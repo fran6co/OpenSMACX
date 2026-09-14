@@ -137,7 +137,7 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
                     startup_graph = observed[version]["code_dependencies"]
                     startup_producers = identities(context, startup_graph["nodes"])
                     startup_roots = {_key(startup_producers[node]) for node in startup_graph["roots"]}
-                    for original, stable in owned:
+                    for original, stable, _ in owned:
                         key, stable_key = _key(original), _key(stable)
                         if key in startup_roots:
                             raise ValueError("task function scope cannot replace explicit generated-root permission")
@@ -218,6 +218,37 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
                     normalized = {version: normalize_residual(graphs[version], producers[version], removed[version], max_nodes=max_nodes)
                                   for version in contexts}
                     comparison = compare_residual(normalized["baseline"], normalized["current"])
+                    if application_scope is not None:
+                        from .application_residual import _owned_bodies
+                        from .pe_output_residual import compare_same_layout_pe
+                        ranges = {}
+                        # Cross-version expansion can reveal a physical alias
+                        # absent from the initial graph. Revalidate final roots;
+                        # no repeated linker/code verification is needed.
+                        for version, context in contexts.items():
+                            native = live[version]
+                            try:
+                                native.check_current()
+                                final_owned = _owned_bodies(
+                                    context, graphs[version], application_scope[version])
+                                expected = {key: value for key, value in renames[version].items()
+                                            if value.get("kind") == "task_function"}
+                                actual = {_key(original): stable for original, stable, extent in final_owned}
+                                if actual != expected:
+                                    raise ValueError("final task body identities differ from original scoped graph")
+                                ranges[version] = [{"entity_id": stable["entity_id"], **extent}
+                                                   for original, stable, extent in final_owned]
+                            finally:
+                                native.check_current()
+                        try:
+                            for native in live.values():
+                                native.check_current()
+                            result["pe_output_residual"] = compare_same_layout_pe(
+                                live["baseline"].inputs.image, live["current"].inputs.image,
+                                ranges["baseline"], ranges["current"])
+                        finally:
+                            for native in live.values():
+                                native.check_current()
                     result.update(result=comparison["result"], code_residual=comparison,
                                   rounds=round_number, preserved_producers=len(expanded),
                                   omitted_bodies={version: len(value) for version, value in removed.items()},

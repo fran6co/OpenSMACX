@@ -56,7 +56,7 @@ def test_identical_or_only_scoped_bytes_change_is_bounded_observation():
         assert result["ready_for_collection"] is result["persisted"] is False
 
 
-@pytest.mark.parametrize("offset", [0x40, 0x88, 0x98 + 64, 0x98 + 96, 0x204, 0x3FF,
+@pytest.mark.parametrize("offset", [0x40, 0x88, 0x98 + 64, 0x204, 0x3FF,
                                      0x400, 0x444, 0x47C, 0x650, 0x800])
 def test_headers_timestamps_directories_nb10_unnamed_data_gaps_overlay_are_literal(offset):
     before = image()
@@ -161,3 +161,60 @@ def test_mutated_parsed_image_and_invalid_diagnostic_bound_refuse():
     assert compare(before, before)["outside_bytes"] == "unknown"
     for bound in (True, -1, 100001, "2"):
         assert compare(image(), image(), max_difference_ranges=bound)["outside_bytes"] == "unknown"
+
+
+def test_boolean_parsed_state_cannot_equal_integer_zero():
+    before = image()
+    before.directories = ((False, False), *before.directories[1:])
+    result = compare(before, before)
+    assert result["outside_bytes"] == "unknown"
+    assert "parsed PE state" in result["reason"]
+
+
+@pytest.mark.parametrize("index,address", [(0, 0x1000), (1, 0x1000), (4, 0x200), (12, 0x1000)])
+def test_directory_alias_in_either_version_never_hides_body_change(index, address):
+    raw = bytearray(image().data)
+    struct.pack_into("<II", raw, 0x98 + 96 + index * 8, address, 4)
+    aliased = image(raw)
+    for a, b in ((aliased, changed(aliased, 0x200)), (image(), aliased), (aliased, image())):
+        result = compare(a, b)
+        assert result["outside_bytes"] == "unknown"
+        assert "aliases directory" in result["reason"]
+
+
+@pytest.mark.parametrize("mapped", [True, False])
+def test_debug_payload_cannot_alias_scoped_code_even_outside_directory(mapped):
+    raw = bytearray(image().data)
+    raw[0x200:0x204] = b"NB10"
+    struct.pack_into("<IIHHIIII", raw, 0x440, 0, 456, 0, 0, 2, 4, 0x1000 if mapped else 0, 0x200)
+    before = image(raw)
+    result = compare(before, changed(before, 0x201))
+    assert result["outside_bytes"] == "unknown"
+    assert "aliases directory" in result["reason"] if mapped else "overlaps mapped" in result["reason"]
+
+
+def test_overlaid_debug_payload_remains_literal_outside_bytes():
+    raw = bytearray(image().data)
+    struct.pack_into("<IIHHIIII", raw, 0x440, 0, 456, 0, 0, 2, 4, 0, 0x800)
+    raw[0x800:0x804] = b"NB10"
+    before = image(raw)
+    result = compare(before, changed(before, 0x801))
+    assert result["outside_bytes"] == "fail" and result["different_file_bytes"] == 1
+
+
+def test_security_directory_is_a_file_offset_and_metadata_is_not_normalized():
+    raw = bytearray(image().data)
+    struct.pack_into("<II", raw, 0x98 + 96 + 4 * 8, 0x800, 8)
+    before = image(raw)
+    assert compare(before, before)["outside_bytes"] == "pass"
+    assert compare(before, changed(before, 0x800))["outside_bytes"] == "fail"
+
+
+@pytest.mark.parametrize("index,address,size", [(0, 0, 4), (0, 0x1000, 0),
+                                                (0, 0x3000, 4), (4, 0x9000, 4),
+                                                (6, 0x2040, 27)])
+def test_unbacked_or_malformed_metadata_cannot_grant_byte_residual(index, address, size):
+    raw = bytearray(image().data)
+    struct.pack_into("<II", raw, 0x98 + 96 + index * 8, address, size)
+    before = image(raw)
+    assert compare(before, before)["outside_bytes"] == "unknown"

@@ -254,6 +254,7 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
 def test_acceptance_fixture_captures_actual_retained_compiler_and_linker_inputs(tmp_path, monkeypatch, structured):
     from dataclasses import replace
     from match_recovery.application_context import application_build
+    from match_recovery.application_residual import _owned_bodies
     from match_recovery.build_graph_commands import _context
     from match_recovery.linked_codeview import LinkedProcedures
     from match_recovery.linked_context import linked_build
@@ -286,6 +287,14 @@ def test_acceptance_fixture_captures_actual_retained_compiler_and_linker_inputs(
                 assert debug["format"] == "codeview5_procedure"
                 assert debug["types"]["format"] == "codeview5_type_graph"
             assert graph["remaining_linked_effects"] == "unknown" and not graph["ready_for_collection"]
+            owned = _owned_bodies(context, graph, {"src/owner.cpp": {METHOD: "owner-method"}})
+            (producer, stable, extent), = owned
+            assert producer == {"kind": "compiled", "unit": "src/owner.cpp", "symbol": METHOD}
+            assert stable == {"kind": "task_function", "entity_id": "owner-method"}
+            node, = [node for node in graph["nodes"] if node["symbol"] == METHOD]
+            assert extent == {"address": node["proof"]["address"], "size": node["proof"]["size"]}
+            assert len(node["proof"]["regions"]) == len(node["proof"]["debug_regions"]) == 1
+            linked.check_current()
             selected = linked.inputs.objects.resolve("owner.obj")
             obj = Coff(selected["raw"])
             subject = obj.function(METHOD)

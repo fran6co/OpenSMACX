@@ -2131,6 +2131,18 @@ input-family equality nor a cached report satisfies retained-selection proof.
 The full-project native acceptance verifier requires the same qualified linked
 preservation independently of configured structure/runtime proof commands.
 
+The application residual now derives task-body extents from source ownership and
+fresh physical COFF/link evidence. Verified direct CodeView/FPO debug children
+do not disqualify an otherwise independent function, but remain outside its
+runtime-body range. Runtime companions, shared definitions, folded bodies and
+observed address aliases refuse whole-body scope. The final dependency graph is
+checked again after expansion, before comparing all remaining PE file bytes when
+both versions have identical geometry and body placements. Directory/debug payload
+overlaps refuse scope; timestamps, debug data, padding and overlays are not masked.
+This is diagnostic byte accounting, not complete metadata-reference closure,
+retained-selection proof or an acceptance grant. Changed layouts and unsupported
+ownership remain unknown.
+
 ## Package boundary and verification
 
 ### Pointer-member interpretations

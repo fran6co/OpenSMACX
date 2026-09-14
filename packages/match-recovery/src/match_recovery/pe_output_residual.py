@@ -19,11 +19,13 @@ MAX_BODIES = 100000
 
 
 def _geometry(image):
+    from .linked_context import _same
+
     if (type(image) is not PeImage or type(image.data) is not bytes
             or not 0 < len(image.data) <= MAX_FILE_BYTES):
         raise ValueError("PE accounting requires bounded immutable PeImage bytes")
     fresh = PeImage(image.data, sha256(image.data).hexdigest())
-    if image.__dict__ != fresh.__dict__:
+    if not _same(image.__dict__, fresh.__dict__):
         raise ValueError("parsed PE state differs from its physical bytes")
     data = image.data
     pe, = struct.unpack_from("<I", data, 0x3C)
@@ -85,6 +87,59 @@ def _bodies(image, rows):
     return result
 
 
+def _metadata_ranges(image):
+    """Protect directory extents and all independently pointed debug payloads.
+
+    This is not a general walk of every directory's indirect references. The
+    caller still owes body non-alias qualification for other pointed-to tables
+    and strings. No metadata byte is normalized or excluded from comparison.
+    """
+    from .pe_debug import _bytes, _mapped, linked_coff_symbols
+
+    ranges = []
+    pe, = struct.unpack_from("<I", image.data, 0x3C)
+    header_size, = struct.unpack_from("<I", image.data, pe + 24 + 60)
+    for index, (address, size) in enumerate(image.directories):
+        if not address and not size:
+            continue
+        if not address or not size:
+            raise ValueError("unsupported PE directory address/size pair")
+        if index == 4:  # Certificate table address is a file pointer, not RVA.
+            _bytes(image.data, address, size)
+            file_at = address
+        elif address + size <= header_size:
+            _bytes(image.data, address, size)
+            file_at = address
+        else:
+            span = Span(image.base + address, image.base + address + size)
+            image.read(span)
+            matches = [(region, offset) for region, offset, raw in image.sections
+                       if region.start <= span.start and span.end <= region.start + raw]
+            if len(matches) != 1:
+                raise ValueError("PE directory lacks unique physical backing")
+            region, offset = matches[0]
+            file_at = offset + span.start - region.start
+        ranges.append((file_at, file_at + size))
+    # This existing strict decoder validates every debug entry and its payload
+    # bounds/RVA-file correspondence, including non-COFF payloads such as NB10.
+    # Header COFF table pointers also cannot silently name unframed body bytes.
+    linked_coff_symbols(image)
+    rva, size = image.directories[6] if len(image.directories) > 6 else (0, 0)
+    if size:
+        directory, _ = _mapped(image, rva, size)
+        for at in range(0, size, 28):
+            _, _, _, _, _, length, _, offset = struct.unpack_from("<IIHHIIII", directory, at)
+            if length:
+                ranges.append((offset, offset + length))
+    return ranges
+
+
+def _check_metadata_aliases(image, bodies):
+    for begin, end in _metadata_ranges(image):
+        if any(row["file_offset"] < end and begin < row["file_offset"] + row["size"] for row in bodies):
+            raise ValueError("PE scoped body aliases directory or debug payload bytes")
+
+
 def compare_same_layout_pe(baseline_image, current_image, baseline_bodies, current_bodies, *, max_difference_ranges=256):
     """Count every outside byte; bound diagnostics, never the comparison scan.
 
@@ -109,6 +164,8 @@ def compare_same_layout_pe(baseline_image, current_image, baseline_bodies, curre
         after = _bodies(current_image, current_bodies)
         if before != after:
             raise ValueError("PE body identities, placements or extents differ")
+        _check_metadata_aliases(baseline_image, before)
+        _check_metadata_aliases(current_image, after)
     except (ValueError, TypeError, struct.error) as error:
         return {**report, "reason": str(error)}
 

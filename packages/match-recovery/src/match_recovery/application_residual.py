@@ -38,19 +38,9 @@ def _owned_bodies(context, graph, bindings):
                 parsed[key] = Coff(raw)
             obj = parsed[key]
             subject = obj.function(producer["symbol"])
-            numbers = obj.code_sections(subject)
-            if (len(numbers) != 1 or numbers[0] != subject.section
-                    or not obj.sections[subject.section - 1].flags & 0x1000
-                    or subject.section in obj.associations.values()):
-                raise ValueError("task function body requires one independent code section; shared regions are not whole-body permissions")
-            # A named function cannot absorb co-located externally usable code.
-            # The compiled residual also independently protects all unowned
-            # sections and metadata; this dimension supplies no header waiver.
-            for other in obj.symbols.values():
-                if (other.section == subject.section and other.index != subject.index
-                        and (other.storage == 2 or other.type & 0x20)):
-                    raise ValueError("task body shares its physical code section with another definition")
-            result.append((producer, {"kind": "task_function", "entity_id": entity}))
+            from .application_body_scope import validate_body_node
+            extent = validate_body_node(obj, subject, node, graph)
+            result.append((producer, {"kind": "task_function", "entity_id": entity}, extent))
         return result
     finally:
         try:
