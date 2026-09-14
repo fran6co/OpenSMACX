@@ -92,7 +92,8 @@ def verify_code_region(obj, symbol, owner, mapping, image, *, objects=None, fixu
         if subject.section in obj.associations.values() and fixups is not None:
             from .linked_bundle import verify_bundle
             return verify_bundle(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
-                                 folded_frames=folded_frames, codeview=codeview)
+                                 folded_frames=folded_frames, codeview=codeview,
+                                 _index=_index, _constants=_constants)
         return verify_function(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
                                _index=_index, _constants=_constants)
     symbols = _ordinary_symbols(obj, subject)

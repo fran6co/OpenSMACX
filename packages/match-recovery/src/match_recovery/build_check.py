@@ -24,6 +24,13 @@ from .source_replica import artifact_parent
 from .toolchain import snapshot as toolchain_snapshot
 
 
+def _input_parents(path, root):
+    """Select the same in-root ancestors without testing every outer parent."""
+    if not path.is_relative_to(root):
+        return ()
+    return path.parents[:len(path.parts) - len(root.parts)]
+
+
 @dataclass(frozen=True)
 class Build:
     path: str
@@ -112,8 +119,7 @@ class Build:
                                                   or path.stat().st_nlink != 1):
                 raise ValueError(f"versioned build input must be a canonical unaliased regular file: {name}")
             if (not path.is_file() or not path.resolve().is_relative_to(root)
-                    or any(parent.is_symlink() for parent in path.parents
-                                         if parent.is_relative_to(root))):
+                    or any(parent.is_symlink() for parent in _input_parents(path, root))):
                 raise ValueError(f"missing or symlinked build input: {name}")
             # Explicit file aliases (e.g. compiler vs linker entry points) are
             # valid inputs. Pin their spelling, resolved target and file bytes;

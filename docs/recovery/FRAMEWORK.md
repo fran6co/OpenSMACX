@@ -38,6 +38,11 @@ semantics, avoiding repeated receipt parsing and command-provider calls. Every
 guard still hashes the unique physical file closure and rechecks membership,
 directory roles and pre/post identities. Source, Git, policy and compiler/toolchain
 guards remain active; no cross-run or mtime-only validation cache is introduced.
+Build snapshots select in-root ancestors lexically once per input, retaining
+the same ordered physical symlink checks and all path/content validation.
+Associated COFF families now receive the graph's exact map-view index and
+expiring optional-constant lookup too. Present constants, standalone callers,
+duplicate/owner conflicts and final population guards retain their checks.
 
 Native export metadata now participates in linked-output qualification, with
 complete table/string protection and a narrowly COFF-consistent creation timestamp.

@@ -29,7 +29,10 @@ def _owned(obj, root):
     return (root, *sorted(owned - {root}))
 
 
-def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folded_frames=None, codeview=None):
+def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folded_frames=None, codeview=None,
+                  _index=None, _constants=None):
+    from .linked_map_index import index_for
+    lookup = index_for(mapping, _index)
     check_image(fixups, image)
     selected = check_selected(obj, owner, objects)
     family = _owned(obj, subject.section)
@@ -44,7 +47,8 @@ def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folde
                 or bool(section.flags & 0x20) != bool(section.flags & 0x20000000)):
             raise ValueError("unsupported associated code/data section form")
         obj.section_subject(number)  # Reject malformed/unsupported relocation forms.
-    pool = mapping.publics if subject.storage == 2 else mapping.statics or ()
+    pool = (lookup.publics.get(subject.name, ()) if subject.storage == 2 else
+            lookup.statics.get((owner.casefold(), subject.name), ()))
     roots = [row for row in pool if row.symbol == subject.name and row.function and row.segment
              and row.owner.casefold() == owner.casefold()]
     if len(roots) != 1:
@@ -83,7 +87,8 @@ def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folde
     for symbol in obj.symbols.values():
         if symbol.section not in ordinals or symbol.name == obj.sections[symbol.section - 1].name:
             continue
-        pool = mapping.publics if symbol.storage == 2 else mapping.statics or ()
+        pool = (lookup.publics.get(symbol.name, ()) if symbol.storage == 2 else
+                lookup.statics.get((owner.casefold(), symbol.name), ()))
         existing = [row for row in pool if row.symbol == symbol.name
                     and (symbol.storage == 2 or row.owner.casefold() == owner.casefold())]
         if existing and (len(existing) != 1 or not existing[0].segment
@@ -101,14 +106,17 @@ def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folde
     names = sorted({obj.symbols[index].name for number in owned
                     for _, index, kind in obj.sections[number - 1].relocations
                     if kind and obj.symbols[index].storage == 2})
-    constants = objects.resolve_constants(names, optional=True) if names else None
+    # Share only the enclosing graph's live optional lookup. Present constants
+    # retain its ordinary resolver validation; standalone callers keep theirs.
+    resolve = objects.resolve_constants if _constants is None else _constants
+    constants = resolve(names, optional=True) if names else None
     regions, private = [], {}
     for number in owned:
         code, relocations, alignment = obj.section_subject(number)
         references, targets = [], {}
         for relocation in relocations:
             target = obj.symbols[int(relocation.target)]
-            constant = _constant_binding(obj, target, mapping, constants)
+            constant = _constant_binding(obj, target, mapping, constants, _index=lookup)
             row = {"offset": relocation.offset, "kind": relocation.kind}
             if constant is not None:
                 targets[relocation.target] = AbsoluteConstant(constant["value"])
@@ -122,11 +130,12 @@ def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folde
                         raise ValueError("associated target disagrees with its independently placed section")
                     row["identity"] = {"owned_region": ordinals[target.section], "offset": target.value}
                 else:
-                    candidates = [item for item in (mapping.publics if target.storage == 2 else mapping.statics or ())
+                    candidates = [item for item in (lookup.publics.get(target.name, ()) if target.storage == 2 else
+                                   lookup.statics.get((owner.casefold(), target.name), ()))
                                   if item.symbol == target.name
                                   and (target.storage == 2 or item.owner.casefold() == owner.casefold())]
                     if not candidates and target.storage == 3:
-                        if any(item.symbol == target.name for item in (*mapping.publics, *(mapping.statics or ()))):
+                        if target.name in lookup.names:
                             raise ValueError("private fallback conflicts with existing linked map evidence")
                         binding = private_data_binding(obj, target, selected, image, address)
                         if target.name in private and private[target.name] != binding:

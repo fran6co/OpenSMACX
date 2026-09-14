@@ -2207,6 +2207,13 @@ compiled-only PASS cannot substitute. A real compiler-backed tiny-application
 control passes full acceptance through structural repair and byte restoration;
 this is not full-game or live-agent recovery acceptance.
 
+Native build snapshots avoid repeatedly testing outer ancestors while keeping
+every in-root symlink check, path resolution and content hash. Linked associated
+families reuse the enclosing graph's duplicate-preserving, exact-view map index
+and expiring optional-constant lookup. Standalone verification and present
+constants retain full resolver checks; no lookup persists across runs or replaces
+input/alias/freshness evidence.
+
 ## Package boundary and verification
 
 ### Pointer-member interpretations
