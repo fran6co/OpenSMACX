@@ -70,6 +70,18 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
                                                      epoch=input_epochs[version])
                            for version, context in contexts.items()}
                 result["physical_sections"] = domains
+                allocations = {}
+                for version, native in live.items():
+                    try:
+                        allocations[version] = native.ordinary_allocations()
+                    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+                        allocations[version] = {"result": Result.UNKNOWN, "reason": str(error),
+                                                "allocation_domain": Result.UNKNOWN,
+                                                "allocation_isolation": Result.UNKNOWN}
+                result["ordinary_allocations"] = allocations
+                if any(value["result"] == Result.FAIL for value in allocations.values()):
+                    result.update(result=Result.FAIL, reason="native static allocation contents or isolation failed")
+                    return result
             observed = {version: value.initializers(max_functions=max_nodes) for version, value in live.items()}
             checks = [_complete(value) for value in observed.values()]
             checks += [_complete(value.get("code_dependencies", {})) for value in observed.values()]

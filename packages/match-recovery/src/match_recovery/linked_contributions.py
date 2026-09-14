@@ -64,7 +64,8 @@ def ordinary_contributions(context, inputs):
                 row["envelope"] = envelope
                 begin, end = envelope["address"], envelope["address"] + envelope["size"]
                 row["intersections"] = [item["index"] for item in by_section[envelope["image_section"]]
-                                        if begin < item["address"] + item["size"] and item["address"] < end]
+                                        if item["size"] > 0 and begin < item["address"] + item["size"]
+                                        and item["address"] < end]
                 physical = owners[digest(row["input"])]
                 if len(physical) != 1 or physical[0]["object_sha256"] != row["object_sha256"]:
                     row["reason"] = "ordinary section lacks one independently bound physical PDB module"
@@ -142,7 +143,7 @@ def _common_contributions(inputs, commons):
         begin, end = common["address"], common["address"] + common["size"]
         for index, contribution in enumerate(inventory.contributions):
             start = inputs.image.sections[contribution.section - 1][0].start + contribution.offset
-            if begin < start + contribution.size and start < end:
+            if contribution.size > 0 and begin < start + contribution.size and start < end:
                 module = inventory.modules[contribution.module]
                 row["intersections"].append({"index": index, **asdict(contribution),
                     "address": start, "module_name": module.name, "object_name": module.object_name})
@@ -161,6 +162,8 @@ def _common_contributions(inputs, commons):
             "common_allocations": commons, "contributions": rows,
             "image_sha256": inventory.image_sha256, "pdb_sha256": inventory.pdb_sha256,
             "contribution_count": len(inventory.contributions), "module_count": len(inventory.modules),
+            "empty_contributions": [{"index": index, **asdict(row)}
+                                    for index, row in enumerate(inventory.contributions) if row.size == 0],
             "allocation_isolation": Result.UNKNOWN, "retained_storage_coverage": Result.UNKNOWN,
             "physical_object_binding": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
             "limitations": ["exact common/PDB coordinates do not prove complete storage or module identity",

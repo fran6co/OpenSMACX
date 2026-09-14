@@ -120,6 +120,14 @@ class LinkedBuild:
         finally:
             self.check_current()
 
+    def ordinary_allocations(self):
+        from .ordinary_allocation_coverage import observe_ordinary_allocations
+        try:
+            self.check_current()
+            return deepcopy(observe_ordinary_allocations(self))
+        finally:
+            self.check_current()
+
     def data_section(self, owner, number):
         from .linked_storage import observe_data_section
         try:

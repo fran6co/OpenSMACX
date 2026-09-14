@@ -37,6 +37,22 @@ and late damage, not measured whole-game throughput. Repeated closure expansion
 and unresolved physical coverage still require work. These are not exclusions
 from application acceptance.
 
+The application path now independently observes ordinary allocation retention:
+exact selected physical sections, whole-section placement, bidirectional PDB
+module/contribution correspondence, supported section forms, and native contents
+must agree. Whole-section retention does not certify producer flag transformations:
+both raw characteristic values remain visible, and unexplained differences still
+prevent complete isolation and acceptance. A closed supported static allocation domain can establish disjointness
+without treating interior member symbols as separate allocations. Distinct data
+allocation overlap and object-versus-image damage reach the application graph as
+failures; verified folded code is not relabelled as data corruption. Missing
+placements, unused-member non-admission evidence, unmatched PDB contributions and
+special/generated storage still prevent complete isolation. This is not whole-image
+attribution, complete retained COMDAT selection or a new acceptance permission.
+Native V60 PDB zero-length contribution records retain their fields and positions;
+they are not positive allocation intervals and do not prove section discard.
+Invalid sections/modules, negative sizes and out-of-range coordinates still refuse.
+
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied
 original can be pinned in source without copying its bytes; compiler and build

@@ -68,8 +68,11 @@ def _contribution(raw, image, module_count, *, nil=False):
         # are not a live region. Preserve no fabricated zero-length placement.
         return None
     if (not 1 <= section <= len(image.sections) or not 0 <= module < module_count
-            or offset < 0 or size <= 0):
+            or offset < 0 or size < 0):
         raise ValueError("invalid PDB contribution section, module or signed extent")
+    # A native VC6 link can emit a valid zero-sized SC. Microsoft's SC address
+    # predicate contains no address when cb == 0, while EnumSC retains the row.
+    # Preserve its fields/order; it supplies neither allocation nor discard proof.
     region = image.sections[section - 1][0]
     if region.start + offset + size > min(region.end, 0x100000000):
         raise ValueError("PDB contribution exceeds its bound PE section")

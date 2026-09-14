@@ -224,9 +224,12 @@ def application_graph(root, task_name, *, integration=None, permission=None):
                                 "reason": str(error), "outside_scope_verification": Result.UNKNOWN,
                                 "ready_for_collection": False}
                 result["application_residual"] = residual
-                if residual.get("scoped_code", {}).get("storage_residual", {}).get("input_consistency") == Result.FAIL:
+                if (residual.get("input_consistency") == Result.FAIL
+                        or residual.get("scoped_code", {}).get("storage_residual", {}).get("input_consistency") == Result.FAIL):
                     result.update(result=Result.FAIL,
                                   reason="selected application data disagrees with its own linked image")
+                if residual.get("allocation_isolation") == Result.FAIL:
+                    result.update(result=Result.FAIL, reason="distinct native application allocations overlap")
                 session_fresh()
                 session = replace(session, _report=deepcopy(result))
                 if permission is not None:

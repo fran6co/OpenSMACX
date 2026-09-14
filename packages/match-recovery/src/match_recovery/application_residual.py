@@ -109,6 +109,14 @@ def compare_application_residual(graph):
             return report
         report["scoped_code"] = _compare_contexts(graph.baseline, graph.current, changes,
                                                   application_scope=scoped, max_nodes=MAX_NODES)
+        scoped = report["scoped_code"]
+        observations = [scoped.get("storage_residual", {}), *scoped.get("ordinary_allocations", {}).values()]
+        report["input_consistency"] = (Result.FAIL if any(value.get("input_consistency") == Result.FAIL
+                                                         for value in observations) else Result.UNKNOWN)
+        report["allocation_isolation"] = (Result.FAIL if any(value.get("allocation_isolation") == Result.FAIL
+                                                            for value in observations) else Result.UNKNOWN)
+        if report["input_consistency"] == Result.FAIL or report["allocation_isolation"] == Result.FAIL:
+            report["result"] = Result.FAIL
         report["reason"] = ("physical code/data observations do not yet establish complete retained section "
                             "selection, anonymous contribution assignment or allocation isolation")
         return report

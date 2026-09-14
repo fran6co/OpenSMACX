@@ -79,10 +79,28 @@ def test_nil_module_first_does_not_erase_its_live_table_entries():
 
 
 @pytest.mark.parametrize("field,values", [("section", [0, 2, 0xFFFF]), ("offset", [-1, 512, 0x7FFFFFFF]),
-    ("size", [0, -1, 513, 0x7FFFFFFF]), ("module", [1, 0xFFFF])])
+    ("size", [-1, 513, 0x7FFFFFFF]), ("module", [1, 0xFFFF])])
 def test_invalid_section_module_and_signed_extents_refuse(field, values):
     for value in values:
         with pytest.raises(ValueError): bind(*parts(contributions=contribution(**{field: value})))
+
+
+@pytest.mark.parametrize("offset", [0, 20, 512])
+def test_zero_extent_keeps_exact_fields_order_and_module_first_without_allocation_grant(offset):
+    empty = contribution(offset=offset, size=0, data_crc=123, relocation_crc=456)
+    value = bind(*parts(module(first=empty), contribution() + empty + empty))
+    assert len(value.contributions) == 3
+    assert value.modules[0].first == value.contributions[1] == value.contributions[2]
+    assert value.contributions[1].size == 0 and value.contributions[1].offset == offset
+    assert value.contributions[1].data_crc == 123 and value.contributions[1].relocation_crc == 456
+    assert value.report()["retained_storage_coverage"] == value.report()["allocation_isolation"] == "unknown"
+
+
+@pytest.mark.parametrize("options", [{"section": 0}, {"section": 0xFFFF}, {"offset": -1},
+                                    {"offset": 513}, {"module": 1}])
+def test_zero_extent_is_not_permission_for_invalid_coordinates_or_nil_full_table_row(options):
+    with pytest.raises(ValueError):
+        bind(*parts(contributions=contribution(size=0, **options)))
 
 
 def test_an_in_bounds_row_cannot_point_at_another_modules_first_entry():
