@@ -2213,6 +2213,10 @@ families reuse the enclosing graph's duplicate-preserving, exact-view map index
 and expiring optional-constant lookup. Standalone verification and present
 constants retain full resolver checks; no lookup persists across runs or replaces
 input/alias/freshness evidence.
+Direct initializer roots share one exact map index and the same expiring
+constant lookup as their dependency traversal. The complete physical population
+is checked before and after observation, including exceptional exits; measured
+constant operands and present-constant resolution retain their ordinary checks.
 
 ## Package boundary and verification
 

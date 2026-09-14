@@ -43,6 +43,8 @@ the same ordered physical symlink checks and all path/content validation.
 Associated COFF families now receive the graph's exact map-view index and
 expiring optional-constant lookup too. Present constants, standalone callers,
 duplicate/owner conflicts and final population guards retain their checks.
+Initializer roots and their dependency traversal share one expiring constant
+lookup, with final guards covering early and exceptional returns as well.
 
 Native export metadata now participates in linked-output qualification, with
 complete table/string protection and a narrowly COFF-consistent creation timestamp.

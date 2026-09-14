@@ -14,7 +14,9 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from .coff_archive import CoffArchive
 from .graph_limits import DEFAULT_NODES, node_limit
 from .linked_function import verify_function as _function
-from .linked_code_graph import observe_code_graph, compare_code_graphs
+from .linked_code_graph import _guarded_code_graph, compare_code_graphs
+from .linked_constant_batch import constant_lookups
+from .linked_map_index import index_for
 from .model import Result, Span
 from .pe_coff import Coff, CoffRecords
 
@@ -140,8 +142,16 @@ def _observe(context, artifacts, *, max_functions=DEFAULT_NODES):
 
 def _observe_inputs(inputs, *, max_functions=DEFAULT_NODES):
     max_functions = node_limit(max_functions)
+    # One expiring population guard covers both the direct root measurement
+    # and its reachable graph. Present constants retain ordinary full checks.
+    with constant_lookups(inputs.objects) as constants:
+        return _observe_inputs_guarded(inputs, max_functions=max_functions, _constants=constants)
+
+
+def _observe_inputs_guarded(inputs, *, max_functions, _constants):
     image, mapping, fixups = inputs.image, inputs.mapping, inputs.fixups
     objects, folding = inputs.objects, inputs.folding
+    lookup = index_for(mapping)
     evidence, coverage, records = inputs.evidence, inputs.coverage, inputs.records
     if mapping.contributions is None:
         raise ValueError("initializer table lacks explicit linker contribution evidence")
@@ -170,7 +180,8 @@ def _observe_inputs(inputs, *, max_functions=DEFAULT_NODES):
                 key = (item["owner"].casefold(), symbol.name)
                 if key not in functions:
                     functions[key] = _function(obj, symbol, item["owner"], mapping, image,
-                                               objects=objects, fixups=fixups)
+                                               objects=objects, fixups=fixups,
+                                               _index=lookup, _constants=_constants)
                 function = functions[key]
                 entries.append({"input": item["identity"], "object_sha256": item["sha256"],
                                 "section": index, "offset": offset, "target": function["address"],
@@ -179,8 +190,8 @@ def _observe_inputs(inputs, *, max_functions=DEFAULT_NODES):
     if not entries and not contributions:
         return {"result": Result.PASS, "table": TABLE, "entries": [], "sequence": [],
                 "contribution": None, "functions": [], "input_coverage": Result.PASS,
-                "code_dependencies": observe_code_graph(objects, mapping, image, [], max_functions=max_functions,
-                                                        fixups=fixups, folding=folding)}
+                "code_dependencies": _guarded_code_graph(objects, mapping, image, [], max_functions=max_functions,
+                                                        fixups=fixups, folding=folding, _constants=_constants)}
     if len(contributions) != 1:
         raise ValueError("initializer table requires one independently bounded linked contribution")
     table, = contributions
@@ -209,9 +220,9 @@ def _observe_inputs(inputs, *, max_functions=DEFAULT_NODES):
     dependencies = {"result": Result.UNKNOWN, "reason": "initializer root table is not verified"}
     if table_ok:
         try:
-            dependencies = observe_code_graph(objects, mapping, image,
+            dependencies = _guarded_code_graph(objects, mapping, image,
                                               [row["function"] for row in sequence], max_functions=max_functions,
-                                              fixups=fixups, folding=folding)
+                                              fixups=fixups, folding=folding, _constants=_constants)
         except (OSError, ValueError) as error:
             # Unsupported dependency metadata cannot erase a measured root
             # failure or turn a valid root observation into missing evidence.
