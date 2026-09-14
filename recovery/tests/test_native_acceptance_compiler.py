@@ -250,14 +250,20 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     return root, image, task, git, evidence
 
 
-def test_acceptance_fixture_captures_actual_retained_compiler_and_linker_inputs(tmp_path, monkeypatch):
+@pytest.mark.parametrize("structured", [False, True])
+def test_acceptance_fixture_captures_actual_retained_compiler_and_linker_inputs(tmp_path, monkeypatch, structured):
+    from dataclasses import replace
     from match_recovery.application_context import application_build
     from match_recovery.build_graph_commands import _context
+    from match_recovery.linked_codeview import LinkedProcedures
     from match_recovery.linked_context import linked_build
     from match_recovery.source_replica import replica_snapshot
 
-    root, _, _, _, _ = prepared_project(tmp_path, monkeypatch)
+    root, _, _, _, evidence = prepared_project(tmp_path, monkeypatch)
     files = {name: raw for name, raw in replica_snapshot(root, ("src",)).items() if raw is not None}
+    if structured:
+        files["src/owner.h"] = (evidence + CLASSES).encode()
+        files["src/owner.cpp"] = files["src/owner.cpp"].replace(b"raw_[0] + raw_[1]", b"bias + member.value")
     with application_build(root, ("src",), files, versioned_files={}) as context:
         proof = context.report["compile_link"]
         assert proof["result"] == proof["command_bindings"]["result"] == "pass", proof
@@ -271,6 +277,33 @@ def test_acceptance_fixture_captures_actual_retained_compiler_and_linker_inputs(
             assert linked.inputs.fixups is not None
             assert {METHOD, "_entry"} <= {row.symbol for row in linked.inputs.mapping.publics}
             assert linked.inputs.coverage["result"] == "pass"
+            graph = linked.code([{"owner": "owner.obj", "symbol": METHOD},
+                                 {"owner": "entry.obj", "symbol": "_entry"}])
+            assert graph["result"] == "pass", graph["gaps"]
+            assert {node["symbol"] for node in graph["nodes"]} == {METHOD, "_entry"}
+            for node in graph["nodes"]:
+                debug, = node["proof"]["debug_regions"]
+                assert debug["format"] == "codeview5_procedure"
+                assert debug["types"]["format"] == "codeview5_type_graph"
+            assert graph["remaining_linked_effects"] == "unknown" and not graph["ready_for_collection"]
+            selected = linked.inputs.objects.resolve("owner.obj")
+            obj = Coff(selected["raw"])
+            subject = obj.function(METHOD)
+            child, = [number for number, parent in obj.associations.items()
+                      if parent == subject.section and obj.sections[number - 1].name == ".debug$S"]
+            address, = [row.address for row in linked.inputs.mapping.publics if row.symbol == METHOD]
+            verifier = LinkedProcedures(linked)
+            args = (obj, child, subject, "owner.obj", linked.inputs.image, address, linked.inputs.fixups)
+            with pytest.raises(ValueError, match="MAP entry"):
+                verifier.verify(*args[:5], address + 1, args[-1])
+            changed = Coff(selected["raw"])
+            sections = list(changed.sections)
+            sections[child - 1] = replace(sections[child - 1], data=bytes(len(sections[child - 1].data)))
+            changed.sections = tuple(sections)
+            with pytest.raises(ValueError, match="selected physical input"):
+                verifier.verify(changed, *args[1:])
+        with pytest.raises(ValueError, match="expired"):
+            verifier.verify(*args)
         context.check_current()
 
 

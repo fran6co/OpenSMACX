@@ -2296,7 +2296,15 @@ is a separate linked-code check. `msvc-pdb` validates an old SmallMSF container;
 linked observations separately require its NB10/DBI identity and section headers
 to match the exact PE. Supported linker fixups can independently place a selected
 COFF association family; every code/data region, relocation and associated FPO
-record must verify. Unsupported or missing companions remain unknown. Compiler
+record must verify. Native linked-build code observation also supports a bounded
+associated CodeView 5 procedure child: exact root-owned SECTION/SECREL bindings,
+complete procedure and register/frame-local records, and correspondence to the
+same build's physically bound PDB module. Procedure extent, flags, locals and
+joint type graphs must agree; type numbering may differ, but names, properties,
+cycles and shared references remain checked. Unknown record forms, type-server
+remapping, folded procedures and missing module evidence refuse. This does not
+ignore debug sections, establish complete debug-output equivalence, or qualify
+outside-scope preservation. Unsupported or missing companions remain unknown. Compiler
 flags and sidecar generation are project policy, not inferred by the library.
 None validates application behavior or complete
 source coverage.

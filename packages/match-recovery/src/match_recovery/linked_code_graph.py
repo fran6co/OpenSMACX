@@ -26,16 +26,17 @@ class _BudgetExhausted(ValueError):
     pass
 
 
-def observe_code_graph(objects, mapping, image, roots, *, max_functions=DEFAULT_NODES, fixups=None, folding=None):
+def observe_code_graph(objects, mapping, image, roots, *, max_functions=DEFAULT_NODES, fixups=None, folding=None,
+                       codeview=None):
     with constant_lookups(objects) as constants:
         return _guarded_code_graph(objects, mapping, image, roots, max_functions=max_functions,
-                                   fixups=fixups, folding=folding, _constants=constants)
+                                   fixups=fixups, folding=folding, _constants=constants, codeview=codeview)
 
 
-def _guarded_code_graph(objects, mapping, image, roots, *, max_functions, fixups, folding, _constants):
+def _guarded_code_graph(objects, mapping, image, roots, *, max_functions, fixups, folding, _constants, codeview=None):
     if folding is None:
         return _observe_code_graph(objects, mapping, image, roots, max_functions=max_functions,
-                                   fixups=fixups, _constants=_constants)
+                                   fixups=fixups, _constants=_constants, codeview=codeview)
     from .linked_folding import Folding
     if (not isinstance(folding, Folding) or folding._objects is not objects
             or folding._mapping != mapping or folding._image is not image or folding._fixups is not fixups):
@@ -43,13 +44,13 @@ def _guarded_code_graph(objects, mapping, image, roots, *, max_functions, fixups
     folding.check_current()
     try:
         return _observe_code_graph(objects, mapping, image, roots, max_functions=max_functions,
-                                   fixups=fixups, folding=folding, _constants=_constants)
+                                   fixups=fixups, folding=folding, _constants=_constants, codeview=codeview)
     finally:
         folding.check_current()
 
 
 def _observe_code_graph(objects, mapping, image, roots, *, max_functions=DEFAULT_NODES, fixups=None,
-                        folding=None, _constants=None):
+                        folding=None, _constants=None, codeview=None):
     """Observe a deterministic rooted graph inside the caller's live epoch.
 
 Node numbering follows root/relocation order, not local compiler spellings.
@@ -225,7 +226,7 @@ never merge distinct definitions. External symbol identity remains explicit.
             node_static = lookup.statics
             proof = verify_code_region(obj, subject, item["owner"], local_mapping, image,
                                        objects=objects, fixups=fixups, folded_frames=frames, _index=lookup,
-                                       _constants=_constants)
+                                       _constants=_constants, codeview=codeview)
             node.update(input=item["identity"], object_sha256=item["sha256"],
                         section=subject.section, proof=proof, result=proof["result"])
             if "regions" in proof:

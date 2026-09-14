@@ -84,7 +84,7 @@ def select_code_region(obj, name):
 
 
 def verify_code_region(obj, symbol, owner, mapping, image, *, objects=None, fixups=None,
-                       folded_frames=None, _index=None, _constants=None):
+                       folded_frames=None, _index=None, _constants=None, codeview=None):
     subject = select_code_region(obj, symbol.name)
     if subject != symbol:
         raise ValueError("linked code entry differs from its selected object symbol")
@@ -92,7 +92,7 @@ def verify_code_region(obj, symbol, owner, mapping, image, *, objects=None, fixu
         if subject.section in obj.associations.values() and fixups is not None:
             from .linked_bundle import verify_bundle
             return verify_bundle(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
-                                 folded_frames=folded_frames)
+                                 folded_frames=folded_frames, codeview=codeview)
         return verify_function(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
                                _index=_index, _constants=_constants)
     symbols = _ordinary_symbols(obj, subject)

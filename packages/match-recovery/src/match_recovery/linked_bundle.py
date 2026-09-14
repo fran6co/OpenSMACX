@@ -29,11 +29,11 @@ def _owned(obj, root):
     return (root, *sorted(owned - {root}))
 
 
-def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folded_frames=None):
+def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folded_frames=None, codeview=None):
     check_image(fixups, image)
     selected = check_selected(obj, owner, objects)
     family = _owned(obj, subject.section)
-    metadata = tuple(number for number in family if obj.sections[number - 1].name == ".debug$F")
+    metadata = tuple(number for number in family if obj.sections[number - 1].name in (".debug$F", ".debug$S"))
     owned = tuple(number for number in family if number not in metadata)
     ordinals = {number: index for index, number in enumerate(owned)}
     for number in owned:
@@ -51,8 +51,16 @@ def verify_bundle(obj, subject, owner, mapping, image, *, objects, fixups, folde
         raise ValueError("associated family has no unique owner-qualified root placement")
     places = {subject.section: roots[0].address}
     verify_frame = verify_fpo if folded_frames is None else folded_frames.verify
-    debug_regions = [{"parent": 0, **verify_frame(obj, number, subject, image, roots[0].address, fixups)}
-                     for number in metadata]
+    debug_regions = []
+    for number in metadata:
+        if obj.sections[number - 1].name == ".debug$F":
+            proof = verify_frame(obj, number, subject, image, roots[0].address, fixups)
+        else:
+            from .linked_codeview import LinkedProcedures
+            if type(codeview) is not LinkedProcedures or folded_frames is not None:
+                raise ValueError("associated CodeView requires native non-folded module/type correspondence")
+            proof = codeview.verify(obj, number, subject, owner, image, roots[0].address, fixups)
+        debug_regions.append({"parent": 0, **proof})
     # Only independently placed source sites may supply another region's base.
     # All paths must agree; unused/unreachable companions still need placement.
     while True:

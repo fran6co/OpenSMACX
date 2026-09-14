@@ -187,11 +187,13 @@ class LinkedBuild:
             self.check_current()
 
     def code(self, roots, *, max_functions=DEFAULT_NODES):
+        from .linked_codeview import LinkedProcedures
         try:
             self.check_current()
             value = self.inputs
             return observe_code_graph(value.objects, value.mapping, value.image, roots,
-                                      fixups=value.fixups, folding=value.folding, max_functions=max_functions)
+                                      fixups=value.fixups, folding=value.folding, max_functions=max_functions,
+                                      codeview=LinkedProcedures(self))
         finally:
             self.check_current()
 
