@@ -111,6 +111,14 @@ class LinkedBuild:
         finally:
             self.check_current()
 
+    def ordinary_contributions(self):
+        from .linked_contributions import ordinary_contributions
+        try:
+            self.check_current()
+            return deepcopy(ordinary_contributions(self.context, self.inputs))
+        finally:
+            self.check_current()
+
     def data_section(self, owner, number):
         from .linked_storage import observe_data_section
         try:
@@ -131,7 +139,7 @@ class LinkedBuild:
         from .linked_storage import common_intersections
         try:
             self.check_current()
-            return deepcopy(common_intersections(self.inputs, symbols, sections))
+            return deepcopy(common_intersections(self.inputs, symbols, sections, context=self.context))
         finally:
             self.check_current()
 

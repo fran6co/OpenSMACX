@@ -181,7 +181,7 @@ def _observe_data_section(inputs, owner, number, index):
             "persisted": False, "ready_for_collection": False}
 
 
-def common_intersections(inputs, symbols, sections=None):
+def common_intersections(inputs, symbols, sections=None, *, context=None):
     """Find positive overlaps against freshly placed requested data sections.
 
     By default derive the entire physical storage census. An explicit subset
@@ -204,11 +204,21 @@ def common_intersections(inputs, symbols, sections=None):
     # user-supplied PASS reports or cross-version numerical correspondences.
     commons = _verify_common_inputs(inputs.evidence, inputs.coverage, inputs.records,
                                     inputs.image, inputs.mapping, names)
-    regions, gaps, census, pdb_contributions = [], [], None, None
+    regions, gaps, census, pdb_contributions, ordinary = [], [], None, None, None
     if sections is None:
         from .linked_storage_census import observe_storage
-        census = observe_storage(inputs)
-        regions, gaps = census["section_envelopes"], census["gaps"]
+        if context is not None and "msvc-pdb" in inputs.artifacts:
+            from .linked_contributions import ordinary_contributions
+            try:
+                ordinary = ordinary_contributions(context, inputs)
+                census = ordinary["census"]
+            except (OSError, ValueError) as error:
+                ordinary = {"result": Result.UNKNOWN, "reason": str(error)}
+                gaps.append({"reason": "PDB ordinary contribution evidence refused: " + str(error)})
+        if census is None:
+            census = observe_storage(inputs)
+        regions = census["section_envelopes"]
+        gaps.extend(census["gaps"])
         if "msvc-pdb" in inputs.artifacts:
             from .linked_contributions import _common_contributions
             try:
@@ -241,6 +251,7 @@ def common_intersections(inputs, symbols, sections=None):
             "intersections": intersections, "gaps": gaps,
             "coverage": "complete_physical_candidate_population" if census is not None else "requested_data_sections_only",
             "storage_census": census, "pdb_contributions": pdb_contributions,
+            "ordinary_contributions": ordinary,
             "retained_data_coverage": Result.UNKNOWN,
             "remaining_linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
             "limitations": ["a positively placed ordinary section can refute common allocation isolation",

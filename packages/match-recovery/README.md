@@ -2909,6 +2909,21 @@ as physical artifacts, with mandatory final guards on success and failure.
 These are physical module bindings only: they do not identify a V60 contribution's
 original COFF section, prove retention or authorize common residual coverage.
 
+`LinkedBuild.ordinary_contributions()` connects that physical module binding to
+the complete storage census and independently anchored ordinary section envelopes.
+An envelope must intersect exactly one PDB contribution with the same physical
+module, PE section, start and declared size; matching sizes or CRCs cannot place
+an unanchored section. Duplicate/intersecting entries and multiple sections sharing
+one contribution refuse correspondence. Unmatched contributions and every physical
+candidate section remain visible, including unsupported or unplaced storage.
+Contradictory kind, access and alignment refuse; all raw COFF/PDB characteristics
+remain separate. A coordinate match does not certify unexplained extra flag bits,
+contents, references, isolation or retention completeness. The default native
+`common_intersections` path now includes this join and shares its census rather
+than enumerating the population again. Missing command/module evidence remains
+an explicit gap while independent section overlap counterexamples remain usable.
+Explicit section subsets do not receive full-census or module coverage implicitly.
+
 `LinkedBuild.common_contributions(symbols)` cross-checks freshly verified common
 extents against that full contribution table. A unique, exact linker-labelled
 interval can establish coordinate correspondence only; all intersecting records
