@@ -2064,6 +2064,19 @@ inventory retains complete proofs referenced by no-fold certificates. It rules
 out only the exact physical root as a storage competitor: that root remains in
 the application graph, and its children and all other candidates still need
 their own checks. Same-key root exclusions never hide associated code children.
+The observed private/static NODUP function form has a separate strict recognizer;
+the global external-key API is unchanged. Its independent placement requires an
+exact original object/section/symbol identity and own-owner static MAP entry,
+plus the same complete code, frame, module and contribution checks. Private names
+may repeat in different objects: a matching spelling never transfers another
+owner's placement or event. Same-object ambiguity, aliases, malformed function
+auxiliaries and own/ownerless REF/ICF observations refuse. Foreign REF events
+need independently authenticated private owners. ICF reconciliation inspects
+complete original event families, including unprinted local aliases: possible
+rewriting of a private name refuses even when code and PDB ranges agree.
+`root_identity_kind` distinguishes private from external entries
+in `comdat_unique_placements`; neither kind removes that root or its descendants
+from the physical/code obligations. No private REF-discard capability is implied.
 REF composition authenticates the original identity, object hash and exact family
 membership before reusing the existing discard verifier. It works even when the
 ANY query precedes the domain's REF queries; it does not depend on census order.

@@ -47,6 +47,11 @@ absence from the MAP. An identical-code competitor can also be distinguished by
 its separately verified, globally unique NODUP root at a disjoint MAP/PDB
 placement. This retains that peer and all descendants as physical/code obligations;
 `comdat_unique_placements` is derived proof input, not a selection exemption.
+Private/static NODUP roots use a separate object-local interpretation and own-owner
+static MAP entry, retaining the same full code/frame and native PDB checks. A
+private name can repeat across TUs; its physical input, section and symbol remain
+distinct. These entries carry `root_identity_kind: private`; they do not grant
+private REF removal or remove their roots/children from verification obligations.
 An identical-code competitor may also be ruled out by the existing positive native
 REF verifier, bound to its exact physical identity, hash and original association
 family. ANY queries obtain that proof independently of census order and retain

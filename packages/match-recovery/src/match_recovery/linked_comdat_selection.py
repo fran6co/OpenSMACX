@@ -381,6 +381,8 @@ def _unique_placement(state, identity_digest, stamp, number):
 
 
 def _unique_placement_uncached(state, identity_digest, stamp, number, token):
+    from .coff_private_function import private_comdat_root
+
     native = state["native"]
     inputs = native.inputs
     records = state["records"].get((identity_digest, stamp), ())
@@ -388,16 +390,24 @@ def _unique_placement_uncached(state, identity_digest, stamp, number, token):
         raise ValueError("unique placement lacks an exact physical candidate identity")
     record, = records
     obj = _object(state, record)
-    root = comdat_key(obj, number)
+    private = private_comdat_root(obj, number)
+    root = private if private is not None else comdat_key(obj, number)
     if (section_selection(obj, number) != 1 or root.type != 32
             or obj.function(root.name) != root or root.value != 0):
         raise ValueError("indistinguishable peer is not a unique independent NODUP code root")
     forest = _family(obj, number)
     sections = {row["object_section"] for row in forest}
-    if [symbol for symbol in obj.symbols.values() if symbol.section in sections and symbol.storage == 2] != [root]:
+    external = [symbol for symbol in obj.symbols.values() if symbol.section in sections and symbol.storage == 2]
+    if external != ([] if private is not None else [root]):
         raise ValueError("unique NODUP root or descendants have extra external aliases")
+    if private is not None:
+        definitions = {min(symbol.index for symbol in obj.symbols.values() if symbol.section == number)
+                       for number in sections}
+        if any(symbol != root and symbol.section in sections and symbol.storage in (3, 6)
+                and symbol.index not in definitions for symbol in obj.symbols.values()):
+            raise ValueError("private NODUP family has additional static or local definitions")
     definitions = []
-    for candidate, declarations, imports in state["interest"].get(root.name, ()):
+    for candidate, declarations, imports in (() if private is not None else state["interest"].get(root.name, ())):
         if imports:
             raise ValueError("unique NODUP key conflicts with an import declaration")
         for symbol in declarations:
@@ -408,11 +418,14 @@ def _unique_placement_uncached(state, identity_digest, stamp, number, token):
                     or symbol["storage"] != 2 or symbol["section"] != number or symbol["type"] != 32):
                 raise ValueError("NODUP peer key is not globally unique with undef-only other declarations")
             definitions.append(symbol)
-    if len(definitions) != 1:
+    if private is None and len(definitions) != 1:
         raise ValueError("NODUP peer lacks one complete original key definition")
     labels = [row for row in (*inputs.mapping.publics, *(inputs.mapping.statics or ())) if row.symbol == root.name]
-    if len(labels) != 1 or labels[0] not in inputs.mapping.publics or not labels[0].function or not labels[0].segment:
-        raise ValueError("unique NODUP peer lacks one exact public MAP placement")
+    if private is not None:
+        labels = _private_own_labels(state, record, labels)
+    pool = inputs.mapping.publics if private is None else (inputs.mapping.statics or ())
+    if len(labels) != 1 or labels[0] not in pool or not labels[0].function or not labels[0].segment:
+        raise ValueError("unique NODUP peer lacks one exact " + ("public" if private is None else "private") + " MAP placement")
     label, = labels
     families = [row for row in inputs.coverage["inputs"] if _owner(row).casefold() == label.owner.casefold()]
     if len(families) != 1:
@@ -424,11 +437,16 @@ def _unique_placement_uncached(state, identity_digest, stamp, number, token):
     _discard_events(state)
     names = {symbol["name"] for part in forest for symbol in part["symbols"] if symbol["name"] != part["name"]}
     section_names = {part["name"] for part in forest}
-    events = list(state["discard_observation"]["rows"])
-    events += [row for group in state["discard_observation"]["icf_groups"]
+    if private is not None:
+        _private_icf_aliases(state, names)
+    events = [(row, False) for row in state["discard_observation"]["rows"]]
+    events += [(row, True) for group in state["discard_observation"]["icf_groups"]
                for row in (group["selected"], *group["replaced"])]
-    for event in events:
-        if (event["symbol"] in names or event["symbol"] in section_names
+    for event, icf in events:
+        relevant = event["symbol"] in names or event["symbol"] in section_names
+        if private is not None and relevant and not icf:
+            _private_ref_conflict(state, selected, event)
+        elif private is None and (event["symbol"] in names or event["symbol"] in section_names
                 and (event["owner"] is None
                      or _owner(event["owner"]).casefold() == selected["owner"].casefold())):
             raise ValueError("unique NODUP peer has contradictory or unsupported REF/ICF observations")
@@ -441,6 +459,7 @@ def _unique_placement_uncached(state, identity_digest, stamp, number, token):
                                 obj, label.address, inputs.mapping)
     inventory = _metadata(state)[0]
     result = {"check": "native_unique_nodup_placement", "result": Result.PASS,
+              "root_identity_kind": "private" if private is not None else "external",
               **placement, "sections": forest, "proof": proof,
               "image_sha256": inventory.image_sha256, "pdb_sha256": inventory.pdb_sha256,
               "log_sha256": state["discard_observation"]["sha256"],
@@ -451,6 +470,65 @@ def _unique_placement_uncached(state, identity_digest, stamp, number, token):
     state["unique_placements"][token] = result
     state["unique_placement_witnesses"][token] = deepcopy(result)
     return result
+
+
+def _private_own_labels(state, record, labels):
+    """Same private spelling in another physical object is not this root."""
+    owned = []
+    for label in labels:
+        families = [row for row in state["native"].inputs.coverage["inputs"]
+                    if _owner(row).casefold() == label.owner.casefold()]
+        if len(families) != 1:
+            raise ValueError("private MAP label lacks one physical final-pass family")
+        selected, _ = _event_selected(state, families[0])
+        if selected["identity"] == _identity(record) and selected["sha256"] == record["sha256"]:
+            owned.append(label)
+    return owned
+
+
+def _private_ref_conflict(state, selected, event):
+    """REF can remove another private identity; it cannot rewrite a MAP owner."""
+    from .coff_private_function import private_comdat_root
+
+    if event["owner"] is None:
+        raise ValueError("private NODUP peer has ownerless REF evidence")
+    other, obj = _event_selected(state, event["owner"])
+    if other["identity"] == selected["identity"]:
+        raise ValueError("private NODUP peer has contradictory own REF evidence")
+    if event["symbol"].startswith("."):
+        sections = {number for number, section in enumerate(obj.sections, 1) if section.name == event["symbol"]}
+        if not sections:
+            raise ValueError("other-owner section event lacks an exact original section")
+    else:
+        root = obj.function(event["symbol"])
+        if private_comdat_root(obj, root.section) != root:
+            raise ValueError("same-name event is not a distinct physical private root")
+
+
+def _private_icf_aliases(state, names):
+    """Printed ICF keys need not name every label that the linker rewrites.
+
+    Inspect exact original event forests, including local labels/descendants.
+    Different original owners cannot disambiguate final MAP alias provenance.
+    """
+    for group in state["discard_observation"]["icf_groups"]:
+        for event in (group["selected"], *group["replaced"]):
+            _, obj = _event_selected(state, event["owner"])
+            if not any(symbol.name in names for symbol in obj.symbols.values()):
+                continue
+            if event["symbol"].startswith("."):
+                roots = {number for number, section in enumerate(obj.sections, 1)
+                         if section.name == event["symbol"]}
+                if not roots:
+                    raise ValueError("private ICF alias event lacks its exact original section")
+            else:
+                roots = {obj.function(event["symbol"]).section}
+            for number in roots:
+                while number in obj.associations:
+                    number = obj.associations[number]
+                forest = _family(obj, number)
+                if any(symbol["name"] in names for part in forest for symbol in part["symbols"]):
+                    raise ValueError("private original-family ICF provenance remains unsupported")
 
 
 def _winner_ref_conflicts(state, winner, obj, root):
@@ -826,6 +904,9 @@ def _discarded_candidate(state, identity_digest, stamp, number):
         root_number = obj.associations[root_number]
     if not obj.sections[root_number - 1].flags & 0x1000 or section_selection(obj, root_number) != 1:
         return None
+    from .coff_private_function import private_comdat_root
+    if private_comdat_root(obj, root_number) is not None:
+        return None  # No private REF authority; require independent placement.
     root = comdat_key(obj, root_number)
     _discard_events(state)
     events = state["discard_named_events"].get(root.name, ())
