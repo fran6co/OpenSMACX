@@ -56,7 +56,7 @@ METHOD = "?add@Owner@@QAEHH@Z"
 
 
 def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, authorize=True, proofs=True, preparation=False,
-                     normalized_checkout=False, generated_context=None, seed_owner=False):
+                     normalized_checkout=False, generated_context=None, seed_owner=False, exported=False):
     if not (VC6_ROOT / "BIN/CL.EXE").is_file():
         pytest.skip("VC6 is not installed")
     for name in ("CL", "_CL_", "VC6_INCLUDE"):
@@ -83,6 +83,12 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     # runtime verifier must observe the retained artifact, not those objects.
     entry = entry.replace("    ExitProcess", "#ifdef TEST_RUNTIME_DAMAGE\n    owner.assign(TestBias, 5);\n#endif\n    ExitProcess")
     entry = entry.replace('extern "C" void entry()', 'int TestBias = 3;\nextern "C" void entry()')
+    if exported:
+        # Real linker-generated export metadata, including a writable-data
+        # export distinct from the readonly metadata section. Neither export
+        # participates in the ownership edit under test.
+        entry += '\nextern "C" {\n__declspec(dllexport) char ExampleLabel[] = "example";\n'
+        entry += '__declspec(dllexport) int ExampleFunction() { return 7; }\n}\n'
     if generated_context is not None:
         assert preparation
         (local / "generated.json").write_text(json.dumps({"flat": 1 if generated_context == "collateral" else 2,
@@ -610,11 +616,21 @@ def test_regenerated_header_preservation_detects_source_dependent_collateral_and
 @pytest.mark.parametrize("damage,investigate,seed_owner", [(None, False, False), ("runtime", False, False),
                                                          ("structure", False, False), (None, True, False), (None, True, True)])
 def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_path, monkeypatch, damage, investigate, seed_owner):
+    _exercise_native_acceptance(tmp_path, monkeypatch, damage, investigate, seed_owner)
+
+
+@pytest.mark.parametrize("damage", [None, "runtime"])
+def test_exported_application_full_acceptance(tmp_path, monkeypatch, damage):
+    _exercise_native_acceptance(tmp_path, monkeypatch, damage, False, False, exported=True)
+
+
+def _exercise_native_acceptance(tmp_path, monkeypatch, damage, investigate, seed_owner, *, exported=False):
     provider = {"schema_version": 1, "artifacts": "build/agents"}
     for role in ("worker", "coordinator", "reviewer"):
         provider[role] = {"command": {"argv": [sys.executable, "recovery/local_agents.py", role, "{request}"], "timeout": 30},
                           "instructions": [], "response": "stdout"}
-    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, damage=damage, provider=provider, seed_owner=seed_owner)
+    root, image, task, git, evidence = prepared_project(tmp_path, monkeypatch, damage=damage, provider=provider,
+                                                      seed_owner=seed_owner, exported=exported)
     product, local, original = root / "src", root / "recovery", image.parent
     monkeypatch.setenv("RECOVERY_IMAGE", str(image))
     configuration = lambda name: json.loads((local / (name + ".json")).read_text())
@@ -675,6 +691,20 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
         "sample.link.log", "sample.link.inputs.json", "compile_commands.json"}
     for name, fingerprint in receipt["artifacts"].items():
         assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
+    if exported:
+        from match_recovery.pe_coff import PeImage
+        from match_recovery.pe_exports import exports
+        application, = [root / name for name in receipt["artifacts"] if name.endswith("/sample.exe")]
+        for path in (image, application):
+            raw = path.read_bytes()
+            pe = PeImage(raw, hashlib.sha256(raw).hexdigest())
+            rows = exports(pe)
+            assert {name for row in rows for name in row.names} == {"ExampleFunction", "ExampleLabel"}
+            assert len(rows) == 2 and all(row.address is not None and row.forwarder is None for row in rows)
+            kinds = {name: any(flags & 0x20000000 and span.start <= row.address < span.end
+                              for (span, _, _), flags in zip(pe.sections, pe.section_flags))
+                     for row in rows for name in row.names}
+            assert kinds == {"ExampleFunction": True, "ExampleLabel": False}
     artifact, = [root / name for name in receipt["artifacts"] if name.endswith("/owner.obj")]
     obj = Coff(artifact.read_bytes())
     original_obj = Coff((original / "owner.obj").read_bytes())

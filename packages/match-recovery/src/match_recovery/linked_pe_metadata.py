@@ -6,6 +6,9 @@ acceptance. Import/bound-import timestamps are never build-ID exemptions.
 Layout, pointers, sizes, and all other debug bytes remain literal. Optional
 locator projection requires the exact declared sidecar and explicit encodings;
 the caller must compare its logical output identity and projection field shape.
+The recognized export creation timestamp must agree with this image's COFF
+creation timestamp. Export target sections are conservative protection ranges,
+not inferred object extents or proof of transitive pointer reachability.
 """
 
 from hashlib import sha256
@@ -17,6 +20,7 @@ from .model import Result, digest
 from .pdb_fixups import bound_fixups
 from .pe_debug import _bytes, _mapped, linked_coff_symbols
 from .pe_output_residual import _geometry, _bodies
+from .pe_exports import export_metadata
 
 
 def _locator(native, spelling):
@@ -104,11 +108,48 @@ def qualify_metadata(native, bodies, *, project_locator=False, runtime_regions=(
         for index, (rva, size) in enumerate(image.directories):
             if (rva, size) == (0, 0):
                 continue
-            if index not in (1, 5, 6, 12):
+            if index not in (0, 1, 5, 6, 12):
                 raise ValueError("unsupported nonzero PE directory: " + str(index))
             if not rva or not size:
                 raise ValueError("incomplete PE metadata directory")
             mapped(rva, size, "directory:" + str(index))
+
+        export_table = export_metadata(image)
+        for region in export_table.ranges:
+            mapped(region.rva, region.size, region.kind)
+        export_protection = []
+        seen_export_sections = set()
+        for entry in export_table.entries:
+            if entry.address is None:
+                continue
+            # Protection only: this is NOT an inferred exported object's
+            # extent. Under the existing non-self-inspection model, prohibit
+            # every identification exemption in its entire containing output
+            # section, including bytes before an interior exported label.
+            # Cross-section pointer arithmetic into build metadata remains
+            # outside that model, as it does for arbitrary runtime code.
+            matches = [(index, start, size) for index, (span, start, size)
+                       in enumerate(image.sections)
+                       if span.start <= entry.address < span.end]
+            if len(matches) != 1:
+                raise ValueError("export target requires one actual containing section")
+            index, start, size = matches[0]
+            if index not in seen_export_sections and size:
+                _bytes(raw, start, size)
+                export_protection.append({"offset": start, "size": size,
+                                          "kind": "export_target_section"})
+                seen_export_sections.add(index)
+        if export_table.timestamp_rva is not None:
+            coff_timestamp, = struct.unpack_from("<I", raw, pe + 8)
+            # PE defines this exact field as creation time of export data.
+            # Requiring same-image COFF creation time narrows the supported
+            # linker shape; differing/unexplained timestamps remain literal
+            # by refusing qualification, never granting an arbitrary mask.
+            if export_table.timestamp != coff_timestamp:
+                raise ValueError("export creation timestamp differs from COFF creation time")
+            _, location = mapped(export_table.timestamp_rva, 4, "export_creation_timestamp")
+            fields.append({"offset": location["offset"], "size": 4,
+                           "kind": "export_creation_timestamp"})
 
         # Existing parser validates complete bounded descriptor/thunk/name
         # semantics. Rewalk only to preserve every indirect physical range,
@@ -191,11 +232,15 @@ def qualify_metadata(native, bodies, *, project_locator=False, runtime_regions=(
             if any(overlaps(region, {"offset": body["file_offset"], "size": body["size"]}) for body in scopes):
                 raise ValueError("scoped body overlaps loader/debug metadata: " + region["kind"])
         allowed = {"coff_timestamp": set(), "debug_timestamp": {"directory:6", "debug_directory"},
-                   "nb10_signature_age": {"nb10_payload"}, "nb10_locator": {"nb10_payload"}}
+                   "nb10_signature_age": {"nb10_payload"}, "nb10_locator": {"nb10_payload"},
+                   "export_creation_timestamp": {"directory:0", "export_directory", "export_header",
+                                                 "export_creation_timestamp"}}
         for field in fields:
             if any(flags & 0x20000000 and size and overlaps(field, {"offset": start, "size": size})
                    for (_, start, size), flags in zip(image.sections, image.section_flags)):
                 raise ValueError("projected identification field overlaps executable storage")
+            if any(overlaps(field, region) for region in export_protection):
+                raise ValueError("projected identification field overlaps an export target section")
             if any(overlaps(field, region) for region in runtime_protection):
                 raise ValueError("projected identification field overlaps an observed runtime region")
             if any(overlaps(field, region) and region["kind"] not in allowed[field["kind"]]
@@ -226,6 +271,8 @@ def qualify_metadata(native, bodies, *, project_locator=False, runtime_regions=(
                 "locator_identity": locator_identity,
                 "fields": fields, "protected_ranges": protected,
                 "runtime_protection": runtime_protection,
+                "export_target_section_protection": {"count": len(export_protection),
+                    "digest": digest(export_protection)},
                 "ready_for_collection": False, "persisted": False,
                 "limitation": "comparison modulo authenticated build-identification fields only; "
                               "not debugger identity, file self-inspection equivalence, body ownership or runtime acceptance"}

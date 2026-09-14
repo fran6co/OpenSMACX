@@ -2164,6 +2164,17 @@ transport even when an artifact uses an encoding absent from command operands.
 This model does not establish debugger identity, executable-file or mapped
 metadata self-inspection equivalence, or runtime correctness.
 
+The metadata domain includes complete PE export tables, aliases, ordinal-only
+slots, holes and forwarders. Only the export creation timestamp may be projected,
+and only when it equals that image's COFF creation timestamp. Versions, names,
+ordinals, target RVAs and forwarder strings remain literal. Indirect arrays and
+strings remain protected even outside the directory span. A direct export protects
+its entire containing raw section against identification projection; this is not
+an inferred object extent, body waiver or transitive exported-pointer proof.
+Overlapping metadata uses, executable/runtime backing and loader fixups still
+refuse projection. The model's mapped-build-metadata self-inspection exclusion
+also applies to accesses through exported pointers.
+
 Fresh source-authorized composition can now satisfy linked outside-scope
 preservation for that domain; permission, review, compiled preservation and all
 other driver checks remain independent. A real compiler/linker control reaches

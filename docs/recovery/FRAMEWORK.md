@@ -39,6 +39,15 @@ guard still hashes the unique physical file closure and rechecks membership,
 directory roles and pre/post identities. Source, Git, policy and compiler/toolchain
 guards remain active; no cross-run or mtime-only validation cache is introduced.
 
+Native export metadata now participates in linked-output qualification, with
+complete table/string protection and a narrowly COFF-consistent creation timestamp.
+Direct exported code/data sections prohibit identification projection throughout
+their raw backing; no exported object extent or transitive pointer closure is
+inferred. Real-compiler exported-application controls pass full acceptance and
+reject runtime damage. A fresh OpenSMACX build also compiles, links and qualifies
+its own export/debug metadata. That single-build prerequisite is not paired
+outside-scope preservation, accepted recovery or game acceptance.
+
 Ordinary tasks with native compile/link observations now enter paired application
 builds under unchanged policy too. The application residual combines exact task
 function bindings with complete physical candidate-section enumeration, all

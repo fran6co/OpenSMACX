@@ -76,7 +76,8 @@ def build(root, output, *, damage=None):
                           "/subsystem:console", "/entry:entry", "/incremental:no", "/opt:noref", "/opt:noicf", "/fixed:no",
                           "/verbose", "/debug", "/debugtype:cv,fixup", "/pdbtype:sept", "/pdb:sample.pdb",
                           "--link-diagnostics=" + str(output / "sample.link.log"),
-                          "/out:sample.exe", "/map:sample.map", "owner.obj", "entry.obj", "kernel32.lib"],
+                          "/out:sample.exe", "/map:sample.map", "/implib:sample.lib",
+                          "owner.obj", "entry.obj", "kernel32.lib"],
                          cwd=output, timeout=60)
     if result.returncode:
         raise ValueError((result.stdout + result.stderr).decode(errors="replace"))

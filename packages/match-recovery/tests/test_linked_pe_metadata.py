@@ -86,7 +86,7 @@ def test_unscoped_bytes_import_hint_names_and_nb10_locator_are_literal(tmp_path,
     assert a["projected_bytes"] != b["projected_bytes"]
 
 
-@pytest.mark.parametrize("directory", [0, 2, 3, 4, 7, 8, 9, 10, 11, 13, 14, 15])
+@pytest.mark.parametrize("directory", [2, 3, 4, 7, 8, 9, 10, 11, 13, 14, 15])
 def test_unknown_directory_never_gains_a_timestamp_or_body_exemption(tmp_path, directory):
     context = fixture(tmp_path / "project", damage=lambda raw, _: struct.pack_into(
         "<II", raw, 0x98 + 96 + directory * 8, 0x2100, 4))

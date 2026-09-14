@@ -1036,6 +1036,12 @@ and the real whole gate and restoration/preservation checks. It rejects both a
 byte-identical wrong hierarchy in the retained build and a runtime-mismatching
 artifact. Its worker/coordinator/reviewer reasoning is deterministic and local;
 all role bridges, delegated authorization and verification use real subprocesses.
+Its exported-application cases include both a real function and writable data
+export, with explicit generated export-library capture. Full acceptance passes
+for the restored model and rejects runtime corruption. These use the package's
+native export metadata qualification without changing the production compiler
+policy; successful qualification of the real application's freshly linked
+metadata is only a prerequisite, not recovery or game acceptance.
 An additional control stops after scope expansion while the correct hierarchy
 still has a byte regression, resumes without committing, and reaches fresh native
 acceptance. A further invocation reuses the unchanged review but rebuilds and
