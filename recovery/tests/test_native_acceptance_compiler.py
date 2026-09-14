@@ -70,6 +70,8 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     integration = Path(__file__).resolve().parents[1]
     for source, target in ((integration / "environment/compile.py", "compiler_support.py"),
                            (integration / "environment/wine.py", "local_wine.py"),
+                           *((integration / "environment" / name, name) for name in
+                             ("wine_repro.py", "wine_compile.py", "wine_link.py", "command_paths.py")),
                            (Path(__file__).with_name("fixtures") / "acceptance_agents.py", "local_agents.py"),
                            (Path(__file__).with_name("fixtures") / "acceptance_environment.py", "environment.py")):
         (local / target).write_bytes(source.read_bytes())
@@ -124,7 +126,8 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
         {"directory": str(root), "file": "src/" + unit + ".cpp", "arguments": ["local-compiler"]}
         for unit in ("owner", "entry")]))
     command = lambda mode: {"argv": [*script, mode], "timeout": 300}
-    inputs = ["recovery/environment.py", "recovery/compiler_support.py", "recovery/local_wine.py"]
+    inputs = ["recovery/" + name for name in ("environment.py", "compiler_support.py", "local_wine.py",
+                                             "wine_repro.py", "wine_compile.py", "wine_link.py", "command_paths.py")]
     if generated_context is not None:
         inputs.append("recovery/generated.json")
     env = ["VC6_PREFIX", "VC6_ROOT", "WINEARCH", "CL", "_CL_", "VC6_INCLUDE", "VC6_LIB"]
@@ -166,7 +169,16 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
     (local / "build.json").write_text(json.dumps({
         "schema_version": 1, "artifacts": "build/products",
         "commands": [{"argv": [*script, "build-" + damage + "-damage" if damage else "build", "{root}", "{build}"], "timeout": 90}],
-        "outputs": [{"path": "sample.exe", "format": "pe32-i386"}, {"path": "owner.obj", "format": "file"}],
+        "outputs": [{"path": "sample.exe", "format": "pe32-i386"}, {"path": "owner.obj", "format": "file"},
+                    {"path": "entry.obj", "format": "file"}, {"path": "sample.map", "format": "msvc-map"},
+                    {"path": "sample.pdb", "format": "msvc-pdb"},
+                    {"path": "sample.link.log", "format": "msvc-link-log"},
+                    {"path": "sample.link.inputs.json", "format": "link-input-files"},
+                    {"path": "compile_commands.json", "format": "compilation-database"}],
+        "compile_link": {"database": "compile_commands.json", "source_extensions": [".cpp"],
+                         "directory": "observations", "suffix": ".compile.json",
+                         "command_stages": {"compile": "compiler-effective", "link": "link-wrapper"},
+                         "link_files": "sample.link.inputs.json", "link_log": "sample.link.log"},
         "inputs": inputs, "input_roots": ["src"], "environment": env}))
     def git(*args):
         return subprocess.run(["git", *args], cwd=root, capture_output=True, check=True).stdout.decode().strip()
@@ -236,6 +248,55 @@ def prepared_project(tmp_path, monkeypatch, *, damage=None, provider=None, autho
         notes.write_bytes(notes.read_bytes().replace(b"\n", b"\r\n"))
         assert not git("diff", "--name-only", "HEAD")
     return root, image, task, git, evidence
+
+
+def test_acceptance_fixture_captures_actual_retained_compiler_and_linker_inputs(tmp_path, monkeypatch):
+    from match_recovery.application_context import application_build
+    from match_recovery.build_graph_commands import _context
+    from match_recovery.linked_context import linked_build
+    from match_recovery.source_replica import replica_snapshot
+
+    root, _, _, _, _ = prepared_project(tmp_path, monkeypatch)
+    files = {name: raw for name, raw in replica_snapshot(root, ("src",)).items() if raw is not None}
+    with application_build(root, ("src",), files, versioned_files={}) as context:
+        proof = context.report["compile_link"]
+        assert proof["result"] == proof["command_bindings"]["result"] == "pass", proof
+        _, directory, compiled, _ = _context(context)
+        assert set(compiled) == {"src/owner.cpp", "src/entry.cpp"}
+        assert {item["output"] for item in compiled.values()} == {directory / "owner.obj", directory / "entry.obj"}
+        for row in proof["compilations"]:
+            assert row["compilation"]["output"]["existed_before"] is False
+            assert row["source"] == str(context.root / "src" / (Path(row["output"]).stem + ".cpp"))
+        with linked_build(context) as linked:
+            assert linked.inputs.fixups is not None
+            assert {METHOD, "_entry"} <= {row.symbol for row in linked.inputs.mapping.publics}
+            assert linked.inputs.coverage["result"] == "pass"
+        context.check_current()
+
+
+def test_acceptance_fixture_damaged_overlay_cannot_impersonate_product_compilation(tmp_path, monkeypatch):
+    from match_recovery.application_context import application_build
+    from match_recovery.build_graph_commands import _context
+    from match_recovery.codeview import class_layout
+    from match_recovery.source_replica import replica_snapshot
+
+    root, _, _, _, evidence = prepared_project(tmp_path, monkeypatch, damage="structure")
+    files = {name: raw for name, raw in replica_snapshot(root, ("src",)).items() if raw is not None}
+    files["src/owner.h"] = (evidence + CLASSES).encode()
+    files["src/owner.cpp"] = files["src/owner.cpp"].replace(b"raw_[0] + raw_[1]", b"bias + member.value")
+    with application_build(root, ("src",), files, versioned_files={}) as context:
+        proof = context.report["compile_link"]
+        assert proof["result"] == "pass", proof
+        for row in proof["compilations"]:
+            actual = Path(row["source"])
+            assert actual.is_relative_to(context.directory / "structure-overlay/src")
+            assert row["compilation"]["source"] == str(actual)
+        layout = class_layout(Coff((context.directory / "owner.obj").read_bytes()), "Owner")
+        assert layout["members"] == {"raw_": 0} and not layout["bases"]
+        assert (context.root / "src/owner.h").read_text() == evidence + CLASSES
+        with pytest.raises(ValueError, match="application source is outside source context or generated in its build"):
+            _context(context)
+        context.check_current()
 
 
 @pytest.mark.parametrize("publish", [False, True, "resources"])
@@ -536,7 +597,9 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     assert outcomes[1]["candidate"]["checks"]["binary"]["result"] == "fail"
     assert outcomes[1]["candidate"]["checks"]["layout"]["result"] == "pass"
     receipt = result["acceptance"]
-    assert len(receipt["artifacts"]) == 2
+    assert {Path(name).name for name in receipt["artifacts"]} == {
+        "sample.exe", "owner.obj", "entry.obj", "sample.map", "sample.pdb",
+        "sample.link.log", "sample.link.inputs.json", "compile_commands.json"}
     for name, fingerprint in receipt["artifacts"].items():
         assert hashlib.sha256((root / name).read_bytes()).hexdigest() == fingerprint
     artifact, = [root / name for name in receipt["artifacts"] if name.endswith("/owner.obj")]

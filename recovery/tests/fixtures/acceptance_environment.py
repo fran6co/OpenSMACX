@@ -50,13 +50,32 @@ def build(root, output, *, damage=None):
             "bias = a; member.value = b;", "raw_[0] = a; raw_[1] = b;")
         body = (root / "src/owner.cpp").read_text().replace("bias + member.value", "raw_[0] + raw_[1]")
         replacements = {"src/owner.h": header.encode(), "src/owner.cpp": body.encode()}
+    compile_root = root
+    if replacements:
+        # Keep the faulty generator's real inputs available for inspection.
+        # Never attribute overlay output to compilation of untouched source.
+        compile_root = output / "structure-overlay"
+        (compile_root / "src").mkdir(parents=True)
+        for source in (root / "src").iterdir():
+            relative = source.relative_to(root).as_posix()
+            (compile_root / relative).write_bytes(replacements.get(relative, source.read_bytes()))
+    observations = output / "observations"
+    observations.mkdir()
+    database = []
     for name in ("owner", "entry"):
-        source = root / "src" / (name + ".cpp")
-        obj = (compile_overlay(root, source, replacements, COMMAND, flags) if replacements else
-               compile_object(source, COMMAND, flags))
-        (output / (name + ".obj")).write_bytes(obj)
+        source = compile_root / "src" / (name + ".cpp")
+        arguments = [*COMMAND, *flags, "--repro-root=" + str(compile_root),
+                     "--compile-diagnostics=" + str(observations / (name + ".compile.json")),
+                     "/Fo" + str(output / (name + ".obj")), str(source)]
+        database.append({"directory": str(compile_root), "file": str(source), "arguments": arguments})
+        result = run_bounded(arguments, cwd=compile_root, timeout=60)
+        if result.returncode:
+            raise ValueError((result.stdout + result.stderr).decode(errors="replace"))
+    (output / "compile_commands.json").write_text(json.dumps(database))
     result = run_bounded([sys.executable, str(WRAPPER), "--tool=link", "/nologo", "/nodefaultlib",
                           "/subsystem:console", "/entry:entry", "/incremental:no", "/opt:noref", "/fixed:no",
+                          "/verbose", "/debug", "/debugtype:cv,fixup", "/pdbtype:sept", "/pdb:sample.pdb",
+                          "--link-diagnostics=" + str(output / "sample.link.log"),
                           "/out:sample.exe", "/map:sample.map", "owner.obj", "entry.obj", "kernel32.lib"],
                          cwd=output, timeout=60)
     if result.returncode:
@@ -84,6 +103,16 @@ def main():
         return 0
     payload = json.load(sys.stdin)
     if mode == "compile":
+        if payload.get("operation") == "command_paths":
+            from match_recovery.command_paths import CommandPathRequest
+            from command_paths import describe_command
+            request = CommandPathRequest.read(root, payload)
+            if request.profile not in ("default", "application"):
+                raise ValueError("unsupported fixture compiler profile")
+            print(json.dumps({"schema_version": 1, "descriptions": [
+                describe_command(command.arguments, command.cwd, stage=command.stage)
+                for command in request.commands]}))
+            return 0
         request = CompilationRequest.read(root, payload)
         recipes = [row for row in read_database(root / "build/compile_commands.json") if row.file == request.source]
         if len(recipes) != 1 or not recipes[0].arguments or recipes[0].arguments[0] != "local-compiler":
