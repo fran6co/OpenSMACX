@@ -19,13 +19,13 @@ MAX_BODIES = 100000
 
 
 def _geometry(image):
-    from .linked_context import _same
+    from .parsed_state import same
 
     if (type(image) is not PeImage or type(image.data) is not bytes
             or not 0 < len(image.data) <= MAX_FILE_BYTES):
         raise ValueError("PE accounting requires bounded immutable PeImage bytes")
     fresh = PeImage(image.data, sha256(image.data).hexdigest())
-    if not _same(image.__dict__, fresh.__dict__):
+    if not same(image.__dict__, fresh.__dict__):
         raise ValueError("parsed PE state differs from its physical bytes")
     data = image.data
     pe, = struct.unpack_from("<I", data, 0x3C)

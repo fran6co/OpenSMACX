@@ -15,7 +15,7 @@ def test_fifty_repeated_queries_prove_refused_key_once_with_same_reason(tmp_path
         calls.append(name)
         return original(state, name)
     monkeypatch.setattr(selection, "_certificate_uncached", counted)
-    with linked_build(context) as native, selection.any_selection(native) as handle:
+    with linked_build(context) as native, selection.comdat_selection(native) as handle:
         reasons = []
         for _ in range(50):
             with pytest.raises(ValueError) as error:
@@ -32,7 +32,7 @@ def test_fifty_repeated_queries_prove_refused_key_once_with_same_reason(tmp_path
 def test_refusal_cache_mutation_fails_final_even_during_exceptional_exit(tmp_path, mode, exceptional):
     context = fixture(tmp_path, winner=independent_sibling())
     with pytest.raises(ValueError, match="derived selection indices changed"):
-        with linked_build(context) as native, selection.any_selection(native) as handle:
+        with linked_build(context) as native, selection.comdat_selection(native) as handle:
             with pytest.raises(ValueError, match="ICF competitor"):
                 handle.loser("dependency.obj", 1)
             state = selection._entry(handle)
@@ -59,7 +59,7 @@ def test_new_native_batch_rechecks_refusal_and_expires_old_handle(tmp_path, monk
         return original(state, name)
     monkeypatch.setattr(selection, "_certificate_uncached", counted)
     for _ in range(2):
-        with linked_build(context) as native, selection.any_selection(native) as handle:
+        with linked_build(context) as native, selection.comdat_selection(native) as handle:
             assert selection._entry(handle)["refusals"] == {}
             for _ in range(3):
                 with pytest.raises(ValueError, match="ICF competitor"):
@@ -82,7 +82,7 @@ def test_io_arbitrary_errors_and_specialized_valueerror_subclasses_are_not_cache
             raise error
         return original(state, name)
     monkeypatch.setattr(selection, "_certificate_uncached", flaky)
-    with linked_build(context) as native, selection.any_selection(native) as handle:
+    with linked_build(context) as native, selection.comdat_selection(native) as handle:
         for _ in range(2):
             with pytest.raises(type(error)) as caught:
                 handle.loser("dependency.obj", 1)
@@ -111,7 +111,7 @@ def test_refused_key_is_exact_case_sensitive_and_does_not_poison_other_key(monke
 def test_cached_refusal_still_requires_final_physical_integrity(tmp_path):
     context = fixture(tmp_path, winner=independent_sibling())
     with pytest.raises(ValueError, match="changed"):
-        with linked_build(context) as native, selection.any_selection(native) as handle:
+        with linked_build(context) as native, selection.comdat_selection(native) as handle:
             for _ in range(3):
                 with pytest.raises(ValueError, match="ICF competitor"):
                     handle.loser("dependency.obj", 1)

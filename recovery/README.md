@@ -43,8 +43,12 @@ two-build storage/callback closure, including unreferenced data. Missing symbols
 do not remove physical obligations. Native COMDAT `ANY` certificates can exclude
 proven duplicate copies from code roots while retaining their physical inventory;
 they require complete same-key candidates and a separately verified winner, not
-absence from the MAP. Reference-eliminated code and other unqualified sections
-remain unresolved. Only exact source-owned independent code
+absence from the MAP. Native `REF` certificates also recognize exact NODUP code
+families through unique, framed discard events bound to the selected physical
+owner and actual REF/nonincremental/verbose options. Qualified or ambiguous owner
+labels, weak aliases into children and contradictory placement/folding events
+refuse. Removed sections remain inventoried; incoming-reference obligations are
+not erased. Other unqualified sections remain unresolved. Only exact source-owned independent code
 COMDAT bodies receive function scope; headers, sibling definitions, multi-entry
 regions and initializer occurrences do not receive a blanket exemption. Compiled
 preservation, native selection/contribution completeness and allocation isolation

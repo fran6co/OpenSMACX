@@ -7,7 +7,7 @@ import struct
 
 import pytest
 
-from match_recovery.linked_comdat_selection import AnySelection, any_selection
+from match_recovery.linked_comdat_selection import ComdatSelection, comdat_selection
 from match_recovery.linked_context import linked_build
 from match_recovery.linked_input_epoch import input_epoch
 from test_linked_modules import fixture as module_fixture, set_link, set_modules, add_archive
@@ -86,8 +86,16 @@ def fixture(root, *, loser=None, winner=None, corrupt=False, sc=True, duplicate_
 
 def observe(context):
     with linked_build(context) as native:
-        with any_selection(native) as selected:
+        with comdat_selection(native) as selected:
             return selected.loser("dependency.obj", 1), selected.certificates()
+
+
+def test_any_loser_child_weak_alias_cannot_disappear_with_the_root(tmp_path):
+    raw = bytearray(object_bytes(child=True, weak=True))
+    symbols, = struct.unpack_from("<I", raw, 8)
+    struct.pack_into("<I", raw, symbols + 7 * 18, 5)
+    with pytest.raises(ValueError, match="weak fallback"):
+        observe(fixture(tmp_path / "project", loser=bytes(raw)))
 
 
 def test_different_any_loser_body_has_exact_native_winner_and_complete_family(tmp_path):
@@ -108,7 +116,7 @@ def test_different_any_loser_body_has_exact_native_winner_and_complete_family(tm
 
 def test_complete_original_association_forest_follows_only_its_any_loser(tmp_path):
     context = fixture(tmp_path / "project", loser=object_bytes(b"\x90\xc3", child=True))
-    with linked_build(context) as native, any_selection(native) as selected:
+    with linked_build(context) as native, comdat_selection(native) as selected:
         root = selected.loser("dependency.obj", 1)
         child = selected.loser("dependency.obj", 2)
         assert root["sections"] == child["sections"] == [1, 2]
@@ -128,7 +136,7 @@ def test_complete_original_association_forest_follows_only_its_any_loser(tmp_pat
 def test_missing_or_contradictory_native_winner_and_family_cannot_certify(tmp_path, options):
     context = fixture(tmp_path / "project", **options)
     with pytest.raises(ValueError):
-        with linked_build(context) as native, any_selection(native) as selected:
+        with linked_build(context) as native, comdat_selection(native) as selected:
             # Query the actual ANY winner: unsupported other definitions cannot
             # be silently omitted just because they are not themselves ANY.
             selected.loser("unit0.obj", 1)
@@ -168,7 +176,7 @@ def test_unselected_any_candidates_are_kept_without_inventing_selected_owners(tm
 
 def test_observation_is_defensive_and_native_handle_cannot_be_replayed(tmp_path):
     context = fixture(tmp_path / "project")
-    with linked_build(context) as native, any_selection(native) as selected:
+    with linked_build(context) as native, comdat_selection(native) as selected:
         original = selected.loser("dependency.obj", 1)
         selected.certificates()[0]["candidates"].clear()
         original["sections"].clear()
@@ -179,14 +187,14 @@ def test_observation_is_defensive_and_native_handle_cannot_be_replayed(tmp_path)
     with pytest.raises(ValueError, match="expired"):
         selected.loser("dependency.obj", 1)
     with pytest.raises(TypeError):
-        AnySelection()
+        ComdatSelection()
 
 
 def test_epoch_from_another_live_build_is_not_compatible(tmp_path):
     with linked_build(fixture(tmp_path / "first")) as first, linked_build(fixture(tmp_path / "second")) as second:
         with input_epoch(first.context, first.inputs.objects) as epoch:
             with pytest.raises(ValueError, match="another context"):
-                with any_selection(second, epoch=epoch):
+                with comdat_selection(second, epoch=epoch):
                     pass
 
 
@@ -194,7 +202,7 @@ def test_epoch_from_another_live_build_is_not_compatible(tmp_path):
 def test_mutation_cannot_escape_batch_final_physical_guards(tmp_path, name):
     context = fixture(tmp_path / "project")
     with pytest.raises(ValueError, match="changed"):
-        with linked_build(context) as native, any_selection(native) as selected:
+        with linked_build(context) as native, comdat_selection(native) as selected:
             selected.loser("dependency.obj", 1)
             path = context.directory / name
             path.write_bytes(path.read_bytes() + b"damage")
@@ -205,7 +213,7 @@ def test_report_and_object_cache_mutation_cannot_escape_native_final_guard(tmp_p
     for mode in ("coff", "certificate", "index", "metadata", "population", "section"):
         context = fixture(tmp_path / mode)
         with pytest.raises(ValueError, match="changed"):
-            with linked_build(context) as native, any_selection(native) as selected:
+            with linked_build(context) as native, comdat_selection(native) as selected:
                 selected.loser("dependency.obj", 1)
                 state = selection._entry(selected)
                 if mode == "coff":
@@ -227,7 +235,7 @@ def test_constructor_and_nonany_query_need_no_pdb_or_selection_policy_waiver(tmp
                       option="/FORCE:MULTIPLE")
     context.report["outputs"] = [row for row in context.report["outputs"] if row["format"] != "msvc-pdb"]
     context.pin_outputs()
-    with linked_build(context) as native, any_selection(native) as selected:
+    with linked_build(context) as native, comdat_selection(native) as selected:
         assert selected.loser("dependency.obj", 1) is None
         assert selected.certificates() == []
 
@@ -236,7 +244,7 @@ def test_any_query_without_own_pdb_refuses_when_it_needs_a_winner(tmp_path):
     context = fixture(tmp_path / "project")
     context.report["outputs"] = [row for row in context.report["outputs"] if row["format"] != "msvc-pdb"]
     context.pin_outputs()
-    with linked_build(context) as native, any_selection(native) as selected:
+    with linked_build(context) as native, comdat_selection(native) as selected:
         with pytest.raises(ValueError, match="PDB"):
             selected.loser("dependency.obj", 1)
 
@@ -248,7 +256,7 @@ def test_map_owner_does_not_substitute_for_original_icf_member_provenance(tmp_pa
         "Selected symbol:\n _f from unit0.obj\nReplaced symbol(s):\n _f from dependency.obj\n"
         "ICF total savings: 16 bytes\nStart Pass2"))
     set_link(context, evidence, log)
-    with linked_build(context) as native, any_selection(native) as selected:
+    with linked_build(context) as native, comdat_selection(native) as selected:
         with pytest.raises(ValueError, match="ICF"):
             selected.loser("dependency.obj", 1)
 
@@ -257,7 +265,7 @@ def test_independently_placed_loser_descendant_label_blocks_discard(tmp_path):
     context = fixture(tmp_path / "project", loser=object_bytes(child=True))
     text = (context.directory / "app.map").read_text()
     update_artifact(context, "app.map", (text + " 0001:00000040 $tail 00401040 dependency.obj\n").encode())
-    with linked_build(context) as native, any_selection(native) as selected:
+    with linked_build(context) as native, comdat_selection(native) as selected:
         with pytest.raises(ValueError, match="contradictory independently placed"):
             selected.loser("dependency.obj", 2)
 
@@ -317,7 +325,7 @@ def test_many_loser_queries_reuse_one_winner_proof_and_do_not_rehash_epoch(tmp_p
         return real(*args, **kwargs)
     monkeypatch.setattr(selection, "verify_code_region", observe_call)
     context = fixture(tmp_path / "project")
-    with linked_build(context) as native, any_selection(native) as selected:
+    with linked_build(context) as native, comdat_selection(native) as selected:
         first = selected.loser("dependency.obj", 1)
         checks = context.checks
         for _ in range(50):

@@ -25,7 +25,7 @@ ordinary resolver's complete checks. No partial result survives a refused epoch.
         yield None
         return
     from .common_allocation import _policy
-    from .linked_context import _same
+    from .parsed_state import same
 
     records, _ = objects._constant_population()
     interest = frozenset(objects._constant_interest)
@@ -45,10 +45,10 @@ ordinary resolver's complete checks. No partial result survives a refused epoch.
 
     def fresh():
         try:
-            if not _same(indices(), original):
+            if not same(indices(), original):
                 raise ValueError("constant lookup population or indices changed during its batch")
             policy = objects._constant_policy_gaps
-            if (original_policy is not None or policy is not None) and not _same(policy, expected_policy):
+            if (original_policy is not None or policy is not None) and not same(policy, expected_policy):
                 raise ValueError("constant lookup policy changed during its batch")
         finally:
             # Do not consult a potentially replaced/cleared native witness map.

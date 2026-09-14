@@ -92,14 +92,14 @@ def _validated_inputs(context, objects):
                     raise ValueError("data producer compiler/source input changed from its receipt")
         from .coff_archive import CoffArchive
         from .common_allocation import _policy
-        from .linked_context import _same
+        from .parsed_state import same
         # Initialize legitimate lazy policy state before pinning the immutable
         # native indices. Growing byte/archive/owner caches remain independently
         # checked against actual physical files, not copied verdicts.
         policy = _policy(evidence, records)
         if objects._constant_policy_gaps is None:
             objects._constant_policy_gaps = policy
-        elif not _same(objects._constant_policy_gaps, policy):
+        elif not same(objects._constant_policy_gaps, policy):
             raise ValueError("data producer selected policy differs from native physical inputs")
         mutable = {"_files", "_archives", "_resolved"}
         resolvers = (objects, native)
@@ -115,15 +115,15 @@ def _validated_inputs(context, objects):
         memo_files = {}
 
         def selected_fresh():
-            if state.native is not native or state.inputs is not inputs or not _same(indices(), index_before):
+            if state.native is not native or state.inputs is not inputs or not same(indices(), index_before):
                 raise ValueError("native input derived indices changed")
             population_fresh()
             if set(memo_files) - inputs.files.keys():
                 raise ValueError("native input byte memo lost a captured file")
             for path, value in inputs.files.items():
                 raw, stamp = value
-                if (not _same(stamp, {"sha256": sha256(raw).hexdigest(), "size": len(raw)})
-                        or path in memo_files and not _same(value, memo_files[path])):
+                if (not same(stamp, {"sha256": sha256(raw).hexdigest(), "size": len(raw)})
+                        or path in memo_files and not same(value, memo_files[path])):
                     raise ValueError("native input byte memo changed")
                 memo_files[path] = deepcopy(value)
             if set(inputs.archives) - inputs.files.keys():
@@ -131,25 +131,25 @@ def _validated_inputs(context, objects):
             for path, members in inputs.archives.items():
                 if path not in archive_members:
                     archive_members[path] = deepcopy(CoffArchive(inputs.files[path][0]).members)
-                if not _same(members, archive_members[path]):
+                if not same(members, archive_members[path]):
                     raise ValueError("native input archive memo changed")
             for resolver, before in zip(resolvers, pinned):
-                if not _same({key: value for key, value in resolver.__dict__.items() if key not in mutable}, before):
+                if not same({key: value for key, value in resolver.__dict__.items() if key not in mutable}, before):
                     raise ValueError("data producer selected-object indices changed")
                 if set(resolver._files) - resolver._stamps.keys() or set(resolver._archives) - resolver._files.keys():
                     raise ValueError("data producer has an unobserved native cache key")
                 for name, raw in resolver._files.items():
                     path = Path(name)
                     actual = inputs.read(path)
-                    if inputs.files[path][1] != resolver._stamps[name] or not _same(actual, raw):
+                    if inputs.files[path][1] != resolver._stamps[name] or not same(actual, raw):
                         raise ValueError("data producer physical file cache changed")
                 for path, archive in resolver._archives.items():
                     if path not in archives:
                         archives[path] = deepcopy(CoffArchive(resolver._files[path]).__dict__)
-                    if type(archive) is not CoffArchive or not _same(archive.__dict__, archives[path]):
+                    if type(archive) is not CoffArchive or not same(archive.__dict__, archives[path]):
                         raise ValueError("data producer physical archive cache changed")
                 for owner, value in resolver._resolved.items():
-                    if not _same(value, witness.resolve(owner)):
+                    if not same(value, witness.resolve(owner)):
                         raise ValueError("data producer selected owner cache changed")
 
         fresh()

@@ -1,9 +1,12 @@
-"""Live, per-key COFF ANY discard certificates, not scope or acceptance.
+"""Live, per-key COFF selection certificates, not scope or acceptance.
 
 An independently verified native winner and a complete physical same-key
 candidate inventory establish only that the other ANY definitions (and their
 associative descendants) were removed. Different loser bytes are permitted.
 Missing MAP entries alone never establish REF removal or winner identity.
+NODUP code removal requires a unique positive native REF event independently
+bound to its selected physical input, with no contradictory original evidence.
+Neither operation transfers source ownership or erases incoming references.
 
 PDB module/address correspondence is distinct from characteristics equivalence:
 https://github.com/microsoft/microsoft-pdb/blob/master/PDB/include/dbicommon.h
@@ -15,19 +18,22 @@ from copy import deepcopy
 from dataclasses import asdict
 from weakref import WeakKeyDictionary
 
-from .coff_comdat import comdat_key, comdat_selection
+from .coff_comdat import comdat_key, comdat_selection as section_selection
 from .common_allocation import _policy, _tokens
 from .linked_code_ownership import _contents
 from .linked_code_region import verify_code_region
 from .linked_codeview import LinkedProcedures
 from .linked_constant_batch import constant_lookups
-from .linked_context import LinkedBuild, _same
+from .linked_context import LinkedBuild
+from .parsed_state import same
 from .linked_interval_index import IntervalIndex
 from .linked_input_epoch import input_epoch, _borrow_epoch
 from .linked_map_index import index_for
+from .linked_objects import _owner
+from .linked_storage_census import _candidates
 from .model import Result, digest
 from .pdb_contributions import bound_contributions
-from .pe_coff import Coff, CoffRecords
+from .pe_coff import Coff, CoffRecords, weak_external
 
 
 def _identity(record):
@@ -42,11 +48,18 @@ def _family(obj, root):
             parent = obj.associations[parent]
         if parent == root:
             sections.add(number)
+    # A weak alias may name a private child label rather than the external
+    # root. The global key index cannot rule that edge out by root spelling.
+    # Keep the entire family unresolved; removing it must not erase a forced
+    # or retained alias, including the final edge of a weak-alias chain.
+    for symbol in obj.symbols.values():
+        if symbol.storage == 105 and weak_external(obj, symbol)[0].section in sections:
+            raise ValueError("COMDAT family has a weak fallback into an original section")
     # Every child keeps its own original section identity and parent relation.
     rows = []
     for number in sorted(sections):
-        if number != root and comdat_selection(obj, number) != 5:
-            raise ValueError("ANY descendant lacks exact associative selection metadata")
+        if number != root and section_selection(obj, number) != 5:
+            raise ValueError("COMDAT descendant lacks exact associative selection metadata")
         section = obj.sections[number - 1]
         rows.append({"object_section": number, "name": section.name,
                      "parent": obj.associations.get(number), "flags": section.flags,
@@ -55,16 +68,16 @@ def _family(obj, root):
     return rows
 
 
-class AnySelection:
+class ComdatSelection:
     """Expiring native query handle. Serialized reports cannot recreate it."""
 
     __slots__ = ("__weakref__",)
 
     def __new__(cls, *args, **kwargs):
-        raise TypeError("ANY selection requires its live context manager")
+        raise TypeError("COMDAT selection requires its live context manager")
 
     def __reduce__(self):
-        raise TypeError("ANY selection handles are not serializable")
+        raise TypeError("COMDAT selection handles are not serializable")
 
     def loser(self, owner, section):
         """Return a certified original loser family, or None for a non-loser.
@@ -79,15 +92,28 @@ class AnySelection:
 
     def certificates(self):
         """One defensive complete inventory per key, not per loser section."""
-        return deepcopy(list(_entry(self)["certificates"].values()))
+        state = _entry(self)
+        return deepcopy([*state["certificates"].values(), *state["ref_certificates"].values()])
+
+    def discarded(self, owner, section):
+        """Query positive native REF removal of an exact NODUP code root.
+
+        No matching event returns None, not an inferred retention/discard.
+        Original incoming-reference obligations are never discharged here.
+        """
+        return _discarded(_entry(self), owner, section)
+
+    def discard_observations(self):
+        """Return the parsed native log observations, if a query needed them."""
+        return deepcopy(_entry(self)["discard_observation"])
 
 
 _live = WeakKeyDictionary()
 
 
 def _entry(handle):
-    if type(handle) is not AnySelection or handle not in _live:
-        raise ValueError("ANY selection handle is unrecognized or expired")
+    if type(handle) is not ComdatSelection or handle not in _live:
+        raise ValueError("COMDAT selection handle is unrecognized or expired")
     return _live[handle]
 
 
@@ -251,7 +277,7 @@ def _certificate_uncached(state, name):
         obj = _object(state, record)
         root = comdat_key(obj, symbol["section"])
         if (root.index != symbol["index"] or root.name != name
-                or comdat_selection(obj, root.section) != 2
+                or section_selection(obj, root.section) != 2
                 or not obj.sections[root.section - 1].flags & 0x20):
             raise ValueError("same-key candidate is not an independent code COMDAT ANY key")
         forest = _family(obj, root.section)
@@ -337,20 +363,25 @@ def _certificate_uncached(state, name):
     return result
 
 
-def _loser(state, owner, number):
+def _query(state, owner, number):
     selected = state["native"].inputs.objects.resolve(owner)
     if type(number) is not int:
-        raise ValueError("ANY query requires an exact original section number")
+        raise ValueError("COMDAT query requires an exact original section number")
     records = state["records"].get((digest(selected["identity"]), selected["sha256"]), ())
     if len(records) != 1:
-        raise ValueError("ANY query differs from its unique physical input inventory")
+        raise ValueError("COMDAT query differs from its unique physical input inventory")
     obj = _object(state, records[0])
     if not 1 <= number <= len(obj.sections):
-        raise ValueError("ANY query section is outside its selected physical input")
+        raise ValueError("COMDAT query section is outside its selected physical input")
     root_number = number
     while root_number in obj.associations:
         root_number = obj.associations[root_number]
-    if not obj.sections[root_number - 1].flags & 0x1000 or comdat_selection(obj, root_number) != 2:
+    return selected, obj, root_number
+
+
+def _loser(state, owner, number):
+    selected, obj, root_number = _query(state, owner, number)
+    if not obj.sections[root_number - 1].flags & 0x1000 or section_selection(obj, root_number) != 2:
         return None
     root = comdat_key(obj, root_number)
     certificate = _certificate(state, root.name)
@@ -370,14 +401,165 @@ def _loser(state, owner, number):
             "disposition": "discarded_any_duplicate"}
 
 
+def _discard_events(state):
+    if state["discard_failure"] is not None:
+        raise ValueError(state["discard_failure"])
+    if state["discard_observation"] is not None:
+        return state["discard_events"]
+    from .msvc_discard import parse_discard_log
+    try:
+        observation = parse_discard_log(state["native"].inputs.artifacts["msvc-link-log"])
+        events = {}
+        for row in observation["rows"]:
+            if row["owner"] is None:
+                continue
+            try:
+                owner = _owner(row["owner"]).casefold()
+            except ValueError:
+                # An unsupported final-pass owner cannot become a query owner;
+                # keep the entire event in the diagnostic rather than erase it.
+                continue
+            events.setdefault((owner, row["symbol"]), []).append(row)
+        state["discard_observation"] = observation
+        state["discard_events"] = events
+        state["discard_witness"] = deepcopy((observation, events))
+        return events
+    except ValueError as error:
+        # A consumer may preserve the query as UNKNOWN, but a malformed whole
+        # transcript must not let a different partial certificate escape exit.
+        state["discard_failure"] = str(error)
+        state["discard_failure_witness"] = str(error)
+        raise
+
+
+def _ref_certificate(state, selected, obj, root, event):
+    token = digest(selected["identity"]), selected["sha256"], root.index
+    if token in state["ref_certificates"]:
+        return state["ref_certificates"][token]
+    if token in state["ref_refusals"]:
+        raise ValueError(state["ref_refusals"][token])
+    try:
+        return _ref_certificate_uncached(state, selected, obj, root, event, token)
+    except ValueError as error:
+        if type(error) is not ValueError:
+            raise
+        state["ref_refusals"][token] = str(error)
+        state["ref_refusal_witnesses"][token] = str(error)
+        raise
+
+
+def _ref_certificate_uncached(state, selected, obj, root, event, token):
+    native = state["native"]
+    inputs = native.inputs
+    commands = state["command_words"]
+    words = state["all_words"]
+    if (state["policy_gaps"] or not state["nonincremental"]
+            or not any(word in ("/opt:ref", "-opt:ref") for word in commands)
+            or not any(word in ("/verbose", "-verbose") for word in commands)
+            or any(word.lower() in ("/opt:noref", "-opt:noref") for word in words)):
+        raise ValueError("REF selection requires supported explicit native REF, nonincremental and VERBOSE options")
+    merges = _noncode_merges(state)
+    # The reported owner is not resolved by basename alone. Its full spelling
+    # must agree with the one native final-pass family that independently binds
+    # this physical selected producer. Different archive occurrences refuse.
+    families = [row for row in inputs.coverage["inputs"] if _owner(row).casefold() == selected["owner"].casefold()]
+    if len(families) != 1:
+        raise ValueError("REF event owner lacks one native final-pass candidate family")
+    family, = families
+    for label in (event["owner"], family):
+        if any(value is not None and any(char in value for char in "/\\:")
+               for value in (label["library"], label["member"])):
+            raise ValueError("qualified REF/final-pass owner needs independent command-path binding")
+    normalize = lambda value: None if value is None else value.replace("\\", "/").casefold()
+    if any(normalize(event["owner"][key]) != normalize(family[key]) for key in ("library", "member")):
+        raise ValueError("REF reported owner spelling contradicts its exact final-pass family")
+    candidates = _candidates(family, inputs.records)
+    if (family["selection"] != Result.PASS or family["candidate_coverage"] != Result.PASS
+            or type(family["candidate_count"]) is not int or family["candidate_count"] != 1
+            or len(candidates) != 1):
+        raise ValueError("REF event owner has ambiguous selected physical candidates")
+    candidate = inputs.records[candidates[0]]
+    if _identity(candidate) != selected["identity"] or candidate["sha256"] != selected["sha256"]:
+        raise ValueError("REF event candidate differs from its queried original input")
+    if (root.type != 0x20 or obj.function(root.name) != root
+            or not obj.sections[root.section - 1].flags & 0x20
+            or section_selection(obj, root.section) != 1):
+        raise ValueError("REF event does not name a supported independent NODUP code root")
+    forest = _family(obj, root.section)
+    numbers = {row["object_section"] for row in forest}
+    if [item for item in obj.symbols.values() if item.section in numbers and item.storage == 2] != [root]:
+        raise ValueError("REF root or descendants have additional external definitions")
+    # All possible linker declarations remain in scope. An ordinary undefined
+    # use remains a separate reference obligation, not a second definition.
+    for record, symbols, imports in state["interest"].get(root.name, ()):
+        if imports:
+            raise ValueError("REF key conflicts with an import declaration")
+        for symbol in symbols:
+            if (_identity(record) == selected["identity"] and record["sha256"] == selected["sha256"]
+                    and symbol["index"] == root.index and symbol["name"] == root.name):
+                continue
+            if (symbol["name"] == root.name and symbol["storage"] == 2 and symbol["section"] == 0
+                    and symbol["value"] == 0 and symbol["type"] in (0, 0x20) and not symbol["auxiliary_size"]):
+                continue
+            raise ValueError("REF key has a conflicting strong, weak, common or unsupported declaration")
+    names = {row["name"] for section in forest for row in section["symbols"] if row["name"] != section["name"]}
+    if any(word.lower().startswith(("/include:", "-include:", "/entry:", "-entry:", "/export:", "-export:"))
+           and word.split(":", 1)[1].split(",", 1)[0] in names for word in words):
+        raise ValueError("REF root has a contradictory forced-retention directive")
+    labels = (*inputs.mapping.publics, *(inputs.mapping.statics or ()))
+    if any(row.symbol == root.name or row.owner.casefold() == selected["owner"].casefold() and row.symbol in names
+           for row in labels):
+        raise ValueError("REF root or associated labels have contradictory native MAP placements")
+    if names & state["folding_names"]:
+        raise ValueError("REF root or descendants have contradictory ICF event identities")
+    section_names = {section["name"] for section in forest}
+    for group in state["discard_observation"]["icf_groups"]:
+        for row in (group["selected"], *group["replaced"]):
+            # Native folding capabilities may be absent without PDB fixups.
+            # Positive log contradictions still count, including section-only
+            # labels in this owner. Basename comparison here only REFUSES;
+            # it never authenticates an event or transfers source authority.
+            if row["symbol"] in names or (row["symbol"] in section_names
+                    and _owner(row["owner"]).casefold() == selected["owner"].casefold()):
+                raise ValueError("REF family has a contradictory reported ICF event")
+    result = {"check": "native_comdat_ref_selection", "result": Result.PASS,
+              "key": root.name, "policy": "IMAGE_COMDAT_SELECT_NODUPLICATES_OPT_REF",
+              "original": {"input": deepcopy(selected["identity"]), "object_sha256": selected["sha256"],
+                           "owner": selected["owner"], "root": asdict(root), "sections": forest},
+              "event": deepcopy(event), "log_sha256": state["discard_observation"]["sha256"],
+              "noncode_merges": merges, "source_authority": "not_transferred",
+              "incoming_references": Result.UNKNOWN, "remaining_linked_effects": Result.UNKNOWN,
+              "outside_scope_verification": Result.UNKNOWN, "ready_for_collection": False, "persisted": False}
+    result["certificate_id"] = digest(result)
+    state["ref_certificates"][token] = result
+    state["ref_certificate_witnesses"][token] = deepcopy(result)
+    return result
+
+
+def _discarded(state, owner, number):
+    selected, obj, root_number = _query(state, owner, number)
+    if not obj.sections[root_number - 1].flags & 0x1000 or section_selection(obj, root_number) != 1:
+        return None
+    root = comdat_key(obj, root_number)
+    events = _discard_events(state).get((selected["owner"].casefold(), root.name), ())
+    if not events:
+        return None
+    if len(events) != 1:
+        raise ValueError("REF root has repeated or ambiguous positive discard events")
+    certificate = _ref_certificate(state, selected, obj, root, events[0])
+    return {"certificate_id": certificate["certificate_id"], "key": root.name,
+            "queried_section": number, "sections": [row["object_section"] for row in certificate["original"]["sections"]],
+            "disposition": "discarded_unreferenced_comdat"}
+
+
 @contextmanager
-def any_selection(native, *, epoch=None):
+def comdat_selection(native, *, epoch=None):
     """Issue per-key queries only inside the original native input lifetime."""
     if type(native) is not LinkedBuild:
-        raise ValueError("ANY selection requires its original live native linked build")
+        raise ValueError("COMDAT selection requires its original live native linked build")
     if epoch is None:
         with input_epoch(native.context, native.inputs.objects) as owned:
-            with any_selection(native, epoch=owned) as handle:
+            with comdat_selection(native, epoch=owned) as handle:
                 yield handle
         return
     native.check_current()
@@ -387,7 +569,7 @@ def any_selection(native, *, epoch=None):
             records, interest = {}, {}
             for record in observed.records:
                 if record["result"] != Result.PASS:
-                    raise ValueError("ANY selection requires complete physical candidate declarations")
+                    raise ValueError("COMDAT selection requires complete physical candidate declarations")
                 token = digest(_identity(record)), record["sha256"]
                 records.setdefault(token, []).append(record)
                 names = {}
@@ -402,11 +584,15 @@ def any_selection(native, *, epoch=None):
             words = [word.lower() for word in inputs.evidence["arguments"]]
             words += [word.lower() for row in observed.records for item in row["directives"] for word in _tokens(item["text"])]
             with constant_lookups(inputs.objects) as constants:
-                handle = object.__new__(AnySelection)
+                handle = object.__new__(ComdatSelection)
                 state = {"native": native, "epoch": epoch, "inputs": observed.inputs,
                     "interest": interest, "records": records, "objects": {}, "certificates": {},
                     "object_witnesses": {}, "certificate_witnesses": {},
                     "refusals": {}, "refusal_witnesses": {},
+                    "ref_certificates": {}, "ref_certificate_witnesses": {},
+                    "ref_refusals": {}, "ref_refusal_witnesses": {},
+                    "discard_observation": None, "discard_events": None, "discard_witness": None,
+                    "discard_failure": None, "discard_failure_witness": None,
                     "metadata": None, "metadata_witness": None,
                     "code_candidates": None, "code_candidates_witness": None,
                     "policy_gaps": _policy(inputs.evidence, observed.records),
@@ -414,13 +600,17 @@ def any_selection(native, *, epoch=None):
                                     if word.startswith(("/merge:", "-merge:"))),
                     "nonincremental": any(word.lower() in ("/incremental:no", "-incremental:no")
                                           for word in inputs.evidence["arguments"]),
+                    "command_words": tuple(word.lower() for word in inputs.evidence["arguments"]),
+                    "all_words": tuple(inputs.evidence["arguments"]) + tuple(word for row in observed.records
+                        for item in row["directives"] for word in _tokens(item["text"])),
                     "folding_names": frozenset(name for _, name in inputs.folding.candidate_keys())
                         if inputs.folding is not None else frozenset(),
                     "map_index": index_for(inputs.mapping), "constants": constants, "codeview": LinkedProcedures(native)}
                 _live[handle] = state
                 fixed = ("native", "epoch", "inputs", "map_index", "constants", "codeview")
                 pointers = {key: state[key] for key in fixed}
-                indexed = ("interest", "records", "policy_gaps", "merges", "nonincremental", "folding_names")
+                indexed = ("interest", "records", "policy_gaps", "merges", "nonincremental", "folding_names",
+                           "command_words", "all_words")
                 before = deepcopy({key: state[key] for key in indexed})
                 map_before = deepcopy(state["map_index"].__dict__)
                 try:
@@ -428,21 +618,29 @@ def any_selection(native, *, epoch=None):
                 finally:
                     del _live[handle]
                     if (any(state[key] is not pointer for key, pointer in pointers.items())
-                            or not _same({key: state[key] for key in indexed}, before)
-                            or not _same(state["map_index"].__dict__, map_before)
-                            or not _same(state["certificates"], state["certificate_witnesses"])
-                            or not _same(state["refusals"], state["refusal_witnesses"])
-                            or not _same(state["code_candidates"], state["code_candidates_witness"])
+                            or not same({key: state[key] for key in indexed}, before)
+                            or not same(state["map_index"].__dict__, map_before)
+                            or not same(state["certificates"], state["certificate_witnesses"])
+                            or not same(state["refusals"], state["refusal_witnesses"])
+                            or not same(state["ref_certificates"], state["ref_certificate_witnesses"])
+                            or not same(state["ref_refusals"], state["ref_refusal_witnesses"])
+                            or not same(state["discard_failure"], state["discard_failure_witness"])
+                            or not same(state["code_candidates"], state["code_candidates_witness"])
                             or state["objects"].keys() != state["object_witnesses"].keys()):
-                        raise ValueError("ANY native derived selection indices changed during the batch")
+                        raise ValueError("COMDAT native derived selection indices changed during the batch")
+                    if state["discard_failure"] is not None:
+                        raise ValueError("native REF transcript remains malformed: " + state["discard_failure"])
+                    if any(state[key] is not None for key in ("discard_observation", "discard_events", "discard_witness")) and not same(
+                            (state["discard_observation"], state["discard_events"]), state["discard_witness"]):
+                        raise ValueError("native REF event observations changed during the batch")
                     for key, (obj, before_obj) in state["object_witnesses"].items():
-                        if state["objects"][key] is not obj or not _same(obj.__dict__, before_obj):
-                            raise ValueError("ANY parsed physical COFF changed during the batch")
+                        if state["objects"][key] is not obj or not same(obj.__dict__, before_obj):
+                            raise ValueError("COMDAT parsed physical COFF changed during the batch")
                     if state["metadata"] is not None:
                         inventory, index, spans = state["metadata"]
                         original, old_inventory, old_index, old_spans = state["metadata_witness"]
-                        if (inventory is not original or not _same(inventory, old_inventory) or not _same(index, old_index)
-                                or not _same(spans.__dict__, old_spans)):
+                        if (inventory is not original or not same(inventory, old_inventory) or not same(index, old_index)
+                                or not same(spans.__dict__, old_spans)):
                             raise ValueError("ANY derived PDB correspondence changed during the batch")
     finally:
         native.check_current()

@@ -71,9 +71,12 @@ class CoffRecords:
     distinction explicit: this reader exposes no function/subject API.
     """
     def __init__(self, data: bytes):
+        data = bytes(data)
         machine, count, _, sym_offset, sym_count, optional, _ = _unpack("<HHIIIHH", data, 0)
         if machine not in (0, 0x14C):
             raise ValueError("expected i386 or unspecified-machine COFF records")
+        # Retain immutable physical bytes for bounded format-specific metadata checks.
+        self.raw_data = data
         self.machine = machine
         self.optional_header_size = optional
         if optional:

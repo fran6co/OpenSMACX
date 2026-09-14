@@ -14,33 +14,10 @@ from .link_input_coverage import _input_inventory
 from .linked_code_graph import observe_code_graph
 from .linked_objects import SelectedObjects
 from .model import Result
+from .parsed_state import same
 from .msvc_link_map import parse_link_map
 from .pe_coff import PeImage
 from .graph_limits import DEFAULT_NODES
-
-
-def _same(left, right, seen=None):
-    """Exact parsed-state equality, including scalar types (False is not 0)."""
-    if type(left) is not type(right):
-        return False
-    if left is right:
-        return True
-    if seen is None:
-        seen = set()
-    pair = id(left), id(right)
-    if pair in seen:
-        return True
-    seen.add(pair)
-    if isinstance(left, dict):
-        return len(left) == len(right) and all(_same(a, b, seen) and _same(x, y, seen)
-            for (a, x), (b, y) in zip(left.items(), right.items()))
-    if isinstance(left, (list, tuple)):
-        return len(left) == len(right) and all(_same(a, b, seen) for a, b in zip(left, right))
-    if isinstance(left, (set, frozenset)):
-        return {(type(value), value) for value in left} == {(type(value), value) for value in right}
-    if hasattr(left, "__dict__"):
-        return _same(left.__dict__, right.__dict__, seen)
-    return left == right
 
 
 @dataclass(frozen=True)
@@ -235,23 +212,23 @@ def linked_build(context):
 
         def selected_fresh():
             actual = inputs.objects
-            if not _same({key: value for key, value in actual.__dict__.items() if key not in mutable_caches}, selected_state):
+            if not same({key: value for key, value in actual.__dict__.items() if key not in mutable_caches}, selected_state):
                 raise ValueError("parsed selected-object state changed within its live epoch")
             population_guard()
             # Include stamped tools, which are not COFF candidate records.
             for path, expected in stamps.items():
                 raw = _read(path, expected)
-                if path in actual._files and not _same(actual._files[path], raw):
+                if path in actual._files and not same(actual._files[path], raw):
                     raise ValueError("selected object file cache changed")
             if set(actual._files) - stamps.keys() or set(actual._archives) - actual._files.keys():
                 raise ValueError("selected object cache has an unobserved physical input")
             for path, archive in actual._archives.items():
                 if path not in archive_witnesses:
                     archive_witnesses[path] = deepcopy(CoffArchive(actual._files[path]).__dict__)
-                if not isinstance(archive, CoffArchive) or not _same(archive.__dict__, archive_witnesses[path]):
+                if not isinstance(archive, CoffArchive) or not same(archive.__dict__, archive_witnesses[path]):
                     raise ValueError("selected archive cache changed")
             for owner, value in actual._resolved.items():
-                if not _same(value, witness.resolve(owner)):
+                if not same(value, witness.resolve(owner)):
                     raise ValueError("selected owner cache differs from physical evidence")
         image_state = deepcopy(inputs.image.__dict__)
         observation_state = deepcopy((inputs.artifacts, inputs.mapping, inputs.evidence,
@@ -263,15 +240,15 @@ def linked_build(context):
                 raise ValueError("linked observation context has expired")
             try:
                 context.check_current()
-                if not _same(context.report, context_report):
+                if not same(context.report, context_report):
                     raise ValueError("application report changed within its linked epoch")
                 if (any(getattr(inputs, name) is not value for name, value in bound_objects.items())
-                        or not _same(metadata_state(), metadata_before)
+                        or not same(metadata_state(), metadata_before)
                         or inputs.folding is not None and (inputs.folding._objects is not inputs.objects
                             or inputs.folding._mapping is not inputs.mapping or inputs.folding._image is not inputs.image
                             or inputs.folding._fixups is not inputs.fixups)):
                     raise ValueError("linked PDB/folding binding changed within its live epoch")
-                if (not _same(inputs.image.__dict__, image_state) or not _same(
+                if (not same(inputs.image.__dict__, image_state) or not same(
                         (inputs.artifacts, inputs.mapping, inputs.evidence, inputs.coverage, inputs.records), observation_state)):
                     raise ValueError("parsed linked evidence changed within its live epoch")
                 selected_fresh()

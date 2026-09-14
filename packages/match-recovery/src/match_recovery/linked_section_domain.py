@@ -38,8 +38,8 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
         state = stack.enter_context(_borrow_epoch(epoch, context, objects))
         choices = None
         if native is not None:
-            from .linked_comdat_selection import any_selection
-            choices = stack.enter_context(any_selection(native, epoch=epoch))
+            from .linked_comdat_selection import comdat_selection
+            choices = stack.enter_context(comdat_selection(native, epoch=epoch))
         selection = observe_input_selection(context, objects, epoch=epoch)
         records = {digest(_identity(record)): record for record in state.records}
         if len(records) != len(state.records):
@@ -93,7 +93,9 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                     continue
                 if choices is not None and section.flags & 0x1000:
                     try:
-                        duplicate = choices.loser(owner, number)
+                        duplicate = choices.discarded(owner, number)
+                        if duplicate is None:
+                            duplicate = choices.loser(owner, number)
                     except ValueError as error:
                         # A refused selection leaves the original physical root
                         # and section obligation. Missing MAP is never discard.
@@ -103,7 +105,11 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                         if (duplicate["queried_section"] != number
                                 or number not in duplicate["sections"]):
                             raise ValueError("COMDAT certificate does not cover its queried physical section")
-                        item.update(retention=Result.PASS, disposition="unselected_comdat_duplicate",
+                        if duplicate["disposition"] not in ("discarded_any_duplicate", "discarded_unreferenced_comdat"):
+                            raise ValueError("COMDAT certificate has an unsupported disposition")
+                        disposition = ("unselected_comdat_duplicate" if duplicate["disposition"] == "discarded_any_duplicate"
+                                       else "discarded_unreferenced_comdat")
+                        item.update(retention=Result.PASS, disposition=disposition,
                                     selection_certificate=duplicate["certificate_id"])
                         # Keep the original input, section, symbols and all
                         # association descendants visible. This does not lend
@@ -140,4 +146,5 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                 "enumeration": Result.PASS, "selection": selection, "inputs": rows,
                 "section_count": count, "code_roots": roots, "data_sections": data, "gaps": gaps,
                 "comdat_selection_certificates": choices.certificates() if choices is not None else [],
+                "ref_discard_observations": choices.discard_observations() if choices is not None else None,
                 "retained_section_selection": Result.UNKNOWN, "ready_for_collection": False}

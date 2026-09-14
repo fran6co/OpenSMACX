@@ -2067,6 +2067,27 @@ guarded batch, never replayed from a report. Missing MAP labels still cannot pro
 reference-elimination (`REF`) discard. This is not complete retained-section
 selection, source ownership transfer, outside-scope preservation or acceptance.
 
+The same guarded native selection context can certify positive `/OPT:REF`
+removal of an exact NODUP code root and its original associative forest. The
+framed executable log must contain one owner-qualified discard event; explicit
+REF, nonincremental and verbose arguments, one independently selected physical
+candidate, exact root policy and conflict checks are required. Bare object or
+archive-member labels must agree with their independently selected final-pass
+family. Qualified paths currently refuse rather than borrowing a basename.
+Repeated events, archive occurrences, weak aliases into private descendants,
+forced retention and MAP/ICF contradictions cannot authorize removal. Folding
+events remain contradictions even when no PDB-backed folding handle is available.
+No event means no removal evidence. Original sections, relocation edges and
+unresolved incoming references remain visible; only certified sections stop
+seeding retained code/data roots. Parsed logs and certificates are derived
+diagnostics, not source facts or replayable acceptance. Native compiler controls
+exercise actual REF on/off behavior; these are not full-game acceptance tests.
+Ordinary COFF function-definition auxiliaries are supported only with coherent
+original `.bf`/`.lf`/`.ef` records, next-function links and bounded physical line
+tables. Their debug-reported function size never shrinks the measured section or
+waives alignment bytes. Parsed-state guards preserve exact scalar types and
+record order independently of the native linking layer.
+
 Supported i386 short-import thunks use a separate six-byte linker recipe. A unique
 producer in the complete physical input population, final-pass library family,
 named map uses, independent PE import identity and exact operand/fixup all must
