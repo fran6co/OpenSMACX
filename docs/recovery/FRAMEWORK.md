@@ -582,6 +582,47 @@ establish completion of this program.
   workflows, preservation of retirement history and incoming recoveries.
 - [ ] Mixed recovery batches, staged runtime tests, alternate-target fixtures.
 
+## Queued engine expansions (post-dry-out)
+
+The user directed recovery with the existing engine to come first; these
+qualifications are recorded so they are not lost and are built only once the
+current recovery scope has dried out (the planner proposes nothing, open tasks
+are blocked on these gaps, and recent batches accept nothing). Each lands as
+its own increment with unit, application-report and real-compiler tests
+(`test_linked_*`, `test_application_*`, `recovery/tests/test_native_*_compiler.py`)
+and same-commit documentation; none grants acceptance or discharges obligations.
+
+1. Retained selection for placed sections: `observe_sections` marks only
+   removed COMDATs (`discarded`/`loser`) as qualified retention; placed NODUP
+   roots and ANY winners stay unknown. Qualify a `ComdatSelection.placed`
+   query over `_unique_placement` certificates that annotates placed sections
+   (`retention: pass`, first `independently_placed_nodup_root`, then
+   `selected_any_winner`) while keeping them in `code_roots` and the physical
+   inventory.
+2. Allocation isolation across certified ICF groups: folded members currently
+   gap `observe_ordinary_allocations` twice (their own module join and the
+   shared code envelope). Qualify same-group sharing bound to the group's
+   verified final storage through a `ComdatSelection.folded` query over
+   certified fold groups; distinct data overlap and unexplained
+   characteristics still fail or refuse.
+3. Anonymous contribution assignment: `* Linker *` PDB modules can never join
+   a physical section, so their contributions stay unmatched. Qualify exact
+   linker-generated storage, starting with verified import-thunk extents
+   (reuse `verify_import_thunk`; follow the `_common_contributions`
+   exact-match precedent); every unassigned row stays unmatched.
+4. Private-form qualifications if real objects need them: private
+   original-family ICF provenance and owner-qualified REF events for static
+   names (the shared function-auxiliary qualification landed 2026-09-14).
+5. Resource-lease robustness: a killed leasing subprocess (a test deadline
+   or an interrupted campaign) leaves the shared compiler prefix quarantined
+   until its active marker is manually inspected and removed; acquisition
+   refuses rather than inferring stale ownership. Observed 2026-09-14 when
+   the campaign control's 180-second subprocess deadline killed a leased
+   run and every later slot-leasing test refused.
+6. The remaining unchecked delivery checkpoints above stay the broader
+   worklist. Verifier refusals met during recovery batches are logged
+   against these entries, not fixed mid-batch.
+
 ## Isolation and integration
 
 The user authorized integration and continuing framework work on `master` after
