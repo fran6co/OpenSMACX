@@ -206,11 +206,12 @@ def test_link_observation_cannot_change_captured_object_receipt(inputs, monkeypa
 
 def test_live_authorization_change_invalidates_existing_coverage(inputs):
     graph, changes, raw, _, _ = inputs
-    with native.application_objects(graph) as run:
-        capability, obj = cover(run, graph, changes, raw)
-        graph._authorization["permission"]["generated_changes"] = []
-        with pytest.raises(ValueError, match="authorization changed"):
-            consume_startup(capability, obj)
+    with pytest.raises(ValueError, match="authorization changed before final verification"):
+        with native.application_objects(graph) as run:
+            capability, obj = cover(run, graph, changes, raw)
+            graph._authorization["permission"]["generated_changes"] = []
+            with pytest.raises(ValueError, match="authorization changed"):
+                consume_startup(capability, obj)
 
 
 def test_live_graph_failure_refuses_consumption_and_final_exit(inputs):

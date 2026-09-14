@@ -47,6 +47,7 @@ def application_objects(graph):
     """
     live = False
     indexes, signatures, initializer_views = {}, {}, {}
+    common_stack, common_views = ExitStack(), {}
     try:
         graph.check_current()
         root, task_name, baseline_revision = graph.root, graph.task_name, graph.baseline_revision
@@ -226,7 +227,7 @@ def application_objects(graph):
                 if repeated != observed:
                     raise ValueError("startup replica evidence changed during linked observation")
                 coverage_fresh()
-                return _mint_startup(obj, tuple(slots), coverage_fresh, fpo=tuple(fpo))
+                return _mint_startup(obj, tuple(slots), coverage_fresh, fpo=tuple(fpo), trial=trial)
             except (KeyError, TypeError, AttributeError) as error:
                 raise ValueError("incomplete native startup coverage binding") from error
             finally:
@@ -235,15 +236,96 @@ def application_objects(graph):
                 finally:
                     coverage_fresh()
 
+        def common_fresh():
+            try:
+                coverage_fresh()
+            finally:
+                try:
+                    if "baseline" in common_views:
+                        common_views["baseline"].check_current()
+                finally:
+                    if "current" in common_views:
+                        common_views["current"].check_current()
+
+        def cover_common_requests(trial, obj, *, unit, version, flags, input_fingerprint, startup):
+            """Explain only redundant requests from this epoch's covered roots.
+
+            A surviving native witness is outside the entire pinned generated
+            projection domain, preventing mutually borrowed or later-removed
+            witnesses. No storage isolation or initializer effect is waived.
+            """
+            from .common_preservation import _compare_linked
+            from .common_request_coverage import _requests, _mint_requests
+            from .common_request_witnesses import retained_witnesses
+            from .linked_context import linked_build
+            from .startup_coverage import _consume_for_producer
+
+            try:
+                common_fresh()
+                slots, fpo = _consume_for_producer(startup, obj, coverage_fresh, trial=trial)
+                observed = compare(trial, obj, unit=unit, version=version, flags=flags,
+                                   input_fingerprint=input_fingerprint)
+                if observed["result"] != Result.PASS:
+                    raise ValueError("common request coverage requires the whole application-object replica")
+                _, projection = project_startup(obj, slots, fpo=fpo)
+                indices = _requests(obj, projection)
+                opposite = "current" if version == "baseline" else "baseline"
+                if unit in indexes[opposite]:
+                    output, expected = indexes[opposite][unit]
+                    other = Coff(_read(output, expected))
+                    # An unchanged declaration needs no waiver. This filter
+                    # only narrows eligibility; a different opposite trial
+                    # still has to pass the ordinary strict residual checks.
+                    unchanged = {(symbol.name, symbol.value) for symbol in other.symbols.values()
+                                 if symbol.section == 0 and symbol.storage == 2 and symbol.type == 0
+                                 and symbol.value > 0 and not other.auxiliary.get(symbol.index)}
+                    indices = tuple(index for index in indices
+                                    if (obj.symbols[index].name, obj.symbols[index].value) not in unchanged)
+                if not indices:
+                    return None
+                permission = graph.authorization.get("permission", {}).get("generated_changes", ())
+                excluded_units = frozenset(change["unit"] for change in permission)
+                if unit not in excluded_units:
+                    raise ValueError("common request has no generated-change authorization")
+                for name, context in (("baseline", graph.baseline), ("current", graph.current)):
+                    if name not in common_views:
+                        common_views[name] = common_stack.enter_context(linked_build(context))
+                requests = {obj.symbols[index].name: obj.symbols[index].value for index in indices}
+                proof = _compare_linked(common_views["baseline"], common_views["current"], tuple(requests))
+                if (proof["result"] != Result.PASS
+                        or any(row.get("baseline_size") != requests[row["symbol"]]
+                               or row.get("current_size") != requests[row["symbol"]]
+                               for row in proof["allocations"])):
+                    raise ValueError("duplicate common request lacks unchanged native common allocation evidence")
+                retained_witnesses(common_views["baseline"], common_views["current"],
+                                   excluded_units=excluded_units, requests=requests)
+                repeated = compare(trial, obj, unit=unit, version=version, flags=flags,
+                                   input_fingerprint=input_fingerprint)
+                if repeated != observed:
+                    raise ValueError("common request replica evidence changed during native verification")
+                return _mint_requests(obj, startup, indices, common_fresh)
+            except (KeyError, TypeError, AttributeError) as error:
+                raise ValueError("incomplete native duplicate common request binding") from error
+            finally:
+                common_fresh()
+
         compare.cover_startup = cover_startup
+        compare.cover_common_requests = cover_common_requests
         yield compare
     except (KeyError, TypeError, AttributeError) as error:
         if live:
             raise  # Do not translate unrelated exceptions from the caller body.
         raise ValueError("incomplete preservation/application object binding") from error
     finally:
-        live = False
-        graph.check_current()
+        try:
+            if live and digest(graph.authorization) != authorization:
+                raise ValueError("application object coverage authorization changed before final verification")
+        finally:
+            live = False
+            try:
+                common_stack.close()
+            finally:
+                graph.check_current()
 
 
 def compare_application_object(graph, trial, obj, *, unit, version, flags, input_fingerprint):

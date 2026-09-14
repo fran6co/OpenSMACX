@@ -374,6 +374,13 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
             object_trials.get(obj), obj, unit=unit, version=version,
             flags=flags, input_fingerprint=digest(before), changes=rows)
 
+    def common_coverage(unit, flags, version, obj, startup):
+        if startup is None:
+            return None
+        return compare_application_object.cover_common_requests(
+            object_trials.get(obj), obj, unit=unit, version=version,
+            flags=flags, input_fingerprint=digest(before), startup=startup)
+
     try:
         if application is not None:
             # Index native membership once, bracket the entire compiler epoch
@@ -528,6 +535,8 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                             row["inline_ownership"] = inline_reports
                         old_startup = startup_coverage(unit, flags, "baseline", prior)
                         new_startup = startup_coverage(unit, flags, "current", original)
+                        old_common = common_coverage(unit, flags, "baseline", prior, old_startup)
+                        new_common = common_coverage(unit, flags, "current", original, new_startup)
                         if prior is None or original is None:
                             comparison = compare_unit_presence(
                                 prior if original is None else original,
@@ -535,11 +544,13 @@ def check_preservation(root: Path, task_name: str, *, units: tuple[str, ...] | N
                                 present="baseline" if original is None else "current",
                                 outside=old_outside if original is None else new_outside,
                                 protected=protected if prior is None else frozenset(),
-                                startup=old_startup if original is None else new_startup)
+                                startup=old_startup if original is None else new_startup,
+                                common=old_common if original is None else new_common)
                         else:
                             comparison = compare_outside_functions(prior, original, old_allowed, new_allowed,
                                                                    baseline_outside=old_outside, current_outside=new_outside,
-                                                                   baseline_startup=old_startup, current_startup=new_startup)
+                                                                   baseline_startup=old_startup, current_startup=new_startup,
+                                                                   baseline_common=old_common, current_common=new_common)
                         if old_startup is not None or new_startup is not None:
                             row["generated_changes"] = [item for item in generated if item["unit"] == unit]
                         _explain_sources(comparison, old_sources, new_sources)

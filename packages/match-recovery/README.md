@@ -292,13 +292,16 @@ addition. Existing restoration/preservation checks still run; the graph route ne
 waives their findings nor resets a baseline. Reports and temporary builds are
 disposable evidence, not acceptance records or a new command-line workflow.
 
-Explicit generated-effect migration authority is still missing: original-entity
-scope and permission for byte regressions do not authorize a new startup
-registration. Supporting that requires independently reviewed intent tied to a
-source ownership change, fresh proof of the exact generated effect and its bounded
-compiled footprint, and unchanged outside dependencies/residuals. An intentionally
-authorized registration would not need to be falsely proved free of allocation
-effects; no such authorization or residual exemption is currently implemented.
+Original-entity scope and permission for byte regressions alone do not authorize
+a new startup registration. The explicit `generated_changes` decision described
+below now supplies independently reviewed intent, tied to a source owner and an
+exact versioned occurrence. Native startup coverage binds its bounded compiled
+footprint before projection. An intentionally authorized registration need not be
+proved free of allocation effects, just as an owned function may intentionally
+change its calls. That authority does not extend to other callback/helper bodies,
+storage definitions or linker-selected implementations. Complete outside
+dependency/residual composition is still required before this route can admit a
+change; it is not full-game runtime equivalence.
 
 `recover inventory` reports source and seed populations, body-presence states,
 historical obligations and mapping conflicts. Body states derive from source
@@ -1984,6 +1987,34 @@ Renumbered trial sections are bound through the original root and association;
 shared roots, aliases, protected source bindings and unsupported metadata refuse.
 Without native coverage the frame continues to protect its root. This does not
 establish debug-data discard, runtime effects or checkpoint acceptance.
+
+The same native preservation path can now explain a redundant **common request
+declaration** introduced or removed with a covered generated root. It derives the
+exact occurrence from that root's actual removed references; an unreferenced new
+declaration or a selected-but-retained root supplies no eligibility. The original
+startup capability must belong to the same live producer and exact compiler trial
+(including source version, TU, flags, authorization and input fingerprint).
+Unchanged declarations keep the ordinary comparison and need no projection.
+
+Both fresh linked applications must independently prove the same named uniform
+common extent and zero initialization, without conflicting named definitions or
+weak aliases.
+A separate, exactly selected compiled TU must retain the same request in both
+builds, outside **all** TUs in the complete generated-change permission. Requests
+cannot cite each other and then both disappear. Ordinary undefined references do
+not supply witnesses; basenames, equal hashes and unselected archive candidates
+cannot replace physical input/receipt correspondence. The first supported witness
+domain is compiled TUs, not inferred dependency-member substitutions.
+
+Only a live, nonserializable `DuplicateCommonRequestCoverage` can remove the one
+exact common symbol row, after scoped/startup projection. Remaining code/data
+relocations or weak fallbacks to that name refuse; their identities, addends and
+request-size differences are never normalized away. Other data, imports,
+directives, helper code, initializer writes and ordering remain protected. Both
+linked epochs and task authorization remain checked through consumption and
+final exit. This is declaration redundancy, **not** allocation isolation,
+alignment, alias correctness, complete linked effects or autonomous acceptance.
+No source mapping, historical claim or task baseline changes as a result.
 
 The native dependency-code graph also verifies whole ordinary COFF code sections,
 including multiple external entries and nonzero entry offsets. Every external

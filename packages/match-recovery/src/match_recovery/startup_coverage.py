@@ -25,27 +25,36 @@ class StartupCoverage:
 _live_coverage = WeakKeyDictionary()
 
 
-def _mint_startup(obj, slots, fresh, *, fpo=()):
+def _mint_startup(obj, slots, fresh, *, fpo=(), trial=None):
     """Private producer hook; parsed reports must never call this directly."""
     fresh()
     value = object.__new__(StartupCoverage)
     _live_coverage[value] = (ref(obj), object_signature(obj), deepcopy(obj.__dict__), tuple(slots),
-                             deepcopy(tuple(fpo)), fresh)
+                             deepcopy(tuple(fpo)), fresh, trial)
     fresh()
     return value
 
 
-def _consume(coverage, obj):
+def _consume(coverage, obj, *, producer=None, trial=None):
     if type(coverage) is not StartupCoverage or coverage not in _live_coverage:
         raise ValueError("startup coverage requires an authentic live native capability")
-    owner, signature, snapshot, slots, fpo, fresh = _live_coverage[coverage]
+    owner, signature, snapshot, slots, fpo, fresh, original_trial = _live_coverage[coverage]
     try:
         fresh()
+        if producer is not None and fresh is not producer:
+            raise ValueError("startup coverage belongs to another native producer epoch")
+        if producer is not None and (trial is None or original_trial is None or trial != original_trial):
+            raise ValueError("startup coverage belongs to another native object trial")
         if owner() is not obj or obj.__dict__ != snapshot or object_signature(obj) != signature:
             raise ValueError("startup coverage belongs to another or changed compiler object")
         return slots, deepcopy(fpo)
     finally:
         fresh()
+
+
+def _consume_for_producer(coverage, obj, producer, *, trial):
+    """Private composition must not borrow another graph's broader permission."""
+    return _consume(coverage, obj, producer=producer, trial=trial)
 
 
 def consume_startup(coverage, obj):

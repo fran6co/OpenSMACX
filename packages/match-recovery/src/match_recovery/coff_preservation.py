@@ -12,7 +12,7 @@ from .model import Result, digest
 from .tasks import entity_id
 
 
-def _residual(obj, allowed, outside, *, retained=frozenset(), startup=None):
+def _residual(obj, allowed, outside, *, retained=frozenset(), startup=None, common=None):
     excluded, seen, keys, entries, found = set(), set(), {}, {}, {}
     if len(set(allowed.values())) != len(allowed):
         raise ValueError("ambiguous scoped function identity")
@@ -53,6 +53,8 @@ def _residual(obj, allowed, outside, *, retained=frozenset(), startup=None):
             pending -= keys.keys()
         found[entity] = {"symbol": name, "owned_sections": len(owned)}
     if startup is None:
+        if common is not None:
+            raise ValueError("common request coverage requires its authorized startup projection")
         value = _object_evidence(obj, excluded=frozenset(excluded), section_keys=keys, entry_names=entries)
     else:
         from .startup_coverage import consume_startup, consume_startup_fpo
@@ -63,14 +65,18 @@ def _residual(obj, allowed, outside, *, retained=frozenset(), startup=None):
         if any(symbol.section in startup_roots and (symbol.name in outside or symbol.name in retained)
                for symbol in obj.symbols.values()):
             raise ValueError("generated startup root also contains a protected outside source binding")
-        value, _ = project_startup(obj, slots, excluded=frozenset(excluded),
-                                   section_keys=keys, entry_names=entries, fpo=fpo)
+        value, projection = project_startup(obj, slots, excluded=frozenset(excluded),
+                                            section_keys=keys, entry_names=entries, fpo=fpo)
+        if common is not None:
+            from .common_request_coverage import _project_requests
+            value = _project_requests(common, obj, value, projection, startup=startup)
     return value, found
 
 
 def compare_outside_functions(baseline, current, baseline_scope, current_scope, *,
                               baseline_outside=frozenset(), current_outside=frozenset(),
-                              baseline_startup=None, current_startup=None):
+                              baseline_startup=None, current_startup=None,
+                              baseline_common=None, current_common=None):
     """Compare all non-scoped COFF contents and exact symbolic references.
 
     Scope maps emitted names to original entity identities supplied by source,
@@ -89,12 +95,14 @@ def compare_outside_functions(baseline, current, baseline_scope, current_scope, 
     defined_before = {symbol.name for symbol in baseline.symbols.values() if symbol.section > 0}
     retained = {name: entity for name, entity in current_scope.items()
                 if name in defined_before and name not in baseline_scope}
-    old, old_scope = _residual(baseline, baseline_scope, baseline_outside, startup=baseline_startup)
-    new, new_scope = _residual(current, current_scope, current_outside, retained=retained.keys(), startup=current_startup)
+    old, old_scope = _residual(baseline, baseline_scope, baseline_outside, startup=baseline_startup,
+                               common=baseline_common)
+    new, new_scope = _residual(current, current_scope, current_outside, retained=retained.keys(), startup=current_startup,
+                               common=current_common)
     return _compare_residuals(old, new, old_scope, new_scope, retained)
 
 
-def compare_unit_presence(obj, scope, *, present, outside=frozenset(), protected=frozenset(), startup=None):
+def compare_unit_presence(obj, scope, *, present, outside=frozenset(), protected=frozenset(), startup=None, common=None):
     """Report a present TU's residual against explicitly established absence.
 
     The caller must independently establish source AND fresh recipe membership
@@ -111,7 +119,7 @@ def compare_unit_presence(obj, scope, *, present, outside=frozenset(), protected
     if present not in ("baseline", "current"):
         raise ValueError("unit presence requires baseline or current")
     retained = {name: entity for name, entity in scope.items() if name in protected}
-    value, found = _residual(obj, scope, outside, retained=retained.keys(), startup=startup)
+    value, found = _residual(obj, scope, outside, retained=retained.keys(), startup=startup, common=common)
     absent = {"sections": [], "symbols": [], "associations": []}
     old, new = (value, absent) if present == "baseline" else (absent, value)
     old_scope, new_scope = (found, {}) if present == "baseline" else ({}, found)
