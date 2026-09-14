@@ -8,6 +8,7 @@ import struct
 import pytest
 
 from match_recovery.linked_context import linked_build
+from match_recovery.common_allocation import _option
 from match_recovery.msf import SmallMsf
 from test_binary import coff_fixture
 from test_build_graph_commands import Context as Commands
@@ -39,7 +40,8 @@ def set_link(context, evidence, log):
     arguments = evidence["arguments"]
     context.report["compile_link"]["command_bindings"]["link"] = {
         "arguments": list(arguments), "cwd": evidence["cwd"], "result": "pass",
-        "description": descriptor(arguments, STAGES["link"], [(i, 0, "input_file") for i in range(len(arguments))])}
+        "description": descriptor(arguments, STAGES["link"], [(i, 0, "input_file")
+            for i, word in enumerate(arguments) if word in evidence["explicit_inputs"] or not _option(word)])}
 
 
 def fixture(root):

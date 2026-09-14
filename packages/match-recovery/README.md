@@ -2043,6 +2043,26 @@ owner in the map. The exact multiset of source frame records must match the
 image-bound PDB; choosing one matching duplicate or deduplicating metadata is not
 proof. Shared code extents are admitted only within that verified group.
 
+The physical application section domain also recognizes independently proven
+COMDAT `ANY` duplicates. Inside one live native input epoch, it inventories every
+same-key definition (including archive occurrences), validates the original COFF
+key and selection policy, and verifies the retained winner's code, references,
+MAP placement and image-bound PDB module/contribution. Relevant folding, aliases,
+conflicting declarations or unsupported selection policy refuse qualification.
+An absent fold-log entry is insufficient: every other possible physical code
+section must differ outside both sections' relocation fields and possible trailing
+padding. Same-key root exclusions never hide their associated code children.
+This conservative proof requires an explicitly nonincremental, relocation-only
+link; ambiguous competitors stay unresolved. PDB module/extent correspondence
+does not equate characteristics: a reserved-bit difference is retained explicitly
+as unknown and cannot waive separate allocation or runtime checks.
+Only certified losing sections and their original associative descendants leave
+the code-root domain; their physical identities and metadata remain in the report.
+Loser bytes need not equal the winner. A winner proof is shared per key within the
+guarded batch, never replayed from a report. Missing MAP labels still cannot prove
+reference-elimination (`REF`) discard. This is not complete retained-section
+selection, source ownership transfer, outside-scope preservation or acceptance.
+
 Supported i386 short-import thunks use a separate six-byte linker recipe. A unique
 producer in the complete physical input population, final-pass library family,
 named map uses, independent PE import identity and exact operand/fixup all must

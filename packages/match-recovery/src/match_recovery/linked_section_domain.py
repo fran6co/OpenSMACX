@@ -5,6 +5,7 @@ proof. In particular, no missing MAP symbol makes a physical section disappear.
 """
 
 from collections import defaultdict
+from contextlib import ExitStack
 from copy import deepcopy
 
 from .linked_code_ownership import _contents
@@ -16,7 +17,7 @@ from .model import Result, digest
 from .pe_coff import Coff, CoffRecords
 
 
-def observe_sections(context, objects, *, epoch=None, max_sections=100000):
+def observe_sections(context, objects, *, epoch=None, native=None, max_sections=100000):
     """Enumerate every candidate, and seed only independently selected inputs.
 
     Anonymous/unsupported sections and ambiguous families remain obligations.
@@ -25,10 +26,20 @@ def observe_sections(context, objects, *, epoch=None, max_sections=100000):
     """
     if type(max_sections) is not int or not 1 <= max_sections <= 1000000:
         raise ValueError("application section domain requires a bounded section limit")
+    if native is not None:
+        from .linked_context import LinkedBuild
+        if (type(native) is not LinkedBuild or native.context is not context
+                or native.inputs.objects is not objects):
+            raise ValueError("section selection requires this exact native linked context")
     if epoch is None:
         with input_epoch(context, objects) as owned:
-            return observe_sections(context, objects, epoch=owned, max_sections=max_sections)
-    with _borrow_epoch(epoch, context, objects) as state:
+            return observe_sections(context, objects, epoch=owned, native=native, max_sections=max_sections)
+    with ExitStack() as stack:
+        state = stack.enter_context(_borrow_epoch(epoch, context, objects))
+        choices = None
+        if native is not None:
+            from .linked_comdat_selection import any_selection
+            choices = stack.enter_context(any_selection(native, epoch=epoch))
         selection = observe_input_selection(context, objects, epoch=epoch)
         records = {digest(_identity(record)): record for record in state.records}
         if len(records) != len(state.records):
@@ -80,6 +91,24 @@ def observe_sections(context, objects, *, epoch=None, max_sections=100000):
                 row["sections"].append(item)
                 if not selected:
                     continue
+                if choices is not None and section.flags & 0x1000:
+                    try:
+                        duplicate = choices.loser(owner, number)
+                    except ValueError as error:
+                        # A refused selection leaves the original physical root
+                        # and section obligation. Missing MAP is never discard.
+                        gap("COMDAT selection remains unqualified: " + str(error), number)
+                        duplicate = None
+                    if duplicate is not None:
+                        if (duplicate["queried_section"] != number
+                                or number not in duplicate["sections"]):
+                            raise ValueError("COMDAT certificate does not cover its queried physical section")
+                        item.update(retention=Result.PASS, disposition="unselected_comdat_duplicate",
+                                    selection_certificate=duplicate["certificate_id"])
+                        # Keep the original input, section, symbols and all
+                        # association descendants visible. This does not lend
+                        # the winner's source identity to an unselected copy.
+                        continue
                 if category == "ordinary_data":
                     data.append({"owner": owner, "section": number})
                 elif category == "code":
@@ -110,4 +139,5 @@ def observe_sections(context, objects, *, epoch=None, max_sections=100000):
         return {"check": "application_physical_section_domain", "result": Result.UNKNOWN,
                 "enumeration": Result.PASS, "selection": selection, "inputs": rows,
                 "section_count": count, "code_roots": roots, "data_sections": data, "gaps": gaps,
+                "comdat_selection_certificates": choices.certificates() if choices is not None else [],
                 "retained_section_selection": Result.UNKNOWN, "ready_for_collection": False}

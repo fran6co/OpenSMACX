@@ -40,7 +40,11 @@ Both ordinary and generated-change graph comparisons now observe the complete
 physical candidate section domain, not just initializer reachability. Selected
 code sections become native roots; all selected ordinary data sections enter the
 two-build storage/callback closure, including unreferenced data. Missing symbols
-do not remove physical obligations. Only exact source-owned independent code
+do not remove physical obligations. Native COMDAT `ANY` certificates can exclude
+proven duplicate copies from code roots while retaining their physical inventory;
+they require complete same-key candidates and a separately verified winner, not
+absence from the MAP. Reference-eliminated code and other unqualified sections
+remain unresolved. Only exact source-owned independent code
 COMDAT bodies receive function scope; headers, sibling definitions, multi-entry
 regions and initializer occurrences do not receive a blanket exemption. Compiled
 preservation, native selection/contribution completeness and allocation isolation

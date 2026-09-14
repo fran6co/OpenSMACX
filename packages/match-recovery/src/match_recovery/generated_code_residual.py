@@ -67,7 +67,7 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
             if application_scope is not None:
                 from .linked_section_domain import observe_sections
                 domains = {version: observe_sections(context, live[version].inputs.objects,
-                                                     epoch=input_epochs[version])
+                                                     epoch=input_epochs[version], native=live[version])
                            for version, context in contexts.items()}
                 result["physical_sections"] = domains
                 allocations = {}
