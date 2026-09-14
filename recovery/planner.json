@@ -7,9 +7,9 @@
   "commit_decision": true,
   "reserved_worktrees": [
     {
-      "path": "build/recovery/control-draw-finalization",
+      "path": "build/recovery/control-integration-native",
       "tasks": ["control-sprite-defaults"],
-      "evidence": ["The retained control/list lifecycle recovery is committed but not accepted or merged. The user now prioritizes a disjoint multi-worker campaign; reserve this checkout and derive its complete current task scope without copying or resetting its baseline."]
+      "evidence": ["The user requested consolidation and removal of inactive recovery branches. This checkout contains the original control/list lifecycle candidate and both subsequent integration attempts; reserve its complete current task scope while reconciling it with master. Removal of the two ancestor checkouts does not establish recovery acceptance or reset the original task baseline."]
     }
   ],
   "evidence": ["The user authorizes agents to orchestrate executable recovery and launch Codex workers. Delegate bounded source-owned task selection and task-only authorization commits; source checkpoints and integration require separate fresh native verification and independent review."]

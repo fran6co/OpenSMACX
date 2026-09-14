@@ -32,7 +32,7 @@ def test_campaign_authorizes_two_isolated_workers_and_verified_publication(tmp_p
     assert policy["publication"]["enabled"] is True
     assert policy["publication"]["cleanup"] is True
     reservation, = profiles["planner"]["reserved_worktrees"]
-    assert reservation["path"] == "build/recovery/control-draw-finalization"
+    assert reservation["path"] == "build/recovery/control-integration-native"
     assert reservation["tasks"] == ["control-sprite-defaults"]
     assert reservation["evidence"]
 
