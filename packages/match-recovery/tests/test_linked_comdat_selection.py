@@ -409,3 +409,46 @@ def test_unused_archive_directive_cannot_establish_actual_nonincremental_link(tm
     set_link(context, evidence, (context.directory / "link.log").read_text())
     with pytest.raises(ValueError, match="selection policy"):
         observe(context)
+
+
+def test_noncode_merge_is_bound_without_waiving_data_preservation(tmp_path):
+    from match_recovery.pe_coff import PeImage
+    context = fixture(tmp_path)
+    raw = (context.directory / "app.exe").read_bytes()
+    image = PeImage(raw, stamp(raw)["sha256"])
+    target = next(name for name, flags in zip(image.section_names, image.section_flags)
+                  if not flags & 0x20000020)
+    evidence = json.loads((context.directory / "link.json").read_bytes())
+    evidence["arguments"].append("/MERGE:.CRT=" + target)
+    set_link(context, evidence, (context.directory / "link.log").read_text())
+    certificate, = observe(context)[1]
+    merge, = certificate["noncode_merges"]
+    assert merge["source"] == ".crt" and merge["target"] == target.casefold()
+    assert merge["physical_code_sections_affected"] == 0
+    assert merge["data_preservation"] == "unknown"
+    assert certificate["outside_scope_verification"] == "unknown"
+
+
+@pytest.mark.parametrize("option", ["/MERGE:.CRT=.text", "/MERGE:.text=.rdata",
+                                    "/MERGE:.CRT=.missing", "/MERGE:.CRT=.CRT",
+                                    "/MERGE:.text$x=.rdata", "/MERGE:.CRT=.rdata$x"])
+def test_code_missing_or_identity_merge_is_not_assumed_neutral(tmp_path, option):
+    with pytest.raises(ValueError, match="merge"):
+        observe(fixture(tmp_path, option=option))
+
+
+def test_unmapped_archive_code_under_merge_source_remains_a_competitor(tmp_path):
+    from match_recovery.pe_coff import PeImage
+    context = fixture(tmp_path)
+    raw = (context.directory / "app.exe").read_bytes()
+    image = PeImage(raw, stamp(raw)["sha256"])
+    target = next(name for name, flags in zip(image.section_names, image.section_flags)
+                  if not flags & 0x20000020)
+    extra = bytearray(object_bytes(b"\x90\xc3", key=b"_extra"))
+    extra[20:28] = b".CRT\0\0\0\0"
+    add_archive(context, [("unused.obj/", bytes(extra))], [])
+    evidence = json.loads((context.directory / "link.json").read_bytes())
+    evidence["arguments"].append("/MERGE:.CRT=" + target)
+    set_link(context, evidence, (context.directory / "link.log").read_text())
+    with pytest.raises(ValueError, match="original physical code"):
+        observe(context)

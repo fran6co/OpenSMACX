@@ -183,10 +183,53 @@ def _no_other_fold(state, obj, root, candidates):
 def _certificate(state, name):
     if name in state["certificates"]:
         return state["certificates"][name]
+    if name in state["refusals"]:
+        raise ValueError(state["refusals"][name])
+    try:
+        return _certificate_uncached(state, name)
+    except ValueError as error:
+        # Do not turn I/O, unexpected errors or specialized ValueError
+        # subclasses into a cached semantic refusal.
+        if type(error) is not ValueError:
+            raise
+        reason = str(error)
+        state["refusals"][name] = reason
+        state["refusal_witnesses"][name] = reason
+        raise
+
+
+def _noncode_merges(state):
+    """Bound code-independent merges; not data or initialization equivalence."""
+    if not state["merges"]:
+        return []
+    image = state["native"].inputs.image
+    names = {row[3].name.split("$", 1)[0].casefold() for row in _code_candidates(state)}
+    if any(name.startswith("/") for name in names):
+        raise ValueError("code merge policy has unresolved physical section names")
+    result = []
+    for source, target in state["merges"]:
+        if "$" in source or "$" in target:
+            raise ValueError("subsection-specific merge semantics remain unqualified")
+        if source == target or source in names or target in names:
+            raise ValueError("section merge can affect original physical code")
+        destinations = [index for index, name in enumerate(image.section_names)
+                        if name.casefold() == target]
+        if len(destinations) != 1 or image.section_flags[destinations[0]] & 0x20000020:
+            raise ValueError("section merge lacks one independently nonexecutable output destination")
+        if any(flags & 0x20000020 for name, flags in zip(image.section_names, image.section_flags)
+               if name.casefold() == source):
+            raise ValueError("section merge has a contradictory executable output source")
+        result.append({"source": source, "target": target, "target_image_section": destinations[0] + 1,
+                       "physical_code_sections_affected": 0, "data_preservation": Result.UNKNOWN})
+    return result
+
+
+def _certificate_uncached(state, name):
     native = state["native"]
     inputs = native.inputs
-    if state["policy_gaps"] or state["merged"] or not state["nonincremental"]:
+    if state["policy_gaps"] or not state["nonincremental"]:
         raise ValueError("ANY selection has unsupported linker/directive selection policy")
+    merges = _noncode_merges(state)
     candidates = []
     for record, symbols, imports in state["interest"].get(name, ()):
         if imports:
@@ -283,6 +326,7 @@ def _certificate(state, name):
                          "characteristics_agreement": Result.PASS if flags == contribution.flags else Result.UNKNOWN,
                          "body_fingerprint": proof["body_fingerprint"]},
               "no_other_fold": no_fold,
+              "noncode_merges": merges,
               "image_sha256": inventory.image_sha256,
               "pdb_sha256": inventory.pdb_sha256,
               "remaining_linked_effects": Result.UNKNOWN, "outside_scope_verification": Result.UNKNOWN,
@@ -362,10 +406,12 @@ def any_selection(native, *, epoch=None):
                 state = {"native": native, "epoch": epoch, "inputs": observed.inputs,
                     "interest": interest, "records": records, "objects": {}, "certificates": {},
                     "object_witnesses": {}, "certificate_witnesses": {},
+                    "refusals": {}, "refusal_witnesses": {},
                     "metadata": None, "metadata_witness": None,
                     "code_candidates": None, "code_candidates_witness": None,
                     "policy_gaps": _policy(inputs.evidence, observed.records),
-                    "merged": any(word.startswith(("/merge:", "-merge:")) for word in words),
+                    "merges": tuple(tuple(word.split(":", 1)[1].split("=")) for word in words
+                                    if word.startswith(("/merge:", "-merge:"))),
                     "nonincremental": any(word.lower() in ("/incremental:no", "-incremental:no")
                                           for word in inputs.evidence["arguments"]),
                     "folding_names": frozenset(name for _, name in inputs.folding.candidate_keys())
@@ -374,7 +420,7 @@ def any_selection(native, *, epoch=None):
                 _live[handle] = state
                 fixed = ("native", "epoch", "inputs", "map_index", "constants", "codeview")
                 pointers = {key: state[key] for key in fixed}
-                indexed = ("interest", "records", "policy_gaps", "merged", "nonincremental", "folding_names")
+                indexed = ("interest", "records", "policy_gaps", "merges", "nonincremental", "folding_names")
                 before = deepcopy({key: state[key] for key in indexed})
                 map_before = deepcopy(state["map_index"].__dict__)
                 try:
@@ -385,6 +431,7 @@ def any_selection(native, *, epoch=None):
                             or not _same({key: state[key] for key in indexed}, before)
                             or not _same(state["map_index"].__dict__, map_before)
                             or not _same(state["certificates"], state["certificate_witnesses"])
+                            or not _same(state["refusals"], state["refusal_witnesses"])
                             or not _same(state["code_candidates"], state["code_candidates_witness"])
                             or state["objects"].keys() != state["object_witnesses"].keys()):
                         raise ValueError("ANY native derived selection indices changed during the batch")

@@ -2056,6 +2056,10 @@ This conservative proof requires an explicitly nonincremental, relocation-only
 link; ambiguous competitors stay unresolved. PDB module/extent correspondence
 does not equate characteristics: a reserved-bit difference is retained explicitly
 as unknown and cannot waive separate allocation or runtime checks.
+Non-code section merges require a separately bounded nonexecutable output target
+and no affected physical code section; this grants no data or initialization
+exemption. Repeated per-key refusals are memoized only inside the same guarded
+native batch. New batches recheck them; I/O and unexpected failures are not cached.
 Only certified losing sections and their original associative descendants leave
 the code-root domain; their physical identities and metadata remain in the report.
 Loser bytes need not equal the winner. A winner proof is shared per key within the
