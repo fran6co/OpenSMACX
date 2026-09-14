@@ -9,6 +9,7 @@ import struct
 import pytest
 
 from match_recovery import linked_data_ownership as native
+from match_recovery import linked_input_epoch as epochs
 from match_recovery.linked_context import linked_build
 from match_recovery.pe_coff import Coff
 from test_common_request_coverage import append_section
@@ -240,12 +241,12 @@ def test_compiled_producer_cannot_be_hidden_inside_dependency_namespace(tmp_path
 
 def test_batch_reuses_one_native_inventory_but_keeps_each_call_guarded(tmp_path, monkeypatch):
     context = fixture(tmp_path)
-    original = native._input_inventory
+    original = epochs._input_inventory
     calls = []
     def inventory(*args):
         calls.append(True)
         return original(*args)
-    monkeypatch.setattr(native, "_input_inventory", inventory)
+    monkeypatch.setattr(epochs, "_input_inventory", inventory)
     with linked_build(context) as live:
         with native.section_producers(context, live.inputs.objects) as batch:
             for _ in range(5):

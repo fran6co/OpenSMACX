@@ -48,6 +48,17 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
         fresh()
         with ExitStack() as stack:
             live = {version: stack.enter_context(linked_build(context)) for version, context in contexts.items()}
+            from .linked_input_epoch import input_epoch
+            from .linked_input_selection import observe_input_selection, compare_selection
+            input_epochs = {version: stack.enter_context(input_epoch(context, live[version].inputs.objects))
+                            for version, context in contexts.items()}
+            # Ordinary scoped functions can change selected inputs without
+            # appearing in the initializer graph. Observe the whole final-pass
+            # population first; later incomplete code must not erase its delta.
+            selection = {version: observe_input_selection(context, live[version].inputs.objects,
+                                                          epoch=input_epochs[version])
+                         for version, context in contexts.items()}
+            result["input_selection"] = compare_selection(selection["baseline"], selection["current"])
             observed = {version: value.initializers() for version, value in live.items()}
             checks = [_complete(value) for value in observed.values()]
             checks += [_complete(value.get("code_dependencies", {})) for value in observed.values()]
@@ -99,7 +110,8 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
             removed = {version: index(version) for version in contexts}
             from .generated_storage_residual import StorageClosure
             from .linked_data_ownership import section_producers
-            data_producers = {version: stack.enter_context(section_producers(context, live[version].inputs.objects))
+            data_producers = {version: stack.enter_context(section_producers(
+                                  context, live[version].inputs.objects, epoch=input_epochs[version]))
                               for version, context in contexts.items()}
             storage = StorageClosure(live, data_producers, limit=max_nodes)
             initial_producers = {version: {_key(value) for value in producers[version].values()}

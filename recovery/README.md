@@ -970,6 +970,13 @@ checks, historical obligations, declared structure/references and outside-scope
 preservation can yield `change_accepted` without requiring unfinished unrelated
 functions to match or application runtime hooks to exist. Its exit 0 means the
 change is ready for a coordinator checkpoint, not that the game is finished.
+Currently the native verifier still lacks complete linked outside-scope
+preservation. It no longer treats unchanged build settings plus passing compiled
+residuals as that proof; ordinary native admission/publication therefore refuses
+the missing prerequisite. Earlier native compiler-control acceptance results
+remain historical evidence under the previous boundary, not current link proof.
+Full-project acceptance also requires that linked qualification independently of
+configured structure/runtime proof commands.
 Explicitly permitted structural regressions still yield `migration_admitted` / 2.
 Neither path collects source; integrated changes must be reverified. Optional
 `--checkpoint <authorization.json>` delegates local publication after fresh review
@@ -1190,7 +1197,12 @@ they do not invent complete hierarchy/lifetime claims. Historical interpretation
 need explicit snapshot review, and current declarations must still measure.
 Full `structure` and `runtime` obligations remain separate and unwaived.
 
-This supplies checkpoint admission for supported cases, not full acceptance.
+Compiled-only preservation does not currently supply native checkpoint admission.
+The verifier requires qualified linked outside-scope evidence on ordinary changes
+too; missing or unknown evidence refuses, even with unchanged build settings and
+approving review. Complete input-family comparison is not yet retained-selection
+or allocation-isolation proof. No source report or prior accepted run substitutes
+for the missing native prerequisite.
 Changed TU recipes, unobserved substitutions, path-sensitive compiler symbols,
 and scoped table/data changes unsupported by the preservation model still refuse
 admission. The window-family deck now passes its task-TU, edited-file and supporting

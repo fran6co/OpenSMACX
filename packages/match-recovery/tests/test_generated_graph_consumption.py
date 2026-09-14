@@ -104,6 +104,29 @@ def test_native_storage_input_counterexample_controls_graph_admission(graph_task
         assert session.report["linked_effects"] == "unknown"
 
 
+@pytest.mark.parametrize("selection", ["pass", "fail", "unknown"])
+def test_complete_input_family_comparison_cannot_grant_retained_contribution_acceptance(
+        graph_task, monkeypatch, selection):
+    """Routing only; complete physical selection controls live separately."""
+    from match_recovery import generated_code_residual
+    root, task = graph_task
+    _, living, _ = contexts(monkeypatch)
+    monkeypatch.setattr(graph_native, "compare_build_initializers", lambda *a, **k: {"result": "pass"})
+
+    def observe(session):
+        assert living == [0, 1]
+        session.check_current()
+        return {"result": "pass", "input_selection": {"result": "unknown",
+                "dependency_families": selection, "retained_section_selection": "unknown"}}
+
+    monkeypatch.setattr(generated_code_residual, "compare_generated_code_residual", observe)
+    with graph_native.application_graph(root, task.task_id, permission=authority(task)) as session:
+        assert session.report["result"] == session.report["linked_effects"] == "unknown"
+        if selection == "fail":
+            assert "selected dependency families changed" in session.report["reason"]
+        assert not session.report["ready_for_collection"]
+
+
 @pytest.mark.parametrize("order", ["pass", "fail", "unknown", None])
 @pytest.mark.parametrize("consistency", ["pass", "fail"])
 def test_generated_graph_consumes_order_without_waiving_other_linked_effects(graph_task, monkeypatch, order, consistency):

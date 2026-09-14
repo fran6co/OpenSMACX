@@ -472,6 +472,15 @@ matching regressions are implicitly permitted. Explicit `--migration` permission
 can instead produce `migration_admitted` / exit 2 with restoration work retained.
 Both are ready for a coordinator checkpoint, not automatic collection or a claim
 that the whole game works. Unknown evidence still refuses admission.
+The native verifier now keeps compiled residuals separate from linked
+outside-scope preservation even when compiler/build settings are unchanged.
+The latter is still incomplete, so ordinary native publication refuses rather
+than promoting a compiled-only pass. Earlier compiler-control acceptance results
+describe the previous boundary, not current full-link admission. Complete input
+family comparison is useful evidence but does not prove retained COMDAT, private
+storage or alias selection. Workers cannot waive this missing prerequisite.
+Full-project acceptance enforces the same native linked prerequisite; switching
+acceptance scope or approving structure/runtime checks does not bypass it.
 Optional `--checkpoint <authorization.json>` delegates a local verified commit to
 the package. Its fields are `author` (the independent task coordinator), `message`
 and boolean `allow_migration`. The default should be false; publishing a tracked

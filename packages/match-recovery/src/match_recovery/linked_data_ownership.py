@@ -6,17 +6,13 @@ No address, symbol spelling, bytes or neighboring section supplies an identity.
 """
 
 from contextlib import contextmanager
-from copy import deepcopy
 from dataclasses import dataclass
 from pathlib import Path
 
-from .build_graph_commands import _context
-from .components import relative_path
-from .linked_code_ownership import _compilations, _contents, _Inputs, _portable, _target
-from .link_file_evidence import parse_link_files
-from .link_input_coverage import _input_inventory
-from .linked_objects import SelectedObjects, _owner
-from .model import digest, require_text
+from .linked_code_ownership import _contents, _portable, _target
+from .linked_input_epoch import input_epoch, _borrow_epoch
+from .linked_objects import _owner
+from .model import require_text
 from .pe_coff import Coff
 
 
@@ -38,106 +34,6 @@ def _section(obj, number):
         raise ValueError("data producer section extent disagrees with its physical representation")
     return section.name
 
-
-@contextmanager
-def _native(context, objects):
-    inputs = _Inputs()
-    report = digest(context.report)
-    context_identity = (context.root, context.directory, context.check_current)
-    population_fresh = None
-    selected_fresh = None
-
-    def fresh():
-        try:
-            if selected_fresh is not None:
-                selected_fresh()
-            elif population_fresh is not None:
-                population_fresh()
-        finally:
-            try:
-                inputs.check_current()
-            finally:
-                try:
-                    context_identity[2]()
-                finally:
-                    if ((context.root, context.directory, context.check_current) != context_identity
-                            or digest(context.report) != report):
-                        raise ValueError("data producer native context report changed")
-
-    try:
-        context.check_current()
-        if type(objects) is not SelectedObjects:
-            raise ValueError("data producer requires native selected physical inputs")
-        root, directory, compiled = _compilations(context)
-        _, _, _, command = _context(context)
-        artifacts = {}
-        for kind in ("link-input-files", "msvc-link-log"):
-            rows = [row for row in context.report.get("outputs", ()) if row.get("format") == kind]
-            if len(rows) != 1:
-                raise ValueError("data producer requires its native link input and final-pass artifacts")
-            row, = rows
-            path = directory / relative_path(row["path"])
-            raw = inputs.read(path)
-            if inputs.files[path][1] != {key: row[key] for key in ("sha256", "size")}:
-                raise ValueError("data producer native artifact changed")
-            artifacts[kind] = raw
-        evidence = parse_link_files(artifacts["link-input-files"])
-        if (digest(evidence) != digest(objects._constant_evidence)
-                or list(command.arguments) != evidence["arguments"] or str(command.cwd) != evidence["cwd"]):
-            raise ValueError("data producer objects differ from this native command/input epoch")
-        coverage, records = _input_inventory(artifacts["link-input-files"], artifacts["msvc-link-log"])
-        native = SelectedObjects(evidence, coverage, records)
-        population, population_fresh = objects._constant_population()
-        if digest(sorted(population, key=digest)) != digest(sorted(records, key=digest)):
-            raise ValueError("data producer population differs from the native physical input inventory")
-        # Read actual compiler/source/header inputs, not merely receipt fields.
-        for row in context.report["compile_link"]["compilations"]:
-            for item in row["compilation"]["inputs"]:
-                path = Path(item["path"])
-                inputs.read(path)
-                if (item["before"] != item["after"] or inputs.files[path][1] != item["after"]):
-                    raise ValueError("data producer compiler/source input changed from its receipt")
-        from .coff_archive import CoffArchive
-        from .common_allocation import _policy
-        from .linked_context import _same
-        # Initialize legitimate lazy policy state before pinning the immutable
-        # native indices. Growing byte/archive/owner caches remain independently
-        # checked against actual physical files, not copied verdicts.
-        policy = _policy(evidence, records)
-        if objects._constant_policy_gaps is None:
-            objects._constant_policy_gaps = policy
-        elif not _same(objects._constant_policy_gaps, policy):
-            raise ValueError("data producer selected policy differs from native physical inputs")
-        mutable = {"_files", "_archives", "_resolved"}
-        pinned = deepcopy({key: value for key, value in objects.__dict__.items() if key not in mutable})
-        archives = {}
-
-        def selected_fresh():
-            if not _same({key: value for key, value in objects.__dict__.items() if key not in mutable}, pinned):
-                raise ValueError("data producer selected-object indices changed")
-            population_fresh()
-            if set(objects._files) - objects._stamps.keys() or set(objects._archives) - objects._files.keys():
-                raise ValueError("data producer has an unobserved native cache key")
-            for name, raw in objects._files.items():
-                path = Path(name)
-                actual = inputs.read(path)
-                if inputs.files[path][1] != objects._stamps[name] or not _same(actual, raw):
-                    raise ValueError("data producer physical file cache changed")
-            for path, archive in objects._archives.items():
-                if path not in archives:
-                    archives[path] = deepcopy(CoffArchive(objects._files[path]).__dict__)
-                if type(archive) is not CoffArchive or not _same(archive.__dict__, archives[path]):
-                    raise ValueError("data producer physical archive cache changed")
-            for owner, value in objects._resolved.items():
-                if not _same(value, native.resolve(owner)):
-                    raise ValueError("data producer selected owner cache changed")
-
-        fresh()
-        yield (root, directory, compiled, coverage, native, inputs), fresh
-    except (KeyError, TypeError, AttributeError) as error:
-        raise ValueError("incomplete native data producer evidence") from error
-    finally:
-        fresh()
 
 
 def _selected(objects, native, owner, inputs):
@@ -224,14 +120,21 @@ class _SectionProducers:
 
 
 @contextmanager
-def section_producers(context, objects):
+def section_producers(context, objects, *, epoch=None):
     """Share physical parsing within one live native section-producer epoch.
 
     Every call checks context, receipts, all captured files and the independently
     witnessed native indices before and after use. The handle expires at exit;
     returned descriptors remain ordinary correspondence inputs, not coverage.
     """
-    with _native(context, objects) as (state, fresh):
+    if epoch is None:
+        with input_epoch(context, objects) as owned:
+            with section_producers(context, objects, epoch=owned) as handle:
+                yield handle
+        return
+    with _borrow_epoch(epoch, context, objects) as native:
+        state = (native.root, native.directory, native.compiled, native.coverage, native.native, native.inputs)
+        fresh = epoch.check_current
         live = True
 
         def check_current():

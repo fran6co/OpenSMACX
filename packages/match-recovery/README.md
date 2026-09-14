@@ -2086,6 +2086,25 @@ automatically classified as unauthorized changes. Complete linked selection,
 allocation isolation and remaining residual effects still prevent graph admission.
 These checks do not establish autonomous or runtime acceptance.
 
+The same paired native observation also compares the complete final-pass input
+families before tracing initializers. An authorized ordinary function can pull
+in a library member that contributes other definitions outside that trace.
+Traversed dependency code already retains its **whole-member** content identity;
+the additional input boundary covers families not reached by the initializer
+graph. It retains native link order, source-qualified compiled inputs and exact
+dependency paths/member occurrences/content identities. Repeated archive names
+remain candidate families, not an invented unique selected member. Compiled TU
+deltas are reported separately from dependency-family changes.
+
+This comparison and data-producer lookup share one expiring native input epoch
+per build, with physical files, receipts and parsed indices guarded throughout.
+Selection diagnostics survive a later incomplete initializer/code observation.
+A changed dependency family requires complete contribution preservation before
+admission; equal families alone cannot prove COMDAT selection, retained private
+sections, aliases or allocation isolation. Those remaining unknowns still refuse
+autonomous acceptance. No source mapping, task baseline or permission is inferred
+from this comparison.
+
 The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's
 JSON request on stdin and freshly runs source integrity, mapping/history checks,
@@ -2100,6 +2119,17 @@ unmeasured obligations prevent admission. No target-specific verifier script is
 needed for these supported checks. This is not full-link equivalence or runtime
 acceptance. Preservation still refuses unsupported TU migrations and changes to
 independent data/tables outside its function-ownership model.
+
+Ordinary unchanged-build-policy changes must also supply qualified linked
+outside-scope preservation. The native verifier no longer promotes the compiled
+residual's overall pass while ignoring its `outside_scope_verification: unknown`.
+Missing linked evidence produces actionable refusal, even when build, scoped
+matches and independent review pass. Current native compiled preservation cannot
+alone yield `change_accepted` or authorize local/destination publication. A live
+graph result, where available, remains a separate required prerequisite; neither
+input-family equality nor a cached report satisfies retained-selection proof.
+The full-project native acceptance verifier requires the same qualified linked
+preservation independently of configured structure/runtime proof commands.
 
 ## Package boundary and verification
 

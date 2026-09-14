@@ -14,6 +14,8 @@ from match_recovery.application_context import application_build
 from match_recovery.driver import working_state
 from match_recovery.linked_context import linked_build
 from match_recovery.linked_data_ownership import section_producers
+from match_recovery.linked_input_epoch import input_epoch
+from match_recovery.linked_input_selection import observe_input_selection, compare_selection
 from match_recovery.pe_coff import Coff
 from match_recovery.resources import INHERITED
 from recovery.environment.wine import VC6_ROOT
@@ -45,18 +47,29 @@ def test_real_data_bytes_callback_and_live_producer_identity():
             selected = native.inputs.objects.resolve(placed.owner)
             obj = Coff(selected["raw"])
             symbol, = (row for row in obj.symbols.values() if row.name == "_native_words")
-            with section_producers(context, native.inputs.objects) as producers:
-                descriptor = producers.identify(placed.owner, symbol.section)
-                assert descriptor == {"kind": "compiled", "unit": ADDED, "section": ".data"}
-                assert producers.resolve(descriptor) == {"owner": selected["owner"], "section": symbol.section}
-                assert producers.identify(placed.owner, symbol.section) == descriptor
-                proof = native.data_contents(placed.owner, symbol.section)
-                assert proof["result"] == proof["input_consistency"] == "pass", proof
-                assert proof["envelope"]["size"] == 20
-                assert any(row["identity"] == {"external": "_native_callback"} for row in proof["references"])
-                assert proof["allocation_isolation"] == proof["remaining_linked_effects"] == "unknown"
-                assert not proof["ready_for_collection"]
-                producers.check_current()
+            with input_epoch(context, native.inputs.objects) as epoch:
+                catalog = observe_input_selection(context, native.inputs.objects, epoch=epoch)
+                assert catalog["candidate_coverage"] == "pass"
+                assert {row["producer"]["unit"] for row in catalog["inventory"]
+                        if row["producer"]["kind"] == "compiled"} == {ADDED, WITNESS}
+                comparison = compare_selection(catalog, catalog)
+                assert comparison["dependency_families"] == "pass" and not comparison["compiled_changes"]
+                assert comparison["result"] == comparison["retained_section_selection"] == "unknown"
+                with section_producers(context, native.inputs.objects, epoch=epoch) as producers:
+                    descriptor = producers.identify(placed.owner, symbol.section)
+                    assert descriptor == {"kind": "compiled", "unit": ADDED, "section": ".data"}
+                    assert producers.resolve(descriptor) == {"owner": selected["owner"], "section": symbol.section}
+                    assert producers.identify(placed.owner, symbol.section) == descriptor
+                    proof = native.data_contents(placed.owner, symbol.section)
+                    assert proof["result"] == proof["input_consistency"] == "pass", proof
+                    assert proof["envelope"]["size"] == 20
+                    assert any(row["identity"] == {"external": "_native_callback"} for row in proof["references"])
+                    assert proof["allocation_isolation"] == proof["remaining_linked_effects"] == "unknown"
+                    assert not proof["ready_for_collection"]
+                    producers.check_current()
+                assert observe_input_selection(context, native.inputs.objects, epoch=epoch) == catalog
             with pytest.raises(ValueError, match="expired"):
                 producers.check_current()
+            with pytest.raises(ValueError, match="expired"):
+                epoch.check_current()
     assert working_state(root) == state

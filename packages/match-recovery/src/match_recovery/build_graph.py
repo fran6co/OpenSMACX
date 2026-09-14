@@ -225,6 +225,10 @@ def application_graph(root, task_name, *, integration=None, permission=None):
                     # functions. Neither a PASS nor a cross-build difference
                     # supplies the remaining scope/storage/effect composition.
                     result["generated_code_residual"] = residual
+                    selection = residual.get("input_selection", {})
+                    if selection.get("dependency_families") == Result.FAIL and result["result"] != Result.FAIL:
+                        result["reason"] = ("selected dependency families changed outside the initializer-only proof; "
+                                            "complete contribution preservation is required")
                     storage = residual.get("storage_residual", {})
                     # An intended source/root delta cannot justify a mismatch
                     # between an actual selected object and its own linked data.

@@ -77,6 +77,13 @@ native checkpoint verification plus independent review can yield `change_accepte
 without waiting for the whole game. Build/link, scoped matching/restoration,
 declared structure/references and outside-scope preservation must pass; only
 explicit coordinator permission admits temporary matching regressions (exit 2).
+The native compiled-residual check does not yet establish linked outside-scope
+preservation. Unchanged build settings no longer promote that unknown to a pass:
+ordinary native acceptance/publication currently refuses the missing linked
+prerequisite too. Input-family equality alone is not retained-selection proof.
+Full-project acceptance requires the same qualification; structure/runtime proof
+commands cannot waive it.
+Do not replay earlier compiler-control acceptance reports under this boundary.
 Exit 0 in change mode means readiness for a coordinator checkpoint, not game
 acceptance or automatic collection. Explicit coordinator `--checkpoint` authorization
 can publish a freshly verified local change; it does not integrate into another

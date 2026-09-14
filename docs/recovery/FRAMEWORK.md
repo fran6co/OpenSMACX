@@ -6,6 +6,17 @@ root tools and legacy gate have been removed following native cutover controls.
 The installed package owns recovery commands and verification; project-local
 configuration and compiler interaction remain under `recovery/`.
 
+Current admission correction: the native migration/checkpoint verifier no longer
+promotes compiled outside-function preservation to linked outside-scope evidence
+merely because build settings are unchanged. Ordinary native acceptance and
+publication now refuse that incomplete prerequisite. Earlier acceptance controls
+below describe their historical, narrower boundary. Complete physical input-family
+comparison is connected to live graph verification; retained contribution/COMDAT
+selection, alias and allocation-isolation composition remain unfinished. Family
+equality and independent approval cannot replace those proofs.
+Full-project acceptance likewise refuses missing linked qualification even when
+its configured structure/runtime proofs pass.
+
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied
 original can be pinned in source without copying its bytes; compiler and build

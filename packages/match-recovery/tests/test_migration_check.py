@@ -2,6 +2,8 @@
 
 The compiler is a controlled test double; this is not a live agent/game pilot.
 Restoration, layout, outside-code comparison and admission policy are real.
+Positive admission protocol controls explicitly double the missing qualified
+linked preservation; ordinary physical compiler evidence cannot supply it.
 """
 
 from contextlib import contextmanager
@@ -114,7 +116,23 @@ def admission(root, payload, report):
     return admit(payload["permission"], tuple(protected.values()), scope, payload["review"], payload["snapshot"], 0, report)
 
 
-def test_native_measured_checkpoint_tracks_regression_then_restores_same_obligations(migration):
+@pytest.fixture
+def qualified_preservation_protocol(migration, monkeypatch):
+    """Explicit complete-prerequisite double for admission protocol tests only.
+
+    This is not evidence that the physical compiler comparison proves linking.
+    The ordinary migration fixture and native producer remain unqualified.
+    """
+    preserve = native.check_preservation
+
+    def qualified(*args, **kwargs):
+        return {**preserve(*args, **kwargs), "outside_scope_verification": "pass",
+                "test_fixture": "synthetic qualified linked prerequisite; not a physical proof"}
+
+    monkeypatch.setattr(native, "check_preservation", qualified)
+
+
+def test_admission_protocol_tracks_regression_then_restores_same_obligations(migration, qualified_preservation_protocol):
     path = migration / "code/unit.cc"
     before = path.read_text()
     path.write_text(before + "// regression\n")
@@ -131,8 +149,89 @@ def test_native_measured_checkpoint_tracks_regression_then_restores_same_obligat
     assert TaskStore(migration).read("owner").base_revision == payload["task"]["base_revision"]
 
 
+def test_physical_compiled_residual_pass_cannot_supply_linked_acceptance(migration, monkeypatch):
+    path = migration / "code/unit.cc"
+    path.write_text(path.read_text() + "// Ordinary scoped body spelling with unchanged build policy.\n")
+    preserve = native.check_preservation
+    observed = []
+
+    def physical(*args, **kwargs):
+        # Real bounded COFF comparison and damage controls, not a fabricated
+        # passing preservation report. No linked-selection evidence is supplied.
+        report = preserve(*args, **kwargs)
+        observed.append(report)
+        return report
+
+    monkeypatch.setattr(native, "check_preservation", physical)
+    payload = request(migration)
+    before = working_state(migration)
+    report = measure(migration, payload)
+    assert len(observed) == 1 and observed[0]["result"] == "pass"
+    assert observed[0]["outside_scope_verification"] == "unknown" and not observed[0]["scope_complete"]
+    assert report["build"] == report["structure"] == report["references"] == "pass"
+    assert report["outside_scope"] == "unknown"
+    diagnostic, = [row for row in report["diagnostics"] if row["check"] == "linked-preservation"]
+    assert diagnostic["result"] == "unknown"
+    assert '"compiled_residual": "pass"' in diagnostic["evidence"][0]
+    assert "baseline/current selection" in diagnostic["evidence"][0]
+    with pytest.raises(ValueError, match="outside-scope preservation"):
+        admission(migration, payload, report)
+    assert working_state(migration) == before
+
+
+@pytest.mark.parametrize("qualified", [None, "unknown", "not_measured", False])
+def test_absent_or_invalid_linked_qualification_never_inherits_compiled_pass(migration, monkeypatch, qualified):
+    report = {"result": "pass"}
+    if qualified is not None:
+        report["outside_scope_verification"] = qualified
+    monkeypatch.setattr(native, "check_preservation", lambda *args, **kwargs: report)
+    payload = request(migration)
+    measured = measure(migration, payload)
+    assert measured["outside_scope"] == "unknown"
+    with pytest.raises(ValueError, match="outside-scope preservation"):
+        admission(migration, payload, measured)
+
+
+def test_native_verification_only_driver_cannot_publish_with_compiled_evidence_alone(migration):
+    task = TaskStore(migration).read("owner")
+    before = working_state(migration)
+    calls = []
+
+    def command(name):
+        return {"argv": [name], "timeout": 10}
+
+    config = {"schema_version": 1, "target": task.target, "acceptance_scope": "change",
+              **{name: command(name) for name in ("context", "check", "obligations", "migration_check")}}
+
+    def execute(command, root, name, payload):
+        stage = command.argv[0]
+        calls.append(stage)
+        if stage == "context":
+            return 0, {}
+        if stage == "obligations":
+            return 0, task_obligations(root, name)
+        if stage == "check":
+            report = native.measure_restoration(root, name, root / "original.exe")
+            return {"pass": 0, "fail": 1, "unknown": 3}[report["result"]], report
+        if stage == "review":
+            return 0, {"snapshot": payload["snapshot"], "decision": "approve",
+                       "evidence": ["Independent approval cannot establish linked selection"], "feedback": "Reviewed scoped source"}
+        assert stage == "migration_check", "Verification-only run must never invoke the worker"
+        return 0, native.measure_migration(root, name, root / "original.exe", payload)
+
+    report = drive(migration, task.task_id, config, {"author": "worker", "command": command("worker")},
+                   iterations=1, verify_only=True,
+                   reviewer_configuration={"author": "independent", "command": command("review")},
+                   checkpoint_configuration={"author": task.author, "message": "Must not publish", "allow_migration": False},
+                   execute=execute)
+    assert report["stop_reason"] == "change_unknown" and not report["ready_for_collection"]
+    assert not report.get("ready_for_checkpoint") and "worker" not in calls
+    assert calls.count("migration_check") == 1
+    assert working_state(migration)["head"] == before["head"]
+
+
 @pytest.mark.parametrize("scope", ["change", "full_project"])
-def test_driver_uses_native_checkpoint_then_resumes_without_resetting_baseline(migration, scope):
+def test_driver_checkpoint_protocol_resumes_without_resetting_baseline(migration, qualified_preservation_protocol, scope):
     task = TaskStore(migration).read("owner")
     permission = request(migration)["permission"]
     path = migration / "code/unit.cc"
@@ -190,8 +289,8 @@ def test_driver_uses_native_checkpoint_then_resumes_without_resetting_baseline(m
 
 @pytest.mark.parametrize("name", ["check_source", "check_mappings", "check_claims", "check_preservation"])
 @pytest.mark.parametrize("result", ["fail", "unknown"])
-def test_independent_prerequisites_cannot_be_waived(migration, monkeypatch, name, result):
-    monkeypatch.setattr(native, name, lambda *_: {"result": result})
+def test_independent_prerequisites_cannot_be_waived(migration, qualified_preservation_protocol, monkeypatch, name, result):
+    monkeypatch.setattr(native, name, lambda *_: {"result": result, "outside_scope_verification": "pass"})
     payload = request(migration)
     report = measure(migration, payload)
     assert report["outside_scope"] == result
@@ -341,7 +440,8 @@ def test_native_graph_prerequisite_reuses_current_build_without_waiving_linked_e
         application.baseline.check_current()
         application.current.check_current()
         calls.append("preservation")
-        return {"result": "pass", "test_fixture": "consumer orchestration, not producer evidence"}
+        return {"result": "pass", "outside_scope_verification": "pass",
+                "test_fixture": "consumer orchestration, not producer evidence"}
 
     monkeypatch.setattr(native, "measure_restoration", restore)
     monkeypatch.setattr(native, "check_preservation", preserve)
@@ -374,7 +474,7 @@ def test_unchanged_or_non_graph_policy_never_invokes_graph_exception_route(migra
         path.write_text(path.read_text() + "\n# changed compiler policy\n")
     monkeypatch.setattr(native, "application_graph", lambda *a, **k: pytest.fail("ineligible graph route"))
     report = measure(migration)
-    assert report["outside_scope"] == ("unknown" if changed_policy else "pass")
+    assert report["outside_scope"] == "unknown"
 
 
 def test_graph_prerequisite_cannot_return_after_mutating_reviewed_source(migration, monkeypatch):
@@ -450,6 +550,16 @@ def test_failed_graph_without_reusable_build_still_checks_current_application(mi
     assert report["outside_scope"] == ("fail" if built == "pass" else "unknown")
     assert calls == ["enter", "current-build", *(["preservation"] if built == "pass" else []), "close"]
     assert not sessions[0].baseline.root.exists() and not sessions[0].current.root.exists()
+
+
+def test_definite_live_graph_failure_is_not_downgraded_by_unknown_compiled_preservation(migration, monkeypatch):
+    live_graph(migration, monkeypatch, outcome="fail")
+    monkeypatch.setattr(native, "check_preservation", lambda *a, **k: {"result": "unknown"})
+    payload = request(migration)
+    report = measure(migration, payload)
+    assert report["outside_scope"] == "fail"
+    with pytest.raises(ValueError, match="outside-scope preservation"):
+        admission(migration, payload, report)
 
 
 def test_failed_build_prevents_compiler_checks(migration, monkeypatch):
@@ -594,7 +704,11 @@ def test_resolved_discovery_requires_fresh_review_then_native_checks(migration, 
     with pytest.raises(ValueError, match="reviewed source snapshot"):
         measure(migration, stale)
     payload = request(migration)
-    assert admission(migration, payload, measure(migration, payload)).exit_code == 0
+    report = measure(migration, payload)
+    assert report["build"] == report["structure"] == report["references"] == "pass"
+    assert report["outside_scope"] == "unknown"
+    with pytest.raises(ValueError, match="outside-scope preservation"):
+        admission(migration, payload, report)
     assert store.read("owner").base_revision == task.base_revision
 
 
@@ -613,7 +727,7 @@ def test_discovery_during_native_verification_invalidates_review(migration, monk
         measure(migration)
 
 
-def test_other_tasks_pending_work_does_not_establish_a_change_dependency(migration):
+def test_other_tasks_pending_work_does_not_establish_a_change_dependency(migration, qualified_preservation_protocol):
     store = TaskStore(migration)
     task = store.read("owner")
     subject = task.subjects[0]
@@ -681,7 +795,9 @@ def test_native_cli_consumes_driver_request_without_project_dispatch(migration, 
     monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(request(migration))))
     assert main(["tasks", "check-migration", "owner", "--root", str(migration), "--image", "original.exe"]) == 0
     report = json.loads(capsys.readouterr().out)
-    assert report["build"] == report["structure"] == report["outside_scope"] == "pass"
+    assert report["build"] == report["structure"] == "pass"
+    assert report["outside_scope"] == "unknown"
+    assert any(row["check"] == "linked-preservation" for row in report["diagnostics"])
     assert "ready_for_collection" not in report  # Measurement envelope, not admission.
 
 

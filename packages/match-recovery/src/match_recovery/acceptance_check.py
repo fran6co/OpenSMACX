@@ -201,6 +201,18 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
     restored = run("restoration", lambda: measure_restoration(
         root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
     preservation = run("preservation", lambda: check_preservation(root, task_name))
+    linked_preservation = preservation.get("outside_scope_verification", "unknown")
+    if linked_preservation not in ("pass", "fail", "unknown"):
+        linked_preservation = "unknown"
+    if linked_preservation != "pass":
+        report["findings"].append({
+            "dimension": "obligations",
+            "message": "Native linked outside-scope preservation is incomplete; compiled residual agreement and unchanged build policy "
+                       "do not prove baseline/current linked selection and contributions. Structure/runtime proof commands cannot waive this prerequisite.",
+            "evidence": [_diagnostic("linked-preservation", {
+                "result": linked_preservation, "compiled_residual": preservation["result"],
+                "next_action": "obtain fresh native linked-selection/residual evidence against the original preservation baseline; "
+                               "keep the source and historical obligations until that verification is complete"})]})
     source_form = run("cpp-source-form", lambda: check_source_form(root))
     policy = run("baseline-build-policy", lambda: {"result": "pass" if unchanged_build_policy(
         root, task, Measurement.read(root), Build.read(root)) else "unknown"})
@@ -258,7 +270,7 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
                                        "evidence": value.get("evidence", ["native acceptance:" + dimension])})
     protected_results = [row["result"] if row["fingerprint"] == current.get(key) else "unknown"
                          for key, row in measurements.items() if key in protected]
-    report["obligations"] = _all([binary, preservation["result"], policy["result"], *protected_results])
+    report["obligations"] = _all([binary, preservation["result"], linked_preservation, policy["result"], *protected_results])
     report["measurements"] = [measurements[key] for key in sorted(protected)]
     report["current"] = {key: current[key] for key in protected if current.get(key) is not None}
     if report["obligations"] != "pass":

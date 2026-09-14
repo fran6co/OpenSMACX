@@ -2,8 +2,9 @@
 
 This measures admission inputs; it never approves a review, waives obligations,
 or establishes final runtime/structural acceptance. Outside-scope verification
-means unchanged source bindings and compiled residuals under an unchanged build
-policy, plus a fresh current build, not equivalence of the whole running program.
+requires qualified linked preservation in addition to unchanged source bindings,
+compiled residuals and a fresh current build. Unchanged build policy alone cannot
+prove archive/COMDAT/common selection or equivalence of the running program.
 """
 
 from pathlib import Path
@@ -181,6 +182,17 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
             preservation = run("preservation", lambda: check_preservation(
                 root, task_name, **({"integration": integration} if integration is not None else {}),
                 **({"application": application} if application is not None else {}), **generated_permission))
+            linked_preservation = (graph["result"] if graph is not None else
+                                   preservation.get("outside_scope_verification", Result.UNKNOWN))
+            if linked_preservation not in tuple(Result):
+                linked_preservation = Result.UNKNOWN
+            if graph is None:
+                diagnose("linked-preservation", {
+                    "result": linked_preservation, "compiled_residual": preservation["result"],
+                    "reason": "outside-scope linked preservation requires fresh baseline/current selection and contribution evidence; "
+                              "compiled residual agreement, unchanged build policy and a successful current link do not establish it",
+                    "next_action": "preserve the candidate and obtain native linked-selection/residual verification against the original "
+                                   "task or integration baseline; reviews and matching-regression permissions cannot waive this prerequisite"})
             structural = (declared_outcome(restored.get("structural_requirements", []), interpretations,
                                            review=request["review"])[0] if interpretations else Result.PASS)
             measurements = {row["obligation_id"]: row for row in restored.get("measurements", [])}
@@ -192,8 +204,9 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
             fresh()
             return {"snapshot": request["snapshot"], "changed": sorted(scope), "build": built["result"],
                     "structure": structural, "references": restored.get("references", Result.UNKNOWN),
-                    "outside_scope": _all([*(row["result"] for row in checks), preservation["result"],
-                                           graph["result"] if graph is not None else Result.PASS if unchanged_policy else Result.UNKNOWN]),
+                    "outside_scope": (Result.FAIL if graph is not None and graph["result"] == Result.FAIL else
+                                      _all([*(row["result"] for row in checks), preservation["result"], linked_preservation,
+                                            Result.PASS if graph is not None or unchanged_policy else Result.UNKNOWN])),
                     "measurements": [measurements[key] for key in sorted(protected)], "current": current,
                     "diagnostics": diagnostics}
     finally:

@@ -1,6 +1,8 @@
 """Native admission controls with real history/build and a synthetic COFF backend.
 
 Global check results and structure/runtime proofs are controlled independently.
+Positive protocol tests explicitly double qualified linked preservation; the
+physical compiler fixture alone never supplies full outside-scope verification.
 These tests prove orchestration, not Alpha Centauri semantics or a live pilot.
 """
 
@@ -97,7 +99,19 @@ def proofs(monkeypatch):
     return calls
 
 
-def test_native_acceptance_retains_one_fresh_build_for_both_proofs(acceptance, proofs):
+@pytest.fixture
+def qualified_preservation_protocol(acceptance, monkeypatch):
+    """Complete-prerequisite protocol double, not physical linked evidence."""
+    preserve = native.check_preservation
+
+    def qualified(*args, **kwargs):
+        return {**preserve(*args, **kwargs), "outside_scope_verification": "pass",
+                "test_fixture": "synthetic complete linked prerequisite for protocol only"}
+
+    monkeypatch.setattr(native, "check_preservation", qualified)
+
+
+def test_native_acceptance_retains_one_fresh_build_for_both_proofs(acceptance, proofs, qualified_preservation_protocol):
     payload = request(acceptance)
     report = measure(acceptance, payload)
     assert acceptance_result(0, report, request=payload) == "pass"
@@ -146,7 +160,7 @@ def test_direct_full_acceptance_cannot_bypass_any_tasks_pending_discovery(
 
 @pytest.mark.parametrize("name", ["owner", "other-task"])
 @pytest.mark.parametrize("disposition", ["incorporated", "rejected"])
-def test_explicitly_resolved_findings_do_not_block_full_acceptance(acceptance, proofs, name, disposition):
+def test_explicitly_resolved_findings_do_not_block_full_acceptance(acceptance, proofs, qualified_preservation_protocol, name, disposition):
     finding = discover(acceptance, name)
     store = TaskStore(acceptance)
     store.resolve(name, discovery_id=finding["discovery_id"], request_id="resolve-finding",
@@ -159,7 +173,7 @@ def test_explicitly_resolved_findings_do_not_block_full_acceptance(acceptance, p
     assert store.decisions(name) == decisions
 
 
-def test_resolving_another_tasks_finding_requires_a_new_full_review(acceptance, proofs):
+def test_resolving_another_tasks_finding_requires_a_new_full_review(acceptance, proofs, qualified_preservation_protocol):
     finding = discover(acceptance, "other-task")
     payload = request(acceptance)
     store = TaskStore(acceptance)
@@ -265,7 +279,7 @@ def test_native_acceptance_refuses_source_changed_after_review_before_entry(acce
     assert not proofs
 
 
-def test_publishing_and_committing_the_review_does_not_invalidate_it(acceptance, proofs):
+def test_publishing_and_committing_the_review_does_not_invalidate_it(acceptance, proofs, qualified_preservation_protocol):
     payload = request(acceptance)
     ReviewStore(acceptance, "owner").append(payload["review"], expected_revision=0)
     git(acceptance, "add", "recovery/history")
@@ -316,6 +330,56 @@ def test_outside_preservation_is_mandatory(acceptance, proofs, monkeypatch, resu
     monkeypatch.setattr(native, "check_preservation", lambda *a: {"result": result})
     report = measure(acceptance)
     assert report["result"] == report["obligations"] == result
+
+
+def test_passing_full_proofs_cannot_promote_actual_compiled_preservation_to_linked_proof(acceptance, proofs, monkeypatch):
+    preserve = native.check_preservation
+    observed = []
+
+    def physical(*args, **kwargs):
+        report = preserve(*args, **kwargs)
+        observed.append(report)
+        return report
+
+    monkeypatch.setattr(native, "check_preservation", physical)
+    payload = request(acceptance)
+    before = working_state(acceptance)
+    report = measure(acceptance, payload)
+    assert len(observed) == 1 and observed[0]["result"] == "pass"
+    assert observed[0]["outside_scope_verification"] == "unknown" and observed[0]["scope_complete"] is False
+    assert report["build"] == report["references"] == report["structure"] == report["runtime"] == "pass"
+    assert [row["dimension"] for row in proofs] == ["structure", "runtime"]
+    assert report["measurements"] and all(row["result"] == "pass" for row in report["measurements"])
+    assert report["result"] == report["obligations"] == "unknown"
+    assert acceptance_result(3, report, request=payload) == "unknown"
+    assert any("Structure/runtime proof commands cannot waive" in row["message"]
+               and "baseline/current linked selection" in row["message"] for row in report["findings"])
+    assert working_state(acceptance) == before
+
+
+@pytest.mark.parametrize("qualification,expected", [(None, "unknown"), (False, "unknown"),
+                                                    ("unverified", "unknown"), ("unknown", "unknown"), ("fail", "fail")])
+def test_full_proof_commands_cannot_replace_missing_or_refused_linked_qualification(
+        acceptance, proofs, monkeypatch, qualification, expected):
+    preservation = {"result": "pass", "scope_complete": False}
+    if qualification is not None:
+        preservation["outside_scope_verification"] = qualification
+    monkeypatch.setattr(native, "check_preservation", lambda *args: preservation)
+    report = measure(acceptance)
+    assert report["structure"] == report["runtime"] == report["build"] == "pass"
+    assert report["obligations"] == report["result"] == expected
+    assert len(proofs) == 2
+    assert any("linked-preservation" in str(row["evidence"]) for row in report["findings"])
+
+
+def test_full_acceptance_cli_refuses_compiled_only_evidence_despite_passing_proofs(acceptance, proofs, monkeypatch, capsys):
+    payload = request(acceptance)
+    monkeypatch.setattr(sys, "stdin", io.StringIO(json.dumps(payload)))
+    assert main(["tasks", "check-acceptance", "owner", "--root", str(acceptance), "--image", "original.exe"]) == 3
+    report = json.loads(capsys.readouterr().out)
+    assert report["result"] == report["obligations"] == "unknown"
+    assert report["structure"] == report["runtime"] == "pass"
+    assert acceptance_result(3, report, request=payload) == "unknown"
 
 
 def test_changed_build_policy_is_not_a_pass(acceptance, proofs):
@@ -401,7 +465,7 @@ def test_request_cannot_omit_current_source_history(acceptance, proofs, damage):
     assert not proofs
 
 
-def test_cli_reads_driver_request_and_returns_native_receipt(acceptance, proofs, monkeypatch, capsys):
+def test_cli_reads_driver_request_and_returns_native_receipt(acceptance, proofs, qualified_preservation_protocol, monkeypatch, capsys):
     payload = request(acceptance)
     monkeypatch.setattr("sys.stdin", io.StringIO(json.dumps(payload)))
     assert main(["tasks", "check-acceptance", "owner", "--root", str(acceptance), "--image", "original.exe"]) == 0
@@ -409,7 +473,7 @@ def test_cli_reads_driver_request_and_returns_native_receipt(acceptance, proofs,
     assert acceptance_result(0, report, request=payload) == "pass"
 
 
-def test_actual_json_proof_subprocesses_receive_the_fresh_artifact(acceptance, monkeypatch):
+def test_actual_json_proof_subprocesses_receive_the_fresh_artifact(acceptance, qualified_preservation_protocol, monkeypatch):
     script = (
         "import hashlib,json,sys; from pathlib import Path; r=json.load(sys.stdin); "
         "o=r['build']['outputs'][0]; p=Path(r['build']['directory'])/o['path']; "
@@ -427,7 +491,7 @@ def test_actual_json_proof_subprocesses_receive_the_fresh_artifact(acceptance, m
 
 
 @pytest.mark.parametrize("native_result", ["unknown", "fail"])
-def test_hook_only_discharges_its_own_unmeasured_protected_dimension(acceptance, proofs, monkeypatch, native_result):
+def test_hook_only_discharges_its_own_unmeasured_protected_dimension(acceptance, proofs, qualified_preservation_protocol, monkeypatch, native_result):
     payload = request(acceptance)
     item = Obligation(payload["protected"][0]["entity_id"], Dimension.STRUCTURE, "fixture structural duty")
     payload["protected"].append({**asdict(item), "obligation_id": item.obligation_id})
@@ -452,7 +516,7 @@ def test_hook_only_discharges_its_own_unmeasured_protected_dimension(acceptance,
     assert measure(acceptance, payload)["result"] == ("pass" if native_result == "unknown" else "fail")
 
 
-def test_driver_reaches_native_acceptance_after_independent_review(acceptance, proofs):
+def test_driver_reaches_native_acceptance_after_independent_review(acceptance, proofs, qualified_preservation_protocol):
     task = TaskStore(acceptance).read("owner")
     stages = []
     def command(name):
