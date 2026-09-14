@@ -1,0 +1,19 @@
+{
+  "event_id": "d387e27fbb14ee558092d9b435b1d911ee6b28c39c238fae8ab4519125635b11",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-63624641b68642418d2d68114e9f53d0",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar.cpp now contains both arithmetic definitions with native original bindings and observed emitted-symbol facts; the two fixed-address calls are removed and both analysis seeds remain unchanged.",
+      "Source rationale now contains identity evidence rather than run diagnostics. Sequential-store comments describe observed overlap behavior without claiming an aliasing contract; vector row zero restores the original vector-first final-product spelling.",
+      "This incorporates the original binding/recovery insight only. Fresh configured build and compile/link correspondence pass, but strict checks still fail both extents. The separate x87 scheduling/precision finding remains pending; no code acceptance, claim, scope expansion or integration is granted."
+    ]
+  },
+  "previous_event": "b1042df49e11b2b1654810ace57574d773392d1f454e2b69a45b65e6b81be3a9",
+  "request_id": "coordinator-caviar-product-binding-incorporated",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:caviar-matrix-operations"
+}

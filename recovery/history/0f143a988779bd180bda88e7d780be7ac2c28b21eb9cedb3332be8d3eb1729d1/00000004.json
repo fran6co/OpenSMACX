@@ -1,0 +1,27 @@
+{
+  "event_id": "dd74ba3272e93e3e1abab6b1b5696ed0ee38191fc7cefdc375051ec95d6071ea",
+  "payload": {
+    "affects": [
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869",
+      "entity-ab28053361d7d2cb9401a40628cbc5580b993bef4c08396dc4a7cebe6d3c017d",
+      "entity-b77f7d1b05e6d98b661ff1630e662531eea38eac8e9305280a5d5d26bd405da2",
+      "entity-b9138cb0d4501629cbcb52b93867c0187b82f4af84f444a86c68c623f7d0932f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "coordinator-caviar-matrix-row-ownership",
+    "evidence": [
+      "src/caviar.h:20 declares VOX_Matrix::values as float[3][3]; helper matrix[3..8] accesses exceed the first inner array supplied by values[0].",
+      "src/caviar.cpp:3129-3130 helper declarations, definitions near3429/3447, vox_draw_scene at original0x639E60 and vox_transform_camera at original0x63A6F0 provide seven calls passing values[0].",
+      "src/caviar.cpp:3297 and3339 scale part.values[0][element] with element spanning nine floats; record the same cross-row defect in outside-task vox_draw_scene.",
+      "Original vector returns at0x62814A and matrix at0x627F4E; following bytes are alignment, so current extents are not explained by a boundary error. Original arithmetic reloads inputs after each output store; do not infer non-aliasing or cache all inputs.",
+      "Current authorization covers only the two helper identities, not mapped caller bodies or caviar.h. Preserve this finding pending central ownership/scope review; no source edits or baseline reset accompanies this decision."
+    ],
+    "hypothesis": "VOX_Matrix owns float[3][3], but geometry helpers and callers flatten values[0] beyond its three-element row. Coordinate pointer-to-row helper signatures and matching caller arguments; rewrite cross-row scaling with proper row/column access while preserving expression and sequential store order. This is a structural recovery finding, not a promise of byte exactness or a granted scope expansion.",
+    "kind": "discovery"
+  },
+  "previous_event": "d387e27fbb14ee558092d9b435b1d911ee6b28c39c238fae8ab4519125635b11",
+  "request_id": "coordinator-caviar-matrix-row-ownership",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:caviar-matrix-operations"
+}

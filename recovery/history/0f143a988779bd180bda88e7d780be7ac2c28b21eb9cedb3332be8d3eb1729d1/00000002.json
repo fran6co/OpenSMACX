@@ -1,0 +1,24 @@
+{
+  "event_id": "b1042df49e11b2b1654810ace57574d773392d1f454e2b69a45b65e6b81be3a9",
+  "payload": {
+    "affects": [
+      "entity-b77f7d1b05e6d98b661ff1630e662531eea38eac8e9305280a5d5d26bd405da2",
+      "entity-b9138cb0d4501629cbcb52b93867c0187b82f4af84f444a86c68c623f7d0932f"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-07b3efbae5474e519b9f069d94c32067",
+    "evidence": [
+      "Added emitted MSVC symbol facts in src/caviar.cpp for ?vox_matrix_vector_mul@@YAXPBM0PAM@Z and ?vox_matrix_matrix_mul@@YAXPBM0PAM@Z while preserving the existing ORIGINAL and RECOVERY_BINDING mappings.",
+      "Fresh installed-framework binary diagnostics now resolve both product symbols under both configured flag sets; remaining failures are candidate extent mismatches: 96 versus 107 bytes for matrix/vector and 240 versus 303 bytes for matrix/matrix.",
+      "The matrix/vector final terms now spell matrix-element * vector-element, matching the original load ordering evidence while preserving sequential stores and documented grouping.",
+      "Fresh configured build and compile/link correspondence passed after the edit. Layout and full acceptance remain unknown; the prior x87 scheduling discovery remains pending."
+    ],
+    "hypothesis": "The product symbol facts and matrix/vector operand ordering are now source-correct within the authorized file, but both genuine bodies still require further evidence or compiler/source-form work to address the original interleaved x87 scheduling and extent differences.",
+    "kind": "discovery"
+  },
+  "previous_event": "4b2933495dd9f322eb11935c2e20d59f9ed39a7d133e0038a8f58327ac85847a",
+  "request_id": "worker-07b3efbae5474e519b9f069d94c32067",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:caviar-matrix-operations"
+}
