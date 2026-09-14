@@ -10,6 +10,75 @@ from match_recovery.tasks import TaskStore
 from test_task_build_graph import GRAPH, change_graph, contexts, graph_task, migration, project
 
 
+@pytest.mark.parametrize("initializer_result", ["pass", "fail", "unknown"])
+def test_ordinary_scoped_body_uses_original_paired_sources_without_generated_waiver(
+        graph_task, monkeypatch, initializer_result):
+    # Real task/history/policy selection with controlled private build contexts;
+    # this exercises eligibility, not a live compiler or completed linked proof.
+    root, task = graph_task
+    source = root / "code/unit.cc"
+    original = source.read_bytes()
+    candidate = original.replace(b"void f() {}", b"void f() { return; }")
+    assert candidate != original
+    source.write_bytes(candidate)
+    graph = (root / GRAPH).read_bytes()
+    before = working_state(root)
+    calls, living, _ = contexts(monkeypatch)
+    observations = []
+
+    def initializers(old, new, **kwargs):
+        assert living == [0, 1] and not kwargs
+        observations.append(True)
+        return {"result": initializer_result, "remaining_linked_effects": "unknown"}
+
+    monkeypatch.setattr(native, "compare_build_initializers", initializers)
+    monkeypatch.setattr(native, "generated_sources", lambda *a, **k: pytest.fail("unexpected generated waiver"))
+    from match_recovery import generated_code_residual
+    monkeypatch.setattr(generated_code_residual, "compare_generated_code_residual",
+                        lambda *a, **k: pytest.fail("unexpected generated residual exception"))
+    with native.application_graph(root, task.task_id) as session:
+        assert session.baseline_revision == task.base_revision
+        assert session.source_versions["baseline"]["code/unit.cc"] == original
+        assert session.source_versions["current"]["code/unit.cc"] == candidate
+        assert [call["versioned"] for call in calls] == [{GRAPH: graph}, {GRAPH: graph}]
+        assert session.authorization == {"task": task.to_dict(),
+                                         "decisions": TaskStore(root).decisions(task.task_id), "integration": None}
+        assert session.report["graph_inputs"] == []
+        assert session.report["source_changes"] == ["code/unit.cc"]
+        assert session.report["result"] == session.report["linked_effects"] == "unknown"
+        assert "generated_code_residual" not in session.report
+        session.check_current()
+    assert len(calls) == 2 and observations == [True] and living == []
+    assert working_state(root) == before
+
+
+@pytest.mark.parametrize("name", ["recovery/compile.py", "recovery/build.json", "recovery/project.json"])
+def test_ordinary_body_route_still_refuses_changed_compiler_policy(graph_task, name):
+    root, task = graph_task
+    source = root / "code/unit.cc"
+    source.write_bytes(source.read_bytes().replace(b"void f() {}", b"void f() { return; }"))
+    path = root / name
+    path.write_bytes(path.read_bytes() + b"\n ")
+    with pytest.raises(ValueError, match="unchanged compiler/build policy"):
+        native.check_build_graph(root, task.task_id)
+
+
+def test_unchanged_policy_does_not_authorize_outside_task_source(graph_task):
+    root, task = graph_task
+    (root / "code/unowned.cc").write_bytes(b"void unrelated() {}\n")
+    with pytest.raises(ValueError, match="source changes exceed authorized editable"):
+        native.check_build_graph(root, task.task_id)
+
+
+def test_unchanged_policy_does_not_turn_matching_permission_into_generated_permission(graph_task):
+    root, task = graph_task
+    permission = {"migration_id": "ordinary-body", "author": task.author,
+                  "evidence": ["Scoped body review, not generated-code authorization"], "allowed": []}
+    with pytest.raises(ValueError, match="explicit generated changes"):
+        with native.application_graph(root, task.task_id, permission=permission):
+            pytest.fail("matching permission must not grant a generated-code exception")
+
+
 def prepared(graph_task, monkeypatch):
     root, task = graph_task
     change_graph(root)

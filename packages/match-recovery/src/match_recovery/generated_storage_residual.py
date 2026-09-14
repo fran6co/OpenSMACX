@@ -61,6 +61,36 @@ class StorageClosure:
         self.required[key] = deepcopy(descriptor)
         return descriptor
 
+    def require_sections(self, version, sections):
+        """Seed exact ordinary sections into the persistent two-build union.
+
+        Only the live producer can derive correspondence. A seed grants no
+        placement, contents or retention proof; observe() must establish those
+        independently in both builds, including any callback dependencies.
+        Each supplied batch is bounded even when it repeats an existing seed.
+        """
+        try:
+            self._fresh()
+            if type(version) is not str or version not in self.live:
+                raise ValueError("storage section seeds require an exact native build version")
+            pending = {}
+            for index, row in enumerate(sections):
+                if index >= self.limit:
+                    raise ValueError("storage section seed batch exceeds its section bound")
+                if (not isinstance(row, dict) or set(row) != {"owner", "section"}
+                        or not isinstance(row["owner"], str) or not row["owner"].strip()
+                        or type(row["section"]) is not int or row["section"] <= 0):
+                    raise ValueError("storage section seed requires exact owner and section fields")
+                descriptor = self.data_producers[version].identify(row["owner"], row["section"])
+                pending[_key(descriptor)] = deepcopy(descriptor)
+            if len(self.required.keys() | pending.keys()) > self.limit:
+                raise ValueError("storage dependency closure exceeds its section bound")
+            # Do not retain a partially validated batch if a later seed refuses.
+            self._fresh()
+            self.required.update(pending)
+        finally:
+            self._fresh()
+
     def _code(self, version, owner, name):
         native = self.live[version]
         selected = native.inputs.objects.resolve(owner)

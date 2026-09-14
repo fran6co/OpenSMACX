@@ -169,7 +169,8 @@ def measure_migration(root: Path, task_name: str, image: Path, request: dict, *,
                 return application.report
 
             graph = (run("build-graph", graph_evidence)
-                     if policy_change["graph_only"] or generated_permission else None)
+                     if policy_change["graph_only"] or generated_permission or
+                        unchanged_policy and build.compile_link is not None else None)
             built = graph.get("current_build") if graph is not None else None
             if not isinstance(built, dict) or built.get("result") != Result.PASS:
                 built = run("build", lambda: check_build(root))

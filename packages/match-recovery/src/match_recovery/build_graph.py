@@ -101,7 +101,9 @@ def application_graph(root, task_name, *, integration=None, permission=None):
 
     Called by native migration verification. Command/membership agreement is
     necessary, not sufficient: linked initializer/common/COMDAT effects still
-    require independent proof before this prerequisite can pass.
+    require independent proof before this prerequisite can pass. Ordinary scoped
+    source edits may use paired builds under unchanged policy without granting
+    any generated-code exception.
     """
     root = Path(root).resolve()
     store, settings, build = TaskStore(root), Measurement.read(root), Build.read(root)
@@ -118,7 +120,7 @@ def application_graph(root, task_name, *, integration=None, permission=None):
     before, policy_before = working_state(root), build.snapshot(root)
     measured_before = settings.snapshot(root, {"task": task, "decisions": decisions, "integration": integration})
     policy = build_policy_changes(root, task, settings, build, integration=integration)
-    if not policy["graph_only"] and not (policy["unchanged"] and permission is not None):
+    if not policy["graph_only"] and not policy["unchanged"]:
         raise ValueError("application graph comparison requires exclusively versioned graph changes and unchanged compiler/build policy")
     if set(policy["changed_paths"]) - set(editable):
         raise ValueError("changed build graph inputs exceed authorized editable task files")
@@ -212,6 +214,20 @@ def application_graph(root, task_name, *, integration=None, permission=None):
                 session = ApplicationGraph(root, task_name, baseline, roots, old, new,
                                            deepcopy({"baseline": prior, "current": current}),
                                            deepcopy(result), deepcopy(authorization), session_fresh)
+                from .application_residual import compare_application_residual
+                try:
+                    with _bound_graph(session):
+                        residual = compare_application_residual(session)
+                except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+                    residual = {"check": "application_task_residual", "result": Result.UNKNOWN,
+                                "reason": str(error), "outside_scope_verification": Result.UNKNOWN,
+                                "ready_for_collection": False}
+                result["application_residual"] = residual
+                if residual.get("scoped_code", {}).get("storage_residual", {}).get("input_consistency") == Result.FAIL:
+                    result.update(result=Result.FAIL,
+                                  reason="selected application data disagrees with its own linked image")
+                session_fresh()
+                session = replace(session, _report=deepcopy(result))
                 if permission is not None:
                     from .generated_code_residual import compare_generated_code_residual
                     try:

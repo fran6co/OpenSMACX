@@ -26,7 +26,7 @@ def _complete(graph):
     return Result.PASS
 
 
-def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=8):
+def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=8, application_scope=None):
     """Internal native code dimension; caller separately validates task authority."""
     if (type(max_nodes) is not int or not 1 <= max_nodes <= 4096
             or type(max_rounds) is not int or not 1 <= max_rounds <= 64):
@@ -37,6 +37,9 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
               "limitations": ["exact authorized local initializer bodies only; other task functions gain no body waiver",
                               "unreachable dependencies still need independent placement in both builds; absence is not discard proof",
                               "code correspondence is not data contents, allocation, dependency selection or runtime acceptance"]}
+    if application_scope is not None:
+        result["check"] = "application_scoped_code_residual"
+        result["limitations"][0] = "task-owned single-function code sections only; ordinary multi-entry sections and header copies gain no blanket waiver"
 
     def fresh():
         try:
@@ -59,6 +62,13 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                                                           epoch=input_epochs[version])
                          for version, context in contexts.items()}
             result["input_selection"] = compare_selection(selection["baseline"], selection["current"])
+            domains = None
+            if application_scope is not None:
+                from .linked_section_domain import observe_sections
+                domains = {version: observe_sections(context, live[version].inputs.objects,
+                                                     epoch=input_epochs[version])
+                           for version, context in contexts.items()}
+                result["physical_sections"] = domains
             observed = {version: value.initializers() for version, value in live.items()}
             checks = [_complete(value) for value in observed.values()]
             checks += [_complete(value.get("code_dependencies", {})) for value in observed.values()]
@@ -98,6 +108,31 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                     identity = {"kind": "compiled", "unit": change["unit"], "symbol": change["symbol"]}
                     omitted[version].add(_key(identity))
                 graphs[version] = observed[version]["code_dependencies"]
+                if domains is not None:
+                    roots = [row["function"] for row in observed[version]["sequence"]]
+                    roots += domains[version]["code_roots"]
+                    from .application_code_roots import combine_roots
+                    roots = combine_roots(live[version], roots)
+                    graphs[version] = live[version].code(roots, max_functions=max_nodes)
+                    if _complete(graphs[version]) != Result.PASS:
+                        result.update(result=_complete(graphs[version]),
+                                      reason="complete physical code roots lack native placement/content evidence",
+                                      version=version, graph=graphs[version])
+                        return result
+                    from .application_residual import _owned_bodies
+                    owned = _owned_bodies(context, graphs[version], application_scope[version])
+                    startup_graph = observed[version]["code_dependencies"]
+                    startup_producers = identities(context, startup_graph["nodes"])
+                    startup_roots = {_key(startup_producers[node]) for node in startup_graph["roots"]}
+                    for original, stable in owned:
+                        key, stable_key = _key(original), _key(stable)
+                        if key in startup_roots:
+                            raise ValueError("task function scope cannot replace explicit generated-root permission")
+                        if key in renames[version] or stable_key in reverse[version]:
+                            raise ValueError("task body and generated occurrence have overlapping identity authority")
+                        omitted[version].add(key)
+                        renames[version][key] = stable
+                        reverse[version][stable_key] = original
 
             def index(version):
                 original = identities(contexts[version], graphs[version]["nodes"])
@@ -114,6 +149,11 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                                   context, live[version].inputs.objects, epoch=input_epochs[version]))
                               for version, context in contexts.items()}
             storage = StorageClosure(live, data_producers, limit=max_nodes)
+            if domains is not None:
+                for version in contexts:
+                    # No reachability filter: physically selected data remains
+                    # required even if neither version's code references it.
+                    storage.require_sections(version, domains[version]["data_sections"])
             initial_producers = {version: {_key(value) for value in producers[version].values()}
                                  for version in contexts}
 
@@ -147,6 +187,9 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                     # Initial roots remain observed too. Their body omission is
                     # version-specific and occurs only after all proofs pass.
                     roots = [row["function"] for row in observed[version]["sequence"]] + list(roots)
+                    if domains is not None:
+                        roots += domains[version]["code_roots"]
+                        roots = combine_roots(native, roots)
                     graphs[version] = native.code(roots, max_functions=max_nodes)
                     if _complete(graphs[version]) != Result.PASS:
                         result.update(result=_complete(graphs[version]), reason="expanded dependency code is unverified",

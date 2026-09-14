@@ -17,6 +17,19 @@ equality and independent approval cannot replace those proofs.
 Full-project acceptance likewise refuses missing linked qualification even when
 its configured structure/runtime proofs pass.
 
+Ordinary tasks with native compile/link observations now enter paired application
+builds under unchanged policy too. The application residual combines exact task
+function bindings with complete physical candidate-section enumeration, all
+supported selected code roots, and unreferenced ordinary data/callback seeds.
+Original/MAP aliases are normalized only through authenticated folding groups;
+all peers still undergo native verification. Ordinary multi-entry regions cannot
+be erased as one function, and generated roots need their separate permission.
+This is not yet complete linked preservation: anonymous contribution assignment,
+retained selection and allocation isolation remain unresolved. The current
+4,096-node code bound also refuses larger complete application graphs rather
+than truncating them to a passing subset. These are explicit remaining work, not
+exclusions from application acceptance.
+
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied
 original can be pinned in source without copying its bytes; compiler and build

@@ -477,6 +477,20 @@ def test_unchanged_or_non_graph_policy_never_invokes_graph_exception_route(migra
     assert report["outside_scope"] == "unknown"
 
 
+def test_ordinary_native_compile_link_policy_enters_paired_builds(migration, monkeypatch):
+    # Route/lifetime control only. No synthetic graph result qualifies native
+    # linked preservation; physical application producers have separate tests.
+    calls, sessions = live_graph(migration, monkeypatch, enter_refusal=True)
+    monkeypatch.setattr(native, "build_policy_changes", lambda *a, **k: {
+        "unchanged": True, "graph_only": False, "changed_paths": []})
+    build = native.Build.read(migration)
+    monkeypatch.setattr(native.Build, "read", lambda *a, **k: replace(build, compile_link={}))
+    report = measure(migration)
+    assert calls == ["enter"] and not sessions
+    assert report["outside_scope"] == "unknown"
+    assert any(row["check"] == "build-graph" for row in report["diagnostics"])
+
+
 def test_graph_prerequisite_cannot_return_after_mutating_reviewed_source(migration, monkeypatch):
     def mutate():
         path = migration / "code/unit.cc"

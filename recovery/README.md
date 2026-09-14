@@ -34,6 +34,18 @@ that build's database. The package rejects missing/substituted observations and
 changing build evidence; extra linker inputs such as zlib remain separately visible.
 Passing this check still does not accept a changed build graph or prove retained
 sections and initialization behavior.
+Native migration also enters paired application builds for ordinary tasks when
+compile/link observations are configured and the build policy is unchanged.
+Both ordinary and generated-change graph comparisons now observe the complete
+physical candidate section domain, not just initializer reachability. Selected
+code sections become native roots; all selected ordinary data sections enter the
+two-build storage/callback closure, including unreferenced data. Missing symbols
+do not remove physical obligations. Only exact source-owned independent code
+COMDAT bodies receive function scope; headers, sibling definitions, multi-entry
+regions and initializer occurrences do not receive a blanket exemption. Compiled
+preservation, native selection/contribution completeness and allocation isolation
+remain independent requirements. Anonymous sections still prevent qualification;
+this extension does not make native publication or game acceptance complete.
 Fresh recovery builds also request a separate PDB with linker fixups, retaining
 explicit release optimization and non-incremental linking. The package binds
 that PDB to its exact PE before using symbol-base fixups to place selected COFF

@@ -81,6 +81,14 @@ The native compiled-residual check does not yet establish linked outside-scope
 preservation. Unchanged build settings no longer promote that unknown to a pass:
 ordinary native acceptance/publication currently refuses the missing linked
 prerequisite too. Input-family equality alone is not retained-selection proof.
+Native compile/link-enabled change checks now build both task-baseline and
+current application versions even with unchanged build policy. Their application
+residual enumerates physical candidate sections, seeds selected code and
+unreferenced ordinary data, and projects only source-owned independent function
+bodies. Missing MAP entries remain obligations; multi-entry sections and generated
+initializers gain no function-scope waiver. Anonymous contribution assignment and
+complete retained-selection/allocation proof are still missing, so publication
+still refuses rather than treating these observations as full preservation.
 Full-project acceptance requires the same qualification; structure/runtime proof
 commands cannot waive it.
 Do not replay earlier compiler-control acceptance reports under this boundary.

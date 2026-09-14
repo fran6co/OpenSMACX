@@ -16,6 +16,7 @@ from match_recovery.linked_context import linked_build
 from match_recovery.linked_data_ownership import section_producers
 from match_recovery.linked_input_epoch import input_epoch
 from match_recovery.linked_input_selection import observe_input_selection, compare_selection
+from match_recovery.linked_section_domain import observe_sections
 from match_recovery.pe_coff import Coff
 from match_recovery.resources import INHERITED
 from recovery.environment.wine import VC6_ROOT
@@ -55,6 +56,11 @@ def test_real_data_bytes_callback_and_live_producer_identity():
                 comparison = compare_selection(catalog, catalog)
                 assert comparison["dependency_families"] == "pass" and not comparison["compiled_changes"]
                 assert comparison["result"] == comparison["retained_section_selection"] == "unknown"
+                domain = observe_sections(context, native.inputs.objects, epoch=epoch)
+                assert domain["enumeration"] == "pass"
+                assert {"owner": selected["owner"], "section": symbol.section} in domain["data_sections"]
+                assert any(row["symbol"] == "_native_callback" for row in domain["code_roots"])
+                assert domain["retained_section_selection"] == "unknown"
                 with section_producers(context, native.inputs.objects, epoch=epoch) as producers:
                     descriptor = producers.identify(placed.owner, symbol.section)
                     assert descriptor == {"kind": "compiled", "unit": ADDED, "section": ".data"}

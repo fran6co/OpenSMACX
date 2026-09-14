@@ -51,6 +51,22 @@ def _classification(section, size):
     return "unsupported_section"
 
 
+def _section_rows(obj, record):
+    """One physical enumeration shared by census and application obligations."""
+    symbols_by_section = defaultdict(list)
+    for symbol in record["symbols"]:
+        symbols_by_section[symbol["section"]].append(symbol)
+    for number, (section, size) in enumerate(zip(obj.sections, obj.section_sizes), 1):
+        symbols = [dict(symbol) for symbol in symbols_by_section[number]]
+        category = _classification(section, size)
+        if category == "empty" and any(symbol["name"] != section.name
+                or symbol["storage"] != 3 or symbol["value"] != 0 or symbol["type"] != 0
+                or symbol["auxiliary_size"] != 18 for symbol in symbols):
+            category = "zero_extent_with_symbols"
+        yield {"object_section": number, "section_name": section.name, "size": size,
+               "flags": section.flags, "classification": category, "symbols": symbols}
+
+
 def observe_storage(inputs, *, max_sections=100000):
     """Derive all candidate sections from one guarded native linked epoch.
 
@@ -136,16 +152,9 @@ def observe_storage(inputs, *, max_sections=100000):
                     if selected is not None and (selected["identity"] != identity
                                                 or selected["sha256"] != record["sha256"]):
                         raise ValueError("storage census selected owner differs from physical candidate")
-                for number, (section, size) in enumerate(zip(obj.sections, obj.section_sizes), 1):
-                    category = _classification(section, size)
-                    symbols = [dict(symbol) for symbol in record["symbols"] if symbol["section"] == number]
-                    if category == "empty" and any(symbol["name"] != section.name
-                            or symbol["storage"] != 3 or symbol["value"] != 0 or symbol["type"] != 0
-                            or symbol["auxiliary_size"] != 18 for symbol in symbols):
-                        category = "zero_extent_with_symbols"
-                    item = {"object_section": number, "section_name": section.name, "size": size,
-                            "flags": section.flags, "classification": category, "symbols": symbols,
-                            "placement": Result.UNKNOWN}
+                for item in _section_rows(obj, record):
+                    number, category = item["object_section"], item["classification"]
+                    item["placement"] = Result.UNKNOWN
                     row["sections"].append(item)
                     if category == "ordinary_data" and selected is not None:
                         try:

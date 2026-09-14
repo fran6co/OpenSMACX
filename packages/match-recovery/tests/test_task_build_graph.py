@@ -206,10 +206,16 @@ def test_other_changed_policy_cannot_borrow_graph_path(graph_task, name):
         native.check_build_graph(root, task.task_id)
 
 
-def test_unchanged_graph_is_not_a_graph_transition(graph_task):
+def test_unchanged_graph_can_compare_sources_without_claiming_linked_preservation(graph_task, monkeypatch):
     root, task = graph_task
-    with pytest.raises(ValueError, match="exclusively versioned graph changes"):
-        native.check_build_graph(root, task.task_id)
+    calls, living, _ = contexts(monkeypatch)
+    report = native.check_build_graph(root, task.task_id)
+    assert len(calls) == 2 and living == []
+    assert calls[0]["files"] == calls[1]["files"]
+    assert calls[0]["versioned"] == calls[1]["versioned"]
+    assert report["graph_inputs"] == report["source_changes"] == []
+    assert report["baseline_revision"] == task.base_revision
+    assert report["result"] == report["linked_effects"] == "unknown"
 
 
 def test_missing_command_stages_refuses_without_building(graph_task):
