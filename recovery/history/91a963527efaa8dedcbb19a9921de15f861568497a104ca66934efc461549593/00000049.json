@@ -1,0 +1,33 @@
+{
+  "event_id": "8b08f471e8ae8c8fee0f9e54c7d2acc0d307e62c5629c4a533bc266466107621",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_control_globals.py",
+      "src/listbox.cpp",
+      "src/listbox.h"
+    ],
+    "evidence": [
+      "Replace only the four original-address defaults with source-owned scalar storage using destination-based provisional names and independently bounded source bindings. Preserve original identities, claims, constructor/close ordering and virtual-base accesses. Add strict wrong-target damage control, remeasure affected claims, compile/link and retire stale seam prose with the alias; no framework edits or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6331824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6332192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9e53f4d14b5b97a1b63851cfede2151a5696f10bc7beb778db536ed01b738508",
+  "request_id": "listbox-default-storage-scope",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:control-sprite-defaults"
+}

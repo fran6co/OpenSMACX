@@ -1,0 +1,74 @@
+{
+  "event_id": "f4560c7d6b0ca4e000920b8c456b8073282e246b6c5e326033f43397fb9b834b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/audits.json",
+      "recovery/tests/test_control_globals.py",
+      "recovery/tests/test_timer_close_recovery.py",
+      "src/editbox.cpp",
+      "src/flatbutton.cpp",
+      "src/netmsg.cpp",
+      "src/time.cpp",
+      "src/time.h",
+      "src/time_lifecycle.cpp"
+    ],
+    "evidence": [
+      "Authorize genuine Time close/destructor ownership in a separate lifecycle TU, original mappings moved through native source writer, removal of three timer wrappers and their header declaration, native calls in stop_timers. Preserve history and all claims; no compiler pragmas, aliases, new exports, copied machine code or acceptance waiver. Test original call targets, timer/destructor bodies and coupled callers under both flags, remeasure all affected claims, full build/link and audit ceilings. Do not change unrelated game bodies to conceal unknown restoration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6383488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6382080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5305408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6323616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4696016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5304144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5828672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5829712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0f52c9d9593d345a8315fb10bd88405909f4e34b3859ed8a18db9ad7cc532263",
+  "request_id": "timer-close-native-lifecycle-scope",
+  "schema_version": 1,
+  "sequence": 54,
+  "stream": "task:control-sprite-defaults"
+}

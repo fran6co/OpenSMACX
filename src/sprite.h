@@ -20,6 +20,8 @@
 #include "original_seam.h"
 
 class Buffer;  // forward declaration
+class CheckBox;  // controls may draw their selected-state sprites
+class RadioButton;  // controls may draw their selected-state sprites
 
 // THE SHEET HEAP. 0x10 bytes, four uint32 members, the IDB's layout. It used
 // to be declared beside its only members in sprite.cpp; the header is where a
@@ -119,6 +121,8 @@ class Sprite {
   void UNK3(int menu_id, int item_id);
   void UNK4(int a1, int a2);
  private:
+  friend class CheckBox;
+  friend class RadioButton;
   // `Win::flip` draws the overlay sprite and takes its frame index from
   // `cTransparentIndex_`, which is the byte the image reads at +8.
   friend class Win;

@@ -1,0 +1,17 @@
+{
+  "event_id": "cbbf5665754a56a4e3cb59e3ec25ae9b6dbfe3cf655b94b08d3e4d9b811305f0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "control-draw-current-item-lifetime",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Both source draw_item definitions check seek_pos before height processing and retain callback-time pos_to_id plus subsequent current-payload/text and column-width rereads. Source incorporation reviewed independently; not a byte/runtime acceptance claim."
+    ]
+  },
+  "previous_event": "c00aad38c2e95692b0398e5cf28bde53b49341e628b8f95b1a3abdcaac48c290",
+  "request_id": "closeout-incorporated-control-draw-current-item-lifetime",
+  "schema_version": 1,
+  "sequence": 58,
+  "stream": "task:control-sprite-defaults"
+}

@@ -1,0 +1,33 @@
+{
+  "event_id": "b2b0bd4e927948817eabf936ac392c4e19350809a83b77604d386146636358d6",
+  "payload": {
+    "affects": [
+      "entity-05f1f5e567bd5629745637e6cdf9c89d0c0773fcd461a7ce72e16d3e878402c9",
+      "entity-0a04de6f141cc2570de3399f691890dfcf7c5827e28fbb5c8d82b4026c2f1e81",
+      "entity-11a8d927c104c7c060354002b286792afd16b8bd566baa54858434578e63e633",
+      "entity-1efbce4e4d8505cf1a7a370974c396819a02af8b2ddbc6fa6cb4257c7bd1278d",
+      "entity-3f6349cc1e1e55b2d272de80befdb3454ee51d275842d4f5c3c1a65acbe1c0dc",
+      "entity-64c265ac92eb19eadba44dba314c615321398a883f31bea97d2d8906241b635c",
+      "entity-661724b34f648f7924c2829eb9b4bd3249d279b37dd2a9fbed39f9a3014f2c5d",
+      "entity-7d72dfcc20abbaeab62d23fcf2f3ea4037750d44338edfbfe5e17c362f548c5e",
+      "entity-847bb8b8decbcc90c8ceae71452aecff1f9a2b8f101b762cee6ac2a62178ffb1",
+      "entity-a5ace58353d3210408c862b56c5752e5de4163492cf5aef7a0bb989157545d83",
+      "entity-d4fdbaedc3da2279e7a84947b21cb2665d2c08c62ce7d6e478bc9629e82ea288",
+      "entity-e4f42bcc8627fd2b27620540a5379017d1ab88e7181c0ed7c069c5d64e0b5837"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "network-nested-list-lifetime",
+    "evidence": [
+      "Pinned401B80/401BE0 stage base6693F4/6693F0, distinct from StringStruct6693A4/6693A0. Derived402D10/4023A0 stage66941C/669418; virtual allocation base moves1C to24. Hooks5D4C50/5D4CC0 each ret4 with a pointer argument; insertion copies pending text, removal obeys Heap ownership.",
+      "Original402DD0 owns nested-list destruction then publishes nested allocation owner; Net4E34D0 destroys that member before three queues, receiver and VoiceTx. Current Net destructor has hand-walked offsets and fixed-address Sub401be0Shim/RemoveAllShim calls.",
+      "Payload fields+4/+8 alone do not prove complete type/extent. Establish allocation and virtual-base evidence before replacing opaque storage or choosing payload ownership."
+    ],
+    "hypothesis": "NetUnk72C omits its distinct typed list base, has opaque list state and wrong-arity empty hooks, and therefore lacks original derived/base cleanup. Net manually calls fixed-address cleanup while its allocation-node member emits incomplete implicit destruction.",
+    "kind": "discovery"
+  },
+  "previous_event": "06e5a1f6f162073d96a0a029323cb88a72fb788d7cf22c03fc5b91ff6480d249",
+  "request_id": "network-nested-list-lifetime",
+  "schema_version": 1,
+  "sequence": 51,
+  "stream": "task:control-sprite-defaults"
+}

@@ -102,6 +102,7 @@ class Font {
   static void __cdecl close_font_class();
 
  private:
+  friend class CheckBox;
   // Buffer::text_height reads the resolved font's height directly.
   friend class Buffer;
   // Menu::requested_height reads the resolved font's height directly.

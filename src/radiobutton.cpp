@@ -153,6 +153,149 @@ uint32_t RadioButton::close() {
     return GraphicWin::close();
 }
 
+// Seed identity: ?draw_item@RadioButton@@QAEXHH@Z at 0x0060D750.
+// The state argument selects the checked/unchecked sprite and also controls
+// the focus rectangle, as shown by the original post-draw branch.
+// ORIGINAL: 0x0060D750 ?draw_item@RadioButton@@QAEXHH@Z 0x0060D750-0x0060DE08
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d750.cpp:1 maps ?draw_item@RadioButton@@QAEXHH@Z to 0x0060D750–0x0060DE08. The supplied record identifies it as an existing scoped legacy_seed.", "src/radiobutton.cpp:159–280 contains the unannotated RadioButton::draw_item(int position, int state) definition using actual GraphicWin/Dialog bases, item-list members and Buffer/Sprite calls. Lines 237–242 require both sprite pointers and select checked_sprite_ for nonzero state, unchecked_sprite_ otherwise.", "Fresh original-image SHA-256 matches pinned 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Original 0x0060DAE8 and 0x0060DAF3 load this+8 and this+4; 0x0060DAFE reads [esp+0x3C], the second explicit argument after 0x24 locals and four saved registers. The nonzero branch draws this+8 and the zero branch draws this+4, consistent with src/radiobutton.h:89–92.", "Fresh source SHA-256 and definition line were obtained read-only. RadioButton is included in this finding and task scope, and src/radiobutton.cpp is editable under the supplied authorization. Native binding publication, discovery reassessment and compiler verification remain outstanding; no code is accepted."], "reason": "Bind the existing scoped RadioButton seed to its unannotated product definition under explicit seed_bindings delegation. The signature and state-dependent Sprite member selection have original evidence. Preserve seed spans/history, task baseline and pending discovery; binding does not establish correctness or acceptance."}
+void RadioButton::draw_item(int position, int state) {
+    Win *parent = win_parent_;
+    if (parent == 0) {
+        return;
+    }
+
+    int extra_height = 0;
+    Dialog::item_list_.seek_pos(-1);
+    for (int i = 0; i < position; ++i) {
+        Dialog::item_list_.next_entry();
+        if (Dialog::item_list_.current_ != 0 &&
+            static_cast<int>(Dialog::item_list_.current_entry()->field_8_) > 1) {
+            int lines = Dialog::item_list_.head_ != 0
+                ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                : 0;
+            int height = static_cast<int>(Dialog::field_68_);
+            if (height <= Buffer::text_line_height() * lines) {
+                lines = Dialog::item_list_.head_ != 0
+                    ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                    : 0;
+                height = Buffer::text_line_height() * lines;
+            }
+            extra_height += height - static_cast<int>(Dialog::field_68_);
+        }
+    }
+
+    const int columns = Dialog::field_58_;
+    const int column = position / columns;
+    const int column_width = Dialog::field_64_;
+    const int cell_height = Dialog::field_44_;
+    const int x = (column_width + cell_height) * column + Dialog::field_40_;
+    const int y = (cell_height >> 1) + extra_height +
+                  (position - column * columns) *
+                      (Dialog::field_68_ + cell_height);
+    if (!Dialog::item_list_.seek_pos(position)) {
+        return;
+    }
+
+    int text_lines = Dialog::item_list_.head_ != 0
+        ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+        : 0;
+    int item_height = static_cast<int>(Dialog::field_68_);
+    if (item_height <= Buffer::text_line_height() * text_lines) {
+        text_lines = Dialog::item_list_.head_ != 0
+            ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+            : 0;
+        item_height = Buffer::text_line_height() * text_lines;
+    }
+
+    const int original_x = x;
+    const int original_y = y;
+    const int original_bottom = y + item_height;
+
+    RECT area;
+    area.left = x;
+    area.top = y;
+    area.right = x + Dialog::field_64_;
+    area.bottom = original_bottom;
+
+    const int callback_state = state != 0
+        ? 2
+        : (Dialog::field_F0_ == static_cast<uint32_t>(position) ? 1 : 0);
+    const int callback_result = parent->vslot_11(
+        reinterpret_cast<int>(static_cast<GraphicWin *>(this)),
+        Dialog::pos_to_id(position), callback_state,
+        reinterpret_cast<int>(&area));
+    if (callback_result == 0) {
+        static_cast<GraphicWin *>(parent)->copy(
+            this, Dialog::field_24_ + original_x,
+            Dialog::field_28_ + original_y, original_x, original_y,
+            Dialog::field_64_, item_height);
+
+        if (checked_sprite_ != 0 && unchecked_sprite_ != 0) {
+            if (state != 0) {
+                checked_sprite_->draw(
+                    this, checked_sprite_->cTransparentIndex_, original_x,
+                    original_y + ((area.bottom - checked_sprite_->iHeight_ -
+                                   area.top) >> 1), 1, 1);
+            } else {
+                unchecked_sprite_->draw(
+                    this, unchecked_sprite_->cTransparentIndex_, original_x,
+                    original_y + ((area.bottom - unchecked_sprite_->iHeight_ -
+                                   area.top) >> 1), 1, 1);
+            }
+        }
+    }
+
+    area.left += Dialog::field_34_;
+    if (Dialog::item_list_.head_ != 0 &&
+        Dialog::item_list_.current_->payload->field_8_ == 1) {
+        char *text = Dialog::item_list_.current_text();
+        char *separator = strchr(text, '|');
+        if (separator == 0) {
+            text = Dialog::item_list_.current_text();
+            if (text != 0) {
+                Buffer::write_l(text, &area, strlen(text));
+            }
+        } else {
+            *separator = 0;
+            text = Dialog::item_list_.current_text();
+            if (text != 0) {
+                Buffer::write_l(text, &area, strlen(text));
+            }
+            *separator = '|';
+            ++separator;
+            if (separator != 0) {
+                Buffer::write_right_l(separator, &area, strlen(separator));
+            }
+        }
+    } else {
+        char *text = Dialog::item_list_.current_text();
+        char *separator = strchr(text, '|');
+        if (separator == 0) {
+            text = Dialog::item_list_.current_text();
+            Buffer::wrap(text, &area);
+        } else {
+            *separator = 0;
+            text = Dialog::item_list_.current_text();
+            Buffer::wrap(text, &area);
+            *separator = '|';
+            ++separator;
+            if (separator != 0) {
+                Buffer::write_right_l(separator, &area, strlen(separator));
+            }
+        }
+    }
+
+    if (Dialog::field_B8_ != static_cast<uint32_t>(-1) &&
+        state != 0 && Win::is_dialog_focus() != 0) {
+        const int text_width = area.right - area.left;
+        area.left = Dialog::field_34_;
+        area.top = original_y;
+        area.right = area.left + text_width;
+        area.bottom = original_bottom;
+        Buffer::dotted_box(&area, Dialog::field_B8_);
+    }
+}
+
 
 /*
 // ORIGINAL: 0x0060E300 ?on_dialog_focus@RadioButton@@QAEXH@Z 0x0060E300-0x0060E317 BYTE_EXACT

@@ -1,0 +1,17 @@
+{
+  "event_id": "86ebe56bcc22c320a784964b372e3b8512deeb4f909182bfe018b51578974755",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-9179d4f271b1411aba274a041728fbd8",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/checkbox.cpp and src/radiobutton.cpp contain canonical product mappings and genuine-member draw bodies preserved in a2e6a2d3 and subsequent reviewed fixes. Both TUs compile in the fresh whole application build. This closes the obsolete unbound/compiler-blocked finding, not byte restoration or task acceptance."
+    ]
+  },
+  "previous_event": "4f6337621f47ddf006d8b168beadedf5b26cc2dd5e06cb963b60ce547a365bea",
+  "request_id": "closeout-incorporated-worker-9179d4f271b1411aba274a041728fbd8",
+  "schema_version": 1,
+  "sequence": 56,
+  "stream": "task:control-sprite-defaults"
+}

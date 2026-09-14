@@ -18,7 +18,7 @@
 #pragma once
 #include "dialog.h"
 #include "graphicwin.h"
-#include "radiobutton.h"  // shared func_dialog_close typedef, as checkbox.h does
+#include "radiobutton.h"
 
  /*
   * ListBox class
@@ -216,15 +216,9 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // DECLARATION-ONLY (2026-09-02): ??1ListBox is called out-of-line 35 times
   // in the image, and ??1DipEdit/??1FileWin tear their ListBox members down
   // with `call ??1ListBox` entered on the GraphicWin vbase - an inline-visible
-  // definition makes those sites expand the (empty) body plus the compiler's
+  // definition makes those sites expand the body plus the compiler's
   // own vbase/vtordisp staging instead. Defined in listbox.cpp.
   ~ListBox();
-  // A `construct` METHOD, NOT A CONSTRUCTOR - the `Win::construct` idiom.
-  // The real body (??0ListBox@@QAE@H@Z, 0x00609DB0) is not promoted yet;
-  // FileWin::FileWin placement-news a most-derived ListBox member and
-  // reaches it by name so that call emits the image's `E8`. Forwarded in
-  // pending_bodies.cpp.
-  void construct(int input);
   // close() and destroy() are void in the mangled names but are modelled as
   // uint32_t to preserve the EAX residue (both leave EAX = 0), as GraphicWin
   // and Scroll do for their teardown pair.
@@ -282,11 +276,6 @@ static_assert(sizeof(ListBox) == 0xB54,
 // (src/checkbox.h) makes the same choice; member ordering plus the two-vbtable
 // test pin the offsets instead.
 
-// ListBox::close reaches Dialog::close (0x00608F50, still an original
-// dependency) through a rebindable seam, identical to CheckBox/RadioButton, so
-// tests can substitute a probe and the seam can later point at a recovered body.
-extern func_dialog_close ListBoxOriginalDialogClose;   // default 0x00608F50
-uint32_t *const ListBoxCloseStaticDefaults = (uint32_t *)0x006970E0;            // 0x006970E0 [0..3]
 extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0
 // Raised to 1 around on_right_down's and on_right_double_click's virtual-base
 // dispatch, dropped to 0 after (0x0060AA20, 0x0060C6D0).

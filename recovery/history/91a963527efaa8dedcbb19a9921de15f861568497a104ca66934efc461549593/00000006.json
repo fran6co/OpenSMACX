@@ -1,0 +1,21 @@
+{
+  "event_id": "5ed69b11e9f2b8d318a15310a894b9c9cac6fc804787c425dc18b4eb7624acd0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-dd9367c1ef0841b28206f2b6487af42b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/checkbox.cpp:173 now binds the existing CheckBox::draw_item identity to the product definition at line 175. Lines 251–256 require both sprite pointers and select checked_sprite_ for nonzero state, unchecked_sprite_ otherwise. The second explicit argument controls selection; geometry does not.",
+      "src/checkbox.h:157–160 declares unchecked_sprite_ and checked_sprite_ as Sprite pointers with original offsets 0x10 and 0x14 respectively.",
+      "Fresh original-image SHA-256 matches pinned 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Original disassembly shows 0x24 bytes of locals and four saved registers; 0x0060F3DE reads the second explicit argument at [esp+0x3C]. Its nonzero branch draws the +0x14 sprite, while its zero branch draws the +0x10 sprite.",
+      "The contradictory geometry branch remains preserved as historical seed evidence at src/unrecovered/0060f030.cpp:2157. The discovery's missing-product-definition premise is now outdated. This decision recognizes only the implemented state-selection insight; it does not accept code or establish compilation, matching, behavioral correctness, or resolution of the separate combined discovery.",
+      "Delegated policy: 7cfeedddf17b2c62c016d92deb0178af2bbe7b44084255cc27bf84bf557e2e29"
+    ]
+  },
+  "previous_event": "95a42a1a152be9798fe256bf72929f814843dfaaa89967c509b13e275899fad7",
+  "request_id": "coordinator-38643eac2ed54026af3e0b50aaa2d953",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:control-sprite-defaults"
+}

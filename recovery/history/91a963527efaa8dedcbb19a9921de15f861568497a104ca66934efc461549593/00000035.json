@@ -1,0 +1,74 @@
+{
+  "event_id": "45af5496bc686388f34e9c533d17979855c00973ff3d96275132cb3062cfe673",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/control_lifetime_harness.cpp",
+      "recovery/tests/test_control_lifetimes.py",
+      "src/deleting_thunks.cpp",
+      "src/editbox.cpp",
+      "src/editbox.h",
+      "src/filewin.cpp",
+      "src/filewin.h",
+      "src/listbox.cpp",
+      "src/listbox.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Pinned 407F00 normal and unwind stages, 609DB0 conditional virtual-base construction, 614E50 unadjusted GraphicWin and trailing Time construction, and 408010 teardown justify genuine FileWin/ListBox/EditBox ownership. Authorize coupled constructors/destructors, source-owned seed bindings, member/base declarations, affected delete entries and lifecycle/layout controls. Preserve all historical claims and seeds, track virtual dispatch gaps, do not reset baseline or infer acceptance from build success."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6371408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4226816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6331824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6332096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6332192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4227088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6377264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4227200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "340770483ad5e9a60eadd48d3bfcd8664ac02e2efe99efbac5ed01d6961c2fa7",
+  "request_id": "filewin-native-member-lifetimes",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:control-sprite-defaults"
+}

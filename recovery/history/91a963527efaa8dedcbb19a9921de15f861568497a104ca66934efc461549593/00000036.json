@@ -1,0 +1,73 @@
+{
+  "event_id": "79fdbcf09f72ede648676e55f452200b4739d1b7f58bc1a59b5587f016e570af",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/editbox_input_harness.cpp",
+      "recovery/tests/test_editbox_recovery.py",
+      "src/buffer.h",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Independent pinned-image comparison of all 90 primary table words at66A038 against GraphicWin identifies overrides12,17,20,21,25,26,51,64 plus deleting entries. Preserve existing base slot order, implement those eight real overrides and text_fits/text_position from original CFG and retained seeds. Narrow Win/Buffer friendship permits actual parent-list and drawing-color access without fake downcasts. Keep all seed claims and unknown CRT/reference obligations; no scope/baseline reset or acceptance from passing lifetime/build tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6378096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6379056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6379584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381392,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "45af5496bc686388f34e9c533d17979855c00973ff3d96275132cb3062cfe673",
+  "request_id": "editbox-native-dispatch-closure",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:control-sprite-defaults"
+}

@@ -96,6 +96,23 @@ void Heap::shutdown() {
     base_size_ = 0;
 }
 
+// Dialog::close's call at 00608FDB targets 005D4580, not shutdown's
+// distinct 005D45B0 entry. The same cleanup is used on a still-live member;
+// reset is a descriptive API, not a recovered original spelling. Keep the
+// canonical destructor binding and measure this additional implementation.
+// RECOVERY_SHARED: v1 0x005D4580 0x005D45AA ?reset@Heap@@QAEXXZ 0x00608F50
+void Heap::reset() {
+    if (base_) {
+        std::free(base_);
+        base_ = nullptr;
+    }
+    err_flags_ = 0;
+    current_ = nullptr;
+    base_ = nullptr;
+    free_size_ = 0;
+    base_size_ = 0;
+}
+
 /*
 Purpose: Deflate the heap of any free memory.
 // ORIGINAL: 0x005D45E0 ?squeeze@Heap@@QAEXH@Z 0x005D45E0-0x005D4615 BYTE_EXACT

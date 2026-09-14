@@ -165,6 +165,152 @@ uint32_t CheckBox::close() {
     return GraphicWin::close();
 }
 
+// Seed identity: ?draw_item@CheckBox@@QAEXHHH@Z at 0x0060F030.
+// This is the product implementation corresponding to the archived seed.
+// The original reads the state argument before selecting the sprite: a
+// nonzero second explicit argument selects checked_sprite_, while zero selects
+// unchecked_sprite_.  The seed's local geometry value is not that argument.
+// ORIGINAL: 0x0060F030 ?draw_item@CheckBox@@QAEXHHH@Z 0x0060F030-0x0060F6FF
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060f030.cpp:1 maps ?draw_item@CheckBox@@QAEXHHH@Z to 0x0060F030–0x0060F6FF; the supplied mapped record classifies this scoped identity as legacy_seed.", "src/checkbox.cpp:173 defines the complete, unannotated CheckBox::draw_item(int position, int state, int focus_mode); line 250 selects checked_sprite_ when state is nonzero and unchecked_sprite_ otherwise. src/checkbox.h:157–160 binds those pointer members to offsets 0x10 and 0x14 respectively.", "Fresh original-image SHA-256 equals the pinned 01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf. Disassembly confirms the 0x24-byte local allocation and four saved registers, and 0x0060F3DE loads [esp+0x3C], the second explicit argument; its zero branch uses the +0x10 sprite and its nonzero branch uses +0x14.", "Explicit seed_bindings delegation permits this existing identity and editable product TU. This proposal binds only CheckBox; RadioButton binding, the pending finding, and fresh native verification remain outstanding. No code acceptance is asserted."], "reason": "The existing scoped seed identifies CheckBox::draw_item(int,int,int). The unannotated product definition implements that interface using actual bases and members, including the original second-argument sprite selection. Bind this existing identity while preserving its original spans and seed history; verification and discovery resolution remain pending."}
+void CheckBox::draw_item(int position, int state, int) {
+    Win *parent = win_parent_;
+    if (parent == 0) {
+        return;
+    }
+
+    int extra_height = 0;
+    Dialog::item_list_.seek_pos(-1);
+    for (int i = 0; i < position; ++i) {
+        Dialog::item_list_.next_entry();
+        if (Dialog::item_list_.current_ != 0 &&
+            static_cast<int>(Dialog::item_list_.current_entry()->field_8_) > 1) {
+            int lines = Dialog::item_list_.head_ != 0
+                ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                : 0;
+            int height = static_cast<int>(Dialog::field_68_);
+            if (height <= Buffer::text_line_height() * lines) {
+                lines = Dialog::item_list_.head_ != 0
+                    ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+                    : 0;
+                height = Buffer::text_line_height() * lines;
+            }
+            extra_height += height - static_cast<int>(Dialog::field_68_);
+        }
+    }
+
+    const int columns = Dialog::field_58_;
+    const int column = position / columns;
+    const int column_width = Dialog::field_64_;
+    const int cell_height = Dialog::field_44_;
+    const int x = (column_width + cell_height) * column + Dialog::field_40_;
+    const int y = (cell_height >> 1) + extra_height +
+                  (position - column * columns) *
+                      (Dialog::field_68_ + cell_height);
+    if (!Dialog::item_list_.seek_pos(position)) {
+        return;
+    }
+
+    int text_lines = Dialog::item_list_.head_ != 0
+        ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+        : 0;
+    int item_height = static_cast<int>(Dialog::field_68_);
+    if (item_height <= Buffer::text_line_height() * text_lines) {
+        text_lines = Dialog::item_list_.head_ != 0
+            ? static_cast<int>(Dialog::item_list_.current_->payload->field_8_)
+            : 0;
+        item_height = Buffer::text_line_height() * text_lines;
+    }
+
+    const int original_x = x;
+    const int original_y = y;
+    const int original_bottom = y + item_height;
+
+    RECT area;
+    area.left = x;
+    area.top = y;
+    area.right = x + Dialog::field_64_;
+    area.bottom = original_bottom;
+
+    const int callback_state = state != 0
+        ? 2
+        : (Dialog::field_F0_ == static_cast<uint32_t>(position) ? 1 : 0);
+    const int callback_result = parent->vslot_11(
+        reinterpret_cast<int>(static_cast<GraphicWin *>(this)),
+        Dialog::pos_to_id(position), callback_state,
+        reinterpret_cast<int>(&area));
+    if (callback_result == 0) {
+        static_cast<GraphicWin *>(parent)->copy(
+            this, Dialog::field_24_ + original_x,
+            Dialog::field_28_ + original_y, original_x, original_y,
+            Dialog::field_64_, item_height);
+
+        if (checked_sprite_ != 0 && unchecked_sprite_ != 0) {
+            if (state != 0) {
+                checked_sprite_->draw(
+                    this, checked_sprite_->cTransparentIndex_, original_x,
+                    original_y + ((area.bottom - checked_sprite_->iHeight_ -
+                                   area.top) >> 1), 1, 1);
+            } else {
+                unchecked_sprite_->draw(
+                    this, unchecked_sprite_->cTransparentIndex_, original_x,
+                    original_y + ((area.bottom - unchecked_sprite_->iHeight_ -
+                                   area.top) >> 1), 1, 1);
+            }
+        }
+    }
+
+    area.top += Buffer::font1_->descent_;
+    area.left += Dialog::field_34_;
+    if (Dialog::item_list_.head_ != 0 &&
+        Dialog::item_list_.current_->payload->field_8_ == 1) {
+        char *text = Dialog::item_list_.current_text();
+        char *separator = strchr(text, '|');
+        if (separator == 0) {
+            text = Dialog::item_list_.current_text();
+            if (text != 0) {
+                Buffer::write_l(text, &area, strlen(text));
+            }
+        } else {
+            *separator = 0;
+            text = Dialog::item_list_.current_text();
+            if (text != 0) {
+                Buffer::write_l(text, &area, strlen(text));
+            }
+            *separator = '|';
+            ++separator;
+            if (separator != 0) {
+                Buffer::write_right_l(separator, &area, strlen(separator));
+            }
+        }
+    } else {
+        char *text = Dialog::item_list_.current_text();
+        char *separator = strchr(text, '|');
+        if (separator == 0) {
+            text = Dialog::item_list_.current_text();
+            Buffer::wrap(text, &area);
+        } else {
+            *separator = 0;
+            text = Dialog::item_list_.current_text();
+            Buffer::wrap(text, &area);
+            *separator = '|';
+            ++separator;
+            if (separator != 0) {
+                Buffer::write_right_l(separator, &area, strlen(separator));
+            }
+        }
+    }
+
+    if (Dialog::field_B8_ != static_cast<uint32_t>(-1) &&
+        state != 0 && Win::is_dialog_focus() != 0) {
+        const int text_width = area.right - area.left;
+        area.left = Dialog::field_34_;
+        area.top = original_y;
+        area.right = area.left + text_width;
+        area.bottom = original_bottom;
+        Buffer::dotted_box(&area, Dialog::field_B8_);
+    }
+}
+
 
 // The state word these three share. Every one of them reaches it the same way
 // the original does - `mov eax,[ecx]` then `[eax+8]` - so the Dialog offset

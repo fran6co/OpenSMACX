@@ -1,0 +1,23 @@
+{
+  "event_id": "fa310d204696dd8d26405b93c2c9c77f8631620733078b0b1d7f7571327e4d76",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Original401060 adjusts virtual-base receiver by -0x1C and stages StringStruct primary/secondary tables before cleanup; real emitted ??1StringStruct@@UAE@XZ independently performs those exact ABI responsibilities and 4066C0 EH tail adjusts by -0xC before reaching it. Authorize re-associating retained401060 marker via explicit emitted-symbol annotation to the actual destructor, removing unused close wrapper/declaration/adjustment constant after caller checks, and updating coupled extraction tests. Preserve original spans/lessons/claims and task baseline; no Dialog call edits or406820 wrapper retirement or acceptance granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4198496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b9e069c8a9bff2ebd5efc66533c34b39f7a467f5140f14e73df6b33493da3fda",
+  "request_id": "list-base-destructor-owner",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:control-sprite-defaults"
+}

@@ -1,0 +1,26 @@
+{
+  "event_id": "dc6f2efd226ea3eb34d9683cfe60070972525ef866592d5bb1a71bd35c35173f",
+  "payload": {
+    "affects": [
+      "entity-b3c9b1a959cafb4c8d3719a004718802d52bb5174aa18c0bd3ecf49f9db48dfb",
+      "entity-fa2d5b1e0b4875cf51af1add3ecc7de2bb9f518b4b6b4ae5db4e268172fb6070"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "control-draw-buffer-and-geometry-dataflow",
+    "evidence": [
+      "RadioButton 0x0060DADC pushes control Buffer, 0x0060DADD sets receiver parent+0x444, 0x0060DAE3 calls Buffer::copy. CheckBox equivalents 0x0060F3BC-0x0060F3C3. Use parentBuffer.copy(controlBuffer, field_24_+originalX, field_28_+originalY, originalX, originalY, columnWidth, computedItemHeight). Radio 0x0060DAC5-0x0060DAC9 and CheckBox 0x0060F3A5-0x0060F3A9 push saved computed height, not a function argument.",
+      "Sprite centering reads Sprite+0x1C = iHeight_, not iTopOffset_ (+0x24): Radio 0x0060DB1E/0x0060DB5B, CheckBox 0x0060F3FE/0x0060F43B. Draw at originalX, originalY + ((area.bottom - sprite.iHeight_ - area.top) >> 1). Keep callback-mutable RECT bounds distinct from original x/y, which Radio pushes/adds at 0x0060DB2D/0x0060DB37.",
+      "CORRECTION to preliminary font-height scope hint: CheckBox 0x0060F46B loads GraphicWin+0x970 = Buffer::font1_ (+0x52C); 0x0060F472 reads Font+0x1C = descent_, not height_ (+0x10), then adds it to area.top. RadioButton 0x0060DB82-0x0060DB91 only adjusts area.left by Dialog.field_34_: it has NO font-descent adjustment. Existing authorized buffer.h/font.h may supply minimal direct-member access; do not call text_height as a semantic substitute.",
+      "Both focus rectangles reconstruct current text width (area.right-area.left) but saved original y and original bottom: Radio 0x0060DCD2-0x0060DD0D, CheckBox 0x0060F5C9-0x0060F604. Expected left=field_34_, top=originalY, right=field_34_+textWidth, bottom=originalY+itemHeight. The eligibility predicate is field_B8_ != -1 && state != 0 && is_dialog_focus(), not area.right != 0.",
+      "CORRECTION to prior third-argument hint: all steady ESP+0x3C reads use SECOND explicit state argument: CheckBox 0x0060F31E/0x0060F3DE/0x0060F5B3 and Radio 0x0060DA3E/0x0060DAFE/0x0060DCBC. CheckBox ESP+0x40 at 0x0060F366 follows two pushes and refers to FIRST argument index. No third-argument read found; retain three-argument ABI but do not invent its use.",
+      "Native parent build reported C2248 for window->win_parent_. src/win.h:365-381 makes it protected, not private. Both control classes inherit it through GraphicWin; access through the current control receiver (unqualified win_parent_) is allowed C++ protected access and needs no Win header expansion. Access through a separate Win pointer is the invalid expression. Fresh compilation must verify the repair. Independently reviewed original-disassembly cache: /home/fran6co/code/OpenSMACX/build/recovery/checkbox-draw-evidence-review.md; it is disposable evidence, not a verdict."
+    ],
+    "hypothesis": "Both draw implementations need to preserve parent-to-control copying, saved original geometry versus callback-mutable RECT, and actual Sprite dimensions. CheckBox alone adds font descent. Retain genuine C++ bases and repair these coupled dataflows before spelling search or acceptance.",
+    "kind": "discovery"
+  },
+  "previous_event": "4154b100173e6523e68b7bfa60100c228cf836b6023d6c44246f573addb43298",
+  "request_id": "control-draw-buffer-and-geometry-dataflow",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:control-sprite-defaults"
+}

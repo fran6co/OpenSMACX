@@ -1,0 +1,20 @@
+{
+  "event_id": "340770483ad5e9a60eadd48d3bfcd8664ac02e2efe99efbac5ed01d6961c2fa7",
+  "payload": {
+    "affects": [
+      "entity-5c5347ae27a8eefd0a546741a37e12a131d06e84605c528a6e80306331cab9e6"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "filewin-duplicated-member-teardown",
+    "evidence": [
+      "Fresh native FileWin object after bounded caller rename contains explicit Dialog destruction atcodeoffset66 and compiler-owned member Dialog destruction at174; accompanying ListBox/EditBox/FlatButton teardown likewise has manual and automatic stages. Source HEAD already had the explicit destroy helper plus automatic member chain before this rename. Original407F00 has one normal direct608E10 call at407F45. Preserve this finding for coupled lifecycle repair; the call-target test only verifies replacement of the obsolete helper, not FileWin lifetime acceptance."
+    ],
+    "hypothesis": "FileWin destructor manually tears down real members and then the compiler destroys them again; full ownership recovery must remove duplicate stages together with the still-empty ListBox destructor and flattened EditBox base, not merely rename one callee.",
+    "kind": "discovery"
+  },
+  "previous_event": "a8b50408a6362490b89b4d522c6bffcc4541b4378c39711f3c29c459e8207c02",
+  "request_id": "filewin-duplicated-member-teardown",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:control-sprite-defaults"
+}

@@ -1,0 +1,29 @@
+{
+  "event_id": "5832a7ae3b5e9d9cca60be095c6c673afa19a02aa5670dadef31d62cce4db15e",
+  "payload": {
+    "affects": [
+      "entity-0130995b0499d668182d84ab3dcad9a453b36e9cff049dccf6b97162aef81bb2",
+      "entity-2e2e5ad778d3c6e3e9a1b4dd5e283279956bb018d8ed1cc281f7a652f4a06372",
+      "entity-969ed15af45e8d5ade7851b602706e7d8900f0211f53edf555ba2dd3659ef16c",
+      "entity-bbabe79f2077fc71579381a53b7b18de8b0bb1b1ec9f2461bff13a64006d35c8",
+      "entity-cbee9d0b63837046d56b8e4ee0d7be53799a7cc511403a8f470b1e9080064800",
+      "entity-d4b0e6d473bfc83afd419719e0ba5b550bd727c060ada16fa4a3c63d9f7b005d",
+      "entity-e74b94b59c0382ced987bcd59dccc42dc2049fb00dac9288fd9eca91336c1926",
+      "entity-f320ea201b5ea77d20c6de5852b8889f62a4a385e839f238b8e3ae3c7710e9a1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "control-globals-and-keyboard-indirection",
+    "evidence": [
+      "Original DWORD accesses615E60/615E6C/615E72/615EDB,614EA4..614EEE,609E6F/609F55 independently establish ten four-byte objects and initial image bytes; PE imports identify USER32.dll GetAsyncKeyState.",
+      "Original5F60DD/5F60E5 compare/store the pointer global9B7AC0,5F6111 reads flag9BC4B0,5F611E/5F6168 read count9B7B34,5F612F/5F615F load pointer9B7A6C,5F6148 stores flag9B7A78. Existing source wrongly dereferences their values.",
+      "Restore original5F5FB0..5F622B identity and tried lesson from git85fc7721f56c2a5cae754b993fe04fcfec74fec1:src/unrecovered/005f5fb0.cpp; do not bank a new claim."
+    ],
+    "hypothesis": "Control defaults and mouse-owner globals have independently bounded original storage but lack source-owned bindings. Win::on_char lost its historical marker during homing and incorrectly dereferences real globals as if they were fixed-address aliases, corrupting owner storage and the z-order path.",
+    "kind": "discovery"
+  },
+  "previous_event": "941be65a44e6f7addc0f5d22b74f9d2d83bace25e37654bc167e73d4d1de5edd",
+  "request_id": "control-globals-and-keyboard-indirection",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:control-sprite-defaults"
+}

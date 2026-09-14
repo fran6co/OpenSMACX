@@ -1,0 +1,28 @@
+{
+  "event_id": "4cd13efc404f38ec9b38d3d9af83570be390805065a464a8d887420d4f915df8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/leaf_recoveries.cpp",
+      "src/leaf_recoveries.h",
+      "src/stringstruct.cpp",
+      "src/stringstruct.h"
+    ],
+    "evidence": [
+      "Original 0x005E3630 is a head-guarded current-entry payload text accessor. Buffer StringList callers at 0x005DB369, 0x005DB399, 0x005DB3C4, 0x005DAFD4, 0x005DAFFD and 0x005DB00E pass the list receiver in ECX and consume EAX as text. Authorize typed StringList ownership with provisional current_text name and shared control callers; retain canonical identity, original baseline and all obligations. Payload +8 has heterogeneous uses and must not be globally renamed line_count. Experiment and subsequent reviewed rehome only; no acceptance granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6174256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0b37817e222bc443b5124abfe13c3ea2deb47cb5cc70008a289cde3c03099aa0",
+  "request_id": "shared-string-text-accessor",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:control-sprite-defaults"
+}

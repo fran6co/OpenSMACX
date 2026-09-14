@@ -1,0 +1,30 @@
+{
+  "event_id": "48af8b1fe26ec9b8bfebc33cfc956689a431ebe9c8177014b1dedef753ca3361",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/dialog_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Actual native VC6 object emits ??_GDialog@@UAEPAXI@Z with30codebytes plus2alignment bytes, direct actual~Dialog and operator-delete calls, matching original609D90 shape. Authorize native-writer FILE migration of existing609D90 identity and symbol to generated owner; preserve its byte claim and full historical block. Reassociate608E10 existing marker with actual destructor body, retire unused Dialog::destroy, handwritten scalar wrapper and DialogOriginalClose address seam, and retain referenced leaf callback adapter delegating directly to actual destructor. Add normal, deleting and exception-path lifetime controls. Preserve baseline, all claims and strict acceptance requirements; no outside leaf body edits or acceptance authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6327824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6331792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "20f8f6565fc83b669d85f80ecd11d0bd1811d206273a54702e09ef0c0df85e87",
+  "request_id": "dialog-native-destructor-owners",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:control-sprite-defaults"
+}
