@@ -1,12 +1,15 @@
 """Configured fresh-build collection for compiler/link file correspondence."""
 
+from contextlib import contextmanager
+from copy import deepcopy
+
 import hashlib
 import os
 from pathlib import Path
 import re
 
 from .compilation_database import entries
-from .compile_file_evidence import _observe, parse_compile_files
+from .compile_file_evidence import _identity, _observe, _physical, parse_compile_files
 from .compile_link_evidence import verify_compile_link_inputs
 from .components import relative_path
 from .link_file_evidence import parse_link_files
@@ -59,7 +62,7 @@ def _observations(directory, suffix):
     return sorted(selected)
 
 
-def verify_build_compilations(root, directory, configuration, *, outputs):
+def _collect(root, directory, configuration, *, outputs, retain=False):
     """Consume evidence inside the fresh build's still-live isolated directory.
 
     The build driver owns source/policy/Git/toolchain freshness. This collector
@@ -98,6 +101,7 @@ def verify_build_compilations(root, directory, configuration, *, outputs):
         observed_paths.add(path)
     database = artifacts["database"]
     expected = []
+    recipe_paths = []
     for entry, raw in zip(entries(database, directory), parse_json_value(database), strict=True):
         origin = directory / raw["directory"]
         source = origin / raw["file"]
@@ -105,6 +109,7 @@ def verify_build_compilations(root, directory, configuration, *, outputs):
                 or origin.resolve() != origin or not origin.is_dir() or not source.is_file()
                 or not source.is_relative_to(root) or not origin.is_relative_to(root)):
             raise ValueError("application recipes require canonical existing project source and directory paths")
+        recipe_paths.append((origin, source))
         if source.suffix in configuration["source_extensions"]:
             expected.append(source)
     tree = directory / configuration["directory"]
@@ -146,4 +151,89 @@ def verify_build_compilations(root, directory, configuration, *, outputs):
     report["evidence_fingerprint"] = digest({
         "files": {str(path): stamp for path, stamp in before.items()},
         "observations": [str(path) for path in selected]})
-    return report
+    if not retain:
+        return report
+    if report["result"] != "pass":
+        raise ValueError("live compile/link evidence requires fresh complete native correspondence")
+    # These are derived during this native verification, never supplied by a
+    # caller's report. Capture exact content stamps and actual checked paths.
+    directories = {origin for origin, _ in recipe_paths}
+    directories.update(Path(parse_compile_files(raw)["cwd"]) for raw in compilations)
+    output_roles = set()
+    if "command_bindings" in report:
+        binding = report["command_bindings"]
+        for row in [*binding["compilations"], binding["link"]]:
+            for operand in row["description"]["operands"]:
+                path, kind = Path(operand["path"]), operand["kind"]
+                if kind in ("input_directory", "output_directory"):
+                    directories.add(path)
+                if kind == "output_file":
+                    directories.add(path.parent)
+                    output_roles.add(path)
+    return report, _epoch_check(before, tree, configuration["suffix"], selected,
+                                tuple(recipe_paths), tuple(sorted(directories)), tuple(sorted(output_roles)))
+
+
+def verify_build_compilations(root, directory, configuration, *, outputs):
+    """Perform fresh semantic and physical verification without retaining state."""
+    return _collect(root, directory, configuration, outputs=outputs)
+
+
+def _epoch_check(stamps, tree, suffix, selected, recipes, directories, output_roles):
+    # Immutable closure; no caller-owned mapping, mutable report, mtime cache or
+    # persisted PASS can add paths, alter expected contents or refresh this epoch.
+    stamps = tuple((path, stamp["sha256"], stamp["size"]) for path, stamp in sorted(stamps.items()))
+    selected = tuple(selected)
+
+    def paths_current():
+        if tuple(_observations(tree, suffix)) != selected:
+            raise ValueError("application compile/link evidence changed: observation membership")
+        for origin, source in recipes:
+            if (origin.resolve() != origin or source.resolve() != source
+                    or not origin.is_dir() or not source.is_file()):
+                raise ValueError("application compile/link evidence changed: recipe paths")
+        for path in directories:
+            _physical(path, directory=True)
+        for path in output_roles:
+            if path.resolve() != path or path.exists() and not path.is_file():
+                raise ValueError("application compile/link evidence changed: command output path")
+
+    def current():
+        paths_current()
+        # Each unique observed file is content-hashed once per freshness call.
+        # Global pre/post physical identities also catch a file changing after
+        # its hash, while a later member is being read (including mtime restore).
+        before = tuple(_identity(_physical(path)) for path, _, _ in stamps)
+        for path, fingerprint, size in stamps:
+            if _observe(path) != {"sha256": fingerprint, "size": size}:
+                raise ValueError("application compile/link evidence changed: observed file contents")
+        paths_current()
+        if tuple(_identity(_physical(path)) for path, _, _ in stamps) != before:
+            raise ValueError("application compile/link evidence changed during freshness verification")
+
+    return current
+
+
+@contextmanager
+def live_build_compilations(root, directory, configuration, *, outputs):
+    """Seal one native verification for an unchanged enclosing live build.
+
+    The enclosing application still checks source/policy/Git/compiler freshness
+    before and after use. This closure rechecks only the collector's existing
+    physical and membership obligations. It cannot be persisted or refreshed
+    into another epoch and adds no completeness or acceptance authority.
+    """
+    report, check = _collect(root, directory, deepcopy(configuration),
+                             outputs=deepcopy(outputs), retain=True)
+    live = True
+
+    def current():
+        if not live:
+            raise ValueError("compile/link evidence context has expired")
+        check()
+
+    try:
+        current()
+        yield deepcopy(report), current
+    finally:
+        live = False

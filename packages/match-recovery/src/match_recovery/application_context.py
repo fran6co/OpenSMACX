@@ -4,7 +4,7 @@ This does not choose a historical revision, authorize a changed graph or prove
 preservation. The caller must consume evidence before the private context closes.
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, nullcontext
 from copy import deepcopy
 from dataclasses import dataclass
 import json
@@ -12,7 +12,7 @@ from pathlib import Path
 from typing import Callable
 
 from .build_check import Build, generate_build
-from .build_compile_evidence import verify_build_compilations
+from .build_compile_evidence import live_build_compilations
 from .compile_file_evidence import _observe
 from .compiler import Compiler
 from .driver import working_state
@@ -117,34 +117,37 @@ def application_build(root, roots, files, *, versioned_files, retain=False):
                                  + json.dumps(report, sort_keys=True))
             directory = replica / report["directory"]
             expected = deepcopy(report)
-            live = True
+            evidence = (live_build_compilations(replica, directory, settings.compile_link,
+                                                outputs=expected["outputs"])
+                        if settings.compile_link is not None else nullcontext((None, None)))
+            with evidence as (observed, compilation_fresh):
+                # Native semantics were freshly verified inside this context;
+                # caller/build reports only pin the original epoch for equality.
+                if compilation_fresh is not None and observed != expected["compile_link"]:
+                    raise ValueError("application compile/link evidence changed")
+                live = True
 
-            def fresh():
-                if not live:
-                    raise ValueError("application build context has expired")
-                inputs_fresh()
-                try:
-                    for output in expected["outputs"]:
-                        if _observe(directory / output["path"]) != {
-                                "sha256": output["sha256"], "size": output["size"]}:
-                            raise ValueError("application build artifact changed")
-                    if settings.compile_link is not None:
-                        observed = verify_build_compilations(replica, directory, settings.compile_link,
-                                                             outputs=expected["outputs"])
-                        # Includes the original receipt/file epoch fingerprint.
-                        # A newly self-consistent replacement cannot refresh it.
-                        if observed != expected["compile_link"]:
-                            raise ValueError("application compile/link evidence changed")
-                finally:
+                def fresh():
+                    if not live:
+                        raise ValueError("application build context has expired")
                     inputs_fresh()
+                    try:
+                        for output in expected["outputs"] if compilation_fresh is None else ():
+                            if _observe(directory / output["path"]) != {
+                                    "sha256": output["sha256"], "size": output["size"]}:
+                                raise ValueError("application build artifact changed")
+                        if compilation_fresh is not None:
+                            compilation_fresh()
+                    finally:
+                        inputs_fresh()
 
-            try:
-                fresh()
-                yield ApplicationBuild(replica, directory, deepcopy(expected), fresh)
-            finally:
                 try:
                     fresh()
+                    yield ApplicationBuild(replica, directory, deepcopy(expected), fresh)
                 finally:
-                    live = False
+                    try:
+                        fresh()
+                    finally:
+                        live = False
     finally:
         original_fresh()

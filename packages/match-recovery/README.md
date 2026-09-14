@@ -200,9 +200,20 @@ The yielded value exposes `root`, `directory`, a defensive-copy `report`, and
 declared artifacts and configured compiler/link evidence are rechecked against
 the original build epoch, including receipt bytes and membership. A self-consistent
 new receipt cannot refresh that epoch. Use the evidence inside the context; private
-files are removed on exit and later freshness checks refuse. Unconfigured evidence
+files are removed on exit by default. Explicit `retain=True` preserves the complete
+ignored replica for artifact inspection, but later freshness checks still refuse.
+Unconfigured evidence
 remains unverified. This API provides fresh builds, not baseline/candidate graph
 equivalence, linked-effect preservation, review or permission to publish a change.
+
+Inside each live application context, the collector verifies compiler/link
+semantics and command descriptions once, then retains that immutable validation.
+Each freshness check still hashes every unique observed file, rescans receipt
+membership, and checks physical paths, recipe/command directory roles and pre/post
+file identities. Original/private source, policy, Git, compiler environment and
+toolchain guards remain active. This is invocation-local reuse, not a disk or
+mtime-only cache; detached reports cannot supply or refresh the validation.
+Every new context verifies independently, and all capabilities expire on exit.
 
 `match_recovery.command_paths` supplies lossless command syntax comparison for
 build-graph verification. `validate_command_paths(arguments, cwd, description,

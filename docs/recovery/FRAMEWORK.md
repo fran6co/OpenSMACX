@@ -33,6 +33,12 @@ real-compiler tiny-application control reaches full acceptance through class
 repair and byte restoration; separate candidate/destination verification also
 passes. These are deterministic-agent controls, not accepted game recovery.
 
+Each live application build now retains its initially verified compiler/link
+semantics, avoiding repeated receipt parsing and command-provider calls. Every
+guard still hashes the unique physical file closure and rechecks membership,
+directory roles and pre/post identities. Source, Git, policy and compiler/toolchain
+guards remain active; no cross-run or mtime-only validation cache is introduced.
+
 Ordinary tasks with native compile/link observations now enter paired application
 builds under unchanged policy too. The application residual combines exact task
 function bindings with complete physical candidate-section enumeration, all
