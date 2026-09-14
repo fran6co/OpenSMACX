@@ -1,0 +1,21 @@
+{
+  "event_id": "dce80e6d3aea9f972e4ecd603dd96341ccc73bb537978274f46a6cd6a4bd80c0",
+  "payload": {
+    "affects": [
+      "entity-51adf20a3c312a5807867f1e63c00f989b20fb77571661ff3b874d34d713e784"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-d44c1430c81e4e6b8c672b3c3da26e48",
+    "evidence": [
+      "Updated src/textindex.cpp to use TextBufferGetPtr with repeated global loads, plain memcpy/strcpy/strcat, kill_lf, GetFileSize(txt_file_map.get_handle(), NULL), and explicit Filemap close after squeeze, matching original disassembly evidence.",
+      "The authorized TextIndex object compiled successfully and the full configured workspace build/link passed; native scoped checks remain unknown with make_index boundary mismatch."
+    ],
+    "hypothesis": "make_index section-record production now follows the evidenced shared-buffer and Filemap behavior within the authorized source scope.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-d44c1430c81e4e6b8c672b3c3da26e48",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:textindex-record-recovery"
+}
