@@ -27,16 +27,21 @@ def test_application_path_consumes_both_native_allocation_domains(tmp_path, dama
 
 @pytest.mark.parametrize("dimension", ["input_consistency", "allocation_isolation"])
 @pytest.mark.parametrize("outcome", ["pass", "fail", "unknown"])
+@pytest.mark.parametrize("scoped_outcome", ["pass", "fail", "unknown"])
 def test_application_wrapper_propagates_counterexamples_without_granting_coverage(
-        authorized, monkeypatch, dimension, outcome):
+        authorized, monkeypatch, dimension, outcome, scoped_outcome):
     # Routing control only. Native physical observations are exercised above;
     # this fixture retains actual task/source authority while controlling the
-    # private dimension result, never supplying an external acceptance receipt.
+    # private scoped/dimension results, never supplying an external acceptance
+    # receipt. Missing native output coverage cannot pass, and an uncompensated
+    # scoped failure cannot be downgraded to unknown by another dimension.
     graph, _ = authorized
     monkeypatch.setattr(generated_code_residual, "_compare_contexts", lambda *a, **k: {
-        "result": "fail", "ordinary_allocations": {"current": {dimension: outcome}}})
+        "result": scoped_outcome, "ordinary_allocations": {"current": {dimension: outcome}}})
     report = application_residual.compare_application_residual(graph)
-    assert report["result"] == ("fail" if outcome == "fail" else "unknown")
+    assert report["result"] == ("fail" if scoped_outcome == "fail" or outcome == "fail" else "unknown")
+    assert report["scoped_code"]["result"] == scoped_outcome
+    assert report[dimension] == ("fail" if outcome == "fail" else "unknown")
     assert report["outside_scope_verification"] == "unknown" and not report["scope_complete"]
 
 
