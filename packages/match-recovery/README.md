@@ -2859,6 +2859,22 @@ This is a whole-section envelope, not an individual C++ object's extent or a
 contents/reference proof. The native context guards all input/output/parsed state
 before use and on normal or exceptional exit.
 
+When ordinary private data lacks a same-owner static map label, this observer
+also follows exact COFF references from retained same-owner callers. It verifies
+each complete linked caller region and associated family before consuming its
+image-bound PDB symbol-base fixups. The selected physical input, target symbol
+index/section/offset and referring relocation must all agree. All independently
+verified anchors must imply the same section base; inconsistent verified callers
+or map/debug anchors refuse placement. Failed or unavailable callers remain
+explicit gaps and cannot supply anchors. An independently verified caller can
+establish bounded placement without proving all callers: caller coverage, target
+contents and allocation isolation remain unknown. No address is inferred from
+equal bytes, contribution sizes or a different owner's retained inline copy.
+Potentially folded callers remain gaps until complete original-owner group
+evidence is composed; the map's winning owner cannot stand in for another member.
+Per-owner batch memoization is guarded by the live native epoch; returned reports
+cannot mutate cached anchors. This does not grant residual coverage or acceptance.
+
 `LinkedBuild.storage_census()` derives every section from the complete physical
 candidate population. It includes explicit objects missing final-pass labels,
 every candidate in ambiguous archive families and unselected archive members.

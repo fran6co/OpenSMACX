@@ -7,6 +7,7 @@ allocation isolation or any task's authority to change the data.
 
 from collections import defaultdict
 from contextlib import contextmanager
+from copy import deepcopy
 
 from .common_allocation import _policy
 from .model import Result, Span, require_text
@@ -41,7 +42,7 @@ def _data_sections(inputs):
             for symbol in record["symbols"]:
                 declarations[symbol["name"]].append((record, symbol))
         index = {"policy": _policy(inputs.evidence, records), "debug": debug,
-                 "declarations": declarations, "selected": {}}
+                 "declarations": declarations, "selected": {}, "caller_anchors": {}}
         yield lambda owner, number: _observe_data_section(inputs, owner, number, index)
     finally:
         fresh()
@@ -154,6 +155,13 @@ def _observe_data_section(inputs, owner, number, index):
                 raise ValueError("private anchor belongs to a different selected section")
             anchors.append({key: row[key] for key in
                             ("symbol", "object_index", "object_offset", "address", "placement")})
+    caller_evidence = None
+    if getattr(inputs, "fixups", None) is not None:
+        from .linked_data_anchors import collect_anchors
+        if key not in index["caller_anchors"]:
+            index["caller_anchors"][key] = collect_anchors(inputs, selected, obj)
+        caller_evidence = index["caller_anchors"][key]
+        anchors.extend(deepcopy(caller_evidence["anchors"].get(number, ())))
     if not anchors:
         raise ValueError("ordinary storage has no independent placement anchor; absence is unproved")
     bases = {row["address"] - row["object_offset"] for row in anchors}
@@ -174,6 +182,9 @@ def _observe_data_section(inputs, owner, number, index):
             "object_sha256": selected["sha256"], "object_section": number,
             "section_name": section.name, "address": base, "size": size,
             "image_section": regions[0][0], "alignment": alignment, "zero_fill": zero_fill,
+            "caller_evidence": deepcopy({key: caller_evidence[key] for key in
+                ("callers", "gaps", "caller_coverage", "target_contents", "allocation_isolation")})
+                if caller_evidence is not None else None,
             "anchors": anchors, "symbols": [{"index": symbol.index, "name": symbol.name,
                 "offset": symbol.value, "storage": symbol.storage} for symbol in symbols],
             "placement": Result.PASS, "contents": Result.UNKNOWN, "allocation_isolation": Result.UNKNOWN,
