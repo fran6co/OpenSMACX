@@ -486,9 +486,12 @@ family comparison is useful evidence but does not prove retained COMDAT, private
 storage or alias selection. Workers cannot waive this missing prerequisite.
 Full-project acceptance enforces the same native linked prerequisite; switching
 acceptance scope or approving structure/runtime checks does not bypass it.
-It still needs the new paired linked proof connected to its exact retained proof
-build. The tiny full-project control currently refuses this missing connection
-despite passing matching, structure and runtime; do not label it accepted.
+The full gate now acquires its current build from the live paired graph after
+preparation; compiled preservation and structure/runtime proofs inspect that same
+build. Its ignored current replica survives verification for artifact rechecks,
+but its live capabilities expire. The tiny real-compiler full-project control
+passes through structural repair and restoration. This does not establish the
+game's missing proof coverage or qualify changed ICF outputs.
 Optional `--checkpoint <authorization.json>` delegates a local verified commit to
 the package. Its fields are `author` (the independent task coordinator), `message`
 and boolean `allow_migration`. The default should be false; publishing a tracked

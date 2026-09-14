@@ -6,6 +6,8 @@ physical compiler fixture alone never supplies full outside-scope verification.
 These tests prove orchestration, not Alpha Centauri semantics or a live pilot.
 """
 
+from contextlib import contextmanager
+from types import SimpleNamespace
 from copy import deepcopy
 from dataclasses import asdict, replace
 import io
@@ -53,7 +55,12 @@ def acceptance(migration, monkeypatch):
 
     def gate(root, image, **kwargs):
         assert kwargs["retain_build"] is True
-        built = check_build(root, retain=True)
+        if "_application_build" in kwargs:
+            application = kwargs["_application_build"]()
+            built = deepcopy(application.current.report)
+            built["directory"] = application.current.directory.relative_to(root).as_posix()
+        else:
+            built = check_build(root, retain=True)
         return {"result": built["result"], "input_fingerprint": digest(native.project_inputs(root, image)),
                 "checks": [{"name": "build", "result": built["result"], "report": built}]}
 
@@ -101,14 +108,53 @@ def proofs(monkeypatch):
 
 @pytest.fixture
 def qualified_preservation_protocol(acceptance, monkeypatch):
-    """Complete-prerequisite protocol double, not physical linked evidence."""
-    preserve = native.check_preservation
+    """Routing-only graph double; no synthetic reports establish native proof.
 
-    def qualified(*args, **kwargs):
-        return {**preserve(*args, **kwargs), "outside_scope_verification": "pass",
-                "test_fixture": "synthetic complete linked prerequisite for protocol only"}
+    Physical graph and alias qualification are covered in native compiler tests.
+    This fixture independently controls the prerequisite and verifies that the
+    gate, preservation and configured proofs receive one live current build.
+    """
+    preserve, build_type = native.check_preservation, native.Build
+    policy = native.unchanged_build_policy
+    state = {"live": None, "sessions": [], "consumed": [], "result": "pass",
+             "linked_effects": "pass"}
 
+    @contextmanager
+    def graph(root, name, *, retain_current=False):
+        assert retain_current is True
+        built = check_build(root, retain=True)
+        current = SimpleNamespace(directory=root / built["directory"], report=deepcopy(built))
+        session = SimpleNamespace(root=root, task_name=name, current=current,
+                                  report={"result": state["result"], "linked_effects": state["linked_effects"]})
+        assert state["live"] is None
+        state["live"] = session
+        state["sessions"].append(session)
+        try:
+            yield session
+        finally:
+            state["live"] = None
+
+    def bound(session):
+        if state["live"] is not session:
+            raise ValueError("fixture graph expired or replaced")
+
+    def qualified(root, name, *, application):
+        bound(application)
+        state["consumed"].append(application)
+        # Do not promote compiled preservation's unknown linked field.
+        return preserve(root, name)
+
+    # Only acceptance's imported class alias is replaced, never Build.read on
+    # the shared class used by build execution or other native verifiers.
+    monkeypatch.setattr(native, "Build", SimpleNamespace(
+        read=lambda root: SimpleNamespace(compile_link=object())))
+    monkeypatch.setattr(native, "unchanged_build_policy",
+                        lambda root, task, measurement, build:
+                        policy(root, task, measurement, build_type.read(root)))
+    monkeypatch.setattr(native, "application_graph", graph)
+    monkeypatch.setattr(native, "require_bound_graph", bound)
     monkeypatch.setattr(native, "check_preservation", qualified)
+    return state
 
 
 def test_native_acceptance_retains_one_fresh_build_for_both_proofs(acceptance, proofs, qualified_preservation_protocol):
@@ -360,11 +406,8 @@ def test_passing_full_proofs_cannot_promote_actual_compiled_preservation_to_link
 @pytest.mark.parametrize("qualification,expected", [(None, "unknown"), (False, "unknown"),
                                                     ("unverified", "unknown"), ("unknown", "unknown"), ("fail", "fail")])
 def test_full_proof_commands_cannot_replace_missing_or_refused_linked_qualification(
-        acceptance, proofs, monkeypatch, qualification, expected):
-    preservation = {"result": "pass", "scope_complete": False}
-    if qualification is not None:
-        preservation["outside_scope_verification"] = qualification
-    monkeypatch.setattr(native, "check_preservation", lambda *args: preservation)
+        acceptance, proofs, monkeypatch, qualified_preservation_protocol, qualification, expected):
+    qualified_preservation_protocol["linked_effects"] = qualification
     report = measure(acceptance)
     assert report["structure"] == report["runtime"] == report["build"] == "pass"
     assert report["obligations"] == report["result"] == expected
@@ -543,3 +586,104 @@ def test_driver_reaches_native_acceptance_after_independent_review(acceptance, p
         reviewer_configuration={"author": "independent", "command": command("review")}, execute=execute)
     assert result["ready_for_collection"] and "worker" not in stages
     assert stages.index("review") < stages.index("acceptance")
+
+
+def test_graph_remains_live_through_proofs_then_expires_with_artifacts_retained(
+        acceptance, proofs, qualified_preservation_protocol, monkeypatch):
+    state = qualified_preservation_protocol
+    original = native.invoke
+
+    def inspect(*args):
+        assert state["live"] is state["sessions"][-1]
+        native.require_bound_graph(state["live"])
+        assert state["consumed"] == [state["live"]]
+        assert args[-1]["build"]["directory"] == state["live"].current.directory.relative_to(acceptance).as_posix()
+        return original(*args)
+
+    monkeypatch.setattr(native, "invoke", inspect)
+    report = measure(acceptance)
+    assert report["result"] == "pass" and state["live"] is None
+    session, = state["sessions"]
+    with pytest.raises(ValueError, match="expired"):
+        native.require_bound_graph(session)
+    assert all((acceptance / path).is_file() for path in report["artifacts"])
+
+
+@pytest.mark.parametrize("damage", ["directory", "outputs"])
+def test_separate_or_relabelled_gate_build_cannot_borrow_linked_graph(
+        acceptance, proofs, qualified_preservation_protocol, monkeypatch, damage):
+    gate = native.check_project
+
+    def substituted(*args, **kwargs):
+        report = gate(*args, **kwargs)
+        built = report["checks"][0]["report"]
+        if damage == "directory":
+            # A second valid independently built product is not the graph build.
+            other = check_build(acceptance, retain=True)
+            assert other["outputs"] == built["outputs"]
+            built["directory"] = other["directory"]
+        else:
+            built["outputs"][0]["sha256"] = "0" * 64
+        return report
+
+    monkeypatch.setattr(native, "check_project", substituted)
+    with pytest.raises(ValueError, match="same current build"):
+        measure(acceptance)
+    assert not proofs and qualified_preservation_protocol["live"] is None
+
+
+def test_saved_compiled_outside_pass_cannot_replace_absent_application_graph(acceptance, proofs, monkeypatch):
+    monkeypatch.setattr(native, "check_preservation",
+                        lambda *args: {"result": "pass", "outside_scope_verification": "pass"})
+    assert measure(acceptance)["obligations"] == "unknown"
+
+
+@pytest.mark.parametrize("graph_present", [False, True])
+def test_explicit_compiled_outside_failure_survives_separate_linked_qualification(
+        acceptance, proofs, monkeypatch, request, graph_present):
+    if graph_present:
+        request.getfixturevalue("qualified_preservation_protocol")
+    monkeypatch.setattr(native, "check_preservation", lambda *args, **kwargs: {
+        "result": "pass", "outside_scope_verification": "fail"})
+    report = measure(acceptance)
+    assert report["result"] == report["obligations"] == "fail"
+
+
+def test_gate_omitting_requested_graph_acquisition_cannot_qualify_acceptance(
+        acceptance, proofs, qualified_preservation_protocol, monkeypatch):
+    ordinary_gate = native.check_project
+
+    def omitted(*args, **kwargs):
+        assert kwargs.pop("_application_build") is not None
+        return ordinary_gate(*args, **kwargs)
+
+    monkeypatch.setattr(native, "check_project", omitted)
+    monkeypatch.setattr(native, "check_preservation", lambda *args: {
+        "result": "pass", "outside_scope_verification": "pass"})
+    report = measure(acceptance)
+    assert report["result"] == report["obligations"] == "unknown"
+    assert qualified_preservation_protocol["sessions"] == []
+
+
+def test_gate_cannot_call_native_acquisition_twice(
+        acceptance, proofs, qualified_preservation_protocol, monkeypatch):
+    def double(*args, **kwargs):
+        kwargs["_application_build"]()
+        kwargs["_application_build"]()
+        pytest.fail("replaced the current native build")
+    monkeypatch.setattr(native, "check_project", double)
+    with pytest.raises(ValueError, match="cannot be replaced"):
+        measure(acceptance)
+    assert qualified_preservation_protocol["live"] is None and not proofs
+
+
+def test_failure_after_build_acquisition_expires_graph_but_retains_output(
+        acceptance, proofs, qualified_preservation_protocol, monkeypatch):
+    def broken(*args):
+        raise RuntimeError("test interruption after native build acquisition")
+    monkeypatch.setattr(native, "invoke", broken)
+    with pytest.raises(RuntimeError, match="test interruption"):
+        measure(acceptance)
+    state = qualified_preservation_protocol
+    assert state["live"] is None
+    assert state["sessions"][0].current.directory.is_dir()

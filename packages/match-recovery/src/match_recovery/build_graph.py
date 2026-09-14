@@ -97,7 +97,7 @@ def _bound_graph(session):
 
 
 @contextmanager
-def application_graph(root, task_name, *, integration=None, permission=None):
+def application_graph(root, task_name, *, integration=None, permission=None, retain_current=False):
     """Build authorized source/graph versions under the same current policy.
 
     Called by native migration verification. Command/membership agreement is
@@ -107,6 +107,8 @@ def application_graph(root, task_name, *, integration=None, permission=None):
     any generated-code exception.
     """
     root = Path(root).resolve()
+    if type(retain_current) is not bool:
+        raise ValueError("application graph retention must be a boolean")
     store, settings, build = TaskStore(root), Measurement.read(root), Build.read(root)
     task, decisions = store.read(task_name), store.decisions(task_name)
     scope, editable = store._scope(task, decisions)
@@ -169,7 +171,8 @@ def application_graph(root, task_name, *, integration=None, permission=None):
         with ExitStack() as contexts:
             old = contexts.enter_context(application_build(root, roots, prior, versioned_files=old_graph))
             fresh()
-            new = contexts.enter_context(application_build(root, roots, current, versioned_files=new_graph))
+            new = contexts.enter_context(application_build(root, roots, current, versioned_files=new_graph,
+                                                           **({"retain": True} if retain_current else {})))
             fresh()
             commands = compare_build_commands(old, new, editable=editable)
             fresh()

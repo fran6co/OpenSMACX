@@ -35,12 +35,14 @@ class ApplicationBuild:
 
 
 @contextmanager
-def application_build(root, roots, files, *, versioned_files):
+def application_build(root, roots, files, *, versioned_files, retain=False):
     """Build exactly these sources/graph files under current configured policy.
 
     Explicit ignored inputs are copied; unrelated ignored caches are not. No
     preparation command runs, nor is its versioned-input policy inherited. A
     successful context still has only the configured build's evidence coverage.
+    Retention keeps the complete private input/receipt/artifact tree for later
+    inspection, not the live verification capability, which always expires.
     """
     root = Path(root).resolve()
     roots = validate_tree(roots, files)
@@ -77,7 +79,7 @@ def application_build(root, roots, files, *, versioned_files):
     try:
         with project_replica(root, roots, files, inputs=tuple(sorted(inputs)),
                              versioned_inputs=settings.versioned_inputs,
-                             versioned_files=versioned_files) as replica:
+                             versioned_files=versioned_files, retain=retain) as replica:
             original_fresh()
             # Snapshotting a private toolchain executes its configured discovery
             # command. Refuse substituted scripts before that first execution.

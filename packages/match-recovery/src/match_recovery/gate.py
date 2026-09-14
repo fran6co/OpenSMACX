@@ -13,6 +13,7 @@ import subprocess
 from time import monotonic
 
 from .build_check import Build, check_build
+from .build_graph import require_bound_graph
 from .claim_integrity import check_claims
 from .components import relative_path
 from .data_check import check_data
@@ -123,10 +124,29 @@ def project_inputs(root: Path, image: Path) -> dict:
     return result
 
 
-def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None, retain_build=False) -> dict:
+def _application_build_report(root, application):
+    """Use an original live graph's current build, never a serialized receipt.
+
+    Only the display directory is rebased to the checkout. Native command and
+    compilation evidence retain their original private-root coordinate system.
+    """
+    require_bound_graph(application)
+    if application.root != root:
+        raise ValueError("gate application build belongs to a different project")
+    report = application.current.report
+    report["directory"] = application.current.directory.relative_to(root).as_posix()
+    relative_path(report["directory"])
+    require_bound_graph(application)
+    return report
+
+
+def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None, retain_build=False,
+                  _application_build=None) -> dict:
     root = root.resolve()
     if type(jobs) is not int or jobs < 1:
         raise ValueError("gate jobs must be a positive integer")
+    if _application_build is not None and (not callable(_application_build) or retain_build is not True):
+        raise ValueError("native application build hook requires retained build verification")
     image = (image if image.is_absolute() else root / image).resolve()
     measurement = Measurement.read(root)
     build = Build.read(root)
@@ -160,10 +180,24 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None, reta
         return project_inputs(root, image)
 
     initial = snapshot()
+    application = None
 
     def unchanged():
         if snapshot() != initial or working_state(root) != state:
             raise ValueError("project gate inputs or Git state changed; preserve edits and recheck")
+        if application is not None:
+            require_bound_graph(application)
+
+    def build_current():
+        nonlocal application
+        if _application_build is None:
+            return check_build(root, **({"retain": True} if retain_build else {}))
+        # Acquisition is after gate-owned preparation and prior pure checks.
+        # The caller holds its context open through every later acceptance check.
+        candidate = _application_build()
+        report = _application_build_report(root, candidate)
+        application = candidate
+        return report
 
     def run(name, operation):
         unchanged()
@@ -193,7 +227,7 @@ def check_project(root: Path, image: Path, *, jobs: int = 1, progress=None, reta
             run("audit:" + name, lambda name=name: audit_source(root, name))
         for name, command in commands.items():
             run("project:" + name, lambda command=command: _command(root, image, command))
-        built = run("build", lambda: check_build(root, **({"retain": True} if retain_build else {})))
+        built = run("build", build_current)
         # One compiler environment by default. Pure checks above finish before
         # the build, and compiled sweeps are serial; only the explicit match
         # sweep jobs parameter can use caller-provisioned compiler concurrency.

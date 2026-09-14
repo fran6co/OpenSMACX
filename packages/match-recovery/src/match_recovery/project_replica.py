@@ -29,15 +29,19 @@ def _git(root, *arguments):
 
 @contextmanager
 def project_replica(root, roots, files, *, inputs=(), artifacts="build/recovery/preservation",
-                    versioned_inputs=(), versioned_files=None):
+                    versioned_inputs=(), versioned_files=None, retain=False):
     """Keep current policy/Git identity, substitute a complete source file set.
 
     No original ignored cache, executable, virtual environment or compiler prefix
     is copied implicitly. Explicit non-source inputs are copied when declared.
     Source/history versions are not rewritten: the private working tree carries
     the counterfactual edits relative to the original current HEAD.
+    Explicit retention preserves the complete ignored replica on exit (including
+    failure), for artifact inspection; it is never acceptance or a worktree task.
     """
     root = Path(root).resolve()
+    if type(retain) is not bool:
+        raise ValueError("project replica retention must be a boolean")
     if any(name in os.environ for name in ("GIT_DIR", "GIT_WORK_TREE", "GIT_COMMON_DIR", "GIT_INDEX_FILE",
                                            "GIT_OBJECT_DIRECTORY", "GIT_ALTERNATE_OBJECT_DIRECTORIES", "GIT_NAMESPACE")):
         raise ValueError("project replica refuses Git path overrides")
@@ -104,7 +108,7 @@ def project_replica(root, roots, files, *, inputs=(), artifacts="build/recovery/
     objects = (root / os.fsdecode(_git(root, "rev-parse", "--git-path", "objects")).strip()).resolve()
     algorithm = _git(root, "rev-parse", "--show-object-format").decode().strip()
     try:
-        with tempfile.TemporaryDirectory(prefix="project-", dir=parent) as temporary:
+        with tempfile.TemporaryDirectory(prefix="project-", dir=parent, delete=not retain) as temporary:
             destination = Path(temporary)
             _git(destination, "init", "--quiet", "--template=", "--object-format=" + algorithm)
             (destination / ".git/objects/info/alternates").write_text(json.dumps(str(objects), ensure_ascii=False) + "\n")

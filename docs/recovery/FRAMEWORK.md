@@ -25,6 +25,14 @@ change acceptance through two deterministic worker/coordinator rounds. Actual
 changes to ICF output, relayout and other unsupported cases still refuse; this does not
 establish live-agent accepted recovery or full-game acceptance.
 
+Full-project verification now acquires that same live paired graph at the gate's
+post-preparation build stage. Its current build supplies the exact artifacts used
+by compiled preservation and both structure/runtime proof commands. The complete
+current replica stays in ignored build storage after capabilities expire. A fresh
+real-compiler tiny-application control reaches full acceptance through class
+repair and byte restoration; separate candidate/destination verification also
+passes. These are deterministic-agent controls, not accepted game recovery.
+
 Ordinary tasks with native compile/link observations now enter paired application
 builds under unchanged policy too. The application residual combines exact task
 function bindings with complete physical candidate-section enumeration, all

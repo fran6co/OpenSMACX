@@ -646,6 +646,30 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     assert outcomes[1]["candidate"]["checks"]["binary"]["result"] == "fail"
     assert outcomes[1]["candidate"]["checks"]["layout"]["result"] == "pass"
     receipt = result["acceptance"]
+    if damage == "structure":
+        # The stronger shared-build route observes the generator's substituted
+        # source before it can qualify the application graph. Do not weaken
+        # source-to-build binding just to reach the later structure proof.
+        assert result["stop_reason"] == "acceptance_unknown"
+        assert receipt["build"] == receipt["obligations"] == "unknown"
+        assert receipt["structure"] == receipt["runtime"] == "unknown"
+        assert "artifacts" not in receipt
+        assert "application source is outside source context or generated in its build" in json.dumps(receipt["findings"])
+        # Failed qualification still preserves the exact faulty current build
+        # for inspection, never as an acceptance receipt. Its method matches,
+        # but the actual compiled hierarchy is wrong and the source stays right.
+        from match_recovery.codeview import class_layout
+        artifact, = root.glob("build/recovery/preservation/project-*/build/products/build-*/owner.obj")
+        obj = Coff(artifact.read_bytes())
+        original_obj = Coff((original / "owner.obj").read_bytes())
+        assert obj.subject(obj.function(METHOD))[0] == original_obj.subject(original_obj.function(METHOD))[0]
+        layout = class_layout(obj, "Owner")
+        assert layout["members"] == {"raw_": 0} and not layout["bases"]
+        assert (product / "owner.h").read_text() == evidence + CLASSES
+        assert TaskStore(root).read(task.task_id).base_revision == task.base_revision
+        assert git("rev-parse", "HEAD") == head
+        assert git("diff", "--name-only", "HEAD").splitlines() == ["src/owner.cpp", "src/owner.h"]
+        return
     assert {Path(name).name for name in receipt["artifacts"]} == {
         "sample.exe", "owner.obj", "entry.obj", "sample.map", "sample.pdb",
         "sample.link.log", "sample.link.inputs.json", "compile_commands.json"}
@@ -654,12 +678,11 @@ def test_real_native_acceptance_preserves_structure_through_byte_regression(tmp_
     artifact, = [root / name for name in receipt["artifacts"] if name.endswith("/owner.obj")]
     obj = Coff(artifact.read_bytes())
     original_obj = Coff((original / "owner.obj").read_bytes())
-    # The damaged structural build really does preserve the method's bytes;
-    # rejecting it must come from structure evidence, not a convenient mismatch.
+    # Runtime corruption cannot hide behind the restored method's exact bytes.
     assert obj.subject(obj.function(METHOD))[0] == original_obj.subject(original_obj.function(METHOD))[0]
     assert receipt["build"] == receipt["references"] == receipt["obligations"] == "pass"
     assert receipt["runtime"] == ("fail" if damage == "runtime" else "pass")
-    assert receipt["structure"] == ("fail" if damage == "structure" else "pass")
+    assert receipt["structure"] == "pass"
     if damage is not None:
         assert result["stop_reason"] == "acceptance_fail"
     if damage == "runtime":

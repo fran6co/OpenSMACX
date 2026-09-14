@@ -11,8 +11,10 @@ import os
 from pathlib import Path
 import re
 import subprocess
+from contextlib import ExitStack
 
 from .build_check import Build
+from .build_graph import application_graph, require_bound_graph
 from .components import relative_path
 from .driver import Command, invoke, working_state
 from .fingerprint import input_snapshot
@@ -95,6 +97,13 @@ def _task_decision_state(root, reviewed_files):
 
 
 def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *, progress=None) -> dict:
+    # Native capabilities expire on every exit, including failed proof commands.
+    # The exact current build files survive for the driver's artifact recheck.
+    with ExitStack() as contexts:
+        return _measure_acceptance(root, task_name, image, request, contexts=contexts, progress=progress)
+
+
+def _measure_acceptance(root, task_name, image, request, *, contexts, progress=None):
     root = root.resolve()
     image = (image if image.is_absolute() else root / image).resolve()
     store = TaskStore(root)
@@ -152,8 +161,21 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
 
     # The gate owns preparation BEFORE its measurement epoch. Do not capture
     # generated compiler recipes until that preparation has completed.
+    application = None
+
+    def acquire_application():
+        nonlocal application
+        if application is not None:
+            raise ValueError("acceptance application build cannot be replaced")
+        application = contexts.enter_context(application_graph(root, task_name, retain_current=True))
+        require_bound_graph(application)
+        if application.root != root or application.task_name != task_name:
+            raise ValueError("acceptance application graph names a different project or task")
+        return application
+
     source_fresh()
-    gate = check_project(root, image, progress=progress, retain_build=True)
+    gate = check_project(root, image, progress=progress, retain_build=True, **(
+        {"_application_build": acquire_application} if Build.read(root).compile_link is not None else {}))
     source_fresh()
     built = next((row["report"] for row in gate["checks"] if row["name"] == "build"), {})
     report["build"] = built.get("result", "unknown")
@@ -168,6 +190,11 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
     if digest(epoch) != gate["input_fingerprint"]:
         raise ValueError("acceptance inputs changed after the project gate")
     directory = relative_path(built.get("directory"))
+    if application is not None:
+        require_bound_graph(application)
+        if (root / directory != application.current.directory
+                or built.get("outputs") != application.current.report["outputs"]):
+            raise ValueError("acceptance gate and linked preservation must use the same current build")
     artifacts = {directory + "/" + relative_path(row["path"]): row["sha256"] for row in built["outputs"]}
     if not artifacts:
         raise ValueError("acceptance requires fresh retained build artifacts")
@@ -175,6 +202,8 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
 
     def fresh():
         source_fresh()
+        if application is not None:
+            require_bound_graph(application)
         if project_inputs(root, image) != epoch:
             raise ValueError("acceptance compiler/image inputs changed")
         for name, fingerprint in artifacts.items():
@@ -200,8 +229,16 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
 
     restored = run("restoration", lambda: measure_restoration(
         root, task_name, image, review=request["review"], review_snapshot=request["snapshot"]))
-    preservation = run("preservation", lambda: check_preservation(root, task_name))
-    linked_preservation = preservation.get("outside_scope_verification", "unknown")
+    preservation = run("preservation", lambda: check_preservation(root, task_name, **(
+        {"application": application} if application is not None else {})))
+    linked = application.report if application is not None else {}
+    linked_dimensions = [linked.get(name) for name in ("result", "linked_effects")]
+    linked_preservation = ("fail" if "fail" in linked_dimensions else
+                           "pass" if all(value == "pass" for value in linked_dimensions) else "unknown")
+    # Negative native evidence remains a failure. A compiled-only positive
+    # report, however, cannot supply the missing linked-build capability.
+    if preservation.get("outside_scope_verification") == "fail":
+        linked_preservation = "fail"
     if linked_preservation not in ("pass", "fail", "unknown"):
         linked_preservation = "unknown"
     if linked_preservation != "pass":
@@ -211,6 +248,7 @@ def measure_acceptance(root: Path, task_name: str, image: Path, request: dict, *
                        "do not prove baseline/current linked selection and contributions. Structure/runtime proof commands cannot waive this prerequisite.",
             "evidence": [_diagnostic("linked-preservation", {
                 "result": linked_preservation, "compiled_residual": preservation["result"],
+                "application": linked,
                 "next_action": "obtain fresh native linked-selection/residual evidence against the original preservation baseline; "
                                "keep the source and historical obligations until that verification is complete"})]})
     source_form = run("cpp-source-form", lambda: check_source_form(root))

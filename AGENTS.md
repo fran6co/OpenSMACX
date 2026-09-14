@@ -96,7 +96,11 @@ initializers gain no function-scope waiver. Anonymous contribution assignment an
 complete retained-selection/allocation proof are still missing, so publication
 still refuses rather than treating these observations as full preservation.
 Full-project acceptance requires the same qualification; structure/runtime proof
-commands cannot waive it.
+commands cannot waive it. Its gate, linked preservation and structure/runtime
+proofs now share one live current application build, acquired after preparation.
+The ignored current replica remains for artifact rechecking; verification
+capabilities expire. A real compiler-backed tiny-application control passes this
+full boundary, not game acceptance or live-provider recovery.
 Do not replay earlier compiler-control acceptance reports under this boundary.
 Exit 0 in change mode means readiness for a coordinator checkpoint, not game
 acceptance or automatic collection. Explicit coordinator `--checkpoint` authorization

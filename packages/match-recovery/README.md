@@ -1820,7 +1820,7 @@ request from stdin and returns the request-bound receipt above. `init` configure
 this installed command; no project acceptance dispatcher is required. It runs
 the whole native/configured gate, retains one fresh build, then verifies strict
 task matching, declared structure, historical obligations, outside-scope compiled
-preservation and unchanged baseline compiler/build policy. Failed native checks
+and linked preservation and unchanged baseline compiler/build policy. Failed native checks
 cannot be waived by review or external proofs. A failed/unknown whole gate stops
 before proof commands run. Compiler/image/source/Git/task changes invalidate the
 epoch; the verifier never stamps annotations or changes the task baseline.
@@ -2173,10 +2173,17 @@ Both runtime residual and qualified output are required to discharge that strict
 type-only difference. Missing native evidence and other failures still refuse.
 Residual diagnostics identify differing producers/field paths with bounded output;
 they never supply acceptance evidence.
-The ordinary change driver consumes this composition. Full-project orchestration
-still needs to connect it to the same retained application build used by its
-structure/runtime proofs; that path currently refuses the missing linked evidence
-even when those proofs pass. A result from a different build is not a substitute.
+Both change and full-project orchestration consume this composition. With native
+compile/link configuration, the full gate acquires a live paired application graph
+at its build stage, after preparation, and uses that graph's exact current build.
+Compiled preservation, linked evidence and structure/runtime proof commands share
+the same native context through the final checks. The complete current replica
+is retained under ignored build storage; native capabilities expire on exit.
+Only artifact display paths are made checkout-relative; compiler/receipt evidence
+keeps its original physical identity. A serialized result, another build or a
+compiled-only PASS cannot substitute. A real compiler-backed tiny-application
+control passes full acceptance through structural repair and byte restoration;
+this is not full-game or live-agent recovery acceptance.
 
 ## Package boundary and verification
 
