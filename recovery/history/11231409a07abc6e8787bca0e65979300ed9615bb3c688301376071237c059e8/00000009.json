@@ -1,0 +1,21 @@
+{
+  "event_id": "a63c6d0efa6d6833ccad26e8c5e25d6f6878a2cf908a40fe398914d69fb1d0e3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-80ba0e77957a4ad48ce7eb1e1b7adf4b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current src/playerlock.cpp:50 already carries the native product binding for PlayerLock::lock at 0x00590000–0x00590093; the original seed and its history remain in src/unrecovered/00590000.cpp. Another seed binding is unnecessary.",
+      "The product implementation uses the two declared SquareLock members, resets each in flag/second/first order, clears active_, acquires entries in order, and unlocks both on either failure before clearing active_ and returning 1. Both successful acquisitions return 0; src/playerlock.h declares the seven-argument method.",
+      "Fresh installed-framework inspect with --in src/playerlock.cpp exited 0, verified the pinned image and decoded all 147 bytes. Original calls at 0x00590041 and 0x0059005A establish ordered acquisition; the loop at 0x00590071–0x0059007D establishes two-entry rollback.",
+      "This finding concerns an identity and files already in task scope. Incorporation records the implemented insight only. Supplied diagnostics still exit 3: Lock::lock fails byte/reference checks, message_data remains unresolved, and layout/build/runtime proof remains incomplete. Both cross-owner discoveries remain pending; no code acceptance, outside ownership transfer or baseline change is proposed.",
+      "Delegated policy: ee50c22b9239a6fd67783c5ece2ea4365d680d1f9fd0d324a863fbb08117799b"
+    ]
+  },
+  "previous_event": "51cf3fa952187d9e90e5ba4dfa5796b588c42fd09a04eb9ad0c837dac21bf89a",
+  "request_id": "coordinator-43e7e220f9e14b92a352d0e79f7c6abc",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:playerlock-acquisition-recovery"
+}

@@ -1,0 +1,29 @@
+{
+  "event_id": "7d2bb983b004d36417515b2702d0bf0ccc7e496f37cb541fda59c350abfce5ee",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/lock.cpp"
+    ],
+    "evidence": [
+      "Fresh read-only inspection using the exact installed runtime verified the pinned image and decoded all 361 bytes of Lock::lock at 0x00590300–0x00590469; its mapped owner is the requested existing identity in src/lock.cpp.",
+      "The original clears the member at +0xE4 at 0x0059044C before calling 0x00592EE0 at 0x00590456. Current src/lock.cpp:347–348 calls message_data(0x1205, owner, 0, 0, 0, 0) before clearing field_E4_, confirming the ordering discrepancy remains.",
+      "Request only the explicitly delegated Lock::lock identity and src/lock.cpp to repair this ordering while preserving the existing conditions and broadcast arguments. PlayerLock-only edits cannot repair this body.",
+      "NetDaemon remains read-only affected context under its existing ownership. The complete discovery remains pending; this proposal grants no resolution, source acceptance, baseline change or publication. No edits or compilation were performed.",
+      "Delegated policy: ee50c22b9239a6fd67783c5ece2ea4365d680d1f9fd0d324a863fbb08117799b"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5833472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "108ac168185ece6f74371409c9f82844d60954fafd3b42f597007dcae0057f47",
+  "request_id": "coordinator-46a4b9fa9e304ee8bd5da48337058702",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:playerlock-acquisition-recovery"
+}

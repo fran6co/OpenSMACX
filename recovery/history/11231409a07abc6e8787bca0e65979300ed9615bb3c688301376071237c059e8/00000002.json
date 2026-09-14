@@ -1,0 +1,22 @@
+{
+  "event_id": "f18503000f187fd7bacbdc47633cb7b3d775cdb02504aec10c66ba2173ead29d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-38e0ceeb2ee74beda5ee10f22da24d29",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current src/playerlock.cpp:59-60 already binds the preserved 0x00590000-0x00590093 identity to the implemented PlayerLock::lock definition at lines 61-81. The discovery's statement that binding remains required is stale; src/unrecovered/00590000.cpp remains preserved as seed evidence.",
+      "src/playerlock.h:35 declares the seven-int method, and lines 40-43 express its receivers as two real SquareLock members.",
+      "Fresh native read-only inspection verified the pinned image and decoded all 147 original bytes. Calls at 0x00590041 and 0x0059005A acquire receivers at +4 and +0x10 in order, skipping the second on first-acquisition failure; src/playerlock.cpp:70-74 expresses that control flow and argument grouping.",
+      "src/playerlock.cpp:63-68 expresses the original two-entry reset and leading-byte clearing. Lines 76-80 express the original two-entry unlock rollback, repeated byte clearing and failure return of 1; successful acquisition returns 0.",
+      "The insight is expressed in current scoped source. This decision establishes incorporation only; no compilation, matching, behavioral acceptance, scope expansion or source modification was performed.",
+      "Delegated policy: 7cfeedddf17b2c62c016d92deb0178af2bbe7b44084255cc27bf84bf557e2e29"
+    ]
+  },
+  "previous_event": "3ece3d28553e79110f8cfb36b3edc729fc178bdb5ed751b528ad73f5dee7af53",
+  "request_id": "coordinator-54422b8931c543928f9cb315157df2c8",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:playerlock-acquisition-recovery"
+}

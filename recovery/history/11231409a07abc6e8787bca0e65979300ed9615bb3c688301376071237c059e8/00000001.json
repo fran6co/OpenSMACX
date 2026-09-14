@@ -1,0 +1,23 @@
+{
+  "event_id": "3ece3d28553e79110f8cfb36b3edc729fc178bdb5ed751b528ad73f5dee7af53",
+  "payload": {
+    "affects": [
+      "entity-aa3d59f0e38ff3a4099c0c089831bed19f448ef616efc2beb6af58be020d9f8a"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-38e0ceeb2ee74beda5ee10f22da24d29",
+    "evidence": [
+      "Implemented the seed-only ?lock@PlayerLock@@QAEHHHHHHHH@Z body in src/playerlock.cpp:59-79 using typed PlayerLock::entries_ SquareLock members, preserving reset, ordered acquisition, rollback, active-byte clearing, and return behavior from the 0x00590000 disassembly.",
+      "Declared the seven-argument PlayerLock::lock in src/playerlock.h:35.",
+      "Fresh scoped restoration passed all four protected historical obligations; the fresh configured full build and link also passed.",
+      "The seed remains unbound by native source mapping, so coordinator binding is required before measuring entity-aa3d59f0e38ff3a4099c0c089831bed19f448ef616efc2beb6af58be020d9f8a."
+    ],
+    "hypothesis": "The recovered typed product definition at src/playerlock.cpp:59 is the unambiguous production owner for the preserved original identity at 0x00590000.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-38e0ceeb2ee74beda5ee10f22da24d29",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:playerlock-acquisition-recovery"
+}

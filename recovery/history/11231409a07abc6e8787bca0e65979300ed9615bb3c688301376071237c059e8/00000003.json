@@ -1,0 +1,25 @@
+{
+  "event_id": "565cccebba9f59c6981a88df96e06028f04ece3c833d9b0c113ea3874e760768",
+  "payload": {
+    "affects": [
+      "entity-7ccd4de8c76264c853e99c6ddeb5652fb03a88bfba9450e4738a7e7e50e73a27",
+      "entity-a59ad96931f5b819d0f8caa7ec5e19c4737affaee79b0619afd52ca706b78a4e",
+      "entity-aa3d59f0e38ff3a4099c0c089831bed19f448ef616efc2beb6af58be020d9f8a",
+      "entity-c88cc47941403650bf75f325f78045524db9aae8673da26b4848002ef735c5d5",
+      "entity-f0efc4aa3a5245cd8af571f67863e6077b6547c924877eb7f42676e6e25fabfe"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-3783ece431af4c519411eaeca58eec7d",
+    "evidence": [
+      "Fresh tasks check-restoration exited 3; all four protected obligations were unknown because VC6 compilation produced no object and reproducibility preprocessing failed.",
+      "The supplied fresh configured CMake build and link passed, and prior scoped diagnostics reported the recovered PlayerLock::lock exact under /Oy-; the recheck failure is unavailable measurement, not a demonstrated source mismatch."
+    ],
+    "hypothesis": "The current authorized PlayerLock recovery remains structurally justified, but coordinator preparation or compiler-resource diagnosis is required before fresh restoration verification can proceed.",
+    "kind": "discovery"
+  },
+  "previous_event": "f18503000f187fd7bacbdc47633cb7b3d775cdb02504aec10c66ba2173ead29d",
+  "request_id": "worker-3783ece431af4c519411eaeca58eec7d",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:playerlock-acquisition-recovery"
+}

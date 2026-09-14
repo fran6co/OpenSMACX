@@ -344,8 +344,8 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
                     }
                 }
             }
-            message_data(0x1205, static_cast<int>(owner), 0, 0, 0, 0);
             field_E4_ = 0;
+            message_data(0x1205, static_cast<int>(owner), 0, 0, 0, 0);
         }
         return 0;
     }
@@ -362,4 +362,3 @@ int Lock::lock(int slot, int flags, int a3, int a4, int a5, int a6, int a7) {
     }
     return 1;
 }
-
