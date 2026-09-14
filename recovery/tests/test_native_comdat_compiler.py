@@ -56,3 +56,67 @@ def test_native_ref_event_controls_original_root_seeding(tmp_path, monkeypatch, 
                 assert section["retention"] == ("pass" if eliminate else "unknown")
             assert domain["result"] == domain["retained_section_selection"] == "unknown"
             assert not domain["ready_for_collection"]
+
+
+@pytest.mark.parametrize("debug", [False, True])
+def test_native_any_copies_with_icf_keep_original_winners_separate_from_storage(tmp_path, monkeypatch, debug):
+    from match_recovery.linked_comdat_selection import comdat_selection
+    from match_recovery.linked_section_domain import observe_sections
+    from match_recovery.msvc_icf import parse_icf_log
+
+    root, _, _, _, _ = prepared_project(tmp_path, monkeypatch, proofs=False)
+    header = root / "src/owner.h"
+    header.write_text(header.read_text()
+        + "\ninline int fold_left(int value) { return value + 739; }\n"
+        + "inline int fold_right(int value) { return value + 739; }\n")
+    for unit in ("owner", "entry"):
+        source = root / "src" / (unit + ".cpp")
+        source.write_text(source.read_text()
+            + f"\nint (*{unit}_fold_references[])(int) = {{fold_left, fold_right}};\n")
+    environment = root / "recovery/environment.py"
+    text = environment.read_text()
+    assert text.count('"/opt:noicf"') == 1
+    text = text.replace('"/opt:noicf"', '"/opt:icf"')
+    if not debug:
+        # A separate test-owned build-policy variant, not a waiver of debug
+        # evidence from a product build. The debug case must remain refused.
+        assert text.count(', "/Z7"') == 1
+        text = text.replace(', "/Z7"', "")
+    environment.write_text(text)
+    files = {name: raw for name, raw in replica_snapshot(root, ("src",)).items() if raw is not None}
+    names = ("?fold_left@@YAHH@Z", "?fold_right@@YAHH@Z")
+    with application_build(root, ("src",), files, versioned_files={}) as context:
+        assert context.report["result"] == "pass"
+        with linked_build(context) as native:
+            log = parse_icf_log(native.inputs.artifacts["msvc-link-log"])
+            relevant = [group for group in log["groups"] if set(names) <= {
+                row["symbol"] for row in (group["selected"], *group["replaced"])}]
+            assert len(relevant) == 1, log
+            queries = []
+            for owner in ("owner.obj", "entry.obj"):
+                obj = Coff(native.inputs.objects.resolve(owner)["raw"])
+                for name in names:
+                    subject = obj.function(name)
+                    assert section_policy(obj, subject.section) == 2
+                    queries.append((owner, subject))
+            discarded = []
+            with comdat_selection(native) as selection:
+                for owner, subject in queries:
+                    if debug:
+                        with pytest.raises(ValueError, match="CodeView|debug\\$S"):
+                            selection.loser(owner, subject.section)
+                    else:
+                        result = selection.loser(owner, subject.section)
+                        if result is not None:
+                            assert result["disposition"] == "discarded_any_duplicate"
+                            discarded.append((owner, subject))
+                if not debug:
+                    assert len(discarded) == 2
+                    assert len(selection.folded_groups()) == 1
+            domain = observe_sections(context, native.inputs.objects, native=native)
+            for owner, subject in discarded:
+                assert {"owner": owner, "symbol": subject.name} not in domain["code_roots"]
+            if debug:
+                for owner, subject in queries:
+                    assert {"owner": owner, "symbol": subject.name} in domain["code_roots"]
+            assert domain["result"] == "unknown" and not domain["ready_for_collection"]

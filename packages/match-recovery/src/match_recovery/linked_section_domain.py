@@ -146,5 +146,6 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                 "enumeration": Result.PASS, "selection": selection, "inputs": rows,
                 "section_count": count, "code_roots": roots, "data_sections": data, "gaps": gaps,
                 "comdat_selection_certificates": choices.certificates() if choices is not None else [],
+                "comdat_folded_groups": choices.folded_groups() if choices is not None else [],
                 "ref_discard_observations": choices.discard_observations() if choices is not None else None,
                 "retained_section_selection": Result.UNKNOWN, "ready_for_collection": False}

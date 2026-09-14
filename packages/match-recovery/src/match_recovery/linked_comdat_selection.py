@@ -36,6 +36,9 @@ from .pdb_contributions import bound_contributions
 from .pe_coff import Coff, CoffRecords, weak_external
 
 
+MAX_FOLD_OVERLAPS = 4000000
+
+
 def _identity(record):
     return {key: record[key] for key in ("path", "member", "occurrence", "generated") if key in record}
 
@@ -106,6 +109,10 @@ class ComdatSelection:
     def discard_observations(self):
         """Return the parsed native log observations, if a query needed them."""
         return deepcopy(_entry(self)["discard_observation"])
+
+    def folded_groups(self):
+        """One complete native group proof, separate from same-key removals."""
+        return deepcopy(list(_entry(self)["fold_groups"].values()))
 
 
 _live = WeakKeyDictionary()
@@ -250,6 +257,212 @@ def _noncode_merges(state):
     return result
 
 
+def _event_selected(state, label):
+    """Bind all present original/final-pass owner spelling, never basename alone."""
+    inputs = state["native"].inputs
+    owner = _owner(label)
+    selected = inputs.objects.resolve(owner)
+    families = [row for row in inputs.coverage["inputs"] if _owner(row).casefold() == owner.casefold()]
+    if len(families) != 1:
+        raise ValueError("optimization event owner lacks one native final-pass family")
+    family, = families
+    for row in (label, family):
+        if any(value is not None and any(char in value for char in "/\\:")
+               for value in (row["library"], row["member"])):
+            raise ValueError("qualified optimization/final-pass owner needs independent command-path binding")
+    normalize = lambda value: None if value is None else value.casefold()
+    if any(normalize(label[key]) != normalize(family[key]) for key in ("library", "member")):
+        raise ValueError("optimization event owner contradicts exact final-pass family")
+    candidates = _candidates(family, inputs.records)
+    if (family["selection"] != Result.PASS or family["candidate_coverage"] != Result.PASS
+            or type(family["candidate_count"]) is not int or family["candidate_count"] != 1
+            or len(candidates) != 1):
+        raise ValueError("optimization event owner has ambiguous physical input candidates")
+    candidate = inputs.records[candidates[0]]
+    if _identity(candidate) != selected["identity"] or candidate["sha256"] != selected["sha256"]:
+        raise ValueError("optimization event differs from selected original physical input")
+    return selected, _object(state, candidate)
+
+
+def _fold_event_group(state, name):
+    # Parsing the exact native transcript also retains positive REF conflicts.
+    # Named K must occur exactly once globally, not just in a convenient group.
+    _discard_events(state)
+    matches = []
+    for index, group in enumerate(state["discard_observation"]["icf_groups"]):
+        for row in (group["selected"], *group["replaced"]):
+            relevant = row["symbol"] == name
+            if row["symbol"].startswith("."):
+                _, obj = _event_selected(state, row["owner"])
+                relevant = any(symbol.name == name and symbol.section > 0
+                               and obj.sections[symbol.section - 1].name == row["symbol"]
+                               for symbol in obj.symbols.values())
+            if relevant:
+                matches.append((index, group))
+    if len(matches) != 1:
+        raise ValueError("ANY key lacks one globally unique positive ICF member observation")
+    return matches[0]
+
+
+def _fold_storage(state, member, obj, mapping):
+    inputs = state["native"].inputs
+    inventory, module_index, spans = _metadata(state)
+    root = member.root
+    size = obj.section_sizes[root.section - 1]
+    begin, end = member.address, member.address + size
+    modules = module_index.get((digest(dict(member.input)), member.object_sha256), ())
+    rows = [(index, inventory.contributions[index], start) for index, start, _ in spans.overlaps(begin, end)]
+    labels = [row for row in (*mapping.publics, *(mapping.statics or ()))
+              if row.symbol == root.name and row.owner.casefold() == member.owner.casefold()]
+    if len(modules) != 1 or len(rows) != 1 or len(labels) != 1:
+        raise ValueError("ICF storage lacks one exact native module/MAP/contribution")
+    index, contribution, start = rows[0]
+    flags = obj.sections[root.section - 1].flags
+    if (start != begin or contribution.size != size or contribution.module != modules[0]
+            or contribution.section != labels[0].segment or labels[0].address != begin
+            or (contribution.flags ^ flags) & ~0x2000):
+        raise ValueError("ICF storage contribution contradicts the original survivor section")
+    for module in inventory.modules:
+        first = module.first
+        if first is None or not first.size:
+            continue
+        address = inputs.image.sections[first.section - 1][0].start + first.offset
+        if address < end and begin < address + first.size and first != contribution:
+            raise ValueError("ICF storage has contradictory module-first contribution")
+    return {"input": dict(member.input), "object_sha256": member.object_sha256,
+            "owner": member.owner, "root": asdict(root), "address": begin, "size": size,
+            "module": contribution.module, "contribution": index, "object_flags": flags,
+            "pdb_flags": contribution.flags,
+            "characteristics_agreement": Result.PASS if contribution.flags == flags else Result.UNKNOWN}
+
+
+def _folded_winner(state, name, candidates, label):
+    from .linked_fold_frames import original_owner_view, verify_fold_frames
+    from .linked_folding import Folding
+
+    native = state["native"]
+    inputs = native.inputs
+    folding = inputs.folding
+    if (type(folding) is not Folding or folding._objects is not inputs.objects
+            or folding._mapping is not inputs.mapping or folding._image is not inputs.image
+            or folding._fixups is not inputs.fixups):
+        raise ValueError("ANY ICF composition requires exact live native folding inputs")
+    words = state["command_words"]
+    if (not any(word in ("/verbose", "-verbose") for word in words)
+            or not any(word in ("/opt:icf", "-opt:icf") for word in words)
+            or any(word.lower() in ("/opt:noicf", "-opt:noicf") for word in state["all_words"])):
+        raise ValueError("ANY ICF composition requires explicit supported native ICF/VERBOSE policy")
+    event_index, event = _fold_event_group(state, name)
+    if event_index in state["fold_index"]:
+        result = state["fold_groups"][state["fold_index"][event_index]]
+    else:
+        group = folding.for_map(label.owner, name)
+        old_group = deepcopy(group)
+        rows = (event["selected"], *event["replaced"])
+        if len(rows) != len(group.members):
+            raise ValueError("ICF group differs from complete original event multiplicity")
+        originals = []
+        for row, member in zip(rows, group.members, strict=True):
+            selected, obj = _event_selected(state, row["owner"])
+            if (dict(member.input) != selected["identity"] or member.object_sha256 != selected["sha256"]
+                    or member.raw != selected["raw"] or member.owner != selected["owner"]
+                    or row["symbol"] != member.reported_symbol
+                    or obj.symbols.get(member.root.index) != member.root):
+                raise ValueError("ICF event member differs from exact original physical producer")
+            root = comdat_key(obj, member.root.section)
+            if root != member.root or section_selection(obj, root.section) not in (1, 2):
+                raise ValueError("ICF peer lacks a supported exact independent COMDAT key")
+            peer_group, _ = _fold_event_group(state, root.name)
+            if peer_group != event_index:
+                raise ValueError("ICF original member overlaps another reported fold group")
+            forest = _family(obj, root.section)
+            numbers = {part["object_section"] for part in forest}
+            if [item for item in obj.symbols.values() if item.section in numbers and item.storage == 2] != [root]:
+                raise ValueError("ICF peer or descendants have additional external definitions")
+            names = {symbol["name"] for part in forest for symbol in part["symbols"]
+                     if symbol["name"] != part["name"]}
+            sections = {part["name"] for part in forest}
+            for discarded in state["discard_observation"]["rows"]:
+                if (discarded["symbol"] in names
+                        or discarded["symbol"] in sections and discarded["owner"] is not None
+                        and _owner(discarded["owner"]).casefold() == member.owner.casefold()):
+                    raise ValueError("ICF retained member has contradictory positive REF evidence")
+            for record, declarations, imports in state["interest"].get(root.name, ()):
+                if imports:
+                    raise ValueError("ICF peer key conflicts with an import declaration")
+                for declaration in declarations:
+                    if (declaration["name"] == root.name and declaration["storage"] == 2
+                            and declaration["section"] == 0 and declaration["value"] == 0
+                            and declaration["type"] in (0, 32) and not declaration["auxiliary_size"]):
+                        continue
+                    peer = _object(state, record)
+                    defined = comdat_key(peer, declaration["section"])
+                    if (defined.name != root.name or defined.index != declaration["index"]
+                            or defined.type != 32 or section_selection(peer, defined.section) != section_selection(obj, root.section)
+                            or section_selection(obj, root.section) == 1
+                            and (_identity(record) != selected["identity"] or defined.index != root.index)):
+                        raise ValueError("ICF peer has conflicting strong/weak/common/key declarations")
+            originals.append((obj, root, forest))
+        frames = verify_fold_frames(group, inputs.image, inputs.fixups)
+        view = original_owner_view(inputs.mapping, group)
+        old_frames, old_view = deepcopy(frames), deepcopy(view)
+        index = index_for(view)
+        old_index = deepcopy(index.__dict__)
+        proofs = []
+        regions_seen = IntervalIndex(max_intervals=1000000)
+        overlap_work = 0
+        for member, (obj, root, forest) in zip(group.members, originals, strict=True):
+            proof = verify_code_region(obj, root, member.owner, view, inputs.image,
+                objects=inputs.objects, fixups=inputs.fixups, folded_frames=frames,
+                _index=index, _constants=state["constants"], codeview=state["codeview"])
+            if proof["result"] != Result.PASS or proof["address"] != group.address:
+                raise ValueError("ICF original peer code/references/companions did not verify")
+            regions = proof.get("regions", [dict(proof, ordinal=0)])
+            if not regions:
+                raise ValueError("ICF member proof has no complete runtime regions")
+            for region in regions:
+                begin, end = region["address"], region["address"] + region["size"]
+                overlaps = regions_seen.overlaps(begin, end)
+                overlap_work += len(overlaps)
+                if overlap_work > min(MAX_FOLD_OVERLAPS, len(group.members) * 1024):
+                    raise ValueError("ICF member overlap work exceeds its bounded native budget")
+                for previous, left, right in overlaps:
+                    prior = proof if previous == len(proofs) else proofs[previous]["proof"]
+                    if not (region["ordinal"] == 0 and len(regions) == 1
+                            and previous != len(proofs)
+                            and len(prior.get("regions", [None])) == 1 and (begin, end) == (left, right)):
+                        raise ValueError("ICF members have unequal or shared companion runtime extents")
+                regions_seen.insert(len(proofs), begin, end)
+            proofs.append({"input": dict(member.input), "object_sha256": member.object_sha256,
+                           "owner": member.owner, "root": asdict(root), "sections": forest, "proof": proof})
+        storage = _fold_storage(state, group.selected, originals[0][0], inputs.mapping)
+        if (not same(group, old_group) or not same(frames, old_frames)
+                or not same(view, old_view) or not same(index.__dict__, old_index)):
+            raise ValueError("ICF derived group proof changed during native composition")
+        result = {"check": "native_comdat_folded_members", "result": Result.PASS,
+                  "event": deepcopy(event), "members": proofs, "final_storage": storage,
+                  "frames": frames.canonical(), "image_sha256": group.image_sha256,
+                  "pdb_sha256": inputs.fixups.pdb_sha256, "log_sha256": group.log_sha256,
+                  "remaining_linked_effects": Result.UNKNOWN, "outside_scope_verification": Result.UNKNOWN,
+                  "source_authority": "not_transferred", "ready_for_collection": False, "persisted": False}
+        result["group_id"] = digest(result)
+        state["fold_groups"][result["group_id"]] = result
+        state["fold_group_witnesses"][result["group_id"]] = deepcopy(result)
+        state["fold_index"][event_index] = result["group_id"]
+        state["fold_index_witnesses"][event_index] = result["group_id"]
+    original = [row for row in result["members"] if row["root"]["name"] == name]
+    if len(original) != 1:
+        raise ValueError("ICF group does not retain one original ANY key producer")
+    original, = original
+    matches = [row for row in candidates if row["input"] == original["input"]
+               and row["object_sha256"] == original["object_sha256"] and row["root"] == original["root"]]
+    if len(matches) != 1 or result["final_storage"]["address"] != label.address:
+        raise ValueError("ICF original ANY winner differs from complete candidate family")
+    return matches[0], {"original_owner": original["owner"], "group_id": result["group_id"],
+                        "storage": result["final_storage"], "image_sha256": result["image_sha256"],
+                        "pdb_sha256": result["pdb_sha256"]}
+
+
 def _certificate_uncached(state, name):
     native = state["native"]
     inputs = native.inputs
@@ -266,7 +479,7 @@ def _certificate_uncached(state, name):
                     and symbol["type"] in (0, 0x20) and not symbol["auxiliary_size"]):
                 continue  # Ordinary unresolved references do not choose a winner.
             if (symbol["name"] != name or symbol["storage"] != 2 or symbol["section"] <= 0
-                    or symbol["value"] or symbol["type"] != 0x20 or symbol["auxiliary_size"]):
+                    or symbol["value"] or symbol["type"] != 0x20):
                 raise ValueError("ANY key has a weak, common, absolute or unsupported conflicting declaration")
             definitions.append(symbol)
         if not definitions:
@@ -293,6 +506,21 @@ def _certificate_uncached(state, name):
     if len(labels) != 1 or labels[0] not in inputs.mapping.publics or not labels[0].function or not labels[0].segment:
         raise ValueError("ANY winner lacks one independent public MAP placement")
     label, = labels
+    folded = _folded_winner(state, name, candidates, label) if name in state["folding_names"] else None
+    if folded is not None:
+        winner, fold = folded
+        result = {"check": "native_comdat_any_selection", "result": Result.PASS,
+                  "key": name, "policy": "IMAGE_COMDAT_SELECT_ANY", "candidates": candidates,
+                  "winner": {**deepcopy(winner), "owner": fold["original_owner"], "address": label.address},
+                  "fold_group_id": fold["group_id"], "final_storage": deepcopy(fold["storage"]),
+                  "rewritten_key": asdict(label), "noncode_merges": merges,
+                  "image_sha256": fold["image_sha256"], "pdb_sha256": fold["pdb_sha256"],
+                  "remaining_linked_effects": Result.UNKNOWN, "outside_scope_verification": Result.UNKNOWN,
+                  "source_authority": "not_transferred", "ready_for_collection": False, "persisted": False}
+        result["certificate_id"] = digest(result)
+        state["certificates"][name] = result
+        state["certificate_witnesses"][name] = deepcopy(result)
+        return result
     selected = inputs.objects.resolve(label.owner)
     winners = [row for row in candidates if row["input"] == selected["identity"]
                and row["object_sha256"] == selected["sha256"]]
@@ -301,8 +529,6 @@ def _certificate_uncached(state, name):
     winner = winners[0]
     obj = state["objects"][(digest(winner["input"]), winner["object_sha256"])]
     root = obj.symbols[winner["root"]["index"]]
-    if name in state["folding_names"]:
-        raise ValueError("ANY winner has an ICF group requiring complete folded-member composition")
     # Absence from reported ICF groups is not a no-fold proof. Every differently
     # identified possible code section must have an immutable byte mismatch.
     no_fold = _no_other_fold(state, obj, root, candidates)
@@ -394,7 +620,10 @@ def _loser(state, owner, number):
     names = {row["name"] for section in candidates[0]["sections"] for row in section["symbols"]
              if row["name"] != section["name"]}
     labels = (*state["native"].inputs.mapping.publics, *(state["native"].inputs.mapping.statics or ()))
-    if any(row.owner.casefold() == selected["owner"].casefold() and row.symbol in names for row in labels):
+    if any(row.owner.casefold() == selected["owner"].casefold() and row.symbol in names
+           and not (certificate.get("fold_group_id") and row in state["native"].inputs.mapping.publics
+                    and asdict(row) == certificate["rewritten_key"])
+           for row in labels):
         raise ValueError("ANY loser has contradictory independently placed original labels")
     return {"certificate_id": certificate["certificate_id"], "key": root.name,
             "queried_section": number, "sections": [row["object_section"] for row in candidates[0]["sections"]],
@@ -588,6 +817,8 @@ def comdat_selection(native, *, epoch=None):
                 state = {"native": native, "epoch": epoch, "inputs": observed.inputs,
                     "interest": interest, "records": records, "objects": {}, "certificates": {},
                     "object_witnesses": {}, "certificate_witnesses": {},
+                    "fold_groups": {}, "fold_group_witnesses": {},
+                    "fold_index": {}, "fold_index_witnesses": {},
                     "refusals": {}, "refusal_witnesses": {},
                     "ref_certificates": {}, "ref_certificate_witnesses": {},
                     "ref_refusals": {}, "ref_refusal_witnesses": {},
@@ -621,6 +852,8 @@ def comdat_selection(native, *, epoch=None):
                             or not same({key: state[key] for key in indexed}, before)
                             or not same(state["map_index"].__dict__, map_before)
                             or not same(state["certificates"], state["certificate_witnesses"])
+                            or not same(state["fold_groups"], state["fold_group_witnesses"])
+                            or not same(state["fold_index"], state["fold_index_witnesses"])
                             or not same(state["refusals"], state["refusal_witnesses"])
                             or not same(state["ref_certificates"], state["ref_certificate_witnesses"])
                             or not same(state["ref_refusals"], state["ref_refusal_witnesses"])

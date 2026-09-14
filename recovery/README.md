@@ -43,7 +43,12 @@ two-build storage/callback closure, including unreferenced data. Missing symbols
 do not remove physical obligations. Native COMDAT `ANY` certificates can exclude
 proven duplicate copies from code roots while retaining their physical inventory;
 they require complete same-key candidates and a separately verified winner, not
-absence from the MAP. Native `REF` certificates also recognize exact NODUP code
+absence from the MAP. Positive native ICF composition keeps the original ANY
+winner distinct from final shared-code storage, verifies every original folded
+member and retains them as roots. Only proven same-key duplicates are excluded;
+folded CodeView and unsupported cross-member overlaps still refuse. The domain's
+`comdat_folded_groups` report is derived evidence, not source ownership or
+acceptance. Native `REF` certificates also recognize exact NODUP code
 families through unique, framed discard events bound to the selected physical
 owner and actual REF/nonincremental/verbose options. Qualified or ambiguous owner
 labels, weak aliases into children and contradictory placement/folding events

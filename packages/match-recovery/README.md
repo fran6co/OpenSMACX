@@ -2047,9 +2047,10 @@ The physical application section domain also recognizes independently proven
 COMDAT `ANY` duplicates. Inside one live native input epoch, it inventories every
 same-key definition (including archive occurrences), validates the original COFF
 key and selection policy, and verifies the retained winner's code, references,
-MAP placement and image-bound PDB module/contribution. Relevant folding, aliases,
-conflicting declarations or unsupported selection policy refuse qualification.
-An absent fold-log entry is insufficient: every other possible physical code
+MAP placement and image-bound PDB module/contribution. Aliases, conflicting
+declarations or unsupported selection policy refuse qualification.
+For keys without a positive folding group, an absent fold-log entry is
+insufficient: every other possible physical code
 section must differ outside both sections' relocation fields and possible trailing
 padding. Same-key root exclusions never hide their associated code children.
 This conservative proof requires an explicitly nonincremental, relocation-only
@@ -2066,6 +2067,22 @@ Loser bytes need not equal the winner. A winner proof is shared per key within t
 guarded batch, never replayed from a report. Missing MAP labels still cannot prove
 reference-elimination (`REF`) discard. This is not complete retained-section
 selection, source ownership transfer, outside-scope preservation or acceptance.
+
+Positive native ICF groups can compose with `ANY` selection. The original
+same-key winner is distinct from the final shared-code storage owner: a MAP
+owner may also contain a discarded copy of that key. Every original group
+member must bind to one globally unique raw optimization event and selected
+physical input, with all original code, references, frame records and companion
+regions verified. Cross-member overlaps obey the native code graph's exact
+extent and family restrictions; folded CodeView remains unsupported. The final
+survivor needs its own exact MAP/PDB module and contribution. Qualified or
+ambiguous labels, cross-group chains and contradictory REF evidence refuse.
+Only the authenticated rewritten public key may name the losing owner's MAP
+alias; other independently placed loser labels remain contradictions. The
+`comdat_folded_groups` domain inventory holds each complete group proof once,
+with per-key certificates referencing it. All original producers remain code
+roots; only proven same-key duplicates stop seeding roots. These guarded,
+derived observations do not establish outside-scope preservation or acceptance.
 
 The same guarded native selection context can certify positive `/OPT:REF`
 removal of an exact NODUP code root and its original associative forest. The
