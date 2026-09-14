@@ -114,6 +114,10 @@ class ComdatSelection:
         """One complete native group proof, separate from same-key removals."""
         return deepcopy(list(_entry(self)["fold_groups"].values()))
 
+    def unique_placements(self):
+        """Independent exact NODUP root placements, never census exclusions."""
+        return deepcopy(list(_entry(self)["unique_placements"].values()))
+
 
 _live = WeakKeyDictionary()
 
@@ -192,7 +196,7 @@ def _code_candidates(state):
     return state["code_candidates"]
 
 
-def _no_other_fold(state, obj, root, candidates):
+def _no_other_fold(state, obj, root, candidates, address):
     from .linked_comdat_nofold import sections_distinct
 
     # The complete same-key ANY inventory has already qualified these precise
@@ -202,14 +206,25 @@ def _no_other_fold(state, obj, root, candidates):
     code = obj.sections[root.section - 1]
     size = obj.section_sizes[root.section - 1]
     checked = 0
+    placements = []
     for identity, stamp, number, other, other_size in _code_candidates(state):
         if (identity, stamp, number) in excluded:
             continue
         if not sections_distinct(code, size, other, other_size):
-            raise ValueError("ANY winner has a possible distinct-section ICF competitor")
+            try:
+                peer = _unique_placement(state, identity, stamp, number)
+                if address < peer["address"] + peer["size"] and peer["address"] < address + size:
+                    raise ValueError("unique NODUP root is not separately placed from this ANY candidate")
+            except ValueError as error:
+                if type(error) is not ValueError:
+                    raise
+                raise ValueError("ANY winner has a possible distinct-section ICF competitor: " + str(error)) from error
+            placements.append(peer["placement_id"])
         checked += 1
-    return {"result": Result.PASS, "method": "immutable_code_prefix_mismatch",
+    return {"result": Result.PASS, "method": "immutable_code_prefix_mismatch" if not placements
+                else "immutable_prefix_or_independent_unique_root_placement",
             "other_physical_code_sections": checked,
+            "unique_placements": placements,
             "same_key_roots": len(excluded), "source_authority": "not_transferred"}
 
 
@@ -304,36 +319,151 @@ def _fold_event_group(state, name):
     return matches[0]
 
 
-def _fold_storage(state, member, obj, mapping):
+def _placed_storage(state, identity, stamp, owner, root, obj, address, mapping):
     inputs = state["native"].inputs
     inventory, module_index, spans = _metadata(state)
-    root = member.root
     size = obj.section_sizes[root.section - 1]
-    begin, end = member.address, member.address + size
-    modules = module_index.get((digest(dict(member.input)), member.object_sha256), ())
+    begin, end = address, address + size
+    containing = [flags for (span, _, _), flags in zip(inputs.image.sections, inputs.image.section_flags)
+                  if span.start <= begin and end <= span.end]
+    if len(containing) != 1 or not containing[0] & 0x20000000 or not containing[0] & 0x20:
+        raise ValueError("native root placement is not wholly within executable PE code storage")
+    modules = module_index.get((digest(identity), stamp), ())
     rows = [(index, inventory.contributions[index], start) for index, start, _ in spans.overlaps(begin, end)]
     labels = [row for row in (*mapping.publics, *(mapping.statics or ()))
-              if row.symbol == root.name and row.owner.casefold() == member.owner.casefold()]
+              if row.symbol == root.name and row.owner.casefold() == owner.casefold()]
     if len(modules) != 1 or len(rows) != 1 or len(labels) != 1:
-        raise ValueError("ICF storage lacks one exact native module/MAP/contribution")
+        raise ValueError("native root placement lacks one exact module/MAP/contribution")
     index, contribution, start = rows[0]
     flags = obj.sections[root.section - 1].flags
     if (start != begin or contribution.size != size or contribution.module != modules[0]
             or contribution.section != labels[0].segment or labels[0].address != begin
             or (contribution.flags ^ flags) & ~0x2000):
-        raise ValueError("ICF storage contribution contradicts the original survivor section")
+        raise ValueError("native root contribution contradicts the original physical section")
     for module in inventory.modules:
         first = module.first
         if first is None or not first.size:
             continue
         address = inputs.image.sections[first.section - 1][0].start + first.offset
         if address < end and begin < address + first.size and first != contribution:
-            raise ValueError("ICF storage has contradictory module-first contribution")
-    return {"input": dict(member.input), "object_sha256": member.object_sha256,
-            "owner": member.owner, "root": asdict(root), "address": begin, "size": size,
+            raise ValueError("native root placement has contradictory module-first contribution")
+    return {"input": dict(identity), "object_sha256": stamp,
+            "owner": owner, "root": asdict(root), "address": begin, "size": size,
             "module": contribution.module, "contribution": index, "object_flags": flags,
             "pdb_flags": contribution.flags,
             "characteristics_agreement": Result.PASS if contribution.flags == flags else Result.UNKNOWN}
+
+
+def _unique_placement(state, identity_digest, stamp, number):
+    """Prove one original NODUP root elsewhere; no recursive ANY inference."""
+    token = digest([identity_digest, stamp, number])
+    if token in state["unique_placements"]:
+        return state["unique_placements"][token]
+    if token in state["unique_refusals"]:
+        raise ValueError(state["unique_refusals"][token])
+    try:
+        return _unique_placement_uncached(state, identity_digest, stamp, number, token)
+    except ValueError as error:
+        if type(error) is not ValueError:
+            raise
+        state["unique_refusals"][token] = str(error)
+        state["unique_refusal_witnesses"][token] = str(error)
+        raise
+
+
+def _unique_placement_uncached(state, identity_digest, stamp, number, token):
+    native = state["native"]
+    inputs = native.inputs
+    records = state["records"].get((identity_digest, stamp), ())
+    if len(records) != 1:
+        raise ValueError("unique placement lacks an exact physical candidate identity")
+    record, = records
+    obj = _object(state, record)
+    root = comdat_key(obj, number)
+    if (section_selection(obj, number) != 1 or root.type != 32
+            or obj.function(root.name) != root or root.value != 0):
+        raise ValueError("indistinguishable peer is not a unique independent NODUP code root")
+    forest = _family(obj, number)
+    sections = {row["object_section"] for row in forest}
+    if [symbol for symbol in obj.symbols.values() if symbol.section in sections and symbol.storage == 2] != [root]:
+        raise ValueError("unique NODUP root or descendants have extra external aliases")
+    definitions = []
+    for candidate, declarations, imports in state["interest"].get(root.name, ()):
+        if imports:
+            raise ValueError("unique NODUP key conflicts with an import declaration")
+        for symbol in declarations:
+            if (symbol["name"] == root.name and symbol["storage"] == 2 and symbol["section"] == 0
+                    and symbol["value"] == 0 and symbol["type"] in (0, 32) and not symbol["auxiliary_size"]):
+                continue
+            if (candidate is not record or symbol["index"] != root.index or symbol["name"] != root.name
+                    or symbol["storage"] != 2 or symbol["section"] != number or symbol["type"] != 32):
+                raise ValueError("NODUP peer key is not globally unique with undef-only other declarations")
+            definitions.append(symbol)
+    if len(definitions) != 1:
+        raise ValueError("NODUP peer lacks one complete original key definition")
+    labels = [row for row in (*inputs.mapping.publics, *(inputs.mapping.statics or ())) if row.symbol == root.name]
+    if len(labels) != 1 or labels[0] not in inputs.mapping.publics or not labels[0].function or not labels[0].segment:
+        raise ValueError("unique NODUP peer lacks one exact public MAP placement")
+    label, = labels
+    families = [row for row in inputs.coverage["inputs"] if _owner(row).casefold() == label.owner.casefold()]
+    if len(families) != 1:
+        raise ValueError("unique NODUP peer lacks one final physical input family")
+    selected, original = _event_selected(state, families[0])
+    if (_identity(record) != selected["identity"] or stamp != selected["sha256"] or original is not obj
+            or selected["owner"].casefold() != label.owner.casefold()):
+        raise ValueError("NODUP peer MAP owner differs from its original physical input")
+    _discard_events(state)
+    names = {symbol["name"] for part in forest for symbol in part["symbols"] if symbol["name"] != part["name"]}
+    section_names = {part["name"] for part in forest}
+    events = list(state["discard_observation"]["rows"])
+    events += [row for group in state["discard_observation"]["icf_groups"]
+               for row in (group["selected"], *group["replaced"])]
+    for event in events:
+        if (event["symbol"] in names or event["symbol"] in section_names
+                and (event["owner"] is None
+                     or _owner(event["owner"]).casefold() == selected["owner"].casefold())):
+            raise ValueError("unique NODUP peer has contradictory or unsupported REF/ICF observations")
+    proof = verify_code_region(obj, root, selected["owner"], inputs.mapping, inputs.image,
+        objects=inputs.objects, fixups=inputs.fixups, _index=state["map_index"],
+        _constants=state["constants"], codeview=state["codeview"])
+    if proof["result"] != Result.PASS or proof["address"] != label.address:
+        raise ValueError("unique NODUP peer complete code/references/metadata did not verify")
+    placement = _placed_storage(state, selected["identity"], stamp, selected["owner"], root,
+                                obj, label.address, inputs.mapping)
+    inventory = _metadata(state)[0]
+    result = {"check": "native_unique_nodup_placement", "result": Result.PASS,
+              **placement, "sections": forest, "proof": proof,
+              "image_sha256": inventory.image_sha256, "pdb_sha256": inventory.pdb_sha256,
+              "log_sha256": state["discard_observation"]["sha256"],
+              "remaining_linked_effects": Result.UNKNOWN, "allocation_isolation": Result.UNKNOWN,
+              "outside_scope_verification": Result.UNKNOWN, "source_authority": "not_transferred",
+              "ready_for_collection": False, "persisted": False}
+    result["placement_id"] = digest(result)
+    state["unique_placements"][token] = result
+    state["unique_placement_witnesses"][token] = deepcopy(result)
+    return result
+
+
+def _winner_ref_conflicts(state, winner, obj, root):
+    """A positive own-root discard cannot coexist with a retained ANY proof."""
+    _discard_events(state)
+    names = {symbol["name"] for part in winner["sections"] for symbol in part["symbols"]
+             if symbol["name"] != part["name"]}
+    section_names = {part["name"] for part in winner["sections"]}
+    selected = state["native"].inputs.objects.resolve(winner["owner"])
+    for row in state["discard_observation"]["rows"]:
+        if row["symbol"] not in names | section_names:
+            continue
+        if row["owner"] is None or _owner(row["owner"]).casefold() == selected["owner"].casefold():
+            raise ValueError("ANY winner has contradictory positive native REF evidence")
+        if row["symbol"] == root.name:
+            # A different original same-key ANY copy may legitimately have its
+            # own discard event. Authenticate that identity, not just its name.
+            other, other_obj = _event_selected(state, row["owner"])
+            symbol = other_obj.function(root.name)
+            if (other["identity"] == selected["identity"] or comdat_key(other_obj, symbol.section) != symbol
+                    or section_selection(other_obj, symbol.section) != 2):
+                raise ValueError("ANY winner discard label lacks a distinct original duplicate")
 
 
 def _folded_winner(state, name, candidates, label):
@@ -435,7 +565,9 @@ def _folded_winner(state, name, candidates, label):
                 regions_seen.insert(len(proofs), begin, end)
             proofs.append({"input": dict(member.input), "object_sha256": member.object_sha256,
                            "owner": member.owner, "root": asdict(root), "sections": forest, "proof": proof})
-        storage = _fold_storage(state, group.selected, originals[0][0], inputs.mapping)
+        selected_member = group.selected
+        storage = _placed_storage(state, dict(selected_member.input), selected_member.object_sha256,
+            selected_member.owner, selected_member.root, originals[0][0], selected_member.address, inputs.mapping)
         if (not same(group, old_group) or not same(frames, old_frames)
                 or not same(view, old_view) or not same(index.__dict__, old_index)):
             raise ValueError("ICF derived group proof changed during native composition")
@@ -529,9 +661,11 @@ def _certificate_uncached(state, name):
     winner = winners[0]
     obj = state["objects"][(digest(winner["input"]), winner["object_sha256"])]
     root = obj.symbols[winner["root"]["index"]]
-    # Absence from reported ICF groups is not a no-fold proof. Every differently
-    # identified possible code section must have an immutable byte mismatch.
-    no_fold = _no_other_fold(state, obj, root, candidates)
+    # Absence from reported ICF groups is not a no-fold proof. Every other
+    # possible physical code section needs an immutable mismatch or its own
+    # independently verified unique NODUP root placement at a disjoint range.
+    no_fold = _no_other_fold(state, obj, root, candidates, label.address)
+    _winner_ref_conflicts(state, {**winner, "owner": selected["owner"]}, obj, root)
     proof = verify_code_region(obj, root, label.owner, inputs.mapping, inputs.image,
                                objects=inputs.objects, fixups=inputs.fixups,
                                _index=state["map_index"], _constants=state["constants"],
@@ -819,6 +953,8 @@ def comdat_selection(native, *, epoch=None):
                     "object_witnesses": {}, "certificate_witnesses": {},
                     "fold_groups": {}, "fold_group_witnesses": {},
                     "fold_index": {}, "fold_index_witnesses": {},
+                    "unique_placements": {}, "unique_placement_witnesses": {},
+                    "unique_refusals": {}, "unique_refusal_witnesses": {},
                     "refusals": {}, "refusal_witnesses": {},
                     "ref_certificates": {}, "ref_certificate_witnesses": {},
                     "ref_refusals": {}, "ref_refusal_witnesses": {},
@@ -854,6 +990,8 @@ def comdat_selection(native, *, epoch=None):
                             or not same(state["certificates"], state["certificate_witnesses"])
                             or not same(state["fold_groups"], state["fold_group_witnesses"])
                             or not same(state["fold_index"], state["fold_index_witnesses"])
+                            or not same(state["unique_placements"], state["unique_placement_witnesses"])
+                            or not same(state["unique_refusals"], state["unique_refusal_witnesses"])
                             or not same(state["refusals"], state["refusal_witnesses"])
                             or not same(state["ref_certificates"], state["ref_certificate_witnesses"])
                             or not same(state["ref_refusals"], state["ref_refusal_witnesses"])

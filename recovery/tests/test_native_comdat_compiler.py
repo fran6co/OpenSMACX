@@ -1,4 +1,4 @@
-"""Real compiler REF retention/removal, not an application acceptance receipt."""
+"""Real compiler COMDAT selection, not an application acceptance receipt."""
 
 import pytest
 
@@ -119,4 +119,53 @@ def test_native_any_copies_with_icf_keep_original_winners_separate_from_storage(
             if debug:
                 for owner, subject in queries:
                     assert {"owner": owner, "symbol": subject.name} in domain["code_roots"]
+            assert domain["result"] == "unknown" and not domain["ready_for_collection"]
+
+
+def test_identical_nodup_peer_has_its_own_native_placement(tmp_path, monkeypatch):
+    from match_recovery.linked_comdat_nofold import sections_distinct
+    from match_recovery.linked_comdat_selection import comdat_selection
+    from match_recovery.linked_section_domain import observe_sections
+
+    root, _, _, _, _ = prepared_project(tmp_path, monkeypatch, proofs=False)
+    header = root / "src/owner.h"
+    header.write_text(header.read_text()
+        + "\ninline int placed_copy(int value) { return value + 739; }\n")
+    for unit in ("owner", "entry"):
+        source = root / "src" / (unit + ".cpp")
+        source.write_text(source.read_text()
+            + f"\nint (*{unit}_placed_reference)(int) = placed_copy;\n")
+    owner_source = root / "src/owner.cpp"
+    owner_source.write_text(owner_source.read_text()
+        + '\nextern "C" int placed_peer(int value) { return value + 739; }\n')
+    # Keep this fixture's explicit NOICF/NOREF policy: the proof must establish
+    # distinct physical placements, not infer them from absent fold/discard logs.
+    files = {name: raw for name, raw in replica_snapshot(root, ("src",)).items() if raw is not None}
+    name = "?placed_copy@@YAHH@Z"
+    with application_build(root, ("src",), files, versioned_files={}) as context:
+        assert context.report["result"] == "pass"
+        with linked_build(context) as native:
+            owner_obj = Coff(native.inputs.objects.resolve("owner.obj")["raw"])
+            peer = owner_obj.function("_placed_peer")
+            assert section_policy(owner_obj, peer.section) == 1
+            peer_map, = [row for row in native.inputs.mapping.publics if row.symbol == peer.name]
+            copy_map, = [row for row in native.inputs.mapping.publics if row.symbol == name]
+            assert peer_map.owner == "owner.obj" and peer_map.address != copy_map.address
+            discarded = []
+            with comdat_selection(native) as selection:
+                for owner in ("owner.obj", "entry.obj"):
+                    obj = Coff(native.inputs.objects.resolve(owner)["raw"])
+                    subject = obj.function(name)
+                    assert section_policy(obj, subject.section) == 2
+                    assert not sections_distinct(obj.sections[subject.section - 1],
+                        obj.section_sizes[subject.section - 1], owner_obj.sections[peer.section - 1],
+                        owner_obj.section_sizes[peer.section - 1])
+                    result = selection.loser(owner, subject.section)
+                    if result is not None:
+                        discarded.append(owner)
+                assert len(discarded) == 1
+            domain = observe_sections(context, native.inputs.objects, native=native)
+            assert {"owner": "owner.obj", "symbol": peer.name} in domain["code_roots"]
+            assert {"owner": copy_map.owner, "symbol": name} in domain["code_roots"]
+            assert {"owner": discarded[0], "symbol": name} not in domain["code_roots"]
             assert domain["result"] == "unknown" and not domain["ready_for_collection"]

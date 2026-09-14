@@ -2050,9 +2050,19 @@ key and selection policy, and verifies the retained winner's code, references,
 MAP placement and image-bound PDB module/contribution. Aliases, conflicting
 declarations or unsupported selection policy refuse qualification.
 For keys without a positive folding group, an absent fold-log entry is
-insufficient: every other possible physical code
-section must differ outside both sections' relocation fields and possible trailing
-padding. Same-key root exclusions never hide their associated code children.
+insufficient: every other possible physical code section needs an immutable byte
+mismatch outside relocation fields and possible trailing padding, or a separately
+verified unique NODUP root at a disjoint final placement. The latter requires its
+complete unique-definition inventory, exact original selected input, own-owner
+MAP and image-bound PDB module/contribution, and full code/reference/companion
+verification. Contradictory REF/ICF evidence, aliases, mixed/ambiguous declarations
+and overlapping root intervals refuse. There is no recursive ANY winner guess.
+Each placement is shared only within the guarded native epoch; disjointness is
+rechecked for each prospective winner. The derived `comdat_unique_placements`
+inventory retains complete proofs referenced by no-fold certificates. It rules
+out only the exact physical root as a storage competitor: that root remains in
+the application graph, and its children and all other candidates still need
+their own checks. Same-key root exclusions never hide associated code children.
 This conservative proof requires an explicitly nonincremental, relocation-only
 link; ambiguous competitors stay unresolved. PDB module/extent correspondence
 does not equate characteristics: a reserved-bit difference is retained explicitly

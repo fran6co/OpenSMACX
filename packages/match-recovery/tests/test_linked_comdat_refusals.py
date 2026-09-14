@@ -22,7 +22,8 @@ def test_fifty_repeated_queries_prove_refused_key_once_with_same_reason(tmp_path
                 handle.loser("dependency.obj", 1)
             reasons.append(str(error.value))
         assert calls == ["_f"]
-        assert reasons == ["ANY winner has a possible distinct-section ICF competitor"] * 50
+        assert reasons == ["ANY winner has a possible distinct-section ICF competitor: "
+                           "indistinguishable peer is not a unique independent NODUP code root"] * 50
         assert handle.certificates() == []
         assert selection._entry(handle)["refusals"] == {"_f": reasons[0]}
 

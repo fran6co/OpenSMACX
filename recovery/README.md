@@ -43,7 +43,11 @@ two-build storage/callback closure, including unreferenced data. Missing symbols
 do not remove physical obligations. Native COMDAT `ANY` certificates can exclude
 proven duplicate copies from code roots while retaining their physical inventory;
 they require complete same-key candidates and a separately verified winner, not
-absence from the MAP. Positive native ICF composition keeps the original ANY
+absence from the MAP. An identical-code competitor can also be distinguished by
+its separately verified, globally unique NODUP root at a disjoint MAP/PDB
+placement. This retains that peer and all descendants as physical/code obligations;
+`comdat_unique_placements` is derived proof input, not a selection exemption.
+Positive native ICF composition keeps the original ANY
 winner distinct from final shared-code storage, verifies every original folded
 member and retains them as roots. Only proven same-key duplicates are excluded;
 folded CodeView and unsupported cross-member overlaps still refuse. The domain's
