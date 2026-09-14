@@ -55,15 +55,16 @@ def _residual(obj, allowed, outside, *, retained=frozenset(), startup=None):
     if startup is None:
         value = _object_evidence(obj, excluded=frozenset(excluded), section_keys=keys, entry_names=entries)
     else:
-        from .startup_coverage import consume_startup
+        from .startup_coverage import consume_startup, consume_startup_fpo
         from .startup_projection import project_startup
         slots = consume_startup(startup, obj)
-        startup_roots = {obj.symbols[index].section for _, _, index in slots}
+        fpo = consume_startup_fpo(startup, obj)
+        startup_roots = {obj.symbols[index].section for _, _, index in slots} | {child for child, _, _ in fpo}
         if any(symbol.section in startup_roots and (symbol.name in outside or symbol.name in retained)
                for symbol in obj.symbols.values()):
             raise ValueError("generated startup root also contains a protected outside source binding")
         value, _ = project_startup(obj, slots, excluded=frozenset(excluded),
-                                   section_keys=keys, entry_names=entries)
+                                   section_keys=keys, entry_names=entries, fpo=fpo)
     return value, found
 
 

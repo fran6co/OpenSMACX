@@ -369,6 +369,7 @@ never merge distinct definitions. External symbol identity remains explicit.
     return {"check": "linked_relocation_code_graph", "result": result, "roots": root_ids,
             "nodes": nodes, "counts": dict(counts), "gaps": gaps, "data_references": storage,
             "import_references": imports,
+            "canonical_nodes": canonical if result == Result.PASS else None,
             "graph_fingerprint": digest({"roots": root_ids, "nodes": canonical}) if result == Result.PASS else None,
             "remaining_linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
             "limitations": ["code reached by explicit COFF relocations only; data contents and indirect targets are unproved",

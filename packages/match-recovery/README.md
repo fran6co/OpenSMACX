@@ -1973,7 +1973,17 @@ It is retained in the comparison fingerprint and `root_metadata_comparisons`,
 not silently ignored as debug data. Final linked treatment and address-identity
 effects remain unknown; absent PE debug directories are not discard proof.
 Unsupported metadata or failed locality keeps exact names and reports the refusal.
-No startup code or metadata is removed, and no residual coverage is granted.
+Order comparison alone removes no startup code or metadata and grants no residual coverage.
+
+For explicitly authorized generated changes, the live application-object producer
+can cover an exclusive root's exact associated FPO child. The complete trial object
+must reproduce the selected application object, and both frame records must match
+one unique image-bound PDB record at that root's independently observed address.
+Only that child and its root can leave the strict object residual together.
+Renumbered trial sections are bound through the original root and association;
+shared roots, aliases, protected source bindings and unsupported metadata refuse.
+Without native coverage the frame continues to protect its root. This does not
+establish debug-data discard, runtime effects or checkpoint acceptance.
 
 The native dependency-code graph also verifies whole ordinary COFF code sections,
 including multiple external entries and nonzero entry offsets. Every external
@@ -1998,6 +2008,28 @@ agree. Repeated archive member names do not establish owner-only selection.
 This verifies the thunk, not the imported DLL. Storage, indirect targets, runtime
 effects and other residuals remain independent obligations; none of these checks
 turns runtime-library code into recovered application code or grants acceptance.
+
+For reviewed generated changes, the native application graph additionally derives
+a generated-root code residual inside both live build contexts. Only exact,
+source-authorized slot-local roots can lose their bodies in that comparison;
+protected source bindings, shared roots and exported aliases refuse. The union
+of all remaining code producers must be independently observed in both builds
+to a bounded fixed point. Producers already in a build's fresh complete graph
+retain that evidence; only missing producers need additional resolution and
+roots. This avoids duplicating verified folded entries under map/original-owner
+aliases without weakening the graph's ambiguity refusal. A helper does not disappear from checks
+when its only initializer caller is removed. Missing linked placement is unknown,
+not inferred discard or permission. Native-proven local-root renamings retain
+their source-qualified occurrence identity; unrelated names never match by bytes.
+
+Residual correspondence retains original producer identities, entry offsets,
+metadata, references into selected roots, and alias/folding/import-slot sharing.
+Compiled producers use exact per-build receipts and stable source TUs; dependency
+producers retain physical input/member/occurrence and content identity. Parsed
+link evidence and acceleration caches are guarded throughout use and at close.
+The result remains a code dimension, not checkpoint admission: other task helper
+bodies gain no implicit waiver, while data/import dependencies and remaining
+storage, selection and runtime effects stay visible and independently unproved.
 
 The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's

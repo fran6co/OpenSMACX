@@ -14,12 +14,8 @@ from pathlib import Path, PurePosixPath, PureWindowsPath
 from .coff_archive import CoffArchive
 from .linked_function import verify_function as _function
 from .linked_code_graph import observe_code_graph, compare_code_graphs
-from .linked_objects import SelectedObjects
-from .link_file_evidence import parse_link_files
-from .link_input_coverage import _input_inventory
 from .model import Result, Span
-from .msvc_link_map import parse_link_map
-from .pe_coff import Coff, CoffRecords, PeImage
+from .pe_coff import Coff, CoffRecords
 
 
 TABLE = ".CRT$XCU"
@@ -137,24 +133,16 @@ def _selected_objects(evidence, coverage, records):
 
 
 def _observe(context, artifacts):
-    image = PeImage(artifacts["pe32-i386"], hashlib.sha256(artifacts["pe32-i386"]).hexdigest())
-    fixups = None
-    if "msvc-pdb" in artifacts:
-        from .pdb_fixups import bound_fixups
-        fixups = bound_fixups(image, artifacts["msvc-pdb"])
-    mapping = parse_link_map(artifacts["msvc-map"])
-    mapping.validate(image)
+    from .linked_context import parse_inputs
+    return _observe_inputs(parse_inputs(artifacts))
+
+
+def _observe_inputs(inputs):
+    image, mapping, fixups = inputs.image, inputs.mapping, inputs.fixups
+    objects, folding = inputs.objects, inputs.folding
+    evidence, coverage, records = inputs.evidence, inputs.coverage, inputs.records
     if mapping.contributions is None:
         raise ValueError("initializer table lacks explicit linker contribution evidence")
-    coverage, records = _input_inventory(artifacts["link-input-files"], artifacts["msvc-link-log"])
-    if coverage["result"] != Result.PASS:
-        raise ValueError("initializer table requires complete linked input candidate coverage")
-    evidence = parse_link_files(artifacts["link-input-files"])
-    objects = SelectedObjects(evidence, coverage, records)
-    folding = None
-    if fixups is not None:
-        from .linked_folding import bind_folding
-        folding = bind_folding(objects, mapping, image, fixups, artifacts["msvc-link-log"])
     selected = _selected_objects(evidence, coverage, records)
     functions, entries = {}, []
     for item in selected.values():

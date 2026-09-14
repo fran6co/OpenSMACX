@@ -2,10 +2,11 @@
 
 from contextlib import ExitStack, contextmanager
 from copy import deepcopy
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
 from pathlib import Path
 import re
 from typing import Callable
+from weakref import WeakKeyDictionary
 
 from .application_context import ApplicationBuild, application_build
 from .build_check import Build
@@ -15,14 +16,14 @@ from .driver import working_state
 from .measurement import Measurement
 from .generated_permissions import generated_sources
 from .linked_initializers import compare_build_initializers
-from .model import Result
+from .model import Result, digest
 from .source_history import _tree, git, revision_files
 from .source_inventory import image_pin
 from .source_replica import replica_roots, replica_snapshot
 from .tasks import TaskStore
 
 
-@dataclass(frozen=True)
+@dataclass(frozen=True, eq=False)
 class ApplicationGraph:
     """Live graph evidence; neither the report nor source copies grant scope."""
 
@@ -48,6 +49,50 @@ class ApplicationGraph:
     @property
     def authorization(self):
         return deepcopy(self._authorization)
+
+
+_live_graphs = WeakKeyDictionary()
+
+
+def require_bound_graph(session):
+    """Verify exact native session identity and its originally supplied authority.
+
+    A copied dataclass, a replacement callback or another valid permission may
+    not borrow the original build epoch. The binding is never serialized.
+    """
+    if type(session) is not ApplicationGraph or session not in _live_graphs:
+        raise ValueError("application graph requires its original live native authority binding")
+    expected, sources, authority, report = _live_graphs[session]
+    guard = expected[-1]
+    try:
+        guard()
+        actual = (session.root, session.task_name, session.baseline_revision, session.roots,
+                  session.baseline, session.current, session.check_current)
+        if (actual[:4] != expected[:4] or any(a is not b for a, b in zip(actual[4:], expected[4:]))
+                or session._sources != sources or digest(session._authorization) != authority
+                or digest(session._report) != report):
+            raise ValueError("application graph binding or authority changed during its native epoch")
+    finally:
+        guard()
+
+
+@contextmanager
+def _bound_graph(session):
+    """Private native producer hook, not caller-supplied verification data."""
+    if type(session) is not ApplicationGraph or session in _live_graphs:
+        raise ValueError("application graph needs a new exclusive native binding")
+    session.check_current()
+    _live_graphs[session] = ((session.root, session.task_name, session.baseline_revision, session.roots,
+                             session.baseline, session.current, session.check_current),
+                            deepcopy(session._sources), digest(session._authorization), digest(session._report))
+    try:
+        require_bound_graph(session)
+        yield session
+    finally:
+        try:
+            require_bound_graph(session)
+        finally:
+            _live_graphs.pop(session, None)
 
 
 @contextmanager
@@ -164,9 +209,26 @@ def application_graph(root, task_name, *, integration=None, permission=None):
 
             try:
                 session_fresh()
-                yield ApplicationGraph(root, task_name, baseline, roots, old, new,
-                                       deepcopy({"baseline": prior, "current": current}),
-                                       deepcopy(result), deepcopy(authorization), session_fresh)
+                session = ApplicationGraph(root, task_name, baseline, roots, old, new,
+                                           deepcopy({"baseline": prior, "current": current}),
+                                           deepcopy(result), deepcopy(authorization), session_fresh)
+                if permission is not None:
+                    from .generated_code_residual import compare_generated_code_residual
+                    try:
+                        with _bound_graph(session):
+                            residual = compare_generated_code_residual(session)
+                    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+                        residual = {"check": "application_generated_code_residual", "result": Result.UNKNOWN,
+                                    "reason": str(error), "remaining_linked_effects": Result.UNKNOWN,
+                                    "ready_for_collection": False}
+                    # This dimension omits generated roots only, not all task
+                    # functions. Neither a PASS nor a cross-build difference
+                    # supplies the remaining scope/storage/effect composition.
+                    result["generated_code_residual"] = residual
+                    session_fresh()
+                    session = replace(session, _report=deepcopy(result))
+                with _bound_graph(session):
+                    yield session
             finally:
                 try:
                     session_fresh()

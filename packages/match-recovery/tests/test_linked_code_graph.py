@@ -263,7 +263,7 @@ def test_missing_or_ambiguous_selected_helper_cannot_pass_from_map_alone(tmp_pat
         # Native complete-input coverage refuses ambiguous explicit basenames
         # even before the initializer/dependency split. Do not weaken it to
         # manufacture a superficially measurable root in this fixture.
-        assert report["current"]["reason"] == "initializer table requires complete linked input candidate coverage"
+        assert report["current"]["reason"] == "linked observation requires complete input candidate coverage"
         assert report["ordered_code_correspondence"] == report["result"] == "unknown"
         assert report["code_dependencies"]["result"] == "unknown"
         return

@@ -25,24 +25,34 @@ class StartupCoverage:
 _live_coverage = WeakKeyDictionary()
 
 
-def _mint_startup(obj, slots, fresh):
+def _mint_startup(obj, slots, fresh, *, fpo=()):
     """Private producer hook; parsed reports must never call this directly."""
     fresh()
     value = object.__new__(StartupCoverage)
-    _live_coverage[value] = (ref(obj), object_signature(obj), deepcopy(obj.__dict__), tuple(slots), fresh)
+    _live_coverage[value] = (ref(obj), object_signature(obj), deepcopy(obj.__dict__), tuple(slots),
+                             deepcopy(tuple(fpo)), fresh)
     fresh()
     return value
 
 
-def consume_startup(coverage, obj):
-    """Read exact immutable slots only while their original epoch is live."""
+def _consume(coverage, obj):
     if type(coverage) is not StartupCoverage or coverage not in _live_coverage:
         raise ValueError("startup coverage requires an authentic live native capability")
-    owner, signature, snapshot, slots, fresh = _live_coverage[coverage]
+    owner, signature, snapshot, slots, fpo, fresh = _live_coverage[coverage]
     try:
         fresh()
         if owner() is not obj or obj.__dict__ != snapshot or object_signature(obj) != signature:
             raise ValueError("startup coverage belongs to another or changed compiler object")
-        return slots
+        return slots, deepcopy(fpo)
     finally:
         fresh()
+
+
+def consume_startup(coverage, obj):
+    """Read exact immutable slots only while their original epoch is live."""
+    return _consume(coverage, obj)[0]
+
+
+def consume_startup_fpo(coverage, obj):
+    """Read exact native-bound child selections, not a debug-name exemption."""
+    return _consume(coverage, obj)[1]

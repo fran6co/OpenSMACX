@@ -5,7 +5,7 @@ residual. It is not itself proof that an initializer, datum or other residual
 may be removed from preservation coverage. Reports cannot be replayed as inputs.
 """
 
-from contextlib import contextmanager
+from contextlib import contextmanager, ExitStack
 from copy import deepcopy
 from dataclasses import dataclass
 from hashlib import sha256
@@ -124,6 +124,8 @@ def application_objects(graph):
             same selections must also belong to the graph's pinned permission;
             source editability alone cannot authorize generated effects.
             """
+            linked_stack = ExitStack()
+            native = locality = None
             try:
                 coverage_fresh()
                 fields = {"entity_id", "unit", "version", "symbol", "offset", "evidence"}
@@ -167,7 +169,7 @@ def application_objects(graph):
                     raise ValueError("startup coverage requires a unique table in both actual compiler objects")
                 application_table, = application_tables
                 trial_table, = trial_tables
-                slots = []
+                slots, fpo = [], []
                 for change in changes:
                     entries = [row for row in linked.get("entries", ())
                                if row.get("input") == {"path": str(output)}
@@ -187,19 +189,51 @@ def application_objects(graph):
                         if symbol.storage != 3 or matches != [(change["offset"], symbol.index, 6)]:
                             raise ValueError("startup slot does not retain its exact static root identity")
                     slots.append((trial_table, change["offset"], local.index))
+                    children = [number for number, parent in application_obj.associations.items()
+                                if parent == emitted.section and application_obj.sections[number - 1].name == ".debug$F"]
+                    if children:
+                        from .initializer_order import _project, _LocalRoots
+                        from .linked_context import linked_build
+                        from .linked_fpo import verify_fpo
+                        from .startup_local import slot_local_root
+                        if locality is None:
+                            _, projection = _project(context, linked, changes)
+                            locality = _LocalRoots(context, linked, projection)
+                        locality.check(unit, change["symbol"])
+                        trial_local = slot_local_root(obj, table=trial_table, offset=change["offset"], symbol=local)
+                        trial_children = trial_local["recognized_debug_children"]
+                        if len(children) != 1 or len(trial_children) != 1:
+                            raise ValueError("startup FPO lacks a unique trial/application child")
+                        trial_child = trial_children[0]["section"]
+                        if native is None:
+                            native = linked_stack.enter_context(linked_build(context))
+                        try:
+                            native.check_current()
+                            frame = verify_fpo(application_obj, children[0], emitted, native.inputs.image,
+                                               entry["target"], native.inputs.fixups)
+                            replica_frame = verify_fpo(obj, trial_child, local, native.inputs.image,
+                                                       entry["target"], native.inputs.fixups)
+                            if frame != replica_frame:
+                                raise ValueError("startup trial FPO differs from its selected native frame")
+                        finally:
+                            native.check_current()
+                        fpo.append((trial_child, local.index, tuple(sorted(frame.items()))))
                 # Validate the exact projection algebra now. The consumer must
                 # revalidate it alongside ordinary mapped-function subtraction.
-                project_startup(obj, tuple(slots))
+                project_startup(obj, tuple(slots), fpo=tuple(fpo))
                 repeated = compare(trial, obj, unit=unit, version=version, flags=flags,
                                    input_fingerprint=input_fingerprint)
                 if repeated != observed:
                     raise ValueError("startup replica evidence changed during linked observation")
                 coverage_fresh()
-                return _mint_startup(obj, tuple(slots), coverage_fresh)
+                return _mint_startup(obj, tuple(slots), coverage_fresh, fpo=tuple(fpo))
             except (KeyError, TypeError, AttributeError) as error:
                 raise ValueError("incomplete native startup coverage binding") from error
             finally:
-                coverage_fresh()
+                try:
+                    linked_stack.close()
+                finally:
+                    coverage_fresh()
 
         compare.cover_startup = cover_startup
         yield compare

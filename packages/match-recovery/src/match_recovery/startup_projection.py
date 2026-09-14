@@ -13,12 +13,13 @@ from .coff_replica import _object_evidence
 from .pe_coff import weak_external
 
 
-def project_startup(obj, slots, *, excluded=frozenset(), section_keys=None, entry_names=None):
+def project_startup(obj, slots, *, excluded=frozenset(), section_keys=None, entry_names=None, fpo=()):
     """Return residual evidence and an exact, non-authoritative coverage report.
 
     A slot is ``(table_section, byte_offset, root_symbol_index)``. Root sections
     are removed only when no other code/data references any symbol in them.
-    Associative children, undefined dependencies and other storage stay strict.
+    Only explicit native-bound leaf FPO selections can follow a removed root.
+    Other associative children, undefined dependencies and storage stay strict.
     """
     if not isinstance(slots, (tuple, list)) or len(slots) > 4096:
         raise ValueError("startup projection requires a bounded slot sequence")
@@ -27,6 +28,11 @@ def project_startup(obj, slots, *, excluded=frozenset(), section_keys=None, entr
         raise ValueError("invalid startup slot identity")
     if len(set(slots)) != len(slots):
         raise ValueError("duplicate startup projection slot")
+    if (not isinstance(fpo, tuple) or len(fpo) > len(slots)
+            or any(not isinstance(row, tuple) or len(row) != 3
+                   or type(row[0]) is not int or type(row[1]) is not int
+                   or not isinstance(row[2], tuple) for row in fpo)):
+        raise ValueError("startup FPO projection requires exact bounded child selections")
     if not slots:
         return _object_evidence(obj, excluded=excluded, section_keys=section_keys, entry_names=entry_names), {
             "slots": [], "removed_root_sections": [], "retained_root_sections": [], "removed_symbols": []}
@@ -61,12 +67,34 @@ def project_startup(obj, slots, *, excluded=frozenset(), section_keys=None, entr
     # Validate the original complete evidence before changing any record. In
     # particular, malformed/ambiguous identities must not vanish in projection.
     _object_evidence(obj, excluded=excluded, section_keys=section_keys, entry_names=entry_names)
+    # Pure structural revalidation is necessary but not native authority. Only
+    # the live producer can establish the selected child's PDB correspondence.
+    from .startup_local import slot_local_root
+    frames, debug_edges = {}, set()
+    for child, index, metadata in fpo:
+        if index not in chosen.values() or child in excluded:
+            raise ValueError("startup FPO is not an unscoped selected root child")
+        root = obj.symbols[index]
+        offsets = [offset for offset, target in chosen.items() if target == index]
+        if len(offsets) != 1 or root.section in frames:
+            raise ValueError("startup FPO has ambiguous root selection")
+        local = slot_local_root(obj, table=table, offset=offsets[0], symbol=root)
+        children = local["recognized_debug_children"]
+        if len(children) != 1 or children[0]["section"] != child:
+            raise ValueError("startup FPO differs from the exact local associated child")
+        expected = tuple(sorted({"format": "fpo_data", "code_size": children[0]["code_size"],
+                                 "data": obj.sections[child - 1].data[4:].hex()}.items()))
+        if metadata != expected:
+            raise ValueError("startup FPO frame differs from its covered metadata")
+        frames[root.section] = (child, expected)
+        debug_edges.add((child, 0, index))
     incoming = {}
     for number, item in enumerate(obj.sections, 1):
         if item.name == ".debug$S":
             continue
         for offset, target, kind in item.relocations:
-            incoming.setdefault(target, []).append((number, offset))
+            if (number, offset, target) not in debug_edges:
+                incoming.setdefault(target, []).append((number, offset))
     # Weak aliases are linker references even without an instruction operand.
     for symbol in obj.symbols.values():
         if symbol.storage == 105:
@@ -131,14 +159,21 @@ def project_startup(obj, slots, *, excluded=frozenset(), section_keys=None, entr
     projected.section_sizes = tuple(4 * len(remaining) if number == table else size
                                     for number, size in enumerate(obj.section_sizes, 1))
     omitted = set(excluded) | set(removed) | ({table} if not remaining else set())
+    if not frames.keys() <= set(removed):
+        raise ValueError("startup FPO cannot be removed without its exclusive root")
+    debug_removed = {child for child, _ in frames.values()}
+    omitted.update(debug_removed)
     value = _object_evidence(projected, excluded=frozenset(omitted), section_keys=section_keys,
                              entry_names=entry_names, preserve_references=frozenset(preserve))
-    consumed = set(removed) | ({table} if not remaining else set())
+    consumed = set(removed) | debug_removed | ({table} if not remaining else set())
     removed_symbols.extend(index for index, symbol in obj.symbols.items()
                            if symbol.section in consumed and symbol.storage != 103)
     return value, {"slots": [list(row) for row in sorted(slots)], "removed_root_sections": removed,
                    "retained_root_sections": retained, "removed_symbols": sorted(set(removed_symbols)),
                    "remaining_slots": len(remaining), "table_removed": not remaining,
+                   "covered_fpo": [{"section": child, "root_section": number, **dict(metadata),
+                                    "runtime_effects": "unknown"}
+                                   for number, (child, metadata) in sorted(frames.items())],
                    "preserved_reference_symbols": sorted(preserve),
                    "covered_root_references": [{"section": number, "offset": offset,
                                                  "target": target, "kind": kind}

@@ -42,6 +42,49 @@ def test_generated_graph_keeps_exact_authority_without_granting_linked_acceptanc
     assert len(calls) == 2 and living == []
 
 
+@pytest.mark.parametrize("outcome", ["pass", "fail", "unknown"])
+def test_native_generated_residual_is_live_diagnostic_not_a_remaining_effect_waiver(graph_task, monkeypatch, outcome):
+    from match_recovery import generated_code_residual
+    root, task = graph_task
+    _, living, _ = contexts(monkeypatch)
+    monkeypatch.setattr(graph_native, "compare_build_initializers", lambda *a, **k: {"result": "pass"})
+    permission = authority(task)
+    calls = []
+
+    def observe(session):
+        assert living == [0, 1]
+        session.check_current()
+        assert session.authorization["permission"] == permission
+        calls.append(session)
+        return {"result": outcome, "remaining_linked_effects": "unknown", "ready_for_collection": False}
+
+    monkeypatch.setattr(generated_code_residual, "compare_generated_code_residual", observe)
+    with graph_native.application_graph(root, task.task_id, permission=permission) as session:
+        assert len(calls) == 1
+        assert session.report["generated_code_residual"]["result"] == outcome
+        assert session.report["result"] == session.report["linked_effects"] == "unknown"
+        assert not session.report["ready_for_collection"]
+    with pytest.raises(ValueError, match="expired"):
+        calls[0].check_current()
+
+
+def test_native_generated_residual_refusal_stays_unknown(graph_task, monkeypatch):
+    from match_recovery import generated_code_residual
+    root, task = graph_task
+    contexts(monkeypatch)
+    monkeypatch.setattr(graph_native, "compare_build_initializers", lambda *a, **k: {"result": "pass"})
+
+    def refused(session):
+        session.check_current()
+        raise ValueError("missing independently placed old helper")
+
+    monkeypatch.setattr(generated_code_residual, "compare_generated_code_residual", refused)
+    with graph_native.application_graph(root, task.task_id, permission=authority(task)) as session:
+        assert session.report["generated_code_residual"]["result"] == "unknown"
+        assert "old helper" in session.report["generated_code_residual"]["reason"]
+        assert session.report["result"] == "unknown"
+
+
 @pytest.mark.parametrize("order", ["pass", "fail", "unknown", None])
 @pytest.mark.parametrize("consistency", ["pass", "fail"])
 def test_generated_graph_consumes_order_without_waiving_other_linked_effects(graph_task, monkeypatch, order, consistency):

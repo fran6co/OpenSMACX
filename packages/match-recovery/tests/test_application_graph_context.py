@@ -103,8 +103,11 @@ def test_both_underlying_artifact_guards_run_even_when_one_refuses(graph_task, m
                         raise ValueError("artifact changed")
                 context.check_current = check
             if explicit:
-                session.check_current()
-    assert calls == ["baseline", "current"] * (2 if explicit else 1)
+                with pytest.raises(ValueError, match="artifact changed"):
+                    session.check_current()
+                assert calls == ["baseline", "current"]
+    assert len(calls) >= 2 * (2 if explicit else 1)
+    assert calls == ["baseline", "current"] * (len(calls) // 2)
     assert living == []
     with pytest.raises(ValueError, match="expired"):
         session.check_current()

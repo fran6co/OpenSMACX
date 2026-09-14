@@ -215,7 +215,16 @@ def test_private_application_context_builds_with_native_command_evidence(added, 
             assert observed["nodes"] and isinstance(observed["gaps"], list)
             assert observed["import_references"], observed
             for imported in observed["import_references"]:
-                assert imported["implementation"] == imported["selection"] == "unknown"
+                assert imported["implementation"] == "unknown"
+                producer = observed["nodes"][imported["node"]]["proof"]
+                if producer.get("extent_kind") == "i386_short_import_thunk":
+                    assert imported["selection"] == producer["selection"] == "pass"
+                    assert producer["selection_basis"] == "unique_complete_physical_producer_and_named_linked_use"
+                    assert imported["address"] == producer["import"]["address"]
+                    assert imported["target"]["loader_import"] == {
+                        key: producer["import"][key] for key in ("module", "name", "ordinal", "symbol")}
+                else:
+                    assert imported["selection"] == "unknown"
                 assert imported["target"]["loader_import"]["module"]
                 assert imported["address"] > 0
             assert len(observed["roots"]) == len(slots)
@@ -226,8 +235,21 @@ def test_private_application_context_builds_with_native_command_evidence(added, 
                     continue
                 function = node["proof"]
                 assert function["result"] == "pass" and function["size"] > 0, node
-                assert function["target_contents"] == "unknown"
-                assert all(function["code"][key] == "pass"
+                if function.get("extent_kind") == "i386_short_import_thunk":
+                    assert function["size"] == 6 and function["recipe"] == "i386_jmp_indirect_abs32"
+                    assert function["selection"] == "pass" and function["body_fingerprint"]
+                    assert function["dll_implementation"] == function["runtime"] == "unknown"
+                    assert function["original_verification"] == "unknown" and not function["ready_for_collection"]
+                    regions = [function["proof"]]
+                else:
+                    assert function["target_contents"] == "unknown"
+                    assert function["code"]["result"] == "pass"
+                    if function.get("extent_kind") == "associated_coff_regions":
+                        assert function["regions"] and function["body_fingerprint"]
+                        regions = [region["code"] for region in function["regions"]]
+                    else:
+                        regions = [function["code"]]
+                assert all(region[key] == "pass" for region in regions
                            for key in ("result", "boundary", "bytes", "references")), node
             if observed["result"] == "pass":
                 assert not observed["gaps"] and observed["graph_fingerprint"], observed
