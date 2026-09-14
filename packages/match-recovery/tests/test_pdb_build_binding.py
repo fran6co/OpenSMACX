@@ -110,7 +110,7 @@ def test_paired_pdb_is_passed_to_roots_and_dependency_graph(tmp_path, monkeypatc
     context = build(tmp_path / "project")
     path = add_bound_pdb(context)
     seen = []
-    for name in ("_function", "observe_code_graph"):
+    for name in ("_function", "_guarded_code_graph"):
         original = getattr(linked_initializers, name)
         def observe(*args, _original=original, _name=name, **kwargs):
             fixups = kwargs["fixups"]
@@ -122,8 +122,10 @@ def test_paired_pdb_is_passed_to_roots_and_dependency_graph(tmp_path, monkeypatc
         monkeypatch.setattr(linked_initializers, name, observe)
     report = observe_build_initializers(context)
     assert report["result"] == "pass"
+    assert report["code_dependencies"]["result"] == "pass"
+    assert report["code_dependencies"]["nodes"]
     assert report["artifacts"]["msvc-pdb"] == stamp(path.read_bytes())
-    assert {name for name, _ in seen} == {"_function", "observe_code_graph"}
+    assert {name for name, _ in seen} == {"_function", "_guarded_code_graph"}
     assert all(item is seen[0][1] for _, item in seen)
     assert not report["ready_for_collection"]
 
