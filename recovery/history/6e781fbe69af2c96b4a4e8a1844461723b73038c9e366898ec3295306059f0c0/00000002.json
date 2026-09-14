@@ -1,0 +1,22 @@
+{
+  "event_id": "08b2add2b676bf07f7115e5814fc7f1564da10c6c9e755fe4052c09a8a721ff5",
+  "payload": {
+    "affects": [
+      "entity-51adf20a3c312a5807867f1e63c00f989b20fb77571661ff3b874d34d713e784",
+      "entity-f73ea71b6462368a74f6ab531b79fc518ad2a12ea9f0c1ef7a3e146259844ad5"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-10a76faa415e4b86b755eb9935600516",
+    "evidence": [
+      "Original make_index calls 0x005D4580 while current source calls Heap::shutdown at 0x005D45B0; original TextIndex destruction tail-calls 0x005D45B0 while the implicit member teardown resolves to Heap::~Heap at 0x005D4580.",
+      "Heap ownership files are outside authorization, and manual Heap destruction was not introduced."
+    ],
+    "hypothesis": "The remaining Heap call-target discrepancy is an unresolved cross-owner interpretation requiring coordinator review.",
+    "kind": "discovery"
+  },
+  "previous_event": "dce80e6d3aea9f972e4ecd603dd96341ccc73bb537978274f46a6cd6a4bd80c0",
+  "request_id": "worker-10a76faa415e4b86b755eb9935600516",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:textindex-record-recovery"
+}

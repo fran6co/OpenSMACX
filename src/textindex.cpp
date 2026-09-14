@@ -19,6 +19,14 @@
 #include "textindex.h"
 #include "general.h"
 #include "filemap.h"
+#include "text.h"
+
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// This copy is the large, called form in the original image.  memcpy is
+// intentionally not project-wide forced out of line because small copies in
+// other translation units are known to inline.
+#pragma function(memcpy)
+#endif
 
 /*
 Purpose: Read the specified file and create an index of section headers ("#EXAMPLE"). Store the file 
@@ -46,34 +54,34 @@ Status: Complete
 void TextIndex::make_index(LPCSTR source_txt) {
     Filemap txt_file_map;
     shutdown();
-    strcpy_s(file_name_, 256, source_txt);
+    strcpy(file_name_, source_txt);
     if (!strchr(file_name_, '.')) {
-        strcat_s(file_name_, 256, ".txt"); // append extension if missing
+        strcat(file_name_, ".txt"); // append extension if missing
     }
     LPVOID txt_addr_base = txt_file_map.open_read(file_name_, false);
     if (txt_addr_base) {
         LPVOID seek_addr = txt_addr_base;
-        LPVOID eof_addr = LPVOID(uint32_t(txt_addr_base) + txt_file_map.get_size());
+        LPVOID eof_addr = LPVOID(uint32_t(txt_addr_base) + GetFileSize(txt_file_map.get_handle(), NULL));
         heap_.init(0x8000); // maximum amount of memory per section index
         while (seek_addr < eof_addr) {
             LPVOID found_addr = memchr(seek_addr, '\n', uint32_t(eof_addr) - uint32_t(seek_addr));
             if (!found_addr) {
                 break; // invalid file, no newlines
             }
-            char parse_buffer[512]; // maximum line length
-            memcpy_s(parse_buffer, 512, seek_addr, uint32_t(found_addr) - uint32_t(seek_addr) + 1);
-            kill_nl(parse_buffer); // bug fix; Filemap reads in raw file including carriage return
-            purge_spaces(parse_buffer);
-            if (parse_buffer[0] == '#' && isupper(parse_buffer[1])) {
-                size_t len = strlen(&parse_buffer[1]) + 1;
+            memcpy(TextBufferGetPtr, seek_addr, uint32_t(found_addr) - uint32_t(seek_addr) + 1);
+            kill_lf(TextBufferGetPtr);
+            purge_spaces(TextBufferGetPtr);
+            if (TextBufferGetPtr[0] == '#' && isupper(TextBufferGetPtr[1])) {
+                size_t len = strlen(&TextBufferGetPtr[1]) + 1;
                 LPVOID store_addr = heap_.get(len + 4); // section name + address
                 *(LPDWORD)store_addr = uint32_t(seek_addr) - uint32_t(txt_addr_base); // file offset
-                strcpy_s(LPSTR(store_addr) + 4, len, &parse_buffer[1]);
+                strcpy(LPSTR(store_addr) + 4, &TextBufferGetPtr[1]);
                 section_count_++;
             }
             seek_addr = LPVOID(uint32_t(found_addr) + 1);
         }
         heap_.squeeze(true);
+        txt_file_map.close();
     }
 }
 

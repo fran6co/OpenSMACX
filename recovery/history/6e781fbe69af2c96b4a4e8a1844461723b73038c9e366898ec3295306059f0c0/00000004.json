@@ -1,0 +1,21 @@
+{
+  "event_id": "680e4396bc206e77811e57f3b2ee7b9b692620bb3ae33e196e3b8fa971dc2db3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-d44c1430c81e4e6b8c672b3c3da26e48",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/textindex.cpp:71-78 repeatedly uses TextBufferGetPtr for memcpy, kill_lf, purge_spaces and section-name extraction. Fresh pinned-image inspection confirms repeated loads from 0x009B7D00 at 0x005FE048-0x005FE0B1 and the kill_lf call at 0x005FE061.",
+      "src/textindex.cpp:75-79 allocates strlen(section)+5 bytes and stores a four-byte file offset followed by the terminated section name, expressing the original operations at 0x005FE090-0x005FE0CC.",
+      "src/textindex.cpp:55-64 and 83-85 uses an automatic Filemap, GetFileSize(get_handle(), NULL), and explicit close after squeeze. Original inspection confirms GetFileSize at 0x005FE007, squeeze at 0x005FE0E7, close at 0x005FE0F0, and subsequent Filemap destruction, including the retained cleanup span.",
+      "This bounded insight is implemented in current source. Incorporation does not accept code or establish restoration; the reported boundary mismatch, separate Heap target discrepancy and unresolved reference findings remain outstanding.",
+      "Delegated policy: 7cfeedddf17b2c62c016d92deb0178af2bbe7b44084255cc27bf84bf557e2e29"
+    ]
+  },
+  "previous_event": "2fdc1c618aea0082520477cf8c8b5601f9df3073cfd5f79d4ffbc53926afc288",
+  "request_id": "coordinator-7a0a9f97fade46e1a4e7ed64a8cc66e0",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:textindex-record-recovery"
+}

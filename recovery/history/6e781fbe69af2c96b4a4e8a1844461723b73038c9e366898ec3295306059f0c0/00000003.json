@@ -1,0 +1,20 @@
+{
+  "event_id": "2fdc1c618aea0082520477cf8c8b5601f9df3073cfd5f79d4ffbc53926afc288",
+  "payload": {
+    "affects": [
+      "entity-cac8b8642330b6703d790c84676e6fac1c0815ed6fbad318da0d3c8db490978e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-9be8686ecacd4e36b387e24e8ba22d59",
+    "evidence": [
+      "search_index remains byte-exact under masked measurement, but strict restoration reports unresolved CRT/string targets including _stricmp, _strcpy, _strchr, _strcat, and the .txt literal."
+    ],
+    "hypothesis": "search_index requires separate imported-target resolution before strict reference restoration can be established.",
+    "kind": "discovery"
+  },
+  "previous_event": "08b2add2b676bf07f7115e5814fc7f1564da10c6c9e755fe4052c09a8a721ff5",
+  "request_id": "worker-9be8686ecacd4e36b387e24e8ba22d59",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:textindex-record-recovery"
+}
