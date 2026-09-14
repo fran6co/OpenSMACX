@@ -118,3 +118,72 @@ def collect_anchors(inputs, selected, obj):
     return {"anchors": dict(anchors), "callers": callers, "gaps": gaps,
             "caller_coverage": Result.UNKNOWN, "target_contents": Result.UNKNOWN,
             "allocation_isolation": Result.UNKNOWN}
+
+
+def collect_data_anchors(inputs, selected, obj, independent):
+    """One hop from existing map/debug/code seeds, never a recursive placement.
+
+    ``independent`` is the enclosing native batch's private envelope observer,
+    with data-derived anchors disabled. Pending FIXUP bindings are used to check
+    the entire referring section and published only after that check passes.
+    No saved report, supplied source address, or unseeded cycle is accepted.
+    """
+    from .linked_data_contents import _verify_placed_data
+    from .linked_fixups import private_data_binding, target_address
+
+    check_image(inputs.fixups, inputs.image)
+    actual = check_selected(obj, selected["owner"], inputs.objects)
+    if any(actual[key] != selected[key] for key in ("identity", "sha256", "raw")):
+        raise ValueError("data source collector differs from selected physical object")
+    candidates = []
+    for number, section in enumerate(obj.sections, 1):
+        if section.flags & ~0xC0F000C0 or not section.flags & 0xC0:
+            continue
+        if any(kind and obj.symbols[index].storage == 3 and obj.symbols[index].type == 0
+               and obj.symbols[index].section > 0 and obj.symbols[index].section != number
+               and not obj.auxiliary.get(index)
+               for _, index, kind in section.relocations):
+            candidates.append(number)
+    if len(candidates) > 4096:
+        raise ValueError("ordinary data anchor sources exceed the native section resource bound")
+    anchors, sources, gaps = defaultdict(list), [], []
+    owner = selected["owner"]
+    for number in candidates:
+        row = {"object_section": number, "result": Result.UNKNOWN}
+        sources.append(row)
+        try:
+            # Even an otherwise verifiable unseeded A<->B cycle cannot enter.
+            independent(number)
+
+            def target(envelope, relocation, symbol):
+                kind = {"absolute32": 6, "relative32": 20}.get(relocation.kind)
+                address = target_address(inputs.fixups, inputs.image, envelope["address"],
+                                         relocation.offset, kind)
+                binding = private_data_binding(obj, symbol, selected, inputs.image, address)
+                bound = independent(symbol.section, (binding,))
+                return bound, binding
+
+            proof = _verify_placed_data(inputs, owner, number, lambda _, section: independent(section),
+                                       fixup_target=target)
+            row.update(result=proof["result"], address=proof["envelope"]["address"],
+                       size=proof["envelope"]["size"])
+            if proof["result"] != Result.PASS:
+                row["reason"] = "whole independently seeded data section is unverified"
+                gaps.append(dict(row))
+                continue
+            pending = []
+            for reference in proof["references"]:
+                binding = reference.get("private_binding")
+                if binding is not None:
+                    pending.append({**binding, "placement": "verified_data_pdb_fixup",
+                        "referring_section": number, "referring_site": row["address"] + reference["offset"],
+                        "relocation_kind": reference["kind"], "source_fingerprint": proof["content_fingerprint"]})
+            for binding in pending:
+                anchors[binding["object_section"]].append(binding)
+            row["anchor_count"] = len(pending)
+        except (OSError, ValueError) as error:
+            row["reason"] = str(error)
+            gaps.append(dict(row))
+    return {"anchors": dict(anchors), "sources": sources, "gaps": gaps,
+            "source_coverage": Result.UNKNOWN, "target_contents": Result.UNKNOWN,
+            "allocation_isolation": Result.UNKNOWN}

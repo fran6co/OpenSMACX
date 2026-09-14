@@ -2960,6 +2960,17 @@ evidence is composed; the map's winning owner cannot stand in for another member
 Per-owner batch memoization is guarded by the live native epoch; returned reports
 cannot mutate cached anchors. This does not grant residual coverage or acceptance.
 
+The same observer supports one-hop private-data references from an ordinary data
+section already placed by independent map/debug or verified code evidence. It
+checks the entire referring section's bytes and relocations before publishing
+anchors from its image-bound PDB fixups. Symbol bases are not inferred from linked
+operands, and effective addends must stay inside the target section. Data-derived
+placement cannot seed another hop or bootstrap an unanchored cycle. Corrupted or
+unverified referring sections supply no anchors; target contents are checked
+separately. The per-owner native batch refuses more than 4,096 candidate referring
+sections. Selection completeness, allocation isolation and acceptance remain
+separate obligations.
+
 `LinkedBuild.storage_census()` derives every section from the complete physical
 candidate population. It includes explicit objects missing final-pass labels,
 every candidate in ambiguous archive families and unselected archive members.

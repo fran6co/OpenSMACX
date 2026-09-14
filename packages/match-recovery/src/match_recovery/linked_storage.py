@@ -42,13 +42,13 @@ def _data_sections(inputs):
             for symbol in record["symbols"]:
                 declarations[symbol["name"]].append((record, symbol))
         index = {"policy": _policy(inputs.evidence, records), "debug": debug,
-                 "declarations": declarations, "selected": {}, "caller_anchors": {}}
+                 "declarations": declarations, "selected": {}, "caller_anchors": {}, "data_anchors": {}}
         yield lambda owner, number: _observe_data_section(inputs, owner, number, index)
     finally:
         fresh()
 
 
-def _observe_data_section(inputs, owner, number, index):
+def _observe_data_section(inputs, owner, number, index, *, include_data=True, extra_anchors=()):
     objects, mapping, image = inputs.objects, inputs.mapping, inputs.image
     require_text(owner, "link map owner")
     if index["policy"]:
@@ -162,6 +162,17 @@ def _observe_data_section(inputs, owner, number, index):
             index["caller_anchors"][key] = collect_anchors(inputs, selected, obj)
         caller_evidence = index["caller_anchors"][key]
         anchors.extend(deepcopy(caller_evidence["anchors"].get(number, ())))
+    data_evidence = None
+    if include_data and getattr(inputs, "fixups", None) is not None:
+        from .linked_data_anchors import collect_data_anchors
+        if key not in index["data_anchors"]:
+            def independent(number, pending=()):
+                return _observe_data_section(inputs, owner, number, index,
+                                             include_data=False, extra_anchors=pending)
+            index["data_anchors"][key] = collect_data_anchors(inputs, selected, obj, independent)
+        data_evidence = index["data_anchors"][key]
+        anchors.extend(deepcopy(data_evidence["anchors"].get(number, ())))
+    anchors.extend(deepcopy(extra_anchors))
     if not anchors:
         raise ValueError("ordinary storage has no independent placement anchor; absence is unproved")
     bases = {row["address"] - row["object_offset"] for row in anchors}
@@ -185,6 +196,9 @@ def _observe_data_section(inputs, owner, number, index):
             "caller_evidence": deepcopy({key: caller_evidence[key] for key in
                 ("callers", "gaps", "caller_coverage", "target_contents", "allocation_isolation")})
                 if caller_evidence is not None else None,
+            "data_evidence": deepcopy({key: data_evidence[key] for key in
+                ("sources", "gaps", "source_coverage", "target_contents", "allocation_isolation")})
+                if data_evidence is not None else None,
             "anchors": anchors, "symbols": [{"index": symbol.index, "name": symbol.name,
                 "offset": symbol.value, "storage": symbol.storage} for symbol in symbols],
             "placement": Result.PASS, "contents": Result.UNKNOWN, "allocation_isolation": Result.UNKNOWN,

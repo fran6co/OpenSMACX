@@ -55,6 +55,11 @@ Missing companions, conflicting placements and unsupported metadata refuse proof
 These checks establish emitted-region correspondence, not C++ ownership, shared
 multi-entry code coverage, data contents, runtime behavior or recovery acceptance.
 Older retained build policies and task baselines are not upgraded implicitly.
+Native ordinary-data placement also supports one-hop references from independently
+placed data, after verifying the entire referring section against the linked image.
+Missing fixups, corrupt bytes and unanchored cycles cannot supply placement; the
+target's contents and complete linked preservation remain separate checks. No
+project-specific compiler flags or acceptance exceptions are added for this case.
 The local `environment/command_paths.py` describes application command operands
 for the package's lossless comparison API. It distinguishes effective compiler
 arguments (including translated Wine paths) from host-stage linker arguments;
