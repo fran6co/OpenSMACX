@@ -204,11 +204,18 @@ def common_intersections(inputs, symbols, sections=None):
     # user-supplied PASS reports or cross-version numerical correspondences.
     commons = _verify_common_inputs(inputs.evidence, inputs.coverage, inputs.records,
                                     inputs.image, inputs.mapping, names)
-    regions, gaps, census = [], [], None
+    regions, gaps, census, pdb_contributions = [], [], None, None
     if sections is None:
         from .linked_storage_census import observe_storage
         census = observe_storage(inputs)
         regions, gaps = census["section_envelopes"], census["gaps"]
+        if "msvc-pdb" in inputs.artifacts:
+            from .linked_contributions import _common_contributions
+            try:
+                pdb_contributions = _common_contributions(inputs, commons)
+            except (OSError, ValueError) as error:
+                pdb_contributions = {"result": Result.UNKNOWN, "reason": str(error)}
+                gaps.append({"reason": "PDB common contribution evidence refused: " + str(error)})
     else:
         with _data_sections(inputs) as observe:
             for row in sections:
@@ -233,7 +240,8 @@ def common_intersections(inputs, symbols, sections=None):
             "common_allocations": commons, "section_envelopes": regions,
             "intersections": intersections, "gaps": gaps,
             "coverage": "complete_physical_candidate_population" if census is not None else "requested_data_sections_only",
-            "storage_census": census, "retained_data_coverage": Result.UNKNOWN,
+            "storage_census": census, "pdb_contributions": pdb_contributions,
+            "retained_data_coverage": Result.UNKNOWN,
             "remaining_linked_effects": Result.UNKNOWN, "persisted": False, "ready_for_collection": False,
             "limitations": ["a positively placed ordinary section can refute common allocation isolation",
                             "unqueried, unsupported, discarded or linker-generated storage is not proved absent",

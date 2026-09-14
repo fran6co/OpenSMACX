@@ -2882,6 +2882,31 @@ intersection list remains unknown: even full candidate enumeration does not
 establish retained-section or linker-generated-storage completeness. Missing sections stay
 explicit gaps. Neither result authorizes projection or acceptance.
 
+The optional PDB sidecar now supplies a separate native contribution inventory.
+`LinkedBuild.contributions()` binds exact NB10/SmallMSF/V60 module and SC records
+to this image through the existing PDB fixup/section-header verification. It
+retains every table entry, including duplicate or intersecting intervals, exact
+characteristics and CRCs. Module first contributions are not substituted for
+the full table; nil first entries cannot erase a module's other contributions.
+The reader bounds names, signed extents, module indices and stream references,
+refuses unsupported versions/EC/TSM, and never opens a module path. Historical
+pointer fields and alignment padding are not interpreted as offsets. Module
+symbol/global-reference payload interpretation is not claimed by this inventory.
+V60 SC records lack original COFF section indices: matching CRCs, sizes or module
+labels cannot choose physical ownership or prove that missing rows were discarded.
+
+`LinkedBuild.common_contributions(symbols)` cross-checks freshly verified common
+extents against that full contribution table. A unique, exact linker-labelled
+interval can establish coordinate correspondence only; all intersecting records
+remain visible. A broader contribution can aggregate the same storage and is not
+automatically a distinct overlapping allocation. With a PDB, the default
+`common_intersections` path includes this evidence automatically and preserves
+unsupported contribution metadata as an explicit gap. No characteristic bits
+are normalized or records excluded. Native entry/final guards apply to both
+observers, and returned diagnostics cannot mutate their parsed inputs. Isolation,
+retained-storage completeness, physical module binding and common residual
+permissions remain unproved; neither API grants acceptance or a coverage waiver.
+
 Passing means bounded **candidate linked-code correspondence**, not original
 equivalence or dependency admission. A map's common/public data address does not
 prove storage size, contents, initialization or ownership. Owner labels and

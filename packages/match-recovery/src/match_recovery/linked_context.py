@@ -84,6 +84,25 @@ class LinkedBuild:
     inputs: LinkedInputs
     check_current: object
 
+    def contributions(self):
+        from .pdb_contributions import bound_contributions
+        try:
+            self.check_current()
+            pdb = self.inputs.artifacts.get("msvc-pdb")
+            if pdb is None:
+                raise ValueError("linked contributions require this build's PDB sidecar")
+            return bound_contributions(self.inputs.image, pdb).report()
+        finally:
+            self.check_current()
+
+    def common_contributions(self, symbols):
+        from .linked_contributions import common_contributions
+        try:
+            self.check_current()
+            return deepcopy(common_contributions(self.inputs, symbols))
+        finally:
+            self.check_current()
+
     def data_section(self, owner, number):
         from .linked_storage import observe_data_section
         try:
