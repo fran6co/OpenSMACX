@@ -33,6 +33,64 @@ from test_codeview import debug_types
 from test_task_source import git
 
 
+def large_nested_diagnostic():
+    return {"result": "unknown", "aaa_inventory": "x" * 14000,
+            "application_residual": {"result": "unknown", "scoped_code": {
+                "graph": {"result": "unknown", "counts": {"nodes": 2, "unknown": 2},
+                    "nodes": [{"symbol": symbol, "owner": "owner.obj", "result": "unknown",
+                               "reason": "unsupported i386 relocation kind 11"}
+                              for symbol in ("_entry", "?add@Owner@@QAEHH@Z")]}}},
+            "zzz_inventory": "y" * 14000}
+
+
+def diagnostic_summary(evidence):
+    return json.loads(evidence[0].split(": ", 1)[1])
+
+
+def test_small_diagnostic_preserves_original_serialization():
+    report = {"result": "unknown", "reason": "small naïve diagnostic", "counts": {"nodes": 2}}
+    assert native._diagnostic_evidence(report) == [json.dumps(report, ensure_ascii=False, sort_keys=True)]
+
+
+def test_large_diagnostic_exposes_central_nested_graph_refusal_without_mutation():
+    report = large_nested_diagnostic()
+    original = deepcopy(report)
+    evidence = native._diagnostic_evidence(report)
+    assert len(evidence) == 2
+    assert "unsupported i386 relocation kind 11" not in evidence[1]
+    summary = diagnostic_summary(evidence)
+    reason, = summary["reasons"]
+    assert reason["reason"] == "unsupported i386 relocation kind 11"
+    assert reason["path"] == "$.application_residual.scoped_code.graph.nodes[0]"
+    assert reason["symbol"] == "_entry" and reason["occurrences"] == 2
+    assert summary["result_counts"] == {"unknown": 5}
+    assert summary["counts"][0]["values"] == {"nodes": 2, "unknown": 2}
+    assert summary["diagnostic_only"] is True and summary["scan_truncated"] is False
+    assert report == original
+    assert sum(map(len, evidence)) < 18200
+
+
+def test_large_diagnostic_bounds_distinct_reasons_and_marks_omissions():
+    report = {"result": "unknown", "nodes": [
+        {"result": "unknown", "reason": str(i) + "x" * 10000,
+         "counts": {str(j): j for j in range(12)}} for i in range(100)]}
+    evidence = native._diagnostic_evidence(report)
+    summary = diagnostic_summary(evidence)
+    assert sum(map(len, evidence)) < 18200
+    assert summary["omitted_reason_occurrences"] + sum(
+        row["occurrences"] for row in summary["reasons"]) == 100
+    assert summary["omitted_count_rows"] > 0
+    assert all(row["text_truncated"] for row in summary["reasons"])
+
+
+def test_large_diagnostic_prioritizes_graph_before_large_inventory():
+    report = large_nested_diagnostic()
+    report["aaa_inventory"] = [{"unrelated": {}} for _ in range(100001)]
+    summary = diagnostic_summary(native._diagnostic_evidence(report))
+    assert summary["scan_truncated"] is True
+    assert summary["reasons"][0]["reason"] == "unsupported i386 relocation kind 11"
+
+
 class Compiler:
     def __init__(self, root):
         self.root = root
@@ -325,6 +383,20 @@ def test_failed_build_diagnostics_survive_early_return(migration, monkeypatch):
     assert report["build"] == "fail" and report["measurements"] == []
     assert "undefined reference to Owner::add" in next(
         row for row in report["diagnostics"] if row["check"] == "build")["evidence"][0]
+
+
+def test_large_native_refusal_summary_does_not_change_admission(migration, monkeypatch):
+    refused = large_nested_diagnostic()
+    monkeypatch.setattr(native, "check_preservation", lambda *args, **kwargs: refused)
+    payload = request(migration)
+    report = measure(migration, payload)
+    row = next(row for row in report["diagnostics"] if row["check"] == "preservation")
+    assert row["result"] == "unknown"
+    assert diagnostic_summary(row["evidence"])["reasons"][0]["occurrences"] == 2
+    assert report["outside_scope"] == "unknown"
+    assert refused == large_nested_diagnostic()
+    with pytest.raises(ValueError, match="outside-scope preservation"):
+        admission(migration, payload, report)
 
 
 @pytest.mark.parametrize("damage", ["generator", "preparation", "added_input", "removed_input", "source"])
