@@ -169,3 +169,73 @@ def test_identical_nodup_peer_has_its_own_native_placement(tmp_path, monkeypatch
             assert {"owner": copy_map.owner, "symbol": name} in domain["code_roots"]
             assert {"owner": discarded[0], "symbol": name} not in domain["code_roots"]
             assert domain["result"] == "unknown" and not domain["ready_for_collection"]
+
+
+def test_identical_nodup_peer_requires_positive_native_ref_removal(tmp_path, monkeypatch):
+    from match_recovery.linked_comdat_nofold import sections_distinct
+    from match_recovery.linked_comdat_selection import comdat_selection
+    from match_recovery.linked_section_domain import observe_sections
+
+    root, _, _, _, _ = prepared_project(tmp_path, monkeypatch, proofs=False)
+    header = root / "src/owner.h"
+    header.write_text(header.read_text()
+        + "\ninline int retained_copy(int value) { return value + 739; }\n"
+        + "extern int (* volatile owner_reference)(int);\n"
+        + "extern int (* volatile entry_reference)(int);\n")
+    for unit in ("owner", "entry"):
+        source = root / "src" / (unit + ".cpp")
+        source.write_text(source.read_text()
+            + f"\nint (* volatile {unit}_reference)(int) = retained_copy;\n")
+    source = root / "src/entry.cpp"
+    text = source.read_text()
+    assert text.count("ExitProcess(owner.add(5))") == 1
+    source.write_text(text.replace("ExitProcess(owner.add(5))",
+        "ExitProcess(owner_reference(owner.add(5)) + entry_reference(7))"))
+    source = root / "src/owner.cpp"
+    source.write_text(source.read_text()
+        + '\nextern "C" int unused_identical(int value) { return value + 739; }\n')
+    environment = root / "recovery/environment.py"
+    text = environment.read_text()
+    assert text.count('"/opt:noref"') == 1
+    environment.write_text(text.replace('"/opt:noref"', '"/opt:ref"'))
+    files = {name: raw for name, raw in replica_snapshot(root, ("src",)).items() if raw is not None}
+    name = "?retained_copy@@YAHH@Z"
+    with application_build(root, ("src",), files, versioned_files={}) as context:
+        assert context.report["result"] == "pass"
+        with linked_build(context) as native:
+            owner_obj = Coff(native.inputs.objects.resolve("owner.obj")["raw"])
+            peer = owner_obj.function("_unused_identical")
+            assert section_policy(owner_obj, peer.section) == 1
+            assert not any(row.symbol == peer.name for row in native.inputs.mapping.publics)
+            copy_map, = [row for row in native.inputs.mapping.publics if row.symbol == name]
+            discarded = []
+            with comdat_selection(native) as selection:
+                # Query the ANY family first: positive REF proof cannot depend
+                # on a prior census/query having already visited the peer.
+                for owner in ("owner.obj", "entry.obj"):
+                    obj = Coff(native.inputs.objects.resolve(owner)["raw"])
+                    subject = obj.function(name)
+                    assert section_policy(obj, subject.section) == 2
+                    assert not sections_distinct(obj.sections[subject.section - 1],
+                        obj.section_sizes[subject.section - 1], owner_obj.sections[peer.section - 1],
+                        owner_obj.section_sizes[peer.section - 1])
+                    result = selection.loser(owner, subject.section)
+                    if result is not None:
+                        discarded.append(owner)
+                assert len(discarded) == 1
+                removed = selection.discarded("owner.obj", peer.section)
+                assert removed is not None and removed["disposition"] == "discarded_unreferenced_comdat"
+                certificates = selection.certificates()
+                any_copy, = [row for row in certificates if row["check"] == "native_comdat_any_selection"]
+                assert removed["certificate_id"] in any_copy["no_other_fold"]["ref_discard_certificates"]
+                assert any(row["symbol"] == peer.name and row["owner"]["label"] == "owner.obj"
+                           for row in selection.discard_observations()["rows"])
+            domain = observe_sections(context, native.inputs.objects, native=native)
+            assert {"owner": copy_map.owner, "symbol": name} in domain["code_roots"]
+            assert {"owner": discarded[0], "symbol": name} not in domain["code_roots"]
+            assert {"owner": "owner.obj", "symbol": peer.name} not in domain["code_roots"]
+            physical, = [row for row in domain["inputs"] if row["owner"] == "owner.obj"]
+            section, = [row for row in physical["sections"] if row["object_section"] == peer.section]
+            assert section["disposition"] == "discarded_unreferenced_comdat"
+            assert section["symbols"] and section["retention"] == "pass"
+            assert domain["result"] == "unknown" and not domain["ready_for_collection"]

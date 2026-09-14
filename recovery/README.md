@@ -47,6 +47,11 @@ absence from the MAP. An identical-code competitor can also be distinguished by
 its separately verified, globally unique NODUP root at a disjoint MAP/PDB
 placement. This retains that peer and all descendants as physical/code obligations;
 `comdat_unique_placements` is derived proof input, not a selection exemption.
+An identical-code competitor may also be ruled out by the existing positive native
+REF verifier, bound to its exact physical identity, hash and original association
+family. ANY queries obtain that proof independently of census order and retain
+the complete REF certificate and incoming-reference obligations. Missing MAP
+entries, ownerless events and unsupported discard evidence cannot substitute.
 Positive native ICF composition keeps the original ANY
 winner distinct from final shared-code storage, verifies every original folded
 member and retains them as roots. Only proven same-key duplicates are excluded;

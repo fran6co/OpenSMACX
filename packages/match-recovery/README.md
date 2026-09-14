@@ -2051,8 +2051,9 @@ MAP placement and image-bound PDB module/contribution. Aliases, conflicting
 declarations or unsupported selection policy refuse qualification.
 For keys without a positive folding group, an absent fold-log entry is
 insufficient: every other possible physical code section needs an immutable byte
-mismatch outside relocation fields and possible trailing padding, or a separately
-verified unique NODUP root at a disjoint final placement. The latter requires its
+mismatch outside relocation fields and possible trailing padding, a positive native
+REF certificate for that exact physical root/family, or a separately verified unique
+NODUP root at a disjoint final placement. The latter requires its
 complete unique-definition inventory, exact original selected input, own-owner
 MAP and image-bound PDB module/contribution, and full code/reference/companion
 verification. Contradictory REF/ICF evidence, aliases, mixed/ambiguous declarations
@@ -2063,6 +2064,13 @@ inventory retains complete proofs referenced by no-fold certificates. It rules
 out only the exact physical root as a storage competitor: that root remains in
 the application graph, and its children and all other candidates still need
 their own checks. Same-key root exclusions never hide associated code children.
+REF composition authenticates the original identity, object hash and exact family
+membership before reusing the existing discard verifier. It works even when the
+ANY query precedes the domain's REF queries; it does not depend on census order.
+The no-fold proof references complete `ref_discard_certificates` by identity, and
+their original sections and incoming-reference obligations remain inventoried.
+An absent MAP entry or ownerless, ambiguous or contradictory discard observation
+cannot remove a competitor. No recursive ANY selection or report replay is used.
 This conservative proof requires an explicitly nonincremental, relocation-only
 link; ambiguous competitors stay unresolved. PDB module/extent correspondence
 does not equate characteristics: a reserved-bit difference is retained explicitly

@@ -207,11 +207,17 @@ def _no_other_fold(state, obj, root, candidates, address):
     size = obj.section_sizes[root.section - 1]
     checked = 0
     placements = []
+    removed = []
     for identity, stamp, number, other, other_size in _code_candidates(state):
         if (identity, stamp, number) in excluded:
             continue
         if not sections_distinct(code, size, other, other_size):
             try:
+                removal = _discarded_candidate(state, identity, stamp, number)
+                if removal is not None:
+                    removed.append(removal["certificate_id"])
+                    checked += 1
+                    continue
                 peer = _unique_placement(state, identity, stamp, number)
                 if address < peer["address"] + peer["size"] and peer["address"] < address + size:
                     raise ValueError("unique NODUP root is not separately placed from this ANY candidate")
@@ -221,10 +227,13 @@ def _no_other_fold(state, obj, root, candidates, address):
                 raise ValueError("ANY winner has a possible distinct-section ICF competitor: " + str(error)) from error
             placements.append(peer["placement_id"])
         checked += 1
-    return {"result": Result.PASS, "method": "immutable_code_prefix_mismatch" if not placements
-                else "immutable_prefix_or_independent_unique_root_placement",
+    method = ("immutable_prefix_or_native_ref_or_independent_unique_root_placement" if removed
+              else "immutable_prefix_or_independent_unique_root_placement" if placements
+              else "immutable_code_prefix_mismatch")
+    return {"result": Result.PASS, "method": method,
             "other_physical_code_sections": checked,
             "unique_placements": placements,
+            "ref_discard_certificates": list(dict.fromkeys(removed)),
             "same_key_roots": len(excluded), "source_authority": "not_transferred"}
 
 
@@ -773,7 +782,9 @@ def _discard_events(state):
     try:
         observation = parse_discard_log(state["native"].inputs.artifacts["msvc-link-log"])
         events = {}
+        named = {}
         for row in observation["rows"]:
+            named.setdefault(row["symbol"], []).append(row)
             if row["owner"] is None:
                 continue
             try:
@@ -785,7 +796,8 @@ def _discard_events(state):
             events.setdefault((owner, row["symbol"]), []).append(row)
         state["discard_observation"] = observation
         state["discard_events"] = events
-        state["discard_witness"] = deepcopy((observation, events))
+        state["discard_named_events"] = named
+        state["discard_witness"] = deepcopy((observation, events, named))
         return events
     except ValueError as error:
         # A consumer may preserve the query as UNKNOWN, but a malformed whole
@@ -793,6 +805,43 @@ def _discard_events(state):
         state["discard_failure"] = str(error)
         state["discard_failure_witness"] = str(error)
         raise
+
+
+def _discarded_candidate(state, identity_digest, stamp, number):
+    """Positive REF removes only this exact physical root/association member.
+
+    This is a native query, independent of earlier census traversal order.
+    No event means no conclusion: a separate-placement proof may still apply.
+    A present unsupported/contradictory event is never treated as absence.
+    """
+    records = state["records"].get((identity_digest, stamp), ())
+    if len(records) != 1:
+        raise ValueError("REF competitor lacks an exact physical candidate identity")
+    record, = records
+    obj = _object(state, record)
+    if type(number) is not int or not 1 <= number <= len(obj.sections):
+        raise ValueError("REF competitor section is outside its original input")
+    root_number = number
+    while root_number in obj.associations:
+        root_number = obj.associations[root_number]
+    if not obj.sections[root_number - 1].flags & 0x1000 or section_selection(obj, root_number) != 1:
+        return None
+    root = comdat_key(obj, root_number)
+    _discard_events(state)
+    events = state["discard_named_events"].get(root.name, ())
+    if not events:
+        return None
+    if len(events) != 1 or events[0]["owner"] is None:
+        raise ValueError("REF competitor lacks one owner-qualified positive event")
+    event, = events
+    selected, selected_obj = _event_selected(state, event["owner"])
+    if (selected["identity"] != _identity(record) or selected["sha256"] != stamp
+            or digest(selected["identity"]) != identity_digest or selected_obj is not obj):
+        raise ValueError("REF competitor event names a different physical input")
+    removal = _discarded(state, selected["owner"], number)
+    if removal is None or removal["queried_section"] != number or number not in removal["sections"]:
+        raise ValueError("REF competitor is not in its exact certified original forest")
+    return removal
 
 
 def _ref_certificate(state, selected, obj, root, event):
@@ -958,7 +1007,8 @@ def comdat_selection(native, *, epoch=None):
                     "refusals": {}, "refusal_witnesses": {},
                     "ref_certificates": {}, "ref_certificate_witnesses": {},
                     "ref_refusals": {}, "ref_refusal_witnesses": {},
-                    "discard_observation": None, "discard_events": None, "discard_witness": None,
+                    "discard_observation": None, "discard_events": None, "discard_named_events": None,
+                    "discard_witness": None,
                     "discard_failure": None, "discard_failure_witness": None,
                     "metadata": None, "metadata_witness": None,
                     "code_candidates": None, "code_candidates_witness": None,
@@ -1001,8 +1051,8 @@ def comdat_selection(native, *, epoch=None):
                         raise ValueError("COMDAT native derived selection indices changed during the batch")
                     if state["discard_failure"] is not None:
                         raise ValueError("native REF transcript remains malformed: " + state["discard_failure"])
-                    if any(state[key] is not None for key in ("discard_observation", "discard_events", "discard_witness")) and not same(
-                            (state["discard_observation"], state["discard_events"]), state["discard_witness"]):
+                    if any(state[key] is not None for key in ("discard_observation", "discard_events", "discard_named_events", "discard_witness")) and not same(
+                            (state["discard_observation"], state["discard_events"], state["discard_named_events"]), state["discard_witness"]):
                         raise ValueError("native REF event observations changed during the batch")
                     for key, (obj, before_obj) in state["object_witnesses"].items():
                         if state["objects"][key] is not obj or not same(obj.__dict__, before_obj):
