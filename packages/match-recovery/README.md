@@ -2895,6 +2895,20 @@ symbol/global-reference payload interpretation is not claimed by this inventory.
 V60 SC records lack original COFF section indices: matching CRCs, sizes or module
 labels cannot choose physical ownership or prove that missing rows were discarded.
 
+`LinkedBuild.module_bindings()` joins module labels to the current build's
+command operands, observed library spellings and full physical candidate
+inventory, then independently checks native final-pass object selection. An
+ordinary object must match an exact complete input operand; archive labels must
+identify both the observed library path and the full member name. Basenames,
+matching hashes or debug labels cannot choose an ambiguous occurrence. Fresh
+generated exports use their existing native generation evidence. Duplicate
+module-to-input bindings, ambiguous import families and the synthetic linker
+module remain unknown. A verified compiled object also carries its source/output
+membership. The native linked epoch now pins application command reports as well
+as physical artifacts, with mandatory final guards on success and failure.
+These are physical module bindings only: they do not identify a V60 contribution's
+original COFF section, prove retention or authorize common residual coverage.
+
 `LinkedBuild.common_contributions(symbols)` cross-checks freshly verified common
 extents against that full contribution table. A unique, exact linker-labelled
 interval can establish coordinate correspondence only; all intersecting records

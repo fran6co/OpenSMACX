@@ -84,6 +84,14 @@ class LinkedBuild:
     inputs: LinkedInputs
     check_current: object
 
+    def module_bindings(self):
+        from .linked_modules import observe_modules
+        try:
+            self.check_current()
+            return deepcopy(observe_modules(self.context, self.inputs))
+        finally:
+            self.check_current()
+
     def contributions(self):
         from .pdb_contributions import bound_contributions
         try:
@@ -168,6 +176,7 @@ def linked_build(context):
     from .linked_initializers import _artifacts
     context.check_current()
     try:
+        context_report = deepcopy(context.report)
         inputs = parse_inputs(_artifacts(context))
         bound_objects = {name: getattr(inputs, name) for name in ("image", "mapping", "objects", "fixups", "folding")}
 
@@ -226,6 +235,8 @@ def linked_build(context):
                 raise ValueError("linked observation context has expired")
             try:
                 context.check_current()
+                if not _same(context.report, context_report):
+                    raise ValueError("application report changed within its linked epoch")
                 if (any(getattr(inputs, name) is not value for name, value in bound_objects.items())
                         or not _same(metadata_state(), metadata_before)
                         or inputs.folding is not None and (inputs.folding._objects is not inputs.objects
