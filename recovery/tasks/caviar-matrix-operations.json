@@ -1,0 +1,32 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "82713790cf8ec0f4e1cbd40de49556e77cb3e2cb",
+  "editable_files": [
+    "src/caviar.cpp",
+    "src/unrecovered/00627e20.cpp",
+    "src/unrecovered/006280e0.cpp"
+  ],
+  "evidence": [
+    "The user requests starting real recovery while the framework's full automatic acceptance gaps are being closed. Authorize one bounded disjoint operation-family task, isolated worker/compiler execution and independent review; do not grant acceptance, automatic integration, claim demotion or scope expansion.",
+    "Product vox_matrix_vector_mul and vox_matrix_matrix_mul currently reinterpret fixed executable addresses 0x006280E0 and 0x00627E20 as callees. Seven local scene/camera call sites use these declared geometry operations; removing these forwarders improves standalone reconstructed behavior.",
+    "Existing seed mappings supply independent spans 0x006280E0-0x0062814B and 0x00627E20-0x00627F4F. Seed arithmetic and TRIED notes are hints, not authority: inspect original disassembly for floating-point grouping, store order and aliasing before changing source. Prior x87 scheduling mismatches must remain explicit, not replaced by copied opcodes or fabricated byte claims.",
+    "The two identities currently have no product ORIGINAL bindings. Worker writes real product bodies and reports their existing seed identities for native coordinator binding. Only the coordinator may move/publish annotations through the framework; preserve seed evidence and history.",
+    "Replayed every task's effective scope and discovery history across all five retained campaign/control worktrees. Neither selected identity nor any of these three editable files overlaps them. Those worktrees, reservations, baselines and pending discoveries remain untouched. This subgroup does not authorize other Caviar functions, headers or third-party libraries."
+  ],
+  "intent": "Recover the Caviar matrix/vector and matrix/matrix ownership subgroup as genuine C++ arithmetic, replacing the two fixed original-executable forwarders. Preserve original operation grouping, float stores, alias behavior, source mappings and historical obligations; keep all other Caviar functions unchanged.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6454816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6455520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "caviar-matrix-operations"
+}
