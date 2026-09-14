@@ -1,0 +1,24 @@
+{
+  "event_id": "4b2933495dd9f322eb11935c2e20d59f9ed39a7d133e0038a8f58327ac85847a",
+  "payload": {
+    "affects": [
+      "entity-b77f7d1b05e6d98b661ff1630e662531eea38eac8e9305280a5d5d26bd405da2",
+      "entity-b9138cb0d4501629cbcb52b93867c0187b82f4af84f444a86c68c623f7d0932f"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-63624641b68642418d2d68114e9f53d0",
+    "evidence": [
+      "Implemented genuine matrix/matrix and matrix/vector C++ bodies in src/caviar.cpp:3424-3455, preserving original FPU term grouping and store order.",
+      "Original disassembly inspection confirms the 3x3 operations and seed spans 0x00627E20-0x00627F4F and 0x006280E0-0x0062814B.",
+      "Configured native build passed; scoped task check remains unknown because these seed-only identities have no unambiguous product binding.",
+      "The coordinator must bind each existing seed identity to its corresponding product definition in src/caviar.cpp; seed files remain unchanged."
+    ],
+    "hypothesis": "The two fixed-address forwarders can be replaced by the authored product bodies, pending coordinator binding and native measurement.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-63624641b68642418d2d68114e9f53d0",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:caviar-matrix-operations"
+}
