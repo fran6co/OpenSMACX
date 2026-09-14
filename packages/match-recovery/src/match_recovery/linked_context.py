@@ -92,7 +92,15 @@ class LinkedBuild:
         finally:
             self.check_current()
 
-    def common_intersections(self, symbols, sections):
+    def storage_census(self, *, max_sections=100000):
+        from .linked_storage_census import observe_storage
+        try:
+            self.check_current()
+            return deepcopy(observe_storage(self.inputs, max_sections=max_sections))
+        finally:
+            self.check_current()
+
+    def common_intersections(self, symbols, sections=None):
         from .linked_storage import common_intersections
         try:
             self.check_current()

@@ -2859,13 +2859,27 @@ This is a whole-section envelope, not an individual C++ object's extent or a
 contents/reference proof. The native context guards all input/output/parsed state
 before use and on normal or exceptional exit.
 
-`LinkedBuild.common_intersections(symbols, sections)` compares requested common
-allocations with those freshly placed ordinary sections (`sections` contains
-`owner`/`section` identities, never caller-supplied bounds). It can expose a
+`LinkedBuild.storage_census()` derives every section from the complete physical
+candidate population. It includes explicit objects missing final-pass labels,
+every candidate in ambiguous archive families and unselected archive members.
+Physical path/member/occurrence and hash identify records; basenames cannot
+silently select one. Ordinary selected data uses the same independent envelope
+observer. Common requests, imports, weak/absolute declarations, directives,
+COMDAT, debug/discardable and other special sections remain visible. Zero-size
+sections with storage symbols or relocation writes are explicit gaps. A section
+resource bound refuses rather than returning a successful truncated census.
+Enumeration success does not prove retention, discard, placement or isolation;
+code and empty sections receive no implicit linked-effect exclusion. Shared
+batch indices avoid rebuilding the debug/declaration index for each section,
+while native entry/final physical and parsed-state guards remain mandatory.
+
+`LinkedBuild.common_intersections(symbols)` now uses that full census by default.
+An explicit optional `sections` subset still contains only `owner`/`section`
+identities, never caller-supplied bounds. It can expose a
 preceding section extending into a common allocation even when every named label
 starts before that allocation. A positive overlap refutes isolation; an empty
-intersection list remains unknown because a requested subset does not establish
-retained-section or linker-generated-storage completeness. Missing sections stay
+intersection list remains unknown: even full candidate enumeration does not
+establish retained-section or linker-generated-storage completeness. Missing sections stay
 explicit gaps. Neither result authorizes projection or acceptance.
 
 Passing means bounded **candidate linked-code correspondence**, not original
