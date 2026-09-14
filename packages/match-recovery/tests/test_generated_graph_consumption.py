@@ -101,7 +101,7 @@ def test_native_storage_input_counterexample_controls_graph_admission(graph_task
     monkeypatch.setattr(generated_code_residual, "compare_generated_code_residual", observe)
     with graph_native.application_graph(root, task.task_id, permission=authority(task)) as session:
         assert session.report["result"] == ("fail" if consistency == "fail" else "unknown")
-        assert session.report["linked_effects"] == "unknown"
+        assert session.report["linked_effects"] == ("fail" if consistency == "fail" else "unknown")
 
 
 @pytest.mark.parametrize("selection", ["pass", "fail", "unknown"])
