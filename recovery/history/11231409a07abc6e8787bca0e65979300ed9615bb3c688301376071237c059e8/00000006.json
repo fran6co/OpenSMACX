@@ -1,0 +1,21 @@
+{
+  "event_id": "e9d1d390657e4e12402de92e45f9f8142a98268b2227162fd38453607666992c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-3783ece431af4c519411eaeca58eec7d",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject only the asserted current prerequisite for compiler preparation: supplied fresh diagnostics successfully measured all four protected PlayerLock obligations, with restoration=pass and no failed or unknown tracked obligations. The historical no-object failure does not describe this snapshot.",
+      "Current src/playerlock.cpp:61 implements ordered acquisition through entries_[0] and entries_[1], short-circuits on failure, unlocks both entries during rollback, clears active_, and returns 0 on success or 1 on failure. This preserves the supplied original-evidence sequence and the seed's behavior using real SquareLock members.",
+      "The overall check still exits 3: Lock::lock fails byte/reference comparison, message_data lacks a resolved binding, and layout, build and runtime proof remain incomplete. Rejecting the obsolete compiler prerequisite does not accept source or resolve these gaps.",
+      "Preserve the PlayerLock implementation, seed history and original task baseline. The separate Lock ordering discovery worker-71aeaa1fab504624bf614c3ddf0e2a47 remains pending under its existing investigation; NetDaemon remains read-only context.",
+      "Delegated policy: ee50c22b9239a6fd67783c5ece2ea4365d680d1f9fd0d324a863fbb08117799b"
+    ]
+  },
+  "previous_event": "7d2bb983b004d36417515b2702d0bf0ccc7e496f37cb541fda59c350abfce5ee",
+  "request_id": "coordinator-64672897465d49e09d01fd2efb32e2e6",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:playerlock-acquisition-recovery"
+}

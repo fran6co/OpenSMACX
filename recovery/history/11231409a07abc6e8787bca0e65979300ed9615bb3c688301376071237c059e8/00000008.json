@@ -1,0 +1,23 @@
+{
+  "event_id": "51cf3fa952187d9e90e5ba4dfa5796b588c42fd09a04eb9ad0c837dac21bf89a",
+  "payload": {
+    "affects": [
+      "entity-b5c6cadbb5dbe13337f0374e3de51575dfeea545f2e7c8c56828fa8b16ddd2ec",
+      "entity-b825275a563a538a20817bae6dae36b4faf002ee34891fdc02c8dcbead97b0c5"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-3b0cc9ac4ec644dabd677a9e301c0934",
+    "evidence": [
+      "Pinned-image evidence places Lock::field_E4_ clearing at 0x0059044C before the message_data call at 0x00590456; src/lock.cpp now reflects that order at lines 347-348.",
+      "The affected NetDaemon::process_message owner remains outside this task's source-edit scope.",
+      "Fresh native scoped checking still reports Lock::lock byte/reference failure and unresolved ?message_data@@YAIHHHHHH@Z; overall task checking remains unknown with exit 3."
+    ],
+    "hypothesis": "The authorized local ordering repair was applied, but Lock::lock still requires coordinator review of its unresolved external binding and remaining byte/reference differences; no outside-scope NetDaemon edit was made.",
+    "kind": "discovery"
+  },
+  "previous_event": "eae8366ec134c482a4df0e00e5ffe87344330d79141c890af759838f49950d0e",
+  "request_id": "worker-3b0cc9ac4ec644dabd677a9e301c0934",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:playerlock-acquisition-recovery"
+}

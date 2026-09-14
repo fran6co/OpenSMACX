@@ -1,0 +1,23 @@
+{
+  "event_id": "eae8366ec134c482a4df0e00e5ffe87344330d79141c890af759838f49950d0e",
+  "payload": {
+    "affects": [
+      "entity-aa3d59f0e38ff3a4099c0c089831bed19f448ef616efc2beb6af58be020d9f8a"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-80ba0e77957a4ad48ce7eb1e1b7adf4b",
+    "evidence": [
+      "Implemented PlayerLock::lock in src/playerlock.cpp:50-70 using the declared SquareLock entries, preserving reset order, ordered acquisition, rollback, active-byte clearing, and return values.",
+      "Added the seven-argument declaration to src/playerlock.h.",
+      "The original identity remains seed-only at 0x00590000 in src/unrecovered/00590000.cpp; no provisional source mapping was added. Coordinator native binding is still required.",
+      "Fresh configured build passed. Protected PlayerLock obligations remained pass; the scoped check reports this newly implemented identity as unknown until binding."
+    ],
+    "hypothesis": "PlayerLock::lock is recovered as genuine typed C++ and is ready for coordinator binding, review, and fresh native measurement.",
+    "kind": "discovery"
+  },
+  "previous_event": "e9d1d390657e4e12402de92e45f9f8142a98268b2227162fd38453607666992c",
+  "request_id": "worker-80ba0e77957a4ad48ce7eb1e1b7adf4b",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:playerlock-acquisition-recovery"
+}

@@ -47,6 +47,31 @@ void PlayerLock::clear() {
 }
 
 
+// ORIGINAL: 0x00590000 ?lock@PlayerLock@@QAEHHHHHHHH@Z 0x00590000-0x00590093
+// RECOVERY_BINDING: v1 {"evidence": ["Explicit seed_bindings delegation permits binding already-scoped seeds to worker-written bodies in existing editable product files; this identity and src/playerlock.cpp are already in task scope.", "Fresh installed-framework inspection verified the pinned image and decoded all 147 bytes at 0x00590000–0x00590093: two entry resets, ordered SquareLock::lock calls at 0x00590041 and 0x0059005A, and a two-entry unlock loop on either failure.", "src/playerlock.cpp:50–70 implements those operations through entries_[0] and entries_[1], clears active_ before acquisition and after rollback, and returns 0 on success or 1 on failure. The current definition line and file SHA-256 were read directly.", "The original identity remains seed-only in src/unrecovered/00590000.cpp. Binding preserves its spans/history and leaves the discovery pending for fresh measurement and review. Supplied checking remains exit 3, with Lock::lock byte/reference failures and unknown layout/build/runtime evidence; no source acceptance is proposed."], "reason": "The unannotated seven-argument PlayerLock::lock definition uses real SquareLock members and expresses the original reset, ordered acquisition, failure rollback and return behavior. Bind the existing scoped seed while retaining its original spans and history."}
+int PlayerLock::lock(int factionID, int flags, int x1, int y1, int flags2,
+                     int x2, int y2) {
+    for (int index = 0; index < 2; ++index) {
+        entries_[index].flag = 0;
+        entries_[index].second = -1;
+        entries_[index].first = -1;
+    }
+    active_ = 0;
+
+    if (entries_[0].lock(factionID, flags, x1, y1) == 0) {
+        if (entries_[1].lock(factionID, flags2, x2, y2) == 0) {
+            return 0;
+        }
+    }
+
+    for (int entry = 0; entry < 2; ++entry) {
+        entries_[entry].unlock(factionID);
+    }
+    active_ = 0;
+    return 1;
+}
+
+
 /*
 Purpose: Report whether either lock entry is engaged - the low bit of its flag
          set. The original is typed as returning void but computes this boolean
@@ -126,4 +151,3 @@ void PlayerLock::unlock(int factionID) {
     }
     active_ = 0;
 }
-

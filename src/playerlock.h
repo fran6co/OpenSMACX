@@ -32,6 +32,7 @@ class PlayerLock {
   PlayerLock() { ; }
   ~PlayerLock() { ; }
   void clear();
+  int lock(int factionID, int flags, int x1, int y1, int flags2, int x2, int y2);
   int add_lock(int factionID, int flags, int x, int y);
   void unlock(int factionID);
   int active();

@@ -1,0 +1,23 @@
+{
+  "event_id": "108ac168185ece6f74371409c9f82844d60954fafd3b42f597007dcae0057f47",
+  "payload": {
+    "affects": [
+      "entity-b5c6cadbb5dbe13337f0374e3de51575dfeea545f2e7c8c56828fa8b16ddd2ec",
+      "entity-b825275a563a538a20817bae6dae36b4faf002ee34891fdc02c8dcbead97b0c5"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-71aeaa1fab504624bf614c3ddf0e2a47",
+    "evidence": [
+      "Pinned-image inspection decoded Lock::lock at 0x00590300-0x00590469 and mapped its caller to NetDaemon::process_message.",
+      "The original stores Lock::field_E4_ to zero at 0x0059044C before broadcasting via message_data at 0x00590456.",
+      "Current src/lock.cpp:347-348 calls message_data before clearing field_E4_, reversing the original ordering."
+    ],
+    "hypothesis": "Lock::lock has an outside-scope ordering discrepancy affecting its broadcast/state-clearing behavior; it requires coordinator replanning and authorization, with no edits made here.",
+    "kind": "discovery"
+  },
+  "previous_event": "565cccebba9f59c6981a88df96e06028f04ece3c833d9b0c113ea3874e760768",
+  "request_id": "worker-71aeaa1fab504624bf614c3ddf0e2a47",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:playerlock-acquisition-recovery"
+}
