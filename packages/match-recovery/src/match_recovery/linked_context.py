@@ -84,6 +84,21 @@ class LinkedBuild:
     inputs: LinkedInputs
     check_current: object
 
+    def common(self, symbols):
+        """Observe requested common storage, without granting trial coverage."""
+        from .common_allocation import _verify_common_inputs
+        try:
+            self.check_current()
+            value = self.inputs
+            report = _verify_common_inputs(value.evidence, value.coverage, value.records,
+                                           value.image, value.mapping, symbols)
+            report["map_sha256"] = sha256(value.artifacts["msvc-map"]).hexdigest()
+            # The parsed helper retains the coverage observation in its report;
+            # callers may edit diagnostics without mutating this live epoch.
+            return deepcopy(report)
+        finally:
+            self.check_current()
+
     def initializers(self):
         from .linked_initializers import _observe_inputs, _stamp
         try:

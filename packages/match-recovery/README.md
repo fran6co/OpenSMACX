@@ -2824,7 +2824,7 @@ size requests and rule out potential strong/absolute/import/weak overrides.
 At least one request needs a participating explicit object or unique final
 archive candidate. Actual map coordinates must select data-only `<common>`
 storage; its full requested span must be readable/writable, non-executable,
-zero-initialized, and free of overlapping publics and loader fixups. Sizes are
+zero-initialized, and free of other public starts within the span and loader fixups. Sizes are
 never inferred from adjacent symbols. Unknown linker options/directives, aliases,
 conflicting sizes and unsupported records remain unverified. This intentionally
 does not apply the largest-request rule to a superset containing unselected
@@ -2835,6 +2835,18 @@ counterexample fails the command, but unsupported storage does not erase bounded
 code evidence. Original correspondence, C++ type/lifetime and runtime ownership
 still need separate proof; no application binding or overall storage acceptance
 is published by this bounded check.
+
+`compare_common_builds` compares explicitly requested common identities in two
+live native application contexts, with mandatory entry/final checks of both
+epochs. An added uniform request and moved address can preserve the same proved
+size and zero initial contents; a changed selected size fails. The guarded
+`LinkedBuild.common` path reuses parsed native inputs without accepting a saved
+inventory or reparsing the population for each query. Returned diagnostics do
+not expose mutable parsed state. Neither API grants residual coverage: an earlier
+allocation can extend into a queried span, and private aliases are not ruled out
+by checking public starts alone. Allocation isolation, guard writes, other linked
+storage, initializer effects and runtime behavior remain separate obligations.
+No task permission, COFF declaration exemption or original mapping is published.
 
 Passing means bounded **candidate linked-code correspondence**, not original
 equivalence or dependency admission. A map's common/public data address does not

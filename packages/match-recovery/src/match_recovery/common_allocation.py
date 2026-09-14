@@ -88,6 +88,13 @@ def _policy(evidence, records):
     return gaps
 
 
+def _symbols(symbols):
+    if not symbols or len(set(symbols)) != len(symbols) or any(
+            not isinstance(name, str) or not name or any(ord(c) < 33 or ord(c) >= 127 for c in name)
+            for name in symbols):
+        raise ValueError("common allocation requires unique nonempty symbol names")
+
+
 def verify_common_allocations(data: bytes, log_data: bytes, image_data: bytes, map_data: bytes,
                               symbols: tuple[str, ...]) -> dict:
     """Re-read physical inputs; supplied output bytes alone prove no freshness.
@@ -95,16 +102,28 @@ def verify_common_allocations(data: bytes, log_data: bytes, image_data: bytes, m
     The component command owns the fresh build and pins/rechecks its artifacts.
     This API never accepts a replayed inventory report as absence evidence.
     """
-    if not symbols or len(set(symbols)) != len(symbols) or any(
-            not isinstance(name, str) or not name or any(ord(c) < 33 or ord(c) >= 127 for c in name)
-            for name in symbols):
-        raise ValueError("common allocation requires unique nonempty symbol names")
+    _symbols(symbols)
     coverage, records = _input_inventory(data, log_data)
     evidence = parse_link_files(data)
-    policy_gaps = _policy(evidence, records)
     image_pin = hashlib.sha256(image_data).hexdigest()
     image = PeImage(image_data, image_pin)
     mapping = parse_link_map(map_data)
+    return {**_verify_common_inputs(evidence, coverage, records, image, mapping, symbols),
+            "map_sha256": hashlib.sha256(map_data).hexdigest()}
+
+
+def _verify_common_inputs(evidence, coverage, records, image, mapping, symbols):
+    """Observe already parsed native inputs without granting residual coverage.
+
+    The enclosing native caller must establish complete physical population,
+    immutable parsed evidence and live artifact/input guards before and after
+    use. This helper does not authenticate caller-supplied dictionaries, saved
+    reports or permissions. Its result is an observation, never a capability.
+    Only the bytes wrapper can include the original map-file digest.
+    """
+    _symbols(symbols)
+    policy_gaps = _policy(evidence, records)
+    image_pin = hashlib.sha256(image.data).hexdigest()
     mapping.validate(image)
     publics = {row.symbol: row for row in mapping.publics}
     results = []
@@ -175,7 +194,7 @@ def verify_common_allocations(data: bytes, log_data: bytes, image_data: bytes, m
     counts = Counter(row["result"] for row in results)
     return {"check": "linked_common_allocations", "result": Result.FAIL if counts[Result.FAIL] else
             Result.UNKNOWN if counts[Result.UNKNOWN] else Result.PASS, "allocations": results, "counts": dict(counts),
-            "image_sha256": image_pin, "map_sha256": hashlib.sha256(map_data).hexdigest(),
+            "image_sha256": image_pin,
             "input_coverage": coverage, "policy_gaps": policy_gaps,
             "original_verification": Result.UNKNOWN, "runtime_verification": Result.UNKNOWN,
             "persisted": False, "ready_for_collection": False,
