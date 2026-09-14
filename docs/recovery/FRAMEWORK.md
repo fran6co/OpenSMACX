@@ -446,7 +446,8 @@ establish completion of this program.
   that control are deterministic local doubles. New executable bindings, live model
   planning and task retirement remain unfinished;
   the bounded OpenSMACX planner authorization now lives in `recovery/planner.json`,
-  with the retained control-recovery checkout reserved against new assignments.
+  with existing task ownership protecting the consolidated control recovery on
+  master; its former external checkout reservation has been removed.
   The native `recover campaign` now composes bounded task planning, task-only
   guarded commits, isolated worker setup, resource-leased parallel dispatch,
   optional central discovery handling and fresh serial integration/publication.

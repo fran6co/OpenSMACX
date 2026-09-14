@@ -1,0 +1,21 @@
+{
+  "event_id": "7bfc37cffa77b5c85fa145ccdb6e9e0ef2f082d6256f08721cdad959377fb6c9",
+  "payload": {
+    "affects": [
+      "entity-4660d744ce11bf4dee88bd9b5bb6665e0e3059fc225cab0dfbe01c173bb71869",
+      "entity-ab28053361d7d2cb9401a40628cbc5580b993bef4c08396dc4a7cebe6d3c017d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "coordinator-retire-matrix-experiment",
+    "evidence": [
+      "Rejected source remains reachable in commit 7095612f; consolidation commit d01bc760 intentionally retained the preceding master caviar.cpp. Existing seed bodies and all task history are unchanged. Earlier binding-resolution events describe the removed worker snapshot, not current product bindings or acceptance."
+    ],
+    "hypothesis": "The retained matrix experiment was not adopted into product source during user-directed branch consolidation. Its arithmetic duplicates existing seeds and retains the unresolved inner-array ownership defect. Preserve all pending findings; new recovery must coordinate typed row access and caller scope before binding a replacement.",
+    "kind": "discovery"
+  },
+  "previous_event": "dd74ba3272e93e3e1abab6b1b5696ed0ee38191fc7cefdc375051ec95d6071ea",
+  "request_id": "coordinator-retire-matrix-experiment",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:caviar-matrix-operations"
+}

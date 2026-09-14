@@ -67,7 +67,8 @@ Committing recovered C++ requires separate `--checkpoint` authorization after
 driver verification. Dependency/conflict/unassigned groups remain analysis work.
 See the package README for the exact protocol, scope limits and failure behavior.
 The bounded policy in `recovery/planner.json` enables live ownership planning;
-its external reservation protects the retained control recovery. Its local compiler-backed
+the consolidated control recovery is owned by its existing task on master, not
+an external worktree reservation. Its local compiler-backed
 control uses deterministic reasoning agents. A live two-worker campaign has now
 exercised planning, isolated parallel provider/compiler execution and central seed
 binding; both candidates remain unaccepted pending discoveries and verification.

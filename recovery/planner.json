@@ -5,12 +5,6 @@
   "max_entities": 100,
   "max_editable_files": 20,
   "commit_decision": true,
-  "reserved_worktrees": [
-    {
-      "path": "build/recovery/control-integration-native",
-      "tasks": ["control-sprite-defaults"],
-      "evidence": ["The user requested consolidation and removal of inactive recovery branches. This checkout contains the original control/list lifecycle candidate and both subsequent integration attempts; reserve its complete current task scope while reconciling it with master. Removal of the two ancestor checkouts does not establish recovery acceptance or reset the original task baseline."]
-    }
-  ],
+  "reserved_worktrees": [],
   "evidence": ["The user authorizes agents to orchestrate executable recovery and launch Codex workers. Delegate bounded source-owned task selection and task-only authorization commits; source checkpoints and integration require separate fresh native verification and independent review."]
 }

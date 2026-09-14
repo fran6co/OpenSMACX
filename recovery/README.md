@@ -1069,7 +1069,7 @@ guard saved assignments and coordinator expansion grants. This is not a live Ope
 partial Git publication and arbitrary conflict repair remain unfinished. See the
 package README and `recovery/WORKFLOW.md` before running a campaign.
 The bounded `recovery/campaign.json` policy authorizes one live batch of up to
-two isolated workers, reserves the preserved control recovery, and permits
+two isolated workers and permits
 publication only after fresh native checks and independent review. Configure the
 absolute shared compiler pool and pinned image paths before launching from clean
 master. This authorization is not evidence of successful live recovery.

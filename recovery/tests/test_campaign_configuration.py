@@ -31,10 +31,7 @@ def test_campaign_authorizes_two_isolated_workers_and_verified_publication(tmp_p
     assert policy["publication"]["allow_migration"] is False
     assert policy["publication"]["enabled"] is True
     assert policy["publication"]["cleanup"] is True
-    reservation, = profiles["planner"]["reserved_worktrees"]
-    assert reservation["path"] == "build/recovery/control-integration-native"
-    assert reservation["tasks"] == ["control-sprite-defaults"]
-    assert reservation["evidence"]
+    assert profiles["planner"]["reserved_worktrees"] == []
 
 
 def test_campaign_refuses_more_workers_than_declared_resources(tmp_path, monkeypatch):
