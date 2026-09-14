@@ -230,6 +230,14 @@ def application_graph(root, task_name, *, integration=None, permission=None):
                                   reason="selected application data disagrees with its own linked image")
                 if residual.get("allocation_isolation") == Result.FAIL:
                     result.update(result=Result.FAIL, reason="distinct native application allocations overlap")
+                if residual.get("result") == Result.FAIL:
+                    result.update(result=Result.FAIL, reason="native application outside-scope preservation failed")
+                elif (result["result"] != Result.FAIL and residual.get("result") == Result.PASS
+                      and residual.get("outside_scope_verification") == Result.PASS
+                      and residual.get("scope_complete") is True):
+                    result.update(result=Result.PASS, linked_effects=Result.PASS,
+                                  preservation_model=residual["preservation_model"],
+                                  reason="fresh source-qualified same-layout linked-output preservation")
                 session_fresh()
                 session = replace(session, _report=deepcopy(result))
                 if permission is not None:
@@ -255,7 +263,7 @@ def application_graph(root, task_name, *, integration=None, permission=None):
                     # Cross-build storage changes need separate ownership/effect
                     # composition; their diagnostic FAIL alone is not this case.
                     if storage.get("input_consistency") == Result.FAIL:
-                        result.update(result=Result.FAIL,
+                        result.update(result=Result.FAIL, linked_effects=Result.FAIL,
                                       reason="selected data contents or references disagree with the actual linked image")
                     session_fresh()
                     session = replace(session, _report=deepcopy(result))

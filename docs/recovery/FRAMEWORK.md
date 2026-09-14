@@ -15,7 +15,15 @@ comparison is connected to live graph verification; retained contribution/COMDAT
 selection, alias and allocation-isolation composition remain unfinished. Family
 equality and independent approval cannot replace those proofs.
 Full-project acceptance likewise refuses missing linked qualification even when
-its configured structure/runtime proofs pass.
+its configured structure/runtime proofs pass. A native output qualifier now
+covers whole projected-image equality with zero body waivers, or same-layout
+explicit-NOICF builds with exclusive source-owned body contributions and supported
+PE metadata. It compares all remaining output bytes
+apart from authenticated build identification, not debugger/self-inspection or
+runtime behavior. A fresh tiny-application real compiler/linker control reaches
+change acceptance through two deterministic worker/coordinator rounds. Actual
+changes to ICF output, relayout and other unsupported cases still refuse; this does not
+establish live-agent accepted recovery or full-game acceptance.
 
 Ordinary tasks with native compile/link observations now enter paired application
 builds under unchanged policy too. The application residual combines exact task

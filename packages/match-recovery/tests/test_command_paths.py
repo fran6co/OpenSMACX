@@ -33,7 +33,7 @@ def parsed(value):
     return validate_command_paths(arguments, cwd, description, stage=description['stage'])
 
 
-@pytest.mark.parametrize('prefix,separator', [('/', '/'), ('Z:\\', '\\')])
+@pytest.mark.parametrize('prefix,separator', [('/', '/'), ('Z:\\', '\\'), ('Q:\\\\', '\\\\')])
 def test_exact_explicit_path_relocation_preserves_every_other_character(prefix, separator):
     old = command('/before', prefix=prefix, separator=separator)
     new = command('/after', prefix=prefix, separator=separator)
@@ -133,6 +133,34 @@ def test_pure_read_does_not_mutate_description_or_use_disk_state():
     value[2]['operands'][0]['path'] = '/changed'
     assert compare_commands(result, parsed(copy))['result'] == 'pass'
     assert result.operands[0].path == Path('/deliberately/nonexistent/project/include')
+
+
+def test_unused_artifact_codec_survives_typed_description_roundtrip():
+    value = command('/project')
+    value[2]['codecs'].append({'anchor': '/', 'prefix': 'Z:\\\\', 'separator': '\\\\'})
+    original = parsed(value)
+    description = original.to_description()
+    assert description == value[2]
+    restored = validate_command_paths(original.arguments, original.cwd, description,
+                                      stage=original.stage)
+    assert restored == original
+    assert restored.encodings[-1].encode(Path('/project/build/unit.pdb')) == 'Z:\\\\project\\\\build\\\\unit.pdb'
+    # Retained declarations are immutable values, not aliases of client JSON.
+    value[2]['codecs'][-1]['prefix'] = 'Q:\\\\'
+    assert original.to_description() == description
+
+
+@pytest.mark.parametrize('damage', ['invalid_sequence', 'invalid_entry', 'invalid_unused', 'missing_used'])
+def test_typed_encoding_declarations_are_revalidated(damage):
+    original = parsed(command('/project'))
+    encodings = original.encodings
+    if damage == 'invalid_sequence': encodings = None
+    elif damage == 'invalid_entry': encodings = (*encodings, 'not an encoding')
+    elif damage == 'invalid_unused': encodings = (*encodings, replace(encodings[0], separator=':'))
+    else: encodings = encodings[1:]
+    changed = replace(original, encodings=encodings)
+    with pytest.raises(ValueError):
+        compare_commands(original, changed)
 
 
 @pytest.mark.parametrize('damage', ['literal_replaced', 'outside_argv', 'overlap', 'negative_offset',

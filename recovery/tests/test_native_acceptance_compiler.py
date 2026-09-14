@@ -370,6 +370,7 @@ def test_real_change_acceptance_does_not_require_application_proof_capabilities(
                              "--root", str(root), "--acceptance-scope", "change", "--iterations", "2",
                              "--reviewer", "recovery/reviewer.json", "--coordinator", "recovery/coordinator.json", *options],
                             cwd=tmp_path, capture_output=True, timeout=180)
+    (tmp_path / "driver-result.json").write_bytes(result.stdout)
     assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
     report = json.loads(result.stdout)
     assert report["stop_reason"] == "change_accepted", report
@@ -509,6 +510,7 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
                              "--acceptance-scope", "change", "--iterations", "1", "--reviewer", "recovery/reviewer.json",
                              "--integration", str(integration), "--checkpoint", str(checkpoint), "--verify-only"],
                             cwd=tmp_path, capture_output=True, timeout=180)
+    (tmp_path / "integration-driver-result.json").write_bytes(result.stdout)
     assert result.returncode == 0, result.stdout.decode() + result.stderr.decode()
     report = json.loads(result.stdout)
     assert report["verification_only"] and report["worker_rounds"] == 0
@@ -528,9 +530,14 @@ def test_installed_integration_recheck_uses_destination_without_resetting_task_h
                                             "message": "Collect verified test-owned hierarchy", "allow_migration": False}))
         if mode == "destination_failure":
             (destination / "build/unavailable-toolchain").write_text("test-owned unavailable build resource\n")
-        collected = subprocess.run([sys.executable, "-m", "match_recovery.cli", "integrate", "publish", task.task_id,
+        from match_recovery.processes import run_bounded
+        # Publication performs two fresh native graph checks. Its outer test
+        # deadline covers both; cooperative termination also cleans nested
+        # verifiers instead of killing only the immediate CLI process.
+        collected = run_bounded([sys.executable, "-m", "match_recovery.cli", "integrate", "publish", task.task_id,
                                     "--root", str(destination), "--candidate", str(root), "--authorization", str(publication),
-                                    "--reviewer", "recovery/reviewer.json"], cwd=tmp_path, capture_output=True, timeout=180)
+                                    "--reviewer", "recovery/reviewer.json"], cwd=tmp_path, timeout=360)
+        (tmp_path / "integration-publication-result.json").write_bytes(collected.stdout)
         assert collected.returncode == (3 if mode == "destination_failure" else 0), collected.stdout.decode() + collected.stderr.decode()
         final = json.loads(collected.stdout)
         if mode == "destination_failure":

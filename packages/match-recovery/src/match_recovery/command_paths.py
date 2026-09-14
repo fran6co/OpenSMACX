@@ -52,18 +52,28 @@ class CommandPaths:
     cwd: Path
     stage: str
     operands: tuple[PathOperand, ...]
+    encodings: tuple[PathEncoding, ...]
 
     def to_description(self):
         if not isinstance(self.operands, (tuple, list)):
             raise ValueError("command operands must be a sequence")
-        codecs, operands = [], []
+        # Artifact metadata can use an explicitly declared encoding absent from
+        # argv (for example an absolute debug locator from a relative /PDB).
+        # Preserve those declarations across typed compiler-client transport.
+        if (not isinstance(self.encodings, (tuple, list))
+                or any(not isinstance(item, PathEncoding) for item in self.encodings)):
+            raise ValueError("invalid typed command encodings")
+        codecs = [{"anchor": str(item.anchor), "prefix": item.prefix,
+                   "separator": item.separator} for item in self.encodings]
+        operands = []
         for item in self.operands:
             if not isinstance(item, PathOperand) or not isinstance(item.encoding, PathEncoding):
                 raise ValueError("invalid typed command operand")
+            if item.encoding not in self.encodings:
+                raise ValueError("command operand encoding is not declared")
             operands.append({"argument": item.argument, "start": item.start, "end": item.end,
-                             "path": str(item.path), "kind": item.kind, "codec": len(codecs)})
-            codecs.append({"anchor": str(item.encoding.anchor), "prefix": item.encoding.prefix,
-                           "separator": item.encoding.separator})
+                             "path": str(item.path), "kind": item.kind,
+                             "codec": self.encodings.index(item.encoding)})
         return {"schema_version": 1, "stage": self.stage, "codecs": codecs,
                 "operands": operands, "unsupported": []}
 
@@ -142,7 +152,10 @@ def validate_command_paths(arguments, cwd, description, *, stage):
             raise ValueError("invalid command path encoding")
         anchor = _path(value["anchor"])
         prefix = _text(value["prefix"], empty=True)
-        if value["separator"] not in ("/", "\\"):
+        # Some compiler metadata spells paths with escaped separators. The
+        # environment must declare that exact codec; never collapse slashes or
+        # apply guessed filesystem/case normalization to an observed spelling.
+        if value["separator"] not in ("/", "\\", "\\\\"):
             raise ValueError("command path separator must be explicit")
         # A nonempty prefix represents a root spelling, never part of the
         # first filename component. This makes the encoding unambiguous.
@@ -169,7 +182,7 @@ def validate_command_paths(arguments, cwd, description, *, stage):
     for left, right in zip(operands, operands[1:]):
         if left.argument == right.argument and left.end > right.start:
             raise ValueError("command path operands overlap")
-    return CommandPaths(arguments, cwd, stage, tuple(operands))
+    return CommandPaths(arguments, cwd, stage, tuple(operands), tuple(codecs))
 
 
 def compare_commands(before, after, *, path_pairs=()):

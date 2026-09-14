@@ -221,7 +221,7 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
                     if application_scope is not None:
                         from .application_residual import _owned_bodies
                         from .pe_output_residual import compare_same_layout_pe
-                        ranges = {}
+                        ranges, bound_bodies = {}, {}
                         # Cross-version expansion can reveal a physical alias
                         # absent from the initial graph. Revalidate final roots;
                         # no repeated linker/code verification is needed.
@@ -238,6 +238,13 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
                                     raise ValueError("final task body identities differ from original scoped graph")
                                 ranges[version] = [{"entity_id": stable["entity_id"], **extent}
                                                    for original, stable, extent in final_owned]
+                                bound_bodies[version] = []
+                                for original, stable, extent in final_owned:
+                                    nodes = [node for node, producer in producers[version].items() if producer == stable]
+                                    if len(nodes) != 1:
+                                        raise ValueError("final task identity has no unique native node")
+                                    bound_bodies[version].append({"node_id": nodes[0],
+                                                                 "entity_id": stable["entity_id"], **extent})
                             finally:
                                 native.check_current()
                         try:
@@ -246,6 +253,12 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
                             result["pe_output_residual"] = compare_same_layout_pe(
                                 live["baseline"].inputs.image, live["current"].inputs.image,
                                 ranges["baseline"], ranges["current"])
+                            from .linked_output_preservation import compare_linked_output
+                            result["linked_output_preservation"] = compare_linked_output(
+                                live["baseline"], live["current"], graphs, bound_bodies)
+                            from .linked_runtime_residual import compare_runtime_code
+                            result["runtime_code_residual"] = compare_runtime_code(
+                                live, graphs, producers, removed, max_nodes=max_nodes)
                         finally:
                             for native in live.values():
                                 native.check_current()

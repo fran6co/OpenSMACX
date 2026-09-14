@@ -22,6 +22,10 @@ def describe_command(arguments, cwd, *, stage):
     codecs = [{'anchor': '/', 'prefix': '/', 'separator': '/'},
               {'anchor': '/', 'prefix': 'Z:\\', 'separator': '\\'},
               {'anchor': cwd, 'prefix': '', 'separator': '/'}]
+    if stage == 'link-wrapper':
+        # LINK 6's NB10 locator uses doubled backslashes. This separately
+        # declared artifact spelling does not relax command-operand parsing.
+        codecs.append({'anchor': '/', 'prefix': 'Z:\\\\', 'separator': '\\\\'})
     operands, unsupported = [], []
 
     def refuse(index, reason):

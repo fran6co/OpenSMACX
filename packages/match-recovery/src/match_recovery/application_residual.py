@@ -1,8 +1,9 @@
 """Task-scoped native application residual, retaining all physical obligations.
 
-This composes source body scope with full-input code/data observation. It cannot
-yet qualify outside-scope preservation: anonymous sections, retained selection,
-allocation isolation and linker-generated contributions still need completion.
+This composes source body scope with full-input code/data observation and native
+same-layout output qualification. Unsupported selection, alias, layout or
+metadata cases retain unknown outside-scope preservation; observations alone
+cannot supply the missing proof.
 """
 
 from .model import Result
@@ -107,6 +108,26 @@ def compare_application_residual(graph):
                                                             for value in observations) else Result.UNKNOWN)
         if report["input_consistency"] == Result.FAIL or report["allocation_isolation"] == Result.FAIL:
             report["result"] = Result.FAIL
+        output = scoped.get("linked_output_preservation", {})
+        runtime = scoped.get("runtime_code_residual", {})
+        # Source-backed hierarchy repairs can correctly change a caller's
+        # debugger type graph without changing its emitted runtime behavior.
+        # Keep the strict difference visible; only the completed native runtime
+        # comparison plus qualified output can discharge this distinction.
+        code_pass = (scoped["result"] == Result.PASS or
+                     scoped["result"] == Result.FAIL
+                     and scoped.get("code_residual", {}).get("result") == Result.FAIL
+                     and runtime.get("check") == "native_runtime_code_residual"
+                     and runtime.get("result") == Result.PASS)
+        if report["result"] != Result.FAIL:
+            if scoped["result"] == Result.FAIL and not code_pass or output.get("result") == Result.FAIL:
+                report["result"] = Result.FAIL
+            elif (code_pass and output.get("result") == Result.PASS
+                  and output.get("outside_scope_verification") == Result.PASS):
+                report.update(result=Result.PASS, outside_scope_verification=Result.PASS, scope_complete=True,
+                              reason="fresh source-scoped native code and qualified same-layout output preservation",
+                              preservation_model=output["model"])
+                return report
         report["reason"] = ("physical code/data observations do not yet establish complete retained section "
                             "selection, anonymous contribution assignment or allocation isolation")
         return report

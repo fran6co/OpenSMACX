@@ -142,6 +142,27 @@ def test_associated_regions_references_and_debug_metadata_are_preserved():
     assert compare_residual(before, normalized(observed))["result"] == "fail"
 
 
+@pytest.mark.parametrize("omitted", [set(), {0}])
+def test_codeview_type_nodes_are_not_function_nodes_even_in_omitted_bodies(omitted):
+    observed = graph([body(0)])
+    types = {"format": "codeview5_type_graph", "nodes": [
+        {"edges": [{"offset": 4, "target": {"node": 7}}]}]}
+    observed["canonical_nodes"][0]["debug_regions"] = [{"types": types}]
+    before = normalized(observed, omitted=omitted)
+    if not omitted:
+        retained = before["canonical"]["nodes"][0]["body"]["debug_regions"][0]["types"]
+        assert retained == types
+        types["nodes"][0]["edges"][0]["target"]["node"] = 8
+        assert compare_residual(before, normalized(observed))["result"] == "fail"
+
+
+def test_type_format_label_cannot_hide_a_dangling_runtime_edge():
+    observed = graph([body(0, [edge({"node": 7})])])
+    observed["canonical_nodes"][0]["format"] = "codeview5_type_graph"
+    with pytest.raises(ValueError, match="unknown node"):
+        normalized(observed, omitted={0})
+
+
 @pytest.mark.parametrize("damage", ["unknown", "gaps", "missing_body", "node_id", "node_unknown",
     "dangling", "invalid_alias", "invalid_fold", "conflicting_import"])
 def test_incomplete_or_invalid_observations_refuse(damage):

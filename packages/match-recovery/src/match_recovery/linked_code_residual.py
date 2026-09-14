@@ -10,6 +10,7 @@ import json
 
 from .model import Result, digest
 from .graph_limits import DEFAULT_NODES, node_limit
+from .linked_residual_diagnostics import residual_differences
 
 
 def _copy(value):
@@ -111,7 +112,13 @@ or an algebraic PASS confer no permission and establish no native freshness.
             return value
         result = {}
         for key, child in value.items():
-            if key == "target" and isinstance(child, dict):
+            # Runtime relocation edges and CodeView type edges use different
+            # node namespaces. Only the two native runtime edge locations can
+            # refer to function nodes; retain type graphs as exact metadata.
+            runtime_edge = (len(path) == 2 and path[0] == "edges" and type(path[1]) is int
+                            or len(path) == 4 and path[0] == "regions" and type(path[1]) is int
+                            and path[2] == "edges" and type(path[3]) is int)
+            if key == "target" and isinstance(child, dict) and runtime_edge:
                 target = dict(child)
                 if "node" in target:
                     target_id = node_id(target["node"])
@@ -168,4 +175,5 @@ def compare_residual(baseline, current):
     # not: retaining all metadata includes its actual JSON value types.
     equal = _key(baseline["canonical"]) == _key(current["canonical"])
     return {"check": "linked_code_residual_comparison", "result": Result.PASS if equal else Result.FAIL,
-            "equal": equal, "remaining_linked_effects": Result.UNKNOWN, "ready_for_collection": False}
+            "equal": equal, "diagnostics": residual_differences(baseline["canonical"], current["canonical"]),
+            "remaining_linked_effects": Result.UNKNOWN, "ready_for_collection": False}

@@ -73,7 +73,7 @@ def build(root, output, *, damage=None):
             raise ValueError((result.stdout + result.stderr).decode(errors="replace"))
     (output / "compile_commands.json").write_text(json.dumps(database))
     result = run_bounded([sys.executable, str(WRAPPER), "--tool=link", "/nologo", "/nodefaultlib",
-                          "/subsystem:console", "/entry:entry", "/incremental:no", "/opt:noref", "/fixed:no",
+                          "/subsystem:console", "/entry:entry", "/incremental:no", "/opt:noref", "/opt:noicf", "/fixed:no",
                           "/verbose", "/debug", "/debugtype:cv,fixup", "/pdbtype:sept", "/pdb:sample.pdb",
                           "--link-diagnostics=" + str(output / "sample.link.log"),
                           "/out:sample.exe", "/map:sample.map", "owner.obj", "entry.obj", "kernel32.lib"],

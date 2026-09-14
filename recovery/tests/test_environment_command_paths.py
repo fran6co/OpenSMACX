@@ -8,6 +8,20 @@ from pathlib import Path, PurePosixPath
 import pytest
 
 from recovery.environment.command_paths import describe_command
+
+
+def test_link_metadata_declares_escaped_locator_without_guessing_operand_paths():
+    from match_recovery.command_paths import PathEncoding, validate_command_paths
+    from pathlib import Path
+
+    description = describe_command(['/pdb:sample.pdb'], '/project/build', stage='link-wrapper')
+    validate_command_paths(['/pdb:sample.pdb'], Path('/project/build'), description, stage='link-wrapper')
+    encoded = {PathEncoding(Path(row['anchor']), row['prefix'], row['separator']).encode(
+        Path('/project/build/sample.pdb')) for row in description['codecs']}
+    assert 'Z:\\\\project\\\\build\\\\sample.pdb' in encoded
+    malformed = describe_command(['/pdb:Z:\\\\project\\\\build\\\\sample.pdb'],
+                                 '/project/build', stage='link-wrapper')
+    assert malformed['unsupported']
 from match_recovery.command_paths import compare_commands, validate_command_paths
 
 

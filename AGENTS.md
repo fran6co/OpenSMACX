@@ -81,6 +81,12 @@ The native compiled-residual check does not yet establish linked outside-scope
 preservation. Unchanged build settings no longer promote that unknown to a pass:
 ordinary native acceptance/publication currently refuses the missing linked
 prerequisite too. Input-family equality alone is not retained-selection proof.
+The package now qualifies whole projected-image equality with zero body waivers,
+or a restricted same-layout, explicit-NOICF body-omission domain, using fresh
+physical COFF/PE/PDB evidence. A tiny real compiler/linker control reaches change
+acceptance with deterministic reasoning agents. Differing OpenSMACX ICF outputs
+remain unsupported; do not change flags or reset task baselines to reuse the
+control's result. It is not full-game acceptance.
 Native compile/link-enabled change checks now build both task-baseline and
 current application versions even with unchanged build policy. Their application
 residual enumerates physical candidate sections, seeds selected code and

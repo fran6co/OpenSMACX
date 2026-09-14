@@ -475,13 +475,20 @@ Both are ready for a coordinator checkpoint, not automatic collection or a claim
 that the whole game works. Unknown evidence still refuses admission.
 The native verifier now keeps compiled residuals separate from linked
 outside-scope preservation even when compiler/build settings are unchanged.
-The latter is still incomplete, so ordinary native publication refuses rather
-than promoting a compiled-only pass. Earlier compiler-control acceptance results
-describe the previous boundary, not current full-link admission. Complete input
+The package can qualify complete projected-image equality with zero body waivers,
+or a same-layout, explicit-NOICF body-omission domain against fresh COFF/PE/PDB
+evidence. Differing OpenSMACX ICF outputs remain unsupported and publication
+still refuses that missing prerequisite rather than promoting a compiled-only
+pass. A fresh tiny-application compiler control now reaches change acceptance
+under the qualified domain. It uses deterministic reasoning agents and does not
+establish accepted game recovery. Earlier controls must not be replayed. Complete input
 family comparison is useful evidence but does not prove retained COMDAT, private
 storage or alias selection. Workers cannot waive this missing prerequisite.
 Full-project acceptance enforces the same native linked prerequisite; switching
 acceptance scope or approving structure/runtime checks does not bypass it.
+It still needs the new paired linked proof connected to its exact retained proof
+build. The tiny full-project control currently refuses this missing connection
+despite passing matching, structure and runtime; do not label it accepted.
 Optional `--checkpoint <authorization.json>` delegates a local verified commit to
 the package. Its fields are `author` (the independent task coordinator), `message`
 and boolean `allow_migration`. The default should be false; publishing a tracked

@@ -2139,9 +2139,44 @@ observed address aliases refuse whole-body scope. The final dependency graph is
 checked again after expansion, before comparing all remaining PE file bytes when
 both versions have identical geometry and body placements. Directory/debug payload
 overlaps refuse scope; timestamps, debug data, padding and overlays are not masked.
-This is diagnostic byte accounting, not complete metadata-reference closure,
-retained-selection proof or an acceptance grant. Changed layouts and unsupported
-ownership remain unknown.
+That literal comparison is diagnostic byte accounting, not an acceptance grant.
+A separate native qualifier now admits complete projected-image equality without
+any body omission, including ICF builds. Differing images require a supported
+same-layout domain: explicit `NOICF`, exclusive body contributions bound to
+physical COFF/PDB/MAP inputs, and complete supported PE metadata ranges outside
+task bodies. Projected fields cannot overlap executable storage or observed
+runtime regions, including associated data. Only
+authenticated build timestamps, NB10 signature/age and the exact declared PDB
+locator may differ as build identification. Every other byte, including padding
+and overlays, remains compared. Compiler-declared path encodings survive typed
+transport even when an artifact uses an encoding absent from command operands.
+This model does not establish debugger identity, executable-file or mapped
+metadata self-inspection equivalence, or runtime correctness.
+
+Fresh source-authorized composition can now satisfy linked outside-scope
+preservation for that domain; permission, review, compiled preservation and all
+other driver checks remain independent. A real compiler/linker control reaches
+`change_accepted` through two worker rounds recovering a base/member model, with
+deterministic reasoning agents and no application structure/runtime proof command
+in change mode. It is not a live AI recovery or full-game acceptance result.
+Differing ICF outputs, changed layouts/body placements, unsupported directories
+and shared ownership still refuse body-omission qualification. OpenSMACX uses ICF;
+its compiler policy and task baselines are not changed to pass.
+
+Strict code-residual diagnostics retain cross-version debugger type differences.
+A separate native runtime residual can disregard only independently bound
+CodeView procedure type graphs; procedure/local offsets, FPO, runtime code/data,
+references and aliases remain compared. Each build must still reproduce its own
+complete source-to-PDB type evidence. This permits a caller's debug description
+to reflect a legitimate class repair, not a waiver of source ABI/layout review.
+Both runtime residual and qualified output are required to discharge that strict
+type-only difference. Missing native evidence and other failures still refuse.
+Residual diagnostics identify differing producers/field paths with bounded output;
+they never supply acceptance evidence.
+The ordinary change driver consumes this composition. Full-project orchestration
+still needs to connect it to the same retained application build used by its
+structure/runtime proofs; that path currently refuses the missing linked evidence
+even when those proofs pass. A result from a different build is not a substitute.
 
 ## Package boundary and verification
 
