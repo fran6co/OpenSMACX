@@ -443,6 +443,9 @@ establish completion of this program.
   In change mode, valid checkpoint refusals retain bounded native diagnostics and
   feed scoped repair/discovery rounds; fresh checks and independent review follow
   edits. Protocol/snapshot/authority errors still stop rather than being retried.
+  Full-project refusals use the same bounded diagnostic formatter: nested reasons
+  and affected symbols/owners take priority over passing artifact inventories.
+  These summaries are disposable feedback, never replacement verification reports.
   A real compiler control catches an unintended unscoped helper, repairs it from
   preservation feedback and accepts the change without reverting its hierarchy.
   The native compiler control now uses the generated driver commands

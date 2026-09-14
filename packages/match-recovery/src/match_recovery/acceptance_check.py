@@ -6,7 +6,6 @@ commands. Missing capabilities yield unknown; no source claims are written.
 """
 
 import hashlib
-import json
 import os
 from pathlib import Path
 import re
@@ -31,6 +30,7 @@ from .source_form import check_source_form
 from .reviews import ReviewStore, acceptance_result, merge_interpretations, pending_interpretations
 from .structural_requirements import declared_outcome
 from .tasks import TaskStore
+from .native_diagnostics import diagnostic_evidence
 
 
 def _all(values):
@@ -39,9 +39,8 @@ def _all(values):
 
 
 def _diagnostic(name, report):
-    # Bounded disposable evidence for the next worker, not merely stage labels.
-    # In particular retain compiler/linker errors from a failed native build.
-    return name + ": " + json.dumps(report, ensure_ascii=False, sort_keys=True)[-12000:]
+    # Shared bounded display; never replace the report consumed by admission.
+    return name + ": " + "\n".join(diagnostic_evidence(report))
 
 
 def _policy(root):
