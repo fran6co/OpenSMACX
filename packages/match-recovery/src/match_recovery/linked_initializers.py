@@ -12,6 +12,7 @@ import hashlib
 from pathlib import Path, PurePosixPath, PureWindowsPath
 
 from .coff_archive import CoffArchive
+from .graph_limits import DEFAULT_NODES, node_limit
 from .linked_function import verify_function as _function
 from .linked_code_graph import observe_code_graph, compare_code_graphs
 from .model import Result, Span
@@ -132,12 +133,13 @@ def _selected_objects(evidence, coverage, records):
     return selected
 
 
-def _observe(context, artifacts):
+def _observe(context, artifacts, *, max_functions=DEFAULT_NODES):
     from .linked_context import parse_inputs
-    return _observe_inputs(parse_inputs(artifacts))
+    return _observe_inputs(parse_inputs(artifacts), max_functions=max_functions)
 
 
-def _observe_inputs(inputs):
+def _observe_inputs(inputs, *, max_functions=DEFAULT_NODES):
+    max_functions = node_limit(max_functions)
     image, mapping, fixups = inputs.image, inputs.mapping, inputs.fixups
     objects, folding = inputs.objects, inputs.folding
     evidence, coverage, records = inputs.evidence, inputs.coverage, inputs.records
@@ -177,7 +179,8 @@ def _observe_inputs(inputs):
     if not entries and not contributions:
         return {"result": Result.PASS, "table": TABLE, "entries": [], "sequence": [],
                 "contribution": None, "functions": [], "input_coverage": Result.PASS,
-                "code_dependencies": observe_code_graph(objects, mapping, image, [], fixups=fixups, folding=folding)}
+                "code_dependencies": observe_code_graph(objects, mapping, image, [], max_functions=max_functions,
+                                                        fixups=fixups, folding=folding)}
     if len(contributions) != 1:
         raise ValueError("initializer table requires one independently bounded linked contribution")
     table, = contributions
@@ -207,7 +210,8 @@ def _observe_inputs(inputs):
     if table_ok:
         try:
             dependencies = observe_code_graph(objects, mapping, image,
-                                              [row["function"] for row in sequence], fixups=fixups, folding=folding)
+                                              [row["function"] for row in sequence], max_functions=max_functions,
+                                              fixups=fixups, folding=folding)
         except (OSError, ValueError) as error:
             # Unsupported dependency metadata cannot erase a measured root
             # failure or turn a valid root observation into missing evidence.
@@ -219,13 +223,13 @@ def _observe_inputs(inputs):
             "code_dependencies": dependencies}
 
 
-def observe_build_initializers(context):
+def observe_build_initializers(context, *, max_functions=DEFAULT_NODES):
     """Verify one actual table and its code; no source/graph ownership inference."""
     try:
         context.check_current()
         try:
             artifacts = _artifacts(context)
-            report = _observe(context, artifacts)
+            report = _observe(context, artifacts, max_functions=max_functions)
             report["artifacts"] = {kind: _stamp(raw) for kind, raw in artifacts.items()}
         except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
             report = {"result": Result.UNKNOWN, "reason": str(error)}
@@ -238,7 +242,7 @@ def observe_build_initializers(context):
         context.check_current()
 
 
-def compare_build_initializers(baseline, current, *, generated_changes=None):
+def compare_build_initializers(baseline, current, *, generated_changes=None, max_functions=DEFAULT_NODES):
     def fresh():
         try:
             baseline.check_current()
@@ -246,7 +250,8 @@ def compare_build_initializers(baseline, current, *, generated_changes=None):
             current.check_current()
     try:
         fresh()
-        old, new = observe_build_initializers(baseline), observe_build_initializers(current)
+        old = observe_build_initializers(baseline, max_functions=max_functions)
+        new = observe_build_initializers(current, max_functions=max_functions)
         from .initializer_order import _compare_order
         projected = _compare_order(baseline, current, old, new,
                                    [] if generated_changes is None else generated_changes)

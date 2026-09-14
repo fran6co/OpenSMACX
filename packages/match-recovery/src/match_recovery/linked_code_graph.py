@@ -13,14 +13,29 @@ from .linked_imports import import_slots, resolve_import_slot
 from .binary import RelocationKind
 from .model import Result, digest
 from .pe_coff import Coff
+from .linked_map_index import MapIndexes
+from .graph_limits import DEFAULT_NODES, MAX_NODES, node_limit
+from .linked_interval_index import IntervalIndex
+from .linked_constant_batch import constant_lookups
 
 
-MAX_FUNCTIONS = 4096
+MAX_FUNCTIONS = MAX_NODES
 
 
-def observe_code_graph(objects, mapping, image, roots, *, max_functions=MAX_FUNCTIONS, fixups=None, folding=None):
+class _BudgetExhausted(ValueError):
+    pass
+
+
+def observe_code_graph(objects, mapping, image, roots, *, max_functions=DEFAULT_NODES, fixups=None, folding=None):
+    with constant_lookups(objects) as constants:
+        return _guarded_code_graph(objects, mapping, image, roots, max_functions=max_functions,
+                                   fixups=fixups, folding=folding, _constants=constants)
+
+
+def _guarded_code_graph(objects, mapping, image, roots, *, max_functions, fixups, folding, _constants):
     if folding is None:
-        return _observe_code_graph(objects, mapping, image, roots, max_functions=max_functions, fixups=fixups)
+        return _observe_code_graph(objects, mapping, image, roots, max_functions=max_functions,
+                                   fixups=fixups, _constants=_constants)
     from .linked_folding import Folding
     if (not isinstance(folding, Folding) or folding._objects is not objects
             or folding._mapping != mapping or folding._image is not image or folding._fixups is not fixups):
@@ -28,20 +43,20 @@ def observe_code_graph(objects, mapping, image, roots, *, max_functions=MAX_FUNC
     folding.check_current()
     try:
         return _observe_code_graph(objects, mapping, image, roots, max_functions=max_functions,
-                                   fixups=fixups, folding=folding)
+                                   fixups=fixups, folding=folding, _constants=_constants)
     finally:
         folding.check_current()
 
 
-def _observe_code_graph(objects, mapping, image, roots, *, max_functions=MAX_FUNCTIONS, fixups=None, folding=None):
+def _observe_code_graph(objects, mapping, image, roots, *, max_functions=DEFAULT_NODES, fixups=None,
+                        folding=None, _constants=None):
     """Observe a deterministic rooted graph inside the caller's live epoch.
 
 Node numbering follows root/relocation order, not local compiler spellings.
 Shared targets and exact linked-address aliases remain shared; identical bytes
 never merge distinct definitions. External symbol identity remains explicit.
 """
-    if type(max_functions) is not int or not 1 <= max_functions <= MAX_FUNCTIONS:
-        raise ValueError("linked code graph requires a bounded positive function limit")
+    node_limit(max_functions)
     mapping.validate(image)
     if fixups is not None:
         from .linked_fixups import check_image
@@ -66,12 +81,33 @@ never merge distinct definitions. External symbol identity remains explicit.
         return keys[key]
 
     root_ids = []
-    for root in roots:
+    for request, root in enumerate(roots):
+        if request >= min(1000000, max_functions * 16):
+            raise ValueError("linked code graph root request resource bound exceeded")
         root_ids.append(add(root["owner"], root["symbol"]))
-    public = {}
-    for row in mapping.publics:
-        public.setdefault(row.symbol, []).append(row)
-    spans, family_spans = [], []
+    map_indexes = MapIndexes()
+    public = map_indexes.for_map(mapping).publics
+    spans = IntervalIndex(max_intervals=min(1000000, max_functions * 8))
+    family_spans = IntervalIndex(max_intervals=min(1000000, max_functions * 8))
+    overlap_work = 0
+    observed_bytes = observed_edges = 0
+
+    def charge(size, edges):
+        nonlocal observed_bytes, observed_edges
+        observed_bytes += size
+        observed_edges += edges
+        if observed_bytes > min(1 << 30, max_functions * 65536):
+            raise _BudgetExhausted("linked code graph observed-byte resource bound exceeded")
+        if observed_edges > min(4000000, max_functions * 1024):
+            raise _BudgetExhausted("linked code graph edge resource bound exceeded")
+
+    def overlaps_in(index, begin, end):
+        nonlocal overlap_work
+        matches = index.overlaps(begin, end)
+        overlap_work += len(matches)
+        if overlap_work > min(4000000, max_functions * 1024):
+            raise _BudgetExhausted("linked code graph overlap output resource bound exceeded")
+        return matches
     fold_views, fold_ids = {}, {}
     fold_groups = []
     fold_candidates = folding.candidate_keys() if folding is not None else frozenset()
@@ -116,12 +152,13 @@ never merge distinct definitions. External symbol identity remains explicit.
                 node.update(input=proof["input"], object_sha256=proof["object_sha256"],
                             proof=proof, result=proof["result"])
                 begin, end = proof["address"], proof["address"] + proof["size"]
-                if any(left < end and begin < right for _, left, right in spans):
+                charge(proof["size"], 1)
+                if overlaps_in(spans, begin, end):
                     raise ValueError("import thunk overlaps another observed code owner")
-                spans.append((cursor, begin, end))
+                spans.insert(cursor, begin, end)
                 # A linker recipe is not an ordinary COFF body. Keep this span
                 # exclusive so a later ordinary entry cannot silently alias it.
-                family_spans.append((cursor, begin, end))
+                family_spans.insert(cursor, begin, end)
                 imported = proof["import"]
                 slot_id = slot_ids.setdefault(imported["address"], len(slot_ids))
                 identity = {key: imported[key] for key in ("module", "name", "ordinal", "symbol")}
@@ -177,26 +214,26 @@ never merge distinct definitions. External symbol identity remains explicit.
                     target = obj.symbols[index]
                     if (owner.casefold(), target.name) not in fold_candidates:
                         continue
-                    if any(row.symbol == target.name and row.owner.casefold() == owner.casefold()
-                           for row in local_mapping.statics or ()):
+                    if map_indexes.for_map(local_mapping).statics.get((owner.casefold(), target.name)):
                         continue
                     group = folding.group(owner, target.name, optional=True)
                     if group is not None:
                         from .linked_fold_frames import original_owner_view
                         register_fold(group)
                         local_mapping = original_owner_view(local_mapping, group)
-            node_static = {}
-            for row in local_mapping.statics or ():
-                node_static.setdefault((row.owner.casefold(), row.symbol), []).append(row)
+            lookup = map_indexes.for_map(local_mapping)
+            node_static = lookup.statics
             proof = verify_code_region(obj, subject, item["owner"], local_mapping, image,
-                                       objects=objects, fixups=fixups, folded_frames=frames)
+                                       objects=objects, fixups=fixups, folded_frames=frames, _index=lookup,
+                                       _constants=_constants)
             node.update(input=item["identity"], object_sha256=item["sha256"],
                         section=subject.section, proof=proof, result=proof["result"])
             if "regions" in proof:
                 region_edges = []
                 for region in proof["regions"]:
                     begin, end = region["address"], region["address"] + region["size"]
-                    overlaps = [(index, left, right) for index, left, right in spans if left < end and begin < right]
+                    charge(region["size"], len(region["references"]))
+                    overlaps = overlaps_in(spans, begin, end)
                     if any(not (region["ordinal"] == 0 and len(proof["regions"]) == 1
                                 and (left, right) == (begin, end) and cursor in fold_ids
                                 and fold_ids.get(index) == fold_ids[cursor]
@@ -206,8 +243,8 @@ never merge distinct definitions. External symbol identity remains explicit.
                         # equal addresses. Ordinary single-region folding below
                         # retains its separate established behavior.
                         raise ValueError("associated family overlaps another observed owner")
-                    spans.append((cursor, begin, end))
-                    family_spans.append((cursor, begin, end))
+                    spans.insert(cursor, begin, end)
+                    family_spans.insert(cursor, begin, end)
                     body = obj.sections[region["section"] - 1]
                     by_offset = {offset: obj.symbols[index] for offset, index, kind in body.relocations if kind}
                     edges = []
@@ -271,13 +308,14 @@ never merge distinct definitions. External symbol identity remains explicit.
                 cursor += 1
                 continue
             code, relocations, _ = obj.subject(subject)
+            charge(len(code), len(relocations))
             begin, end = proof["address"], proof["address"] + len(code)
-            overlaps = [(index, left, right) for index, left, right in spans if left < end and begin < right]
-            if any(left < end and begin < right and not (
+            overlaps = overlaps_in(spans, begin, end)
+            if any(not (
                     cursor in fold_ids and fold_ids.get(index) == fold_ids[cursor]
                     and (left, right) == (begin, end)
                     and len(nodes[index].get("proof", {}).get("regions", ())) == 1)
-                   for index, left, right in family_spans):
+                   for index, left, right in overlaps_in(family_spans, begin, end)):
                 raise ValueError("ordinary code overlaps an observed associated family")
             if any((left, right) != (begin, end) for _, left, right in overlaps):
                 raise ValueError("linked code graph has overlapping, differently bounded functions")
@@ -285,7 +323,7 @@ never merge distinct definitions. External symbol identity remains explicit.
                    for index, _, _ in overlaps):
                 raise ValueError("linked code overlaps a different or unproved folding group")
             alias = overlaps[0][0] if overlaps else cursor
-            spans.append((cursor, begin, end))
+            spans.insert(cursor, begin, end)
             edges = []
             constants = {row["offset"]: row for row in proof["references"] if "constant_binding" in row}
             private = {row["offset"]: row for row in proof["references"] if "private_binding" in row}
@@ -358,6 +396,10 @@ never merge distinct definitions. External symbol identity remains explicit.
             # the same function's target closure.
             node.update(result=Result.FAIL if node["result"] == Result.FAIL else Result.UNKNOWN, reason=str(error))
             gaps.append({"node": cursor, "owner": node["owner"], "symbol": node["symbol"], "reason": str(error)})
+            if isinstance(error, _BudgetExhausted):
+                # All prequeued but unvisited nodes remain UNKNOWN. Do not
+                # repeatedly scan an exhausted dense-alias or edge population.
+                break
         cursor += 1
     # A relocation can name a real function while its addend actually lands
     # somewhere else. Observe the effective destination, not just the symbol.

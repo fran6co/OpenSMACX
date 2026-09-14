@@ -100,6 +100,7 @@ def identities(context, nodes):
     """Index freshly observed nodes by explicit IDs and stable exact producers."""
     context.check_current()
     inputs = _Inputs()
+    parsed = {}
     try:
         root, directory, compiled = _compilations(context)
         by_output = {row["path"]: unit for unit, row in compiled.items()}
@@ -125,7 +126,10 @@ def identities(context, nodes):
             raw = _contents(source, node["object_sha256"], inputs)
             if proof.get("extent_kind") != "i386_short_import_thunk":
                 from .linked_code_region import select_code_region
-                select_code_region(Coff(raw), symbol)
+                key = (tuple(sorted(source.items())), node["object_sha256"])
+                if key not in parsed:
+                    parsed[key] = Coff(raw)
+                select_code_region(parsed[key], symbol)
             if set(source) == {"path"} and str(path) in by_output:
                 unit = by_output[str(path)]
                 if node["object_sha256"] != compiled[unit]["sha256"]:

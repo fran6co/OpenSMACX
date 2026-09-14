@@ -12,6 +12,7 @@ from pathlib import Path
 
 from .linked_code_ownership import _compilations, _portable
 from .linked_imports import import_slots
+from .graph_limits import DEFAULT_NODES, node_limit
 from .model import Result
 from .pe_coff import Coff
 
@@ -23,8 +24,9 @@ def _key(value):
 class StorageClosure:
     """One bounded paired native epoch, retaining the union across code rounds."""
 
-    def __init__(self, live, data_producers, *, limit=4096):
-        if type(limit) is not int or not 1 <= limit <= 4096 or set(live) != {"baseline", "current"}:
+    def __init__(self, live, data_producers, *, limit=DEFAULT_NODES):
+        limit = node_limit(limit)
+        if set(live) != {"baseline", "current"}:
             raise ValueError("storage closure requires two native builds and a bounded section limit")
         self.live, self.limit = dict(live), limit
         if set(data_producers) != set(live):

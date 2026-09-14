@@ -163,5 +163,6 @@ def test_closure_bounds_never_convert_missing_work_to_pass(monkeypatch, tmp_path
         report = _compare_contexts(*contexts, [selection(version="baseline")], **limits)
         assert report["result"] == "unknown", report
     else:
-        with pytest.raises(ValueError, match="bounded"):
+        message = "graph node budget" if "max_nodes" in limits else "bounded"
+        with pytest.raises(ValueError, match=message):
             _compare_contexts(*contexts, [selection(version="baseline")], **limits)

@@ -151,7 +151,8 @@ def test_initializer_comparison_is_consumed_live_without_waiving_remaining_effec
     change_graph(root)
     calls, living, _ = contexts(monkeypatch)
     observations = []
-    def initializers(old, new):
+    def initializers(old, new, *, max_functions):
+        assert max_functions == 100000
         assert living == [0, 1]
         assert old is calls[0]["context"] and new is calls[1]["context"]
         old.check_current()
@@ -172,7 +173,7 @@ def test_input_corruption_is_distinct_from_cross_build_initializer_change(graph_
     root, task = graph_task
     change_graph(root)
     _, living, _ = contexts(monkeypatch)
-    monkeypatch.setattr(native, "compare_build_initializers", lambda *args: {
+    monkeypatch.setattr(native, "compare_build_initializers", lambda *args, **kwargs: {
         "result": "fail", "input_consistency": consistency, "remaining_linked_effects": "unknown"})
     report = native.check_build_graph(root, task.task_id)
     assert living == []

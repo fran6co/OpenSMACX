@@ -9,9 +9,7 @@ separate initializer-order comparison; no reachability pruning occurs here.
 import json
 
 from .model import Result, digest
-
-
-MAX_NODES = 4096
+from .graph_limits import DEFAULT_NODES, node_limit
 
 
 def _copy(value):
@@ -39,19 +37,20 @@ def _key(value):
     return json.dumps(value, sort_keys=True, separators=(",", ":"), allow_nan=False)
 
 
-def normalize_residual(observed_graph, identities: dict[int, object], omitted: set[int]):
+def normalize_residual(observed_graph, identities: dict[int, object], omitted: set[int], *, max_nodes=DEFAULT_NODES):
     """Omit approved bodies only, retaining every other node and relationship.
 
 IDs are supplied for *all* nodes, including omitted bodies: incoming references
 and alias/fold membership must still identify those definitions. Saved reports
 or an algebraic PASS confer no permission and establish no native freshness.
 """
+    max_nodes = node_limit(max_nodes)
     if (not isinstance(observed_graph, dict) or observed_graph.get("result") != Result.PASS
             or observed_graph.get("gaps") != []):
         raise ValueError("residual comparison requires a complete passing code graph")
     nodes, bodies = observed_graph.get("nodes"), observed_graph.get("canonical_nodes")
     if (not isinstance(nodes, list) or not isinstance(bodies, list)
-            or len(nodes) != len(bodies) or len(nodes) > MAX_NODES):
+            or len(nodes) != len(bodies) or len(nodes) > max_nodes):
         raise ValueError("residual comparison requires bounded canonical nodes")
     indexes = set(range(len(nodes)))
     if (not isinstance(identities, dict) or any(type(key) is not int for key in identities)

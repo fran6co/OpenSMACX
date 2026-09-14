@@ -25,10 +25,17 @@ Original/MAP aliases are normalized only through authenticated folding groups;
 all peers still undergo native verification. Ordinary multi-entry regions cannot
 be erased as one function, and generated roots need their separate permission.
 This is not yet complete linked preservation: anonymous contribution assignment,
-retained selection and allocation isolation remain unresolved. The current
-4,096-node code bound also refuses larger complete application graphs rather
-than truncating them to a passing subset. These are explicit remaining work, not
-exclusions from application acceptance.
+retained selection and allocation isolation remain unresolved. Application
+observation now explicitly carries a 100,000-node budget through startup, code,
+storage and residual comparison; standalone helpers retain a 4,096-node default.
+Exhaustion refuses complete verification instead of accepting a truncated subset.
+Invocation-local MAP and interval indexes avoid repeated full-map/overlap scans.
+Optional absent-constant lookups share one expiring physical-population guard;
+actual constants and surrounding native artifact/cache guards remain independently
+checked. Large physical fixture controls cover 4,099 roots, reachable functions
+and late damage, not measured whole-game throughput. Repeated closure expansion
+and unresolved physical coverage still require work. These are not exclusions
+from application acceptance.
 
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied

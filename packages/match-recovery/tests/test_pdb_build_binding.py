@@ -134,8 +134,8 @@ def test_paired_pdb_change_during_observation_expires_whole_result(tmp_path, mon
     context = build(tmp_path / "project")
     path = add_bound_pdb(context)
     original = linked_initializers._observe
-    def observe(*args):
-        report = original(*args)
+    def observe(*args, **kwargs):
+        report = original(*args, **kwargs)
         path.write_bytes(path.read_bytes() + b"changed during observation")
         return report
     monkeypatch.setattr(linked_initializers, "_observe", observe)

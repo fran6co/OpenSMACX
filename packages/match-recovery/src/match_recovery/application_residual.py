@@ -6,6 +6,7 @@ allocation isolation and linker-generated contributions still need completion.
 """
 
 from .model import Result
+from .graph_limits import MAX_NODES
 
 
 def _owned_bodies(context, graph, bindings):
@@ -20,6 +21,7 @@ def _owned_bodies(context, graph, bindings):
 
     producers = identities(context, graph["nodes"])
     inputs = _Inputs()
+    parsed = {}
     result = []
     try:
         for node in graph["nodes"]:
@@ -30,7 +32,11 @@ def _owned_bodies(context, graph, bindings):
             entity = allowed.get(producer["symbol"])
             if entity is None:
                 continue
-            obj = Coff(_contents(node["input"], node["object_sha256"], inputs))
+            raw = _contents(node["input"], node["object_sha256"], inputs)
+            key = (tuple(sorted(node["input"].items())), node["object_sha256"])
+            if key not in parsed:
+                parsed[key] = Coff(raw)
+            obj = parsed[key]
             subject = obj.function(producer["symbol"])
             numbers = obj.code_sections(subject)
             if (len(numbers) != 1 or numbers[0] != subject.section
@@ -102,7 +108,7 @@ def compare_application_residual(graph):
             report["reason"] = "paired application commands lack complete correspondence"
             return report
         report["scoped_code"] = _compare_contexts(graph.baseline, graph.current, changes,
-                                                  application_scope=scoped)
+                                                  application_scope=scoped, max_nodes=MAX_NODES)
         report["reason"] = ("physical code/data observations do not yet establish complete retained section "
                             "selection, anonymous contribution assignment or allocation isolation")
         return report

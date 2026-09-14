@@ -35,7 +35,9 @@ def _ordinary_symbols(obj, subject):
     return sorted(rows, key=lambda row: (row["offset"], row["name"], row["type"], row["storage"]))
 
 
-def _ordinary_placement(obj, subject, owner, mapping, image, objects):
+def _ordinary_placement(obj, subject, owner, mapping, image, objects, *, _index=None):
+    from .linked_map_index import index_for
+    lookup = index_for(mapping, _index)
     entries = [item for item in obj.symbols.values() if item.section == subject.section and item.storage == 2]
     if len(entries) > 1 or subject.value:
         from .linked_fixups import check_selected
@@ -45,7 +47,7 @@ def _ordinary_placement(obj, subject, owner, mapping, image, objects):
         if entry.name in names:
             raise ValueError("ordinary section has ambiguous external entry names")
         names.add(entry.name)
-        matches = [row for row in mapping.publics if row.symbol == entry.name]
+        matches = lookup.publics.get(entry.name, ())
         if (len(matches) != 1 or not matches[0].function or not matches[0].segment
                 or matches[0].owner.casefold() != owner.casefold()):
             raise ValueError("ordinary entry lacks a unique same-owner code placement")
@@ -56,8 +58,7 @@ def _ordinary_placement(obj, subject, owner, mapping, image, objects):
     for item in obj.symbols.values():
         if item.section != subject.section or item.storage not in (3, 6) or obj.auxiliary.get(item.index):
             continue
-        matches = [row for row in mapping.statics or ()
-                   if row.symbol == item.name and row.owner.casefold() == owner.casefold()]
+        matches = lookup.statics.get((owner.casefold(), item.name), ())
         if matches and (len(matches) != 1 or not matches[0].segment
                         or matches[0].address != base + item.value):
             raise ValueError("ordinary internal symbol has contradictory map placement")
@@ -82,7 +83,8 @@ def select_code_region(obj, name):
     return subject
 
 
-def verify_code_region(obj, symbol, owner, mapping, image, *, objects=None, fixups=None, folded_frames=None):
+def verify_code_region(obj, symbol, owner, mapping, image, *, objects=None, fixups=None,
+                       folded_frames=None, _index=None, _constants=None):
     subject = select_code_region(obj, symbol.name)
     if subject != symbol:
         raise ValueError("linked code entry differs from its selected object symbol")
@@ -91,10 +93,14 @@ def verify_code_region(obj, symbol, owner, mapping, image, *, objects=None, fixu
             from .linked_bundle import verify_bundle
             return verify_bundle(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
                                  folded_frames=folded_frames)
-        return verify_function(obj, subject, owner, mapping, image, objects=objects, fixups=fixups)
+        return verify_function(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
+                               _index=_index, _constants=_constants)
     symbols = _ordinary_symbols(obj, subject)
-    base = _ordinary_placement(obj, subject, owner, mapping, image, objects)
-    proof = _verify_region(obj, subject, owner, mapping, image, objects=objects, fixups=fixups)
+    from .linked_map_index import index_for
+    lookup = index_for(mapping, _index)
+    base = _ordinary_placement(obj, subject, owner, mapping, image, objects, _index=lookup)
+    proof = _verify_region(obj, subject, owner, mapping, image, objects=objects, fixups=fixups,
+                           _index=lookup, _constants=_constants)
     if proof["address"] != base:
         raise ValueError("ordinary code proof differs from its shared section placement")
     return {**proof, "extent_kind": "selected_code_section", "section_symbols": symbols,

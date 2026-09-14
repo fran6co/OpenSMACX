@@ -142,7 +142,7 @@ def test_generated_graph_consumes_order_without_waiving_other_linked_effects(gra
 
     monkeypatch.setattr(graph_native, "compare_build_initializers", observe)
     with graph_native.application_graph(root, task.task_id, permission=permission) as session:
-        assert calls == [{"generated_changes": permission["generated_changes"]}]
+        assert calls == [{"generated_changes": permission["generated_changes"], "max_functions": 100000}]
         assert session.report["result"] == ("fail" if order == "fail" or consistency == "fail" else "unknown")
         assert session.report["linked_effects"] == "unknown"
 

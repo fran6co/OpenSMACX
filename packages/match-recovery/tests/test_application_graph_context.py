@@ -27,7 +27,7 @@ def test_ordinary_scoped_body_uses_original_paired_sources_without_generated_wai
     observations = []
 
     def initializers(old, new, **kwargs):
-        assert living == [0, 1] and not kwargs
+        assert living == [0, 1] and kwargs == {"max_functions": 100000}
         observations.append(True)
         return {"result": initializer_result, "remaining_linked_effects": "unknown"}
 
@@ -85,7 +85,7 @@ def prepared(graph_task, monkeypatch):
     (root / "code/old.cc").unlink()
     (root / "code/new.cc").write_bytes(b"current new source\n")
     calls, living, comparisons = contexts(monkeypatch)
-    monkeypatch.setattr(native, "compare_build_initializers", lambda *a: {
+    monkeypatch.setattr(native, "compare_build_initializers", lambda *a, **k: {
         "result": "pass", "remaining_linked_effects": "unknown"})
     return root, task, calls, living, comparisons
 

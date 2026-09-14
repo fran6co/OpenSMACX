@@ -16,6 +16,7 @@ from .driver import working_state
 from .measurement import Measurement
 from .generated_permissions import generated_sources
 from .linked_initializers import compare_build_initializers
+from .graph_limits import MAX_NODES
 from .model import Result, digest
 from .source_history import _tree, git, revision_files
 from .source_inventory import image_pin
@@ -172,7 +173,7 @@ def application_graph(root, task_name, *, integration=None, permission=None):
             fresh()
             commands = compare_build_commands(old, new, editable=editable)
             fresh()
-            initializers = compare_build_initializers(old, new, **(
+            initializers = compare_build_initializers(old, new, max_functions=MAX_NODES, **(
                 {"generated_changes": permission["generated_changes"]} if permission is not None else {}))
             fresh()
             # Reuse the actual current application build in migration; do not

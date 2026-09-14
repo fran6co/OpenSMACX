@@ -14,6 +14,7 @@ from .linked_context import linked_build
 from .linked_code_ownership import identities, resolve
 from .linked_code_residual import normalize_residual, compare_residual
 from .model import Result
+from .graph_limits import DEFAULT_NODES, node_limit
 
 
 def _key(value):
@@ -26,10 +27,10 @@ def _complete(graph):
     return Result.PASS
 
 
-def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=8, application_scope=None):
+def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, max_rounds=8, application_scope=None):
     """Internal native code dimension; caller separately validates task authority."""
-    if (type(max_nodes) is not int or not 1 <= max_nodes <= 4096
-            or type(max_rounds) is not int or not 1 <= max_rounds <= 64):
+    node_limit(max_nodes)
+    if type(max_rounds) is not int or not 1 <= max_rounds <= 64:
         raise ValueError("generated residual requires bounded positive node/round limits")
     contexts = {"baseline": baseline, "current": current}
     result = {"check": "application_generated_code_residual", "result": Result.UNKNOWN,
@@ -69,7 +70,7 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                                                      epoch=input_epochs[version])
                            for version, context in contexts.items()}
                 result["physical_sections"] = domains
-            observed = {version: value.initializers() for version, value in live.items()}
+            observed = {version: value.initializers(max_functions=max_nodes) for version, value in live.items()}
             checks = [_complete(value) for value in observed.values()]
             checks += [_complete(value.get("code_dependencies", {})) for value in observed.values()]
             if any(value != Result.PASS for value in checks):
@@ -202,7 +203,7 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                 if not required.keys() <= expanded.keys():
                     raise ValueError("a required original producer vanished during dependency expansion")
                 if required.keys() == expanded.keys():
-                    normalized = {version: normalize_residual(graphs[version], producers[version], removed[version])
+                    normalized = {version: normalize_residual(graphs[version], producers[version], removed[version], max_nodes=max_nodes)
                                   for version in contexts}
                     comparison = compare_residual(normalized["baseline"], normalized["current"])
                     result.update(result=comparison["result"], code_residual=comparison,

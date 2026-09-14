@@ -206,9 +206,9 @@ def test_cycles_terminate_without_dropping_back_edges(tmp_path):
     assert report["nodes"][1]["edges"][0]["target"] == {"node": 0}
 
 
-@pytest.mark.parametrize("limit", [0, -1, True, 4097, 1.5])
+@pytest.mark.parametrize("limit", [0, -1, True, 100001, 1.5])
 def test_invalid_resource_limits_refuse(tmp_path, limit):
-    with pytest.raises(ValueError, match="bounded positive"):
+    with pytest.raises(ValueError, match="graph node budget"):
         direct_graph(call_graph(tmp_path / "bounded"), max_functions=limit)
 
 

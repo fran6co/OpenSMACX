@@ -16,6 +16,7 @@ from .linked_objects import SelectedObjects
 from .model import Result
 from .msvc_link_map import parse_link_map
 from .pe_coff import PeImage
+from .graph_limits import DEFAULT_NODES
 
 
 def _same(left, right, seen=None):
@@ -167,17 +168,17 @@ class LinkedBuild:
         finally:
             self.check_current()
 
-    def initializers(self):
+    def initializers(self, *, max_functions=DEFAULT_NODES):
         from .linked_initializers import _observe_inputs, _stamp
         try:
             self.check_current()
-            report = _observe_inputs(self.inputs)
+            report = _observe_inputs(self.inputs, max_functions=max_functions)
             report["artifacts"] = {kind: _stamp(raw) for kind, raw in self.inputs.artifacts.items()}
             return report
         finally:
             self.check_current()
 
-    def code(self, roots, *, max_functions=4096):
+    def code(self, roots, *, max_functions=DEFAULT_NODES):
         try:
             self.check_current()
             value = self.inputs

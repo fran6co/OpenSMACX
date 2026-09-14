@@ -49,6 +49,21 @@ def _read(path, expected):
     return raw
 
 
+def _constant_names(names, optional):
+    """Shared strict request grammar; batching confers no binding authority."""
+    if (type(optional) is not bool or not isinstance(names, (tuple, list))
+            or not 1 <= len(names) <= 4096):
+        raise ValueError("absolute symbol lookup requires a bounded nonempty name sequence")
+    names = tuple(names)
+    for name in names:
+        require_text(name, "absolute linker symbol")
+        if any(ord(char) < 33 or ord(char) >= 127 for char in name):
+            raise ValueError("unsupported absolute linker symbol spelling")
+    if len(set(names)) != len(names):
+        raise ValueError("absolute symbol lookup requires unique names")
+    return names
+
+
 class SelectedObjects:
     """A bounded index of one complete native link-input inventory.
 
@@ -342,16 +357,7 @@ class SelectedObjects:
         from .common_allocation import _policy
         from .pe_coff import Coff
 
-        if (type(optional) is not bool or not isinstance(names, (tuple, list))
-                or not 1 <= len(names) <= 4096):
-            raise ValueError("absolute symbol lookup requires a bounded nonempty name sequence")
-        names = tuple(names)
-        for name in names:
-            require_text(name, "absolute linker symbol")
-            if any(ord(char) < 33 or ord(char) >= 127 for char in name):
-                raise ValueError("unsupported absolute linker symbol spelling")
-        if len(set(names)) != len(names):
-            raise ValueError("absolute symbol lookup requires unique names")
+        names = _constant_names(names, optional)
         records, fresh = self._constant_population()
 
         def one(name):
