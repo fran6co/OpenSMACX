@@ -36,6 +36,12 @@ carry this rationale to agents. Run results, timings, spelling-search attempts a
 current match status do not belong here. Existing historical LEVER/TRIED comments
 remain legacy seed evidence, not the destination for new run logs.
 
+Delegated seed binding separates these inputs explicitly: `binding.reason` and
+`binding.evidence` supply the source rationale, while top-level `evidence`
+explains the coordinator decision. Request hashes, impact counts, permission
+checks and compiler-run diagnostics belong to the latter, not the source comment.
+Neither evidence channel substitutes for the other.
+
 ## Compact object bindings
 
 `RECOVERY_OBJECT: v1 <start> <emitted-symbol>` binds an original object start

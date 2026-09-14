@@ -176,13 +176,17 @@ def validate_response(response, snapshot):
         raise ValueError("only an expansion may request additional scope")
     binding = response.get("binding")
     if response["action"] == "bind_seed":
-        if not isinstance(binding, dict) or set(binding) != {"entity_id", "source", "line", "source_sha256", "name", "reason"}:
-            raise ValueError("seed binding needs an identity, fresh source location, symbol and rationale")
+        if not isinstance(binding, dict) or set(binding) != {"entity_id", "source", "line", "source_sha256", "name", "reason", "evidence"}:
+            raise ValueError("seed binding needs an identity, fresh source location, symbol, rationale and separate binding evidence")
         entity_id(binding["entity_id"])
         relative_path(binding["source"])
         require_digest(binding["source_sha256"])
         require_text(binding["name"], "binding symbol")
         require_text(binding["reason"], "binding rationale")
+        from .binding_source import validate as validate_binding
+        validate_binding({"reason": binding["reason"], "evidence": binding["evidence"]})
+        if len(set(binding["evidence"])) != len(binding["evidence"]):
+            raise ValueError("seed binding evidence references must be distinct")
         if type(binding["line"]) is not int or binding["line"] < 1:
             raise ValueError("seed binding requires a positive source line")
     elif binding is not None:
@@ -316,6 +320,7 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
                                 "Use investigate to request one bounded worker round for a discovery already inside current scope; it remains unresolved and cannot pass acceptance.",
                                 "Use investigate_local to examine or repair only current task files when a discovery also involves known outside owners. This grants no outside editing, ownership transfer, resolution or acceptance; explain the useful local work in evidence. Defer if only outside work can help.",
                                 "With explicit seed_bindings delegation, bind_seed may map an existing scoped seed identity to a worker-written body in an editable product TU. Supply its fresh source digest/location and evidence-backed symbol; native publication retains the existing original spans and pending finding. Otherwise return binding:null.",
+                                "For bind_seed, binding.reason and binding.evidence are source-owned, load-bearing identity rationale and references: explain the original address/symbol, body and owner relationship. Top-level evidence explains this coordinator decision and may contain run diagnostics, request hashes, impact counts, compiler failures and permission checks. Never copy that run context into binding.reason or binding.evidence; both evidence arrays are independently required and neither substitutes for the other.",
                                 "Choose a pending discovery not listed in investigating; those IDs already have transient authorization for this unchanged round.",
                                 "When routing and route_choices are supplied, route can request help for a listed subset from an existing managed owner. Return only its supplied task id and subjects; the controller binds discovery, owner and history. It grants no editing scope, owner activation, investigation or resolution. Parked, retained historical, and unassigned owners are context, not selectable targets. Routes publish only in serial coordination; keep the complete finding pending.",
                                 "Defer unknown originals or insufficient evidence; do not hide structural work or reset baselines."]}
@@ -428,8 +433,7 @@ def coordinate(root, task_name, configuration, *, execute=None, investigating=()
         # All writers stay AFTER policy validation and serial routing.
         binding_report = bind(root, image=image, address=origins[key].address,
                               spans=[Span(*span) for span in spans],
-                              **{name: value for name, value in proposal.items() if name != "entity_id"},
-                              evidence=response["evidence"])
+                              **{name: value for name, value in proposal.items() if name != "entity_id"})
     evidence = [*response["evidence"], "Delegated policy: " + digest(delegation)]
     decision = dict(request_id="coordinator-" + uuid.uuid4().hex, author=task.author,
                     expected_revision=len(decisions))

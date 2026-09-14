@@ -52,7 +52,8 @@ def test_worker_body_is_bound_then_rechecked_without_resolving_discovery_early(p
             if action == "bind_seed":
                 result["binding"] = {"entity_id": row["entity_id"], "source": "src/f.cpp", "line": 1,
                                      "source_sha256": hashlib.sha256(body.read_bytes()).hexdigest(),
-                                     "name": "_f", "reason": "Test-owned seed extent and worker-written product owner"}
+                                     "name": "_f", "reason": "Test-owned seed extent and worker-written product owner",
+                                     "evidence": ["src/seeds/seed.cpp: original extent and src/f.cpp: product _f"]}
             if action == "incorporate":
                 assert store.status(task.task_id, store.scope(task.task_id)[0])["pending_discoveries"]
                 assert [item["kind"] for item in store.decisions(task.task_id)] == ["discovery"]

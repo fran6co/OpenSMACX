@@ -10,6 +10,7 @@ from match_recovery.model import Origin
 from match_recovery.source_inventory import source_snapshot
 from match_recovery.tasks import Task, TaskStore
 from match_recovery.binding import bind
+from match_recovery.agent_protocol import response_schema
 from test_binding import parameters, project
 from test_task_source import git
 
@@ -65,6 +66,7 @@ def _response(payload, origin, project, **binding_overrides):
         "source_sha256": hashlib.sha256((project / "src/f.cpp").read_bytes()).hexdigest(),
         "name": "_f",
         "reason": "The worker body is in the existing product translation unit.",
+        "evidence": ["image:0x00401000-0x00401001; src/seeds/seed.cpp maps the product function _f"],
     }
     proposal.update(binding_overrides)
     return {
@@ -100,7 +102,59 @@ def test_bind_seed_uses_real_binder_and_preserves_seed_pending_baseline(project)
     assert store.status(task.task_id, {origin.entity_id})["pending_discoveries"]
     product = next(row for row in source_snapshot(root)["records"] if row["path"] == "src/f.cpp")
     assert product["entity_id"] == origin.entity_id
-    assert product["binding_evidence"]["evidence"] == result["evidence"]
+    assert product["binding_evidence"]["evidence"] == _response({"snapshot": "unused"}, origin, root)["binding"]["evidence"]
+    assert product["binding_evidence"]["evidence"] != result["evidence"]
+
+
+def test_binding_keeps_decision_diagnostics_out_of_source(project):
+    root, store, task, origin, delegation = _prepare(project)
+    decision = ["request hash " + "a" * 64, "2844 impacted entities; compiler failed; permission checked"]
+    binding_evidence = ["image:0x00401000-0x00401001", "src/seeds/seed.cpp: original _seed corresponds to product _f"]
+
+    def execute(command, root, name, payload):
+        response = _response(payload, origin, root, evidence=binding_evidence)
+        response["evidence"] = decision
+        return 0, response
+
+    result = coordinate(root, task.task_id, delegation, execute=execute)
+    product = next(row for row in source_snapshot(root)["records"] if row["path"] == "src/f.cpp")
+    assert product["binding_evidence"]["evidence"] == binding_evidence
+    assert result["evidence"] == decision
+    assert all(item not in (root / "src/f.cpp").read_text() for item in decision)
+    assert store.status(task.task_id, {origin.entity_id})["pending_discoveries"]
+
+
+@pytest.mark.parametrize("evidence", [None, [], "image:0x401000", [1], [""], ["same", "same"],
+                                      ["line\nbreak"], ["ORIGINAL: injected"]])
+def test_invalid_binding_evidence_refuses_before_publication(project, evidence):
+    root, store, task, origin, delegation = _prepare(project)
+    before = (root / "src/f.cpp").read_bytes()
+    decisions = store.decisions(task.task_id)
+    with pytest.raises(ValueError):
+        coordinate(root, task.task_id, delegation,
+                   execute=lambda *args: (0, _response(args[-1], origin, root, evidence=evidence)))
+    assert (root / "src/f.cpp").read_bytes() == before
+    assert store.decisions(task.task_id) == decisions
+
+
+def test_binding_requires_both_evidence_channels(project):
+    root, store, task, origin, delegation = _prepare(project)
+    response = _response({"snapshot": "a" * 64}, origin, root)
+    response["binding"].pop("evidence")
+    with pytest.raises(ValueError, match="separate binding evidence"):
+        validate_response(response, "a" * 64)
+    response = _response({"snapshot": "a" * 64}, origin, root)
+    response["evidence"] = []
+    with pytest.raises(ValueError, match="decision needs evidence"):
+        validate_response(response, "a" * 64)
+
+
+def test_coordinator_schema_requires_separate_binding_evidence():
+    properties = response_schema("coordinator")["properties"]
+    binding = next(item for item in properties["binding"]["anyOf"] if item["type"] == "object")
+    assert "evidence" in binding["required"]
+    assert binding["properties"]["evidence"]["minItems"] == 1
+    assert properties["evidence"]["minItems"] == 1
 
 
 @pytest.mark.parametrize("damage", ["missing_policy", "unknown_identity", "outside_editable", "stale_digest"])

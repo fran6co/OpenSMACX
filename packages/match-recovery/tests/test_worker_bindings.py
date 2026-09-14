@@ -468,7 +468,8 @@ def test_native_coordinator_binding_between_workers_becomes_protected_without_re
             if action == "bind_seed":
                 answer["binding"] = {"entity_id": row["entity_id"], "source": "src/f.cpp", "line": 1,
                                      "source_sha256": hashlib.sha256(product.read_bytes()).hexdigest(),
-                                     "name": "_f", "reason": "Coordinator-owned uncommitted rationale"}
+                                     "name": "_f", "reason": "Coordinator-owned uncommitted rationale",
+                                     "evidence": ["src/seeds/seed.cpp: original extent and src/f.cpp: product _f"]}
             return 0, answer
         assert role == "worker"
         worker_sources.append(product.read_bytes())

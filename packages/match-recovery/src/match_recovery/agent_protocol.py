@@ -35,11 +35,20 @@ def response_schema(role):
                         "action": {"type": "string", "enum": ["expand", "incorporate", "reject", "defer", "investigate", "investigate_local", "bind_seed", "route"]},
                         "discovery_id": text,
                         "subjects": {"type": "array", "items": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"}},
-                        "editable_files": {"type": "array", "items": text}, "evidence": evidence,
+                        "editable_files": {"type": "array", "items": text},
+                        "evidence": {**evidence, "description":
+                                     "Decision reasoning and run context, including diagnostics and permission checks. "
+                                     "Not source binding evidence; never automatically copied into source."},
                         "binding": {"anyOf": [{"type": "null"}, _object({
                             "entity_id": {"type": "string", "pattern": "^entity-[0-9a-f]{64}$"},
                             "source": text, "line": {"type": "integer", "minimum": 1},
-                            "source_sha256": digest, "name": text, "reason": text})]},
+                            "source_sha256": digest, "name": text,
+                            "reason": {**text, "description":
+                                       "Source-owned rationale connecting the original identity, body and owner; no run log."},
+                            "evidence": {**evidence, "description":
+                                         "Distinct single-line load-bearing references for the original address/symbol, "
+                                         "body and owner relationship. Written to source; exclude run diagnostics, request "
+                                         "hashes, impact counts and permission checks. Independent of top-level evidence."}})]},
                         "route": {"anyOf": [{"type": "null"}, _object({
                             "owner": text,
                             # Keep the transport schema in the common strict-output

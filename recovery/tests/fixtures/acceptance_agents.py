@@ -76,7 +76,8 @@ elif role == "coordinator":
             "entity_id": seed["entity_id"], "source": "src/owner.cpp",
             "line": next(i for i, line in enumerate(product.read_text().splitlines(), 1) if line.startswith("int Owner::add")),
             "source_sha256": hashlib.sha256(product.read_bytes()).hexdigest(),
-            "name": "?add@Owner@@QAEHH@Z", "reason": "Test-owned original class symbol, seed span and worker-written real Owner method"})
+            "name": "?add@Owner@@QAEHH@Z", "reason": "Test-owned original class symbol, seed span and worker-written real Owner method",
+            "evidence": ["src/seeds/owner.cpp: original Owner::add span and symbol; src/owner.cpp: corresponding Owner method"]})
 else:
     assert role == "reviewer"
     response = {"snapshot": request["snapshot"], "decision": "approve",

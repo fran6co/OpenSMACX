@@ -3844,7 +3844,16 @@ Ordinary `investigate` retains its entirely-in-scope requirement.
 
 `bind_seed` requires explicit `seed_bindings` delegation and a `binding` object
 with `entity_id`, `source`, positive `line`, current `source_sha256`, emitted
-`name`, and `reason`. The identity must already be selected and affected by the
+`name`, `reason`, and a nonempty array of distinct `evidence` references.
+`binding.reason` and `binding.evidence` become source-owned identity rationale:
+explain the original address/symbol, body and owner relationship. Top-level
+`evidence` remains separately required for the coordinator decision and its run
+context (diagnostics, request hashes, impact counts, compiler failures and
+permission checks); it is not copied into source. The two channels have no
+fallback: older proposals without explicit binding evidence are refused, while
+existing source bindings remain unchanged. Source evidence must be single-line
+text without embedded original markers.
+The identity must already be selected and affected by the
 pending discovery; its existing records must all be seeds with agreeing spans.
 The product TU must already exist in the editing scope. The native binder retains
 those spans, validates the pinned executable backing and fresh source, inserts
