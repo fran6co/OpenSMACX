@@ -225,6 +225,14 @@ def application_graph(root, task_name, *, integration=None, permission=None):
                     # functions. Neither a PASS nor a cross-build difference
                     # supplies the remaining scope/storage/effect composition.
                     result["generated_code_residual"] = residual
+                    storage = residual.get("storage_residual", {})
+                    # An intended source/root delta cannot justify a mismatch
+                    # between an actual selected object and its own linked data.
+                    # Cross-build storage changes need separate ownership/effect
+                    # composition; their diagnostic FAIL alone is not this case.
+                    if storage.get("input_consistency") == Result.FAIL:
+                        result.update(result=Result.FAIL,
+                                      reason="selected data contents or references disagree with the actual linked image")
                     session_fresh()
                     session = replace(session, _report=deepcopy(result))
                 with _bound_graph(session):

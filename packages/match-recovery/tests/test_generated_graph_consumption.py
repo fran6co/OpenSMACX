@@ -85,6 +85,25 @@ def test_native_generated_residual_refusal_stays_unknown(graph_task, monkeypatch
         assert session.report["result"] == "unknown"
 
 
+@pytest.mark.parametrize("consistency", ["pass", "fail", "unknown"])
+def test_native_storage_input_counterexample_controls_graph_admission(graph_task, monkeypatch, consistency):
+    """Routing control; physical storage evidence is exercised separately."""
+    from match_recovery import generated_code_residual
+    root, task = graph_task
+    _, living, _ = contexts(monkeypatch)
+    monkeypatch.setattr(graph_native, "compare_build_initializers", lambda *a, **k: {"result": "pass"})
+
+    def observe(session):
+        assert living == [0, 1]
+        session.check_current()
+        return {"result": "pass", "storage_residual": {"result": "fail", "input_consistency": consistency}}
+
+    monkeypatch.setattr(generated_code_residual, "compare_generated_code_residual", observe)
+    with graph_native.application_graph(root, task.task_id, permission=authority(task)) as session:
+        assert session.report["result"] == ("fail" if consistency == "fail" else "unknown")
+        assert session.report["linked_effects"] == "unknown"
+
+
 @pytest.mark.parametrize("order", ["pass", "fail", "unknown", None])
 @pytest.mark.parametrize("consistency", ["pass", "fail"])
 def test_generated_graph_consumes_order_without_waiving_other_linked_effects(graph_task, monkeypatch, order, consistency):

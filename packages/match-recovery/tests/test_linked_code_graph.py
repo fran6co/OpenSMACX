@@ -226,7 +226,7 @@ def test_external_data_is_explicitly_unproved_not_an_invented_code_target(tmp_pa
     assert report["result"] == "pass" and len(report["nodes"]) == 1
     assert report["data_references"] == [{"node": 0, "offset": 1, "kind": "absolute32",
                                          "target": {"data": {"external": "_global"}},
-                                         "address": 0x402100, "contents": "unknown"}]
+                                         "address": 0x402100, "addend": 0, "contents": "unknown"}]
     assert report["remaining_linked_effects"] == "unknown" and report["ready_for_collection"] is False
 
 

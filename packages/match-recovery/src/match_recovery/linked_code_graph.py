@@ -228,6 +228,7 @@ never merge distinct definitions. External symbol identity remains explicit.
                         elif "private_binding" in reference:
                             edge["target"] = {"data": identity}
                             storage.append({"node": cursor, "region": region["ordinal"], **edge,
+                                            "addend": addend,
                                             "address": reference["address"],
                                             "placement": reference["private_binding"], "contents": Result.UNKNOWN})
                         else:
@@ -257,6 +258,7 @@ never merge distinct definitions. External symbol identity remains explicit.
                                     raise ValueError("declared code target has a non-function linked placement")
                                 edge["target"] = {"data": identity}
                                 storage.append({"node": cursor, "region": region["ordinal"], **edge,
+                                                "addend": addend,
                                                 "address": placed.address, "contents": Result.UNKNOWN})
                         edges.append(edge)
                     region_edges.append({key: region[key] for key in
@@ -299,6 +301,7 @@ never merge distinct definitions. External symbol identity remains explicit.
                     reference = private[relocation.offset]
                     edge["target"] = {"data": reference["identity"]}
                     storage.append({"node": cursor, **edge, "address": reference["address"],
+                                    "addend": addend,
                                     "placement": reference["private_binding"], "contents": Result.UNKNOWN})
                 elif target.section == subject.section and 0 <= target.value < len(code):
                     if not 0 <= target.value + addend < len(code):
@@ -337,6 +340,7 @@ never merge distinct definitions. External symbol identity remains explicit.
                                     {"local_owner": item["owner"], "symbol": target.name})
                         edge["target"] = {"data": identity}
                         storage.append({"node": cursor, **edge, "address": placed.address,
+                                        "addend": addend,
                                         "contents": Result.UNKNOWN})
                 edges.append(edge)
             node["edges"] = edges

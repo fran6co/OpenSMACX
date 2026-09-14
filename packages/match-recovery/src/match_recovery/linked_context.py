@@ -127,6 +127,15 @@ class LinkedBuild:
         finally:
             self.check_current()
 
+    def data_contents(self, owner, number):
+        """Verify complete ordinary initial bytes and references in this epoch."""
+        from .linked_data_contents import verify_data_contents
+        try:
+            self.check_current()
+            return deepcopy(verify_data_contents(self.inputs, owner, number))
+        finally:
+            self.check_current()
+
     def storage_census(self, *, max_sections=100000):
         from .linked_storage_census import observe_storage
         try:

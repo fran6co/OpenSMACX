@@ -97,16 +97,24 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                 return {node for node, value in original.items() if _key(value) in omitted[version]}
 
             removed = {version: index(version) for version in contexts}
+            from .generated_storage_residual import StorageClosure
+            from .linked_data_ownership import section_producers
+            data_producers = {version: stack.enter_context(section_producers(context, live[version].inputs.objects))
+                              for version, context in contexts.items()}
+            storage = StorageClosure(live, data_producers, limit=max_nodes)
             initial_producers = {version: {_key(value) for value in producers[version].values()}
                                  for version in contexts}
 
             def union():
                 values = {_key(value): value for version in contexts for node, value in producers[version].items()
                           if node not in removed[version]}
+                values.update(storage.code_required)
                 if len(values) > max_nodes:
                     raise ValueError("generated residual producer union exceeds its node bound")
                 return values
 
+            storage_report = storage.observe(graphs, producers)
+            result["storage_residual"] = storage_report
             required = union()
             for round_number in range(1, max_rounds + 1):
                 for version, context in contexts.items():
@@ -133,6 +141,8 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=4096, max_rounds=
                                       version=version, graph=graphs[version], rounds=round_number)
                         return result
                     removed[version] = index(version)
+                storage_report = storage.observe(graphs, producers)
+                result["storage_residual"] = storage_report
                 expanded = union()
                 if not required.keys() <= expanded.keys():
                     raise ValueError("a required original producer vanished during dependency expansion")

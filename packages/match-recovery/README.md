@@ -2059,8 +2059,32 @@ Compiled producers use exact per-build receipts and stable source TUs; dependenc
 producers retain physical input/member/occurrence and content identity. Parsed
 link evidence and acceleration caches are guarded throughout use and at close.
 The result remains a code dimension, not checkpoint admission: other task helper
-bodies gain no implicit waiver, while data/import dependencies and remaining
-storage, selection and runtime effects stay visible and independently unproved.
+bodies gain no implicit waiver. A separate native storage residual now follows
+ordinary data, common allocations and import slots reached by either build's
+code, including dependencies of explicitly removed roots. Ordinary sections are
+bound to independently selected physical inputs, then their complete initial
+bytes, relocations, signed addends and loader fixups are checked against that
+build's actual image. Compiled sections correspond by source TU and unique
+section name; dependency sections retain their physical member/content identity.
+Private labels cannot acquire placement from the pointer being checked.
+
+The two-build dependency union expands through data-to-data cycles and feeds
+callbacks back into the native code verifier. Newly observed code can add more
+data in the next bounded round. Effective reference offsets must remain inside
+the independently observed target extent. Removing a caller never removes its
+former target from preservation. Section contents, reference identities, extents,
+flags and observed sharing relationships compare independently in both builds;
+this does not prove isolation from unobserved storage. Import-slot correspondence
+does not prove the imported library's implementation or ABI. Unsupported special
+or COMDAT data remains unknown. Section-producer parsing is shared only within a
+live, guarded build epoch; neither cached reports nor descriptors grant scope.
+
+A selected-input/linked-image data counterexample fails the application graph,
+even if a later dependency lookup is incomplete. Cross-build storage differences
+remain a separate diagnostic pending ownership composition; they are not
+automatically classified as unauthorized changes. Complete linked selection,
+allocation isolation and remaining residual effects still prevent graph admission.
+These checks do not establish autonomous or runtime acceptance.
 
 The package supplies the native `migration_check` command:
 `recover tasks check-migration <task> --image <image>`. It consumes the driver's
