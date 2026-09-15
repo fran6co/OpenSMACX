@@ -3,37 +3,83 @@
   "artifacts": "build/recovery/agents",
   "planner": {
     "command": {
-      "argv": ["env", "CLAUDE_CONFIG_DIR=/home/fran6co/.claude-z", "claude", "-p", "--output-format", "text", "--permission-mode", "plan", "--model", "glm-5.3"],
+      "argv": [
+        "/home/fran6co/code/OpenSMACX/recovery/environment/claude_agent.sh",
+        "-p",
+        "--output-format",
+        "text",
+        "--permission-mode",
+        "plan",
+        "--model",
+        "glm-5.3"
+      ],
       "timeout": 3300
     },
-    "instructions": [".claude/agents/recovery-planner.md"],
+    "instructions": [
+      ".claude/agents/recovery-planner.md"
+    ],
     "response": "stdout"
   },
   "worker": {
     "evidence_delivery": "on_demand",
     "command": {
-      "argv": ["env", "CLAUDE_CONFIG_DIR=/home/fran6co/.claude-z", "claude", "-p", "--output-format", "text", "--permission-mode", "bypassPermissions", "--model", "glm-5.3", "--add-dir", "{env:VC6_PREFIX}"],
+      "argv": [
+        "/home/fran6co/code/OpenSMACX/recovery/environment/claude_agent.sh",
+        "-p",
+        "--output-format",
+        "text",
+        "--permission-mode",
+        "bypassPermissions",
+        "--model",
+        "glm-5.3",
+        "--add-dir",
+        "{env:VC6_PREFIX}"
+      ],
       "timeout": 3300
     },
-    "instructions": [".claude/agents/recovery-worker.md"],
+    "instructions": [
+      ".claude/agents/recovery-worker.md"
+    ],
     "response": "stdout"
   },
   "coordinator": {
     "evidence_delivery": "on_demand",
     "command": {
-      "argv": ["env", "CLAUDE_CONFIG_DIR=/home/fran6co/.claude-z", "claude", "-p", "--output-format", "text", "--permission-mode", "plan", "--model", "glm-5.3"],
+      "argv": [
+        "/home/fran6co/code/OpenSMACX/recovery/environment/claude_agent.sh",
+        "-p",
+        "--output-format",
+        "text",
+        "--permission-mode",
+        "plan",
+        "--model",
+        "glm-5.3"
+      ],
       "timeout": 3300
     },
-    "instructions": [".claude/agents/recovery-coordinator.md"],
+    "instructions": [
+      ".claude/agents/recovery-coordinator.md"
+    ],
     "response": "stdout"
   },
   "reviewer": {
     "evidence_delivery": "on_demand",
     "command": {
-      "argv": ["env", "CLAUDE_CONFIG_DIR=/home/fran6co/.claude-z", "claude", "-p", "--output-format", "text", "--permission-mode", "plan", "--model", "glm-5.3"],
+      "argv": [
+        "/home/fran6co/code/OpenSMACX/recovery/environment/claude_agent.sh",
+        "-p",
+        "--output-format",
+        "text",
+        "--permission-mode",
+        "plan",
+        "--model",
+        "glm-5.3"
+      ],
       "timeout": 3300
     },
-    "instructions": [".claude/agents/recovery-reviewer.md"],
+    "instructions": [
+      ".claude/agents/recovery-reviewer.md"
+    ],
     "response": "stdout"
   }
 }
