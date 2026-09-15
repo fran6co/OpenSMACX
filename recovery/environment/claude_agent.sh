@@ -47,17 +47,18 @@ if text.startswith("```"):
             print(json.dumps(value))
             sys.exit(0)
 decoder = json.JSONDecoder()
-last = None
+first = None
 for match in re.finditer(r"\{", text):
     try:
         value, _ = decoder.raw_decode(text[match.start():])
     except ValueError:
         continue
     if isinstance(value, dict):
-        last = value
-if last is None:
+        first = value
+        break
+if first is None:
     sys.exit(1)
-print(json.dumps(last))
+print(json.dumps(first))
 PY
 }
 
