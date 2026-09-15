@@ -1,0 +1,145 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "72b14a83cc787054047b74ed0deb0013fdb8ffa7",
+  "editable_files": [
+    "src/flic.cpp",
+    "src/flic.h"
+  ],
+  "evidence": [
+    "Group eligibility and fit: the request partition lists class:Flic eligible with no reservations, 24 entities and editable files only src/flic.cpp and src/flic.h. Fresh 'recover partition --group class:Flic --details' confirms 8 product-bound identities (constructor 0x00629D60, close 0x00629DF0, destructor 0x004327A0, UNK4-UNK8) plus 16 seed-only identities; no existing task's editable files overlap flic.cpp, flic.h or any of these seeds, and the group fits the 100-entity/20-file delegation without additional files.",
+    "The class shell is already genuine C++ that bodies can compile against: src/flic.h declares Flic with an embedded Buffer at +0x4, FILE* state and an embedded Palette at +0x5BC with static_assert(sizeof(Flic)==0xAE4); src/flic.cpp holds BYTE_EXACT constructor and close bodies and the mapped destructor, so implementing the 16 missing methods is structural completion of an already-typed owner, not scaffold work.",
+    "16 identities remain seed-only with original spans: init 0x00629E50-0x0062A068 (536 bytes), decode_frame 0x0062A070 (BYTE_EXACT seed), UNK1 0x0062A120, UNK2 0x0062A210 (BYTE_EXACT), rewind 0x0062A280 (BYTE_EXACT seed preserved NO_COMPILE), UNK3 0x0062A2C0-0x0062A4FA, and the chunk family decode_byte_run/decode_delta_flc/fill/decode_fli_copy/decode_chunk/decode_byte_run_trans/decode_delta_flc_trans/decode_black_trans/decode_fli_copy_trans/UNK9 spanning 0x0062A500-0x0062B7BF, whose preserved opaque-class scaffold seeds measure MISMATCH; writing idiomatic bodies against the real typed members is the established convergence direction, with each mismatch retained as a diagnostic rather than a target.",
+    "All callee dependencies are already product-bound C++: fresh 'recover inspect' maps init's original calls to Buffer::init 0x005D7670, Buffer::sync_to_palette 0x005DE8F0, Buffer::copy 0x005DFF00, Palette::init 0x005FE330, env_open 0x00634BB0, Buffer::get_data 0x005E3373/0x005E33F3 and mem_get 0x005D4510, each with source bindings in product TUs, so the family can be recovered without fixed-address forwarders or copied opcodes.",
+    "DataChunk coupling is internal to this family: grep across src/ finds DataChunk only in the Flic seed files and in no product header, so it can be declared inside the group's own src/flic.h; no additional product files are requested and none are needed.",
+    "Caller evidence shows the family is load-bearing: pinned-image inspect of decode_frame 0x0062A070 lists 11 distinct mapped callers - DiploPop::start/portrait_anim/bioscan_anim/timer callbacks, MainInterface::redraw_complete, ReportWin::sat_anim, MonuWin::init, SetupWin::do_menu_rightside, boom and crash_landing - so implementing these bodies advances real game functionality across diplomacy, interface, reports and effects, not an isolated artifact.",
+    "Resume options were inspected and set aside with concrete reasons: playerlock-acquisition-recovery now sits at next_action review_scope_expansion requiring the outside message_data owner unavailable in this delegation; textindex-record-recovery's remaining discoveries are cross-owner (Heap call-target interpretation, CRT imported-target resolution); emitted-symbol-bindings is eligible but a bounded emitted-name correction. New Flic work requires no unavailable authority and yields greater genuine recovered C++.",
+    "Selection claims no completion: CRT calls inside init/decode bodies (fopen/fread/fseek/fclose at static runtime addresses) may remain unresolved strict-reference obligations exactly as in existing tasks; they are preserved as pending evidence, and neither this selection, a future passing build, nor banked measurements establish a working game or task acceptance.",
+    "Planner delegation: 7acd4a9ed47fc620b1c308183a0678fe1061e1200bf0d59cc1d367314479fb1b"
+  ],
+  "intent": "Recover the Flic FLIC-animation decoder family as genuine C++ methods in src/flic.cpp: init-from-file, decode_frame and the UNK dispatch helpers, rewind, and the run/delta/copy/trans chunk decoders, written idiomatically against the class's real embedded Buffer and Palette members, with the Flic-internal DataChunk declared in the group's own src/flic.h. Preserve original spans, seed provenance, caller behavior and all historical obligations; seed byte mismatches remain diagnostics, not goals.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4401056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6462960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6463776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6464768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6465312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466752,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6466768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6467984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6469504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "flic-decoder-recovery"
+}
