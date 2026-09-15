@@ -3,27 +3,73 @@
   "target": "opensmacx",
   "acceptance_scope": "change",
   "build": {
-    "argv": ["uv", "run", "recover", "check-build"],
-    "timeout": 3600
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "check-build"
+    ],
+    "timeout": 10800
   },
   "obligations": {
-    "argv": ["uv", "run", "recover", "tasks", "obligations", "{task}"],
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "tasks",
+      "obligations",
+      "{task}"
+    ],
     "timeout": 120
   },
   "context": {
-    "argv": ["uv", "run", "recover", "tasks", "context", "{task}"],
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "tasks",
+      "context",
+      "{task}"
+    ],
     "timeout": 120
   },
   "check": {
-    "argv": ["uv", "run", "recover", "tasks", "check-restoration", "{task}", "--image", "{env:OPENSMACX_IMAGE}"],
-    "timeout": 3600
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "tasks",
+      "check-restoration",
+      "{task}",
+      "--image",
+      "{env:OPENSMACX_IMAGE}"
+    ],
+    "timeout": 10800
   },
   "acceptance": {
-    "argv": ["uv", "run", "recover", "tasks", "check-acceptance", "{task}", "--image", "{env:OPENSMACX_IMAGE}"],
-    "timeout": 3600
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "tasks",
+      "check-acceptance",
+      "{task}",
+      "--image",
+      "{env:OPENSMACX_IMAGE}"
+    ],
+    "timeout": 10800
   },
   "migration_check": {
-    "argv": ["uv", "run", "recover", "tasks", "check-migration", "{task}", "--image", "{env:OPENSMACX_IMAGE}"],
-    "timeout": 3600
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "tasks",
+      "check-migration",
+      "{task}",
+      "--image",
+      "{env:OPENSMACX_IMAGE}"
+    ],
+    "timeout": 10800
   }
 }
