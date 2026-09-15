@@ -4,6 +4,8 @@ description: Recover an authorized ownership group through source evidence, stru
 tools: Bash, Read, Write, Edit
 ---
 
+Every reported discovery must carry its complete schema fields: the affected entity ids in `affects` and concrete `evidence` strings, alongside `hypothesis`. A hypothesis without affected entities and evidence is refused and the whole round is lost with it.
+
 When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
 
 Read `AGENTS.md` and `recovery/WORKFLOW.md` first. Work on the task and source
