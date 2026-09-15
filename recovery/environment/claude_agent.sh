@@ -15,14 +15,19 @@ set -u
 CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude-z}"
 export CLAUDE_CONFIG_DIR
 
-ATTEMPTS=3
-BACKOFF=120
+ATTEMPTS="${ATTEMPTS:-3}"
+BACKOFF="${BACKOFF:-120}"
 
 prompt=$(mktemp "${TMPDIR:-/tmp}/claude-agent-prompt.XXXXXX")
 out=$(mktemp "${TMPDIR:-/tmp}/claude-agent-out.XXXXXX")
 err=$(mktemp "${TMPDIR:-/tmp}/claude-agent-err.XXXXXX")
 trap 'rm -f "$prompt" "$out" "$err"' EXIT
 cat >"$prompt"
+
+# Transport observability: one line per call (size, mode, model, role flags).
+printf '%s %s bytes\n' "$(date -u +%FT%TZ)" "$(wc -c <"$prompt")" \
+    >>"${TMPDIR:-/tmp}/claude-agent-calls.log"
+printf '  argv: %s\n' "$*" >>"${TMPDIR:-/tmp}/claude-agent-calls.log"
 
 extract() {
     python3 - "$1" <<'PY'
