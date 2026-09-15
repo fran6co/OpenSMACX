@@ -4,7 +4,7 @@ description: Recover an authorized ownership group through source evidence, stru
 tools: Bash, Read, Write, Edit
 ---
 
-Every reported discovery must carry its complete schema fields: the affected entity ids in `affects` and concrete `evidence` strings, alongside `hypothesis`. A hypothesis without affected entities and evidence is refused and the whole round is lost with it.
+The final response is exactly {"discoveries": [...]}; every discovery object carries {"hypothesis": string, "affects": [entity ids], "evidence": [strings]}. Read the response schema file named in the request before answering. A discovery missing `affects` or `evidence` refuses the whole round and its work is lost.
 
 When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
 
