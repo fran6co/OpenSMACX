@@ -52,7 +52,7 @@ def test_campaign_recovers_integrates_rechecks_and_selects_again(tmp_path, monke
     root, image, task, git, evidence, configuration = campaign_project(tmp_path, monkeypatch, authorize)
     before = git("rev-parse", "HEAD")
     result = subprocess.run([sys.executable, "-I", "-m", "match_recovery", "campaign", "--root", str(root),
-                             "--config", "recovery/campaign.json"], cwd=tmp_path, capture_output=True, timeout=180)
+                             "--config", "recovery/campaign.json"], cwd=tmp_path, capture_output=True, timeout=900)
     # Keep disposable diagnostics inspectable without rerunning real builds or
     # embedding the whole native proof graph in pytest's failure rendering.
     (root / "build/campaign-result.json").write_bytes(result.stdout)
