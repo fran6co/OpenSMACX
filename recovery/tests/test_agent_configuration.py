@@ -19,14 +19,24 @@ def test_configured_provider_accepts_arguments_before_loading_schema(tmp_path, r
     values = {"{schema}": str(schema), "{response}": str(tmp_path / "response.json"),
               "{env:VC6_PREFIX}": str(tmp_path)}
     argv = [values.get(word, word) for word in command]
-    assert not schema.exists()
-    # Schema loading fails before any request: catches mutually exclusive CLI
-    # options that --help accepts, without provider credentials or network use.
-    result = subprocess.run(argv, input="Configuration validation only; do not run tools.",
-                            capture_output=True, text=True, timeout=15)
-    assert result.returncode != 0
-    assert "Failed to read output schema file " + str(schema) in result.stderr, result.stderr
-    assert not (tmp_path / "response.json").exists()
+    if "{schema}" in command:
+        assert not schema.exists()
+        # Schema loading fails before any request: catches mutually exclusive CLI
+        # options that --help accepts, without provider credentials or network use.
+        result = subprocess.run(argv, input="Configuration validation only; do not run tools.",
+                                capture_output=True, text=True, timeout=15)
+        assert result.returncode != 0
+        assert "Failed to read output schema file " + str(schema) in result.stderr, result.stderr
+        assert not (tmp_path / "response.json").exists()
+    else:
+        # Providers without a schema-file argument (for example a headless
+        # stdout CLI) validate arguments locally: an unknown option fails
+        # before any credentials, network use or model round trip.
+        result = subprocess.run(argv + ["--zzz-local-argument-validation-probe"], input="",
+                                capture_output=True, text=True, timeout=15)
+        assert result.returncode != 0
+        assert "--zzz-local-argument-validation-probe" in result.stderr, result.stderr
+        assert not (tmp_path / "response.json").exists()
 
 
 @pytest.mark.skipif(os.environ.get("OPENSMACX_LIVE_PROVIDER_SCHEMA") != "1",
@@ -61,4 +71,7 @@ def test_live_provider_accepts_native_response_schema_in_isolated_empty_checkout
               "edit source or make recovery decisions. Return exactly this JSON object: " + json.dumps(expected))
     result = subprocess.run(argv, cwd=tmp_path, input=prompt, text=True, capture_output=True, timeout=180)
     assert result.returncode == 0, result.stderr[-12000:]
-    assert json.loads(response.read_text()) == expected
+    if settings[role]["response"] == "file":
+        assert json.loads(response.read_text()) == expected
+    else:
+        assert json.loads(result.stdout) == expected
