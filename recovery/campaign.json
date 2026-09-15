@@ -12,12 +12,14 @@
   "max_batches": 1,
   "max_parallel": 2,
   "iterations": 2,
-  "timeout": 14400,
+  "timeout": 28800,
   "publication": {
     "enabled": true,
     "allow_migration": false,
     "message": "Integrate freshly verified ownership recovery",
     "cleanup": true
   },
-  "evidence": ["The user explicitly requests a full multi-worker recovery process. Authorize one bounded batch of up to two disjoint ownership tasks in isolated worktrees and compiler slots, followed by fresh independent review and serial candidate/destination verification before integration into master. Respect the retained C++ task reservation; preserve unfinished structural work and discoveries. This grants no acceptance from process reports, game-completion claim, baseline reset, claim demotion or permission to discard preserved work."]
+  "evidence": [
+    "The user explicitly requests a full multi-worker recovery process. Authorize one bounded batch of up to two disjoint ownership tasks in isolated worktrees and compiler slots, followed by fresh independent review and serial candidate/destination verification before integration into master. Respect the retained C++ task reservation; preserve unfinished structural work and discoveries. This grants no acceptance from process reports, game-completion claim, baseline reset, claim demotion or permission to discard preserved work."
+  ]
 }

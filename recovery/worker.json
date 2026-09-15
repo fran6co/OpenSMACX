@@ -1,7 +1,13 @@
 {
   "author": "recovery-worker",
   "command": {
-    "argv": ["uv", "run", "recover", "agent", "worker"],
-    "timeout": 3600
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "agent",
+      "worker"
+    ],
+    "timeout": 11400
   }
 }

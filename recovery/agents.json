@@ -15,7 +15,7 @@
         "--model",
         "glm-5.3"
       ],
-      "timeout": 3300
+      "timeout": 10800
     },
     "instructions": [
       ".claude/agents/recovery-planner.md"
@@ -37,7 +37,7 @@
         "--add-dir",
         "{env:VC6_PREFIX}"
       ],
-      "timeout": 3300
+      "timeout": 10800
     },
     "instructions": [
       ".claude/agents/recovery-worker.md"
@@ -59,7 +59,7 @@
         "--model",
         "glm-5.3"
       ],
-      "timeout": 3300
+      "timeout": 10800
     },
     "instructions": [
       ".claude/agents/recovery-coordinator.md"
@@ -81,7 +81,7 @@
         "--model",
         "glm-5.3"
       ],
-      "timeout": 3300
+      "timeout": 10800
     },
     "instructions": [
       ".claude/agents/recovery-reviewer.md"

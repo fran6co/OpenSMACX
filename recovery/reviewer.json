@@ -1,7 +1,13 @@
 {
   "author": "independent-recovery-reviewer",
   "command": {
-    "argv": ["uv", "run", "recover", "agent", "reviewer"],
-    "timeout": 3600
+    "argv": [
+      "uv",
+      "run",
+      "recover",
+      "agent",
+      "reviewer"
+    ],
+    "timeout": 11400
   }
 }
