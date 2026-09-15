@@ -38,8 +38,8 @@ class Command:
             raise ValueError("command argv must be a nonempty array, not a shell string")
         for argument in value["argv"]:
             require_text(argument, "command argument")
-        if type(value["timeout"]) is not int or not 1 <= value["timeout"] <= 3600:
-            raise ValueError("command timeout must be 1..3600 seconds")
+        if type(value["timeout"]) is not int or not 1 <= value["timeout"] <= 86400:
+            raise ValueError("command timeout must be 1..86400 seconds")
         return cls(tuple(value["argv"]), value["timeout"])
 
 

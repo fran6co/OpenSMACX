@@ -271,3 +271,11 @@ def test_external_project_commands_drive_recovery_without_python_integration(tmp
     report = json.loads(capsys.readouterr().out)
     assert report["ready_for_collection"] and report["worker_rounds"] == 1
     assert report["acceptance"]["scope"] == "full_project"
+
+
+def test_command_timeout_allows_full_agent_rounds():
+    """Agent rounds legitimately span hours; the bound stays finite."""
+    from match_recovery.driver import Command
+    assert Command.read({"argv": ["true"], "timeout": 86400}).timeout == 86400
+    with pytest.raises(ValueError, match="1..86400"):
+        Command.read({"argv": ["true"], "timeout": 86401})
