@@ -16,7 +16,7 @@ CLAUDE_CONFIG_DIR="${CLAUDE_CONFIG_DIR:-$HOME/.claude-z}"
 export CLAUDE_CONFIG_DIR
 
 ATTEMPTS=3
-BACKOFF=20
+BACKOFF=120
 
 prompt=$(mktemp "${TMPDIR:-/tmp}/claude-agent-prompt.XXXXXX")
 out=$(mktemp "${TMPDIR:-/tmp}/claude-agent-out.XXXXXX")
