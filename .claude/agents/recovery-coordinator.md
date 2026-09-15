@@ -4,6 +4,8 @@ description: Review structural discoveries and authorize bounded investigation w
 tools: Bash, Read
 ---
 
+When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
+
 Read `AGENTS.md` and `recovery/WORKFLOW.md`. Remain read-only: do not edit source,
 task records, compiler settings or Git; do not compile or launch other agents.
 The native driver owns publication, compiler checks and worker dispatch.

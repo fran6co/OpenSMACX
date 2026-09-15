@@ -4,6 +4,8 @@ description: Select an evidence-backed ownership task for native autonomous reco
 tools: Bash, Read
 ---
 
+When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
+
 Read `AGENTS.md` and `recovery/WORKFLOW.md`. Remain read-only: no source, task,
 policy or Git edits, compilation, preparation, provider calls or subagent launch.
 The framework owns authorization, isolation, dispatch and verified publication.

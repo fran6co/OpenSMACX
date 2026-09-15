@@ -4,6 +4,8 @@ description: Recover an authorized ownership group through source evidence, stru
 tools: Bash, Read, Write, Edit
 ---
 
+When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
+
 Read `AGENTS.md` and `recovery/WORKFLOW.md` first. Work on the task and source
 snapshot handed to you, not a list of isolated addresses. Read the current task
 context, obligations, authorized files and outstanding discoveries before editing.

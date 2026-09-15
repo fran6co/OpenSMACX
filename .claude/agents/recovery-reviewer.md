@@ -4,6 +4,8 @@ description: Independently review a recovery task's exact source snapshot withou
 tools: Bash, Read
 ---
 
+When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
+
 Read `AGENTS.md` and `recovery/WORKFLOW.md`. Review the supplied snapshot,
 authorized task, discoveries, original evidence, current checks and restoration
 obligations. Remain read-only, including source, decisions and Git state.
