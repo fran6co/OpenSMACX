@@ -92,15 +92,42 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                 if not selected:
                     continue
                 if choices is not None and section.flags & 0x1000:
+                    refusal = None
                     try:
                         duplicate = choices.discarded(owner, number)
                         if duplicate is None:
                             duplicate = choices.loser(owner, number)
                     except ValueError as error:
-                        # A refused selection leaves the original physical root
-                        # and section obligation. Missing MAP is never discard.
-                        gap("COMDAT selection remains unqualified: " + str(error), number)
+                        refusal = error
                         duplicate = None
+                    if duplicate is None:
+                        # No removal certificate: a separately placed NODUP root
+                        # is positive retention evidence, never a census
+                        # exclusion. Placed roots fall through and stay code
+                        # roots with all their obligations. The placement proof
+                        # refuses genuine REF/ICF contradictions itself, so an
+                        # unsupported removal form (for example a private root)
+                        # does not block its own placement annotation.
+                        try:
+                            placement = choices.placed(owner, number)
+                        except ValueError as placement_error:
+                            # A refused selection leaves the original physical
+                            # root and section obligation. Missing MAP is never
+                            # discard.
+                            gap("COMDAT selection remains unqualified: "
+                                + "; ".join(text for text in (str(refusal), str(placement_error)) if text), number)
+                            placement = None
+                        else:
+                            if placement is None and refusal is not None:
+                                gap("COMDAT selection remains unqualified: " + str(refusal), number)
+                        if placement is not None:
+                            if (placement["queried_section"] != number
+                                    or number not in placement["sections"]):
+                                raise ValueError("COMDAT placement does not cover its queried physical section")
+                            item.update(retention=Result.PASS,
+                                        disposition=placement["disposition"],
+                                        selection_placement=placement["placement_id"],
+                                        root_identity_kind=placement["root_identity_kind"])
                     if duplicate is not None:
                         if (duplicate["queried_section"] != number
                                 or number not in duplicate["sections"]):

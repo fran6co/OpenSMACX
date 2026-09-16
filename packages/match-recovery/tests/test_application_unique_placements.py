@@ -25,7 +25,12 @@ def test_distinct_peer_stays_in_physical_inventory_and_root_domain(tmp_path, fpo
     dependency, = [row for row in report["inputs"] if row["owner"] == "dependency.obj"]
     for section in dependency["sections"]:
         if section["object_section"] >= (3 if fpo else 2):
-            assert section["retention"] == "unknown" and "disposition" not in section
+            # The separately placed NODUP peer earns positive retention while
+            # remaining a code root; annotation never excludes it.
+            assert section["retention"] == "pass"
+            assert section["disposition"] == "independently_placed_nodup_root"
+            assert section["selection_placement"] == peer["placement_id"]
+            assert section["root_identity_kind"] == peer["root_identity_kind"]
     assert report["result"] == report["retained_section_selection"] == "unknown"
     assert not report["ready_for_collection"]
 

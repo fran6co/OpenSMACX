@@ -79,12 +79,18 @@ def test_same_named_private_peers_require_independent_native_placements(tmp_path
             domain = observe_sections(context, native.inputs.objects, native=native)
             assert {"owner": copy_map.owner, "symbol": name} in domain["code_roots"]
             assert {"owner": discarded[0], "symbol": name} not in domain["code_roots"]
+            placements_by_owner = {row["owner"]: row for row in placements}
             for owner in ("owner.obj", "entry.obj"):
                 assert {"owner": owner, "symbol": private} in domain["code_roots"]
                 original, = [row for row in domain["inputs"] if row["owner"] == owner]
                 obj = Coff(native.inputs.objects.resolve(owner)["raw"])
                 section, = [row for row in original["sections"]
                             if row["object_section"] == obj.function(private).section]
-                assert section["retention"] == "unknown" and "disposition" not in section
+                # Each private peer earns its own placement annotation while
+                # remaining an ordinary code root.
+                assert section["retention"] == "pass"
+                assert section["disposition"] == "independently_placed_nodup_root"
+                assert section["root_identity_kind"] == "private"
+                assert section["selection_placement"] == placements_by_owner[owner]["placement_id"]
             assert domain["result"] == domain["retained_section_selection"] == "unknown"
             assert not domain["ready_for_collection"]

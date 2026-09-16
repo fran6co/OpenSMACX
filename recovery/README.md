@@ -52,6 +52,11 @@ static MAP entry, retaining the same full code/frame and native PDB checks. A
 private name can repeat across TUs; its physical input, section and symbol remain
 distinct. These entries carry `root_identity_kind: private`; they do not grant
 private REF removal or remove their roots/children from verification obligations.
+A COMDAT section with no removal certificate now composes its verified placement
+into retained selection: placed NODUP roots, external and private, annotate their
+section `retention: pass` with the placement id while remaining ordinary code
+roots; unplaced sections stay unknown with their gaps, and the report-level
+retained selection stays unknown until every selected section is qualified.
 An identical-code competitor may also be ruled out by the existing positive native
 REF verifier, bound to its exact physical identity, hash and original association
 family. ANY queries obtain that proof independently of census order and retain

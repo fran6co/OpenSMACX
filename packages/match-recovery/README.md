@@ -2077,6 +2077,18 @@ rewriting of a private name refuses even when code and PDB ranges agree.
 `root_identity_kind` distinguishes private from external entries
 in `comdat_unique_placements`; neither kind removes that root or its descendants
 from the physical/code obligations. No private REF-discard capability is implied.
+The physical section domain composes those placements into retained selection:
+when a COMDAT section has neither a removal certificate nor a refused removal
+query, `ComdatSelection.placed` returns the root's verified placement and the
+section is annotated `retention: pass` with `disposition:
+independently_placed_nodup_root`, its `selection_placement` id and its
+`root_identity_kind`. Placed sections fall through to ordinary code-root
+seeding; annotation never excludes them or their descendants. The placement
+proof refuses genuine REF/ICF contradictions itself, so an unsupported removal
+form (a private root) does not block its own placement annotation. Sections
+with no qualifying placement stay unknown and keep their gap; the report-level
+`retained_section_selection` stays unknown until every selected section earns
+its own disposition.
 REF composition authenticates the original identity, object hash and exact family
 membership before reusing the existing discard verifier. It works even when the
 ANY query precedes the domain's REF queries; it does not depend on census order.

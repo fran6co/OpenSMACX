@@ -53,7 +53,11 @@ def test_native_ref_event_controls_original_root_seeding(tmp_path, monkeypatch, 
                 root_row = {"owner": "owner.obj", "symbol": subject.name}
                 assert (root_row in domain["code_roots"]) is not eliminate
                 section, = [item for item in row["sections"] if item["object_section"] == subject.section]
-                assert section["retention"] == ("pass" if eliminate else "unknown")
+                # Removed roots carry the discard disposition; kept roots earn
+                # their independent placement while staying code roots.
+                assert section["retention"] == "pass"
+                assert section["disposition"] == ("discarded_unreferenced_comdat" if eliminate
+                                                  else "independently_placed_nodup_root")
             assert domain["result"] == domain["retained_section_selection"] == "unknown"
             assert not domain["ready_for_collection"]
 

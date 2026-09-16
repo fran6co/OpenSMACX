@@ -11,7 +11,8 @@ def physical(report):
     """Selection may annotate originals, never rewrite or remove their evidence."""
     return [(row["input"], row["object_sha256"], [
         {key: value for key, value in section.items()
-         if key not in ("retention", "disposition", "selection_certificate")}
+         if key not in ("retention", "disposition", "selection_certificate",
+                        "selection_placement", "root_identity_kind")}
         for section in row["sections"]]) for row in report["inputs"]]
 
 

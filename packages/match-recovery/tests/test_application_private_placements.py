@@ -19,15 +19,21 @@ def test_private_placement_retains_each_physical_root_and_its_descendants(tmp_pa
                                     if row != {"owner": "dependency.obj", "symbol": "_K"}]
     assert {"owner": "unit0.obj", "symbol": "_K"} in report["code_roots"]
     owners = ("dependency.obj", "unit0.obj") if two else ("dependency.obj",)
-    for owner in owners:
-        assert {"owner": owner, "symbol": "_P"} in report["code_roots"]
-        original, = [row for row in report["inputs"] if row["owner"] == owner]
-        for section in original["sections"]:
-            if section["object_section"] >= (3 if fpo else 2):
-                assert section["retention"] == "unknown" and "disposition" not in section
     placements = report["comdat_unique_placements"]
     assert len(placements) == len(owners)
     assert all(row["root_identity_kind"] == "private" for row in placements)
+    for owner in owners:
+        assert {"owner": owner, "symbol": "_P"} in report["code_roots"]
+        placement, = [row for row in placements if row["owner"] == owner]
+        original, = [row for row in report["inputs"] if row["owner"] == owner]
+        for section in original["sections"]:
+            if section["object_section"] >= (3 if fpo else 2):
+                # The private peer earns positive retention while remaining a
+                # code root; annotation never excludes it.
+                assert section["retention"] == "pass"
+                assert section["disposition"] == "independently_placed_nodup_root"
+                assert section["selection_placement"] == placement["placement_id"]
+                assert section["root_identity_kind"] == "private"
     certificate, = report["comdat_selection_certificates"]
     assert set(certificate["no_other_fold"]["unique_placements"]) == {
         row["placement_id"] for row in placements}
