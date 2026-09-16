@@ -89,6 +89,8 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
             # Revalidate at consumption even if a caller bypassed frozen
             # dataclass construction or modified the instance deliberately.
             AbsoluteConstant.__post_init__(target)
+        elif type(target) is CompilerArtifact:
+            CompilerArtifact.__post_init__(target)
         elif type(target) is not int or not 0 <= target < 2**32:
             raise ValueError("resolved i386 target must be a 32-bit address")
     rows, occupied, outside_original = [], set(), []

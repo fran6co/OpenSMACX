@@ -17,6 +17,16 @@ from .pe_coff import Coff, PeImage
 MAX_REFERENCE_DIAGNOSTICS = 128
 
 
+def _binding_description(target):
+    if target is None:
+        return None
+    if type(target) is int:
+        return f"0x{target:08X}"
+    if type(target) is AbsoluteConstant:
+        return f"0x{target.value:08X}"
+    return "compiler-artifact"
+
+
 def _emitted_references(obj, subject, targets):
     entries, count = [], 0
     for number in obj.code_sections(subject):
@@ -27,12 +37,11 @@ def _emitted_references(obj, subject, targets):
             count += 1
             if len(entries) >= MAX_REFERENCE_DIAGNOSTICS:
                 continue
-            target = targets.get(str(index))
             entries.append({"section": number, "section_name": section.name,
                             "offset": offset, "coff_type": kind,
                             "symbol": obj.symbols[index].name,
                             "storage_class": obj.symbols[index].storage,
-                            "binding_address": f"0x{target:08X}" if target is not None else None})
+                            "binding_address": _binding_description(targets.get(str(index)))})
     return {"emitted_references": entries, "omitted_references": count - len(entries),
             "limitations": ["candidate section offsets, not aligned original instruction positions",
                             "binding addresses exclude operand addends and do not prove target agreement or linker selection",
