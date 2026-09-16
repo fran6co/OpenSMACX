@@ -95,7 +95,11 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
                     # binding: neither interpretation may resolve the name.
                     del externals[symbol]
                 continue
-            if len((targets.get(symbol, set()) | reserved.get(symbol, set())) - {address}) != 0:
+            interpretations = targets.get(symbol, set()) | reserved.get(symbol, set())
+            if interpretations and (type(address) is not int or interpretations != {address}):
+                # A product or reserved image-address interpretation only
+                # resolves when it coincides with the verified origin; an
+                # absolute constant shares no address with any of them.
                 continue
             externals[symbol] = address
     return accepted, refused, externals

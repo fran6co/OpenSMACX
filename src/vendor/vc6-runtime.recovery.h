@@ -64,6 +64,9 @@
 //     {"origin": "0x00645598", "spans": ["0x00645598-0x006455C9"], "symbol": "_fclose", "unit": "build/intel/mt_obj/fclose.obj", "evidence": "Original direct call from ?close@Flic@@QAEXXZ 0x00629DF0, its only call target. The 49-byte body checks the stream mode flag (0x40), locks through 0x00647C37, calls __fclose_lk at 0x006455C9 and unlocks; terminal RET at 0x006455C8. Archive fclose.obj member bytes match with relocation slots only."},
 //     {"origin": "0x00646178", "spans": ["0x00646178-0x006461A7"], "symbol": "_fread", "unit": "build/intel/mt_obj/fread.obj", "evidence": "Original calls from decode_fli_copy 0x0062AB80 (twice), ?decode_frame@Flic@@QAEHHH@Z 0x0062A070 and the byte-run decoder family. The 47-byte body locks through 0x00647C37 then tail-calls __fread_lk; terminal RET at 0x006461A6. Archive fread.obj member bytes match with relocation slots only."},
 //     {"origin": "0x00647330", "spans": ["0x00647330-0x0064735C"], "symbol": "_fseek", "unit": "build/intel/mt_obj/fseek.obj", "evidence": "Original calls from rewind 0x0062A280, UNK2 0x0062A210, decode_frame 0x0062A070, decode_fli_copy 0x0062AB80 and the byte-run decoder family. The 44-byte framed body locks through 0x00647C37, tail-calls __fseek_lk at 0x0064735C and unlocks; terminal RET at 0x0064735B. Archive fseek.obj member bytes match with relocation slots only."}
+//   ],
+//   "absolute_symbols": [
+//     {"symbol": "__except_list", "value": "0x00000000", "unit": "build/intel/mt_obj/exsup.obj", "evidence": "exsup.obj defines __except_list as a COFF absolute with value 0, storage 2. Every /GX function with unwind state emits DIR32 references to it; the linker resolves them all to 0, so the original image operands (the fs:[0] chain-head encodings) equal the candidate operands byte for byte. The TIB chain itself is loader state, never an image address."}
 //   ]
 // }
 // RECOVERY_COMPONENT_END

@@ -156,6 +156,7 @@ class ToolchainManifest:
     archive_sha256: str
     license_evidence: str
     bindings: tuple[VendorBinding, ...]
+    absolute_symbols: tuple[AbsoluteSymbolBinding, ...] = ()
 
     def __post_init__(self):
         if (self.component.delivery != Delivery.TOOLCHAIN
@@ -167,6 +168,10 @@ class ToolchainManifest:
             raise ValueError("toolchain original bindings must be nonempty and unique")
         if len({item.symbol for item in self.bindings}) != len(self.bindings):
             raise ValueError("toolchain symbol bindings must be unique")
+        if len({item.symbol for item in self.absolute_symbols}) != len(self.absolute_symbols):
+            raise ValueError("toolchain absolute symbol bindings must be unique")
+        if {item.symbol for item in self.absolute_symbols} & {item.symbol for item in self.bindings}:
+            raise ValueError("toolchain symbols cannot be both function and absolute bindings")
         for item in self.bindings:
             ordered = sorted(item.spans)
             if any(left.end > right.start for left, right in zip(ordered, ordered[1:])):
@@ -178,7 +183,7 @@ class ToolchainManifest:
     @classmethod
     def from_dict(cls, value: dict) -> ToolchainManifest:
         _fields(value, {"schema_version", "kind", "component", "archive_sha256",
-                        "license_evidence", "bindings"}, "toolchain manifest")
+                        "license_evidence", "bindings", "absolute_symbols"}, "toolchain manifest")
         if type(value["schema_version"]) is not int or value["schema_version"] != 1:
             raise ValueError("unsupported toolchain manifest schema")
         if value["kind"] != "toolchain_component":
@@ -197,10 +202,39 @@ class ToolchainManifest:
             spans = tuple(Span(**_fields(span, {"start", "end"}, "span"))
                           for span in _list(item["spans"], "spans"))
             bindings.append(VendorBinding(origin, spans, item["symbol"], item["unit"], item["evidence"]))
-        return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings))
+        absolutes = []
+        for item in _list(value.get("absolute_symbols") or [], "absolute_symbols"):
+            _fields(item, {"symbol", "value", "unit", "evidence"}, "absolute symbol binding")
+            declared = item["value"]
+            declared = int(str(declared), 16) if isinstance(declared, str) else declared
+            absolutes.append(AbsoluteSymbolBinding(item["symbol"], declared, item["unit"], item["evidence"]))
+        return cls(owner, value["archive_sha256"], value["license_evidence"], tuple(bindings),
+                   tuple(absolutes))
 
 
 ComponentManifest = VendorManifest | ToolchainManifest
+
+
+@dataclass(frozen=True)
+class AbsoluteSymbolBinding:
+    """An absolute linker constant a pinned archive member defines.
+
+    The member must define the symbol with a negative section (COFF absolute)
+    and exactly this value; the value is what every link resolves it to, so a
+    verified binding may resolve reference fields byte-exactly. It is never a
+    function extent or an image address.
+    """
+    symbol: str
+    value: int
+    unit: str
+    evidence: str
+
+    def __post_init__(self):
+        require_text(self.symbol, "absolute symbol name")
+        if type(self.value) is not int or not 0 <= self.value < 2**32:
+            raise ValueError("absolute symbol value must be an unsigned 32-bit integer")
+        require_text(self.unit, "absolute symbol archive member")
+        require_text(self.evidence, "absolute symbol evidence")
 
 
 def source_integrity(root: Path, manifest: VendorManifest, archive: Path | None = None) -> dict:

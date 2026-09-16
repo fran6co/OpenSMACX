@@ -10,6 +10,7 @@ product claims or acceptance.
 
 from pathlib import Path
 
+from .binary import AbsoluteConstant
 from .component_binary import verify_toolchain
 from .components import ToolchainManifest
 from .model import Result
@@ -17,7 +18,7 @@ from .records import read_json
 
 
 def component_targets(root: Path, snapshot: dict, image_data: bytes) -> tuple[dict, list]:
-    """Return ({symbol: address}, reports) from freshly passing components.
+    """Return ({symbol: address or AbsoluteConstant}, reports) from fresh components.
 
     Configured archives whose verification does not pass contribute no
     targets and keep their symbols unresolved. A missing or invalid
@@ -53,4 +54,9 @@ def component_targets(root: Path, snapshot: dict, image_data: bytes) -> tuple[di
                 continue
             targets[row["symbol"]] = (row["address"] if type(row["address"]) is int
                                       else int(str(row["address"]), 16))
+        for row in report.get("absolute_symbols", ()):
+            # A member-verified absolute constant resolves every link's fields
+            # to the same value; an unverified one stays unresolved.
+            if row["result"] == Result.PASS:
+                targets[row["symbol"]] = AbsoluteConstant(int(str(row["value"]), 16))
     return targets, reports

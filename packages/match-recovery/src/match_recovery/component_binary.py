@@ -74,7 +74,8 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
     actual = hashlib.sha256(archive_data).hexdigest()
     archive_result = Result.PASS if actual == manifest.archive_sha256 else Result.FAIL
     objects, errors, rows, checked_imports = {}, {}, [], []
-    members = sorted({binding.unit for binding in manifest.bindings})
+    members = sorted({binding.unit for binding in manifest.bindings}
+                     | {item.unit for item in manifest.absolute_symbols})
     if archive_result == Result.PASS:
         archive = CoffArchive(archive_data)
         for member in members:
@@ -83,12 +84,30 @@ def verify_toolchain(manifest: ToolchainManifest, image_data: bytes, archive_dat
             except ValueError as error:
                 errors[member] = str(error)
         rows, checked_imports = _check_functions(manifest, objects, image, errors, import_bindings)
-    outcomes = {row["result"] for row in rows} | {archive_result}
+    absolute_rows = []
+    for item in manifest.absolute_symbols:
+        row = {"symbol": item.symbol, "unit": item.unit, "value": f"0x{item.value:08X}",
+               "result": Result.UNKNOWN}
+        obj = objects.get(item.unit)
+        if obj is None:
+            row["reason"] = errors.get(item.unit, "archive member was not read")
+        else:
+            matches = [symbol for symbol in obj.symbols.values() if symbol.name == item.symbol]
+            absolutes = [symbol for symbol in matches if symbol.section < 0]
+            if len(matches) != 1 or not absolutes:
+                row["reason"] = "member does not define exactly one absolute symbol"
+            elif absolutes[0].value != item.value or absolutes[0].storage != 2:
+                row["reason"] = "member defines a different absolute value"
+            else:
+                row["result"] = Result.PASS
+        absolute_rows.append(row)
+    outcomes = {row["result"] for row in rows} | {archive_result} | {row["result"] for row in absolute_rows}
     overall = (Result.FAIL if Result.FAIL in outcomes else Result.UNKNOWN
                if Result.UNKNOWN in outcomes or not rows else Result.PASS)
     return {"component_id": manifest.component.component_id, "check": "toolchain_binary_references",
             "result": overall, "archive": {"result": archive_result, "sha256": actual},
-            "functions": rows, "import_bindings": checked_imports,
+            "functions": rows, "absolute_symbols": absolute_rows,
+            "import_bindings": checked_imports,
             "counts": dict(sorted(Counter(row["result"] for row in rows).items())),
             "selected_members": members, "member_errors": errors,
             "member_reads": len(members) if archive_result == Result.PASS else 0, "compile_attempts": 0,

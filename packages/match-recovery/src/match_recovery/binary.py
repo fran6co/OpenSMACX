@@ -32,6 +32,24 @@ class AbsoluteConstant:
 
 
 @dataclass(frozen=True)
+class CompilerArtifact:
+    """A translation-unit-internal compiler label, not a product reference.
+
+    VC6 emits dollar-prefixed labels ($L try targets, $T unwind-state
+    storage, $E/$S guards) defined in the object's own associated sections.
+    Their addresses are layout-relative to sections a function binding does
+    not place, so their fields are masked and recorded rather than compared;
+    the artifact's structural definition in the same object is the evidence.
+    """
+
+    symbol: str
+
+    def __post_init__(self):
+        if type(self.symbol) is not str or not self.symbol.startswith("$"):
+            raise ValueError("compiler artifact names follow the VC6 dollar-label convention")
+
+
+@dataclass(frozen=True)
 class Relocation:
     offset: int
     kind: RelocationKind
@@ -94,13 +112,23 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
                 "candidate_relocations_outside_original": sorted(outside_original),
                 "reason": "candidate exceeds or misses the independently recorded extent"}
     linked = bytearray(candidate[:size])
-    unresolved, constant_absolute = set(), set()
+    unresolved, constant_absolute, artifacts = set(), set(), set()
     for relocation in relocations:
         offset = relocation.offset
         target = targets.get(relocation.target)
         if target is None:
             unresolved.update(range(offset, offset + 4))
             rows.append({"offset": offset, "target": relocation.target, "result": Result.UNKNOWN})
+            continue
+        if type(target) is CompilerArtifact:
+            # A TU-internal compiler label has no comparable absolute value:
+            # record the structural reference and mask its layout-relative
+            # field instead of asserting an address that placement never
+            # established. The artifact stays visible in every report.
+            artifacts.update(range(offset, offset + 4))
+            rows.append({"offset": offset, "target": relocation.target,
+                         "binding": {"kind": "compiler_artifact", "symbol": target.symbol},
+                         "result": Result.PASS})
             continue
         binding = {}
         if type(target) is AbsoluteConstant:
@@ -130,10 +158,11 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
     unresolved_absolute = {relocation.offset for relocation in relocations
                            if relocation.kind == RelocationKind.ABSOLUTE32
                            and relocation.target not in targets}
-    extra = sorted(absolute_sites - original_absolute_sites - unresolved_absolute - constant_absolute)
+    extra = sorted(absolute_sites - original_absolute_sites - unresolved_absolute - constant_absolute
+                   - {offset for offset in artifacts})
     constant_rebased = sorted(constant_absolute & original_absolute_sites)
     differences = [index for index, (left, right) in enumerate(zip(original, linked, strict=True))
-                   if left != right and index not in unresolved]
+                   if left != right and index not in unresolved and index not in artifacts]
     byte_result = Result.FAIL if differences else Result.UNKNOWN if unresolved else Result.PASS
     reference_results = [row["result"] for row in rows]
     references = (Result.FAIL if missing or extra or constant_rebased or Result.FAIL in reference_results else
@@ -147,4 +176,5 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
             "unresolved_absolute_relocations": sorted(unresolved_absolute - original_absolute_sites),
             "constant_absolute_relocations": sorted(constant_absolute),
             "unexpected_constant_base_relocations": constant_rebased,
+            "compiler_artifact_relocations": sorted(artifacts),
             "alignment_fill": len(tail)}

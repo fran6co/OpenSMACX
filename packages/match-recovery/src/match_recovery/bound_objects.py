@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import hashlib
 from typing import Mapping, Sequence
 
-from .binary import compare_bound_code
+from .binary import AbsoluteConstant, CompilerArtifact, compare_bound_code
 from .components import relative_path
 from .model import Origin, Result, Span, require_text
 from .pe_coff import Coff, PeImage
@@ -57,7 +57,7 @@ class FunctionBinding:
 
 
 def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Coff],
-                  image: PeImage, *, external_targets: Mapping[str, int] | None = None,
+                  image: PeImage, *, external_targets: Mapping[str, int | AbsoluteConstant] | None = None,
                   import_targets: Mapping[str, int] | None = None,
                   errors: Mapping[str, str] | None = None) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
@@ -73,8 +73,10 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         raise ValueError("function binding refers to a different image/address space")
     externals = dict(external_targets or {})
     imports = dict(import_targets or {})
-    if any(not isinstance(key, str) or not key or type(value) is not int
-           or not 0 <= value <= 0xFFFFFFFF for key, value in (*externals.items(), *imports.items())):
+    if any(not isinstance(key, str) or not key or type(value) not in (int, AbsoluteConstant)
+           for key, value in externals.items()) or any(
+            not isinstance(key, str) or not key or type(value) is not int
+            or not 0 <= value <= 0xFFFFFFFF for key, value in imports.items()):
         raise ValueError("invalid explicit external target binding")
     if imports.keys() & (externals.keys() | {binding.symbol for binding in bindings}):
         raise ValueError("conflicting source and import symbol bindings")
@@ -130,6 +132,12 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # A global defined in this TU still needs its own source
                         # binding. Never place an entire data section from it.
                         targets[str(index)] = externals[symbol.name]
+                    elif symbol.name.startswith("$") and symbol.storage != 2:
+                        # A VC6 compiler label (try targets, unwind-state
+                        # storage, guards) defined in an associated section the
+                        # binding does not place: its reference is structural
+                        # to this translation unit, not a product address.
+                        targets[str(index)] = CompilerArtifact(symbol.name)
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                     if symbol.name in externals:
                         targets[str(index)] = externals[symbol.name]
