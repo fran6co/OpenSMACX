@@ -602,12 +602,16 @@ and same-commit documentation; none grants acceptance or discharges obligations.
    stays unknown until every selected section is qualified. REMAINING:
    computed report-level retention once non-COMDAT sections
    (debug/`comdat_data`/`.drectve`) have their own dispositions.
-2. Allocation isolation across certified ICF groups: folded members currently
-   gap `observe_ordinary_allocations` twice (their own module join and the
-   shared code envelope). Qualify same-group sharing bound to the group's
-   verified final storage through a `ComdatSelection.folded` query over
-   certified fold groups; distinct data overlap and unexplained
-   characteristics still fail or refuse.
+2. Allocation isolation across certified ICF groups. LANDED 2026-09-16:
+   `ComdatSelection.folded` returns a member's certified group and
+   `observe_ordinary_allocations` binds same-group code members to their
+   group's verified final storage - the join bypass, joint retention and
+   certified-sharing overlap branch are composed from complete group proofs,
+   never new verification. Distinct data overlap still fails; unexplained
+   producer characteristics and envelope disagreements still gap; the
+   application graph threads the section domain's certified groups through
+   both builds. REMAINING: a real-compiler /opt:icf control exercising
+   same-group sharing end to end.
 3. Anonymous contribution assignment: `* Linker *` PDB modules can never join
    a physical section, so their contributions stay unmatched. Qualify exact
    linker-generated storage, starting with verified import-thunk extents

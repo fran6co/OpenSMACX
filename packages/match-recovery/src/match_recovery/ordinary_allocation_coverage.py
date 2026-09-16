@@ -17,17 +17,28 @@ from .model import Result, digest
 from .pe_coff import Coff
 
 
-def observe_ordinary_allocations(native):
+def observe_ordinary_allocations(native, *, folded_groups=()):
     """Recompute supported static input allocations in the enclosing live epoch.
 
     The enclosing LinkedBuild guards all parsed state and artifacts. This private
     operation additionally brackets physical population and context freshness.
-    It establishes neither whole-image attribution nor task/runtime acceptance.
+    Certified ICF fold groups may compose same-key code coalescence; everything
+    outside them keeps its own obligations. It establishes neither whole-image
+    attribution nor task/runtime acceptance.
     """
     from .linked_context import LinkedBuild
     from .application_code_roots import combine_roots
     if type(native) is not LinkedBuild:
         raise ValueError("ordinary allocations require the live native linked build")
+    if not isinstance(folded_groups, (list, tuple)):
+        raise ValueError("folded groups must be certified group certificates")
+    fold_members = {}
+    for group in folded_groups:
+        for member in group.get("members", ()):
+            key = (digest(member["input"]), member["object_sha256"], member["root"]["section"])
+            if fold_members.get(key, group)["group_id"] != group["group_id"]:
+                raise ValueError("one folded member claims two certified groups")
+            fold_members[key] = group
     native.check_current()
     context, inputs = native.context, native.inputs
     before = digest(context.report)
@@ -151,6 +162,25 @@ def observe_ordinary_allocations(native):
             physical = modules[digest(row["input"])]
             matches = contribution_ranges.overlaps(begin, end)
             row["intersections"] = [item[0] for item in matches]
+            group = (fold_members.get((digest(row["input"]), row["object_sha256"], row["object_section"]))
+                     if row["classification"] == "code" else None)
+            storage = group["final_storage"] if group is not None else None
+            if storage is not None and (storage["address"] != begin or storage["size"] != row["size"]):
+                gap("certified fold storage disagrees with the allocation envelope", row)
+                continue
+            if storage is not None:
+                # A certified ICF member shares the selected member's storage;
+                # the group proof already bound its exact physical identity.
+                row["fold_group_id"] = group["group_id"]
+                row["contribution"] = storage["contribution"]
+                row["pdb_flags"] = storage["pdb_flags"]
+                if storage["object_flags"] == row["flags"]:
+                    row["characteristics_agreement"] = Result.PASS
+                else:
+                    # Same retention rule as an own-module join: producer flag
+                    # transformations remain visible and unexplained.
+                    gap("allocation contribution characteristics remain unexplained", row)
+                continue
             if len(physical) != 1 or physical[0]["object_sha256"] != row["object_sha256"] or len(matches) != 1:
                 gap("allocation lacks a unique physical module/contribution join", row)
                 continue
@@ -183,7 +213,16 @@ def observe_ordinary_allocations(native):
         overlap = False
         for index, row in enumerate(sections):
             contribution = row.get("contribution")
-            if contribution is not None and users[contribution] == 1 and row["input_consistency"] == Result.PASS:
+            same_group = None
+            if contribution is not None:
+                sharers = [other for other in sections if other.get("contribution") == contribution]
+                identities = {other.get("fold_group_id") for other in sharers}
+                same_group = (row.get("fold_group_id") is not None and len(identities) == 1
+                              and None not in identities)
+            if (contribution is not None and row["input_consistency"] == Result.PASS
+                    and (users[contribution] == 1 or same_group)):
+                # One certified group jointly retains its shared contribution;
+                # every member keeps its own physical/code obligations.
                 row["retention"] = Result.PASS
                 used.add(contribution)
             elif not row.get("nonoccupying"):
@@ -201,6 +240,10 @@ def observe_ordinary_allocations(native):
                     if distinct:
                         row["allocation_isolation"] = Result.FAIL
                         overlap = True
+                    elif "fold_group_id" in row and all(
+                            sections[other].get("fold_group_id") == row["fold_group_id"]
+                            for other in row["overlaps"]):
+                        row["allocation_sharing"] = "certified_icf_coalescence"
                     else:
                         gap("shared native code needs retained allocation correspondence", row)
         unmatched = [row["index"] for row in contributions if row["index"] not in used]

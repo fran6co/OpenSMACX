@@ -97,11 +97,11 @@ class LinkedBuild:
         finally:
             self.check_current()
 
-    def ordinary_allocations(self):
+    def ordinary_allocations(self, *, folded_groups=()):
         from .ordinary_allocation_coverage import observe_ordinary_allocations
         try:
             self.check_current()
-            return deepcopy(observe_ordinary_allocations(self))
+            return deepcopy(observe_ordinary_allocations(self, folded_groups=folded_groups))
         finally:
             self.check_current()
 

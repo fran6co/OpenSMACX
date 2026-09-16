@@ -73,7 +73,11 @@ def _compare_contexts(baseline, current, changes, *, max_nodes=DEFAULT_NODES, ma
                 allocations = {}
                 for version, native in live.items():
                     try:
-                        allocations[version] = native.ordinary_allocations()
+                        # The physical section domain certified its fold groups
+                        # over the same live build; reuse them here so proven
+                        # same-key coalescence composes instead of gapping.
+                        allocations[version] = native.ordinary_allocations(
+                            folded_groups=domains[version]["comdat_folded_groups"])
                     except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
                         allocations[version] = {"result": Result.UNKNOWN, "reason": str(error),
                                                 "allocation_domain": Result.UNKNOWN,

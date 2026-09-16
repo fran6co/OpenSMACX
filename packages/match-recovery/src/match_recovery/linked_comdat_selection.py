@@ -129,6 +129,15 @@ class ComdatSelection:
         """Independent exact NODUP root placements, never census exclusions."""
         return deepcopy(list(_entry(self)["unique_placements"].values()))
 
+    def folded(self, owner, section):
+        """Query the certified fold group of one exact original member.
+
+        No certified membership returns None; ambiguous membership raises.
+        This reuses complete group proofs; it verifies nothing new and never
+        discharges the member's own physical obligations.
+        """
+        return _folded_member(_entry(self), owner, section)
+
 
 _live = WeakKeyDictionary()
 
@@ -890,6 +899,25 @@ def _placed(state, owner, number):
             "sections": [row["object_section"] for row in placement["sections"]],
             "root_identity_kind": placement["root_identity_kind"],
             "disposition": "independently_placed_nodup_root"}
+
+
+def _folded_member(state, owner, number):
+    selected, obj, root_number = _query(state, owner, number)
+    groups = []
+    for group in state["fold_groups"].values():
+        if any(member["input"] == selected["identity"]
+               and member["object_sha256"] == selected["sha256"]
+               and member["root"]["section"] == root_number
+               for member in group["members"]):
+            groups.append(group)
+    if not groups:
+        return None
+    if len({group["group_id"] for group in groups}) != 1:
+        raise ValueError("folded member belongs to ambiguous certified groups")
+    group, = groups
+    return {"group_id": group["group_id"], "key": group["members"][0]["root"]["name"],
+            "final_storage": deepcopy(group["final_storage"]),
+            "disposition": "certified_icf_coalescence"}
 
 
 def _discard_events(state):
