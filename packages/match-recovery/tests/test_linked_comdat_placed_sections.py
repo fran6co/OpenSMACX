@@ -36,13 +36,19 @@ def test_placed_refuses_an_unqualified_placement_and_caches_it(tmp_path):
         assert state["unique_refusals"]
 
 
-def test_placed_returns_none_outside_independent_nodup_roots(tmp_path):
+def test_placed_distinguishes_any_winner_from_loser_copy(tmp_path):
     context = fixture(tmp_path / "project")
     with linked_build(context) as native, comdat_selection(native) as selected:
-        # The ANY winner and the ANY loser copy are selection 2: no placement
-        # exists to query for either.
         assert selected.loser("dependency.obj", 1) is not None
-        assert selected.placed("unit0.obj", 1) is None
+        # The certified ANY winner is positively selected.
+        winner = selected.placed("unit0.obj", 1)
+        assert winner["disposition"] == "selected_any_winner"
+        assert winner["root_identity_kind"] == "external"
+        assert winner["queried_section"] == 1 and 1 in winner["sections"]
+        certificate, = [row for row in selected.certificates()
+                        if row["certificate_id"] == winner["certificate_id"]]
+        assert certificate["winner"]["input"] == native.inputs.objects.resolve("unit0.obj")["identity"]
+        # The loser copy is a removal question, never a placement.
         assert selected.placed("dependency.obj", 1) is None
 
 

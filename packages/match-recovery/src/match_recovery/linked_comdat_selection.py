@@ -111,11 +111,13 @@ class ComdatSelection:
         return deepcopy(_entry(self)["discard_observation"])
 
     def placed(self, owner, section):
-        """Query positive independent placement of an exact NODUP code root.
+        """Query positive retention of an exact placed COMDAT code root.
 
-        No qualifying placement returns None, never an inferred selection.
-        The root and its descendants stay physical/code obligations; this is
-        derived retention evidence, not a census exclusion.
+        An independently placed NODUP root or the certified ANY winner earns
+        its disposition; anything else returns None, never an inferred
+        selection. The root and its descendants stay physical/code
+        obligations; this is derived retention evidence, not a census
+        exclusion.
         """
         return _placed(_entry(self), owner, section)
 
@@ -862,7 +864,25 @@ def _loser(state, owner, number):
 
 def _placed(state, owner, number):
     selected, obj, root_number = _query(state, owner, number)
-    if not obj.sections[root_number - 1].flags & 0x1000 or section_selection(obj, root_number) != 1:
+    if not obj.sections[root_number - 1].flags & 0x1000:
+        return None
+    policy = section_selection(obj, root_number)
+    if policy == 2:
+        # The certified ANY winner is positively selected; a loser copy is a
+        # removal question, never a placement.
+        root = comdat_key(obj, root_number)
+        certificate = _certificate(state, root.name)
+        if certificate["winner"]["input"] != selected["identity"]:
+            return None
+        winner, = [row for row in certificate["candidates"]
+                   if row["input"] == selected["identity"]
+                   and row["object_sha256"] == selected["sha256"]
+                   and row["root"]["section"] == root_number]
+        return {"certificate_id": certificate["certificate_id"], "key": root.name,
+                "queried_section": number,
+                "sections": [row["object_section"] for row in winner["sections"]],
+                "root_identity_kind": "external", "disposition": "selected_any_winner"}
+    if policy != 1:
         return None
     placement = _unique_placement(state, digest(selected["identity"]), selected["sha256"], root_number)
     return {"placement_id": placement["placement_id"], "key": placement["root"]["name"],

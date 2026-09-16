@@ -123,6 +123,19 @@ def test_native_any_copies_with_icf_keep_original_winners_separate_from_storage(
             if debug:
                 for owner, subject in queries:
                     assert {"owner": owner, "symbol": subject.name} in domain["code_roots"]
+            else:
+                # The surviving winners earn their selected disposition while
+                # staying code roots.
+                winners = [pair for pair in queries if pair not in discarded]
+                assert len(winners) == 2
+                for owner, subject in winners:
+                    assert {"owner": owner, "symbol": subject.name} in domain["code_roots"]
+                    row, = [item for item in domain["inputs"] if item["owner"] == owner]
+                    section, = [item for item in row["sections"]
+                                if item["object_section"] == subject.section]
+                    assert section["retention"] == "pass"
+                    assert section["disposition"] == "selected_any_winner"
+                    assert section["root_identity_kind"] == "external"
             assert domain["result"] == "unknown" and not domain["ready_for_collection"]
 
 

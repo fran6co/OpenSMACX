@@ -592,17 +592,16 @@ its own increment with unit, application-report and real-compiler tests
 (`test_linked_*`, `test_application_*`, `recovery/tests/test_native_*_compiler.py`)
 and same-commit documentation; none grants acceptance or discharges obligations.
 
-1. Retained selection for placed sections. LANDED 2026-09-16 for independently
-   placed NODUP roots, external and private: `ComdatSelection.placed` returns
-   the root's verified `_unique_placement` certificate and the section domain
-   annotates `retention: pass` with `independently_placed_nodup_root`, the
-   placement id and `root_identity_kind` while the root stays an ordinary code
-   root; a refused placement keeps the section unknown with its gap, and the
-   report-level `retained_section_selection` stays unknown until every
-   selected section is qualified. REMAINING: the `selected_any_winner`
-   disposition for ANY winners (reuse the existing ANY certificate; no new
-   verification), and computed report-level retention once non-COMDAT
-   sections (debug/`comdat_data`/`.drectve`) have their own dispositions.
+1. Retained selection for placed sections. LANDED 2026-09-16: independently
+   placed NODUP roots, external and private, annotate `retention: pass` with
+   `independently_placed_nodup_root`, their placement id and
+   `root_identity_kind`; certified ANY winners annotate
+   `selected_any_winner` referencing their certificate id. Every annotated
+   root stays an ordinary code root; a refused placement keeps the section
+   unknown with its gap, and the report-level `retained_section_selection`
+   stays unknown until every selected section is qualified. REMAINING:
+   computed report-level retention once non-COMDAT sections
+   (debug/`comdat_data`/`.drectve`) have their own dispositions.
 2. Allocation isolation across certified ICF groups: folded members currently
    gap `observe_ordinary_allocations` twice (their own module join and the
    shared code envelope). Qualify same-group sharing bound to the group's

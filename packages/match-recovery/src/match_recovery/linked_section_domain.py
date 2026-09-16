@@ -124,10 +124,16 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                             if (placement["queried_section"] != number
                                     or number not in placement["sections"]):
                                 raise ValueError("COMDAT placement does not cover its queried physical section")
-                            item.update(retention=Result.PASS,
-                                        disposition=placement["disposition"],
-                                        selection_placement=placement["placement_id"],
-                                        root_identity_kind=placement["root_identity_kind"])
+                            if placement["disposition"] == "selected_any_winner":
+                                item.update(retention=Result.PASS,
+                                            disposition=placement["disposition"],
+                                            selection_certificate=placement["certificate_id"],
+                                            root_identity_kind=placement["root_identity_kind"])
+                            else:
+                                item.update(retention=Result.PASS,
+                                            disposition=placement["disposition"],
+                                            selection_placement=placement["placement_id"],
+                                            root_identity_kind=placement["root_identity_kind"])
                     if duplicate is not None:
                         if (duplicate["queried_section"] != number
                                 or number not in duplicate["sections"]):

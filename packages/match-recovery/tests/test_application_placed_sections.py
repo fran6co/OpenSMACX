@@ -51,6 +51,26 @@ def test_unqualified_placement_keeps_unknown_retention_and_gaps(tmp_path, damage
     assert report["result"] == "unknown" and not report["ready_for_collection"]
 
 
+def test_any_winner_earns_its_selected_disposition(tmp_path):
+    context = fixture(tmp_path / "project")
+    with linked_build(context) as native:
+        plain = observe_sections(context, native.inputs.objects)
+        report = observe_sections(context, native.inputs.objects, native=native)
+    assert physical(report) == physical(plain)
+    # Only the ANY loser copy leaves the roots; the winner stays one.
+    assert report["code_roots"] == [row for row in plain["code_roots"]
+                                    if row != {"owner": "dependency.obj", "symbol": "_K"}]
+    unit0, = [row for row in report["inputs"] if row["owner"] == "unit0.obj"]
+    section, = [item for item in unit0["sections"] if item["object_section"] == 1]
+    assert section["retention"] == "pass"
+    assert section["disposition"] == "selected_any_winner"
+    assert section["root_identity_kind"] == "external"
+    certificate, = report["comdat_selection_certificates"]
+    assert section["selection_certificate"] == certificate["certificate_id"]
+    assert {"owner": "unit0.obj", "symbol": "_K"} in report["code_roots"]
+    assert report["retained_section_selection"] == "unknown"
+
+
 def test_private_peers_each_earn_their_own_placement_annotation(tmp_path):
     context = private_fixture(tmp_path / "project", two=True)
     with linked_build(context) as native:

@@ -2082,7 +2082,9 @@ when a COMDAT section has neither a removal certificate nor a refused removal
 query, `ComdatSelection.placed` returns the root's verified placement and the
 section is annotated `retention: pass` with `disposition:
 independently_placed_nodup_root`, its `selection_placement` id and its
-`root_identity_kind`. Placed sections fall through to ordinary code-root
+`root_identity_kind`; the certified ANY winner earns
+`disposition: selected_any_winner` referencing its `selection_certificate`
+id. Placed sections fall through to ordinary code-root
 seeding; annotation never excludes them or their descendants. The placement
 proof refuses genuine REF/ICF contradictions itself, so an unsupported removal
 form (a private root) does not block its own placement annotation. Sections
