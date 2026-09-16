@@ -12,17 +12,21 @@
     "timeout": 11400
   },
   "subjects": [
-    "entity-b5c6cadbb5dbe13337f0374e3de51575dfeea545f2e7c8c56828fa8b16ddd2ec"
+    "entity-b5c6cadbb5dbe13337f0374e3de51575dfeea545f2e7c8c56828fa8b16ddd2ec",
+    "entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9"
   ],
   "editable_files": [
-    "src/lock.cpp"
+    "src/lock.cpp",
+    "src/palette.h",
+    "src/palette.cpp"
   ],
   "seed_bindings": {
     "image": "{env:OPENSMACX_IMAGE}"
   },
   "evidence": [
     "User-authorized autonomous ownership recovery: coordinate discoveries and bind already-authorized seed identities to worker-written bodies inside existing editable product files, retaining seed spans/history.",
-    "The preserved PlayerLock discovery worker-71aeaa1fab504624bf614c3ddf0e2a47 identifies original Lock::lock at 0x00590300 with a state-clear/broadcast ordering discrepancy. Permit an evidence-backed repair expansion to that existing unowned identity and src/lock.cpp only. NetDaemon remains read-only affected context; its existing task ownership and the complete pending discovery remain intact. This grants no Heap access, other task takeover, new original identities, baseline change, source acceptance or Git publication."
+    "The preserved PlayerLock discovery worker-71aeaa1fab504624bf614c3ddf0e2a47 identifies original Lock::lock at 0x00590300 with a state-clear/broadcast ordering discrepancy. Permit an evidence-backed repair expansion to that existing unowned identity and src/lock.cpp only. NetDaemon remains read-only affected context; its existing task ownership and the complete pending discovery remain intact. This grants no Heap access, other task takeover, new original identities, baseline change, source acceptance or Git publication.",
+    "The journaled Flic coordination (2026-09-16) verifies that the original ??1Flic@@QAE@XZ calls ??1Palette@@QAE@XZ at 0x005FE2E0 while the in-class implicitly-inline ~Palette(){close();} in src/palette.h:114 expands at the Flic site and emits ?close@Palette instead, failing relocation under both flag sets. The flic-decoder-recovery task's editable scope already includes the palette files (scope_expanded decision 18). Permit the same evidence-backed repair for that Palette teardown identity and its two files only, following the measured out-of-line destructor move of ~Buffer (src/buffer.h). Still no Heap access, other task takeover, new original identities, baseline change, source acceptance or Git publication."
   ],
-  "max_decisions": 8
+  "max_decisions": 12
 }
