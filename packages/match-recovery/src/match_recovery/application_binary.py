@@ -23,10 +23,16 @@ from .shared_source import read_shared, referenced_shared_units, validate_shared
 from .shared_binary import check_shared
 
 
-def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, dict]:
-    """Require a single product definition; archived interpretations remain seeds."""
+def select_bindings(view: dict, selected: frozenset[str], component_targets: dict | None = None) -> tuple[list, list, dict]:
+    """Require a single product definition; archived interpretations remain seeds.
+
+    Freshly verified toolchain components may publish relocation targets for
+    their reserved names; the annotation alone never does, and a genuine
+    product conflict keeps refusing resolution.
+    """
     bindings, refused, targets = [], [], defaultdict(set)
     ambiguous = set()
+    reserved = defaultdict(set)
     found = set()
     for group in view["groups"]:
         for entity in group["entities"]:
@@ -40,7 +46,9 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
             # evidence that the current build uses the specified library code.
             # Reserve these names against product aliases too. Admission needs
             # fresh dependency/link evidence, not a prior component report.
-            ambiguous.update(item["symbol"] for item in candidates if item["component"] is not None)
+            for item in candidates:
+                if item["component"] is not None:
+                    reserved[item["symbol"]].add(entity["origin"]["address"])
             if candidate is not None and candidate["component"] is None:
                 # Exact source spelling only. Ambiguous external names are
                 # removed below; static definitions never become external COFF
@@ -66,6 +74,8 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
     refused.extend({"entity_id": key, "result": Result.UNKNOWN, "reason": "source mapping is missing"}
                    for key in sorted(selected - found))
     ambiguous.update(symbol for symbol, addresses in targets.items() if len(addresses) != 1)
+    product_ambiguous = set(ambiguous)
+    ambiguous.update(reserved)
     accepted = []
     for binding in bindings:
         if binding.symbol in ambiguous:
@@ -73,8 +83,22 @@ def select_bindings(view: dict, selected: frozenset[str]) -> tuple[list, list, d
                             "symbol": binding.symbol, "reason": "ambiguous source symbol binding"})
         else:
             accepted.append(binding)
-    return accepted, refused, {symbol: next(iter(addresses)) for symbol, addresses in targets.items()
-                               if symbol not in ambiguous}
+    externals = {symbol: next(iter(addresses)) for symbol, addresses in targets.items()
+                 if symbol not in ambiguous}
+    if component_targets:
+        for symbol, address in component_targets.items():
+            if symbol in product_ambiguous:
+                continue
+            if symbol in externals:
+                if externals[symbol] != address:
+                    # A verified component origin contradicts the product
+                    # binding: neither interpretation may resolve the name.
+                    del externals[symbol]
+                continue
+            if len((targets.get(symbol, set()) | reserved.get(symbol, set())) - {address}) != 0:
+                continue
+            externals[symbol] = address
+    return accepted, refused, externals
 
 
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
@@ -149,7 +173,12 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     import_bindings = read_imports(root)
     shared_bindings = read_shared(root, snapshot["image_sha256"])
     validate_shared(shared_bindings, view, reserved=[item.symbol for item in (*object_bindings, *generated_bindings, *import_bindings)])
-    bindings, refused, externals = select_bindings(view, selected)
+    from .component_targets import component_targets
+    try:
+        dependency_targets, component_reports = component_targets(root, snapshot, image_data)
+    except ValueError as error:
+        raise ValueError(f"component dependency verification refused: {error}") from error
+    bindings, refused, externals = select_bindings(view, selected, component_targets=dependency_targets)
     # Build-only definitions are deliberately unfinished. Their emitted RET
     # may match an empty original, but cannot establish task completion until
     # the source body-slot sentinel is deliberately removed. Keep reference
@@ -287,6 +316,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "input_fingerprint": digest(before), "functions": rows, "counts": dict(sorted(counts.items())),
             "compile_attempts": attempts, "selected_entities": len(selected), "translation_units": units,
             "flag_sets": [list(flags) for flags in flag_sets],
+            "component_verification": component_reports,
             "object_definitions": object_checks,
             "object_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit}
                               for item in object_bindings if item.span is not None],

@@ -3,11 +3,24 @@
   "build": "recovery/build.json",
   "preparation": "recovery/prepare.json",
   "gate": "recovery/gate.json",
+  "components": {
+    "toolchain_archives": {
+      "vc6-runtime": "/home/fran6co/opt/vc6/LIB/LIBCMT.LIB"
+    }
+  },
   "audits": "recovery/audits.json",
   "references": {
-    "documentation_roots": ["docs", "recovery", ".claude"],
-    "command_roots": ["recovery"],
-    "exclude_roots": [".claude/worktrees"]
+    "documentation_roots": [
+      "docs",
+      "recovery",
+      ".claude"
+    ],
+    "command_roots": [
+      "recovery"
+    ],
+    "exclude_roots": [
+      ".claude/worktrees"
+    ]
   },
   "layout": {
     "conventional_offsets": true,
@@ -16,18 +29,39 @@
   "initializers": {
     "ruleset": "cpp-trailing-address-v1",
     "probe_bytes": 4,
-    "scalar_types": ["int", "unsigned int", "long", "unsigned long", "uint32_t", "int32_t", "short", "uint16_t", "bool", "size_t", "DWORD"],
-    "unit_extensions": [".cpp"],
-    "exclude_roots": ["src/vendor"]
+    "scalar_types": [
+      "int",
+      "unsigned int",
+      "long",
+      "unsigned long",
+      "uint32_t",
+      "int32_t",
+      "short",
+      "uint16_t",
+      "bool",
+      "size_t",
+      "DWORD"
+    ],
+    "unit_extensions": [
+      ".cpp"
+    ],
+    "exclude_roots": [
+      "src/vendor"
+    ]
   },
   "mappings": {
     "compile_commands": "build/compile_commands.json",
-    "forwarder_macros": ["PENDING_BODY"]
+    "forwarder_macros": [
+      "PENDING_BODY"
+    ]
   },
   "source": {
     "image_pin": "src/IMAGE_PIN",
     "address_space": "pe:va",
-    "seed_roots": ["src/recovered", "src/unrecovered"],
+    "seed_roots": [
+      "src/recovered",
+      "src/unrecovered"
+    ],
     "symbol_format": "msvc"
   },
   "source_history": {
@@ -35,7 +69,10 @@
     "before_configuration": {
       "image_pin": "src/IMAGE_PIN",
       "address_space": "pe:va",
-      "seed_roots": ["src/recovered", "src/unrecovered"],
+      "seed_roots": [
+        "src/recovered",
+        "src/unrecovered"
+      ],
       "symbol_format": "msvc"
     },
     "evidence": [
@@ -44,22 +81,96 @@
     ]
   },
   "toolchain": {
-    "command": {"argv": ["{framework_python}", "-I", "-B", "recovery/environment/adapter.py"], "timeout": 30},
-    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/wine.py", "recovery/environment/wine_repro.py", "recovery/environment/wine_compile.py", "recovery/environment/command_paths.py"],
-    "environment": ["VC6_ROOT", "VC6_INCLUDE", "VC6_LIB"]
+    "command": {
+      "argv": [
+        "{framework_python}",
+        "-I",
+        "-B",
+        "recovery/environment/adapter.py"
+      ],
+      "timeout": 30
+    },
+    "inputs": [
+      "recovery/environment/adapter.py",
+      "recovery/environment/compile.py",
+      "recovery/environment/wine.py",
+      "recovery/environment/wine_repro.py",
+      "recovery/environment/wine_compile.py",
+      "recovery/environment/command_paths.py"
+    ],
+    "environment": [
+      "VC6_ROOT",
+      "VC6_INCLUDE",
+      "VC6_LIB"
+    ]
   },
   "compiler": {
-    "command": {"argv": ["{framework_python}", "-I", "-B", "recovery/environment/adapter.py"], "timeout": 330},
-    "inputs": ["recovery/environment/adapter.py", "recovery/environment/compile.py", "recovery/environment/recipe.py", "recovery/environment/recipes.json", "recovery/environment/wine.py", "recovery/environment/wine_repro.py", "recovery/environment/wine_compile.py", "recovery/environment/command_paths.py"],
-    "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
+    "command": {
+      "argv": [
+        "{framework_python}",
+        "-I",
+        "-B",
+        "recovery/environment/adapter.py"
+      ],
+      "timeout": 330
+    },
+    "inputs": [
+      "recovery/environment/adapter.py",
+      "recovery/environment/compile.py",
+      "recovery/environment/recipe.py",
+      "recovery/environment/recipes.json",
+      "recovery/environment/wine.py",
+      "recovery/environment/wine_repro.py",
+      "recovery/environment/wine_compile.py",
+      "recovery/environment/command_paths.py"
+    ],
+    "environment": [
+      "VC6_PREFIX",
+      "VC6_ROOT",
+      "VC6_INCLUDE",
+      "VC6_LIB",
+      "WINEARCH",
+      "CL",
+      "_CL_"
+    ]
   },
   "measurement": {
     "backend": "pe-coff-i386",
     "compiler_profile": "application",
-    "flag_sets": [["/c", "/O2", "/Gy", "/GR-", "/GX"], ["/c", "/O2", "/Gy", "/GR-", "/Oy-", "/GX"]],
-    "layout_flags": ["/Z7"],
-    "unit_extensions": [".cpp", ".c"],
-    "input_roots": ["cmake"],
-    "inputs": ["CMakeLists.txt", "build/compile_commands.json", "recovery/environment/vc6-cl", "recovery/driver.json", "pyproject.toml", "uv.lock"]
+    "flag_sets": [
+      [
+        "/c",
+        "/O2",
+        "/Gy",
+        "/GR-",
+        "/GX"
+      ],
+      [
+        "/c",
+        "/O2",
+        "/Gy",
+        "/GR-",
+        "/Oy-",
+        "/GX"
+      ]
+    ],
+    "layout_flags": [
+      "/Z7"
+    ],
+    "unit_extensions": [
+      ".cpp",
+      ".c"
+    ],
+    "input_roots": [
+      "cmake"
+    ],
+    "inputs": [
+      "CMakeLists.txt",
+      "build/compile_commands.json",
+      "recovery/environment/vc6-cl",
+      "recovery/driver.json",
+      "pyproject.toml",
+      "uv.lock"
+    ]
   }
 }
