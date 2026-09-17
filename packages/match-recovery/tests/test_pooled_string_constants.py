@@ -3,6 +3,8 @@
 import hashlib
 import struct
 
+import pytest
+
 from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.model import Origin, Result, Span
 from match_recovery.pe_coff import Coff, PeImage
@@ -10,13 +12,13 @@ from match_recovery.pe_coff import Coff, PeImage
 LITERAL_NAME = b"??_C@_0"  # short inline form of a VC6 pooled string symbol
 
 
-def object_with_literal(code, literal):
+def object_with_literal(code, literal, *, storage=3):
     """One code COMDAT, one read-only literal section, one DIR32 reference."""
     code_bytes = code + b"\xcc" * (-len(code) % 16)
     literal_bytes = literal + b"\0"
     reloc = struct.pack("<IIH", 1, 1, 6)  # DIR32 at code offset 1 -> literal symbol index 1
     symbols = (b"_f".ljust(8, b"\0") + struct.pack("<IhHBB", 0, 1, 0x20, 2, 0)
-               + LITERAL_NAME.ljust(8, b"\0") + struct.pack("<IhHBB", 0, 2, 0, 3, 0))
+               + LITERAL_NAME.ljust(8, b"\0") + struct.pack("<IhHBB", 0, 2, 0, storage, 0))
     base = 20 + 2 * 40  # header plus two section table rows
     header = struct.pack("<HHIIIHH", 0x14C, 2, 0,
                          base + len(code_bytes) + len(literal_bytes) + len(reloc), 2, 0, 0)
@@ -67,8 +69,18 @@ def check(code, literal, *, twice=False, image_literal=None):
     return row
 
 
-def test_pooled_literal_resolves_by_unique_content():
-    row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF")
+@pytest.mark.parametrize("storage", [2, 3])
+def test_pooled_literal_resolves_by_unique_content(storage):
+    import test_pooled_string_constants as module
+    original_builder = module.object_with_literal
+    def builder(code, literal, **kwargs):
+        kwargs["storage"] = storage
+        return original_builder(code, literal, **kwargs)
+    module.object_with_literal = builder
+    try:
+        row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF")
+    finally:
+        module.object_with_literal = original_builder
     assert row["result"] == Result.PASS, row
     pooled, = row["pooled_string_constants"]
     assert pooled["literal"] == b"JKAF\0" and pooled["address"] == "0x00402000"

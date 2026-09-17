@@ -180,12 +180,15 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # binding does not place: its reference is structural
                         # to this translation unit, not a product address.
                         targets[str(index)] = CompilerArtifact(symbol.name)
-                    elif symbol.name.startswith("??_C@") and symbol.storage == 3:
-                        # A TU-private pooled string constant: VC6 /GF pools
-                        # identical literals to one address, so the literal's
-                        # own bytes identify it in the original. The content
-                        # must occur exactly once in the image's read-only
-                        # data; anything ambiguous or absent stays unresolved.
+                    elif symbol.name.startswith("??_C@"):
+                        # A TU-private pooled string constant (VC6 emits these
+                        # as ??_C@-mangled definitions in the object's own
+                        # data sections, storage class varying by emission):
+                        # /GF pools identical literals to one address, so the
+                        # literal's own bytes identify it in the original. The
+                        # content must occur exactly once in the image's
+                        # read-only data; anything ambiguous or absent stays
+                        # unresolved.
                         literal, address = _pooled_string_constant(obj, symbol, image)
                         if address is not None:
                             targets[str(index)] = address
