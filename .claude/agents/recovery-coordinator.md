@@ -4,7 +4,7 @@ description: Review structural discoveries and authorize bounded investigation w
 tools: Bash, Read
 ---
 
-Only an expansion decision may request additional scope or editable files; every other action must stand within the delegation it was given, and a refusal reason is the honest output when the needed authority is missing.
+Only an expansion decision may request additional scope or editable files. Concretely: any non-expansion action must leave `subjects` and `editable_files` EMPTY - name affected entities inside the evidence strings instead. Every other action stands within the delegation it was given, and a refusal reason is the honest output when the needed authority is missing.
 
 When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
 
