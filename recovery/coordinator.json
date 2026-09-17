@@ -13,7 +13,8 @@
   },
   "subjects": [
     "entity-b5c6cadbb5dbe13337f0374e3de51575dfeea545f2e7c8c56828fa8b16ddd2ec",
-    "entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9"
+    "entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9",
+    "entity-47d9241aac557b08702e063ea33c95e8efd3ed6ae3e758174849cf2b8feaa51e"
   ],
   "editable_files": [
     "src/lock.cpp",
@@ -31,7 +32,8 @@
     "The preserved PlayerLock discovery worker-71aeaa1fab504624bf614c3ddf0e2a47 identifies original Lock::lock at 0x00590300 with a state-clear/broadcast ordering discrepancy. Permit an evidence-backed repair expansion to that existing unowned identity and src/lock.cpp only. NetDaemon remains read-only affected context; its existing task ownership and the complete pending discovery remain intact. This grants no Heap access, other task takeover, new original identities, baseline change, source acceptance or Git publication.",
     "The journaled Flic coordination (2026-09-16) verifies that the original ??1Flic@@QAE@XZ calls ??1Palette@@QAE@XZ at 0x005FE2E0 while the in-class implicitly-inline ~Palette(){close();} in src/palette.h:114 expands at the Flic site and emits ?close@Palette instead, failing relocation under both flag sets. The flic-decoder-recovery task's editable scope already includes the palette files (scope_expanded decision 18). Permit the same evidence-backed repair for that Palette teardown identity and its two files only, following the measured out-of-line destructor move of ~Buffer (src/buffer.h). Still no Heap access, other task takeover, new original identities, baseline change, source acceptance or Git publication.",
     "The flic-decoder coordination (2026-09-17) measures all twelve protected byte obligations passing; decode_byte_run_trans 0x0062AF40 is a diagnostic entity carrying no byte obligation, and 32+ measured spellings across the cast, loop-form, scope and zero-use axes plateau at 576 vs the 582 extent with four of seven frame slots already agreeing - the residual is compiler-side with no source lever under the two fixed flag sets. Authorize resolving that finding within the flic task files when its structural description is expressed in current source; never demote claims, change flag sets or rewrite baselines.",
-    "Image evidence (2026-09-17) shows the original Buffer::copy was header-inline - the PAU-spelled flic TU emitted its own COMDAT, ICF-folded into the PAV copy at 0x005DFF00 - so restoring the inline body in src/buffer.h (buffer.cpp keeping its marker record) is the recovery-true repair for flic's last obligation. Grant the flic task's coordinator that two-file scope; every affected claim stays under scoped recheck measurement and nothing is demoted or assumed."
+    "Image evidence (2026-09-17) shows the original Buffer::copy was header-inline - the PAU-spelled flic TU emitted its own COMDAT, ICF-folded into the PAV copy at 0x005DFF00 - so restoring the inline body in src/buffer.h (buffer.cpp keeping its marker record) is the recovery-true repair for flic's last obligation. Grant the flic task's coordinator that two-file scope; every affected claim stays under scoped recheck measurement and nothing is demoted or assumed.",
+    "The Buffer tile identity entity-47d9241aac (0x5DA860 family) carries the pointer-to-member copy lever the inline restoration requires (src/buffer.cpp:3401); own it within the flic coordination under full scoped measurement."
   ],
   "max_decisions": 20
 }
