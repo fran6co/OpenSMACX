@@ -68,12 +68,14 @@ class FunctionBinding:
 def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Coff],
                   image: PeImage, *, external_targets: Mapping[str, int | AbsoluteConstant] | None = None,
                   import_targets: Mapping[str, int] | None = None,
-                  errors: Mapping[str, str] | None = None) -> list[dict]:
+                  errors: Mapping[str, str] | None = None, member_functions: bool = False) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
     External targets must be unambiguous source-owned mappings supplied by the
     adapter. Static symbol names never leak across translation units. Defined
     symbols resolve through their own mappings too, not only undefined imports.
+    Pinned archive members may name plain code sections; their binding carries
+    the identity that a product object's COMDAT boundary would prove.
     """
     if len({item.origin.entity_id for item in bindings}) != len(bindings):
         raise ValueError("ambiguous original function selection")
@@ -95,7 +97,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         if obj is None:
             continue
         try:
-            symbol = obj.function(binding.symbol)
+            symbol = obj.function(binding.symbol, comdat=not member_functions)
         except ValueError as error:
             subjects[binding.origin.entity_id] = str(error)
             continue

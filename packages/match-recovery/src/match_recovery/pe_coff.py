@@ -189,14 +189,17 @@ class Coff(CoffRecords):
                     break
         return (symbol.section, *sorted(children))
 
-    def function(self, name: str) -> Symbol:
+    def function(self, name: str, *, comdat: bool = True) -> Symbol:
         matches = [symbol for symbol in self.symbols.values() if symbol.name == name
                    and symbol.section > 0 and symbol.type & 0x20 and symbol.storage in (2, 3)]
         if len(matches) != 1:
             raise ValueError(f"expected one defined COFF function named {name!r}")
         symbol = matches[0]
         section = self.sections[symbol.section - 1]
-        if not section.flags & 0x20 or not section.flags & 0x1000:
+        # A pinned archive member's plain code section carries its identity in
+        # the binding; the COMDAT requirement guards product objects, where a
+        # plain section never proves an independent function boundary.
+        if not section.flags & 0x20 or (comdat and not section.flags & 0x1000):
             raise ValueError("function must belong to a code COMDAT")
         peers = [item for item in self.symbols.values() if item.section == symbol.section
                  and item.type & 0x20 and item.storage in (2, 3)]

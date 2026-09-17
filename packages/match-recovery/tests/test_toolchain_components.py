@@ -248,3 +248,32 @@ def test_toolchain_annotations_remain_preservation_obligations(toolchain_project
     assert _symbol_sources({}, records, set())["_f"][0]["source"] == "code/runtime.recovery.h"
     with pytest.raises(ValueError, match="duplicate component"):
         parse_components({"one.recovery.h": text, "two.recovery.h": text})
+
+
+def test_plain_archive_member_codes_verify_through_their_binding():
+    """A pinned member's plain code section carries identity in its binding."""
+    import struct
+    image = pe_fixture(b"\xc3")
+    plain = bytearray(coff_fixture(b"\xc3"))
+    # Strip the COMDAT flag from the single .text section header (section
+    # table starts at 20; flags are the trailing dword of the 40-byte row).
+    struct.pack_into("<I", plain, 56, struct.unpack_from("<I", plain, 56)[0] & ~0x1000)
+    raw = archive([("//", b"release\\runtime.obj\0"), ("/0", bytes(plain))])
+    pin = hashlib.sha256(image).hexdigest()
+    binding = VendorBinding(Origin(pin, "pe:va", 0x401000), (Span(0x401000, 0x401001),),
+                            "_f", "release/runtime.obj", "plain member code section")
+    manifest = ToolchainManifest(Component("runtime", Ownership.RUNTIME, Delivery.TOOLCHAIN,
+                                           ("Synthetic compiler distribution",), "test"),
+                                 hashlib.sha256(raw).hexdigest(), "Synthetic test fixture", (binding,))
+    report = verify_toolchain(manifest, image, raw)
+    assert report["result"] == "pass" and report["counts"] == {"pass": 1}
+
+    # The product path still refuses the identical shape: a plain section
+    # never proves an independent function boundary in a product object.
+    from match_recovery.bound_objects import FunctionBinding, check_objects
+    from match_recovery.pe_coff import Coff, PeImage
+    product_binding = FunctionBinding(Origin(pin, "pe:va", 0x401000),
+                                      (Span(0x401000, 0x401001),), "_f", "release/runtime.obj")
+    row, = check_objects((product_binding,), {"release/runtime.obj": Coff(bytes(plain))},
+                         PeImage(image, pin))
+    assert row["result"] == "unknown" and "COMDAT" in row["reason"]

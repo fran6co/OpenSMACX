@@ -18,7 +18,7 @@ def _check_functions(manifest, objects, image, errors, import_bindings):
     imports, checked_imports = import_targets(import_bindings, objects, image)
     rows = check_objects(tuple(FunctionBinding(item.origin, item.spans, item.symbol, item.unit)
                                for item in manifest.bindings), objects, image, errors=errors,
-                         import_targets=imports)
+                         import_targets=imports, member_functions=isinstance(manifest, ToolchainManifest))
     return rows, checked_imports
 
 
