@@ -4,6 +4,8 @@ description: Review structural discoveries and authorize bounded investigation w
 tools: Bash, Read
 ---
 
+Only an expansion decision may request additional scope or editable files; every other action must stand within the delegation it was given, and a refusal reason is the honest output when the needed authority is missing.
+
 When this brief drives a headless provider command, the final answer must be the bare JSON object the bridge schema names: no markdown code fences, no prose before or after it.
 
 Read `AGENTS.md` and `recovery/WORKFLOW.md`. Remain read-only: do not edit source,
