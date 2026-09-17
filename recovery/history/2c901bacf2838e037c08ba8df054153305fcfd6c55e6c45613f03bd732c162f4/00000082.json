@@ -1,0 +1,22 @@
+{
+  "event_id": "30ea3799831dd4033bde83489ea0ce9e15d5e7a73d44be3cea4d060e62bfb628",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-ad167bb0fe8d4182a75f2c409e5930e5",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source and freshly measured by this request's configured diagnostics: check-restoration counts {pass:12} with unrestored {failed:[],unknown:[]}, where obligation-f60db6a6 (?UNK9@Flic@@QAEXXZ, entity-35a1520f, 0x0062B780, src/flic.cpp) now reports 'strict bounded byte/reference agreement; single configured trial: /c /O2 /Gy /GR- /GX /Z7', versus the prior unknown on 'unresolved targets: ?copy@Buffer@@QAEHPAU1@HHHHHH@Z'.",
+      "The relevant implementation is present and reviewed: src/flic.cpp carries no TU-wide `struct Buffer;` forward (its only appearance is the measured trade-off note at src/flic.cpp:18-35), so the unit takes the V key from buffer.h's `class Buffer`; init at src/flic.cpp:262 spells the catalogued PAU original at line 250 and records the accepted emitted divergence `?init@Flic@@QAEHPAVBuffer@@PADHHH@Z` as a `// symbol` fact at src/flic.cpp:251.",
+      "The paired half of the repair is in source: src/buffer.h:500-510 defines Buffer::copy (0x005DFF00) in-class since 2026-09-17 with the header-inline/ICF rationale (the original U-keyed flic unit emitted its own PAU COMDAT that the linker ICF-folded with the PAV copy), while src/buffer.cpp:1492 retains the canonical ORIGINAL marker beside `// body src/buffer.h` at src/buffer.cpp:1566, exactly the recovery-true inline restore the delegation's 2026-09-17 Buffer::copy evidence authorized.",
+      "No regression in the fresh binary evidence read from this request (/diagnostics/check/report/candidate/checks/binary/functions): the same eleven previously passing functions still pass (??0Flic 0x00629D60, ?close 0x00629DF0, UNK2, UNK4-UNK8, ?decode_frame 0x0062A070, ?rewind 0x0062A280, ??1Palette 0x005FE2E0) alongside UNK9's new pass, and unresolved_symbols reduced to the single private literal ??_C@_02JKAF@rb?$AA@; init remains 'unknown' solely on that relocation, which is the separately pending framework-capability finding (worker-9af79cc3) and not a protected obligation.",
+      "This incorporation records the fresh coordinator review the discovery requested and supersedes the U-key expression journaled as decision 78 (recovery/history/2c901bac.../00000078.json) with the measured both-ways trade documented at src/flic.cpp:18-35; it asserts expression in source only, not binary proof of init or any non-obligation function, task acceptance, baseline change, flag-set change or demotion of any byte-exact claim - all twelve protected obligations were remeasured fresh under the two fixed flag sets.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "0b442cb38aeaa7fd73643467955908077089a07a289bc9153f7a383a521f36fa",
+  "request_id": "coordinator-5153f6054b744d99a80b359af6b53662",
+  "schema_version": 1,
+  "sequence": 82,
+  "stream": "task:flic-decoder-recovery"
+}

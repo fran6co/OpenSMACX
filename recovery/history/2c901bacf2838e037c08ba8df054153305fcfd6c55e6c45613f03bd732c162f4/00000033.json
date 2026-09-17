@@ -1,0 +1,22 @@
+{
+  "event_id": "6e0f70d7076bdfe05be42e9549d839650ee3434d0fb0a87663ffb3bcc60707f1",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-22a25aba4f7c4f2893aa3193b2923225",
+    "evidence": [
+      "candidate bytes verified identical to image: preswitch 8b86b8050000 53 8b1f 55 50 e8.. 8d6c18fa (lea ebp,[eax+ebx-6]) and skip body 8b8eb8050000 83c3fa 6a01 53 51 e8.. 83c40c (add ebx,-6; push ebx), plus the full ring (33c0 668b4706 85c0 0f84.. 0f8e.. 8bf8) and delta tail (sub ebp,eax; push ebp)",
+      "destructive `size -= 6`, member-at-fseek, split-statement and reordered-operand spellings all let VC6 extract and hoist `lea ebp,[eax-6]` above the ftell call (nine spellings measured across rounds 3-4 and this round)",
+      "the two-read + ring-split candidate is instruction-identical to the image across the whole 541-byte code region except relocation placeholder fields (structdiff: same 36694 weighted bytes, zero candidate-only/image-only instructions)"
+    ],
+    "hypothesis": "decode_chunk's end/size pair must be spelled as two separate member reads (`int end = ftell(file_) + chunk->size_ - 6; int size = chunk->size_;`) so the allocator merges the loads without giving CSE a shared size-6 subexpression, and the frame-ring counter must be split into a guard variable plus a `remaining` copy - together these reproduce the image's `lea ebp,[eax+ebx-6]` preswitch, the in-arm `add ebx,-6; push ebx`, the `mov ax,[edi+6]`/`mov edi,eax` ring, and the chunk->edi / size->ebx register allocation with both saved-register pushes sunk under their branches",
+    "kind": "discovery"
+  },
+  "previous_event": "60054b5fe7cd31531a38a123d1f36aebf46d6f10735250ddcef41e0911b078ea",
+  "request_id": "worker-22a25aba4f7c4f2893aa3193b2923225",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "02a26e162b75abb817e570e7e5a935f15d182595b7481f5a7eb38f7b5ae52a6b",
+  "payload": {
+    "affects": [
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-bf8deb72852e4d6d9f28d9d4764d2b1f",
+    "evidence": [
+      "build/recovery/variants/brt-fresh-base.lst: sub esp,0x1c; push ebx; push esi; xor ebx,ebx reused for mov [esp+0x20],ebx (scratch), cmp [esi+0x5a4],ebx, cmp eax,ebx (mem_get), cmp eax,ebx (height guard) and mov [esp+0x20],ebx (row); only push ebp under the jle; row head mov ebx,[esi+0x59c] with cursor reloads mov edi,[esp+0x28] and mov ebp,[esp+0x2c]; abs region and eax,0xff plus mov dword [esp+0x10],eax plus mov ebx,0; literal bound cmp ebx,edx; jb; epilogue pop ebp, pop edi, pop esi, pop ebx",
+      "build/recovery/variants/brt-image.lst (0x0062AF40): sub esp,0x1c; push esi; mov [esp+0x1c],0 immediate; mov eax,[esi+0x5a4]; test eax,eax; je; mem_get result tested with test eax,eax; push edi inside the rect block; mov ecx,height; test ecx,ecx; mov [esp+0x1c],0; jle; then push ebx; push ebp together; row head round-trips remaining through memory and carries row_src via mov ebp,eax; abs region xor ebx,ebx; test al,al; mov byte [esp+0x10],al; literal loop cmp ebx,edx; jl; epilogue pop ebp; pop ebx; pop edi; pop esi",
+      "slot maps derived with staggered-push bookkeeping across the saved-register pushes: image count@+0x00, value@+0x04, remaining@+0x08, row_dst@+0x0c, row_src@+0x10, row@+0x14, scratch@+0x18; fresh candidate count@+0x00, value@+0x04, row_dst@+0x08, row_src@+0x0c, remaining@+0x10, row@+0x14, scratch@+0x18; the stale 0x20-frame listing build/recovery/variants/brt-cand.txt predates the current source and should not be used as evidence"
+    ],
+    "hypothesis": "A fresh /O2 listing of the current product source supersedes the 0x20-frame premise carried by both pending discoveries: the current spelling already compiles the image's 0x1c frame with seven slots, count homed at frame+0x00 and value with its own slot at frame+0x04 (byte compare and byte store-back), row at +0x14 and scratch at +0x18 - the image's homes for count, value, row and scratch all already agree. The live structural gap is narrow and enumerable: the image orders the remaining slot before the cursor pair (remaining@+0x08, row_dst@+0x0c, row_src@+0x10) where the candidate orders row_dst@+0x08, row_src@+0x0c, remaining@+0x10; the image pushes only esi at entry, zero-stores scratch and row with immediate mov [esp+slot],0, compares via mov-reg-then-test, and pushes ebx and ebp together under the height jle, while the candidate opens push ebx and shares one xor ebx,ebx across the scratch store, both member compares, the mem_get test and the row store; the image round-trips remaining through memory at the row head (eax carrier, mov ebp,eax carrying row_src from the entry get_data) while the candidate register-homes remaining in ebx and reloads both cursors after the call; the image byte-store-backs the abs()-masked count after xor ebx,ebx; test al,al where the candidate emits and eax,0xff; mov dword [esp+0x10],eax; mov ebx,0; and the image's literal-loop bound is signed jl against the unsigned jbe guard.",
+    "kind": "discovery"
+  },
+  "previous_event": "99834c7e983ba0e5ac5904144bd4470ba50dac3cfe1cadbd1023d99b0504ac20",
+  "request_id": "worker-bf8deb72852e4d6d9f28d9d4764d2b1f",
+  "schema_version": 1,
+  "sequence": 51,
+  "stream": "task:flic-decoder-recovery"
+}

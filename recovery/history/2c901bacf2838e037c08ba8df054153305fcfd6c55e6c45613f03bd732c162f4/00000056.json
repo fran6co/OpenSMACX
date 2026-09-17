@@ -1,0 +1,22 @@
+{
+  "event_id": "c8d621f99ed4d691be10741a53e32c650de1e17509ee09ceb6a7212ee488f564",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-d1ca1b5442184cf2aafc8ad8595593fb",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current source expresses the structural description: src/flic.cpp:1091-1168 (working-tree sha256 5aed0278500375275dbb876fda4d85075941a0293b37f730615521ce2eaad796, identical to the request's mapped source record) implements Flic::decode_byte_run_trans as a full product body - a 32-bit unsigned count reloaded as a dword by fread and masked & 0xff at every length use (memset arg line 1131, memcpy arg 1133, dst advance 1135, src advance 1136, remaining decrement 1124, literal bound 1155), the count slot reused for the literal run length via (uint8_t)abs((int8_t)count) with byte store-back (1138-1139) under an unsigned count > 0 guard (1141), and one byte-typed value slot shared by run and literal paths (1115, 1127-1130, 1143-1146); the accepted spelling was left unedited exactly as the discovery reports.",
+      "Fresh diagnostics from the unchanged request (sha256 74780f3fc5ec3e65ce173573e1111caba541eec062ddde8ef7e5b6e7d8626293, read in full) confirm the plateau is current, not historical: both configured flag sets measure candidate_size 576 against original_size 582 with reason 'candidate exceeds or misses the independently recorded extent' and references unknown, and the first flag set's emitted references (?mem_get@YAPAXI@Z at +35, ?get_data@Buffer@@QAEHHH@Z at +128, ?get_data@Buffer@@QAEHXZ at +140, _fread at +194/+234/+266, _memset at +319) match the discovery's baseline offsets, corroborating that the six zero-use spellings left the prologue and guard region byte-identical.",
+      "The discovery's own measurements close the last source-side axis: build/recovery/variants/brt-zero-deck.json scored in brt-zero-result.json (exit 0) shows t-local, mem-local, row-forloop and their pairwise/triple combinations each at 576 bytes, boundary fail, under both flag sets, with every candidate's call-site offsets identical to baseline - no spelling improves toward 582, so VC6's CSE of the guard local and the push ebx/xor ebx,ebx entry are spelling-independent and the residual register/stack allocation (0x1c vs 0x20 frame, deferred pushes, memory-homed remaining) is compiler-side under the two fixed flag sets.",
+      "No claim is demoted and no baseline touched: the fresh scoped check shows all twelve protected byte obligations passing (fingerprints b1f885c657b629aad5bac0fee8a268f043d9d10413875f8fbfa92f2a7223df11 through b35d7513517d25cce30977d9bbf282fef5b82ea72980668b5771868e23255979) and entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6 carries none of them - decode_byte_run_trans appears only as a diagnostic entity whose 576-vs-582 boundary result remains recorded in the binary check; the layout check separately observed complete Flic and Palette compiler definitions under both flag sets (compile attempts 4, no failures), so the body compiles against the typed class shell.",
+      "Authority: the framework-coordinator's 2026-09-17 delegation evidence measures all twelve protected obligations passing, names decode_byte_run_trans 0x0062AF40 a diagnostic entity with the residual compiler-side after 32+ spellings across the cast, loop-form, scope and zero-use axes, and authorizes resolving that finding within the flic task files when its structural description is expressed in current source - which it now is; incorporation is identification of the expressed implementation, not binary or behavioral proof, and the sibling pending finding worker-24ebc715a07b4eee81ec6b85ca4f2b70 on the same entity remains pending and unaffected by this single-discovery decision.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "5aedf260c1d18bcf3c8d98b7b403cee734d956d0ae5c0fe10a8b771a874860ba",
+  "request_id": "coordinator-24f2e44d1cac41b480af1a9836984048",
+  "schema_version": 1,
+  "sequence": 56,
+  "stream": "task:flic-decoder-recovery"
+}

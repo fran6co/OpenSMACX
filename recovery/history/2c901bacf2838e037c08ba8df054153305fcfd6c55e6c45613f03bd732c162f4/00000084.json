@@ -1,0 +1,23 @@
+{
+  "event_id": "ef37b83a5eb2aa1d3cfaedcb13d66cf61588490dcc94b370f705b9a96d5e26a4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-9af79cc3cee24930a57943095f2cfd0e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh configured scoped check (unchanged request sha256 9b6d0bf9d2284bb98d3027a38d3b163fa8d8b36fefaae7ad3ace7d564fdd1876): init '?init@Flic@@QAEHPAVBuffer@@PADHHH@Z' (entity-0641b92c0c405745e8330d5b7a73de810469893a4148810357316609018191af', src/flic.cpp) now measures result=pass - the /O2 /GX /Z7 trial reports bytes=pass and references=pass with zero unresolved, missing or extra absolute relocations; the /Oy- trial still fails, and flag sets are alternatives, so the function passes on the /O2 /GX trial exactly as the discovery's aggregation argument predicted.",
+      "The blocker the finding named is gone in that same fresh measurement: the TU-private literal ??_C@_02JKAF@rb?$AA@ ('rb\\0', the original's push 0x697470 feeding call 0x00634BB0 env_open) is now carried in the check's pooled_string_constants with reason 'content repeats across translation units; reference is structural to this unit's layout' and an emitted compiler-artifact binding - the previously null binding_address unknown is resolved as a pooled structural reference, not by any source respelling.",
+      "The requested capability is expressed in current source: packages/match-recovery/src/match_recovery/bound_objects.py gained content-based TU-private pooled-string resolution in commit c203587d 'Resolve TU-private pooled string constants by content', refined by 1656df25 'Match the measured pooled-literal emission shapes', 84b1e916 'Treat repeated TU-private literals as structural references' and e722d623 'Decode pooled literals for report serialization', with the master resolution merged at 0d41ce9d.",
+      "The insight's source-side half is also expressed and unchanged: src/flic.cpp:289 keeps the idiomatic 'file_ = env_open(file_name, \"rb\");' with no invented named global, matching the original pooled .rdata literal at 0x00697470 beside 'jackal' (0x00697468) and '10.10' (0x00697478); all 15 emitted references in the passing trial are bound (_fclose 0x00645598, _fread 0x00646178, _fseek 0x00647330, ?init@Palette 0x005FE330, env_open 0x00634BB0, ?init@Buffer 0x005D7670, ?PaletteCurrent 0x009B8174, ?sync_to_palette 0x005DE8F0, ?copy@Buffer 0x005DFF00).",
+      "Disposition reasoning: current evidence confirms rather than refutes the hypothesis (reject would misstate it), and no bounded worker repair remains - the fix was framework-side and no in-scope source spelling was wanted or needed - so investigate/investigate_local would authorize work with no object and defer would misstate sufficient evidence; incorporation of the expressed insight is the honest proposal, with publication and acceptance reserved to the serial controller.",
+      "Scope guard: the overall scoped check still exits 3 with 12 failing functions (UNK1, UNK3, fill, decode_byte_run, decode_byte_run_trans, decode_delta_flc, decode_delta_flc_trans, decode_fli_copy, decode_fli_copy_trans, decode_black_trans, decode_chunk, ??1Flic) - separate matters outside this decision; init carries no protected byte obligation in this task's twelve protected obligations, so this incorporation claims only the reference-binding insight, not task acceptance, baseline change or any demotion of byte-exact claims.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "e839fdcb3b5edeb09cb5e1f29696af56286185e5ee55564d844b3382993f3831",
+  "request_id": "coordinator-ed8912446d8b4ff385582ef2587eb5d9",
+  "schema_version": 1,
+  "sequence": 84,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "ad9afb61035fe5d8aa1bea81d85c48946601f5f2f35f9619ab6fa5004de666cc",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-704784b96a644e0b8d37997cb38c9197",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Insight is expressed in current source (src/flic.cpp working-tree sha256 6349001609d527464d18d835fbb2719fbab42295ebb5412b63c9bcd2af4dd66b): decode_byte_run computes abs(ctrl) at line 593 and frees its scratch row at 611; decode_delta_flc at 666/716 and 739; decode_byte_run_trans at 1040 and 1068; decode_chunk computes only the trailing position correction abs(end - ftell(file_)) at 971 with no free; decode_delta_flc_trans computes abs at 1114/1175 with no free and no mem_get; decode_fli_copy's single trailing heap operation is free(scratch) at 849 with no abs.",
+      "The ORIGINAL call-list markers in the same file carry the two addresses exactly where the mapping requires: decode_byte_run (line 550), decode_delta_flc (629) and decode_byte_run_trans (988) list both 0x00644EF2 and 0x00644F3A; decode_chunk (866) and decode_delta_flc_trans (1083) list only 0x00644F3A; decode_fli_copy (809) lists only 0x00644EF2; fill, decode_black_trans and decode_fli_copy_trans list neither address.",
+      "Fresh scoped binary diagnostics in the unchanged request (sha256 3c74071f5acb1d5064940a996a4746704b99afafe55f48b89c695bdbd5559567, pointer /diagnostics/check/report/candidate/checks/binary/functions) confirm every emitted set: _abs and _free in decode_byte_run, decode_delta_flc and decode_byte_run_trans; _abs only in decode_chunk and decode_delta_flc_trans; _free only in decode_fli_copy; neither in fill, decode_black_trans or decode_fli_copy_trans - each matches its ORIGINAL call list under free=0x00644EF2, abs(int)=0x00644F3A.",
+      "The remaining unknown relocations are structural to isolated-TU scoped checks, not a missing implementation: the same fresh diagnostics show _fread/_ftell/_fseek sites with null binding addresses reported unknown exactly like _free/_abs. Incorporation does not resolve those obligations or prove the identity mapping; the objdump evidence for 0x00644EF2 (heap-validating retail free through IAT slot 0x669198) and the 9-byte abs at 0x00644F3A stays preserved in the finding record for any central CRT identity pinning.",
+      "No further authority is exercised: all six affected identities are current task subjects with no outside owner named (decision_facts outside_delegation empty; each appears once in the fresh impact recheck set), so no expand, investigate_local or route is proposed; investigate was not chosen because the hypothesis needs no further source analysis or repair - current source already emits exactly the reconciled reference sets.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "a92b662c11cb69c72c2c862fc9a57bd22fd0e1add9d39cc89f55e33bde171fea",
+  "request_id": "coordinator-22be6ff2e2fa48bfbf9e1b2a836b1102",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:flic-decoder-recovery"
+}

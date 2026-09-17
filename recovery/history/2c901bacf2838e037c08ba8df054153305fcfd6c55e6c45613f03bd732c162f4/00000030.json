@@ -1,0 +1,21 @@
+{
+  "event_id": "8b31c335165bd5816ed401ebb52002d4e90998c305b43f004ec32f841a5d38c5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-c1b3e3acca5d4cf19a91588476868d54",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/flic.cpp:499 declares `DataChunk *chunks = &chunk_;` above the scan guard (src/flic.cpp:501), preceded by the rationale comment at src/flic.cpp:496-498 naming the single materialization (lea at 0x0062A379) reused at the scan fread and the forward loop's fread/decode_chunk; the local is used at src/flic.cpp:504 (scan-head fread) and src/flic.cpp:550-551 (forward-loop fread plus decode_chunk), exactly the three reuse sites in the finding. This is the applied guard-local spelling, not a planned repair or seed-only body.",
+      "Verified the decision evidence against the unchanged request: build/recovery/agents/agent-89tm8p5t/request.json has SHA-256 5d4d422633d22cf59fda78d8c667825e63e985766eecef088be7d64705e15834 (matches the manifest), and the working-tree src/flic.cpp digest 168a3e332ac62797037bf35cc8bc8be421cbe96f620215f35de9bb296c4a4831 matches the diagnostics epoch, so the fresh scoped checks measured exactly this source.",
+      "Fresh scoped binary check for ?UNK3@Flic@@QAEHH@Z (entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652): the /O2 /Gy /GR- /GX /Z7 trial reaches boundary pass with the current spelling (references still fail on unresolved _ftell/_fread/_fseek targets, bytes fail with 438 differing offsets); /O2 /Oy- remains extent-blocked at candidate 560 vs original 570. Incorporation records only that the insight is expressed in source, not byte, reference or behavioral proof; the discovery's own deck-unk3b measurement already showed chunks-ptr vs chunks-ptr-first identical (444 diff vs 449 baseline), so no spelling choice remains open inside this finding.",
+      "The remaining UNK3 gap is separately tracked: the frame_pos uninitialized-read finding (worker-b90a1fcd8a7a44398b5c65731f72e7fd, also expressed at src/flic.cpp:487-495) is already listed in investigating with transient authorization this round, and the finding decided here affects only entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652, which is inside the current task scope with src/flic.cpp editable; no outside owner is named, so no expansion, routing or deferral is warranted.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "30104210e51266bcaa2894ae9c11f0bab43b882f28cf57e8abb40391d5202330",
+  "request_id": "coordinator-cd873acd48404636af506c3eb543dfbc",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:flic-decoder-recovery"
+}

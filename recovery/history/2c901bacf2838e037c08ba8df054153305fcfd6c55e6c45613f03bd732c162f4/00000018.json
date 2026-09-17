@@ -1,0 +1,20 @@
+{
+  "event_id": "befedccf3dbc1723fbfe0af7ae014c7ff8cba191632cd56cdd0f30c467c1b539",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/palette.cpp",
+      "src/palette.h"
+    ],
+    "evidence": [
+      "Verified 2026-09-16 from the journaled coordination: the original ??1Flic@@QAE@XZ call list contains ??1Palette@@QAE@XZ at 0x005FE2E0, while the current candidate emits ?close@Palette@@QAEXXZ (0x005FE500) under both flag sets because palette.h:114 spells ~Palette(){close();} as in-class implicitly-inline, expanding at the Flic destruction site. The original ??1Palette is an out-of-line BYTE_EXACT thunk (18 callers, body src/palette.h); moving its body out-of-line into palette.cpp restores the compiler-generated teardown call, the proven VC6 lever (heap.h ctor, ~Buffer). Without this scope the flic task is blocked on an owner outside its editable files."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "594f433b9373240f4e7e6b717f93d53fb11f3bbba30fe05587afe050322ec78b",
+  "request_id": "coordinator-scope-palette-dtor",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:flic-decoder-recovery"
+}

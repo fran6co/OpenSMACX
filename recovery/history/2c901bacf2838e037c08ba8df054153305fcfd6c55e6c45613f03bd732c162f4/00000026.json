@@ -1,0 +1,22 @@
+{
+  "event_id": "9ff171fd4c85182b11004ab770e7a4b788db2ecaf0fc73b694d3dc364ac4215d",
+  "payload": {
+    "affects": [
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65",
+      "entity-89a36e1efe67b436795e85562c84b8242a066fddaeb98592f459bd872ca9067b"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-cbdfa0bd91dc4d838efd122369bd4134",
+    "evidence": [
+      "deck-flicopy: rect-readback /O2 52 differing bytes vs baseline 54 (extent 310 agrees); instruction diff shows only mov ecx/push ecx vs mov eax/push eax swaps for the stride and width loads; /Oy- stays 320 extent-blocked; applied to decode_fli_copy.",
+      "deck-dbrb: rect-readback on decode_byte_run /O2 diverges from byte 6 (push edi appears, xor ebx,ebx zero-store prologue lost), 462 diff bytes vs baseline 287; /Oy- 512 extent-blocked either way; rejected, current spelling kept."
+    ],
+    "hypothesis": "The rect read-back spelling (`rect[2] = rect[0] + width`) is context-dependent rather than family-wide: it is 2 bytes closer in decode_fli_copy /O2 (54->52 diff, remaining deltas are ecx-vs-eax choices for immediately-pushed values) but 175 bytes worse in decode_byte_run (287->462) because it destroys the early xor-zero-store prologue, so a winning rect spelling must be scored per function before editing.",
+    "kind": "discovery"
+  },
+  "previous_event": "084cbba3e93e4259c898312e97d6f7553b657cdc924aa7658d9e5b363c72a73d",
+  "request_id": "worker-cbdfa0bd91dc4d838efd122369bd4134",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:flic-decoder-recovery"
+}

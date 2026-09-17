@@ -1,0 +1,22 @@
+{
+  "event_id": "99834c7e983ba0e5ac5904144bd4470ba50dac3cfe1cadbd1023d99b0504ac20",
+  "payload": {
+    "affects": [
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-b8141bda6b5d432caf67b0e04401d892",
+    "evidence": [
+      "deck build/recovery/variants/brt-scope-deck.json scored in build/recovery/variants/brt-scope-result.json: candidates v-rowscope-rcv, v-rowscope-cvr, v-rowscope-vcr, v-pktscope, v-branchscope, v-funcscope-after-row each 576 bytes, boundary fail, under /c /O2 /Gy /GR- /GX /Z7 and /c /O2 /Gy /GR- /Oy- /GX /Z7; control (memset length operand changed) recompiles differently",
+      "build/recovery/variants/build_brt_scope_deck.py documents the six spellings; they only move declaration sites, keeping every fread(&value) use count at 2 and all value mentions",
+      "request.json target diagnostics for the 576-byte candidate record references pass and size 576 under both flag sets; the TRIED note on the flic.cpp marker records the prior 14 cast spellings plus six loop-form spellings capped at 576"
+    ],
+    "hypothesis": "The previously unmeasured declaration-order and scope-placement axis for the decode_byte_run_trans locals is now measured and exhausted: six spellings relocating the value/count/remaining declarations across function, row, packet-body and per-branch scopes all compile to the same 576-byte candidate under both configured flag sets (extent fail against the recorded 582-byte span 0x0062AF40-0x0062B186), so the scope axis does not move register allocation, frame layout or size; the measured plateau on this entity now spans 32 spellings (14 cast spellings, six loop-form spellings, six scope spellings, six zero-use spellings). No product source was edited this round; the 12 passing byte obligations and protected mappings are untouched.",
+    "kind": "discovery"
+  },
+  "previous_event": "5901d15b2f72cc92bdca289f4a181d216638f1fb7cc63dc20be03dd3711daac1",
+  "request_id": "worker-b8141bda6b5d432caf67b0e04401d892",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "c834a70a679773ac26e99d733bb73b4214910f38c7b0db870c9cd08b41b83fe7",
+  "payload": {
+    "affects": [
+      "entity-47d9241aac557b08702e063ea33c95e8efd3ed6ae3e758174849cf2b8feaa51e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-f894732b63454e20a02190efbb997654",
+    "evidence": [
+      "Pre-repair measurement (recover measure, 2026-09-18, build/recovery/tmp-tile-pre.json): ?tile@Buffer@@QAEHPAVBuffer@@HHHHHH@Z at 0x005DA860 compiled 350 instructions against the image's 144, similarity 0.29, 'a different program, not a different allocation' - confirming the independent review's prediction that no post-move tile measurement existed.",
+      "Applied edit (src/buffer.cpp, tile body): 'int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) = &Buffer::copy;' before the tile loops with the loop call spelled '(source->*copy)(this, 0, 0, colX, rowY, tileWidth, tileHeight);', plus a dated TRIED entry on the 0x005DA860 marker recording both measurements.",
+      "Post-repair measurement (build/recovery/tmp-tile-post.json): 146 instructions, similarity 0.917 - the exact best the marker's 24-flag-set history records for the pre-move spelling; the direct call at 0x005DA9BB is restored and the documented frame/residual is unchanged by the lever.",
+      "Post-edit verification: tasks check flic-decoder-recovery reproduces the request state exactly (11 fail / 14 pass scoped entities, 0 compile errors, no unresolved symbols) and tasks check-restoration reports 12/12 obligations pass with zero unrestored - the repair moved no protected measurement."
+    ],
+    "hypothesis": "Buffer::tile's compiled shape is repaired inside authorized src/buffer.cpp: the plain loop call to the in-class 7-arg copy folded the blitter in (350 vs 144 instructions); routing the call through a pointer-to-member restores the image's direct call and returns tile to its documented pre-move allocator plateau (146 instructions, 0.917 similarity, frame 0x28 vs the image's 0x24 - allocator slot preference no spelling reaches).",
+    "kind": "discovery"
+  },
+  "previous_event": "bdaa3773d5c5cdee704a8b5add79cd558f632bcc113f525a9828314c3938b0bf",
+  "request_id": "worker-f894732b63454e20a02190efbb997654",
+  "schema_version": 1,
+  "sequence": 94,
+  "stream": "task:flic-decoder-recovery"
+}

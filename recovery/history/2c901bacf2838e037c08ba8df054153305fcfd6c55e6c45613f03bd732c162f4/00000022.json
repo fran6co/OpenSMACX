@@ -1,0 +1,21 @@
+{
+  "event_id": "7a81e65ad7d43324f7c8b1ba9a2e9267a3d01c96f7fea1e9643445ab753bd834",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-c35649dcd93d4903a4a5f841418cd2cf",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh scoped check in this unchanged request (task flic-decoder-recovery, working tree src/flic.cpp sha256 bed8a87a295bbfcb19929afdf0df481510b98297c23bc39d8eafb9159673dcbf and src/palette.cpp sha256 b3faa41c687b4aaa5b10c3e04dd653d845e17ed6696e34834fcdf33b5bd8d82f, matching the discovery's own measured snapshot) measures all five affected obligations as result pass with references pass and reason 'strict bounded byte/reference agreement': ??0Flic@@QAE@XZ 0x00629D60, ?close@Flic@@QAEXXZ 0x00629DF0, ?decode_frame@Flic@@QAEHHH@Z 0x0062A070, ?UNK2@Flic@@QAEHXZ 0x0062A210, ?rewind@Flic@@QAEHXZ 0x0062A280; report counts pass:12, restoration pass, unrestored empty.",
+      "The specific targets the hypothesis declared permanently unresolvable now relocate with resolved targets and pass in /diagnostics/check/report/candidate/checks/binary/functions: _fclose in close (targets 310 and 286 across both flag sets), _fread target 416 and _fseek target 415 in decode_frame, _fseek targets 415/415/389 in UNK2 and rewind, and the constructor's EH relocations $T49829, ___CxxFrameHandler and __except_list all result pass in the /O2 /GX trial; checks.binary.unresolved_symbols is empty, so none of _fread, _fseek, _fclose, ___CxxFrameHandler, __except_list, $T49818, $T49829 remains blocked.",
+      "The coordinator-owned capability the discovery said discharging these obligations requires has landed in the current framework: commits e7cdca10 'Publish freshly verified toolchain component targets to scoped checks' and 7623e2ba 'Resolve SEH frame artifacts and absolute runtime constants in scoped checks'. The request's binary check now embeds a component_verification section (vc6-runtime archive sha256 1ef9c27b4f76031e40fcbdf7d518adc4969f90d6a00dd1ea88697907268c1b2b, result pass) feeding resolved external targets into the scoped application check, so the premise 'permanently unmeasurable from the task's authorized files under the current framework' no longer describes the current framework.",
+      "The 12 functions that do fail are ordinary byte mismatches in other family bodies, not CRT-blocked unknowns: fill, decode_byte_run, decode_delta_flc, decode_fli_copy, decode_chunk, the *_trans decoders, UNK1, UNK3 and ??1Flic@@QAE@XZ fail bytes with references pass or per-trial differences (fill differing_offsets 26-33 with references pass; the constructor's /Oy- trial fails bytes/refs while its /GX trial passes), matching the task's retained-diagnostic convergence direction. They stay pending restoration work; this rejection grants no acceptance: scope_complete remains false, verification not_measured, component_verification retains 11 unknown components and ?init@Flic remains unknown, so the overall check result and exit_code 3 stand.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "45ec19fdb72869b5466e77537e61b484713cd83ca911686218c89a765131d3c4",
+  "request_id": "coordinator-b378f45ae58c453fb7fbdf5876b22def",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:flic-decoder-recovery"
+}

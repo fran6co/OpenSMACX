@@ -1,0 +1,23 @@
+{
+  "event_id": "63a636de0dd5e2f39b49565b52c66f746967e9465c474d9afcea32d862ce6997",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-35dc4ae272094789acd0b9f53ab3afc1",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The hypothesis is expressed in current source, verified directly: the TRIED note at src/flic.cpp:676-700 records the full structural description - the image reads the line header at one site (0x0062A7C7) entered by both back edges (skip-path jmp 0x0062A7B7 at 0x0062A804, line-tail jl 0x0062A7B7 at 0x0062AA8C) with eight fread sites, while VC6 in this tree rotates the cycle and emits two cloned sites; seven spellings measured 2026-09-17 across both campaign flag sets (decks flic-delta-loopmerge and flic-delta-continue plus local compiles) plateau byte-identical at 1008/960, the Buffer local reaches 992/944, and the single-site continue-merge lands at 928/912-944 with divergent register allocation (kdb 1633 vs the baseline 864), so the note retains the current while spelling as the closest measured form.",
+      "The relevant implementation is the real product body, not a seed or planned repair: Flic::decode_delta_flc at src/flic.cpp:704-816 implements exactly that retained closest form, spelling the line-header fread at the loop head (src/flic.cpp:735) and the skip re-read (src/flic.cpp:739); the working-tree file SHA-256 a39a65395460ff2d30c937313be7257a75bf93e050232a9fc9a291b3492776a2 matches the request's mapped source record for entity-356fc181efee0a59fe11c746c433d866536569295c0dd8ad29d98dac106e7520.",
+      "Fresh diagnostics corroborate the plateau rather than refuting it: the scoped binary check on this unchanged request measures decode_delta_flc 0x0062A720 fail by extent only - candidate 1008 bytes under /c /O2 /Gy /GR- /GX /Z7 and 960 under /Oy- against the independently recorded 967-byte original extent - with nine _fread relocation sites (section offsets 110/175/245/443/490/549/600/636/739) versus the image's eight, exactly the duplicated line-header read the note documents; bytes and references report unknown with no other measured divergence, and the referenced component_verification, generated_tables, shared_functions, layout coverage and recheck_entities arrays contain nothing bearing on this entity.",
+      "No obligation, baseline or claim is demoted: entity-356fc181efee0a59fe11c746c433d866536569295c0dd8ad29d98dac106e7520 is a subject of flic-decoder-recovery and carries no protected byte obligation; the twelve protected obligations (constructor 0x00629D60, close 0x00629DF0, decode_frame 0x0062A070, rewind 0x0062A280, UNK2/UNK4-UNK9 and ~Palette 0x005FE2E0) all measure pass and are untouched, and the ORIGINAL marker at src/flic.cpp:669-670 preserves the 0x0062A720-0x0062AAE7 identity with its 967-byte extent under both fixed flag sets.",
+      "The resolution ground is source expression verified against the unchanged request file (SHA-256 8517205518f2d29588df2ec6c6015ac031c786bbb094bbae1c5b5888a6ee3637), not a passing checker or run budget: the extent failure remains recorded as a diagnostic in the binary check, consistent with the task intent that byte mismatches remain diagnostics rather than goals, and with the framework's 2026-09-17 flic coordination position that diagnostic entities whose residual is compiler-side with no source lever under the two fixed flag sets are resolved within the flic task files once their structural description is expressed in current source.",
+      "Other actions do not fit this finding: its affects list names only the in-scope entity above, so expand or route would grant unneeded scope; the hypothesis is already measured to have no source lever under the two fixed flag sets, so investigate or investigate_local would only re-measure the same plateau; and the evidence corroborates rather than refutes, so reject is unwarranted.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "76c6ef0f4526ee78b2db64996d1d414df8923fa27c44d41a28112687b90e40d9",
+  "request_id": "coordinator-d80f5298816f430388b7b1473502d5d5",
+  "schema_version": 1,
+  "sequence": 72,
+  "stream": "task:flic-decoder-recovery"
+}

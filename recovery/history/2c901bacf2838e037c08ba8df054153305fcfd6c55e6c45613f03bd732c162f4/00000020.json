@@ -1,0 +1,21 @@
+{
+  "event_id": "5bc94492656d7a0f67fb96b7162f47477d50a723b728124e727b7498a2894d1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-30c0df0aa7004d3a9d8095c3b7f2d188",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The hypothesis's lever is expressed in current source, not planned: src/palette.h:125 now declares `MEASURED ~Palette();` out-of-line (lines 112-124 document superseding the in-class `MEASURED ~Palette() { close(); }` on 2026-09-16 via the same measured lever as buffer.h's ~Buffer), and src/palette.cpp:724 defines `MEASURED Palette::~Palette() { close(); }` beside the ORIGINAL marker at src/palette.cpp:703 (0x005FE2E0-0x005FE2E5, kind thunk) with the LEVER recorded there.",
+      "Fresh scoped diagnostic (request sha256 6caeeb5296727a588a3e66972c52e6dc91bd69123e65b44afc90085df865466d, generated units include src/palette.cpp): obligation-e1c0779bde302715589ddc142332990ebd6d813344313534cdc449932d32b699 for ??1Palette@@QAE@XZ at 0x005FE2E0 measures pass — strict bounded byte/reference agreement under /c /O2 /Gy /GR- /GX /Z7 — so the incorporated body is a compiled product definition, not a seed.",
+      "The causal claim is confirmed at the Flic site by the referenced functions evidence (/diagnostics/check/report/candidate/checks/binary/functions): ??1Flic@@QAE@XZ now emits offset 49 `??1Palette@@QAE@XZ` binding 0x005FE2E0 in the /O2 /GX variant and offset 50 the same in the /Oy- variant, replacing the `?close@Palette@@QAEXXZ` 0x005FE500 binding the discovery recorded; the emitted teardown references now match the original call list 0x00629DF0 (?close@Flic), 0x005FE2E0 (??1Palette), 0x005D7410 (??1Buffer) exactly, with the trailing ??1Buffer entry binding the correct original target as the predicted pairing fallout.",
+      "Incorporation is not binary or behavioral proof and does not resolve the family's other residuals: ??1Flic's function verdict remains fail on bytes and the .text$x extent (candidate 21 vs original 35 bytes) — the compiler-generated EH unwind-state residual the discovery itself excluded from this hypothesis as having no corresponding source statement — and those stay with ??1Flic's own obligations; the alphamovie.h/gamma.h teardown-site recheck the finding flagged remains controller-owned recheck context (recheck_entities closure), outside this decision.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "820e9505db5688d2afa922103b3c01ce5a508f02174c3ac97b69f21d137a0548",
+  "request_id": "coordinator-739f20afc2334dc09026b714927c4ab1",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:flic-decoder-recovery"
+}

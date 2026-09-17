@@ -1,0 +1,22 @@
+{
+  "event_id": "2959235e6422eb7c67ce2218f3051b6adf15b402675b2258afb838d6196791c2",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-b5bb2c3939b147d0b34582417b570ab2",
+    "evidence": [
+      "Decoded image tables: trans index bytes at 0x0062AF08 / handlers at 0x0062AEF0 and opaque index at 0x0062AF30 / handlers at 0x0062AF18 map cases 4, 0xb, 0xc, 0x12 to 0x0062AEA1 (fseek chunk->size_-6 then the shared delta-correction tail), same target as the out-of-range ja; real handlers are 7, 0xd, 0xf, 0x10.",
+      "Compiled /O2 switch bounds from deck-chunk baseline: add eax,-7; cmp eax,9 (span [7,0x10]) with fall-through labels 4/0xb/0xc/0x12 dropped; candidate size 608 vs original 541.",
+      "deck-chunk2 measurement: case-4-fseek (explicit fseek per label plus default) compiled 656 under both flag sets (+48 = two extra un-merged fseek bodies), fused-end (size + ftell - 6) is a size plateau (608/624 unchanged, robust a-6 CSE reassoc), rect-locals ties baseline; all lost_passing_measurements empty."
+    ],
+    "hypothesis": "The original decode_chunk spelled the FLI subchunk skip labels (4, 0xb, 0xc, 0x12) as explicit case entries in both switches, not fall-throughs to default: the image's jump tables are dense over [4,0x12] with those four cases routed to the same fseek(size-6) handler as out-of-range, while VC6 fed a fall-through spelling folds them away (table span [7,0x10], compiled 608/624 vs image 541). Duplicating the fseek body per label keeps a wide table but emits un-merged call sites (+48 bytes, 656), proving VC6 does not tail-merge; no idiomatic spelling among those measured reproduces the image's wide table plus single shared body.",
+    "kind": "discovery"
+  },
+  "previous_event": "7a81e65ad7d43324f7c8b1ba9a2e9267a3d01c96f7fea1e9643445ab753bd834",
+  "request_id": "worker-b5bb2c3939b147d0b34582417b570ab2",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:flic-decoder-recovery"
+}

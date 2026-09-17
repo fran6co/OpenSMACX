@@ -1,0 +1,23 @@
+{
+  "event_id": "6ec8b55bb7b0c9cbdc98c79d338966f97f278744dcfe3e39d886b19fb7463677",
+  "payload": {
+    "affects": [
+      "entity-c5c525a9ec05f978680947239922e3e1c1da701f3add273308ccfb65109b408e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-f2f11bf7d26b4b6abc0531beebfc8098",
+    "evidence": [
+      "image call map (recover inspect 0x0062B190 --in src/flic.cpp): 13 calls, 7 fread sites (+91 line_count, +136 opcode single site, +419 0x8000 re-read, +466 skip, +527 run, +576 value, +831 word); fresh /O2 compile: 14 calls, 8 freads - the do-while(true)+break opcode read rotated into entry (+0x84) and back-edge (+0xDE) copies",
+      "image line tail spills dst and the row counter to their homes (mov [esp+0x1c],ebp; mov [esp+0x24],eax) then jl 0x62b204 into the read setup at 0x0062B208-0x0062B218",
+      "official deck flic-trans-continue (both flag sets): continue-merge 1072/1040 and continue-merge-dest-local 1056/1040, all under the 1117 extent with unchanged differing-byte totals (kdb 864/317) - the rotation duplicate is spelling-invariant and removing it drops the function 13-77 bytes under extent",
+      "regional offset comparison: image spans value-read to word-read 255 bytes vs compiled 87, word-abs to end 275 bytes vs compiled 375 - the transparent byte loop and mixed-word loops trade extent between regions beyond statement spelling"
+    ],
+    "hypothesis": "decode_delta_flc_trans's -13-byte extent failure combines the same rotation-duplicated opcode fread (8 emitted sites against the image's 7; the image's single site at +136 is entered by the line tail jl 0x62B204 at 0x0062B46B) with a compensating regional layout: the image carries ~168 more bytes between the per-byte value read (+576) and the word read (+831) and ~100 fewer after the word abs than every measured spelling; no spelling in the measured set reaches the 1117-byte extent, and the residual is VC6-side register allocation and block placement, documented in the function's TRIED note.",
+    "kind": "discovery"
+  },
+  "previous_event": "48098c9b964a27fd3a226ed6feb4d498ded457b02353f221e869e4fd31288991",
+  "request_id": "worker-f2f11bf7d26b4b6abc0531beebfc8098",
+  "schema_version": 1,
+  "sequence": 65,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "6668f29b1087d3c11495c735d6c7c39183366ce8e5eb92d3d250eb3fb1df1553",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-13359bcb43ba4a23988070812eeae274",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source, not merely planned: the adopted pointer-local dirty-rectangle store block (uint32_t *rect = &field_58C_; rect[0]=x; rect[1]=y; rect[2]=x+width; rect[3]=y+height) is present in Flic::fill (src/flic.cpp:787-797), Flic::decode_fli_copy (822-830), Flic::decode_black_trans (1250-1254) and Flic::decode_fli_copy_trans (1281-1285), while the two inline decode_chunk 0xD arms (911-915 and 946-950) use the read-back spelling (rect[2] = rect[0] + width) that interleaves the sums correctly where this lives in esi with no pending pushes; fill's rationale comment (761-786) records the full 19-spelling measurement and the context-dependent-scheduling explanation, so both the adopted form and the residual attribution are in source.",
+      "Fresh diagnostics from the unchanged request (SHA-256 7c59d4404ab8472cfbbb908b074a43e96f5e384f0f7a58717e7704db69a3fa18, pointer /diagnostics/check/report/candidate/checks/binary/functions) corroborate exactly the residual signature the finding predicts: fill fails bytes only at offsets 26-49 with boundary pass and references pass (the single ?fill@Buffer@@QAEHHHHHH@Z relocation at offset 91 passes) under both flag sets; decode_black_trans is identical on both flag sets; decode_fli_copy and decode_fli_copy_trans carry the same store/add bytes failure with boundary pass under /c /O2 /Gy /GR- /GX /Z7 and boundary fail under /Oy- while all callees still resolve (mem_get 0x005D4510, Buffer::get_data 0x005E33F3, _fread, _free).",
+      "Layout coverage in the same request observes Flic completely in both flag sets (size 2788 = 0xAE4, dirty-rect members at 0x58C/0x590/0x594/0x598, buffer2_/file_ pointers as declared), so the finding is confined to body scheduling as claimed and no structural dimension contradicts it.",
+      "No other action fits this finding: all five affected identities are already in current task ownership (outside_delegation is empty), so expand and the outside-owner precondition of investigate_local are moot; investigate would fund another spelling round against the measured 19-spelling hypothesis-stop (decks fill-rect-v1/v2/v3, both flag sets) that the finding itself documents as unreached by any idiomatic standalone spelling; the hypothesis is affirmatively supported by the objdump interleave evidence and the deck measurements, so reject is unwarranted.",
+      "Incorporation records source expression only and discharges no measurement: the bytes-fail obligations of the four standalone bodies, the /Oy- boundary failures of decode_fli_copy and decode_fli_copy_trans, and the separate unresolved-CRT unknowns (constructor $T49835/___CxxFrameHandler/__except_list, close _fclose, decode_frame _fread/_fseek, UNK2 and rewind _fseek) remain visible failure/unknown tails.",
+      "The companion pending finding worker-6bffbdd9da504b36ab5609f5e25f411c (decode_chunk shared-skip-body spelling and the 541-byte extent ceiling) is deliberately left untouched by this decision: its fresh variant evidence shows boundary fail on both flag sets from labels beyond the recorded extent ($L49944 at 0x0062AF00, $L49947 at 0x0062AF0C, $L49946 at 0x0062AF20 past the 0x0062AEED end), its hypothesized two-body original spelling is not what current source expresses, and it stays pending for its own fresh decision.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "ad9afb61035fe5d8aa1bea81d85c48946601f5f2f35f9619ab6fa5004de666cc",
+  "request_id": "coordinator-6cfa9026054d4843a35367423f9acbde",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:flic-decoder-recovery"
+}

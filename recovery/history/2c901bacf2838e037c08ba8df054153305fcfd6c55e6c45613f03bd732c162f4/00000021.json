@@ -1,0 +1,27 @@
+{
+  "event_id": "45ec19fdb72869b5466e77537e61b484713cd83ca911686218c89a765131d3c4",
+  "payload": {
+    "affects": [
+      "entity-30f02220029d6ec3d2f1aa869a47636c3f5aa48660307dc9e5198fc10c5f6073",
+      "entity-4803310bec5bcc7164185cfab5679c816c87cdb91100e6c2e51eea04d564cbff",
+      "entity-4aeb4f34e2a42ce961668d22d0457153440a7223ff14bdf589517502ca37e436",
+      "entity-511f96dcd5205352b535403335f25151dbc8be3928c372e97c449395e3f69ac2",
+      "entity-80eb1d65d28ad14c33f66ca7fee669f86ee429b7ef3c34eacb39b6a5756fc682"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-c35649dcd93d4903a4a5f841418cd2cf",
+    "evidence": [
+      "Request /check/candidate/checks/recovery_result details: the five obligations' only blocking reasons are 'unresolved targets: _fclose', '_fread, _fseek', '_fseek', and '$T49829, ___CxxFrameHandler, __except_list' (constructor); zero obligations fail, and the same unresolved set appears in /check/candidate/checks/binary unresolved_symbols for the task TUs src/flic.cpp and src/palette.cpp.",
+      "packages/match-recovery/src/match_recovery/application_binary.py select_bindings (lines ~40-46): external target addresses are populated only from catalogued entities with a non-seed product source candidate ('targets[candidate[\"symbol\"]].add(entity[\"origin\"][\"address\"])'), while candidates whose component is not None are added to the ambiguous set and refused with reason 'dependency binding: use component verification, not application recovery'; none of _fread, _fseek, _fclose, ___CxxFrameHandler, __except_list, $T49818, $T49829 has a product source definition in src/flic.cpp or src/palette.cpp, so they can never enter the application targets map regardless of body spelling.",
+      "Counter-proof that the existing toolchain-manifest route does not feed application task targets: src/vendor/vc6-runtime.recovery.h already carries a RECOVERY_COMPONENT binding for symbol _free at origin 0x00644EF2 (spans 0x00644EF2-0x00644F3A), yet _free remains in this request's unresolved_symbols for the same scoped check that compiles flic.cpp's mem_get/free calls - only the manifest's RECOVERY_IMPORT lines (DLL imports such as __imp__InitializeCriticalSection) reach the task check, with identity pass.",
+      "Working tree is the exact measured snapshot (src/flic.cpp sha256 bed8a87a295bbfcb19929afdf0df481510b98297c23bc39d8eafb9159673dcbf, src/palette.cpp sha256 b3faa41c687b4aaa5b10c3e04dd653d845e17ed6696e34834fcdf33b5bd8d82f, matching the request's restoration source_evidence), the fresh build_check passes with both TUs compiled and linked and no seed files among link inputs, all other scoped checks (generated tables/coverage, shared functions, object definitions, layout coverage, import bindings) pass, and the independent review (recovery/history/fa7436ac.../00000002.json) approved this snapshot while retaining exactly these CRT-blocked unknowns as verification work."
+    ],
+    "hypothesis": "The five unknown byte obligations for the Flic decoder task (constructor 0x00629D60, close 0x00629DF0, decode_frame 0x0062A070, UNK2 0x0062A210, rewind 0x0062A280) are permanently unmeasurable from the task's authorized files under the current framework, not pending source repair: their strict-reference results are blocked only by component-owned CRT externals (_fclose, _fread, _fseek) and compiler-generated EH symbols ($T49818, $T49829, ___CxxFrameHandler, __except_list), and the application strict comparator resolves relocation targets exclusively from product source definitions while deliberately refusing component-owned symbols. Discharging them requires a coordinator-owned capability - component-verification integration or a framework change in application target resolution - so further worker rounds on these obligations cannot change their result.",
+    "kind": "discovery"
+  },
+  "previous_event": "5bc94492656d7a0f67fb96b7162f47477d50a723b728124e727b7498a2894d1f",
+  "request_id": "worker-c35649dcd93d4903a4a5f841418cd2cf",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:flic-decoder-recovery"
+}

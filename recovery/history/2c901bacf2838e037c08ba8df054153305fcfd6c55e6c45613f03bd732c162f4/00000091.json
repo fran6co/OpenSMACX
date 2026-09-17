@@ -1,0 +1,21 @@
+{
+  "event_id": "61d71e737c35c535fe9b71b2591f254b1f94fc9b0100bc1754d090387e5d7054",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-7707abe4df914a8883eab53cda16704d",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The finding's insight is expressed in current source: Flic::~Flic() at src/flic.cpp:202-212 spells the close() call through the local pointer-to-member 'void (Flic::*close_method)() = &Flic::close; (this->*close_method)();' - the opaque-call spelling that keeps VC6's EH pass from consulting close()'s already-parsed no-throw body - with the ROOT CAUSE 2026-09-18 and APPLIED 2026-09-18 seed history at src/flic.cpp:163-198 and the original marker at src/flic.cpp:126 carrying spans 0x004327A0-0x004327F8 and 0x00653420-0x00653443 (working-tree file sha256 76dcff62a5da0f21593752f66fa96687ec43fd94c170e1dd9e49183d577c4566). This is a product body in an already-editable task file, not a seed or planned repair.",
+      "Fresh scoped check read from the unchanged request (sha256 b9e40993a390a92db204e2c2d953cd512418e8e5741aeac001b674dbf2b52bec, /diagnostics/check/report/candidate/checks/binary/functions): ??1Flic@@QAE@XZ result pass - under /c /O2 /Gy /GR- /Oy- /GX /Z7 bytes pass, boundary pass, references pass, differing_offsets [] on both spans (4401056-4401144 body and 6632480-6632515 funclet), with emitted references matching the finding's mechanism: the direct call ?close@Flic@@QAEXXZ (0x00629DF0) at offset 39 devirtualized from the pointer-to-member, ??1Palette@@QAE@XZ (0x005FE2E0) at offset 54 and ??1Buffer@@UAE@XZ (0x005D7410) at offset 69, i.e. the image's full three-state unwind map with the two-arm funclet.",
+      "Failing and unknown tails preserved: the same fresh check shows the /c /O2 /Gy /GR- /GX /Z7 frame-pointer variant of ??1Flic still failing (boundary fail, candidate_size 96 vs original_size 88, bytes/references unknown), and the joint layout check remains result unknown with witness_missing true (Flic/Palette observed only as mapped_method_hint coverage). Incorporation records source expression, not two-flag-set, layout or behavioral proof; ??1Flic carries no protected byte obligation and nothing is demoted - all 12 protected obligations including ??1Palette@@QAE@XZ pass with restoration pass and unrestored empty (14 pass / 11 fail of 25 scoped entities otherwise unchanged).",
+      "Scope check: the finding's affects list names only entity-1ed38400e559c191ce3ab3a96dd2be482a0c41794f6970ac23e56db90fb7ab73, which is inside the current task subjects and editable files (src/flic.cpp), with empty outside_delegation and unknown_originals - no expansion, worker round or new authority is needed to express it. The hypothesis's closing generalization to the Palette-by-value embedders in gamma.h/alphamovie.h is untested prose outside this task's files and stays unverified; the companion finding worker-ef0a073e01ed4c1b93e6ddd253d30641 (??1Palette declaration-spelling exoneration) remains pending for a separate fresh decision.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "1fc757cfefb06a87457a8cf833836fa40acc24c54b3adc2bc7778d15aa526ce6",
+  "request_id": "coordinator-76c6236dcbbc4d089cd54b1853c446dc",
+  "schema_version": 1,
+  "sequence": 91,
+  "stream": "task:flic-decoder-recovery"
+}

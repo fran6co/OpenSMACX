@@ -1,0 +1,22 @@
+{
+  "event_id": "a3847c2291d64336a42925efe9ad4aaae88eb04ccb1a9738260a5facc909fa6e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-22a25aba4f7c4f2893aa3193b2923225",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/flic.cpp (sha256 6735697e6a916083dc745bdc015e563140247eb64061f1f1bd789a52831df5c9) lines 958-959 spell the end/size pair as two separate member reads exactly as hypothesized (`int end = ftell(file_) + chunk->size_ - 6; int size = chunk->size_;`) inside Flic::decode_chunk (line 899), with the load-merge/no-CSE-hoist rationale documented in the function's source comments (lines 900-917).",
+      "The frame-ring half of the hypothesis is likewise in the implementation: lines 938-954 split the ring counter into the `count` guard variable (`== 0` then `<= 0`) plus a `remaining` copy (`int remaining = count; do {...} while (--remaining != 0);`), the spelling the finding ties to the image's `mov ax,[edi+6]`/`mov edi,eax` ring handoff and the chunk->edi / size->ebx allocation with saved-register pushes sunk under their branches.",
+      "Structural verification from the finding supports the spelling as more than a planned repair: the two-read + ring-split candidate is instruction-identical to the image across the whole 541-byte code region except relocation placeholder fields (structdiff: same 36694 weighted bytes, zero candidate-only/image-only instructions), including the `lea ebp,[eax+ebx-6]` preswitch and the in-arm `add ebx,-6; push ebx` skip body.",
+      "Fresh diagnostics from this unchanged request (sha256 2b9cd2ea6e163eb27495aa4c432faa3a6bdd26f7b0409cd0193452f06d0b2031) confirm the body is real and measured, not seed-only: the scoped binary check lists ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z from src/flic.cpp under both flag sets among 12 pass / 12 fail / 1 unknown selected entities, and check-restoration reports restoration pass with all 12 protected obligations passing (counts pass 12, zero non-pass details), so recording this incorporation regresses no protected measurement.",
+      "Boundary of this decision: incorporation records the spelling insight only and is not a byte-match, extent or acceptance claim. decode_chunk's remaining binary failure is the jump-table placement conflict (VC6 emits the tables inside the 624-byte COMDAT past the recorded 0x0062ACD0-0x0062AEED 541-byte extent), which is the separate pending discovery worker-05b223693afb4b57ad6cce91a7de8623 and stays pending; no verification-policy or baseline change is proposed.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "696f3c3bd6bf6f1caa399264781d28452c803e8460db9d7b5414a1d2dae1e0b0",
+  "request_id": "coordinator-2cb22f70d70d4ac6b0b674cb9bec1f47",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:flic-decoder-recovery"
+}

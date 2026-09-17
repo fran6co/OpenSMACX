@@ -497,8 +497,120 @@ class Buffer {
   // that many palette entries.
   int load_pcx(BYTE *data, DWORD size, Palette *palette, int colour_base,
                int colour_count);
-  int copy(Buffer *destination, int source_x, int source_y, int destination_x,
-           int destination_y, int width, int height);
+  // 0x005DFF00 - THE BLITTER, IN-CLASS since 2026-09-17 (the body lived out
+  // of line in buffer.cpp; the ORIGINAL marker and its full history stay
+  // there beside `// body src/buffer.h`, like get_data's). The image's own
+  // copy was header-inline, and its flic unit was U-keyed (init is
+  // catalogued `PAUBuffer` there): that unit emitted its own PAU COMDAT
+  // alongside this PAV one and the linker ICF-folded them - the only way
+  // one image can hold both spellings of the name. This tree keys every
+  // unit V through this `class Buffer` declaration, so the one PAV COMDAT
+  // spelling serves all callers; flic.cpp records its PAV emissions with
+  // `// symbol` facts instead of re-keying the unit.
+  MEASURED int copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
+                    int width, int height) {
+      if (dib_bits_ == nullptr && surface_ == nullptr) {
+          return 7;
+      }
+      if (buffer == nullptr) {
+          return 3;
+      }
+
+      // A negative read position shrinks the extent and shifts the write
+      // position by the overhang, then clamps: the standard blit clip.
+      if (xCoord < 0) {
+          width += xCoord;
+          wx -= xCoord;
+          xCoord = 0;
+      }
+      if (yCoord < 0) {
+          height += yCoord;
+          wy -= yCoord;
+          yCoord = 0;
+      }
+
+      // `biHeight` is stored negative, so `-biHeight` is the row count.
+      if (xCoord > dib_.bmiHeader.biWidth
+          || yCoord > -dib_.bmiHeader.biHeight) {
+          return 0;
+      }
+      if (xCoord + width > dib_.bmiHeader.biWidth) {
+          width = dib_.bmiHeader.biWidth - xCoord;
+      }
+      if (yCoord + height > -dib_.bmiHeader.biHeight) {
+          height = -(yCoord + dib_.bmiHeader.biHeight);
+      }
+
+      // The write rectangle, clipped against the destination's own clip rect.
+      RECT clipped;
+      clipped.left = wx;
+      clipped.top = wy;
+      clipped.right = wx + width;
+      clipped.bottom = wy + height;
+      if (!IntersectRect(&clipped, &clipped, &buffer->rect1_)) {
+          return 0;
+      }
+
+      // Whatever the intersection moved the write rect by, the read position
+      // moves with it; the extent comes from the intersected rect.
+      xCoord += clipped.left - wx;
+      yCoord += clipped.top - wy;
+      width = clipped.right - clipped.left;
+      height = clipped.bottom - clipped.top;
+
+      if (clipped.left >= buffer->dib_.bmiHeader.biWidth
+          || clipped.top >= -buffer->dib_.bmiHeader.biHeight
+          || buffer->get_data() == 0) {
+          return 3;
+      }
+      uint8_t *const write = static_cast<uint8_t *>(buffer->locked_bits_)
+          + buffer->stride_ * clipped.top + clipped.left;
+      if (write == nullptr) {
+          return 3;
+      }
+
+      if (xCoord >= dib_.bmiHeader.biWidth
+          || yCoord >= -dib_.bmiHeader.biHeight
+          || get_data() == 0) {
+          buffer->free_data(1);
+          return 3;
+      }
+      uint8_t *const read = static_cast<uint8_t *>(locked_bits_)
+          + stride_ * yCoord + xCoord;
+      if (read == nullptr) {
+          buffer->free_data(1);
+          return 3;
+      }
+
+      if (buffer != this) {
+          // Different objects cannot overlap, so rows go in either order.
+          uint8_t *destination = write;
+          const uint8_t *source = read;
+          for (int row = 0; row < height; ++row) {
+              memcpy(destination, source, static_cast<size_t>(width));
+              source += stride_;
+              destination += buffer->stride_;
+          }
+      } else {
+          // SAME BUFFER, so the two rectangles can overlap. Rows are walked
+          // from whichever end keeps the read ahead of the write, and each row
+          // is moved rather than copied because the horizontal shift can
+          // overlap too.
+          const int step = (wy < yCoord) ? 1 : -1;
+          const int first = (wy < yCoord) ? 0 : height - 1;
+          uint8_t *destination = write + first * static_cast<int>(buffer->stride_);
+          uint8_t *source = read + first * static_cast<int>(stride_);
+          for (int row = 0; row < height; ++row) {
+              memmove(destination, source, static_cast<size_t>(width));
+              destination += step * static_cast<int>(buffer->stride_);
+              source += step * static_cast<int>(stride_);
+          }
+      }
+
+      free_data(1);
+      buffer->free_data(1);
+      return 0;
+  }
 
  // PROTECTED, NOT PRIVATE: GraphicWin derives from Buffer and the homed
  // window bodies read these directly - which is what the image does, since

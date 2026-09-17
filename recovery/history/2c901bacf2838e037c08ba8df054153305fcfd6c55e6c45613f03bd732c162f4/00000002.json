@@ -1,0 +1,22 @@
+{
+  "event_id": "d9035d36e328e891e3097cbb7800b972d4cb8f983cde5cc24883197bf652c250",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-58eb5e792d6d4627ba9751c5728a96fa",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Verified the hypothesis against the retained original disassembly (build/recovery/variants/img-0x0062A2C0.json, 166 instructions): the function is frameless (sub esp,0x18 plus four register pushes); pre-loop stores at 0x0062A321/0x0062A32A write base+0x14 (pending_frame) and base+0x18 (pending_pos) while the ftell argument push is live; a complete census of esp-relative dword stores in 0x0062A2C0-0x0062A4FA shows base+0x1c has exactly one writer, the per-iteration spill at 0x0062A35F ([esp+0x30] with five live argument pushes - the unpopped ftell argument plus four fread arguments - confirmed by add esp,0x14 at 0x0062A36A); base+0x1c is read at 0x0062A3BD (copied into pending_pos beside pending_frame=frame_) and at 0x0062A4D8 (exit fseek(file, frame_pos, SEEK_SET)).",
+      "Confirmed the uninitialized-read reachability: 0x0062A33F jg 0x62a3fc skips the scan when frame_ > target (target below current frame with rewind skipped because field_5B4 bit 0 is clear), then 0x0062A3FC compares pending_frame (== frame_, never updated) against frame_ and jge 0x62a4d8 seeks through the never-written slot; any executed loop iteration defines the slot first at 0x0062A35F, so the original defect is confined to exactly the loop-never-entered path, as the finding states.",
+      "The insight is expressed in current product source, not a seed or planned repair: src/flic.cpp:464 declares the hoisted loop-carried frame_pos initialized from the pre-loop ftell (pending_pos), each scan iteration reassigns it at src/flic.cpp:468, the non-decodable update reads it into pending_pos at src/flic.cpp:484, the already-past-target exit seeks it at src/flic.cpp:493, and the comment at src/flic.cpp:456-463 documents the original's uninitialized slot (first store 0x0062A35F) and why the initialization diverges to keep that exit defined - preserving the original's defined-path behavior without preserving its latent defect.",
+      "Scope facts: the only affected identity entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652 is in currently_owned and the task subject list, the finding names no outside owner, and the mapped record shows a product binding at src/flic.cpp:435 with legacy_state implemented, so no expansion, routing or seed binding (bind_seed unavailable) is involved.",
+      "Incorporation is not byte or behavioral proof and resolves no obligation: the fresh scoped check still reports ?UNK3@Flic@@QAEHH@Z as fail - candidate exceeds or misses the independently recorded extent (560-byte candidate vs the 570-byte original span) on both configured flag trials, within a 12 fail / 6 pass / 6 unknown census - so the extent/byte divergence from the deliberate initialization remains a visible failing diagnostic, and task acceptance, matching and any spelling-convergence work stay separate.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "7af3fd57d83fb0658c620688ecb1df00bb2a7cce5d2e7fad1b50d2fc56fb3cb8",
+  "request_id": "coordinator-e3aa3c3b608743509c56c9b29f883bae",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:flic-decoder-recovery"
+}

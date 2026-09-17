@@ -1,0 +1,22 @@
+{
+  "event_id": "eeaa2e50c851d52438426695abfe29c7c3bfb676c14711ec14f32858fbcfec56",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-a9127a8663c94a6f817a0e488a0bc86f",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/flic.cpp:18-35 spells `struct Buffer;` as the TU's first visible tag declaration and records the measured trade-off this finding hypothesized - a TU-wide forward keyed the unit U and emitted init's catalogued `?init@Flic@@QAEHPAUBuffer@@PADHHH@Z`, while use-site `struct Buffer *` spellings re-keyed nothing.",
+      "The repair the hypothesis required is applied under the delegated two-file scope, not planned: src/buffer.h:500-609 holds copy (0x005DFF00) in-class since 2026-09-17 with the header-inline/ICF rationale, and src/buffer.cpp:1492 retains the canonical marker `?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005DFF00-0x005E079B` with the move recorded at src/buffer.cpp:1559-1566 beside `// body src/buffer.h`, matching the framework's 2026-09-17 inline-restore grant exactly.",
+      "Fresh request diagnostics (restoration input_fingerprint f67bd1086d40b868f44067f4e0bfea17f3b941b795fb75c49daf30acf0dce249, check exit 3) confirm the mechanism instead of refuting it: the /O2 /GX trial measures init under its catalogued PAU symbol with boundary pass, empty differing_offsets, and 12 of 15 relocations passing (?init@Buffer 0x005D7670, ?init@Palette 0x005FE330, ?sync_to_palette 0x005DE8F0, CRT _fread/_fseek/_fclose/_env_open); the PAV-vs-PAU symbol-identity unknown that motivated the finding is gone.",
+      "The emitted copy reference in init (offset 503) and UNK9 (offset 58) is now the PAU spelling `?copy@Buffer@@QAEHPAU1@HHHHHH@Z` - the both-spellings state the hypothesis attributed to the original image (one COMDAT per spelling, ICF-folded); both UNK9 flag-set variants show empty differing_offsets with bytes unknown solely on that one unresolved binding.",
+      "Residuals remain visible obligations untouched by this incorporation: the PAU copy name has no catalogued original binding in the scoped check (unresolved_symbols also hold ??_C@_02JKAF@rb?$AA@ and ?PaletteCurrent@@3PAVPalette@@A), 12 CRT-referencing decoder bodies still measure fail, and obligation-f60db6a6 plus init's strict references stay unknown pending binding evidence; no claim is demoted, no flag set or baseline changed.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "33578170705950a10f41334abf28eb0e778ba4956eef757841cca373b53d3fdc",
+  "request_id": "coordinator-1de5ca78a8e845cebee7e2b5da3f0c7f",
+  "schema_version": 1,
+  "sequence": 78,
+  "stream": "task:flic-decoder-recovery"
+}

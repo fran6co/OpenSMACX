@@ -1,0 +1,22 @@
+{
+  "event_id": "a7ec2d9da8fe26bd508aa63087f0cd8f98fe6fb93110c9c2a4e75b050aa38a37",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b6d0a0a46ecc45b7b8d2f35cd4744d81",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Verified current source state: src/flic.cpp sha256 d1862662558c9b74ae646ebc087771e3a7ffd6c1e4be14c7041967a27137397a (mtime 2026-09-17 23:07:32) holds Flic::fill with the ORIGINAL marker 0x0062AB10-0x0062AB72 at line 864, the plain-sum rect stores (rect[2] = x + width; rect[3] = y + height;) at lines 940-941, and the appended 'Closed 2026-09-17 (round 2, three fresh /O2 compiles)' paragraph at lines 917-929 - exactly the edit content the hypothesis describes, so the insight is expressed in the current source, not a planned repair or seed-only body.",
+      "Timeline verified in this checkout: build/recovery/tmp/r6/flic-s0.obj (23:01:47) and flic-{A,B,C}.{cpp,obj} (23:03:12-23:04:57) precede the 23:07:32 src/flic.cpp mtime, and each probe variant diffs against the current file in only the fill rect-store block (destructive-interleaved, assignment-interleaved, read-back) while the current file keeps the plain-sum form - the 23:07 edit's full content is identified as claimed.",
+      "No obligation exposure: fill (entity-dcb8e21d8c49bebdd09b97fd12c4f9f2dcf8bbb9f58a04e97a6816c07cb3654d, 0x0062AB10) is absent from this request's 12 protected byte obligations (UNK7, UNK6, ??0Flic, close, UNK4, UNK5, decode_frame, UNK2, UNK8, ??1Palette, rewind, UNK9), and the request's fresh restoration check measured against the current d1862662 working tree reports result pass with counts pass=12 and unrestored.failed empty.",
+      "Measurement neutrality corroborated by this request's own fresh binary diagnostics (request sha256 30e810709dab757db49c6e5e9cd3322dda43374ff4593f43d0d657918f2d39cc, functions array read in full): fill fails bytes with exactly 18 differing offsets under both configured flag sets with boundary and references pass, overall counts fail=12/pass=13 - the same per-function shape the discovery reports for the pre-edit snapshot, so the hash gap is a timestamp artifact with no measured change.",
+      "No worker attempt is warranted and deferral grounds do not hold: the finding names only the in-scope fill identity inside editable src/flic.cpp, the settled plain-sum spelling and its documented spelling-closure are the product body itself, and no repair or outside-owner dependency remains; incorporation is not byte or behavioral proof - fill's non-obligation 18-offset byte mismatch stays a visible diagnostic and no claim, baseline or acceptance is demoted or granted.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "62df2c1f618665d66a1071d3f8d777bb06188e54fc5942567b223b8424b080ba",
+  "request_id": "coordinator-d15f045eb94a49129c9133588070d7f2",
+  "schema_version": 1,
+  "sequence": 88,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "e030d373948f954b3a1182d2e0c445ad9a012017b13393a5107d77e8f5352851",
+  "payload": {
+    "affects": [
+      "entity-0641b92c0c405745e8330d5b7a73de810469893a4148810357316609018191af"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-a9127a8663c94a6f817a0e488a0bc86f",
+    "evidence": [
+      "flic.cpp header comment (lines 18-30) records the measured trade-off: a struct key emitted PAU references that nothing defines and the game could not link",
+      "sprite, texture and console units already emit PAV against catalogued PAU names the same way - a project-wide accepted convention",
+      "round-2 task check: init remains the single 'unknown' binary result while all 8 init-scope restoration obligations pass"
+    ],
+    "hypothesis": "Flic::init's 'unknown' binary result is the deliberate Buffer class-key mangling trade-off recorded at the top of flic.cpp: keying Buffer as class through buffer.h makes every Buffer-typed name in this unit mangle PAV so Buffer::copy links (buffer.cpp's single out-of-line copy is the PAV spelling), at the cost of init's emitted symbol spelling PAV where the image catalogued the PAU original; the original image held both spellings only because its Buffer::copy was header-inline (one COMDAT per spelling, ICF-folded), and the fix would require re-keying Buffer in buffer.h/buffer.cpp, which sit outside this task's authorized files.",
+    "kind": "discovery"
+  },
+  "previous_event": "0dfa2b612db05035e6d63b8e86df7c384a909a60845886fed2db450566c2e85b",
+  "request_id": "worker-a9127a8663c94a6f817a0e488a0bc86f",
+  "schema_version": 1,
+  "sequence": 67,
+  "stream": "task:flic-decoder-recovery"
+}

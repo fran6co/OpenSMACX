@@ -1,0 +1,24 @@
+{
+  "event_id": "4add25a9235b47989be182bf82f1c9ca22c62af9cbe741ec343b30c985ef1c3f",
+  "payload": {
+    "affects": [
+      "entity-1ed38400e559c191ce3ab3a96dd2be482a0c41794f6970ac23e56db90fb7ab73"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-7707abe4df914a8883eab53cda16704d",
+    "evidence": [
+      "Probe build/recovery/probes/eh-palette-dllexport/ehprobe2.cpp compiled /c /O2 /Gy /GR- /GX /Z7: with close()'s body above the destructor the destructor emits entry state 0, no byte store before the second teardown call, and an 18-byte one-arm funclet; with the destructor above the body (or close undefined) it emits entry state 1, 'mov byte [esp+0x10],0', dword -1 before the third call, and a 29-byte two-arm funclet - the image's 0x004327A0/0x00653420 shape exactly.",
+      "Probe ehprobe3.cpp same flags: 'void (W::*close_method)() = &W::close; (this->*close_method)();' restores the full three-state shape with close's body still above the destructor and the call still a plain direct 5-byte call; '#pragma auto_inline(off)' around close's definition changes nothing (one-arm funclet), and the pointer-to-member literal '(this->*&Flic::close)()' also folds back to the body-profiled direct call (deck dtor-close-pmf-literal scored at baseline bytes 804/864).",
+      "Deck build/variants-dtor2 (four spellings, both campaign flag sets): dtor-close-pmf and the typedef form carry zero differing bytes on both ??1Flic spans under /Oy- with boundary pass; only the fs:0 __except_list relocations remain unknown in the diagnostic trial, and the scoped task check afterwards resolves them - result pass.",
+      "Scoped check build/recovery/tmp-taskcheck-round3.json: ??1Flic variants [/c /O2 /Gy /GR- /GX /Z7]=fail, [/c /O2 /Gy /GR- /Oy- /GX /Z7]=pass (bytes pass, boundary pass, references pass, differing_offsets [] on spans 4401056-4401144 and 6632480-6632515); no other entity's verdict changed (14 pass / 11 fail) and check-restoration reports restoration pass with all 12 protected obligations passing, ??1Palette@@QAE@XZ included.",
+      "The original compile must not have seen close()'s body at the destructor's call site, i.e. the original flic.cpp ordered the destructor before close's definition - the pointer-to-member spelling in the applied fix reaches the same codegen without moving function blocks, which the variants harness forbids ('candidate deck cannot change original identities, spans or historical claims' on the reorder deck build/variants-dtor1)."
+    ],
+    "hypothesis": "The ??1Flic@@QAE@XZ (0x004327A0) failure reduces to one VC6 EH behavior, now root-caused and closed: an embedding destructor's per-member unwind states exist only while every call preceding the member teardowns is opaque to throw analysis. Flic::close() is defined above Flic::~Flic() in src/flic.cpp and its body (member stores plus one extern-C fclose, which /GX treats as no-throw) is consulted by VC6 even though close() is emitted as a real call, not inlined - so VC6 proved the prefix no-throw, collapsed the entry state to 0, emitted no transition before call ??1Palette, and built a 21-byte one-arm funclet where the image carries entry state 1, 'mov byte ptr [ebp-4],0' before call ??1Palette, and the 35-byte two-arm funclet at 0x00653420. Spelling the close() call through a local pointer-to-member (the same opaque-call idiom this file uses for Buffer::get_data/copy) keeps VC6's devirtualized direct call byte-identical while restoring the full three-state map; the fix is applied in src/flic.cpp and the scoped check moves ??1Flic from fail/fail to fail/pass - bytes, boundary and references all pass under /c /O2 /Gy /GR- /Oy- /GX /Z7 with zero differing offsets across both the 88-byte body span and the 35-byte funclet span, 14 of 25 task entities now passing with all 12 protected obligations and restoration unchanged. The same lever likely applies to any embedder whose destructor calls a same-file no-throw member before member teardown (the Palette-by-value embedders in gamma.h and alphamovie.h are outside this task's files and untested).",
+    "kind": "discovery"
+  },
+  "previous_event": "a7ec2d9da8fe26bd508aa63087f0cd8f98fe6fb93110c9c2a4e75b050aa38a37",
+  "request_id": "worker-7707abe4df914a8883eab53cda16704d",
+  "schema_version": 1,
+  "sequence": 89,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,30 @@
+{
+  "event_id": "eb6cb822b86943e9d05165fed47c965e6ae456c84197878b57498dc95f788cbe",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28",
+      "entity-4ba0bb4f8a4f1759ab9fe9d09b15b896070b778bc5b05ea819cc5d1bbebb9d66",
+      "entity-4cf6960a275f724ca7d752b864017bcc4a12aa019407ab88c2f12b50ce7f6367",
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65",
+      "entity-89a36e1efe67b436795e85562c84b8242a066fddaeb98592f459bd872ca9067b",
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6",
+      "entity-dcb8e21d8c49bebdd09b97fd12c4f9f2dcf8bbb9f58a04e97a6816c07cb3654d"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-3e557ca65ede4c5184065d0f8ad2e46e",
+    "evidence": [
+      "local probe build/recovery/variants/probe (tryfill2.py/tryfill3.py, flic-test.cpp identical to src/flic.cpp modulo TRIED comments, vc6-cl /c /O2 /Gy /GR- /GX /Z7, COFF disassembly via dumpcoff.py): plain locals hoist both adds above the stores with dests (edi,esi) exactly as deck-recorded; e1/e11/e40 fresh-member sums anchor adds after both stores and give the y-sum dest eax matching the image at offset 0x2F-0x31, but the x-sum dest stays on the freshly loaded width register and the loads sit at the sums (96 bytes)",
+      "e9/e30/e31/e32 read-back spellings: store-forwarding puts the first add's destination on x's register as the image has it, but the second always lands on height's, the loads reorder to y,height,width,x, the rect1 store sinks below both adds (112 bytes), and all three operand-swap spellings emit one byte-identical body proving VC6 normalizes the tree",
+      "e33/e34 mixed read-back/fresh spellings: both plain stores precede the adds and the first dest is x's register, but the second dest is height's, x is assigned esi where the image uses edx, and the width load is deferred (96/112 bytes); e39 direct-member sum stores keep the store order but sink both sum stores below the call's reload sequence",
+      "e2 all-member spelling (no locals): VC6 performs no load caching at all - every operand reloads at every use including a second [ecx+0x5ac] load for the add (112 bytes) - proving the pointer-local store cache invalidation is what produces the image's four member reloads before Buffer::fill and that the current spelling is the unique producer of the image's load and reload sequences",
+      "fill TRIED comment in src/flic.cpp extended with the fifteen-spelling record and the two anchor mechanisms; tasks check-restoration flic-decoder-recovery rerun after the edit: restoration pass, unrestored failed/tracked/unknown all empty"
+    ],
+    "hypothesis": "The dirty-rectangle add-placement residual in the Flic decoder family is a VC6-internal register-destination allocation that no source spelling reaches: fifteen additional disassembled /O2 compiles (fresh member reads inside the sums, read-back left operands with every operand-swap permutation, direct-member sum stores after pointer stores, all-member spelling, named sum locals, pair locals, array spellings, unsigned operand types) collapse into five emergent shapes, none of which combines the image's four prologue loads (y,x,height,width into eax,edx,esi,edi) with its add destinations (edx,eax) interleaved store,store,add,add,store,store; the read-back mechanism does steer the first add onto x's register via store forwarding but always lands the second on height's, and the fresh-member mechanism anchors both adds after the stores but lands the x-sum on the width register with its load pinned at the sum instead of the prologue (96 bytes, extent-fail against the recorded 98). Thirty-four spellings measured in total across decks fill-rect-v1/v2/v3 and local compiles; the plateau now has direct disassembly evidence rather than deck byte counts alone.",
+    "kind": "discovery"
+  },
+  "previous_event": "915da73433044294fa46b8b995d18a98e1a0e9b7e87edd1e6e7f069d051a11ba",
+  "request_id": "worker-3e557ca65ede4c5184065d0f8ad2e46e",
+  "schema_version": 1,
+  "sequence": 60,
+  "stream": "task:flic-decoder-recovery"
+}

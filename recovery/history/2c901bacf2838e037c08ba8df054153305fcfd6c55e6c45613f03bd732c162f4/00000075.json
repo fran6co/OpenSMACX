@@ -1,0 +1,21 @@
+{
+  "event_id": "c06aa1055d0ea097b5b2d2a972967659c5a4849127ccbe42c2a47f9241e57d2b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "coordinator-pau-mangling-hypothesis",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The hypothesis's specific prediction was measured and failed: worker-0ec2bfe944204f0bb38e93c58f0907ed applied exactly the proposed spelling (int init(struct Buffer *buffer, ...) at the src/flic.h:80 declaration and src/flic.cpp:255 definition, buffer.h still included normally) and freshly compiled it under both configured flag trials; the check still refused init with \"expected one defined COFF function named '?init@Flic@@QAEHPAUBuffer@@PADHHH@Z'\", and a read-only measure of 0x00629E50 against src/flic.cpp reported that PAU name \"not found among the object's .text symbols\" - the use-site elaborated specifier did not override the emitted class-keyed definition, directly refuting use-site keying.",
+      "Current unchanged source and this request's fresh scoped check corroborate the refutation: src/flic.h:80 and src/flic.cpp:255-256 again spell plain `Buffer *buffer` (the experiment was reverted, tree byte-identical to pre-round), and the fresh binary check lists ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z as the single 'unknown' result under both flag trials (/c /O2 /Gy /GR- /GX /Z7 and /c /O2 /Gy /GR- /Oy- /GX /Z7) with the same expected-one-defined-function refusal while all twelve protected byte obligations pass.",
+      "The contrast measurement recorded at src/flic.cpp:18-30 shows the opposite behavior: a TU-wide `struct Buffer;` forward did key the unit U (init emitted PAU) but re-keyed every Buffer::copy reference to ?copy@Buffer@@QAEHPAU1@HHHHHH@Z, a name nothing defines because buffer.cpp's single out-of-line copy is the PAV spelling, so the game could not link. Together the two measurements show VC6 fixes the struct/class (U/V) mangling key at the first visible tag declaration of the type in the translation unit (buffer.h's `class Buffer`) with no per-use-site or per-declaration-site override - the exact per-declaration mechanism this hypothesis asserted.",
+      "This rejection resolves only the refuted use-site-keying hypothesis; the sibling findings worker-a9127a8663c94a6f817a0e488a0bc86f and worker-0ec2bfe944204f0bb38e93c58f0907ed remain pending for separate decisions (the only remaining source lever re-keys Buffer in src/buffer.h/src/buffer.cpp, outside this task's and this delegation's editable files), and no source acceptance, scope, baseline or identity change is made.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "97ae9f4c274ec1b1d94d05e77208e89d2e37da5381adf0e2637a0e6ddbe7fce8",
+  "request_id": "coordinator-5679a2a9284a4cfeb8174c910f59781f",
+  "schema_version": 1,
+  "sequence": 75,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "7af3fd57d83fb0658c620688ecb1df00bb2a7cce5d2e7fad1b50d2fc56fb3cb8",
+  "payload": {
+    "affects": [
+      "entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-58eb5e792d6d4627ba9751c5728a96fa",
+    "evidence": [
+      "Original disassembly (recover inspect 0x0062A2C0, retained in build/recovery/variants/img-0x0062A2C0.json): the pre-loop stores at 0x0062A321/0x0062A32A write base+0x14 (pending_frame) and base+0x18 (pending_pos) while the ftell argument push is still live; the store at 0x0062A35F targets [esp+0x30] with five argument pushes live, i.e. base+0x1c, and add esp,0x14 at 0x0062A36A confirms those pushes were uncleared; base+0x1c has no other writer in the 0x0062A2C0-0x0062A4FA span yet is read at 0x0062A3BD and 0x0062A4D8.",
+      "Current spelling measured after the fix: 169 instructions against the original 166, verdict MISMATCH, result fail - unchanged census (recover measure 0x0062A2C0; uv run recover tasks check flic-decoder-recovery exit 0, counts 12 fail / 6 pass / 6 unknown, identical to the pre-edit census)."
+    ],
+    "hypothesis": "The original ?UNK3@Flic@@QAEHH@Z (0x0062A2C0) keeps its scan position in a loop-carried stack slot that is never initialized before the scan: the slot is first written by the per-iteration spill at 0x0062A35F and read both by the pending-position update (0x0062A3BD-0x0062A3C5, copying the current iteration's frame position into pending_pos) and by the already-past-target exit seek at 0x0062A4D8, so a call whose target is below the current frame (scan loop never entered) seeks to uninitialized stack garbage - a latent bug the image never exercises because the function has no callers. src/flic.cpp now spells this as a hoisted loop-carried frame_pos whose non-decodable update and exit seek read the same variable, initialized from the pre-loop ftell to keep that exit defined, with the divergence documented beside the declaration.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-58eb5e792d6d4627ba9751c5728a96fa",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "e182f86b009fe0a6a0250d88ffbff53f3772bd8fe7cab84f8f5c846a45bc1007",
+  "payload": {
+    "affects": [
+      "entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-b90a1fcd8a7a44398b5c65731f72e7fd",
+    "evidence": [
+      "UNK3 image 0x0062A2E0-0x0062A2FB: slots [esp+0x18]/[esp+0x1c] are first written by pending_frame/pending_pos assignments inside the guarded scan prologue; the exit at 0x0062A4D8-0x0062A4EE reaches a seek reading a slot no store has touched when the scan was skipped.",
+      "Variant measurement: initializing frame_pos from pending_pos compiled 560 (extent-blocked, /Oy-) and failed boundary at /O2 570-extent; the no-init spelling reached /O2 extent agreement (bytes fail, 447 diff) - applied to src/flic.cpp this round."
+    ],
+    "hypothesis": "UNK3's frame_pos local is uninitialized until the scan runs in the original: the already-past-target exit seeks the stack slot whose first write is the scan-head spill, so removing the pending_pos initializer (leaving `long frame_pos;`) is required for /O2 extent agreement, and the deliberate uninitialized read on that path is part of the original's behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "2959235e6422eb7c67ce2218f3051b6adf15b402675b2258afb838d6196791c2",
+  "request_id": "worker-b90a1fcd8a7a44398b5c65731f72e7fd",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:flic-decoder-recovery"
+}

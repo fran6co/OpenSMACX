@@ -1,0 +1,23 @@
+{
+  "event_id": "bdaa3773d5c5cdee704a8b5add79cd558f632bcc113f525a9828314c3938b0bf",
+  "payload": {
+    "affects": [
+      "entity-07c27601a81a927e470284cd138e74836e9d3ab32ce8899c2e3d7ec8c2a78201"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-4657e218f39f4b188f5258bfd89105fa",
+    "evidence": [
+      "Fresh post-move measurement (recover measure, /O2 /Gy /GR- /Oy- /GX, 2026-09-18): ?fill@GraphicWin@@QAEXH@Z at 0x005D5250 (src/graphicwin.cpp:307) compiles 260 instructions against the image's 80, matching_instructions 0, similarity 0.094, historical_byte_obligation false - the 279-instruction in-class blitter folded into it where the original calls 0x005DFF00.",
+      "The image's own call form is direct: inspect of 0x005DA860 shows tile's copy call as form direct, target 0x005DFF00 at 0x005DA9BB, so a devirtualized pointer-to-member call at each site reproduces the original relocation exactly - the lever measured pass on both rewritten copy overloads in src/buffer.cpp (build/recovery/worker-round4-bufferclaims.json) and at flic.cpp's six sites.",
+      "The plain spellings remain at the other outside-scope sites (grep 2026-09-18): src/checkbox.cpp:242, src/radiobutton.cpp:228, src/graphicwin.cpp:402, src/planwin.cpp:253, src/win.cpp:2900, 3125, 4044, 5626, 8301, 8408, 9825 - all unmeasured post-move; the independent review (recovery/history/fa7436ac.../00000005.json) routed them to the preservation sweep or a scope request, and this measurement confirms the folding model's prediction at the first site tested.",
+      "src/buffer.cpp and src/buffer.h are authorized for this task, but graphicwin.cpp, checkbox.cpp, radiobutton.cpp, planwin.cpp and win.cpp are not; the repairs belong to their owners or an explicit scope expansion."
+    ],
+    "hypothesis": "The buffer.h in-class Buffer::copy move's blast radius reaches outside-scope owners: GraphicWin::fill now folds the whole blitter where the image makes a call, so the outside plain 7-arg copy call sites need owner-side repair (same pointer-to-member lever) or a preservation-scope decision before the header move can pass outside-scope compiled preservation.",
+    "kind": "discovery"
+  },
+  "previous_event": "ad64c6ac02654fcc5788dabc45cd56b7930499def4028da3e3f1b327c349be8d",
+  "request_id": "worker-4657e218f39f4b188f5258bfd89105fa",
+  "schema_version": 1,
+  "sequence": 93,
+  "stream": "task:flic-decoder-recovery"
+}

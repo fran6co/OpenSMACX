@@ -1,0 +1,24 @@
+{
+  "event_id": "c5490cd4100497518bde79310ee9b04750eacb7b4f0b9ee463c43a9b94c97fa5",
+  "payload": {
+    "affects": [
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-329ebb921f594835b93d3e2f438ce623",
+    "evidence": [
+      "image 0x0062B0B3-0x0062B11F literal head: movsx ecx,al; push ecx; call abs; add esp,4; xor ebx,ebx; test al,al; mov byte ptr [esp+0x10],al; jbe skip - unsigned byte guard on a byte-stored truncated abs result written back into the 32-bit count slot",
+      "image run path 0x0062B041-0x0062B0B1 reproduced instruction-for-instruction by deck build/variants-round2 candidate count-reuse-runval8: mov al,[esp+0x24]; mov dl,[esi+0x5a4]; mov cl,[esi]; add al,dl; add esp,0x10; cmp al,cl; mov byte ptr [esp+0x14],al; je; paired and-0xff memset arguments; and ecx,0xff; add edi,ecx; add ebp,ecx",
+      "every length use in the image is a dword load plus and 0xff (memset and memcpy size arguments, both cursor advances, and the packet-tail decrement mov eax,[esp+0x10]; and eax,0xff; sub) - a 32-bit count masked in the source, not a uint8_t local as the prior product spelling had",
+      "applied spelling measured in deck build/variants-round3 hoist-u8-ucount: 576 bytes, zero compile errors, aggregate known_differing_bytes 864 under /c /O2 /Gy /GR- /GX /Z7, no lost passing measurements; int-count spelling hoist-u8-icount measured identical (576/864), unsigned kept for the guard and all masked lengths",
+      "the image's value slot is shared by both packet paths at one frame offset with all byte-width accesses (fread dest lea, mov al load, cmp al,cl compare, mov byte store-back), matching the hoisted single function-scope uint8_t value and the sibling decode_delta_flc_trans declaration style"
+    ],
+    "hypothesis": "decode_byte_run_trans's original local model is now measured, not inferred: a single 32-bit count local whose every length use is a dword reload masked & 0xff at source level, reused for the literal run length via (uint8_t)abs((int8_t)count) with a byte store-back and an unsigned count > 0 guard, plus ONE byte-typed value slot shared by the run and literal paths. With the product's call order and branch polarity this model compiles the image's run path instruction-for-instruction. Applied to src/flic.cpp as the hoist-u8-ucount spelling (hoisted shared uint8_t value, unsigned count with count & 0xff masks on memset/memcpy args, both cursor advances, the remaining decrement, and the literal loop bound).",
+    "kind": "discovery"
+  },
+  "previous_event": "412ee7f5f83445984acc43c633735088c488bed6ae8eca1ad93a452053043243",
+  "request_id": "worker-329ebb921f594835b93d3e2f438ce623",
+  "schema_version": 1,
+  "sequence": 46,
+  "stream": "task:flic-decoder-recovery"
+}

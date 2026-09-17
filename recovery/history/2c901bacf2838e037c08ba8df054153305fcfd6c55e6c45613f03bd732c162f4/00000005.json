@@ -1,0 +1,22 @@
+{
+  "event_id": "a5a13082d344ab8b81f37c6540f8ed85f1363218b7b29267903635db74ffceb9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b107934a481c48c2a6ef1c811a722c56",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source verification: the pointer-local store spelling `uint32_t *rect = &field_58C_;` is present at all eight rect sites in src/flic.cpp (lines 558, 766, 801, 886, 921, 980, 1226, 1257), and the VC6 load-cache invalidation mechanism with the 80-to-98-byte extent change is documented in the comment above the body it explains (src/flic.cpp:745-761; Flic::fill body at 744-772, ORIGINAL 0x0062AB10, 98 bytes).",
+      "Fresh controller diagnostics (request ff52e5c1e6d3ca7baea4e571493850bf940457d6f94e17fd2a2c0ec0531f28f8, /diagnostics/check/report/candidate/checks/binary/functions): Flic::fill measures boundary pass at the recorded 98-byte extent under both configured flag sets, differing offsets confined to 26-41,43,49, and the Buffer::fill (0x005D8240) relocation passing; decode_black_trans (0x0062B600) shows the identical confined window with references pass - the member loads, register assignment and four-operand reload block that this discovery attributes to the pointer spelling are byte-exact in the current compile.",
+      "The surviving 26-49 window is the add-scheduling residual owned by the sibling finding worker-8b7c120f918b46a6a1ed399071a52b43, which remains pending for its own separate decision; this incorporation is source expression only, not behavioral or acceptance proof.",
+      "Failure and unknown tails are preserved, not discharged: 12 functions still fail and 6 remain unknown on unresolved targets (_fread, _fseek, _fclose, $T49825, ___CxxFrameHandler, __except_list), decode_chunk boundary-fails under both flag sets, and the layout check still reports witness_missing with zero witnessed definitions.",
+      "All seven affected identities (fill, decode_fli_copy, decode_fli_copy_trans, decode_black_trans, decode_byte_run, decode_byte_run_trans, decode_chunk) are currently owned in flic-decoder-recovery with no outside owners named (outside_delegation empty), so incorporation requires no scope change; noted for the next round, the two decode_chunk type-0xD arms still spell the sums as read-backs while the six standalone sites use plain sums - that inconsistency belongs to the sibling finding's evaluation, not this one.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "a5c97844ee81fe559b9be7d1c3967f22500f94af8359e0df511979638bf24836",
+  "request_id": "coordinator-c70f18ba5e21494d9e5d431423b5a4dc",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -770,7 +770,14 @@ int Buffer::load_pcx(BYTE *data, DWORD size, Palette *palette,
 
 int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int width,
                  int height) {
-    return copy(buffer, xCoord, yCoord, xCoord, yCoord, width, height);
+    // Through a pointer-to-member since the blitter moved in-class into
+    // buffer.h (2026-09-17): a plain call lets /O2's /Ob1 fold the whole
+    // 279-instruction body into this 35-byte shuffle, where the image makes
+    // the call - the same measured lever the get_data sites in flic.cpp use.
+    int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
+        &Buffer::copy;
+    return (this->*copy)(buffer, xCoord, yCoord, xCoord, yCoord, width,
+                         height);
 }
 
 
@@ -799,8 +806,13 @@ int Buffer::copy(Buffer *buffer, RECT *rect) {
     // use downstream, including the argument push order.
     const int top = rect->top;
     const int left = rect->left;
-    return copy(buffer, left, top, left, top,
-                rect->right - left, rect->bottom - top);
+    // Same pointer-to-member spelling as the five-int overload above: the
+    // blitter is in-class in buffer.h now and a plain call inlines it here
+    // too (279 instructions against this shuffle's 21).
+    int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
+        &Buffer::copy;
+    return (this->*copy)(buffer, left, top, left, top,
+                         rect->right - left, rect->bottom - top);
 }
 
 
@@ -1544,110 +1556,14 @@ To close this properly the four arms have to come back, with `get_data` and
 `free_data` inlined at each of them, which is a different body from this
 one rather than an adjustment to it.
 */
-int Buffer::copy(Buffer *buffer, int xCoord, int yCoord, int wx, int wy,
-                 int width, int height) {
-    if (dib_bits_ == nullptr && surface_ == nullptr) {
-        return 7;
-    }
-    if (buffer == nullptr) {
-        return 3;
-    }
-
-    // A negative read position shrinks the extent and shifts the write
-    // position by the overhang, then clamps: the standard blit clip.
-    if (xCoord < 0) {
-        width += xCoord;
-        wx -= xCoord;
-        xCoord = 0;
-    }
-    if (yCoord < 0) {
-        height += yCoord;
-        wy -= yCoord;
-        yCoord = 0;
-    }
-
-    // `biHeight` is stored negative, so `-biHeight` is the row count.
-    if (xCoord > dib_.bmiHeader.biWidth
-        || yCoord > -dib_.bmiHeader.biHeight) {
-        return 0;
-    }
-    if (xCoord + width > dib_.bmiHeader.biWidth) {
-        width = dib_.bmiHeader.biWidth - xCoord;
-    }
-    if (yCoord + height > -dib_.bmiHeader.biHeight) {
-        height = -(yCoord + dib_.bmiHeader.biHeight);
-    }
-
-    // The write rectangle, clipped against the destination's own clip rect.
-    RECT clipped;
-    clipped.left = wx;
-    clipped.top = wy;
-    clipped.right = wx + width;
-    clipped.bottom = wy + height;
-    if (!IntersectRect(&clipped, &clipped, &buffer->rect1_)) {
-        return 0;
-    }
-
-    // Whatever the intersection moved the write rect by, the read position
-    // moves with it; the extent comes from the intersected rect.
-    xCoord += clipped.left - wx;
-    yCoord += clipped.top - wy;
-    width = clipped.right - clipped.left;
-    height = clipped.bottom - clipped.top;
-
-    if (clipped.left >= buffer->dib_.bmiHeader.biWidth
-        || clipped.top >= -buffer->dib_.bmiHeader.biHeight
-        || buffer->get_data() == 0) {
-        return 3;
-    }
-    uint8_t *const write = static_cast<uint8_t *>(buffer->locked_bits_)
-        + buffer->stride_ * clipped.top + clipped.left;
-    if (write == nullptr) {
-        return 3;
-    }
-
-    if (xCoord >= dib_.bmiHeader.biWidth
-        || yCoord >= -dib_.bmiHeader.biHeight
-        || get_data() == 0) {
-        buffer->free_data(1);
-        return 3;
-    }
-    uint8_t *const read = static_cast<uint8_t *>(locked_bits_)
-        + stride_ * yCoord + xCoord;
-    if (read == nullptr) {
-        buffer->free_data(1);
-        return 3;
-    }
-
-    if (buffer != this) {
-        // Different objects cannot overlap, so rows go in either order.
-        uint8_t *destination = write;
-        const uint8_t *source = read;
-        for (int row = 0; row < height; ++row) {
-            memcpy(destination, source, static_cast<size_t>(width));
-            source += stride_;
-            destination += buffer->stride_;
-        }
-    } else {
-        // SAME BUFFER, so the two rectangles can overlap. Rows are walked
-        // from whichever end keeps the read ahead of the write, and each row
-        // is moved rather than copied because the horizontal shift can
-        // overlap too.
-        const int step = (wy < yCoord) ? 1 : -1;
-        const int first = (wy < yCoord) ? 0 : height - 1;
-        uint8_t *destination = write + first * static_cast<int>(buffer->stride_);
-        uint8_t *source = read + first * static_cast<int>(stride_);
-        for (int row = 0; row < height; ++row) {
-            memmove(destination, source, static_cast<size_t>(width));
-            destination += step * static_cast<int>(buffer->stride_);
-            source += step * static_cast<int>(stride_);
-        }
-    }
-
-    free_data(1);
-    buffer->free_data(1);
-    return 0;
-}
+// MOVED IN-CLASS 2026-09-17, restoring the header placement the image had.
+// The flic translation unit is keyed U (see the top of flic.cpp) so its
+// `Buffer::copy` references mangle PAU, and no out-of-line PAV definition
+// can resolve them - the original link carried both spellings because each
+// spelled its own inline COMDAT, folded together by ICF. Same arrangement
+// as get_data above: the body lives in buffer.h, the marker and this
+// history stay here.
+// body src/buffer.h
 
 /*
 Purpose: Release every resource the buffer owns and reset it to its
@@ -3425,6 +3341,15 @@ Purpose: Tile a source buffer across a rectangle of this one, stepping the
 //        leave 3/144 with the same first divergence, and 24 flag sets scored
 //        /O2 as the best at 0.917 similar. Allocator slot preference, not a
 //        source relationship this spelling reaches.
+// TRIED: measured post-move 2026-09-18 (recover measure, /O2 /Gy /GR- /Oy-
+//        /GX): with copy's body in-class in buffer.h, the plain loop call
+//        folds the whole blitter in - 350 instructions against the image's
+//        144, similarity 0.29, first divergence at offset 0 ("a different
+//        program, not a different allocation"). APPLIED 2026-09-18: the call
+//        goes through a pointer-to-member, the same measured lever the two
+//        copy overloads above and flic.cpp's six sites use; VC6 devirtualizes
+//        it to the image's direct call at 0x005DA9BB. The allocator residual
+//        above (frame 0x28 vs 0x24) is unchanged by the lever.
 */
 int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
                  int h) {
@@ -3468,6 +3393,13 @@ int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
                 tilesY++;
             }
 
+            // Through a pointer-to-member since the blitter moved in-class
+            // into buffer.h (2026-09-17): a plain call here folds the whole
+            // 279-instruction body into this 396-byte walker, where the
+            // image makes the call at 0x005DA9BB - the same measured lever
+            // the two copy overloads above and flic.cpp's sites use.
+            int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
+                &Buffer::copy;
             int rowsLeft = tilesY;
             if (rowsLeft > 0) {
                 int rowY = startY;
@@ -3476,8 +3408,8 @@ int Buffer::tile(Buffer *source, int src_x, int src_y, int x, int y, int w,
                     if (colsLeft > 0) {
                         int colX = startX;
                         do {
-                            source->copy(this, 0, 0, colX, rowY, tileWidth,
-                                         tileHeight);
+                            (source->*copy)(this, 0, 0, colX, rowY, tileWidth,
+                                            tileHeight);
                             colsLeft--;
                             colX += tileWidth;
                         } while (colsLeft != 0);

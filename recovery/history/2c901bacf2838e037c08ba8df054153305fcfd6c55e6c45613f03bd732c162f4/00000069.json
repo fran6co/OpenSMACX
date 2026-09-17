@@ -1,0 +1,22 @@
+{
+  "event_id": "8bb5dfe31a2d66c2d9b27edf380abd0656029b0ee95a580f4689a355cc65289e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-c9cb348b44024a8e9b985caca42e5b7b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Delegated authorization: the 2026-09-17 flic-decoder coordination evidence in this run's delegation measures all twelve protected byte obligations passing, names decode_byte_run_trans 0x0062AF40 as a diagnostic entity carrying no byte obligation whose 32+ measured spellings plateau at 576 vs the 582 extent, and authorizes resolving that finding within the flic task files when its structural description is expressed in current source, never demoting claims, changing flag sets or rewriting baselines; this finding is the one carrying decode_byte_run_trans and the rest of the measured plateau family.",
+      "The finding's insight is expressed in current source: every affected identity is implemented as the closest measured idiomatic spelling with the compiler-side plateau rationale preserved as seed history - fill at src/flic.cpp:831 (inline note lines 832-876, thirty-four spellings, destination pair edx,eax unreachable), decode_fli_copy at src/flic.cpp:911 (TRIED at line 900, family-wide add-placement plateau), decode_chunk at src/flic.cpp:974 (extent note lines 959-965 and 1005-1011: 541 code + 80 jump-table + 3 pad bytes reproduce the dispatch byte-for-byte, wide [4,0x12] six-slot table and index table exact), UNK1 at src/flic.cpp:368 (note lines 369-385), UNK3 at src/flic.cpp:501 (TRIED at line 473: all four deck candidates emit one identical 576-byte section), decode_byte_run at src/flic.cpp:603, and decode_byte_run_trans at src/flic.cpp:1160 (TRIED at lines 1128-1156: fourteen spellings, every byte-value spelling caps at 576 against the recorded 582 while 582-byte spellings contradict the image's byte compare); decode_black_trans and decode_fli_copy_trans share the same documented dirty-rectangle block.",
+      "Fresh diagnostics from the unchanged request (sha256 c38a060e25f31f7a3d3a27a33fc7f68cf327103a29742a8b2d5eb28cf0af26ec) preserve the failure tails rather than replacing them: the scoped binary check measures 12 pass / 12 fail / 1 unknown, with fill, decode_fli_copy, decode_fli_copy_trans, decode_black_trans, UNK3, decode_byte_run, decode_fli_copy, decode_chunk, UNK1 and decode_byte_run_trans all still fail under both configured flag sets (decode_byte_run_trans variants: 'candidate exceeds or misses the independently recorded extent' at span 0x0062AF40-0x0062B186), exactly the documented plateaus; incorporation records the expressed structural description, not a byte pass.",
+      "Incorporation boundary respected: the restoration check's twelve protected byte obligations (constructor 0x00629D60, close, decode_frame, rewind, UNK2, UNK4-UNK9 and the out-of-line ??1Palette at 0x005FE2E0) all pass, decode_byte_run_trans carries no protected byte obligation, the Flic layout witness (size 2788 = 0xAE4, all member offsets) and Palette witness (1108) hold under both flag sets, and all six affected identities remain in the read-only recheck impact list - no claim is demoted, no flag set or baseline changes, and the remaining ~Flic EH-funclet, init PAV/PAU and delta loop-rotation findings stay separately pending.",
+      "All six affected identities (entity-23ce21fb, entity-4e0c9433, entity-64768fc9, entity-d1c1894c, entity-dbf73777, entity-dcb8e21d) are inside the current flic-decoder-recovery task scope, so no expansion is requested; no discovery is under transient investigation authorization this round, and a further bounded investigate round would only re-measure the documented spelling-invariant plateaus the finding itself records.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "5ab992823280b909265f137641e4ef791b20e8a23c2b4185abfa1ec60d84b5b4",
+  "request_id": "coordinator-836f63c64a5540b98f8c9529fccaf95d",
+  "schema_version": 1,
+  "sequence": 69,
+  "stream": "task:flic-decoder-recovery"
+}

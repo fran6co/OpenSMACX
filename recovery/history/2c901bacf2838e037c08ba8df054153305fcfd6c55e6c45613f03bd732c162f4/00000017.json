@@ -1,0 +1,29 @@
+{
+  "event_id": "594f433b9373240f4e7e6b717f93d53fb11f3bbba30fe05587afe050322ec78b",
+  "payload": {
+    "affects": [
+      "entity-1ed38400e559c191ce3ab3a96dd2be482a0c41794f6970ac23e56db90fb7ab73",
+      "entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-30c0df0aa7004d3a9d8095c3b7f2d188",
+    "evidence": [
+      "Strict-reference relocation verdict for the /O2 candidate of ??1Flic@@QAE@XZ (entity-1ed38400...): offset 49 emits `?close@Palette@@QAEXXZ` binding 0x005FE500, while the original marker's call list is 0x00629DF0 (?close@Flic), 0x005D7410 (??1Buffer@@UAE@XZ), 0x005FE2E0 (??1Palette) — the candidate contains no reference to ??1Palette@@QAE@XZ at all.",
+      "`uv run recover inspect 0x005FE2E0 --image $OPENSMACX_IMAGE`: 5-byte thunk `jmp 0x5fe500` with 18 catalogued callers, mapped by palette.cpp's ORIGINAL marker `0x005FE2E0 ??1Palette@@QAE@XZ 0x005FE2E0-0x005FE2E5 BYTE_EXACT // body src/palette.h ... // kind thunk`, i.e. the image deliberately routes Palette teardown through this thunk.",
+      "src/palette.h:114 spells `MEASURED ~Palette() { close(); }` in-class (implicitly inline); its own line-113 note records that the emitted thunk is a one-instruction jmp to ?close@Palette@@QAEXXZ, confirming the image kept the destructor out-of-line.",
+      "Contrast within the same candidate: ??0Flic@@QAE@XZ's implicit Palette construction binds `??0Palette@@QAE@XZ` at 0x005FE2A0 and PASSES, because palette.h declares the Palette constructor out-of-line — only the destructor is in-class.",
+      "Precedent: src/buffer.h ~169-197 moved `~Buffer` out of class (2026-09-03) with the measured rationale that the in-class spelling let /O2's /Ob1 expand close()+~Spot into every local Buffer's teardown 'where the image makes `call ??1Buffer@@QAE@XZ` at all 87 of its sites'.",
+      "src/alphamovie.cpp's amovie_project STRUCTURE note independently records the same VC6 behavior: 'the avi paths spell the same thing out (close, close, ~Palette, ~GraphicWin) because VC6 inlined the dtor there'.",
+      "Blast radius beyond Flic: src/alphamovie.h and src/gamma.h also embed Palette by value, so the out-of-line declaration changes their teardown sites too — coordinator should recheck those owners (recheck_entities closure) after the change.",
+      "The trailing `??1Buffer@@UAE@XZ` relocation fail at candidate offset 65 is plausibly positional fallout of the shifted body (binding address 0x005D7410 is the correct original target); re-measure after the Palette callee is restored before treating it as independent.",
+      "Scoping check that this is the family's only callee-identity divergence: UNK1's /Oy- relocation fails (offset 52 `?get_data@Buffer@@QAEHXZ`, offset 186 `?decode_chunk@Flic...`) both bind the correct targets 0x005E3373/0x0062ACD0 from the marker's call list — pairing fallout of UNK1's documented eax-vs-ecx instruction-shape residual, not a wrong callee; decode_chunk and UNK3 fail only on extent with all relocations unknown (unresolved CRT _fread/_fseek/_ftell)."
+    ],
+    "hypothesis": "The in-class inline destructor `MEASURED ~Palette() { close(); }` (palette.h:114) is why ??1Flic@@QAE@XZ fails the strict reference check: VC6's /O2 implies /Ob1, which expands that inline body into Flic's compiler-generated implicit member teardown, so src/flic.cpp emits `call ?close@Palette@@QAEXXZ` (0x005FE500) where the image calls the out-of-line thunk `??1Palette@@QAE@XZ` at 0x005FE2E0. No spelling inside flic.cpp reaches this call — it is generated from palette.h's declaration. The lever is declaring ~Palette out-of-line with its body beside palette.cpp's existing marker, the same measured move buffer.h made for ~Buffer; palette.h/palette.cpp are outside this task's authorized files (src/flic.cpp, src/flic.h), so the change belongs to the Palette owner. Note the in-file TRIED analysis ('13/25 instructions, one single missing EH unwind-state byte') predates this evidence and is incomplete: the masked listing diff it relied on cannot see call-target divergence at all, since a call is a call once its operand is masked.",
+    "kind": "discovery"
+  },
+  "previous_event": "632f384e8ac280ef834fb46632863382421adafccb43921bd8896f043f57738e",
+  "request_id": "worker-30c0df0aa7004d3a9d8095c3b7f2d188",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:flic-decoder-recovery"
+}

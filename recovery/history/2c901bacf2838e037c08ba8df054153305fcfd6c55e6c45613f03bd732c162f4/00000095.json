@@ -1,0 +1,23 @@
+{
+  "event_id": "79662b0691e0a03da90649b18a2fd0afaef924b6973b84bea484da4b92345a79",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The buffer inline-copy restoration (grant 71df0d96) required the pointer-to-member copy lever in Buffer's tile loops (src/buffer.cpp:3401-3412); the fresh scoped check measures that tile identity (0x5DA860-family, entity-47d9241aac...) as affected by the already-applied repair, with restoration 12/12 and zero unresolved symbols. Own that tile identity within this task so its measurement completes instead of hanging outside every delegation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6137952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c834a70a679773ac26e99d733bb73b4214910f38c7b0db870c9cd08b41b83fe7",
+  "request_id": "coordinator-scope-buffer-tile",
+  "schema_version": 1,
+  "sequence": 95,
+  "stream": "task:flic-decoder-recovery"
+}

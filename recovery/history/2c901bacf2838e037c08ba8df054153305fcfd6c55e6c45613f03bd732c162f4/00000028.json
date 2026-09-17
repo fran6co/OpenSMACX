@@ -1,0 +1,21 @@
+{
+  "event_id": "2ed4dbf8d49393cd698632ab9cf43ef18fc1e46c85c708c3aaa7bcc6a4f4c731",
+  "payload": {
+    "affects": [
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-b9d4383853de4235bef31274f6aec4c3",
+    "evidence": [
+      "deck-trans: baseline, u8-casts, int8-casts, int8-casts+compound-add, u8-casts+compound-add all compile 576 bytes under both flag sets (extent-blocked vs 582), identical aggregate known_differing_bytes 833.",
+      "Instruction diff of the /O2 baseline vs image: image prologue is sub esp/push esi/mov [esp+slot],0/mov eax,[esi+0x5a4]; test eax,eax with push ebx+ebp emitted only after the row-count jle (0x0062AF81 region), remaining reloaded as mov eax,[esp+slot]; test eax,eax at each packet-loop head, epilogue pops ebp/ebx before edi; compiled instead pushes ebx in the prologue, keeps remaining in ebx, and spills via cmp-with-ebx."
+    ],
+    "hypothesis": "decode_byte_run_trans's remaining /O2 gap (576 vs extent 582, all five row-loop cast spellings plateau) is register allocation, not spelling: the image zero-initializes scratch with an immediate store (mov [esp+slot],0), sinks push ebx/push ebp under the row-loop guard, tests members via mov+test rather than cmp-with-zeroed-ebx, and keeps remaining memory-homed with volatile-register tests; none of these are reachable from idiomatic packet-loop spellings.",
+    "kind": "discovery"
+  },
+  "previous_event": "9dfd1eaf4081ed4669be34d146936a1915aaf65b1d5a2d80c414524bd3f1e032",
+  "request_id": "worker-b9d4383853de4235bef31274f6aec4c3",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:flic-decoder-recovery"
+}

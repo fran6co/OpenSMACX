@@ -1,0 +1,20 @@
+{
+  "event_id": "43aad9a76faf934b350c1348077e54ad91015e48b19108b182ffe709f6a57461",
+  "payload": {
+    "affects": [
+      "entity-0641b92c0c405745e8330d5b7a73de810469893a4148810357316609018191af"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "coordinator-pau-mangling-hypothesis",
+    "evidence": [
+      "The fresh scoped check names ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z as the single unknown (expected-one-defined-function refusal) while all twelve protected byte obligations pass; the original image's own catalogue records the PAU spelling for init (src/flic.cpp:244 marker) alongside PAV spellings for Buffer::copy (src/buffer.cpp:1480, BYTE_EXACT), proving both keys coexisted in the original build. The MSVC mangler emits A for struct-keyed and B for class-keyed elaborated type specifiers at each declaration site."
+    ],
+    "hypothesis": "MSVC keys the A/B struct-class mangling distinction on the use-site elaborate-type-specifier, not on a translation-unit-wide class key: the original image holds ?init@Flic@@QAEHPAUBuffer@@ (struct-keyed parameter) and PAV-mangled Buffer::copy calls from the SAME original TU, which is only expressible when each declaration carries its own key. Therefore spelling init's parameter as 'struct Buffer *' in src/flic.cpp (declaration and definition, with buffer.h still included normally for the class-keyed copy calls) should emit the catalogued PAU symbol without touching src/buffer.h and without breaking copy linkage - unlike the measured full-TU 'struct Buffer;' forward, which rekeyed every use.",
+    "kind": "discovery"
+  },
+  "previous_event": "63a636de0dd5e2f39b49565b52c66f746967e9465c474d9afcea32d862ce6997",
+  "request_id": "coordinator-pau-mangling-hypothesis",
+  "schema_version": 1,
+  "sequence": 73,
+  "stream": "task:flic-decoder-recovery"
+}

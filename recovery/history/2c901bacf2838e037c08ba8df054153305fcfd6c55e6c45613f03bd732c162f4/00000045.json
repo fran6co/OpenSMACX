@@ -1,0 +1,21 @@
+{
+  "event_id": "412ee7f5f83445984acc43c633735088c488bed6ae8eca1ad93a452053043243",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-cbdfa0bd91dc4d838efd122369bd4134",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current source expresses the finding's per-function scoring outcome: Flic::decode_byte_run (src/flic.cpp:578, rect stores at 589-597) keeps its direct plain-sum spelling after the finding's own deck-dbrb rejection (read-back 462 vs 287 differing bytes, xor-zero-store prologue destroyed), and Flic::decode_fli_copy (src/flic.cpp:842, rect stores at 851-859) also compiles plain sums, so the read-back spelling is nowhere applied family-wide.",
+      "decode_fli_copy's TRIED note (src/flic.cpp:831-838) records that function's own measured verdict: plain sums are the image's spelling (y-first loads into eax/ecx, adds pinned between the store pairs, 310 code bytes + NOP pad, extent boundary passes) while the read-back spelling flips the loads x-first; the residual bytes are the family-wide add-placement plateau documented beside Flic::fill (src/flic.cpp:781-807, naming decode_black_trans, decode_fli_copy and decode_fli_copy_trans as sharing the block) plus size-neutral ecx/eax register permutations in the per-row fread setup - the same permutation deltas the finding's deck-flicopy instruction diff isolated, which supersedes its raw 2-byte read-back advantage.",
+      "Fresh scoped diagnostics on this unchanged scope (request sha256 e95fab8d08c572898acbd9e280946c57c1aaff43442562197c6e20ce3e51136d, /diagnostics/check/report/candidate/checks/binary/functions) confirm the incorporated state: decode_fli_copy /O2 passes boundary at the recorded 310-byte extent with references pass and 37 differing byte offsets while /Oy- stays extent-blocked at 320, and decode_byte_run /O2 passes boundary at 527 with 266 differing offsets while /Oy- stays extent-blocked at 512 - both per-function spellings hold their extents exactly as the finding observed, byte mismatches retained as diagnostics rather than targets.",
+      "The finding's 'applied to decode_fli_copy' read-back edit is no longer the source spelling; what the current source expresses is the finding's actionable content - the rect spelling is context-dependent and must be scored per function before editing - via two distinct per-function spellings and their in-source measurement rationale. This is expression of the insight, not behavioral proof or acceptance: both obligations still measure bytes-fail and remain restoration obligations, and the sibling decode_byte_run_trans allocator findings stay pending and untouched by this decision (worker-24ebc715 already carries this round's investigation; worker-b9d4383853 has no source expression yet and needs its own fresh decision).",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "1a429456631be08d5bcde39769bc723718012313bea67c520c7dfd84d4bc498b",
+  "request_id": "coordinator-1d8f94631c884a9688af1507d66b388f",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:flic-decoder-recovery"
+}

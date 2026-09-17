@@ -1,0 +1,20 @@
+{
+  "event_id": "77d4f9d6b6cfc2ffab8900ed230d78f18235bcd6b9772b69e5c0072305a115e8",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b90a1fcd8a7a44398b5c65731f72e7fd",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The hypothesis is expressed in current source: src/flic.cpp:495 declares `long frame_pos;` with no initializer inside Flic::UNK3 (entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652, original 0x0062A2C0 ?UNK3@Flic@@QAEHH@Z), and the already-past-target exit at src/flic.cpp:527-529 re-seeks it via fseek(file_, frame_pos, SEEK_SET) on the path where the scan was skipped; the surrounding comment records the image evidence that the scan-head spill at 0x0062A35F is the slot's first store. Both the spelling and the deliberate uninitialized read the finding requires are present in the working tree.",
+      "Fresh scoped diagnostics for this unchanged scope (request sha256 1dc50326edc7c00d689884805eba5465821d8f5a12c96f43d379c06524193a39, /diagnostics/check/report/candidate/checks/binary/functions, ?UNK3@Flic@@QAEHH@Z) confirm the finding's predicted effect of that spelling: the /O2 /Z7 variant now reports boundary=pass against the independently recorded 570-byte extent (the initializer variant it replaced failed that boundary), while bytes remain fail with ~447 differing offsets and the /Oy- variant stays 560 vs 570. Incorporation records only that the insight is expressed, not byte, reference or behavioral acceptance; UNK3's wider convergence remains open.",
+      "No expansion, routing or binding is needed: the finding affects only entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652, which flic-decoder-recovery already owns with src/flic.cpp among its editable files, the decision facts list no outside_delegation or unknown_originals for it, and bind_seed is unavailable for this discovery; no route_choices are supplied, so route stays null.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "8b31c335165bd5816ed401ebb52002d4e90998c305b43f004ec32f841a5d38c5",
+  "request_id": "coordinator-c92836d6bbd64341a3c633f05b0504fa",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:flic-decoder-recovery"
+}

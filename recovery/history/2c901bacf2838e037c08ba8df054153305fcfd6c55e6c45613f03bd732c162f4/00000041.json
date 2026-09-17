@@ -1,0 +1,23 @@
+{
+  "event_id": "63011072b4bb702e5ceb27eef9a2b8e5cd2d7e3a85dbf079b21cf28cdd1bb6a7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-e21d5f88d90a46d182867becd074ff1c",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Verified in the unchanged working tree: Flic::decode_fli_copy (ORIGINAL marker 0x0062AB80 at src/flic.cpp:824) now spells the dirty-rectangle block exactly as the finding hypothesizes - y loaded first (int y = field_5B0_ at src/flic.cpp:851 before int x = field_5AC_ at :852), then plain sums rect[2] = x + width; rect[3] = y + height; at src/flic.cpp:858-859 - with the TRIED note at src/flic.cpp:831-838 documenting that read-back flips the loads x-first and that the residual bytes are the family add-placement plateau.",
+      "Fresh scoped binary check in this request corroborates the finding's boundary prediction: ?decode_fli_copy@Flic@@QAEXXZ boundary PASS with bytes FAIL under /c /O2 /Gy /GR- /GX /Z7 and extent-blocked only under /Oy- (candidate 320 vs recorded 310), i.e. the plain-sums spelling passes the extent boundary where the read-back spelling failed.",
+      "The per-function differentiation the finding describes is expressed in current source: decode_byte_run (the finding's affected identity entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65, in task scope) retains its own direct packet spelling at src/flic.cpp:578-620 (fresh check /O2 boundary pass, bytes fail), and decode_chunk's two 0xD arms likewise spell plain sums at src/flic.cpp:970-978 and 1007-1015.",
+      "No protected obligation regressed: the fresh check-restoration in this request reports counts {pass: 12} with zero non-pass details (??0Flic, ??1Palette, close, decode_frame, rewind, UNK2, UNK4-UNK9 all passing); decode_fli_copy is not among the protected set, matching the finding's round-5 deck evidence of lost_passing_measurements: [].",
+      "Incorporation records only that the spelling insight is expressed in source, not byte or behavioral acceptance: decode_fli_copy bytes still differ by the documented family-wide add-placement plateau plus size-neutral register permutations in the per-row fread setup, and the overlapping findings worker-cbdfa0bd91dc4d838efd122369bd4134, worker-b9d4383853de4235bef31274f6aec4c3 and worker-24ebc715a07b4eee81ec6b85ca4f2b70 remain pending untouched.",
+      "Read the full request file (sha256 328bbdad4b76f7679d8a25263ec4042b316e94af514de9d6e801fc898df7b58a) and the referenced evidence values before deciding: binary.functions per-variant boundary/bytes results for all four discovered functions, generated_tables (Net vtables at 0x0066EB04, unrelated to Flic), layout.coverage (Flic 2788-byte and Palette 1108-byte definitions observed under both flag sets), component_verification (vc6-runtime archive pass, 11 unknowns), and recheck_entities (2883 ids, impact context only).",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "2d92584680c0bc3c0167de77aad7dda38b40636b2a042a4031d4938927d2a8f2",
+  "request_id": "coordinator-26af1aba24f840feb80ae85676bfc567",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:flic-decoder-recovery"
+}

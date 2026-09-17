@@ -1,0 +1,22 @@
+{
+  "event_id": "4753c816a3baa51c453e0b708e9979a6362f7c9516bcd13012b29f6b8ba41a67",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-05b223693afb4b57ad6cce91a7de8623",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh scoped diagnostics in this unchanged request (diagnostics/check/report/candidate/checks/binary/functions, decode_chunk 0x0062ACD0; src/flic.cpp sha256 7a1f34b37696e9a1647d0dffe84e4eeb4bf29a8c39ab026e4cc6ae21f22ab6be matches the measured working tree) show the /O2 trial boundary=pass with alignment_fill=0 over the recorded span 0x0062ACD0-0x0062AF40 (6466768-6467392, 624 bytes), and all twelve switch-table label relocations INSIDE the original at offsets 147-604 ($L49949/$L49950/$L49951/$L49952, $skip2$47987 x4, $L47958/$L47959/$L47960/$L47967, $L47977/$L47978/$L47979/$L47985) each result=pass: a table-bearing spelling now passes the boundary, so the hypothesis' core mechanism ('any table-bearing spelling fails with relocations outside the original') no longer holds under the current record and policy.",
+      "The fixed 541-byte extent premise is superseded in current source: src/flic.cpp:889-896 records the corrected mapping '0x0062ACD0 ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z 0x0062ACD0-0x0062AF40 ... size 624 bytes (extent corrected 2026-09-17: 541 code-to-ret bytes plus the two switch jump-table pairs the original image carries at 0x0062AEED-0x0062AF38 ... 80 table bytes and 3 pad)', and the fresh check reads exactly that span (end 6467392 = decode_byte_run_trans's start 0x0062AF40). The cited flic-round5 deck failure (candidate_relocations_outside_original [544..604] under both flag sets) was measured against the old incomplete code-to-ret extent, i.e. a historical measurement, not the current boundary input.",
+      "What remains on entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28 is ordinary per-spelling work, not a policy/compiler placement conflict: the same /O2 variant fails bytes at 36 differing offsets in two clusters (206-229 and 385-408, the add-placement residuals the annotation itself documents), and references=unknown only for the unresolved CRT imports _ftell (offsets 100, 494) and _abs (502), which the task-level binary check reports globally (unresolved_symbols _abs/_ftell/_memset) alongside the vc6-runtime component verification with unknown link selection - none of which is the claimed table-placement conflict.",
+      "The /Oy- trial alone still fails boundary at candidate 656 bytes versus the 624-byte span (one relocation at offset 624), a flag-set size excess of the identical table-bearing spelling, while every protected obligation on this task passes on the single /O2 trial (restoration counts pass:12, zero non-pass details, restoration result 'pass' in this request); 'structurally unpassable under the current boundary policy' is therefore not sustained by any current measurement, only by the superseded extent record.",
+      "The finding's still-valid observations (VC6 emitting the switch tables inside this COMDAT under both campaign flag sets, and the original image carrying them at 0x0062AEED-0x0062AF38) are already preserved in the source annotation, including the residual stale 'Extent note' at src/flic.cpp:936-942 that repeats the superseded 0x0062ACD0-0x0062AEED wording; rejecting the discovery hides nothing and accepts no code.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "7fab12eb03d196c7660f606019e81f566b012828803eef0539d36bf3ef3b1204",
+  "request_id": "coordinator-7820a04ca06842d38a09e7e6987fe252",
+  "schema_version": 1,
+  "sequence": 43,
+  "stream": "task:flic-decoder-recovery"
+}

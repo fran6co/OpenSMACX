@@ -1,0 +1,23 @@
+{
+  "event_id": "a32887fb63649f04b7984bcb84f485f4dab659001ba717a9cdeda2c79e440fc1",
+  "payload": {
+    "affects": [
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-24ebc715a07b4eee81ec6b85ca4f2b70",
+    "evidence": [
+      "image frame map reconstructed from img-0x0062AF40: 0x1c frame with count@+0x0, src temp@+0x4, remaining@+0x8, row_dst@+0xc, row_src@+0x10, row counter@+0x14, scratch@+0x18; pushes at 0x0062AF43 (esi), 0x0062AF8B (edi), 0x0062AFEF-0x0062AFF0 (ebx/ebp under the jle)",
+      "six spellings measured locally: product for+pre-read 570 code bytes, while+trailing-decrement 570, offset-local no change (optimized away), commuted sums no change, single-advancing-cursor 560 (frame collapses to 0x18) - best stays 12 bytes short of the image's 582",
+      "in every candidate ebx is taken by remaining across the packet loop (early push ebx, xor ebx,ebx entry, cmp-with-ebx member tests), while the image frees ebx for i by memory-homing remaining; the 560 single-cursor result proves the image sits between the two spellings (0x18 vs 0x1c vs 0x20 frames)",
+      "decode_byte_run's direct rect spelling was preserved untouched (528-byte neighbor, +1 known)"
+    ],
+    "hypothesis": "decode_byte_run_trans's image register allocation requires a staggered push schedule (push esi at entry, push edi at the rect block, push ebx/ebp sunk under the row-count guard) with scratch, the row counter and remaining all memory-homed (remaining reloaded at each packet-loop head, width/height re-read from members each row, immediate `mov [esp+0x1c],0` stores) so ebx goes to the literal-loop counter i, edi to dst and ebp to the src cursor - no source spelling among those measured tips VC6's allocator into that assignment",
+    "kind": "discovery"
+  },
+  "previous_event": "b7257cca59241a5fe15995df248552c68a9caae55ffdaa920e8c342f9121e6a6",
+  "request_id": "worker-24ebc715a07b4eee81ec6b85ca4f2b70",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:flic-decoder-recovery"
+}

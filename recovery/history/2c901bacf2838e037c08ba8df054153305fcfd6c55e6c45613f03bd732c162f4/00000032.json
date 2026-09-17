@@ -1,0 +1,23 @@
+{
+  "event_id": "60054b5fe7cd31531a38a123d1f36aebf46d6f10735250ddcef41e0911b078ea",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-1b1f8fa2363942e494de8485743bf58b",
+    "evidence": [
+      "goto-label candidate emits index table [0,5,5,1,5,5,5,0,0,2,5,3,4,5,0] byte-identical to the image table at 0x0062AF08, with handler table slot0=slot5=0x0062AEA1 (the skip body) exactly as the image's table at 0x0062AEF0",
+      "every break/duplicate-default spelling measured collapses to the narrow [7,0x10] four-slot fold (probes sw2/probe_e/probe_f, all 160 bytes wide-table; prior deck round: nodup 608/624, oneswitch 528)",
+      "reordering source arms to 7, 0xF, 0xD, 0x10 reproduced the image's body layout (case-7 arm, byte_run call, 0xD block, copy/fill tail, 0x10 arm) in both the transparent and opaque switches",
+      "applied to src/flic.cpp; product compiles to 541 code bytes + 3 pad + 80 table bytes = 624 COMDAT, equal to the image's linked 0x270 section"
+    ],
+    "hypothesis": "Flic::decode_chunk's dispatcher is spelled as a goto into a labeled default arm: that is the only switch shape that keeps the image's wide dispatch span [4,0x12] with six handler slots (slot0 = slot5 = ja-target = the single shared skip body, zero stubs), and the skip handler does NOT fall through into the delta-correction tail - it rejoins through the same post-switch jmp to the shared tail at 0x0062AEB6 every other arm uses; the case bodies are emitted in source order 7, 0xF, 0xD, 0x10 in both switches",
+    "kind": "discovery"
+  },
+  "previous_event": "77d4f9d6b6cfc2ffab8900ed230d78f18235bcd6b9772b69e5c0072305a115e8",
+  "request_id": "worker-1b1f8fa2363942e494de8485743bf58b",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:flic-decoder-recovery"
+}

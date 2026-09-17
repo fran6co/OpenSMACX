@@ -1,0 +1,21 @@
+{
+  "event_id": "1fc757cfefb06a87457a8cf833836fa40acc24c54b3adc2bc7778d15aa526ce6",
+  "payload": {
+    "affects": [
+      "entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-ef0a073e01ed4c1b93e6ddd253d30641",
+    "evidence": [
+      "Probe build/recovery/probes/eh-palette-dllexport/ehprobe.cpp compiled /c /O2 /Gy /GR- /GX /Z7: W_plain (plain out-of-line dtor) and W_dl (dllexport dtor declaration) emit identical 96-byte destructors - entry state 1, 'mov byte [esp+0x10],0' before the second teardown call, dword -1 before the third - and identical 29-byte two-arm funclets; both match the image's 0x004327A0/0x00653420 shape.",
+      "Scoped check build/recovery/tmp-taskcheck-round3.json after the applied change: ??1Palette@@QAE@XZ passes both flag trials and all 12 protected obligations including the ??1Palette BYTE_EXACT obligation still pass (check-restoration restoration pass, unrestored empty), with palette.h/palette.cpp unmodified this round."
+    ],
+    "hypothesis": "The declaration spelling of ~Palette is exonerated in the ??1Flic mismatch: __declspec(dllexport) on an out-of-line member destructor declaration has no effect on EH unwind-state assignment in embedding classes. A plain out-of-line '~P();' declaration and a dllexport 'MEASURED ~P();' (src/palette.h:125's exact spelling) produce byte-identical destructor bodies and funclets in an embedder whose other call sites keep the member teardowns opaque; the previously suspected link from palette.h's MEASURED to the missing palette_ unwind arm is disproven, so no palette.h/palette.cpp change is needed or warranted for the EH behavior, and the passing ??1Palette@@QAE@XZ obligation is untouched by the applied flic.cpp fix.",
+    "kind": "discovery"
+  },
+  "previous_event": "4add25a9235b47989be182bf82f1c9ca22c62af9cbe741ec343b30c985ef1c3f",
+  "request_id": "worker-ef0a073e01ed4c1b93e6ddd253d30641",
+  "schema_version": 1,
+  "sequence": 90,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "5e1a7de475bd2275fa484720df48444ddd2aec0f7e80c24ca396088a254f5a38",
+  "payload": {
+    "affects": [
+      "entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-2f588e9a73dd43cfbd661874fb1682f8",
+    "evidence": [
+      "objdump of terranx_original.exe 0x0062A2C0-0x0062A4FA: signed jumps exclusively — jge at the scan head and pending-frame exit (0x62A2E7, 0x62A42C, 0x62A402), jle through the scan (0x62A37F, 0x62A3F0), jl at the scan tail and decode loop (0x62A3B5, 0x62A4C6). No ja/jbe/ja-equivalent appears at any frame_ comparison.",
+      "Deck trial under /c /O2 /Gy /GR- /Oy- /GX /Z7: the static_cast<int> candidate differed by 126 bytes vs 317 for unsigned-compare candidates, and its compiled listing emitted jge/jl/jle exclusively at those sites; the /O2 /Oy- trial was unchanged. UNK3 remains boundary-fail 560 vs 570 bytes from register-allocation/frame-layout deltas (the image keeps &chunk_ in ebx across the function), not from the compares.",
+      "Current src/flic.cpp Flic::UNK3 carries static_cast<int>(frame_) on the target < frame_ rewind guard, the scan entry (frame_ <= target), the scan do-while tail, the pending-frame exit comparison and the decode loop condition."
+    ],
+    "hypothesis": "UNK3's original compares frame_ against the scan target as signed int: the image uses signed condition codes exclusively (jge/jle/jl) at every frame_ comparison, while plain uint32_t member compares lower to unsigned jumps (ja/jbe). The static_cast<int>(frame_) spelling on the four scan compares plus the pending exit restores the signed condition codes without changing function size; it is applied in current source.",
+    "kind": "discovery"
+  },
+  "previous_event": "0d6060d89ace7b5184e630548df14e08f5afdd7d2eeaec07d5fde9291665a0f5",
+  "request_id": "worker-2f588e9a73dd43cfbd661874fb1682f8",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:flic-decoder-recovery"
+}

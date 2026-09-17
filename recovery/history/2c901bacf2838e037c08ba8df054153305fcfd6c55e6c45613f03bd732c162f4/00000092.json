@@ -1,0 +1,22 @@
+{
+  "event_id": "ad64c6ac02654fcc5788dabc45cd56b7930499def4028da3e3f1b327c349be8d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-ef0a073e01ed4c1b93e6ddd253d30641",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source as the exact structure the exoneration endorses, requiring no change: the out-of-line declaration `MEASURED ~Palette();` at src/palette.h:125 (with the 2026-09-16 out-of-line LEVER note at src/palette.h:111-124) and the definition `MEASURED Palette::~Palette() { close(); }` at src/palette.cpp:729 beside the BYTE_EXACT marker at src/palette.cpp:708 (verified working-tree sha256 5fc3a457ac260fca1bab361063d9d26e564c17f0af30e3135aa2731090ae2e58, matching the request's mapped record; both palette files unmodified this round). The exoneration itself is recorded in seed history at src/flic.cpp:177-180 ('The declaration spelling of ~Palette is exonerated... probe W_plain/W_dl').",
+      "Probe verified by reading build/recovery/probes/eh-palette-dllexport/ehprobe.cpp: W_plain and W_dl differ only in __declspec(dllexport) on the embedded member's out-of-line destructor declaration, all member teardowns kept opaque as flic.cpp sees Palette, so the finding's measured result (identical 96-byte destructor bodies and identical 29-byte two-arm funclets, both matching the image's 0x004327A0/0x00653420 shape) directly tests and disproves the suspected link from palette.h's MEASURED spelling to the missing palette_ unwind arm.",
+      "Fresh diagnostics from the unchanged request (sha256 33d7491ce92f46096766fd6e21f30586aea15d04c689044ec1ad949f9f9db6fd, functions array read in full) corroborate: ??1Palette@@QAE@XZ (entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9) passes BOTH flag trials - bytes pass, boundary pass, references pass, sole relocation the tail-jump to ?close@Palette@@QAEXXZ (0x005FE500) - and ??1Flic@@QAE@XZ passes calling ??1Palette@@QAE@XZ at 0x005FE2E0 (offset 54 in .text, offset 21 in .text$x); all 12 protected obligations pass with restoration pass and unrestored empty.",
+      "Failing and unknown tails preserved: the same fresh binary check keeps result fail with 11 of 25 scoped identities failing (e.g. decode_byte_run_trans at 576 vs 582 bytes under both flag sets, the documented compiler-side plateau entity carrying no byte obligation), the /GX frame-pointer variant of ??1Flic still boundary-fails (candidate 96 vs original 88), build/structure/runtime verification remain unknown, and the layout check remains unknown with witness_missing true. Incorporation records source expression only, not two-flag-set, layout or behavioral proof; no claim is demoted and no baseline changes.",
+      "Alternatives disposed with evidence: no worker round is warranted because the finding's own conclusion is that no palette.h/palette.cpp change is needed and the probe already measured the exact suspected mechanism; no outside owner is named (outside_delegation empty and the sole affected identity entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9 is currently owned in task scope); reject would require evidence refuting the exoneration and none exists; deferral grounds of insufficient evidence or authority do not hold. This completes the disposition of the ??1Flic EH investigation whose other half (worker-7707abe4df914a8883eab53cda16704d, the applied pointer-to-member fix) was incorporated at decision 91.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "61d71e737c35c535fe9b71b2591f254b1f94fc9b0100bc1754d090387e5d7054",
+  "request_id": "coordinator-802c1d74c88246618924b85b1e4289e7",
+  "schema_version": 1,
+  "sequence": 92,
+  "stream": "task:flic-decoder-recovery"
+}

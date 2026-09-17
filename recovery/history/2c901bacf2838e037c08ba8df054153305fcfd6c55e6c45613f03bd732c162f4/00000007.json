@@ -1,0 +1,27 @@
+{
+  "event_id": "13bb18367fabe30282be771aed0fc598fad81852e71013cfbe416c5f4bdadfed",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28",
+      "entity-356fc181efee0a59fe11c746c433d866536569295c0dd8ad29d98dac106e7520",
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65",
+      "entity-89a36e1efe67b436795e85562c84b8242a066fddaeb98592f459bd872ca9067b",
+      "entity-c5c525a9ec05f978680947239922e3e1c1da701f3add273308ccfb65109b408e",
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-704784b96a644e0b8d37997cb38c9197",
+    "evidence": [
+      "objdump of terranx_original.exe at 0x00644F3A: mov eax,[esp+4]; test eax,eax; jge +2; neg eax; ret — the 9-byte abs(int). At 0x00644EF2: push esi; mov esi,[esp+8]; test esi,esi; je ... with heap-block validation (push 9; calls into 0x647d04/0x647df4/0x647e1f) and HeapFree through IAT slot 0x669198 — the retail free(void*).",
+      "Cross-check inside decode_fli_copy (0x0062AB80-0x0062ACB6): the span's calls are 0x005D4510 (mem_get), 0x005E33F3 (Buffer::get_data HHH), 0x00646178 (fread) in its row loop, and one call to 0x00644EF2 at 0x62ACAA as the last call before the epilogue — where the body's single trailing heap operation is free(scratch); its ORIGINAL marker lists 0x00644EF2 without 0x00644F3A, and neither the seed nor the product body computes an abs there.",
+      "Under this mapping every checked Flic function's emitted references reconcile with its ORIGINAL call list: decode_byte_run, decode_delta_flc and decode_byte_run_trans emit both _abs and _free (both addresses listed); decode_chunk emits _abs only for the trailing position correction abs(end - ftell(file_)) (only 0x00644F3A listed; image: lea ebp,[eax+ebx-6] ... sub ebp,eax; call 0x00644F3A at 0x62AEC2); decode_delta_flc_trans emits _abs with no _free and no mem_get, matching its four-entry list; decode_fli_copy emits _free only, matching its four-entry list. Current src/flic.cpp spellings already emit exactly these sets."
+    ],
+    "hypothesis": "The two uncatalogued CRT addresses in the Flic family's ORIGINAL call lists are free = 0x00644EF2 and abs(int) = 0x00644F3A; pinning these identities reconciles every checked function's emitted reference set with its ORIGINAL call list, and explains why the strict reference comparator cannot resolve them (isolated TU compiles leave _free/_abs unbound, producing unknown rather than fail — the same terminal state as the _fread/_fseek/_fclose/EH obligations).",
+    "kind": "discovery"
+  },
+  "previous_event": "192818a3a0f7ad77d847cb5a6905203e7f997f0028f257ba186788a8e5607b68",
+  "request_id": "worker-704784b96a644e0b8d37997cb38c9197",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:flic-decoder-recovery"
+}

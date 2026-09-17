@@ -1,0 +1,21 @@
+{
+  "event_id": "084cbba3e93e4259c898312e97d6f7553b657cdc924aa7658d9e5b363c72a73d",
+  "payload": {
+    "affects": [
+      "entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-c1b3e3acca5d4cf19a91588476868d54",
+    "evidence": [
+      "UNK3 image 0x0062A379: lea ebx,[esi+0xab4] emitted once between the frame compare and the loop guard, reused at 0x0062A39E (scan fread push) and 0x0062A3E3/0x0062A3EE (forward-loop fread and decode_chunk).",
+      "deck-unk3b: chunks-ptr and chunks-ptr-first both compile /O2 with a single lea reg,[esi+0xab4] and byte-diff 444 vs baseline 449; identical between the two positions; applied the guard-local spelling with a rationale comment."
+    ],
+    "hypothesis": "UNK3 materializes &chunk_ exactly once above the scan guard and reuses the register at the scan fread and the forward loop's fread/decode_chunk sites; spelling it as a DataChunk* local declared at the guard reproduces the single lea and is 5 diff bytes closer at /O2, with declaration position (function top vs at the guard) a plateau.",
+    "kind": "discovery"
+  },
+  "previous_event": "e182f86b009fe0a6a0250d88ffbff53f3772bd8fe7cab84f8f5c846a45bc1007",
+  "request_id": "worker-c1b3e3acca5d4cf19a91588476868d54",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,25 @@
+{
+  "event_id": "7df16785e3323de70c91647df36fd3887af4770f045bd825a48013e147a01798",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-bf8deb72852e4d6d9f28d9d4764d2b1f",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Verified the authoritative request file SHA-256 7e0026ab680b0d07a64054b68bbd7fa2eaa0e50e66d57a842446c0d5f100d326 and read the JSON-Pointer-referenced diagnostics (/diagnostics/check/report/candidate/checks/binary/functions, component_verification, layout/coverage) before deciding.",
+      "Fresh scoped-check record for ?decode_byte_run_trans@Flic@@QAEXXZ (entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6, span 0x0062AF40-0x0062B186): candidate_size 576 vs original_size 582 under both configured flag sets, boundary fail only (\"candidate exceeds or misses the independently recorded extent\"), references unknown, candidate_relocations_outside_original empty - the gap is extent-only, not a reference or relocation defect.",
+      "Restoration check in the same fresh run: all twelve protected byte obligations pass with no failed/tracked/unknown unrestored entries, including ??1Palette@@QAE@XZ at src/palette.cpp:703; decode_byte_run_trans is a diagnostic entity carrying no byte obligation, so incorporation demotes no claim, changes no flag set and rewrites no baseline.",
+      "The insight is expressed in current source: Flic::decode_byte_run_trans at src/flic.cpp:1091-1168 implements the documented structural spelling - an unsigned 32-bit count masked & 0xff at every length use (memset/memcpy arguments, both cursor advances, the remaining decrement, the literal bound), count-slot reuse for the literal run length via (uint8_t)abs((int8_t)count) under an unsigned count > 0 guard, and a single byte-typed value slot shared by run and literal paths, with direct field_5A4_/field_59C_/field_5A0_ member reads.",
+      "build/recovery/variants/brt-fresh-base.lst corroborates the discovery's fresh /O2 listing: sub esp,0x1c (the image's 0x1c frame), scratch zeroed into its slot, push edi inside the rect block, push ebp sunk under the height guard, row homed at +0x14 and scratch at +0x18 matching the image; the enumerated residual (slot ordering of remaining vs the cursor pair, push schedule, memory round-trip of remaining, mov-reg-then-test compares, signed jl literal bound) is register allocation.",
+      "Every enumerated residual axis is measured closed by the sibling pending discoveries: 32 spellings across the cast axis (deck-trans, all 576, known_differing_bytes 833), loop-form axis (best 560-570, frames 0x18/0x1c/0x20), scope axis (brt-scope-result.json, six spellings all 576) and zero-use axis (brt-zero-result.json, six spellings all 576 with call-site offsets identical to baseline: mem_get +35, get_data@3 +128, get_data@0 +140, fread +194/+234/+266, memset +319) - no source spelling moves VC6's allocator toward the image's 582-byte assignment under the two fixed flag sets.",
+      "Delegation evidence (flic-decoder coordination, 2026-09-17) explicitly authorizes resolving this finding within the flic task files when its structural description is expressed in current source, with claims never demoted and flag sets and baselines unchanged; the fresh listing and current body establish that condition, so incorporation stands within the delegated authority and no expansion is requested.",
+      "Incorporation is not behavioral or binary proof: the 576-vs-582 boundary fail and the unknown strict references (unresolved _abs/_ftell/_memset CRT bindings) remain visible diagnostics, and the sibling findings worker-b9d4383853de4235bef31274f6aec4c3, worker-24ebc715a07b4eee81ec6b85ca4f2b70, worker-b8141bda6b5d432caf67b0e04401d892 and worker-d1ca1b5442184cf2aafc8ad8595593fb stay pending for their own fresh decisions.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "ec8764f11af213700f9902a1d4e6411cb268fba3926f8e5011cddf687463eb93",
+  "request_id": "coordinator-c4c945fe954b48ecb789b050a729182e",
+  "schema_version": 1,
+  "sequence": 53,
+  "stream": "task:flic-decoder-recovery"
+}

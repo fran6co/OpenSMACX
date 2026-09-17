@@ -110,8 +110,19 @@ class Palette {
  public:
   Palette();                         // 005FE2A0
   // A TAIL JUMP, not an empty body: the image's destructor is one
-  // instruction, `jmp ?close@Palette@@QAEXXZ`.
-  MEASURED ~Palette() { close(); }   // 005FE2E0
+  // instruction, `jmp ?close@Palette@@QAEXXZ`. The definition in
+  // palette.cpp beside the marker is `{ close(); }`, and that is what VC6
+  // compiles into the tail jump.
+  // OUT OF LINE, 2026-09-16, superseding the in-class spelling
+  // `MEASURED ~Palette() { close(); }`. That definition let /O2's /Ob1
+  // expand the teardown into every embedding class's compiler-generated
+  // member destruction: Flic's ??1Flic emitted
+  // `call ?close@Palette@@QAEXXZ` (0x005FE500) where the image calls the
+  // out-of-line thunk `??1Palette@@QAE@XZ` at 0x005FE2E0, one of its 18
+  // catalogued sites. alphamovie.h and gamma.h embed Palette by value too.
+  // Same measured lever as buffer.h's ~Buffer (2026-09-03): the inliner
+  // has no body to fold.
+  MEASURED ~Palette();               // 005FE2E0
 
   int get_rgbquad(RGBQUAD *output, int start, int count);
   // 0x005FE650. Not recovered; `Buffer::load_pcx` hands it the buffer's own

@@ -1,0 +1,22 @@
+{
+  "event_id": "a92b662c11cb69c72c2c862fc9a57bd22fd0e1add9d39cc89f55e33bde171fea",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-ca50c1990ffe485c9bde329038fe5f85",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The finding's insight is expressed in current source: Flic::UNK1 in src/flic.cpp (body at line 348 under the ORIGINAL marker '?UNK1@Flic@@QAEHHH@Z 0x0062A120-0x0062A202', line 337) carries a comment block (lines 349-365) stating exactly the hypothesis - plain member read-modify-writes keep the image's cached 'or edx,2' dword op, the bit-1 test goes through a copy ('mov eax,edx; test al,1'), the pointer-to-member get_data call invalidates VC6's member-load cache so both later clears reload field_5B4_ ('mov ecx,[esi+0x5b4]'), VC6 shortens '& ~2' to the 2-byte AL form only when the clear temp lands in eax while the image's temps sit in ecx, and no measured spelling (member RMW, flags-local round trip, result-local, explicit self-read, full-width 0xfffffffd masks) steers those temps off eax because the retval constant sinks past the clear.",
+      "The body applies the documented spelling: field_5B4_ |= 2 at line 366, three clear sites field_5B4_ &= ~2 at lines 368, 373 and 385, with the pointer-to-member get_data call (lines 371-372) between set and later clears - the cache-invalidation trigger the finding identifies as reproducing the image's reloads.",
+      "Fresh diagnostics in the unchanged request (sha256 0c32ca47f461315e3ff50f69d092affe7bdefd9d0f1370c3baf4781df4e58c3e, decision_revision 12) corroborate the finding's terminal state and leave no in-scope repair for a worker round: ?UNK1@Flic@@QAEHHH@Z result fail - the /O2 /Gy /GR- /GX /Z7 trial fails boundary with candidate_size 224 vs original_size 226 (the finding's measured register-allocation residual) and the /O2 /Oy- /GX /Z7 trial fails bytes; references resolve unknown only for _fread/_fseek (targets 405/404) with emitted references exactly ?get_data@Buffer@@QAEHXZ, _fseek, _fread and ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z; the scoped census is unchanged at 12 fail / 6 pass / 6 unknown functions and 6 pass / 5 unknown / 0 fail obligations.",
+      "The finding's only affected identity entity-d1c1894cbbe931152030edcdf78892572ff505b9e7706a12be89825537a (?UNK1@Flic@@QAEHHH@Z) is in current task scope and src/flic.cpp is a task editable file, so this is not a cross-owner discovery and no expansion is needed; the mapping is a worker-written product body (current source candidate, not a seed-only body or planned repair), so incorporation identifies an existing implementation rather than authorizing one.",
+      "This incorporation records only that the insight is expressed in source; it is not binary or behavioral proof, acceptance or a check waiver: UNK1's byte result remains fail and the family's unresolved CRT/EH symbols (_free, _fread, _fseek, _fclose, $T49824/$T49835, ___CxxFrameHandler, __except_list) keep their unknown obligations. Investigate would grant a bounded attempt with no remaining measured repair target (five spelling families already measured with passing controls), and defer is unnecessary because the evidence and delegated authority suffice for this expressed-source decision.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "1874deb1505923257b42ec21d091f6b58452080957647048033c028eeafe3cc5",
+  "request_id": "coordinator-8b903805e98e4e8c8ba50aacb17ac134",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:flic-decoder-recovery"
+}

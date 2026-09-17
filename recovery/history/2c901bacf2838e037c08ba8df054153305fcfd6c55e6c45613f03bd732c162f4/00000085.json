@@ -1,0 +1,24 @@
+{
+  "event_id": "56b82015e8949a14e60b664f9174aa2df4ce8a6dff86a86f27be4d1b7696e272",
+  "payload": {
+    "affects": [
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-d5dd98e2d7924cebae66e667324ad80e",
+    "evidence": [
+      "original listing 0x0062A500-0x0062A70F (157 instructions): value add folded to one op 'add BYTE PTR [esp+0x14],al' with the field_5A4_ load's low byte as addend; memset setup reloads count and value as dwords and masks both ('mov ecx,[esp+0x10]' / 'mov edx,[esp+0x14]' / 'and ecx,0xff' / 'and edx,0xff')",
+      "current tree measures 158 instructions against 157 (similarity 0.952, 40 masked bytes, extent pass at /O2): +3 from the run-path value round trip (mov cl,al / mov al,[slot] / add al,cl / mov [slot],al), -1 at each of the two literal-path lengths (movsx from al vs dword reload+and)",
+      "deck build/variants-dbr1 (4 spellings: dword count/value with & 0xff masks, compound +=, uint8_t value, (uint8_t) casts; both campaign flag sets): every dword-slot spelling produces the image's reload+and forms but compiles 544 bytes and fails the 527-byte recorded extent; local /O2 listing of the dword-value form shows the add shortened only to 'add al,[slot]' + 'and eax,0xff' + 'mov [slot],eax' (159 instructions), never the memory-destination RMW",
+      "deck build/variants-dbr2 (3 spellings: byte+byte assignment, compound +=, hoisted declarations): all hold the extent at /O2 and stay at 158 instructions; the assignment form (now committed to src/flic.cpp) reproduces the image's dword-reload+and value uses at memset ('mov eax,DWORD PTR _value$[esp]' / 'and eax,255')",
+      "post-edit task check: binary counts unchanged at 13 pass / 12 fail, all 12 protected obligations still passing, no regression; rect block carries the hoisted add placement fill() documents for the family, count-neutral"
+    ],
+    "hypothesis": "Flic::decode_byte_run's /O2 byte mismatch is a fully decomposed VC6 register/stack-allocation plateau, not a source-spelling gap: the image's three distinctive forms - the one-instruction memory-destination colour-offset add (add BYTE PTR [value_slot],al), dword count/value slot reloads masked with and 0xff at every length use, and interleaved rect-block adds - cannot be co-produced by any source spelling. Dword count/value locals with & 0xff masks reproduce the image's reload+and forms but grow the body to 544 bytes against the recorded 527 (extent fail); byte-typed spellings hold the extent but keep the four-instruction add round trip and movsx run lengths (158 vs 157 instructions, 40 masked bytes). The committed spelling now carries the byte-typed value add (the form decode_byte_run_trans proves), which reproduces the image's dword-reload+and value uses at memset while remaining extent-passing; the residual is the same compiler-side class fill(), decode_byte_run_trans and UNK3 document, recorded in the marker's new TRIED note.",
+    "kind": "discovery"
+  },
+  "previous_event": "ef37b83a5eb2aa1d3cfaedcb13d66cf61588490dcc94b370f705b9a96d5e26a4",
+  "request_id": "worker-d5dd98e2d7924cebae66e667324ad80e",
+  "schema_version": 1,
+  "sequence": 85,
+  "stream": "task:flic-decoder-recovery"
+}

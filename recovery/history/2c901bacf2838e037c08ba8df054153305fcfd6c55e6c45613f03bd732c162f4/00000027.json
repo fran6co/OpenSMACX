@@ -1,0 +1,21 @@
+{
+  "event_id": "9dfd1eaf4081ed4669be34d146936a1915aaf65b1d5a2d80c414524bd3f1e032",
+  "payload": {
+    "affects": [
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-953ac9b26b514853bd7610fa524ab0ec",
+    "evidence": [
+      "decode_byte_run image 0x0062A518 region: row-head fread into [esp+0x18], per-packet fread into [esp+0x14], mov reg,[slot]; and reg,0xff bound reloads, mov byte ptr [esp+0x14],al abs write-back, and the count-up reload memcpy loop at 0x0062A695-0x0062A6B2.",
+      "Variant sequence this round: int+uint8_t-casts 512 extent-blocked -> single int8_t count reaches frame parity -> scratch-before-dst decl yields the early xor ebx,ebx; mov [esp+0x14],ebx prologue and /O2 boundary pass (528 raw / 527 extent, 287 diff bytes); += , cast and plain value-add spellings byte-identical."
+    ],
+    "hypothesis": "decode_byte_run's original fuses the packet-count, ctrl and count variables into a single int8_t count (row-head fread result unused, one dword slot for the address-taken byte, int-promotion reloads via mov/and 0xff), and declares the scratch pointer before dst; with that spelling the /O2 trial reaches extent agreement (527) while /Oy- remains 512-blocked, and the four value-add spellings are a byte-identical plateau.",
+    "kind": "discovery"
+  },
+  "previous_event": "9ff171fd4c85182b11004ab770e7a4b788db2ecaf0fc73b694d3dc364ac4215d",
+  "request_id": "worker-953ac9b26b514853bd7610fa524ab0ec",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:flic-decoder-recovery"
+}

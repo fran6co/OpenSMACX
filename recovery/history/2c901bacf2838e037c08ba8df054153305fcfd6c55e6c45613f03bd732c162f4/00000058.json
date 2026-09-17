@@ -1,0 +1,29 @@
+{
+  "event_id": "06725ad8a50662ba96d94a252fa70e8012689ab69cd5488394e5aa79fe763402",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28",
+      "entity-356fc181efee0a59fe11c746c433d866536569295c0dd8ad29d98dac106e7520",
+      "entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652",
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65",
+      "entity-c5c525a9ec05f978680947239922e3e1c1da701f3add273308ccfb65109b408e",
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-231fcca9bb5b49b69680a9d4d20cba35",
+    "evidence": [
+      "Current request check.candidate.checks.binary.unresolved_symbols = [\"_abs\",\"_ftell\",\"_memset\"], with unknown-result relocations in both flag trials: decode_byte_run and decode_byte_run_trans reference _abs and _memset; decode_chunk references _abs and _ftell; UNK3 references _ftell; decode_delta_flc and decode_delta_flc_trans reference _abs.",
+      "src/vendor/vc6-runtime.recovery.h's vc6-runtime RECOVERY_COMPONENT binds _free, __lock, __unlock, __heap_init, ___sbh_heap_init, ___sbh_find_block, ___sbh_free_block, ___CxxFrameHandler, _fclose, _fread and _fseek, but contains no entry for _abs, _ftell or _memset; that file lies outside this task's editable files (src/flic.cpp, src/flic.h, src/palette.cpp, src/palette.h).",
+      "Original-image disassembly identifies the three unbound bodies: 0x00644F3A is a `neg eax; ret` leaf immediately after _free's bound span 0x00644EF2-0x00644F3A; 0x00647920 is a framed ftell body ending in its terminal ret at 0x00647941; 0x006465F0 is the al-fill memset loop.",
+      "The task's own ORIGINAL markers record the original call sites: decode_byte_run calls 0x005D4510 0x005E33F3 0x00644EF2 0x00644F3A 0x00646178 0x006465F0; decode_byte_run_trans calls include 0x00644F3A, 0x00645930 and 0x006465F0; UNK3 and decode_chunk call 0x00647920; decode_delta_flc and decode_delta_flc_trans call 0x00644F3A (delta decoder's skip-line abs, e.g. the call at 0x0062A7F3).",
+      "Precedent in the same manifest: after the coordinator added the _fclose, _fread and _fseek bindings, the relocations reaching them resolved and the five affected obligations (Flic ctor, close, decode_frame, UNK2, rewind) now measure pass in this request's checks."
+    ],
+    "hypothesis": "The three CRT names the Flic decoder bodies call - _abs, _ftell and _memset - have no toolchain-component binding, so strict reference verification stays unresolved for every function reaching them and their reference results remain unmeasurable. Extending the vc6-runtime RECOVERY_COMPONENT manifest in src/vendor/vc6-runtime.recovery.h with the original-image spans _abs 0x00644F3A-0x00644F3D, _ftell 0x00647920-0x00647942 and _memset 0x006465F0 (bounded like the existing entries by their original control-flow terminal returns, independently of the archive member) would resolve those relocations the same way the coordinator's earlier _fclose/_fread/_fseek bindings made the file-IO functions measurable, after which the constructor, close, decode_frame, UNK2 and rewind obligations began passing. src/vendor/vc6-runtime.recovery.h is outside this task's editable files, so this needs coordinator/toolchain-owner action rather than a worker edit.",
+    "kind": "discovery"
+  },
+  "previous_event": "3b83f3d412dc07925dc5c59ee07473e2aebbe92ca3d974e66e856bc7b5e11434",
+  "request_id": "worker-231fcca9bb5b49b69680a9d4d20cba35",
+  "schema_version": 1,
+  "sequence": 58,
+  "stream": "task:flic-decoder-recovery"
+}

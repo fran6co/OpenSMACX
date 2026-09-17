@@ -1,0 +1,21 @@
+{
+  "event_id": "44a240f2e21f4270cff1052b9d685eb64eba5428cb28bd71d7c285f13b024084",
+  "payload": {
+    "affects": [
+      "entity-dcb8e21d8c49bebdd09b97fd12c4f9f2dcf8bbb9f58a04e97a6816c07cb3654d"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-cf36ed1efdc14490ba9550dce4edf24b",
+    "evidence": [
+      "current spelling's disassembly matches the image's original (0x0062AB10) instruction-for-instruction outside offsets 0x1A-0x30: identical prologue loads interleaved with push esi/push edi, identical four rect stores to [ecx+0x58c/0x590/0x594/0x598], identical reload sequence and call/pops/ret; the sole divergence is add edi,edx/add esi,eax hoisted above the stores where the image has add edx,edi/add eax,esi between the store pairs",
+      "the image's store-then-add order is forced by a WAR hazard on edx/eax exactly when the adds destroy those registers, so the placement is a consequence of the destination choice - a single VC6 allocation decision, consistent with the same class of residual documented for UNK3 and decode_byte_run_trans"
+    ],
+    "hypothesis": "The fill-family block's byte target decomposes into exactly two independent mechanisms - the load/reload sequence, which the current pointer-store spelling already reproduces exactly, and the add destination/placement pair, which is compiler-internal - so any future spelling search should evaluate candidates by whether they change the add destination registers at all, not by byte-diff totals, since every measured shape either matches the prologue and hoists or anchors and permutes.",
+    "kind": "discovery"
+  },
+  "previous_event": "eb6cb822b86943e9d05165fed47c965e6ae456c84197878b57498dc95f788cbe",
+  "request_id": "worker-cf36ed1efdc14490ba9550dce4edf24b",
+  "schema_version": 1,
+  "sequence": 61,
+  "stream": "task:flic-decoder-recovery"
+}

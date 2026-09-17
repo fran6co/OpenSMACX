@@ -1,0 +1,21 @@
+{
+  "event_id": "d3de6ffd50dd55f3caa7f118079e3084307d8e8c314ee354829c65e49314ba2c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-ea01385e5e654af5ae950ef525ececf4",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The finding's actionable half is expressed and freshly measured in current source: src/palette.h:125 declares `MEASURED ~Palette();` out-of-line and src/palette.cpp:703 defines it beside the 0x005FE2E0 marker; the fresh scoped check (request 27e8e2dd..., /diagnostics/check/report/candidate/checks/binary/functions) reports ??1Palette@@QAE@XZ result pass at 0x005FE2E0 in src/palette.cpp and obligation-e1c0779b... pass (fingerprint 5dfd50c714609b51dfc50f303a01b8ebbbdd822f80fe09d44a366c8535b59eb3).",
+      "~Flic's teardown now binds the catalogued thunk exactly as the finding required: the fresh /O2 variant for ??1Flic@@QAE@XZ (entity-1ed38400..., 0x004327A0) emits call references to ?close@Flic@@QAEXXZ 0x00629DF0, ??1Buffer@@UAE@XZ 0x005D7410 and ??1Palette@@QAE@XZ 0x005FE2E0 (offset 49), matching the ORIGINAL marker's call topology at src/flic.cpp:120; the body is the one-statement `close();` transcription of the single real call.",
+      "The residual half is measured compiler-side with no source statement: the fresh span data shows the .text$x funclet at candidate_size 21 vs original_size 35 ('candidate exceeds or misses the independently recorded extent'), and the TRIED note at src/flic.cpp:127 records 13/25 instructions, 0.980 similar across 10 flag sets with the single missing instruction being the second EH unwind-state store (`mov byte ptr [ebp-4], 0`) after close() returns; no spelling of the one-statement body adds that unreachable state transition, and the two fixed campaign flag sets are unchanged.",
+      "Both affected identities (entity-1ed38400... ~Flic, entity-a07386d5... ~Palette) are already in current task scope, so no expansion is requested; incorporation claims no byte or behavioral proof - ~Flic's own binary result remains fail (aggregate 12 pass / 12 fail / 1 unknown unchanged) and stays a visible diagnostic, the 12 protected obligations are untouched, and no claim is demoted and no baseline rewritten, per the delegation's 2026-09-17 plateau-resolution authorization for findings whose structural description is expressed in current source.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "8bb5dfe31a2d66c2d9b27edf380abd0656029b0ee95a580f4689a355cc65289e",
+  "request_id": "coordinator-7ccf1c073dde47f6b30290f8ea3d7c90",
+  "schema_version": 1,
+  "sequence": 70,
+  "stream": "task:flic-decoder-recovery"
+}

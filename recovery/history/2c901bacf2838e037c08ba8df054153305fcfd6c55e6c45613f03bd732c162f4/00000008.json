@@ -1,0 +1,22 @@
+{
+  "event_id": "0d6060d89ace7b5184e630548df14e08f5afdd7d2eeaec07d5fde9291665a0f5",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-6bffbdd9da504b36ab5609f5e25f411c",
+    "evidence": [
+      "objdump/section dump of terranx_original.exe: transparent switch near 0x62AE84 does add eax,-4; cmp eax,0xe; ja 0x62AEA1 with jump table at 0x0062AEF0 and index bytes at 0x0062AF08; the opaque switch at 0x62AE03 has its table at 0x0062AF18 and index bytes at 0x0062AF30. Both index tables map types 4, 0xb, 0xc, 0x12 to 00 and all other values to 05, and slot 0 and slot 5 of BOTH target tables hold 0x0062AEA1 — the shared add ebx,-6; push 1; push ebx; call 0x00647330 (fseek SEEK_CUR) body.",
+      "The recorded extent 0x0062ACD0-0x0062AEED (541 bytes) excludes the tables at 0x0062AEF0-0x0062AF37; a candidate COMDAT necessarily carries its own switch tables, so the boundary rule (no relocations beyond the recorded extent) fails structurally for every spelling — a ceiling to document, not chase.",
+      "A two-body spelling (separate fseek in each switch) compiled a 656-byte local section vs 608 for the current single shared body (deck diagnostics under /c /O2 /Gy /GR- /GX /Z7); both fall in the same merge fate or worse. Current src/flic.cpp keeps one shared body (case 4: case 0xb: case 0xc: case 0x12: default:) in both switches; its scoped check fails boundary only, with bytes/references unknown from genuine callees (family decoders, Buffer::fill/copy, fread/ftell/fseek/abs)."
+    ],
+    "hypothesis": "decode_chunk's original spelled two separate identical fseek skip bodies (one under case 4/0xb/0xc/0x12, one under default) which VC6 cross-merged: both switches' index tables assign the 4/0xb/0xc/0x12 group to index 0 and the unhandled types to index 5, and both target slots hold the same address 0x0062AEA1. The single shared skip body in current source is functionally identical; additionally the recorded 541-byte extent is a structural ceiling — VC6 emits both switch tables inside the function COMDAT with absolute relocations beyond the recorded code extent, so no candidate can boundary-pass while carrying its tables.",
+    "kind": "discovery"
+  },
+  "previous_event": "13bb18367fabe30282be771aed0fc598fad81852e71013cfbe416c5f4bdadfed",
+  "request_id": "worker-6bffbdd9da504b36ab5609f5e25f411c",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:flic-decoder-recovery"
+}

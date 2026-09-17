@@ -1,0 +1,22 @@
+{
+  "event_id": "eda12cd1a67f3a5168178dcb87c6fd1d2fe017f08774e96c8ad11ff678c924cd",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-cf36ed1efdc14490ba9550dce4edf24b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Expressed implementation identified: src/flic.cpp:806-862 - Flic::fill is the product pointer-store spelling (uint32_t *rect = &field_58C_; rect[0]=x; rect[1]=y; rect[2]=x+width; rect[3]=y+height; then buffer2_->fill(field_5AC_, field_5B0_, field_59C_, field_5A0_, 0)), and its commentary at src/flic.cpp:807-851 states the discovery's exact two-mechanism decomposition: the pointer-store spelling 'matches the image's loads, registers, stores and reloads' (load/reload mechanism already reproduced exactly) while 'the destination pair (edx,eax) with four prologue loads is VC6-internal allocation no spelling reaches' (add destination/placement is compiler-internal).",
+      "The hypothesis's forward-looking criterion - evaluate future spellings by whether they change the add destination registers at all - is already applied and recorded in that source: thirty-four spellings are documented including every destination-steering form, with the read-back operand rect[2]=rect[0]+width recorded as steering 'the FIRST add's destination onto x's register ... the second always lands on height's', the fresh member read rect[2]=x+field_59C_ as anchoring 'the add after both stores', plus operand swaps, declaration-order permutations, direct-member and all-member spellings - reproducing the discovery's 'matches the prologue and hoists / anchors and permutes' taxonomy; no untested spelling axis remains, so investigate would only re-measure recorded spellings.",
+      "Fresh diagnostics read from the unchanged request (SHA-256 afd6a96cec3ea66fd54f31ca106c1fe6b5a67478b5319a44cf706122ef5895f2) corroborate confinement rather than refute it: the /diagnostics/check/report/candidate/checks/binary/functions entry for ?fill@Flic@@QAEXXZ at 0x0062AB10 measures bytes:fail identically under both configured flag sets with differing_offsets 26-41, 43, 49 (the ~0x1A-0x31 add/store interleave window, one byte past the discovery's stated 0x1A-0x30 bound - the same moved add/store pair), boundary:pass, references:pass for ?fill@Buffer@@QAEHHHHHH@Z at 0x005D8240, and everything outside that window agreeing.",
+      "No claim is demoted and no obligation is touched: fill carries no byte obligation - all twelve protected obligations measure pass in the same fresh run - the retained seed src/recovered/units/0062ab10.cpp still records measured MISMATCH (divergence 1) as a diagnostic, and this incorporation is not binary or behavioral proof: the bytes:fail measurement stays recorded under both fixed flag sets with baselines and flag sets unchanged.",
+      "Scope and class: the finding's sole affects entry entity-dcb8e21d8c49bebdd09b97fd12c4f9f2dcf8bbb9f58a04e97a6816c07cb3654d is a current task subject whose product body already lives in the task's editable src/flic.cpp, so no expansion or outside owner is involved; the delegation's 2026-09-17 flic-decoder coordination documents this compiler-side residual class (UNK3, decode_byte_run_trans) and its resolution condition 'structural description expressed in current source', which holds here; the comment's note that the same add placement carries to decode_black_trans, decode_fli_copy and decode_fli_copy_trans is read-only context outside this finding's affects list and remains pending independently.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "a6e8c9ca71342df92de3d52f5043e4bb8faad68f0ee6c54ce79223c617465e43",
+  "request_id": "coordinator-b7af65a2059443688afe24e14079f3db",
+  "schema_version": 1,
+  "sequence": 63,
+  "stream": "task:flic-decoder-recovery"
+}

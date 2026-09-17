@@ -1,0 +1,21 @@
+{
+  "event_id": "632f384e8ac280ef834fb46632863382421adafccb43921bd8896f043f57738e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-6bffbdd9da504b36ab5609f5e25f411c",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source, not a seed-only or planned body: src/flic.cpp in this worktree (SHA-256 6349001609d527464d18d835fbb2719fbab42295ebb5412b63c9bcd2af4dd66b, matching the request's mapped record) implements Flic::decode_chunk with its ORIGINAL binding at line 860 (0x0062ACD0, recorded extent 6466768-6467309) and spells the shared skip arm 'case 4: case 0xb: case 0xc: case 0x12: default: fseek(file_, size - 6, SEEK_CUR);' in both the transparent and opaque switches (lines 928-934 and 961-967), followed by the ftell/abs/fseek position correction; the referenced layout coverage independently witnesses the typed Flic shell (size 2788, embedded DataChunk members at 2740/2756/2772) the body is written against.",
+      "Fresh scoped binary evidence read from the unchanged request (SHA-256 4b6974f1c51476b9d4be841c1ec7dce72c74436081ca300efc0b0fac6fb9c807, pointer /diagnostics/check/report/candidate/checks/binary/functions) confirms the current spelling compiles to the original's shared-target shape: label $L47966 (0x0062AEA3) is referenced from slots of BOTH jump tables (offsets 556 and 588), reproducing the finding's objdump of terranx_original.exe where the 4/0xb/0xc/0x12 group maps to index 0, unhandled types to index 5, and slots 0 and 5 of both target tables hold 0x0062AEA1; emitted references are exactly the genuine callee set (fread, ftell, fseek, abs, the six family decoders, Buffer::copy, Buffer::fill), so the functional content of the hypothesis is present in the product body.",
+      "The residual failure is boundary-only and structural, matching the finding's ceiling: both configured trials (/c /O2 /Gy /GR- /GX /Z7 at 608 bytes, /Oy- variant at 624) fail with 'candidate exceeds or misses the independently recorded extent' solely via candidate_relocations_outside_original at offsets 540-608 - the switch-table label relocations any candidate COMDAT must carry - while the original image itself places its tables at 0x0062AEF0-0x0062AF37 beyond the code-only 541-byte extent, so no spelling can boundary-pass; the worker's tested two-body alternative measured 656 bytes with the same fate, leaving no useful bounded repair a further investigate round could perform.",
+      "This incorporation is not binary or behavioral proof and resolves no obligation: decode_chunk's byte/reference measurement remains unknown (unresolved CRT targets _fread/_ftell/_fseek/_abs), the task's five unknown obligations and protected baselines are untouched, no acceptance or claim change is proposed, and the extent ceiling remains documented in the preserved finding evidence; incorporate rather than reject because the fresh candidate corroborates rather than refutes the shared-body correspondence, and rather than defer because evidence and delegated authority are sufficient with no unknown originals requiring binding decisions.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "6668f29b1087d3c11495c735d6c7c39183366ce8e5eb92d3d250eb3fb1df1553",
+  "request_id": "coordinator-92e8e248cc774ae593dde843f7cec66d",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "33578170705950a10f41334abf28eb0e778ba4956eef757841cca373b53d3fdc",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-0ec2bfe944204f0bb38e93c58f0907ed",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The finding's insight is now expressed in live source, not a plan: src/flic.cpp:35 holds the active TU-wide `struct Buffer;` forward, and the src/flic.cpp:18-34 comment records exactly this discovery's two measured directions - a TU-wide forward keyed the unit U and emitted init's PAU name, while use-site `struct Buffer *` spellings at the declaration re-keyed nothing - i.e. VC6 fixes the U/V key at the first visible tag declaration with no per-use-site override.",
+      "The buffer-side lever the finding said was required is applied inside the already-expanded scope: src/buffer.h:500-609 defines the seven-argument `Buffer::copy` (0x005DFF00) in-class since 2026-09-17, with the comment stating the image's own copy was header-inline so the U-keyed flic TU emitted its own PAU COMDAT alongside the PAV one and the linker ICF-folded them - the only way one image holds both spellings; src/buffer.cpp:1492-1566 retains the ORIGINAL marker and full history beside `// body src/buffer.h`, matching the framework-coordinator's 2026-09-17 inline-restore grant for exactly this repair, so no further expansion is needed (src/buffer.h and src/buffer.cpp are already in the task's editable files).",
+      "Fresh diagnostics in this request confirm the emitted-name half of the hypothesis: the binary check now locates `?init@Flic@@QAEHPAUBuffer@@PADHHH@Z` in src/flic.cpp with boundary pass under both configured flag trials (functions array, init result unknown solely for reference-target reasons) - the catalogued PAU name the discovery measured as unreachable from flic-only spellings is now emitted.",
+      "Incorporation is expression, not acceptance or resolution of the remaining tails: the same fresh check still reports obligation-f60db6a6 (?UNK9@Flic@@QAEXXZ, 0x0062B780) unknown with reason 'unresolved targets: ?copy@Buffer@@QAEHPAU1@HHHHHH@Z', init unknown on unresolved ??_C@_02JKAF@rb?$AA@, ?PaletteCurrent@@3PAVPalette@@A and the PAU copy, twelve known idiomatic decoder mismatches plus ??1Flic@@QAE@XZ fail, and layout witness coverage remains incomplete - all preserved; nothing is demoted, no baseline, flag set or claim changes.",
+      "The sibling finding worker-a9127a8663c94a6f817a0e488a0bc86f remains pending for its own separate decision, and this incorporation grants no acceptance, worker permission or Git publication.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "80096b1f9844e56ba9f5e2d7abd300f11b64793f1431ad4b9bc0b1dd2b05ff14",
+  "request_id": "coordinator-1baa407295274352aab62c78babfaab7",
+  "schema_version": 1,
+  "sequence": 77,
+  "stream": "task:flic-decoder-recovery"
+}

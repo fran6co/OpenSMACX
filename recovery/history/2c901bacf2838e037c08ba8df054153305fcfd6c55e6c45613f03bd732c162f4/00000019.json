@@ -1,0 +1,28 @@
+{
+  "event_id": "820e9505db5688d2afa922103b3c01ce5a508f02174c3ac97b69f21d137a0548",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh scoped binary check (request sha256 f2a7a1318587f2e34de9a42a6e211f68e6833c6ae164e8bf9edb8f23e1ef9021, pointer /diagnostics/check/report/candidate/checks/binary/functions): ??1Flic@@QAE@XZ fails references under both configured flag sets — /O2 /GX emits ?close@Palette@@QAEXXZ binding 0x005FE500 at candidate offset 49 and /O2 /Oy- /GX at offset 50 — while the original marker's call list (src/flic.cpp:126) is 0x00629DF0, 0x005D7410, 0x005FE2E0, so the candidate contains no reference to ??1Palette@@QAE@XZ at all; in the /Oy- trial the ?close@Flic relocation at offset 39 passes, isolating the Palette callee identity as the divergence rather than the explicit body.",
+      "Current source confirms the lever: src/palette.h:114 spells the in-class implicitly-inline `MEASURED ~Palette() { close(); }` while the constructor is declared out-of-line (palette.h:111, body at palette.cpp:685), which is why ??0Flic's implicit Palette construction binds ??0Palette at 0x005FE2A0 and passes; the ??1Palette ORIGINAL marker at src/palette.cpp:699 records the 5-byte thunk 0x005FE2E0-0x005FE2E5, kind thunk, 18 callers, body src/palette.h, so the out-of-line definition belongs beside that marker and no spelling in src/flic.cpp reaches the compiler-generated call.",
+      "Measured in-tree precedent for the same lever: src/buffer.h:184-197 moved `MEASURED virtual ~Buffer();` out of class on 2026-09-03 because the in-class definition let /O2's /Ob1 expand the body into every local Buffer's teardown where the image makes `call ??1Buffer@@QAE@XZ` at all 87 of its sites; the requested change applies the identical destructor-declaration move to Palette.",
+      "Delegation and derived facts authorize exactly this subset and nothing more: delegation evidence names this Palette teardown identity and its two files only for the flic-decoder-recovery task, and decision_facts for discovery worker-30c0df0aa7004d3a9d8095c3b7f2d188 list delegated_repairs=[entity-a07386d5...] with empty outside_delegation and unknown_originals; decision_state next_action is review_scope_expansion with scope_expansion_required=[entity-a07386d5...], which is not among the task's 24 subjects, so a scope-expansion proposal (not investigate, which is unavailable for exactly this reason) is the required serial decision.",
+      "Blast radius stays outside the request and the finding stays pending: src/flic.h:117, src/alphamovie.h:63 and src/gamma.h:79 embed Palette by value, so their teardown sites change too and remain read-only recheck context (affects), not requested files; the trailing ??1Buffer relocation fail at candidate offset 65 (binding 0x005D7410, the correct original target) is preserved as plausibly positional fallout of the shifted body to re-measure after the repair — this expansion grants repair scope only, no resolution, acceptance, baseline change or Heap/other-owner access.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6284000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "befedccf3dbc1723fbfe0af7ae014c7ff8cba191632cd56cdd0f30c467c1b539",
+  "request_id": "coordinator-6285d10aa93c4b57ac21c707d113e1f3",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:flic-decoder-recovery"
+}

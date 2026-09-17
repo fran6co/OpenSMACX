@@ -1,0 +1,24 @@
+{
+  "event_id": "9dcac57a23572ce78e7affb835da343a9d245489b020ceaf7b14778581ef4358",
+  "payload": {
+    "affects": [
+      "entity-0641b92c0c405745e8330d5b7a73de810469893a4148810357316609018191af",
+      "entity-35a1520fa9d12ec948282e2a93423b2d16ed08def354712a1d1690c5dcbdb3c7"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-ad167bb0fe8d4182a75f2c409e5930e5",
+    "evidence": [
+      "Fresh `recover tasks check-restoration flic-decoder-recovery` on the current tree: counts {pass:12}, unrestored {failed:[],unknown:[]}, obligation-f60db6a6 (?UNK9@Flic@@QAEXXZ) now 'strict bounded byte/reference agreement; single configured trial: /c /O2 /Gy /GR- /GX /Z7', versus this round's request where the same obligation was unknown with reason 'unresolved targets: ?copy@Buffer@@QAEHPAU1@HHHHHH@Z'.",
+      "src/flic.cpp:18-35 documents the measured both-ways trade-off: the U key emitted init's catalogued PAU name but re-spelled the copy relocations PAU1@, a spelling no source mapping holds (the image catalogues copy as ?copy@Buffer@@QAEHPAVBuffer@@HHHHHH@Z at 0x005DFF00), leaving UNK9 unresolvable with every non-reloc byte matching; the V key makes the copy relocations resolve to 0x005DFF00.",
+      "src/buffer.h:500-510 holds the 0x005DFF00 blitter in-class with the header-inline/ICF rationale (the original flic unit emitted its own PAU COMDAT that the linker ICF-folded with the PAV one) and src/buffer.cpp:1492 retains the canonical marker with the move recorded beside `// body src/buffer.h`.",
+      "No regression: the same eleven functions that passed in the request's check still pass in the fresh check (constructor, close, UNK2, UNK4-UNK8, decode_frame, rewind, ~Palette) and the fresh configured build gate passes (recover check-build exit 0, 'fresh configured artifacts and compile/link evidence verified')."
+    ],
+    "hypothesis": "The inherited U-to-V mangling-key revert in src/flic.cpp (drop of the TU-wide `struct Buffer;` forward, with Buffer::copy restored in-class in src/buffer.h) resolves the last permanently-unresolvable protected obligation: UNK9 at 0x0062B780 now measures strict bounded byte/reference agreement, taking the task to 12/12 passing obligations with no previously passing function regressed. This supersedes the incorporated U-key expression recorded in task journal decision 78 (recovery/history/2c901bac.../00000078.json) and needs fresh coordinator review of the resulting source; the accepted trade is that init's emitted symbol becomes ?init@Flic@@QAEHPAVBuffer@@PADHHH@Z, diverging from its catalogued PAU name, which src/flic.cpp:250-251 records as a `// symbol` fact.",
+    "kind": "discovery"
+  },
+  "previous_event": "eeaa2e50c851d52438426695abfe29c7c3bfb676c14711ec14f32858fbcfec56",
+  "request_id": "worker-ad167bb0fe8d4182a75f2c409e5930e5",
+  "schema_version": 1,
+  "sequence": 79,
+  "stream": "task:flic-decoder-recovery"
+}

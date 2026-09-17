@@ -1,0 +1,22 @@
+{
+  "event_id": "ab9fc95396d4b7c0374481210ad41d5f0f73c541a7307521a8a61c468f6ba723",
+  "payload": {
+    "affects": [
+      "entity-d1c1894cbbe931152030edcdf78892572ff505b9e7706ae036a12be89825537a"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-ca50c1990ffe485c9bde329038fe5f85",
+    "evidence": [
+      "objdump of terranx_original.exe 0x0062A120-0x0062A202: entry loads the flags dword and ors 2 in dword form; the bit-1 test goes through a copy (mov eax,edx; test al,1); every clear site keeps the dword and ecx — mov ecx,edx; mov eax,7; and ecx,0xfffffffd at 0x62A138-0x62A13F; mov ecx,[esi+0x5b4]; mov eax,0x10; and ecx,0xfffffffd at 0x62A15B-0x62A166; and after the decode_chunk call mov ecx,[esi+0x5b4]; inc edx; and ecx,0xfffffffd at 0x62A1E5-0x62A1EC (objdump).",
+      "Five spelling families measured under /c /O2 /Gy /GR- /GX /Z7 (deck build/recovery/variants/flic-round2-deck.json, candidate unk1-member, controls passing, no lost baseline passes): member RMW, flags-local round trip, result-local, explicit self-read, and full-width 0xfffffffd masks each put the clear temp in eax, where VC6 shortens & ~2 to and al,0xfd; the retval constant sinks past the clear instead of occupying eax first, which is what the image's interleaved mov eax,7 between copy and AND would need.",
+      "The pointer-to-member get_data call between set and clear invalidates VC6's member-load cache, so both later clears reload field_5B4_ the way the image does (mov ecx,[esi+0x5b4]); a flags-local round trip would keep the value in a register and skip the reloads. Current src/flic.cpp Flic::UNK1 documents and applies this spelling; the scoped check census is unchanged (12 fail / 6 pass / 6 unknown functions; obligations 6 pass / 5 unknown / 0 fail)."
+    ],
+    "hypothesis": "UNK1's transparent-bit ops keep dword encodings in the image because every flags temp sits in ecx with the return-value constant interleaved into eax; VC6 emits the 2-byte AL special form (and al,0xfd) only when the temp lands in eax, where the 3-byte dword form and the byte form are the same length anyway. The member read-modify-write spelling in current source is the measured best form — it reproduces the image's entry, cached or, copy+byte-test and call-invalidated reloads; no measured spelling steers the three clear temps off eax, so the remaining two AND sites are a register-allocation residual, not a missing source form.",
+    "kind": "discovery"
+  },
+  "previous_event": "5e1a7de475bd2275fa484720df48444ddd2aec0f7e80c24ca396088a254f5a38",
+  "request_id": "worker-ca50c1990ffe485c9bde329038fe5f85",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:flic-decoder-recovery"
+}

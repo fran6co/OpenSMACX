@@ -1,0 +1,23 @@
+{
+  "event_id": "0dfa2b612db05035e6d63b8e86df7c384a909a60845886fed2db450566c2e85b",
+  "payload": {
+    "affects": [
+      "entity-1ed38400e559c191ce3ab3a96dd2be482a0c41794f6970ac23e56db90fb7ab73",
+      "entity-a07386d55d61d2b411293235e2bb2177ae36622b4121136c97eb871cde2e71a9"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-ea01385e5e654af5ae950ef525ececf4",
+    "evidence": [
+      "round-1 measurement (TRIED note): best 13/25 instructions, 0.980 similar across 10 flag sets (/c /O2 /Ob0 /Gy /GR- /Oy- /GX best); the single missing instruction is the second unwind-state store",
+      "APPLIED 2026-09-16: ~Palette declared MEASURED out-of-line in palette.h and defined beside the 0x005FE2E0 marker in palette.cpp; the ~Palette obligation passes and ~Flic's teardown call binds the catalogued thunk",
+      "round-2 task check still reports ~Flic fail (aggregate 12 pass / 12 fail / 1 unknown unchanged); no spelling of the one-statement body `close();` adds an unreachable state transition"
+    ],
+    "hypothesis": "~Flic's residual byte diffs are a compiler-generated EH unwind-state transition with no source statement: the image stores a second unwind-state byte (mov byte ptr [ebp-4], 0) right after close() returns, marking the switch from full-teardown to subobject-only teardown, and emits a 35-byte funclet where this tree emits 21; the out-of-line ~Palette binding (0x005FE2E0) the destructor now makes is correct and its obligation passes, so the remaining failure is unreachable from flic.cpp spelling.",
+    "kind": "discovery"
+  },
+  "previous_event": "6ec8b55bb7b0c9cbdc98c79d338966f97f278744dcfe3e39d886b19fb7463677",
+  "request_id": "worker-ea01385e5e654af5ae950ef525ececf4",
+  "schema_version": 1,
+  "sequence": 66,
+  "stream": "task:flic-decoder-recovery"
+}

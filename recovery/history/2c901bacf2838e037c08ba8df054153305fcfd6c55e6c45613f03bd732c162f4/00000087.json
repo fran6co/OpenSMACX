@@ -1,0 +1,24 @@
+{
+  "event_id": "62df2c1f618665d66a1071d3f8d777bb06188e54fc5942567b223b8424b080ba",
+  "payload": {
+    "affects": [
+      "entity-dcb8e21d8c49bebdd09b97fd12c4f9f2dcf8bbb9f58a04e97a6816c07cb3654d"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-b6d0a0a46ecc45b7b8d2f35cd4744d81",
+    "evidence": [
+      "File timeline: stat shows src/flic.cpp mtime 2026-09-17 23:07:32 while build/recovery/agents/agent-a5um9y3l/request.json was written 22:52:27; build/recovery/tmp/r6/flic-s0.obj and flic-{A,B,C}.{cpp,obj} carry 23:01-23:04 mtimes; the only other post-22:52 writes are the request/schema copies and one parse_cache entry.",
+      "The r6 probes diff against current src/flic.cpp in exactly one block each - fill()'s rect stores (destructive-interleaved, assignment-interleaved, read-back) - and the current file keeps the plain-sum form with the appended closure paragraph, identifying the 23:07 edit's full content.",
+      "fill (0x0062AB10) is not among the 12 protected obligations (request check.candidate details list UNK7, UNK6, ??0Flic, close, UNK4, UNK5, decode_frame, UNK2, UNK8, ??1Palette, rewind, UNK9), so no obligation could regress from this body edit.",
+      "Fresh 'uv run recover tasks check-restoration flic-decoder-recovery --image <pinned image>' on the current working tree: restoration=pass with counts pass=12 and unrestored.failed empty.",
+      "Fresh 'uv run recover tasks check flic-decoder-recovery --image <pinned image>' on the current working tree: binary counts fail=12/pass=13 with per-function shapes identical to the request snapshot (fill 18/18 differing offsets both flag sets, decode_fli_copy 37, decode_chunk 36 under /O2 with boundary+references pass, UNK1 199 with boundary pass under /O2, decode_byte_run 273 with boundary pass, UNK3 441, decode_delta_flc 1008/960 vs 967, decode_delta_flc_trans 1104/1072 vs 1117, decode_byte_run_trans 576 vs 582, decode_fli_copy_trans 18 with /Oy- 272 vs 262, ??1Flic EH-funclet residual) - no measured change from the snapshot."
+    ],
+    "hypothesis": "The prior session made one trailing edit to src/flic.cpp after this round's request snapshot was measured (file mtime 2026-09-17 23:07:32 vs request.json 22:52:27): it reverted fill() to the plain-sum rect spelling and appended the 'Closed 2026-09-17 (round 2, three fresh /O2 compiles)' TRIED paragraph after probing the r6 variants in build/recovery/tmp/r6/flic-{A,B,C}.cpp. The edit is measurement-neutral: fill carries no protected byte obligation, the note records the plain-sum and interleaved spellings as compiling byte-identical, and fresh checks on the current tree reproduce the request's results exactly. The request's candidate measurements therefore describe the pre-edit file (restoration-journal working-tree sha256 b3054211... for src/flic.cpp vs the current d1862662...), and this hash gap is a timestamp artifact, not an unverified regression.",
+    "kind": "discovery"
+  },
+  "previous_event": "c90357b06929a34bda2548a3a5fb0130afcc75c51e1e73c7e5e4bae1b61d6ffd",
+  "request_id": "worker-b6d0a0a46ecc45b7b8d2f35cd4744d81",
+  "schema_version": 1,
+  "sequence": 87,
+  "stream": "task:flic-decoder-recovery"
+}

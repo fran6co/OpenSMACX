@@ -1,0 +1,21 @@
+{
+  "event_id": "696f3c3bd6bf6f1caa399264781d28452c803e8460db9d7b5414a1d2dae1e0b0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-1b1f8fa2363942e494de8485743bf58b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/flic.cpp:962-1032 expresses this discovery in the product body: both switches spell the skip cluster as `case 4: case 0xb: case 0xc: case 0x12: goto skip;` into the labeled `default: skip:` arm (goto at line 992, label at 994; second switch `goto skip2` at 1027, label at 1029), source arm order is 7, 0xF, 0xD, 0x10 in both switches, and the skip arm ends in `break`, rejoining the post-switch delta-correction tail at lines 1035-1038 exactly as the hypothesis describes.",
+      "Fresh scoped diagnostics on this unchanged source (request sha256 06c1cb3b45a23b78ecbceda7bfd1d83cf45c8d855becb841ba673fc694eb34b0, functions array) show decode_chunk compiling to a 624-byte COMDAT under /c /O2 /Gy /GR- /GX /Z7 - 541 code bytes + 3 pad + 80 table bytes, equal to the image's linked 0x270 section - with emitted internal labels bound at the image's exact table addresses ($L49949 at 0x0062AF08, $L49950 at 0x0062AEF0, $L49951 at 0x0062AF30, $L49952 at 0x0062AF18), i.e. the wide six-slot dispatch span [4,0x12] with the shared skip body.",
+      "The only boundary failures in that fresh diagnostic are the 12 jump-table relocations at candidate offsets 544-604 past the independently recorded 0x0062ACD0-0x0062AEED extent; that extent/compiler-placement conflict is a distinct pending finding (worker-05b2236939b147d0b34582417b570ab2) which this incorporation neither resolves nor waives, and no acceptance is claimed.",
+      "check-restoration on the same source reports counts {pass: 12} with zero non-pass details across the scoped obligations (??0Flic, ??1Palette, close, decode_frame, rewind, UNK2, UNK4-UNK9); incorporation records only that the dispatcher insight is expressed in current source, not binary or behavioral proof.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "5b152c6bfddf542ddac1079e81ba473d1893ba492bb2109f1ba4968c4fbdb706",
+  "request_id": "coordinator-109a49d9530a498cb85f29970cb4cc42",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:flic-decoder-recovery"
+}

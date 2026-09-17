@@ -1,0 +1,23 @@
+{
+  "event_id": "e839fdcb3b5edeb09cb5e1f29696af56286185e5ee55564d844b3382993f3831",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-9647e264df1e4973b0fa26e3b3eefb46",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Direct source read of the current tree: src/palette.cpp:74 carries `// RECOVERY_OBJECT: v1 0x009B8174 ?PaletteCurrent@@3PAVPalette@@A` directly above the definition `Palette *PaletteCurrent;  // 0x009B8174` at src/palette.cpp:79, structurally identical to the precedented PaletteActive v1 annotation at src/palette.cpp:28-29 (0x009B8180); the annotation's comment records the pinned-image evidence `mov edx,[0x9B8174]` at 0x0062A017 inside init between Buffer::init and Buffer::sync_to_palette.",
+      "src/flic.cpp:314-315 spells `buffer_.init(field_59C_, field_5A0_, 0, nullptr);` then `buffer_.sync_to_palette(PaletteCurrent);` - the same global-reference order as the original init disassembly, so the recovered caller consumes the bound identity exactly as the hypothesis describes.",
+      "Fresh scoped diagnostics supplied in this unchanged request (request SHA-256 e40da2aaee45d83b6805c8107b0a93f4643aa33e28d899e88faa30a39a417f5f): checks.binary.unresolved_symbols == [\"??_C@_02JKAF@rb?$AA@\"] only; the ?PaletteCurrent@@3PAVPalette@@A and ?copy@Buffer@@QAEHPAU1@HHHHHH@Z entries the discovery reported as previously unresolved are gone, matching the hypothesis's predicted post-binding state.",
+      "Fresh functions evidence at /diagnostics/check/report/candidate/checks/binary/functions: init's /O2 /Gy /GR- /GX /Z7 variant has boundary pass and its offset-457 relocation ?PaletteCurrent@@3PAVPalette@@A binds to 0x009B8174 with result pass (14 of 15 relocations pass); the sole remaining unknown in that trial is the TU-private ??_C@_02JKAF@rb?$AA@ literal (binding_address null), which is the subject of the separate still-pending discovery worker-9af79cc3cee24930a57943095f2cfd0e and is untouched by this decision.",
+      "Fresh object_definitions evidence lists ?PaletteCurrent@@3PAVPalette@@A at 0x009B8174 in both configured flag-set tables beside PaletteActive at 0x009B8180, and all twelve protected byte obligations (UNK2/4/5/6/7/8/9, constructor, close, decode_frame, rewind, ??1Palette@@QAE@XZ) measure pass, so the annotation disturbs no protected claim.",
+      "Boundaries preserved: incorporation only records that the insight is expressed in current source, not binary or behavioral proof - the v1 binding deliberately leaves initial data and extent unknown (the image's initial bytes there are a runtime-assigned pointer), init's overall function result remains unknown pending the string-literal capability gap, the /Oy- trial diverges wholesale as before, and the scoped check exits 3 (unmeasurable); no acceptance, resolution of worker-9af79cc3cee24930a57943095f2cfd0e, baseline change or scope change is claimed.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "30ea3799831dd4033bde83489ea0ce9e15d5e7a73d44be3cea4d060e62bfb628",
+  "request_id": "coordinator-f70b494fc4a24752ba07bca57663cbd0",
+  "schema_version": 1,
+  "sequence": 83,
+  "stream": "task:flic-decoder-recovery"
+}

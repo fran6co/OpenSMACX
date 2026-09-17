@@ -1,0 +1,22 @@
+{
+  "event_id": "5901d15b2f72cc92bdca289f4a181d216638f1fb7cc63dc20be03dd3711daac1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-4a3d485dc01842ed8a4a8ebfdf3297c3",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reviewed the unchanged authoritative request (SHA-256 0391e7c42d3b627072248d267a12bb14ef9bad9e62dc4b999ecc3cc167d298da) and every referenced evidence pointer; the current src/flic.cpp digest 5aed0278500375275dbb876fda4d85075941a0293b37f730615521ce2eaad796 matches the mapped product record for entity-dbf73777 at src/flic.cpp:1052, so the reviewed body is the current source.",
+      "The discovery's actionable content is expressed in the applied body src/flic.cpp:1091-1168 (?decode_byte_run_trans@Flic@@QAEXXZ, original span 0x0062AF40-0x0062B186): an unsigned 32-bit count read via fread(&count,1,1,file_) and masked `count & 0xff` at every length use (memset/memcpy arguments, both cursor advances, the remaining decrement, the literal-loop bound), the same count slot reused for the literal run length via (uint8_t)abs((int8_t)(count)) with byte store-back and an unsigned count>0 guard, and one byte-typed `value` slot shared by run and literal paths with byte compare against field_0_ and byte store-back - the image-proven byte semantics, deliberately not the 32-bit literal widening.",
+      "The only measured spellings reaching the recorded 582-byte extent (variants-round2 count-reuse-val32-nomask and count-reuse-runval8) diverge from the image by dword and eax,0xff, dword cmp, dword store-back and jb against the image's byte cmp al,cl, byte store-back and signed jl, costing about 529 extra differing aggregate bytes (1393 vs 864); the applied byte-value spelling caps at 576 under both flag sets, which the fresh scoped diagnostics confirm as an extent-only boundary fail (candidate_size 576 vs original_size 582 in both the /O2 and /O2 /Oy- trials, bytes and references unknown) while its emitted callee relocations (mem_get, both Buffer::get_data overloads, fread x4, memset, memcpy, abs, free) match the original call set.",
+      "The residual is compiler-side register allocation outside the measured source-spelling space: 14 spellings across decks build/variants-round1/2/3 (560-592 bytes) invariantly open push ebx early with xor ebx,ebx testing field_5A4_, keep remaining in ebx with a write-back before each fread, reload both cursors after calls and lay out a 0x20 frame, while the image defers push ebx/push ebp under the row-count guard, memory-homes remaining as a round-trip through its stack slot, keeps both cursors in edi/ebp across the packet loop and uses a 0x1c frame with immediate-zeroed scratch; that diagnosis and its 14-spelling exhaustion are preserved as source-owned TRIED history at src/flic.cpp:1059-1087, so the insight is expressed in the current source rather than awaiting a further repair round.",
+      "Incorporation is not acceptance, resolution or a behavioral proof: the 582-byte extent obligation on entity-dbf73777 remains unmet (fresh check exit 3, restoration pass with all 12 protected scoped obligations passing; the 12 binary identity fails are retained family diagnostics per task intent and the sole component unknown is the pre-existing vc6-runtime toolchain entry with unresolved CRT symbols such as ___InternalCxxFrameHandler and __fclose_lk), and the two refined findings worker-b9d4383853de4235bef31274f6aec4c3 and worker-24ebc715a07b4eee81ec6b85ca4f2b70 remain pending for separate decisions; no investigating list was supplied and no route_discoveries delegation or owner choices exist, so no route is proposed.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "03aeccc97951c43181d424a053e5ad279d6e3a835ff0ae6861e5023e98a89e09",
+  "request_id": "coordinator-dc9e25e4487e48c8a7392afdc7c25832",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:flic-decoder-recovery"
+}

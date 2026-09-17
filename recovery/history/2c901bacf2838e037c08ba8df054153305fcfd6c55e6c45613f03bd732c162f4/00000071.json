@@ -1,0 +1,21 @@
+{
+  "event_id": "76c6ef0f4526ee78b2db64996d1d414df8923fa27c44d41a28112687b90e40d9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-f2f11bf7d26b4b6abc0531beebfc8098",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: the comment block of ?decode_delta_flc_trans@Flic@@QAEXXZ carries the ORIGINAL marker at src/flic.cpp:1244 (0x0062B190-0x0062B5ED, 1117 bytes) and the TRIED note at src/flic.cpp:1251-1274 documenting the finding's complete structural description - the image's single-site opcode fread at +136 entered by the line tail jl 0x62B204 at 0x0062B46B (7 fread sites, 13 calls), VC6 rotating the do{fread;if(...)break;}while(true) spelling into entry and back-edge copies (8 emitted sites), the ~168-byte regional surplus between the per-byte value read (+576) and the word read (+831) offset by ~100 fewer bytes after the word abs, and the conclusion that no measured spelling reaches the 1117-byte extent, with the current spelling at src/flic.cpp:1277 retained as the closest measured form.",
+      "Fresh diagnostics corroborate the documented state: request sha256 86ee27404dd9a1f3cc2c55381aaec25e449b7b6ed9a1b8eefd0bf5e282664434 at /diagnostics/check/report/candidate/checks/binary/functions measures ?decode_delta_flc_trans@Flic@@QAEXXZ at candidate_size 1104 under /c /O2 /Gy /GR- /GX /Z7 and 1072 under /c /O2 /Gy /GR- /Oy- /GX /Z7 against original_size 1117 with reason 'candidate exceeds or misses the independently recorded extent', and its emitted_references show exactly 8 _fread relocations against the image's 7 - the rotation duplicate and regional extent trade the TRIED note records; the finding's decks flic-delta-loopmerge and flic-trans-continue (2026-09-17, both campaign flag sets) show every nested-cycle spelling byte-identical and the continue-merge family collapsing the site while landing 1072/1056/1040 under extent with unchanged differing-byte totals, so the residual is VC6-side register allocation and block placement.",
+      "No claim is demoted and no scope changes: entity-c5c525a9ec05f978680947239922e3e1c1da701f3add273308ccfb65109b408e carries no byte obligation (all twelve protected obligations pass and restoration measures pass in the same fresh check), the ORIGINAL marker's 1117-byte extent and the seed src/recovered/units/0062b190.cpp are preserved, and the extent mismatch remains a visible diagnostic per the task intent that seed byte mismatches are diagnostics, not goals - matching the delegation's 2026-09-17 flic-decoder coordination condition that such compiler-side plateau findings resolve within the flic task files only when the structural description is expressed in current source, never demoting claims, changing flag sets or rewriting baselines; incorporation is recognition of that expression, not binary, behavioral or acceptance proof.",
+      "No worker round, expansion or routing is warranted: the finding names only entity-c5c525a9ec05f978680947239922e3e1c1da701f3add273308ccfb65109b408e inside already-owned src/flic.cpp (no outside owners), and the two official decks plus local compiles exhausted the spelling space under the two fixed flag sets, leaving no source lever a bounded attempt could pull; publication of this resolution stays with the serial controller.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "d3de6ffd50dd55f3caa7f118079e3084307d8e8c314ee354829c65e49314ba2c",
+  "request_id": "coordinator-5bfdf17aae9d4f5abb9bd3c4e18f3b62",
+  "schema_version": 1,
+  "sequence": 71,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,29 @@
+{
+  "event_id": "aabf3b786bb699776a8dddec94a661ef18a753ccf8f1bb2c208c8ef6b280b7b3",
+  "payload": {
+    "author": "recovery-worker",
+    "decision": "approve",
+    "evidence": [
+      "Snapshot integrity: working-tree src/flic.cpp sha256 3a795e039fd70430d22c884dda53a91b584177c30eb89c5754a13b2010a4eb22 exactly matches the request's restoration source_evidence digest; git status shows only the two authorized files (src/flic.cpp, src/flic.h) modified, with the untracked recovery/history/ directory being framework journal storage, not source.",
+      "All 24 in-scope entities carry genuine C++ bodies written against the typed embedded members; no 'BODY GOES HERE.' sentinel and no raw image-address operand appears in code. decode_chunk's emitted relocations bind real product callees (?decode_delta_flc_trans@Flic 0x0062B190, ?copy@Buffer 0x005DFF00, ?decode_byte_run_trans@Flic 0x0062AF40, ?decode_fli_copy_trans@Flic 0x0062B670) plus CRT _fread/_ftell — no fixed-address forwarders or copied opcodes.",
+      "Layout evidence (/check/candidate/checks/layout/coverage): 'complete compiler definition parsed' for class Flic in both flag trials, no bases, size 2788 == 0xAE4, members at buffer_=4, file_=1468-4=0x5B8, palette_=1468=0x5BC, frame_=2576=0xA10, header_=2580=0xA14, chunk_=2740=0xAB4 — matching the header's claims; the field_A10_[53] blob split (frame_+header_+0x20 gap+3 DataChunks == 53*4 bytes) preserves the class extent exactly.",
+      "Protected obligations: 11 obligations, 6 pass (UNK4/UNK5/UNK6/UNK7/UNK8/UNK9), 5 unknown — every unknown is caused solely by unresolved CRT/EH targets ($T49830, ___CxxFrameHandler, __except_list, _fclose, _fread, _fseek), and zero obligations fail. BYTE_EXACT marker count is unchanged 7 -> 7 between base 72b14a83 and the working tree; seed files src/unrecovered/0062a070.cpp, src/unrecovered/0062a210.cpp, src/recovered/units/0062a280.cpp and 0062b780.cpp are unmodified, so no historical claim was demoted or rehomed away.",
+      "The 12 binary-check fails are instruction-shape/size diagnostics on FILE-marker bodies in the documented idiomatic-first direction (decode_chunk 608 vs 541 bytes, decode_delta_flc 1008 vs 967, decode_byte_run_trans 576 vs 582, UNK1 224 vs 226, UNK3 560 vs 570), each with genuine callee relocations; the destructor's boundary fail reproduces its pre-existing TRIED note (13/25 instructions, missing compiler EH state store) and its body 'close();' is unchanged from base.",
+      "Build evidence (/check/build_check): fresh configured build pass — 120 sources compiled including src/flic.cpp, OpenSMACX.exe/PDB/MAP produced, link result pass, source_membership pass, missing_sources and unexpected_sources both empty.",
+      "Diff is additive and scoped: src/flic.h adds FliHeader/DataChunk (authorized by the task intent) plus the 16 method declarations and the typed blob split; the only deleted lines in src/flic.cpp are two 'field_A10_[0] = 0;' stores replaced by 'frame_ = 0;' — the same store to offset 0xA10 through the now-named member.",
+      "The PAU->PAV Buffer mangling consequence for Flic::init's emitted symbol is a documented, link-driven structural decision (buffer.h's 'class Buffer' key), with the ORIGINAL marker retaining the catalogued PAU identity — consistent with the already-accepted PAV emissions in sprite/texture/console; shared_functions/generated_tables evidence concerns Net:: vtable entries owned by other TUs and imposes no Flic obligation.",
+      "Class-debt audit: 18 unk-method findings (UNK1-UNK9 in both files) are preserved evidence-free naming debt; per project policy these names are correctly not invented away, and the audit fail reflects that open debt rather than a defect of this change."
+    ],
+    "feedback": "Approved as per-change source acceptance only: the family is genuine recovered C++ — real ownership (single class Flic, no bases, embedded Buffer at +0x4 and Palette at +0x5BC, FILE* state), real lifecycle (auto-constructed members, close()-then-teardown destructor), real callees, additive scope and preserved obligations. This approval does not convert any unknown into a pass: the five CRT/EH-blocked obligations (constructor 0x00629D60, close 0x00629DF0, decode_frame 0x0062A070, UNK2 0x0062A210, rewind 0x0062A280) remain unknown pending strict-reference resolution of the static CRT imports, and the 12 byte mismatches remain restoration diagnostics — recovery_result stays 'unknown' and next_action stays 'recover' until they are resolved or explicitly dispositioned. Remaining verification work for the checkpoint verifier: build/link, declared structure/references, protected obligations, and outside-scope preservation on this merged source; layout declared-requirement coverage is witness-missing (no RECOVERY_MEMBER interpretations declared — none are required by this task's evidence) and structure/runtime/lifetime proof remains a separate application boundary, as does full-project acceptance. The 18 unk-method naming-debt findings stay open for future evidence.",
+    "kind": "review",
+    "retractions": [],
+    "reviewer": "independent-recovery-reviewer",
+    "snapshot": "7c8567b8bbe20800c6d149f6b876f2eb1a0295d8f4db4eaaa80b26ea90402058",
+    "supersessions": []
+  },
+  "previous_event": null,
+  "request_id": "1a7dbb9b0a0b3881ad8667b53473b859ed9fb4e353dcea387ae27985d56d4ccb",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "review:flic-decoder-recovery"
+}

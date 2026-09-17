@@ -1,0 +1,23 @@
+{
+  "event_id": "0b442cb38aeaa7fd73643467955908077089a07a289bc9153f7a383a521f36fa",
+  "payload": {
+    "affects": [
+      "entity-0641b92c0c405745e8330d5b7a73de810469893a4148810357316609018191af"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-9af79cc3cee24930a57943095f2cfd0e",
+    "evidence": [
+      "Original image: `push 0x697470` at 0x00629ECE feeding `call 0x634bb0` (env_open) inside init, with bytes at 0x00697470 reading 'rb\\0\\0' string-pooled in .rdata beside 'jackal' (0x00697468) and '10.10' (0x00697478).",
+      "Fresh scoped check: init's variant under /O2 /GX has boundary pass and 14 of 15 emitted references bound (_fclose 0x00645598, ?init@Palette 0x005FE330, env_open 0x00634BB0, _fread/_fseek, ?init@Buffer 0x005D7670, ?PaletteCurrent 0x009B8174, ?sync_to_palette 0x005DE8F0, ?copy@Buffer 0x005DFF00) with bytes/references unknown solely on the private `??_C@_02JKAF@rb?$AA@` (binding_address null in both trials).",
+      "match_recovery/object_source.py object_targets requires an external storage-class-2 definition and bound_objects.check_objects documents 'Static symbol names never leak across translation units'; the literal is a storage-class-3 private COFF symbol in flic.obj's .rdata with no anchored section base, so neither RECOVERY_OBJECT nor the externals table can reach it, and no string-pool grammar exists in docs/DECOMP_MAP.md or the package.",
+      "The /Oy- variant's wholesale byte divergence is not an additional blocker: flags are alternatives and the function result is PASS when any trial passes, so a string-binding capability (for example binding private string constants by content to pooled original addresses) would let the /O2 /GX trial stand on its own."
+    ],
+    "hypothesis": "init's remaining 'unknown' is a framework binding capability gap, not a source defect: the checker cannot bind TU-private string constants, so the pooled literal \"rb\" the original pushes cannot be resolved. Because configured flag sets are alternatives (a function passes when any trial passes, per match_recovery/application_binary.py result aggregation), this single relocation is now the only thing between init and a pass under the /O2 /GX trial; resolving it requires a framework-side string-pool binding mechanism, not any in-scope source spelling. The precedented named-global workaround (popup.cpp's PopupStartModMode1) would invent a named object the original does not have: 0x00697470 is a VC6-pooled .rdata literal, not a .data object, and the bytes after \"rb\\0\\0\" at 0x00697474 belong to other pooled literals.",
+    "kind": "discovery"
+  },
+  "previous_event": "2a11438985e81cf1c0c8d3b26d5db2265511ce403a16970bef2d1fca479c96ad",
+  "request_id": "worker-9af79cc3cee24930a57943095f2cfd0e",
+  "schema_version": 1,
+  "sequence": 81,
+  "stream": "task:flic-decoder-recovery"
+}

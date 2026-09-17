@@ -1,0 +1,21 @@
+{
+  "event_id": "1874deb1505923257b42ec21d091f6b58452080957647048033c028eeafe3cc5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-2f588e9a73dd43cfbd661874fb1682f8",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Verified in the unchanged working tree (src/flic.cpp sha256 6349001609d527464d18d835fbb2719fbab42295ebb5412b63c9bcd2af4dd66b, matching the diagnostics' mapped-record digest): Flic::UNK3 (src/flic.cpp:456-535, entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652, original span 0x0062A2C0-0x0062A4FA) spells static_cast<int>(frame_) at every site the finding enumerates: the rewind guard at line 460, the scan entry at 477, the scan do-while tail at 500, the pending-frame exit at 503 (both operands), and the decode loop condition at 511/531 — the signed-compare insight is expressed in current source, not a planned repair.",
+      "Fresh scoped diagnostics in this request agree with the finding's terminal state: the binary check's UNK3 row is fail with reason 'candidate exceeds or misses the independently recorded extent' only (560 vs 570 bytes), i.e. the residual is register allocation/frame layout exactly as the discovery states, not the condition codes; incorporation asserts expression in source, not byte or behavioral proof, so this residual does not block it.",
+      "No worker repair round is warranted: the finding names no missing source form to repair, so investigate would grant a bounded attempt with no identified work; the affected identity is solely entity-4e0c9433 which is already in task scope, so no expansion is needed and none would lie within this delegation's lock.cpp-only expansion grant; the evidence supports rather than refutes the hypothesis, so reject is wrong.",
+      "Read the request file (sha256 44e12ccd16beb09302bc29bbec1b2d072d86985d196989b677e3999a9c93c64a) and inspected all seven referenced evidence collections at their JSON Pointers: binary.functions (24 rows: 12 fail/6 pass/6 unknown), generated_coverage (284 per-unit not_emitted/witness rows), generated_tables (2 Net vtable rows), object_definitions (44 outside globals), shared_functions (12 Net virtuals, pass), layout.coverage (2 Flic compiler-layout entries, size 2788), and impact.recheck_entities (2883 entity ids, include-impact context only) — none contradicts incorporation; the unknown CRT/EH obligation tails remain pending and are untouched by this decision.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "0195a37330facf9eebfa4ed7d720bc98bf90d371e6dc1a19afee64f933a76465",
+  "request_id": "coordinator-1d909e58075147e8aa357af2a5354644",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:flic-decoder-recovery"
+}

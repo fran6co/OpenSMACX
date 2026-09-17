@@ -1,0 +1,24 @@
+{
+  "event_id": "1a429456631be08d5bcde39769bc723718012313bea67c520c7dfd84d4bc498b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b5157ca79b1f46258a5081e55607aacb",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in the current source: the two round-5 winners are implemented bodies inside the task's editable files - decode_chunk's chunk-v4 dispatch at src/flic.cpp:905 (extent documentation 889-904: 541 code-to-ret bytes plus the two switch jump-table pairs, 624-byte COMDAT, wide [4,0x12] six-slot table and index table reproduced byte-for-byte) and decode_fli_copy at src/flic.cpp:842 (310 code bytes inside its 320-byte COMDAT).",
+      "Fresh diagnostics in the unchanged request (sha256 966a85e33b0dc2abb7b8c83b35c27edd6c3160a17472b4be3e074aa8eb55acc0) independently re-verify the no-regression claim for this exact snapshot: scoped_recovery_and_restoration reports counts {pass:12} with 12/12 details pass, zero non-pass entries, restoration result pass.",
+      "All 12 protected obligations measure pass under the single configured trial /c /O2 /Gy /GR- /GX /Z7 with fresh fingerprints: ??0Flic 0x00629D60, close 0x00629DF0, decode_frame 0x0062A070, rewind 0x0062A280, UNK2 0x0062A210, UNK4-UNK9 0x0062A710-0x0062B780 in src/flic.cpp and ??1Palette 0x005FE2E0 at src/palette.cpp:703; nothing in the protected set was lost to the applied edits.",
+      "Both affected identities (entity-23ce21fb decode_chunk 0x0062ACD0, entity-64768fc9 decode_byte_run 0x0062A500) are current task subjects homed in src/flic.cpp; the finding names no outside owner, so incorporation stands within existing scope and grants no expansion, worker round or acceptance.",
+      "Preserved tails, not waived by this decision: the same fresh binary check still reports 12 fail results among unprotected subjects (documented spelling-plateau mismatches such as decode_byte_run 0x0062A500, decode_fli_copy 0x0062AB80 and decode_byte_run_trans 0x0062AF40, retained as diagnostics per the task intent) and one unknown (?init 0x00629E50: emitted PAV Buffer spelling versus the catalogued PAU name, documented atop src/flic.cpp); incorporation is source expression, not binary, behavioral or acceptance proof.",
+      "The other findings remain pending and untouched: worker-cbdfa0bd91dc4d838efd122369bd4134 (per-function rect spelling, current source keeps plain sums family-wide with TRIED/LEVER measurement history at src/flic.cpp:793-796 and 831-838) and worker-b9d4383853de4235bef31274f6aec4c3 (decode_byte_run_trans register-allocation plateau, same entity as the already-authorized worker-24ebc715a07b4eee81ec6b85ca4f2b70 investigation) each still need their own fresh decision.",
+      "snapshot token 80a855139a49acdf7f7c06c3bf5f35eba209c4a28cc829d1790d2e226aac04fb read from the authoritative request; decision_revision 43, task flic-decoder-recovery, next_action recover; read-only coordination performed with no source, task-record, compiler or Git changes.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "4753c816a3baa51c453e0b708e9979a6362f7c9516bcd13012b29f6b8ba41a67",
+  "request_id": "coordinator-a30f794ad6394644ad4157a92b0d6275",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:flic-decoder-recovery"
+}

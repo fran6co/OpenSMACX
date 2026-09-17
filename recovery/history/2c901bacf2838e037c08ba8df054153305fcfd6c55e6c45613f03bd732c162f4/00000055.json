@@ -1,0 +1,22 @@
+{
+  "event_id": "5aedf260c1d18bcf3c8d98b7b403cee734d956d0ae5c0fe10a8b771a874860ba",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b8141bda6b5d432caf67b0e04401d892",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The discovery's structural description is expressed in current source: src/flic.cpp:1091-1168 Flic::decode_byte_run_trans (working-tree sha256 5aed0278500375275dbb876fda4d85075941a0293b37f730615521ce2eaad796) spells the field_5A4_ guard with mem_get scratch (1093-1098), rect stores into field_58C_ (1104-1108), row_dst/row_src from both Buffer::get_data overloads (1110-1113), per-row re-read of remaining from field_59C_ (1119) with the row bound re-reading field_5A0_ (1117,1162), a dword count reloaded by fread and masked & 0xff at every length use (1124,1131,1133,1135-1136,1155), the count slot reused for the literal run length via (uint8_t)abs((int8_t)count) with byte store-back and unsigned count > 0 guard (1138-1141), and one byte-typed value slot shared by run and literal paths compared bytewise against field_0_ (1115,1127-1130,1143-1151); the TRIED note at 1059-1087 preserves the measured spelling history beside the ORIGINAL binding at 1052.",
+      "Fresh diagnostics from the unchanged request (sha256 32e996d29203d2d3bd21776fea221e123971bde74651bd9fcd0fa72db7aab15d, verified) measure all twelve protected byte obligations passing with restoration pass; entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6 carries no byte obligation (absent from the protected list) and its current record shows candidate_size 576 vs original_size 582 (span 0x0062AF40-0x0062B186), boundary fail, zero candidate relocations outside the original span, and emitted references at the documented plateau offsets (mem_get +35, get_data@3 +128, get_data@0 +140, fread +194/+234/+266/+408, memset +319, memcpy +338, abs +368, free +561) identically under both configured flag sets.",
+      "Worker deck artifacts verified read-only on disk: build/recovery/variants/brt-scope-result.json scores v-rowscope-rcv/cvr/vcr, v-pktscope, v-branchscope and v-funcscope-after-row each at 576 bytes with boundary fail under both flag sets, zero compile errors and no lost passing measurements, and build/recovery/variants/brt-zero-result.json scores t-local, mem-local, row-forloop and their pairwise/triple combinations each at 576 with a 576 baseline; both decks' controls pass (all TU replicas agree, each file independently changes its compiled witness), confirming the measured 32-spelling plateau across the cast, loop-form, scope and zero-use axes that this discovery records.",
+      "The delegation's 2026-09-17 flic-decoder coordination entry measures this same plateau (32+ spellings, 576 vs the 582 extent, four of seven frame slots agreeing, residual compiler-side with no source lever under the two fixed flag sets) and authorizes resolving the finding within the flic task files when its structural description is expressed in current source; that condition is now verified against src/flic.cpp, and nothing is demoted: the 582-byte extent record in the ORIGINAL marker, both flag sets and the task baseline remain untouched.",
+      "Incorporation is expression-in-source only, not binary, behavioral or acceptance proof: the extent fail against the recorded 582-byte span stays visible in the fresh scoped check, the sibling pending discoveries worker-24ebc715a07b4eee81ec6b85ca4f2b70 and worker-d1ca1b5442184cf2aafc8ad8595593fb on the same entity remain pending for separate fresh decisions, and the class-debt unk-method audit findings on src/flic.cpp/src/flic.h are unrelated naming work outside this decision.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "b99a113c86231869e1314e9b2a5e79c2774c4a49d9ad1fc95a7be45e45b645ab",
+  "request_id": "coordinator-07a0207fa6254362a00ec5a963458f9b",
+  "schema_version": 1,
+  "sequence": 55,
+  "stream": "task:flic-decoder-recovery"
+}

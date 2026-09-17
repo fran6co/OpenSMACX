@@ -1,0 +1,24 @@
+{
+  "event_id": "48098c9b964a27fd3a226ed6feb4d498ded457b02353f221e869e4fd31288991",
+  "payload": {
+    "affects": [
+      "entity-356fc181efee0a59fe11c746c433d866536569295c0dd8ad29d98dac106e7520"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-35dc4ae272094789acd0b9f53ab3afc1",
+    "evidence": [
+      "image call map (recover inspect 0x0062A720 --in src/flic.cpp): 15 calls, 8 fread sites at +109 +167 +396 +443 +502 +553 +599 +702; fresh /O2 compile of current source: 16 calls, 9 fread sites - the line-header read duplicated at section offsets 0xAE (entry, slot [esp+0x14]) and 0xF4 (back edge, slot [esp+0x18])",
+      "image CFG: skip back edge and line tail both enter the single fread setup at 0x0062A7B7; row and line_index memory-homed at the tail (mov [esp+0x2c],ebp; mov [esp+0x1c],eax; and ecx,0xffff / inc eax / cmp / jl 0x62a7b7)",
+      "official deck flic-delta-loopmerge (both campaign flag sets): baseline-current, for-break-single-fread, goto-single-fread, comma-while-single-fread all byte-identical at 1008 bytes /O2 and 960 /Oy- (kdb 864/317); for-break-buffer-local 992/944",
+      "local compiles of for-break, goto and comma spellings independently reproduce 1008 bytes, 305 instructions, 16 calls each - VC6 canonicalizes every nested-cycle spelling into the same rotated two-site loop",
+      "official deck flic-delta-continue: continue-merge (skip as continue in the line loop) collapses to a single read site but measures 928 (/Oy-; /O2 run unmeasured) and 944/912 with the Buffer local, kdb 1633 against the baseline's 864 - farther from the image, so the current while spelling stays the closest measured form"
+    ],
+    "hypothesis": "decode_delta_flc's +41-byte extent failure is exactly one duplicated line-header fread call site: the original reads the header at a single site (0x0062A7C7) that both the skip path (jmp 0x0062A7B7 at 0x0062A804) and the line tail (jl 0x0062A7B7 at 0x0062AA8C) branch back into, while VC6 in this tree rotates the skip cycle and emits two sites with cloned stack homes; the rotation is spelling-invariant and the single-site continue spelling lands 39-55 bytes under extent with a divergent register allocation, so no source spelling reaches the 967-byte extent - a VC6-side loop-rotation plateau, documented in the function's TRIED note.",
+    "kind": "discovery"
+  },
+  "previous_event": "eda12cd1a67f3a5168178dcb87c6fd1d2fe017f08774e96c8ad11ff678c924cd",
+  "request_id": "worker-35dc4ae272094789acd0b9f53ab3afc1",
+  "schema_version": 1,
+  "sequence": 64,
+  "stream": "task:flic-decoder-recovery"
+}

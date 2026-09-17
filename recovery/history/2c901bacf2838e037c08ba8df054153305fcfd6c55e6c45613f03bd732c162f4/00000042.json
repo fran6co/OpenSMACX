@@ -1,0 +1,19 @@
+{
+  "event_id": "7fab12eb03d196c7660f606019e81f566b012828803eef0539d36bf3ef3b1204",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/0062acd0.cpp"
+    ],
+    "evidence": [
+      "The decode_chunk extent correction (2026-09-17, product binding src/flic.cpp:889 now records the 624-byte physical COMDAT 0x0062ACD0-0x0062AF40 with image evidence) supersedes the preserved seed 0062acd0.cpp, whose 541-byte code-to-extent record conflicts with the product binding and refuses the entity in select_bindings. Retiring the superseded seed follows the rehoming precedent: product-owned entities drop their scaffold bindings. This is record retirement only; no other seed or archived unit is touched."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "63011072b4bb702e5ceb27eef9a2b8e5cd2d7e3a85dbf079b21cf28cdd1bb6a7",
+  "request_id": "coordinator-scope-decode-chunk-seed",
+  "schema_version": 1,
+  "sequence": 42,
+  "stream": "task:flic-decoder-recovery"
+}

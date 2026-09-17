@@ -1,0 +1,22 @@
+{
+  "event_id": "69bd3324f08ad94f54c7ff89716c0082fbf5bb5fc3e08852ef7e4b0e373dac0e",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-05b223693afb4b57ad6cce91a7de8623",
+    "evidence": [
+      "variants deck flic-round5: baseline 608 and chunk-v4 624 both fail boundary with candidate_relocations_outside_original [544,548,552,556,560,564,584,588,592,596,600,604] (the two jump-table pairs) under BOTH flag sets",
+      "compare_bound_code in packages/match-recovery/src/match_recovery/binary.py admits only `len(candidate) == size + (-size % alignment)` with all tail bytes in (0x90, 0xCC)",
+      "the linked image itself carries the tables at 0x0062AEED-0x0062AF38, past the recorded 0x0062ACD0-0x0062AEED extent, so the original build placed them outside the function's measured section"
+    ],
+    "hypothesis": "decode_chunk's 0x0062ACD0 extent obligation is structurally unpassable under the current boundary policy: VC6 (both campaign flag sets) always emits the switch jump tables inside the function's own COMDAT, while the framework's extent check only admits NOP/INT3 padding past the independently recorded 541-byte extent, so any table-bearing spelling fails with relocations outside the original - this is a policy/compiler placement conflict, not a spelling deficiency",
+    "kind": "discovery"
+  },
+  "previous_event": "6e0f70d7076bdfe05be42e9549d839650ee3434d0fb0a87663ffb3bcc60707f1",
+  "request_id": "worker-05b223693afb4b57ad6cce91a7de8623",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:flic-decoder-recovery"
+}

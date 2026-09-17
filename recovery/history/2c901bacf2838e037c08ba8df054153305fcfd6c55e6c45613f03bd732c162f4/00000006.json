@@ -1,0 +1,24 @@
+{
+  "event_id": "192818a3a0f7ad77d847cb5a6905203e7f997f0028f257ba186788a8e5607b68",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-8b7c120f918b46a6a1ed399071a52b43",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: Flic::fill at src/flic.cpp:744-772 keeps the pointer-store spelling (uint32_t *rect = &field_58C_, plain sums rect[2] = x + width, rect[3] = y + height at lines 766-770) and its comment at lines 745-761 documents the pointer-store cache-invalidation effect (which reproduces the image's reload block and the 98-byte recorded size), the unreachable add placement between the store pairs, both measured failure shapes and the decision to keep the idiomatic plain form; the same spelling is adopted at src/flic.cpp:558-562 (decode_byte_run), 801-805 (decode_fli_copy), 980-984 (decode_byte_run_trans), 1226-1230 (decode_black_trans) and 1257-1261 (decode_fli_copy_trans), while decode_chunk's two inline type-0xD blocks at 886-890 and 921-925 retain the other documented shape (read-back), which the same comment covers.",
+      "Deck evidence verified on disk: build/recovery/decks/fill-rect-v2.out measures inplace-add, assign-add, plain-swapped and readback-2only all failing with the identical 18-diff signature [26,27,...,41,43,49] under both flag sets, and readback-1only failing with 16 diffs [8,15,22,27,32,...,41,43,49]; build/recovery/decks/fill-rect-v3.out measures ptr-first-only and ptr-second-only at 40 diffs and ptr-sum-stores at the plain 18-diff signature; the interleaved `x += width` statement order (inplace-add) was measured and still hoists both adds, so the two-shape classification covers the natural spelling space.",
+      "Fresh scoped diagnostics from the unchanged request (sha256 dac02ac2fa44805868012f2c7bd9ef3a9451251c1924a8fd5ecfaf59ff55e806, pointer /diagnostics/check/report/candidate/checks/binary/functions) confirm the recorded residual is current and stable: ?fill@Flic@@QAEXXZ and ?decode_black_trans@Flic@@QAEXXZ fail bytes with exactly [26-41,43,49] in both flag sets with references pass and boundary pass, ?decode_fli_copy_trans@@QAEXXZ fails 18 diffs [32-47,49,55] with only _fread unresolved, and ?decode_fli_copy@@QAEXXZ fails 37 diffs including the pre-existing 74-85 row-loop window the discovery itself flags as unexplained and predating this change.",
+      "Original evidence corroborates the negative result: the preserved seed src/recovered/units/0062ab10.cpp spells the rect block in raw-pointer form and its header records 'measured tier MISMATCH' (divergence 1), and the image's only inter-store instructions are the two register adds at 0x0062AB36-0x0062AB39; plain sums are register adds with no memory dependence so VC6 hoists them above the stores in every measured form, read-back spellings pin the adds only by introducing loads in the wrong order, and partial pointer routing restructures the reload block, which is the scheduler-level explanation the source comment now records.",
+      "No scope action is required: all seven affected identities (fill entity-dcb8e21d..., decode_fli_copy entity-89a36e1e..., decode_fli_copy_trans entity-4ba0bb4f..., decode_byte_run entity-64768fc9..., decode_byte_run_trans entity-dbf73777..., decode_black_trans entity-4cf6960a..., decode_chunk entity-23ce21fb...) are already owned by task flic-decoder-recovery whose editable files src/flic.cpp and src/flic.h contain every site; decision_facts list outside_delegation and unknown_originals as empty.",
+      "Incorporation claims no behavioral or byte proof and waives nothing: the 18-byte hoisted-adds window remains a visible per-check diagnostic for the family, none of these entities carries a protected byte obligation (the protected list covers only UNK4-UNK9, constructor, close, decode_frame, UNK2 and rewind), and the task baseline git-history:72b14a83cc787054047b74ed0deb0013fdb8ffa7 is untouched.",
+      "Remaining family work stays pending and separate from this finding: decode_chunk, decode_byte_run, decode_byte_run_trans, decode_delta_flc, decode_delta_flc_trans, UNK1 and UNK3 currently fail the recorded-extent boundary check, decode_fli_copy's 74-85 window is still unexplained, and unresolved CRT imports (_fread, _fseek, _fclose, ___CxxFrameHandler) keep init, constructor, close, decode_frame, UNK2 and rewind at unknown; these are ordinary task obligations for future worker rounds, not part of this rect-scheduling hypothesis.",
+      "Delegated policy: 48e9ebf369e29804d426f1d842f8de184948c6689c17ea4d0e07ced353657830"
+    ]
+  },
+  "previous_event": "a5a13082d344ab8b81f37c6540f8ed85f1363218b7b29267903635db74ffceb9",
+  "request_id": "coordinator-44875d67b8cb4b89a90d8704fa1d133a",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:flic-decoder-recovery"
+}

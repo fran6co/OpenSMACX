@@ -1,0 +1,29 @@
+{
+  "event_id": "5ab992823280b909265f137641e4ef791b20e8a23c2b4185abfa1ec60d84b5b4",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28",
+      "entity-4e0c9433252ba6053d060d5d5c790a79441906362b521c9ab548b75510ecf652",
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65",
+      "entity-d1c1894cbbe931152030edcdf78892572ff505b9e7706ae036a12be89825537a",
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6",
+      "entity-dcb8e21d8c49bebdd09b97fd12c4f9f2dcf8bbb9f58a04e97a6816c07cb3654d"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-c9cb348b44024a8e9b985caca42e5b7b",
+    "evidence": [
+      "fill TRIED note: thirty-four spellings across decks fill-rect-v1/v2/v3, flic-rect-locals/mutate/variants2-5 and fifteen local compiles; no spelling combines the image's prologue loads with its interleaved add placement (destination pair edx,eax)",
+      "UNK3 TRIED note (deck unk3-pmf-goto, 2026-09-17): pointer-to-member at the call site and flagless goto spellings both emit one identical 576-byte section - register and slot allocation differs (image homes &chunk_ in ebx, spills frame_pos; this tree rematerializes)",
+      "decode_byte_run final deck (flic-final-report): UNK1 member-test x decode_byte_run slot-ctrl cross, all four candidates kdb 157 under /O2",
+      "decode_byte_run_trans TRIED note: 14 spellings, every byte-value spelling caps at 576 bytes against the recorded 582 while 582-byte spellings widen the literal value to a dword compare the image contradicts",
+      "decode_chunk extent note (2026-09-17): 541 code + 80 jump-table + 3 pad bytes reproduce the image's dispatch byte-for-byte; the recorded code-to-ret extent cannot admit any table-bearing spelling"
+    ],
+    "hypothesis": "The remaining failing family - fill, decode_fli_copy, decode_black_trans, decode_fli_copy_trans, decode_chunk's two 0xD arms, UNK1, UNK3, decode_byte_run, decode_byte_run_trans - are measured compiler-side plateaus in add-placement and register/slot allocation: the dirty-rectangle store block's interleaved adds (34+ spellings), UNK3's four-candidate deck emitting one identical 576-byte section, decode_byte_run's 4-way cross at kdb 157, and the byte-value width/extent tension in decode_byte_run_trans (576 vs 582) are all documented in per-function TRIED notes and were not moved by any round-2 evidence; the delta-pair finding above adds a fifth member of the same class (loop-rotation site duplication).",
+    "kind": "discovery"
+  },
+  "previous_event": "e030d373948f954b3a1182d2e0c445ad9a012017b13393a5107d77e8f5352851",
+  "request_id": "worker-c9cb348b44024a8e9b985caca42e5b7b",
+  "schema_version": 1,
+  "sequence": 68,
+  "stream": "task:flic-decoder-recovery"
+}

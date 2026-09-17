@@ -1,0 +1,22 @@
+{
+  "event_id": "2a11438985e81cf1c0c8d3b26d5db2265511ce403a16970bef2d1fca479c96ad",
+  "payload": {
+    "affects": [
+      "entity-0641b92c0c405745e8330d5b7a73de810469893a4148810357316609018191af"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-9647e264df1e4973b0fa26e3b3eefb46",
+    "evidence": [
+      "Pinned-image disassembly of init 0x00629E50: `mov edx, DWORD PTR ds:0x9b8174` at 0x0062A017 immediately before `call 0x5de8f0` (Buffer::sync_to_palette at 0x005DE8F0), the same reference order this tree's init spells at src/flic.cpp:315.",
+      "`recover check-data --image <pinned> --symbol ?PaletteCurrent@@3PAVPalette@@A`: definition 'pass' under both configured flag sets, compiler storage section 5 offset 4 size 4, source src/palette.cpp line 74; content/lifetime unknown as expected for an unbounded v1 binding.",
+      "Fresh task check after the edit: unresolved_symbols == [\"??_C@_02JKAF@rb?$AA@\"] (previously [\"??_C@_02JKAF@rb?$AA@\", \"?PaletteCurrent@@3PAVPalette@@A\", \"?copy@Buffer@@QAEHPAU1@HHHHHH@Z\"]) and init's emitted_references now bind ?PaletteCurrent@@3PAVPalette@@A to 0x009B8174; `recover check-source --jobs 8` passes (exit 0), confirming the annotation grammar project-wide."
+    ],
+    "hypothesis": "The original global at 0x009B8174 is PaletteCurrent and is now source-bound: a RECOVERY_OBJECT v1 annotation beside the palette.cpp definition (src/palette.cpp:74, definition at :79) binds the emitted ?PaletteCurrent@@3PAVPalette@@A, so Flic::init's relocation resolves to 0x009B8174 and the scoped check's unresolved_symbols drop from three entries to one. The binding is v1 like PaletteActive's precedented one at src/palette.cpp:28: object start only, initial data and extent left unknown (the image's initial bytes there are a runtime-assigned pointer).",
+    "kind": "discovery"
+  },
+  "previous_event": "9dcac57a23572ce78e7affb835da343a9d245489b020ceaf7b14778581ef4358",
+  "request_id": "worker-9647e264df1e4973b0fa26e3b3eefb46",
+  "schema_version": 1,
+  "sequence": 80,
+  "stream": "task:flic-decoder-recovery"
+}

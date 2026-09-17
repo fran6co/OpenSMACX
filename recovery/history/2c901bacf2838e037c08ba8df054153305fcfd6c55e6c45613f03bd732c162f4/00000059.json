@@ -1,0 +1,21 @@
+{
+  "event_id": "915da73433044294fa46b8b995d18a98e1a0e9b7e87edd1e6e7f069d051a11ba",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-231fcca9bb5b49b69680a9d4d20cba35",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The requested toolchain action is expressed in current source: src/vendor/vc6-runtime.recovery.h's RECOVERY_COMPONENT block now binds _abs origin 0x00644F3A spans 0x00644F3A-0x00644F45 unit build/intel/mt_obj/abs.obj (line 67), _ftell origin 0x00647920 spans 0x00647920-0x00647942 unit ftell.obj (line 68) and _memset origin 0x006465F0 spans 0x006465F0-0x00646648 unit memset.obj (line 69), published by commits 0d0b04b0 (abs, ftell) and bd6ca573 (memset through its pinned identity); the finding explicitly reserved this file to coordinator/toolchain-owner action, and that owner has now acted.",
+      "Fresh request diagnostics (request_sha256 6254ec95a24092a884ef62e425c636029ca6edd151ca0a02ea6e01b38e187fe3) confirm the hypothesis's predicted effect: checks.binary.unresolved_symbols is now [] where the finding recorded [\"_abs\",\"_ftell\",\"_memset\"], and the vc6-runtime component_verification now selects abs.obj, ftell.obj and memset.obj among its 12 members, with _abs measuring pass on bytes and references and _memset pass on bytes and references.",
+      "The six affected identities (decode_byte_run, decode_byte_run_trans, decode_chunk, UNK3, decode_delta_flc, decode_delta_flc_trans) are no longer unmeasurable: decode_byte_run's fresh variant binds its _memset call to 0x006465F0, its _abs call to 0x00644F3A and fread/free to their already-bound spans, with empty missing/extra/unresolved absolute-relocation lists; the remaining fail results are measured differing-offset byte differences (the documented compiler-side register/slot allocation residuals on these entities), a separate concern from this relocation-binding finding.",
+      "Incorporation is expression in source, not binary or behavioral proof, and two tails remain visible: _ftell's own component references stay unknown because its member-internal __lock_file/__ftell_lk/__unlock_file relocations sit in the component's unresolved set, and the controller refined the finding's guessed _abs terminal 0x00644F3D to 0x00644F45 (the 11-byte cdq/xor/sub magnitude idiom) on archive-member evidence; no scope, baseline or acceptance change is requested.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "06725ad8a50662ba96d94a252fa70e8012689ab69cd5488394e5aa79fe763402",
+  "request_id": "coordinator-ab0802f8ea044e6ba8518a202081aaaa",
+  "schema_version": 1,
+  "sequence": 59,
+  "stream": "task:flic-decoder-recovery"
+}

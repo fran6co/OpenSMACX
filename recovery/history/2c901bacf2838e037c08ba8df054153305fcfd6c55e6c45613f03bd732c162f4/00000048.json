@@ -1,0 +1,22 @@
+{
+  "event_id": "03aeccc97951c43181d424a053e5ad279d6e3a835ff0ae6861e5023e98a89e09",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-329ebb921f594835b93d3e2f438ce623",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/flic.cpp:1091-1168 (Flic::decode_byte_run_trans) implements the measured local model with one function-scope byte-typed value slot at line 1115 shared by the run path (line 1127) and the literal path (line 1143), and a 32-bit unsigned count declared at line 1120.",
+      "Every length use is a source-level count & 0xff mask on the dword count: the remaining decrement (line 1124), the memset argument (1131), the memcpy argument (1133), both cursor advances (1135-1136) and the literal loop bound (1155); the literal run length reuses the count slot via count = (uint8_t)abs((int8_t)count) with a byte store-back (1138-1139) behind an unsigned count > 0 guard (1141), exactly the hoist-u8-ucount spelling the discovery reports as applied.",
+      "Fresh scoped binary check (/diagnostics/check/report/candidate/checks/binary/functions, entry 0x0062AF40 from the unchanged request, sha256 3fd159fe320b3e2f63220834a715e464bc87f4bbe80bb2e517b4a0523614b9df): the applied body compiles 576 bytes under both configured flag sets against the independently recorded 582-byte extent (boundary fail, bytes/references unknown) and emits the _abs external at offsets 364/368 alongside _fread/_memset/_memcpy/_free/mem_get and both Buffer::get_data overloads, matching the applied spelling's measured 576/864 result rather than any 582-byte widening.",
+      "This incorporation is expression-in-source only, not behavioral or extent proof: the 582-byte obligation stays a visible fail row, and the sibling register-allocation discoveries on the same entity (worker-b9d4383853de4235bef31274f6aec4c3, worker-24ebc715a07b4eee81ec6b85ca4f2b70, worker-4a3d485dc01842ed8a4a8ebfdf3297c3) remain pending; no scope, acceptance or baseline change is requested.",
+      "The preserved TRIED history at src/flic.cpp:1059-1087 records the 14-spelling measurement space and that only literal-value-widening spellings reach the 582 extent, which the image's byte compare/store-back contradicts; the fresh 576-byte boundary fail is consistent with that account, so the extent gap remains owned by the pending register-allocation findings rather than this local-model finding.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "4dab19efd5a335093e5d460671e24d9999254d4d978da34bc7dfb616bfd3b287",
+  "request_id": "coordinator-e525822d433d4b6f904deed32ea3b5f1",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -71,6 +71,11 @@ const uint8_t SystemColours[80] = {
     255, 255, 255, 0,   // 255 white
 };
 
+// RECOVERY_OBJECT: v1 0x009B8174 ?PaletteCurrent@@3PAVPalette@@A
+// The address is read straight out of the image: Flic::init loads
+// `mov edx, [0x9B8174]` (0x0062A017) between Buffer::init and
+// Buffer::sync_to_palette, the same global reference order this tree's
+// init spells. PaletteActive below carries the matching V-keyed binding.
 Palette *PaletteCurrent;  // 0x009B8174
 
 /*
@@ -658,18 +663,22 @@ int Palette::init() {
 
 
 // ---------------------------------------------------------------------------
-// DEFINED IN THE HEADER, CLAIMED HERE.
+// LIFECYCLE, CLAIMED HERE.
 //
-// These pieces are written in-class so the image's own inlining reproduces -
-// a constructor or destructor the compiler is expected to fold into its
-// caller. A marker cannot live beside them: `decomp.reader` globs `*.cpp`
-// and `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
-// header could be neither read nor measured. VC6 emits each of them into
-// this unit's object as its own COMDAT anyway, which is what the comparison
-// pulls out, and the `body` fact says where to go to edit one.
+// The constructor and the destructor are both defined out of line in this
+// unit, beside their markers. They were first written in-class so the
+// image's own inlining would reproduce, and the markers lived here because
+// a marker cannot live in a header: the source reader globs `*.cpp` and
+// `*.c`, and a comparison compiles a TRANSLATION UNIT, so a marker in a
+// header could be neither read nor measured. While the bodies sat in the
+// header, VC6 emitted each of them into this unit's object as its own
+// COMDAT anyway, which is what the comparison pulled out, and a `body`
+// fact said where to go to edit one. ~Palette then moved out of line
+// (2026-09-16): /O2's /Ob1 was expanding the in-class body into every
+// embedding class's implicit teardown - see the LEVER on its marker below.
 //
-// The ratchet still covers the header: this unit includes it, so breaking an
-// in-class body here fails the claim below. Measured, not assumed.
+// The ratchet still covers the header: this unit includes it, so breaking a
+// declaration here fails the claims below. Measured, not assumed.
 // ---------------------------------------------------------------------------
 
 /*
@@ -697,14 +706,27 @@ Palette::Palette() {
 
 /*
 // ORIGINAL: 0x005FE2E0 ??1Palette@@QAE@XZ 0x005FE2E0-0x005FE2E5 BYTE_EXACT
-// body      src/palette.h
+// body      src/palette.cpp
 // size      5 bytes
 // prototype void (__thiscall ??1Palette@@QAE@XZ)(Palette* this)
 // callers   18   call targets   0
 // kind      thunk
 // flags     hidden;thunk;sp_ready;purged_ok
 // calls     (none)
+// LEVER: OUT OF LINE (2026-09-16, was `MEASURED ~Palette() { close(); }` in
+//   palette.h). The in-class definition let /O2's /Ob1 expand the teardown
+//   into every embedding class's compiler-generated member destruction:
+//   Flic's ??1Flic (0x004327A0) emitted `call ?close@Palette@@QAEXXZ`
+//   (0x005FE500) where the image calls this thunk, one of its 18
+//   catalogued sites. Same body either way - the difference is which call
+//   sites the compiler is willing to build it in; same measured lever as
+//   buffer.h's ~Buffer (2026-09-03). The five bytes cannot be written by
+//   hand: they are the tail-jump compile of `{ close(); }`.
 */
+
+// The whole destructor: close() is the last thing it does, so /O2 compiles
+// the call as the tail jump the marker names.
+MEASURED Palette::~Palette() { close(); }
 
 /*
 Purpose: Restart the timer of the colour-cycling slot that owns `key`.

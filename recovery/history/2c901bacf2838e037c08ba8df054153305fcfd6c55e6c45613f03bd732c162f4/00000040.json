@@ -1,0 +1,21 @@
+{
+  "event_id": "2d92584680c0bc3c0167de77aad7dda38b40636b2a042a4031d4938927d2a8f2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b5bb2c3939b147d0b34582417b570ab2",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The hypothesis is expressed in the current implementation: src/flic.cpp:988-996 (trans switch, opened at src/flic.cpp:962) and src/flic.cpp:1023-1031 (opaque switch, opened at src/flic.cpp:999) spell the FLI subchunk skip labels as explicit stacked case entries (4, 0xb, 0xc, 0x12) whose goto lands on the labeled default arm, so the four skip cases and out-of-range share one fseek(file_, size - 6, SEEK_CUR) body in both switches - exactly the image's wide table plus single shared body, superseding the finding's 'no spelling among those measured' caveat.",
+      "The relevant implementation is Flic::decode_chunk (entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28, src/flic.cpp:899-1039); its source note at src/flic.cpp:918-936 records that this goto-into-labeled-default shape is the only measured spelling keeping the image's wide dispatch span [4,0x12] with six handler slots (slot0 = slot5 = the shared skip body) and the index table [0,5,5,1,5,5,5,0,0,2,5,3,4,5,0] byte-for-byte, arm order 7, 0xF, 0xD, 0x10, with code-to-ret 541 equal to the recorded extent.",
+      "Fresh diagnostics corroborate the structure: the referenced /diagnostics/check/report/candidate/checks/binary/functions value in request sha256 7add99df64a06d9d14d6df5937dd9e6ac43904f69a26dbeb3fb9a61019a44676 shows decode_chunk under /c /O2 /Gy /GR- /GX /Z7 emitting two six-pointer handler tables whose relocations bind slot0 and slot5 of each table ($L49949/$L49950 and $L49951/$L49952 groups) to the single shared $skip2$47987 target at 0x0062AEA1, matching the image's decoded tables at 0x0062AEF0-0x0062AF38.",
+      "This incorporation is not resolution, acceptance or a byte proof: the same fresh result keeps boundary fail for decode_chunk (candidate 624 vs original_size 541, candidate_relocations_outside_original [544,548,...,604]) because VC6 emits the jump tables inside the function COMDAT while the recorded 0x0062ACD0-0x0062AEED extent stops at the ret; that residual placement/policy conflict is the separate still-pending finding worker-05b223693afb4b57ad6cce91a7de8623 and is neither resolved nor waived by this decision.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "a3847c2291d64336a42925efe9ad4aaae88eb04ccb1a9738260a5facc909fa6e",
+  "request_id": "coordinator-2676c3b49a464c3a9457e548b0f9e11c",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:flic-decoder-recovery"
+}

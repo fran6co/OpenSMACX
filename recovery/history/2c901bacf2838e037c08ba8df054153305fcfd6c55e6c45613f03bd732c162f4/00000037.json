@@ -1,0 +1,22 @@
+{
+  "event_id": "5b152c6bfddf542ddac1079e81ba473d1893ba492bb2109f1ba4968c4fbdb706",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28",
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-b5157ca79b1f46258a5081e55607aacb",
+    "evidence": [
+      "flic-round5-deck.json rankings: chunk-v4, chunk-v4-copysums, copysums-only each pass=25 fail=12 unknown=6, lost_passing_measurements=[] for all three",
+      "check-restoration after applying both edits: counts {pass: 12} with zero non-pass details (??0Flic, ??1Palette, close, decode_frame, rewind, UNK2, UNK4-UNK9), product compiles clean under /c /O2 /Gy /GR- /GX /Z7 with decode_chunk at 624 and decode_fli_copy at 320 COMDAT"
+    ],
+    "hypothesis": "The two applied winners carry no regression risk to the task's protected set: every candidate in the round-5 deck preserved pass 25 / fail 12 / unknown 6 with zero lost passing measurements, and check-restoration after the edits shows all 12 scoped obligations passing",
+    "kind": "discovery"
+  },
+  "previous_event": "a32887fb63649f04b7984bcb84f485f4dab659001ba717a9cdeda2c79e440fc1",
+  "request_id": "worker-b5157ca79b1f46258a5081e55607aacb",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:flic-decoder-recovery"
+}

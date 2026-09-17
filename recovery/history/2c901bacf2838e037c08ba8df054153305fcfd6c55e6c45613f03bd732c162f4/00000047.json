@@ -1,0 +1,25 @@
+{
+  "event_id": "4dab19efd5a335093e5d460671e24d9999254d4d978da34bc7dfb616bfd3b287",
+  "payload": {
+    "affects": [
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-4a3d485dc01842ed8a4a8ebfdf3297c3",
+    "evidence": [
+      "measured compiled sizes across decks build/variants-round1, -round2 and -round3: 560 (/Oy-), 570, 576 (every byte-value spelling including the prior product body and both round-3 hoists), 582 (only the 32-bit-literal-value spellings count-reuse-val32-nomask and count-reuse-runval8, which boundary-pass the recorded extent), 592 (both-values-32-bit family)",
+      "count-reuse-runval8's literal path diverges from the image exactly by and eax,0xff plus dword cmp eax,ecx plus dword store-back plus jb loop branch, against the image's byte cmp al,cl, byte store-back and signed jl - the six bytes that separate 576 from 582",
+      "the image's unsigned guard (jbe after test al,al) and signed literal-loop bound (jl after cmp ebx,edx) admit no single-count-type spelling: unsigned count yields jbe+jb, int count yields jle+jl; both variants measured identically at 576 bytes and 864 aggregate",
+      "image prologue sub esp,0x1c; push esi; mov esi,ecx; mov dword ptr [esp+0x1c],0 versus the push ebx; xor ebx,ebx; cmp [esi+0x5a4],ebx opening every measured spelling emits (probe listings brt-D/E/F and round1-round3 compiled diagnostics)",
+      "aggregate known_differing_bytes 1393 for the extent-passing runval8 versus 864 for byte-value spellings: forcing the 582 extent by widening the literal value costs about 529 differing bytes against image-observed byte semantics",
+      "post-edit task check flic-decoder-recovery: zero fail rows, all measurable scoped proofs pass, 26 compile attempts clean; only pre-existing toolchain-component and layout witness unknowns remain"
+    ],
+    "hypothesis": "The residual gap on decode_byte_run_trans is compiler-side register allocation, not source spelling, refining both pending discoveries: across 14 measured spellings VC6 invariantly opens push ebx early with xor ebx,ebx testing field_5A4_, caches remaining in ebx with a write-back before each fread, reloads both cursors after calls, and lays out a 0x20 frame; the image defers push ebx/push ebp under the row head, memory-homes remaining as a round-trip through its stack slot, keeps both cursors in edi/ebp across the packet loop, and uses a 0x1c frame with scratch immediate-zeroed into it. The recorded 582-byte extent is reachable only by widening the literal-path value to 32 bits, which the image's byte compare and byte store-back contradict; byte-value spellings cap at 576. The image's exact combination lies outside the measured spelling space, so the pending memory-homing model needs a lever other than body spelling, and both findings should stay pending for coordinator review of the applied source.",
+    "kind": "discovery"
+  },
+  "previous_event": "c5490cd4100497518bde79310ee9b04750eacb7b4f0b9ee463c43a9b94c97fa5",
+  "request_id": "worker-4a3d485dc01842ed8a4a8ebfdf3297c3",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:flic-decoder-recovery"
+}

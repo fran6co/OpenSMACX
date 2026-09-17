@@ -1,0 +1,22 @@
+{
+  "event_id": "30104210e51266bcaa2894ae9c11f0bab43b882f28cf57e8abb40391d5202330",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-953ac9b26b514853bd7610fa524ab0ec",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Insight is expressed in the current product body src/flic.cpp:578-634 (?decode_byte_run@Flic@@QAEXXZ, 0x0062A500, in-scope entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65, editable file of this task): line 602 declares a single `int8_t count;` serving both the row-head packet-count fread (line 603, whose value is never read before the per-packet fread at line 605 overwrites it) and the per-packet control byte, giving the one address-taken dword slot reloaded via static_cast<uint8_t> at lines 612, 620, 625-626 — the fused-variable spelling the hypothesis requires.",
+      "The hypothesis's declaration-order claim is also in source: src/flic.cpp:579 declares `void *scratch = nullptr;` before `dst` at line 580, matching the early zero-store prologue observation; no component of the hypothesis remains a planned repair.",
+      "Fresh diagnostics from the unchanged request (/diagnostics/check/report/candidate/checks/binary/functions) re-confirm the discovery's central falsifiable claim: decode_byte_run at /O2 (/c /O2 /Gy /GR- /GX /Z7) has boundary pass over the original span 6464768-6465295 (527 bytes, extent agreement) with bytes fail (266 differing offsets), and /Oy- boundary fail — the stated 512-blocked /Oy- behavior, so both flag-set observations of the finding reproduce on current source.",
+      "The /O2 references failure is confined to CRT imports _memset and _abs (binding_address null; the check's unresolved_symbols are _abs/_ftell/_memset, the obligation category this task explicitly preserves) while every sibling reference binds (?get_data@Buffer 0x005E33F3, ?mem_get 0x005D4510, _fread 0x00646178, _free 0x00644EF2), so no sibling-dispatch repair remains for this finding; incorporation identifies the implementation only and claims no byte-exact, layout or behavioral proof, and the /Oy- and CRT obligations stay visible.",
+      "Discovery worker-953ac9b26b514853bd7610fa524ab0ec is not listed in the current investigating set (worker-b5bb2c3939b147d0b34582417b570ab2), so this is a fresh decision on an unclaimed pending finding within existing scope; no expansion, binding or routing is requested.",
+      "Delegated policy: 5bc58b41eb8bc9d3037be2cd00bbb922da480b0a49a75d5ca95b9c0b01590fad"
+    ]
+  },
+  "previous_event": "2ed4dbf8d49393cd698632ab9cf43ef18fc1e46c85c708c3aaa7bcc6a4f4c731",
+  "request_id": "coordinator-d5498fd8ea1349309c4b6890a35e3a2a",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,24 @@
+{
+  "event_id": "97ae9f4c274ec1b1d94d05e77208e89d2e37da5381adf0e2637a0e6ddbe7fce8",
+  "payload": {
+    "affects": [
+      "entity-0641b92c0c405745e8330d5b7a73de810469893a4148810357316609018191af"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-0ec2bfe944204f0bb38e93c58f0907ed",
+    "evidence": [
+      "Bounded edit applied exactly as authorized: `int init(struct Buffer *buffer, ...)` at src/flic.h:80 (declaration) and src/flic.cpp:255 (definition), buffer.h still included normally; then a fresh `uv run recover tasks check-restoration flic-decoder-recovery` ran under the inherited VC6_PREFIX (report kept at build/recovery/worker-round1-checkrestoration.json, input_fingerprint 075532b9081d832e72259132d29b969acf701f11461894d037b9cfcf2dad849c, 26 compile attempts, so the edited source was freshly compiled, not cached).",
+      "The fresh check still refuses init with reason \"expected one defined COFF function named '?init@Flic@@QAEHPAUBuffer@@PADHHH@Z'\" under BOTH configured flag trials (/c /O2 /Gy /GR- /GX /Z7 and /c /O2 /Gy /GR- /Oy- /GX /Z7), while all twelve protected byte obligations still pass and the same twelve known diagnostic mismatches (idiomatic decoder bodies) remain — the edit changed nothing observable.",
+      "Read-only confirmation via `uv run recover measure 0x00629E50 --image $OPENSMACX_IMAGE --in src/flic.cpp` (2 compile attempts, report at build/recovery/worker-round1-measure-init.json): \"?init@Flic@@QAEHPAUBuffer@@PADHHH@Z not found among the object's .text symbols\" — the object compiled from the `struct Buffer *` spelling emits no PAU-named definition, i.e. the use-site elaborated specifier does not override the class key recorded from buffer.h.",
+      "The contrast measurement is already in source history: the TU-wide `struct Buffer;` forward (src/flic.cpp:18-30 comment) DID key the unit U — emitting init PAU but re-keying every Buffer::copy reference to ?copy@Buffer@@QAEHPAU1@HHHHHH@Z, a name nothing defines because buffer.cpp's single out-of-line copy (src/buffer.cpp, PAV spelling) is class-keyed — and the game could not link. Together the two measurements show VC6 fixes the U/V key at the first visible tag declaration and no per-use-site or per-declaration-site override exists, which is also the only consistent explanation of the original image holding PAU init and PAV copy alongside a header-inline copy COMDAT per spelling.",
+      "No current TU references Flic::init (grep of src/ shows callers only construct, close and decode_frame Flic objects; the `init(Buffer*,...)` declarations in src/unrecovered/00472230.cpp:1758 and src/recovered/units/0043f2b0.cpp:339 are uncompiled seeds), so no caller emission or outside obligation could have masked the result; after the negative measurement both edits were reverted and `git diff --stat` matches the pre-round state exactly (5 files, 1446 insertions / 306 deletions), with no commit, policy or journal change made."
+    ],
+    "hypothesis": "The use-site elaborated-type-specifier experiment for Flic::init's emitted symbol is now measured and negative: MSVC6 keys the struct/class (U/V) mangling from the FIRST visible tag declaration of the type in the translation unit (buffer.h's `class Buffer`) and ignores later use-site spellings, so spelling init's first parameter `struct Buffer *` at both the src/flic.h declaration and the src/flic.cpp definition still emits the class-keyed PAV definition symbol. This disproves coordinator-pau-mangling-hypothesis (use-site keying) and confirms the premise of worker-a9127a8663c94a6f817a0e488a0bc86f: within this task's authorized files no spelling emits the catalogued ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z name while keeping Buffer::copy resolvable, because any first-declaration `struct Buffer;` forward re-keys every Buffer name in the TU (including copy references) to the unresolvable PAU spelling; the only source lever re-keys Buffer in src/buffer.h/src/buffer.cpp, which remain outside this task's editable files. The inert spelling was reverted, returning the working tree byte-identical to its pre-round state; both pending findings remain for coordinator resolution against this fresh evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "43aad9a76faf934b350c1348077e54ad91015e48b19108b182ffe709f6a57461",
+  "request_id": "worker-0ec2bfe944204f0bb38e93c58f0907ed",
+  "schema_version": 1,
+  "sequence": 74,
+  "stream": "task:flic-decoder-recovery"
+}

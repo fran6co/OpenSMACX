@@ -1,0 +1,23 @@
+{
+  "event_id": "b99a113c86231869e1314e9b2a5e79c2774c4a49d9ad1fc95a7be45e45b645ab",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b9d4383853de4235bef31274f6aec4c3",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Implementation present and product-bound: src/flic.cpp:1091 defines void Flic::decode_byte_run_trans() as a full idiomatic body over the real typed members - mem_get scratch guarded by field_5A4_, buffer2_->get_data/Buffer::get_data cursors, stride row advance, count masked & 0xff at every length use, count slot reused via (uint8_t)abs((int8_t)count) with byte store-back, one shared byte value slot - bound by the ORIGINAL marker at src/flic.cpp:1052 to 0x0062AF40-0x0062B186 (582 bytes); the seed src/recovered/units/0062af40.cpp remains separately retained, so this is not a seed-only or planned body.",
+      "Structural description expressed in current source: the TRIED note at src/flic.cpp:1059-1087 records the 14 cast spellings scored across decks variants-round1/2/3 (256-592 bytes, every byte-value spelling capped at 576, extent-fail against the recorded 582) and states this discovery's hypothesis verbatim - the 6-byte gap and differing bytes sit in register allocation (compiled: early push ebx with xor ebx,ebx, remaining cached in ebx with write-backs, 0x20 frame; image: push ebx/ebp deferred under the row-count guard, remaining memory-homed via [esp+0x18], cursors held in edi/ebp, 0x1c frame with immediate-zeroed scratch) and 'No spelling in this family reaches that allocation; the residual is compiler-side'.",
+      "Fresh diagnostics corroborate the plateau as current state, not history: the /diagnostics/check/report/candidate/checks/binary/functions record for entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6 measures candidate_size 576 vs original_size 582, boundary fail 'candidate exceeds or misses the independently recorded extent', under both configured flag sets, with emitted references unchanged at the baseline call sites (mem_get +35/+37, get_data +128/+129 and +140, _fread x4, _memset +319/+307, _memcpy, _abs, _free); incorporation is not binary or behavioral proof and the extent diagnostic stays visible.",
+      "No demotion or obligation impact: entity-dbf73777 carries no protected byte obligation - the 12 protected obligations in this request's restoration report exclude it, and all 12 measured obligations pass this round, including ??1Palette@@QAE@XZ at 0x005FE2E0 in src/palette.cpp; both fixed flag sets, the git-history:72b14a83 baseline and every existing byte claim remain untouched.",
+      "Within delegated authority: delegation evidence (flic-decoder coordination 2026-09-17) authorizes resolving this finding inside the flic task files once its structural description is expressed in current source, after 32+ measured spellings across the cast, loop-form, scope and zero-use axes plateau at 576 vs the 582 extent; this decision incorporates worker-b9d438 only, leaving worker-24ebc715a07b4eee81ec6b85ca4f2b70, worker-b8141bda6b5d432caf67b0e04401d892 and worker-d1ca1b5442184cf2aafc8ad8595593fb pending, because their loop-form/frame, scope-axis and zero-axis deck spellings were measured without product-source edits and are not yet expressed in source.",
+      "Read-only decision: no source, task record, compiler setting or Git change was made; the authoritative request at build/recovery/agents/agent-qreb4g8z/request.json was hash-verified (9ddcd64d34a4853563f76385909cb6d62b715c039db5f98191cfc74cc09e0af0) and its referenced binary/functions evidence inspected before deciding.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "7df16785e3323de70c91647df36fd3887af4770f045bd825a48013e147a01798",
+  "request_id": "coordinator-e1e1200256e14de1806369e94602d2f3",
+  "schema_version": 1,
+  "sequence": 54,
+  "stream": "task:flic-decoder-recovery"
+}

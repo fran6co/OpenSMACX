@@ -1,0 +1,22 @@
+{
+  "event_id": "b7257cca59241a5fe15995df248552c68a9caae55ffdaa920e8c342f9121e6a6",
+  "payload": {
+    "affects": [
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-e21d5f88d90a46d182867becd074ff1c",
+    "evidence": [
+      "plain-sums candidate: 310 code bytes + 10 NOP pad = 320 COMDAT, boundary PASS, bytes FAIL; the row loop and guard are instruction-identical to the image (mov eax,[esi+0x5a0]; test; mov [esp+0x10],0; jle) and the code-to-ret offset equals the image's 310 exactly",
+      "image 0x0062ABCA-0x0062ABE0 pins both adds between the store pairs (add ecx,edi; add eax,edx) while every candidate spelling hoists them above the stores or flips the load order - 4 spellings measured this round (plain, x+=width, commuted width+x, read-back), extending fill()'s documented 19-spelling family plateau",
+      "deck flic-round5 copysums-only candidate: pass 25 / fail 12 / unknown 6 with lost_passing_measurements [] - no obligation regressed; applied to src/flic.cpp with a TRIED note on the marker"
+    ],
+    "hypothesis": "decode_fli_copy's image spells its dirty-rectangle block as plain sums (`rect[2] = x + width; rect[3] = y + height;`) with y loaded first - the rect read-back spelling is per-function, and here read-back flips the loads x-first and fails the extent boundary while plain sums passes it; the remaining byte differences are the family-wide add-placement plateau plus size-neutral register permutations in the per-row fread setup (image loads stride/width through ecx/edx where the candidates pick eax)",
+    "kind": "discovery"
+  },
+  "previous_event": "69bd3324f08ad94f54c7ff89716c0082fbf5bb5fc3e08852ef7e4b0e373dac0e",
+  "request_id": "worker-e21d5f88d90a46d182867becd074ff1c",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:flic-decoder-recovery"
+}

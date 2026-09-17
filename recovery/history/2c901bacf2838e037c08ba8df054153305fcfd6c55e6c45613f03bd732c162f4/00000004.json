@@ -1,0 +1,29 @@
+{
+  "event_id": "a5c97844ee81fe559b9be7d1c3967f22500f94af8359e0df511979638bf24836",
+  "payload": {
+    "affects": [
+      "entity-23ce21fb8d6ccb00696c7c63198670b5c3c3fa3a358a33d0f8e86994f46afd28",
+      "entity-4ba0bb4f8a4f1759ab9fe9d09b15b896070b778bc5b05ea819cc5d1bbebb9d66",
+      "entity-4cf6960a275f724ca7d752b864017bcc4a12aa019407ab88c2f12b50ce7f6367",
+      "entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65",
+      "entity-89a36e1efe67b436795e85562c84b8242a066fddaeb98592f459bd872ca9067b",
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6",
+      "entity-dcb8e21d8c49bebdd09b97fd12c4f9f2dcf8bbb9f58a04e97a6816c07cb3654d"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-8b7c120f918b46a6a1ed399071a52b43",
+    "evidence": [
+      "Deck build/recovery/decks/fill-rect-v2.out: inplace-add, assign-add, readback-2only and plain-swapped candidates all fail with 18 diffs at offsets 26-49 (correct register allocation, hoisted adds); readback-1only fails with 16 diffs at offsets 8,15,22,... (adds positioned but loads reordered from byte 8).",
+      "Deck build/recovery/decks/fill-rect-v3.out: ptr-first-only and ptr-second-only fail with 40 diffs (the mixed direct/pointer stores restructure the reload block); ptr-sum-stores fails with the plain 18-diff signature.",
+      "The two adds are the image's only instructions between the store pairs (0x0062AB2A store [ecx+0x58C], 0x0062AB30 store [ecx+0x590], 0x0062AB36 add edx,edi, 0x0062AB38 add eax,esi, 0x0062AB3A store [ecx+0x594], 0x0062AB40 store [ecx+0x598]); in the compiled plain form both adds precede the first store, which is what moves every byte in the 26-49 window.",
+      "After adopting plain sums family-wide, decode_fli_copy_trans fails at 18 diffs (was 19) and decode_fli_copy at 37 (was 35, its additional offsets 74-85 in the row loop predate this change and remain unexplained) - build/recovery/decks/check-after-rect-plain.out; the trade and both measured shapes are documented in the comment above Flic::fill in src/flic.cpp."
+    ],
+    "hypothesis": "No idiomatic C++ spelling reproduces the image's add scheduling inside the rect block: the image stores rect0 and rect1, then computes the two sums in place between the store pairs (`add edx,edi`/`add eax,esi` at 0x0062AB36-0x0062AB39, sums landing in x's and y's registers) before storing rect2/rect3. Thirteen measured spellings fall into exactly two failure shapes under both flag sets: every plain-sum spelling (including `x += width`, `x = x + width`, `width + x`) lets VC6 hoist both adds above the stores (18 diffs at offsets 26-49), and every read-back spelling (`rect[2] = rect[0] + width`) keeps the adds near the stores but reorders the first three member loads (16 diffs starting at offsets 8/15/22) and still hoists the second add above the rect1 store; routing only some of the four stores through the pointer restructures the reload block entirely (40 diffs). The plain form was kept as the structurally closest and most idiomatic spelling; the hoisted adds are the family's residual mismatch.",
+    "kind": "discovery"
+  },
+  "previous_event": "e5520799ec5cb5f6c35cb7521b9c3f0c9456d413b22fa10bfb7c12f29f814d52",
+  "request_id": "worker-8b7c120f918b46a6a1ed399071a52b43",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:flic-decoder-recovery"
+}

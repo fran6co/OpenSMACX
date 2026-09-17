@@ -1,0 +1,21 @@
+{
+  "event_id": "a6e8c9ca71342df92de3d52f5043e4bb8faad68f0ee6c54ce79223c617465e43",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-3e557ca65ede4c5184065d0f8ad2e46e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Source expression verified at src/flic.cpp:806-862: Flic::fill is implemented as the pointer-store plain-sum spelling and its TRIED record (extended 2026-09-17) carries the finding's full structural description - thirty-four spellings collapsing into five measured shapes (plain-local hoist, fresh-member anchor after both stores, read-back store-forwarding, direct-member sum-store sinking below the call reloads, all-member no-load-cache), the conclusion that the destination pair (edx,eax) with the four prologue loads is VC6-internal allocation no spelling reaches, and the pointer-local store-cache invalidation that makes this spelling alone produce the image's four member reloads before Buffer::fill at the recorded 98-byte extent.",
+      "The family scope is likewise expressed in current source: src/flic.cpp:849-851 records the residual add placement carrying to decode_black_trans, decode_fli_copy and decode_fli_copy_trans which share this block, and the decode_fli_copy TRIED at src/flic.cpp:875-882 cites the family-wide add-placement plateau fill() documents; all seven affected identities (fill 0x0062AB10, decode_byte_run 0x0062A500, decode_chunk 0x0062ACD0, decode_fli_copy 0x0062AB80, decode_byte_run_trans 0x0062AF40, decode_black_trans 0x0062B600, decode_fli_copy_trans 0x0062B670) are currently owned in this task with outside_delegation and unknown_originals empty, so incorporation requires no new subjects or editable files.",
+      "Fresh diagnostics from the unchanged request (sha256 5707ff2f826495b065f48ecf53fceadf44bea3744a50f7c0ef572feb65310712, check exit 3 diagnostic_only) corroborate the described state without being the ground for resolution: restoration passes with all twelve protected byte obligations passing under the single configured trial and unrestored failed/tracked/unknown all empty, while the scoped binary functions array measures exactly the diagnostic chunk-family entities (including all seven affected here) as fail - the retained plateau residual the finding documents, not a demoted claim.",
+      "Ground and guardrails: the resolution rests on source expression and follows the delegation's 2026-09-17 authorization to resolve this compiler-side plateau class within the flic task files when its structural description is expressed in current source; no byte-exact claim is demoted, neither fixed flag set is changed, no baseline moves, and the diagnostic mismatches stay visible. Incorporation records source expression only, not behavioral proof or acceptance; the refined companion finding worker-cf36ed1efdc14490ba9550dce4edf24b remains pending for its own fresh serial decision.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "44a240f2e21f4270cff1052b9d685eb64eba5428cb28bd71d7c285f13b024084",
+  "request_id": "coordinator-f9f6545394904c8c938c918fe648125e",
+  "schema_version": 1,
+  "sequence": 62,
+  "stream": "task:flic-decoder-recovery"
+}

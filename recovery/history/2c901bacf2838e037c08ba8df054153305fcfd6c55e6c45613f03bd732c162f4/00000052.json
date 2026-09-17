@@ -1,0 +1,22 @@
+{
+  "event_id": "ec8764f11af213700f9902a1d4e6411cb268fba3926f8e5011cddf687463eb93",
+  "payload": {
+    "affects": [
+      "entity-dbf73777bdd8871620ec77e7c4a6602e5ce2879583904bb7342809f8d8ec68a6"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-d1ca1b5442184cf2aafc8ad8595593fb",
+    "evidence": [
+      "deck build/recovery/variants/brt-zero-deck.json scored in build/recovery/variants/brt-zero-result.json (exit 0): candidates t-local, mem-local, row-forloop, t-local+row-forloop, mem-local+row-forloop, t-local+mem-local+row-forloop each 576 bytes, boundary fail, both configured flag sets; baseline 576",
+      "build/recovery/variants/brt-zero-result.json target diagnostic emitted_references: all twelve candidate records carry offsets identical to the baseline record (offset 35 symbol ?mem_get@@YAPAXI@Z, offset 128 ?get_data@Buffer@@QAEHHH@Z, offset 140 ?get_data@Buffer@@QAEHXZ, offsets 194/234/266 _fread, offset 319 _memset), showing the prologue and guard region compile identically even though the spellings change the zero-compare forms",
+      "build/recovery/variants/build_brt_zero_deck.py documents the six spellings; steering the guard to mov eax,[esi+0x5a4]; test eax,eax (8 bytes instead of the 6-byte cmp [esi+0x5a4],ebx) would shift the mem_get call off offset 35, and no candidate's offsets moved"
+    ],
+    "hypothesis": "The zero-CSE pivot, the last plausible source-side lever for the 6-byte gap and the push-schedule difference, is now measured and closed: six spellings that reduce or relocate the zero uses - a transparent local read from field_5A4_ for the guard, a separate mem_get-result local with scratch assigned only on success, a for-statement row init placing the zero inside the loop statement, and their pairwise and triple combinations - all compile to 576 bytes under both flag sets, and every one emits call-site offsets identical to the baseline (mem_get at +35, get_data@3 at +128, get_data@0 at +140, fread at +194/+234/+266, memset at +319), so VC6 CSEs the guard local away and keeps push ebx plus the shared xor ebx,ebx at entry regardless of spelling; the residual allocation differences are compiler-side under the two configured flag sets, consistent with the pending discoveries. No spelling strictly improves on 576 toward 582, so product source was left unedited per the acceptance rule and no task-check rerun was required.",
+    "kind": "discovery"
+  },
+  "previous_event": "02a26e162b75abb817e570e7e5a935f15d182595b7481f5a7eb38f7b5ae52a6b",
+  "request_id": "worker-d1ca1b5442184cf2aafc8ad8595593fb",
+  "schema_version": 1,
+  "sequence": 52,
+  "stream": "task:flic-decoder-recovery"
+}

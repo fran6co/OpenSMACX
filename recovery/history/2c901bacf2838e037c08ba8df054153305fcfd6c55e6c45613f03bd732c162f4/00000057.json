@@ -1,0 +1,20 @@
+{
+  "event_id": "3b83f3d412dc07925dc5c59ee07473e2aebbe92ca3d974e66e856bc7b5e11434",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-24ebc715a07b4eee81ec6b85ca4f2b70",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current source expresses the finding's structural description: src/flic.cpp:1091-1168 (file sha256 5aed0278500375275dbb876fda4d85075941a0293b37f730615521ce2eaad796, ORIGINAL marker 0x0062AF40 at line 1052) implements decode_byte_run_trans with every reconstructed image frame slot as a typed local - count re-read per packet and masked `& 0xff` at every length use, count slot reused for the literal run length via (uint8_t)abs((int8_t)count) with the unsigned count>0 guard and one shared byte value slot, per-row remaining from field_59C_, row_dst/row_src cursor locals, a row counter re-testing field_5A0_ each row, a zero-initialized scratch from mem_get(buffer2_->stride_) allocated only when field_5A4_!=0 and freed at exit, and the four field_58C_ rect stores.",
+      "Fresh diagnostics read from the unchanged request (sha256 d2a36ffd85b831828a0fee4eb5f58a5fe429c68b72093a1e1d1a126a4952f4f0): the scoped binary check measures this exact body at candidate_size 576 against the independently recorded 582-byte extent under both configured flag sets, reason 'candidate exceeds or misses the independently recorded extent' with bytes unknown - precisely the plateau the discovery documents; the entity carries no protected byte obligation, restoration shows all 12 protected obligations passing with no failed or unknown unrestored work, and the remaining generated_tables/shared_functions/object_definitions evidence mentions no decode_byte_run_trans defect, so incorporation demotes no claim.",
+      "The delegation's 2026-09-17 flic-decoder coordination evidence authorizes resolving this finding within the flic task files when its structural description is expressed in current source, without changing flag sets or rewriting baselines; the residual 576-vs-582 gap sits in VC6 register allocation (staggered pushes, memory-homed remaining) with no source lever after 32+ measured spellings, so the finding resolves by incorporation of the expressed structure - not by refutation and without proposing a further worker repair round.",
+      "Delegated policy: 113bc3a7a450a8a3127878ec08a4fd3cb039b9427ed80c7c1060551e0b9db3cd"
+    ]
+  },
+  "previous_event": "c8d621f99ed4d691be10741a53e32c650de1e17509ee09ceb6a7212ee488f564",
+  "request_id": "coordinator-df63ea361d084387ad74098a648bde73",
+  "schema_version": 1,
+  "sequence": 57,
+  "stream": "task:flic-decoder-recovery"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "80096b1f9844e56ba9f5e2d7abd300f11b64793f1431ad4b9bc0b1dd2b05ff14",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.cpp",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "Image-level evidence (2026-09-17): the original init 0x00629E50 is PAU-spelled (U-keyed flic TU) while its recorded call list contains 0x005DFF00 - the PAV copy address (buffer.cpp:1480, BYTE_EXACT). A single TU referencing both keys with both resolving requires Buffer::copy to be header-inline in the original, emitting one COMDAT per spelling, the U-spelling ICF-folded into 0x5DFF00. Restoring that structure - the body moves to src/buffer.h and buffer.cpp keeps its marker record - is the recovery-true repair for flic's last obligation. All affected claims are guarded by the scoped check's recheck entities; the move must measure, never assume."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c06aa1055d0ea097b5b2d2a972967659c5a4849127ccbe42c2a47f9241e57d2b",
+  "request_id": "coordinator-scope-buffer-restore",
+  "schema_version": 1,
+  "sequence": 76,
+  "stream": "task:flic-decoder-recovery"
+}

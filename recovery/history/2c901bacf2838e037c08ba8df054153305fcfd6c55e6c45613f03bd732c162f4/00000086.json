@@ -1,0 +1,21 @@
+{
+  "event_id": "c90357b06929a34bda2548a3a5fb0130afcc75c51e1e73c7e5e4bae1b61d6ffd",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-d5dd98e2d7924cebae66e667324ad80e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The discovery's insight is expressed in current source: src/flic.cpp:645-702 (?decode_byte_run@Flic@@QAEXXZ, marker at src/flic.cpp:607, entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65) carries the byte-typed count/value locals, the assignment-form colour-offset add (value = uint8_t(value + uint8_t(field_5A4_)), lines 677-678), memset consuming that byte-typed value (line 680, reproducing the image's dword-reload+and VALUE uses), and the hoisted rect block (lines 660-664) with the add placement fill() documents; the marker TRIED note (lines 614-641) records the full plateau decomposition (158 vs 157 instructions, +3 run-path add round trip against -1 movsx at each literal length, 40 masked bytes, similarity 0.952). This is a measured idiomatic product body, not a seed copy or placeholder.",
+      "The source-spelling space is measured out under the two fixed flag sets: deck variants-dbr1 (four dword count/value spellings with & 0xff masks, both campaign flag sets) reproduces the image's reload+and forms but compiles 544 bytes against the recorded 527-byte extent; deck variants-dbr2 (three byte-typed spellings) plus both committed spellings hold the /O2 extent but never emit the image's one-op memory-destination add. The two families trade exactly the forms the image co-produces, so no source lever remains - the residual is the VC6 register/stack-allocation class fill(), decode_byte_run_trans and UNK3 already document, matching the 2026-09-17 delegation's authorized compiler-side plateau class for the flic task files.",
+      "Fresh diagnostics (request sha256 63fe9f22256748f495a7ec179b01ef581e4e27453d83f0a410de04e356c8f8ee, binary check input_fingerprint 22683fab82be3adbb1eeec2ed4f208753a85ac100bd827e6caf22d5ef2095316) confirm the documented boundary with no regression: decode_byte_run carries no protected byte obligation; its /O2 trial is boundary pass with bytes fail (the five failing relocations memset@300/abs@314/fread@350/fread@378/free@504 are positional shifts of the correct callee identities) and /Oy- measures 512 against the 527 extent; all twelve protected byte obligations pass with restoration pass and binary counts unchanged at 13 pass/12 fail. Incorporation banks no new byte claim, demotes nothing and changes neither flag set nor baseline; the residual mismatch stays visible as a diagnostic, and this is not binary, behavioral or acceptance proof.",
+      "No scope change is needed or proposed: the sole affected identity entity-64768fc93e198b389c104fca8d8790f5e2e1dab64a89851537ae1159ee807c65 is already in current ownership (decision_facts currently_owned, outside_delegation empty, unknown_originals empty) and lives in the already-editable flic task file, so the decision stands entirely inside the supplied delegation with subjects and editable_files empty.",
+      "Delegated policy: fdaf5f6bdb4e6c82c479cc8a943c84fa257b67881fde3ea81de556a4f2a5dc0d"
+    ]
+  },
+  "previous_event": "56b82015e8949a14e60b664f9174aa2df4ce8a6dff86a86f27be4d1b7696e272",
+  "request_id": "coordinator-60b3a9d2ec9f4ae2a91d25d5e13a5ba6",
+  "schema_version": 1,
+  "sequence": 86,
+  "stream": "task:flic-decoder-recovery"
+}
