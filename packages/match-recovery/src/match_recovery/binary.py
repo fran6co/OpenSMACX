@@ -45,8 +45,9 @@ class CompilerArtifact:
     symbol: str
 
     def __post_init__(self):
-        if type(self.symbol) is not str or not self.symbol.startswith("$"):
-            raise ValueError("compiler artifact names follow the VC6 dollar-label convention")
+        if type(self.symbol) is not str or not (self.symbol.startswith("$")
+                                                or self.symbol.startswith("??_C@")):
+            raise ValueError("compiler artifact names follow the VC6 reserved-label conventions")
 
 
 @dataclass(frozen=True)

@@ -86,9 +86,13 @@ def test_pooled_literal_resolves_by_unique_content(storage):
     assert pooled["literal"] == b"JKAF\0" and pooled["address"] == "0x00402000"
 
 
-def test_ambiguous_literal_stays_unresolved():
+def test_repeated_literal_masks_as_structural_reference():
     row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF", twice=True)
-    assert row["result"] == Result.UNKNOWN and "pooled_string_constants" not in row
+    assert row["result"] == Result.PASS, row
+    pooled, = row["pooled_string_constants"]
+    assert pooled["address"] is None and "repeats" in pooled["reason"]
+    artifact, = [item for item in row["relocations"] if item["offset"] == 1]
+    assert artifact["binding"]["kind"] == "compiler_artifact"
 
 
 def test_absent_literal_stays_unresolved():

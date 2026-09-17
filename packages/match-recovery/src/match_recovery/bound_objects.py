@@ -36,15 +36,23 @@ def _pooled_string_constant(obj, symbol, image):
     literal = bytes(data[symbol.value:end + 1])
     occurrences = []
     for (span, offset, size), flags in zip(image.sections, image.section_flags):
-        if not size or flags & 0x80000000 or not flags & 0x40000000:
+        # Readable initialized data hosts the pool; VC6 emits pooled literals
+        # into .rdata or writable .data depending on its const-pooling mode.
+        if not size or not flags & 0x40000000:
             continue
         raw = image.data[offset:offset + size]
         at = raw.find(literal)
         while at >= 0:
-            occurrences.append(span.start + at)
+            # Pooled entries are NUL-delimited: a hit inside a longer literal
+            # (its tail matching ours) is that entry, not ours. Only a start
+            # of section or a position right after a terminator is an entry.
+            if at == 0 or raw[at - 1] == 0:
+                occurrences.append(span.start + at)
             at = raw.find(literal, at + 1)
     if len(occurrences) == 1:
         return literal, occurrences[0]
+    if not occurrences:
+        return None, None
     return literal, None
 
 
@@ -181,19 +189,25 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # to this translation unit, not a product address.
                         targets[str(index)] = CompilerArtifact(symbol.name)
                     elif symbol.name.startswith("??_C@"):
-                        # A TU-private pooled string constant (VC6 emits these
-                        # as ??_C@-mangled definitions in the object's own
-                        # data sections, storage class varying by emission):
-                        # /GF pools identical literals to one address, so the
-                        # literal's own bytes identify it in the original. The
-                        # content must occur exactly once in the image's
-                        # read-only data; anything ambiguous or absent stays
-                        # unresolved.
+                        # A TU-private string constant (VC6 emits these as
+                        # ??_C@-mangled definitions in the object's own data
+                        # sections). Uniquely-occurring content identifies its
+                        # image address byte-exactly. This image keeps one
+                        # copy per translation unit, so common literals occur
+                        # many times: their reference is structural to this
+                        # TU's data layout, recorded and masked like a
+                        # compiler label. Absent content stays unresolved.
                         literal, address = _pooled_string_constant(obj, symbol, image)
                         if address is not None:
                             targets[str(index)] = address
                             row.setdefault("pooled_string_constants", []).append(
                                 {"symbol": symbol.name, "literal": literal, "address": f"0x{address:08X}"})
+                        elif literal is not None:
+                            targets[str(index)] = CompilerArtifact(symbol.name)
+                            row.setdefault("pooled_string_constants", []).append(
+                                {"symbol": symbol.name, "literal": literal, "address": None,
+                                 "reason": "content repeats across translation units; "
+                                           "reference is structural to this unit's layout"})
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                     if symbol.name in externals:
                         targets[str(index)] = externals[symbol.name]
