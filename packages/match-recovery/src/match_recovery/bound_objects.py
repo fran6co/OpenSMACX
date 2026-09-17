@@ -17,6 +17,37 @@ from .pe_coff import Coff, PeImage
 MAX_REFERENCE_DIAGNOSTICS = 128
 
 
+def _pooled_string_constant(obj, symbol, image):
+    """Return (literal, address) for a TU-private pooled string constant.
+
+    The literal is the NUL-terminated bytes at the symbol's own section
+    offset; its address is the unique occurrence of those bytes, terminator
+    included, inside the image's read-only initialized data. VC6 /GF pools
+    identical literals to one address, so content is the identity; anything
+    absent, ambiguous or writable-backed stays unresolved.
+    """
+    section = obj.sections[symbol.section - 1]
+    data = section.data
+    if symbol.value >= len(data):
+        return None, None
+    end = data.find(b"\0", symbol.value)
+    if end < 0 or end == symbol.value:
+        return None, None
+    literal = bytes(data[symbol.value:end + 1])
+    occurrences = []
+    for (span, offset, size), flags in zip(image.sections, image.section_flags):
+        if not size or flags & 0x80000000 or not flags & 0x40000000:
+            continue
+        raw = image.data[offset:offset + size]
+        at = raw.find(literal)
+        while at >= 0:
+            occurrences.append(span.start + at)
+            at = raw.find(literal, at + 1)
+    if len(occurrences) == 1:
+        return literal, occurrences[0]
+    return literal, None
+
+
 def _binding_description(target):
     if target is None:
         return None
@@ -149,6 +180,17 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # binding does not place: its reference is structural
                         # to this translation unit, not a product address.
                         targets[str(index)] = CompilerArtifact(symbol.name)
+                    elif symbol.name.startswith("??_C@") and symbol.storage == 3:
+                        # A TU-private pooled string constant: VC6 /GF pools
+                        # identical literals to one address, so the literal's
+                        # own bytes identify it in the original. The content
+                        # must occur exactly once in the image's read-only
+                        # data; anything ambiguous or absent stays unresolved.
+                        literal, address = _pooled_string_constant(obj, symbol, image)
+                        if address is not None:
+                            targets[str(index)] = address
+                            row.setdefault("pooled_string_constants", []).append(
+                                {"symbol": symbol.name, "literal": literal, "address": f"0x{address:08X}"})
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                     if symbol.name in externals:
                         targets[str(index)] = externals[symbol.name]
