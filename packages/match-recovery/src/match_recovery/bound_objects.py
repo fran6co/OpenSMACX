@@ -201,11 +201,11 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         if address is not None:
                             targets[str(index)] = address
                             row.setdefault("pooled_string_constants", []).append(
-                                {"symbol": symbol.name, "literal": literal, "address": f"0x{address:08X}"})
+                                {"symbol": symbol.name, "literal": literal.decode("latin-1"), "address": f"0x{address:08X}"})
                         elif literal is not None:
                             targets[str(index)] = CompilerArtifact(symbol.name)
                             row.setdefault("pooled_string_constants", []).append(
-                                {"symbol": symbol.name, "literal": literal, "address": None,
+                                {"symbol": symbol.name, "literal": literal.decode("latin-1"), "address": None,
                                  "reason": "content repeats across translation units; "
                                            "reference is structural to this unit's layout"})
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:

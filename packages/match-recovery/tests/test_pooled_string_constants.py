@@ -83,7 +83,7 @@ def test_pooled_literal_resolves_by_unique_content(storage):
         module.object_with_literal = original_builder
     assert row["result"] == Result.PASS, row
     pooled, = row["pooled_string_constants"]
-    assert pooled["literal"] == b"JKAF\0" and pooled["address"] == "0x00402000"
+    assert pooled["literal"] == "JKAF\x00" and pooled["address"] == "0x00402000"
 
 
 def test_repeated_literal_masks_as_structural_reference():
