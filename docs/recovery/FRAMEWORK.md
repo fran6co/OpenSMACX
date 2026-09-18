@@ -612,11 +612,14 @@ and same-commit documentation; none grants acceptance or discharges obligations.
    application graph threads the section domain's certified groups through
    both builds. REMAINING: a real-compiler /opt:icf control exercising
    same-group sharing end to end.
-3. Anonymous contribution assignment: `* Linker *` PDB modules can never join
-   a physical section, so their contributions stay unmatched. Qualify exact
-   linker-generated storage, starting with verified import-thunk extents
-   (reuse `verify_import_thunk`; follow the `_common_contributions`
-   exact-match precedent); every unassigned row stays unmatched.
+3. Anonymous contribution assignment. LANDED 2026-09-18: `* Linker *`
+   module contributions assign through complete import-thunk recipe
+   verification against the image's own import directory
+   (`linker_generated_storage.py`); assigned storage leaves the unmatched
+   set as generated identity and unassigned recipes keep the domain open.
+   REMAINING: other linker-generated shapes beyond the measured thunk
+   recipe (jump thunks to image code, TLS or debug scaffolds) stay
+   unmatched until separately qualified.
 4. Private-form qualifications if real objects need them: private
    original-family ICF provenance and owner-qualified REF events for static
    names (the shared function-auxiliary qualification landed 2026-09-14).
