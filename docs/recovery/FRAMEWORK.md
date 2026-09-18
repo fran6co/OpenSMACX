@@ -599,9 +599,12 @@ and same-commit documentation; none grants acceptance or discharges obligations.
    `selected_any_winner` referencing their certificate id. Every annotated
    root stays an ordinary code root; a refused placement keeps the section
    unknown with its gap, and the report-level `retained_section_selection`
-   stays unknown until every selected section is qualified. REMAINING:
-   computed report-level retention once non-COMDAT sections
-   (debug/`comdat_data`/`.drectve`) have their own dispositions.
+   stays unknown until every selected section is qualified. The
+   report-level `retained_section_selection` now computes from
+   per-section evidence (2026-09-18): pass only when every selected
+   section carries a qualified disposition, unknown otherwise.
+   REMAINING: dispositions for non-COMDAT sections
+   (debug/`comdat_data`/`.drectve`) so real builds can reach the pass.
 2. Allocation isolation across certified ICF groups. LANDED 2026-09-16:
    `ComdatSelection.folded` returns a member's certified group and
    `observe_ordinary_allocations` binds same-group code members to their
