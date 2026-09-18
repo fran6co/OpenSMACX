@@ -1,0 +1,110 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ef7ecbad55281cc65f5596e30a302ab7ce7c461e",
+  "editable_files": [
+    "src/technology.cpp",
+    "src/technology.h"
+  ],
+  "evidence": [
+    "Eligibility verified fresh with 'uv run --no-sync --frozen recover partition --group source:src/technology.cpp --details --impact': 17 entities, every one homed in src/technology.cpp with empty conflicts, next_action review_ownership_and_structure; the request partition marks the group eligible with no reservation reasons and group files exactly src/technology.cpp and src/technology.h. Checked all fifteen tasks' effective scopes in this request and recovery/tasks/*.json on disk: none lists either file, and request reservations are empty; 17 entities and 2 files fit the 100-entity/20-file delegation with no additional files.",
+    "Real unclaimed implementation work, not claim inflation: src/technology.cpp holds 17 ORIGINAL markers with 10 BYTE_EXACT claims; the seven open bodies total roughly 6.5KB of original code — tech_val 0x005BCBE0-0x005BDC05 (4,133 decoded bytes, 26/1361 agreeing, essentially unstarted past the has_tech forceinline landing), say_tech(char*) 0x005B9C40 (12/221), tech_rate 0x005BE6B0 (71/234 after its three signedness levers), tech_ai 0x005BDC10 (10/124), tech_recurse 0x005B9F90 (25/36), tech_effects 0x005BAE60 and valid_tech_leap 0x0057CE50 — each with in-file LEVER/TRIED history establishing the next concrete moves.",
+    "Callee closure verified against the pinned image via recover inspect with no reserved-callee wall: every mapped direct callee of the seven open bodies is product-bound C++ — in-group tech_recurse, tech_is_preq, tech_avail, tech_val and has_tech, plus Strings::get (src/strings.cpp), random (src/random.cpp), bit_count (src/general.cpp), wants_to_attack and climactic_battle (src/faction.cpp) and weapon_budget (src/veh.cpp); the remaining direct targets (0x00645470 strcat and the 0x64FC68/0x64601D neighbors) are static-CRT addresses preserved as imported-target obligations exactly as existing tasks carry them.",
+    "The documented convergence levers are owned by this group: src/technology.h already hosts the MEASURED-inline has_tech/tech_recurse bodies and declares extern RulesTechnology Technology[MaxTechnologyNum] (original 0x0094F358) with static_assert(sizeof(RulesTechnology)==0x2C). The per-body notes in technology.cpp explicitly record that moving has_tech's definition 'is out of scope for this body' with ~108 call sites — ownership of technology.h is precisely the authority this task grants, and the header's wide include footprint (partition impact lists the including TUs) is measured by the standard outside-scope preservation check.",
+    "Load-bearing caller evidence from pinned-image inspect of tech_ai 0x005BDC10: mapped direct callers PickTech::pick 0x00486510, time_warp 0x005AEDE0 and setup_player 0x005B0E00, all currently seeds — the research chooser drives tech selection, time warp and player setup, and tech_val/tech_rate are its valuation and rate core, so converging these bodies advances real game logic rather than an isolated artifact.",
+    "Known boundary preserved as a discovery rather than an edit: tech_rate's remaining is_human divergence is documented in-file to belong to is_human in faction.h, which is reserved by existing tasks (diplomacy-presentation, infowin-ownership); the body converges to its in-scope plateau and that finding routes to the faction.h owners. No additional product files are requested.",
+    "Alternatives inspected against current source and set aside with concrete reasons: resuming playerlock-acquisition-recovery needs the outside NetDaemon message_data owner (netdaemon.cpp reserved by jackal-voice-ownership) and textindex-record-recovery reduces to the cross-owner Heap call-target split (heap.cpp reserved by control-sprite-defaults) plus CRT imported-target resolution — both unavailable authority; emitted-symbol-bindings remains eligible but is a bounded emitted-name correction kept for its own checkpoint; source:src/terraforming.cpp was inspected and set aside because its recorded 453-instruction excess sits in the accessor chain of reserved headers (base.h/map.h inside control-sprite-defaults' scope), a wall technology.cpp does not have; class:Wave is sequenced behind the in-flight midi-sound-base-recovery Sound-base landing; class:ReportIf, class:MessageWin, class:FX and class:EditGroup are walled on seed-only callees in reserved TUs per prior recorded analysis that current reservations keep in force.",
+    "No completion or acceptance is claimed: the ten existing BYTE_EXACT claims retain restoration obligations; strict-reference CRT obligations and the faction.h finding may leave unknowns open exactly as in existing tasks; neither this selection, a future passing build, nor banked measurements establish a working game or task acceptance. This planner remained read-only throughout — only partition, pinned-image inspect and task-file reads ran, via 'uv run --no-sync --frozen', with no source, task, policy or Git edits, no compilation and no subagent launches.",
+    "Planner delegation: 7acd4a9ed47fc620b1c308183a0678fe1061e1200bf0d59cc1d367314479fb1b"
+  ],
+  "intent": "Recover the technology free-function family in src/technology.cpp as genuine converging C++: the seven mapped bodies carrying no byte claim — valid_tech_leap 0x0057CE50, say_tech(char*,int,int) 0x005B9C40, tech_recurse 0x005B9F90, tech_effects 0x005BAE60, tech_val 0x005BCBE0, tech_ai 0x005BDC10 and tech_rate 0x005BE6B0 — working the group-owned technology.h inline-placement levers (has_tech/tech_recurse MEASURED-inline positioning, out-of-line has_tech_call) and the documented local spellings (plain strcat with split \" (\" appends, unsigned rule_factor shifts with signed divides, shared base-pointer zero-inits, hoisted preq locals). Preserve the ten existing BYTE_EXACT claims, original spans, LEVER/TRIED seed history and all historical obligations; byte mismatches remain diagnostics, not goals. The is_human word-load divergence documented for tech_rate belongs to is_human in faction.h and stays a routed discovery, never an edit here.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5607840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5754448,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6003776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6004464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6004512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6004624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6004704,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6007840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6008416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6015840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6015968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6020112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6020464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6020496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6020544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6020592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6022832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "tech-tree-convergence-recovery"
+}
