@@ -19,13 +19,15 @@
       "name": "worker-3",
       "environment": {
         "VC6_PREFIX": "{resource}"
-      }
+      },
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-3"
     },
     {
       "name": "worker-2",
       "environment": {
         "VC6_PREFIX": "{resource}"
-      }
+      },
+      "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-2"
     }
   ]
 }
