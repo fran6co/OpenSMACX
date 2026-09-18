@@ -1,0 +1,234 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "9b0a3f528704bfc693b43f8a4024756b7f7e237e",
+  "editable_files": [
+    "src/midi.cpp",
+    "src/midi.h"
+  ],
+  "evidence": [
+    "Group eligibility verified with 'recover partition --group class:Midi --details': 42 entities, editable files exactly src/midi.cpp and src/midi.h, no reservation reasons, within the 100-entity/20-file delegation. No existing task's editable files list midi.cpp or midi.h (checked all twelve tasks in this request), and only src/midi.cpp and src/delegation_thunks.cpp include midi.h, so the structural migration's blast radius is confined to the group's own files.",
+    "Exactly five identities are seed-only: init 0x004C7C60-0x004C7CB5 (seed BYTE_EXACT), set_fname 0x004C7CF0-0x004C7D42 (BYTE_EXACT), load(const char*) 0x004C7D80-0x004C7DCD (seed carries no byte claim — genuine unmeasured work), load() 0x004C7DD0-0x004C7E1B (BYTE_EXACT), unload 0x004C7E20-0x004C7E79 (BYTE_EXACT). The other 37 members are product-bound in src/midi.cpp (28 measured BYTE_EXACT on arrival per its header note), so this completes an already-typed owner rather than scaffolding.",
+    "Pinned-image evidence for the structural correction, read via 'recover inspect': Midi::unload (0x004C7E20) loads the vtable at [this+0] and calls slots 0x5C and 0x80 — Sound slots 23 (is_playing) and 32 (detach) in src/sound.h's own 33-slot numbering — then clears bit 0 of [this+0x40], Sound's documented loaded flag, after releasing the [this+0x3C] delegate through the module-guarded function-pointer global at 0x0090DB28 with the module word at 0x0090DB7C — the product-owned SoundDllProcs[1] release slot and SoundDllModule band declared in src/sound.h and defined in src/sound_loader.cpp. Midi::init (0x004C7C60) frees/reallocates the filename at [this+0x4C] (Sound's fname_ slot) and zeroes Midi-own storage at this+0x54 via memset — exactly sizeof(Sound)==0x54, where src/wave.h independently pins Wave's first own field after the same shared prefix.",
+    "In-tree precedent and stated prerequisite: src/wave.h documents the identical relationship recovered for Wave — declaring the real 'class Wave : Sound' base restored the SEH unwind frame and improved both bodies (3/73 to 23/73 and 2/101 to 44/101) — and src/midi.h's own 2026-09-03 note states these five bodies 'need the filename pointer and the Sound relationship modelled first'. The current flat Midi (opaque field_0_[0x3C], no virtuals) compiles the 37 forwarders but cannot express the virtual dispatch the image performs through Midi's own table; nothing in the tree embeds Midi by value or asserts sizeof(Midi), so correcting the hierarchy needs no other file.",
+    "Dependency closure needs no expansion and no reserved files: the five bodies' direct callees are CRT statics (free/strlen/operator new/strcpy/memset at 0x6453E0/0x64557F/0x64558A/0x645460/0x6465F0) — preserved as unresolved imported-target strict-reference obligations exactly as existing tasks do — plus the product-owned SoundDllProcs globals reachable by including src/sound.h without editing it. Alternate eligible work was inspected and set aside: class:ReportIf has 24 seed-only bodies but sampled callee mapping shows roughly a dozen external seed-only callees owned by reserved TUs (ListBox::attach/item/set_selected_*, Dialog::init, scroll_*, WorldWin::hide_all/show_all, MainInterface::set_date, energy_compute in the reserved global_arith/listbox/dialog/scroll/worldwin/maininterface/reportwin/graphicwin files), which this delegation's no-later-expansion policy cannot absorb; class:Sound's five unwired placeholder slots (targets already BYTE_EXACT shared leaves in field_accessors.cpp/leaf_recoveries.cpp) are noted as follow-up, not selected.",
+    "Resume options remain unsuitable here: emitted-symbol-bindings is a bounded emitted-name correction kept for its own checkpoint; playerlock-acquisition-recovery's remaining findings need the outside NetDaemon message_data owner; textindex-record-recovery's remaining discoveries are cross-owner Heap call-target and CRT imported-target interpretations. Fresh Midi work requires none of that unavailable authority.",
+    "No completion or acceptance is claimed: the load(const char*) seed has no measured claim, caller coverage from inspect is partial (no mapped direct-call edges; Midi is reached through its virtual surface and the ambience layer), any byte regression of the 37 forwarders during the justified base migration follows the preserved-migration path rather than reversion, and neither this selection, a future passing build, nor banked seed measurements establish a working game or task acceptance.",
+    "Planner delegation: 7acd4a9ed47fc620b1c308183a0678fe1061e1200bf0d59cc1d367314479fb1b"
+  ],
+  "intent": "Recover Midi's five remaining lifecycle methods — init (0x004C7C60), set_fname (0x004C7CF0), load(const char*) (0x004C7D80), load() (0x004C7DD0) and unload (0x004C7E20) — as genuine C++ in src/midi.cpp on the real Sound base relationship, replacing the flat opaque-prefix model in src/midi.h: the shared delegate/flag/filename slots at 0x3C/0x40/0x4C and Midi-own storage from 0x54, with the compiler-owned primary virtual surface the image dispatches through. Preserve the 37 existing forwarding members, seed provenance, original spans and all historical obligations; seed byte mismatches remain diagnostics, not goals.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5011296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011328,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5011952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012000,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5012944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5013584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "midi-sound-base-recovery"
+}
