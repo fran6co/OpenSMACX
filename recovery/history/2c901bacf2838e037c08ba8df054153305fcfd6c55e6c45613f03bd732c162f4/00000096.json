@@ -1,0 +1,22 @@
+{
+  "event_id": "5f480725cd8ef3e939034a11405dac3f26f1ba12834ab99bbca57827deeac02f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-f894732b63454e20a02190efbb997654",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: Buffer::tile (src/buffer.cpp:3354) routes its loop call through a pointer-to-member - 'int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) = &Buffer::copy;' at src/buffer.cpp:3401-3402 and '(source->*copy)(this, 0, 0, colX, rowY, tileWidth, tileHeight);' at src/buffer.cpp:3411-3412 - targeting the header-inline 7-arg copy at src/buffer.h:510; the finding's only affected identity entity-47d9241aac (0x005DA860) is already inside current task scope, so no expansion is required.",
+      "The marker on the same function records the full measured claim: src/buffer.cpp:3344-3352 (TRIED 2026-09-18) documents the plain in-class call folding the blitter in (350 instructions vs the image's 144, similarity 0.29, divergence at offset 0), the APPLIED pointer-to-member lever that VC6 devirtualizes to the image's direct call at 0x005DA9BB, and that the allocator residual is unchanged; src/buffer.cpp:3331-3343 retains the 2026-09-03 plateau record (3/144 residual, frame 0x28 vs 0x24, 24 flag sets with /O2 best 0.917 - allocator slot preference no spelling reaches), so no further worker round is warranted against a measured plateau and reject is refuted by the restored direct relocation.",
+      "Fresh diagnostics for this unchanged scope corroborate the post-repair state: check-restoration reports 12/12 protected byte obligations passing with zero unrestored (entity-47d9241aac carries no byte obligation - it is a diagnostic identity), the scoped binary check shows 0 compile errors and no unresolved symbols across src/buffer.cpp, src/flic.cpp and src/palette.cpp, and tile's scoped similarity fail is the documented allocator plateau rather than a regression moved by the repair.",
+      "Incorporation records expression in source only - not tile byte-exactness (the 0.917 plateau stands), not acceptance - and leaves the separate blast-radius discovery worker-4657e218f39f4b188f5258bfd89105fa fully pending: its affected owner entity-07c27601a81a927e470284cd138e74836e9d3ab32ce8899c2e3d7ec8c2a78201 (GraphicWin::fill, src/graphicwin.cpp:307) is outside this delegation's subjects and editable files, so that finding requires a central scope decision this coordinator cannot grant.",
+      "Verification context: working tree clean at f3069f1662eb72b40abc5b9145bbc6f7f3f0fcde matching the request restoration head; request file SHA-256 7610fdbefd96a2d979a0a94024b50cdde0ab9966b876e4ce04b69ab09129455f re-verified before deciding; coordinator remained read-only throughout.",
+      "Delegated policy: 59538b98a002deae6764f63b1438d571f0229768a7bb02a0c6ea364516a83dec"
+    ]
+  },
+  "previous_event": "79662b0691e0a03da90649b18a2fd0afaef924b6973b84bea484da4b92345a79",
+  "request_id": "coordinator-17755766fae64730bc46902c5dabf705",
+  "schema_version": 1,
+  "sequence": 96,
+  "stream": "task:flic-decoder-recovery"
+}
