@@ -1,0 +1,85 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2391baa27fc1c5cc23637a3578d3f1fc169966f8",
+  "editable_files": [
+    "src/path.cpp",
+    "src/path.h"
+  ],
+  "evidence": [
+    "Group eligibility verified fresh with 'recover partition --group class:Path --details --impact': 12 entities, every one product-bound in src/path.cpp (init 0x0059A220, shutdown 0x0059A2D0, ~Path 0x0059A320, zoc_path, find, move, make_abstract, merge, territory, continent, continents, sensors), group editable files exactly src/path.cpp and src/path.h, no reservation reasons, well inside the 100-entity/20-file delegation. Checked all thirteen tasks in this request plus recovery/tasks/*.json: none lists path.cpp or path.h, so there is no overlap or reserved owner.",
+    "The selected subject is the tree's single remaining honest stub: src/path.cpp:196-299 maps ?find@Path@@QAEHHHHHHHHH@Z 0x0059A530-0x005BC05 (5,845 bytes, ~1,884 instructions) and its own investigation note records the body as `return 0;` (measured 2026-08-22: 2 instructions against the image's 1,884, similarity 0.002 under every flag set) with no seed artifact anywhere, and explicitly requests a dedicated pass ('it needs a pass of its own', 'do not hand it out beside eleven other addresses'). This task is that dedicated pass: real implementation work, not a claim-count increase.",
+    "Dependency closure needs no expansion and hits no reserved-callee wall: the note enumerates all eleven direct callees as real in-tree symbols - MapWin::draw_map 0x0046A550, goody_at 0x00592140, hex_cost 0x00593510, Path::zoc_path 0x0059A370 (same group), has_abil 0x005BF1F0, veh_at 0x005BFE90, can_arty 0x005C0DB0, speed_proto 0x005C13B0, plus CRT abs 0x00644F3A and memset 0x006465F0 preserved as imported-target obligations exactly as existing tasks do - and the globals (Rules 0x949738, MapLongitude, MapLongitudeBounds, MapLatitudeBounds, MapArea, MapIsFlat, map_tiles) are already resolved in map.cpp/map.h/alpha.h, which need only declarations.",
+    "Load-bearing caller evidence from fresh pinned-image 'recover inspect --callers': ten direct call sites reach find - product callers Path::move (src/path.cpp:300, same ownership group) and action_road_to (src/veh.cpp:6997, live product C++ today), plus mapped seeds MapWin::dest_line 0x00467430, base_connect 0x004EC3F0 (two sites), contiguous 0x0053A780, enemy_move 0x0056B5B0 (two sites) and time_warp 0x005AEDE0 (two sites). Every one currently receives the stub's 0, so implementing find restores real pathfinding for unit movement, road-building and the destination-line UI preview; the cache-prologue fields (path.h 0x18/0x1C/0x20/0x24/0x28) are the class's own typed members.",
+    "The rest of the group gives the task coherent structural breadth beyond one body: zoc_path carries live LEVER analysis (one shared map_loc for the entry test's three tile reads; the paired `< 8` and `>= 0` owner tests that stop VC6 collapsing them), and move/make_abstract/territory/continent/continents/sensors are mapped product bodies without byte claims awaiting convergence, while init, shutdown, ~Path and merge hold BYTE_EXACT claims that stay protected restoration obligations.",
+    "Resume options were inspected and set aside with concrete evidence, not speculation: playerlock-acquisition-recovery sits at next_action review_scope_expansion and both its pending discoveries need the outside NetDaemon message_data owner in netdaemon.cpp, reserved by jackal-voice-ownership - unavailable authority; textindex-record-recovery's two discoveries reduce to the cross-owner Heap call-target split (heap.cpp reserved by control-sprite-defaults) and CRT imported-target resolution (_stricmp/_strchr/_strcat still unbound after b0ae6d1b bound strlen/strcpy/new/delete); emitted-symbol-bindings is eligible and unblocked (its five ?construct@Ambience-family emitted-name mismatches against the image's ??0 constructors are still live in src/ambience.cpp:380-709) but is a bounded emitted-name correction, and it remains eligible and reserved for its own checkpoint rather than being duplicated.",
+    "Create alternatives were inspected against current source, not prior similarity: class:Sound's one seed-only identity (ctor 0x004C6080) has its base-init inlined by the Ambience family in ambience.cpp (reserved by emitted-symbol-bindings) and by wave.cpp's landed manual base-store replay, so the migration blast radius lands in reserved files and is better sequenced behind the Ambience family; class:EditGroup's core attach 0x00611AF0 calls EditBox::init 0x00614FE0 and EditBox::set_text 0x006151E0, both seed-only with product home in editbox.cpp reserved by infowin-ownership and a pending_bodies.cpp forwarder seam; class:FileBox, class:BAmbience and class:AAmbience have only void*-redirect field accessors as product presence with their class scaffolds in hypothesis_layouts.h reserved by jackal-voice-ownership; class:ReportIf's 23 seed-only bodies depend on seed-only callees in reserved TUs, class:MessageWin is walled on ListBox virtual-base internals in reserved listbox.h/stringstruct.h, class:FX's bodies are fixed-address forwarders in reserved pending_bodies.cpp, and class:BattleWin is dominated by the 4,311-byte battle_report with 28 callees.",
+    "No completion or acceptance is claimed: find's SEH frame, its repeated scan-block structure and CRT references may leave strict-reference and instruction-shape obligations open exactly as in existing tasks; the four existing BYTE_EXACT claims retain restoration obligations; unmeasured seed callers outside the group are not coverage; and neither this selection, a future passing build, nor banked measurements establish a working game or task acceptance. This planner remained read-only throughout - no source, task, policy or Git edits, no compilation, preparation, provider calls or subagent launches; diagnostics ran via 'uv run --no-sync --frozen' with partition, tasks context and pinned-image inspect only.",
+    "Planner delegation: 7acd4a9ed47fc620b1c308183a0678fe1061e1200bf0d59cc1d367314479fb1b"
+  ],
+  "intent": "Recover the Path class family in src/path.cpp as genuine C++: implement find 0x0059A530 (the tree's only remaining honest `return 0;` stub, 5,845 original bytes) with its cache-check prologue, repeated neighbour-scan blocks and cleanup, and converge the eight mapped bodies that carry no byte claim - zoc_path 0x0059A370, move 0x0059BC10, make_abstract 0x0059C200, territory 0x0059C3C0, continent 0x0059C520, continents 0x0059C790 and sensors 0x0059CCA0 - against the already-product-bound callees and resolved globals, using the same typed Path members and idiomatic spelling the file's LEVER notes establish. Preserve original spans, the four existing BYTE_EXACT claims (init, shutdown, ~Path, merge), seed history and every historical obligation; byte mismatches remain diagnostics, not goals.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5874208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5874384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5874464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5874544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5874992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5880848,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5882368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5882688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5882816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5883168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5883792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5885088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "path-finding-recovery"
+}
