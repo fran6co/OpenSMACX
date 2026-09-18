@@ -1,0 +1,260 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5b421683ea40200f5bcc165427c6a6b4c12346eb",
+  "editable_files": [
+    "src/wave_device.cpp",
+    "src/wave_device.h"
+  ],
+  "evidence": [
+    "Eligibility verified from the request partition and a fresh read-only 'uv run --no-sync --frozen recover partition --group class:Wave_Device --details --impact': 47 entities, editable files exactly src/wave_device.cpp and src/wave_device.h, no reservation reasons, within the 100-entity/20-file delegation with no additional files. None of the twelve existing tasks' editable-file lists contains either file (checked each task in this request).",
+    "Source inspection shows a typed owner mid-convergence, not scaffold: wave_device.cpp carries 50 ORIGINAL markers, 37 already BYTE_EXACT; the 13 open bodies are mapped with real bodies or documented near-misses (select 0x004C5030 has an in-tree LEVER analysis of 14 real wave_attrib/wave_chain_next calls and a 0.989-similarity register-allocation divergence), and the class shell already owns its vtable surface (unk_slot2 ret stub) plus the embedded WaveControlGroup groups_ array (0x18 stride, 0x10 count) constructed through the CRT vector iterator in-file — so class:Wave_Device subsumes the separately listed class:WaveControlGroup (2 entities) without extra files.",
+    "Coupling closure needs no unavailable authority: callees are the product-owned SoundDllProcs/SoundDllModule globals declared in src/sound.h and defined in src/sound_loader.cpp (no task reserves either file), the wrapped device's vtable slots, and CRT vector iterators/memcpy preserved as unresolved imported-target obligations exactly as existing tasks do. wave_device.h includers (wave.h via wave.cpp, pending_bodies.cpp, net_class.cpp, sound.cpp, sound_loader.cpp) need declaration-level compatibility only; a fresh 'recover audits check storage --in src/wave_device.cpp' passes at ceiling (8/8 duplicate global identities, scaled class-pointer sum 0).",
+    "Load-bearing caller evidence: WaveDeviceGlobal (original 0x0090D978) is the process wave device every Wave/Sound dispatch reaches through wave.h's WaveDeviceCreateSlot/ReleaseSlot roles, and init_sound (sound.cpp, BYTE_EXACT) drives device bring-up through this family, so closing these bodies advances the whole sound stack the in-flight Wave migration and the just-authorized midi-sound-base-recovery build on — with zero file overlap with either (midi.cpp/midi.h; sound.cpp/sound.h).",
+    "Alternatives inspected and rejected with concrete evidence: resuming playerlock-acquisition-recovery needs the outside NetDaemon message_data owner (netdaemon.cpp reserved by jackal-voice-ownership) — unavailable authority; resuming textindex-record-recovery reduces to the cross-owner Heap call-target split (heap.cpp reserved by control-sprite-defaults) and CRT imported-target interpretation; resuming emitted-symbol-bindings is a bounded emitted-name correction in ambience.cpp/buffer.cpp/mapwin.cpp that cannot absorb the flic buffer.h blast-radius finding routed to graphicwin.cpp owners.",
+    "class:Sound was inspected and deferred, not skipped silently: its constructor 0x004C6080 is the one seed-only identity and the five vftable slots (0x004482F0, 0x00448310/20/30, 0x00448380) are placeholder bodies in sound.cpp, but that constructor is inlined by the reserved Ambience family ('class Ambience : public Sound' in src/ambience.h, ctors 0x004C84xx per src/sound.h) and wave.cpp still manually replays the base-region stores, so the structural correction cannot complete inside this delegation while midi-sound-base-recovery works the same family — better sequenced after those land.",
+    "class:MessageWin was inspected and rejected: its central bodies on_selected 0x004718C0, add_message 0x00471530 and clear 0x004717A0 are documented in messagewin.cpp itself as unhomable 'until ListBox's virtual-base internals are modelled', and listbox.h/stringstruct.h are reserved by control-sprite-defaults and radiobutton-lifetime — the same reserved-callee wall the previous planner recorded for class:ReportIf. class:FX is blocked because FX::init 0x00445CD0 and FX::play 0x00446A00 are fixed-address forwarders in pending_bodies.cpp, reserved by three existing tasks. class:BattleWin is dominated by the 4311-byte battle_report 0x00421B50 with 28 callees and an admitted approximated tail.",
+    "No completion or acceptance is claimed: the 37 existing BYTE_EXACT claims retain restoration obligations, strict-reference targets (CRT memcpy/memset, SoundDllProcs slot types, the wrapped device's table extent) remain obligations where unresolved, and neither this selection, a future passing build, nor banked measurements establish a working game. This planner remained read-only throughout: no source, task, policy or Git edits, no compilation, no provider calls, no subagents; diagnostics ran via uv run --no-sync --frozen with reports cached only under ignored build/recovery/agents/agent-adox9oct/.",
+    "Planner delegation: 7acd4a9ed47fc620b1c308183a0678fe1061e1200bf0d59cc1d367314479fb1b"
+  ],
+  "intent": "Recover the Wave_Device sound-device wrapper family in src/wave_device.cpp as genuine C++: close the thirteen open bodies — create_device 0x004C4ED0, delete_device 0x004C4F10, select 0x004C5030, set_hwnd 0x004C5000, set_group_volume 0x004C5320, enable_group 0x004C53A0, disable_group 0x004C5400, is_group_disabled 0x004C5460, the is_eax/is_3d semantic corrections (0x004C54B0, 0x004C5530), and the Wave_Device and WaveControlGroup constructor/destructor pairs (0x004C4DD0/0x004C4E60, 0x004C5490/0x004C5B80) with their recorded unwind spans — against the real WaveDeviceGlobal storage, the product-owned SoundDllProcs slots and the device's own vtable dispatch, without fixed-address forwarders or copied opcodes. Preserve all original spans, the existing 37 BYTE_EXACT claims, LEVER/TRIED seed history and every historical obligation; byte mismatches remain diagnostics, not goals.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5000656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5000800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5000912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5000976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001168,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001584,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001792,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5001856,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002336,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002720,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002864,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5002912,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "wave-device-control-recovery"
+}
