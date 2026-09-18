@@ -19,10 +19,16 @@ ATTEMPTS="${ATTEMPTS:-3}"
 BACKOFF="${BACKOFF:-120}"
 
 prompt=$(mktemp "${TMPDIR:-/tmp}/claude-agent-prompt.XXXXXX")
+cat >"$prompt"
+# Transport-level role reminder: the coordinator role keeps answering with
+# worker-shaped hypothesis objects the bridge refuses. This is formatting
+# guidance only; the response schema file remains the contract.
+if grep -q "You are the recovery coordinator" "$prompt"; then
+    printf 'FINAL ANSWER SHAPE: exactly {"action": "expand|incorporate|reject|defer|investigate|investigate_local|bind_seed|route", "snapshot": <request snapshot digest>, "discovery_id": <finding>, "subjects": [], "editable_files": [], "evidence": [strings]}. Never a hypothesis/affects object - that is the worker schema and the bridge refuses it.\n' >>"$prompt"
+fi
 out=$(mktemp "${TMPDIR:-/tmp}/claude-agent-out.XXXXXX")
 err=$(mktemp "${TMPDIR:-/tmp}/claude-agent-err.XXXXXX")
 trap 'rm -f "$prompt" "$out" "$err"' EXIT
-cat >"$prompt"
 
 # Transport observability: one line per call (size, mode, model, role flags).
 printf '%s %s bytes\n' "$(date -u +%FT%TZ)" "$(wc -c <"$prompt")" \
