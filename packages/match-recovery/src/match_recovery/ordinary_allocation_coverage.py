@@ -53,6 +53,10 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
             if row["result"] == Result.PASS:
                 modules[digest(row["input"])].append(row)
         contributions = joined["contributions"]
+        from .linker_generated_storage import assign_linker_contributions
+        generated = assign_linker_contributions(contributions, joined["modules"]["modules"], inputs.image)
+        assigned_contributions = {record["index"] for record in generated["records"]
+                                  if record["result"] == Result.PASS}
         contribution_ranges = IntervalIndex()
         for row in contributions:
             if row["size"] > 0:
@@ -246,7 +250,10 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                         row["allocation_sharing"] = "certified_icf_coalescence"
                     else:
                         gap("shared native code needs retained allocation correspondence", row)
-        unmatched = [row["index"] for row in contributions if row["index"] not in used]
+        # Verified linker-generated storage is assigned, not physically joined;
+        # it no longer keeps the contribution domain open.
+        unmatched = [row["index"] for row in contributions
+                     if row["index"] not in used and row["index"] not in assigned_contributions]
         if unmatched:
             gap("PDB contributions remain without unique verified physical allocations")
         closed = not gaps and not unmatched
@@ -256,6 +263,7 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
         damaged = code["result"] == Result.FAIL or any(row["input_consistency"] == Result.FAIL for row in sections)
         return {"check": "ordinary_allocation_coverage", "sections": sections, "code": code,
                 "contributions": contributions, "unmatched_contributions": unmatched, "gaps": gaps,
+                "generated_storage": generated,
                 "empty_contributions": [row["index"] for row in contributions if row["size"] == 0],
                 "input_consistency": Result.FAIL if damaged else Result.PASS if closed else Result.UNKNOWN,
                 "allocation_domain": Result.PASS if closed else Result.UNKNOWN,
