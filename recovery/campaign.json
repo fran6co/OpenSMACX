@@ -10,8 +10,8 @@
   "checkpoint": "recovery/checkpoint.json",
   "resources": "recovery/resources.json",
   "max_batches": 1,
-  "max_parallel": 2,
-  "iterations": 2,
+  "max_parallel": 4,
+  "iterations": 3,
   "timeout": 28800,
   "publication": {
     "enabled": true,
@@ -20,6 +20,6 @@
     "cleanup": true
   },
   "evidence": [
-    "The user explicitly requests a full multi-worker recovery process. Authorize one bounded batch of up to two disjoint ownership tasks in isolated worktrees and compiler slots, followed by fresh independent review and serial candidate/destination verification before integration into master. Respect the retained C++ task reservation; preserve unfinished structural work and discoveries. This grants no acceptance from process reports, game-completion claim, baseline reset, claim demotion or permission to discard preserved work."
+    "The user explicitly requests a full multi-worker recovery fan-out. Authorize bounded batches of up to four disjoint ownership tasks in isolated worktrees and compiler slots, followed by fresh independent review and serial candidate/destination verification before integration into master. The machine now carries the complete linked-preservation engine (placement dispositions, ICF allocation composition, linker contribution assignment, retained-selection computation, CRT bindings); the fresh worktrees inherit it natively. Respect the retained C++ task reservation; preserve unfinished structural work and discoveries. This grants no acceptance from process reports, game-completion claim, baseline reset, claim demotion or permission to discard preserved work."
   ]
 }
