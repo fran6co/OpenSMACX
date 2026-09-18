@@ -1,0 +1,215 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "699d3779a339505e354b46f2e806815fb43ee00d",
+  "editable_files": [
+    "src/texture.cpp",
+    "src/texture.h"
+  ],
+  "evidence": [
+    "Group eligibility verified fresh with 'uv run --no-sync --frozen recover partition --group class:Texture --details --impact': 38 entities, root files exactly src/texture.cpp and src/texture.h, conflicts empty on every entity, within the 100-entity/20-file delegation. Checked all fourteen tasks under recovery/tasks/: none lists texture.cpp or texture.h, so there is no overlap or reserved owner; class:Texture appears in the request partition as eligible with no reservation reasons.",
+    "The group holds real unclaimed implementation work, not scaffold inflation: src/texture.cpp carries 50 line-headed ORIGINAL markers with only 11 BYTE_EXACT claims (the Texture ctor 0x00619650 and the small leaf bodies 0x006239B0/0x00623F50/0x00624630/0x00624C70-0x00624D72), leaving 29 of the 38 group identities with no byte claim - including extract 0x00619710, close 0x00619690, the destructor 0x00619660, the large rasterizers draw 0x0061AC60/0x0061B1F0/0x006233C0, draw_trans 0x006198E0/0x0061A240/0x0061C090, draw_coast 0x0061EAD0/0x00623F80, draw_mask_dest 0x0061E540 and the setup_edge/setup_edge_gouraud pair 0x00624D80/0x0061FC90 that the whole family calls; the existing TRIED/LEVER notes and the EdgeScan DDA model in texture.h are preserved seed history to converge from, with each mismatch retained as a diagnostic.",
+    "Structural debt with exclusive ownership evidence: src/texture.cpp:374-398 declares 28 raw original-address pointer aliases - blit_scale_65536f/blit_scale_256f at 0x00670A84/0x00670A88, blit_alt_slot_520/524 at 0x006972C4/0x006972C8 and the 0x009BB490-0x009BB4FC blitter scratch block. Fresh grep over src/ shows the 0x009BB49x-0x009BB4Fx range is referenced only by texture.cpp, texture.h and the family's own seeds (src/unrecovered/00621870.cpp, src/unrecovered/00624670.cpp), while neighboring 0x009BB4xx words belong to other owners (FontDefault 0x009BB484 in font/buffer, the vox block from 0x009BB438 in caviar) - so the block can be recovered as real source-owned storage beside its only users under the bind-a-real-global-beside-its-definition rule, with per-word extent evidence still required rather than assumed bounds; texture.h itself documents the Texture layout as a floor, not a size, leaving member modelling open.",
+    "Dependency closure needs no expansion and hits no reserved-callee wall: pinned-image inspect maps the family's direct callees to product-bound C++ - Buffer::get_data 0x005E3373 and free_data 0x005E34A3 (buffer.cpp), fixed_div 0x00628AD0 and mem_get 0x005D4510 (general.cpp), TexHeap::get_tex_mem 0x00635370 (sprite.cpp, reached only through extract's parameter) - while CRT 0x00644EF2/0x00645930 stay imported-target obligations exactly as existing tasks carry them; internal dispatch (setup_edge/setup_edge_gouraud/sub_61xxxx-62xxxx) is in-group, and the one outside forwarder sub_621870 (0x00621870, pending_bodies.cpp, reserved) is called only by the already BYTE_EXACT sub_624ca0, which this task preserves untouched.",
+    "Load-bearing caller evidence from fresh pinned-image inspect: MapWin's product constructor in src/mapwin.cpp constructs the embedded TextureStore (mapped direct edge to 0x006252A0), and Texture::extract 0x00619710 shows 24 mapped caller edges led by the load_terrain seeds (src/unrecovered/00451c50.cpp) and TextureRectExtract 0x006196D0 - the family is the terrain/polygon rasterization core under the reserved MapWin owner. The single seed-only identity, TextureRectExtract::extract 0x006196D0, has an existing seed (src/recovered/units/006196d0.cpp) and follows the project's bind_seed path once its body is written in the already-editable TU.",
+    "Alternatives were inspected against current source, not similarity: resuming playerlock-acquisition-recovery needs the outside NetDaemon message_data owner (netdaemon.cpp reserved by jackal-voice-ownership) and textindex-record-recovery reduces to the cross-owner Heap call-target split (heap.cpp reserved by control-sprite-defaults) plus CRT imported-target resolution, so both require unavailable authority; emitted-symbol-bindings remains eligible but is a bounded emitted-name correction kept for its own checkpoint; path-finding-recovery was authorized at HEAD and stays with its own dispatch; class:Wave's 14 open bodies are walled on the Sound-base SEH/destructor staging that the active midi-sound-base-recovery is landing on the same sound family, so Wave is sequenced behind that landing; class:Sound's constructor is inlined by the reserved ambience.cpp family; source:src/xpops.cpp is already 23/24 BYTE_EXACT with no placeholders, and source:src/alpha.cpp, though viable, is a smaller TU-shaped group than this class/lifetime group.",
+    "No completion or acceptance is claimed: in-source evidence documents walls no C body can cross (draw_coast's ESP-hijacking inner loop at 0x0061F016, x87 choreography in the perspective bodies), so some bodies cannot converge byte-exact and their mismatches stay diagnostics; the existing BYTE_EXACT claims retain restoration obligations; and neither this selection, a future passing build, nor banked measurements establish a working game or task acceptance. This planner remained read-only throughout - no source, task, policy or Git edits, no compilation, preparation, provider calls or subagent launches; diagnostics ran via 'uv run --no-sync --frozen' with partition, task context and pinned-image inspect only.",
+    "Planner delegation: 0c6521f3995bfeb4f572cf3d12287ac543537b012177ca3c4e40cd0dc53552de",
+    "Planner delegation: 7acd4a9ed47fc620b1c308183a0678fe1061e1200bf0d59cc1d367314479fb1b"
+  ],
+  "intent": "Recover the Texture rasterizer family in src/texture.cpp as genuine C++: converge the 29 open mapped bodies - extract 0x00619710, close 0x00619690, the destructor 0x00619660, the draw/draw_trans/draw_coast/draw_mask_dest/draw_upper_threshold_trans overloads and the setup_edge/setup_edge_gouraud and sub_61xxxx-62xxxx scanline helpers - against the real EdgeScan model and the product-bound Buffer/fixed_div/mem_get/TexHeap callees; recover the family-owned blitter storage (the 0x009BB490-0x009BB4FC block and the 0x00670A84/0x00670A88/0x006972C4/0x006972C8 pointer aliases) as real source-owned globals beside their only users; and implement the seed-only TextureRectExtract::extract 0x006196D0 in the editable TU for native seed binding. Preserve original spans, the existing BYTE_EXACT claims, TRIED/LEVER seed history and all historical obligations; the reserved pending_bodies.cpp sub_621870 forwarder and its already-exact caller stay untouched; byte mismatches remain diagnostics, not goals.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6395472,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6395664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6396128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6397312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6398528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6399840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6401120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6402544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6403968,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6406288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6407728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6409040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6412688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6414176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6415680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6417104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6418640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6421648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6425104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6427312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6431232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6432784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6434224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6435776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6437296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6437344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6438736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6438784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6440496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6442368,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "texture-rasterizer-recovery"
+}
