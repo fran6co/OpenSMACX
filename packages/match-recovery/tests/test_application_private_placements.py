@@ -38,7 +38,8 @@ def test_private_placement_retains_each_physical_root_and_its_descendants(tmp_pa
     assert set(certificate["no_other_fold"]["unique_placements"]) == {
         row["placement_id"] for row in placements}
     assert certificate["no_other_fold"]["ref_discard_certificates"] == []
-    assert report["result"] == report["retained_section_selection"] == "unknown"
+    assert report["result"] == "unknown"
+    assert report["retained_section_selection"] == "pass"
     assert not report["ready_for_collection"]
 
 

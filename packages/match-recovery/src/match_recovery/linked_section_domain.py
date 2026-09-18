@@ -175,6 +175,10 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                         roots.append({"owner": owner, "symbol": sorted(entries)[0]})
                 else:
                     gap("section requires separate retention verification: " + category, number)
+        selected_sections = [section for row in rows for section in row["sections"]]
+        retained = (Result.PASS if selected_sections
+                    and all(section["retention"] == Result.PASS for section in selected_sections)
+                    else Result.UNKNOWN)
         return {"check": "application_physical_section_domain", "result": Result.UNKNOWN,
                 "enumeration": Result.PASS, "selection": selection, "inputs": rows,
                 "section_count": count, "code_roots": roots, "data_sections": data, "gaps": gaps,
@@ -182,4 +186,4 @@ def observe_sections(context, objects, *, epoch=None, native=None, max_sections=
                 "comdat_folded_groups": choices.folded_groups() if choices is not None else [],
                 "comdat_unique_placements": choices.unique_placements() if choices is not None else [],
                 "ref_discard_observations": choices.discard_observations() if choices is not None else None,
-                "retained_section_selection": Result.UNKNOWN, "ready_for_collection": False}
+                "retained_section_selection": retained, "ready_for_collection": False}

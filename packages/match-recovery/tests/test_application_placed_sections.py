@@ -29,7 +29,8 @@ def test_placed_sections_earn_retention_and_stay_roots(tmp_path, fpo):
             assert section["root_identity_kind"] == "external"
     # A qualified selection leaves no unqualified gap behind.
     assert not [row for row in report["gaps"] if "COMDAT selection remains unqualified" in row["reason"]]
-    assert report["result"] == report["retained_section_selection"] == "unknown"
+    assert report["result"] == "unknown"
+    assert report["retained_section_selection"] == "pass"
     assert not report["ready_for_collection"]
 
 
@@ -68,7 +69,7 @@ def test_any_winner_earns_its_selected_disposition(tmp_path):
     certificate, = report["comdat_selection_certificates"]
     assert section["selection_certificate"] == certificate["certificate_id"]
     assert {"owner": "unit0.obj", "symbol": "_K"} in report["code_roots"]
-    assert report["retained_section_selection"] == "unknown"
+    assert report["retained_section_selection"] == "pass"
 
 
 def test_private_peers_each_earn_their_own_placement_annotation(tmp_path):
@@ -88,4 +89,4 @@ def test_private_peers_each_earn_their_own_placement_annotation(tmp_path):
         assert placed["selection_placement"] == placement["placement_id"]
         assert placed["root_identity_kind"] == "private"
     assert not [row for row in report["gaps"] if "COMDAT selection remains unqualified" in row["reason"]]
-    assert report["retained_section_selection"] == "unknown"
+    assert report["retained_section_selection"] == "pass"

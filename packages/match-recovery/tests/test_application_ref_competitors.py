@@ -54,7 +54,8 @@ def test_positive_ref_certificate_can_discharge_competitor_without_erasing_inven
     assert {row["object_section"]: row["disposition"] for row in dependency["sections"]} == {
         1: "unselected_comdat_duplicate", 2: "discarded_unreferenced_comdat"}
     assert not report["comdat_unique_placements"]
-    assert report["result"] == report["retained_section_selection"] == "unknown"
+    assert report["result"] == "unknown"
+    assert report["retained_section_selection"] == "pass"
     assert not report["ready_for_collection"]
 
 

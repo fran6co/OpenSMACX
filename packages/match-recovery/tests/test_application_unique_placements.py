@@ -31,7 +31,8 @@ def test_distinct_peer_stays_in_physical_inventory_and_root_domain(tmp_path, fpo
             assert section["disposition"] == "independently_placed_nodup_root"
             assert section["selection_placement"] == peer["placement_id"]
             assert section["root_identity_kind"] == peer["root_identity_kind"]
-    assert report["result"] == report["retained_section_selection"] == "unknown"
+    assert report["result"] == "unknown"
+    assert report["retained_section_selection"] == "pass"
     assert not report["ready_for_collection"]
 
 

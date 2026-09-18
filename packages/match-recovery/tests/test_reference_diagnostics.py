@@ -34,7 +34,8 @@ def test_missing_original_companion_extent_does_not_hide_emitted_edges():
     row, = check_objects((binding,), objects, image)
     assert row["result"] == "unknown"
     entry, = row["diagnostic"]["emitted_references"]
-    assert entry["symbol"] == "$tail2" and entry["binding_address"] is None
+    # A TU-internal dollar label is now a recognized structural reference.
+    assert entry["symbol"] == "$tail2" and entry["binding_address"] == "compiler-artifact"
 
 
 @pytest.mark.parametrize("offset,expected", [(5, "fail"), (14, "unknown")])

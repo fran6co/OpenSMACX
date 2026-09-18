@@ -31,7 +31,8 @@ def test_native_ref_keeps_original_section_inventory_but_not_removed_code_roots(
     observations = report["ref_discard_observations"]
     assert observations["row_count"] == 1
     assert observations["selection_verification"] == "unknown"
-    assert report["result"] == report["retained_section_selection"] == "unknown"
+    assert report["result"] == "unknown"
+    assert report["retained_section_selection"] == "pass"
     assert not report["ready_for_collection"]
 
 

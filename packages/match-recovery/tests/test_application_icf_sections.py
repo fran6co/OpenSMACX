@@ -37,6 +37,8 @@ def test_only_same_key_loser_stops_seeding_roots(tmp_path, fpo):
     assert cert["winner"]["owner"] == "unit0.obj"
     assert group["final_storage"]["owner"] == "dependency.obj"
     assert report["result"] == report["retained_section_selection"] == "unknown"
+    # The surviving _J copy has no removal or placement disposition, so the
+    # domain-level retention stays unknown exactly as its section row does.
     assert not report["ready_for_collection"]
 
 

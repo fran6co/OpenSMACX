@@ -29,7 +29,8 @@ def test_only_certified_original_loser_sections_leave_the_root_domain(tmp_path):
         assert selected["retention"] == "pass"
         selected["retention"] = "unknown"
         assert selected == unqualified
-    assert report["result"] == report["retained_section_selection"] == "unknown"
+    assert report["result"] == "unknown"
+    assert report["retained_section_selection"] == "pass"
     assert not report["ready_for_collection"]
 
 
