@@ -331,6 +331,7 @@ Purpose: Ask the wrapped device whether it supports EAX, through its vtable
          slot 0x74. With no device wrapped the original clears only al, which
          is the codegen for a false of byte width; zero is that value.
 // ORIGINAL: 0x004C54B0 ?is_eax@Wave_Device@@QAEHXZ 0x004C54B0-0x004C54BF SEMANTIC
+// symbol    ?is_eax@Wave_Device@@QAE_NXZ
 // size      15 bytes
 // prototype int (__thiscall ?is_eax@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -340,8 +341,13 @@ Purpose: Ask the wrapped device whether it supports EAX, through its vtable
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
-int Wave_Device::is_eax() {
-    return query_wrapped_device(this, 0x74);
+bool Wave_Device::is_eax() {
+    void *device = device_14_;
+    if (device) {
+        typedef bool(__fastcall *device_bool_vfn)(void *);
+        return vtable_slot<device_bool_vfn>(device, 0x74)(device);
+    }
+    return false;
 }
 
 
@@ -391,6 +397,7 @@ Purpose: Ask the wrapped device whether it does 3D audio, through vtable slot
          0x84. With no device wrapped the original clears only al, the codegen
          for a false of byte width; zero is that value.
 // ORIGINAL: 0x004C5530 ?is_3d@Wave_Device@@QAEHXZ 0x004C5530-0x004C5542 SEMANTIC
+// symbol    ?is_3d@Wave_Device@@QAE_NXZ
 // size      18 bytes
 // prototype int (__thiscall ?is_3d@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -400,8 +407,13 @@ Purpose: Ask the wrapped device whether it does 3D audio, through vtable slot
 Return Value: the device's answer, or 0 when none is wrapped
 Status: Complete
 */
-int Wave_Device::is_3d() {
-    return query_wrapped_device(this, 0x84);
+bool Wave_Device::is_3d() {
+    void *device = device_14_;
+    if (device) {
+        typedef bool(__fastcall *device_bool_vfn)(void *);
+        return vtable_slot<device_bool_vfn>(device, 0x84)(device);
+    }
+    return false;
 }
 
 /*
@@ -605,6 +617,7 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
          original defines only AL on the out-of-range path; callers test the
          byte.
 // ORIGINAL: 0x004C5460 ?is_group_disabled@Wave_Device@@QAEHI@Z 0x004C5460-0x004C5481
+// symbol    ?is_group_disabled@Wave_Device@@QAE_NI@Z
 // TRIED: byte-exactness. Plateaus at 7/14, 0.875 similar (best
 // `/c /O2 /Gy /GR- /Oy- /GX`). The image writes only AL on BOTH return
 // paths - `mov al, 1` (2 bytes) on the out-of-range path and a bare
@@ -618,6 +631,17 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
 // combinations compile identically (still 0.875). Whatever makes the
 // image settle for AL-only appears to be a VC6 quirk this tree has not
 // found the source shape for; not chased further.
+// LEVER: bool-return the mangled return type is what selects AL-only stores.
+//   With `bool` the out-of-range arm compiles the image's own `mov al, 1`
+//   (B0 01); every int spelling measured above widened to `mov eax, 1`.
+// LEVER: const-bool-local CLOSED 2026-09-18: naming the comparison result -
+//   `const bool disabled = groups_[group].enabled == 0; return disabled;` -
+//   drops the temp machinery entirely: the byte loads straight into dl and
+//   `sete al` fires in place, 33 of 33 bytes on /O2 /Oy- (measured
+//   byte-exact; the plateau above was the direct `return <expr>` spelling,
+//   which kept `xor edx,edx; mov bl; sete dl; mov al,dl` plus the ebx
+//   save). A branchy `if (enabled) return false; return true;` twin
+//   compiles to the same 33 bytes.
 // size      33 bytes
 // prototype int (__thiscall ?is_group_disabled@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
@@ -627,11 +651,12 @@ Purpose: Report whether a group is disabled: out-of-range groups always are,
 Return Value: 1 when disabled, 0 when enabled
 Status: Complete
 */
-int Wave_Device::is_group_disabled(unsigned int group) {
+bool Wave_Device::is_group_disabled(unsigned int group) {
     if (group > 0xF) {
-        return 1;
+        return true;
     }
-    return groups_[group].enabled == 0 ? 1 : 0;
+    const bool disabled = groups_[group].enabled == 0;
+    return disabled;
 }
 
 
@@ -1008,53 +1033,14 @@ int Wave_Device::get_listener_zpos(float *z) {
 
 namespace {
 
-// The removal-safe walk the three group administrators share. The cursor
-// field is re-read after every callback: a wave's handler may pull waves
-// from the group, and pull_from_group maintains the cursor, so the walk
-// survives removal - and a self-removal skips the follower, exactly the
-// original's advance rule. A node with a null wave stops the walk.
-void walk_group_waves(WaveControlGroup &group, void (*visit)(Wave *wave)) {
-    WaveGroupNode *const first = group.head;
-    group.cursor = first;
-    if (!first) {
-        return;
-    }
-    Wave *wave = first->wave;
-    if (!wave) {
-        return;
-    }
-    for (;;) {
-        visit(wave);
-        WaveGroupNode *const cursor = group.cursor;
-        if (!cursor) {
-            return;
-        }
-        WaveGroupNode *const next = cursor->next;
-        group.cursor = next;
-        if (!next) {
-            return;
-        }
-        wave = next->wave;
-        if (!wave) {
-            return;
-        }
-    }
-}
-
-// Per-wave handlers: replay the wave's own stored volume through its vtable
-// slot 0x40, resume through slot 0x8C, halt through slot 0x14. The volume
-// field is private to Wave and read by offset, as the original does.
-void replay_wave_volume(Wave *wave) {
-    typedef void (OriginalObject::*wave_volume_fn)(uint32_t volume);
-    uint32_t vol;
-    std::memcpy(&vol, reinterpret_cast<uint8_t *>(wave) + 4, 4);
-    (ORIGINAL(wave)->*vtable_slot<wave_volume_fn>(wave, 0x40))(vol);
-}
-
-void resume_wave(Wave *wave) {
-    typedef void(__fastcall *wave_vfn)(void *);
-    vtable_slot<wave_vfn>(wave, 0x8C)(wave);
-}
+// The removal-safe walk the three group administrators each carry INLINE:
+// the cursor field is re-read after every callback (a wave's handler may
+// pull waves from the group, and pull_from_group maintains the cursor, so
+// the walk survives removal - and a self-removal skips the follower, exactly
+// the original's advance rule), and a node with a null wave stops the walk.
+// The image carries three copies of the loop with no shared helper call; the
+// per-wave dispatches (volume slot 0x40, resume slot 0x8C, halt slot 0x14)
+// are spelled inside each administrator's loop.
 
 __forceinline void halt_wave(Wave *wave) {
     typedef void(__fastcall *wave_vfn)(void *);
@@ -1107,6 +1093,28 @@ Purpose: Set a group's volume scale and replay every member wave's own
          stored volume through its vtable slot 0x40, so the new scale takes
          effect. Bad slots and volumes above 0x7F answer 0xA.
 // ORIGINAL: 0x004C5320 ?set_group_volume@Wave_Device@@QAEHII@Z 0x004C5320-0x004C537F
+// TRIED: inlining the walk - EARLIER CONCLUSION DISPROVEN 2026-09-18. An
+//   earlier round measured spelled-out walks "hundreds of bytes further"
+//   and concluded the image calls a shared walk out-of-line; decoded image
+//   bytes say otherwise: all three administrators carry the cursor loop
+//   INLINE (no call), and those earlier trials failed for two unrelated
+//   reasons - they addressed the group through a `WaveControlGroup&`
+//   (which folds the array base +0x24 into the lea, moving every field
+//   disp), and their whole-file byte sums still counted the leftover
+//   out-of-line helper. The spelling below is instruction-identical to
+//   0x4C5320-0x4C537F on /O2 /Oy-: 40 of 40 instructions, byte-exact.
+// LEVER: list-view-mixed-addressing the walk reads head/cursor through a
+//   `WaveGroupList&` pinned at `&groups_[a1].head` while the volume store
+//   and guard stay struct-subscripted. CSE then unifies the shared base as
+//   `esi = this + 24*a1` WITHOUT folding the array base: enabled +0x24,
+//   volume +0x28, head +0x2c, cursor +0x34 - the image's own disps. A pure
+//   struct view (`WaveControlGroup& group`) folds +0x24 into the lea and
+//   every disp lands 8 bytes off.
+// LEVER: break-not-return the loop exits spell `break` out of the while,
+//   reaching ONE trailing `return 0`. Early `return 0`s inside the loop
+//   each grow their own epilogue (112 bytes against 95) and flip the
+//   entry-test polarity (jne-to-body); breaks keep the image's je-to-exit
+//   and the shared xor eax,epilogue at the end.
 // size      95 bytes
 // prototype int (__thiscall ?set_group_volume@Wave_Device@@QAEHII@Z)(Wave_Device* this, unsigned int, unsigned int)
 // callers   2   call targets   0
@@ -1121,9 +1129,30 @@ int Wave_Device::set_group_volume(unsigned int a1, unsigned int a2) {
     if (a1 > 0xF || a2 > 0x7F) {
         return 0xA;
     }
-    WaveControlGroup &group = groups_[a1];
-    group.volume = a2;
-    walk_group_waves(group, &replay_wave_volume);
+    groups_[a1].volume = a2;
+    WaveGroupList &list =
+        *reinterpret_cast<WaveGroupList *>(&groups_[a1].head);
+    WaveGroupNode *const first = list.head;
+    list.cursor = first;
+    if (first) {
+        Wave *wave = first->wave;
+        while (wave) {
+            typedef void (OriginalObject::*wave_volume_fn)(uint32_t volume);
+            uint32_t vol;
+            std::memcpy(&vol, reinterpret_cast<uint8_t *>(wave) + 4, 4);
+            (ORIGINAL(wave)->*vtable_slot<wave_volume_fn>(wave, 0x40))(vol);
+            WaveGroupNode *const cursor = list.cursor;
+            if (!cursor) {
+                break;
+            }
+            WaveGroupNode *const next = cursor->next;
+            list.cursor = next;
+            if (!next) {
+                break;
+            }
+            wave = next->wave;
+        }
+    }
     return 0;
 }
 
@@ -1134,6 +1163,28 @@ Purpose: Enable a group. Only a disabled one does any work: every member
          written AFTER the walk. An already-enabled group is left exactly as
          it is, nonzero byte and all.
 // ORIGINAL: 0x004C53A0 ?enable_group@Wave_Device@@QAEHI@Z 0x004C53A0-0x004C5400
+// LEVER: early-return-0 the already-enabled case is an EARLY `return 0`,
+//   not the walk nested inside `if (!enabled)`: the range guard, the
+//   enabled test and the walk sit at function level in sequence. That
+//   layout is what makes VC6 save esi in the prologue (`mov eax,[ebp+8];
+//   push esi; cmp`) and pop it inside the 0xA tail - the image's own
+//   placement. With the walk nested, VC6 lays the guard fail out as a
+//   distant shared tail (`ja` to the end, like set_group_volume and
+//   add_to_group) and saves esi late at its first def (`lea eax; push esi;
+//   lea esi`), one byte moved and 86 of 96 offsets displaced.
+// LEVER: inline-break-walk same cursor loop as set_group_volume: written
+//   out with `break` exits, list view for head/cursor, struct subscript
+//   for the enabled byte, store AFTER the walk.
+// TRIED: 2026-09-18 five-spelling deck, both flag sets: this spelling is
+//   BYTE-EXACT on /O2 /Oy- (0 of 96 differing, references resolved);
+//   body-in-if (`if (a1 <= 0xF) { ... }`), a goto body-label, a hoisted
+//   `WaveGroupNode *first = nullptr;` above the guard (dead store,
+//   optimized away - unlike select's resume_tail there is no honest read
+//   site for a null here) and a hoisted `WaveControlGroup *const group =
+//   &groups_[a1];` all measured worse or unchanged. Earlier rounds'
+//   guard-first list-hoist and hoisted-enabled-local spellings stay
+//   measured-worse (esi via edx before the guard; enabled load re-based
+//   through esi).
 // size      96 bytes
 // prototype int (__thiscall ?enable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
@@ -1148,11 +1199,31 @@ int Wave_Device::enable_group(unsigned int a1) {
     if (a1 > 0xF) {
         return 0xA;
     }
-    WaveControlGroup &group = groups_[a1];
-    if (!group.enabled) {
-        walk_group_waves(group, &resume_wave);
-        group.enabled = 1;
+    if (groups_[a1].enabled) {
+        return 0;
     }
+    WaveGroupList &list =
+        *reinterpret_cast<WaveGroupList *>(&groups_[a1].head);
+    WaveGroupNode *const first = list.head;
+    list.cursor = first;
+    if (first) {
+        Wave *wave = first->wave;
+        while (wave) {
+            typedef void(__fastcall *wave_vfn)(void *);
+            vtable_slot<wave_vfn>(wave, 0x8C)(wave);
+            WaveGroupNode *const cursor = list.cursor;
+            if (!cursor) {
+                break;
+            }
+            WaveGroupNode *const next = cursor->next;
+            list.cursor = next;
+            if (!next) {
+                break;
+            }
+            wave = next->wave;
+        }
+    }
+    groups_[a1].enabled = 1;
     return 0;
 }
 
@@ -1162,6 +1233,18 @@ Purpose: Disable a group. Only an enabled one does any work: every member
          wave halts through its vtable slot 0x14, and the enabled byte is
          cleared AFTER the walk.
 // ORIGINAL: 0x004C5400 ?disable_group@Wave_Device@@QAEHI@Z 0x004C5400-0x004C545D
+// LEVER: early-return-0 the halt twin of enable_group's winning spelling:
+//   the not-enabled case is an EARLY `return 0`, the walk sits at function
+//   level, and the enabled byte is cleared AFTER the walk. This layout is
+//   what puts `push esi` in the prologue before the range compare and its
+//   pop inside the 0xA tail, the image's own placement.
+// LEVER: inline-break-walk the halt twin of enable_group's cursor loop
+//   (vtable slot 0x14, `break` exits, list view for head/cursor, struct
+//   subscript for the enabled byte).
+// TRIED: 2026-09-18 three-spelling deck, both flag sets: this spelling is
+//   BYTE-EXACT on /O2 /Oy- (0 of 93 differing, references resolved);
+//   body-in-if measured worse, and a goto body-label spelling changed the
+//   function's extent (boundary fail - bytes unmeasurable).
 // size      93 bytes
 // prototype int (__thiscall ?disable_group@Wave_Device@@QAEHI@Z)(Wave_Device* this, unsigned int)
 // callers   1   call targets   0
@@ -1176,11 +1259,31 @@ int Wave_Device::disable_group(unsigned int a1) {
     if (a1 > 0xF) {
         return 0xA;
     }
-    WaveControlGroup &group = groups_[a1];
-    if (group.enabled) {
-        walk_group_waves(group, &halt_wave);
-        group.enabled = 0;
+    if (!groups_[a1].enabled) {
+        return 0;
     }
+    WaveGroupList &list =
+        *reinterpret_cast<WaveGroupList *>(&groups_[a1].head);
+    WaveGroupNode *const first = list.head;
+    list.cursor = first;
+    if (first) {
+        Wave *wave = first->wave;
+        while (wave) {
+            typedef void(__fastcall *wave_vfn)(void *);
+            vtable_slot<wave_vfn>(wave, 0x14)(wave);
+            WaveGroupNode *const cursor = list.cursor;
+            if (!cursor) {
+                break;
+            }
+            WaveGroupNode *const next = cursor->next;
+            list.cursor = next;
+            if (!next) {
+                break;
+            }
+            wave = next->wave;
+        }
+    }
+    groups_[a1].enabled = 0;
     return 0;
 }
 
@@ -1290,6 +1393,20 @@ Purpose: Build the wrapped device of the requested kind through the factory
          refused with 0xC; a dead factory answers 0x14.
 // ORIGINAL: 0x004C4ED0 ?create_device@Wave_Device@@QAEHK@Z 0x004C4ED0-0x004C4F07
 // symbol    ?create_device@Wave_Device@@UAEHK@Z
+// LEVER: hoist-and-read-once the image hoists `lea eax, [ecx+0x14]` ahead of
+//   the device test and reads the factory hook ONCE into a register
+//   (`mov ecx, [0x90db34]`); the body spells both - a local slot pointer
+//   first, a single hook read second - and the factory call passes that
+//   pointer, not a fresh `&device_14_` at the call site.
+// LEVER: inverted-guard-tail-order the image's first guard `jnz` jumps
+//   FORWARD over everything, so the success arm leads and the two failure
+//   values tail in fall-through order: factory answer first, 0x14 second,
+//   0xC LAST. Spelling it `if (!device_14_) { factory? call : 0x14 } return
+//   0xC;` reproduces that layout - measured 0 differing bytes on
+//   /O2 /Oy- (the guard-first spelling kept 34). The function still
+//   verifies as unknown, not pass: its one relocation reads
+//   ?WaveDeviceFactoryHook@@3P6AHPAPAXK@ZA, and the shipped image carries
+//   no symbol on the 0x0090DB34 dword to prove link selection against.
 // size      55 bytes
 // prototype int (__thiscall ?create_device@Wave_Device@@QAEHK@Z)(Wave_Device* this, unsigned int)
 // callers   0   call targets   0
@@ -1302,13 +1419,15 @@ Return Value: the factory's answer, 0xC with a device already wrapped, or
 Status: Complete
 */
 int Wave_Device::create_device(unsigned long a1) {
-    if (device_14_) {
-        return 0xC;
-    }
-    if (!WaveDeviceFactorySlot()) {
+    void **const device_slot = &device_14_;
+    if (!device_14_) {
+        func_wave_device_factory *const factory = WaveDeviceFactoryHook;
+        if (factory) {
+            return factory(device_slot, a1);
+        }
         return 0x14;
     }
-    return (WaveDeviceFactorySlot())(&device_14_, a1);
+    return 0xC;
 }
 
 
@@ -1317,6 +1436,9 @@ Purpose: Tear the wrapped device down through the argument-less destroy hook
          and forget it. Without a device or a hook, 0x14 and nothing happens.
 // ORIGINAL: 0x004C4F10 ?delete_device@Wave_Device@@QAEHXZ 0x004C4F10-0x004C4F37
 // symbol    ?delete_device@Wave_Device@@UAEHXZ
+// LEVER: shared-tail-one-store both failure paths reach ONE `mov eax, 0x14`
+//   tail (nested guards, not two early returns) and the field is stored
+//   once, on the success arm only; the hook is read once into a local.
 // size      39 bytes
 // prototype int (__thiscall ?delete_device@Wave_Device@@QAEHXZ)(Wave_Device* this)
 // callers   0   call targets   0
@@ -1328,15 +1450,15 @@ Return Value: 0, or 0x14 with no device or no hook
 Status: Complete
 */
 int Wave_Device::delete_device() {
-    if (!device_14_) {
-        return 0x14;
+    if (device_14_) {
+        func_wave_device_destroy *const hook = WaveDeviceDestroyHook;
+        if (hook) {
+            hook();
+            device_14_ = nullptr;
+            return 0;
+        }
     }
-    if (!WaveDeviceDestroySlot()) {
-        return 0x14;
-    }
-    (WaveDeviceDestroySlot())();
-    device_14_ = nullptr;
-    return 0;
+    return 0x14;
 }
 
 
@@ -1383,6 +1505,14 @@ Purpose: Release the wrapped device: its own vtable slot 0x10 winds it down,
 // ORIGINAL: 0x004C4F80 ?release@Wave_Device@@QAEXXZ 0x004C4F80-0x004C4FB3 BYTE_EXACT
 // LEVER: returns-int the catalogued name decodes `X` (void), but `xor eax, eax` at 0x004C4FAF is a MERGE POINT - the guard's `je 0x4c4faf` and the fall-through from the trailing store both reach it before `pop esi; ret`. That is a shared `return 0`, not a side effect. Same correction as `?release@Wave_In_Device@@QAEHXZ` (0x004C5A50) and `Midi_Device::release`. With the void head the body is 2 bytes short and ends at 17 of 19.
 // LEVER: store-twice the field is cleared INSIDE the destroy-hook arm and again after it, which is why 0x004C4FA1 and 0x004C4FA8 are two identical `mov [esi+0x14], 0` that fall into one another. One store scores 17/19.
+// LEVER: hook-global the destroy-hook read at 0x004C4FA6 is `mov eax,
+//   dword ptr [0x90db38]` carrying an ABSOLUTE RELOCATION in the image; a raw
+//   fixed-address cast compiles the same bytes with no relocation, which is
+//   what failed the reference check at offset 23. The slot is a real global
+//   (WaveDeviceDestroyHook, defined below with its 0x0090DB38 binding) - the
+//   same treatment as WaveDeviceGlobal and the release guard. The relocation
+//   itself verifies as unknown rather than pass: the shipped image has no
+//   symbol on that dword, so nothing can prove link selection.
 // symbol    ?release@Wave_Device@@QAEHXZ
 // size      51 bytes
 // prototype void (__thiscall ?release@Wave_Device@@QAEXXZ)(Wave_Device* this)
@@ -1401,7 +1531,7 @@ int Wave_Device::release() {
             vtable_slot<device_down_fn>(device_14_, 0x10)(device_14_);
         }
         if (device_14_) {
-            func_wave_device_destroy *const hook = WaveDeviceDestroySlot();
+            func_wave_device_destroy *const hook = WaveDeviceDestroyHook;
             if (hook) {
                 hook();
                 device_14_ = nullptr;
@@ -1588,6 +1718,15 @@ Wave_Device WaveDeviceGlobal;  // 0x0090D978
 // `int *const WaveDeviceReleaseGuard = (int *)0x0090DB7C` (wave.h) and a
 // `g_0090db7c` static in sound.cpp - the same terranx.exe dword twice.
 int WaveDeviceReleaseGuard;  // 0x0090DB7C
+
+// The device factory/destroy hooks, 0x0090DB34 / 0x0090DB38 in the image.
+// Real globals for the same reason as WaveDeviceGlobal and the release guard
+// above: the image's reads of the two slots carry absolute relocations, which
+// a raw-address cast cannot compile.
+// RECOVERY_OBJECT: v1 0x0090DB34 ?WaveDeviceFactoryHook@@3P6AHPAPAXK@ZA
+func_wave_device_factory *WaveDeviceFactoryHook;  // 0x0090DB34
+// RECOVERY_OBJECT: v1 0x0090DB38 ?WaveDeviceDestroyHook@@3P6AXXZA
+func_wave_device_destroy *WaveDeviceDestroyHook;  // 0x0090DB38
 
 // Slot 2 of Wave_Device's image vftable: a bare `ret` stub at 0x00404280.
 void Wave_Device::unk_slot2() {}

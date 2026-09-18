@@ -1,0 +1,23 @@
+{
+  "event_id": "e90f3c5c3e7573c972b3171d92909c6812740aaf1ba706db1d581779ebf33a2c",
+  "payload": {
+    "affects": [
+      "entity-bd0ecb6a03e5dc9c473c2f73b0039f6355f07bc86482a4d9c9ea89d42633d6a0"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-a8a7329fe6b846a0b224d764133c6184",
+    "evidence": [
+      "image 0x4C5474: `mov dl,[ecx+eax*8+0x24]; test dl,dl; sete al; pop ebp; ret 4` — no register save, no temp move",
+      "final check /Oy-: is_group_disabled result=pass bytes=pass differing_offsets=0",
+      "local battery isd_v1/v2/v5/v6/v7 all compiled the 48B widening form; isd_v3 (const bool local) and isd_v4 (branchy) both compiled 14/14 image instructions",
+      "src/wave_device.cpp LEVER: const-bool-local note added 2026-09-18, prior TRIED history preserved"
+    ],
+    "hypothesis": "is_group_disabled's 33-byte body is reached by NAMING the comparison result rather than returning the expression: `const bool disabled = groups_[group].enabled == 0; return disabled;` loads the byte straight into dl and emits a bare `sete al` — byte-exact (33/33 on /O2 /Oy-). The direct `return <expr>` spelling (all four previously measured forms) kept the widening temp `xor edx,edx; mov bl; sete dl; mov al,dl` plus a spurious ebx save (48B); a branchy `if (enabled) return false; return true;` twin compiles to the same 33 bytes, narrowing the lever to the temp, not the branches.",
+    "kind": "discovery"
+  },
+  "previous_event": "4a94acbb90d8e9347e938dd2893e002f13da9588a9defa16d63b95bc000df419",
+  "request_id": "worker-a8a7329fe6b846a0b224d764133c6184",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:wave-device-control-recovery"
+}

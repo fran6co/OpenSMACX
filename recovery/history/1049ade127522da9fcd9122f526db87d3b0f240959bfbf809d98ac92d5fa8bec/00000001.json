@@ -1,0 +1,27 @@
+{
+  "event_id": "8d7df4ab53afd2dae3d4e8d51dd850c3fbc8c2e899bd5cd5bc2fb84519ee1cd5",
+  "payload": {
+    "affects": [
+      "entity-116a0084342d7c34a600f0c11a966fce047317d32ad41b8702e6132ad134df8a",
+      "entity-13541e0b4c5d8494f3d94fc75b395acb92f12d800010e150f12e477c2e3361e1",
+      "entity-e836568879f078e611b499eb2275f218092533d9537603346a0486bad3520e39",
+      "entity-f16c802e620fc3841e4048894f107723518df58851a3e5546ad3ceff815759b0"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-ad8350a6a37d4adbb6ba73cfcee41e6e",
+    "evidence": [
+      "recover measure on the four bodies pre-fix: each SHAPE_EXACT with exactly one differing constant - the virtual dispatch slot swapped against the image (map_patch(char*,K) emits 0xdc vs original 0xd8; map_patch(char*,K,K) emits 0xd8 vs 0xdc; set_active_tracks(KK) emits 0x90 vs 0x94; set_active_tracks(I) emits 0x94 vs 0x90)",
+      "recover inspect originals: 2-arg map_patch calls dword ptr [eax+0xd8] at 0x004C78A4, 3-arg calls [eax+0xdc] at 0x004C7878; byte-exact passers set_track@0x84, add_active_trackset@0x98, clear_patch@0xe0 pin the group positions, isolating the defect to intra-group order",
+      "image Sound vftable ground truth (RVA 0x26E3C0): slot 6=0x4c64a0 play(unsigned int), 7=0x4c6480 play(); slot 9=0x4c6600 fade(unsigned long), 10=0x4c65e0 fade(); slot 11=0x4c6660 fade_in(unsigned int), 12=0x4c6620 fade_in() - all three fit descending parameter count, while sound.h declares play and fade_in in image order, contradicting a declaration-reversal rule (sound.h is outside this task's editable files; noted for the coordinator, no edit made)",
+      "variants deck (schema v2, 5 candidates, src/midi.h + src/midi.cpp, damage controls per file) on the /Oy- game trial: current-baseline fail=6/pass=32; swap-active-tracks-only and swap-map-patch-only each fail=4/pass=34 (each single-pair swap fixes exactly its own pair, proving the mechanism is group-local); swap-both-groups and split-slot-names both fail=2/pass=36; split-slot-names applied deliberately as the mechanism-independent spelling",
+      "final recover tasks check on the edited tree: ?map_patch@Midi@@QAEHPADK@Z, ?map_patch@Midi@@QAEHPADKK@Z, ?set_active_tracks@Midi@@QAEHKK@Z, ?set_active_tracks@Midi@@QAEHI@Z all pass; the two remaining fails (?load@Midi@@UAEHPBD@Z, ?set_play_type@Midi@@QAEHI@Z) are the pre-existing documented deliberate non-reproductions of original bugs"
+    ],
+    "hypothesis": "VC6 does not lay same-name virtual overload groups out in declaration order: measured on MidiDelegate, both pairs (set_active_tracks, map_patch) compile with the higher-arity member first regardless of declaration order, so sharing Midi's forwarder names across each delegate pair placed every dispatch on the wrong slot (0x90<->0x94 and 0xd8<->0xdc swapped, each body exactly one constant off). The uniform rule fitting all measured pairs including the image's Sound pairs (play, fade, fade_in - where play and fade_in are declared in image order and byte-measured, falsifying plain declaration reversal) is descending parameter count. Fix applied 2026-09-18: the two higher-arity delegate slots (0x94, 0xdc) took neutral slotNNN names (slot037, slot055), which pin each slot by position under any group ordering and claim nothing about the wrapped class's unevidenced member names - the header's established slotNNN convention; the two Midi forwarder bodies call the renamed members. Final check: all four bodies pass, 36 pass / 2 fail / 4 unknown on the task, no regressions.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-ad8350a6a37d4adbb6ba73cfcee41e6e",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:midi-sound-base-recovery"
+}

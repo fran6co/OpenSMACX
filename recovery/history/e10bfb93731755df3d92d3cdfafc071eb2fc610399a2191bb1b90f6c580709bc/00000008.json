@@ -1,0 +1,23 @@
+{
+  "event_id": "3e67b57044327a39da105599eeb252d3dffa70d8a9be895b526560c8ce1df212",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-7e9ab299c8be43d58b0124f170c5c16d",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Insight expressed in current source: src/wave_device.cpp:1403-1413 spells create_device with the inverted-guard tail order (`if (!device_14_) { factory ? call : 0x14 } return 0xC;`) plus the hoisted `device_slot` local and single factory-hook read (levers at 1378-1391); delete_device (1434-1444) and release (1509-1525) read the destroy hook through the global with release's returns-int/store-twice spelling.",
+      "Hook-global bindings present beside their definitions: src/wave_device.cpp:1708-1711 carries `// RECOVERY_OBJECT: v1 0x0090DB34 ?WaveDeviceFactoryHook@@3P6AHPAPAXK@ZA` and `// RECOVERY_OBJECT: v1 0x0090DB38 ?WaveDeviceDestroyHook@@3P6AXXZA`; declarations at src/wave_device.h:148-149.",
+      "Fresh diagnostics read from the unchanged request file (sha256 3af513863b2f0e4a6f9acf7ad513b7ec00a95c46ddf8c1da4d4c7d6f6dd3fbcc, pointer /diagnostics/check/report/candidate/checks/binary/functions): create_device result pass — on /O2 /Oy- boundary/bytes/references pass with differing_offsets 0 and the ?WaveDeviceFactoryHook relocation pass; delete_device and release pass on BOTH flag sets (d0 each) with the ?WaveDeviceDestroyHook relocation pass; release's historical obligation-0199cf35 measures pass.",
+      "Source identity confirmed: current src/wave_device.cpp SHA-256 504f676ba6d090e878b927dcb3a908e69cd724c15afc430f849e7ea893f4d0bc equals the snapshot's mapped-record digest, so these diagnostics measure exactly the inspected source.",
+      "Tails preserved, not resolved by this decision: create_device still fails the non-Oy- trial (differing_offsets 50, factory-hook relocation fail); the task's other opens — set_hwnd d20, select d20, enable_group d86, disable_group d85, add_to_group/pull_from_group unknown on unbound callee relocations (?insert@WaveGroupList@@QAEXPAVWave@@@Z, ??3@YAXPAX@Z), ctor/dtor unknown on the checker's multi-span refusal — belong to the remaining pending discoveries and stay pending.",
+      "The create_device LEVER note's stale caveat (relocation 'still verifies as unknown') predates the bindings; the fresh /Oy- trial shows it pass. Incorporation records expression of the insight only: no acceptance, baseline change, claim edit or source edit is authorized or performed; all three affected identities (entity-568a30d4..., entity-3c0a5ac4..., entity-04f13a62...) are inside this task's scope, so no expansion, binding or route is proposed (no route_choices are delegated in this request).",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "96407cbe45fbc7f0801129cbe3b65b5d279b34b998fa7038c4125a43bfd8ce83",
+  "request_id": "coordinator-a0480a2fe0284ac78e8439cc75491950",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:wave-device-control-recovery"
+}

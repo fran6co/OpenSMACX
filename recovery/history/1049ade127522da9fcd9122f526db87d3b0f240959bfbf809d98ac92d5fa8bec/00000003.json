@@ -1,0 +1,22 @@
+{
+  "event_id": "c2e9e473b76a97055b17159dd59437146b79e6a34d7126bf319ad6a474564c04",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-ad8350a6a37d4adbb6ba73cfcee41e6e",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The discovery's fix is expressed in current source: src/midi.h:102 declares 'virtual int slot037(unsigned long, unsigned long); // slot 0x94' and src/midi.h:120 declares 'virtual int slot055(char *, unsigned long, unsigned long); // slot 0xdc', giving the two higher-arity MidiDelegate slots neutral slotNNN names that pin each slot by position under any same-name overload group ordering, while the header comment at src/midi.h:41-56 records the measured VC6 rule (higher-arity member emitted first) and the image's agreeing Sound pairs (play, fade, fade_in) that falsify plain declaration reversal.",
+      "Forwarder wiring verified in src/midi.cpp (SHA-256 20291ef9e65aa43652cbc1188543512db1db1d7af5e7709605beeed5fe1b8294, matching the request's mapped_records): Midi::map_patch(char*,K,K) at src/midi.cpp:158-164 forwards to delegate->slot055 (slot 0xdc, original 0x004C7860); Midi::map_patch(char*,K) at src/midi.cpp:179-185 keeps delegate->map_patch (slot 0xd8, original 0x004C7890); Midi::set_active_tracks(K,K) at src/midi.cpp:304-310 forwards to delegate->slot037 (slot 0x94, original 0x004C79C0); Midi::set_active_tracks(I) at src/midi.cpp:325-331 keeps delegate->set_active_tracks (slot 0x90, original 0x004C79F0).",
+      "Fresh diagnostics read from the unchanged request (SHA-256 dc2a209cfe434acbd3c2d81d282a8cb690b2749de6156ef4026a6a9a42b7b50d): /diagnostics/check/report/details and /measurements show all four affected obligations passing bytes and references on the /Oy- /GX /Z7 trial - obligation-70e960e5 (entity-13541e0b4c5d8494f3d94fc75b395acb92f12d800010e150f12e477c2e3361e1, ?map_patch@Midi@@QAEHPADKK@Z), obligation-e4b1f06a (entity-116a0084342d7c34a600f0c11a966fce047317d32ad41b8702e6132ad134df8a, ?map_patch@Midi@@QAEHPADK@Z), obligation-928d6cc7 (entity-e836568879f078e611b499eb2275f218092533d9537603346a0486bad3520e39, ?set_active_tracks@Midi@@QAEHKK@Z), obligation-9eed270b (entity-f16c802e620fc3841e4048894f107723518df58851a3e5546ad3ceff815759b0, ?set_active_tracks@Midi@@QAEHI@Z).",
+      "No other task entity regressed: the binary functions check's only fails are the documented deliberate non-reproductions ?load@Midi@@UAEHPBD@Z and ?set_play_type@Midi@@QAEHI@Z, and the four unknowns (?init@Midi@@QAEHPADK@Z, ?set_fname@Midi@@QAEHPBD@Z, ?unload@Midi@@UAEHXZ, ?load@Midi@@QAEHXZ) are the imported-target steady state of the separate pending discovery worker-8acb66e211b54cdb89e3239eaea2934a, which remains pending and untouched by this decision.",
+      "Incorporate rather than investigate (the repair is already applied in the editable files and freshly measured, so no new worker round is needed), reject (the variant-deck evidence - each single-pair swap fixing exactly its own pair - and the image vftable ground truth support the mechanism), or expand (all four affected identities are inside current task scope and the sound.h declaration-order observation is recorded read-only in the src/midi.h comment without editing sound.h). Incorporation records that the insight is expressed in source, not binary or behavioral proof, task acceptance, or resolution of the sibling imported-target finding.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "6ddd2f6d57c6cc9b7c901c0d09d3e638816c9e3e419e2040653a9a0ba96435e7",
+  "request_id": "coordinator-12f17a3320a740e3a774e4541f4497ed",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:midi-sound-base-recovery"
+}

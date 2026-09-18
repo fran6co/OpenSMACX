@@ -1,0 +1,21 @@
+{
+  "event_id": "442032773c253bab5a8b9805a81e094e4dd580dd1da9a6c6a63460f3cd7f2962",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-f6178465d8de4437be7052fbd76b24b5",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current source expresses the mixed-view insight: src/wave_device.cpp:1133 (set_group_volume, body from line 1128) declares `WaveGroupList &list = *reinterpret_cast<WaveGroupList *>(&groups_[a1].head` ) beside the struct-subscripted `groups_[a1].volume` store; enable_group (lines 1189-1193) and disable_group (lines 1241-1245) repeat the identical mix of list view for head/cursor and `groups_[a1].enabled` subscript, and the `list-view-mixed-addressing` LEVER note at src/wave_device.cpp:1106 documents the CSE behavior (esi = this + 24*a1 without folding the +0x24 array base) beside the applied bodies — this is an applied implementation, not a seed-only body or planned repair.",
+      "Fresh scoped binary check in the unchanged request (sha256 27205be1446444c7fe6d24f76192564b25411db26d16ce2b77497fb6f72c1c9c, /diagnostics/check/report/candidate/checks/binary/functions) confirms the insight compiles to the image's displacements: `?set_group_volume@Wave_Device@@QAEHII@Z` (entity-f51c312294e7ee7debc80564cfa1902d5f22d8e6caaab675749a90036d8c85b7, 0x004C5320-0x004C537F) result pass with differing_offsets [] and boundary pass on the /c /O2 /Gy /GR- /Oy- /GX /Z7 trial (40 of 40 instructions byte-exact per the in-tree TRIED note), while protected BYTE_EXACT get_group_volume (0x004C5380) stays pass.",
+      "The affected twin administrators carry the same mixed-view disps and reproduce 38 of 39 instructions each; their sole residual is the push-esi placement byte owned by the separate still-pending discovery worker-af65c4ca63844eaaadf5e692beaed7b2, which this decision neither resolves nor absorbs.",
+      "Incorporation is not binary or behavioral proof, acceptance or scope change: set_group_volume still fails the plain /O2 trial (94 differing offsets), enable_group/disable_group fail both configured trials (95/86 and 92/85 offsets), the protected obligations obligation-1a95d92f38c3871e41d0efc616aeb2c249b4ef6c67cc8850c9cce6bdc1238412 (pull_from_group) and obligation-2d6deb41b43f3036a35fef3b25f95caa417e072a44d1c716b75a9827eb66227d (add_to_group) remain unknown on unbound ?insert@WaveGroupList@@QAEXPAVWave@@@Z and ??3@YAXPAX@Z relocations, and the other three pending discoveries keep their pending status unchanged.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "9265c569b71b4a24679d376032c7626abf49cd50defea5d813a9e23cf726517f",
+  "request_id": "coordinator-3cf5cfeb743349d3b54ce513e7d46436",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:wave-device-control-recovery"
+}

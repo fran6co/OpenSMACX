@@ -1,0 +1,25 @@
+{
+  "event_id": "40dc6b45cc1056babdaf6a858595d161276d3e36545a014d4737532037dc9996",
+  "payload": {
+    "affects": [
+      "entity-0e69f51707a88b9eae563a31f6eff560f3972b06d585555370409d9ab4ed978c",
+      "entity-7ce065c2a9de1228524eea0b48e25a836cdb71aaba80e4bfd59fd14cd0557fc7",
+      "entity-ba468cce9da26b402e83bf05d755d22660163a969f40223eff788bddc79038b3",
+      "entity-c4b9ae523d51af03570ff9ebfb51e0db01a4b234377ac1f70b9051f3c1015fa3"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-4c4dfe577fb04bc1beaadbb3419cce2d",
+    "evidence": [
+      "final check /Oy-: add_to_group unknown/unknown with differing_offsets=0 (boundary pass); sole relocation ?insert@WaveGroupList@@QAEXPAVWave@@@Z unbound",
+      "final check /Oy-: pull_from_group unknown/unknown differing_offsets=0; sole relocation ??3@YAXPAX@Z unbound; grep of the tree finds no spelling for 0x0064557F (vector_teardown.h binds only WaveOperatorNew 0x0064558A via pending_bodies.cpp:277)",
+      "ctor/dtor rows: reason 'code sections require one entry and at most one uniquely associated recorded tail' on both flag sets, unchanged from session start"
+    ],
+    "hypothesis": "Two members remain unverifiable solely through callee symbols that no authorized file can bind: add_to_group is byte-perfect on /Oy- (differing_offsets []) but its call relocation targets ?insert@WaveGroupList@@QAEXPAVWave@@@Z, a pending_bodies forwarder with no image binding (calling wave_group_insert_redirect directly is bindable but adds a 2-byte edx setup and fails the extent); pull_from_group is likewise byte-perfect but its ??3@YAXPAX@Z relocation targets the game free at 0x0064557F, for which no compiled spelling exists anywhere in the tree (only WaveOperatorNew at 0x0064558A is bound via PENDING_BODY). The Wave_Device ctor/dtor are refused by the checker itself: their multi-span ORIGINAL records (main + cold 0x4C4DB0 + EH 0x659EA0/0x659EB2) trip 'code sections require one entry and at most one uniquely associated recorded tail', which marker edits outside authorized scope would be needed to change.",
+    "kind": "discovery"
+  },
+  "previous_event": "2986b7c66b5cd7a416bf114e513941700f56a16caccf0042f9683d37988efcc8",
+  "request_id": "worker-4c4dfe577fb04bc1beaadbb3419cce2d",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:wave-device-control-recovery"
+}

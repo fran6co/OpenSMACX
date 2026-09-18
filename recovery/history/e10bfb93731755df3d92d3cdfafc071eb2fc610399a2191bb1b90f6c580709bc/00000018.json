@@ -1,0 +1,23 @@
+{
+  "event_id": "cb3f7a5626abedde1452f5b0bebb797f39c97c5f76800b5351288f6cba18950f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "central-hook-globals",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave_device.h:148-149 spells the discovery's header-extern half in current source: `extern func_wave_device_factory *WaveDeviceFactoryHook;  // 0x0090DB34` and `extern func_wave_device_destroy *WaveDeviceDestroyHook;  // 0x0090DB38`.",
+      "src/wave_device.cpp:1722-1729 spells the TU-definition half: `func_wave_device_factory *WaveDeviceFactoryHook;  // 0x0090DB34` and `func_wave_device_destroy *WaveDeviceDestroyHook;  // 0x0090DB38`, each preceded by a RECOVERY_OBJECT v1 marker naming ?WaveDeviceFactoryHook@@3P6AHPAPAXK@ZA / ?WaveDeviceDestroyHook@@3P6AXXZA - the established WaveDeviceGlobal 0x0090D978 binding treatment the hypothesis prescribed.",
+      "All three affected bodies read the slots as typed globals rather than fixed-address casts: create_device hoists the single factory read at src/wave_device.cpp:1424, delete_device reads the destroy hook at src/wave_device.cpp:1454, and release reads it at src/wave_device.cpp:1534; the fresh binary check's unresolved_symbols list contains only ??3@YAXPAX@Z and ?insert@WaveGroupList@@QAEXPAVWave@@@Z, so the hook relocations resolve against these TU definitions and no missing_absolute_relocations failure remains.",
+      "Fresh scoped check read from the unchanged request at /diagnostics/check/report/details (37 rows) holds exactly two non-pass obligations - obligation-1a95d92f pull_from_group (unresolved ??3@YAXPAX@Z) and obligation-2d6deb41 add_to_group (unresolved ?insert@WaveGroupList@@QAEXPAVWave@@@Z) - neither a hook-global subject; obligation counts are 35 pass / 2 unknown / 0 failed, matching the discovery's predicted post-edit state where release and delete_device stop failing and no previously passing measurement is lost.",
+      "Working-tree src/wave_device.cpp SHA-256 0e9a1cb2d68b32d5d2ad789db6b351c757a1bdb8ccb1eae0454008fcf045c566 equals the file_sha256 recorded in the release/create_device/delete_device mapped_records, so the hook-global levers describe the same unchanged source this decision inspected.",
+      "Boundary kept: this proposes incorporation of an insight expressed in source, not behavioral or link-selection proof - the discovery's own ceiling stands (the shipped image has no symbol on the 0x0090DB34/0x0090DB38 dwords, so those relocations verify as unknown, not pass); publication stays with the serial controller and this decision made no source, task, compiler or Git change.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "110eb04d450ea130bbb45384da3eb817a7b66c45b83b0747f6618c3464f459cd",
+  "request_id": "coordinator-6988f67b95fb4d58bab27150829e1eb2",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:wave-device-control-recovery"
+}

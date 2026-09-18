@@ -1,0 +1,17 @@
+{
+  "event_id": "81dbd406d79ccdacc4605397fe61bd8e1f0f0dd7531a9592fab9a48d27706a33",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-4c4dfe577fb04bc1beaadbb3419cce2d",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The finding's blocking premise is satisfied: central scope expansion (decision revision 19) granted this task src/pending_bodies.cpp so the PAU-spelled ?insert@WaveGroupList@@QAEXPAVWave@@@Z definition can be added beside the PAV forwarder at pending_bodies.cpp:1766-1772 under full scoped measurement. add_to_group 0x004C5240 is byte-perfect except its offset-29 relocation to that symbol; the next worker round executes the spelling with the granted scope."
+    ]
+  },
+  "previous_event": "039586c0d8596a38d26882f8cc8a5c72bae66bd9d7abe0d6db045baf6dd9f889",
+  "request_id": "central-resolve-insert-scope",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:wave-device-control-recovery"
+}

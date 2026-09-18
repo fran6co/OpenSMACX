@@ -1,0 +1,24 @@
+{
+  "event_id": "b3292f10821ee0e0720b9fb5db751e58eaba988cabab2c9ce9dfd84938edd083",
+  "payload": {
+    "affects": [
+      "entity-7959a947680ff9c885749336bc4b2f9eacc8be122c6899999f719ca3dfbad09e",
+      "entity-9afb7d31156a27027b00eb06cd82c5d11b60725dd4dc903e64b1f29d45ee8671",
+      "entity-f51c312294e7ee7debc80564cfa1902d5f22d8e6caaab675749a90036d8c85b7"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-f6178465d8de4437be7052fbd76b24b5",
+    "evidence": [
+      "image enable_group 0x4C53B9: `lea esi,[ecx+eax*8]` then `[esi+0x2c]` head, `[esi+0x34]` cursor, `[esi+0x24]` enabled store, while the enabled LOAD recomputes `[ecx+eax*8+0x24]` — the mixed-view signature",
+      "applied bodies in src/wave_device.cpp use `WaveGroupList &list = *reinterpret_cast<WaveGroupList *>(&groups_[a1].head)` beside `groups_[a1].volume`/`groups_[a1].enabled` and compile to those exact disps",
+      "deck5 w4-svg-ref (struct-reference volume + list view) measured 42 differing offsets on /O2 and an extent miss on /Oy-, worse than the mixed-subscript winner's 0"
+    ],
+    "hypothesis": "The administrators' field addressing comes from MIXING two views of the same group record: struct subscript for enabled/volume plus a WaveGroupList reference pinned at &groups_[a1].head for head/cursor. VC6's CSE then unifies the shared base as esi = this + 24*a1 WITHOUT folding the array base 0x24 into the lea, giving the image's exact displacements (+0x24 enabled, +0x28 volume, +0x2c head, +0x34 cursor). A pure struct view (`WaveControlGroup &group`) folds +0x24 into the lea and lands every disp 8 bytes off — this, not the inline/outline question, is what sank the earlier experiments.",
+    "kind": "discovery"
+  },
+  "previous_event": "7a8973667e1f8292e571e7a8c0bd25e17175d4f4f6d3e74b075d4137365d0d3d",
+  "request_id": "worker-f6178465d8de4437be7052fbd76b24b5",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:wave-device-control-recovery"
+}

@@ -1,0 +1,25 @@
+{
+  "event_id": "2986b7c66b5cd7a416bf114e513941700f56a16caccf0042f9683d37988efcc8",
+  "payload": {
+    "affects": [
+      "entity-04f13a62ca81ecd03cec81d1ef0f2c9aedd193e95a44f764eccfa5817265b7b7",
+      "entity-3c0a5ac4499c6bc442dd2aaca06100df0cc274424674395c289c2905b7a7cef4",
+      "entity-568a30d426077830ce36abfa1389ac7b9d00c9971fa2c6f477e2d39bf13dc4cd"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-7e9ab299c8be43d58b0124f170c5c16d",
+    "evidence": [
+      "final check /Oy-: create_device pass/pass d0, delete_device pass/pass d0, release pass/pass d0",
+      "src/wave_device.cpp: `// RECOVERY_OBJECT: v1 0x0090DB34 ?WaveDeviceFactoryHook@@3P6AHPAPAXK@ZA` and `// RECOVERY_OBJECT: v1 0x0090DB38 ?WaveDeviceDestroyHook@@3P6AXXZA` beside the definitions",
+      "deck4 c1 (inverted create, no bindings): unknown with differing_offsets=0 on /Oy- — same bytes, unbound reloc; deck6 with bindings: pass",
+      "image evidence for the slots: create reads [0x90db34] at 0x4C4EDD, delete reads ds:0x90db38 at 0x4C4F1A, release reads ds:0x90db38 at 0x4C4FA6"
+    ],
+    "hypothesis": "create_device's tail order was the last structural gap: the image's first guard jumps forward over everything, so the success arm leads and the failure values tail in fall-through order (factory answer, then 0x14, then 0xC LAST); spelling `if (!device_14_) { factory ? call : 0x14 } return 0xC;` is byte-exact on /Oy- (0 differing bytes vs 34 for the guard-first spelling). With the two hook-global RECOVERY_OBJECT v1 bindings added beside their definitions, the absolute data relocations verify and create_device, delete_device AND release all verify PASS — the bindings resolved what previously measured unknown at the same 0-diff state.",
+    "kind": "discovery"
+  },
+  "previous_event": "e90f3c5c3e7573c972b3171d92909c6812740aaf1ba706db1d581779ebf33a2c",
+  "request_id": "worker-7e9ab299c8be43d58b0124f170c5c16d",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:wave-device-control-recovery"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "77f71ec619443bea812a74560a5c9bc4105df798e35ee544f6d65d29cae92cb8",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-fab91500527b4ef581227fd6859be102",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current source expresses the finding's implementation: src/wave_device.cpp:1198 Wave_Device::enable_group spells the range guard first, the already-enabled case as an EARLY `return 0`, the cursor walk at function level, and `groups_[a1].enabled = 1` stored after the walk; src/wave_device.cpp:1258 Wave_Device::disable_group is the halt twin (early `return 0` when not enabled, `enabled = 0` cleared after the walk). ORIGINAL markers 0x004C53A0-0x004C5400 and 0x004C5400-0x004C545D are intact beside the bodies and the LEVER/TRIED seed history (early-return-0, inline-break-walk, 2026-09-18 decks) is preserved.",
+      "Fresh scoped diagnostics in this request (sha256 c633366a913d9e2707ef163f9883284bd0e9a42dbeb2f9d91d504c4c409caf65, pointer /diagnostics/check/report/candidate/checks/binary/functions) measure ?enable_group@Wave_Device@@QAEHI@Z result pass and ?disable_group@Wave_Device@@QAEHI@Z result pass: on /c /O2 /Gy /GR- /Oy- /GX /Z7 both variants report bytes pass with differing_offsets [] , references pass and boundary pass; the /O2-only variants fail with 91 and 88 differing offsets respectively, exactly the flag-set split the finding documents.",
+      "Neither entity-9afb7d31156a27027b00eb06cd82c5d11b60725dd4dc903e64b1f29d45ee8671 nor entity-7959a947680ff9c885749336bc4b2f9eacc8be122c6899999f719ca3dfbad09e carries a restoration obligation in the 37-entry protected set, so the joint check counts remain pass 35 / unknown 2 with unrestored.unknown limited to the add_to_group obligation (obligation-2d6deb41b43f3036a35fef3b25f95caa417e072a44d1c716b75a9827eb66227d) and pull_from_group obligation (obligation-1a95d92f38c3871e41d0efc616aeb2c249b4ef6c67cc8850c9cce6bdc1238412) - subjects of the separate pending discoveries, untouched by this decision.",
+      "Incorporation records source expression only: it banks no byte claim for the two functions, leaves the earlier one-byte scheduling finding worker-af65c4ca63844eaaadf5e692beaed7b2 and the callee-binding findings worker-4c4dfe577fb04bc1beaadbb3419cce2d/worker-0dc6e5263ca146fdb1f3b5639144ceb1 pending, and does not establish build, layout or acceptance; the /O2-only-set mismatch stays a visible diagnostic under the two fixed flag sets with no demotion.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "d1d15718a648d0a4ecada9bed122e4dd9f757937ecc2644297ecaa6f978a51f1",
+  "request_id": "coordinator-cb57c6a925f84964bc7160770ce8d4f8",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:wave-device-control-recovery"
+}

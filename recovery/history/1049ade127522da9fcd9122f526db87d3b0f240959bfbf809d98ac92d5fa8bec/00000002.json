@@ -1,0 +1,23 @@
+{
+  "event_id": "6ddd2f6d57c6cc9b7c901c0d09d3e638816c9e3e419e2040653a9a0ba96435e7",
+  "payload": {
+    "affects": [
+      "entity-1c46f3d07064242b7ea4ffbe9fa6e246c26557ccd0ca5b13d291314eafb37021",
+      "entity-3816826e770c336d1cdcb60f7f94c47d29b50c7033fb3d5121908529cc7b3eb1"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-8acb66e211b54cdb89e3239eaea2934a",
+    "evidence": [
+      "recover tasks check: ?init@Midi@@QAEHPADK@Z and ?set_fname@Midi@@QAEHPBD@Z report unknown with unresolved imported-target obligations, the same steady state the sibling task wave-device-control-recovery documents for SoundDllProcs/WaveDeviceReleaseGuard (which hold ?unload@Midi@@UAEHXZ and ?load@Midi@@QAEHXZ unknown here)",
+      "src/vendor/vc6-runtime.recovery.h pins _free, __lock, __unlock, __heap_init, ___sbh_heap_init, ___sbh_find_block, ___sbh_free_block, ___CxxFrameHandler, _fclose, _fread, _fseek, _abs, _ftell, _memset - none of _strcpy, _strlen, ??2, ??3; _memset being pinned is why init's real memset call at 0x004C7CA3 did not block that body",
+      "the image addresses are known and localized: init and set_fname call 0x006453E0/0x00645460/0x0064557F/0x0064558A (the four CRT statics; 0x0064558A is ??2@YAPAXI@Z per vector_teardown.h's WaveOperatorNew note), so binding evidence would only need archive-member identification, not new body work"
+    ],
+    "hypothesis": "The init and set_fname obligations stay unknown because four CRT entry points the bodies call (_strcpy, _strlen, ??2@YAPAXI@Z operator new, ??3@YAXPAX@Z operator delete) are absent from src/vendor/vc6-runtime.recovery.h's pinned component bindings, so their imported-target obligations cannot resolve; the bodies themselves are spelled and their other callees (_memset, WaveOperatorNew call sites through the same bodies' remaining seams) do not block. Filling these four component bindings would let both obligations leave the unknown state without touching the bodies.",
+    "kind": "discovery"
+  },
+  "previous_event": "8d7df4ab53afd2dae3d4e8d51dd850c3fbc8c2e899bd5cd5bc2fb84519ee1cd5",
+  "request_id": "worker-8acb66e211b54cdb89e3239eaea2934a",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:midi-sound-base-recovery"
+}

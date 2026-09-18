@@ -1,0 +1,23 @@
+{
+  "event_id": "513f4f84a071ef0df085ce3796163f367b6475bc4d0719aadef29a13a67824a4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-aea69e1c6aff44f1bd3bb3194ca7eda8",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh scoped check (unchanged request sha 93b303f4d37e8004a948e9f2784450b76a918350b5e87e5d2185109656746f0a, exit_code 3) confirms the discovery's measurements exactly: ?set_hwnd@Wave_Device@@QAEHPAX@Z fails bytes on /Oy- with differing_offsets 8-27 (20 offsets), references pass, boundary pass; ?select@Wave_Device@@QAEHK@Z fails bytes on /Oy- with 20 differing offsets (56,60,74,76,78,80,149,155,158-169,174), references fail with missing_absolute_relocations [36] - both exactly the documented residuals after the administrators were rewritten.",
+      "The insight is expressed in current source: set_hwnd's TRIED note at src/wave_device.cpp:456 records the measured byte-exact flip (14 of 14) and its deliberate refusal - the ORIGINAL() named-pointer seam would rise 94 to 95 above its ratcheted ceiling, and the seam-free __fastcall spelling measures 4 of 14 because the image passes the argument on the stack (thiscall); the implemented body stands at src/wave_device.cpp:467-472.",
+      "select's TRIED note at src/wave_device.cpp:1303 records the vtable-register-alternation plateau (88 v 88 instructions, 0.989 similar, last 15 instructions' register choice with identical shape and count), the refused osmx semantic verdict ('instruction 34: mov operand is a different KIND') and the measured-worse alternatives (0/88, 0/88, 70/88 against the standing 73/88); the implemented body with all five documented levers applied stands at src/wave_device.cpp:1332.",
+      "No regression and nothing demoted: the same fresh report measures 35 of 37 restoration obligations pass (the 2 unknowns are the other finding's unbound ?insert@WaveGroupList@@QAEXPAVWave@@@Z and ??3@YAXPAX@Z relocations on add_to_group/pull_from_group, which remain pending under worker-4c4dfe577fb04bc1beaadbb3419cce2d with their complete finding) and the binary check counts 39 pass / 4 fail / 4 unknown against the pre-round 34/7/6 with no formerly passing member lost; set_hwnd and select were never byte-exact claims (legacy_byte_exact false), so this incorporation demotes no claim, changes no baseline and accepts nothing - incorporation records source expression, not behavioral proof.",
+      "Selection and boundary: worker-af65c4ca63844eaaadf5e692beaed7b2 (enable_group/disable_group push-esi scheduling) already holds this round's transient authorization and was not decided here; worker-4c4dfe577fb04bc1beaadbb3419cce2d remains pending because its blockers (callee bindings in pending_bodies.cpp, the absent 0x0064557F free spelling, and the multi-span ctor/dtor ORIGINAL records tripping 'code sections require one entry and at most one uniquely associated recorded tail') lie outside the two editable files and outside this delegation.",
+      "Read-only compliance: evidence was read from the unchanged request file via its JSON Pointer references (/diagnostics/check/report/details, measurements, protected, candidate/checks/binary/functions) and from current source only; no source, task, policy or Git edits, no compilation, no subagent launches.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "442032773c253bab5a8b9805a81e094e4dd580dd1da9a6c6a63460f3cd7f2962",
+  "request_id": "coordinator-023c9be30f524463b97ef5f4526bf11e",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:wave-device-control-recovery"
+}

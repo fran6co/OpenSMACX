@@ -1,0 +1,23 @@
+{
+  "event_id": "9265c569b71b4a24679d376032c7626abf49cd50defea5d813a9e23cf726517f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-7ca23c52bf4c440098dbb02d130c0b94",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Insight is expressed in current source: src/wave_device.cpp:1128-1157 (set_group_volume, entity-f51c312294e7ee7debc80564cfa1902d5f22d8e6caaab675749a90036d8c85b7) writes the cursor walk fully inline with two `break` exits (lines 1146, 1151) and ONE trailing `return 0` (line 1156), reading head/cursor through `WaveGroupList &list = *reinterpret_cast<WaveGroupList *>(&groups_[a1].head)` (1133-1134) beside struct-subscripted `groups_[a1].volume` (1132) - exactly the discovery's spelling, with no out-of-line helper call.",
+      "The disproven out-of-line TRIED conclusion is corrected in-tree: src/wave_device.cpp:1096-1105 carries the rewritten 2026-09-18 TRIED note ('EARLIER CONCLUSION DISPROVEN... all three administrators carry the cursor loop INLINE') plus LEVER notes list-view-mixed-addressing (1106-1112) and break-not-return (1113-1117); enable_group (src/wave_device.cpp:1189-1218, entity-9afb7d31156a27027b00eb06cd82c5d11b60725dd4dc903e64b1f29d45ee8671) and disable_group (src/wave_device.cpp:1241-1270, entity-7959a947680ff9c885749336bc4b2f9eacc8be122c6899999f719ca3dfbad09e) spell the same inline break-walk with the inline-break-walk LEVER notes at 1166 and 1226.",
+      "Fresh diagnostics from the unchanged request (sha256 35612ae7bed22ff939d598eafb446401108aece517edca1f2f4d418eb828d923, pointer /diagnostics/check/report/candidate/checks/binary/functions) confirm the byte claim: ?set_group_volume@Wave_Device@@QAEHII@Z overall result pass - the /c /O2 /Gy /GR- /Oy- /GX /Z7 variant measures bytes=pass, boundary=pass, differing_offsets=0, references=pass (the /O2-without-/Oy- variant fails with 94 differing offsets, matching the discovery's flag-set attribution).",
+      "Same fresh report keeps the residual honestly separated: enable_group result fail with 86 differing offsets on /Oy- (boundary pass) and disable_group fail with 85 on /Oy- (boundary pass); those one-byte push-esi scheduling plateaus belong to the still-pending discovery worker-af65c4ca63844eaaadf5e692beaed7b2, so this incorporation neither accepts those members nor demotes any claim.",
+      "Measured candidate is the in-tree body: sha256 of src/wave_device.cpp is 504f676ba6d090e878b927dcb3a908e69cd724c15afc430f849e7ea893f4d0bc, identical to the file_sha256 in the request's mapped records for set_group_volume/enable_group/disable_group/add_to_group/pull_from_group/select/set_hwnd and the ctor/dtor rows.",
+      "No cross-owner dependency: all three affected entities are in this task's currently_owned set for the discovery (outside_delegation empty), so incorporation needs no expansion; the fresh check's unknown tail (add_to_group/pull_from_group unbound callees, ctor/dtor multi-span refusal) is owned by pending discovery worker-4c4dfe577fb04bc1beaadbb3419cce2d and is untouched by this decision.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "286d8b436537ad224f2cbceb92c305c04f8b329ca87a833b4539a959fb7fd96b",
+  "request_id": "coordinator-5595381472964a89b8afc9f50cefca85",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:wave-device-control-recovery"
+}

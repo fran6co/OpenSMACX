@@ -1,0 +1,24 @@
+{
+  "event_id": "110eb04d450ea130bbb45384da3eb817a7b66c45b83b0747f6618c3464f459cd",
+  "payload": {
+    "affects": [
+      "entity-04f13a62ca81ecd03cec81d1ef0f2c9aedd193e95a44f764eccfa5817265b7b7",
+      "entity-3c0a5ac4499c6bc442dd2aaca06100df0cc274424674395c289c2905b7a7cef4",
+      "entity-568a30d426077830ce36abfa1389ac7b9d00c9971fa2c6f477e2d39bf13dc4cd"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "central-hook-globals",
+    "evidence": [
+      "Variant deck build/recovery/tmp-decks/deck1-hooks.json (entity release, both flag trials, controls pass, no lost passing measurements): baseline release passes bytes on both trials but fails references with missing_absolute_relocations [23]; all three hook-global candidates emit relocation offset 23 -> ?WaveDeviceDestroyHook@@3P6AXXZA with per-relocation result unknown and an instruction stream decoded identical to baseline (a1 ........ at offset 22, the two consecutive `mov [esi+0x14], 0` stores at offsets 33/40 preserved, 51 bytes).",
+      "Post-edit `recover tasks check wave-device-control-recovery`: function results move from 32 pass / 11 fail / 4 unknown to 34 pass / 7 fail / 6 unknown; release and delete_device are the fail->unknown movers and no previously passing measurement was lost.",
+      "Image disassembly of release 0x004C4F80-0x004C4FB3, delete_device 0x004C4F10-0x004C4F37 and create_device 0x004C4ED0-0x004C4F07: each hook load is an A1/8B absolute-memory instruction on 0x0090DB34 or 0x0090DB38, the same instruction class the comparator's absolute-relocation check covers."
+    ],
+    "hypothesis": "The factory/destroy hook slots at 0x0090DB34/0x0090DB38 are real address-bound globals rather than raw fixed-address reads: the image's hook loads (`mov eax, dword ptr [0x90db38]` at 0x004C4FA6 in release, the matching forms in create_device/delete_device) carry absolute relocations, which a `*reinterpret_cast<T**>(0xADDR)` inline accessor cannot emit - it compiles the same bytes with no relocation, and that missing relocation at offset 23 was the round's only failing reference. Spelling the slots as a header extern plus a TU definition carrying `// 0x0090DB34`/`// 0x0090DB38` binding comments (the established WaveDeviceGlobal 0x0090D978 / WaveDeviceReleaseGuard 0x0090DB7C treatment) emits the identical instruction WITH its relocation. The reference then verifies as unknown, not pass: the shipped image has no symbol on those dwords so link selection is unprovable - the same ceiling every code reference to process data has in this comparator (only CRT imports, verified by symbol identity, and generated-table entries verify as pass). Release and delete_device both move fail->unknown, resolving the failing obligation without regressing anything.",
+    "kind": "discovery"
+  },
+  "previous_event": "9b83121d96b95a681659e342b0e8a9799381121ac39f9700f42c8932a74aaa74",
+  "request_id": "central-hook-globals",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:wave-device-control-recovery"
+}

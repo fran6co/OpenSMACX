@@ -1,0 +1,19 @@
+{
+  "event_id": "039586c0d8596a38d26882f8cc8a5c72bae66bd9d7abe0d6db045baf6dd9f889",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "The wave task's last obligation add_to_group 0x004C4F00 is byte-perfect except its relocation at offset 29 to ?insert@WaveGroupList@@QAEXPAVWave@@@Z - the PAU (struct-keyed Wave) spelling the original image carries - while src/pending_bodies.cpp:1766-1772 defines only the PAV spelling as an unbound trampoline. Granting this task the pending_bodies file lets the worker add the PAU-spelled definition beside it (or the struct-keyed forward) under full scoped measurement; the original image holds both spellings, so this restores original structure rather than inventing identity."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b237d33a6cf3f288ad0abb97c9b6d59a604fbe7d6c44c29a8d8de08a0b563789",
+  "request_id": "central-scope-wavegrouplist-pau",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:wave-device-control-recovery"
+}

@@ -1,0 +1,24 @@
+{
+  "event_id": "60ac883cf330c51a3f39bc3866482ed2b9afc15002b6f65c18724b9f39211424",
+  "payload": {
+    "affects": [
+      "entity-1c46f3d07064242b7ea4ffbe9fa6e246c26557ccd0ca5b13d291314eafb37021",
+      "entity-3816826e770c336d1cdcb60f7f94c47d29b50c7033fb3d5121908529cc7b3eb1"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-90809401d836431f9e915cbb674e84b2",
+    "evidence": [
+      "Fresh post-re-spelling `recover tasks check midi-sound-base-recovery`: init and set_fname under the single configured /Oy- trial both report boundary=pass with differing_offsets=[] and emitted references ??3@YAXPAX@Z, _strlen, ??2@YAPAXI@Z, _strcpy (plus _memset for init); ?WaveOperatorNew@@YAPAXI@Z no longer appears anywhere in the scoped report — unresolved_symbols are exactly ??2, ??3, _strcpy, _strlen plus the two sound-loader globals.",
+      "The round's embedded request check predates the re-spelling (its init/set_fname emitted_references still list ?WaveOperatorNew, and its class-debt audit line numbers match the pre-LEVER-comment source), so that embedded check — not the fresh one — is the stale view; scoped counts are unchanged between epochs (36 pass / 2 fail / 4 unknown), the two /Oy- fails being pre-existing documented states: load(const char*) (the task's no-byte-claim body whose marker records the deliberately unreproduced pointer-as-status bug) and set_play_type (2-byte extent gap; its TRIED note holds `return (int)this;` back behind the pointer-as-int zero ceiling).",
+      "src/vector_teardown.h:72-84 declares WaveOperatorNew as the 'DECLARED, NOT BOUND' forwarder for the game's operator new (??2@YAPAXI@Z at 0x0064558A, defined in src/pending_bodies.cpp:275); a relocation to ?WaveOperatorNew@@YAPAXI@Z has no original identity to resolve against, which is why the direct operator new spelling — symmetric with the already-direct operator delete at src/midi.cpp:780 and src/midi.cpp:821 emitting ??3 against original 0x006453E0 — had to land before any vendor pin could help; those files and their other callers are untouched.",
+      "First-hand read of src/vendor/vc6-runtime.recovery.h's pinned bindings confirms none of ??2/??3/_strcpy/_strlen is selected; the two remaining unknown obligations (?load@Midi@@QAEHXZ 0x004C7DD0 and ?unload@Midi@@UAEHXZ 0x004C7E20, reason 'unresolved targets: ?SoundDllProcs@@3PAPAXA, ?WaveDeviceReleaseGuard@@3HA') are the separate steady state the sibling task wave-device-control-recovery documents and stay outside this discovery's affects."
+    ],
+    "hypothesis": "With both allocation sites now spelling the direct operator new (src/midi.cpp:783 and src/midi.cpp:824 — the bounded re-spelling the investigate_local grant prescribed, applied by the interrupted attempt and freshly re-verified this round), the init and set_fname obligations' unknown state rests solely on four CRT entry points absent from src/vendor/vc6-runtime.recovery.h's pinned component bindings: ??3@YAXPAX@Z (0x006453E0), ??2@YAPAXI@Z (0x0064558A), _strcpy (0x00645460) and _strlen (0x0064557F). That file pins only _free, __lock, __unlock, __heap_init, ___sbh_heap_init, ___sbh_find_block, ___sbh_free_block, ___CxxFrameHandler, _fclose, _fread, _fseek, _abs, _ftell and _memset — which is why init's _memset relocation already passes. Pinning those four archive members is coordinator work outside this task's editable files (src/midi.cpp, src/midi.h); no further body edits are needed, since both bodies are boundary-pass with differing_offsets empty under the configured /Oy- trial and their emitted references now name the original callee identities (??2/??3) the pins would resolve.",
+    "kind": "discovery"
+  },
+  "previous_event": "c2e9e473b76a97055b17159dd59437146b79e6a34d7126bf319ad6a474564c04",
+  "request_id": "worker-90809401d836431f9e915cbb674e84b2",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:midi-sound-base-recovery"
+}

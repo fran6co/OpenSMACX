@@ -1,0 +1,22 @@
+{
+  "event_id": "06b8df6c6a7cf20715f5abc9e0b700aab28dc40ba2b485bb1ff0b4edefbfd298",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-8acb66e211b54cdb89e3239eaea2934a",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/vendor/vc6-runtime.recovery.h:70-73 now pins exactly the four CRT component bindings the finding named as absent, each with the archive-member identification it said was the only remaining need - _strlen 0x006453E0 (build/intel/mt_obj/strlen.obj), _strcpy 0x00645460 (bounded inside build/intel/mt_obj/strcat.obj), ??3@YAXPAX@Z 0x0064557F (delete.obj) and ??2@YAPAXI@Z 0x0064558A (new.obj) - inside the existing vc6-runtime RECOVERY_COMPONENT block whose _memset 0x006465F0 pin (line 69) the finding already credited for init's real call at 0x004C7CA3.",
+      "Fresh diagnostics from the unchanged request (SHA-256 d9d45e8de8dd8e4802d98d3cca8dd1b88709bb3bcccc70183e8faa2eea6fefae) confirm the finding's predicted effect with the bodies untouched: /diagnostics/check/report/details shows obligation-79c3373638e1556f6addea02f5f18b667645cbf1bc99edfd4a0b4a96536812dc (?init@Midi@@QAEHPADK@Z, entity-1c46f3d07064242b7ea4ffbe9fa6e246c26557ccd0ca5b13d291314eafb37021) and obligation-4888f10ec247f284a7db1e7b6f6f2a456b3613e4d8eb8fe35694b473469d9985 (?set_fname@Midi@@QAEHPBD@Z, entity-3816826e770c336d1cdcb60f7f94c47d29b50c7033fb3d5121908529cc7b3eb1) both measuring pass ('strict bounded byte/reference agreement', configured /c /O2 /Gy /GR- /Oy- /GX /Z7 trial), and the binary function entries report result pass with emitted references ??3/_strlen/??2/_strcpy/_memset resolved and no unresolved references; the product bodies at src/midi.cpp:777-788 and src/midi.cpp:795+ still spell the direct operator delete / operator new / strlen / strcpy / memset calls the pins resolve.",
+      "Incorporate rather than investigate because no bounded repair remains for this finding: the four bindings exist in an already-editable file and both named obligations left the unknown state, so a worker round would have nothing to do; reject is wrong because current evidence confirms the hypothesis instead of refuting it. This is incorporation of a structural insight, not binary/behavioral proof or acceptance.",
+      "Preserved tails, none inside this finding's affects (init and set_fname only): the joint check still reports result unknown, scope_complete false and ready_for_collection false; ?load@Midi@@QAEHXZ (entity-f3cd0dc2d73882b49bd25d841eec389a8d909ce0a1fb63ba88be2f27112c0687, obligation-a57a475e44844a6081e3d1bb87603934c3da93a19a9d3460239a471bed5414d4) and ?unload@Midi@@UAEHXZ (entity-d7a26f8e6943ec09badea46ea18d0ec863f7088ecd7e55fbb94118f5e560c1b1, obligation-f647cd58ad729d1e41523a055eb0c5185d5587408565c4d874bc3818834f4a41) remain unknown on unresolved targets ?SoundDllProcs@@3PAPAXA and ?WaveDeviceReleaseGuard@@3HA - product globals owned outside this task's files, the sibling wave-device-control-recovery steady state the finding itself cited - and ?load@Midi@@UAEHPBD@Z / ?set_play_type@Midi@@QAEHI@Z still fail their byte/boundary trials; the second pending discovery worker-46022fccf0f147c6a0a5f95208c15e39 (class-debt over-ceilings) is untouched and stays pending.",
+      "Decision made read-only from the authoritative request file and current source only: JSON Pointer evidence (/diagnostics/check/report/candidate/checks/binary/functions, /diagnostics/check/report/details, /diagnostics/check/report/protected, /diagnostics/context/report/restoration/obligations) was read in full for the init/set_fname/load/unload entries, src/vendor/vc6-runtime.recovery.h and src/midi.cpp were inspected without edits, and no source, task record, compiler setting or Git state was changed.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "d495cc3ba1315ae778e865650d4355c5045a3009abf546e1a5505714241b832e",
+  "request_id": "coordinator-08c9a2b13f5f4b1a91b6088209a96f75",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:midi-sound-base-recovery"
+}

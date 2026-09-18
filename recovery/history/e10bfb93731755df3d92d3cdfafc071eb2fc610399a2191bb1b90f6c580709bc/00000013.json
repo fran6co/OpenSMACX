@@ -1,0 +1,26 @@
+{
+  "event_id": "2073757c252c5f104ba10ff98c7e2f1acb2804be7eb84e2544f507958851ff56",
+  "payload": {
+    "affects": [
+      "entity-7959a947680ff9c885749336bc4b2f9eacc8be122c6899999f719ca3dfbad09e",
+      "entity-9afb7d31156a27027b00eb06cd82c5d11b60725dd4dc903e64b1f29d45ee8671"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-fab91500527b4ef581227fd6859be102",
+    "evidence": [
+      "task check 2026-09-18 after the edits: ?enable_group@Wave_Device@@QAEHI@Z result pass, /Oy- flag trial 0 of 96 differing with references resolved (91 differing on the /O2-only set); ?disable_group@Wave_Device@@QAEHI@Z result pass, /Oy- trial 0 of 93 differing (88 on /O2-only)",
+      "emitted prologue identical to the image: mov eax,[ebp+8]; push esi; cmp eax,0xF; jbe body; mov eax,0xA; pop esi; pop ebp; ret 4 — the esi save sits BEFORE the range compare, its pop inside the inline fail tail",
+      "five-spelling deck on both flag sets: the early-return-0 spelling measured 0/96; body-in-if (`if (a1 <= 0xF) { ... }`) measured worse — ja to a distant shared tail with a late `lea eax; push esi; lea esi` save, 86 of 96 offsets displaced; a goto body-label and a hoisted `WaveControlGroup *const group = &groups_[a1];` were no better",
+      "the grant's suggested lever measured dead: a constant-initialized `WaveGroupNode *first = nullptr;` hoisted above the guard is a dead store VC6 optimizes away — unlike select's resume_tail there is no honest read site for the null on any path",
+      "halt-twin three-spelling deck: disable_group early-return-0 spelling 0/93 differing on /O2 /Oy- with references resolved; body-in-if worse; the goto twin changed the function extent (boundary fail, bytes unmeasurable)",
+      "mechanism cross-checked against image siblings: the already-byte-exact set_group_volume/add_to_group/pull_from_group all use the distant-tail/late-push layout, so the divergence was layout family, not walk content; deck neighbor rows unchanged 561/561 on both flag sets — no regressions from the landed edits"
+    ],
+    "hypothesis": "enable_group (0x004C53A0) and disable_group (0x004C5400) are byte-exact when the already-set case is spelled as an EARLY `return 0` with the cursor walk at function level: that layout is what makes VC6 place `push esi` in the prologue before the range compare and pop it inside the inline 0xA tail, the image's own placement. Both spellings are landed in src/wave_device.cpp and the post-edit task check measures both functions pass on /c /O2 /Gy /GR- /Oy- /GX /Z7.",
+    "kind": "discovery"
+  },
+  "previous_event": "513f4f84a071ef0df085ce3796163f367b6475bc4d0719aadef29a13a67824a4",
+  "request_id": "worker-fab91500527b4ef581227fd6859be102",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:wave-device-control-recovery"
+}

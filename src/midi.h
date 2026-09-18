@@ -18,10 +18,42 @@
 #pragma once
 
 #include "vc6_compat.h"
+#include "sound.h"
 
 /* Midi and its delegate, recovered 2026-08-23 (see 2bbecdbd): the
  * declarations live here now, not in hypothesis_layouts.h - correct
- * work does not feed the scaffold it is meant to retire. */
+ * work does not feed the scaffold it is meant to retire.
+ *
+ * MIDI IS A SOUND, the same relationship wave.h recovered for Wave on
+ * 2026-08-22. The first 0x54 bytes are the Sound sub-object - the
+ * wrapped sequencer at 0x3C (Sound::device_), the flag dword at 0x40,
+ * the heap-owned filename copy at 0x4C - and Midi::unload's own image
+ * dispatches prove the base: it loads the vtable at [this+0] and calls
+ * slots 0x5C and 0x80, Sound slots 23 (is_playing) and 32 (detach) in
+ * sound.h's own numbering, then clears bit 0 of [this+0x40] exactly as
+ * Sound::unload's `flags_40_ &= ~1u` does. The flat opaque prefix this
+ * header carried could spell neither dispatch; the compiler now owns
+ * the primary vtable, and four same-signature members (play,
+ * set_volume, load(const char*), unload) implicitly override their
+ * Sound slots - the image's QAE spelling is catalogued on each body's
+ * marker, the build's UAE on its `// symbol` fact.
+ *
+ * The wrapped sequencer is MidiDelegate below: a Sound-family table of
+ * 75 slots extended with the sequencer interface at 0x84..0x128, the
+ * same family shape ambience.h gives its own. Two of those slots (0x94,
+ * 0xdc) carry neutral slotNNN names: VC6 does not place same-name
+ * virtual overload groups in declaration order - measured on this class
+ * 2026-09-18, both pairs emit with the higher-arity member first, and
+ * the image's own Sound pairs (play, fade, fade_in) agree, so plain
+ * declaration reversal cannot be the rule - and giving both members
+ * Midi's forwarder name landed every dispatch of each pair on the wrong
+ * slot (all four bodies measured exactly one constant apart: 0x90<->0x94
+ * and 0xd8<->0xdc). Distinct names pin each slot by position under any
+ * group ordering, and claim nothing: the wrapped class's own member
+ * names are unevidenced, which is what this header's slotNNN spelling
+ * has meant all along. Midi's own storage begins
+ * at 0x54 - one flag byte, the byte init clears; nothing else recovered
+ * reads past the Sound sub-object yet, so no extent is pinned. */
 
 struct TrackSet;
 struct ChannelCtrl;
@@ -35,7 +67,7 @@ class MidiDelegate {
   virtual void slot002();
   virtual void slot003();
   virtual void slot004();
-  virtual void slot005();
+  virtual int slot005();  // the family's unload (Sound slot 5); unload wants its answer
   virtual void slot006();
   virtual int play();                                        // slot 0x1c
   virtual void slot008();
@@ -67,7 +99,7 @@ class MidiDelegate {
   virtual int set_tempo(unsigned long);                      // slot 0x88
   virtual int mute_track(unsigned long);                     // slot 0x8c
   virtual int set_active_tracks(unsigned int);               // slot 0x90
-  virtual int set_active_tracks(unsigned long, unsigned long);  // slot 0x94
+  virtual int slot037(unsigned long, unsigned long);         // slot 0x94
   virtual int add_active_trackset(TrackSet *);               // slot 0x98
   virtual int get_trackset(unsigned int);                    // slot 0x9c
   virtual int set_active_range_lo(unsigned int, unsigned int);  // slot 0xa0
@@ -85,7 +117,7 @@ class MidiDelegate {
   virtual void slot052();
   virtual int get_time(unsigned long);                       // slot 0xd4
   virtual int map_patch(char *, unsigned long);              // slot 0xd8
-  virtual int map_patch(char *, unsigned long, unsigned long);  // slot 0xdc
+  virtual int slot055(char *, unsigned long, unsigned long);  // slot 0xdc
   virtual int clear_patch(unsigned long);                    // slot 0xe0
   virtual int set_channel_ctrl(ChannelCtrl *);               // slot 0xe4
   virtual int set_program_ctrl(ProgramCtrl *);               // slot 0xe8
@@ -107,12 +139,8 @@ class MidiDelegate {
   virtual int set_patch(unsigned int, unsigned int);         // slot 0x128
 };
 
-class Midi {
+class Midi : public Sound {
  public:
-  uint8_t field_0_[0x3C];  // 0x0
-  MidiDelegate *delegate_;  // 0x3C - the sequencer this forwards to
-  uint8_t field_40_[0x10];  // 0x40
-
   int play();
   int set_switch_type(unsigned long);
   int add_switch_range(unsigned long, unsigned long);
@@ -147,13 +175,31 @@ class Midi {
   int set_track_ctrl(TrackCtrl *);
 
   // THE NINE remaining Midi methods, homed from src/recovered and
-  // src/unrecovered 2026-09-03. The five forwarders below are one guarded
-  // virtual call each; init/set_fname/load/unload reach 0x4C and 0x54 and so
-  // need the filename pointer and the Sound relationship modelled first.
+  // src/unrecovered 2026-09-03: five one-guarded-call forwarders plus
+  // the four lifecycle bodies and init recovered 2026-09-18 on the
+  // Sound base the class now declares. Each reaches 0x4C (fname_) or
+  // the sequencer at 0x3C (Sound::device_), both inherited members now.
   void set_volume(int volume);
   int switch_state(bool on);
   int set_base_path(const char *path);
   bool is_trackset_playing(unsigned int trackset);
   int set_play_type(unsigned int type);
+
+  // The five lifecycle bodies, midi.cpp. set_fname and init own the
+  // filename copy at 0x4C; the two loads and unload wrap the sequencer
+  // at 0x3C and were unreachable until the Sound base existed. play(),
+  // set_volume(int), load(const char*) and unload() override their
+  // Sound slots and mangle UAE - each body's marker carries both facts.
+  int set_fname(const char *fname);
+  int init(char *fname, unsigned long a2);
+  int load();
+  int load(const char *fname);
+  int unload();
+
+ private:
+  // 0x54, the first Midi-own byte past the 0x54 Sound sub-object: the
+  // one byte init clears with memset. No recovered body reads it yet,
+  // so the storage model stops here and no extent is asserted.
+  uint8_t field_54_;
 };
 

@@ -18,19 +18,49 @@
 #include "stdafx.h"
 #include "original_seam.h"
 #include "midi.h"
+// The guarded creation/release hooks and their guard dword - the same
+// seams the Wave loader and the Sound destructor dispatch through. The
+// hook calls themselves go through the product-owned SoundDllProcs
+// table (sound.h), NOT wave.h's fixed-address accessors: the image calls
+// `dword ptr [0x90DB24]`/`[0x90DB28]` with a HIGHLOW fixup at each site,
+// and only a symbol-based spelling emits the DIR32 relocation the checker
+// can see - a cast-of-constant folds the address into the disp32 with no
+// relocation at all.
+#include "wave.h"
+
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+// init's one-byte clear of the Midi-own byte at 0x54 is a REAL memset call
+// in the image (`push 1 / add esi,0x54 / push 0 / push esi / call` at
+// 0x004C7CA3); /O2 implies /Oi and the intrinsic would inline it as
+// `mov byte ptr [esi],0`. memset is not on stdafx.h's project-wide
+// `#pragma function` list, so the forcing is TU-local here - this file's
+// only memset - the same idiom textindex.cpp records for memcpy.
+#pragma function(memset)
+#endif
 
 /*
  * The 32 forwarding methods of Midi, moved here from
  * delegation_thunks.cpp by the same pass that declared their delegate:
- * each is a real member whose `delegate_->f(...)` lets VC6 emit the
+ * each is a real member whose delegate dispatch lets VC6 emit the
  * image's `call dword ptr [eax + slot]` itself. 28 measured BYTE_EXACT
- * on arrival (2bbecdbd); four sit one register-allocation step away.
+ * on arrival (2bbecdbd); the last four were never register allocation
+ * but the delegate's same-name overload-group vtable ordering - fixed
+ * 2026-09-18 by the two neutral slotNNN names (midi.h's header note
+ * carries the measured VC6 behavior and the deck that isolated it).
+ *
+ * SINCE 2026-09-18 Midi declares its real Sound base (midi.h): the
+ * sequencer forwarders read Sound::device_ at 0x3C through a
+ * MidiDelegate view - the flat header's `delegate_` member is gone -
+ * and the five lifecycle bodies below the forwarder run are the same
+ * pass's second half. Every marker, claim and TRIED note carries over
+ * unchanged.
  */
 
 /*
 Purpose: ?play@Midi@@QAEHXZ - forward 0 argument(s) to slot 0x1c of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7760 ?play@Midi@@QAEHXZ 0x004C7760-0x004C7772 BYTE_EXACT
+// symbol    ?play@Midi@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?play@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -41,8 +71,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::play() {
-    if (delegate_ != nullptr) {
-        return delegate_->play();
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->play();
     }
     return 0x14;
 }
@@ -61,8 +92,9 @@ Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
 int Midi::set_switch_type(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_switch_type(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_switch_type(a1);
     }
     return 0x13;
 }
@@ -81,8 +113,9 @@ Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
 int Midi::add_switch_range(unsigned long a1, unsigned long a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->add_switch_range(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->add_switch_range(a1, a2);
     }
     return 0x13;
 }
@@ -101,8 +134,9 @@ Return Value: the delegate's, or 0x13 when the member is null
 Status: Complete
 */
 int Midi::set_nswitch_threads(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_nswitch_threads(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_nswitch_threads(a1);
     }
     return 0x13;
 }
@@ -121,8 +155,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::map_patch(char *a1, unsigned long a2, unsigned long a3) {
-    if (delegate_ != nullptr) {
-        return delegate_->map_patch(a1, a2, a3);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->slot055(a1, a2, a3);
     }
     return 0x14;
 }
@@ -141,8 +176,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::map_patch(char *a1, unsigned long a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->map_patch(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->map_patch(a1, a2);
     }
     return 0x14;
 }
@@ -161,8 +197,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::clear_patch(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->clear_patch(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->clear_patch(a1);
     }
     return 0x14;
 }
@@ -180,8 +217,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::reset() {
-    if (delegate_ != nullptr) {
-        return delegate_->reset();
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->reset();
     }
     return 0x14;
 }
@@ -200,8 +238,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_track(uint8_t *a1, unsigned long a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_track(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_track(a1, a2);
     }
     return 0x14;
 }
@@ -220,8 +259,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::mute_track(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->mute_track(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->mute_track(a1);
     }
     return 0x14;
 }
@@ -240,8 +280,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::unmute_track(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->unmute_track(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->unmute_track(a1);
     }
     return 0x14;
 }
@@ -260,8 +301,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_tracks(unsigned long a1, unsigned long a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_active_tracks(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->slot037(a1, a2);
     }
     return 0x14;
 }
@@ -280,8 +322,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_tracks(unsigned int a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_active_tracks(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_active_tracks(a1);
     }
     return 0x14;
 }
@@ -300,8 +343,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::play_trackset(unsigned int a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->play_trackset(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->play_trackset(a1);
     }
     return 0x14;
 }
@@ -320,8 +364,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::xpose_trackset(unsigned int a1, int a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->xpose_trackset(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->xpose_trackset(a1, a2);
     }
     return 0x14;
 }
@@ -340,8 +385,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::stop_trackset(unsigned int a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->stop_trackset(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->stop_trackset(a1);
     }
     return 0x14;
 }
@@ -360,8 +406,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::add_active_trackset(TrackSet *a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->add_active_trackset(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->add_active_trackset(a1);
     }
     return 0x14;
 }
@@ -380,8 +427,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_range_lo(unsigned int a1, unsigned int a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_active_range_lo(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_active_range_lo(a1, a2);
     }
     return 0x14;
 }
@@ -400,8 +448,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_active_range_hi(unsigned int a1, unsigned int a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_active_range_hi(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_active_range_hi(a1, a2);
     }
     return 0x14;
 }
@@ -420,8 +469,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::remove_active_trackset(unsigned int a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->remove_active_trackset(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->remove_active_trackset(a1);
     }
     return 0x14;
 }
@@ -440,8 +490,9 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_trackset(unsigned int a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->get_trackset(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->get_trackset(a1);
     }
     return 0;
 }
@@ -459,8 +510,9 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_ntracks() {
-    if (delegate_ != nullptr) {
-        return delegate_->get_ntracks();
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->get_ntracks();
     }
     return 0;
 }
@@ -479,8 +531,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::load_patch(unsigned int a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->load_patch(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->load_patch(a1);
     }
     return 0x14;
 }
@@ -499,8 +552,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::unload_patch(unsigned int a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->unload_patch(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->unload_patch(a1);
     }
     return 0x14;
 }
@@ -519,8 +573,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_patch(unsigned int a1, unsigned int a2) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_patch(a1, a2);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_patch(a1, a2);
     }
     return 0x14;
 }
@@ -539,8 +594,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_tempo(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_tempo(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_tempo(a1);
     }
     return 0x14;
 }
@@ -559,8 +615,9 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_time(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->get_time(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->get_time(a1);
     }
     return 0;
 }
@@ -578,8 +635,9 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_control_track() {
-    if (delegate_ != nullptr) {
-        return delegate_->get_control_track();
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->get_control_track();
     }
     return 0;
 }
@@ -598,8 +656,9 @@ Return Value: the delegate's, or 0x0 when the member is null
 Status: Complete
 */
 int Midi::get_total_track_ticks(unsigned long a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->get_total_track_ticks(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->get_total_track_ticks(a1);
     }
     return 0;
 }
@@ -618,8 +677,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_channel_ctrl(ChannelCtrl *a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_channel_ctrl(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_channel_ctrl(a1);
     }
     return 0x14;
 }
@@ -638,8 +698,9 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_program_ctrl(ProgramCtrl *a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_program_ctrl(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_program_ctrl(a1);
     }
     return 0x14;
 }
@@ -658,42 +719,308 @@ Return Value: the delegate's, or 0x14 when the member is null
 Status: Complete
 */
 int Midi::set_track_ctrl(TrackCtrl *a1) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_track_ctrl(a1);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_track_ctrl(a1);
     }
     return 0x14;
 }
 
 // ===== HOMED 2026-09-03 out of the archive. Each is one guarded virtual
-// call through the delegate, which is what `delegate_` at 0x3C is for.
+// call through the sequencer at 0x3C - Sound::device_, cast to the
+// MidiDelegate view - which is what the wrapped object is for.
+
+/*
+Purpose: Initialise the MIDI from a filename. The name replaces whatever
+         copy the object already holds at 0x4C - the old block returns to
+         the game CRT heap, the new one is measured, allocated on that
+         same heap and copied in - and the one Midi-own flag byte at 0x54
+         is cleared. The second argument is ignored; the status word is
+         memset's own answer (the destination pointer).
+// ORIGINAL: 0x004C7C60 ?init@Midi@@QAEHPADK@Z 0x004C7C60-0x004C7CB5 BYTE_EXACT
+// size      85 bytes
+// prototype int (__thiscall ?init@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
+// callers   0   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645460 0x0064557F 0x0064558A 0x006465F0
+// LEVER: `return reinterpret_cast<int>(memset(...))` - VC6 rejects a
+//        non-void body with no return at all (C4716), and the image's
+//        status word IS memset's eax, so the return spells the shared
+//        fall-through of both paths. The null store between delete and
+//        new is real (the seed measured it): the field is cleared before
+//        the new block is measured.
+// LEVER: `#pragma function(memset)` (file-local, above) - /O2 implies /Oi,
+//        and the intrinsic expands a ONE-byte memset to
+//        `mov byte ptr [esi],0`; the image's clear at 0x004C7CA3 is a real
+//        call (`push 1 / add esi,0x54 / push 0 / push esi / call _memset /
+//        add esp,0xC`). 80 -> 85 bytes, the marker's own size.
+// LEVER: the destination is the declared member `field_54_` (midi.h),
+//        not a raw this+0x54 cast - this file's one class-debt raw
+//        self-access finding. Deck-measured 2026-09-18: the member
+//        address compiles to the same bytes as the cast under /Oy-
+//        (differing_offsets empty, every neighbor unchanged).
+// PROMOTED from src/recovered/units/004c7c60.cpp (seed BYTE_EXACT); homed
+//        onto the Sound base 2026-09-18 - the 0x4C slot is Sound::fname_
+//        and the cleared byte is the first Midi-own byte past the 0x54
+//        Sound sub-object.
+// LEVER: the allocation is the DIRECT operator new - ??2@YAPAXI@Z, the
+//        image's own callee at 0x0064558A - symmetric with the operator
+//        delete above it (??3, 0x006453E0). Measured 2026-09-18: the
+//        re-spelling is byte-neutral under /Oy- (differing_offsets still
+//        empty) and swaps the emitted reference from the unbound
+//        WaveOperatorNew forwarder to ??2, the identity the original
+//        relocation names.
+Return Value: memset's destination pointer, reinterpreted
+Status: Complete
+*/
+int Midi::init(char *a1, unsigned long a2) {
+    if (a1 != 0) {
+        if (fname_) {
+            operator delete(fname_);
+        }
+        fname_ = nullptr;
+        fname_ = operator new(strlen(a1) + 1);
+        strcpy(static_cast<char *>(fname_), a1);
+    }
+    return reinterpret_cast<int>(
+        memset(&field_54_, 0, 1));
+}
+
+/*
+Purpose: Remember the MIDI's filename. The previous copy, if any, goes back
+         to the game CRT heap first; the new string is measured, allocated
+         on that same heap, recorded at 0x4C, and copied in - the field
+         already names the block while it is still being filled.
+// ORIGINAL: 0x004C7CF0 ?set_fname@Midi@@QAEHPBD@Z 0x004C7CF0-0x004C7D42 BYTE_EXACT
+// size      82 bytes
+// prototype int (__thiscall ?set_fname@Midi@@QAEHPBD@Z)(Midi* this, int8*)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x006453E0 0x00645460 0x0064557F 0x0064558A
+// LEVER: branch polarity - `if (fname) { work; return 0; } return 0xA;`,
+//        the same positive-branch shape Wave::set_fname records
+//        (wave.cpp); the guard clause inlines the 0xA return at the top
+//        instead of a shared tail at the end.
+// PROMOTED from src/recovered/units/004c7cf0.cpp (seed BYTE_EXACT; its
+//        `// symbol` PAC fact was the seed's own non-const parameter -
+//        the product's `const char *` mangles the catalogued PBD); homed
+//        onto the Sound base 2026-09-18 - the 0x4C slot is Sound::fname_.
+// LEVER: the allocation is the DIRECT operator new, ??2@YAPAXI@Z at
+//        0x0064558A, symmetric with the operator delete above it - the
+//        same re-spelling init's marker records, measured with it
+//        2026-09-18 (byte-neutral under /Oy-, emitted reference ??2 in
+//        place of the unbound WaveOperatorNew forwarder).
+Return Value: 0, or 0xA when the name is null
+Status: Complete
+*/
+int Midi::set_fname(const char *fname) {
+    if (fname) {
+        if (fname_) {
+            operator delete(fname_);
+        }
+        fname_ = nullptr;
+        fname_ = operator new(strlen(fname) + 1);
+        strcpy(static_cast<char *>(fname_), fname);
+        return 0;
+    }
+    return 0xA;
+}
+
+/*
+Purpose: Load the MIDI from a caller-supplied filename. With no wrapped
+         sequencer yet, the creation hook - the slot beside the release
+         hook, behind the same guard dword - builds one directly into the
+         0x3C field, with the MIDI's own mode 2 (Wave's loaders pass 1);
+         the base Sound::load then reads the file.
+// ORIGINAL: 0x004C7D80 ?load@Midi@@QAEHPBD@Z 0x004C7D80-0x004C7DCD
+// symbol    ?load@Midi@@UAEHPBD@Z
+// size      78 bytes
+// prototype int (__thiscall ?load@Midi@@QAEHPBD@Z)(Midi* this, int8*)
+// callers   0   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004C6280
+// indirect  0x004C7D8D
+// NO BYTE CLAIM: no seed ever measured this body; this is its first
+//        product spelling (the task's one genuinely unmeasured body).
+//        The Sound::load call is QUALIFIED because Midi::load(const
+//        char*) overrides the same virtual - unqualified would recurse.
+// BUG IN THE ORIGINAL, not reproduced: with a sequencer already wrapped
+//        the image returns the FNAME POINTER (`mov eax,[ebp+8]`) as the
+//        status word; this tree returns 1. Both are nonzero - callers
+//        treat the busy path as an error either way - but a pointer
+//        reinterpreted as status is not a spelling any honest int has.
+//        The unreproduced bug is also the residual byte diagnostic: the
+//        image hoists `lea eax,[esi+0x3C]` before the null test and caches
+//        the argument in edi, so its guard and Sound::load sit at offsets
+//        22 and 67 where this spelling puts them at 19 and 62. The
+//        creation hook itself lands at the image's own offset 47
+//        (measured 2026-09-18) through the SoundDllProcs table - the
+//        include note above explains why the fixed-address accessor
+//        cannot.
+Return Value: 0 on success, 1 with a dead creation hook, the creation
+              error, or the base loader's answer
+Status: Complete
+*/
+int Midi::load(const char *a1) {
+    int result;
+    if (device_ == nullptr) {
+        if (!WaveDeviceReleaseGuard) {
+            return 1;
+        }
+        result = (*reinterpret_cast<func_wave_device_create **>(
+            &SoundDllProcs[0]))(&device_, a1, 2);
+    } else {
+        result = 1;  // the image returns the fname pointer here; see the
+                     // BUG note above
+    }
+    if (result != 0) {
+        return result;
+    }
+    return Sound::load(a1);
+}
+
+/*
+Purpose: Load the MIDI from its remembered filename. With no wrapped
+         sequencer yet, the guarded creation hook builds one directly
+         into the 0x3C field, again with mode 2; the base Sound::load
+         then reads the file.
+// ORIGINAL: 0x004C7DD0 ?load@Midi@@QAEHXZ 0x004C7DD0-0x004C7E1B BYTE_EXACT
+// size      75 bytes
+// prototype int (__thiscall ?load@Midi@@QAEHXZ)(Midi* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x004C6280
+// indirect  0x004C7DFB
+// PROMOTED from src/recovered/004c7dd0.cpp (byte-exact emitter match, the
+//        only seed for this family that called the base loader directly);
+//        homed onto the Sound base 2026-09-18 - the remembered name is
+//        Sound::fname_, the wrapped sequencer is Sound::device_, and the
+//        qualified `Sound::load` is the direct 0x004C6280 call the image
+//        makes (Midi::load() is an overload, not an override, but the
+//        qualification keeps the call non-virtual either way).
+// LEVER: the creation hook calls `dword ptr [SoundDllProcs+0]`, the
+//        table sound.h owns - wave.h's fixed-address accessor emits the
+//        same `call [mem]` but folds 0x90DB24 into the disp32 with NO
+//        relocation, and the image has a HIGHLOW fixup there. Measured
+//        2026-09-18: guard, hook and Sound::load relocations land at the
+//        image's own offsets 23, 45 and 60.
+Return Value: 0 on success, 8 with no filename, 1 with a dead creation
+              hook, or the creation/load error
+Status: Complete
+*/
+int Midi::load() {
+    const char *filename = static_cast<const char *>(fname_);
+    if (filename != 0) {
+        if (device_ == nullptr) {
+            if (!WaveDeviceReleaseGuard) {
+                return 1;
+            }
+            const int created = (*reinterpret_cast<func_wave_device_create **>(
+                &SoundDllProcs[0]))(&device_, filename, 2);
+            if (created != 0) {
+                return created;
+            }
+        }
+        return Sound::load(filename);
+    }
+    return 8;
+}
+
+/*
+Purpose: Release the loaded MIDI. While the sequencer at 0x3C is still
+         sounding (the base Sound's own is_playing, family slot 0x5C),
+         the sequencer's unload (family slot 5) runs alone and its answer
+         is the result; once quiet, the same unload runs and the wrapped
+         sequencer then goes back through the release hook when that hook
+         is live. The sequencer is forgotten either way, the base's detach
+         (slot 0x80) runs, and the loaded bit of the flag dword at 0x40
+         is cleared.
+// ORIGINAL: 0x004C7E20 ?unload@Midi@@QAEHXZ 0x004C7E20-0x004C7E79 BYTE_EXACT
+// symbol    ?unload@Midi@@UAEHXZ
+// size      89 bytes
+// prototype int (__thiscall ?unload@Midi@@QAEHXZ)(Midi* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x004C7E2F 0x004C7E3B 0x004C7E4B 0x004C7E56 0x004C7E66
+// LEVER: the real Sound base retires the scaffold's MidiVCall shims - the
+//        is_playing/detach dispatches become the compiler's own virtual
+//        calls through the vtable the base now owns, and the sequencer's
+//        slot-5 unload is MidiDelegate::slot005, promoted void->int here
+//        because its answer is this body's result on the busy path.
+// LEVER: NO named delegate local. The image holds the result in edi from
+//        `xor edi,edi` at entry and re-reads Sound::device_ at each
+//        dispatch (`mov ecx,[esi+0x3C]` / `mov edx,[ecx]` after the
+//        is_playing call, `mov eax,[esi+0x3C]` before the release hook);
+//        a named local steals edi for the pointer and pushes ebx for the
+//        result, two instructions the image has not. 96 -> 89 bytes.
+// LEVER: the release hook calls `dword ptr [SoundDllProcs+4]`, not
+//        wave.h's fixed-address accessor - the accessor folds 0x90DB28
+//        into the disp32 with no relocation where the image has a HIGHLOW
+//        fixup (see the include note above). Measured 2026-09-18: guard
+//        and hook relocations land at the image's own offsets 31 and 45.
+// PROMOTED from src/unrecovered/004c7e20.cpp (scaffold BYTE_EXACT with
+//        the shim tables); this is the body's first product spelling.
+Return Value: the sequencer's unload answer on the busy path, 0 otherwise
+Status: Complete
+*/
+int Midi::unload() {
+    int result = 0;
+    if (device_ != nullptr) {
+        if (is_playing() == 0) {
+            static_cast<MidiDelegate *>(device_)->slot005();
+            if (WaveDeviceReleaseGuard) {
+                (*reinterpret_cast<func_wave_device_release **>(
+                    &SoundDllProcs[1]))(device_);
+            }
+        } else {
+            result = static_cast<MidiDelegate *>(device_)->slot005();
+        }
+        device_ = nullptr;
+    }
+    detach();
+    flags_40_ &= ~1u;
+    return result;
+}
+
 
 // ORIGINAL: 0x004C7780 ?set_volume@Midi@@QAEXH@Z 0x004C7780-0x004C77AC BYTE_EXACT
+// symbol    ?set_volume@Midi@@UAEXH@Z
 void Midi::set_volume(int volume) {
-    if (delegate_ != nullptr) {
-        delegate_->set_volume(volume);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        delegate->set_volume(volume);
     }
-    *(int *)&field_0_[4] = volume & 0x7f;
+    volume_ = volume & 0x7f;
 }
 
 // ORIGINAL: 0x004C77B0 ?switch_state@Midi@@QAEH_N@Z 0x004C77B0-0x004C77D0 BYTE_EXACT
 // NO RETURN on the null path, deliberately: the original leaves eax alone.
 int Midi::switch_state(bool on) {
-    if (delegate_ != nullptr) {
-        return delegate_->switch_state(on);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->switch_state(on);
     }
 }
 
 // ORIGINAL: 0x004C78C0 ?set_base_path@Midi@@QAEHPBD@Z 0x004C78C0-0x004C78DA BYTE_EXACT
 int Midi::set_base_path(const char *path) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_base_path(path);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_base_path(path);
     }
 }
 
 // ORIGINAL: 0x004C7AB0 ?is_trackset_playing@Midi@@QAE_NI@Z 0x004C7AB0-0x004C7AD0 BYTE_EXACT
 bool Midi::is_trackset_playing(unsigned int trackset) {
-    if (delegate_ != nullptr) {
-        return delegate_->is_trackset_playing(trackset);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->is_trackset_playing(trackset);
     }
     return false;
 }
@@ -709,7 +1036,8 @@ bool Midi::is_trackset_playing(unsigned int trackset) {
       //   because ecx still holds it, so callers read a pointer as the int result.
 //   Reproduced as-is; not corrected.
 int Midi::set_play_type(unsigned int type) {
-    if (delegate_ != nullptr) {
-        return delegate_->set_play_type(type);
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate != nullptr) {
+        return delegate->set_play_type(type);
     }
 }

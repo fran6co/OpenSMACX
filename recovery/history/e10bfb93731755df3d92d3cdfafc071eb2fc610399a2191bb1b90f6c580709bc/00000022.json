@@ -1,0 +1,20 @@
+{
+  "event_id": "ece271e40bbcc2eb1f2e7362d8330f93311d2eeb0c48a867a985e171e424a2e4",
+  "payload": {
+    "affects": [
+      "entity-ba468cce9da26b402e83bf05d755d22660163a969f40223eff788bddc79038b3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "central-corrective-insert-routing",
+    "evidence": [
+      "Dispatch refusal logged in campaign run-idcqnnsn round 22 stderr: retained scope overlaps another task or reserved owner. add_to_group 0x004C5240 remains the sole unknown at 36/37 with its offset-29 relocation to the unbound PAU insert spelling; the definition file is outside every valid grant for this task."
+    ],
+    "hypothesis": "Corrective record: the previous central resolution of the insert-scope finding claimed a pending_bodies.cpp grant that the reservation system refused at dispatch ('retained scope overlaps another task or reserved owner'). The add_to_group insert blocker is therefore route-only: the owning task of src/pending_bodies.cpp must add the PAU-spelled ?insert@WaveGroupList@@QAEXPAVWave@@@Z definition (or release its reservation). No wave-task edit can resolve this obligation.",
+    "kind": "discovery"
+  },
+  "previous_event": "81dbd406d79ccdacc4605397fe61bd8e1f0f0dd7531a9592fab9a48d27706a33",
+  "request_id": "central-corrective-insert-routing",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:wave-device-control-recovery"
+}

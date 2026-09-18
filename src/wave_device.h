@@ -83,17 +83,17 @@ class Wave_Device {
   int get_hw_mem_size();
   int get_rate();
   int get_ds();
-  int is_eax();
+  bool is_eax();
   int is_disabled();
   int stop_raw_dump();
-  int is_3d();
+  bool is_3d();
   void set_rate(unsigned long rate);
   void set_volume(unsigned long volume);
   int set_hwnd(void *hwnd);
   int get_group_volume(unsigned int group);
   int add_to_group(unsigned int group, Wave *wave);
   int pull_from_group(Wave *wave);
-  int is_group_disabled(unsigned int group);
+  bool is_group_disabled(unsigned int group);
   int select(unsigned long a1);
   virtual int create_device(unsigned long a1);   // slot 0 (0x4C4ED0)
   virtual int delete_device();                   // slot 1 (0x4C4F10)
@@ -145,8 +145,8 @@ static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes")
 typedef int(__cdecl func_wave_device_factory)(void **device_slot,
                                               unsigned long kind);
 typedef void(__cdecl func_wave_device_destroy)(void);
-inline func_wave_device_factory *&WaveDeviceFactorySlot() { return *reinterpret_cast<func_wave_device_factory **>(0x0090DB34); }
-inline func_wave_device_destroy *&WaveDeviceDestroySlot() { return *reinterpret_cast<func_wave_device_destroy **>(0x0090DB38); }
+extern func_wave_device_factory *WaveDeviceFactoryHook;  // 0x0090DB34
+extern func_wave_device_destroy *WaveDeviceDestroyHook;  // 0x0090DB38
 
 // The per-group construct/teardown pair the device's own lifetime hands to
 // the CRT vector iterators; both stay rebindable while they double as the

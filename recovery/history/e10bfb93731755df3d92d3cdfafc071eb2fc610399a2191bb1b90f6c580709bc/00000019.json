@@ -1,0 +1,19 @@
+{
+  "event_id": "b237d33a6cf3f288ad0abb97c9b6d59a604fbe7d6c44c29a8d8de08a0b563789",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/vendor/vc6-runtime.recovery.h"
+    ],
+    "evidence": [
+      "The wave task's add_to_group/pull_from_group obligations block on the ??3@YAXPAX@Z operator-delete reference target. Master carries the archive-verified binding (b0ae6d1b: 0x0064557F, 11 bytes, free slot relocated, bounded by operator new at 0x0064558A) but this dispatch-frozen worktree cannot see it. Carrying the same manifest lines within the task's own editable scope lets the scoped check resolve the target without touching any other file."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cb3f7a5626abedde1452f5b0bebb797f39c97c5f76800b5351288f6cba18950f",
+  "request_id": "central-scope-runtime-manifest",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:wave-device-control-recovery"
+}

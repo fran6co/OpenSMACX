@@ -1,0 +1,24 @@
+{
+  "event_id": "4a94acbb90d8e9347e938dd2893e002f13da9588a9defa16d63b95bc000df419",
+  "payload": {
+    "affects": [
+      "entity-7959a947680ff9c885749336bc4b2f9eacc8be122c6899999f719ca3dfbad09e",
+      "entity-9afb7d31156a27027b00eb06cd82c5d11b60725dd4dc903e64b1f29d45ee8671"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-af65c4ca63844eaaadf5e692beaed7b2",
+    "evidence": [
+      "local diff: ENG4 spelling 38/39 instructions identical to 0x4C53A0; sole delta `push esi` at image offset 7 vs candidate offset 26; jbe disp 0x0A vs 0x09",
+      "final check /Oy-: enable_group fail d86, disable_group fail d85 (both boundary pass)",
+      "spelled and measured worse: list-above-guard (esi via `lea edx,[eax+eax*2]; lea esi,[ecx+edx*8]` before the guard, `[esi+0x24]` load) and const-uint8_t enabled local (unchanged push placement)",
+      "documented in the new LEVER/TRIED notes on both functions in src/wave_device.cpp"
+    ],
+    "hypothesis": "enable_group/disable_group are each ONE byte away: every instruction matches the image except the `push esi` save, which the image schedules in the prologue (before the range guard, popped in the 0xA tail) while every source spelling measured here saves late (after `lea eax`, popped in the shared epilogue). The moved byte displaces 86/96 and 85/93 byte offsets positionally with an identical instruction multiset — a scheduler coin, not a shape difference. Hoisting the list declaration above the guard makes it worse (esi computed via edx before the guard, enabled load re-based through esi), as does a hoisted enabled local.",
+    "kind": "discovery"
+  },
+  "previous_event": "b3292f10821ee0e0720b9fb5db751e58eaba988cabab2c9ce9dfd84938edd083",
+  "request_id": "worker-af65c4ca63844eaaadf5e692beaed7b2",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:wave-device-control-recovery"
+}

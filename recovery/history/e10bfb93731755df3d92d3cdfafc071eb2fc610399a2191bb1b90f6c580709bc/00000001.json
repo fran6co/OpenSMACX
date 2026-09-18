@@ -1,0 +1,25 @@
+{
+  "event_id": "7a8973667e1f8292e571e7a8c0bd25e17175d4f4f6d3e74b075d4137365d0d3d",
+  "payload": {
+    "affects": [
+      "entity-7959a947680ff9c885749336bc4b2f9eacc8be122c6899999f719ca3dfbad09e",
+      "entity-9afb7d31156a27027b00eb06cd82c5d11b60725dd4dc903e64b1f29d45ee8671",
+      "entity-f51c312294e7ee7debc80564cfa1902d5f22d8e6caaab675749a90036d8c85b7"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-7ca23c52bf4c440098dbb02d130c0b94",
+    "evidence": [
+      "objdump of 0x4C5320-0x4C537F: loop body `mov eax,[ecx+4]; mov edx,[ecx]; push eax; call [edx+0x40]` inline, exits share one `xor eax,eax` epilogue at 0x4C536F",
+      "variants deck build/recovery/tmp-decks/deck6-final.json candidate w1-winners [/O2 /Oy-]: set_group_volume result=pass boundary=pass bytes=pass differing_offsets=0",
+      "local overlay compile of the break-style body: 40/40 instructions byte-identical to the image; return-style variant measured 112 bytes (boundary fail) in deck4 candidate c1",
+      "src/wave_device.cpp TRIED note rewritten 2026-09-18 with the corrected conclusion and both levers"
+    ],
+    "hypothesis": "The in-tree TRIED note claiming the image's group administrators call a shared walk helper out-of-line is disproven: decoded image bytes show the removal-safe cursor loop fully INLINED in all three administrators (set_group_volume 0x4C534E-0x4C536D, enable_group 0x4C53D5-0x4C53F3, disable_group 0x4C5435-0x4C5450) with no helper call. Writing the loop inline with `break` exits and ONE trailing `return 0` reproduces it instruction-for-instruction: set_group_volume is now BYTE_EXACT (40 of 40 instructions, 0 differing bytes on /O2 /Oy-). The earlier round's 'hundreds of bytes further' measurements came from struct-view addressing (below) and byte sums that still counted the leftover out-of-line helper. Early `return 0` statements inside the loop each grow a separate epilogue (112B vs 95B) and flip the entry-test polarity (jne-to-body instead of je-to-exit).",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-7ca23c52bf4c440098dbb02d130c0b94",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:wave-device-control-recovery"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "9b83121d96b95a681659e342b0e8a9799381121ac39f9700f42c8932a74aaa74",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-af65c4ca63844eaaadf5e692beaed7b2",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh scoped check (request.json sha256 0ca2ad8a8ebf045d6d9557b3a0390180fae0a3dd0bace0f256ebb1a206bf25c4, exit 3, /diagnostics/check/report/candidate/checks/binary/functions) measures both affected entities as overall pass: ?enable_group@Wave_Device@@QAEHI@Z 0x004C53A0 (entity-9afb7d31156a27027b00eb06cd82c5d11b60725dd4dc903e64b1f29d45ee8671) and ?disable_group@Wave_Device@@QAEHI@Z 0x004C5400 (entity-7959a947680ff9c885749336bc4b2f9eacc8be122c6899999f719ca3dfbad09e); on the game-code flag set /c /O2 /Gy /GR- /Oy- /GX /Z7 both variants read bytes pass, references pass, differing_offsets [] over the full ORIGINAL spans 5002144-5002240 and 5002240-5002333 - the discovery's sole structural delta, the displaced push esi, no longer exists in the current spelling.",
+      "The insight is expressed in current source, not merely claimed: src/wave_device.cpp implements enable_group (ORIGINAL 0x004C53A0) and disable_group (ORIGINAL 0x004C5400) with the early-return-0 layout - range guard, enabled test and cursor walk at function level in sequence, enabled byte stored AFTER the walk - and the in-file LEVER notes document exactly this layout as what makes VC6 place push esi in the prologue (mov eax,[ebp+8]; push esi; cmp) with its pop inside the 0xA tail, the image's own placement. Both affected identities are inside this task's owned scope, so no expansion is needed before incorporation.",
+      "The worker's own 2026-09-18 decks (TRIED notes carried on both markers, mapped_records file_sha256 0e9a1cb2d68b32d5d2ad789db6b351c757a1bdb8ccb1eae0454008fcf045c566) measured this spelling BYTE-EXACT on /O2 /Oy- (0 of 96 and 0 of 93 differing, references resolved) and retain the measured-worse alternatives (body-in-if, goto body-label, hoisted nullptr first, hoisted group pointer, list-above-guard, hoisted enabled local) as history; the hypothesis's 'scheduler coin, no source lever' tail is superseded by the landed spelling itself, not by a passing checker.",
+      "Failure and unknown tails are preserved unchanged by this decision: obligation-level measurements count 35 pass / 2 unknown with the only unknowns obligation-1a95d92f38c3871e41d0efc616aeb2c249b4ef6c67cc8850c9cce6bdc1238412 (pull_from_group, unresolved ??3@YAXPAX@Z) and obligation-2d6deb41b43f3036a35fef3b25f95caa417e072a44d1c716b75a9827eb66227d (add_to_group, unresolved ?insert@WaveGroupList@@QAEXPAVWave@@@Z), the function-level fails set_hwnd/select and unknowns ??0/??1Wave_Device are untouched, and the non-Oy- variant rows for enable/disable still record the positional displacement as compiler-side diagnostics. This incorporation claims expression in source only - no binary or behavioral proof, no demoted claim, no baseline change - and the pending discoveries worker-4c4dfe577fb04bc1beaadbb3419cce2d and worker-0dc6e5263ca146fdb1f3b5639144ceb1 remain pending for separate decisions.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "77f71ec619443bea812a74560a5c9bc4105df798e35ee544f6d65d29cae92cb8",
+  "request_id": "coordinator-856d9a9c3b68467f9fd7ed1571cb9087",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:wave-device-control-recovery"
+}

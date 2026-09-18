@@ -1,0 +1,19 @@
+{
+  "event_id": "ae22e1f99781d469de1b08c1c06eef5fdb008e1ad1b0853dfc2fa20d9f474f12",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/vendor/vc6-runtime.recovery.h"
+    ],
+    "evidence": [
+      "The midi task's init/set_fname obligations block on ??2/??3/_strcpy/_strlen reference targets. Master carries all four archive-verified bindings (b0ae6d1b) but this dispatch-frozen worktree cannot see them. Carrying the same manifest lines within the task's editable scope lets the scoped check resolve those targets without touching any other file."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4b9be6bbfbf3e28bd58343eaa8de909540fb5319dc0d3bd8abff208676f8f1f4",
+  "request_id": "central-scope-runtime-manifest",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:midi-sound-base-recovery"
+}

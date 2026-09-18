@@ -1,0 +1,22 @@
+{
+  "event_id": "4b9be6bbfbf3e28bd58343eaa8de909540fb5319dc0d3bd8abff208676f8f1f4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "central-hook-globals",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The prescribed spelling is expressed in current source at all three affected bodies: src/midi.cpp:922-923 (Midi::load() creation hook, (*reinterpret_cast<func_wave_device_create **>(&SoundDllProcs[0]))(&device_, filename, 2)), src/midi.cpp:978-979 (Midi::unload() release hook, (*reinterpret_cast<func_wave_device_release **>(&SoundDllProcs[1]))(device_)) and src/midi.cpp:873-874 (Midi::load(const char*) creation hook) - the symbol-based lvalue-at-table form against SoundDllProcs declared in src/sound.h:157-158 and defined in src/sound_loader.cpp:78, not wave.h's fixed-address WaveDeviceCreateSlot/WaveDeviceReleaseSlot accessors (0x0090DB24/0x0090DB28 constants).",
+      "The fresh scoped check embedded in this request (request SHA-256 34d6c29973949e417446b33c1a00bce92cba1706950f01caf7800a5965edb0e5) confirms the predicted convergence: ?load@Midi@@QAEHXZ and ?unload@Midi@@UAEHXZ report result unknown on BOTH flag trials with boundary=pass, differing_offsets=[] and missing_absolute_relocations=[] - versus the discovery's documented pre-edit references fail with missing_absolute_relocations [45] on both - and their obligation details give the reason 'unresolved targets: ?SoundDllProcs@@3PAPAXA, ?WaveDeviceReleaseGuard@@3HA', exactly the accepted steady state the hypothesis predicted when promoting both from fail to unknown.",
+      "Emitted references in the same fresh check name ?SoundDllProcs@@3PAPAXA and ?WaveDeviceReleaseGuard@@3HA in all three bodies (load() additionally ?load@Sound@@UAEHPBD@Z), so the DIR32 relocations the reference check needs are emitted; the scoped unresolved_symbols list carries those two sound-loader globals alongside ??2/??3/_strcpy/_strlen, i.e. remaining target resolution outside the scoped units, not missing relocations.",
+      "The residual fail on ?load@Midi@@UAEHPBD@Z is the separately documented axis, not the hook spelling: its NO BYTE CLAIM marker records the deliberately unreproduced pointer-as-status bug whose hoisted lea/cached edi place the guard and Sound::load at 19/62 versus the image's 22/67, while stating the creation hook itself lands at the image's own offset 47 through the SoundDllProcs table; set_play_type's fail is its documented 2-byte extent gap. Scoped counts are 36 pass / 2 fail / 4 unknown with zero lost passing rows.",
+      "Incorporation is expression-in-source only: it does not resolve the unresolved-target unknowns (the sound-loader globals and the four CRT entry points absent from src/vendor/vc6-runtime.recovery.h remain outside this task's scoped units and editable files, and the sibling pending discoveries worker-8acb66e211b54cdb89e3239eaea2934a/worker-90809401d836431f9e915cbb674e84b2 stay pending for them), does not measure load(const char*)'s unclaimed body, and is not behavioral or acceptance proof; the LEVER records at src/midi.cpp:905-908 and 962-965 document the measured image-offset landings (23/45/60 for load(), 31/45 for unload()).",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "c71f86c79521ddef69ff084c1267f2eb6f1c86e8ad29e660b71d30119a1507b3",
+  "request_id": "coordinator-c8dfc99a25d945e8a7922e9fce50fa52",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:midi-sound-base-recovery"
+}

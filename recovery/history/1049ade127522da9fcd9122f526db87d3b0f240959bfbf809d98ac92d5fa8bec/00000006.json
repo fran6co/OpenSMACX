@@ -1,0 +1,24 @@
+{
+  "event_id": "c71f86c79521ddef69ff084c1267f2eb6f1c86e8ad29e660b71d30119a1507b3",
+  "payload": {
+    "affects": [
+      "entity-5399b58df6c2721d86c84f38662167115bfc22af6241dee90e06160fa7a8e9f1",
+      "entity-d7a26f8e6943ec09badea46ea18d0ec863f7088ecd7e55fbb94118f5e560c1b1",
+      "entity-f3cd0dc2d73882b49bd25d841eec389a8d909ce0a1fb63ba88be2f27112c0687"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "central-hook-globals",
+    "evidence": [
+      "Original 0x004C7DD0 ?load@Midi@@QAEHXZ (75 bytes) carries its absolute sites at offsets 23 (guard 0x90DB7C), 45 (create slot 0x90DB24) and 60 (Sound::load 0x004C6280 REL32); 0x004C7E20 ?unload@Midi@@UAEHXZ (89 bytes) at 31 (guard) and 45 (release slot 0x90DB28); 0x004C7D80 ?load@Midi@@UAEHPBD@Z (78 bytes) at 22, 47 and 67.",
+      "Pre-edit check state: all three bodies failed references with missing_absolute_relocations [45] (load()/unload) and [22,47] (load(const char*)) — src/wave.h:200/226 inline accessors return *reinterpret_cast<F **>(0x0090DB28)/(0x0090DB24), constants with no symbol, so VC6 emits the same-size call [mem] with no relocation entry.",
+      "Variant deck scoring (build/recovery/agents/agent-93k7xs0x/deck3.json, both flag trials): the **-deref spelling compiles clean, keeps known_differing_bytes at 54 on the game trial (/c /O2 /Gy /GR- /Oy- /GX /Z7) — identical to baseline — with lost_passing_measurements 0; load()'s relocations land at 23 (WaveDeviceReleaseGuard, unknown), 45 (SoundDllProcs, unknown) and 60 (?load@Sound@@UAEHPBD@Z, PASS); unload's at 31 and 45."
+    ],
+    "hypothesis": "The Sound-family creation/release hook calls in Midi's lifecycle bodies must be spelled as an lvalue at the product-owned SoundDllProcs table — (*reinterpret_cast<func_wave_device_create **>(&SoundDllProcs[0]))(&device_, name, 2) and the func_wave_device_release twin at index 1 — because the image calls dword ptr [0x90DB24]/[0x90DB28] with a HIGHLOW fixup at each site and only a symbol-based spelling emits the DIR32 relocation the reference check can see; wave.h's fixed-address accessors fold the address into the disp32 with no relocation at all, and init_sound's documented single-pointer idiom (*reinterpret_cast<F *>(&SoundDllProcs[N])) materializes mov reg,[table+N] + call reg instead of the image's direct FF 15. With this spelling load() and unload converge to the accepted unresolved-target steady state (boundary pass, relocations at the image's own offsets), promoting both from fail to unknown with zero lost passing rows.",
+    "kind": "discovery"
+  },
+  "previous_event": "27b043b4acd32c3e09581cce7aba62ab0b951d159f72c74f81aed2476a1aba5a",
+  "request_id": "central-hook-globals",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:midi-sound-base-recovery"
+}

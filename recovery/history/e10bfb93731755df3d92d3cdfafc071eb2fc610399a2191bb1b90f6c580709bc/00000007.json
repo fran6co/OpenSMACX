@@ -1,0 +1,23 @@
+{
+  "event_id": "96407cbe45fbc7f0801129cbe3b65b5d279b34b998fa7038c4125a43bfd8ce83",
+  "payload": {
+    "affects": [
+      "entity-8941ca245093fed401221b7482dec1fdcc66acdd372832f91de4d15e35176328",
+      "entity-8e8b4cffcd59c0717c991ce09ee30ba0eaf290a99d5fc19c738e217021998a33"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-aea69e1c6aff44f1bd3bb3194ca7eda8",
+    "evidence": [
+      "final check /Oy-: set_hwnd fail d20, select fail d20 — identical to the pre-change measurements (deck6 neighbor rows confirm the same numbers across every candidate)",
+      "set_hwnd TRIED note in src/wave_device.cpp records the 94→95 seam cost and the deliberate non-claim; select's TRIED note records the 73/88 = 0.989 plateau and the refused osmx semantic verdict",
+      "task totals moved 34 pass / 7 fail / 6 unknown → 39 pass / 4 fail / 4 unknown with no formerly passing member lost"
+    ],
+    "hypothesis": "set_hwnd and select keep their documented deliberate plateaus, unchanged by this round: set_hwnd's byte-exact spelling would cost an ORIGINAL() named-pointer seam above its ratcheted ceiling (94→95, measured 14 of 14 with the flip — the price is written in its TRIED note), and select rests at its register-alternation plateau (0.989 similar; 20 differing bytes on /Oy- are the last 15 instructions' register choice with identical shape and count). Neither was regressed: both still measure exactly their documented residuals after the administrators were rewritten.",
+    "kind": "discovery"
+  },
+  "previous_event": "40dc6b45cc1056babdaf6a858595d161276d3e36545a014d4737532037dc9996",
+  "request_id": "worker-aea69e1c6aff44f1bd3bb3194ca7eda8",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:wave-device-control-recovery"
+}

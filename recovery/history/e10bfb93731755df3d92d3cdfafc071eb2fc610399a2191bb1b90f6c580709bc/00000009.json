@@ -1,0 +1,21 @@
+{
+  "event_id": "286d8b436537ad224f2cbceb92c305c04f8b329ca87a833b4539a959fb7fd96b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-a8a7329fe6b846a0b224d764133c6184",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/wave_device.cpp:654-660 spells the worker-written body `bool Wave_Device::is_group_disabled(unsigned int group)` with the named comparison result - `const bool disabled = groups_[group].enabled == 0; return disabled;` after the `group > 0xF` early return - exactly the discovery's lever, documented in-tree by LEVER 'bool-return' (line 634) and LEVER 'const-bool-local CLOSED 2026-09-18' (line 637) with the prior 0.875 TRIED plateau preserved (lines 621-633); the working-tree file SHA-256 504f676ba6d090e878b927dcb3a908e69cd724c15afc430f849e7ea893f4d0bc equals the file_sha256 the fresh diagnostics measured, so this is not a seed-only or planned body.",
+      "Fresh diagnostic evidence read from the unchanged request (sha256 02507d79075a2fc218d817191b602403007d396f24314a35d74970a8db8b1a01) at /diagnostics/check/report/candidate/checks/binary/functions: ?is_group_disabled@Wave_Device@@QAE_NI@Z (entity-bd0ecb6a03e5dc9c473c2f73b0039f6355f07bc86482a4d9c9ea89d42633d6a0, 0x004C5460, span 5002336-5002369) result=pass; the ['/c','/O2','/Gy','/GR-','/Oy-','/GX','/Z7'] variant measures boundary=pass, bytes=pass, references=pass with differing_offsets [] across the 33-byte extent - the fresh pass is not inferred from the worker's historical deck rows.",
+      "Honest measurement tail: on the plain /O2 flag set (no /Oy-) the same body misses the recorded extent (candidate_size 32 vs original_size 33, reason 'candidate exceeds or misses the independently recorded extent', boundary fail), so the byte agreement is specific to the /Oy- set under the two fixed flag sets; incorporation records the expressed structure only and is not a dual-flag-set, behavioral or acceptance proof, and the joint scoped check remains result=unknown with build/runtime verification unknown.",
+      "Scope and boundaries: is_group_disabled is the finding's sole affected identity and lies inside this task's delegated ownership and editable files (src/wave_device.cpp/.h), so no expansion or routing is needed; it carries no scoped obligation row in /diagnostics/check/report/details (the 37 rows exclude it - the two unknown tails belong to pull_from_group's ??3@YAXPAX@Z and add_to_group's ?insert@WaveGroupList@@QAEXPAVWave@@@Z relocations, which stay pending under discovery worker-4c4dfe577fb04bc1beaadbb3419cce2d, as do the enable_group/disable_group push-esi residual under worker-af65c4ca63844eaaadf5e692beaed7b2 and the set_hwnd/select plateaus under worker-aea69e1c6aff44f1bd3bb3194ca7eda8).",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "3e67b57044327a39da105599eeb252d3dffa70d8a9be895b526560c8ce1df212",
+  "request_id": "coordinator-741ed674589843b5acb1923910813df5",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:wave-device-control-recovery"
+}

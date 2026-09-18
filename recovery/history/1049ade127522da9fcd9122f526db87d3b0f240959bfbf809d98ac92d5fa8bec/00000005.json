@@ -1,0 +1,26 @@
+{
+  "event_id": "27b043b4acd32c3e09581cce7aba62ab0b951d159f72c74f81aed2476a1aba5a",
+  "payload": {
+    "affects": [
+      "entity-1c46f3d07064242b7ea4ffbe9fa6e246c26557ccd0ca5b13d291314eafb37021",
+      "entity-3816826e770c336d1cdcb60f7f94c47d29b50c7033fb3d5121908529cc7b3eb1",
+      "entity-5399b58df6c2721d86c84f38662167115bfc22af6241dee90e06160fa7a8e9f1",
+      "entity-d7a26f8e6943ec09badea46ea18d0ec863f7088ecd7e55fbb94118f5e560c1b1",
+      "entity-f3cd0dc2d73882b49bd25d841eec389a8d909ce0a1fb63ba88be2f27112c0687"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-46022fccf0f147c6a0a5f95208c15e39",
+    "evidence": [
+      "Deck build/recovery/agents/agent-vi827wqy/deck-init-field54.json scored three spellings (member-literal, member-sizeof, raw-cast-current) before the edit: all three identical for the primary target under /Oy- (boundary=pass, differing_offsets=0, same emitted references), both flag sets' controls pass ('all TU replicas agree; each file independently changes its compiled witness'), and the per-candidate neighbor result fingerprints are byte-identical across candidates — the member spelling costs nothing.",
+      "Fresh post-edit `recover tasks check midi-sound-base-recovery`: counts unchanged (36 pass / 2 fail / 4 unknown), init /Oy- still boundary=pass with differing_offsets=[] and the ??2 reference intact; `uv run recover check-source --jobs 8 --summary` passes, covering the LEVER note added at src/midi.cpp:758-762.",
+      "Fresh `recover audits check class-debt --summary`: raw self-access 195/195 exact (196/195 growth before the edit), scaffold name 3002/2993 growth, unk-method 194/186 growth; `recover audits check class-debt --in src/midi.cpp` now reports only scaffold-name findings (63), src/midi.h one scaffold-name finding, and zero unk-method findings in authorized files."
+    ],
+    "hypothesis": "The project-wide class-debt audit's remaining over-ceilings cannot be paid down inside this task's editable files. After this round's deck-verified re-spell of init's one-byte clear to the declared member — memset(&field_54_, 0, 1) at src/midi.cpp:787 replacing the raw reinterpret_cast<char*>(this)+0x54 that was midi.cpp's single raw self-access finding and the migration's +1 over the 195 ceiling — raw self-access measures 195/195 exact, but the audit still fails on scaffold name 3002/2993 and unk-method 194/186. The authorized files' scaffold names (63 findings in src/midi.cpp, 1 in src/midi.h: the a1/a2 parameters of the five recovered lifecycle bodies and the forwarders) are preserved unresolved naming evidence that worker policy forbids inventing names to clear, and no unk-method finding lies in authorized files. Closing the gap needs evidence-backed name recovery in later rounds or a coordinator ceiling/ratchet decision, not worker edits.",
+    "kind": "discovery"
+  },
+  "previous_event": "60ac883cf330c51a3f39bc3866482ed2b9afc15002b6f65c18724b9f39211424",
+  "request_id": "worker-46022fccf0f147c6a0a5f95208c15e39",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:midi-sound-base-recovery"
+}

@@ -1,0 +1,27 @@
+{
+  "event_id": "d1d15718a648d0a4ecada9bed122e4dd9f757937ecc2644297ecaa6f978a51f1",
+  "payload": {
+    "affects": [
+      "entity-050c582a4d55d69078bfa8898762f51174940bccc1e778f57e26444d68f30a8a",
+      "entity-0e69f51707a88b9eae563a31f6eff560f3972b06d585555370409d9ab4ed978c",
+      "entity-ba468cce9da26b402e83bf05d755d22660163a969f40223eff788bddc79038b3"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-0dc6e5263ca146fdb1f3b5639144ceb1",
+    "evidence": [
+      "deck 2026-09-18 (candidate rekey-with-symbol-lines, both flag sets): with `struct Wave;` ahead of wave.h the object emits `?add_to_group@Wave_Device@@QAEHIPAUWave@@@Z` — the image's own catalogued ORIGINAL name — observed in compiled diagnostics on both flag sets",
+      "byte-neutral measurement: differing counts identical to baseline (49 on /c /O2 /Gy /GR- /GX /Z7, 0 on the /Oy- set); the scoped result stays unknown solely through the relocation at offset 29, symbol `?insert@WaveGroupList@@QAEXPAUWave@@@Z`, result unknown",
+      "today's PAV spelling is equally unresolved — baseline add_to_group measures unknown/0 on /Oy- through the same insert callee — so the re-key changes WHICH spelling is undefined, not the measured bytes",
+      "full-link break predicted by symbol arithmetic: the re-keyed TU references the PAU insert while src/pending_bodies.cpp lines 1764-1772 (outside this task's authorized files) define only `?insert@WaveGroupList@@QAEXPAVWave@@@Z`; that forwarder carries no ORIGINAL marker, so no authorized file can bind it",
+      "the redirect flips too: its deck neighbor row reads `?wave_group_insert_redirect@@YIXPAUWaveGroupList@@PAXPAVWave@@@Z unknown — reason: expected one defined COFF function named (the PAV spelling)` because the binding comment still says PAV while the object now emits PAU, and the row carries in_task=False — its `// symbol` restamp is outside this deck's authorization",
+      "VC6's U/V mangling key comes from the first visible tag declaration in the TU (established earlier on Flic::init); the TU-local `struct Wave;` spelling was preferred over re-keying wave_device.h:23's `class Wave;` because the header edit would re-key every TU that includes the header before wave.h (wave.cpp, sound.cpp, ...) — a wider blast radius requiring its own coordination round"
+    ],
+    "hypothesis": "Spelling `struct Wave;` before `#include \"wave.h\"` in src/wave_device.cpp re-keys this TU's VC6 mangling so add_to_group, pull_from_group and wave_group_insert_redirect emit exactly the image's own catalogued PAU symbols, byte-neutrally — the original build must have seen Wave first as a struct-keyed tag in this TU. The edit cannot land within this task: pending_bodies.cpp's WaveGroupList::insert forwarder defines only the PAV spelling (outside the authorized files), so the full link would fail, and the redirect's `// symbol` binding is not a task subject. Landing it requires coordinated edits to pending_bodies.cpp (or wave_device.h:23) plus a restamp of the redirect's binding.",
+    "kind": "discovery"
+  },
+  "previous_event": "2073757c252c5f104ba10ff98c7e2f1acb2804be7eb84e2544f507958851ff56",
+  "request_id": "worker-0dc6e5263ca146fdb1f3b5639144ceb1",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:wave-device-control-recovery"
+}
