@@ -4,12 +4,28 @@
     {
       "name": "worker-0",
       "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-0",
-      "environment": {"VC6_PREFIX": "{resource}"}
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
     },
     {
       "name": "worker-1",
       "directory": "{env:OPENSMACX_COMPILER_POOL}/worker-1",
-      "environment": {"VC6_PREFIX": "{resource}"}
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-3",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
+    },
+    {
+      "name": "worker-2",
+      "environment": {
+        "VC6_PREFIX": "{resource}"
+      }
     }
   ]
 }
