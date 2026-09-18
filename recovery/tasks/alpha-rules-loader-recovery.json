@@ -1,0 +1,180 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0ade15de11b00fb16cc304ae54a42ce1906bc564",
+  "editable_files": [
+    "src/alpha.cpp",
+    "src/alpha.h"
+  ],
+  "evidence": [
+    "Group eligibility verified fresh with 'uv run --no-sync --frozen recover partition --group source:src/alpha.cpp --details': 31 entities, every one product-bound in src/alpha.cpp (source_symbol basis) with zero conflicts; group files exactly src/alpha.cpp and src/alpha.h, no reservation reasons, within the 100-entity/20-file delegation with no additional files. Checked all sixteen tasks in this request and every recovery/tasks/*.json on disk: none lists src/alpha.cpp or src/alpha.h as editable (the single texture-rasterizer-recovery.json text hit is evidence prose; its editable_files are src/texture.cpp and src/texture.h only).",
+    "Real unclaimed implementation work, not claim inflation: src/alpha.cpp holds 31 ORIGINAL markers with 24 BYTE_EXACT claims; the ten open bodies total roughly 15.9KB of original code — read_basic_rules 0x00585170 (3,254B), read_faction(Player*,int) 0x00586090 (3,739B, plateau 196/985 after the clear_faction inline and local-buffer levers), read_factions 0x00586F30 (~1.7KB), read_units 0x00587240, read_rules 0x005873C0 (3,804B, 883 image instructions with 'the rest of this function' explicitly unchased), prefs_get(char*,char*,int) 0x0059D980 (marked NOT MEASURABLE in this tree as committed — wrong callee at its strcpy), prefs_load 0x0059DCF0 (2,066B), prefs_save 0x0059E5D0, plus the SEMANTIC prefs_use and say_label — each with in-file LEVER/TRIED history naming the next concrete move.",
+    "Callee closure verified against source mappings with no reserved-callee wall: every mapped direct callee of the open bodies is product-bound C++ — in-group tech_name, read_tech, labels_init, the prefs_get(int,int) overload and clear_faction; the text_* family plus text_make_index/text_clear_index (src/text.cpp, src/textindex.cpp, all BYTE_EXACT); Strings::init/put/get (src/strings.cpp); parse_says/parse_say/parse_string (src/general.cpp); X_pop (src/xpops.cpp); BaseButton::set_bubble_text (src/basebutton.cpp); the remaining direct targets (0x006453E0/0x00645460/0x00645470/0x0064FD20/0x0064FC88/0x00645DA7/0x00645E90) are static-CRT addresses preserved as imported-target obligations exactly as existing tasks carry them.",
+    "The group owns its header levers: src/alpha.h already hosts the MEASURED-inline placements these bodies converge through (clear_faction at line 788, tech_item 783, the __forceinline label_get 812, default_warn/labels_shutdown/set_language) — the same header-authority pattern the authorized tech-tree task holds for technology.h; read_faction's documented 44/985 -> 196/985 progress came from exactly such in-group placements, and alpha.h is in this group's editable files with no other claimant.",
+    "Load-bearing caller and storage evidence: alpha.cpp defines and fills the game's real rules storage (Rules, Players, PlayerData, Technology, Facility, Terraforming, Bases, Energy, SocialCategories, AlphaIniPrefs at their original addresses), and fresh pinned-image 'recover inspect --callers' of read_faction shows mapped direct callers read_faction(int) 0x00586090 and read_factions 0x00586F30 — converging this family advances the actual game-data and preferences load path, not an isolated artifact.",
+    "Alternatives inspected against current source and set aside with concrete evidence, not similarity: class:BattleWin is 14/14 BYTE_EXACT with no open body; class:Text (28 markers), class:Spot (13/12), class:Midi_Device's src/sounddevice.cpp (40/38) and class:ButtonGroup/class:Filemap (fully exact) are essentially converged leaving at most one or two open bodies; class:Wave's flagship constructor/destructor carry the documented 2026-09-03 WALL — the four remaining destructor instructions are the base-destructor stage coupled to the reserved ~Effect tail jump and Sound emission — and two prior planner rounds sequenced Wave behind the in-flight midi-sound-base-recovery; class:Sound's constructor is inlined by the reserved ambience.cpp family; class:ReportIf, class:MessageWin, class:EditGroup and class:FX remain walled on seed-only callees or headers in reserved TUs; source:src/terraforming.cpp's recorded 453-instruction excess sits in the reserved base.h/map.h accessor chain; resuming playerlock-acquisition-recovery needs the outside NetDaemon message_data owner in netdaemon.cpp reserved by jackal-voice-ownership, textindex-record-recovery reduces to the cross-owner Heap call-target split in heap.cpp reserved by control-sprite-defaults plus CRT imported-target resolution, and emitted-symbol-bindings (eligible, no pending discoveries, verification not_measured) is a bounded emitted-name correction whose src/buffer.cpp and src/mapwin.cpp overlap control-sprite-defaults' and flic-decoder-recovery's reservations — kept for its own checkpoint rather than duplicated here.",
+    "No completion or acceptance is claimed: the 24 existing BYTE_EXACT claims retain restoration obligations; the VC6 inline-heuristic mix documented for prefs_load's helper overloads and the CRT static references may leave strict-reference and instruction-shape unknowns open exactly as in existing tasks; and neither this selection, a future passing build, nor banked measurements establish a working game or task acceptance.",
+    "This planner remained read-only throughout — no source, task, policy or Git edits, no compilation, preparation, provider calls or subagent launches; diagnostics ran via 'uv run --no-sync --frozen' (partition, tasks context, pinned-image inspect) plus direct file reads only.",
+    "Planner delegation: 7acd4a9ed47fc620b1c308183a0678fe1061e1200bf0d59cc1d367314479fb1b"
+  ],
+  "intent": "Recover the alpha.txt rules/preferences loader family in src/alpha.cpp as genuine converging C++: the ten open bodies — read_basic_rules 0x00585170, read_faction(Player*,int) 0x00586090, read_factions 0x00586F30, read_units 0x00587240, read_rules 0x005873C0, prefs_get(char*,char*,int) 0x0059D980, prefs_load 0x0059DCF0, prefs_save 0x0059E5D0 and the SEMANTIC prefs_use/say_label — working the group-owned src/alpha.h MEASURED-inline placement levers (clear_faction, tech_item, label_get, default_warn/labels_shutdown/set_language) and the documented local spellings: C-library rand at the JENN282 reroll, the two-argument strcpy form, the peeled #BONUSNAMES loop, the FACTION_SET switch lowering, 256-byte local parse buffers, and StringTemp-based prefs defaults without std::string/std::stringstream. Preserve the 24 existing BYTE_EXACT claims, original spans, LEVER/TRIED seed history and all historical obligations; byte mismatches remain diagnostics, not goals.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5290144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5786976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787696,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5787984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5788016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791712,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5791888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5795632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796416,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5796800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888672,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888800,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888832,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5888976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5889264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891376,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5891536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5892432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5920896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6384080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6384128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6451456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alpha-rules-loader-recovery"
+}
