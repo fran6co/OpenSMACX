@@ -598,7 +598,7 @@ def _folded_winner(state, name, candidates, label):
         rows = (event["selected"], *event["replaced"])
         if len(rows) != len(group.members):
             raise ValueError("ICF group differs from complete original event multiplicity")
-        originals = []
+        originals, incoming = [], []
         for row, member in zip(rows, group.members, strict=True):
             selected, obj = _event_selected(state, row["owner"])
             if (dict(member.input) != selected["identity"] or member.object_sha256 != selected["sha256"]
@@ -631,6 +631,10 @@ def _folded_winner(state, name, candidates, label):
                     if (declaration["name"] == root.name and declaration["storage"] == 2
                             and declaration["section"] == 0 and declaration["value"] == 0
                             and declaration["type"] in (0, 32) and not declaration["auxiliary_size"]):
+                        continue
+                    reference = _incoming_weak_reference(state, record, declaration, root.name)
+                    if reference is not None:
+                        incoming.append(reference)
                         continue
                     peer = _object(state, record)
                     defined = comdat_key(peer, declaration["section"])
@@ -680,6 +684,7 @@ def _folded_winner(state, name, candidates, label):
             raise ValueError("ICF derived group proof changed during native composition")
         result = {"check": "native_comdat_folded_members", "result": Result.PASS,
                   "event": deepcopy(event), "members": proofs, "final_storage": storage,
+                  "incoming_weak_references": incoming,
                   "frames": frames.canonical(), "image_sha256": group.image_sha256,
                   "pdb_sha256": inputs.fixups.pdb_sha256, "log_sha256": group.log_sha256,
                   "remaining_linked_effects": Result.UNKNOWN, "outside_scope_verification": Result.UNKNOWN,
@@ -702,13 +707,49 @@ def _folded_winner(state, name, candidates, label):
                         "pdb_sha256": result["pdb_sha256"]}
 
 
+def _incoming_weak_reference(state, record, symbol, name):
+    """Recognize a possible use of the global key, never resolve an alias.
+
+    An auxiliary index naming an undefined external is not a reference to a
+    particular original COMDAT copy. Defined/local fallback targets retain
+    their separate refusal, as do weak declarations of the queried key itself.
+    """
+    if symbol["storage"] != 105 or symbol["name"] == name:
+        return None
+    obj = _object(state, record)
+    weak = obj.symbols.get(symbol["index"])
+    if weak is None:
+        raise ValueError("incoming weak declaration is absent from its physical object")
+    target, mode = weak_external(obj, weak)
+    physical = {**asdict(weak), "auxiliary_size": len(obj.auxiliary[weak.index]),
+                "declaration": "weak", "fallback": target.name, "search_mode": mode}
+    if not same(symbol, physical):
+        raise ValueError("incoming weak declaration differs from its physical inventory")
+    if (weak.type != 0x20 or target.name != name or target.storage != 2
+            or target.section != 0 or target.value != 0 or target.type != 0x20
+            or obj.auxiliary.get(target.index)):
+        return None
+    if [item for item in obj.symbols.values() if item.name == weak.name] != [weak]:
+        return None
+    # A separate definition of G in this object is still checked by the full
+    # candidate loop. Extra undefined/local/special same-name records cannot
+    # borrow this one unambiguous auxiliary target's interpretation.
+    if any(item != target and not (item.storage == 2 and item.section > 0
+                                   and item.value == 0 and item.type == 0x20)
+           for item in obj.symbols.values() if item.name == name):
+        return None
+    return {"input": _identity(record), "object_sha256": record["sha256"],
+            "weak_symbol": asdict(weak), "fallback_symbol": asdict(target),
+            "search_mode": mode, "resolution": Result.UNKNOWN}
+
+
 def _certificate_uncached(state, name):
     native = state["native"]
     inputs = native.inputs
     if state["policy_gaps"] or not state["nonincremental"]:
         raise ValueError("ANY selection has unsupported linker/directive selection policy")
     merges = _noncode_merges(state)
-    candidates = []
+    candidates, incoming = [], []
     for record, symbols, imports in state["interest"].get(name, ()):
         if imports:
             raise ValueError("ANY key conflicts with an import-library declaration")
@@ -717,6 +758,10 @@ def _certificate_uncached(state, name):
             if (symbol["storage"] == 2 and symbol["section"] == 0 and symbol["value"] == 0
                     and symbol["type"] in (0, 0x20) and not symbol["auxiliary_size"]):
                 continue  # Ordinary unresolved references do not choose a winner.
+            reference = _incoming_weak_reference(state, record, symbol, name)
+            if reference is not None:
+                incoming.append(reference)
+                continue
             if (symbol["name"] != name or symbol["storage"] != 2 or symbol["section"] <= 0
                     or symbol["value"] or symbol["type"] != 0x20):
                 raise ValueError("ANY key has a weak, common, absolute or unsupported conflicting declaration")
@@ -750,6 +795,7 @@ def _certificate_uncached(state, name):
         winner, fold = folded
         result = {"check": "native_comdat_any_selection", "result": Result.PASS,
                   "key": name, "policy": "IMAGE_COMDAT_SELECT_ANY", "candidates": candidates,
+                  "incoming_weak_references": incoming,
                   "winner": {**deepcopy(winner), "owner": fold["original_owner"], "address": label.address},
                   "fold_group_id": fold["group_id"], "final_storage": deepcopy(fold["storage"]),
                   "rewritten_key": asdict(label), "noncode_merges": merges,
@@ -813,6 +859,7 @@ def _certificate_uncached(state, name):
             raise ValueError("ANY winner has contradictory module-first contribution evidence")
     result = {"check": "native_comdat_any_selection", "result": Result.PASS,
               "key": name, "policy": "IMAGE_COMDAT_SELECT_ANY", "candidates": candidates,
+              "incoming_weak_references": incoming,
               "winner": {**deepcopy(winner), "owner": selected["owner"], "address": begin,
                          "module": contribution.module, "contribution": index,
                          "object_flags": flags, "pdb_flags": contribution.flags,

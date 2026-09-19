@@ -2049,6 +2049,15 @@ same-key definition (including archive occurrences), validates the original COFF
 key and selection policy, and verifies the retained winner's code, references,
 MAP placement and image-bound PDB module/contribution. Aliases, conflicting
 declarations or unsupported selection policy refuse qualification.
+An incoming weak function reference with a different name may name the global
+key through its physical auxiliary index to an ordinary undefined external
+function declaration. This is a possible use, not a competing definition or
+proof that the weak call resolves to that key. The original weak record and
+target index, types, complete same-name records and all definition candidates
+remain checked. Direct weak declarations of the key, defined/private/common
+fallbacks and ambiguous metadata still refuse. Both ordinary and folded winner
+proofs expose these uses as `incoming_weak_references` with resolution unknown;
+actual code references still require their independent target proof.
 For keys without a positive folding group, an absent fold-log entry is
 insufficient: every other possible physical code section needs an immutable byte
 mismatch outside relocation fields and possible trailing padding, a positive native
