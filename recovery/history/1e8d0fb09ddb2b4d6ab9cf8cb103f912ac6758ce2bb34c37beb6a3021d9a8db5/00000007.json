@@ -1,0 +1,17 @@
+{
+  "event_id": "5d661f3189f25991b190bb7603b8dae8091762fad4dbb752e76f33d9a5bb3d51",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-d4958da6bb064141a12cecd6f4c462f4",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent original review supports reverse filtered removal, signed bounds, whole 24-byte element assignment with count reload and decrement after shifting. Keep the ordinary direct loop; this is not proof the original author had to duplicate source. Removed the now-single-use erase_at helper and restored public kill_pos unchanged. Fresh scoped checks pass kill_specific and kill_pos plus all other Spot bodies except the pre-existing replace mismatch; all12 historical obligations pass. Native recorder measured kill_specific54/54 instructions and banked its claim. Full application build/link passes. Source and new claim remain unaccepted pending complete native change verification; no flags, fake exports or acceptance rules were changed."
+    ]
+  },
+  "previous_event": "fd7042fefbeb70610f87e106957bab18508b9eda5d58fbe58b61bae3404a7008",
+  "request_id": "spot-direct-removal-20260919",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:spot-operations-convergence"
+}

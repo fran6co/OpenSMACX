@@ -1,0 +1,23 @@
+{
+  "event_id": "c0ed1b682e9baf74f056ca44f43c537e3967d44086b7a063c370b9437f9d143c",
+  "payload": {
+    "affects": [
+      "entity-b5d29275981a30e6962d303f06bd0f78d80a155a0b2dfe13887f648f1aa1d828",
+      "entity-c3adf097ed74d100a1f4c535d86120efc0755ad444bfd3a4a34802e5b38d65cd"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-d4958da6bb064141a12cecd6f4c462f4",
+    "evidence": [
+      "Original kill_specific disassembly contains the six-dword inline copy loop at 0x005FAA52-0x005FAA72.",
+      "The direct-copy variant measured zero differing bytes; the helper variant differed at 38 offsets.",
+      "Fresh task check reports kill_specific and kill_pos pass."
+    ],
+    "hypothesis": "kill_specific must retain its own inline element-copy loop while kill_pos may use the force-inlined helper.",
+    "kind": "discovery"
+  },
+  "previous_event": "7e0ffcee8d5b3e6481be5a5256a949fb1eb5ee4b0db3f312cbf6b992d2b7dc09",
+  "request_id": "worker-d4958da6bb064141a12cecd6f4c462f4",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:spot-operations-convergence"
+}

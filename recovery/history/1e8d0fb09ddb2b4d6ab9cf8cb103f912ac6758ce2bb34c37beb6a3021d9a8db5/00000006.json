@@ -1,0 +1,22 @@
+{
+  "event_id": "fd7042fefbeb70610f87e106957bab18508b9eda5d58fbe58b61bae3404a7008",
+  "payload": {
+    "affects": [
+      "entity-59e118765674fbe8a06276c112e14714c5bf6611c40c45a2b51955a959d0fc82"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-55273c16a6fa4646be1e26faa59ed4d5",
+    "evidence": [
+      "Original replace is 86 bytes and loads spots_ directly into eax at 0x005FA917.",
+      "Five plausible pointer/reference/index/loop spellings all emitted the same 96-byte candidate with the same ranking.",
+      "Fresh task check still reports replace failed on boundary while all other Spot functions pass."
+    ],
+    "hypothesis": "replace remains blocked by a VC6 register-allocation difference, not an established semantic or ownership defect.",
+    "kind": "discovery"
+  },
+  "previous_event": "c0ed1b682e9baf74f056ca44f43c537e3967d44086b7a063c370b9437f9d143c",
+  "request_id": "worker-55273c16a6fa4646be1e26faa59ed4d5",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:spot-operations-convergence"
+}

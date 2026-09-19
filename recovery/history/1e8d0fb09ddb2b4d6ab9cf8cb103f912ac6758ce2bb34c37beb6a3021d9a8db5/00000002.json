@@ -1,0 +1,22 @@
+{
+  "event_id": "15027d1079f110f08749b021c2072d5639681fbf972959c3084fcd1dc7d7820a",
+  "payload": {
+    "affects": [
+      "entity-59e118765674fbe8a06276c112e14714c5bf6611c40c45a2b51955a959d0fc82"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-df75d30ac1dd47218f2f7ae3f8d05286",
+    "evidence": [
+      "Current replace source uses signed int iteration and one SpotInternal pointer local, preserving the documented signed guard and shared base for comparisons and RECT stores.",
+      "Four bounded native source variants all compiled with passing damage controls but produced no better ranking; the baseline remained a 96-byte candidate against an independently recorded 86-byte span.",
+      "Direct measurement reports 38 candidate instructions versus 37 original, 10 matching instructions, and 0.9867 mnemonic similarity; the first divergence is the loop-head register plan."
+    ],
+    "hypothesis": "replace is at a compiler register-allocation plateau rather than a source-model defect; no evidence-backed spelling currently improves it.",
+    "kind": "discovery"
+  },
+  "previous_event": "de6c19907bea0d05729eea1a77209da9e84d3905fcc974b902e03c0b608c4002",
+  "request_id": "worker-df75d30ac1dd47218f2f7ae3f8d05286",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:spot-operations-convergence"
+}

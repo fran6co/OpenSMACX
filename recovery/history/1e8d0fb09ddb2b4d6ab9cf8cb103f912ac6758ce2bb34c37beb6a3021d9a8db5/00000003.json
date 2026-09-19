@@ -1,0 +1,17 @@
+{
+  "event_id": "39c3e8b379c401a9b8da5404ddbdc4bfd51458cfc8a4e3440a3b6aa72a4145b5",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-c0ca805375024108bcc35096d158ed11",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent review rejects duplicate kill_pos_inline as an original design claim. The original kill_specific contains signed bounds, whole six-dword element copies, count decrement and reverse traversal. src/spot.h now owns one private erase_at implementation used by the mapped public kill_pos and kill_specific; the separately emitted public identity remains intact, with no export or artificial address anchor. Fresh strict restoration passes all 12 historical claims. Both originally open bodies remain mismatches; partial similarity does not establish an allocator-only ceiling or acceptance."
+    ]
+  },
+  "previous_event": "15027d1079f110f08749b021c2072d5639681fbf972959c3084fcd1dc7d7820a",
+  "request_id": "spot-single-erase-incorporated-20260919",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:spot-operations-convergence"
+}

@@ -1,0 +1,17 @@
+{
+  "event_id": "c8c7d8f894ae2a67fb6df789c730b9b176eec50a2ebd240dc2930b8eca64153e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-55273c16a6fa4646be1e26faa59ed4d5",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Retain the observed86-byte original versus96-byte candidate and the original loop-head load as evidence, but a small spelling search cannot establish an allocator-only blocker or absence of source-model defects. Independent follow-up tested three new hypotheses with native damage controls: matched-branch RECT value assignment emitted112bytes, guarded post-tested traversal96bytes, and signed count members96bytes. None was applied; no protected passing measurement was lost in the replicas. Leave replace as an explicit open recovery target, preserve the newly recorded kill_specific recovery and all historical obligations, and stop this bounded spelling search rather than asserting completeness."
+    ]
+  },
+  "previous_event": "5d661f3189f25991b190bb7603b8dae8091762fad4dbb752e76f33d9a5bb3d51",
+  "request_id": "spot-replace-bounded-evidence-20260919",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:spot-operations-convergence"
+}

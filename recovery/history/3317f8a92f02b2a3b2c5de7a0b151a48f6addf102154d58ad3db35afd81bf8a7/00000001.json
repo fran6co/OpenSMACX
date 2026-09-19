@@ -1,0 +1,26 @@
+{
+  "event_id": "dbf2272332a1c0de253dfe88f763b0449db9c637194a60b5ee6b330302813b95",
+  "payload": {
+    "author": "recovery-worker",
+    "decision": "approve",
+    "evidence": [
+      "Verified request.json SHA-256 213ad668874f9139ff3822ae7f60b48890c1a9028d0055969bd4aa24cf8abf58; current spot.cpp and spot.h hashes match the supplied source evidence.",
+      "src/spot.cpp:170 preserves the original 0x005FAA10 reverse traversal, position/type filtering, signed bounds, complete 24-byte element shifts and count decrement after shifting. Independent native image inspection supports these semantics without assuming an original helper or duplicated source.",
+      "Original constructor, initialization and destructor evidence at 0x005FA860, 0x005FA8A0 and 0x005FA870 supports the existing pointer/count members and allocation/free lifecycle. The change introduces no globals, hierarchy changes, virtual dispatch substitutions or placeholders.",
+      "Retain interpretation b78c48c5938938609903a5fd1c5ede0a8a637236d6e183938619e5f57077df2e unchanged: original initialization stores capacity at this+4, supporting src/spot.h:62. No supersession or retraction is justified; this offset evidence does not establish complete lifetime or original signedness.",
+      "request.json#/check/candidate/checks/binary/functions: kill_specific passes strict bytes/references in the default trial; its /Oy- trial fails extent. replace fails both trials at 96 candidate bytes versus 86 original bytes. All 13 protected restoration obligations pass.",
+      "Referenced build diagnostics report successful compilation/linking, but linked selection, allocation and input coverage remain unknown. Component verification contains 14 unknown results, including free. Native caller inspection found no mapped kill_specific callers but returned incomplete coverage with decoding errors."
+    ],
+    "feedback": "Approve the bounded kill_specific source change. Keep replace explicitly unfinished; the evidence does not establish an allocator-only limitation. Preserve all historical obligations and the existing member-offset interpretation. This approval neither completes the ownership task nor admits publication: the replace failure, required outside-scope preservation, reference/dependency gaps and broader structure/runtime verification remain outstanding.",
+    "kind": "review",
+    "retractions": [],
+    "reviewer": "independent-recovery-reviewer",
+    "snapshot": "2ddb8ccf62b0c84d0db9be084ca95429aeff551cf81faa2e2b3276faef8433e2",
+    "supersessions": []
+  },
+  "previous_event": null,
+  "request_id": "e76d65a5626861edef3f711106180999b4a781a6657ca4a5d4aa0b66d138755f",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "review:spot-operations-convergence"
+}

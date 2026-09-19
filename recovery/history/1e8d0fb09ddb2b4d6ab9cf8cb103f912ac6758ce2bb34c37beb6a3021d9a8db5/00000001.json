@@ -1,0 +1,23 @@
+{
+  "event_id": "de6c19907bea0d05729eea1a77209da9e84d3905fcc974b902e03c0b608c4002",
+  "payload": {
+    "affects": [
+      "entity-b5d29275981a30e6962d303f06bd0f78d80a155a0b2dfe13887f648f1aa1d828",
+      "entity-c3adf097ed74d100a1f4c535d86120efc0755ad444bfd3a4a34802e5b38d65cd"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-c0ca805375024108bcc35096d158ed11",
+    "evidence": [
+      "Added Spot::kill_pos_inline as a __forceinline source helper, leaving the mapped Spot::kill_pos definition and identity intact.",
+      "Fresh direct measurement retains kill_pos exact restoration and emits kill_specific at 54 instructions, matching 28/54 instructions with the original; remaining difference is allocator-only (mov edx,ecx versus push ebx/mov ebx,ecx).",
+      "Fresh restoration check passed all 12 obligations and the configured full build/link passed."
+    ],
+    "hypothesis": "kill_specific requires a force-inlined copy of kill_pos semantics, while the original kill_pos must remain separately emitted to preserve its historical mapping.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-c0ca805375024108bcc35096d158ed11",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:spot-operations-convergence"
+}

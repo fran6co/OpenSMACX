@@ -152,7 +152,10 @@ void Spot::kill_pos(int position) {
 
 /*
 Purpose: Remove a specific spot.
-// ORIGINAL: 0x005FAA10 ?kill_specific@Spot@@QAEXHH@Z 0x005FAA10-0x005FAA89
+The original scans backward and shifts complete elements after each match.
+Historical experiments below concern a call-to-helper spelling, not a
+requirement to inline a helper or evidence that the allocator gap is unavoidable.
+// ORIGINAL: 0x005FAA10 ?kill_specific@Spot@@QAEXHH@Z 0x005FAA10-0x005FAA89 BYTE_EXACT
 // LEVER: kill_pos must be `__forceinline` (and defined ABOVE this body) for the image's 54-instruction inlined copy to appear at all: without it the tree emits a `call` and scores 0/54 (32 instructions, 0.811). With it 0/54 (0.811) -> 28/54 (0.963).
 // TRIED: `static_cast<int>(add_count_) - 1` for the loop initialiser; swapping the compares to `type == ... && position == ...`. Both identical to the tree's 28/54 (0.963). Remaining gap is one register: the image keeps `this` in `edx` (`mov edx,ecx`, same as the out-of-line kill_pos) and `ebx` free for the inlined copy index, where VC6 gives us `push ebx; mov ebx,ecx` and copies the index into `edx` instead. Pure allocator choice, not source form.
 // size      121 bytes
@@ -167,7 +170,12 @@ Status: Complete
 void Spot::kill_specific(int position, int type) {
     for (int i = add_count_ - 1; i >= 0; i--) {
         if (spots_[i].position == position && spots_[i].type == type) {
-            kill_pos(i);
+            if (i >= 0 && i < static_cast<int>(add_count_)) {
+                for (int j = i; j < static_cast<int>(add_count_) - 1; j++) {
+                    spots_[j] = spots_[j + 1];
+                }
+                add_count_--;
+            }
         }
     }
 }
