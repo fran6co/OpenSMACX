@@ -13,6 +13,27 @@ from .pdb_fixups import BoundFixups
 from .pe_coff import Symbol, weak_external
 
 
+def _root_reference(obj, target, root):
+    """A direct definition or ordinary external declaration of this root.
+
+    COFF may retain both an earlier undefined declaration and its later
+    definition. The native caller independently binds the root's selected
+    owner/address; this does not resolve weak aliases or choose a definition.
+    PE/COFF: Section Number Values and Storage Class (EXTERNAL).
+    https://learn.microsoft.com/en-us/windows/win32/debug/pe-format
+    """
+    if target == root:
+        return
+    if root.storage != 2 or target.name != root.name:
+        raise ValueError("FPO relocation does not reference its exact external root")
+    for symbol in obj.symbols.values():
+        if symbol.name != root.name or symbol == root:
+            continue
+        if (symbol.storage != 2 or symbol.section != 0 or symbol.value
+                or symbol.type not in (0, 0x20) or obj.auxiliary.get(symbol.index)):
+            raise ValueError("FPO root declaration has a conflicting definition or alias")
+
+
 def validate_fpo_source(obj, number, root, image, address, fixups):
     """Validate an emitted leaf frame and linked extent, not PDB correspondence.
 
@@ -32,12 +53,16 @@ def validate_fpo_source(obj, number, root, image, address, fixups):
     section = obj.sections[number - 1]
     if (section.name != ".debug$F" or section.flags != 0x42101048
             or len(section.data) != 16 or obj.section_sizes[number - 1] != 16
-            or section.relocations != ((0, root.index, 7),)
+            or len(section.relocations) != 1
             or obj.associations.get(number) != root.section
             or number in obj.associations.values()
             or sum(parent == root.section and obj.sections[child - 1].name == ".debug$F"
                    for child, parent in obj.associations.items()) != 1):
         raise ValueError("unsupported associated FPO child")
+    offset, target, kind = section.relocations[0]
+    if offset != 0 or kind != 7 or target not in obj.symbols:
+        raise ValueError("unsupported associated FPO root relocation")
+    _root_reference(obj, obj.symbols[target], root)
     symbols = [symbol for symbol in obj.symbols.values() if symbol.section == number]
     if len(symbols) != 1:
         raise ValueError("FPO child has aliases or ambiguous section definition")

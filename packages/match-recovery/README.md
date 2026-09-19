@@ -2597,7 +2597,14 @@ is a separate linked-code check. `msvc-pdb` validates an old SmallMSF container;
 linked observations separately require its NB10/DBI identity and section headers
 to match the exact PE. Supported linker fixups can independently place a selected
 COFF association family; every code/data region, relocation and associated FPO
-record must verify. Native linked-build code observation also supports a bounded
+record must verify. An associated FPO record may reference either its exact root
+definition or a same-name ordinary undefined external declaration of that already
+independently bound root. The physical relocation index and complete same-name
+COFF records are checked; private roots, weak aliases, common/absolute definitions
+and conflicting declarations gain no name-based resolution. Complete frame fields
+must still match the image-bound PDB, including the exact multiset for folded
+members. This is metadata correspondence, not selection or runtime proof.
+Native linked-build code observation also supports a bounded
 associated CodeView 5 procedure child: exact root-owned SECTION/SECREL bindings,
 complete procedure and register/frame-local records, and correspondence to the
 same build's physically bound PDB module. Procedure extent, flags, locals and

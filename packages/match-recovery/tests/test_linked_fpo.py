@@ -52,6 +52,80 @@ def check(raw=None, records=None):
     return verify_fpo(obj, 2, obj.function("_f"), image, 0x401000, fixups)
 
 
+def declared_root_object(*, name=b"_f", value=0, section=0, kind=32, storage=2,
+                         auxiliary=b"", repeats=1, private_root=False, extra=b"",
+                         before=False, payload=None, code=None):
+    raw = bytearray(object_bytes(payload, code=code))
+    symbols_at, count = struct.unpack_from("<II", raw, 8)
+    end = symbols_at + count * 18
+    declaration = name.ljust(8, b"\0") + struct.pack(
+        "<IhHBB", value, section, kind, storage, len(auxiliary) // 18) + auxiliary
+    added = declaration * repeats + extra
+    added_count = len(added) // 18
+    insertion = symbols_at if before else end
+    raw[insertion:insertion] = added
+    struct.pack_into("<I", raw, 12, count + added_count)
+    relocation, = struct.unpack_from("<I", raw, 60 + 24)
+    struct.pack_into("<I", raw, relocation + 4, 0 if before else count)
+    if private_root:
+        raw[symbols_at + (2 + (added_count if before else 0)) * 18 + 16] = 3
+    return bytes(raw)
+
+
+@pytest.mark.parametrize("kind", [0, 32])
+@pytest.mark.parametrize("repeats", [1, 3])
+@pytest.mark.parametrize("before", [False, True])
+def test_ordinary_undefined_declarations_reference_the_independently_bound_root(kind, repeats, before):
+    raw = declared_root_object(kind=kind, repeats=repeats, before=before)
+    obj = Coff(raw)
+    target = obj.symbols[obj.sections[1].relocations[0][1]]
+    assert target.index != obj.function("_f").index
+    assert check(raw) == check()
+
+
+@pytest.mark.parametrize("damage", [
+    {"name": b"_other"}, {"name": b"_F"}, {"value": 4}, {"section": -1}, {"section": -2},
+    {"section": 1}, {"storage": 3}, {"kind": 0x10}, {"kind": 0x21},
+    {"auxiliary": bytes(18)}, {"private_root": True},
+    {"storage": 105, "auxiliary": struct.pack("<II10x", 2, 2)},
+])
+def test_same_frame_bytes_cannot_override_a_different_or_unsupported_declaration(damage):
+    with pytest.raises(ValueError):
+        check(declared_root_object(**damage))
+
+
+@pytest.mark.parametrize("section,value,kind,storage", [
+    (0, 4, 0, 2), (-1, 0, 0, 2), (1, 0, 0, 2), (0, 0, 32, 3),
+])
+def test_a_good_relocation_cannot_hide_another_conflicting_same_name_record(section, value, kind, storage):
+    extra = b"_f".ljust(8, b"\0") + struct.pack("<IhHBB", value, section, kind, storage, 0)
+    with pytest.raises(ValueError, match="conflicting"):
+        check(declared_root_object(extra=extra))
+
+
+@pytest.mark.parametrize("records", [b"", struct.pack("<IIIHH", 0x1000, 16, 4, 2, 0x0201),
+    struct.pack("<IIIHH", 0x1000, 16, 3, 2, 0x0201) * 2])
+def test_undefined_declaration_still_requires_exact_unique_pdb_frame(records):
+    with pytest.raises(ValueError, match="metadata"):
+        check(declared_root_object(), records)
+
+
+@pytest.mark.parametrize("field,fmt,value", [(0, "I", 4), (4, "I", 1),
+    (4, "I", 900), (8, "H", 6)])
+def test_declaration_path_does_not_relax_physical_relocation_shape(field, fmt, value):
+    raw = bytearray(declared_root_object())
+    relocation, = struct.unpack_from("<I", raw, 60 + 24)
+    struct.pack_into("<" + fmt, raw, relocation + field, value)
+    with pytest.raises(ValueError):
+        check(bytes(raw))
+
+
+def test_declaration_path_cannot_hide_nonzero_root_addend_in_matching_metadata():
+    payload = struct.pack("<IIIHH", 1, 16, 3, 2, 0x0201)
+    with pytest.raises(ValueError, match="root addend"):
+        check(declared_root_object(payload=payload), struct.pack("<I", 0x1000) + payload[4:])
+
+
 def test_nonzero_frame_data_matches_complete_image_bound_metadata():
     proof = check()
     assert proof == {"format": "fpo_data", "data": struct.pack("<IIHH", 16, 3, 2, 0x0201).hex(), "code_size": 16}

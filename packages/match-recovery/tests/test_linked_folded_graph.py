@@ -14,7 +14,7 @@ from match_recovery.pe_coff import PeImage
 from match_recovery.pdb_fixups import bound_fixups
 from test_binary import coff_fixture
 from test_linked_folding import fixture as folding_fixture
-from test_linked_fpo import object_bytes
+from test_linked_fpo import declared_root_object, object_bytes
 from test_linked_objects import inventory
 from test_link_file_evidence import stamp
 from test_msf import small_msf
@@ -23,14 +23,15 @@ from test_pdb_fixups import parts
 
 
 def fixture(root, *, peer_params=4, damage=None, extra_groups="", second_address=0x401000,
-            companions=False, peer_extent=16):
+            companions=False, peer_extent=16, declarations=False):
     first_frame = struct.pack("<IIIHH", 0, 6 if companions else 16, 3, 2, 0x0201)
     peer_frame = struct.pack("<IIIHH", 0, 6 if companions else peer_extent, 3, peer_params, 0x0201)
     code = b"\xe8\0\0\0\0\xc3" + b"\xcc" * 10 if companions else b"\x90" * 15 + b"\xc3"
     peer_code = b"\x91" + code[1:] if damage == "peer_source" else code
     def emitted(frame, body):
         if not companions:
-            return object_bytes(frame, code=body)
+            return (declared_root_object(payload=frame, code=body, before=True)
+                    if declarations else object_bytes(frame, code=body))
         value = bytearray(object_fixture(extra=(b".debug$F", frame, ((0, 2, 7),), 1, 5, 0x42101048)))
         symbol_at, = struct.unpack_from("<I", value, 8)
         del value[symbol_at + 8 * 18:symbol_at + 9 * 18]
@@ -99,6 +100,17 @@ def test_folding_requires_complete_exact_frame_multiset_not_any_matching_record(
     result = graph(fixture(tmp_path, damage=damage))
     assert result["result"] == "unknown" and result["graph_fingerprint"] is None
     assert any("every original member exactly" in gap["reason"] for gap in result["gaps"])
+
+
+@pytest.mark.parametrize("damage", [None, "missing_fpo", "extra_fpo", "duplicate_wrong_fpo", "wrong_fpo_root"])
+def test_declaration_references_preserve_folded_frame_multiset_obligations(tmp_path, damage):
+    result = graph(fixture(tmp_path, declarations=True, damage=damage))
+    if damage is None:
+        assert result["result"] == "pass", result["gaps"]
+        assert len(result["nodes"]) == 2
+    else:
+        assert result["result"] == "unknown" and result["graph_fingerprint"] is None
+        assert any("every original member exactly" in gap["reason"] for gap in result["gaps"])
 
 
 def test_identical_frame_duplicates_require_the_actual_number_of_original_members(tmp_path):
