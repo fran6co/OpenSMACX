@@ -53,7 +53,7 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
     context, inputs = native.context, native.inputs
     before = digest(context.report)
     _, fresh = inputs.objects._constant_population()
-    data_stack = ExitStack()
+    observation_stack = ExitStack()
     try:
         context.check_current()
         joined = ordinary_contributions(context, inputs)
@@ -83,12 +83,11 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
             gap("physical allocation population is incomplete")
         # These observations contain unsupported policy and unbound participation,
         # not merely an empty intersection list. None is an allocation exemption.
-        # Common-request gaps are reconciled below against same-epoch native
-        # storage. Every other census obligation remains untouched.
-        gaps.extend(row for row in census["gaps"]
-                    if row["reason"] != "common_requests require separate linked-effect verification")
+        # Common requests and exact positively removed sections are reconciled
+        # below against live native proofs. Other census obligations stay.
         ordinary = {(digest(row["input"]), row["object_section"]): row for row in joined["sections"]}
-        verify_data = data_stack.enter_context(data_contents_batch(inputs))
+        verify_data = observation_stack.enter_context(data_contents_batch(inputs))
+        choices, removed = None, {}
         for candidate in census["inputs"]:
             if (candidate["participation"] != "final_pass" or len(candidate["owners"]) != 1):
                 gap("candidate lacks independent retained or non-admitted allocation evidence", candidate)
@@ -111,6 +110,37 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                     # of relocation writes/nonsection symbol-bearing allocations.
                     row["nonoccupying"] = Result.PASS
                     continue
+                if item["flags"] & 0x1000 and owner is not None and candidate["participation"] == "final_pass":
+                    try:
+                        # The census and native query must name the same exact
+                        # physical object, not just an equal basename or body.
+                        selected = inputs.objects.resolve(owner)
+                        if (selected["identity"] != row["input"] or selected["sha256"] != row["object_sha256"]):
+                            raise ValueError("removal query differs from its physical census object")
+                        if choices is None:
+                            from .linked_comdat_selection import comdat_selection
+                            choices = observation_stack.enter_context(comdat_selection(native))
+                        removal = choices.discarded(owner, row["object_section"])
+                        if removal is None:
+                            removal = choices.loser(owner, row["object_section"])
+                        if removal is not None:
+                            if (removal["queried_section"] != row["object_section"]
+                                    or row["object_section"] not in removal["sections"]
+                                    or removal["disposition"] not in (
+                                        "discarded_any_duplicate", "discarded_unreferenced_comdat")):
+                                raise ValueError("removal certificate does not cover this physical section")
+                            # Preserve positive source size, flags and identity.
+                            # Only its final allocation is absent; this is not
+                            # an empty COFF section or an incoming-edge waiver.
+                            row.update(nonoccupying=Result.PASS, retention=Result.PASS,
+                                       disposition=removal["disposition"],
+                                       selection_certificate=removal["certificate_id"])
+                            removed[digest(row["input"]), row["object_section"]] = category
+                            continue
+                    except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
+                        # Unsupported removal leaves the original root and all
+                        # of its placement/content obligations in the graph.
+                        row["removal_refusal"] = str(error)
                 if category not in ("ordinary_data", "code"):
                     gap("section has no supported independent allocation interpretation", row)
                     continue
@@ -147,9 +177,18 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                         roots.append({"owner": owner, "symbol": min(entries)})
                 except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
                     gap(str(error), row)
-        # A failed batch freshness check is not one section's missing evidence.
-        # Close outside the per-section refusal handler, before consuming rows.
-        data_stack.close()
+        certificates = choices.certificates() if choices is not None else []
+        # Failed final freshness is not one section's missing evidence. Both
+        # placement and removal batches close before any result is consumed.
+        observation_stack.close()
+        for item in census["gaps"]:
+            if item["reason"] == "common_requests require separate linked-effect verification":
+                continue  # Reconciled below by independent common storage.
+            key = digest(item.get("input")), item.get("object_section")
+            category = removed.get(key)
+            if category is not None and item["reason"] == "unplaced or separately verified section: " + category:
+                continue  # Only this exact certified family's placement gap.
+            gaps.append(item)
         try:
             roots = combine_roots(native, roots)
             code = observe_code_graph(inputs.objects, inputs.mapping, inputs.image, roots,
@@ -165,6 +204,8 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
             gap("native code allocation observation is incomplete")
         allocations = IntervalIndex()
         for index, row in enumerate(sections):
+            if row.get("disposition") in ("discarded_any_duplicate", "discarded_unreferenced_comdat"):
+                continue  # No linked extent; retain the complete original row.
             if row["classification"] == "code":
                 nodes = by_section[digest(row["input"]), row["object_section"]]
                 if len(nodes) == 1:
@@ -296,6 +337,7 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
         return {"check": "ordinary_allocation_coverage", "sections": sections, "code": code,
                 "contributions": contributions, "unmatched_contributions": unmatched, "gaps": gaps,
                 "generated_storage": generated,
+                "comdat_removal_certificates": certificates,
                 "common_storage": commons,
                 "empty_contributions": [row["index"] for row in contributions if row["size"] == 0],
                 "input_consistency": Result.FAIL if damaged else Result.PASS if closed else Result.UNKNOWN,
@@ -306,7 +348,7 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                 "scope": "supported_static_physical_allocations", "ready_for_collection": False, "persisted": False}
     finally:
         try:
-            data_stack.close()
+            observation_stack.close()
         finally:
             try:
                 fresh()

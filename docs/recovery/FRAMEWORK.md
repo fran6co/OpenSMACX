@@ -108,6 +108,16 @@ final physical freshness failures escape the row-level diagnostic handler and
 refuse the whole observation. Contribution-group membership is indexed once
 without dropping failed or ungrouped claimants or intersection multiplicity.
 
+Allocation observation now asks the native COMDAT selection handle for positive
+REF removal and certified ANY duplicate removal. It retains every original
+section, including associated children, with its positive size and explicit
+disposition; only proven absent linked allocations stop seeding code roots.
+Only the exact removed section's census placement gap is discharged. Missing
+MAP entries, refused/ambiguous selection, incoming code references, unexplained
+producer flags and unmatched contributions remain obligations. The live removal
+batch must close successfully before any observation can escape; saved diagnostic
+certificates cannot authorize removal in another observation.
+
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied
 original can be pinned in source without copying its bytes; compiler and build

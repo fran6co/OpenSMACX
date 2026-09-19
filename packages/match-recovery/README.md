@@ -2121,6 +2121,14 @@ paths; final population freshness runs outside per-section refusal handling.
 The enclosing native image/MAP/source guards remain mandatory. Contribution-group
 indexes retain failed and ungrouped members; they do not replace the count of
 all intersecting allocations. There is no persisted verdict cache or new waiver.
+The allocation observer also acquires its own live COMDAT removal proof. Positive
+native REF events and complete ANY-winner certificates can establish that an
+original section and its exact associative family occupy no final storage. Their
+original identities, sizes and flags stay in diagnostics with explicit removal
+dispositions. Only their allocation/root-seeding requirement is discharged;
+incoming references and all unqualified physical candidates remain obligations.
+No absent MAP row, caller-supplied certificate or matching body grants removal.
+Final selection freshness failures refuse the whole observation, not one row.
 Non-code section merges require a separately bounded nonexecutable output target
 and no affected physical code section; this grants no data or initialization
 exemption. Repeated per-key refusals are memoized only inside the same guarded

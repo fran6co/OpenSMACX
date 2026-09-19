@@ -60,6 +60,22 @@ def test_native_ref_event_controls_original_root_seeding(tmp_path, monkeypatch, 
                                                   else "independently_placed_nodup_root")
             assert domain["result"] == domain["retained_section_selection"] == "unknown"
             assert not domain["ready_for_collection"]
+            allocations = native.ordinary_allocations()
+            for subject in subjects:
+                allocation, = [item for item in allocations["sections"]
+                               if item["input"] == actual["identity"]
+                               and item["object_section"] == subject.section]
+                assert allocation["size"] > 0
+                assert (allocation.get("disposition") == "discarded_unreferenced_comdat") is eliminate
+                assert any(node["owner"] == "owner.obj" and node["symbol"] == subject.name
+                           for node in allocations["code"]["nodes"]) is not eliminate
+                if eliminate:
+                    assert allocation["nonoccupying"] == allocation["retention"] == "pass"
+                    assert "envelope" not in allocation
+                    assert not any(gap.get("input") == actual["identity"]
+                                   and gap.get("object_section") == subject.section
+                                   for gap in allocations["gaps"])
+            assert not allocations["ready_for_collection"]
 
 
 @pytest.mark.parametrize("debug", [False, True])
