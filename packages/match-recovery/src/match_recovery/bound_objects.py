@@ -17,45 +17,6 @@ from .pe_coff import Coff, PeImage
 MAX_REFERENCE_DIAGNOSTICS = 128
 
 
-def _pooled_string_constant(obj, symbol, image):
-    """Return (literal, address) for a TU-private pooled string constant.
-
-    The literal is the NUL-terminated bytes at the symbol's own section
-    offset; its address is the unique occurrence of those bytes, terminator
-    included, inside the image's read-only initialized data. VC6 /GF pools
-    identical literals to one address, so content is the identity; anything
-    absent, ambiguous or writable-backed stays unresolved.
-    """
-    section = obj.sections[symbol.section - 1]
-    data = section.data
-    if symbol.value >= len(data):
-        return None, None
-    end = data.find(b"\0", symbol.value)
-    if end < 0 or end == symbol.value:
-        return None, None
-    literal = bytes(data[symbol.value:end + 1])
-    occurrences = []
-    for (span, offset, size), flags in zip(image.sections, image.section_flags):
-        # Readable initialized data hosts the pool; VC6 emits pooled literals
-        # into .rdata or writable .data depending on its const-pooling mode.
-        if not size or not flags & 0x40000000:
-            continue
-        raw = image.data[offset:offset + size]
-        at = raw.find(literal)
-        while at >= 0:
-            # Pooled entries are NUL-delimited: a hit inside a longer literal
-            # (its tail matching ours) is that entry, not ours. Only a start
-            # of section or a position right after a terminator is an entry.
-            if at == 0 or raw[at - 1] == 0:
-                occurrences.append(span.start + at)
-            at = raw.find(literal, at + 1)
-    if len(occurrences) == 1:
-        return literal, occurrences[0]
-    if not occurrences:
-        return None, None
-    return literal, None
-
-
 def _binding_description(target):
     if target is None:
         return None
@@ -208,25 +169,12 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # successful masked reference.
                         targets[str(index)] = CompilerArtifact(symbol.name)
                     elif symbol.name.startswith("??_C@"):
-                        # A TU-private string constant (VC6 emits these as
-                        # ??_C@-mangled definitions in the object's own data
-                        # sections). Uniquely-occurring content identifies its
-                        # image address byte-exactly. This image keeps one
-                        # copy per translation unit, so common literals occur
-                        # many times: content alone cannot select the original
-                        # occurrence. Preserve the hint, leaving that reference
-                        # unresolved like an unplaced compiler label.
-                        literal, address = _pooled_string_constant(obj, symbol, image)
-                        if address is not None:
-                            targets[str(index)] = address
-                            row.setdefault("pooled_string_constants", []).append(
-                                {"symbol": symbol.name, "literal": literal.decode("latin-1"), "address": f"0x{address:08X}"})
-                        elif literal is not None:
-                            targets[str(index)] = CompilerArtifact(symbol.name)
-                            row.setdefault("pooled_string_constants", []).append(
-                                {"symbol": symbol.name, "literal": literal.decode("latin-1"), "address": None,
-                                 "reason": "content repeats across translation units; "
-                                           "original occurrence is unresolved"})
+                        # Content occurrence, even unique, is not an original
+                        # object/extent witness. Only independently declared,
+                        # freshly checked local bindings may resolve literals.
+                        # Keep the emitted symbol diagnostic without scanning
+                        # the image or inventing a NUL-terminated extent.
+                        targets[str(index)] = CompilerArtifact(symbol.name)
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                     if symbol.name in externals:
                         targets[str(index)] = externals[symbol.name]

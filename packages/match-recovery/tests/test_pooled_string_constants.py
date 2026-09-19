@@ -1,4 +1,4 @@
-"""TU-private pooled string constants resolve by their pooled content."""
+"""Unbound literal content is not original identity or bounded storage proof."""
 
 import hashlib
 import struct
@@ -59,39 +59,32 @@ def binding(pin):
     return (FunctionBinding(Origin(pin, "pe:va", 0x401000), (Span(0x401000, 0x401000 + 16),), "_f", "unit.obj"),)
 
 
-def check(code, literal, *, twice=False, image_literal=None, image_target=0x402000):
+def check(code, literal, *, twice=False, image_literal=None, image_target=0x402000,
+          storage=3, image_flags=0x40000040):
     original = b"\xa1" + struct.pack("<I", image_target) + b"\x90" * 11
     pooled = image_literal if image_literal is not None else literal
-    raw = object_with_literal(code, literal)
-    img = image_with_literal(original, pooled, twice=twice)
+    raw = object_with_literal(code, literal, storage=storage)
+    img = bytearray(image_with_literal(original, pooled, twice=twice))
+    struct.pack_into("<I", img, 0x1A0 + 36, image_flags)
+    img = bytes(img)
     pin = hashlib.sha256(img).hexdigest()
     row, = check_objects(binding(pin), {"unit.obj": Coff(raw)}, PeImage(img, pin))
     return row
 
 
 @pytest.mark.parametrize("storage", [2, 3])
-def test_pooled_literal_resolves_by_unique_content(storage):
-    import test_pooled_string_constants as module
-    original_builder = module.object_with_literal
-    def builder(code, literal, **kwargs):
-        kwargs["storage"] = storage
-        return original_builder(code, literal, **kwargs)
-    module.object_with_literal = builder
-    try:
-        row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF")
-    finally:
-        module.object_with_literal = original_builder
-    assert row["result"] == Result.PASS, row
-    pooled, = row["pooled_string_constants"]
-    assert pooled["literal"] == "JKAF\x00" and pooled["address"] == "0x00402000"
+def test_unique_content_does_not_establish_literal_identity(storage):
+    row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF", storage=storage)
+    assert row["result"] == row["references"] == Result.UNKNOWN, row
+    reference, = row["diagnostic"]["emitted_references"]
+    assert reference["symbol"] == LITERAL_NAME.decode()
+    assert reference["binding_address"] == "compiler-artifact"
 
 
 @pytest.mark.parametrize("target", [0x402000, 0x402005, 0x403000])
 def test_repeated_literal_keeps_diagnostics_without_resolving_occurrence(target):
     row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF", twice=True, image_target=target)
     assert row["result"] == row["references"] == Result.UNKNOWN, row
-    pooled, = row["pooled_string_constants"]
-    assert pooled["address"] is None and "repeats" in pooled["reason"]
     artifact, = [item for item in row["relocations"] if item["offset"] == 1]
     assert artifact["binding"]["kind"] == "compiler_artifact"
     assert artifact["result"] == Result.UNKNOWN
@@ -100,3 +93,31 @@ def test_repeated_literal_keeps_diagnostics_without_resolving_occurrence(target)
 def test_absent_literal_stays_unresolved():
     row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF", image_literal=b"OTHER")
     assert row["result"] == Result.UNKNOWN and "pooled_string_constants" not in row
+
+
+@pytest.mark.parametrize("candidate,original", [(b"a\0b", b"a\0c"),
+                                                (b"r\0b\0\0", b"r\0c\0\0")])
+def test_first_nul_prefix_cannot_hide_different_literal_storage(candidate, original):
+    row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11,
+                candidate, image_literal=original)
+    assert row["result"] == row["references"] == Result.UNKNOWN, row
+
+
+@pytest.mark.parametrize("flags", [0x40000040, 0xC0000040, 0x60000020, 0x40000080])
+def test_content_occurrence_in_any_image_storage_cannot_bind_a_literal(flags):
+    row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"rb", image_flags=flags)
+    assert row["result"] == row["references"] == Result.UNKNOWN, row
+
+
+@pytest.mark.parametrize("addend", [0xFFFFFFFD, 4])
+def test_content_inference_cannot_resolve_escaped_literal_addends(addend):
+    signed = addend if addend < 2**31 else addend - 2**32
+    row = check(b"\xa1" + struct.pack("<I", addend) + b"\x90" * 11, b"rb",
+                image_target=0x402000 + signed)
+    assert row["result"] == row["references"] == Result.UNKNOWN, row
+
+
+def test_unknown_literal_does_not_hide_independent_instruction_damage():
+    row = check(b"\xa1\x00\x00\x00\x00" + b"\x91" + b"\x90" * 10, b"rb")
+    assert row["references"] == Result.UNKNOWN
+    assert row["result"] == row["bytes"] == Result.FAIL

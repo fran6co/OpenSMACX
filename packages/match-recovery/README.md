@@ -2471,8 +2471,13 @@ The i386 backend verifies dedicated independent MSVC literal COMDATs, with exact
 section-definition/key metadata, complete raw or zero-fill extent and no relocations.
 Embedded NULs and wide literals are not truncated at their first zero. Original storage
 must be bounded readable non-executable data. Unsupported ordinary/static/associative
-storage stays unknown. Missing or damaged definitions reserve their unresolved identity,
-so a unique-content fallback cannot override a failed declared binding.
+storage stays unknown. Missing or damaged definitions reserve their unresolved identity.
+Unbound literal symbols remain diagnostic unknowns even when their contents appear only
+once in the original. Content search cannot establish original object identity or extent;
+the former first-NUL search and implicit address binding are removed.
+The shared dependency verifier follows the same rule. Vendor/toolchain checks
+currently have no TU-private literal-binding input; references needing one remain
+unknown rather than borrowing an application TU's binding or raw address.
 
 Task binary checks compile literal owners selected through their evidence anchors,
 even when no selected function otherwise needs that TU. `literal_definitions` reports

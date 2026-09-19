@@ -138,9 +138,12 @@ in C++, do not infer their original addresses from the operand under test, and d
 reuse another TU's same-named literal. No game literal binding is introduced by this
 framework extension. Exception metadata remains a separate unsupported case.
 
-Unplaced compiler labels and unbound ambiguous pooled literals remain unknown references
+Unplaced compiler labels and all unbound pooled literals remain unknown references
 in strict checks. Their names and same-object definitions are diagnostic hints,
-not permission to mask operands into success. Explicitly mapped companion code
+not permission to mask operands into success. Even a unique content occurrence cannot
+establish original literal identity/extent. The former first-NUL content-search binding
+is removed; source-owned literal declarations supply bounded, freshly verified targets.
+Explicitly mapped companion code
 still verifies normally; unrelated measured damage remains a failure.
 Earlier strict passes that relied on masking these references are not current
 verification evidence. Preserve historical claims and task decisions, but rerun

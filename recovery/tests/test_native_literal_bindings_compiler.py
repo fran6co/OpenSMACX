@@ -3,12 +3,14 @@
 from dataclasses import replace
 import hashlib
 from pathlib import Path
+import struct
 import sys
 
 import pytest
 
 from match_recovery.literal_data import check_literals, literal_storage
 from match_recovery.binary import BoundedTarget
+from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.literal_source import LiteralBinding
 from match_recovery.model import Origin, Span
 from match_recovery.pe_coff import Coff, PeImage
@@ -38,7 +40,11 @@ def test_real_compiler_literal_extent_preserves_embedded_nuls_and_wide_storage(t
         symbol = obj.symbols[index].name
         contents, observation = literal_storage(obj, symbol)
         assert contents == expected and observation["size"] == len(expected)
-        raw = image_with_literal(b"\xa1\x00\x20\x40\x00" + b"\x90" * 11, expected[:-1], twice=True)
+        section = obj.sections[subject.section - 1]
+        assert len(section.relocations) == 1 and section.relocations[0] == (1, index, 6)
+        original_code = bytearray(section.data)
+        struct.pack_into("<I", original_code, 1, 0x402000)
+        raw = image_with_literal(original_code, expected[:-1])
         pin = hashlib.sha256(raw).hexdigest()
         origin = Origin(pin, "pe:va", 0x402000)
         binding = LiteralBinding(origin, Span(0x402000, 0x402000 + len(expected)), symbol,
@@ -46,6 +52,12 @@ def test_real_compiler_literal_extent_preserves_embedded_nuls_and_wide_storage(t
         targets, rows = check_literals([binding], {binding.unit: obj}, PeImage(raw, pin))
         assert rows[0]["definition"] == rows[0]["content"] == "pass"
         assert targets == {(binding.unit, symbol): BoundedTarget(binding.span)}
+        body = FunctionBinding(binding.evidence,
+            (Span(0x401000, 0x401000 + len(original_code)),), function, binding.unit)
+        unbound, = check_objects([body], {binding.unit: obj}, PeImage(raw, pin))
+        assert unbound["result"] == unbound["references"] == "unknown"
+        bound, = check_objects([body], {binding.unit: obj}, PeImage(raw, pin), literal_targets=targets)
+        assert bound["result"] == "pass"
         wrong_extent = replace(binding, span=Span(origin.address, origin.address + len(expected) + 1))
         refused, rows = check_literals([wrong_extent], {binding.unit: obj}, PeImage(raw, pin))
         assert rows[0]["content"] == "fail" and refused == {(binding.unit, symbol): None}
