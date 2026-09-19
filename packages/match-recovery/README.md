@@ -2158,6 +2158,16 @@ This verifies the thunk, not the imported DLL. Storage, indirect targets, runtim
 effects and other residuals remain independent obligations; none of these checks
 turns runtime-library code into recovered application code or grants acceptance.
 
+Synthetic linker-module contributions can separately identify an isolated,
+six-byte import-thunk output recipe. A native generated-module identity, exact
+PE/PDB coordinates, executable code characteristics, independently validated
+readable import slot and exact loader relocation are required. Duplicate or
+intersecting contributions remain unmatched. Import-shaped bytes alone are not
+evidence of valid generated storage, and this output assignment does not supply
+the physical-producer proof above. The real VC6 control attributes its import
+thunk to the library module and leaves the synthetic linker's debug contribution
+unmatched; neither is reassigned to manufacture a closed allocation domain.
+
 For reviewed generated changes, the native application graph additionally derives
 a generated-root code residual inside both live build contexts. Only exact,
 source-authorized slot-local roots can lose their bodies in that comparison;

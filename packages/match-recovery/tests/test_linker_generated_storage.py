@@ -1,68 +1,84 @@
-"""Linker-generated storage assigns only verified import-thunk recipes."""
+"""Physical PE damage controls for the new generated-storage assignment."""
 
 import struct
 
+import pytest
+
 from match_recovery.linker_generated_storage import assign_linker_contributions
+from test_imports import pe
+from test_linked_import_thunks import image_thunk
 
 
-class StubImage:
-    def __init__(self, imports, blobs):
-        self._imports = imports
-        self._blobs = blobs
-
-    def imports(self):
-        return self._imports
-
-    def read(self, span):
-        for (start, end), data in self._blobs:
-            if start <= span.start and span.end <= end:
-                return data[span.start - start:span.end - start]
-        raise ValueError("span outside stub")
+def assign(raw, *, rows=None, modules=None):
+    return assign_linker_contributions(
+        rows if rows is not None else [{"index": 0, "module": 0, "address": 0x402000, "size": 6,
+                                       "section": 2, "offset": 0, "flags": 0x60000020}],
+        modules if modules is not None else [{"index": 0, "name": "* Linker *",
+                                             "kind": "linker_generated", "object_name": ""}],
+        pe(bytes(raw)),
+    )
 
 
-class StubImport:
-    def __init__(self, module, name, ordinal, address):
-        self.module, self.name, self.ordinal, self.address = module, name, ordinal, address
+@pytest.mark.parametrize("options", [{}, {"ordinal": True}, {"bound": True}, {"lookup": False}])
+def test_physical_pe_positive_control(options):
+    report = assign(image_thunk(**options))
+    assert report["assigned"] == 1
+    assert not report["ready_for_collection"]
+    assert report["records"][0]["assignment"]["ordinal"] == (7 if options.get("ordinal") else None)
 
 
-def modules(*rows):
-    return [{"index": index, "name": name, "object_name": obj, "kind": kind}
-            for index, (name, obj, kind) in enumerate(rows)]
+@pytest.mark.parametrize("damage", ["missing_fixup", "wrong_fixup", "nonexecutable_thunk", "executable_iat",
+                                   "opcode", "unbound_operand", "cut_relocation", "iat_relocation"])
+def test_damaged_pe_cannot_assign_generated_thunk(damage):
+    raw = bytearray(image_thunk())
+    if damage == "missing_fixup":
+        struct.pack_into("<H", raw, 0x308, 0)
+    elif damage == "wrong_fixup":
+        struct.pack_into("<H", raw, 0x308, 0x3001)
+    elif damage == "nonexecutable_thunk":
+        struct.pack_into("<I", raw, 0x1A0 + 36, 0x40000040)
+    elif damage == "executable_iat":
+        struct.pack_into("<I", raw, 0x178 + 36, 0x60000020)
+    elif damage == "opcode":
+        raw[1025] = 0x15
+    elif damage == "unbound_operand":
+        struct.pack_into("<I", raw, 1026, 0x401164)
+    elif damage == "cut_relocation":
+        struct.pack_into("<H", raw, 0x308, 0x3003)
+    else:
+        struct.pack_into("<I", raw, 0x300, 0x1000)
+        struct.pack_into("<H", raw, 0x308, 0x3160)
+    report = assign(raw)
+    assert report["assigned"] == 0, report
+    assert report["result"] != "pass", report
 
 
-def contributions(*rows):
-    return [{"index": index, "module": module, "address": address, "size": size}
-            for index, (module, address, size) in enumerate(rows)]
+@pytest.mark.parametrize("field,value", [("section", 1), ("offset", 1), ("flags", 0x40000040),
+                                        ("size", 0), ("size", 5), ("size", 7)])
+def test_contribution_extent_and_characteristics_are_not_inferred_from_bytes(field, value):
+    row = {"index": 0, "module": 0, "address": 0x402000, "size": 6,
+           "section": 2, "offset": 0, "flags": 0x60000020, field: value}
+    report = assign(image_thunk(), rows=[row])
+    assert report["assigned"] == 0 and report["unassigned"] == 1
 
 
-def test_verified_thunk_recipe_assigns_to_its_import():
-    slot = 0x405000
-    thunk = b"\xff\x25" + struct.pack("<I", slot)
-    image = StubImage([StubImport("KERNEL32.dll", "ReadFile", None, slot)],
-                      [((0x401000, 0x401010), thunk + b"\xcc" * 10)])
-    report = assign_linker_contributions(
-        contributions((0, 0x401000, 6)), modules(("* Linker *", "", "linker_generated")), image)
-    record, = report["records"]
-    assert record["result"] == "pass" and report["assigned"] == 1
-    assert record["assignment"]["kind"] == "import_thunk"
-    assert record["assignment"]["symbol"] == "ReadFile"
-    assert record["assignment"]["slot"] == "0x00405000"
+@pytest.mark.parametrize("field,value", [("object_name", "real.obj"), ("kind", "unresolved")])
+def test_linker_name_alone_is_not_generated_module_identity(field, value):
+    module = {"index": 0, "name": "* Linker *", "kind": "linker_generated", "object_name": "", field: value}
+    assert assign(image_thunk(), modules=[module])["assigned"] == 0
 
 
-def test_unbound_operand_and_wrong_shape_stay_unmatched():
-    image = StubImage([StubImport("KERNEL32.dll", "ReadFile", None, 0x405000)],
-                      [((0x401000, 0x401020), b"\x90" * 0x20)])
-    wrong_slot = b"\xff\x25" + struct.pack("<I", 0x406000)
-    report = assign_linker_contributions(
-        contributions((0, 0x401000, 6), (0, 0x401008, 5), (0, 0x401010, 6)),
-        modules(("* Linker *", "", "linker_generated")), image)
-    assert report["assigned"] == 0 and report["unassigned"] == 3
-    assert all(record["assignment"] is None for record in report["records"])
-    assert report["result"] == "unknown"
+def test_ordinary_modules_are_not_recipe_candidates():
+    module = {"index": 0, "name": "real.obj", "kind": "standalone_object", "object_name": "real.obj"}
+    report = assign(image_thunk(), modules=[module])
+    assert report["records"] == []
+    assert not report["ready_for_collection"]
 
 
-def test_ordinary_modules_are_never_considered():
-    image = StubImage([], [])
-    report = assign_linker_contributions(
-        contributions((0, 0x401000, 6)), modules(("unit.obj", "unit.obj", "standalone_object")), image)
-    assert report["records"] == [] and report["result"] == "pass"
+@pytest.mark.parametrize("offset", [0, 2, 5])
+def test_duplicate_or_intersecting_contribution_stays_unassigned(offset):
+    first = {"index": 0, "module": 0, "address": 0x402000, "size": 6,
+             "section": 2, "offset": 0, "flags": 0x60000020}
+    second = {**first, "index": 1, "address": first["address"] + offset, "offset": offset}
+    report = assign(image_thunk(), rows=[first, second])
+    assert report["assigned"] == 0 and report["unassigned"] == 2

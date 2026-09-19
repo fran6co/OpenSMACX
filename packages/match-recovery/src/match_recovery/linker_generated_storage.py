@@ -1,28 +1,35 @@
-"""Verified linker-generated storage: import thunks the image itself proves.
+"""Image-backed linker thunk storage, not physical input selection or acceptance.
 
-A ``* Linker *`` PDB module has no physical object, so its contributions can
-never join one. Each assigned row carries a complete recipe verification
-against the live image: the contribution's bytes must be exactly the VC6
-import-thunk spelling, and its operand must name a slot from the image's own
-import directory. Anything else stays unmatched; assignment is never inferred
-from an address, size or module alone.
+The enclosing native epoch binds these observations to its fresh PE/PDB pair.
+An import-shaped byte string alone cannot close a contribution obligation.
 """
 
+from .binary import Relocation, RelocationKind, compare_bound_code
+from .linked_imports import import_slots
+from .linked_interval_index import IntervalIndex
 from .model import Result, Span
 
 
 def assign_linker_contributions(contributions, modules, image):
-    """Assign linker-module contributions to verified import-thunk recipes.
+    """Assign only isolated executable thunk extents with exact loader fixups.
 
-    Returns one record per linker contribution. A pass record names the
-    import its thunk dispatches; an unmatched record keeps its contribution
-    in the caller's unmatched set. This observes generated storage only -
-    it grants no retention, isolation or acceptance.
+    This establishes a supported output recipe, not its physical library producer,
+    input retention, allocation isolation or equivalence across application builds.
+    Unknown recipes and damaged evidence remain unmatched.
     """
-    slots = {}
-    for item in image.imports():
-        slots.setdefault(item.address, item)
-    by_index = {row["index"]: row for row in modules}
+    by_index = {}
+    for row in modules:
+        if row["index"] in by_index:
+            raise ValueError("duplicate linker contribution module index")
+        by_index[row["index"]] = row
+    intervals = IntervalIndex()
+    for position, row in enumerate(contributions):
+        if row["size"] > 0:
+            intervals.insert(position, row["address"], row["address"] + row["size"])
+    # Use the same independently validated readable, non-executable loader
+    # slots as native short-import verification, not raw descriptor addresses.
+    slots = None
+    slot_error = None
     records = []
     for row in contributions:
         module = by_index.get(row["module"])
@@ -30,28 +37,56 @@ def assign_linker_contributions(contributions, modules, image):
             continue
         record = {"index": row["index"], "address": row["address"], "size": row["size"],
                   "module": row["module"], "assignment": None, "result": Result.UNKNOWN}
+        records.append(record)
         try:
-            data = image.read(Span(row["address"], row["address"] + row["size"]))
-        except ValueError:
-            data = b""
-        # VC6 spelling: jmp dword ptr [slot] -> FF 25 <abs32>, the operand
-        # bound to a slot the image's import directory itself declares.
-        if row["size"] == 6 and len(data) == 6 and data[:2] == b"\xff\x25":
+            if module.get("kind") != "linker_generated" or module.get("object_name") != "":
+                raise ValueError("linker label lacks native generated-module identity")
+            if row["size"] != 6:
+                raise ValueError("unsupported linker contribution recipe extent")
+            span = Span(row["address"], row["address"] + row["size"])
+            matches = [(number, region, flags) for number, ((region, _, _), flags) in enumerate(
+                zip(image.sections, image.section_flags, strict=True), 1)
+                if region.start <= span.start and span.end <= region.end]
+            if len(matches) != 1:
+                raise ValueError("linker thunk lacks one wholly containing image section")
+            number, region, flags = matches[0]
+            if row.get("section") != number or row.get("offset") != span.start - region.start:
+                raise ValueError("linker contribution and image coordinates disagree")
+            # Code/read/execute, not writable or initialized/uninitialized data.
+            if flags & 0xE00000E0 != 0x60000020 or row.get("flags", 0) & 0xE00000E0 != 0x60000020:
+                raise ValueError("linker thunk requires executable code characteristics")
+            if len(intervals.overlaps(span.start, span.end)) != 1:
+                raise ValueError("linker contribution overlaps another contribution")
+            if slots is None and slot_error is None:
+                try:
+                    slots = import_slots(image)
+                except ValueError as error:
+                    slot_error = str(error)
+            if slot_error is not None:
+                raise ValueError(slot_error)
+            data = image.read(span)
+            if len(data) != 6 or data[:2] != b"\xff\x25":
+                raise ValueError("unsupported linker thunk instruction recipe")
             target = int.from_bytes(data[2:6], "little")
             bound = slots.get(target)
-            if bound is not None:
-                record.update(result=Result.PASS,
-                              assignment={"kind": "import_thunk", "module_name": bound.module,
-                                          "symbol": bound.name, "ordinal": bound.ordinal,
-                                          "slot": f"0x{target:08X}"})
-        records.append(record)
-    assigned = [record for record in records if record["result"] == Result.PASS]
+            if bound is None:
+                raise ValueError("linker thunk operand does not name a validated loader slot")
+            proof = compare_bound_code(span, data, b"\xff\x25\0\0\0\0",
+                (Relocation(2, RelocationKind.ABSOLUTE32, "import_slot"),),
+                {"import_slot": bound["address"]}, original_absolute_sites=image.absolute_sites(span))
+            record["proof"] = proof
+            if proof["result"] != Result.PASS:
+                raise ValueError("linker thunk bytes or loader relocation disagree with recipe")
+            record.update(result=Result.PASS,
+                          assignment={"kind": "import_thunk", "module_name": bound["module"],
+                                      "symbol": bound["name"], "ordinal": bound["ordinal"],
+                                      "slot": f"0x{target:08X}"})
+        except ValueError as error:
+            record["reason"] = str(error)
+    assigned = sum(record["result"] == Result.PASS for record in records)
     return {"check": "linker_generated_storage",
-            "result": Result.UNKNOWN if any(record["result"] != Result.PASS for record in records)
-            else Result.PASS if records else Result.PASS,
-            "records": records,
-            "assigned": len(assigned),
-            "unassigned": len(records) - len(assigned),
+            "result": Result.PASS if assigned == len(records) else Result.UNKNOWN,
+            "records": records, "assigned": assigned, "unassigned": len(records) - assigned,
             "limitations": ["verified thunk recipes only, not whole linker-output attribution",
                             "assigned storage is generated identity, never product retention",
                             "unsupported linker contributions stay unmatched and keep the domain open"],

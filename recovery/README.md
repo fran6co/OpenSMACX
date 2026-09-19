@@ -78,6 +78,13 @@ regions and initializer occurrences do not receive a blanket exemption. Compiled
 preservation, native selection/contribution completeness and allocation isolation
 remain independent requirements. Anonymous sections still prevent qualification;
 this extension does not make native publication or game acceptance complete.
+Linker-generated thunk assignment requires native generated-module identity,
+exact PE/PDB coordinates, executable storage, independent loader-slot validation,
+the exact HIGHLOW relocation and a non-overlapping contribution. Missing fixups,
+data-only lookalikes and duplicate contributions stay unmatched. The real VC6
+control emits its import thunk under the DLL's library module, not `* Linker *`;
+the latter's debug metadata remains an unresolved contribution. Passing the
+separate physical import-thunk verifier does not qualify that unrelated storage.
 Fresh recovery builds also request a separate PDB with linker fixups, retaining
 explicit release optimization and non-incremental linking. The package binds
 that PDB to its exact PE before using symbol-base fixups to place selected COFF

@@ -615,11 +615,17 @@ and same-commit documentation; none grants acceptance or discharges obligations.
    application graph threads the section domain's certified groups through
    both builds. REMAINING: a real-compiler /opt:icf control exercising
    same-group sharing end to end.
-3. Anonymous contribution assignment. LANDED 2026-09-18: `* Linker *`
-   module contributions assign through complete import-thunk recipe
-   verification against the image's own import directory
-   (`linker_generated_storage.py`); assigned storage leaves the unmatched
-   set as generated identity and unassigned recipes keep the domain open.
+3. Anonymous contribution assignment. LANDED 2026-09-18, corrected 2026-09-19:
+   `* Linker *` module contributions require a complete isolated import-thunk
+   recipe, native generated-module identity, exact executable PE/PDB coordinates,
+   independently validated loader storage and the exact HIGHLOW relocation
+   (`linker_generated_storage.py`). The original byte-pattern check could
+   falsely close allocation coverage with missing/wrong fixups or duplicate
+   contributions; physical PE/PDB damage controls now cover those failures.
+   Assigned storage leaves the unmatched set as generated identity and
+   unassigned recipes keep the domain open. A real VC6 compiler control gives
+   its import thunk to the library module and leaves the synthetic linker's
+   debug metadata unmatched, not a claimed live positive for this recipe.
    REMAINING: other linker-generated shapes beyond the measured thunk
    recipe (jump thunks to image code, TLS or debug scaffolds) stay
    unmatched until separately qualified.
