@@ -1,0 +1,19 @@
+{
+  "event_id": "679366b050d259e91e7241e9373c81cac9c985d61f0155b4dd3bcebd21680b63",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): sub_624cd0 is unknown solely on the cross-TU reference ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z whose only compiled definition is the pending_bodies.cpp forwarder. The unverified original-identity binding (seed spans 0x00621870-0x6221F1) is now published at src/pending_bodies.cpp:2227 in this worktree by the central coordinator. This expansion authorizes only that binding marker block in src/pending_bodies.cpp - the forwarder body, the already-exact caller sub_624ca0 and the x87 seed stay untouched; defining a second Texture::sub_621870 in texture.cpp remains forbidden (ODR break)."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "408e86c47d4b8ac70d72ae4624c02ce953db08073960cdc8abf9ca318b3b87e1",
+  "request_id": "sub621870-bind-expand-1",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:texture-rasterizer-recovery"
+}

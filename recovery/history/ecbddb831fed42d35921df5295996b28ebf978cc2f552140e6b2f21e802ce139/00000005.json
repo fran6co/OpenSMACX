@@ -1,0 +1,20 @@
+{
+  "event_id": "bd7650aacf621e9e1fcc9c94e3988d975fe9c9117cd892970f4e5e6f3961811d",
+  "payload": {
+    "affects": [
+      "entity-f02bd7bf7cc425b8a49fb3cf1f489d23e44e55f3baac1c749bbded27ae37f7f8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-rect-real-owner-20260919",
+    "evidence": [
+      "The user requested finishing the replacement behind03927c9a instead of leaving the restored seed as the endpoint. Retained worker-1 and campaign have no running processes; coordinator fast-forwarded only unchanged upstream inputs to03927c9a while preserving its source WIP, journal and original699d3779 task baseline. Fresh original0x006196D0-0x00619706 decode confirms unchanged ECX Texture receiver, Buffer and rectangle arguments, null rectangle result0x10, null heap forwarded to0x00619710 and ret0xC on both exits. A third incoming32-bit slot is unused; its source type remains unknown. Independent review confirms ordinary C++ overloads need no fake class or receiver cast. Restore the canonical seed name through the native source writer, keep int only as provisional ABI representation, retain all other worker changes and discoveries, and delete the seed only after the product replacement retains its measured historical obligation and is integrated. This authorizes in-scope correction, not acceptance or a baseline reset."
+    ],
+    "hypothesis": "The retained TextureRectExtract holder is scaffold structure, not a recovered class. Finish the pending replacement as a genuine Texture::extract overload and correct its canonical mapping before retiring the protected seed.",
+    "kind": "discovery"
+  },
+  "previous_event": "679366b050d259e91e7241e9373c81cac9c985d61f0155b4dd3bcebd21680b63",
+  "request_id": "texture-rect-real-owner-20260919",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:texture-rasterizer-recovery"
+}

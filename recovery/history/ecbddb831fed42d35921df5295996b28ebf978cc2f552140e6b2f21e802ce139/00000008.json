@@ -1,0 +1,17 @@
+{
+  "event_id": "09bb1cca75bced4e1b8a9a071f2d318b1da898b9c3efe225cbef285df6f5029f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-91f3896ee97043a6b9bfbb9e77b7a013",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The two-line source binding beside the existing Texture::sub_621870 forwarder in src/pending_bodies.cpp, authorized by journal event 4, preserves its seed extent and names the actual emitted member. The forwarder body and unrecovered seed are unchanged and no byte claim is granted to that callee. Fresh task restoration after the real rectangle overload replacement and redundant seed deletion passes all protected obligations, including the previously unresolved sub_624cd0 caller reference. Independent source review confirmed the annotation-only change matches its bounded authorization. This resolves the missing callee-identity binding discovery only; the original-address forwarder remains unfinished behavior and broader Texture references/automatic acceptance remain unknown."
+    ]
+  },
+  "previous_event": "3fd2d193fc36d1a39572d1d4c8ad2be82b4637af12efdcb629288a0584fbe17b",
+  "request_id": "texture-cross-tu-binding-incorporated-20260919",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:texture-rasterizer-recovery"
+}

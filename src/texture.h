@@ -113,6 +113,9 @@ class Texture {
   // array when the polygon is not the whole texture.
   int extract(Buffer *buffer, int x, int y, int width, int height,
               TexHeap *heap);
+  // 0x006196D0: rectangle forwarding overload. The third incoming 32-bit
+  // slot is unused; int preserves its ABI without claiming its original type.
+  int extract(Buffer *buffer, RECT *rect, int unused);
   void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last);
   void draw_trans(Buffer *buffer, Vert *verts, int count);
   // 0x006239B0, the narrowest of the sentinel wrappers: a5 == -1 forwards
@@ -326,5 +329,4 @@ static_assert(sizeof(TextureStore) == 0x260,
 
 
 typedef void *func_texture_free(void *);
-
 

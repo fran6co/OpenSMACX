@@ -283,6 +283,21 @@ int Texture::extract(Buffer *buffer, int x, int y, int width, int height,
     return 0;
 }
 
+// Rectangle form of extract; ECX remains the same Texture receiver at the
+// call to the six-argument overload. Both original exits pop three stack slots,
+// but the third incoming slot is never read. Its original type is unresolved.
+
+// ORIGINAL: 0x006196D0 ?extract@Texture@@QAEHPAUBuffer@@PAURECT@@@Z 0x006196D0-0x00619706 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x006196D0-0x00619706 is 54 bytes. ECX remains unchanged for its direct call to Texture::extract at 0x00619710. The first two stack slots supply Buffer and RECT; both exits use ret 0xC, but the third incoming slot is never read. A null rectangle returns 0x10; otherwise the call supplies left, top, right-left, bottom-top and a literal null heap.", "The historical seed restored by 03927c9a preserves the canonical Texture name and original byte obligation. Its separate TextureRectExtract class is verification scaffolding, not evidence of another object type. Mapped-span caller search is incomplete and establishes no type for the unused slot."], "reason": "Recover an ordinary Texture rectangle overload on the original receiver, without a fake holder class or reinterpret_cast. Keep the canonical catalogue name even though it omits the third stack slot; the emitted-symbol fact describes the actual three-argument method. int is only a provisional representation of the unused 32-bit slot, not a recovered original type."}
+// symbol    ?extract@Texture@@QAEHPAVBuffer@@PAUtagRECT@@H@Z
+int Texture::extract(Buffer *buffer, RECT *rect, int) {
+    if (rect == 0) {
+        return 0x10;
+    }
+    return extract(buffer, rect->left, rect->top,
+                   rect->right - rect->left, rect->bottom - rect->top, 0);
+}
+
 /*
 Purpose: Tear down the store, leaving a count of 3 at offset 0 and clearing
          the field at 4. Calls nothing.

@@ -1,0 +1,24 @@
+{
+  "event_id": "16ba7b3dbeddf5ce2d92c8e8a501ac2bf9ece81741b8b8255bdf33ead643a6d9",
+  "payload": {
+    "affects": [
+      "entity-0878ec475aed78b8c3b6bde24e9d4498ccb5731a8141209bb5dd6b321f6d6c88"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-91f3896ee97043a6b9bfbb9e77b7a013",
+    "evidence": [
+      "Fresh `recover tasks check-restoration texture-rasterizer-recovery --summary` reason, verbatim: unresolved targets: ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z; single configured trial: ['/c', '/O2', '/Gy', '/GR-', '/GX', '/Z7']",
+      "src/pending_bodies.cpp:2218-2231 is the only compiled definition of ?sub_621870@Texture@@ - a PENDING_BODY(0x00621870) forwarder, with the note 'It is reached by name by Texture::sub_624cd0, so this forwarder is the only compiled definition'; src/texture.h:233 declares the member but src/texture.cpp defines no body for it, and the file is reserved outside this task's authorized files",
+      "Masked `recover measure 0x00624CD0` passes: 16 instructions, 4 masked bytes; the 54-byte body differs from the image only at the call rel32 (image e8 76 cb ff ff at offset 38 -> callee 0x00621870, the unresolved target)",
+      "The /Oy- trial failing is family-normal, not a defect of this wrapper: sibling sentinel wrappers sub_624c70/sub_624ca0/sub_624d00 all report trial 1 (/c /O2 /Gy /GR- /GX /Z7) bytes+references pass and trial 2 (/Oy-) fail with ndiff 43/38/51 respectively, and their overall function results are pass - sub_624cd0 is the only family member whose trial 1 is blocked, and solely by the cross-TU callee resolution",
+      "Nothing editable in src/texture.cpp or src/texture.h can close it: the wrapper body must keep the by-name call to emit the image's E8, and moving sub_621870's definition into an authorized file is a scope expansion only the coordinator can grant"
+    ],
+    "hypothesis": "The remaining unknown obligation for ?sub_624cd0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHH2H@Z (0x00624CD0) is structurally unresolvable inside this task's authorized files: its body is byte-identical to the image except the single call rel32 to Texture::sub_621870 (0x00621870), whose only compiled definition is the PENDING_BODY forwarder in reserved src/pending_bodies.cpp:2225 - outside src/texture.cpp/src/texture.h and outside the task's entity set - so the single-TU scoped check can never resolve that relocation no matter how the wrapper is spelled. Coordinator action is needed: check-side resolution of ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z against the pending forwarder, or explicit scope/binding authorization; sub_621870's own body is walled (x87 fdivr st(4) with five locals live across ~350 instructions, per its TRIED note), so homing it is not the near-term path.",
+    "kind": "discovery"
+  },
+  "previous_event": "b66614f21c082808ac673b4919b0405c852cbd3cbc89984ac6642996564991f2",
+  "request_id": "worker-91f3896ee97043a6b9bfbb9e77b7a013",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:texture-rasterizer-recovery"
+}

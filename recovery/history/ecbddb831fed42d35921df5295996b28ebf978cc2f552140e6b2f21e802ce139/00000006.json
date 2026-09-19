@@ -1,0 +1,19 @@
+{
+  "event_id": "08a0a65ac0982b7e885ee54a1545dc549b0bba601c27b65c7de17a0671bb4f1f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/006196d0.cpp"
+    ],
+    "evidence": [
+      "Authorize removal of only the now-superseded006196d0 scaffold from this candidate, inseparable from its genuine Texture overload and native-recorded claim. Fresh product measurement is24/24 exact; strict task verification passes boundary, bytes and reference target for the new method and all10 protected obligations. Full application build/link passes, claim continuity has zero missing requirements, and the complete old seed is recoverable as Git blobc819a84cfd0ca8b1a81b5f54ccbb1ecdf1dbc32e. This prepares atomic source replacement, not another deletion-only master commit: any publication must contain the real body, header declaration, correct original mapping and recorded obligation together. Preserve original task baseline and unrelated WIP. Broader automatic acceptance remains unknown and manual integration authority is being requested separately."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bd7650aacf621e9e1fcc9c94e3988d975fe9c9117cd892970f4e5e6f3961811d",
+  "request_id": "texture-rect-seed-retirement-scope-20260919",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:texture-rasterizer-recovery"
+}

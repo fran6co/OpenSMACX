@@ -1,0 +1,17 @@
+{
+  "event_id": "3fd2d193fc36d1a39572d1d4c8ad2be82b4637af12efdcb629288a0584fbe17b",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "texture-rect-real-owner-20260919",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/texture.cpp now defines a genuine Texture::extract(Buffer*, RECT*, int) overload; src/texture.h declares it. The canonical 0x006196D0 identity and 54-byte extent remain beside the native-recorded BYTE_EXACT obligation and actual emitted symbol. The unused third slot is explicitly provisional, not an invented recovered type. The fake holder and receiver cast are absent. The redundant seed is removed only in this same candidate; its complete historical blob c819a84cfd0ca8b1a81b5f54ccbb1ecdf1dbc32e remains in Git. Independent source/deletion review found no lost identity or unique evidence. After deletion, claim continuity reports zero missing requirements, a fresh full application build/link passes (53.17 seconds), and fresh task restoration passes with no failed, tracked or unknown protected obligations. Broader task references and automatic publication remain unknown. This incorporates the bounded source discovery, not full Texture completion, autonomous acceptance or permission to merge."
+    ]
+  },
+  "previous_event": "08a0a65ac0982b7e885ee54a1545dc549b0bba601c27b65c7de17a0671bb4f1f",
+  "request_id": "texture-rect-real-owner-incorporated-20260919",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:texture-rasterizer-recovery"
+}

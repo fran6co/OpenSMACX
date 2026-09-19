@@ -1,0 +1,23 @@
+{
+  "event_id": "408e86c47d4b8ac70d72ae4624c02ce953db08073960cdc8abf9ca318b3b87e1",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-095caef0708e418ca7234e7b10fa6398",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/texture.cpp:326 now records the emitted spelling '// symbol    ?extract@TextureRectExtract@@QAEHPAVBuffer@@PAUtagRECT@@H@Z' while the ORIGINAL marker at :324 and RECOVERY_BINDING v1 at :325 still preserve the image's PAU/PAURECT decoration and seed history, and the seed-derived body at :327-334 (null-rect guard returning 0x10, reinterpret_cast<Texture *> receiver, six-argument extract with null TexHeap) is untouched - exactly the finding's claim that only the stale fact was corrected, with no body or binding change.",
+      "Fresh scoped check, functions evidence read in full from the unchanged request (/diagnostics/check/report/candidate/checks/binary/functions): 0x006196D0 overall result pass - trial /c /O2 /Gy /GR- /GX /Z7 reports bytes pass, references pass, differing_offsets empty, and its single relocation at body offset 45 is bound in-TU to ?extract@Texture@@QAEHPAVBuffer@@HHHHPAUTexHeap@@@Z at binding_address 0x00619710; the check's own recorded emitted symbol equals the corrected annotation spelling.",
+      "The /Oy- variant fails only on extent (candidate_size 64 vs original 54, reason 'candidate exceeds or misses the independently recorded extent') with bytes otherwise unmeasured - the family-normal /Oy- shape shared with the sibling sentinel wrappers whose overall results are pass, so the single configured trial governs and the obligation is not masked by a defect in this body.",
+      "The two name-affecting deltas are already-recorded tree facts, not new interpretations: 'class Buffer' makes VC6 emit PAV where the image decoration reads PAU (the delta every Texture member in this TU carries), and windows.h 'typedef struct tagRECT RECT' yields PAUtagRECT; src/texture.cpp:300-317 documents the direct C2371 redeclaration probe and the Buffer::copy 0x005D95E0 BYTE_EXACT precedent (emitted PAUtagRECT against the image's PAURECT).",
+      "Unknown tail preserved, not hidden: the same fresh check leaves ?sub_624cd0@Texture@@ 0x00624CD0 unknown solely on its offset-38 relocation to ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z (binding_address null, cross-TU pending forwarder), unrestored.unknown lists only obligation-0cf9451fd81fff1bbb5e180f9c0eba4e70434005a2b2a7261e1adb2b896c34e5, and that separate finding (worker-91f3896ee97043a6b9bfbb9e77b7a013) stays pending and undecided here.",
+      "Boundary of this incorporation: it establishes only that the corrected emitted-name fact is expressed in the task-owned src/texture.cpp definition and passes the fresh scoped measurement; it is not binary or behavioral proof, full-link acceptance, or a claim on any outside owner - component_verification still carries the vc6-runtime CRT imported-target unknowns exactly as before.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "16ba7b3dbeddf5ce2d92c8e8a501ac2bf9ece81741b8b8255bdf33ead643a6d9",
+  "request_id": "coordinator-aab9c9d7cc0f4791a43248ca149aa9b8",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:texture-rasterizer-recovery"
+}

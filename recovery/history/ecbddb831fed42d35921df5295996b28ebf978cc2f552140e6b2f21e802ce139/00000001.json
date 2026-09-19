@@ -1,0 +1,24 @@
+{
+  "event_id": "b66614f21c082808ac673b4919b0405c852cbd3cbc89984ac6642996564991f2",
+  "payload": {
+    "affects": [
+      "entity-f02bd7bf7cc425b8a49fb3cf1f489d23e44e55f3baac1c749bbded27ae37f7f8"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-095caef0708e418ca7234e7b10fa6398",
+    "evidence": [
+      "Pre-fix `recover measure 0x006196D0 --image $OPENSMACX_IMAGE --in src/texture.cpp` diagnostic: the annotation records the emitted symbol '?extract@TextureRectExtract@@QAEHPAUBuffer@@PAUtagRECT@@H@Z', which is not among the object's .text symbols - the fact is stale",
+      "The object compiled from src/texture.cpp with the file's own recipe (cl 12.00.8168, /TP /O2 /Ob2 /GX -MT /FI vc6_compat.h) contains the string '?extract@TextureRectExtract@@QAEHPAVBuffer@@PAUtagRECT@@H@Z' in its symbol/string table; the PAU spelling appears nowhere in the object",
+      "Both name-affecting deltas are already-recorded tree facts, not new interpretations: Buffer is a class here so every Texture member emits PAV where the image's decoration has PAU, and windows.h's `typedef struct tagRECT RECT` makes the tag arrive as tagRECT (a local `struct RECT` redeclaration is refused with C2371, probed directly; Buffer::copy 0x005D95E0 is BYTE_EXACT with emitted PAUtagRECT against the image's PAURECT)",
+      "Post-fix measure of 0x006196D0: result pass, verdict BYTE_EXACT, 24/24 instructions matching, 4 masked bytes - the call rel32 at body offset 45 whose callee Texture::extract (0x00619710) is in-TU and bound; body bytes otherwise identical to the image",
+      "`recover tasks check-restoration texture-rasterizer-recovery --summary` moved from 8 pass / 2 unknown to 9 pass / 1 unknown with failed=[]; obligation-0affa69219cb5b0e0291dccee34ed24359f8ec800bdfb8aeef2fb7f1758da0b no longer appears in unrestored.unknown"
+    ],
+    "hypothesis": "The unknown obligation for ?extract@TextureRectExtract@@QAEHPAUBuffer@@PAUtagRECT@@H@Z (0x006196D0) was caused by a stale `// symbol` fact, not by any body or binding defect: the tree declares `class Buffer`, so VC6 mangles the parameter PAVBuffer while the annotation recorded the image's PAU spelling, and the grammar requires the symbol fact to name what this tree's compiler emits, measured from the object. Corrected the annotation at src/texture.cpp (and the measurement comment above it, which asserted the same wrong PAU spelling); the ORIGINAL marker, RECOVERY_BINDING v1 and the seed-derived body are untouched.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-095caef0708e418ca7234e7b10fa6398",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:texture-rasterizer-recovery"
+}
