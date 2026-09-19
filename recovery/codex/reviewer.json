@@ -1,0 +1,7 @@
+{
+  "author": "independent-recovery-reviewer",
+  "command": {
+    "argv": ["uv", "run", "recover", "agent", "reviewer", "--config", "recovery/codex/agents.json"],
+    "timeout": 11400
+  }
+}

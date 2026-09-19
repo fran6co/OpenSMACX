@@ -1,0 +1,22 @@
+{
+  "schema_version": 1,
+  "artifacts": "build/recovery/agents",
+  "worker": {
+    "evidence_delivery": "on_demand",
+    "command": {
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-5.6-luna", "-c", "model_provider=\"openai\"", "-c", "model_reasoning_effort=\"high\"", "--approve-for-me", "--add-dir", "{env:VC6_PREFIX}", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "timeout": 10800
+    },
+    "instructions": [".claude/agents/recovery-worker.md"],
+    "response": "file"
+  },
+  "reviewer": {
+    "evidence_delivery": "on_demand",
+    "command": {
+      "argv": ["codex", "exec", "--ephemeral", "--model", "gpt-6-astra", "-c", "model_provider=\"openai\"", "-c", "model_reasoning_effort=\"high\"", "--sandbox", "read-only", "--output-schema", "{schema}", "--output-last-message", "{response}", "-"],
+      "timeout": 10800
+    },
+    "instructions": [".claude/agents/recovery-reviewer.md"],
+    "response": "file"
+  }
+}

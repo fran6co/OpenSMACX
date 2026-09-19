@@ -1,0 +1,53 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "edd4befcf08e1aac0de676502cb693fedfb60ed4",
+  "editable_files": [
+    "src/vector.cpp",
+    "src/vector.h"
+  ],
+  "evidence": [
+    "src/vector.h records original x87 member evidence and compiler experiments identifying the hidden return object and destructor at 0x0055B750. src/vector.cpp still retains synthetic output parameters due to a retired emitter limitation. Revalidate against the pinned executable using the current native framework; old measurements are hints only.",
+    "User explicitly prioritizes executable recovery over more acceptance implementation. The four retained campaign scopes (pathfinding, texture, tech, alpha) and existing task editable files do not own vector.cpp or vector.h. Work in a new isolated checkout; no automatic integration or migration admission is authorized."
+  ],
+  "intent": "Recover genuine Vector value-return and lifecycle semantics, beginning with the destructor, subtraction and scale. Replace synthetic output parameters with evidence-backed C++ signatures; implement only authorized identities, request bindings for seeds and scope for affected callers. Preserve all historical obligations and build continuity. Do not spend this task on framework changes.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5617488,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505600,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6505648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6506096,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vector-value-semantics"
+}

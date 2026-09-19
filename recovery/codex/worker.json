@@ -1,0 +1,7 @@
+{
+  "author": "recovery-worker",
+  "command": {
+    "argv": ["uv", "run", "recover", "agent", "worker", "--config", "recovery/codex/agents.json"],
+    "timeout": 11400
+  }
+}
