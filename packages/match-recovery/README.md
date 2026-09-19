@@ -2102,6 +2102,18 @@ This conservative proof requires an explicitly nonincremental, relocation-only
 link; ambiguous competitors stay unresolved. PDB module/extent correspondence
 does not equate characteristics: a reserved-bit difference is retained explicitly
 as unknown and cannot waive separate allocation or runtime checks.
+Common storage follows the same distinction: complete uniform physical requests,
+selected placement, zero initial contents and unique exact linker contributions
+can establish retention while reserved producer characteristics remain unknown.
+The ordinary allocation observer derives every common request from the physical
+population, checks PDB fixup writes and ordinary/common/common overlaps, and
+discharges only verified common-request storage obligations. Failed later checks
+do not erase independently established common extents. Unexplained `0x2000` adds
+a mandatory per-common gap, even with no ordinary sections. Other unsupported
+flags, alignment, aggregation or competitors refuse attribution. Native content
+and isolation failures propagate through application residual verification;
+imports, directives, unselected candidates and other effects remain obligations.
+This composes retention, not byte projection, request removal or acceptance.
 Non-code section merges require a separately bounded nonexecutable output target
 and no affected physical code section; this grants no data or initialization
 exemption. Repeated per-key refusals are memoized only inside the same guarded

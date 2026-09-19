@@ -175,13 +175,17 @@ def _verify_common_inputs(evidence, coverage, records, image, mapping, symbols):
             flags = image.section_flags[public.segment - 1]
             if flags & 0x20000000 or flags & 0xC0000000 != 0xC0000000:
                 raise ValueError("common allocation is not in readable writable non-executable storage")
-            if any(other.symbol != name and span.start <= other.address < span.end for other in mapping.publics):
-                raise ValueError("common allocation overlaps another public placement")
             # Bound before allocating zero bytes, including adversarial huge
             # requests; read_initial also refuses code sections and cross-seams.
             region = image.sections[public.segment - 1][0]
             if span.end > region.end or size > 16 * 1024 * 1024:
                 raise ValueError("common allocation exceeds its section or verification resource bound")
+            # Preserve independently selected, bounded storage even when a
+            # later public/contents check refuses. Allocation consumers must
+            # not lose an overlapping competitor merely because it failed.
+            row["extent_verification"] = Result.PASS
+            if any(other.symbol != name and span.start <= other.address < span.end for other in mapping.publics):
+                raise ValueError("common allocation overlaps another public placement")
             initial = image.read_initial(span)
             if image.absolute_sites(span):
                 raise ValueError("common allocation contains loader relocations")

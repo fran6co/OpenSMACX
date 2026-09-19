@@ -22,7 +22,8 @@ SECOND = b"ABCDEFGH"
 
 
 def fixture(root, *, overlap=False, missing_anchor=False, missing_sc=False, corrupt=False,
-            extra_unplaced=False, empty_sc=False, pdb_data_flags=0xC0300040):
+            extra_unplaced=False, empty_sc=False, pdb_data_flags=0xC0300040,
+            commons=(), common_damage=False, adjust=None):
     """One receipt-bound input, code and two fully named ordinary sections.
 
     The selected ordinary entry has real code bytes and its own bound PDB SC.
@@ -39,6 +40,11 @@ def fixture(root, *, overlap=False, missing_anchor=False, missing_sc=False, corr
     end = at + 18 * count
     raw[end:end] = struct.pack("<8sIhHBB", b"_entry\0\0", 0, 3, 0x20, 2, 0)
     struct.pack_into("<I", raw, 12, count + 1)
+    for name, size, offset, flags in commons:
+        at, count = struct.unpack_from("<II", raw, 8)
+        end = at + 18 * count
+        raw[end:end] = struct.pack("<8sIhHBB", name.encode(), size, 0, 0, 2, 0)
+        struct.pack_into("<I", raw, 12, count + 1)
     if extra_unplaced:
         raw = bytearray(append_section(raw, data=b"unplaced"))
         raw[140:148] = b".extra\0\0"
@@ -67,6 +73,9 @@ def fixture(root, *, overlap=False, missing_anchor=False, missing_sc=False, corr
                f" 0002:{first + 8:08x} _inner {0x402000 + first + 8:08x} {output.name}\n"
                + ("" if missing_anchor else
                   f" 0002:{second + 4:08x} _target {0x402000 + second + 4:08x} {output.name}\n"))
+    mapping = mapping.replace(" entry point", "".join(
+        f" 0002:{offset:08x} {name} {0x402000 + offset:08x} <common>\n"
+        for name, _, offset, _ in commons) + " entry point")
     update_artifact(context, "app.map", mapping.encode())
     image = bytearray((context.directory / "app.exe").read_bytes())
     image[0x200:0x210] = b"\xcc" * 16
@@ -78,16 +87,23 @@ def fixture(root, *, overlap=False, missing_anchor=False, missing_sc=False, corr
     struct.pack_into("<II", image, 0x98 + 96 + 5 * 8, 0, 0)
     if corrupt:
         image[0x400 + first] ^= 1
+    if common_damage:
+        image[0x400 + commons[0][2]] = 1
     update_artifact(context, "app.exe", bytes(image))
     label = str(output).encode()
-    set_modules(context, module(label, label))
+    set_modules(context, module(label, label) + (module(b"* Linker *", b"") if commons else b""))
     records = contribution(section=2, offset=first, size=16, flags=pdb_data_flags)
     if not missing_sc:
         records += contribution(section=2, offset=second, size=8, flags=pdb_data_flags)
     records += contribution(section=1, offset=0x1E0, size=16, flags=0x60500020)
     if empty_sc:
         records += contribution(section=2, offset=first + 4, size=0, flags=0xC0300040)
+    for _, size, offset, flags in commons:
+        if flags is not None:
+            records += contribution(section=2, offset=offset, size=size, flags=flags, module=1)
     set_contributions(context, records)
+    if adjust is not None:
+        adjust(context)
     # All mutation above constructs a different physical fixture BEFORE its
     # live epoch. Changes after this point cannot refresh its captured proof.
     expected = digest(context.report)

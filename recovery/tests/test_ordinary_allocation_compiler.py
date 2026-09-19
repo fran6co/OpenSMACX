@@ -45,6 +45,35 @@ def test_real_ordinary_payload_retention_does_not_certify_pdb_characteristics():
                     assert row["characteristics_agreement"] == row["allocation_isolation"] == "unknown"
                 assert report["empty_contributions"]
                 assert set(report["empty_contributions"]) <= set(report["unmatched_contributions"])
+                # Commons have no input COFF section to join. Native requests
+                # and PDB extents retain them without explaining producer flags.
+                names = {row.symbol for row in live.inputs.mapping.publics if row.owner == "<common>"}
+                assert names
+                commons = {row["symbol"]: row for row in report["common_storage"]["allocations"]}
+                assert names <= commons.keys()
+                # These runtime commons have possible strong definitions in
+                # fpinit.obj. A MAP placement does not prove those candidates
+                # absent; keep this real conservative-selection refusal.
+                floating = {"__FPinit", "__FPmtinit", "__FPmtterm"}
+                assert floating <= commons.keys()
+                assert "__FPinit" in names
+                for name in floating:
+                    row = commons[name]
+                    assert row["retention"] == row["input_consistency"] == "unknown"
+                    assert "contribution" not in row
+                    assert any(item["declaration"] == "defined" and item["member"].endswith("/fpinit.obj")
+                               for item in row["proof"]["blockers"])
+                assert "__crtheap" in names - floating
+                for name in names:
+                    if name in floating:
+                        continue
+                    row = commons[name]
+                    assert row["retention"] == row["input_consistency"] == "pass", row
+                    assert row["pdb_flags"] & 0x2000
+                    assert row["characteristics_agreement"] == row["allocation_isolation"] == "unknown"
+                    assert row["contribution"] not in report["unmatched_contributions"]
+                assert any(row.get("symbol") in names and "characteristics remain unexplained" in row["reason"]
+                           for row in report["gaps"])
                 assert report["result"] == report["allocation_domain"] == "unknown"
                 assert report["allocation_isolation"] == report["remaining_linked_effects"] == "unknown"
                 assert not report["ready_for_collection"]

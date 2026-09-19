@@ -91,6 +91,16 @@ Native V60 PDB zero-length contribution records retain their fields and position
 they are not positive allocation intervals and do not prove section discard.
 Invalid sections/modules, negative sizes and out-of-range coordinates still refuse.
 
+Common storage now composes with this allocation observation. Complete physical
+requests, selected uniform sizes, initial zero bytes and a unique exact native
+linker contribution establish retention; they do not establish producer flag
+equivalence. Reserved `0x2000` stays visible and leaves a mandatory characteristics
+gap even after contribution attribution. Ordinary/common and common/common
+collisions include independently bounded competitors whose later checks failed.
+Common corruption and collisions propagate as failures through the application
+residual. Imports, directives, unused-candidate selection and all other unresolved
+effects remain obligations; no common bytes or declarations gain a projection.
+
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied
 original can be pinned in source without copying its bytes; compiler and build

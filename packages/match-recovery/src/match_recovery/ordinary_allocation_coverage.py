@@ -72,13 +72,16 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
             gap("physical allocation population is incomplete")
         # These observations contain unsupported policy and unbound participation,
         # not merely an empty intersection list. None is an allocation exemption.
-        gaps.extend(census["gaps"])
+        # Common-request gaps are reconciled below against same-epoch native
+        # storage. Every other census obligation remains untouched.
+        gaps.extend(row for row in census["gaps"]
+                    if row["reason"] != "common_requests require separate linked-effect verification")
         ordinary = {(digest(row["input"]), row["object_section"]): row for row in joined["sections"]}
         for candidate in census["inputs"]:
             if (candidate["participation"] != "final_pass" or len(candidate["owners"]) != 1):
                 gap("candidate lacks independent retained or non-admitted allocation evidence", candidate)
-            if candidate["common_requests"] or candidate["imports"] or candidate["directives"]:
-                gap("common, import or directive allocation effects remain unbounded", candidate)
+            if candidate["imports"] or candidate["directives"]:
+                gap("import or directive allocation effects remain unbounded", candidate)
             if candidate["format"] != "coff":
                 gap("non-COFF input requires a linker-generated allocation bound", candidate)
             owner = candidate["owners"][0] if len(candidate["owners"]) == 1 else None
@@ -211,11 +214,18 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                 if row["classification"] != "ordinary_data":
                     continue
             row["contribution"] = contribution["index"]
+        from .common_allocation_coverage import observe_common_allocations
+        commons = observe_common_allocations(inputs, sections)
+        gaps.extend(commons["gaps"])
+        retained_names = {row["symbol"] for row in commons["allocations"] if row["retention"] == Result.PASS}
+        for candidate in census["inputs"]:
+            if any(symbol["name"] not in retained_names for symbol in candidate["common_requests"]):
+                gap("common requests lack independently retained storage", candidate)
         # The relation must be injective in both directions. Neither a failed
         # join nor a physically placed competitor may disappear from this check.
         users = Counter(index for row in sections for index in row.get("intersections", ()))
         used = set()
-        overlap = False
+        overlap = commons["allocation_isolation"] == Result.FAIL
         for index, row in enumerate(sections):
             contribution = row.get("contribution")
             same_group = None
@@ -253,18 +263,25 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                         gap("shared native code needs retained allocation correspondence", row)
         # Verified linker-generated storage is assigned, not physically joined;
         # it no longer keeps the contribution domain open.
+        common_contributions = set(commons["retained_contributions"])
         unmatched = [row["index"] for row in contributions
-                     if row["index"] not in used and row["index"] not in assigned_contributions]
+                     if row["index"] not in used and row["index"] not in assigned_contributions
+                     and row["index"] not in common_contributions]
         if unmatched:
             gap("PDB contributions remain without unique verified physical allocations")
         closed = not gaps and not unmatched
         for row in sections:
             if row["retention"] == Result.PASS and row["allocation_isolation"] != Result.FAIL and closed:
                 row["allocation_isolation"] = Result.PASS
-        damaged = code["result"] == Result.FAIL or any(row["input_consistency"] == Result.FAIL for row in sections)
+        for row in commons["allocations"]:
+            if row["retention"] == Result.PASS and closed:
+                row["allocation_isolation"] = Result.PASS
+        damaged = (code["result"] == Result.FAIL or commons["input_consistency"] == Result.FAIL
+                   or any(row["input_consistency"] == Result.FAIL for row in sections))
         return {"check": "ordinary_allocation_coverage", "sections": sections, "code": code,
                 "contributions": contributions, "unmatched_contributions": unmatched, "gaps": gaps,
                 "generated_storage": generated,
+                "common_storage": commons,
                 "empty_contributions": [row["index"] for row in contributions if row["size"] == 0],
                 "input_consistency": Result.FAIL if damaged else Result.PASS if closed else Result.UNKNOWN,
                 "allocation_domain": Result.PASS if closed else Result.UNKNOWN,

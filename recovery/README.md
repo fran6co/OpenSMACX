@@ -612,6 +612,12 @@ handle and six small-block-heap globals. This proves candidate storage, not thei
 original-game bindings or runtime lifetime. Conflicting requests, aliases,
 unsupported policies and incomplete evidence remain unknown. No replacement
 application globals are introduced, and full dependency admission remains open.
+Native application allocation checks now compose common requests with exact
+PDB contribution retention and ordinary/common overlap checking. Known reserved
+producer flags remain explicit characteristics gaps, not normalized bits or
+acceptance permissions. Failed initial contents and independently bounded
+overlapping allocations propagate to the application residual as failures.
+Source bindings, declarations and storage bytes receive no omission exemption.
 The Wine wrapper rejects nonempty `LINK`/`_LINK_` environment options and passes
 explicit empty values to the child; put linker options in the configured argument
 list. Hidden environment/registry defaults must not bypass captured link policy.
