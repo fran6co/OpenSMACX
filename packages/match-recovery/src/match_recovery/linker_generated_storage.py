@@ -1,4 +1,4 @@
-"""Image-backed linker thunk storage, not physical input selection or acceptance.
+"""Image-backed linker storage, not physical input selection or acceptance.
 
 The enclosing native epoch binds these observations to its fresh PE/PDB pair.
 An import-shaped byte string alone cannot close a contribution obligation.
@@ -10,8 +10,8 @@ from .linked_interval_index import IntervalIndex
 from .model import Result, Span
 
 
-def assign_linker_contributions(contributions, modules, image):
-    """Assign only isolated executable thunk extents with exact loader fixups.
+def assign_linker_contributions(contributions, modules, image, *, pdb=None):
+    """Assign isolated verified thunk or PE/PDB debug-directory extents.
 
     This establishes a supported output recipe, not its physical library producer,
     input retention, allocation isolation or equivalence across application builds.
@@ -41,8 +41,15 @@ def assign_linker_contributions(contributions, modules, image):
         try:
             if module.get("kind") != "linker_generated" or module.get("object_name") != "":
                 raise ValueError("linker label lacks native generated-module identity")
+            if row["size"] > 0 and len(intervals.overlaps(row["address"], row["address"] + row["size"])) != 1:
+                raise ValueError("linker contribution overlaps another contribution")
             if row["size"] != 6:
-                raise ValueError("unsupported linker contribution recipe extent")
+                from .linker_debug_storage import verify_debug_storage
+                proof = verify_debug_storage(image, pdb, row)
+                record.update(result=Result.PASS, proof=proof,
+                              assignment={"kind": proof["kind"], "address": proof["address"],
+                                          "size": proof["size"]})
+                continue
             span = Span(row["address"], row["address"] + row["size"])
             matches = [(number, region, flags) for number, ((region, _, _), flags) in enumerate(
                 zip(image.sections, image.section_flags, strict=True), 1)
@@ -55,8 +62,6 @@ def assign_linker_contributions(contributions, modules, image):
             # Code/read/execute, not writable or initialized/uninitialized data.
             if flags & 0xE00000E0 != 0x60000020 or row.get("flags", 0) & 0xE00000E0 != 0x60000020:
                 raise ValueError("linker thunk requires executable code characteristics")
-            if len(intervals.overlaps(span.start, span.end)) != 1:
-                raise ValueError("linker contribution overlaps another contribution")
             if slots is None and slot_error is None:
                 try:
                     slots = import_slots(image)
@@ -87,7 +92,8 @@ def assign_linker_contributions(contributions, modules, image):
     return {"check": "linker_generated_storage",
             "result": Result.PASS if assigned == len(records) else Result.UNKNOWN,
             "records": records, "assigned": assigned, "unassigned": len(records) - assigned,
-            "limitations": ["verified thunk recipes only, not whole linker-output attribution",
+            "limitations": ["verified thunk/debug recipes only, not whole linker-output attribution",
+                            "debug allocation bytes remain literal; no new metadata projection or omission",
                             "assigned storage is generated identity, never product retention",
                             "unsupported linker contributions stay unmatched and keep the domain open"],
             "ready_for_collection": False, "persisted": False}

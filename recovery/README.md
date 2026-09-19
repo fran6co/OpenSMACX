@@ -82,9 +82,20 @@ Linker-generated thunk assignment requires native generated-module identity,
 exact PE/PDB coordinates, executable storage, independent loader-slot validation,
 the exact HIGHLOW relocation and a non-overlapping contribution. Missing fixups,
 data-only lookalikes and duplicate contributions stay unmatched. The real VC6
-control emits its import thunk under the DLL's library module, not `* Linker *`;
-the latter's debug metadata remains an unresolved contribution. Passing the
-separate physical import-thunk verifier does not qualify that unrelated storage.
+control emits its import thunk under the DLL's library module, not `* Linker *`.
+Passing the separate physical import-thunk verifier does not qualify that unrelated
+debug storage. A separate native recipe now qualifies an exact readonly 28-byte
+NB10 directory contribution, or the control's 56-byte shape with exactly 28 retained
+zero bytes after that entry. It rebinds the physical PE/PDB, complete contribution population and module,
+checks coordinates, backing, overlaps and loader/PDB relocation writes, and requires
+the overlay NB10 payload. The zero suffix is not inferred to be unused or a second
+entry. All allocation bytes remain in residual comparison; no new projection,
+retention exemption or acceptance permission is introduced. Other debug shapes stay
+unmatched. The real compiler control independently passes this recipe and refuses a
+damaged suffix; this does not complete the game's linked-preservation domain.
+The measured game has a 28-byte directory contribution with PDB flags `0x40002040`
+against PE flags `0x40000040`. The unexplained reserved bit is not masked: this
+contribution still refuses, as do the other linker-owned storage shapes.
 Fresh recovery builds also request a separate PDB with linker fixups, retaining
 explicit release optimization and non-incremental linking. The package binds
 that PDB to its exact PE before using symbol-base fixups to place selected COFF

@@ -54,7 +54,8 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                 modules[digest(row["input"])].append(row)
         contributions = joined["contributions"]
         from .linker_generated_storage import assign_linker_contributions
-        generated = assign_linker_contributions(contributions, joined["modules"]["modules"], inputs.image)
+        generated = assign_linker_contributions(contributions, joined["modules"]["modules"], inputs.image,
+                                               pdb=inputs.artifacts.get("msvc-pdb"))
         assigned_contributions = {record["index"] for record in generated["records"]
                                   if record["result"] == Result.PASS}
         contribution_ranges = IntervalIndex()

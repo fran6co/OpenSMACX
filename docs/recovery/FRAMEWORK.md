@@ -624,10 +624,19 @@ and same-commit documentation; none grants acceptance or discharges obligations.
    contributions; physical PE/PDB damage controls now cover those failures.
    Assigned storage leaves the unmatched set as generated identity and
    unassigned recipes keep the domain open. A real VC6 compiler control gives
-   its import thunk to the library module and leaves the synthetic linker's
-   debug metadata unmatched, not a claimed live positive for this recipe.
+   its import thunk to the library module, not a claimed live positive for this
+   recipe. A separate physical PE/PDB-bound debug recipe now qualifies the
+   exact readonly 28-byte NB10 directory contribution and the control's 56-byte
+   variant with 28 retained zero suffix bytes. Exact native contribution/module identity, complete
+   interval isolation, backing and absence of loader/PDB writes are required;
+   suffix damage refuses. All bytes remain compared; no new projection or
+   acceptance permission is introduced. The real compiler control qualifies
+   this allocation independently of the import thunk.
+   The game's 28-byte contribution still has an unexplained reserved PDB
+   characteristic (`0x40002040` versus PE `0x40000040`); it is not normalized
+   into an assignment or accepted allocation.
    REMAINING: other linker-generated shapes beyond the measured thunk
-   recipe (jump thunks to image code, TLS or debug scaffolds) stay
+   recipes (jump thunks to image code, TLS or other debug scaffolds) stay
    unmatched until separately qualified.
 4. Private-form qualifications if real objects need them: private
    original-family ICF provenance and owner-qualified REF events for static

@@ -2172,8 +2172,23 @@ readable import slot and exact loader relocation are required. Duplicate or
 intersecting contributions remain unmatched. Import-shaped bytes alone are not
 evidence of valid generated storage, and this output assignment does not supply
 the physical-producer proof above. The real VC6 control attributes its import
-thunk to the library module and leaves the synthetic linker's debug contribution
-unmatched; neither is reassigned to manufacture a closed allocation domain.
+thunk to the library module; it is not reassigned to the synthetic linker module.
+
+A separate PE/PDB-bound recipe identifies a readonly initialized debug allocation:
+exactly one 28-byte NB10 directory entry with an overlay payload, optionally followed
+by 28 retained zero bytes (the 56-byte control shape). It re-reads the full physical contribution table
+and native module identity, validates exact PE coordinates and backing, and refuses
+overlaps, nonzero suffixes, mismatched PDB identity, or loader/PDB writes anywhere in
+the allocation. An omitted competing contribution in a caller's list cannot bypass
+the independent table check. The suffix is not called unused padding or a second
+debug entry. Every byte remains in output residual comparison; no additional
+metadata field is projected out. This closes only that output contribution's
+assignment obligation, not input selection, all allocations or acceptance. Other
+debug extents and shapes remain unmatched. Real compiler controls verify this
+independently of import-thunk production and reject suffix damage.
+Unexplained PDB characteristics, including the observed reserved `0x2000` difference
+in the application's 28-byte contribution, still refuse; exact coordinates do not
+permit silently normalizing that flag.
 
 For reviewed generated changes, the native application graph additionally derives
 a generated-root code residual inside both live build contexts. Only exact,
