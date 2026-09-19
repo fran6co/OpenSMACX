@@ -129,6 +129,15 @@ COFF pointer/code references and actual PE loader fixups in both live builds.
 This is not proof that callbacks, common storage or startup side effects are
 preserved, and it does not waive the retained recovery's outside-scope findings.
 
+Unplaced compiler labels and ambiguous pooled literals remain unknown references
+in strict checks. Their names and same-object definitions are diagnostic hints,
+not permission to mask operands into success. Explicitly mapped companion code
+still verifies normally; unrelated measured damage remains a failure.
+Earlier strict passes that relied on masking these references are not current
+verification evidence. Preserve historical claims and task decisions, but rerun
+the checks with the corrected framework before acceptance; do not replay a saved
+pass or change C++ structure merely to hide the newly visible obligation.
+
 The active agent/coordinator contract is [WORKFLOW.md](WORKFLOW.md). Historical
 compiler observations are in [COMPILER_EVIDENCE.md](COMPILER_EVIDENCE.md); they do
 not override task scope, structural evidence or acceptance policy.

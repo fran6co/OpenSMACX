@@ -93,13 +93,22 @@ def test_multiple_associated_code_sections_are_not_paired_by_order():
     assert check_objects([binding], objects, image)[0]["result"] == "unknown"
 
 
-def test_associated_data_does_not_take_the_place_of_a_code_tail():
-    binding, objects, image = fixture(extra=(b".xdata$x", bytes(16), (), 1, 5, 0x40401040))
+@pytest.mark.parametrize("parent,selection", [(1, 5), (0, 2)])
+@pytest.mark.parametrize("label", [b"$tail3", b"data"])
+def test_unmapped_data_does_not_take_the_place_of_a_code_tail(parent, selection, label):
+    extra = (b".xdata$x", bytes(16), (), parent, selection, 0x40401040)
+    binding, objects, image = fixture(extra=extra)
     obj = objects[binding.unit]
     assert obj.code_sections(obj.function("_f")) == (1, 2)
     assert check_objects([binding], objects, image)[0]["result"] == "pass"
-    # A real relocation to that unmapped exception data still stays unknown.
-    obj.sections = (replace(obj.sections[0], relocations=((1, 8, 20),)), *obj.sections[1:])
+    # Change physical relocation/symbol bytes, then parse a fresh object.
+    # Neither association nor a compiler-looking name supplies placement.
+    raw = bytearray(object_fixture(extra=extra))
+    relocation_table, = struct.unpack_from("<I", raw, 20 + 24)
+    struct.pack_into("<I", raw, relocation_table + 4, 8)
+    symbol_table, = struct.unpack_from("<I", raw, 8)
+    raw[symbol_table + 8 * 18:symbol_table + 8 * 18 + 8] = label.ljust(8, b"\0")
+    objects[binding.unit] = Coff(bytes(raw))
     row, = check_objects([binding], objects, image)
     assert row["result"] == row["references"] == "unknown"
 

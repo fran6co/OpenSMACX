@@ -59,8 +59,8 @@ def binding(pin):
     return (FunctionBinding(Origin(pin, "pe:va", 0x401000), (Span(0x401000, 0x401000 + 16),), "_f", "unit.obj"),)
 
 
-def check(code, literal, *, twice=False, image_literal=None):
-    original = b"\xa1" + struct.pack("<I", 0x402000) + b"\x90" * 11
+def check(code, literal, *, twice=False, image_literal=None, image_target=0x402000):
+    original = b"\xa1" + struct.pack("<I", image_target) + b"\x90" * 11
     pooled = image_literal if image_literal is not None else literal
     raw = object_with_literal(code, literal)
     img = image_with_literal(original, pooled, twice=twice)
@@ -86,13 +86,15 @@ def test_pooled_literal_resolves_by_unique_content(storage):
     assert pooled["literal"] == "JKAF\x00" and pooled["address"] == "0x00402000"
 
 
-def test_repeated_literal_masks_as_structural_reference():
-    row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF", twice=True)
-    assert row["result"] == Result.PASS, row
+@pytest.mark.parametrize("target", [0x402000, 0x402005, 0x403000])
+def test_repeated_literal_keeps_diagnostics_without_resolving_occurrence(target):
+    row = check(b"\xa1\x00\x00\x00\x00" + b"\x90" * 11, b"JKAF", twice=True, image_target=target)
+    assert row["result"] == row["references"] == Result.UNKNOWN, row
     pooled, = row["pooled_string_constants"]
     assert pooled["address"] is None and "repeats" in pooled["reason"]
     artifact, = [item for item in row["relocations"] if item["offset"] == 1]
     assert artifact["binding"]["kind"] == "compiler_artifact"
+    assert artifact["result"] == Result.UNKNOWN
 
 
 def test_absent_literal_stays_unresolved():

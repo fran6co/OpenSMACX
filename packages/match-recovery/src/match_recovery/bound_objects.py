@@ -183,10 +183,10 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # binding. Never place an entire data section from it.
                         targets[str(index)] = externals[symbol.name]
                     elif symbol.name.startswith("$") and symbol.storage != 2:
-                        # A VC6 compiler label (try targets, unwind-state
-                        # storage, guards) defined in an associated section the
-                        # binding does not place: its reference is structural
-                        # to this translation unit, not a product address.
+                        # A compiler-looking local label is useful context,
+                        # but naming/association cannot establish its target.
+                        # The comparator retains this as UNKNOWN, never a
+                        # successful masked reference.
                         targets[str(index)] = CompilerArtifact(symbol.name)
                     elif symbol.name.startswith("??_C@"):
                         # A TU-private string constant (VC6 emits these as
@@ -194,9 +194,9 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                         # sections). Uniquely-occurring content identifies its
                         # image address byte-exactly. This image keeps one
                         # copy per translation unit, so common literals occur
-                        # many times: their reference is structural to this
-                        # TU's data layout, recorded and masked like a
-                        # compiler label. Absent content stays unresolved.
+                        # many times: content alone cannot select the original
+                        # occurrence. Preserve the hint, leaving that reference
+                        # unresolved like an unplaced compiler label.
                         literal, address = _pooled_string_constant(obj, symbol, image)
                         if address is not None:
                             targets[str(index)] = address
@@ -207,7 +207,7 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
                             row.setdefault("pooled_string_constants", []).append(
                                 {"symbol": symbol.name, "literal": literal.decode("latin-1"), "address": None,
                                  "reason": "content repeats across translation units; "
-                                           "reference is structural to this unit's layout"})
+                                           "original occurrence is unresolved"})
                 elif symbol.section == 0 and symbol.value == 0 and symbol.storage == 2:
                     if symbol.name in externals:
                         targets[str(index)] = externals[symbol.name]

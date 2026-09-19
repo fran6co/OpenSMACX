@@ -6,7 +6,7 @@ import struct
 
 import pytest
 
-from match_recovery.binary import Relocation, RelocationKind, compare_bound_code
+from match_recovery.binary import CompilerArtifact, Relocation, RelocationKind, compare_bound_code
 from match_recovery.component_binary import verify_component
 from match_recovery.components import SourceFile, VendorBinding, VendorManifest
 from match_recovery.model import Component, Delivery, Origin, Ownership, Result, Span
@@ -86,6 +86,52 @@ def test_unknown_relocation_does_not_hide_an_independent_opcode_failure():
                      (Relocation(1, ABS, "missing"),))
     assert report["references"] == Result.UNKNOWN
     assert report["result"] == Result.FAIL
+
+
+@pytest.mark.parametrize("symbol", ["$L1", "??_C@literal"])
+@pytest.mark.parametrize("kind", [ABS, REL])
+@pytest.mark.parametrize("equal_operands", [False, True])
+def test_unplaced_compiler_artifact_never_proves_a_reference(symbol, kind, equal_operands):
+    original = b"\xa1\x00\x20\x40\x00\xc3"
+    candidate = original if equal_operands else b"\xa1\0\0\0\0\xc3"
+    report = compare(original, candidate, (Relocation(1, kind, "target"),),
+                     {"target": CompilerArtifact(symbol)})
+    assert report["result"] == report["bytes"] == report["references"] == Result.UNKNOWN
+    assert report["compiler_artifact_relocations"] == [1, 2, 3, 4]
+    relocation, = report["relocations"]
+    assert relocation["result"] == Result.UNKNOWN and relocation["binding"]["symbol"] == symbol
+
+
+def test_unplaced_artifact_does_not_invent_absolute_rebase_semantics():
+    code = b"\xa1\0\0\0\0\xc3"
+    report = compare(code, code, (Relocation(1, ABS, "target"),),
+                     {"target": CompilerArtifact("$L1")}, original_absolute_sites=frozenset())
+    assert report["result"] == report["references"] == Result.UNKNOWN
+    assert report["extra_absolute_relocations"] == []
+    assert report["unresolved_absolute_relocations"] == [1]
+
+
+@pytest.mark.parametrize("damage", ["opcode", "known_target", "missing_absolute"])
+def test_artifact_uncertainty_cannot_hide_independent_damage(damage):
+    original = b"\xa1\x00\x20\x40\x00\xa1\x00\x30\x40\x00\xc3"
+    candidate = b"\xa1\0\0\0\0\xa1\0\0\0\0\xc3"
+    if damage == "opcode":
+        candidate = b"\xa3" + candidate[1:]
+    first_kind = REL if damage == "missing_absolute" else ABS
+    report = compare(original, candidate,
+                     (Relocation(1, first_kind, "unknown"), Relocation(6, ABS, "known")),
+                     {"unknown": CompilerArtifact("$L1"),
+                      "known": 0x403100 if damage == "known_target" else 0x403000},
+                     original_absolute_sites=frozenset({1, 6}))
+    assert report["result"] == Result.FAIL
+    assert report["relocations"][0]["result"] == Result.UNKNOWN
+
+
+def test_independent_placement_restores_a_compiler_named_target():
+    code = b"\xa1\x00\x20\x40\x00\xc3"
+    report = compare(code, b"\xa1\0\0\0\0\xc3", (Relocation(1, ABS, "$L1"),), {"$L1": 0x402000})
+    assert report["result"] == report["references"] == Result.PASS
+    assert report["compiler_artifact_relocations"] == []
 
 
 @pytest.mark.parametrize("candidate", [b"", b"\xc3\xc3", b"\xc3" + bytes(15), b"\xc3" + b"\x90" * 16])

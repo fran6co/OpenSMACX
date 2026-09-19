@@ -33,13 +33,11 @@ class AbsoluteConstant:
 
 @dataclass(frozen=True)
 class CompilerArtifact:
-    """A translation-unit-internal compiler label, not a product reference.
+    """A diagnostic hint for an unplaced compiler label, not a target binding.
 
-    VC6 emits dollar-prefixed labels ($L try targets, $T unwind-state
-    storage, $E/$S guards) defined in the object's own associated sections.
-    Their addresses are layout-relative to sections a function binding does
-    not place, so their fields are masked and recorded rather than compared;
-    the artifact's structural definition in the same object is the evidence.
+    Neither a compiler-looking name nor a definition in the same object proves
+    its original destination. Such references remain unresolved until supplied
+    with independent placement or constant evidence through the ordinary types.
     """
 
     symbol: str
@@ -65,7 +63,8 @@ class Relocation:
 
 
 def compare_bound_code(span: Span, original: bytes, candidate: bytes,
-                       relocations: tuple[Relocation, ...], targets: Mapping[str, int | AbsoluteConstant], *,
+                       relocations: tuple[Relocation, ...],
+                       targets: Mapping[str, int | AbsoluteConstant | CompilerArtifact], *,
                        original_absolute_sites: frozenset[int] = frozenset(),
                        alignment: int = 1) -> dict:
     """Apply known relocations, then compare every byte; never enlarge `span`.
@@ -124,14 +123,14 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
             rows.append({"offset": offset, "target": relocation.target, "result": Result.UNKNOWN})
             continue
         if type(target) is CompilerArtifact:
-            # A TU-internal compiler label has no comparable absolute value:
-            # record the structural reference and mask its layout-relative
-            # field instead of asserting an address that placement never
-            # established. The artifact stays visible in every report.
+            # Preserve the diagnostic without granting reference correctness.
+            # Even byte-identical operands cannot establish an unplaced target.
             artifacts.update(range(offset, offset + 4))
+            unresolved.update(range(offset, offset + 4))
             rows.append({"offset": offset, "target": relocation.target,
                          "binding": {"kind": "compiler_artifact", "symbol": target.symbol},
-                         "result": Result.PASS})
+                         "result": Result.UNKNOWN,
+                         "reason": "compiler artifact has no independently established target"})
             continue
         binding = {}
         if type(target) is AbsoluteConstant:
@@ -160,12 +159,12 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
     # rebase mismatch. Known image-address targets still require HIGHLOW sites.
     unresolved_absolute = {relocation.offset for relocation in relocations
                            if relocation.kind == RelocationKind.ABSOLUTE32
-                           and relocation.target not in targets}
-    extra = sorted(absolute_sites - original_absolute_sites - unresolved_absolute - constant_absolute
-                   - {offset for offset in artifacts})
+                           and (targets.get(relocation.target) is None
+                                or type(targets.get(relocation.target)) is CompilerArtifact)}
+    extra = sorted(absolute_sites - original_absolute_sites - unresolved_absolute - constant_absolute)
     constant_rebased = sorted(constant_absolute & original_absolute_sites)
     differences = [index for index, (left, right) in enumerate(zip(original, linked, strict=True))
-                   if left != right and index not in unresolved and index not in artifacts]
+                   if left != right and index not in unresolved]
     byte_result = Result.FAIL if differences else Result.UNKNOWN if unresolved else Result.PASS
     reference_results = [row["result"] for row in rows]
     references = (Result.FAIL if missing or extra or constant_rebased or Result.FAIL in reference_results else

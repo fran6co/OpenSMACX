@@ -2158,6 +2158,13 @@ This verifies the thunk, not the imported DLL. Storage, indirect targets, runtim
 effects and other residuals remain independent obligations; none of these checks
 turns runtime-library code into recovered application code or grants acceptance.
 
+Unplaced compiler-label hints are not relocation bindings. Dollar-prefixed local
+labels, exception-data associations and repeated pooled-literal contents remain
+diagnostics with unknown target agreement; none may mask an operand into a
+passing strict comparison. Independently mapped companion code and explicit
+targets still undergo ordinary byte/addend/loader-fixup comparison. Unknown
+artifact references do not hide unrelated opcode or known-target failures.
+
 Synthetic linker-module contributions can separately identify an isolated,
 six-byte import-thunk output recipe. A native generated-module identity, exact
 PE/PDB coordinates, executable code characteristics, independently validated
