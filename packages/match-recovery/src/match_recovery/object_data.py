@@ -43,7 +43,7 @@ def referenced_initial_object_units(selected, bindings, objects):
     return frozenset(required)
 
 
-def check_initial_data(bindings, objects, image, targets, *, errors=None):
+def check_initial_data(bindings, objects, image, targets, *, literal_targets=None, errors=None):
     pin = hashlib.sha256(image.data).hexdigest()
     if any(b.origin.image_sha256 != pin or b.origin.address_space != "pe:va" for b in bindings):
         raise ValueError("object data binding belongs to another image")
@@ -93,7 +93,11 @@ def check_initial_data(bindings, objects, image, targets, *, errors=None):
                     raise ValueError("object extent cuts or contains an unsupported data relocation")
                 symbol = obj.symbols[index]
                 relocations.append(Relocation(offset - start, RelocationKind.ABSOLUTE32, str(index)))
-                if symbol.storage == 2 and symbol.name in targets and symbol.section >= 0:
+                local_key = (binding.unit, symbol.name)
+                if local_key in (literal_targets or {}):
+                    if symbol.section > 0 and literal_targets[local_key] is not None:
+                        resolved[str(index)] = literal_targets[local_key]
+                elif symbol.storage == 2 and symbol.name in targets and symbol.section >= 0:
                     if symbol.section == 0 and symbol.value:
                         continue  # COFF common allocation is not a selected definition.
                     resolved[str(index)] = targets[symbol.name]

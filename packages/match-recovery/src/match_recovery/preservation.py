@@ -27,6 +27,7 @@ from .model import Origin, Result, digest
 from .pe_coff import Coff
 from .preservation_objects import ObjectTrial, application_objects
 from .object_source import parse_objects
+from .literal_source import parse_literals
 from .shared_source import parse_shared
 from .import_source import parse_imports
 from .records import parse_json, read_json
@@ -95,7 +96,8 @@ def _outside_annotations(files, source, pin, selected):
             # DLL/name/ordinal must not disappear behind identical object bytes.
             add({"kind": "import", **{key: value for key, value in asdict(item).items() if key != "line"}})
         for kind, parser in (("object", parse_objects), ("member", parse_members),
-                             ("base", parse_bases), ("generated", parse_generated), ("shared", parse_shared)):
+                             ("base", parse_bases), ("generated", parse_generated), ("shared", parse_shared),
+                             ("literal", parse_literals)):
             for item in parser(text, name, pin, address_space=source.address_space):
                 # Bounded objects belong to their explicit evidence anchor,
                 # as in task binary checks and historical obligations. Legacy

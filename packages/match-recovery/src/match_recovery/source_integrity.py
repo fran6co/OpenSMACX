@@ -21,7 +21,7 @@ from .source_config import SourceConfiguration
 
 RULES = (
     "marker_coverage", "noop_identity", "keyword_isolation",
-    "demotion_line_count", "demotion_lessons", "lesson_deletion", "binding_evidence",
+    "demotion_line_count", "demotion_lessons", "lesson_deletion", "binding_evidence", "literal_bindings",
 )
 # Independent, deliberately broader than the parser's accepted address grammar.
 # Only standalone comment marker heads count here, not quoted documentation,
@@ -42,6 +42,14 @@ def check_annotation_text(path: Path, text: str) -> dict:
         parse_binding_evidence(text, records)
     except ValueError as error:
         fail("binding_evidence", 1, str(error))
+
+    from .literal_source import parse_literals
+    try:
+        # Syntax only: image identity and cross-TU ownership are checked by the
+        # configured reader, never invented by this text-integrity control.
+        parse_literals(text, path.name, "0" * 64, address_space="pe:va")
+    except ValueError as error:
+        fail("literal_bindings", 1, str(error))
 
     parsed_lines = {record.line for record in records}
     for line, content in enumerate(text.splitlines(), 1):

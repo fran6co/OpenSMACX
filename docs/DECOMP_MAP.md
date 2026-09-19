@@ -54,6 +54,25 @@ measurement. The installed `recover check-data` computes compiler extents, initi
 bytes and relocation-target agreement; missing bounds stay unknown. The active
 workflow explains history/review preservation and lifetime limitations.
 
+## TU-private literal bindings
+
+`// RECOVERY_LITERAL: v1 <start> <exclusive-end> <emitted-symbol> <evidence-address>`
+beside a literal use declares its original bounded storage. The owning translation
+unit is the source file containing the annotation; identical compiler symbols in
+other TUs do not share that identity. Explain the independent correspondence in
+adjacent source prose. The evidence address anchors review/restoration obligations
+to an original function; it is not a current measurement or the address of a pointer
+variable. Keep ordinary inline C++ literals, not measurement-only global variables.
+
+Native verification compares fresh, separately bounded emitted storage and then
+uses the address only for references in its owning TU. Current i386 support requires
+an independent literal COMDAT with its own complete extent; ordinary/static or
+ambiguous storage remains unknown. Embedded-NUL and wide data use the full section,
+not a first-terminator guess. Bindings do not prove linker selection or lifetime.
+Removing, moving or rebinding a declaration retains its historical obligations;
+variant decks cannot change it. No instruction operand under test or repeated-content
+search may establish this source correspondence.
+
 ## Shared original function bodies
 
 `// RECOVERY_SHARED: v1 <start> <end> <emitted-symbol> <evidence-address>`

@@ -276,7 +276,7 @@ def test_proven_shared_body_resolves_generated_table_but_bad_body_does_not():
     table = GeneratedBinding(Origin(pin, "pe:va", 0x401000), Span(0x401000, 0x401004), "??_7Widget@@6B@", evidence, "code/widget.h", 1)
     for code, expected in ((b"\xc3", "pass"), (b"\x90", "unknown")):
         objects = {**table_objects, "code/methods.cc": Coff(code_object({"_method": code}))}
-        _, _, tables, _, shared = check_compiled([], (), [table], objects, PeImage(raw, pin), {}, shared_bindings=[binding])
+        _, _, tables, _, shared, _ = check_compiled([], (), [table], objects, PeImage(raw, pin), {}, shared_bindings=[binding])
         assert tables[0]["content"] == expected
         assert shared[0]["result"] == ("pass" if expected == "pass" else "fail")
 

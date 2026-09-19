@@ -12,6 +12,8 @@ from match_recovery.bound_objects import FunctionBinding, check_objects
 from match_recovery.generated_source import read_generated
 from match_recovery.model import Origin, Result, Span, digest
 from match_recovery.object_source import read_objects, object_targets, referenced_object_units
+from .literal_source import read_literals
+from .literal_data import check_literals
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.tasks import TaskStore
 from match_recovery.ownership_source import project_view
@@ -106,14 +108,15 @@ def select_bindings(view: dict, selected: frozenset[str], component_targets: dic
 
 
 def check_compiled(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
-                   import_bindings=(), shared_bindings=()):
+                   import_bindings=(), shared_bindings=(), literal_bindings=()):
     """Same strict target resolution for ordinary measurements and source trials."""
     return _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals,
-                              errors=errors, import_bindings=import_bindings, shared_bindings=shared_bindings)[0]
+                              errors=errors, import_bindings=import_bindings, shared_bindings=shared_bindings,
+                              literal_bindings=literal_bindings)[0]
 
 
 def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, image, externals, *, errors=None,
-                       import_bindings=(), shared_bindings=()):
+                       import_bindings=(), shared_bindings=(), literal_bindings=()):
     """Resolve targets from product objects, never from a retention probe."""
     data_targets, checked_objects = object_targets(object_bindings, objects)
     if {item.symbol for item in shared_bindings} & (set(externals) | {item.symbol for item in bindings}
@@ -124,23 +127,27 @@ def _compiled_evidence(bindings, object_bindings, generated_bindings, objects, i
             set(externals) | {item.symbol for item in object_bindings} | {item.symbol for item in generated_bindings}):
         raise ValueError("import symbol also has a function/object/generated binding")
     imports, checked_imports = import_targets(import_bindings, objects, image)
+    active_literals = [item for item in literal_bindings if item.unit in objects or item.unit in (errors or {})]
+    literal_targets, checked_literals = check_literals(active_literals, objects, image, errors=errors)
     generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
     shared_targets, checked_shared = check_shared(shared_bindings, objects, image,
-        {**externals, **data_targets, **generated_targets}, import_targets=imports, errors=errors)
+        {**externals, **data_targets, **generated_targets}, import_targets=imports,
+        literal_targets=literal_targets, errors=errors)
     externals = {**externals, **shared_targets}
     if shared_bindings:
         generated_targets, checked_generated = check_generated(generated_bindings, objects, image, {**externals, **data_targets})
     from .object_data import check_initial_data
     bounded = [item for item in object_bindings if item.span is not None
                and (item.unit in objects or item.unit in (errors or {}))]
-    initial = check_initial_data(bounded, objects, image, {**externals, **data_targets, **generated_targets, **imports}, errors=errors)
+    initial = check_initial_data(bounded, objects, image, {**externals, **data_targets, **generated_targets, **imports},
+                                 literal_targets=literal_targets, errors=errors)
     by_symbol = {item["symbol"]: item for item in initial}
     checked_objects = [by_symbol.pop(row["symbol"], row) for row in checked_objects] + list(by_symbol.values())
     targets = {**externals, **data_targets, **generated_targets}
     rows = check_objects(bindings, objects, image,
                          external_targets=targets,
-                         import_targets=imports, errors=errors)
-    return (rows, checked_objects, checked_generated, checked_imports, checked_shared), targets, imports
+                         import_targets=imports, literal_targets=literal_targets, errors=errors)
+    return (rows, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals), targets, imports
 
 
 def verify_task(root: Path, task_name: str, image_path: Path, *,
@@ -171,6 +178,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     image_data = image_path.read_bytes()
     image = PeImage(image_data, snapshot["image_sha256"])
     object_bindings = read_objects(root, snapshot["image_sha256"])
+    literal_bindings = read_literals(root, snapshot["image_sha256"])
     if any(item.span is not None for item in object_bindings):
         flag_sets = tuple(flags + settings.layout_flags for flags in settings.flag_sets)
     generated_bindings = read_generated(root, snapshot["image_sha256"])
@@ -205,8 +213,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     command_for = command_for if command_for is not None else lambda path: ()
     required_data = [item for item in object_bindings if item.evidence is not None and item.evidence.entity_id in selected]
     required_shared = [item for item in shared_bindings if item.evidence.entity_id in selected]
+    required_literals = [item for item in literal_bindings if item.evidence.entity_id in selected]
     units = sorted({item.unit for item in bindings} | {item.unit for item in required_data}
-                   | {item.unit for item in required_shared})
+                   | {item.unit for item in required_shared} | {item.unit for item in required_literals})
     commands, command_errors = {}, {}
     for unit in units:
         try:
@@ -217,6 +226,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             command_errors[unit] = str(error)
     attempts, variants, object_checks = 0, defaultdict(list), []
     generated_checks, dependencies, import_checks, shared_checks = [], [], [], []
+    literal_checks = []
     generated_observations = []
     retained_observations = []
     generated_units = set(units)
@@ -254,8 +264,8 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
         active_shared = [item for item in shared_bindings if item.unit in objects or item.unit in errors]
         checked, product_targets, product_imports = _compiled_evidence(
             bindings, object_bindings, generated_bindings, objects, image, externals, errors=errors,
-            import_bindings=import_bindings, shared_bindings=active_shared)
-        checked_functions, checked_objects, checked_generated, checked_imports, checked_shared = checked
+            import_bindings=import_bindings, shared_bindings=active_shared, literal_bindings=literal_bindings)
+        checked_functions, checked_objects, checked_generated, checked_imports, checked_shared, checked_literals = checked
         if retained_diagnostics:
             from .function_witness import retained_definition
             for binding in bindings:
@@ -283,11 +293,18 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
                 observation = {**observation, "entity_id": binding.origin.entity_id,
                                "symbol": binding.symbol, "unit": binding.unit, "flags": list(flags)}
                 if probe is not None:
+                    # Probe COFF is not the product object: re-establish every
+                    # same-TU literal against these exact new emitted bytes.
+                    probe_literals, _ = check_literals(
+                        [item for item in literal_bindings if item.unit == binding.unit],
+                        {binding.unit: probe}, image)
                     observation["measurement"], = check_objects(
                         [binding], {binding.unit: probe}, image,
-                        external_targets=product_targets, import_targets=product_imports)
+                        external_targets=product_targets, import_targets=product_imports,
+                        literal_targets=probe_literals)
                 retained_observations.append(observation)
         shared_checks.extend({**item, "flags": list(flags)} for item in checked_shared)
+        literal_checks.extend({**item, "flags": list(flags)} for item in checked_literals)
         object_checks.extend({**item, "flags": list(flags)} for item in checked_objects)
         import_checks.extend({**item, "flags": list(flags)} for item in checked_imports)
         generated_checks.extend({**item, "flags": list(flags)} for item in checked_generated)
@@ -311,6 +328,7 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
     overall = (Result.UNKNOWN if counts[Result.UNKNOWN] else Result.FAIL if counts[Result.FAIL] else Result.PASS)
     table_results = ({item["content"] for item in generated_checks}
                      | {item["content"] for item in object_checks if "content" in item}
+                     | {item["content"] for item in literal_checks}
                      | {item["result"] for item in shared_checks})
     if Result.UNKNOWN in table_results:
         overall = Result.UNKNOWN
@@ -322,6 +340,9 @@ def verify_task(root: Path, task_name: str, image_path: Path, *,
             "flag_sets": [list(flags) for flags in flag_sets],
             "component_verification": component_reports,
             "object_definitions": object_checks,
+            "literal_definitions": literal_checks,
+            "literal_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit}
+                               for item in literal_bindings],
             "object_owners": [{"interpretation_id": item.interpretation_id, "unit": item.unit}
                               for item in object_bindings if item.span is not None],
             "object_dependencies": dependencies,

@@ -2447,6 +2447,49 @@ interpretations, requiring the owner in every trial—not duplicate definitions 
 each caller. Legacy address comments still need explicit source-binding migration;
 this check does not silently treat them as complete coverage.
 
+### TU-private original literal storage
+
+Keep literals in normal C++ expressions. When repeated contents cannot establish
+which original object a literal represents, record an independently justified
+binding beside its use in the owning translation unit:
+
+```cpp
+// RECOVERY_LITERAL: v1 0x00402000 0x00402003 ??_C@_02JKAF@rb?$AA@ 0x00401000
+```
+
+The fields are original start, exclusive end, emitted symbol, and original evidence
+anchor. The configured image pin and source filename complete the identity. Preserve
+the rationale in adjacent source prose; do not add run transcripts or current scores.
+The address must come from reviewed original-object evidence, not the operand that
+the check will compare. The annotation is an interpretation, not a measured claim.
+
+The library keys these identities by `(translation unit, emitted symbol)`, separately
+from globals/imports. Identical names in different TUs may have different originals;
+overlapping literal/object/table ownership refuses. No bare-symbol binding leaks
+across TUs, places a whole data section, or proves link-time COMDAT selection.
+The i386 backend verifies dedicated independent MSVC literal COMDATs, with exact
+section-definition/key metadata, complete raw or zero-fill extent and no relocations.
+Embedded NULs and wide literals are not truncated at their first zero. Original storage
+must be bounded readable non-executable data. Unsupported ordinary/static/associative
+storage stays unknown. Missing or damaged definitions reserve their unresolved identity,
+so a unique-content fallback cannot override a failed declared binding.
+
+Task binary checks compile literal owners selected through their evidence anchors,
+even when no selected function otherwise needs that TU. `literal_definitions` reports
+each trial; declared-structure restoration requires the exact owner and every configured
+trial. Shared bodies and private retention probes use independently reverified local
+targets. Variant decks keep the annotations fixed and include literal failures in
+their diagnostic rankings. Literal declarations grant no body omission or generated-root
+preservation permission. Removal, rehoming and rebinding retain historical obligations.
+
+`recover check-data --image <original>` includes all declared literal owners. A
+bare-symbol selection is refused if more than one owner matches; run the unfiltered
+check for that population. Literal-only data projects are supported. Passing bounded
+contents/references is not full hierarchy, runtime, linked preservation or acceptance.
+Verified literal targets retain their bounds through reference comparison: a relocation
+addend outside the object and its one-past address fails even if its encoded address
+matches. Permitting the one-past pointer does not prove that dereferencing it is valid.
+
 ### System import identities
 
 For ordinary PE32 imports, declare the emitted pointer symbol and intended

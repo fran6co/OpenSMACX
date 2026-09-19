@@ -8,7 +8,7 @@ from dataclasses import dataclass
 import hashlib
 from typing import Mapping, Sequence
 
-from .binary import AbsoluteConstant, CompilerArtifact, compare_bound_code
+from .binary import AbsoluteConstant, BoundedTarget, CompilerArtifact, compare_bound_code
 from .components import relative_path
 from .model import Origin, Result, Span, require_text
 from .pe_coff import Coff, PeImage
@@ -63,6 +63,8 @@ def _binding_description(target):
         return f"0x{target:08X}"
     if type(target) is AbsoluteConstant:
         return f"0x{target.value:08X}"
+    if type(target) is BoundedTarget:
+        return f"0x{target.span.start:08X}"
     return "compiler-artifact"
 
 
@@ -107,6 +109,7 @@ class FunctionBinding:
 def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Coff],
                   image: PeImage, *, external_targets: Mapping[str, int | AbsoluteConstant] | None = None,
                   import_targets: Mapping[str, int] | None = None,
+                  literal_targets: Mapping[tuple[str, str], BoundedTarget | None] | None = None,
                   errors: Mapping[str, str] | None = None, member_functions: bool = False) -> list[dict]:
     """One report per selected binding, including missing objects and symbols.
 
@@ -123,6 +126,16 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
         raise ValueError("function binding refers to a different image/address space")
     externals = dict(external_targets or {})
     imports = dict(import_targets or {})
+    literals = dict(literal_targets or {})
+    for key, value in literals.items():
+        if (not isinstance(key, tuple) or len(key) != 2 or any(not isinstance(x, str) or not x for x in key)
+                or value is not None and type(value) is not BoundedTarget):
+            raise ValueError("invalid TU-qualified literal target")
+        relative_path(key[0])
+        if value is not None:
+            BoundedTarget.__post_init__(value)
+    if {key[1] for key in literals} & (externals.keys() | imports.keys() | {item.symbol for item in bindings}):
+        raise ValueError("literal target also has a global function/object/import binding")
     if any(not isinstance(key, str) or not key or type(value) not in (int, AbsoluteConstant)
            for key, value in externals.items()) or any(
             not isinstance(key, str) or not key or type(value) is not int
@@ -176,7 +189,13 @@ def check_objects(bindings: Sequence[FunctionBinding], objects: Mapping[str, Cof
             for index, symbol in obj.symbols.items():
                 if symbol.section > 0:
                     base = sections.get((binding.unit, symbol.section))
-                    if base is not None:
+                    local_key = (binding.unit, symbol.name)
+                    if local_key in literals:
+                        # A declared, freshly checked literal never falls back
+                        # to content search or exports a same-name global.
+                        if literals[local_key] is not None:
+                            targets[str(index)] = literals[local_key]
+                    elif base is not None:
                         targets[str(index)] = base + symbol.value
                     elif symbol.storage == 2 and symbol.name in externals:
                         # A global defined in this TU still needs its own source

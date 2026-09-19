@@ -88,6 +88,7 @@ def check_requirements(inventory, candidate):
                                        ("layout", "bases", "nonvirtual_base_offset"),
                                        ("binary", "generated_tables", "compiler_generated_vtable"),
                                        ("binary", "object_definitions", "object_initial_data"),
+                                       ("binary", "literal_definitions", "tu_private_literal"),
                                        ("binary", "shared_functions", "shared_function_body")):
         for row in reports[backend].get(collection, []):
             key = row.get("interpretation_id")
@@ -105,7 +106,7 @@ def check_requirements(inventory, candidate):
             witness = (unit, tuple(flags))
             if witness in observations[key]:
                 raise ValueError("ambiguous structural measurement for a compiler witness")
-            if kind in ("compiler_generated_vtable", "object_initial_data"):
+            if kind in ("compiler_generated_vtable", "object_initial_data", "tu_private_literal"):
                 result = _all((Result(row.get("definition", Result.UNKNOWN)),
                                Result(row.get("content", Result.UNKNOWN))))
                 reason = row.get("reason", row.get("proof", {}).get("reason", "table definition and bounded contents compared"))
@@ -127,6 +128,7 @@ def check_requirements(inventory, candidate):
         kind = item["value"].get("kind")
         backend = {"direct_member_offset": "layout", "nonvirtual_base_offset": "layout",
                    "compiler_generated_vtable": "binary", "object_initial_data": "binary",
+                   "tu_private_literal": "binary",
                    "shared_function_body": "binary"}.get(kind)
         row = {"interpretation_id": key, "entity_id": item["entity_id"], "kind": kind,
                "current": item["current"], "requirement": item["value"], "result": Result.UNKNOWN,
@@ -143,8 +145,10 @@ def check_requirements(inventory, candidate):
                 generated_units, _, generated_gap = generated_grid
                 units = sorted(set(units) | set(generated_units))
                 gap = gap or generated_gap
-            if kind in ("object_initial_data", "shared_function_body"):
-                owners = reports[backend].get("object_owners" if kind == "object_initial_data" else "shared_owners", [])
+            if kind in ("object_initial_data", "shared_function_body", "tu_private_literal"):
+                owner_collection = {"object_initial_data": "object_owners", "shared_function_body": "shared_owners",
+                                    "tu_private_literal": "literal_owners"}[kind]
+                owners = reports[backend].get(owner_collection, [])
                 if not isinstance(owners, list) or any(not isinstance(owner, dict) or set(owner) != {"interpretation_id", "unit"}
                         or not isinstance(owner["unit"], str) or not owner["unit"] for owner in owners):
                     raise ValueError("invalid source owner coverage")
@@ -153,6 +157,13 @@ def check_requirements(inventory, candidate):
                     gap = "requires one source-owned measurement host"
                 elif kind == "shared_function_body" and units != [item["value"].get("unit")]:
                     gap = "shared body measurement host disagrees with source interpretation"
+                if kind == "tu_private_literal":
+                    owner = item["value"].get("unit")
+                    if units != [owner] or any(unit != owner for unit, _ in observed):
+                        gap = "literal measurements require the exact source-owned translation unit"
+                    # Private symbols are meaningful only inside this TU. A
+                    # matching symbol in another object cannot fill its trials.
+                    units = [owner]
             # Include any extra compiled dependency witnesses as well. A bad
             # definition there must not disappear behind a passing scoped TU.
             table_coverage = generated_absences[key]

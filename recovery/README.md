@@ -129,7 +129,16 @@ COFF pointer/code references and actual PE loader fixups in both live builds.
 This is not proof that callbacks, common storage or startup side effects are
 preserved, and it does not waive the retained recovery's outside-scope findings.
 
-Unplaced compiler labels and ambiguous pooled literals remain unknown references
+Source-owned `RECOVERY_LITERAL: v1` annotations can now bind bounded literal storage
+to its owning TU, independently of global objects. Task checks, variants and
+`check-data` verify the fresh emitted section before using that local reference target;
+historical obligations retain rebinding/removal decisions. See the package README and
+`docs/DECOMP_MAP.md` for the grammar and supported compiler domain. Keep literals inline
+in C++, do not infer their original addresses from the operand under test, and do not
+reuse another TU's same-named literal. No game literal binding is introduced by this
+framework extension. Exception metadata remains a separate unsupported case.
+
+Unplaced compiler labels and unbound ambiguous pooled literals remain unknown references
 in strict checks. Their names and same-object definitions are diagnostic hints,
 not permission to mask operands into success. Explicitly mapped companion code
 still verifies normally; unrelated measured damage remains a failure.

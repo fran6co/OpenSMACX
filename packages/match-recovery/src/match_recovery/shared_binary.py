@@ -8,7 +8,7 @@ from .bound_objects import FunctionBinding, check_objects
 from .model import Result
 
 
-def check_shared(bindings, objects, image, external_targets, *, import_targets=None, errors=None):
+def check_shared(bindings, objects, image, external_targets, *, import_targets=None, literal_targets=None, errors=None):
     symbols = {item.symbol for item in bindings}
     if len(symbols) != len(bindings) or symbols & (external_targets.keys() | (import_targets or {}).keys()):
         raise ValueError("conflicting shared function symbol bindings")
@@ -28,7 +28,7 @@ def check_shared(bindings, objects, image, external_targets, *, import_targets=N
                     raise ValueError("shared method requires an external owning definition")
                 proof, = check_objects([FunctionBinding(binding.origin, (binding.span,), binding.symbol, binding.unit)],
                     objects, image, external_targets={**external_targets, **targets},
-                    import_targets=import_targets, errors=errors)
+                    import_targets=import_targets, literal_targets=literal_targets, errors=errors)
                 row.update(proof)
             except ValueError as error:
                 row.update(result=Result.UNKNOWN, reason=str(error))

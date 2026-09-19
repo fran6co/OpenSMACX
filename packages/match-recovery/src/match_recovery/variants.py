@@ -15,6 +15,7 @@ from .generated_source import read_generated
 from .measurement import Measurement
 from .model import Origin, Result, Span, digest, require_digest, require_text
 from .object_source import read_objects, referenced_object_units
+from .literal_source import read_literals
 from .import_source import read_imports, parse_imports
 from .ownership_source import class_hint, project_view
 from .partition import Candidate, partition
@@ -38,10 +39,12 @@ def _rank_trials(baselines, trials):
                      for row in trial["object_definitions"] if "content" in row})
         rows.update({("shared", row["unit"], row["symbol"], row["address"]): row
                      for row in trial.get("shared_functions", [])})
+        rows.update({("literal", row["unit"], row["symbol"], row["address"]): row
+                     for row in trial.get("literal_definitions", [])})
         return rows
 
     def result(key, row):
-        return row.get("content" if key[0] == "object" else "result", Result.UNKNOWN)
+        return row.get("content" if key[0] in ("object", "literal") else "result", Result.UNKNOWN)
 
     rankings = []
     for baseline in baselines:
@@ -51,7 +54,7 @@ def _rank_trials(baselines, trials):
         before = measurements(baseline)
         observed = [(trial, measurements(trial)) for trial in group]
         scoped = {key for rows in (before, *(rows for _, rows in observed)) for key, row in rows.items()
-                  if key[0] in ("object", "shared") or row.get("in_task") or key[2] == baseline["target"]["entity_id"]}
+                  if key[0] in ("object", "shared", "literal") or row.get("in_task") or key[2] == baseline["target"]["entity_id"]}
         passing = {key for key, row in before.items() if result(key, row) == Result.PASS}
         details = []
         for trial, rows in observed:
@@ -265,6 +268,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
     if target is None:
         raise ValueError("candidate target requires one unambiguous mapped product definition with image spans")
     data_bindings, generated = read_objects(root, pin), read_generated(root, pin)
+    literal_bindings = read_literals(root, pin)
     shared = read_shared(root, pin)
     validate_shared(shared, view)
     # Compile every mapped task TU together, not just the primary target. This
@@ -274,6 +278,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                     and Path(item.unit).suffix in settings.unit_extensions}
                    | {name for name in originals if Path(name).suffix in settings.unit_extensions}
                    | {item.unit for item in data_bindings if item.evidence is not None and item.evidence.entity_id in selected}
+                   | {item.unit for item in literal_bindings if item.evidence.entity_id in selected}
                    | {item.unit for item in shared if item.evidence.entity_id in selected})
     if any(Path(unit).suffix not in settings.unit_extensions for unit in units):
         raise ValueError("required data owner is not a configured translation unit")
@@ -364,9 +369,9 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                 support_controls.append(control)
         measured = [item for item in trial_bindings if item.unit in objects or item.unit in units]
         active_shared = [item for item in trial_shared if item.unit in objects or item.unit in errors]
-        rows, data_rows, generated_rows, import_rows, shared_rows = check_compiled(
+        rows, data_rows, generated_rows, import_rows, shared_rows, literal_rows = check_compiled(
             measured, data_bindings, generated, objects, image, trial_externals, errors=errors,
-            import_bindings=imports, shared_bindings=active_shared)
+            import_bindings=imports, shared_bindings=active_shared, literal_bindings=literal_bindings)
         selected_row = next(row for row in rows if row["entity_id"] == target.origin.entity_id)
         result = {"name": name, "flags": list(flags), "target": selected_row,
                 "neighbors": [{**row, "in_task": row["entity_id"] in selected} for row in rows if row is not selected_row],
@@ -374,7 +379,7 @@ def measure_variants(root: Path, task_name: str, image_path: Path, deck: dict, *
                 "binding_changes": changes,
                 "object_dependencies": support_controls, "support_compile_attempts": support_attempts,
                 "object_definitions": data_rows, "generated_tables": generated_rows, "import_bindings": import_rows,
-                "shared_functions": shared_rows}
+                "shared_functions": shared_rows, "literal_definitions": literal_rows}
         if compiled_diagnostics:
             binding = next(item for item in trial_bindings if item.origin.entity_id == target.origin.entity_id)
             result["_compiled_diagnostic"] = compiled_diagnostic(

@@ -32,6 +32,24 @@ class AbsoluteConstant:
 
 
 @dataclass(frozen=True)
+class BoundedTarget:
+    """An independently placed object, with bounded pointer addends.
+
+    A pointer may designate its storage or the one-past address. This does not
+    permit dereferencing one-past, establish lifetime, or prove linker selection.
+    """
+
+    span: Span
+
+    def __post_init__(self):
+        if type(self.span) is not Span:
+            raise ValueError("bounded target requires an exact storage span")
+        Span.__post_init__(self.span)
+        if not 0 <= self.span.start < self.span.end < 2**32:
+            raise ValueError("bounded target and its one-past address must fit i386")
+
+
+@dataclass(frozen=True)
 class CompilerArtifact:
     """A diagnostic hint for an unplaced compiler label, not a target binding.
 
@@ -64,7 +82,7 @@ class Relocation:
 
 def compare_bound_code(span: Span, original: bytes, candidate: bytes,
                        relocations: tuple[Relocation, ...],
-                       targets: Mapping[str, int | AbsoluteConstant | CompilerArtifact], *,
+                       targets: Mapping[str, int | AbsoluteConstant | BoundedTarget | CompilerArtifact], *,
                        original_absolute_sites: frozenset[int] = frozenset(),
                        alignment: int = 1) -> dict:
     """Apply known relocations, then compare every byte; never enlarge `span`.
@@ -91,6 +109,8 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
             AbsoluteConstant.__post_init__(target)
         elif type(target) is CompilerArtifact:
             CompilerArtifact.__post_init__(target)
+        elif type(target) is BoundedTarget:
+            BoundedTarget.__post_init__(target)
         elif type(target) is not int or not 0 <= target < 2**32:
             raise ValueError("resolved i386 target must be a 32-bit address")
     rows, occupied, outside_original = [], set(), []
@@ -132,7 +152,11 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
                          "result": Result.UNKNOWN,
                          "reason": "compiler artifact has no independently established target"})
             continue
-        binding = {}
+        binding, bounded = {}, None
+        if type(target) is BoundedTarget:
+            bounded = target.span
+            binding = {"binding": {"kind": "bounded_address", "start": bounded.start, "end": bounded.end}}
+            target = bounded.start
         if type(target) is AbsoluteConstant:
             binding = {"binding": {"kind": "absolute_constant", "value": target.value}}
             if relocation.kind != RelocationKind.ABSOLUTE32:
@@ -143,13 +167,16 @@ def compare_bound_code(span: Span, original: bytes, candidate: bytes,
             constant_absolute.add(offset)
             target = target.value
         addend = int.from_bytes(linked[offset:offset + 4], "little", signed=True)
+        escaped = bounded is not None and not 0 <= addend <= bounded.end - bounded.start
         value = target + addend
         if relocation.kind == RelocationKind.RELATIVE32:
             value -= span.start + offset + 4
         encoded = (value & 0xFFFFFFFF).to_bytes(4, "little")
         linked[offset:offset + 4] = encoded
         rows.append({"offset": offset, "target": relocation.target, **binding,
-                     "result": Result.PASS if encoded == original[offset:offset + 4] else Result.FAIL})
+                     "result": Result.PASS if not escaped and encoded == original[offset:offset + 4] else Result.FAIL,
+                     **({"reason": "relocation addend escapes independently bounded target", "addend": addend}
+                        if escaped else {})})
     absolute_sites = {relocation.offset for relocation in relocations
                       if relocation.kind == RelocationKind.ABSOLUTE32}
     missing = sorted(original_absolute_sites - absolute_sites)
