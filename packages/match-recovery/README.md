@@ -2114,6 +2114,13 @@ flags, alignment, aggregation or competitors refuse attribution. Native content
 and isolation failures propagate through application residual verification;
 imports, directives, unselected candidates and other effects remain obligations.
 This composes retention, not byte projection, request removal or acceptance.
+The observer shares ordinary placement indexes within a single guarded content
+batch, including per-owner caller/data anchors. Every request remeasures its
+contents and returns independent diagnostics. The callable expires on all exit
+paths; final population freshness runs outside per-section refusal handling.
+The enclosing native image/MAP/source guards remain mandatory. Contribution-group
+indexes retain failed and ungrouped members; they do not replace the count of
+all intersecting allocations. There is no persisted verdict cache or new waiver.
 Non-code section merges require a separately bounded nonexecutable output target
 and no affected physical code section; this grants no data or initialization
 exemption. Repeated per-key refusals are memoized only inside the same guarded

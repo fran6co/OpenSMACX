@@ -6,15 +6,25 @@ report or source-scoped body permission supplies an allocation exemption.
 """
 
 from collections import Counter, defaultdict
+from contextlib import ExitStack
 
 from .graph_limits import MAX_NODES
 from .linked_code_graph import observe_code_graph
 from .linked_code_region import select_code_region
 from .linked_contributions import ordinary_contributions
-from .linked_data_contents import verify_data_contents
+from .linked_data_contents import data_contents_batch
 from .linked_interval_index import IntervalIndex
 from .model import Result, digest
 from .pe_coff import Coff
+
+
+def _contribution_groups(sections):
+    """Index every assigned claimant, including failed and ungrouped rows."""
+    groups = defaultdict(set)
+    for row in sections:
+        if row.get("contribution") is not None:
+            groups[row["contribution"]].add(row.get("fold_group_id"))
+    return groups
 
 
 def observe_ordinary_allocations(native, *, folded_groups=()):
@@ -43,6 +53,7 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
     context, inputs = native.context, native.inputs
     before = digest(context.report)
     _, fresh = inputs.objects._constant_population()
+    data_stack = ExitStack()
     try:
         context.check_current()
         joined = ordinary_contributions(context, inputs)
@@ -77,6 +88,7 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
         gaps.extend(row for row in census["gaps"]
                     if row["reason"] != "common_requests require separate linked-effect verification")
         ordinary = {(digest(row["input"]), row["object_section"]): row for row in joined["sections"]}
+        verify_data = data_stack.enter_context(data_contents_batch(inputs))
         for candidate in census["inputs"]:
             if (candidate["participation"] != "final_pass" or len(candidate["owners"]) != 1):
                 gap("candidate lacks independent retained or non-admitted allocation evidence", candidate)
@@ -110,7 +122,7 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                         placed = ordinary[digest(row["input"]), row["object_section"]]
                         if "envelope" in placed:
                             row["envelope"] = placed["envelope"]
-                        proof = verify_data_contents(inputs, owner, row["object_section"])
+                        proof = verify_data(owner, row["object_section"])
                         row.update(proof=proof, input_consistency=proof["input_consistency"])
                         if (proof["input"] != row["input"] or proof["object_sha256"] != row["object_sha256"]
                                 or proof["envelope"] != row.get("envelope")):
@@ -135,6 +147,9 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                         roots.append({"owner": owner, "symbol": min(entries)})
                 except (OSError, ValueError, KeyError, TypeError, AttributeError) as error:
                     gap(str(error), row)
+        # A failed batch freshness check is not one section's missing evidence.
+        # Close outside the per-section refusal handler, before consuming rows.
+        data_stack.close()
         try:
             roots = combine_roots(native, roots)
             code = observe_code_graph(inputs.objects, inputs.mapping, inputs.image, roots,
@@ -224,14 +239,14 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
         # The relation must be injective in both directions. Neither a failed
         # join nor a physically placed competitor may disappear from this check.
         users = Counter(index for row in sections for index in row.get("intersections", ()))
+        contribution_groups = _contribution_groups(sections)
         used = set()
         overlap = commons["allocation_isolation"] == Result.FAIL
         for index, row in enumerate(sections):
             contribution = row.get("contribution")
             same_group = None
             if contribution is not None:
-                sharers = [other for other in sections if other.get("contribution") == contribution]
-                identities = {other.get("fold_group_id") for other in sharers}
+                identities = contribution_groups[contribution]
                 same_group = (row.get("fold_group_id") is not None and len(identities) == 1
                               and None not in identities)
             if (contribution is not None and row["input_consistency"] == Result.PASS
@@ -291,8 +306,11 @@ def observe_ordinary_allocations(native, *, folded_groups=()):
                 "scope": "supported_static_physical_allocations", "ready_for_collection": False, "persisted": False}
     finally:
         try:
-            fresh()
-            if digest(context.report) != before:
-                raise ValueError("ordinary allocation context changed during observation")
+            data_stack.close()
         finally:
-            native.check_current()
+            try:
+                fresh()
+                if digest(context.report) != before:
+                    raise ValueError("ordinary allocation context changed during observation")
+            finally:
+                native.check_current()

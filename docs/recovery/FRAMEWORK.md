@@ -101,6 +101,13 @@ Common corruption and collisions propagate as failures through the application
 residual. Imports, directives, unused-candidate selection and all other unresolved
 effects remain obligations; no common bytes or declarations gain a projection.
 
+Ordinary content verification now shares placement/declaration and per-owner
+anchor indexes across one expiring batch. Each section is still measured; no
+verdict crosses epochs. Lazy entry preserves per-section setup refusals, while
+final physical freshness failures escape the row-level diagnostic handler and
+refuse the whole observation. Contribution-group membership is indexed once
+without dropping failed or ungrouped claimants or intersection multiplicity.
+
 New projects now start with native source/measurement/driver configuration via
 `recover init`, not a local operation dispatcher stub. An explicitly supplied
 original can be pinned in source without copying its bytes; compiler and build

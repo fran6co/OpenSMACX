@@ -6,6 +6,7 @@ The native caller owns image/map/live-context guards; physical input population
 guards bracket this complete operation on both normal and exceptional exit.
 """
 
+from contextlib import ExitStack, contextmanager
 from hashlib import sha256
 
 from .binary import AbsoluteConstant, RelocationKind, compare_bound_code
@@ -24,6 +25,34 @@ def verify_data_contents(inputs, owner, number):
     """
     with _data_sections(inputs) as observe:
         return _verify_placed_data(inputs, owner, number, observe)
+
+
+@contextmanager
+def data_contents_batch(inputs):
+    """Share placement indexes, not verdicts, within one native guarded epoch.
+
+    The enclosing native caller still guards image/MAP/parsed state. Physical
+    population freshness brackets the lazy batch, including exceptional close;
+    no result may be consumed as verified before that close succeeds.
+    """
+    live, observe = True, None
+    with ExitStack() as stack:
+        def verify(owner, number):
+            nonlocal observe
+            if not live:
+                raise ValueError("data contents batch has expired")
+            if observe is None:
+                # Publish only after successful entry. A failed setup leaves
+                # no partial observer or memoized refusal for later requests.
+                observe = stack.enter_context(_data_sections(inputs))
+            return _verify_placed_data(inputs, owner, number, observe)
+
+        try:
+            yield verify
+        finally:
+            # Expire even when the body's exception or final freshness check
+            # refuses. ExitStack then checks the physical population at close.
+            live = False
 
 
 def _verify_placed_data(inputs, owner, number, observe, *, fixup_target=None):
