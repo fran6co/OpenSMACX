@@ -1,0 +1,19 @@
+{
+  "event_id": "ed6eb110551d4c465f05453f2c536d68cfcfa0aecf48914bf99a2aab3ed74246",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "editor-interface-button-member-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console.cpp editor_generate now accesses MainInterfaceGlobal.flat_button_[2] and calls its real show/hide operations. src/basebutton.h declares the hide override and src/basebutton.cpp implements the group_ guard, field_A9C_ clear and qualified Win::hide call. Original identity/spans and historical seed are preserved.",
+      "The MainInterface member-array constructor establishes offset 0xE00, stride 0xB4C and count 42. Original BaseButton/FlatButton/ImageButton/PushButton tables select this override at slot two; battle and council callers also dispatch through that slot. No existing qualified BaseButton::hide calls were found.",
+      "This incorporates only the embedded-button interpretation. Separate pending discoveries preserve the missing Win binding, other fixed-address consumers and shared storage/lifetime dependencies. No byte claim, completed editor recovery, preservation or acceptance is granted."
+    ]
+  },
+  "previous_event": "1c943e842d4b264d430dc0720e71945c6e7ec5b0683e77357667676a554f1f64",
+  "request_id": "incorporate-editor-interface-button-member-20260920",
+  "schema_version": 1,
+  "sequence": 75,
+  "stream": "task:control-sprite-defaults"
+}

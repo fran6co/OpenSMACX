@@ -1,0 +1,23 @@
+{
+  "event_id": "337052b9fe3c4c2f6e577d5708efcaa6b12cdc3b100d496a91884d280cc4c229",
+  "payload": {
+    "affects": [
+      "entity-387e9df1717eef8b81371db84328cd85a9c6b1069b4015987baea2f61c834da3",
+      "entity-e359dc4db1a4fd599c8017cbab16cdd459e65dd928565edf57f2edf175f6d744"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "basebutton-hide-win-owner-binding-20260920",
+    "evidence": [
+      "Original BaseButton::hide span 0x00406860-0x00406879 ends in a direct tail call to Win::hide at 0x005EDCD0. Product code expresses that call as qualified Win::hide(). The callee binding, not another spelling of the five-instruction override, is the missing source relationship.",
+      "Retained radiobutton-lifetime owner in codex-worldwin-20260919 owns original Win::hide 0x005EDCD0-0x005EDE56 and restores its mapping to emitted ?hide@Win@@UAEXXZ in src/win.cpp. The map-storage checkout has no source mapping for that original identity. The retained owner has other unresolved work; routing does not import its changes or acceptance.",
+      "All BaseButton, FlatButton, ImageButton and PushButton original primary tables select 0x00406860 in hide slot two; preserve this actual override and the qualified base call while the cross-owner mapping is reconciled."
+    ],
+    "hypothesis": "The genuine BaseButton hide override depends on the existing Win::hide implementation whose original binding was lost on master and has been restored only in its retained owner worktree; route that dependency rather than invent a duplicate owner or accept a masked call match.",
+    "kind": "discovery"
+  },
+  "previous_event": "c395ea4cfe554bc6f281c05120b31e082755ee2eef675894813e6e2f633657b5",
+  "request_id": "basebutton-hide-win-owner-binding-20260920",
+  "schema_version": 1,
+  "sequence": 73,
+  "stream": "task:control-sprite-defaults"
+}

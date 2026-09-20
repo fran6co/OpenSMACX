@@ -1,0 +1,31 @@
+{
+  "event_id": "8dea46b378c4a9585d03d91f1eb3611269e691e286ad4cbc39dbf8181e2330ab",
+  "payload": {
+    "affects": [
+      "entity-132bfae1bedbb014fd8258d0662e3ee5fdbc4aab32fde773553b067e7f2a5ca1",
+      "entity-30be0a774eb164d465344bba49909c60d423a1dff081de113aaf87a176aee759",
+      "entity-55ece8fcf390ffc7a4c45e8222467204db64d474666f220278d7d939737953b1",
+      "entity-5ac2cb5f81b61015b4e445448bd842fc2267e14ec159110081075f35e3e9c72b",
+      "entity-83181e87833dc16e9c13f13a3fd3b2ebf217f6f9fde7d190369e85ee3a6b9752",
+      "entity-8d2d3bce2f14cff101fbd458f582b979dd946b4633d7e9403dfada2251133007",
+      "entity-bfdfde0cbcff9126a47dbfdba96b7c4a0e238d8e350528be55c4a2031b796a32",
+      "entity-d6e43b59659158cb5b612147bc93e428b670e3a851d0bd60ec35ef52fd691a59"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-window-storage-coupled-lifetimes-20260920",
+    "evidence": [
+      "WorldWin origin task radiobutton-lifetime revision31 routes system_init ownership here. Original MapWinTable range0x007D3C3C-0x007D3C5C is eight pointer slots; startup allocates1..7 and publishes borrowed Console at0. system_close deletes1..7; mapwin_system_shutdown also walks these slots. Both shutdown paths remain original-address forwarders. Do not move or mirror the array without the lifecycle closure.",
+      "Original static debug receiver0x009B22F0 is MultiDebug: initializer0x005C97C0 at CRT slot0x00682668 constructs it; constructor builds GraphicWin, Font+0xA14 and Time+0xA40; destructor0x005C9E00 clears net then tears them down. Existing WinBubbleWindow is wrongly Win and its fields+0x10,+0x9C,+0xC4,+0x1A4,+0x3FC are split into independent globals. Its fixed timer callback and pending destructor must be recovered with storage.",
+      "Opening pointer0x00945824 still uses an original-address accessor; original producers init_opening0x00589B60 and top_menu0x0058E360 and users SetupWin, change_opening, desktop_init and system_close need coordinated recovery. BasePopDefaultField322C at0x009B8DD0 is a Win pointer, not the currently declared word. ConsoleGlobal also lacks an object binding.",
+      "Original cd_check0x00628F30 tests0x009B8DD0 at0x006290A2 and passes HandleMain at0x009B7B28 or null to DirectXSetupA; current source instead tests HandleMain and passes ExpansionEnabled. Preserve this misbinding, invisible to source-name search, for its existing owners.",
+      "release_sound0x004C5D90 is exact only in its seed; proper shutdown still requires sound chain and device storage recovery. None of these dependencies is resolved by a passing compile/link check or close_opening masked match."
+    ],
+    "hypothesis": "The corrected map-window consumers still require coupled source-owned storage and shutdown recovery; matching individual bodies does not close their storage, generated deletion or debug-window lifetime dependencies.",
+    "kind": "discovery"
+  },
+  "previous_event": "f20c758f3731300d8c89420e65100c76756a3252275d8bf01cb3011b52188f57",
+  "request_id": "map-window-storage-coupled-lifetimes-20260920",
+  "schema_version": 1,
+  "sequence": 71,
+  "stream": "task:control-sprite-defaults"
+}

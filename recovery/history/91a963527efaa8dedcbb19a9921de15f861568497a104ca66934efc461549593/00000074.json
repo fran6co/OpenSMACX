@@ -1,0 +1,26 @@
+{
+  "event_id": "1c943e842d4b264d430dc0720e71945c6e7ec5b0683e77357667676a554f1f64",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_event_id": "337052b9fe3c4c2f6e577d5708efcaa6b12cdc3b100d496a91884d280cc4c229",
+    "discovery_id": "basebutton-hide-win-owner-binding-20260920",
+    "evidence": [
+      "Existing Win owner already retains the restored binding; coordinate that source relationship with the BaseButton caller. Do not grant source edits, reset either baseline, copy task journals or declare restoration/acceptance from this request."
+    ],
+    "kind": "discovery_routed",
+    "subjects": [
+      "entity-e359dc4db1a4fd599c8017cbab16cdd459e65dd928565edf57f2edf175f6d744"
+    ],
+    "target": {
+      "base_revision": "623946b512c7c7998739d5650c6bb078fee58daf",
+      "history_head": "fa59ad78814bec55cdfcc1c587b32c4f76a78fd7e664261c124966dca697178c",
+      "task_id": "radiobutton-lifetime",
+      "task_sha256": "ac514c79e0b8e092ccec7a746f4d1dda395fa4358452baaa0f332f60347389a4"
+    }
+  },
+  "previous_event": "337052b9fe3c4c2f6e577d5708efcaa6b12cdc3b100d496a91884d280cc4c229",
+  "request_id": "route-basebutton-win-hide-owner-20260920",
+  "schema_version": 1,
+  "sequence": 74,
+  "stream": "task:control-sprite-defaults"
+}

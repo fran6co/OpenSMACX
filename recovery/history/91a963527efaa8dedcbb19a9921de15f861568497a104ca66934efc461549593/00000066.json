@@ -1,0 +1,31 @@
+{
+  "event_id": "c5d4e22412f0795673e8fb3ed5b832af1c36de0ee30a40be64fcfbed516e7432",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes the first bounded prerequisite of the WorldWin map-window storage request: correct close_opening lifetime/base conversion at 0x00589B20, system_init Console base conversion, and Console::editor_generate loaded-slot/member/free-draw-call semantics at 0x004E0FD0. Fresh journal-derived ownership across all retained worktrees finds the two added identities unassigned; system_init already belongs to this task. Other owners with shared file permissions are stopped and their source is preserved. No other game/console functions, global migrations or shared BasePop/MultiDebug bodies are authorized by this step.",
+      "Original close_opening dispatches the GraphicWin scalar deleting destructor with flag one; original editor_generate 0x004E1033 loads table slot zero, 0x004E1038 writes that object plus0x1DD98, 0x004E1042 calls its MapWin::draw_map, and 0x004E1068/0x004E1085 call free draw_map. Preserve all original mappings, baselines and pending discoveries; remaining storage and lifecycle defects stay pending. This decision is editing authority, not acceptance or manual integration permission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5806880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5115856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0eb6f3b15078ad47d03e812362fed1b945da7063f5ad9bd697fa9a41c1f78560",
+  "request_id": "map-window-consumer-prerequisites-20260920",
+  "schema_version": 1,
+  "sequence": 66,
+  "stream": "task:control-sprite-defaults"
+}

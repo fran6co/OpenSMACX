@@ -1,0 +1,19 @@
+{
+  "event_id": "791d9064328a633b31fe11cc29a75e30b71504bcd5e6df3c4e3e20f93d4aed17",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.h"
+    ],
+    "evidence": [
+      "The authorized close_opening correction invalidates game.h interpretation of its indirect call as on_dialog_focus. Permit only adjacent opening_window declaration evidence correction to explain GraphicWin deleting destruction and unresolved original-address pointer storage; no pointer migration or broader game interface edits are authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c5d4e22412f0795673e8fb3ed5b832af1c36de0ee30a40be64fcfbed516e7432",
+  "request_id": "opening-lifetime-header-evidence-20260920",
+  "schema_version": 1,
+  "sequence": 67,
+  "stream": "task:control-sprite-defaults"
+}

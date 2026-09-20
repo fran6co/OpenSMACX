@@ -68,6 +68,7 @@ class BaseButton : public GraphicWin {
   // free() residue in EAX that the image never sets on purpose, and spelling
   // it cost one instruction (`xor eax,eax`) at the close of the body.
   void close();
+  virtual void hide();
   int init(LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
   BaseButton *destroy();

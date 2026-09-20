@@ -1,0 +1,23 @@
+{
+  "event_id": "ab1acecb65df3f168222d7153d3c647f1010821dcf027188ecc85b9106eaab4a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent review of already-authorized Console::editor_generate identifies three additional original/source discrepancies in the same body. Authorize their repair: original0x4E0FDD loads the LockMapTable pointer rather than dereferencing its first byte; original0x4E101D uses signed loop comparison; original0x4E107A-0x4E107F clears only bit0x80 and preserves the remaining GameState bits. Keep the unidentified interface receiver and broader table lifecycle as pending discoveries, not invented types or accepted behavior. No additional functions or files are granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5115856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "791d9064328a633b31fe11cc29a75e30b71504bcd5e6df3c4e3e20f93d4aed17",
+  "request_id": "editor-generation-reviewed-semantics-20260920",
+  "schema_version": 1,
+  "sequence": 68,
+  "stream": "task:control-sprite-defaults"
+}

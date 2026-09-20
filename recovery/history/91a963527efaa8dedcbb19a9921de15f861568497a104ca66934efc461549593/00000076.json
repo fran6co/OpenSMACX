@@ -1,0 +1,19 @@
+{
+  "event_id": "17513aea74ea84fbcedd6f1573504a470438d1b3ace34aa4579690c8b9432fbb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basebutton_hide.py"
+    ],
+    "evidence": [
+      "Authorize focused actual-source controls for retained BaseButton::hide recovery: null/non-null group behavior, original25-byte body/reference and compiler-emitted hide slot. Coordinator manually reviews integration independently of unfinished automatic acceptance. Do not alter product source, shared ownership or other pending discoveries; tests are bounded controls, not whole-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ed6eb110551d4c465f05453f2c536d68cfcfa0aecf48914bf99a2aab3ed74246",
+  "request_id": "basebutton-hide-review-controls-20260920",
+  "schema_version": 1,
+  "sequence": 76,
+  "stream": "task:control-sprite-defaults"
+}

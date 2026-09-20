@@ -1,0 +1,23 @@
+{
+  "event_id": "62f2b4e0a00cf6ffe79fdc83613df8d09df0b143a52b714dc9d9213af532c659",
+  "payload": {
+    "affects": [
+      "entity-002b57962afc67227f0678e7fa06589d3700b875cdb2d9b49e65e327ba32530a",
+      "entity-387e9df1717eef8b81371db84328cd85a9c6b1069b4015987baea2f61c834da3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "editor-interface-button-member-20260920",
+    "evidence": [
+      "Original MainInterface constructor0x0045EF10 pushes FlatButton constructor0x00607CF0, count42, stride0xB4C, base this+0xE00 into the array constructor iterator. 0x007AE820+0xE00+2*0xB4C equals0x007B0CB8, independently identifying the embedded object behind editor_generate tail dispatch.",
+      "Original FlatButton constructor0x00607CFB installs primary table0x00669754, with show slot0x005ED9D0 and hide slot0x00406860. The latter clears BaseButton field+0xA9C only when ButtonGroup* at+0xAA8 is null, then tailcalls Win::hide. Its historical exact seed remains src/recovered/units/00406860.cpp; product class lacks the override.",
+      "scenario.cpp old assertion that no constructor reaches the singleton is contradicted by member-array construction. Other consumers need separate owner work; this finding grants no editing scope or acceptance."
+    ],
+    "hypothesis": "The editor singleton is MainInterfaceGlobal.flat_button_[2], whose original virtual hide target is an unrecovered BaseButton override; a typed editor call requires that genuine override rather than the inherited Win::hide.",
+    "kind": "discovery"
+  },
+  "previous_event": "ab1acecb65df3f168222d7153d3c647f1010821dcf027188ecc85b9106eaab4a",
+  "request_id": "editor-interface-button-member-20260920",
+  "schema_version": 1,
+  "sequence": 69,
+  "stream": "task:control-sprite-defaults"
+}

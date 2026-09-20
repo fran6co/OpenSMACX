@@ -1,0 +1,23 @@
+{
+  "event_id": "c395ea4cfe554bc6f281c05120b31e082755ee2eef675894813e6e2f633657b5",
+  "payload": {
+    "affects": [
+      "entity-002b57962afc67227f0678e7fa06589d3700b875cdb2d9b49e65e327ba32530a",
+      "entity-8506f2700c2be73b5ecfbc74805888eb8284e8f30d7fd53d0356b217949f8397"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "embedded-button-and-map-storage-other-consumers-20260920",
+    "evidence": [
+      "Original MainInterface initializer0x00459560 and constructor0x0045EF10 establish flat_button_[2] at0x007B0CB8 via array construction. scenario.cpp old no-constructor/no-enclosing-owner explanation is disproved; its callers and Console::editor_fast0x004E10C0 still use fake interface dispatches. Do not silently drop this discovery after editor_generate is corrected.",
+      "map.h map_tiles() reads original pointer slot0x0094A30C while lock.cpp owns real LockMapTable for that same original identity. Editor generation now correctly reads LockMapTable as a pointer and Map::bit as a member; other map readers/producers require coordinated storage unification, not a mirrored fixed address.",
+      "The MainInterface header comment describing the embedded buttons hide slot as Win::hide must be corrected by its owner: original BaseButton, FlatButton and ImageButton tables all select BaseButton::hide0x00406860. This step implements that override but does not authorize other caller or header changes."
+    ],
+    "hypothesis": "The proven embedded MainInterface button and tile storage interpretations also affect other existing consumers, which remain outside this prerequisite repair.",
+    "kind": "discovery"
+  },
+  "previous_event": "8dea46b378c4a9585d03d91f1eb3611269e691e286ad4cbc39dbf8181e2330ab",
+  "request_id": "embedded-button-and-map-storage-other-consumers-20260920",
+  "schema_version": 1,
+  "sequence": 72,
+  "stream": "task:control-sprite-defaults"
+}

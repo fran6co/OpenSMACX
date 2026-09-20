@@ -34,6 +34,16 @@ uint32_t BaseButtonA98Default;  // 0x009B8E30
 
 #include <new>
 
+// ORIGINAL: 0x00406860 ?hide@BaseButton@@QAEXXZ 0x00406860-0x00406879 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original FlatButton constructor0x00607CFB installs table0x00669754; its slot2 targets the complete25-byte function0x00406860-0x00406879.", "Original0x00406860 tests the ButtonGroup pointer at+0xAA8, clears the dword at+0xA9C when null, then jumps to Win::hide0x005EDCD0. Existing BaseButton members group_ and field_A9C_ own these offsets.", "Historical seed src/recovered/units/00406860.cpp supplies the preserved original identity and span; the product override uses the existing GraphicWin/Win inheritance rather than raw self offsets."], "reason": "FlatButton primary vtable selects the BaseButton hide override, which conditionally clears its ungrouped state before invoking Win::hide."}
+// symbol    ?hide@BaseButton@@UAEXXZ
+void BaseButton::hide() {
+    if (group_ == 0) {
+        field_A9C_ = 0;
+    }
+    Win::hide();
+}
+
 /*
 Purpose: Construct the GraphicWin base and two Time members, then install the
          BaseButton tables and process defaults.

@@ -1,0 +1,28 @@
+{
+  "event_id": "f20c758f3731300d8c89420e65100c76756a3252275d8bf01cb3011b52188f57",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.cpp",
+      "src/basebutton.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes the missing BaseButton::hide implementation/declaration and the corresponding typed editor_generate member calls. Journal-derived original identity is currently unassigned. infowin-ownership has existing shared file permissions but no active editing worker; WorldWin and all retained campaign source remain stopped and untouched. Shared declaration effects require fresh build/restoration/reference checks and independent review before any publication.",
+      "Use genuine group_ and field_A9C_ members and qualified Win::hide; retain the exact seed and all its historical original spans. Bind only through native source publication. Do not invent a button name, modify unrelated singleton consumers, grant acceptance, or reset task history.",
+      "In the same authorized editor body replace the corrected raw tile-word loop by Map::bit and sizeof(Map) indexing using the existing Map declaration and BIT_BASE_IN_TILE/BIT_VEH_IN_TILE constants. This does not grant a migration of the shared LockMapTable/map_tiles storage."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4221024,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "62f2b4e0a00cf6ffe79fdc83613df8d09df0b143a52b714dc9d9213af532c659",
+  "request_id": "editor-basebutton-hide-closure-20260920",
+  "schema_version": 1,
+  "sequence": 70,
+  "stream": "task:control-sprite-defaults"
+}
