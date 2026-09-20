@@ -21,6 +21,7 @@ from pathlib import Path
 
 from capstone import CS_ARCH_X86, CS_MODE_32, Cs, x86
 
+from ..pe_coff import Coff
 from .model import DecompilationState, Tier
 
 @dataclass(frozen=True)
@@ -536,6 +537,16 @@ def text_symbols(obj: bytes) -> list[tuple[str, int, int]]:
     which entry is right: guessing belongs in the migration that writes the
     fact, never in what measures.
     """
+    return [(name, value, section) for name, value, section, storage
+            in _subject_candidates(obj) if storage == 2]
+
+
+def _subject_candidates(obj: bytes) -> list[tuple[str, int, int, int]]:
+    """Legacy external .text candidates plus local definitions to validate.
+
+    A local definition is not yet a function or an independently bounded body.
+    Keep its storage class so selection cannot prefer a same-named external.
+    """
     machine, n_sections, _ts, sym_ptr, n_syms, _opt, _ch = \
         struct.unpack_from("<HHIIIHH", obj, 0)
     if machine != 0x14C:
@@ -559,16 +570,64 @@ def text_symbols(obj: bytes) -> list[tuple[str, int, int]]:
         name = sym_name(obj[off:off + 8])
         value, section_no, _type, storage, n_aux = \
             struct.unpack_from("<IhHBB", obj, off + 8)
-        if storage == 2 and 0 < section_no <= len(names) \
-                and names[section_no - 1] == ".text":
-            out.append((name, value, section_no - 1))
+        if 0 < section_no <= len(names) and (
+                storage == 3 or storage == 2 and names[section_no - 1] == ".text"):
+            out.append((name, value, section_no - 1, storage))
         i += 1 + n_aux
     return out
 
 
+def _local_function_masked(raw: bytes, name: str, *,
+                           original_extent: int | None = None) -> tuple[bytes, frozenset[int]]:
+    """One explicitly named TU-local function, never a slice between labels.
+
+    Reuse the bounded COFF reader for the additional supported domain. Plain
+    shared code, missing section ownership and associated code stay unsupported;
+    accepting STATIC in the legacy section-tail extractor would be unsafe.
+    This is still masked-byte measurement, not reference or link verification.
+    """
+    obj = Coff(raw)
+    definitions_named = [entry for entry in obj.symbols.values()
+                         if entry.name == name and entry.section > 0]
+    if len(definitions_named) != 1:
+        raise ValueError(f"{name} is ambiguous in the object")
+    symbol = obj.function(name)
+    section = obj.sections[symbol.section - 1]
+    definitions = [entry for entry in obj.symbols.values()
+                   if entry.section == symbol.section and entry.storage == 3
+                   and entry.type == 0 and entry.name == section.name]
+    auxiliary = obj.auxiliary.get(definitions[0].index, b"") if len(definitions) == 1 else b""
+    if (len(auxiliary) != 18 or struct.unpack_from("<H", auxiliary, 12)[0] != 0
+            or symbol.section in obj.associations or len(obj.code_sections(symbol)) != 1):
+        raise ValueError("local function requires one independently defined code COMDAT without associated code")
+    code, relocations, _ = obj.subject(symbol)
+    end = len(code)
+    while end and code[end - 1] in (0x90, 0xCC):
+        end -= 1
+    code = code[:end]
+    if not code:
+        raise ValueError("local function has no code after alignment padding")
+    # The legacy external comparer can extend the original read for switch
+    # tails. A local mapping must not borrow a neighboring original body.
+    if original_extent is not None and len(code) > original_extent:
+        raise ValueError("local function exceeds its explicit original image span")
+    masked = set()
+    for relocation in relocations:
+        if not 0 <= relocation.offset <= len(code) - 4:
+            raise ValueError("local function relocation crosses its code boundary")
+        field = set(range(relocation.offset, relocation.offset + 4))
+        if field & masked:
+            raise ValueError("local function has overlapping relocations")
+        masked.update(field)
+    return code, frozenset(masked)
+
+
 def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
-                          ) -> tuple[bytes, frozenset[int]]:
-    """The symbol's code out of a COFF object - the `.text` section named
+                          *, spans=None) -> tuple[bytes, frozenset[int]]:
+    """The symbol's code out of a COFF object - the legacy external `.text`
+    path, or a separately validated exclusive local code COMDAT.
+
+    The external path takes the section named
     by the symbol, from the symbol's value to the section's end, trailing
     NOP/INT3 padding stripped. With `/Gy` each function is its own COMDAT
     section, so the section end is the function end."""
@@ -582,7 +641,7 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
         n_relocs, = struct.unpack_from("<H", obj, off + 32)
         sections.append((name, raw_size, raw_ptr, reloc_ptr, n_relocs))
 
-    externals = text_symbols(obj)
+    candidates = _subject_candidates(obj)
 
     # ONE RULE, AND IT READS A FACT. `emitted` is what the annotation says
     # this tree's compiler produces for the piece; `name` is what the IMAGE
@@ -598,8 +657,15 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
     # can explain. The guessing lives in the migration that writes the fact
     # (`reader.region_identifiers`); what measures reads it.
     wanted = emitted or symbol
-    matches = [e for e in externals
-               if e[0] == wanted or (not emitted and e[0] == "_" + symbol)]
+    matches = [e for e in candidates
+               if e[0] == wanted or (not emitted and e[3] == 2 and e[0] == "_" + symbol)]
+    if any(storage == 3 for _, _, _, storage in matches):
+        if len(matches) != 1:
+            raise ValueError(f"{wanted} is ambiguous in the object")
+        if spans is not None and len(spans) != 1:
+            raise ValueError("local function measurement requires one original image span")
+        extent = spans[0][1] - spans[0][0] if spans is not None else None
+        return _local_function_masked(obj, wanted, original_extent=extent)
     if not matches:
         # TWO DIFFERENT FAULTS, SAID DIFFERENTLY. A recorded symbol that is
         # absent is a STALE fact - the annotation made a claim and the
@@ -613,9 +679,9 @@ def _coff_function_masked(obj: bytes, symbol: str, emitted: str = "",
             f"{symbol} not found among the object's .text symbols, and the "
             f"annotation records no `symbol` fact saying what this tree "
             f"emits for it")
-    if len({(value, sec) for _n, value, sec in matches}) > 1:
+    if len({(value, sec) for _n, value, sec, _storage in matches}) > 1:
         raise ValueError(f"{wanted} is ambiguous in the object")
-    _name, value, sec = matches[0]
+    _name, value, sec, _storage = matches[0]
     _sec_name, raw_size, raw_ptr, reloc_ptr, n_relocs = sections[sec]
     code = obj[raw_ptr + value:raw_ptr + raw_size]
     end = len(code)
@@ -689,7 +755,7 @@ def subject_asm(obj: bytes, record: DecompilationState,
     if not record.name:
         raise ValueError(
             f"{record.address_hex}: no name fact under its marker")
-    code, mask = _coff_function_masked(obj, record.name, record.symbol)
+    code, mask = _coff_function_masked(obj, record.name, record.symbol, spans=record.image_spans)
     return Listing(code=code, base=record.address, mask=mask, flags=flags)
 
 

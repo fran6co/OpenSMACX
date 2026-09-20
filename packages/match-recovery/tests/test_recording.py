@@ -11,24 +11,32 @@ import pytest
 from match_recovery.cli import main
 from match_recovery import recording
 from match_recovery.source import read_file
+from match_recovery.source_measure import measure_source
 from test_claim_integrity import git, commit, configuration
 from test_binary import pe_fixture
 from source.test_unit_comparison import coff
+from source.test_local_asm import local_coff
 
 
 FIRST = "// ORIGINAL: 0x00401000 _f 0x00401000-0x00401001\n// TRIED: seed observation\nvoid f() {}\n"
 SECOND = "// ORIGINAL: 0x00401001 _h 0x00401001-0x00401004\nint h() {return 0;}\n"
 
 
-def compiler(root, functions=None, *, effect="", failure=False):
-    obj = coff(functions if functions is not None else [("_f", b"\xc3"), ("_h", b"\x33\xc0\xc3")])
+def compiler(root, functions=None, *, effect="", failure=False, raw_object=None, objects_by_source=None):
+    obj = raw_object if raw_object is not None else coff(
+        functions if functions is not None else [("_f", b"\xc3"), ("_h", b"\x33\xc0\xc3")])
+    if objects_by_source is None:
+        response = f"print(json.dumps({{'object_base64': {base64.b64encode(obj).decode()!r}}}))\n"
+    else:
+        encoded = {source: base64.b64encode(value).decode() for source, value in objects_by_source.items()}
+        response = f"objects = {encoded!r}\nprint(json.dumps({{'object_base64': objects[r['source']]}}))\n"
     (root / "recovery/compiler.py").write_text(
         "import json, sys\nfrom pathlib import Path\nr = json.load(sys.stdin)\n"
         "assert r['schema_version'] == 2 and r['profile'] == 'fixture'\n"
         "Path('build').mkdir(exist_ok=True)\n"
         "with Path('build/calls.jsonl').open('a') as f: f.write(json.dumps(r)+'\\n')\n"
         + effect + "\n" + ("print(json.dumps({'error': 'synthetic compile failure'})); sys.exit(3)\n" if failure else
-                           f"print(json.dumps({{'object_base64': {base64.b64encode(obj).decode()!r}}}))\n"))
+                           response))
 
 
 @pytest.fixture
@@ -79,6 +87,134 @@ def test_installed_cli_measures_and_publishes_a_family_once(project, capsys):
     assert "TRIED: seed observation" in (project / "engine/family.cc").read_text()
     assert calls(project)[0]["flags"] == ["first", "/Dvalue=two words"]
     assert not list((project / "build/recovery/publications").iterdir())
+
+
+LOCAL_GENERATED = "_$E19"
+
+
+def local_file_mapping(source, symbol=LOCAL_GENERATED):
+    first, rest = source.split("\n", 1)
+    return first + " FILE\n// symbol " + symbol + "\n" + rest
+
+
+def local_function_object(functions=None, damage=None):
+    """Give the existing COFF fixture genuine STATIC/function/COMDAT metadata.
+
+    These are synthetic bytes and metadata, not a native compiler claim. The
+    production parser and compiler JSON boundary remain in the exercised path.
+    """
+    (name, code), = functions or [(LOCAL_GENERATED, b"\xc3")]
+    options = {
+        "non_comdat": {"flags": 0x60500020},
+        "non_function": {"kind": 0},
+        "shared_section": {"peers": (("_$E20", 0, 0x20, 3),)},
+        "duplicate": {"peers": ((LOCAL_GENERATED, 0, 0x20, 3),)},
+        "nonzero_entry": {"value": 1},
+    }
+    return local_coff(code, name=name, **options.get(damage, {}))
+
+
+def test_local_generated_file_binding_measures_then_banks_without_rewriting_identity(project, capsys):
+    path = project / "engine/family.cc"
+    path.write_text(local_file_mapping(FIRST) + SECOND)
+    compiler(project, raw_object=local_function_object())
+    before = path.read_bytes()
+    assert main(["measure", "_f", "--root", str(project), "--image", "original/input.exe"]) == 0
+    measured = json.loads(capsys.readouterr().out)
+    assert measured["counts"] == {"pass": 1} and not measured["ready_for_collection"]
+    assert path.read_bytes() == before and not read_file(path)[0].byte_exact
+    code, report = run(project, "_f")
+    assert code == 0 and len(report["updated"]) == 1 and not report["unresolved"]
+    first, second = read_file(path)
+    assert first.name == "_f" and first.symbol == LOCAL_GENERATED and first.byte_exact
+    assert first.image_spans == ((0x401000, 0x401001),)
+    assert not second.byte_exact and "TRIED: seed observation" in path.read_text()
+    assert report["verification"] == "historical_masked_bytes_only" and not report["ready_for_collection"]
+    assert {row["source"] for row in calls(project)} == {"engine/family.cc"}
+
+
+@pytest.mark.parametrize("damage", ["non_comdat", "shared_section", "non_function", "duplicate", "nonzero_entry"])
+def test_unsafe_local_generated_binding_refuses_without_source_publication(project, damage):
+    path = project / "engine/family.cc"
+    path.write_text(local_file_mapping(FIRST) + SECOND)
+    compiler(project, raw_object=local_function_object(damage=damage))
+    before = path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns
+    measured = measure_source(project, ("_f",), image=Path("original/input.exe"))
+    assert measured["result"] == "unknown" and measured["counts"] == {"unknown": 1}
+    code, report = run(project, "_f")
+    assert code == 3 and len(report["unresolved"]) == 1 and report["updated"] == []
+    assert before == (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
+    assert not any(row.byte_exact for row in read_file(path))
+
+
+def test_local_generated_lookup_does_not_guess_an_extra_leading_underscore(project):
+    path = project / "engine/family.cc"
+    path.write_text(local_file_mapping(FIRST, LOCAL_GENERATED[1:]) + SECOND)
+    compiler(project, raw_object=local_function_object())
+    before = path.read_bytes()
+    code, report = run(project, "_f")
+    assert code == 3 and len(report["unresolved"]) == 1 and report["updated"] == []
+    assert path.read_bytes() == before
+
+
+def test_local_generated_multiple_original_spans_cannot_bank_only_the_primary(project):
+    path = project / "engine/family.cc"
+    mapping = local_file_mapping(FIRST).replace(
+        "0x00401000-0x00401001 FILE",
+        "0x00401000-0x00401001;0x00401010-0x00401011 FILE")
+    path.write_text(mapping + SECOND)
+    compiler(project, raw_object=local_function_object())
+    before = path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns
+    measured = measure_source(project, ("_f",), image=Path("original/input.exe"))
+    assert measured["result"] == "unknown" and measured["counts"] == {"unknown": 1}
+    assert "one original image span" in json.dumps(measured)
+    code, report = run(project, "_f")
+    assert code == 3 and len(report["unresolved"]) == 1 and report["updated"] == []
+    assert "one original image span" in json.dumps(report)
+    assert before == (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
+    assert not any(row.byte_exact for row in read_file(path))
+
+
+def test_local_generated_body_cannot_borrow_adjacent_original_function(project):
+    path = project / "engine/family.cc"
+    path.write_text(local_file_mapping(FIRST) + SECOND)
+    # The object concatenates f and h exactly, but f owns only the first byte.
+    compiler(project, raw_object=local_function_object([
+        (LOCAL_GENERATED, b"\xc3\x33\xc0\xc3")]))
+    before = path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns
+    measured = measure_source(project, ("_f",), image=Path("original/input.exe"))
+    assert measured["counts"] == {"unknown": 1}
+    assert "exceeds its explicit original image span" in json.dumps(measured)
+    code, report = run(project, "_f")
+    assert code == 3 and len(report["unresolved"]) == 1 and report["updated"] == []
+    assert "exceeds its explicit original image span" in json.dumps(report)
+    assert before == (path.read_bytes(), path.stat().st_ino, path.stat().st_mtime_ns)
+    assert not any(row.byte_exact for row in read_file(path))
+
+
+@pytest.mark.parametrize("owner_present", [False, True])
+def test_same_generated_local_name_is_resolved_only_in_its_selected_tu(project, owner_present):
+    first = project / "engine/family.cc"
+    second = project / "engine/other.cc"
+    first.write_text(local_file_mapping(FIRST))
+    second.write_text(local_file_mapping(SECOND))
+    compiler(project, objects_by_source={
+        "engine/family.cc": local_function_object([
+            (LOCAL_GENERATED if owner_present else "_$Absent", b"\xc3")]),
+        "engine/other.cc": local_function_object([(LOCAL_GENERATED, b"\x33\xc0\xc3")]),
+    })
+    before = first.read_bytes()
+    measured = measure_source(project, ("_f", "_h"), image=Path("original/input.exe"))
+    assert measured["counts"] == ({"pass": 2} if owner_present else {"unknown": 1, "pass": 1})
+    code, report = run(project, "_f", "_h")
+    assert code == (0 if owner_present else 3)
+    assert len(report["updated"]) == (2 if owner_present else 1)
+    assert read_file(first)[0].byte_exact == owner_present
+    assert read_file(second)[0].byte_exact
+    if not owner_present:
+        assert first.read_bytes() == before
+        assert report["unresolved"][0]["address"] == "0x00401000"
+    assert {row["source"] for row in calls(project)} == {"engine/family.cc", "engine/other.cc"}
 
 
 def test_noop_keeps_source_inode_timestamp_and_claims(project):

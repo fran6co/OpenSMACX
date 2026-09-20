@@ -3502,6 +3502,20 @@ build or accept precomputed verdicts. Default empty compiler arguments request t
 local compiler's recipe; explicit argv can be supplied with `--arguments <relative
 JSON-file>`. All arguments remain tokens, not a shell command string.
 
+Compiler-generated TU-local functions can be measured and recorded through an
+explicit emitted-symbol binding in their owning source file, including `FILE`
+mappings beside the C++ construct that generates them. The i386 backend admits
+only an exact local function name with exclusive, zero-offset ownership of a
+code COMDAT and validated section-definition metadata. It requires one original
+image span and refuses a trimmed body exceeding that span, never borrowing
+adjacent original bytes. Plain/shared sections, additional associated code, ambiguous names,
+missing metadata and invalid relocation fields refuse measurement. Local names
+never select another TU's object or receive underscore/name guesses. Ordinary
+associated data is not measured by this body comparison. Keep real C++ lifetime
+and hierarchy declarations rather than substituting handwritten generated-code
+wrappers. These are historical masked-byte claims, not proof of CRT ordering,
+references, exception behavior, retained selection or complete object lifetime.
+
 Functions in one TU share invocation-local objects and failures; `--jobs N` permits
 multiple TUs concurrently, defaulting to 1. The project/coordinator must provide
 safe compiler capacity. Header-only mappings need an explicit compilation host
