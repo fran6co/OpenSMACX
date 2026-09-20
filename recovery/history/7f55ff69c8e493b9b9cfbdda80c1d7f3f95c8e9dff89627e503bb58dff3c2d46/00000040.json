@@ -1,0 +1,57 @@
+{
+  "event_id": "8708db29ecabfb5b386ef46b9f3930c8f8fa20535fb1beede7a833ec1214de92",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_map_radius.py",
+      "recovery/tests/test_texture_vertices.py",
+      "src/buffer.h",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/texture.cpp",
+      "src/texture.h",
+      "src/vert.h"
+    ],
+    "evidence": [
+      "Continue the renderer dependency recovery from reviewed master20a82cd8 in an isolated worktree. The Console cursor batch has completed destination build/link, protected matching, scoped references/layout and regression verification. Do not reset the original task baseline, demote claims, alter compiler policy or introduce framework work.",
+      "Original Texture draw_trans61A31E..35E and polygon6266B9..6DE independently read signed X at0 and Y at4 with stride8. PAUVert API identities support struct Vert. Define this real signed-coordinate type, preserve pointer ABI, and replace the authorized consumers raw int vertex scans with actual members. EdgePoint remains distinct: shared shape does not prove identical semantic type.",
+      "Texture draw_trans61A281..2AA chooses four vertices for zero and eight for nonzero, with embedded UV tables atC/2C; its final parameter is a selector, not a count. Correct its misleading declaration. Missing rasterization remains unfinished until actual original algorithm and dependency semantics are recovered; do not claim a typed min/max scan completes the blitter.",
+      "The map cursor cache at7D3BE8 has an independently observed32byte extent: gen_terrain_poly464D12..21 and466C21..30 copy eight dwords from7D3C08, and draw_map46A940..95D translates four XY pairs. Do not infer bounds from neighboring MapWinTable, merge with working polygon storage7D3C08, or claim unobserved initialization. Preserve these producer dependencies; declaring an unused replacement cache alone does not recover their path.",
+      "Allow evidence-led recovery of existing MapWin draw_radius forwarder and gen_radius seed within this scope, but no new fixed-address calls, fake vtables or fabricated storage. Dependencies outside scope require a separate coordinator decision; existing recovered behavior must not become placeholders. Actual-body tests, independent original control-flow review and native compilation/linking/reference/layout/matching checks are required before manual integration. No new matching regressions are authorized by this decision."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6398528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6402544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6442368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4629152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4624784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "55372f1d2470546009a0ed4997ffa93ec435df8b82161b7875ed5d214acb8d32",
+  "request_id": "renderer-vertex-ownership-20260920",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:vector-value-semantics"
+}
