@@ -732,18 +732,6 @@ void CouncWin::draw_leader(int factionID) {  // 0x00425DB0
     PENDING_BODY(0x00425DB0, pending)(this, nullptr, factionID);
 }
 
-void GraphicWin::soft_update() {  // 0x005D5890
-    typedef void(__fastcall *pending)(GraphicWin *, void *);
-    PENDING_BODY(0x005D5890, pending)(this, nullptr);
-}
-
-// ?soft_update@GraphicWin@@QAEXPAURECT@@@Z at 0x005D5930 - the RECT
-// overload, still an original body. StatusWin::redraw calls it BY NAME.
-void GraphicWin::soft_update(RECT *area) {
-    typedef void(__fastcall *pending)(GraphicWin *, void *, RECT *);
-    PENDING_BODY(0x005D5930, pending)(this, nullptr, area);
-}
-
 // ?update_window@Win@@QAEHPAURECT@@@Z at 0x005F74A0 - GraphicWin::update
 
 // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0, the RECT overload -

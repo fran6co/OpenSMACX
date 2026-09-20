@@ -195,13 +195,10 @@ class GraphicWin : public Win, public Buffer {
   void update(GraphicWin *target);
   // 0x005D5630 returns zero on both paths; the second argument is unused.
   int update(RECT *area, GraphicWin *target);
-  // 0x005D5890  ?soft_update@GraphicWin@@QAEXXZ - public, __thiscall,
-  // void(void). Called directly (not virtually) by WorldWin, so it must not
-  // be virtual here. Still an original body; the definition at the end of
-  // graphicwin.cpp forwards to it.
+  // Invalidate the full Buffer rectangle, or a clipped client rectangle.
+  // Direct nonvirtual calls at 0x005D5890 and 0x005D5930. Neither overload
+  // repaints synchronously or modifies a borrowed rectangle.
   void soft_update();
-  // 0x005D5930, still an original body - a distinct overload from the
-  // zero-argument one above. StatusWin::redraw calls it BY NAME.
   void soft_update(RECT *area);
  private:
   // Borrowed frame sprites. overlay_nonclient supplies each as Sprite's
@@ -355,10 +352,3 @@ extern func_buffer_init BufferOriginalInit;
 // contiguous block between the colour-map slot GraphicWinColorMapTable
 // already binds at 0x009B3390 and GraphicWinFieldA0CDefault at 0x009B33C0.
 extern GraphicWinFrameDefaults GraphicWinInitDefaults;
-
-
-// GraphicWin::soft_update at 0x005D5890 (157 bytes, bare ret) blits the
-// window's own buffer without the full repaint path. Still an original body -
-// MapWin::draw_radius, WorldWin and StatusWin::redraw all reach it - so it is
-// forwarded. Rebindable so tests can substitute a probe and so the seam can
-// later point at a recovered body.

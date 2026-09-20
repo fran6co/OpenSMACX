@@ -1,0 +1,30 @@
+{
+  "event_id": "fbfb4c84f39defa50885eefe048a6477c25fb07e605606cfe4b14597ae103167",
+  "payload": {
+    "affects": [
+      "entity-12e474f3054881d1521a550c47a220ff264398d72fbaac9857a3ea4baec9bdc0",
+      "entity-3010e8a7c56a31e1aa0507e047931995ed1b6ca212cd585e3245a002b3b13bd8",
+      "entity-3e51e221834c501c9dd2cb8f41603062da26b1b8e56feb3d4e4ffe1075d218e0",
+      "entity-819eddc2a690f1e752a517eab7235e868b76d8f46dd7cc875581f71fdd382cde",
+      "entity-86db8b9a89e5bcb42eda1023c640db36eb2ee82f6cb4fbb96dd61655684063e2",
+      "entity-902ad048415c15dd3128c1359609cb8e592beda1780bc768451ccce71a270aee",
+      "entity-a78c6be4282a4acc272eb839f0766a576bec9a2bfa7795ac50a60e76088d19bf",
+      "entity-b77f7d1b05e6d98b661ff1630e662531eea38eac8e9305280a5d5d26bd405da2"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-animation-typed-renderer-dependencies-20260920",
+    "evidence": [
+      "Original vehdraw_turn_start 0x4BF8D0-0x4BFC67 returns int step count from _ftol at0x4BFC29/4E, consumed by veh_scoot0x55AA2F/3D; seed void prototype and angular branch formulas disagree. Original equal directions allow zero-step/NaN increment; ties select positive rotation.",
+      "g_VEHDRAW_CAVIAR in src/caviar.cpp already represents receiver0x8CC828; writes0x8CC888-0x8CC89C are its+0x60..+0x74 members, not separate globals. Use actual VOX_Vect/VOX_Matrix POD types, not lifecycle-bearing Vector.",
+      "Original initializer0x4C1B10-0x4C1CF7 establishes four VOX_Vect[2401] tables at0x8CDD10,0x8D4D9C,0x8DBE28,0x8E2EB4, each extent0x708C; turn_start uses base7 altitude index minus400. Encoded later bases are biased by-0x12C0, not object starts. Initializer/setup remains seed-only.",
+      "Original set_shadow_table0x618450-0x61845B copies256 bytes from0x6F107C, currently scalar MultiDebugText: shared owner/extent must be recovered. Remaining genuine dependencies include pick_top_veh0x5593E0,compute_camera0x4BF740,inverse0x627F50,matrix-vector multiply0x6280E0; caviar-matrix-operations already owns the latter. No broad scope grant or finding resolution is implied."
+    ],
+    "hypothesis": "Vehicle animation requires a coupled renderer setup recovery: seed turn_start return/angle interpretation is wrong, Caviar lighting uses genuine members, facet table bases include biased operand addresses, and scalar shadow storage cannot represent a 256-byte input. Preserve these structural dependencies rather than recreating raw global offsets or zero-filled stand-ins.",
+    "kind": "discovery"
+  },
+  "previous_event": "cae157437d2dcd478f90d368265c15f00cb3cd9996b04b491e6dd3d030b31c39",
+  "request_id": "vehicle-animation-typed-renderer-dependencies-20260920",
+  "schema_version": 1,
+  "sequence": 121,
+  "stream": "task:infowin-ownership"
+}

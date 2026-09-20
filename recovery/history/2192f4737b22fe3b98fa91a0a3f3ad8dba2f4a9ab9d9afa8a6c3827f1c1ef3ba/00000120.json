@@ -1,0 +1,35 @@
+{
+  "event_id": "cae157437d2dcd478f90d368265c15f00cb3cd9996b04b491e6dd3d030b31c39",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_soft_update.py",
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "User requests coordinator-reviewed C++ recovery without waiting for automatic acceptance. Isolated GraphicWin soft_update implementation checkpoint; no other worker may edit these files during this batch.",
+      "The retained Vector veh_scoot caller requires actual GraphicWin rectangle invalidation. Existing infowin ownership includes GraphicWin and its RECT overload; preserve all baselines and pending discoveries.",
+      "Both original entries call Win::is_visible and client_to_screen; Buffer rectangle and USER32 imports already have source-owned representations. Replace both original-address forwarders using existing bases and test actual method bodies."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6117520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6117680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ebea1daf6bb97eee1bcf1c19c6052aed0259277df5f5c1dec64511576386d9b2",
+  "request_id": "coordinator-soft-update-product-20260920",
+  "schema_version": 1,
+  "sequence": 120,
+  "stream": "task:infowin-ownership"
+}

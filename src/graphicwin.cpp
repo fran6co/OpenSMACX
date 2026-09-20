@@ -553,6 +553,45 @@ int GraphicWin::update(RECT *area, GraphicWin *) {
     return 0;
 }
 
+// Invalidate the Buffer bounds in screen coordinates without repainting now.
+// ORIGINAL: 0x005D5890 ?soft_update@GraphicWin@@QAEXXZ 0x005D5890-0x005D592D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005D58A3 reads the Buffer rectangle at GraphicWin+0x474; 0x005D58E0 calls Win::client_to_screen on a zero origin and 0x005D5922 calls USER32 InvalidateRect with HandleMain and erase=false. Complete span retained from src/unrecovered/005d5890.cpp."], "reason": "Invalidate the visible GraphicWin Buffer bounds through its real Win base and the SDK import, without copying pixels or calling the original executable."}
+void GraphicWin::soft_update() {
+    if (!Win::is_visible()) return;
+
+    int x = 0, y = 0;
+    RECT local = rect2_;
+    Win::client_to_screen(&x, &y);
+    local.left += x;
+    local.right += x;
+    local.top += y;
+    local.bottom += y;
+    InvalidateRect(HandleMain, &local, FALSE);
+}
+
+// Clip a borrowed client rectangle, then invalidate its screen projection.
+// A null argument takes the full-buffer path, including its visibility check.
+// ORIGINAL: 0x005D5930 ?soft_update@GraphicWin@@QAEXPAUtagRECT@@@Z 0x005D5930-0x005D5A6E
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005D5937 checks visibility and null path repeats it at 0x005D5954. 0x005D59D5 copies caller coordinates; 0x005D5A01 intersects the local copy with Buffer bounds, 0x005D5A1F converts the zero origin, and 0x005D5A60 invalidates HandleMain without erasing. Complete span retained from src/recovered/units/005d5930.cpp."], "reason": "Invalidate a clipped, translated copy of a borrowed client rectangle; null takes the full Buffer path with the original repeated visibility check."}
+void GraphicWin::soft_update(RECT *area) {
+    if (!Win::is_visible()) return;
+    if (!area) {
+        soft_update();
+        return;
+    }
+
+    RECT local = *area;
+    if (!IntersectRect(&local, &local, &rect2_)) return;
+
+    int x = 0, y = 0;
+    Win::client_to_screen(&x, &y);
+    local.left += x;
+    local.right += x;
+    local.top += y;
+    local.bottom += y;
+    InvalidateRect(HandleMain, &local, FALSE);
+}
+
 // GraphicWin::init's four remaining original dependencies. Win::init carries
 // the whole window-creation closure, compute_min_size is frame arithmetic,
 // nonclient_to_client converts an outer size to a client size in place, and
@@ -750,12 +789,6 @@ void GraphicWin::on_mouse_move(int x, int y, unsigned int keys, int from_parent)
 
 
 
-
-/*
- * A forwarder, not a recovery: ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z at
- * 0x005D56B0, the one-argument overload of three. See soft_update above for
- * the auto_inline reasoning.
- */
 
 /*
 Purpose: Step the receiver back to the subobject ??_GGraphicWin@@UAEPAXI@Z
