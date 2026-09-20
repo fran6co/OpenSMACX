@@ -176,7 +176,7 @@ void Vector::scale(Vector &output, float scalar) {
 /*
 Purpose: Add two vectors component-wise into an output vector.
 // ORIGINAL: 0x00628150 sub_628150 0x00628150-0x00628175 BYTE_EXACT
-// symbol    ?vector_add@@YAXPAVVector@@00@Z
+// symbol    ?vector_add@@YAXPBM0PAM@Z
 // size      37 bytes
 // prototype 
 // callers   17   call targets   0
@@ -186,9 +186,9 @@ Purpose: Add two vectors component-wise into an output vector.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
-void __cdecl vector_add(Vector *left, Vector *right, Vector *output) {
-    float rx = right->x_;
-    output->x_ = rx + left->x_;
-    output->y_ = left->y_ + right->y_;
-    output->z_ = left->z_ + right->z_;
+void __cdecl vector_add(const float *left, const float *right, float *output) {
+    float rx = right[0];
+    output[0] = rx + left[0];
+    output[1] = left[1] + right[1];
+    output[2] = left[2] + right[2];
 }

@@ -414,15 +414,15 @@ class Caviar {
   // set_scene_rotation fills, and the scale seeded 1.0f. VoxSceneState above
   // is that block, with each offset's Caviar member named on it.
   VoxSceneState scene_state_;  // 0x18, 0x48 bytes
-  float field_60_;     // 0x60, the scene's down vector, seeded {0, 0, -1}
-  float field_64_;     // 0x64
-  float field_68_;     // 0x68
-  float field_6C_;  // 0x6C
-  float field_70_;  // 0x70
-  // 0x74. A float: set_shadow_vector stores cos() into it and Caviar::init
-  // seeds it with a rotation component, both `mov dword ptr [ecx + 0x74]`
-  // off a float register.
-  float field_74_;
+ public:
+  // init normalises the light and copies it to the shadow direction;
+  // turn_start supplies both vectors directly for the vehicle renderer.
+  // RECOVERY_MEMBER: v2 Caviar light_vector_ VOX_Vect 0x60 0x00616DE0
+  VOX_Vect light_vector_;
+  // RECOVERY_MEMBER: v2 Caviar shadow_vector_ VOX_Vect 0x6C 0x006181D0
+  VOX_Vect shadow_vector_;
+
+ private:
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C
   uint32_t field_80_;  // 0x80
@@ -584,6 +584,8 @@ struct VOX_ScnRenderHnd {
   uint8_t lead_[0x50];     // +0x00
   void *colour_table_;     // +0x50
 };
+
+extern Caviar g_VEHDRAW_CAVIAR;
 
 static_assert(sizeof(VOX_ScnRenderHnd) == 0x54,
               "the render handle must reach its colour table at +0x50");

@@ -1,0 +1,26 @@
+{
+  "event_id": "f867c0593ba2458e0171860fbbb42347d867604b1974f0c81689bda876fd30bd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/vector.cpp",
+      "src/vector.h"
+    ],
+    "evidence": [
+      "Original628150 operates on three float components with sequential stores. Eight Caviar calls pass VOX_Vect storage, not gameplay Vector objects. Authorize truthful float-array interface and all scoped Caviar callers; retain original identity and exactness obligation. Retained Vector checkout is idle and will be reconciled centrally without discarding its value-semantic work."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6455632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a5d1eb1ea7d735856562a139de0a6e44f265c72913d8d0a9af0acd48f7bd16a6",
+  "request_id": "typed-vector-helper-20260920",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:caviar-matrix-operations"
+}

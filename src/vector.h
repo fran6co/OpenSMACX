@@ -126,7 +126,6 @@ class Vector {
 
 static_assert(sizeof(Vector) == 0xC, "Vector layout must match the legacy ABI");
 
-// Component-wise addition of two vectors into a third, component order
-// preserved because the output may overlap either input.
-void __cdecl vector_add(Vector *left, Vector *right, Vector *output);
-
+// Three-component voxel array addition, not a gameplay Vector lifetime.
+// Inputs are reloaded between stores, preserving overlapping-array behavior.
+void __cdecl vector_add(const float *left, const float *right, float *output);

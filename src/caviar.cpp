@@ -453,6 +453,9 @@ void Caviar::close() {
 }
 
 // ====================
+// turn_start addresses this renderer at 0x008CC828 and its light/shadow
+// vectors at +0x60/+0x6C. It is the existing C++ static owner, not an alias.
+// RECOVERY_OBJECT: v1 0x008CC828 ?g_VEHDRAW_CAVIAR@@3VCaviar@@A
 Caviar g_VEHDRAW_CAVIAR;
 Buffer g_CAVIAR_BUFFER_1;
 Buffer g_CAVIAR_BUFFER_2;
@@ -1165,10 +1168,26 @@ inline int vox_alloc_typed(int size, T **out) {
     }
     return 0;
 }
-// 0x006391F0, the palette expander vox_read_chunks' 0x1020000 arm reaches for
-// an old-format record. Not homed yet: pending_bodies.cpp forwards it. C++
-// linkage, to match that forwarder's definition.
-int __cdecl vox_expand_palette(int fd, void *palette);
+// Old CVR palettes contain sixteen 256-byte shade rows after a two-byte
+// prefix and RGB table. Expand them to twenty-four rows, in column-first
+// order; failed reads leave the already-read prefix intact and no new rows.
+// ORIGINAL: 0x006391F0 ?vox_expand_palette@@YAHHPAE@Z 0x006391F0-0x006392DC
+// RECOVERY_BINDING: v1 {"evidence": ["Original6391F0..6392DC reads 1,1,768,4096 bytes in order, returns -1 on each read failure and expands 24 shade rows from source row floor(2*row/3) in column-first order. Existing seed provides compatible bounds; fresh VC6 emits the declared symbol."], "reason": "Recover old-format CVR palette expansion as genuine C++ in its loader owner, replacing the original-address forwarder."}
+int __cdecl vox_expand_palette(int fd, uint8_t *palette) {
+    uint8_t shades[0x1000];
+    if (vox_read_exact(fd, palette, 1) != 0) return -1;
+    if (vox_read_exact(fd, palette + 1, 1) != 0) return -1;
+    if (vox_read_exact(fd, palette + 2, 0x300) != 0) return -1;
+    if (vox_read_exact(fd, shades, sizeof(shades)) != 0) return -1;
+
+    for (int column = 0; column < 0x100; ++column) {
+        for (int shade = 0; shade < 0x30; shade += 2) {
+            palette[0x302 + (shade / 2) * 0x100 + column] =
+                shades[(shade / 3) * 0x100 + column];
+        }
+    }
+    return 0;
+}
 
 // Defined at the foot of this file, promoted from its artifact.
 void __cdecl sub_63ae20(unsigned char *record);
@@ -2547,11 +2566,8 @@ int Caviar::add_object(CaviarData *definition, VOX_Vect *offset, int step) {
             CaviarData &instance = slots_[field_13CC_];
             CvrPart &part = definition->record_->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
-            // The engine's accumulator is declared over the game's Vector; a
-            // VOX_Vect is the same three floats under the engine's own name,
-            // which is why the image's call site casts.
-            vector_add((Vector *)(part.vectors_ + remainder), (Vector *)offset,
-                       (Vector *)instance.instance_vector_);
+            vector_add(part.vectors_[remainder].values, offset->values,
+                       instance.instance_vector_->values);
             *instance.instance_matrix_ = part.matrices_[remainder];
 
             instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
@@ -2600,10 +2616,8 @@ int Caviar::add_object(CaviarData *definition, CaviarData *geometry,
                 return 1;
             }
             CaviarData &instance = slots_[field_13CC_];
-            vector_add(
-                (Vector *)(geometry->record_->parts_[index].vectors_ +
-                           remainder),
-                (Vector *)offset, (Vector *)instance.instance_vector_);
+            vector_add(geometry->record_->parts_[index].vectors_[remainder].values,
+                       offset->values, instance.instance_vector_->values);
             instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
             instance_steps_[field_13CC_] = definition->record_->steps_[index];
             ++index;
@@ -2653,10 +2667,8 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
                 return 1;
             }
             CaviarData &instance = slots_[field_13CC_];
-            vector_add(
-                (Vector *)(geometry->record_->parts_[index].vectors_ +
-                           remainder),
-                (Vector *)offset, (Vector *)instance.instance_vector_);
+            vector_add(geometry->record_->parts_[index].vectors_[remainder].values,
+                       offset->values, instance.instance_vector_->values);
             instance_palettes_[field_13CC_] = object;
             instance_steps_[field_13CC_] = definition->record_->steps_[index];
             ++index;
@@ -2716,8 +2728,8 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
             CaviarData &instance = slots_[field_13CC_];
             CvrPart &part = record->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
-            vector_add((Vector *)(part.vectors_ + remainder), (Vector *)offset,
-                       (Vector *)instance.instance_vector_);
+            vector_add(part.vectors_[remainder].values, offset->values,
+                       instance.instance_vector_->values);
             *instance.instance_matrix_ = part.matrices_[remainder];
             instance_palettes_[field_13CC_] = object;
             instance_steps_[field_13CC_] = record->steps_[index];
@@ -3273,8 +3285,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
         vox_matrix_vector_mul(vox_view_rotation_.values,
                               instance.instance_vector_[step].values,
                               position.values);
-        vector_add((Vector *)&position, (Vector *)&vox_view_offset_,
-                   (Vector *)&position);
+        vector_add(position.values, vox_view_offset_.values, position.values);
 
         // The level-of-detail cut decides whether the part is drawn at all:
         // the image seeds the flag with 1 and clears it when the walked
@@ -3323,8 +3334,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
             vox_matrix_vector_mul(vox_shadow_rotation_.values,
                                   instance.instance_vector_[step].values,
                                   shadow.values);
-            vector_add((Vector *)&shadow, (Vector *)&vox_shadow_offset_,
-                       (Vector *)&shadow);
+            vector_add(shadow.values, vox_shadow_offset_.values, shadow.values);
 
             const float radius = extent * vox_radius_scale_;
             const float span_x = radius * vox_shadow_span_x_;
@@ -3546,8 +3556,7 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
                               instance.instance_vector_[step].values,
                               rotated.values);
         leaf_006281b0_redirect(rotated.values, state->scale_, scaled.values);
-        vector_add((Vector *)&scaled, (Vector *)&state->scene_offset_,
-                       (Vector *)&centre);
+        vector_add(scaled.values, state->scene_offset_.values, centre.values);
 
         // The part's rotation is the scene rotation times the instance's own.
         VOX_Matrix part;
@@ -3562,7 +3571,7 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
         VOX_Vect pivot;
         VOX_Vect corner;
         vox_matrix_vector_mul(part.values, offset.values, pivot.values);
-        vector_add((Vector *)&pivot, (Vector *)&centre, (Vector *)&corner);
+        vector_add(pivot.values, centre.values, corner.values);
 
         // The three axes the box is built from are the part rotation's
         // COLUMNS - image 0x63A81E takes [esp+0x68], 0x63A835 [esp+0x6c] and
@@ -4062,8 +4071,8 @@ int Caviar::set_buffer(Buffer *buffer) {
 }
 
 /*
-Purpose: Set the shadow direction from an elevation and an azimuth: the second
-         column of the rotation becomes {cos(azimuth)*sin(elevation),
+Purpose: Set the shadow direction from an elevation and an azimuth:
+         {cos(azimuth)*sin(elevation),
          sin(azimuth)*sin(elevation), cos(elevation)}, the vector a shadow
          falls along for a light at those angles.
 // ORIGINAL: 0x006181D0 ?set_shadow_vector@Caviar@@QAEXMM@Z 0x006181D0-0x0061824F FILE
@@ -4075,9 +4084,8 @@ Purpose: Set the shadow direction from an elevation and an azimuth: the second
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006463E4 0x00646494
 //
-// HOMED from src/unrecovered/006181d0.cpp. The three offsets it writes are
-// caviar.h's declared floats - 0x6C, 0x70 and 0x74, and 0x74 is a float now
-// because this body is what proves it.
+// HOMED from src/unrecovered/006181d0.cpp. The three stores at 0x6C,
+// 0x70 and 0x74 are the components of Caviar::shadow_vector_.
 Return Value: n/a
 */
 // The image CALLS cos here (0x646494) as it calls sin; stdafx's pragma line
@@ -4089,15 +4097,15 @@ Return Value: n/a
 #endif
 void Caviar::set_shadow_vector(float elevation, float azimuth) {
     // The trig names the angles: cos(elevation) is the vector's whole z
-    // component and sin(elevation) scales the in-plane pair, so elevation is
-    // measured off the ground plane and azimuth around it.
+    // component and sin(elevation) scales the in-plane pair, so this angle
+    // is measured from the z axis and azimuth around it.
     float sin_elevation = (float)sin(elevation);
     float sin_azimuth = (float)sin(azimuth);
     float cos_elevation = (float)cos(elevation);
     float cos_azimuth = (float)cos(azimuth);
-    field_74_ = cos_elevation;
-    field_6C_ = cos_azimuth * sin_elevation;
-    field_70_ = sin_azimuth * sin_elevation;
+    shadow_vector_.values[2] = cos_elevation;
+    shadow_vector_.values[0] = cos_azimuth * sin_elevation;
+    shadow_vector_.values[1] = sin_azimuth * sin_elevation;
 }
 
 /*
@@ -4230,9 +4238,9 @@ void Caviar::init() {
     float cos_elevation = (float)cos(1.0);
     float cos_azimuth = (float)cos(0.0);
 
-    field_6C_ = cos_azimuth * sin_elevation;
-    field_70_ = sin_zero * sin_elevation;
-    field_74_ = cos_elevation;
+    shadow_vector_.values[0] = cos_azimuth * sin_elevation;
+    shadow_vector_.values[1] = sin_zero * sin_elevation;
+    shadow_vector_.values[2] = cos_elevation;
 
     scene_state_.scene_offset_.values[0] = 0.0f;
     scene_state_.scene_offset_.values[1] = 0.0f;
@@ -4274,17 +4282,17 @@ void Caviar::init() {
     scene_state_.draw_flags_ = 0;
     scene_state_.instance_steps_ = &instance_steps_[0];
 
-    field_60_ = 0;
-    field_64_ = 0;
-    field_68_ = -1.0f;
+    light_vector_.values[0] = 0;
+    light_vector_.values[1] = 0;
+    light_vector_.values[2] = -1.0f;
 
-    vox_normalise_vector(&field_60_, &field_60_);
+    vox_normalise_vector(light_vector_.values, light_vector_.values);
 
     // The normalised down vector is the light: its x and y are the shadow
     // direction's in-plane pair and its z is the elevation term
     // set_shadow_vector writes over.
-    field_6C_ = field_60_;
-    field_70_ = field_64_;
+    shadow_vector_.values[0] = light_vector_.values[0];
+    shadow_vector_.values[1] = light_vector_.values[1];
 
     scene_state_.scene_rotation_.values[0][0] = 1.0f;
     scene_state_.scene_rotation_.values[0][1] = 0;
@@ -4309,7 +4317,7 @@ void Caviar::init() {
 
 
     field_A4_ = 1;
-    field_74_ = field_68_;
+    shadow_vector_.values[2] = light_vector_.values[2];
     field_4_ |= 1;
 }
 

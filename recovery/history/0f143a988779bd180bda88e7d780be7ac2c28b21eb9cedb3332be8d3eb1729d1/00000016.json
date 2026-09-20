@@ -1,0 +1,36 @@
+{
+  "event_id": "a5d1eb1ea7d735856562a139de0a6e44f265c72913d8d0a9af0acd48f7bd16a6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_light_vectors.py",
+      "recovery/tests/test_cvr_record_loader.py",
+      "src/caviar.cpp",
+      "src/caviar.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Recover old-format palette expansion6391F0..6392DC and remove its original-address forwarder, wiring actual loader host coverage rather than the dependency double. Preserve partial read/error effects and investigate seed loop index before trusting it.",
+      "Recover Caviar embedded vectors at60..68 and6C..74, their original users and genuine g_VEHDRAW_CAVIAR8CC828 ownership. Public typed members permit the concurrently recovered vehicle turn setup to use actual class storage. No vehicle/game source edits; root integrates dependent header changes before vehicle verification.",
+      "Preserve all33 Caviar historical obligations, loader and geometry behavior. Existing test native layout dictionaries must be updated for the justified vector member grouping, with source-owned member evidence. No framework edits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6525424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9226280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "38f5bbb08b8a70898da324cfee2cf5c7f7eaa68fe4aa13b457118c45bb1c7983",
+  "request_id": "palette-and-renderer-vector-ownership-20260920",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:caviar-matrix-operations"
+}

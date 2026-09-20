@@ -309,16 +309,6 @@ void MapWin::click(int a1, int a2, int a3) {  // 0x0046D5D0
 // ?render@Caviar@@QAEHPAUBuffer@@HHH@Z at 0x00617230 is HOMED into
 // src/caviar.cpp (2026-09-05, caviar class pass), so this forwarder is gone.
 
-// sub_6391f0 at 0x006391F0 - the CVR palette expander: an old-format
-// 0x1020000 chunk is read through this instead of straight into the buffer,
-// and caviar.cpp's vox_read_chunks reaches it as vox_expand_palette. Forwarded
-// rather than homed because its body is still a transcription in the archive.
-int __cdecl vox_expand_palette(int fd, void *palette) {
-    typedef int(__cdecl *pending)(int, void *);
-    PENDING_BODY(0x006391F0, pending)(fd, palette);
-    return 0;
-}
-
 // ?init@Sprite@@QAEXPADHH@Z at 0x005E3890 - BasePop::start (0x00601BF0)
 // calls it BY NAME on the popup's own `sprite_` for the "sprite" directive,
 // so the call site needs the member's real address to emit the image's `E8`.
