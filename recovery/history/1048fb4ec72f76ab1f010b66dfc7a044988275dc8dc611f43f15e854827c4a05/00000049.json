@@ -1,0 +1,18 @@
+{
+  "event_id": "8a115cd10f7cd5e6b40bbdd5991a40d9072863b1f3cd378d08f94bbea6885c62",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-conditional-poll-and-return-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp preserves selected SetCursor return or adjusted skip-selection index, then freshly reads direct-mouse/custom-sprite predicates before deciding whether to restore and poll. Actual-source controls cover all20 dispatch entries and out-of-range, direct/custom early returns, and SetCursor changing both predicates in either direction.",
+      "Independent read-only original/source review by draw_deck_review found no remaining concrete defect in this bounded repair. All25 control tests pass, including11 cursor dataflow damage cases and both-flag storage damage controls. Full application build/link passes; all108 Win historical byte claims pass on master and candidate. Source integrity and historical identity checks pass with no missing obligations. Cursor and restore bodies still mismatch; no new byte claim, full structure/runtime proof, linked preservation or publication acceptance is granted. Other pending discoveries, task baseline and historical owner conflicts are retained."
+    ]
+  },
+  "previous_event": "0d7561b5b354af2e05f34c63961a6aab28370d59a8214877777f1ea76ac52ffa",
+  "request_id": "incorporate-win-cursor-conditional-poll-and-return-20260920",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:radiobutton-lifetime"
+}

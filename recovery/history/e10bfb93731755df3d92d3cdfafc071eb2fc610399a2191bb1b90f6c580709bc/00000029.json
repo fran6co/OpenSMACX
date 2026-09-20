@@ -1,0 +1,20 @@
+{
+  "event_id": "8d52167b8c75cbdddb722440c9888b0702c324948e99d48eae5c9f8cbd6d60e9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/wave_device.cpp"
+    ],
+    "evidence": [
+      "Sound owner sound-attribute-slot-contract-20260920 now corrects slot28 to integer get_attrib using original Wave table target4C6F80 and the two select call sites. Use that actual virtual interface in select and remove the final Sound-side raw vtable helper. Opaque wrapped-device calls remain an independent driver-interface dependency, not a recovered class claim.",
+      "Verify two attribute queries and callback-sensitive member access using the actual source declarations, real chain bodies and select body with explicit non-Wave test subclasses. All prior scope, historical matching and acceptance limits remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9374bd68f830c6710515ddee765f117b473c9d251dcf15d296f81b206adf44b8",
+  "request_id": "wave-device-typed-attribute-dispatch-20260920",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:wave-device-control-recovery"
+}

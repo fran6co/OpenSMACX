@@ -33,16 +33,15 @@ class Net;
   * GraphicWin is pinned at 0xA14, which fixes the origin for the two fields
   * below. Where the object ends is not established.
   */
+// RECOVERY_BASE: v1 MultiDebug GraphicWin 0x0 0x005C97F0
 class MultiDebug : public GraphicWin {
  public:
-  void __cdecl timer_callback_daemon(int a2);
+  // Time passes one cdecl integer payload, not a hidden member receiver.
+  static void __cdecl timer_callback_daemon(int context);
+  // Original primary vtable slot 12 paints the network diagnostics.
+  virtual void vslot_12();
   MultiDebug();
-  // NOT a constructor: see the "NOT a constructor" note in log.h - an
-  // ordinary method drops the SEH frame a real derived GraphicWin
-  // constructor picks up under /GX (FlatButton's/PullDown's own notes).
-  // 0x005C9E00 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Clear the session, then destroy the declared timer, font and base.
   ~MultiDebug();
   void close();
   // Bring the debug window up on its GraphicWin base: 0x96 by 0x12c in the
@@ -52,12 +51,17 @@ class MultiDebug : public GraphicWin {
   int init(Net *net, Win *window, unsigned char *text);
 
  private:
+  // RECOVERY_MEMBER: v2 MultiDebug font_ Font 0xA14 0x005C97F0
   Font font_;  // 0xA14, the IDB's 40-byte member covering 0xA14..0xA3C
+  // RECOVERY_MEMBER: v3 MultiDebug net_ Net* 0xA3C 0x005C9860
   Net *net_;   // 0xA3C, the IDB's field_A3C: zeroed by the constructor and
                // by close, set to the session by init
   // The constructor places a Time HERE (`lea ecx,[esi+0xa40]; call
   // ??0Time@@QAE@XZ`), right after net_, before ever storing to net_
-  // itself - see MultiDebug::construct() in multidebug.cpp.
+  // itself - see MultiDebug::MultiDebug() in multidebug.cpp.
+  // RECOVERY_MEMBER: v2 MultiDebug timer_ Time 0xA40 0x005C97F0
   Time timer_;  // 0xA40
 };
 
+// The static debug window, including its inherited Win and Buffer subobjects.
+extern MultiDebug WinBubbleWindow;

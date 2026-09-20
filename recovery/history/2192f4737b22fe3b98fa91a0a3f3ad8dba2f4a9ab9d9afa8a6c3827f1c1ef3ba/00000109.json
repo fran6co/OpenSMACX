@@ -1,0 +1,23 @@
+{
+  "event_id": "57f3b3266ed0dff8643c3a3e8a0b49a1d4463f7c84842346f0815ef0d12114dd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/sound_chain_storage_harness.cpp",
+      "recovery/tests/sound_lifetime_harness.cpp",
+      "recovery/tests/test_sound_virtual_surface.py",
+      "recovery/tests/wave_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Authorize the already-owned Sound slot27 contract as virtual int set_attrib(unsigned long), paired with the existing Wave body4C6F20. Fresh original table reads place4C6F20 in slot27 of Wave and Effect, with base purecall; original96-byte body returns zero in eax and ret4. Keep the base implementation explicitly unfinished rather than claiming the pure base is recovered.",
+      "Update existing link doubles to the corrected signature; add strict original/body/table/typed-call controls and a damage case restoring the old placeholder in the existing Sound-family test file. The Wave_Device-owned test file remains untouched. Publish only the compiler-observed Wave symbol with native source.write_symbol and guarded publication. Preserve all markers/spans/claims and task ownership; remeasure protected family bodies and build/link. This is editing authority, not acceptance or claim-demotion permission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "282dcfec11e0b7e898c1dc586b71767dab6bd70498ba4f9cc65de8ba6880abf4",
+  "request_id": "sound-attribute-setter-contract-20260920",
+  "schema_version": 1,
+  "sequence": 109,
+  "stream": "task:infowin-ownership"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "8e43dc14d5568aa7206e177bcf59c6024404d70f14924873f8944f9140cd68e9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-game-ambience-clock-import-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave.cpp calls SDK timeGetTime in is_playing and play and owns the unique RECOVERY_IMPORT binding for __imp__timeGetTime@0, WINMM.dll name:timeGetTime. src/game.cpp game_init and src/ambience.cpp MAmbience::general cache the SDK function pointer using the correct DWORD WINAPI signature. Deleted WaveTimeGetTimeSlot, func_time_get_time and AmbienceTimeGetTime; no original executable slot address remains in those live C++ expressions.",
+      "recovery/tests/test_wave_clock_import.py freshly checks pinned original import identity, Wave memory-indirect calls and the once-loaded/two-static-call-site shapes in game_init and MAmbience::general. Compiler operands under both fixed trials use the ordinary undefined SDK import pointer, and controls reject wrong APIs, hardcoded old slot reads and calling import data as code. Independent original/source review found no blocker. This is not proof of every runtime path, DLL implementation/version, other raw Ambience state or full behavior.",
+      "122 focused tests passed. All292 protected historical claims across ten TUs reproduce; after purpose-comment-only edits, Sound29 claims were freshly rechecked. Final fresh configured build/link passed and the resulting PE has a unique WINMM.dll timeGetTime import. Source integrity passes and historical claim identities are preserved. Tightened six reduced-debt ceilings without raising any; compiler-work and storage audits pass. Class-debt still reports scaffold names3003>2993 and unknown method mentions192>186. No new byte claim or full recovery/acceptance is asserted; the separate Net/popup clock finding remains pending."
+    ]
+  },
+  "previous_event": "b9935692678b896d7fde92861839781dd7941e85ae88a7f51b797df0bfcc238f",
+  "request_id": "wave-game-ambience-clock-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 116,
+  "stream": "task:infowin-ownership"
+}

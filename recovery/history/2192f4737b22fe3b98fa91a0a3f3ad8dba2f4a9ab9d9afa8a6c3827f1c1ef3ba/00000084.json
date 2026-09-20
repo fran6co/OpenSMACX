@@ -1,0 +1,23 @@
+{
+  "event_id": "e7c4162ea8bf6b683a65aa5716ee9f30ac56b3a569f8ebc718da834a9bf27927",
+  "payload": {
+    "affects": [
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5",
+      "entity-41ec52c0d6b408ae9d1064c87a3ffedf534a189d88cad4bf4b4b7d29b4a3d9d2",
+      "entity-cca84d5534451eae39e1467e11e65d8cbcbacb0813402a8701f118880b5daccf"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-placeholder-name-accidental-override-20260920",
+    "evidence": [
+      "Native compiler observation of Wave table slot3 resolves ?UNK1@Wave@@UAEHH@Z, whose source original mapping is4C7080. Both original Wave66E44C and Effect66B7A4 slot3 instead contain4C6430, Sound::UNK1. The Wave helper4C7080 is absent from their57observed entries; its current int(int) signature happens to collide with the base name.",
+      "The Wave helper follows the wrapped device chain through offset3C and returns1; no original override evidence supports the shared provisional spelling. Preserve its original identity and byte claim, observe a fresh emitted symbol after rename, and verify inherited slot3 plus callers. No method rename or Sound edit has been made during the derived-tail repair."
+    ],
+    "hypothesis": "The provisional name Wave::UNK1(int) accidentally overrides Sound::UNK1(int), substituting a different original function into inherited slot3. Give the independently mapped Wave helper a non-conflicting evidence-backed provisional name and preserve the true Sound entry.",
+    "kind": "discovery"
+  },
+  "previous_event": "534302f621c91fa7b490d9908e973f27f7fa432f6b2c4b14d575dfd0e4864916",
+  "request_id": "wave-placeholder-name-accidental-override-20260920",
+  "schema_version": 1,
+  "sequence": 84,
+  "stream": "task:infowin-ownership"
+}

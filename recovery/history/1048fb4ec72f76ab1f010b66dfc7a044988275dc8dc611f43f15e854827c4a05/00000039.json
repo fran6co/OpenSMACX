@@ -1,0 +1,27 @@
+{
+  "event_id": "2ab2faedc33fef839a5c72f3e308df5e86c02d2888eacb7196a2f6695fff8823",
+  "payload": {
+    "affects": [
+      "entity-20b07a5db69bc1bc163ed78042bdb130cc20a91587e4973440be6dd772c5e996",
+      "entity-22f1fb19bd9dafde1f58f045e82a9978ba243fb016aba0196b02b3095e451c97",
+      "entity-4923bd0b9cd591601713b2bf38b4815728f173cbb23dccede5a8ce3e832d88c4",
+      "entity-769be764e6b0d8375f0dd3592a5e046e8f3159df030012e11413f6f95038651d",
+      "entity-a0733ea3b3a471b2cda158a8320006751b121b4c9fc8b258b3415dcb9b3b42f0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-root-array-and-dirty-rect-storage-20260920",
+    "evidence": [
+      "Original init loads count at5EC02A, compares it with0x28 at5EC030, then stores the receiver at[9B6E48+count*4] at5EC067 or slot zero at5EC08C. The root registry start and pointer-element interpretation are independent of the helper comparison. add_parent5F5080 writes the same array at5F509C or shifts/prepends at5F50B1-5F50C7; it has no capacity guard, so do not invent one.",
+      "Forty four-byte entries from9B6E48 end at9B6EE8. Independent restore_flip_sprite5F1750 passes9B6EE8 to USER32 UnionRect as destination/source at5F17B5/5F17BA via import669328 at5F17C7, passes that rectangle to Win::flip at5F17DC, and clears left at5F17F9 and right at5F1803 (9B6EF0). Current WinModalResult is separately allocated at the original address of this right member. Its consumers are restore_flip_sprite, RestoreAndFlip and Win::update_cursor; repair them together with the definition/declaration rather than mirror storage.",
+      "A mapped-original scan observed25 root-start references in12 functions, including initialization/admission, removal/compaction and reorder operations. Coverage is3011 distinct source-mapped spans with12 incomplete linear decodes, not unmapped or indirect code. Forty slots is supported by independent admission and neighboring RECT evidence, but whole-program bounds safety is not established.",
+      "Only original start identities are presently suitable for the four existing registry globals: on_char5F611E/5F6168 reads count9B7B34;5F612F/5F615F loads pointer storage9B7A6C;5F6148 clears scalar9B7A78. Hide independently reads the pointer at5EDDE3/5EDE13 and clears the flag at5EDDFD. Start-only bindings do not settle array extent, initialization/lifetime or acceptance. Preserve this discovery pending the coupled storage repair and required scope/bindings."
+    ],
+    "hypothesis": "Recover the root registry extent and cursor dirty rectangle as real shared storage: current WinRootWindows[64] conflicts with the original40-root region, and WinModalResult duplicates WinDirtyRect.right rather than owning another scalar.",
+    "kind": "discovery"
+  },
+  "previous_event": "f2752d6af15712fa505a262f5bf9ebfe840ba6bf545e832584fc7032df6bdca3",
+  "request_id": "win-root-array-and-dirty-rect-storage-20260920",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:radiobutton-lifetime"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "3ba752bb99c46722687d1b8cac98a74b18f5d20905f1451a7478c54c79786c43",
+  "payload": {
+    "affects": [
+      "entity-20b07a5db69bc1bc163ed78042bdb130cc20a91587e4973440be6dd772c5e996"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-poll-result-contract-20260920",
+    "evidence": [
+      "Original final cursor polling calls ShowCursor at5F21EB and reaches common epilogue5F21F8 without forcing EAX to zero. The current while(ShowCursor(ebxFlag)<=0) loop discards that result and then returns0. Verify the complete branch/stack dataflow during the cursor repair; changing the global alias alone cannot repair this behavior.",
+      "This supplements the pending dirty-rectangle/argument discovery for the same unmapped homed function. RestoreAndFlip-style original RECT.right clears also appear at5F18FC,5F1C38,5F1D41,5F1F22,5F1FC7,5F206C,5F2112. The final saved-sprite path restores its pointer at5F21D2 before clearing left/right at5F21D8/5F21DE; preserve this distinct order rather than applying an indiscriminate helper rewrite. No source edit or acceptance is granted by this finding."
+    ],
+    "hypothesis": "The final update_cursor polling path returns its final ShowCursor result rather than the unconditional zero currently reconstructed; retain that return contract in the coupled cursor repair.",
+    "kind": "discovery"
+  },
+  "previous_event": "2e3cc2b32141e4eed1db22b8b474a11cd8779d18958174b3fede66d968b0b7e0",
+  "request_id": "win-cursor-poll-result-contract-20260920",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:radiobutton-lifetime"
+}

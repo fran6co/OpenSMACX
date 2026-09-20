@@ -1,0 +1,38 @@
+{
+  "event_id": "d607c22cdfcbcb4118578ec5acaa6d3714bc06519f49bdb003a0295153a64932",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize only the three coupled WorldWin bodies and declarations in already-owned worldwin.cpp/h, plus the history-backed Win::show mapping restored through the native binder in already-owned win.cpp without changing its implementation. Preserve seeds, all original spans, the set_world historical byte obligation and the original task baseline. Use real existing members, ButtonGroup array accessor, compiler virtual dispatch and explicitly qualified direct Win calls. No new address aliases, storage/lifecycle edits in other owners, library work or acceptance waiver. Verify the whole selected family, protected callers and full application build/link. Shared MapWinTable storage and downstream Win behavior remain separate unresolved dependencies."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4995472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4995536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4995648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6216144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ba5a950839f8e27a0eae9763987cb06b0fbfa9553c003488d4575d1f2f2d7447",
+  "request_id": "worldwin-view-family-scope-20260919",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:radiobutton-lifetime"
+}

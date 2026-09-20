@@ -1,0 +1,135 @@
+{
+  "event_id": "ba842456acd357a59c89d437d96b85771331cefc6a6397623a61599d8ab91c2a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/multidebug_paint_harness.cpp",
+      "recovery/tests/test_control_globals.py",
+      "recovery/tests/test_multidebug_lifetime.py",
+      "recovery/tests/win_hide_harness.cpp",
+      "recovery/tests/win_keyboard_harness.cpp",
+      "src/autosound.cpp",
+      "src/autosound.h",
+      "src/deleting_thunks.cpp",
+      "src/deleting_thunks.h",
+      "src/game.cpp",
+      "src/multidebug.cpp",
+      "src/multidebug.h",
+      "src/net_class.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "task:infowin-ownership:multidebug-static-owner-and-paint-20260920. Correct seed location is src/recovered/units/005c9920.cpp; previous discovery path unrecovered was a locator error, not another source identity.",
+      "Serial coordinator authorizes existing infowin owner to repair entire MultiDebug storage/paint subset, including static lifetime bindings and primary generated deletion mapping; canonical markers through native writer only, all historical claims retained.",
+      "Shared header reservations audited: Net header shared control-sprite-defaults/jackal-voice-ownership, Win header shared control/radiobutton, game.cpp shared frontend-presentation. No concurrent worker edits admitted. Net header edit limited to narrow MultiDebug access and independently evidenced NetPlayer fields with layout/claim checks; no Net bodies or unrelated shared work authorized.",
+      "WinBubbleWindow becomes actual MultiDebug owned by multidebug.cpp; Win on_char accesses inherited members, AutoSound val_4_ gets independently evidenced Win* type with corresponding constructor/init/reset/hide uses. Existing alias globals are removed, not mirrored.",
+      "Only system_init debug receiver/Console-parent conversion in game.cpp may change. Retained map-storage worker already has independently verified ordinary Console-to-Win conversion; reuse that source decision serially without copying or resetting either task journal/baseline. Other system/storage/sound dependencies remain pending.",
+      "Recover genuine slot12 paint using Buffer base/font_/net_ and source string literals, not raw self-offsets or numeric code/data pointers. New tests cover original dispatch, member ownership, text/counter ordering and generated lifetime; byte or structural regressions stay visible and unaccepted, never demoted or hidden by changed flags/ceilings."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5828672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6069760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6069888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6069936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6216912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6250416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6260288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6279856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6470272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6470640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6470976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6471120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "60eb573206c82d04f390e0960bccb9483d326f8c1b2142b539766a0ab53cf428",
+  "request_id": "multidebug-owner-paint-closure-scope-20260920",
+  "schema_version": 1,
+  "sequence": 63,
+  "stream": "task:infowin-ownership"
+}

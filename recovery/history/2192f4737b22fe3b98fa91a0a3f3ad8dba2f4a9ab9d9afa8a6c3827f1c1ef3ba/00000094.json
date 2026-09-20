@@ -1,0 +1,26 @@
+{
+  "event_id": "b54ce6d90df0ff5dbc7308ee60872ac94df71ff8cf3d85d5637619a4a077eae3",
+  "payload": {
+    "affects": [
+      "entity-242250d2f9cf015cd5e716acad3a8d3e276f79330115e0bb4e9bcee992d355d7",
+      "entity-2a19b46ea61c1a46ddb215d08cbf24b5b13749c120531708e4f66c87e360362f",
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5",
+      "entity-66273cd3be9a8ff2fe43be61069ea80c885c67beaf03b2b199c6644ac25c21d9",
+      "entity-da78d6fe600b13331c0536e2385fff353014d1f4a842aff5fa271e2f28509443"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sound-missing-fade-root-20260920",
+    "evidence": [
+      "Fresh pinned image observation: words66E444/66E448 both point4482F0. Sound constructor4C6080 publishes66E444 at4C60AA, initializes volume+4, pan+8, nine words+C..2F and loop+30, then advances EH state and publishes Sound66E3C0 at4C60CC. Body4482F0 accesses interval+38, so the base field extent/ownership needs reconciliation, not a vptr-only empty base invented for code shape.",
+      "Sound destructor4C6120 republishes66E444 at4C61C1. Shared cleanup4C8450..4C8457 installs the same table. src/sound.cpp already records missing-base/EH evidence but src/sound.h still has no base and an empty Sound constructor. Wave and Ambience comments show corresponding construction/destruction stages. Preserve these cross-function observations as a pending task discovery rather than repeating spelling-only recovery.",
+      "This finding grants no new edit scope, shared-code reinterpretation or acceptance. Four repaired Sound member slots1/25/26/30 pass strict leaf/table checks; all233 protected body claims in eight affected TUs and a fresh configured build/link pass. Original Wave slots24/27/28 and all wider restoration/linked/runtime obligations remain open."
+    ],
+    "hypothesis": "Sound still flattens an original nontrivial base whose two observed virtual slots both select the fade-interval setter4482F0. Recover that base and its lifetime/member ownership across Sound/Wave and other descendants; the newly homed member slots are bounded behavior recovery, not proof of the complete hierarchy.",
+    "kind": "discovery"
+  },
+  "previous_event": "a72b43e1b1c61f7c1a13447724f34a7e4ad3437a29b9ddcfad1849bb1dd27cf4",
+  "request_id": "sound-missing-fade-root-20260920",
+  "schema_version": 1,
+  "sequence": 94,
+  "stream": "task:infowin-ownership"
+}

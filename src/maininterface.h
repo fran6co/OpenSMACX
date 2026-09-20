@@ -320,6 +320,7 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   const RECT &status_hit_rect() const { return status_hit_rect_; }
   const RECT &status_left_rect() const { return status_left_rect_; }
   const RECT &status_right_rect() const { return status_right_rect_; }
+  ButtonGroup &button_group(int index) { return button_group_[index]; }
 
  private:
   // 0xA14 is the IfaceRegistryEntry base - its SubInterface vptr and its one
@@ -585,6 +586,9 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   // moves no offset and no byte.
   FlatButton flat_button_[42];
  private:
+  // The constructor at 0x0045EF10 builds four 0x94-byte groups here.
+  // WorldWin::set_detail_map reaches element 1 at global+0x1E878+0x94.
+  // RECOVERY_MEMBER: v4 MainInterface button_group_ ButtonGroup[4] 0x1E878 0x250 0x004C3950
   ButtonGroup button_group_[4];
   uint32_t field_1EAC8_;
   StringBox string_box_;

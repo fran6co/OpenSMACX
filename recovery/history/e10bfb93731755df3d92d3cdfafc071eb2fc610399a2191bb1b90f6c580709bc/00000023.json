@@ -1,0 +1,22 @@
+{
+  "event_id": "ac7d50cee825013f923f0a1b46c749853c4382927bd614c1d6cc18a7ae2a7e33",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_wave_device_exports.py",
+      "recovery/tests/wave_device_exports_harness.cpp"
+    ],
+    "evidence": [
+      "Serial coordinator repair of the existing Wave_Device owner in this retained checkout, following infowin-ownership route-sound-storage-to-wave-device-20260920. Fresh census finds wave_device.cpp/h clean in all eight worktrees and no distinct owner of those files. Only these two already-owned C++ files and the two new tests may change; do not exercise the historically conflicting pending_bodies/vendor grants or claim this checkout is autonomously accepted.",
+      "Original loader4C5E50 writes the real eleven-slot array90DB24..90DB50. Wave_Device create_device4C4ED0/delete_device4C4F10/release4C4F80 consume indices4/5. Replace separately allocated WaveDeviceFactoryHook/DestroyHook variables with typed reads of that array; remove their incorrect standalone unbounded object interpretations while retaining original slot identities in source alongside the consumers and the independently bounded array owner in sound_loader.cpp. Old v1 annotations assert starts, not bounded initial-data claims; preserve all original function markers, spans and historical matching obligations.",
+      "Verify actual loader-owned targets through native object/reference checks and current Wave_Device methods with runtime/damage controls, then remeasure protected family claims and build/link. Existing Sound-chain request and WaveGroupList::insert restoration dependency remain pending; this does not authorize other-owner edits, temporary regressions, baseline replacement or full publication."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ece271e40bbcc2eb1f2e7362d8330f93311d2eeb0c48a867a985e171e424a2e4",
+  "request_id": "wave-device-export-owner-repair-20260920",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:wave-device-control-recovery"
+}

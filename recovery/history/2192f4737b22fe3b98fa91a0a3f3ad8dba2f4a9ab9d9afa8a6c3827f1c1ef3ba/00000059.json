@@ -1,0 +1,28 @@
+{
+  "event_id": "960297bf695932dae04391a1175e49a4c76578e2b6a1cb88f8bfa1a138057c52",
+  "payload": {
+    "affects": [
+      "entity-3a18f16d23e008911ce9f5fa8f8f62f4c94d2ce72c3744c02038ebb9b6edc338",
+      "entity-5ac2cb5f81b61015b4e445448bd842fc2267e14ec159110081075f35e3e9c72b",
+      "entity-70f15d0218943a90f68b693d3031f7afa5c813fad3b08192d31697221e45ad10",
+      "entity-8d2d3bce2f14cff101fbd458f582b979dd946b4633d7e9403dfada2251133007",
+      "entity-ad02a1ded309353a976faffebd183145997c926740a541ec5e9cf0373183245c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "multidebug-callback-and-double-teardown-20260920",
+    "evidence": [
+      "original:0x005C9900-0x005C9914 reads only [ebp+8], null guards and dispatches virtual slot 62",
+      "original:0x005C9E00-0x005C9E77 and 0x00662AD0-0x00662AF0 identify complete destruction and cleanup",
+      "source:src/multidebug.cpp:init currently registers literal 0x005C9900 because declaration incorrectly uses a member function",
+      "source:src/pending_bodies.cpp:MultiDebug destructor calls original then compiler still tears down declared members",
+      "original:0x0066FA88 slot12 selects 0x005C9920, still seed-only; static receiver 0x009B22F0 remains incorrectly typed Win"
+    ],
+    "hypothesis": "MultiDebug timer daemon is a one-payload static cdecl callback, not a nonstatic member; init must register its real symbol. The complete destructor clears net_ before automatic Time/Font/GraphicWin destruction; calling its original address inside the C++ destructor duplicates lifecycle work. Repair these prerequisites without declaring the missing paint override or wrong global owner resolved.",
+    "kind": "discovery"
+  },
+  "previous_event": "8ccc2119fd45e290ac6d805a62eb5df5527e74606f04a39fada868ab7ddd4b37",
+  "request_id": "multidebug-callback-and-double-teardown-20260920",
+  "schema_version": 1,
+  "sequence": 59,
+  "stream": "task:infowin-ownership"
+}

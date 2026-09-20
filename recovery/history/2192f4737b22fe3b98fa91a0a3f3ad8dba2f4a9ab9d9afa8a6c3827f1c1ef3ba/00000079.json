@@ -1,0 +1,24 @@
+{
+  "event_id": "dd9717ba1fc2d0ce518909038bca99eb04619a6d6854f822815257abd57611c3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The typed callback compilation identified two additional existing consumers in Popup::on_exec at 0x00405910. They already pass &text_block_a_ but cast it to char*. Authorize removing only those redundant casts for the shared typed interface. No behavioral or matching claim for the rest of on_exec follows.",
+      "Fresh ownership inspection across master, WorldWin, map-storage, vector and all four retained campaign worktrees found no task owning 0x00405910. src/popup.cpp is already editable under infowin-ownership. No task baseline changes or overlapping owner transfer."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4217104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9dc9a34979b4938f2aed37ad1acb9d5815fd4a42f98b02213f7cd319991afc41",
+  "request_id": "basepop-callback-popup-caller-20260920",
+  "schema_version": 1,
+  "sequence": 79,
+  "stream": "task:infowin-ownership"
+}

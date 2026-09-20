@@ -78,7 +78,6 @@
 #include "credits.h"
 #include "diplopop.h"
 #include "diplowin.h"
-#include "multidebug.h"
 #include "netmsg.h"
 #include "netwin.h"
 #include "newtechwin.h"
@@ -925,11 +924,6 @@ Menu::~Menu() {  // ??1Menu@@QAE@XZ at 0x005FAD00
     PENDING_BODY(0x005FAD00, pending)(this, nullptr);
 }
 
-MultiDebug::~MultiDebug() {  // ??1MultiDebug@@QAE@XZ at 0x005C9E00
-    typedef void(__fastcall *pending)(MultiDebug *, void *);
-    PENDING_BODY(0x005C9E00, pending)(this, nullptr);
-}
-
 NetMsg::~NetMsg() {  // ??1NetMsg@@QAE@XZ at 0x0047ADA0
     typedef void(__fastcall *pending)(NetMsg *, void *);
     PENDING_BODY(0x0047ADA0, pending)(this, nullptr);
@@ -983,11 +977,6 @@ StringBox::~StringBox() {  // ??1StringBox@@QAE@XZ at 0x004325C0
 TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0
     typedef void(__fastcall *pending)(TutWin *, void *);
     PENDING_BODY(0x004BE7D0, pending)(this, nullptr);
-}
-
-WorldWin::~WorldWin() {  // ??1WorldWin@@QAE@XZ at 0x004C4A70
-    typedef void(__fastcall *pending)(WorldWin *, void *);
-    PENDING_BODY(0x004C4A70, pending)(this, nullptr);
 }
 
 AlphaSave::~AlphaSave() {  // ??1AlphaSave@@QAE@XZ at 0x00408170
@@ -1708,12 +1697,6 @@ int Net::send(void *data, int mode, unsigned long who, int size) {
                                      int);
     return PENDING_BODY(0x00630080, pending)(this, nullptr, data, mode, who,
                                              size);
-}
-
-// ?init@FX@@QAEXXZ at 0x00445CD0
-void FX::init() {
-    typedef void(__fastcall *pending)(FX *, void *);
-    PENDING_BODY(0x00445CD0, pending)(this, nullptr);
 }
 
 // ??0BasePop@@QAE@XZ at 0x00600860 - homed into basepop.cpp on 2026-08-29

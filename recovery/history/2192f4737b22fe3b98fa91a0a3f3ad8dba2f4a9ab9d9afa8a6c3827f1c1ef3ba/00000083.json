@@ -1,0 +1,25 @@
+{
+  "event_id": "534302f621c91fa7b490d9908e973f27f7fa432f6b2c4b14d575dfd0e4864916",
+  "payload": {
+    "affects": [
+      "entity-10f0a810fe3ad3e84f5cd513c0146009fb8145c34ff53e8b2682f00365589c78",
+      "entity-1230214480110d936c7303cd41cbae3fc62bc86711849701a769c428feedf6f2",
+      "entity-3326ae72c42d984c8fe85fb1af65d49a2b394bbddcfa501e3b65c4c85d515974",
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5",
+      "entity-7d018374eec2c9b2df81d499086b8ad616771e0e895cf5d1e958893593129cb8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sound-inherited-overload-slot-order-20260920",
+    "evidence": [
+      "Fresh compiler-generated Wave table has slot6 Wave::play() and slot7 Sound::play(unsigned int), while original Wave66E44C/Effect66B7A4 and Sound66E3C0 put unsigned play at6 and nullary play at7. Emitted slot11 is nullary Sound::fade_in and12 the unsigned overload; original places unsigned at11 and nullary at12.",
+      "The current Sound header comment numbers state original positions but do not establish what VC6 emits: it groups overloads and reverses their declaration order. Derived-tail repair preserved this as a separate base-contract obligation; no Sound edits, baseline resets or full-table acceptance here."
+    ],
+    "hypothesis": "Current Sound overload declarations swap original play slots6/7 and fade_in slots11/12 in emitted derived tables. Restore the compiler-observed base overload order and recheck all affected callers; Wave derived-tail agreement is not evidence these inherited calls work.",
+    "kind": "discovery"
+  },
+  "previous_event": "c887c7844238ffbaa5dde7991f20d3a35a7e5ec2a5d3b2d6d3eb33be0166e635",
+  "request_id": "sound-inherited-overload-slot-order-20260920",
+  "schema_version": 1,
+  "sequence": 83,
+  "stream": "task:infowin-ownership"
+}

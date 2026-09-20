@@ -1,0 +1,22 @@
+{
+  "event_id": "9374bd68f830c6710515ddee765f117b473c9d251dcf15d296f81b206adf44b8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_wave_device_sound_chain.py",
+      "recovery/tests/wave_device_sound_chain_harness.cpp"
+    ],
+    "evidence": [
+      "Serial repair of this owner select4C5030 in response to infowin-ownership sound-chain-and-export-alias-owners-20260920. Sound owner separately authorizes the shared declarations and storage. Do not edit unrelated historically conflicting pending_bodies/vendor scopes or transfer function ownership.",
+      "Original select reads head90DB20, uses Sound virtual slots25/26/5/4, and rethreads common Sound members44/48/4C. Use Sound pointers and those already-declared virtual methods; remove WaveResumeLinks offset overlay and helper dispatches for recovered methods. The slot28 attribute contract remains separately unresolved, so retain one explicitly provisional dispatch for it rather than silently calling a wrongly declared virtual or guessing its family interface.",
+      "Preserve both attribute reads, next-before-unload sequencing, tail-first replay and member rereads across callbacks. Verify real source behavior and damage controls, current historical claims and fresh application link. This authorization does not accept the broader migration or resolve the whole sound-family discovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e119b7218e777754f86c77bc4b7296925b20f5cc203295a397b7258688a286d7",
+  "request_id": "wave-device-sound-chain-consumer-20260920",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:wave-device-control-recovery"
+}

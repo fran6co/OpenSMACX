@@ -1,0 +1,23 @@
+{
+  "event_id": "8c98e8171c0eb02d533fa59834596434d544b5b12b611e37a5c3ddb45f4b8a03",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "The complete protected seed0x004C3950-0x004C398A is a genuine WorldWin operation required by veh_scoot. Native current scope in all worktrees identifies this task as the existing owner of worldwin.cpp/h and maininterface.h. Recover the real member write, second embedded MainInterface ButtonGroup, MapWin virtual show and explicitly qualified global Win hide call. Preserve the seed and original claim, avoid fake virtual interfaces and address aliases, and keep missing Win binding and table-storage ownership visible. No lifecycle regression or acceptance is authorized by this expansion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4995408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c9f7039414b5dab708740b054b6c6722ab5da1337000cbea629c67dbd129d3dc",
+  "request_id": "worldwin-detail-map-caller-dependency-20260919",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:radiobutton-lifetime"
+}

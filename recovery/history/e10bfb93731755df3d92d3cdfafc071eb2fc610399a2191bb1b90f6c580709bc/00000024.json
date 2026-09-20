@@ -1,0 +1,23 @@
+{
+  "event_id": "7a21b22a08ad4d978681b9cc9846544ebfaf7fff33ed7d2156e3c2ceb8f60fbc",
+  "payload": {
+    "affects": [
+      "entity-04f13a62ca81ecd03cec81d1ef0f2c9aedd193e95a44f764eccfa5817265b7b7",
+      "entity-3c0a5ac4499c6bc442dd2aaca06100df0cc274424674395c289c2905b7a7cef4",
+      "entity-568a30d426077830ce36abfa1389ac7b9d00c9971fa2c6f477e2d39bf13dc4cd"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-device-export-alias-storage-20260920",
+    "evidence": [
+      "Incoming infowin-ownership route pins the common export-array finding. Original loader advances from90DB24 to90DB50 in11 words; native initial-data check of the declared SoundDllProcs owner passes for its44-byte pre-loader storage. Existing wave_device.cpp separately allocates two zero-filled pointers at symbols WaveDeviceFactoryHook/DestroyHook which the loader never assigns.",
+      "Original create/delete/release instructions consume90DB34/90DB38. These are array offsets16/20. Preserve that address/role evidence as source-owned subranges of the existing array, not extra candidate storage or copied executable pointers. Unrelated chain and insert findings remain open."
+    ],
+    "hypothesis": "The Wave_Device factory and destroy pointers are entries4/5 of the loader-owned export array, not separately allocated globals. All three lifecycle consumers must follow that common storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "ac7d50cee825013f923f0a1b46c749853c4382927bd614c1d6cc18a7ae2a7e33",
+  "request_id": "wave-device-export-alias-storage-20260920",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:wave-device-control-recovery"
+}

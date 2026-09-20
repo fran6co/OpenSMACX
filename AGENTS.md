@@ -154,6 +154,14 @@ multi-file publication is not globally atomic. See `recovery/README.md`.
 
 ## Working rules
 
+The user authorizes coordinator-reviewed manual recovery merges without waiting
+for fully automatic acceptance. Review the actual C++ and evidence, preserve
+claims/discoveries, require build/link and relevant regression checks, and recheck
+after integration. Record limitations in the commit, not a fabricated acceptance
+report. Prefer parallel recovery batches; framework work is driven by demonstrated
+recovery blockers. See recovery/WORKFLOW.md, "Coordinator-reviewed integration". This does
+not weaken the native automatic driver's refusal conditions or prove game acceptance.
+
 `recovery/worker.json` and `recovery/reviewer.json` use the package's native
 agent-command bridge; provider arguments live in `recovery/agents.json`.
 Verify provider access and isolated worktree/compiler resources before launching.

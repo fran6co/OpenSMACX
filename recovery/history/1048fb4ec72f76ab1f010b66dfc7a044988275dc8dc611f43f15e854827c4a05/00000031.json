@@ -1,0 +1,20 @@
+{
+  "event_id": "fa59ad78814bec55cdfcc1c587b32c4f76a78fd7e664261c124966dca697178c",
+  "payload": {
+    "affects": [
+      "entity-63bdbba9ca8ca5889a451256d8cea38423f0d46e6eb6a960e824e5f0f8bff347"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "worldwin-generated-deleting-family-20260920",
+    "evidence": [
+      "Independent native PE/COFF inspection finds original0x004C4CA0-0x004C4CAB subtracts0x444 from ECX and jumps to0x004C4C70 without changing the flags stack slot. Retained worldwin.cpp.obj naturally defines ??_EWorldWin@@WEEE@AEPAXI@Z and its secondary Buffer vtable references it. Its relocation targets weak external ??_EWorldWin@@UAEPAXI@Z, mode2 fallback to concrete ??_GWorldWin@@UAEPAXI@Z. The retained primary calls the complete destructor, conditionally calls operator delete for flags bit0, returns the receiver and pops4; its frame-omitting30-byte body differs from the original33-byte framed body, so this is structural evidence only. Historical canonical adjustor name/span survive in24472a5a^:src/init_thunks.cpp; that file was deliberately retired, not a route to recreate. There is no current adjustor mapping or task owner. The primary original remains claimed through scalar_delete_world_win in deleting_thunks.cpp; its identity belongs to this task, but that shared source file participates in other owners and must not be edited under current scope. Fresh current broad checks pass the protected primary wrapper with /Oy-, while complete destructor references remain unknown. Preserve existing obligations; authorize a bounded generated-family rehome and verify real weak target selection before removing the wrapper or banking an adjustor claim."
+    ],
+    "hypothesis": "The genuine WorldWin hierarchy already emits its primary deleting destructor and secondary Buffer-base adjustor. Recover their source-owned generated mappings together instead of inventing another thunk or retaining a synthetic wrapper as the final model; coordinate the protected primary mapping before changing its owner.",
+    "kind": "discovery"
+  },
+  "previous_event": "11f570266bc273d0ae4b462aa0948b2a3d76db22a880086fe123798eb557df5f",
+  "request_id": "worldwin-generated-deleting-family-20260920",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:radiobutton-lifetime"
+}

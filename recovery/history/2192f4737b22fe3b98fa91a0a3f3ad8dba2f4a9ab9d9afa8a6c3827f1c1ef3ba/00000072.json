@@ -1,0 +1,23 @@
+{
+  "event_id": "3081b51390165fefa669f01fffe4ddef81dc5290135918ef6701a40a3f47eeef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize mapping and native recording of the naturally emitted Effect constructor in src/fx.cpp. Original FX constructor supplies callback0x4482D0; independent decoding of4482D0..4482E2 shows Wave construction followed by Effect vptr installation. Real FX Effect[97] emits the implicit constructor without a handwritten vtable. Existing seed span and claim remain intact; this is not approval of Effect teardown or the full sound stack."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4489936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "6075a1a733c337b46b30ffc0d0a4ea46711f35cfc05c6a58f589b2494e94d385",
+  "request_id": "fx-natural-effect-constructor-binding-20260920",
+  "schema_version": 1,
+  "sequence": 72,
+  "stream": "task:infowin-ownership"
+}

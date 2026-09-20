@@ -1,0 +1,19 @@
+{
+  "event_id": "a252e89f2eb755ad1ab70cdafb07c6b9a8743d0679edbeae3bb2b37dc7bf4ce6",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-symbol-fact-writer-gap-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Master 09a42996 adds match_recovery.source.write_symbol with guarded-publication separation, bounded comment fact ownership, source snapshot/provenance checks and lexical refusal controls in tests/source/test_symbol_writer.py.",
+      "src/wave.cpp original 0x004C6F80 now carries compiler-observed ?get_attrib@Wave@@UAEHXZ through native publication, with historical marker, spans and claim intact. src/sound.h exposes the slot-28 virtual contract. recovery/tests/test_wave_device_sound_chain.py verifies the original Wave/Effect table target and negative nonvirtual control.",
+      "This resolves only the missing current-symbol publication path and its Wave binding. The separate sound-chain/export cross-owner discovery remains pending; no complete lifecycle, hierarchy, linked preservation or application acceptance is granted."
+    ]
+  },
+  "previous_event": "0b1c13afb2c5d9765318d29e5a2d88ceb32add3e4492fce1300039916bd61ed9",
+  "request_id": "wave-symbol-fact-writer-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 104,
+  "stream": "task:infowin-ownership"
+}

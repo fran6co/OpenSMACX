@@ -1,0 +1,20 @@
+{
+  "event_id": "767317da5f8ecae21cc1bdcf6c720e442c559e186b93933b61b996ab1274e51e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "fx-static-defaults-native-data-evidence-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/fx.cpp retains the ordinary TU-local const BasePopTextBlock FxPopupSoundDefaults and its bounded RECOVERY_OBJECT mapping 0x00683AD8..0x00683BF0, anchored to FX::init at 0x00445CD0. No external linkage or executable-byte surrogate was introduced.",
+      "Installed match_recovery from master commit 945a843d now verifies ordinary static COFF data through its exact S_LDATA32_ST SECTION/SECREL symbol pair and complete standalone type extent. Fresh VC6 measurements prove the 280-byte FxPopupSoundDefaults allocation and original initial contents in both configured trials. This change was independently reviewed.",
+      "recovery/tests/test_fx_initialization.py now requires native initial-data content and boundary passes; real compiler mutations of a default value and the object array extent fail the corresponding observations. Twelve initializer tests pass, including the actual-source call-sequence harness and damage controls. Generic static-data tests reject cross-owner borrowing, linkage mismatch, malformed identities, and global-target export.",
+      "This closes only the TU-local constant allocation/initial-data evidence gap. FX::init remains an unclaimed byte mismatch; inherited Sound placeholders, static relocation-target qualification, final-link preservation and whole application runtime acceptance are not established or waived. Task baseline and historical claims are unchanged."
+    ]
+  },
+  "previous_event": "9c58db1020e552880411a2ae12dfb279899230bf76cfb79e04dee54cdf6f8f76",
+  "request_id": "fx-static-defaults-native-data-resolved-20260920",
+  "schema_version": 1,
+  "sequence": 92,
+  "stream": "task:infowin-ownership"
+}

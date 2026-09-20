@@ -1,0 +1,19 @@
+{
+  "event_id": "1e8fd2945f0a2296c2fa9f608311bb386a55192e01f70d01b4091741c85afe5c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-manual-self-dispatch-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave.cpp now uses genuine set_volume, detach, is_looping, attach, get_attrib and set_loop_state virtual calls in the seven affected methods, removing all twelve manual self-vtable calls. Both filename-loader paths call Sound::load directly without reinterpret_cast; obsolete live comments denying real inheritance were corrected. Original markers, spans, historical byte claims and seed lessons remain intact.",
+      "recovery/tests/test_wave_virtual_tail.py compares original and emitted call-slot sequences for all seven methods under both fixed compiler trials, asserts original direct targets and current symbolic references to Sound::load, and rejects forced-direct dispatch, wrong-slot and recursive-loader damage. Independent source review confirms receiver/captured-device-table timing is preserved, but slot-sequence tests alone do not prove receiver dataflow or external-device semantics.",
+      "Fresh verification:112 focused Sound/Wave/FX/device tests passed, all273 protected bodies across nine TUs matched, configured full application compile/link passed, source annotation integrity passed and2462 historical claim identities remain with no missing obligations. None of these seven unclaimed bodies is newly byte-exact; no claims were banked or demoted. This resolves manual self-dispatch only; broader class/lifetime/restoration, cross-owner findings, linked preservation and full acceptance remain unfinished."
+    ]
+  },
+  "previous_event": "6bdd4e799a78892e7c26c12cb5cc263aa6c2a2689c0bdf9d516cd4b99d9363af",
+  "request_id": "wave-typed-self-dispatch-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 112,
+  "stream": "task:infowin-ownership"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "9c58db1020e552880411a2ae12dfb279899230bf76cfb79e04dee54cdf6f8f76",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "autosound-defaults-storage-boundary-corrected-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/autosound.cpp/h now declare37 default words, bounded at9BC080..9BC114, matching the actual constructor/close/close2 reads. src/fx.cpp now implements the source-owned producer445CD0 and clears exactly this same array after initializing the Effect bank and before initializing CPU voices; pending_bodies.cpp no longer forwards FX::init into the original executable. The retained seed and every historical consumer claim remain intact.",
+      "recovery/tests/test_autosound_defaults.py independently verifies original producer writes, complete consumer reads, current storage and damage controls. recovery/tests/test_fx_initialization.py executes the actual new initializer with explicit audio doubles against the freshly decoded199-call original contract, checking all37 reset words, ordering, repeated calls and neighboring guards; shortening the reset is rejected. Independent review found no behavioral blocker. Combined60 tests,68 affected protected-body matches, claim/source integrity and fresh application build/link pass.",
+      "This incorporates the concrete33-versus37 allocation/producer defect, not sound-stack/game acceptance. FX::init remains an unclaimed byte mismatch. The new TU-local popup constant native allocation-evidence gap is preserved by fx-static-defaults-native-data-evidence-20260920; remaining inherited Sound placeholders and wider linked/runtime obligations remain pending."
+    ]
+  },
+  "previous_event": "1777022db0c332d4773a7896e686bc1c1fc81fb98879274945f7754c2908e04f",
+  "request_id": "autosound-defaults-producer-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 91,
+  "stream": "task:infowin-ownership"
+}

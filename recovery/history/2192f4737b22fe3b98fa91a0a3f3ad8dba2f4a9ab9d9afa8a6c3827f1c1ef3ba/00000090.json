@@ -1,0 +1,21 @@
+{
+  "event_id": "1777022db0c332d4773a7896e686bc1c1fc81fb98879274945f7754c2908e04f",
+  "payload": {
+    "affects": [
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "fx-static-defaults-native-data-evidence-20260920",
+    "evidence": [
+      "Actual VC6 emits _FxPopupSoundDefaults with static COFF storage3 for const BasePopTextBlock in src/fx.cpp. check_initial_data/data_layout currently requires one defined external COFF symbol and a global CodeView data record; its unknown result is not a pass.",
+      "Original445CF2..445CFE copies70words from683AD8 to9B8AB8. Bounded tests compare those280 observed constant bytes and the complete BasePopTextBlock class size, while the actual initializer runtime harness checks all words and neighboring guards. Neither substitutes for the missing native static allocation proof."
+    ],
+    "hypothesis": "Native initial-data verification cannot yet establish the allocation/type extent of the TU-local const FxPopupSoundDefaults. Preserve its normal C++ internal linkage and original bounded source binding; extend reusable static-data evidence support rather than making the object external solely for the verifier.",
+    "kind": "discovery"
+  },
+  "previous_event": "10a0e79322ca38dc0b7bdc7249f7bb0fddb4c52af829aa261b876b6ff175e2c5",
+  "request_id": "fx-static-defaults-native-data-evidence-20260920",
+  "schema_version": 1,
+  "sequence": 90,
+  "stream": "task:infowin-ownership"
+}

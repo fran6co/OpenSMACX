@@ -1,0 +1,19 @@
+{
+  "event_id": "157a1a4244ad4893635c24f2da78143ddf24ef1fa0d48863b0d6c99a893313c8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_autosound_defaults.py"
+    ],
+    "evidence": [
+      "Authorize correction of the existing AutoSoundDefaults allocation from 33 to 37 mutable words and its source-owned bounded mapping. Original consumers 62BA80/62BBF0/62BDD0 each read 9BC080..9BC110, and original FX::init writes those same 37 words. Add independent original/compiled extent checks and private-overlay damage controls. This does not authorize FX producer recovery or assert full storage/runtime closure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "50b2e3ba0c2f8a2b9fdbf6277f7ca0141c0388e9421f77815cb9efd79a5de186",
+  "request_id": "autosound-defaults-bounded-verification-20260920",
+  "schema_version": 1,
+  "sequence": 69,
+  "stream": "task:infowin-ownership"
+}

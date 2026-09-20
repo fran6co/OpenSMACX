@@ -1,0 +1,28 @@
+{
+  "event_id": "880fe51fb5f3eea5eb1629e0b7742ced1cb158af21bf83820e0bee104e513bfc",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_event_id": "6ae5a36188a4039e47d3a70995cc53f36459251ec9dd5501c592c250f8d5a5c5",
+    "discovery_id": "sound-chain-and-export-alias-owners-20260920",
+    "evidence": [
+      "Request existing owner to reconcile global Sound chain consumption and DLL factory/destroy slots with their actual common storage. Current Sound task only repairs create/release consumers and declares the existing loader array; no other-owner edits or claim demotions are authorized."
+    ],
+    "kind": "discovery_routed",
+    "subjects": [
+      "entity-3c0a5ac4499c6bc442dd2aaca06100df0cc274424674395c289c2905b7a7cef4",
+      "entity-568a30d426077830ce36abfa1389ac7b9d00c9971fa2c6f477e2d39bf13dc4cd",
+      "entity-8e8b4cffcd59c0717c991ce09ee30ba0eaf290a99d5fc19c738e217021998a33"
+    ],
+    "target": {
+      "base_revision": "5b421683ea40200f5bcc165427c6a6b4c12346eb",
+      "history_head": "ece271e40bbcc2eb1f2e7362d8330f93311d2eeb0c48a867a985e171e424a2e4",
+      "task_id": "wave-device-control-recovery",
+      "task_sha256": "38c3e5aaea9add60518932eb173a69ce1007b32fe73a9a0d7c6c2e689f7ed677"
+    }
+  },
+  "previous_event": "6ae5a36188a4039e47d3a70995cc53f36459251ec9dd5501c592c250f8d5a5c5",
+  "request_id": "route-sound-storage-to-wave-device-20260920",
+  "schema_version": 1,
+  "sequence": 100,
+  "stream": "task:infowin-ownership"
+}

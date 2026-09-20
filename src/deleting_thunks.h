@@ -34,7 +34,6 @@
 #include "gamma.h"
 #include "maininterface.h"
 #include "menu.h"
-#include "multidebug.h"
 #include "netmsg.h"
 #include "netwin.h"
 #include "newtechwin.h"
@@ -48,7 +47,6 @@
 #include "socialwin.h"
 #include "stringbox.h"
 #include "tutwin.h"
-#include "worldwin.h"
 #include "hypothesis_layouts.h"
 #include "editbox.h"
 #include "net_class.h"
@@ -200,9 +198,6 @@ void *__fastcall adjust_this_check_button(void *self, void *,
 void *__fastcall adjust_this_social_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_tut_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_world_win(void *self, void *,
-                                         unsigned int arg0);
-void *__fastcall adjust_this_world_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_ambience(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_video(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_voice_rx(void *self, void *, unsigned int arg0);
@@ -215,10 +210,6 @@ void *__fastcall adjust_this_alpha_menu(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_replay_win(void *self, void *,
                                           unsigned int arg0);
 void *__fastcall adjust_this_replay_win(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_multi_debug(void *self, void *,
-                                           unsigned int arg0);
-void *__fastcall adjust_this_multi_debug(void *self, void *,
-                                         unsigned int arg0);
 void *__fastcall scalar_delete_graphic_win(void *self, void *,
                                            unsigned int arg0);
 void *__fastcall adjust_this_graphic_win(void *self, void *,

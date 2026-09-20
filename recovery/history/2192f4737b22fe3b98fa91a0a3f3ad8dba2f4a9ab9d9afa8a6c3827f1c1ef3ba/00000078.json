@@ -1,0 +1,22 @@
+{
+  "event_id": "9dc9a34979b4938f2aed37ad1acb9d5815fd4a42f98b02213f7cd319991afc41",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/popup_wave_callback_harness.cpp",
+      "recovery/tests/test_popup_wave_callback.py",
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "Authorize a serial coordinator repair of the shared callback declaration and its existing infowin-owned constructor, close, exec and popup_wave_callback. Use BasePopTextBlock for the parameter, void return, cdecl, typed global storage and typed member assignment; preserve the original callback identity and observe its emitted symbol. Do not change the text parser, unrelated layouts, or sound-family virtual declarations.",
+      "basepop.h is also an interface used by radiobutton-lifetime in this same retained WorldWin checkout and by a retained map-storage checkout. Limit this grant to BasePopTextBlock evidence and the callback field/default declaration; do not touch RadioButton/Dialog layout or import/reset other worktree changes. popup.cpp/h and all five callback-side identities are already in infowin scope. Validate protected BasePop and Popup claims and fresh build/link before any integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1dc2829b1cf88e625478e3196735e72c8adb79b30694da5aca4d3e9d95f31b90",
+  "request_id": "basepop-callback-interface-controls-20260920",
+  "schema_version": 1,
+  "sequence": 78,
+  "stream": "task:infowin-ownership"
+}

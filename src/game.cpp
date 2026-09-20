@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <mmsystem.h>
 #include "temp.h"
 #include "xpops.h"  // X_pop
 #include "game.h"
@@ -1359,17 +1360,9 @@ int __cdecl system_init() {
     battlewin_init(static_cast<BattleWin *>(sub_interface_global()));
     console_init(&ConsoleGlobal, 0);
 
-    // MultiDebug's window argument is the Console's GraphicWin virtual base,
-    // the same walk close_opening spells out: vtable slot 1 holds the
-    // subobject displacement, and the receiver is that displacement added.
-    int console_window = reinterpret_cast<int>(&ConsoleGlobal);
-    if (console_window != 0) {
-        console_window += reinterpret_cast<int *>(
-            *reinterpret_cast<int **>(&ConsoleGlobal))[1];
-    }
-    reinterpret_cast<MultiDebug *>(&WinBubbleWindow)
-        ->init(&NetDaemonNet, reinterpret_cast<Win *>(console_window),
-               &MultiDebugText);
+    // The language performs the Console-to-Win virtual-base conversion.
+    Win *console_window = &ConsoleGlobal;
+    WinBubbleWindow.init(&NetDaemonNet, console_window, &MultiDebugText);
 
     messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8));
     datalink_init(&DatalinkMain);
@@ -1417,7 +1410,7 @@ Status: homed from src/unrecovered/0058f2f0.cpp on this pass; its pending
         156 bytes discounted as relocations.
 */
 int __cdecl game_init(int mode, int reload) {
-    func_time_get_time *time_get_time = WaveTimeGetTimeSlot();
+    DWORD (WINAPI *const time_get_time)() = timeGetTime;
     WorldClimateSkipTerrainClear = 1;
     my_srand(time_get_time());
     random_reseed(time_get_time());

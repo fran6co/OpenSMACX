@@ -1,0 +1,24 @@
+{
+  "event_id": "079d515cc42c156836e1f4d4c3a410b8d93a4eb92e84fd99abd0c9bf67b31dbc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/sound_lifetime_harness.cpp",
+      "src/sound.cpp",
+      "src/sound.h",
+      "src/wave.cpp"
+    ],
+    "evidence": [
+      "Original Wave table66E44C slot28 points to existing Wave::get_attrib4C6F80; select4C5030 invokes that slot twice and tests the integer result at4C5063/4C506E. Sound table66E3C0 slot28 is the purecall target645844. Replace the incorrect void unk_slot28 declaration with the evidence-backed int get_attrib virtual contract, enabling the real Wave override.",
+      "Retain an explicitly unfinished base body for build continuity; no original base implementation is claimed, and other families still need their own overrides and abstractness recovery. Observe the emitted Wave symbol before reconciling its source fact through match_recovery.source writer; preserve its historical claim and remeasure.",
+      "Update the existing constructor harness link double to the corrected signature. Add native original/emitted vtable-slot and strict existing-body checks, including damage controls that remove virtual dispatch. No publication, demotion or temporary-regression acceptance is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3720a0ee73c54ebc269044b6bedcf5b743fb5ac28aba7d5bd6fc511a2a26caa7",
+  "request_id": "sound-attribute-slot-contract-20260920",
+  "schema_version": 1,
+  "sequence": 102,
+  "stream": "task:infowin-ownership"
+}

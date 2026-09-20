@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <mmsystem.h>
 #include "original_seam.h"
 #include "general.h"
 #include "wave.h"
@@ -25,9 +26,18 @@
 #include "net_class.h"
 #include "basepop.h"
 
+// The Windows multimedia clock is a system import, not storage in this build.
+// RECOVERY_IMPORT: v1 __imp__timeGetTime@0 WINMM.dll name:timeGetTime
+
+// Wave construction at 0x004C676E installs this table. Its derived slots
+// 33..56 are also present in Effect's table; inherited placeholders still
+// need recovery, so no complete-table acceptance is implied here.
+// RECOVERY_GENERATED: v1 vtable 0x0066E44C ? ??_7Wave@@6B@ 0x004C66E0
+
 /*
 Purpose: Returns a fixed 11; the legacy implementation is a single constant load.
 // ORIGINAL: 0x004C70E0 ?set_asdr@Wave@@QAEHXZ 0x004C70E0-0x004C70E6 BYTE_EXACT
+// symbol    ?set_asdr@Wave@@UAEHXZ
 // size      6 bytes
 // prototype int (__thiscall ?set_asdr@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -45,6 +55,7 @@ int Wave::set_asdr() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
 // ORIGINAL: 0x004C70D0 ?set_bufflimit@Wave@@QAEHI@Z 0x004C70D0-0x004C70D8 BYTE_EXACT
+// symbol    ?set_bufflimit@Wave@@UAEHI@Z
 // size      8 bytes
 // prototype int (__thiscall ?set_bufflimit@Wave@@QAEHI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   0
@@ -62,6 +73,7 @@ int Wave::set_bufflimit(unsigned int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
 // ORIGINAL: 0x004C70F0 ?set_attack@Wave@@QAEHIII@Z 0x004C70F0-0x004C70F8 BYTE_EXACT
+// symbol    ?set_attack@Wave@@UAEHIII@Z
 // size      8 bytes
 // prototype int (__thiscall ?set_attack@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -79,6 +91,7 @@ int Wave::set_attack(unsigned int, unsigned int, unsigned int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
 // ORIGINAL: 0x004C7100 ?set_sustain@Wave@@QAEHIII@Z 0x004C7100-0x004C7108 BYTE_EXACT
+// symbol    ?set_sustain@Wave@@UAEHIII@Z
 // size      8 bytes
 // prototype int (__thiscall ?set_sustain@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -96,6 +109,7 @@ int Wave::set_sustain(unsigned int, unsigned int, unsigned int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
 // ORIGINAL: 0x004C7110 ?set_decay@Wave@@QAEHIII@Z 0x004C7110-0x004C7118 BYTE_EXACT
+// symbol    ?set_decay@Wave@@UAEHIII@Z
 // size      8 bytes
 // prototype int (__thiscall ?set_decay@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -113,6 +127,7 @@ int Wave::set_decay(unsigned int, unsigned int, unsigned int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 11.
 // ORIGINAL: 0x004C7120 ?set_release@Wave@@QAEHIII@Z 0x004C7120-0x004C7128 BYTE_EXACT
+// symbol    ?set_release@Wave@@UAEHIII@Z
 // size      8 bytes
 // prototype int (__thiscall ?set_release@Wave@@QAEHIII@Z)(Wave* this, unsigned int, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -152,13 +167,9 @@ Return Value: whatever the device's unload returned, or 0 when none was wrapped
 Status: Complete
 */
 int Wave::unload() {
-    // Both dispatches read the live vtable pointer at run time rather than
-    // being declared virtual, so neither can disagree with the original layout.
-    // ONE parameter, so `__fastcall` puts the receiver in ecx and leaves
-    // edx alone; a second would cost a `xor edx, edx` the image has not.
+    // The wrapped device still has an opaque external interface; our own
+    // chain operation uses the inherited Sound virtual contract.
     typedef int(__fastcall *device_unload_fn)(void *);
-    typedef void(__fastcall *wave_self_fn)(void *);
-    typedef void (OriginalObject::*wave_vfn)();
 
     int result = 0;
     if (device_) {
@@ -172,7 +183,7 @@ int Wave::unload() {
     const uint8_t flags = static_cast<uint8_t>(flags_54_);
     device_ = nullptr;
     if (!(flags & 2)) {
-        vtable_slot<wave_self_fn>(this, 0x80)(this);
+        detach();
     }
     flags_40_ &= 0xFFFFFFFEu;
     return result;
@@ -184,7 +195,7 @@ Purpose: Set the playback pitch, clamped to the range the engine accepts
          (-1200 to 1200). The clamped value is stored at 0x58 and handed to the
          wrapped device, if there is one, through its vtable slot 0x98.
 // ORIGINAL: 0x004C6EE0 ?set_pitch@Wave@@QAEXH@Z 0x004C6EE0-0x004C6F19 BYTE_EXACT
-// symbol    ?set_pitch@Wave@@QAEHH@Z
+// symbol    ?set_pitch@Wave@@UAEHH@Z
 // LEVER: returns-int - same as Wave_Device::release/enable/disable. The
 //        image's shared tail does `xor eax, eax` before `pop ebp; ret 4`,
 //        the int-returning epilogue; a void body tail-jumps instead. The
@@ -223,7 +234,8 @@ int Wave::set_pitch(int a1) {
 Purpose: Load a wave. The object's own vtable slot 0x88 does the loading; unless
          bit 2 of the second argument says otherwise, its own slot 0x8C then
          runs as the follow-up and supplies the result.
-// ORIGINAL: 0x004C6DB0 ?load@Wave@@QAEHPADK@Z 0x004C6DB0-0x004C6DE6 SEMANTIC
+// ORIGINAL: 0x004C6DB0 ?load@Wave@@QAEHPADK@Z 0x004C6DB0-0x004C6DE6 BYTE_EXACT
+// symbol    ?load@Wave@@UAEHPADK@Z
 // size      54 bytes
 // prototype int (__thiscall ?load@Wave@@QAEHPADK@Z)(Wave* this, int8*, unsigned int)
 // callers   5   call targets   0
@@ -242,17 +254,11 @@ Return Value: slot 0x8C's result, or 0 when bit 2 of a2 skipped it
 Status: Complete
 */
 int Wave::load(char *a1, unsigned long a2) {
-    // Both arguments here are passed ON THE STACK by the device's own
-    // calling convention, not in ecx/edx as `__fastcall` parameters would
-    // be; the pointer-to-member type keeps that thiscall shape.
-    typedef void (OriginalObject::*load_fn)(char *a1, unsigned long a2);
-    typedef int(__fastcall *follow_fn)(void *);
-
-    (ORIGINAL(this)->*vtable_slot<load_fn>(this, 0x88))(a1, a2);
+    init(a1, a2);
     if (a2 & 4) {
         return 0;
     }
-    return vtable_slot<follow_fn>(this, 0x8C)(this);
+    return load();
 }
 
 
@@ -261,6 +267,7 @@ int Wave::load(char *a1, unsigned long a2) {
 Purpose: Report the wave's length in milliseconds, a plain read of the field
          at 0x60.
 // ORIGINAL: 0x004C6B00 ?get_ms_length@Wave@@QAEHXZ 0x004C6B00-0x004C6B04 BYTE_EXACT
+// symbol    ?get_ms_length@Wave@@UAEHXZ
 // size      4 bytes
 // prototype int (__thiscall ?get_ms_length@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -274,12 +281,6 @@ int Wave::get_ms_length() {
     return ms_length_;
 }
 
-
-// With no wrapped device the wave is timed against the clock. The original
-// reaches timeGetTime through `call dword ptr [0x669368]`, an indirect call
-// on an import slot, so the seam is the address of that slot rather than the
-// function: it reads the live pointer at run time exactly as the original
-// does, and stays rebindable without linking winmm into the leaf tests.
 
 /*
 Purpose: Report whether the wave is still sounding. A wrapped device answers
@@ -330,7 +331,7 @@ int Wave::is_playing() {
     if (start_time_ == 0) {
         return 0;
     }
-    const uint32_t elapsed = (WaveTimeGetTimeSlot())() - start_time_;
+    const uint32_t elapsed = timeGetTime() - start_time_;
     // `cmp ecx, eax` / `jbe`: the length is compared unsigned, so a negative
     // stored length reads as a very long one rather than as already finished.
     return static_cast<uint32_t>(ms_length_) > elapsed ? 1 : 0;
@@ -343,6 +344,7 @@ Purpose: Start the wave playing. A wrapped device answers through its own
          its result is returned verbatim. With no device the answer is a
          fixed 0x14.
 // ORIGINAL: 0x004C68F0 ?play@Wave@@QAEHH@Z 0x004C68F0-0x004C6913 BYTE_EXACT
+// symbol    ?play@Wave@@UAEHH@Z
 // size      35 bytes
 // prototype int (__thiscall ?play@Wave@@QAEHH@Z)(Wave* this, int)
 // callers   0   call targets   0
@@ -371,6 +373,7 @@ int Wave::play(int effect) {
 Purpose: Ask the wrapped device, through its vtable slot 0xC8, whether the
          buffer is in hardware.
 // ORIGINAL: 0x004C6AE0 ?is_hwbuffer@Wave@@QAEHXZ 0x004C6AE0-0x004C6AF2 BYTE_EXACT
+// symbol    ?is_hwbuffer@Wave@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?is_hwbuffer@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -393,6 +396,7 @@ int Wave::is_hwbuffer() {
 Purpose: Ask the wrapped device for a time value through its vtable slot 0xB4,
          passing the query argument on.
 // ORIGINAL: 0x004C6FD0 ?get_time@Wave@@QAEHI@Z 0x004C6FD0-0x004C6FF0 BYTE_EXACT
+// symbol    ?get_time@Wave@@UAEHI@Z
 // size      32 bytes
 // prototype int (__thiscall ?get_time@Wave@@QAEHI@Z)(Wave* this, unsigned int)
 // callers   0   call targets   0
@@ -416,6 +420,7 @@ int Wave::get_time(uint32_t a1) {
 Purpose: Ask the wrapped device for the current marker through its vtable
          slot 0xB8.
 // ORIGINAL: 0x004C6FF0 ?get_current_marker@Wave@@QAEHXZ 0x004C6FF0-0x004C7003 BYTE_EXACT
+// symbol    ?get_current_marker@Wave@@UAEHXZ
 // size      19 bytes
 // prototype int (__thiscall ?get_current_marker@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -461,6 +466,7 @@ int Wave::get_game_hwnd() {
 Purpose: Ask the wrapped device for the device count through its vtable
          slot 0xBC.
 // ORIGINAL: 0x004C7020 ?get_ndevices@Wave@@QAEHXZ 0x004C7020-0x004C7032 BYTE_EXACT
+// symbol    ?get_ndevices@Wave@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?get_ndevices@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -485,7 +491,7 @@ Purpose: Unknown. The original chases the pointer chain that starts at the
          it runs out, reads nothing else, and always answers 1. The argument
          is ignored.
 // ORIGINAL: 0x004C7080 ?UNK1@Wave@@QAEHH@Z 0x004C7080-0x004C7096 BYTE_EXACT
-// symbol    ?UNK1@Wave@@UAEHH@Z
+// symbol    ?probe_device_chain@Wave@@QAEHH@Z
 // size      22 bytes
 // prototype int (__thiscall ?UNK1@Wave@@QAEHH@Z)(Wave* this, int)
 // callers   0   call targets   0
@@ -495,7 +501,7 @@ Purpose: Unknown. The original chases the pointer chain that starts at the
 Return Value: 1, always
 Status: Complete
 */
-int Wave::UNK1(int) {
+int Wave::probe_device_chain(int) {
     uint8_t *cursor = static_cast<uint8_t *>(device_);
     while (cursor) {
         cursor = *reinterpret_cast<uint8_t **>(cursor + 0x3C);
@@ -508,6 +514,7 @@ int Wave::UNK1(int) {
 Purpose: Set the reverb mix. The value is stored at 0x5C first, then the
          wrapped device is told through its vtable slot 0xE0.
 // ORIGINAL: 0x004C70A0 ?set_reverb_mix@Wave@@QAEHM@Z 0x004C70A0-0x004C70C6
+// symbol    ?set_reverb_mix@Wave@@UAEHM@Z
 // size      38 bytes
 // prototype int (__thiscall ?set_reverb_mix@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
@@ -544,6 +551,7 @@ int Wave::set_reverb_mix(float mix) {
 Purpose: Ask the wrapped device, through its vtable slot 0xDC, whether the
          wave is 3D positioned.
 // ORIGINAL: 0x004C7250 ?is_3d@Wave@@QAEHXZ 0x004C7250-0x004C7262 SEMANTIC
+// symbol    ?is_3d@Wave@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?is_3d@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -572,6 +580,7 @@ Purpose: Describe a device into the caller's buffer through the wrapped
          to an empty string - but only when the third argument is nonzero,
          and without any null check on the buffer - and the answer is 1.
 // ORIGINAL: 0x004C7040 ?get_device_description@Wave@@QAEHPADHH@Z 0x004C7040-0x004C7078 BYTE_EXACT
+// symbol    ?get_device_description@Wave@@UAEHPADHH@Z
 // size      56 bytes
 // prototype int (__thiscall ?get_device_description@Wave@@QAEHPADHH@Z)(Wave* this, int8*, int, int)
 // callers   0   call targets   0
@@ -598,6 +607,7 @@ int Wave::get_device_description(char *a1, int a2, int a3) {
 Purpose: Position the wave in 3D through the wrapped device's vtable
          slot 0xCC.
 // ORIGINAL: 0x004C7190 ?set_position3d@Wave@@QAEHMMM@Z 0x004C7190-0x004C71BB BYTE_EXACT
+// symbol    ?set_position3d@Wave@@UAEHMMM@Z
 // size      43 bytes
 // prototype int (__thiscall ?set_position3d@Wave@@QAEHMMM@Z)(Wave* this, float, float, float)
 // callers   0   call targets   0
@@ -621,6 +631,7 @@ int Wave::set_position3d(float x, float y, float z) {
 Purpose: Set the wave's X position through the wrapped device's vtable
          slot 0xD0.
 // ORIGINAL: 0x004C71C0 ?set_xpos@Wave@@QAEHM@Z 0x004C71C0-0x004C71E3 BYTE_EXACT
+// symbol    ?set_xpos@Wave@@UAEHM@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_xpos@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
@@ -644,6 +655,7 @@ int Wave::set_xpos(float x) {
 Purpose: Set the wave's Y position through the wrapped device's vtable
          slot 0xD4.
 // ORIGINAL: 0x004C71F0 ?set_ypos@Wave@@QAEHM@Z 0x004C71F0-0x004C7213 BYTE_EXACT
+// symbol    ?set_ypos@Wave@@UAEHM@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_ypos@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
@@ -667,6 +679,7 @@ int Wave::set_ypos(float y) {
 Purpose: Set the wave's Z position through the wrapped device's vtable
          slot 0xD8.
 // ORIGINAL: 0x004C7220 ?set_zpos@Wave@@QAEHM@Z 0x004C7220-0x004C7243 BYTE_EXACT
+// symbol    ?set_zpos@Wave@@UAEHM@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_zpos@Wave@@QAEHM@Z)(Wave* this, float)
 // callers   0   call targets   0
@@ -694,7 +707,7 @@ Purpose: Store the attribute mask into the wave's own fields, then tell the
          bit 2 is clear - bit 4 -> 4 and bit 8 -> 0x20). Bits already set at
          0x54 are never cleared.
 // ORIGINAL: 0x004C6F20 ?set_attrib@Wave@@QAEXK@Z 0x004C6F20-0x004C6F80 BYTE_EXACT
-// symbol    ?set_attrib@Wave@@QAEHK@Z
+// symbol    ?set_attrib@Wave@@UAEHK@Z
 // LEVER: returns-int - same as set_pitch / Wave_Device::release. The image's
 //        epilogue is the int-returning `xor eax, eax` shared tail; a void body
 //        tail-jumps instead. Return type becomes `int`, the `// symbol` fact
@@ -746,6 +759,7 @@ Purpose: Compose the attribute mask back out of the wave's own fields, OR-ed
          the dword at 0x30 -> bit 1, and the 0x54 flag dword's bits
          1 -> 0, 8 -> 6, 2 -> 2, 4 -> 4, 0x10 -> 7, 0x20 -> 8.
 // ORIGINAL: 0x004C6F80 ?get_attrib@Wave@@QAEHXZ 0x004C6F80-0x004C6FCA BYTE_EXACT
+// symbol    ?get_attrib@Wave@@UAEHXZ
 // size      74 bytes
 // prototype int (__thiscall ?get_attrib@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -916,9 +930,7 @@ Return Value: the device's start answer, 0x14 when disabled or unstartable,
 Status: Complete
 */
 int Wave::play() {
-    typedef void (OriginalObject::*wave_volume_fn)(uint32_t volume);
     typedef int(__fastcall *device_start_fn)(void *);
-    typedef void(__fastcall *wave_vfn)(void *);
 
     int result = 0;
     if (group_slot_ < 0x10) {
@@ -927,13 +939,13 @@ int Wave::play() {
             return 0x14;
         }
         if (flags_54_ & 0x10) {
-            (ORIGINAL(this)->*vtable_slot<wave_volume_fn>(this, 0x40))(volume_);
+            set_volume(volume_);
         }
     }
     if (device_) {
         result = vtable_slot<device_start_fn>(device_, 0x1C)(device_);
     } else if (flags_54_ & 0x10) {
-        this->load();
+        Wave::load();
         if (device_) {
             result = vtable_slot<device_start_fn>(device_, 0x1C)(device_);
         }
@@ -941,8 +953,8 @@ int Wave::play() {
         result = 0x14;
     }
     if (flags_54_ & 0x10) {
-        start_time_ = (WaveTimeGetTimeSlot())();
-        vtable_slot<wave_vfn>(this, 0x80)(this);
+        start_time_ = timeGetTime();
+        detach();
         device_ = nullptr;
     }
     return result;
@@ -960,6 +972,7 @@ Purpose: Load the wave from its remembered filename. With no wrapped device
          the file, and on success the device reports the length in
          milliseconds through its slot 0xC4 into the field at 0x60.
 // ORIGINAL: 0x004C6CE0 ?load@Wave@@QAEHXZ 0x004C6CE0-0x004C6DAC
+// symbol    ?load@Wave@@UAEHXZ
 // LEVER: `int attribs = 0;` declared as the FIRST statement, before even the
 //        `fname` null check - matches the image's `xor edi, edi` right after
 //        the prologue's `push edi`, which forces edi to be pushed/popped
@@ -1007,11 +1020,8 @@ int Wave::load() {
         if (flags_54_ & 1) {
             attribs |= 1;
         }
-        {
-            typedef int(__fastcall *wave_query_fn)(void *);
-            if (vtable_slot<wave_query_fn>(this, 0x58)(this)) {
-                attribs |= 2;
-            }
+        if (is_looping()) {
+            attribs |= 2;
         }
         const uint32_t flags = flags_54_;
         if (flags & 4) {
@@ -1033,15 +1043,9 @@ int Wave::load() {
             typedef void (OriginalObject::*device_attrib_fn)(int attribs);
             (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
         }
-        // `Sound::load`, NOT `this->load`. Both of these sit INSIDE a `Wave::load`
-        // overload, so `this->load(...)` resolved to the same function and recursed
-        // without bound - a real runtime defect the byte comparison cannot see,
-        // because a call target is a discounted relocation. The image calls
-        // 0x004C6280, which is `?load@Sound@@QAEHPBD@Z`, and this marker's own
-        // `// calls` fact says so. `Wave` is spelled flat rather than `: Sound`
-        // (see the note in `wave.h` for why), so the Sound subobject at offset 0
-        // is reached by cast.
-        const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(fname);
+        // The original calls Sound::load (0x004C6280) directly. Virtual
+        // dispatch here would recurse into Wave's filename overload.
+        const int loaded = Sound::load(fname);
         if (loaded) {
             return loaded;
         }
@@ -1062,6 +1066,7 @@ Purpose: Reload the wave from its remembered filename. The device is created
          vtable slot 0x7C runs, and a nonzero dword at 0x30 additionally
          starts the device looping through its slot 0x48 with argument 1.
 // ORIGINAL: 0x004C6DF0 ?reload@Wave@@QAEHXZ 0x004C6DF0-0x004C6E95 SEMANTIC
+// symbol    ?reload@Wave@@UAEHXZ
 // size      165 bytes
 // prototype int (__thiscall ?reload@Wave@@QAEHXZ)(Wave* this)
 // callers   0   call targets   0
@@ -1106,11 +1111,8 @@ int Wave::reload() {
         if (flags_54_ & 1) {
             attribs |= 1;
         }
-        {
-            typedef int(__fastcall *wave_query_fn)(void *);
-            if (vtable_slot<wave_query_fn>(this, 0x58)(this)) {
-                attribs |= 2;
-            }
+        if (is_looping()) {
+            attribs |= 2;
         }
         {
             typedef void (OriginalObject::*device_attrib_fn)(int attribs);
@@ -1125,10 +1127,7 @@ int Wave::reload() {
         if (result == 0) {
             if (!(flags_40_ & 1)) {
                 flags_40_ |= 1;
-                {
-                    typedef void(__fastcall *wave_vfn)(void *);
-                    vtable_slot<wave_vfn>(this, 0x7C)(this);
-                }
+                attach();
                 if (loop_flag_30_) {
                     typedef void (OriginalObject::*device_loop_fn)(int on);
                     (ORIGINAL(device_)->*vtable_slot<device_loop_fn>(device_, 0x48))(1);
@@ -1196,8 +1195,7 @@ int Wave::dyna_load(char *fname) {
             // device, not a freshly re-derived one.
             uint8_t *const device_vtable =
                 *reinterpret_cast<uint8_t **>(device_);
-            typedef int(__fastcall *wave_query_fn)(void *);
-            const int attribs = vtable_slot<wave_query_fn>(this, 0x70)(this);
+            const int attribs = get_attrib();
             {
                 // The int argument is passed on the stack, not in edx; the
                 // pointer-to-member type keeps the thiscall shape.
@@ -1205,8 +1203,7 @@ int Wave::dyna_load(char *fname) {
                 (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(
                     device_vtable + 0x6C)))(attribs);
             }
-            typedef void(__fastcall *wave_vfn)(void *);
-            vtable_slot<wave_vfn>(this, 0x7C)(this);
+            attach();
         }
         return created;
     }
@@ -1259,11 +1256,8 @@ int Wave::load(const char *fname) {
     if (flags_54_ & 1) {
         attribs |= 1;
     }
-    {
-        typedef int(__fastcall *wave_query_fn)(void *);
-        if (vtable_slot<wave_query_fn>(this, 0x58)(this)) {
-            attribs |= 2;
-        }
+    if (is_looping()) {
+        attribs |= 2;
     }
     const uint32_t flags = flags_54_;
     if (flags & 8) {
@@ -1276,15 +1270,9 @@ int Wave::load(const char *fname) {
         typedef void (OriginalObject::*device_attrib_fn)(int attribs);
         (ORIGINAL(device_)->*vtable_slot<device_attrib_fn>(device_, 0x6C))(attribs);
     }
-    // `Sound::load`, NOT `this->load`. Both of these sit INSIDE a `Wave::load`
-    // overload, so `this->load(...)` resolved to the same function and recursed
-    // without bound - a real runtime defect the byte comparison cannot see,
-    // because a call target is a discounted relocation. The image calls
-    // 0x004C6280, which is `?load@Sound@@QAEHPBD@Z`, and this marker's own
-    // `// calls` fact says so. `Wave` is spelled flat rather than `: Sound`
-    // (see the note in `wave.h` for why), so the Sound subobject at offset 0
-    // is reached by cast.
-    const int loaded = reinterpret_cast<Sound *>(this)->Sound::load(fname);
+    // The original calls Sound::load (0x004C6280) directly, not this
+    // Wave overload. Qualification preserves the non-recursive base call.
+    const int loaded = Sound::load(fname);
     if (loaded) {
         return loaded;
     }
@@ -1308,16 +1296,11 @@ int Wave::load(const char *fname) {
 
 
 /*
-Purpose: Build the wave. The original constructs in the same three vtable
-         stages the destructor tears down; between the stages only the CRT
-         memset runs, so the two intermediate vtable installs are
-         unobservable and - like the registered SEH frame - omitted, keeping
-         only the final Wave vtable publication. A device dispatch of the
-         0x3E8 default through slot 0 is provably dead (the device slot is
-         zeroed a few instructions earlier with nothing between) and omitted
-         under the same policy. The net field state: full volume, zeroed
-         regions, a 1000ms default at 0x38, flag dword 4, Sound::set_type
-         run with type 1, unit reverb mix, and the out-of-range group slot.
+Purpose: Build the inherited Sound/Fade state once, then initialize Wave's
+         own flags, pitch, reverb, timing and group state. Sound::set_type(1)
+         is a direct base-method call in the original. The compiler owns
+         construction tables and exception cleanup; the historical spelling
+         experiments below predate recovery of the fade base.
 // ORIGINAL: 0x004C66E0 ??0Wave@@QAE@XZ 0x004C66E0-0x004C67B6;0x004C8450-0x004C8457;0x00659EF4-0x00659F06
 // TRIED: 3/73 - the image carries an SEH unwind frame here (`push -1 /
 //            push 0x659efc / mov eax,fs:[0] / ...`), the same symptom as
@@ -1354,33 +1337,12 @@ Status: Complete
 // memset, then the FINAL vtable write (0x66E44C) ahead of the flags_54_
 // memset.
 Wave::Wave() {
-    volume_ = 0x7F;
-    pan_8_ = 0;
-    memset(&field_C_, 0, 0x24);
-    loop_flag_30_ = 0;
-    chain_prev_ = nullptr;
-    chain_next_ = nullptr;
-    device_ = nullptr;
-    fname_ = nullptr;
-    memset(&flags_40_, 0, sizeof(flags_40_));
-    // The bit-0 clear on a value the memset above just zeroed is a no-op in
-    // practice, but the image performs it unconditionally (`and ecx,
-    // 0xfffffffe` right after the memset), so it is transcribed.
-    flags_40_ &= ~1;
-    fade_38_ = 0x3E8;
-    // The original's indirect device dispatch through slot 0x6C with the
-    // 1000ms default is provably dead here (device_ was just zeroed above,
-    // with nothing between) and is not transcribed - same policy as the
-    // other Wave bodies with an `indirect` marker line.
-    type_ = 0;
+    // Sound and SoundFadeState construct their own fields exactly once.
     // The original's `memset(this + 0x54, 0, 4)` at 0x004C6774 - same lever
     // as set_fname's own `memset(&flags_54_, 0, 4)` below.
     memset(&flags_54_, 0, sizeof(flags_54_));
     flags_40_ |= 4;
-    // `Wave` is deliberately NOT spelled `: Sound` - see the note on the
-    // class - so the base's method is reached by cast rather than by
-    // inheritance.
-    reinterpret_cast<Sound *>(this)->set_type(1);
+    Sound::set_type(1);
     pitch_ = 0;
     reverb_mix_ = 1.0f;
     group_slot_ = 0x10;
@@ -1403,6 +1365,7 @@ Purpose: Initialise the wave from a filename and a mode mask. Streaming waves
          (bit 4 suppressed for streaming waves, bit 8 unsuppressed here), and
          bit 1 of the mode runs the wave's own vtable slot 0x48 with 1.
 // ORIGINAL: 0x004C69B0 ?init@Wave@@QAEXPADK@Z 0x004C69B0-0x004C6AD5
+// symbol    ?init@Wave@@UAEXPADK@Z
 // TRIED: best flag set /c /O2 /Oi- /Gy /GR- /Oy- /GX reaches 13/122
 //   (0.975 similar); `listing_diff` at those flags shows the structure and
 //   control flow already match - 23 differing runs, nearly all the SAME
@@ -1466,8 +1429,7 @@ void Wave::init(char *group_id, unsigned long flags) {
                 // device, not a freshly re-derived one - as in dyna_load.
                 uint8_t *const device_vtable =
                     *reinterpret_cast<uint8_t **>(device_);
-                typedef int(__fastcall *wave_query_fn)(void *);
-                const int attribs = vtable_slot<wave_query_fn>(this, 0x70)(this);
+                const int attribs = get_attrib();
                 {
                     // The int argument is passed on the stack, not in edx;
                     // the pointer-to-member type keeps the thiscall shape.
@@ -1475,8 +1437,7 @@ void Wave::init(char *group_id, unsigned long flags) {
                     (ORIGINAL(device_)->*(*reinterpret_cast<device_attrib_fn *>(device_vtable + 0x6C)))(
                         attribs);
                 }
-                typedef void(__fastcall *wave_vfn)(void *);
-                vtable_slot<wave_vfn>(this, 0x7C)(this);
+                attach();
             }
         }
         if (device_) {
@@ -1491,8 +1452,7 @@ void Wave::init(char *group_id, unsigned long flags) {
         flags_54_ |= 4;
     }
     if (flags & 2) {
-        typedef void (OriginalObject::*wave_loop_fn)(int on);
-        (ORIGINAL(this)->*vtable_slot<wave_loop_fn>(this, 0x48))(1);
+        set_loop_state(1);
     }
     if (flags & 0x40) {
         flags_54_ |= 8;
@@ -1554,11 +1514,10 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
          copy goes back to the game CRT heap; a chained wave unlinks itself
          from the global wave chain; the wrapped device is put through the
          release hook when the hook is live, then forgotten. The inlined base
-         destructor then repeats the buffer free and the unlink - normally
-         dead, but kept because an aliased chain neighbour or a re-linking
-         release hook re-arms them, exactly as in the original. The registered
-         SEH frame is omitted: the binary has no throw entry point, so it is
-         unreachable.
+         destructor owns the later filename/device/chain cleanup. The real
+         Sound base performs that stage once, with Sound virtual dispatch
+         already active. The compiler owns the exception cleanup and final
+         SoundFadeState destruction; do not duplicate those stages here.
 // ORIGINAL: 0x004C67C0 ??1Wave@@QAE@XZ 0x004C67C0-0x004C68EC;0x004C8450-0x004C8457;0x00659F06-0x00659F20
 // symbol    ??1Wave@@UAE@XZ
 // LEVER: plain member access, not the `Wave volatile *const self` view. The
@@ -1599,20 +1558,10 @@ Purpose: Destroy the wave. The original is a three-stage teardown of an
 Return Value: n/a
 Status: Complete
 */
-// auto_inline(off): with ~Wave virtual (inherited from ~Sound), VC6's
-// inlining of the base-dtor call into trivial derived dtors (~Effect)
-// changes their shape away from the image's tail-jmp. The image calls the
-// base dtor out of line; this keeps every derived dtor doing the same.
-#pragma auto_inline(off)
 Wave::~Wave() {
-    // PLAIN MEMBER ACCESS, no volatile view - the view was measured before
-    // `Wave` grew its real `Sound` base and the SEH frame with it, and it now
-    // only costs: it forced every access through a spilled `self` slot and
-    // stopped VC6 hoisting the `flags_40_` read above the two null neighbour
-    // stores the image interleaves it with. Dropping it moved 49/101 -> 58/101
-    // with the instruction count still 101/101. `prev`/`next` are downcasts to
-    // `Wave *` rather than volatile puns: the chain is the wave chain, and a
-    // `Sound *` cannot name the protected members.
+    // Original 0x004C6856 changes to the Sound table before the release
+    // callback at 0x004C6886. Only the Wave stage belongs in this body;
+    // the automatic base destructor owns that transition and cleanup.
     if (group_slot_ < 0x10) {
         WaveDeviceGlobal.pull_from_group(this);
     }
@@ -1625,57 +1574,23 @@ Wave::~Wave() {
         // Unlink from the wave chain. The second neighbour is re-read after
         // the first write because a neighbour pointer may alias this very
         // object - the original re-reads it the same way.
-        Wave *const prev = static_cast<Wave *>(chain_prev_);
+        Sound *const prev = chain_prev_;
         if (prev) {
             prev->chain_next_ = chain_next_;
         } else {
-            WaveChainHead() = static_cast<Wave *>(chain_next_);
+            SoundChainHead = chain_next_;
         }
-        Wave *const next = static_cast<Wave *>(chain_next_);
+        Sound *const next = chain_next_;
         if (next) {
             next->chain_prev_ = chain_prev_;
         } else {
-            WaveChainTail() = static_cast<Wave *>(chain_prev_);
-        }
-        chain_next_ = nullptr;
-        chain_prev_ = nullptr;
-        flags_40_ &= ~2u;
-    }
-    // The inlined base destructor's copy of the free: reachable only when the
-    // unlink above re-populated the slot through an aliased neighbour.
-    void *const late_block = fname_;
-    if (late_block) {
-        operator delete(late_block);
-        fname_ = nullptr;
-    }
-    void *const device = device_;
-    if (device) {
-        if (WaveDeviceReleaseGuard) {
-            (WaveDeviceReleaseSlot())(device);
-        }
-        device_ = nullptr;
-    }
-    if (flags_40_ & 2) {
-        // The inlined base destructor's copy of the unlink: reachable only
-        // when the release hook re-armed the chain bit.
-        Wave *const prev = static_cast<Wave *>(chain_prev_);
-        if (prev) {
-            prev->chain_next_ = chain_next_;
-        } else {
-            WaveChainHead() = static_cast<Wave *>(chain_next_);
-        }
-        Wave *const next = static_cast<Wave *>(chain_next_);
-        if (next) {
-            next->chain_prev_ = chain_prev_;
-        } else {
-            WaveChainTail() = static_cast<Wave *>(chain_prev_);
+            SoundChainTail = chain_prev_;
         }
         chain_next_ = nullptr;
         chain_prev_ = nullptr;
         flags_40_ &= ~2u;
     }
 }
-#pragma auto_inline(on)
 
 
 /*
@@ -1798,8 +1713,7 @@ void Effect::init(char *fname, long flags) {
     }
     Wave::init(path, flags);
     if ((static_cast<uint8_t>(flags) & 0x84) == 0) {
-        typedef void(__fastcall *wave_vfn)(void *);
-        vtable_slot<wave_vfn>(this, 0x8C)(this);
+        load();
     }
 }
 
@@ -1810,10 +1724,17 @@ void Effect::init(char *fname, long flags) {
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
+// FX::init supplies these receivers; array teardown independently witnesses
+// the CPU bank's 45 elements and 0x6C stride.
+// RECOVERY_OBJECT: v1 0x006A7090 ?g_ALPHAMENU_WAVE@@3VWave@@A
 Wave g_ALPHAMENU_WAVE;  // 0x006A7090
+// RECOVERY_OBJECT: v2 0x0074C5F0 0x0074D8EC ?g_CPU_WAVES@@3PAVWave@@A 0x00445CD0
 Wave g_CPU_WAVES[45];  // 0x0074C5F0, 0x6c stride
+// RECOVERY_OBJECT: v1 0x00749C18 ?g_SCOOT_WAVE@@3VWave@@A
 Wave g_SCOOT_WAVE;  // 0x00749C18
+// RECOVERY_OBJECT: v1 0x0074D8F0 ?g_OK_WAVE@@3VWave@@A
 Wave g_OK_WAVE;  // 0x0074D8F0
+// RECOVERY_OBJECT: v1 0x0074D9D0 ?g_PASSOVER_WAVE@@3VWave@@A
 Wave g_PASSOVER_WAVE;  // 0x0074D9D0
 Wave g_MAININTERFACE_WAVE;  // 0x007D38B8
 Wave g_MULTIWIN_WAVE;  // 0x007FFF00

@@ -1,0 +1,23 @@
+{
+  "event_id": "83f2b2c19f83411722e9828c5a99d77dc7c0a35fd6aec34b4d46efee1edb7082",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Serial coordinator repair of the missing original Win::hide identity needed by set_detail_map. win.cpp was already in this owner task scope before this worktree; no new file grant or concurrent Win worker is introduced. Restore the original390-byte identity lost at homing commit3cb99d43 using the native writer, keep its unclaimed historical status and existing body unchanged, and observe the virtual emitted symbol?hide@Win@@UAEXXZ as shown by the application MAP and current declaration. Other tasks historical Win file scopes remain intact; this does not grant broad Win refactoring or claim that hide is exact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6216912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8c98e8171c0eb02d533fa59834596434d544b5b12b611e37a5c3ddb45f4b8a03",
+  "request_id": "worldwin-hide-target-restoration-20260919",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:radiobutton-lifetime"
+}

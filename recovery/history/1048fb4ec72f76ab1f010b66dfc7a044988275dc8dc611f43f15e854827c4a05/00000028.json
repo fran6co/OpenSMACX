@@ -1,0 +1,17 @@
+{
+  "event_id": "f7b345b9e5b21e0c732367f76726c4a17a13b74fbe39c9bc9ac7f85f6658cbbf",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worldwin-complete-lifetime-repair-20260919",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Replaced the original-address complete-destructor forwarder with genuine implicit WorldWin destruction. Native FILE mapping preserves both original spans and canonical identity; native recorder reproduces89main-body instructions, the protected deleting caller reproduces14, and the application builds and links. Independent review of both the /Oy- variant and retained full-build COFF/PE proves normal member/base order and the original13-state predecessor/action graph: outer GraphicWin, outer Buffers, TextureStore arrays/member, embedded Buffers/Fonts, ImageButton array, with no invented MapWin virtual-base cleanup state. All three natural COFF copies share that graph. Actual map.cpp CRT initializer constructs WorldClimateWorldWin, registers its teardown and teardown jumps to the source destructor, with no original-address duplicate call. This resolves the double-destruction/source-model repair only; runtime-component equivalence, throw injection, exclusive global extent, cross-owner storage finding and whole-image preservation remain unproved and no acceptance/integration is granted."
+    ]
+  },
+  "previous_event": "57e5384f98506c0384b702c15a138cc5729855ebcfed35492a8fa495742e5561",
+  "request_id": "worldwin-implicit-lifetime-incorporation-20260919",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:radiobutton-lifetime"
+}

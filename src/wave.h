@@ -99,47 +99,54 @@ class Wave : public Sound {
  public:
   Wave();
   ~Wave();
-  int set_asdr();
   void set_volume(int volume);
   int set_fname(const char *fname);
-  int play();
-  int load();
-  int reload();
+  int dyna_load(char *fname);
+  int unload();
+  int is_playing();
+  int get_game_hwnd();
+  // Provisional behavioral name for original 0x004C7080: walk the wrapped
+  // device chain and return 1. It is not Sound's unrelated slot-3 method;
+  // the shared historical name UNK1 accidentally made this an override.
+  int probe_device_chain(int unused);
+  int set_attrib(unsigned long attrib);
+  int get_attrib();
+
+  // Original Wave (0x0066E44C) and Effect (0x0066B7A4) tables agree on
+  // this derived virtual sequence, slots 33..56. In particular FX::init
+  // calls set_pitch through slot 38, and Effect::init calls load at 35.
+  // The inherited Sound placeholders remain separate recovery obligations.
+  virtual int reload();                            // 33
   // `K`, not `I`. MSVC decorates `unsigned long` K and `unsigned int` I,
   // and this tree spells uint32_t as unsigned int - same width, different
   // decorated name, and the name is what the linker pairs on.
-  void init(char *group_id, unsigned long flags);
-  int dyna_load(char *fname);
-  int load(const char *fname);
-
-  int set_bufflimit(unsigned int limit);
-  int set_attack(unsigned int a1, unsigned int a2, unsigned int a3);
-  int set_sustain(unsigned int a1, unsigned int a2, unsigned int a3);
-  int set_decay(unsigned int a1, unsigned int a2, unsigned int a3);
-  int set_release(unsigned int a1, unsigned int a2, unsigned int a3);
-  int unload();
-  int set_pitch(int pitch);
-  // PADK per ?load@Wave@@QAEHPADK@Z: a string and an unsigned long, not two
-  // integers.
-  int load(char *a1, unsigned long a2);
-  int get_ms_length();
-  int is_playing();
-  int play(int effect);
-  int is_hwbuffer();
-  int get_time(uint32_t a1);
-  int get_current_marker();
-  int get_game_hwnd();
-  int get_ndevices();
-  int UNK1(int pos);
-  int set_reverb_mix(float mix);
-  int is_3d();
-  int get_device_description(char *a1, int a2, int a3);
-  int set_position3d(float x, float y, float z);
-  int set_xpos(float x);
-  int set_ypos(float y);
-  int set_zpos(float z);
-  int set_attrib(unsigned long attrib);
-  int get_attrib();
+  virtual void init(char *group_id, unsigned long flags);  // 34
+  // VC6 groups overloads at their first declaration and emits new slots in
+  // reverse overload order. Keep the inherited overload in this group too.
+  virtual int load(char *a1, unsigned long a2);      // 36
+  virtual int load();                              // 35
+  int load(const char *fname);                     // inherited 4
+  virtual int play(int effect);                    // 37
+  int play();                                     // inherited 7
+  virtual int set_pitch(int pitch);                // 38
+  virtual int set_bufflimit(unsigned int limit);    // 39
+  virtual int set_asdr();                          // 40
+  virtual int set_attack(unsigned int a1, unsigned int a2, unsigned int a3);   // 41
+  virtual int set_sustain(unsigned int a1, unsigned int a2, unsigned int a3);  // 42
+  virtual int set_decay(unsigned int a1, unsigned int a2, unsigned int a3);    // 43
+  virtual int set_release(unsigned int a1, unsigned int a2, unsigned int a3);  // 44
+  virtual int get_time(uint32_t a1);                // 45
+  virtual int get_current_marker();                // 46
+  virtual int get_ndevices();                      // 47
+  virtual int get_device_description(char *a1, int a2, int a3);  // 48
+  virtual int get_ms_length();                     // 49
+  virtual int is_hwbuffer();                       // 50
+  virtual int set_position3d(float x, float y, float z);  // 51
+  virtual int set_xpos(float x);                    // 52
+  virtual int set_ypos(float y);                    // 53
+  virtual int set_zpos(float z);                    // 54
+  virtual int is_3d();                             // 55
+  virtual int set_reverb_mix(float mix);            // 56
  private:
   // 0x54, a whole 32-bit field - see the withdrawal above. Bit 1 suppresses
   // the vtable callback in unload, and set_attrib/init/get_attrib map the
@@ -166,25 +173,14 @@ extern Wave g_CPU_WAVES[45];  // 0x0074C5F0
 static_assert(sizeof(Wave) == 0x6C, "Wave layout must match terranx.exe");
 
 
-// With no wrapped device the wave is timed against the clock, through the
-// game's imported timeGetTime. The seam is the address of that import slot -
-// the IAT entry the original calls indirectly - so it reads the live pointer
-// at run time and stays rebindable for tests.
-typedef DWORD(__stdcall func_time_get_time)(void);
-inline func_time_get_time *&WaveTimeGetTimeSlot() { return *reinterpret_cast<func_time_get_time **>(0x00669368); }
-
 void *__fastcall wave_scalar_dtor_redirect(Wave *self, void *,
                                            unsigned int mode);
 
-// The destructor's dependencies, each rebindable for the leaf tests. A wave
-// still holding one of the 0x10 device group slots is pulled from its group
-// by the device singleton at a fixed address; the filename copy was allocated
-// by the game CRT, so it must be returned to the game's own operator delete
-// rather than ours; the release hook slot runs over the wrapped device when
-// the guard dword says the hook is live; and a chained wave unlinks itself
-// from the doubly-linked wave chain whose end slots the two chain seams name.
-// Which end is "head" is inferred from the unlink shape (the slot written
-// when the 0x44 neighbour is null); nothing else pins the labels.
+// A wave holding one of the 0x10 device group slots is pulled from its
+// group by WaveDeviceGlobal. Its filename allocation is returned through
+// operator delete, and its wrapped device through the loader-owned release
+// hook while the guard says it is live. The common Sound chain is declared
+// in sound.h; Wave does not allocate separate ends or narrow its neighbors.
 typedef int (OriginalObject::*func_wave_device_pull_from_group)(Wave *wave);
 typedef void(__cdecl func_wave_device_release)(void *device);
 extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
@@ -197,10 +193,10 @@ extern func_wave_device_pull_from_group WaveDevicePullFromGroup;
 // standalone build. Every `WaveDeviceGlobal->` receiver and every
 // `*WaveDeviceReleaseGuard` read keeps its folded form - the immediates and
 // disp32s become the same instructions against relocated symbols.
-inline func_wave_device_release *&WaveDeviceReleaseSlot() { return *reinterpret_cast<func_wave_device_release **>(0x0090DB28); }
+// The loader fills ordinal 2 in its real export array. Read that slot's
+// storage, not the original executable's address or a second pointer global.
+inline func_wave_device_release *&WaveDeviceReleaseSlot() { return *reinterpret_cast<func_wave_device_release **>(&SoundDllProcs[1]); }
 extern int WaveDeviceReleaseGuard;  // 0x0090DB7C
-inline Wave *&WaveChainHead() { return *reinterpret_cast<Wave **>(0x0090DB20); }
-inline Wave *&WaveChainTail() { return *reinterpret_cast<Wave **>(0x0090DB1C); }
 
 // The rest of the Wave dependency surface. The filename copy is allocated on
 // the game CRT heap (the destructor and set_fname free it there, so the new
@@ -219,11 +215,12 @@ extern func_wave_original_load WaveOriginalLoad;
 // load()'s remaining surface: the device-creation hook lives in the slot
 // right beside the release hook, behind the same guard dword, and builds the
 // device straight into the wave's 0x3C field; Sound::load is the base-class
-// loader - Wave derives from Sound, which is what the destructor's staged
-// vtable descent walks - and it is not yet source-owned.
+// loader in sound.cpp. Wave's real Sound base owns the common lifecycle.
 typedef int(__cdecl func_wave_device_create)(void **device_slot,
                                              const char *fname, int mode);
-inline func_wave_device_create *&WaveDeviceCreateSlot() { return *reinterpret_cast<func_wave_device_create **>(0x0090DB24); }
+// Ordinal 1 has the matching creation signature; both roles use the same
+// loader-owned array so clearing or reloading the DLL updates their targets.
+inline func_wave_device_create *&WaveDeviceCreateSlot() { return *reinterpret_cast<func_wave_device_create **>(&SoundDllProcs[0]); }
 typedef int (OriginalObject::*func_sound_original_load)(const char *fname);
 extern func_sound_original_load SoundOriginalLoad;
 typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);
@@ -249,4 +246,3 @@ inline func_effect_callback &EffectOkHookSlot() {
 inline func_effect_callback &EffectDoneHookSlot() {
   return *reinterpret_cast<func_effect_callback *>(0x009B7AA0);
 }
-

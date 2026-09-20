@@ -1,0 +1,21 @@
+{
+  "event_id": "0b1c13afb2c5d9765318d29e5a2d88ceb32add3e4492fce1300039916bd61ed9",
+  "payload": {
+    "affects": [
+      "entity-58f665996529915eaa526068322082423577f2d7a78351c3739fe3a1ef69901c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-symbol-fact-writer-gap-20260920",
+    "evidence": [
+      "src/sound.h slot 28 and original Wave table 0x0066E44C+0x70 target 0x004C6F80; fresh VC6 observation emits ?get_attrib@Wave@@UAEHXZ instead of catalogued QAE.",
+      "recovery/tests/test_wave_device_sound_chain.py: unresolved_source_target while source write_file preserves the old empty symbol fact; root package tests/source/test_symbol_writer.py covers explicit guarded fact preparation and refusal controls."
+    ],
+    "hypothesis": "Restoring the original Sound attribute virtual requires an explicit compiler-observed Wave override symbol fact. Legacy write_file preserves fact blocks and cannot publish this change. A guarded native symbol writer is required; its reader window must not borrow neighboring facts or confuse code with comment facts.",
+    "kind": "discovery"
+  },
+  "previous_event": "079d515cc42c156836e1f4d4c3a410b8d93a4eb92e84fd99abd0c9bf67b31dbc",
+  "request_id": "wave-symbol-fact-writer-gap-20260920",
+  "schema_version": 1,
+  "sequence": 103,
+  "stream": "task:infowin-ownership"
+}

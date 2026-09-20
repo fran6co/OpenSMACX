@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <mmsystem.h>
 #include "original_seam.h"
 #include "popup.h"
 #include "wave.h"
@@ -683,6 +684,7 @@ Purpose: Sound a popup's wave. Nothing sounds unless bit 0x400 of the flag
          anything sounded - wave 0x19 fires the owner's virtual at 0x138
          and wave 0x10 plays effect 0x38.
 // ORIGINAL: 0x004456B0 ?popup_wave_callback@@YAXPAUPopupWave@@H@Z 0x004456B0-0x004457BE SEMANTIC
+// symbol    ?popup_wave_callback@@YAXPAUBasePopTextBlock@@H@Z
 // TRIED     the two differing instructions are the vtable temp - image `mov eax, [ecx]` against the compiled `mov edx, [ecx]` - and the register is chosen by the SEAM, not by spelling. VC6 reserves `__thiscall` (C4234), so a plain `(*(Slot **)owner)[78](owner)` cannot be written at all, which is why the ORIGINAL()/pointer-to-member machinery exists; that machinery is what takes eax and pushes the vtable load into edx. Byte-exactness needs a REAL class with a no-argument virtual at slot 78. It is not Win: 0x138 is Win's on_key slot (0x005F5D10) and on_key takes four arguments while this call pushes none, so naming Win here would be invention.
 // size      270 bytes
 // prototype 
@@ -698,18 +700,18 @@ Status: Complete
 // the image's dword at 0x0074DAA4 is.
 int PopupWaveLastIndex;  // 0x0074DAA4
 
-void __cdecl popup_wave_callback(PopupWave *popup, int) {
+void __cdecl popup_wave_callback(BasePopTextBlock *popup, int) {
     if (!(GamePreferences & 0x400)) {
         return;
     }
     if (!popup) {
         return;
     }
-    const int32_t index = popup->wave_index_;
+    const int32_t index = popup->field_104_;
     if (index < 0) {
         return;
     }
-    if (!popup->armed_108_) {
+    if (!popup->field_108_) {
         return;
     }
     if (index >= 0x2D) {
@@ -717,13 +719,13 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
     }
     if (index == 0x19) {
         if (BaseCurrent->queue_production_id[0] < -FacilitySPStart) {
-            popup->wave_index_ = 0x25;
+            popup->field_104_ = 0x25;
         }
     }
-    if (popup->wave_index_ == 0x2B && (PopupWaveTimeSlot())() % 3 != 1) {
+    if (popup->field_104_ == 0x2B && timeGetTime() % 3 != 1) {
         return;
     }
-    const int32_t chosen = popup->wave_index_;
+    const int32_t chosen = popup->field_104_;
     if (GamePreferences & 0x400) {
         if (!g_WAVE_GENERAL.Wave::is_playing() &&
             !(g_CPU_WAVES + PopupWaveLastIndex)->Wave::is_playing()) {
@@ -733,13 +735,13 @@ void __cdecl popup_wave_callback(PopupWave *popup, int) {
             wave->Wave::play();
         }
     }
-    if (popup->wave_index_ == 0x19) {
+    if (popup->field_104_ == 0x19) {
         void *const owner = PopupWaveOwnerSlot();
         if (owner) {
             (ORIGINAL(owner)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(owner) + 0x138)))();
         }
     }
-    if (popup->wave_index_ == 0x10) {
+    if (popup->field_104_ == 0x10) {
         g_FX.FX::play(0x38);
     }
 }
@@ -1574,14 +1576,14 @@ int Popup::on_exec() {
     case 1:
         MainInterfaceGlobal.set_message(StringTemp, 0x5f, 0, 1, 1);
         if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-            field_3094_(reinterpret_cast<char *>(&text_block_a_), 1);
+            field_3094_(&text_block_a_, 1);
         }
         return 0;
     case 2:
     case 0x3ea:
         InterfaceMessageWin.add_base(BaseIDCurrentSelected, StringTemp, 0);
         if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-            field_3094_(reinterpret_cast<char *>(&text_block_a_), 1);
+            field_3094_(&text_block_a_, 1);
         }
         return code == 0x3ea;
     default:

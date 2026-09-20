@@ -17,7 +17,22 @@
  */
 #include "stdafx.h"
 #include "multidebug.h"
-#include "vtable_shim.h"
+#include "net_class.h"
+#include <stdlib.h>
+#include <string.h>
+
+// ORIGINAL: 0x005C97C0 ??__Eg_MULTIDEBUG@@YAXXZ 0x005C97C0-0x005C97D6 FILE
+// RECOVERY_BINDING: v1 {"reason":"The original relocated CRT entry constructs the static MultiDebug object and registers its complete teardown; bind the compiler's natural initializer, not a handwritten wrapper.","evidence":["git:24472a5a^:src/init_thunks.cpp","original:CRT slot 0x00682668 points to 0x005C97C0","original:0x005C97C0 constructs 0x009B22F0 and registers 0x005C97E0"]}
+// symbol    _$E21
+
+// ORIGINAL: 0x005C97E0 ??__Fg_MULTIDEBUG@@YAXXZ 0x005C97E0-0x005C97EA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The static object's registered teardown tail-calls its complete destructor; the compiler-generated helper owns this lifetime.","evidence":["git:24472a5a^:src/atexit_thunks.cpp","original:0x005C97E0 passes 0x009B22F0 to the complete destructor at 0x005C9E00"]}
+// symbol    _$E19
+
+// Original startup constructs MultiDebug here and registers its complete
+// destructor. The keyboard path accesses this object's inherited members.
+// RECOVERY_OBJECT: v1 0x009B22F0 ?WinBubbleWindow@@3VMultiDebug@@A
+MultiDebug WinBubbleWindow;
 
 /*
 Purpose: Construct the GraphicWin base, the embedded Font and Time, then
@@ -37,8 +52,23 @@ MultiDebug::MultiDebug() {
     net_ = 0;
 }
 
+// ORIGINAL: 0x005C9E00 ??1MultiDebug@@QAE@XZ 0x005C9E00-0x005C9E77;0x00662AD0-0x00662AF0 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The retained destructor seed identifies the complete MultiDebug teardown and its Font/GraphicWin cleanup funclets; the declared members own these lifetimes.","evidence":["src/unrecovered/005c9e00.cpp","original:0x005C9E3C clears net_ before Time, Font and GraphicWin teardown","original:0x00662AD0-0x00662AF0 contains the base and font cleanup funclets"]}
+// symbol    ??1MultiDebug@@UAE@XZ
+// The complete destructor clears the session before Time, Font and GraphicWin
+// teardown. Their reverse declaration order also owns exception cleanup;
+// explicitly calling the original destructor here would destroy them twice.
+MultiDebug::~MultiDebug() {
+    net_ = 0;
+}
+
+// ORIGINAL: 0x005C9E80 ??_GMultiDebug@@UAEPAXI@Z 0x005C9E80-0x005C9EA1 FILE BYTE_EXACT
+// symbol    ??_GMultiDebug@@UAEPAXI@Z
+// Natural scalar deletion calls the complete destructor and conditionally
+// releases the object. The Buffer-base entry below adjusts to this receiver.
+
 /*
-Purpose: Close the debug window by clearing its single active flag.
+Purpose: Close the debug session by clearing its network pointer.
 // ORIGINAL: 0x005C98E0 ?close@MultiDebug@@QAEXXZ 0x005C98E0-0x005C98EB BYTE_EXACT
 // size      11 bytes
 // prototype void (__thiscall ?close@MultiDebug@@QAEXXZ)(MultiDebug* this)
@@ -91,13 +121,7 @@ int MultiDebug::init(Net *net, Win *window, unsigned char *text) {
     field_A0_ = reinterpret_cast<uint32_t>(text);
     font_.init("Times New Roman", 0xa, 0);
     fill(0);
-    // The tick is passed as the bare `void (__cdecl *)(int)` that
-    // Time::start takes, and the function it names is this class's own
-    // `void __cdecl` member - so its address is a pointer-to-member and
-    // VC6 refuses every conversion to a plain function pointer (C2440,
-    // measured on both the `reinterpret_cast` and the C-style cast). The
-    // address is spelled directly instead; it is the member above.
-    timer_.start(reinterpret_cast<void (__cdecl *)(int)>(0x005C9900),
+    timer_.start(MultiDebug::timer_callback_daemon,
                  reinterpret_cast<int>(this), 0x3e8, 5);
     return 0;
 }
@@ -106,6 +130,9 @@ int MultiDebug::init(Net *net, Win *window, unsigned char *text) {
 /*
 Purpose: Forward the timer tick to the object's own virtual slot 62.
 // ORIGINAL: 0x005C9900 ?timer_callback_daemon@MultiDebug@@QAAXH@Z 0x005C9900-0x005C9914 BYTE_EXACT
+// symbol    ?timer_callback_daemon@MultiDebug@@SAXH@Z
+// The original loads its sole payload from [ebp+8] and returns with plain
+// ret. The catalogue's Q spelling is not evidence of a hidden C++ receiver.
 // size      20 bytes
 // prototype 
 // callers   0   call targets   0
@@ -116,9 +143,96 @@ Purpose: Forward the timer tick to the object's own virtual slot 62.
 Return Value: n/a
 Status: Complete
 */
-void __cdecl MultiDebug::timer_callback_daemon(int a2) {
-    if (this) {
-        redraw();
+void __cdecl MultiDebug::timer_callback_daemon(int context) {
+    MultiDebug *self = reinterpret_cast<MultiDebug *>(context);
+    if (self != 0) {
+        self->redraw();
+    }
+}
+
+// ORIGINAL: 0x005C9920 ?on_redraw@MultiDebug@@QAEXXZ 0x005C9920-0x005C9DF9 FILE
+// symbol    ?vslot_12@MultiDebug@@UAEXXZ
+// The original primary table's slot 12 selects this painter. The timer's
+// inherited GraphicWin::redraw reaches it through ordinary virtual dispatch.
+void MultiDebug::vslot_12() {
+    Buffer::set_font(&font_, 0, 0, 0);
+    Buffer::set_text_color(255, -1, 1, 1);
+    GraphicWin::fill(0);
+
+    char message[256];
+    char number[80];
+    message[0] = 0;
+    strcat(message, "Host ID: ");
+    _itoa(static_cast<int>(net_->field_764_), number, 10);
+    strcat(message, number);
+    Buffer::write_l(message, 3, 3, strlen(message));
+    int y = 3 + Buffer::text_line_height();
+
+    message[0] = 0;
+    strcat(message, "Local ID: ");
+    _itoa(static_cast<int>(net_->field_760_), number, 10);
+    strcat(message, number);
+    Buffer::write_l(message, 3, y, strlen(message));
+    y += (Buffer::text_line_height() * 3) / 2;
+
+    for (int index = 0; index < 16; ++index) {
+        if (net_->players_[index].field_0_ == 0) {
+            continue;
+        }
+
+        message[0] = 0;
+        _itoa(index, number, 10);
+        strcat(message, number);
+        strcat(message, ". ");
+        strcat(message, " ");
+        int value_x = Buffer::write_l(message, 3, y, strlen(message));
+        char *name = net_->players_[index].name_and_tail_;
+        if (name != 0) {
+            Buffer::write_l(name, value_x, y, strlen(name));
+        }
+        y += Buffer::text_line_height();
+
+        // Keep the original independent conversions and fresh session reads.
+        // A cached NetPlayer reference would outlive the intervening draws.
+        char guaranteed[80];
+        message[0] = 0;
+        strcat(message, "Guaranteed count: ");
+        _itoa(static_cast<int>(net_->players_[index].field_4_), guaranteed, 10);
+        strcat(message, guaranteed);
+        Buffer::write_l(message, value_x, y, strlen(message));
+        y += Buffer::text_line_height();
+
+        char sending[80];
+        message[0] = 0;
+        strcat(message, "Sending: ");
+        _itoa(static_cast<int>(net_->players_[index].field_8_), sending, 10);
+        strcat(message, sending);
+        Buffer::write_l(message, value_x, y, strlen(message));
+        y += Buffer::text_line_height();
+
+        char average[80];
+        message[0] = 0;
+        strcat(message, "Average reply time: ");
+        _itoa(static_cast<int>(net_->players_[index].field_C_), average, 10);
+        strcat(message, average);
+        Buffer::write_l(message, value_x, y, strlen(message));
+        y += Buffer::text_line_height();
+
+        char last[80];
+        message[0] = 0;
+        strcat(message, "Last time: ");
+        _itoa(static_cast<int>(net_->players_[index].stamp_10_), last, 10);
+        strcat(message, last);
+        Buffer::write_l(message, value_x, y, strlen(message));
+        y += Buffer::text_line_height();
+
+        char flags[80];
+        message[0] = 0;
+        strcat(message, "Flags: ");
+        _itoa(net_->players_[index].flags_14_, flags, 10);
+        strcat(message, flags);
+        Buffer::write_l(message, value_x, y, strlen(message));
+        y += Buffer::text_line_height();
     }
 }
 

@@ -28,8 +28,8 @@
 // object). 0x104 of string plus five numbers: BasePop::start (0x00601BF0)
 // strcat's into `text` and atoi/atol's into each of the five, and
 // BasePop::close (0x00600F00) restores the whole 0x118 from the file-backed
-// defaults. The five numbers are named by their offsets because nothing in
-// the tree reads them back - see the member comment in the class below.
+// defaults. popup_wave_callback consumes +0x104 as a wave index and +0x108
+// as an integer enable flag. The generic parser also fills the other fields.
 struct BasePopTextBlock {
   char text[0x104];  // 0x0000
   int field_104_;    // 0x0104
@@ -45,6 +45,12 @@ static_assert(offsetof(BasePopTextBlock, field_104_) == 0x104,
               "BasePopTextBlock first number must follow the text");
 static_assert(offsetof(BasePopTextBlock, field_114_) == 0x114,
               "BasePopTextBlock last number must end the block");
+
+// FX::init installs popup_wave_callback into the default at 0x009B8CF8.
+// BasePop::exec passes the complete block, not merely its leading string,
+// and cleans two arguments after each call (0x0060369C / 0x00603787).
+typedef void (__cdecl *BasePopConfigCallback)(BasePopTextBlock *, int);
+extern BasePopConfigCallback BasePopDefaultField3094;
 
  /*
   * BasePop class
@@ -499,17 +505,16 @@ class BasePop : public GraphicWin {
   // image bounds what strcat may write into it, so the buffer is the size the
   // next field forces rather than a capacity the code checks. The five
   // numbers stay offset-named: start() parses each from its own token with
-  // atoi/atol and nothing reads them back anywhere in the tree, so their
-  // meanings are unknown and naming them would be invention.
+  // atoi/atol. The sound callback interprets the first two; the remaining
+  // fields retain offset names until their consumers establish meanings.
   BasePopTextBlock text_block_a_;  // 0x2E64
   BasePopTextBlock text_block_b_;  // 0x2F7C
   // THE PER-POPUP CONFIG CALLBACK, typed from its only caller. BasePop::exec
   // (0x00602600) reads the slot twice, tests it against null and calls it
   // straight (`call eax`, 0x0060369C and 0x00603787) with a text block and a
-  // flag, cleaning eight bytes afterwards - `int (__cdecl *)(char *, int)`.
-  // The image never stores anything but an integer default here, which is why
-  // it was the uint32_t it was; exec is the first body to read it back.
-  int (__cdecl *field_3094_)(char *, int);  // 0x3094
+  // flag, cleaning eight bytes afterwards. FX::init supplies the void
+  // popup_wave_callback; neither call consumes a return value.
+  BasePopConfigCallback field_3094_;  // 0x3094
   Spot spot_;
   uint32_t field_30A4_;
   uint32_t field_30A8_;

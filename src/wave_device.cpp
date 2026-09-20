@@ -1031,8 +1031,6 @@ int Wave_Device::get_listener_zpos(float *z) {
 }
 
 
-namespace {
-
 // The removal-safe walk the three group administrators each carry INLINE:
 // the cursor field is re-read after every callback (a wave's handler may
 // pull waves from the group, and pull_from_group maintains the cursor, so
@@ -1041,52 +1039,6 @@ namespace {
 // The image carries three copies of the loop with no shared helper call; the
 // per-wave dispatches (volume slot 0x40, resume slot 0x8C, halt slot 0x14)
 // are spelled inside each administrator's loop.
-
-__forceinline void halt_wave(Wave *wave) {
-    typedef void(__fastcall *wave_vfn)(void *);
-    vtable_slot<wave_vfn>(wave, 0x14)(wave);
-}
-
-// The chain-link view select repurposes: once a sound is halted off the
-// global chain, its link fields at 0x44/0x48 thread the private resume
-// list instead, and 0x4C remembers the filename to reload by. All three
-// fields are private to the sound classes and reached by offset, as the
-// original does.
-struct WaveResumeLinks {
-    Wave *prev;   // +0x44
-    Wave *next;   // +0x48
-    char *fname;  // +0x4C
-};
-
-__forceinline WaveResumeLinks *resume_links(Wave *wave) {
-    return reinterpret_cast<WaveResumeLinks *>(
-        reinterpret_cast<uint8_t *>(wave) + 0x44);
-}
-
-// The sound-side virtuals select dispatches through: the attribute word
-// (slot 0x70), the chain-next and chain-prev accessors (slots 0x64/0x68),
-// and load-by-name (slot 0x10).
-__forceinline int wave_attrib(Wave *wave) {
-    typedef int(__fastcall *wave_query_fn)(void *);
-    return vtable_slot<wave_query_fn>(wave, 0x70)(wave);
-}
-
-__forceinline Wave *wave_chain_next(Wave *wave) {
-    typedef Wave *(__fastcall *wave_chain_fn)(void *);
-    return vtable_slot<wave_chain_fn>(wave, 0x64)(wave);
-}
-
-__forceinline Wave *wave_chain_prev(Wave *wave) {
-    typedef Wave *(__fastcall *wave_chain_fn)(void *);
-    return vtable_slot<wave_chain_fn>(wave, 0x68)(wave);
-}
-
-__forceinline void load_wave_by_name(Wave *wave, char *fname) {
-    typedef int (OriginalObject::*wave_load_fn)(char *fname);
-    (ORIGINAL(wave)->*vtable_slot<wave_load_fn>(wave, 0x10))(fname);
-}
-
-}  // namespace
 
 /*
 Purpose: Set a group's volume scale and replay every member wave's own
@@ -1299,7 +1251,7 @@ Purpose: Switch the wrapped device to another output. Every sound on the
          attribute word is fetched twice per chained sound, and a sound
          appended to the resume list keeps whatever its next link held until
          the replay clears it.
-// ORIGINAL: 0x004C5030 ?select@Wave_Device@@QAEHK@Z 0x004C5030-0x004C50EF
+// ORIGINAL: 0x004C5030 ?select@Wave_Device@@QAEHK@Z 0x004C5030-0x004C50EF BYTE_EXACT
 // LEVER: declare-before-the-guard `Wave *resume_tail = nullptr;` above the
 //   `if (!device_14_) return 2;` early exit, not below it. The image zeroes edi
 //   at 0x004C503B - BEFORE the guard's compare - and pops it again inside the
@@ -1348,26 +1300,26 @@ Return Value: 0, or 2 when no device is wrapped
 Status: Complete
 */
 int Wave_Device::select(unsigned long a1) {
-    Wave *resume_tail = nullptr;
+    Sound *resume_tail = nullptr;
     if (!device_14_) {
         return 2;
     }
-    Wave *sound = WaveChainHead();
+    Sound *sound = SoundChainHead;
     while (sound) {
-        if ((wave_attrib(sound) & 1) && !(wave_attrib(sound) & 4)) {
-            Wave *const next = wave_chain_next(sound);
-            halt_wave(sound);
+        if ((sound->get_attrib() & 1) && !(sound->get_attrib() & 4)) {
+            Sound *const next = sound->get_next();
+            sound->unload();
             if (!resume_tail) {
-                resume_links(sound)->prev = nullptr;
-                resume_links(sound)->next = nullptr;
+                sound->chain_prev_ = nullptr;
+                sound->chain_next_ = nullptr;
             } else {
-                resume_links(resume_tail)->next = sound;
-                resume_links(sound)->prev = resume_tail;
+                resume_tail->chain_next_ = sound;
+                sound->chain_prev_ = resume_tail;
             }
             resume_tail = sound;
             sound = next;
         } else {
-            sound = wave_chain_next(sound);
+            sound = sound->get_next();
         }
     }
     {
@@ -1375,12 +1327,12 @@ int Wave_Device::select(unsigned long a1) {
         (ORIGINAL(device_14_)->*vtable_slot<device_fn>(device_14_, 0x18))(a1);
     }
     while (resume_tail) {
-        Wave *const replay = resume_tail;
-        resume_tail = wave_chain_prev(resume_tail);
-        char *const fname = resume_links(replay)->fname;
-        resume_links(replay)->next = nullptr;
-        resume_links(replay)->prev = nullptr;
-        load_wave_by_name(replay, fname);
+        Sound *const replay = resume_tail;
+        resume_tail = resume_tail->get_prev();
+        const char *const fname = static_cast<const char *>(replay->fname_);
+        replay->chain_next_ = nullptr;
+        replay->chain_prev_ = nullptr;
+        replay->load(fname);
     }
     return 0;
 }
@@ -1391,7 +1343,7 @@ int Wave_Device::select(unsigned long a1) {
 Purpose: Build the wrapped device of the requested kind through the factory
          hook, straight into the 0x14 field. A device already wrapped is
          refused with 0xC; a dead factory answers 0x14.
-// ORIGINAL: 0x004C4ED0 ?create_device@Wave_Device@@QAEHK@Z 0x004C4ED0-0x004C4F07
+// ORIGINAL: 0x004C4ED0 ?create_device@Wave_Device@@QAEHK@Z 0x004C4ED0-0x004C4F07 BYTE_EXACT
 // symbol    ?create_device@Wave_Device@@UAEHK@Z
 // LEVER: hoist-and-read-once the image hoists `lea eax, [ecx+0x14]` ahead of
 //   the device test and reads the factory hook ONCE into a register
@@ -1421,7 +1373,9 @@ Status: Complete
 int Wave_Device::create_device(unsigned long a1) {
     void **const device_slot = &device_14_;
     if (!device_14_) {
-        func_wave_device_factory *const factory = WaveDeviceFactoryHook;
+        // Original 0x0090DB34 is ordinal 5 in the loader's export array.
+        func_wave_device_factory *const factory =
+            reinterpret_cast<func_wave_device_factory *>(SoundDllProcs[4]);
         if (factory) {
             return factory(device_slot, a1);
         }
@@ -1434,7 +1388,7 @@ int Wave_Device::create_device(unsigned long a1) {
 /*
 Purpose: Tear the wrapped device down through the argument-less destroy hook
          and forget it. Without a device or a hook, 0x14 and nothing happens.
-// ORIGINAL: 0x004C4F10 ?delete_device@Wave_Device@@QAEHXZ 0x004C4F10-0x004C4F37
+// ORIGINAL: 0x004C4F10 ?delete_device@Wave_Device@@QAEHXZ 0x004C4F10-0x004C4F37 BYTE_EXACT
 // symbol    ?delete_device@Wave_Device@@UAEHXZ
 // LEVER: shared-tail-one-store both failure paths reach ONE `mov eax, 0x14`
 //   tail (nested guards, not two early returns) and the field is stored
@@ -1451,7 +1405,9 @@ Status: Complete
 */
 int Wave_Device::delete_device() {
     if (device_14_) {
-        func_wave_device_destroy *const hook = WaveDeviceDestroyHook;
+        // Original 0x0090DB38 is ordinal 6, not independent pointer storage.
+        func_wave_device_destroy *const hook =
+            reinterpret_cast<func_wave_device_destroy *>(SoundDllProcs[5]);
         if (hook) {
             hook();
             device_14_ = nullptr;
@@ -1531,7 +1487,8 @@ int Wave_Device::release() {
             vtable_slot<device_down_fn>(device_14_, 0x10)(device_14_);
         }
         if (device_14_) {
-            func_wave_device_destroy *const hook = WaveDeviceDestroyHook;
+            func_wave_device_destroy *const hook =
+                reinterpret_cast<func_wave_device_destroy *>(SoundDllProcs[5]);
             if (hook) {
                 hook();
                 device_14_ = nullptr;
@@ -1719,14 +1676,12 @@ Wave_Device WaveDeviceGlobal;  // 0x0090D978
 // `g_0090db7c` static in sound.cpp - the same terranx.exe dword twice.
 int WaveDeviceReleaseGuard;  // 0x0090DB7C
 
-// The device factory/destroy hooks, 0x0090DB34 / 0x0090DB38 in the image.
-// Real globals for the same reason as WaveDeviceGlobal and the release guard
-// above: the image's reads of the two slots carry absolute relocations, which
-// a raw-address cast cannot compile.
-// RECOVERY_OBJECT: v1 0x0090DB34 ?WaveDeviceFactoryHook@@3P6AHPAPAXK@ZA
-func_wave_device_factory *WaveDeviceFactoryHook;  // 0x0090DB34
-// RECOVERY_OBJECT: v1 0x0090DB38 ?WaveDeviceDestroyHook@@3P6AXXZA
-func_wave_device_destroy *WaveDeviceDestroyHook;  // 0x0090DB38
+// Factory/destroy storage belongs to SoundDllProcs in sound_loader.cpp:
+// original 0x0090DB34/0x0090DB38 are its slots 4/5. The old separately
+// allocated WaveDeviceFactoryHook/WaveDeviceDestroyHook variables described
+// those same addresses but were never populated by the loader. Preserve the
+// slot identities through the array's bounded source mapping and the reads
+// above; there must not be a second pair of pointer objects here.
 
 // Slot 2 of Wave_Device's image vftable: a bare `ret` stub at 0x00404280.
 void Wave_Device::unk_slot2() {}

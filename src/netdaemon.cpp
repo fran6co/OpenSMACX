@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <mmsystem.h>
 #include "original_seam.h"
 #include "netdaemon.h"
 #include "log.h"  // log_say, source-owned at 0x006262F0
@@ -1400,9 +1401,8 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
 // The turn stamp is 0x0093E8BC, which is the daemon's own
 // lock_state_[0].dword_[0]: net_end_of_turn (0x00529F30) ends with
 // `++*0x0093E8BC`, once per turn, so the field counts turns for the whole
-// session. The stamp comes from net_class.h's NetTimeGetTimeSlot(), the same
-// 0x00669368 import slot the image calls through as
-// `call dword ptr [0x669368]`.
+// session. The stamp comes from the SDK timeGetTime import; its original
+// import-slot identity is bound beside the other audio clock consumers.
 //
 // Payload parameters are named for the record offset they land at, which is
 // the one thing about them the bodies prove.
@@ -1433,7 +1433,7 @@ void __cdecl message_veh(int opcode, int payload_10, int payload_14,
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = NetDaemonLocalFaction;
-    message.time_ = NetTimeGetTimeSlot()();
+    message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     message.field_10_ = payload_10;
     message.field_14_ = payload_14;
@@ -1463,7 +1463,7 @@ void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = NetDaemonLocalFaction;
-    message.time_ = NetTimeGetTimeSlot()();
+    message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     message.payload_10_ = payload_10;
     strcpy(message.text_, text);
@@ -1486,6 +1486,7 @@ void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
 // got. The forwarder is the only spelling that passes the callee's EAX
 // through, so it stays.
 // ORIGINAL: 0x00592F50 sub_592f50 0x00592F50-0x00592FE9
+// symbol    ?send_raw_data@@YAXHHHHHHHHHH@Z
 // size      153 bytes
 // callers   0   call targets   1
 // kind      game
@@ -1502,7 +1503,7 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
 
     *reinterpret_cast<short *>(message + 0x00) = static_cast<short>(opcode);
     *reinterpret_cast<int *>(message + 0x04) = NetDaemonLocalFaction;
-    *reinterpret_cast<unsigned int *>(message + 0x08) = NetTimeGetTimeSlot()();
+    *reinterpret_cast<unsigned int *>(message + 0x08) = timeGetTime();
     *reinterpret_cast<int *>(message + 0x0c) =
         NetDaemonNet.lock_state_[0].dword_[0];
     *reinterpret_cast<int *>(message + 0x10) = payload_10;
@@ -1550,7 +1551,7 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = NetDaemonLocalFaction;
-    message.time_ = NetTimeGetTimeSlot()();
+    message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
 
     filled = 0;
@@ -1610,7 +1611,7 @@ void __cdecl message_lock(int opcode, int target, int payload_10,
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = NetDaemonLocalFaction;
-    message.time_ = NetTimeGetTimeSlot()();
+    message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     message.field_10_ = payload_10;
     message.field_14_ = payload_14;
@@ -1641,7 +1642,7 @@ void __cdecl message_landmark(int opcode, int target, char *text,
 
     *reinterpret_cast<short *>(message) = static_cast<short>(opcode);
     *reinterpret_cast<int *>(message + 0x04) = NetDaemonLocalFaction;
-    *reinterpret_cast<unsigned long *>(message + 0x08) = NetTimeGetTimeSlot()();
+    *reinterpret_cast<unsigned long *>(message + 0x08) = timeGetTime();
     *reinterpret_cast<int *>(message + 0x1c) = payload_1C;
     *reinterpret_cast<int *>(message + 0x0c) =
         NetDaemonNet.lock_state_[0].dword_[0];
@@ -1679,7 +1680,7 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 
     message.opcode_ = static_cast<short>(opcode);
     message.faction_ = NetDaemonLocalFaction;
-    message.time_ = NetTimeGetTimeSlot()();
+    message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     strncpy(message.text_, text, 0x100);
 
@@ -1691,7 +1692,6 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 }
 
 // Fixed-slot bindings carried from 00532940.cpp
-typedef unsigned long (__stdcall *TimeGetTimeFn)(void);
 
 // ORIGINAL: 0x00532940 ?send_message@NetDaemon@@QAEXPADKH@Z 0x00532940-0x00532A44 FILE BYTE_EXACT
 // size      260 bytes
@@ -1796,7 +1796,7 @@ void NetDaemon::send_message(char *message, unsigned long length, int target) {
         unsigned short flags = *reinterpret_cast<unsigned short *>(message);
         if (flags & 0x4000) {
             *reinterpret_cast<unsigned long *>(message + 8) =
-                NetTimeGetTimeSlot()();
+                timeGetTime();
             Net::send(message, length, 0, 1);
             return;
         }
@@ -1966,8 +1966,7 @@ int NetDaemon::init(int option) {
 int NetDaemon::wait(char * message, int * state, int value, int timeout) {
     int saved = NetDaemonNet.lock_state_[1].dword_[3];
     ++NetBusyCount;
-    typedef unsigned long (__stdcall *TimeGetTimeFn)();
-    TimeGetTimeFn timeGetTimeFn = NetTimeGetTimeSlot();
+    DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
     unsigned long startTime = timeGetTimeFn();
     bool triggeredTimeout = false;
     while (*state == value) {
@@ -2027,7 +2026,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
 
   message_data(0x8240, 0, payload_10, payload_14, 0, 0);
 
-  TimeGetTimeFn timeGetTime_ = NetTimeGetTimeSlot();
+  DWORD (WINAPI *const timeGetTime_)() = timeGetTime;
   int savedE904 = NetDaemonNet.lock_state_[1].dword_[3];
   (NetBusyCount)++;
   payload_14 = static_cast<int>(timeGetTime_());
@@ -2088,7 +2087,6 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
 // indirect  0x005306EA 0x0053070F 0x005307E0 0x00530802
 
 int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, int scratch) {
-    typedef unsigned long (__stdcall *PTimeGetTime)(void);
 
     if (NetDaemonIsMultiplayerNet == 0) {
         return 0;
@@ -2112,7 +2110,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
 
     NetBusyCount = NetBusyCount + 1;
     scratch = NetDaemonNet.lock_state_[1].dword_[3];
-    unsigned long t0 = NetTimeGetTimeSlot()();
+    unsigned long t0 = timeGetTime();
     int waited = 0;
     if (*(int *)(lock_state_[1].dword_[2]) == 0) {
         do {
@@ -2120,7 +2118,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                 break;
             }
             if (!waited) {
-                unsigned long now = NetTimeGetTimeSlot()();
+                unsigned long now = timeGetTime();
                 if (now - t0 > 0x640) {
                     waited = 1;
                     ((NetMsg *)NetMsgPopup)->pop((const char *)"AWAITLOCK", 0, 2, (const char *)0);
@@ -2147,7 +2145,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
         if ((unsigned char)target & 2) {
             NetBusyCount = NetBusyCount + 1;
             scratch = NetDaemonNet.lock_state_[1].dword_[3];
-            unsigned long t0b = NetTimeGetTimeSlot()();
+            unsigned long t0b = timeGetTime();
             target = (int)t0b;
             int waited2 = 0;
             if (*(int *)(locks_.field_E8_) == 0) {
@@ -2156,7 +2154,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                         break;
                     }
                     if (!waited2) {
-                        unsigned long now2 = NetTimeGetTimeSlot()();
+                        unsigned long now2 = timeGetTime();
                         if (now2 - (unsigned long)target > 0x320) {
                             waited2 = 1;
                             ((NetMsg *)NetMsgPopup)->pop((const char *)"AWAITGLOBALLOCK", 0, 2, (const char *)0);
@@ -2221,8 +2219,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
     message_lock(0x2215, target, x, y, 0, -1, -1, 0);
 
     int savedVal = NetDaemonNet.lock_state_[1].dword_[3];
-    typedef unsigned long (__stdcall *FuncTimeGetTime)();
-    FuncTimeGetTime timeGetTimeFn = NetTimeGetTimeSlot();
+    DWORD (WINAPI *const timeGetTimeFn)() = timeGetTime;
     ++NetBusyCount;
     y = timeGetTimeFn();
 
@@ -2278,8 +2275,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
 // indirect  0x00530AF8 0x00530B1D 0x00530BC1 0x00530BE6
 
 int NetDaemon::add_global() {
-    typedef unsigned long (__stdcall *TimeGetTimeFn)();
-    TimeGetTimeFn get_time = NetTimeGetTimeSlot();
+    DWORD (WINAPI *const get_time)() = timeGetTime;
 
     if (NetDaemonIsMultiplayerNet == 0) {
         return 0;
@@ -2428,7 +2424,7 @@ void NetDaemon::unlock_base(int base_id) {
             log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), NetDaemonLocalFaction, 0, 0);
             int saved = NetDaemonNet.lock_state_[1].dword_[3];
             ++NetBusyCount;
-            unsigned long baseline = NetTimeGetTimeSlot()();
+            unsigned long baseline = timeGetTime();
 
             int logged_wait = 0;
             if (lock_state_[2].dword_[5] == 1) {
@@ -2437,7 +2433,7 @@ void NetDaemon::unlock_base(int base_id) {
                         break;
                     }
                     if (logged_wait == 0) {
-                        if (NetTimeGetTimeSlot()() - baseline > 0x7d0) {
+                        if (timeGetTime() - baseline > 0x7d0) {
                             logged_wait = 1;
                             NetMsgPopup->pop(
                                 reinterpret_cast<char *>("AWAITEXEC"), 0, 2, 0);
@@ -2529,7 +2525,7 @@ void NetDaemon::await_exec(int opcode) {
     log_say(reinterpret_cast<char *>("Client waiting for acknowledgement"), NetDaemonLocalFaction, 0, 0);
     int saved = NetDaemonNet.lock_state_[1].dword_[3];
     ++NetBusyCount;
-    unsigned long baseline = NetTimeGetTimeSlot()();
+    unsigned long baseline = timeGetTime();
 
     int logged_wait = 0;
     if (lock_state_[2].dword_[3] == 1) {
@@ -2538,7 +2534,7 @@ void NetDaemon::await_exec(int opcode) {
                 break;
             }
             if (logged_wait == 0) {
-                if (NetTimeGetTimeSlot()() - baseline > 0x7d0) {
+                if (timeGetTime() - baseline > 0x7d0) {
                     logged_wait = 1;
                     NetMsgPopup->pop(
                         reinterpret_cast<char *>("AWAITEXEC"), 0, 2, 0);
@@ -2629,7 +2625,7 @@ void NetDaemon::await_synch() {
 
         int saved = NetDaemonNet.lock_state_[1].dword_[3];
         (NetBusyCount)++;
-        unsigned long start_time = NetTimeGetTimeSlot()();
+        unsigned long start_time = timeGetTime();
 
         int warned = 0;
         if (*state == synching) {
@@ -2639,7 +2635,7 @@ void NetDaemon::await_synch() {
                 }
                 if (!warned) {
                     unsigned long now =
-                        NetTimeGetTimeSlot()();
+                        timeGetTime();
                     if (now - start_time > 0x7d0) {
                         warned = synching;
                         NetMsgPopup->pop(
@@ -2720,7 +2716,7 @@ void NetDaemon::await_diplo(int opcode) {
         log_say(reinterpret_cast<char *>("Awaiting DIPLO event"), NetDaemonLocalFaction, 0, 0);
         (NetBusyCount)++;
         int32_t saved = NetDaemonNet.lock_state_[1].dword_[3];
-        unsigned int start_time = NetTimeGetTimeSlot()();
+        unsigned int start_time = timeGetTime();
         int timed_out = 0;
         if (lock_state_[2].dword_[1] == opcode) {
             do {
@@ -2728,7 +2724,7 @@ void NetDaemon::await_diplo(int opcode) {
                     break;
                 }
                 if (!timed_out) {
-                    unsigned int now = NetTimeGetTimeSlot()();
+                    unsigned int now = timeGetTime();
                     if (now - start_time > 0x7d0) {
                         timed_out = 1;
                         NetMsgPopup->pop(

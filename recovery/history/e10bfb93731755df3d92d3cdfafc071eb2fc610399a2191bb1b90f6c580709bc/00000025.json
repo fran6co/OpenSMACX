@@ -1,0 +1,19 @@
+{
+  "event_id": "8d47854a47b5671c88992195f39b72b3774cfbbe720f1a869184a1bb57fc3c76",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-device-export-alias-storage-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave_device.cpp now reads factory/destroy entries4/5 of loader-owned SoundDllProcs; removed independently allocated hook variables and their incorrect unbounded start bindings. Original90DB34/90DB38 identities remain explained beside consumers and within the bounded90DB24..90DB50 source owner in sound_loader.cpp. This removes split storage, not historical function identities or bounded initialization obligations.",
+      "Native strict comparison passes create_device4C4ED0, delete_device4C4F10 and release4C4F80 including original relocation targets from the compiled loader owner; wrongslot mutations fail reference checks. Actual-source loader/class/lifecycle harness passes and rejects bad targets, omitted factory invocation and a removed callback-sensitive receiver guard. Independent review found no blocker and confirmed the original instruction evidence. Final combined export controls18passed; all270 prior checked claims held; native recorder banked create_device22/22 and delete_device16/16; fresh configured build/link passed after recording.",
+      "This is bounded source incorporation, not autonomous acceptance or full device lifetime/ABI proof. infowin-ownership sound-chain-and-export-alias-owners finding stays pending for its independent Sound-chain portion. Wave_Device insert dependency and historical scope conflicts remain unresolved; no outside-owner files or baselines were changed."
+    ]
+  },
+  "previous_event": "7a21b22a08ad4d978681b9cc9846544ebfaf7fff33ed7d2156e3c2ceb8f60fbc",
+  "request_id": "wave-device-export-alias-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:wave-device-control-recovery"
+}

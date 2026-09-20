@@ -1,0 +1,18 @@
+{
+  "event_id": "0d7561b5b354af2e05f34c63961a6aab28370d59a8214877777f1ea76ac52ffa",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-sprite-buffer-and-handle-ownership-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp now uses actual Sprite width/height and Buffer DIB dimensions, removes false WinSavedArea globals/declarations, passes dimensions to init, saves ScreenBuffer into g_WIN_BUFFER, and uses borrowed HCURSOR directly. Resource names retain their full bits. Tests exercise fresh post-init/post-copy reads, changed cursor publication, height-only resize and borrowed/resource branches.",
+      "Independent read-only original/source review by draw_deck_review found no remaining concrete defect in this bounded repair. All25 control tests pass, including11 cursor dataflow damage cases and both-flag storage damage controls. Full application build/link passes; all108 Win historical byte claims pass on master and candidate. Source integrity and historical identity checks pass with no missing obligations. Cursor and restore bodies still mismatch; no new byte claim, full structure/runtime proof, linked preservation or publication acceptance is granted. Other pending discoveries, task baseline and historical owner conflicts are retained."
+    ]
+  },
+  "previous_event": "c9e3dc7aee28cdc9faf3d26fb30908f2f3e321874397762678cd47a8ae0fca76",
+  "request_id": "incorporate-win-cursor-sprite-buffer-and-handle-ownership-20260920",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:radiobutton-lifetime"
+}

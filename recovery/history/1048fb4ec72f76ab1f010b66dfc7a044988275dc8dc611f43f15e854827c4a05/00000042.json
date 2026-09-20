@@ -1,0 +1,35 @@
+{
+  "event_id": "61ba54d1d963b3688d9bf66824a655099ddccee70750821bb86b95aebde887b5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_globals.py",
+      "recovery/tests/win_cursor_harness.cpp",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Authorize the pending root-array/dirty-rectangle and cursor findings as one coupled source repair in the already retained WorldWin worker. Restore the missing update_cursor original mapping natively from git3cb99d43 parent, preserving its unclaimed span. Existing restore_flip_sprite and Win consumers already belong to this task; update_cursor is not assigned to another task in registered checkouts. Historical overlapping infowin-ownership metadata remains visible and is not resolved or admitted for autonomous publication by this decision. No other live worker is editing these source files; all other retained WIP stays untouched.",
+      "Use real Win cursor members and independently evidenced Sprite/Buffer relationships; correct shared WinDirtyRect mutation, flip observer order, tgl and polling return contracts. Remove the false WinModalResult scalar and declaration, preserving its observed loads/stores as the right member. Correct WinRootWindows to40 pointer slots using independent admission and adjacent RECT evidence, not candidate sizeof; add bounded source data interpretations anchored to original consumers. Do not invent a new add_parent capacity guard, manufacture exactness, change historical spans/claims or assume whole-program bounds safety.",
+      "Add live-source compiler/Wine regression controls with callback and OS doubles through the existing test facility, including private damage controls. Check actual compiled globals/members and fresh touched claims plus full build/link. New findings outside this coupled family remain discoveries requiring scope; task baseline, pending unrelated findings, compiler settings and acceptance boundary remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6232096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6231888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3ba752bb99c46722687d1b8cac98a74b18f5d20905f1451a7478c54c79786c43",
+  "request_id": "authorize-win-cursor-storage-family-20260920",
+  "schema_version": 1,
+  "sequence": 42,
+  "stream": "task:radiobutton-lifetime"
+}

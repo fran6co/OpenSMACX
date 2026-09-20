@@ -1,0 +1,27 @@
+{
+  "event_id": "6bdd4e799a78892e7c26c12cb5cc263aa6c2a2689c0bdf9d516cd4b99d9363af",
+  "payload": {
+    "affects": [
+      "entity-17c1a3937b703c34f76bf27b4a2b001626b31943d2c9c5d04061bc2f657c874f",
+      "entity-27d38a57bf1dbe9cbb40c2872b82616e022949f8038ba12308528525a2be9c01",
+      "entity-3871415dc81057ea2a3dd1d47e5f573876bf9eaa275fbafe946b564c01c2a1a7",
+      "entity-525f0fce72bbe27bc2f3a5a694a6b6f54548c1a0a018d1e4fc38c6daea33d929",
+      "entity-77d640053ed7ba972be4265dbb3a6466f69fa17cc699d53b7456a196e12e5596",
+      "entity-9062c709969fdde77323a765c298c84d4fe16da87017d0d1da6b9495c979219f",
+      "entity-bd7de15280bcf024df03aa97b20dcd2829de42b35f6308715e3d260c7a544554"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-manual-self-dispatch-20260920",
+    "evidence": [
+      "src/wave.cpp: unload/play use self slot0x80 detach; play uses slot0x40 set_volume; load overloads/reload use slot0x58 is_looping; reload/dyna_load/init use slot0x7C attach; dyna_load/init use slot0x70 get_attrib; init uses slot0x48 set_loop_state. src/sound.h now declares these virtual contracts and Wave provides its overrides.",
+      "dyna_load and init deliberately capture the external device vtable before get_attrib and re-read device_ after the callback; preserve this ordering and do not reinterpret the external interface as recovered. Existing functions and test_wave_virtual_tail.py are already inside this task scope."
+    ],
+    "hypothesis": "Seven owned Wave methods still bypass the recovered Sound/Wave hierarchy with twelve manual self-vtable calls. Replace them with genuine virtual calls while preserving original callback ordering and the distinct opaque external device dispatch.",
+    "kind": "discovery"
+  },
+  "previous_event": "4f5fe3741bc49aad39f56df24c7f1722d2748d655997f898bea482928508db4f",
+  "request_id": "wave-manual-self-dispatch-20260920",
+  "schema_version": 1,
+  "sequence": 111,
+  "stream": "task:infowin-ownership"
+}

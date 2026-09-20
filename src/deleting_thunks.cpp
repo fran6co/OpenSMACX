@@ -87,7 +87,6 @@
 #include "gamma.h"
 #include "maininterface.h"
 #include "menu.h"
-#include "multidebug.h"
 #include "netmsg.h"
 #include "netwin.h"
 #include "newtechwin.h"
@@ -101,7 +100,6 @@
 #include "socialwin.h"
 #include "stringbox.h"
 #include "tutwin.h"
-#include "worldwin.h"
 #include "hypothesis_layouts.h"
 #include "editbox.h"
 #include "net_class.h"
@@ -1399,31 +1397,6 @@ void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0) {
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
-         ??_GWorldWin@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004C4C70 ??_GWorldWin@@UAEPAXI@Z 0x004C4C70-0x004C4C91 BYTE_EXACT
-// symbol    ?scalar_delete_world_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GWorldWin@@UAEPAXI@Z)(WorldWin* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C4A70 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_world_win(void *self, void *,
-                                         unsigned int arg0) {
-    static_cast<WorldWin *>(self)->WorldWin::~WorldWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
-
-/*
-Purpose: The compiler-generated scalar deleting destructor at
          ??_GAmbience@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.
@@ -1597,31 +1570,6 @@ Status: Complete
 void *__fastcall scalar_delete_replay_win(void *self, void *,
                                           unsigned int arg0) {
     static_cast<ReplayWin *>(self)->ReplayWin::~ReplayWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
-
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GMultiDebug@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x005C9E80 ??_GMultiDebug@@UAEPAXI@Z 0x005C9E80-0x005C9EA1 BYTE_EXACT
-// symbol    ?scalar_delete_multi_debug@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GMultiDebug@@UAEPAXI@Z)(MultiDebug* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x005C9E00 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_multi_debug(void *self, void *,
-                                           unsigned int arg0) {
-    static_cast<MultiDebug *>(self)->MultiDebug::~MultiDebug();
     if (arg0 & 1) {
         operator delete(self);
     }

@@ -1,0 +1,23 @@
+{
+  "event_id": "50b2e3ba0c2f8a2b9fdbf6277f7ca0141c0388e9421f77815cb9efd79a5de186",
+  "payload": {
+    "affects": [
+      "entity-48c30d8d76db0a4e37560bf49234f8be3dd2eebe9125b247d07dbed7c07138f8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "multidebug-paint-message-guard-interpretation-20260920",
+    "evidence": [
+      "original:0x005C99A4 calls strcat; 0x005C99A9 reloads the stack message address independently into ECX, followed by TEST ECX and JE at 0x005C99B2/0x005C99B4. Equivalent pointer tests recur at 0x005C9A33, 0x005C9AE4, 0x005C9B99, 0x005C9C1C, 0x005C9C9F, 0x005C9D22 and 0x005C9DA7.",
+      "original:0x005C9A93 establishes the prefix-coordinate fallback of 3 inside the active-player path; 0x005C9B09 replaces it with the guarded draw result.",
+      "source:src/recovered/units/005c9920.cpp is a retained hint, not authority for its if(strcat(...)) expression or raw self offsets. src/buffer.h currently declares explicit-length write_l; the original inline wrapper name and declaration remain unproved.",
+      "Coordinator decision: the automatic message array cannot be null in defined C++; keep recovery/tests/multidebug_paint_harness.cpp controls focused on actual formatting, coordinates and callback-sensitive session reads. Do not manufacture a null-returning strcat control. Native private-overlay deck build/recovery/multidebug-paint-pointer-guards.json is diagnostic only; no candidate is authorized for banking or a shared-header edit by this discovery."
+    ],
+    "hypothesis": "The original MultiDebug painter independently null-checks the message pointer after concatenation; its retained seed incorrectly attributes these branches to strcat return values and places the prefix-coordinate fallback outside the active-player iteration. A nullable-text convenience wrapper remains a hypothesis, not an established Buffer interface. Preserve the genuine member-based painter while seeking the missing source-level structure; do not invent a shared helper or copy the seed guard solely for a byte score.",
+    "kind": "discovery"
+  },
+  "previous_event": "45b4d4c7d4c10de023186b470a748bf78e4327b3ac753b19e82946a8d5100100",
+  "request_id": "multidebug-paint-message-guard-interpretation-20260920",
+  "schema_version": 1,
+  "sequence": 68,
+  "stream": "task:infowin-ownership"
+}

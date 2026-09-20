@@ -1,0 +1,33 @@
+{
+  "event_id": "43cb815c3ff7bbad4b06cc2fffbdff20c94852f5416e54a974841ceefc87bbe3",
+  "payload": {
+    "affects": [
+      "entity-0a8b26cc4dd58fafc7733fc444158afe997f0f2b1a4072432e08ad2aca17f7dd",
+      "entity-0f2e92c9472ef0d654879febf6cb6271395821618cf4379418ddba7de2b4edd1",
+      "entity-48c30d8d76db0a4e37560bf49234f8be3dd2eebe9125b247d07dbed7c07138f8",
+      "entity-55ece8fcf390ffc7a4c45e8222467204db64d474666f220278d7d939737953b1",
+      "entity-5ac2cb5f81b61015b4e445448bd842fc2267e14ec159110081075f35e3e9c72b",
+      "entity-8d2d3bce2f14cff101fbd458f582b979dd946b4633d7e9403dfada2251133007",
+      "entity-ad02a1ded309353a976faffebd183145997c926740a541ec5e9cf0373183245c",
+      "entity-d6e43b59659158cb5b612147bc93e428b670e3a851d0bd60ec35ef52fd691a59",
+      "entity-e359dc4db1a4fd599c8017cbab16cdd459e65dd928565edf57f2edf175f6d744"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "multidebug-static-owner-and-paint-20260920",
+    "evidence": [
+      "original:CRT slot 0x00682668 selects initializer 0x005C97C0; construction and atexit teardown select receiver 0x009B22F0",
+      "original:0x0066FA88 primary table differs from GraphicWin only deleting destructor slot0 and paint slot12->0x005C9920; redraw slot62 remains inherited GraphicWin::redraw",
+      "source:src/multidebug.h:Font +0xA14, Net* +0xA3C and Time +0xA40; complete original extent not established",
+      "source:src/win.cpp:on_char uses separate globals corresponding to debug object fields +0x9C,+0xC4,+0x1A4,+0x3FC,+0x10. Last is AutoSound::val_4_, whose Win* use is corroborated by Win::hide",
+      "source:src/unrecovered/005c9920.cpp:paint seed needs real Net player fields/access decision, not an opaque overlay",
+      "Coordinator preserves this finding pending a coupled owner/member/paint repair; no permission to migrate globals or change shared AutoSound/Net headers is granted by the bounded callback/destructor step"
+    ],
+    "hypothesis": "The original static receiver at 0x009B22F0 is MultiDebug, not Win. Its separate WinDrawFlags/WinPopupWindow/WinDialogList/WinPopupCount/WinTopDialog globals actually alias inherited fields. MultiDebug also needs the real slot-12 paint override at 0x005C9920; inherited redraw dispatches it. Correct callback/destructor alone cannot close this storage/dispatch dependency.",
+    "kind": "discovery"
+  },
+  "previous_event": "146a15b4a5a01a9b3e85fce6e940903137e1652a2b885041737832ed8d4cf220",
+  "request_id": "multidebug-static-owner-and-paint-20260920",
+  "schema_version": 1,
+  "sequence": 61,
+  "stream": "task:infowin-ownership"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "61ccb666e509d7b44067ec3693d0134c7b1308bfe953c3c89eba584cc4106411",
+  "payload": {
+    "affects": [
+      "entity-0c49cc4a150c5229fc8b89370e751a4c763725602496be52bac9ecf43e33307b",
+      "entity-8229fd9a22e95a3a752fbf80abfeb26f14b9a915ffb9a344888763af4c5104a1",
+      "entity-e60dda83a472993270643d46a89bc5f30062930ccfe82089c518b8d463421169"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-clock-capture-restoration-20260920",
+    "evidence": [
+      "Independent original review: Net6320E0 loads the clock pointer at6320F4 then rereads the IAT at632244/63226E, while source uses its captured now pointer throughout. NetDaemon::wait5303B0 and add_global530AA0 use original direct IAT reads where source retains one cached pointer. The existing source spellings predate the SDK repair, and the original legacy TRIED history is retained.",
+      "This is an unresolved restoration/interpretation question, not evidence that the SDK import is wrong or permission to restore fixed executable addresses. Compare direct SDK calls and justified caching through native compiler overlays; do not weaken byte obligations or claim exact runtime callback/order coverage from import-pointer tests."
+    ],
+    "hypothesis": "The real SDK import repair preserves existing source clock-pointer capture, but that spelling still differs from original access placement in Net polling and two NetDaemon wait paths. Revisit with fresh compiler overlays; import identity alone must not resolve their body/order restoration.",
+    "kind": "discovery"
+  },
+  "previous_event": "7fbf17835aa2c9133d1ba2da73172f038fdaa6ecb8e53d3c6ecb8fceac7885a4",
+  "request_id": "net-clock-capture-restoration-20260920",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:jackal-voice-ownership"
+}

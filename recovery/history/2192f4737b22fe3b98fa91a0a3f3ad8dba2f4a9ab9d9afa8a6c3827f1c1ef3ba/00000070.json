@@ -1,0 +1,53 @@
+{
+  "event_id": "8319bbf7565ce4afc06bc8ad14e7052a731c594bc2722ab53d2a0423f5fdcea9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_fx_lifetime.py",
+      "src/fx.cpp",
+      "src/fx.h"
+    ],
+    "evidence": [
+      "Authorize the existing AutoSound producer dependency prerequisite: replace FX raw-byte effect bank and explicit CRT iterator/cast machinery with the independently witnessed 97-element Effect array and compiler-owned construction/destruction, then verify original size, element type, callback identity, all five historical FX claims and build/link. Current source FX::init resets AutoSound but remains an original forwarder; no claim of recovered producer or runtime closure follows from this prerequisite.",
+      "Original FX constructor 4482A0..4482BB and destructor448290..4482A0 provide count97/stride108 and Effect ctor4482D0/dtor4482C0 callback evidence. No active owner in the current master, retained WorldWin/map-storage/vector task scopes owns the selected FX identities or fx.cpp/h. hypothesis_layouts.h/Wave implementation remain outside this grant; observe and preserve their existing obligations without editing."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4489872,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4489888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4483728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4483760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4483792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4480208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "157a1a4244ad4893635c24f2da78143ddf24ef1fa0d48863b0d6c99a893313c8",
+  "request_id": "fx-bank-lifetime-prerequisite-20260920",
+  "schema_version": 1,
+  "sequence": 70,
+  "stream": "task:infowin-ownership"
+}

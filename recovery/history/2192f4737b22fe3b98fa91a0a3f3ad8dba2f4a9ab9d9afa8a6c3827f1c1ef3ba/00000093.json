@@ -1,0 +1,47 @@
+{
+  "event_id": "a72b43e1b1c61f7c1a13447724f34a7e4ad3437a29b9ddcfad1849bb1dd27cf4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sound_virtual_surface.py",
+      "src/field_accessors.cpp",
+      "src/field_accessors.h",
+      "src/leaf_recoveries.cpp",
+      "src/leaf_recoveries.h",
+      "src/sound.cpp",
+      "src/sound.h"
+    ],
+    "evidence": [
+      "Fresh original Sound66E3C0, Wave66E44C, Midi66E538, Ambience66E664 and VoiceTx66E8C4 tables share slots1/25/26/30 at4482F0/448310/448320/448330. The bodies store nonzero fade interval at+38 with zero rejection10, or read chain_next+48, chain_prev+44 and type+50 respectively.",
+      "Authorize replacing the four empty Sound placeholders with typed ordinary members, rehoming the existing claimed leaf/accessor records and removing their unused redirects/declarations. Preserve original identities and all matching obligations; use the native annotation writer. No changes to Wave-specific slot24 or attributes27/28, no new shared slots, no baseline or acceptance changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4489968,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4490000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4490016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4490032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "767317da5f8ecae21cc1bdcf6c720e442c559e186b93933b61b996ab1274e51e",
+  "request_id": "sound-local-member-slots-scope-20260920",
+  "schema_version": 1,
+  "sequence": 93,
+  "stream": "task:infowin-ownership"
+}

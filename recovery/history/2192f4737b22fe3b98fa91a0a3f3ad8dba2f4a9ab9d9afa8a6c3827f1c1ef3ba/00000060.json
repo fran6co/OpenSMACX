@@ -1,0 +1,52 @@
+{
+  "event_id": "146a15b4a5a01a9b3e85fce6e940903137e1652a2b885041737832ed8d4cf220",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_multidebug_lifetime.py",
+      "src/multidebug.cpp",
+      "src/multidebug.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Serial coordinator checkpoint in retained codex-worldwin-20260919 checkout: all registered task journals identify infowin-ownership as sole owner of multidebug.cpp; no active worker owns these edits. Existing task baseline/history retained, no duplicate owner or worker activation.",
+      "Bounded edits: callback ABI and registration, natural complete destructor binding from retained seed, remove only its pending forwarder, lower corresponding ceiling, compiler-backed tests. No other pending body/header edits authorized.",
+      "Existing radiobutton WorldWin/Win WIP in this checkout remains unchanged by this prerequisite. Shared pending_bodies/audit edits are serialized by the same coordinator, not independently schedulable scopes.",
+      "Global debug owner/member aliases, missing paint override, MapWinTable and sound shutdown remain pending cross-owner work; no acceptance, baseline reset, claim demotion or regression waiver granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6068208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6069760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6069936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "960297bf695932dae04391a1175e49a4c76578e2b6a1cb88f8bfa1a138057c52",
+  "request_id": "multidebug-callback-and-destructor-scope-20260920",
+  "schema_version": 1,
+  "sequence": 60,
+  "stream": "task:infowin-ownership"
+}

@@ -1197,7 +1197,10 @@ Status: Complete
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
+// FX::init loads and configures these existing menu sound owners.
+// RECOVERY_OBJECT: v1 0x00749C88 ?g_MENU_UP_WAVE@@3VWave@@A
 Wave g_MENU_UP_WAVE;  // 0x00749C88
+// RECOVERY_OBJECT: v1 0x0074D960 ?g_MENU_DOWN_WAVE@@3VWave@@A
 Wave g_MENU_DOWN_WAVE;  // 0x0074D960
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are

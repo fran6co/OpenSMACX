@@ -16,17 +16,14 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "vector_teardown.h"
 #include "hypothesis_layouts.h"
 
  /*
   * FX class - the sound-effect bank.
   *
-  * The destructor walks 0x61 elements of 0x6C bytes starting at +0 through
-  * the CRT vector iterator, and the per-element destructor it passes is a
-  * jump thunk onto Wave's - so the bank is an array of Wave-shaped effects,
-  * and 0x6C independently confirms the Wave extent the atexit thunk table
-  * pinned. The extent here is at least 0x61 * 0x6C; nothing pins more.
+  * Construction and destruction walk 97 Effect objects of 0x6C bytes at
+  * offset zero (0x004482A0 / 0x00448290). The compiler owns their lifetimes;
+  * the final dword at +0x28EC is initialized separately by FX::init.
   */
 class FX {
  public:
@@ -34,7 +31,7 @@ class FX {
   void play(int effect);
 
  public:
-  // 0x00445CD0, a pending_bodies forwarder. control_game (game.cpp) inits the
+  // 0x00445CD0: control_game (game.cpp) initializes the
   // bank once the Shift check says the sound stack is wanted.
   void init();
 
@@ -46,32 +43,15 @@ class FX {
   ~FX();
 
  private:
-  uint8_t effects_[0x61 * 0x6C];
+  // RECOVERY_MEMBER: v4 FX effects_ Effect[97] 0x0 0x28EC 0x004482A0
+  Effect effects_[97];
 
-  // Storage the image proves is here: its own methods reach 0x28F0.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 1 member(s) from the IDA database, 0 named; it starts a member at 0x28EC, which is where src/ ends.
-
+  // FX::init writes -1 here at 0x00445CD9, after the complete Effect array.
   uint32_t field_28EC_;  // 0x28EC
 };
 
 static_assert(sizeof(FX) == 0x28F0,
               "FX layout must match the original executable");
 
-// The process-wide bank, at the fixed address fx.cpp pins it to. Declared
-// here rather than cast at use sites so control_game (game.cpp) reaches it
-// by name.
+// The process-wide source-owned bank; the original identity is in fx.cpp.
 extern FX g_FX;  // 0x00749CF8
-
-// The per-element destructor the original passes: the Effect jump thunk at
-// 0x004482C0, which lands on the Wave destructor. Held as its own rebindable
-// dependency so the bank teardown retires with the Wave work.
-// The element callbacks, real functions now - see fx.cpp for the recovered
-// bodies (Wave::Wave + the Effect vftable; ~Wave).
-void __fastcall EffectElementTeardown(void *self);
-void __fastcall EffectElementCtor(void *self);
-
-// Its construction-side twin, ??0Effect@@QAE@XZ at 0x004482D0. Still original;
-// the constructor passes it and the teardown above to the same CRT iterator,
-// so both retire together with the Wave work.
-

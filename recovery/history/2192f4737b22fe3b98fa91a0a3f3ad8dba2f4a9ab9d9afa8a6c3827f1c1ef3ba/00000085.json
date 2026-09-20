@@ -1,0 +1,20 @@
+{
+  "event_id": "1c530c4190107f3299bc3cd84030650140f1c7d68eda6996e0e6bcc3e4355913",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "fx-wave-virtual-pitch-dependency-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave.h now declares all24Wave-derived virtual methods in the compiler-observed slot33..56sequence. Fresh native generated-table observations correlate every tail target in both Wave and Effect with the original tables; the Effect-pointer pitch contract emits original slot38. Symbols are compiler-observed current interpretations, not replacements for original identities.",
+      "src/wave.cpp Wave::load(char*,unsigned long) now calls real virtual init/load; Effect::init calls real virtual load while retaining qualified Wave::init. Wave::play retains its independently witnessed direct Wave::load call. The load overload now passes strict function boundary/bytes/reference comparison and was banked only through native record for0x004C6DB0.",
+      "recovery/tests/test_wave_virtual_tail.py checks both flag alternatives, original callers, actual emitted table targets and code, pristine same-domain damage controls, missing virtual slot and swapped overload rejection. Independent worldwin_source review found no remaining source or test-control blockers. Combined44tests pass without skips; selected Wave25, FX6 and Popup37 byte claims all pass;2458historical byte/shape claim annotations remain represented; source integrity and fresh application build/link pass.",
+      "Only the missing derived virtual surface and existing affected call sites are incorporated. FX::init itself remains unrecovered. The unbounded table bindings intentionally do not claim full-table acceptance: inherited placeholder contracts, base overload slot order and the accidental Wave::UNK1 override remain separate pending discoveries. No linked preservation, full-task or game acceptance follows from these checks."
+    ]
+  },
+  "previous_event": "e7c4162ea8bf6b683a65aa5716ee9f30ac56b3a569f8ebc718da834a9bf27927",
+  "request_id": "wave-derived-virtual-tail-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 85,
+  "stream": "task:infowin-ownership"
+}

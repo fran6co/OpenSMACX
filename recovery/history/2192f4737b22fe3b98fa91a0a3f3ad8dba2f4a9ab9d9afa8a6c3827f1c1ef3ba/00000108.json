@@ -1,0 +1,22 @@
+{
+  "event_id": "282dcfec11e0b7e898c1dc586b71767dab6bd70498ba4f9cc65de8ba6880abf4",
+  "payload": {
+    "affects": [
+      "entity-4d3cb3cddaeec9f6876611a2e6319e359c3c193c89f06c4dba65b0ba083e3cf9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sound-wave-attribute-setter-override-20260920",
+    "evidence": [
+      "Fresh pinned-image reads: Sound table66E3C0 slot27 is purecall645844, Wave table66E44C slot27 is4C6F20, Effect table66B7A4 slot27 is4C6F20.",
+      "src/sound.h currently declares virtual void unk_slot27(); src/wave.h declares nonvirtual int set_attrib(unsigned long); src/wave.cpp original4C6F20 has protected claim and emitted QAEHK symbol. Its integer return is already supported by the original zero-return tail and current matching body. Changing virtualness needs native observed-symbol publication and retained-claim/table controls.",
+      "Existing work fixed slot28 getter and derived-only lifetime, not slot27 setter. Preserve that distinction; inherited placeholders in other Sound families are not proof of their original implementations."
+    ],
+    "hypothesis": "Sound slot27 remains a void/no-argument placeholder, preventing Wave::set_attrib(unsigned long) from overriding the original attribute setter. Recover the typed base virtual contract and compiler-observed Wave symbol together rather than retaining a byte-exact nonvirtual method beside the wrong table entry.",
+    "kind": "discovery"
+  },
+  "previous_event": "dd59be25b98079f8d134c4c9522e725a0682c87338cac6a4ff5aa734e23d4a82",
+  "request_id": "sound-wave-attribute-setter-override-20260920",
+  "schema_version": 1,
+  "sequence": 108,
+  "stream": "task:infowin-ownership"
+}

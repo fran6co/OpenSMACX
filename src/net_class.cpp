@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <mmsystem.h>
 #include <cstring>
 #include "net_class.h"
 #include "original_seam.h"
@@ -214,7 +215,7 @@ int VoiceTx::unload() {
 // (0x004C8F70, 151 bytes) sits verbatim in src/unrecovered/, and the other
 // three are wrapped-device delegations, two of them still NOT_MATCHING
 // redirect spellings in delegation_thunks.cpp. Semantic debt until named,
-// exactly like Sound::unk_slot1 - placeholders, not claims.
+// placeholders, not claims.
 int VoiceTx::init(unsigned long, void *, unsigned long) { return 0; }
 int VoiceTx::get_next_buffer() { return 0; }
 int VoiceTx::return_buffer(struct _MMIOINFO *) { return 0; }
@@ -275,38 +276,19 @@ Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
 // calls     0x004C61E0 0x00645460 0x0064558A 0x006465F0
 // PROMOTED from src/recovered/units/004c8cc0.cpp. With VoiceTx : public Sound
 // the three vtable stages (0x66E444 -> 0x66E3C0 -> 0x66E8C4) are the
-// compiler's own base-construction sequence. The image's dead
-// device-slot0(0x3E8) call stays - device_ was just cleared, so the guard
-// never fires, but the bytes carry it.
+// compiler's own base-construction sequence. Sound owns the inherited
+// initialization and default fade setup; VoiceTx clears its own flags at
+// original 0x004C8D49..0x004C8D5D before allocating the display name.
 Return Value: n/a
 Status: Complete
 */
 VoiceTx::VoiceTx() {
-    volume_ = 0x7F;
-    pan_8_ = 0;
-    field_C_ = 0;
-    field_10_ = 0;
-    field_14_ = 0;
-    field_18_ = 0;
-    field_1C_ = 0;
-    field_20_ = 0;
-    field_24_ = 0;
-    field_28_ = 0;
-    field_2C_ = 0;
-    loop_flag_30_ = 0;
-    delay_ = 0;
-    fade_38_ = 0x3E8;
-    flags_40_ &= ~1u;
-    if (device_ != 0) {
-        typedef void (OriginalObject::*slot_fn)(unsigned int);
-        (ORIGINAL(device_)->*vtable_slot<slot_fn>(device_, 0))(0x3E8);
-    }
-    type_ = 0;
-    chain_prev_ = 0;
-    chain_next_ = 0;
+    // The real Sound constructor initializes the inherited device/chain
+    // state; do not read an uninitialized device or repeat base construction.
+    memset(&flags_54_, 0, sizeof(flags_54_));
     fname_ = ::operator new(0xA);
     strcpy(reinterpret_cast<char *>(fname_), "Voice Tx");
-    set_type(7);
+    Sound::set_type(7);
 }
 
 // The receiver's no-op insertion/removal hooks have one pointer argument.
@@ -764,7 +746,7 @@ Purpose: Keep the session alive and reap the players that have gone quiet:
 Return Value: n/a
 */
 void Net::check_polling() {
-    const func_net_time now = NetTimeGetTimeSlot();
+    DWORD (WINAPI *const now)() = timeGetTime;
     if (NetDirectPlay == 0) {
         return;
     }

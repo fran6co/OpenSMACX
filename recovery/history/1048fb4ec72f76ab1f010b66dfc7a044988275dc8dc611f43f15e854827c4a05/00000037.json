@@ -1,0 +1,40 @@
+{
+  "event_id": "cdb1e4cd2ffd4408146acfe57a46598da758dbb3b2c59ad5b6f8f16c5d955806",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_globals.py",
+      "recovery/tests/win_root_order_harness.cpp",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Authorize the pending root-order finding as one coupled repair: make bring_parent_to_top a receiver-free static cdecl Win operation; use actual Win flags/pointers in its body; fix show null-receiver spelling and callback-dependent root-count continuation; preserve the right-button caller while its call convention follows the corrected declaration. Native task checks across all registered worktrees find helper/right-button identities unassigned and show already owned here.",
+      "Restore helper and right-button mappings lost at homing from git3cb99d43 parent using native binding, with original spans and unclaimed historical state. The right-button body itself remains unchanged apart from compiled call convention. Static versus free historical spelling remains unproved; source static ownership records the ABI-backed choice without inventing an original symbol.",
+      "Add a live-source root-order harness with registry/callback doubles and meaningful damage controls through the existing test facility. Retain original task baseline, all other worktrees, mappings and claims. No source edits are active in this checkout; header impact needs fresh claim/build verification. No fixed-address globals, root-array extent guess, placeholder, acceptance waiver or broader Win refactor is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6216144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6246720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6252304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9463f0a47c51cecc2d553d144afaa7367b95af38bf9662bd4f343dac92aa03a3",
+  "request_id": "authorize-win-root-order-coupled-repair-20260920",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:radiobutton-lifetime"
+}

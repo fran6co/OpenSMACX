@@ -1,0 +1,22 @@
+{
+  "event_id": "508fa31eb6c1191a07c1b74d02e11e6e2ba4f8f334375b464a0d07bab225146f",
+  "payload": {
+    "affects": [
+      "entity-242250d2f9cf015cd5e716acad3a8d3e276f79330115e0bb4e9bcee992d355d7",
+      "entity-9be1f380a84ddc2730383da19db4d974fdaaebf1203b88912400af318debb31e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-repeated-base-destruction-20260920",
+    "evidence": [
+      "src/wave.cpp Wave::~Wave manually copies the Sound tail from late_block through release and unlink; class Wave : public Sound already has a real virtual Sound destructor in src/sound.cpp.",
+      "Pinned original4C67C0 publishes Wave table66E44C at4C67E0; Sound table66E3C0 at4C6856 precedes release callback4C6886; root table66E444 is published at4C68D9. Original Effect destructor4482C0 directly jumps to4C67C0, contradicting stale calls-note4C6920."
+    ],
+    "hypothesis": "Wave::~Wave duplicates Sound-owned filename/device/chain teardown while the real C++ Sound base destructor also runs automatically. Release callbacks therefore run in the wrong Wave virtual stage and may observe extra cleanup. Recover the derived-only Wave body and compiler-owned Sound stage; do not retain duplicated lifecycle to optimize a local score.",
+    "kind": "discovery"
+  },
+  "previous_event": "a252e89f2eb755ad1ab70cdafb07c6b9a8743d0679edbeae3bb2b37dc7bf4ce6",
+  "request_id": "wave-repeated-base-destruction-20260920",
+  "schema_version": 1,
+  "sequence": 105,
+  "stream": "task:infowin-ownership"
+}

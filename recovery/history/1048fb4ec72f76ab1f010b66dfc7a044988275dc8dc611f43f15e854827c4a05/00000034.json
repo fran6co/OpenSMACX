@@ -1,0 +1,21 @@
+{
+  "event_id": "2992953097cf0bff7dd4652049882ba78efb839dcfe3baa96b72b4efa90b871b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_control_globals.py",
+      "recovery/tests/win_hide_harness.cpp"
+    ],
+    "evidence": [
+      "Add a bounded live-source Win::hide regression harness through the existing compiler/Wine harness facility, including direct flag values, a safe readable-pointer damage control, and mutable root traversal checks. Extract the actual product body rather than copying it.",
+      "This is local behavior evidence with test doubles, not an original-game runtime oracle, class-layout proof or acceptance command. Existing keyboard tests and their harness remain unchanged. Other task test permissions are preserved; no other source-editing worker is active in these test files."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c9ecf9999f58b9f7f159dcf82a789e82ae1300d94a1366953177e325643a5513",
+  "request_id": "authorize-win-hide-runtime-controls-20260920",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:radiobutton-lifetime"
+}

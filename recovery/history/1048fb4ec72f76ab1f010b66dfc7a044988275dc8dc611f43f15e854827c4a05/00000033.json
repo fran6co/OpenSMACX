@@ -1,0 +1,26 @@
+{
+  "event_id": "c9ecf9999f58b9f7f159dcf82a789e82ae1300d94a1366953177e325643a5513",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Explicit coordinator extension of the earlier mapping-only permission: allow the Win::hide body to test the actual JackalInitFlags value and represent focus/Z-order locals as Win pointers. This changes no original identity, baseline, body scope beyond this method, shared global declaration or class layout.",
+      "The previous standalone show/hide measurement is terminal. No active source-editing worker owns Win; other retained Win file permissions are unchanged and the concurrent editor deck uses a different source checkout and compiler lease. Preserve all other source work, remeasure this body and existing Win claims, build/link, and obtain independent review. Unknown matching or references are not acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6216912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "6a7daf0b3d4b30bea832d9f54618d70ffb03dc848012eefe3af1162117cad69e",
+  "request_id": "authorize-win-hide-typed-value-repair-20260920",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:radiobutton-lifetime"
+}

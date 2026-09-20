@@ -1,0 +1,21 @@
+{
+  "event_id": "9310c08c5ea82dbed2cc8c0f48b4e621b37f37a33c5ad018c81e6d31d564c1d3",
+  "payload": {
+    "affects": [
+      "entity-0640ce735373b916415b26efbc42189c244e8260b61b57bae04639748b33d15a",
+      "entity-a35e4473f10f9cc93130cc0e97804eb39fab8b5b63cc6a559c7d9735c8dae995"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "worldwin-complete-lifetime-repair-20260919",
+    "evidence": [
+      "Pinned CRT slot0x00682604 invokes initializer0x004C38B0, which constructs receiver0x008E9F60 through WorldWin::WorldWin and registers teardown0x004C38D0; teardown jumps to0x004C4A70. The destructor full spans0x004C4A70-0x004C4BEC and0x00659D60-0x00659E44 match automatic mapWin_, buffer2_, buffer1_, and GraphicWin destruction. Two independent read-only reviews found no WorldWin-specific body work. Original FuncInfo0x00678F88 has13 cleanup stages and no separate MapWin virtual-base unwind action, so normal-order evidence is not blanket EH proof. Current seed remains unclaimed/MISMATCH. The old initializer/atexit mapping retirement was explicit and must not be silently undone."
+    ],
+    "hypothesis": "The real WorldClimateWorldWin object lacks an original-object binding, and its destructor forwarder duplicates complete destruction before C++ automatically destroys the same members/base again. Replace that forwarder with genuine automatic lifetime code; preserve all original spans and investigate exception-cleanup correspondence separately.",
+    "kind": "discovery"
+  },
+  "previous_event": "83f2b2c19f83411722e9828c5a99d77dc7c0a35fd6aec34b4d46efee1edb7082",
+  "request_id": "worldwin-complete-lifetime-repair-20260919",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:radiobutton-lifetime"
+}

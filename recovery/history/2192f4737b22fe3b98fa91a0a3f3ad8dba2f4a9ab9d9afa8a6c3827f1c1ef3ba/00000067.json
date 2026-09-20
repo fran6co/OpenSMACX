@@ -1,0 +1,17 @@
+{
+  "event_id": "45b4d4c7d4c10de023186b470a748bf78e4327b3ac753b19e82946a8d5100100",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "autosound-defaults-storage-boundary-20260920",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Superseded solely to correct its consumer list: src/autosound.cpp reads defaults in constructor, close and close2; init zeroes fields. The 33-element declaration versus index36 access remains unresolved and is fully preserved by autosound-defaults-storage-boundary-corrected-20260920. No code repair, scope expansion, storage acceptance or dismissal of the underlying defect is implied."
+    ]
+  },
+  "previous_event": "3856022f87ddc15132935986e3ad138b4b4cc84abb3bcbb0f6336192826a86ea",
+  "request_id": "autosound-defaults-consumer-list-correction-20260920",
+  "schema_version": 1,
+  "sequence": 67,
+  "stream": "task:infowin-ownership"
+}

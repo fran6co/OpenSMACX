@@ -75,6 +75,11 @@ extern "C" void __cdecl sound_version_warning(const char *text, const char *capt
 // storage: SoundDllModule keeps the LoadLibraryA reference once
 // load_sound_dll fills it, and stays null when the DLL is absent.
 HMODULE SoundDllModule;
+// Original loader 0x004C5E85 starts at 0x0090DB24, advances by four bytes
+// through ordinal 11, and stops at 0x0090DB50 (0x004C5EA8). Its failure
+// path clears the same eleven words. This is pre-loader storage, not a
+// claim that the DLL exports or their ABI have been verified.
+// RECOVERY_OBJECT: v2 0x0090DB24 0x0090DB50 ?SoundDllProcs@@3PAPAXA 0x004C5E50
 SoundDllProcsTable SoundDllProcs;
 
 int __cdecl load_sound_dll() {

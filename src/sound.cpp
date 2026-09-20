@@ -29,6 +29,14 @@
 #include "basepop.h"
 #include <cstring>
 
+// Independent zero-initialized pointer objects used by the common chain.
+// Original attach writes head at 0x004C6387 and tail at 0x004C638D;
+// Sound::detach and Wave_Device::select use the same storage identities.
+// RECOVERY_OBJECT: v2 0x0090DB20 0x0090DB24 ?SoundChainHead@@3PAVSound@@A 0x004C6370
+Sound *SoundChainHead;
+// RECOVERY_OBJECT: v2 0x0090DB1C 0x0090DB20 ?SoundChainTail@@3PAVSound@@A 0x004C6370
+Sound *SoundChainTail;
+
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 11.
 // ORIGINAL: 0x004C6430 ?UNK1@Sound@@QAEHH@Z 0x004C6430-0x004C6438 BYTE_EXACT
@@ -45,6 +53,11 @@ Status: Complete
 int Sound::UNK1(int) {
     return 11;
 }
+
+// Sound destruction publishes this table at original 0x004C6140. Its
+// inherited overload positions are independently consumed by derived tables;
+// unfinished placeholder slots still prevent complete-table verification.
+// RECOVERY_GENERATED: v1 vtable 0x0066E3C0 ? ??_7Sound@@6B@ 0x004C6120
 
 /*
 Purpose: Fade the sound out. The work is done by two of the object's own
@@ -147,7 +160,7 @@ Purpose: Ask the wrapped device for its play position, through vtable slot 0x74.
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // VIRTUAL since 2026-08-30: slot 29 of Sound's table (0x0066E3C0) is this
-// function in the image, between the pure pair and unk_slot30. Virtualness
+// function in the image, between the pure pair and get_type. Virtualness
 // spells U, not Q, in the mangled name - hence the symbol fact. The body is
 // unchanged; the claim re-measured BYTE_EXACT under it.
 Return Value: the device's answer, or 0 when none is wrapped
@@ -746,8 +759,9 @@ Purpose: Destroy the sound. This is exactly the body ~Wave inlines as its
          the game heap (cleared only when there was one), put the wrapped
          device through the guarded release hook and forget it, unlink from
          the sound chain, and publish the ultimate base's vtable on the way
-         out. The registered SEH frame is omitted as unreachable.
-// ORIGINAL: 0x004C6120 ??1Sound@@QAE@XZ 0x004C6120-0x004C61D4;0x004C8450-0x004C8457;0x00659EE2-0x00659EF4
+         out through its real SoundFadeState base. The compiler owns the
+         exception cleanup; remaining external hooks are not lifetime proof.
+// ORIGINAL: 0x004C6120 ??1Sound@@QAE@XZ 0x004C6120-0x004C61D4;0x004C8450-0x004C8457;0x00659EE2-0x00659EF4 BYTE_EXACT
 // symbol    ??1Sound@@UAE@XZ
 // size      205 bytes
 // prototype void (__thiscall ??1Sound@@QAE@XZ)(Sound* this)
@@ -760,24 +774,11 @@ Return Value: n/a
 Status: Complete
 */
 Sound::~Sound() {
-    // The body below is the faithful transcription - same field order, same
-    // guards, same heap and chain work - and nothing in it is guessable
-    // differently. It measures 0/62 anyway, and for a structural reason, not a
-    // spelling one: the image opens with VC6's /GX unwind frame (push -1, the
-    // handler, `mov eax, fs:[0]`, `mov fs:[0], esp`, a state variable at
-    // [ebp-4]) and closes by publishing the FAMILY ROOT vtable 0x66E444. This
-    // tree's Sound declares no base, so VC6 emits neither - it has nothing to
-    // unwind and no base table to restore - and the missing eight prologue
-    // instructions misalign the whole listing, holding the score at zero no
-    // matter what the body does.
-    // TRIED 2026-09-03: the plain spelling below (54 instructions, was the
-    // `Sound volatile *const self` view at 47), the virtual view, and the
-    // detach-virtual-call shape. All 0/62. LANDING IT NEEDS THE ROOT BASE
-    // DECLARED on Sound - the same root 0x0066E444 that net_class.h names the
-    // family root and that ??0Wave / ??0Ambience / ??0VoiceTx all stage first
-    // - which moves every Wave, Ambience, VoiceTx and Net constructor and
-    // destructor at once and is a family-wide declaration change, not a body
-    // edit. Left for a /recover-class Sound pass.
+    // The original closes with the root table at 0x004C61C1 and has an
+    // exception cleanup at 0x004C8450. SoundFadeState owns both lifetime
+    // effects; do not install a table by hand or flatten this base to alter
+    // the destructor's code shape. Remaining hooks/chain globals still need
+    // independent recovery before the whole sound lifetime is accepted.
     if (fname_) {
         operator delete(fname_);
         fname_ = nullptr;
@@ -793,13 +794,13 @@ Sound::~Sound() {
         if (prev) {
             prev->chain_next_ = chain_next_;
         } else {
-            WaveChainHead() = reinterpret_cast<Wave *>(chain_next_);
+            SoundChainHead = chain_next_;
         }
         Sound *const next = chain_next_;
         if (next) {
             next->chain_prev_ = chain_prev_;
         } else {
-            WaveChainTail() = reinterpret_cast<Wave *>(chain_prev_);
+            SoundChainTail = chain_prev_;
         }
         chain_next_ = nullptr;
         chain_prev_ = nullptr;
@@ -873,16 +874,16 @@ int Sound::attach() {
     // they are written here and left alone deliberately.
     // TRIED 2026-08-30 with the stores omitted: the image's persistent zero
     // register never materialises and the compares fall back to `test`.
-    if (!WaveChainTail()) {
-        WaveChainHead() = reinterpret_cast<Wave *>(this);
-        WaveChainTail() = reinterpret_cast<Wave *>(this);
+    if (!SoundChainTail) {
+        SoundChainHead = this;
+        SoundChainTail = this;
         chain_next_ = nullptr;
         chain_prev_ = nullptr;
         flags_40_ |= 2;
         return 0;
     }
-    chain_prev_ = reinterpret_cast<Sound *>(WaveChainTail());
-    WaveChainTail() = reinterpret_cast<Wave *>(this);
+    chain_prev_ = SoundChainTail;
+    SoundChainTail = this;
     chain_prev_->chain_next_ = this;
     chain_next_ = nullptr;
     flags_40_ |= 2;
@@ -914,13 +915,13 @@ int Sound::detach() {
     if (prev) {
         prev->chain_next_ = chain_next_;
     } else {
-        WaveChainHead() = reinterpret_cast<Wave *>(chain_next_);
+        SoundChainHead = chain_next_;
     }
     Sound *const next = chain_next_;
     if (next) {
         next->chain_prev_ = chain_prev_;
     } else {
-        WaveChainTail() = reinterpret_cast<Wave *>(chain_prev_);
+        SoundChainTail = chain_prev_;
     }
     chain_next_ = nullptr;
     flags_40_ &= ~2u;
@@ -981,16 +982,85 @@ int __cdecl init_sound(void *window, unsigned long backends) {
     return 0;
 }
 
-// The unrecovered Sound vftable slots (0x004482F0 and the 0x004483xx run):
-// implemented in the image's effect region, bodies not yet recovered. The
-// declarations keep the vftable slots true; the bodies are semantic debt.
-void Sound::unk_slot1() {}
+// Original family tables share slot 1 at 0x004482F0. Unlike set_fade,
+// this changes the remembered interval without notifying the wrapped device.
+// The behavioral name is provisional; zero refuses without changing state.
+// ORIGINAL: 0x004482F0 sub_4482f0 0x004482F0-0x0044830C BYTE_EXACT
+// symbol    ?set_fade_interval@SoundFadeState@@UAEHK@Z
+int SoundFadeState::set_fade_interval(unsigned long interval) {
+    if (interval == 0) {
+        return 10;
+    }
+    fade_38_ = interval;
+    return 0;
+}
+
+// Root slot 0 has the same original body as root slot 1. Sound overrides
+// only this slot to notify its wrapped device; the root only remembers it.
+// RECOVERY_SHARED: v1 0x004482F0 0x0044830C ?set_fade@SoundFadeState@@UAEHK@Z 0x004C6080
+int SoundFadeState::set_fade(unsigned long interval) {
+    if (interval == 0) {
+        return 10;
+    }
+    fade_38_ = interval;
+    return 0;
+}
+
+// Construct the Sound-owned fields after the fade prefix. The original
+// flags clear covers one complete dword and does not initialize delay_.
+// The first table publication in 0x004C6080 and final publication in
+// 0x004C6120 identify the base table. Its complete original extent remains
+// unclaimed; two observed slots are not a full linked-table proof.
+// RECOVERY_GENERATED: v1 vtable 0x0066E444 ? ??_7SoundFadeState@@6B@ 0x004C6080
+// ORIGINAL: 0x004C6080 ??0Sound@@QAE@XZ 0x004C6080-0x004C611A;0x004C8450-0x004C8457;0x00659ED0-0x00659EE2
+Sound::Sound() {
+    chain_prev_ = 0;
+    chain_next_ = 0;
+    device_ = 0;
+    fname_ = 0;
+    memset(&flags_40_, 0, sizeof(flags_40_));
+    flags_40_ &= ~1u;
+    Sound::set_fade(1000);
+    type_ = 0;
+}
+
+// Purpose: Return the next Sound in the common chain (family slot 25).
+// Ownership is also witnessed by attach/detach's typed chain manipulation.
+// ORIGINAL: 0x00448310 sub_448310 0x00448310-0x00448314 BYTE_EXACT
+// symbol    ?get_next@Sound@@UAEPAV1@XZ
+Sound *Sound::get_next() {
+    return chain_next_;
+}
+
+// Purpose: Return the previous Sound in the common chain (family slot 26).
+// ORIGINAL: 0x00448320 sub_448320 0x00448320-0x00448324 BYTE_EXACT
+// symbol    ?get_prev@Sound@@UAEPAV1@XZ
+Sound *Sound::get_prev() {
+    return chain_prev_;
+}
+
+// Purpose: Return the type field written by Sound::set_type (family slot 30).
+// ORIGINAL: 0x00448330 sub_448330 0x00448330-0x00448334 BYTE_EXACT
+// symbol    ?get_type@Sound@@UAEIXZ
+uint32_t Sound::get_type() {
+    return type_;
+}
+
+// These remaining base contracts are unfinished; their existence is not
+// evidence that the original table or derived overrides have been recovered.
 void Sound::unk_slot24() {}
-void Sound::unk_slot25() {}
-void Sound::unk_slot26() {}
-void Sound::unk_slot27() {}
-void Sound::unk_slot28() {}
-void Sound::unk_slot30() {}
+int Sound::set_attrib(unsigned long) {
+    // BODY GOES HERE.
+    // The original base is pure. Remaining family overrides are unfinished;
+    // this definition provides build continuity, not recovered behavior.
+    return 0;
+}
+int Sound::get_attrib() {
+    // BODY GOES HERE.
+    // The original base is pure; this only keeps still-incomplete derived
+    // classes linkable until their attribute overrides are recovered.
+    return 0;
+}
 
 // Slot 15: pure in the image's Sound vftable, overridden per derived class
 // (Wave's override is get_game_hwnd). This tree defines the base slot so the

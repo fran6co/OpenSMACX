@@ -1,0 +1,20 @@
+{
+  "event_id": "6916d44db18cd37847fbb9c067bd6dc6d24792818ea27200b0d8d5c88512365d",
+  "payload": {
+    "affects": [
+      "entity-34e86a318084dc2c9eb9d45d6b73217eb9a65940aceacd2cdeb15be4c028e7c6"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "popup-clock-import-local-20260920",
+    "evidence": [
+      "Already-owned popup.cpp/popup.h callback4456B0 uses PopupWaveTimeSlot at0x00669368, the verified WINMM timeGetTime import. Its existing runtime harness needs an explicit SDK-signature clock double instead of the removed helper; extend the owned clock import controls for this caller. The broader routed Net/Popup finding stays pending."
+    ],
+    "hypothesis": "Replace the popup-wave callback original-IAT clock alias with SDK timeGetTime and preserve its modulo-three playback guard.",
+    "kind": "discovery"
+  },
+  "previous_event": "d52b9dea3bb64f3f74fccb0b0731186586fa504717fdf5d2869dad2493fdaf9e",
+  "request_id": "popup-clock-import-local-20260920",
+  "schema_version": 1,
+  "sequence": 118,
+  "stream": "task:infowin-ownership"
+}

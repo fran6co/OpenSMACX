@@ -1,0 +1,26 @@
+{
+  "event_id": "773f192540d822e8e608ef070fb636ed201e5b48730501001b9c2b6e4d61d84c",
+  "payload": {
+    "affects": [
+      "entity-0a8b26cc4dd58fafc7733fc444158afe997f0f2b1a4072432e08ad2aca17f7dd",
+      "entity-0f2e92c9472ef0d654879febf6cb6271395821618cf4379418ddba7de2b4edd1",
+      "entity-5ac2cb5f81b61015b4e445448bd842fc2267e14ec159110081075f35e3e9c72b",
+      "entity-8d2d3bce2f14cff101fbd458f582b979dd946b4633d7e9403dfada2251133007"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "multidebug-generated-lifetime-verification-20260920",
+    "evidence": [
+      "source:src/multidebug.cpp binds the original CRT initializer and registered teardown beside the actual MultiDebug WinBubbleWindow definition, using observed local compiler symbols rather than wrappers.",
+      "source:packages/match-recovery/src/match_recovery/source/asm.py:text_symbols restricts candidates to storage-class EXTERNAL in .text; its extractor then assumes symbol-to-section-end is one function. Local STATIC helpers require independent boundary handling, not a broader name filter alone.",
+      "source:recovery/tests/test_multidebug_lifetime.py checks the relocation-derived CRT/constructor/atexit/complete-destructor chain and rejects wrong receiver, constructor and registered operation. These bounded controls do not prove full CRT ordering, original complete object extent, linked preservation or runtime acceptance.",
+      "Coordinator retains multidebug-static-owner-and-paint-20260920 pending: the genuine paint body and member ownership are source work, not byte/reference or complete lifetime acceptance. Keep seeds and do not change the settled compiler trials to force a claim."
+    ],
+    "hypothesis": "Natural static MultiDebug ownership is implemented, but the original startup/teardown correspondences still need supported generated-code verification. Preserve the real object, source mappings and restoration obligations; a local-symbol recorder refusal is not evidence to replace compiler-generated lifetime with handwritten wrappers.",
+    "kind": "discovery"
+  },
+  "previous_event": "ba842456acd357a59c89d437d96b85771331cefc6a6397623a61599d8ab91c2a",
+  "request_id": "multidebug-generated-lifetime-verification-20260920",
+  "schema_version": 1,
+  "sequence": 64,
+  "stream": "task:infowin-ownership"
+}

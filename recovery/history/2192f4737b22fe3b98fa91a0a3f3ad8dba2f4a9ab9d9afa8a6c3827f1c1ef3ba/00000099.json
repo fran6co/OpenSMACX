@@ -1,0 +1,28 @@
+{
+  "event_id": "6ae5a36188a4039e47d3a70995cc53f36459251ec9dd5501c592c250f8d5a5c5",
+  "payload": {
+    "affects": [
+      "entity-242250d2f9cf015cd5e716acad3a8d3e276f79330115e0bb4e9bcee992d355d7",
+      "entity-3c0a5ac4499c6bc442dd2aaca06100df0cc274424674395c289c2905b7a7cef4",
+      "entity-524ff27f140ff3661186181430bf94cd85ab02da1d393a8667e5f42d2a736eca",
+      "entity-568a30d426077830ce36abfa1389ac7b9d00c9971fa2c6f477e2d39bf13dc4cd",
+      "entity-6219c56c793724712214d46486e6d572c2c3c8fe5bc7b688e8dbcecfba0e6e71",
+      "entity-7234ffb2fef9d3d1e4606b5f0e84595bccf7fb7a0971db3d4c9dc85fb79279af",
+      "entity-8e8b4cffcd59c0717c991ce09ee30ba0eaf290a99d5fc19c738e217021998a33"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sound-chain-and-export-alias-owners-20260920",
+    "evidence": [
+      "src/wave.h WaveChainHead/Tail point to original90DB20/90DB1C. Sound::attach/detach/destruction use that chain for Sound objects; Wave_Device::select4C5030 reads it as Wave and overlays links through WaveResumeLinks. Original Sound destructor stores both global pointers and Sound members44/48; a real Sound-owned chain needs coordinated caller/type recovery, not a cast hiding missing inheritance.",
+      "Original load_sound_dll4C5E50 fills11 contiguous export slots90DB24..90DB50. src/sound_loader.cpp has the real SoundDllProcs array but wave.h create/release helpers still name original90DB24/28. These two consumers can be repaired inside the current authorized scope.",
+      "src/wave_device.cpp separately defines WaveDeviceFactoryHook at90DB34 and WaveDeviceDestroyHook at90DB38: original array indices4/5, but distinct candidate storage. Existing owner wave-device-control-recovery owns create_device4C4ED0/delete_device4C4F10/select4C5030. Preserve that owner and its claims/mappings; a route requests coordinated repair without granting source edits, resolving this finding or declaring sound subsystem acceptance."
+    ],
+    "hypothesis": "Sound chain storage and the sound DLL export array are still split across address-only helpers or separately allocated aliases. Recover the common owners across the Sound and Wave_Device families; do not repair one call site while leaving another owner using independent storage for the same original slot.",
+    "kind": "discovery"
+  },
+  "previous_event": "fe3675579cb299777efe0c4f042a9ddfa7f0c3af27accd7cc8b663e90aa0d4d1",
+  "request_id": "sound-chain-and-export-alias-owners-20260920",
+  "schema_version": 1,
+  "sequence": 99,
+  "stream": "task:infowin-ownership"
+}

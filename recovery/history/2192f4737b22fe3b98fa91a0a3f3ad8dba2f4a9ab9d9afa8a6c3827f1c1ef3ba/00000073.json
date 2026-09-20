@@ -1,0 +1,23 @@
+{
+  "event_id": "fa368b5ee7bb412442831aa73cf654ffce9dc488b827a880d9aee6ab707d9d6b",
+  "payload": {
+    "affects": [
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5",
+      "entity-b45f8b7bb6aba647522382131954544e265891cb57bd9476ba1ea8b84ffcee22"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "fx-defaults-basepop-copy-index-20260920",
+    "evidence": [
+      "src/basepop.cpp BasePop::close copies BasePopDefaultBlock2E64[i / 4] and BasePopDefaultBlock2F7C[i / 4] into this+0x2E64+i*4 and this+0x2F7C+i*4 for i=0..69. This differs from the same owners constructor memcpy behavior.",
+      "Pinned original 0x00600F0B loads ESI=0x009B8AB8; 0x00600F28 sets ECX=70; 0x00600F2D performs rep movsd into this+0x2E64. 0x00600F35 sets ECX=70; 0x00600F3A loads ESI=0x009B8BD0; 0x00600F3F repeats into this+0x2F7C. Both independently require consecutive source dwords, not source index i/4.",
+      "FX::init at0x00445CD0 supplies the first source block and callback; its migration remains unfinished. This records a cross-owner prerequisite without editing BasePop or expanding its scope, and does not resolve autosound-defaults-storage-boundary-corrected-20260920."
+    ],
+    "hypothesis": "The FX-produced BasePop default block has an incorrect consumer: BasePop::close advances its destination by one dword but indexes each source block with i/4, repeating each source word four times. Correct the consumer with the shared defaults owner before claiming the FX producer/defaults family complete.",
+    "kind": "discovery"
+  },
+  "previous_event": "3081b51390165fefa669f01fffe4ddef81dc5290135918ef6701a40a3f47eeef",
+  "request_id": "fx-defaults-basepop-copy-index-20260920",
+  "schema_version": 1,
+  "sequence": 73,
+  "stream": "task:infowin-ownership"
+}

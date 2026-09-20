@@ -734,6 +734,26 @@ remove existing claim-dependent instrumentation without a restoration plan.
 
 ## 6. Verify and hand back
 
+### Coordinator-reviewed integration
+
+The user authorizes the coordinating agent to review and merge recovery batches
+itself; completing fully automatic acceptance is not a prerequisite for this
+manual route. Prioritize executable recovery in disjoint ownership groups, with
+targeted worker measurements and one serial integration checkpoint per batch.
+Framework changes should address demonstrated recovery blockers, not delay useful
+C++ work while pursuing general acceptance machinery.
+
+Review the actual source diff, original evidence, affected callers and ownership,
+not just worker reports. Preserve original identities, historical claims and
+unresolved discoveries. Require a fresh build/link and relevant byte, reference,
+layout and regression checks; recheck the integrated checkout. Identify existing
+whole-project failures separately from change-caused failures. Do not weaken a
+gate, demote a claim or call an unknown result a pass to enable merging.
+Document the merge decision and remaining limitations in the Git commit. A
+manually reviewed merge is neither native automatic acceptance nor proof that the
+whole game works. The automatic driver and publication refusal rules below remain
+unchanged when those commands are used.
+
 Every integrated step must leave the application compiling and linking. Trace
 new callees before integration. If an unresolved function cannot yet be recovered,
 the coordinator may bind an empty definition in its owning product TU, with the
@@ -775,8 +795,12 @@ verification. After interruption, inspect the Git diff and retained backups unde
 ignored `build/recovery/publications/`; a multi-file batch is not globally atomic.
 Recover source at a coordinator checkpoint, then recheck identities and remeasure.
 
-Run `cmake --build build` and the full unpiped
-`uv run recover check --image <original>`. Exit 3 is unmeasurable, not green; “0 REGRESSED”
+Use `cmake --build build` for the ordinary application build. For whole-project
+diagnosis or automatic acceptance, run the full unpiped
+`uv run recover check --image <original>`; manual integration above uses the
+checks relevant to the batch and does not require repeating this full sweep for
+each small recovery. A skipped or interrupted sweep remains unverified.
+Exit 3 is unmeasurable, not green; “0 REGRESSED”
 alone is not acceptance. The installed `recover record` command
 is the only current claim-stamping entry point and proves historical masked-byte
 agreement, not full structural/reference correctness. Never hand-edit markers.

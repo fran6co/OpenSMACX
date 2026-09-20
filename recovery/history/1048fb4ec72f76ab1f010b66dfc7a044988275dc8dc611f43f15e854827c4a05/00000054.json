@@ -1,0 +1,25 @@
+{
+  "event_id": "1fb79daeb5ae1765cd1222d85152bc77232b3154cdb2697bc382b3085d8f633f",
+  "payload": {
+    "affects": [
+      "entity-05e936318014f312c95c4fd333a2c718af4c57c5c0004f37116b92e8188ab01c",
+      "entity-30be0a774eb164d465344bba49909c60d423a1dff081de113aaf87a176aee759",
+      "entity-49891968e85ab313cdd1e5c82f3005549d2c270c832b4a5633a47f6a0e03a462",
+      "entity-55ece8fcf390ffc7a4c45e8222467204db64d474666f220278d7d939737953b1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-table-desktop-initialization-closure-20260920",
+    "evidence": [
+      "Pinned original desktop_init 0x58EE60 calls mapwin_system_init 0x471030 at 0x58EE96. Current src/pending_bodies.cpp still forwards both identities. Independent read-only review decoded this edge from the pinned original.",
+      "Original mapwin_system_init iterates all eight MapWinTable slots and initializes standalone MapWin at 0x7D4060. Shutdown 0x4710E0 closes active secondary windows without deleting them; system_close 0x58F250 deletes and clears slots 1..7 regardless of activity while retaining borrowed slot0.",
+      "Preserve this additional prerequisite alongside map-window-storage-lifetime-20260919 and mapwin-standalone-static-lifetime-20260920. No table, caller, producer or scope change is authorized or implemented by this discovery."
+    ],
+    "hypothesis": "Moving MapWinTable to source-owned storage requires the original desktop initialization caller as well as table lifecycle bodies: desktop_init still forwards to the original executable and would otherwise initialize the old table.",
+    "kind": "discovery"
+  },
+  "previous_event": "65ca2fa0013b8bda5bc5b25dfc059b0a7ea02c2627fdd448d8497fcd3787f005",
+  "request_id": "mapwin-table-desktop-initialization-closure-20260920",
+  "schema_version": 1,
+  "sequence": 54,
+  "stream": "task:radiobutton-lifetime"
+}

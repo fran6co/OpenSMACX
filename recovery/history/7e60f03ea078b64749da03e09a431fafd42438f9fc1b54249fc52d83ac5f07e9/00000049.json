@@ -1,0 +1,17 @@
+{
+  "event_id": "74c4752b8b24b626bf25e08c8317d3e438e14154ed5f0a50a6eff79f1805f36e",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-raw-message-current-symbol-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netdaemon.cpp binds original592F50 to compiler-observed ?send_raw_data@@YAXHHHHHHHHHH@Z through the native source writer and guarded publication. Original identity, span and unclaimed status remain intact. Both configured trials emit that symbol; fresh import-operand controls locate the real body. Diagnostic masked comparison reproduces41/41 instructions without banking a new claim."
+    ]
+  },
+  "previous_event": "61ccb666e509d7b44067ec3693d0134c7b1308bfe953c3c89eba584cc4106411",
+  "request_id": "net-raw-message-symbol-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:jackal-voice-ownership"
+}

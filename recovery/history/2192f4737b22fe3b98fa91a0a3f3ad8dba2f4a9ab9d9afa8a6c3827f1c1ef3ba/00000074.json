@@ -1,0 +1,20 @@
+{
+  "event_id": "a435ce75546108f63bdd9800f396c3ba22aff85e86b90e060e23e51daa0171fd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/basepop_defaults_harness.cpp",
+      "recovery/tests/test_basepop_defaults.py"
+    ],
+    "evidence": [
+      "Authorize focused original/compiled and runtime-prefix damage controls for the already-owned BasePop::close two defaults copies. Fix the two i/4 source-index errors using the actual typed text_block_a_/text_block_b_ members and complete sizeof copies. No other BasePop reset, callback, table, layout or producer change is authorized by this bounded repair; the wider FX/defaults closure remains pending."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fa368b5ee7bb412442831aa73cf654ffce9dc488b827a880d9aee6ab707d9d6b",
+  "request_id": "basepop-default-copy-controls-20260920",
+  "schema_version": 1,
+  "sequence": 74,
+  "stream": "task:infowin-ownership"
+}

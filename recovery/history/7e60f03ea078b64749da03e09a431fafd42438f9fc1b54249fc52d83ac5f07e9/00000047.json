@@ -1,0 +1,20 @@
+{
+  "event_id": "7fbf17835aa2c9133d1ba2da73172f038fdaa6ecb8e53d3c6ecb8fceac7885a4",
+  "payload": {
+    "affects": [
+      "entity-2d48178c489947b016fd63569c126b75bb24669551e78061f90cac9fcca063db"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-raw-message-current-symbol-20260920",
+    "evidence": [
+      "The new network clock control locates the original IAT access but Coff.function rejects historical sub_592f50. src/netdaemon.cpp defines send_raw_data for that mapped function; the current symbol fact is absent. Observe the unique definition under both fixed compiler trials and use native write_symbol/guarded publication, not a hardcoded symbol in the test or a hand-edited original marker."
+    ],
+    "hypothesis": "Original592F50 is implemented as send_raw_data but lacks its current emitted-symbol fact. This prevents native operand verification from locating the existing body; publish the compiler-observed current symbol while preserving the original identity and spans.",
+    "kind": "discovery"
+  },
+  "previous_event": "67786ede5e239864b0ce568ec70ea37c8d42a80eebb8cfaac20b43af3efc9437",
+  "request_id": "net-raw-message-current-symbol-20260920",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:jackal-voice-ownership"
+}

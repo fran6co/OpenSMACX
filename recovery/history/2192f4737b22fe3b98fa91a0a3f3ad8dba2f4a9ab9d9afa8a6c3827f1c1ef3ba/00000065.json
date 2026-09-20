@@ -1,0 +1,29 @@
+{
+  "event_id": "17f8eee352b0aae6950f32962ab1f513bb95b4b26ffb6bc4e9f69f1e40724363",
+  "payload": {
+    "affects": [
+      "entity-1bd065e88de40f1bfb18de52c7647e9d34081144f9dba44b8660fff101cea077",
+      "entity-270709c06d8264d8ba07bb2e315912614e2d68a8f0aa6d00ab965c9376a9bcf8",
+      "entity-2c5d6dc29c2c357ad2719e4658c2a93cb81cfaa4b6fdbf41974f673c192bb6bc",
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5",
+      "entity-52acd0a7261131edfc0574d54cb05f2ec974c2fce72ecce176ae2c9b5337e3ac",
+      "entity-95f55395e70ae4a94106538d60c5a5403feb484c3b976c1d01a6e385b4dfa306",
+      "entity-f936adbe940fa53cbff2443936db1a040decdbd8340a919f240d09ac5b9a8873"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "autosound-defaults-storage-boundary-20260920",
+    "evidence": [
+      "source:src/autosound.cpp defines uint32_t AutoSoundDefaults[33]; constructor, close and init use AutoSoundDefaults[33] through [36] for their final fields.",
+      "source:src/autosound.h documents 37 words behind the vfptr but describes the process block as [33]; original default-block/producer interpretation must reconcile this contradiction rather than copying the existing array bound.",
+      "source:src/autosound.cpp attributes runtime population to FX::init at 0x00445CD0. This is a producer hint, not current proof of its full writes or original storage extent.",
+      "This finding predates the authorized val_4_ pointer correction. That correction does not repair or authorize expanding the default block, changing FX, or claiming startup safety. Preserve this dependency for a separate coordinated ownership decision."
+    ],
+    "hypothesis": "The pre-existing AutoSound defaults declaration has 33 elements, while construction/reset bodies read indices through 36. Recover the producer and complete process-default storage together; passing masked body comparisons cannot establish an in-bounds global or its initialization/lifetime.",
+    "kind": "discovery"
+  },
+  "previous_event": "773f192540d822e8e608ef070fb636ed201e5b48730501001b9c2b6e4d61d84c",
+  "request_id": "autosound-defaults-storage-boundary-20260920",
+  "schema_version": 1,
+  "sequence": 65,
+  "stream": "task:infowin-ownership"
+}

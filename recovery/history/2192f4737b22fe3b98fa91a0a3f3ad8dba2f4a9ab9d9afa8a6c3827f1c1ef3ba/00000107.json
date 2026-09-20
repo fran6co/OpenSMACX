@@ -1,0 +1,19 @@
+{
+  "event_id": "dd59be25b98079f8d134c4c9522e725a0682c87338cac6a4ff5aa734e23d4a82",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-repeated-base-destruction-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave.cpp Wave::~Wave now owns only group removal, first filename clear and chain unlink. Its real Sound base owns later teardown and virtual-stage transition; duplicated late free/release/unlink and obsolete inline-suppression pragma are removed. All original normal/EH spans and historical lessons remain intact.",
+      "recovery/tests/test_wave_lifetime.py checks original Wave/Sound/root table order, release position and both EH cleanup destinations; its actual-source harness verifies virtual stage, callback-created filename retention, callback relinking and distinct derived/base exception paths, with five deliberate damage controls. Independent review found no blocker; broader targeted controls, protected claims, source integrity and fresh build/link pass.",
+      "This incorporates the duplicate-stage defect, not complete Sound/Wave recovery. Wave destructor remains unmatched under fixed compiler trials, with its local diagnostic dropping from58/101 to52/101 after removing incorrect duplication. Effect destructor and complete lifecycle/linked preservation remain unfinished; no temporary-regression admission, claim demotion or acceptance is granted."
+    ]
+  },
+  "previous_event": "8fe52a5be273a91a83b77cfdaad8609cb3c063d2fe4bc6e6d1bca4bc4f7e0209",
+  "request_id": "wave-derived-only-teardown-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 107,
+  "stream": "task:infowin-ownership"
+}

@@ -18,11 +18,12 @@
 #include "stdafx.h"
 #include "autosound.h"
 
-// 0x009BC080, in .data's ZERO-FILL tail - the shipped file carries no
-// bytes here. The FILLER is measured: FX::init (0x00445CD0) writes the
-// entries before any AutoSound is constructed, so this is runtime
-// storage, never compile-time data.
-uint32_t AutoSoundDefaults[33];
+// Constructor, close and close2 read 37 mutable words at [9BC080,9BC114).
+// The loader supplies initial zeros; FX::init (0x00445CD0) also clears all
+// 37 words, but is optional and does not precede static window construction.
+// The source-owned FX initializer resets this same array.
+// RECOVERY_OBJECT: v2 0x009BC080 0x009BC114 ?AutoSoundDefaults@@3PAIA 0x0062BA80
+uint32_t AutoSoundDefaults[37];
 
 
 /*
@@ -43,7 +44,7 @@ Status: Complete
 AutoSound::AutoSound() {
     val_1_ = static_cast<int>(AutoSoundDefaults[0]);
     val_3_ = static_cast<int>(AutoSoundDefaults[1]);
-    val_4_ = static_cast<int>(AutoSoundDefaults[2]);
+    val_4_ = reinterpret_cast<Win *>(AutoSoundDefaults[2]);
     val_2_ = static_cast<int>(AutoSoundDefaults[3]);
     val_5_ = static_cast<int>(AutoSoundDefaults[4]);
     val_6_ = static_cast<int>(AutoSoundDefaults[5]);
@@ -102,7 +103,7 @@ void AutoSound::close() {
     // unrolls it; the image is 333 bytes of straight-line load/store pairs.
     val_1_ = static_cast<int>(AutoSoundDefaults[0]);
     val_3_ = static_cast<int>(AutoSoundDefaults[1]);
-    val_4_ = static_cast<int>(AutoSoundDefaults[2]);
+    val_4_ = reinterpret_cast<Win *>(AutoSoundDefaults[2]);
     val_2_ = static_cast<int>(AutoSoundDefaults[3]);
     val_5_ = static_cast<int>(AutoSoundDefaults[4]);
     val_6_ = static_cast<int>(AutoSoundDefaults[5]);
@@ -160,7 +161,7 @@ void AutoSound::close2() {
     val_1_ = static_cast<int>(AutoSoundDefaults[0]);
     val_2_ = static_cast<int>(AutoSoundDefaults[3]);
     val_3_ = static_cast<int>(AutoSoundDefaults[1]);
-    val_4_ = static_cast<int>(AutoSoundDefaults[2]);
+    val_4_ = reinterpret_cast<Win *>(AutoSoundDefaults[2]);
     val_5_ = static_cast<int>(AutoSoundDefaults[4]);
     val_6_ = static_cast<int>(AutoSoundDefaults[5]);
     val_7_ = reinterpret_cast<Win *>(AutoSoundDefaults[6]);
@@ -290,4 +291,3 @@ Status: Complete
 // some call sites and calls it at others, and a .cpp definition is only ever
 // one of those. The marker stays here because that is where the catalogue
 // reads it.
-

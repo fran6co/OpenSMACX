@@ -1,0 +1,18 @@
+{
+  "event_id": "ebea1daf6bb97eee1bcf1c19c6052aed0259277df5f5c1dec64511576386d9b2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "popup-clock-import-local-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/popup.cpp uses SDK timeGetTime in the modulo-three callback guard; src/popup.h no longer has PopupWaveTimeSlot. The source-owned import identity lives in wave.cpp. The runtime harness supplies an explicit matching SDK-signature clock double and continues exercising the playback branches.",
+      "Fresh155-test sound/clock/popup run, original/compiler import-operand and partial-damage controls,357 protected body checks and configured build/link all pass. This incorporates only the already-owned popup clock repair. The broader routed Net/popup discovery stays pending; runtime dependency and cross-owner closure are not asserted."
+    ]
+  },
+  "previous_event": "6916d44db18cd37847fbb9c067bd6dc6d24792818ea27200b0d8d5c88512365d",
+  "request_id": "popup-clock-import-local-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 119,
+  "stream": "task:infowin-ownership"
+}

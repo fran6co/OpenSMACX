@@ -1,0 +1,22 @@
+{
+  "event_id": "b9935692678b896d7fde92861839781dd7941e85ae88a7f51b797df0bfcc238f",
+  "payload": {
+    "affects": [
+      "entity-34e86a318084dc2c9eb9d45d6b73217eb9a65940aceacd2cdeb15be4c028e7c6",
+      "entity-e60dda83a472993270643d46a89bc5f30062930ccfe82089c518b8d463421169"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "remaining-net-popup-clock-aliases-20260920",
+    "evidence": [
+      "src/net_class.h defines NetTimeGetTimeSlot as a reference at0x00669368; Net::check_polling6320E0 and multiple src/netdaemon.cpp clock consumers use it. src/popup.h similarly defines PopupWaveTimeSlot, used by popup_wave_callback4456B0. Fresh pinned PE enumeration identifies the unique WINMM.dll timeGetTime slot. The new binding in src/wave.cpp supplies its original identity but does not fix these remaining literal-address consumers.",
+      "This finding preserves the cross-owner work; it does not authorize those edits or resolve any Net/Popup behavior. Existing jackal-voice-ownership owns Net::check_polling. Do not delete NetTimeGetTimeSlot without updating and remeasuring the NetDaemon caller family, preserving existing historical claims."
+    ],
+    "hypothesis": "Net polling and the popup-wave callback still read the old executable timeGetTime slot through separate fixed-address aliases. They need SDK import consumers under their existing ownership, with dependent NetDaemon callers checked before deleting the shared Net helper.",
+    "kind": "discovery"
+  },
+  "previous_event": "7b47c66741a8c36fbe44e594b4fce4227e718797ba76a698e47f217f986bf321",
+  "request_id": "remaining-net-popup-clock-aliases-20260920",
+  "schema_version": 1,
+  "sequence": 115,
+  "stream": "task:infowin-ownership"
+}

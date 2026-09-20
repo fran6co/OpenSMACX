@@ -1,0 +1,38 @@
+{
+  "event_id": "b2077fe19d60ba0b48ba693c0e468e5449dec81b94f6369e885fe8a75e8529d3",
+  "payload": {
+    "affects": [
+      "entity-0c49cc4a150c5229fc8b89370e751a4c763725602496be52bac9ecf43e33307b",
+      "entity-1f34e1a1bb27dd2e71bffba06e901b12a0224d1099f88751642d777f03c4fa5c",
+      "entity-2aa732fabe6463ca4929ce3ec3e3380bdf38ca30bda9482da69a2d6275fa5640",
+      "entity-2d48178c489947b016fd63569c126b75bb24669551e78061f90cac9fcca063db",
+      "entity-2dc35df73ff3a7c354472eb99a2a2f8c125a8f25e8e2194fc78953a3e201ff24",
+      "entity-44bdd2aeda66130563649c7788d43efa31ab50fcbac38ce34384cb2a6e349240",
+      "entity-60e9fb4efa6821dd2534547b99343c05600e1c77affeaa628c9c7872e4aa418c",
+      "entity-6a1996fab7c2f2317f4fb8222340d557fc07cc64bf43e9efd505a02bcfb25a04",
+      "entity-8229fd9a22e95a3a752fbf80abfeb26f14b9a915ffb9a344888763af4c5104a1",
+      "entity-8c0a687c73b8d9f9ebb476a721a593943020873048ff8a9c8e9c074d88fb96a3",
+      "entity-9104cf264c16c5678717e34c3985559c52556432df555b83d8c6316718f13c41",
+      "entity-93b0c8bf92237fb957eaa17e3aca549e13d75cd04aedc5217d8ea6d59f62fda7",
+      "entity-af80bfd242f83fd450085b176c503dcf77f439df9e9c376abc193a39feb93cb9",
+      "entity-afa837f7608de42b5b67bef949bac4ec501f401047d0aed21ab895dbd328d9d1",
+      "entity-b0ee116df31acecaac78c1efa6e274a84ce102ce1caee61a8145a293e24d9652",
+      "entity-b2390451fdad7ac4f719285087dfaa4db6da4c431f10fab60adc3364ac0cf84e",
+      "entity-c1e9bb017e56aa360fe9b60464baf4189e2ef10f013840adf238f54112bbc848",
+      "entity-e60dda83a472993270643d46a89bc5f30062930ccfe82089c518b8d463421169"
+    ],
+    "author": "coordinator",
+    "discovery_id": "net-family-clock-import-20260920",
+    "evidence": [
+      "Incoming InfoWin route identifies Net::check_polling6320E0. Source call-site census identifies17 additional NetDaemon consumers; five have protected historical byte claims. All eight worktree task stores were checked: these17 identities are currently unowned, and Net::check_polling retains this existing owner.",
+      "The pinned PE import table uniquely identifies WINMM.dll timeGetTime at0x00669368; src/wave.cpp now has the source-owned SDK pointer binding. Delete NetTimeGetTimeSlot and its unused typedef only after replacing all consumers, without changing timeout conditions or network state."
+    ],
+    "hypothesis": "Replace Net and NetDaemon fixed original-IAT clock reads with the SDK timeGetTime import while preserving each direct/cached call form, timeout arithmetic and packet timestamp order.",
+    "kind": "discovery"
+  },
+  "previous_event": "2c214b390f37d9f0b494cc4f9dd6c51ec3f2d529c97e8fc7948abae2e28e31dd",
+  "request_id": "net-family-clock-import-20260920",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:jackal-voice-ownership"
+}

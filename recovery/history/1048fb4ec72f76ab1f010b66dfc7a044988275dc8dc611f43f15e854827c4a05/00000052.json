@@ -1,0 +1,18 @@
+{
+  "event_id": "dd301637881c5cd39075e2063d7f2bf48fc1f8737bfef047c6cc8da221dbba89",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worldwin-view-family-20260919",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/worldwin.cpp now contains all four real view-state methods: set_detail_map writes1; set_world_map writes0; show_all branches on any nonzero remembered value without writing it; hide_all clears selection UI and hides both views without changing the remembered value. The four current bodies retain native measured byte claims, all freshly passing with the complete15-claim WorldWin TU. Source uses MainInterfaceGlobal embedded ButtonGroup, genuine virtual-base dispatch on the detail map, and explicit direct Win calls on the distinct global WorldClimateWorldWin.",
+      "The missing unclaimed Win::show identity/span was restored through the native binder and its emitted virtual symbol is source-owned. Win show/hide/root-order controls pass with the108 existing Win claims retained. Win::show itself remains non-exact; no claim has been fabricated. MapWinTable still has the original fixed-address alias and its coupled startup/shutdown/debug/storage findings remain pending under map-window-storage-lifetime and worldwin-strict-map-storage-owner. This closes the implemented bodies/missing-binding finding only, not their strict reference closure, storage ownership, full restoration or publication acceptance."
+    ]
+  },
+  "previous_event": "5a6ee3c403317b1f7df87c4e7f815765a4a09ff0457a99290191d14227ff8108",
+  "request_id": "incorporate-worldwin-view-source-family-20260920",
+  "schema_version": 1,
+  "sequence": 52,
+  "stream": "task:radiobutton-lifetime"
+}

@@ -1,0 +1,28 @@
+{
+  "event_id": "fe3675579cb299777efe0c4f042a9ddfa7f0c3af27accd7cc8b663e90aa0d4d1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/sound_export_storage_harness.cpp",
+      "recovery/tests/test_sound_export_storage.py",
+      "src/sound_loader.cpp"
+    ],
+    "evidence": [
+      "Fresh census of all eight retained worktrees finds no task file ownership for sound_loader.cpp; loader4C5E50 is unowned in this checkout. Authorize binding its existing eleven-pointer export array and replacing WaveDeviceCreateSlot/ReleaseSlot hardcoded addresses in already owned wave.h with references to SoundDllProcs slots0/1. Do not change loader logic, unrelated DLL hooks or other-owner source.",
+      "Pinned original loader4C5E85 starts at90DB24, increments pointer by4, stops at90DB50 and clears11 dwords on failure; Sound destructor4C616E calls90DB28 and Wave load4C6E23 calls90DB24. Define the44-byte source object extent from these original accesses, not from compiler layout. Verify native initial data, actual-source loader/hook interaction, damaged-slot controls, affected protected matches and fresh build/link; no regression or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5004880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5792db2e3a50bfc0d998686f087cbcb36d241cb506f6d240a9a367e9ca92d62b",
+  "request_id": "sound-export-storage-scope-20260920",
+  "schema_version": 1,
+  "sequence": 98,
+  "stream": "task:infowin-ownership"
+}

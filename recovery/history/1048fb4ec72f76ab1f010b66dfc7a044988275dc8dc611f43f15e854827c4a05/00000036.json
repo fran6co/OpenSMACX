@@ -1,0 +1,26 @@
+{
+  "event_id": "9463f0a47c51cecc2d553d144afaa7367b95af38bf9662bd4f343dac92aa03a3",
+  "payload": {
+    "affects": [
+      "entity-0fdee156193e61dfdda598c07a72235cdb29fb48be8f4d47ed41e4bb75d0d63d",
+      "entity-22f1fb19bd9dafde1f58f045e82a9978ba243fb016aba0196b02b3095e451c97",
+      "entity-3beab855544302cb4dbba75a25dabb70d65339b64adc377a21e1ad59e50f906f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-root-lift-calling-convention-and-live-count-20260920",
+    "evidence": [
+      "Original Win::show0x005EDA3E and on_r_button_down0x005F672A each push one window argument before calling0x005F5140 and add esp,4 afterward. The root helper loads entry-stack[esp+4], never consumes incoming ECX and returns without popping arguments at0x005F51F6. Its complete unclaimed0x005F5140-0x005F51F7 mapping exists in git3cb99d43^:src/unrecovered/005f5140.cpp but was omitted during homing. Current win.h declares a nonstatic cdecl member; show calls it through null win_parent_.",
+      "A static Win member is an ABI-compatible minimal source model for this class-owned root-registry operation; the binary does not distinguish historical free versus static spelling. The separate child-order helper0x005F52E0 consumes ECX parent and returns ret4, and must remain an ordinary member. The root helper raw word-index0x26 is existing Win::iFlags_ at+0x98.",
+      "Original show0x005EDA94 reloads WinRootCount every loop continuation; current show retains an initial count across recurse_zorder callbacks. Preserve the initial positive guard, signed continuation and highlighted-window reload after recursion. This is a semantic dependency, not only a spelling difference.",
+      "Original Win::init0x005EC030 rejects root count0x28 before insertion, establishing a normal40-root admission limit. It does not independently bound the entire storage allocation or every producer; do not infer an original array extent from the current WinRootWindows[64] declaration.",
+      "Root-helper identity is unassigned across current registered task worktrees. This discovery authorizes no body/header edit, source binding or acceptance; obtain explicit coupled scope before changing the convention and its callers."
+    ],
+    "hypothesis": "Win::show depends on a receiver-free root-order operation currently misdeclared as a nonstatic cdecl member and snapshots a root count that the original reloads after callbacks; recover the coupled operation and callers with proper pointer/member access.",
+    "kind": "discovery"
+  },
+  "previous_event": "3fa14e9206a155e50e5ebd4cb7612f94b917266d0dd2cef5d063fee12f83e651",
+  "request_id": "win-root-lift-calling-convention-and-live-count-20260920",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:radiobutton-lifetime"
+}

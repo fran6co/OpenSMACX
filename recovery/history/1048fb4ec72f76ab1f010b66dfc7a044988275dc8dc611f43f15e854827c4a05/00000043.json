@@ -1,0 +1,22 @@
+{
+  "event_id": "0745d0902c06bda7beaf982e74830b8cc8dd0245f40bf5f02a7cfd31fbb13ef2",
+  "payload": {
+    "affects": [
+      "entity-20b07a5db69bc1bc163ed78042bdb130cc20a91587e4973440be6dd772c5e996"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-sprite-buffer-and-handle-ownership-20260920",
+    "evidence": [
+      "5F1986/5F1994 reads Sprite dimensions at+18/+1C;5F19B5-5F19C9 compares them against g_WIN_BUFFER at9B6F08 plus80/84 (DIB biWidth and negated biHeight). The existing separate WinSavedAreaWidth/Height globals at9B6F88/9B6F8C overlap those real members. Init at5F19D4 receives width,height,0,0, not sprite pointer values.",
+      "5F1A0C-5F1A1C uses ScreenBuffer as receiver and g_WIN_BUFFER as destination: save screen pixels to the cursor backing buffer. The restore paths use the opposite direction.5F1ACC-5F1ADD directly passes the loaded borrowed HCURSOR to SetCursor; resource loading belongs only to the distinct cursor_name_ path at5F1AEB-5F1B02.",
+      "Preserve observable rereads: fresh cursor_sprite_ for height after storing width, fresh global dimensions after init, fresh sprite publication after init, and global coordinates/dimensions after copy. These corrections fit authorized existing Win/Sprite/Buffer member usage; no Sprite/Buffer header or unrelated owner body is edited. The broader Buffer lifetimes and strict reference closure remain independent verification obligations."
+    ],
+    "hypothesis": "The same cursor operation misidentifies Buffer dimension members as globals, uses pointers as dimensions, reverses save-copy ownership and treats a borrowed cursor handle as a resource ID. Recover these existing typed owners with the cursor contract.",
+    "kind": "discovery"
+  },
+  "previous_event": "61ba54d1d963b3688d9bf66824a655099ddccee70750821bb86b95aebde887b5",
+  "request_id": "win-cursor-sprite-buffer-and-handle-ownership-20260920",
+  "schema_version": 1,
+  "sequence": 43,
+  "stream": "task:radiobutton-lifetime"
+}

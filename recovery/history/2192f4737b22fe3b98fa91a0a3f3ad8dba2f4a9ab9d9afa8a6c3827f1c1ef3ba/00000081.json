@@ -1,0 +1,25 @@
+{
+  "event_id": "1e59211af7100cbe0be72cbc2d66a7672f8db2a16ab510a0ae20f41cb4318e16",
+  "payload": {
+    "affects": [
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5",
+      "entity-4d3cb3cddaeec9f6876611a2e6319e359c3c193c89f06c4dba65b0ba083e3cf9",
+      "entity-547a68162a34b0a1bea4b87893f1bc2601ee130c147dc03cf74bbe5a490f9753",
+      "entity-58f665996529915eaa526068322082423577f2d7a78351c3739fe3a1ef69901c",
+      "entity-7281b8e8639ebb8f0716e01a4af17024eb228f2d4787af30fa5686b06693ed59"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-inherited-placeholder-contracts-20260920",
+    "evidence": [
+      "Both original Wave table66E44C and Effect table66B7A4 slot24 point448340, while current Wave inherits Sound::unk_slot24 whose documented original base target is448380. Slots27/28 point Wave::set_attrib4C6F20 and get_attrib4C6F80; current Wave declares these as unrelated nonvirtual methods while Sound supplies void placeholders.",
+      "This must not be hidden by verifying only the new tail. The derived tail is independently witnessed at slots33..56; the FX call446034 specifically consumes slot38(set_pitch), and Effect::init445CB9 consumes slot35(load). Preserve this finding separately from that tail repair; no base-contract change or full table acceptance is authorized here."
+    ],
+    "hypothesis": "Restoring Waves derived virtual tail does not repair inherited placeholder slots24/27/28: actual Wave overrides differ from current Sound placeholder methods. Reconcile base contracts and real overrides across Sound-derived owners before claiming the full Wave or Effect tables correct.",
+    "kind": "discovery"
+  },
+  "previous_event": "57f4a269c67d0283d5c5d1e7788c950e63c126e5d44861f19fd2c41bd0849bb9",
+  "request_id": "wave-inherited-placeholder-contracts-20260920",
+  "schema_version": 1,
+  "sequence": 81,
+  "stream": "task:infowin-ownership"
+}

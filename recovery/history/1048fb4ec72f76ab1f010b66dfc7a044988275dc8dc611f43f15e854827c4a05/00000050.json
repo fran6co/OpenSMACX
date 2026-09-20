@@ -1,0 +1,30 @@
+{
+  "event_id": "a8e77dc13acebcd2c7a4792acd7b2e8b5918194cf9b3ef78ec1c0b74887da027",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_worldwin_lifetime.py",
+      "src/deleting_thunks.cpp",
+      "src/deleting_thunks.h",
+      "src/worldwin.cpp"
+    ],
+    "evidence": [
+      "Pending generated-family finding31: primary4C4C70 is already owned by this task; original Buffer-base adjustor4C4CA0-4C4CAB has no current product mapping or task owner. All registered worktree task scopes were inspected; only this retained task owns the primary/complete destructor. Shared deleting files are authorized only for the unused WorldWin wrapper and declarations, not other owner bodies.",
+      "Fresh natural COFF under both settled flag sets defines primary_G, complete destructor, secondary_E adjustor, and mode2 weak_E fallback to_G. Existing /Oy- profile exactly reproduces all14 original primary instructions; no compiler policy change or regression waiver is authorized. Independent original review establishes33-byte primary,11-byte subecx444/jmp adjustor, constructor table installations and unchanged flags/ret4 contract.",
+      "Rehome canonical protected primary mapping through the native writer, restore the lost adjustor binding/corrected-signature lesson from24472a5a^:src/init_thunks.cpp, and bank any new current claim only through native recording after measurement. Remove synthetic wrapper and unused WorldWin declarations; retain all other source/history, baseline, claims and pending discoveries. Add native compiler-backed family/reference controls, build/link and fresh preservation checks. Weak fallback alone is not linked selection or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5000352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8a115cd10f7cd5e6b40bbdd5991a40d9072863b1f3cd378d08f94bbea6885c62",
+  "request_id": "authorize-worldwin-natural-deleting-family-20260920",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:radiobutton-lifetime"
+}

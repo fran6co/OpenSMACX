@@ -21,23 +21,23 @@ class Win;  // the window this record is embedded at offset 0 of
 
  /*
   * AutoSound - the PROCESS SETTINGS RECORD, embedded at offset 0 of every
-  * window (class Win : public AutoSound). 37 ints behind one vfptr; the
-  * constructor copies them wholesale from AutoSoundDefaults[33], the
-  * runtime-filled block at 0x009BC080 that FX::init zeroes before any
-  * window exists.
+  * window (class Win : public AutoSound). 37 words behind one vfptr; the
+  * constructor copies them wholesale from AutoSoundDefaults[37], the
+  * mutable block at [0x009BC080,0x009BC114). Loader zero-initialization
+  * supplies its initial values; FX::init optionally resets them later.
   *
   * FIELD MAP (offset = 0x04 + 4*(N-1)). One member is anchored:
   *   flags_   0x20  BasePop toggles bits 0/1 (UNK3/UNK4)
-  * Two more are typed, not numbered:
+  * Three fields have window-pointer uses:
+  *   val_4_   0x10  the window notified after hide, including debug hiding
   *   val_7_   0x1C  the child `on_mouse_move` notifies when a position
   *                  arrives that is NOT the window's own - `Win *`
   *   val_19_  0x4C  the same slot for the from-parent arm - `Win *`
-  * Both are read only as windows (win.cpp on_mouse_move null-tests them
-  * and calls vslot_23/vslot_07 on them), and the defaults block stores
+  * These uses null-test the windows and dispatch vslot_23/vslot_07.
+  * The defaults block stores
   * whatever pointer value it was filled with, so the int was storage
   * typing, not behaviour.
-  * The other 34 are bulk-copy/reset/zero only across the whole tree -
-  * no per-field behaviour exists anywhere yet, so they stay numbered
+  * Fields whose meaning is still unknown stay numbered
   * rather than guessed. Their names arrive with the settings/options
   * writer, still unrecovered. IDB independently numbered them identically
   * (docs/recovery/idb-members.csv: val1..val37).
@@ -78,7 +78,9 @@ class AutoSound {
   int val_1_;  // 0x0004
   int val_2_;
   int val_3_;
-  int val_4_;
+  // Win::hide and the debug keyboard path notify this window via slots 23/7.
+  // RECOVERY_MEMBER: v3 AutoSound val_4_ Win* 0x10 0x005EDCD0
+  Win *val_4_;
   int val_5_;
   int val_6_;
   // 0x1C. A `Win *`, not an int: `Win::on_mouse_move` reads it as the child

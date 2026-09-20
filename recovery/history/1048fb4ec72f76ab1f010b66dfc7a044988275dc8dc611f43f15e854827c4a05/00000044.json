@@ -1,0 +1,21 @@
+{
+  "event_id": "9196397af48b05267956ce4a02e69c8843c13672d7cbfcdfacf9d524129adafd",
+  "payload": {
+    "affects": [
+      "entity-20b07a5db69bc1bc163ed78042bdb130cc20a91587e4973440be6dd772c5e996"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-conditional-poll-and-return-20260920",
+    "evidence": [
+      "Independent original review: 5F2137 and 5F2143 branch directly to epilogue 5F21F8; 5F214F reaches polling without restoration when no saved sprite remains. Selection branches retain SetCursor return; skip-selection indices 0/1/3 retain hit index.",
+      "Authorized Win cursor family scope42 covers this coupled branch repair. Actual-source runtime controls exercise all 20 switch entries plus out-of-range, direct/custom early returns and return values. These are bounded branch controls, not original runtime equivalence or game acceptance."
+    ],
+    "hypothesis": "The cursor dispatcher must preserve its selection/index result and skip OS cursor polling when direct mouse mode or a freshly observed custom sprite is active. The old unconditional polling tail changed both side effects and return values.",
+    "kind": "discovery"
+  },
+  "previous_event": "0745d0902c06bda7beaf982e74830b8cc8dd0245f40bf5f02a7cfd31fbb13ef2",
+  "request_id": "win-cursor-conditional-poll-and-return-20260920",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:radiobutton-lifetime"
+}

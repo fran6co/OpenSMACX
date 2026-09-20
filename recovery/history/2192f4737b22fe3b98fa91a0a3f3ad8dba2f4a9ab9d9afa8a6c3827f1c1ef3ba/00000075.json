@@ -1,0 +1,21 @@
+{
+  "event_id": "ef4df9a4e6fe08dd02096bd27046a6deb54bab02560ed8c20e1a369ab7d700b6",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "fx-defaults-basepop-copy-index-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basepop.cpp BasePop::close now copies each complete BasePopTextBlock through its real member with memcpy; the erroneous source i/4 loops are removed. Original 0x00600F0B..0x00600F3F independently establishes two 70-dword copies from 0x009B8AB8 and 0x009B8BD0 to this+0x2E64 and this+0x2F7C.",
+      "The two defaults definitions carry bounded RECOVERY_OBJECT v2 bindings for adjacent 0x118-byte objects. recovery/tests/test_basepop_defaults.py checks actual compiler output, member layout, initial storage and source target/addend identity under both flag trials; undersized, oversized and shifted-source damage is rejected.",
+      "recovery/tests/basepop_defaults_harness.cpp executes the actual recovered copy prefix with distinct values in all 70 words of each block and surrounding guards. It deliberately does not execute or claim verification of the whole close method.",
+      "Independent worldwin_source review found no blocking concerns in the two-copy repair and strengthened bounds/addend damage controls. Fresh combined BasePop, FX and AutoSound tests pass 28 cases; all 44 previously passing protected BasePop bodies still pass, all 2458 historical claims remain present, source integrity passes, and a fresh application build links.",
+      "This incorporates only the concrete BasePop consumer copy-index defect. BasePop::close remains a measured mismatch; FX::init and the broader autosound-defaults-storage-boundary-corrected-20260920 producer discovery remain unfinished. No full-task, linked-preservation or game acceptance is claimed."
+    ]
+  },
+  "previous_event": "a435ce75546108f63bdd9800f396c3ba22aff85e86b90e060e23e51daa0171fd",
+  "request_id": "basepop-default-copy-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 75,
+  "stream": "task:infowin-ownership"
+}

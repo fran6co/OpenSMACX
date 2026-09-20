@@ -1,0 +1,18 @@
+{
+  "event_id": "686254f6f302bdbe839d8a0740505c197ef178ae54b3d2f8d2fc9081241353f2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "sound-inherited-overload-slot-order-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sound.h now declares each play/fade_in overload group in the order that actual VC6 emits as original slots6/7 and11/12. src/sound.cpp binds the original Sound table66E3C0 from its destructor publication4C6140. Sound implementation bodies and original identities are unchanged.",
+      "recovery/tests/test_sound_virtual_surface.py independently checks original targets, all emitted Sound/Wave/Effect copies observed in sound.cpp/wave.cpp/fx.cpp under both configured flag trials, ordinary C++ dispatch, and overlay damage controls restoring the old swaps. Independent source review found no blocker. Fresh family checks retain all192 selected prior matches; the combined50 tests, source/claim checks and fresh application build/link pass. Unbounded table contents and remaining placeholder contracts are not accepted by these observations."
+    ]
+  },
+  "previous_event": "e4fdd9b82bbbc875bb71cbaf2d2654f4d840c4c42261669e1c4be3fc0ee8f99e",
+  "request_id": "sound-inherited-overload-slots-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 87,
+  "stream": "task:infowin-ownership"
+}

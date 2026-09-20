@@ -1,0 +1,32 @@
+{
+  "event_id": "7b47c66741a8c36fbe44e594b4fce4227e718797ba76a698e47f217f986bf321",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_wave_clock_import.py",
+      "src/ambience.cpp"
+    ],
+    "evidence": [
+      "Authorize the two unowned caller subjects with the existing Wave consumers and owned game/wave headers. Replace these clock aliases with SDK timeGetTime, add one source RECOVERY_IMPORT binding, delete WaveTimeGetTimeSlot and its now-unused typedef plus AmbienceTimeGetTime. Preserve original load/call timing and historical annotations; do not change other fixed-address state or library ABI.",
+      "Add original-import/COFF operand and negative alias/wrong-function controls. Remeasure every protected claim in touched TUs and shared Sound/Wave dependents, and verify full compile/link. This is editing authority only, not acceptance, scope transfer or claim-demotion permission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5829360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4485984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8777bbe7a285c38d9e92f5f4a40d4d9d993d6b91906de7e31cf0f640df7db23a",
+  "request_id": "authorize-clock-import-consumers-20260920",
+  "schema_version": 1,
+  "sequence": 114,
+  "stream": "task:infowin-ownership"
+}

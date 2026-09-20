@@ -1,0 +1,18 @@
+{
+  "event_id": "2121efcec6b427cb149341e2a247c684a3782393d709880fbfc36dd4b44e5f08",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-dirty-rectangle-and-argument-contract-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp restores update_cursor original identity through native binding and records its compiler-observed static symbol. The body mutates the actual shared dirty rectangle, branches on tgl, returns the UnionRect result when requested, and retains the original right-to-left load/return after flip. Restore helpers clear the sprite before calling flip. Original screen coordinates remain separate from mutable hit-test copies.",
+      "Independent read-only original/source review by draw_deck_review found no remaining concrete defect in this bounded repair. All25 control tests pass, including11 cursor dataflow damage cases and both-flag storage damage controls. Full application build/link passes; all108 Win historical byte claims pass on master and candidate. Source integrity and historical identity checks pass with no missing obligations. Cursor and restore bodies still mismatch; no new byte claim, full structure/runtime proof, linked preservation or publication acceptance is granted. Other pending discoveries, task baseline and historical owner conflicts are retained."
+    ]
+  },
+  "previous_event": "ed499e042862589bde332b0a5d0510571d3db6f41b1f02f1087ad85b9ebd0839",
+  "request_id": "incorporate-win-cursor-dirty-rectangle-and-argument-contract-20260920",
+  "schema_version": 1,
+  "sequence": 46,
+  "stream": "task:radiobutton-lifetime"
+}

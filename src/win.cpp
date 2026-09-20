@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "net_class.h"
+#include "multidebug.h"
 
 typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "vtable_shim.h"
@@ -709,8 +710,16 @@ Win *WinPointerOwner3;
 Win *WinPointerOwner4;
 Win *WinFocusWindow;       // 0x009B7AE0
 Win *WinModalWindow;       // 0x009B7ADC
-Win *WinRootWindows[64];   // 0x009B6E48
-int WinRootCount;          // 0x009B7B34
+// init stores Win pointers at 5EC067/5EC08C; add_parent repeats those
+// array accesses at 5F509C/5F50C7. init admits 40 roots (5EC030);
+// those pointer slots end at the independently used dirty RECT (5F17C7).
+// add_parent has no capacity guard: this extent is not a bounds-safety proof.
+// RECOVERY_OBJECT: v2 0x009B6E48 0x009B6EE8 ?WinRootWindows@@3PAPAVWin@@A 0x005EBD80
+Win *WinRootWindows[40];
+// init increments this scalar at 5EC092-93; on_char reloads it at
+// 5F611E/5F6168. It is the count value, not an address-backed alias.
+// RECOVERY_OBJECT: v1 0x009B7B34 ?WinRootCount@@3HA
+int WinRootCount;
 int WinMouseDirect;        // 0x009B7AA4
 int WinMouseScreenX;       // 0x009B6628
 int WinMouseScreenY;       // 0x009B662C
@@ -720,13 +729,8 @@ int WinDragOffsetX;          // 0x009B7A38
 int WinDragOffsetY;          // 0x009B7A3C
 int WinMaximizeIcon;         // 0x009B7B04
 int WinRestoreIcon;          // 0x009B7B08
-int WinModalResult;          // 0x009B6EF0
-int WinSavedAreaWidth;       // 0x009B6F88
-int WinSavedAreaHeight;      // 0x009B6F8C
 int WinSizingFlag;           // 0x009B7AD4
 int WinModalDepth;           // 0x009B7AE4
-int WinPopupCount;           // 0x009B26EC
-int WinDrawFlags;            // 0x009B238C
 int WinKeyModifiers;         // 0x009B7B18
 int WinViewOriginX;          // 0x009B7A70
 int WinViewOriginY;          // 0x009B7A74
@@ -741,8 +745,6 @@ int WinTrackingX;          // 0x009B7AB0
 int WinTrackingY;          // 0x009B7AB4
 Buffer *WinBackBuffer;         // 0x009B7A68
 Win *WinModalFocus;         // 0x009B8D7C
-Win *WinPopupWindow;        // 0x009B23B4
-Win *WinTopDialog;          // 0x009B2300
 Win *WinPendingFocus;       // 0x009B7B38
 // Shared current receiver for window callbacks and redraw, not a pointer
 // through which to overwrite the previous receiver's object storage.
@@ -751,13 +753,14 @@ Win *WinCallbackWindow;
 Win *WinInputFocus;       // 0x009B7AC4
 Win *WinActiveWindow;     // 0x009B7AC8
 Win *WinBubbleCompanion;   // 0x009B7A4C
-Win WinBubbleWindow;       // 0x009B22F0
-Win *WinDialogList[150];   // 0x009B2494
 // RECOVERY_OBJECT: v1 0x009B6630 ?WinZOrderArray@@3PAPAVWin@@A
 Win *WinZOrderArray[512];
 RECT WinBubbleRect;        // 0x009B6E38
 RECT WinScreenClipRect;    // 0x009B74C0
-RECT WinDirtyRect;         // 0x009B6EE8
+// restore_flip_sprite passes this complete RECT to UnionRect at 5F17C7
+// and flip at 5F17DC. Its right member at 9B6EF0 is not a modal result.
+// RECOVERY_OBJECT: v2 0x009B6EE8 0x009B6EF8 ?WinDirtyRect@@3UtagRECT@@A 0x005F1750
+RECT WinDirtyRect;
 Win *WinDefaultFocus;      // 0x009B7AEC
 DDInit WinDisplayInit;     // 0x009BE618
 Win *WinFocusStack[4];     // 0x009B7A1C
@@ -767,10 +770,16 @@ const uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
     247, 24, 0xffffffff, 1, 1, 8, 0xffffffff, 7, 2, 1};
 WinDynamicDefaultsTable WinDynamicDefaults;  // 0x009B7AF0
 int WinBubbleActive;       // 0x009B7A50
-Win *WinZOrderWindow;      // 0x009B7A6C
+// on_char loads this pointer at 5F612F/5F615F; hide independently does
+// so at 5EDDE3/5EDE13. The binding names pointer storage, not its pointee.
+// RECOVERY_OBJECT: v1 0x009B7A6C ?WinZOrderWindow@@3PAVWin@@A
+Win *WinZOrderWindow;
 // RECOVERY_OBJECT: v1 0x009B7B30 ?WinZOrderCount@@3HA
 int WinZOrderCount;
-int WinZOrderFlag;         // 0x009B7A78
+// on_char 5F6148 and hide 5EDDFD clear this scalar directly when the
+// selected root is encountered; its wider flag meaning remains provisional.
+// RECOVERY_OBJECT: v1 0x009B7A78 ?WinZOrderFlag@@3HA
+int WinZOrderFlag;
 void(__cdecl *WinLeftDownHook)(int x, int y);  // 0x009B7A90
 int WinCursorMoved;        // 0x009B7B3C
 void(__cdecl *WinMessageHook)();                            // 0x009B7A88
@@ -4054,16 +4063,16 @@ void __cdecl restore_flip_sprite(int do_flip) {
         UnionRect(&WinDirtyRect,
                   &WinDirtyRect, &local);
         if (do_flip != 0) {
-            int saved = reinterpret_cast<int>(WinFlipSprite);
-            WinFlipSprite = reinterpret_cast<Sprite *>(0);
+            Sprite *saved = WinFlipSprite;
+            WinFlipSprite = 0;
             // Win::flip is a STATIC member (win.h:211), so the image's
             // single RECT push with no ecx setup IS this call - which is
             // what the artifact's invented `win_flip_stub` was standing in
             // for. No stub and no forwarder needed.
             Win::flip(&WinDirtyRect);
-            WinFlipSprite = reinterpret_cast<Sprite *>(saved);
+            WinFlipSprite = saved;
             WinDirtyRect.left = 0;
-            WinModalResult = 0;
+            WinDirtyRect.right = 0;
         }
     }
 }
@@ -5580,7 +5589,6 @@ typedef int (__stdcall *ComSlot17)(void *self, HDC *out);
 // defined them - a static function and a macro do not travel with a
 // method body.
 
-#define WFIELD(obj, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(obj) + (off)))
 // Homed below; the signature is the one its TRIED note measured -
 // `void __cdecl restore_flip_sprite(int)`, from the [esp+0x14] stack read.
 void __cdecl restore_flip_sprite(int);
@@ -5600,13 +5608,6 @@ static void call_slot_cc(int *obj, int arg) {
 // The flip/restore helper block, taken whole from the artifact that
 // defined it. Restoring its pieces one compiler error at a time kept
 // finding another dependency; the block is the coherent unit.
-typedef int(__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
-typedef void *(__stdcall *LoadCursorFn)(void *, int);
-typedef void *(__stdcall *SetCursorFn)(void *);
-typedef void(__stdcall *GetCursorPosFn)(int *);
-typedef int(__stdcall *PollFn)(int);
-
-#define WFIELD(obj, off) (*reinterpret_cast<int *>(reinterpret_cast<char *>(obj) + (off)))
 
 // Builds the saved-region rect the "direct" way: left,top,right=left+w,bottom=top+h.
 static void BuildRectDirect(RECT &r) {
@@ -5616,11 +5617,12 @@ static void BuildRectDirect(RECT &r) {
     r.bottom = WinFlipSpriteX + WinClipHeight;
 }
 
-// Restores the saved screen region (if one is pending) and flips it, then
-// clears the pending flag. `useHelper` selects between the two rect-build
+// Restores the saved screen region (if one is pending), clears the sprite
+// before flip observes it, and consumes the dirty width. `useHelper` selects
+// between the two rect-build
 // strategies the disassembly duplicates at each call site (a direct sum,
 // or the opaque sub_5f86c0 helper) - both read the same four fields.
-static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
+static void RestoreAndFlip(bool useHelper) {
     if (WinFlipSprite != 0) {
         g_WIN_BUFFER
             .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
@@ -5631,13 +5633,13 @@ static void RestoreAndFlip(UnionRectFn UnionRect, bool useHelper) {
         } else {
             BuildRectDirect(rect);
         }
-        RECT merged;
-        UnionRect(&merged, &rect, &WinDirtyRect);
-        Win::flip(&merged);
+        UnionRect(&WinDirtyRect, &WinDirtyRect, &rect);
+        WinFlipSprite = 0;
+        Win::flip(&WinDirtyRect);
         WinDirtyRect.left = 0;
-        WinModalResult = 0;
+        WinDirtyRect.right = 0;
     }
-    WinFlipSprite = reinterpret_cast<Sprite *>(0);
+    WinFlipSprite = 0;
 }
 
 namespace {
@@ -6053,9 +6055,12 @@ typedef int int32_t;
 typedef unsigned char uint8_t;
 typedef void(__stdcall *ThreeArgFn)(int, int, int);
 
+// ORIGINAL: 0x005EDCD0 ?hide@Win@@QAEXXZ 0x005EDCD0-0x005EDE56
+// RECOVERY_BINDING: v1 {"evidence": ["git3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted src/recovered/units/005edcd0.cpp and homed this body without its mapping. The parent has canonical symbol?hide@Win@@QAEXXZ and complete390-byte span0x005EDCD0-0x005EDE56 with a MISMATCH note, not an exact claim. The current body retains the homed-from heading and genuine Win declaration; original WorldWin::set_detail_map tail-calls this exact entry on the distinct WorldClimateWorldWin global."], "reason": "Restore the original identity lost when the existing Win::hide implementation was homed. Preserve its historically unclaimed state; the catalogue nonvirtual spelling is provenance, while the actual product declaration is virtual."}
+// symbol    ?hide@Win@@UAEXXZ
 void Win::hide() {
     int32_t zero;
-    int32_t focus_a, focus_b, chosen;
+    Win *focus_a, *focus_b, *chosen;
     Win **child;
     int32_t i;
 
@@ -6066,7 +6071,7 @@ void Win::hide() {
     if (WinBubbleCompanion == this) {
         zero = 0;
         if (WinBubbleActive != zero) {
-            WinBubbleCompanion = reinterpret_cast<Win *>(zero);
+            WinBubbleCompanion = 0;
             WinBubbleActive = zero;
             update_screen(&WinBubbleRect, 0);
             flip(&WinBubbleRect);
@@ -6076,14 +6081,14 @@ void Win::hide() {
     zero = 0;
 
 converge:
-    focus_a = reinterpret_cast<int>(WinPointerOwner1);
-    focus_b = reinterpret_cast<int>(WinPointerOwner2);
-    chosen = (focus_a != zero) ? focus_a : focus_b;
-    if (chosen == reinterpret_cast<int32_t>(this)) {
+    focus_a = WinPointerOwner1;
+    focus_b = WinPointerOwner2;
+    chosen = (focus_a != 0) ? focus_a : focus_b;
+    if (chosen == this) {
         goto clear_focus;
     }
-    if (focus_a == zero) {
-        if (focus_b == zero) {
+    if (focus_a == 0) {
+        if (focus_b == 0) {
             goto skip_all;
         }
         goto search;
@@ -6091,7 +6096,7 @@ converge:
     focus_b = focus_a;
 
 search:
-    if (focus_b == zero) {
+    if (focus_b == 0) {
         goto skip_all;
     }
     if (child_count_ <= 0) {
@@ -6100,10 +6105,10 @@ search:
     child = children_;
     i = 0;
     for (;;) {
-        if (reinterpret_cast<int32_t>(*child) == focus_b) {
+        if (*child == focus_b) {
             goto found;
         }
-        if ((*child)->is_descendant(reinterpret_cast<Win *>(focus_b))) {
+        if ((*child)->is_descendant(focus_b)) {
             goto found;
         }
         i++;
@@ -6116,8 +6121,8 @@ search:
 found:
     zero = 0;
 clear_focus:
-    WinPointerOwner1 = reinterpret_cast<Win *>(zero);
-    WinPointerOwner2 = reinterpret_cast<Win *>(zero);
+    WinPointerOwner1 = 0;
+    WinPointerOwner2 = 0;
 
 skip_all:
     if (WinPointerOwner3 == this) {
@@ -6132,7 +6137,7 @@ skip_all:
         this->release_modal();
     }
 
-    if (!(*reinterpret_cast<uint8_t *>(JackalInitFlags) & 1)) {
+    if ((JackalInitFlags & 1) == 0) {
         return;
     }
 
@@ -6140,17 +6145,17 @@ skip_all:
         int32_t total = WinRootCount;
         WinZOrderCount = 0;
         if (total > 0) {
-            int32_t target = reinterpret_cast<int>(WinZOrderWindow);
+            Win *target = WinZOrderWindow;
             Win **p = WinRootWindows;
             int32_t j = 0;
             for (;;) {
-                if (target != 0 && target == reinterpret_cast<int32_t>(*p)) {
+                if (target != 0 && target == *p) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
                 if ((*p)->iSomeFlag_ & 1) {
                     recurse_zorder(*p);
-                    target = reinterpret_cast<int>(WinZOrderWindow);
+                    target = WinZOrderWindow;
                 }
                 total = WinRootCount;
                 j++;
@@ -6165,7 +6170,7 @@ skip_all:
     InvalidateRect(HandleMain, 0, 0);
 
     {
-        Win *other = reinterpret_cast<Win *>(val_4_);
+        Win *other = val_4_;
         if (other != 0) {
             if (other->vslot_23() == 0) {
                 other->vslot_07();
@@ -7511,6 +7516,9 @@ Win *Win::get_key_window() {
 typedef BOOL (__stdcall *InvalidateRectFn)(void *, const RECT *, BOOL);
 typedef void (__cdecl *Sub5f8670Fn)(RECT *, int, int);
 
+// ORIGINAL: 0x005ED9D0 ?show@Win@@QAEXH@Z 0x005ED9D0-0x005EDCCB
+// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/recovered/units/005ed9d0.cpp preserves the unclaimed FILE marker for0x005ED9D0-0x005EDCCB. Commit3cb99d43 homed its body into win.cpp under the005ed9d0 heading but omitted the mapping. Original WorldWin set_world_map and show_all call0x005ED9D0 directly on0x008E9F60; existing Win::show(int) is the distinct real product operation. This mapping identifies the homed operation independently of subsequent behavior and reference verification."], "reason": "Restore the original mapping lost when the existing Win::show implementation was homed. Preserve the historical canonical name and complete unclaimed span; do not treat mapping restoration as implementation verification."}
+// symbol    ?show@Win@@UAEXH@Z
 void Win::show(int visible) {
     if ((iSomeFlag_ & 1) == 0 && (iSomeFlag_ & 4) != 0) {
         field_1A0_ |= 2;
@@ -7523,25 +7531,27 @@ void Win::show(int visible) {
             if (win_parent_) {
                 win_parent_->bring_child_to_top(this);
             } else {
-                win_parent_->bring_parent_to_top(this);
+                Win::bring_parent_to_top(this);
             }
         }
 
         int32_t count = WinRootCount;
         WinZOrderCount = 0;
         if (count > 0) {
-            int32_t cur = reinterpret_cast<int>(WinZOrderWindow);
-            for (int32_t i = 0; i < count; ++i) {
+            Win *cur = WinZOrderWindow;
+            int32_t i = 0;
+            do {
                 Win *w = WinRootWindows[i];
-                if (cur != 0 && cur == reinterpret_cast<int32_t>(w)) {
+                if (cur != 0 && cur == w) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
-                if (reinterpret_cast<uint8_t *>(w)[0x9c] & 1) {
+                if (w->iSomeFlag_ & 1) {
                     recurse_zorder(w);
-                    cur = reinterpret_cast<int>(WinZOrderWindow);
+                    cur = WinZOrderWindow;
                 }
-            }
+                ++i;
+            } while (i < WinRootCount);
         }
 
         if ((visible & 2) == 0) {
@@ -8243,106 +8253,98 @@ int Win::init(int x, int y, int width, int height, char * caption,
 }
 
 // ===== homed from src/unrecovered/005f1820.cpp =====
-typedef int(__stdcall *UnionRectFn)(RECT *, const RECT *, const RECT *);
-typedef void *(__stdcall *LoadCursorFn)(void *, int);
-typedef void *(__stdcall *SetCursorFn)(void *);
-typedef void(__stdcall *GetCursorPosFn)(int *);
-typedef int(__stdcall *PollFn)(int);
 
+// ORIGINAL: 0x005F1820 ?update_cursor@Win@@QAAHPAUWin@@H@Z 0x005F1820-0x005F2200
+// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/unrecovered/005f1820.cpp preserves this identity and full code span with mismatch history, not a byte claim. Its existing body is under the same homing heading in win.cpp. Entry reads two stack arguments; original body ends at5F21FF and the switch table begins at5F2200. Source binding does not establish behavior, table matching or acceptance."], "reason": "Restore the unclaimed cursor operation mapping omitted during homing. The catalogued decoration is historical; the product uses the receiver-free static Win operation."}
+// symbol    ?update_cursor@Win@@SAHPAV1@H@Z
 int __cdecl Win::update_cursor(Win *window, int tgl) {
 
-    POINT pt;  // the artifact spelled this `int pt[2]`
+    POINT pt;
     GetCursorPos(&pt);
-    int x = pt.x;
-    int y = pt.y;
+    int screen_x = pt.x;
+    int screen_y = pt.y;
+    // Lookup can convert these copies to window-local hit-test coordinates;
+    // saved cursor pixels remain positioned in the original screen coordinates.
+    int hit_x = screen_x;
+    int hit_y = screen_y;
 
     Win *win = window;
     if (win == 0) {
-        win = reinterpret_cast<Win *>(Win::get_mouse_window(&x, &y));
+        win = Win::get_mouse_window(&hit_x, &hit_y);
         if (win == 0) {
-            RestoreAndFlip(UnionRect, false);
+            RestoreAndFlip(false);
             HCURSOR cur = LoadCursorA(0, IDC_ARROW);
             return reinterpret_cast<int>(SetCursor(cur));
         }
     }
 
-    if (WinMouseDirect == 0 && (WFIELD(win, 0x98) & 0x4000000) == 0) {
-        int field188 = WFIELD(win, 0x188);
-        if (field188 != 0) {
-            // A window wants the cursor image saved/restored under it.
-            int saved = reinterpret_cast<int>(WinFlipSprite);
-            if (saved == 0) {
+    if (WinMouseDirect == 0 && (win->iFlags_ & WinFlagHitTestIndirect) == 0) {
+        if (win->cursor_sprite_ != 0) {
+            if (WinFlipSprite == 0) {
                 while (ShowCursor(0) >= 0) {
                 }
             } else {
                 restore_flip_sprite(0);
             }
 
-            int field188b = WFIELD(win, 0x188);
-            int prevSaved = reinterpret_cast<int>(WinFlipSprite);
-            if (field188b != prevSaved) {
-                WinClipWidth = *reinterpret_cast<int *>(field188b + 0x18);
-                WinClipHeight = *reinterpret_cast<int *>(field188b + 0x1c);
-                WinDragOffsetX = WFIELD(win, 0x18c);
-                WinDragOffsetY = WFIELD(win, 0x190);
-                bool sameArea = WinSavedAreaWidth == field188b && -WinSavedAreaHeight == prevSaved;
-                if (!sameArea) {
-                    g_WIN_BUFFER.init(field188b, prevSaved, 0, 0);
+            if (win->cursor_sprite_ != WinFlipSprite) {
+                WinClipWidth = win->cursor_sprite_->iWidth_;
+                WinClipHeight = win->cursor_sprite_->iHeight_;
+                WinDragOffsetX = win->field_18C_;
+                WinDragOffsetY = win->field_190_;
+                if (g_WIN_BUFFER.dib_.bmiHeader.biWidth != WinClipWidth ||
+                    -g_WIN_BUFFER.dib_.bmiHeader.biHeight != WinClipHeight) {
+                    g_WIN_BUFFER.init(WinClipWidth, WinClipHeight, 0, 0);
                 }
             }
             int width = WinClipWidth;
             int height = WinClipHeight;
-            int destX = x - WinDragOffsetX;
-            int destY = y - WinDragOffsetY;
+            int destX = screen_x - WinDragOffsetX;
+            int destY = screen_y - WinDragOffsetY;
             WinFlipSpriteY = destX;
             WinFlipSpriteX = destY;
-            WinFlipSprite = reinterpret_cast<Sprite *>(field188b);
-            int copyResult = g_WIN_BUFFER
-                                  .copy((&ScreenBuffer), 0, 0, destX, destY,
-                                         width, height);
+            WinFlipSprite = win->cursor_sprite_;
+            ScreenBuffer.copy(&g_WIN_BUFFER, destX, destY, 0, 0, width, height);
 
             RECT rect;
-            rect.left = destX;
-            rect.top = destY;
-            rect.right = destX + width;
-            rect.bottom = destY + height;
-            RECT merged;
-            UnionRect(&merged, &rect, &WinDirtyRect);
-            if (merged.bottom == 0) {
-                return copyResult;
+            rect.left = WinFlipSpriteY;
+            rect.top = WinFlipSpriteX;
+            rect.right = WinFlipSpriteY + WinClipWidth;
+            rect.bottom = WinFlipSpriteX + WinClipHeight;
+            int result = UnionRect(&WinDirtyRect, &rect, &WinDirtyRect);
+            if (tgl == 0) {
+                return result;
             }
             int prevFlag = WinFlipClipped;
             WinFlipClipped = 1;
-            Win::flip(&merged);
-            int result = WinModalResult;
+            Win::flip(&WinDirtyRect);
+            // 5F1A85 loads right (it does not clear it); 5F1A93 stores it to
+            // left and the function returns the same value after the flip.
+            result = WinDirtyRect.right;
             WinFlipClipped = prevFlag;
             WinDirtyRect.left = result;
             return result;
         }
 
-        // win->0x188 == 0: nothing pending under this window.
+        // This window uses an OS cursor, not a saved sprite.
         if (WinFlipSprite != 0) {
             int ebxFlag = 1;
             restore_flip_sprite(1);
             while (ShowCursor(ebxFlag) <= 0) {
             }
         }
-        WinFlipSprite = reinterpret_cast<Sprite *>(0);
+        WinFlipSprite = 0;
 
-        int owner = WFIELD(win, 0x194);
-        if (owner != 0) {
-            int cursorId = WFIELD(owner, 0);
-            if (cursorId != 0) {
-                HCURSOR cur = LoadCursorA(0, MAKEINTRESOURCE(cursorId));
-                return reinterpret_cast<int>(SetCursor(cur));
+        if (win->cursor_handle_ != 0) {
+            if (*win->cursor_handle_ != 0) {
+                return reinterpret_cast<int>(SetCursor(*win->cursor_handle_));
             }
         }
-        Win *win2 = reinterpret_cast<Win *>(WFIELD(win, 0x198));
-        if (win2 == 0) {
+        if (win->cursor_name_ == 0) {
             goto lab_default_cursor;
         }
         {
-            HCURSOR cur = LoadCursorA(0, reinterpret_cast<const char *>(win2));
+            HCURSOR cur = LoadCursorA(0, reinterpret_cast<const char *>(win->cursor_name_));
             return reinterpret_cast<int>(SetCursor(cur));
         }
     }
@@ -8350,82 +8352,86 @@ int __cdecl Win::update_cursor(Win *window, int tgl) {
     // Full dispatch: ask the window what kind of hit region the cursor is
     // over, then pick the matching cursor image / saved-region behaviour.
     // Case grouping and targets read from the resolved jump table (20
-    // entries at 0x005F1B3C), not guessed.
+    // entries at 0x005F2200, dispatched at 0x005F1B3C), not guessed.
     {
-        int hitCode = win->on_nc_hittest(x, y);
+        int hitCode = win->on_nc_hittest(hit_x, hit_y);
         hitCode += 2;
         int ebxFlag = 1;
+        int result = hitCode;
 
         switch (hitCode) {
         case 2:
         case 4:
-            RestoreAndFlip(UnionRect, false);
+            RestoreAndFlip(false);
             WinCursorMoved = ebxFlag;
-            SetCursor(LoadCursorA(0, IDC_ARROW));
+            result = reinterpret_cast<int>(SetCursor(LoadCursorA(0, IDC_ARROW)));
             break;
         case 12:
-            RestoreAndFlip(UnionRect, false);
+            RestoreAndFlip(false);
             WinCursorMoved = ebxFlag;
-            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f84)));
+            result = reinterpret_cast<int>(SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f84))));
             break;
         case 13:
-            RestoreAndFlip(UnionRect, true);
+            RestoreAndFlip(true);
             WinCursorMoved = ebxFlag;
-            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f84)));
+            result = reinterpret_cast<int>(SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f84))));
             break;
         case 14:
         case 17:
-            RestoreAndFlip(UnionRect, true);
+            RestoreAndFlip(true);
             WinCursorMoved = ebxFlag;
-            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f85)));
+            result = reinterpret_cast<int>(SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f85))));
             break;
         case 15:
         case 19:
-            RestoreAndFlip(UnionRect, true);
+            RestoreAndFlip(true);
             WinCursorMoved = ebxFlag;
-            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f82)));
+            result = reinterpret_cast<int>(SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f82))));
             break;
         case 16:
         case 18:
-            RestoreAndFlip(UnionRect, true);
+            RestoreAndFlip(true);
             WinCursorMoved = ebxFlag;
-            SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f83)));
+            result = reinterpret_cast<int>(SetCursor(LoadCursorA(0, MAKEINTRESOURCE(0x7f83))));
             break;
         case 0:
         case 1:
         case 3:
-            // No cursor change at all for these hit codes.
+            // Skip selection, but still restore and poll in the common tail.
             break;
         default:
             // Covers 5..11 and any out-of-table index (the `ja` fallback).
-            RestoreAndFlip(UnionRect, true);
-            SetCursor(LoadCursorA(0, IDC_ARROW));
+            RestoreAndFlip(true);
+            result = reinterpret_cast<int>(SetCursor(LoadCursorA(0, IDC_ARROW)));
             break;
         }
 
-        if (WinMouseDirect == 0 && WFIELD(win, 0x188) == 0 && WinFlipSprite != 0) {
+        if (WinMouseDirect != 0 || win->cursor_sprite_ != 0) {
+            return result;
+        }
+        if (WinFlipSprite != 0) {
             g_WIN_BUFFER
                 .copy((&ScreenBuffer), 0, 0, WinFlipSpriteY, WinFlipSpriteX,
                        WinClipWidth, WinClipHeight);
             RECT rect;
             make_rect(&rect, WinFlipSpriteY, WinFlipSpriteX, WinClipWidth, WinClipHeight);
-            RECT merged;
-            UnionRect(&merged, &rect, &WinDirtyRect);
-            int savedFlag = reinterpret_cast<int>(WinFlipSprite);
-            WinFlipSprite = reinterpret_cast<Sprite *>(0);
-            Win::flip(&merged);
-            WinFlipSprite = reinterpret_cast<Sprite *>(savedFlag);
+            UnionRect(&WinDirtyRect, &WinDirtyRect, &rect);
+            Sprite *saved = WinFlipSprite;
+            WinFlipSprite = 0;
+            Win::flip(&WinDirtyRect);
+            WinFlipSprite = saved;
             WinDirtyRect.left = 0;
-            WinModalResult = 0;
+            WinDirtyRect.right = 0;
         }
 
-        while (ShowCursor(ebxFlag) <= 0) {
-        }
-        return 0;
+        do {
+            result = ShowCursor(ebxFlag);
+        } while (result <= 0);
+        return result;
     }
 
 lab_default_cursor:
-    WinFlipSprite = reinterpret_cast<Sprite *>(0);
+    WinFlipSprite = 0;
     {
         HCURSOR cur = LoadCursorA(0, IDC_ARROW);
         return reinterpret_cast<int>(SetCursor(cur));
@@ -8861,10 +8867,12 @@ void Win::on_char(char param2, int param3) {
     }
 
     if (matched) {
-        if ((static_cast<uint8_t>(WinDrawFlags) & 1) == 0 ||
-            (WinPopupWindow != 0 && (WinPopupWindow)->is_visible() == 0)) {
+        Win &debug_window = WinBubbleWindow;
+        if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) == 0 ||
+            (debug_window.win_parent_ != 0 &&
+             debug_window.win_parent_->is_visible() == 0)) {
             (&WinBubbleWindow)->show(0);
-        } else if ((static_cast<uint8_t>(WinDrawFlags) & 1) != 0) {
+        } else if ((static_cast<uint8_t>(debug_window.iSomeFlag_) & 1) != 0) {
             if (WinBubbleCompanion == &WinBubbleWindow &&
                 WinBubbleActive != 0) {
                 WinBubbleCompanion = nullptr;
@@ -8880,8 +8888,8 @@ void Win::on_char(char param2, int param3) {
             if (cand == &WinBubbleWindow) {
                 WinPointerOwner1 = nullptr;
                 WinPointerOwner2 = 0;
-            } else if (cand != nullptr && WinPopupCount > 0) {
-                Win **list = WinDialogList;
+            } else if (cand != nullptr && debug_window.child_count_ > 0) {
+                Win **list = debug_window.children_;
                 int i = 0;
                 do {
                     if (list[i] == cand || list[i]->is_descendant(cand)) {
@@ -8890,7 +8898,7 @@ void Win::on_char(char param2, int param3) {
                         break;
                     }
                     i++;
-                } while (i < WinPopupCount);
+                } while (i < debug_window.child_count_);
             }
 
             if (WinPointerOwner3 == &WinBubbleWindow) {
@@ -8900,7 +8908,7 @@ void Win::on_char(char param2, int param3) {
             if (WinPointerOwner4 == &WinBubbleWindow) {
                 WinPointerOwner4 = 0;
             }
-            WinDrawFlags &= ~1;
+            debug_window.iSomeFlag_ &= ~1;
             if (WinFocusWindow == &WinBubbleWindow) {
                 (&WinBubbleWindow)->release_modal();
             }
@@ -8926,7 +8934,7 @@ void Win::on_char(char param2, int param3) {
 
                 InvalidateRect(HandleMain, 0, 0);
 
-                Win *w = WinTopDialog;
+                Win *w = debug_window.val_4_;
                 if (w != 0 && w->vslot_23() == 0) {
                     w->vslot_07();
                 }
@@ -9134,41 +9142,40 @@ void Win::set_caption(char * text) {
 
 // ===== homed from src/unrecovered/005f5140.cpp =====
 
+// ORIGINAL: 0x005F5140 ?bring_parent_to_top@Win@@QAAXPAVWin@@@Z 0x005F5140-0x005F51F7
+// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/unrecovered/005f5140.cpp preserves this identity and span. Original entry loads the sole argument from the stack, never consumes incoming ECX and returns with plain ret; show at0x5EDA3E and on_r_button_down at0x5F672A each push the window and reclaim four bytes. Static versus free historical spelling is not established."], "reason": "Restore the unclaimed original mapping omitted during homing; model the receiver-free root-order operation as a static Win member. The catalogued name is not the recovered calling convention."}
+// symbol    ?bring_parent_to_top@Win@@SAXPAV1@@Z
 void __cdecl Win::bring_parent_to_top(Win * window) {
-    if (window != 0 && (reinterpret_cast<unsigned int *>(window)[0x26] & 0x2000000) == 0) {
+    if (window != 0 && (window->iFlags_ & 0x2000000) == 0) {
         int count = WinRootCount;
         int i = 0;
-        if (count > 0) {
-            while (true) {
-                if (WinRootWindows[i] == window) {
-                    if (i < count) {
-                        int j = i;
-                        while (j > 0) {
-                            WinRootWindows[j] = WinRootWindows[j - 1];
-                            --j;
-                        }
-                        WinRootWindows[0] = window;
-                    }
-                    break;
-                }
-                ++i;
-                if (i >= count) break;
-            }
+        for (; i < count; ++i) {
+            if (WinRootWindows[i] == window) break;
         }
+        if (i < count) {
+            while (i > 0) {
+                WinRootWindows[i] = WinRootWindows[i - 1];
+                --i;
+            }
+            WinRootWindows[0] = window;
+        }
+        int j = 0;
         WinZOrderCount = 0;
         if (count > 0) {
-            for (int j = 0; j < count; ++j) {
-                int cur = reinterpret_cast<int>(WinZOrderWindow);
-                if (cur != 0 && cur == reinterpret_cast<int>(WinRootWindows[j])) {
+            Win *cur = WinZOrderWindow;
+            do {
+                if (cur != 0 && cur == WinRootWindows[j]) {
                     WinZOrderCount = 0;
                     WinZOrderFlag = 0;
                 }
                 Win *w = WinRootWindows[j];
-                if (*(reinterpret_cast<unsigned char *>(w) + 0x9c) & 1) {
+                if (w->iSomeFlag_ & 1) {
                     recurse_zorder(w);
                     count = WinRootCount;
+                    cur = WinZOrderWindow;
                 }
-            }
+                ++j;
+            } while (j < count);
         }
     }
 
@@ -10133,6 +10140,9 @@ void Win::update_window_to_buffer(Buffer * buffer) {
 
 // ===== homed from src/recovered/units/005f6710.cpp =====
 
+// ORIGINAL: 0x005F6710 ?on_r_button_down@Win@@QAEXJHHIH@Z 0x005F6710-0x005F687F
+// RECOVERY_BINDING: v1 {"evidence": ["git show 3cb99d43^:src/recovered/units/005f6710.cpp preserves this identity and span. The body remains in win.cpp beneath its original homing heading. Its parentless path calls the receiver-free root-order helper at0x5F672A; declaration repair changes that ABI without rewriting the handler body."], "reason": "Restore the unclaimed original mapping omitted during homing of the existing right-button handler. This binding is not a matching or behavioral claim."}
+// symbol    ?on_r_button_down@Win@@UAEXJHHIH@Z
 void Win::on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
     typedef void(__cdecl *RawHandler)(int, int);
 

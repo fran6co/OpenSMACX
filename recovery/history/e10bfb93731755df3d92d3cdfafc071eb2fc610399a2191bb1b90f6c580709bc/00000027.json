@@ -1,0 +1,20 @@
+{
+  "event_id": "e119b7218e777754f86c77bc4b7296925b20f5cc203295a397b7258688a286d7",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "source-reader-comment-braces-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Framework master commit 3b09a303867416edf7eca3232fe69b0a6e83fb92 carries actual block-comment context through source/reader.py and shared_source.py; missing local bodies cannot borrow a separately annotated neighbor.",
+      "packages/match-recovery/tests/source/test_roundtrip.py and tests/test_shared_functions.py cover prose braces, quoted delimiters, unterminated blocks, header-homed bodies, shared comment blocks, and same-line close/reopen boundaries; independent review found no remaining blocker.",
+      "recovery/tests/test_wave_device_exports.py now supplies the actual create_device/delete_device/release bodies directly from match_recovery.source record.region to the VC6 lifecycle harness; the temporary anchor-extraction workaround is removed.",
+      "This resolves the extraction defect only. It does not accept the retained C++ migration or resolve the separate Sound-chain ownership and lifetime findings."
+    ]
+  },
+  "previous_event": "0aea352b204fe345340a881f4b54394d31792d090078569151c3d45422089591",
+  "request_id": "source-reader-comment-braces-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:wave-device-control-recovery"
+}

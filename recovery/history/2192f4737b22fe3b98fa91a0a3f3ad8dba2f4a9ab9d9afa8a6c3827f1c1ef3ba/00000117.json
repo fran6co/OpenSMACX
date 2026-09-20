@@ -1,0 +1,26 @@
+{
+  "event_id": "d52b9dea3bb64f3f74fccb0b0731186586fa504717fdf5d2869dad2493fdaf9e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_event_id": "b9935692678b896d7fde92861839781dd7941e85ae88a7f51b797df0bfcc238f",
+    "discovery_id": "remaining-net-popup-clock-aliases-20260920",
+    "evidence": [
+      "Route the remaining Net clock-alias anchor to its existing local owner. NetTimeGetTimeSlot also serves the NetDaemon caller family; read caller evidence before deleting the header helper. This is a request, not scope transfer, acceptance or closure."
+    ],
+    "kind": "discovery_routed",
+    "subjects": [
+      "entity-e60dda83a472993270643d46a89bc5f30062930ccfe82089c518b8d463421169"
+    ],
+    "target": {
+      "base_revision": "edc32903e16080d1607aa9e630adbb13f0c0d951",
+      "history_head": "2c214b390f37d9f0b494cc4f9dd6c51ec3f2d529c97e8fc7948abae2e28e31dd",
+      "task_id": "jackal-voice-ownership",
+      "task_sha256": "30ca2d556fff71413efe9a1cef7b357ad0aaa84daed3c0cd5588eccdfd52342d"
+    }
+  },
+  "previous_event": "8e43dc14d5568aa7206e177bcf59c6024404d70f14924873f8944f9140cd68e9",
+  "request_id": "route-net-clock-import-20260920",
+  "schema_version": 1,
+  "sequence": 117,
+  "stream": "task:infowin-ownership"
+}

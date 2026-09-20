@@ -1,0 +1,26 @@
+{
+  "event_id": "11f570266bc273d0ae4b462aa0948b2a3d76db22a880086fe123798eb557df5f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_event_id": "e37e92ea8e2962d02776baf5b27763fe1e6c4f4acad8e986e9027ae75df6909f",
+    "discovery_id": "worldwin-strict-map-storage-owner-20260920",
+    "evidence": [
+      "system_init is the existing source-owned startup operation that initializes the shared eight-slot map-window table. WorldWin's four view methods fail strict relocation verification while this storage remains an original-address alias. Coordinate real storage with borrowed Console slot zero, owning slots one through seven and separately scoped shutdown/debug-window lifetimes. This request preserves all findings and grants no editing scope, owner activation, baseline reset or acceptance."
+    ],
+    "kind": "discovery_routed",
+    "subjects": [
+      "entity-d6e43b59659158cb5b612147bc93e428b670e3a851d0bd60ec35ef52fd691a59"
+    ],
+    "target": {
+      "base_revision": "6eae6dfbc5cee82b39e282315fb92b9754600251",
+      "history_head": "0eb6f3b15078ad47d03e812362fed1b945da7063f5ad9bd697fa9a41c1f78560",
+      "task_id": "control-sprite-defaults",
+      "task_sha256": "f150544ba67dab431cd5e54f758e90bd08903047ea290095d13409e8fdec4f4f"
+    }
+  },
+  "previous_event": "e37e92ea8e2962d02776baf5b27763fe1e6c4f4acad8e986e9027ae75df6909f",
+  "request_id": "worldwin-request-map-startup-owner-20260920",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:radiobutton-lifetime"
+}

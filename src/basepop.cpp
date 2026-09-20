@@ -1145,7 +1145,7 @@ pump:
     // THE CONFIG CALLBACK, once per caption block, only when the popup has
     // neither the lock bit nor a callback-free config.
     if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-        field_3094_(text_block_a_.text, 1);
+        field_3094_(&text_block_a_, 1);
     }
     hide();
 
@@ -1178,7 +1178,7 @@ pump:
             }
             hide();
             if ((field_30A8_ & 0x400000) == 0 && field_3094_ != 0) {
-                field_3094_(text_block_b_.text, 0);
+                field_3094_(&text_block_b_, 0);
             }
         }
     }
@@ -1879,11 +1879,14 @@ const uint32_t BasePopDefaultField31A0[4] = {247, 7, 248, 2};  // 0x00696F54
 // into text_block_a_ / text_block_b_. All zero until popups_normal and the
 // set_def_* setters fill them; BasePop::close (0x00600f00) restores them
 // from here 70 dwords at a time.
-uint32_t BasePopDefaultBlock2E64[70];  // 0x009B8AB8
-uint32_t BasePopDefaultBlock2F7C[70];  // 0x009B8BD0
+// RECOVERY_OBJECT: v2 0x009B8AB8 0x009B8BD0 ?BasePopDefaultBlock2E64@@3PAIA 0x00600F00
+uint32_t BasePopDefaultBlock2E64[70];
+// RECOVERY_OBJECT: v2 0x009B8BD0 0x009B8CE8 ?BasePopDefaultBlock2F7C@@3PAIA 0x00600F00
+uint32_t BasePopDefaultBlock2F7C[70];
 
 // Copied to +0x3094, the head of the object's third block-sized region.
-uint32_t BasePopDefaultField3094;  // 0x009B8CF8
+// RECOVERY_OBJECT: v2 0x009B8CF8 0x009B8CFC ?BasePopDefaultField3094@@3P6AXPAUBasePopTextBlock@@H@ZA 0x00445CD0
+BasePopConfigCallback BasePopDefaultField3094;  // 0x009B8CF8
 
 // The dword immediately below the class-defaults table, file-backed and
 // shipped as -1. See the note beside the extern in basepop.h.
@@ -1983,8 +1986,7 @@ BasePop::BasePop() {
 
 
     field_30A4_ = static_cast<int>(BasePopDefaultField30A4);
-    field_3094_ = reinterpret_cast<int (__cdecl *)(char *, int)>(
-        BasePopDefaultField3094);
+    field_3094_ = BasePopDefaultField3094;
 
     memcpy(&text_block_a_, BasePopDefaultBlock2E64, 0x118);
     memcpy(&text_block_b_, BasePopDefaultBlock2F7C, 0x118);
@@ -2168,14 +2170,10 @@ void BasePop::close() {
     int i, off;
 
     *(int *)(self + 0x30a4) = BasePopDefaultField30A4;
-    *(int *)(self + 0x3094) = BasePopDefaultField3094;
+    field_3094_ = BasePopDefaultField3094;
 
-    for (i = 0; i < 0x46; i++) {
-        *(int *)(self + 0x2e64 + i * 4) = (int)BasePopDefaultBlock2E64[i / 4];
-    }
-    for (i = 0; i < 0x46; i++) {
-        *(int *)(self + 0x2f7c + i * 4) = (int)BasePopDefaultBlock2F7C[i / 4];
-    }
+    memcpy(&text_block_a_, BasePopDefaultBlock2E64, sizeof(text_block_a_));
+    memcpy(&text_block_b_, BasePopDefaultBlock2F7C, sizeof(text_block_b_));
 
     if (*(void **)(self + 0x3224) != 0) {
         free(*(void **)(self + 0x3224));

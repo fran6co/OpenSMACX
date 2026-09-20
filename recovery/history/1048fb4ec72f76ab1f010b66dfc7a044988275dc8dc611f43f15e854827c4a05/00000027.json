@@ -1,0 +1,22 @@
+{
+  "event_id": "57e5384f98506c0384b702c15a138cc5729855ebcfed35492a8fa495742e5561",
+  "payload": {
+    "affects": [
+      "entity-0640ce735373b916415b26efbc42189c244e8260b61b57bae04639748b33d15a",
+      "entity-55ece8fcf390ffc7a4c45e8222467204db64d474666f220278d7d939737953b1",
+      "entity-aa8f1e638fc607333162b662ba825b3c763f29b8154a8bbb8ab6587f64fc5833"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-window-storage-lifetime-20260919",
+    "evidence": [
+      "Original draw_tile0x0046AF40 establishes eight4-byte MapWin pointer slots [0x007D3C3C,0x007D3C5C). system_init allocates slots1..7 and publishes borrowed ConsoleGlobal in slot0. system_close [0x0058F250,0x0058F2E6) deletes and clears only1..7 but product still forwards to original code. mapwin.h and console.h separately alias the same old storage. Shutdown also requires release_sound, true deleting calls for the opening window, and real MultiDebug global receiver0x009B22F0. Its live CRT initializer0x005C97C0 (slot0x00682668) constructs through0x005C97F0 and registers teardown0x005C97E0->0x005C9E00. Current Win WinBubbleWindow is undersized; separate WinDrawFlags,WinPopupWindow,WinDialogList,WinPopupCount spell members at+0x9C,+0xC4,+0x1A4,+0x3FC; WinTopDialog+0x10 is unresolved. Do not copy aliases or infer full allocation extent from candidate sizeof. Journal-derived infowin-ownership owns Console/game/MultiDebug files and overlaps Win; this finding grants no cross-owner edits. Preserve it for explicit coordinated storage/lifetime recovery, including sound closure; newly matching WorldWin bodies do not resolve it."
+    ],
+    "hypothesis": "The WorldWin view family still depends on address-backed MapWinTable storage. Replacing that alias requires coupled startup/shutdown, Console slot-zero alias and real debug-window ownership recovery; an isolated new array would split state and be wrong.",
+    "kind": "discovery"
+  },
+  "previous_event": "d607c22cdfcbcb4118578ec5acaa6d3714bc06519f49bdb003a0295153a64932",
+  "request_id": "map-window-storage-lifetime-20260919",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:radiobutton-lifetime"
+}

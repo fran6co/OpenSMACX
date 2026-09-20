@@ -703,7 +703,9 @@ class Win : public AutoSound {
  public:
   void __cdecl OnRButtonDown(void * hwnd, long flags, int x, int y, unsigned int keys);
   void __cdecl OnRButtonUp(void * hwnd, int x, int y, unsigned int keys);
-  void __cdecl bring_parent_to_top(Win * window);
+  // Original 0x005F5140 consumes only the stack window argument; both
+  // callers clean it up. There is no hidden receiver (unlike the child lift).
+  static void __cdecl bring_parent_to_top(Win * window);
   void draw_rect_border(int x1, int y1, int x2, int y2, HGDIOBJ pen1, HGDIOBJ pen2, int unused7);
   void remove_child(Win *child);
   void set_caption_height(int height);
@@ -909,14 +911,9 @@ extern int WinDragOffsetX;          // 0x009B7A38
 extern int WinDragOffsetY;          // 0x009B7A3C
 extern int WinMaximizeIcon;         // 0x009B7B04
 extern int WinRestoreIcon;          // 0x009B7B08
-extern int WinModalResult;          // 0x009B6EF0
-extern int WinSavedAreaWidth;       // 0x009B6F88
-extern int WinSavedAreaHeight;      // 0x009B6F8C
 extern int WinSizingFlag;           // 0x009B7AD4
 
 extern int WinModalDepth;           // 0x009B7AE4
-extern int WinPopupCount;           // 0x009B26EC
-extern int WinDrawFlags;            // 0x009B238C
 extern int WinKeyModifiers;         // 0x009B7B18
 extern int WinViewOriginX;          // 0x009B7A70
 extern int WinViewOriginY;          // 0x009B7A74
@@ -949,20 +946,11 @@ extern int WinTrackingY;     // 0x009B7AB4
 // hits, and what they count is not established.
 extern Buffer *WinBackBuffer;         // 0x009B7A68
 extern Win *WinModalFocus;         // 0x009B8D7C
-extern Win *WinPopupWindow;        // 0x009B23B4
-extern Win *WinTopDialog;          // 0x009B2300
 extern Win *WinPendingFocus;       // 0x009B7B38
 extern Win *WinCallbackWindow;   // 0x009B7AB8
 extern Win *WinInputFocus;       // 0x009B7AC4
 extern Win *WinActiveWindow;     // 0x009B7AC8
 extern Win *WinBubbleCompanion;  // 0x009B7A4C
-// The bubble window is an OBJECT at 0x009B22F0, not a pointer to one:
-// every use compares it against real Win pointers and calls methods on it,
-// the same shape as `Buffer ScreenBuffer` at 0x009B7490.
-extern Win WinBubbleWindow;      // 0x009B22F0
-// Iterated to WinPopupCount; the storage runs from 0x009B2494 to that
-// counter at 0x009B26EC, which is 600 bytes - 150 entries.
-extern Win *WinDialogList[150];  // 0x009B2494
 // Indexed by WinZOrderCount. 0x009B6630 to the next named global at
 // 0x009B6E38 is 2056 bytes; 512 entries is 2048 of them, and the last 8
 // bytes belong to something this tree has not named yet.

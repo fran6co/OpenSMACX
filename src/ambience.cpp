@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <mmsystem.h>
 #include "original_seam.h"
 #include "ambience.h"
 #include "sound.h"   // Sound::set_type, reached by cast
@@ -763,7 +764,6 @@ Ambience g_AMBIENCE;  // 0x0074DA40
 // is the one the codegen needs: a dereferenced const pointer folds to the
 // absolute address, where an `extern T` definition would not.
 //
-//   AmbienceTimeGetTime  0x00669368  the timeGetTime import slot
 //   AmbienceClockArmed   0x0074C5E8  byte, set once, gates the first clock read
 //   AmbienceClock        0x0074D8EC  the last clock reading
 //   AmbienceGeneralTick  0x00683C14  clamped to 18, incremented once a pass
@@ -783,8 +783,6 @@ Ambience g_AMBIENCE;  // 0x0074DA40
 //   SAmbienceCents       0x0074DAC8  +100 a pass, wraps +400 back to -300
 //   SAmbiencePass0       0x0074DACC  wraps at 1
 //   SAmbiencePass1       0x0074DAD0  wraps at 7
-static func_time_get_time *const AmbienceTimeGetTime =
-    (func_time_get_time *)0x00669368;
 static uint8_t *const AmbienceClockArmed = (uint8_t *)0x0074C5E8;
 static int *const AmbienceClock = (int *)0x0074D8EC;
 static int *const AmbienceGeneralTick = (int *)0x00683C14;
@@ -858,7 +856,7 @@ int Ambience::set_patch(unsigned int, unsigned int) { return 0; }
 // calls     (none)
 // indirect  0x0044737E 0x0044738B 0x00447399 0x004473E2 0x004473FA 0x00447461
 void MAmbience::general() {
-    func_time_get_time *const get_time = AmbienceTimeGetTime;
+    DWORD (WINAPI *const get_time)() = timeGetTime;
     if ((*AmbienceClockArmed & 1) == 0) {
         *AmbienceClockArmed |= 1;
         *AmbienceClock = get_time();

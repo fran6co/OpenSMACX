@@ -1,0 +1,19 @@
+{
+  "event_id": "d49bc9916d30e5130abf701879df83a8ba2830d316de064b43e1a6e5a1d1c1af",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "sound-missing-fade-root-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sound.h now declares the evidence-backed 0x3C SoundFadeState base and Sound at 0x54, with original member/base bindings; the base name remains provisional. src/sound.cpp binds both observed root setter slots and restores the real Sound constructor and compiler-owned base cleanup. Wave and VoiceTx use that constructor instead of duplicating inherited initialization; VoiceTx also clears its own flags before allocating its name. The originally untouched delay storage remains untouched.",
+      "recovery/tests/test_sound_lifetime.py and sound_lifetime_harness.cpp exercise actual root/Sound/VoiceTx construction, native layout and bounded cleanup evidence, with seven damage controls. Independent review found no remaining scoped blockers after correcting VoiceTx flags initialization and the test observation of untouched delay storage. Cached sound-root-final reports under build/recovery document 53 passing tests, all 233 prior protected matches, and successful fresh build/link. Native recover record banked Sound destructor 0x004C6120 at 62/62; post-record claim continuity passes with 2459 claims and no missing identities.",
+      "This incorporates the missing root, not complete audio recovery or publication acceptance. Sound constructor remains 13/55 mismatch and unclaimed. Root-table complete extent, Sound/Wave slots24/27/28, original-address device/chain references, the separate Ambience intermediate hierarchy, linked preservation and full runtime/structural acceptance remain unresolved. No historical obligations, task baseline or gate was weakened."
+    ]
+  },
+  "previous_event": "866edd0d44f93bfca61ed974b73c3e7894ac4c44b96d2c46724834bd143ab53c",
+  "request_id": "sound-fade-root-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 96,
+  "stream": "task:infowin-ownership"
+}

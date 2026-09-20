@@ -6,7 +6,7 @@ from pathlib import Path
 import shutil
 
 import pytest
-from capstone import CS_AC_READ, CS_AC_WRITE
+from capstone import Cs, CS_ARCH_X86, CS_MODE_32, CS_AC_READ, CS_AC_WRITE
 
 from match_recovery.compiler import Compiler
 from match_recovery.bound_objects import FunctionBinding, check_objects
@@ -14,6 +14,7 @@ from match_recovery.import_source import import_targets, read_imports
 from match_recovery.measurement import Measurement
 from match_recovery.model import Origin, Span
 from match_recovery.object_source import object_targets, read_objects
+from match_recovery.object_data import check_initial_data
 from match_recovery.pe_coff import Coff, PeImage
 from match_recovery.source.reader import read_file
 from match_recovery.source_inventory import image_pin
@@ -97,6 +98,184 @@ def test_live_keyboard_control_rejects_the_old_extra_indirection(tmp_path, monke
     monkeypatch.setattr(harness_support, "read_file", damaged)
     with pytest.raises(AssertionError, match="Assertion failed"):
         test_live_keyboard_bubble_owners_and_mutable_z_order(tmp_path, monkeypatch)
+
+
+@pytest.mark.parametrize("good,bad", [
+    ("debug_window.win_parent_->is_visible() == 0",
+     "debug_window.win_parent_->is_visible() != 0"),
+    ("} while (i < debug_window.child_count_);", "} while (i < 2);"),
+    ("Win **list = debug_window.children_;",
+     "Win *snapshot[4]; for (int k = 0; k < 4; ++k) "
+     "snapshot[k] = debug_window.children_[k]; Win **list = snapshot;"),
+    ("Win *w = debug_window.val_4_;", "Win *w = val_4_;"),
+])
+def test_live_keyboard_controls_require_owned_members_and_fresh_children(
+        tmp_path, monkeypatch, good, bad):
+    reader = harness_support.read_file
+
+    def damaged(path):
+        result = []
+        for record in reader(path):
+            if record.address == 0x5F5FB0:
+                assert record.region.count(good) == 1
+                record = replace(record, region=record.region.replace(good, bad))
+            result.append(record)
+        return result
+
+    monkeypatch.setattr(harness_support, "read_file", damaged)
+    with pytest.raises(AssertionError, match="Assertion failed"):
+        test_live_keyboard_bubble_owners_and_mutable_z_order(tmp_path, monkeypatch)
+
+
+def test_live_hide_reads_flag_value_and_mutable_window_state(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "win_hide_harness.cpp", [
+        ("// LIVE_HIDE", "src/win.cpp", 0x5EDCD0)])
+
+
+def test_live_cursor_uses_shared_storage_and_observable_callback_state(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "win_cursor_harness.cpp", [
+        ("// LIVE_CURSOR", "src/win.cpp", 0x5F1820)], declarations=[
+        ("// LIVE_RESTORE", "src/win.cpp", "void __cdecl restore_flip_sprite(int do_flip) {",
+         "\n\n\n/*\nPurpose: Run the teardown step"),
+        ("// LIVE_RECT_HELPERS", "src/win.cpp", "static void BuildRectDirect(RECT &r) {",
+         "\nnamespace {\n// SCROLL'S SLOT 25")])
+
+
+@pytest.mark.parametrize("good,bad", [
+    ("int destX = screen_x - WinDragOffsetX;", "int destX = hit_x - WinDragOffsetX;"),
+    ("if (tgl == 0)", "if (rect.bottom == 0)"),
+    ("ScreenBuffer.copy(&g_WIN_BUFFER, destX, destY, 0, 0, width, height);",
+     "g_WIN_BUFFER.copy(&ScreenBuffer, 0, 0, destX, destY, width, height);"),
+    ("SetCursor(*win->cursor_handle_)",
+     "SetCursor(LoadCursorA(0, reinterpret_cast<const char *>(*win->cursor_handle_)))"),
+    ("rect.left = WinFlipSpriteY;", "rect.left = destX;"),
+    ("result = WinDirtyRect.right;", "result = 0;"),
+    ("int result = UnionRect(&WinDirtyRect, &rect, &WinDirtyRect);",
+     "RECT merged; int result = UnionRect(&merged, &rect, &WinDirtyRect);"),
+    ("if (WinMouseDirect != 0 || win->cursor_sprite_ != 0)", "if (false)"),
+    ("g_WIN_BUFFER.init(WinClipWidth, WinClipHeight, 0, 0);",
+     "g_WIN_BUFFER.init(reinterpret_cast<int>(win->cursor_sprite_), 0, 0, 0);"),
+    ("} while (result <= 0);\n        return result;", "} while (result <= 0);\n        return 0;"),
+    ("WinFlipSprite = 0;\n            Win::flip(&WinDirtyRect);",
+     "Win::flip(&WinDirtyRect);\n            WinFlipSprite = 0;"),
+])
+def test_cursor_controls_reject_recovered_dataflow_defects(tmp_path, monkeypatch, good, bad):
+    reader = harness_support.read_file
+
+    def damaged(path):
+        result = []
+        for record in reader(path):
+            if record.address == 0x5F1820:
+                assert record.region.count(good) == 1
+                record = replace(record, region=record.region.replace(good, bad))
+            result.append(record)
+        return result
+
+    monkeypatch.setattr(harness_support, "read_file", damaged)
+    with pytest.raises(AssertionError, match="Assertion failed"):
+        test_live_cursor_uses_shared_storage_and_observable_callback_state(tmp_path, monkeypatch)
+
+
+def test_root_registry_and_cursor_rectangle_have_independent_bounded_storage(control_globals):
+    compiler, settings, objects = control_globals
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not path.is_file():
+        pytest.skip("pinned image is required")
+    pin = image_pin(ROOT)
+    image = PeImage(path.read_bytes(), pin)
+    symbols = {"?WinRootWindows@@3PAPAVWin@@A", "?WinDirtyRect@@3UtagRECT@@A"}
+    bindings = [b for b in read_objects(ROOT, pin) if b.symbol in symbols]
+    assert len(bindings) == 2
+
+    def check(obj):
+        return check_initial_data(bindings, {"src/win.cpp": obj}, image, {})
+
+    source = ROOT / "src/win.cpp"
+    before = source.read_bytes()
+    old = b"Win *WinRootWindows[40];"
+    assert before.count(old) == 1
+    for flags, obj in zip(settings.flag_sets, objects["src/win.cpp"]):
+        rows = check(obj)
+        assert all(r["content"] == r["proof"]["boundary"] == "pass" for r in rows)
+        assert {r["symbol"]: r["compiler_storage"]["size"] for r in rows} == {
+            "?WinRootWindows@@3PAPAVWin@@A": 160, "?WinDirtyRect@@3UtagRECT@@A": 16}
+        assert not any("WinModalResult" in s.name or "WinSavedArea" in s.name
+                       for s in obj.symbols.values())
+        damaged = Coff(compiler.overlay(source, {"src/win.cpp": before.replace(
+            old, b"Win *WinRootWindows[64];")}, (), flags + settings.layout_flags))
+        row, = (r for r in check(damaged) if "WinRootWindows" in r["symbol"])
+        assert row["content"] == row["proof"]["boundary"] == "fail"
+    assert source.read_bytes() == before
+
+
+def test_live_hide_control_rejects_flag_value_as_address(tmp_path, monkeypatch):
+    reader = harness_support.read_file
+
+    def damaged(path):
+        result = []
+        for record in reader(path):
+            if record.address == 0x5EDCD0:
+                good = "if ((JackalInitFlags & 1) == 0) {"
+                bad = "if (!(*reinterpret_cast<uint8_t *>(JackalInitFlags) & 1)) {"
+                assert record.region.count(good) == 1
+                record = replace(record, region=record.region.replace(good, bad))
+            result.append(record)
+        return result
+
+    monkeypatch.setattr(harness_support, "read_file", damaged)
+    with pytest.raises(AssertionError, match="Assertion failed"):
+        test_live_hide_reads_flag_value_and_mutable_window_state(tmp_path, monkeypatch)
+
+
+def test_live_root_order_uses_receiver_free_lift_and_mutable_registry(tmp_path, monkeypatch):
+    run_recovered_harness(tmp_path, monkeypatch, "win_root_order_harness.cpp", [
+        ("// LIVE_ROOT_LIFT", "src/win.cpp", 0x5F5140),
+        ("// LIVE_SHOW", "src/win.cpp", 0x5ED9D0)], declarations=[
+        ("// LIVE_ROOT_DECLARATION", "src/win.h",
+         "  static void __cdecl bring_parent_to_top(Win * window);",
+         "  void draw_rect_border(")])
+
+
+def test_root_lift_callers_use_static_cdecl_and_reclaim_one_argument(control_globals):
+    _, _, objects = control_globals
+    helper = symbol_at("src/win.cpp", 0x5F5140)
+    assert helper == "?bring_parent_to_top@Win@@SAXPAV1@@Z"
+    decoder = Cs(CS_ARCH_X86, CS_MODE_32)
+    for obj in objects["src/win.cpp"]:
+        code, _, _ = obj.subject(obj.function(helper))
+        returns = [op for op in decoder.disasm(code, 0) if op.mnemonic == "ret"]
+        assert returns and all(not op.op_str for op in returns)
+        for address in (0x5ED9D0, 0x5F6710):
+            code, relocations, _ = obj.subject(obj.function(symbol_at("src/win.cpp", address)))
+            offset, = (row.offset for row in relocations if obj.symbols[int(row.target)].name == helper)
+            instructions = list(decoder.disasm(code, 0))
+            index, = (i for i, op in enumerate(instructions)
+                      if op.address <= offset < op.address + op.size)
+            assert instructions[index].mnemonic == "call"
+            cleanup = instructions[index + 1]
+            assert (cleanup.mnemonic, cleanup.op_str) == ("add", "esp, 4")
+
+
+@pytest.mark.parametrize("address,good,bad", [
+    (0x5ED9D0, "} while (i < WinRootCount);", "} while (i < count);"),
+    (0x5F5140, "count = WinRootCount;\n                    cur = WinZOrderWindow;",
+     "count = WinRootCount;"),
+])
+def test_live_root_order_rejects_stale_callback_state(tmp_path, monkeypatch, address, good, bad):
+    reader = harness_support.read_file
+
+    def damaged(path):
+        result = []
+        for record in reader(path):
+            if record.address == address:
+                assert record.region.count(good) == 1
+                record = replace(record, region=record.region.replace(good, bad))
+            result.append(record)
+        return result
+
+    monkeypatch.setattr(harness_support, "read_file", damaged)
+    with pytest.raises(AssertionError, match="Assertion failed"):
+        test_live_root_order_uses_receiver_free_lift_and_mutable_registry(tmp_path, monkeypatch)
 
 
 def test_listbox_close_uses_actual_default_targets_and_rejects_swapped_field(control_globals):

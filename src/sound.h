@@ -17,37 +17,80 @@
  */
 #pragma once
 
- /*
-  * Sound class
-  *
-  * Layout not established; its methods reach as far as 0x90, so the
-  * object is at least that large. The only thing pinned here is the vtable
-  * pointer at offset zero, which fade dispatches through; it is held as
-  * opaque storage so no C++ vtable is generated that could disagree with the
-  * original's. The rest is an object for the canary to seed, not a modelled
-  * layout.
-  */
-class Sound {
+#include "vc6_compat.h"
+#include <cstring>
+
+// Provisional behavioral name for the original base published at 0x0066E444.
+// Sound construction initializes this prefix before installing its own table;
+// destruction and the shared unwind cleanup restore the same two-slot table.
+// Both original slots select 0x004482F0. That method reaches fade_38_, while
+// Sound's first additional field is device_ at 0x3C.
+class SoundFadeState {
  public:
-  Sound() { ; }
+  SoundFadeState() {
+    volume_ = 0x7F;
+    pan_8_ = 0;
+    memset(state_C_, 0, sizeof(state_C_));
+    loop_flag_30_ = 0;
+    // The original base does not initialize delay_ or fade_38_. Sound sets
+    // the default interval after constructing this prefix.
+  }
+  virtual int set_fade(unsigned long interval);           // root slot 0
+  virtual int set_fade_interval(unsigned long interval);  // root slot 1
+
+ protected:
+  // Nonvirtual: the original root table has no deleting-destructor slot.
+  // This real destructor lets the compiler own the final base-table store
+  // and the derived constructor's exception cleanup.
+  ~SoundFadeState() {}
+
+  uint32_t volume_;       // 0x04
+  int32_t pan_8_;         // 0x08
+  uint32_t state_C_[9];   // 0x0C..0x2F, zeroed block; element roles unknown
+  uint32_t loop_flag_30_; // 0x30
+  uint32_t delay_;        // 0x34, left untouched by construction
+  uint32_t fade_38_;      // 0x38, remembered nonzero fade interval
+};
+
+// RECOVERY_MEMBER: v1 SoundFadeState volume_ 0x04 0x004C6080
+// RECOVERY_MEMBER: v1 SoundFadeState pan_8_ 0x08 0x004C6080
+// RECOVERY_MEMBER: v1 SoundFadeState state_C_ 0x0C 0x004C6080
+// RECOVERY_MEMBER: v1 SoundFadeState loop_flag_30_ 0x30 0x004C6080
+// RECOVERY_MEMBER: v1 SoundFadeState delay_ 0x34 0x004C6560
+// RECOVERY_MEMBER: v1 SoundFadeState fade_38_ 0x38 0x004482F0
+static_assert(sizeof(SoundFadeState) == 0x3C, "Sound fade prefix extent");
+
+// Sound owns the common 0x54-byte state inherited by the audio classes.
+// The compiler owns its primary virtual table; incomplete method contracts
+// below remain recovery obligations, not an opaque substitute for that table.
+// RECOVERY_BASE: v1 Sound SoundFadeState 0x00 0x004C6080
+class Sound : public SoundFadeState {
+  // Both consumers rethread these common links in the original: Wave's
+  // destruction and Wave_Device::select (0x004C5030). Friendship is this
+  // reconstruction's access policy, not an inferred original access label.
+  friend class Wave;
+  friend class Wave_Device;
+ public:
+  Sound();
   // THE VIRTUAL SET, in the image's own vftable slot order (0x0066E3C0).
   // The compiler now owns the vftable these slots name; Sound's storage no
-  // longer carries a hand-rolled table. Slot 1 and the three FX-region slots
-  // (24/25/26/30 in the image's table) are unrecovered bodies - placeholder
-  // definitions in sound.cpp, semantic debt until named.
+  // longer carries a hand-rolled table. Slot 24 and some derived
+  // implementations of the attribute setter/query remain unfinished.
   virtual int set_fade(unsigned long fade);        // slot 0 (0x4C6580)
-  virtual void unk_slot1();                        // slot 1 (0x4482F0, unrecovered)
+  // Slot 1 is inherited from SoundFadeState (0x4482F0).
   virtual ~Sound();                                // slot 2 (0x4C92D0 ??_GSound)
   virtual int UNK1(int a1);                        // slot 3 (0x4C6430)
   virtual int load(const char *fname);             // slot 4 (0x4C6280)
   virtual int unload();                            // slot 5 (0x4C6440)
-  virtual int play(unsigned int effect);           // slot 6 (0x4C64A0)
+  // VC6 emits an overload group in reverse declaration order. These two
+  // declarations must still produce original slots 6 (argument) and 7 (none).
   virtual int play();                              // slot 7 (0x4C6480)
+  virtual int play(unsigned int effect);           // slot 6 (0x4C64A0)
   virtual int stop();                              // slot 8 (0x4C64D0)
   virtual int fade();                              // slot 10 (0x4C65E0)
   virtual void fade(unsigned long a1);             // slot 9 (0x4C6600)
-  virtual void fade_in(unsigned int a1);           // slot 11 (0x4C6660)
   virtual int fade_in();                           // slot 12 (0x4C6620)
+  virtual void fade_in(unsigned int a1);           // slot 11 (0x4C6660)
   virtual void ramp(int a1, int a2, unsigned int a3);  // slot 13 (0x4C6640)
   virtual int release();                           // slot 14 (0x4C64F0)
   virtual int get_game_hwnd();                     // slot 15 (pure in image; Wave implements)
@@ -60,44 +103,29 @@ class Sound {
   virtual int is_looping();                        // slot 22 (0x4C6690)
   virtual int is_playing();                        // slot 23 (0x4C64C0)
   virtual void unk_slot24();                       // slot 24 (0x448380, unrecovered)
-  virtual void unk_slot25();                       // slot 25 (0x448310, unrecovered)
-  virtual void unk_slot26();                       // slot 26 (0x448320, unrecovered)
-  virtual void unk_slot27();                       // slot 27 (pure in image)
-  virtual void unk_slot28();                       // slot 28 (pure in image)
+  virtual Sound *get_next();                       // slot 25 (0x448310)
+  virtual Sound *get_prev();                       // slot 26 (0x448320)
+  // Pure in the original base; Wave/Effect select 0x004C6F20, whose
+  // stack argument is the mask and whose common return clears eax.
+  virtual int set_attrib(unsigned long attrib);    // slot 27
+  // Pure in the original base table. Wave's table selects get_attrib at
+  // 0x004C6F80; Wave_Device::select consumes the integer result twice.
+  virtual int get_attrib();                       // slot 28
   // THE TAIL, corrected 2026-08-29 against the family tables: the image's
   // Sound table runs to slot 32 with get_time VIRTUAL at 29 (?get_time@@QAEHXZ
-  // at 0x4C66A0 sits between the pure pair and unk_slot30 in 0x0066E3C0,
+  // at 0x4C66A0 sits between the pure pair and get_type in 0x0066E3C0,
   // 0x0066E8C4 and every family table), attach at 31 and detach at 32. The
   // old tail declared get_time non-virtual after detach, which left Sound a
   // slot short and shifted every derived class's own slots one early.
   virtual int get_time();                          // slot 29 (0x4C66A0)
-  virtual void unk_slot30();                       // slot 30 (0x448330, unrecovered)
+  virtual uint32_t get_type();                     // slot 30 (0x448330)
   virtual int attach();                            // slot 31 (0x4C6370)
   virtual int detach();                            // slot 32 (0x4C63D0)
 
  protected:
-  // PROTECTED, not private, because `Wave` is a real derived class - its
-  // own 0x00..0x53 duplicated every one of these fields at the same
-  // offsets until 2026-08-22. Access changes no layout and no codegen.
-  // The fields below are the slice Wave inherits and mirrors at the same
-  // offsets: the loop dword at 0x30, the wrapped device at 0x3C, the flag
-  // dword at 0x40 (bit 0 the loaded bit, plus set_type's class bits), the
-  // heap-owned filename at 0x4C, and the type at 0x50.
-  uint32_t volume_;       // 0x04, low seven bits of set_volume's argument
-  int32_t pan_8_;         // 0x08, set_pan's clamp to [-0x40, 0x3F]
-  uint32_t field_C_;      // 0x0C, IDB field_C..field_2C for the nine dwords
-  uint32_t field_10_;     // 0x10
-  uint32_t field_14_;     // 0x14
-  uint32_t field_18_;     // 0x18
-  uint32_t field_1C_;     // 0x1C
-  uint32_t field_20_;     // 0x20
-  uint32_t field_24_;     // 0x24
-  uint32_t field_28_;     // 0x28
-  uint32_t field_2C_;     // 0x2C
-  uint32_t loop_flag_30_;  // 0x30, IDB `loop_state`
-  uint32_t delay_;        // 0x34, IDB `delay`; set_delay writes it
-  uint32_t fade_38_;      // 0x38, the last nonzero fade/fade-in argument
-  void *device_;
+  // The fade prefix is inherited. Sound owns the wrapped device, loaded/
+  // chain flags, linked-list neighbors, filename allocation and sound type.
+  void *device_;         // 0x3C
   uint32_t flags_40_;
   Sound *chain_prev_;     // 0x44, toward the head slot at 0x90DB20
   Sound *chain_next_;     // 0x48, toward the tail slot at 0x90DB1C
@@ -114,10 +142,15 @@ class Sound {
 // A THIRD witness landed later, from the other direction: 0x54 is exactly
 // where Wave's own fields start (0x004C6774) and where Ambience's do
 // (0x004C84xx), because both constructors inline this whole constructor on an
-// unadjusted `this` before writing anything of their own. Neither is spelled
-// with a Sound base - Sound::~Sound is out of line and a real base would emit
-// a call the original inlines - but both begin with one.
+// unadjusted `this` before writing anything of their own. Both now declare
+// that Sound base; original inlining is not a reason to flatten the hierarchy.
 static_assert(sizeof(Sound) == 0x54, "Sound layout must match the original executable");
+
+// Common active-sound chain, not a Wave-only collection. Sound::attach
+// (0x004C6370) establishes the ends; detach/destruction maintain them.
+// Definitions and bounded original storage bindings live in sound.cpp.
+extern Sound *SoundChainHead;
+extern Sound *SoundChainTail;
 
 void *__fastcall sound_scalar_dtor_redirect(Sound *self, void *,
                                             unsigned int mode);

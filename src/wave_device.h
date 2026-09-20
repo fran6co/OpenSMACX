@@ -138,15 +138,13 @@ extern Wave_Device WaveDeviceGlobal;  // 0x0090D978
 static_assert(sizeof(WaveControlGroup) == 0x18, "group records stride 24 bytes");
 
 
-// The device factory/destroy hooks: two more function-pointer slots beside
-// the creation hook the waves use, consulted by the device lifecycle. The
-// factory builds a device of the requested kind straight into the 0x14
-// field; the destroy hook takes no arguments at all.
+// SoundDllProcs slots 4/5 (original 0x0090DB34/0x0090DB38) are consulted
+// by the device lifecycle. The factory builds a device of the requested
+// kind straight into the 0x14 field; the destroy hook takes no arguments.
+// These are role signatures, not separately allocated globals.
 typedef int(__cdecl func_wave_device_factory)(void **device_slot,
                                               unsigned long kind);
 typedef void(__cdecl func_wave_device_destroy)(void);
-extern func_wave_device_factory *WaveDeviceFactoryHook;  // 0x0090DB34
-extern func_wave_device_destroy *WaveDeviceDestroyHook;  // 0x0090DB38
 
 // The per-group construct/teardown pair the device's own lifetime hands to
 // the CRT vector iterators; both stay rebindable while they double as the
@@ -162,4 +160,3 @@ void __fastcall wave_control_group_dtor_redirect(WaveControlGroup *self,
 
 void __fastcall wave_group_insert_redirect(WaveGroupList *self, void *,
                                            Wave *a1);
-

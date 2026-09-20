@@ -1,0 +1,21 @@
+{
+  "event_id": "10a0e79322ca38dc0b7bdc7249f7bb0fddb4c52af829aa261b876b6ff175e2c5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fx_initialization_harness.cpp",
+      "recovery/tests/test_fx_initialization.py"
+    ],
+    "evidence": [
+      "Authorize the already-scoped FX::init445CD0 producer recovery in fx.cpp, removal of its pending_bodies forwarder, and native seed-derived binding preserving its3089-byte span and seed. Use the real Effect[97], existing Wave globals, Wave_Device singleton, BasePopTextBlock callback/default storage and37 AutoSound defaults. Sound placeholder contracts remain separate pending findings; only set_pitch slot38 is consumed indirectly here and is already independently verified.",
+      "Fresh census of all retained worktree task stores found the FX initializer identity owned only in this infowin task checkout; menu.cpp/pending_bodies are inherited same-task scope, not a new owner. Existing wave.cpp and menu.cpp global definitions may gain source-owned object bindings, with no new duplicate instances or lifecycle changes. Verify call/argument/receiver sequence against pinned instructions, all literals/default block content, damage controls, affected historical matches and fresh build/link. No baseline reset or full acceptance is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "dbc90627b842a7937dcfff188f8ec0ac296f5eea8cb9f689f0d3163ffa3c36b4",
+  "request_id": "fx-init-real-producer-recovery-20260920",
+  "schema_version": 1,
+  "sequence": 89,
+  "stream": "task:infowin-ownership"
+}

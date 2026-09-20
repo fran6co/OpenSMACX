@@ -160,8 +160,7 @@ extern char PopupPendingLink[256];    // 0x007591C8
 extern int PopupPendingLinkFlag;      // 0x007592C8
 
 // shell32 is not in this build's link set, so the one ShellExecuteA call
-// stays a seam over its own import slot - the same non-binding shape as
-// PopupWaveTimeSlot below.
+// stays a separate fixed-address import seam requiring recovery.
 typedef long (__stdcall *func_popup_shell_execute)(void *, const char *,
                                                    const char *, const char *,
                                                    const char *, int);
@@ -267,20 +266,6 @@ int __cdecl pops_no_flags(char *caption, char *label, int value,
 class Wave;
 class FX;
 
-// The popup state the wave callback reads. Only the two fields it touches
-// are carved: the wave index at 0x104 and the armed marker at 0x108 that
-// must be set for anything to sound.
-struct PopupWave {
-  uint8_t opaque_[0x104];
-  int32_t wave_index_;  // +0x104
-  void *armed_108_;     // +0x108
-};
-
-static_assert(offsetof(PopupWave, wave_index_) == 0x104,
-              "the callback reads the index at 0x104");
-static_assert(offsetof(PopupWave, armed_108_) == 0x108,
-              "the callback reads the armed marker at 0x108");
-
 // The callback's dependencies, every one rebindable: the sound-enable flag
 // word (bit 0x400 gates everything), the context whose field at 0x50 turns
 // wave 0x19 into 0x25 for a secret project, the voiceover wave, the
@@ -288,7 +273,6 @@ static_assert(offsetof(PopupWave, armed_108_) == 0x108,
 // the owner whose virtual at 0x138 fires after wave 0x19, and the FX bank
 // that plays effect 0x38 after wave 0x10.
 typedef int (OriginalObject::*func_popup_wave_query)();
-typedef unsigned long(__stdcall func_popup_time_source)(void);
 
 // The four dependencies that are REAL OBJECTS in this binary are reached by
 // their own names: the flag word is `GamePreferences` (game.cpp,
@@ -297,11 +281,9 @@ typedef unsigned long(__stdcall func_popup_time_source)(void);
 // the FX bank is `g_FX` (fx.cpp, 0x00749CF8) - all declared by the headers
 // this file's users already include. The last-played index has no home yet,
 // so it is real storage homed to popup.cpp; in the image it is the
-// zero-initialised dword at 0x0074DAA4 beside the bank. The two inline
-// accessors below are seams that remain, not bindings: each names a single
-// fixed address the tests rebind.
+// zero-initialised dword at 0x0074DAA4 beside the bank. The owner accessor
+// below remains a fixed-address seam; the clock uses the SDK import.
 extern int PopupWaveLastIndex;  // 0x0074DAA4
 inline void *&PopupWaveOwnerSlot() { return *reinterpret_cast<void **>(0x0074DAA0); }
-inline func_popup_time_source *&PopupWaveTimeSlot() { return *reinterpret_cast<func_popup_time_source **>(0x00669368); }
 
-void __cdecl popup_wave_callback(PopupWave *popup, int);
+void __cdecl popup_wave_callback(BasePopTextBlock *popup, int);

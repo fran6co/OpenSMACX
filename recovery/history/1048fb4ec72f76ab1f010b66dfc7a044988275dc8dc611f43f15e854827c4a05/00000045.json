@@ -1,0 +1,18 @@
+{
+  "event_id": "ed499e042862589bde332b0a5d0510571d3db6f41b1f02f1087ad85b9ebd0839",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-root-array-and-dirty-rect-storage-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp now defines40 Win root pointers bounded by independent init/admission and following RECT evidence, plus the separate16-byte WinDirtyRect. The fake WinModalResult scalar and extern are removed; all consumers use WinDirtyRect.right. Initial storage/extent pass for both declared flag sets and the old64-slot overlay fails the native boundary check. Unguarded add_parent remains unchanged; no whole-program bounds safety is claimed.",
+      "Independent read-only original/source review by draw_deck_review found no remaining concrete defect in this bounded repair. All25 control tests pass, including11 cursor dataflow damage cases and both-flag storage damage controls. Full application build/link passes; all108 Win historical byte claims pass on master and candidate. Source integrity and historical identity checks pass with no missing obligations. Cursor and restore bodies still mismatch; no new byte claim, full structure/runtime proof, linked preservation or publication acceptance is granted. Other pending discoveries, task baseline and historical owner conflicts are retained."
+    ]
+  },
+  "previous_event": "9196397af48b05267956ce4a02e69c8843c13672d7cbfcdfacf9d524129adafd",
+  "request_id": "incorporate-win-root-array-and-dirty-rect-storage-20260920",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:radiobutton-lifetime"
+}

@@ -1,0 +1,33 @@
+{
+  "event_id": "65ca2fa0013b8bda5bc5b25dfc059b0a7ea02c2627fdd448d8497fcd3787f005",
+  "payload": {
+    "affects": [
+      "entity-05e936318014f312c95c4fd333a2c718af4c57c5c0004f37116b92e8188ab01c",
+      "entity-239b541d839c2dac4cd4a28d5f1aa5c12123a5219999cec9dadea0f207562b29",
+      "entity-30be0a774eb164d465344bba49909c60d423a1dff081de113aaf87a176aee759",
+      "entity-99fb307f1e35e87b0f0b55b479abb963f1b0f8e84f7e3dbedc532e94c973fe6d",
+      "entity-9bcb21bf562e0fbe5708dd7d1bc605af43cf88c8cfed4aa97d4e328b9fda4024",
+      "entity-9fa098397b71c95f1ec77df097456435dd3d50de859f28b4748880de0052e99a",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5",
+      "entity-ceb55b6c66858badb1e6bd53c9dde954054a3314f9908bc2957a34200f43ab0a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-standalone-static-lifetime-20260920",
+    "evidence": [
+      "original:CRT slot0x00682540 points to initializer0x00462080-0x00462098, which constructs0x007D4060 with hidden most-derived1 and registers0x004620A0-0x004620B4",
+      "original:teardown calls own-part destructor0x00420F90 on0x007F5ACC then GraphicWin destructor0x005D4DD0; receiver equals start+0x21A6C and original vbtable0x0066C870",
+      "original:system_init0x0058F177 allocates0x22480 then calls same MapWin constructor with most-derived1 at0x0058F192, supporting complete-object end0x007F64E0 independently of candidate sizeof; header later-global gap0x22798 is not its size",
+      "source:MapWinTerrainFixupExtra3 remains a fixed pointer; no current initializer/teardown wrapper supplies source-owned storage. Historical init_thunks/guarded_teardowns were retired in24472a5a",
+      "original:shutdown frees/clears owned_ then qualified GraphicWin::close; this is not complete destruction. draw_farm0x0040F0F0 also uses the object and field_1DD6C_ alias0x007F1DCC",
+      "original:mapwin_system_init also initializes independent256-dword region0x007D3C60-0x007D4060 (indices10..65 one, others zero); array end adjacency must not become comparisons between unrelated source objects",
+      "source:other terrain extras correspond to embedded MapWin in WorldClimateWorldWin+0x152C and TutWinBaseWindow+0x1E674, requiring genuine member access rather than new globals. Existing dependencies and task owners remain; this discovery grants no new editing scope"
+    ],
+    "hypothesis": "The standalone receiver 0x007D4060 is a distinct most-derived static MapWin whose current source has no storage owner. MapWinTable migration also needs this real object and native compiler-generated startup/teardown, with system init/shutdown and terrain consumers sharing it. It is neither an array slot nor a separate GraphicWin-only object.",
+    "kind": "discovery"
+  },
+  "previous_event": "dd301637881c5cd39075e2063d7f2bf48fc1f8737bfef047c6cc8da221dbba89",
+  "request_id": "mapwin-standalone-static-lifetime-20260920",
+  "schema_version": 1,
+  "sequence": 53,
+  "stream": "task:radiobutton-lifetime"
+}

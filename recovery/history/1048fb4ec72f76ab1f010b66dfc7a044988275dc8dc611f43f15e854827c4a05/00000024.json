@@ -1,0 +1,30 @@
+{
+  "event_id": "cd28550438f41493c15ebc25f2b5d5049926a60d0b78d4d20c8564b65e24d943",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "Serial bounded coordinator authorization after native measurement terminated. Existing owner already has worldwin.cpp/h and pending_bodies.cpp; remove only the WorldWin destructor forwarder and home its complete genuine destructor with native binding, preserving the seed, full spans and unclaimed state. Add only a v1 binding and original lifetime evidence beside the existing WorldClimateWorldWin definition in map.cpp: journal-derived scopes found no existing map.cpp owner. No v2 extent is authorized from candidate sizeof. Include the existing protected scalar-delete identity for remeasurement only; do not rewrite or remove its wrapper in this step. Other pending forwarders and all unrelated map.cpp code remain untouched. No task baseline reset, claim demotion, acceptance or integration is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4999792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5000304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9310c08c5ea82dbed2cc8c0f48b4e621b37f37a33c5ad018c81e6d31d564c1d3",
+  "request_id": "worldwin-lifetime-source-scope-20260919",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:radiobutton-lifetime"
+}

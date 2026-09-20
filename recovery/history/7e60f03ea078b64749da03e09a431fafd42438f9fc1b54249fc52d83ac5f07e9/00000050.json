@@ -1,0 +1,19 @@
+{
+  "event_id": "d8b69b64b9fc6ecf859ae30254264b0b636ae38452cf66b1ea5eb9c057c64ee6",
+  "payload": {
+    "author": "coordinator",
+    "discovery_id": "net-family-clock-import-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/net_class.cpp and src/netdaemon.cpp now use the real SDK timeGetTime import for the18 owned consumers. Removed NetTimeGetTimeSlot and obsolete typedefs. Preserved existing direct versus cached source calls, timestamp writes and timeout conditions; no hardcoded original clock-slot operand remains in live product code.",
+      "recovery/tests/test_network_clock_import.py verifies the pinned original IAT identity and both compiler trials, including wrong-API, old-slot and mixed-valid/invalid-call controls. The complete focused sound/clock/popup run passed155 tests, all357 selected protected claims across12 TUs reproduced, and a fresh configured application build/link passed. These are bounded checks, not network protocol or whole-image acceptance.",
+      "Independent review identified preexisting clock-capture differences in Net6320E0 and NetDaemon5303B0/530AA0. net-clock-capture-restoration-20260920 stays pending; this resolution covers the import-identity repair only, not full body matching or callback/read-timing equivalence."
+    ]
+  },
+  "previous_event": "74c4752b8b24b626bf25e08c8317d3e438e14154ed5f0a50a6eff79f1805f36e",
+  "request_id": "net-family-clock-import-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:jackal-voice-ownership"
+}

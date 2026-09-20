@@ -1,0 +1,20 @@
+{
+  "event_id": "f2752d6af15712fa505a262f5bf9ebfe840ba6bf545e832584fc7032df6bdca3",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-root-lift-calling-convention-and-live-count-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.h declares bring_parent_to_top as static cdecl: the original accepts one explicit stack window and no hidden receiver. src/win.cpp uses actual flags and Win pointers, retains stable root ordering and reloads count/target after recursion. Static source ownership is the minimal ABI-backed model, not a claim that the original spelling was static rather than free.",
+      "Win::show calls the root operation explicitly and rechecks WinRootCount on every traversal continuation, while refreshing WinZOrderWindow only after recursion. The right-button body remains unchanged and its call now follows the corrected helper declaration. Native bindings restore both lost original identities and unclaimed spans with separate measured emitted-symbol facts.",
+      "recovery/tests/win_root_order_harness.cpp injects both live bodies and the real static declaration. It covers root guards/order, missing and hidden roots, callback shrink/growth and target changes, parent routing and show guards; private damage cases reintroduce stale callback state. test_control_globals.py checks both real compiled callers reclaim one argument and the helper returns without callee stack cleanup. These are bounded behavior and ABI controls, not real object-layout, right-button behavior, root-array extent or game acceptance.",
+      "The coupled defect is incorporated without demoting or banking claims. Broader Win lifetime/storage recovery, strict target verification and instruction matching remain open; all other discoveries and original task baseline remain unchanged."
+    ]
+  },
+  "previous_event": "cdb1e4cd2ffd4408146acfe57a46598da758dbb3b2c59ad5b6f8f16c5d955806",
+  "request_id": "incorporate-win-root-order-coupled-repair-20260920",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:radiobutton-lifetime"
+}

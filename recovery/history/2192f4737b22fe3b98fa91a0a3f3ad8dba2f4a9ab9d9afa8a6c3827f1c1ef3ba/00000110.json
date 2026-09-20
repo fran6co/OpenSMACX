@@ -1,0 +1,18 @@
+{
+  "event_id": "4f5fe3741bc49aad39f56df24c7f1722d2748d655997f898bea482928508db4f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "sound-wave-attribute-setter-override-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/sound.h and src/sound.cpp now declare the real slot27 virtual int set_attrib(unsigned long); the pure original base remains an explicitly unfinished build placeholder. src/wave.cpp has compiler-observed ?set_attrib@Wave@@UAEHK@Z published through native write_symbol without modifying its historical marker, span or byte claim.",
+      "recovery/tests/test_sound_virtual_surface.py verifies original Wave/Effect slot27 targets, strict complete setter bytes/references, typed Sound pointer dispatch and a damage control restoring the old wrong placeholder. All101 focused Sound/Wave/FX/device tests passed; all273 protected bodies across nine TUs reproduce; fresh configured compile/link passed. This resolves this override defect only, not base purity, remaining derived classes, linked preservation, broader discoveries or recovery acceptance."
+    ]
+  },
+  "previous_event": "57f3b3266ed0dff8643c3a3e8a0b49a1d4463f7c84842346f0815ef0d12114dd",
+  "request_id": "sound-wave-attribute-setter-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 110,
+  "stream": "task:infowin-ownership"
+}

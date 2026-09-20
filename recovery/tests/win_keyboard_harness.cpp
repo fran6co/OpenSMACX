@@ -14,11 +14,13 @@ struct ScrollSlots {
 struct Win {
     void *guard;
     unsigned int iSomeFlag_;
+    Win *win_parent_, *val_4_, *children_[4], *descendant;
+    int child_count_, visible, visibility_queries, descendant_queries;
     ScrollSlots *scroll_vert_, *scroll_horz_;
     int released, shown, updated, flipped, activated, fallback, query;
     void on_char(char, int);
-    int is_visible() { return 1; }
-    int is_descendant(Win *) { return 0; }
+    int is_visible() { ++visibility_queries; return visible; }
+    int is_descendant(Win *);
     void show(int value) { assert(value == 0); ++shown; }
     void update_screen(RECT *, int value) { assert(value == 0); ++updated; }
     void flip(RECT *) { ++flipped; }
@@ -30,17 +32,31 @@ struct Win {
         assert(key == 'g' && modifiers == 23); ++fallback;
     }
 };
-Win WinBubbleWindow, other, root1, root2, receiver;
-Win *WinBubbleCompanion, *WinPopupWindow, *WinPointerOwner1, *WinPointerOwner2;
-Win *WinPointerOwner3, *WinPointerOwner4, *WinFocusWindow, *WinTopDialog;
-Win *WinZOrderWindow, *WinDialogList[4], *WinRootWindows[4];
-int WinBubbleActive, WinDrawFlags, WinPopupCount, JackalInitFlags;
+struct MultiDebug : Win {};
+MultiDebug WinBubbleWindow;
+Win other, root1, root2, receiver, parent, child1, child2;
+Win *WinBubbleCompanion, *WinPointerOwner1, *WinPointerOwner2;
+Win *WinPointerOwner3, *WinPointerOwner4, *WinFocusWindow;
+Win *WinZOrderWindow, *WinRootWindows[4];
+int WinBubbleActive, JackalInitFlags;
 int WinZOrderCount, WinZOrderFlag, WinRootCount, WinKeyModifiers = 23;
 RECT WinBubbleRect;
 const char WinMdebugCode[] = "mdebug";
 char WinKeyRing[10], *WinKeyRingCursor;
 void *HandleMain = &receiver;
-int invalidations, traversals, shrink_roots;
+int invalidations, traversals, shrink_roots, mutate_children;
+int Win::is_descendant(Win *window) {
+    ++descendant_queries;
+    if (this == &child1) {
+        if (mutate_children == 1) WinBubbleWindow.child_count_ = 1;
+        if (mutate_children == 2) WinBubbleWindow.children_[1] = window;
+        if (mutate_children == 3) {
+            WinBubbleWindow.children_[1] = window;
+            WinBubbleWindow.child_count_ = 2;
+        }
+    }
+    return window == descendant;
+}
 void InvalidateRect(void *window, int area, int erase) {
     assert(window == HandleMain && !area && !erase); ++invalidations;
 }
@@ -59,11 +75,16 @@ void arm() {
     memset(WinKeyRing, 0, sizeof(WinKeyRing));
     memcpy(WinKeyRing, "mdebu", 5);
     WinKeyRingCursor = WinKeyRing + 5;
-    WinDrawFlags = 1;
+    memset(&WinBubbleWindow, 0, sizeof(WinBubbleWindow));
+    memset(&parent, 0, sizeof(parent));
+    memset(&child1, 0, sizeof(child1));
+    memset(&child2, 0, sizeof(child2));
+    WinBubbleWindow.iSomeFlag_ = 0xa5;
+    WinPointerOwner1 = WinPointerOwner2 = 0;
+    mutate_children = 0;
     JackalInitFlags = 0;
     WinPointerOwner3 = 0;
     WinPointerOwner4 = 0;
-    WinTopDialog = 0;
     receiver.fallback = 0;
 }
 
@@ -75,7 +96,7 @@ int main() {
     receiver.on_char('g', 0);
     assert(WinPointerOwner4 == &other && other.guard == &WinBubbleWindow);
     assert(receiver.fallback == 1 && WinKeyRingCursor == WinKeyRing + 6);
-    assert((WinDrawFlags & 1) == 0);
+    assert(WinBubbleWindow.iSomeFlag_ == 0xa4);
 
     arm(); receiver.on_char('g', 0); assert(!WinPointerOwner4);
     arm(); WinPointerOwner4 = &WinBubbleWindow; receiver.on_char('g', 0);
@@ -87,7 +108,7 @@ int main() {
     WinRootWindows[0] = &root1; WinRootWindows[1] = &root2;
     root1.iSomeFlag_ = root2.iSomeFlag_ = 1;
     WinZOrderWindow = &root1; WinZOrderFlag = 41; WinZOrderCount = 17;
-    WinTopDialog = &other; receiver.on_char('g', 0);
+    WinBubbleWindow.val_4_ = &other; receiver.on_char('g', 0);
     assert(traversals == 2 && invalidations == 1 && other.activated == 1);
     assert(WinZOrderFlag == 0 && WinZOrderCount == 0);
 
@@ -98,6 +119,36 @@ int main() {
     assert(traversals == 1 && WinZOrderFlag == 42 && invalidations == 2);
     arm(); JackalInitFlags = 1; WinRootCount = 0;
     receiver.on_char('g', 0); assert(invalidations == 3);
+
+    // The real object's parent controls visibility; no independent popup alias.
+    for (int visible = 0; visible != 2; ++visible) {
+        arm(); WinBubbleWindow.win_parent_ = &parent; parent.visible = visible;
+        receiver.on_char('g', 0);
+        assert(parent.visibility_queries == 1);
+        assert(WinBubbleWindow.shown == !visible);
+        assert(WinBubbleWindow.iSomeFlag_ == (visible ? 0xa4U : 0xa5U));
+    }
+    arm(); WinBubbleWindow.iSomeFlag_ = 0xa4;
+    WinBubbleWindow.win_parent_ = &parent;
+    receiver.on_char('g', 0);
+    assert(WinBubbleWindow.shown == 1 && !parent.visibility_queries);
+
+    // Child callbacks may shrink/grow the count or replace a later member.
+    // A stale count misses growth or visits child2 after shrink; a copied list
+    // misses replacement. Owner2 exercises the fallback candidate selection.
+    for (int mutation = 0; mutation != 4; ++mutation) {
+        arm(); mutate_children = mutation;
+        WinBubbleWindow.children_[0] = &child1;
+        WinBubbleWindow.children_[1] = &child2;
+        WinBubbleWindow.child_count_ = mutation == 3 ? 1 : 2;
+        child2.descendant = &other;
+        WinPointerOwner2 = &other;
+        receiver.on_char('g', 0);
+        assert(child1.descendant_queries == 1);
+        assert(child2.descendant_queries == (mutation == 0));
+        assert(WinPointerOwner2 == (mutation == 1 ? &other : 0));
+        assert(!WinPointerOwner1);
+    }
 
     // Unmatched input still routes vertical, horizontal, then fallback.
     ScrollSlots vertical = {0, 1}, horizontal = {0, 1};

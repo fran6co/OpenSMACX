@@ -1,0 +1,24 @@
+{
+  "event_id": "2e3cc2b32141e4eed1db22b8b474a11cd8779d18958174b3fede66d968b0b7e0",
+  "payload": {
+    "affects": [
+      "entity-20b07a5db69bc1bc163ed78042bdb130cc20a91587e4973440be6dd772c5e996",
+      "entity-a0733ea3b3a471b2cda158a8320006751b121b4c9fc8b258b3415dcb9b3b42f0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-dirty-rectangle-and-argument-contract-20260920",
+    "evidence": [
+      "Historical lost source mapping is preserved in3cb99d43^:src/unrecovered/005f1820.cpp: original0x005F1820 spans[0x005F1820,0x005F2200), FILE. Current product body is homed under that address heading without its mapping. Restore the original identity with native binding after explicit scope coordination; do not invent a new seed or erase its historical state.",
+      "Independent original stack tracking: prologue subtracts0x30 and saves four registers, placing entry ESP at current ESP+0x40 after balanced stdcall UnionRect. Instruction5F1A61 compares[esp+0x48] (second argument tgl) with zero, not a RECT bottom. The zero branch reaches5F21F8 with EAX still the UnionRect result, not the earlier copy result. Preserve the original return/dataflow while correcting this branch.",
+      "Original update_cursor UnionRect paths mutate global WinDirtyRect and pass its address to flip, unlike the current local merged rectangle. RestoreAndFlip-style original paths clear WinFlipSprite before flip, for example5F18E8 before5F18EE; current helper clears it afterward. This ordering matters to observers and must be modeled/tested together with the rectangle owner.",
+      "The unusual right-to-left result path is a real load:5F1A85 loads[9B6EF0],5F1A8D restores WinFlipClipped,5F1A93 stores that value to[9B6EE8], then returns it. Replace the fake independent scalar with the actual WinDirtyRect.right member, not an invented clear. This extends pending root-array/dirty-rectangle storage discovery; no cursor source edit or acceptance is authorized by the finding."
+    ],
+    "hypothesis": "Repair the cursor dirty-rectangle owner and its operations as a coupled contract, not only a WinModalResult rename: current local merged rectangles, sprite clearing order and tgl interpretation differ from original update_cursor.",
+    "kind": "discovery"
+  },
+  "previous_event": "2ab2faedc33fef839a5c72f3e308df5e86c02d2888eacb7196a2f6695fff8823",
+  "request_id": "win-cursor-dirty-rectangle-and-argument-contract-20260920",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:radiobutton-lifetime"
+}

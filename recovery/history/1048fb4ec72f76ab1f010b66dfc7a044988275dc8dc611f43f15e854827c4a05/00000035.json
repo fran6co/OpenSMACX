@@ -1,0 +1,19 @@
+{
+  "event_id": "3fa14e9206a155e50e5ebd4cb7612f94b917266d0dd2cef5d063fee12f83e651",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-hide-flag-value-address-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp Win::hide now tests JackalInitFlags as an integer value and represents focus_a/focus_b/chosen and the root traversal target as Win pointers. Its existing read order, nullable branches, callback-dependent count/target reloads and val_4_ conversion remain intact. No global/class layout or unrelated method was changed.",
+      "recovery/tests/win_hide_harness.cpp obtains the actual source body through the existing compiler/Wine harness. Direct flag values, a readable even-address/odd-pointee negative control, owner cleanup and mutable root traversal cover this bounded defect; test_control_globals.py deliberately restores the old indirection only in a private test body. These doubles do not establish application layout, actual virtual dispatch or game acceptance.",
+      "The source bug and local pointer representation are incorporated. The original unclaimed mapping is retained; further instruction matching, callee/global binding and surrounding Win lifetime/storage recovery remain open. Incoming BaseButton coordination and all other pending findings are unchanged."
+    ]
+  },
+  "previous_event": "2992953097cf0bff7dd4652049882ba78efb839dcfe3baa96b72b4efa90b871b",
+  "request_id": "incorporate-win-hide-typed-value-repair-20260920",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:radiobutton-lifetime"
+}

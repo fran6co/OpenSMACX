@@ -19,22 +19,16 @@
 #include "mapwin.h"
 #include "buffer.h"
 
-#include "original_seam.h"
 #include "graphicwin.h"
 
  /*
   * WorldWin class
   *
-  * Derives from GraphicWin in the original by ordinary single inheritance -
-  * its constructor calls GraphicWin's on an unadjusted `this` - so unlike the
-  * virtually-derived windows this one is written as the original wrote it and
-  * needs no ABI workaround.
-  *
-  * The layout is not established. The constructor's own fields begin at 0xA14,
-  * immediately after the base, and where the object ends is unknown, so
-  * nothing pins its sizeof and the fields between are not modelled. The
-  * methods recovered here are bare returns that touch no field, which is why
-  * they can be replaced ahead of that mapping.
+  * Ordinary GraphicWin base, two embedded Buffers and a complete MapWin.
+  * Construction at 0x004C4BF0 and destruction at 0x004C4A70 establish that
+  * ownership order. MapWin has its own virtual GraphicWin base; WorldWin
+  * does not gain another virtual-base construction flag from containing it.
+  * The known member layout does not yet establish the complete object extent.
   */
 class WorldWin : public GraphicWin {
  public:
@@ -45,16 +39,15 @@ class WorldWin : public GraphicWin {
   void follow_center(int xCoord, int yCoord);
   void focus(int x_coord, int y_coord);
   void set_center(int a1, int a2);
-  // The image's ??0WorldWin@@QAE@XZ (0x004C4BF0) has ZERO callers in the
-  // image, so this conversion cannot break a call site. The compiler owns
-  // the GraphicWin base, buffer1_, buffer2_ and the vptr installs; the body
-  // keeps only mapWin_'s construct(1) - MapWin's own init is still a
-  // construct-method (mapwin.h's dual-emission wall).
+  void set_detail_map();
+  void set_world_map();
+  void show_all();
+  void hide_all();
+  // Original CRT initializer 0x004C38B0 constructs WorldClimateWorldWin.
+  // Declared members, including mapWin_'s virtual base, construct automatically.
   WorldWin();
-  // 0x004C4A70 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
-  ~WorldWin();
+  // Implicit destruction owns mapWin_, both Buffers and the GraphicWin base.
+  // Its naturally emitted 0x004C4A70 identity is mapped in worldwin.cpp.
   void clear_terrain();
   void on_left_double_click(int a1, int a2);
   void on_left_click(int a1, int a2);
@@ -74,7 +67,11 @@ class WorldWin : public GraphicWin {
   uint32_t field_239C0_;  // 0x239C0
   uint32_t field_239C4_;  // 0x239C4
   uint32_t field_239C8_;  // 0x239C8
-  uint32_t field_239CC_;  // 0x239CC
+  // Remembered map choice, not current visibility: set_detail_map writes 1,
+  // set_world_map (0x004C3990) writes 0, and show_all (0x004C39D0) tests it.
+  // hide_all (0x004C3A40) hides both views without changing the selection.
+  // RECOVERY_MEMBER: v1 WorldWin detail_map_selected_ 0x239CC 0x004C3950
+  uint32_t detail_map_selected_;  // 0x239CC
 
   // Storage the image proves is here: its own methods reach 0x239D4.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -91,4 +88,3 @@ class WorldWin : public GraphicWin {
 extern WorldWin WorldClimateWorldWin;  // 0x008E9F60
 
 // WorldWin's shared click handler is not recovered.
-

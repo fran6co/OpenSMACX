@@ -1,0 +1,22 @@
+{
+  "event_id": "60eb573206c82d04f390e0960bccb9483d326f8c1b2142b539766a0ab53cf428",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "multidebug-callback-and-double-teardown-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "source:src/multidebug.h:static cdecl one-payload timer_callback_daemon; src/multidebug.cpp:init registers the real symbol, callback null-guards payload and invokes virtual redraw",
+      "source:src/multidebug.cpp:complete destructor clears net_ before automatic members/base; native seed-derived binding preserves both original main and cleanup spans. src/pending_bodies.cpp no longer supplies the duplicate teardown forwarder; seed retained",
+      "review:independent original-image review confirms sole payload, caller cleanup, virtual slot62, init timing and normal Time/Font/GraphicWin order with Font/base cleanup states",
+      "verification:build/recovery/multidebug-lifetime-verification-20260920.json in coordinator root records fresh application build/link,181 affected claims, source integrity and no missing historical identities; native recorder banks only newly measured destructor",
+      "verification:recovery/tests/test_multidebug_lifetime.py plus retained WorldWin/Win controls passed; bounded normal control-flow/reference evidence is not full EH/runtime proof",
+      "Scope finding multidebug-static-owner-and-paint-20260920 remains pending. This resolves only implemented callback/destructor defects, not the wrong global owner, missing paint behavior, shared storage, outside-scope preservation or acceptance. Preexisting class-debt growth remains red; no gate or ceiling is weakened."
+    ]
+  },
+  "previous_event": "43cb815c3ff7bbad4b06cc2fffbdff20c94852f5416e54a974841ceefc87bbe3",
+  "request_id": "multidebug-callback-and-destructor-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 62,
+  "stream": "task:infowin-ownership"
+}

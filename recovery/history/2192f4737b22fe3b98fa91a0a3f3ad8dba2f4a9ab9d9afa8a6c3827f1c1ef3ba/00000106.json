@@ -1,0 +1,20 @@
+{
+  "event_id": "8fe52a5be273a91a83b77cfdaad8609cb3c063d2fe4bc6e6d1bca4bc4f7e0209",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_wave_lifetime.py",
+      "recovery/tests/wave_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Authorize bounded Wave destructor repair in already-owned src/wave.cpp and executable controls using real Sound/Wave declarations and actual destructor bodies. Runtime dependency doubles must be explicit; verify derived/base callback stages, device release ordering, chain reattachment, guarded release, ordinary and exceptional destruction. Preserve all source mappings and claims; Wave destructor itself has no historical byte claim. Protected siblings must be remeasured and application must build/link; no automatic migration admission or subsystem acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "508fa31eb6c1191a07c1b74d02e11e6e2ba4f8f334375b464a0d07bab225146f",
+  "request_id": "wave-derived-only-teardown-controls-20260920",
+  "schema_version": 1,
+  "sequence": 106,
+  "stream": "task:infowin-ownership"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "6a7daf0b3d4b30bea832d9f54618d70ffb03dc848012eefe3af1162117cad69e",
+  "payload": {
+    "affects": [
+      "entity-e359dc4db1a4fd599c8017cbab16cdd459e65dd928565edf57f2edf175f6d744"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-hide-flag-value-address-20260920",
+    "evidence": [
+      "Pinned original0x005EDDCB is test byte ptr [0x009BC4B0],1 followed by the return branch. general.cpp defines real int JackalInitFlags with this original-address provenance; general.h declares int. The current reinterpret_cast<uint8_t*>(JackalInitFlags) instead treats small flag bits as an address.",
+      "The original focus and Z-order values are Win receivers or array entries: compares use window pointers and descendant calls consume a Win pointer. Existing locals focus_a, focus_b, chosen and target round-trip those pointers through int, although no arithmetic is needed. Preserve read order, nullable checks, loop reloads and dispatch.",
+      "Incoming BaseButton owner request preserves this same callee relationship. Repairing this source does not transfer its mapping to the other checkout or close its strict-reference, shared-storage, lifecycle or acceptance obligations."
+    ],
+    "hypothesis": "The restored Win::hide source dereferences the value of the integer JackalInitFlags instead of testing the flag object; its local window identities also retain unnecessary integer representations.",
+    "kind": "discovery"
+  },
+  "previous_event": "fa59ad78814bec55cdfcc1c587b32c4f76a78fd7e664261c124966dca697178c",
+  "request_id": "win-hide-flag-value-address-20260920",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:radiobutton-lifetime"
+}

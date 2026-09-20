@@ -1,0 +1,19 @@
+{
+  "event_id": "6075a1a733c337b46b30ffc0d0a4ea46711f35cfc05c6a58f589b2494e94d385",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fx_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Authorize a compiler/Wine harness that inserts the actual FX declaration and five mapped bodies, with an explicit Effect test double recording element lifetime and throwing during construction. This checks bank ordering/unwind/indexing, not real Effect/Wave behavior or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8319bbf7565ce4afc06bc8ad14e7052a731c594bc2722ab53d2a0423f5fdcea9",
+  "request_id": "fx-bank-live-lifetime-control-20260920",
+  "schema_version": 1,
+  "sequence": 71,
+  "stream": "task:infowin-ownership"
+}

@@ -1,0 +1,18 @@
+{
+  "event_id": "dbc90627b842a7937dcfff188f8ec0ac296f5eea8cb9f689f0d3163ffa3c36b4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "wave-placeholder-name-accidental-override-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/wave.h and src/wave.cpp give original4C7080 the provisional nonvirtual name probe_device_chain, with current symbol ?probe_device_chain@Wave@@QAEHH@Z observed from actual compiler output. Its chain-walking body and original mapping/claim are unchanged. Wave and Effect now inherit slot3 Sound::UNK1 at4C6430, returning11 rather than this unrelated helper returning1.",
+      "recovery/tests/test_sound_virtual_surface.py verifies strict helper boundary/bytes/references, observed inherited slot3 and ordinary compiler dispatch/direct helper calls. An overlay restoring the shared UNK1 name reproduces the wrong override. Independent review confirms distinct original behavior. The broader wave-inherited-placeholder-contracts finding remains pending; this resolution establishes neither the complete sound hierarchy nor linked/runtime acceptance."
+    ]
+  },
+  "previous_event": "686254f6f302bdbe839d8a0740505c197ef178ae54b3d2f8d2fc9081241353f2",
+  "request_id": "wave-helper-identity-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 88,
+  "stream": "task:infowin-ownership"
+}

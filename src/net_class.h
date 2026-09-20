@@ -61,14 +61,14 @@ struct IDirectPlay2;
   */
 class VoiceTx : public Sound {
  public:
-  // 0x004C8CC0, a pending_bodies forwarder - not this batch's address.
+  // Original 0x004C8CC0; the body in net_class.cpp follows real base
+  // construction with its own flags clear, name allocation and type setup.
   VoiceTx();
   // NO DECLARED DESTRUCTOR. The old pending_bodies forwarder for 0x004C8DB0
   // is retired: with a Sound base the compiler-generated ??1VoiceTx calls the
-  // REAL, claimed ~Sound (src/sound.cpp) once, which is both a smaller
-  // compiled form and the first teardown path in this tree that runs instead
-  // of faulting. The image's own ??1VoiceTx inlines the whole three-stage
-  // descent and stays unrecovered.
+  // real ~Sound (src/sound.cpp) once. That destructor now has its own real
+  // fade base. The original inlined VoiceTx destruction path still needs
+  // recovery; calling the base alone does not establish complete lifetime behavior.
 
   // THE VIRTUAL SET VoiceTx ADDS OR OVERRIDES, in 0x0066E8C4 slot order.
   // Sound's other slots (set_fade .. detach, 0..32) are inherited untouched.
@@ -245,13 +245,13 @@ static_assert(sizeof(NetAllocationNode) == 0x60,
               "allocation node extent from original allocation and virtual base");
 
 /* One of the sixteen 0x58-byte player slots at Net+0x154. Two independent
-   reads: init() clears the words at 0x0, 0x4, 0x8 and 0xC and ONE BYTE at
-   0x10 over sixteen slots of 0x58 bytes, 0x154..0x6D4; get_player_name
+   reads: init() clears the words at 0x0, 0x4, 0x8 and 0x10 and the byte at
+   0x14 over sixteen slots of 0x58 bytes, 0x154..0x6D4; get_player_name
    (0x00631A20) reads the name text at slot + 0x15 - image 0x169 - stride
    0x58; and check_polling (0x006320E0) reads and writes the DWORD at slot +
    0x10 as a millisecond timestamp (`mov ebx,[edi+0x10]` /
-   `mov dword ptr [edi+0x10],eax`), which is what makes it a dword rather
-   than the byte flag the init store alone would suggest. */
+   `mov dword ptr [edi+0x10],eax`). The separate byte at 0x14 is displayed
+   as Flags by MultiDebug. */
 class NetPlayer {
  public:
   uint32_t field_0_;  // 0x0
@@ -260,7 +260,13 @@ class NetPlayer {
   uint32_t field_C_;  // 0xC
   uint32_t stamp_10_;  // 0x10, timeGetTime() of the last packet from this
                        // player - the staleness clock check_polling reaps on
-  uint8_t field_14_[0x44];  // 0x14..0x57, the name text starts at 0x15
+  // RECOVERY_MEMBER: v1 NetPlayer flags_14_ 0x14 0x005C9920
+  uint8_t flags_14_;
+  // Text starts at +0x15. This covers storage to the independently observed
+  // +0x58 slot boundary, NOT a recovered maximum name length: the original
+  // name capacity and any trailing padding are still unknown.
+  // RECOVERY_MEMBER: v1 NetPlayer name_and_tail_ 0x15 0x00631A20
+  char name_and_tail_[0x43];
 };
 
 struct ServiceList;
@@ -273,6 +279,8 @@ class RemoveAllShim {
 };
 
 class Net {
+  // Original MultiDebug paint 0x005C9920 displays these session/player fields.
+  friend class MultiDebug;
  public:
   // Original construction publishes the primary table at 0x0066EB04.
   // Six slots: original drop_player calls primary slot 5 at 0x00632612.
@@ -483,17 +491,6 @@ extern IDirectPlay2 *NetDirectPlay;
 // still need source-owned storage; they are not aliases of NetDirectPlay.
 uint32_t *const NetReapBusy = (uint32_t *)0x009BE60C;
 uint32_t *const NetKeepAliveBusy = (uint32_t *)0x009BE610;
-
-// The game's imported timeGetTime, as check_polling reads it: the slot the
-// import table hands over, not the function - `NetTimeGetTimeSlot()` returns
-// the live pointer, so the call goes through it the way the image's
-// `call dword ptr [0x669368]` does. wave.h binds the same slot for its own
-// timing; this file keeps its own typedef so the link closure stays
-// self-contained.
-typedef unsigned long(__stdcall *func_net_time)();
-inline func_net_time &NetTimeGetTimeSlot() {
-    return *reinterpret_cast<func_net_time *>(0x00669368);
-}
 
 // Shared receive/queue-copy storage. Original Receive advertises the 0x2000
 // capacity initialized by Net::init, not the old four-byte scalar declaration.

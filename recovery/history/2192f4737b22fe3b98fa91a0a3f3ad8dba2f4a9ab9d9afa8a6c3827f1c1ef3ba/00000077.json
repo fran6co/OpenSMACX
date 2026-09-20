@@ -1,0 +1,26 @@
+{
+  "event_id": "1dc2829b1cf88e625478e3196735e72c8adb79b30694da5aca4d3e9d95f31b90",
+  "payload": {
+    "affects": [
+      "entity-342e830e289adb04ec6b884442a558ee4b48cc1106bd2769d23005b7301a0ba5",
+      "entity-34e86a318084dc2c9eb9d45d6b73217eb9a65940aceacd2cdeb15be4c028e7c6",
+      "entity-90b3be7d514c3d328484973039ce8d84811132d83c047ddfe8e5f24890948619",
+      "entity-b45f8b7bb6aba647522382131954544e265891cb57bd9476ba1ea8b84ffcee22",
+      "entity-c043d38573c83162a964031aad8ede121e10ab8fa95b65f241fe742cb1328c86"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "fx-basepop-typed-callback-dependency-20260920",
+    "evidence": [
+      "Original FX at 0x00445CE6 stores callback 0x004456B0 into global 0x009B8CF8. BasePop::exec at 0x00603693..0x0060369E and 0x0060377E..0x00603789 passes the actual member blocks at this+0x2E64 and this+0x2F7C with flags 1 and 0, cdecl cleanup, and no consumed return value.",
+      "popup_wave_callback reads/writes block+0x104 as the wave index and tests block+0x108 without dereferencing it. BasePop::start writes those as integers parsed from text. Existing PopupWave pointer-shaped armed_108_ and integer-return char callback are unsupported interpretations; the existing complete BasePopTextBlock supplies actual storage without type punning.",
+      "Bounded repair does not recover FX producer, clock/owner seams inside popup callback, or the whole BasePop::exec. Historical markers and claims remain obligations."
+    ],
+    "hypothesis": "FX installs popup_wave_callback into the BasePop default callback; the shared declaration must carry a void cdecl callback on the actual BasePopTextBlock rather than integer storage, an int-returning char callback and a separate aliasing PopupWave prefix struct.",
+    "kind": "discovery"
+  },
+  "previous_event": "6cd8697a0bc0c3e7ce3a5a4b07d87d2e0b9a0e4f35fb4e77796c8f09a49e4387",
+  "request_id": "fx-basepop-typed-callback-dependency-20260920",
+  "schema_version": 1,
+  "sequence": 77,
+  "stream": "task:infowin-ownership"
+}

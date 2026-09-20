@@ -1,0 +1,23 @@
+{
+  "event_id": "3720a0ee73c54ebc269044b6bedcf5b743fb5ac28aba7d5bd6fc511a2a26caa7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/sound_chain_storage_harness.cpp",
+      "recovery/tests/test_sound_chain_storage.py"
+    ],
+    "evidence": [
+      "Serial coordinator work on this retained owner only. Current census of all eight worktrees finds the Sound/Wave files modified only here; preserve all prior WIP, historical source obligations and baselines. This grants no publication or acceptance.",
+      "Original Sound::attach4C6370 stores head90DB20 and tail90DB1C, while detach4C63D0 and destruction4C6120 maintain both through common Sound links44/48. Declare and define bounded real Sound pointer storage in sound.h/sound.cpp, remove original-address Wave accessors, and update this owner Sound/Wave consumers to Sound pointers rather than unsafe Wave downcasts.",
+      "The observed Wave destructor and Wave_Device switch4C5030 both manipulate the common Sound links. Grant those classes explicit C++ friendship for real member access; this access policy is not a claim about original private/protected spelling. Wave_Device edits belong to its separate existing owner and are performed serially under its own authorization.",
+      "Use original instruction/initial-data witnesses, native strict reference checks, real attach/detach runtime and damage controls, historical-claim restoration and fresh build/link. The wrong or incomplete Sound virtual slots and duplicate Wave base teardown remain independent pending findings; do not fabricate their recovery or demote obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "880fe51fb5f3eea5eb1629e0b7742ced1cb158af21bf83820e0bee104e513bfc",
+  "request_id": "sound-chain-storage-owner-20260920",
+  "schema_version": 1,
+  "sequence": 101,
+  "stream": "task:infowin-ownership"
+}

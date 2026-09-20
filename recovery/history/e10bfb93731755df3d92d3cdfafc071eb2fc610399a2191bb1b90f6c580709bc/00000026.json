@@ -1,0 +1,21 @@
+{
+  "event_id": "0aea352b204fe345340a881f4b54394d31792d090078569151c3d45422089591",
+  "payload": {
+    "affects": [
+      "entity-568a30d426077830ce36abfa1389ac7b9d00c9971fa2c6f477e2d39bf13dc4cd"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "source-reader-comment-braces-20260920",
+    "evidence": [
+      "Observed while extracting actual create_device for runtime control: read_file reports an empty extract_error but region begins at // ORIGINAL inside the existing block comment, includes bare Return Value prose and the closing delimiter, and omits /*. The current test temporarily selects the actual definition between unique source anchors.",
+      "Independent synthetic read_text reproducer: block comment with ORIGINAL401000, a TRIED note containing if(x){return0;}, bare Return Value prose, closing comment, then int f(){return0;} reproduces missing opener. source/reader.py _extract_forward_text infers a surrounding comment by searching for */ only before the first raw brace, which counts a brace inside a comment. Correct lexical comment context in the reusable package and remove the test workaround; preserve marker identities, code regions and source roundtrips."
+    ],
+    "hypothesis": "Framework function-region extraction can lose an enclosing block-comment opener when historical notes contain a brace, returning invalid standalone C++ without an extraction error.",
+    "kind": "discovery"
+  },
+  "previous_event": "8d47854a47b5671c88992195f39b72b3774cfbbe720f1a869184a1bb57fc3c76",
+  "request_id": "source-reader-comment-braces-20260920",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:wave-device-control-recovery"
+}

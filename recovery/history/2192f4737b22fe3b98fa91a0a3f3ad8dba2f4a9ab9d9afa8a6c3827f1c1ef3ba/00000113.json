@@ -1,0 +1,24 @@
+{
+  "event_id": "8777bbe7a285c38d9e92f5f4a40d4d9d993d6b91906de7e31cf0f640df7db23a",
+  "payload": {
+    "affects": [
+      "entity-129ed02b95888a770e58daa044b3f3c0f0430bcda9d6615f5f108f36403702ed",
+      "entity-693d63fa5498f0e470908dd615ece8bf659f007a24d0eda73630c53a18757661",
+      "entity-6a9db2b68c0e8c85966d783ff7d36ee0210a13bbdd45ef03f281a97f91d2287e",
+      "entity-77d640053ed7ba972be4265dbb3a6466f69fa17cc699d53b7456a196e12e5596"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "wave-game-ambience-clock-import-20260920",
+    "evidence": [
+      "Fresh pinned PE import enumeration identifies WINMM.dll name:timeGetTime uniquely at0x00669368. Original Wave4C6B2B and4C698E call that IAT slot; game_init loads it into esi at58F2F4 and calls esi at58F304/58F30F; MAmbience::general loads it into edi at44736C and calls edi at44737E/447399. CMake already links winmm; use the SDK declaration, not an executable-address alias.",
+      "Read-only ownership census of all eight registered checkouts finds no existing owner for game_init58F2F0 or MAmbience::general447360. Wave subjects are already owned locally. Net and popup have separate related aliases; this finding and authority cover only these four consumers, not their existing owners or the unresolved Ambience state bank."
+    ],
+    "hypothesis": "Wave and game_init read the original fixed timeGetTime IAT address, and MAmbience::general incorrectly calls that slot address as code. Use the SDK dllimport and source-owned original import identity, preserving the once-loaded/twice-called function pointer in game_init and MAmbience::general.",
+    "kind": "discovery"
+  },
+  "previous_event": "1e8fd2945f0a2296c2fa9f608311bb386a55192e01f70d01b4091741c85afe5c",
+  "request_id": "wave-game-ambience-clock-import-20260920",
+  "schema_version": 1,
+  "sequence": 113,
+  "stream": "task:infowin-ownership"
+}

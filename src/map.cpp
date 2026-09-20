@@ -3533,10 +3533,10 @@ uint32_t WorldClimateSkipTerritoryReset;  // 0x009B22EC
 // `if ((GameState & 0x80) != 0 && WorldClimateRedrawRequest != 0)
 //      console_map_win()->clear_terrain(), draw_map(1);`
 uint32_t WorldClimateRedrawRequest;  // 0x009B22E8
-// The process-wide WorldWin, torn down/built at this same fixed address
-// elsewhere (the retired atexit_thunks.cpp / init_thunks.cpp).
-// THE WORLD-CLIMATE WINDOW - the one definition; worldwin.h declares it, so
-// game.cpp names this object instead of casting the address.
+// Original CRT table slot 0x00682604 selects initializer 0x004C38B0, which
+// constructs this WorldWin and registers teardown 0x004C38D0. That teardown
+// destroys the same receiver at 0x008E9F60. Its complete extent is not yet proven.
+// RECOVERY_OBJECT: v1 0x008E9F60 ?WorldClimateWorldWin@@3VWorldWin@@A
 WorldWin WorldClimateWorldWin;
 
 // veh_init (0x005C03D0) is still an archived body with no product definition,

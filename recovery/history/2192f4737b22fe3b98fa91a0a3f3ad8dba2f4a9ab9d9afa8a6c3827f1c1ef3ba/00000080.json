@@ -1,0 +1,20 @@
+{
+  "event_id": "57f4a269c67d0283d5c5d1e7788c950e63c126e5d44861f19fd2c41bd0849bb9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "fx-basepop-typed-callback-dependency-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/basepop.h now declares BasePopConfigCallback as void cdecl(BasePopTextBlock*, int), shared by the default pointer and stored member. Constructor and close use typed assignment; BasePop::exec and Popup::on_exec pass actual member addresses. src/popup.h no longer invents an unrelated PopupWave prefix with pointer-shaped armed storage; popup_wave_callback consumes the real integer fields104/108.",
+      "Original producer445CE6 and caller60369C/603787 witnesses are recomputed in recovery/tests/test_popup_wave_callback.py. Compiler-observed callback symbol ?popup_wave_callback@@YAXPAUBasePopTextBlock@@H@Z is recorded beside the unchanged original identity; the observed default symbol has a v2 binding for9B8CF8..9B8CFC with fresh four-byte zero-initial-storage verification.",
+      "The actual callback-body runtime harness covers preferences, null input, index boundaries, integer enable flag, clock residues, busy waves, index remapping and notifications using explicitly limited dependency doubles. Six behavior-damage controls reject mutations; combined callback/defaults/FX/AutoSound suite passes37tests with no skips. All81 previously passing protected BasePop/Popup bodies remain passing; the callback retains its prior70/72 mnemonic-only result, without claim promotion.",
+      "Independent worldwin_source review found no final blockers. Fresh historical identity check retains2458claims with no missing requirements; annotation integrity passes; fresh full application build/link passes. This incorporates the shared callback-interface defect only. FX::init remains unrecovered; fx-wave-virtual-pitch-dependency-20260920 and the broader AutoSound producer finding remain pending. Dependency doubles and build success are not linked selection, task acceptance or game acceptance."
+    ]
+  },
+  "previous_event": "dd9717ba1fc2d0ce518909038bca99eb04619a6d6854f822815257abd57611c3",
+  "request_id": "basepop-typed-callback-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 80,
+  "stream": "task:infowin-ownership"
+}

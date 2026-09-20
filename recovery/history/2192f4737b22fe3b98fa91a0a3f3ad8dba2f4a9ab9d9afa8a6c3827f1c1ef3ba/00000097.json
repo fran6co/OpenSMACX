@@ -1,0 +1,24 @@
+{
+  "event_id": "5792db2e3a50bfc0d998686f087cbcb36d241cb506f6d240a9a367e9ca92d62b",
+  "payload": {
+    "affects": [
+      "entity-1bccfb1a9527e60e3a3b33221bf8e0a4677573b28112acc59b6e779f28be2311",
+      "entity-4f8779035252fa03db316a1e0d16c933e06600a50d07f7b5fd0ab26ab226ec3f",
+      "entity-6c4d1d6b1ed65393cb9f45942bd0e6ba5576e3b1c0a83c6af0f3b15b23f57d24"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "ambience-intermediate-lifetime-20260920",
+    "evidence": [
+      "src/ambience.h currently declares Ambience directly derived from Sound. src/ambience.cpp records original constructor4C8460 table stages66E444,66E3C0,66E538,66E664, but implements it as Ambience::construct with raw self-offset access. The newly recovered SoundFadeState/Sound base covers only the first two stages.",
+      "Existing image-derived evidence at src/ambience.cpp constructor/destructor notes ties seed src/unrecovered/004c75b0.cpp to the prefix ending at table66E538 and describes4C7670 as a base-level destructor. Tables66E538 and66E664 reportedly differ in destructor/load/unload; independently recheck the image and all affected callers before choosing Midi as the actual owner or changing mappings. src/midi.h has no recovered explicit constructor.",
+      "This records a separate pending finding, not edit permission, an accepted hierarchy, a waived matching obligation or a reason to discard the correct Sound root. Obtain scope and preserve seed/product mappings before recovery."
+    ],
+    "hypothesis": "Ambience still flattens an intermediate Midi-like lifecycle stage and exposes its original constructor as an ordinary construct method. Recover actual constructor/destructor ownership and inheritance before optimizing the constructor spellings; catalogue names alone do not establish ownership.",
+    "kind": "discovery"
+  },
+  "previous_event": "d49bc9916d30e5130abf701879df83a8ba2830d316de064b43e1a6e5a1d1c1af",
+  "request_id": "ambience-intermediate-lifetime-20260920",
+  "schema_version": 1,
+  "sequence": 97,
+  "stream": "task:infowin-ownership"
+}

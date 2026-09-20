@@ -1,0 +1,23 @@
+{
+  "event_id": "ba5a950839f8e27a0eae9763987cb06b0fbfa9553c003488d4575d1f2f2d7447",
+  "payload": {
+    "affects": [
+      "entity-0fdee156193e61dfdda598c07a72235cdb29fb48be8f4d47ed41e4bb75d0d63d",
+      "entity-8b107288ce737a08952c0df117493c15abab29af94ef5e4940273121d40f7c2d",
+      "entity-aa8f1e638fc607333162b662ba825b3c763f29b8154a8bbb8ab6587f64fc5833",
+      "entity-caf767e9ae12eb97966288e728c0c980b768929d136627f24b9a578a6be68ea9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "worldwin-view-family-20260919",
+    "evidence": [
+      "Pinned original fully decodes 0x004C3990-0x004C39CB,0x004C39D0-0x004C3A39,0x004C3A40-0x004C3A6B. Set_world writes zero to this+0x239CC; show_all only tests that member, and hide_all does not write it. All use the second MainInterface ButtonGroup and distinct map/global receivers. Map calls dispatch through the virtual GraphicWin base; global calls directly select Win bodies. Existing seed claim on set_world remains an obligation. Win::show has unchanged product body in win.cpp but its unclaimed0x005ED9D0-0x005EDCCB mapping disappeared at3cb99d43. Journal-derived ownership across master and all retained workers finds these four identities unassigned; affected WorldWin and Win files already belong to this owner. Caller-search coverage is incomplete, and shared map storage/lifetimes remain unresolved."
+    ],
+    "hypothesis": "WorldWin detail selection, world selection, show_all and hide_all form one view-state family. Recover the remaining real member bodies together; direct Win::show also lost its source mapping during homing.",
+    "kind": "discovery"
+  },
+  "previous_event": "cd28550438f41493c15ebc25f2b5d5049926a60d0b78d4d20c8564b65e24d943",
+  "request_id": "worldwin-view-family-20260919",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:radiobutton-lifetime"
+}

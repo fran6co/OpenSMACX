@@ -1,0 +1,22 @@
+{
+  "event_id": "e37e92ea8e2962d02776baf5b27763fe1e6c4f4acad8e986e9027ae75df6909f",
+  "payload": {
+    "affects": [
+      "entity-0640ce735373b916415b26efbc42189c244e8260b61b57bae04639748b33d15a",
+      "entity-55ece8fcf390ffc7a4c45e8222467204db64d474666f220278d7d939737953b1",
+      "entity-d6e43b59659158cb5b612147bc93e428b670e3a851d0bd60ec35ef52fd691a59"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "worldwin-strict-map-storage-owner-20260920",
+    "evidence": [
+      "Fresh native radiobutton-lifetime check-binary against master69e0c3f5 plus retained WorldWin source compiled56 units/trials. All four view bodies have zero differing non-reference bytes, but strict checks fail missing absolute relocations for the MapWinTable[1] operand: offsets28 in set_detail_map/set_world_map,15 in hide_all, and28/74 in show_all. Current mapwin.h map_win_table casts literal0x007D3C3C to an array pointer. This is a real source-storage defect, not another spelling problem. Existing finding map-window-storage-lifetime-20260919 preserves eight-slot extent, borrowed Console slot0, owning slots1..7 and shutdown/debug-window dependencies. Fresh journal-derived ownership corrects the earlier file-only interpretation: system_init0x0058F040 is owned by control-sprite-defaults, while system_close0x0058F250 is currently unassigned by entity (game.cpp participates in other file scopes). Request startup-owner coordination and separately authorize missing shutdown identities before editing; no isolated replacement array, placeholder teardown or original-address alias is admitted. Destructor/runtime and linked-preservation unknowns remain separate."
+    ],
+    "hypothesis": "Fresh strict checks reject the WorldWin view family despite matching instruction bytes because MapWinTable still embeds original address0x007D3C3C instead of source-owned relocatable storage. Recover that storage together with its actual startup/shutdown owners; do not weaken the comparator or treat the four measured bodies as accepted.",
+    "kind": "discovery"
+  },
+  "previous_event": "f7b345b9e5b21e0c732367f76726c4a17a13b74fbe39c9bc9ac7f85f6658cbbf",
+  "request_id": "worldwin-strict-map-storage-owner-20260920",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:radiobutton-lifetime"
+}

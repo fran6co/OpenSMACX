@@ -1,0 +1,18 @@
+{
+  "event_id": "c9e3dc7aee28cdc9faf3d26fb30908f2f3e321874397762678cd47a8ae0fca76",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "win-cursor-poll-result-contract-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp returns the positive final ShowCursor result and preserves the final saved-sprite restoration order. Runtime controls cover skip-selection paths and reject the old unconditional zero return. The separately recorded conditional-poll finding retains the two original early-return predicates.",
+      "Independent read-only original/source review by draw_deck_review found no remaining concrete defect in this bounded repair. All25 control tests pass, including11 cursor dataflow damage cases and both-flag storage damage controls. Full application build/link passes; all108 Win historical byte claims pass on master and candidate. Source integrity and historical identity checks pass with no missing obligations. Cursor and restore bodies still mismatch; no new byte claim, full structure/runtime proof, linked preservation or publication acceptance is granted. Other pending discoveries, task baseline and historical owner conflicts are retained."
+    ]
+  },
+  "previous_event": "2121efcec6b427cb149341e2a247c684a3782393d709880fbfc36dd4b44e5f08",
+  "request_id": "incorporate-win-cursor-poll-result-contract-20260920",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:radiobutton-lifetime"
+}
