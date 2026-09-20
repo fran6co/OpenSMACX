@@ -29,6 +29,7 @@
 #include "imagebutton.h"
 #include "map.h"       // MapLongitudeBounds / MapLatitudeBounds / MapIsFlat / map_tiles
 #include "general.h"   // mem_get, and the game-state flags the painters read
+#include "strings.h"   // StringTemp is also the shared main-caption scratch buffer.
 #include <cstring>
 #include <stdlib.h>
 
@@ -146,9 +147,6 @@ void MapWin::do_image_buttons() {
 // MapWin::main_caption also selects its complete receiver at 0x007AE820.
 // RECOVERY_OBJECT: v1 0x007AE820 ?MainInterfaceGlobal@@3VMainInterface@@A
 MainInterface MainInterfaceGlobal;  // 0x007AE820
-// AN ARRAY: the image pushes 0x009B86A0 as an immediate. Extent is a
-// floor - nothing recovered bounds the writes.
-char MapWinMainCaption[256];  // 0x009B86A0
 
 /*
 Purpose: Push the map's caption into the main interface's date field. The
@@ -165,7 +163,9 @@ Return Value: n/a
 Status: Complete
 */
 void MapWin::main_caption() {
-    MainInterfaceGlobal.set_date(MapWinMainCaption);
+    // The original pushes the same scratch storage used by the string
+    // producers, not an independent caption allocation.
+    MainInterfaceGlobal.set_date(StringTemp);
 }
 
 

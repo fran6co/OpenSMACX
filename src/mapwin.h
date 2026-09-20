@@ -364,12 +364,6 @@ class MapWin : public virtual GraphicWin {
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");
 
 
-// MapWin::main_caption sets the date on the one MainInterface the original
-// keeps at a fixed address, using a caption that also lives at one.
-typedef void (OriginalObject::*func_set_date)(char *);
-extern func_set_date MainInterfaceOriginalSetDate;
-extern char MapWinMainCaption[256];
-
 // 0x004710E0, still an original body (src/unrecovered/004710e0.cpp); the
 // definition in pending_bodies.cpp forwards to it. desktop_close tears the
 // map-window system down between the window closes and the final hide.
