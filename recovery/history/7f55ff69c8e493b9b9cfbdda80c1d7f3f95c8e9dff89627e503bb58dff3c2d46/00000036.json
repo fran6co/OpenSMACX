@@ -1,0 +1,25 @@
+{
+  "event_id": "95780bdf8a2a6eb954fcbee86c23acc8522c0b3bc6cbe34954fdeb141cd6e2e8",
+  "payload": {
+    "affects": [
+      "entity-27cc156a4330fe115a50e45e9bc4508653556611f66d0917a867d11e9a3b91c0",
+      "entity-81ecc869f5374e2a5164a5ed04c2c82873cb7a6961408cdb54e072a6cd60ed49",
+      "entity-8fae3078e33d1b07ac206b8a54241b18b233765f46ab56a4acb81452cde5259e",
+      "entity-cfa10ce30516e830921120dcc63b5ae351b0b55b391b1750ba0b3ab10df68514"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-radius-console-storage-followup-20260920",
+    "evidence": [
+      "Fresh read-only original inspection bounds draw_radius to46A2A0..46A496. It calls seed-only gen_radius469190 before cursor overlay gates, then existing compute_clip, Texture draw_trans, GraphicWin soft_update and do_all_draws. Preserve post-gen_radius state reads, negative/zero/positive draw modes, cylindrical viewport wrapping and signed zoom<=-8. Four existing product callees do not make gen_radius implemented.",
+      "ConsoleGlobal starts9156B0. Existing Console fields23BF8,23C00,23C08,23C10[32],23C90[32] correspond exactly to9392A8,9392B0,9392B8,9392C0,939340. Current EditorGenerateUndoDepth, raw CursorDrawSuppressed and standalone CursorLastIndex/X/Y compete with those fields. Constructor/reset and cursor methods already write the relative fields. The header assertion that the last-position cache is distinct is not established by this overlap; verify original constructors and producers before migrating all consumers.",
+      "Both radius Texture owners already exist; shared vertex storage7D3BE8 has no product owner and Vert remains opaque. GraphicWin genuinely inherits Buffer, so no manual vbtable receiver arithmetic is needed. gen_radius also reaches unfinished terrain, overlays and drawing dependencies. This finding requests later ownership scope; it does not authorize placeholders as completed behavior or grant new source edits."
+    ],
+    "hypothesis": "The remaining MapWin radius renderer needs Console-owned cursor storage rather than additional standalone globals, plus genuine shared vertex storage and its gen_radius dependency closure.",
+    "kind": "discovery"
+  },
+  "previous_event": "7478a61782312a016f5210f4292e4689712c0f87defb59dcedf4151690edaec2",
+  "request_id": "map-radius-console-storage-followup-20260920",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:vector-value-semantics"
+}

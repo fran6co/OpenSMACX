@@ -1,0 +1,27 @@
+{
+  "event_id": "93078f819969c97b450e4785c313522328529d62c3fd3c9fa7188ddd32f77bf5",
+  "payload": {
+    "affects": [
+      "entity-08159b4b53bc2401ddb7e4f0eea363e3f8e8d982f4debd560c22f81cf2b25c13",
+      "entity-3b59389650c8821e1bba929423d8969e7c09c052690022ae22e94c3389bbadfa",
+      "entity-3e51e221834c501c9dd2cb8f41603062da26b1b8e56feb3d4e4ffe1075d218e0",
+      "entity-471ab29057a090aa887b19c808bfcb89900ba39a1e378ccca4a31699977e36d4",
+      "entity-69c52b8e7b299fc0ab2c5563803c3c2379cc036e5d60154b7d523ef059de7308",
+      "entity-d677dbd8cc0d679d411efa54a0727c5d82f0bccd152d45f93f4a5bea5ad48315"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vector-definition-order-restoration-hypothesis-20260920",
+    "evidence": [
+      "Read-only review of retained lifecycle decks finds destructor-before-close ordering throughout. The earlier ordinary-destructor baseline also changed constructor visibility. A before/after ordinary-destructor diagnostic with the working inline constructor would isolate this untested ordering axis; out-of-line destruction alone would still lose veh_scoot singleton direct-close inlining.",
+      "If order affects codegen, all TUs could share token-identical inline destructor definitions while vector.cpp encounters ordinary close first and veh.cpp does not. A declarations/inline-definitions header split can be valid C++; do not use conflicting definitions, fake exports, emission anchors or compiler flag changes. Any emitted destructor copies and their final selection remain proof obligations, especially if vector.cpp emits a clearing body instead of the original close tail jump.",
+      "No experiment or source change has been made for this hypothesis. Three historical arithmetic matching obligations and all existing lifetime/caller obligations remain open. Preserve original task baseline and the coordinator-reviewed integration limitation."
+    ],
+    "hypothesis": "Vector cleanup visibility may depend on where VC6 encounters the destructor definition relative to ordinary close; a shared inline-definition header split is a standard-compliant hypothesis, not a measured fix.",
+    "kind": "discovery"
+  },
+  "previous_event": "95780bdf8a2a6eb954fcbee86c23acc8522c0b3bc6cbe34954fdeb141cd6e2e8",
+  "request_id": "vector-definition-order-restoration-hypothesis-20260920",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:vector-value-semantics"
+}
