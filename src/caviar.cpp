@@ -3124,11 +3124,6 @@ float __cdecl vox_stage_scene(void *record, void *state, void *view, int step,
         record, state, view, step, scratch_a, scratch_b);
 }
 
-// The matrix operations share VOX_Matrix's actual three-float row type.
-void __cdecl vox_matrix_vector_mul(const float (*)[3], const float *, float *);
-void __cdecl vox_matrix_matrix_mul(const float (*)[3], const float (*)[3],
-                                  float (*)[3]);
-
 // 0x0063A280. Four arguments, the draw's four.
 OPENSMACX_NOINLINE
 void __cdecl vox_load_scene_view(void *record, void *state, void *view,
@@ -4310,3 +4305,68 @@ void Caviar::init() {
     field_74_ = field_68_;
     field_4_ |= 1;
 }
+
+// All cofactors are formed before any destination write. This preserves the
+// inverse's in-place/overlapping behavior, unlike the sequential multiply.
+// A zero determinant is not special-cased in the original arithmetic.
+// ORIGINAL: 0x00627F50 ?vox_matrix_inverse@@YAXPAY02$$CBMPAY02M@Z 0x00627F50-0x006280DF
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original body, complete seed extent, and fresh VC6 symbol observation; recovery/tests/test_caviar_geometry.py checks original expression trees and bounded host behavior.", "Inverse snapshots cofactor inputs before stores and has no singular guard; cross preserves sequential overlapping writes; rotation uses scoped x87 intrinsics and reads all angles before stores. Numerical spill precision is not established by these structural bindings."], "reason": "Source-owned voxel geometry with typed matrix rows and original arithmetic/store ordering."}
+void __cdecl vox_matrix_inverse(const float (*matrix)[3], float (*out)[3]) {
+    float c00 = matrix[1][1] * matrix[2][2] - matrix[1][2] * matrix[2][1];
+    float c10 = matrix[1][0] * matrix[2][2] - matrix[2][0] * matrix[1][2];
+    float c20 = matrix[1][0] * matrix[2][1] - matrix[2][0] * matrix[1][1];
+    float reciprocal = 1.0f / ((matrix[0][0] * c00 - c10 * matrix[0][1])
+                              + c20 * matrix[0][2]);
+    float c01 = matrix[0][1] * matrix[2][2] - matrix[0][2] * matrix[2][1];
+    float c11 = matrix[0][0] * matrix[2][2] - matrix[0][2] * matrix[2][0];
+    float c21 = matrix[0][0] * matrix[2][1] - matrix[0][1] * matrix[2][0];
+    float c02 = matrix[0][1] * matrix[1][2] - matrix[0][2] * matrix[1][1];
+    float c12 = matrix[0][0] * matrix[1][2] - matrix[0][2] * matrix[1][0];
+    float c22 = matrix[0][0] * matrix[1][1] - matrix[0][1] * matrix[1][0];
+
+    out[0][0] = reciprocal * c00;
+    out[0][1] = -(reciprocal * c01);
+    out[0][2] = reciprocal * c02;
+    out[1][0] = -(reciprocal * c10);
+    out[1][2] = -(reciprocal * c12);
+    out[1][1] = reciprocal * c11;
+    out[2][0] = reciprocal * c20;
+    out[2][1] = -(reciprocal * c21);
+    out[2][2] = reciprocal * c22;
+}
+
+// Each component is stored before the next one's input reads; retain that
+// order when an output vector overlaps an input vector.
+// ORIGINAL: 0x00628290 ?vox_cross_product@@YAXPBM0PAM@Z 0x00628290-0x006282D1
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original body, complete seed extent, and fresh VC6 symbol observation; recovery/tests/test_caviar_geometry.py checks original expression trees and bounded host behavior.", "Inverse snapshots cofactor inputs before stores and has no singular guard; cross preserves sequential overlapping writes; rotation uses scoped x87 intrinsics and reads all angles before stores. Numerical spill precision is not established by these structural bindings."], "reason": "Source-owned voxel geometry with typed matrix rows and original arithmetic/store ordering."}
+void __cdecl vox_cross_product(const float *left, const float *right, float *out) {
+    out[0] = left[1] * right[2] - right[1] * left[2];
+    out[1] = right[0] * left[2] - left[0] * right[2];
+    out[2] = left[0] * right[1] - right[0] * left[1];
+}
+
+// This helper uses x87 trig intrinsics, whereas the scene/light routines above
+// call the runtime. Restore their function policy after this local body.
+#pragma intrinsic(sin, cos)
+// ORIGINAL: 0x00627D00 ?caviar_apply_rotation@@YAXPBMPAUVOX_Matrix@@@Z 0x00627D00-0x00627E19
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original body, complete seed extent, and fresh VC6 symbol observation; recovery/tests/test_caviar_geometry.py checks original expression trees and bounded host behavior.", "Inverse snapshots cofactor inputs before stores and has no singular guard; cross preserves sequential overlapping writes; rotation uses scoped x87 intrinsics and reads all angles before stores. Numerical spill precision is not established by these structural bindings."], "reason": "Source-owned voxel geometry with typed matrix rows and original arithmetic/store ordering."}
+void __cdecl caviar_apply_rotation(const float *angles, VOX_Matrix *matrix) {
+    float sx = (float)sin(angles[0]);
+    float cx = (float)cos(angles[0]);
+    float sy = (float)sin(angles[1]);
+    float cy = (float)cos(angles[1]);
+    float sz = (float)sin(angles[2]);
+    float cz = (float)cos(angles[2]);
+    float sz_sy = sz * sy;
+
+    matrix->values[0][0] = cy * cx;
+    matrix->values[0][1] = cx * sz_sy - cz * sx;
+    matrix->values[0][2] = cx * (cz * sy) + sz * sx;
+    matrix->values[1][0] = cy * sx;
+    matrix->values[1][1] = sx * sz_sy + cz * cx;
+    matrix->values[1][2] = sx * (cz * sy) - sz * cx;
+    matrix->values[2][0] = -sy;
+    matrix->values[2][1] = sz * cy;
+    matrix->values[2][2] = cz * cy;
+}
+#pragma function(sin, cos)

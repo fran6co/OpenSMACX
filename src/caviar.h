@@ -457,10 +457,14 @@ static_assert(sizeof(Caviar) == 0x13D0,
 // a `call dword ptr [...]` where the image has `call rel32`.
 void __cdecl caviar_free_record(void *record);
 
-// The rotation is applied by a helper that is not recovered yet.
-// 0x00627D00, a pending_bodies forwarder, for the same reason as
-// `caviar_free_record` above.
-void __cdecl caviar_apply_rotation(float *angles, void *matrix);
+// Shared voxel geometry uses the matrices' real three-float row bounds.
+void __cdecl caviar_apply_rotation(const float *angles, VOX_Matrix *matrix);
+void __cdecl vox_matrix_vector_mul(const float (*)[3], const float *, float *);
+void __cdecl vox_matrix_matrix_mul(const float (*)[3], const float (*)[3],
+                                  float (*)[3]);
+void __cdecl vox_matrix_inverse(const float (*)[3], float (*)[3]);
+void __cdecl vox_cross_product(const float *, const float *, float *);
+void __cdecl vox_normalise_vector(const float *, float *);
 
 // ---------------------------------------------------------------------------
 // The voxel (CAVIAR) engine seam init_class reaches. None of the three is

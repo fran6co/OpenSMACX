@@ -1,0 +1,45 @@
+{
+  "event_id": "add2ff2ee4b827d1f0a6716cdba07e9b37ad83434671267c7487ca11106f78b7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_geometry.py",
+      "src/caviar.cpp",
+      "src/caviar.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "User prioritizes substantive parallel C++ recovery and coordinator-reviewed integration, not automatic acceptance development. Recover the full rotation/inverse/cross geometry subgroup required by original compute_camera4BF740,vehdraw_turn_start4BF8D0 andfacet initializer4C1B10. Inspect complete original arithmetic, input/store order and intrinsic/runtime choice before implementation.",
+      "Isolated geometry worker exclusively owns these source files for this batch. The vehicle coordinator checkout may edit veh.cpp/h and separately authorized storage-owner files, but not Caviar/pending source. Retained Vector remains parked and unchanged. Historical task baseline and all obligations remain.",
+      "Authorize typed public declarations for existing matrix multiply/normalize plus new rotation/inverse/cross APIs, and correction of set_scene_rotation helper argument type; no layout changes or unrelated Caviar fixes. Remove only the627D00 pending forwarder; use real existing VOX arrays and preserve actual row bounds."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6454528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6455120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6455952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6390640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "369d2557a171b0c0e99c64f98ccacdce71607be69329eb76ec8de1cbbda20256",
+  "request_id": "coordinator-camera-facet-geometry-20260920",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:caviar-matrix-operations"
+}

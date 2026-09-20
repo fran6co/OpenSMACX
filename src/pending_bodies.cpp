@@ -297,12 +297,6 @@ uint32_t __cdecl message_data(int a1, int a2, int a3, int a4, int a5, int a6) {
 // of its fixed-address bindings renamed to the tree's own models. Its
 // forwarder went with it.
 
-// sub_627d00 at 0x00627D00 - applies three Euler angles to a matrix.
-void __cdecl caviar_apply_rotation(float *angles, void *matrix) {
-    typedef void(__cdecl *pending)(float *, void *);
-    PENDING_BODY(0x00627D00, pending)(angles, matrix);
-}
-
 void MapWin::click(int a1, int a2, int a3) {  // 0x0046D5D0
     typedef void(__fastcall *pending)(MapWin *, void *, int, int, int);
     PENDING_BODY(0x0046D5D0, pending)(this, nullptr, a1, a2, a3);
