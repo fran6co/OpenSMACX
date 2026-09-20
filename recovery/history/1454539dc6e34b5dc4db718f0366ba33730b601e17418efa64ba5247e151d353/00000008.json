@@ -1,0 +1,30 @@
+{
+  "event_id": "ad6ce0fb85fe70b2c5271d0eeabdb6c8946ae9f49783ba4ae01043730e612c6b",
+  "payload": {
+    "affects": [
+      "entity-0b8f024e45ba25167332929c9539ef3a51c118618927be259b6de5f3a513e8b8",
+      "entity-20ec65de6e45b2c9ec3940a9218af1817b4ff7e6003d2dbb27ddb766e7b4bea6",
+      "entity-4a634a5177c6b37464538c0c1d436674cd762bdcc5d5948bceb1d2b9bd71972f",
+      "entity-4bd48789ec1e663abca844659ace5940b0d3c878a77559981165a72e44dfbfee",
+      "entity-6f78b860ce8840331d5de9e266f9abeabf354286893e125a2b6c7c92b0919edb",
+      "entity-a29382661647fa1149ed3d6a8e8d4a0823f09a805fd0e3daf94b84b56b0f1258",
+      "entity-fa00e7681cac451d4bbe4a27ffb18bf4b3ad3b718d016e43361c97bf1eaa8507"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-63b504455e9f46b0b3a233d799e80cc1",
+    "evidence": [
+      "live-tree experiment: adding the annotation above 'extern RulesTechnology Technology[MaxTechnologyNum]; // 0x0094F358' (src/technology.h:160, same format as the proven TechName binding at src/technology.cpp:37) made 'recover tasks check tech-tree-convergence-recovery --summary' record object_dependencies errors {'src/technology.h': 'object owner is not a configured translation unit'} under BOTH /c /O2 /Gy /GR- /GX /Z7 and /c /O2 /Gy /GR- /Oy- /GX /Z7, while unresolved_symbols still listed ?Technology@@3PAURulesTechnology@@A and binary counts stayed 1 pass / 9 fail / 7 unknown",
+      "package mechanism read from source: match_recovery/object_source.py object_targets resolves a binding only when objects.get(binding.unit) yields a compiled unit whose COFF defines the symbol with storage 2 and section > 0 (the code comment: 'The task does not prove objects owned by uncompiled TUs'), and referenced_object_units schedules the annotated unit for compilation where recovery/project.json unit_extensions is ['.cpp'] only - a header can never satisfy either path, unlike the TechName definition inside compiled technology.cpp",
+      "the annotation was reverted after measurement (a dead binding would also leave a permanent dependency error in every future check); a dated TRIED note now sits on the declaration recording the negative, and a fresh tasks check after the revert shows the original seven unresolved cross-TU externs with empty dependency errors plus a passing fresh configured build (recover check-build --summary, exit 0)",
+      "the variant-deck route cannot substitute for this experiment: variants.py reads object bindings via read_objects(root, pin) from the live tree only ('measurements use the current source bindings'), so the live edit plus scoped check was the only decisive instrument, matching the TechName precedent",
+      "the ten protected BYTE_EXACT obligations and the prior round's preserved edits (tech_category MEASURED-inline move into technology.h, TechName RECOVERY_OBJECT) are intact; both pending discoveries remain pending and no acceptance, scope change or owner edit is claimed"
+    ],
+    "hypothesis": "A RECOVERY_OBJECT annotation at an extern DECLARATION site is a measured dead binding and cannot feed strict relocation bindings from inside this task's two files: with 'RECOVERY_OBJECT: v1 0x0094F358 ?Technology@@3PAURulesTechnology@@A' placed on the Technology declaration in src/technology.h, the scoped check recorded 'object owner is not a configured translation unit' for src/technology.h under both configured flag sets and ?Technology@@3PAURulesTechnology@@A stayed in unresolved_symbols with every per-function result unchanged. The resolver only honors an object binding through the annotated unit's own compiled object defining the symbol, and headers are never configured translation units, so the seven ?Technology-dependent strict rows (plus the StringTemp/ExpansionEnabled/GameRules/LockEnableMask/PlayersData/VehPrototypes rows) require the annotation beside each storage definition in its owning .cpp (alpha.cpp for Technology) - outside this task's authorized scope, converting the infrastructure-boundary hypothesis into measured evidence for a fresh serial decision.",
+    "kind": "discovery"
+  },
+  "previous_event": "164934566f66cfe7371816faf658ef4fdc62170953fea928da47c62dd6f7d78a",
+  "request_id": "worker-63b504455e9f46b0b3a233d799e80cc1",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:tech-tree-convergence-recovery"
+}

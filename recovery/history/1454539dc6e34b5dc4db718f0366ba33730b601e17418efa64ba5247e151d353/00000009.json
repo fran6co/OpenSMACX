@@ -1,0 +1,21 @@
+{
+  "event_id": "af16b1c3d52528255ddcc983e1e96e1b855af122d69b8403470435b28cb8384e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alpha.cpp",
+      "src/game.cpp",
+      "src/strings.cpp"
+    ],
+    "evidence": [
+      "Scoped checks defer on unresolved extern data relocations emitted from src/technology.cpp (?Technology@@3PAURulesTechnology@@A, ?ExpansionEnabled@@3HA, ?StringTemp@@3PADA, ?PlayersData@@3PAUPlayerData@@A) because the defining TUs are outside this task's compiled set. The data-binding channel is source-owned RECOVERY_OBJECT annotations beside the owning definitions: read_objects reads them project-wide and verify_task's referenced_object_units loop compiles the annotated owner read-only, then object_targets verifies the external definition and resolves the relocation. This expansion authorizes only the annotation lines already inserted beside the pre-existing verified // 0x... address comments in src/alpha.cpp, src/game.cpp and src/strings.cpp - no other change to those files."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ad6ce0fb85fe70b2c5271d0eeabdb6c8946ae9f49783ba4ae01043730e612c6b",
+  "request_id": "data-binding-expand-tech-1",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:tech-tree-convergence-recovery"
+}

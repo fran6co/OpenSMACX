@@ -1,0 +1,23 @@
+{
+  "event_id": "95e90166e7064556fa4f6b30897ba845d4e71ffa8f4885b60b3fd727f0ff947d",
+  "payload": {
+    "affects": [
+      "entity-9df9085783e76b921a5e8cd3ae82352e7fd94644e790dd50ed71669d587bb398"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-a47fc6f8b8b2471896cb17dc895e8848",
+    "evidence": [
+      "scoped task check transitioned ?tech_name@@YAPADHH@Z unknown -> pass: bytes pass, references pass under /c /O2 /Gy /GR- /Oy- /GX /Z7, all four relocations resolve, differing_offsets []",
+      "?TechName@@3PADA left the trial's unresolved_symbols list and the object-definition row {address 0x00945E80, unit src/technology.cpp} reports definition pass under both flag sets",
+      "per-function diff of the check before vs after the binding across all 17 subjects: only the tech_name row changed (unknown -> pass); counts {fail 9, unknown 8} -> {fail 9, unknown 7, pass 1}",
+      "a plain `// 0x00945E80` comment alone did NOT resolve it (measured: identical counts and unresolved list) because object_source.object_targets only feeds relocation targets from // RECOVERY_OBJECT: annotations, which is also why ?Technology's extern-with-address-comment stays unresolved"
+    ],
+    "hypothesis": "TechName's original storage is 0x00945E80 and binding it beside its definition as `RECOVERY_OBJECT: v1` (evidence: the image's own tech_name body at 0x005B9EF0-0x005B9F16 pushes 0x945e80, zeroes byte ptr [0x945e80] and returns 0x945e80 - exactly the buffer our tech_name zeroes, passes to say_tech and returns) resolves the last strict-trial extern owned by this task's files.",
+    "kind": "discovery"
+  },
+  "previous_event": "29cb2015edb4e928ef63aeb61ab62ca379b3989bc8e33c8449c3ea473f88c468",
+  "request_id": "worker-a47fc6f8b8b2471896cb17dc895e8848",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tech-tree-convergence-recovery"
+}

@@ -29,6 +29,12 @@
 
 int TechValidCount;  // 0x00949730
 int TechCommerceCount;  // 0x00949734
+// 0x00945E80, read off the image's own tech_name body: `push 0x945e80` /
+// `mov byte ptr [0x945e80], 0` / `mov eax, 0x945e80` at
+// 0x005B9EFB/0x005B9F00/0x005B9F0F - the buffer tech_name zeroes, passes to
+// say_tech and returns. v1, not v2: the writes through say_tech are bounded
+// only by this declaration, so no initial-data extent is claimed.
+// RECOVERY_OBJECT: v1 0x00945E80 ?TechName@@3PADA
 char TechName[80];
 
 /*
@@ -165,6 +171,37 @@ BOOL __cdecl valid_tech_leap(int tech_id, int faction_id) {
     return true;
 fail:
     return false;
+}
+
+/*
+Purpose: Determine what category is dominate for tech_id. If there is a tie, the order of precedence
+         is as follows: growth > tech > wealth > power.
+// ORIGINAL: 0x005B9FE0 ?tech_category@@YAHH@Z 0x005B9FE0-0x005BA02C BYTE_EXACT
+// size      76 bytes
+// prototype int (__cdecl ?tech_category@@YAHH@Z)(int techID)
+// callers   6   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: Tech category id: growth (0), tech (1), wealth (2) or power (3).
+Status: Complete
+*/
+// Original say_tech open-codes these signed comparisons at 0x005B9D26,
+// while six other caller bodies make direct calls to this entry (for
+// example labs_write at 0x004A844D). Keep an ordinary external definition,
+// visible to the same-TU optimizer without exposing its body in the header.
+int __cdecl tech_category(int tech_id) {
+    uint32_t category = 0;
+    int compare = Technology[tech_id].growth_value;
+    if (Technology[tech_id].tech_value > compare) {
+        category = 1;
+        compare = Technology[tech_id].tech_value;
+    }
+    if (Technology[tech_id].wealth_value > compare) {
+        category = 2;
+        compare = Technology[tech_id].wealth_value;
+    }
+    return (Technology[tech_id].power_value > compare) ? 3 : category;
 }
 
 /*
@@ -375,33 +412,6 @@ Status: Complete
 //   out of [esi + 0x94f380] only after it returns. The image's form wants the
 //   reads at the call sites AND the array base folded into the displacements;
 //   this compiler will not do both at once here. Left at the pointer form.
-
-/*
-Purpose: Determine what category is dominate for tech_id. If there is a tie, the order of precedence
-         is as follows: growth > tech > wealth > power.
-// ORIGINAL: 0x005B9FE0 ?tech_category@@YAHH@Z 0x005B9FE0-0x005BA02C BYTE_EXACT
-// size      76 bytes
-// prototype int (__cdecl ?tech_category@@YAHH@Z)(int techID)
-// callers   6   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: Tech category id: growth (0), tech (1), wealth (2) or power (3).
-Status: Complete
-*/
-int __cdecl tech_category(int tech_id) {
-    uint32_t category = 0;
-    int compare = Technology[tech_id].growth_value;
-    if (Technology[tech_id].tech_value > compare) {
-        category = 1;
-        compare = Technology[tech_id].tech_value;
-    }
-    if (Technology[tech_id].wealth_value > compare) {
-        category = 2;
-        compare = Technology[tech_id].wealth_value;
-    }
-    return (Technology[tech_id].power_value > compare) ? 3 : category;
-}
 
 /*
 Purpose: Check to see whether provided faction can research a specific technology. Checks are

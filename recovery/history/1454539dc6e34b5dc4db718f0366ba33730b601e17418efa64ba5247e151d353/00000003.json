@@ -1,0 +1,21 @@
+{
+  "event_id": "e00d93cc1a2e9e87697a89ee0d5f49ac48384144007b32c029af6287f9a9d2ce",
+  "payload": {
+    "affects": [
+      "entity-ccf6a4f8261d99a26c6cb439a8821681d0901eaf2e37f8355d85587c1073636e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-63a82cc7688440b69f8bae68d716f899",
+    "evidence": [
+      "hoisting `int category = tech_category(tech_id);` before label_get and the add-first ordering both measured byte-identical to the plain call form (14/221 @0.819, 199 instructions, first_divergence 3), so the plain form was kept as the more faithful spelling",
+      "recover measure first_divergence 3 with esi-vs-eax and push-order divergence in the prologue, before any string append"
+    ],
+    "hypothesis": "say_tech(char*,int,int)'s remaining divergence is prologue register allocation, not a reachable source spelling: the image defers its `push ebx` into the category branch (push/pop pair at 0x005B9D66/0x005B9DCB) where this tree keeps it in the prologue, and first divergence sits at instruction 3.",
+    "kind": "discovery"
+  },
+  "previous_event": "95e90166e7064556fa4f6b30897ba845d4e71ffa8f4885b60b3fd727f0ff947d",
+  "request_id": "worker-63a82cc7688440b69f8bae68d716f899",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:tech-tree-convergence-recovery"
+}

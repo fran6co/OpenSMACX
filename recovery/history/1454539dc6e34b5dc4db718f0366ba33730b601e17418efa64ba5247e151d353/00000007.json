@@ -1,0 +1,24 @@
+{
+  "event_id": "164934566f66cfe7371816faf658ef4fdc62170953fea928da47c62dd6f7d78a",
+  "payload": {
+    "affects": [
+      "entity-ccf6a4f8261d99a26c6cb439a8821681d0901eaf2e37f8355d85587c1073636e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-ab60e57fe20a40528561d3013c42a112",
+    "evidence": [
+      "candidate deck build/recovery/decks/say-tech-branch-live-ranges.json scored 5 candidates x 2 flag sets with 0 compile errors: every candidate keeps candidate_size 640 against the original 688 with boundary fail 'candidate exceeds or misses the independently recorded extent' and identical known_differing_bytes (698 under /O2, 0 under /O2 /Oy-) and identical scored results (pass 18/fail 17 and pass 19/fail 9/unknown 7)",
+      "deck --compiled-diagnostics .text digests for the say_tech section: branch-local-buf is byte-identical to current (ff348e6956f4 under /O2, 7fa97fab749d under /O2 /Oy-), while itoa-first (1f551f20143b/767116b18faa) and lvl-local == lvl-local-branch-buf (847dc1032e92/da91deaf27a0) differ in bytes with identical instruction counts 193/205 - so buffer scope never matters and only the tech_recurse consumption ordering moves bytes",
+      "recover measure ?say_tech@@YAXPADHH@Z under /c /O2 /Gy /GR- /Oy- /GX: plain form 14/221 matching, similarity 0.819, first_divergence 3, 199 compiled instructions; itoa-first 16/221 but similarity FALLS to 0.729; lvl-local 12/221 @ 0.754 (198 instructions) - the plain form remains the best-measured spelling and was kept",
+      "measure divergence context pins the wall: the image prologue is push ebp; mov ebp,esp; sub esp,0x50; mov eax,[ebp+0xc]; push esi; cmp eax,-1; push edi (tech_id in eax through the first compare) while this tree's is push ebp; mov ebp,esp; sub esp,0x50; push esi; mov esi,[ebp+0xc]; cmp esi,-1; push edi under every one of the five spellings",
+      "the measured negative is recorded in the say_tech marker (TRIED 2026-09-19 note in src/technology.cpp) and both authorized files were returned to their pre-experiment compiled content (comment-only additions remain), with a fresh scoped tasks check confirming the baseline counts (1 pass / 9 fail / 7 unknown) and a fresh configured build passing (exit 0)"
+    ],
+    "hypothesis": "say_tech(char*,int,int)'s remaining divergence is confirmed unreachable from any branch-local source spelling of the category computation: a bounded deck plus live-tree measure of five spellings (plain form, _itoa(tech_recurse(...)) hoisted before the label_get append, int tech_lvl local, num_buf declared inside the if (category_lvl) block, and lvl-local combined with the inner buffer) all keep first_divergence at instruction 3 and the 640-byte extent against the image's 688. The wall is now pinned to the prologue shape itself: the image loads tech_id into the SCRATCH register eax before push esi (0x005B9C46 mov eax,[ebp+0xc]; cmp eax,-1) where every spelling here emits push esi; mov esi,[ebp+0xc] (tech_id straight into the callee-saved slot), which is whole-function register allocation, not a spelling of the category branch; the plain form stays as the best-measured, most faithful spelling.",
+    "kind": "discovery"
+  },
+  "previous_event": "5b72f72d333f57e919ac538c1ad61bf612ed5b008fdc4100876f039bebe669e2",
+  "request_id": "worker-ab60e57fe20a40528561d3013c42a112",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:tech-tree-convergence-recovery"
+}

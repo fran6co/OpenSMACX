@@ -1,0 +1,19 @@
+{
+  "event_id": "a4098444fbd9dd573bf9689c323bd1ec7749b2850484f660d00a8091dd9622a0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_tech_category.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes focused actual-source behavior controls and personal review of the retained candidate against current master; task baseline and pending findings remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "af16b1c3d52528255ddcc983e1e96e1b855af122d69b8403470435b28cb8384e",
+  "request_id": "tech-tree-convergence-recovery-bounded-controls-20260920",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:tech-tree-convergence-recovery"
+}

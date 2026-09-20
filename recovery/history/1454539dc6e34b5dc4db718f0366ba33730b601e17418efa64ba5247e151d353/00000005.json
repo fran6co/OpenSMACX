@@ -1,0 +1,23 @@
+{
+  "event_id": "291e6449a189deaa2864c75855c3bb365d2180c4e5f332045fdafc84569003d9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-a47fc6f8b8b2471896cb17dc895e8848",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Insight is expressed in current source: src/technology.cpp:37-38 places `// RECOVERY_OBJECT: v1 0x00945E80 ?TechName@@3PADA` immediately above `char TechName[80];`, with the image-derived rationale at src/technology.cpp:32-36 (the image's own tech_name body at 0x005B9EF0-0x005B9F16 pushes 0x945E80, zeroes byte ptr [0x945E80] and returns 0x945E80 at 0x005B9EFB/0x005B9F00/0x005B9F0F).",
+      "The bound buffer is the one the recovered body uses: entity-9df9085783e76b921a5e8cd3ae82352e7fd94644e790dd50ed71669d587bb398 (?tech_name@@YAPADHH@Z, marker src/technology.cpp:289, body in src/technology.h:182-184) zeroes TechName[0], passes TechName to say_tech and returns it - exactly the buffer the image pushes, zeroes and returns at 0x00945E80.",
+      "Fresh strict-trial diagnostics confirm the claimed effect (request /diagnostics/check/report/candidate/checks/binary/functions, request SHA-256 6bd39156189781d30202d9ca2c69d985490e2e31b1ef731ad17253ce6983cc28): the ?tech_name@@YAPADHH@Z row is the sole pass, and under /c /O2 /Gy /GR- /Oy- /GX /Z7 bytes pass and references pass with all four relocations resolving (?TechName@@3PADA x3 at binding 0x00945E80 plus ?say_tech@@YAXPADHH@Z); the /GX-only variant still shows the pre-binding offset-shifted fail shape.",
+      "Fresh object_definitions rows report address 0x00945E80 ?TechName@@3PADA unit src/technology.cpp definition pass under BOTH configured flag sets, and ?TechName@@3PADA is absent from the trial's unresolved_symbols (?ExpansionEnabled, ?GameRules, ?LockEnableMask, ?PlayersData, ?StringTemp, ?Technology, ?VehPrototypes remain, all owned outside these files) - so the last strict-trial extern owned by this task's files is resolved, exactly as the hypothesis predicted for obligation-ab4457e0331816a56a7431be8c58f8a59145665b923e587fa211dbe563f8d493 (counts fail 9 / unknown 7 / pass 1).",
+      "The worker's controlled negative (a plain `// 0x00945E80` comment left counts and the unresolved list unchanged) matches the mechanism claimed: object_source.object_targets feeds relocation targets only from // RECOVERY_OBJECT: annotations, which is also why ?Technology's extern-with-address-comment in src/technology.h stays unresolved.",
+      "Scope preserved: entity-9df9085783e76b921a5e8cd3ae82352e7fd94644e790dd50ed71669d587bb398 is currently owned and src/technology.cpp is a task-editable file; incorporation records the source expression only - not binary or behavioral proof - and the git-history baseline for the protected obligation plus the remaining cross-TU strict-row unknowns stay untouched for the other pending findings.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "dbf8ddde7c5a47cc76c9770930baea8fcc1e870007b81fb3ed86d7f1c86f1064",
+  "request_id": "coordinator-0ecfa797b6da4adf940ff2d52582d203",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:tech-tree-convergence-recovery"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "5b72f72d333f57e919ac538c1ad61bf612ed5b008fdc4100876f039bebe669e2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-0e41e98e43884799bef0a2e167924b1b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source: src/technology.h:230-242 defines `MEASURED inline int __cdecl tech_category(int tech_id)` carrying the four-compare growth>tech>wealth>power chain, joining the existing header MEASURED-inline family (tech_recurse at technology.h:216, tech_is_preq at technology.h:244) with the placement rationale comment at technology.h:227-229; the header note at technology.h:170-174 records that no bare extern declaration accompanies it.",
+      "The seed marker and history are retained in technology.cpp exactly as the hypothesis required: src/technology.cpp:398-412 keeps the ORIGINAL marker (0x005B9FE0 ?tech_category@@YAHH@Z, BYTE_EXACT, callers 6 / call targets 0) plus the 'BODY IN technology.h, as MEASURED inline' note, and say_tech's call site at src/technology.cpp:263 keeps the plain `label_get(629 + tech_category(tech_id))` spelling that now folds in.",
+      "Both affected identities (entity-a29382661647fa1149ed3d6a8e8d4a0823f09a805fd0e3daf94b84b56b0f1258 tech_category, entity-ccf6a4f8261d99a26c6cb439a8821681d0901eaf2e37f8355d85587c1073636e say_tech(char*,int,int)) are already inside this task's scope and its two editable files, so no expansion was needed for incorporation.",
+      "Fresh diagnostics in this request are consistent with the worker's deck evidence and do not contradict the placement: 26 configured compile attempts across both fixed flag sets with no compile errors, and the scoped check's tech_category strict row reads unknown solely on the unresolved cross-TU extern ?Technology@@3PAURulesTechnology@@A - the infrastructure boundary that is separately pending as worker-73745ebe313647739bf7085eff2db591, which this decision leaves fully pending.",
+      "Incorporation is structural recognition only, not binary or behavioral proof: say_tech(char*,int,int)'s obligation stays unrestored (masked measurement 14/221 agreeing, 0.819 similarity), its strict row remains fail on ?StringTemp@@3PADA, and the register-allocation plateau finding worker-63a82cc7688440b69f8bae68d716f899 also remains pending; nothing here demotes a claim or accepts source.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "291e6449a189deaa2864c75855c3bb365d2180c4e5f332045fdafc84569003d9",
+  "request_id": "coordinator-ecbc2178b2994ad78988fa8d1403a56f",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:tech-tree-convergence-recovery"
+}

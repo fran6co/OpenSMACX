@@ -1,0 +1,25 @@
+{
+  "event_id": "29cb2015edb4e928ef63aeb61ab62ca379b3989bc8e33c8449c3ea473f88c468",
+  "payload": {
+    "affects": [
+      "entity-a29382661647fa1149ed3d6a8e8d4a0823f09a805fd0e3daf94b84b56b0f1258",
+      "entity-ccf6a4f8261d99a26c6cb439a8821681d0901eaf2e37f8355d85587c1073636e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-0e41e98e43884799bef0a2e167924b1b",
+    "evidence": [
+      "4-candidate variants deck (build/recovery/decks/tech-category-inline.json, .result.json): per-file damage witnesses passed under both flag sets, 0 compile errors, no lost passing measurements, no binding changes",
+      "after the move, say_tech(char*,int,int)'s emitted references carry no ?tech_category@@YAHH@Z relocation under either configured flag set; its reference set matches the image's call list shape (tech_recurse, Strings::get, strcat, __itoa)",
+      "masked-byte measurement of say_tech improved 12/221 agreeing @0.735 similarity to 14/221 @0.819 (190 -> 199 compiled instructions) under /O2 /Oy-",
+      "tech_category's out-of-line copy remains BYTE_EXACT 26/26 and has_tech 46/46, say_tech(int,int) 11/11 retained; tech_recurse unchanged at 25/36",
+      "zero compiled product callers outside src/technology.cpp (only seed/unrecovered scaffolds reference tech_category), so no outside-TU compiled change"
+    ],
+    "hypothesis": "tech_category is a member of the technology.h MEASURED-inline family: the image open-codes its four-compare chain at every one of its 6 call sites (say_tech's at 0x005B9D26-0x005B9D5B) while keeping the out-of-line body, so moving the definition out of technology.cpp into the header as `MEASURED inline` (with the marker and seed history staying in technology.cpp) earns say_tech its inline without costing the body its own emitted copy.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-0e41e98e43884799bef0a2e167924b1b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tech-tree-convergence-recovery"
+}

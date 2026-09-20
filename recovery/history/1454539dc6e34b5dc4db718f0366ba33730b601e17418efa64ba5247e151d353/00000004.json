@@ -1,0 +1,29 @@
+{
+  "event_id": "dbf8ddde7c5a47cc76c9770930baea8fcc1e870007b81fb3ed86d7f1c86f1064",
+  "payload": {
+    "affects": [
+      "entity-0b8f024e45ba25167332929c9539ef3a51c118618927be259b6de5f3a513e8b8",
+      "entity-20ec65de6e45b2c9ec3940a9218af1817b4ff7e6003d2dbb27ddb766e7b4bea6",
+      "entity-4a634a5177c6b37464538c0c1d436674cd762bdcc5d5948bceb1d2b9bd71972f",
+      "entity-4bd48789ec1e663abca844659ace5940b0d3c878a77559981165a72e44dfbfee",
+      "entity-6f78b860ce8840331d5de9e266f9abeabf354286893e125a2b6c7c92b0919edb",
+      "entity-a29382661647fa1149ed3d6a8e8d4a0823f09a805fd0e3daf94b84b56b0f1258",
+      "entity-fa00e7681cac451d4bbe4a27ffb18bf4b3ad3b718d016e43361c97bf1eaa8507"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-73745ebe313647739bf7085eff2db591",
+    "evidence": [
+      "scoped task check unresolved_symbols after this round: ?ExpansionEnabled@@3HA, ?GameRules@@3IA, ?LockEnableMask@@3IA, ?PlayersData@@3PAUPlayerData@@A, ?StringTemp@@3PADA, ?Technology@@3PAURulesTechnology@@A, ?VehPrototypes@@3PAUVehPrototype@@A - all defined outside src/technology.cpp and src/technology.h",
+      "Technology is declared `extern ... // 0x0094F358` in technology.h yet stays unresolved, demonstrating address comments do not feed strict relocation targets; only owners' RECOVERY_OBJECT bindings do (proven by the TechName fix inside this task's own file)",
+      "masked-byte measurements still show exactness for the claimed bodies (tech_category 26/26, has_tech 46/46, say_tech(int,int) 11/11, tech_avail 130/130, tech_is_preq 63/63) while their strict rows read unknown/fail purely on unresolved cross-TU externs",
+      "fresh configured full build passes (recover check-build --summary, result pass) with the header change in place"
+    ],
+    "hypothesis": "the remaining strict-row unknowns/fails in this family are an infrastructure boundary, not source regressions: single-TU strict trials cannot resolve externs owned by other translation units (?Technology -> alpha.cpp; ?StringTemp -> temp.cpp; ?ExpansionEnabled/?GameRules/?LockEnableMask/?PlayersData/?VehPrototypes -> other TUs), so those rows cannot go green from inside this task's two authorized files and need their owners' own object bindings or a wider admission gate; tech_rate's is_human word-load divergence stays routed to is_human in faction.h per the marker's own TRIED note and was not edited here.",
+    "kind": "discovery"
+  },
+  "previous_event": "e00d93cc1a2e9e87697a89ee0d5f49ac48384144007b32c029af6287f9a9d2ce",
+  "request_id": "worker-73745ebe313647739bf7085eff2db591",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:tech-tree-convergence-recovery"
+}
