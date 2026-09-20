@@ -657,7 +657,7 @@ int __cdecl can_terraform(int faction_id, int x, int y, int force_improve, int b
         && (tile->bit2 & (BIT2_UNK_80000000 | BIT2_VOLCANO)) != BIT2_VOLCANO
         && plant_value < forest_value
         && (!is_human(faction_id)
-            || (faction_id == LocalFaction
+            || (faction_id == ConsoleGlobal.faction_id_
                 && (GamePreferences & PREF_AUTO_FORMER_PLANT_FORESTS)))) {
         result = ORDER_PLANT_FOREST;
     }

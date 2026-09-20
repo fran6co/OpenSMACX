@@ -325,7 +325,6 @@ extern NetWin NetWinDialog;  // 0x0080A6F8
 // What names them as ids: setup_faction_data (0x00481FD0) returns early when
 // they are equal, and pick_pass (0x0047C970) hands 0x0093D4F0 to
 // AlphaNet::pid_2_idx, which walks the eight per-slot records looking for it.
-// Rebindable for tests, like NetDaemonLocalFaction.
+// Transport configuration used by the setup dialog.
 extern int NetWinPlayerId;       // 0x0093D4F0, defined in netwin.cpp
 extern int NetWinOtherPlayerId;  // 0x0093D4F4, defined in netwin.cpp
-

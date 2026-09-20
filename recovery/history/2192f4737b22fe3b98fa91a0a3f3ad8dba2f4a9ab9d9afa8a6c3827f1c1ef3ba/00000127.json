@@ -1,0 +1,19 @@
+{
+  "event_id": "a89723f7f4afe0a8210a1304542add8bfc6c6e27128c28d5a1f0d90b804d3757",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-selection-console-split-storage-20260920",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console.h owns six source-bound members at23BD4..23BE8. ConsoleGlobal plus these offsets is the original absolute storage; all product callers now use the same members while receiver-relative calls remain receiver-relative.",
+      "src/veh.cpp implements pick_top_veh5593E0 using real Console/Veh/VehPrototype/RulesChassis records, independent suppression689F30 and original state mask4200. Existing game transport flag also replaces duplicate daemon allocation.",
+      "Coordinator review preserves historical obligations and distinguishes bounded host controls/native member/relocation observations from full strict matching. New selection remains unclaimed and nonexact; no full-game or automatic acceptance asserted."
+    ]
+  },
+  "previous_event": "71486df3ac9ae398339f126d5add9ec8dc98c5c627c72e34b00cd7f8a283aaa5",
+  "request_id": "console-member-storage-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 127,
+  "stream": "task:infowin-ownership"
+}

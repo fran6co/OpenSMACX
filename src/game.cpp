@@ -839,8 +839,8 @@ void __cdecl repair_phase(int faction_id) {
                 continue;  // the base's own draw covers it
             }
         }
-        if (veh_faction_id != LocalFaction
-            && !(Vehs[veh_id].visibility & (1 << LocalFaction))) {
+        if (veh_faction_id != ConsoleGlobal.faction_id_
+            && !(Vehs[veh_id].visibility & (1 << ConsoleGlobal.faction_id_))) {
             continue;
         }
         draw_tile_call(x, y, -1);
@@ -854,24 +854,6 @@ void __cdecl repair_phase(int faction_id) {
 // bodies in two translation units is not a neutral choice: which unit a
 // piece compiles in decides what can be inlined into it.
 // ---------------------------------------------------------------------------
-
-/*
- * Game-scoped bindings and small recovered bodies that code outside
- * game.cpp needs.
- *
- * Same split, and for the same reason, as font_recovery.cpp: game.cpp reaches
- * Players, parse_set and parse_says, so any target that links it drags the
- * whole alpha/base closure in. The leaf test suite cannot afford that, and
- * Console::focus - which only wants to compare a faction id - would otherwise
- * have to mint a third name for an address that game.cpp and netdaemon.cpp
- * already bind twice between them. Nothing here may acquire a dependency: the
- * point of the file is that it has none.
- */
-
-// The faction the human is playing, at 0x00939284. netdaemon.cpp binds the
-// same address as NetDaemonLocalFaction; that duplicate predates this file and
-// is left alone rather than churned, but new callers should reach for this one.
-int LocalFaction;  // 0x00939284
 
 /*
 Purpose: The ceiling on a single energy allocation slider. The legacy
@@ -896,10 +878,9 @@ Status: Complete
 // The main loop.
 // ---------------------------------------------------------------------------
 
-// The four unnamed globals the loop drives; addresses and roles documented in
+// Loop state globals; addresses and roles documented in
 // game.h next to each declaration.
 int GameRestartQueued;  // 0x0093A948
-int FocusVehId;         // 0x00939290
 int ExitTurnLoop;       // 0x009B2068
 int ControlTurnPhase;   // 0x009B2070
 char SaveGameFileName[0x104];  // 0x0093AA0C
@@ -1090,7 +1071,7 @@ void __cdecl control_game() {
             *reinterpret_cast<volatile uint32_t *>(
                 reinterpret_cast<uint8_t *>(primary_window) + 0x1DD70) = flags;
         }
-        FocusVehId = -1;
+        ConsoleGlobal.focus_vehicle_ = -1;
         if (IsMultiplayerNet != 0) {
             net_control_turn();
         } else {
@@ -1783,7 +1764,7 @@ int __cdecl sub_52db70() {
     if (ConsoleControlTurnActive != 0) {
         return 0;
     }
-    return NetTurnFaction == NetDaemonLocalFaction;
+    return NetTurnFaction == ConsoleGlobal.faction_id_;
 }
 
 // ORIGINAL: 0x0052DBF0 ?next_player_turn@@YAHXZ 0x0052DBF0-0x0052DC68 FILE
@@ -2221,7 +2202,7 @@ char *__cdecl get_pact(int faction_id) {
 int __cdecl current_server() {
     int in_transit = ConsoleControlTurnActive;
     if ((NetTurnFlags & 0x10) != 0 && in_transit == 0) {
-        if (NetTurnFaction == LocalFaction) {
+        if (NetTurnFaction == ConsoleGlobal.faction_id_) {
             return 1;
         }
         return 0;

@@ -1400,7 +1400,7 @@ void Popup::start(char *text_file, const char *text_label, int value,
                   char *override_text, int flags, GraphicWin *owner_window) {
     if (strcmp(text_file, *reinterpret_cast<char *const *>(ClimatePopupTitle)) == 0
         || strcmp(text_file, PopupStartModTag) == 0) {
-        if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
+        if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
             if (ExpansionEnabled == 0) {
                 goto fallback;
             }

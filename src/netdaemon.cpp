@@ -33,10 +33,7 @@
 #include "technology.h"    // GameTechAchieved
 #include "game.h"          // IsMultiplayerNet: the application's shared flag
 
-int NetDaemonIsMultiplayerNet;  // 0x0093F660
-int NetDaemonLocalFaction;  // 0x00939284
-
-// The next dword after NetDaemonIsMultiplayerNet. Every sender in this file
+// The next dword after IsMultiplayerNet. Every sender in this file
 // increments it around one send_message call, every wait loop increments it
 // for the length of its poll and decrements it on the way out, and
 // MultiWin::draw_time (0x00478BE0) declines to draw the turn clock unless it
@@ -49,7 +46,7 @@ int NetBusyCount;  // 0x0093F664
 // send_game synchs the replay only when it is nonzero.
 int ReplayEventCount;  // 0x009469F8
 
-// Four bytes below NetDaemonIsMultiplayerNet. on_player_deleted
+// Four bytes below IsMultiplayerNet. on_player_deleted
 // (0x0052E370) sets it when a client leaves; a lock whose wait saw it comes
 // back with the "NOLOCK" popup instead of a lock.
 int NetPlayerDropped;  // 0x0093F65C
@@ -524,10 +521,10 @@ Status: Complete with temporary message_data original dependency
 */
 uint32_t NetDaemon::unlock_veh() {
     // Loaded exactly once, and it is also the EAX the non-net path returns.
-    uint32_t residue = static_cast<uint32_t>(NetDaemonIsMultiplayerNet);
+    uint32_t residue = static_cast<uint32_t>(IsMultiplayerNet);
     if (residue != 0) {
         // `cmp eax, edi` against a zeroed edi: any nonzero flag announces.
-        log_say("Client releasing lock", NetDaemonLocalFaction, 0, 0);
+        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         residue = message_data(0x2212, 0, 0, 0, 0, 0);
         // The four announce-side fields, in the original's deliberately
         // non-monotonic order: 1BB0, 1BAC, 1BCC, 1BC8.
@@ -580,8 +577,8 @@ void NetDaemon::unlock() {
     // The four announce-side fields sit inside lock_state_[2] - 0x1BAC, 0x1BB0,
     // 0x1BC8 and 0x1BCC are that entry's dword_[2], dword_[3], dword_[9] and
     // dword_[10]. Named through the declared member rather than a raw offset.
-    if (NetDaemonIsMultiplayerNet != 0) {
-        log_say("Client releasing lock", NetDaemonLocalFaction, 0, 0);
+    if (IsMultiplayerNet != 0) {
+        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
         message_data(0x2212, 0, 0, 0, 0, 0);
         lock_state_[2].dword_[3] = 0;
         lock_state_[2].dword_[2] = 0;
@@ -603,7 +600,7 @@ Purpose: Tell the other clients this client is leaving the diplomacy channel.
 Status: Complete
 */
 void NetDaemon::close_channel() {
-    if (NetDaemonIsMultiplayerNet != 0) {
+    if (IsMultiplayerNet != 0) {
         message_data(0x8241, 0, 0, 0, 0, 0);
         // 0x1BA0 is lock_state_[1].dword_[14].
         lock_state_[1].dword_[14] = 0;
@@ -680,13 +677,13 @@ void NetDaemon::hang_up() {
     if (lock_state_[0].dword_[4] != 0) {
         return;
     }
-    if (NetDaemonIsMultiplayerNet == 0) {
+    if (IsMultiplayerNet == 0) {
         return;
     }
     lock_state_[0].dword_[4] = 1;
     if (NetTurnFlags & 0x10) {
         if (ConsoleControlTurnActive == 0) {
-            if (NetTurnFaction != NetDaemonLocalFaction) {
+            if (NetTurnFaction != ConsoleGlobal.faction_id_) {
                 goto L0cc;
             }
         } else if (NetDaemonNet.lock_state_[0].dword_[1] == 0) {
@@ -696,13 +693,13 @@ void NetDaemon::hang_up() {
     }
 L0cc:
     if (NetDaemonNet.lock_state_[0].dword_[1] != 0) {
-        locks_.records_[NetDaemonLocalFaction].clear();
-        if (locks_.field_E0_ == NetDaemonLocalFaction) {
+        locks_.records_[ConsoleGlobal.faction_id_].clear();
+        if (locks_.field_E0_ == ConsoleGlobal.faction_id_) {
             locks_.field_E4_ = 0;
             locks_.field_E0_ = 0;
         }
         lock_state_[1].dword_[5] &=
-            ~lock_state_[1].dword_[6 + NetDaemonLocalFaction];
+            ~lock_state_[1].dword_[6 + ConsoleGlobal.faction_id_];
         message_data(0x4b00, 0, 0, 0, 0, 0);
     }
 L145:
@@ -1378,7 +1375,7 @@ int NetDaemon::end_of_event(int faction_id, int turn_value) {
     if (lock_state_[0].dword_[1] == 0) {
         lock_state_[0].dword_[0] = turn_value;
     }
-    if (faction_id == NetDaemonLocalFaction) {
+    if (faction_id == ConsoleGlobal.faction_id_) {
         if (lock_state_[2].dword_[7] != 0) {
             log_say("Remaining Locked2", 0, 0, 0);
             lock_state_[2].dword_[7] = 0;
@@ -1432,7 +1429,7 @@ void __cdecl message_veh(int opcode, int payload_10, int payload_14,
     } message;
 
     message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = NetDaemonLocalFaction;
+    message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     message.field_10_ = payload_10;
@@ -1462,7 +1459,7 @@ void __cdecl message_base(int opcode, int payload_10, char *text, int target) {
     } message;
 
     message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = NetDaemonLocalFaction;
+    message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     message.payload_10_ = payload_10;
@@ -1502,7 +1499,7 @@ void __cdecl send_raw_data(int opcode, int target, int payload_10,
     unsigned char message[0x90];
 
     *reinterpret_cast<short *>(message + 0x00) = static_cast<short>(opcode);
-    *reinterpret_cast<int *>(message + 0x04) = NetDaemonLocalFaction;
+    *reinterpret_cast<int *>(message + 0x04) = ConsoleGlobal.faction_id_;
     *reinterpret_cast<unsigned int *>(message + 0x08) = timeGetTime();
     *reinterpret_cast<int *>(message + 0x0c) =
         NetDaemonNet.lock_state_[0].dword_[0];
@@ -1550,7 +1547,7 @@ void __cdecl message_big_data(int opcode, int target, int *payload,
     int *dst;
 
     message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = NetDaemonLocalFaction;
+    message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
 
@@ -1610,7 +1607,7 @@ void __cdecl message_lock(int opcode, int target, int payload_10,
     } message;
 
     message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = NetDaemonLocalFaction;
+    message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     message.field_10_ = payload_10;
@@ -1641,7 +1638,7 @@ void __cdecl message_landmark(int opcode, int target, char *text,
     char message[0x40];
 
     *reinterpret_cast<short *>(message) = static_cast<short>(opcode);
-    *reinterpret_cast<int *>(message + 0x04) = NetDaemonLocalFaction;
+    *reinterpret_cast<int *>(message + 0x04) = ConsoleGlobal.faction_id_;
     *reinterpret_cast<unsigned long *>(message + 0x08) = timeGetTime();
     *reinterpret_cast<int *>(message + 0x1c) = payload_1C;
     *reinterpret_cast<int *>(message + 0x0c) =
@@ -1679,7 +1676,7 @@ void __cdecl message_chat(int opcode, int target, char *text) {
     } message;
 
     message.opcode_ = static_cast<short>(opcode);
-    message.faction_ = NetDaemonLocalFaction;
+    message.faction_ = ConsoleGlobal.faction_id_;
     message.time_ = timeGetTime();
     message.turn_ = NetDaemonNet.lock_state_[0].dword_[0];
     strncpy(message.text_, text, 0x100);
@@ -1712,7 +1709,7 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 //
 // address        0x00532940
 // measured tier  NO_COMPILE
-// refusal        u00532940.cpp(46) : error C2653: 'NetDaemon' : is not a class or namespace name u00532940.cpp(47) : error C2065: 'NetDaemonIsMultiplayerNet' : undeclared identifier u00532940.
+// refusal        u00532940.cpp(46) : error C2653: 'NetDaemon' : is not a class or namespace name u00532940.cpp(47) : error C2065: 'IsMultiplayerNet' : undeclared identifier u00532940.
 //
 // The WHOLE unit as measured, scaffolding included: for the units
 // that are byte-exact yet refuse extraction, the agent tuned the
@@ -1792,7 +1789,7 @@ void __cdecl message_chat(int opcode, int target, char *text) {
 // compare in the opposite order, and `target = target;` was folded away
 // entirely. Measured, and the three sites are spelled the same way for it.
 void NetDaemon::send_message(char *message, unsigned long length, int target) {
-    if (NetDaemonIsMultiplayerNet) {
+    if (IsMultiplayerNet) {
         unsigned short flags = *reinterpret_cast<unsigned short *>(message);
         if (flags & 0x4000) {
             *reinterpret_cast<unsigned long *>(message + 8) =
@@ -1867,10 +1864,10 @@ void NetDaemon::send_message(char *message, unsigned long length, int target) {
 // (2026-09-04).
 int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
                         int payload_20, int payload_18) {
-    if (NetDaemonIsMultiplayerNet == 0) {
+    if (IsMultiplayerNet == 0) {
         return 0;
     }
-    if ((NetDaemonNet.lock_state_[0].dword_[12] & (1 << NetDaemonLocalFaction)) != 0 &&
+    if ((NetDaemonNet.lock_state_[0].dword_[12] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
         (NetTurnFlags & 0x10) == 0) {
         NetMsgPopup->pop("ALREADYDONE", 0, 2, 0);
         return 1;
@@ -2013,14 +2010,14 @@ int NetDaemon::wait(char * message, int * state, int value, int timeout) {
 
 int NetDaemon::open_channel(int payload_10, int payload_14) {
 
-  if (NetDaemonIsMultiplayerNet == 0) {
+  if (IsMultiplayerNet == 0) {
     return 0;
   }
   if (lock_state_[1].dword_[14] != 0) {
     return 1;
   }
 
-  log_say(reinterpret_cast<char *>("Client requesting Diplo Channel"), NetDaemonLocalFaction, 0, 0);
+  log_say(reinterpret_cast<char *>("Client requesting Diplo Channel"), ConsoleGlobal.faction_id_, 0, 0);
   lock_state_[1].dword_[14] = 1;
   lock_state_[2].dword_[0] = 0;
 
@@ -2088,7 +2085,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
 
 int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, int scratch) {
 
-    if (NetDaemonIsMultiplayerNet == 0) {
+    if (IsMultiplayerNet == 0) {
         return 0;
     }
     NetPlayerDropped = 0;
@@ -2105,7 +2102,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
     *(int *)(lock_state_[1].dword_[2]) = 0;
     *(int *)(locks_.field_E8_) = 0;
 
-    log_say((char *)"Client requesting lock", NetDaemonLocalFaction, x, y);
+    log_say((char *)"Client requesting lock", ConsoleGlobal.faction_id_, x, y);
     message_lock(0x2210, target, x, y, payload_18, payload_1C, scratch, 0);
 
     NetBusyCount = NetBusyCount + 1;
@@ -2197,7 +2194,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
 // Fixed-slot bindings carried from 00530920.cpp
 
 // ORIGINAL: 0x00530920 ?add_lock@NetDaemon@@QAEHHHH@Z 0x00530920-0x00530A91 FILE
-// TRIED: reordering the initial `NetDaemonIsMultiplayerNet==0` / `field_1BAC_==0` guards; the mismatch (#5) is deeper, in how the two early returns and the ebx-lazy-save prologue are scheduled.
+// TRIED: reordering the initial `IsMultiplayerNet==0` / `field_1BAC_==0` guards; the mismatch (#5) is deeper, in how the two early returns and the ebx-lazy-save prologue are scheduled.
 // size      369 bytes
 // prototype int (__thiscall ?add_lock@NetDaemon@@QAEHHHH@Z)(NetDaemon* this, int, int, int)
 // callers   2   call targets   9
@@ -2207,14 +2204,14 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
 // indirect  0x005309A6 0x005309C6
 
 int NetDaemon::add_lock(int target, int x, int y) {
-    if (NetDaemonIsMultiplayerNet == 0) {
+    if (IsMultiplayerNet == 0) {
         return 0;
     }
     if (lock_state_[2].dword_[2] == 0) {
         return 1;
     }
 
-    log_say(reinterpret_cast<char *>("Client requesting ADD LOCK"), NetDaemonLocalFaction, 0, 0);
+    log_say(reinterpret_cast<char *>("Client requesting ADD LOCK"), ConsoleGlobal.faction_id_, 0, 0);
     lock_state_[1].dword_[2] = 0;
     message_lock(0x2215, target, x, y, 0, -1, -1, 0);
 
@@ -2277,7 +2274,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
 int NetDaemon::add_global() {
     DWORD (WINAPI *const get_time)() = timeGetTime;
 
-    if (NetDaemonIsMultiplayerNet == 0) {
+    if (IsMultiplayerNet == 0) {
         return 0;
     }
     NetPlayerDropped = 0;
@@ -2415,13 +2412,13 @@ void NetDaemon::unlock_base(int base_id) {
 
     log_say(reinterpret_cast<char *>("UnlockBase"), NetDaemonNet.lock_state_[2].dword_[2], base_id, 0);
 
-    if (NetDaemonIsMultiplayerNet != 0 && NetDaemonNet.lock_state_[2].dword_[2] != 0) {
+    if (IsMultiplayerNet != 0 && NetDaemonNet.lock_state_[2].dword_[2] != 0) {
         log_say(reinterpret_cast<char *>("UnlockBase doing synch & unlock"), 0, 0, 0);
         synch_base(base_id);
 
-        if (NetDaemonIsMultiplayerNet != 0) {
+        if (IsMultiplayerNet != 0) {
             lock_state_[2].dword_[5] = 1;
-            log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), NetDaemonLocalFaction, 0, 0);
+            log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), ConsoleGlobal.faction_id_, 0, 0);
             int saved = NetDaemonNet.lock_state_[1].dword_[3];
             ++NetBusyCount;
             unsigned long baseline = timeGetTime();
@@ -2456,12 +2453,12 @@ void NetDaemon::unlock_base(int base_id) {
             --NetBusyCount;
             NetDaemonNet.lock_state_[1].dword_[3] = saved;
             if (lock_state_[2].dword_[5] == 0) {
-                log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), NetDaemonLocalFaction, 0, 0);
+                log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
             }
             lock_state_[2].dword_[5] = 0;
 
-            if (NetDaemonIsMultiplayerNet != 0) {
-                log_say(reinterpret_cast<char *>("Client releasing lock"), NetDaemonLocalFaction, 0, 0);
+            if (IsMultiplayerNet != 0) {
+                log_say(reinterpret_cast<char *>("Client releasing lock"), ConsoleGlobal.faction_id_, 0, 0);
                 message_data(0x2212, 0, 0, 0, 0, 0);
                 lock_state_[2].dword_[3] = 0;
                 lock_state_[2].dword_[2] = 0;
@@ -2518,11 +2515,11 @@ void NetDaemon::unlock_base(int base_id) {
 
 void NetDaemon::await_exec(int opcode) {
 
-    if (NetDaemonIsMultiplayerNet == 0) {
+    if (IsMultiplayerNet == 0) {
         return;
     }
 
-    log_say(reinterpret_cast<char *>("Client waiting for acknowledgement"), NetDaemonLocalFaction, 0, 0);
+    log_say(reinterpret_cast<char *>("Client waiting for acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
     int saved = NetDaemonNet.lock_state_[1].dword_[3];
     ++NetBusyCount;
     unsigned long baseline = timeGetTime();
@@ -2556,11 +2553,11 @@ void NetDaemon::await_exec(int opcode) {
 
     --NetBusyCount;
     NetDaemonNet.lock_state_[1].dword_[3] = saved;
-    log_say(reinterpret_cast<char *>("Client received acknowledgement"), NetDaemonLocalFaction, 0, 0);
+    log_say(reinterpret_cast<char *>("Client received acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
 
     if (opcode != 0) {
-        if (NetDaemonIsMultiplayerNet != 0) {
-            log_say(reinterpret_cast<char *>("Client releasing lock"), NetDaemonLocalFaction, 0, 0);
+        if (IsMultiplayerNet != 0) {
+            log_say(reinterpret_cast<char *>("Client releasing lock"), ConsoleGlobal.faction_id_, 0, 0);
             message_data(0x2212, 0, 0, 0, 0, 0);
             lock_state_[2].dword_[3] = 0;
             lock_state_[2].dword_[2] = 0;
@@ -2618,10 +2615,10 @@ void NetDaemon::await_exec(int opcode) {
 void NetDaemon::await_synch() {
     uint32_t *state = &lock_state_[2].dword_[5];
 
-    if (NetDaemonIsMultiplayerNet != 0) {
+    if (IsMultiplayerNet != 0) {
         int synching = 1;
         *state = synching;
-        log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), NetDaemonLocalFaction, 0, 0);
+        log_say(reinterpret_cast<char *>("Awaiting acknowledgement of SYNCH"), ConsoleGlobal.faction_id_, 0, 0);
 
         int saved = NetDaemonNet.lock_state_[1].dword_[3];
         (NetBusyCount)++;
@@ -2660,7 +2657,7 @@ void NetDaemon::await_synch() {
         (NetBusyCount)--;
         NetDaemonNet.lock_state_[1].dword_[3] = saved;
         if (*state == 0) {
-            log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), NetDaemonLocalFaction, 0, 0);
+            log_say(reinterpret_cast<char *>("Received SYNCH acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
         }
         *state = 0;
     }
@@ -2711,9 +2708,9 @@ void NetDaemon::await_synch() {
 
 
 void NetDaemon::await_diplo(int opcode) {
-    if (NetDaemonIsMultiplayerNet != 0) {
+    if (IsMultiplayerNet != 0) {
         lock_state_[2].dword_[1] = opcode;
-        log_say(reinterpret_cast<char *>("Awaiting DIPLO event"), NetDaemonLocalFaction, 0, 0);
+        log_say(reinterpret_cast<char *>("Awaiting DIPLO event"), ConsoleGlobal.faction_id_, 0, 0);
         (NetBusyCount)++;
         int32_t saved = NetDaemonNet.lock_state_[1].dword_[3];
         unsigned int start_time = timeGetTime();
@@ -2748,7 +2745,7 @@ void NetDaemon::await_diplo(int opcode) {
         (NetBusyCount)--;
         NetDaemonNet.lock_state_[1].dword_[3] = saved;
         if (lock_state_[2].dword_[1] == 0) {
-            log_say(reinterpret_cast<char *>("Received DIPLO acknowledgement"), NetDaemonLocalFaction, 0, 0);
+            log_say(reinterpret_cast<char *>("Received DIPLO acknowledgement"), ConsoleGlobal.faction_id_, 0, 0);
         }
         lock_state_[2].dword_[1] = 0;
     }

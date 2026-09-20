@@ -568,7 +568,7 @@ tut_check(int flag) {
     if ((flag & TutorialFlags) != 0) {
         return 0;
     }
-    if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
+    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         return 0;
     }
     TutorialFlags |= flag;
@@ -596,7 +596,7 @@ tut_check2(int flag) {
     if ((flag & TutorialFlags2) != 0) {
         return 0;
     }
-    if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
+    if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
         return 0;
     }
     TutorialFlags2 |= flag;

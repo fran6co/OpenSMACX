@@ -58,18 +58,12 @@ static const uintptr_t LoadFlagsAddress = 0x00453F70;
 // name one from the two slots. Named for what the harness does with it rather
 // than for a class the image has not given us.
 static const uintptr_t InterfaceSingletonAddress = 0x007B0CB8;
-static const uintptr_t ConsoleAddress = 0x009156B0;
-static const uintptr_t CurrentFactionAddress = 0x00939284;
 static const uintptr_t ActionGoToAddress = 0x004CB310;
 static const uintptr_t TurnUpkeepCallerReturn = 0x0052768F;
 // The turn-loop exit flag and the turn phase are named globals now - see
 // game.h (ExitTurnLoop, ControlTurnPhase); the raw uintptr_t bindings that
 // stood here were retired when control_game was homed into game.cpp on
 // 2026-08-29 and both addresses gained real definitions.
-static const size_t ConsoleSelectedVehicleOffset = 0x23BDC;
-static const size_t ConsolePreviousVehicleOffset = 0x23BE0;
-static const size_t ConsoleTurnLoopOffset = 0x23BE4;
-static const size_t ConsoleTurnActiveOffset = 0x23BE8;
 
 typedef int (__cdecl *TopMenuFunction)(int);
 typedef void (__cdecl *OpeningMovieFunction)(char *);
@@ -231,7 +225,7 @@ bool validate_loaded_state() {
 }
 
 void inspect_loaded_state() {
-    int current_faction = *reinterpret_cast<int *>(CurrentFactionAddress);
+    int current_faction = ConsoleGlobal.faction_id_;
     int candidate = -1;
     for (int vehicle = 0; vehicle < VehCurrentCount; vehicle++) {
         if (Vehs[vehicle].faction_id == current_faction && veh_moves(vehicle) > 0) {
@@ -295,13 +289,11 @@ void inspect_loaded_state() {
 }
 
 void request_end_turn(Console *self) {
-    uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
     GameState |= STATE_UNK_2;
     ControlTurnPhase = 0;
-    *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) = 0;
-    *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) = 0;
-    *reinterpret_cast<int *>(bytes + ConsolePreviousVehicleOffset) =
-        *reinterpret_cast<int *>(bytes + ConsoleSelectedVehicleOffset);
+    self->field_23BE4_ = 0;
+    self->field_23BE8_ = 0;
+    self->focus_vehicle_ = self->selected_vehicle_;
 }
 
 void execute_commands(Console *self) {
@@ -309,7 +301,7 @@ void execute_commands(Console *self) {
         finish_failure("vehicle_out_of_range");
         return;
     }
-    int current_faction = *reinterpret_cast<int *>(CurrentFactionAddress);
+    int current_faction = ConsoleGlobal.faction_id_;
     if (Vehs[State.vehicle_id].faction_id != current_faction
         || veh_moves(State.vehicle_id) == 0) {
         finish_failure("vehicle_not_movable_by_current_faction");
@@ -388,11 +380,10 @@ void execute_commands(Console *self) {
         && Vehs[State.vehicle_id].next_veh_id_stack == -1
         && Vehs[State.vehicle_id].prev_veh_id_stack == -1;
     request_end_turn(self);
-    uint8_t *bytes = reinterpret_cast<uint8_t *>(self);
     bool end_turn_requested = (GameState & STATE_UNK_2) != 0
         && ControlTurnPhase == 0
-        && *reinterpret_cast<int *>(bytes + ConsoleTurnLoopOffset) == 0
-        && *reinterpret_cast<int *>(bytes + ConsoleTurnActiveOffset) == 0;
+        && self->field_23BE4_ == 0
+        && self->field_23BE8_ == 0;
     bool passed = movement_ordered && end_turn_requested
         && (!State.resolve_movement || movement_resolved);
     if (passed && State.advance_turn) {
@@ -604,6 +595,6 @@ int __cdecl scenario_top_menu(int mode) {
     write_progress("after_load");
     refresh_loaded_game();
     write_progress("after_refresh");
-    scenario_human_turn_ready(reinterpret_cast<Console *>(ConsoleAddress));
+    scenario_human_turn_ready(&ConsoleGlobal);
     return 0;
 }

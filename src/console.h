@@ -411,12 +411,26 @@ class Console : public MapWin {
   // SIGNED, and not a spelling choice: editor_fungus runs its tile-copy
   // counter in this slot and the image's back edge is `jl` (0x004E1461), so
   // the field is an int - `uint32_t` compiles `jb` and diverges there.
-  int32_t field_23BD4_;  // 0x23BD4
-  uint32_t field_23BD8_;  // 0x23BD8
-  uint32_t field_23BDC_;  // 0x23BDC
-  uint32_t field_23BE0_;  // 0x23BE0
+ public:
+  // These are Console state, not separate globals. In ConsoleGlobal at
+  // 0x9156B0 they occupy 0x939284..0x93929B. External absolute accesses and
+  // receiver-relative constructor/reset accesses identify the same storage.
+  // Vehicle indices are signed: selection/focus use the -1 sentinel.
+  // RECOVERY_MEMBER: v1 Console faction_id_ 0x23BD4 0x004E13E0
+  int32_t faction_id_;       // 0x23BD4; mutable editor/view faction context
+  // RECOVERY_MEMBER: v1 Console cursor_active_ 0x23BD8 0x0050F460
+  uint32_t cursor_active_;   // 0x23BD8
+  // RECOVERY_MEMBER: v1 Console selected_vehicle_ 0x23BDC 0x0051D740
+  int32_t selected_vehicle_; // 0x23BDC
+  // RECOVERY_MEMBER: v1 Console focus_vehicle_ 0x23BE0 0x00510CE0
+  // veh_kill clears/remaps this id with selection; the main loop resets it
+  // between games, and ready_search consumes it before its normal scan.
+  int32_t focus_vehicle_;    // 0x23BE0
+  // RECOVERY_MEMBER: v1 Console field_23BE4_ 0x23BE4 0x0050F460
   uint32_t field_23BE4_;  // 0x23BE4
+  // RECOVERY_MEMBER: v1 Console field_23BE8_ 0x23BE8 0x0050F460
   uint32_t field_23BE8_;  // 0x23BE8
+ private:
   uint32_t field_23BEC_;  // 0x23BEC
   uint32_t field_23BF0_;  // 0x23BF0
   uint32_t field_23BF4_;  // 0x23BF4
@@ -528,7 +542,7 @@ inline MapWin *&console_map_win() {
 // callees are still original bodies, so each gets a rebindable seam. Nothing
 // here binds an address that is already bound: the table is mapwin.h's
 // MapWinTable at 0x007D3C3C (which also carries MapWinTableSlots and
-// MapWinActiveOffset) and the faction id is game.h's LocalFaction.
+// MapWinActiveOffset) and the faction id is ConsoleGlobal.faction_id_.
 //
 // Console::cursor_next (0x005109B0, ret 8) is entered on the process-wide
 // Console the original names with `mov ecx, 0x9156b0` at 0x00510921 - never on

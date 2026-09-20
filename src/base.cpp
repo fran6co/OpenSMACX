@@ -338,7 +338,7 @@ int __cdecl base_at(int x, int y) {
         GetAsyncKeyState(VK_CONTROL);
     }
     rebuild_base_bits();
-    ConsoleGlobal.focus(x, y, NetDaemonLocalFaction);
+    ConsoleGlobal.focus(x, y, ConsoleGlobal.faction_id_);
     return -1;
 }
 
@@ -4329,7 +4329,7 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
     if ((*(unsigned char *)&LockEnableMask & (1 << faction_id)) != 0) {
         draw_map(1);
     }
-    if (faction_id == LocalFaction) {
+    if (faction_id == ConsoleGlobal.faction_id_) {
         ConsoleGlobal.update_data(0);
     }
 }

@@ -13,7 +13,7 @@ int menu_ids[16];
 char menu_text[16][128], labels[1200][16];
 int hit_result, hit_menu, hit_index, selected_action, display_choice, lock_result, selectable;
 int spying_result, live_menus, live_displays;
-int GameState, LocalFaction, IsMultiplayerNet, ConsoleControlTurnActive, CursorVehIndex;
+int GameState, IsMultiplayerNet, ConsoleControlTurnActive;
 char StringTemp[1032];
 
 void event(int code, int a = 0, int b = 0, int c = 0) {
@@ -102,6 +102,7 @@ struct Daemon {
     void unlock_veh() { event(UNLOCK); }
 } NetDaemonNet;
 struct Console {
+    int faction_id_, selected_vehicle_;
     void set_move(int force) { event(MOVE, force); }
     void editor_edit_veh(int id) { event(EDIT, id); }
 } ConsoleGlobal;
@@ -131,12 +132,12 @@ void reset() {
     selected_action = -1; display_choice = -1;
     selectable = 1; lock_result = spying_result = 0;
     GameState = IsMultiplayerNet = ConsoleControlTurnActive = 0;
-    LocalFaction = 2; CursorVehIndex = 7;
+    ConsoleGlobal.faction_id_ = 2; ConsoleGlobal.selected_vehicle_ = 7;
     memset(Bases, 0, sizeof(Bases));
     memset(PlayersData, 0, sizeof(PlayersData));
     memset(&NetDaemonNet, 0, sizeof(NetDaemonNet));
     memset(&status, 0, sizeof(status));
-    Bases[3].faction_id_current = LocalFaction;
+    Bases[3].faction_id_current = ConsoleGlobal.faction_id_;
     Bases[3].queue_production_id[0] = 1;
     strcpy(VehPrototypes[1].veh_name, "Scout");
     Facility[2].name = reinterpret_cast<char *>(17);
@@ -184,7 +185,7 @@ int main() {
     reset(); selected_action = 5; click(); assert(only(ZOOM).a == 3 && only(ZOOM).b == 0 && !count(ACTIVE));
     for (int failure = 0; failure <= 1; ++failure) {
         reset(); hit_menu = 0; selected_action = 6; lock_result = failure; click();
-        assert(CursorVehIndex == 3 && only(LOCK).a == 3 && only(MOVE).a == 1 && !count(ACTIVE));
+        assert(ConsoleGlobal.selected_vehicle_ == 3 && only(LOCK).a == 3 && only(MOVE).a == 1 && !count(ACTIVE));
         assert(count(WAKE) == !failure && count(SYNC) == !failure);
         assert(count(AWAIT) == !failure && count(UNLOCK) == !failure);
         if (!failure) {
@@ -205,7 +206,7 @@ int main() {
             if (block == 0) ConsoleControlTurnActive = 1;
             if (block == 1) NetDaemonNet.lock_state_[2].dword_[4] = 1;
             if (block == 2) NetDaemonNet.lock_state_[0].dword_[3] = 1;
-            if (block == 3) NetDaemonNet.lock_state_[0].dword_[12] = 1 << LocalFaction;
+            if (block == 3) NetDaemonNet.lock_state_[0].dword_[12] = 1 << ConsoleGlobal.faction_id_;
             click(); assert(!count(SOFT_ZOOM) && count(ACTIVE) == 1);
             IsMultiplayerNet = 0; event_count = 0; click(); assert(count(SOFT_ZOOM) == 1);
         }

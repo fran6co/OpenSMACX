@@ -42,14 +42,6 @@
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
-// Two id slots the vehicle verbs re-point when a vehicle id disappears. Both
-// are defined in other TUs (console.cpp and game.cpp); neither has a header
-// home yet, which is the same HANDOFF shape console.cpp's forwarder block
-// records - the declarations move into console.h / game.h when those passes
-// recover them.
-extern int CursorVehIndex;  // 0x0093928C, defined in console.cpp
-
-
 int VehCurrentCount;  // 0x009A64C8
 int VehDropLiftVehID;  // 0x009B2280
 int VehLiftX;  // 0x009B2278
@@ -63,7 +55,9 @@ LPSTR VehBattleDisplayTerrain;
 // Zero initialisation IS the image's initialisation: every base below reads
 // ZERO at run time (`image_data.py`, all past the file-backed end of .data),
 // and the alpha.txt / x.txt loaders fill them before use.
+// RECOVERY_OBJECT: v1 0x009AB868 ?VehPrototypes@@3PAUVehPrototype@@A
 VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
+// RECOVERY_OBJECT: v1 0x00952828 ?Vehs@@3PAUVeh@@A
 Veh Vehs[2049];  // 0x00952828
 // RECOVERY_OBJECT: v1 0x0094A330 ?Chassis@@3PAURulesChassis@@A
 RulesChassis Chassis[MaxChassisNum];  // 0x0094A330
@@ -85,6 +79,52 @@ uint32_t VehBattleModCount[2];  // 0x00915614
 BOOL VehBattleUnkTgl[2];  // 0x0091561C
 int VehBattleModifier[8];  // 0x009155F0
 LPSTR VehBattleDisplay[160];  // 0x0090F554
+
+// boom temporarily suppresses one vehicle while redrawing the affected tile,
+// then restores -1. This is separate from the Console's selected vehicle.
+// RECOVERY_OBJECT: v2 0x00689F30 0x00689F34 ?VehDrawSuppressedVehicle@@3HA 0x005593E0
+int VehDrawSuppressedVehicle = -1;
+
+// ORIGINAL: 0x005593E0 ?pick_top_veh@@YAHH@Z 0x005593E0-0x005594EB
+// RECOVERY_BINDING: v1 {"evidence": ["Original5593E0..5594EB climbs signed previous links then visits next links, snapshots the Console faction, excludes temporary suppression, prefers eligible selected vehicle and retains the first highest-score entry.", "Original559466 test dh,42 establishes state mask4200, correcting the seed420000. Original ctor/reset member accesses and ConsoleGlobal9156B0 establish faction/cursor/selected/enable ownership, not independent globals. Observed VC6 symbol and original complete seed extent."], "reason": "Recover stack display selection against real vehicle/prototype/chassis records and Console state."}
+int __cdecl pick_top_veh(int veh_id) {
+    int best = veh_id;
+    int best_score = -99;
+    if (veh_id < 0) {
+        return best;
+    }
+    int index = veh_id;
+    int previous = Vehs[index].prev_veh_id_stack;
+    while (previous >= 0) {
+        index = previous;
+        previous = Vehs[index].prev_veh_id_stack;
+    }
+    if (index < 0) {
+        return best;
+    }
+    const int faction = ConsoleGlobal.faction_id_;
+    do {
+        if (VehDrawSuppressedVehicle == -1 || index != VehDrawSuppressedVehicle) {
+            if (index == ConsoleGlobal.selected_vehicle_
+                && Vehs[index].faction_id == faction
+                && (Vehs[index].state & 0x4200) == 0
+                && ConsoleGlobal.cursor_active_ != 0
+                && ConsoleGlobal.field_23BE4_ != 0) {
+                return index;
+            }
+            const int prototype = Vehs[index].proto_id;
+            const int chassis = VehPrototypes[prototype].chassis_id;
+            const int score = Chassis[chassis].triad
+                + (Vehs[index].faction_id == faction ? 4 : 0);
+            if (score > best_score) {
+                best_score = score;
+                best = index;
+            }
+        }
+        index = Vehs[index].next_veh_id_stack;
+    } while (index >= 0);
+    return best;
+}
 
 // Four normal tables, each indexed by the four terrain-height levels in
 // vehdraw_compute_facet_normals. The original initializer writes 7^4 vectors
@@ -3126,7 +3166,7 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
         return;
     }
     Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
-    if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
+    if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
         && !(GameState & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
         tile->bit2 |= 0x400000; // TODO: identify value
@@ -3177,7 +3217,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
         return;
     }
     Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
-    if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
+    if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
         && !(GameState & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
         tile->bit2 |= 0x400000; // TODO: identify value
@@ -3260,7 +3300,7 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
         if (y >= 0 && y < (int)MapLatitudeBounds
             && x >= 0 && x < (int)MapLongitudeBounds) {
             Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
-            if (faction_id == LocalFaction && !(tile->visibility & (1 << faction_id))
+            if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
                 && !(GameState & STATE_OMNISCIENT_VIEW)
                 && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
                 tile->bit2 |= 0x400000; // TODO: identify value
@@ -5951,15 +5991,15 @@ void __cdecl veh_kill(int veh_id) {
         } while (--count != 0);
     }
 
-    if (CursorVehIndex == veh_id) {
-        CursorVehIndex = -1;
-    } else if (veh_id < CursorVehIndex) {
-        --CursorVehIndex;
+    if (ConsoleGlobal.selected_vehicle_ == veh_id) {
+        ConsoleGlobal.selected_vehicle_ = -1;
+    } else if (veh_id < ConsoleGlobal.selected_vehicle_) {
+        --ConsoleGlobal.selected_vehicle_;
     }
-    if (FocusVehId == veh_id) {
-        FocusVehId = -1;
-    } else if (veh_id < FocusVehId) {
-        --FocusVehId;
+    if (ConsoleGlobal.focus_vehicle_ == veh_id) {
+        ConsoleGlobal.focus_vehicle_ = -1;
+    } else if (veh_id < ConsoleGlobal.focus_vehicle_) {
+        --ConsoleGlobal.focus_vehicle_;
     }
     if (*StatusHoverVehId == veh_id) {
         *StatusHoverVehId = -1;
@@ -5976,8 +6016,8 @@ void __cdecl veh_kill(int veh_id) {
     }
     if (IsMultiplayerNet != 0) {
         int *slot = *VehSelectionFollow;
-        if (slot != 0 && slot != &CursorVehIndex && slot != VehSelectionFollowLimit &&
-            slot != &FocusVehId) {
+        if (slot != 0 && slot != &ConsoleGlobal.selected_vehicle_ && slot != VehSelectionFollowLimit &&
+            slot != &ConsoleGlobal.focus_vehicle_) {
             if (veh_id <= *slot) {
                 --*slot;
             }
@@ -6050,7 +6090,7 @@ void __cdecl kill(int veh_id) {
 
     if (VehBattleUnkTgl[0] == 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
         x < MapLongitudeBounds) {
-        if (faction_id == LocalFaction) {
+        if (faction_id == ConsoleGlobal.faction_id_) {
             const int at = veh_at(x, y);
             const int checked = stack_check(at, 1, faction_id, -1, -1);
             if (checked == 0 || worm_abil != 0) {
@@ -6141,7 +6181,7 @@ Status: MISMATCH #9 - the veh_id * 0x34 multiply lowers through a different
 int __cdecl veh_ready(int veh_id) {
     if (veh_id >= 0 && Vehs[veh_id].y >= 0 && Vehs[veh_id].y < MapLatitudeBounds &&
         Vehs[veh_id].x >= 0 && Vehs[veh_id].x < MapLongitudeBounds &&
-        Vehs[veh_id].faction_id == (uint8_t)LocalFaction &&
+        Vehs[veh_id].faction_id == (uint8_t)ConsoleGlobal.faction_id_ &&
         ((Vehs[veh_id].flags & 0x40) == 0 || (Vehs[veh_id].flags & 0x400) == 0) &&
         veh_jail(veh_id) == 0 &&
         ((Vehs[veh_id].state & 0x4200) != 0 || Vehs[veh_id].order < 1 ||
@@ -6178,7 +6218,7 @@ int __cdecl veh_selectable(int veh_id) {
         Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds) {
         return 0;
     }
-    if (Vehs[veh_id].faction_id != (uint8_t)LocalFaction) {
+    if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
         return 0;
     }
     if ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) {
@@ -6203,7 +6243,7 @@ Status: MISMATCH.
 int __cdecl veh_unmoved(int veh_id) {
     if (veh_id < 0 || Vehs[veh_id].y < 0 || Vehs[veh_id].y >= MapLatitudeBounds ||
         Vehs[veh_id].x < 0 || Vehs[veh_id].x >= MapLongitudeBounds ||
-        Vehs[veh_id].faction_id != (uint8_t)LocalFaction ||
+        Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_ ||
         ((Vehs[veh_id].flags & 0x40) != 0 && (Vehs[veh_id].flags & 0x400) != 0) ||
         veh_jail(veh_id) != 0) {
         return 0;
@@ -6370,7 +6410,7 @@ void __cdecl promote(int veh_id) {
 
     const int morale_before = morale_veh(veh_id, 1, 0);
     ++Vehs[veh_id].morale;
-    if (Vehs[veh_id].faction_id != (uint8_t)LocalFaction) {
+    if (Vehs[veh_id].faction_id != (uint8_t)ConsoleGlobal.faction_id_) {
         return;
     }
     if (!((1 << Vehs[veh_id].faction_id) & LockEnableMask)) {
@@ -6851,7 +6891,7 @@ void __cdecl action_gate(int veh_id, int base_id) {
     }
     draw_tile(Bases[base_id].x, Bases[base_id].y, 2);
 
-    if (veh_id == CursorVehIndex) {
+    if (veh_id == ConsoleGlobal.selected_vehicle_) {
         ConsoleGlobal.focus(veh_x, veh_y, Vehs[veh_id].faction_id);
     }
 }
@@ -7010,7 +7050,7 @@ Return Value: n/a
 Status: MISMATCH.
 */
 void __cdecl action_go_to(int veh_id) {
-    const int net = NetDaemonIsMultiplayerNet;
+    const int net = IsMultiplayerNet;
     const int turn_active = ConsoleControlTurnActive;
     if (net != 0 && turn_active == 0) {
         *VehSelectionFollow = (int *)&veh_id;
@@ -7029,7 +7069,7 @@ void __cdecl action_go_to(int veh_id) {
 
     if (move_result < 0) {
         Vehs[veh_id].order = ORDER_NONE;
-        if (NetDaemonIsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
+        if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
             synch_veh(veh_id);
             NetDaemonNet.await_synch();
             NetDaemonNet.unlock_veh();
@@ -7037,7 +7077,7 @@ void __cdecl action_go_to(int veh_id) {
         return;
     }
 
-    if (NetDaemonIsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
+    if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
         if (NetDaemonNet.order_veh(veh_id, move_result, 1) != 0) {
             NetDaemonNet.await_exec(1);
         }
@@ -7124,7 +7164,7 @@ Return Value: n/a
 Status: MISMATCH.
 */
 void __cdecl action_road_to(int veh_id) {
-    if (NetDaemonIsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
+    if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0) {
         *VehSelectionFollow = (int *)&veh_id;
     }
 
@@ -7143,13 +7183,13 @@ void __cdecl action_road_to(int veh_id) {
         || goal_y >= MapLatitudeBounds || goal_x < 0
         || goal_x >= MapLongitudeBounds) {
         Vehs[veh_id].order = ORDER_NONE;
-        net_flag = NetDaemonIsMultiplayerNet;
+        net_flag = IsMultiplayerNet;
     } else {
         if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= ALT_BIT_SHORE_LINE
             && !has_tech_call(Rules.tech_build_roads_fungus, owner)
             && has_tech_call(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, owner)) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
-                if (NetDaemonIsMultiplayerNet == 0
+                if (IsMultiplayerNet == 0
                     || ConsoleControlTurnActive != 0) {
                     const uint8_t saved_order = Vehs[veh_id].order;
                     action_terraform(veh_id, ORDER_REMOVE_FUNGUS, 1);
@@ -7168,7 +7208,7 @@ void __cdecl action_road_to(int veh_id) {
             || has_tech_call(Rules.tech_build_roads_fungus, owner)) {
             if (!(tile->bit & BIT_BASE_IN_TILE) || (tile->val2 & 0xf) > 7) {
                 if (!(tile->bit & BIT_ROAD)) {
-                    if (NetDaemonIsMultiplayerNet == 0
+                    if (IsMultiplayerNet == 0
                         || ConsoleControlTurnActive != 0) {
                         const uint8_t saved_order = Vehs[veh_id].order;
                         action_terraform(veh_id, ORDER_ROAD, 1);
@@ -7183,7 +7223,7 @@ void __cdecl action_road_to(int veh_id) {
                 if (Vehs[veh_id].order == ORDER_MAGTUBE_TO
                     && !(tile->bit & BIT_MAGTUBE)
                     && has_tech_call(Terraforming[TERRA_MAGTUBE].preq_tech, owner)) {
-                    if (NetDaemonIsMultiplayerNet == 0
+                    if (IsMultiplayerNet == 0
                         || ConsoleControlTurnActive != 0) {
                         action_terraform(veh_id, ORDER_ROAD, 1);
                         Vehs[veh_id].order = ORDER_MAGTUBE_TO;
@@ -7200,7 +7240,7 @@ void __cdecl action_road_to(int veh_id) {
         if (x == goal_x && y == goal_y) {
             const uint8_t order = Vehs[veh_id].order;
             Vehs[veh_id].order = ORDER_NONE;
-            if (NetDaemonIsMultiplayerNet != 0
+            if (IsMultiplayerNet != 0
                 && ConsoleControlTurnActive == 0) {
                 synch_veh(veh_id);
                 NetDaemonNet.await_synch();
@@ -7209,7 +7249,7 @@ void __cdecl action_road_to(int veh_id) {
             if (Vehs[veh_id].state & VSTATE_UNK_200) {
                 return;
             }
-            if (owner != (unsigned)LocalFaction) {
+            if (owner != (unsigned)ConsoleGlobal.faction_id_) {
                 return;
             }
             StringTemp[0] = 0;
@@ -7226,9 +7266,9 @@ void __cdecl action_road_to(int veh_id) {
         const int min_speed = has_tech_call(Rules.tech_build_roads_fungus, owner)
             ? 0 : 0x10;
         const int found = Paths.find(x, y, goal_x, goal_y, 0, -1, min_speed, -1);
-        net_flag = NetDaemonIsMultiplayerNet;
+        net_flag = IsMultiplayerNet;
         if (found >= 0 && found < 8) {
-            if (NetDaemonIsMultiplayerNet != 0
+            if (IsMultiplayerNet != 0
                 && ConsoleControlTurnActive == 0) {
                 if (NetDaemonNet.order_veh(veh_id, found, 1) == 0) {
                     return;
@@ -7594,7 +7634,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         if (base_idx >= 0 && BaseFindDist < 3) {
             Bases[base_idx].state |= 0x100;
         }
-        if (action == TERRA_THERMAL_BORE && faction == LocalFaction
+        if (action == TERRA_THERMAL_BORE && faction == ConsoleGlobal.faction_id_
             && base_idx >= 0 && Bases[base_idx].faction_id_current == faction) {
             parse_says(0, Bases[base_idx].name_string, -1, -1);
             NetMsgPopup->pop(VehLabelBOREHOLEMINE, 5000, 0, 0);
@@ -7628,7 +7668,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             Bases[near_base].minerals_accumulated_2 = forest_val;
             Bases[near_base].production_id_last =
                 Bases[near_base].queue_production_id[0];
-            if (faction == LocalFaction && (faction_bit & LockEnableMask) != 0
+            if (faction == ConsoleGlobal.faction_id_ && (faction_bit & LockEnableMask) != 0
                 && Rules.minerals_harvesting_forest != 0) {
                 parse_says(0, Bases[near_base].name_string, -1, -1);
                 parse_num(0, Rules.minerals_harvesting_forest);
@@ -7655,15 +7695,15 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         if (TerraformDrownedBaseId >= 0) {
             parse_says(0, Bases[TerraformDrownedBaseId].name_string, -1, -1);
             parse_says(1, Players[faction].adj_name_faction, -1, -1);
-            const char *msg = faction == LocalFaction ? VehLabelTERRAMINE
+            const char *msg = faction == ConsoleGlobal.faction_id_ ? VehLabelTERRAMINE
                                                       : VehLabelTERRAYOURS;
             NetMsgPopup->pop(msg, 5000, 0, 0);
         }
-        if (MapBaseIdClosestSubmergedVeh[LocalFaction] >= 0) {
+        if (MapBaseIdClosestSubmergedVeh[ConsoleGlobal.faction_id_] >= 0) {
             const int drown_base = MapBaseIdClosestSubmergedVeh[faction];
             parse_says(0, Bases[drown_base].name_string, -1, -1);
             parse_says(1, Players[faction].adj_name_faction, -1, -1);
-            const char *msg = faction == LocalFaction ? VehLabelDROWNMINE
+            const char *msg = faction == ConsoleGlobal.faction_id_ ? VehLabelDROWNMINE
                                                       : VehLabelDROWNYOURS;
             NetMsgPopup->pop(msg, 5000, 0, 0);
         }
@@ -7679,12 +7719,12 @@ forest_shared:
         TutWinBaseWindow.GraphicWin::redraw();
     }
 
-    if (faction != LocalFaction) {
+    if (faction != ConsoleGlobal.faction_id_) {
         return 1;
     }
 
     if ((Vehs[veh_id].state & VSTATE_UNK_200) != 0
-        && (GamePreferences & 0x20) != 0 && NetDaemonIsMultiplayerNet == 0) {
+        && (GamePreferences & 0x20) != 0 && IsMultiplayerNet == 0) {
         const uint32_t bit = 1 << (action & 0x1F);
         uint32_t seen = TerraformAnnouncedMask[not_ocean];
         if ((bit & seen) == 0) {
@@ -7765,7 +7805,7 @@ forest_shared:
         }
     }
 
-    if (faction == LocalFaction && Vehs[veh_id].order == ORDER_NONE
+    if (faction == ConsoleGlobal.faction_id_ && Vehs[veh_id].order == ORDER_NONE
         && !(Vehs[veh_id].state & VSTATE_UNK_200)
         && VehTerraformStingLatch == 0) {
         VehTerraformStingLatch = 1;
@@ -7961,8 +8001,8 @@ void __cdecl action_oblit(int veh_id, int base_id) {
     parse_says(0, Bases[base_id].name_string, -1, -1);
 
     PluralityDefault = 0;
-    GenderDefault = Players[LocalFaction].faction_bonus_count;
-    parse_says(1, Players[LocalFaction].name_leader, -1, -1);
+    GenderDefault = Players[ConsoleGlobal.faction_id_].faction_bonus_count;
+    parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
 
     parse_says(2, Players[base_former].adj_name_faction, -1, -1);
 
@@ -7974,16 +8014,16 @@ void __cdecl action_oblit(int veh_id, int base_id) {
     PluralityDefault = 0;
     parse_says(4, Players[veh_faction].name_leader, -1, -1);
 
-    const bool audible = Bases[base_id].faction_id_current == LocalFaction
-        || (Bases[base_id].visibility & (1 << (LocalFaction & 0x1f))) != 0;
+    const bool audible = Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+        || (Bases[base_id].visibility & (1 << (ConsoleGlobal.faction_id_ & 0x1f))) != 0;
 
     base_kill(base_id);
     draw_map(1);
 
-    if ((int)veh_faction == LocalFaction) {
+    if ((int)veh_faction == ConsoleGlobal.faction_id_) {
         popp((char *)*ClimatePopupTitle, VehLabelOBLITTED, 0,
              VehIconBASEOBL_SM_PCX, 0);
-    } else if ((int)base_former == LocalFaction || audible) {
+    } else if ((int)base_former == ConsoleGlobal.faction_id_ || audible) {
         popp((char *)*ClimatePopupTitle, VehLabelOBLITTED2, 0,
              VehIconBASEOBL2_SM_PCX, 0);
     }

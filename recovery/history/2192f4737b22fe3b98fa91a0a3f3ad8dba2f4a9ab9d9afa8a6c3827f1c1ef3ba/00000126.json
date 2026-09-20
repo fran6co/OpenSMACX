@@ -1,0 +1,34 @@
+{
+  "event_id": "71486df3ac9ae398339f126d5add9ec8dc98c5c627c72e34b00cd7f8a283aaa5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Removing duplicate faction globals exposed the adjacent duplicate transport flag: game.cpp IsMultiplayerNet and netdaemon.cpp NetDaemonIsMultiplayerNet bothdeclare93F660. All consumers of the duplicate are in already granted netdaemon.cpp/veh.cpp; consolidate them to the existing game-owned BOOL storage while preserving network logic.",
+      "Permit source-owned start bindings for existing Vehs952828 andVehPrototypes9AB868 after fresh compiler-symbol observation; these are existing allocations, not permission to fabricate replacement tables. Suppressedvehicle689F30 is an independent initialized-1 dword bounded by nextstring689F34; constructor/memberstate939284..298 must remaininsideConsoleGlobal."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 9696864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9775144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10139752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e5955fae4f1d0ae325f92a6389837cece2e59effca20e164e0308be052479599",
+  "request_id": "coordinator-console-network-storage-20260920",
+  "schema_version": 1,
+  "sequence": 126,
+  "stream": "task:infowin-ownership"
+}

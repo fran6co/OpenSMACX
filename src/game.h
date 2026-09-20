@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "console.h"  // not_my_turn reads the current Console faction.
+
 class MultiWin;
 class MainInterface;
 class BattleWin;
@@ -149,7 +151,6 @@ extern BOOL IsMultiplayerPBEM;
 // `test byte ptr [0x9a681c], 0x10` in not_my_turn.
 extern uint32_t NetTurnFlags;
 extern int NetTurnFaction;
-extern int LocalFaction;
 
 
 void __cdecl reset_territory();
@@ -169,10 +170,6 @@ void __cdecl control_game();
 // closed-net path, 0x00514D30 from its sibling) and consumed once per pass of
 // the main loop, which reloads and sets up a game when it sees it.
 extern int GameRestartQueued;  // 0x0093A948
-// An id slot maintained the way the selection id is: veh_kill (0x005C08C0)
-// clears it when it names the killed vehicle and decrements it when the id
-// was below. The main loop resets it between games. Exact role not recovered.
-extern int FocusVehId;  // 0x00939290
 // The flag the turn loop watches: Console::on_sys_close raises it, control_turn
 // and net_control_turn raise and clear it, and the main loop clears it before
 // each turn and again at the same four-store sequence it opens with. Formerly
@@ -327,7 +324,7 @@ MEASURED inline BOOL __cdecl not_my_turn() {
     }
     // `cmp ecx, edx` / `setne al`: the result is the inequality itself, not a
     // normalised flag, and the faction identity is what decides it.
-    return NetTurnFaction != LocalFaction;
+    return NetTurnFaction != ConsoleGlobal.faction_id_;
 }
 
 MEASURED inline uint32_t __cdecl game_year(int turn) {

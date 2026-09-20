@@ -27,6 +27,8 @@ extern VOX_Vect VehDrawFacetNormals3[2401];
 extern VOX_Vect VehDrawCameraAngles;
 void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix);
 void __cdecl vehdraw_compute_facet_normals();
+extern int VehDrawSuppressedVehicle;
+int __cdecl pick_top_veh(int veh_id);
 
  /*
   * Vehicle/unit related objects, variables and functions.

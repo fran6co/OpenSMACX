@@ -263,14 +263,8 @@ void __cdecl action_airdrop(int faction_id, int x, int y, int mode);
 int __cdecl order_veh(int veh_id, int x, int y);
 
 
-// The multiplayer-transport flag at 0x0093F660 and the local faction id at
-// 0x00939284, both read by unlock_veh. src/game.cpp binds the same two
-// addresses as IsMultiplayerNet / LocalFaction, but that translation unit is
-// not linked into recovery-leaf-tests, so NetDaemon owns its own rebindable
-// pair the way src/spying.cpp owns SpyingCurrentFaction for the very
-// same faction address.
-extern int NetDaemonIsMultiplayerNet;
-extern int NetDaemonLocalFaction;
+// Transport state is game.h's IsMultiplayerNet; faction state is owned by
+// ConsoleGlobal. The daemon does not allocate duplicates of either.
 
 // The message builders at 0x00592E10..0x00593215, defined in netdaemon.cpp.
 // They pack a record on the stack, stamp it with the local faction, the

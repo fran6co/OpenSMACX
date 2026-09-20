@@ -4853,7 +4853,7 @@ int __cdecl enemy_veh(int veh_id) {
     const int unit_id = veh_id;
 
     bool is_local_turn;
-    if (Vehs[unit_id].faction_id == LocalFaction && IsMultiplayerNet != 0) {
+    if (Vehs[unit_id].faction_id == ConsoleGlobal.faction_id_ && IsMultiplayerNet != 0) {
         is_local_turn = true;
     } else {
         is_local_turn = false;

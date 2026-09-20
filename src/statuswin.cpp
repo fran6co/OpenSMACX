@@ -36,7 +36,6 @@
 #include "tutwin.h"
 #include "veh.h"
 
-extern int CursorVehIndex;  // console.cpp owns the selected vehicle
 void __cdecl help_any();
 
 // ORIGINAL: 0x004B9010 ?on_right_click@StatusWin@@QAEXHHH@Z 0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA
@@ -71,7 +70,7 @@ void StatusWin::on_right_click(int x, int y, int) {
     int base_id = -1;
     if (menu_id != 2) {
         if (menu_id == 0 || menu_id == 10) {
-            if (menu_id == 10) object_index = CursorVehIndex;
+            if (menu_id == 10) object_index = ConsoleGlobal.selected_vehicle_;
             menu.add_item(6, label_get(0x958 / 4));
             menu.add_item(7, label_get(0x112C / 4));
             if (GameState & STATE_SCENARIO_EDITOR) {
@@ -81,11 +80,11 @@ void StatusWin::on_right_click(int x, int y, int) {
         } else {
             base_id = object_index;
             int owner = Bases[base_id].faction_id_current;
-            if ((GameState & STATE_OMNISCIENT_VIEW) || owner == LocalFaction
-                || spying(owner) || (PlayersData[LocalFaction].diplo_treaties[owner] & 1)) {
+            if ((GameState & STATE_OMNISCIENT_VIEW) || owner == ConsoleGlobal.faction_id_
+                || spying(owner) || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1)) {
                 menu.add_item(5, label_get(0x894 / 4));
             }
-            if (owner == LocalFaction || (GameState & STATE_OMNISCIENT_VIEW)) {
+            if (owner == ConsoleGlobal.faction_id_ || (GameState & STATE_OMNISCIENT_VIEW)) {
                 for (int action = 51; action <= 56; ++action) {
                     StringTemp[0] = '\0';
                     strcat(StringTemp, " ");
@@ -115,7 +114,7 @@ void StatusWin::on_right_click(int x, int y, int) {
         (ConsoleControlTurnActive || NetDaemonNet.lock_state_[2].dword_[4]
          || NetDaemonNet.lock_state_[0].dword_[3]);
     bool faction_blocked = IsMultiplayerNet &&
-        (NetDaemonNet.lock_state_[0].dword_[12] & (1U << LocalFaction));
+        (NetDaemonNet.lock_state_[0].dword_[12] & (1U << ConsoleGlobal.faction_id_));
 
     switch (selected) {
     case 1:
@@ -133,7 +132,7 @@ void StatusWin::on_right_click(int x, int y, int) {
         break;
     case 6:
         if (veh_selectable(object_index)) {
-            CursorVehIndex = object_index;
+            ConsoleGlobal.selected_vehicle_ = object_index;
             if (NetDaemonNet.lock_veh(&object_index, 0, -1, -1, 0) == 0) {
                 veh_wake(object_index);
                 synch_veh(object_index);

@@ -527,7 +527,7 @@ int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
     // two captions.
     if (strcmp(caption, XPopModCheckString1()) == 0 ||
         strcmp(caption, XPopModCheckString2Text) == 0) {
-        if ((Players[LocalFaction].rule_flags & RFLAG_ALIEN) != 0) {
+        if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
             if (ExpansionEnabled != 0) {
                 FILE *const fp = fopen(XPopModCheckFile1Text, XPopModCheckMode1Text);
                 if (fp != nullptr) {

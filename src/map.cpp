@@ -6423,7 +6423,7 @@ void __cdecl say_loc(char *text, int x, int y, int want_name, int trailer_mode,
     if (want_name != 0) {
         if (base_id < 0) {
             want_coords = 0;
-            base_id = base_find(x, y, -1, -1, -1, LocalFaction);
+            base_id = base_find(x, y, -1, -1, -1, ConsoleGlobal.faction_id_);
             if (base_id < 0) {
                 goto trailer;
             }

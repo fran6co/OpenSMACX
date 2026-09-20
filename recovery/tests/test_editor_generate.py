@@ -56,13 +56,17 @@ def harness(method):
         static_assert(sizeof(int) == 4 && sizeof(Map) == 44, "host widths");
         static_assert(offsetof(Map, bit) == 8, "actual tile member");
         uint8_t *LockMapTable;
-        int CursorVehActive, CursorVehIndex, EditorGenerateUndoDepth;
+        int EditorGenerateUndoDepth;
         void require(bool ok) { if (!ok) std::exit(42); }
         struct MapWin {
             uint32_t field_1DD98_;
             void draw_map(int);
         };
-        struct Console : MapWin { void editor_generate(); };
+        struct Console : MapWin {
+            uint32_t cursor_active_;
+            int32_t selected_vehicle_;
+            void editor_generate();
+        } ConsoleGlobal;
         struct Button { void show(int); void hide(); };
         struct Interface { Button flat_button_[42]; } MainInterfaceGlobal;
         MapWin first_window, other_window;
@@ -76,7 +80,7 @@ def harness(method):
         void auto_undo() {
             require(stage == 0 && GameState == 0x11223344u);
             require(VehCurrentCount == 17 && BaseCurrentCount == 18);
-            require(CursorVehActive == 19 && CursorVehIndex == 20);
+            require(ConsoleGlobal.cursor_active_ == 19 && ConsoleGlobal.selected_vehicle_ == 20);
             require(EditorGenerateUndoDepth == 21);
             stage = 1;
             // The body must acquire both the pointer and count AFTER undo.
@@ -90,7 +94,7 @@ def harness(method):
             require(other_window.field_1DD98_ == 0x55667788u);
             require(GameState == (undo_state | 4u));
             require(VehCurrentCount == 0 && BaseCurrentCount == 0);
-            require(CursorVehActive == 0 && CursorVehIndex == -1);
+            require(ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.selected_vehicle_ == -1);
             require(EditorGenerateUndoDepth == 0);
             // Includes every non-bit member and neighboring records before
             // and after the requested span, not just the touched flag words.
@@ -164,16 +168,21 @@ def harness(method):
                     MapArea = 0;
                     LockMapTable = reinterpret_cast<uint8_t *>(decoy);
                     VehCurrentCount = 17; BaseCurrentCount = 18;
-                    CursorVehActive = 19; CursorVehIndex = 20;
+                    ConsoleGlobal.cursor_active_ = 19;
+                    ConsoleGlobal.selected_vehicle_ = 20;
                     EditorGenerateUndoDepth = 21;
                     stage = free_calls = button_calls = 0;
                     Console console;
                     console.field_1DD98_ = 0xaabbccddu;
+                    console.cursor_active_ = 0x13579u;
+                    console.selected_vehicle_ = 73;
                     console.editor_generate();
                     require(stage == 6 && button_calls == 1);
                     require(free_calls == (initially_set ? 1 : 2));
                     require(GameState == final_state);
                     require(console.field_1DD98_ == 0xaabbccddu);
+                    require(console.cursor_active_ == 0x13579u);
+                    require(console.selected_vehicle_ == 73);
                     auto untouched = reinterpret_cast<unsigned char *>(decoy);
                     for (unsigned i=0; i<sizeof(decoy); ++i) require(untouched[i] == 0x55);
                 }
@@ -214,6 +223,8 @@ def test_actual_editor_body_preserves_bounded_state_and_call_contract(tmp_path):
     ("static_cast<unsigned char>(GameState)", "static_cast<unsigned char>(flags)", 1),
     (".show(0);", ".show(1);", 1),
     ("auto_undo();", "", 1),
+    ("ConsoleGlobal.cursor_active_", "this->cursor_active_", 1),
+    ("ConsoleGlobal.selected_vehicle_", "this->selected_vehicle_", 1),
 ])
 def test_editor_regression_mutations_are_rejected(tmp_path, before, after, count):
     method = body()

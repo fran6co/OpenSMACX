@@ -928,7 +928,7 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
     // store or call that could alias it - the image keeps it in ecx and does
     // exactly two reloads, one after the vendetta-table clearing and one
     // after the ambience call.
-    int local_faction = LocalFaction;
+    int local_faction = ConsoleGlobal.faction_id_;
     if (treaty & 7) {
         if ((faction_id == local_faction || faction_id_with == local_faction)
             && (SpyingStatusTable[faction_id_with
@@ -954,7 +954,7 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
             DiploVendettaTable[faction_id + faction_id_with
                                * SpyingStatusStride] = 0;
             DiploVendettaTable[index] = 0;
-            local_faction = LocalFaction;
+            local_faction = ConsoleGlobal.faction_id_;
         }
         treaty |= 0x80000108;
         SpyingStatusTable[index] &= 0xfaeef378;
@@ -964,7 +964,7 @@ void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty) {
             || faction_id_with == local_faction) {
             DiploRedrawFlag |= 1;
             ambience(0xcc);
-            local_faction = LocalFaction;
+            local_faction = ConsoleGlobal.faction_id_;
         }
     }
     if (treaty & 0x17) {
@@ -3922,7 +3922,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
                 treaty_on(faction_id, turncoat_faction, 0x2000);
                 return;
             }
-            if (turncoat_faction == LocalFaction) {
+            if (turncoat_faction == ConsoleGlobal.faction_id_) {
                 PluralityDefault = Players[faction_id].is_noun_plural;
                 GenderDefault = Players[faction_id].noun_gender;
                 parse_says(0, Players[faction_id].noun_faction, -1, -1);

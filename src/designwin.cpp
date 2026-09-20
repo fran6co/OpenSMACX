@@ -853,7 +853,7 @@ void DesignWin::construct_weapon() {
 
 
 void DesignWin::construct_armor(int a1) {
-    vehdraw_construct_armor(LocalFaction, protoChassisType_, protoWeaponType_,
+    vehdraw_construct_armor(ConsoleGlobal.faction_id_, protoChassisType_, protoWeaponType_,
                             protoArmorType_, a1, &caviar_);
 }
 
@@ -874,7 +874,7 @@ void DesignWin::construct_armor(int a1) {
 
 
 void DesignWin::construct_reactor() {
-    vehdraw_construct_reactor(LocalFaction, protoChassisType_, protoWeaponType_,
+    vehdraw_construct_reactor(ConsoleGlobal.faction_id_, protoChassisType_, protoWeaponType_,
                               protoReactorType_, protoAbilityFlags_, &caviar_);
 }
 
@@ -1074,4 +1074,3 @@ void DesignWin::shut_that_badboy_down() {
 // it. Ruled out rather than re-derive: this is a same-shape sibling of the
 // documented INSTRUCTION SCHEDULING wall, but for cross-call register
 // liveness instead of instruction order.
-

@@ -202,7 +202,7 @@ Console::Console()
     // vtables (the Win-part table at +0 and the Buffer-part table at +0x444).
 
     field_23BC8_ = static_cast<uint32_t>(-1);
-    field_23BD8_ = 0;
+    cursor_active_ = 0;
     field_23BE4_ = 0;
     field_23BE8_ = 0;
     field_23BF0_ = 0;
@@ -619,7 +619,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     // `jge`: a negative faction takes 0x60000000 and matches both view tags at
     // once. Otherwise the neg/sbb/and/add idiom at 0x005108C1-0x005108D5 folds
     // one equality into a constant, giving 0x40000000 for a different faction
-    // and 0x20000000 for the local one. LocalFaction is read only on the
+    // and 0x20000000 for the local one. The global faction is read only on the
     // non-negative path, exactly as the original's branch structure has it.
     // 0x005108B3 `mov [ebp-4], esi` with ESI zero. The literal 1 at 0x0051097A
     // is the ONLY store into that slot, so this is a plain 0/1 flag and the
@@ -629,7 +629,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     if (faction_id < 0) {
         mask = 0x60000000U;
     } else {
-        mask = (faction_id != LocalFaction) ? 0x40000000U : 0x20000000U;
+        mask = (faction_id != ConsoleGlobal.faction_id_) ? 0x40000000U : 0x20000000U;
     }
     for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
         // 0x005108DE `mov eax, [esi*4 + 0x7d3c3c]`. Re-read every iteration,
@@ -835,7 +835,7 @@ void Console::menu_update() {
     // alpha_menu_ IS the object the image calls 0x00460DD0 on - the member
     // form replaces the MainMenu pun this body used to carry, and measured
     // BYTE_EXACT unchanged (2026-09-04).
-    alpha_menu_.check(field_23BDC_);
+    alpha_menu_.check(selected_vehicle_);
 }
 
 /*
@@ -918,7 +918,7 @@ void Console::editor_diplomacy() {
     // across the whole item loop and the two popup calls, which cannot be
     // the global re-read - either of those calls could store through its
     // char* argument.
-    int faction = LocalFaction;
+    int faction = ConsoleGlobal.faction_id_;
 
     int result;
     {
@@ -980,7 +980,7 @@ Status: Complete
 void Console::close() {
     char *self = reinterpret_cast<char *>(this);
     field_23BC8_ = 0xffffffff;
-    field_23BD8_ = 0;
+    cursor_active_ = 0;
     field_23BE4_ = 0;
     field_23BE8_ = 0;
     field_23BF0_ = 0;
@@ -1115,14 +1115,6 @@ static const char *const StrResetAllFac = (const char *)0x00688F98;
 // clears exactly one dword per pass, starting at 0x0094613C and stopping on
 // the exclusive 0x00946158 where RulesResource Resource[] begins. The run
 // sits between Citizen[9] and Resource[0], so it is not part of either array.
-
-// THE CURSOR'S OWN VEHICLE, as two globals rather than one struct: the flag
-// and the index the vehicle cursor paints from. editor_clear_vehicles zeroes
-// the flag and stores -1 in the index in the same breath, and archive
-// transcriptions of veh_turn read them together as
-// `*CursorVehActive != 0 && *CursorVehIndex >= 0`. No image symbol for either.
-int CursorVehActive = 0;  // 0x00939288, defined here
-int CursorVehIndex = -1;  // 0x0093928C, defined here
 
 // .rdata strings, read out of the image: 0x00688FA4 is "RESETALLTECH", the
 // confirmation X_pop asks before editor_reset_tech throws every faction's
@@ -1265,8 +1257,8 @@ void Console::editor_clear_vehicles() {
     int count = 0;
     VehCurrentCount = 0;
     BaseCurrentCount = 0;
-    CursorVehActive = 0;
-    CursorVehIndex = -1;
+    ConsoleGlobal.cursor_active_ = 0;
+    ConsoleGlobal.selected_vehicle_ = -1;
     if (MapArea > 0) {
         unsigned int *rec = reinterpret_cast<unsigned int *>(LockMapTable + 8);
         do {
@@ -1477,10 +1469,10 @@ void Console::menu_simple() {
     // project flags - see 0x00624D00's near miss for the same family of
     // issue (fixed register-count/window choices by the scheduler, not
     // reachable from portable source).
-    // menu+0x11b0 is field_23BDC_: 0x22A2C + 0x11B0 = 0x23BDC. The member
+    // menu+0x11b0 is selected_vehicle_: 0x22A2C + 0x11B0 = 0x23BDC. The member
     // form replaces the MainMenu pun this body used to carry.
     GameMorePreferences &= 0xffdfffff;
-    alpha_menu_.check(field_23BDC_);
+    alpha_menu_.check(selected_vehicle_);
     X_pop(StrMenuSimple, 0);
 }
 
@@ -1497,7 +1489,7 @@ void Console::menu_simple() {
 // calls     0x0046B190 0x005BF310 0x005C08C0
 
 void Console::editor_reset_tech() {
-    int *field23bdc = reinterpret_cast<int *>(&field_23BDC_);
+    int *field23bdc = &selected_vehicle_;
     if (X_pop(StrResetAllTech, 0) != 0) {
         for (int *p1 = reinterpret_cast<int *>(0x96ee08);
              reinterpret_cast<int>(p1) < 0x97d39c; p1 += 0x833) {
@@ -1554,7 +1546,7 @@ int Console::ready_search(int veh_id) {
     int result = -1;
     int coordA, coordB;
 
-    if (veh_id < 0 || Vehs[veh_id].faction_id != LocalFaction) {
+    if (veh_id < 0 || Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
         veh_id = -1;
         coordA = *((int *)CursorLastX + CursorLastIndex);
         coordB = *((int *)CursorLastY + CursorLastIndex);
@@ -1568,12 +1560,12 @@ int Console::ready_search(int veh_id) {
     while (outerIdx <= 2) {
         int vehCount = VehCurrentCount;
 
-        if ((IsMultiplayerNet != 0) && (outerIdx == 0) && ((int)field_23BE0_ >= 0) &&
-            ((int)field_23BE0_ < vehCount) &&
-            (Vehs[field_23BE0_].faction_id == LocalFaction) &&
-            (veh_ready((int)field_23BE0_) != 0)) {
-            result = (int)field_23BE0_;
-            field_23BE0_ = 0xffffffff;
+        if ((IsMultiplayerNet != 0) && (outerIdx == 0) && (focus_vehicle_ >= 0) &&
+            (focus_vehicle_ < vehCount) &&
+            (Vehs[focus_vehicle_].faction_id == ConsoleGlobal.faction_id_) &&
+            (veh_ready(focus_vehicle_) != 0)) {
+            result = focus_vehicle_;
+            focus_vehicle_ = -1;
             goto searchDone;
         }
 
@@ -1609,7 +1601,7 @@ int Console::ready_search(int veh_id) {
                 if (score < bestScore) {
                     bestScore = score;
                     result = innerIdx;
-                } else if (score == bestScore && innerIdx == (int)field_23BDC_) {
+                } else if (score == bestScore && innerIdx == selected_vehicle_) {
                     result = innerIdx;
                 }
             }
@@ -1621,7 +1613,7 @@ int Console::ready_search(int veh_id) {
             vehCount = VehCurrentCount;
             for (int clearIdx = 0; clearIdx < vehCount; clearIdx++) {
                 unsigned int *rec = reinterpret_cast<unsigned int *>(&Vehs[clearIdx].state);
-                if (outerIdx != 0 || clearIdx != (int)field_23BDC_ || veh_id < 0) {
+                if (outerIdx != 0 || clearIdx != selected_vehicle_ || veh_id < 0) {
                     *rec &= 0xfffffffd;
                 }
             }
@@ -1711,8 +1703,8 @@ void Console::editor_load() {
     flags |= 4;
     VehCurrentCount = 0;
     BaseCurrentCount = 0;
-    CursorVehActive = 0;
-    CursorVehIndex = -1;
+    ConsoleGlobal.cursor_active_ = 0;
+    ConsoleGlobal.selected_vehicle_ = -1;
     GameState = flags;
     draw_map(1);
     ConsoleInfoWin.set_redraw_phase(7);
@@ -1745,8 +1737,8 @@ void Console::editor_generate() {
 
     VehCurrentCount = 0;
     BaseCurrentCount = 0;
-    CursorVehActive = 0;
-    CursorVehIndex = 0xffffffff;
+    ConsoleGlobal.cursor_active_ = 0;
+    ConsoleGlobal.selected_vehicle_ = -1;
 
     if (count > 0) {
         int i = 0;
@@ -2193,11 +2185,11 @@ void Console::editor_fungus() {
                 int i = 0;
                 do {
                     tile->bit &= 0xFFFFFFDFu;
-                    field_23BD4_ = 1;
+                    faction_id_ = 1;
                     do {
-                        tile->bit_visible[field_23BD4_ - 1] = tile->bit;
-                        field_23BD4_ = field_23BD4_ + 1;
-                    } while (field_23BD4_ < 8);
+                        tile->bit_visible[faction_id_ - 1] = tile->bit;
+                        faction_id_ = faction_id_ + 1;
+                    } while (faction_id_ < 8);
                     i++;
                     tile++;
                 } while (i < static_cast<int>(MapArea));
@@ -2245,7 +2237,7 @@ void Console::editor_lock2() {
     }
     GameState = flags | lock_mask;
     NetMsgPopup->pop(StrProtectOn, 5000, 0, 0);
-    if (CursorVehActive != 0) {
+    if (ConsoleGlobal.cursor_active_ != 0) {
         set_view(1);
     }
     MainInterfaceGlobal.draw_edit_pane();
@@ -2281,10 +2273,10 @@ void Console::prev_cursor() {
         console_map_win()->draw_map(1);
     }
     console_map_win()->draw_cursor();
-    if (CursorVehActive != 0) {
+    if (ConsoleGlobal.cursor_active_ != 0) {
         ambience(0x1E);
         const int had_move_now = field_23C00_;
-        field_23BD8_ = 0;
+        cursor_active_ = 0;
         field_23BF8_ = 1;
         field_23BFC_ = 1;
         if (had_move_now != 0) {
@@ -2295,7 +2287,7 @@ void Console::prev_cursor() {
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
         console_map_win()->main_caption();
-        alpha_menu_.check(field_23BDC_);
+        alpha_menu_.check(selected_vehicle_);
     }
     const int cursor_timer = field_23C08_ - 1;
     field_23C08_ = cursor_timer;
@@ -2599,7 +2591,7 @@ void Console::center() {
 void Console::base_me() {
     const int slot = CursorLastIndex;
     const int base_id =
-        base_find(CursorLastX[slot], CursorLastY[slot], LocalFaction);
+        base_find(CursorLastX[slot], CursorLastY[slot], ConsoleGlobal.faction_id_);
     if (base_id >= 0) {
         TutWinBaseWindow.zoom(base_id, 0);
     }
@@ -2721,13 +2713,13 @@ void Console::editor_clear_terrain() {
 
 
 void Console::set_view(int force_update) {
-    // The vehicle-cursor repaint cycle, guarded two ways: CursorVehActive
+    // The vehicle-cursor repaint cycle, guarded two ways: the global cursor flag
     // says a cursor vehicle exists at all, force_update says the caller wants
     // the repaint regardless (the editor toggles pass 1 so the view follows
     // the flag they just flipped even with no vehicle selected).
-    if (CursorVehActive != 0 || force_update != 0) {
+    if (ConsoleGlobal.cursor_active_ != 0 || force_update != 0) {
         ambience(0x1E);
-        field_23BD8_ = 0;
+        cursor_active_ = 0;
         field_23BF8_ = 1;
         field_23BFC_ = 1;
         if (field_23C00_ != 0) {
@@ -2738,7 +2730,7 @@ void Console::set_view(int force_update) {
         ConsoleInfoWin.change(0);
         ConsoleStatusWin.redraw();
         console_map_win()->main_caption();
-        alpha_menu_.check(field_23BDC_);
+        alpha_menu_.check(selected_vehicle_);
     }
 }
 
@@ -2823,8 +2815,8 @@ void Console::editor_fast() {
     unsigned char *base = reinterpret_cast<unsigned char *>(map_tiles());
     VehCurrentCount = 0;
     BaseCurrentCount = 0;
-    CursorVehActive = 0;
-    CursorVehIndex = -1;
+    ConsoleGlobal.cursor_active_ = 0;
+    ConsoleGlobal.selected_vehicle_ = -1;
     GameState = state;
     for (int i = 0; i < static_cast<int>(MapArea); i++) {
         *reinterpret_cast<unsigned int *>(base + i * 0x2c + 8) &= 0xfffffffc;

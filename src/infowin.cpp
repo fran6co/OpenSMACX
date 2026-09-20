@@ -189,7 +189,7 @@ int InfoWin::state_valid(int state) {
             return 1;
         case 1:
             if (TurnCurrentNum >= 50 &&
-                (TurnCurrentNum >= 100 || PlayersData[LocalFaction].diff_level >= DLVL_TALENT)) {
+                (TurnCurrentNum >= 100 || PlayersData[ConsoleGlobal.faction_id_].diff_level >= DLVL_TALENT)) {
                 return 1;
             }
             break;
@@ -197,10 +197,10 @@ int InfoWin::state_valid(int state) {
             if (DiplomacyActive) {
                 return 1;
             }
-            if (TurnCurrentNum >= 50 || PlayersData[LocalFaction].diff_level >= DLVL_TALENT) {
+            if (TurnCurrentNum >= 50 || PlayersData[ConsoleGlobal.faction_id_].diff_level >= DLVL_TALENT) {
                 for (int faction = 1; faction < MaxPlayerNum; ++faction) {
-                    if (faction != LocalFaction &&
-                        (PlayersData[LocalFaction].diplo_treaties[faction] & DTREATY_COMMLINK)) {
+                    if (faction != ConsoleGlobal.faction_id_ &&
+                        (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & DTREATY_COMMLINK)) {
                         return 1;
                     }
                 }
