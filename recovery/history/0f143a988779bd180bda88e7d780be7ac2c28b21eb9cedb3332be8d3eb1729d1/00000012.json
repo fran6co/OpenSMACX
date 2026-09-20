@@ -1,0 +1,24 @@
+{
+  "event_id": "b9e821ed5da9fdc432eed0bfe2bd9a7901de84567fdc96296a59c1c7bc70c4c5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Loader tag04000000 calls6388C0..638AC2, currently seed-only. Recover this real dispatcher and its existing typed downstream calls along with the parent loader; do not add an original-address call or leave a placeholder in place of recoverable behavior.",
+      "Typed CvrRecord+14 palette storage and its existing add_object consumers are within revision11 Caviar ownership grant; original byte-offset palette semantics determine the model."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6523072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e95ecf5155c2d6b0f6caff752d99b7e939613f4ae58d4e816200ccb5ce0f2989",
+  "request_id": "coordinator-cvr-geometry-chunk-dispatch-20260920",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:caviar-matrix-operations"
+}

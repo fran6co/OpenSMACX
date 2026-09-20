@@ -1,0 +1,27 @@
+{
+  "event_id": "38f5bbb08b8a70898da324cfee2cf5c7f7eaa68fe4aa13b457118c45bb1c7983",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/caviar.cpp",
+      "src/caviar.h"
+    ],
+    "evidence": [
+      "Original638307 loads9C0834 as a cdecl callback, passes fd/record/header and tests AL after call63833B. Replace existing integer slot with the real callback type and source-owned data binding; preserve initialization and emitted call protocol.",
+      "CvrRecord and Caviar member declarations/consumers are already authorized by revision11; review also requires actual palette-pointer instance storage, defined overlap copying matching the original backward-copy branch and source-owned key member expectations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 10225716,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a9f97c84f3ea11f96ca0630b2913d3b3bcfc6824d64eb62167e94af6c7becb4b",
+  "request_id": "cvr-user-callback-ownership-20260920",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:caviar-matrix-operations"
+}

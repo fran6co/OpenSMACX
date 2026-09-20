@@ -1,0 +1,29 @@
+{
+  "event_id": "7039d8ebff8dee968515b73dbf2f39ab534d1e5794a3c38d4f4955308ef637eb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "6388C0 dispatches its object/shadow records to638AD0 and639090; recover their full behavior within the already authorized Caviar source/header owner. No new original-address dependencies or callback stand-ins.",
+      "The parent loader user callback at9C0834 returnschar and receives(fd,CvrRecord*,ChunkHeader*), can modify headerlength, and owns a separate source callback slot. Typed conversion is authorized within Caviar; retain the originally ordered header/remaining reads."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6523600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6525072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b9e821ed5da9fdc432eed0bfe2bd9a7901de84567fdc96296a59c1c7bc70c4c5",
+  "request_id": "coordinator-cvr-object-shadow-chunks-20260920",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:caviar-matrix-operations"
+}

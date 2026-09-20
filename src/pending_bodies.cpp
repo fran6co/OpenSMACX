@@ -306,15 +306,6 @@ void MapWin::click(int a1, int a2, int a3) {  // 0x0046D5D0
 // its members - is HOMED to caviar.cpp as caviar_free_record, which is why
 // this forwarder is gone rather than merely stale.
 
-// sub_6381f0 at 0x006381F0 - the CVR record loader: reads the "CVR\0" header
-// off an open descriptor and builds the record CaviarData::init keeps at +8.
-// caviar.cpp reaches it as vox_load_record. Its own body is still a
-// transcription in the archive, so this forwarder stands in for it.
-int __cdecl vox_load_record(int fd) {
-    typedef int(__cdecl *pending)(int);
-    return PENDING_BODY(0x006381F0, pending)(fd);
-}
-
 // ?render@Caviar@@QAEHPAUBuffer@@HHH@Z at 0x00617230 is HOMED into
 // src/caviar.cpp (2026-09-05, caviar class pass), so this forwarder is gone.
 

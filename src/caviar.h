@@ -78,7 +78,8 @@ struct CvrPart {
 // multiplies all seven by one scale. The rest of the block belongs to the
 // loader and nothing here reads it.
 struct CvrShape {
-  uint8_t lead_[0x8];  // +0x00
+  uint32_t field_0_;   // +0x00, serialized prefix; interpretation unresolved
+  uint32_t byte_size_; // +0x04, current shape bytes moved by patch chunks
   float scale_;        // +0x08, the whole-shape scale
   uint8_t mid_[0x8];   // +0x0C
   int16_t axis_x_;     // +0x14, the three per-axis extents the AABB is built from
@@ -154,19 +155,46 @@ static_assert(offsetof(VoxCameraBlock, bounds_.values_) == 0x48,
               "the bounds' six ints must start at +0x48 for the draw");
 
 struct CvrRecord {
-  uint8_t lead_[0x14];   // +0x00, five engine handles the loader fills
-  uint32_t id_;          // +0x14, stored on as `id_ + 0x302` per instance
-  uint8_t mid_[0x8];     // +0x18
+  uint32_t flags_;       // +0x00, bit 0 distinguishes explicit step sizes
+  uint32_t state_;       // +0x04, set to 3 after the file is consumed
+  float version_;       // +0x08, selects the old palette format below 7
+  char *description_;   // +0x0C
+  char *palette_name_;  // +0x10
+  // RECOVERY_MEMBER: v1 CvrRecord palette_ 0x14 0x00638720
+  uint8_t *palette_;    // +0x14, instance palette data begins 0x302 bytes in
+  uint8_t *field_18_;   // +0x18, payload of palette chunk 0x01030000
+  char *parts_name_;    // +0x1C
   // BOTH SIGNED, and the division proves it: every add_object takes the step
   // modulo +0x20 with `idiv` (`cdq` before it), and tests +0x24 with
   // `test esi, esi / jle`. Unsigned members would give `div` and `jbe`.
   int32_t step_count_;   // +0x20
   int32_t part_count_;   // +0x24
-  uint32_t *slot_table_; // +0x28
+  char **slot_table_;    // +0x28, per-part names
+  // RECOVERY_MEMBER: v3 CvrRecord steps_ CvrStep* 0x2C 0x00638AD0
   CvrStep *steps_;       // +0x2C
+  // RECOVERY_MEMBER: v3 CvrRecord parts_ CvrPart* 0x30 0x006388C0
   CvrPart *parts_;       // +0x30
-  uint8_t *shadows_;     // +0x34
+  // RECOVERY_MEMBER: v3 CvrRecord shadows_ CvrShadow* 0x34 0x00638F30
+  struct CvrShadow *shadows_; // +0x34
+  uint32_t field_38_;    // +0x38, zeroed by the loader; role unresolved
+  uint32_t field_3C_;    // +0x3C, zeroed by the loader; role unresolved
+  // RECOVERY_MEMBER: v1 CvrRecord user_length_ 0x40 0x006381F0
+  int32_t user_length_;  // +0x40, callback's current chunk length minus 8
 };
+
+struct CvrShadow {
+  uint32_t field_0_;    // +0x00, payload of chunk 0x04040401
+  uint8_t *field_4_;    // +0x04
+  uint8_t *field_8_;    // +0x08
+};
+
+struct CvrChunkHeader {
+  int32_t tag;
+  int32_t length;
+};
+
+static_assert(sizeof(CvrRecord) == 0x44, "CVR loader allocates and clears 0x44 bytes");
+static_assert(sizeof(CvrShadow) == 0xC, "CVR shadow entries have three words");
 
 struct CaviarData {
  public:
@@ -276,7 +304,7 @@ class Caviar {
   // 0x00617920..0x00618080. The eight add_object overloads append the parts of
   // one .cvr definition to the renderer's instance table: each part's three
   // arrays are indexed with the caller's step, the geometry is accumulated
-  // into the instance's own vector and matrix, and the instance's id and step
+  // into the instance's own vector and matrix, and the instance's palette and step
   // entry are copied out of the record. Every one returns 0, 1 when the table
   // is full (200), 7 when a definition carries no record, or 0x10 on a null
   // argument.
@@ -438,10 +466,11 @@ class Caviar {
   // 0x10AC, and 0x960 + 0x320 is 0xC80, which is what the four fields this
   // replaces occupied (4 + 4 + 4 + 0xC74).
   CaviarData slots_[200];       // 0x74C
-  // THE INSTANCE ID TABLE, in the order add_object appends to it: it stores
-  // `record->id_ + 0x302` per drawn instance. 0x10AC + 200*4 is 0x13CC, so it
-  // is exactly 200 long.
-  uint32_t instance_ids_[200];  // 0x10AC
+  // Per-instance colour sources: add_object selects the record's palette
+  // after its 0x302-byte header, or the supplied byte buffer. object_start
+  // copies 0x1800 bytes from the selected pointer, not from a numeric ID.
+  // RECOVERY_MEMBER: v1 Caviar instance_palettes_ 0x10AC 0x00617920
+  uint8_t *instance_palettes_[200]; // 0x10AC; 200 Win32 pointers end at 0x13CC
   uint32_t field_13CC_;  // 0x13CC
 };
 
@@ -451,11 +480,9 @@ static_assert(sizeof(Caviar) == 0x13D0,
               "Caviar layout must match the original executable");
 
 
-// The 413-byte helper that walks the record and frees its members is not yet
-// source-owned, so close reaches it through a rebindable dependency.
-// 0x00638430, a pending_bodies forwarder. A POINTER here cost CaviarData::close
-// a `call dword ptr [...]` where the image has `call rel32`.
-void __cdecl caviar_free_record(void *record);
+// The loader and its matching release walk own the CVR record allocations.
+CvrRecord *__cdecl vox_load_record(int fd);
+void __cdecl caviar_free_record(CvrRecord *record);
 
 // Shared voxel geometry uses the matrices' real three-float row bounds.
 void __cdecl caviar_apply_rotation(const float *angles, VOX_Matrix *matrix);

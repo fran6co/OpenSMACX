@@ -1044,7 +1044,9 @@ void *vox_callback_slots[6];
 
 // The engine's data slots, real storage now - each was a binding on the
 // image address in its name, which the standalone build does not map.
-uint32_t vox_unk_9c0834 = 0;    // 0x009C0834, zeroed on accepted CPU report
+typedef char (__cdecl *vox_user_chunk_fn)(int, CvrRecord *, CvrChunkHeader *);
+// RECOVERY_OBJECT: v2 0x009C0834 0x009C0838 ?vox_user_chunk@@3P6ADHPAUCvrRecord@@PAUCvrChunkHeader@@@ZA 0x006381F0
+vox_user_chunk_fn vox_user_chunk = 0; // 0x009C0834, zeroed on accepted CPU report
 uint32_t vox_unk_9c0b78 = 0;    // 0x009C0B78, zeroed on accepted CPU report
 // 0x009C0B70, the CPU VENDOR byte vox_detect_cpu fills: 0 unknown,
 // 1 GenuineIntel, 2 AuthenticAMD.
@@ -1101,6 +1103,7 @@ static const char vox_msg_unsupported_pixel[] = "Unsupported pixel size"; // 0x0
 static const char *const vox_msg_bad_file_format = "Bad file format";  // 0x006989D0
 static const char *const vox_msg_reading_file = "Reading file";        // 0x006989D4
 static const char *const vox_msg_no_room = "No room";                  // 0x006989D8
+static const char *const vox_msg_user_chunk = "Error reading user data chunk"; // 0x006989E0
 
 // The loader's two float constants, .rdata 0x00670FE8 and 0x00670FEC. The
 // first is the chain walk's cut: vox_walk_scaled_chain keeps walking while a
@@ -1136,16 +1139,32 @@ extern "C" char __cdecl sub_63f9b0(unsigned char *record);
 extern "C" unsigned char *__cdecl vox_walk_scaled_chain(unsigned char *node,
                                                         float scale);
 extern "C" int __cdecl vox_read_exact(int fd, void *buffer, int count);
-extern "C" int __cdecl vox_alloc_block(int size, int *out);
-extern "C" int __cdecl vox_read_length_field(int fd, unsigned char *record,
+extern "C" int __cdecl vox_alloc_block(int size, void **out);
+extern "C" int __cdecl vox_read_length_field(int fd, CvrRecord *record,
                                              int length);
-extern "C" int __cdecl vox_read_chunks(int fd, unsigned char *record, int size);
-extern "C" int __cdecl vox_read_colour_chunks(int fd, int *out, int size);
-// 0x006381F0, the CVR record loader. Not homed yet: pending_bodies.cpp
-// forwards it. C++ linkage, to match that forwarder's definition.
-int __cdecl vox_load_record(int fd);
-extern "C" int __cdecl vox_read_geometry_chunks(int fd, int *slots, int size,
+extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size);
+extern "C" int __cdecl vox_read_colour_chunks(int fd, CvrStep *out, int size);
+extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size,
                                                 int count);
+extern "C" int __cdecl vox_read_dword(int fd, CvrRecord *record);
+int __cdecl vox_read_parts(int fd, CvrRecord *record, int size);
+int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size);
+int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size);
+int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size);
+
+// Publish the typed slot before reporting allocation failure, just as the
+// original allocator does. A void-pointer temporary wrapper would delay that
+// observable write until after vox_stage_error.
+template<class T>
+inline int vox_alloc_typed(int size, T **out) {
+    T *block = reinterpret_cast<T *>(vox_alloc_slot((unsigned long)size));
+    *out = block;
+    if (block == 0) {
+        vox_stage_error(vox_msg_no_room);
+        return -1;
+    }
+    return 0;
+}
 // 0x006391F0, the palette expander vox_read_chunks' 0x1020000 arm reaches for
 // an old-format record. Not homed yet: pending_bodies.cpp forwards it. C++
 // linkage, to match that forwarder's definition.
@@ -1235,7 +1254,7 @@ char __cdecl vox_init_callbacks(unsigned long *callbacks, int flag) {
             vox_stage_error(vox_msg_cpu_unsupported);
             return 1;
         }
-        vox_unk_9c0834 = 0;
+        vox_user_chunk = 0;
         vox_unk_9c0b78 = 0;
         return 0;
     }
@@ -1757,7 +1776,7 @@ Purpose: Free a CVR record: five plain pointer fields (0xc, 0x10, 0x14, 0x18,
          itself. Every release goes through the engine's free slot.
 // ORIGINAL: 0x00638430 sub_638430 0x00638430-0x006385CD
 // TRIED: teardown - frees five plain pointer fields (0xc/0x10/0x14/ 0x18/0x1c), three arrays of small structs at 0x28/0x2c/0x30/ 0x34 sized by a shared count field at 0x24, then the object itself through the free callback at g_009c0b84. Diverges at #6 - the original re-reads each array-base field inside the loop rather than caching it once; landed at 0.64 similarity.
-// symbol    ?caviar_free_record@@YAXPAX@Z
+// symbol    ?caviar_free_record@@YAXPAUCvrRecord@@@Z
 // size      413 bytes
 // callers   2   call targets   0
 // kind      game
@@ -1798,103 +1817,97 @@ Purpose: Free a CVR record: five plain pointer fields (0xc, 0x10, 0x14, 0x18,
 //        102 of 154, /c /O2 /Gy /GR- /GX.
 Return Value: n/a
 */
-void __cdecl caviar_free_record(void *record) {
+void __cdecl caviar_free_record(CvrRecord *record) {
     if (record == 0) {
         return;
     }
-    unsigned char *base = (unsigned char *)record;
-
-    int first = *(int *)(base + 0xc);
+    char *first = record->description_;
     if (first != 0) {
         vox_free_slot((unsigned long)first);
     }
-    int second = *(int *)(base + 0x10);
+    char *second = record->palette_name_;
     if (second != 0) {
         vox_free_slot((unsigned long)second);
     }
-    int third = *(int *)(base + 0x14);
+    uint8_t *third = record->palette_;
     if (third != 0) {
         vox_free_slot((unsigned long)third);
     }
-    int fourth = *(int *)(base + 0x18);
+    uint8_t *fourth = record->field_18_;
     if (fourth != 0) {
         vox_free_slot((unsigned long)fourth);
     }
-    int fifth = *(int *)(base + 0x1c);
+    char *fifth = record->parts_name_;
     if (fifth != 0) {
         vox_free_slot((unsigned long)fifth);
     }
 
-    if (*(int *)(base + 0x28) != 0) {
-        if (*(int *)(base + 0x24) > 0) {
+    if (record->slot_table_ != 0) {
+        if (record->part_count_ > 0) {
             int index = 0;
             do {
                 // No null test - the image frees the slot's answer whatever
                 // it holds.
-                int element = *(int *)(*(int *)(base + 0x28) + index * 4);
+                char *element = record->slot_table_[index];
                 vox_free_slot((unsigned long)element);
                 ++index;
-            } while (index < *(int *)(base + 0x24));
+            } while (index < record->part_count_);
         }
-        vox_free_slot(*(unsigned long *)(base + 0x28));
+        vox_free_slot((unsigned long)record->slot_table_);
     }
 
-    if (*(int *)(base + 0x30) != 0) {
-        if (*(int *)(base + 0x24) > 0) {
+    if (record->parts_ != 0) {
+        if (record->part_count_ > 0) {
             int index = 0;
-            int offset = 0;
             do {
-                int lead = *(int *)(*(int *)(base + 0x30) + offset);
+                uint8_t *lead = record->parts_[index].colours_;
                 if (lead != 0) {
                     vox_free_slot((unsigned long)lead);
                 }
-                int mid = *(int *)(*(int *)(base + 0x30) + offset + 4);
+                VOX_Vect *mid = record->parts_[index].vectors_;
                 if (mid != 0) {
                     vox_free_slot((unsigned long)mid);
                 }
-                int last = *(int *)(*(int *)(base + 0x30) + offset + 8);
+                VOX_Matrix *last = record->parts_[index].matrices_;
                 if (last != 0) {
                     vox_free_slot((unsigned long)last);
                 }
                 ++index;
-                offset += 0xc;
-            } while (index < *(int *)(base + 0x24));
+            } while (index < record->part_count_);
         }
-        vox_free_slot(*(unsigned long *)(base + 0x30));
+        vox_free_slot((unsigned long)record->parts_);
     }
 
-    if (*(int *)(base + 0x2c) != 0) {
-        if (*(int *)(base + 0x24) > 0) {
+    if (record->steps_ != 0) {
+        if (record->part_count_ > 0) {
             int index = 0;
             do {
-                int lead = *(int *)(*(int *)(base + 0x2c) + index * 8 + 4);
+                CvrShape *lead = record->steps_[index].shape_;
                 if (lead != 0) {
                     vox_free_slot((unsigned long)lead);
                 }
                 ++index;
-            } while (index < *(int *)(base + 0x24));
+            } while (index < record->part_count_);
         }
-        vox_free_slot(*(unsigned long *)(base + 0x2c));
+        vox_free_slot((unsigned long)record->steps_);
     }
 
-    if (*(int *)(base + 0x34) != 0) {
-        if (*(int *)(base + 0x24) > 0) {
+    if (record->shadows_ != 0) {
+        if (record->part_count_ > 0) {
             int index = 0;
-            int offset = 0;
             do {
-                int lead = *(int *)(*(int *)(base + 0x34) + offset + 4);
+                uint8_t *lead = record->shadows_[index].field_4_;
                 if (lead != 0) {
                     vox_free_slot((unsigned long)lead);
                 }
-                int mid = *(int *)(*(int *)(base + 0x34) + offset + 8);
+                uint8_t *mid = record->shadows_[index].field_8_;
                 if (mid != 0) {
                     vox_free_slot((unsigned long)mid);
                 }
                 ++index;
-                offset += 0xc;
-            } while (index < *(int *)(base + 0x24));
+            } while (index < record->part_count_);
         }
-        vox_free_slot(*(unsigned long *)(base + 0x34));
+        vox_free_slot((unsigned long)record->shadows_);
     }
 
     vox_free_slot((unsigned long)record);
@@ -2014,14 +2027,8 @@ Purpose: Allocate through the engine's alloc slot into *out, staging "No room"
 // HOMED from src/recovered/units/00638620.cpp.
 Return Value: 0 with *out filled, or -1 with the message staged.
 */
-extern "C" int __cdecl vox_alloc_block(int size, int *out) {
-    void *block = (void *)vox_alloc_slot((unsigned long)size);
-    *out = (int)block;
-    if (block == 0) {
-        vox_stage_error(vox_msg_no_room);
-        return -1;
-    }
-    return 0;
+extern "C" int __cdecl vox_alloc_block(int size, void **out) {
+    return vox_alloc_typed(size, out);
 }
 
 /*
@@ -2040,7 +2047,7 @@ Purpose: Allocate (length - 8) + 1 bytes into the record's slot at +0xc, read
 // HOMED from src/recovered/units/006386d0.cpp.
 Return Value: 0 when the field is read and terminated, -1 on either failure.
 */
-extern "C" int __cdecl vox_read_length_field(int fd, unsigned char *record,
+extern "C" int __cdecl vox_read_length_field(int fd, CvrRecord *record,
                                              int length) {
     // Three statements, in this order. The image reads the record into eax
     // first (0x6386D0), the payload count into esi second (0x6386D5..DA) and
@@ -2048,18 +2055,18 @@ extern "C" int __cdecl vox_read_length_field(int fd, unsigned char *record,
     // be its own local or the first load lands on the wrong argument, and
     // `payload` has to precede `slot` or the two registers swap (measured:
     // 11 of 36 either way round without the base local).
-    unsigned char *base = record;
+    CvrRecord *base = record;
     int payload = length - 8;
     // The slot lives at +0xc of the record the caller hands over - the same
     // field caviar_free_record releases first.
-    int *slot = (int *)(base + 0xc);
-    if (vox_alloc_block(payload + 1, slot) != 0) {
+    char **slot = &base->description_;
+    if (vox_alloc_typed(payload + 1, slot) != 0) {
         return -1;
     }
     if (vox_read_exact(fd, (void *)*slot, payload) != 0) {
         return -1;
     }
-    *(char *)(*slot + payload) = 0;
+    (*slot)[payload] = 0;
     return 0;
 }
 
@@ -2102,7 +2109,7 @@ Return Value: 0 when the walk consumed the block, -1 on any failure.
 //        for the record, a pointer walked by case, per-case casts - made
 //        VC6 dedicate ebx here. /c /O2 /Gy /GR- /GX.
 */
-extern "C" int __cdecl vox_read_chunks(int fd, unsigned char *record, int size) {
+extern "C" int __cdecl vox_read_chunks(int fd, CvrRecord *record, int size) {
     struct ChunkHeader {
         int tag;
         int length;
@@ -2123,41 +2130,41 @@ extern "C" int __cdecl vox_read_chunks(int fd, unsigned char *record, int size) 
         }
         switch (header.tag) {
         case 0x1010000:
-            if (vox_alloc_block(header.length - 8 + 1,
-                                (int *)(record + 0x10)) != 0) {
+            if (vox_alloc_typed(header.length - 8 + 1,
+                                &record->palette_name_) != 0) {
                 return -1;
             }
-            if (vox_read_exact(fd, (void *)*(int *)(record + 0x10),
+            if (vox_read_exact(fd, record->palette_name_,
                                header.length - 8) != 0) {
                 return -1;
             }
-            *(char *)(*(int *)(record + 0x10) + header.length - 8) = 0;
+            record->palette_name_[header.length - 8] = 0;
             break;
         case 0x1020000:
-            if (*(float *)(record + 8) < vox_threshold_seven) {
-                if (vox_alloc_block(0x1b02, (int *)(record + 0x14)) != 0) {
+            if (record->version_ < vox_threshold_seven) {
+                if (vox_alloc_typed(0x1b02, &record->palette_) != 0) {
                     return -1;
                 }
-                if (vox_expand_palette(fd, (void *)*(int *)(record + 0x14)) != 0) {
+                if (vox_expand_palette(fd, record->palette_) != 0) {
                     return -1;
                 }
             } else {
-                if (vox_alloc_block(header.length - 8,
-                                    (int *)(record + 0x14)) != 0) {
+                if (vox_alloc_typed(header.length - 8,
+                                    &record->palette_) != 0) {
                     return -1;
                 }
-                if (vox_read_exact(fd, (void *)*(int *)(record + 0x14),
+                if (vox_read_exact(fd, record->palette_,
                                    header.length - 8) != 0) {
                     return -1;
                 }
             }
             break;
         case 0x1030000:
-            if (vox_alloc_block(header.length - 8,
-                                (int *)(record + 0x18)) != 0) {
+            if (vox_alloc_typed(header.length - 8,
+                                &record->field_18_) != 0) {
                 return -1;
             }
-            if (vox_read_exact(fd, (void *)*(int *)(record + 0x18),
+            if (vox_read_exact(fd, record->field_18_,
                                header.length - 8) != 0) {
                 return -1;
             }
@@ -2200,7 +2207,7 @@ Return Value: 0 when the walk consumed the block, -1 on any failure.
 //        divergence at instruction 8 - the missing ebx load. /c /O2 /Gy
 //        /GR- /GX.
 */
-extern "C" int __cdecl vox_read_colour_chunks(int fd, int *out, int size) {
+extern "C" int __cdecl vox_read_colour_chunks(int fd, CvrStep *out, int size) {
     struct ChunkHeader {
         int tag;
         int length;
@@ -2222,16 +2229,16 @@ extern "C" int __cdecl vox_read_colour_chunks(int fd, int *out, int size) {
         }
         switch (header.tag) {
         case 0x4040201:
-            if (*out == 0) {
-                if (vox_alloc_block(payload, out + 1) != 0) {
+            if (out->lead_ == 0) {
+                if (vox_alloc_typed(payload, &out->shape_) != 0) {
                     return -1;
                 }
             } else {
-                if (vox_alloc_block(*out, out + 1) != 0) {
+                if (vox_alloc_typed(out->lead_, &out->shape_) != 0) {
                     return -1;
                 }
             }
-            if (vox_read_exact(fd, (void *)*(out + 1), payload) != 0) {
+            if (vox_read_exact(fd, out->shape_, payload) != 0) {
                 return -1;
             }
             break;
@@ -2282,7 +2289,7 @@ Return Value: 0 when the walk consumed the block, -1 on any failure.
 //        instruction 8). Same callee-save wall as vox_read_chunks and
 //        vox_read_colour_chunks. /c /O2 /Gy /GR- /GX.
 */
-extern "C" int __cdecl vox_read_geometry_chunks(int fd, int *slots, int size,
+extern "C" int __cdecl vox_read_geometry_chunks(int fd, CvrPart *slots, int size,
                                                 int count) {
     struct ChunkHeader {
         int tag;
@@ -2304,26 +2311,26 @@ extern "C" int __cdecl vox_read_geometry_chunks(int fd, int *slots, int size,
         }
         switch (header.tag) {
         case 0x4040301:
-            if (vox_alloc_block(count, slots) != 0) {
+            if (vox_alloc_typed(count, &slots->colours_) != 0) {
                 return -1;
             }
-            if (vox_read_exact(fd, (void *)slots[0], count) != 0) {
+            if (vox_read_exact(fd, slots->colours_, count) != 0) {
                 return -1;
             }
             break;
         case 0x4040302:
-            if (vox_alloc_block(count * 0xc, slots + 1) != 0) {
+            if (vox_alloc_typed(count * sizeof(VOX_Vect), &slots->vectors_) != 0) {
                 return -1;
             }
-            if (vox_read_exact(fd, (void *)slots[1], count * 0xc) != 0) {
+            if (vox_read_exact(fd, slots->vectors_, count * sizeof(VOX_Vect)) != 0) {
                 return -1;
             }
             break;
         case 0x4040303:
-            if (vox_alloc_block(count * 0x24, slots + 2) != 0) {
+            if (vox_alloc_typed(count * sizeof(VOX_Matrix), &slots->matrices_) != 0) {
                 return -1;
             }
-            if (vox_read_exact(fd, (void *)slots[2], count * 0x24) != 0) {
+            if (vox_read_exact(fd, slots->matrices_, count * sizeof(VOX_Matrix)) != 0) {
                 return -1;
             }
             break;
@@ -2508,7 +2515,7 @@ Purpose: Append every part of one loaded .cvr definition to the renderer's
          instance table, at the caller's rotation step. Each part contributes
          one colour byte, one accumulated vector and one matrix, copied out of
          the part's three parallel arrays at `step % step_count`, and the
-         instance's id and step entry come off the record.
+         instance's palette and step entry come off the record.
 // ORIGINAL: 0x00617920 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z 0x00617920-0x00617A9F
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAUVOX_Vect@@H@Z
 // size      383 bytes
@@ -2547,7 +2554,7 @@ int Caviar::add_object(CaviarData *definition, VOX_Vect *offset, int step) {
                        (Vector *)instance.instance_vector_);
             *instance.instance_matrix_ = part.matrices_[remainder];
 
-            instance_ids_[field_13CC_] = definition->record_->id_ + 0x302;
+            instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
             instance_steps_[field_13CC_] = definition->record_->steps_[index];
             ++index;
             ++field_13CC_;
@@ -2597,7 +2604,7 @@ int Caviar::add_object(CaviarData *definition, CaviarData *geometry,
                 (Vector *)(geometry->record_->parts_[index].vectors_ +
                            remainder),
                 (Vector *)offset, (Vector *)instance.instance_vector_);
-            instance_ids_[field_13CC_] = definition->record_->id_ + 0x302;
+            instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
             instance_steps_[field_13CC_] = definition->record_->steps_[index];
             ++index;
             ++field_13CC_;
@@ -2650,7 +2657,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
                 (Vector *)(geometry->record_->parts_[index].vectors_ +
                            remainder),
                 (Vector *)offset, (Vector *)instance.instance_vector_);
-            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_palettes_[field_13CC_] = object;
             instance_steps_[field_13CC_] = definition->record_->steps_[index];
             ++index;
             ++field_13CC_;
@@ -2712,7 +2719,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
             vector_add((Vector *)(part.vectors_ + remainder), (Vector *)offset,
                        (Vector *)instance.instance_vector_);
             *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_palettes_[field_13CC_] = object;
             instance_steps_[field_13CC_] = record->steps_[index];
             ++index;
             ++field_13CC_;
@@ -2724,7 +2731,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
 /*
 Purpose: Append one .cvr definition's parts to the instance table in full -
          colour, vector, matrix - using a second definition as the geometry
-         source. The count, the id and the step entry come off the first
+         source. The count, the palette and the step entry come off the first
          record, the part arrays and the rotation step off the second.
 // ORIGINAL: 0x00617C30 ?add_object@Caviar@@QAEHPAUCaviarData@@PAUCaviarData@@H@Z 0x00617C30-0x00617DAE
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@0H@Z
@@ -2760,7 +2767,7 @@ int Caviar::add_object(CaviarData *definition, CaviarData *geometry, int step) {
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
             *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_ids_[field_13CC_] = definition->record_->id_ + 0x302;
+            instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
             instance_steps_[field_13CC_] = definition->record_->steps_[index];
             ++index;
             ++field_13CC_;
@@ -2809,7 +2816,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
             *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_palettes_[field_13CC_] = object;
             instance_steps_[field_13CC_] = definition->record_->steps_[index];
             ++index;
             ++field_13CC_;
@@ -2855,7 +2862,7 @@ int Caviar::add_object(CaviarData *definition, int step) {
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
             *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_ids_[field_13CC_] = record->id_ + 0x302;
+            instance_palettes_[field_13CC_] = record->palette_ + 0x302;
             instance_steps_[field_13CC_] = record->steps_[index];
             ++index;
             ++field_13CC_;
@@ -2867,7 +2874,7 @@ int Caviar::add_object(CaviarData *definition, int step) {
 /*
 Purpose: Append one .cvr definition's parts to the instance table in full -
          colour, vector, matrix - with a raw object pointer as the instance's
-         id and the whole record taken from the definition.
+         palette source and the whole record taken from the definition.
 // ORIGINAL: 0x00618080 ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z 0x00618080-0x006181D0
 // symbol    ?add_object@Caviar@@QAEHPAUCaviarData@@PAEH@Z
 // size      336 bytes
@@ -2901,7 +2908,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object, int step) {
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
             *instance.instance_matrix_ = part.matrices_[remainder];
-            instance_ids_[field_13CC_] = (uint32_t)object;
+            instance_palettes_[field_13CC_] = object;
             instance_steps_[field_13CC_] = record->steps_[index];
             ++index;
             ++field_13CC_;
@@ -3779,8 +3786,8 @@ Purpose: Read a single 4-byte field at offset +8 of the caller's block: the
 // `call rel32`.
 Return Value: 0 when the four bytes were read, -1 otherwise.
 */
-extern "C" int __cdecl vox_read_dword(int fd, void *block) {
-    return vox_read_exact(fd, (char *)block + 8, 4) ? -1 : 0;
+extern "C" int __cdecl vox_read_dword(int fd, CvrRecord *record) {
+    return vox_read_exact(fd, &record->version_, sizeof(record->version_)) ? -1 : 0;
 }
 
 /*
@@ -3921,8 +3928,8 @@ Purpose: Load a .cvr file into this slot: release whatever record it still
 // CLAIMED BYTE_EXACT, homed from src/unrecovered/00616bd0.cpp 2026-09-04 and
 // re-measured here. Its three helper bindings rename to bodies this file now
 // owns or forwards: caviar_sub_638430 is caviar_free_record, homed above;
-// caviar_sub_6381f0 is vox_load_record (0x006381F0, forwarded from
-// pending_bodies.cpp); caviar_open is the CRT's _open, spelled plainly -
+// caviar_sub_6381f0 is vox_load_record (0x006381F0);
+// caviar_open is the CRT's _open, spelled plainly -
 // 0x8000 is _O_BINARY.
 Return Value: 0, 0x10 without a name, 6 when the open fails, 0x17 when the
               loader returns no record.
@@ -3940,8 +3947,8 @@ int CaviarData::init(char *name) {
     if (fd == -1) {
         return 6;
     }
-    int record = vox_load_record(fd);
-    record_ = (CvrRecord *)(unsigned long)record;
+    CvrRecord *record = vox_load_record(fd);
+    record_ = record;
     if (record == 0) {
         return 0x17;
     }
@@ -4001,7 +4008,7 @@ void __cdecl Caviar::object_start(VOX_ScnRenderHnd *handle, long step,
         memcpy(handle->colour_table_, (void *)CaviarScene.render_argument_,
                0x1800);
     } else {
-        memcpy(handle->colour_table_, (void *)self.instance_ids_[step], 0x1800);
+        memcpy(handle->colour_table_, self.instance_palettes_[step], 0x1800);
     }
 }
 
@@ -4370,3 +4377,277 @@ void __cdecl caviar_apply_rotation(const float *angles, VOX_Matrix *matrix) {
     matrix->values[2][2] = cz * cy;
 }
 #pragma function(sin, cos)
+
+// Chunk lengths are 32-bit file words. Keep the original wrapping subtraction
+// before its signed-result test, without signed-overflow arithmetic in C++.
+static int32_t vox_chunk_payload(int32_t length) {
+    return (int32_t)((uint32_t)length - 8u);
+}
+
+// Failures return without releasing partially built records, as in the image.
+// ORIGINAL: 0x006381F0 ?vox_load_record@@YAPAUCvrRecord@@H@Z 0x006381F0-0x00638425
+// RECOVERY_BINDING: v1 {"evidence": ["Original 006381F0..00638425: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
+CvrRecord *__cdecl vox_load_record(int fd) {
+    CvrChunkHeader header;
+    if (vox_read_exact(fd, &header, sizeof(header)) != 0) return 0;
+    if (header.tag != 0x00525643) {
+        vox_stage_error(vox_msg_bad_file_format);
+        return 0;
+    }
+    uint32_t remaining = (uint32_t)header.length - 8u;
+    CvrRecord *record;
+    if (vox_alloc_typed(sizeof(CvrRecord), &record) != 0) return 0;
+    memset(record, 0, sizeof(*record));
+    while (remaining != 0) {
+        if (vox_read_exact(fd, &header, sizeof(header)) != 0) return 0;
+        remaining -= (uint32_t)header.length;
+        if ((remaining & 0x80000000u) != 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return 0;
+        }
+        switch (header.tag) {
+        case 0x01000000:
+            if (vox_read_dword(fd, record) != 0) return 0;
+            break;
+        case 0x02000000:
+            if (vox_read_length_field(fd, record, header.length) != 0) return 0;
+            break;
+        case 0x03000000:
+            if (vox_read_chunks(fd, record, header.length) != 0) return 0;
+            break;
+        case 0x04000000:
+            if (vox_read_parts(fd, record, header.length) != 0) return 0;
+            break;
+        case 0x0F000000: {
+            vox_user_chunk_fn callback = vox_user_chunk;
+            vox_message_buffer[0] = 0;
+            if (callback == 0) {
+                if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+                    vox_stage_error(vox_msg_bad_file_format);
+                    return 0;
+                }
+            } else {
+                if (callback(fd, record, &header) != 0) {
+                    if (strlen(vox_message_buffer) == 0) vox_stage_error(vox_msg_user_chunk);
+                    return 0;
+                }
+                // The callback may rewrite the header; remaining was already
+                // decremented, but this stored payload length is a fresh read.
+                record->user_length_ = vox_chunk_payload(header.length);
+            }
+            break;
+        }
+        default:
+            if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return 0;
+            }
+            break;
+        }
+    }
+    record->state_ = 3;
+    return record;
+}
+
+// ORIGINAL: 0x006388C0 ?vox_read_parts@@YAHHPAUCvrRecord@@H@Z 0x006388C0-0x00638AC2
+// RECOVERY_BINDING: v1 {"evidence": ["Original 006388C0..00638AC2: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
+int __cdecl vox_read_parts(int fd, CvrRecord *record, int size) {
+    uint32_t remaining = (uint32_t)size - 8u;
+    // The format supplies the count chunk before entries (or the final count
+    // check). The original has no initialized fallback for a missing count.
+    int expected_count;
+    int index;
+    while (remaining != 0) {
+        CvrChunkHeader header;
+        if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
+        remaining -= (uint32_t)header.length;
+        if ((remaining & 0x80000000u) != 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return -1;
+        }
+        switch (header.tag) {
+        case 0x04010000: {
+            int payload = vox_chunk_payload(header.length);
+            if (vox_alloc_typed((uint32_t)payload + 1u, &record->parts_name_) != 0) return -1;
+            if (vox_read_exact(fd, record->parts_name_, payload) != 0) return -1;
+            record->parts_name_[payload] = 0;
+            break;
+        }
+        case 0x04020000: {
+            if (vox_read_exact(fd, &expected_count, sizeof(expected_count)) != 0) return -1;
+            uint32_t names_bytes = (uint32_t)expected_count * sizeof(*record->slot_table_);
+            if (vox_alloc_typed(names_bytes, &record->slot_table_) != 0) return -1;
+            memset(record->slot_table_, 0, names_bytes);
+            uint32_t parts_bytes = (uint32_t)expected_count * sizeof(*record->parts_);
+            if (vox_alloc_typed(parts_bytes, &record->parts_) != 0) return -1;
+            index = 0;
+            memset(record->parts_, 0, parts_bytes);
+            record->part_count_ = expected_count;
+            break;
+        }
+        case 0x04030000:
+            if (vox_read_exact(fd, &record->step_count_, sizeof(record->step_count_)) != 0) return -1;
+            break;
+        case 0x04040000:
+            if (vox_read_part(fd, record, index, header.length) != 0) return -1;
+            ++index;
+            break;
+        case 0x04050000:
+            if (vox_read_shape_patches(fd, record, header.length) != 0) return -1;
+            break;
+        default:
+            if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return -1;
+            }
+            break;
+        }
+    }
+    if (expected_count != index) {
+        vox_stage_error("Number of objects mismatch");
+        return -1;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x00638AD0 ?vox_read_part@@YAHHPAUCvrRecord@@HH@Z 0x00638AD0-0x00638CB9
+// RECOVERY_BINDING: v1 {"evidence": ["Original 00638AD0..00638CB9: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
+int __cdecl vox_read_part(int fd, CvrRecord *record, int index, int size) {
+    uint32_t remaining = (uint32_t)size - 8u;
+    while (remaining != 0) {
+        CvrChunkHeader header;
+        if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
+        remaining -= (uint32_t)header.length;
+        if ((remaining & 0x80000000u) != 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return -1;
+        }
+        switch (header.tag) {
+        case 0x04040100: {
+            int payload = vox_chunk_payload(header.length);
+            if (vox_alloc_typed((uint32_t)payload + 1u, &record->slot_table_[index]) != 0) return -1;
+            if (vox_read_exact(fd, record->slot_table_[index], payload) != 0) return -1;
+            record->slot_table_[index][payload] = 0;
+            break;
+        }
+        case 0x04040200:
+            if (record->steps_ == 0) {
+                uint32_t bytes = (uint32_t)record->part_count_ * sizeof(*record->steps_);
+                if (vox_alloc_typed(bytes, &record->steps_) != 0) return -1;
+                memset(record->steps_, 0, bytes);
+            }
+            if (vox_read_colour_chunks(fd, &record->steps_[index], header.length) != 0) return -1;
+            if (record->steps_[index].lead_ == 0) {
+                record->flags_ &= ~1u;
+                record->steps_[index].lead_ = record->steps_[index].shape_->byte_size_;
+            } else {
+                record->flags_ |= 1u;
+            }
+            break;
+        case 0x04040300:
+            if (vox_read_geometry_chunks(fd, &record->parts_[index], header.length, record->step_count_) != 0) return -1;
+            break;
+        case 0x04040400:
+            if (vox_read_shadow(fd, record, index, header.length) != 0) return -1;
+            break;
+        default:
+            if (vox_seek_slot((unsigned long)fd, vox_chunk_payload(header.length), 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return -1;
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x00638F30 ?vox_read_shadow@@YAHHPAUCvrRecord@@HH@Z 0x00638F30-0x00639086
+// RECOVERY_BINDING: v1 {"evidence": ["Original 00638F30..00639086: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
+int __cdecl vox_read_shadow(int fd, CvrRecord *record, int index, int size) {
+    if (record->shadows_ == 0) {
+        if (vox_alloc_typed((uint32_t)record->part_count_ * sizeof(*record->shadows_), &record->shadows_) != 0) return -1;
+        // Unlike the name/part/step arrays, the original does not clear this.
+    }
+    uint32_t remaining = (uint32_t)size - 8u;
+    CvrShadow *entry = &record->shadows_[index];
+    while (remaining != 0) {
+        CvrChunkHeader header;
+        if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
+        remaining -= (uint32_t)header.length;
+        if ((remaining & 0x80000000u) != 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return -1;
+        }
+        int payload = vox_chunk_payload(header.length);
+        switch (header.tag) {
+        case 0x04040401:
+            if (vox_read_exact(fd, entry, payload) != 0) return -1;
+            break;
+        case 0x04040402:
+            if (vox_alloc_typed(payload, &entry->field_4_) != 0) return -1;
+            if (vox_read_exact(fd, entry->field_4_, payload) != 0) return -1;
+            break;
+        case 0x04040403:
+            if (vox_alloc_typed(payload, &entry->field_8_) != 0) return -1;
+            if (vox_read_exact(fd, entry->field_8_, payload) != 0) return -1;
+            break;
+        default:
+            if (vox_seek_slot((unsigned long)fd, payload, 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return -1;
+            }
+            break;
+        }
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x00639090 ?vox_read_shape_patches@@YAHHPAUCvrRecord@@H@Z 0x00639090-0x006391E6
+// RECOVERY_BINDING: v1 {"evidence": ["Original 00639090..006391E6: preserve existing seed extent; pinned decode independently checks terminal return, dispatch callees and relevant field/callback behavior. Fresh VC6 output establishes current emitted symbol.", "Original638230 allocates44 bytes;638353 writes user_length at40. Palette storage is a pointer, parts/steps/shadows are typed allocations with callback-observable failure and release ordering.", "Patch639090 uses prefix+4 displacement,42-byte prefix and overlap-capable original6474E0 copy; standard memmove preserves the observed backward-copy behavior without undefined overlapping memcpy. Host controls are bounded and not full-game or malformed-file acceptance."], "reason": "Recover typed CVR record loading and nested chunk ownership in the genuine Caviar loader closure."}
+int __cdecl vox_read_shape_patches(int fd, CvrRecord *record, int size) {
+    uint32_t remaining = (uint32_t)size - 8u;
+    // The format must select an index before its first patch. The original
+    // leaves the index unspecified for a patch lacking that predecessor.
+    int index;
+    while (remaining != 0) {
+        CvrChunkHeader header;
+        if (vox_read_exact(fd, &header, sizeof(header)) != 0) return -1;
+        remaining -= (uint32_t)header.length;
+        if ((remaining & 0x80000000u) != 0) {
+            vox_stage_error(vox_msg_bad_file_format);
+            return -1;
+        }
+        int payload = vox_chunk_payload(header.length);
+        switch (header.tag) {
+        case 0x04050001:
+            if (vox_read_exact(fd, &index, payload) != 0) return -1;
+            break;
+        case 0x04050002: {
+            CvrShape *shape = record->steps_[index].shape_;
+            // A 42-byte serialized prefix of a variable-size shape allocation,
+            // not a declaration of a 42-byte complete object or array stride.
+            unsigned char prefix[0x2A];
+            if (vox_read_exact(fd, prefix, sizeof(prefix)) != 0) return -1;
+            uint32_t prefix_size;
+            memcpy(&prefix_size, prefix + sizeof(uint32_t), sizeof(prefix_size));
+            uint32_t old_size = shape->byte_size_;
+            uint32_t new_size = prefix_size + old_size;
+            unsigned char *bytes = reinterpret_cast<unsigned char *>(shape);
+            // The original CRT target copies backward when these ranges
+            // overlap; the patch prefix need not exceed the old shape size.
+            memmove(bytes + prefix_size, bytes, old_size);
+            memcpy(bytes, prefix, sizeof(prefix));
+            if (vox_read_exact(fd, bytes + sizeof(prefix), (uint32_t)payload - sizeof(prefix)) != 0) return -1;
+            shape->byte_size_ = new_size;
+            break;
+        }
+        default:
+            if (vox_seek_slot((unsigned long)fd, payload, 1) < 0) {
+                vox_stage_error(vox_msg_bad_file_format);
+                return -1;
+            }
+            break;
+        }
+    }
+    return 0;
+}
