@@ -1,0 +1,21 @@
+{
+  "event_id": "80953fc4404498bb897530ab5405634cf05edf7e619a707ada78c1e89f5746f4",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-df5218b6eb9f43839c0b95c97c0d20fd",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Verified in the unchanged working tree this request measured (src/path.cpp SHA-256 c9f46e404f94a7635ac13c66f85de4154700fd4fca9328e11acb68a247ad1b00): Path::move at src/path.cpp:974-1101 carries every structure the finding names - the weapon gate get_proto_offense_rating==0 && !has_project(SP_XENOEMPATYH_DOME, veh_faction_id) at lines 1015-1018, the non-air gate ((x_dist(veh_x,x_waypoint)+abs(veh_y-y_waypoint))&~1)!=0 at 1019-1020, the find call passing the PARAMETER faction_id at 1021-1023, the sentinel-99999 8-direction scan at 1035-1083 (best_cost = 99999, base_who(x_scan, 0) BUG note at 1068-1073, the double-abs air cost dist*32+vector_dist(x_dist(...),abs(...)) at 1061-1062), and both order-clearing tails at 1084-1099.",
+      "The veh_skip_call forwarder is present at src/path.cpp:53-55 (same idiom as region_set_call line 36 / abstract_set_call line 43) and is called at exactly the two tail sites (lines 1087, 1096); the file's LEVER block at lines 959-964 records the measured 1568->1552 restoration, and the TRIED block at 946-958 records the 4-spelling variants deck (build/recovery/decks/path-move-spellings.json) scoring all spellings identically under both flag sets.",
+      "The request's fresh binary-check evidence corroborates the claimed site-for-site call profile: move's emitted references resolve ?find@Path x1, ?hex_cost x1, ?speed x2, ?veh_skip_call x2, ?zoc_move x2, _abs x8 - the 16 image calls - with candidate_size 1552, exactly as the finding reports against the image's 1507-byte extent.",
+      "Incorporation records expression of the transcription only, not binary or behavioral proof: move carries no byte obligation (the four protected obligations init/shutdown/~Path/merge are untouched by this decision and still measure shutdown/~Path pass, init/merge unknown solely on the outside MapArea/Continents binding gap of worker-aa46f3ca8c534a0f999d12438af84fe6). The residual 45-byte gap attribution to MapLongitudeBounds/MapLongitude/MapIsFlat register hoisting inside xrange/on_map/x_dist in map.h remains a diagnostic plateau measurement - the same wall zoc_path and find already record, and move's fresh emitted references show those globals unbound (binding_address null) exactly as that outside-owner finding describes; map.h stays outside this task's editable files and nothing outside src/path.cpp/src/path.h is edited, resolved or accepted here.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "c9e7b8ce914de551cd2822c8ecb686241e709b056f400c39edff88dcbfe12da6",
+  "request_id": "coordinator-bd19030448c64f1f89cdea65cf2f761a",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:path-finding-recovery"
+}

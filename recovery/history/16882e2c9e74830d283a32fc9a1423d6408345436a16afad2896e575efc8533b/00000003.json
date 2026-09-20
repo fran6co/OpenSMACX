@@ -1,0 +1,21 @@
+{
+  "event_id": "955786d92bde06fa41815ce2af5431fefa237d2b09190d5494bab22013d93ac4",
+  "payload": {
+    "affects": [
+      "entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-8c799dd4575b4042a5fb67e7559103d8",
+    "evidence": [
+      "0x0059A54D-0x0059A555: when [ebp+0x20] & 0x200, the original [ebp+0x18] proto argument is stored to [ebp-0x40] and 0 written back to the argument slot",
+      "0x0059ADB0: cmp DWORD PTR [ebp-0x40],ecx (next tile's territory) / je 0x0059B321 exempts the tile, alongside the faction_id compare at 0x0059ADA7"
+    ],
+    "hypothesis": "When unk1 & 0x200 forces proto_id to 0 at the top of find, the original proto id survives in [ebp-0x40] and still exempts its own faction's territory inside the 0x200 territory branch, even though triad, speed, plan and hex_cost all operate on the zeroed proto_id; the C body keeps a proto_saved local for exactly this compare.",
+    "kind": "discovery"
+  },
+  "previous_event": "7b829fa98544f69f7353cc9aeab7bb83093f295954701c51c55fec9d7f54b737",
+  "request_id": "worker-8c799dd4575b4042a5fb67e7559103d8",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:path-finding-recovery"
+}

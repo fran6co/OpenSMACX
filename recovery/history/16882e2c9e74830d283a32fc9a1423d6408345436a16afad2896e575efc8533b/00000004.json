@@ -1,0 +1,23 @@
+{
+  "event_id": "1894e5ac30e1b480dae8cc8a2cde1abfc8d33904f69bfd9bb64b56bee47408d1",
+  "payload": {
+    "affects": [
+      "entity-136f7fb9e314fc333942d94c378482d2c99c320fd858b0bd7f95e8c949ee8f96",
+      "entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-81c11d1b44724f2f8a00c16c150e5e4f",
+    "evidence": [
+      "0x0059B057-0x0059B06C: edx = ds:0x9a64e8 & 0xff, and-tested with 1 << faction_id to gate the visibility exemption, and the surviving edx drives the penalty",
+      "0x0059B99C-0x0059B9A3 (reconstruction copy): neg edx / sbb edx,edx / and edx,0xffffff9d / add edx,0x64 yields 1 when edx was nonzero (human) and 100 otherwise",
+      "0x0059B0EF-0x0059B103: xor edx,edx / setle dl / dec edx / and edx,0x5dc / add edx,0x3e8 on ds:0x9a6800 (SunspotDuration) yields 2500 while it is positive and 1000 once it runs out"
+    ],
+    "hypothesis": "The truce-ground penalty in find's treaty block is is_human(faction_id) ? 1 : 100, selected via LockEnableMask byte 0 (0x009A64E8) exactly as is_human()/factions_status_byte() read it, while treaty ground costs SunspotDuration > 0 ? 2500 : 1000; zoc_path's own is_human gate reads the same byte, tying both spellings to that global.",
+    "kind": "discovery"
+  },
+  "previous_event": "955786d92bde06fa41815ce2af5431fefa237d2b09190d5494bab22013d93ac4",
+  "request_id": "worker-81c11d1b44724f2f8a00c16c150e5e4f",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:path-finding-recovery"
+}

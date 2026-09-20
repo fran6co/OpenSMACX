@@ -1,0 +1,22 @@
+{
+  "event_id": "7eae0811583165e086bbddabf257aaefb0a5df289ad57fccceaf615167dbf2e2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-cabd4eccead04c6ba86ed1f598e65c34",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh obligation ledger in this unchanged request confirms the hypothesis's mechanism: obligation-04213ae3 (?init@Path 0x0059A220) is unknown with reason 'unresolved targets: ?MapArea@@3IA, ?memset_call@@YAPAXPAXHI@Z' and obligation-ad2e9fc0 (?merge@Path 0x0059C340) is unknown with reason 'unresolved targets: ?Continents@@3PAUContinent@@A, ?MapArea@@3IA'; all three symbols appear in checks.binary.unresolved_symbols. MapArea and Continents are map.cpp globals reachable only via headers, and memset_call (src/path.cpp:54) is a recovery-internal forwarder with no image-address binding (the original init calls memset 0x006465F0 directly, per the marker's calls list), so the scoped single-TU check cannot bind them and no spelling inside src/path.cpp/src/path.h changes that.",
+      "Per-function evidence read from /diagnostics/check/report/candidate/checks/binary/functions corroborates it: init's variant under /O2 /Gy /GR- /GX /Z7 has empty differing_offsets with every bindable relocation passing (_free -> 0x00644EF2, ?mem_get -> 0x005D4510) and unknowns exactly at its four ?MapArea relocations and the ?memset_call call; merge's only relocations are the six unbound Continents/MapArea slots (offsets 32-99), matching its body reading Continents[] and (int)MapArea. The two protected bodies referencing none of these targets - shutdown 0x0059A2D0 and ~Path 0x0059A320 - pass strict bounded byte/reference agreement in the same run, so the check itself executes cleanly; merge's component-level fail is exactly its baseline disposition, not a new mismatch.",
+      "The insight is expressed in current source, not a planned repair: init is implemented at src/path.cpp:77 (marker line 60, ORIGINAL 0x0059A220-0x0059A2C3 BYTE_EXACT) and merge at src/path.cpp:1073 (marker line 1049, ORIGINAL 0x0059C340-0x0059C3B7 BYTE_EXACT). git diff 2391baa2..working-tree on src/path.cpp contains exactly four hunks - the mapwin.h include near line 26, the find notes/marker rewrite, the transcribed find body, and one status comment inside move - none intersecting either body, so both bodies are byte-identical to the baseline revision that carries the claims.",
+      "One evidence caveat recorded honestly: the cited baseline snapshot build/recovery/agents/agent-p3bqwrpu/request.json no longer exists on disk (the agents directory holds only the current agent-dbm73ike round), so the worker's before/after ledger equality is inherited rather than re-read; it is independently supported because the bodies are git-identical to baseline and the fresh component counts (fail 9 / pass 2 / unknown 1, init the sole function-level unknown) reproduce the baseline ledger the worker reported, with zero compile errors across 26 attempts.",
+      "Incorporation is not acceptance and authorizes no work: both obligations remain in unrestored.unknown with their git-history baselines protected and no claims demoted; no worker round is granted because no repair inside the task's two editable files can resolve cross-TU externs or give memset_call an image binding, and the finding names no defect - it is a measurement-status explanation now verified against source and fresh diagnostics.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "0a206580a004f298d9a6fd68be3bcb5c4788710f0bbb56681ae30da58de6972e",
+  "request_id": "coordinator-dc18a58757ef4c32bf1354ef7cb5d12c",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:path-finding-recovery"
+}

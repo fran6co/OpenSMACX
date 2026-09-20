@@ -39,8 +39,10 @@ int MapLatitudeBounds;  // 0x00949874
 uint32_t MapRandSeed;  // 0x00949878
 int MapSeaLevel;  // 0x0094987C
 int MapSeaLevelCouncil;  // 0x00949880
+// RECOVERY_OBJECT: v1 0x00949884 ?MapArea@@3IA
 uint32_t MapArea;  // 0x00949884
 uint32_t MapAreaSqRoot;  // 0x00949888
+// RECOVERY_OBJECT: v1 0x0094988C ?MapIsFlat@@3HA
 BOOL MapIsFlat;  // 0x0094988C
 int MapLandmarkCount;  // 0x00949890
 int MapAbstractLongBounds;  // 0x0094A294

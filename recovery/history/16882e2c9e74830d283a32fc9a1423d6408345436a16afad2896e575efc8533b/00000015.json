@@ -1,0 +1,21 @@
+{
+  "event_id": "d6808ebaa4f07ab0ee9e8aa4b768577177e5430d89512a37706cba401ddc47f8",
+  "payload": {
+    "affects": [
+      "entity-33d5adfed58c3369d9c8daf81afdc610e294f74063afba7032d03b033019ce14"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-63d9865e42f6447ca5b5f225c015344c",
+    "evidence": [
+      "final-check.json merge entry: missing_absolute_relocations = [33, 40, 47, 54, 62, 77, 100] against candidate relocations at 32/39/46/53/61/99 - offset 77 has no candidate relocation at all, the map_tiles() base read",
+      "merge is BYTE_EXACT-claimed and its marker records 39/39 instructions agreeing; only the strict reference/relocation comparison fails, on the two out-of-scope causes above"
+    ],
+    "hypothesis": "merge's own remaining relocation gap is a map.h spelling, not a path.cpp one: the image carries a relocation at original offset 77 with no candidate counterpart because map_tiles() (map.h:362) returns the raw global address without a symbol relocation, so the hoisted Map *tiles = map_tiles() loop base emits no relocatable reference; the candidate's six relocations also sit at a consistent -1 offset (32/39/46/53/61/99 vs the image's 33/40/47/54/62/100) from the unresolved-global encoding shift. The map.h owner can close the first half by giving map_tiles an original-identity spelling.",
+    "kind": "discovery"
+  },
+  "previous_event": "46e492283f2a88f3c945458f68015f0cc773673b7f2095c0b58726970cb56d0d",
+  "request_id": "worker-63d9865e42f6447ca5b5f225c015344c",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:path-finding-recovery"
+}

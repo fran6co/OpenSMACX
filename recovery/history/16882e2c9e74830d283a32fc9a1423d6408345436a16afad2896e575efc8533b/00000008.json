@@ -1,0 +1,22 @@
+{
+  "event_id": "4346c0af572f8134f47986b133087ea8d5b07802e7fe005f08bdd1f248e259c2",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-43a12648bd1643758df069cff8188698",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The insight is expressed in current source inside Path::find (entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c, working-tree src/path.cpp sha256 bc3b02f54c97544a4ff9efd210df7da14d477fa0838cec7f70b0474b1f1cffab): line 362 loads region_dst = map_loc(x_dst, y_dst)->region, and the vendetta mask loop for (int f = 1; f < 8; f++) at lines 363-376 sets mask_vendetta only when PlayersData[f].region_total_bases[region_dst] != 0 at src/path.cpp:373 - exactly the hypothesized spelling and gating.",
+      "Independent declarations corroborate the structure: src/faction.h:490 declares uint8_t region_total_bases[128] inside PlayerData (byte element type matching the byte-width read at 0x0059A6B5), and src/faction.h:536-549 documents PlayersData at 0x0096C9E0 with the image-measured stride 2099*4 = 8396 = 0x20CC.",
+      "Address arithmetic is consistent with the hypothesis: 0x96FC28 - 0x96C9E0 - 0x20CC = 4476, so 0x96FC28 is &PlayersData[1].region_total_bases[0]; the image seeding lea esi,[esi+0x96fc28] at 0x0059A62E with the destination region, cmp BYTE PTR [esi],0x0 at 0x0059A6B5, and add esi,0x20cc at 0x0059A6CA for f in 1..7 matches the C loop's faction range, base and read exactly.",
+      "All affected identities are already task subjects with src/path.cpp already in the task's editable scope, so no expansion is requested; this decision only records that the structural identification is expressed, per the finding, in the transcribed find body.",
+      "Incorporation is source expression, not binary or behavioral proof: the fresh scoped check still measures ?find@Path@@QAEHHHHHHHHH@Z as result fail (85 known-differing bytes under /O2 /Gy /GR- /GX /Z7 per the 2026-09-18 transcription note) and ?init@Path/?merge@Path as unknown on unresolved cross-TU targets; no obligation, baseline or claim is changed by this decision.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "493eb3502b896a80ec51a1381871203d379b45ca9643476060137ba912cb50ef",
+  "request_id": "coordinator-8c040a19a7b74e71b41f1144e9fc1169",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:path-finding-recovery"
+}

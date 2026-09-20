@@ -1,0 +1,24 @@
+{
+  "event_id": "2ab85b73bbd14a7e52d59bffcbecbebc2ee4e5e71c20e0c5cc69278192d9469e",
+  "payload": {
+    "affects": [
+      "entity-289ccd1657006dd1d015ecd7e80cdcef4fbf99cadb68d938c9ca8dee770e8a26",
+      "entity-9453a459b6cd86802db54513afdef0a59fdbc632a50e5b45420e8bd968bdc94e",
+      "entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-4bd46d0d595944b09c81f53765c48a04",
+    "evidence": [
+      "final-check.json: init's emitted references bind _memset -> 0x006465F0 and init's only remaining unresolved target is ?MapArea@@3IA (binding null, out of scope); find and sensors likewise bind _memset -> 0x006465F0",
+      "continents' emitted references contain no _memset at all - the intrinsic restoration ahead of its body kept the ZeroMemory over sea_coasts as inline stores, matching the image's calls list",
+      "the change was decked before committing (path-memset.json, 3 candidates x 2 flag sets): scoped-pragmas preserved continents' codegen exactly (1408 instructions under /O2, 1376 under /Oy-) where a TU-wide #pragma function shifted it to 1376/1360 by adding a call the image does not make"
+    ],
+    "hypothesis": "The memset_call forwarder was replaced by scoped #pragma function(memset)/#pragma intrinsic(memset) so the three real image memset calls reference _memset directly: init (0x0059A220), find (0x0059A530) and sensors (0x0059CCA0) now emit _memset -> 0x006465F0 against the pinned CRT component binding, while continents (0x0059C790) keeps its inline constant-8 stores (intrinsic restored ahead of that body only). The old forwarder's synthetic symbol left every strict reference through it permanently unresolved; init's unresolved set dropped from two symbols to one.",
+    "kind": "discovery"
+  },
+  "previous_event": "2a5c09f1f792c35152dbe8aeb7c0e65bc88f6b59a60a3de98b7999c8289dd473",
+  "request_id": "worker-4bd46d0d595944b09c81f53765c48a04",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:path-finding-recovery"
+}

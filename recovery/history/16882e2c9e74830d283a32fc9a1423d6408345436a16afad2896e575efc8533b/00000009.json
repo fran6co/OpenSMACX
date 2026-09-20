@@ -1,0 +1,21 @@
+{
+  "event_id": "0a206580a004f298d9a6fd68be3bcb5c4788710f0bbb56681ae30da58de6972e",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-8c799dd4575b4042a5fb67e7559103d8",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The save/zero prologue is expressed in current source at src/path.cpp:340-343: `int proto_saved = proto_id; if (unk1 & 0x200) { proto_id = 0; }` corresponds to the original 0x0059A54D-0x0059A555 sequence that stores the [ebp+0x18] proto argument into [ebp-0x40] and writes 0 back to the argument slot.",
+      "The saved-proto territory exemption is expressed at src/path.cpp:527-529: inside the `unk1 & 0x200` branch the guard `if (faction_id != territory_next && proto_saved != territory_next)` mirrors the paired original compares at 0x0059ADA7 (faction_id) and 0x0059ADB0 (`cmp DWORD PTR [ebp-0x40],ecx / je 0x0059B321`), and proto_saved has exactly this one use in the whole body (grep: declared line 340, used line 529 only).",
+      "Every other consumer operates on the zeroed proto_id as the hypothesis states: get_proto_triad/speed_proto at src/path.cpp:344-345, has_abil at 350, and hex_cost at 508 and 744; the transcription note at src/path.cpp:328-330 documents the same [ebp-0x40] insight, so the finding is expressed, not merely planned.",
+      "Current diagnostics from the request's functions array (/diagnostics/check/report/candidate/checks/binary/functions) still measure ?find@Path@@QAEHHHHHHHHH@Z fail on extent (candidate 6144 bytes under /O2 /Gy /GR- /GX /Z7 and 5664 under the /Oy- set vs the 5845 recorded extent); incorporation here establishes only that the structural insight is in source, not binary or behavioral proof, and find's convergence remains open measurement work.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "4346c0af572f8134f47986b133087ea8d5b07802e7fe005f08bdd1f248e259c2",
+  "request_id": "coordinator-c23a5afbd85f445aa05b00b584baa3e3",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:path-finding-recovery"
+}

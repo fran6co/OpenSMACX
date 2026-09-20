@@ -1,0 +1,24 @@
+{
+  "event_id": "a2687585f28060cb0f124ca0f1d10482fd6e91c072bbe767d8b1d52f90c7e569",
+  "payload": {
+    "affects": [
+      "entity-f0f3708a5bdc58c456cfdb7f94a520fa330aa4ccfc7a4a39e18026b4f8f8da1a"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-df5218b6eb9f43839c0b95c97c0d20fd",
+    "evidence": [
+      "src/path.cpp now carries the full body: weapon gate get_proto_offense_rating==0 && !has_project(SP_XENOEMPATYH_DOME, veh_faction_id) (SecretProject field 8 at 0x009A6534, Bases[].faction_id_current at 0x0097D044 - both addresses the old WIP note resolved), the non-air gate ((x_dist(veh_x,x_waypoint)+abs(veh_y-y_waypoint))&~1)!=0, the find call, the sentinel-99999 8-direction scan, and the two order-clearing tails",
+      "find's faction argument is the PARAMETER faction_id, not veh_faction_id: the image reads [ebp+0xc] at 0x0059BE4C",
+      "the air cost is dist*32 + vector_dist(x_dist(x_scan,x_waypoint), abs(y_scan-y_waypoint)): the image's four abs calls at 0x0059C023-0x0059C05E are x_dist's own, the site's abs(dy), and vector_dist's two no-op abs()s on already-nonneg arguments - the double-abs signature of that exact nesting",
+      "veh_skip is MEASURED inline in veh.h and expanded at both tail sites, which also doubled speed to four calls where the image makes two; the veh_skip_call forwarder (same idiom as region_set_call/abstract_set_call in this file) restored the two calls and halved speed back to two, candidate size 1568 -> 1552, final-check.json emitted_references agree with the image's 16 calls",
+      "a 4-spelling variants deck (build/recovery/decks/path-move-spellings.json: hoisted is_human local, comma-operator owner gate, int flags, inline get_proto_triad without the local) scored all four IDENTICALLY to the committed spelling under both flag sets with replica and damage controls passing - the committed spelling is the idiomatic one, find's precedent"
+    ],
+    "hypothesis": "Path::move (0x0059BC10) is now fully transcribed: the WIP stub ended at 0x0059BD73 and the missing ~420 instructions are in place, with the emitted call profile agreeing with the image site-for-site (find 0x0059A530 x1, hex_cost 0x00593510 x1, speed 0x005C1540 x2 via two veh_moves calls, veh_skip x2 via a new file-local veh_skip_call forwarder, zoc_move 0x005C8D40 x2, abs 0x00644F3A x8); candidate size 1552 vs the image's 1507 under /O2 (1488 under /Oy-), and the residual gap is the MapLongitudeBounds/MapLongitude/MapIsFlat register hoisting inside xrange/on_map/x_dist in map.h - the wall zoc_path and find already record.",
+    "kind": "discovery"
+  },
+  "previous_event": "7eae0811583165e086bbddabf257aaefb0a5df289ad57fccceaf615167dbf2e2",
+  "request_id": "worker-df5218b6eb9f43839c0b95c97c0d20fd",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:path-finding-recovery"
+}

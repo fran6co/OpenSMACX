@@ -1,0 +1,19 @@
+{
+  "event_id": "0614329b131d2c76b5a647af62091a623e749662681dd111ed5d6948eb74989d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_path_arithmetic.py"
+    ],
+    "evidence": [
+      "Coordinator manual review found two duplicated semantic transcription errors in Path::find: original AND AL,FE preserves high distance bits at 0059AF07/0059B797; original nearby-base mask operations OR all inputs at 0059B1F1/0059BA66. Original SHL count masking also needs defined C++ for territory -1. Authorize a focused actual-source-expression test with original instruction evidence and mutation controls. This grants tests only, not acceptance or claim changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ec72523753542fc7712f644a28574121efca0356b3f93534624a9a4b0fea5364",
+  "request_id": "path-arithmetic-review-controls-20260920",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:path-finding-recovery"
+}

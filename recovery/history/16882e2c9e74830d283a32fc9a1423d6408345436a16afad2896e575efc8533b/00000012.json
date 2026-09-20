@@ -1,0 +1,21 @@
+{
+  "event_id": "2a5c09f1f792c35152dbe8aeb7c0e65bc88f6b59a60a3de98b7999c8289dd473",
+  "payload": {
+    "affects": [
+      "entity-f0f3708a5bdc58c456cfdb7f94a520fa330aa4ccfc7a4a39e18026b4f8f8da1a"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-9b045de173ff430ab6dd26c533854a10",
+    "evidence": [
+      "0x0059C0C3: mov ecx,[0x94a30c]; lea edx,[edi+edi*4]; lea eax,[edi+edx*2]; lea eax,[ecx+eax*4] - edi is x_scan>>1 from 0x0059BF94 and no y term appears, versus the pact gate's full map_loc at 0x0059BF89-0x0059BFA3 which does multiply [ebp+0xc] (y_scan) by MapLongitude at 0x0059BF90",
+      "the gate continues (skips the tile) when zoc && zoc_move(x_scan,y_scan,veh_faction_id) && base_who(x_scan,0) != 0: bit&1 test at 0x0059C0D2, owner<8 at 0x0059C0DE, owner!=0 at 0x0059C0E5, matching base_who's -1/no-base/owner semantics against 0"
+    ],
+    "hypothesis": "The scan's zone-of-control gate in Path::move reads base_who with y literally 0 in the original binary - a probable original bug worth preserving as-is: the tile table is indexed by (x_scan >> 1) alone at 0x0059C0C3-0x0059C0E5 with no y * MapLongitude term, so the test consults row 0 (the north pole) whatever y_scan is; almost certainly meant base_who(x_scan, y_scan). Reproduced verbatim in src/path.cpp with a BUG note.",
+    "kind": "discovery"
+  },
+  "previous_event": "a2687585f28060cb0f124ca0f1d10482fd6e91c072bbe767d8b1d52f90c7e569",
+  "request_id": "worker-9b045de173ff430ab6dd26c533854a10",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:path-finding-recovery"
+}

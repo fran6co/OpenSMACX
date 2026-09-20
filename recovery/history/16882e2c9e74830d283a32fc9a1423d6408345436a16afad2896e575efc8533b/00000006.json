@@ -1,0 +1,24 @@
+{
+  "event_id": "cfc43ecadc550ee396387e54c06081f6cb23661bd3faf280c3551d4e04d12482",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-81c11d1b44724f2f8a00c16c150e5e4f",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/path.cpp:622 and src/path.cpp:827 spell the treaty-ground penalty in find's treaty block at both neighbour-scan sites as `penalty = SunspotDuration > 0 ? 2500 : 1000;`, matching the finding's 0x0059B0EF-0x0059B103 sequence on ds:0x9a6800",
+      "src/path.cpp:624 and src/path.cpp:829 spell the truce-ground penalty as `penalty = is_human(faction_id) ? 1 : 100;`, matching the finding's 0x0059B99C-0x0059B9A3 reconstruction sequence",
+      "src/faction.h:987-994 defines is_human(faction_id) as `factions_status_byte(0) & (1u << faction_id)`, where factions_status_byte(0) reads byte 0 of LockEnableMask (0x009A64E8, declared src/faction.h:600 and src/lock.h:89) - exactly the selection byte the finding names at 0x0059B057-0x0059B06C",
+      "src/game.cpp:83 defines `int SunspotDuration;  // 0x009A6800`, the single global the 2500/1000 branch reads",
+      "zoc_path's own gate at src/path.cpp:178 (`if (!is_human(faction_id))`) calls the same inline, tying both spellings to that global as the hypothesis claims",
+      "both affected identities (entity-136f7fb9e314fc333942d94c378482d2c99c320fd858b0bd7f95e8c949ee8f96 zoc_path 0x0059A370 and entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c find 0x0059A530) are product bodies in this task's editable src/path.cpp and are inside the currently-owned set for this discovery",
+      "incorporation records the expressed structural insight only: the fresh scoped check (request /diagnostics/check/report/candidate/checks/binary/functions) still measures find boundary fail and zoc_path boundary fail, so no byte obligation, protected claim or open measurement is demoted or resolved by this decision",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "f4d8451061058bc58faa1b29488731ba476a02725c3dd6cbe134632386d2cb91",
+  "request_id": "coordinator-4a2eb28b1539425fbaa7c95e0c1b058a",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:path-finding-recovery"
+}

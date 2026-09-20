@@ -1,0 +1,22 @@
+{
+  "event_id": "7b829fa98544f69f7353cc9aeab7bb83093f295954701c51c55fec9d7f54b737",
+  "payload": {
+    "affects": [
+      "entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-43a12648bd1643758df069cff8188698",
+    "evidence": [
+      "0x0059A620: mov al,[edx+3] loads map_loc(x_dst,y_dst)->region; 0x0059A62E: lea esi,[esi+0x96fc28]",
+      "0x0059A6B5: cmp BYTE PTR [esi],0x0 gates the vendetta bit; 0x0059A6CA: add esi,0x20cc per faction f in 1..7",
+      "0x20CC is the PlayersData per-faction stride (2099 dwords, base 0x0096C9E0, faction.h) and the byte-width read matches the region_total_bases[128] element type"
+    ],
+    "hypothesis": "0x0096FC28 is PlayersData[f].region_total_bases[region]: find's vendetta mask loop reads one byte there per faction (esi seeded at 0x0096FC28 + the destination tile's region, advanced 0x20CC per faction), so a faction enters mask_vendetta only when it holds a base in the destination's map region; this is the structural identification behind the C spelling PlayersData[f].region_total_bases[region_dst].",
+    "kind": "discovery"
+  },
+  "previous_event": "5416ccff5c4ab39a5c209ed8dcf0b105908cb81d85d18bca69ccbb238364f31b",
+  "request_id": "worker-43a12648bd1643758df069cff8188698",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:path-finding-recovery"
+}

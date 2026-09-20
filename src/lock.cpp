@@ -20,6 +20,7 @@
 #include "lock.h"
 
 uint32_t LockEnableMask;  // 0x009A64E8, the faction human/alive status dword
+// RECOVERY_OBJECT: v1 0x0094A30C ?LockMapTable@@3PAEA
 uint8_t *LockMapTable;    // 0x0094A30C, the map-record table pointer
 
 

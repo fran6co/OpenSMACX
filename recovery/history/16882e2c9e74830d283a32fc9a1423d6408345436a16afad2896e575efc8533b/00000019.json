@@ -1,0 +1,22 @@
+{
+  "event_id": "74e316842ce832ad397349cd8ccf8b671d1ddaca135e94ddb25de6b5171ef9a8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alpha.cpp",
+      "src/game.cpp",
+      "src/map.cpp",
+      "src/strings.cpp"
+    ],
+    "evidence": [
+      "Scoped checks defer on unresolved extern data relocations emitted from src/path.cpp (?MapArea@@3IA, ?MapIsFlat@@3HA, ?Continents@@3PAUContinent@@A, ?PlayersData@@3PAUPlayerData@@A) because the defining TUs are outside this task's compiled set. The data-binding channel is source-owned RECOVERY_OBJECT annotations beside the owning definitions: read_objects reads them project-wide and verify_task's referenced_object_units loop compiles the annotated owner read-only, then object_targets verifies the external definition and resolves the relocation. This expansion authorizes only the annotation lines already inserted beside the pre-existing verified // 0x... address comments in src/map.cpp, src/alpha.cpp, src/game.cpp and src/strings.cpp - no other change to those files."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "80953fc4404498bb897530ab5405634cf05edf7e619a707ada78c1e89f5746f4",
+  "request_id": "data-binding-expand-path-1",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:path-finding-recovery"
+}

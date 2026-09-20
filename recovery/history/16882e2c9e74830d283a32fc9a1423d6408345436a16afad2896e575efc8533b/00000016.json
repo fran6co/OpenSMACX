@@ -1,0 +1,22 @@
+{
+  "event_id": "72597be227c9e978c952cc94c475876cbf6e226e1dfca59aced43fc796e6aa0c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-4bd46d0d595944b09c81f53765c48a04",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Insight is expressed in current source, verified against working-tree src/path.cpp (sha256 c9f46e404f94a7635ac13c66f85de4154700fd4fca9328e11acb68a247ad1b00, the same digest the request diagnostics measured): scoped #pragma function(memset) at src/path.cpp:70-72 ahead of Path::init (definition line 96, memset(map_table_, 0, MapArea * 4) at line 103) and Path::find (line 418), #pragma intrinsic(memset) restored at src/path.cpp:1396-1398 immediately ahead of Path::continents (definition line 1400), and #pragma function(memset) re-enabled at src/path.cpp:1562-1564 ahead of Path::sensors (definition line 1566, ZeroMemory at line 1568); the supersession note at src/path.cpp:65-69 records the rationale, and no memset_call forwarder definition remains in the file (only historical comment mentions at lines 65 and 84-85).",
+      "Fresh request diagnostics corroborate the emitted-reference claims: in /diagnostics/check/report/candidate/checks/binary/functions, ?init@Path@@QAEXXZ (0x0059A220), ?find@Path@@QAEHHHHHHHHH@Z (0x0059A530) and ?sensors@Path@@QAEHHPAH0@Z (0x0059CCA0) each carry an emitted reference _memset with binding_address 0x006465F0 under BOTH flag sets, while ?continents@Path@@QAEXXZ (0x0059C790) carries no _memset reference under either - matching the image's inline constant-8 stores over sea_coasts.",
+      "The pinned CRT component binding resolves: component_verification (vc6-runtime, archive sha256 1ef9c27b...) reports _memset at 0x006465F0 with result pass and references pass, so the direct _memset references land on a real original identity instead of the old forwarder's synthetic symbol.",
+      "init's unresolved set is down to one symbol exactly as claimed: the fresh obligation detail for obligation-04213ae3... reads 'unresolved targets: ?MapArea@@3IA', and the TU-wide unresolved_symbols list contains no forwarder symbol - only the ten data globals (?Continents, ?LockEnableMask, ?MapArea, ?MapIsFlat, ?MapLatitudeBounds, ?MapLongitude, ?MapLongitudeBounds, ?PlayersData, ?Vehs, _RadiusBaseX, _RadiusBaseY).",
+      "Boundary of this decision: incorporation records the structural insight only, not behavioral or acceptance proof. init's and merge's strict measurements remain unknown on the outside MapArea/Continents data-global bindings and merge's map_tiles relocation offset 77 - those stay fully pending as worker-aa46f3ca8c534a0f999d12438af84fe6 and worker-63d9865e42f6447ca5b5f225c015344c; the affected entities Path::init (entity-9453a459...), Path::find (entity-ad68dc9f...) and Path::sensors (entity-289ccd16...) are all inside current task scope, and no outside file, baseline change, byte-claim demotion or source acceptance is granted. Request file digest verified unchanged (a109cf97cbd9da453fbff9b051f3271d2051c892fedab51be3d5202fa4f14c13).",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "d6808ebaa4f07ab0ee9e8aa4b768577177e5430d89512a37706cba401ddc47f8",
+  "request_id": "coordinator-a0f64b8f77144fbeb0184fc59a1303fc",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:path-finding-recovery"
+}

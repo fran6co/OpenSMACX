@@ -55,6 +55,7 @@
 char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
 
+// RECOVERY_OBJECT: v1 0x009A6488 ?ExpansionEnabled@@3HA
 BOOL ExpansionEnabled;  // 0x009A6488
 uint32_t GamePreferences;  // 0x009A6490
 

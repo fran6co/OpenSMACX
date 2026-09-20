@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "strings.h"
 
+// RECOVERY_OBJECT: v1 0x009B86A0 ?StringTemp@@3PADA
 char StringTemp[1032];   // 0x009B86A0
 
 // The one game-wide string table, 0x009B90D8 in the image - REAL STORAGE,

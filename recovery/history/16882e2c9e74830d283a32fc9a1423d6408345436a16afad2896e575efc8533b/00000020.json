@@ -1,0 +1,20 @@
+{
+  "event_id": "ec72523753542fc7712f644a28574121efca0356b3f93534624a9a4b0fea5364",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/lock.cpp",
+      "src/map.h"
+    ],
+    "evidence": [
+      "Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): merge ?merge@Path@@QAEXHH@Z is bytes pass with all six relocations resolving through the RECOVERY_OBJECT annotations (0x009AA730, 0x00949884); the sole residual is missing_absolute_relocations [77] - map_tiles() at src/map.h:362 is a raw-address cast over 0x0094A30C, whose in-tree identity is uint8_t *LockMapTable at src/lock.cpp:23 (declared src/lock.h:85). The RECOVERY_OBJECT annotation for LockMapTable is now inserted at src/lock.cpp:23 in this worktree. This expansion authorizes only that annotation line in src/lock.cpp plus the map_tiles() accessor re-spell over the annotated identity in src/map.h named by the finding - a path.cpp-local alias would be a manufactured duplicate-global identity, not a repair."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "74e316842ce832ad397349cd8ccf8b671d1ddaca135e94ddb25de6b5171ef9a8",
+  "request_id": "lockmaptable-expand-path-1",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:path-finding-recovery"
+}

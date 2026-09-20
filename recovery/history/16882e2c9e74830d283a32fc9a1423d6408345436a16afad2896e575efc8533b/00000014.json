@@ -1,0 +1,23 @@
+{
+  "event_id": "46e492283f2a88f3c945458f68015f0cc773673b7f2095c0b58726970cb56d0d",
+  "payload": {
+    "affects": [
+      "entity-33d5adfed58c3369d9c8daf81afdc610e294f74063afba7032d03b033019ce14",
+      "entity-9453a459b6cd86802db54513afdef0a59fdbc632a50e5b45420e8bd968bdc94e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-aa46f3ca8c534a0f999d12438af84fe6",
+    "evidence": [
+      "final-check.json unresolved_symbols: ?Continents@@3PAUContinent@@A, ?LockEnableMask@@3IA, ?MapArea@@3IA, ?MapIsFlat@@3HA, ?MapLatitudeBounds@@3HA, ?MapLongitude@@3IA, ?MapLongitudeBounds@@3HA, ?PlayersData@@3PAUPlayerData@@A, ?Vehs@@3PAUVeh@@A, _RadiusBaseX, _RadiusBaseY - none of which are declared in src/path.cpp or src/path.h",
+      "merge's relocations are all 'unknown' on ?Continents (offsets 32/39/46/53) and ?MapArea (61/99) with binding target 2424 unresolved; init's four ?MapArea references likewise null",
+      "init otherwise agrees with the image's shape and its result is 'unknown' (not fail) purely on the MapArea binding"
+    ],
+    "hypothesis": "Restoring init's and merge's strict measurements (and any future byte claim in this TU) is blocked by a data-global binding gap outside this task's file scope: MapArea (declared map.cpp:42) and Continents (alpha.cpp:78) carry only bare // 0x... comments, so their emitted references resolve to binding_address null; the same holds for LockEnableMask, MapIsFlat, MapLatitudeBounds, MapLongitude, MapLongitudeBounds, PlayersData, Vehs and the locally-materialised _RadiusBaseX/_RadiusBaseY (map.h const int[] with no address binding). RECOVERY_OBJECT annotations (or equivalent original-identity bindings) in map.cpp/alpha.cpp would resolve init to zero unresolved symbols and merge to two.",
+    "kind": "discovery"
+  },
+  "previous_event": "2ab85b73bbd14a7e52d59bffcbecbebc2ee4e5e71c20e0c5cc69278192d9469e",
+  "request_id": "worker-aa46f3ca8c534a0f999d12438af84fe6",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:path-finding-recovery"
+}

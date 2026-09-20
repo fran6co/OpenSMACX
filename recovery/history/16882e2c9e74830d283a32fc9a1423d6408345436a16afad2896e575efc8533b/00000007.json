@@ -1,0 +1,22 @@
+{
+  "event_id": "493eb3502b896a80ec51a1381871203d379b45ca9643476060137ba912cb50ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-7b1d912afb584ac68e8445a7ab8f8393",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The direction-return contract is expressed in the implementation of entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c (?find@Path@@QAEHHHHHHHHH@Z, src/path.cpp line 197, working-tree file sha256 bc3b02f54c97544a4ff9efd210df7da14d477fa0838cec7f70b0474b1f1cffab matching the request's restoration source_evidence): src/path.cpp:727-731 initializes best_dir = -1 / best_score = 2000000000 (the image's 0x77359400 at 0x0059B407/0x0059B411) and scans i in [0,8) over RadiusBaseX/RadiusBaseY; src/path.cpp:704-705 returns -1 when the search never reached the source and src/path.cpp:893 returns best_dir.",
+      "The adjacent-destination early return is live code, not a marker note: src/path.cpp:735-737 `if (x_next == x_dst && y_next == y_dst) return i;` reproduces the 0x0059BBF9 return of the direction counter [ebp-0x1c] itself.",
+      "The scoring and backtrack penalty are the reconstruction's final block: src/path.cpp:883-885 `if (unk2 >= 0 && unk2 < 8 && (i ^ 4) == unk2) cost += 20 * (int)Rules.move_rate_roads;` matches 0x0059BB95-0x0059BBB9 (signed [0,8) test, xor 4, lea ecx,[eax+edx*4] on move_rate_roads*5), and src/path.cpp:886-890 `int score = cost * 2 + (i & 1); if (score <= best_score)` matches 0x0059BBC5-0x0059BBD5, preferring cardinal directions on ties.",
+      "The sea-standoff counter store is expressed at src/path.cpp:877-878: inside the open-water artillery scan (:856-876, can_arty/vendetta test over RadiusOffset 1..24) the body executes `i = 25;` with the comment naming the image's store (0x0059B25C/0x0059BAD7) - 25+1 fails the <8 loop exit at the bottom and neither (i ^ 4) nor (i & 1) can match 25, exactly the hypothesis's loop-termination effect. Path::move (entity-f0f3708a5bdc58c456cfdb7f94a520fa330aa4ccfc7a4a39e18026b4f8f8da1a) records the consumer side at src/path.cpp:959-994: its WIP tail note traces the call into Path::find at 0x0059BE66 passing the previous direction and consuming the returned index, and the transcribed marker at src/path.cpp:307-337 documents the same contract.",
+      "Incorporation is expression in source, not correctness or acceptance: the fresh scoped check in this request still measures ?find@Path@@QAEHHHHHHHHH@Z result fail in checks.binary.functions (ledger pass 2 / fail 9 / unknown 1 for the twelve Path functions) with the transcription's known residual byte differences under the two fixed flag sets; no protected obligation, baseline or byte-exact claim on init/shutdown/~Path/merge is altered by this decision, and the remaining three pending findings (worker-43a12648bd1643758df069cff8188698, worker-8c799dd4575b4042a5fb67e7559103d8, worker-cabd4eccead04c6ba86ed1f598e65c34) stay pending for their own fresh decisions.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "cfc43ecadc550ee396387e54c06081f6cb23661bd3faf280c3551d4e04d12482",
+  "request_id": "coordinator-78ad57b8fe7f42d7afb76ca0ea0d919f",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:path-finding-recovery"
+}

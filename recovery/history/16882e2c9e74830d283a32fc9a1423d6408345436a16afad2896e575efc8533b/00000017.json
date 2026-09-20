@@ -1,0 +1,21 @@
+{
+  "event_id": "c9e7b8ce914de551cd2822c8ecb686241e709b056f400c39edff88dcbfe12da6",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-9b045de173ff430ab6dd26c533854a10",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Fresh read-only pinned-image disassembly (uv run --no-sync --frozen recover inspect --image terranx_original.exe over the ?move@Path@@QAEHHH@Z span 0x0059BC10-0x0059C1F3) confirms the finding's addresses exactly: at 0x0059C0C3-0x0059C0CF the tile-table base [0x94a30c] is indexed by edi alone (edi = x_scan>>1 from `sar edi,1` at 0x0059BF94) via `lea edx,[edi+edi*4]; lea eax,[edi+edx*2]; lea eax,[ecx+eax*4]` with no y*MapLongitude term, while the pact gate's map_loc at 0x0059BF89-0x0059BFA3 performs `imul eax,[ebp+0xc]` (y_scan * [0x68faf0]) before the identical lea chain, and the same [ebp+0xc] y_scan IS passed to zoc_move at 0x0059C0B1-0x0059C0B7 - base_who is the only y-less read in the gate.",
+      "The image's base_who-against-0 semantics also verify: bit&1 test at 0x0059C0D2 (`test byte ptr [eax+8],1`), owner<8 at 0x0059C0DE, and the owner!=0 skip at 0x0059C0E5 (`jne 0x59c120`, the loop continue), matching base_who's -1/no-base/owner return compared against 0.",
+      "The insight is expressed in current source, not planned: src/path.cpp:1067-1068 carries `if (zoc && zoc_move(x_scan, y_scan, veh_faction_id) && base_who(x_scan, 0) != 0)` inside Path::move (entity-f0f3708a5bdc58c456cfdb7f94a520fa330aa4ccfc7a4a39e18026b4f8f8da1a), with the IMAGE BUG note at src/path.cpp:1069-1073 documenting the row-0/north-pole read at 0x0059C0C3-0x0059C0E5 and the probable intent base_who(x_scan, y_scan); the surrounding pact gate at src/path.cpp:1047-1053 keeps the full map_loc(x_scan, y_scan) form, reproducing the image's contrast.",
+      "Incorporation records the structural insight only - the original-binary y=0 bug preserved verbatim rather than fixed, the recovery-true spelling; it is not a behavioral, byte or acceptance proof for Path::move, and the separate move-transcription finding (worker-df5218b6eb9f43839c0b95c97c0d20fd) with its map.h hoisting-wall attribution remains pending for its own decision.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "72597be227c9e978c952cc94c475876cbf6e226e1dfca59aced43fc796e6aa0c",
+  "request_id": "coordinator-f89ea410bf6b4e899b3da3a7649e81de",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:path-finding-recovery"
+}

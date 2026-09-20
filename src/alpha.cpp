@@ -72,13 +72,16 @@ LPSTR Repute[MaxReputeNum];                                 // 0x00946A30
 RulesMight Might[MaxMightNum];                              // 0x0094C558
 RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
 Player Players[MaxPlayerNum];                               // 0x00946A50
+// RECOVERY_OBJECT: v1 0x0096C9E0 ?PlayersData@@3PAUPlayerData@@A
 PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
 RulesNatural Natural[MaxNaturalNum];                        // 0x0094ADE0
 Landmark MapLandmark[MaxLandmarkNum];                       // 0x00949894
+// RECOVERY_OBJECT: v1 0x009AA730 ?Continents@@3PAUContinent@@A
 Continent Continents[MaxContinentNum];                      // 0x009AA730
 uint32_t FactionRankings[MaxPlayerNum];                     // 0x009A64EC
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
 char MapFilePath[80];                                       // 0x0094A2BC
+// RECOVERY_OBJECT: v1 0x0094F358 ?Technology@@3PAURulesTechnology@@A
 RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
 RulesTerraforming Terraforming[MaxTerrainNum];      // 0x00691878

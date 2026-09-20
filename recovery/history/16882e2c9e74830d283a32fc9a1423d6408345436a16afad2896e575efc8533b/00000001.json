@@ -1,0 +1,25 @@
+{
+  "event_id": "5416ccff5c4ab39a5c209ed8dcf0b105908cb81d85d18bca69ccbb238364f31b",
+  "payload": {
+    "affects": [
+      "entity-ad68dc9f4e23e9f904637b5702611a67df91dc516703f8e6ea05dbc03f33ad6c",
+      "entity-f0f3708a5bdc58c456cfdb7f94a520fa330aa4ccfc7a4a39e18026b4f8f8da1a"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-7b1d912afb584ac68e8445a7ab8f8393",
+    "evidence": [
+      "0x0059BBF9: the reconstruction returns [ebp-0x1c] (direction counter i) directly when (x_next,y_next) equals (x_dst,y_dst)",
+      "0x0059BB95-0x0059BBB9: unk2 tested signed in [0,8), xored with 4 and compared against i, then cost += lea ecx,[eax+edx*4] on Rules.move_rate_roads * 5, i.e. +20 * move_rate_roads",
+      "0x0059BBC5-0x0059BBD5: score = cost * 2 + (i & 1) via lea eax,[edx+eax*2], taken when <= best_score; best_dir initialised -1 and best_score 0x77359400 at 0x0059B407/0x0059B411",
+      "0x0059B25C and 0x0059BAD7: mov DWORD PTR [ebp-0x1c],0x19 stores 25 into the direction counter inside the sea artillery standoff, so the loop bottom inc/cmp 8 at 0x0059B3AF exits and neither (i ^ 4) nor (i & 1) can match afterwards",
+      "src/path.cpp now carries the transcribed body with this contract in its marker, and Path::move's WIP note records the 0x0059BE66 call into find"
+    ],
+    "hypothesis": "Path::find (0x0059A530) returns a first-step DIRECTION index 0-7 in RadiusBase order, -1 when unreachable, and i itself when the destination is already adjacent to the source; unk2 is the vehicle's previous travel direction (a step with (i ^ 4) == unk2 is its reverse and costs 20 * Rules.move_rate_roads extra in the reconstruction), the selection score is cost * 2 + (i & 1) so equal costs prefer cardinal directions, and the sea-standoff artillery scan stores 25 into the direction counter, which ends the direction loop and makes both the backtrack test and the parity term miss. Path::move's traced tail calls find at 0x0059BE66 passing that previous direction and consumes the returned index.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-7b1d912afb584ac68e8445a7ab8f8393",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:path-finding-recovery"
+}

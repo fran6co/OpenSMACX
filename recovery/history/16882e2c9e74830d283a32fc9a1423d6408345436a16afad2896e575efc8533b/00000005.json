@@ -1,0 +1,23 @@
+{
+  "event_id": "f4d8451061058bc58faa1b29488731ba476a02725c3dd6cbe134632386d2cb91",
+  "payload": {
+    "affects": [
+      "entity-33d5adfed58c3369d9c8daf81afdc610e294f74063afba7032d03b033019ce14",
+      "entity-9453a459b6cd86802db54513afdef0a59fdbc632a50e5b45420e8bd968bdc94e"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-cabd4eccead04c6ba86ed1f598e65c34",
+    "evidence": [
+      "post-edit recover tasks check: checks.binary.unresolved_symbols includes ?MapArea@@3IA and ?Continents@@3PAUContinent@@A; 26 compilation attempts with no errors and empty stderr",
+      "baseline snapshot in build/recovery/agents/agent-p3bqwrpu/request.json at /candidate/checks/binary counts fail 9, pass 2, unknown 1 - identical to the post-edit run",
+      "git diff shows only the find body, its marker and notes, and the mapwin.h include changed; init and merge source and their BYTE_EXACT markers are byte-identical to the baseline"
+    ],
+    "hypothesis": "init and merge measure unknown rather than fail purely from scoped single-TU symbol resolution: their targets (?MapArea@@3IA, ?memset_call@@YAPAXPAXHI@Z, ?Continents@@3PAUContinent@@A) remain in the check's unresolved_symbols, both bodies are untouched from the baseline revision, and the post-edit scoped check reproduces the baseline ledger exactly (fail 9 / pass 2 / unknown 1) with zero compile errors - a measurement limitation, not a regression.",
+    "kind": "discovery"
+  },
+  "previous_event": "1894e5ac30e1b480dae8cc8a2cde1abfc8d33904f69bfd9bb64b56bee47408d1",
+  "request_id": "worker-cabd4eccead04c6ba86ed1f598e65c34",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:path-finding-recovery"
+}
