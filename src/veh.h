@@ -19,6 +19,7 @@
 
 struct VOX_Vect;
 struct VOX_Matrix;
+class Caviar;
 
 extern VOX_Vect VehDrawFacetNormals0[2401];
 extern VOX_Vect VehDrawFacetNormals1[2401];
@@ -30,6 +31,20 @@ extern VOX_Vect VehGunMountOffset;
 extern VOX_Vect VehDropOffset;
 extern VOX_Vect VehHoverGunOffset;
 extern VOX_Vect VehHoverLightsOffset;
+extern VOX_Vect VehInfantryOffset;
+extern int VehDrawAnimationStep;
+void __cdecl vehdraw_construct_vehicle(int veh_id, Caviar *renderer);
+void __cdecl vehdraw_construct_vehicle(int faction_id, int chassis, int weapon,
+                                      int armor, int reactor, uint32_t abilities,
+                                      Caviar *renderer);
+void __cdecl vehdraw_construct_abil(uint32_t abilities, Caviar *renderer, int faction_id);
+void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
+                                      int armor, int reactor, Caviar *renderer);
+void __cdecl vehdraw_construct_weapon(int faction_id, int chassis, int weapon, Caviar *renderer);
+void __cdecl vehdraw_construct_armor(int faction_id, int chassis, int weapon,
+                                    int armor, int transparent, Caviar *renderer);
+void __cdecl vehdraw_construct_reactor(int faction_id, int chassis, int weapon,
+                                      int reactor, uint32_t abilities, Caviar *renderer);
 void __cdecl vehdraw_setup();
 extern int VehDrawTurnVehicle;
 extern float VehDrawTurnAngle;

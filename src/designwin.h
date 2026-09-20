@@ -464,25 +464,3 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
 // the class is no longer `__declspec(dllexport)`. The `H` in
 // ?select_special@DesignWin@@QAEXH@Z is the one int both select_special_N
 // thunks pass.
-
-/*
- * The vehdrawConstruct family - the four ?vehdraw_construct_*@@YAHHH...@
- * free functions DesignWin's construct_chassis / construct_weapon /
- * construct_armor / construct_reactor call. All four are still
- * unrecovered bodies (src/unrecovered/004c2470.cpp, 004c2cf0.cpp,
- * 004c3090.cpp, 004c3800.cpp) reached through pending_bodies forwarders;
- * their real home is a vehdraw translation unit this tree has not split
- * out yet, so the prototypes stand here where their only homed callers
- * see them. HANDOFF: move these declarations when that TU exists.
- *
- * `Caviar &`, not `Caviar *` - the mangled `PAUCaviar@@` says pointer, and
- * a reference spells the same call site without the caller taking an
- * address by hand.
- */
-int __cdecl vehdraw_construct_chassis(int a1, int a2, int a3, int a4, int a5,
-                                      Caviar *caviar);
-int __cdecl vehdraw_construct_weapon(int a1, int a2, int a3, Caviar *caviar);
-int __cdecl vehdraw_construct_armor(int a1, int a2, int a3, int a4, int a5,
-                                    Caviar *caviar);
-int __cdecl vehdraw_construct_reactor(int a1, int a2, int a3, int a4, int a5,
-                                      Caviar *caviar);

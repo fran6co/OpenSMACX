@@ -1,0 +1,78 @@
+{
+  "event_id": "b6335b74e196384bc780bc55f3e1ec611e305afd4c07a38cc17dab57feabd375",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_models.py",
+      "src/caviar.h",
+      "src/designwin.h",
+      "src/pending_bodies.cpp",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Recover the seven existing seed identities as the coupled vehicle-model construction family, using the93 original-bound model owners, actual palette tables and typed attachment offsets just integrated in3eb22fc5. No new duplicate models or original-address calls.",
+      "Authorize a semantic inline Caviar instance-count reset without changing layout or releasing allocations; original4C1D20 and4C2360 store zero at13CC. Bind actual animation-step storage8E9F50 (initial zero) and shared VOX_Vect687AE8 (-400,200,0). Move existing design-window construction declarations to the owning vehicle header and reconcile actual return types from original exits/callers, retaining catalogued names with observed symbol facts.",
+      "Pinned prior review establishes prototype re-read after morale callback, unsigned ordinary chassis load, signed armor access, real Console faction ownership, reactor-minus-one array selection under nonzero guard, and ability duplicate additions with bonus value/count re-reads after callbacks. Verify these and all remaining branches against the pinned image, not the seeds alone.",
+      "Worker edits are confined to the listed C++ and new vehicle-model test file. Root alone removes the four pending forwarders and publishes original annotations, commits and integration. Parallel MainInterface investigation may edit only independently authorized interface-owned files; no shared Caviar/vehicle/header writes. Retained Vector source and task baseline stay unchanged. Manual reviewed integration requires build/link and scoped regression checks; no automatic or full-game acceptance, no demotions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4988192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4988976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4989792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4990064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4992240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4993168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4995072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9346896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6847208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10138936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bc1e5e3bdb9570910da26f80f0568da0f5088818e3cbe524f085c048ed09dcee",
+  "request_id": "vehicle-model-construction-closure-20260920",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:caviar-matrix-operations"
+}

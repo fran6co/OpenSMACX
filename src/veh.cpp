@@ -37,6 +37,7 @@
 #include "path.h"  // Paths - the move cost table the go-to verbs consult
 #include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
 #include "caviar.h"
+#include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 #include "leaf_recoveries.h"  // The source-owned vector-length operation.
 #include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
@@ -67,6 +68,9 @@ RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
 // RECOVERY_OBJECT: v1 0x0094F278 ?Armor@@3PAURulesArmor@@A
 RulesArmor Armor[MaxArmorNum];  // 0x0094F278
 RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
+// Ability-model assembly reads the signed prerequisite at record +0x18;
+// the original indexes these existing rules with a 0x1C-byte stride.
+// RECOVERY_OBJECT: v1 0x009AB538 ?Ability@@3PAURulesAbility@@A
 RulesAbility Ability[MaxAbilityNum];  // 0x009AB538
 RulesMorale Morale[MaxMoraleNum];  // 0x00952328
 RulesCombatMode DefenseModes[MaxDefenseModeNum];  // 0x00946A00
@@ -161,9 +165,442 @@ VOX_Vect VehHoverLightsOffset; // 0x00789B48
 
 // ORIGINAL: 0x004C1D10 ?vehdraw_setup@@YAXXZ 0x004C1D10-0x004C1D15 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original4C1D10 is a five-byte tail jump to4C1B10; load_voxels451066 calls this entry. No extra renderer initialization or copied thunk bytes."], "reason": "Recover the voxel-loader setup entry as an ordinary call to the existing vehicle facet-normal owner."}
+
 void __cdecl vehdraw_setup() {
     vehdraw_compute_facet_normals();
 }
+
+// Animation frame read by model assembly. Original 8E9F50 starts at zero;
+// scoot_start sets it to one, and visible crawler assembly advances it.
+// RECOVERY_OBJECT: v2 0x008E9F50 0x008E9F54 ?VehDrawAnimationStep@@3HA 0x004C2470
+int VehDrawAnimationStep;
+// Shared infantry/native model placement, original 687AE8..687AF4.
+// This is distinct from the four offsets derived from loaded voxel parts.
+// RECOVERY_OBJECT: v2 0x00687AE8 0x00687AF4 ?VehInfantryOffset@@3UVOX_Vect@@A 0x004C3800
+VOX_Vect VehInfantryOffset = {{-400.0f, 200.0f, 0.0f}};
+
+// ORIGINAL: 0x004C2030 ?vehdraw_construct_abil@@YAHHPAUCaviar@@H@Z 0x004C2030-0x004C2360
+// RECOVERY_BINDING: v1 {"evidence": ["Original type15 bonus loop calls the technology predicate with signed short prerequisite, reloads bonus value after that call, masks the shift count to five bits, and reloads loop count on continuation. Bonus additions and the subsequent ordinary ability additions are not deduplicated.", "Original faction alien flag selects human or alien colony/terraforming attachments; remaining masks select independently loaded model owners. Mapped callers discard the catalogued integer result."], "reason": "Recover ordered ability model additions from actual faction bonuses and rule records, retaining repeated selections."}
+// symbol    ?vehdraw_construct_abil@@YAXIPAVCaviar@@H@Z
+void __cdecl vehdraw_construct_abil(uint32_t abilities, Caviar *renderer, int faction_id) {
+    for (int i = 0; i < Players[faction_id].faction_bonus_count; ++i) {
+        if (Players[faction_id].faction_bonus_id[i] != RULE_FREEABIL) continue;
+        if (!has_tech(Ability[Players[faction_id].faction_bonus_val1[i]].preq_tech, faction_id))
+            continue;
+        // has_tech precedes the second read of the bonus index in the image.
+        const uint32_t bonus = abilities &
+            (1u << (Players[faction_id].faction_bonus_val1[i] & 31));
+        if (bonus & 0x1000000u) renderer->add_object(&g_SP_SOPORIFIC_CAVIARDATA, 0);
+        if (bonus & 0x2000000u) renderer->add_object(&g_SP_DISSWAVE_CAVIARDATA, 0);
+        if (bonus & 0x8000000u) renderer->add_object(&g_SP_NANOO_CAVIARDATA, 0);
+        if (bonus & 0x4000000u) renderer->add_object(&g_SP_MARINED_CAVIARDATA, 0);
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (bonus & 1u) renderer->add_object(&g_SSFA_CAVIARDATA, 0);
+            if (bonus & 0x2000u) renderer->add_object(&g_SFTA_CAVIARDATA, 0);
+        } else {
+            if (bonus & 1u) renderer->add_object(&g_SSF_CAVIARDATA, 0);
+            if (bonus & 0x2000u) renderer->add_object(&g_SFT_CAVIARDATA, 0);
+        }
+        if (bonus & 0x20u) renderer->add_object(&g_SAS_CAVIARDATA, 0);
+        if (bonus & 0x80u) renderer->add_object(&g_SCD_CAVIARDATA, 0);
+        if (bonus & 0x400u) renderer->add_object(&g_SAGS_CAVIARDATA, 0);
+        if (bonus & 0x8000u) renderer->add_object(&g_VHR_CAVIARDATA1, 0);
+        if (bonus & 0x200000u) renderer->add_object(&g_SRB_CAVIARDATA, 0);
+        if (bonus & 0x10u) renderer->add_object(&g_SDP_CAVIARDATA, 0);
+        if (bonus & 0x200u) renderer->add_object(&g_SCJ_CAVIARDATA, 0);
+        if (bonus & 0x40000u) renderer->add_object(&g_SHT_CAVIARDATA, 0);
+    }
+    // Bonus parts and explicitly selected parts are not deduplicated.
+    if (abilities & 0x1000000u) renderer->add_object(&g_SP_SOPORIFIC_CAVIARDATA, 0);
+    if (abilities & 0x2000000u) renderer->add_object(&g_SP_DISSWAVE_CAVIARDATA, 0);
+    if (abilities & 0x8000000u) renderer->add_object(&g_SP_NANOO_CAVIARDATA, 0);
+    if (abilities & 0x4000000u) renderer->add_object(&g_SP_MARINED_CAVIARDATA, 0);
+    if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+        if (abilities & 1u) renderer->add_object(&g_SSFA_CAVIARDATA, 0);
+        if (abilities & 0x2000u) renderer->add_object(&g_SFTA_CAVIARDATA, 0);
+    } else {
+        if (abilities & 1u) renderer->add_object(&g_SSF_CAVIARDATA, 0);
+        if (abilities & 0x2000u) renderer->add_object(&g_SFT_CAVIARDATA, 0);
+    }
+    if (abilities & 0x20u) renderer->add_object(&g_SAS_CAVIARDATA, 0);
+    if (abilities & 0x80u) renderer->add_object(&g_SCD_CAVIARDATA, 0);
+    if (abilities & 0x400u) renderer->add_object(&g_SAGS_CAVIARDATA, 0);
+    if (abilities & 0x8000u) renderer->add_object(&g_VHR_CAVIARDATA1, 0);
+    if (abilities & 0x200000u) renderer->add_object(&g_SRB_CAVIARDATA, 0);
+    if (abilities & 0x10u) renderer->add_object(&g_SDP_CAVIARDATA, 0);
+    if (abilities & 0x200u) renderer->add_object(&g_SCJ_CAVIARDATA, 0);
+    if (abilities & 0x40000u) renderer->add_object(&g_SHT_CAVIARDATA, 0);
+}
+
+// ORIGINAL: 0x004C3800 ?vehdraw_construct_reactor@@YAHHHHHHPAUCaviar@@@Z 0x004C3800-0x004C3896 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original returns before array access when reactor is zero. VIPTR, VPBR0 and VR operands are biased by one12-byte model and therefore mean reactor-minus-one into existing arrays.", "Infantry and chassis8 return after their selected model; only the general reactor case tests ability0x8000 and adds VHR2. Original4C387D reloads flags before exit, so seed returned add_object values were invented."], "reason": "Recover reactor attachments through source-owned model arrays and infantry placement."}
+// symbol    ?vehdraw_construct_reactor@@YAXHHHHIPAVCaviar@@@Z
+void __cdecl vehdraw_construct_reactor(int faction_id, int chassis, int weapon,
+                                      int reactor, uint32_t abilities, Caviar *renderer) {
+    UNUSED(faction_id);
+    if (reactor == 0) return;
+    if (chassis == 0 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+        renderer->add_object(&g_VIPTR_CAVIARDATA[reactor - 1], &VehInfantryOffset, 0);
+        return;
+    }
+    if (chassis == 8) {
+        renderer->add_object(&g_VPBR0_CAVIARDATA[reactor - 1], 0);
+        return;
+    }
+    renderer->add_object(&g_VR_CAVIARDATA[reactor - 1], 0);
+    if (abilities & 0x8000u) renderer->add_object(&g_VHR_CAVIARDATA2, 0);
+}
+
+// ORIGINAL: 0x004C2360 ?vehdraw_construct_vehicle@@YAHHHHHHHPAUCaviar@@@Z 0x004C2360-0x004C246D
+// RECOVERY_BINDING: v1 {"evidence": ["Original4C23BC loads argument6 as ability flags and pushes faction as the ability helper final argument. The seed swapped these inputs. Original signed armor-defense comparison may substitute infantry for a supply crawler.", "Reactor selection follows all component builders and therefore observes current weapon mode. Original void exits and all mapped callers support no returned value; the legacy catalogue name remains provenance."], "reason": "Recover explicit vehicle component assembly through real chassis, weapon, ability, armor and reactor operations."}
+// symbol    ?vehdraw_construct_vehicle@@YAXHHHHHIPAVCaviar@@@Z
+void __cdecl vehdraw_construct_vehicle(int faction_id, int chassis, int weapon,
+                                      int armor, int reactor, uint32_t abilities,
+                                      Caviar *renderer) {
+    renderer->reset_objects();
+    if (weapon == 21 && chassis == 1 && Armor[armor].defense_rating <= 1) chassis = 0;
+    vehdraw_construct_chassis(faction_id, chassis, weapon, armor, reactor, renderer);
+    vehdraw_construct_weapon(faction_id, chassis, weapon, renderer);
+    vehdraw_construct_abil(abilities, renderer, faction_id);
+    vehdraw_construct_armor(faction_id, chassis, weapon, armor, 0, renderer);
+    // This operation reads Weapon.mode after the component builders.
+    vehdraw_construct_reactor(faction_id, chassis, weapon, reactor, abilities, renderer);
+}
+
+// ORIGINAL: 0x004C1D20 ?vehdraw_construct_vehicle@@YAHHPAUCaviar@@@Z 0x004C1D20-0x004C202D
+// RECOVERY_BINDING: v1 {"evidence": ["Original resets renderer count before scaling and reloads prototype identity after morale calculation. Ordinary fields are byte-zero-extended, armor defense uses signed comparison, and faction comes from the current vehicle. Native special prototypes 8/9/10 clamp morale before scaling and choose their actual animated model.", "The repeated ordinary final reactor selection is expressed through the genuine shared reactor operation. Catalogued integer return is not consumed by mapped callers; original exits expose incidental register contents, not a supported result."], "reason": "Recover vehicle model assembly from genuine vehicle/prototype state and loaded CaviarData owners."}
+// symbol    ?vehdraw_construct_vehicle@@YAXHPAVCaviar@@@Z
+void __cdecl vehdraw_construct_vehicle(int veh_id, Caviar *renderer) {
+    renderer->reset_objects();
+    int proto_id = Vehs[veh_id].proto_id;
+    const int initial_chassis = VehPrototypes[proto_id].chassis_id;
+    if (initial_chassis == 0) {
+        const int weapon = VehPrototypes[proto_id].weapon_id;
+        renderer->set_scaling(renderer->get_scaling() *
+            ((weapon < 3 || weapon == 21) ? 1.25f : 0.8f));
+    } else if (initial_chassis == 1 && VehPrototypes[proto_id].weapon_id == 21) {
+        renderer->set_scaling(renderer->get_scaling() * 1.25f);
+    }
+    int morale;
+    if (Vehs[veh_id].faction_id != 0) morale = morale_veh(veh_id, 0, 0);
+    else morale = static_cast<int>(morale_alien(veh_id, ConsoleGlobal.faction_id_));
+    // Morale calculation may change the vehicle/prototype state.
+    proto_id = Vehs[veh_id].proto_id;
+    if (proto_id == 8 || proto_id == 9 || proto_id == 10) {
+        const int maximum = proto_id == 10 ? 7 : 6;
+        if (morale < 0) morale = 0;
+        else if (morale > maximum) morale = maximum;
+        const int base = proto_id == 8 ? 12 : (proto_id == 9 ? 6 : 5);
+        renderer->set_scaling(static_cast<float>(
+            static_cast<double>(renderer->get_scaling()) * (morale + base) * 0.125f));
+        if (proto_id == 8)
+            renderer->add_object(&g_NW_CAVIARDATA, VehDrawAnimationStep % 5 + 30);
+        else if (proto_id == 9)
+            renderer->add_object(&g_NI_CAVIARDATA, VehDrawAnimationStep % 5 + 30);
+        else
+            renderer->add_object(&g_NLC_CAVIARDATA, VehDrawAnimationStep);
+        return;
+    }
+    const uint32_t abilities = VehPrototypes[proto_id].ability_flags;
+    const int reactor = VehPrototypes[proto_id].reactor_id;
+    const int weapon = VehPrototypes[proto_id].weapon_id;
+    int chassis = VehPrototypes[proto_id].chassis_id;
+    const int armor = VehPrototypes[proto_id].armor_id;
+    const int faction_id = Vehs[veh_id].faction_id;
+    renderer->reset_objects();
+    if (weapon == 21 && chassis == 1 && Armor[armor].defense_rating <= 1) chassis = 0;
+    vehdraw_construct_chassis(faction_id, chassis, weapon, armor, reactor, renderer);
+    vehdraw_construct_weapon(faction_id, chassis, weapon, renderer);
+    vehdraw_construct_abil(abilities, renderer, faction_id);
+    vehdraw_construct_armor(faction_id, chassis, weapon, armor, 0, renderer);
+    vehdraw_construct_reactor(faction_id, chassis, weapon, reactor, abilities, renderer);
+}
+
+// ORIGINAL: 0x004C2470 ?vehdraw_construct_chassis@@YAHHHHHHPAUCaviar@@@Z 0x004C2470-0x004C2C87
+// RECOVERY_BINDING: v1 {"evidence": ["Original bounds faction only for chassis tint selection, uses signed armor defense, and selects real reactor-minus-one model arrays. Utility infantry falls through the shared add at4C27AA and also adds VLIGHTS at4C27B8, omitted by the seed.", "Original rover steps and aircraft faction flags are reloaded at call boundaries. Crawler assembly uses signed step remainder then queries the genuine DesignWin Win base at4C2BE9 and increments the current animation storage."], "reason": "Recover chassis model ownership, tint selection and animation through genuine renderer operations."}
+// symbol    ?vehdraw_construct_chassis@@YAXHHHHHPAVCaviar@@@Z
+void __cdecl vehdraw_construct_chassis(int faction_id, int chassis, int weapon,
+                                      int armor, int reactor, Caviar *renderer) {
+    if (faction_id < 0 || faction_id > 7) faction_id = 0;
+    unsigned char *body_colors = &BodyTintColorTables[faction_id][0][0];
+    unsigned char *armor_colors = 0;
+    int armor_grade = 0;
+    switch (armor) {
+    case 1: case 5: armor_grade = 1; break;
+    case 2: case 10: case 11: armor_grade = 1; armor_colors = &ArmorTintColorTables[0][0][0]; break;
+    case 3: armor_grade = 1; armor_colors = &ArmorTintColorTables[1][0][0]; break;
+    case 6: case 12: case 13: armor_grade = 1; armor_colors = &ArmorTintColorTables[2][0][0]; break;
+    case 7: armor_grade = 1; armor_colors = &ArmorTintColorTables[3][0][0]; break;
+    case 4: case 8: armor_grade = 2; break;
+    }
+    if (armor == 10 || armor == 12) renderer->add_object(&g_SCJ_CAVIARDATA, 0);
+    if (armor == 11 || armor == 13) renderer->add_object(&g_SHT_CAVIARDATA, 0);
+    if (weapon == 21 && chassis == 1 && Armor[armor].defense_rating <= 1) chassis = 0;
+    if (chassis < 0 || chassis > 8) return;
+
+    if ((chassis == 1 || chassis == 3 || chassis == 5 || chassis == 6 || chassis == 7)
+        && reactor != 0) {
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (armor_colors)
+                renderer->add_object(&g_ACP_CAVIARDATA[reactor - 1], armor_colors, 0);
+            else renderer->add_object(&g_ACP_CAVIARDATA[reactor - 1], 0);
+        } else renderer->add_object(&g_VRC_CAVIARDATA[reactor - 1], 0);
+    }
+    switch (chassis) {
+    case 0:
+        if (Weapon[weapon].mode < 3) {
+            if (weapon == 17) return;
+            CaviarData *model = (Players[faction_id].rule_flags & RFLAG_ALIEN)
+                ? &g_AX_CAVIARDATA : &g_VI_CAVIARDATA;
+            renderer->add_object(model, &VehInfantryOffset, VehDrawAnimationStep % 15);
+        } else if (weapon == 21) {
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN)
+                renderer->add_object(&g_AX_CAVIARDATA, &ArmorTintColorTables[3][0][0],
+                                     &VehInfantryOffset, VehDrawAnimationStep % 15);
+            else renderer->add_object(&g_VPT_CAVIARDATA, &VehInfantryOffset,
+                                      VehDrawAnimationStep % 15);
+        } else if (weapon != 22 &&
+                   (!(Players[faction_id].rule_flags & RFLAG_ALIEN) || weapon != 17)) {
+            renderer->add_object(&g_VB_CAVIARDATA, 0);
+            renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+            renderer->add_object(&g_VCL_CAVIARDATA, 0);
+            renderer->add_object(&g_VCLT00_CAVIARDATA, 0);
+            renderer->add_object(&g_VLIGHTS_CAVIARDATA, 0);
+        }
+        return;
+    case 1: case 3:
+        renderer->add_object(&g_VGMC_CAVIARDATA, 0);
+        renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+        if (chassis == 3) { renderer->add_object(&g_VFL_CAVIARDATA, 0); return; }
+        renderer->add_object(&g_VSP_CAVIARDATA, 0);
+        renderer->add_object(&g_VSPTB_CAVIARDATA, VehDrawAnimationStep);
+        renderer->add_object(&g_VSPTF_CAVIARDATA, VehDrawAnimationStep);
+        renderer->add_object(&g_VLIGHTS_CAVIARDATA, 0);
+        return;
+    case 2:
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VHT_VBP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VHTP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VHTTP_CAVIARDATA, body_colors, 0);
+        if (armor_grade == 0) {
+            renderer->add_object(&g_VHTA0_CAVIARDATA[0], 0);
+            renderer->add_object(&g_VHTTPA0_CAVIARDATA[0], 0);
+        }
+        renderer->add_object(&g_VLIGHTS_CAVIARDATA, &VehHoverLightsOffset, 0);
+        return;
+    case 4: case 5: case 6: case 7:
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+        renderer->add_object(&g_VGMC_CAVIARDATA, 0);
+        renderer->add_object(&g_VGMCP_CAVIARDATA, body_colors, 0);
+        if (chassis == 4) {
+            renderer->add_object(&g_VCU_CAVIARDATA, 0);
+            renderer->add_object(&g_VCUP_CAVIARDATA, body_colors, 0);
+            renderer->add_object(&g_VCUW_CAVIARDATA, 0);
+            if (armor_grade == 0) renderer->add_object(&g_VCUA0_CAVIARDATA[0], 0);
+        } else if (chassis == 5) {
+            renderer->add_object(&g_VJTP_CAVIARDATA, body_colors, 0);
+            if (armor_grade == 0)
+                renderer->add_object((Players[faction_id].rule_flags & RFLAG_ALIEN)
+                    ? &g_AA_WING_CAVIARDATA[0] : &g_VJT0_CAVIARDATA[0], 0);
+        } else if (chassis == 6) {
+            renderer->add_object(&g_VCT_CAVIARDATA, 0);
+            renderer->add_object(&g_VCTP_CAVIARDATA, body_colors, 0);
+            renderer->add_object(&g_VCTB_CAVIARDATA, VehDrawAnimationStep % 15);
+            if (TutWinDesWindow.is_visible())
+                VehDrawAnimationStep = static_cast<int>(static_cast<uint32_t>(VehDrawAnimationStep) + 1u);
+            if (armor_grade == 0) renderer->add_object(&g_VCT0_CAVIARDATA[0], body_colors, 0);
+        } else {
+            renderer->add_object(&g_VGS_CAVIARDATA, 0);
+            renderer->add_object(&g_VGSP_CAVIARDATA, body_colors, 0);
+        }
+        return;
+    case 8:
+        if (weapon == 16) renderer->add_object(&g_VM13_CAVIARDATA, 0);
+        else {
+            renderer->add_object(&g_VM_CAVIARDATA, 0);
+            if (weapon == 24) renderer->add_object(&g_TECLOAD_CAVIARDATA, 0);
+            else if (weapon == 25) renderer->add_object(&g_FUNLOAD_CAVIARDATA, 0);
+        }
+        renderer->add_object(&g_VB_CAVIARDATA, 0);
+        renderer->add_object(&g_VBP_CAVIARDATA, body_colors, 0);
+    }
+}
+
+// ORIGINAL: 0x004C2CF0 ?vehdraw_construct_weapon@@YAHHHHPAUCaviar@@@Z 0x004C2CF0-0x004C306A
+// RECOVERY_BINDING: v1 {"evidence": ["Original allocates and initializes a26-entry automatic model lookup, not static storage. Offense minus1 and99 have distinct models; bounded other values include a no-model sentinel. Special weapons/chassis return before ordinary faction/rule work.", "Original terraform handling rereads faction flags after the first model addition. Gun, hover-gun and drop offsets are the actual vectors populated by load_voxels, not old executable addresses."], "reason": "Recover weapon model selection and attachments through real model arrays, tint tables and vector offsets."}
+// symbol    ?vehdraw_construct_weapon@@YAXHHHPAVCaviar@@@Z
+void __cdecl vehdraw_construct_weapon(int faction_id, int chassis, int weapon, Caviar *renderer) {
+    const int model_indices[26] = {-1,-1,0,0,1,3,2,2,4,4,5,5,6,7,7,7,8,8,8,8,9,9,9,9,10,13};
+    if (chassis == 8) return;
+    if (weapon == 16) { renderer->add_object(&g_VM13_CAVIARDATA, 0); return; }
+    if (weapon == 23 || weapon == 24 || weapon == 25) {
+        renderer->add_object(&g_VM_CAVIARDATA, 0);
+        if (weapon == 24) renderer->add_object(&g_TECLOAD_CAVIARDATA, 0);
+        else if (weapon == 25) renderer->add_object(&g_FUNLOAD_CAVIARDATA, 0);
+        return;
+    }
+    int offense = Weapon[weapon].offense_rating;
+    if (faction_id < 0 || faction_id > 7) faction_id = 0;
+    unsigned char *body_colors = &BodyTintColorTables[faction_id][0][0];
+    const int mode = Weapon[weapon].mode;
+    if (mode < 3) {
+        int model;
+        if (offense == -1) model = 11;
+        else if (offense == 99) model = 12;
+        else {
+            if (offense < 0) offense = 0;
+            else if (offense > 25) offense = 25;
+            model = model_indices[offense];
+        }
+        if (model != -1) {
+            CaviarData *definition = weapon == 12 ? &g_RESLASER_CAVIARDATA : &g_VW_CAVIARDATA[model];
+            if (chassis == 0) {
+                renderer->add_object(definition, &VehGunMountOffset, 0);
+                renderer->add_object(&g_VGMT_CAVIARDATA, 0);
+                renderer->add_object(&g_VGMTP_CAVIARDATA, body_colors, 0);
+            } else if (chassis == 2) renderer->add_object(definition, &VehHoverGunOffset, 0);
+            else renderer->add_object(definition, 0);
+        }
+    } else {
+        switch (mode) {
+        case 7: renderer->add_object(&g_VWNTT_CAVIARDATA, 0); break;
+        case 8:
+            if (chassis != 0) renderer->add_object(&g_DROPLET_CAVIARDATA, &VehDropOffset, 0);
+            else if (Players[faction_id].rule_flags & RFLAG_ALIEN)
+                renderer->add_object(&g_ACOLPOD_CAVIARDATA, VehDrawAnimationStep % 15);
+            else {
+                renderer->add_object(&g_DROP_CAVIARDATA, 0);
+                renderer->add_object(&g_DROPLET_CAVIARDATA, 0);
+            }
+            break;
+        case 9:
+            if (chassis == 0)
+                renderer->add_object((Players[faction_id].rule_flags & RFLAG_ALIEN)
+                    ? &g_VTA_CAVIARDATA : &g_VT_CAVIARDATA, 0);
+            // The first add can change faction state; this is a fresh test.
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                renderer->add_object(&g_AT_CAVIARDATA, 0);
+                renderer->add_object(&g_ATP_CAVIARDATA, 0);
+            } else renderer->add_object(&g_VWNTU_CAVIARDATA, 0);
+            break;
+        case 10: renderer->add_object(&g_VWNST_CAVIARDATA, 0); break;
+        case 11: if (chassis != 0) renderer->add_object(&g_PTMOD_CAVIARDATA, 0); break;
+        case 12: renderer->add_object(&g_VWNAA_CAVIARDATA, 0); break;
+        }
+    }
+    if (weapon == 13) {
+        if (chassis == 0) renderer->add_object(&g_RESBOLT_CAVIARDATA, &VehGunMountOffset, 0);
+        else if (chassis == 2) renderer->add_object(&g_RESBOLT_CAVIARDATA, &VehHoverGunOffset, 0);
+        else renderer->add_object(&g_RESBOLT_CAVIARDATA, 0);
+    }
+}
+
+// ORIGINAL: 0x004C3090 ?vehdraw_construct_armor@@YAHHHHHHPAUCaviar@@@Z 0x004C3090-0x004C3795
+// RECOVERY_BINDING: v1 {"evidence": ["Original special and ordinary armor cases are separate; transparent armor5 uses the first constant-color ramp. Reactor-independent model arrays are indexed from their actual starts rather than biased original address expressions.", "Original crawler armor adds its crawler model followed by the human/alien body armor, with the same selected tint on both. Do not clamp faction here: unlike chassis and weapon, the original does not."], "reason": "Recover armor overlays, tint and ordered body-specific pairs using actual model owners."}
+// symbol    ?vehdraw_construct_armor@@YAXHHHHHPAVCaviar@@@Z
+void __cdecl vehdraw_construct_armor(int faction_id, int chassis, int weapon,
+                                    int armor, int transparent, Caviar *renderer) {
+    bool special = false;
+    bool ordinary = false;
+    unsigned char *colors = 0;
+    switch (armor) {
+    case 1: ordinary = true; break;
+    case 2: case 10: case 11: ordinary = true; colors = &ArmorTintColorTables[0][0][0]; break;
+    case 3: ordinary = true; colors = &ArmorTintColorTables[1][0][0]; break;
+    case 6: case 12: case 13: ordinary = true; colors = &ArmorTintColorTables[2][0][0]; break;
+    case 7: ordinary = true; colors = &ArmorTintColorTables[3][0][0]; break;
+    case 5:
+        if (transparent) { ordinary = true; colors = &ConstantColorTables[0][0]; }
+        else special = true;
+        break;
+    case 4: case 8: case 9:
+        if (chassis == 0 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+            CaviarData *model = armor == 4 ? &g_VIPTAWL_CAVIARDATA :
+                (armor == 8 ? &g_VIPTASGN_CAVIARDATA : &g_VIPTAPSI_CAVIARDATA);
+            renderer->add_object(model, &VehInfantryOffset, VehDrawAnimationStep);
+        } else {
+            renderer->add_object(&g_A_CAVIARDATA, 0);
+            renderer->add_object(armor == 4 ? &g_APWALL_CAVIARDATA :
+                (armor == 8 ? &g_ASGEN_CAVIARDATA : &g_APSID_CAVIARDATA), 0);
+        }
+        special = true;
+        break;
+    }
+    CaviarData *first = 0;
+    CaviarData *second = 0;
+    switch (chassis) {
+    case 0:
+        if (special || !ordinary) return;
+        if (weapon != -1 && (Weapon[weapon].mode < 3 || Weapon[weapon].mode == 11)) {
+            first = (Players[faction_id].rule_flags & RFLAG_ALIEN)
+                ? &g_AA_CAVIARDATA : &g_VIPTA_CAVIARDATA[0];
+            if (colors) renderer->add_object(first, colors, &VehInfantryOffset, VehDrawAnimationStep % 15);
+            else renderer->add_object(first, &VehInfantryOffset, VehDrawAnimationStep % 15);
+            return;
+        }
+        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
+        break;
+    case 1:
+        if (special || !ordinary) return;
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            first = &g_AA01_CAVIARDATA; second = &g_AA_ROVER_CAVIARDATA;
+        } else { first = &g_VA01_CAVIARDATA; second = &g_VSPA0_CAVIARDATA[0]; }
+        break;
+    case 2:
+        if (special) { first = &g_VHTA0_CAVIARDATA[0]; second = &g_VHTTPA0_CAVIARDATA[0]; }
+        else if (ordinary) { first = &g_VHTA0_CAVIARDATA[1]; second = &g_VHTTPA0_CAVIARDATA[1]; }
+        break;
+    case 3:
+        if (special || !ordinary) return;
+        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
+        break;
+    case 4:
+        if (special) {
+            if (armor != 5) first = &g_VCUA0_CAVIARDATA[0];
+        } else if (ordinary) first = &g_VCUA0_CAVIARDATA[1];
+        break;
+    case 5:
+        if (special) {
+            if (armor != 5) first = (Players[faction_id].rule_flags & RFLAG_ALIEN)
+                ? &g_AA_WING_CAVIARDATA[0] : &g_VJT0_CAVIARDATA[0];
+        } else if (ordinary) {
+            if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+                first = &g_AA01_CAVIARDATA; second = &g_AA_WING_CAVIARDATA[1];
+            } else { first = &g_VA01_CAVIARDATA; second = &g_VJT0_CAVIARDATA[1]; }
+        }
+        break;
+    case 6:
+        if (special) {
+            if (armor == 5) return;
+            first = &g_VCT0_CAVIARDATA[0];
+        } else {
+            if (!ordinary) return;
+            first = &g_VCT0_CAVIARDATA[1];
+        }
+        second = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
+        break;
+    case 7:
+        if (!ordinary) return;
+        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
+        break;
+    case -1:
+        if (!ordinary || special) return;
+        first = (Players[faction_id].rule_flags & RFLAG_ALIEN) ? &g_AA01_CAVIARDATA : &g_VA01_CAVIARDATA;
+        break;
+    }
+    if (first) {
+        if (colors) renderer->add_object(first, colors, 0);
+        else renderer->add_object(first, 0);
+    }
+    if (second) {
+        if (colors) renderer->add_object(second, colors, 0);
+        else renderer->add_object(second, 0);
+    }
+}
+
 // Turn setup publishes these for the subsequent animation frames.
 // RECOVERY_OBJECT: v2 0x008CC820 0x008CC824 ?VehDrawTurnVehicle@@3HA 0x004BF8D0
 int VehDrawTurnVehicle;

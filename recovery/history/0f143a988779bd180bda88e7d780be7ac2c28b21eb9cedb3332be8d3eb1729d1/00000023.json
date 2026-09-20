@@ -1,0 +1,26 @@
+{
+  "event_id": "f6802e5a1b3227acdc902f3bb501c6241af5ba3ebcfff0fcb6059f499e7516da",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp"
+    ],
+    "evidence": [
+      "Original chassis construction 4C2BE9 calls Win::is_visible with receiver 71F2B0. Existing src/designwin.cpp already defines the real DesignWin TutWinDesWindow at that documented original identity; the derived Win base begins at zero. Authorize only its source object binding, not constructor or unrelated body changes.",
+      "Root owns this annotation while the vehicle worker owns veh.cpp/h, caviar.h, designwin.h and its new behavior tests. No overlapping source writes, additional C++ placeholders, baseline reset, claim weakening or acceptance waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 7467696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b6335b74e196384bc780bc55f3e1ec611e305afd4c07a38cc17dab57feabd375",
+  "request_id": "vehicle-model-design-window-owner-20260920",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:caviar-matrix-operations"
+}

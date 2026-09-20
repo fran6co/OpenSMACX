@@ -328,6 +328,9 @@ struct CaviarData {
 
 class Caviar {
  public:
+  // Vehicle assembly starts a new instance list without releasing any of
+  // the renderer's allocated slots or loaded model definitions.
+  void reset_objects() { field_13CC_ = 0; }
   void close();   // 0x00617020
   void UNK11(float *out1, float *out2, float *out3);
   Caviar();
@@ -533,6 +536,7 @@ class Caviar {
   // copies 0x1800 bytes from the selected pointer, not from a numeric ID.
   // RECOVERY_MEMBER: v1 Caviar instance_palettes_ 0x10AC 0x00617920
   uint8_t *instance_palettes_[200]; // 0x10AC; 200 Win32 pointers end at 0x13CC
+  // RECOVERY_MEMBER: v1 Caviar field_13CC_ 0x13CC 0x004C1D20
   uint32_t field_13CC_;  // 0x13CC
 };
 

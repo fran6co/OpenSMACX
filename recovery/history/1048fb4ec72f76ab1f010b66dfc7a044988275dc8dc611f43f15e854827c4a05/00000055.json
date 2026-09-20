@@ -1,0 +1,42 @@
+{
+  "event_id": "9484901d9c922789eb697a32e4007f7e9744fffb776a0c0e8e8eed23ebd70acf",
+  "payload": {
+    "affects": [
+      "entity-1f3b49d7d9bc7bd48f1f7d186a0515cf3255b0eb739576e49ab1af9a1ae13aa7",
+      "entity-230774e177ebeecda0632b0bede9f9b075248a0257deb41e42348eb6d51cf782",
+      "entity-2cf18fd457555e5de2210fc9ffd4c0b85b98af34272e60cc33c585fcf99c41ed",
+      "entity-3f756baafdac74412b9b137e244294ed33eca4f71e2173f28f836f3dec785d42",
+      "entity-4e75ebcc7b10710f775bf39000f0f605f9740312c87112bd2af56750a9b1c848",
+      "entity-52b2a8807c8437ae1e83e8c9240f4228bf615c6d788553f8d62ebdb7b0886746",
+      "entity-576724e865d50a7c5ea1eedd9324ae44c55fe6600eae48fd7eb3ecd61408f9a3",
+      "entity-6198a2584101a1b27399152e86f31b3f5f19bc691ae0d77123186c1a213f39de",
+      "entity-75ee0b353570910fa3fba6c9857b1858c3c9e1acd7c51f818e21e39c077bd908",
+      "entity-79db72aaf5d9c5c54f1fb43590df6e1cdb17fa9ddacb2d33c3aa6a2caa56131b",
+      "entity-7fada3d74da96c49c5d219bf974b7a2a06cf7924d7f8a23b86a311f89ff41d38",
+      "entity-b416f3bb74574f1a2448cf3a3280da0714bfe8fd66d8d81ba4ae0741babb1136",
+      "entity-b839ce0304f56ff434b26f3366d92cd48c6e27c5bc50e3abf99dff1e587f3174",
+      "entity-c8749f57ecde07440c458f952917111fbc6041c1275e3a4d8802d3f87a9aa93a",
+      "entity-d4e80cf409eb3bb08d0f53b86fff97643878c00df6d7327fbf12f6ca63a24dc7",
+      "entity-d9355bd76332c991691c785bc9020993bf6520a443b53b1614a3f12a01210c07",
+      "entity-e159d0f9c5f1d00e27692e19985503e7b1437b8d1d087b9508806c4dc7789c41",
+      "entity-e7cd52910dc93b83d24677c2f594b2c68bd3a21fec686d2329caacfbdb532e6d",
+      "entity-ef02bce95aa55f8ec5782b336c6a428c41e3afc56ee3d996a4b344cafdb41dda"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "maininterface-mode-stack-and-borrowed-interface-hierarchy-20260920",
+    "evidence": [
+      "Pinned original MainInterface initialization at 4596C1..4596E1 clears twelve pointers at 7AE7F0..7AE820 and thirty dwords at 7AE778..7AE7F0, then publishes this+0xA14 as registry[0] at 4596F5. It does not reset the active stack index at 7D392C. Bounds come from the original loops, not current candidate sizes.",
+      "Original set_iface_mode45D310..45D37D pushes modes; release_iface_mode45D380..45D43F removes buried entries or pops the top, notifying old/new interfaces in order. delete_iface_mode45D2E0..45D303 only clears the first matching borrowed pointer: no object deletion or stack repair.",
+      "Additional publishers: BaseWin::init41E8D0 slot3, BattleWin::init4219E0 slot10, CouncWin::init427230 slot7, Datalink::init429300 slot8, DesignWin::init43C270 slot1, DiploPop::init440700 slot4, DiploWin::exec443F10 slot11, ReportIf::init4A3460 slot5, SocialWin::init4B2740 slot2. Several initialization bodies remain original-address forwarders; changing storage alone disconnects those producers.",
+      "Current ReportIf and SocialWin derive SubInterface but not IfaceRegistryEntry; Datalink and DiploWin still flatten the secondary base. A genuine common interface requires coordinated declaration, lifecycle, virtual-slot and receiver-ABI review. Preserve the eighteen MainInterface event dispatchers and additional ReportIf/InfoWin/StatusWin/Console/turn callers.",
+      "Original redraw_complete45C3A0..45C5AF distinguishes receiver spot/flic members from MainInterfaceGlobal drawing. Its multiplayer animation condition accepts NetTurnFlags bit0x10 clear (45C457 JE45C469); the seed condition is wrong. Scalar68526C initially1 and counter7D3938 initially0 are separate owners. Flic coordinates are at5AC/5B0. This finding remains pending, does not grant editing or recovery acceptance, and must not be discarded as outside a single function."
+    ],
+    "hypothesis": "MainInterface redraw recovery depends on a real mode stack and borrowed SubInterface registry shared across interface lifecycles. Existing fixed-address aliases and IfaceRegistryEntry casts do not establish the correct common hierarchy; migrate producers, consumers and receiver adjustments together.",
+    "kind": "discovery"
+  },
+  "previous_event": "1fb79daeb5ae1765cd1222d85152bc77232b3154cdb2697bc382b3085d8f633f",
+  "request_id": "maininterface-mode-stack-and-borrowed-interface-hierarchy-20260920",
+  "schema_version": 1,
+  "sequence": 55,
+  "stream": "task:radiobutton-lifetime"
+}

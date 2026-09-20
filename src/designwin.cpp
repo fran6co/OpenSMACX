@@ -27,6 +27,8 @@
 #include "strings.h"
 #include "technology.h"
 #include "temp.h"
+#include "general.h"
+#include "veh.h"
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -439,6 +441,9 @@ Wave g_DESIGNWIN_WAVE;  // 0x0071F240
 // it at its fixed address before WinMain; DesignWin's constructor here is
 // the empty inline the tree models, so this object is zero storage the
 // game's own init populates, exactly as the image leaves it.
+// The vehicle chassis animation queries this same window's Win base at
+// 0x004C2BE9; the original receiver is the complete object at 0x0071F2B0.
+// RECOVERY_OBJECT: v1 0x0071F2B0 ?TutWinDesWindow@@3VDesignWin@@A
 DesignWin TutWinDesWindow;  // 0x0071F2B0
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
