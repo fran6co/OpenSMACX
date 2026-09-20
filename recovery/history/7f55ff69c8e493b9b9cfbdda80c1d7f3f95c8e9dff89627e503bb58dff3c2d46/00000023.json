@@ -1,0 +1,154 @@
+{
+  "event_id": "7315b103a259565eb3c739842b887321601dbe34414f52cc294655664154bd93",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_font_queue.py",
+      "recovery/tests/test_vehicle_animation.py",
+      "src/basewin.cpp",
+      "src/font.cpp",
+      "src/font.h",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/pending_bodies.cpp",
+      "src/veh.cpp",
+      "src/veh.h",
+      "src/worldwin.h"
+    ],
+    "evidence": [
+      "Master2853b58e supplies the real model-construction family. Retained Vector candidate rebased to53d17837 without C++ diff change (four-file binary patch sha2566adcefcd3b007dab07a0b2dbf1ce55a0c2e4b1db261933cc9eed0037cbc2c267); original task baselineedd4befcf08e1aac0de676502cb693fedfb60ed4 remains unchanged.",
+      "Authorize coupled six-function movement/render caller recovery plus FontQueue::get_zoom. Original veh_scoot constructs Buffer[8], Vector[8], a single Vector and another Vector[8], with reverse normal and EH teardown. Recover those actual lifetimes instead of forcing standalone constructor/destructor emission. Preserve normalize mismatch discovery and all historical claims.",
+      "Pinned original load_vehicles45446C..4546A8 processes nineteen physical0x90-stride Chassis records94A330..94ADE0; gameplay rules count remains nine. Recover physical capacity and actual missile member access in promote5062B0, not a duplicate fixed-address alias. FontQueue5592D0 owns a three-slot LRU keyed by computed height/style, returns Font*, and uses shared map zoom globals691E6C/70, both initially minus one. Consolidate existing mapwin/basewin aliases into real shared storage and use actual source-owned Font/init/default face.",
+      "Original WorldWin+239D0 is a member, not an independent global. Other animation/interpolation fields require pinned width, initializer and ownership evidence before declarations. New discoveries outside the listed closure remain pending; MapWinTable registration producers need further scope/evidence before replacement.",
+      "Root alone edits source mappings, journals and Git. Parallel workers are currently read-only; implementation assignments will explicitly partition file ownership. No framework edits, forced callbacks, original-address forwarders, claim demotions or task-baseline reset. Fresh build/link, affected historical obligations and relevant semantic/reference/layout checks precede coordinator-reviewed integration. This is not automatic or full-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5611856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5608688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4979824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4980224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4984656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4985504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5608144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9741104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6889068,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6889072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9698016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9698184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6874468,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6874472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6874476,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9224796,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9224808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9224824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9224840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9231608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9231616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9721884,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9492784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5268144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "60a03e32b5bcb53a204afe43cc74adbd95daa35a533ba892f0b829edcd1385a1",
+  "request_id": "vector-real-animation-caller-closure-20260920",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:vector-value-semantics"
+}

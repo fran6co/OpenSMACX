@@ -1,0 +1,20 @@
+{
+  "event_id": "4e231746c9cc58889f7e0f79667d6266c0e8cc3ef9fcad79ba336003f5a0f039",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vector_values.py"
+    ],
+    "evidence": [
+      "The existing caller tests deliberately double the Vector dependency. Add independent behavior controls using the actual header and actual product method bodies, covering genuine class-value ABI at source level, result independence, self-aliasing, mutating scale and cleanup. This closes a concrete integration review gap without substituting host arithmetic for native x87 or byte-restoration evidence.",
+      "Implementation is limited to this test file; no compiler flags, product definitions, historical claims, baseline, framework or acceptance checks change. Preserve all three current arithmetic restoration obligations and normalize limitations. Integration decision remains pending coordinator source/evidence review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2d6406302a17fcc7171c79ba734e6a3112111e0af70901819b93e8c316471065",
+  "request_id": "vector-product-behavior-integration-review-20260920",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:vector-value-semantics"
+}

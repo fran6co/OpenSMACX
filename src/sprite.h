@@ -61,17 +61,15 @@ class Sprite {
   // nothing in the body can name them either.
   int UNK1(int a, int b, int c, int d, int e, int f, int g);
   int UNK2(int a, int b, int c, int d, int e);
-  int draw(Buffer *buffer, int a, int b, int c, int x, int y);
-  int draw(Buffer *buffer, int a, int b, int c);
-  // The draw_dest family: the five-argument form does the work, and each
-  // wider sibling is a save/set/call/restore wrapper that substitutes a draw
-  // origin or scroll pair for the duration of the call. The five-argument
-  // bodies are still original, so each is reached through a pending_bodies
-  // forwarder - exactly the arrangement draw's own four-argument overload
-  // has, and for the same reason.
-  int draw_dest(Buffer *buffer, int a, int b, int c, unsigned char *bits);
-  int draw_dest(Buffer *buffer, int a, int b, int c, int x, int y,
-                unsigned char *bits);
+  int draw(Buffer *destination, int transparent, int x, int y,
+           int numerator, int denominator);
+  int draw(Buffer *destination, int transparent, int x, int y);
+  // Zero source pixels remap the destination; other nontransparent pixels
+  // retain their source colour. Wider overloads temporarily replace N / D.
+  int draw_dest(Buffer *destination, int transparent, int x, int y,
+                unsigned char *table);
+  int draw_dest(Buffer *destination, int transparent, int x, int y,
+                int numerator, int denominator, unsigned char *table);
   int draw_dest_unk2(Buffer *buffer, int a, int b, int c, unsigned char *bits);
   int draw_dest_unk2(Buffer *buffer, int a, int b, int c, int x, int y,
                      unsigned char *bits);
@@ -79,15 +77,13 @@ class Sprite {
                             unsigned char *bits);
   int draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x, int y,
                             unsigned char *bits);
-  // DECLARED FOR BUFFER::draw_dest_source AND Buffer::draw_mono, homed into
-  // buffer.cpp by the homing pass: those wrappers tail into these two the way
-  // draw_dest tails into draw_dest above. Additive declarations only - no
-  // offset moves, so no body in sprite.cpp changes a byte.
+  // Buffer's software drawing wrappers borrow the shared Sprite descriptor.
   int draw_dest_source(Buffer *buffer, int a, int b, int c, int d);
   int draw_dest_source(Buffer *buffer, int a, int b, int c, int d, int e,
                        unsigned char *bits);
-  int draw_mono(Buffer *buffer, int a, int b, int c, int d);
-  int draw_mono(Buffer *buffer, int a, int b, int c, int d, int e, int f);
+  int draw_mono(Buffer *destination, int transparent, int x, int y, int color);
+  int draw_mono(Buffer *destination, int transparent, int x, int y, int color,
+                int numerator, int denominator);
   // Sprite-sheet extraction used by the per-control init_class bodies. The
   // body lives in sprite.cpp beside its marker. `extract`'s last parameter is
   // a texture-heap pointer most callers pass as null.
@@ -120,7 +116,17 @@ class Sprite {
 
   void UNK3(int menu_id, int item_id);
   void UNK4(int a1, int a2);
+  void fill_scaling_table();
+  int *get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_skip,
+      int *destination_skip, int *source_count, int *destination_count);
+  int *get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_skip,
+      int *destination_skip, int *source_count, int *destination_count);
+  int *get_clipped_x_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
+      int *source_skip, int *destination_count, int *source_count);
+  int *get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
+      int *source_skip, int *destination_count, int *source_count);
  private:
+  friend int __cdecl veh_draw(Buffer *, int, int, int, int, int, int);
   friend class CheckBox;
   friend class RadioButton;
   // `Win::flip` draws the overlay sprite and takes its frame index from
@@ -225,9 +231,18 @@ typedef void *func_sprite_free(void *);
 
 
 
-// The draw origin this overload substitutes for the duration of the call.
-extern int SpriteDrawOriginX;
-extern int SpriteDrawOriginY;
-
-// The four-argument overload this one wraps is a 3225-byte body with eleven
-// call targets, still an original dependency. Tests rebind this seam.
+// Uniform scaling ratio, temporarily substituted by the wider draw overloads.
+// These are not independent horizontal/vertical origins: both axes use N / D.
+extern int SpriteScaleNumerator;    // 0x00696D18, initially 1
+extern Sprite g_VEH_SPRITES[152];        // 0x007777A0
+extern Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778
+extern int SpriteScaleDenominator;  // 0x00696D1C, initially 1
+extern int SpriteCachedScaleNumerator;    // 0x00696D20, initially -1
+extern int SpriteCachedScaleDenominator;  // 0x00696D24, initially -1
+extern float SpriteScalingRatio;          // 0x009B6624
+extern int SpriteMinimumScaledWidth;     // 0x009B661C
+extern int SpriteMinimumScaledHeight;    // 0x009B6620
+enum { SpriteScalingTableCount = 800 };
+extern int SpriteScalingSteps[SpriteScalingTableCount];   // 0x009B3AD8
+extern int SpriteClippedXSteps[SpriteScalingTableCount];  // 0x009B53EC
+extern int SpriteClippedYSteps[SpriteScalingTableCount];  // 0x009B4760

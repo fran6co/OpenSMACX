@@ -9,27 +9,12 @@
  */
 #include "stdafx.h"
 #include "vector.h"
+#include <math.h>
 
-#include <cstring>
-#include <new>
-
-/*
-Purpose: Initialize a zero vector.
-// ORIGINAL: 0x006343C0 ??0Vector@@QAE@XZ 0x006343C0-0x006343CD BYTE_EXACT
-// size      13 bytes
-// prototype void (__thiscall ??0Vector@@QAE@XZ)(Vector* this)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-Vector::Vector() {
-    x_ = 0.0f;
-    y_ = 0.0f;
-    z_ = 0.0f;
-}
+// 0x0063456A calls the CRT sqrt with a double argument. Do not substitute
+// the compiler's fsqrt intrinsic: it omits that argument-rounding boundary
+// and the runtime's floating-point handling.
+#pragma function(sqrt)
 
 /*
 Purpose: Clear all vector components.
@@ -55,8 +40,8 @@ Note:    `output` is the hidden return-object slot of `Vector operator-`, not
          a declared parameter - see the signature note in vector.h. The
          difference is computed into a temporary first because the original
          does, and because the caller may pass the same object twice.
-// ORIGINAL: 0x00634430 ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z 0x00634430-0x0063447B
-// symbol    ?__mi@Vector@@QAEXAAV1@0@Z
+// ORIGINAL: 0x00634430 ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z 0x00634430-0x0063447B BYTE_EXACT
+// symbol    ??GVector@@QAE?AV0@AAV0@@Z
 // size      75 bytes
 // prototype void (__thiscall ?__mi@Vector@@QAEXAAVVector@@AAVVector@@@Z)(Vector* this, Vector*, Vector*)
 // callers   1   call targets   0
@@ -65,22 +50,65 @@ Note:    `output` is the hidden return-object slot of `Vector operator-`, not
 // calls     (none)
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
-// TRIED: this catalogued `void __mi(Vector&, Vector&)` signature, tried
-//            as-is - MISMATCH from instruction 0 (`sub esp, 0x10` against
-//            this tree's `sub esp, 0xc`). The image's extra 4 bytes and the
-//            `mov dword ptr [esp], 0` right after are the /GX return-object
-//            constructed flag for a BY-VALUE `Vector operator-` return - see
-//            "why two are adopted and two are not" in vector.h, which names
-//            this a REAL CEILING in `tools/emit_translation_unit.py` (never
-//            declares the destructor a rebuilt verification unit would need
-//            to reproduce the flag), not a source-form question for this body.
+// Historical output-parameter trials omitted the original return-object
+// construction flag. Their retired scaffold could not model the destructor;
+// that limitation does not constrain the product class or prove this body.
 */
-void Vector::__mi(Vector &output, Vector &right) {
+Vector Vector::operator-(Vector &right) {
     Vector result;
     result.x_ = x_ - right.x_;
     result.y_ = y_ - right.y_;
     result.z_ = z_ - right.z_;
-    output = result;
+    return result;
+}
+
+// Component-wise sum, with a separate returned value.
+// ORIGINAL: 0x006343E0 ??HVector@@QAE?AV0@AAV0@@Z 0x006343E0-0x0063442B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x006343EF-0x00634417 adds right components to receiver components, rounds three float results before copying them through the separate result pointer, returns that pointer in EAX and ends with ret8 at0x00634428. Complete span agrees with src/recovered/units/006343e0.cpp.", "Vector constructor0x006343C0 and veh_scoot array construction0x0055A197-0x0055A1D9 establish the same12-byte class and destructor; its established arithmetic return convention is independently used by veh_scoot at0x0055A82F."], "reason": "Vector addition returns a separate three-float value; the first stack argument is the hidden class-result pointer, not a source output parameter. Product ownership replaces the seed scaffold without removing it."}
+Vector Vector::operator+(Vector &right) {
+    Vector result;
+    result.x_ = right.x_ + x_;
+    result.y_ = right.y_ + y_;
+    result.z_ = right.z_ + z_;
+    return result;
+}
+
+// Cross product this x right; preserve the original floating-point operand order.
+// ORIGINAL: 0x006345E0 ?cross@Vector@@QAE?AV1@AAV1@@Z 0x006345E0-0x00634641 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x006345EF-0x0063462D computes y*right.z-right.y*z, right.x*z-x*right.z, right.y*x-y*right.x using float receiver and argument loads. All input reads precede output copying; EAX receives the result pointer and ret8 ends at0x00634641. Span agrees with src/unrecovered/006345e0.cpp.", "The same Vector constructor/destructor and12-byte array stride are paired in veh_scoot0x0055A197-0x0055A1D9. The neighboring addition and subtraction share its receiver and hidden class-result ABI; the seed synthetic Vec3 output-parameter wrapper is not product design."], "reason": "Vector cross product returns a separate three-float value without mutating either input. Preserve the original multiplication/subtraction operand order and each component rounding; the catalogue output pointer is a hidden class-result slot."}
+Vector Vector::cross(Vector &right) {
+    Vector result;
+    result.x_ = y_ * right.z_ - right.y_ * z_;
+    result.y_ = right.x_ * z_ - x_ * right.z_;
+    result.z_ = right.y_ * x_ - y_ * right.x_;
+    return result;
+}
+
+// Return a normalized value without modifying the receiver. The original
+// comparison copies the input for either unit length or an unordered length;
+// it has no zero-length guard. The original retains the length and reciprocal
+// in x87 registers, rounding the sum for sqrt's double argument and the
+// resulting components for their float storage.
+// ORIGINAL: 0x00634520 ?normalize@Vector@@QAE?AV1@XZ 0x00634520-0x006345DD
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original0x00634531-0x00634567 computes (x*x+y*y)+z*z with no intermediate float stores, passes a double to sqrt0x00646544, and0x0063456F-0x0063457D tests x87 C3 so equal and unordered lengths copy the input. The other path has no zero guard, multiplies x/y/z by the reciprocal and rounds each result to float. Both returns supply the result pointer in EAX. Complete span agrees with src/unrecovered/00634520.cpp; its synthetic output-parameter body is seed evidence only."], "reason": "The original computes a separate normalized three-float Vector using sqrt and a reciprocal, never mutating its receiver. Normalize is an operation-derived name, not an original debug symbol; the stack result pointer and ret4 indicate a hidden class-value result."}
+Vector Vector::normalize() {
+    // Original 0x00634531 loads z, y, x before accumulating the squared length.
+    const float z = z_;
+    const float y = y_;
+    const float x = x_;
+    float length = static_cast<float>(sqrt((x * x + y * y) + z * z));
+    Vector result;
+    if (length != length) {
+        return *this;
+    }
+    if (length == 1.0f) {
+        return *this;
+    }
+    float reciprocal = 1.0f / length;
+    result.x_ = static_cast<float>(reciprocal * x_);
+    result.y_ = static_cast<float>(reciprocal * y_);
+    result.z_ = static_cast<float>(reciprocal * z_);
+    return result;
 }
 
 /*
@@ -89,7 +117,7 @@ Note:    Returns `*this`, which is what leaves the receiver in EAX at `ret 4`.
          The catalogued `void` return does not reproduce these bytes; this
          does, exactly.
 // ORIGINAL: 0x00634480 ?__apl@Vector@@QAEAAVVector@@AAVVector@@@Z 0x00634480-0x006344A1 BYTE_EXACT
-// symbol    ?__apl@Vector@@QAEAAV1@AAV1@@Z
+// symbol    ??YVector@@QAEAAV0@AAV0@@Z
 // CORRECTED from ?__apl@Vector@@QAEXAAVVector@@@Z
 //   opens `mov eax, ecx` and leaves `this` in EAX at `ret 4`; with a
 //   `Vector &` return and `return *this` the body is byte-exact, with
@@ -104,7 +132,7 @@ Note:    Returns `*this`, which is what leaves the receiver in EAX at `ret 4`.
 Return Value: this vector
 Status: Complete
 */
-Vector &Vector::__apl(Vector &right) {
+Vector &Vector::operator+=(Vector &right) {
     x_ += right.x_;
     y_ += right.y_;
     z_ += right.z_;
@@ -114,7 +142,7 @@ Vector &Vector::__apl(Vector &right) {
 /*
 Purpose: Subtract another vector from this one, component by component.
 // ORIGINAL: 0x006344B0 ?__ami@Vector@@QAEAAVVector@@AAVVector@@@Z 0x006344B0-0x006344D1 BYTE_EXACT
-// symbol    ?__ami@Vector@@QAEAAV1@AAV1@@Z
+// symbol    ??ZVector@@QAEAAV0@AAV0@@Z
 // CORRECTED from ?__ami@Vector@@QAEXAAVVector@@@Z
 //   the same shape with fsub for fadd, and the same two verdicts
 // size      33 bytes
@@ -127,7 +155,7 @@ Purpose: Subtract another vector from this one, component by component.
 Return Value: this vector
 Status: Complete
 */
-Vector &Vector::__ami(Vector &right) {
+Vector &Vector::operator-=(Vector &right) {
     x_ -= right.x_;
     y_ -= right.y_;
     z_ -= right.z_;
@@ -141,8 +169,8 @@ Note:    The original scales `this` IN PLACE and then copies it out; `output`
          is the hidden return slot of `Vector scale(float)`. Both effects are
          load-bearing - a caller that ignores the result still sees `this`
          scaled.
-// ORIGINAL: 0x00634670 ?scale@Vector@@QAEXAAVVector@@M@Z 0x00634670-0x006346B1
-// symbol    ?scale@Vector@@QAEXAAV1@M@Z
+// ORIGINAL: 0x00634670 ?scale@Vector@@QAEXAAVVector@@M@Z 0x00634670-0x006346B1 BYTE_EXACT
+// symbol    ?scale@Vector@@QAE?AV1@M@Z
 // size      65 bytes
 // prototype void (__thiscall ?scale@Vector@@QAEXAAVVector@@M@Z)(Vector* this, Vector*, float)
 // callers   1   call targets   0
@@ -151,20 +179,14 @@ Note:    The original scales `this` IN PLACE and then copies it out; `output`
 // calls     (none)
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
-// TRIED: this catalogued `void scale(Vector&, float)` signature, tried
-//            as-is - MISMATCH from instruction 0 (image opens `push ecx`
-//            with no frame; this tree's `push ebp; mov ebp, esp`). Same
-//            /GX return-object-flag ceiling as __mi above: `scale` is really
-//            `Vector scale(float)` returning by value, and
-//            `tools/emit_translation_unit.py` cannot rebuild a verification
-//            unit that declares the destructor the flag depends on. See
-//            "why two are adopted and two are not" in vector.h.
+// The historical output-parameter spelling omitted class-result construction.
+// The catalogue spelling is retained as provenance, not the emitted signature.
 */
-void Vector::scale(Vector &output, float scalar) {
+Vector Vector::scale(float scalar) {
     x_ *= scalar;
     y_ *= scalar;
     z_ *= scalar;
-    output = *this;
+    return *this;
 }
 
 
@@ -191,4 +213,31 @@ void __cdecl vector_add(const float *left, const float *right, float *output) {
     output[0] = rx + left[0];
     output[1] = left[1] + right[1];
     output[2] = left[2] + right[2];
+}
+
+// ORIGINAL: 0x00634650 sub_634650 0x00634650-0x0063466B BYTE_EXACT
+// symbol    ?dot@Vector@@QBEMABV1@@Z
+// kind      game
+// The original accumulates z, then y, then x without intermediate stores.
+// dot and const qualification describe observed behavior, not debug symbols.
+float Vector::dot(const Vector &right) const {
+    const float rz = right.z_;
+    const float ry = right.y_;
+    const float rx = right.x_;
+    return (rz * z_ + ry * y_) + rx * x_;
+}
+
+// ORIGINAL: 0x006344E0 sub_6344e0 0x006344E0-0x00634513 BYTE_EXACT
+// symbol    ??8Vector@@QBE_NABV0@@Z
+// kind      game
+// Original x87 comparisons test C3 only: each component may be equal or
+// unordered, but any ordered mismatch fails. Preserve x/y/z short-circuiting.
+// Explicit self-comparisons retain that relation with other C++ compilers too.
+bool Vector::operator==(const Vector &right) const {
+    if (!(x_ == right.x_ || x_ != x_ || right.x_ != right.x_)) goto unequal;
+    if (!(y_ == right.y_ || y_ != y_ || right.y_ != right.y_)) goto unequal;
+    if (z_ != z_ || right.z_ != right.z_) return true;
+    if (z_ == right.z_) return true;
+unequal:
+    return false;
 }

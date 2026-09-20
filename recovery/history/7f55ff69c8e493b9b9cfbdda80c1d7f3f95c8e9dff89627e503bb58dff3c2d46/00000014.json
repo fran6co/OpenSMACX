@@ -1,0 +1,24 @@
+{
+  "event_id": "fef409d38f9231920c3b33580161c285fa398c7660b1b31b9cc1253f9aea75de",
+  "payload": {
+    "affects": [
+      "entity-08159b4b53bc2401ddb7e4f0eea363e3f8e8d982f4debd560c22f81cf2b25c13",
+      "entity-3e51e221834c501c9dd2cb8f41603062da26b1b8e56feb3d4e4ffe1075d218e0",
+      "entity-69c52b8e7b299fc0ab2c5563803c3c2379cc036e5d60154b7d523ef059de7308",
+      "entity-89bf7e88839b47357b4cc2ffc52a8fc9c780107afc2a49c9c68de62a3538fdde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vector-standalone-caller-context-20260919",
+    "evidence": [
+      "Original veh_scoot0x0055A150 uses constructor0x006343C0 and destructor0x0055B750 for two eight-element arrays at0x0055A197-0x0055A1D9. Normal and exceptional cleanup use those callbacks; singleton/result cleanup directly calls close. Original destructor0x0055B750 specifically tail-jumps to close0x006343D0, which also needs explanation beyond arithmetic-only inlining.",
+      "Current header-inline Vector source passes strict arithmetic and full build/link, but does not emit those three historical standalone definitions in measured product units. Their claims and header-body mappings remain and native restoration reports unknown, not pass. All useful source work and original seeds are preserved. veh_scoot is not yet authorized for edits; assess its genuine product ownership/dependencies and authorize coupled recovery separately. No automatic reversion, claim demotion, dummy array, artificial export or special flags is authorized."
+    ],
+    "hypothesis": "Retained inline Vector arithmetic is strict-exact and builds, but standalone constructor/destructor/close restoration needs genuine caller and original TU/emission context. The seed-only veh_scoot caller is a coupled owner, not a reason to manufacture dummy callback uses or discard the supported class model.",
+    "kind": "discovery"
+  },
+  "previous_event": "6cd18fb582cc620d84711fc8e6d3a487516891827e96dc19cec3403324f3a082",
+  "request_id": "vector-standalone-caller-context-20260919",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,17 @@
+{
+  "event_id": "d65d22a9c86d017d0b7ab422fa311d4be9a37de050066b69b70742c195aff8b9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-3f424c4bc4b54c4cb431d9045da9c38f",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native bind now maps original0x006343E0-0x0063442B to the real Vector operator+ body using its compiler-observed symbol. Original disassembly establishes right-plus-receiver operand order, three float roundings, separate hidden result and ret8. Corrected the source order accordingly and kept the seed untouched. This adds an unclaimed product mapping, not proof of exactness: fresh task checks still report extra lifetime code as unknown; existing restoration obligations pass."
+    ]
+  },
+  "previous_event": "77558864636e75e7fc098d7ce3f28ff9c8655a0ed0aa142b3343030ce71ff155",
+  "request_id": "vector-add-product-binding-20260919",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,17 @@
+{
+  "event_id": "0f994249825c91f754ed9f8531938ed8415c01c2793c49b6b680df91d9d65bff",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-e377a84187584dbfb8feb96354728d7b",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native bind published the destructor at its agreeing seed span, with independent veh_scoot construction/cleanup evidence. Compiler-observed value-return symbols now bind __mi and scale without changing ORIGINAL identities. Fresh strict task checks passed the destructor and scale and restored all five prior obligations; native record then banked both product definitions after the missing historical Texture seed was restored. Subtraction remains unverified because its generated exception-cleanup sections exceed the supported original extent model; preserve the genuine by-value structure and continue source restoration, not signature rollback or claim demotion. No task acceptance or integration is established."
+    ]
+  },
+  "previous_event": "17868f20218f904eb55e6ecaf9ec922984a3d791b50c02959badb4f312e29c1d",
+  "request_id": "vector-bindings-incorporated-20260919",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:vector-value-semantics"
+}

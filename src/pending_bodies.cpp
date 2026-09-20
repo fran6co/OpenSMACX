@@ -320,15 +320,6 @@ int Sprite::init(char *filename, int width, int height) {
                                              height);
 }
 
-// ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z at 0x005E4B9A - 3225 bytes, the blitter
-// the six-argument overload wraps with a substituted origin. Called by name,
-// so it gets a forwarder rather than a pointer.
-//             body in src/unrecovered/005e4b9a.cpp
-int Sprite::draw(Buffer *buffer, int a, int b, int c) {
-    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int);
-    return PENDING_BODY(0x005E4B9A, pending)(this, nullptr, buffer, a, b, c);
-}
-
 // ?get_pcx_dimensions@Buffer@@QAEHPBDPAH1@Z at 0x005E2480 - BasePop::start
 // (0x00601BF0) calls it for the "sprite" directive. The image's body never
 // reads the receiver ECX (its first instructions overwrite it), so the call
@@ -340,26 +331,8 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
                                              height);
 }
 
-// The draw_dest family's five-argument workers - 0x005E5833, 0x005E81BC and
-// 0x005E8FF5. Each is still an original body, and each is called by name from
-// its own wider save/set/call/restore wrapper in sprite.cpp.
-//             bodies in src/unrecovered/005e5833.cpp, 005e81bc.cpp,
-//             005e8ff5.cpp
-//
-// NOTE FOR THE NEXT HOMING OF 0x005E5833 ITSELF: tools/home_bodies.py's
-// forwarder sweep keys on `Sprite::draw_dest` and cannot tell this five-word
-// overload from a seven-word one, so homing any other `draw_dest` while this
-// forwarder exists deletes it and the link fails. The three seven-word
-// wrappers are already homed; the next homing that should touch this name is
-// this body's own, which is the one case the sweep is right about.
-int Sprite::draw_dest(Buffer *buffer, int a, int b, int c,
-                      unsigned char *bits) {
-    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int,
-                                     unsigned char *);
-    return PENDING_BODY(0x005E5833, pending)(this, nullptr, buffer, a, b, c,
-                                             bits);
-}
-
+// Remaining specialized Sprite workers, called by their scale wrappers.
+// Plain draw and draw_dest now live in sprite.cpp.
 int Sprite::draw_dest_unk2(Buffer *buffer, int a, int b, int c,
                            unsigned char *bits) {
     typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int,

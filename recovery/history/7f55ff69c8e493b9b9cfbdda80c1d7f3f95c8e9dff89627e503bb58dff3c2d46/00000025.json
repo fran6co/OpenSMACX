@@ -1,0 +1,36 @@
+{
+  "event_id": "8b4820fdf4745db923d1a1ca8724ff544f62190173bd946a6cd38921c280d535",
+  "payload": {
+    "affects": [
+      "entity-3c127901ed9b5c56ff61ec70b72b852d82cd6a9e0e09d708eaf123802c1bf993",
+      "entity-3e51e221834c501c9dd2cb8f41603062da26b1b8e56feb3d4e4ffe1075d218e0",
+      "entity-42f93e4d6d788f66b5b9923b5518f56a562824ac02648d2be476c65f674dd63b",
+      "entity-4e2f3c50ff6bf963400d715eec839d3fab0308498792561ef74ce0686dc91584",
+      "entity-53ee69552b6fe51f628783aac48377dbc9bdf941c9ac33ade9cbced79e67ce4e",
+      "entity-64be09d86483d795be295d1656d253eecaf6955bb502d50f296fa5917d05f140",
+      "entity-6ce5262b118f9bc42ea64c7057452d64e2668c44940f1fa0fa9adfe15556af42",
+      "entity-891e280d2236a5078b0275a5ad9ba585d203cfc940bc0c3bf0965e920111293c",
+      "entity-a6f084dda87801d9ac5da90aecbcf07c9396b12cfc603d479af7d344e5f84477",
+      "entity-b8f5235869fe19b8403926c1069beada1186a1215677af04d597193c95de3771",
+      "entity-cce333f607e008399caf2bc16fc5b9ca28aeb268d2bab5926b29cf5a34cdc713",
+      "entity-d35da1b0011f646ceb25ef11127e86471e53401e79c5169744447efaf8512895",
+      "entity-e782b6057ba500fc5ea60fccaa4f082abef92c732ffc978dabec478f403fc698"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-caller-render-dependencies-20260920",
+    "evidence": [
+      "Independent pinned-original caller review reconstructed veh_scoot55A150..55AF11 with EH65FF70..65FFC7 and veh_draw5594F0..55A14E. Review proposals remain uncompiled temporary fragments, not product recoveries. Source-owned Vector arrays/temporaries are the actual constructor/destructor consumers. The coordinator explicitly chooses zero-initialized active[8] because original skips the store for null slots before later reading them; startup normally fills all eight slots. This defensive behavior is not an original-byte claim.",
+      "Sprite::draw_mono5E3E50 has a declaration but no product definition. Its coherent source closure includes the scaling overload5E3E00, Buffer::draw_mono5D8930, fill_scaling_table5EB20F and four clipped-table helpers5EAB0F/5EABBF/5EAC6F/5EACFF. Existing draw5E4B9A and draw_dest5E5833 remain executable-address forwarders. Original mono success paths call free_data(1), origin scales the sprite offset rather than screen x, shrink/expand selection is reversed in the seed, and source pitch uses width2. Recover/test scalar clipping and pixel semantics with actual Buffer/Sprite ownership before asserting rendering acceptance.",
+      "Caller seed corrections include original screen coordinates for vehicle drawing versus offset flag/health/order coordinates, zero default sprite variation except explicit native categories, actual element-base Sprite receiver rather than transparent-byte offset, Buffer source/destination direction, real Vector value operations, flags1 early cleanup after turn frames, SPARTANS colors44/0, duplicated bracket order labels and faction3 highlight250 versus255. The current four-byte label scratch assumes short rule strings; malformed overlong labels remain a safety obligation.",
+      "Shared zoom globals are initially minus one and now source-owned. Their original temporary-ratio producers in several BaseWin, BattleWin, ProdPicker and StatusWin bodies remain unfinished. MapWinTable startup already publishes its actual slots; shutdown58F250 remains unfinished. Neither new storage nor host doubles establishes those dependent lifecycles.",
+      "Independent review found the existing vox_normalise_vector628220 source groups squared components differently from original62823D..628253 and narrows sqrt before reciprocal, whereas original retains extended precision then rounds reciprocal628267. Current emitted helper equivalence has not been inspected in this caller task. Preserve this floating-point dependency for fresh measurement; do not silently adjust flags or replace the genuine class lifetimes to protect local matching."
+    ],
+    "hypothesis": "Genuine veh_scoot/veh_draw callers expose a missing monochrome Sprite blitter and existing sprite forwarders; complete caller recovery must not silently substitute addresses or treat their dependencies as recovered.",
+    "kind": "discovery"
+  },
+  "previous_event": "caa9305049ac12c1eb720eeddb3d3b6a5acc3e66d680cc3796bec39b44da26bb",
+  "request_id": "vehicle-caller-render-dependencies-20260920",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:vector-value-semantics"
+}

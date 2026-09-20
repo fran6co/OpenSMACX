@@ -1,0 +1,25 @@
+{
+  "event_id": "a137348d25dcdecdd5decf74d8c34445b12b3f0de0574c3277294c133f1dceef",
+  "payload": {
+    "author": "recovery-worker",
+    "decision": "request_changes",
+    "evidence": [
+      "Verified the unchanged request SHA-256: 90b2cacb98e85cdabcf70957b2e7f850ab9b1c29332e1f70b3fd324c059dcee7. Current src/vector.cpp matches its supplied digest.",
+      "Independent pinned-image inspection confirms 0x0055B750 delegates to Vector::close. veh_scoot pairs this destructor with construction of eight-element, 12-byte arrays and uses it during normal and exceptional cleanup.",
+      "Original caller evidence at 0x0055A82F–0x0055A87E supports value-return temporaries for subtraction and scale. Original scale mutates the receiver before copying its three float components into the return object.",
+      "src/vector.cpp:85 introduces a named Vector local. /check/candidate/checks/binary/functions/5 reports both subtraction trials unknown, with destructor calls, exception registration and a C++ frame handler. The original 75-byte subtraction span contains no calls. This difference remains unexplained.",
+      "All six protected obligations pass. Complete build evidence reports successful compilation/linking, but linked selection remains unknown. Layout observations show size 12 and offsets 0/4/8 without declared original-layout requirements; structural coverage remains unknown."
+    ],
+    "feedback": "Preserve the supported destructor and value-return migration. Resolve subtraction’s additional local cleanup and exception machinery: establish whether it reflects compiler optimization or an incorrect lifetime model, then provide fresh bounded byte/reference verification or independently justified remaining obligations. Do not revert to synthetic output parameters or weaken checks. Correct the header’s stale binding/emitter guidance and qualify its claim that subtraction reproduces all 75 bytes. Declared-layout coverage and outside-scope preservation still require verification before acceptance; the passing build and protected bodies do not supply those proofs.",
+    "kind": "review",
+    "retractions": [],
+    "reviewer": "independent-recovery-reviewer",
+    "snapshot": "a1ae837ea9f87516a129a414236eca92c214ce7a9e3e741c5f85a41fb549d9da",
+    "supersessions": []
+  },
+  "previous_event": null,
+  "request_id": "4fc245c356e2a64b92a94cf29c609d32884abe025d931cb1941f2ce86f0b2c3a",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "review:vector-value-semantics"
+}

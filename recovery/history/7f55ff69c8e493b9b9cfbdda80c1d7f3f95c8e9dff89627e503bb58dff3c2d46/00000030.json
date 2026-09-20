@@ -1,0 +1,27 @@
+{
+  "event_id": "817a6273f6ba8cc5bbb74deca9e8e2a40499d256a646e78ed03de1ea9908be81",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.cpp",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "The existing product g_BUFFER definition at9B6080 is the receiver of pinned Sprite draw5E4BC3(load_pcx),5E4BFC(draw) and5E4C09(close), and corresponding mono calls. Reuse this actual object and publish its start binding, not another scratch Buffer or fixed address. Start-only v1 intentionally does not claim independently bounded initial storage/lifetime from current class size alone.",
+      "Native observed Sprite layout remains44bytes; Buffer1416bytes and relevant clip20/pixel50/pitch4A8 offsets agree. Fresh build/link and59 existing protected bodies passed before this source binding; recheck source/data obligations after publication. This is not game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 10182784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "750a7339f0857f7d3a197abc8249afc69c7c462b50577cab0c7e873b9968fb6e",
+  "request_id": "vector-sprite-existing-staging-buffer-binding-20260920",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:vector-value-semantics"
+}

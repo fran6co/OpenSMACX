@@ -1,0 +1,27 @@
+{
+  "event_id": "f5b28af7e2e960acc4e75853e721bdc7287bd704fba2af00943ca81c7d82316d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Authorize the complete genuine veh_scoot caller as a coupled continuation of Vector lifetime recovery, with its natural product home in src/veh.cpp/h and both original spans0x0055A150-0x0055AF11 and0x0065FF70-0x0065FFC7 intact. No current task or retained Path/Texture/Technology/Alpha campaign worker owns this identity or these files. Original two Vector[8] arrays, singleton, arithmetic temporaries and normal/exception cleanup make it a real dependency, not an emission witness. Preserve the original task baseline and unaccepted Vector source; do not copy/reset journals or integrate it merely to establish a new caller task.",
+      "Recover actual interpolation and movement behavior: the seed explicitly sets scootFrames=0 and has approximate scrolling arithmetic, so it is not a finished implementation to relocate. Preserve the user-requested real C++ operators/RAII and all historical claims. Additional rendering callees, global storage owners, Buffer/WorldWin/GraphicWin details and runtime bodies are NOT editable under this expansion; report typed interface/storage dependencies rather than adding fixed addresses, fake wrappers or out-of-scope edits. Keep the pending standalone lifecycle discovery open until fresh original-caller/emission evidence actually resolves it."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5611856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fef409d38f9231920c3b33580161c285fa398c7660b1b31b9cc1253f9aea75de",
+  "request_id": "vector-vehicle-lifetime-scope-20260919",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:vector-value-semantics"
+}

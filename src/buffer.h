@@ -387,6 +387,8 @@ class Buffer {
   int get_pixel(int x, int y);
 
   int draw(Buffer *destination, int index, int x, int y, int numerator, int denominator);
+  int draw_mono(Buffer *destination, int transparent, int x, int y,
+                int colour, int numerator, int denominator);
   // __STDCALL, like load_tga: the image's name is QAG, not QAE, so the
   // loader pair was declared with the explicit convention.
   int __stdcall load_bmp(const char *filename, Palette *palette, int a3,
@@ -630,6 +632,8 @@ class Buffer {
   // address, and the object spelling names the field. Access control is
   // compile-time only, so no offset and no emitted byte moves.
   friend class Caviar;
+  // Sprite rasterization uses the destination's clip and acquired pixel data.
+  friend class Sprite;
   
   // DipEdit::init copies `rect2_` out as the starting point for its frame,
   // title field and button strip - a window body reading its own buffer's
@@ -924,6 +928,9 @@ Buffer *__fastcall buffer_construct_redirect(Buffer *self, void *);
 // `mov ecx, [eax]` and `call [ecx + 0x18]` on it, which is slot 6,
 // IDirectDraw::CreateSurface. It also calls slot 4, CreateClipper.
 extern IDirectDraw *BufferDirectDraw;
+
+// Shared file-backed sprite staging surface (original 0x009B6080).
+extern Buffer g_BUFFER;
 
 // Value the close reset writes at offset 0x520; its meaning is unconfirmed.
 extern uint32_t BufferField520Default;

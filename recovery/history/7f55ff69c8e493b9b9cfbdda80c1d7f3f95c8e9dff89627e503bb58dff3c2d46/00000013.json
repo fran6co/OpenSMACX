@@ -1,0 +1,17 @@
+{
+  "event_id": "6cd18fb582cc620d84711fc8e6d3a487516891827e96dc19cec3403324f3a082",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "vector-lifetime-visibility-20260919",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent review supports retaining genuine default construction, direct component assignments, value return and destructor calling close, with standard inline definitions available in the header. Adopted that source model without fake globals, exports, callback anchors, alternate bodies or flag changes. Canonical lifecycle markers now point to their single real header definitions and every historical claim remains. Fresh actual-header strict checks pass addition75bytes, subtraction75bytes, cross97bytes and all other arithmetic; original offsets0/4/8 pass in both trials. Full application build/link passes. Native recorder banked only the three newly exact arithmetic bodies. Standalone constructor/destructor/close remain three explicit restoration UNKNOWNs due missing emitted definitions; this retained WIP is not a migration checkpoint, restored family, publication permission or acceptance."
+    ]
+  },
+  "previous_event": "20c1f41fb633a39c5dea2ff96ec7d6eabe09b795c3803c2873806826d237b0d6",
+  "request_id": "vector-retain-inline-model-20260919",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:vector-value-semantics"
+}

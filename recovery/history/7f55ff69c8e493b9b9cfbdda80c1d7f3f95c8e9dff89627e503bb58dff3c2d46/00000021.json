@@ -1,0 +1,17 @@
+{
+  "event_id": "99ad86b0ad504f97d83ec90cbd116d7c9b4e6c593c343505f75997ebf44f2f4c",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "vector-leaf-member-ownership-20260919",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The existing original identities now have unique product definitions as Vector::dot and Vector::operator== in src/vector.cpp, declared in src/vector.h. The native source writer moved both complete mappings and retained their historical claims; only their two obsolete leaf wrapper definitions and declarations were removed. Independent source review found no bounded correctness blocker: dot retains z/y/x x87 evaluation and comparison explicitly retains equal-or-unordered behavior per component. Fresh strict restoration verifies both methods alongside seven other obligations; three separate lifecycle emission unknowns remain pending and are not resolved by this decision. The application builds and links, claim continuity passes, and mapping ambiguities equal the unchanged master baseline. This incorporates only the member-rehoming finding, not whole-class recovery, outside-scope preservation, acceptance or integration."
+    ]
+  },
+  "previous_event": "7c6271d21d5a95a761aab9f05ba226aeb6bccbac62bab3bbecf409f666beb05c",
+  "request_id": "vector-leaf-member-incorporation-20260919",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:vector-value-semantics"
+}

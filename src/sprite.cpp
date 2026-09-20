@@ -121,8 +121,706 @@ void Sprite::close() {
 // OBJECTS, NOT POINTERS: the image addresses 0x00696D18 and 0x00696D1C
 // directly - `mov esi, dword ptr [0x696d18]` - where a pointer variable
 // loads the pointer first.
-int SpriteDrawOriginX = 1;  // 0x00696D18
-int SpriteDrawOriginY = 1;  // 0x00696D1C
+// RECOVERY_OBJECT: v2 0x00696D18 0x00696D1C ?SpriteScaleNumerator@@3HA 0x005EB20F
+int SpriteScaleNumerator = 1;  // 0x00696D18
+// RECOVERY_OBJECT: v2 0x00696D1C 0x00696D20 ?SpriteScaleDenominator@@3HA 0x005EB20F
+int SpriteScaleDenominator = 1;  // 0x00696D1C
+
+// Blitters update the cache only after fill_scaling_table returns. Equal
+// numerator/denominator bypasses this cache and uses the unscaled path.
+// RECOVERY_OBJECT: v2 0x00696D20 0x00696D24 ?SpriteCachedScaleNumerator@@3HA 0x005E3E50
+int SpriteCachedScaleNumerator = -1;
+// RECOVERY_OBJECT: v2 0x00696D24 0x00696D28 ?SpriteCachedScaleDenominator@@3HA 0x005E3E50
+int SpriteCachedScaleDenominator = -1;
+// RECOVERY_OBJECT: v2 0x009B6624 0x009B6628 ?SpriteScalingRatio@@3MA 0x005E3E50
+float SpriteScalingRatio;
+// RECOVERY_OBJECT: v2 0x009B661C 0x009B6620 ?SpriteMinimumScaledWidth@@3HA 0x005E3E50
+int SpriteMinimumScaledWidth;
+// RECOVERY_OBJECT: v2 0x009B6620 0x009B6624 ?SpriteMinimumScaledHeight@@3HA 0x005E3E50
+int SpriteMinimumScaledHeight;
+
+// The fill ends at 0x9B4758; that address is a separate blitter scalar,
+// not another table. The clipping buffers end at independently used colour
+// and pointer storage (0x9B53E0 and 0x9B606C), respectively.
+// RECOVERY_OBJECT: v2 0x009B3AD8 0x009B4758 ?SpriteScalingSteps@@3PAHA 0x005EB20F
+int SpriteScalingSteps[SpriteScalingTableCount];
+// RECOVERY_OBJECT: v2 0x009B4760 0x009B53E0 ?SpriteClippedYSteps@@3PAHA 0x005EABBF
+int SpriteClippedYSteps[SpriteScalingTableCount];
+// RECOVERY_OBJECT: v2 0x009B53EC 0x009B606C ?SpriteClippedXSteps@@3PAHA 0x005EAB0F
+int SpriteClippedXSteps[SpriteScalingTableCount];
+
+// ORIGINAL: 0x005EB20F ?fill_scaling_table@Sprite@@QAEXXZ 0x005EB20F-0x005EB294
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5EB20F..5EB294 divides larger by smaller scale operands, biases error by quotient parity, and fills9B3AD8 until9B4758. Integer error operations wrap32bits before signed branches; cache publication belongs to callers.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the shared800-entry scale-step table generator with its original quotient-parity phase."}
+void Sprite::fill_scaling_table() {
+    const int larger = SpriteScaleNumerator > SpriteScaleDenominator
+        ? SpriteScaleNumerator : SpriteScaleDenominator;
+    const int smaller = SpriteScaleNumerator < SpriteScaleDenominator
+        ? SpriteScaleNumerator : SpriteScaleDenominator;
+    int quotient, twice_remainder, twice_divisor, error;
+    if (smaller > 1) {
+        quotient = larger / smaller;
+        twice_remainder = static_cast<int>(static_cast<uint32_t>(larger % smaller) * 2u);
+        twice_divisor = static_cast<int>(static_cast<uint32_t>(smaller) * 2u);
+        error = static_cast<int>(static_cast<uint32_t>(twice_remainder >> 1) -
+                                 static_cast<uint32_t>(twice_divisor));
+    } else {
+        quotient = larger;
+        twice_remainder = twice_divisor = error = 0;
+    }
+    // Original integer error accumulation wraps at 32 bits before its signed
+    // branch. Positive scale operands alone do not guarantee no overflow.
+    if (quotient & 1)
+        error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(larger));
+    for (int i = 0; i < SpriteScalingTableCount; ++i) {
+        if (smaller == 1) {
+            SpriteScalingSteps[i] = quotient;
+        } else {
+            error = static_cast<int>(static_cast<uint32_t>(error) + static_cast<uint32_t>(twice_remainder));
+            SpriteScalingSteps[i] = quotient;
+            if (error > 0) {
+                error = static_cast<int>(static_cast<uint32_t>(error) - static_cast<uint32_t>(twice_divisor));
+                SpriteScalingSteps[i] = static_cast<int>(static_cast<uint32_t>(quotient) + 1u);
+            }
+        }
+    }
+}
+
+// Intersected, nonempty rectangles and accesses within the 800-step bank are
+// caller preconditions. The original helpers do not clamp oversized requests.
+// Expansion maps each input pixel/row to a run of output pixels/rows; the
+// clipped head and tail may shorten those runs. Output stores retain order
+// even when a caller supplies aliased output pointers.
+static int *sprite_clip_expand(int skip, int extent, int *source_skip,
+    int *destination_skip, int *source_count, int *destination_count, int *table) {
+    if (extent == 0) return 0;
+    *destination_count = extent;
+    *destination_skip = skip;
+    int index = 0;
+    while (skip > 0) {
+        skip -= SpriteScalingSteps[index];
+        ++index;
+    }
+    const int *input = SpriteScalingSteps + index;
+    int count;
+    int *output;
+    if (skip < 0) {
+        const int remaining = -skip;
+        extent -= remaining;
+        --index;
+        table[0] = remaining;
+        *source_skip = index;
+        output = table + 1;
+        count = 1;
+    } else {
+        *source_skip = index;
+        output = table;
+        count = 0;
+    }
+    while (extent > 0) {
+        const int step = *input++;
+        *output++ = step;
+        extent -= step;
+        ++count;
+    }
+    if (extent < 0) output[-1] += extent;
+    *source_count = count;
+    return table;
+}
+
+// Shrink entries are source advances per output pixel/row. Unlike expansion,
+// the first and third output arguments are in destination coordinates.
+static int *sprite_clip_shrink(int skip, int extent, int *destination_skip,
+    int *source_skip, int *destination_count, int *source_count, int *table) {
+    if (extent == 0) return 0;
+    *destination_skip = skip;
+    *destination_count = extent;
+    *source_skip = 0;
+    int index = 0;
+    while (index < skip) {
+        *source_skip += SpriteScalingSteps[index];
+        ++index;
+    }
+    *source_count = 0;
+    for (int i = 0; i < extent; ++i) {
+        const int step = SpriteScalingSteps[index + i];
+        table[i] = step;
+        *source_count += step;
+    }
+    return table;
+}
+
+// ORIGINAL: 0x005EAB0F ?get_clipped_x_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAB0F-0x005EABB7
+// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B53EC and caller5E5244 consumes EAX as an int-table pointer. It clips partial first/last runs and reports source and destination extents, retaining ordered alias-visible output stores.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the actual X run table."}
+// symbol    ?get_clipped_x_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+int *Sprite::get_clipped_x_table_expand(RECT *full, RECT *clipped, int *source_skip,
+    int *destination_skip, int *source_count, int *destination_count) {
+    return sprite_clip_expand(clipped->left - full->left, clipped->right - clipped->left,
+        source_skip, destination_skip, source_count, destination_count, SpriteClippedXSteps);
+}
+
+// ORIGINAL: 0x005EABBF ?get_clipped_y_table_expand@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EABBF-0x005EAC69
+// RECOVERY_BINDING: v1 {"evidence": ["Original returns9B4760 and caller5E5285 consumes EAX as an int-table pointer. Top/bottom coordinate counterpart of5EAB0F with its own scratch table.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover expansion clipping as a typed pointer to the independent Y run table."}
+// symbol    ?get_clipped_y_table_expand@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+int *Sprite::get_clipped_y_table_expand(RECT *full, RECT *clipped, int *source_skip,
+    int *destination_skip, int *source_count, int *destination_count) {
+    return sprite_clip_expand(clipped->top - full->top, clipped->bottom - clipped->top,
+        source_skip, destination_skip, source_count, destination_count, SpriteClippedYSteps);
+}
+
+// ORIGINAL: 0x005EAC6F ?get_clipped_x_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EAC6F-0x005EACFB
+// RECOVERY_BINDING: v1 {"evidence": ["Original computes source prefix skip and total source advances from9B3AD8; returned9B53EC is consumed as a pointer by5E503C. Output roles differ from expansion and retain alias-visible writes.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking X clipping using actual source-advance entries."}
+// symbol    ?get_clipped_x_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+int *Sprite::get_clipped_x_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
+    int *source_skip, int *destination_count, int *source_count) {
+    return sprite_clip_shrink(clipped->left - full->left, clipped->right - clipped->left,
+        destination_skip, source_skip, destination_count, source_count, SpriteClippedXSteps);
+}
+
+// ORIGINAL: 0x005EACFF ?get_clipped_y_table_shrink@Sprite@@QAEHPAURECT@@PAURECT@@PAHPAHPAHPAH@Z 0x005EACFF-0x005EAD8D
+// RECOVERY_BINDING: v1 {"evidence": ["Original top/bottom counterpart of5EAC6F returns9B4760. Callers read one int entry per row but pixel kernels explicitly consume its low byte.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover shrinking Y clipping with an independent source-advance table."}
+// symbol    ?get_clipped_y_table_shrink@Sprite@@QAEPAHPAUtagRECT@@0PAH111@Z
+int *Sprite::get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
+    int *source_skip, int *destination_count, int *source_count) {
+    return sprite_clip_shrink(clipped->top - full->top, clipped->bottom - clipped->top,
+        destination_skip, source_skip, destination_count, source_count, SpriteClippedYSteps);
+}
+
+// The blitters own per-draw cursors and pitches locally; only scale decisions
+// and their reusable lookup tables are shared. Pixel loops preserve source
+// order, including overlapping source/destination and expansion replication.
+// ORIGINAL: 0x005E3E00 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHHHH@Z 0x005E3E00-0x005E3E50 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5E3E00 saves696D18/1C, substitutes final two parameters, calls5E3E50 with destination/key/x/y/color, restores denominator then numerator and returns result. Retain the claimed same-span seed and its restoration obligation; this binding is not a new claim.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the genuine mono scaling overload rather than changing global layout or copying an opaque seed class."}
+// symbol    ?draw_mono@Sprite@@QAEHPAVBuffer@@HHHHHH@Z
+int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
+                      int color, int numerator, int denominator) {
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = numerator;
+    SpriteScaleDenominator = denominator;
+    const int result = draw_mono(destination, transparent, x, y, color);
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
+    return result;
+}
+
+// ORIGINAL: 0x005E3E50 ?draw_mono@Sprite@@QAEHPAUBuffer@@HHHH@Z 0x005E3E50-0x005E4ADA
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned3210-byte worker loads file-backed sprites through9B6080; software paths cover1:1, shrinking and expansion. Initial unscaled top skip uses logical width while subsequent rows use pitch. Scaled origins truncate coordinate+offset*ratio, not scaled coordinates. Preserve final free_data and source-byte/run ordering; local loop scratch replaces assembler scratch, not shared scale owners.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover the monochrome sprite blitter through actual Sprite storage, Buffer locking and scale tables."}
+// symbol    ?draw_mono@Sprite@@QAEHPAVBuffer@@HHHH@Z
+int Sprite::draw_mono(Buffer *destination, int transparent, int x, int y,
+                      int color) {
+    if (ppszFileName_ != 0) {
+        const int loaded = g_BUFFER.load_pcx(ppszFileName_, 0, 10, 236);
+        if (loaded != 0) return loaded;
+        const int result = g_BUFFER.draw_mono(destination, transparent, x, y,
+            color, SpriteScaleNumerator, SpriteScaleDenominator);
+        g_BUFFER.close();
+        return result;
+    }
+    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0)
+        return 3;
+
+    if (SpriteScaleNumerator != SpriteScaleDenominator &&
+        (SpriteCachedScaleNumerator != SpriteScaleNumerator ||
+         SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
+        // FILD/FIDIV followed by the one float32 publication at5E3F2F.
+        SpriteScalingRatio = static_cast<float>(
+            static_cast<double>(SpriteScaleNumerator) / SpriteScaleDenominator);
+        if (SpriteScalingRatio > 4.0) {
+            destination->free_data(1);
+            return 0;
+        }
+        fill_scaling_table();
+        SpriteCachedScaleNumerator = SpriteScaleNumerator;
+        SpriteCachedScaleDenominator = SpriteScaleDenominator;
+    }
+
+    const unsigned char fill = static_cast<unsigned char>(color);
+    const unsigned char key = static_cast<unsigned char>(transparent);
+    const int source_pitch = iSpriteWidth2_;
+    int destination_pitch = static_cast<int>(destination->stride_);
+    const unsigned char *const scaled_source =
+        reinterpret_cast<const unsigned char *>(pcBits_);
+
+    if (SpriteScaleNumerator == SpriteScaleDenominator) {
+        RECT original;
+        original.top = y + iTopOffset_;
+        original.left = x + iLeftOffset_;
+        original.right = original.left + iSpriteWidth_;
+        original.bottom = original.top + iSpriteHeight_;
+        RECT clipped = original;
+        if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        // Deliberate original asymmetry: the initial clipped top skip uses
+        // logical width (+10), while subsequent rows advance by pitch (+C).
+        const unsigned char *source_row =
+            reinterpret_cast<const unsigned char *>(pcBits_) +
+            (clipped.left - original.left) +
+            (clipped.top - original.top) * iSpriteWidth_;
+        unsigned char *destination_row =
+            static_cast<unsigned char *>(destination->locked_bits_) +
+            clipped.left + clipped.top * destination_pitch;
+        const int columns = clipped.right - clipped.left;
+        const int rows = clipped.bottom - clipped.top;
+        for (int row = 0; row < rows; ++row) {
+            for (int column = 0; column < columns; ++column) {
+                if (source_row[column] != key)
+                    destination_row[column] = fill;
+            }
+            if (row + 1 < rows) {
+                source_row += source_pitch;
+                destination_row += destination_pitch;
+            }
+        }
+        destination->free_data(1);
+        return 0;
+    }
+
+    // The integer argument coordinates are not themselves scaled. Original
+    // x87 keeps the multiply/add live through _ftol; avoid float32 products.
+    const int scaled_height = static_cast<int>(
+        static_cast<double>(iSpriteHeight_) * SpriteScalingRatio);
+    const int scaled_width = static_cast<int>(
+        static_cast<double>(iSpriteWidth_) * SpriteScalingRatio);
+    const int top = static_cast<int>(
+        static_cast<double>(y) + static_cast<double>(iTopOffset_) * SpriteScalingRatio);
+    const int left = static_cast<int>(
+        static_cast<double>(x) + static_cast<double>(iLeftOffset_) * SpriteScalingRatio);
+    RECT original = {left, top, left + scaled_width, top + scaled_height};
+    RECT clipped = original;
+    if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+        destination->free_data(1);
+        return 0;
+    }
+    // The first clip is an early rejection only. The second call below
+    // really recomputes from the original bounds; it must not be removed.
+    unsigned char *const destination_bits =
+        static_cast<unsigned char *>(destination->locked_bits_);
+    const int base_offset = original.left + original.top * destination_pitch;
+    destination_pitch = static_cast<int>(destination->stride_);
+    int source_x, source_y, destination_x, destination_y;
+    int source_columns, source_rows, destination_columns, destination_rows;
+
+    if (SpriteScaleNumerator < SpriteScaleDenominator) {
+        if (original.right - original.left < SpriteMinimumScaledWidth ||
+            original.bottom - original.top < SpriteMinimumScaledHeight) {
+            destination->free_data(1);
+            return 0;
+        }
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+            &destination_x, &source_x, &destination_columns, &source_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+            &destination_y, &source_y, &destination_rows, &source_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < destination_rows; ++row) {
+            const unsigned char *source = source_row;
+            for (int column = 0; column < destination_columns; ++column) {
+                if (*source != key) destination_row[column] = fill;
+                if (column + 1 < destination_columns) source += columns[column];
+            }
+            // MOV DL,[row_table]; ADD row_table,4 at5E4477..447C.
+            // Nonzero low-byte row skips are the finite original domain.
+            if (row + 1 < destination_rows) {
+                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+                destination_row += destination_pitch;
+            }
+        }
+    } else {
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+            &source_x, &destination_x, &source_columns, &destination_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+            &source_y, &destination_y, &source_rows, &destination_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < source_rows; ++row) {
+            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+            const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
+            int output_column = 0;
+            for (int column = 0; column < source_columns; ++column) {
+                if (source_row[column] != key) {
+                    for (int repeat = 0; repeat < repeats; ++repeat)
+                        for (int pixel = 0; pixel < columns[column]; ++pixel)
+                            destination_row[repeat * destination_pitch + output_column + pixel] = fill;
+                }
+                output_column += columns[column];
+            }
+            if (row + 1 < source_rows) {
+                source_row += source_pitch;
+                destination_row += repeats * destination_pitch;
+            }
+        }
+    }
+    destination->free_data(1);
+    return 0;
+}
+
+// ORIGINAL: 0x005E4B9A ?draw@Sprite@@QAEHPAUBuffer@@HHH@Z 0x005E4B9A-0x005E5833
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned worker loads file-backed sprites through Buffer9B6080, otherwise uses real destination lock/clip/pitch and the scale-table helpers. Initial top clipping uses pitch. Each expanded source byte is sampled once and replicated in the original per-source-pixel row order.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Replace the original-address Sprite draw forwarder with genuine clipped transparent pixel copying."}
+// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHH@Z
+int Sprite::draw(Buffer *destination, int transparent, int x, int y) {
+    if (ppszFileName_ != 0) {
+        const int loaded = g_BUFFER.load_pcx(ppszFileName_, 0, 10, 236);
+        if (loaded != 0) return loaded;
+        const int result = g_BUFFER.draw(destination, transparent, x, y,
+            SpriteScaleNumerator, SpriteScaleDenominator);
+        g_BUFFER.close();
+        return result;
+    }
+    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0)
+        return 3;
+
+    if (SpriteScaleNumerator != SpriteScaleDenominator &&
+        (SpriteCachedScaleNumerator != SpriteScaleNumerator ||
+         SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
+        // FILD/FIDIV followed by the one float32 publication at5E3F2F.
+        SpriteScalingRatio = static_cast<float>(
+            static_cast<double>(SpriteScaleNumerator) / SpriteScaleDenominator);
+        if (SpriteScalingRatio > 4.0) {
+            destination->free_data(1);
+            return 0;
+        }
+        fill_scaling_table();
+        SpriteCachedScaleNumerator = SpriteScaleNumerator;
+        SpriteCachedScaleDenominator = SpriteScaleDenominator;
+    }
+
+    const unsigned char key = static_cast<unsigned char>(transparent);
+    const int source_pitch = iSpriteWidth2_;
+    int destination_pitch = static_cast<int>(destination->stride_);
+    const unsigned char *const scaled_source =
+        reinterpret_cast<const unsigned char *>(pcBits_);
+
+    if (SpriteScaleNumerator == SpriteScaleDenominator) {
+        RECT original;
+        original.top = y + iTopOffset_;
+        original.left = x + iLeftOffset_;
+        original.right = original.left + iSpriteWidth_;
+        original.bottom = original.top + iSpriteHeight_;
+        RECT clipped = original;
+        if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        // The plain-color worker uses source pitch for the initial top clip.
+        const unsigned char *source_row =
+            reinterpret_cast<const unsigned char *>(pcBits_) +
+            (clipped.left - original.left) +
+            (clipped.top - original.top) * source_pitch;
+        unsigned char *destination_row =
+            static_cast<unsigned char *>(destination->locked_bits_) +
+            clipped.left + clipped.top * destination_pitch;
+        const int columns = clipped.right - clipped.left;
+        const int rows = clipped.bottom - clipped.top;
+        for (int row = 0; row < rows; ++row) {
+            for (int column = 0; column < columns; ++column) {
+                if (source_row[column] != key)
+                    destination_row[column] = source_row[column];
+            }
+            if (row + 1 < rows) {
+                source_row += source_pitch;
+                destination_row += destination_pitch;
+            }
+        }
+        destination->free_data(1);
+        return 0;
+    }
+
+    // The integer argument coordinates are not themselves scaled. Original
+    // x87 keeps the multiply/add live through _ftol; avoid float32 products.
+    const int scaled_height = static_cast<int>(
+        static_cast<double>(iSpriteHeight_) * SpriteScalingRatio);
+    const int scaled_width = static_cast<int>(
+        static_cast<double>(iSpriteWidth_) * SpriteScalingRatio);
+    const int top = static_cast<int>(
+        static_cast<double>(y) + static_cast<double>(iTopOffset_) * SpriteScalingRatio);
+    const int left = static_cast<int>(
+        static_cast<double>(x) + static_cast<double>(iLeftOffset_) * SpriteScalingRatio);
+    RECT original = {left, top, left + scaled_width, top + scaled_height};
+    RECT clipped = original;
+    if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+        destination->free_data(1);
+        return 0;
+    }
+    // The first clip is an early rejection only. The second call below
+    // really recomputes from the original bounds; it must not be removed.
+    unsigned char *const destination_bits =
+        static_cast<unsigned char *>(destination->locked_bits_);
+    const int base_offset = original.left + original.top * destination_pitch;
+    destination_pitch = static_cast<int>(destination->stride_);
+    int source_x, source_y, destination_x, destination_y;
+    int source_columns, source_rows, destination_columns, destination_rows;
+
+    if (SpriteScaleNumerator < SpriteScaleDenominator) {
+        if (original.right - original.left < SpriteMinimumScaledWidth ||
+            original.bottom - original.top < SpriteMinimumScaledHeight) {
+            destination->free_data(1);
+            return 0;
+        }
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+            &destination_x, &source_x, &destination_columns, &source_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+            &destination_y, &source_y, &destination_rows, &source_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < destination_rows; ++row) {
+            const unsigned char *source = source_row;
+            for (int column = 0; column < destination_columns; ++column) {
+                if (*source != key) destination_row[column] = *source;
+                if (column + 1 < destination_columns) source += columns[column];
+            }
+            // MOV DL,[row_table]; ADD row_table,4 at5E4477..447C.
+            // Nonzero low-byte row skips are the finite original domain.
+            if (row + 1 < destination_rows) {
+                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+                destination_row += destination_pitch;
+            }
+        }
+    } else {
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+            &source_x, &destination_x, &source_columns, &destination_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+            &source_y, &destination_y, &source_rows, &destination_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < source_rows; ++row) {
+            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+            const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
+            int output_column = 0;
+            for (int column = 0; column < source_columns; ++column) {
+                const unsigned char pixel_value = source_row[column];
+                if (pixel_value != key) {
+                    for (int repeat = 0; repeat < repeats; ++repeat)
+                        for (int pixel = 0; pixel < columns[column]; ++pixel)
+                            destination_row[repeat * destination_pitch + output_column + pixel] = pixel_value;
+                }
+                output_column += columns[column];
+            }
+            if (row + 1 < source_rows) {
+                source_row += source_pitch;
+                destination_row += repeats * destination_pitch;
+            }
+        }
+    }
+    destination->free_data(1);
+    return 0;
+}
+
+// ORIGINAL: 0x005E5833 ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E5833-0x005E6652
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned worker tests transparency before source zero. Unit and shrink paths remap individual destination pixels for zero sources. Expansion5E6097/6268/63F3/6546 samples table[first destination] once per source pixel and replicates that cached color over its block. No file-backed load path exists in this worker.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Replace the destination-remap Sprite forwarder with actual clipped pixel operations."}
+// symbol    ?draw_dest@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
+int Sprite::draw_dest(Buffer *destination, int transparent, int x, int y,
+                      unsigned char *table) {
+    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0)
+        return 3;
+
+    if (SpriteScaleNumerator != SpriteScaleDenominator &&
+        (SpriteCachedScaleNumerator != SpriteScaleNumerator ||
+         SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
+        // FILD/FIDIV followed by the one float32 publication at5E3F2F.
+        SpriteScalingRatio = static_cast<float>(
+            static_cast<double>(SpriteScaleNumerator) / SpriteScaleDenominator);
+        if (SpriteScalingRatio > 4.0) {
+            destination->free_data(1);
+            return 0;
+        }
+        fill_scaling_table();
+        SpriteCachedScaleNumerator = SpriteScaleNumerator;
+        SpriteCachedScaleDenominator = SpriteScaleDenominator;
+    }
+
+    const unsigned char key = static_cast<unsigned char>(transparent);
+    const int source_pitch = iSpriteWidth2_;
+    int destination_pitch = static_cast<int>(destination->stride_);
+    const unsigned char *const scaled_source =
+        reinterpret_cast<const unsigned char *>(pcBits_);
+
+    if (SpriteScaleNumerator == SpriteScaleDenominator) {
+        RECT original;
+        original.top = y + iTopOffset_;
+        original.left = x + iLeftOffset_;
+        original.right = original.left + iSpriteWidth_;
+        original.bottom = original.top + iSpriteHeight_;
+        RECT clipped = original;
+        if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        // The plain-color worker uses source pitch for the initial top clip.
+        const unsigned char *source_row =
+            reinterpret_cast<const unsigned char *>(pcBits_) +
+            (clipped.left - original.left) +
+            (clipped.top - original.top) * source_pitch;
+        unsigned char *destination_row =
+            static_cast<unsigned char *>(destination->locked_bits_) +
+            clipped.left + clipped.top * destination_pitch;
+        const int columns = clipped.right - clipped.left;
+        const int rows = clipped.bottom - clipped.top;
+        for (int row = 0; row < rows; ++row) {
+            for (int column = 0; column < columns; ++column) {
+                if (source_row[column] != key)
+                    destination_row[column] = source_row[column] == 0
+                        ? table[destination_row[column]] : source_row[column];
+            }
+            if (row + 1 < rows) {
+                source_row += source_pitch;
+                destination_row += destination_pitch;
+            }
+        }
+        destination->free_data(1);
+        return 0;
+    }
+
+    // The integer argument coordinates are not themselves scaled. Original
+    // x87 keeps the multiply/add live through _ftol; avoid float32 products.
+    const int scaled_height = static_cast<int>(
+        static_cast<double>(iSpriteHeight_) * SpriteScalingRatio);
+    const int scaled_width = static_cast<int>(
+        static_cast<double>(iSpriteWidth_) * SpriteScalingRatio);
+    const int top = static_cast<int>(
+        static_cast<double>(y) + static_cast<double>(iTopOffset_) * SpriteScalingRatio);
+    const int left = static_cast<int>(
+        static_cast<double>(x) + static_cast<double>(iLeftOffset_) * SpriteScalingRatio);
+    RECT original = {left, top, left + scaled_width, top + scaled_height};
+    RECT clipped = original;
+    if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+        destination->free_data(1);
+        return 0;
+    }
+    // The first clip is an early rejection only. The second call below
+    // really recomputes from the original bounds; it must not be removed.
+    unsigned char *const destination_bits =
+        static_cast<unsigned char *>(destination->locked_bits_);
+    const int base_offset = original.left + original.top * destination_pitch;
+    destination_pitch = static_cast<int>(destination->stride_);
+    int source_x, source_y, destination_x, destination_y;
+    int source_columns, source_rows, destination_columns, destination_rows;
+
+    if (SpriteScaleNumerator < SpriteScaleDenominator) {
+        if (original.right - original.left < SpriteMinimumScaledWidth ||
+            original.bottom - original.top < SpriteMinimumScaledHeight) {
+            destination->free_data(1);
+            return 0;
+        }
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+            &destination_x, &source_x, &destination_columns, &source_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+            &destination_y, &source_y, &destination_rows, &source_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < destination_rows; ++row) {
+            const unsigned char *source = source_row;
+            for (int column = 0; column < destination_columns; ++column) {
+                if (*source != key)
+                    destination_row[column] = *source == 0
+                        ? table[destination_row[column]] : *source;
+                if (column + 1 < destination_columns) source += columns[column];
+            }
+            // MOV DL,[row_table]; ADD row_table,4 at5E4477..447C.
+            // Nonzero low-byte row skips are the finite original domain.
+            if (row + 1 < destination_rows) {
+                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+                destination_row += destination_pitch;
+            }
+        }
+    } else {
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+            &source_x, &destination_x, &source_columns, &destination_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+            &source_y, &destination_y, &source_rows, &destination_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < source_rows; ++row) {
+            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+            const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
+            int output_column = 0;
+            for (int column = 0; column < source_columns; ++column) {
+                const unsigned char pixel_value = source_row[column];
+                if (pixel_value != key) {
+                    // Expanded zero pixels sample the first destination once,
+                    // then replicate that result over the whole output block.
+                    const unsigned char mapped = pixel_value == 0
+                        ? table[destination_row[output_column]] : pixel_value;
+                    for (int repeat = 0; repeat < repeats; ++repeat)
+                        for (int pixel = 0; pixel < columns[column]; ++pixel)
+                            {
+                            unsigned char &target = destination_row[
+                                repeat * destination_pitch + output_column + pixel];
+                            target = mapped;
+                        }
+                }
+                output_column += columns[column];
+            }
+            if (row + 1 < source_rows) {
+                source_row += source_pitch;
+                destination_row += repeats * destination_pitch;
+            }
+        }
+    }
+    destination->free_data(1);
+    return 0;
+}
 
 // Shared four-byte sprite-memory counter: the constructor at 0x005E37E6/
 // 0x005E37EF reads/writes it, and close at 0x005E3833/0x005E383F updates
@@ -133,7 +831,7 @@ int SpriteDrawOriginY = 1;  // 0x00696D1C
 int SpriteMemoryUsed = 0;
 
 /*
-Purpose: Draw the sprite with a temporarily substituted draw origin.
+Purpose: Draw the sprite with a temporarily substituted uniform scale ratio.
 // ORIGINAL: 0x005E4B4A ?draw@Sprite@@QAEHPAUBuffer@@HHHHH@Z 0x005E4B4A-0x005E4B95 BYTE_EXACT
 // symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHH@Z
 // size      75 bytes
@@ -146,15 +844,15 @@ Return Value: Whatever the four-argument overload returns
 Status: Complete with a temporary dependency on the four-argument overload
 */
 int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
-    // The origin is swapped for the duration of the call and restored in the
+    // The ratio is swapped for the duration of the call and restored in the
     // reverse order the legacy body uses.
-    const int saved_x = SpriteDrawOriginX;
-    const int saved_y = SpriteDrawOriginY;
-    SpriteDrawOriginX = x;
-    SpriteDrawOriginY = y;
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = x;
+    SpriteScaleDenominator = y;
     const int result = draw(buffer, a, b, c);
-    SpriteDrawOriginY = saved_y;
-    SpriteDrawOriginX = saved_x;
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
     return result;
 }
 
@@ -943,8 +1641,7 @@ void TexHeap::shutdown() {
 }
 
 /*
-Purpose: Draw into a destination buffer at (x, y) by substituting the pair
-         into the class draw origin for the duration of the call, then
+Purpose: Draw into a destination buffer with scale ratio x/y for this call, then
          restoring what was there. The five-argument overload does the work.
 // ORIGINAL: 0x005E6652 ?draw_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E6652-0x005E66A2 BYTE_EXACT
 // symbol    ?draw_dest@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
@@ -958,19 +1655,19 @@ Status: Complete
 */
 int Sprite::draw_dest(Buffer *buffer, int a, int b, int c, int x, int y,
                       unsigned char *bits) {
-    const int saved_x = SpriteDrawOriginX;
-    const int saved_y = SpriteDrawOriginY;
-    SpriteDrawOriginX = x;
-    SpriteDrawOriginY = y;
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = x;
+    SpriteScaleDenominator = y;
     const int result = draw_dest(buffer, a, b, c, bits);
-    SpriteDrawOriginY = saved_y;
-    SpriteDrawOriginX = saved_x;
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
     return result;
 }
 
 /*
-Purpose: Draw into a destination buffer through the unk2 worker at (x, y),
-         substituting the pair into the class draw origin for the duration of
+Purpose: Draw into a destination buffer through the unk2 worker with ratio x/y,
+         substituting the pair into the class scale for the duration of
          the call. Byte for byte the same wrapper as draw_dest above.
 // ORIGINAL: 0x005E816C ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E816C-0x005E81BC BYTE_EXACT
 // symbol    ?draw_dest_unk2@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
@@ -984,19 +1681,19 @@ Status: Complete
 */
 int Sprite::draw_dest_unk2(Buffer *buffer, int a, int b, int c, int x, int y,
                            unsigned char *bits) {
-    const int saved_x = SpriteDrawOriginX;
-    const int saved_y = SpriteDrawOriginY;
-    SpriteDrawOriginX = x;
-    SpriteDrawOriginY = y;
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = x;
+    SpriteScaleDenominator = y;
     const int result = draw_dest_unk2(buffer, a, b, c, bits);
-    SpriteDrawOriginY = saved_y;
-    SpriteDrawOriginX = saved_x;
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
     return result;
 }
 
 /*
-Purpose: Draw into a destination buffer through the multi-table worker at
-         (x, y), substituting the pair into the class draw origin for the
+Purpose: Draw into a destination buffer through the multi-table worker with
+         ratio x/y, substituting the pair into the class scale for the
          duration of the call. Byte for byte the same wrapper as draw_dest
          above.
 // ORIGINAL: 0x005E8FA5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E8FA5-0x005E8FF5 BYTE_EXACT
@@ -1011,12 +1708,12 @@ Status: Complete
 */
 int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
                                   int y, unsigned char *bits) {
-    const int saved_x = SpriteDrawOriginX;
-    const int saved_y = SpriteDrawOriginY;
-    SpriteDrawOriginX = x;
-    SpriteDrawOriginY = y;
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = x;
+    SpriteScaleDenominator = y;
     const int result = draw_multi_table_dest(buffer, a, b, c, bits);
-    SpriteDrawOriginY = saved_y;
-    SpriteDrawOriginX = saved_x;
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
     return result;
 }

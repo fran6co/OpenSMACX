@@ -1,0 +1,28 @@
+{
+  "event_id": "0fe8866fdd9e96fbe5996c634f9ee54423dc90fe9589bcfb640519058fbd9b15",
+  "payload": {
+    "affects": [
+      "entity-08159b4b53bc2401ddb7e4f0eea363e3f8e8d982f4debd560c22f81cf2b25c13",
+      "entity-3e51e221834c501c9dd2cb8f41603062da26b1b8e56feb3d4e4ffe1075d218e0",
+      "entity-69c52b8e7b299fc0ab2c5563803c3c2379cc036e5d60154b7d523ef059de7308",
+      "entity-89bf7e88839b47357b4cc2ffc52a8fc9c780107afc2a49c9c68de62a3538fdde"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-46778a49a92c459a877461ae96a8aaf8",
+    "evidence": [
+      "The pinned executable constructs Vector[8] position and step arrays plus a singleton at 0x0055A197-0x0055A1D9, and exception cleanup at 0x0065FF89-0x0065FFBC directly reuses destructor 0x0055B750; the cleanup span 0x0065FF70-0x0065FFC7 confirms these callbacks are genuine product dependencies.",
+      "src/veh.cpp and src/veh.h contain no product veh_scoot declaration or definition. The only available body is the seed src/unrecovered/0055a150.cpp, which disables movement with scootFrames=0 and uses raw fixed-address and extern-C scaffolding.",
+      "The pinned interpolation evidence establishes typed Vector subtraction, reciprocal scaling, accumulation, capture/restore, frame timing, and lifecycle cleanup. Replacing this with a partial loop, dummy callback use, or fixed-address wrapper would not recover the original operation.",
+      "The required product interfaces vehdraw_turn_start, vehdraw_scoot_start, and veh_draw have no current product declarations or definitions. WorldWin::set_detail_map and the protected GraphicWin::soft_update forwarding path belong to outside or pending owners, so they cannot be repaired within this authorization.",
+      "The original reads animation preference storage at 0x0094581C and updates state at 0x0068E564, 0x0068E568, and 0x0068E56C; current product source has no binding for the preference, while the state slots are consumed by other original routines. The seed configuration address is insufficient evidence for a product global.",
+      "Vector constructor, destructor, and close remain native-unknown as standalone definitions even though the inline arithmetic and layout are supported; the caller's direct array cleanup and singleton destructor jump require a genuine emission/binding decision rather than manufactured callback witnesses."
+    ],
+    "hypothesis": "An honest veh_scoot recovery is blocked in this bounded attempt by unresolved product storage and outside rendering/lifecycle interfaces. Preserve the supported Vector model and pending obligations; do not add a partial implementation or synthetic bindings until the coordinator resolves these concrete ownership and emission dependencies.",
+    "kind": "discovery"
+  },
+  "previous_event": "f5b28af7e2e960acc4e75853e721bdc7287bd704fba2af00943ca81c7d82316d",
+  "request_id": "worker-46778a49a92c459a877461ae96a8aaf8",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:vector-value-semantics"
+}

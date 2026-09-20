@@ -1,0 +1,33 @@
+{
+  "event_id": "caa9305049ac12c1eb720eeddb3d3b6a5acc3e66d680cc3796bec39b44da26bb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_map_window_storage.py",
+      "src/console.h"
+    ],
+    "evidence": [
+      "Pinned MapWinTable7D3C3C..7D3C5C is eight zero-initialized pointers. Existing product system_init populates slots1..7 with new MapWin and then publishes ConsoleGlobal in slot0. Unify source-owned table with existing mapwin consumers and console_map_win, which currently independently dereferences the same fixed address. Remove obsolete accessor/macro rather than leaving a second storage view. Shutdown58F250 and window initialization dependencies remain explicitly unfinished; this storage correction is not runtime acceptance.",
+      "Caller recovery exposed MapWin::tile_to_pixel462F00 incorrectly dereferencing absolute0x1DDD4 instead of the receiver member and using y in the out-of-range horizontal fallback. Authorize correction only after direct pinned instruction review, with focused actual-source semantic controls; preserve historical claims and unaffected mappings.",
+      "These files are root-owned while renderer worker owns veh.cpp/h/worldwin.h. All new bindings use native writer and original task baseline remains unchanged. Compile/link and affected body/structure/reference checks required before reviewed integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 8207420,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4599552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7315b103a259565eb3c739842b887321601dbe34414f52cc294655664154bd93",
+  "request_id": "vector-caller-map-storage-20260920",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:vector-value-semantics"
+}

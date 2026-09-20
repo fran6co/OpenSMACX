@@ -153,7 +153,7 @@ CASES = (
          lambda e: e.replace("src/radiobutton.cpp", "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_1;",
                              "Sprite *RadioButtonDefault1 = &g_RADIOBUTTON_SPRITE_2;")),
     Case("dropped_initial_value", "project:trailing-address-initial-values", "fail",
-         lambda e: e.replace("src/sprite.cpp", "SpriteDrawOriginX = 1;", "SpriteDrawOriginX;")),
+         lambda e: e.replace("src/sprite.cpp", "SpriteScaleNumerator = 1;", "SpriteScaleNumerator;")),
     Case("image_pin", None, "unknown", wrong_image_pin),
     Case("source_symbol_missing", "symbols", "unknown",
          lambda e: symbol(e, "?totally_bogus_harness@@YAXXZ"),
@@ -419,3 +419,31 @@ def test_damage_anchor_still_applies_and_restores_private_source(case, tmp_path)
         case.mutate(edits)
         assert edits.original and any((tmp_path / name).read_bytes() != original[name] for name in edits.original)
     assert all((tmp_path / name).read_bytes() == data for name, data in original.items())
+
+
+def test_renamed_scale_initializer_damage_is_still_observed(tmp_path):
+    # Merely finding the renamed variable is insufficient: the conventional
+    # initializer lens also requires its trailing address hint. Native bounded
+    # object bindings strengthen that evidence but do not replace this stage's
+    # independent control until the stage itself is retired.
+    from match_recovery.initializer_check import check_initializers
+
+    image = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
+    if not image.is_file():
+        pytest.skip("pinned original required for initializer damage control")
+    for name in ("src/sprite.cpp", "src/IMAGE_PIN", "recovery/project.json"):
+        target = tmp_path / name
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes((ROOT / name).read_bytes())
+    before = check_initializers(tmp_path, image)
+    owner, = [row for row in before["observations"] if row["symbol"] == "SpriteScaleNumerator"]
+    assert owner["image_nonzero"] and not owner["source_zero"]
+    case = next(case for case in CASES if case.name == "dropped_initial_value")
+    with damage(tmp_path) as edits:
+        case.mutate(edits)
+        damaged = check_initializers(tmp_path, image)
+        assert damaged["result"] == "fail"
+        assert any(row["symbol"] == "SpriteScaleNumerator" for row in damaged["findings"])
+    restored = check_initializers(tmp_path, image)
+    assert restored["findings"] == before["findings"]
+    assert restored["observations"] == before["observations"]

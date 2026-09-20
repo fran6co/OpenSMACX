@@ -1,0 +1,48 @@
+{
+  "event_id": "95e57451c9fe1eea2ae47a8e566e78467f9b56e4b0c140f1dd556b2976e53e7b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Independent pinned helper inspection corrects provisional array start identities in revision27: scale steps9B3AD8..9B4758, clippedY9B4760..9B53E0 and clippedX9B53EC..9B606C are three800-int arrays. Fill terminates at9B4758; original draw5E52EB stores a separate scalar at9B4758. Do not create arrays at provisional9B4758 or9B53D8; historical scope is retained but those are not ownership claims.",
+      "Original Sprite draw5E4FDE/5E4FEC and mono equivalents compare scaled size against zero-initialized minimum width9B661C and height9B6620. Ratio calculation5E4C69..75 stores float9B6624; ratio/cache shared by the three authorized blitters. These actual owners are authorized after pinned initial-data verification; no opaque scratch-address views.",
+      "No change to task baseline, measurement policy or historical claims. Additional storage is part of the already-authorized Sprite dependency closure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 10176352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10179564,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10184220,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10184224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10184228,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "30ee165a0edf7b9ad7ad42ddf48f5e55bcb2f42e560d3fa59b946bb62748c76b",
+  "request_id": "vector-sprite-storage-extent-correction-20260920",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:vector-value-semantics"
+}

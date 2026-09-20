@@ -75,7 +75,10 @@ class WorldWin : public GraphicWin {
 
   // Storage the image proves is here: its own methods reach 0x239D4.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_239D0_[0x4];
+  // UNK3 (0x004C47F0) gates the projected detail-map viewport outline on
+  // this dword. Vehicle movement enables it; WorldWin/Console init clear it.
+  // RECOVERY_MEMBER: v1 WorldWin viewport_outline_enabled_ 0x239D0 0x004C47F0
+  uint32_t viewport_outline_enabled_;  // 0x239D0
 };
 
 

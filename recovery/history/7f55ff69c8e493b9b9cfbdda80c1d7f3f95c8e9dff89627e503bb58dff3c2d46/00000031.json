@@ -1,0 +1,75 @@
+{
+  "event_id": "e4852699826f18b583f797c3900fd91e7d9c174a0abd4e3e001f163f545d8d36",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_draw.py",
+      "recovery/tests/test_vehicle_scoot.py",
+      "src/infowin.h",
+      "src/sprite.h",
+      "src/veh.cpp",
+      "src/veh.h",
+      "src/wave.h"
+    ],
+    "evidence": [
+      "Sprite/Buffer dependency closure is retained in2acd993e: ten actual bodies with fresh build/link, protected-body checks and behavioral tests. Continue already-authorized veh_draw5594F0 and veh_scoot55A150, preserving their original spans including EH65FF70..65FFC7. Natural Vector arrays and singleton must produce their own lifetimes, not forced callback anchors. Task baseline remains unchanged.",
+      "Reuse existing sprite152/112 arrays, faction text/shadow arrays and Wave749C18; authorize only truthful public extern declarations and narrow Sprite veh_draw access. Publish actual signed preference94581C (independent INI588AA0 and strings68F4D0/E0 name FastUnitAnim) and Font pointer93FAE0, both initially zero. Source extent evidence must come from original load/store widths, not symbol spelling alone.",
+      "Independent original review shows Buffer black health-fill receives the same mutable RECT subsequently read and passed to foreground fill; preserve callback modifications. Draft stale-local rectangle reconstruction is rejected. Source reads damaged vehicle state after fill, then computes health without intervening callbacks.",
+      "Original veh_draw copies an unbounded rules label to four bytes then truncates to one character before bracket duplication. Current alpha loader does not enforce a short-label contract. Coordinator authorizes direct first-character initialization plus terminators, preserving valid displayed labels and preventing the original malformed-label overflow. Keep the real StringTable lookup and override ordering; null lookup remains unsupported. This safety correction and already-approved null-slot active initialization are not original-byte equivalence claims.",
+      "Root owns product source/journal/Git. Two workers may implement only the named independent host behavioral test files; test doubles establish bounded caller behavior, not native x87/EH or full-game acceptance. Freeze source and tests before serial native measurement. Existing MapWin draw_radius seam remains a pending dependency, not accepted rendering."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5608688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5611856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9721884,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9698016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7829408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7911288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6879728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6879760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7642136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "817a6273f6ba8cc5bbb74deca9e8e2a40499d256a646e78ed03de1ea9908be81",
+  "request_id": "vector-vehicle-callers-concrete-integration-20260920",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "77558864636e75e7fc098d7ce3f28ff9c8655a0ed0aa142b3343030ce71ff155",
+  "payload": {
+    "affects": [
+      "entity-3b2c3d928743865dc295ae96d06b30adcf16cd197a1ab732c5d26ed3e8775062",
+      "entity-d677dbd8cc0d679d411efa54a0727c5d82f0bccd152d45f93f4a5bea5ad48315"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-0cc61c1d6d8742f39f3c63623bbe27c9",
+    "evidence": [
+      "src/vector.h states that __mi and scale use evidence-backed Vector value returns, but their historical source markers retain the synthetic catalogue spellings.",
+      "src/vector.cpp retains the original markers while emitting current value-return symbols ?__mi@Vector@@QAE?AV1@AAV1@@Z and ?scale@Vector@@QAE?AV1@M@Z.",
+      "Fresh scoped restoration passed all six protected obligations, but the scoped candidate still reports the value-return __mi identity as unknown and requires coordinator migration of the historical bindings."
+    ],
+    "hypothesis": "The existing __mi and scale product bodies are structurally justified, but their historical mappings need coordinator-owned migration from synthetic output-parameter symbols to the value-return identities before native identity verification can complete.",
+    "kind": "discovery"
+  },
+  "previous_event": "f107db95714e1843f4d82f4cc3329af36088a58d53c239bc9dec1360d708cb8b",
+  "request_id": "worker-0cc61c1d6d8742f39f3c63623bbe27c9",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:vector-value-semantics"
+}

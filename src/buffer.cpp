@@ -3204,6 +3204,18 @@ int Buffer::draw(Buffer *destination, int index, int x, int y,
     return result;
 }
 
+// ORIGINAL: 0x005D8930 ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHHHH@Z 0x005D8930-0x005D8A28
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned248-byte wrapper receives destination then transparency, not a transparent destination pointer. Existing setup_buff_sprite owns the descriptor preamble; forwards all seven arguments to5E3E00, clears the borrowed pixel pointer and returns its result.", "Existing seed identity and extent retained against the pinned original; catalogue class/return spellings are provenance, not a substitute for emitted symbol facts or fresh measurements."], "reason": "Recover Buffer mono drawing through its actual borrowed Sprite descriptor."}
+// symbol    ?draw_mono@Buffer@@QAEHPAV1@HHHHHH@Z
+int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
+                      int colour, int numerator, int denominator) {
+    setup_buff_sprite(transparent);
+    int result = g_BUFFER_SPRITE.draw_mono(
+        destination, transparent, x, y, colour, numerator, denominator);
+    release_buff_sprite();
+    return result;
+}
+
 // DirectDraw surface vtable slots 0x19 (Lock) and 0x20 (Unlock), reached the
 // way win.cpp reaches its own: an explicit index through the interface's
 // vtable. A `VCall` shim would say the same thing in bytes and cost the
@@ -3964,7 +3976,10 @@ Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
 Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];  // 0x0075C218, 0x588 stride
 Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;  // 0x0077AA70
 Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
-Buffer g_BUFFER;  // 0x009B6080
+// File-backed Sprite draw stages through this Buffer: original 0x005E4BC3,
+// 0x005E4BFC and 0x005E4C09 use it for load_pcx, drawing and close.
+// RECOVERY_OBJECT: v1 0x009B6080 ?g_BUFFER@@3VBuffer@@A
+Buffer g_BUFFER;
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
 // constructed before WinMain by the CRT's dynamic-initializer walk

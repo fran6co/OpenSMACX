@@ -1,0 +1,44 @@
+{
+  "event_id": "745e322769f43768e51d2986bf67540a38bc35ecdadea2a1c49e4b959247fe87",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/vector.cpp",
+      "src/vector.h",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Fresh VC6 diagnostic using real veh_scoot arrays emits exact13-byte constructor, but current header-visible close is inlined into destructor as11-byte clearing instead of original5-byte tailcall; no standalone close is emitted. Both ordinary configured flags show this. This is actual generated-code evidence, not a hypothetical callback anchor.",
+      "Pinned veh_scoot singleton calls constructor6343C0 at55A1BB, normal cleanup calls close6343D0 at55AEC7, and singleton EH65FF9F jumps to destructor55B750. Arrays use constructor/destructor callbacks at55A197/1C0. The destructor itself jumps to close. Authorize ordinary constructor/close definitions in vector.cpp before arithmetic and header-visible inline destructor only, so the genuine caller sees the original opaque construction/cleanup boundaries.",
+      "Retain every historical marker/claim and seed; remove only stale header body-location facts for definitions moved beside their existing vector.cpp markers through guarded native publication. Native measurement must observe actual product-TU emissions and recheck all arithmetic bodies. No dummy arrays, pointer anchors, forced exports, flags or baseline changes. Do not automatically revert this evidence-supported source arrangement if further restoration is needed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6505408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6505424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5617488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5611856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e4852699826f18b583f797c3900fd91e7d9c174a0abd4e3e001f163f545d8d36",
+  "request_id": "vector-real-caller-lifetime-visibility-20260920",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:vector-value-semantics"
+}

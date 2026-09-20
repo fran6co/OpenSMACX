@@ -1,0 +1,30 @@
+{
+  "event_id": "ae6588614ed55e3e19e3cc3791073a3b8c043d8a18f003336111a35b85554592",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Recover two new Vector application methods in the existing product cpp/header: addition 0x006343E0-0x0063442B and cross product 0x006345E0-0x00634641. Their seed-only generic catalogue names hide class ownership; pinned original receiver accesses, three float components and hidden class-result ABI identify the same Vector family. No current task or retained campaign owns these identities. Seeds remain untouched. Prioritize these new bodies over further subtraction-only spelling searches; preserve the real destructor and banked scale plus all historical obligations.",
+      "Addition computes right plus receiver into a separate by-value result without mutating inputs. Cross computes x=y*rz-ry*z, y=rx*z-x*rz, z=ry*x-y*rx, rounds each float result before output copy and does not mutate inputs. Do not import seed volatile padding, synthetic return parameters or fixed-address wrappers. Correct stale current-tense emitter/binding guidance in vector.h while retaining qualified historical lessons. Implement genuine C++ in the existing authorized files and return binding discoveries for coordinator native bind; no manual ORIGINAL markers or claims.",
+      "Recent bounded replica experiments already tried unnamed three-float constructor return (48 bytes), float locals then unnamed return (64 bytes), and named three-float construction (128 bytes plus33-byte EH tail) against subtraction original75 bytes. Do not repeat these as new experiments or assert impossibility; reports are build/recovery/vector-return-construction-variants.json in the main checkout. Named-local cleanup differs genuinely from original no-call body, not just comparator coverage."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6505440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6505952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0f994249825c91f754ed9f8531938ed8415c01c2793c49b6b680df91d9d65bff",
+  "request_id": "vector-add-cross-20260919",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:vector-value-semantics"
+}

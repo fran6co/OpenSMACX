@@ -33,6 +33,10 @@
 #include <cstring>
 #include <stdlib.h>
 
+// Eight pointer slots, initially zero; startup publishes slot0 at0x0058F1C1
+// after constructing slots1..7. draw_tile bounds its walk at0x007D3C5C.
+// RECOVERY_OBJECT: v2 0x007D3C3C 0x007D3C5C ?MapWinTable@@3PAPAVMapWin@@A 0x0058F040
+MapWinSlots MapWinTable;
 
 /*
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
@@ -736,8 +740,6 @@ static const signed char *const CornerLightTable = (const signed char *)0x007F66
 // nothing here maps that storage.
 // 0x00685EA0 / 0x00685EE0 - the two coordinate-stride tables the same walk
 // adds to a tile's x and y as it steps outward, indexed by byte offset.
-// 0x00691E6C / 0x00691E70 - the scale pair the altitude shading divides by:
-// a numerator and a denominator, 1/0 meaning "take the fixed 1/16 step".
 // THE VIRTUAL-BASE DISPLACEMENT the compiler lays MapWin down with: the
 // vbtable it emits holds {0, 0x21A6C} (mapwin.h), so every handler the
 // image enters on the GraphicWin base walks `entered - 0x21A6C` to get to
@@ -755,8 +757,13 @@ static char *entered_receiver(MapWin *window) {
     return reinterpret_cast<char *>(window) + MapWinEnteredOffset;
 }
 
-static int *const MapWinCaptionScale = (int *)0x00691E6C;
-static int *const MapWinCaptionDivisor = (int *)0x00691E70;
+// The pinned image initializes both signed zoom-override words to -1.
+// FontQueue::get_zoom at 0x005592D0 uses the first only when positive;
+// otherwise it derives the scale from its explicit zoom argument.
+// RECOVERY_OBJECT: v2 0x00691E6C 0x00691E70 ?MapWinCaptionScale@@3HA 0x005592D0
+int MapWinCaptionScale = -1;
+// RECOVERY_OBJECT: v2 0x00691E70 0x00691E74 ?MapWinCaptionDivisor@@3HA 0x005592D0
+int MapWinCaptionDivisor = -1;
 static const unsigned char *const AltStepY = (const unsigned char *)0x00685EE0;
 
 // 0x007D3C28..0x007D3C34 - FOUR CONSECUTIVE INTS the primary window publishes
@@ -1001,11 +1008,11 @@ void MapWin::init_dummy() {
 }
 
 static int get_alt_ratio(MapWin * w, int count) {
-    if (*MapWinCaptionScale < 1) {
+    if (MapWinCaptionScale < 1) {
         int v = ((int)w->field_1DD98_ + 0x10) * count;
         return (v + ((v >> 0x1f) & 0xf)) >> 4;
     }
-    return (*MapWinCaptionScale * count) / *MapWinCaptionDivisor;
+    return (MapWinCaptionScale * count) / MapWinCaptionDivisor;
 }
 
 // ORIGINAL: 0x0046FE70 ?get_alt@MapWin@@QAEHHHH@Z 0x0046FE70-0x00470414 FILE
@@ -1197,114 +1204,54 @@ merge:
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0046FE70
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00462F00
-// measured tier  MISMATCH
-// divergence     103
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00462f00/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?tile_to_pixel@MapWin@@QAEXHHPAHPAH@Z  at 0x00462F00  (316 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-void MapWin::tile_to_pixel(int a1, int a2, int * a3, int * a4) {
-        int wrapped_x = a1;
+// Original0x00462F4D and0x00462F6B load the receiver's horizontal margin;
+// 0x00462F95 reloads the original x argument for the out-of-view fallback.
+// The four altitude samples use the unwrapped input coordinates, in4..1 order.
+void MapWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
     int map_width = MapLongitudeBounds;
-    int y;
-
-    if (a2 < field_1DDA8_ ||
-        a2 >= field_1DDD8_ +
-                  field_1DDD0_ +
-                  field_1DDA8_) {
-        goto out_of_range;
-    }
-
-    {
-        int flag = MapIsFlat & 1;
-        if (flag == 0) {
-            if (a1 < field_1DDA4_) {
-                wrapped_x = map_width + a1;
+    int relative_x;
+    bool in_view = false;
+    if (tile_y >= field_1DDA8_ &&
+        tile_y < field_1DDD8_ + field_1DDD0_ + field_1DDA8_) {
+        int wrapped_x = tile_x;
+        int flat = MapIsFlat & 1;
+        if (flat == 0) {
+            if (wrapped_x < field_1DDA4_) {
+                wrapped_x += map_width;
             }
-            if (wrapped_x >= *reinterpret_cast<int32_t *>(0x1ddd4) +
-                                  field_1DDCC_ +
-                                  field_1DDA4_) {
+            if (wrapped_x >= field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
                 wrapped_x -= map_width;
             }
         }
-
-        int x_min = field_1DDA4_;
-        if (wrapped_x < x_min ||
-            wrapped_x >= *reinterpret_cast<int32_t *>(0x1ddd4) +
-                             field_1DDCC_ + x_min) {
-            goto out_of_range;
-        }
-
-        y = a1 - x_min;
-        if (flag != 0) {
-            goto have_y;
-        }
-        if (y >= 0) {
-            if (y >= map_width) {
-                y -= map_width;
+        if (wrapped_x >= field_1DDA4_ &&
+            wrapped_x < field_1DDD4_ + field_1DDCC_ + field_1DDA4_) {
+            in_view = true;
+            relative_x = tile_x - field_1DDA4_;
+            if (flat == 0) {
+                if (relative_x < 0) {
+                    relative_x += map_width;
+                } else if (relative_x >= map_width) {
+                    relative_x -= map_width;
+                }
             }
-            goto have_y;
         }
-        y += map_width;
-        goto have_y;
     }
-
-out_of_range:
-    y = a2 - field_1DDA4_;
-    if (y > map_width / 2) {
-        y -= map_width;
+    if (!in_view) {
+        relative_x = tile_x - field_1DDA4_;
+        if (relative_x > map_width / 2) {
+            relative_x -= map_width;
+        }
+        if (relative_x < -(map_width / 2)) {
+            relative_x += map_width;
+        }
     }
-    if (y >= -(map_width / 2)) {
-        goto have_y;
-    }
-    y += map_width;
-
-have_y:
-    *a3 = field_1DDBC_ * (y - 1) +
-          field_1DDAC_;
-
-    {
-        int sum = get_alt(a1, a2, 4);
-        sum += get_alt(a1, a2, 3);
-        sum += get_alt(a1, a2, 2);
-        sum += get_alt(a1, a2, 1);
-
-        int result_x = a2 - field_1DDA8_;
-        int row_base = field_1DDB0_;
-        sum >>= 2;
-        result_x--;
-        result_x *= field_1DDC0_;
-        result_x += row_base;
-        result_x -= sum;
-        *a4 = result_x;
-    }
+    *pixel_x = field_1DDBC_ * (relative_x - 1) + field_1DDAC_;
+    int altitude = get_alt(tile_x, tile_y, 4);
+    altitude += get_alt(tile_x, tile_y, 3);
+    altitude += get_alt(tile_x, tile_y, 2);
+    altitude += get_alt(tile_x, tile_y, 1);
+    *pixel_y = (tile_y - field_1DDA8_ - 1) * field_1DDC0_ +
+               field_1DDB0_ - (altitude >> 2);
 }
 
 // ORIGINAL: 0x004711A0 ?terrain_fixup@@YAXPAUMapWin@@@Z 0x004711A0-0x0047123B FILE
@@ -1523,7 +1470,7 @@ int *const CursorDrawSuppressed = (int *)0x009392B0;
 
 void __cdecl draw_cursor() {
     if (*CursorDrawSuppressed == 0) {
-        MapWinSlots &table = map_win_table();
+        MapWinSlots &table = MapWinTable;
         MapWin **slot = table;
         do {
             MapWin *window = *slot;
@@ -1851,8 +1798,8 @@ void MapWin::calculate_dimensions() {
     field_1DDB0_ = 0;
 
     int32_t v;
-    if (*MapWinCaptionScale > 0) {
-        v = (*MapWinCaptionScale * 50) / *MapWinCaptionDivisor;
+    if (MapWinCaptionScale > 0) {
+        v = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
     } else {
         v = ((field_1DD98_ + 0x10) * 50) / 16;
     }
@@ -1968,20 +1915,20 @@ void MapWin::calculate_dimensions() {
     int32_t fogW;
     if ((field_1DD70_ & 2) == 0 || field_1DD98_ < -10) {
         fogW = 0;
-    } else if (*MapWinCaptionScale < 1) {
+    } else if (MapWinCaptionScale < 1) {
         fogW = ((field_1DD98_ * 3 + 0x30) * 4) / 16;
     } else {
-        fogW = (*MapWinCaptionScale * 12) / *MapWinCaptionDivisor;
+        fogW = (MapWinCaptionScale * 12) / MapWinCaptionDivisor;
     }
     field_1DDDC_ = fogW;
 
     int32_t fogH;
     if ((field_1DD70_ & 2) == 0 || field_1DD98_ < -10) {
         fogH = 0;
-    } else if (*MapWinCaptionScale < 1) {
+    } else if (MapWinCaptionScale < 1) {
         fogH = (field_1DD98_ * 4 + 0x40) / 16;
     } else {
-        fogH = (*MapWinCaptionScale * 4) / *MapWinCaptionDivisor;
+        fogH = (MapWinCaptionScale * 4) / MapWinCaptionDivisor;
     }
     field_1DDE0_ = fogH;
 

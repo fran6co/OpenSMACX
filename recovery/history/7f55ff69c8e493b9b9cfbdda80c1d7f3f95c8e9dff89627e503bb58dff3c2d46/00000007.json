@@ -1,0 +1,22 @@
+{
+  "event_id": "f107db95714e1843f4d82f4cc3329af36088a58d53c239bc9dec1360d708cb8b",
+  "payload": {
+    "affects": [
+      "entity-471ab29057a090aa887b19c808bfcb89900ba39a1e378ccca4a31699977e36d4"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-b733607aab774b239b437e78ab1fa2f7",
+    "evidence": [
+      "src/vector.h identifies 0x006345E0 as the standard Vector cross product.",
+      "src/unrecovered/006345e0.cpp records a thiscall three-float cross-product interpretation, while src/vector.cpp:106-112 now implements the corresponding product body.",
+      "Fresh configured build/link passed; native binding remains required because the seed-only function previously reported no unambiguous product definition."
+    ],
+    "hypothesis": "Original 0x006345E0 is Vector::cross(Vector&) returning a Vector by value; coordinator binding is still required.",
+    "kind": "discovery"
+  },
+  "previous_event": "74830b32be677b6c0ee6c6c9897b91dab1e1daf1a556a1ad68126ae8a4eccf27",
+  "request_id": "worker-b733607aab774b239b437e78ab1fa2f7",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:vector-value-semantics"
+}
