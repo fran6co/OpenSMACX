@@ -1,0 +1,27 @@
+{
+  "event_id": "9da3bbd098b83e67896b4842bbbb8f9ca7bf17d1d753d6613085db2a435d25eb",
+  "payload": {
+    "affects": [
+      "entity-4c62f8829576f2d500e3778e36e7d79d2f893ce6a926d6172fd14227c8a953d2",
+      "entity-909342cc7e21c8c48ff4d566b3dcd45fceb252481887eb7151ad02a5d7b29f3d",
+      "entity-94caeeaf24f8ebae277fcd7f60924927bafe25b26159c8ef0fe8d9ddbc51927b",
+      "entity-eb7ae4fa5dc794e6938aea11d65d617ad409ee18774636600a3c4b53e8237403",
+      "entity-f5fce7274b7028c39af7c3f53c50e0772b83910dd3a603bb232f39af351465ab"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-17552c6689ef473a93a411e7d54a67c3",
+    "evidence": [
+      "src/alpha.cpp:59-61 - RECOVERY_OBJECT: v1 0x00691AFC ?AlphaxFileID@@3PBDB with LPCSTR AlphaxFileID = \"ALPHAX\"; read_tech loads the pointer variable at 0x00585E34",
+      "src/netwin.cpp:49 - static char **const NetWinFactionTextFile = (char **)0x00691AFC;",
+      "src/netwin.cpp:121,147,170,184 - text_open(*NetWinFactionTextFile, ...) dereferences the same storage",
+      "build/recovery/tmp-agent/rf-check2.out - read_factions emitted references bind AlphaxFileID at 0x00691AFC from src/alpha.cpp"
+    ],
+    "hypothesis": "Duplicate global identity at 0x00691AFC (the storage-audit finding): AlphaxFileID in src/alpha.cpp and NetWinFactionTextFile in src/netwin.cpp both bind the same original object ?AlphaxFileID@@3PBDB - netwin dereferences it as char** through a typed-pointer cast where alpha.cpp owns it as LPCSTR \"ALPHAX\". Every text_open(*NetWinFactionTextFile,...) site in netwin.cpp is an image-proven user of the alpha.cpp object; binding netwin's uses to the real object (or its seed) is required before those units' reference checks can resolve, and no seed binding may displace alpha.cpp's product binding of the same address.",
+    "kind": "discovery"
+  },
+  "previous_event": "441f6079c64978329352bd19397849b558622b677244e87d49252ce80a806825",
+  "request_id": "worker-17552c6689ef473a93a411e7d54a67c3",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:alpha-rules-loader-recovery"
+}

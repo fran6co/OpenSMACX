@@ -1,0 +1,19 @@
+{
+  "event_id": "b37aebc964814bee5044cd20fb42038bd58ca8b1e3b5a1104a7a6fea0f6721a0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_read_factions.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes focused actual-source behavior controls and personal review of the retained candidate against current master; task baseline and pending findings remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "202f60ea67a0ef3104b10c158e0895d8b2dbd20371ecdeb9a9fb70f3665ed23a",
+  "request_id": "alpha-rules-loader-recovery-bounded-controls-20260920",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:alpha-rules-loader-recovery"
+}

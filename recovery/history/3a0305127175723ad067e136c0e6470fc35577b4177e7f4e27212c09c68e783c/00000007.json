@@ -1,0 +1,20 @@
+{
+  "event_id": "603f9df4f07503f9441695e95de317de4bbcad130ea9eb66c70970f5c6166d11",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-619b70fdda724c4c8b33f950d690f064",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The hypothesis is expressed in current source: all five read_factions copy sites (entity-94caeeaf24f8ebae277fcd7f60924927bafe25b26159c8ef0fe8d9ddbc51927b, already in task scope) are direct plain strcpy calls - src/alpha.cpp:1096 strcpy(BonusName[i].key, text_item()) at image call 0x00586F63, :1103/:1104 strcpy(Players[player].filename/search_key, text_item()) at 0x00586FD2/0x00586FDE, :1187 strcpy(Players[player].filename, text_item()) at 0x005870FC, and :1194 strcpy(Players[player].search_key, Players[player].filename) at 0x00587101; no strcpy_s spelling of either arity remains anywhere in the function body (lines 996-1228) - the only remaining mentions are the in-source lever comments at 1086-1095 and 1188-1193 documenting exactly this finding.",
+      "The claimed mechanism is verified against current headers: src/stdafx.h:97 carries '#pragma function(strcat, strcpy, strlen, strcmp, abs, sin, memcmp)' (guarded to _MSC_VER <= 1200), while src/vc6_compat.h:125 and :138 define both strcpy_s overloads as inline shims that merely call strcpy - force-included before the pragma applies, so any strcpy_s spelling inline-expands the intrinsic walk instead of emitting the image's real call, exactly as the finding states; the same lever is recorded as already proven on prefs_put's strcat (obligation-1d92b863, references pass, strict bounded byte/reference agreement in this check's details) and the 736-vs-656 emitted-byte variant measurement (rf-variants3/rf-variants5) is cited in the function's lever record.",
+      "Incorporation identifies the expressed implementation only, not behavioral proof: read_factions carries no protected obligation in this check's 23 obligations, its overall byte convergence remains open, and the distinct pending findings for load_faction_art's missing product binding (worker-304084a47c5e4d25809cc489500b9893), the 0x00691AFC duplicate global identity (worker-17552c6689ef473a93a411e7d54a67c3), and prefs_get's zero product callers (worker-c5b66a49aa614fe8a5361b176a52720f) are untouched by this decision and each still requires authority outside this task's editable files (src/alpha.cpp, src/alpha.h).",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "94d288ab7756f60d464c71b23c8ca16a69d9d7c491f54206a506008f3edf6a96",
+  "request_id": "coordinator-ef656837d8c245debb5309f35fcebd74",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:alpha-rules-loader-recovery"
+}

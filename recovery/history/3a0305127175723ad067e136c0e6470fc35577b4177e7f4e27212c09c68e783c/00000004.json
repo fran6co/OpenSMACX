@@ -1,0 +1,24 @@
+{
+  "event_id": "4f5e36cbfd1306bb050bef913512de3de8498fe84c9e30b234504bf313c24d32",
+  "payload": {
+    "affects": [
+      "entity-258877ced379d6abc0c0f17af3b2cac7777257fa56d0a7c6bd47d51ae81ea311",
+      "entity-94caeeaf24f8ebae277fcd7f60924927bafe25b26159c8ef0fe8d9ddbc51927b"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-304084a47c5e4d25809cc489500b9893",
+    "evidence": [
+      "src/unrecovered/00453710.cpp:1 - ORIGINAL: 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17 FILE",
+      "src/pending_bodies.cpp:1489-1495 - PENDING_BODY forwarder, no product body",
+      "build/recovery/tmp-agent/rf-check2.out - read_faction@@YAXH@Z result unknown with unresolved target ?load_faction_art@@YAXH@Z",
+      "src/alpha.cpp:1209-1210,1223-1224 - both physical call sites now in product source"
+    ],
+    "hypothesis": "load_faction_art (0x00453710, 775 bytes) has no product binding: it exists only as a src/pending_bodies.cpp forwarder and an unrecovered seed, so every verification dimension that traverses its call edges - read_faction(int) 0x00586050 (calls it at its second call target) and read_factions 0x00586F30 (calls it at 0x005871A9 and inside the reroll loop) - reports unknown/fail on references rather than measuring the bodies. read_factions' two physical load_faction_art call sites are now spelled in product source; binding the seed would let both callers' reference checks resolve.",
+    "kind": "discovery"
+  },
+  "previous_event": "9da3bbd098b83e67896b4842bbbb8f9ca7bf17d1d753d6613085db2a435d25eb",
+  "request_id": "worker-304084a47c5e4d25809cc489500b9893",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:alpha-rules-loader-recovery"
+}

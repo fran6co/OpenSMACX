@@ -63,8 +63,11 @@ LPSTR VehBattleDisplayTerrain;
 // and the alpha.txt / x.txt loaders fill them before use.
 VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
 Veh Vehs[2049];  // 0x00952828
+// RECOVERY_OBJECT: v1 0x0094A330 ?Chassis@@3PAURulesChassis@@A
 RulesChassis Chassis[MaxChassisNum];  // 0x0094A330
+// RECOVERY_OBJECT: v1 0x0094AE60 ?Weapon@@3PAURulesWeapon@@A
 RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
+// RECOVERY_OBJECT: v1 0x0094F278 ?Armor@@3PAURulesArmor@@A
 RulesArmor Armor[MaxArmorNum];  // 0x0094F278
 RulesReactor Reactor[MaxReactorNum];  // 0x009527F8
 RulesAbility Ability[MaxAbilityNum];  // 0x009AB538

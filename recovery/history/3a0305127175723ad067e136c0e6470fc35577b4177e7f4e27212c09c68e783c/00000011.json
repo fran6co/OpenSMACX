@@ -1,0 +1,26 @@
+{
+  "event_id": "dc7c88e6727c506bb646ba803af90c873621be85acf45c9e6e0938882b6e2883",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/netwin.cpp"
+    ],
+    "evidence": [
+      "Coordinator inspected current task scopes: no task owns src/netwin.cpp. Pending finding worker-17552c6689ef473a93a411e7d54a67c3 identifies four setup_faction_data loads through fixed slot0x691AFC as uses of the real AlphaxFileID in alpha.cpp. Authorize replacement of only that alias and those four uses, with fresh original/native caller observations and existing NetWin claim checks. No unrelated networking, literal-storage or lifetime changes; preserve task baseline and other findings. Audits may only lower actually decreased ceilings."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4726736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b37aebc964814bee5044cd20fb42038bd58ca8b1e3b5a1104a7a6fea0f6721a0",
+  "request_id": "alpha-netwin-shared-file-slot-20260920",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:alpha-rules-loader-recovery"
+}

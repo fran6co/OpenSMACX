@@ -1,0 +1,17 @@
+{
+  "event_id": "f217dd5ddf70451643af17b4c14bb8065658d4b56c46a32fc5d01cb33fbdf095",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-c5b66a49aa614fe8a5361b176a52720f",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Current prefs_load in src/alpha.cpp calls the string overload for Semaphore, Custom World and binary defaults. Fresh ordinary alpha.cpp compilations under both settled flag trials define ?prefs_get@@YAPADPBD0H@Z; it is measurable but mismatched, not absent. Do not manufacture another caller or expand scope to force emission. This rejects only the false no-caller/no-emission hypothesis, not remaining preference behavior/matching obligations."
+    ]
+  },
+  "previous_event": "dc7c88e6727c506bb646ba803af90c873621be85acf45c9e6e0938882b6e2883",
+  "request_id": "alpha-reject-missing-prefs-caller-20260920",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:alpha-rules-loader-recovery"
+}

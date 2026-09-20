@@ -62,6 +62,7 @@ HWND HandleMain;  // 0x009B7B28
 
 uint32_t UnkBitfield1;  // 0x0090D91C
 
+// RECOVERY_OBJECT: v1 0x009B8198 ?FilefindPath@@3UFilefind@@A
 Filefind FilefindPath;  // 0x009B8198
 
 // The parse-string family's four tables (temp.h has the layout note):

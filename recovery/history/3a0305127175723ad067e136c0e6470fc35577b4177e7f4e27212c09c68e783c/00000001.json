@@ -1,0 +1,25 @@
+{
+  "event_id": "bfa56124ec7ffeb084088ec2408922e01c433efda4f6d7956b0c4dcb0d5252fb",
+  "payload": {
+    "affects": [
+      "entity-94caeeaf24f8ebae277fcd7f60924927bafe25b26159c8ef0fe8d9ddbc51927b"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-d08fa4d33e964022a0e7d1da7e49747d",
+    "evidence": [
+      "src/alpha.cpp:1215-1226 - restored second loop with the vestigial &Players[player] != &Players[0] guard and its image citation (cmp esi,0x946a50; je at 0x00587198)",
+      "src/alpha.cpp:1194 - strcpy(Players[player].search_key, Players[player].filename) restoring the image's filename copy at 0x00587101",
+      "src/alpha.cpp:1207-1210 - both physical guards restored (faction_id != -1 && &Players[player].filename != &Players[0].filename)",
+      "src/alpha.cpp:1111-1113 - ExpansionEnabled guard restored around prefs_fac_load per mov eax,[0x9a6488]; test; je 0x00587002 at 0x00586FF4",
+      "src/alpha.cpp:1035-1071 - new marker LEVER (2026-09-19) documenting all five restorations with deck names and scores, preserving every prior TRIED/LEVER line",
+      "build/recovery/tmp-agent/rf-variants5.out - split3 compiled listing: lea edx,[ebx+0x18]; call strcpy; add esp,0x10 in the JENN282 arm, call read_faction; mov ecx,[ebp-4] in loop 1, and the loop-2 call topology matching the image; 656 bytes/665 image"
+    ],
+    "hypothesis": "read_factions (0x00586F30) is TWO sequential player loops in the original, not the merged single if/else loop the tree carried: the JENN282 loop sends every non-JENN player straight to its increment (jne 0x587175 at 0x587060) and a second walk (0x58718E-0x5871C8, mov edi,1; mov esi,0x946fec; add esi,0x59c; cmp esi,0x949730; jl) re-runs read_faction+load_faction_art for every player 1..7, so each random-chosen faction is parsed twice; both Players[0] guards are physical (cmp ebx,0x946a54; je on the filename pointer at 0x587150, cmp esi,0x946a50; je on the struct pointer at 0x587198); search_key receives the FILENAME via a second strcpy (lea edx,[ebx+0x18]; push ebx; push edx; call strcpy at 0x587101, one add esp,0x10 for both copies), not a second text_item token; and prefs_fac_load is guarded at the call site (mov eax,[0x9a6488]; test eax,eax; je 0x587002 at 0x00586FF4) outside its own internal guard. Landed in src/alpha.cpp this round after variants-scoring seven spellings across three decks (split/split-peel/split-noguard/merged x strcpy arities): emitted extent 656 bytes against the image's 665, down from 736, with the second loop reproduced instruction-for-instruction; the 9-byte delta remains a diagnostic.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-d08fa4d33e964022a0e7d1da7e49747d",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alpha-rules-loader-recovery"
+}

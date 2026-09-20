@@ -1,0 +1,24 @@
+{
+  "event_id": "202f60ea67a0ef3104b10c158e0895d8b2dbd20371ecdeb9a9fb70f3665ed23a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp",
+      "src/strings.cpp",
+      "src/technology.cpp",
+      "src/temp.cpp",
+      "src/text.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Fresh scoped check (run-z7f3353q coordination, 2026-09-19) lists twelve unresolved extern data relocations from src/alpha.cpp bodies: ?StringTemp@@3PADA and ?StringTable@@3VStrings@@A (strings.cpp), ?ExpansionEnabled@@3HA (game.cpp), ?Chassis/?Weapon/?Armor@@3PAU... (veh.cpp), ?FilefindPath@@3UFilefind@@A (temp.cpp), ?Txt@@3VText@@A, ?TextBufferGetPtr@@3PADA, ?TextBufferItemPtr@@3PADA (text.cpp), ?TechValidCount/?TechCommerceCount@@3HA (technology.cpp). The RECOVERY_OBJECT v1 annotations are now inserted beside each pre-existing verified // 0x... address definition in this worktree, following the same channel that resolved MapArea/Continents/Technology for the path and tech workers (referenced_object_units compiles the owner read-only; object_targets verifies the external definition). This expansion authorizes only those annotation lines - no other change to the six files. The six CRT names (_atoi, __itoa, _strcat, _strcmp, __stricmp, _strncpy) stay carried imported-target obligations pending component bindings."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "41d9b82abb4a64d1b2444af57a86bd1d972d4b3d3d0c883f0ea38ca8fe1fe0b8",
+  "request_id": "alpha-data-bindings-expand-1",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:alpha-rules-loader-recovery"
+}

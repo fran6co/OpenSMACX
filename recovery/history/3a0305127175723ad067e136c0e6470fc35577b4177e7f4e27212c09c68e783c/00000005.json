@@ -1,0 +1,23 @@
+{
+  "event_id": "3c60fd2f148c002a1c5618f1369000fa99b2d5cfdf1e5bf981d07a4c60da4e65",
+  "payload": {
+    "affects": [
+      "entity-45c90ee4a4402458da77bcb4f215f81eb90641c6f1b9fd2deeb434444616db01"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-c5b66a49aa614fe8a5361b176a52720f",
+    "evidence": [
+      "src/unrecovered/004e2a30.cpp:2203,2205 - prefs_get string-overload calls in seed",
+      "src/unrecovered/004e2e50.cpp:2334; src/unrecovered/005aaab0.cpp:2200,2202; src/unrecovered/005ab600.cpp:2087 - remaining seed call sites",
+      "src/alpha.cpp:1726-1738 - marker TRIED documents zero product callers and the COMDAT-drop experiment",
+      "src/alpha.cpp:1749 - transcribed body, inline, awaiting a real caller"
+    ],
+    "hypothesis": "prefs_get(LPCSTR, LPCSTR, BOOL) 0x0059D980 has zero callers in product source: all six image call edges live in unrecovered seeds (004e2a30, 004e2e50, 005aaab0, 005ab600), so VC6/COMDAT discards the inline free function from the linked object and it cannot be measured until one of those units is recovered - the marker's own TRIED documents that dropping inline did not force emission, confirming linker COMDAT discard of an unreferenced section rather than a spelling defect. Its int-returning sibling 0x0059DB40 (17 product callers) is unaffected.",
+    "kind": "discovery"
+  },
+  "previous_event": "4f5e36cbfd1306bb050bef913512de3de8498fe84c9e30b234504bf313c24d32",
+  "request_id": "worker-c5b66a49aa614fe8a5361b176a52720f",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:alpha-rules-loader-recovery"
+}

@@ -1478,6 +1478,8 @@ int __cdecl custom_planet(int a, int b) {
 // load_faction_art at 0x00453710 - body in src/unrecovered/00453710.cpp.
 // Was a temp.h function POINTER (`func5 *const load_faction_art`); see the
 // note above draw_map.
+// ORIGINAL: 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17
+// RECOVERY_BINDING: v1 {"evidence": ["Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): obligation-5fbf6e74 read_faction(int) is unknown solely on 'unresolved targets: ?load_faction_art@@YAXH@Z'; src/alpha.cpp:681-686 spells both image call targets with load_faction_art(player_id) at image 0x00453710, and src/alpha.cpp:1210,1224 spell read_factions' two physical sites exactly as the image keeps them - no edit confined to alpha.cpp/alpha.h can resolve a link-time-absent definition.", "Seed src/unrecovered/00453710.cpp line 1 catalogues ORIGINAL 0x00453710 ?load_faction_art@@YAXH@Z 0x00453710-0x00453A17 FILE (775 bytes); the forwarder at src/pending_bodies.cpp:1492-1496 carries the same address in its PENDING_BODY macro and its comment records the function-pointer history."], "reason": "The pending_bodies.cpp forwarder at the annotated line is the only compiled definition of the symbol (a temp.h function-pointer binding historically); the name and extent are the seed's catalogue, adopted verbatim so cross-TU by-name references resolve against the original identity without transcribing the body."}
 void __cdecl load_faction_art(int player_id) {
     typedef void(__cdecl *pending)(int);
     PENDING_BODY(0x00453710, pending)(player_id);

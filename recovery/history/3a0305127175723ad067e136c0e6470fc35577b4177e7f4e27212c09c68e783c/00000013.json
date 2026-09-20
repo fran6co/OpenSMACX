@@ -1,0 +1,17 @@
+{
+  "event_id": "d0a2506c6fc198cbf7d29b6edd2f5b997ed9cfdeaa2103ef4028e51aa7fcceca",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-17552c6689ef473a93a411e7d54a67c3",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/netwin.cpp removes NetWinFactionTextFile and all four dereferences; setup_faction_data now reads alpha.cpp-owned AlphaxFileID. Original loads at48207D,48212B,482183,4821E9 all name slot691AFC. Both fresh candidate compiler trials carry exactly four ordinary ?AlphaxFileID@@3PBDB relocations; all seven protected NetWin claims reproduce and the application builds/links. The v1 owner binding is beside the existing initialized pointer in alpha.cpp. This resolves only the duplicate pointer-slot interpretation: unrelated NetWin original-address literals, lifetime, and whole-application behavior remain unfinished."
+    ]
+  },
+  "previous_event": "f217dd5ddf70451643af17b4c14bb8065658d4b56c46a32fc5d01cb33fbdf095",
+  "request_id": "alpha-netwin-shared-file-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:alpha-rules-loader-recovery"
+}

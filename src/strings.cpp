@@ -26,6 +26,7 @@ char StringTemp[1032];   // 0x009B86A0
 // (see strings.h). The image's ??__E runs the real constructor against it;
 // here the CRT walk does the same, and jackal_init_real's
 // `StringTable.init(0x8000)` populates it.
+// RECOVERY_OBJECT: v1 0x009B90D8 ?StringTable@@3VStrings@@A
 Strings StringTable;  // 0x009B90D8
 
 /*

@@ -1,0 +1,23 @@
+{
+  "event_id": "441f6079c64978329352bd19397849b558622b677244e87d49252ce80a806825",
+  "payload": {
+    "affects": [
+      "entity-94caeeaf24f8ebae277fcd7f60924927bafe25b26159c8ef0fe8d9ddbc51927b"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-619b70fdda724c4c8b33f950d690f064",
+    "evidence": [
+      "src/stdafx.h:97 - #pragma function(strcat, strcpy, strlen, strcmp, abs, sin, memcmp)",
+      "src/vc6_compat.h:125,138 - both strcpy_s overloads are inline shims defined before the pragma applies",
+      "build/recovery/tmp-agent/rf-variants3.out vs rf-variants5.out - split with strcpy_s (either arity) emits inline repne scasb walks and 768 bytes; the identical body with direct strcpy emits real call sites and 656 bytes",
+      "src/alpha.cpp:1085-1096 - BONUSNAMES copy now direct strcpy with the lever documented in its comment"
+    ],
+    "hypothesis": "Every string copy in read_factions is a DIRECT plain strcpy call in the original (five sites: 0x586F63, 0x586FD2, 0x586FDE, 0x5870FC, 0x587101), and any strcpy_s spelling - either arity - cannot reproduce them: both strcpy_s overloads are inline shims in vc6_compat.h, which /FI force-includes BEFORE stdafx.h's #pragma function(strcat, strcpy, strlen, strcmp, abs, sin, memcmp) takes effect, so the shim's internal strcpy stays an intrinsic and inline-expands into the repne scasb/rep movsd walk; writing strcpy directly in alpha.cpp (after the pragma) emits the real call. Same lever already proven on prefs_put's strcat (0x0059E530, BYTE_EXACT) and prefs_fac_load/read_units' plain strcpy. Measured effect here: ~80 bytes and the difference between 736 and 656 emitted bytes.",
+    "kind": "discovery"
+  },
+  "previous_event": "bfa56124ec7ffeb084088ec2408922e01c433efda4f6d7956b0c4dcb0d5252fb",
+  "request_id": "worker-619b70fdda724c4c8b33f950d690f064",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alpha-rules-loader-recovery"
+}

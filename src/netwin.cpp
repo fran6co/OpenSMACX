@@ -44,9 +44,9 @@ static char *const NetWinSectionNewFactions = (char *)0x00686924;  // "NEWFACTIO
 static char *const NetWinSectionCustom = (char *)0x00686930;       // "CUSTOMFACTIONS"
 static char *const NetWinPcxSuffix = (char *)0x00686940;           // ".pcx"
 static char *const NetWinDefaultPcx = (char *)0x00686948;          // "faction.pcx"
-// The text file the sections are read from - a pointer slot, so it is loaded
-// through rather than folded.
-static char **const NetWinFactionTextFile = (char **)0x00691AFC;
+// setup_faction_data reads the same 0x00691AFC pointer slot as the rules
+// loader. AlphaxFileID in alpha.cpp owns it; this TU does not own an alias
+// into the old executable's storage.
 
 // Both copies setup_faction_data makes are REAL calls in the image
 // (0x00645930), and their size is not a compile-time constant, but /O2
@@ -118,7 +118,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     // Slow path: rebuild the table from the localized faction text. The
     // CUSTOMFACTIONS count is discovered by walking until text_item is empty.
     int custom_count = 0;
-    if (text_open(*NetWinFactionTextFile, NetWinSectionCustomCount) == 0) {
+    if (text_open(AlphaxFileID, NetWinSectionCustomCount) == 0) {
         text_get();
         if (*text_item() != 0) {
             do {
@@ -144,7 +144,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     // The 7 base factions land first, at the front of the block. The image
     // counts the loop DOWN (`mov [ebp-0x10],7 / dec / jne`), which is why the
     // flag offset climbs in the third clause of the same for.
-    if (text_open(*NetWinFactionTextFile, NetWinSectionFactions) != 0) {
+    if (text_open(AlphaxFileID, NetWinSectionFactions) != 0) {
         return;
     }
     char *records;
@@ -167,7 +167,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
 
     // The 7 expansion factions follow, one 0x190 stride further on: the flag
     // offset walks 0..0xAF0 while the name offset starts at 0xAF0.
-    if (text_open(*NetWinFactionTextFile, NetWinSectionNewFactions) != 0) {
+    if (text_open(AlphaxFileID, NetWinSectionNewFactions) != 0) {
         return;
     }
     name_offset = 0xaf0;
@@ -181,7 +181,7 @@ void NetWin::setup_faction_data(MessageFactionData *message_faction_data) {
     }
 
     // Then however many custom factions the count pass found, at 0x15E0.
-    if (text_open(*NetWinFactionTextFile, NetWinSectionCustom) != 0) {
+    if (text_open(AlphaxFileID, NetWinSectionCustom) != 0) {
         return;
     }
     if (custom_count > 0) {

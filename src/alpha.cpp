@@ -33,13 +33,31 @@
 #include "textindex.h"
 #include "veh.h"
 
+// The profile APIs are SDK imports, not recovered bodies: prefs_get (both
+// overloads), prefs_fac_load, prefs_load and both prefs_put overloads reach
+// them through import slots (`call dword ptr [0x669104]` at 0x0059E527 in
+// prefs_put, esi loaded from 0x669108 at 0x0059D98C in prefs_get). The
+// identities come from the original import directory; the pinned image
+// supplies each slot address, never a copied operand.
+// RECOVERY_IMPORT: v1 __imp__GetPrivateProfileStringA@24 KERNEL32.dll name:GetPrivateProfileStringA
+// RECOVERY_IMPORT: v1 __imp__WritePrivateProfileStringA@16 KERNEL32.dll name:WritePrivateProfileStringA
 // THE INI STRINGS ARE GLOBALS, not literals at each call site. The image
 // loads them - `mov ecx, [0x006900CC]; push ecx` - where a literal would
 // compile to `push offset`, which is two bytes shorter per use and shifts
 // every branch after it. Six call sites in this file pass them.
+// prefs_put (0x0059E510) loads both variables before its four pushes
+// (`mov eax, dword ptr [0x6900CC]` / `mov eax, dword ptr [0x6900D0]`);
+// the DWORDs at 0x006900CC/0x006900D0 point at the ".\Alpha Centauri.Ini"
+// and "Alpha Centauri" literals.
+// RECOVERY_OBJECT: v1 0x006900CC ?PrefsFile@@3PBDB
 const char *PrefsFile = ".\\Alpha Centauri.ini";   // 0x006900CC
+// RECOVERY_OBJECT: v1 0x006900D0 ?PrefsSection@@3PBDB
 const char *PrefsSection = "Alpha Centauri";       // 0x006900D0
 
+// read_tech's prologue loads the pointer variable (`mov eax, dword ptr
+// [0x691AFC]` at 0x00585E34) ahead of text_open; the DWORD there points at
+// the "ALPHAX" literal at 0x00691B58.
+// RECOVERY_OBJECT: v1 0x00691AFC ?AlphaxFileID@@3PBDB
 LPCSTR AlphaxFileID = "ALPHAX";
 LPCSTR ScriptTxtID = "SCRIPT";
 // `const` + static: nothing outside this file names them, so internal
@@ -53,6 +71,10 @@ static LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 // They were typed-pointer bindings into the image's address space until
 // converted to the objects themselves; the folded absolute addressing of
 // every use site is unchanged, the immediate now a relocation.
+// labels_shutdown (0x006169D0) and labels_init (0x00616A00) address the
+// struct in place: `mov eax, dword ptr [0x9B90F8]` (strings_ptr) and
+// `mov dword ptr [0x9B90FC], 0` (count).
+// RECOVERY_OBJECT: v1 0x009B90F8 ?Labels@@3ULabel@@A
 Label Labels;                                       // 0x009B90F8
 RulesResourceinfo ResourceInfo[MaxResourceInfoNum]; // 0x00945F50
 RulesTimeControl TimeControl[MaxTimeControlNum];    // 0x0094F1B8
@@ -60,6 +82,10 @@ RulesResource Resource[MaxResourceNum];             // 0x00946158
 RulesEnergy Energy[MaxEnergyNum];                   // 0x0094A318
 RulesBasic Rules;                                   // 0x00949738
 RulesWorldbuilder WorldBuilder;                     // 0x009502A8
+// prefs_load (0x0059DCF0) stores every field in place - `mov dword ptr
+// [0x94B464], eax` for preferences through custom_world at 0x0094B480
+// (bounded by the `cmp esi, 0x94B49C` loop tail at 0x0059E4D9).
+// RECOVERY_OBJECT: v1 0x0094B464 ?AlphaIniPrefs@@3UAlphaIniPref@@A
 AlphaIniPref AlphaIniPrefs;                         // 0x0094B464
 DefaultPref DefaultPrefs;                           // 0x0094B350
 
@@ -71,6 +97,10 @@ LPSTR Mood[MaxMoodNum];                                     // 0x0094C9E4
 LPSTR Repute[MaxReputeNum];                                 // 0x00946A30
 RulesMight Might[MaxMightNum];                              // 0x0094C558
 RulesBonusName BonusName[MaxBonusNameNum];                  // 0x009461A8
+// read_faction(int) (0x00586050) computes its Player* argument as
+// `lea ecx, [eax*4 + 0x946A50]` (stride 1436); faction.h repeats the base
+// beside its extern declaration.
+// RECOVERY_OBJECT: v1 0x00946A50 ?Players@@3PAUPlayer@@A
 Player Players[MaxPlayerNum];                               // 0x00946A50
 // RECOVERY_OBJECT: v1 0x0096C9E0 ?PlayersData@@3PAUPlayerData@@A
 PlayerData PlayersData[MaxPlayerNum];                       // 0x0096C9E0
@@ -81,6 +111,8 @@ Continent Continents[MaxContinentNum];                      // 0x009AA730
 uint32_t FactionRankings[MaxPlayerNum];                     // 0x009A64EC
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
 char MapFilePath[80];                                       // 0x0094A2BC
+// read_tech walks the array from `mov esi, 0x94F360` (&Technology[0].id,
+// base+8 over flags/name) with the 0x2C stride declared in technology.h.
 // RECOVERY_OBJECT: v1 0x0094F358 ?Technology@@3PAURulesTechnology@@A
 RulesTechnology Technology[MaxTechnologyNum];       // 0x0094F358
 RulesMandate Mandate[MaxMandateNum];                // 0x0094B4A0
@@ -92,6 +124,9 @@ BaseSecretProject SecretProject;                    // 0x009A6514
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
+// set_language (0x00627100) is exactly `mov eax, [esp+4];
+// mov dword ptr [0x9BC054], eax; ret`.
+// RECOVERY_OBJECT: v1 0x009BC054 ?Language@@3IA
 uint32_t Language;  // 0x009BC054
 
 /*
@@ -1025,20 +1060,32 @@ BOOL __cdecl read_factions() {
         // BUG IN THE ORIGINAL (preserved): `call 0x00645460` at 0x00586F63
         // pushes only the two arguments - plain unbounded `strcpy`, not a
         // 24-byte-bounded copy. Same for both `Players[player]` fields just
-        // below (0x00586FD2, 0x00586FDE); the length-checked calls only
-        // start at the `strcpy_s(..., 24, ...)` further down this function.
-        strcpy_s(BonusName[i].key, text_item());
+        // below (0x00586FD2, 0x00586FDE) and both copies in the JENN282 arm
+        // (0x005870FC, 0x00587106). Spelled as DIRECT `strcpy` calls, not
+        // `strcpy_s`: both shims live in vc6_compat.h, which /FI includes
+        // BEFORE stdafx.h's `#pragma function(strcpy, ...)` takes effect, so
+        // any `strcpy_s` inline-expands the intrinsic `repne scasb` walk
+        // where the image makes a real call (same lever as prefs_put's
+        // strcat, 0x0059E530).
+        strcpy(BonusName[i].key, text_item());
     }
     if (text_open(AlphaxFileID, ExpansionEnabled ? "NEWFACTIONS" : "FACTIONS")) {
         return true;
     }
-    for (int player = 1; player < MaxPlayerNum; player++) {
+    int player;
+    for (player = 1; player < MaxPlayerNum; player++) {
         text_get();
-        strcpy_s(Players[player].filename, text_item());
-        strcpy_s(Players[player].search_key, text_item());
+        strcpy(Players[player].filename, text_item());
+        strcpy(Players[player].search_key, text_item());
     }
     // SMACX only: Will override any values parsed from alphax.txt #NEWFACTIONS if set in ini;
-    prefs_fac_load(); // Removed an extra SMACX_Enabled check around call since there is one inside
+    // The image GUARDS this call at the CALL SITE - `mov eax,[0x9a6488];
+    // test eax,eax; je 0x00587002` at 0x00586FF4 - so the ExpansionEnabled
+    // check that used to wrap it is restored: it is physically in the
+    // original, outside prefs_fac_load's own guard.
+    if (ExpansionEnabled) {
+        prefs_fac_load();
+    }
     int faction_count = 14;
     if (!text_open(AlphaxFileID, "CUSTOMFACTIONS")) { // get count of custom factions
         text_get();
@@ -1061,8 +1108,8 @@ BOOL __cdecl read_factions() {
                 int faction_set = rand_val / 7; // 0: SMAC; 1: SMACX; 2+: custom
                 // NOT a nested ternary argument: the image lowers this as a
                 // SWITCH - `sub edx,0; je` / `dec edx; je` / `dec edx; jne`,
-                // with FACTIONS+NEWFACTIONS tail-merged into the one call at
-                // 0x0058709B and CUSTOMFACTIONS on its own at 0x005870C6. So
+                // with CUSTOMFACTIONS+NEWFACTIONS sharing the call at
+                // 0x0058709B and FACTIONS on its own at 0x005870C6. So
                 // `faction_set` past 2 opens NOTHING here, where the ternary
                 // reading opened CUSTOMFACTIONS for every custom set: BUG IN
                 // THE ORIGINAL, reproduced.
@@ -1112,8 +1159,14 @@ BOOL __cdecl read_factions() {
                         text_get();
                     } while (--j != 0);
                 }
-                strcpy_s(Players[player].filename, 24, text_item());
-                strcpy_s(Players[player].search_key, 24, text_item()); // original copied filename twice
+                strcpy(Players[player].filename, text_item());
+                // The image copies the FILENAME, not a second token:
+                // `lea edx,[ebx+0x18]; push ebx; push edx; call strcpy` at
+                // 0x00587101 - one text_item, two DIRECT strcpy calls (see
+                // the BONUSNAMES note above), one `add esp,0x10` for both.
+                // The old reading consumed a second token the image never
+                // takes.
+                strcpy(Players[player].search_key, Players[player].filename);
                 for (int k = 1; k < MaxPlayerNum; k++) {
                     if (player != k) {
                         if (!strcmp(Players[player].filename, Players[k].filename)) {
@@ -1122,14 +1175,26 @@ BOOL __cdecl read_factions() {
                         }
                     }
                 }
-                if (faction_id != -1) { // skip Players[0] like below check
+                // TWO tests in the image: `lea edx,[edi+1]; test edx,edx;
+                // je` for faction_id == -1, then `cmp ebx,0x946a54; je` -
+                // &Players[0].filename against this player's filename
+                // pointer (0x00587146-0x00587153).
+                if (faction_id != -1
+                    && &Players[player].filename != &Players[0].filename) {
                     read_faction(&Players[player], 0);
                     load_faction_art(player);
                 }
             } while (faction_id == -1);
-        } else {
-            // removed check (&Players[player] != &Players[0]) since Players[0] is already skipped
-            // moved this into same loop to increase performance with random factions
+        }
+    }
+    // TWO LOOPS IN THE IMAGE, not one merged loop: the JENN282 loop above
+    // sends every other player straight to its increment (`jne 0x00587175`
+    // at 0x00587060), and this second loop walks the players once more for
+    // the faction parse - so the original reads each random faction twice.
+    // The `cmp esi,0x946a50; je` at 0x00587198 is the `!= &Players[0]`
+    // check VC6 does not fold away even though the walk starts at [1].
+    for (player = 1; player < MaxPlayerNum; player++) {
+        if (&Players[player] != &Players[0]) {
             read_faction(&Players[player], 0);
             load_faction_art(player);
         }
@@ -1690,18 +1755,10 @@ Purpose: Attempt to read the setting's value from the ini file.
 // LEVER: WRONG CALLEE - `strcpy_s(TextBufferGetPtr, 256, default_value)`
 //        pushed a 3rd argument the image never does; `add esp, 8` after
 //        the call (2 args) confirms a plain `strcpy`.
-// TRIED: NOT MEASURABLE in this tree as committed - this overload
-//            (`LPSTR prefs_get(LPCSTR, LPCSTR, BOOL)`) has ZERO callers
-//            anywhere in the recovered source, unlike its `int`-returning
-//            sibling at 0x0059DB40 (17 callers). The image's own marker
-//            says 4 real callers exist, so some other not-yet-recovered
-//            call site reaches it, but nothing here does - VC6 (COMDAT,
-//            `/Gy`) drops an unreferenced `inline` free function from the
-//            linked object regardless. Tried dropping `inline` to force
-//            emission; still absent from the linked symbols, confirming
-//            it is the LINKER discarding an unreferenced COMDAT, not the
-//            `inline` keyword. Transcribed correctly (see the LEVER above)
-//            but cannot be scored until a real caller is found.
+// Historical emission experiments mistakenly classified this overload as
+// uncalled. prefs_load uses it for Semaphore, Custom World and the binary
+// preference defaults. Those are real source callers; absence from a linked
+// symbol list does not establish absence from a compiled object.
 // size      153 bytes
 // prototype int8* (__cdecl ?prefs_get@@YAPADPADPADH@Z)(int8* lpKeyName, int8* lpDefault, int)
 // callers   4   call targets   2

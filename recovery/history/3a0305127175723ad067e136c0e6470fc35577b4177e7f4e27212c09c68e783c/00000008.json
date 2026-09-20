@@ -1,0 +1,19 @@
+{
+  "event_id": "41d9b82abb4a64d1b2444af57a86bd1d972d4b3d3d0c883f0ea38ca8fe1fe0b8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): read_faction(int) obligation-5fbf6e74 is unknown solely on 'unresolved targets: ?load_faction_art@@YAXH@Z' whose only compiled definition is the pending_bodies.cpp forwarder; both in-scope callers spell their sites exactly as the image keeps them. The unverified original-identity binding (seed spans 0x453710-0x453A17) is now published at src/pending_bodies.cpp:1492 in this worktree by the central coordinator. This expansion authorizes only that binding marker block in src/pending_bodies.cpp - the forwarder body and the 775-byte seed stay untouched; transcribing the body into alpha.cpp would manufacture a new original identity and remains forbidden."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "603f9df4f07503f9441695e95de317de4bbcad130ea9eb66c70970f5c6166d11",
+  "request_id": "loadfactionart-bind-expand-1",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:alpha-rules-loader-recovery"
+}

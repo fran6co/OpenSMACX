@@ -353,6 +353,7 @@ TRIED: a measurement of either. VC6 names a generated initialiser
                can carry those symbols. Both were NO_COMPILE before this
                change and had never been scored, so no claim is lost.
 */
+// RECOVERY_OBJECT: v1 0x009B7BA0 ?Txt@@3VText@@A
 Text Txt(512);  // 0x009B7BA0
 // INITIALISED FROM Txt, in this order, in this file. Within one translation
 // unit C++ guarantees namespace-scope objects are initialised in DECLARATION
@@ -365,7 +366,9 @@ Text Txt(512);  // 0x009B7BA0
 // entry IN that table. So in this build the pointers stayed null, and the
 // 44 functions that read them - `prefs_get` among them, four times from
 // WinMain - wrote through a null pointer on the startup path.
+// RECOVERY_OBJECT: v1 0x009B7D00 ?TextBufferGetPtr@@3PADA
 LPSTR TextBufferGetPtr = Txt.get_buffer_get();    // 0x009B7D00
+// RECOVERY_OBJECT: v1 0x009B7D04 ?TextBufferItemPtr@@3PADA
 LPSTR TextBufferItemPtr = Txt.get_buffer_item();  // 0x009B7D04
 
 // ORIGINAL: 0x005FD4C0 ?text_set_get_ptr@@YAXXZ 0x005FD4C0-0x005FD4CB BYTE_EXACT

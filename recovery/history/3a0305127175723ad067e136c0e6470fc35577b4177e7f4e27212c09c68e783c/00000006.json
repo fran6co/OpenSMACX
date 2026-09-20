@@ -1,0 +1,24 @@
+{
+  "event_id": "94d288ab7756f60d464c71b23c8ca16a69d9d7c491f54206a506008f3edf6a96",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-d08fa4d33e964022a0e7d1da7e49747d",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/alpha.cpp:1221-1226 - the restored second player walk is in product source: for (player = 1; ...) { if (&Players[player] != &Players[0]) { read_faction(&Players[player], 0); load_faction_art(player); } } with the physical struct-pointer guard (cmp esi,0x946a50; je at 0x00587198) spelled out, matching the two-loop control flow proven at 0x0058718E-0x005871C8.",
+      "src/alpha.cpp:1187-1194 - the JENN282 arm takes one text_item then two direct strcpy calls, the second copying the FILENAME into search_key (strcpy(Players[player].search_key, Players[player].filename)) per lea edx,[ebx+0x18]; push ebx; push edx; call strcpy at 0x00587101, not a second token.",
+      "src/alpha.cpp:1207-1210 - both physical guards restored in the reroll arm: faction_id != -1 && &Players[player].filename != &Players[0].filename, matching the two tests at 0x00587146-0x00587153 (cmp ebx,0x946a54; je on the filename pointer).",
+      "src/alpha.cpp:1111-1113 - prefs_fac_load is guarded at the call site by if (ExpansionEnabled), per mov eax,[0x9a6488]; test eax,eax; je 0x00587002 at 0x00586FF4, outside prefs_fac_load's own internal guard.",
+      "src/alpha.cpp:1035-1061 - the marker LEVER (2026-09-19) documents all five restorations with deck names and scores (rf-deck{,2,3}.json, split/split-peel/split-noguard/merged x strcpy arities, 736 -> 656 bytes) while preserving every prior TRIED/LEVER line.",
+      "Fresh request diagnostics at /diagnostics/check/report/candidate/checks/binary/functions confirm the expressed spelling: read_factions (entity-94caeeaf, 0x00586F30) emitted candidate_size 656 against the 665-byte original span 5795632-5796297, with emitted references binding ?AlphaxFileID@@3PBDB at 0x00691AFC, text_open/text_get/text_item, and direct _strcpy at 0x00645460 - the call topology the finding claims.",
+      "entity-94caeeaf carries none of this task's 23 protected restoration obligations (checked /diagnostics/context/report/restoration/obligations), so incorporating this structural finding demotes no byte claim; the 9-byte extent delta and the function-level boundary/bytes diagnostic remain open diagnostics under the task's continuing convergence, since incorporation records expression in source, not byte, behavioral or acceptance proof.",
+      "Delegated policy: 8068c9386fef287a3445397efe970c1dc1b9188598fe023f3e227a58e15a4d56"
+    ]
+  },
+  "previous_event": "3c60fd2f148c002a1c5618f1369000fa99b2d5cfdf1e5bf981d07a4c60da4e65",
+  "request_id": "coordinator-4e38b126bbbd457c89b88c8862a475e6",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:alpha-rules-loader-recovery"
+}
