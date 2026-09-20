@@ -43,11 +43,17 @@ lossy parses cannot conceal lost prose or unrelated edits.
 STATE IS NEVER WRITTEN. It is derived from the region on read, which is
 what makes the loop a test: the rewritten file must re-derive the same
 state from the same code.
+
+EXPLICIT SYMBOL FACT UPDATES use the separate pure ``write_symbol`` operation.
+Unlike the legacy marker writer, it requires a current complete reader snapshot
+and verifies that other annotations and lessons retain their interpretations.
+Its caller supplies compiler evidence, authorization and guarded publication.
 """
 
 from __future__ import annotations
 
 import re
+from dataclasses import asdict
 from difflib import SequenceMatcher
 from pathlib import Path
 
@@ -55,7 +61,7 @@ from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, NEXT_MARKER)
 from .model import DecompilationState, Mode, State
-from .reader import _lesson_run
+from .reader import _fact_lines, _lesson_run, read_text
 
 # ------------------------------------------------------------------ spelling
 
@@ -422,6 +428,85 @@ def write_bytes(raw: bytes, records: list[DecompilationState]) -> bytes:
                     ending = (ending or newline) if rendered.endswith("\n") else ""
                 output.append(content + ending)
     return "".join(output).encode("utf-8", errors="surrogateescape")
+
+
+def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
+    """Prepare an explicit emitted-symbol fact update without writing a file.
+
+    Ordinary ``write`` deliberately preserves fact blocks. This separate
+    operation requires a current reader snapshot, retains all other bytes and
+    bindings, and refuses ambiguous facts. The caller owns compiler evidence,
+    authorization and guarded publication; this never grants a byte claim.
+    """
+    if not isinstance(raw, bytes):
+        raise ValueError("symbol rewriting requires original source bytes")
+    if (not isinstance(symbol, str) or not symbol
+            or any(c.isspace() or ord(c) < 32 or ord(c) == 127 for c in symbol)
+            or any(token in symbol for token in ("/*", "*/", "//", "\\", "??/"))):
+        raise ValueError("emitted symbol must be one annotation-safe token")
+    encoded = symbol.encode("utf-8")
+    # Match read_file's universal-newline and replacement-decoding semantics;
+    # edits below use the original bytes, not this parsing-only representation.
+    text = raw.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n")
+    if re.search(r"[\v\f\x1c-\x1e\x85\u2028\u2029]", text):
+        raise ValueError("unsupported source line separator")
+    if re.search(r"(?:\\|\?\?/)[ \t]*\n", text):
+        raise ValueError("symbol rewriting does not support line-spliced source")
+    if 'R"' in text:
+        raise ValueError("symbol rewriting does not support raw-string source")
+    records = read_text(text, record.path)
+    selected = [i for i, row in enumerate(records) if row.line == record.line]
+    if len(selected) != 1 or asdict(records[selected[0]]) != asdict(record):
+        raise ValueError("source symbol update requires a current record snapshot")
+    position = selected[0]
+    lines, source_lines = text.splitlines(), raw.splitlines(keepends=True)
+    if len(lines) != len(source_lines):
+        raise ValueError("unsupported source line separator")
+    facts = []
+    for offset, stripped in _fact_lines(lines, record.line - 1):
+        match = FACT_LINE.fullmatch(stripped)
+        if match and match.group(1) == "symbol":
+            value = match.group(2) or ""
+            if value and not any(c.isspace() for c in value):
+                facts.append((offset, match, value))
+    if len(facts) > 1:
+        raise ValueError("ambiguous duplicate emitted-symbol facts")
+    output = list(source_lines)
+    if facts:
+        offset, match, value = facts[0]
+        if any(token in value for token in ("/*", "*/", "//", "\\", "??/")):
+            raise ValueError("existing symbol is not an annotation-safe token")
+        line = source_lines[offset]
+        leading = len(line) - len(line.lstrip(b" \t"))
+        start = leading + match.start(2)
+        old = value.encode("utf-8")
+        if line[start:start + len(old)] != old:
+            raise ValueError("symbol fact cannot be rewritten byte-for-byte")
+        output[offset] = line[:start] + encoded + line[start + len(old):]
+    else:
+        index = record.line - 1
+        line = source_lines[index]
+        newline = b"\r\n" if line.endswith(b"\r\n") else b"\r" if line.endswith(b"\r") else b"\n"
+        if not line.endswith((b"\n", b"\r")):
+            output[index] += newline
+        output.insert(index + 1, b"// symbol    " + encoded + newline)
+    result = b"".join(output)
+    reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), record.path)
+    if len(reread) != len(records):
+        raise ValueError("symbol rewrite changed annotation coverage")
+    for i, (before, after) in enumerate(zip(records, reread)):
+        left, right = asdict(before), asdict(after)
+        left["symbol"] = symbol if i == position else before.symbol
+        for field in ("line", "region", "origin"):
+            left.pop(field)
+            right.pop(field)
+        # Line positions may shift; lesson text/provenance must not change.
+        def provenance(row):
+            return tuple((x.kind, x.key, x.prose, tuple(t for _, t in x.lines))
+                         for x in row.origin or ())
+        if left != right or provenance(before) != provenance(after):
+            raise ValueError("symbol rewrite changed other source facts or lessons")
+    return result
 
 
 def remove(text: str, records: list[DecompilationState]) -> str:

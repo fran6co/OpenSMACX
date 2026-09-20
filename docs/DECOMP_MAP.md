@@ -125,6 +125,17 @@ on 2026-08-19 for the records the build compiles. Every reader goes through
 `match_recovery.source`, which reads this fact, and an annotation without one is simply a
 piece whose emitted name is its `name`.
 
+For a compiler-observed symbol change, `match_recovery.source.write_symbol`
+prepares an explicit fact update from original bytes and a fresh reader record.
+It preserves the historical marker, claims, lessons and unrelated bytes; ordinary
+`write`/`write_file` still deliberately leave fact blocks untouched. Publish the
+result through `source.publication.publish` with current-input validation and
+task authorization. This operation neither measures nor grants a claim. Duplicate
+or shadowed facts and stale snapshots refuse; facts never belong to a neighboring
+`ORIGINAL` marker. The bounded writer also refuses raw-string or line-spliced
+source rather than guessing its lexical context. Recompile after publication:
+adding a physical annotation line can affect uses of `__LINE__`.
+
 An adjacent `// body` fact names the source file containing a definition hosted
 elsewhere, for example `// body src/stringstruct.h` for a header-defined method.
 Keep the canonical original marker in its owning TU, not a duplicate per emitted

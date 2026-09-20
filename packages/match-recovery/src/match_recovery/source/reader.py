@@ -667,9 +667,9 @@ def _read_text(text: str, path: Path | str,
         found_ruled = _ruled_of(found_run)
         found_dead = ()
         found_later = _deferred_of(found_run)
-        emitted = _token_fact(lines, index, "symbol")
-        catalogued_kind = _token_fact(lines, index, "kind")
-        defined_in = _token_fact(lines, index, "body")
+        emitted = _token_fact(lines, index, "symbol", in_block=in_block)
+        catalogued_kind = _token_fact(lines, index, "kind", in_block=in_block)
+        defined_in = _token_fact(lines, index, "body", in_block=in_block)
         if keyword == "FILE":
             region = text
             found.append(DecompilationState(
@@ -742,7 +742,25 @@ def region_identifiers(record: DecompilationState) -> tuple[str, ...]:
     return tuple(seen)
 
 
-def _token_fact(lines: list[str], index: int, key: str) -> str:
+def _fact_lines(lines: list[str], index: int, *, in_block: bool | None = None):
+    """The contiguous fact/comment window, never another annotation's facts."""
+    if in_block is None:
+        in_block = False
+        for line in lines[:index + 1]:
+            in_block = _block_state_after(line, in_block)
+    for offset, line in enumerate(lines[index + 1:], index + 1):
+        stripped = line.strip()
+        if not (stripped.startswith("//") or (in_block and stripped.startswith("*"))):
+            break
+        if _parse_marker(line, in_block) is not None:
+            break
+        if in_block and _brace_delta(line, in_block)[3].strip():
+            break  # A closing comment followed by code is not a fact line.
+        in_block = _block_state_after(line, in_block)
+        yield offset, stripped
+
+
+def _token_fact(lines: list[str], index: int, key: str, *, in_block: bool | None = None) -> str:
     """The `// <key> <token>` fact under the marker at `index`, or "".
 
     THE TWO FACTS THE RECORD TAKES OUT OF THE BLOCK. `name` and `spans` ride
@@ -757,10 +775,7 @@ def _token_fact(lines: list[str], index: int, key: str) -> str:
     the lessons come from, so a fact belonging to the NEXT annotation cannot
     be picked up.
     """
-    for line in lines[index + 1:]:
-        stripped = line.strip()
-        if not (stripped.startswith("//") or stripped.startswith("*")):
-            break
+    for _, stripped in _fact_lines(lines, index, in_block=in_block):
         match = FACT_LINE.match(stripped)
         if match and match.group(1) == key:
             value = (match.group(2) or "").strip()
