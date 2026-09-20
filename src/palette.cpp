@@ -22,7 +22,8 @@
 #include "buffer.h"   // Buffer::sync_to_palette in set()
 #include "random.h"   // random in init()
 
-Palette g_PALETTE1;  // 0x0094C590
+// RECOVERY_OBJECT: v1 0x0094C590 ?g_PALETTE1@@3VPalette@@A
+Palette g_PALETTE1;
 HPALETTE PaletteInitialized;  // 0x009B8178
 int PaletteUsesSystemColours;  // 0x009B8188
 // RECOVERY_OBJECT: v1 0x009B8180 ?PaletteActive@@3PAVPalette@@A

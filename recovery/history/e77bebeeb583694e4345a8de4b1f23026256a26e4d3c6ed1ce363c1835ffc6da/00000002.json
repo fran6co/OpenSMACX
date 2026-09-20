@@ -1,0 +1,73 @@
+{
+  "event_id": "87298be337ab289c38be32e18e00c741e9be0455d2ad5b31ff94bb153b22ec4f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize source-owned remap arrays for complete colortables_init producer. Original loops, explicit cache copy sizes and contiguous bounded table ranges establish 24x256 transparent armor;8x256 territory;256 reddish,red,blue,spotlight;8x256fade;13x16x256explosion;24x256constant;4x24x256armor;8x24x256body. Bounds and initial bytes must be checked against pinned image and native compiled extents; do not duplicate existing ShadowColorTable or any model owner."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 7270268,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7276412,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7278460,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7278972,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7279228,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7281276,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7281532,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7334780,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7897680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7939684,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 7972844,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1507b4ce7f22c77f9e7e34a4778c306b191fd5334bd056a07b3bce3d88f6400c",
+  "request_id": "palette-table-storage-20260920",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:frontend-presentation"
+}

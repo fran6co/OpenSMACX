@@ -1,0 +1,73 @@
+{
+  "event_id": "2e19b836e11ea951a1269a14f45e628377b60bee8e67a6dc3e4af1bb9e27a81f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_filemap_cleanup.py",
+      "src/filemap.cpp",
+      "src/filemap.h",
+      "src/palette.cpp"
+    ],
+    "evidence": [
+      "Bind the existing standing palette identity; no new palette allocation. Restrict header cleanup visibility to its evidence-backed implementation owner. Pinned mapped-function scan observes expanded UnmapViewOfFile cleanup only within Filemap, while palette production, palette comparison, TextIndex and checksum callers directly call close at0x6287C0. Authorize legal out-of-line public close and, only if needed, a private implementation-only inline cleanup helper; preserve nine historical Filemap bodies, normal/EH lifetimes and distinct close(end) tail. No flags, copied code, ODR-invalid public cpp-only inline, NetDaemon layout edits or demotions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6456192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6456224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6456256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6456288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6456368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6456640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6456912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6457280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6457360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9749904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "87298be337ab289c38be32e18e00c741e9be0455d2ad5b31ff94bb153b22ec4f",
+  "request_id": "palette-storage-and-filemap-visibility-20260920",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:frontend-presentation"
+}

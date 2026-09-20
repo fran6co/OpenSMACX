@@ -1497,12 +1497,6 @@ void __cdecl load_voxels() {
 // ?load_deswin_sprites@@YAXXZ at 0x00455E50 is homed in leaf_recoveries.cpp
 // under its own name - no forwarder, that claim is compiled.
 
-// ?colortables_init@@YAXXZ at 0x00423570
-void __cdecl colortables_init() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00423570, pending)();
-}
-
 // ?load_cycling@@YAXXZ at 0x00455400
 void __cdecl load_cycling() {
     typedef void(__cdecl *pending)();

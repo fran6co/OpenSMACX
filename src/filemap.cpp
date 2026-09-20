@@ -19,6 +19,41 @@
 #include "filemap.h"
 #include "general.h"
 
+// The image expands cleanup inside Filemap but calls close from external
+// consumers. Keep the implementation visible only to this owning TU.
+inline void Filemap::close_impl() {
+    if (map_view_addr_) {
+        UnmapViewOfFile(map_view_addr_);
+        map_view_addr_ = 0;
+    }
+    if (file_map_) {
+        CloseHandle(file_map_);
+        file_map_ = 0;
+    }
+    if (file_ != INVALID_HANDLE_VALUE) {
+        CloseHandle(file_);
+        file_ = 0;
+    }
+    // Original 6287C0 writes only +0, +8 and +4; retain file_size_.
+}
+
+/*
+Purpose: Close the map and all handles to the file.
+// ORIGINAL: 0x006287C0 ?close@Filemap@@QAEXXZ 0x006287C0-0x00628803 BYTE_EXACT
+// size      67 bytes
+// prototype void (__thiscall ?close@Filemap@@QAEXXZ)(Filemap* this)
+// callers   10   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x006287CB 0x006287E5 0x006287F7
+Return Value: n/a
+Status: Complete
+*/
+void Filemap::close() {
+    close_impl();
+}
+
 /*
 Purpose: Initialize the class by opening a file with write permission. The boolean parameter toggles 
          if the file is accessed sequentially or randomly.
@@ -84,7 +119,7 @@ LPVOID Filemap::open_read(LPCSTR file_name, BOOL is_sequential) {
     const DWORD flags = is_sequential
         ? (FILE_FLAG_SEQUENTIAL_SCAN | FILE_ATTRIBUTE_NORMAL)
         : (FILE_FLAG_RANDOM_ACCESS | FILE_ATTRIBUTE_NORMAL);
-    close();
+    close_impl();
     LPCSTR file_paths = filefind_get(file_name);
     if (!file_paths) {
         file_paths = file_name;
@@ -101,12 +136,12 @@ LPVOID Filemap::open_read(LPCSTR file_name, BOOL is_sequential) {
     // where the image has a copy.
     file_map_ = CreateFileMapping(file_, NULL, PAGE_READONLY, 0, 0, NULL);
     if (!file_map_) {
-        close();
+        close_impl();
         return NULL;
     }
     map_view_addr_ = MapViewOfFile(file_map_, FILE_MAP_READ, 0, 0, 0);
     if (!map_view_addr_) {
-        close();
+        close_impl();
         return NULL;
     }
     file_size_ = GetFileSize(file_, NULL);
@@ -135,7 +170,7 @@ LPVOID Filemap::open(LPCSTR file_name, BOOL is_sequential) {
     const DWORD flags = is_sequential
         ? (FILE_FLAG_SEQUENTIAL_SCAN | FILE_ATTRIBUTE_NORMAL)
         : (FILE_FLAG_RANDOM_ACCESS | FILE_ATTRIBUTE_NORMAL);
-    close();
+    close_impl();
     LPCSTR file_paths = filefind_get(file_name);
     if (!file_paths) {
         file_paths = file_name;
@@ -148,12 +183,12 @@ LPVOID Filemap::open(LPCSTR file_name, BOOL is_sequential) {
     }
     file_map_ = CreateFileMapping(file_, NULL, PAGE_READWRITE, 0, 0, NULL);
     if (!file_map_) {
-        close();
+        close_impl();
         return NULL;
     }
     map_view_addr_ = MapViewOfFile(file_map_, FILE_MAP_ALL_ACCESS, 0, 0, 0);
     if (!map_view_addr_) {
-        close();
+        close_impl();
         return NULL;
     }
     file_size_ = GetFileSize(file_, NULL);
@@ -197,7 +232,7 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
     const DWORD flags = is_sequential
         ? (FILE_FLAG_SEQUENTIAL_SCAN | FILE_ATTRIBUTE_NORMAL)
         : (FILE_FLAG_RANDOM_ACCESS | FILE_ATTRIBUTE_NORMAL);
-    close();
+    close_impl();
     file_size_ = size;
     file_ = CreateFileA(file_name, GENERIC_READ | GENERIC_WRITE, 0, NULL,
                         CREATE_ALWAYS, flags, NULL);
@@ -212,42 +247,28 @@ LPVOID Filemap::create(LPCSTR file_name, uint32_t size, BOOL is_sequential) {
     // block, and folds the shared CloseHandle(file_map_)/CloseHandle(file_)
     // tail across all four via cross-jumping).
     if (SetFilePointer(file_, size, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
-        close();
+        close_impl();
         return NULL;
     }
     SetEndOfFile(file_);
     if (SetFilePointer(file_, 0, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
-        close();
+        close_impl();
         return NULL;
     }
     file_map_ = CreateFileMapping(file_, NULL, PAGE_READWRITE, 0, 0, NULL);
     if (!file_map_) {
-        close();
+        close_impl();
         return NULL;
     }
     map_view_addr_ = MapViewOfFile(file_map_, FILE_MAP_ALL_ACCESS, 0, 0, 0);
     if (!map_view_addr_) {
-        close();
+        close_impl();
         return NULL;
     }
     filemap_memset_call(map_view_addr_, 0, size);
     return map_view_addr_;
 }
 
-/*
-Purpose: Close the map and all handles to the file.
-// ORIGINAL: 0x006287C0 ?close@Filemap@@QAEXXZ 0x006287C0-0x00628803 BYTE_EXACT
-// size      67 bytes
-// prototype void (__thiscall ?close@Filemap@@QAEXXZ)(Filemap* this)
-// callers   10   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x006287CB 0x006287E5 0x006287F7
-Return Value: n/a
-Status: Complete
-*/
-// body src/filemap.h
 
 /*
 Purpose: Close and set the end of the file. This can be used to truncate existing files. It also 
@@ -279,7 +300,7 @@ void Filemap::close(LPVOID new_addr) {
     // reaches by `jmp` - the image has ONE copy of that tail, this tree had
     // two before the reshape.
     if (new_addr < map_view_addr_) {
-        close();
+        close_impl();
         return;
     }
     LONG new_size = LONG(new_addr) - LONG(map_view_addr_);
@@ -292,7 +313,7 @@ void Filemap::close(LPVOID new_addr) {
         file_map_ = 0;
     }
     if (SetFilePointer(file_, new_size, NULL, FILE_BEGIN) == INVALID_SET_FILE_POINTER) {
-        close();
+        close_impl();
         return;
     }
     SetEndOfFile(file_);
@@ -337,16 +358,5 @@ Filemap::Filemap()
 // notes     Staged hybrid export redirect calls the source-owned destructor
 */
 Filemap::~Filemap() {
-    if (map_view_addr_) {
-        UnmapViewOfFile(map_view_addr_);
-        map_view_addr_ = nullptr;
-    }
-    if (file_map_) {
-        CloseHandle(file_map_);
-        file_map_ = nullptr;
-    }
-    if (file_ != INVALID_HANDLE_VALUE) {
-        CloseHandle(file_);
-        file_ = nullptr;
-    }
+    close_impl();
 }

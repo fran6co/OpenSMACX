@@ -39,6 +39,11 @@ void __cdecl RGB_to_HSV(const PALETTEENTRY *entry, HSV *out);
   */
 class Palette {
  public:
+  // Cache validation and tint construction read the original contiguous
+  // 256-entry palette without granting callers permission to change it.
+  const PALETTEENTRY *entries() const { return entries_; }
+
+ public:
   // homed from 005fe2f0.cpp
   Palette &copy_from(Palette *src);
 
@@ -169,6 +174,7 @@ class Palette {
   // The 256 palette entries themselves, at offset 0. get_rgbquad and
   // init read and write them as bytes; GetSystemPaletteEntries fills them
   // directly in init.
+  // RECOVERY_MEMBER: v1 Palette entries_ 0x0 0x00422F20
   PALETTEENTRY entries_[256];  // 0x0000
   uint32_t seed_;
   // FIVE ANIMATION SLOTS, named from what `?UNK3@Palette@@QAEXH@Z`

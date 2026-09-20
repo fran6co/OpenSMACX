@@ -243,6 +243,7 @@ void __cdecl load_interface(int mode);             // ?load_interface@@YAXH@Z
 void __cdecl load_voxels();                        // ?load_voxels@@YAXXZ
 void __cdecl load_deswin_sprites();                // 0x00455E50, leaf_recoveries.cpp
 void __cdecl colortables_init();                   // ?colortables_init@@YAXXZ
+int __cdecl compare_palettes();
 void __cdecl load_cycling();                       // ?load_cycling@@YAXXZ
 void __cdecl config_popups();                      // ?config_popups@@YAXXZ
 void __cdecl bung_momma();                         // ?bung_momma@@YAXXZ
@@ -284,6 +285,19 @@ extern uint32_t SystemInterfaceFlags;  // 0x00933420
 // Shared shadow palette-index remap, filled by colortables_init. MultiDebug
 // retains this table pointer; it is not storage for debug text.
 extern unsigned char ShadowColorTable[256];  // 0x006F107C
+// Independent remap objects written by colortables_init. Extents come from
+// its cache copy sizes and bounded row loops, not neighbouring declarations.
+extern unsigned char ArmorTransparentColorTables[24][256]; // 0x006EEF7C, 0x1800 bytes
+extern unsigned char TerritoryColorTables[8][256];         // 0x006F077C, 0x800 bytes
+extern unsigned char ReddishColorTable[256];               // 0x006F0F7C
+extern unsigned char RedTintColorTable[256];               // 0x006F117C
+extern unsigned char FadeColorTables[8][256];              // 0x006F127C, 0x800 bytes
+extern unsigned char BlueTintColorTable[256];              // 0x006F1A7C
+extern unsigned char ExplosionColorTables[13][16][256];    // 0x006F1B7C, 0xD000 bytes
+extern unsigned char SpotlightColorTable[256];             // 0x006FEB7C
+extern unsigned char ConstantColorTables[24][256];         // 0x00788250, 0x1800 bytes
+extern unsigned char ArmorTintColorTables[4][24][256];     // 0x00792664, 0x6000 bytes
+extern unsigned char BodyTintColorTables[8][24][256];      // 0x0079A7EC, 0xC000 bytes
 
 extern "C" int __cdecl _mkdir(const char *path);
 
