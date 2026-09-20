@@ -1,0 +1,24 @@
+{
+  "event_id": "9a90889ddf68671e9ccd5979fa5a0126cd4cc228e4572bea533a23f579901b24",
+  "payload": {
+    "affects": [
+      "entity-477a7d325bf9c957e372fa9ecfe8a5ec5deec0c7d40d760ee923fa055b96907b",
+      "entity-d604d5f1fbecbfcba646f860f78c88c8a551b0aaa2f3893fa02fac506260c4c4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-keyed-pair-abi-and-behavior-20260920",
+    "evidence": [
+      "Original 61A760 reads four stack arguments and returns 0x10: Buffer*, Vert*, signed count, Vert* UV. Stores at 61A793/A5 select the explicit UV base; 61A7AB/B3 select count. Its 61ABE5..E9 kernel skips only equality with the low byte of TextureRasterKey. No depth, upper-threshold comparison, perspective division or borrowed-texture guard appears. It otherwise uses the width-based keyed raster and plain-edge/PC24 interpolation already recovered for 61A240.",
+      "Original 6239E0..623F44 takes the same four arguments plus an alternate-row color. Exactly -1 forwards at 623A05 before own acquisition/reset. Other values select keyed row recoloring: absolute screen-Y odd rows copy the texel; even rows use the fifth argument low byte. Both preserve color-key holes. Evidence: color capture 623A28, key capture 623A53..64, parity initialization 623B3C..3E, branch 623E8A..94, pixel rules 623EA1..A5 and 623ED0..D4, parity advancement 623F15..1C. No new palette lookup is required.",
+      "The product caller of 61A760 is 6239E0; other mapped callers 4648EE/464F10 are retained gen_terrain_poly seeds. The mapped caller of 6239E0 at 4650E3 is also seed-only. Preserve those seeds; do not recover terrain under this authorization. Correct the coupled product ABI, not just the callee: current aux/count use is reversed and the non-sentinel body also has bad edge direction and slope expressions.",
+      "After the packed recovery, EdgeScanShadow has only two instances in 61A760. Replace both with real EdgeScan and remove the obsolete declaration when no consumers remain. Other raw scratch aliases still have separate rasterizer consumers and cannot be removed merely because this pair no longer uses them."
+    ],
+    "hypothesis": "The two remaining upper-threshold names and count/UV types misrepresent ordinary keyed and alternating-row keyed rasterizers; recover the pair together.",
+    "kind": "discovery"
+  },
+  "previous_event": "2759d991070e011aa7af1d53074e7152fb55a19764e837f50cab80b3e34af0eb",
+  "request_id": "texture-keyed-pair-abi-and-behavior-20260920",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:vector-value-semantics"
+}

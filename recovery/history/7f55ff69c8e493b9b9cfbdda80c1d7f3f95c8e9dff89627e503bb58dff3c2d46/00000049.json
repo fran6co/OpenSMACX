@@ -1,0 +1,37 @@
+{
+  "event_id": "d8bb3315c1588d56cb7f0417b71b61eae599fe60ab5049ae07d0d56f59689b92",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_texture_vertices.py",
+      "src/texture.cpp",
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Following the reviewed packed-raster integration and fresh destination checks, authorize a new isolated checkout for both keyed bodies, their declarations, focused actual-source tests and same-commit debt-ceiling reductions. Preserve original task baseline, all historical claims and outstanding discoveries. No framework change, flag change or new protected-match regression is authorized.",
+      "Use evidence-backed provisional draw_color_key overloads with count and Vert* UV, documenting their behavioral basis. Preserve canonical original names/spans and publish only explicit emitted-symbol fact changes through match_recovery.source.writer.write_symbol using current reader snapshots and fresh compiler evidence. Do not collide with the different opaque packed draw_trans signature or hand-edit ORIGINAL markers.",
+      "Reuse typed plain-edge and PC24/chop helpers where actually common; no hardcoded original-address state, assembly, copied bytes, fixed four/eight count truncation, or texture/UV array type punning. Correct both bodies from original evidence rather than retaining the current bad non-sentinel implementation merely to limit diff size.",
+      "Require actual-source controls for arbitrary counts, explicit UVs, key holes, width-based sampling, clipped/final rows, absolute even/odd and negative Y parity, low-byte alternate colors, and -1 versus other negative colors. Investigate zero/inverted clipped-span countdown and speculative final-source reads explicitly; preserve unresolved exceptional geometry, shared-scratch and callback-visible FP-status findings without claiming full equivalence.",
+      "Fresh protected-byte checks, scoped reference/layout checks, claim continuity, source controls, application compile/link and coordinator original/source review precede manual integration; repeat checks on the destination. Only the native recorder can bank any actual matching discovery. This authorization is not a working-game or automatic-acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6399840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6437344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9a90889ddf68671e9ccd5979fa5a0126cd4cc228e4572bea533a23f579901b24",
+  "request_id": "texture-keyed-pair-recovery-scope-20260920",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:vector-value-semantics"
+}
