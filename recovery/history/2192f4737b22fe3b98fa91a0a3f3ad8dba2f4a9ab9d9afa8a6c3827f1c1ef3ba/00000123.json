@@ -1,0 +1,45 @@
+{
+  "event_id": "7190277f301b493da2a643af72f02f2917f82aaa4cac9652e21d26d9385e5166",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "4C1B10..4C1CF7 populates four independent 2401-element VOX_Vect tables, stride12, initial destination8D4D9C and relative bases-708C,+708C,+E118. Four nested seven-step loops independently establish extent708C per table, ending8E9F40.",
+      "4BF7E4/EA and4BF801 publish three contiguous camera angle components at8E9F40..4C; next WorldClimateWorldWin begins8E9F60. Fresh pinned-image storage and emitted COFF observations required before bounded bindings.",
+      "Baseline93341C is ConsoleGlobal inherited MapWin.field_1DD6C_, proven receiver-relative writes462D1D/462D38/470ED9; use this existing member, not an independent global. No Caviar or Console declaration edits granted here."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 9231632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9260444,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9289256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9318068,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 9346880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "127b3a3adc46360813023b1cd13dc0e1f16ea8b82cd164e150f31bb49324e07e",
+  "request_id": "coordinator-vehicle-normal-camera-storage-20260920",
+  "schema_version": 1,
+  "sequence": 123,
+  "stream": "task:infowin-ownership"
+}

@@ -36,6 +36,8 @@
 #include "netdaemon.h"  // NetDaemonNet, synch_veh / order_veh - the action family's net half
 #include "path.h"  // Paths - the move cost table the go-to verbs consult
 #include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
+#include "caviar.h"
+#include "leaf_recoveries.h"  // The source-owned vector-length operation.
 #include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
@@ -83,6 +85,107 @@ uint32_t VehBattleModCount[2];  // 0x00915614
 BOOL VehBattleUnkTgl[2];  // 0x0091561C
 int VehBattleModifier[8];  // 0x009155F0
 LPSTR VehBattleDisplay[160];  // 0x0090F554
+
+// Four normal tables, each indexed by the four terrain-height levels in
+// vehdraw_compute_facet_normals. The original initializer writes 7^4 vectors
+// per table, not one flat array accessed through pointers to its neighbours.
+// RECOVERY_OBJECT: v2 0x008CDD10 0x008D4D9C ?VehDrawFacetNormals0@@3PAUVOX_Vect@@A 0x004C1B10
+VOX_Vect VehDrawFacetNormals0[2401];
+// RECOVERY_OBJECT: v2 0x008D4D9C 0x008DBE28 ?VehDrawFacetNormals1@@3PAUVOX_Vect@@A 0x004C1B10
+VOX_Vect VehDrawFacetNormals1[2401];
+// RECOVERY_OBJECT: v2 0x008DBE28 0x008E2EB4 ?VehDrawFacetNormals2@@3PAUVOX_Vect@@A 0x004C1B10
+VOX_Vect VehDrawFacetNormals2[2401];
+// RECOVERY_OBJECT: v2 0x008E2EB4 0x008E9F40 ?VehDrawFacetNormals3@@3PAUVOX_Vect@@A 0x004C1B10
+VOX_Vect VehDrawFacetNormals3[2401];
+
+// compute_camera publishes the first rotation here; vehicle rendering reads
+// its first component when converting facing angles into camera coordinates.
+// RECOVERY_OBJECT: v2 0x008E9F40 0x008E9F4C ?VehDrawCameraAngles@@3UVOX_Vect@@A 0x004BF740
+VOX_Vect VehDrawCameraAngles;
+
+// The original calls the CRT atan entry after storing a double argument;
+// the compiler's default fpatan intrinsic bypasses that rounding boundary.
+#pragma function(atan)
+// ORIGINAL: 0x004BF740 ?compute_camera@@YAXPAUVOX_Vect@@PAUVOX_Matrix@@@Z 0x004BF740-0x004BF8C1
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original control flow and original seed extent; observed VC6 external symbol. Tests exercise actual bodies, call/publication order, unordered/zero camera branches and complete facet tables at both established baselines.", "Camera publishes its first Euler triple before the second rotation; original CRT atan calls round their quotient to double. Facet initialization snapshots ConsoleGlobal inherited MapWin field at1DD6C, established by receiver-relative MapWin initialization; four independent 2401-element tables replace cross-object pointer arithmetic."], "reason": "Vehicle rendering setup with real VOX types, source-owned tables and actual Console terrain-height state."}
+void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix) {
+    VOX_Vect angles = {{0.0f, 0.0f, -1.0466667f}};
+    VOX_Matrix first_rotation;
+    VOX_Matrix second_rotation;
+    VOX_Vect rotated;
+    caviar_apply_rotation(angles.values, &first_rotation);
+    vox_matrix_vector_mul(first_rotation.values, normal->values, rotated.values);
+
+    // The original x87 tests take the zero arm for unordered values too.
+    if (rotated.values[0] == 0.0f || rotated.values[0] != rotated.values[0]) {
+        angles.values[0] = 0.0f;
+    } else if (rotated.values[1] == 0.0f || rotated.values[1] != rotated.values[1]) {
+        angles.values[0] = 1.57f;
+    } else {
+        angles.values[0] = (float)atan((double)rotated.values[0] / rotated.values[1]);
+    }
+    angles.values[1] = 0.0f;
+    angles.values[2] = 0.0f;
+    VehDrawCameraAngles = angles;
+    caviar_apply_rotation(angles.values, &first_rotation);
+
+    VOX_Vect projected = {{rotated.values[0], rotated.values[1], 0.0f}};
+    float length = leaf_006281e0_redirect(projected.values);
+    if (length == 0.0f || length != length) {
+        angles.values[2] = 0.0f;
+    } else if (rotated.values[2] == 0.0f || rotated.values[2] != rotated.values[2]) {
+        angles.values[2] = 1.57f;
+    } else {
+        angles.values[2] = (float)atan((double)length / rotated.values[2]);
+    }
+    angles.values[0] = 0.0f;
+    angles.values[1] = 0.0f;
+    caviar_apply_rotation(angles.values, &second_rotation);
+    vox_matrix_matrix_mul(first_rotation.values, second_rotation.values, matrix->values);
+    matrix->values[2][0] = -matrix->values[2][0];
+    matrix->values[2][1] = -matrix->values[2][1];
+    matrix->values[2][2] = -matrix->values[2][2];
+}
+#pragma intrinsic(atan)
+
+// ORIGINAL: 0x004C1B10 ?vehdraw_compute_facet_normals@@YAXXZ 0x004C1B10-0x004C1CF7
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original control flow and original seed extent; observed VC6 external symbol. Tests exercise actual bodies, call/publication order, unordered/zero camera branches and complete facet tables at both established baselines.", "Camera publishes its first Euler triple before the second rotation; original CRT atan calls round their quotient to double. Facet initialization snapshots ConsoleGlobal inherited MapWin field at1DD6C, established by receiver-relative MapWin initialization; four independent 2401-element tables replace cross-object pointer arithmetic."], "reason": "Vehicle rendering setup with real VOX types, source-owned tables and actual Console terrain-height state."}
+void __cdecl vehdraw_compute_facet_normals() {
+    // 0x93341C is ConsoleGlobal + MapWin::field_1DD6C_, initialized to 25
+    // or 8 by MapWin::calculate_dimensions. It is not an independent global.
+    const int baseline = (int)ConsoleGlobal.field_1DD6C_;
+    int index = 0;
+    for (int i = 30; i < 240; i += 30) {
+        const float height_i = (float)((i >> 2) - baseline);
+        for (int j = 30; j < 240; j += 30) {
+            const float height_j = (float)((j >> 2) - baseline);
+            for (int k = 30; k < 240; k += 30) {
+                const float height_k = (float)((k >> 2) - baseline);
+                for (int l = 30; l < 240; l += 30) {
+                    const float height_l = (float)((l >> 2) - baseline);
+                    VOX_Vect a = {{0.0f, 50.0f, height_j}};
+                    VOX_Vect b = {{-50.0f, 0.0f, height_i}};
+                    VOX_Vect c = {{50.0f, 0.0f, height_k}};
+                    VOX_Vect d = {{0.0f, -50.0f, height_l}};
+                    VOX_Vect n0, n1, n2, n3;
+                    vox_cross_product(a.values, b.values, n0.values);
+                    vox_cross_product(c.values, a.values, n1.values);
+                    vox_cross_product(d.values, c.values, n2.values);
+                    vox_cross_product(b.values, d.values, n3.values);
+                    vox_normalise_vector(n0.values, n0.values);
+                    vox_normalise_vector(n1.values, n1.values);
+                    vox_normalise_vector(n2.values, n2.values);
+                    vox_normalise_vector(n3.values, n3.values);
+                    VehDrawFacetNormals0[index] = n0;
+                    VehDrawFacetNormals1[index] = n1;
+                    VehDrawFacetNormals2[index] = n2;
+                    VehDrawFacetNormals3[index] = n3;
+                    ++index;
+                }
+            }
+        }
+    }
+}
 
 // has_fac_built_call() (real bitmask() call, general.h bitmask_call) is now
 // declared in base.h, which this file already includes - no local

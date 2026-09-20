@@ -1,0 +1,26 @@
+{
+  "event_id": "59881efeeb19fbd2a90c08e72968cdc35cf7bdca7ac3964fffd3b1d1487007e0",
+  "payload": {
+    "affects": [
+      "entity-3a85be28599c57ca492355834ec7cbabe3f34a194f45f2d5a2b68a23cdf738a4",
+      "entity-5d94db8e1de9064311879f56f8d3cb5faae1dd46e6a6976d94327e49c954ec11",
+      "entity-68dc337466fe91f7987ddd73a1515af76a23723f58624c4fae1f23438031ef6d",
+      "entity-902ad048415c15dd3128c1359609cb8e592beda1780bc768451ccce71a270aee",
+      "entity-fcbf3542b2d944298dd1105cfba6e412a8ae854eebcb6a78c891b05abb0dac09"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-selection-console-split-storage-20260920",
+    "evidence": [
+      "ConsoleGlobal9156B0 plus23BD4/23BD8/23BDC/23BE4 equals939284/288/28C/294. Original ctor50F592 and50F598 clears receiver-relative23BD8/23BE4; net_not_my_turn529E79/529ED9/529F1E writes absolute939294.",
+      "pick_top_veh559466 test dh,42 uses state mask0x4200, not seed0x420000. Suppressed vehicle689F30 is independent signed index initialized-1; boom5053CD..505403 sets/restores it, veh_draw55950B..559527 skips it.",
+      "Existing duplicate definitions in game.cpp/netdaemon.cpp/spying.cpp/console.cpp must migrate coherently with their users and fresh Console layout/matching checks. This finding remains pending; current camera/facet work reuses established MapWin member only."
+    ],
+    "hypothesis": "Vehicle selection depends on real Console state; existing LocalFaction/NetDaemonLocalFaction/SpyingCurrentFaction and CursorVehActive/CursorVehIndex allocate disconnected duplicate storage for Console members. Consolidate their owners and callers rather than adding more globals or implementing pick_top_veh against the duplicate aliases.",
+    "kind": "discovery"
+  },
+  "previous_event": "7190277f301b493da2a643af72f02f2917f82aaa4cac9652e21d26d9385e5166",
+  "request_id": "vehicle-selection-console-split-storage-20260920",
+  "schema_version": 1,
+  "sequence": 124,
+  "stream": "task:infowin-ownership"
+}

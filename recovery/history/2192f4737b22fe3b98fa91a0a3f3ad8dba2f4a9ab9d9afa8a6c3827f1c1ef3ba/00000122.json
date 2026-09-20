@@ -1,0 +1,39 @@
+{
+  "event_id": "127b3a3adc46360813023b1cd13dc0e1f16ea8b82cd164e150f31bb49324e07e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_vehicle_setup.py",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Recover real vehicle selection, camera and full four-table facet initialization, not a lifecycle-only caller or zero-array substitute. Seeds are hints: original disassembly determines loops, calls, stored globals and finite/exceptional arithmetic behavior.",
+      "Disjoint worker owns Caviar arithmetic/header/pending forwarder dependencies; coordinator integrates that reviewed step serially before final vehicle compilation. Current vehicle checkout edits no shared Caviar files. Retained Vector source work/baseline remains untouched.",
+      "Existing veh ownership remains this task. New global identity must reuse existing source storage where present; outside-owner storage changes require explicit further scope before edits. All original mappings/claims and pending vehicle-renderer findings remain."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5608416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4978496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4987664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fbfb4c84f39defa50885eefe048a6477c25fb07e605606cfe4b14597ae103167",
+  "request_id": "coordinator-vehicle-selection-camera-facets-20260920",
+  "schema_version": 1,
+  "sequence": 122,
+  "stream": "task:infowin-ownership"
+}

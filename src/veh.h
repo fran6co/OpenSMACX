@@ -17,6 +17,17 @@
  */
 #pragma once
 
+struct VOX_Vect;
+struct VOX_Matrix;
+
+extern VOX_Vect VehDrawFacetNormals0[2401];
+extern VOX_Vect VehDrawFacetNormals1[2401];
+extern VOX_Vect VehDrawFacetNormals2[2401];
+extern VOX_Vect VehDrawFacetNormals3[2401];
+extern VOX_Vect VehDrawCameraAngles;
+void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix);
+void __cdecl vehdraw_compute_facet_normals();
+
  /*
   * Vehicle/unit related objects, variables and functions.
   */
