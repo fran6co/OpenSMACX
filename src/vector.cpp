@@ -16,30 +16,9 @@
 // and the runtime's floating-point handling.
 #pragma function(sqrt)
 
-// veh_scoot pairs this destructor with Vector construction for arrays of
-// eight 12-byte elements, in both normal and exceptional cleanup paths.
-// ORIGINAL: 0x0055B750 ??1Vector@@QAE@XZ 0x0055B750-0x0055B755 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x0055B750 tail-jumps to Vector::close at 0x006343D0; span agrees with src/unrecovered/0055b750.cpp.", "veh_scoot constructs two eight-element arrays of stride 12 using constructor 0x006343C0 and destructor 0x0055B750 at 0x0055A197-0x0055A1D9; normal and exceptional array cleanup reuse that destructor."], "reason": "Real Vector destructor calling close, replacing the seed-only synthetic receiver shim without removing its historical obligation."}
-// body      src/vector.h
-
-/*
-Purpose: Initialize a zero vector.
-// ORIGINAL: 0x006343C0 ??0Vector@@QAE@XZ 0x006343C0-0x006343CD BYTE_EXACT
-// body      src/vector.h
-// size      13 bytes
-// prototype void (__thiscall ??0Vector@@QAE@XZ)(Vector* this)
-// callers   1   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// notes     Runtime redirect installed by DllMain after byte-signature validation
-Status: Complete
-*/
-
 /*
 Purpose: Clear all vector components.
 // ORIGINAL: 0x006343D0 ?close@Vector@@QAEXXZ 0x006343D0-0x006343DB BYTE_EXACT
-// body      src/vector.h
 // size      11 bytes
 // prototype void (__thiscall ?close@Vector@@QAEXXZ)(Vector* this)
 // callers   1   call targets   0
@@ -49,6 +28,11 @@ Purpose: Clear all vector components.
 // notes     Runtime redirect installed by DllMain after byte-signature validation
 Status: Complete
 */
+void Vector::close() {
+    x_ = 0.0f;
+    y_ = 0.0f;
+    z_ = 0.0f;
+}
 
 /*
 Purpose: Subtract another vector into a separate output vector.

@@ -1,0 +1,39 @@
+{
+  "event_id": "2d6406302a17fcc7171c79ba734e6a3112111e0af70901819b93e8c316471065",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/vector.cpp",
+      "src/vector.h",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Refine the constructor-visibility trial: ordinary constructor adds calls in all four default-result methods, so retain the valid header-inline constructor. Keep close ordinary in vector.cpp: genuine veh_scoot arrays emit matching13-byte constructor and5-byte destructor; vector.cpp emits matching11-byte close. No artificial emission anchors or flags are used.",
+      "Rehome only the existing constructor/destructor annotation blocks to veh.cpp, the genuine array callback emission host, retaining their header body locations, identities, spans and historical claims. Close remains beside its real vector.cpp definition. This is a product measurement host, not a claim that the entire original translation-unit boundary is proven.",
+      "Current vector.cpp add/sub/cross now contain27/27/36 instructions instead of original22/22/31 because cleanup is opaque; six other arithmetic bodies remain exact and normalize remains a known mismatch. Preserve this explicit restoration debt and all claims rather than invent invalid cross-TU inline definitions or change compiler policy. Coordinator permits retained WIP only, not an exactness or integration claim. Final build/link and caller regressions must still be checked."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6505408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6505424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5617488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "745e322769f43768e51d2986bf67540a38bc35ecdadea2a1c49e4b959247fe87",
+  "request_id": "vector-genuine-lifetime-hosts-20260920",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:vector-value-semantics"
+}

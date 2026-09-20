@@ -225,6 +225,9 @@ typedef int (OriginalObject::*func_sound_original_load)(const char *fname);
 extern func_sound_original_load SoundOriginalLoad;
 typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);
 
+// Movement sound, owned and initialized with the other Wave objects.
+extern Wave g_SCOOT_WAVE;  // 0x00749C18
+
 // Effect::init registers three callbacks into the Win hook slots before it
 // resolves a filename: the input callback at 0x004457C0 into WinMessageHook
 // (0x009B7A88), the ok callback at 0x00445650 into 0x009B7A98, and the

@@ -37,6 +37,11 @@
 #include "path.h"  // Paths - the move cost table the go-to verbs consult
 #include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
 #include "caviar.h"
+#include "font.h"
+#include "infowin.h"
+#include "worldwin.h"
+#include "wave.h"
+#include <mmsystem.h>
 #include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 #include "leaf_recoveries.h"  // The source-owned vector-length operation.
@@ -92,6 +97,582 @@ LPSTR VehBattleDisplay[160];  // 0x0090F554
 // then restores -1. This is separate from the Console's selected vehicle.
 // RECOVERY_OBJECT: v2 0x00689F30 0x00689F34 ?VehDrawSuppressedVehicle@@3HA 0x005593E0
 int VehDrawSuppressedVehicle = -1;
+
+// These header-defined lifetime callbacks are emitted for the real
+// Vector arrays in veh_scoot below, not forced by a measurement anchor.
+// veh_scoot pairs this destructor with Vector construction for arrays of
+// eight 12-byte elements, in both normal and exceptional cleanup paths.
+// ORIGINAL: 0x0055B750 ??1Vector@@QAE@XZ 0x0055B750-0x0055B755 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x0055B750 tail-jumps to Vector::close at 0x006343D0; span agrees with src/unrecovered/0055b750.cpp.", "veh_scoot constructs two eight-element arrays of stride 12 using constructor 0x006343C0 and destructor 0x0055B750 at 0x0055A197-0x0055A1D9; normal and exceptional array cleanup reuse that destructor."], "reason": "Real Vector destructor calling close, replacing the seed-only synthetic receiver shim without removing its historical obligation."}
+// body      src/vector.h
+
+/*
+Purpose: Initialize a zero vector.
+// ORIGINAL: 0x006343C0 ??0Vector@@QAE@XZ 0x006343C0-0x006343CD BYTE_EXACT
+// body      src/vector.h
+// size      13 bytes
+// prototype void (__thiscall ??0Vector@@QAE@XZ)(Vector* this)
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+// notes     Runtime redirect installed by DllMain after byte-signature validation
+Status: Complete
+*/
+// Movement rendering publishes this font for the current order label.
+// Original 0x00559DF6 stores the FontQueue result, also passed to set_font.
+// RECOVERY_OBJECT: v2 0x0093FAE0 0x0093FAE4 ?VehDrawFont@@3PAVFont@@A 0x005594F0
+Font *VehDrawFont;
+// Signed preference: negative/default/positive select slow/normal/fast.
+// The independent INI loader 0x00588AA0 names it FastUnitAnim.
+// RECOVERY_OBJECT: v2 0x0094581C 0x00945820 ?FastUnitAnim@@3HA 0x0055A150
+int FastUnitAnim;
+
+// ORIGINAL: 0x005594F0 ?veh_draw@@YAHPAUBuffer@@HHHHHH@Z 0x005594F0-0x0055A14E
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5594F0..55A14E retains raw screen coordinates for vehicle bodies, applies metric offsets only to overlays, and re-reads shared caption scale after callbacks. Health foreground reuses the rectangle passed to black fill. Order labels are truncated to one character then brackets duplicated; copy only that character to avoid original malformed-label overflow. Independent original review corrects seed receiver offsets and preserves cached faction versus fresh Console reads.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover vehicle bodies and overlays using actual sprites, chassis metrics, faction palettes and font storage."}
+// symbol    ?veh_draw@@YAHPAVBuffer@@HHHHHH@Z
+int __cdecl veh_draw(Buffer * buffer, int veh_id, int screen_x, int screen_y, int zoom, int flags, int frame) {
+    int x = screen_x, y = screen_y;
+
+    if ((flags & 1) != 0) {
+        veh_id = pick_top_veh(veh_id);
+        if (VehDrawSuppressedVehicle != -1 && VehDrawSuppressedVehicle == veh_id) {
+            return 0;
+        }
+    }
+
+    unsigned int faction = Vehs[veh_id].faction_id;
+    unsigned int factionSaved = faction;
+
+    if ((zoom < -8 || (flags & 0x100) != 0) && (flags & 8) == 0 && (flags & 0x800) == 0) {
+        int prototype = Vehs[veh_id].proto_id;
+        if (faction != (unsigned int)ConsoleGlobal.faction_id_ &&
+            VehPrototypes[prototype].plan == '\v' && (GameState & 0x80) == 0) {
+            return 0;
+        }
+        if ((flags & 0x400) != 0) {
+            return 0;
+        }
+        int rw, rh;
+        if (MapWinCaptionScale < 1) {
+            rh = (zoom * 5 + 0x50) * 10 / 16;
+            rw = (zoom * 5 + 0x50) * 0x14 / 16;
+        } else {
+            rh = (MapWinCaptionScale * 0x32) / MapWinCaptionDivisor;
+            rw = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
+        }
+        rw += x;
+        rh += y;
+        if ((flags & 0x200) == 0) {
+            int dxy;
+            if (MapWinCaptionScale < 1) {
+                dxy = (zoom * 8 + 0x80) / 16;
+            } else {
+                dxy = (MapWinCaptionScale * 8) / MapWinCaptionDivisor;
+            }
+            x += dxy;
+            rw -= dxy;
+            y += dxy;
+            rh -= dxy;
+        } else {
+            x -= 2;
+            rw += 2;
+            y -= 2;
+            rh += 2;
+        }
+        int qy = (rh - y) / 4;
+        int botY = y + qy;
+        int botYr = rh + qy;
+        int mid = ((rw - x) - botYr + botY) / 2;
+        int leftX = x + mid;
+        int rightX = rw - mid;
+        RECT r1;
+        r1.left = leftX; r1.top = botY; r1.right = rightX; r1.bottom = botYr;
+        int col = (strcmp(Players[faction].search_key, "SPARTANS") == 0) ? 44 : 0;
+        buffer->box(&r1, col, col);
+        r1.left++; r1.bottom--; r1.top++; r1.right--;
+        buffer->fill(&r1, InfoFactionTextColors[faction]);
+        return 0;
+    }
+
+    if (MapWinCaptionScale < 1) {
+        SpriteScaleNumerator = zoom + 0x10;
+        SpriteScaleDenominator = 0x10;
+    } else {
+        SpriteScaleNumerator = MapWinCaptionScale;
+        SpriteScaleDenominator = MapWinCaptionDivisor;
+    }
+
+    int prototype = Vehs[veh_id].proto_id;
+    unsigned int category = VehPrototypes[prototype].chassis_id;
+    if ((char)Weapon[VehPrototypes[prototype].weapon_id].icon > -1 &&
+        category == 0) {
+        category = (char)Weapon[VehPrototypes[prototype].weapon_id].icon + 9;
+    }
+    if ((char)VehPrototypes[prototype].icon_offset > -1) {
+        category = (char)VehPrototypes[prototype].icon_offset + 9;
+    }
+    unsigned int sprite_category = category;
+
+    unsigned int morale;
+    if (faction == 0) {
+        morale = morale_alien(veh_id, ConsoleGlobal.faction_id_);
+    } else {
+        morale = morale_veh(veh_id, 0, 0);
+    }
+
+    unsigned int variation = 0;
+    if (sprite_category == 12 || sprite_category == 10 || sprite_category == 13 || sprite_category == 14)
+        variation = morale;
+    else if (sprite_category == 15) {
+        const int prototype = Vehs[veh_id].proto_id;
+        if (prototype == 17) variation = 1;
+        if (prototype == 18) variation = 2;
+    }
+
+    if ((flags & 0x1000) == 0) {
+        int dx, dy;
+        if (MapWinCaptionScale < 1) {
+            dx = (zoom + 0x10) * Chassis[sprite_category].sprite_flag_x_off[variation] / 16;
+        } else {
+            dx = (int)(Chassis[sprite_category].sprite_flag_x_off[variation] * MapWinCaptionScale) / MapWinCaptionDivisor;
+        }
+        x += dx;
+        if (MapWinCaptionScale < 1) {
+            dy = (zoom + 0x10) * Chassis[sprite_category].sprite_flag_y_off[variation] / 16;
+        } else {
+            dy = (int)(Chassis[sprite_category].sprite_flag_y_off[variation] * MapWinCaptionScale) / MapWinCaptionDivisor;
+        }
+        y += dy;
+    }
+
+    unsigned int flagBit800 = flags & 0x800;
+    if (flagBit800 == 0) {
+        if ((int)sprite_category > 8) {
+            Sprite *sp = &g_VEH_SPRITES[variation + sprite_category * 8];
+            // EBX/ESI retain the unshifted origin; the adjusted stack
+            // coordinates are only for the flag/health/order overlays.
+            sp->draw_dest(buffer, sp->cTransparentIndex_, screen_x, screen_y, ShadowColorTable);
+        }
+        SpriteScaleNumerator = 1;
+        SpriteScaleDenominator = 1;
+        if ((flags & 0x80) == 0 && (int)sprite_category < 9) {
+            if ((flags & 0x10) == 0) {
+                if ((flags & 0x20) == 0) {
+                    vehdraw_draw(buffer, veh_id, screen_x, screen_y, flags, zoom, frame);
+                } else {
+                    vehdraw_scoot(buffer, screen_x, screen_y, frame, zoom);
+                }
+            } else {
+                vehdraw_turn(buffer, screen_x, screen_y, frame, zoom);
+            }
+        }
+    }
+
+    if (MapWinCaptionScale < 1) {
+        SpriteScaleDenominator = 0x10;
+        SpriteScaleNumerator = zoom + 0x10;
+    } else {
+        SpriteScaleNumerator = MapWinCaptionScale;
+        SpriteScaleDenominator = MapWinCaptionDivisor;
+    }
+
+    if ((((flags & 0x40) != 0 || (flags & 0x400) != 0) && flagBit800 == 0) ||
+        (factionSaved != (unsigned int)ConsoleGlobal.faction_id_ &&
+         VehPrototypes[Vehs[veh_id].proto_id].plan == '\v' &&
+         (GameState & 0x80) == 0)) {
+        goto tail;
+    }
+
+    {
+        int exhausted = 0;
+        if (IsMultiplayerNet == 0) {
+            if (faction == (unsigned int)ConsoleGlobal.faction_id_) {
+                unsigned int spd = speed(veh_id, 0);
+                int diff = (int)spd - Vehs[veh_id].moves_expended;
+                if (diff < 0 || (diff < 1000 && spd == Vehs[veh_id].moves_expended)) {
+                    exhausted = 1;
+                }
+            }
+        } else {
+            unsigned int spd = speed(veh_id, 0);
+            int diff = (int)spd - Vehs[veh_id].moves_expended;
+            if (diff < 0 || (diff < 1000 && spd == Vehs[veh_id].moves_expended)) {
+                exhausted = 1;
+            }
+        }
+
+        unsigned int stackFaction = faction;
+        if ((flags & 2) != 0) {
+            int stackN = stack_check(veh_id, 1, -1, -1, -1);
+            stackFaction = faction;
+            if (stackN > 1) {
+                if (Chassis[sprite_category].sprite_flag_x_off[variation] > 0x32) {
+                    int dxs;
+                    if (MapWinCaptionScale < 1) {
+                        dxs = (zoom * 3 + 0x30) * 2 / 16;
+                    } else {
+                        dxs = (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
+                    }
+                    x -= dxs;
+                }
+                Sprite *sp = &g_FLAGS_VEH_SPRITES[exhausted + (faction * 7 + morale) * 2];
+                sp->draw_mono(buffer, sp->cTransparentIndex_, x, y, InfoFactionShadowColors[faction]);
+                if (MapWinCaptionScale < 1) {
+                    x += (zoom * 3 + 0x30) * 2 / 16;
+                } else {
+                    x += (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
+                }
+            }
+        }
+
+        Sprite *sp2 = &g_FLAGS_VEH_SPRITES[exhausted + (stackFaction * 7 + morale) * 2];
+        sp2->draw(buffer, sp2->cTransparentIndex_, x, y);
+
+        RECT r2;
+        int rr24, rr28, rr2c, rr30;
+        if (MapWinCaptionScale < 1) {
+            rr24 = (zoom + 0x10) * 0x15 / 16;
+            rr28 = (zoom * 2 + 0x20) / 16;
+            rr2c = (zoom * 3 + 0x30) * 2 / 16;
+            rr30 = (zoom * 3 + 0x30) * 2 / 16;
+        } else {
+            rr24 = (MapWinCaptionScale * 0x15) / MapWinCaptionDivisor;
+            rr28 = (MapWinCaptionScale * 2) / MapWinCaptionDivisor;
+            rr2c = (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
+            rr30 = (MapWinCaptionScale * 6) / MapWinCaptionDivisor;
+        }
+        rr2c += y;
+        rr30 += x;
+        rr28 = rr30 + rr28;
+        rr24 = rr2c + rr24;
+        r2.left = rr30; r2.top = rr2c; r2.right = rr28; r2.bottom = rr24;
+        buffer->fill(&r2, 0);
+
+        // No callback intervenes between these state reads and the foreground
+        // fill. Reactor and damage are bytes; health is bounded to 1..1000.
+        const int health_prototype = Vehs[veh_id].proto_id;
+        int reactor = VehPrototypes[health_prototype].reactor_id;
+        if (reactor < 1) reactor = 1;
+        else if (reactor > 100) reactor = 100;
+        const int maximum_health = VehPrototypes[health_prototype].plan == 12
+            ? 1 : reactor * 10;
+        const int damage = Vehs[veh_id].dmg_incurred;
+        const int remaining_health = maximum_health - damage;
+        if (remaining_health > 0) {
+            // Reuse the rectangle passed to black fill, including any changes
+            // made by that call, rather than rebuilding it from stale locals.
+            r2.bottom = (r2.bottom - r2.top) * remaining_health / maximum_health + r2.top;
+            int health_color = 249;
+            if (damage < maximum_health * 2 / 3) health_color = 251;
+            if (damage < maximum_health / 3 || damage == 0) health_color = 250;
+            buffer->fill(&r2, health_color);
+        }
+
+        VehDrawFont = g_FONTQUEUE_VAL2.get_zoom(zoom, 1, 4, 1);
+        buffer->set_font(VehDrawFont, 0, 0, 0);
+        int col2 = (strcmp(Players[faction].search_key, "SPARTANS") == 0) ? 44 : 0;
+        buffer->set_text_color(col2, -1, 1, 1);
+
+        int triadIdx = (signed char)Vehs[veh_id].order;
+        if (triadIdx < 0) triadIdx = 0;
+        else if (triadIdx > 0x1d) triadIdx = 0x1d;
+
+        if (MapWinCaptionScale < 1) {
+            rr24 = (zoom + 0x10) * 0xe / 16;
+            rr28 = (zoom + 0x10) * 0xb / 16;
+            rr2c = (zoom * 5 + 0x50) / 16;
+            rr30 = (zoom * 5 + 0x50) * 2 / 16;
+        } else {
+            rr24 = (MapWinCaptionScale * 0xe) / MapWinCaptionDivisor;
+            rr28 = (MapWinCaptionScale * 0xb) / MapWinCaptionDivisor;
+            rr2c = (MapWinCaptionScale * 5) / MapWinCaptionDivisor;
+            rr30 = (MapWinCaptionScale * 10) / MapWinCaptionDivisor;
+        }
+        rr2c += y;
+        rr30 += x;
+        rr28 = rr30 + rr28;
+        rr24 = rr2c + rr24;
+        r2.left = rr30; r2.top = rr2c; r2.right = rr28; r2.bottom = rr24;
+
+        char *word = StringTable.get(reinterpret_cast<int>(Order[triadIdx].letter));
+        // The original copies an unbounded label then discards all but its
+        // first character. Copy only the displayed character: malformed long
+        // rule labels must not overflow the original four-byte scratch.
+        char lineBuf[4] = {word[0], 0, 0, 0};
+
+        if ((Vehs[veh_id].state & 0x4000) != 0) {
+            strcpy(lineBuf, "/");
+        }
+        if ((Vehs[veh_id].state & 0x1000200) == 0x1000200) {
+            strcpy(lineBuf, "P");
+        }
+        if ((Vehs[veh_id].state & 0x200) != 0) {
+            if (Vehs[veh_id].order_auto_type == '\v') {
+                strcpy(lineBuf, "*");
+            }
+            if ((Vehs[veh_id].state & 0x200) != 0 &&
+                Vehs[veh_id].order_auto_type == '\n') {
+                strcpy(lineBuf, "B");
+            }
+        }
+
+        // 559FEC/559FF0 terminate the one-character label. 55A082
+        // duplicates brackets into byte1 ("[[" / "]]"), not a dead local.
+        lineBuf[2] = 0;
+        lineBuf[1] = 0;
+        if (faction == (unsigned int)ConsoleGlobal.faction_id_ &&
+            (static_cast<unsigned char>(LockEnableMask) & (unsigned char)(1 << (faction & 0x1f))) != 0) {
+            if (lineBuf[0] == '[' || lineBuf[0] == ']') {
+                lineBuf[1] = lineBuf[0];
+            }
+        } else {
+            if ((GameState & 0x80) != 0 ||
+                (static_cast<unsigned char>(LockEnableMask) & (unsigned char)(1 << (ConsoleGlobal.faction_id_ & 0x1f))) == 0) {
+                if ((GameState & 0x40) != 0 && (GameState & 0x1000) != 0) {
+                    lineBuf[0] = Vehs[veh_id].move_to_ai_type;
+                }
+                if (lineBuf[0] != '-' && (Vehs[veh_id].state & 0x40000) != 0) {
+                    int col3 = ((Vehs[veh_id].state & 0x20000) == 0) ? 0xfb : 0xf8;
+                    buffer->set_text_color(col3, -1, 1, 1);
+                }
+                if (lineBuf[0] == '[' || lineBuf[0] == ']') {
+                    lineBuf[1] = lineBuf[0];
+                }
+            } else {
+                lineBuf[0] = '-';
+            }
+        }
+
+        if (faction == (unsigned int)ConsoleGlobal.faction_id_) {
+            if ((Vehs[veh_id].state & 0x200) != 0) {
+                buffer->set_text_color(InfoFactionShadowColors[faction], -1, 1, 1);
+                if (lineBuf[0] == '-') lineBuf[0] = 'a';
+                if ((GameState & 0x40) != 0 && (GameState & 0x1000) != 0) {
+                    lineBuf[0] = Vehs[veh_id].move_to_ai_type;
+                }
+            }
+            if (faction == (unsigned int)ConsoleGlobal.faction_id_ &&
+                (Vehs[veh_id].state & 0x8000000) != 0) {
+                int col4 = ConsoleGlobal.faction_id_ == 3 ? 250 : 255;
+                buffer->set_text_color(col4, -1, 1, 1);
+            }
+        }
+        buffer->write_cent_l(lineBuf, &r2, (int)strlen(lineBuf));
+    }
+
+tail:
+    SpriteScaleNumerator = 1;
+    SpriteScaleDenominator = 1;
+    if (flagBit800 != 0) {
+        SpriteScaleDenominator = 1;
+        SpriteScaleNumerator = 1;
+        return 0;
+    }
+    return (int)sprite_category < 9;
+}
+
+// ORIGINAL: 0x0055A150 ?veh_scoot@@YAXHHHHH@Z 0x0055A150-0x0055AF11;0x0065FF70-0x0065FFC7
+// RECOVERY_BINDING: v1 {"evidence": ["Original55A175..55A1D9 constructs Buffer[8],Vector[8],singleton Vector,Vector[8], with reverse normal teardown55AEA7..55AEFB and EH65FF70..65FFC7. Use genuine value subtraction, mutating scale and compound operations. Preserve flags1 turn-only cleanup, flags4000 immediate redraw, fresh MapWinTable receivers and preference reads, source/destination copy direction, wrap and timing. Zero-initialized active flags explicitly make null slots inactive rather than preserving original uninitialized reads.", "Preserve existing seed identity and complete original spans. Source binding is not a measured matching or runtime claim."], "reason": "Recover real movement animation with automatic Buffer and Vector lifetime rather than raw stack/return-slot scaffolding."}
+void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags) {
+    Buffer saved[8];
+    Vector position[8];
+    Vector destination;
+    Vector increment[8];
+    // Original skips the flag store for null slots. Startup normally fills
+    // all eight slots; explicitly treating null slots as inactive is a
+    // coordinator-authorized safety correction to that undefined case.
+    int active[8] = {0};
+    int start_x[8], start_y[8], end_x[8], end_y[8];
+    int margin_x[8], margin_y[8];
+    RECT area[8];
+
+    VehDrawPositionY = tile_y;
+    VehDrawPositionX = tile_x;
+    VehDrawPositionVehicle = veh_id;
+    bool retain_origin = false;
+    if (direction >= 8) {
+        direction %= 8;
+        retain_origin = true;
+    }
+    g_SCOOT_WAVE.play();
+    int next_x = tile_x + VehMoveDeltaX[direction];
+    if (!(MapIsFlat & 1)) {
+        if (next_x < 0) next_x += MapLongitudeBounds;
+        else if (next_x >= MapLongitudeBounds) next_x -= MapLongitudeBounds;
+    }
+    const int next_y = tile_y + VehMoveDeltaY[direction];
+    const bool immediate = (flags & 0x4000) != 0;
+    int delay = 0, move_frames = 0;
+    if (!immediate && IsMultiplayerNet &&
+        Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
+        WorldClimateWorldWin.set_detail_map();
+        WorldClimateWorldWin.viewport_outline_enabled_ = 1;
+    }
+    draw_tile(tile_x, tile_y, 0);
+    draw_tile(next_x, next_y, 0);
+    if (!immediate) {
+        delay = IsMultiplayerNet ? 10 : 16;
+        const int triad = Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].triad;
+        if (triad == 1) delay = delay * 2 / 3;
+        if (triad == 2) delay /= 3;
+        move_frames = FastUnitAnim < 0 ? 9 : (FastUnitAnim == 0 ? 6 : 3);
+        if (IsMultiplayerNet) {
+            if (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_) delay = 0;
+            move_frames = 4;
+            Vehs[veh_id].facing = static_cast<int8_t>(direction);
+        }
+    }
+    for (int i = 0; i < 8; ++i) {
+        MapWin *window = MapWinTable[i];
+        if (!window) continue;
+        active[i] = 0;
+        if (i != 0 && !window->field_1DD74_) continue;
+        bool visible = false;
+        for (int endpoint = 0; endpoint < 2; ++endpoint) {
+            int x = endpoint ? next_x : tile_x;
+            const int y = endpoint ? next_y : tile_y;
+            if (y < static_cast<int>(window->field_1DDA8_) ||
+                y >= static_cast<int>(window->field_1DDD8_ + window->field_1DDD0_ + window->field_1DDA8_))
+                continue;
+            if (!(MapIsFlat & 1)) {
+                if (x < static_cast<int>(window->field_1DDA4_)) x += MapLongitudeBounds;
+                if (x >= static_cast<int>(window->field_1DDD4_ + window->field_1DDCC_ + window->field_1DDA4_))
+                    x -= MapLongitudeBounds;
+            }
+            if (x >= static_cast<int>(window->field_1DDA4_) &&
+                x < static_cast<int>(window->field_1DDD4_ + window->field_1DDCC_ + window->field_1DDA4_)) {
+                visible = true;
+                break;
+            }
+        }
+        if (!visible) continue;
+        active[i] = 1;
+        window->tile_to_pixel(tile_x, tile_y, &start_x[i], &start_y[i]);
+        MapWinTable[i]->tile_to_pixel(next_x, next_y, &end_x[i], &end_y[i]);
+        window = MapWinTable[i];
+        start_y[i] -= window->field_1DDC0_;
+        end_y[i] -= window->field_1DDC0_;
+        if (!immediate) {
+            position[i].x_ = static_cast<float>(start_x[i]);
+            position[i].y_ = static_cast<float>(start_y[i]);
+            destination.x_ = static_cast<float>(end_x[i]);
+            destination.y_ = static_cast<float>(end_y[i]);
+            increment[i] = destination - position[i];
+            increment[i].scale(1.0f / static_cast<float>(move_frames));
+            position[i] += increment[i];
+        }
+        window = MapWinTable[i];
+        area[i].left = start_x[i] < end_x[i] ? start_x[i] : end_x[i];
+        area[i].top = start_y[i] < end_y[i] ? start_y[i] : end_y[i];
+        area[i].right = (start_x[i] > end_x[i] ? start_x[i] : end_x[i]) + window->field_1DDB4_;
+        area[i].bottom = (start_y[i] > end_y[i] ? start_y[i] : end_y[i]) +
+                         window->field_1DDB8_ + window->field_1DDC0_;
+        if (immediate) {
+            RECT origin;
+            origin.left = start_x[i]; origin.top = start_y[i];
+            origin.right = start_x[i] + window->field_1DDB4_;
+            origin.bottom = start_y[i] + window->field_1DDB8_ + window->field_1DDC0_;
+            UnionRect(&area[i], &origin, &area[i]);
+        }
+        RECT end_clip, start_clip;
+        MapWinTable[i]->compute_clip(next_x, next_y, 0, &end_clip);
+        MapWinTable[i]->compute_clip(tile_x, tile_y, 0, &start_clip);
+        UnionRect(&area[i], &end_clip, &start_clip);
+        if (!immediate) {
+            margin_x[i] = (area[i].right - area[i].left) / 4;
+            margin_y[i] = (area[i].bottom - area[i].top) / 4;
+            area[i].left -= margin_x[i]; area[i].right += margin_x[i];
+            area[i].top -= margin_y[i]; area[i].bottom += margin_y[i];
+            saved[i].init(area[i].right - area[i].left, area[i].bottom - area[i].top, 0, 0);
+            static_cast<Buffer *>(MapWinTable[i])->copy(&saved[i], area[i].left, area[i].top,
+                0, 0, area[i].right - area[i].left, area[i].bottom - area[i].top);
+        }
+    }
+    if (immediate) {
+        Vehs[veh_id].facing = static_cast<int8_t>(direction);
+    } else {
+        // Preference is re-read after all preparation callbacks.
+        const int turn_speed = FastUnitAnim < 0 ? 25 : (FastUnitAnim == 0 ? 16 : 8);
+        const int turn_frames = vehdraw_turn_start(veh_id, direction, turn_speed, 2);
+        DWORD previous_time = timeGetTime();
+        for (int turn_frame = 0; turn_frame < turn_frames; ++turn_frame) {
+            for (int i = 0; i < 8; ++i) if (active[i]) {
+                const int width = area[i].right - area[i].left;
+                const int height = area[i].bottom - area[i].top;
+                RECT moving = {start_x[i], start_y[i], start_x[i] + width, start_y[i] + height};
+                RECT intersection;
+                if (IntersectRect(&intersection, &moving, &area[i])) {
+                    veh_draw(static_cast<Buffer *>(MapWinTable[i]), veh_id, start_x[i], start_y[i],
+                        static_cast<int>(MapWinTable[i]->field_1DD98_), 0x12, turn_frame);
+                    MapWinTable[i]->update(&area[i], 0);
+                    saved[i].copy(static_cast<Buffer *>(MapWinTable[i]),
+                        start_x[i] - margin_x[i] - area[i].left,
+                        start_y[i] - margin_y[i] - area[i].top,
+                        start_x[i] - margin_x[i], start_y[i] - margin_y[i], width, height);
+                }
+            }
+            DWORD now;
+            do { do_non_input(); now = timeGetTime(); }
+            while (static_cast<int>(now - previous_time) < delay / 2);
+            previous_time = now;
+        }
+        // Original jumps straight to global-coordinate cleanup for this flag.
+        if (flags & 1) {
+            VehDrawPositionX = -1;
+            VehDrawPositionY = -1;
+            flush_input();
+            return;
+        }
+        vehdraw_scoot_start(veh_id, direction, move_frames, 2);
+        for (int move_frame = 0; move_frame < move_frames; ++move_frame) {
+            for (int i = 0; i < 8; ++i) if (active[i]) {
+                const int width = area[i].right - area[i].left;
+                const int height = area[i].bottom - area[i].top;
+                RECT moving;
+                moving.top = static_cast<int>(position[i].y_);
+                moving.left = static_cast<int>(position[i].x_);
+                moving.right = moving.left + width; moving.bottom = moving.top + height;
+                RECT intersection;
+                if (IntersectRect(&intersection, &moving, &area[i])) {
+                    // Convert again after IntersectRect, as the original does.
+                    const int y = static_cast<int>(position[i].y_);
+                    const int x = static_cast<int>(position[i].x_);
+                    veh_draw(static_cast<Buffer *>(MapWinTable[i]), veh_id, x, y,
+                        static_cast<int>(MapWinTable[i]->field_1DD98_), 0x22, move_frame);
+                    MapWinTable[i]->update(&area[i], 0);
+                    const int restore_y = static_cast<int>(position[i].y_);
+                    const int restore_x = static_cast<int>(position[i].x_);
+                    saved[i].copy(static_cast<Buffer *>(MapWinTable[i]),
+                        restore_x - margin_x[i] - area[i].left,
+                        restore_y - margin_y[i] - area[i].top,
+                        restore_x - margin_x[i], restore_y - margin_y[i], width, height);
+                }
+                position[i] += increment[i];
+            }
+            DWORD now;
+            do { do_non_input(); now = timeGetTime(); }
+            while (static_cast<int>(now - previous_time) < delay);
+            previous_time = now;
+        }
+        for (int i = 0; i < 8; ++i) position[i] -= increment[i];
+    }
+    if (!retain_origin) {
+        VehDrawPositionX = next_x;
+        VehDrawPositionY = next_y;
+    }
+    for (int final_slot = 0; final_slot < 8; ++final_slot) if (active[final_slot]) {
+        veh_draw(static_cast<Buffer *>(MapWinTable[final_slot]), veh_id,
+            end_x[final_slot], end_y[final_slot],
+            static_cast<int>(MapWinTable[final_slot]->field_1DD98_), 2, 1);
+        MapWinTable[final_slot]->soft_update(&area[final_slot]);
+        do_all_draws();
+    }
+    VehDrawPositionX = -1;
+    VehDrawPositionY = -1;
+    flush_input();
+}
+
 
 // ORIGINAL: 0x005593E0 ?pick_top_veh@@YAHH@Z 0x005593E0-0x005594EB
 // RECOVERY_BINDING: v1 {"evidence": ["Original5593E0..5594EB climbs signed previous links then visits next links, snapshots the Console faction, excludes temporary suppression, prefers eligible selected vehicle and retains the first highest-score entry.", "Original559466 test dh,42 establishes state mask4200, correcting the seed420000. Original ctor/reset member accesses and ConsoleGlobal9156B0 establish faction/cursor/selected/enable ownership, not independent globals. Observed VC6 symbol and original complete seed extent."], "reason": "Recover stack display selection against real vehicle/prototype/chassis records and Console state."}

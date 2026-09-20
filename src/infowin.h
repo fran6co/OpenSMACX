@@ -170,3 +170,7 @@ class InfoWin {
 // substitute a probe.
 typedef void (OriginalObject::*func_info_win_right_menu)(int, int);
 extern func_info_win_right_menu InfoWinOriginalRightMenu;  // 0x004589C0
+
+// Actual palette-index owners shared by information and vehicle overlays.
+extern int InfoFactionTextColors[8];
+extern int InfoFactionShadowColors[8];

@@ -69,6 +69,10 @@ void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix);
 void __cdecl vehdraw_compute_facet_normals();
 extern int VehDrawSuppressedVehicle;
 int __cdecl pick_top_veh(int veh_id);
+int __cdecl veh_draw(Buffer *buffer, int veh_id, int screen_x, int screen_y,
+                     int zoom, int flags, int frame);
+void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags);
+extern int FastUnitAnim;
 
  /*
   * Vehicle/unit related objects, variables and functions.

@@ -62,20 +62,15 @@ class Vector {
   float z_;
 };
 
-// Keep actual construction and cleanup available to value-returning arithmetic.
-// Original standalone callback identities remain mapped in vector.cpp; inline
-// availability alone does not establish their emitted copies or original TU.
+// Normal singleton/temporary cleanup in veh_scoot calls close directly, while
+// arrays and exception cleanup take this destructor's address. Keep the small
+// destructor visible here, but close's definition in vector.cpp, so callers
+// cannot turn the destructor callback into component stores.
 inline Vector::~Vector() {
   close();
 }
 
 inline Vector::Vector() {
-  x_ = 0.0f;
-  y_ = 0.0f;
-  z_ = 0.0f;
-}
-
-inline void Vector::close() {
   x_ = 0.0f;
   y_ = 0.0f;
   z_ = 0.0f;

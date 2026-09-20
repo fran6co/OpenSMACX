@@ -126,6 +126,7 @@ class Sprite {
   int *get_clipped_y_table_shrink(RECT *full, RECT *clipped, int *destination_skip,
       int *source_skip, int *destination_count, int *source_count);
  private:
+  friend int __cdecl veh_draw(Buffer *, int, int, int, int, int, int);
   friend class CheckBox;
   friend class RadioButton;
   // `Win::flip` draws the overlay sprite and takes its frame index from
@@ -233,6 +234,8 @@ typedef void *func_sprite_free(void *);
 // Uniform scaling ratio, temporarily substituted by the wider draw overloads.
 // These are not independent horizontal/vertical origins: both axes use N / D.
 extern int SpriteScaleNumerator;    // 0x00696D18, initially 1
+extern Sprite g_VEH_SPRITES[152];        // 0x007777A0
+extern Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778
 extern int SpriteScaleDenominator;  // 0x00696D1C, initially 1
 extern int SpriteCachedScaleNumerator;    // 0x00696D20, initially -1
 extern int SpriteCachedScaleDenominator;  // 0x00696D24, initially -1
