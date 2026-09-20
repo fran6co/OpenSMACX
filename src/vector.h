@@ -10,119 +10,76 @@
 #pragma once
 
 /*
- * Vector - the game's three-component float vector.
+ * Vector is three 32-bit floating-point components. Original subtraction
+ * loads this+0, this+4 and this+8 with fld dword at 0x0063443F,
+ * 0x00634447 and 0x00634455. The constructor initializes these three
+ * components; veh_scoot constructs arrays with a 12-byte element stride.
  *
- * THE STORAGE IS `float`, AND THAT IS MEASURED, NOT INFERRED. This header
- * declared `uint32_t values_[3]` until 2026-08-12, which forced every body
- * below to launder its own members through `memcpy` before it could do
- * arithmetic on them. `tools/verify_member_offsets.py --class Vector`
- * withdrew that spelling: the class's own thiscall methods read all three
- * offsets with x87 instructions, and an x87 instruction names the type.
+ * The catalogue's output parameters for arithmetic results are MSVC hidden
+ * class-return slots, not source parameters. At 0x0055A82F veh_scoot calls
+ * subtraction with a separate result object, copies the returned value, then
+ * closes that temporary. At 0x0055A873 it calls scale, destroys the returned
+ * temporary, and subsequently uses the modified receiver. Scale therefore
+ * mutates this object AND returns its value; addition, subtraction and cross
+ * product return a separate value without modifying their inputs.
  *
- *   0x0063443F  fld dword ptr [ecx]        Vector::__mi, member at 0x0
- *   0x00634447  fld dword ptr [ecx + 4]                   member at 0x4
- *   0x00634455  fld dword ptr [ecx + 8]                   member at 0x8
+ * veh_scoot pairs constructor 0x006343C0 with destructor 0x0055B750 for two
+ * arrays of eight elements (0x0055A197-0x0055A1D9), including exceptional
+ * cleanup. The destructor tail-jumps to close at 0x006343D0.
  *
- * `fld dword ptr` is a 4-byte float load; `fld qword ptr` would be a double.
- * Two independent readings agree. The two Vector methods already recovered
- * BYTE_EXACT elsewhere - 0x006344E0 (operator==) and 0x00634650 (dot) in
- * src/leaf_recoveries.cpp - reach the same three offsets through
- * `const float *`, and both reproduce the shipped bytes exactly that way.
+ * Historical notes in commit 0995e492 claimed a 75-byte value-returning
+ * subtraction probe. No reproducing source or result was retained with that
+ * claim. It is not a current measurement or a constraint on this class.
+ * The extra original stack slot is not a fourth component; return-object
+ * construction and temporary lifetime must be recovered as C++, not padding.
  *
- * SIZEOF IS 0xC AND THERE IS NO FOURTH COMPONENT. The constructor at
- * 0x006343C0 zeroes exactly three dwords; no catalogued Vector method
- * touches `this + 0xC` or past it. The thing that looks like a fourth
- * component is a stack slot, not a member - see "the frame slot" below.
- *
- * THE CATALOGUE'S PROTOTYPES FOR THIS CLASS ARE WRONG, and the bytes say so.
- * The image carries no symbols, so every mangled name in functions.csv is
- * IDA's reconstruction; for Vector it is demonstrably a reconstruction and
- * not a linker record, because it spells the argument types out in full
- * (`AAVVector@@AAVVector@@`) where VC6 back-references the second one to `0`.
- * Recompiling with the original compiler settles each signature:
- *
- *   0x00634480  ?__apl  catalogued `void __apl(Vector &)`. The body opens
- *               `mov eax, ecx` and leaves `this` in EAX at `ret 4`. Written
- *               as `Vector &__apl(Vector &)` returning `*this`, VC6 12.00.8168
- *               reproduces all 33 bytes; written `void`, it emits a different
- *               and shorter sequence. It is `operator+=`. ADOPTED below.
- *   0x006344B0  ?__ami  the same, with fsub. `operator-=`. ADOPTED below.
- *   0x00634430  ?__mi   catalogued `void __mi(Vector &output, Vector &right)`.
- *               There is no `output` parameter: that stack slot is MSVC's
- *               hidden return-object pointer, which is why the original
- *               leaves it in EAX. The true signature is `Vector __mi(Vector &)`
- *               - `operator-` returning by value - and with a destructor
- *               declared, VC6 reproduces all 75 bytes including the frame
- *               slot. NOT adopted: see "why two are adopted and two are not".
- *   0x00634670  ?scale  same shape: `Vector scale(float)`, which multiplies
- *               `this` in place and returns a copy. All 65 bytes reproduce.
- *               NOT adopted, same reason.
- *
- * THE FRAME SLOT. Every Vector method that returns a Vector by value opens by
- * storing zero to one dead 4-byte stack slot below its temporary
- * (`mov dword ptr [esp], 0` at 0x00634437, at 0x006343E7, at 0x0063467E, and
- * the same slot under the Matrix temporaries at 0x00634529 and 0x0063472B).
- * It is not a fourth member and not padding: it is the flag MSVC emits under
- * /GX to record whether the return object has been constructed, and it
- * appears if and only if the returned class has a destructor. Vector has one,
- * at 0x0055B750, which is a `jmp` to close. Removing the destructor from the
- * probe removes the store and shortens the body by exactly those 8 bytes.
- *
- * WHY TWO ARE ADOPTED AND TWO ARE NOT. Adopting a signature means correcting
- * the catalogued name in tools/catalogue_corrections.py, because that name is
- * what tools/emit_translation_unit.py declares the method as when it builds a
- * verification unit. `emit.decode_signature` understands a reference return
- * (`AAVVector@@`) and does not understand a by-value class return (`?AV...`),
- * so __apl and __ami can be corrected and measured today and __mi and scale
- * cannot. Neither could reach BYTE_EXACT anyway: the emitted shell declares a
- * class's data members and the subject method only, never a destructor, so
- * the return-object flag above can never appear in a rebuilt body. Teaching
- * the emitter to declare a destructor when the class has one is what would
- * close 0x00634430, 0x006343E0, 0x00634520, 0x006345E0 and 0x00634670 - and
- * it changes codegen for every class in the tree, so it is a measured
- * tooling change, not a header edit.
- *
- * THE REST OF THE CLASS, catalogued and read but not declared here. Each was
- * disassembled for this note; the arithmetic is what names them.
- *
- *   0x006343E0  Vector __pl(Vector &)      operator+; mirrors __mi
- *   0x006344E0  bool operator==(Vector &)  recovered: src/leaf_recoveries.cpp
- *   0x00634520  Vector normalize()         len = sqrt(x*x + y*y + z*z), then
- *                                          `return *this` when len == 1.0f
- *                                          (the float 1.0f at 0x0066AA34),
- *                                          else scale by 1.0f / len. Does not
- *                                          modify `this`.
- *   0x006345E0  Vector cross(Vector &)     the standard cross product,
- *                                          this x right, component order
- *                                          x = y*rz - ry*z and so on
- *   0x00634650  float dot(Vector &)        recovered: src/leaf_recoveries.cpp
- *   0x0055B750  ~Vector()                  `jmp close`
- *
- * NEXT DOOR, and not a Vector. 0x006346C0 / 0x006346F0 / 0x00634720 are a
- * 3x3 float matrix: two 36-byte identity initialisers (1.0f on the diagonal,
- * offsets 0x0 to 0x20) and a component-wise add over 3x3 with the same
- * return-object flag slot. It has no class in src/ yet.
+ * Adjacent 36-byte matrix operations are a different ownership group, not
+ * additional Vector members.
  */
 class Vector {
  public:
+  ~Vector();                                  // 0x0055B750
   Vector();                                   // 0x006343C0
   void close();                               // 0x006343D0
 
-  // Catalogued `void __mi(Vector &, Vector &)`; really `Vector operator-`
-  // returning by value, with `output` the hidden return slot. See above.
-  void __mi(Vector &output, Vector &right);   // 0x00634430
+  Vector operator+(Vector &right);            // 0x006343E0
+  Vector operator-(Vector &right);            // 0x00634430
+  Vector &operator+=(Vector &right);          // 0x00634480
+  Vector &operator-=(Vector &right);          // 0x006344B0
+  Vector cross(Vector &right);                // 0x006345E0
+  Vector normalize();                        // 0x00634520
+  float dot(const Vector &right) const;       // 0x00634650
+  bool operator==(const Vector &right) const;  // 0x006344E0
 
-  Vector &__apl(Vector &right);               // 0x00634480  operator+=
-  Vector &__ami(Vector &right);               // 0x006344B0  operator-=
+  // Scale the receiver in place and return its updated value.
+  Vector scale(float scalar);                 // 0x00634670
 
-  // Catalogued `void scale(Vector &, float)`; really `Vector scale(float)`,
-  // which scales `this` in place and returns a copy through `output`.
-  void scale(Vector &output, float scalar);   // 0x00634670
-
-  float x_;  // 0x0
-  float y_;  // 0x4
-  float z_;  // 0x8
+  // RECOVERY_MEMBER: v1 Vector x_ 0x0 0x00634430
+  float x_;
+  // RECOVERY_MEMBER: v1 Vector y_ 0x4 0x00634430
+  float y_;
+  // RECOVERY_MEMBER: v1 Vector z_ 0x8 0x00634430
+  float z_;
 };
+
+// Keep actual construction and cleanup available to value-returning arithmetic.
+// Original standalone callback identities remain mapped in vector.cpp; inline
+// availability alone does not establish their emitted copies or original TU.
+inline Vector::~Vector() {
+  close();
+}
+
+inline Vector::Vector() {
+  x_ = 0.0f;
+  y_ = 0.0f;
+  z_ = 0.0f;
+}
+
+inline void Vector::close() {
+  x_ = 0.0f;
+  y_ = 0.0f;
+  z_ = 0.0f;
+}
 
 static_assert(sizeof(Vector) == 0xC, "Vector layout must match the legacy ABI");
 

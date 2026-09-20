@@ -1,0 +1,20 @@
+{
+  "event_id": "be249b4a906a56aab9ce44abf408f82aacc691591732bc9261cad99473e8a52a",
+  "payload": {
+    "affects": [
+      "entity-3e51e221834c501c9dd2cb8f41603062da26b1b8e56feb3d4e4ffe1075d218e0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-current-owner-correction-20260919",
+    "evidence": [
+      "Fresh native TaskStore status across all master task files and validated decisions: infowin-ownership revision58 includes src/veh.cpp; radiobutton-lifetime revision20 includes worldwin.cpp/h and maininterface.h. Multiple historical tasks also include win.cpp. No vehicle or dependency C++ edits were made by this Vector worker, so nothing is being discarded. Earlier initial-task-only ownership statements were incomplete."
+    ],
+    "hypothesis": "The initial vehicle dependency ownership audit omitted scope-expansion journals. Do not use the retained Vector-to-veh.cpp/h expansion to edit another current owner. Coordinate with infowin-ownership for vehicle source and radiobutton-lifetime for WorldWin/MainInterface; retain the caller discovery and original task baseline.",
+    "kind": "discovery"
+  },
+  "previous_event": "0fe8866fdd9e96fbe5996c634f9ee54423dc90fe9589bcfb640519058fbd9b15",
+  "request_id": "vehicle-current-owner-correction-20260919",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:vector-value-semantics"
+}

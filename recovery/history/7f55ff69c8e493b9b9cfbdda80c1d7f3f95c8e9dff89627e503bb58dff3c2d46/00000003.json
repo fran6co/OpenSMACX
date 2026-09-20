@@ -1,0 +1,17 @@
+{
+  "event_id": "17868f20218f904eb55e6ecaf9ec922984a3d791b50c02959badb4f312e29c1d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-bfbbc92072824f46a2fdc89653e1f7d6",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Independent original review confirms veh_scoot uses separate return temporaries and a nontrivial Vector destructor. Its only source binding is src/unrecovered/0055a150.cpp, a seed excluded from the product build; no product caller invokes the changed methods. Preserve that seed and its original ABI evidence rather than rewrite historical hints. This rejects the requirement to migrate an uncompiled seed before local Vector recovery, not the discovered original caller relationship; product recovery of veh_scoot must use the corrected Vector interface when its owner is authorized."
+    ]
+  },
+  "previous_event": "668b09adba76e38420f046218c1dc1d20b09b61819657875a002dfe6d0e8f5da",
+  "request_id": "vector-seed-caller-review-20260919",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:vector-value-semantics"
+}

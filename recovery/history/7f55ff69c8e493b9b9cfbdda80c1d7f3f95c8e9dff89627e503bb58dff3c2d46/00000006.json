@@ -1,0 +1,22 @@
+{
+  "event_id": "74830b32be677b6c0ee6c6c9897b91dab1e1daf1a556a1ad68126ae8a4eccf27",
+  "payload": {
+    "affects": [
+      "entity-3b59389650c8821e1bba929423d8969e7c09c052690022ae22e94c3389bbadfa"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-3f424c4bc4b54c4cb431d9045da9c38f",
+    "evidence": [
+      "src/vector.h identifies 0x006343E0 as Vector __pl/operator+ mirroring __mi.",
+      "src/vector.cpp:96-102 now contains the real Vector value-returning addition body.",
+      "Fresh configured build/link passed; native binding remains required because the seed-only function previously reported no unambiguous product definition."
+    ],
+    "hypothesis": "Original 0x006343E0 is Vector::__pl(Vector&) returning a Vector by value; coordinator binding is still required.",
+    "kind": "discovery"
+  },
+  "previous_event": "ae6588614ed55e3e19e3cc3791073a3b8c043d8a18f003336111a35b85554592",
+  "request_id": "worker-3f424c4bc4b54c4cb431d9045da9c38f",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:vector-value-semantics"
+}

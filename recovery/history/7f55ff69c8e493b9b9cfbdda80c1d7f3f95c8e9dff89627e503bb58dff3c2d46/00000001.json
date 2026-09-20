@@ -1,0 +1,28 @@
+{
+  "event_id": "c39b5f2179a4c92e3ceb0b5456500932d13cd6290b41fe3c44a71b823b72863c",
+  "payload": {
+    "affects": [
+      "entity-08159b4b53bc2401ddb7e4f0eea363e3f8e8d982f4debd560c22f81cf2b25c13",
+      "entity-3b2c3d928743865dc295ae96d06b30adcf16cd197a1ab732c5d26ed3e8775062",
+      "entity-69c52b8e7b299fc0ab2c5563803c3c2379cc036e5d60154b7d523ef059de7308",
+      "entity-d677dbd8cc0d679d411efa54a0727c5d82f0bccd152d45f93f4a5bea5ad48315"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-e377a84187584dbfb8feb96354728d7b",
+    "evidence": [
+      "Original 0x00634430 uses [esp+0x14] as a hidden Vector return pointer and has the /GX constructed flag at [esp], so the synthetic output parameter is not genuine source semantics.",
+      "Original 0x00634670 mutates this and copies the result through a hidden return pointer, establishing Vector scale(float).",
+      "Original 0x0055B750 is a five-byte tail jump to Vector::close at 0x006343D0.",
+      "src/vector.h and src/vector.cpp now declare and define the destructor, Vector __mi(Vector&), and Vector scale(float); the product destructor body calls close(), and subtraction copies this before applying __ami.",
+      "Fresh configured build and link passed. Scoped layout still observes Vector size 0xC with float members at offsets 0, 4, and 8.",
+      "Five candidate spellings compiled under native variant controls; value-return candidates remain unmeasurable only because existing source markers still name the historical synthetic symbols. Coordinator binding review is required before banking measurements."
+    ],
+    "hypothesis": "Vector lifecycle and value-return semantics are structurally recovered in the authorized product files, but the existing historical source bindings must be updated by the coordinator.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "worker-e377a84187584dbfb8feb96354728d7b",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vector-value-semantics"
+}

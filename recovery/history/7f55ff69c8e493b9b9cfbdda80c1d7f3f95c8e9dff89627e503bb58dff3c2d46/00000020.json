@@ -1,0 +1,31 @@
+{
+  "event_id": "7c6271d21d5a95a761aab9f05ba226aeb6bccbac62bab3bbecf409f666beb05c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/leaf_recoveries.cpp",
+      "src/leaf_recoveries.h"
+    ],
+    "evidence": [
+      "Serial coordinator authorization for only the two discovered, previously unassigned Vector identities. Retain control-sprite-defaults historical shared-file grant and every unrelated leaf function and declaration; no other leaf refactoring or ownership takeover. No active retained campaign, Spot, or WorldWin assignment edits these files. Move existing mappings with the installed source writer, preserve names/spans/byte obligations and historical seed facts, recover ordinary class operations and remove only their unused synthetic wrapper declarations/definitions. Freshly remeasure both original identities and existing Vector obligations, check mapping/claim continuity and build/link; this grants edits, not acceptance or integration, and does not resolve the finding."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6506064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6505696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1b4fe6c854aac4da976d9c39cccb00ee322977c00d215481ac4677e1547ccc38",
+  "request_id": "vector-leaf-member-rehome-scope-20260919",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:vector-value-semantics"
+}

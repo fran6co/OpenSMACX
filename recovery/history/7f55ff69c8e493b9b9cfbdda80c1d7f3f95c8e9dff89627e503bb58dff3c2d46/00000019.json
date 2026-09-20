@@ -1,0 +1,21 @@
+{
+  "event_id": "1b4fe6c854aac4da976d9c39cccb00ee322977c00d215481ac4677e1547ccc38",
+  "payload": {
+    "affects": [
+      "entity-b6254a13bc862c8398b781fd2d5bfd1e814a6c0ece59940d67e795cd25d26d1b",
+      "entity-c970438f3b8f1880152de4690f48f1f0e9242e8dcd56c60b7e243a26236ca049"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vector-leaf-member-ownership-20260919",
+    "evidence": [
+      "Fresh native inspect completely decodes 0x00634650-0x0063466B and 0x006344E0-0x00634513: ECX receiver, one stack argument and ret4, ST0 float return for dot, AL boolean return for equality. Existing product bindings are in leaf_recoveries.cpp, not seeds. Journal-derived TaskStore.scope finds no current subject owner for these two identities; control-sprite-defaults has historical shared-file ownership. Existing retained campaign assignments and running Spot/WorldWin work do not edit leaf files. The coordinator must grant only this bounded rehoming; preserve all unrelated leaf functions, history, task baselines and the other task file scope."
+    ],
+    "hypothesis": "The dot product and component comparison are genuine Vector operations but remain void-pointer fastcall leaf wrappers. Rehome their original identities and protected claims into the actual three-float class without keeping synthetic ABI shims or duplicate product mappings.",
+    "kind": "discovery"
+  },
+  "previous_event": "c131a2804d5db2c850085f0815a1fdcc979f7f6837842dc8e46f718b4c418696",
+  "request_id": "vector-leaf-member-ownership-20260919",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:vector-value-semantics"
+}

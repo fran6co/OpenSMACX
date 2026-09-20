@@ -1,0 +1,17 @@
+{
+  "event_id": "08bc50fa554f7fc0ded42c9a406a31021c26eb0a3fdb1b091f0715b959f36096",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-0cc61c1d6d8742f39f3c63623bbe27c9",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The historical marker name is catalogue provenance, not the current emitted-symbol identity. Existing current-symbol facts already supported the real value-returning signatures; scale passed strict checking and native recording. Subtraction is unknown because emitted code genuinely includes extra cleanup/EH regions, not because its historical marker needs rewriting. Preserved all original markers and claims, replaced catalogue-style arithmetic method names with real C++ operators, and updated current-symbol facts only from fresh COFF output. All protected obligations pass after renaming. Added independently original-evidenced member offsets0/4/8; both compiler trials pass. Removed misleading current-tense emitter guidance and qualified the unsubstantiated75-byte historical probe assertion, traced only to commit0995e492 without reproducing evidence."
+    ]
+  },
+  "previous_event": "256ff6bcea049ed32fc093a87df52c59deaecc3ee3b60791236115662156ea14",
+  "request_id": "vector-stale-migration-note-20260919",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:vector-value-semantics"
+}

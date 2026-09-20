@@ -1,0 +1,26 @@
+{
+  "event_id": "20c1f41fb633a39c5dea2ff96ec7d6eabe09b795c3803c2873806826d237b0d6",
+  "payload": {
+    "affects": [
+      "entity-08159b4b53bc2401ddb7e4f0eea363e3f8e8d982f4debd560c22f81cf2b25c13",
+      "entity-3b59389650c8821e1bba929423d8969e7c09c052690022ae22e94c3389bbadfa",
+      "entity-471ab29057a090aa887b19c808bfcb89900ba39a1e378ccca4a31699977e36d4",
+      "entity-69c52b8e7b299fc0ab2c5563803c3c2379cc036e5d60154b7d523ef059de7308",
+      "entity-89bf7e88839b47357b4cc2ffc52a8fc9c780107afc2a49c9c68de62a3538fdde",
+      "entity-d677dbd8cc0d679d411efa54a0727c5d82f0bccd152d45f93f4a5bea5ad48315"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vector-lifetime-visibility-20260919",
+    "evidence": [
+      "Native candidate deck build/recovery/vector-inline-construction-deck.json, inline-lifecycle-default-result, passes compiled damage controls and strict subtraction/addition/cross plus arithmetic neighbors under the existing default flag set. Main ignored report build/recovery/vector-inline-construction-variants.json records the complete positive and missing-emission results; no inline variant was applied or recorded.",
+      "Original veh_scoot passes constructor0x006343C0 and destructor0x0055B750 for real8-element arrays; destructor0x0055B750 tail-jumps to close0x006343D0. Recovering inline source must explain both those standalone callback bodies and the arithmetic no-call spans. Do not add measurement-only exports, pointer anchors, fake wrappers or flags to manufacture emission. Current product subtraction now uses the same ordinary default-result/direct-component construction as addition and cross, without changing lifecycle visibility."
+    ],
+    "hypothesis": "All three value-returning arithmetic methods need construction and cleanup visibility consistent with their original no-call bodies. A complete inline-lifecycle replica matches subtraction, addition and cross, but does not emit the historical standalone constructor/destructor/close. Preserve this class-level direction and all original lifecycle obligations; standalone emission and original caller/TU context need review before adopting an inline source model.",
+    "kind": "discovery"
+  },
+  "previous_event": "08bc50fa554f7fc0ded42c9a406a31021c26eb0a3fdb1b091f0715b959f36096",
+  "request_id": "vector-lifetime-visibility-20260919",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:vector-value-semantics"
+}

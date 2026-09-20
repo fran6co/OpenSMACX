@@ -1,0 +1,20 @@
+{
+  "event_id": "60a03e32b5bcb53a204afe43cc74adbd95daa35a533ba892f0b829edcd1385a1",
+  "payload": {
+    "affects": [
+      "entity-f32bf46c4dff3163026486f4924715ee4e6976f210750fda95cc004fdb73814e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vector-normalize-construction-eh-context-20260919",
+    "evidence": [
+      "Independent original/current comparison localizes all 44 current differences to offsets 0x21-0x57: original zero-initializes three result fields before sqrt and releases x87 input temporaries before spilling its double argument; current does these in the opposite schedule. The code from fnstsw at offset0x58 through both returns already agrees. A fresh native two-candidate deck combining current float/z-y-x staging with pre-sqrt construction (before loads or after loads) passes its damage controls and compiles ten trials, but both candidates introduce an FS exception frame, 208-byte primary section and18-byte cleanup section, exceeding the independently bounded189-byte original. The ranking zero known differing bytes reflects unmeasured extent, NOT byte equality. No source candidate adopted or claim banked; preserve the existing source and three standalone lifecycle obligations. Do not remove the genuine destructor, add a nonthrowing declaration without evidence, alter compiler flags, or manufacture a caller to suppress the discrepancy. Reports are disposable under ignored build/recovery/vector-normalize-construction-order-*.json."
+    ],
+    "hypothesis": "The remaining normalize scheduling mismatch is coupled to result lifetime across the CRT sqrt call. Moving construction earlier is not a local byte-fix under the current compiler context: it introduces exception cleanup absent from the original. Preserve the supported class model and seek original call/lifetime context before more spelling searches.",
+    "kind": "discovery"
+  },
+  "previous_event": "99ad86b0ad504f97d83ec90cbd116d7c9b4e6c593c343505f75997ebf44f2f4c",
+  "request_id": "vector-normalize-construction-eh-context-20260919",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:vector-value-semantics"
+}

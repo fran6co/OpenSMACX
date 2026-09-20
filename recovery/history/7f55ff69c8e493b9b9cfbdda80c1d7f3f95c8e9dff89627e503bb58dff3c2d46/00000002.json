@@ -1,0 +1,25 @@
+{
+  "event_id": "668b09adba76e38420f046218c1dc1d20b09b61819657875a002dfe6d0e8f5da",
+  "payload": {
+    "affects": [
+      "entity-08159b4b53bc2401ddb7e4f0eea363e3f8e8d982f4debd560c22f81cf2b25c13",
+      "entity-3b2c3d928743865dc295ae96d06b30adcf16cd197a1ab732c5d26ed3e8775062",
+      "entity-3e51e221834c501c9dd2cb8f41603062da26b1b8e56feb3d4e4ffe1075d218e0",
+      "entity-d677dbd8cc0d679d411efa54a0727c5d82f0bccd152d45f93f4a5bea5ad48315"
+    ],
+    "author": "recovery-worker",
+    "discovery_id": "worker-bfbbc92072824f46a2fdc89653e1f7d6",
+    "evidence": [
+      "recover inspect reports direct/tail caller edges from the seed veh_scoot identity in src/unrecovered/0055a150.cpp to 0x0055B750, 0x00634430, and 0x00634670.",
+      "The seed class declaration in src/unrecovered/0055a150.cpp still uses synthetic void __mi(Vector&,Vector&) and void scale(Vector&,float) signatures.",
+      "src/unrecovered/0055a150.cpp is outside the authorized editable files src/vector.cpp and src/vector.h; caller migration requires coordinator scope expansion."
+    ],
+    "hypothesis": "The existing veh_scoot seed caller must be reviewed and migrated under separate scope before the new Vector value-return ABI can be propagated to all callers.",
+    "kind": "discovery"
+  },
+  "previous_event": "c39b5f2179a4c92e3ceb0b5456500932d13cd6290b41fe3c44a71b823b72863c",
+  "request_id": "worker-bfbbc92072824f46a2fdc89653e1f7d6",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vector-value-semantics"
+}

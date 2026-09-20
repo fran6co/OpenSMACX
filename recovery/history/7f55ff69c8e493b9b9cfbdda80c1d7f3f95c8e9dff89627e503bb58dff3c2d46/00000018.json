@@ -1,0 +1,23 @@
+{
+  "event_id": "c131a2804d5db2c850085f0815a1fdcc979f7f6837842dc8e46f718b4c418696",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Recover the remaining same-class normalization operation0x00634520-0x006345DD using original x87 dataflow, genuine class value return, and the real CRT sqrt. It does not mutate the receiver; preserve original zero-length and unordered-comparison behavior. Native current scope inspection found no other owner of vector.cpp/h. Keep vehicle/outside-owner findings pending, do not edit their files, and retain all lifecycle restoration obligations. This is source recovery authorization, not permission to waive incomplete runtime reference evidence or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6505760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "be249b4a906a56aab9ce44abf408f82aacc691591732bc9261cad99473e8a52a",
+  "request_id": "vector-normalization-scope-20260919",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:vector-value-semantics"
+}

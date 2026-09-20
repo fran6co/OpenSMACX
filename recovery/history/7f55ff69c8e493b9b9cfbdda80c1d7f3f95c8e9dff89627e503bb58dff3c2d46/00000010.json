@@ -1,0 +1,17 @@
+{
+  "event_id": "256ff6bcea049ed32fc093a87df52c59deaecc3ee3b60791236115662156ea14",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "worker-b733607aab774b239b437e78ab1fa2f7",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native bind now maps original0x006345E0-0x00634641 to Vector::cross with its compiler-observed value-return symbol. The source preserves independently disassembled multiplication/subtraction order and separate output, including reading operands before output writes. Seed wrapper remains untouched. Fresh task check can now identify the product body, but its extra temporary cleanup machinery remains an open mismatch, not an accepted result."
+    ]
+  },
+  "previous_event": "d65d22a9c86d017d0b7ab422fa311d4be9a37de050066b69b70742c195aff8b9",
+  "request_id": "vector-cross-product-binding-20260919",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:vector-value-semantics"
+}
