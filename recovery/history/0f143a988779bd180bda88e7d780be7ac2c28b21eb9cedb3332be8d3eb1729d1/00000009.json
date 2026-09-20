@@ -1,0 +1,18 @@
+{
+  "event_id": "369d2557a171b0c0e99c64f98ccacdce71607be69329eb76ec8de1cbbda20256",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "coordinator-retire-matrix-experiment",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The rejected worker experiment was not restored. A fresh implementation uses typed row ownership with coordinated caller/scaling changes, original expression grouping and sequential input reload/store behavior. The native binder mapped original0x6280E0 and0x627E20 to observed current symbols in src/caviar.cpp without granting claims or changing seeds.",
+      "Coordinator independently decoded both complete original bodies and both caller scaling spans, reviewed the source/tests and reran12focused tests. Source/claim/reference checks pass; mapping findings exactly equal currentmaster22existing ambiguous-source findings. Fresh candidate build/link passes. Matching/x87 scheduling discovery remains pending; manual bounded integration is not full automatic acceptance."
+    ]
+  },
+  "previous_event": "759cdd671b4c8f76de18bdb07c067680e806cff67593cb1c7f8bc78999d25bc0",
+  "request_id": "coordinator-caviar-new-implementation-reviewed-20260920",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:caviar-matrix-operations"
+}

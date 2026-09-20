@@ -1,0 +1,20 @@
+{
+  "event_id": "a5f18d51d8e3abfedc146f83467adf3739b9ff3c9a24537ebec26aa43a8af639",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caviar_matrix_operations.py"
+    ],
+    "evidence": [
+      "Coordinator resumes existing caviar-matrix-operations in a new isolated checkout from current master. No other active worker edits caviar.cpp or this test; GraphicWin worker uses separate files and task journal. Preserve original task baseline and all discoveries.",
+      "User requests real parallel recovery with coordinator-reviewed merge. Add actual-source arithmetic/aliasing regression tests while replacing the two authorized executable-address calls. No scope beyond the existing two Caviar matrix operation definitions and this test."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7bfc37cffa77b5c85fa145ccdb6e9e0ef2f082d6256f08721cdad959377fb6c9",
+  "request_id": "matrix-host-controls-manual-batch-20260920",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:caviar-matrix-operations"
+}

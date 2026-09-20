@@ -3124,10 +3124,10 @@ float __cdecl vox_stage_scene(void *record, void *state, void *view, int step,
         record, state, view, step, scratch_a, scratch_b);
 }
 
-// The three geometry helpers are defined further down, beside the camera
-// transform that shares them; the draw reaches all three.
-void __cdecl vox_matrix_vector_mul(const float *, const float *, float *);
-void __cdecl vox_matrix_matrix_mul(const float *, const float *, float *);
+// The matrix operations share VOX_Matrix's actual three-float row type.
+void __cdecl vox_matrix_vector_mul(const float (*)[3], const float *, float *);
+void __cdecl vox_matrix_matrix_mul(const float (*)[3], const float (*)[3],
+                                  float (*)[3]);
 
 // 0x0063A280. Four arguments, the draw's four.
 OPENSMACX_NOINLINE
@@ -3268,7 +3268,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
         // The part's world position: its own vector through the view's
         // rotation, plus the view's offset.
         VOX_Vect position;
-        vox_matrix_vector_mul(vox_view_rotation_.values[0],
+        vox_matrix_vector_mul(vox_view_rotation_.values,
                               instance.instance_vector_[step].values,
                               position.values);
         vector_add((Vector *)&position, (Vector *)&vox_view_offset_,
@@ -3290,11 +3290,13 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
         // The part's rotation is the view's rotation times its own, scaled
         // by the walked node's extent.
         VOX_Matrix part;
-        vox_matrix_matrix_mul(vox_view_rotation_.values[0],
-                              instance.instance_matrix_[step].values[0],
-                              part.values[0]);
-        for (int element = 0; element < 9; ++element) {
-            part.values[0][element] *= extent;
+        vox_matrix_matrix_mul(vox_view_rotation_.values,
+                              instance.instance_matrix_[step].values,
+                              part.values);
+        for (int row = 0; row < 3; ++row) {
+            for (int column = 0; column < 3; ++column) {
+                part.values[row][column] *= extent;
+            }
         }
 
         // The record's per-object callback: object_start, whose protocol is
@@ -3316,7 +3318,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
         if (want_shadow != 0 &&
             ((uint32_t *)record->setup_block_)[2] != 0) {
             VOX_Vect shadow;
-            vox_matrix_vector_mul(vox_shadow_rotation_.values[0],
+            vox_matrix_vector_mul(vox_shadow_rotation_.values,
                                   instance.instance_vector_[step].values,
                                   shadow.values);
             vector_add((Vector *)&shadow, (Vector *)&vox_shadow_offset_,
@@ -3332,11 +3334,14 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
                 shadow.values[1] <=
                     static_cast<float>(view->bounds_.values_[5]) + span_y) {
                 VOX_Matrix shadow_part;
-                vox_matrix_matrix_mul(vox_shadow_rotation_.values[0],
-                                      instance.instance_matrix_[step].values[0],
-                                      shadow_part.values[0]);
-                for (int element = 0; element < 6; ++element) {
-                    shadow_part.values[0][element] *= extent;
+                vox_matrix_matrix_mul(vox_shadow_rotation_.values,
+                                      instance.instance_matrix_[step].values,
+                                      shadow_part.values);
+                // The shadow renderer scales only the first two rows.
+                for (int shadow_row = 0; shadow_row < 2; ++shadow_row) {
+                    for (int shadow_column = 0; shadow_column < 3; ++shadow_column) {
+                        shadow_part.values[shadow_row][shadow_column] *= extent;
+                    }
                 }
                 vox_draw_shadow(record, node, &shadow, &shadow_part,
                                 &view->bounds_);
@@ -3413,34 +3418,52 @@ int Caviar::render_scene(Buffer *buffer, int flags) {
 }
 
 // ---------------------------------------------------------------------------
-// The engine's geometry helpers the camera transform reaches. None of the
-// three is recovered yet - 0x006280E0 and 0x00627E20 sit beside vector_add
-// (0x00628150) and the scale helper (0x006281B0, homed in
-// src/leaf_recoveries.cpp), 0x0063A9D0 is the 900-byte AABB walk the transform
-// hands six vectors to. File-local stand-ins keep their calls `call rel32` the
-// way the image has them, the same device vox_draw_scene uses below.
+// Geometry shared by scene drawing and camera transformation. Matrix inputs
+// use their real row bounds; output stores are sequential, with fresh input
+// reads for each result, preserving the original overlap behavior.
+// The separate AABB walk below remains an original-address dependency.
 // ---------------------------------------------------------------------------
 
 // 0x006280E0. A 3x3 times a vector: three rows of three multiplies and a
 // store, 107 bytes, no calls of its own.
-OPENSMACX_NOINLINE
-void __cdecl vox_matrix_vector_mul(const float *matrix, const float *vector,
+// ORIGINAL: 0x006280E0 ?vox_matrix_vector_mul@@YAXPAY02$$CBMPBMPAM@Z 0x006280E0-0x0062814B
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x006280E0-0x0062814B loads three matrix rows, computes each dot product with its distinct x87 grouping, and stores output components at0x00628108,0x00628127,0x00628147 before reading the next row. Complete extent agrees with src/unrecovered/006280e0.cpp.", "Existing vox_draw_scene and vox_transform_camera call sites supply VOX_Matrix::values, a float[3][3], not a nine-element inner row. Pointer-to-row parameters preserve that C++ object boundary without changing pointer ABI."], "reason": "Multiply a VOX matrix by a three-float vector using actual row ownership, original dot-product grouping and sequential stores. Reload inputs between results to preserve observed overlap behavior."}
+void __cdecl vox_matrix_vector_mul(const float (*matrix)[3], const float *vector,
                                   float *out) {
-    typedef void(__cdecl *pending)(const float *, const float *, float *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x006280E0))(matrix,
-                                                                     vector,
-                                                                     out);
+    out[0] = (matrix[0][1] * vector[1] + matrix[0][2] * vector[2])
+        + vector[0] * matrix[0][0];
+    out[1] = (matrix[1][1] * vector[1] + matrix[1][2] * vector[2])
+        + matrix[1][0] * vector[0];
+    out[2] = (matrix[2][2] * vector[2] + matrix[2][1] * vector[1])
+        + matrix[2][0] * vector[0];
 }
 
 // 0x00627E20. A 3x3 times a 3x3, 303 bytes - nine dot products over the same
 // rows the vector multiply walks.
-OPENSMACX_NOINLINE
-void __cdecl vox_matrix_matrix_mul(const float *left, const float *right,
-                                  float *out) {
-    typedef void(__cdecl *pending)(const float *, const float *, float *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00627E20))(left,
-                                                                     right,
-                                                                     out);
+// ORIGINAL: 0x00627E20 ?vox_matrix_matrix_mul@@YAXPAY02$$CBM0PAY02M@Z 0x00627E20-0x00627F4F
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x00627E20-0x00627F4F computes nine dot products and stores row-major components one at a time; the x87 stack empties at each store and later products reload input memory. Complete extent agrees with src/unrecovered/00627e20.cpp.", "Existing scene and camera callers own VOX_Matrix records with float values[3][3]. Both input and output matrix parameters therefore point to rows; callers pass values rather than escaping the first three-element row."], "reason": "Multiply two row-major VOX matrices with their genuine three-float row bounds; retain per-cell original expression grouping and row-major sequential output stores, including input/output overlap behavior."}
+void __cdecl vox_matrix_matrix_mul(const float (*left)[3], const float (*right)[3],
+                                  float (*out)[3]) {
+    // Parentheses retain each original x87 dot-product grouping. Do not
+    // precompute a whole row or matrix: out may alias either input.
+    out[0][0] = (left[0][1] * right[1][0] + left[0][2] * right[2][0])
+        + right[0][0] * left[0][0];
+    out[0][1] = (left[0][0] * right[0][1] + right[1][1] * left[0][1])
+        + right[2][1] * left[0][2];
+    out[0][2] = (left[0][0] * right[0][2] + left[0][2] * right[2][2])
+        + left[0][1] * right[1][2];
+    out[1][0] = (right[0][0] * left[1][0] + right[2][0] * left[1][2])
+        + right[1][0] * left[1][1];
+    out[1][1] = (right[0][1] * left[1][0] + right[2][1] * left[1][2])
+        + right[1][1] * left[1][1];
+    out[1][2] = (left[1][2] * right[2][2] + left[1][1] * right[1][2])
+        + left[1][0] * right[0][2];
+    out[2][0] = (right[0][0] * left[2][0] + left[2][1] * right[1][0])
+        + left[2][2] * right[2][0];
+    out[2][1] = (left[2][2] * right[2][1] + left[2][1] * right[1][1])
+        + left[2][0] * right[0][1];
+    out[2][2] = (left[2][0] * right[0][2] + left[2][1] * right[1][2])
+        + left[2][2] * right[2][2];
 }
 
 // 0x0063A9D0. Builds the axis-aligned box one part covers: the centre, the
@@ -3517,7 +3540,7 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
         VOX_Vect rotated;
         VOX_Vect scaled;
         VOX_Vect centre;
-        vox_matrix_vector_mul(state->scene_rotation_.values[0],
+        vox_matrix_vector_mul(state->scene_rotation_.values,
                               instance.instance_vector_[step].values,
                               rotated.values);
         leaf_006281b0_redirect(rotated.values, state->scale_, scaled.values);
@@ -3526,9 +3549,9 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
 
         // The part's rotation is the scene rotation times the instance's own.
         VOX_Matrix part;
-        vox_matrix_matrix_mul(state->scene_rotation_.values[0],
-                              instance.instance_matrix_[step].values[0],
-                              part.values[0]);
+        vox_matrix_matrix_mul(state->scene_rotation_.values,
+                              instance.instance_matrix_[step].values,
+                              part.values);
 
         VOX_Vect offset;
         offset.values[0] = static_cast<float>(shape.offset_x_) * scale;
@@ -3536,7 +3559,7 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
         offset.values[2] = static_cast<float>(shape.offset_z_) * scale;
         VOX_Vect pivot;
         VOX_Vect corner;
-        vox_matrix_vector_mul(part.values[0], offset.values, pivot.values);
+        vox_matrix_vector_mul(part.values, offset.values, pivot.values);
         vector_add((Vector *)&pivot, (Vector *)&centre, (Vector *)&corner);
 
         // The three axes the box is built from are the part rotation's

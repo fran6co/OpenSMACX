@@ -1,0 +1,31 @@
+{
+  "event_id": "278f09f9b327b71d6bd21b41ea7a90eed895b93b7541ca58fc900ea93c8f4688",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/caviar.cpp"
+    ],
+    "evidence": [
+      "Resolve the existing coordinator-caviar-matrix-row-ownership dependency before repeating the retired experiment. Authorize helper pointer-to-row signatures, all seven coupled call sites in vox_draw_scene and vox_transform_camera, and their two nine-element part scaling walks using genuine row/column bounds. Preserve float operation order and alias reload/store semantics.",
+      "No other live worker or retained worktree edits caviar.cpp; Vector and GraphicWin work remain disjoint. This is explicit coordinator scope expansion against original task baseline, not permission to omit obligations or accept a byte regression. Do not change unrelated Caviar bodies, model layout or flags."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6528608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6530800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a5f18d51d8e3abfedc146f83467adf3739b9ff3c9a24537ebec26aa43a8af639",
+  "request_id": "coordinator-caviar-typed-rows-callers-20260920",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:caviar-matrix-operations"
+}

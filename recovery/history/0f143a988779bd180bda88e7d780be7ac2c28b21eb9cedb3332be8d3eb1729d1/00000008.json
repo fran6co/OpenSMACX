@@ -1,0 +1,19 @@
+{
+  "event_id": "759cdd671b4c8f76de18bdb07c067680e806cff67593cb1c7f8bc78999d25bc0",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "coordinator-caviar-matrix-row-ownership",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/caviar.cpp now declares and defines both helpers with genuine pointer-to-three-float-row matrix inputs/output. All seven calls in vox_draw_scene and vox_transform_camera pass the complete values array; no helper crosses values[0] row bounds.",
+      "The main part scaling loop visits three rows of three; shadow scaling visits two rows of three. This corrects the overly broad two-nine-element description in earlier scope/history evidence: original0x63A00E-0x63A089 scales9components,0x63A1E5-0x63A237 scales6. No layout or unrelated Vector/VOX reinterpretation was changed.",
+      "Twelve actual-body host/UBSan, alias/store-order/grouping/scaling damage and pinned-original expression controls pass. Native VC6 compilation observes the pointer-to-row symbols; all31existing byte claims and2instruction-shape obligations reproduce, and fresh configured build/link passes. This resolves row ownership only; new bodies and affected callers are not byte-exact, and complete renderer behavior remains unproved."
+    ]
+  },
+  "previous_event": "278f09f9b327b71d6bd21b41ea7a90eed895b93b7541ca58fc900ea93c8f4688",
+  "request_id": "coordinator-caviar-rows-incorporated-20260920",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:caviar-matrix-operations"
+}
