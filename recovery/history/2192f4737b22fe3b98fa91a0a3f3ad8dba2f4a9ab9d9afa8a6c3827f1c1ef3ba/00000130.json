@@ -1,0 +1,27 @@
+{
+  "event_id": "7e66dab1700238c8fc7e0bc7d7b415dd0e8ebb210f5f8681ead797eda2aba131",
+  "payload": {
+    "affects": [
+      "entity-00bd43406e27451adb4b7504e6ab69a80d638e94d7c05ab3c557b15adc51611c",
+      "entity-23c508fea601f25d890deb0d463f793246fc00011775272a623dd8a561965bcb",
+      "entity-3604d8c263f5b462bec0ea401824ad809b8fc71e3073bd5c0c4886c367a95780",
+      "entity-3d143e27f841343ee62149e3ffb33edea5f533f53bb7dda7cb4e1df15318192d",
+      "entity-707c1c08343ea654dbefe3d78f1c3f5ab286252d2ea17cfc4dd7ceb10e4102fd",
+      "entity-c281f875dffbd250c15ebc3552d813138f7fd8f6d2f6a1980de063ae7aa799cc"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-model-construction-closure-20260920",
+    "evidence": [
+      "Original4C1D20..4C202D resets Caviar+13CC, calls real scaling/add_object/morale plus construct_chassis/weapon/armor (current forwarders) and ability (seed only). All six direct callers discard EAX; generic exits preserve inconsistent incidental values, supporting void rather than seed invented return0.",
+      "Existing CaviarData owners NW,NI,NLC,VHR2 and VIPTR,VPBR0,VR arrays are in caviar.cpp; declare and bind them rather than allocate aliases. Reactor indexing is reactor_id-1 under nonzero guard, not biased array starts.",
+      "Original8E9F50 signed animation counter initially0, writes1 at4C008B and increments at4C1193/4C2BF2. Original687AE8 is shared VOX_Vect{-400,200,0}. Caviar private instance_count needs semantic reset API. Generic chassis is zero-extended, armor byte comparison signed. DesignWin callers of current helper declarations remain protected."
+    ],
+    "hypothesis": "The next turn-animation operation requires actual vehicle model construction and its four part helpers. Do not add a new original-address dispatcher or expose raw Caviar offsets; recover instance-list reset, existing model owners and the missing shared animation/offset storage together.",
+    "kind": "discovery"
+  },
+  "previous_event": "3c9cdbd80caea4770b1e7afba7629b51b671ef36dc50a4dee70408d88ffbb448",
+  "request_id": "vehicle-model-construction-closure-20260920",
+  "schema_version": 1,
+  "sequence": 130,
+  "stream": "task:infowin-ownership"
+}

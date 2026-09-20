@@ -1,0 +1,25 @@
+{
+  "event_id": "e1902d54390037194cc46ef6a10a68217b61cc7ee6434c5d87995d00d039ed6e",
+  "payload": {
+    "affects": [
+      "entity-3545c8b90ce4c54a25f3d4c8569dbbcb6dacbc698a1a48916b3844297e311540",
+      "entity-4b373f6fcbd9713f5d4b587f2937747a8ed1a96505c6798bae5d25b3ee1bfca6",
+      "entity-5abed0317e5159ba433e1f3660314bf99b5a1bdff3f5cf9c20b2b0d694066ce3",
+      "entity-6c627870072b1530e943d64e29af07758023207e65e6bcbe65b7e96bfd15c832"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "caviar-definition-versus-instance-lifetime-20260920",
+    "evidence": [
+      "Original load_voxels unwind655030..655042 calls456100, a five-byte jump to actual CaviarData::close616C60. Current CaviarData declaration has a constructor and close but no destructor;129 existing model init sites reuse real static CaviarData owners.",
+      "Current caviar.h overlays loader state and per-instance colour/vector/matrix pointers in one CaviarData union and uses200 slots. Caviar::close frees instance allocations directly, whereas CaviarData::close frees a CvrRecord. Similar three-word zero stores alone do not prove same class or lifetime; inspect original ctor/dtor/unwind behavior before repairing.",
+      "colortables_init423F8F..423F9A loads existing g_VBP_CAVIARDATA.record_, then its palette_ pointer+302 directly. Seed adds record base again incorrectly. Upcoming producer needs truthful read access to this record and Palette entries, not raw offsets or duplicated owners."
+    ],
+    "hypothesis": "Before recovering voxel loading, distinguish real loaded-model CaviarData lifetimes from the current renderer instance-slot interpretation. Do not blindly give all 200 dual-role slots a model destructor or keep a missing destructor to protect code generation.",
+    "kind": "discovery"
+  },
+  "previous_event": "beb57ae75fff218f9ca475d072cb393e3cd3ac933395e403f77bf6bdfdfb1c6b",
+  "request_id": "caviar-definition-versus-instance-lifetime-20260920",
+  "schema_version": 1,
+  "sequence": 132,
+  "stream": "task:infowin-ownership"
+}

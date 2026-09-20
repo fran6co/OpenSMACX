@@ -1,0 +1,24 @@
+{
+  "event_id": "beb57ae75fff218f9ca475d072cb393e3cd3ac933395e403f77bf6bdfdfb1c6b",
+  "payload": {
+    "affects": [
+      "entity-0ab99ac9fd596ec3941ce5182195291a755de3724fa69e722fc2f3cc5163cae9",
+      "entity-6c627870072b1530e943d64e29af07758023207e65e6bcbe65b7e96bfd15c832",
+      "entity-6c876a9a970524de0224ad7293094e4ace420f9be958acf9b219c006cc053b6b",
+      "entity-73bdfc2a6fba5a4db6ac8858940506d37916fc9df488172be187cb95b591f3cf"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-renderer-owned-initializer-dependencies-20260920",
+    "evidence": [
+      "Original4236BD..4236C8 copies256 bytes from shadow.tmp;423781..423794 computes the same table with Palette::create_table(0,256,-43),423853..42385E writes the cache. Source pending_bodies.cpp still forwards colortables_init.",
+      "Original451953..4519AB reads VEH_LIGHT_DIR_MAP then normalizes its three converted integer values into687AD8. Source pending_bodies.cpp still forwards load_voxels. New zero/default source data is only initial-storage evidence, not initialization recovery."
+    ],
+    "hypothesis": "New source-owned shadow remap and configurable vehicle light have correct initial storage, but their operational producers remain executable-address forwarders. Recover colortables_init and load_voxels against these owners; initial zero/default data is not a populated runtime palette or loaded configuration.",
+    "kind": "discovery"
+  },
+  "previous_event": "7e66dab1700238c8fc7e0bc7d7b415dd0e8ebb210f5f8681ead797eda2aba131",
+  "request_id": "vehicle-renderer-owned-initializer-dependencies-20260920",
+  "schema_version": 1,
+  "sequence": 131,
+  "stream": "task:infowin-ownership"
+}

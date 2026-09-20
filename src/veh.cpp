@@ -37,6 +37,7 @@
 #include "path.h"  // Paths - the move cost table the go-to verbs consult
 #include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
 #include "caviar.h"
+#include "vector.h"  // vector_add operates on actual three-float arrays.
 #include "leaf_recoveries.h"  // The source-owned vector-length operation.
 #include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
 
@@ -142,6 +143,102 @@ VOX_Vect VehDrawFacetNormals3[2401];
 // its first component when converting facing angles into camera coordinates.
 // RECOVERY_OBJECT: v2 0x008E9F40 0x008E9F4C ?VehDrawCameraAngles@@3UVOX_Vect@@A 0x004BF740
 VOX_Vect VehDrawCameraAngles;
+
+// load_voxels reads VEH_LIGHT_DIR_MAP, converts its three integer settings
+// to floats and normalizes this vector. These are the image's defaults.
+// RECOVERY_OBJECT: v2 0x00687AD8 0x00687AE4 ?VehLightDirMap@@3UVOX_Vect@@A 0x004BF8D0
+VOX_Vect VehLightDirMap = {{-0.57735f, 0.57735f, 0.57735f}};
+// Turn setup publishes these for the subsequent animation frames.
+// RECOVERY_OBJECT: v2 0x008CC820 0x008CC824 ?VehDrawTurnVehicle@@3HA 0x004BF8D0
+int VehDrawTurnVehicle;
+// RECOVERY_OBJECT: v2 0x008CC260 0x008CC264 ?VehDrawTurnAngle@@3MA 0x004BF8D0
+float VehDrawTurnAngle;
+// RECOVERY_OBJECT: v2 0x008CC258 0x008CC25C ?VehDrawTurnIncrement@@3MA 0x004BF8D0
+float VehDrawTurnIncrement;
+
+// ORIGINAL: 0x004BF8D0 ?vehdraw_turn_start@@YAHHHHH@Z 0x004BF8D0-0x004BFC67
+// RECOVERY_BINDING: v1 {"evidence": ["Original4BF8D0..4BFC67 returns the integer animation step count, snapshots light before selection, publishes selection before facing access, loads the map pointer slot, and uses unsigned Weapon.mode at+0A.", "All four facet vectors are copied before calls; camera/light/shadow publication follows original call order. Original stores only negative arc to float before comparison; preserving positive precision determines half-turn direction. Zero angle preserves zero steps and NaN increment. Observed VC6 emitted symbol and layouts."], "reason": "Recover vehicle turn setup using actual map, vehicle, renderer and vector ownership instead of fixed executable storage."}
+int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) {
+    const VOX_Vect light = VehLightDirMap;
+    const VOX_Vect shadow_direction = {{-0.57735f, 0.57735f, 0.57735f}};
+    if (flags & 1) {
+        veh_id = pick_top_veh(veh_id);
+    }
+    VehDrawTurnVehicle = veh_id;
+    const int x = VehLiftX;
+    const int y = VehLiftY;
+    int old_facing = Vehs[veh_id].facing;
+    if (old_facing == -1) {
+        old_facing = 0;
+    }
+    Vehs[veh_id].facing = (int8_t)direction;
+
+    const Map *tiles = reinterpret_cast<const Map *>(LockMapTable);
+    VOX_Vect normal;
+    bool sloped = (tiles[y * MapLongitude + (x >> 1)].climate & 0xE0) >= 0x60;
+    if (sloped) {
+        const VehPrototype &prototype = VehPrototypes[Vehs[veh_id].proto_id];
+        if (prototype.chassis_id == 0 && Weapon[prototype.weapon_id].mode < 3) {
+            sloped = false;
+        }
+    }
+    if (sloped) {
+        const int h1 = ConsoleGlobal.get_relative_alt(x, y, 1);
+        const int h2 = ConsoleGlobal.get_relative_alt(x, y, 2);
+        const int h3 = ConsoleGlobal.get_relative_alt(x, y, 3);
+        const int h4 = ConsoleGlobal.get_relative_alt(x, y, 4);
+        const int index = ((h1 * 7 + h2) * 7 + h3) * 7 + h4 - 400;
+        const VOX_Vect n0 = VehDrawFacetNormals0[index];
+        const VOX_Vect n1 = VehDrawFacetNormals1[index];
+        const VOX_Vect n2 = VehDrawFacetNormals2[index];
+        const VOX_Vect n3 = VehDrawFacetNormals3[index];
+        vector_add(n0.values, n1.values, normal.values);
+        vector_add(normal.values, n2.values, normal.values);
+        vector_add(normal.values, n3.values, normal.values);
+        vox_normalise_vector(normal.values, normal.values);
+    } else {
+        normal.values[0] = 0.0f;
+        normal.values[1] = 0.0f;
+        normal.values[2] = 1.0f;
+    }
+
+    VOX_Matrix camera;
+    compute_camera(&normal, &camera);
+    g_VEHDRAW_CAVIAR.light_vector_ = light;
+    VOX_Matrix inverse;
+    vox_matrix_inverse(camera.values, inverse.values);
+    VOX_Vect shadow;
+    vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
+    g_VEHDRAW_CAVIAR.shadow_vector_ = shadow;
+    g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
+    VOX_Vect position;
+    position.values[0] = camera.values[2][0] * -10000.0f;
+    position.values[1] = camera.values[2][1] * -10000.0f;
+    position.values[2] = camera.values[2][2] * -10000.0f;
+    g_VEHDRAW_CAVIAR.set_camera_direct(&position, &camera);
+
+    VehDrawTurnAngle = ((old_facing - 3) & 7) * 0.785375f;
+    const float target = ((direction - 3) & 7) * 0.785375f;
+    float negative_distance;
+    // The negative arc is rounded to float; the positive arc remains in the
+    // x87 register through comparison. Rounding both can reverse half-turns.
+    double positive_distance;
+    if (VehDrawTurnAngle > target) {
+        negative_distance = VehDrawTurnAngle - target;
+        positive_distance = ((double)target + 6.283f) - VehDrawTurnAngle;
+    } else {
+        positive_distance = (double)target - VehDrawTurnAngle;
+        negative_distance = (float)(((double)VehDrawTurnAngle + 6.283f) - target);
+    }
+    if (negative_distance < positive_distance) {
+        const int steps = (int)(speed * negative_distance * 0.15915963f);
+        VehDrawTurnIncrement = -(negative_distance / steps);
+        return steps;
+    }
+    const int steps = (int)(speed * positive_distance * 0.15915963f);
+    VehDrawTurnIncrement = (float)(positive_distance / steps);
+    return steps;
+}
 
 // The original calls the CRT atan entry after storing a double argument;
 // the compiler's default fpatan intrinsic bypasses that rounding boundary.
@@ -4612,7 +4709,7 @@ void __cdecl veh_clear(int veh_id, int proto_id, int faction_id) {
     Vehs[veh_id].visibility = 0;
     Vehs[veh_id].home_base_id = -1;
     Vehs[veh_id].morale = rule_morale + 1;
-    Vehs[veh_id].unk_5 = 2;
+    Vehs[veh_id].facing = 2;
     Vehs[veh_id].probe_action = 0;
     Vehs[veh_id].probe_sabotage_id = 0;
 }

@@ -281,11 +281,9 @@ extern int WinMinimizeIcon;   // 0x009B7B0C
 // other clue to what the two bits mean.
 extern uint32_t SystemInterfaceFlags;  // 0x00933420
 
-// A byte buffer the image pushes BY ADDRESS at fifteen call sites, among them
-// multidebug_init's third argument. Nothing in the tree names it and the image
-// gives it no type, so it is bound as the one object whose address is what the
-// callers actually take.
-extern unsigned char MultiDebugText;  // 0x006F107C
+// Shared shadow palette-index remap, filled by colortables_init. MultiDebug
+// retains this table pointer; it is not storage for debug text.
+extern unsigned char ShadowColorTable[256];  // 0x006F107C
 
 extern "C" int __cdecl _mkdir(const char *path);
 

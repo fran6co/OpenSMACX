@@ -25,6 +25,11 @@ extern VOX_Vect VehDrawFacetNormals1[2401];
 extern VOX_Vect VehDrawFacetNormals2[2401];
 extern VOX_Vect VehDrawFacetNormals3[2401];
 extern VOX_Vect VehDrawCameraAngles;
+extern VOX_Vect VehLightDirMap;
+extern int VehDrawTurnVehicle;
+extern float VehDrawTurnAngle;
+extern float VehDrawTurnIncrement;
+int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags);
 void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix);
 void __cdecl vehdraw_compute_facet_normals();
 extern int VehDrawSuppressedVehicle;
@@ -448,7 +453,9 @@ struct Veh {
     uint8_t order_auto_type; // see VehOrdersAutoType
     uint8_t visibility; // faction bitfield of who can currently see Veh excluding owner
     uint8_t moves_expended; // stored as road moves (x3)
-    int8_t unk_5; // related to movement
+    // Turn setup reads the old facing and stores the new eight-way direction.
+    // RECOVERY_MEMBER: v1 Veh facing 0x29 0x004BF8D0
+    int8_t facing;
     uint8_t unk_6; // automated action iterator count
     uint8_t move_to_ai_type; // shown as status icon with debug mode active
     // 000 00 000 : framed faction : secondary options : primary action id (0-7)

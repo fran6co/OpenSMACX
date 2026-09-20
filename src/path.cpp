@@ -1025,7 +1025,7 @@ int Path::move(int veh_id, int faction_id) {
         && ((x_dist(veh_x, x_waypoint) + abs(veh_y - y_waypoint)) & ~1) != 0) {
         int dir = find(veh_x, veh_y, x_waypoint, y_waypoint, Vehs[veh_id].proto_id,
             faction_id, flags,
-            (Vehs[veh_id].state & VSTATE_UNK_10000) ? Vehs[veh_id].unk_5 : -1);
+            (Vehs[veh_id].state & VSTATE_UNK_10000) ? Vehs[veh_id].facing : -1);
         if (dir >= 0) {
             return dir;
         }
@@ -1093,7 +1093,7 @@ int Path::move(int veh_id, int faction_id) {
         }
     }
     if ((Vehs[veh_id].state & VSTATE_UNK_10000)
-        && best_dir == (Vehs[veh_id].unk_5 ^ 4)
+        && best_dir == (Vehs[veh_id].facing ^ 4)
         && get_proto_triad(Vehs[veh_id].proto_id) != TRIAD_AIR) {
         Vehs[veh_id].state &= ~VSTATE_UNK_10000;
         Vehs[veh_id].order = ORDER_NONE;

@@ -67,8 +67,10 @@ int WinMinimizeIcon;   // 0x009B7B0C
 
 uint32_t SystemInterfaceFlags;  // 0x00933420
 
-// 0x006F107C. See game.h.
-unsigned char MultiDebugText;  // 0x006F107C
+// colortables_init loads 256 palette indices from shadow.tmp or builds the
+// same remap with Palette::create_table(0, 256, -43), then caches all 256 bytes.
+// RECOVERY_OBJECT: v2 0x006F107C 0x006F117C ?ShadowColorTable@@3PAEA 0x004BF8D0
+unsigned char ShadowColorTable[256];
 uint32_t GameMorePreferences;  // 0x009A6494
 uint32_t GameWarnings;  // 0x009A6498
 uint32_t GameRules;  // 0x009A649C
@@ -1314,7 +1316,7 @@ int __cdecl system_init() {
 
     // The language performs the Console-to-Win virtual-base conversion.
     Win *console_window = &ConsoleGlobal;
-    WinBubbleWindow.init(&NetDaemonNet, console_window, &MultiDebugText);
+    WinBubbleWindow.init(&NetDaemonNet, console_window, ShadowColorTable);
 
     messagewin_init(reinterpret_cast<MessageWin *>(0x007F67F8));
     datalink_init(&DatalinkMain);

@@ -371,7 +371,7 @@ void execute_commands(Console *self) {
         && Vehs[State.vehicle_id].x == State.target_x
         && Vehs[State.vehicle_id].y == State.target_y
         && movement_cost == expected_cost
-        && Vehs[State.vehicle_id].unk_5 == movement_direction
+        && Vehs[State.vehicle_id].facing == movement_direction
         && order_cleared
         && veh_moves(State.vehicle_id) == 0
         && veh_at(State.target_x, State.target_y) == State.vehicle_id
