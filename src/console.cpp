@@ -25,6 +25,7 @@
 #include "infowin.h"
 #include "map.h"
 #include "mapwin.h"
+#include "maininterface.h"
 #include "statuswin.h"
 #include "temp.h"
 #include "fx.h"
@@ -1727,7 +1728,6 @@ class VCall { public:
 };
 
 // ORIGINAL: 0x004E0FD0 ?editor_generate@Console@@QAEXXZ 0x004E0FD0-0x004E10BC FILE
-// TRIED: hand-written VCall shim for the two indirect calls at +4/+8 on the fixed-address singleton 0x007B0CB8 (emit_translation_unit's vtable_slots heuristic only fires on a reg-deref'd vtable load, not an absolute-address one). Body compiles; landed at MISMATCH (82% mnemonic similarity, first divergence at instruction 2 - scheduling around the leading auto_undo() call).
 // size      236 bytes
 // prototype void (__thiscall ?editor_generate@Console@@QAEXXZ)(Console* this)
 // callers   2   call targets   4
@@ -1741,7 +1741,7 @@ void Console::editor_generate() {
     auto_undo();
 
     int count = MapArea;
-    unsigned int *p = reinterpret_cast<unsigned int *>((*LockMapTable) + 8);
+    Map *tile = reinterpret_cast<Map *>(LockMapTable);
 
     VehCurrentCount = 0;
     BaseCurrentCount = 0;
@@ -1752,35 +1752,40 @@ void Console::editor_generate() {
         int i = 0;
         do {
             i++;
-            *p &= 0xfffffffc;
-            p += 0xb;
-        } while (i < MapArea);
+            tile->bit &= ~(BIT_BASE_IN_TILE | BIT_VEH_IN_TILE);
+            ++tile;
+        } while (i < static_cast<int>(MapArea));
     }
 
     EditorGenerateUndoDepth = 0;
     GameState = GameState | 4;
-    *reinterpret_cast<int *>(MapWinTable + 0x1dd98) = 0xfffffff2;
-    reinterpret_cast<MapWin *>(MapWinTable)->draw_map(1);
+    // 0x004E1033 loads slot zero before accessing the window's +0x1DD98
+    // member. The array itself is neither the receiver nor member storage.
+    MapWinTable[0]->field_1DD98_ = static_cast<uint32_t>(-14);
+    MapWinTable[0]->draw_map(1);
 
     int flags = GameState;
     int wasSet = flags & 0x80;
     flags |= 0x80;
     GameState = flags;
     world_build();
-    draw_map(1);
+    ::draw_map(1);
     if (wasSet == 0) {
         int f2 = GameState;
-        f2 &= 0x7f;
+        f2 &= ~0x80;
         GameState = f2;
-        draw_map(1);
+        ::draw_map(1);
     }
 
-    unsigned char flagByte = *reinterpret_cast<unsigned char *>((&GameState));
+    // MainInterface construction at 0x0045EF10 creates 42 FlatButtons at
+    // +0xE00 with stride 0xB4C. Element 2 is the original 0x007B0CB8
+    // receiver; its table selects Win::show and BaseButton::hide.
+    unsigned char flagByte = static_cast<unsigned char>(GameState);
     if ((flagByte & 0x80) != 0 && (flagByte & 0x40) != 0) {
-        reinterpret_cast<VCall *>(0x007B0CB8)->slot001(0);
+        MainInterfaceGlobal.flat_button_[2].show(0);
         return;
     }
-    reinterpret_cast<VCall *>(0x007B0CB8)->slot002();
+    MainInterfaceGlobal.flat_button_[2].hide();
 }
 
 // Fixed-slot bindings carried from 004e1190.cpp

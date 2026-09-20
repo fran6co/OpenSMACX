@@ -1151,9 +1151,9 @@ void __cdecl desktop_close() {
 }
 
 /*
-Purpose: Leave the opening path: publish the Console's GraphicWin virtual
-         base and dismiss the opening window through its first vtable slot.
-// ORIGINAL: 0x00589B20 ?close_opening@@YAXXZ 0x00589B20-0x00589B57 FILE
+Purpose: Publish the Console's Win base for popup parenting, then destroy
+         the owned opening window and clear its pointer.
+// ORIGINAL: 0x00589B20 ?close_opening@@YAXXZ 0x00589B20-0x00589B57 FILE BYTE_EXACT
 // size      55 bytes
 // prototype
 // callers   2   call targets   0
@@ -1161,46 +1161,20 @@ Purpose: Leave the opening path: publish the Console's GraphicWin virtual
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x00589B4A
-// TRIED: `static_cast<GraphicWin *>(ConsoleGlobal)` for the vbtable walk -
-//   the folded const binding lets VC6 PROVE the pointer non-null, so the
-//   image's `test eax,eax / je` guard is dropped and the vbptr reload merges
-//   into one absolute load. Measured 0 of 15, diverging at instruction 0:
-//   image opens `mov eax, 0x9156b0` immediate, ours `mov eax, [0x9156b0]`.
-// TRIED: an explicit `if (console_window != 0)` guard around the walk - the
-//   value is the same compile-time constant, so VC6 folds the test away and
-//   the output is identical to the static_cast spelling.
-// LEVER: the image's shape is VC6's virtual-base conversion of an
-//   `&extern_object` - a RELOCATED symbol address, which VC6 cannot prove
-//   non-null (hence the guard) and re-derives absolutely (hence the
-//   `mov ecx, dword ptr [0x9156b0]` reload). Reproducing it needs an object
-//   SYMBOL for the console; the artifact's `extern ConsoleShadow g_console;`
-//   has no definition anywhere, so the shape cannot link from this tree.
-//   The explicit walk below is the closest linking form: value, guard,
-//   vbtable slot 1 through the fixed address.
-// LEVER: ConsoleGlobal is the REAL object now (console.cpp), and both reads
-//   of the walk take `&ConsoleGlobal` - the relocated symbol address the
-//   TRIED above asked for. Measured 1/15 (was 0/15 through the binding): the
-//   image's opening `mov eax, 0x9156b0` now matches. What is left is
-//   register naming on the guard copy - ours emits `mov ecx, eax; test ecx,
-//   ecx` where the image tests eax in place and re-adds the immediate -
-//   plus the tail dispatch's register choice. Unmeasured ideas stop here;
-//   the body is unclaimed and the shape is the image's.
+// The original converts Console through MapWin's virtual GraphicWin base.
+// At 0x00589B4A it calls the opening object's scalar deleting destructor
+// with flag one, not on_dialog_focus. GraphicWin's original primary table
+// at 0x0066FC50 selects 0x005D7140, which destroys and frees the allocation.
 Return Value: n/a
-Status: Complete
 */
 void __cdecl close_opening() {
-    // ConsoleGlobal is the REAL Console object now (console.cpp), so both
-    // reads below are its own relocated address - the `mov eax, 0x9156b0`
-    // immediate the image opens with, then the absolute vbtable reload.
-    int console_window = reinterpret_cast<int>(&ConsoleGlobal);
-    if (console_window != 0) {
-        console_window += reinterpret_cast<int *>(
-            *reinterpret_cast<int **>(&ConsoleGlobal))[1];
-    }
+    Win *console_window = &ConsoleGlobal;
     GraphicWin *opening = opening_window();
-    BasePopDefaultField322C = console_window;
+    // The shared default is still declared as a word by the BasePop owner;
+    // its value is a Win pointer, after the ordinary C++ base conversion.
+    BasePopDefaultField322C = reinterpret_cast<uint32_t>(console_window);
     if (opening != 0) {
-        opening->on_dialog_focus(1);
+        delete opening;
         opening_window() = 0;
     }
 }
@@ -1306,10 +1280,6 @@ Purpose: Bring the shared system up, once per process: create the four data
 //   /Ob0 scores worse (53/135) because map_win_table and friends turn into
 //   real calls.
 Return Value: 1 when the label table fails to load, else 0.
-Status: homed from src/unrecovered/0058f040.cpp on this pass. Its five free
-        callees and six member `init` callees are pending_bodies forwarders
-        (game.h). 34/135 agreeing, 0.925 similar, best set /O2 /Gy /GR- /Oy-
-        /GX; the remaining runs are register naming, not structure.
 */
 int __cdecl system_init() {
     _mkdir("saves");

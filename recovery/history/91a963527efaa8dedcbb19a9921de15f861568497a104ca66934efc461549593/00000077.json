@@ -1,0 +1,20 @@
+{
+  "event_id": "792efb2023f12eb1d9e66ca9a28c740c5ce2c21b3b1fa10235c680f813940f2d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_close_opening.py",
+      "recovery/tests/test_editor_generate.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes focused actual-source controls for retained editor_generate and close_opening candidates during personal integration review; original task baseline and pending storage/lifetime findings remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "17513aea74ea84fbcedd6f1573504a470438d1b3ace34aa4579690c8b9432fbb",
+  "request_id": "editor-opening-controls-20260920",
+  "schema_version": 1,
+  "sequence": 77,
+  "stream": "task:control-sprite-defaults"
+}
