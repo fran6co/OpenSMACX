@@ -1,0 +1,24 @@
+{
+  "event_id": "750a7339f0857f7d3a197abc8249afc69c7c462b50577cab0c7e873b9968fb6e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_gate_controls.py"
+    ],
+    "evidence": [
+      "Update only the existing conventional-global initializer damage anchor from SpriteDrawOriginX to its corrected SpriteScaleNumerator owner; retain the same missing-initializer mutation and refusal. This is rename continuity, not removal or weakening of a control.",
+      "Coordinator reviews plain C++ kernels for original mono5E3E50/draw5E4B9A/draw_dest5E5833. Retain actual shared ratio/cache/minimum/table owners; express per-draw assembler scratch pitches, counters and cursor pointers as local variables, not artificial mapped globals. This deliberately does not reproduce shared assembler scratch interference under reentrant calls and does not establish strict reference or full-image preservation. New blitters remain unclaimed until fresh measurements; no historical claim is demoted.",
+      "Correct normal C++ pointer formation by summing clipped integer offsets before adding them to a buffer pointer, and omit unused final row/column pointer advances. Negative offscreen origins are ordinary clipping inputs; intermediate out-of-array pointers are not an acceptable C++ reconstruction.",
+      "Original shrinking row advance reads only the low byte of each int entry. For byte0, its decrement loop performs2^32-1 pitch additions without pixel accesses, followed by pitch-minus-consumed-width; after consumed-width the final Win32 address advances0. Use the direct low-byte row advance, preserving the finite resulting addresses without reproducing billions of empty arithmetic iterations. This is not a claim for malformed scales or out-of-table inputs.",
+      "Original destination-remap expansion samples a zero source pixel through table[first destination byte] once, then duplicates the cached result across its whole horizontal/vertical block. Confirmed independently for1/2/3/4 row branches at5E6546/5E63F3/5E6268/5E6097. Unit/shrink remap each output individually; transparency is tested before zero handling. Preserve pixel-read/write order for overlapping buffers.",
+      "No new framework implementation, relaxed gates, claims or baseline resets. Host controls exercise actual source with explicit platform doubles; native compilation/build, existing claim checks and original references remain separate required evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "95e57451c9fe1eea2ae47a8e566e78467f9b56e4b0c140f1dd556b2976e53e7b",
+  "request_id": "vector-sprite-cpp-kernel-review-20260920",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,115 @@
+{
+  "event_id": "30ee165a0edf7b9ad7ad42ddf48f5e55bcb2f42e560d3fa59b946bb62748c76b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_mono.py",
+      "recovery/tests/test_sprite_blitters.py",
+      "recovery/tests/test_sprite_scaling.py",
+      "src/buffer.cpp",
+      "src/buffer.h",
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Pending discovery at task revision25 identifies actual veh_draw5594F0 and veh_scoot55A150 as natural Vector lifecycle callers. Their Sprite mono/draw/draw_dest dependencies must be genuine source-owned implementations, not newly introduced original-address calls. Authorize this concrete dependency closure, not unrelated graphics recovery.",
+      "Original Sprite draw_mono5E3E50 calls Buffer5D8930, scale table5EB20F and four clipped-table members5EAB0F/5EABBF/5EAC6F/5EACFF. Preserve the claimed seed5E3E00 as a historical obligation and bind product bodies through the native writer; no invented or demoted claims.",
+      "Current SpriteDrawOriginX/Y owners at696D18/1C are ratio numerator/denominator according to fill_scaling_table divisions and scaled blitter dimensions. Authorize coherent names/parameter comments and actual shared table/cache storage after verifying bounds/types/initial bytes, without duplicate owners. Any additionally discovered storage requires further evidence and scope decision.",
+      "Use actual Sprite and Buffer members, COM interfaces and existing Buffer setup/release ownership. Original unrolled pixel loops may be expressed as portable C++; preserve pixel, transparency, clipping, scaling and lock/release semantics, explicitly retaining unmatched code-generation obligations. No asm, copied bytes, opaque self offsets or new executable-address forwarding.",
+      "Root owns Git, native binding, claims and measurement epochs. Parallel investigators use disjoint files only after explicit assignment. Keep the original task baseline; review original instructions, behavioral mutation controls, affected historical claims, layouts and fresh build/link before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6176256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6176336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6129968,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6205967,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6204175,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6204351,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6204527,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6204671,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6179738,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6182963,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6909208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6909212,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6909216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6909220,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10173144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10176344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 10179544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9e4742d1c65c2da56c4455b602099887959aab871eeb4d088bdc3a4a1362200b",
+  "request_id": "vector-real-sprite-blitter-dependencies-20260920",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:vector-value-semantics"
+}
