@@ -36,11 +36,9 @@ from .model import DecompilationState, Lesson, Mode, Recipe, State
 def _block_state_after(line: str, in_block: bool) -> bool:
     """Cheap block-comment tracking: count the transitions on the line.
 
-    Deliberately naive about strings containing comment marks - a false
-    positive there only makes the scanner MORE willing to read a marker, and
-    a marker at an address the catalogue does not know is reported as
-    uncatalogued rather than believed, so the error cannot fabricate a map
-    entry.
+    Quoted lines use the same lexical walk as body extraction, so literal
+    comment marks cannot change the context of a later source annotation.
+    Ordinary unquoted lines retain the fast delimiter-search path.
     THE SCAN IS BY `find`, NOT BY CHARACTER. This ran once per line of every
     file under `src/`, and every tool in the loop reads the tree at
     startup: the catalogue, the brief, the verifier and the ratchet all pay
@@ -53,6 +51,8 @@ def _block_state_after(line: str, in_block: bool) -> bool:
     line comment. Depth never exceeds one - the character version only ever
     incremented from zero - so `/*` inside a block is text, exactly as before.
     """
+    if '"' in line or "'" in line:
+        return _brace_delta(line, in_block)[1]
     index = 0
     if in_block:
         end = line.find("*/")
@@ -350,7 +350,8 @@ def _subject_of(name: str) -> str | None:
     return next(group for group in parts.groups() if group)
 
 
-def _region_end(lines: list[str], start: int, name: str = "") -> int | None:
+def _region_end(lines: list[str], start: int, name: str = "", *,
+                in_block: bool = False) -> int | None:
     """Index of the line that ends the region opened at `start`, or None.
 
     THE LAST TOP-LEVEL CLOSE BEFORE THE NEXT MARKER, not the first. A body
@@ -379,7 +380,10 @@ def _region_end(lines: list[str], start: int, name: str = "") -> int | None:
     defined, the punctuation rule still decides, which is why every one of
     the 5,066 committed regions ends exactly where it did before.
     """
-    depth, opened, end, in_block = 0, False, None, False
+    depth, opened, end = 0, False, None
+    marker = MARKER.search(lines[start])
+    marker_start = marker.start() if marker else 0
+    shared_comment = _block_state_after(lines[start][:marker_start], in_block)
     # PERMISSIVE ON PURPOSE, because the two errors are not symmetric.
     # Calling the subject defined too early only restores the old answer;
     # calling it defined too late extends the region over a neighbour. So a
@@ -391,13 +395,18 @@ def _region_end(lines: list[str], start: int, name: str = "") -> int | None:
               else re.compile(rf"\b{re.escape(subject)}\b"))
     punctuated = None
     for offset, line in enumerate(lines[start:]):
-        # ONLY ONCE A REGION HAS OPENED. 20 annotations sit inside a doc
-        # comment that is followed by another marker before any brace - the
-        # bulk-annotated files put several markers in one header block - and
-        # breaking there ended the scan before the definition was reached,
-        # turning every one of them into "no closing brace within the file".
-        if offset and opened and NEXT_MARKER.match(line):
-            break
+        # Legacy bulk annotations can share one uninterrupted header comment.
+        # Outside that header, a new marker belongs to another definition,
+        # even when this marker has no local body (for example a header-homed
+        # method). Never borrow its neighbour's body to conceal that absence.
+        if offset and (following := MARKER.search(line)) is not None:
+            same_comment = shared_comment and "*/" not in line[:following.start()]
+            if (opened or not same_comment) and _parse_marker(line, in_block) is not None:
+                break
+        # End-of-line state alone misses a close/reopen sequence: */ /*.
+        # Within the original block, quotes do not escape its closing token.
+        if shared_comment and "*/" in (line[marker_start:] if not offset else line):
+            shared_comment = False
         delta, in_block, saw_open, code = _brace_delta(line, in_block)
         # BEFORE this line's braces are judged, since a single-line
         # definition names the subject and closes the region on one line.
@@ -427,23 +436,19 @@ def _region_end(lines: list[str], start: int, name: str = "") -> int | None:
 
 
 def _extract_forward_text(lines: list[str], marker_line: int,
-                          name: str = "") -> str:
+                          name: str = "", *, in_block: bool = False) -> str:
     """The region claimed by a marker at `marker_line` (1-based), in LINES.
 
-    The brace counter, the inclusive closing-brace line, and the `/*`
-    re-opening when the extract starts mid-comment are the census rule -
-    duplicated line for line here only so the scanner can run on in-memory
-    text (the migrator's dry-run), and pinned to
-    `byte_match_census.body_span` over the whole tree by
-    test_annotation_scan so the copy cannot drift from the canonical
-    extractor it mirrors.
+    Preserve the scanner's actual block-comment context both while locating
+    the body and when reopening an extract that begins mid-comment. Raw
+    braces or comment delimiters in prose/strings cannot establish that state.
     """
     start = marker_line - 1
-    end = _region_end(lines, start, name)
+    end = _region_end(lines, start, name, in_block=in_block)
     if end is None:
         raise ValueError("no closing brace within the file")
     text = "\n".join(lines[start:end + 1]) + "\n"
-    if "*/" in text.split("{", 1)[0]:
+    if in_block:
         text = "/*\n" + text
     return text
 
@@ -651,7 +656,8 @@ def _read_text(text: str, path: Path | str,
     for index, line in enumerate(lines):
         # Parse with the state the line OPENS in, then advance the state, so
         # a marker on the line that opens a comment is still inside it.
-        parsed = _parse_marker(line, in_block)
+        marker_in_block = in_block
+        parsed = _parse_marker(line, marker_in_block)
         in_block = _block_state_after(line, in_block)
         if parsed is None:
             continue
@@ -694,7 +700,8 @@ def _read_text(text: str, path: Path | str,
                 region, error = _proved_body(lines), ""
             else:
                 try:
-                    region = _extract_forward_text(lines, index + 1, name)
+                    region = _extract_forward_text(lines, index + 1, name,
+                                                   in_block=marker_in_block)
                     error = ""
                 except ValueError as problem:
                     region, error = "", str(problem)

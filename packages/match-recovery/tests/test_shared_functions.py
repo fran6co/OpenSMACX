@@ -109,6 +109,23 @@ def test_source_body_state_is_derived_without_merging_shared_markers():
     assert "no body region" in missing.body_error
 
 
+def test_shared_region_uses_real_comment_context_not_prose_braces():
+    source = ('/*\n// RECOVERY_SHARED: v1 0x10 0x11 _a 0x20\n'
+              'An unmatched { is only prose.\n*/\nvoid a() {}\n')
+    binding, = parse_shared(source, "code/methods.cc", "a" * 64, address_space="custom:offset")
+    assert binding.body_error is None
+    unterminated = source.replace("*/\n", "")
+    binding, = parse_shared(unterminated, "code/methods.cc", "a" * 64, address_space="custom:offset")
+    assert binding.body_error == "shared source binding has no body region"
+
+
+def test_shared_region_ignores_a_literal_comment_opener_before_its_marker():
+    source = ('const char *label = "/*";\n'
+              '// RECOVERY_SHARED: v1 0x10 0x11 _a 0x20\nvoid a() {}\n')
+    binding, = parse_shared(source, "code/methods.cc", "a" * 64, address_space="custom:offset")
+    assert binding.body_error is None
+
+
 @pytest.mark.parametrize("line", ["v1 0x10 0x10 _a 0x20", "v1 0x10 ? _a 0x20", "v1 0x10 0x11 _a", "v2 0x10 0x11 _a 0x20"])
 def test_malformed_or_unbounded_shared_annotations_are_refused(line):
     with pytest.raises(ValueError):

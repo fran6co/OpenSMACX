@@ -60,6 +60,95 @@ def test_body_marker():
     assert write(BODY, records) == BODY
 
 
+@pytest.mark.parametrize("note", [
+    "// TRIED: if (x) { return 1; } before the real definition.",
+    "An unmatched { in prose is not a C++ scope.",
+    "A closing } in prose is not the end of a function.",
+])
+def test_extracted_body_reopens_its_actual_block_comment_despite_prose_braces(note):
+    text = ("/*\n// ORIGINAL: 0x00401000 ?f@@YAHXZ 0x00401000-0x00401006\n"
+            + note + "\nReturn Value: result\n*/\nint f() { return 0; }\n")
+    row, = read_text(text, FIXTURE)
+    assert not row.extract_error
+    assert row.region.startswith("/*\n// ORIGINAL:")
+    assert row.region.endswith("int f() { return 0; }\n")
+    assert function_line(row.region, "f") == len(row.region.splitlines())
+    assert write(text, [row]) == text
+
+
+@pytest.mark.parametrize("prefix", [
+    'const char *text = "/*";\n',
+    'const char *text = "escaped \\\" /*";\n',
+    "char quote = '\"'; // /* is just prose here\n",
+])
+def test_literal_comment_openers_do_not_change_later_body_context(prefix):
+    text = prefix + "// ORIGINAL: 0x00401000 ?f@@YAHXZ 0x00401000-0x00401006\nint f() { return 0; }\n"
+    row, = read_text(text, FIXTURE)
+    assert not row.extract_error
+    assert row.region.startswith("// ORIGINAL:")
+    assert row.region.endswith("int f() { return 0; }\n")
+    assert write(text, [row]) == text
+
+
+def test_comment_closer_in_a_string_does_not_invent_a_region_opener():
+    text = ('// ORIGINAL: 0x00401000 ?f@@YAHXZ 0x00401000-0x00401006\n'
+            'const char *label = "*/";\nint f() { return 0; }\n')
+    row, = read_text(text, FIXTURE)
+    assert not row.extract_error
+    assert row.region == text
+
+
+def test_extraction_does_not_borrow_braces_from_an_unterminated_comment():
+    text = ('/*\n// ORIGINAL: 0x00401000 ?f@@YAHXZ 0x00401000-0x00401006\n'
+            'not code: int f() { return 0; }\n')
+    row, = read_text(text, FIXTURE)
+    assert row.extract_error and not row.region
+
+
+@pytest.mark.parametrize("between,close", [
+    ("*/\n/*\n// ", "\n*/"),
+    ("*/ /*\n// ", "\n*/"),
+    ("*/\n/* ", " */"),
+    ("*/\n// ", ""),
+    ("*/ /* ", " */"),
+    ("*/ // ", ""),
+])
+def test_missing_header_homed_body_cannot_borrow_next_annotation(between, close):
+    text = ("/*\n// ORIGINAL: 0x00401000 ?f@@YAHXZ 0x00401000-0x00401006 BYTE_EXACT\n"
+            "// body src/inline.h\nProse: f() { return 0; }\n"
+            + between + "ORIGINAL: 0x00401010 ?g@@YAHXZ 0x00401010-0x00401016"
+            + close + "\nint g() { return 1; }\n")
+    first, second = read_text(text, FIXTURE)
+    assert first.extract_error and not first.region
+    assert first.body == "src/inline.h" and first.byte_exact
+    assert not second.extract_error
+    assert second.region.endswith("int g() { return 1; }\n")
+
+
+def test_missing_body_in_line_comments_cannot_borrow_next_annotation():
+    text = ("// ORIGINAL: 0x00401000 ?f@@YAHXZ 0x00401000-0x00401006\n"
+            "// ORIGINAL: 0x00401010 ?g@@YAHXZ 0x00401010-0x00401016\n"
+            "int g() { return 1; }\n")
+    first, second = read_text(text, FIXTURE)
+    assert first.extract_error and not first.region
+    assert not second.extract_error
+    assert second.region.endswith("int g() { return 1; }\n")
+
+
+@pytest.mark.parametrize("opening", ["/*\n// ", "/* "])
+@pytest.mark.parametrize("closing", ["\n*/", " */"])
+def test_multiple_annotations_can_still_share_one_uninterrupted_block(opening, closing):
+    text = (opening + "ORIGINAL: 0x00401000 ?f@@YAHXZ 0x00401000-0x00401006\n"
+            "// ORIGINAL: 0x00401010 ?f@@YAHXZ 0x00401010-0x00401016"
+            + closing + "\nint f() { return 0; }\n")
+    records = read_text(text, FIXTURE)
+    assert len(records) == 2
+    assert all(not row.extract_error and row.region.endswith("int f() { return 0; }\n")
+               for row in records)
+    if opening == "/*\n// " and closing == "\n*/":
+        assert write(text, records) == text
+
+
 FILE_TEXT = """// ORIGINAL: 0x00402000 FILE
 // BODY GOES HERE.
 """

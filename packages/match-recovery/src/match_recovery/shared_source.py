@@ -47,12 +47,16 @@ class SharedFunctionBinding:
 
 
 def parse_shared(text, path, pin, *, address_space):
-    from .source.reader import _extract_forward_text, _is_placeholder_region
+    from .source.reader import _block_state_after, _extract_forward_text, _is_placeholder_region
 
     lines = text.splitlines()
-    locations = [i for i, line in enumerate(lines) if line.lstrip().startswith(PREFIX)]
+    locations, in_block = [], False
+    for i, line in enumerate(lines):
+        if line.lstrip().startswith(PREFIX):
+            locations.append((i, in_block))
+        in_block = _block_state_after(line, in_block)
     bindings = []
-    for index in locations:
+    for index, in_block in locations:
         match = PATTERN.fullmatch(lines[index].strip())
         if match is None:
             raise ValueError(f"invalid shared body binding at {path}:{index + 1}")
@@ -63,7 +67,7 @@ def parse_shared(text, path, pin, *, address_space):
                      if lines[i].lstrip().startswith((PREFIX, "// ORIGINAL:"))), len(lines))
         error = None
         try:
-            region = _extract_forward_text(lines[index:stop], 1, symbol)
+            region = _extract_forward_text(lines[index:stop], 1, symbol, in_block=in_block)
             if _is_placeholder_region(region):
                 error = "unfinished shared source placeholder"
         except ValueError:
