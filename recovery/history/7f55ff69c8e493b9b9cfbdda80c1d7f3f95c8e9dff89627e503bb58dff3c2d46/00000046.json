@@ -1,0 +1,43 @@
+{
+  "event_id": "6864bd669085753e6ded1758f777cee07f1722677f0dc3beabf0d982a52fb43c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_texture_vertices.py",
+      "src/sprite.cpp",
+      "src/texture.cpp",
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Continue actual renderer recovery after manually reviewed e515f851 and completed destination verification. The finished vertex worktree and branch are removed; next source editing requires a newly isolated checkout. Preserve the original task baseline and all unresolved discoveries. No framework work, claim demotion or new protected-body regression is authorized.",
+      "Original6198E0 takes an actual signed count and explicit Vert UV array, not the61A240 selector. It requires borrowed_ nonzero after both initial edge setups. Its619D20..30 kernel copies every palette byte, including any value equal to the raster key, and writes end-start+1 pixels even after right clipping. Keep these differences rather than reusing the exclusive color-key pixel loop.",
+      "At619CC2/CC8 source V/U are packed independently into pointer bytes; inner ADC updates each byte with wrapping. Texture extract6197BD..C4 allocates height<<8, sets borrowed_ at6197CF and advances rows by256 at619838. TexHeap get_tex_mem635390 tests current_ low16bits before allocation6353B2, establishing64KiB alignment for valid heap-created textures. The existing sprite.cpp comment saying16-byte alignment is false; correct that comment only, do not alter allocator behavior in this sub-batch.",
+      "619A63..76 independently selects PC24/chop, with FNINIT at entry/exit. Reuse corrected integer reciprocal/product semantics and typed plain-edge calculations where genuinely common. Use typed overloads or narrowly scoped templates for EdgePoint versus Vert UVs; do not reinterpret one array as the other or truncate arbitrary count to4/8. Keep distinct pixel kernels and sentinel wrapper6239B0 forwarding intact.",
+      "Require actual-source pixel/mutation controls for arbitrary count, independent byte wrapping/carries, unconditional copy, inclusive clipping, borrowed-zero lifecycle, PC24-sensitive slopes and final-row drawing. Fresh native protected matching, references/layout where supported, application build/link and coordinator source/original review precede integration. Retain exceptional geometry/shared-scratch/FP callback-status limitations; no working-game or byte claim follows from this authorization."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6396128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6437296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6509424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5d1315293d4ca8af0fa011b52837625dc214ebcd984453d3b4885ccd1b8a32a9",
+  "request_id": "packed-texture-raster-scope-20260920",
+  "schema_version": 1,
+  "sequence": 46,
+  "stream": "task:vector-value-semantics"
+}
