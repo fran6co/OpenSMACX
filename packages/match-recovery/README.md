@@ -2472,6 +2472,15 @@ retains historical review requirements on the evidence anchor's task.
 The PE/COFF backend uses standalone CodeView data records to measure candidate
 widths, tying the exact emitted symbol to its debug record with SECTION/SECREL
 relocations. It does not guess sizes from C++ spelling or neighboring symbols.
+An ordinary module-local static definition requires its own `S_LDATA32_ST`
+record; an external definition requires `S_GDATA32_ST`, following Microsoft's
+[CodeView record definitions](https://github.com/microsoft/microsoft-pdb/blob/master/include/cvinfo.h).
+The linkage and exact debug-relocation pair must agree. Keep normal file-local
+`const` objects local: external linkage is not required to verify their storage.
+Section/auxiliary symbols and ambiguous same-named definitions do not qualify.
+This support measures the selected owner's data, not cross-TU target identity:
+static relocations still cannot borrow global target bindings, and the object
+annotation catalogue still refuses duplicate bare object names across owners.
 Forward class/struct/union storage records require one complete same-kind,
 qualified-name definition in that standalone stream; missing or ambiguous
 definitions remain unknown, and no other TU supplies a substitute layout.
@@ -2485,7 +2494,7 @@ once per trial and following referenced object owners without expanding edit sco
 Missing bounds/types/definitions/targets remain unknown. Nonmatching contents,
 extents or resolved references fail. Exit 0 requires all requested observations
 to pass; counterexamples exit 1 and incomplete evidence exits 3. Supported ordinary
-external data excludes weak/common/TLS storage, overlapping definitions and
+external and module-local data exclude weak/common/TLS storage, overlapping definitions and
 unsupported debug/relocation forms. Individual comparisons are bounded to 16 MiB.
 No source or claims are stamped, and no initializer executes during verification.
 Passing says nothing about CRT constructors, final-link selection or later lifetime.

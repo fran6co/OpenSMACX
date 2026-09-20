@@ -9,16 +9,17 @@ import pytest
 from match_recovery.codeview_data import data_layout, storage_size
 from match_recovery.model import Origin, Span
 from match_recovery.object_data import check_initial_data, referenced_initial_object_units
-from match_recovery.object_source import ObjectBinding, parse_objects
+from match_recovery.object_source import ObjectBinding, object_targets, parse_objects
 from match_recovery.pe_coff import Coff, PeImage, Symbol
 from test_binary import pe_fixture
 from test_codeview import record
 
 
 def data_fixture(value=bytes(4), *, type_index=0x74, types=b"", relocations=(), bss=None,
-                 definition=b"_g", reference=b"_h"):
+                 definition=b"_g", reference=b"_h", storage=2, debug_kind=None):
     assert 0 < len(definition) <= 8 and 0 < len(reference) <= 8
-    debug = struct.pack("<I", 2) + record(0x1008, struct.pack("<IIH", type_index, 0, 0) + b"\x01g")
+    kind = (0x1007 if storage == 3 else 0x1008) if debug_kind is None else debug_kind
+    debug = struct.pack("<I", 2) + record(kind, struct.pack("<IIH", type_index, 0, 0) + b"\x01g")
     parts = [(b".data", value, relocations, 0xC0300040, len(value)) if bss is None else
              (b".bss", b"", (), 0xC0300080, bss),
              (b".debug$T", struct.pack("<I", 2) + types, (), 0x40000040, 4 + len(types)),
@@ -30,7 +31,7 @@ def data_fixture(value=bytes(4), *, type_index=0x74, types=b"", relocations=(), 
                                   offset + len(raw) if rels else 0, 0, len(rels), 0, flags))
         chunks.append(raw + relbytes)
         offset += len(raw) + len(relbytes)
-    symbols = definition.ljust(8, b"\0") + struct.pack("<IhHBB", 0, 1, 0, 2, 0)
+    symbols = definition.ljust(8, b"\0") + struct.pack("<IhHBB", 0, 1, 0, storage, 0)
     symbols += reference.ljust(8, b"\0") + struct.pack("<IhHBB", 0, 0, 0, 2, 0)
     return struct.pack("<HHIIIHH", 0x14C, len(parts), 0, offset, 2, 0, 0) + b"".join(tables + chunks) + symbols + struct.pack("<I", 4)
 
@@ -91,9 +92,10 @@ def test_local_weak_common_and_absolute_symbols_do_not_borrow_external_binding(s
     assert proof(struct.pack("<I", 0x402000), obj, absolute=0, target={"_h": 0x402000})["content"] == "unknown"
 
 
+@pytest.mark.parametrize("storage", [2, 3])
 @pytest.mark.parametrize("change", ["missing_types", "missing_symbols", "wrong_pair", "addend", "duplicate", "short_record", "overlap"])
-def test_missing_or_inconsistent_compiler_storage_is_unknown(change):
-    obj = Coff(data_fixture())
+def test_missing_or_inconsistent_compiler_storage_is_unknown(change, storage):
+    obj = Coff(data_fixture(storage=storage))
     if change == "missing_types":
         obj.sections = (obj.sections[0], replace(obj.sections[1], name=".debug$P"), obj.sections[2])
     elif change == "missing_symbols":
@@ -112,6 +114,76 @@ def test_missing_or_inconsistent_compiler_storage_is_unknown(change):
         obj.symbols[2] = Symbol(2, "_alias", 0, 1, 0, 2)
     row = proof(obj=obj)
     assert row["content"] == "unknown" and "reason" in row
+
+
+@pytest.mark.parametrize("bss", [False, True])
+def test_tu_local_data_uses_its_actual_const_type_and_not_section_extent(bss):
+    modifier = record(0x1001, struct.pack("<IH", 0x74, 1))
+    obj = Coff(data_fixture(bytes(12), type_index=0x1000, types=modifier,
+                            storage=3, bss=12 if bss else None))
+    obj.symbols[0] = replace(obj.symbols[0], value=4)
+    if not bss:
+        obj.sections = (replace(obj.sections[0], flags=0x40300040), *obj.sections[1:])
+    observed = data_layout(obj, "_g")
+    assert observed["offset"] == 4 and observed["size"] == 4
+    assert proof(obj=obj)["content"] == "pass"
+    assert proof(bytes(8), obj)["proof"]["boundary"] == "fail"
+    assert proof(b"\x01\0\0\0", obj)["content"] == "fail"
+
+
+@pytest.mark.parametrize("storage,kind", [(3, 0x1008), (2, 0x1007), (3, 0x100E), (3, 0x1009)])
+def test_static_global_tls_and_public_debug_records_are_not_interchangeable(storage, kind):
+    row = proof(obj=Coff(data_fixture(storage=storage, debug_kind=kind)))
+    assert row["content"] == "unknown"
+
+
+@pytest.mark.parametrize("damage", ["section_symbol", "auxiliary", "duplicate_name", "other_target", "out_of_bounds"])
+def test_static_data_requires_one_ordinary_definition_and_its_own_debug_pair(damage):
+    obj = Coff(data_fixture(storage=3))
+    if damage == "section_symbol":
+        obj.sections = (replace(obj.sections[0], name="_g"), *obj.sections[1:])
+    elif damage == "auxiliary":
+        obj.auxiliary[0] = bytes(18)
+    elif damage == "duplicate_name":
+        obj.symbols[2] = replace(obj.symbols[0], index=2, storage=2)
+    elif damage == "other_target":
+        obj.sections = (*obj.sections[:2], replace(obj.sections[2], relocations=((12, 1, 11), (16, 1, 10))))
+    else:
+        obj.symbols[0] = replace(obj.symbols[0], value=1)
+    assert proof(obj=obj)["content"] == "unknown"
+
+
+def test_static_pointer_initializer_can_reference_external_but_does_not_export_local_targets():
+    obj = Coff(data_fixture(type_index=0x403, relocations=((0, 1, 6),), storage=3))
+    original = struct.pack("<I", 0x402000)
+    assert proof(original, obj, absolute=0, target={"_h": 0x402000})["content"] == "pass"
+    obj.symbols[1] = replace(obj.symbols[1], storage=3, section=1, value=4)
+    assert proof(original, obj, absolute=0, target={"_h": 0x402000})["content"] == "unknown"
+
+
+def test_static_data_evidence_is_per_owner_not_per_bare_symbol_name():
+    raw = data_image()
+    image = PeImage(raw, hashlib.sha256(raw).hexdigest())
+    origin = Origin(hashlib.sha256(raw).hexdigest(), "pe:va", 0x401000)
+    bindings = [ObjectBinding(origin, "_g", unit, 1, Span(0x401000, 0x401004), origin)
+                for unit in ("code/first.cc", "code/second.cc")]
+    rows = check_initial_data(bindings, {"code/first.cc": Coff(data_fixture(storage=3)),
+                                       "code/second.cc": Coff(data_fixture(b"\x01\0\0\0", storage=3))}, image, {})
+    assert [row["content"] for row in rows] == ["pass", "fail"]
+    rows = check_initial_data(bindings, {"code/first.cc": Coff(data_fixture(storage=3))}, image, {})
+    assert [row["content"] for row in rows] == ["pass", "unknown"]
+
+
+def test_verified_static_initial_data_is_not_exported_as_a_global_target():
+    raw = data_image()
+    image = PeImage(raw, hashlib.sha256(raw).hexdigest())
+    origin = Origin(hashlib.sha256(raw).hexdigest(), "pe:va", 0x401000)
+    binding = ObjectBinding(origin, "_g", "code/local.cc", 1, Span(0x401000, 0x401004), origin)
+    objects = {binding.unit: Coff(data_fixture(storage=3))}
+    row, = check_initial_data([binding], objects, image, {})
+    assert row["content"] == "pass"
+    targets, reports = object_targets((binding,), objects)
+    assert targets == {} and reports[0]["definition"] == "unknown"
 
 
 def test_arrays_use_type_extent_and_invalid_or_recursive_types_are_refused():

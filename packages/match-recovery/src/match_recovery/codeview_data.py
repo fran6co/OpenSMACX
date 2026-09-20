@@ -93,13 +93,19 @@ def storage_size(index, records, seen=frozenset()):
 
 
 def data_layout(obj, name):
-    """Require a uniquely defined external, with directly relocated debug data."""
-    definitions = [s for s in obj.symbols.values() if s.name == name and s.storage == 2
+    """Measure one TU's external or static definition through its debug identity.
+
+    Static storage is not an external relocation target. Callers must retain the
+    owning object; this does not qualify same-spelled symbols in other TUs.
+    """
+    definitions = [s for s in obj.symbols.values() if s.name == name and s.storage in (2, 3)
                    and s.section > 0 and not s.type & 0x20]
     if len(definitions) != 1:
-        raise ValueError("requires one defined external COFF data symbol")
+        raise ValueError("requires one defined external or static COFF data symbol")
     symbol = definitions[0]
     section = obj.sections[symbol.section - 1]
+    if symbol.storage == 3 and (symbol.name == section.name or symbol.index in obj.auxiliary):
+        raise ValueError("static data requires an ordinary definition, not section/auxiliary metadata")
     if section.flags & 0x20 or not section.flags & (0x40 | 0x80) or section.name.startswith(".tls"):
         raise ValueError("unsupported COFF data storage section")
     records = _type_records(obj)
@@ -131,12 +137,14 @@ def data_layout(obj, name):
                 raise ValueError("invalid CodeView symbol record length")
             record = Cursor(cursor.take(size))
             leaf = record.number("<H")
-            if leaf != 0x1008:  # S_GDATA32_ST, not thread/local/public records
+            if leaf not in (0x1007, 0x1008):  # S_LDATA32_ST, S_GDATA32_ST, not TLS/public records
                 continue
             relocations = [(offset - start, index, kind) for offset, index, kind in debug.relocations
                            if start <= offset < cursor.at]
             if not any(index == symbol.index for _, index, _ in relocations):
                 continue
+            if leaf != (0x1007 if symbol.storage == 3 else 0x1008):
+                raise ValueError("CodeView data linkage disagrees with its COFF definition")
             if sorted(relocations) != [(8, symbol.index, 11), (12, symbol.index, 10)]:
                 raise ValueError("data debug record requires its exact SECTION/SECREL symbol pair")
             type_index, offset, segment = record.number("<I"), record.number("<I"), record.number("<H")

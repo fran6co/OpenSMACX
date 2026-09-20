@@ -47,6 +47,17 @@ def test_native_cli_and_all_trials_are_read_only(project, monkeypatch, capsys):
     assert before == {p: p.read_bytes() for p in project.rglob("*") if p.is_file()}
 
 
+def test_native_cli_checks_module_local_const_data_without_externalizing_it(project, monkeypatch, capsys):
+    import match_recovery.data_check as module
+    source = project / "code/global.cc"
+    source.write_text(source.read_text().replace("int g = 7;", "const int g = 7;"))
+    monkeypatch.setattr(module, "Compiler", lambda *_, **__: lambda *_: data_fixture(b"\x07\0\0\0", storage=3))
+    assert main(["check-data", "--root", str(project), "--image", str(project / "image.exe"), "--symbol", "_g"]) == 0
+    report = json.loads(capsys.readouterr().out)
+    assert report["counts"] == {"pass": 2} and not report["ready_for_collection"]
+    assert "const int g" in source.read_text()
+
+
 def test_native_cli_uses_configured_compiler_protocol_for_data_only_project(project, capsys):
     response = base64.b64encode(compiler()).decode()
     (project / "recovery/compiler.py").write_text(
