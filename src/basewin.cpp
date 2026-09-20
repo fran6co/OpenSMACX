@@ -729,8 +729,6 @@ static int *const MainInterfaceScreenClipBottom = (int *)0x007AECA0;
 //       pair mapwin.cpp names, read here to pitch the garrison rows.
 static int *const MainInterfaceTileSource = (int *)0x0078D6B0;
 static int *const BoxSpriteStyle3 = (int *)0x0078D5A0;
-static int *const MapWinCaptionScale = (int *)0x00691E6C;
-static int *const MapWinCaptionDivisor = (int *)0x00691E70;
 // The shared full-screen drawing Buffer, the same binding maininterface.cpp,
 // reportif.cpp and socialwin.cpp carry; InterfaceClipRect above is its +0x30.
 static int *const InterfaceBuffer = (int *)0x007AEC64;
@@ -797,8 +795,8 @@ void BaseWin::draw_garrison(int) {
     spot1_.kill_type(6);
 
     int spacing;
-    if (*MapWinCaptionScale > 0) {
-        spacing = (*MapWinCaptionScale * 20) / *MapWinCaptionDivisor;
+    if (MapWinCaptionScale > 0) {
+        spacing = (MapWinCaptionScale * 20) / MapWinCaptionDivisor;
     } else {
         spacing = 0x38;
     }

@@ -25,10 +25,12 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "basepop.h"
+#include "mapwin.h"
 
 HDC Font::FontHDC;
 int Font::FontInitCount;
 
+// RECOVERY_OBJECT: v1 0x00691B2C ?DefaultFontFace@@3PBDB
 LPCSTR DefaultFontFace = "Arial";  // 0x00691B2C -> 0x00691BD4
 
 /*
@@ -568,9 +570,9 @@ Status: Complete
 */
 FontQueue::FontQueue() {
     for (int i = 0; i < 3; i++) {
-        slot_age_[i] = -999;
-        slot_unused_[i] = 0;
-        slot_index_[i] = i;
+        heights_[i] = -999;
+        styles_[i] = 0;
+        lru_slots_[i] = i;
     }
 }
 
@@ -589,6 +591,50 @@ Return Value: n/a
 Status: Complete
 */
 FontQueue::~FontQueue() {
+}
+
+// ORIGINAL: 0x005592D0 ?get_zoom@FontQueue@@QAEHHHHH@Z 0x005592D0-0x005593D9
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5592D0..5593D9 computes signed scale and height in two division stages, substitutes11 for10, and reads the shared691E6C/70 override only when its numerator is positive. The constructor559290 establishes three Font objects of stride28 followed by height/style/order arrays at78/84/90.", "Original559334..559374 rotates the oldest slot, publishes keys before calling actual Font::init618F40 with the source-owned DefaultFontFace, ignores the status result and returns the same Font pointer. Original559382..5593D9 promotes a cache hit without initialization; missing order entries leave the order unchanged. Retain the unclaimed seed and catalogue signature as historical evidence."], "reason": "Recover the three-slot font-height/style LRU as the existing FontQueue owner, returning its actual Font member rather than a synthetic integer address."}
+// symbol    ?get_zoom@FontQueue@@QAEPAVFont@@HHHH@Z
+Font *FontQueue::get_zoom(int zoom, int numerator, int denominator, int style) {
+    int scale;
+    if (MapWinCaptionScale > 0) {
+        scale = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
+    } else {
+        scale = ((zoom * 5 + 80) * 10) / 16;
+    }
+    int height = (scale * numerator) / denominator;
+    if (height == 10) {
+        height = 11;
+    }
+
+    for (int slot = 0; slot < 3; ++slot) {
+        if (heights_[slot] == height && styles_[slot] == style) {
+            for (int position = 0; position < 3; ++position) {
+                if (lru_slots_[position] == slot) {
+                    for (int next = position; next < 2; ++next) {
+                        lru_slots_[next] = lru_slots_[next + 1];
+                    }
+                    lru_slots_[2] = slot;
+                    break;
+                }
+            }
+            return &fonts_[slot];
+        }
+    }
+
+    int oldest = lru_slots_[0];
+    for (int position = 0; position < 2; ++position) {
+        lru_slots_[position] = lru_slots_[position + 1];
+    }
+    lru_slots_[2] = oldest;
+    heights_[oldest] = height;
+    styles_[oldest] = style;
+    Font *font = &fonts_[oldest];
+    // The original publishes the cache keys before init and returns the slot
+    // even if font creation fails. Do not invent a retry or null result here.
+    font->init(DefaultFontFace, height, style);
+    return font;
 }
 
 
@@ -655,8 +701,10 @@ int Font::UNK1(int, int, int, int) {
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
-FontQueue g_FONTQUEUE_VAL2;  // 0x0093FB88
-FontQueue g_FONTQUEUE_VAL1;  // 0x0093FAE8
+// RECOVERY_OBJECT: v1 0x0093FB88 ?g_FONTQUEUE_VAL2@@3VFontQueue@@A
+FontQueue g_FONTQUEUE_VAL2;
+// RECOVERY_OBJECT: v1 0x0093FAE8 ?g_FONTQUEUE_VAL1@@3VFontQueue@@A
+FontQueue g_FONTQUEUE_VAL1;
 // Was `Font g_FONTS[48]` beside the `Font *const FontTable = (Font
 // *)0x0093FC58` binding - the array is the binding's storage, so the object
 // now carries the public name and find_font's `FontTable + N` indexes it

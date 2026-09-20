@@ -1,0 +1,20 @@
+{
+  "event_id": "9e4742d1c65c2da56c4455b602099887959aab871eeb4d088bdc3a4a1362200b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json"
+    ],
+    "evidence": [
+      "Authorize only downward audit-ceiling updates matching the current native storage/compiler-work/class-debt lowerings after genuine source-owner recovery. Duplicate executable data aliases have been replaced with real shared objects, obsolete leaf wrappers are removed by retained Vector ownership work, and no-longer-used pending forwarders from integrated renderer batches remain absent.",
+      "Do not change detector rules, exclusions or baselines and never raise a ceiling. Any pre-existing growth remains a separately reported failure; tightening other rules does not establish full gate, linked preservation, Vector restoration or game acceptance. This is cleanup policy accompanying the C++ checkpoint, not framework implementation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8b4820fdf4745db923d1a1ca8724ff544f62190173bd946a6cd38921c280d535",
+  "request_id": "animation-cleanup-audit-tightening-20260920",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:vector-value-semantics"
+}

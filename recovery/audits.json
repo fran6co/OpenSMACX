@@ -31,9 +31,9 @@
         "deleting_thunks.cpp markers": 70,
         "delegation_thunks.cpp markers": 25,
         "field_accessors.cpp markers": 38,
-        "leaf_recoveries.cpp markers": 49,
+        "leaf_recoveries.cpp markers": 47,
         "nullsub_thunks.cpp markers": 52,
-        "PENDING_BODY forwarders": 251,
+        "PENDING_BODY forwarders": 240,
         "artifact files (recovered/)": 937,
         "unrecovered files": 1020,
         "hypothesis_layouts.h lines": 2734
@@ -108,7 +108,7 @@
       "interface_extensions": [".h"],
       "exclude_roots": ["src/vendor"],
       "ceilings": {
-        "duplicate global identities": 8,
+        "duplicate global identities": 5,
         "scaled class-pointer sum": 0
       },
       "counters": []
@@ -128,12 +128,12 @@
         "unk-method": 186,
         "evidence-free unk": 39,
         "function-address binding": 2,
-        "orphan redirect": 187,
+        "orphan redirect": 183,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 185,
+        "raw self-access": 184,
         "pointer-parameter as int": 102,
-        "scaffold name": 2993
+        "scaffold name": 2927
       },
       "counters": []
     }

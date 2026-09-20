@@ -529,11 +529,10 @@ inline func_get_key_state *&ConsoleEditKeyStateSlot() { return *reinterpret_cast
 // real objects do through this build's own startup.
 extern InfoWin ConsoleInfoWin;    // 0x007AD2A0, the process-wide InfoWin
 extern StatusWin ConsoleStatusWin;  // 0x008C5568, the process-wide StatusWin
-// AN LVALUE AT A FIXED ADDRESS. The MapWin POINTER lives at 0x007D3C3C and
-// the image reads it with one absolute `mov ecx, [0x7d3c3c]`; spelled
-// `void **const` it took two loads - the constant, then the pointer.
+// The same primary slot published by system_init, not a second fixed-address
+// view of the original executable's table.
 inline MapWin *&console_map_win() {
-  return *reinterpret_cast<MapWin **>(0x007D3C3C);
+  return MapWinTable[0];
 }
 
 

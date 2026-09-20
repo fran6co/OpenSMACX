@@ -268,8 +268,12 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1DD98_;  // 0x1DD98
   uint32_t field_1DD9C_;  // 0x1DD9C
   uint32_t field_1DDA0_;  // 0x1DDA0
-  uint32_t field_1DDA4_;  // 0x1DDA4
-  uint32_t field_1DDA8_;  // 0x1DDA8
+  // Tile origins and visible extents are signed: tile_to_pixel at0x00462F00
+  // compares them using JL/JGE, including maps whose viewport crosses zero.
+  // RECOVERY_MEMBER: v1 MapWin field_1DDA4_ 0x1DDA4 0x00462F00
+  int field_1DDA4_;
+  // RECOVERY_MEMBER: v1 MapWin field_1DDA8_ 0x1DDA8 0x00462F00
+  int field_1DDA8_;
   uint32_t field_1DDAC_;  // 0x1DDAC
   uint32_t field_1DDB0_;  // 0x1DDB0
   uint32_t field_1DDB4_;  // 0x1DDB4
@@ -278,10 +282,14 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1DDC0_;  // 0x1DDC0
   uint32_t field_1DDC4_;  // 0x1DDC4
   uint32_t field_1DDC8_;  // 0x1DDC8
-  uint32_t field_1DDCC_;  // 0x1DDCC
-  uint32_t field_1DDD0_;  // 0x1DDD0
-  uint32_t field_1DDD4_;  // 0x1DDD4
-  uint32_t field_1DDD8_;  // 0x1DDD8
+  // RECOVERY_MEMBER: v1 MapWin field_1DDCC_ 0x1DDCC 0x00462F00
+  int field_1DDCC_;
+  // RECOVERY_MEMBER: v1 MapWin field_1DDD0_ 0x1DDD0 0x00462F00
+  int field_1DDD0_;
+  // RECOVERY_MEMBER: v1 MapWin field_1DDD4_ 0x1DDD4 0x00462F00
+  int field_1DDD4_;
+  // RECOVERY_MEMBER: v1 MapWin field_1DDD8_ 0x1DDD8 0x00462F00
+  int field_1DDD8_;
   uint32_t field_1DDDC_;  // 0x1DDDC
   uint32_t field_1DDE0_;  // 0x1DDE0
   uint8_t field_1DDE4_[0x28];  // 0x1DDE4
@@ -387,25 +395,14 @@ int32_t *const MapWinInputEnabled = (int32_t *)0x0090D938;
 // The element type is pinned by ?mapwin_system_init@@YAXH@Z at 0x0047107F,
 // `mov ecx, dword ptr [esi*4 + 0x7d3c3c]`, and by ?zoom@BaseWin@@QAEXHH@Z at
 // 0x0041AAC3, which walks slot 0's vbtable. Populated at run time, so this is
-// a mutable global; rebindable so leaf tests can seed a controlled table.
-// A REFERENCE TO THE ARRAY, not a pointer to its first element. The image
-// indexes it absolutely - `mov eax, [esi*4 + 0x7d3c3c]` at 0x005108DE, one
-// instruction per read - and any spelling that yields a POINTER VALUE lets
-// VC6 park the base in a register across a loop, which the image never does.
-// An array reference has no value to park: the subscript folds the address in.
+// a mutable global. system_init installs seven allocated MapWins and the
+// actual ConsoleGlobal in slot zero; all consumers use the same storage.
 //
 // TRIED: an accessor returning `reinterpret_cast<MapWin **>(0x007D3C3C)`
 // is a pointer value and measures WORSE than the `MapWin **const` it replaced
 // - 19 of 85 instructions in `Console::focus` against 29.
 typedef MapWin *MapWinSlots[8];
-inline MapWinSlots &map_win_table() {
-  // THROUGH A NAMED POINTER. VC6 rejects dereferencing a cast integer literal
-  // of array-pointer type outright - `C2101: '&' on constant` - so the cast
-  // lands in a variable first, which it accepts and folds.
-  MapWinSlots *const table = (MapWinSlots *)0x007D3C3C;
-  return *table;
-}
-#define MapWinTable (map_win_table())
+extern MapWinSlots MapWinTable;
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
 
 // 0x0068A5CC. THE SLOT OF THE WINDOW BEING WORKED WITH, or -1 for none.
@@ -416,6 +413,11 @@ static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 
 // (0x0050F155). Every read is a signed compare against zero (`jl` at
 // 0x0050F07D, and 0x00517BF6 the same), so `int`, not unsigned.
 extern int MapWinSelectedSlot;  // 0x0068A5CC
+
+// Shared map/caption zoom override; nonpositive scale uses the window zoom.
+// FontQueue::get_zoom also uses this pair to select its cached font height.
+extern int MapWinCaptionScale;    // 0x00691E6C, initially -1
+extern int MapWinCaptionDivisor;  // 0x00691E70, initially -1
 
 // Per-window "this window is live" dword. The MapWin constructor clears it
 // (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init

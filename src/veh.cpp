@@ -61,8 +61,11 @@ LPSTR VehBattleDisplayTerrain;
 VehPrototype VehPrototypes[MaxVehProtoNum];  // 0x009AB868
 // RECOVERY_OBJECT: v1 0x00952828 ?Vehs@@3PAUVeh@@A
 Veh Vehs[2049];  // 0x00952828
-// RECOVERY_OBJECT: v1 0x0094A330 ?Chassis@@3PAURulesChassis@@A
-RulesChassis Chassis[MaxChassisNum];  // 0x0094A330
+// The rules loader fills entries0..8; original load_vehicles45446C..4546B4
+// additionally populates sprite metrics in entries9..18 at the same0x90 stride.
+// The full table ends at Natural's independent start0x0094ADE0.
+// RECOVERY_OBJECT: v2 0x0094A330 0x0094ADE0 ?Chassis@@3PAURulesChassis@@A 0x00454270
+RulesChassis Chassis[ChassisStorageCount];  // 0x0094A330
 // RECOVERY_OBJECT: v1 0x0094AE60 ?Weapon@@3PAURulesWeapon@@A
 RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60
 // RECOVERY_OBJECT: v1 0x0094F278 ?Armor@@3PAURulesArmor@@A
@@ -608,6 +611,321 @@ int VehDrawTurnVehicle;
 float VehDrawTurnAngle;
 // RECOVERY_OBJECT: v2 0x008CC258 0x008CC25C ?VehDrawTurnIncrement@@3MA 0x004BF8D0
 float VehDrawTurnIncrement;
+
+// These are independent animation globals, not fields beyond the renderer's
+// complete-object boundary. Scoot setup publishes two normal increments and
+// their respective origins; each frame interpolates only its selected half.
+// RECOVERY_OBJECT: v2 0x008CC25C 0x008CC260 ?VehDrawScootFacing@@3HA 0x004BFE00
+int VehDrawScootFacing;
+// RECOVERY_OBJECT: v2 0x008CDCF8 0x008CDCFC ?VehDrawScootSteps@@3HA 0x004BFE00
+int VehDrawScootSteps;
+// RECOVERY_OBJECT: v2 0x008CC268 0x008CC274 ?VehDrawScootFirstIncrement@@3UVOX_Vect@@A 0x004BFE00
+VOX_Vect VehDrawScootFirstIncrement;
+// RECOVERY_OBJECT: v2 0x008CC278 0x008CC284 ?VehDrawScootSecondIncrement@@3UVOX_Vect@@A 0x004BFE00
+VOX_Vect VehDrawScootSecondIncrement;
+// RECOVERY_OBJECT: v2 0x008CC288 0x008CC294 ?VehDrawScootNormalMid@@3UVOX_Vect@@A 0x004BFE00
+VOX_Vect VehDrawScootNormalMid;
+// RECOVERY_OBJECT: v2 0x008CDD00 0x008CDD0C ?VehDrawScootNormalStart@@3UVOX_Vect@@A 0x004BFE00
+VOX_Vect VehDrawScootNormalStart;
+// Temporary draw coordinates belong to the vehicle rendering state; -1 means
+// no override. veh_draw uses them only when the selected vehicle also agrees.
+// RECOVERY_OBJECT: v2 0x0068E564 0x0068E568 ?VehDrawPositionX@@3HA 0x004C12A0
+int VehDrawPositionX = -1;
+// RECOVERY_OBJECT: v2 0x0068E568 0x0068E56C ?VehDrawPositionY@@3HA 0x004C12A0
+int VehDrawPositionY = -1;
+// RECOVERY_OBJECT: v2 0x0068E56C 0x0068E570 ?VehDrawPositionVehicle@@3HA 0x004C12A0
+int VehDrawPositionVehicle = -1;
+
+static float vehdraw_scale(int zoom) {
+    if (MapWinCaptionScale > 0) {
+        return MapWinCaptionScale * 0.07f / MapWinCaptionDivisor;
+    }
+    return (zoom + 16) * 0.07f * 0.0625f;
+}
+
+static int vehdraw_centre_offset(int numerator, int zoom) {
+    if (numerator > 0) {
+        return (numerator * 50) / MapWinCaptionDivisor;
+    }
+    return ((zoom * 5 + 80) * 10) / 16;
+}
+
+static bool vehdraw_uses_terrain(int veh_id, int x, int y) {
+    const Map *tiles = reinterpret_cast<const Map *>(LockMapTable);
+    if ((tiles[y * MapLongitude + (x >> 1)].climate & 0xE0) < 0x60) {
+        return false;
+    }
+    const VehPrototype &prototype = VehPrototypes[Vehs[veh_id].proto_id];
+    return prototype.chassis_id != 0 || Weapon[prototype.weapon_id].mode >= 3;
+}
+
+static int vehdraw_facet_index(const int *h1, const int *h2,
+                               const int *h3, const int *h4, int cell) {
+    return ((h1[cell] * 7 + h2[cell]) * 7 + h3[cell]) * 7 + h4[cell] - 400;
+}
+
+static void vehdraw_average_facets(int index, VOX_Vect *normal) {
+    // Copy every input before the first call, as the original does.
+    const VOX_Vect n0 = VehDrawFacetNormals0[index];
+    const VOX_Vect n1 = VehDrawFacetNormals1[index];
+    const VOX_Vect n2 = VehDrawFacetNormals2[index];
+    const VOX_Vect n3 = VehDrawFacetNormals3[index];
+    vector_add(n0.values, n1.values, normal->values);
+    vector_add(normal->values, n2.values, normal->values);
+    vector_add(normal->values, n3.values, normal->values);
+    vox_normalise_vector(normal->values, normal->values);
+}
+
+static void vehdraw_finish_frame(Buffer *buffer, int veh_id, int x, int y, int flags) {
+    // Rendering can change the selected prototype; fetch it after render.
+    const VehPrototype &prototype = VehPrototypes[Vehs[veh_id].proto_id];
+    if (prototype.armor_id == 5) {
+        g_VEHDRAW_CAVIAR.reset_objects();
+        vehdraw_construct_armor(Vehs[veh_id].faction_id, prototype.chassis_id,
+                               prototype.weapon_id, 5, 1, &g_VEHDRAW_CAVIAR);
+        g_VEHDRAW_CAVIAR.render_multi_table_dest(buffer, x, y, 24,
+            reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables), flags);
+    } else {
+        g_VEHDRAW_CAVIAR.clear_buffers(0);
+    }
+}
+
+// ORIGINAL: 0x004BFC70 ?vehdraw_turn@@YAXPAUBuffer@@HHHH@Z 0x004BFC70-0x004BFDFA
+// RECOVERY_BINDING: v1 {"evidence": ["Original selects scale, rotates scene from frame/turn increment, computes caption-centred coordinates, resets and assembles the actual vehicle, renders, then reloads its prototype for transparent-armor overlay or buffer clearing.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover a vehicle turn frame through the real renderer and shared turn state."}
+// symbol    ?vehdraw_turn@@YAXPAVBuffer@@HHHH@Z
+void __cdecl vehdraw_turn(Buffer *buffer, int x, int y, int frame, int zoom) {
+    const int veh_id = VehDrawTurnVehicle;
+    g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
+    g_VEHDRAW_CAVIAR.set_scene_rotation(
+        frame * VehDrawTurnIncrement + VehDrawTurnAngle - VehDrawCameraAngles.values[0],
+        0.0f, 0.0f);
+    const int numerator = MapWinCaptionScale;
+    x += vehdraw_centre_offset(numerator, zoom);
+    y += vehdraw_centre_offset(numerator, zoom);
+    g_VEHDRAW_CAVIAR.reset_objects();
+    vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
+    g_VEHDRAW_CAVIAR.render(buffer, x, y, 1);
+    vehdraw_finish_frame(buffer, veh_id, x, y, 0);
+}
+
+// ORIGINAL: 0x004BFE00 ?vehdraw_scoot_start@@YAXHHHH@Z 0x004BFE00-0x004C0F24
+// RECOVERY_BINDING: v1 {"evidence": ["Original samples four nine-element altitude arrays, including the zero-delta centre; it snapshots original facet vectors before additions. Even directions combine destination facet3 and centre facet1; odd directions use eight ordered facets. Both interpolation increments divide by their respective half-frame counts.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover terrain-normal interpolation setup using nine actual terrain samples and independent animation globals."}
+// symbol    ?vehdraw_scoot_start@@YAXHHHH@Z
+void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags) {
+    if (flags & 1) veh_id = pick_top_veh(veh_id);
+    VehDrawScootSteps = steps;
+    VehDrawTurnVehicle = veh_id;
+    VehDrawScootFacing = (direction - 3) & 7;
+
+    // The ninth sample is the centre. The four original stack runs each
+    // occupy nine integers, including the values used for the starting tile.
+    int h1[9], h2[9], h3[9], h4[9];
+    int x, y;
+    for (int cell = 0; cell < 9; ++cell) {
+        x = xrange(VehMoveDeltaX[cell] + VehLiftX);
+        y = VehMoveDeltaY[cell] + VehLiftY;
+        h1[cell] = ConsoleGlobal.get_relative_alt(x, y, 1);
+        h2[cell] = ConsoleGlobal.get_relative_alt(x, y, 2);
+        h3[cell] = ConsoleGlobal.get_relative_alt(x, y, 3);
+        h4[cell] = ConsoleGlobal.get_relative_alt(x, y, 4);
+    }
+    VOX_Vect start, end, midpoint;
+    if (vehdraw_uses_terrain(veh_id, x, y)) {
+        vehdraw_average_facets(vehdraw_facet_index(h1, h2, h3, h4, 8), &start);
+    } else {
+        start.values[0] = start.values[1] = 0.0f;
+        start.values[2] = 1.0f;
+        midpoint = start;
+    }
+    x = VehMoveDeltaX[direction] + VehLiftX;
+    VehDrawAnimationStep = 1;
+    x = xrange(x);
+    y = VehMoveDeltaY[direction] + VehLiftY;
+    if (vehdraw_uses_terrain(veh_id, x, y)) {
+        vehdraw_average_facets(vehdraw_facet_index(h1, h2, h3, h4, direction), &end);
+    } else {
+        end.values[0] = end.values[1] = 0.0f;
+        end.values[2] = 1.0f;
+    }
+    // Re-read terrain/prototype after the normalizer calls. The midpoint is
+    // the shared edge (even directions) or the eight meeting facets (odd).
+    if (!vehdraw_uses_terrain(veh_id, x, y)) {
+        midpoint.values[0] = midpoint.values[1] = 0.0f;
+        midpoint.values[2] = 1.0f;
+    } else {
+        const int centre = vehdraw_facet_index(h1, h2, h3, h4, 8);
+        VOX_Vect n[8];
+        int count = 0;
+        switch (direction) {
+        case 0: case 2: case 4: case 6:
+            n[0] = VehDrawFacetNormals3[vehdraw_facet_index(h1, h2, h3, h4, direction)];
+            n[1] = VehDrawFacetNormals1[centre];
+            count = 2;
+            break;
+        case 1: {
+            const int a = vehdraw_facet_index(h1, h2, h3, h4, 0);
+            const int b = vehdraw_facet_index(h1, h2, h3, h4, 1);
+            const int c = vehdraw_facet_index(h1, h2, h3, h4, 2);
+            n[0] = VehDrawFacetNormals1[centre]; n[1] = VehDrawFacetNormals2[centre];
+            n[2] = VehDrawFacetNormals2[a]; n[3] = VehDrawFacetNormals3[a];
+            n[4] = VehDrawFacetNormals3[b]; n[5] = VehDrawFacetNormals0[b];
+            n[6] = VehDrawFacetNormals0[c]; n[7] = VehDrawFacetNormals1[c];
+            count = 8;
+            break;
+        }
+        case 3: {
+            const int a = vehdraw_facet_index(h1, h2, h3, h4, 2);
+            const int b = vehdraw_facet_index(h1, h2, h3, h4, 3);
+            const int c = vehdraw_facet_index(h1, h2, h3, h4, 4);
+            n[0] = VehDrawFacetNormals2[centre]; n[1] = VehDrawFacetNormals3[centre];
+            n[2] = VehDrawFacetNormals3[a]; n[3] = VehDrawFacetNormals0[a];
+            n[4] = VehDrawFacetNormals0[b]; n[5] = VehDrawFacetNormals1[b];
+            n[6] = VehDrawFacetNormals1[c]; n[7] = VehDrawFacetNormals2[c];
+            count = 8;
+            break;
+        }
+        case 5: {
+            const int a = vehdraw_facet_index(h1, h2, h3, h4, 4);
+            const int b = vehdraw_facet_index(h1, h2, h3, h4, 5);
+            const int c = vehdraw_facet_index(h1, h2, h3, h4, 6);
+            n[0] = VehDrawFacetNormals3[centre]; n[1] = VehDrawFacetNormals0[centre];
+            n[2] = VehDrawFacetNormals0[a]; n[3] = VehDrawFacetNormals1[a];
+            n[4] = VehDrawFacetNormals1[b]; n[5] = VehDrawFacetNormals2[b];
+            n[6] = VehDrawFacetNormals2[c]; n[7] = VehDrawFacetNormals3[c];
+            count = 8;
+            break;
+        }
+        case 7: {
+            const int a = vehdraw_facet_index(h1, h2, h3, h4, 6);
+            const int b = vehdraw_facet_index(h1, h2, h3, h4, 7);
+            const int c = vehdraw_facet_index(h1, h2, h3, h4, 0);
+            n[0] = VehDrawFacetNormals0[centre]; n[1] = VehDrawFacetNormals1[centre];
+            n[2] = VehDrawFacetNormals1[a]; n[3] = VehDrawFacetNormals2[a];
+            n[4] = VehDrawFacetNormals2[b]; n[5] = VehDrawFacetNormals3[b];
+            n[6] = VehDrawFacetNormals3[c]; n[7] = VehDrawFacetNormals0[c];
+            count = 8;
+            break;
+        }
+        }
+        if (count) {
+            vector_add(n[0].values, n[1].values, midpoint.values);
+            for (int i = 2; i < count; ++i) {
+                vector_add(midpoint.values, n[i].values, midpoint.values);
+            }
+        }
+    }
+    vox_normalise_vector(midpoint.values, midpoint.values);
+    leaf_00628180_redirect(midpoint.values, start.values, VehDrawScootFirstIncrement.values);
+    leaf_00628180_redirect(end.values, midpoint.values, VehDrawScootSecondIncrement.values);
+    const int half = steps >> 1;
+    leaf_006281b0_redirect(VehDrawScootFirstIncrement.values, 1.0f / half,
+                          VehDrawScootFirstIncrement.values);
+    leaf_006281b0_redirect(VehDrawScootSecondIncrement.values, 1.0f / (steps - half),
+                          VehDrawScootSecondIncrement.values);
+    VehDrawScootNormalStart = start;
+    VehDrawScootNormalMid = midpoint;
+}
+
+// ORIGINAL: 0x004C0F50 ?vehdraw_scoot@@YAXPAUBuffer@@HHHH@Z 0x004C0F50-0x004C1296
+// RECOVERY_BINDING: v1 {"evidence": ["Original chooses first or second normal increment at a strict greater-than half-frame boundary, snapshots light, computes camera and shadow, sets scaling both before and after camera publication, assembles vehicle, increments animation, renders, and reloads armor state.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover an interpolated vehicle movement frame using real camera, normal, shadow and renderer ownership."}
+// symbol    ?vehdraw_scoot@@YAXPAVBuffer@@HHHH@Z
+void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom) {
+    const int half = VehDrawScootSteps >> 1;
+    const VOX_Vect light = VehLightDirMap;
+    const VOX_Vect shadow_direction = {{-0.57735f, 0.57735f, 0.57735f}};
+    VOX_Vect base, increment, normal;
+    if (frame > half) {
+        frame -= half;
+        base = VehDrawScootNormalMid;
+        increment = VehDrawScootSecondIncrement;
+    } else {
+        base = VehDrawScootNormalStart;
+        increment = VehDrawScootFirstIncrement;
+    }
+    leaf_006281b0_redirect(increment.values, (float)frame, increment.values);
+    vector_add(increment.values, base.values, normal.values);
+    vox_normalise_vector(normal.values, normal.values);
+    VOX_Matrix camera, inverse;
+    compute_camera(&normal, &camera);
+    g_VEHDRAW_CAVIAR.light_vector_ = light;
+    vox_matrix_inverse(camera.values, inverse.values);
+    VOX_Vect shadow;
+    vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
+    g_VEHDRAW_CAVIAR.shadow_vector_ = shadow;
+    g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
+    VOX_Vect position;
+    position.values[0] = camera.values[2][0] * -10000.0f;
+    position.values[1] = camera.values[2][1] * -10000.0f;
+    position.values[2] = camera.values[2][2] * -10000.0f;
+    g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
+    g_VEHDRAW_CAVIAR.set_camera_direct(&position, &camera);
+    // This second scale operation and fresh global reads occur in the image.
+    g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
+    g_VEHDRAW_CAVIAR.set_scene_rotation(
+        VehDrawScootFacing * 0.785375f - VehDrawCameraAngles.values[0], 0.0f, 0.0f);
+    const int veh_id = VehDrawTurnVehicle;
+    vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
+    ++VehDrawAnimationStep;
+    const int numerator = MapWinCaptionScale;
+    x += vehdraw_centre_offset(numerator, zoom);
+    y += vehdraw_centre_offset(numerator, zoom);
+    g_VEHDRAW_CAVIAR.render(buffer, x, y, 1);
+    vehdraw_finish_frame(buffer, veh_id, x, y, 0);
+}
+
+// ORIGINAL: 0x004C12A0 ?vehdraw_draw@@YAXPAUBuffer@@HHHHHH@Z 0x004C12A0-0x004C1732
+// RECOVERY_BINDING: v1 {"evidence": ["Original null-buffer return precedes work; optional stack selection and temporary coordinate override choose the vehicle/location. Terrain uses the actual map pointer slot and base7 VOX_Vect facet arrays. Vehicle assembly precedes scene rotation; render flags derive bit13 and transparent armor uses the corresponding overlay flags.", "Original mapped extent is preserved from the existing unclaimed seed and checked against the pinned executable; catalogue return/type names remain provenance until observed compiler-symbol facts are published."], "reason": "Recover ordinary vehicle voxel drawing through real terrain and model owners."}
+// symbol    ?vehdraw_draw@@YAXPAVBuffer@@HHHHHH@Z
+void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
+                          int zoom, int terrain) {
+    if (!buffer) return;
+    const VOX_Vect light = VehLightDirMap;
+    const VOX_Vect shadow_direction = {{-0.57735f, 0.57735f, 0.57735f}};
+    if (flags & 1) veh_id = pick_top_veh(veh_id);
+    int tile_x = VehDrawPositionX;
+    int tile_y;
+    if (tile_x == -1 || VehDrawPositionVehicle != veh_id) {
+        tile_x = Vehs[veh_id].x;
+        tile_y = Vehs[veh_id].y;
+    } else {
+        tile_y = VehDrawPositionY;
+    }
+    int facing = Vehs[veh_id].facing;
+    if (facing == -1) facing = 0;
+    VOX_Vect normal;
+    if (terrain && vehdraw_uses_terrain(veh_id, tile_x, tile_y)) {
+        const int h1 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 1);
+        const int h2 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 2);
+        const int h3 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 3);
+        const int h4 = ConsoleGlobal.get_relative_alt(tile_x, tile_y, 4);
+        vehdraw_average_facets(((h1 * 7 + h2) * 7 + h3) * 7 + h4 - 400, &normal);
+    } else {
+        normal.values[0] = normal.values[1] = 0.0f;
+        normal.values[2] = 1.0f;
+    }
+    VOX_Matrix camera, inverse;
+    compute_camera(&normal, &camera);
+    g_VEHDRAW_CAVIAR.light_vector_ = light;
+    vox_matrix_inverse(camera.values, inverse.values);
+    VOX_Vect shadow;
+    vox_matrix_vector_mul(inverse.values, shadow_direction.values, shadow.values);
+    g_VEHDRAW_CAVIAR.shadow_vector_ = shadow;
+    g_VEHDRAW_CAVIAR.set_shadow_table(ShadowColorTable);
+    VOX_Vect position;
+    position.values[0] = camera.values[2][0] * -10000.0f;
+    position.values[1] = camera.values[2][1] * -10000.0f;
+    position.values[2] = camera.values[2][2] * -10000.0f;
+    g_VEHDRAW_CAVIAR.set_scaling(vehdraw_scale(zoom));
+    g_VEHDRAW_CAVIAR.set_camera_direct(&position, &camera);
+    vehdraw_construct_vehicle(veh_id, &g_VEHDRAW_CAVIAR);
+    g_VEHDRAW_CAVIAR.set_scene_rotation(
+        ((facing - 3) & 7) * 0.785375f - VehDrawCameraAngles.values[0], 0.0f, 0.0f);
+    const int numerator = MapWinCaptionScale;
+    x += vehdraw_centre_offset(numerator, zoom);
+    y += vehdraw_centre_offset(numerator, zoom);
+    g_VEHDRAW_CAVIAR.render(buffer, x, y, ((flags >> 12) & 2) | 1);
+    vehdraw_finish_frame(buffer, veh_id, x, y, (flags >> 12) & 2);
+}
 
 // ORIGINAL: 0x004BF8D0 ?vehdraw_turn_start@@YAHHHHH@Z 0x004BF8D0-0x004BFC67
 // RECOVERY_BINDING: v1 {"evidence": ["Original4BF8D0..4BFC67 returns the integer animation step count, snapshots light before selection, publishes selection before facing access, loads the map pointer slot, and uses unsigned Weapon.mode at+0A.", "All four facet vectors are copied before calls; camera/light/shadow publication follows original call order. Original stores only negative arc to float before comparison; preserving positive precision determines half-turn direction. Zero angle preserves zero steps and NaN increment. Observed VC6 emitted symbol and layouts."], "reason": "Recover vehicle turn setup using actual map, vehicle, renderer and vector ownership instead of fixed executable storage."}
@@ -6814,15 +7132,6 @@ int __cdecl veh_unmoved(int veh_id) {
 
 // ===== veh.cpp, P2 wave 2: the prototype-design and battle families =====
 
-// One byte of RulesChassis, at +0x4D. Nonzero suppresses promotion of every
-// unit on that chassis outright - promote (0x005062B0) returns before touching
-// morale when it is set. RulesChassis models no member at 0x4D: its BOOL run
-// covers 0x48..0x5F and the sprite offsets start at 0x66, so the field list in
-// veh.h is missing something between the genders and the plurals. That is a
-// LAYOUT finding for whichever pass recovers Chassis, and this binding is the
-// record of it.
-uint8_t *const ChassisNoPromoteFlag = (uint8_t *)0x0094A37D;
-
 // The faction prototype-design list. 0x0094B558, eight factions x 64 entries x
 // 8 bytes - one entry is VehPrototype's ability_flags dword followed by its
 // chassis/weapon/armor/reactor bytes, which is exactly the 8 bytes
@@ -6936,8 +7245,7 @@ Status: MISMATCH.
 void __cdecl promote(int veh_id) {
     const int proto_id = Vehs[veh_id].proto_id;
 
-    if (*reinterpret_cast<const uint8_t *>(
-            ChassisNoPromoteFlag + VehPrototypes[proto_id].chassis_id * 0x90) != 0) {
+    if (Chassis[VehPrototypes[proto_id].chassis_id].missile != 0) {
         return;
     }
 
@@ -7251,8 +7559,13 @@ void __cdecl veh_battle_msg(char *label, char *icon) {
 // file-backed .data, not .bss: the eight ints of each are the compass deltas
 // (X runs +1,+2,+1,0,-1,-2,-1,0; the Alt runs are the same wheel turned one
 // step), which is why they are initialised here rather than left to a loader.
-int VehMoveDeltaX[8] = {1, 2, 1, 0, -1, -2, -1, 0};        // 0x0066EF50
-int VehMoveDeltaY[8] = {-1, 0, 1, 2, 1, 0, -1, -2};        // 0x0066EF74
+// The ordinary tables also contain the stationary centre at index eight.
+// Eight directions followed by the centre, sampled by scoot setup's nine
+// iterations. Both complete initial runs are present in original .rdata.
+// RECOVERY_OBJECT: v2 0x0066EF50 0x0066EF74 ?VehMoveDeltaX@@3PAHA 0x004BFE00
+int VehMoveDeltaX[9] = {1, 2, 1, 0, -1, -2, -1, 0, 0};
+// RECOVERY_OBJECT: v2 0x0066EF74 0x0066EF98 ?VehMoveDeltaY@@3PAHA 0x004BFE00
+int VehMoveDeltaY[9] = {-1, 0, 1, 2, 1, 0, -1, -2, 0};
 int VehMoveDeltaXAlt[8] = {0, 1, 2, 1, 0, -1, -2, -1};     // 0x0066EFBC
 int VehMoveDeltaYAlt[8] = {0, -1, 0, 1, 2, 1, 0, -1};      // 0x0066F440
 

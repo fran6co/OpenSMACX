@@ -20,6 +20,7 @@
 struct VOX_Vect;
 struct VOX_Matrix;
 class Caviar;
+class Buffer;
 
 extern VOX_Vect VehDrawFacetNormals0[2401];
 extern VOX_Vect VehDrawFacetNormals1[2401];
@@ -50,6 +51,20 @@ extern int VehDrawTurnVehicle;
 extern float VehDrawTurnAngle;
 extern float VehDrawTurnIncrement;
 int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags);
+void __cdecl vehdraw_turn(Buffer *buffer, int x, int y, int frame, int zoom);
+void __cdecl vehdraw_scoot_start(int veh_id, int direction, int steps, int flags);
+void __cdecl vehdraw_scoot(Buffer *buffer, int x, int y, int frame, int zoom);
+void __cdecl vehdraw_draw(Buffer *buffer, int veh_id, int x, int y, int flags,
+                          int zoom, int terrain);
+extern int VehDrawPositionX;
+extern int VehDrawPositionY;
+extern int VehDrawPositionVehicle;
+extern int VehDrawScootFacing;
+extern int VehDrawScootSteps;
+extern VOX_Vect VehDrawScootNormalStart;
+extern VOX_Vect VehDrawScootNormalMid;
+extern VOX_Vect VehDrawScootFirstIncrement;
+extern VOX_Vect VehDrawScootSecondIncrement;
 void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix);
 void __cdecl vehdraw_compute_facet_normals();
 extern int VehDrawSuppressedVehicle;
@@ -550,6 +565,8 @@ struct RulesOrder {
 };
 
 static const int MaxChassisNum = 9;
+// The physical rules bank has nineteen records; only nine are ordinary chassis.
+static const int ChassisStorageCount = 19;
 static const int MaxWeaponNum = 26;
 static const int MaxArmorNum = 14;
 static const int MaxVehProtoNum = 512;
@@ -581,9 +598,10 @@ extern Veh Vehs[2049];  // 0x00952828, 0x34 stride
 // adds VehMoveDeltaX[direction] to the cursor's own x (and the Y twin to its y)
 // before wrapping. The Alt twins are the same eight steps rotated one place and
 // are what the mirrored map orientation uses.
-extern int VehMoveDeltaX[8];  // 0x0066EF50
-extern int VehMoveDeltaY[8];  // 0x0066EF74
-extern RulesChassis Chassis[MaxChassisNum];  // 0x0094A330, 0x90 stride
+// The ninth entry is the centre, sampled by vehdraw_scoot_start.
+extern int VehMoveDeltaX[9];  // 0x0066EF50
+extern int VehMoveDeltaY[9];  // 0x0066EF74
+extern RulesChassis Chassis[ChassisStorageCount];  // 0x0094A330, 0x90 stride
 // Exactly fills to SocialCategories (0x0094B000): 26 * 0x10 = 0x1A0.
 extern RulesWeapon Weapon[MaxWeaponNum];  // 0x0094AE60, 0x10 stride
 // Exactly fills to Technology (0x0094F358): 14 * 0x10 = 0xE0.
