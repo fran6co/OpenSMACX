@@ -211,8 +211,8 @@ class MapWin : public virtual GraphicWin {
   void main_caption();
   // 0x0046AD60, NOT the free ::draw_cursor at 0x0046AE00 that mapwin.cpp
   // defines. The cursor's own repaint runs per window and reads the shared
-  // CursorLastIndex/CursorLastX/CursorLastY triple plus this window's clip
-  // fields, so it needs the receiver; Console::set_cursor, move_cursor,
+  // ConsoleGlobal cursor history plus this window's clip fields, so it
+  // needs the receiver; Console::set_cursor, move_cursor,
   // prev_cursor and set_view all call it on the current map window. Body
   // still unrecovered - a pending_bodies forwarder.
   void draw_cursor();

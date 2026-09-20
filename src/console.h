@@ -434,14 +434,35 @@ class Console : public MapWin {
   uint32_t field_23BEC_;  // 0x23BEC
   uint32_t field_23BF0_;  // 0x23BF0
   uint32_t field_23BF4_;  // 0x23BF4
+  // 0x9392A8 in ConsoleGlobal. Cursor/radius drawing tests this flag;
+  // editor_generate clears it. Its broader meaning is still provisional.
+  // RECOVERY_MEMBER: v1 Console field_23BF8_ 0x23BF8 0x004E0FD0
   uint32_t field_23BF8_;  // 0x23BF8
   uint32_t field_23BFC_;  // 0x23BFC
-  uint32_t field_23C00_;  // 0x23C00
+ public:
+  // survey cycles 0..3; a nonzero mode also suppresses free draw_cursor.
+  // RECOVERY_MEMBER: v1 Console survey_mode_ 0x23C00 0x00515450
+  uint32_t survey_mode_;  // 0x23C00
+ private:
   uint32_t field_23C04_;  // 0x23C04
-  uint32_t field_23C08_;  // 0x23C08
-  uint32_t field_23C0C_;  // 0x23C0C
-  uint32_t field_23C10_[0x20];  // 0x23C10
-  uint32_t field_23C90_[0x20];  // 0x23C90
+ public:
+  // The absolute cursor reads are these members of ConsoleGlobal at
+  // 0x9392B8, 0x9392BC, 0x9392C0 and 0x939340. cursor_next compares that
+  // object's current position, but appends to its receiver's history.
+  // prev_cursor wraps a negative index; cursor_next uses signed % 32.
+  // RECOVERY_MEMBER: v1 Console cursor_history_index_ 0x23C08 0x00510A60
+  int32_t cursor_history_index_;  // 0x23C08
+ private:
+  // RECOVERY_MEMBER: v1 Console cursor_history_head_ 0x23C0C 0x005109B0
+  int32_t cursor_history_head_;  // 0x23C0C
+ public:
+  // Two parallel signed coordinate arrays, 32 entries each. The original
+  // load_daemon fill at 0x005A9A02..0x005A9A32 ends at 0x9393C0.
+  // RECOVERY_MEMBER: v1 Console cursor_history_x_ 0x23C10 0x005109B0
+  int32_t cursor_history_x_[32];  // 0x23C10
+  // RECOVERY_MEMBER: v1 Console cursor_history_y_ 0x23C90 0x005109B0
+  int32_t cursor_history_y_[32];  // 0x23C90
+ private:
   uint32_t field_23D10_;  // 0x23D10
   uint32_t field_23D14_;  // 0x23D14
   uint32_t field_23D18_;  // 0x23D18
@@ -566,22 +587,11 @@ typedef void(__cdecl func_console_flush_input)(void);
 // 0x005FD120, defined in src/console.cpp.
 void __cdecl flush_input();
 // THE OBJECT, at 0x009156B0 in the image - REAL STORAGE, defined in
-// console.cpp. It was `Console *const ConsoleGlobal = (Console *)0x009156B0`
-// naming terranx.exe data that is unmapped in a standalone build. Console's
-// constructor here is the empty inline the tree models, so the object is the
-// zero storage the image leaves until its own construct() fills it. Every
-// `ConsoleGlobal->` receiver keeps its folded `mov ecx, imm32` form, the
-// displacement relocated; body text that READS the console's address (the
-// vbtable walk in close_opening) now takes `&ConsoleGlobal`.
+// console.cpp. Static zero-initialization precedes its real constructor.
+// The constructor only clears history slot zero, and does not initialize
+// the history head; independently constructed Consoles do not inherit the
+// process-wide object's initial zero storage.
 extern Console ConsoleGlobal;  // 0x009156B0, the process-wide Console
-
-// Console::cursor_next's own last-position cache: the CURRENT index and the
-// two coordinate arrays it indexes, distinct from the per-object ring buffer
-// at field_23C08_/field_23C0C_/field_23C10_. No established identity beyond
-// what this one function shows.
-extern int CursorLastIndex;    // 0x009392B8
-extern int CursorLastX[32];    // 0x009392C0
-extern int CursorLastY[32];    // 0x00939340
 
 // Two fixed-address strings cursor_next passes to danger() when a debug-mode
 // coordinate parity mismatch is detected. No established text.

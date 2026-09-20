@@ -136,11 +136,6 @@ char *__cdecl popt(char *caption, const char *label, int a3, char *a4, int a5); 
 char *__cdecl get_phrase(int phrase_id, int faction_id);                 // 0x0058F810 ?get_phrase@@YAPADHH@Z
 char *__cdecl get_noun_phrase(int phrase_id, int faction_id);            // 0x0058F8B0 ?get_noun_phrase@@YAPADHH@Z
 
-// 0x009392A8 is a dword editor_generate clears before regenerating the map;
-// it is NOT mapwin.h's MapWinSelectedSlot (0x0068A5CC), which the same body
-// does not touch. No image symbol and no other reader in the tree.
-int EditorGenerateUndoDepth = 0;  // 0x009392A8, defined here
-
 // 0x00939FD0, the tick counter auto_play_callback (below) drives: it counts
 // this up once per callback, and when it passes 100 it plays one turn for the
 // current faction through Console::end_my_turn and clears it again. The only
@@ -207,15 +202,17 @@ Console::Console()
     field_23BE8_ = 0;
     field_23BF0_ = 0;
     field_23BF4_ = 0;
-    field_23C00_ = 0;
+    survey_mode_ = 0;
     field_23C04_ = 0;
     field_23BFC_ = 0;
     field_23BF8_ = 0;
-    field_23C08_ = 0;
+    cursor_history_index_ = 0;
 
+    // 0x0050F5D3..0x0050F5EE repeatedly clears only the current slot (zero).
+    // The other slots and history head remain untouched by construction.
     for (int32_t i = 0x20; i != 0; i--) {
-        field_23C10_[field_23C08_] = 0;
-        field_23C90_[field_23C08_] = 0;
+        cursor_history_x_[cursor_history_index_] = 0;
+        cursor_history_y_[cursor_history_index_] = 0;
     }
 
     field_23D10_ = 0;
@@ -508,16 +505,12 @@ void Console::update_data(int change_flags) {
 }
 
 
-int CursorLastIndex;    // 0x009392B8
-int CursorLastX[32];    // 0x009392C0
-int CursorLastY[32];    // 0x00939340
-
 /*
 Purpose: Report the cursor's new tile position to the status bar and record
          it in this Console's own ring buffer, unless it is the same tile
-         already at the head of the cache. In debug mode, warn when the two
-         coordinates have mismatched parity, then normalise them to matching
-         parity before anything else runs.
+         already selected in ConsoleGlobal's history. In debug mode, warn
+         when the coordinates have mismatched parity, then normalise them
+         to matching parity before anything else runs.
 // ORIGINAL: 0x005109B0 ?cursor_next@Console@@QAEXHH@Z 0x005109B0-0x00510A59 BYTE_EXACT
 // size      169 bytes
 // prototype void (__thiscall ?cursor_next@Console@@QAEXHH@Z)(Console* this, int, int)
@@ -542,18 +535,18 @@ void Console::cursor_next(int x_coord, int y_coord) {
         }
     }
     ConsoleStatusWin.set_loc(x_coord, y_coord);
-    int idx = CursorLastIndex;
-    if (x_coord == CursorLastX[idx]) {
-        if (y_coord == CursorLastY[idx]) {
+    int idx = ConsoleGlobal.cursor_history_index_;
+    if (x_coord == ConsoleGlobal.cursor_history_x_[idx]) {
+        if (y_coord == ConsoleGlobal.cursor_history_y_[idx]) {
             return;
         }
     }
-    int newIdx = (static_cast<int32_t>(field_23C0C_) + 1) % 32;
-    field_23C0C_ = static_cast<uint32_t>(newIdx);
-    field_23C08_ = static_cast<uint32_t>(newIdx);
-    reinterpret_cast<int32_t *>(field_23C10_)[newIdx] = x_coord;
-    int reIdx = static_cast<int32_t>(field_23C0C_);
-    reinterpret_cast<int32_t *>(field_23C10_)[32 + reIdx] = y_coord;
+    int newIdx = (cursor_history_head_ + 1) % 32;
+    cursor_history_head_ = newIdx;
+    cursor_history_index_ = newIdx;
+    cursor_history_x_[newIdx] = x_coord;
+    int reIdx = cursor_history_head_;
+    cursor_history_y_[reIdx] = y_coord;
 }
 
 /*
@@ -675,9 +668,7 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
             // 0x0051092B reloads `this`, 0x0051092E reads the survey-overlay
             // latch. Read AFTER the call, do NOT hoist: this comes from `this`
             // while cursor_next was handed ConsoleGlobal, and cursor_next
-            // writes its own object's fields in this region. Held as a raw
-            // offset into the unmapped derived storage, the way clear_group
-            // holds 0x23D1C.
+            // writes its own object's history fields in this region.
             // NOT `volatile`. The image hoists the two argument pushes for
             // MapWin::focus ABOVE this store (`push edi; push ebx` at
             // 0x0051093A, then the clear at 0x0051093C); a volatile store
@@ -686,14 +677,11 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
             // still survives - it is followed by a call VC6 cannot see
             // through - and the read below still cannot be hoisted over
             // cursor_next for the same reason.
-            uint32_t *const overlay =
-                reinterpret_cast<uint32_t *>(
-                    reinterpret_cast<uint8_t *>(this) + 0x23C00);
-            if (*overlay != 0) {
+            if (survey_mode_ != 0) {
                 // 0x0051093C clears the latch BEFORE the table load at
                 // 0x00510946 and before the call at 0x0051094C. The clear is
                 // ordered against MapWin::focus, not folded into it.
-                *overlay = 0;
+                survey_mode_ = 0;
                 // 0x00510946 reads slot 0 by absolute address, with no [esi*4]
                 // index, and as a fresh load. Do NOT reuse `window`:
                 // cursor_next may have republished the table.
@@ -957,8 +945,8 @@ void Console::editor_diplomacy() {
 }
 
 /*
-Purpose: Reset the console - clear the message ring, the two 0x20-entry tables,
-         and the trailing state, then close the Buffer, Time and GraphicWin
+Purpose: Reset the console - clear its scalar state and history slot zero,
+         then close the Buffer, Time and GraphicWin
          subobjects and clear the map.
 The historical forwarding notes below predate the separate timer lifecycle TU;
 the timer call now uses the existing Time member directly.
@@ -985,18 +973,20 @@ void Console::close() {
     field_23BE8_ = 0;
     field_23BF0_ = 0;
     field_23BF4_ = 0;
-    field_23C00_ = 0;
+    survey_mode_ = 0;
     field_23C04_ = 0;
     field_23BFC_ = 0;
     field_23BF8_ = 0;
-    field_23C08_ = 0;
+    cursor_history_index_ = 0;
+    // 0x0051D821..0x0051D83C reloads this same index on every iteration.
+    // Slots 1..31 and the history head survive close().
     int count = 0x20;
     do {
         count -= 1;
-        uint32_t idx1 = field_23C08_;
-        *reinterpret_cast<uint32_t *>(self + 0x23c10 + idx1 * 4) = 0;
-        uint32_t idx2 = field_23C08_;
-        *reinterpret_cast<uint32_t *>(self + 0x23c90 + idx2 * 4) = 0;
+        int32_t idx1 = cursor_history_index_;
+        cursor_history_x_[idx1] = 0;
+        int32_t idx2 = cursor_history_index_;
+        cursor_history_y_[idx2] = 0;
     } while (count != 0);
     field_23D10_ = 0;
     field_23D18_ = 0;
@@ -1018,8 +1008,8 @@ Time g_CONSOLE_TIMER;
 // ??__E dynamic initializers construct the InfoWin and the Console's
 // neighbours at their fixed addresses before WinMain (measured: `mov ecx,
 // 0x7ad2a0; call InfoWin::InfoWin` at 0x004562C0 with an atexit thunk);
-// PrefWin and Console carry no constructor in this tree, so those two are
-// the zero storage the image leaves until its own init fills them.
+// ConsoleGlobal also has a real constructor; its static zero-initialization
+// supplies the scalar/history storage that constructor leaves untouched.
 PrefWin ConsolePrefWin;   // 0x008578D8
 // RECOVERY_OBJECT: v1 0x007AD2A0 ?ConsoleInfoWin@@3VInfoWin@@A
 InfoWin ConsoleInfoWin;
@@ -1028,6 +1018,9 @@ InfoWin ConsoleInfoWin;
 // 0x0050E852) and the compiler emits that push for a most-derived global
 // on its own. The old explicit `ConsoleGlobal(1)` was the flag spelled as
 // a real int - the exact doubling Console(int) carried.
+// Absolute cursor loads at 0x00510A01..0x00510A19 address this object's
+// history members. The following stores instead use the method receiver.
+// RECOVERY_OBJECT: v1 0x009156B0 ?ConsoleGlobal@@3VConsole@@A
 Console ConsoleGlobal;
 
 // ORIGINAL: 0x00515740 ?toggle_dest@Console@@QAEXXZ 0x00515740-0x00515758 BYTE_EXACT
@@ -1548,8 +1541,8 @@ int Console::ready_search(int veh_id) {
 
     if (veh_id < 0 || Vehs[veh_id].faction_id != ConsoleGlobal.faction_id_) {
         veh_id = -1;
-        coordA = *((int *)CursorLastX + CursorLastIndex);
-        coordB = *((int *)CursorLastY + CursorLastIndex);
+        coordA = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        coordB = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
     } else {
         coordA = *(short *)((unsigned char *)Vehs + veh_id * 0x34);
         coordB = Vehs[veh_id].y;
@@ -1749,7 +1742,7 @@ void Console::editor_generate() {
         } while (i < static_cast<int>(MapArea));
     }
 
-    EditorGenerateUndoDepth = 0;
+    ConsoleGlobal.field_23BF8_ = 0;
     GameState = GameState | 4;
     // 0x004E1033 loads slot zero before accessing the window's +0x1DD98
     // member. The array itself is neither the receiver nor member storage.
@@ -2005,17 +1998,17 @@ void Console::editor_rockiness() {
 // beside the array definitions so the cursor's own deltas stop being
 // anonymous fixed addresses.
 // TRIED: `const int slot`; operand order `delta + coord` for the x sum. The
-// image loads CursorLastX[slot] BEFORE VehMoveDeltaX[direction] (0x005148BE
+// image loads ConsoleGlobal.cursor_history_x_[slot] BEFORE VehMoveDeltaX[direction] (0x005148BE
 // then 0x005148C6) and the reverse for y, so the x sum is spelled
 // coordinate-first below; neither ordering nor the const moved the first
-// divergence, which is which register holds CursorLastIndex (image: edx,
+// divergence, which is which register holds ConsoleGlobal.cursor_history_index_ (image: edx,
 // this tree: eax) and follows from the image deferring its `this` spill
 // (0x005148CD `mov edi, ecx`) until after both loads.
 
 
 void Console::move_cursor(int direction) {
-    const int slot = CursorLastIndex;
-    int new_x = CursorLastX[slot] + VehMoveDeltaX[direction];
+    const int slot = ConsoleGlobal.cursor_history_index_;
+    int new_x = ConsoleGlobal.cursor_history_x_[slot] + VehMoveDeltaX[direction];
     if ((MapIsFlat & 1) == 0) {
         if (new_x < 0) {
             new_x = new_x + MapLongitudeBounds;
@@ -2023,12 +2016,12 @@ void Console::move_cursor(int direction) {
             new_x = new_x - MapLongitudeBounds;
         }
     }
-    int new_y = VehMoveDeltaY[direction] + CursorLastY[slot];
+    int new_y = VehMoveDeltaY[direction] + ConsoleGlobal.cursor_history_y_[slot];
     if (new_y >= 0 && new_y < MapLatitudeBounds && new_x >= 0 &&
         new_x < MapLongitudeBounds) {
         field_23BF8_ = 0;
-        if (field_23C00_ != 0) {
-            field_23C00_ = 0;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
             console_map_win()->draw_map(1);
         }
         console_map_win()->draw_cursor();
@@ -2081,8 +2074,8 @@ int Console::set_cursor(int x_coord, int y_coord) {
     // the "jumps TO the work" shape, not a fourth `||` term.
     if (x_coord < MapLongitudeBounds) {
         field_23BF8_ = 0;
-        if (field_23C00_ != 0) {
-            field_23C00_ = 0;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
             console_map_win()->draw_map(1);
         }
         console_map_win()->draw_cursor();
@@ -2106,12 +2099,12 @@ int Console::set_cursor(int x_coord, int y_coord) {
 
 
 void Console::survey2() {
-    if (field_23C00_ != 0) {
-        field_23C00_ = 0;
+    if (survey_mode_ != 0) {
+        survey_mode_ = 0;
         console_map_win()->draw_map(1);
         return;
     }
-    field_23C00_ = 1;
+    survey_mode_ = 1;
     uint32_t saved = console_map_win()->field_1DD70_;
     console_map_win()->field_1DD70_ = saved & 0xfffff7ff;
     console_map_win()->field_1DD70_ =
@@ -2121,9 +2114,9 @@ void Console::survey2() {
     console_map_win()->field_1DD70_ =
         console_map_win()->field_1DD70_ & 0xffffefff;
     if (tut_check(0x400) != 0) {
-        const int slot = CursorLastIndex;
-        TutorialWindow.tut_map(StrTerraSurvey2, CursorLastX[slot],
-                               CursorLastY[slot], -1, nullptr, 0, -1, -1);
+        const int slot = ConsoleGlobal.cursor_history_index_;
+        TutorialWindow.tut_map(StrTerraSurvey2, ConsoleGlobal.cursor_history_x_[slot],
+                               ConsoleGlobal.cursor_history_y_[slot], -1, nullptr, 0, -1, -1);
     }
 }
 
@@ -2266,21 +2259,21 @@ void Console::editor_lock2() {
 
 
 void Console::prev_cursor() {
-    const int had_move = field_23C00_;
+    const int had_move = survey_mode_;
     field_23BF8_ = 0;
     if (had_move != 0) {
-        field_23C00_ = 0;
+        survey_mode_ = 0;
         console_map_win()->draw_map(1);
     }
     console_map_win()->draw_cursor();
     if (ConsoleGlobal.cursor_active_ != 0) {
         ambience(0x1E);
-        const int had_move_now = field_23C00_;
+        const int had_move_now = survey_mode_;
         cursor_active_ = 0;
         field_23BF8_ = 1;
         field_23BFC_ = 1;
         if (had_move_now != 0) {
-            field_23C00_ = 0;
+            survey_mode_ = 0;
             console_map_win()->draw_map(1);
         }
         ::draw_cursor();
@@ -2289,15 +2282,15 @@ void Console::prev_cursor() {
         console_map_win()->main_caption();
         alpha_menu_.check(selected_vehicle_);
     }
-    const int cursor_timer = field_23C08_ - 1;
-    field_23C08_ = cursor_timer;
+    const int cursor_timer = cursor_history_index_ - 1;
+    cursor_history_index_ = cursor_timer;
     if (cursor_timer < 0) {
-        field_23C08_ = 0x1F;
+        cursor_history_index_ = 0x1F;
     }
-    const int slot = CursorLastIndex;
-    ConsoleStatusWin.set_loc(CursorLastX[slot], CursorLastY[slot]);
-    const int slot_now = CursorLastIndex;
-    console_map_win()->focus(CursorLastX[slot_now], CursorLastY[slot_now]);
+    const int slot = ConsoleGlobal.cursor_history_index_;
+    ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot]);
+    const int slot_now = ConsoleGlobal.cursor_history_index_;
+    console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now], ConsoleGlobal.cursor_history_y_[slot_now]);
 }
 
 // ORIGINAL: 0x00515600 ?base_names@Console@@QAEXXZ 0x00515600-0x00515638 FILE BYTE_EXACT
@@ -2543,21 +2536,21 @@ void Console::toggle_base_grid() {
 // not own: 0x0046B1F0 is ?set_center@MapWin@@QAEXHHH@Z, undeclared. It needs
 // `void set_center(int, int, int);` on MapWin and a pending_bodies forwarder
 // (the body itself is src/recovered/units/0046b1f0.cpp, unclaimed, 275
-// bytes). Everything the body reads is already bound here: CursorLastIndex /
-// CursorLastX / CursorLastY in console.h and the accessor console_map_win()
+// bytes). Everything the body reads is already bound here: ConsoleGlobal.cursor_history_index_ /
+// ConsoleGlobal.cursor_history_x_ / ConsoleGlobal.cursor_history_y_ in console.h and the accessor console_map_win()
 // for the single absolute load of 0x007D3C3C the image makes at 0x00515416.
 //
 // The de-punned body, ready to drop in once set_center is declared:
 //
 // void Console::center() {
-//     const int index = CursorLastIndex;
-//     console_map_win()->set_center(CursorLastX[index], CursorLastY[index], 1);
+//     const int index = ConsoleGlobal.cursor_history_index_;
+//     console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[index], ConsoleGlobal.cursor_history_y_[index], 1);
 // }
 
 
 void Console::center() {
-    const int slot = CursorLastIndex;
-    console_map_win()->set_center(CursorLastX[slot], CursorLastY[slot], 1);
+    const int slot = ConsoleGlobal.cursor_history_index_;
+    console_map_win()->set_center(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], 1);
 }
 
 // ORIGINAL: 0x005169B0 ?base_me@Console@@QAEXXZ 0x005169B0-0x005169E6 BYTE_EXACT
@@ -2579,8 +2572,8 @@ void Console::center() {
 // The de-punned body, ready to drop in once zoom is declared:
 //
 // void Console::base_me() {
-//     const int index = CursorLastIndex;
-//     const int result = base_find(CursorLastX[index], CursorLastY[index],
+//     const int index = ConsoleGlobal.cursor_history_index_;
+//     const int result = base_find(ConsoleGlobal.cursor_history_x_[index], ConsoleGlobal.cursor_history_y_[index],
 //                                  LocalFaction);
 //     if (result >= 0) {
 //         TutWinBaseWindow.zoom(result, 0);
@@ -2589,9 +2582,9 @@ void Console::center() {
 
 
 void Console::base_me() {
-    const int slot = CursorLastIndex;
+    const int slot = ConsoleGlobal.cursor_history_index_;
     const int base_id =
-        base_find(CursorLastX[slot], CursorLastY[slot], ConsoleGlobal.faction_id_);
+        base_find(ConsoleGlobal.cursor_history_x_[slot], ConsoleGlobal.cursor_history_y_[slot], ConsoleGlobal.faction_id_);
     if (base_id >= 0) {
         TutWinBaseWindow.zoom(base_id, 0);
     }
@@ -2608,12 +2601,12 @@ void Console::base_me() {
 
 
 void Console::survey() {
-    // A three-step cycle on the overlay latch: 0 -> 1 -> 2 -> 3 -> 0. Each
+    // Cycle through three survey modes: 0 -> 1 -> 2 -> 3 -> 0. Each
     // step forces one repaint with the map's detail mask pinned to a value
     // that shows only the layer that step is about, then puts the mask back.
-    const int state = field_23C00_;
+    const int state = survey_mode_;
     if (state == 1) {
-        field_23C00_ = 2;
+        survey_mode_ = 2;
         const uint32_t saved = console_map_win()->field_1DD70_;
         console_map_win()->field_1DD70_ = 0x603;
         console_map_win()->draw_map(1);
@@ -2621,7 +2614,7 @@ void Console::survey() {
         return;
     }
     if (state == 2) {
-        field_23C00_ = 3;
+        survey_mode_ = 3;
         const uint32_t saved = console_map_win()->field_1DD70_;
         console_map_win()->field_1DD70_ = 0x402;
         console_map_win()->draw_map(1);
@@ -2629,11 +2622,11 @@ void Console::survey() {
         return;
     }
     if (state != 0) {
-        field_23C00_ = 0;
+        survey_mode_ = 0;
         console_map_win()->draw_map(1);
         return;
     }
-    field_23C00_ = 1;
+    survey_mode_ = 1;
     const uint32_t saved = console_map_win()->field_1DD70_;
     console_map_win()->field_1DD70_ = 0x623;
     console_map_win()->draw_map(1);
@@ -2722,8 +2715,8 @@ void Console::set_view(int force_update) {
         cursor_active_ = 0;
         field_23BF8_ = 1;
         field_23BFC_ = 1;
-        if (field_23C00_ != 0) {
-            field_23C00_ = 0;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
             console_map_win()->draw_map(1);
         }
         ::draw_cursor();

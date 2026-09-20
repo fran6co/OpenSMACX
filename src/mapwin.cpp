@@ -784,7 +784,7 @@ static const unsigned char *const AltStepY = (const unsigned char *)0x00685EE0;
 // is what the arithmetic says and no more.
 static int *const MapWinPrimaryCorner = (int *)0x007D3C28;
 
-// 0x009393C0 - in the Console state block beside CursorLastIndex/CursorLastX.
+// 0x009393C0 - in the Console state block after the cursor history arrays.
 // on_nc_left_down reads it once and returns without touching the keyboard when
 // it is nonzero, and otherwise polls and writes the modifier-key state, so the
 // nonzero value is "do not refresh the modifier state". Bound here because
@@ -1463,13 +1463,11 @@ int MapWin::get_relative_alt(int x, int y, int detail) {
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0046A2A0 0x004BDEA0
-// The one guard this body reads before drawing anything: zero means the cursor
-// is clear to draw. No other site in the tree names it, and the archive only
-// ever binds it anonymously, so the polarity above is the whole evidence.
-int *const CursorDrawSuppressed = (int *)0x009392B0;
+// 0x0046AE04 reads ConsoleGlobal's survey mode at 0x9392B0: any active
+// survey mode suppresses this cursor pass.
 
 void __cdecl draw_cursor() {
-    if (*CursorDrawSuppressed == 0) {
+    if (ConsoleGlobal.survey_mode_ == 0) {
         MapWinSlots &table = MapWinTable;
         MapWin **slot = table;
         do {
@@ -1477,9 +1475,9 @@ void __cdecl draw_cursor() {
             if (window != 0 &&
                 (slot == table ||
                  window->field_1DD74_ != 0)) {
-                int index = CursorLastIndex;
-                int tile_y = CursorLastY[index];
-                int tile_x = CursorLastX[index];
+                int index = ConsoleGlobal.cursor_history_index_;
+                int tile_y = ConsoleGlobal.cursor_history_y_[index];
+                int tile_x = ConsoleGlobal.cursor_history_x_[index];
                 if (window->field_1DDA8_ <= tile_y &&
                     tile_y < window->field_1DDD8_ +
                              window->field_1DDD0_ +
@@ -1514,7 +1512,8 @@ void __cdecl draw_cursor() {
 // ORIGINAL: 0x00462870 ?clear@MapWin@@QAEXH@Z 0x00462870-0x00462959 FILE
 // HOMED 2026-09-04 from the 0x00462870 artifact; the artifact's
 // `g_9392c0`/`g_939340`/`g_009392b8`/`g_00949870`/`g_00949874` are the
-// tree's CursorLastX / CursorLastY / CursorLastIndex (console.h) and
+// ConsoleGlobal's cursor_history_x_/cursor_history_y_/cursor_history_index_
+// members (console.h) and the tree's
 // MapLongitudeBounds / MapLatitudeBounds (map.h), and `g_00939e5c` is the new
 // IfaceScreenWidth binding above. Measured in the tree: 8/65.
 // TRIED: `g_939340`/`g_9392c0` as the scaffold's `int *const` globals - the address does work (indexed by `*g_009392b8`), so switched to `extern int name[]`. Landed at 97.7%: the original loads `*g_00939e5c` into a register before comparing it to 1000, where this source's compiler folds the load into `cmp dword ptr[addr],1000` directly - tried both an inline dereference and a named local holding the read first; the compiler made the same choice either way. The `((t<1000)-1)&6` then `-6` also comes out as `sub eax,6` here against the original's `add eax,-6` (same value, different opcode).
@@ -1543,12 +1542,12 @@ void MapWin::clear(int index) {
     field_1DD9C_ = (halfWidth ^ halfHeight) & 1 ^ halfWidth;
 
     if (index == 0) {
-        int player = CursorLastIndex;
-        int cy = CursorLastY[player];
-        int cx = CursorLastX[player];
+        int player = ConsoleGlobal.cursor_history_index_;
+        int cy = ConsoleGlobal.cursor_history_y_[player];
+        int cx = ConsoleGlobal.cursor_history_x_[player];
         if (cy >= 0 && cy < MapLatitudeBounds && cx >= 0 && cx < MapLongitudeBounds) {
             field_1DD9C_ = cx;
-            field_1DDA0_ = CursorLastY[CursorLastIndex];
+            field_1DDA0_ = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
         }
     }
 

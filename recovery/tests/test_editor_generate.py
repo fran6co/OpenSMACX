@@ -56,7 +56,6 @@ def harness(method):
         static_assert(sizeof(int) == 4 && sizeof(Map) == 44, "host widths");
         static_assert(offsetof(Map, bit) == 8, "actual tile member");
         uint8_t *LockMapTable;
-        int EditorGenerateUndoDepth;
         void require(bool ok) { if (!ok) std::exit(42); }
         struct MapWin {
             uint32_t field_1DD98_;
@@ -65,6 +64,7 @@ def harness(method):
         struct Console : MapWin {
             uint32_t cursor_active_;
             int32_t selected_vehicle_;
+            uint32_t field_23BF8_;
             void editor_generate();
         } ConsoleGlobal;
         struct Button { void show(int); void hide(); };
@@ -81,7 +81,7 @@ def harness(method):
             require(stage == 0 && GameState == 0x11223344u);
             require(VehCurrentCount == 17 && BaseCurrentCount == 18);
             require(ConsoleGlobal.cursor_active_ == 19 && ConsoleGlobal.selected_vehicle_ == 20);
-            require(EditorGenerateUndoDepth == 21);
+            require(ConsoleGlobal.field_23BF8_ == 21);
             stage = 1;
             // The body must acquire both the pointer and count AFTER undo.
             LockMapTable = reinterpret_cast<uint8_t *>(&records[1]);
@@ -95,7 +95,7 @@ def harness(method):
             require(GameState == (undo_state | 4u));
             require(VehCurrentCount == 0 && BaseCurrentCount == 0);
             require(ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.selected_vehicle_ == -1);
-            require(EditorGenerateUndoDepth == 0);
+            require(ConsoleGlobal.field_23BF8_ == 0);
             // Includes every non-bit member and neighboring records before
             // and after the requested span, not just the touched flag words.
             require(std::memcmp(records, expected, sizeof(records)) == 0);
@@ -170,12 +170,13 @@ def harness(method):
                     VehCurrentCount = 17; BaseCurrentCount = 18;
                     ConsoleGlobal.cursor_active_ = 19;
                     ConsoleGlobal.selected_vehicle_ = 20;
-                    EditorGenerateUndoDepth = 21;
+                    ConsoleGlobal.field_23BF8_ = 21;
                     stage = free_calls = button_calls = 0;
                     Console console;
                     console.field_1DD98_ = 0xaabbccddu;
                     console.cursor_active_ = 0x13579u;
                     console.selected_vehicle_ = 73;
+                    console.field_23BF8_ = 0x2468u;
                     console.editor_generate();
                     require(stage == 6 && button_calls == 1);
                     require(free_calls == (initially_set ? 1 : 2));
@@ -183,6 +184,7 @@ def harness(method):
                     require(console.field_1DD98_ == 0xaabbccddu);
                     require(console.cursor_active_ == 0x13579u);
                     require(console.selected_vehicle_ == 73);
+                    require(console.field_23BF8_ == 0x2468u);
                     auto untouched = reinterpret_cast<unsigned char *>(decoy);
                     for (unsigned i=0; i<sizeof(decoy); ++i) require(untouched[i] == 0x55);
                 }
@@ -211,6 +213,7 @@ def test_actual_editor_body_preserves_bounded_state_and_call_contract(tmp_path):
 
 
 @pytest.mark.parametrize("before,after,count", [
+    ("ConsoleGlobal.field_23BF8_ = 0;", "field_23BF8_ = 0;", 1),
     ("int count = MapArea;", "unsigned count = MapArea;", 1),
     ("tile->bit &= ~(BIT_BASE_IN_TILE | BIT_VEH_IN_TILE);", "tile->bit = 0;", 1),
     ("++tile;", "tile += 2;", 1),
