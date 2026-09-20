@@ -7,6 +7,9 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+// ORIGINAL: 0x00456100 ??1CaviarData@@QAE@XZ 0x00456100-0x00456105 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original destructor span and its direct close target.", "Original model arrays and renderer embedding EH cleanup distinguish loaded-model and instance lifetimes.", "Fresh VC6 observations under both configured flag sets identify this natural emission host and preserve normal versus EH call targets."], "reason": "Genuine header-defined destructor in src/caviar.h; this translation unit naturally emits the original five-byte cleanup tail through real object lifetime use, without synthetic calls or forced exports."}
+// body      src/caviar.h
 #include "stdafx.h"
 #include "caviar.h"
 #include "basepop.h"
@@ -100,12 +103,9 @@ Return Value: n/a
 Status: Complete
 */
 Caviar::Caviar() {
-    uint8_t *bytes = reinterpret_cast<uint8_t *>(this);
-    const uint32_t distance_limit = 0x461C4000;
     const uint32_t default_scene_scale = 0x3F2AAAAB;
-    const uint32_t zero = 0;
-    memcpy(bytes + 0x108, &distance_limit, sizeof(distance_limit));
-    memcpy(bytes + 0x13CC, &zero, sizeof(zero));
+    field_108_ = 0x461C4000;
+    field_13CC_ = 0;
     memcpy(&scene_scale_, &default_scene_scale, sizeof(scene_scale_));
 }
 
@@ -417,36 +417,26 @@ Purpose: Release every allocation the renderer holds and reset the scene.
 // `slots_` says the same thing in the type, and see the note on it in the
 // header for why the arithmetic reconciles.
 //
-// A DOWN-COUNTING do/while OVER A WALKING POINTER, because that is what the
-// image emits: it never materialises an index, and the loop cannot run zero
-// times.
+// The image visits all 200 entries in increasing address order, freeing and
+// clearing each entry's colour, vector and matrix allocations in that order.
 Return Value: n/a
 Status: Complete
 */
 void Caviar::close() {
-    // THE CURSOR AIMS AT THE MIDDLE MEMBER. The image computes
-    // `lea esi, [ebp + 0x750]` - `fileDescriptor_` of slot zero, not
-    // `field_0_` at 0x74C - and reaches the other two as `[esi - 4]` and
-    // `[esi + 4]`. Walking from `slots_` bases at 0x74C instead and reads
-    // `[esi]`, `[esi+4]`, `[esi+8]`: the same three words, a different
-    // instruction at every site.
-    void **cursor = &slots_->fileDescriptor_;
-    int count = 0xc8;
-    do {
-        if (cursor[-1] != nullptr) {
-            free(cursor[-1]);
-            cursor[-1] = nullptr;
+    for (int index = 0; index < 200; ++index) {
+        if (slots_[index].instance_colour_ != nullptr) {
+            free(slots_[index].instance_colour_);
+            slots_[index].instance_colour_ = nullptr;
         }
-        if (cursor[0] != nullptr) {
-            free(cursor[0]);
-            cursor[0] = nullptr;
+        if (slots_[index].instance_vector_ != nullptr) {
+            free(slots_[index].instance_vector_);
+            slots_[index].instance_vector_ = nullptr;
         }
-        if (cursor[1] != nullptr) {
-            free(cursor[1]);
-            cursor[1] = nullptr;
+        if (slots_[index].instance_matrix_ != nullptr) {
+            free(slots_[index].instance_matrix_);
+            slots_[index].instance_matrix_ = nullptr;
         }
-        cursor += 3;
-    } while (--count);
+    }
 
     field_4_ = 0;
     scene_scale_ = 2.0f / 3.0f;
@@ -506,7 +496,8 @@ CaviarData g_VIPTR_CAVIARDATA[4];  // 0x00799628, 0xc stride
 CaviarData g_VIPTA_CAVIARDATA[2];  // 0x007791D0, 0xc stride
 CaviarData g_PTMOD_CAVIARDATA;  // 0x0078A500
 CaviarData g_VB_CAVIARDATA;  // 0x00779230
-CaviarData g_VBP_CAVIARDATA;  // 0x0078E968
+// RECOVERY_OBJECT: v1 0x0078E968 ?g_VBP_CAVIARDATA@@3UCaviarData@@A
+CaviarData g_VBP_CAVIARDATA;
 CaviarData g_VGMC_CAVIARDATA;  // 0x0075AED0
 CaviarData g_VGMCP_CAVIARDATA;  // 0x0076EBE0
 CaviarData g_VLIGHTS_CAVIARDATA;  // 0x0075B848
@@ -2563,7 +2554,7 @@ int Caviar::add_object(CaviarData *definition, VOX_Vect *offset, int step) {
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             CvrPart &part = definition->record_->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
             vector_add(part.vectors_[remainder].values, offset->values,
@@ -2615,7 +2606,7 @@ int Caviar::add_object(CaviarData *definition, CaviarData *geometry,
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             vector_add(geometry->record_->parts_[index].vectors_[remainder].values,
                        offset->values, instance.instance_vector_->values);
             instance_palettes_[field_13CC_] = definition->record_->palette_ + 0x302;
@@ -2666,7 +2657,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             vector_add(geometry->record_->parts_[index].vectors_[remainder].values,
                        offset->values, instance.instance_vector_->values);
             instance_palettes_[field_13CC_] = object;
@@ -2725,7 +2716,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             CvrPart &part = record->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
             vector_add(part.vectors_[remainder].values, offset->values,
@@ -2774,7 +2765,7 @@ int Caviar::add_object(CaviarData *definition, CaviarData *geometry, int step) {
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             CvrPart &part = geometry->record_->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
@@ -2823,7 +2814,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object,
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             CvrPart &part = geometry->record_->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
@@ -2869,7 +2860,7 @@ int Caviar::add_object(CaviarData *definition, int step) {
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             CvrPart &part = record->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
@@ -2915,7 +2906,7 @@ int Caviar::add_object(CaviarData *definition, uint8_t *object, int step) {
             if (field_13CC_ == 200) {
                 return 1;
             }
-            CaviarData &instance = slots_[field_13CC_];
+            VoxInstance &instance = slots_[field_13CC_];
             CvrPart &part = record->parts_[index];
             *instance.instance_colour_ = part.colours_[remainder];
             *instance.instance_vector_ = part.vectors_[remainder];
@@ -3269,7 +3260,7 @@ void __cdecl vox_draw_scene(VoxRenderRecord *record, VoxSceneState *state,
     const int want_shadow = state_bytes[0x8c];
 
     for (int index = 0; index < state->instance_count_; ++index) {
-        CaviarData &instance = state->instances_[index];
+        VoxInstance &instance = state->instances_[index];
         if ((instance.instance_colour_[step] & 0x80) != 0) {
             continue;
         }
@@ -3540,7 +3531,7 @@ void __cdecl vox_transform_camera(VoxSceneState *state, int step,
 
     int index = 0;
     do {
-        CaviarData &instance = state->instances_[index];
+        VoxInstance &instance = state->instances_[index];
         CvrShape &shape = *state->instance_steps_[index].shape_;
         float scale = shape.scale_ * state->scale_;
 
@@ -3952,7 +3943,7 @@ int CaviarData::init(char *name) {
         record_ = 0;
     }
     int fd = _open(name, 0x8000);
-    fileDescriptor_ = (void *)(unsigned int)fd;
+    fileDescriptor_ = fd;
     if (fd == -1) {
         return 6;
     }
@@ -3962,7 +3953,7 @@ int CaviarData::init(char *name) {
         return 0x17;
     }
     if (fileDescriptor_ != 0) {
-        _close((int)fileDescriptor_);
+        _close(fileDescriptor_);
         fileDescriptor_ = 0;
     }
     return 0;
@@ -4210,7 +4201,7 @@ void Caviar::init() {
     close();
 
     for (int index = 0; index < 200; ++index) {
-        CaviarData &instance = slots_[index];
+        VoxInstance &instance = slots_[index];
         instance.instance_colour_ = static_cast<uint8_t *>(mem_get(1));
         if (instance.instance_colour_ == 0) {
             close();

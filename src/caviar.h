@@ -100,11 +100,26 @@ struct CvrStep {
 
 struct CaviarData;
 
+// Renderer-owned destinations, not loaded CVR models. Caviar::init allocates
+// 1/12/36 bytes per entry; Caviar::close releases all three. The renderer's
+// destructor tails close without a second array-destructor traversal.
+struct VoxInstance {
+  VoxInstance() : instance_colour_(0), instance_vector_(0), instance_matrix_(0) { }
+  uint8_t *instance_colour_;
+  // RECOVERY_MEMBER: v3 VoxInstance instance_vector_ VOX_Vect* 0x4 0x00616DE0
+  VOX_Vect *instance_vector_;
+  // RECOVERY_MEMBER: v3 VoxInstance instance_matrix_ VOX_Matrix* 0x8 0x00616DE0
+  VOX_Matrix *instance_matrix_;
+};
+
+static_assert(sizeof(VoxInstance) == 0xC, "renderer instance entries have 12-byte stride");
+
 // 0x0076E890, defined in caviar.cpp. Declared here (not in a game.cpp static)
 // so the 0x300-byte pointer table load_bases (0x00453A20) fills can name its
 // end bound as this object instead of a second name for the same address -
 // the duplicate-globals census counts that as two names for one address.
 extern CaviarData g_VCTB_CAVIARDATA;
+extern CaviarData g_VBP_CAVIARDATA;
 struct VOX_ScnRenderHnd;
 struct VOX_Rect;
 struct VoxRenderRecord;
@@ -123,8 +138,8 @@ struct VoxSceneState {
   int32_t instance_count_;     // +0x04  Caviar::field_1C_, the count render
                                //         stores before it draws
   uint32_t draw_flags_;        // +0x08  Caviar::field_20_
-  CaviarData *instances_;      // +0x0C  Caviar::field_24_, &slots_[0]: the
-                               //         12-byte stride is one CaviarData
+  // RECOVERY_MEMBER: v3 VoxSceneState instances_ VoxInstance* 0xC 0x0063A6F0
+  VoxInstance *instances_;     // +0x0C  Caviar::field_24_, &slots_[0]
   CvrStep *instance_steps_;    // +0x10  Caviar::field_28_, &instance_steps_[0]
   VOX_Vect scene_offset_;      // +0x14  Caviar::field_2C_ .. field_34_
   VOX_Matrix scene_rotation_;  // +0x20  Caviar::rotation_ at 0x38
@@ -198,59 +213,26 @@ static_assert(sizeof(CvrShadow) == 0xC, "CVR shadow entries have three words");
 
 struct CaviarData {
  public:
-  // IN-CLASS and `MEASURED`, not out-of-line in caviar.cpp: `Caviar::Caviar()`
-  // has to be able to FOLD this into its 200-element array-construction loop,
-  // which is what the image writes out inline there. `MEASURED` rather than a
-  // plain `inline` keeps 0x00616BC0's own COMDAT measurable; its marker stays
-  // in caviar.cpp with a `// body` fact.
+  // Loaded models have their own lifetime: original array initialization
+  // supplies 0x616BC0 and destructor 0x456100 to the EH iterator.
   MEASURED CaviarData() : field_0_(0), fileDescriptor_(0), record_(nullptr) { }
+  ~CaviarData() { close(); }
   void close();
   // 0x00616BD0. Loads a .cvr file into this slot: releases whatever record
   // it still holds, opens the file, hands the descriptor to the loader and
   // closes it again once the record is built.
   int init(char *name);
+  const CvrRecord *record() const { return record_; }
 
  private:
-  // ALL THREE ARE OWNED ALLOCATIONS. `Caviar::close` frees and nulls every one
-  // of them for all 200 slots - `[esi-4]`, `[esi]`, `[esi+4]` around 0x750 -
-  // so modelling the first two as `uint32_t` said less than the image does.
-  // `CaviarData::close` still only releases `record_`, through the helper;
-  // the two teardowns are genuinely different and both are in the image.
-  //
-  // TWO ROLES FOR THE SAME 12 BYTES, and the allocations prove both. While a
-  // .cvr definition is loaded the slot holds the loader's three handles, the
-  // third being the renderer record `close` releases. Once `add_object` has
-  // instantiated that definition into the renderer's instance table the same
-  // three dwords hold the per-instance DESTINATIONS a draw writes through:
-  // `Caviar::init` allocates 1 byte, 0xC bytes and 0x24 bytes per instance
-  // and stores the three answers here, which is a colour byte, a VOX_Vect and
-  // a VOX_Matrix.
-  union {
-    struct {
-      void *field_0_;         // +0x0
-      void *fileDescriptor_;  // +0x4
-      CvrRecord *record_;     // +0x8, the renderer record close releases
-    };
-    struct {
-      uint8_t *instance_colour_;    // +0x0
-      VOX_Vect *instance_vector_;   // +0x4
-      VOX_Matrix *instance_matrix_; // +0x8
-    };
-  };
+  uint32_t field_0_;         // +0x0, zeroed; role unresolved
+  // RECOVERY_MEMBER: v1 CaviarData fileDescriptor_ 0x4 0x00616BD0
+  int fileDescriptor_;       // +0x4, CRT _open result, including -1
+  // RECOVERY_MEMBER: v3 CaviarData record_ CvrRecord* 0x8 0x00616C60
+  CvrRecord *record_;        // +0x8, released by close and the destructor
 
-  // The renderer owns these slots and tears them down in bulk.
+  // add_object reads loaded definitions into separate VoxInstance storage.
   friend class Caviar;
-  // The engine's camera transform reads the two per-instance destinations a
-  // draw writes through - the vector at +0x4 and the matrix at +0x8 of the
-  // second view above (image 0x63A740 `[ebp + 4]`, 0x63A786 `[ebp + 8]`).
-  friend void __cdecl vox_transform_camera(VoxSceneState *state, int step,
-                                           VOX_Vect *position,
-                                           VOX_Vect *extent);
-  // The engine's draw reads the same two destinations plus the colour byte
-  // the draw tests bit 0x80 of.
-  friend void __cdecl vox_draw_scene(VoxRenderRecord *record,
-                                     VoxSceneState *state,
-                                     VoxCameraBlock *view, int step);
 };
 
 class Caviar {
@@ -262,14 +244,8 @@ class Caviar {
   // three allocations per instance, the rotation, the clipping defaults and
   // the channel bounds, then switches the renderer on.
   void init();
-  // No `??1Caviar@@...` is catalogued anywhere in the image; every embedding
-  // class's own teardown (StatusWin::~StatusWin, and the still-forwarded
-  // BaseWin/DesignWin/ProdPicker destructors) reaches Caviar through
-  // close() instead of a destructor call. Giving Caviar member subobjects a
-  // real (not raw-storage) presence needs SOME destructor for the compiler
-  // to invoke automatically in reverse declaration order, so this one
-  // forwards to the same close() the image itself calls - not a
-  // byte-matching trick, a real reading of how Caviar tears down.
+  // Original 0x4210F0 tails close; instance entries have no additional
+  // destructor work. Loaded CaviarData models have a separate destructor.
   ~Caviar() { close(); }
   void set_camera_direct(const VOX_Vect *camera, const VOX_Matrix *matrix);
   void set_scaling(float scaling);
@@ -457,15 +433,10 @@ class Caviar {
   // +0x2C entry the instance was built from; 0x10C + 200*8 is 0x74C, so it is
   // exactly 200 long and 0x13CC is the count in use.
   CvrStep instance_steps_[200];  // 0x10C
-  // THE OBJECT-DATA ARRAY. The image does NOT memset it - it runs a 200-turn
-  // loop writing three zero dwords per element, which is `CaviarData`'s own
-  // constructor folded into the implicit array construction. Declaring the
-  // array means neither that nor `Caviar::close` has to reach it through a
-  // cast, and `Caviar::Caviar()` writes nothing about it at all.
-  // The arithmetic reconciles exactly: 200 * 0xC is 0x960, from 0x74C to
-  // 0x10AC, and 0x960 + 0x320 is 0xC80, which is what the four fields this
-  // replaces occupied (4 + 4 + 4 + 0xC74).
-  CaviarData slots_[200];       // 0x74C
+  // Original construction clears three pointers per entry; close frees
+  // those allocations directly, never passing them to model-record cleanup.
+  // RECOVERY_MEMBER: v4 Caviar slots_ VoxInstance[200] 0x74C 0x960 0x00616DA0
+  VoxInstance slots_[200];      // 0x74C
   // Per-instance colour sources: add_object selects the record's palette
   // after its 0x302-byte header, or the supplied byte buffer. object_start
   // copies 0x1800 bytes from the selected pointer, not from a numeric ID.

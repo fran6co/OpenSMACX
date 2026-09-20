@@ -1,0 +1,25 @@
+{
+  "event_id": "8819165def81812b88c37e8c7be868dadd034629ea442e1dc4faea7abf7141d5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/statuswin.cpp"
+    ],
+    "evidence": [
+      "Annotation-only permission for the ordinary header-defined Caviar destructor naturally emitted by StatusWin member EH cleanup. No StatusWin executable source changes. Original 0x4210F0 tails Caviar::close at0x617020; normal StatusWin teardown calls close directly while its EH cleanup needs the destructor. Both native flag sets independently observe this selection after the real model/instance split."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4329712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "181241f8ced486199ae1a58bea78a0c52afcc7de5694e89283df89d8bfc63a3c",
+  "request_id": "caviar-natural-destructor-host-20260920",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:caviar-matrix-operations"
+}

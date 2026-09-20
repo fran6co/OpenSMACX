@@ -32,6 +32,8 @@ def assert_native_layouts(obj):
                    "field_18_","parts_name_","step_count_","part_count_","slot_table_",
                    "steps_","parts_","shadows_","field_38_","field_3C_","user_length_")
     expected={
+        "CaviarData":(12,{"field_0_":0,"fileDescriptor_":4,"record_":8}),
+        "VoxInstance":(12,{"instance_colour_":0,"instance_vector_":4,"instance_matrix_":8}),
         "CvrRecord":(0x44,{name:index*4 for index,name in enumerate(record_fields)}),
         "CvrPart":(12,{"colours_":0,"vectors_":4,"matrices_":8}),
         "CvrStep":(8,{"lead_":0,"shape_":4}),
