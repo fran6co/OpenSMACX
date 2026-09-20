@@ -1,0 +1,18 @@
+{
+  "event_id": "361cac9b603173566a712b2f2d5e36a9e9cd64f49827d406ac7d72e9c1ab5e5d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "vector-definition-order-restoration-hypothesis-20260920",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native private overlays against unchanged defac5d8 source tested ordinary destructor before and after close, then token-identical inline destructor delayed until after close. Working inline constructor, arithmetic and configured flags were unchanged. Each trial passed unchanged-replica controls for vector.cpp/veh.cpp and independent compiled header/close damage witnesses under both configured flag sets.",
+      "The ordinary-before case emits35/35/44 instructions for add/sub/cross in the first flag set; ordinary-after and delayed-inline remain27/27/36, as current source, versus originals22/22/31. Neither flag set restores matching. Both ordinary cases also replace genuine veh_scoot direct-close cleanup calls with destructor calls. Delayed inline preserves those references but supplies no arithmetic improvement. Reject ordering alone as a restoration route; no candidate was published and all historical matching obligations remain."
+    ]
+  },
+  "previous_event": "93078f819969c97b450e4785c313522328529d62c3fd3c9fa7188ddd32f77bf5",
+  "request_id": "reject-vector-order-alone-restoration-20260920",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:vector-value-semantics"
+}

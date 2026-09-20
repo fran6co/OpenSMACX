@@ -1,0 +1,111 @@
+{
+  "event_id": "55372f1d2470546009a0ed4997ffa93ec435df8b82161b7875ed5d214acb8d32",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_console_cursor_storage.py",
+      "recovery/tests/test_editor_generate.py",
+      "src/console.cpp",
+      "src/console.h",
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Authorize a bounded Console-owned structural sub-batch of the renderer dependency recovery, in a new isolated coordinator-owned worktree. Existing previously integrated InfoWin/Console task history remains intact; there is no competing active Console editor. Preserve the original vector task baseline and discoveries. Scope is solely six cursor/survey members and their existing product consumers; do not implement gen_radius or other renderer functions in this batch.",
+      "Pinned original ConsoleGlobal9156B0 plus23BF8/23C00/23C08/23C0C/23C10/23C90 equals9392A8/9392B0/9392B8/9392BC/9392C0/939340. Replace false separate EditorGenerateUndoDepth, CursorLastIndex/X/Y storage and fixed CursorDrawSuppressed alias with those real members. Preserve uint32 for the two mode/flag fields; indexes and X/Y use signed int32. Survey515450 establishes four states, so use survey_mode_, never bool. Use provisional field_23BF8_ unless broader flag naming is independently supported.",
+      "Constructor50F5C8..5EE and close51D81B..83C repeatedly clear only X[0]/Y[0], not all32entries; neither resets the head23C0C. Preserve this original behavior and zero-initialized global versus separately constructed receiver distinction. load_daemon5A9A02..32 independently bounds each array to32dwords. cursor_next510A01..19 reads ConsoleGlobal before510A1D..4C writes the receiver; preserve that distinction and signed modulo. Replace the current out-of-bounds X-array-plus32 Y store with the genuine Y member.",
+      "Original prev_cursor510B14..23 decrements and wraps using a sign branch; subsequent global history reads reload around StatusWin set_loc. Do not cache callback-visible state or substitute this for absolute global reads. Replace close raw member stores and focus raw23C00 access with actual members. Source owns offset/evidence annotations, not run logs; original markers and claims remain unchanged.",
+      "Add actual-body positive and mutation controls for separate receiver/global state, append/backward wrap, callback mutation, array isolation, original partial reset, survey transitions and global editor clear. Update the existing editor_generate harness. Require fresh native build/link, affected protected matches, member layout and references, source/claim checks and coordinator source review before integration. No automatic demotion or new matching regressions are authorized; preserve and report any justified structural mismatch for explicit review. Only lower relevant cleanup ceilings after actual counts fall; no baseline/gate/framework changes.",
+      "Retain outside-scope discoveries: Blink2Counter9392B4 overlaps Console+23C04; KeyStatePollSuppressed9393C0 overlaps+23D10. Do not silently extend this batch to those aliases or discard the findings. Seeds, including src/recovered/004e09b0.cpp, stay evidence-only and unedited."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5305440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5363664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5310896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5310624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5311712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5115856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5327024,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5326816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5330224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5311072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5329920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5335472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5330000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5313664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4632064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4597872,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "361cac9b603173566a712b2f2d5e36a9e9cd64f49827d406ac7d72e9c1ab5e5d",
+  "request_id": "console-cursor-renderer-ownership-scope-20260920",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:vector-value-semantics"
+}
