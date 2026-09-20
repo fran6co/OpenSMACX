@@ -1036,8 +1036,8 @@ int TexHeap::get_mem(int size) {
 
 /*
 Purpose: Hand out the first sheet-heap block whose free tail fits `size` and
-         whose `current_` cursor is 16-byte aligned in its low half, returning
-         the block's own address as the handle. The walk is get_mem's, with
+         whose `current_` cursor is 64-KiB aligned (low 16 bits zero), returning
+         the payload from Heap::get. The walk is get_mem's, with
          one more condition in the filter, and `Texture::extract` is its only
          caller - it takes the returned block as a borrowed texture rather
          than allocating fresh pixels.

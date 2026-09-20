@@ -9,6 +9,11 @@ The color-key test executes the complete live 61A240 draw_trans and its local
 helpers. Buffer lock/unlock and floating-point environment calls are explicit
 doubles; native layout, actual x87 flags, shared scratch side effects and game
 rendering remain outside this host evidence.
+
+The packed 6198E0 test retains the actual body and typed edge helpers, with a
+delegating call observer for its initial edge setups. Guarded host buffers test
+inclusive opaque copying and independent packed coordinate arithmetic, not the
+original allocator's 64-KiB alignment or shared-scratch side effects.
 """
 
 from pathlib import Path
@@ -140,9 +145,18 @@ def test_compiling_vertex_scan_mutations_are_rejected(tmp_path, before, after):
 
 def raster_bodies():
     source = (ROOT / "src/texture.cpp").read_text()
-    names = ("texture_fixed", "texture_difference", "texture_edge",
-             "texture_advance_edge", "texture_span_step")
-    result = {name: braced(source, "static int " + name + "(") for name in names}
+    result = {name: braced(source, "static int " + name + "(")
+              for name in ("texture_fixed", "texture_difference")}
+    for coordinate_type in ("EdgePoint", "Vert"):
+        for axis in ("u", "v"):
+            signature = "static int texture_" + axis + "(const " + coordinate_type + " &uv)"
+            result[axis + "_" + coordinate_type] = braced(source, signature)
+    for name in ("texture_edge", "texture_advance_edge"):
+        # Include the actual template prefix, not a fixture-created substitute.
+        signature = re.search(r"template\s*<class Coordinates>\s*static int "
+                              + name + r"\(", source).group()
+        result[name] = braced(source, signature)
+    result["texture_span_step"] = braced(source, "static int texture_span_step(")
     result["texture_reset_fpu"] = braced(source, "static void texture_reset_fpu() {")
     result["draw_trans"] = braced(source, "void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {")
     return result
@@ -405,4 +419,246 @@ def test_lock_callback_state_cannot_be_captured_early(tmp_path, declaration):
     brace = method.index("{") + 1
     actual["draw_trans"] = method[:brace] + "\n" + declaration + method[brace:]
     result = run_host(tmp_path, raster_harness(actual))
+    assert result.returncode == 42, result.stderr
+
+
+def packed_bodies():
+    actual = raster_bodies()
+    actual["draw_trans"] = braced(
+        (ROOT / "src/texture.cpp").read_text(),
+        "void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {")
+    return actual
+
+
+def packed_harness(methods, observe_initial=True):
+    methods = dict(methods)
+    # Observe initial calls while delegating every calculation to the actual
+    # helper. The macro is scoped to the unchanged draw body only; the already
+    # defined advance helper retains its direct actual edge-helper calls.
+    if observe_initial:
+        methods["draw_trans"] = r'''
+        int initial_edge_calls;
+        template<class Coordinates>
+        int observe_initial_edge(EdgeScan &edge, int index, const Vert *vertices,
+                                 const Coordinates *uv, int count, int bottom) {
+            require(events == std::vector<int>({1,2,3}));
+            ++initial_edge_calls;
+            require(initial_edge_calls <= 2);
+            require(edge.f0 == (initial_edge_calls == 1 ? -1 : 1));
+            return texture_edge(edge, index, vertices, uv, count, bottom);
+        }
+        #define texture_edge observe_initial_edge
+        ''' + methods["draw_trans"] + "\n#undef texture_edge\n"
+    else:
+        methods["draw_trans"] = "int initial_edge_calls;\n" + methods["draw_trans"]
+    # Reuse declaration extraction and the explicit Buffer/FPU doubles from
+    # the color-key fixture. These replacements change fixture scaffolding
+    # only, never any extracted product definition.
+    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace("void draw_trans(Buffer *, Vert *, int);",
+                            "void draw_trans(Buffer *, Vert *, int, Vert *);")
+    common = common.replace("static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];", r'''
+        static unsigned char output[16 * 14], expected[16 * 14];
+        static unsigned char pixel_storage[65536+64], preserved_pixels[65536+64];
+        static unsigned char *pixels = pixel_storage + 32;
+    ''')
+    common = common.replace("struct Buffer {", "void publish_texture();\n        struct Buffer {")
+    common = common.replace("TextureRasterKey = lock_key;",
+                            "TextureRasterKey = lock_key; publish_texture();")
+    common += "\nconst bool observe_initial = " + ("true" if observe_initial else "false") + ";\n"
+    return common + r'''
+        unsigned publish_borrowed;
+        void publish_texture() {
+            texture.pixels_ = pixels;
+            texture.borrowed_ = publish_borrowed;
+        }
+        void start() {
+            events.clear(); initial_edge_calls = 0;
+            std::memset(output, 0xee, sizeof(output));
+            std::memset(expected, 0xee, sizeof(expected));
+            std::memset(pixel_storage, 0xa5, sizeof(pixel_storage));
+            for (int v=0; v<256; ++v) for (int u=0; u<256; ++u)
+                pixels[v*256+u] = static_cast<unsigned char>(u*37+v*71+13);
+            std::memcpy(preserved_pixels, pixel_storage, sizeof(pixel_storage));
+            texture.pixels_ = pixel_storage; // stale pointer before lock
+            texture.borrowed_ = 0;
+            texture.iWidth_ = texture.iHeight_ = 256;
+            publish_borrowed = 1;
+            buffer.rect1_={0,0,0,0}; buffer.stride_=8;
+            lock_clip={0,0,12,12}; lock_stride=16;
+            TextureRasterKey=255; lock_key=0x120000u | pixels[3*256+2];
+        }
+        void sample(int x, int y, int u, int v) {
+            require(x >= 0 && x < 16 && y >= 0 && y < 12);
+            require(u >= 0 && u < 256 && v >= 0 && v < 256);
+            // No key filtering: every source palette value is copied.
+            expected[16+y*lock_stride+x] = pixels[v*256+u];
+        }
+        void finish(Vert *vertices, int count, Vert *uv, bool raster=true, int setups=2) {
+            std::vector<Vert> saved_vertices, saved_uv;
+            if (count > 0) {
+                saved_vertices.assign(vertices, vertices+count);
+                saved_uv.assign(uv, uv+count);
+            }
+            texture.draw_trans(&buffer, vertices, count, uv);
+            if (observe_initial) require(initial_edge_calls == setups);
+            const std::vector<int> active = {1,2,3,4,5,2,3};
+            const std::vector<int> inactive = {1,2,3,5,2,3};
+            require(events == (raster ? active : inactive));
+            require(std::memcmp(output, expected, sizeof(output)) == 0);
+            require(std::memcmp(pixel_storage, preserved_pixels, sizeof(pixel_storage)) == 0);
+            if (count > 0) {
+                require(std::memcmp(vertices, saved_vertices.data(), count*sizeof(Vert)) == 0);
+                require(std::memcmp(uv, saved_uv.data(), count*sizeof(Vert)) == 0);
+            }
+        }
+        int main() {
+            // Arbitrary signed counts, not the other overload's 4/8 selector.
+            Vert triangle[]={{1,1},{5,1},{1,3}};
+            Vert triangle_uv[]={{2,3},{2,3},{2,3}};
+            start();
+            for (int x=1; x<=5; ++x) sample(x,1,2,3);
+            for (int x=1; x<=3; ++x) sample(x,2,2,3);
+            finish(triangle,3,triangle_uv); // texel equals the current key
+
+            Vert pentagon[]={{1,1},{3,1},{5,1},{5,3},{1,3}};
+            Vert pentagon_uv[5];
+            for (auto &uv : pentagon_uv) uv={6,7};
+            start();
+            for (int y=1; y<3; ++y) for (int x=1; x<=5; ++x) sample(x,y,6,7);
+            finish(pentagon,5,pentagon_uv);
+
+            Vert perimeter[]={{1,1},{2,1},{3,1},{5,1},{5,2},{5,3},
+                              {4,3},{3,3},{2,3},{1,3},{1,2},{1,1}};
+            Vert perimeter_uv[12];
+            for (auto &uv : perimeter_uv) uv={6,7};
+            start();
+            for (int y=1; y<3; ++y) for (int x=1; x<=5; ++x) sample(x,y,6,7);
+            finish(perimeter,12,perimeter_uv);
+
+            // Opposite fractional X edge slopes: -2/3 delays its first
+            // left correction while +2/3 advances the right edge immediately.
+            Vert sloped[]={{2,0},{5,0},{7,3},{0,3}};
+            Vert sloped_uv[]={{6,7},{6,7},{6,7},{6,7}};
+            start();
+            const int left[]={2,2,1}, right[]={5,6,7};
+            for (int y=0; y<3; ++y) for (int x=left[y]; x<=right[y]; ++x) sample(x,y,6,7);
+            finish(sloped,4,sloped_uv);
+
+            // At row1, left=(255.75,3.25), du=.5,dv=.75. These explicit
+            // original packed-ADC samples distinguish independent byte wraps
+            // from a linear pointer increment carrying U into V.
+            Vert rectangle[]={{1,0},{5,0},{5,4},{1,4}};
+            Vert fractional_uv[]={{255,3},{257,6},{260,7},{258,4}};
+            const int positive_uv[5][2]={{255,3},{0,4},{0,4},{1,5},{1,6}};
+            start(); lock_clip={0,1,12,2};
+            for (int i=0; i<5; ++i) sample(1+i,1,positive_uv[i][0],positive_uv[i][1]);
+            finish(rectangle,4,fractional_uv);
+            start(); lock_clip={3,1,4,2};
+            sample(3,1,0,4); sample(4,1,1,5); // includes clip.right
+            finish(rectangle,4,fractional_uv);
+
+            // Independent fractional borrow in U and V, modulo256.
+            Vert short_row[]={{1,1},{5,1},{5,2},{1,2}};
+            Vert negative_uv[]={{0,0},{-2,-1},{-2,-1},{0,0}};
+            const int negative_samples[5][2]={{0,0},{255,255},{255,255},{254,255},{254,255}};
+            start();
+            for (int i=0; i<5; ++i) sample(1+i,1,negative_samples[i][0],negative_samples[i][1]);
+            finish(short_row,4,negative_uv);
+
+            // Integer steps wrap each component too, including the V byte.
+            Vert wrap_uv[]={{254,254},{258,258},{258,258},{254,254}};
+            start();
+            const int diagonal[]={254,255,0,1,2};
+            for (int i=0; i<5; ++i) sample(1+i,1,diagonal[i],diagonal[i]);
+            finish(short_row,4,wrap_uv);
+
+            // PC24/chop rounds the width3 slope below65536; the inclusive
+            // four samples are U=[0,0,1,2], not the exclusive kernel's three.
+            Vert width_three[]={{1,1},{4,1},{4,2},{1,2}};
+            Vert width_three_uv[]={{0,0},{3,0},{3,0},{0,0}};
+            start();
+            sample(1,1,0,0); sample(2,1,0,0); sample(3,1,1,0); sample(4,1,2,0);
+            finish(width_three,4,width_three_uv);
+
+            // Signed negative screen/UV coordinates, clipped on all four
+            // sides. Constant UV=-1,-2 selects packed column255,row254.
+            Vert clipped[]={{-2,-1},{4,-1},{4,3},{-2,3}};
+            Vert clipped_uv[]={{-1,-2},{-1,-2},{-1,-2},{-1,-2}};
+            start(); lock_clip={0,0,2,2};
+            for (int y=0; y<2; ++y) for (int x=0; x<=2; ++x) sample(x,y,255,254);
+            finish(clipped,4,clipped_uv);
+
+            // A zero-width clip strictly inside a positive raw span writes
+            // one pixel. Merely touching the raw endpoint still rejects.
+            start(); lock_clip={3,1,3,2}; sample(3,1,255,255);
+            finish(short_row,4,negative_uv);
+            start(); lock_clip={5,1,7,2}; finish(short_row,4,negative_uv);
+            start(); lock_clip={0,1,1,2}; finish(short_row,4,negative_uv);
+            Vert reversed[]={{1,1},{1,3},{5,1}};
+            start(); finish(reversed,3,triangle_uv);
+            Vert vertical[]={{2,1},{2,3}};
+            start(); finish(vertical,2,triangle_uv);
+
+            // Edge setup still precedes the borrowed-zero guard, while the
+            // active PC24 policy and pixel loop do not run in this case.
+            start(); publish_borrowed=0;
+            finish(short_row,4,negative_uv,false,2);
+            start(); lock_clip={0,0,12,1}; finish(short_row,4,negative_uv);
+            start(); finish(triangle,0,triangle_uv,false,0);
+            start(); finish(triangle,-1,triangle_uv,false,0);
+            Vert flat[]={{1,1},{3,1},{5,1},{1,1}};
+            start(); finish(flat,4,negative_uv,false,0);
+        }
+    '''
+
+
+@pytest.mark.parametrize("observe_initial", [False, True])
+def test_actual_packed_opaque_raster(tmp_path, observe_initial):
+    result = run_host(tmp_path, packed_harness(packed_bodies(), observe_initial))
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("before,after", [
+    ("i < count", "i < (count > 4 ? 4 : count)"),
+    ("+ 1u;", "+ 0u;"),
+    ("*out = pixels[row * 256 + column];",
+     "if (pixels[row * 256 + column] != static_cast<unsigned char>(TextureRasterKey)) *out = pixels[row * 256 + column];"),
+    ("row * 256 + column", "row * 255 + column"),
+    ("column = (column + column_step + (uf >> 16)) & 0xff;",
+     "column = (column + column_step) & 0xff;"),
+    ("column = (column + column_step + (uf >> 16)) & 0xff;",
+     "row = (row + ((column + column_step + (uf >> 16)) >> 8)) & 0xff; column = (column + column_step + (uf >> 16)) & 0xff;"),
+    ("row = (row + row_step + (vf >> 16)) & 0xff;",
+     "row = (row + row_step) & 0xff;"),
+    ("row = (row + row_step + (vf >> 16)) & 0xff;",
+     "row = (row + row_step + (uf >> 16)) & 0xff;"),
+    ("const unsigned int column_step = static_cast<unsigned char>(du >> 16);",
+     "const unsigned int column_step = 0;"),
+    ("if (y >= clip.top && end > clip.left && x < clip.right && end > x)",
+     "if (!done && y >= clip.top && end > clip.left && x < clip.right && end > x)"),
+    ("end > clip.left && x < clip.right", "end >= clip.left && x <= clip.right"),
+    ("if (min_y < max_y && texture_edge", "if (borrowed_ != 0 && min_y < max_y && texture_edge"),
+])
+def test_compiling_packed_mutations_are_rejected(tmp_path, before, after):
+    actual = packed_bodies()
+    assert actual["draw_trans"].count(before) == 1
+    actual["draw_trans"] = actual["draw_trans"].replace(before, after)
+    result = run_host(tmp_path, packed_harness(actual))
+    assert result.returncode == 42, result.stderr
+
+
+@pytest.mark.parametrize("declaration", [
+    "const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);",
+    "const int stride = static_cast<int>(buffer->stride_);",
+    "const RECT clip = buffer->rect1_;",
+])
+def test_packed_lock_publication_cannot_be_captured_early(tmp_path, declaration):
+    actual = packed_bodies()
+    method = actual["draw_trans"]
+    assert method.count(declaration) == 1
+    method = method.replace(declaration, "")
+    brace = method.index("{") + 1
+    actual["draw_trans"] = method[:brace] + "\n" + declaration + method[brace:]
+    result = run_host(tmp_path, packed_harness(actual))
     assert result.returncode == 42, result.stderr

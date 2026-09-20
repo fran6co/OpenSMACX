@@ -118,7 +118,9 @@ class Texture {
   // 0x006196D0: rectangle forwarding overload. The third incoming 32-bit
   // slot is unused; int preserves its ABI without claiming its original type.
   int extract(Buffer *buffer, RECT *rect, int unused);
-  void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last);
+  // 0x006198E0 uses explicit UV vertices and opaque, inclusive spans from
+  // borrowed 256-byte-pitch texture pages; unlike the color-key overload.
+  void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *uv);
   // 0x0061A281..0x0061A2AA selects four vertices for zero, eight otherwise.
   void draw_trans(Buffer *buffer, Vert *verts, int use_eight_vertices);
   // 0x006239B0, the narrowest of the sentinel wrappers: a5 == -1 forwards

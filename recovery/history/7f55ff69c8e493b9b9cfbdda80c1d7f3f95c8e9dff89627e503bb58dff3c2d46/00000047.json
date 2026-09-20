@@ -1,0 +1,22 @@
+{
+  "event_id": "2759d991070e011aa7af1d53074e7152fb55a19764e837f50cab80b3e34af0eb",
+  "payload": {
+    "affects": [
+      "entity-477a7d325bf9c957e372fa9ecfe8a5ec5deec0c7d40d760ee923fa055b96907b",
+      "entity-df9867ecd9c3a2a302aa1042fdbda4b1d05c146c05c06fb9bf9322afc8223e4a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "packed-texture-remaining-edge-shadow-20260920",
+    "evidence": [
+      "src/texture.cpp still declares EdgeScanShadow as twelve int words for the neighboring61A760 partial body. Original setup_edge624D80 writes the thirteenth word at offset0x30; retained shadow storage cannot satisfy that extent and its direction initialization is incomplete. Do not delete a still-used declaration or claim the neighboring body recovered merely because6198E0 now uses the real EdgeScan.",
+      "Packed6198E0 integration is bounded to its authorized group; retain the finding for a separately authorized neighboring-body implementation. Preserve original mappings, seeds and claims. Shared-scratch/FP callback status and exceptional geometry remain pending from the earlier raster decision, including extrema sentinel hazards outside normal established-extrema input."
+    ],
+    "hypothesis": "The neighboring unrecovered Texture overload retains an undersized edge scratch declaration and requires a coupled real-edge recovery; the packed raster no longer uses it.",
+    "kind": "discovery"
+  },
+  "previous_event": "6864bd669085753e6ded1758f777cee07f1722677f0dc3beabf0d982a52fb43c",
+  "request_id": "packed-texture-remaining-edge-shadow-20260920",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:vector-value-semantics"
+}
