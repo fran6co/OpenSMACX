@@ -230,7 +230,13 @@ int Palette::create_table_from_color(int color,unsigned char *table,int start,in
         const int first=optional_defaults ? 50 : config["ARMORCOLORING_TRANS"][1];
         const int second=optional_defaults ? 100 : config["ARMORCOLORING_TRANS"][2];
         check(color==(optional_defaults ? 0 : (unsigned(config["ARMORCOLORING_TRANS"][0])+10u)&255u));
-        check(weight==((24-row)*first+row*second)/12); located=true;
+        check(weight==((24-row)*first+row*second)/24);
+        if (first==50 && second==100) {
+            const int expected[24]={50,52,54,56,58,60,62,64,66,68,70,72,75,77,79,81,83,85,87,89,91,93,95,97};
+            check(weight==expected[row]);
+        }
+        if (first==-1 && second==0) check(weight==(row==0 ? -1 : 0));
+        located=true;
     }
     check(located);
     if (start!=0) check(start==10 && count==236 && keep==100-weight);
@@ -303,7 +309,11 @@ void prime() {
 }
 void producer_case(const std::string &scenario) {
     initialize();
-    if (scenario=="cold" || scenario=="defaults" || scenario=="indices_wrap") {
+    if (scenario=="cold" || scenario=="defaults" || scenario=="indices_wrap" || scenario=="negative_transparent") {
+        if (scenario=="negative_transparent") {
+            config["ARMORCOLORING_TRANS"][1]=-1;
+            config["ARMORCOLORING_TRANS"][2]=0;
+        }
         if (scenario=="defaults") {
             optional_defaults=true;
             config.erase("VEHICLECOLORING"); config.erase("ARMORCOLORING");
@@ -433,7 +443,7 @@ def run(executable,scenario):
 
 @pytest.mark.parametrize("scenario",[
     "compare_equal","compare_changed","compare_missing","compare_create_failure",
-    "cold","defaults","indices_wrap","warm","palette_changed",*("basic:"+str(i) for i in range(6)),
+    "cold","defaults","indices_wrap","negative_transparent","warm","palette_changed",*("basic:"+str(i) for i in range(6)),
     "explosion:0","explosion:6","explosion:12","territory","armor","transparent",
     "omitted_weight","guarded_create","mandatory_create","body_missing","short_palette",
     "throw:text:energyglow","throw:pixel","throw:nearest","throw:+File1","throw:+Buffer",
@@ -456,10 +466,13 @@ def test_each_serialized_segment_invalidates(executable,offset):
     ("hide_missing_body","body_missing"), ("missing_tint_store","cold"),
     ("missing_text_get","cold"),
     ("unguarded_basic_create","guarded_create"),
+    ("wrong_divisor12","cold"), ("wrong_divisor3","cold"),
 ])
 def test_runtime_damage(tmp_path,damage,scenario):
     _,bodies,_=live_source()
     changes={
+        "wrong_divisor12": ("row * transparent_second) / 24", "row * transparent_second) / 12"),
+        "wrong_divisor3": ("row * transparent_second) / 24", "row * transparent_second) / 3"),
         "local_palette": ("g_PALETTE1.create_table(ShadowColorTable", "local_palette.create_table(ShadowColorTable"),
         "stale_territory": ('if (!regenerate) territory_cache = file.open("territory.tmp", 1);',
                             'territory_cache = file.open("territory.tmp", 1);'),

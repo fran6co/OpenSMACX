@@ -1,0 +1,25 @@
+{
+  "event_id": "bc1e5e3bdb9570910da26f80f0568da0f5088818e3cbe524f085c048ed09dcee",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_palette_production.py"
+    ],
+    "evidence": [
+      "Pinned4242E9..4242FD uses signed high multiplication by0x2AAAAAAB, arithmetic right shift2 and sign correction: divide24, not previously landed12. Example numerator24 produces1. Correct genuine palette producer and independent expected values; add original-instruction and negative-division controls plus divisor damage. No claim demotion; original colortables_init remains unclaimed. Worker is sole editor of game.cpp in isolated voxel-loading checkout, so fix this discovered regression in the same verified batch; rerun full palette and preservation suite."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4339056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0ac98a4df8cd2a69dcc68bde2a54c4321421d4262a0f893ded8593d3857f8652",
+  "request_id": "correct-signed-palette-divisor-20260920",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:caviar-matrix-operations"
+}

@@ -54,6 +54,213 @@
 #include "filemap.h"
 #include "palette.h"
 #include "caviar.h"
+#include "leaf_recoveries.h"
+
+// Each row maps every palette index to its row number (original 0x007A81A0).
+// RECOVERY_OBJECT: v2 0x007A81A0 0x007A99A0 ?VoxelRowColorTables@@3PAY0BAA@EA 0x00451030
+unsigned char VoxelRowColorTables[24][256];
+
+// The temporary model retains the fourth record until scope exit, including
+// unwinding. A valid record with a different step count leaves its offset alone.
+// ORIGINAL: 0x00451030 ?load_voxels@@YAXXZ 0x00451030-0x00451A09;0x00655030-0x00655042
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original133ordered init calls establish model receivers, array indices and filename case. Existing caviar.cpp owners supply the actual objects; no original-address pointer stand-ins.", "Original four temporary records read first-part vectors only when step_count is2; null records zero the output and other counts retain it. Only the first two have explicit close calls; the third is replaced by init and the fourth is destroyed after configuration/table work. Original EH655030 reaches CaviarData destructor456100.", "Original4519BA high multiply0x2AAAAAAB and arithmetic shift2 implement signed divide24. Advancing the numerator24 per row yields24rows numbered0..23; the seed divide3 was incorrect. Light settings are individually converted/stored before in-place normalization."], "reason": "Recover voxel asset loading through genuine model objects, renderer setup, typed record parts and source-owned output tables; retain the temporary model through normal and exceptional scope exit."}
+void __cdecl load_voxels() {
+    CaviarData scratch;
+    g_VEHDRAW_CAVIAR.init();
+    vehdraw_setup();
+    g_SSF_CAVIARDATA.init("ssf.cvr");
+    g_SDP_CAVIARDATA.init("sdp.cvr");
+    g_SAS_CAVIARDATA.init("sas.cvr");
+    g_SCD_CAVIARDATA.init("scd.cvr");
+    g_SCJ_CAVIARDATA.init("scj.cvr");
+    g_SAGS_CAVIARDATA.init("sags.cvr");
+    g_SFT_CAVIARDATA.init("sft.cvr");
+    g_VHR_CAVIARDATA1.init("vhr.cvr");
+    g_SHT_CAVIARDATA.init("sht.cvr");
+    g_SRB_CAVIARDATA.init("srb.cvr");
+    g_ASAS_CAVIARDATA.init("asas.cvr");
+    g_RESLASER_CAVIARDATA.init("reslaser.cvr");
+    g_RESBOLT_CAVIARDATA.init("resbolt.cvr");
+    g_FUNLOAD_CAVIARDATA.init("funload.cvr");
+    g_TECLOAD_CAVIARDATA.init("tecload.cvr");
+    g_SP_SOPORIFIC_CAVIARDATA.init("SP-SOPORIFIC.cvr");
+    g_SP_DISSWAVE_CAVIARDATA.init("SP-DISSWAVE.cvr");
+    g_SP_MARINED_CAVIARDATA.init("SP-MARINED.cvr");
+    g_SP_NANOO_CAVIARDATA.init("SP-NANOO.cvr");
+    g_AA01_CAVIARDATA.init("AA01.cvr");
+    g_AA_ROVER_CAVIARDATA.init("AA-Rover.cvr");
+    g_AA_WING_CAVIARDATA[0].init("AA-WING0.cvr");
+    g_AA_WING_CAVIARDATA[1].init("AA-WING.cvr");
+    g_ACP_CAVIARDATA[0].init("ACP00.cvr");
+    g_ACP_CAVIARDATA[1].init("ACP01.cvr");
+    g_ACP_CAVIARDATA[2].init("ACP02.cvr");
+    g_ACP_CAVIARDATA[3].init("ACP03.cvr");
+    g_AA_CAVIARDATA.init("AA.cvr");
+    g_SSFA_CAVIARDATA.init("SSFA.CVR");
+    g_SFTA_CAVIARDATA.init("SFTA.CVR");
+    g_VW00_CAVIARDATA.init("vw00.cvr");
+    g_VIPTAWL_CAVIARDATA.init("viptawal.cvr");
+    g_VIPTASGN_CAVIARDATA.init("viptasgn.cvr");
+    g_VIPTAPSI_CAVIARDATA.init("viptapsi.cvr");
+    g_VIPTR_CAVIARDATA[0].init("viptr00.cvr");
+    g_VIPTR_CAVIARDATA[1].init("viptr01.cvr");
+    g_VIPTR_CAVIARDATA[2].init("viptr02.cvr");
+    g_VIPTR_CAVIARDATA[3].init("viptr03.cvr");
+    g_VIPTA_CAVIARDATA[0].init("vipta00.cvr");
+    g_VIPTA_CAVIARDATA[1].init("vipta01.cvr");
+    g_PTMOD_CAVIARDATA.init("ptmod.cvr");
+    g_VPT_CAVIARDATA.init("vpt.cvr");
+    g_A_CAVIARDATA.init("a.cvr");
+    g_APWALL_CAVIARDATA.init("apwall.cvr");
+    g_APSID_CAVIARDATA.init("apsid.cvr");
+    g_ASGEN_CAVIARDATA.init("asgen.cvr");
+    g_VB_CAVIARDATA.init("VB.CVR");
+    g_VBP_CAVIARDATA.init("VBP.CVR");
+    g_VGMC_CAVIARDATA.init("VGMC.CVR");
+    g_VGMCP_CAVIARDATA.init("VGMCP.CVR");
+    g_VLIGHTS_CAVIARDATA.init("VLIGHTS.CVR");
+    g_VA01_CAVIARDATA.init("VA01.cvr");
+    g_VR_CAVIARDATA[0].init("VR00.cvr");
+    g_VR_CAVIARDATA[1].init("VR01.cvr");
+    g_VR_CAVIARDATA[2].init("VR02.cvr");
+    g_VR_CAVIARDATA[3].init("VR03.cvr");
+    g_VHR_CAVIARDATA2.init("VHR.CVR");
+    g_VRC_CAVIARDATA[0].init("VRCP00.cvr");
+    g_VRC_CAVIARDATA[1].init("VRCP01.cvr");
+    g_VRC_CAVIARDATA[2].init("VRCP02.cvr");
+    g_VRC_CAVIARDATA[3].init("VRCP03.cvr");
+    g_VI_CAVIARDATA.init("VI.CVR");
+    g_VGMT_CAVIARDATA.init("VGMT.CVR");
+    g_VGMTP_CAVIARDATA.init("VGMTP.CVR");
+    g_VW_CAVIARDATA[0].init("VW01.CVR");
+    g_VW_CAVIARDATA[1].init("VW02.CVR");
+    g_VW_CAVIARDATA[2].init("VW03.CVR");
+    g_VW_CAVIARDATA[3].init("VW04.CVR");
+    g_VW_CAVIARDATA[4].init("VW05.CVR");
+    g_VW_CAVIARDATA[5].init("VW06.CVR");
+    g_VW_CAVIARDATA[6].init("VW07.CVR");
+    g_VW_CAVIARDATA[7].init("VW08.CVR");
+    g_VW_CAVIARDATA[8].init("VW09.CVR");
+    g_VW_CAVIARDATA[9].init("VW10.CVR");
+    g_VW_CAVIARDATA[10].init("VW11.CVR");
+    g_VW_CAVIARDATA[11].init("VW12.CVR");
+    g_VW_CAVIARDATA[13].init("VW14.CVR");
+    g_VW_CAVIARDATA[14].init("VW12.CVR");
+    g_AX_CAVIARDATA.init("AX.CVR");
+    g_ACOLPOD_CAVIARDATA.init("ACOLPOD.CVR");
+    g_AT_CAVIARDATA.init("AT.CVR");
+    g_VTA_CAVIARDATA.init("VTA.CVR");
+    g_ATP_CAVIARDATA.init("ATp.CVR");
+    scratch.init("AVGMTGUN.CVR");
+    {
+        const CvrRecord *record = scratch.record();
+        if (!record) {
+            VehGunMountOffset.values[0] = 0.0f;
+            VehGunMountOffset.values[1] = 0.0f;
+            VehGunMountOffset.values[2] = 0.0f;
+        } else if (record->step_count_ == 2) {
+            const VOX_Vect *vectors = record->parts_[0].vectors_;
+            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehGunMountOffset.values);
+        }
+    }
+    scratch.close();
+    g_DROP_CAVIARDATA.init("drop.cvr");
+    g_DROPLET_CAVIARDATA.init("droplet.cvr");
+    scratch.init("adroper.cvr");
+    {
+        const CvrRecord *record = scratch.record();
+        if (!record) {
+            VehDropOffset.values[0] = 0.0f;
+            VehDropOffset.values[1] = 0.0f;
+            VehDropOffset.values[2] = 0.0f;
+        } else if (record->step_count_ == 2) {
+            const VOX_Vect *vectors = record->parts_[0].vectors_;
+            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehDropOffset.values);
+        }
+    }
+    scratch.close();
+    g_VWNTU_CAVIARDATA.init("vwntu.cvr");
+    g_VT_CAVIARDATA.init("vt.cvr");
+    g_VCL_CAVIARDATA.init("VCL.cvr");
+    g_VCLT00_CAVIARDATA.init("VCLT00.CVR");
+    g_VSP_CAVIARDATA.init("VSP.cvr");
+    g_VSPA0_CAVIARDATA[0].init("VSPA01.CVR");
+    g_VSPA0_CAVIARDATA[1].init("VSPA02.CVR");
+    g_VSPTF_CAVIARDATA.init("vsptf.cvr");
+    g_VSPTB_CAVIARDATA.init("vsptb.cvr");
+    g_VHT_VBP_CAVIARDATA.init("vht-vbp.cvr");
+    g_VHTP_CAVIARDATA.init("vhtp.cvr");
+    g_VHTA0_CAVIARDATA[0].init("vhta00.cvr");
+    g_VHTA0_CAVIARDATA[1].init("vhta01.cvr");
+    g_VHTTP_CAVIARDATA.init("vhttp.cvr");
+    g_VHTTPA0_CAVIARDATA[0].init("vhtta00.cvr");
+    g_VHTTPA0_CAVIARDATA[1].init("vhtta01.cvr");
+    scratch.init("AVHT-GunReposition.cvr");
+    {
+        const CvrRecord *record = scratch.record();
+        if (!record) {
+            VehHoverGunOffset.values[0] = 0.0f;
+            VehHoverGunOffset.values[1] = 0.0f;
+            VehHoverGunOffset.values[2] = 0.0f;
+        } else if (record->step_count_ == 2) {
+            const VOX_Vect *vectors = record->parts_[0].vectors_;
+            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehHoverGunOffset.values);
+        }
+    }
+    scratch.init("AVHT-LightsReposition.cvr");
+    {
+        const CvrRecord *record = scratch.record();
+        if (!record) {
+            VehHoverLightsOffset.values[0] = 0.0f;
+            VehHoverLightsOffset.values[1] = 0.0f;
+            VehHoverLightsOffset.values[2] = 0.0f;
+        } else if (record->step_count_ == 2) {
+            const VOX_Vect *vectors = record->parts_[0].vectors_;
+            leaf_00628180_redirect(vectors[1].values, vectors[0].values, VehHoverLightsOffset.values);
+        }
+    }
+    g_VFL_CAVIARDATA.init("VFL.cvr");
+    g_VGS_CAVIARDATA.init("VGS.cvr");
+    g_VGSP_CAVIARDATA.init("VGSP.CVR");
+    g_VJTP_CAVIARDATA.init("VJTP.CVR");
+    g_VJT0_CAVIARDATA[0].init("VJT00.cvr");
+    g_VJT0_CAVIARDATA[1].init("VJT01.cvr");
+    g_VCU_CAVIARDATA.init("VCU.cvr");
+    g_VCUP_CAVIARDATA.init("VCUP.CVR");
+    g_VCUA0_CAVIARDATA[0].init("VCUA00.cvr");
+    g_VCUA0_CAVIARDATA[1].init("VCUA01.cvr");
+    g_VCUW_CAVIARDATA.init("VCUW.CVR");
+    g_VCT_CAVIARDATA.init("vct.cvr");
+    g_VCTP_CAVIARDATA.init("VCTP.CVR");
+    g_VCT0_CAVIARDATA[0].init("vct00.cvr");
+    g_VCT0_CAVIARDATA[1].init("vct01.cvr");
+    g_VCTB_CAVIARDATA.init("VCTB.CVR");
+    g_VWNTT_CAVIARDATA.init("VWNTT.CVR");
+    g_VWNST_CAVIARDATA.init("VWNST.CVR");
+    g_VWNAA_CAVIARDATA.init("VWNAA.CVR");
+    g_VPBR0_CAVIARDATA[0].init("vpbr00.cvr");
+    g_VPBR0_CAVIARDATA[1].init("vpbr01.cvr");
+    g_VPBR0_CAVIARDATA[2].init("vpbr02.cvr");
+    g_VPBR0_CAVIARDATA[3].init("vpbr03.cvr");
+    g_VM_CAVIARDATA.init("VM.CVR");
+    g_VM13_CAVIARDATA.init("vw13.cvr");
+    g_NW_CAVIARDATA.init("nw.CVR");
+    g_NI_CAVIARDATA.init("ni.CVR");
+    g_NLC_CAVIARDATA.init("nlc.cvr");
+    if (text_open("system", "VEH_LIGHT_DIR_MAP") == 0) {
+        text_get();
+        VehLightDirMap.values[0] = (float)text_item_number();
+        VehLightDirMap.values[1] = (float)text_item_number();
+        VehLightDirMap.values[2] = (float)text_item_number();
+        vox_normalise_vector(VehLightDirMap.values, VehLightDirMap.values);
+    }
+    // The original signed divide-by-24 advances its numerator by 24 per row.
+    for (int row = 0; row < 24; ++row) {
+        for (int color = 0; color < 256; ++color) {
+            VoxelRowColorTables[row][color] = (unsigned char)row;
+        }
+    }
+}
 
 char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 
@@ -385,7 +592,7 @@ void __cdecl colortables_init() {
         memcpy(ArmorTransparentColorTables, transparent_cache, sizeof(ArmorTransparentColorTables));
     } else {
         for (int row = 0; row < 24; ++row) {
-            const int weight = ((24 - row) * transparent_first + row * transparent_second) / 12;
+            const int weight = ((24 - row) * transparent_first + row * transparent_second) / 24;
             g_PALETTE1.create_table_from_color(transparent_color, ArmorTransparentColorTables[row], 10, 236, 100 - weight, weight);
         }
         void *cache = file.create("armorgrads_trans.tmp", sizeof(ArmorTransparentColorTables), 1);

@@ -148,6 +148,22 @@ VOX_Vect VehDrawCameraAngles;
 // to floats and normalizes this vector. These are the image's defaults.
 // RECOVERY_OBJECT: v2 0x00687AD8 0x00687AE4 ?VehLightDirMap@@3UVOX_Vect@@A 0x004BF8D0
 VOX_Vect VehLightDirMap = {{-0.57735f, 0.57735f, 0.57735f}};
+// load_voxels derives these offsets from the first part's two step vectors:
+// AVGMTGUN, adroper, AVHT-GunReposition, and AVHT-LightsReposition.
+// RECOVERY_OBJECT: v2 0x007AC1B0 0x007AC1BC ?VehGunMountOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehGunMountOffset;    // 0x007AC1B0
+// RECOVERY_OBJECT: v2 0x0079A618 0x0079A624 ?VehDropOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehDropOffset;        // 0x0079A618
+// RECOVERY_OBJECT: v2 0x00798C30 0x00798C3C ?VehHoverGunOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehHoverGunOffset;    // 0x00798C30
+// RECOVERY_OBJECT: v2 0x00789B48 0x00789B54 ?VehHoverLightsOffset@@3UVOX_Vect@@A 0x00451030
+VOX_Vect VehHoverLightsOffset; // 0x00789B48
+
+// ORIGINAL: 0x004C1D10 ?vehdraw_setup@@YAXXZ 0x004C1D10-0x004C1D15 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original4C1D10 is a five-byte tail jump to4C1B10; load_voxels451066 calls this entry. No extra renderer initialization or copied thunk bytes."], "reason": "Recover the voxel-loader setup entry as an ordinary call to the existing vehicle facet-normal owner."}
+void __cdecl vehdraw_setup() {
+    vehdraw_compute_facet_normals();
+}
 // Turn setup publishes these for the subsequent animation frames.
 // RECOVERY_OBJECT: v2 0x008CC820 0x008CC824 ?VehDrawTurnVehicle@@3HA 0x004BF8D0
 int VehDrawTurnVehicle;

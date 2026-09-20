@@ -240,6 +240,7 @@ void __cdecl textcolor_init();                     // ?textcolor_init@@YAXXZ
 void __cdecl load_palette();                       // ?load_palette@@YAXXZ
 void __cdecl load_misc();                          // ?load_misc@@YAXXZ
 void __cdecl load_interface(int mode);             // ?load_interface@@YAXH@Z
+extern unsigned char VoxelRowColorTables[24][256];
 void __cdecl load_voxels();                        // ?load_voxels@@YAXXZ
 void __cdecl load_deswin_sprites();                // 0x00455E50, leaf_recoveries.cpp
 void __cdecl colortables_init();                   // ?colortables_init@@YAXXZ

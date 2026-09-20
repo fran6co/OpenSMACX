@@ -1488,11 +1488,6 @@ void __cdecl load_interface(int mode) {
     PENDING_BODY(0x00455610, pending)(mode);
 }
 
-// ?load_voxels@@YAXXZ at 0x00451030
-void __cdecl load_voxels() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00451030, pending)();
-}
 
 // ?load_deswin_sprites@@YAXXZ at 0x00455E50 is homed in leaf_recoveries.cpp
 // under its own name - no forwarder, that claim is compiled.
