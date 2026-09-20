@@ -1,0 +1,18 @@
+{
+  "event_id": "5d1315293d4ca8af0fa011b52837625dc214ebcd984453d3b4885ccd1b8a32a9",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "texture-fninit-precision-inference-20260920",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject the64-significand hypothesis. texture_span_step now represents reciprocal and product as explicit integer significand/exponent pairs, truncating each to24bits; FILD delta remains exact, and65536 scaling is a power-of-two exponent adjustment. Active control selects_PC_24 plus_RC_CHOP; entry/exit remain FNINIT-equivalent PC64 resets.",
+      "At width1 and deltaINT_MAX, original24-bit arithmetic truncates to2147483520, not2147483647. Corrected independent oracle and actual-body regression controls must cover this distinction before a fresh native checkpoint. This resolution corrects the interpretation only, not full function/game acceptance or the retained local-scratch/exceptional-input/producer obligations."
+    ]
+  },
+  "previous_event": "65d974319dc27e9dd9ee030dbc537521a7a0415ca11130bdcaed6b51495940cd",
+  "request_id": "reject-texture-64bit-slopes-20260920",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:vector-value-semantics"
+}

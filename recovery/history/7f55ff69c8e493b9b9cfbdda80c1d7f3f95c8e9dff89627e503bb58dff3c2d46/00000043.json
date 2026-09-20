@@ -1,0 +1,25 @@
+{
+  "event_id": "a77d78c917e7025b1eb1fc05fe1736d8791579bc15b7df7dc62ebe81c14591f9",
+  "payload": {
+    "affects": [
+      "entity-2529012a1b97c564be1041cbcf50bd56647035e00392ff486ed2fd378ca9a751",
+      "entity-27cc156a4330fe115a50e45e9bc4508653556611f66d0917a867d11e9a3b91c0",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-8fae3078e33d1b07ac206b8a54241b18b233765f46ab56a4acb81452cde5259e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-radius-producer-closure-20260920",
+    "evidence": [
+      "Fresh original control flow passes same MapWin to gen_radius first, then reads global Console cursor state, clips/wraps coordinates, selects radius Texture at signed zoom-8, passes real Buffer base and selector0, and independently clips/updates GraphicWin before optional do_all_draws. Preserve callback-visible reloads and negative draw-mode update behavior.",
+      "Gen_radius lacks product implementation and adds eight missing direct dependencies: GraphicWin RECTfill5D5350, terrain4632D0, wrapper4712D0, vehicles468F90, base names467DE0, unmapped overlays4688E0, MapWin visibility4216F0, legend469720. Seed wrongly passes Buffer-adjusted receiver to GraphicWin fill and wrongly declares visibility stdcall. Do not copy these errors or invent overlays extent.",
+      "Four shared screen vertices at7D3BE8 are bounded by actual eight-dword copies464D12..21/466C21..30 and four-pair translations46A940..95D. Keep separate working polygon7D3C08; do not add unused cache storage and call the producer path recovered."
+    ],
+    "hypothesis": "MapWin draw_radius can use real Buffer inheritance and a four-Vert shared cursor cache, but its gen_radius and terrain producer closure cannot yet establish a working path.",
+    "kind": "discovery"
+  },
+  "previous_event": "8b120f710894ab454ad09fb69cd7605945602db98d08ccab243197f0d73dbc7c",
+  "request_id": "map-radius-producer-closure-20260920",
+  "schema_version": 1,
+  "sequence": 43,
+  "stream": "task:vector-value-semantics"
+}

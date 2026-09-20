@@ -1,0 +1,23 @@
+{
+  "event_id": "2c7998a861ae4967bb881e1b4933315efed27833d1ed482fac86f46e8e4fdc2f",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-88ca33a70fbdb2c9f5d4c37d208e04c33391719d1d6060fdba3355d323cbecf1",
+      "entity-912bc58d8f0606b37d81c3c6fb642d45380106dafca1378e3a441408a945f08f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-key-producer-order-20260920",
+    "evidence": [
+      "Pinned original stores dword9 at451CD2 before load_pcx451CDC; retained451C50 seed reverses this order. Four further stores occur464EA9,46501F,46505F,4655B5 in gen_terrain_poly4632D0. Preserve seed provenance and recover those owners before claiming a working initialized renderer.",
+      "Initial storage9BB548 is zero, eleven original dword reads observe it, and61A240 consumes its lowbyte as color key. Bind the real unsigned dword start beside TextureRasterKey; do not initialize9 early, infer full extent from neighboring addresses, or claim other rasterizers use it solely as transparency."
+    ],
+    "hypothesis": "TextureRasterKey has genuine shared storage; terrain initialization and terrain-renderer writers remain unrecovered dependencies, and the load_terrain seed has the wrong store/call order.",
+    "kind": "discovery"
+  },
+  "previous_event": "8708db29ecabfb5b386ef46b9f3930c8f8fa20535fb1beede7a833ec1214de92",
+  "request_id": "texture-key-producer-order-20260920",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:vector-value-semantics"
+}

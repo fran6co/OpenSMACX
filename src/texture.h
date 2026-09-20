@@ -17,6 +17,8 @@
  */
 #pragma once
 
+#include "vert.h"
+
  /*
   * Texture class
   *
@@ -28,12 +30,14 @@
   * therefore reaches at least 0x70; that is a floor, not a size, and the
   * storage below is what the canary seeds rather than a modelled layout.
   */
-// The rasteriser's own types, reached only through pointers here. `Vert`
-// stays opaque everywhere in this tree - the blitters walk it as a raw int
-// stream - so a forward declaration is all the class model has.
+// The rasteriser uses the shared polygon vertex declaration in vert.h.
+// The remaining types are reached only through pointers here.
 class Buffer;
-struct Vert;
 struct TexHeap;
+
+// Shared raster key/threshold; terrain initialization supplies its value.
+// Original storage and writer evidence are bound beside its definition.
+extern unsigned int TextureRasterKey;
 
 /*
  * THE EDGE SCANNER, one per polygon side, and the state `setup_edge` and
@@ -50,9 +54,9 @@ struct EdgeScan {
     // scanline loop. Named from what `setup_edge`, `setup_edge_gouraud` and
     // `edge_step` do to each slot; the three read as one DDA once the names
     // are in - `accumA += deltaA`, and so on down the channels.
-    int f0;           // 0x00 the Y the walk starts from; callers pre-set it
+    int f0;           // 0x00 vertex traversal direction, -1 or +1
     int counter;      // 0x04 rows this edge spans, the DDA's divisor
-    int id;           // 0x08 the Y the walk landed on
+    int id;           // 0x08 next endpoint's vertex index
     int accumA;       // 0x0c first interpolant, accumulator
     int accumB;       // 0x10 second interpolant, accumulator
     int deltaA;       // 0x14 first interpolant's step
@@ -68,12 +72,10 @@ struct EdgeScan {
 };
 
 /*
- * THE VERTEX, 8 BYTES, TWO INTS. `setup_edge` indexes the two arrays it is
- * handed at `[i * 2]` and `[i * 2 + 1]`, and the vertex-array base the
- * rasterisers read off the texture at 0x9BB490/0x9BB4F4 is stepped by 8, so
- * this is the shape those arrays hold. It stays a separate type from `Vert`
- * above because `Vert` is the image's own tag for the polygon vertex the
- * blitters are passed and this tree has never had to define it.
+ * The texture's coordinate pairs, eight bytes each. setup_edge reads the
+ * two components at [i * 2] and [i * 2 + 1]. These embedded interpolation
+ * coordinates retain the current EdgePoint name. Their shape agrees with
+ * Vert, but this separate declaration does not prove a distinct original type.
  */
 struct EdgePoint {
     int a;
@@ -117,7 +119,8 @@ class Texture {
   // slot is unused; int preserves its ABI without claiming its original type.
   int extract(Buffer *buffer, RECT *rect, int unused);
   void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last);
-  void draw_trans(Buffer *buffer, Vert *verts, int count);
+  // 0x0061A281..0x0061A2AA selects four vertices for zero, eight otherwise.
+  void draw_trans(Buffer *buffer, Vert *verts, int use_eight_vertices);
   // 0x006239B0, the narrowest of the sentinel wrappers: a5 == -1 forwards
   // straight to the four-argument overload above.
   void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last,
@@ -329,4 +332,3 @@ static_assert(sizeof(TextureStore) == 0x260,
 
 
 typedef void *func_texture_free(void *);
-

@@ -21,6 +21,7 @@
 #include "general.h"
 #include <new>
 #include <stdlib.h>
+#include <float.h>
 
 // ===== FIXED-POINT AND BYTE-PACKING HELPERS, shared by the blitters =====
 //
@@ -83,6 +84,103 @@ static bool CARRY1(byte a, byte b) {
 }
 static bool CARRY4(uint32_t a, uint32_t b) {
     return ((ulonglong)a + (ulonglong)b) > 0xFFFFFFFFu;
+}
+
+// Plain polygon edges use only the first thirteen EdgeScan words. Gouraud's
+// extra channel is not initialized by the original setup at 0x00624D80.
+static int texture_fixed(int value) {
+    return static_cast<int>(static_cast<unsigned int>(value) << 16);
+}
+
+static int texture_difference(int a, int b) {
+    return static_cast<int>(static_cast<unsigned int>(a) -
+                            static_cast<unsigned int>(b));
+}
+
+static int texture_edge(EdgeScan &edge, int index, const Vert *vertices,
+                        const EdgePoint *uv, int count, int bottom) {
+    if (index == bottom) return 0;
+    for (;;) {
+        int next = index + edge.f0;
+        if (next >= count) next = 0;
+        else if (next < 0) next = count - 1;
+        edge.counter = texture_difference(vertices[next].y, vertices[index].y);
+        if (edge.counter != 0) {
+            if (edge.counter < 0) return 0;
+            edge.id = next;
+            edge.accumA = texture_fixed(uv[index].a);
+            edge.accumB = texture_fixed(uv[index].b);
+            const int height = texture_fixed(edge.counter);
+            edge.deltaA = static_cast<int>(
+                static_cast<int64_t>(texture_difference(texture_fixed(uv[next].a), edge.accumA))
+                * 65536 / height);
+            edge.deltaB = static_cast<int>(
+                static_cast<int64_t>(texture_difference(texture_fixed(uv[next].b), edge.accumB))
+                * 65536 / height);
+            edge.accumC = vertices[index].x;
+            const int dx = texture_difference(vertices[next].x, vertices[index].x);
+            const int magnitude = dx < 0 ? texture_difference(0, dx) : dx;
+            edge.extraDeltaC = dx < 0 ? -1 : 1;
+            edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;
+            const int quotient = magnitude / edge.counter;
+            edge.deltaC = dx < 0 ? texture_difference(0, quotient) : quotient;
+            edge.fracSub = edge.counter;
+            edge.fracDelta = static_cast<int>(magnitude % edge.counter);
+            return 1;
+        }
+        index = next;
+        if (index == bottom) return 0;
+    }
+}
+
+static int texture_advance_edge(EdgeScan &edge, const Vert *vertices,
+                                const EdgePoint *uv, int count, int bottom) {
+    if (--edge.counter == 0)
+        return texture_edge(edge, edge.id, vertices, uv, count, bottom);
+    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
+    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
+    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
+    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
+    if (edge.fracAccum > 0) {
+        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
+        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
+    }
+    return 1;
+}
+
+// 0x0061A3DF clears the x87 precision bits (AND AX,FCFF), then 0x0061A3E3
+// selects truncation (OR AX,0C00): arithmetic has a 24-bit significand, not
+// FNINIT's 64. Reproduce FDIVR at 0x0061A421 and FMUL at 0x0061A530 with
+// integer significand/exponent arithmetic, independently truncating both.
+// FILD loads the signed delta exactly; scaling the rounded product by 65536
+// is an exact exponent adjustment before FISTP. The widest product is 55 bits.
+static int texture_span_step(int delta, int width) {
+    const uint64_t denominator = static_cast<uint64_t>(width) << 16;
+    uint64_t upper_power = 1;
+    int reciprocal_shift = 23;
+    while (upper_power < denominator) {
+        upper_power <<= 1;
+        ++reciprocal_shift;
+    }
+    const uint64_t significand = (static_cast<uint64_t>(1) << reciprocal_shift) / denominator;
+    const uint64_t magnitude = delta < 0 ? -static_cast<int64_t>(delta) : delta;
+    uint64_t product = significand * magnitude;
+    int exponent = 16 - reciprocal_shift;
+    while (product >= (static_cast<uint64_t>(1) << 24)) {
+        product >>= 1;
+        ++exponent;
+    }
+    const uint64_t rounded = exponent >= 0 ? product << exponent : product >> -exponent;
+    return delta < 0 ? static_cast<int>(-static_cast<int64_t>(rounded)) : static_cast<int>(rounded);
+}
+
+static void texture_reset_fpu() {
+    // FNINIT at entry/exit resets, rather than restores, the caller's state.
+    // VC6 _fpreset defaults to 53-bit precision, so explicitly select the
+    // original 64-bit significand and all exception masks afterward.
+    _fpreset();
+    _control87(_MCW_EM | _PC_64 | _RC_NEAR | _IC_PROJECTIVE,
+               _MCW_EM | _MCW_PC | _MCW_RC | _MCW_IC);
 }
 
 /*
@@ -834,7 +932,13 @@ void Texture::draw_trans(Buffer * a1, Vert * a2, int a3, Vert * a4) {
 }
 
 // Fixed-slot bindings carried from 0061a240.cpp
-static int *const blit_light_threshold_2 = (int *)0x009BB548;
+// load_terrain at 0x00451CD2 and gen_terrain_poly at 0x00464EA9 write
+// a dword here. Initial image storage is zero; the unrecovered terrain
+// initialization sets it to nine. Rasterizers use it as a key or threshold,
+// so its identity is shared, not a per-Texture transparent-index member.
+// RECOVERY_OBJECT: v1 0x009BB548 ?TextureRasterKey@@3IA
+unsigned int TextureRasterKey;
+static int *const blit_light_threshold_2 = reinterpret_cast<int *>(&TextureRasterKey);
 
 // ORIGINAL: 0x0061A240 ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@H@Z 0x0061A240-0x0061A753 FILE
 // symbol    ?draw_trans@Texture@@QAEXPAVBuffer@@PAUVert@@H@Z
@@ -848,105 +952,95 @@ static int *const blit_light_threshold_2 = (int *)0x009BB548;
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x00624D80
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0061A240
-// measured tier  MISMATCH
-// divergence     4
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0061a240/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?draw_trans@Texture@@QAEXPAUBuffer@@PAUVert@@H@Z  at 0x0061A240  (1299 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
+// 0x0061A55D..0x0061A6C5 packs U/V fractions and a pixel count into
+// registers, including ESP. It is color-key copying, not a jump table.
+// Edge and scanline scratch is local here; original shared-scratch side
+// effects/reentrancy and FP status visible inside surface Unlock are not
+// established by this reconstruction. The terrain writers of TextureRasterKey
+// and the other legacy rasterizers remain separate recovery dependencies.
+// The local-scratch interpretation covers ordinary convex screen polygons:
+// edge/span heights fit positive signed 16.16, fixed_div quotients fit int,
+// and positive-stride clipped row addresses do not wrap signed 32-bit order.
+// Oversized spans can reuse preceding calls' shared slopes in the executable;
+// those exceptional-input and callback-status behaviors remain unverified.
+void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {
+    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    texture_reset_fpu();
+    const EdgePoint *uv = use_eight_vertices ? cornersAndMids_ : corners_;
+    const int count = use_eight_vertices ? 8 : 4;
+    const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
+    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const int width = static_cast<int>(iWidth_);
+    const int stride = static_cast<int>(buffer->stride_);
+    const RECT clip = buffer->rect1_;
 
-
-void Texture::draw_trans(Buffer * a1, Vert * a2, int a3) {
-    char *self = reinterpret_cast<char *>(this);
-    char *buf = reinterpret_cast<char *>(a1);
-
-    *blit_pixel_base = a1->get_data();
-
-    *blit_edge_uvs_b = reinterpret_cast<int>(a2);
-    *blit_texture_pixels = *reinterpret_cast<int *>(self);
-    *blit_texture_width2 = *reinterpret_cast<int *>(self + 4);
-    *blit_texture_height = *reinterpret_cast<int *>(self + 8);
-
-    int *vertexTable;
-    if (a3) {
-        vertexTable = reinterpret_cast<int *>(self + 0x2c);
-        *blit_vertex_count = 8;
-    } else {
-        vertexTable = reinterpret_cast<int *>(self + 0xc);
-        *blit_vertex_count = 4;
+    int min_y = 0x7fff, max_y = -0x7ffd;
+    int top = 0, bottom = 0;
+    for (int i = 0; i < count; ++i) {
+        if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
+        if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
     }
-    *blit_edge_uvs_a = reinterpret_cast<int>(vertexTable);
-
-    *blit_light_threshold = *blit_light_threshold_2;
-    *blit_buffer_stride = *reinterpret_cast<int *>(buf + 0x4a8);
-    *blit_texture_width = *reinterpret_cast<int *>(self + 4);
-
-    RECT *clip = reinterpret_cast<RECT *>(buf + 0x20);
-    if (clip) {
-        *blit_clip_right = clip->right;
-        *blit_clip_left = clip->left;
-        *blit_clip_bottom = clip->bottom;
-        *blit_clip_top = clip->top;
-
-        int minY = 0x7fff, maxY = 0xffff8003;
-        int minX = 0x7fff, maxX = 0xffff8003;
-        int minYIndex = 0;
-        int count = *blit_vertex_count;
-        int *v = reinterpret_cast<int *>(a2);
-        for (int i = 0; i < count; ++i) {
-            int y = v[1];
-            if (y < minY) { minY = y; minYIndex = i; }
-            if (y > maxY) { maxY = y; *blit_max_y_index = i; }
-            int x = v[0];
-            if (x < minX) minX = x;
-            if (x > maxX) maxX = x;
-            v += 2;
+    EdgeScan left, right;
+    left.f0 = -1;
+    right.f0 = 1;
+    if (min_y < max_y && texture_edge(left, top, vertices, uv, count, bottom) &&
+        texture_edge(right, top, vertices, uv, count, bottom)) {
+        _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+        int du = 0, dv = 0;
+        int y = min_y;
+        if (y >= clip.bottom) {
+            buffer->free_data(1);
+            texture_reset_fpu();
+            return;
         }
-
-        // From here the original interpolates two active edges per
-        // scanline band in 16.16 fixed point and rasterizes each span
-        // with a hand-written inner loop that repoints ESP at a jump
-        // table and walks it with `sub esp,0x10000` / `jns` - a
-        // technique only inline assembly produces, never a compiler.
-        // Not transcribed at the instruction level; the call shape
-        // (setup_edge per band, free_data on the way out) is kept.
-        if (minY < maxY) {
-            EdgeScan edge1;
-            EdgeScan edge2;
-            setup_edge(&edge1, minYIndex);
-            setup_edge(&edge2, minYIndex);
+        for (;;) {
+            int x = left.accumC;
+            int end = right.accumC;
+            int u = left.accumA, v = left.accumB;
+            const int span = texture_fixed(texture_difference(end, x));
+            if (span > 0) {
+                du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
+                dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
+            }
+            // Both sides advance before the saved row is drawn. Left failure
+            // skips right advancement, but never suppresses this final row.
+            const int done = !texture_advance_edge(left, vertices, uv, count, bottom) ||
+                             !texture_advance_edge(right, vertices, uv, count, bottom);
+            if (y >= clip.bottom) break;
+            if (y >= clip.top && y < clip.bottom && end > clip.left &&
+                x < clip.right && end > x) {
+                if (end > clip.right) end = clip.right;
+                if (x < clip.left) {
+                    const int skip = texture_fixed(texture_difference(clip.left, x));
+                    u = static_cast<int>(static_cast<unsigned int>(u) +
+                        static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                    v = static_cast<int>(static_cast<unsigned int>(v) +
+                        static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                    x = clip.left;
+                }
+                unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
+                int64_t source = static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
+                    * static_cast<int64_t>(width)
+                    + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
+                unsigned int uf = static_cast<unsigned short>(u);
+                unsigned int vf = static_cast<unsigned short>(v);
+                const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
+                for (; x < end; ++x, ++out) {
+                    const unsigned char texel = pixels[source];
+                    if (texel != key) *out = texel;
+                    uf += static_cast<unsigned short>(du);
+                    vf += static_cast<unsigned short>(dv);
+                    source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
+                    uf &= 0xffff;
+                    vf &= 0xffff;
+                }
+            }
+            if (done) break;
+            ++y;
         }
     }
-
-    if (a1) {
-        a1->free_data(1);
-    }
+    buffer->free_data(1);
+    texture_reset_fpu();
 }
 
 // ORIGINAL: 0x0061A760 ?draw_upper_threshold_trans@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@H@Z 0x0061A760-0x0061AC53 FILE
@@ -1157,11 +1251,10 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
         int botVert = 0;
 
         Vert *v = a2;
-        int *vi = reinterpret_cast<int *>(a2);
         int count = *blit_vertex_count;
         if (count > 0) {
             for (int i = 0; i < count; ++i) {
-                int y = vi[1];
+                int y = v->y;
                 if (y < minY) {
                     topVert = i;
                     minY = y;
@@ -1170,10 +1263,10 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
                     *blit_max_y_index = i;
                     maxY = y;
                 }
-                int x = vi[0];
+                int x = v->x;
                 if (x < minX) minX = x;
                 if (maxX < x) maxX = x;
-                vi += 2;
+                ++v;
             }
 
             if (minY < maxY) {

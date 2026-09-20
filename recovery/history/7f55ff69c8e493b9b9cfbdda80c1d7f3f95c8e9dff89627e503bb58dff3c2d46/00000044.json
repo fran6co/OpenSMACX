@@ -1,0 +1,21 @@
+{
+  "event_id": "65d974319dc27e9dd9ee030dbc537521a7a0415ca11130bdcaed6b51495940cd",
+  "payload": {
+    "affects": [
+      "entity-912bc58d8f0606b37d81c3c6fb642d45380106dafca1378e3a441408a945f08f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-fninit-precision-inference-20260920",
+    "evidence": [
+      "Coordinator final instruction review found61A3DF bytes66 25 FF FC: AND AX,FCFF clears PCbits0300. Following61A3E3 bytes66 0D 00 0C set RCchop. Starting037F becomes0C7F: PC24/chop, not PC64/chop. Independent reviewer confirmed raw bytes and withdrew the earlier64-significand inference.",
+      "The numerical clause in prior local-raster-domain decision is superseded. Its earlier64-bit simulation and143-case oracle tested the wrong model and cannot establish original equivalence. Build, matching and declaration observations do not repair this semantic failure; do not publish on that evidence."
+    ],
+    "hypothesis": "The first slope interpretation assumed FNINIT precision persisted through raster arithmetic; this interpretation is contradicted by the later control-word mask.",
+    "kind": "discovery"
+  },
+  "previous_event": "a77d78c917e7025b1eb1fc05fe1736d8791579bc15b7df7dc62ebe81c14591f9",
+  "request_id": "texture-fninit-precision-inference-20260920",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:vector-value-semantics"
+}

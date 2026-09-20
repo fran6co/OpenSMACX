@@ -29,9 +29,8 @@ class StringList;
 // 35 mangled names that mentions it spells `PAUVert@@`, and `U` is MSVC's tag
 // for a struct. It has to be `struct` for that reason and not as a style
 // choice - declaring `class Vert;` would mangle `Buffer::poly` as `PAVVert@@`
-// and match no symbol the target objects hold. Nothing defines it yet, so the
-// members are unknown; the declaration exists so headers that only pass a
-// `Vert *` through can compile.
+// and match no symbol the target objects hold. Its signed coordinate members
+// are defined in vert.h; this header only needs the pointer declaration.
 struct Vert;
 
 // DirectDraw surface handle passed to `init`. No definition is known - the
@@ -634,6 +633,10 @@ class Buffer {
   friend class Caviar;
   // Sprite rasterization uses the destination's clip and acquired pixel data.
   friend class Sprite;
+  // Texture::draw_trans reads the destination stride at 0x0061A2BB and
+  // rect1_ at 0x0061A2DA..0x0061A2F9. Its get_data call at 0x0061A253
+  // acquires the pixels published in locked_bits_ for the rasterizer.
+  friend class Texture;
   
   // DipEdit::init copies `rect2_` out as the starting point for its frame,
   // title field and button strip - a window body reading its own buffer's
