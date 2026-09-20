@@ -1,0 +1,41 @@
+{
+  "event_id": "7478a61782312a016f5210f4292e4689712c0f87defb59dcedf4151690edaec2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/vector.cpp",
+      "src/vector.h",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Under the user-authorized coordinator-reviewed manual integration policy in AGENTS.md and WORKFLOW.md, authorize integration of the retained C++ batch through ab21c58f plus the bounded actual-Vector tests. This supersedes the earlier retained-WIP-only integration restriction for this batch. It is not a native migration-admission receipt, automatic publication authorization, or game acceptance; automatic driver refusal rules remain unchanged.",
+      "Explicitly permit temporary matching regressions only for historical addition6343E0, subtraction634430 and cross6345E0 while retaining their claims, identities and restoration obligations. Their actual value arithmetic is unchanged by the close visibility split, local-result destruction cannot erase a returned class copy, and scale still mutates its receiver and returns an independent value. Real movement arrays require the now-observed constructor/destructor/close identities. Never reset the original task baseline, demote these claims, hide them in another task, or call their current bytes exact.",
+      "Coordinator source review and independent review found no new behavioral blocker or product consumer of the removed synthetic Vector APIs. Actual header/product-method behavior tests now complement the caller tests explicit dependency doubles. Native evidence independently establishes the three lifetime bodies, their boundaries/close reference and12-byte layout; it does not establish all game behavior or original x87 equivalence of unclaimed normalize.",
+      "The previously verified batch compiles and links, preserves original claim identities, and retains all discoveries. Wave reload4C6DF0 mismatch was freshly reproduced identically on clean master2853b58e; existing class-debt192>186 and22mapping findings are not caused by this batch. Do not raise ceilings, change compiler policy, or alter native gates to integrate. Require current clean Git state, same reviewed C++ tree, passing actual-Vector tests, and fresh destination build/link, scoped matching/reference/data and regression rechecks. Any additional unexplained failure must be investigated and reported, not waived by this decision.",
+      "Pending MapWin draw_radius and other original-address dependencies remain explicit unfinished recovery. This decision integrates a reviewed structural migration with open matching work, not a fully recovered executable. Preserve the useful work and evidence in master before removing the redundant completed worktree/branch; disposable build caches may be regenerated."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6505440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6505520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6505952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4e231746c9cc58889f7e0f79667d6266c0e8cc3ef9fcad79ba336003f5a0f039",
+  "request_id": "manual-vehicle-structural-migration-integration-20260920",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:vector-value-semantics"
+}
