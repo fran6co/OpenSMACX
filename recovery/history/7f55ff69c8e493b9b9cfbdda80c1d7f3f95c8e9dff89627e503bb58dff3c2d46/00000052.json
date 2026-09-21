@@ -1,0 +1,23 @@
+{
+  "event_id": "aac1f9d4b6aa497692593733f80fc132bf4a91dfce26d834bf47f17cb9683815",
+  "payload": {
+    "affects": [
+      "entity-2232b065ed4afaa87759b97e09e5bbb1a9d61c120d00306d27bac7b431c28d10",
+      "entity-cd87605c19ab120c3e75aa037cd3b9d737f5dbb5fba7f4ac130beb8acf21bb29"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "mapwin-gen-tile-map-20260921",
+    "evidence": [
+      "Original 0x00468C20..0x00468CC5 (165 bytes) is __thiscall MapWin::gen_tile(int x, int y, int, int): this lands in esi at 468C28; it first calls member 0x462F00 with (this, x, y, &x, &y) as an in-out coordinate transform (lea eax,[ebp+0xc]; lea ecx,[ebp+8]; pushes at 468C34..37, mov ecx,esi at 468C38); it then calls gen_terrain_poly 0x004632D0 with ten stack arguments cleaned by add esp,0x28 at 468C78 - buffer [esi+0x1dd70] (with the vtable-adjusted +0x444 fallback when null at 468C3F..52), this, y, x, the transformed pair, [ebp+0x10], exactly -1 (push at 468C67), and [esi+0x1dd98] - and afterwards gates on x/y bounds against 0x00949870/0x00949874 (MapLongitudeBounds/MapLatitudeBounds, the same globals map.cpp:37/38 homed) at 468C7B..91 before the [ebp+0x14]-guarded 0x466CA0/0x4688E0 tail.",
+      "Original 0x00469CA0..0x0046A292 (1522 bytes) is __thiscall MapWin::gen_map(int, int) with nine call targets (0x462F00, gen_terrain_poly 0x4632D0, 0x466CA0, 0x467DE0, 0x4688E0, 0x469720, 0x4698D0, 0x4712A0 and GraphicWin::fill 0x5D5250); the retained seed's TRIED note records a faithful transcription through instruction #28 including the vtable-adjusted GraphicWin::fill call, diverging only at #29 on i&1 parity scheduling in the row/col base computation (hoisting the parity to a temp was tried without change; not chased further).",
+      "Neither body has a source marker: mapwin.cpp carries 41 ORIGINAL markers, none at 0x468C20 or 0x469CA0; both seeds stay retained working-copy trackers. gen_terrain_poly stays OUT of this recovery (its 56 __thiscall receiver derivations are separate future work per its own BLOCKED note); calls into it remain carried seed-forwarded obligations exactly like the standing pending-body pattern."
+    ],
+    "hypothesis": "The two MapWin generator seeds are ordinary member functions: gen_tile is a small coordinate-transform plus gen_terrain_poly forwarder with bounds gating, and gen_map is its three-loop driver; both are recoverable now without the gen_terrain_poly receiver work.",
+    "kind": "discovery"
+  },
+  "previous_event": "41c65caf1056585f66dacea838af6fe9ded35f44548f4303057a242a7174a802",
+  "request_id": "mapwin-gen-tile-map-20260921",
+  "schema_version": 1,
+  "sequence": 52,
+  "stream": "task:vector-value-semantics"
+}

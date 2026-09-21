@@ -1,0 +1,34 @@
+{
+  "event_id": "ff2e040ffe6af8c680ab6bffc4a386d1f44356317995e4b9dfc630574ed0fa8a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_mapwin_generation.py",
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Following the reviewed keyed-raster integration (e6dae354), authorize an isolated checkout for the two MapWin generator bodies from the mapwin-gen-tile-map-20260921 discovery: real member spellings with typed receivers, the 0x462F00 in-out transform call, the ten-argument gen_terrain_poly forwarding with its -1 literal and null-buffer fallback, the MapLongitudeBounds/MapLatitudeBounds gating, and gen_map's three-loop driver with its GraphicWin::fill call. Preserve the retained seeds' history and all outstanding discoveries; gen_terrain_poly and its 56 receiver derivations stay out of scope.",
+      "Require actual-source controls for the transform in/out behavior, negative and out-of-range coordinates against the bounds, the forwarding argument shape, and gen_map's loop/parity behavior; fresh protected-byte/scoped checks, claim continuity, application compile/link and coordinator original/source review precede manual integration, with checks repeated on the destination and audit ceilings lowered in the same commit. No framework change, flag change or new protected-match regression is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4623392,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4627616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "aac1f9d4b6aa497692593733f80fc132bf4a91dfce26d834bf47f17cb9683815",
+  "request_id": "mapwin-gen-scope-20260921",
+  "schema_version": 1,
+  "sequence": 53,
+  "stream": "task:vector-value-semantics"
+}
