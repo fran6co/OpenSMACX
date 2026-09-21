@@ -1,0 +1,30 @@
+{
+  "event_id": "69a2bf05291848ed9ac8fea3dd603786eb99eea76e0afc5c3e570310fc341843",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_mapwin_generation.py",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/unrecovered/004632d0.cpp"
+    ],
+    "evidence": [
+      "Following the receiver-derivation discovery (terrain-poly-receivers-20260921), authorize the gen_terrain_poly transcription: the real free ten-word __cdecl body in src/mapwin.cpp (the ABI 630ae300 established and gen_radius corroborates) with all 44 blitter calls spelled as member calls on the derived receivers, the three neighbour-mask scan loops restored, and the seed retired atomically in the same change. Preserve the seed's 113 named fixed globals and its BLOCKED note history by moving the durable facts into the new body's comments; keep every existing marker, test and TRIED history; the catalogued member mangle stays the identity of record with the free-function reinterpretation documented as mapwin.h/pending_bodies.cpp already do.",
+      "The worker MUST resolve caveat (b) from texture.cpp's real definitions and load_terrain before writing indexed array accesses, and must document any extent correction in the touched files. Require actual-source controls extending test_mapwin_generation.py for the receiver selection groups (base-land/ocean corner indexing, landmark table indexing, improvement sprite guards, river/magtube/road edge selection, grid overlays) against mocked blitters; fresh protected-byte/scoped checks, claim continuity, application compile/link, coordinator original/source review and destination rechecks precede manual integration; ceilings lowered or raised to measured counts in the same commit. No framework change, flag change or new protected-match regression."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "931d2a16c1276135ca4cec28ea746d137cdef0abac56781b2d0ebc603645dbd4",
+  "request_id": "terrain-poly-transcription-scope-20260921",
+  "schema_version": 1,
+  "sequence": 56,
+  "stream": "task:vector-value-semantics"
+}

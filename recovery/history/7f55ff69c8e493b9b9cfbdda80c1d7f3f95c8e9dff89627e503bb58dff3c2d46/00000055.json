@@ -1,0 +1,23 @@
+{
+  "event_id": "931d2a16c1276135ca4cec28ea746d137cdef0abac56781b2d0ebc603645dbd4",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-poly-receivers-20260921",
+    "evidence": [
+      "Three independent counts agree on 44 physical blitter call sites in 0x004632D0-0x00466C92 (objdump linear sweep, recover inspect mapped calls, scaffold expressions); the cold span 0x00655920-32 holds only EH unwind funclets. Every one of the 44 callees ends ret imm16 (0x10-0x20) and NO caller does add esp after any of them - all are __thiscall member calls, so an obj->method spelling is derivable per site, which is exactly what the BLOCKED note said was missing.",
+      "Every receiver chain was traced instruction-by-instruction with all jump predecessors enumerated: 42 distinct identities, ALL of them fixed terrain-band globals from src/texture.h/src/sprite.h (17 Texture roots: g_FARM/FLAT_ARID/MOIST/RAINY/DUNE/ROCKY/OCEAN/MOUNT_PLANET/SUNNY_MESA/GARLAND_CRATER/JUNGLE_LAND/FOREST/FUNGUS/RAINFALL_SINGLE_TILE/RIVER/MAGTUBE/ROAD_TEXTURES) and 24 Sprite roots (every g_TER1_* family plus g_FOSSIL_FIELD_RIDGE_SPRITES) - plus the incoming Buffer* argument a1 for the three Buffer::line sites (0x00464CB3/0x00465A3B/0x00466BF1). Zero receivers are MapWin fields or stack locals; the MapWin* a2 only supplies lighting through the homed get_alt/get_point_light calls.",
+      "Site-to-group structure for transcription: base-land corner loop = sites at 0x00464215/0x00464353/0x004643A9 (per-triangle, 0x70-stride indexed); ocean corner loop 0x00464681/0x004646AE/0x004646E3; landmark overlays 0x004648BC/0x004648EE/0x00464A33/0x00464B68 (indexed by the g_00685A98/AFC/BD4 landmark tables); jungle/forest/fungus 0x00464F10/0x00465029/0x004650E3; territory border 0x00465340/0x00465DA1/0x00465A3B; coast 0x0046547C; river 0x004655BF/0x00465600; improvement sprites 0x00464DE3..0x004661B4; wreck/goody 0x004663CA/0x00466434/0x004664EC; monolith/unity-pod 0x0046652D/0x0046658B; grid overlays 0x004665FF. The three scaffold-empty neighbour-mask loops (0x464E24-0x464EA2, 0x464F5B-0x464FD6, 0x4654EC-0x46555F) feed sites 11-13/16 with masks landing in the reused a5 slot 0x18(%ebp)/ebx.",
+      "Caveats recorded for the transcription: (a) the 0x0061A760 marker line at src/texture.cpp:1055 carries the catalogued name with the emitted ?draw_color_key@...H1@Z symbol fact beside it - call it by the tree spelling draw_color_key; (b) indexed receivers exceed two declared extents (site 0x004643A9 indexes g_ROCKY_TEXTURES up to 6 against a declared [4]; site 0x00464215 indexes g_FARM_TEXTURES up to 9 against [9] if Random::get(0,2) is inclusive) - resolve the real extents from texture.cpp's definitions/load_terrain before writing array indexing; (c) use the machine count 44, not the BLOCKED note's 56."
+    ],
+    "hypothesis": "gen_terrain_poly's BLOCKED condition is dischargeable: all 44 blitter call sites (not 56) are __thiscall member calls whose ECX receivers are fully derivable, and every receiver is a named terrain-band global or the incoming Buffer* argument - no MapWin field or local.",
+    "kind": "discovery"
+  },
+  "previous_event": "135b6458093ae88aca37dce110b61ad0fb1a55107c603f6550e4a5ae101df83c",
+  "request_id": "terrain-poly-receivers-20260921",
+  "schema_version": 1,
+  "sequence": 55,
+  "stream": "task:vector-value-semantics"
+}
