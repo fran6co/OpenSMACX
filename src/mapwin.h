@@ -172,6 +172,32 @@ class MapWin : public virtual GraphicWin {
   int get_brighting(int x, int y, int corner);
   int get_point_light(int x, int y, int corner);
 
+  // THE GENERATION PAIR, homed 2026-09-21 from the original evidence
+  // (journal discovery mapwin-gen-tile-map-20260921). gen_tile renders one
+  // tile: tile_to_pixel transforms its coordinates IN PLACE on the parameter
+  // homes (the pre-call pair survives in registers to become arguments 7/8
+  // of gen_terrain_poly while the post-call pair becomes 9/10), and the
+  // vehicle/overlay tail runs only for original coordinates that are on the
+  // map with a nonzero fourth argument. gen_map drives the visible map in
+  // three scans (terrain, vehicles, overlays) plus base names, legend and
+  // wars; its bodies live beside their markers in mapwin.cpp.
+  void gen_tile(int x, int y, int a3, int a4);
+  void gen_map(int a1, int a2);
+  // 0x00466CA0, still an original body (src/recovered/units/00466ca0.cpp):
+  // declared so gen_tile's and gen_map's vehicle scan compile; the pushes at
+  // 0x00468CA3..AD and 0x0046A023..32 fix this five-argument shape.
+  void draw_vehicles(int x, int y, int pixel_x, int pixel_y, int draw_type);
+  // 0x004688E0, no seed mapping yet: the name and the void(int, int) shape
+  // come from the two call sites that push exactly (x, y) after gen_tile's
+  // vehicle draw and inside gen_map's overlay scan.
+  void gen_overlays(int x, int y);
+  // 0x00467DE0 / 0x00469720 / 0x004698D0, still original bodies: declared so
+  // gen_map's unconditional base-name pass and its 0x2000/0x20000/0x100000
+  // gated legend and war passes compile.
+  void draw_base_names();
+  void draw_legend();
+  void draw_wars();
+
   // ??0MapWin@@QAE@H@Z at 0x004626E0, spelled as the real constructor it is.
   // ATTEMPT #2. The first try built `MapWin(int a1)`, measured VC6 emitting
   // BOTH the hidden most-derived flag at [ebp+0xc] and a1 at [ebp+8] (every
@@ -452,6 +478,23 @@ void __cdecl draw_map(int draw_type);
 // it once per live MapWin slot and once more for each of three
 // fixed-address windows.
 void __cdecl terrain_fixup(MapWin *window);
+
+// ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z at
+// 0x004632D0 - the terrain polygon renderer, still an original body
+// (src/unrecovered/004632d0.cpp) and deliberately out of scope of the
+// generation batch. The two compiled call sites that reach it (gen_tile at
+// 0x00468C73 and gen_map's terrain scan at 0x00469E47) push exactly ten
+// words - the window among them as the SECOND argument, a transformed-out
+// Buffer pointer first - and clean up 0x28 bytes themselves, so no implicit
+// receiver rides the call. It is declared as the free __cdecl function
+// those sites spell rather than as an instance member: a member call would
+// push an extra `this` the image does not have. Arguments 3..10 are, in
+// order, field_1DD98_, the caller's draw_type, the literal -1,
+// field_1DD70_, the original tile x, the original tile y, and the pair
+// tile_to_pixel wrote back.
+int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3,
+                             int a4, int a5, int a6, int a7, int a8,
+                             int a9, int a10);
 
 // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550 - public, __thiscall, void(int) by
 // the mangled name, `ret 4` by the image - is 2049 bytes and still an original

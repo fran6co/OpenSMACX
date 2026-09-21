@@ -801,6 +801,56 @@ static int *const KeyStatePollSuppressed = (int *)0x009393C0;
 static int *const IAT_GetKeyState = (int *)0x0066932C;
 static int *const IAT_GetAsyncKeyState = (int *)0x00669330;
 
+/*
+Purpose: Render one map tile - terrain first, then vehicles and overlays.
+         The tile coordinates enter as (x, y) and are transformed IN PLACE by
+         tile_to_pixel through pointers to their own parameter homes, so the
+         pre-call pair has to survive in registers (ebx/edi in the image) to
+         reach gen_terrain_poly as arguments 7/8 while the post-call pair is
+         read back from the same homes as arguments 9/10 - and to gate the
+         vehicle/overlay tail, which the ORIGINAL pair does, not the pixel
+         pair. The surface handed to gen_terrain_poly is the window's own
+         Buffer base; converting `this` to it walks the vbtable to the
+         GraphicWin virtual base and adds 0x444, and VC6 emits the null
+         select around that walk itself (measured on a standalone probe:
+         every spelling of the plain `Buffer *surface = this;` upcast
+         produces the test/jne/xor-jmp/lea shape the image carries).
+// ORIGINAL: 0x00468C20 ?gen_tile@MapWin@@QAEXHHHH@Z 0x00468C20-0x00468CC5 FILE
+// size      165 bytes
+// prototype void (__thiscall ?gen_tile@MapWin@@QAEXHHHH@Z)(MapWin* this, int, int, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462F00 0x004632D0 0x00466CA0 0x004688E0
+// TRIED: 53/71 instructions match under /c /O2 /Gy /GR- /Oy- /GX; the whole
+//            body agrees - prologue, in-place transform, the ten-argument
+//            forward, bounds gate and both tail calls - except ONE schedule
+//            slot: the image preloads field_1DD70_ into ECX at 0x00468C3F,
+//            BEFORE the Buffer conversion's null select, and pushes py/px as
+//            load-push/load-push pairs through EDX; this spelling computes
+//            the select first (EAX, the image's own destination and walk
+//            registers) and sinks the field_1DD70_ load to between the two
+//            pushes. Measured alternatives: a const or assigned flags local
+//            declared before the conversion materializes the load early but
+//            swaps the pair (flags EAX / select ECX, 51/71); a window local
+//            chain, an inline conversion, and a forced-inline shared helper
+//            all reproduce the select-first form. No spelling found that
+//            loads field_1DD70_ into ECX ahead of an EAX select; recorded as
+//            a scheduling plateau, not chased further at this budget.
+*/
+void MapWin::gen_tile(int x, int y, int a3, int a4) {
+    const int tile_x = x;
+    const int tile_y = y;
+    tile_to_pixel(x, y, &x, &y);
+    gen_terrain_poly(this, this, field_1DD98_, a3, -1, field_1DD70_,
+                     tile_x, tile_y, x, y);
+    if (tile_y >= 0 && tile_y < MapLatitudeBounds &&
+        tile_x >= 0 && tile_x < MapLongitudeBounds && a4 != 0) {
+        draw_vehicles(tile_x, tile_y, x, y - field_1DDC0_, a3);
+        gen_overlays(tile_x, tile_y);
+    }
+}
+
 // ORIGINAL: 0x00468CD0 ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z 0x00468CD0-0x00468F8D FILE
 // symbol    ?compute_clip@MapWin@@QAEHHHHPAUtagRECT@@@Z
 //           The same windows.h `typedef struct tagRECT` mangling every other
@@ -928,6 +978,207 @@ int MapWin::compute_clip(int a1, int a2, int a3, RECT * a4) {
         return 1;
     }
     return 0;
+}
+
+/*
+Purpose: Generate the whole visible map - background, terrain, vehicles,
+         overlays, base names, legend and territory wars. Three row-major
+         scans walk the same window rectangle: rows come from field_1DDA8_
+         plus the scan index, columns start at field_1DDA4_ biased by the
+         ROW's parity - odd rows sit one tile right and take their column
+         count from field_1DDCC_ where even rows take it from field_1DDD4_ -
+         and the column steps two tiles at a time because SMAC rows
+         interleave.
+         Each visited column is seam-wrapped once against MapLongitudeBounds
+         unless the map is flat, then bounds-gated, then optionally gated by
+         the two zoom rectangles at field_21A48_ and field_21A58_ - whose
+         own left/right order may be swapped on a cylindrical map, in which
+         case membership is the union of the two arcs. The vehicle and
+         overlay scans admit a two-tile margin around those rectangles.
+         The overlay scan still calls tile_to_pixel even though it discards
+         the pixel pair: the image does the same (0x0046A215), and the call
+         cannot be dropped without changing behavior visible to a replacing
+         callee.
+// ORIGINAL: 0x00469CA0 ?gen_map@MapWin@@QAEXHH@Z 0x00469CA0-0x0046A292 FILE
+// TRIED: faithful three-loop transcription (retained seed src/unrecovered/
+//            00469ca0.cpp) matched through instruction #28 and diverged at
+//            #29 on the i&1 parity scheduling in the row/column base
+//            computation; hoisting `i & 1` to a temp changed nothing. The
+//            body below spells the scans idiomatically instead.
+// TRIED: 2026-09-21 variant deck (four spellings of the row/col base and
+//            count select: inline ternary, hoisted parity temp, parity
+//            between the two bases, if-selected count) - all four compile
+//            gen_map to identical sizes (1488 bytes /c /O2 /Gy /GR- /GX,
+//            1456 bytes with /Oy-) against the original's 1522, so the
+//            parity spelling is byte-neutral and the ternary form stays.
+//            The remaining extent gap is allocator-shaped: the image
+//            memory-homes the vehicle/overlay scans' eight +/-2 zoom
+//            margins at [ebp-0x30..-0x1c] through store-then-reload chains
+//            inside a 0x38-byte frame, keeps the scan index in the dead a2
+//            parameter slot and the third scan's column base in the dead a1
+//            slot, and reloads MapLongitudeBounds once per iteration into a
+//            register this tree re-reads; none of that is reachable by
+//            spelling, and the emitted call/reference set (fill, both
+//            bounds globals, MapIsFlat, tile_to_pixel, gen_terrain_poly,
+//            draw_vehicles, gen_overlays, draw_base_names, draw_legend,
+//            draw_wars, on_map) agrees with the image's nine targets.
+// size      1522 bytes
+// prototype void (__thiscall ?gen_map@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   1   call targets   9
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00462F00 0x004632D0 0x00466CA0 0x00467DE0 0x004688E0 0x00469720 0x004698D0 0x004712A0 0x005D5250
+*/
+void MapWin::gen_map(int a1, int a2) {
+    if (a2 == 0) {
+        if ((field_1DD70_ & 0x82000000) == 0 && field_21A44_ == 0) {
+            GraphicWin::fill(0x41);
+        }
+        for (int i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
+            const int row = field_1DDA8_ + i;
+            int col = field_1DDA4_ + (i & 1);
+            const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
+            for (int n = count; n > 0; n--, col += 2) {
+                const int flat = MapIsFlat & 1;
+                int wrapped = col;
+                if (flat == 0) {
+                    if (wrapped < 0) {
+                        wrapped += MapLongitudeBounds;
+                    } else if (wrapped >= MapLongitudeBounds) {
+                        wrapped -= MapLongitudeBounds;
+                    }
+                }
+                if (row >= 0 && row < MapLatitudeBounds &&
+                    wrapped >= 0 && wrapped < MapLongitudeBounds &&
+                    (field_21A44_ == 0 ||
+                     (row >= (int)field_21A5C_ && row <= (int)field_21A64_ &&
+                      ((int)field_21A58_ > (int)field_21A60_ && flat == 0
+                           ? wrapped >= (int)field_21A58_ ||
+                                 wrapped < (int)field_21A60_
+                           : wrapped >= (int)field_21A58_ &&
+                                 wrapped < (int)field_21A60_)) ||
+                     (row >= (int)field_21A4C_ && row <= (int)field_21A54_ &&
+                      ((int)field_21A48_ > (int)field_21A50_ && flat == 0
+                           ? wrapped >= (int)field_21A48_ ||
+                                 wrapped < (int)field_21A50_
+                           : wrapped >= (int)field_21A48_ &&
+                                 wrapped < (int)field_21A50_)))) {
+                    int px;
+                    int py;
+                    tile_to_pixel(wrapped, row, &px, &py);
+                    Buffer *const surface = this;
+                    gen_terrain_poly(surface, this, field_1DD98_, a1, -1,
+                                     field_1DD70_, wrapped, row, px, py);
+                    on_map(wrapped, row);
+                }
+            }
+        }
+    }
+
+    for (int i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
+        const int row = field_1DDA8_ + i;
+        int col = field_1DDA4_ + (i & 1);
+        const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
+        for (int n = count; n > 0; n--, col += 2) {
+            const int map_width = MapLongitudeBounds;
+            const int flat = MapIsFlat & 1;
+            int wrapped = col;
+            if (flat == 0) {
+                if (wrapped < 0) {
+                    wrapped += map_width;
+                } else if (wrapped >= map_width) {
+                    wrapped -= map_width;
+                }
+            }
+            if (row >= 0 && row < MapLatitudeBounds &&
+                wrapped >= 0 && wrapped < map_width) {
+                bool generate = field_21A44_ == 0;
+                if (!generate) {
+                    const int left1 = field_21A58_ - 2;
+                    const int top1 = field_21A5C_ - 2;
+                    const int right1 = field_21A60_ + 2;
+                    const int bottom1 = field_21A64_ + 2;
+                    const int left2 = field_21A48_ - 2;
+                    const int top2 = field_21A4C_ - 2;
+                    const int right2 = field_21A50_ + 2;
+                    const int bottom2 = field_21A54_ + 2;
+                    generate =
+                        (row >= top1 && row <= bottom1 &&
+                         (left1 > right1 && flat == 0
+                              ? wrapped >= left1 || wrapped < right1
+                              : wrapped >= left1 && wrapped < right1)) ||
+                        (row >= top2 && row <= bottom2 &&
+                         (left2 > right2 && flat == 0
+                              ? wrapped >= left2 || wrapped < right2
+                              : wrapped >= left2 && wrapped < right2));
+                }
+                if (generate) {
+                    int px;
+                    int py;
+                    tile_to_pixel(wrapped, row, &px, &py);
+                    draw_vehicles(wrapped, row, px, py - field_1DDC0_, a1);
+                }
+            }
+        }
+    }
+
+    draw_base_names();
+
+    if ((field_1DD70_ & 0x2000) != 0) {
+        for (int i = 0; i < field_1DDD0_ + field_1DDD8_ + 1; i++) {
+            const int row = field_1DDA8_ + i;
+            int col = field_1DDA4_ + (i & 1);
+            const int count = (i & 1) ? field_1DDCC_ : field_1DDD4_;
+            for (int n = count; n > 0; n--, col += 2) {
+                const int map_width = MapLongitudeBounds;
+                const int flat = MapIsFlat & 1;
+                int wrapped = col;
+                if (flat == 0) {
+                    if (wrapped < 0) {
+                        wrapped += map_width;
+                    } else if (wrapped >= map_width) {
+                        wrapped -= map_width;
+                    }
+                }
+                if (row >= 0 && row < MapLatitudeBounds &&
+                    wrapped >= 0 && wrapped < map_width) {
+                    bool generate = field_21A44_ == 0;
+                    if (!generate) {
+                        const int left1 = field_21A58_ - 2;
+                        const int top1 = field_21A5C_ - 2;
+                        const int right1 = field_21A60_ + 2;
+                        const int bottom1 = field_21A64_ + 2;
+                        const int left2 = field_21A48_ - 2;
+                        const int top2 = field_21A4C_ - 2;
+                        const int right2 = field_21A50_ + 2;
+                        const int bottom2 = field_21A54_ + 2;
+                        generate =
+                            (row >= top1 && row <= bottom1 &&
+                             (left1 > right1 && flat == 0
+                                  ? wrapped >= left1 || wrapped < right1
+                                  : wrapped >= left1 && wrapped < right1)) ||
+                            (row >= top2 && row <= bottom2 &&
+                             (left2 > right2 && flat == 0
+                                  ? wrapped >= left2 || wrapped < right2
+                                  : wrapped >= left2 && wrapped < right2));
+                    }
+                    if (generate) {
+                        int px;
+                        int py;
+                        tile_to_pixel(wrapped, row, &px, &py);
+                        gen_overlays(wrapped, row);
+                    }
+                }
+            }
+        }
+    }
+
+    if ((field_1DD70_ & 0x20000) != 0) {
+        draw_legend();
+    }
+    if ((field_1DD70_ & 0x100000) != 0) {
+        draw_wars();
+    }
 }
 
 // ORIGINAL: 0x0046A4A0 ?draw_tile@MapWin@@QAEXHHH@Z 0x0046A4A0-0x0046A52F FILE

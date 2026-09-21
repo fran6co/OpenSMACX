@@ -1211,6 +1211,78 @@ int MapWin::on_nc_hittest(int x, int y) {  // 0x0046F660
 // MapWin::on_sys_close WAS HERE, forwarding to 0x0046F880. Homed into
 // mapwin.cpp 2026-08-29.
 
+// THE GENERATION BATCH SEAM (2026-09-21). gen_tile (0x00468C20) and gen_map
+// (0x00469CA0) are homed into src/mapwin.cpp and call the six bodies below
+// BY NAME; the declarations live in mapwin.h and these forwarders are their
+// definitions, so the application links while the scoped checks keep
+// carrying each callee as an unresolved target against the original image.
+
+// ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z at
+// 0x004632D0 - the terrain polygon renderer (seed src/unrecovered/
+// 004632d0.cpp), deliberately outside the generation batch: its own BLOCKED
+// note records the future work, re-deriving the receiver at each of its 56
+// call sites so the blitter calls can become member calls. The catalogue
+// scopes it in MapWin, but both compiled call sites that reach it (gen_tile at
+// 0x00468C73 and gen_map's terrain scan at 0x00469E47) push ten words with
+// the window as the SECOND argument and clean 0x28 themselves - no implicit
+// receiver rides the call - so mapwin.h declares it as the free __cdecl
+// function those sites spell, and this forwarder keeps that ABI.
+int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
+                             int a5, int a6, int a7, int a8, int a9,
+                             int a10) {
+    typedef int(__cdecl *pending)(Buffer *, MapWin *, int, int, int, int,
+                                   int, int, int, int);
+    return PENDING_BODY(0x004632D0, pending)(buffer, window, a3, a4, a5, a6,
+                                             a7, a8, a9, a10);
+}
+
+// ?draw_vehicles@MapWin@@QAEXHHHHH@Z at 0x00466CA0 (seed
+// src/recovered/units/00466ca0.cpp). gen_tile's vehicle tail (0x00468CB0)
+// and gen_map's vehicle scan (0x0046A035) push (x, y, pixel_x,
+// pixel_y - field_1DDC0_, draw_type) - the pushes at 0x00468CA3..AD and
+// 0x0046A023..32 fix the five-argument shape.
+void MapWin::draw_vehicles(int x, int y, int pixel_x, int pixel_y,
+                           int draw_type) {
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int, int, int,
+                                      int);
+    PENDING_BODY(0x00466CA0, pending)(this, nullptr, x, y, pixel_x, pixel_y,
+                                      draw_type);
+}
+
+// ?draw_base_names@MapWin@@QAEXXZ at 0x00467DE0 (seed
+// src/unrecovered/00467de0.cpp). gen_map calls it unconditionally between
+// its vehicle and overlay scans (0x0046A079).
+void MapWin::draw_base_names() {
+    typedef void(__fastcall *pending)(MapWin *, void *);
+    PENDING_BODY(0x00467DE0, pending)(this, nullptr);
+}
+
+// 0x004688E0 - NO catalogue mapping and no seed: the name gen_overlays and
+// the void(int, int) shape rest on its two call sites alone (gen_tile's
+// overlay tail at 0x00468CB9 and gen_map's overlay scan at 0x0046A221, both
+// pushing (x, y) after `mov ecx, esi` with the callee cleaning ret 8). The
+// header declaration carries the same caveat.
+void MapWin::gen_overlays(int x, int y) {
+    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
+    PENDING_BODY(0x004688E0, pending)(this, nullptr, x, y);
+}
+
+// ?draw_legend@MapWin@@QAEXXZ at 0x00469720 (seed
+// src/recovered/units/00469720.cpp). gen_map's 0x20000-gated legend pass
+// (0x0046A271).
+void MapWin::draw_legend() {
+    typedef void(__fastcall *pending)(MapWin *, void *);
+    PENDING_BODY(0x00469720, pending)(this, nullptr);
+}
+
+// ?draw_wars@MapWin@@QAEXXZ at 0x004698D0 (seed
+// src/recovered/units/004698d0.cpp). gen_map's 0x100000-gated territory-war
+// pass (0x0046A284).
+void MapWin::draw_wars() {
+    typedef void(__fastcall *pending)(MapWin *, void *);
+    PENDING_BODY(0x004698D0, pending)(this, nullptr);
+}
+
 // ?draw_base_dest@MapWin@@QAEXH@Z at 0x00467970. line_timer (time.cpp) calls
 // it per live map-window slot with the literal 1.
 void MapWin::draw_base_dest(int draw_type) {  // 0x00467970

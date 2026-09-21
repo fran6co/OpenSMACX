@@ -1,0 +1,19 @@
+{
+  "event_id": "135b6458093ae88aca37dce110b61ad0fb1a55107c603f6550e4a5ae101df83c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Link continuity for the mapwin generation batch: VC6 resolves the six declared-only callees (gen_terrain_poly 0x004632D0, draw_vehicles 0x00466CA0, gen_overlays 0x4688E0, draw_base_names 0x00467DE0, draw_legend 0x00469720, draw_wars 0x004698D0) before /OPT:REF can drop the unreferenced gen_tile/gen_map COMDATs, so declarations alone leave LNK2001 x6. The standing reconciliation channel is the coordinator-owned PENDING_BODY forwarder file (241 existing instances): each callee gets a documented forwarder so the application links while the scoped checks keep carrying the direct-call obligations. This expansion authorizes only those six forwarder blocks and their comments - no body transcription, no other change to the file."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ff2e040ffe6af8c680ab6bffc4a386d1f44356317995e4b9dfc630574ed0fa8a",
+  "request_id": "mapgen-pending-bodies-seam-20260921",
+  "schema_version": 1,
+  "sequence": 54,
+  "stream": "task:vector-value-semantics"
+}

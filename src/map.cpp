@@ -34,7 +34,9 @@
 #include "mapwin.h"
 #include "worldwin.h"
 
+// RECOVERY_OBJECT: v1 0x00949870 ?MapLongitudeBounds@@3HA
 int MapLongitudeBounds;  // 0x00949870
+// RECOVERY_OBJECT: v1 0x00949874 ?MapLatitudeBounds@@3HA
 int MapLatitudeBounds;  // 0x00949874
 uint32_t MapRandSeed;  // 0x00949878
 int MapSeaLevel;  // 0x0094987C

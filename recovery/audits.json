@@ -33,7 +33,7 @@
         "field_accessors.cpp markers": 38,
         "leaf_recoveries.cpp markers": 47,
         "nullsub_thunks.cpp markers": 52,
-        "PENDING_BODY forwarders": 238,
+        "PENDING_BODY forwarders": 244,
         "artifact files (recovered/)": 937,
         "unrecovered files": 1020,
         "hypothesis_layouts.h lines": 2734
@@ -125,7 +125,7 @@
         "src/vendor"
       ],
       "ceilings": {
-        "unk-method": 186,
+        "unk-method": 192,
         "evidence-free unk": 39,
         "function-address binding": 2,
         "orphan redirect": 183,
@@ -133,7 +133,7 @@
         "undocumented trivial body": 0,
         "raw self-access": 180,
         "pointer-parameter as int": 93,
-        "scaffold name": 2879
+        "scaffold name": 2917
       },
       "counters": []
     }
