@@ -14,6 +14,14 @@ The packed 6198E0 test retains the actual body and typed edge helpers, with a
 delegating call observer for its initial edge setups. Guarded host buffers test
 inclusive opaque copying and independent packed coordinate arithmetic, not the
 original allocator's 64-KiB alignment or shared-scratch side effects.
+
+The keyed 61A760 and alternating 6239E0 tests execute those complete bodies
+with caller-owned vertex counts and explicit UV arrays, including the packed
+countdown's zero/inverted clipped spans and its high-word 0x8000 boundary,
+absolute even/odd and negative-Y parity, low-byte alternate colors, and the
+exactly-minus-one forward that precedes the lock. The countdown oracle and
+wide fixtures stay inside allocated arrays so rejected mutants fail by
+comparison rather than by writing out of bounds.
 """
 
 from pathlib import Path
@@ -157,6 +165,7 @@ def raster_bodies():
                               + name + r"\(", source).group()
         result[name] = braced(source, signature)
     result["texture_span_step"] = braced(source, "static int texture_span_step(")
+    result["texture_span_pixels"] = braced(source, "static unsigned int texture_span_pixels(")
     result["texture_reset_fpu"] = braced(source, "static void texture_reset_fpu() {")
     result["draw_trans"] = braced(source, "void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices) {")
     return result
@@ -362,6 +371,30 @@ def raster_harness(methods):
             Vert point[] = {{0,0},{0,0},{0,0},{0,0}};
             start(); finish(point, 0, false);
             start(); lock_clip={0,0,0,0}; finish(rectangle, 0);
+
+            // The span kernel's packed countdown writes one pixel for spans
+            // that clipping leaves zero or inverted after admission.
+            Vert wide_span[] = {{2,0},{6,0},{6,1},{2,1}};
+            start(); lock_clip={5,0,3,2};
+            for (auto &uv : texture.corners_) uv={1,2};
+            sample(5,0,1,2);
+            finish(wide_span, 0);
+            start(); lock_clip={4,0,4,2};
+            for (auto &uv : texture.corners_) uv={1,2};
+            sample(4,0,1,2);
+            finish(wide_span, 0);
+            // end == clip.left rejects before clipping; only a strict
+            // greater-than admits.
+            Vert narrow[] = {{1,0},{4,0},{4,1},{1,1}};
+            start(); lock_clip={4,0,5,2};
+            for (auto &uv : texture.corners_) uv={1,2};
+            finish(narrow, 0);
+            // A span of 0x10005 runs only its low sixteen pixels.
+            start(); lock_clip={0,0,0x10006,12};
+            Vert truncated[] = {{1,1},{0x10006,1},{0x10006,2},{1,2}};
+            for (auto &uv : texture.corners_) uv={1,2};
+            for (int i=0; i<5; ++i) sample(1+i,1,1,2);
+            finish(truncated, 0);
         }
     '''.replace("ACTUAL_VERTEX", vertex_declaration()).replace("ACTUAL_RECORDS", records).replace(
         "ACTUAL_FIELDS", "\n".join(fields)).replace("ACTUAL_BODIES", "\n".join(methods.values())).replace(
@@ -661,4 +694,438 @@ def test_packed_lock_publication_cannot_be_captured_early(tmp_path, declaration)
     brace = method.index("{") + 1
     actual["draw_trans"] = method[:brace] + "\n" + declaration + method[brace:]
     result = run_host(tmp_path, packed_harness(actual))
+    assert result.returncode == 42, result.stderr
+
+
+def keyed_bodies():
+    actual = raster_bodies()
+    actual["draw_color_key"] = braced(
+        (ROOT / "src/texture.cpp").read_text(),
+        "void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv) {")
+    return actual
+
+
+def alternating_bodies():
+    actual = keyed_bodies()
+    actual["draw_color_key5"] = braced(
+        (ROOT / "src/texture.cpp").read_text(),
+        "void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv, int color) {")
+    return actual
+
+
+KEYED_MAIN = r'''
+    int main() {
+        // Arbitrary counts, not the other overload's 4/8 selector, with the
+        // texture sampled through width-eight rows (v*8+u). The keyed span
+        // is exclusive: end-left pixels starting at the left edge.
+        Vert triangle[]={{1,1},{5,1},{1,3}};
+        Vert constant_uv[]={{2,3},{2,3},{2,3}};
+        start();
+        for (int x=1; x<5; ++x) sample(x,1,2,3);
+        for (int x=1; x<3; ++x) sample(x,2,2,3);
+        finish(triangle,3,constant_uv); // texel equals the current key
+
+        Vert pentagon[]={{1,1},{3,1},{5,1},{5,3},{1,3}};
+        Vert pentagon_uv[5];
+        for (auto &uv : pentagon_uv) uv={6,7};
+        start();
+        for (int y=1; y<3; ++y) for (int x=1; x<5; ++x) sample(x,y,6,7);
+        finish(pentagon,5,pentagon_uv);
+
+        Vert perimeter[]={{1,1},{2,1},{3,1},{5,1},{5,2},{5,3},
+                          {4,3},{3,3},{2,3},{1,3},{1,2},{1,1}};
+        Vert perimeter_uv[12];
+        for (auto &uv : perimeter_uv) uv={6,7};
+        start();
+        for (int y=1; y<3; ++y) for (int x=1; x<5; ++x) sample(x,y,6,7);
+        finish(perimeter,12,perimeter_uv);
+
+        // Explicit UVs can walk backwards along a scanline.
+        Vert reverse[]={{1,1},{5,1},{5,2},{1,2}};
+        Vert reverse_uv[]={{4,4},{0,0},{0,0},{4,4}};
+        start();
+        for (int i=0; i<4; ++i) sample(1+i,1,4-i,4-i);
+        finish(reverse,4,reverse_uv);
+
+        // Clipping with negative coordinates: the skip advances U by two.
+        Vert clipped[]={{-2,-1},{4,-1},{4,3},{-2,3}};
+        Vert clipped_uv[]={{0,0},{6,0},{6,4},{0,4}};
+        start(); lock_clip={0,0,2,2};
+        sample(0,0,1,1); sample(1,0,2,1); sample(0,1,1,2); sample(1,1,2,2);
+        finish(clipped,4,clipped_uv);
+
+        // The final row is still drawn after the left edge runs out.
+        Vert sloped[]={{2,0},{6,0},{4,4},{0,4}};
+        start();
+        const int left[]={2,2,1,1};
+        for (int y=0; y<4; ++y) for (int x=0; x<4; ++x) sample(left[y]+x,y,6,7);
+        finish(sloped,4,perimeter_uv);
+
+        // A constant texel equal to the key leaves the span empty.
+        Vert hole_uv[]={{1,0},{1,0},{1,0},{1,0}};
+        start(); finish(reverse,4,hole_uv);
+
+        // Admitted spans that clipping leaves zero, inverted or touching
+        // still write exactly one pixel (or none before admission).
+        Vert spanned[]={{2,0},{6,0},{6,1},{2,1}};
+        Vert span_uv[]={{1,2},{1,2},{1,2},{1,2}};
+        start(); lock_clip={5,0,3,2};
+        sample(5,0,1,2);
+        finish(spanned,4,span_uv);
+        start(); lock_clip={4,0,4,2};
+        sample(4,0,1,2);
+        finish(spanned,4,span_uv);
+        Vert narrow[]={{1,0},{4,0},{4,1},{1,1}};
+        start(); lock_clip={4,0,5,2};
+        finish(narrow,4,span_uv);
+
+        // A raw span of 0x10005 runs only its low sixteen pixels.
+        start(); lock_clip={0,0,0x10006,12};
+        Vert truncated[]={{1,1},{0x10006,1},{0x10006,2},{1,2}};
+        for (int i=0; i<5; ++i) sample(1+i,1,1,2);
+        finish(truncated,4,span_uv);
+
+        // The entry row test rejects a polygon already below the clip.
+        start(); lock_clip={0,0,12,1}; finish(reverse,4,span_uv);
+        // Counts at or below zero never reach the edge helpers.
+        start(); finish(triangle,0,constant_uv,false);
+        start(); finish(triangle,-1,constant_uv,false);
+        start(); finish(pentagon,-7,pentagon_uv,false);
+        Vert flat[]={{1,1},{3,1},{5,1},{1,1}};
+        start(); finish(flat,4,span_uv,false);
+        Vert point[]={{0,0},{0,0},{0,0},{0,0}};
+        start(); finish(point,4,span_uv,false);
+    }
+'''
+
+KEYED_WIDE_MAIN = r'''
+    int main() {
+        Vert span_uv[4]={{6,7},{6,7},{6,7},{6,7}};
+        // 32769 pixels: the largest span the countdown reproduces whole.
+        start(); lock_clip={0,0,74000,3}; lock_stride=74000;
+        Vert full[]={{1,0},{32770,0},{32770,1},{1,1}};
+        for (int x=1; x<=32769; ++x) sample(x,0,6,7);
+        finish(full,4,span_uv);
+        // One pixel more collapses the whole span to a single write.
+        start(); lock_clip={0,0,74000,3}; lock_stride=74000;
+        Vert collapsed[]={{1,0},{32771,0},{32771,1},{1,1}};
+        sample(1,0,6,7);
+        finish(collapsed,4,span_uv);
+        start(); lock_clip={0,0,74000,3}; lock_stride=74000;
+        Vert far_over[]={{1,0},{0x9000,0},{0x9000,1},{1,1}};
+        sample(1,0,6,7);
+        finish(far_over,4,span_uv);
+        // 0x10005 wraps to five pixels again, 0x10000 to one.
+        start(); lock_clip={0,0,74000,3}; lock_stride=74000;
+        Vert wrapped[]={{1,0},{0x10006,0},{0x10006,1},{1,1}};
+        for (int i=0; i<5; ++i) sample(1+i,0,6,7);
+        finish(wrapped,4,span_uv);
+        start(); lock_clip={0,0,74000,3}; lock_stride=74000;
+        Vert wrapped_zero[]={{1,0},{0x10001,0},{0x10001,1},{1,1}};
+        sample(1,0,6,7);
+        finish(wrapped_zero,4,span_uv);
+        // A clip that inverts by exactly 0x8000 still runs 0x8000 pixels.
+        start(); lock_clip={40000,0,7232,2}; lock_stride=74000;
+        Vert inverted[]={{1,0},{50000,0},{50000,1},{1,1}};
+        for (int x=40000; x<=72767; ++x) sample(x,0,6,7);
+        finish(inverted,4,span_uv);
+    }
+'''
+
+
+def keyed_harness(methods, wide=False, main_body=KEYED_MAIN):
+    """Call the explicit-UV color-key overload with caller-owned counts.
+
+    The normal fixture reuses the color-key doubles and its width-eight
+    texture; the wide variant hosts spans whose packed countdown's high word
+    crosses 0x8000, with rows sized so even mutant over-writes stay inside
+    the allocated arrays and fail by comparison, not by smashing memory.
+    """
+    methods = dict(methods)
+    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace(
+        "void draw_trans(Buffer *, Vert *, int);",
+        "void draw_trans(Buffer *, Vert *, int);\n"
+        "            void draw_color_key(Buffer *, Vert *, int, Vert *);")
+    if wide:
+        common = common.replace(
+            "static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];",
+            "static unsigned char output[74000 * 3], expected[74000 * 3], pixels[8 * 8];")
+        common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
+                                "reinterpret_cast<intptr_t>(output + 74000)")
+    return common + r'''
+        void start() {
+            events.clear();
+            std::memset(output, 0xee, sizeof(output));
+            std::memset(expected, 0xee, sizeof(expected));
+            for (unsigned i=0; i<sizeof(pixels); ++i) pixels[i] = i + 1;
+            texture.pixels_ = pixels; texture.iWidth_ = texture.iHeight_ = 8;
+            texture.borrowed_ = 1;
+            buffer.rect1_ = {0,0,0,0}; buffer.stride_ = 8;
+            lock_clip = {0,0,12,12}; lock_stride = 16;
+            TextureRasterKey = 255; lock_key = 0x120002u;
+            for (auto &uv : texture.corners_) uv = {0,0};
+            for (auto &uv : texture.cornersAndMids_) uv = {7,7};
+        }
+        void sample(int x, int y, int u, int v) {
+            const unsigned char value = pixels[v*8+u];
+            if (value != static_cast<unsigned char>(lock_key))
+                expected[BASE+y*lock_stride+x] = value;
+        }
+        void finish(Vert *vertices, int count, Vert *uv, bool raster=true) {
+            texture.draw_color_key(&buffer, vertices, count, uv);
+            const std::vector<int> active = {1,2,3,4,5,2,3};
+            const std::vector<int> inactive = {1,2,3,5,2,3};
+            require(events == (raster ? active : inactive));
+            require(std::memcmp(output, expected, sizeof(output)) == 0);
+        }
+    '''.replace("BASE", "74000" if wide else "16") + main_body
+
+
+def test_actual_explicit_uv_color_key_raster(tmp_path):
+    result = run_host(tmp_path, keyed_harness(keyed_bodies()))
+    assert result.returncode == 0, result.stderr
+
+
+def test_actual_explicit_uv_color_key_wide_boundaries(tmp_path):
+    result = run_host(tmp_path, keyed_harness(keyed_bodies(), wide=True,
+                                              main_body=KEYED_WIDE_MAIN))
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("method,before,after", [
+    ("draw_color_key", "if (texel != key) *out = texel;", "*out = texel;"),
+    ("draw_color_key", "texture_span_pixels(texture_difference(end, x))",
+     "texture_span_pixels(texture_difference(x, end))"),
+    ("draw_color_key", "if (min_y < max_y && texture_edge", "if (4 <= count && texture_edge"),
+    ("draw_color_key", "if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }",
+     "if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = 0; }"),
+    ("draw_color_key", "const unsigned char key = static_cast<unsigned char>(TextureRasterKey);",
+     "const unsigned char key = 0;"),
+])
+def test_compiling_keyed_mutations_are_rejected(tmp_path, method, before, after):
+    actual = keyed_bodies()
+    assert actual[method].count(before) == 1
+    actual[method] = actual[method].replace(before, after)
+    result = run_host(tmp_path, keyed_harness(actual))
+    assert result.returncode == 42, result.stderr
+
+
+@pytest.mark.parametrize("before,after", [
+    ("return pixels - 1u < 0x8001u ? pixels : 1u;", "return pixels ? pixels : 1u;"),
+    ("return pixels - 1u < 0x8001u ? pixels : 1u;", "return pixels < 0x8001u ? pixels : 1u;"),
+    ("return pixels - 1u < 0x8001u ? pixels : 1u;", "return 1u;"),
+    ("static_cast<unsigned int>(difference) & 0xffff",
+     "static_cast<unsigned int>(difference)"),
+])
+def test_compiling_countdown_mutations_are_rejected(tmp_path, before, after):
+    actual = keyed_bodies()
+    assert actual["texture_span_pixels"].count(before) == 1
+    actual["texture_span_pixels"] = actual["texture_span_pixels"].replace(before, after)
+    result = run_host(tmp_path, keyed_harness(actual, wide=True, main_body=KEYED_WIDE_MAIN))
+    assert result.returncode == 42, result.stderr
+
+
+def span_pixels_oracle(difference):
+    n16 = difference & 0xFFFF
+    return n16 if 1 <= n16 <= 0x8001 else 1
+
+
+def test_actual_span_pixel_countdown_boundaries(tmp_path):
+    body = keyed_bodies()["texture_span_pixels"]
+    cases = [0, 1, 2, 3, 4, 5, 0x7ffe, 0x7fff, 0x8000, 0x8001, 0x8002, 0x8003,
+             0xfffe, 0xffff, 0x10000, 0x10001, 0x10004, 0x10005, 0x10006,
+             0x18000, 0x18001, 0x18002, 0x7fffffff,
+             -1, -2, -3, -0x7fff, -0x8000, -0x8001, -0x8002, -0xffff,
+             -0x10005, -0x7fffffff, -2147483647 - 1]
+    table = ",\n".join("{%d, %du}" % (value, span_pixels_oracle(value)) for value in cases)
+    source = r'''
+        #include <cstdio>
+        #include <cstdlib>
+        #define require(c) do { if (!(c)) { \
+            std::fprintf(stderr, "line %d: %s\n", __LINE__, #c); \
+            std::exit(42); } } while (0)
+        ACTUAL_BODY
+        const int cases[][2] = { CASES };
+        int main() {
+            for (const auto &c : cases) require(texture_span_pixels(c[0]) == c[1]);
+        }
+    '''.replace("ACTUAL_BODY", body).replace("CASES", table)
+    result = run_host(tmp_path, source)
+    assert result.returncode == 0, result.stderr
+
+
+ALTERNATING_MAIN = r'''
+    int main() {
+        const int color = 0x1F5;
+        // Negative first row: parity comes from min_y, not from zero.
+        Vert raised[]={{1,-3},{5,-3},{5,0},{1,0}};
+        Vert constant_uv[4]={{2,4},{2,4},{2,4},{2,4}};
+        start();
+        for (int y=-3; y<0; ++y) for (int x=1; x<5; ++x) sample(x,y,2,4,color);
+        finish(raised,4,constant_uv,color);
+
+        // The same shape from row zero alternates the other way round.
+        Vert ground[]={{1,0},{5,0},{5,3},{1,3}};
+        start();
+        for (int y=0; y<3; ++y) for (int x=1; x<5; ++x) sample(x,y,2,4,-2);
+        finish(ground,4,constant_uv,-2);
+
+        // Other negative colors recolor; only exactly -1 forwards.
+        start();
+        for (int y=0; y<3; ++y) for (int x=1; x<5; ++x) sample(x,y,2,4,(int)0xFFFFFF00u);
+        finish(ground,4,constant_uv,(int)0xFFFFFF00u);
+
+        // Key holes survive on copy rows and recolor rows alike.
+        start(); lock_key = 0x12000Bu;
+        Vert walk[]={{1,0},{5,0},{5,1},{1,1}};
+        Vert walk_uv[]={{1,1},{5,1},{5,2},{1,2}};
+        for (int x=1; x<5; ++x) sample(x,0,x,1,color);
+        finish(walk,4,walk_uv,color);
+
+        // Clipped rows keep the absolute parity of the screen row.
+        start(); lock_clip={0,0,12,1};
+        for (int x=1; x<5; ++x) sample(x,0,2,4,color);
+        finish(ground,4,constant_uv,color);
+        start(); lock_clip={0,1,12,2};
+        for (int x=1; x<5; ++x) sample(x,1,2,4,color);
+        finish(ground,4,constant_uv,color);
+
+        // Degenerate inputs recolor nothing at all.
+        Vert flat[]={{1,1},{3,1},{5,1},{1,1}};
+        start(); finish(flat,4,constant_uv,color,false);
+        start(); finish(ground,0,constant_uv,color,false);
+        start(); finish(ground,-3,constant_uv,color,false);
+    }
+'''
+
+
+def alternating_harness(methods, forward_observer=False, main_body=ALTERNATING_MAIN):
+    methods = dict(methods)
+    observer = ""
+    if forward_observer:
+        del methods["draw_color_key"]
+        observer = r'''
+        void Texture::draw_color_key(Buffer *b, Vert *v, int c, Vert *u) {
+            ++forward_calls; forwarded_buffer = b; forwarded_verts = v;
+            forwarded_count = c; forwarded_uv = u;
+            require(events.empty());
+        }
+        '''
+    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace(
+        "void draw_trans(Buffer *, Vert *, int);",
+        "void draw_trans(Buffer *, Vert *, int);\n"
+        "            void draw_color_key(Buffer *, Vert *, int, Vert *);\n"
+        "            void draw_color_key(Buffer *, Vert *, int, Vert *, int);")
+    common = common.replace(
+        "static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];",
+        "static unsigned char output[16 * 16], expected[16 * 16], pixels[8 * 8];")
+    common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
+                            "reinterpret_cast<intptr_t>(output + 8 * 16)")
+    return common + r'''
+        int forward_calls; Buffer *forwarded_buffer; Vert *forwarded_verts;
+        int forwarded_count; Vert *forwarded_uv;
+    ''' + observer + r'''
+        void start() {
+            events.clear(); forward_calls = 0; forwarded_buffer = 0;
+            forwarded_verts = 0; forwarded_count = -9; forwarded_uv = 0;
+            std::memset(output, 0xee, sizeof(output));
+            std::memset(expected, 0xee, sizeof(expected));
+            for (unsigned i=0; i<sizeof(pixels); ++i) pixels[i] = i + 1;
+            texture.pixels_ = pixels; texture.iWidth_ = texture.iHeight_ = 8;
+            texture.borrowed_ = 1;
+            buffer.rect1_ = {0,0,0,0}; buffer.stride_ = 8;
+            lock_clip = {0,-6,12,8}; lock_stride = 16;
+            TextureRasterKey = 255; lock_key = 0x1200F5u;
+            for (auto &uv : texture.corners_) uv = {0,0};
+            for (auto &uv : texture.cornersAndMids_) uv = {7,7};
+        }
+        // Absolute screen row y is odd when it copies, even when recoloring.
+        void sample(int x, int y, int u, int v, int color) {
+            const unsigned char value = pixels[v*8+u];
+            if (value == static_cast<unsigned char>(lock_key)) return;
+            expected[128 + y*lock_stride + x] = ((y & 1) != 0) ? value : (unsigned char)color;
+        }
+        void finish(Vert *vertices, int count, Vert *uv, int color, bool raster=true) {
+            texture.draw_color_key(&buffer, vertices, count, uv, color);
+            const std::vector<int> active = {1,2,3,4,5,2,3};
+            const std::vector<int> inactive = {1,2,3,5,2,3};
+            require(events == (raster ? active : inactive));
+            require(std::memcmp(output, expected, sizeof(output)) == 0);
+        }
+    ''' + main_body
+
+
+ALTERNATING_FORWARD_MAIN = r'''
+    int main() {
+        Vert triangle[]={{1,1},{5,1},{1,3}};
+        Vert triangle_uv[]={{2,3},{2,3},{2,3}};
+        // Exactly -1 forwards before this overload locks or resets: no
+        // buffer events, no pixels, and every argument passes through.
+        start();
+        texture.draw_color_key(&buffer, triangle, 3, triangle_uv, -1);
+        require(forward_calls == 1 && events.empty());
+        require(forwarded_buffer == &buffer && forwarded_verts == triangle);
+        require(forwarded_count == 3 && forwarded_uv == triangle_uv);
+        require(std::memcmp(output, expected, sizeof(output)) == 0);
+    }
+'''
+
+
+@pytest.mark.parametrize("main_body,observer", [
+    (ALTERNATING_MAIN, False),
+    (ALTERNATING_FORWARD_MAIN, True),
+])
+def test_actual_alternating_row_color_key_raster(tmp_path, main_body, observer):
+    result = run_host(tmp_path, alternating_harness(alternating_bodies(), observer, main_body))
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("before,after", [
+    ("if (color == -1) {", "if (color != 0) {"),
+    ("int parity = min_y & 1;", "int parity = 0;"),
+    ("++parity;", ";"),
+    ("*out = (parity & 1) != 0 ? texel : alternate;",
+     "*out = texel;"),
+    ("if (texel != key) *out = (parity & 1) != 0 ? texel : alternate;",
+     "*out = (parity & 1) != 0 ? texel : alternate;"),
+    ("const unsigned char alternate = static_cast<unsigned char>(color);",
+     "const unsigned char alternate = static_cast<unsigned char>(color >> 8);"),
+])
+def test_compiling_alternating_mutations_are_rejected(tmp_path, before, after):
+    actual = alternating_bodies()
+    assert actual["draw_color_key5"].count(before) == 1
+    actual["draw_color_key5"] = actual["draw_color_key5"].replace(before, after)
+    result = run_host(tmp_path, alternating_harness(actual))
+    assert result.returncode == 42, result.stderr
+
+
+def test_alternating_forward_runs_before_lock(tmp_path):
+    actual = alternating_bodies()
+    real = actual["draw_color_key5"]
+    brace = real.index("{") + 1
+    # A body that locks first publishes an event before forwarding.
+    actual["draw_color_key5"] = (real[:brace]
+        + "\n            buffer->get_data();\n"
+        + "            if (color == -1) { draw_color_key(buffer, vertices, count, uv); return; }"
+        + real[brace:])
+    result = run_host(tmp_path,
+                      alternating_harness(actual, True, ALTERNATING_FORWARD_MAIN))
+    assert result.returncode == 42, result.stderr
+
+
+@pytest.mark.parametrize("declaration", [
+    "const unsigned char key = static_cast<unsigned char>(TextureRasterKey);",
+    "const int stride = static_cast<int>(buffer->stride_);",
+    "const RECT clip = buffer->rect1_;",
+])
+def test_keyed_lock_publication_cannot_be_captured_early(tmp_path, declaration):
+    actual = keyed_bodies()
+    method = actual["draw_color_key"]
+    assert method.count(declaration) == 1
+    method = method.replace(declaration, "")
+    brace = method.index("{") + 1
+    actual["draw_color_key"] = method[:brace] + "\n" + declaration + method[brace:]
+    result = run_host(tmp_path, keyed_harness(actual))
     assert result.returncode == 42, result.stderr

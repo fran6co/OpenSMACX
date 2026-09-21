@@ -1,0 +1,39 @@
+{
+  "event_id": "41c65caf1056585f66dacea838af6fe9ded35f44548f4303057a242a7174a802",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_texture_vertices.py",
+      "src/texture.cpp",
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Extend the active keyed-pair batch to the small 61A240 pixel-count correction and genuinely shared helper if useful. Keep its acquisition, selector, embedded UV arrays, interpolation, key and other behavior unchanged. Original task baseline and all historical claims remain intact; this does not authorize unrelated rasterizer or terrain changes.",
+      "Require safely allocated actual-source zero/inverted-clip tests plus independent high-word counter boundary checks. Preserve all prior packed/color-key tests and protected-body measurements. Fresh source/original review, native matching/reference/layout checks and application build/link precede manual integration and destination recheck."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6398528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6399840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6437344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8c2f68d59331b3020925244c1c3e1044aa8db098150691ccf05b6a4c438c98fb",
+  "request_id": "keyed-existing-raster-count-scope-20260920",
+  "schema_version": 1,
+  "sequence": 51,
+  "stream": "task:vector-value-semantics"
+}

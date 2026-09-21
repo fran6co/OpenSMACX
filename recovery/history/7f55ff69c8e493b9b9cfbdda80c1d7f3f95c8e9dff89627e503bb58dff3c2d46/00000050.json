@@ -1,0 +1,23 @@
+{
+  "event_id": "8c2f68d59331b3020925244c1c3e1044aa8db098150691ccf05b6a4c438c98fb",
+  "payload": {
+    "affects": [
+      "entity-477a7d325bf9c957e372fa9ecfe8a5ec5deec0c7d40d760ee923fa055b96907b",
+      "entity-912bc58d8f0606b37d81c3c6fb642d45380106dafca1378e3a441408a945f08f",
+      "entity-d604d5f1fbecbfcba646f860f78c88c8a551b0aaa2f3893fa02fac506260c4c4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "keyed-packed-countdown-correction-20260920",
+    "evidence": [
+      "Independent coordinator/reviewer decoding from whole mapped function starts confirms DEC ECX; SHL ECX,16; MOV CX,u_fraction; MOV ESP,ECX; then unconditional pixel iteration, ADD SP,du_fraction, SUB ESP,0x10000 and JNS. Anchors: 61A6BA..6FF, 61ABBA..BFF and 623E6A..EEA. ADD SP cannot propagate carry into the high-word counter. For n16=uint16(end-start), output iterations equal n16 for 1..32769 and one otherwise; raw-span admission remains unchanged before clipping.",
+      "Original 61A6F6, 61ABF6 and 623EB2/623EE1 also preload the next texel before testing the terminating count. The current ordinary C++ reconstruction omits that unused final read. Preserve this known fault/read-observation difference; do not label it equivalent or add a volatile/emission-only anchor merely to manufacture the machine trace. Valid source storage and callback/shared-scratch/FP-status boundaries remain unproved beyond existing evidence."
+    ],
+    "hypothesis": "All three keyed raster loops have an unconditional first pixel and signed high-word countdown; the existing x<end reconstruction incorrectly skips admitted zero/inverted clipped spans.",
+    "kind": "discovery"
+  },
+  "previous_event": "d8bb3315c1588d56cb7f0417b71b61eae599fe60ab5049ae07d0d56f59689b92",
+  "request_id": "keyed-packed-countdown-correction-20260920",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:vector-value-semantics"
+}

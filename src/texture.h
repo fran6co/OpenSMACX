@@ -127,12 +127,19 @@ class Texture {
   // straight to the four-argument overload above.
   void draw_trans(Buffer *buffer, Vert *verts, int count, Vert *last,
                   int sentinel);
-  // `count` is spelled `int *` because the catalogue said so; the body uses
-  // it purely as a scalar and never dereferences it. `a4` stays `int`: it is
-  // stored into the edge-vertex slot as an integer and no caller passes a
-  // typed pointer, so the evidence does not reach the type.
-  void draw_upper_threshold_trans(Buffer *buffer, Vert *verts, int *count,
-                                  int a4);
+  // 0x0061A760: the color-key raster over an arbitrary caller vertex/UV pair.
+  // Four arguments (ret 0x10): the count is a plain scalar the catalogue had
+  // as `int *`, and the last argument is the explicit UV vertex base. The
+  // kernel skips only texels equal to the low byte of TextureRasterKey; the
+  // provisional draw_color_key name records the behaviour, not an original
+  // debug symbol.
+  void draw_color_key(Buffer *buffer, Vert *verts, int count, Vert *uv);
+  // 0x006239E0: the alternating-row variant. color == -1 forwards to the
+  // four-argument overload before any lock or FPU reset; every other value
+  // runs the keyed raster with absolute even screen rows recolored to the
+  // color's low byte and odd rows copied, keeping color-key holes in both.
+  void draw_color_key(Buffer *buffer, Vert *verts, int count, Vert *uv,
+                      int color);
   void draw(Buffer *buffer, Vert *verts, int *zvals, int a4, Vert *edgeVerts);
   void draw_trans(Buffer *buffer, Vert *verts, int *zvals, int a4,
                   Vert *edgeVerts);
@@ -207,8 +214,6 @@ class Texture {
   void sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
                   int edgeVerts, int light_thresh,
                   int *out_flag);                                // 0x00622810
-  void draw_upper_threshold_trans2(Buffer *buf, Vert *verts, int aux,
-                                   int count, int threshold_color);  // 0x006239E0
 
   // ===== THE -1 SENTINEL WRAPPERS =====
   // Five thin members that all read the same way: the LAST argument is a
