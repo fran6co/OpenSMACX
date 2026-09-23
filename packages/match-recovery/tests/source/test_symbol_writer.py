@@ -7,12 +7,14 @@ import pytest
 
 from match_recovery.source import read_text, write_symbol
 from match_recovery.source.publication import publish
+from match_recovery import binding_source
 
 
 PATH = Path("fixture.cpp")
 MARKER = b"// ORIGINAL: 0x00401000 ?f@@QAEHXZ 0x00401000-0x00401006 BYTE_EXACT"
 NEXT = b"// ORIGINAL: 0x00402000 _next 0x00402000-0x00402001 FILE"
 SYMBOL = "?f@@UAEHXZ"
+BINDING = binding_source.render("Original callers establish the member", ["call at 0x403000"]).encode()
 
 
 def records(raw):
@@ -84,6 +86,42 @@ def test_stale_snapshot_and_changed_provenance_refuse():
 
 def test_unterminated_marker_gets_a_separate_fact_line():
     assert write_symbol(MARKER, records(MARKER)[0], SYMBOL) == MARKER + b"\n// symbol    " + SYMBOL.encode() + b"\n"
+
+
+@pytest.mark.parametrize("newline", [b"\n", b"\r\n", b"\r"])
+@pytest.mark.parametrize("tail", [b"", b"int f() {}\n"])
+def test_insert_keeps_binding_adjacent_and_preserves_its_owner(newline, tail):
+    raw = MARKER + newline + BINDING + (newline + tail if tail else b"")
+    row, = records(raw)
+    result = write_symbol(raw, row, SYMBOL)
+    expected = MARKER + newline + BINDING + newline + b"// symbol    " + SYMBOL.encode() + newline + tail
+    assert result == expected
+    after, = records(result)
+    assert binding_source.parse(result.decode(), [after]) == binding_source.parse(raw.decode(), [row])
+    assert after.symbol == SYMBOL and after.byte_exact
+    assert write_symbol(result, after, SYMBOL) == result
+
+
+def test_inserting_symbol_does_not_reassign_neighbor_binding():
+    raw = MARKER + b"\n" + BINDING + b"\nint f() {}\n" + NEXT + b"\n" + BINDING + b"\n"
+    before = records(raw)
+    result = write_symbol(raw, before[0], SYMBOL)
+    after = records(result)
+    old_bindings = binding_source.parse(raw.decode(), before)
+    new_bindings = binding_source.parse(result.decode(), after)
+    assert [old_bindings[r.line] for r in before] == [new_bindings[r.line] for r in after]
+    assert result.endswith(NEXT + b"\n" + BINDING + b"\n")
+
+
+@pytest.mark.parametrize("binding", [
+    b"// RECOVERY_BINDING: v2 {}\n",
+    b"// RECOVERY_BINDING: v1 {}\n",
+    b"// intervening comment\n" + BINDING + b"\n",
+])
+def test_invalid_binding_is_not_silently_preserved_or_repaired(binding):
+    raw = MARKER + b"\n" + binding + b"int f() {}\n"
+    with pytest.raises(ValueError, match="binding"):
+        write_symbol(raw, records(raw)[0], SYMBOL)
 
 
 def test_pointer_assignment_is_code_not_a_symbol_fact():

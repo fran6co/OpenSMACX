@@ -57,6 +57,7 @@ from dataclasses import asdict
 from difflib import SequenceMatcher
 from pathlib import Path
 
+from .. import binding_source
 from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
                       LESSON_LEVER, LESSON_RULED_OUT, LESSON_UNRECOVERABLE,
                       MARKER, NEXT_MARKER)
@@ -458,6 +459,7 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
     selected = [i for i, row in enumerate(records) if row.line == record.line]
     if len(selected) != 1 or asdict(records[selected[0]]) != asdict(record):
         raise ValueError("source symbol update requires a current record snapshot")
+    bindings = binding_source.parse(text, records)
     position = selected[0]
     lines, source_lines = text.splitlines(), raw.splitlines(keepends=True)
     if len(lines) != len(source_lines):
@@ -487,6 +489,11 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
         index = record.line - 1
         line = source_lines[index]
         newline = b"\r\n" if line.endswith(b"\r\n") else b"\r" if line.endswith(b"\r") else b"\n"
+        # Binding rationale belongs immediately after its original marker.
+        # Inserting a symbol between them would orphan load-bearing evidence.
+        if record.line in bindings:
+            index += 1
+            line = source_lines[index]
         if not line.endswith((b"\n", b"\r")):
             output[index] += newline
         output.insert(index + 1, b"// symbol    " + encoded + newline)
@@ -494,6 +501,10 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
     reread = read_text(result.decode("utf-8", errors="replace").replace("\r\n", "\n").replace("\r", "\n"), record.path)
     if len(reread) != len(records):
         raise ValueError("symbol rewrite changed annotation coverage")
+    rebound = binding_source.parse(result.decode("utf-8", errors="replace"), reread)
+    if ([bindings.get(row.line) for row in records]
+            != [rebound.get(row.line) for row in reread]):
+        raise ValueError("symbol rewrite changed original binding rationale")
     for i, (before, after) in enumerate(zip(records, reread)):
         left, right = asdict(before), asdict(after)
         left["symbol"] = symbol if i == position else before.symbol
