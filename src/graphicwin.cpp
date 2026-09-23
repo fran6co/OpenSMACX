@@ -71,6 +71,14 @@ uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
 // RECOVERY_OBJECT: v1 0x009B3394 ?GraphicWinInitDefaults@@3UGraphicWinFrameDefaults@@A
 GraphicWinFrameDefaults GraphicWinInitDefaults;
 
+// Process-lifetime borrowed colour-map pointer, originally a zero-filled DWORD
+// at 0x009B3390. The pinned image has only the two fill loads: no direct writer
+// or address escape was found. That is not proof against computed indirect
+// writes; retain mutable storage and the optional remapping path. No allocation
+// or destruction of the pointed-to table is evidenced here.
+// RECOVERY_OBJECT: v2 0x009B3390 0x009B3394 ?GraphicWinColorMapTable@@3PAEA 0x005D5350
+unsigned char *GraphicWinColorMapTable = nullptr;
+
 /*
 Purpose: Construct the Win base and Buffer subobject, then install GraphicWin
          tables and initialize its trailing window state.
@@ -401,16 +409,54 @@ void GraphicWin::fill(int color) {
     int height = static_cast<int>(dib_.bmiHeader.biHeight);
     static_cast<Buffer *>(static_cast<GraphicWin *>(win_parent_))->copy(
         surface, origin_x, origin_y, 0, 0, width, -height);
-    void *const table = GraphicWinColorMapTable();
+    unsigned char *const table = GraphicWinColorMapTable;
     if (table == nullptr) {
         return;
     }
     // Re-read, do NOT hoist onto the pair above: the original reloads both at
     // 0x005D5302 and 0x005D5308, so a blit that resized the surface is seen
-    // by the remap. The bounds are inclusive, hence width-1 and -1-height.
+    // by the remap. map_colors uses exclusive bounds, but the original caller
+    // still subtracts one: its remap omits the final row and column.
     width = static_cast<int>(dib_.bmiHeader.biWidth);
     height = static_cast<int>(dib_.bmiHeader.biHeight);
     surface->map_colors(0, 0, width - 1, -1 - height, table);
+}
+
+// Rectangle counterpart of fill(int). The parent query is only an admission
+// test: the original copies from the reloaded parent's Buffer base, not from
+// the object returned by the query. As in the original, the transparent path
+// requires a live rectangle and a parent that remains a GraphicWin.
+// ORIGINAL: 0x005D5350 ?fill@GraphicWin@@QAEHPAURECT@@H@Z 0x005D5350-0x005D543E FILE
+// RECOVERY_BINDING: v1 {"evidence": ["5D5373 queries Win slotF4;5D53D2 reloads parent before5D53E6 Buffer copy;5D53EB loads the shared table and5D53F5..5417 reread RECT and remap right/bottom-minus-one. Transparent exit returns0, opaque5D5435 returns Buffer fill result, both ret8."], "reason": "This rectangle fill uses the real Win hierarchy and Buffer base. Transparent admission queries the parent, but the reloaded actual parent supplies the copied pixels; opaque fill delegates and returns its result."}
+// symbol    ?fill@GraphicWin@@QAEHPAUtagRECT@@H@Z
+int GraphicWin::fill(RECT *area, int color) {
+    bool transparent = false;
+    if ((iFlags_ & 0x80000) != 0 && win_parent_ != nullptr) {
+        Win *const parent = win_parent_;
+        transparent = parent->get_graphic_win() != nullptr;
+    }
+    if (!transparent) {
+        return Buffer::fill(area, color);
+    }
+
+    const int origin_x = client_rect_.left + outer_rect_.left;
+    const int origin_y = client_rect_.top + outer_rect_.top;
+    const int left = area->left;
+    const int top = area->top;
+    const int width = area->right - left;
+    const int height = area->bottom - top;
+    static_cast<Buffer *>(static_cast<GraphicWin *>(win_parent_))->copy(
+        this, left + origin_x, top + origin_y, left, top, width, height);
+
+    // Copy can invoke surface callbacks. Load the table and rectangle again
+    // afterwards; neither the incoming bounds nor the table may be cached
+    // across that call. The original ignores both drawing return codes.
+    unsigned char *const table = GraphicWinColorMapTable;
+    if (table != nullptr) {
+        Buffer::map_colors(area->left, area->top,
+                           area->right - 1, area->bottom - 1, table);
+    }
+    return 0;
 }
 
 

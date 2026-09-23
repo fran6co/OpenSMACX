@@ -1,0 +1,55 @@
+{
+  "event_id": "f8d15db5b168736128a8d6f84c1818a33a65501c29bc61c8429b716dd1dacb9a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_remapping.py",
+      "recovery/tests/test_graphicwin_fill.py",
+      "src/buffer.cpp",
+      "src/buffer.h",
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Authorize coupled real GraphicWin RECT fill, both Buffer colour remappers, and replacement of raw9B3390 pointer alias with a borrowed process-lifetime unsigned-char pointer initialized null. Original direct instruction and file-backed address-byte scans find only scalar5D52F7 and RECT5D53EB readers, no direct writer/address escape; arbitrary computed writes remain unproved. Do not invent setter, ownership or pointee storage.",
+      "RECT5D5350 returns Buffer fill result on opaque path, zero on transparent path. Virtual get_graphic_win is a boolean admission query; reload actual parent afterward, and reread RECT/table after copy. Preserve exclusive coordinate remap bounds and the callers/RECT-overload extra minus-one border, not stale inclusive prose. Boundaries and native emitted symbols must be bound with package writer; keep all seeds.",
+      "Original5DA39B and5DA551 snapshot stride-width before locking, while5DA41A and5DA5D6 compute initial pixel with post-lock stride. Reuse real get_data/free_data; preserve live aliasing LUT, failure returns/no release, successful-null Lock counter side effects, and post-loop release. RECT overload may delegate to coordinate overload after explicit guards and original endpoint adjustment. No raw self offsets/manual COM vtables.",
+      "Independent original audit found existing Buffer RECT-fill row-step defect: product advances from row start by stride-width, but original5DFE92/96 advances EDI through stores before5DFE98 adds gap. Repair to advance from completed tail; test multi-row, full-width and padded-pitch fills. Do not modify original null-RECT DirectDraw quirk speculatively.",
+      "Coordinator-reviewed manual recovery checkpoint: actual-source host controls and damage cases, native historical claims/strict diagnostics/data storage, fresh build/link and destination rechecks. No automatic acceptance or game-working claim; preserve larger terrain WIP and all existing task baselines/discoveries. Only coordinator runs native compiler/binder/Git, and edits freeze before whole-build snapshots."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6116176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6115920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6136624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6137040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6159568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "55594d9bce6b277f43c1b8f24f1a7a9db8f55439b048e8031e0045d7089c36ac",
+  "request_id": "window-fill-remapping-ownership-20260923",
+  "schema_version": 1,
+  "sequence": 141,
+  "stream": "task:infowin-ownership"
+}

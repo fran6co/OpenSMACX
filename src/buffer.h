@@ -404,7 +404,9 @@ class Buffer {
                             unsigned char *bits);
   int copy(Buffer *source, int x, int y, int w, int h, int sw, int sh,
            int a8, int a9);
-  int map_colors(int a1, int a2, int a3, int a4, unsigned char *table);
+  // Coordinate bounds are exclusive. The RECT overload additionally
+  // subtracts one from right/bottom, as in the original remapping path.
+  int map_colors(int left, int top, int right, int bottom, unsigned char *table);
   int map_colors(RECT *area, unsigned char *table);
   int write_strings_height(StringList *strings, int a2, int a3);
   // (left, top, width, height) from the two recovered call sites, which pass
@@ -479,11 +481,6 @@ class Buffer {
   // 0x005D8240 - builds a RECT from the four coordinates and forwards to
   // the RECT overload above.
   int fill(int left, int top, int width, int height, int color);
-  // 0x005DA330, a pending_bodies forwarder.
-  // DECLARED AND NEVER DEFINED, so there is no body to read the four ints
-  // off and no caller in this tree to read them off either. Left scaffold
-  // for the same reason as `poly` above.
-  int map_colors(int a1, int a2, int a3, int a4, void *table);
   int load_pcx(const char *filename, Palette *palette, int tgl, int height);
   // 0x005E2690, the actual PCX decoder: the by-name overload above maps the
   // file and hands over the bytes and their length.

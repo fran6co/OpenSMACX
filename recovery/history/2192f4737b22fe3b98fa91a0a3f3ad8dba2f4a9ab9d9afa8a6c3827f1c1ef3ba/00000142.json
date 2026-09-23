@@ -1,0 +1,28 @@
+{
+  "event_id": "45ef71e750755794377b17503cfcdef53b87c21bb3810e3428b9d69b6bfbf991",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_remapping.py",
+      "src/buffer.cpp"
+    ],
+    "evidence": [
+      "Independent review of touched RECT fill found ordinary unaligned left=1,width>=4 invokes undefined uint32_t dereference despite original5DFE92 REP STOSD permitting byte-aligned destinations. Authorize memcpy4 into byte cursor or equivalent defined byte storage, retain DWORD/tail split if useful; do not weaken tests to aligned-only rows.",
+      "Original5DFE98 final row adds the gap even when no next row is visited. A C++ pointer addition can exceed one-past for left>0 on the last allocation row. Use numeric uintptr_t traversal preserving target wrap/zero test and live shared gap, only form pointers for actual valid pixel accesses.",
+      "Bind existing BufferFillRowGap scratch to its independently checked9B3A10..14 zero-initialized DWORD and fill evidence after verifying direct references and native emitted symbol; preserve source storage rather than leave strict reference unknown. No new allocation/lifecycle. Same reviewed-checkpoint verification and historical obligations as revision141; no baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6159568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f8d15db5b168736128a8d6f84c1818a33a65501c29bc61c8429b716dd1dacb9a",
+  "request_id": "window-fill-unaligned-storage-repair-20260923",
+  "schema_version": 1,
+  "sequence": 142,
+  "stream": "task:infowin-ownership"
+}

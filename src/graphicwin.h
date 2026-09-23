@@ -186,6 +186,7 @@ class GraphicWin : public Win, public Buffer {
   int init(int x, int y, int width, int height, LPSTR title, int flags,
            Win *parent, Menu *menu, BorderSizing *border);
   int fill(int x1, int y1, int x2, int y2, int color);
+  int fill(RECT *area, int color);
   void fill(int color);
   // Win slot 62; original PushButton entry 0x00670D58 selects 0x005D5A70.
   virtual void redraw();
@@ -319,18 +320,10 @@ void *graphic_win_destructor_probe_buffer_target();
 void *graphic_win_destructor_probe_win_target();
 int graphic_win_destructor_probe_order();
 
-// Buffer::fill(int) at 0x005DFB50 (ret 4) paints the whole surface in one
-// colour; Buffer::map_colors at 0x005DA330 (ret 0x14) remaps a region through
-// a translation table. Both are still original bodies. The fill's extents are
-// INCLUSIVE: the recovered caller passes width-1 and -1-height, which the
-// RECT sibling at 0x005D5350 independently confirms by passing right-1 and
-// bottom-1.
-typedef int (OriginalObject::*func_graphic_win_buffer_fill_color)(int);
-typedef int (OriginalObject::*func_graphic_win_map_colors)(int, int, int, int, void *);
-
-// The translation table fill consults before remapping. A null table means
-// the plain blit is the whole operation, which is the common case.
-inline void *&GraphicWinColorMapTable() { return *reinterpret_cast<void **>(0x009B3390); }
+// Borrowed process colour-map pointer, initially null in the pinned image.
+// Both transparent fill overloads consult it after copying the parent surface.
+// A null pointer leaves the copied pixels unchanged.
+extern unsigned char *GraphicWinColorMapTable;
 
 
 // GraphicWin::init's four remaining original dependencies. Win::init at

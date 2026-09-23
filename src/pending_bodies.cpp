@@ -498,13 +498,6 @@ int TutWin::tut_win(void *owner, const char *text, int a3, int a4,
                                              a4, sprite, a6, a7, a8);
 }
 
-int Buffer::map_colors(int a1, int a2, int a3, int a4, void *table) {
-    typedef int(__fastcall *pending)(Buffer *, void *, int, int, int, int,
-                                     void *);              // 0x005DA330
-    return PENDING_BODY(0x005DA330, pending)(this, nullptr, a1, a2, a3, a4,
-                                             table);
-}
-
 void BaseWin::click(int a1, int a2, int right, int is_double) {       // 0x004165D0
     typedef void(__fastcall *pending)(BaseWin *, void *, int, int, int, int);
     PENDING_BODY(0x004165D0, pending)(this, nullptr, a1, a2, right, is_double);
