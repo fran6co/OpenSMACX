@@ -34,6 +34,31 @@
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
+// Construction455F10 and destruction456010 enumerate the same37 Sprite
+// members, including cleanup on partial construction. Real member lifetime
+// supplies those operations and unwind actions exactly once.
+// ORIGINAL: 0x00455F10 ??0FactionArt@@QAE@XZ 0x00455F10-0x0045600B;0x00654ED0-0x00654F71 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retained seed src/recovered/units/00455f10.cpp supplies the original identity and both main/cleanup spans; complete original audit confirms the same member groups and their forward/reverse order.", "Original constructor455F10 and destructor456010 cover24 base Sprites,2 council logos,six individual Sprites,3 small report logos,2 report logos; current FactionArt declaration owns those objects with0x65C total extent.", "Original CRT6820B4 selects44CC50, which constructs8 elements at78E978 and registers44CC80 for reverse teardown. The compiled lifecycle is observed, but this binding is not a byte, exception-equivalence or linked-startup claim."], "reason": "Original FactionArt member construction/destruction has no additional application statements. Genuine C++ members own normal and partial-construction cleanup; the empty user body is not an unfinished placeholder."}
+FactionArt::FactionArt() {}
+
+// ORIGINAL: 0x00456010 ??1FactionArt@@QAE@XZ 0x00456010-0x004560FC;0x00654F80-0x00655021 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retained seed src/recovered/units/00456010.cpp supplies the original identity and both main/cleanup spans; complete original audit confirms the same member groups and their forward/reverse order.", "Original constructor455F10 and destructor456010 cover24 base Sprites,2 council logos,six individual Sprites,3 small report logos,2 report logos; current FactionArt declaration owns those objects with0x65C total extent.", "Original CRT6820B4 selects44CC50, which constructs8 elements at78E978 and registers44CC80 for reverse teardown. The compiled lifecycle is observed, but this binding is not a byte, exception-equivalence or linked-startup claim."], "reason": "Original FactionArt member construction/destruction has no additional application statements. Genuine C++ members own normal and partial-construction cleanup; the empty user body is not an unfinished placeholder."}
+FactionArt::~FactionArt() {}
+
+// CRT slot6820B4 selects44CC50: construct eight elements at78E978 with
+// stride65C, then register44CC80 to destroy that same vector at exit.
+// This independently bounds78E978..791C58; the last two members of each
+// element occupy604..65C. Content loading and linked startup ordering
+// remain unfinished; the compiler owns the new vector's lifetime.
+// RECOVERY_OBJECT: v2 0x0078E978 0x00791C58 ?FactionsArt@@3PAUFactionArt@@A 0x00455F10
+FactionArt FactionsArt[MaxPlayerNum];
+
+// Both original producers453A20/455EB0 fill192 four-byte pointers to the
+// first24 members of those eight objects, independently bounding
+//76E590..76E890. Initial pointer storage is zero.
+// RECOVERY_OBJECT: v2 0x0076E590 0x0076E890 ?FactionBaseSprites@@3PAY2132PAVSprite@@A 0x00453A20
+Sprite *FactionBaseSprites[MaxPlayerNum][2][4][3];
+
 uint32_t RankingFactionIDUnk1;  // 0x009A650C
 uint32_t RankingFactionIDUnk2;  // 0x009A6510
 int DiploFriction;  // 0x0093FA74 // not always bounded, should it be 0-20?

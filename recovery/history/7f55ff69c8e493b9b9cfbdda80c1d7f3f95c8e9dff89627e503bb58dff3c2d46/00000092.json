@@ -1,0 +1,30 @@
+{
+  "event_id": "8f89b5087366fa5ac9191753b880ddc649d84850239171f22cc80d50e5646052",
+  "payload": {
+    "affects": [
+      "entity-5aa06522dc7a332ed21073454de5cd5d31865fd3d51212af57eb5e09affaf2c8",
+      "entity-5c25bc16f695317409749d1efaa0b2a5f125636c6f028683bbc7375ec67afe93",
+      "entity-78de17f4c0b21236908669042286be5ef73ed50d1082825d7154574a2840bc5e",
+      "entity-88ca33a70fbdb2c9f5d4c37d208e04c33391719d1d6060fdba3355d323cbecf1",
+      "entity-8d7e6de19687105175163848e843a1296a04e52bcd25b23fae75eca6fe6b6d8f",
+      "entity-9fbf8ad2a96e5383489e666f4e22762470d7e85061424bef02424ca034b767f9",
+      "entity-b50919edb239927e4ab7f6c327f8a20efe4169082c9267bc8e8cee9a52854f46"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-art-loading-closure-20260923",
+    "evidence": [
+      "Full453710..453A17 analysis corrects the seed fallback condition:45376F tests load_pcx and453771 skips faction.pcx fallback on zero, so fallback occurs on nonzero. Preserve callback order, fresh Players.filename after palette initialization, four pixel publications before next callback,37 Sprite extracts and final buffer close. Base extracts are terrain then defense then size; trailing report_logo[2] precedes report_logo_small[3], unlike declaration order.",
+      "Palette publications already have owners: InfoFactionTextColors68F9F0, InfoFactionShadowColors68FA10 and ChatItemIdTable[24]68FA30. The write at68FA50 is ChatItemIdTable[faction+8], not a new allocation. Loader needs a proper public extern for that existing owner, not another equal-valued array.",
+      "colortables_init_faction423000 is absent from product source and its retained seed supplies only a prefix of original423000..423566 plus cleanup. The missing behavior includes palette comparison/cache/Filemap/remap processing. A complete load_faction_art draft cannot omit the call or treat that seed prefix as recovered.",
+      "Full94-byte load_sprites455EB0..455F0E calls vehicles454270, terrain451C50, performs192 borrowed-pointer publications inline, then icons4547E0 and cursors454FC0. Only cursors currently has genuine compiled source. Vehicles/icons are retained recovered-unit seeds; terrain is an unrecovered seed. None of those three is linked as a product body or pending forwarder. A drafted wrapper needs those real callees before integration, not invented loader placeholders.",
+      "Both complete drafts remain analysis-only, with original-address forwarders preserved until their connected replacements are ready. Current FactionArt lifetime/load_bases checkpoint does not claim their completion or change their scopes/baselines."
+    ],
+    "hypothesis": "Genuine faction artwork loading requires the complete palette-remap initializer and three seed-only sprite loaders; do not mistake recovered storage and pointer publication for a working asset pipeline.",
+    "kind": "discovery"
+  },
+  "previous_event": "04acffe233e5349eb4b1e74a907279801dd69bc2e7e38f8691e77103c809afb2",
+  "request_id": "faction-art-loading-closure-20260923",
+  "schema_version": 1,
+  "sequence": 92,
+  "stream": "task:vector-value-semantics"
+}

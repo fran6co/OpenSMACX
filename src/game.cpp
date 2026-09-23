@@ -3167,15 +3167,13 @@ void __cdecl load_cursors() {
     g_PCX_PARSE_TEMP_BUFFER1.close();
 }
 
-// 0x0076E590 - the 192-entry `Sprite *` table load_bases fills: 8 factions x
-// 24 sprites, 24 = faction.h's FactionArt::base[6][4], and the 0x2c stride is
-// sizeof(Sprite). It ends exactly where caviar.cpp's g_VCTB_CAVIARDATA
-// (0x0076E890) starts, which is what bounds the walk. It is a const POINTER
-// to the table rather than the array itself on purpose: the array spelling
-// moves load_bases's whole register assignment (below).
-static int *const FactionArtBasePtrTable = (int *)0x0076E590;
+// The original walks eight factions, two terrain variants, four size tiers
+// and three defense tiers, storing pointers to successive Sprite members.
+// The real pointer table and its pointees share faction.cpp ownership.
+// The preserved LEVER/TRIED notes below describe the superseded raw-storage
+// spelling, not a requirement to keep an executable-address table.
 
-// ORIGINAL: 0x00453A20 ?load_bases@@YAXXZ 0x00453A20-0x00453A6A FILE
+// ORIGINAL: 0x00453A20 ?load_bases@@YAXXZ 0x00453A20-0x00453A6A FILE BYTE_EXACT
 // LEVER: the two fixed-address bindings renamed off their addresses.
 //         0x0076E890 is caviar.cpp's g_VCTB_CAVIARDATA (now declared in
 //         caviar.h, so the same address does not carry two names), which makes
@@ -3198,28 +3196,16 @@ static int *const FactionArtBasePtrTable = (int *)0x0076E590;
 //         `xor ebx, ebx` never appears at all.
 
 void __cdecl load_bases() {
-    int ebx = 0;
-    char **eax = reinterpret_cast<char **>(FactionArtBasePtrTable);
-    do {
-        int esi = 0;
-        do {
-            int edi = 4;
-            do {
-                char *ecx = reinterpret_cast<char *>(
-                    FactionArtGlobal_storage + ebx + esi);
-                int edx = 3;
-                do {
-                    *eax = ecx;
-                    ecx += 0x2c;
-                    eax++;
-                    edx--;
-                } while (edx != 0);
-                esi += 0x84;
-                edi--;
-            } while (edi != 0);
-        } while (esi < 0x420);
-        ebx += 0x65c;
-    } while (reinterpret_cast<int>(eax) < reinterpret_cast<int>(&g_VCTB_CAVIARDATA));
+    for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+        for (int terrain = 0; terrain < 2; ++terrain) {
+            for (int size = 0; size < 4; ++size) {
+                for (int defense = 0; defense < 3; ++defense) {
+                    FactionBaseSprites[faction][terrain][size][defense] =
+                        &FactionsArt[faction].base[terrain][size][defense];
+                }
+            }
+        }
+    }
 }
 
 // ORIGINAL: 0x0052A9B0 sub_52a9b0 0x0052A9B0-0x0052AA2D FILE BYTE_EXACT

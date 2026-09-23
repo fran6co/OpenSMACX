@@ -1,0 +1,31 @@
+{
+  "event_id": "7733683c1b7ad3b8b56b33bbd30a3e7e1f9763ee81cbf6174c5201a174c0365c",
+  "payload": {
+    "affects": [
+      "entity-08f72fa36fac6eb36baf6643c3c8edb3e3e0d4f749d12e709cc4f1144b1b2862",
+      "entity-1a49737ded46b07422371d5210abba7641da458b27b7120916db79cbc67dd67b",
+      "entity-42de1aae37f134d8959f83f8a71b3cda8262f262ef939b0e7dc2c471fadfa609",
+      "entity-4f611e3d5f46cecd00bc769ff6129e2980c216793b2a74e5b2d10aa9793a3c5a",
+      "entity-5aa06522dc7a332ed21073454de5cd5d31865fd3d51212af57eb5e09affaf2c8",
+      "entity-9fbf8ad2a96e5383489e666f4e22762470d7e85061424bef02424ca034b767f9",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-rendering-faction-art-owner-closure-20260923",
+    "evidence": [
+      "Independent complete55AF20..55B739 audit produced an analysis-only candidate. Original corrections versus seed: water55B2EC reads Map.climate+0, neighbor55B4A3..55B4B7 reloads true Base.x/y, revealed-label55B613 pushes zero colors, and write_l55B689..55B692 uses rectangle.left+2/top+1. Preserve direct alien test without adding ExpansionEnabled, low32 arithmetic and cached/live read timing. Candidate still requires independent review, compilation and tests before import.",
+      "Full executable instruction-reference scan of76E590..76E890 found two producers453A25 and455EBF and reader55B31C. Proposed Sprite*[8][2][4][3] must refer to real constructed FactionArt subobjects. Current game.cpp load_bases writes raw FactionArtBasePtrTable into FactionArtGlobal_storage; load_sprites455EB0 remains an original forwarder. Both producers must migrate together;192 pointer entries are image-initial zero, not lifetime evidence.",
+      "load_faction_art453710 remains an original forwarder that writes faction-art storage and three palette owners. Original FactionArt constructor455F10..45600B plus unwinds654ED0..654F71 and destructor456010..4560FC plus unwinds654F80..655021 establish24+2+6+3+2 Sprite members (37*2C=65C). Existing total storage size alone does not prove semantic array grouping or genuine lifetime. No exact historical claims on those two seed lifecycle identities were observed.",
+      "BaseDrawFont proposed Font* owner93FC24 has only observed write55B344 and reads55B3BA/55B5C1/55B633 and zero image initial data; do not confuse VehDrawFont93FAE0. ChatItemIdTable[24]68FA30 already owns the mutable colors used at55B65B; do not duplicate another equal-valued array. SecretProject.citizens_defense_force and Rules.pop_limit_sans_hab_complex/dome already own corresponding globals. Font pixel-height access and existing red head-icon declarations need reviewed interfaces.",
+      "BaseWin::draw_energy_alloc411980 also consumes the style pool in the original (ten pushes:9,3,0 then seven6), but its current scaffold has none. The integrated36-callsite migration is not a claim that this unrecovered body is complete; its eventual recovery must use the shared pool.",
+      "No product import or scope expansion is authorized by recording this discovery. Preserve original seeds and unresolved runtime initialization; a linking placeholder would not establish renderer or asset behavior."
+    ],
+    "hypothesis": "Complete base_draw requires genuine constructed FactionArt storage, both sprite-table producers and the asset-loading lifecycle, rather than reproducing original-address aliases.",
+    "kind": "discovery"
+  },
+  "previous_event": "665fb13aaab99a3d99c9c4ca3649cfa647930ef792219c5d2dbaa06bfc861f4d",
+  "request_id": "base-rendering-faction-art-owner-closure-20260923",
+  "schema_version": 1,
+  "sequence": 89,
+  "stream": "task:vector-value-semantics"
+}

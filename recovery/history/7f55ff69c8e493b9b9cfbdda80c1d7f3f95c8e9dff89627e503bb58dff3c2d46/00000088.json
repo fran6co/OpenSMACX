@@ -1,0 +1,31 @@
+{
+  "event_id": "665fb13aaab99a3d99c9c4ca3649cfa647930ef792219c5d2dbaa06bfc861f4d",
+  "payload": {
+    "affects": [
+      "entity-45e00ac3d5d753ab79d60641aa7f2195d58d169047cd73b370c2cc131328365a",
+      "entity-53047e440434e174c1474d559110bdeb60ce3bd4a5af686f225c58e7c0e754fc",
+      "entity-784acc563b55fa3ac8c196af99e95e39f074244a18680a45bc7870fd83f5f09d",
+      "entity-800d8eeb8fa1d8912448678ceab9b6bb9483405f01d71f60c1ae2b2e6516c05d",
+      "entity-90adea27a7d2a943a525699fa127ee033c700d6b5f3d8703c6bf7b7a1568c8e0",
+      "entity-ceada8a2d0646e82f29d6067dc32d18f1acc6c0af754b8e82278833b09be644a",
+      "entity-e410282ec98f45c4ba6e38591da1f7b8349bc49c9ccfd18ea1ef07d91185c90f",
+      "entity-f3bfe8ba6cf7077c1bcaf5de89ca0cb92a1d1814e41bf219b5fb9a8298f2ded0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "farm-support-redraw-slot12-correction-20260923",
+    "evidence": [
+      "Independent original-vtable audit: Win66FDD0[62]=404280; GraphicWin66FC50, MapWin66A57C, PlanWin66D2AC and Console66EC18 all have slot62=5D5A70. Support409034 uses that real virtual dispatch. GraphicWin5D5AAF subsequently dispatches slot12 (+30); current Win::vslot_12 is empty and MapWin::on_redraw is nonvirtual with raw receiver arithmetic.",
+      "Original slot12: MapWin421880 subtracts vtordisp then reaches46B1D0; PlanWin48BF70 subtracts vtordisp then reaches its own48AF30; Console51DE40 subtracts vtordisp and2328 before46B1D0. Full Map callback46B1D0 is owned_ !=0 then draw_map(1). Preserve all four existing exact identities and GraphicWin5D5A70; PlanWin48AF30 remains a1159-byte original forwarder/seed prerequisite.",
+      "Do not globally rename Win::vslot_12 to on_redraw without a separate complete override audit. Existing vslot_12 overrides include AlphaMenu, MultiDebug, CouncWin and EditBox; named on_redraw methods already serve other hierarchies including Dialog plus GraphicWin. Win::on_redraw(int,int)5ED9C0 is an unrelated exact overload. A bounded provisional-slot override may avoid accidental override changes, subject to genuine generated thunk evidence.",
+      "Complete support408EB0..4090BF draft was independently reviewed instruction-by-instruction without a concrete discrepancy: retain post-fill/pre-init panel snapshot, arithmetic SAR of1DD6C, positive height scale25 not50, separate truncating centering halves, pre-redraw bitmap dimensions and live embedded Buffer/soft_update receivers. Genuine MapWin::init(int,int)470A90 and slot12 closure are missing; analysis is not product recovery or acceptance. Earlier finding remains preserved, not silently rewritten.",
+      "These findings grant no scope change, historical demotion or automatic acceptance. base_energy behavior change remains explicitly deferred."
+    ],
+    "hypothesis": "Correct the earlier slot62 hypothesis: GraphicWin::redraw already occupies slot62; its slot12 callback needs real MapWin/PlanWin overrides and generated receiver adjustments.",
+    "kind": "discovery"
+  },
+  "previous_event": "f173953cbcf7e76e0ab4685c89790409b42fd23ae09df7213f19735ca17bd0cd",
+  "request_id": "farm-support-redraw-slot12-correction-20260923",
+  "schema_version": 1,
+  "sequence": 88,
+  "stream": "task:vector-value-semantics"
+}

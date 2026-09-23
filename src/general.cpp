@@ -2234,11 +2234,8 @@ void __cdecl jackal_close() {
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
-// FactionArt is not modelled yet - its constructor runs through the
-// FactionArtCtorTarget seam, so this stands in as raw storage until the
-// class is recovered. 8 elements of 0x65C stride, per the image's own
-// VectorCtorIterator. NOT constructed in this build (documented gap).
-uint8_t FactionArtGlobal_storage[8 * 0x65C];  // 0x0078E978
+// Faction artwork is owned by the genuine FactionArt array in faction.cpp;
+// its Sprite members now participate in C++ construction and destruction.
 // ===== archived teardown callbacks for still-bound globals =====
 // These globals are not modelled as real objects yet; the bindings move
 // with the callbacks until their domains claim them.

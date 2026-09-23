@@ -558,7 +558,13 @@ static_assert(sizeof(PlayerData) == 0x20CC,
               "PlayerData layout must match the original executable");
 
 struct FactionArt {
-    Sprite base[6][4];
+    FactionArt();
+    ~FactionArt();
+
+    // load_bases453A20 publishes these in terrain/size/defense order;
+    // base_draw55AF20 selects the same 2 x 4 x 3 elements. The original
+    // constructor455F10 constructs all24 contiguous Sprites before logos.
+    Sprite base[2][4][3];
     Sprite council_logo[2];
     Sprite council_small;
     Sprite council_big;
@@ -569,6 +575,7 @@ struct FactionArt {
     Sprite report_logo_small[3];
     Sprite report_logo[2];
 };
+static_assert(sizeof(FactionArt) == 0x65C, "FactionArt original member extent");
 
 static const int MaxSocialCatNum = 4;
 static const int MaxSocialModelNum = 4;
@@ -585,8 +592,8 @@ static const int MaxSitesNum = 25;
 // THE FACTION STORAGE - real objects, not pointers into the original image.
 // Every address below is uninitialised .data in the shipped binary (zero at
 // load); the rules walkers in alpha.cpp and the faction code fill them.
-// Definitions in alpha.cpp. FactionsArt (0x0078E978) is general.cpp's
-// FactionArtGlobal_storage - one storage, one name, no second object.
+// Definitions in alpha.cpp, except FactionsArt in faction.cpp. FactionArt
+// owns its Sprite members; it is not an array of unconstructed bytes.
 // FactionsStatus (0x009A64E8) is lock.h's LockEnableMask - same rule.
 extern RulesSocialCategory SocialCategories[MaxSocialCatNum];   // 0x0094B000
 extern RulesSocialEffect SocialEffects[MaxSocialEffectNum];     // 0x00946580
@@ -598,10 +605,11 @@ extern Player Players[MaxPlayerNum];   // Players[0] is AI native life faction (
 extern PlayerData PlayersData[MaxPlayerNum];                    // 0x0096C9E0
 extern uint32_t FactionRankings[MaxPlayerNum];                  // 0x009A64EC
 extern uint32_t LockEnableMask;  // 0x009A64E8 - declared in lock.h too; byte 0 = is_human bytes, byte 1 = is_alive
-// Declared here (not just in general.cpp) because game.cpp's load_bases
-// (0x00453A20) walks this storage directly, 0x2c per Sprite, filling the
-// FactionArtBasePtrTable - and the storage was otherwise reachable by no name.
-extern uint8_t FactionArtGlobal_storage[8 * 0x65C];
+extern FactionArt FactionsArt[MaxPlayerNum];  // 0x0078E978
+// Mutable borrowed pointers, populated by load_bases. The original's other
+// producer load_sprites455EB0 and content loader load_faction_art453710
+// remain unrecovered; storage/lifetime alone do not supply loaded artwork.
+extern Sprite *FactionBaseSprites[MaxPlayerNum][2][4][3];  // 0x0076E590
 // Per-turn archive of every faction's power score, written by rankings() for the first
 // MaxRankingHistoryTurns turns and indexed faction + turn * MaxPlayerNum. Sixteen bits per
 // entry, which is why a score above 65535 wraps in the graph and not in the ranking.

@@ -1,0 +1,36 @@
+{
+  "event_id": "04acffe233e5349eb4b1e74a907279801dd69bc2e7e38f8691e77103c809afb2",
+  "payload": {
+    "affects": [
+      "entity-11ac17a83e2272f8f19f1488f7cf5449c6b3ebfc0c661460629d519512d88376",
+      "entity-13e141830e92ae425529aa74634e63c864b5b213062feb9682fef95b0d1ba8a4",
+      "entity-187b157b044b61730fbecdb8bbfaa153015c0119c7fced55d069909c9ec1a507",
+      "entity-508fc9eaea32cf2bd859361bd2a3d5328a86879e6b2291b9179b5de912901379",
+      "entity-53047e440434e174c1474d559110bdeb60ce3bd4a5af686f225c58e7c0e754fc",
+      "entity-914f098c259f7ebb395f6dbcf39bc94cae3869461dd34016033f28b180853a78",
+      "entity-917f75234b1f4ba49694ffde21f808f1417c8d0892073788e8c0dabaa4880e16",
+      "entity-98bac2cd8cc0eaf56a0a923f860c7c0647f97260ab2b42e62a835afe03feba77",
+      "entity-a342b10c47d7b68103c52b1269bc754a19478319c71e7c7eb22116b5c76a9ab6",
+      "entity-ceada8a2d0646e82f29d6067dc32d18f1acc6c0af754b8e82278833b09be644a",
+      "entity-ed61cc5ba1008b6ca6a1d528b1894996e53468159f994da2058088d8e0e9c779",
+      "entity-f5a6a22dd4ba2cb9567e7968b7042e0677124856c1ef47bc323c922f3e52220b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "map-plan-redraw-connected-owners-20260923",
+    "evidence": [
+      "Independent full MapWin init470A90..470EC2 draft found existing owners: Buffer buffer_a_+1E938;6E81B4 is TutWinBaseWindow.rect1_;8EB48C is WorldClimateWorldWin.mapWin_; caption font is inherited Win::field_F8_. Preserve label29 lookup even when primary caption discards it, fresh label lookups, grammar publication, post-init mode/index reads, inherited virtual slot62 redraw and post-redraw flags. Missing lower init470920 and layout initializer46FA20 remain real prerequisites.",
+      "Initialization shared storage still needs producer evidence: RECT939F08 from WorldWin4C3A70/4C49A0; indexed RECT939F48 needs complete allocation bounds; layout mask939EDC; borrowed Font*945778 published by config_popups588F61 after find_font(10,1). Do not turn these into fixed addresses or independent snapshots merely to compile the draft.",
+      "Complete PlanWin48AF30..48B3B7 draft corrects seed errors: both map visibility and base visibility/ownership gates; endpoint2 beforeendpoint1; use veh_fake return as veh_draw id; patterned-line argument order preserves x/y and pattern counters. Tail model is four colors at21FFC followed by four sixteen-byte endpoint records at2200C..2204C, exactly the existing80 bytes. Both add_line48AE40/48AE90 guard count<4 and must be migrated with their consumers; no layout widening.",
+      "Independent CRT audit contradicts time.cpp current no-constructor prose:682570 selects48AE00, which constructs PlanWin front834D70 with most-derived flag1 and registers48AE20. Exit invokes48BD80 andGraphicWin5D4DD0 on856DC0. line_timer50EEB5 passes that virtual-base receiver and50EEBF directly calls48AF30. Recover the true PlanWin object and use a qualified direct draw_contents call; current reinterpretation of856DC0 as an unadjusted PlanWin is wrong.",
+      "A bounded collision-free name for Win slot12 is draw_contents: migrate current AlphaMenu/MultiDebug/CouncWin/EditBox overrides and eight direct virtual callsites together, then genuine MapWin/PlanWin overrides and inherited Console thunks. Do not globally rename to on_redraw because unrelated Dialog-slot methods would become accidental Win overrides. Preserve all mapped thunk/handler identities and exact claims; compiler symbols must be observed before native publication.",
+      "These are preserved draft interpretations, not integration or scope permission. Patterned Buffer line5E09D0 is an explicit unfinished placeholder; base_draw faction-art dependency and linked PlanWin lifetime remain open. No new C++ renderer imported, no task baseline reset, and deferred base_energy remains untouched."
+    ],
+    "hypothesis": "The support/plan renderers need their genuine initialization, window object and line-storage owners; existing forwarder receivers and seed transcriptions are insufficient.",
+    "kind": "discovery"
+  },
+  "previous_event": "65b798551503a368cd33d9bf3847b3055859c6208bf8706aabf442e0f2ae7364",
+  "request_id": "map-plan-redraw-connected-owners-20260923",
+  "schema_version": 1,
+  "sequence": 91,
+  "stream": "task:vector-value-semantics"
+}

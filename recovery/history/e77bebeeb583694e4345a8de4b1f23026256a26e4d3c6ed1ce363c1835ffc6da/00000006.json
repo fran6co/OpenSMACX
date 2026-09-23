@@ -1,0 +1,43 @@
+{
+  "event_id": "50bbda69d38dbfecc93b6b949c7969ec7044ef7f1ccb4cff3ebbeb7b06e092a1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_faction_art.py",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/game.cpp",
+      "src/general.cpp"
+    ],
+    "evidence": [
+      "Authorize the connected base-renderer prerequisite: real FactionArt member lifetime at455F10/456010 and one FactionArt[8] owner at78E978, replacing unconstructed bytes. Original member construction/unwind and destructor order establish24 base Sprites,2 council logos,six single Sprites,3 small report logos,2 report logos. Use C++ member lifetime, never vector helper callbacks, placement reconstruction or hand exception machinery.",
+      "Authorize correct base[2][4][3] dimensions from both producers453A20/455EB0 and reader55AF20; preserve the0x65C element size. Introduce the sole Sprite*[8][2][4][3] pointer table for76E590..76E890, and recover complete existing load_bases producer453A20 with real member addresses and no cross-object sentinel or original executable pointer.",
+      "Replace raw FactionArtGlobal_storage declaration/definition and stale no-lifetime comments together. Native binder must retain original lifecycle spans including cleanup funclets and retained seeds; record no match claim without a measurement. Independently establish object bounds, generated CRT/atexit path, member offsets, initial storage and protected claims; host controls should exercise actual declarations, construction/destruction order and producer pointer identity.",
+      "This step does not silently recover load_sprites455EB0 or load_faction_art453710: both existing forwarders remain explicit producer/content-loading dependencies. No operational artwork, full base_draw or game acceptance follows. Their pending findings remain; do not fabricate placeholder texture data or original-address aliases as a substitute.",
+      "Manual coordinator checkpoint only after independent review, fresh build/link and scoped regression checks. Preserve all existing terrain WIP, task baselines and historical claims. base_energy behavior change remains deferred. No workers mutate product or compiler state outside explicit coordination."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4546320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4546576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4536864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "209a603c94f748201d74bde666b573ab36257c0d472da37b468391051386a862",
+  "request_id": "faction-art-real-lifetime-20260923",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:frontend-presentation"
+}
