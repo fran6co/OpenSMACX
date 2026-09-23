@@ -225,6 +225,22 @@ extern Sprite g_TER1_SENSOR_ARRAY_SPRITE;             // 0x007A6830
 // Shared interface choices: DipEdit uses elements 1 and 2 for its checkboxes.
 extern Sprite g_IFACE_CLOSE_X_SPRITES[3];
 
+// Existing resource/control assets populated by load_icons. No second
+// storage or per-consumer copies: original counts are owned in sprite.cpp.
+extern Sprite g_ICONS_GENERAL_SPRITES[16];
+extern Sprite g_RESOURCE_ICON_SPRITES[32];
+extern Sprite g_RED_ALIEN_HEAD_ICON_SPRITE;
+extern Sprite g_SILVER_MENU_ICON_SPRITES[4];
+extern Sprite g_SILVER_CHECKBOX_ICON_SPRITES[2];
+extern Sprite g_RED_MALE_HEAD_ICON_SPRITE;
+extern Sprite g_NULL_RESOURCE_ICON_SPRITE;
+extern Sprite g_PEACE_SIGN_SPRITES[2];
+extern Sprite g_ICON_TILE_SQUARE_SPRITE;
+extern Sprite g_SCROLL_BAR_ARROW_ICON_SPRITES[12];
+extern Sprite g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES[12];
+extern Sprite g_SCROLL_BAR_FILLER_ICON_SPRITES;
+extern Sprite g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE;
+
 // Existing interface assets populated by load_box_sprites; each numbered
 // array supplies the corresponding corner/edge of all 51 panel styles.
 extern Sprite g_IFACE_BOX_SPRITES1[51];

@@ -1,0 +1,33 @@
+{
+  "event_id": "89b26244545e2f82eaeb83834a4727924f44f6b0477995f75d5287df841cacb1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_icons_loader.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Authorize complete genuine load_icons4547E0..454D0C in game.cpp, using the existing shared PCX Buffer and13 actual Sprite owners in sprite.cpp. Add public loader/asset declarations; no duplicate storage, original-address calls, placeholder assets or copied instructions. Preserve the retained seed and bind through the native writer.",
+      "Original full body attempts86 extractions,172 recolors (263 to265 then262 to265 before every extraction), three PCX loads (palette0/base10/count236), and one terminal close. All service results are ignored and there is no DirectDraw guard. Preserve receiver, rectangle, loop, sheet-change and failure-path ordering; all required service definitions already exist.",
+      "Independently verify original array counts, element stride44, scalar Sprite extent, CRT/teardown references and filename bounds before compact object/literal bindings. Source-owned bounds and names are inputs, not acceptance results. Keep linked startup and actual loaded pixel content unknown unless separately proved.",
+      "Actual-source host controls must observe complete receiver/argument/callback order, ignored failures and final close, with compiling assertion-rejected mutations. Native measurements, protected claims, storage/reference checks and fresh application build/link plus independent review precede manual integration; no native full-project acceptance claim or baseline reset.",
+      "Existing load_sprites455EB0 is still an unrecovered original forwarder; vehicles454270 and terrain451C50 are separate missing callees. This body recovery does not claim connected asset startup is complete. Preserve those and the faction-cache overread findings, terrain WIP and deferred base_energy without behavior changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4540384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "48d3245dbe73db347cc0c31f1f5c452eb9f2719ae2904c05d6e27460142878ff",
+  "request_id": "icons-loader-real-assets-20260923",
+  "schema_version": 1,
+  "sequence": 85,
+  "stream": "task:control-sprite-defaults"
+}

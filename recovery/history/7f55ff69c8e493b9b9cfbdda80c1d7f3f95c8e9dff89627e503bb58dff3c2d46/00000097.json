@@ -1,0 +1,24 @@
+{
+  "event_id": "4e09d26172a7c66631003e518a68cbbdc1758a505a3f71d03b75f0b2753ee93e",
+  "payload": {
+    "affects": [
+      "entity-693d63fa5498f0e470908dd615ece8bf659f007a24d0eda73630c53a18757661",
+      "entity-8d7e6de19687105175163848e843a1296a04e52bcd25b23fae75eca6fe6b6d8f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "caption-icons-borrowed-owner-20260923",
+    "evidence": [
+      "Current src/game.cpp publisher belongs to original0x0058F2F0 (?game_init@@YAHHH@Z); it writes75AE4C,75AE78,75AE20 into WinCloseIcon,WinMaximizeIcon,WinMinimizeIcon. Independent asset bounds establish g_SILVER_MENU_ICON_SPRITES[1],[2],[0] respectively in75AE20..75AED0.",
+      "Current slots are ints with split source ownership: close/minimize definitions in game.cpp and maximize/restore in win.cpp; game.h and win.h expose them. Consumers and original contiguous-slot interpretation require a connected typed-owner audit, not three new aliases or duplicate Sprite objects.",
+      "Do not claim icon-loader recovery establishes caption rendering, recover the callers through raw pointers, or change the untouched restore slot merely because it lies between others. Preserve existing claims, pending source work and real original pointer relationships during the future migration.",
+      "This finding grants no scope expansion or runtime acceptance. The complete load_icons body can be measured and checked independently while the existing startup/consumer ownership remains explicit."
+    ],
+    "hypothesis": "Caption icon publishers and consumers must borrow the recovered menu Sprite objects through genuine typed storage; loading those assets alone does not repair old executable-address publication.",
+    "kind": "discovery"
+  },
+  "previous_event": "1e032b4384521b07f26000c8afd26ed13ef58b0cdcea3e96d6faea38695c7e0f",
+  "request_id": "caption-icons-borrowed-owner-20260923",
+  "schema_version": 1,
+  "sequence": 97,
+  "stream": "task:vector-value-semantics"
+}

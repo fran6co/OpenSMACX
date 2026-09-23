@@ -1,0 +1,29 @@
+{
+  "event_id": "6d68196ea1fa9d36ed6d939703b15d3b5c4ae3d0e47bca5c51c53934f2a67f88",
+  "payload": {
+    "affects": [
+      "entity-1e2d79f3ff59441d347817fb23ba7d32b5d99f371110f170df64cdac0eedd3c7",
+      "entity-258877ced379d6abc0c0f17af3b2cac7777257fa56d0a7c6bd47d51ae81ea311",
+      "entity-5c25bc16f695317409749d1efaa0b2a5f125636c6f028683bbc7375ec67afe93",
+      "entity-9fbf8ad2a96e5383489e666f4e22762470d7e85061424bef02424ca034b767f9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "faction-cache-cross-object-read-20260923",
+    "evidence": [
+      "Two independent complete-original audits confirm42350E loads the saved row start79A7EC+faction*1800;423511 pushesC000,423516 source,423517 destination,423518 calls645930. That callee takes destination/source/bytecount and executes REP MOVSD; there is no hidden row-length conversion.",
+      "Independent whole-table producer423F5B..424082 fills24x256 bytes per faction, ending7A67EC, and42409C..4240A7 serializes exactlyC000 bytes. Existing BodyTintColorTables[8][24][256] therefore has genuine extent79A7EC..7A67EC. A row-selectedC000 copy reads faction*1800 bytes beyond that object: faction1 ends7A7FEC; faction7 ends7B0FEC.",
+      "The extra range is not spare tint storage: even faction1 reads independently constructed sensor Sprite7A6830 (44F260/44F280), kelp Sprite7A6860 (44ED70/44ED90), and interface Sprite[51]7A6978..7A723C (44CE80/44CEB0, explicit51x2C). Do not inflate the tint array over those actual owners or read arbitrary relocated addresses.",
+      "The ordinary original read_factions loop58718E..5871A8 passes faction1 through7 to453710, and45371B passes the same index to423000. read_faction586050 excludes0. Rebuild is conditional on image/cache state, not faction0; restricting the recovery to faction0 would omit normal application behavior.",
+      "Another confirmed asymmetry: cache-hit42338B..423397 copies only100 bytes from cache+100 to the selected tint row despite aC100 minimum cache length. Preserve this observed behavior until an explicit decision; do not assume the intended payload length is already established.",
+      "Further draft-only observation: body-cache create retry before3000ms branches423218 into the header-create path while StringTemp still carries faction plus .tmp. Exact suffix literals are .pcx682EEC, vals.tmp682EF4 and .tmp682F00. A complete implementation must retain retry/timer/file sequencing or explicitly authorize its correction.",
+      "No behavior change, padding substitute, source import or runtime acceptance is authorized by this finding. Keep the original forwarder and full seeds pending; continue other genuine recoveries while this path awaits a reviewed behavior decision. The user separately deferred base_energy initialization, which remains untouched."
+    ],
+    "hypothesis": "Original faction tint-cache regeneration reads beyond the real shared tint table for ordinary factions; a genuine relocated C++ implementation requires explicit original-bug handling, not an enlarged fake array or cross-object pointer walk.",
+    "kind": "discovery"
+  },
+  "previous_event": "8f89b5087366fa5ac9191753b880ddc649d84850239171f22cc80d50e5646052",
+  "request_id": "faction-cache-cross-object-read-20260923",
+  "schema_version": 1,
+  "sequence": 93,
+  "stream": "task:vector-value-semantics"
+}

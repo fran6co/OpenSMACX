@@ -1495,7 +1495,13 @@ Sprite g_TER1_SENSOR_ARRAY_SPRITE;  // 0x007A6830
 Sprite g_RAINFALL_DOUBLE_TILE_SPRITES[2];  // 0x007ACBB8, 0x2c stride
 Sprite g_VEH_SPRITES[152];  // 0x007777A0, 0x2c stride
 Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778, 0x2c stride
+// Original CRT 0x682358 constructs 16 Sprite(s) via 0x44F380
+// and registers 0x44F3B0 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0075B450 0x0075B710 ?g_ICONS_GENERAL_SPRITES@@3PAVSprite@@A 0x004547E0
 Sprite g_ICONS_GENERAL_SPRITES[16];  // 0x0075B450, 0x2c stride
+// Original CRT 0x68235C constructs 32 Sprite(s) via 0x44F3D0
+// and registers 0x44F400 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x007A72A0 0x007A7820 ?g_RESOURCE_ICON_SPRITES@@3PAVSprite@@A 0x004547E0
 Sprite g_RESOURCE_ICON_SPRITES[32];  // 0x007A72A0, 0x2c stride
 // RECOVERY_OBJECT: v2 0x0078CAD0 0x0078CC30 ?g_CITIZEN_LG_CURSOR_SPRITES@@3PAVSprite@@A 0x00454FC0
 Sprite g_CITIZEN_LG_CURSOR_SPRITES[8];  // 0x0078CAD0, 0x2c stride
@@ -1513,12 +1519,33 @@ Sprite g_AL_SPECIALIST_LG_CURSOR_SPRITES[7];  // 0x00798CD0, 0x2c stride
 Sprite g_AL_CITIZEN_SM_CURSOR_SPRITES[4];  // 0x0075B180, 0x2c stride
 // RECOVERY_OBJECT: v2 0x0075B710 0x0075B844 ?g_AL_SPECIALIST_SM_CURSOR_SPRITES@@3PAVSprite@@A 0x00454FC0
 Sprite g_AL_SPECIALIST_SM_CURSOR_SPRITES[7];  // 0x0075B710, 0x2c stride
+// Original CRT 0x682380 constructs 1 Sprite(s) via 0x44F6A0
+// and registers 0x44F6C0 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x00791F98 0x00791FC4 ?g_RED_ALIEN_HEAD_ICON_SPRITE@@3VSprite@@A 0x004547E0
 Sprite g_RED_ALIEN_HEAD_ICON_SPRITE;  // 0x00791F98
+// Original CRT 0x682384 constructs 4 Sprite(s) via 0x44F6D0
+// and registers 0x44F700 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0075AE20 0x0075AED0 ?g_SILVER_MENU_ICON_SPRITES@@3PAVSprite@@A 0x004547E0
 Sprite g_SILVER_MENU_ICON_SPRITES[4];  // 0x0075AE20, 0x2c stride
+// Original CRT 0x682388 constructs 2 Sprite(s) via 0x44F720
+// and registers 0x44F750 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0075AF68 0x0075AFC0 ?g_SILVER_CHECKBOX_ICON_SPRITES@@3PAVSprite@@A 0x004547E0
 Sprite g_SILVER_CHECKBOX_ICON_SPRITES[2];  // 0x0075AF68, 0x2c stride
+// Original CRT 0x68238C constructs 1 Sprite(s) via 0x44F770
+// and registers 0x44F790 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0075AD88 0x0075ADB4 ?g_RED_MALE_HEAD_ICON_SPRITE@@3VSprite@@A 0x004547E0
 Sprite g_RED_MALE_HEAD_ICON_SPRITE;  // 0x0075AD88
+// Original CRT 0x682390 constructs 1 Sprite(s) via 0x44F7A0
+// and registers 0x44F7C0 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0078A520 0x0078A54C ?g_NULL_RESOURCE_ICON_SPRITE@@3VSprite@@A 0x004547E0
 Sprite g_NULL_RESOURCE_ICON_SPRITE;  // 0x0078A520
+// Original CRT 0x682394 constructs 2 Sprite(s) via 0x44F7D0
+// and registers 0x44F800 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0075AF10 0x0075AF68 ?g_PEACE_SIGN_SPRITES@@3PAVSprite@@A 0x004547E0
 Sprite g_PEACE_SIGN_SPRITES[2];  // 0x0075AF10, 0x2c stride
+// Original CRT 0x682398 constructs 1 Sprite(s) via 0x44F820
+// and registers 0x44F840 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x00776728 0x00776754 ?g_ICON_TILE_SQUARE_SPRITE@@3VSprite@@A 0x004547E0
 Sprite g_ICON_TILE_SQUARE_SPRITE;  // 0x00776728
 Sprite g_XI_BOOM_VEH_SPRITES[144];  // 0x007A9B30, 0x2c stride
 Sprite g_XF_BOOM_VEH_SPRITES[64];  // 0x007AB460, 0x2c stride
@@ -1534,9 +1561,21 @@ Sprite g_SECRET_PROJECT_ICON_SPRITES[64];  // 0x00759320, 0x2c stride
 // Original 0x44FB00/0x44FB30 construct/destroy 3 elements at stride 0x2C.
 // RECOVERY_OBJECT: v2 0x00788038 0x007880BC ?g_IFACE_MP_COMBO_ARROW_SPRITES@@3PAVSprite@@A 0x00453A70
 Sprite g_IFACE_MP_COMBO_ARROW_SPRITES[3];
+// Original CRT 0x6823CC constructs 12 Sprite(s) via 0x44FB50
+// and registers 0x44FB80 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x00791D88 0x00791F98 ?g_SCROLL_BAR_ARROW_ICON_SPRITES@@3PAVSprite@@A 0x004547E0
 Sprite g_SCROLL_BAR_ARROW_ICON_SPRITES[12];  // 0x00791D88, 0x2c stride
+// Original CRT 0x6823D0 constructs 12 Sprite(s) via 0x44FBA0
+// and registers 0x44FBD0 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0078DE30 0x0078E040 ?g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES@@3PAVSprite@@A 0x004547E0
 Sprite g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES[12];  // 0x0078DE30, 0x2c stride
+// Original CRT 0x6823D4 constructs 1 Sprite(s) via 0x44FBF0
+// and registers 0x44FC10 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x0079A5E8 0x0079A614 ?g_SCROLL_BAR_FILLER_ICON_SPRITES@@3VSprite@@A 0x004547E0
 Sprite g_SCROLL_BAR_FILLER_ICON_SPRITES;  // 0x0079A5E8
+// Original CRT 0x6823D8 constructs 1 Sprite(s) via 0x44FC20
+// and registers 0x44FC40 for teardown; element extent is 0x2C.
+// RECOVERY_OBJECT: v2 0x007796B0 0x007796DC ?g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE@@3VSprite@@A 0x004547E0
 Sprite g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE;  // 0x007796B0
 // Original 0x44FC50/0x44FC80 construct/destroy 2 elements at stride 0x2C.
 // RECOVERY_OBJECT: v2 0x007AC040 0x007AC098 ?g_IFACE_LOCK_SPRITES@@3PAVSprite@@A 0x00453A70
@@ -1755,4 +1794,142 @@ int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x,
     SpriteScaleDenominator = saved_denominator;
     SpriteScaleNumerator = saved_numerator;
     return result;
+}
+
+// The icon and cursor loaders reference distinct original NEWICONS.PCX
+// storage. Keep this loader beside its assets, separate from game.cpp
+// literal pooling; this does not assert a historical TU boundary.
+// Populate the existing resource/control icon objects from three shared
+// sheets. Startup through load_sprites remains a separate recovery dependency.
+// ORIGINAL: 0x004547E0 ?load_icons@@YAXXZ 0x004547E0-0x00454D0C
+// RECOVERY_BINDING: v1 {"evidence": ["Full original4547E0..454D0C and retained seed src/recovered/units/004547e0.cpp establish the single no-argument loader, three sheet loads, recolor pairs before every extraction, all receivers/rectangles and unconditional terminal close.", "All service results are ignored. Original454B04 resets the arrow-column coordinate to104 before filler extraction. Menu and checkbox receivers belong to existing arrays, including checkbox element1 rather than separate75AF94 storage.", "Original per-asset CRT constructors/teardowns independently establish element counts and44-byte stride. Existing load_sprites startup and raw caption-icon publisher are separate unfinished ownership dependencies, not proof supplied by this binding."], "reason": "Complete original icon-sheet loader uses the existing shared PCX Buffer and thirteen existing Sprite groups. Recover ordinary C++ object/array accesses without original-address aliases or replacement assets."}
+void __cdecl load_icons() {
+    Buffer &buffer = g_PCX_PARSE_TEMP_BUFFER1;
+    Sprite *icon;
+    int source_x;
+    int source_y;
+    int columns_left;
+
+    // Pinned literals: 685064 NEWICONS.PCX; 685074 TER1WRECK.PCX;
+    // 685084 ICONS.PCX. All loads use palette 0, base 10, count 236.
+    // There is no DirectDraw guard here, unlike load_cursors.
+    // RECOVERY_LITERAL: v1 0x00685064 0x00685071 ??_C@_0N@NBMC@NEWICONS?4PCX?$AA@ 0x004547E0
+    buffer.load_pcx("NEWICONS.PCX", 0, 10, 236);
+    icon = g_ICONS_GENERAL_SPRITES;
+    source_y = 13;
+    do {
+        source_x = 1;
+        columns_left = 4;
+        do {
+            buffer.change_color(263, 265);
+            buffer.change_color(262, 265);
+            icon->extract(&buffer, 265, source_x, source_y, 22, 22, 0);
+            source_x += 23;
+            ++icon;
+        } while (--columns_left);
+        source_y += 23;
+    } while (icon < g_ICONS_GENERAL_SPRITES + 16);
+
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_NULL_RESOURCE_ICON_SPRITE.extract(&buffer, 265, 1, 174, 22, 22, 0);
+
+    icon = g_PEACE_SIGN_SPRITES;
+    for (source_y = 220; icon < g_PEACE_SIGN_SPRITES + 2; source_y += 23) {
+        buffer.change_color(263, 265);
+        buffer.change_color(262, 265);
+        icon->extract(&buffer, 265, 1, source_y, 22, 22, 0);
+        ++icon;
+    }
+
+    icon = g_RESOURCE_ICON_SPRITES;
+    source_y = 304;
+    do {
+        source_x = 174;
+        columns_left = 8;
+        do {
+            buffer.change_color(263, 265);
+            buffer.change_color(262, 265);
+            icon->extract(&buffer, 265, source_x, source_y, 40, 40, 0);
+            source_x += 41;
+            ++icon;
+        } while (--columns_left);
+        source_y += 41;
+    } while (icon < g_RESOURCE_ICON_SPRITES + 32);
+
+    // RECOVERY_LITERAL: v1 0x00685074 0x00685082 ??_C@_0O@CAND@TER1WRECK?4PCX?$AA@ 0x004547E0
+    buffer.load_pcx("TER1WRECK.PCX", 0, 10, 236);
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_RED_ALIEN_HEAD_ICON_SPRITE.extract(&buffer, 265, 768, 148, 28, 42, 0);
+
+    // RECOVERY_LITERAL: v1 0x00685084 0x0068508E ??_C@_09OIPD@ICONS?4PCX?$AA@ 0x004547E0
+    buffer.load_pcx("ICONS.PCX", 0, 10, 236);
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_ICON_TILE_SQUARE_SPRITE.extract(&buffer, 265, 1, 1, 100, 50, 0);
+
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_RED_MALE_HEAD_ICON_SPRITE.extract(&buffer, 265, 46, 303, 33, 30, 0);
+
+    icon = g_SCROLL_BAR_ARROW_ICON_SPRITES;
+    source_y = 1;
+    do {
+        source_x = 104;
+        columns_left = 3;
+        do {
+            buffer.change_color(263, 265);
+            buffer.change_color(262, 265);
+            icon->extract(&buffer, 265, source_x, source_y, 24, 24, 0);
+            source_x += 25;
+            ++icon;
+        } while (--columns_left);
+        source_y += 25;
+    } while (icon < g_SCROLL_BAR_ARROW_ICON_SPRITES + 12);
+
+    // Original EDI is reset to 104 after the final arrow row; the filler
+    // source X is not the previous row's final icon or its one-past position.
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_SCROLL_BAR_FILLER_ICON_SPRITES.extract(&buffer, 265, 104, 101, 18, 18, 0);
+
+    icon = g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES;
+    source_y = 1;
+    do {
+        source_x = 192;
+        columns_left = 3;
+        do {
+            buffer.change_color(263, 265);
+            buffer.change_color(262, 265);
+            icon->extract(&buffer, 265, source_x, source_y, 10, 10, 0);
+            source_x += 11;
+            ++icon;
+        } while (--columns_left);
+        source_y += 11;
+    } while (icon < g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES + 12);
+
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE.extract(&buffer, 265, 225, 1, 10, 10, 0);
+
+    icon = g_SILVER_MENU_ICON_SPRITES;
+    for (source_x = 320; icon < g_SILVER_MENU_ICON_SPRITES + 4; source_x += 16) {
+        buffer.change_color(263, 265);
+        buffer.change_color(262, 265);
+        icon->extract(&buffer, 265, source_x, 1, 15, 15, 0);
+        ++icon;
+    }
+
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_SILVER_CHECKBOX_ICON_SPRITES[0].extract(&buffer, 265, 320, 20, 16, 16, 0);
+
+    buffer.change_color(263, 265);
+    buffer.change_color(262, 265);
+    g_SILVER_CHECKBOX_ICON_SPRITES[1].extract(&buffer, 265, 337, 20, 16, 16, 0);
+
+    // Every service result above is deliberately ignored, including failed
+    // loads and extractions. Close occurs only after all 86 extraction attempts.
+    buffer.close();
 }

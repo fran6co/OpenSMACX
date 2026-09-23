@@ -1,0 +1,17 @@
+{
+  "event_id": "b2db2caded2e1a5a95ecebbdc85e9f6a762c449cbf3f78c2bad339cba37b1684",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "faction-cache-cross-object-read-20260923",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Rejected only the incorrect affected-entry metadata (587140 is not read_factions entry); the complete evidence and pending hypothesis are preserved in faction-cache-cross-object-read-identity-corrected-20260923 with source-confirmed586F30. This does not reject, resolve or waive the original overread defect. No product behavior change was made."
+    ]
+  },
+  "previous_event": "92cf24ef36ca38e6099bbeff75dcead99e25dfa97fa91950c0944e1b845e9b66",
+  "request_id": "supersede-cache-finding-interior-entry-20260923",
+  "schema_version": 1,
+  "sequence": 95,
+  "stream": "task:vector-value-semantics"
+}
