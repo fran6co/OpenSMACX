@@ -43,8 +43,170 @@
 #include "tutwin.h"
 #include "veh.h"
 #include "xpops.h"
+#include "alpha.h"
+#include "faction.h"
+#include "game.h"
+#include "random.h"
+#include <mmsystem.h>
 #include <cstdint>
 #include <cstring>
+
+// Existing shared text.pcx palette publication, owned by palette.cpp.
+extern int TextColourTable[195];
+
+namespace {
+
+int psych_display_signed(uint32_t value) {
+    return value <= 0x7FFFFFFFu ? static_cast<int>(value)
+        : -1 - static_cast<int>(0xFFFFFFFFu - value);
+}
+int psych_display_add(int left, int right) {
+    return psych_display_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
+}
+int psych_display_sub(int left, int right) {
+    return psych_display_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
+}
+
+} // namespace
+
+// Draw one row using the original population-sized spacing. The stage counts
+// are snapshots, but the number of content citizens and specialists is read
+// again after each Sprite draw. Packed specialist types must be valid 0..6;
+// the original neither clamps malformed nibbles nor bounds the returned type.
+// ORIGINAL: 0x00408720 ?psych_row@BaseWin@@QAEXHHHHHHH@Z 0x00408720-0x00408B1B;0x00651567-0x00651579
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00408720-0x00408B1B complete body and 0x00651567-0x00651579 Random cleanup funclet.", "image:0x00408786 imports timeGetTime. Human variants use four-mood strides; alien four-mood arrays do not consume random selections.", "image:0x00408720-0x00408B1B reads packed specialist nibbles for the first16 entries and calls best_specialist for each later entry; sprite calls are followed by fresh population/specialist reads."], "reason": "Draw the published population mood row through genuine citizen and specialist sprites, preserving Random lifetime, sprite variation, packed specialist types and live base reads."}
+void BaseWin::psych_row(int x, int y, int width, int sprite_width,
+                       int talents, int drones, int super_drones) {
+    Random random;
+    const int population = BaseCurrent->population_size;
+    int spacing = sprite_width;
+    if (population > 1) {
+        const int available = psych_display_sub(width, sprite_width) / (population - 1);
+        spacing = available < 1 || sprite_width < 1 ? 1
+            : (available > sprite_width ? sprite_width : available);
+    }
+    random.reseed(timeGetTime());
+    const bool alien = ExpansionEnabled != 0
+        && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80) != 0;
+    Buffer *const canvas = this;
+    Sprite *const citizens = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES : g_CITIZEN_SM_CURSOR_SPRITES;
+    Sprite *const specialists = alien ? g_AL_SPECIALIST_SM_CURSOR_SPRITES : g_SPECIALIST_SM_CURSOR_SPRITES;
+
+    for (int talent = 0; talent < talents; ++talent) {
+        const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
+        Sprite &sprite = citizens[variant * 4];
+        sprite.draw(canvas, sprite.transparent_index(), x, y);
+        x = psych_display_add(x, spacing);
+    }
+    for (int content = 0; content < psych_display_sub(psych_display_sub(
+             psych_display_sub(BaseCurrent->population_size, BaseCurrent->specialist_total), talents), drones);
+         ++content) {
+        const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
+        Sprite &sprite = citizens[variant * 4 + 1];
+        sprite.draw(canvas, sprite.transparent_index(), x, y);
+        x = psych_display_add(x, spacing);
+    }
+    const int ordinary_drones = psych_display_sub(drones, super_drones);
+    for (int drone = 0; drone < drones; ++drone) {
+        const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
+        Sprite &sprite = citizens[variant * 4 + 2 + (drone >= ordinary_drones ? 1 : 0)];
+        sprite.draw(canvas, sprite.transparent_index(), x, y);
+        x = psych_display_add(x, spacing);
+    }
+    for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
+        int type;
+        if (specialist < 16) {
+            type = (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15;
+        } else {
+            type = best_specialist();
+        }
+        Sprite &sprite = specialists[type];
+        sprite.draw(canvas, sprite.transparent_index(), x, y);
+        x = psych_display_add(x, spacing);
+    }
+}
+
+// The panel reads the shared five-stage publication; it does not recompute
+// psych. The original restores the clip and resets caption overrides, but
+// leaves a successfully installed borrowed font pointer after the local Font
+// dies. Preserve that observed lifetime boundary; callers must replace it
+// before another text operation, which is not established by this body.
+// ORIGINAL: 0x00408B20 ?draw_psych@BaseWin@@QAEXXZ 0x00408B20-0x00408E93;0x00651579-0x0065158B
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00408B20-0x00408E93 complete body and 0x00651579-0x0065158B Font cleanup funclet.", "image:0x00408B51 addresses panel RECT at BaseWin+0x40B8C; 0x00408B70 addresses inherited Buffer+0x444; 0x00408B4B saves its clip at BaseWin+0x464.", "image:0x00408BBF reads Sprite height+0x1C and 0x00408E21 reads width+0x18. 0x00408E32-0x00408E35 passes half-panel width minus4, not y.", "image:0x00408B20-0x00408E93 sets caption overrides before set_font, resets them to minus1, and restores clip before local Font destruction. It does not restore the borrowed font pointer; subsequent caller lifetime closure remains unproved."], "reason": "Display the shared five psych-stage histories with a genuine local Font and inherited Buffer, retaining label decisions, duplicate-stage skipping and original restoration/lifetime behavior."}
+void BaseWin::draw_psych() {
+    Font font;
+    Buffer *const canvas = this;
+    RECT saved_clip = canvas->rect1_;
+    canvas->set_clip(&rect1_);
+    GraphicWin::fill(0);
+    font.init(DefaultFontFace, 12, 1);
+
+    const int faction = BaseCurrent->faction_id_current;
+    const int left = rect1_.left;
+    const int top = rect1_.top;
+    const int right = rect1_.right;
+    const int panel_width = psych_display_sub(right, left);
+    const int row_pitch = psych_display_add(g_CITIZEN_SM_CURSOR_SPRITES[0].height(), 1);
+    MapWinCaptionScale = 30;
+    MapWinCaptionDivisor = 38;
+    canvas->set_font(&font, 0, 0, 0);
+    const int text_offset = psych_display_sub(row_pitch / 2, font.height_ / 2);
+    int y = psych_display_add(top, 2);
+    int stage = 0;
+    for (int row = 0; row < 5; ++row) {
+        if (stage != 0) {
+            while (stage < 5
+                && BasePsychTalents[stage] == BasePsychTalents[stage - 1]
+                && BasePsychDrones[stage] == BasePsychDrones[stage - 1]
+                && BasePsychSuperDrones[stage] == BasePsychSuperDrones[stage - 1]) {
+                ++stage;
+            }
+        }
+        if (stage < 5) {
+            StringTemp[0] = 0;
+            const int half_width = psych_display_sub(panel_width / 2, 4);
+            const int caption_x = psych_display_sub(psych_display_sub(right, half_width), 2);
+            int label;
+            switch (stage) {
+            case 0: {
+                const Base *const base = BaseCurrent;
+                if (base->assimilation_turns_left != 0 && base->faction_id_former != base->faction_id_current)
+                    label = 970;
+                else label = base->nerve_staple_turns_left != 0 ? 971 : 322;
+                break;
+            }
+            case 1: label = 323; break;
+            case 2: label = 324; break;
+            case 3: {
+                const int selected = BaseIDCurrentSelected;
+                int byte_index;
+                int mask;
+                bitmask(FAC_BROOD_PIT, &byte_index, &mask);
+                const bool brood_pit = (Bases[selected].facilities_built[byte_index]
+                    & static_cast<unsigned char>(mask)) != 0;
+                const int police = psych_display_add(PlayersData[faction].soc_effect_pending.police,
+                    brood_pit ? 2 : 0);
+                label = police <= -2 ? 326 : 325;
+                break;
+            }
+            default: label = 327; break;
+            }
+            strcat(StringTemp, label_get(label));
+            canvas->set_text_color(TextColourTable[114], TextColourTable[115], 1, 1);
+            const int text_y = psych_display_sub(psych_display_add(text_offset, y), 2);
+            canvas->write_cent_l(StringTemp, caption_x, text_y, half_width,
+                static_cast<int>(strlen(StringTemp)));
+            psych_row(psych_display_add(left, 2), y, half_width,
+                psych_display_add(g_CITIZEN_SM_CURSOR_SPRITES[0].width(), 1),
+                BasePsychTalents[stage], BasePsychDrones[stage], BasePsychSuperDrones[stage]);
+        }
+        y = psych_display_add(y, row_pitch);
+        ++stage;
+    }
+    MapWinCaptionScale = -1;
+    MapWinCaptionDivisor = -1;
+    canvas->set_clip(&saved_clip);
+}
 
 // Link-only placeholders; production selection and hurry are not implemented.
 // ORIGINAL: 0x00417040 ?production@BaseWin@@QAEXHH@Z 0x00417040-0x00418DBD;0x00651BB0-0x0065221C

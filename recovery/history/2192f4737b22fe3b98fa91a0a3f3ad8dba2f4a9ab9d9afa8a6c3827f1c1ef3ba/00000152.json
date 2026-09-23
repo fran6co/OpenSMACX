@@ -1,0 +1,49 @@
+{
+  "event_id": "e24c03e143a50f6053701f95220db49d5ae682c291a7d8629a678438acf9f010",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_cursor_assets.py",
+      "recovery/tests/test_psych_display.py",
+      "src/basewin.cpp",
+      "src/basewin.h",
+      "src/console.cpp",
+      "src/console.h",
+      "src/game.cpp",
+      "src/game.h",
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Authorize the complete original BaseWin psych_row and draw_psych bodies together with their asset producer load_cursors. The three identities are seed-only and currently unowned; retain those seeds, complete original spans including unwind funclets, and all historical obligations. Coordinator adds product bindings through the native source binder after original review. No new claims, new placeholders, original-address calls or baseline reset.",
+      "All direct callees are existing genuine bodies: Random, Font, Sprite draw/extract, Buffer loading/clipping/text, GraphicWin fill, Strings get, bitmask, best_specialist and verified CRT/system interfaces. Use genuine local Random/Font lifetimes and imported timeGetTime, not hand-authored unwind code or IAT-address aliases. Main startup load_sprites remains unfinished and must not be reported closed by this step.",
+      "Use existing nine real Sprite arrays and shared temporary PCX Buffer, CursorHotspotX/Y, DirectDraw state, source-owned psych stage arrays, labels, font face, caption overrides and text colours. Expose evidence-backed Sprite read accessors/declarations and bind independently bounded storage with observed symbols; do not introduce stand-in objects. Incorporate the already retained transparent_index accessor only after review, preserving the rest of the terrain work and its journal.",
+      "Independent display audit finds seed width arguments wrong: the original passes half-panel width minus four to psych_row and write_cent_l, not y. Original caption overrides are set before set_font and reset to minus one; clip is restored before Font destruction. The borrowed font pointer is not restored in the original: preserve this observation and investigate its lifetime contract, never silently repair it or assert full screen runtime acceptance.",
+      "Coordinator decoded the full load_cursors extent 454FC0..4553F3: skip on nonnull BufferDirectDraw, scan 32 markers in each hotspot axis including vertical row 32, retain the last marker, recolour twice before each extraction, and publish hotspots after extraction. Human variants advance receiver by B0 at 45512E and 4551FB, not repeated overwrite as in the seed. Retain load/extraction failure behavior and final shared-buffer close.",
+      "Require independent complete original/source review, actual-body tests with compiling damage controls, source-owned storage/literal and relevant native layout/reference/protected-claim checks, full candidate build/link and fresh destination verification before manual integration. Do not claim native automatic acceptance, matching or complete startup/lifecycle from scoped evidence. Energy original-defect behavior remains unauthorized and untouched."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4228896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4229920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4542400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2f9abb55210a5822f3d68be7dcf9b725a2c0ea82dcfbabd7a080e2b72ba8e6af",
+  "request_id": "psych-display-and-citizen-asset-producer-20260923",
+  "schema_version": 1,
+  "sequence": 152,
+  "stream": "task:infowin-ownership"
+}

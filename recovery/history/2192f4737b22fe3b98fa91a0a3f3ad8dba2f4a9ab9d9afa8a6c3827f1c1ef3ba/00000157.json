@@ -1,0 +1,17 @@
+{
+  "event_id": "2fd4db2d3210f70d8f91c2204c103fc9a67ab2732e694bf3a38a0356e536fb33",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "directdraw-interface-identity-20260923",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The discovery used an erroneous affected shutdown identity62D0F0. Actual source/original shutdown is sub_62d100 at62D100..62D13A in src/general.cpp. Supersede that event with the corrected interface discovery; do not interpret this rejection as resolving the IDirectDraw2 issue."
+    ]
+  },
+  "previous_event": "4b6505adda0f01a57e4c4e505f1eff2fe3b233a51fa3fd8e55b15e7c2b5295bf",
+  "request_id": "correct-directdraw-shutdown-identity-20260923",
+  "schema_version": 1,
+  "sequence": 157,
+  "stream": "task:infowin-ownership"
+}

@@ -1,0 +1,31 @@
+{
+  "event_id": "74eed6350145c890541c1c8699feaad3aec4f23129f4e91dbc36cdedf6bb9980",
+  "payload": {
+    "affects": [
+      "entity-0f7c1d0be83075c20486f7581fb031158a7cd6d5396fd2e2a61bd44b68e970a3",
+      "entity-12638c22d0a3e6386a6bc8a2b9358c198b7fe1b7a73731067205f66ede66dc6f",
+      "entity-2d63ef556c42517a9d5b8ad4e57f78e35a8156569df84665bc75be2dd3828afa",
+      "entity-336e00903bce61448619ab3c1bc81a4d44c04cbb4a5f2cf0fb124fc6ce322402",
+      "entity-78e238f0d37cc17881a871931929e3ce7f4de32c7d2340cd2a355dda86609444",
+      "entity-8e663eb9780798f9f52831d31ffeab1e0b2b8b090f2d707a2cf75ac5e3e2c247",
+      "entity-b50919edb239927e4ab7f6c327f8a20efe4169082c9267bc8e8cee9a52854f46",
+      "entity-f21077d02dc446406ab4b68e6bdf6ade8d776585b157f27b6121c31ead8d7fba"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "cursor-asset-unfinished-consumer-closure-20260923",
+    "evidence": [
+      "Original go_reset at 50F097/50F09E compares cursor sprite pointers with cursor array elements1/9. Current time.cpp still compares its integer-backed MapWin field_1EF4C_ to original absolute93AA9C/93ABFC; Console publishes relocated source Sprite addresses. Existing mismatch needs genuine shared pointer-field migration, not a new integer/address stand-in.",
+      "Full typed migration affects mapwin.h and Console cursor_on510400/510490, selected5107E0 and cursor_off510520; cursor_off retains a historical byte claim. MapWin constructor/clear zero stores remain compatible. Preserve the claim and inspect full consumers before editing.",
+      "Current MapWin::click46D5D0 remains an original-address forwarder; original46D6D2/46D6DC/46D74A consume cursor elements1/9/5. BaseWin::on_iface_mouse_move41DF50 forwards original code reading citizen/specialist arrays at41E367/41E372/41E385/41E3B2. Neither handler is recovered by this loader/display step.",
+      "Main load_sprites455EB0 is still unfinished. The new producer and psych readers use genuine existing objects, but this is not complete initialization, full cursor consumer closure or a working screen/game claim. Do not silently discard these findings or interpret a passing build as their resolution.",
+      "draw_psych408B20 leaves the Buffer borrowed font pointer after local Font destruction, exactly as original; complete caller rebinding/runtime lifetime proof remains unavailable. TextColourTable114/115 uses existing correct data, without claiming closure of the separately documented palette overlap debt at other indices."
+    ],
+    "hypothesis": "Recovering the cursor/citizen asset loader and psych display does not close the remaining cursor-pointer and forwarded UI consumers; retain these structural dependencies for the next ownership recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "e24c03e143a50f6053701f95220db49d5ae682c291a7d8629a678438acf9f010",
+  "request_id": "cursor-asset-unfinished-consumer-closure-20260923",
+  "schema_version": 1,
+  "sequence": 153,
+  "stream": "task:infowin-ownership"
+}

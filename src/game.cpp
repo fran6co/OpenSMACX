@@ -2972,6 +2972,114 @@ extern "C" int __cdecl extract_sheet_icon(int sprite, int sheet_x, int sheet_y,
         &g_PCX_PARSE_TEMP_BUFFER1, 0x109, off_x, off_y, 0x1c, 0x1c, 0);
 }
 
+// RECOVERY_LITERAL: v1 0x0068511C 0x00685127 ??_C@_0L@GPCH@CURSOR?4PCX?$AA@ 0x00454FC0
+// RECOVERY_LITERAL: v1 0x00685128 0x00685135 ??_C@_0N@NBMC@NEWICONS?4PCX?$AA@ 0x00454FC0
+// RECOVERY_LITERAL: v1 0x00685138 0x00685145 ??_C@_0N@NHKJ@ALIENCIT?4PCX?$AA@ 0x00454FC0
+// ORIGINAL: 0x00454FC0 ?load_cursors@@YAXXZ 0x00454FC0-0x004553F3 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00454FC0-0x004553F3 complete body; 0x00454FC6 reads DirectDraw state and skips on nonnull.", "image:0x00455006-0x00455049 scans 32 samples in each axis, including vertical row32; 0x00455099-0x0045509F publishes the last marker only after extraction.", "image:0x0045512E and 0x004551FB advance human receiver by four Sprite objects for the second variant. Original initializer/destructor loops at 0x0044F420-0x0044F693 independently establish citizen array extents.", "image:0x0068511C,0x00685128,0x00685138 contain independently inspected bounded filename strings CURSOR.PCX, NEWICONS.PCX and ALIENCIT.PCX."], "reason": "Populate genuine cursor and citizen Sprite arrays from the three asset sheets, preserving hotspot scanning, extraction order and original mode/failure behavior."}
+void __cdecl load_cursors() {
+    if (BufferDirectDraw) {
+        return;
+    }
+
+    g_PCX_PARSE_TEMP_BUFFER1.load_pcx("CURSOR.PCX", 0, 10, 236);
+    int x = 1;
+    for (int cursor = 0; cursor < 12; ++cursor) {
+        int hot_y = 0;
+        int hot_x = 0;
+        for (int column = 0; column < 32; ++column) {
+            if (g_PCX_PARSE_TEMP_BUFFER1.get_pixel(x + column, 0) == 5) {
+                hot_x = column;
+            }
+        }
+        for (int row = 0; row < 32; ++row) {
+            if (g_PCX_PARSE_TEMP_BUFFER1.get_pixel(x - 1, row + 1) == 5) {
+                hot_y = row;
+            }
+        }
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+        g_CURSOR_SPRITES[cursor].extract(
+            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 1, 32, 32, 0);
+        CursorHotspotX[cursor] = hot_x;
+        CursorHotspotY[cursor] = hot_y;
+        x += 33;
+    }
+
+    g_PCX_PARSE_TEMP_BUFFER1.load_pcx("NEWICONS.PCX", 0, 10, 236);
+    x = 1;
+    int mood;
+    int specialist;
+    for (mood = 0; mood < 4; ++mood) {
+        for (int variant = 0; variant < 2; ++variant) {
+            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+            g_CITIZEN_LG_CURSOR_SPRITES[mood + 4 * variant].extract(
+                &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 501, 38, 48, 0);
+            x += 39;
+        }
+    }
+    for (specialist = 0; specialist < 7; ++specialist) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+        g_SPECIALIST_LG_CURSOR_SPRITES[specialist].extract(
+            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 501, 38, 48, 0);
+        x += 39;
+    }
+
+    x = 44;
+    for (mood = 0; mood < 4; ++mood) {
+        for (int variant = 0; variant < 2; ++variant) {
+            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+            g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+            g_CITIZEN_SM_CURSOR_SPRITES[mood + 4 * variant].extract(
+                &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 458, 30, 38, 0);
+            x += 31;
+        }
+    }
+    for (specialist = 0; specialist < 7; ++specialist) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+        g_SPECIALIST_SM_CURSOR_SPRITES[specialist].extract(
+            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 458, 30, 38, 0);
+        x += 31;
+    }
+
+    g_PCX_PARSE_TEMP_BUFFER1.load_pcx("ALIENCIT.PCX", 0, 10, 236);
+    x = 1;
+    for (mood = 0; mood < 4; ++mood) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+        g_AL_CITIZEN_SM_CURSOR_SPRITES[mood].extract(
+            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 1, 30, 38, 0);
+        x += 31;
+    }
+    for (specialist = 0; specialist < 7; ++specialist) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+        g_AL_SPECIALIST_SM_CURSOR_SPRITES[specialist].extract(
+            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 1, 30, 38, 0);
+        x += 31;
+    }
+
+    x = 1;
+    for (mood = 0; mood < 4; ++mood) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+        g_AL_CITIZEN_LG_CURSOR_SPRITES[mood].extract(
+            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 41, 38, 48, 0);
+        x += 39;
+    }
+    for (specialist = 0; specialist < 7; ++specialist) {
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x107, 0x109);
+        g_PCX_PARSE_TEMP_BUFFER1.change_color(0x106, 0x109);
+        g_AL_SPECIALIST_LG_CURSOR_SPRITES[specialist].extract(
+            &g_PCX_PARSE_TEMP_BUFFER1, 0x109, x, 41, 38, 48, 0);
+        x += 39;
+    }
+    g_PCX_PARSE_TEMP_BUFFER1.close();
+}
+
 // 0x0076E590 - the 192-entry `Sprite *` table load_bases fills: 8 factions x
 // 24 sprites, 24 = faction.h's FactionArt::base[6][4], and the 0x2c stride is
 // sizeof(Sprite). It ends exactly where caviar.cpp's g_VCTB_CAVIARDATA

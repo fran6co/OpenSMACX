@@ -1,0 +1,27 @@
+{
+  "event_id": "4b6505adda0f01a57e4c4e505f1eff2fe3b233a51fa3fd8e55b15e7c2b5295bf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp"
+    ],
+    "evidence": [
+      "Coordinator checkpoint revises revision152 no-new-claims instruction for this one independently reviewed body only: retain the native recorder measured claim on load_cursors. The initially unclaimed implementation measured288/290; ordinary independent hot_y/hot_x initializer ordering explains the two remaining stores, and reordering them does not change behavior.",
+      "The framework recorder freshly measured290/290 and published the exact claim; no marker was hand edited. Its returned operation exit0/pass is distinct from the disposable caller script tuple-unpacking error after publication. Inspect the actual source and freshly remeasure before integration; do not replay the returned report as acceptance.",
+      "This permission neither demotes a claim nor changes a task baseline or driver policy. Psych row/display remain unclaimed. Require fresh post-change build/link, protected claim checks, strict loader reference/data diagnostics and independent review; retain all pending consumer/interface/lifetime discoveries."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4542400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a37f083d114c02acd876ed38d76c2e9ea9ac8cbd0ddee272d5795b464830806d",
+  "request_id": "cursor-measured-claim-checkpoint-20260923",
+  "schema_version": 1,
+  "sequence": 156,
+  "stream": "task:infowin-ownership"
+}

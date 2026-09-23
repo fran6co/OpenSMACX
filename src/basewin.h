@@ -149,7 +149,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   // name. Arity and return type are read off the image's own mangled
   // symbols, not off the bodies: `QAEH` against `QAEX` is the only
   // difference between several of these.
-  void psych_row(int a1, int a2, int a3, int a4, int a5, int a6, int a7);  // 0x00408720
+  void psych_row(int x, int y, int width, int sprite_width,
+                 int talents, int drones, int super_drones);  // 0x00408720
   void draw_psych();                                    // 0x00408B20
   void draw_support();                                  // 0x00408EB0
   int farm_get(int a1, int a2);                         // 0x00409100
@@ -566,6 +567,7 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40B80_;  // 0x40B80
   uint32_t field_40B84_;  // 0x40B84
   uint32_t field_40B88_;  // 0x40B88
+  // RECOVERY_MEMBER: v1 BaseWin rect1_ 0x40B8C 0x00408B20
   RECT rect1_;  // 0x40B8C, IDB `rect1`
   uint32_t field_40B9C_;  // 0x40B9C
   uint32_t field_40BA0_;  // 0x40BA0

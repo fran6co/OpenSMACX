@@ -1,0 +1,21 @@
+{
+  "event_id": "a37f083d114c02acd876ed38d76c2e9ea9ac8cbd0ddee272d5795b464830806d",
+  "payload": {
+    "affects": [
+      "entity-1c59933cf2aaf6a966010c527222be587159865cda835d79a88c67aeff5f1ee0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-energy-user-deferral-20260923",
+    "evidence": [
+      "User response2026-09-23 to the pending zero-initialization question: Defer that behavior change; recover other code first.",
+      "Retain discovery in revision148 and the existing base_energy source/seed unchanged. Do not infer permission for zero initialization, another deterministic substitute or a claim of original-equivalent behavior."
+    ],
+    "hypothesis": "The original base_energy uninitialized-subtotal path remains unresolved; the user explicitly declined changing its behavior now and requested other recoveries first.",
+    "kind": "discovery"
+  },
+  "previous_event": "69096fbb7d409cc03f2581bc0979d395729e8edce1f21b5eabc09143fc376db7",
+  "request_id": "base-energy-user-deferral-20260923",
+  "schema_version": 1,
+  "sequence": 155,
+  "stream": "task:infowin-ownership"
+}

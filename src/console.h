@@ -30,6 +30,9 @@ class PrefWin;
 
 class InfoWin;
 
+extern int CursorHotspotX[12];
+extern int CursorHotspotY[12];
+
  /*
   * Console class
   *

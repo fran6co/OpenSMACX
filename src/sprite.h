@@ -64,6 +64,10 @@ class Sprite {
   int draw(Buffer *destination, int transparent, int x, int y,
            int numerator, int denominator);
   int draw(Buffer *destination, int transparent, int x, int y);
+  // Terrain painters pass the stored unsigned palette key to draw().
+  unsigned char transparent_index() const { return cTransparentIndex_; }
+  int width() const { return iWidth_; }
+  int height() const { return iHeight_; }
   // Zero source pixels remap the destination; other nontransparent pixels
   // retain their source colour. Wider overloads temporarily replace N / D.
   int draw_dest(Buffer *destination, int transparent, int x, int y,
@@ -151,6 +155,7 @@ class Sprite {
   // as `xor eax,eax; mov al,[sprite+8]` at every site that passes it to
   // `Sprite::draw` as an int (0x005E2E07 here, 0x005EFF02 in Win::flip). A
   // `char` compiles to `movsx`, which is a different instruction.
+  // RECOVERY_MEMBER: v1 Sprite cTransparentIndex_ 0x8 0x00408720
   unsigned char cTransparentIndex_;
   char pad1_;
   char pad2_;
@@ -158,7 +163,9 @@ class Sprite {
   int iSpriteWidth2_;
   int iSpriteWidth_;
   int iSpriteHeight_;
+  // RECOVERY_MEMBER: v1 Sprite iWidth_ 0x18 0x00408B20
   int iWidth_;
+  // RECOVERY_MEMBER: v1 Sprite iHeight_ 0x1C 0x00408B20
   int iHeight_;
   int iLeftOffset_;
   int iTopOffset_;
@@ -239,6 +246,18 @@ extern Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778
 extern int SpriteScaleDenominator;  // 0x00696D1C, initially 1
 extern int SpriteCachedScaleNumerator;    // 0x00696D20, initially -1
 extern int SpriteCachedScaleDenominator;  // 0x00696D24, initially -1
+// load_cursors populates these existing sprite objects. Human citizens have
+// four moods in each of two variants; alien citizens have one four-mood set.
+extern Sprite g_CURSOR_SPRITES[12];
+extern Sprite g_CITIZEN_LG_CURSOR_SPRITES[8];
+extern Sprite g_SPECIALIST_LG_CURSOR_SPRITES[7];
+extern Sprite g_CITIZEN_SM_CURSOR_SPRITES[8];
+extern Sprite g_SPECIALIST_SM_CURSOR_SPRITES[7];
+extern Sprite g_AL_CITIZEN_LG_CURSOR_SPRITES[4];
+extern Sprite g_AL_SPECIALIST_LG_CURSOR_SPRITES[7];
+extern Sprite g_AL_CITIZEN_SM_CURSOR_SPRITES[4];
+extern Sprite g_AL_SPECIALIST_SM_CURSOR_SPRITES[7];
+
 extern float SpriteScalingRatio;          // 0x009B6624
 extern int SpriteMinimumScaledWidth;     // 0x009B661C
 extern int SpriteMinimumScaledHeight;    // 0x009B6620

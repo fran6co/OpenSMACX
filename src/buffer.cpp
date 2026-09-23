@@ -486,6 +486,9 @@ int Buffer::text_line_height() {
 }
 
 
+// QueryInterface output at 62CDBD, interface load/call at 62CDEF and
+// release/clear at 62D100..62D13A establish this four-byte pointer slot.
+// RECOVERY_OBJECT: v2 0x009BC494 0x009BC498 ?BufferDirectDraw@@3PAUIDirectDraw@@A 0x00454FC0
 IDirectDraw *BufferDirectDraw;  // 0x009BC494
 // 0x00696BF0, holding 1. `Buffer::Buffer` and `Buffer::close` are its
 // only two references in the whole image and both READ it, so it is a
@@ -4089,6 +4092,10 @@ const char BufferExtBmp[] = ".bmp";
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit. Addresses of
 // the ones documented individually live beside their definitions.
+// Startup 44CC20 constructs this Buffer; 44CC40 destroys it. Constructor
+// 5D7254 writes the final DWORD at +584; the three independent Buffer
+// receivers in 462779..4627A1 have stride588, bounding its complete extent.
+// RECOVERY_OBJECT: v2 0x00798668 0x00798BF0 ?g_PCX_PARSE_TEMP_BUFFER1@@3VBuffer@@A 0x00454FC0
 Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
 Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];  // 0x0075C218, 0x588 stride
 Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;  // 0x0077AA70

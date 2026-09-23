@@ -122,7 +122,6 @@ int __cdecl tech_advance(int tech_id);                         // 0x005BE530 ?te
 void __cdecl tech_achieved(int faction_id, int tech_id, int is_stolen, int a4); // 0x005BB000 ?tech_achieved@@YAXHHHH@Z
 void __cdecl social_select(int faction_id);                       // 0x005B5620 ?social_select@@YAXH@Z
 void __cdecl design_new_veh(int faction_id, int proto_id);              // 0x00583CB0 ?design_new_veh@@YAXHH@Z
-void __cdecl load_cursors();                              // 0x00454FC0 ?load_cursors@@YAXXZ
 void __cdecl draw_tile_fixup(int x, int y, int a3, int a4); // 0x0046AF90 ?draw_tile_fixup@@YAXHHHH@Z
 int __cdecl enemy_veh(int veh_id);                            // 0x00579240 ?enemy_veh@@YAHH@Z
 void __cdecl message_veh(int veh_id, int a2, int a3, int a4); // 0x00592E10 ?message_veh@@YAXHHHH@Z
@@ -156,7 +155,6 @@ extern WorldWin WorldClimateWorldWin;  // 0x008E9F60
 // THE CURSOR SPRITE ARRAY sprite.cpp owns. Declared here because
 // Console::cursor_on hands its elements to Win::set_cursor by address; the
 // definition and the 0x2c stride comment live in src/sprite.cpp.
-extern Sprite g_CURSOR_SPRITES[12];  // 0x0093AA70
 
 /*
 Purpose: Build the game console - its virtual GraphicWin base, its MapWin
@@ -1274,7 +1272,9 @@ void Console::editor_clear_vehicles() {
 // CursorHotspotX[shape] and CursorHotspotY[shape] as Win::set_cursor's
 // hot_x / hot_y, which is the whole of the evidence for the pairing and the
 // order; neither table has a symbol in the image.
+// RECOVERY_OBJECT: v2 0x0093AA10 0x0093AA40 ?CursorHotspotX@@3PAHA 0x00454FC0
 int CursorHotspotX[12] = {0};  // 0x0093AA10, defined here
+// RECOVERY_OBJECT: v2 0x0093AA40 0x0093AA70 ?CursorHotspotY@@3PAHA 0x00454FC0
 int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
 
 // ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE

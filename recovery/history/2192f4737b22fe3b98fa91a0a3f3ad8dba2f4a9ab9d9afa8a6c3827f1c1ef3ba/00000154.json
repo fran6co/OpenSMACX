@@ -1,0 +1,24 @@
+{
+  "event_id": "69096fbb7d409cc03f2581bc0979d395729e8edce1f21b5eabc09143fc376db7",
+  "payload": {
+    "affects": [
+      "entity-42e02333ceccacf2e07fbcce23d815333375e95cb6f74673f7493707dcee0255",
+      "entity-b50919edb239927e4ab7f6c327f8a20efe4169082c9267bc8e8cee9a52854f46",
+      "entity-d3bf4760c056f94c848b3e728b183e61015dcfab5bf55c302e78cc3fa8ad460d"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "directdraw-interface-identity-20260923",
+    "evidence": [
+      "Original62CDBD QueryInterface writes9BC494 using IID66FC38, b3a6f3e0-2b43-11cf-a2de-00aa00b93356. Local original SDK INCLUDE/DDRAW.H line48 identifies IID_IDirectDraw2; SetDisplayMode has five arguments atline600 versus three for IDirectDraw atline516.",
+      "Current BufferDirectDraw is declared IDirectDraw*. The four-byte initial-storage binding9BC494..9BC498 is correct, and recovered load_cursors only tests nullness, so this does not invalidate that bounded body. It does not prove the full interface type or later startup/call ABI.",
+      "Original startup62CD50 remains seed-only. Recover that owner and inspect every interface call before changing the shared pointer declaration; preserve lifecycle and all affected claims rather than silently replacing a type globally."
+    ],
+    "hypothesis": "The existing shared DirectDraw pointer is populated with IDirectDraw2 in the original; complete interface/startup recovery remains necessary beyond this loader null test.",
+    "kind": "discovery"
+  },
+  "previous_event": "74eed6350145c890541c1c8699feaad3aec4f23129f4e91dbc36cdedf6bb9980",
+  "request_id": "directdraw-interface-identity-20260923",
+  "schema_version": 1,
+  "sequence": 154,
+  "stream": "task:infowin-ownership"
+}
