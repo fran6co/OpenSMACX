@@ -636,6 +636,7 @@ class Buffer {
   // and pitch (0x00626648 / 0x00626E38), then releases the same acquisition.
   friend int __cdecl polygon(Buffer *, Vert *, int, int);
   friend int __cdecl polygon_dest(Buffer *, Vert *, int, unsigned char *);
+  friend int __cdecl polygon_gouraud(Buffer *, Vert *, int *);
   
   // DipEdit::init copies `rect2_` out as the starting point for its frame,
   // title field and button strip - a window body reading its own buffer's
@@ -900,6 +901,8 @@ extern const char BufferExtBmp[];
 int __cdecl polygon(Buffer *buffer, Vert *verts, int count, int color);
 int __cdecl polygon_dest(Buffer *buffer, Vert *verts, int count,
                          unsigned char *colors);
+// Gouraud's original entry always consumes four vertices and four lights.
+int __cdecl polygon_gouraud(Buffer *buffer, Vert *verts, int *lights);
 
 // DirectDraw surface vtable slots the data lock/release pair dispatches
 // through; both are stdcall COM methods on the surface interface.

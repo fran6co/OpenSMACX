@@ -1,0 +1,44 @@
+{
+  "event_id": "ea1584426c69840e36c808a20c52ac75e396a95fa9503f431a1fa54981a35152",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_polygon.py",
+      "recovery/tests/test_polygon_gouraud.py",
+      "src/buffer.h",
+      "src/general.cpp",
+      "src/polygon.cpp"
+    ],
+    "evidence": [
+      "Continue the already-authorized eight-entry polygon family, adding Gouraud626900/626A00 to the six flat entries now on master66025a1d. Preserve the existing task baseline and all seeds/claims. Three existing physical row slots9BC020/03C/048 receive coordinates during clip publication, then addresses at626AED/626AFA/626B0A. Authorize one union per existing slot with an int coordinate view and uintptr_t address view; this source representation preserves shared storage, not proof of the original declaration. Integer addresses avoid forming out-of-allocation C++ pointers for clipped negative rows; cast only for admitted pixel writes. No independent Gouraud row state or aggregate/global gaps are authorized.",
+      "Original Gouraud edge uses the same fifteen-word layout as the existing EdgeScan representation in texture.h: first three edge traversal fields, four untouched interpolant slots, then x/DDA/light fields. Reuse that representation without claiming a recovered historical type name. Five additional independent globals are9BC014 span-right DWORD,024 light16_16 DWORD,028 span-left DWORD,02C light pointer DWORD,034 light-step WORD;036..037 is not owned. Slots initially occupy PE virtual zero fill. Native bindings use compiler-observed symbols and independent original bounds.",
+      "Original626B76..626B7C divides signed light delta DIRECTLY by positive wrapped width<<16 under PC24/chop, then626C5C scales by256 and626C62 FISTP WORD. Do not reuse the Texture reciprocal-first helper: delta196608/width3 yields polygon256 versus Texture255. Integer signed64 division can reproduce final in-range chopped WORD pixels because all signed16 integer boundaries are representable at24-bit precision; out-of-range conversion yields8000. FPU control reset/selection must remain observable around acquisition/release, while arithmetic exception/status and pending x87 stack effects remain explicitly unproved, not full runtime equivalence.",
+      "Original validates vertices/light pointers but not Buffer; failed get still publishes null pixels, releases, and resets FPU. Successful get resets FPU before publication. Four vertices, original sentinels and unsupported malformed extrema, undecremented bounds, signed/order-preserving row addresses, unsorted winding, snapshot-before-advance, left exhaustion suppressing right, final saved span drawn, inclusive right pixel, and live shared DWORD/WORD state must be preserved. Left clipping zero-extends WORD step, multiplies skip, shifts product right8, then adds to16_16 light. Preserve original unusual scaling.",
+      "Negative Gouraud light gradients expose undefined C++ in the already-owned fixed_div628AD0: its signed negative numerator is left-shifted16. Authorize replacing that expression with int64 numerator multiplied by65536 before signed division, with actual-source positive/negative/fitting-boundary tests and all existing general.cpp claims remeasured. This is the original signed EDX:EAX dividend for representable quotients, not a new divide-by-zero or overflow guard; no demotion or changed out-of-domain claim is authorized.",
+      "Use actual product Gouraud/flat functions and real fixed_div in sanitizer controls, independent rational oracles, FPU lifecycle recording doubles with their limitations stated, and compiling damage controls. Require fresh native data/layout/code/reference diagnostics, preservation of Buffer/flat advance/general historical claims, independent review, full application build/link and destination verification. Keep larger terrain WIP and findings untouched. No automatic/full-game or complete indirect-reference/FPU-status acceptance follows."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6449408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6449664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6458064,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "be6efe7a5302eda98b105b78bd711e5bf5fd218e8730bc5daca35e66af26ab16",
+  "request_id": "polygon-gouraud-shared-storage-and-fixed-div-20260923",
+  "schema_version": 1,
+  "sequence": 138,
+  "stream": "task:infowin-ownership"
+}

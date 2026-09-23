@@ -42,6 +42,9 @@ def actual_source():
         field, = re.findall(declaration, header)
         fields.append(field)
     vertex = braced((ROOT / "src/vert.h").read_text(), "struct Vert {") + ";"
+    edge = braced((ROOT / "src/texture.h").read_text(), "struct EdgeScan {") + ";"
+    fixed = braced((ROOT / "src/general.cpp").read_text(), "int __cdecl fixed_div(")
+    source = edge + "\n" + fixed + "\n" + source
     return source, "\n".join(fields), vertex
 
 
@@ -68,6 +71,10 @@ bool fail_lock,release_mutates;
 RECT live_clip;
 unsigned live_pitch;
 std::string events;
+const unsigned _MCW_EM=0x003f,_MCW_PC=0x0300,_MCW_RC=0x0c00,_MCW_IC=0x1000;
+const unsigned _PC_64=0x0300,_PC_24=0,_RC_NEAR=0,_IC_PROJECTIVE=0,_RC_CHOP=0x0c00;
+void _fpreset(){events+='R';}
+unsigned _control87(unsigned,unsigned){events+='C';return 0;}
 void acquire_observer();
 void release_observer(int);
 struct Buffer {
@@ -85,9 +92,9 @@ State before,at_release;
 std::vector<unsigned char> pixels_at_release;
 State snapshot() {
     return {PolygonColor,reinterpret_cast<intptr_t>(PolygonPixels),PolygonBottomVertex,
-            reinterpret_cast<intptr_t>(PolygonVertices),PolygonClipLeft,PolygonClipTop,
-            reinterpret_cast<intptr_t>(PolygonRemap),PolygonVertexCount,PolygonY,
-            PolygonPitch,PolygonClipRight,PolygonClipBottom};
+            reinterpret_cast<intptr_t>(PolygonVertices),PolygonClipLeft,PolygonClipTop.coordinate,
+            reinterpret_cast<intptr_t>(PolygonRemap),PolygonVertexCount,PolygonY.coordinate,
+            PolygonPitch,PolygonClipRight,PolygonClipBottom.coordinate};
 }
 void acquire_observer() {
     require(events.empty() && snapshot()==before);events+='G';
@@ -95,7 +102,7 @@ void acquire_observer() {
 void release_observer(int count) {
     require(count==1 && events=="G");events+='F';
     at_release=snapshot();pixels_at_release.assign(pixels,pixels+sizeof(pixels));
-    if(release_mutates){PolygonY=1234;PolygonColor=-321;PolygonRemap=nullptr;}
+    if(release_mutates){PolygonY.coordinate=1234;PolygonColor=-321;PolygonRemap=nullptr;}
 }
 void start() {
     for(unsigned i=0;i<sizeof(pixels);++i)pixels[i]=expected[i]=(i*37+11)&255;
@@ -103,9 +110,9 @@ void start() {
     live_clip={-4,-4,18,18};live_pitch=40;fail_lock=release_mutates=false;
     buffer.rect1_={90,91,92,93};buffer.stride_=63;
     PolygonColor=301;PolygonPixels=pixels+5;PolygonBottomVertex=71;
-    PolygonVertices=nullptr;PolygonClipLeft=72;PolygonClipTop=73;
-    PolygonRemap=lookup+1;PolygonVertexCount=74;PolygonY=75;
-    PolygonPitch=76;PolygonClipRight=77;PolygonClipBottom=78;
+    PolygonVertices=nullptr;PolygonClipLeft=72;PolygonClipTop.coordinate=73;
+    PolygonRemap=lookup+1;PolygonVertexCount=74;PolygonY.coordinate=75;
+    PolygonPitch=76;PolygonClipRight=77;PolygonClipBottom.coordinate=78;
     events.clear();at_release.clear();pixels_at_release.clear();before=snapshot();
 }
 int ceiling(int numerator,int denominator) {
@@ -248,7 +255,7 @@ void helper_controls() {
 }
 void span_controls() {
     for(bool remap:{false,true})for(int left:{-6,-2,0,4,10})for(int right:{-4,0,2,8,12}) {
-        start();PolygonPixels=origin;PolygonPitch=40;PolygonY=-2;
+        start();PolygonPixels=origin;PolygonPitch=40;PolygonY.coordinate=-2;
         PolygonClipLeft=-2;PolygonClipRight=8;PolygonColor=0x1ab;PolygonRemap=lookup;
         // Standalone spans have no Y clipping and do not sort endpoints.
         for(int x=std::max(left,-2);x<std::min(right,8);++x) {
@@ -295,7 +302,7 @@ def test_actual_flat_polygon_family(tmp_path):
     ("--edge->remaining_rows == 0", "edge->remaining_rows-- == 0"),
     ("if (vertex == PolygonBottomVertex)", "if (false)"),
     ("vertices[vertex].y > maximum_y", "vertices[vertex].y >= maximum_y"),
-    ("PolygonY >= PolygonClipTop", "PolygonY > PolygonClipTop"),
+    ("PolygonY.coordinate >= PolygonClipTop.coordinate", "PolygonY.coordinate > PolygonClipTop.coordinate"),
     ("PolygonColor = color;", "PolygonColor = color + 1;"),
     ("static_cast<int>(buffer->stride_)", "48"),
     ("buffer->free_data(1);", "if (PolygonPixels) buffer->free_data(1);"),
@@ -307,7 +314,7 @@ def test_actual_flat_polygon_family(tmp_path):
     ("if (left < PolygonClipLeft)", "if (false)"),
     ("if (right >= PolygonClipRight)", "if (false)"),
     ("if (!advance_flat_polygon_edge(&backward))", "if (advance_flat_polygon_edge(&backward))"),
-    ("++PolygonY;", "PolygonY += 2;"),
+    ("++PolygonY.coordinate;", "PolygonY.coordinate += 2;"),
 ])
 def test_flat_polygon_damage_is_observed(tmp_path, before, after):
     source, fields, vertex = actual_source()

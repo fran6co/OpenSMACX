@@ -1348,7 +1348,11 @@ Status: Complete
 // left out deliberately; adding it back defeats the match, it does not fix
 // one.
 int __cdecl fixed_div(int numerator, int denominator) {
-    return (int)(((int64_t)numerator << 16) / denominator);
+    // EDX:EAX contains the signed numerator scaled by 65536. Multiplication
+    // preserves that dividend for negative gradients without C++'s undefined
+    // left shift of a negative value. As in the original IDIV, the divisor
+    // must be nonzero and the quotient must fit the signed 32-bit result.
+    return (int)(((int64_t)numerator * 65536) / denominator);
 }
 
 /*

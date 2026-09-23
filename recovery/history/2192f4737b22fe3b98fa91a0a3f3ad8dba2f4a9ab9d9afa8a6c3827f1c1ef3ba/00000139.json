@@ -1,0 +1,23 @@
+{
+  "event_id": "f75582ed0d122f9c3d06e40be4659b8808a1ee0c5531c0fe9c20f731743ea511",
+  "payload": {
+    "affects": [
+      "entity-3625ea1e4913b4bd3d85a21296cb13efc7a8dd3b1f0296fd82d95aa93942bd82",
+      "entity-3d26bfa19367dc4d87de1b010d418acd8e1489651a76251ea7ec75a1320d5ffa"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "polygon-gouraud-release-fpu-observability-20260923",
+    "evidence": [
+      "Original626B76..626B7C and626C85..626C8B perform direct x87 division underPC24/chop;626C5C/626C62 multiply256 and storeWORD. Non-exact ratios can set inexact status and out-of-range WORD conversions can set invalid status. The current integer helper has no corresponding x87 arithmetic instructions; matching final integer values is not proof of those flags.",
+      "Original computes the next quotient before pixel clipping and done handling. A positive next width can leave a pending x87 value when626D6F calls Buffer::free_data;626D75 resets only after that call. Current polygon_gouraud keeps integer pending operands, not that hardware stack value. Control-reset/selection calls and shared state are preserved, while the source explicitly documents this missing proof.",
+      "Buffer release may invoke the DirectDraw surface Unlock callback. Host FPU observers prove call ordering/control arguments only; they do not establish real x87 status/stack or external COM behavior. Preserve this finding pending through the coordinator-reviewed C++ checkpoint; do not use the pixel oracle, build success or this decision as complete runtime or automatic acceptance."
+    ],
+    "hypothesis": "The integer reconstruction of Gouraud WORD light steps preserves bounded raster values but does not reproduce intermediate x87 arithmetic flags or the pending quotient stack at Buffer release. Complete behavior needs evidence that the actual release/COM callback path cannot observe a relevant difference, or a justified recovery of those effects.",
+    "kind": "discovery"
+  },
+  "previous_event": "ea1584426c69840e36c808a20c52ac75e396a95fa9503f431a1fa54981a35152",
+  "request_id": "polygon-gouraud-release-fpu-observability-20260923",
+  "schema_version": 1,
+  "sequence": 139,
+  "stream": "task:infowin-ownership"
+}
