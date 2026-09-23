@@ -1,0 +1,29 @@
+{
+  "event_id": "d430a2a83309120ff4c628d1b3662702d089ae84519e82bdb22efa1d8a625e57",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_go_cursor_state.py",
+      "src/time.cpp"
+    ],
+    "evidence": [
+      "Authorize go_reset to consume the separately coordinated genuine MapWin cursor_sprite_/cursor_resource_id_ fields and compare against actual g_CURSOR_SPRITES elements1/9. Remove integer pointer traversal and manual self-offset active reads from this body without broad timer/window changes.",
+      "Original50F007..50F014 reloads the MapWinTable slot for vslot_63 after vslot_04 may replace it. Current source incorrectly dispatches through the cached window. Preserve the cached Win base for the owner4 comparison, but refresh the table receiver for later dispatch and preserve all original cursor/cache/slot store timing.",
+      "The four Console consumers and shared header belong to infowin-ownership; do not reassign their original identities or reset either task baseline. Commit the connected manually reviewed group together only after native verification. Keep base_energy and the retained terrain changes untouched.",
+      "Add bounded actual-body callback replacement tests with original-derived oracles and compiling damage controls. Existing MapWin draw_map and other forwarders remain explicit runtime prerequisites. No new stubs, handcrafted virtual dispatch or original-address compares."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5304144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "792efb2023f12eb1d9e66ca9a28c740c5ce2c21b3b1fa10235c680f813940f2d",
+  "request_id": "typed-go-reset-cursor-consumer-20260923",
+  "schema_version": 1,
+  "sequence": 78,
+  "stream": "task:control-sprite-defaults"
+}

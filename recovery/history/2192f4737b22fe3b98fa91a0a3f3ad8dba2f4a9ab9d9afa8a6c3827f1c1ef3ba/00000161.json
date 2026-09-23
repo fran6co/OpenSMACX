@@ -1,0 +1,17 @@
+{
+  "event_id": "af3bbd5492910fb5b8d4e39e6ead13490a251379ba8cc39bac9f7fb36ae835df",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "cursor-mapwin-virtual-callback-closure-20260923",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "The coordinator accidentally used50F540 as the affected Console constructor identity. The source and complete original span identify Console::Console at50F460..50F629; the observed table installation remains50F562. Supersede this metadata error without rejecting or resolving the independently verified missing override finding."
+    ]
+  },
+  "previous_event": "f9de305d2b2db5ae398d090d3e6b7799e8d355b37fad69848462bcf6efcdfd6e",
+  "request_id": "correct-console-constructor-discovery-identity-20260923",
+  "schema_version": 1,
+  "sequence": 161,
+  "stream": "task:infowin-ownership"
+}

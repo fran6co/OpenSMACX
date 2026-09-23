@@ -1,0 +1,57 @@
+{
+  "event_id": "10adb6b854fc73a715b66681d40045b3c76740cf1bf9db90aa92e15942e32be2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_cursor_state.py",
+      "src/console.cpp",
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Continue discovery153 with real borrowed MapWin Sprite* cursor_sprite_ at1EF4C and the separate cursor_resource_id_ scalar at1EF50. Use typed member accesses, typed eight-slot traversal and real virtual-base conversions in four existing Console consumers. Constructor4626E0 and clear462870 receive only the corresponding member renames; preserve their behavior and byte claims.",
+      "Root controls shared header changes and minimal MapWin initialization renames; worker owns four Console bodies. Preserve all current terrain source/journal work and stage only reviewed cursor-related hunks from overlapping MapWin files. Original markers, seeds, claims and baselines remain intact; native recording alone may bank a freshly verified exact body.",
+      "cursor_on writes the sprite back to its cached receiver after set_cursor. cursor_off/selected reload the table slot before flags and draw_map. Preserve different message-pump cadence, slot0 active bypass, valid original index domain and no invented failure/bounds guards. Use source-owned cursor elements and hotspot arrays.",
+      "go_reset50EF50 is owned by control-sprite-defaults, not transferred or duplicated. Coordinate its separately authorized counterpart in this same manually reviewed checkpoint. MapWin::draw_map and other forwarded handlers remain unfinished dependencies, not new scope or a claim of full cursor runtime closure.",
+      "Require independent original/source/test review, actual-body sanitizer controls, native pointer/member/base layouts, affected historical byte claims, source/reference checks and fresh candidate/destination full build/link. Keep justified structure on temporary matching regressions for restoration; no demotion, automatic acceptance waiver or new placeholder."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5309440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5309584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5309728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5310432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4597472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4597872,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "dca0f525dc7fe6b48bf12ce4bc09af6322fe0d0c86c0de9b25118f962d4b0b18",
+  "request_id": "typed-map-cursor-consumers-20260923",
+  "schema_version": 1,
+  "sequence": 159,
+  "stream": "task:infowin-ownership"
+}

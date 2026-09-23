@@ -1,0 +1,28 @@
+{
+  "event_id": "39ff94477be9f96bf2beb70b249546027d52f0ca656548efff7a5b0fb164f516",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.h",
+      "src/time.cpp"
+    ],
+    "evidence": [
+      "go_reset still obtains937118 through an absolute-address helper. game.cpp already defines a genuine external-linkage GraphicWin CoverWindow used by its main loop; time.cpp old internal-linkage comment and game.cpp claim that the helper was retired contradict actual source.",
+      "Authorize the shared extern declaration in game.h and replacement of go_cover_window with CoverWindow.Win::hide in time.cpp, deleting the unused helper and stale rationale. Reuse the existing object without new storage, constructor, extent claim or ownership reassignment. Original50EF57..50EF5C loads937118 and directly callsWin::hide5EDCD0.",
+      "This bounded consumer repair does not establish the complete original CoverWindow class/lifecycle. Keep other fixed-address timer objects outside this step. Require fresh build/link and affected historical claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5304144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d430a2a83309120ff4c628d1b3662702d089ae84519e82bdb22efa1d8a625e57",
+  "request_id": "go-reset-real-cover-object-20260923",
+  "schema_version": 1,
+  "sequence": 79,
+  "stream": "task:control-sprite-defaults"
+}

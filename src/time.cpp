@@ -508,17 +508,6 @@ void CALLBACK Time::MultimediaProc(uint32_t UNUSED(timer_id), uint32_t UNUSED(ms
 
 // global
 
-// The full-screen window the go mode drops over the desktop, at a fixed
-// address. game.cpp binds the same address as `CoverWindow` with internal
-// linkage, which time.cpp cannot name, and a second variable binding for one
-// address fails the duplicate-globals ceiling - so the address comes back
-// from an inline function instead, which VC6 folds to the same
-// `mov ecx, imm32` receiver at the call site (the world_climate_window
-// idiom, game.cpp).
-inline Win *go_cover_window() {
-    return (Win *)0x00937118;
-}
-
 /*
 Purpose: Cancel the go mode: hide the cover window, stop the go timer, then
          reset the mode state and cursor of every live map window and of the
@@ -576,56 +565,47 @@ Return Value: n/a
 Status: Complete
 */
 void __cdecl go_reset() {
-    go_cover_window()->Win::hide();
+    CoverWindow.Win::hide();
     GoTimer.close();
 
-    int index = 0;
-    int cursor = reinterpret_cast<int>(MapWinTable);
-    const int end = cursor + static_cast<int>(MapWinTableSlots) * 4;
-    do {
-        MapWin *const window = *reinterpret_cast<MapWin *const *>(cursor);
+    for (int index = 0; index < static_cast<int>(MapWinTableSlots); ++index) {
+        MapWin **const slot = &MapWinTable[index];
+        MapWin *const window = *slot;
         if (window != nullptr &&
-            (cursor == reinterpret_cast<int>(MapWinTable) ||
-             *reinterpret_cast<const volatile uint32_t *>(
-                 reinterpret_cast<const uint8_t *>(window) +
-                 MapWinActiveOffset) != 0) &&
+            (index == 0 || window->field_1DD74_ != 0) &&
             index != MapWinSelectedSlot &&
             window->field_1DD80_ != 0) {
             // The FIRST store runs off the window the tests loaded; the rest
             // re-read the slot each time, as the image re-reads [esi] for
             // every store after the first (0x0050EFB6 on).
             window->field_1DD88_ = 1;
-            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DD80_ = 0;
-            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DD8C_ = 0;
-            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DD84_ = 0;
-            (*reinterpret_cast<MapWin *const *>(cursor))->field_1DE0C_ = -1;
+            (*slot)->field_1DD80_ = 0;
+            (*slot)->field_1DD8C_ = 0;
+            (*slot)->field_1DD84_ = 0;
+            (*slot)->field_1DE0C_ = -1;
 
-            // The GraphicWin virtual base the dispatches run through, as a
-            // Win* so the owner comparisons are same-type. Each use
-            // re-derives the vbtable walk - the image computes the adjusted
-            // receiver twice (0x0050EFDA, 0x0050F007) rather than keeping
-            // one.
-            const Win *const base = static_cast<GraphicWin *>(window);
+            // Capture-loss dispatch may replace the slot. Owner4 is still
+            // compared with the old base, but the next dispatch reloads it
+            // (50EFF9 versus 50F007 in the original).
+            Win *const base = static_cast<GraphicWin *>(*slot);
             if (WinPointerOwner3 == base) {
                 WinPointerOwner3 = nullptr;
-                window->vslot_04();
+                base->vslot_04();
             }
             if (WinPointerOwner4 == base) {
                 WinPointerOwner4 = nullptr;
             }
-            window->vslot_63();
+            (*slot)->vslot_63();
             ConsoleStatusWin.set_title(0);
         }
-        ++index;
-        cursor += 4;
-    } while (cursor < end);
+    }
 
     // Slot 0's cursor first, unconditionally.
     MapWin *const primary = MapWinTable[0];
-    if (primary->field_1EF4C_ != 0 || primary->field_1EF50_ != 0x7F00) {
+    if (primary->cursor_sprite_ != 0 || primary->cursor_resource_id_ != 0x7F00) {
         primary->GraphicWin::set_cursor(0x7F00);
-        primary->field_1EF50_ = 0x7F00;
-        primary->field_1EF4C_ = 0;
+        primary->cursor_resource_id_ = 0x7F00;
+        primary->cursor_sprite_ = 0;
     }
 
     if (MapWinSelectedSlot >= 0) {
@@ -639,12 +619,13 @@ void __cdecl go_reset() {
         // the dead `!= 0` arm re-reads the FIELD from memory (0x0050F0A5
         // compares [edi + 0x1ef4c] again, not the register) - the same
         // re-read-the-lvalue shape as the reset stores below. Reproduced.
-        const uint32_t cursor_sprite = window->field_1EF4C_;
-        if ((cursor_sprite == 0x0093AA9C || cursor_sprite == 0x0093ABFC) &&
-            (window->field_1EF4C_ != 0 || window->field_1EF50_ != 0x7F00)) {
+        Sprite *const cursor_sprite = window->cursor_sprite_;
+        if ((cursor_sprite == &g_CURSOR_SPRITES[1] ||
+             cursor_sprite == &g_CURSOR_SPRITES[9]) &&
+            (window->cursor_sprite_ != 0 || window->cursor_resource_id_ != 0x7F00)) {
             window->GraphicWin::set_cursor(0x7F00);
-            window->field_1EF50_ = 0x7F00;
-            window->field_1EF4C_ = 0;
+            window->cursor_resource_id_ = 0x7F00;
+            window->cursor_sprite_ = 0;
         }
         (*slot)->field_1DD88_ = 1;
         (*slot)->field_1DD80_ = 0;
@@ -652,10 +633,10 @@ void __cdecl go_reset() {
         (*slot)->field_1DD84_ = 0;
         (*slot)->field_1DE0C_ = -1;
 
-        const Win *const base = static_cast<GraphicWin *>((*slot));
+        Win *const base = static_cast<GraphicWin *>(*slot);
         if (WinPointerOwner3 == base) {
             WinPointerOwner3 = nullptr;
-            (*slot)->vslot_04();
+            base->vslot_04();
         }
         if (WinPointerOwner4 == base) {
             WinPointerOwner4 = nullptr;

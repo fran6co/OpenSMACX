@@ -1277,7 +1277,7 @@ int CursorHotspotX[12] = {0};  // 0x0093AA10, defined here
 // RECOVERY_OBJECT: v2 0x0093AA40 0x0093AA70 ?CursorHotspotY@@3PAHA 0x00454FC0
 int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
 
-// ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE
+// ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      144 bytes
 // prototype void (__thiscall ?cursor_on@Console@@QAEXH@Z)(Console* this, int)
@@ -1287,28 +1287,21 @@ int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
 // calls     0x005EC740 0x005FCA30
 
 void Console::cursor_on(int cursor_shape) {
-    int *iter = reinterpret_cast<int *>(MapWinTable);
-    do {
-        int val = *iter;
-        if (val != 0) {
-            int ok = (iter == reinterpret_cast<int *>(MapWinTable)) ||
-                     (*(int *)((char *)val + MapWinActiveOffset) != 0);
-            if (ok) {
-                char *sprite_ptr = (char *)g_CURSOR_SPRITES + cursor_shape * 0x2c;
-                int cur = *(int *)((char *)val + 0x1ef4c);
-                if (cur != (int)sprite_ptr) {
-                    int p1 = CursorHotspotY[cursor_shape];
-                    int p2 = CursorHotspotX[cursor_shape];
-                    int *layout = *(int **)val;
-                    int adj = *(int *)((char *)layout + 4);
-                    Win *target = (Win *)((char *)val + adj);
-                    target->set_cursor((Sprite *)sprite_ptr, p2, p1);
-                    *(int *)((char *)val + 0x1ef4c) = (int)sprite_ptr;
-                }
+    // The original assumes cursor_shape names one of the twelve loaded
+    // cursor sprites; neither it nor the hotspot lookup adds a bounds guard.
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+            Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
+            if (window->cursor_sprite_ != sprite) {
+                window->GraphicWin::set_cursor(sprite,
+                    CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]);
+                // set_cursor may dispatch callbacks. Publish to the window
+                // we called, not a replacement installed in its table slot.
+                window->cursor_sprite_ = sprite;
             }
         }
-        iter++;
-    } while (iter < reinterpret_cast<int *>(MapWinTable + MapWinTableSlots));
+    }
     do_non_input();
 }
 
@@ -1323,31 +1316,27 @@ void Console::cursor_on(int cursor_shape) {
 // calls     0x0046A550 0x005EC7C0 0x005FCA30
 
 void Console::selected() {
-    int saved = field_23D10_;
-    if (saved != 0) {
+    if (field_23D10_ != 0) {
         field_23D10_ = 0;
-        char *entry_addr = reinterpret_cast<char *>(MapWinTable);
-        do {
-            int obj = *reinterpret_cast<int *>(entry_addr);
-            if (obj != 0 && (entry_addr == reinterpret_cast<char *>(MapWinTable) ||
-                              *reinterpret_cast<int *>(obj + MapWinActiveOffset) != 0)) {
-                if (*reinterpret_cast<int *>(obj + 0x1ef4c) != 0 ||
-                    *reinterpret_cast<int *>(obj + 0x1ef50) != 0x7f00) {
-                    int vt = *reinterpret_cast<int *>(obj);
-                    int adjusted = obj + *reinterpret_cast<int *>(vt + 4);
-                    reinterpret_cast<Win *>(adjusted)->set_cursor(0x7f00);
-                    *reinterpret_cast<int *>(obj + 0x1ef50) = 0x7f00;
-                    *reinterpret_cast<int *>(obj + 0x1ef4c) = 0;
+        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+                if (window->cursor_sprite_ != nullptr ||
+                    window->cursor_resource_id_ != 0x7f00) {
+                    window->GraphicWin::set_cursor(0x7f00);
+                    window->cursor_resource_id_ = 0x7f00;
+                    window->cursor_sprite_ = nullptr;
                 }
-                unsigned int flags = *reinterpret_cast<unsigned int *>(*reinterpret_cast<int *>(entry_addr) + 0x1dd70);
+                // Unlike cursor writeback, repaint state belongs to the
+                // live slot after the cursor callback (0x00510859).
+                const uint32_t flags = MapWinTable[slot]->field_1DD70_;
                 if ((flags & 0xc40000) != 0) {
-                    *reinterpret_cast<unsigned int *>(*reinterpret_cast<int *>(entry_addr) + 0x1dd70) = flags & 0xff3bffff;
-                    reinterpret_cast<MapWin *>(*reinterpret_cast<int *>(entry_addr))->draw_map(1);
+                    MapWinTable[slot]->field_1DD70_ = flags & 0xff3bffff;
+                    MapWinTable[slot]->draw_map(1);
                 }
                 do_non_input();
             }
-            entry_addr += 4;
-        } while (entry_addr < reinterpret_cast<char *>(MapWinTable + MapWinTableSlots));
+        }
     }
 }
 
@@ -1915,22 +1904,14 @@ void Console::editor_clear_random() {
 void Console::cursor_on(int cursor_shape, int veh_id) {
     field_23D14_ = static_cast<uint32_t>(veh_id);
     field_23D10_ = static_cast<uint32_t>(cursor_shape);
-    for (int *p = reinterpret_cast<int *>(MapWinTable);
-         p != reinterpret_cast<int *>(MapWinTable + MapWinTableSlots); ++p) {
-        int esiVal = *p;
-        if (esiVal != 0) {
-            char *obj = reinterpret_cast<char *>(esiVal);
-            if (p == reinterpret_cast<int *>(MapWinTable) ||
-                *reinterpret_cast<int *>(obj + 0x1dd74) != 0) {
-                char *target = reinterpret_cast<char *>(g_CURSOR_SPRITES) + cursor_shape * 0x2c;
-                if (*reinterpret_cast<char **>(obj + 0x1ef4c) != target) {
-                    int *vt = *reinterpret_cast<int **>(obj);
-                    int off = *reinterpret_cast<int *>(reinterpret_cast<char *>(vt) + 4);
-                    Win *winObj = reinterpret_cast<Win *>(obj + off);
-                    winObj->set_cursor(reinterpret_cast<Sprite *>(target),
-                                        CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]);
-                    *reinterpret_cast<char **>(obj + 0x1ef4c) = target;
-                }
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+            Sprite *const sprite = &g_CURSOR_SPRITES[cursor_shape];
+            if (window->cursor_sprite_ != sprite) {
+                window->GraphicWin::set_cursor(sprite,
+                    CursorHotspotX[cursor_shape], CursorHotspotY[cursor_shape]);
+                window->cursor_sprite_ = sprite;
             }
         }
     }
@@ -2840,9 +2821,9 @@ void Console::editor_fast() {
 //
 // Homed 2026-09-04. The two raw slots the emitter bound - 0x007D3C3C and the
 // exclusive 0x007D3C5C - are mapwin.h's MapWinTable and MapWinTableSlots,
-// and 0x1DD74 inside the loop is the same header's MapWinActiveOffset. The
-// walk is the one selected() and cursor_on() already spell in this TU.
-// LEVER: the loop tail compares the CASTED ints, not the pointers -
+// and 0x1DD74 is the active-window member. The typed walk below preserves
+// their eight-slot domain without truncating relocated pointers.
+// Historical LEVER: the old loop tail compared CASTED ints, not pointers -
 // `reinterpret_cast<int>(entry) < reinterpret_cast<int>(...)`. A pointer
 // comparison compiles `jb` where the image has `jl`, and that one byte was
 // the whole divergence (39/40 -> 40/40). Runs under the /Oy- set.
@@ -2850,29 +2831,25 @@ void Console::editor_fast() {
 
 void Console::cursor_off() {
     field_23D10_ = 0;
-    int *entry = reinterpret_cast<int *>(MapWinTable);
-    do {
-        int obj = *entry;
-        if (obj != 0 && (entry == reinterpret_cast<int *>(MapWinTable) ||
-                          *reinterpret_cast<int *>(obj + MapWinActiveOffset) != 0)) {
-            if (*reinterpret_cast<int *>(obj + 0x1ef4c) != 0 ||
-                *reinterpret_cast<int *>(obj + 0x1ef50) != 0x7f00) {
-                int vt = *reinterpret_cast<int *>(obj);
-                int adjusted = obj + *reinterpret_cast<int *>(vt + 4);
-                reinterpret_cast<Win *>(adjusted)->set_cursor(0x7f00);
-                *reinterpret_cast<int *>(obj + 0x1ef50) = 0x7f00;
-                *reinterpret_cast<int *>(obj + 0x1ef4c) = 0;
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr && (slot == 0 || window->field_1DD74_ != 0)) {
+            if (window->cursor_sprite_ != nullptr ||
+                window->cursor_resource_id_ != 0x7f00) {
+                window->GraphicWin::set_cursor(0x7f00);
+                window->cursor_resource_id_ = 0x7f00;
+                window->cursor_sprite_ = nullptr;
             }
-            unsigned int flags = *reinterpret_cast<unsigned int *>(*entry + 0x1dd70);
+            // Preserve the original post-callback reload (0x00510584),
+            // while the two cursor stores above still use the old receiver.
+            const uint32_t flags = MapWinTable[slot]->field_1DD70_;
             if ((flags & 0xc40000) != 0) {
-                *reinterpret_cast<unsigned int *>(*entry + 0x1dd70) = flags & 0xff3bffff;
-                reinterpret_cast<MapWin *>(*entry)->draw_map(1);
+                MapWinTable[slot]->field_1DD70_ = flags & 0xff3bffff;
+                MapWinTable[slot]->draw_map(1);
             }
             do_non_input();
         }
-        ++entry;
-    } while (reinterpret_cast<int>(entry) <
-             reinterpret_cast<int>(MapWinTable + MapWinTableSlots));
+    }
 }
 
 // ORIGINAL: 0x00515010 ?set_tech@Console@@QAEXH@Z 0x00515010-0x005150C2 FILE BYTE_EXACT

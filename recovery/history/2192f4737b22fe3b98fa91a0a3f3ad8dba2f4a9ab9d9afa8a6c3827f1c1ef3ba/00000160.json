@@ -1,0 +1,27 @@
+{
+  "event_id": "f9de305d2b2db5ae398d090d3e6b7799e8d355b37fad69848462bcf6efcdfd6e",
+  "payload": {
+    "affects": [
+      "entity-0d1060682ee93266cf1ab436f1f251c9ff230e70f090fe4ff4061bf910c56d08",
+      "entity-0f7c1d0be83075c20486f7581fb031158a7cd6d5396fd2e2a61bd44b68e970a3",
+      "entity-32d4ccd9aa391a342289a480ad08e492a75f21310a9161b1b228f72a53b883da",
+      "entity-c9a2e597de91063d4741fcf751a7f7f7d67cfe5d1ad05e54e3163922bd31d8d1",
+      "entity-ceb55b6c66858badb1e6bd53c9dde954054a3314f9908bc2957a34200f43ab0a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "cursor-mapwin-virtual-callback-closure-20260923",
+    "evidence": [
+      "Independent original review: MapWin ctor4627F9 installs Win-branch table66A57C; slot4(+10) is421870, which adjusts vtordisp then jumps46EB90 MapWin::on_lose_mouse_capture. Console ctor50F562 installs66EC18; corresponding slot4 is51DE30, which adjusts vtordisp and2328 then jumps the same46EB90.",
+      "Current Win::vslot_04 is empty, while MapWin::on_lose_mouse_capture is nonvirtual and does not override it. A separate admitted hierarchy step should rename the slot in place and reconcile all genuine callers/overrides/adjustors, not bypass virtual dispatch in go_reset.",
+      "Both original tables slot63(+FC) point404290, push0 then callGraphicWin::update5D56B0. Current Win::vslot_63 is empty. Original404290 is currently a claimed AlphaMovie::update mapping; investigate shared GraphicWin callback ownership/binding and affected tables. Win already has an unrelated update dispatcher; Sound-family Ambience::vslot_63 is unrelated.",
+      "Five cursor consumer repairs preserve original virtual invocation and callback receiver timing, but cannot close these actual target dependencies or prove working-game behavior. Retain this finding for central scoped recovery with constructor/table/caller verification. Do not discard it merely to preserve a local byte claim."
+    ],
+    "hypothesis": "Typed go_reset dispatch exposes a preexisting missing MapWin capture override and GraphicWin update callback; preserve this hierarchy work rather than substituting direct calls or claiming cursor runtime closure.",
+    "kind": "discovery"
+  },
+  "previous_event": "10adb6b854fc73a715b66681d40045b3c76740cf1bf9db90aa92e15942e32be2",
+  "request_id": "cursor-mapwin-virtual-callback-closure-20260923",
+  "schema_version": 1,
+  "sequence": 160,
+  "stream": "task:infowin-ownership"
+}

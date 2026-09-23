@@ -28,6 +28,7 @@ class MessageWin;
 class Datalink;
 class Net;
 class Win;
+class GraphicWin;
 
  /*
   * Game related objects, variables and functions.
@@ -176,6 +177,9 @@ extern int GameRestartQueued;  // 0x0093A948
 // bound raw, as console.h's ConsoleExitTurnLoop and scenario.cpp's
 // ExitTurnLoopAddress; both now reach this global by name.
 extern int ExitTurnLoop;  // 0x009B2068
+
+// Shared cover window hidden by go_reset and shown/painted by the main loop.
+extern GraphicWin CoverWindow;  // 0x00937118
 // Where control_turn / net_control_turn are in their phase; the main loop
 // reads it to size the desktop before the turn runs, and scenario.cpp gates
 // the end-turn path on it. Formerly scenario.cpp's raw ControlTurnPhaseAddress.

@@ -367,8 +367,12 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1EF1C_;  // 0x1EF1C
   Font font_c_;  // 0x1EF20
   uint32_t field_1EF48_;  // 0x1EF48
-  uint32_t field_1EF4C_;  // 0x1EF4C
-  uint32_t field_1EF50_;  // 0x1EF50
+  // Borrowed cursor cache: Console::cursor_on stores a g_CURSOR_SPRITES
+  // element here; resource-cursor resets clear it without destroying a Sprite.
+  // RECOVERY_MEMBER: v3 MapWin cursor_sprite_ Sprite* 0x1EF4C 0x00510400
+  Sprite *cursor_sprite_;  // 0x1EF4C
+  // RECOVERY_MEMBER: v1 MapWin cursor_resource_id_ 0x1EF50 0x00462870
+  uint32_t cursor_resource_id_;  // 0x1EF50
   // THE IMAGE BUTTONS: 4 * 0xABC (BaseButton 0xAB8 + the field imagebutton.h
   // names) = the 0x2AF0 this replaces, ending at 0x21A44 where the dword run
   // the map already names picks up. The image's ??_M arg here is
@@ -471,11 +475,8 @@ extern int MapWinCaptionDivisor;  // 0x00691E70, initially -1
 // Per-window "this window is live" dword. The MapWin constructor clears it
 // (0x00462822), MapWin::clear writes it (0x004628AF), and mapwin_system_init
 // sets it per slot (0x00471090, 0x0047109E). Every free drawing helper gates
-// on it for slots 1..7. Kept as a documented raw offset rather than carved
-// into MapWin: the field is read from outside the class, MapWin's 0x21A6C
-// bytes of derived storage are deliberately unmapped, and carving it would
-// force inventing a public accessor for a field whose full meaning is not
-// recovered. Same idiom as scroll.cpp's read_volatile_bits.
+// on it for slots 1..7. MapWin now declares this as field_1DD74_; the offset
+// remains for older, not-yet-migrated consumers. New code uses the member.
 static const size_t MapWinActiveOffset = 0x1DD74;
 
 // MapWin::draw_radius at 0x0046A2A0 is still an original body: `ret 0x10` at

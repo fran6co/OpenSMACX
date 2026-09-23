@@ -65,7 +65,7 @@ MapWin::MapWin() {
     field_1DD80_ = 0;
     field_1DD8C_ = 0;
     field_21A44_ = 0;
-    field_1EF4C_ = 0;
+    cursor_sprite_ = 0;
     field_1EEC0_ = static_cast<uint32_t>(0xffffd8f1);
     field_1EEC4_ = 0xffffffff;
 }
@@ -1807,8 +1807,8 @@ void MapWin::clear(int index) {
         }
     }
 
-    field_1EF50_ = 0x7f00;
-    field_1EF4C_ = 0;
+    cursor_resource_id_ = 0x7f00;
+    cursor_sprite_ = 0;
     if (owned_ != 0) {
         free(owned_);
         owned_ = 0;
