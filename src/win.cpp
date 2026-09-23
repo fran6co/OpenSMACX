@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 
-// Win constructor-installed Win branch: capture slot4, update slot63.
+// Win constructor-installed Win branch: capture4, resize13, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066FDD0 ? ??_7Win@@6B@ 0x005EB3D0
 #include "net_class.h"
@@ -5377,6 +5377,7 @@ void Win::set_bubble_text(char * text, RECT * rect) {
 }
 
 // ORIGINAL: 0x005EE330 ?resize_event@Win@@QAEHHH@Z 0x005EE330-0x005EE454
+// symbol    ?resize_event@Win@@QAEXHH@Z
 // TRIED: a named-global spelling for 0x9b7ab8, i.e. a static Win-pointer global assigned from `this`, reordered the entry register allocation - mismatch at instr #0; a plain store through a cast fixed address matches through instr #16-19 depending on how the vtable-slot-3/13 calls are spelled. The two indirect vtable calls, slot 3 at +0xc and slot 13 at +0x34, cannot use a virtual-shim helper class declared ahead of the definition: a second top-level type before the function truncates the region this file's own extractor reads (brace-depth returns to zero at the helper's own close, before the real body), and a LOCAL shim class needs every declared virtual defined, C2599, which VC6 then emits as extra external symbols and the unit fails the exactly-one-symbol check. A raw thiscall function pointer draws C4234. The working spelling: an empty LOCAL class with no members at all, so it carries no vtable and needs no symbol, used purely for its member-pointer representation, populated at runtime through a union from the vtable slot read as a plain pointer - legitimate member-pointer call syntax, so it invokes with the receiver in ECX like the original, and it is one self-contained region for this file's own extractor. 0.857 mnemonic similarity, first divergence at instr #19; landing the closest MISMATCH. NOTE: literal brace characters in this comment block will truncate the region the same way - keep this prose brace-free.
 // size      292 bytes
 // prototype int (__thiscall ?resize_event@Win@@QAEHHH@Z)(Win* this, int, int)
@@ -5411,62 +5412,45 @@ void Win::set_bubble_text(char * text, RECT * rect) {
 //            instruction 6 moves. The raw-offset spelling is kept because
 //            it measures better, which is the opposite of the usual lesson.
 
-int Win::resize_event(int width, int height) {
-  class MfpBase {};
-  typedef int (MfpBase::*Fn3)(int, int, int);
-  union Conv3 {
-    Fn3 asMfp;
-    void *asPtr;
-  };
-
-  // 0x009B7AB8 is WinCallbackWindow, already bound in win_slots.h.
-  WinCallbackWindow = this;
-
-  if ((iFlags_ & 0x40) == 0) {
-    if (scroll_vert_ != 0) {
-      // THE SCROLLBAR'S move, not this window's. The image loads
-      // scroll_vert_ into ECX at 0x005EE348, tests it, and calls
-      // 0x5ed7d0 - Win::move - with that still in the receiver register.
-      scroll_vert_->move(outer_rect_.right - outer_rect_.left, 0);
-      char *sv = (char *)scroll_vert_;
-      char *sh = (char *)scroll_horz_;
-      int iVar2;
-      if (sh == 0) {
-        iVar2 = outer_rect_.bottom - outer_rect_.top;
-      } else {
-        iVar2 = *(int *)(sh + 0x4c8) - outer_rect_.top + outer_rect_.bottom;
-      }
-      // Vtable offset 0xc IS slot 3, which win.h declares as
-      // `resize(int, int, int)` - the signature the Fn3 typedef spelled out
-      // by hand. No member-function-pointer shim needed.
-      scroll_vert_->resize(*(int *)(sv + 0x4c4), iVar2, 0);
+// The TRIED notes above describe historical scoring, not the current model.
+// Original callers5D62E8/5ED9A2/5EDAC6 ignore the result; the body ends after
+// redo_caption_buttons without producing one. Model this notification as void.
+// Both move calls target the scrollbar, and may replace either borrowed pointer.
+void Win::resize_event(int width, int height) {
+    WinCallbackWindow = this;
+    if ((iFlags_ & 0x40) == 0) {
+        if (scroll_vert_ != 0) {
+            scroll_vert_->move(outer_rect_.right - outer_rect_.left, 0);
+            Scroll *horizontal = scroll_horz_;
+            Scroll *vertical = scroll_vert_;
+            int resize_height;
+            if (horizontal == 0) {
+                resize_height = outer_rect_.bottom - outer_rect_.top;
+            } else {
+                resize_height = horizontal->dib_.bmiHeader.biHeight -
+                                outer_rect_.top + outer_rect_.bottom;
+            }
+            vertical->resize(vertical->dib_.bmiHeader.biWidth, resize_height, 0);
+        }
+        if (scroll_horz_ != 0) {
+            scroll_horz_->move(0, outer_rect_.bottom - outer_rect_.top);
+            Scroll *vertical = scroll_vert_;
+            Scroll *horizontal = scroll_horz_;
+            if (vertical == 0) {
+                horizontal->resize(outer_rect_.right - outer_rect_.left,
+                                   -horizontal->dib_.bmiHeader.biHeight, 0);
+            } else {
+                horizontal->resize((outer_rect_.right - vertical->dib_.bmiHeader.biWidth) -
+                                   outer_rect_.left,
+                                   -horizontal->dib_.bmiHeader.biHeight, 0);
+            }
+        }
     }
-    if (scroll_horz_ != 0) {
-      move(0, outer_rect_.bottom - outer_rect_.top);
-      char *sh = (char *)scroll_horz_;
-      char *sv = (char *)scroll_vert_;
-      Conv3 c;
-      c.asPtr = (*(void ***)sh)[0xc / 4];
-      if (sv == 0) {
-        (reinterpret_cast<MfpBase *>(scroll_horz_)->*c.asMfp)(
-            outer_rect_.right - outer_rect_.left, -*(int *)(sh + 0x4c8), 0);
-      } else {
-        (reinterpret_cast<MfpBase *>(scroll_horz_)->*c.asMfp)(
-            (outer_rect_.right - *(int *)(sv + 0x4c4)) - outer_rect_.left,
-            -*(int *)(sh + 0x4c8), 0);
-      }
+    if (field_400_ != 0) {
+        field_400_(width, height);
     }
-  }
-  // field_400_ IS the resize callback: storage typed where it is declared,
-  // so no cast sits between the null-test and the call.
-  if (field_400_ != 0) {
-    field_400_(width, height);
-  }
-  // Slot 13 of Win's own vtable - vslot_13 - reached as the virtual call
-  // the image's [vtable+0x34] dispatch is.
-  vslot_13(width, height);
-  redo_caption_buttons();
-  return 0;
+    on_resize(width, height);
+    redo_caption_buttons();
 }
 
 // Fixed-slot bindings carried from 005f1340.cpp

@@ -1,0 +1,59 @@
+{
+  "event_id": "ec1c153f87df3eeb968930bb75ed9175380bd88b2725aa648b53d52dda0cc189",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_window_resize.py",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Authorize the connected resize-event recovery: original Win slot13(two arguments) selects MapWin46FA00 through generated MapWin421890/PlanWin48BF80/Console51DE50 adjustors. Replace only Win-family resize slot and MapWin override, never the unrelated MainInterface one-argument vslot_13 methods. Preserve generated thunk identities/spans and use compiler-observed symbols/hosts; no handwritten this arithmetic.",
+      "Correct Win::resize_event horizontal move receiver: original5EE3AD loads scroll_horz_ and5EE3C8 calls Win::move on that scrollbar, not this. Use genuine Scroll/Buffer dib_.bmiHeader signed dimensions, real virtual resize and post-callback receiver/member reloads. Preserve one initial flags0x40 test and callback then virtual on_resize then redo_caption_buttons ordering.",
+      "Observed void resize_event interface: original direct callers5D62E8,5ED9A2,5EDAC6 and all three current C++ callers ignore the result. Original ends after redo_caption_buttons with no materialized result. Remove fabricated return0 and use void without missing-return undefined behavior, retaining original catalogue name and updating measured emitted symbol via native writer. This interpretation is grounded in callsites, not recovered debug names.",
+      "MapWin handler uses genuine field_1DD70_ highbit and do_image_buttons on its own object; original46FB80 really is an empty recovered body, not an unfinished placeholder. Native receiver-layout evidence is required. Preserve correct hierarchy if byte matching regresses; restore existing claims without demotion, no flags changes or hand-installed virtual dispatch.",
+      "Coordinator-owned changes in the retained isolated worktree, with disjoint tests/implementation/review workers. Preserve terrain source/journal WIP and deferred base_energy. Native byte/reference/layout checks, callback-mutation controls, independent review and fresh full build/link before and after manual integration. No automatic/full-game acceptance or task-baseline reset.",
+      "Authorize the already-overlapping Win/MapWin group and Win::show caller under this connected coordinator checkpoint; do not duplicate source bindings or transfer the unrelated MainInterface family."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6218544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4651520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4651904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6215808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6216144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6236000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a290c8c360c72e7e73a830e37f01991e3e6fe9bb97b2495a05f1e16288863905",
+  "request_id": "window-resize-counterpart-20260923",
+  "schema_version": 1,
+  "sequence": 57,
+  "stream": "task:radiobutton-lifetime"
+}

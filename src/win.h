@@ -105,7 +105,8 @@ class Win : public AutoSound {
 
  public:
   // homed from 005ee330.cpp
-  int resize_event(int width, int height);
+  // Resize notification; all three original callers ignore the result.
+  void resize_event(int width, int height);
 
  public:
   // homed from 005f83d0.cpp
@@ -474,6 +475,7 @@ class Win : public AutoSound {
   // so its installer is still an original dependency. Typed here rather
   // than cast at the one use, same rule as key_hook_. The named typedef
   // makes the callback interface explicit, like mouse_move_hook_ above.
+  // RECOVERY_MEMBER: v1 Win field_400_ 0x400 0x005EE330
   WinResizeCallback field_400_;
   uint32_t field_404_;
   // 0x408. A CALLBACK, not storage: `on_mouse_move` calls it with the
@@ -493,7 +495,10 @@ class Win : public AutoSound {
   WinKeyHookFn key_hook_;
   uint32_t field_434_;
   uint32_t field_438_;
+  // Borrowed nonclient scrollbars; resize_event reloads them after callbacks.
+  // RECOVERY_MEMBER: v3 Win scroll_vert_ Scroll* 0x43C 0x005EE330
   Scroll *scroll_vert_;
+  // RECOVERY_MEMBER: v3 Win scroll_horz_ Scroll* 0x440 0x005EE330
   Scroll *scroll_horz_;
 
  public:
@@ -532,7 +537,10 @@ class Win : public AutoSound {
   virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_11(int = 0, int = 0, int = 0, int = 0) { return 0; }  // 0x00404240
   virtual void vslot_12() {}  // 0x00404280
-  virtual void vslot_13(int = 0, int = 0) {}  // 0x00404260
+  // Slot 13: Win's constructor-installed table66FDD0 selects the shared RET8.
+  // MapWin supplies a genuine override; this is not MainInterface's slot13.
+  // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_resize@Win@@UAEXHH@Z 0x005EB3D0
+  virtual void on_resize(int, int) {}
   virtual void vslot_14() {}  // 0x00404280
   virtual void vslot_15(int = 0) {}  // 0x00404270
   virtual void on_mouse_move(int x, int y, unsigned int keys, int from_parent);  // slot 16  0x005F6320

@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 
-// MapWin constructor-installed Win branch: capture slot4, update slot63.
+// MapWin constructor-installed Win branch: capture4, resize13, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066A57C ? ??_7MapWin@@6BWin@@@ 0x004626E0
 #include "original_seam.h"
@@ -469,6 +469,7 @@ void MapWin::on_redraw() {
 
 /*
 // ORIGINAL: 0x0046FA00 ?on_resize@MapWin@@QAEXHH@Z 0x0046FA00-0x0046FA1A BYTE_EXACT
+// symbol    ?on_resize@MapWin@@UAEXHH@Z
 // size      26 bytes
 // prototype void (__thiscall ?on_resize@MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   1
@@ -477,10 +478,9 @@ void MapWin::on_redraw() {
 // calls     0x0046FB80
 Status: Complete
 */
-void MapWin::on_resize(int a1, int a2) {
-    char *self = reinterpret_cast<char *>(this);
-    if ((*reinterpret_cast<unsigned int *>(self - 0x3cfc) & 0x80000000) == 0) {
-        reinterpret_cast<MapWin *>(self - 0x21a6c)->do_image_buttons();
+void MapWin::on_resize(int, int) {
+    if ((field_1DD70_ & 0x80000000) == 0) {
+        do_image_buttons();
     }
 }
 
@@ -2685,6 +2685,23 @@ Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win slot13 adjustor for the genuine MapWin resize
+// override. The virtual-base layout owns the receiver adjustment.
+/*
+Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
+         MapWin::on_resize expects, then forward unchanged.
+// ORIGINAL: 0x00421890 ?on_resize@thunk1_MapWin@@QAEXHH@Z 0x00421890-0x00421898 FILE BYTE_EXACT
+// symbol    ?on_resize@MapWin@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_resize@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
 // calls     (none)
 Return Value: n/a
 Status: Complete

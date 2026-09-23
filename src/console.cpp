@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 
-// Console constructor-installed Win branch: capture slot4, update slot63.
+// Console constructor-installed Win branch: capture4, resize13, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066EC18 ? ??_7Console@@6BWin@@@ 0x0050F460
 #include "original_seam.h"
@@ -3166,6 +3166,23 @@ Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
 // callers   0   call targets   0
 // kind      game
 // flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win slot13 adjustor for the genuine MapWin resize
+// override. The virtual-base layout owns the receiver adjustment.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_resize expects, then forward unchanged.
+// ORIGINAL: 0x0051DE50 ?on_resize@thunk4_MapWin@@QAEXHH@Z 0x0051DE50-0x0051DE5E FILE BYTE_EXACT
+// symbol    ?on_resize@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
+// size      14 bytes
+// prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
 // calls     (none)
 Return Value: n/a
 Status: Complete

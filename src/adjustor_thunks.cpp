@@ -848,27 +848,7 @@ void __fastcall adjust_map_win1_on_redraw(void *self, void *) {
     reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_redraw();
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_resize expects, then forward unchanged.
-// ORIGINAL: 0x00421890 ?on_resize@thunk1_MapWin@@QAEXHH@Z 0x00421890-0x00421898
-// symbol    ?adjust_map_win1_on_resize@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_resize@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_resize(void *self, void *, int arg0,
-                                          int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_resize(arg0, arg1);
-}
+
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
@@ -1156,27 +1136,7 @@ void __fastcall adjust_plan_win1_on_redraw(void *self, void *) {
     reinterpret_cast<PlanWin *>(object - vtordisp)->PlanWin::on_redraw();
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_resize expects, then forward unchanged.
-// ORIGINAL: 0x0048BF80 ?on_resize@thunk5_MapWin@@QAEXHH@Z 0x0048BF80-0x0048BF8E
-// symbol    ?adjust_map_win5_on_resize@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_resize@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_resize(void *self, void *, int arg0,
-                                          int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_resize(arg0, arg1);
-}
+
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
@@ -1486,27 +1446,7 @@ void __fastcall adjust_map_win4_on_redraw(void *self, void *) {
     reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_redraw();
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_resize expects, then forward unchanged.
-// ORIGINAL: 0x0051DE50 ?on_resize@thunk4_MapWin@@QAEXHH@Z 0x0051DE50-0x0051DE5E
-// symbol    ?adjust_map_win4_on_resize@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_resize(void *self, void *, int arg0,
-                                          int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_resize(arg0, arg1);
-}
+
 
 /*
 Purpose: Adjust the receiver from Console's thunk1 subobject to the one

@@ -160,7 +160,8 @@ class MapWin : public virtual GraphicWin {
   void click(int a1, int a2, int a3);
 
  public:
-  void on_resize(int a1, int a2);
+  // Win slot13, through generated MapWin/PlanWin/Console vtordisp thunks.
+  virtual void on_resize(int width, int height);
   void on_redraw();
   // 0x00467970, a pending_bodies forwarder. line_timer (time.cpp) calls it
   // per live map-window slot with the literal 1.
@@ -303,6 +304,8 @@ class MapWin : public virtual GraphicWin {
   TextureStore textures_b_[0xC4];   // 0x98C
   TextureStore texture_store_;      // 0x1DB0C
   uint32_t field_1DD6C_;  // 0x1DD6C
+  // on_resize suppresses image-button refresh when the high bit is set.
+  // RECOVERY_MEMBER: v1 MapWin field_1DD70_ 0x1DD70 0x0046FA00
   uint32_t field_1DD70_;  // 0x1DD70
   uint32_t field_1DD74_;  // 0x1DD74
   uint32_t field_1DD78_;  // 0x1DD78
