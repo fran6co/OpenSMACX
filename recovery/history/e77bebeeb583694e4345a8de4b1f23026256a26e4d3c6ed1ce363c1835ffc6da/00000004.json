@@ -1,0 +1,30 @@
+{
+  "event_id": "0d310f4426e355fffdd0dad11cb9004ec719c14d04ed61d4639366952c4880be",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_palette_cycling.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "The existing frontend-presentation task owns455400. Authorize its real load_cycling implementation and coupled mutable OceanDetailShade[80] allocation [6861F0,686330) in game.cpp, declaration in game.h, tests and removal of only its obsolete pending_bodies.cpp forwarder after native binding. Preserve seeds, original baseline and all existing claims/discoveries. Root coordinates this manual dependency recovery in the existing terrain checkout; no other checkout owns active edits.",
+      "Pinned original45540F opens system/cycling and skips all later work on failure. Read count then per-cycle three sequential numbers, call g_PALETTE1.init_cycle with wrapping first+10 and unsigned third, followed by start_cycle even when init_cycle fails. Nonpositive count still enters system/oceanoffsets. Only text_get lines starting ASCII digits are accepted; preserve partial/prior suffix, maximum80writes and the extra text_get after the80th accepted write. Use existing source-owned Palette and parser APIs, never image-address callbacks.",
+      "OceanDetailShade needs its exact initial values for failed/partial loads and persistent runtime updates; no per-call reset or immutable copy is authorized. The terrain task may remove its pointer alias and read the new shared game.h declaration once present. UnworkedCornerLight is separate. Fresh native data bounds/content/reference checks, protected measurements, actual-source mutation controls, independent review and application build/link precede any manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4543488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2e19b836e11ea951a1269a14f45e628377b60bee8e67a6dc3e4af1bb9e27a81f",
+  "request_id": "terrain-ocean-shade-producer-20260923",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:frontend-presentation"
+}

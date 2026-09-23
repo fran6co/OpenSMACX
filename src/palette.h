@@ -67,7 +67,7 @@ class Palette {
 
  public:
   // homed from 005fe700.cpp
-  int init_cycle(int key, int first, int reserved, unsigned long count);
+  int init_cycle(int key, int first, int count, unsigned long interval);
 
  public:
   // homed from 005ff930.cpp

@@ -1491,9 +1491,10 @@ int Palette::fade_to(Palette *other, int start, int count, int steps,
 //   verdict.
 
 
-// `reserved` is never read; the census carries it as a third int and the
-// body proves nothing about it. Open finding, like make_remap_table's.
-int Palette::init_cycle(int key, int first, int reserved, unsigned long count) {
+// The third argument is the colour count (5FE73E, 5FE7FF, 5FE805);
+// the fourth is only the timer interval (5FE87C). They are independent:
+// a slow timer must not allocate or copy more palette entries.
+int Palette::init_cycle(int key, int first, int count, unsigned long interval) {
     unsigned int first_index = (unsigned char)first;
 
     if (first_index < 10) {
@@ -1538,13 +1539,15 @@ int Palette::init_cycle(int key, int first, int reserved, unsigned long count) {
     entry->count = (unsigned char)count;
     entry->first = (unsigned char)first_index;
 
-    void *mem = mem_get(count * 4);
+    // The original LEA wraps the signed count in a 32-bit byte count.
+    const unsigned int colour_bytes = static_cast<unsigned int>(count) * 4u;
+    void *mem = mem_get(colour_bytes);
     entry->colours = mem;
     if (mem == 0) {
         return 4;
     }
 
-    memcpy(mem, &entries_[first_index], count * 4);
+    memcpy(mem, &entries_[first_index], colour_bytes);
 
     Time *t = new Time();
     entry->time = t;
@@ -1552,10 +1555,11 @@ int Palette::init_cycle(int key, int first, int reserved, unsigned long count) {
         return 4;
     }
 
-    // (int)this: Time::init's context parameter really is an int in its
-    // catalogued signature - the pointer-as-int lives in Time's API, and
-    // Time's own class pass is where the type gets fixed.
-    t->init(Palette::timer_callback, key, (int)this, (int)count, 5);
+    // Time's existing callback ABI carries a target-32-bit pointer in int.
+    // Make the narrowing explicit; this is not a host-width callback ABI.
+    t->init(Palette::timer_callback, key,
+            static_cast<int>(reinterpret_cast<intptr_t>(this)),
+            static_cast<uint32_t>(interval), 5);
     return 0;
 }
 

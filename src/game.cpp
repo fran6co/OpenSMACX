@@ -60,6 +60,22 @@
 // RECOVERY_OBJECT: v2 0x007A81A0 0x007A99A0 ?VoxelRowColorTables@@3PAY0BAA@EA 0x00451030
 unsigned char VoxelRowColorTables[24][256];
 
+// Original 0x006861F0..0x00686330: mutable palette offsets selected by
+// alt_get_ocean_detail's 0..79 result. Configuration replaces only the
+// accepted prefix, so these startup values and later untouched entries
+// persist across missing, partial and repeated load_cycling calls.
+// RECOVERY_OBJECT: v2 0x006861F0 0x00686330 ?OceanDetailShade@@3PAHA 0x00455400
+int OceanDetailShade[80] = {
+    37, 37, 37, 37, 37, 37, 36, 36, 36, 36,
+    35, 35, 35, 35, 35, 25, 25, 25, 25, 25,
+    25, 25, 25, 25, 25, 25, 25, 25, 25, 25,
+    16, 16, 14, 13, 13, 12, 12, 11, 11, 10,
+    10, 9, 9, 8, 8, 8, 7, 7, 6, 6,
+    5, 5, 4, 4, 3, 3, 2, 1, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0, 0, 0, 0, 0, 0, 0
+};
+
 // The temporary model retains the fourth record until scope exit, including
 // unwinding. A valid record with a different step count leaves its offset alone.
 // ORIGINAL: 0x00451030 ?load_voxels@@YAXXZ 0x00451030-0x00451A09;0x00655030-0x00655042
@@ -1934,6 +1950,48 @@ int __cdecl game_init(int mode, int reload) {
     WinMaximizeIcon = 0x0075AE78;
     WinMinimizeIcon = 0x0075AE20;
     return 0;
+}
+
+// Original 0x00455400: palette cycles and ocean offsets are one ordered
+// configuration load. A missing cycling section also skips ocean offsets;
+// initialization errors do not suppress the following start_cycle call.
+// Original section-name strings include their terminating NULs. The two
+// "system" arguments instead use distinct original copies at 685150 and
+// 685168; a pooled compiler literal is not one shared original identity.
+// RECOVERY_LITERAL: v1 0x00685148 0x00685150 ??_C@_07MAH@cycling?$AA@ 0x00455400
+// RECOVERY_LITERAL: v1 0x00685158 0x00685165 ??_C@_0N@GLFC@oceanoffsets?$AA@ 0x00455400
+// ORIGINAL: 0x00455400 ?load_cycling@@YAXXZ 0x00455400-0x004554C0 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["45540F guards both sections; 455432..45546B read three cycle arguments and call Palette init/start in order; 45547C..4554B9 accept ASCII-digit-led ocean lines with an eighty-entry bound and one trailing read. The original seed and exact startup table are retained."], "reason": "The original ordered configuration loader owns palette cycle setup and writes the shared eighty-entry ocean shade table consumed by terrain generation."}
+void __cdecl load_cycling() {
+    if (text_open("system", "cycling") != 0) {
+        return;
+    }
+    text_get();
+    const int count = text_item_number();
+    for (int cycle = 0; cycle < count; ++cycle) {
+        text_get();
+        const int first = text_item_number();
+        const int colors = text_item_number();
+        const unsigned long interval =
+            static_cast<unsigned int>(text_item_number());
+        const int palette_first = static_cast<int>(static_cast<unsigned int>(first) + 10u);
+        g_PALETTE1.init_cycle(cycle, palette_first, colors, interval);
+        g_PALETTE1.start_cycle(cycle);
+    }
+    if (text_open("system", "oceanoffsets") != 0) {
+        return;
+    }
+    int offset = 0;
+    for (char *line = text_get(); line != 0; line = text_get()) {
+        if (offset >= 80) {
+            break;
+        }
+        if (*line >= '0' && *line <= '9') {
+            OceanDetailShade[offset++] = text_item_number();
+        }
+        // The original reads another line after the eightieth accepted
+        // value, before the next iteration checks the table boundary.
+    }
 }
 
 /*

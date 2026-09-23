@@ -1,0 +1,30 @@
+{
+  "event_id": "209a603c94f748201d74bde666b573ab36257c0d472da37b468391051386a862",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_palette_cycle_lifetime.py",
+      "src/palette.cpp",
+      "src/palette.h"
+    ],
+    "evidence": [
+      "Fresh task inventory has no existing owner for5FE700; authorize frontend-presentation to correct its real load_cycling dependency. No task baseline is reset and no other checkout is editing this family. Keep the original unclaimed mapping and ABI parameter types, but name third int count and fourth unsigned long interval.",
+      "Independent review and coordinator full decode5FE700..5FE8AC establish third argument at adjustedESP+28 as signed color count: range check5FE73E, stored low byte5FE7FF, wrapped count*4allocation5FE805/812, copy5FE839. Fourth argument at adjustedESP+2C is used only as Time::init interval at5FE87C..890. Current source incorrectly labels third reserved and uses fourth for both buffer length and timer. Correct it rather than copying that mistake into the new caller.",
+      "Preserve original guard ordering, reuse teardown, allocation failures and Time ownership; do not invent a capacity or negative-count guard. Use explicit unsigned32 multiplication for the original wrapped byte count. Host controls should distinguish count from interval and observe cleanup/copy/allocation/timer arguments and failures. Full-capacity slot overrun and invalid successful huge allocations remain unresolved input-domain behavior, not silently repaired.",
+      "The timer context is still a target32-bit integer ABI carrying this pointer. An explicit intptr_t-to-int conversion may make that narrowing visible without changing its interface or claiming native host callback equivalence. Native measurements, existing byte-claim preservation, actual-source tests and application link remain required; no exact or acceptance claim is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6285056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0d310f4426e355fffdd0dad11cb9004ec719c14d04ed61d4639366952c4880be",
+  "request_id": "palette-cycle-count-interval-20260923",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:frontend-presentation"
+}

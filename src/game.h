@@ -246,6 +246,7 @@ void __cdecl load_deswin_sprites();                // 0x00455E50, leaf_recoverie
 void __cdecl colortables_init();                   // ?colortables_init@@YAXXZ
 int __cdecl compare_palettes();
 void __cdecl load_cycling();                       // ?load_cycling@@YAXXZ
+extern int OceanDetailShade[80];
 void __cdecl config_popups();                      // ?config_popups@@YAXXZ
 void __cdecl bung_momma();                         // ?bung_momma@@YAXXZ
 int __fastcall maininterface_init(MainInterface *self, int mode);

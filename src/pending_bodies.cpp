@@ -1537,12 +1537,6 @@ void __cdecl load_interface(int mode) {
 // ?load_deswin_sprites@@YAXXZ at 0x00455E50 is homed in leaf_recoveries.cpp
 // under its own name - no forwarder, that claim is compiled.
 
-// ?load_cycling@@YAXXZ at 0x00455400
-void __cdecl load_cycling() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00455400, pending)();
-}
-
 // ?textcolor_init@@YAXXZ at 0x004BA220 is homed in palette.cpp - no forwarder.
 
 // ?config_popups@@YAXXZ at 0x00588AA0
