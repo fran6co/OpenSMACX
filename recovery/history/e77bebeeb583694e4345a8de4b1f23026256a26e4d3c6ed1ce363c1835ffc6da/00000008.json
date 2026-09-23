@@ -1,0 +1,122 @@
+{
+  "event_id": "310f91e9f8ce6b37fae82c931a1ed9df84cf0410f570c0dad328f18d5f6c07bf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/control_lifetime_harness.cpp",
+      "recovery/tests/editbox_input_harness.cpp",
+      "recovery/tests/multidebug_paint_harness.cpp",
+      "recovery/tests/test_editbox_recovery.py",
+      "recovery/tests/test_imagebutton_paint.py",
+      "recovery/tests/test_multidebug_lifetime.py",
+      "recovery/tests/win_root_order_harness.cpp",
+      "src/alphamenu.cpp",
+      "src/alphamenu.h",
+      "src/basebutton.h",
+      "src/basepop.cpp",
+      "src/councwin.cpp",
+      "src/councwin.h",
+      "src/editbox.cpp",
+      "src/editbox.h",
+      "src/graphicwin.cpp",
+      "src/imagebutton.cpp",
+      "src/imagebutton.h",
+      "src/multidebug.cpp",
+      "src/multidebug.h",
+      "src/sprite.h",
+      "src/win.cpp",
+      "src/win.h",
+      "src/worldwin.cpp"
+    ],
+    "evidence": [
+      "Authorize complete ImageButton painter6253D0..6256CC through its genuine Win slot12 override, using inherited members, borrowed Sprite and existing palette/window globals. Original ctor6252E8 installs table670A94 whose slot12 is6253D0; slots62/63 remain GraphicWin redraw5D5A70 and update404290. Recover the whole body and dependencies, not a drawing stub or executable-address forwarder.",
+      "Name Win slot12 draw_contents, preserving its ordinal and all existing explicit overrides/callers. Independent original tables establish AlphaMenu403340 at66ED88, MultiDebug5C9920 at66FA88, CouncWin426AA0 at66AAE8 and EditBox615270 at66A038. Preserve these bodies and their current recovery state; AlphaMenu remains a stub and CouncWin a forwarder. Existing original identities and claims are immutable; reconcile changed emitted symbols using native observations/writer.",
+      "Add only evidence-backed member access needed by the painter, including displayed versus source Sprite dimensions and inherited button state. Preserve guards, callback rereads, text/bevel order, signed comparisons and scaling. Investigate any uninitialized path without silently initializing values or changing original behavior. Keep seed evidence and use native binding for the new unclaimed product body.",
+      "This staged hierarchy repair deliberately leaves MapWin/PlanWin nonvirtual on_redraw methods unchanged until their receiver, complete bodies and dependencies are restored. Do not accidentally make Dialog-family on_redraw an override. Existing slot12/caption-creation discoveries remain pending; this scope is not game, automatic or full hierarchy acceptance.",
+      "Coordinator alone owns product edits, native symbol/binding publication, compiler leases, journal and Git integration. Require independent original/source review, honest actual-body controls, native table/layout/byte/reference checks, preserved historical claims and full clean build/link before manual integration and after. Preserve retained terrain WIP, all task baselines, deferred base_energy and faction-cache behavior. Existing overlapping radiobutton caller scope is unchanged; no retained radio journal work is discarded or implicitly collected."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6443984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4207424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4352672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6068512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6378096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6118000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6216144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6215808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4353952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6301184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4998640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4998672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4996768,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4211328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "552b16d1ac78f38d5e8439c3d9d58d86c0b2662d47bbc124867afbd0fb254be9",
+  "request_id": "imagebutton-genuine-paint-slot12-20260923",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:frontend-presentation"
+}

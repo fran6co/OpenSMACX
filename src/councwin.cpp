@@ -40,7 +40,7 @@ void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 // ?on_redraw@CouncWin@@QAEXXZ, 0x00426AA0, unrecovered. on_status reaches it
 // with `mov edx,[ecx-0xa14] / call [edx+0x30]`, a live dispatch through the
 // front's own table, so the entry has to be CouncWin's.
-void CouncWin::vslot_12() {
+void CouncWin::draw_contents() {
     typedef void(__fastcall *pending)(CouncWin *, void *);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00426AA0))(
         this, nullptr);
@@ -101,7 +101,7 @@ Status: Complete
 //   the virtual dispatch.
 void CouncWin::on_status(int mode) {
     if (mode != 0) {
-        static_cast<GraphicWin *>(this)->vslot_12();
+        static_cast<GraphicWin *>(this)->draw_contents();
         for (int i = 0; i < 6; i++) {
             if (i != 5) {
                 buttons_[i].show(0);

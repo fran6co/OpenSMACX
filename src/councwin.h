@@ -95,13 +95,13 @@ class CouncWin : public GraphicWin, public IfaceRegistryEntry {
 
   // ---- slots of the FRONT vtable (0x66AAE8) that CouncWin implements ------
   // The image's catalogue names them on_redraw / on_button_clicked; the slots
-  // keep the Win vtable's own vslot_N names because that is the name the
-  // override has to carry to land at the right offset. Both are unrecovered,
+  // use Win's virtual names so the overrides keep their existing positions.
+  // Both bodies are unrecovered,
   // so both are forwarders - but on_status reaches slot 12 and vslot_13
   // reaches slot 44 through a live `call dword ptr [eax+N]`, so the entries
   // have to be CouncWin's and not Win's shared no-ops for those dispatches to
   // mean what the image's mean.
-  void vslot_12();                 // slot 12, 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ
+  virtual void draw_contents();    // slot 12, 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ
   void on_button_clicked(int button_id);    // slot 44, 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z
   // PAUGraphicWin@@PADH, per
   // ?on_button_text_draw@CouncWin@@QAEHPAUGraphicWin@@PADH@Z. 0x00426F90 is

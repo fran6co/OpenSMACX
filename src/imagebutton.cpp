@@ -16,8 +16,13 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
-#include "original_seam.h"
+#include "palette.h"
+#include <cstring>
 #include "imagebutton.h"
+
+// Constructor 6252E8 installs this Win table; slot12 paints, and slots62/63
+// retain GraphicWin redraw/update. Full table extent remains unestablished.
+// RECOVERY_GENERATED: v1 vtable 0x00670A94 ? ??_7ImageButton@@6BWin@@@ 0x006252E0
 
 /*
 Purpose: Construct the button on its BaseButton base and clear its one field.
@@ -166,4 +171,136 @@ int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
                       int width, int height, Win *parent, int style_flag) {
     sprite_ = sprite;
     return BaseButton::init(name, id, x, y, width, height, parent, style_flag);
+}
+
+// Original 6253D0 paints through the inherited Buffer. Centers are defined
+// only when a Sprite exists at the centering step; a later null-to-nonnull
+// replacement during bevel drawing exposes uninitialized coordinates in the
+// original too. No zero-center behavior is invented here.
+namespace {
+int image_button_paint_signed(uint32_t value) {
+    return value <= 0x7fffffffU
+        ? static_cast<int>(value)
+        : -1 - static_cast<int>(~value);
+}
+
+int image_button_paint_add(int left, int right) {
+    return image_button_paint_signed(static_cast<uint32_t>(left) +
+                                     static_cast<uint32_t>(right));
+}
+
+int image_button_paint_sub(int left, int right) {
+    return image_button_paint_signed(static_cast<uint32_t>(left) -
+                                     static_cast<uint32_t>(right));
+}
+
+int image_button_paint_half(int value) {
+    // SAR by one, including negative odd dimensions; not truncation to zero.
+    return value >= 0 ? value / 2 : -1 - ((-1 - value) / 2);
+}
+
+void image_button_paint_inset(RECT *area) {
+    area->left = image_button_paint_add(area->left, 1);
+    area->right = image_button_paint_sub(area->right, 1);
+    area->top = image_button_paint_add(area->top, 1);
+    area->bottom = image_button_paint_sub(area->bottom, 1);
+}
+}
+
+// ORIGINAL: 0x006253D0 ?on_redraw@ImageButton@@QAEXXZ 0x006253D0-0x006256CC
+// RECOVERY_BINDING: v1 {"evidence": ["Original ctor6252E8 installs Win table670A94; its slot12 at670AC4 selects6253D0. GraphicWin::redraw5D5A70 dispatches that slot. This is distinct from the separate Dialog-family on_redraw virtual and leaves pending MapWin/PlanWin receiver restoration unchanged.", "Complete6253D0..6256CC uses HandleMain, WinCallbackWindow, PaletteActive, inherited Win parent, Buffer rect2 and BaseButton label/colors/state. Its second focus outline reloads A94 at625487; all box calls share one mutable local rectangle. Centering reads fresh rect2 after outlines; later draws reload sprite_ but retain those centers.", "Sprite displayed dimensions at18/1C determine centers while source pixel width10 determines horizontal scaling. Pressed state is selected once; bevel colors/thickness are live through box calls and text displacement reloads thickness after Sprite::draw. Signed wrapping arithmetic and arithmetic-half semantics are explicit.", "Preserve src/recovered/units/006253d0.cpp as seed evidence. The original null-at-centering then nonnull-at-draw condition exposes uninitialized coordinates; no zero-coordinate behavior is introduced. That pending behavior boundary, caption creation, remaining hierarchy and dependency runtime remain unproved."], "reason": "Recover the complete ImageButton painter as the genuine Win slot12 override, using existing borrowed Sprite and inherited button/Buffer state rather than raw offsets or image addresses."}
+// symbol    ?draw_contents@ImageButton@@UAEXXZ
+void ImageButton::draw_contents() {
+    if (!HandleMain || !win_parent_) {
+        return;
+    }
+    WinCallbackWindow = win_parent_;
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    canvas->sync_to_palette(PaletteActive);
+    RECT area = rect2_;
+    GraphicWin::fill(image_button_paint_signed(color_));
+
+    int layers = 0;
+    const int first_outline = image_button_paint_signed(field_A94_);
+    if (first_outline != -1) {
+        canvas->box(&area, first_outline, first_outline);
+        image_button_paint_inset(&area);
+        if (is_dialog_focus()) {
+            const int focused_outline = image_button_paint_signed(field_A94_);
+            canvas->box(&area, focused_outline, focused_outline);
+            image_button_paint_inset(&area);
+            layers = 1;
+        }
+    }
+
+    int center_x;
+    int center_y;
+    Sprite *const centering_sprite = sprite_;
+    if (centering_sprite) {
+        const int thickness = image_button_paint_signed(bevel_thickness_);
+        center_x = image_button_paint_half(image_button_paint_sub(
+            image_button_paint_sub(image_button_paint_sub(
+                rect2_.right, centering_sprite->width()), thickness),
+            rect2_.left));
+        center_y = image_button_paint_half(image_button_paint_sub(
+            image_button_paint_sub(image_button_paint_sub(
+                rect2_.bottom, centering_sprite->height()), rect2_.top),
+            thickness));
+    }
+
+    // The pressed branch is selected once, but colors and thickness remain
+    // live across every box call. The first optional outline did not count
+    // toward thickness; only the extra focus outline starts layers at one.
+    const bool pressed = field_A9C_ != 0;
+    while (layers < image_button_paint_signed(bevel_thickness_)) {
+        if (!pressed) {
+            canvas->box(&area, image_button_paint_signed(bevel_upper_),
+                        image_button_paint_signed(bevel_lower_));
+        } else {
+            canvas->box(&area, image_button_paint_signed(bevel_lower_),
+                        image_button_paint_signed(bevel_upper_));
+        }
+        image_button_paint_inset(&area);
+        layers = image_button_paint_add(layers, 1);
+    }
+
+    Sprite *const drawn_sprite = sprite_;
+    if (drawn_sprite) {
+        // Logical pixel width (+10), not displayed width (+18). The image
+        // only limits horizontal scale; no independent height fit occurs.
+        int numerator;
+        int denominator = drawn_sprite->source_width();
+        int x;
+        int y;
+        if (!pressed) {
+            numerator = image_button_paint_sub(area.right, area.left);
+            x = center_x;
+            y = center_y;
+        } else {
+            const int thickness = image_button_paint_signed(bevel_thickness_);
+            numerator = image_button_paint_sub(
+                image_button_paint_sub(area.right, thickness), area.left);
+            x = image_button_paint_add(center_x, thickness);
+            y = image_button_paint_add(center_y, thickness);
+        }
+        if (numerator >= denominator) {
+            numerator = 1;
+            denominator = 1;
+        }
+        drawn_sprite->draw(canvas, drawn_sprite->transparent_index(),
+                           x, y, numerator, denominator);
+    }
+
+    if (pressed) {
+        // Fresh read after drawing, not the thickness used for the sprite.
+        const int thickness = image_button_paint_signed(bevel_thickness_);
+        area.left = image_button_paint_add(area.left, thickness);
+        area.right = image_button_paint_add(area.right, thickness);
+        area.top = image_button_paint_add(area.top, thickness);
+        area.bottom = image_button_paint_add(area.bottom, thickness);
+    }
+    LPSTR const text = name_;
+    if (text) {
+        canvas->write_cent_l(text, &area, static_cast<int>(strlen(text)));
+    }
 }

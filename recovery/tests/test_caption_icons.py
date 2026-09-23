@@ -51,6 +51,7 @@ def actual_source():
     parts["WIN_FIELDS"] = "\n".join(fields)
     parts["WIN_METHODS"] = "\n".join(one(r"^  " + p, h["win"]) for p in
         (r"int move\([^;]+;", r"void redo_caption_buttons\(\);", r"void do_caption_buttons\(\);"))
+    parts["WIN_PAINT"] = braced(h["win"], "virtual void draw_contents()")
     parts["BASE_INIT_DECL"] = one(r"  int init\(LPCSTR name,[^;]+;", h["basebutton"])
     parts["DIB"] = braced(h["buffer"], "struct Dib : BITMAPINFO") + ";"
     parts["DIB_MEMBER"] = one(r"^  Dib dib_;", h["buffer"])
@@ -125,10 +126,14 @@ DIB
 struct Buffer { DIB_MEMBER };
 struct AutoSound {virtual ~AutoSound(){}};
 class ImageButton;
-WIN_BASE public: WIN_FIELDS WIN_METHODS int identity; };
+WIN_BASE public: WIN_FIELDS WIN_METHODS WIN_PAINT int identity; };
 GRAPHICWIN_BASE public: };
 BASEBUTTON_BASE public: BASE_INIT_DECL void close(); };
 IMAGE_DECL
+// Painting belongs to its own actual-body fixture. The caption service
+// projection must never reach it; keep the real override declaration linked
+// without substituting a passing paint implementation here.
+void ImageButton::draw_contents(){require(false);}
 static_assert(std::is_same<decltype(Win::close_button_),ImageButton*>::value,"typed caption receiver");
 static_assert(std::is_same<decltype(ImageButton::sprite_),Sprite*>::value,"borrowed sprite pointer");
 static_assert(std::is_same<decltype(WinRestoreIcon),Sprite*>::value,"typed global owner");

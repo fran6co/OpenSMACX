@@ -539,7 +539,10 @@ class Win : public AutoSound {
   virtual void *vslot_09(void *value = 0) { return value; }  // 0x00404230
   virtual int vslot_10(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_11(int = 0, int = 0, int = 0, int = 0) { return 0; }  // 0x00404240
-  virtual void vslot_12() {}  // 0x00404280
+  // Slot 12 paints the contents; redraw() at slot 62 drives this callback.
+  // Constructor 5EB3D0 installs table66FDD0, selecting the shared empty body.
+  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?draw_contents@Win@@UAEXXZ 0x005EB3D0
+  virtual void draw_contents() {}  // 0x00404280
   // Slot 13: Win's constructor-installed table66FDD0 selects the shared RET8.
   // MapWin supplies a genuine override; this is not MainInterface's slot13.
   // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_resize@Win@@UAEXHH@Z 0x005EB3D0

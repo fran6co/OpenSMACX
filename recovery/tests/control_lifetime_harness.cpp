@@ -18,7 +18,7 @@ struct Time {
     ~Time() { event(24); }
 };
 // LIVE_EDITBOX_DECL
-void EditBox::vslot_12() {}
+void EditBox::draw_contents() {}
 void EditBox::vslot_17(int, int) {}
 void EditBox::vslot_20(int, int) {}
 void EditBox::vslot_21(int, int) {}

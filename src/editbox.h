@@ -41,7 +41,7 @@ class EditBox : public GraphicWin {
 
   // Override the existing Win slots; adding catalogue-named virtuals would
   // append new slots or select GraphicWin's unrelated mouse/focus overloads.
-  virtual void vslot_12();              // on_redraw
+  virtual void draw_contents();        // slot 12
   virtual void vslot_17(int x, int y);   // on_mouse_move
   virtual void vslot_20(int x, int y);   // on_left_down
   virtual void vslot_21(int x, int y);   // on_left_up

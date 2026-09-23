@@ -151,10 +151,10 @@ void __cdecl MultiDebug::timer_callback_daemon(int context) {
 }
 
 // ORIGINAL: 0x005C9920 ?on_redraw@MultiDebug@@QAEXXZ 0x005C9920-0x005C9DF9 FILE
-// symbol    ?vslot_12@MultiDebug@@UAEXXZ
+// symbol    ?draw_contents@MultiDebug@@UAEXXZ
 // The original primary table's slot 12 selects this painter. The timer's
 // inherited GraphicWin::redraw reaches it through ordinary virtual dispatch.
-void MultiDebug::vslot_12() {
+void MultiDebug::draw_contents() {
     Buffer::set_font(&font_, 0, 0, 0);
     Buffer::set_text_color(255, -1, 1, 1);
     GraphicWin::fill(0);

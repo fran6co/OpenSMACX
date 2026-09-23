@@ -513,7 +513,7 @@ void GraphicWin::redraw() {
     }
     // The window's own paint, vtable slot 12: the image reaches it the way
     // any virtual call is reached, so the call is spelled as one.
-    vslot_12();
+    draw_contents();
     this->overlay_nonclient(nullptr);
 
     // Re-read, do NOT reuse the latched value: the original reloads at

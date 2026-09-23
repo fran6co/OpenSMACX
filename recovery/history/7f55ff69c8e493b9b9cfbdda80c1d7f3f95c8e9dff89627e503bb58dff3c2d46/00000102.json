@@ -1,0 +1,22 @@
+{
+  "event_id": "febd50cc5ffb40cac6d588e386ed206d70fdb6622a1947d818f77c483fc23ecc",
+  "payload": {
+    "affects": [
+      "entity-b604606aa570e9e714af8e4c1c8b59ffa171eb11fea8b0aa6e754adc38aab987"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "imagebutton-centering-reentrancy-boundary-20260923",
+    "evidence": [
+      "Full original6253D0..6256CC initializes centers only on nonnull sprite at6254C4..625501. Null branch625503/507 reads unwritten stack coordinates; later box calls precede fresh sprite reads62556E and62561E. A null-to-nonnull replacement across those calls can expose the indeterminate centers.",
+      "Current complete candidate deliberately leaves center_x/center_y conditional. A stable null Sprite never evaluates them in C++; a Sprite present at centering supplies the original display-size coordinates even if its receiver is later replaced. Do not initialize to zero as an unapproved behavior change, assume arbitrary rendering callbacks cannot mutate state, or count undefined-domain host runs as positive proof.",
+      "This is a preserved original behavior boundary, not authorization to change it. Native matching, table/layout checks and defined-domain tests do not prove complete reentrant rendering or game acceptance. Existing painting/creation and map hierarchy findings stay pending."
+    ],
+    "hypothesis": "Original ImageButton painting leaves coordinates indeterminate when no Sprite exists at centering but a later drawing callback installs one; recovery must not silently invent coordinates.",
+    "kind": "discovery"
+  },
+  "previous_event": "ac156d3672339aac668f6b268399d39f0ab81931b21ad7b59c39b841bb2294f2",
+  "request_id": "imagebutton-centering-reentrancy-boundary-20260923",
+  "schema_version": 1,
+  "sequence": 102,
+  "stream": "task:vector-value-semantics"
+}

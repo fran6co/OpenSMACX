@@ -18,7 +18,7 @@ struct Win {
     void show(int visible);
     void bring_child_to_top(Win *window) { assert(window->win_parent_ == this); ++child_lifts; }
     void resize_event(int, int) {}
-    void vslot_12() {}
+    void draw_contents() {}
     void vslot_51(int) {}
     int vslot_23() { return 1; }
     void vslot_07() {}

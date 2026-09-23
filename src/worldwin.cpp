@@ -186,7 +186,7 @@ void WorldWin::on_right_click(int a, int b) {
 Status: Complete
 */
 void WorldWin::set_center(int a1, int a2) {
-    vslot_12();
+    draw_contents();
     GraphicWin::soft_update();
 }
 
@@ -202,7 +202,7 @@ void WorldWin::set_center(int a1, int a2) {
 Status: Complete
 */
 void WorldWin::focus(int x_coord, int y_coord) {
-    vslot_12();
+    draw_contents();
     GraphicWin::soft_update();
 }
 
@@ -218,6 +218,6 @@ void WorldWin::focus(int x_coord, int y_coord) {
 Status: Complete
 */
 void WorldWin::follow_center(int xCoord, int yCoord) {
-    vslot_12();
+    draw_contents();
     GraphicWin::soft_update();
 }

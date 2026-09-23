@@ -13,7 +13,7 @@ def table_targets(obj, name):
 
 
 def test_real_editbox_overrides_occupy_existing_primary_slots(control_objects):
-    expected = {0: "??_EEditBox@@UAEPAXI@Z", 12: "?vslot_12@EditBox@@UAEXXZ",
+    expected = {0: "??_EEditBox@@UAEPAXI@Z", 12: "?draw_contents@EditBox@@UAEXXZ",
                 17: "?vslot_17@EditBox@@UAEXHH@Z", 20: "?vslot_20@EditBox@@UAEXHH@Z",
                 21: "?vslot_21@EditBox@@UAEXHH@Z", 25: "?vslot_25@EditBox@@UAEHHH@Z",
                 26: "?vslot_26@EditBox@@UAEHH@Z", 51: "?vslot_51@EditBox@@UAEXH@Z",

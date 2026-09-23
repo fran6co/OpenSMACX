@@ -95,7 +95,11 @@ class BaseButton : public GraphicWin {
   Time time2_;
   uint32_t field_A74_;
   uint32_t field_A78_;
+ protected:
+  // Derived painters read the live label after drawing the button surface.
+  // RECOVERY_MEMBER: v1 BaseButton name_ 0xA7C 0x006253D0
   LPSTR name_;
+ private:
   LPSTR bubble_text_;
  public:
   // THE COLOUR-AND-BEVEL RUN AT 0xA84..0xA9C, PUBLIC so BasePop::exec's
@@ -105,14 +109,22 @@ class BaseButton : public GraphicWin {
   // DialogDefaults[0..3] and the two BaseButtonA94/A98 defaults. Access is
   // compile-time only: the members keep their declaration order and offsets,
   // which is what pins the layout.
+  // RECOVERY_MEMBER: v1 BaseButton color_ 0xA84 0x006253D0
   uint32_t color_;
+  // RECOVERY_MEMBER: v1 BaseButton bevel_upper_ 0xA88 0x006253D0
   uint32_t bevel_upper_;
+  // RECOVERY_MEMBER: v1 BaseButton bevel_lower_ 0xA8C 0x006253D0
   uint32_t bevel_lower_;
+  // RECOVERY_MEMBER: v1 BaseButton bevel_thickness_ 0xA90 0x006253D0
   uint32_t bevel_thickness_;
+  // RECOVERY_MEMBER: v1 BaseButton field_A94_ 0xA94 0x006253D0
   uint32_t field_A94_;
   uint32_t field_A98_;
- private:
+ protected:
+  // ImageButton's painter selects the raised/depressed bevel from this word.
+  // RECOVERY_MEMBER: v1 BaseButton field_A9C_ 0xA9C 0x006253D0
   uint32_t field_A9C_;
+ private:
   uint32_t field_AA0_;
   uint32_t field_AA4_;
   ButtonGroup *group_;

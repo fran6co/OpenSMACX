@@ -983,9 +983,9 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         }
     }
 
-    // DRAW IT. Slot 0x30 - Win::vslot_12, which BasePop's table points at
+    // DRAW IT. Slot 0x30 - Win::draw_contents, which BasePop's table points at
     // on_redraw (0x00604AB0).
-    vslot_12();
+    draw_contents();
 
     // THE ROW ORIGIN. Slot 0x178 hands all three back through pointers, which
     // is why the three exist before it runs. `origin` is the value it wrote;

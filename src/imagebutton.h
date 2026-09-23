@@ -50,6 +50,8 @@ class ImageButton : public BaseButton {
   int init(Sprite *sprite, LPCSTR name, int id, int x, int y,
            Win *parent, int style_flag);
   void set_sprite(Sprite *sprite) { sprite_ = sprite; }
+  // Win slot 12; the constructor-installed table selects original 6253D0.
+  virtual void draw_contents();
 
  private:
   // init 625340/625380 publish this borrowed pointer; paint 6253D0 reads

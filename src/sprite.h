@@ -68,6 +68,8 @@ class Sprite {
   unsigned char transparent_index() const { return cTransparentIndex_; }
   int width() const { return iWidth_; }
   int height() const { return iHeight_; }
+  // Pixel width before the displayed dimensions/scaling are applied (+0x10).
+  int source_width() const { return iSpriteWidth_; }
   // Zero source pixels remap the destination; other nontransparent pixels
   // retain their source colour. Wider overloads temporarily replace N / D.
   int draw_dest(Buffer *destination, int transparent, int x, int y,
@@ -161,6 +163,7 @@ class Sprite {
   char pad2_;
   char pad3_;
   int iSpriteWidth2_;
+  // RECOVERY_MEMBER: v1 Sprite iSpriteWidth_ 0x10 0x006253D0
   int iSpriteWidth_;
   int iSpriteHeight_;
   // RECOVERY_MEMBER: v1 Sprite iWidth_ 0x18 0x00408B20
