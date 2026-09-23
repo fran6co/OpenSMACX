@@ -1,0 +1,29 @@
+{
+  "event_id": "a9a9bb403dba45c93bd16fb0e35edd38f314398072dcfc6216db7ec625ff5e5b",
+  "payload": {
+    "affects": [
+      "entity-06593b2591ecc68652b48e2b81d8987ef6db323b417f7a8f2486e451f75ed72d",
+      "entity-115ddfd89659b9233f30e6ef305f10fd5e15ec39c577a935fbda57242a89078b",
+      "entity-2529012a1b97c564be1041cbcf50bd56647035e00392ff486ed2fd378ca9a751",
+      "entity-bba8bb92e0606ba5e7085a014126a70774e5c5e4832689899e798e48a7bed641",
+      "entity-ea0518c3383e184ea59b2aef0bc48278b1ae6ed0dd487ac8c6101964b3378901"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "draw-map-connected-rendering-scope-20260923",
+    "evidence": [
+      "Independent read-only original/seed/source review after the resize checkpoint: draw_map46A550..46AD51 is a 2049-byte controller forwarder. All eight direct callees have product bodies, but that does not establish complete renderer behavior or close their dependencies.",
+      "Original46AC72..46AC97 saves rectangle1 afresh before the second clipped gen_map. The old seed omits that save and restores rectangle1 from rectangle2 storage. Model both MapWin tile-damage rectangles21A48..21A57 and21A58..21A67 with gen_map consumers, preserving horizontal wrap and inclusive vertical conventions.",
+      "Shared corner-copy storage7D3BE8..7D3C08 contains four Vert coordinates, copied from scratch7D3C08..7D3C28 by terrain and consumed by draw_radius. Replace address aliases through coordinated storage ownership, not private draw_map locals; retained terrain work and its discoveries remain untouched.",
+      "Original46AD18 invokes Win slot17: MapWin/PlanWin/Console original entries4218B0/48BFA0/51DE70. Current slot17 is empty and MapWin::on_mouse_move is nonvirtual with an original forwarder46F000..46F651. Recover or explicitly preserve that connected dependency; no blanket redraw-slot12 rename is authorized.",
+      "Original import66933C is USER32!IsRectEmpty, not the seed peek helper. Preserve no-update early return when incremental tile origin is unchanged, signed altitude shifts, independent faction reloads for clipped passes, incremental-only restoration to Buffer::rect2_, and distinct draw_type<0 generation versus draw_type!=0 update tests.",
+      "Coordinator decision: retain this finding for scope planning of substantive C++ recovery after completed resize verification. It grants no edits, changes no baseline, and claims no acceptance. User-deferred base_energy remains untouched; vehicle/name/overlay/legend/war forwarders and unfinished terrain remain explicit rendering limitations."
+    ],
+    "hypothesis": "Plan draw_map as connected map-scroll/storage/damage-region recovery; do not copy the defective seed or silently dispatch mouse feedback through the current empty Win slot17. Further scope authorization is required before edits.",
+    "kind": "discovery"
+  },
+  "previous_event": "0c5d60c08dfcfc6916098fdbb68aaeea482728a8b3e15de78bac30bef866b7fe",
+  "request_id": "draw-map-connected-rendering-scope-20260923",
+  "schema_version": 1,
+  "sequence": 168,
+  "stream": "task:infowin-ownership"
+}

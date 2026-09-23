@@ -559,7 +559,6 @@ void MainInterface::chat(char *text, int channel) {
 }
 
 // Fixed-slot bindings carried from 0045c290.cpp
-static int *const MainInterfaceTileSource = (int *)0x0078D6B0;
 static int *const InterfaceBuffer = (int *)0x007AEC64;
 static int *const InterfaceClipRect = (int *)0x007AEC94;
 static int *const MainInterfaceTileFlag = (int *)0x007D3930;
@@ -617,7 +616,7 @@ void MainInterface::restore_back(int a1) {
         int y = r[1] + 1;
         int w = (r[2] - 1) - x;
         int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(reinterpret_cast<Buffer *>(*MainInterfaceTileSource), x, y, x, y, w, h);
+        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
@@ -628,7 +627,7 @@ void MainInterface::restore_back(int a1) {
         int y = r[1] + 1;
         int w = (r[2] - 1) - x;
         int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(reinterpret_cast<Buffer *>(*MainInterfaceTileSource), x, y, x, y, w, h);
+        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
@@ -639,7 +638,7 @@ void MainInterface::restore_back(int a1) {
         int y = r[1] + 1;
         int w = (r[2] - 1) - x;
         int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(reinterpret_cast<Buffer *>(*MainInterfaceTileSource), x, y, x, y, w, h);
+        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 
     {
@@ -648,7 +647,7 @@ void MainInterface::restore_back(int a1) {
         int y = r[1] + 1;
         int w = (r[2] - 1) - x;
         int h = (r[3] - 1) - y;
-        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(reinterpret_cast<Buffer *>(*MainInterfaceTileSource), x, y, x, y, w, h);
+        reinterpret_cast<Buffer *>(InterfaceBuffer)->tile(InterfaceBoxStyles[9].mask_, x, y, x, y, w, h);
     }
 }
 

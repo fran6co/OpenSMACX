@@ -1,0 +1,25 @@
+{
+  "event_id": "022860031663e0c11bdfaa62a8e5d2d26fef587361ed4d7f5bb76969ce4e4c89",
+  "payload": {
+    "affects": [
+      "entity-1a1701d9d3cc4da252532ac0fd0181398535bbf7aba99b2ac9372c1bc2c3faf2",
+      "entity-9464d1353aa4fbb7d3d7701c5990d666f5299433fbdacbb67817788b3544a603",
+      "entity-a4eae865aff7a81b8487d9797ff470929a40677cb9d3ecc1468800132c06c6af",
+      "entity-ba94e368185900491222d8b893844925ad841fb6adb512a4cad54c5c8784f932"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-lighting-nibble-domain-20260923",
+    "evidence": [
+      "Original get_alt47037A..47039C stores (sum_four_land_height_tiers -4*recipient_tier +4)&15; water/out-of-map fallback4703CD stores4. If each other corner tile differs by at most one tier, the value is1..7 and biased lighting reads equal table[corner][v-1][w-1] at7F6688.",
+      "Without that invariant, recipient5 with neighbors3,4,4 yields0; recipient5 with3,3,4 yields15. Reads may therefore reach7F6680..6687 (last ocean DWORD and unidentified gap) or through7F678B beyond generated table. No safe independent-array substitution is authorized for arbitrary loaded/editor/cache states. Preserve the unresolved domain decision even after repairing world_alt_set lowering direction.",
+      "The observed writer allocations remain non-overlapping: ocean shades7F6644..6684, unidentified gap6684..6688, lighting6688..674C. Recover producer470420 and actual startup caller471033 together with reader-domain evidence; do not invent a union, clamp, fallback or acceptance waiver."
+    ],
+    "hypothesis": "Independent lighting arrays require a proved neighbor-height domain, not merely non-overlapping writer extents.",
+    "kind": "discovery"
+  },
+  "previous_event": "de6f5e57ae55d5eb8b19fbba35ec0766b921bfa9f02d269ffabf5bf4d535f0c6",
+  "request_id": "terrain-lighting-nibble-domain-20260923",
+  "schema_version": 1,
+  "sequence": 72,
+  "stream": "task:vector-value-semantics"
+}

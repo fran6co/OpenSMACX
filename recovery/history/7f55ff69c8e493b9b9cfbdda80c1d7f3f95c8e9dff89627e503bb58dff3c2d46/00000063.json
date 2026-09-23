@@ -1,0 +1,26 @@
+{
+  "event_id": "bf53373c781d20beb07222beec54664a6968b777626c7449dba65514df0c7bc6",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_event_id": "1c5e9309cdfa7fe33cf9e03da0361627afa29798e6c04bb6aa9831a32ece2383",
+    "discovery_id": "terrain-poly-storage-and-call-closure-20260923",
+    "evidence": [
+      "Request the independently owned real callee for terrain. Source work remains isolated and unaccepted; this route neither resolves the finding nor supplies execution/admission authority. The separate owner scope decision authorizes this bounded manual attempt."
+    ],
+    "kind": "discovery_routed",
+    "subjects": [
+      "entity-9cbbbd3136dc7a2472e648944fbc8ba98c5afc630fd97ad4d81db04151d969c0"
+    ],
+    "target": {
+      "base_revision": "699d3779a339505e354b46f2e806815fb43ee00d",
+      "history_head": "b47d762a6d494310b7d1566ee111e2ce6d54a89320041b7cc83a4aaaec7d1f3c",
+      "task_id": "texture-rasterizer-recovery",
+      "task_sha256": "4e830bb3683156a594e1a7c5639ee9d842f8cd058307e117bd1c18ce61b46c95"
+    }
+  },
+  "previous_event": "6a337d29c9cf4240214c0cd8061f070f02f2715a4fe85544b274b7e6511d5e41",
+  "request_id": "terrain-callee-route-texture-rasterizer-recovery-20260923",
+  "schema_version": 1,
+  "sequence": 63,
+  "stream": "task:vector-value-semantics"
+}

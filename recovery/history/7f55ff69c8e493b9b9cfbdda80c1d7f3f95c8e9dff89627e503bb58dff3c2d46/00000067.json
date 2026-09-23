@@ -1,0 +1,26 @@
+{
+  "event_id": "7b264de03b29729e96be2e49c24dc13a1fb896d571184bbcf21013278fbc8d75",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_event_id": "ccd627242a8fd525cb50ba5fdea1e707a35336764fe7d8f8a6ffb3d5319458a7",
+    "discovery_id": "terrain-shared-storage-producer-closure-20260923",
+    "evidence": [
+      "Request the existing frontend owner to supply the real shared table and producer. The independent scope decision grants this manual attempt, not discovery resolution or automatic acceptance."
+    ],
+    "kind": "discovery_routed",
+    "subjects": [
+      "entity-86d7e5c89d10b5430eb10c3e7ed28d65efe70e2a1016188c82296f6e71b2d8ab"
+    ],
+    "target": {
+      "base_revision": "1df75b55d218913e5eaf09331264b37457f98c8e",
+      "history_head": "0d310f4426e355fffdd0dad11cb9004ec719c14d04ed61d4639366952c4880be",
+      "task_id": "frontend-presentation",
+      "task_sha256": "ef5587104e1d6c3162f5fbaa5a04270de0e86d84c7b0a8c3081120707ed06d2d"
+    }
+  },
+  "previous_event": "0015f77692087ef97ee0df2f95dcb90cc341e0f4eef8ce47389f914b383c9450",
+  "request_id": "terrain-ocean-shade-producer-route-20260923",
+  "schema_version": 1,
+  "sequence": 67,
+  "stream": "task:vector-value-semantics"
+}

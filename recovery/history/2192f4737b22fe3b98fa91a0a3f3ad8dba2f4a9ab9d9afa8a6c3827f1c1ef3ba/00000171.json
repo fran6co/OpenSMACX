@@ -1,0 +1,28 @@
+{
+  "event_id": "8a2f896ef80d0753b35f9cbcbdafc62ce0843f8d3d856c55ebda4300ce70198c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_routes.py",
+      "src/buffer.cpp",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "direct_dest_line4672C0 cover0 branch newly references nine-argument Buffer::line5E09D0..5E10BA. Current header int return disagrees with original void catalogue and all relevant calls ignore the result; its product definition is absent. Preserve original source identity and seed, correct the declaration to void, and use only an explicit BODY GOES HERE mapped empty body under the user build-continuity permission if genuine pattern rendering is not yet implemented. Never claim the non-cover renderer works or bank an empty body.",
+      "The mouse path passes cover1 and uses the already recovered five-argument line; both branches remain present in the genuine direct controller. Broader patterned horizontal/vertical renderer dependencies are unfinished and not silently replaced. This is an explicit link-continuity obligation, not recovery or acceptance of5E09D0. Native source/publication, fresh build and scoped regression checks still required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6162896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "91781cb2c06dbec81d1b1752fbd5048865a5a1d918c8d8c66bd6cffdd283ef26",
+  "request_id": "map-feedback-patterned-line-link-20260923",
+  "schema_version": 1,
+  "sequence": 171,
+  "stream": "task:infowin-ownership"
+}

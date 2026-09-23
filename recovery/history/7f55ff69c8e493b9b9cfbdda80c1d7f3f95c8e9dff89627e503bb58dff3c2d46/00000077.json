@@ -1,0 +1,28 @@
+{
+  "event_id": "08416eaa3fe2925ec4914ce5872510d2d4bd41a9cc80bf9b1af29b77d6d2853e",
+  "payload": {
+    "affects": [
+      "entity-05e936318014f312c95c4fd333a2c718af4c57c5c0004f37116b92e8188ab01c",
+      "entity-08f72fa36fac6eb36baf6643c3c8edb3e3e0d4f749d12e709cc4f1144b1b2862",
+      "entity-3831d38d4dec7421e0102cab1dedab79741a8e694468c7911715ed3418b32383",
+      "entity-800d8eeb8fa1d8912448678ceab9b6bb9483405f01d71f60c1ae2b2e6516c05d",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5",
+      "entity-edfa78cec653bbabe362d1ff9938b29aefff7188f5f8ef634467686675a3f9c5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-farm-consumer-producer-seed-closure-20260923",
+    "evidence": [
+      "Independent original review identifies farm flag reads40F305/40F36A/40F531 at90E99C+radiusIndex*4; the seed incorrectly byte-indexes some of these. Its producer farm_compute4E68B0..4E6E4E is seed-only, with direct writes4E68E8..4E6E23. A new zero array without that producer would not recover the state.",
+      "Original40F41C pushes shared scratch then40F422 selects Texture receiver787FB8, the source g_RADIUS1_TEXTURE; Buffer is an explicit argument. Tail40FC82 pushes0 before40FC8A pushes rect1_, giving GraphicWin::update(&rect1_,0), unlike the reversed seed. Resource icon calls40F81A/40F84C select the six-argument Sprite draw with explicit1,1 scale; using the shorter overload loses temporary scale behavior. Faction loads40F356/40F63D are unsigned bytes at Base+4.",
+      "draw_psych408B20, draw_support408EB0 and base_draw55AF20 currently have seed bodies but no product implementations. Dummy MapWin7D4060 remains a raw alias whose startup/shutdown lifecycle is not recovered;7F1DCC is its member+1DD6C, not separate storage. Existing BaseWin Buffer/rect1_/Spot members should be used, not recreated offsets.",
+      "Only gen_terrain_poly and draw_farm directly reference Scratch7D3C08; the separate Copy7D3BE8 also has draw_radius consumers and draw_map translation writes. Polygon recovery removes a prerequisite but does not authorize independently localizing either shared state while these original paths remain. Preserve the bounded clear_terrain pointer repair as the next actionable dependency; larger ownership/lifecycle findings remain pending."
+    ],
+    "hypothesis": "BaseWin farm drawing cannot close shared corner storage by transcribing its seed: call arguments, flag stride and mutable producers/lifetime are unresolved.",
+    "kind": "discovery"
+  },
+  "previous_event": "743c5a1d79f8cd184b6adfaaba5b49d1698d2ec4c8aa87f9e3cb5443011749b3",
+  "request_id": "terrain-farm-consumer-producer-seed-closure-20260923",
+  "schema_version": 1,
+  "sequence": 77,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,25 @@
+{
+  "event_id": "743c5a1d79f8cd184b6adfaaba5b49d1698d2ec4c8aa87f9e3cb5443011749b3",
+  "payload": {
+    "affects": [
+      "entity-27cc156a4330fe115a50e45e9bc4508653556611f66d0917a867d11e9a3b91c0",
+      "entity-8fae3078e33d1b07ac206b8a54241b18b233765f46ab56a4acb81452cde5259e",
+      "entity-d02d882772c482a8ea97261301ebb05223a3e2a0a78c7f804e94f12be0385c4a",
+      "entity-d2045034c46ba9b6fd0a890426f1f8b800da6626a94459e4ccae4abbf698dde9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-radius-seed-coordinate-corruption-20260923",
+    "evidence": [
+      "Root independently confirms original46931A..469355: first pixel_to_tile call46933E receives[ebp-3C] then[ebp-38], second469355 receives[ebp-34] then[ebp-38]. The clip RECT starts[ebp-3C], giving (left,top) and(right,top), with x86 right-to-left pushes accounted for. src/recovered/units/00469190.cpp instead calls with(top,right) then(bottom,left). Reinspect all corner calls and output locals, not only these two.",
+      "Root independently confirms4216F8 loads argument1 intoESI,4216FC argument2 intoEDI;421707 comparesEDI to map height949874,421713 comparesESI to width949870. Thus argument1 is x and argument2 y. src/unrecovered/004216f0.cpp Obj4216F0::check uses a1 as y and a2 as x throughout. Member accesses1DDA8/1DDA4 and original callers support a MapWin visible-region interpretation, not the synthetic seed class.",
+      "draw_radius also depends on gen_radius, its vehicle-scan overload, terrain adapter4712D0, real GraphicWin RECT fill, and unfinished overlay/name/legend paths. These findings do not grant outside-owner edits or establish shared MapCornerCopy/MapCornerScratch closure."
+    ],
+    "hypothesis": "The radius and visible-region seeds transpose coordinates; they cannot be copied into product source as behavioral evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "dfaf3f46f0ab5d4d33e0eb7b23ed0502b13c961948d4b89d3358e7d6d6e488fb",
+  "request_id": "terrain-radius-seed-coordinate-corruption-20260923",
+  "schema_version": 1,
+  "sequence": 76,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "0015f77692087ef97ee0df2f95dcb90cc341e0f4eef8ce47389f914b383c9450",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-typed-uv-coast-constants-20260923",
+    "evidence": [
+      "Authorize existing mapwin.cpp and test_mapwin_generation.py scope to recover OceanCornerUVs Vert[16] [685CA8,685D28), LandCornerUVs Vert[12] [686090,6860F0), and EdgeMidUVs Vert[16] [6860F0,686170). Original loops463E99..463F8B,463FB1 and4645E7..464706 establish extents. 686098 is LandCornerUVs[1]; rotated overlays use vertex3*rotation+1, not a separate allocation. Original direct references contain no writes or embedded relocations.",
+      "The dune branch borrows an unrotated three-vertex LandCornerUVs slice (464254..464353), not the earlier rotated land_uv. Preserve the borrowed real table pointer; LandCornerUVs may remain nonconst for the existing mutable-pointer API rather than adding const casts, changing an outside-owner method signature, or copying into new scratch with different alias/lifetime behavior. Host fixtures must share the real logical slice rather than keeping an independent LandCornerUVsB mock.",
+      "Recover CoastMaskTable as53rows of8unsigned bytes [684730,6848D8), per original465379 stride8 over53entries; values0..5. Recover UnworkedCornerLight as separately mapped real mutable int initialized2 at686354..686358, read by464148. The absence of a direct writer does not make it part of load_cycling or authorize replacing it by a literal. Native compiler symbol/extent/content/reference checks must follow.",
+      "The mutable coast palette remains the twelve-byte load_terrain allocation [787E54,787E60), not an independent constant slice. Its loader/startup path remains pending; no replacement is authorized here. Original compute_lighting_table begins470420, not470414 (padding at end of get_alt). Correct the mistaken affected-address hint in history61; no lighting-producer scope or acceptance is granted."
+    ],
+    "hypothesis": "Replace independently bounded terrain UV, coast-mask and unworked-shade aliases with genuine typed source storage while preserving shared slices.",
+    "kind": "discovery"
+  },
+  "previous_event": "287609df4b9aec78d1e3fdf08224a5bf79eadd6a7b7057afa2534bf4533e1086",
+  "request_id": "terrain-typed-uv-coast-constants-20260923",
+  "schema_version": 1,
+  "sequence": 66,
+  "stream": "task:vector-value-semantics"
+}

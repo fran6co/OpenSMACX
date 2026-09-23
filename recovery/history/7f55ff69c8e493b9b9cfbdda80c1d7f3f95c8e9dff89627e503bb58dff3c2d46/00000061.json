@@ -1,0 +1,26 @@
+{
+  "event_id": "ccd627242a8fd525cb50ba5fdea1e707a35336764fe7d8f8a6ffb3d5319458a7",
+  "payload": {
+    "affects": [
+      "entity-3f4abf6790a79c23283a4ac17a69ef542ab400947531c2b12691d24aebf0aa9b",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-86d7e5c89d10b5430eb10c3e7ed28d65efe70e2a1016188c82296f6e71b2d8ab",
+      "entity-88ca33a70fbdb2c9f5d4c37d208e04c33391719d1d6060fdba3355d323cbecf1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-shared-storage-producer-closure-20260923",
+    "evidence": [
+      "Independent original review identifies OceanDetailShade as mutable: load_cycling455400 initializes ESI=6861F0 at455491 and writes parsed values through686330, eighty dwords. Its terrain reader must share this owner and configuration writes. A const table copied from initial image state is not a complete replacement.",
+      "Coast palette storage is twelve bytes at787E54..787E60, written by load_terrain: EDI=787E54 at452215; three rows0x158/169/17A and four columns0x82/90/9E/AC feed Buffer::get_pixel and byte stores at452230. Terrain CoastMaskBright points at owner+2 and CoastMaskRunEnd at owner+7. The independently bounded coast-mask input has53rows*8bytes [684730,6848D8), values0..5; current consumer uses palette bytes4..7. Preserve the full producer allocation and shared state, not a four-byte constant slice.",
+      "OceanCornerShades writes sixteen dwords [7F6644,7F6684): inner stores46456D/4645DA, increment4645E4, outer stride4646F9. Its last dword overlaps CornerLightTable bytes0..3 at7F6680. The get_brighting read470704 uses signed bytes indexed7*v1+v2 where both nibbles are masked0..15, reaching index120 without a separately proved producer-domain bound. Preserve this unresolved alias and investigate producer/caller domain before splitting arrays; existing lighting writer begins7F6688, not the aliased prefix.",
+      "The three land-fan tables are separately bounded real source arrays with source-owned v2 object interpretations in mapwin.cpp. They do not establish the unrelated mutable-storage closure above. MapFocus coordinates likewise have an original Console::new_base producer at4CF7C0, so default-only globals would miss its publish/redraw/reset behavior. Keep these outside-owner dependencies pending and route or authorize their coupled recovery before integration."
+    ],
+    "hypothesis": "Remaining terrain storage must be recovered with its producers and actual overlaps, not by converting every address alias into an independent array.",
+    "kind": "discovery"
+  },
+  "previous_event": "ac7ead8f5df6068ed532bdd591160a14dd1d5067f8ce5fc7e5941ead368aed42",
+  "request_id": "terrain-shared-storage-producer-closure-20260923",
+  "schema_version": 1,
+  "sequence": 61,
+  "stream": "task:vector-value-semantics"
+}

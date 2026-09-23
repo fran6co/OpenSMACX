@@ -1,0 +1,25 @@
+{
+  "event_id": "1c5e9309cdfa7fe33cf9e03da0361627afa29798e6c04bb6aa9831a32ece2383",
+  "payload": {
+    "affects": [
+      "entity-46432472d7876f120f6c4fb6814a8a57feeecf37e3bf74d5c1c62b3ecd9d054b",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-9cbbbd3136dc7a2472e648944fbc8ba98c5afc630fd97ad4d81db04151d969c0"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-poly-storage-and-call-closure-20260923",
+    "evidence": [
+      "Original land/farm/rocky walks at 463E99..46401E use byte strides for twelve coordinate pairs. The retained C++ applies those strides as int-array indices; its mid-edge UV allocation also has twelve ints where the original uses sixteen pairs. Landmark and shade pointers additionally assume independent C++ locals form one contiguous original stack frame. Authorize correction inside the existing body scope with true arrays and scalar counters, not oversized buffers or test-only substitutions.",
+      "BufferOriginalLine and TextureOriginalDraw2 are newly introduced jumps into fixed addresses in the retired executable. Do not integrate those seams as working recovery. Preserve the original seed identities and request the owning scope for real implementations or explicitly unfinished source-owned bodies under the user-approved build-continuity policy. The old gen_terrain_poly forwarder must also be retired together with its actual compiled replacement, not left as a duplicate definition.",
+      "The retained ChassisTriadTable alias already has the typed owner Chassis[chassis_id].triad, with 0x90 stride and +0x49 offset. Use that owner rather than a fresh original-address alias. Shared raster clamps, vertex scratch and constant tables require independently bounded source-owned storage or a preserved unresolved dependency; the terrain transcription must not mistake renamed fixed addresses for standalone storage.",
+      "Preserve this worktree and its useful receiver analysis. Source, original-instruction and actual-source test review must agree on coordinates, UVs, branch-specific callees and table index versus rotation before manual integration. Host fixtures must not change the function body to conceal narrowing, indexing or ABI errors. Original task baseline, seed history and existing claims remain unchanged."
+    ],
+    "hypothesis": "The retained terrain transcription requires real typed local storage and dependency closure before integration; named receivers alone do not establish correct C++ or working calls.",
+    "kind": "discovery"
+  },
+  "previous_event": "69a2bf05291848ed9ac8fea3dd603786eb99eea76e0afc5c3e570310fc341843",
+  "request_id": "terrain-poly-storage-and-call-closure-20260923",
+  "schema_version": 1,
+  "sequence": 57,
+  "stream": "task:vector-value-semantics"
+}

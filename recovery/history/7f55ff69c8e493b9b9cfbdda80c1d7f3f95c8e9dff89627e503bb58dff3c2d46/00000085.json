@@ -1,0 +1,49 @@
+{
+  "event_id": "73baf47c57b99e5c1cbec79f300e5b7b7fc80e3a87b24777731372811cb989df",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Authorize one genuine FarmMapWindow global and extern, original storage binding after independent bounds verification, and replacement of the third fixed-address terrain_fixup receiver with its address. Retain receiver order and existing first two unresolved aliases; no unrelated behavior changes.",
+      "Original CRT682540 invokes462080 on most-derived MapWin7D4060, registering4620A0. The exit invokes MapWin own-part420F90 then GraphicWin5D4DD0 on the GraphicWin virtual-base receiver7F5ACC. Let the compiler own sole construction, registration and complete destruction; do not add manual wrappers or duplicate objects.",
+      "Correct stale live prose about nonexistent complete-object destruction, retired guarded_teardowns and wrong emitted destructor identity. Preserve historical TRIED comments, source mappings, claims and all task baselines. Check fresh generated code and original constructor/destructor obligations after this migration.",
+      "This does not implement runtime mapwin_system_init/shutdown, init overloads, lighting or farm UI. Existing lifecycle, cache population, interface-style producer and renderer discoveries remain pending; source object plus zero initial storage does not prove relocated startup or working gameplay. Base_energy remains deferred."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4595840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4595872,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4597472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4329360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4657728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "40b44199ece990dfb29d019d3a407647bddbba7b362183bd54152c1080431274",
+  "request_id": "farm-map-window-real-object-20260923",
+  "schema_version": 1,
+  "sequence": 85,
+  "stream": "task:vector-value-semantics"
+}

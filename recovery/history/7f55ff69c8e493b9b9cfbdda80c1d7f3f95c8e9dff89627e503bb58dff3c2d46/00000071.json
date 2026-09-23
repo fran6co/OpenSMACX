@@ -1,0 +1,26 @@
+{
+  "event_id": "de6f5e57ae55d5eb8b19fbba35ec0766b921bfa9f02d269ffabf5bf4d535f0c6",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_event_id": "83fbc2a3f2804b0dd3c49e7505fee96485883d55a01791f3229982887ada60d5",
+    "discovery_id": "terrain-altitude-lowering-direction-20260923",
+    "evidence": [
+      "Request bounded original-behavior repair and lowering/raising controls from the existing owner. Routing preserves the finding; it does not grant implementation scope or resolve lighting-domain evidence."
+    ],
+    "kind": "discovery_routed",
+    "subjects": [
+      "entity-ba94e368185900491222d8b893844925ad841fb6adb512a4cad54c5c8784f932"
+    ],
+    "target": {
+      "base_revision": "62a0a9b6610fdb7be399b01425fb0d99f63f6ade",
+      "history_head": "88de4dfa6eb83427f9b70b120eedc4d557867e41de95c603abb4fc5ec0a40ad8",
+      "task_id": "infowin-ownership",
+      "task_sha256": "ce2028caf143a31258630cad7d6802cafc314ba6e2dfbe21778e7602ff908b41"
+    }
+  },
+  "previous_event": "83fbc2a3f2804b0dd3c49e7505fee96485883d55a01791f3229982887ada60d5",
+  "request_id": "terrain-altitude-lowering-owner-route-20260923",
+  "schema_version": 1,
+  "sequence": 71,
+  "stream": "task:vector-value-semantics"
+}

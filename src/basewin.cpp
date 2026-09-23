@@ -880,17 +880,8 @@ static int *const MainInterfaceScreenClipTop = (int *)0x007AEC98;
 static int *const MainInterfaceScreenClipRight = (int *)0x007AEC9C;
 static int *const MainInterfaceScreenClipBottom = (int *)0x007AECA0;
 
-// Fixed-slot bindings carried from 004103b0.cpp, named from their neighbours
-// and from the tree's own names for the same addresses.
-//   MainInterfaceTileSource 0x0078D6B0 - the Buffer draw_garrison tiles the
-//       garrison panel from; maininterface.cpp binds the same address under
-//       this name for its own draw.
-//   BoxSpriteStyle3 0x0078D5A0 - the BoxSpriteParams pool based at
-//       0x0078D528 on the 0x28 grid, pool index 3 (reportif.cpp, socialwin.cpp).
-//   MapWinCaptionScale / MapWinCaptionDivisor 0x00691E6C / 0x00691E70 - the
-//       pair mapwin.cpp names, read here to pitch the garrison rows.
-static int *const MainInterfaceTileSource = (int *)0x0078D6B0;
-static int *const BoxSpriteStyle3 = (int *)0x0078D5A0;
+// Garrison frames use style3. Original 0x410485 loads style9's mask pointer
+// from 0x78D6B0; that address is a member slot, not a Buffer object itself.
 // The shared full-screen drawing Buffer, the same binding maininterface.cpp,
 // reportif.cpp and socialwin.cpp carry; InterfaceClipRect above is its +0x30.
 static int *const InterfaceBuffer = (int *)0x007AEC64;
@@ -936,7 +927,7 @@ void BaseWin::draw_garrison(int) {
     int width = right - left;
     int bottom = garrison_rect_.bottom;
     int height = bottom - top;
-    canvas->tile(reinterpret_cast<Buffer *>(MainInterfaceTileSource), left, top,
+    canvas->tile(InterfaceBoxStyles[9].mask_, left, top,
                  left, top, width, height);
 
     RECT frame_rect;
@@ -945,7 +936,7 @@ void BaseWin::draw_garrison(int) {
     frame_rect.right = right;
     frame_rect.bottom = bottom;
     canvas->box_sprite(&frame_rect,
-                       reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
+                       &InterfaceBoxStyles[3]);
 
     frame_rect.left += 3;
     frame_rect.top += 3;

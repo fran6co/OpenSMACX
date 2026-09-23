@@ -234,6 +234,9 @@ void __cdecl system_close();
 // the first to go this way (multidebug.h, this batch).
 void __cdecl load_sprites();                       // ?load_sprites@@YAXXZ
 void __cdecl load_fixed_sprites();                 // ?load_fixed_sprites@@YAXXZ
+// Populates shared panel styles and their existing sprite/mask assets.
+// The original load_interface caller remains a separate startup dependency.
+void __cdecl load_box_sprites();
 void __cdecl textcolor_init();                     // ?textcolor_init@@YAXXZ
 // The fixed-art load itself. Six of the seven are still original bodies
 // reached through pending_bodies.cpp forwarders - declared nowhere before

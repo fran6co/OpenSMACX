@@ -1,0 +1,158 @@
+{
+  "event_id": "48d3245dbe73db347cc0c31f1f5c452eb9f2719ae2904c05d6e27460142878ff",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_interface_styles.py",
+      "src/basewin.cpp",
+      "src/buffer.cpp",
+      "src/buffer.h",
+      "src/datalink.cpp",
+      "src/dipedit.cpp",
+      "src/game.cpp",
+      "src/game.h",
+      "src/maininterface.cpp",
+      "src/newtechwin.cpp",
+      "src/newtechwin.h",
+      "src/reportif.cpp",
+      "src/socialwin.cpp",
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Authorize the complete original453A70..453F6F interface box-sprite loader, one mutable BoxSpriteParams[51] owner for78D528..78DD20, existing asset-object public declarations and independently supported compact storage bindings. Use actual existing objects, no duplicate buffers/sprites or per-panel copies. Preserve original ignored-failure behavior and publication/callback order.",
+      "Authorize joint migration of36 box_sprite calls and five direct mask consumers in the six identified product files. Style indices are0/3/6/9/33 as original addresses show. Garrison410485 loads the style9 mask pointer; correct its current pointer-slot-address defect. MainInterface must retain four separate reloads across tile callbacks.",
+      "Retain all seeds, mappings, first-eight Datalink exact obligations and task baselines. Remeasure affected claims, compile/link and test actual loader source with original-derived observations and assertion-only damage controls. Any remaining matching/structure obligations stay visible; no automatic demotion or fabricated acceptance.",
+      "Fix false immutable-ten-block documentation in buffer.h and retire only replaced style aliases/prose. Tests may modify only the authorized new test file; coordinator owns product integration, source binding/publication, compiler resources and Git.",
+      "load_interface455610 and further asset/runtime startup remain unrecovered dependencies. This step does not import draw_farm, support rendering, base_draw or change virtual slot62; corresponding pending discoveries remain for a separate reviewed scope. base_energy is deferred."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4260784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4367600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4367920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4368272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4368640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4368992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4369344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4369696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4370048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4370400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4370832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4371200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4371600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4372016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4372448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4372800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4373168,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4536944,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4571792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4865312,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4911888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4918608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5091456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6172115,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fdb58e46423f959c251b657f918e9f668bd71a22cae67c1710902edc1182b2ef",
+  "request_id": "interface-style-pool-and-loader-20260923",
+  "schema_version": 1,
+  "sequence": 84,
+  "stream": "task:control-sprite-defaults"
+}

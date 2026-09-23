@@ -1,0 +1,53 @@
+{
+  "event_id": "4667b7eaa7c3f52211005e8497d5693bb072049d9ac46db6639e4623de9ea8fc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_generation.py",
+      "recovery/tests/test_mapwin_scrolling.py",
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Authorize genuine MapWin draw_map46A550 controller and its connected two-argument mouse-feedback46F000 override. Preserve the four-argument Win router slot16, restore only slot17 with a distinct generic method name, and update already-explicit EditBox/AlphaMenu slot17 overrides and current router callers without activating unrelated nonvirtual methods.",
+      "Use original rather than seed behavior: independent rectangle snapshots after first generation, real IsRectEmpty import, side-effect-aware dimension/origin/faction reloads and signed geometry. Recover MapWin tile damage regions as genuine four-int structures with original gen_map inclusive-Y/wrapped-X semantics; preserve member offsets and affected historical claims.",
+      "Restore original source identities for seed-only draw_map/on_mouse_move with the package binder, preserving seeds/history and actual symbols. Replace only the three MapWin-family slot17 handwritten adjustors with actual compiler-generated definitions and source mappings after native observation. No hand-written vtables, fixed addresses, or byte injection.",
+      "Shared corner storage is two separate four-Vert objects, copy7D3BE8..7D3C08 and scratch7D3C08..7D3C28. Authorize coordinated source storage and conversion of retained terrain uses; retain radius/farm and terrain producer dependencies as explicit unfinished obligations until their genuine owners join the migration. Do not merge a misleading split-storage path or claim complete rendering from the controller.",
+      "Root coordinates source publication, compiler leases, preparation and Git; agents use disjoint candidate/test files. Preserve retained terrain WIP, all historical claims, task baselines, seeds and user-deferred base_energy. Require independent original/source review, native affected-claim/reference/layout checks and fresh build/link before and after manual integration. No automatic/full-game acceptance; justified nonexact new C++ remains unclaimed.",
+      "Existing terrain/gen_map/radius ownership remains with this task. Only coupled storage/region changes and genuine radius prerequisites are authorized here, not unrelated terrain behavior edits or claim/demotion policy changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4629840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4627616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4629152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4624784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "41fdc5a7031bd3292eeaa860821f94f1ecc23b600044d07c665e1636d7cb90c1",
+  "request_id": "map-scroll-terrain-storage-counterpart-20260923",
+  "schema_version": 1,
+  "sequence": 80,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,27 @@
+{
+  "event_id": "41fdc5a7031bd3292eeaa860821f94f1ecc23b600044d07c665e1636d7cb90c1",
+  "payload": {
+    "affects": [
+      "entity-05ce1e16366aa6689f2f8e93aa3619e8e66e511bbe8cb4c1592ff92100502fbf",
+      "entity-2529012a1b97c564be1041cbcf50bd56647035e00392ff486ed2fd378ca9a751",
+      "entity-27cc156a4330fe115a50e45e9bc4508653556611f66d0917a867d11e9a3b91c0",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-8fae3078e33d1b07ac206b8a54241b18b233765f46ab56a4acb81452cde5259e",
+      "entity-d2045034c46ba9b6fd0a890426f1f8b800da6626a94459e4ccae4abbf698dde9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-radius-copy-storage-consumer-closure-20260923",
+    "evidence": [
+      "Independent original audit:draw_radius46A2D8 calls gen_radius;46A437 passes MapCornerCopy7D3BE8 to Texture::draw_trans. Still-forwarded draw_map translates all four copied coordinates at46A940..95D, subtracting scroll displacement. Terrain publishes the eight DWORDs from Scratch to Copy at464D12..21 and466C21..30 only for the cursor tile. Recovering one reader and allocating another array would split this live state.",
+      "The direct Copy closure includes terrain generation, draw_radius/gen_radius and draw_map; draw_map retains the original Win-branch virtual dispatch obligations already discovered. Scratch additionally reaches BaseWin farm drawing. Do not silently resolve or discard those earlier findings.",
+      "Next bounded radius prerequisites are its four-argument vehicle scan, terrain adapter4712D0 and visible-region predicate4216F0. Re-derive typed receiver/signatures and actual coordinates; journal76 already preserves seed x/y corruption. Existing overlay/name/legend original forwarders remain unfinished behavior. Scope decisions and implementation are not granted by this finding."
+    ],
+    "hypothesis": "MapCornerCopy cannot move to source-owned storage until draw_radius/gen_radius and draw_map join the terrain producer; recover their small typed prerequisites before localizing the array.",
+    "kind": "discovery"
+  },
+  "previous_event": "9a6770564e8b6652d393cfce29181021c8a784928a53fff441eb9427aa5c9713",
+  "request_id": "terrain-radius-copy-storage-consumer-closure-20260923",
+  "schema_version": 1,
+  "sequence": 79,
+  "stream": "task:vector-value-semantics"
+}

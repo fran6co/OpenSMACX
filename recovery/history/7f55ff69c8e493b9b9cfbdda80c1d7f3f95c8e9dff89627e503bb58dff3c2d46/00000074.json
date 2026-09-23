@@ -1,0 +1,28 @@
+{
+  "event_id": "aa46ade15ea706069e2f214e86035b2c6bac6462ddeddd6f6cc2887d7f1600e9",
+  "payload": {
+    "affects": [
+      "entity-06593b2591ecc68652b48e2b81d8987ef6db323b417f7a8f2486e451f75ed72d",
+      "entity-2529012a1b97c564be1041cbcf50bd56647035e00392ff486ed2fd378ca9a751",
+      "entity-32d4ccd9aa391a342289a480ad08e492a75f21310a9161b1b228f72a53b883da",
+      "entity-ceb55b6c66858badb1e6bd53c9dde954054a3314f9908bc2957a34200f43ab0a",
+      "entity-ea0518c3383e184ea59b2aef0bc48278b1ae6ed0dd487ac8c6101964b3378901",
+      "entity-fbd0592184fd9e6ab6392d3501eac3a15365dbfa06409f45cf61290ad74d9196"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-draw-map-virtual-owner-closure-20260923",
+    "evidence": [
+      "Independent original investigation observes MapWin constructor4627F9 installing66A57C on the Win/GraphicWin branch. Root independently reads66A57C+44 as4218B0 and+FC as404290. Thunk4218B0 subtracts[ecx-4] then jumps46F000. Body404290 pushes0 and calls5D56B0 before RET. GraphicWin table66FC50 also carries404290 at+FC; a catalogued AlphaMovie-only owner does not establish the whole shared interpretation.",
+      "Original draw_map46AD07..46AD18 derives the GraphicWin virtual base, pushes y then x and calls slot44;46AD37..46AD42 calls slotFC on that branch. Current src/win.h has empty vslot_17(int,int) and vslot_63(); src/mapwin.h declares nonvirtual two-argument on_mouse_move, while the different four-argument Win callback is slot16. The existing MapWin forwarder does not implement the required behavior.",
+      "Original46F000 uses entered GraphicWin-base-relative fields:46F03F reads[esi-3CF4],46F05A derives the MapWin front with[esi-21A6C]. Simply marking the existing forwarder virtual risks a second/wrong receiver adjustment. Recover the actual owner/body with normal C++ hierarchy, retain generated thunk identity and compare callers; do not manually install a table or call an empty placeholder.",
+      "src/alphamovie.cpp owns the protected404290 body as AlphaMovie::update calling GraphicWin::update(0). Preserve that claim and canonical identity; investigate native shared-function annotations only after original table/owner evidence supports each genuine override. Current Win::update is a separate dispatch wrapper, so reusing its name blindly is not a demonstrated slot migration. This discovery grants no outside-owner edits or acceptance."
+    ],
+    "hypothesis": "Recovering draw_map requires genuine two-argument motion and update virtual dispatch, not calls to the currently empty Win slots. The MapWin receiver convention and shared original update body need coupled owner review.",
+    "kind": "discovery"
+  },
+  "previous_event": "dc599e0805d5235cf440e2dca6ad93ceba35637ea2995c2ba8b64811f0be73a6",
+  "request_id": "terrain-draw-map-virtual-owner-closure-20260923",
+  "schema_version": 1,
+  "sequence": 74,
+  "stream": "task:vector-value-semantics"
+}

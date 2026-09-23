@@ -55,6 +55,93 @@
 #include "palette.h"
 #include "caviar.h"
 #include "leaf_recoveries.h"
+#include "newtechwin.h"  // Existing technology-popup sprite assets.
+
+// Mutable panel styles: load_box_sprites fills three columns by seventeen
+// rows. The records borrow the actual Sprite and Buffer objects below.
+// Original 0x78D528..0x78DD20 is initially zero; it is not a static address table.
+// The original loader advances 0x28 per record and stops after 51 buffers.
+// RECOVERY_OBJECT: v2 0x0078D528 0x0078DD20 ?InterfaceBoxStyles@@3PAUBoxSpriteParams@@A 0x00453A70
+BoxSpriteParams InterfaceBoxStyles[51];
+
+namespace {
+void extract_interface_box_sprite(Sprite &sprite, int x, int y, int width, int height) {
+    sprite.extract(&g_PCX_PARSE_TEMP_BUFFER1, WinFillColour,
+                   x, y, width, height, nullptr);
+}
+}
+
+// ORIGINAL: 0x00453A70 ?load_box_sprites@@YAXXZ 0x00453A70-0x00453F6F
+// RECOVERY_BINDING: v1 {"evidence": ["Original453A70..453F6F and retained src/recovered/units/00453a70.cpp. Original455E35 calls this body from load_interface; that caller remains a separate unfinished startup dependency.", "Original453B43..453D4A advances three columns over seventeen rows, with 0x28-byte records and 0x588-byte mask buffers. Eight sprite pointers precede each current-mask get_pixel call; transparent masks publish null before close, and color7 follows either branch.", "Original453A82 loads interface.pcx. The complete body also extracts leading icons, popup edges/middle, tech arrows and six column-major new-tech icons, then closes the shared source canvas. Ignored return values remain ignored as in the original."], "reason": "The interface asset loader owns publication of 51 mutable shared panel-style records and populates existing Sprite/Buffer assets. Genuine member receivers replace the seed transcription's lost extraction and pixel-test receivers."}
+void __cdecl load_box_sprites() {
+    Buffer &canvas = g_PCX_PARSE_TEMP_BUFFER1;
+    // Original ignores failure and continues the full publication sequence.
+    // Original 0x453A82 names this 14-byte NUL-terminated literal.
+    // RECOVERY_LITERAL: v1 0x00685014 0x00685022 ??_C@_0O@EGK@interface?4pcx?$AA@ 0x00453A70
+    canvas.load_pcx("interface.pcx", 0, 10, 236);
+    extract_interface_box_sprite(g_IFACE_LOCK_SPRITES[0], 247, 71, 15, 19);
+    extract_interface_box_sprite(g_IFACE_LOCK_SPRITES[1], 263, 71, 15, 19);
+    extract_interface_box_sprite(g_IFACE_GREEN_RIGHT_ARROW_SPRITE[0], 615, 530, 16, 15);
+    for (int arrow = 0; arrow < 3; ++arrow) {
+        extract_interface_box_sprite(g_IFACE_MP_COMBO_ARROW_SPRITES[arrow], 534 + arrow * 8, 537, 7, 13);
+    }
+
+    for (int style = 0; style < 51; ++style) {
+        const int x = 33 + (style % 3) * 39;
+        const int y = 229 + (style / 3) * 39;
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES1[style], x - 32, y, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES2[style], x, y, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES3[style], x - 32, y + 32, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES4[style], x, y + 32, 6, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES5[style], x - 25, y, 24, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES6[style], x - 25, y + 32, 24, 6);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES7[style], x - 32, y + 7, 6, 24);
+        extract_interface_box_sprite(g_IFACE_BOX_SPRITES8[style], x, y + 7, 6, 24);
+
+        Buffer &mask = g_IFACE_BOX_SPRITE_BUFFERS[style];
+        mask.init(24, 24, 0, nullptr);
+        canvas.copy(&mask, x - 25, y + 7, 0, 0, 24, 24);
+        InterfaceBoxStyles[style].corner0_ = &g_IFACE_BOX_SPRITES1[style];
+        InterfaceBoxStyles[style].corner1_ = &g_IFACE_BOX_SPRITES2[style];
+        InterfaceBoxStyles[style].corner2_ = &g_IFACE_BOX_SPRITES3[style];
+        InterfaceBoxStyles[style].corner3_ = &g_IFACE_BOX_SPRITES4[style];
+        InterfaceBoxStyles[style].edge0_ = &g_IFACE_BOX_SPRITES5[style];
+        InterfaceBoxStyles[style].edge1_ = &g_IFACE_BOX_SPRITES6[style];
+        InterfaceBoxStyles[style].edge2_ = &g_IFACE_BOX_SPRITES7[style];
+        InterfaceBoxStyles[style].edge3_ = &g_IFACE_BOX_SPRITES8[style];
+        // This style's Buffer, not canvas. Pointer publication precedes the
+        // pixel test; a transparent mask is cleared before close can observe it.
+        if (mask.get_pixel(0, 0) == 9) {
+            InterfaceBoxStyles[style].mask_ = nullptr;
+            mask.close();
+        } else {
+            InterfaceBoxStyles[style].mask_ = &mask;
+        }
+        InterfaceBoxStyles[style].mask_color_ = 7;
+    }
+
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE, 296, 711, 61, 44);
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_TOP_MID_SPRITE, 358, 711, 61, 44);
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE, 420, 711, 61, 44);
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_MID_LEFT_SPRITE, 296, 756, 61, 44);
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE, 420, 756, 61, 44);
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE, 296, 801, 61, 44);
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_BOT_MID_SPRITE, 358, 801, 61, 44);
+    extract_interface_box_sprite(g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE, 420, 801, 61, 44);
+    g_IFACE_STD_POPUPS_MIDDLE_BUFFER.init(61, 44, 0, nullptr);
+    canvas.copy(&g_IFACE_STD_POPUPS_MIDDLE_BUFFER, 358, 756, 0, 0, 61, 44);
+
+    for (int tech_arrow = 0; tech_arrow < 3; ++tech_arrow) {
+        extract_interface_box_sprite(g_IFACE_TECH_TREE_ARROW_SPRITES[tech_arrow], 140 + tech_arrow * 8, 37, 7, 13);
+    }
+    for (int technology = 0; technology < 6; ++technology) {
+        // Unlike the style pool, these six slots are column-major.
+        extract_interface_box_sprite(g_NEWTECHWIN_SPRITES[technology],
+                                     391 + (technology / 3) * 29,
+                                     566 + (technology % 3) * 35, 28, 34);
+    }
+    canvas.close();
+}
 
 // Each row maps every palette index to its row number (original 0x007A81A0).
 // RECOVERY_OBJECT: v2 0x007A81A0 0x007A99A0 ?VoxelRowColorTables@@3PAY0BAA@EA 0x00451030

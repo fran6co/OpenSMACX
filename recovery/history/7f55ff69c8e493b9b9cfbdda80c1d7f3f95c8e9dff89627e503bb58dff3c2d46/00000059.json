@@ -1,0 +1,23 @@
+{
+  "event_id": "794e169edf54cea1a461e374a8ca92950d4f5b63c92457e7a8a938a829062351",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-visible-fields-and-observer-sentinel-20260923",
+    "evidence": [
+      "Coordinator independently decoded the complete original body: 463599 reads GamePreferences at 9A649C, not GameRules. The multiply chain 4635B4..4635C1 forms 2099*a4; 4635C4 tests byte [96C9E1 + 8396*a4], bit2. For an ordinary faction this is PlayersData[a4].flags bit0x200. For observer -1 the physical byte is 96A915, Vehs[1895].x high byte: preserve x & 0x200 through that real member, with a source comment documenting accidental original aliasing. No fake player record or original-address pointer is authorized. Other negative or out-of-range faction behavior is not proved.",
+      "Original 463538 reads map+0xC+4*a4, so faction zero selects bit2 while factions1..7 select bit_visible[a4-1]. Visibility tests read byte+4, the actual Map.visibility member, not val2 at+2. The sensor owner comparison uses signed Map.territory at+7. Landmark sequence is a signed arithmetic shift by24. Authorize in-body corrections and discriminating actual-source controls; propagate the bit-visible correction to the corresponding neighbor reads after checking their original sites.",
+      "Same-TU land fan storage is independently bounded by the normal loop463E68..463F85 and wireframe loop466ADC..466BAF: three twelve-int tables at685F20,685F50,685F80. Replace fixed-address aliases with the four geometric centre/edge triangles and preserve source-owned original object bindings after observing their emitted symbols. Other storage remains unresolved: ocean shade scratch overlaps CornerLightTable, OceanDetailShade is mutated by load_cycling, and coast palette samples are initialized by load_terrain. Do not instantiate independent objects for overlapping storage or treat runtime tables as constants.",
+      "Keep all original identities, claims and seeds. These repairs remain in the authorized terrain C++/test scope. Fresh native compile, actual-source tests, scoped restoration/reference checks and build/link are still required before manual integration; neither these decisions nor fixture agreement prove full recovery."
+    ],
+    "hypothesis": "The retained terrain transcription misidentifies several map/player fields and a separate observer-sentinel read; correct them from original offsets rather than fixture agreement.",
+    "kind": "discovery"
+  },
+  "previous_event": "2c7e594c24f0f405dd6099355289e6471dbbf0640c2650bf9c736612496d6a20",
+  "request_id": "terrain-visible-fields-and-observer-sentinel-20260923",
+  "schema_version": 1,
+  "sequence": 59,
+  "stream": "task:vector-value-semantics"
+}

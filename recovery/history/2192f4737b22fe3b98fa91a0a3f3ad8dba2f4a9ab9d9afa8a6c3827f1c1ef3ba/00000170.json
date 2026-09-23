@@ -1,0 +1,76 @@
+{
+  "event_id": "91781cb2c06dbec81d1b1752fbd5048865a5a1d918c8d8c66bd6cffdd283ef26",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/control_lifetime_harness.cpp",
+      "recovery/tests/editbox_input_harness.cpp",
+      "recovery/tests/test_editbox_recovery.py",
+      "recovery/tests/test_mapwin_mouse_feedback.py",
+      "src/adjustor_thunks.cpp",
+      "src/adjustor_thunks.h",
+      "src/console.cpp",
+      "src/console.h",
+      "src/editbox.cpp",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/pending_bodies.cpp",
+      "src/planwin.cpp"
+    ],
+    "evidence": [
+      "Authorize mouse-feedback dependency closure: Console::selecting5105C0, MapWin::dest_line467430 and direct_dest_line4672C0, and editor46B510. Recover genuine current-owned bodies from original evidence, not seed calls into the executable. If an as-yet absent editor implementation cannot be finished in this checkpoint, the user-authorized build-continuity route permits an explicit mapped BODY GOES HERE placeholder with all seed evidence retained, never a matching/working-editor claim.",
+      "MapMouseFeedbackBusy7F67C4 has three original references all in46F000 and zero initial storage. MapDestinationCost7D3B70 is a separate signed scalar produced by dest_line, not the adjacent corner-table suffix. MapInputEnabled90D938 replaces every current raw MapWinInputEnabled alias consumer together; original main_game publisher remains an explicit unfinished startup dependency, not a new initial value of1.",
+      "Console field23D10 is the current interaction/cursor mode written by cursor_on, ctor, reset and click paths. Permit its access from the genuine mouse owner with field offset evidence, preserving current stores/meaning and all byte claims. Use actual CoverWindow, ConsoleGlobal, Vehs, VehPrototypes, Chassis/Bases and Strings rather than duplicating global aliases.",
+      "Original mode8/key handler cycles waypoint_count0..3, so five segments really write x[5] at y[0] and y[5] at hoverX. Preserve these explicit physical aliases without out-of-bounds arrays or widened layout. Preserve original no-vehicle branch endpoint quirks and valid state domain; do not introduce a bug-fix policy or affect deferred base_energy.",
+      "Update existing EditBox slot17 source-symbol evidence via native writer after compiler observation, and its direct host test callers/expectations together. Preserve mapped identities, claims, all pending discoveries and baselines. No unrelated virtuals activated and no native/full-game acceptance claims; fresh compiler/build/review remains mandatory before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5309888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4617264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4616896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4633872,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4647840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4647904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4647824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a8759d0790a5e8c14b6c35268bd947e639adf659e0c3111a77d276ddfbfadfe9",
+  "request_id": "map-feedback-real-callee-closure-20260923",
+  "schema_version": 1,
+  "sequence": 170,
+  "stream": "task:infowin-ownership"
+}

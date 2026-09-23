@@ -1,0 +1,32 @@
+{
+  "event_id": "fdb58e46423f959c251b657f918e9f668bd71a22cae67c1710902edc1182b2ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_radius.py",
+      "src/console.h",
+      "src/texture.cpp",
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Authorize the reviewed connected radius bodies: draw_radius, gen_radius, four-argument draw_vehicles, provisional typed MapWin::tile_in_view4216F0, and genuine cdecl terrain adapter4712D0. The latter retains its historical mapwin_unk1 exactness obligation; preserve seed/provenance and recover through native binding/writer/recording, never demotion or an invented exact claim.",
+      "Original4216F0 is a MapWin thiscall with three arguments, not seed stdcall. Original4712D0 converts a nullable MapWin to its Buffer base then calls the ten-argument free renderer; proper C++ base conversion must replace raw vbtable arithmetic. Preserve asymmetric scan rows, distinct vehicle cap10 and uncapped terrain/overlay expansion, top-left/top-right conversion arguments and live callback reloads.",
+      "Add declarations for existing genuine radius Texture objects, and evidence-backed source bindings after independently verifying bounds/initial data/lifetime. Grant access only to existing Console field23BF8 without changing offset or meaning. Remove the replaced original draw_radius seam and stale live forwarder prose while preserving historical LEVER/TRIED notes.",
+      "Tests must extract actual bodies and use original-derived controller/geometry oracles with explicit dependency doubles and assertion-only damage controls. Root owns native compilation, source publication and Git. Preserve all prior discoveries, baselines, retained terrain work and base_energy deferral.",
+      "Existing five-argument vehicles, base-name, overlay and legend forwarders, terrain WIP, farm scratch consumer, projection helper raw accesses and texture-loading/runtime dependencies remain explicit unfinished work. This scope closes no broader discovery and grants no full-game or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4629152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4a73658e0099e66a4f7c110ff23266f485f96a4f5dd94ed2f908d5b3c0c89523",
+  "request_id": "radius-console-texture-counterpart-20260923",
+  "schema_version": 1,
+  "sequence": 83,
+  "stream": "task:control-sprite-defaults"
+}

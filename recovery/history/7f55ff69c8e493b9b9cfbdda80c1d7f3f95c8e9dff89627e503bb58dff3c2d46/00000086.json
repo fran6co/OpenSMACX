@@ -1,0 +1,25 @@
+{
+  "event_id": "f85b8a9748119141cec39b2f2c127f3a8be4bc0b565f356c4c6930ea39cd990b",
+  "payload": {
+    "affects": [
+      "entity-800d8eeb8fa1d8912448678ceab9b6bb9483405f01d71f60c1ae2b2e6516c05d",
+      "entity-90adea27a7d2a943a525699fa127ee033c700d6b5f3d8703c6bf7b7a1568c8e0",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "farm-support-redraw-slot62-owner-20260923",
+    "evidence": [
+      "Independent farm-integration audit found draw_support408EB0..4090BF calls slot62 at409034 on its embedded MapWin. Product BaseWin already owns that MapWin at+1E674. The support body remains a seed, not a product definition or a pending_bodies row.",
+      "Current Win declares empty virtual redraw (original404280), while MapWin declares nonvirtual on_redraw46B1D0. The latter is historically byte-exact but still interprets its receiver through raw -21A6C arithmetic, so neither a similar name nor its local match proves correct virtual dispatch.",
+      "Verify original vtable ownership and entered receiver before scope expansion and structural repair; preserve46B1D0 historical exactness and related derived-owner discoveries. No authorization to change class slots or discard original behavior follows from this finding.",
+      "Complete reviewed draw_farm additionally needs the real shared mutable interface-style pool, resource sprite declarations/source width, and seed-only base_draw55AF20. Preserve asset-loader and runtime-init dependencies; do not equate a linking placeholder with recovered support or rendering behavior."
+    ],
+    "hypothesis": "The support panel uses embedded MapWin virtual redraw slot62; establish its real override and generated adjustment before importing the panel, rather than dispatching to the inherited empty Win::redraw.",
+    "kind": "discovery"
+  },
+  "previous_event": "73baf47c57b99e5c1cbec79f300e5b7b7fc80e3a87b24777731372811cb989df",
+  "request_id": "farm-support-redraw-slot62-owner-20260923",
+  "schema_version": 1,
+  "sequence": 86,
+  "stream": "task:vector-value-semantics"
+}

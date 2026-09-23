@@ -92,11 +92,10 @@ class GraphicWin;
 class CheckBox;
 
 /*
- * The panel-drawing table `Buffer::box_sprite` is driven by. The image holds
- * ten of these as static .data blocks (DipEdit's frame is 0x0078D690, its
- * field and button strip 0x0078D528, ReplayWin's 0x0078D618 and 0x0078D7F8)
- * and nothing ever writes one, so every field is a sprite pointer or colour
- * chosen at build time and the layout is read straight off the body:
+ * The panel-drawing record consumed by Buffer::box_sprite. Original
+ * load_box_sprites (0x453A70) writes 51 mutable records, after extracting
+ * their sprites and copying their masks. These borrow real objects; they
+ * are neither immutable blocks nor fixed executable-address tables.
  *
  *   +0x00..+0x0c  the four CORNERS, drawn once each at 1:1 - top-left,
  *                 top-right, bottom-left, bottom-right in that order
@@ -125,6 +124,8 @@ struct BoxSpriteParams {
 static_assert(sizeof(BoxSpriteParams) == 0x28,
               "BoxSpriteParams is ten dwords: eight sprite pointers, a mask "
               "buffer and a colour");
+
+extern BoxSpriteParams InterfaceBoxStyles[51];
 
 class Buffer {
  public:
@@ -912,6 +913,8 @@ static const size_t BufferSurfaceUnlockSlot = 0x80;
 // maininterface body that reads it back can name it instead of binding the
 // address. Wave-3 handoff, 2026-09-05.
 extern Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
+extern Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];
+extern Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;
 
 
 void __fastcall buffer_destructor_redirect(Buffer *self, void *);

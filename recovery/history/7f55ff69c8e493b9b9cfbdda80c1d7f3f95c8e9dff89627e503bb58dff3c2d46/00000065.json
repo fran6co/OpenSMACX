@@ -1,0 +1,22 @@
+{
+  "event_id": "287609df4b9aec78d1e3fdf08224a5bf79eadd6a7b7057afa2534bf4533e1086",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-neighbor-mask-table-storage-20260923",
+    "evidence": [
+      "Independent pinned-image investigation identifies six relocation-backed readers at463EEE/463F67,464EB9/464EEE,46506F/4650C3. Their eight-neighbor masks index256 pairs at685484..685684. No direct writer or escaped pointer was found. Texture selectors lie in0..14 and rotations in0..3. Authorize const unsigned char[256][2] source storage and explicit mask/component accesses in the existing mapwin.cpp scope, with v2 object binding anchored at4632D0 and native initial-data/extent/reference checks before treating storage as verified.",
+      "A geometric blob-mask interpretation reproduces254 entries but not CA/DA: both original entries are{11,2}, not the inferred{5,1}. Preserve the original exceptional entries, not an aesthetically normalized table. A derivation is an explanatory hint, not authority to alter behavior.",
+      "MapFocusX/Y remain pending: Console::new_base publishes them before redraw and resets afterward. This decision grants no separate default-only replacement, producer scope expansion, historical claim, or integration acceptance. Existing terrain storage/lifetime discoveries stay pending."
+    ],
+    "hypothesis": "The terrain neighbor-mask selector is a bounded constant pair table, not an executable-address pointer; recover it in the owning terrain TU.",
+    "kind": "discovery"
+  },
+  "previous_event": "8c374b7132b42a5c947d419e94b25cd4436f597106f9d840ac62ce1b7c4c8b5c",
+  "request_id": "terrain-neighbor-mask-table-storage-20260923",
+  "schema_version": 1,
+  "sequence": 65,
+  "stream": "task:vector-value-semantics"
+}

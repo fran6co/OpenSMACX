@@ -50,5 +50,9 @@ int NewTechWin::on_key_click(int, int) {
     return 1;
 }
 
-// ====================
+// Original initializer 0x483880 constructs six Sprites at stride 0x2C;
+// initial storage is zero. Registered teardown 0x4838B0 tests/sets mask0x01 of
+// byte0x822604 before destruction; this initial-data binding does not establish
+// that guard or complete startup/lifetime equivalence.
+// RECOVERY_OBJECT: v2 0x00822610 0x00822718 ?g_NEWTECHWIN_SPRITES@@3PAVSprite@@A 0x00453A70
 Sprite g_NEWTECHWIN_SPRITES[6];

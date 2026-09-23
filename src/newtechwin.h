@@ -20,6 +20,10 @@
 #include "buttongroup.h"
 #include "graphicwin.h"
 #include "stringbox.h"
+#include "sprite.h"
+
+// Two columns of three technology-popup icons, populated by load_box_sprites.
+extern Sprite g_NEWTECHWIN_SPRITES[6];
 
  /*
   * NewTechWin class
@@ -125,4 +129,3 @@ class NewTechWin : public GraphicWin {
 
 static_assert(sizeof(NewTechWin) == 0x107C4,
               "NewTechWin layout must match the original executable");
-

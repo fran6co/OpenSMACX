@@ -1,0 +1,24 @@
+{
+  "event_id": "f5ba6a8427affffe4cbd9d7e89ba79445973d54d383ebf0c614a9e2f24b53ca1",
+  "payload": {
+    "affects": [
+      "entity-1a1701d9d3cc4da252532ac0fd0181398535bbf7aba99b2ac9372c1bc2c3faf2",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-9464d1353aa4fbb7d3d7701c5990d666f5299433fbdacbb67817788b3544a603",
+      "entity-a4eae865aff7a81b8487d9797ff470929a40677cb9d3ecc1468800132c06c6af"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-lighting-biased-base-20260923",
+    "evidence": [
+      "Independent original review observes compute_lighting_table470420 writes196bytes [7F6688,7F674C). Its first address is the get_brighting base7F6680 plus8, exactly7*1+1. For nibbles1..7, base+49*q+7*v+w equals a proper four-by-seven-by-seven table at6688 indexed[q][v-1][w-1]. Thus history61 physical overlap inference and the existing source comment claiming unrelated storage are not established merely by their different base constants.",
+      "OceanCornerShades writes16dwords [7F6644,7F6684), which does not overlap the observed writer allocation beginning6688. However, current get_alt only proves masked four-bit0..15 values, not1..7. Prove the original height/neighbor domain before using distinct arrays or subtracting one; retain malformed/out-of-domain behavior as unresolved. This is an interpretation to investigate, not layout acceptance, scope expansion or permission to invent an overlapping union."
+    ],
+    "hypothesis": "The apparent ocean-shade/light-table overlap may be a biased one-based reader address, not overlapping actual allocations; index-domain proof remains required.",
+    "kind": "discovery"
+  },
+  "previous_event": "1efcfe9c62c55c9c2cca287f70ed71026b30f8594b5b3ceb184154a32360e75d",
+  "request_id": "terrain-lighting-biased-base-20260923",
+  "schema_version": 1,
+  "sequence": 69,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "2c7e594c24f0f405dd6099355289e6471dbbf0640c2650bf9c736612496d6a20",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-no-owner-diplomacy-storage-20260923",
+    "evidence": [
+      "Coordinator and worker independently decoded the complete mapped function. At 463762 owner becomes -1; 4637A7..7B9 index row a4, column owner. The missing column physically reads PlayersData[a4].last_turn_new_base at +0x14 rather than diplo_treaties[0] at +0x18. Use the real member in this explicit sentinel case, not a huge unsigned index.",
+      "At 463927 owner again becomes -1, but 463931..3943 use row owner, column a4. This is a different original out-of-range access: address 0x96C9F8 - 0x20CC + 4*a4, or 0x96A92C + 4*a4. Vehs starts 0x952828 with stride 0x34; this lands inside its existing storage, at Vehs[1895]+0x18+4*a4. For valid active factions 1..7 the low-bit sources are waypoint_y[0], waypoint_y[2], morale, moves_expended, probe_action, next_veh_id_stack, and Vehs[1896].x. Preserve this apparently accidental renderer dependency explicitly through those typed fields; do not silently turn missing-owner into false or invent a dummy diplomacy row.",
+      "The worked-tile scan excludes a4<1 before these accesses; the supported game faction domain is 1..7. The source helper must document this domain and original-bug interpretation. This is not evidence that the original intended to read vehicle state. Require independent offset assertions and actual-source bit-toggle controls for every valid faction, plus an asymmetric ordinary treaty test to distinguish row/column reversal. No source-owned global is rehomed or redefined, no original-address pointer is introduced, and no game-acceptance claim follows."
+    ],
+    "hypothesis": "The two original no-owner diplomacy lookups address different real storage; preserve their observable bit tests without C++ out-of-bounds array indexing.",
+    "kind": "discovery"
+  },
+  "previous_event": "1c5e9309cdfa7fe33cf9e03da0361627afa29798e6c04bb6aa9831a32ece2383",
+  "request_id": "terrain-no-owner-diplomacy-storage-20260923",
+  "schema_version": 1,
+  "sequence": 58,
+  "stream": "task:vector-value-semantics"
+}

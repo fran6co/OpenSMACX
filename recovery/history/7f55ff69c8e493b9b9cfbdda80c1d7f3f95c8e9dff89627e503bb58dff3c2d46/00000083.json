@@ -1,0 +1,45 @@
+{
+  "event_id": "d3d5d55427180735cabc1fa7306617738b5f7fa81ccde9fdebaaf454cc1ff17a",
+  "payload": {
+    "affects": [
+      "entity-0c0a33f838ac11c05f7b364b87b09f981bb102861e04ab78958f7988a756543e",
+      "entity-1682298b3e3b2f1286ea5c49e6e6ad814c2ce49ab755d80ef3e5b7cbb3cd33aa",
+      "entity-2d31861ec2788f577c1e2b2ff08943ebab5247cc50c267a6cb02868e453c2e9f",
+      "entity-300514b1093748af2ef35fd6979e0d9bc483889498eaee7bae2ce36264dc48e7",
+      "entity-339341a3474d944d349ae25ac2e4e06df2f28d8c364c19ca0085f533ccb84b5d",
+      "entity-3514cdee4082977bd7a6588c8079da0e12fe5cce80fac140d7d4771df7747a54",
+      "entity-3537ada5bfae9a21b740edcf4c6ddad32295cf8dd0606fbe0fe2c206395999a6",
+      "entity-3f72f74e6cfc9ae9d6ebe4866b981a1da597c2d816b8e783e8269285b844bef3",
+      "entity-4f8a94ad8dc114635381d87dd0bdb3bd84465c0e41c9b54dc13845812a5ed656",
+      "entity-541701e9a04928e399f7b5f3f8374f5301053709e81fe8de68aea377ca0f61f5",
+      "entity-607ba317d54568dffb80be59f81df4b4dd60a80347e0f6b5051cef5dc2f8ebfa",
+      "entity-65502c349819f441c4aedc47874bb3344b484b8547cea54cc60588799cd0b172",
+      "entity-69d4ee2eecb2a1e6fa0c59f8e053ddcf105238425125f01ab754aa46a55d9188",
+      "entity-6a0a4a5fd885b2b1c9ef955900461280a8bdfd89550e034a78cfcbe22d1045ab",
+      "entity-7a9c6b19c73b50b1e32dbb1f25f4fa47eed7646c44895fa3b7d3965f46b5b8d1",
+      "entity-8b0ea656d0457dc2673c6d0fb97dc9c18d684b0d614a0deef6722be9e57b0ccc",
+      "entity-8c5fab66269517ad71704ec7d825962c05c83ae536a52d771ffe5a570e4035f4",
+      "entity-95170a02ea301388b36e9f24001140d8152e866ccf735670ebcc2fb3f777595d",
+      "entity-a3237fc32c8359093fc596b55685fb1ff3124cc96b7eba34b2c09a8889365659",
+      "entity-b5153e53ff34e39e4cac412f20d6f6b7b49ebe9436fc53b73c7c4418050562b3",
+      "entity-ce5655edff2d8bf635378b71ebde2610ea5644f5d26027648ad28fb8a000e349",
+      "entity-d8a5450c3c0d7c36c49c978adbe50c446e298fe94dfd9e68e18e65d845929330",
+      "entity-f503da77981a9fa9d0fac46edf5d54db7f3572f6d7a49fd4d85554768ea54ccd"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "style-pool-mask-member-consumer-migration-20260923",
+    "evidence": [
+      "78D6B0 is the mask pointer member at+20 of style9 starting78D690, not an independent Buffer object. Original draw_garrison410485 loads EAX from this slot, then passes EAX to tile at410490. Current basewin.cpp passes reinterpret_cast<Buffer *>(MainInterfaceTileSource), the slot address itself. Correct the source to InterfaceBoxStyles[9].mask_ only through the coordinated real-pool migration.",
+      "MainInterface::restore_back45C290 correctly dereferences its existing raw alias. Preserve four independent mask loads at45C2CD/45C30A/45C34D/45C37B after preceding callbacks; replacing them with one cached pointer is not equivalent.",
+      "Existing product box_sprite consumers: reportif reset4A3D20 styles0/3/33; socialwin draw_social4AF310 and draw_psych_alloc4B0D50 styles3/6; dipedit init4DB080 styles0/9; all16 datalink set_cat_* methods style6; basewin draw_garrison4103B0 style3 plus style9 mask. There are36 box_sprite uses and five direct mask consumers. Use shared record addresses and actual mask members, not copied records or separate globals.",
+      "The first eight Datalink methods carry historical exact obligations. Preserve all mappings/claims, remeasure every touched TU and verify the real loader/publication ordering, full build/link, and affected callbacks before integration. This discovery preserves the behavioral defect and cross-owner footprint; it does not authorize edits or close the pending style/farm/terrain findings."
+    ],
+    "hypothesis": "Migrate all existing box-style consumers with the live51-element pool, preserving member-pointer loads and fixing draw_garrison which currently passes the pointer-slot address as its Buffer receiver.",
+    "kind": "discovery"
+  },
+  "previous_event": "a91397cc49a73a8c45fd22176add81b6c742dd3e189053c3bcec7651c73667e9",
+  "request_id": "style-pool-mask-member-consumer-migration-20260923",
+  "schema_version": 1,
+  "sequence": 83,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,27 @@
+{
+  "event_id": "dc599e0805d5235cf440e2dca6ad93ceba35637ea2995c2ba8b64811f0be73a6",
+  "payload": {
+    "affects": [
+      "entity-05e936318014f312c95c4fd333a2c718af4c57c5c0004f37116b92e8188ab01c",
+      "entity-13e141830e92ae425529aa74634e63c864b5b213062feb9682fef95b0d1ba8a4",
+      "entity-1a1701d9d3cc4da252532ac0fd0181398535bbf7aba99b2ac9372c1bc2c3faf2",
+      "entity-49891968e85ab313cdd1e5c82f3005549d2c270c832b4a5633a47f6a0e03a462",
+      "entity-ceada8a2d0646e82f29d6067dc32d18f1acc6c0af754b8e82278833b09be644a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-lighting-live-startup-closure-20260923",
+    "evidence": [
+      "Original470420..470536 reads no incoming receiver or arguments and returns with RET. Its only direct caller471033 supplies no receiver; the seed null-this invocation is not an acceptable C++ model. A receiver-independent helper is viable but static/member source identity is not uniquely established by an unused receiver. Dependency quick_root6290E0 already exists.",
+      "The sole direct caller of mapwin_system_init471030 is desktop_init58EE60 at58EE96. Product desktop_init remains an original-address pending forwarder, so a new source generator/initializer alone would not execute. Recover the actual caller chain, the seed-only MapWin::init(int,int)470A90 and init(RECT*,char*,int)470920, and real dummy MapWin storage7D4060 before claiming source startup closure.",
+      "Initializer471030 also owns a256-dword allocation [7D3C60,7D4060), setting indices10..65 inclusive to1 and others0, and iterates8window slots using clear/init then initializes the dummy. No source dummy allocation or complete lifetime evidence is established. Original quick_root, clear462870 and init_dummy470ED0 bodies are available; existing helper ownership and historical MapWin overlap require coordinator review before expansion.",
+      "Preserve the separate1..7lighting-index domain obligation from histories69/72. Correct the misleading source comment claiming the biased reader and writer are unrelated: when v,w lie1..7 they identify the same table at6688. This comment correction grants no new body/storage scope or acceptance."
+    ],
+    "hypothesis": "A real lighting table must be initialized through the recovered desktop/window startup chain, not an unreachable replacement generator.",
+    "kind": "discovery"
+  },
+  "previous_event": "022860031663e0c11bdfaa62a8e5d2d26fef587361ed4d7f5bb76969ce4e4c89",
+  "request_id": "terrain-lighting-live-startup-closure-20260923",
+  "schema_version": 1,
+  "sequence": 73,
+  "stream": "task:vector-value-semantics"
+}

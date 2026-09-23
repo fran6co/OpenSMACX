@@ -1,0 +1,30 @@
+{
+  "event_id": "f93a2d3e735379543a89d7fb6b77c12615d08de0cd4df3fb4b32ad1324542532",
+  "payload": {
+    "affects": [
+      "entity-05e936318014f312c95c4fd333a2c718af4c57c5c0004f37116b92e8188ab01c",
+      "entity-239b541d839c2dac4cd4a28d5f1aa5c12123a5219999cec9dadea0f207562b29",
+      "entity-30be0a774eb164d465344bba49909c60d423a1dff081de113aaf87a176aee759",
+      "entity-806b4267e5ec725cc7fc100d301d3aa25afe14a4928b43b5e44ea612b6931630",
+      "entity-99fb307f1e35e87b0f0b55b479abb963f1b0f8e84f7e3dbedc532e94c973fe6d",
+      "entity-9bcb21bf562e0fbe5708dd7d1bc605af43cf88c8cfed4aa97d4e328b9fda4024",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5",
+      "entity-ceb55b6c66858badb1e6bd53c9dde954054a3314f9908bc2957a34200f43ab0a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "farm-map-window-complete-object-lifetime-20260923",
+    "evidence": [
+      "CRT pointer682540 names462080; initializer passes hidden most-derived1 and receiver7D4060 to4626E0, then registers4620A0. The latter calls MapWin own-part destructor420F90 on7F5ACC=front+21A6C, then GraphicWin destructor5D4DD0 on that same virtual-base receiver. Existing MapWin ctor/destructor bodies are not by themselves a complete-global lifetime proof.",
+      "Runtime initialization4710D1/4710D6 calls init_dummy on the same global. Shutdown47112D..47115F frees and nulls owned_ at+4 and invokes qualified GraphicWin::close through the genuine base; it is not destruction. Product terrain_fixup extra3 also holds the raw original address and must migrate with this owner.",
+      "The existing mapwin.cpp prose naming retired guarded_teardowns/??_DMapWin and mapwin.h standalone-lifetime commentary cannot override these original sites. Correct load-bearing prose when importing the owner, and verify compiler-generated constructor/atexit wrapper and CRT order from fresh output.",
+      "Retain earlier lighting, dummy-init, seed coordinate, farm and corner-storage discoveries. This finding authorizes no product edits or acceptance; source-owned global naming and coupled runtime/helper scope require coordinator decisions."
+    ],
+    "hypothesis": "Recover the shared off-screen MapWin as one genuine most-derived global, including compiler-owned complete teardown and runtime initialization/shutdown; never substitute separate member storage or a manually destroyed GraphicWin.",
+    "kind": "discovery"
+  },
+  "previous_event": "4667b7eaa7c3f52211005e8497d5693bb072049d9ac46db6639e4623de9ea8fc",
+  "request_id": "farm-map-window-complete-object-lifetime-20260923",
+  "schema_version": 1,
+  "sequence": 81,
+  "stream": "task:vector-value-semantics"
+}

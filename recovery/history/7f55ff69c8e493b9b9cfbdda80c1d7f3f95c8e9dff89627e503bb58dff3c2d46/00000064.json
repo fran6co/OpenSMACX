@@ -1,0 +1,21 @@
+{
+  "event_id": "8c374b7132b42a5c947d419e94b25cd4436f597106f9d840ac62ce1b7c4c8b5c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "The original4632D0 identity now has its native-compiled product body in mapwin.cpp, retaining the verified free ten-word cdecl interface and the historical seed. Authorize removal of only the same-signature gen_terrain_poly PENDING_BODY forwarder from pending_bodies.cpp; retaining both creates duplicate compiled definitions. No other pending body is authorized for removal.",
+      "The three Buffer line call sites and Texture draw2 call site now use separately scoped real owning-TU implementations, with native source bindings and observed emitted symbols. The two newly introduced fixed-executable-address callbacks are removed. Retain seeds and all claims; this dependency progress does not resolve shared terrain storage, the incomplete61AC60 sentinel kernel, or full behavior.",
+      "Run a fresh application compile/link after retiring the duplicate. Build continuity is not acceptance or permission to merge remaining new original-address storage aliases. This remains an isolated manual recovery candidate; other agents edits and task baselines are unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bf53373c781d20beb07222beec54664a6968b777626c7449dba65514df0c7bc6",
+  "request_id": "terrain-compiled-forwarder-retirement-20260923",
+  "schema_version": 1,
+  "sequence": 64,
+  "stream": "task:vector-value-semantics"
+}

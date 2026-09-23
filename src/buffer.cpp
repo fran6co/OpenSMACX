@@ -4097,8 +4097,14 @@ const char BufferExtBmp[] = ".bmp";
 // receivers in 462779..4627A1 have stride588, bounding its complete extent.
 // RECOVERY_OBJECT: v2 0x00798668 0x00798BF0 ?g_PCX_PARSE_TEMP_BUFFER1@@3VBuffer@@A 0x00454FC0
 Buffer g_PCX_PARSE_TEMP_BUFFER1;  // 0x00798668
-Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];  // 0x0075C218, 0x588 stride
-Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;  // 0x0077AA70
+// Original initializer 0x44CF70 and exit 0x44CFA0 use 51 elements at stride
+// 0x588; the loader's end pointer is 0x76DC30. Image-initial storage is zero.
+// RECOVERY_OBJECT: v2 0x0075C218 0x0076DC30 ?g_IFACE_BOX_SPRITE_BUFFERS@@3PAVBuffer@@A 0x00453A70
+Buffer g_IFACE_BOX_SPRITE_BUFFERS[51];
+// Original initializer/exit 0x44D140/0x44D160 use Buffer's complete 0x588
+// extent (constructor's final DWORD is at +0x584), initially zero.
+// RECOVERY_OBJECT: v2 0x0077AA70 0x0077AFF8 ?g_IFACE_STD_POPUPS_MIDDLE_BUFFER@@3VBuffer@@A 0x00453A70
+Buffer g_IFACE_STD_POPUPS_MIDDLE_BUFFER;
 Buffer g_VEHDRAW_BUFFER;  // 0x008CC298
 // File-backed Sprite draw stages through this Buffer: original 0x005E4BC3,
 // 0x005E4BFC and 0x005E4C09 use it for load_pcx, drawing and close.

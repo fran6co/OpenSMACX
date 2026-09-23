@@ -1,0 +1,25 @@
+{
+  "event_id": "4a73658e0099e66a4f7c110ff23266f485f96a4f5dd94ed2f908d5b3c0c89523",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_selecting.py"
+    ],
+    "evidence": [
+      "Complete the already authorized Console::selecting mouse-feedback dependency and original-based actual-source host controls. Preserve mode/range/patrol sequencing, real cursor storage, receiver identity and callback reloads. Tests use explicit boundary doubles and do not establish game acceptance. All existing scope/baselines/discoveries and base_energy deferral remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5309888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c514ae81ab078afe7bf70b56efd0ee77a902ae2e172734e04c0418f05d1ab8e9",
+  "request_id": "selecting-actual-source-controls-20260923",
+  "schema_version": 1,
+  "sequence": 82,
+  "stream": "task:control-sprite-defaults"
+}

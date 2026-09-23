@@ -396,14 +396,8 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
  * StringUpperSlot    0x0066931C - game.h already documents this address as the
  *                    CharUpper entry of a function-pointer table, and names the
  *                    accessor `string_upper_slot()`.
- * BoxSpriteStyleN    the BoxSpriteParams pool buffer.h documents. 0x0078D528 is
- *                    the pool base (buffer.h calls it DipEdit's field-and-button
- *                    strip, ReplayWin's 0x0078D618), and every other block this
- *                    tree touches sits on the 0x28 = sizeof(BoxSpriteParams)
- *                    grid above it: 0x0078D5A0 = +3, 0x0078D618 = +6,
- *                    0x0078DA50 = +33 (reportif.cpp), 0x0078D690 = +9,
- *                    0x0078D7F8 = +18. The number is the pool index, so one
- *                    block keeps one name across every TU that draws with it.
+ * Panel styles now borrow shared mutable InterfaceBoxStyles elements 3/6;
+ * their original starts 0x78D5A0/0x78D618 are no longer address aliases.
  * InterfaceBuffer    0x007AEC64, the shared full-screen drawing Buffer. 55
  *                    archive sites cast it to `Buffer *` and draw through it -
  *                    DesignWin::draw_info, Datalink, DiploPop::start, ReportIf,
@@ -431,8 +425,6 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
  *                    reads the allocation it scales by 10 for display.
  */
 static int *const StringUpperSlot = (int *)0x0066931C;
-static int *const BoxSpriteStyle3 = (int *)0x0078D5A0;
-static int *const BoxSpriteStyle6 = (int *)0x0078D618;
 static int *const SocialEffectTable = (int *)0x0094B024;
 static int *const SocialEffectRow = (int *)0x0094B2CC;
 static int *const SocialEffectRowEnd = (int *)0x0094B2D8;
@@ -464,14 +456,14 @@ void SocialWin::draw_social(int a1) {
     rect1.right = headerSlot[2];
     rect1.bottom = headerSlot[3];
     buffer->set_clip(&rect1);
-    buffer->box_sprite(&rect1, (BoxSpriteParams *)BoxSpriteStyle3);
+    buffer->box_sprite(&rect1, &InterfaceBoxStyles[3]);
 
     RECT rect2;
     rect2.left = rect1.left + 3;
     rect2.top = rect1.top + 3;
     rect2.right = rect1.right - 3;
     rect2.bottom = rect1.top + 3 + 0x14;
-    buffer->box_sprite(&rect2, (BoxSpriteParams *)BoxSpriteStyle6);
+    buffer->box_sprite(&rect2, &InterfaceBoxStyles[6]);
 
     StringTemp[0] = 0;
     int nameKey = *(int *)&SocialCategories[a1 * 0x35];
@@ -494,10 +486,10 @@ void SocialWin::draw_social(int a1) {
             hdr.top = slot[1];
             hdr.right = slot[2];
             hdr.bottom = slot[3];
-            buffer->box_sprite(&hdr, (BoxSpriteParams *)BoxSpriteStyle6);
+            buffer->box_sprite(&hdr, &InterfaceBoxStyles[6]);
             hdr.top += 0x16;
             hdr.bottom += 0x16;
-            buffer->box_sprite(&hdr, (BoxSpriteParams *)BoxSpriteStyle6);
+            buffer->box_sprite(&hdr, &InterfaceBoxStyles[6]);
             continue;
         }
 
@@ -506,7 +498,7 @@ void SocialWin::draw_social(int a1) {
         body.top = slot[1] + 0x16;
         body.right = slot[2];
         body.bottom = slot[3] + 0x16;
-        buffer->box_sprite(&body, (BoxSpriteParams *)BoxSpriteStyle6);
+        buffer->box_sprite(&body, &InterfaceBoxStyles[6]);
 
         int countNonzero = 0;
         int countBig = 0;
@@ -702,7 +694,7 @@ void SocialWin::draw_psych_alloc() {
     buf->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
 
     RECT local_rect = *update_rect;
-    buf->box_sprite(&local_rect, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle6));
+    buf->box_sprite(&local_rect, &InterfaceBoxStyles[6]);
 
     local_rect.left += 3;
     local_rect.top += 3;
@@ -850,4 +842,3 @@ void SocialWin::allocate_energy(int a1, int a2) {
         } while (attempts < 3);
     }
 }
-

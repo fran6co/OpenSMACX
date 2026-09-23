@@ -1,0 +1,21 @@
+{
+  "event_id": "ac7ead8f5df6068ed532bdd591160a14dd1d5067f8ce5fc7e5941ead368aed42",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-rule-global-name-correction-20260923",
+    "evidence": [
+      "History59 preserved the correct original address but assigned the wrong existing source name. Source src/game.cpp defines GamePreferences at9A6490 and GameRules at9A649C. Restore the entry fog gate463599 to GameRules; the later wireframe gate463E10 also reads GameRules. The sensor gate4656A3 reads9A6490 and therefore remains GamePreferences. Do not propagate the mistaken name into tests or treat the journal as stronger than the source and original operands.",
+      "All independently established field/observer/array corrections in history59 remain in scope. Actual-source controls must distinguish both globals by setting opposing bits. This correction neither resolves full-body equivalence nor grants a byte claim."
+    ],
+    "hypothesis": "Correct the name interpretation in history59: original address9A649C is GameRules, not GamePreferences.",
+    "kind": "discovery"
+  },
+  "previous_event": "794e169edf54cea1a461e374a8ca92950d4f5b63c92457e7a8a938a829062351",
+  "request_id": "terrain-rule-global-name-correction-20260923",
+  "schema_version": 1,
+  "sequence": 60,
+  "stream": "task:vector-value-semantics"
+}

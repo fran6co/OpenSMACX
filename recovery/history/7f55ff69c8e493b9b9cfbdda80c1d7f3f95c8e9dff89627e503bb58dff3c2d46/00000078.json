@@ -1,0 +1,27 @@
+{
+  "event_id": "9a6770564e8b6652d393cfce29181021c8a784928a53fff441eb9427aa5c9713",
+  "payload": {
+    "affects": [
+      "entity-3831d38d4dec7421e0102cab1dedab79741a8e694468c7911715ed3418b32383",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-8252ad9b514fc77bba32541f37db3820422a32fbfebab5a1ef73f5d6cfeb6d64",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5",
+      "entity-b9fddddd579d58fb2311adcaeb92178a7a4a4e9636148aabe9a89b3d0d89fedc"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-farm-state-extent-and-seed-corruption-20260923",
+    "evidence": [
+      "Original4E68E3 compares byte index54; indices21..24 store1 at4E68E8. The loop advances4 at4E6BA2 and stops at64 at4E6BA5:25 DWORDs at90E99C..90EA00, not21. Final4E6E23..3F folds only first21 entries ending90E9F0 into separate mask90EA00..04. Independent coordinator instruction inspection confirms these bounds; initial104bytes are zero-filled, not proof of runtime state.",
+      "Independent producer audit:4E68B6 loads the BaseCurrent pointer at90EA30 before signed-short coordinates and unsigned-byte faction, whereas seed treats the pointer slot as Base.4E6C7A tests another base worked-mask at+78(resource_sqr_radius), not seed+3C. Diplomacy indexing4E6B12..24/4E6B60..72 selects PlayersData[currentFaction].diplo_treaties[otherFaction], not seed column scaled by16. Map pointer reloads4E697C/4E6A0A/4E6A46 after calls must not be replaced by an entry snapshot.",
+      "Direct callees whose_territory/add_goal/goody_at/stack_fix/stack_check/veh_at and CRT abs have source bodies, but that does not prove whole producer behavior. Known flags consumers farm_click40A1D0 and draw_farm40F0F0 remain seed-only; mask reader base_yield4E80B0 is still an explicit empty product placeholder. Couple mutable storage with those consumers instead of publishing a fresh unused zero array or claiming UI/game acceptance.",
+      "The window-fill/remapping checkpoint40322001 removes the previously missing GraphicWin RECT dependency but does not resolve this farm closure or earlier terrain discoveries. Preserve original task baseline and retained gen_terrain_poly work; authorize new owned source work separately."
+    ],
+    "hypothesis": "Farm flags require25 DWORDs plus a separate mask, and farm_compute seed corrupts BaseCurrent, worked-mask and diplomacy indexing; shared producer/consumer recovery must use original evidence.",
+    "kind": "discovery"
+  },
+  "previous_event": "08416eaa3fe2925ec4914ce5872510d2d4bd41a9cc80bf9b1af29b77d6d2853e",
+  "request_id": "terrain-farm-state-extent-and-seed-corruption-20260923",
+  "schema_version": 1,
+  "sequence": 78,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,25 @@
+{
+  "event_id": "1efcfe9c62c55c9c2cca287f70ed71026b30f8594b5b3ceb184154a32360e75d",
+  "payload": {
+    "affects": [
+      "entity-2529012a1b97c564be1041cbcf50bd56647035e00392ff486ed2fd378ca9a751",
+      "entity-27cc156a4330fe115a50e45e9bc4508653556611f66d0917a867d11e9a3b91c0",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-scratch-owner-closure-20260923",
+    "evidence": [
+      "Original OceanCornerVerts has exactly sixteen Vert pairs at [7D3AF0,7D3B70), initially zero with no embedded relocations. Stores46459E/4645AC and passed slices46466D/46469A/4646C6 account for its five direct references, all inside gen_terrain_poly. The next7D3B70 location is a separate scalar. Authorize replacing this existing scoped raw alias with one real static Vert[16] object in mapwin.cpp, retaining its shared lifetime and four-vertex slices; require fresh native symbol/extent/data proof and terrain controls. No outside ownership or baseline changes.",
+      "MapCornerCopy is [7D3BE8,7D3C08), and MapCornerScratch is [7D3C08,7D3C28): adjacent but non-overlapping four-vertex objects. Original scratch writers advance y pointer7D3C0C by8 to7D3C2C at4640BC/4643C0..D8 and466B9C..BBA. REP MOVSD count8 copies at464D12..21 and466C21..30 prove both extents.",
+      "BaseWin::draw_farm40F0F0 consumes scratch after gen_terrain_poly40F35F via polygon_dest at40F38C/40F40A and Texture at40F427. MapWin::draw_radius46A2A0 reads the copy at46A437; draw_map46A550 translates four copied x/y pairs at46A940..95D. Current original-address forwarders would split storage if only the local aliases became arrays. Preserve pending dependencies; no independent land-array substitution or outside-body edit is authorized."
+    ],
+    "hypothesis": "The ocean vertex array is locally owned, but land scratch and copied vertices require coupled external consumers and producer.",
+    "kind": "discovery"
+  },
+  "previous_event": "7b264de03b29729e96be2e49c24dc13a1fb896d571184bbcf21013278fbc8d75",
+  "request_id": "terrain-scratch-owner-closure-20260923",
+  "schema_version": 1,
+  "sequence": 68,
+  "stream": "task:vector-value-semantics"
+}

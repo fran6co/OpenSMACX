@@ -1,0 +1,25 @@
+{
+  "event_id": "dfaf3f46f0ab5d4d33e0eb7b23ed0502b13c961948d4b89d3358e7d6d6e488fb",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-a4eae865aff7a81b8487d9797ff470929a40677cb9d3ecc1468800132c06c6af",
+      "entity-b00162871e31bfe7e80ab1e5fbe25cbeb05d8a1cb57ecf4a8fb1737f7a178ba5",
+      "entity-f49ef2bc5dbba1f011d63e430af583ef25f4f7ea618db7073021a4ca7b33b200"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-clear-cache-pointer-indirection-20260923",
+    "evidence": [
+      "Root independently disassembled46FD90..46FDFD:46FD90 loads[ecx+4] and tests it;46FDA9/46FDDC reload that same member for each byte store. First pass writes bytes0..3 of each12-byte record, second pass bytes4..8; bytes9..11 remain unchanged. No instruction dereferences the allocation to obtain another pointer.",
+      "Current worker src/mapwin.cpp MapWin::clear_terrain begins unsigned char *field4 = *reinterpret_cast<unsigned char **>(owned_) and repeats the indirection before its second pass. This reads through null before its guard and treats record data as a pointer. Current init/get_alt/free paths establish owned_ as the allocation itself, not a pointer slot.",
+      "draw_farm invokes this dependency twice and gen_terrain_poly/get_alt consume the cache. Review the existing12-byte record lifecycle and other cache invalidators together; source history near clear-related code also contains pointer-indirection spelling experiments and cannot override original behavior. A bounded repair needs actual-source null/zero/negative-count and poison/untouched-byte controls, caller context, historical-claim checks and build/link. This finding grants no claim demotion, scope expansion or closure of the larger terrain-storage work."
+    ],
+    "hypothesis": "MapWin::clear_terrain currently dereferences the terrain-cache allocation as a pointer-to-pointer. The original uses the owned allocation directly, so the recovered dependency can fault on null or cached bytes interpreted as an address.",
+    "kind": "discovery"
+  },
+  "previous_event": "aa46ade15ea706069e2f214e86035b2c6bac6462ddeddd6f6cc2887d7f1600e9",
+  "request_id": "terrain-clear-cache-pointer-indirection-20260923",
+  "schema_version": 1,
+  "sequence": 75,
+  "stream": "task:vector-value-semantics"
+}

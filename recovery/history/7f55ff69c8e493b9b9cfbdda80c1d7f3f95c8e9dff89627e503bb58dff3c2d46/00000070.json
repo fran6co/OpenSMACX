@@ -1,0 +1,25 @@
+{
+  "event_id": "83fbc2a3f2804b0dd3c49e7505fee96485883d55a01791f3229982887ada60d5",
+  "payload": {
+    "affects": [
+      "entity-9464d1353aa4fbb7d3d7701c5990d666f5299433fbdacbb67817788b3544a603",
+      "entity-a4eae865aff7a81b8487d9797ff470929a40677cb9d3ecc1468800132c06c6af",
+      "entity-ba94e368185900491222d8b893844925ad841fb6adb512a4cad54c5c8784f932"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-altitude-lowering-direction-20260923",
+    "evidence": [
+      "Independent reviewer and coordinator original decode agree:5C22A5 reads tile altitude byte,5C22AB shifts right5,5C22AE compares existing altitudeECX against ring capEAX, and5C22B0 JLE skips the update. Only existing altitude greater than the cap is lowered through5C22C3/5C2316.",
+      "Current src/map.cpp world_alt_set5C2020 uses alt_at<alt in BOTH raising and lowering loops. The second loop should lower high neighbors, but the current predicate selects low neighbors. This is an original-behavior defect, not a byte-spelling optimization. Its mapping is unclaimed; all existing historical obligations must still remain. Existing owner is infowin-ownership, so no map.cpp edit or task-baseline reset is authorized by this finding.",
+      "Correcting that branch is only one prerequisite for ordinary one-step neighbor smoothing. Loaded, editor and direct-alt_set states still do not prove the1..7 nibble domain needed to replace biased CornerLightTable arithmetic. Preserve that domain obligation separately.",
+      "Further original storage review: Texture::draw61B1F0 and6233C0 also mutate/clamp the passed shade arrays in place at61B274/B282 and623477/3485. OceanCornerShades therefore requires shared mutable lifetime, not an immutable copied table. compute_lighting_table470420 writes196bytes at6688..674C and has original startup caller471033 in seed mapwin_system_init471030; no product producer/startup home has been established."
+    ],
+    "hypothesis": "world_alt_set lowering-ring comparison is reversed in current source, undermining the neighbor-height invariant needed by lighting indices.",
+    "kind": "discovery"
+  },
+  "previous_event": "f5ba6a8427affffe4cbd9d7e89ba79445973d54d383ebf0c614a9e2f24b53ca1",
+  "request_id": "terrain-altitude-lowering-direction-20260923",
+  "schema_version": 1,
+  "sequence": 70,
+  "stream": "task:vector-value-semantics"
+}

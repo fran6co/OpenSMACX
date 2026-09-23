@@ -467,17 +467,10 @@ void SubInterface::release_iface_mode() {
 ListBox ReportIfEnergyListBox;  // 0x0087BE84
 
 /*
- * Fixed-slot bindings the homed bodies arrived carrying, named from evidence.
- * The BoxSpriteStyleN numbers are indices into the BoxSpriteParams pool based
- * at 0x0078D528, on the 0x28 = sizeof(BoxSpriteParams) grid - see the block
- * comment in socialwin.cpp. InterfaceBuffer (0x007AEC64) is the shared
- * full-screen drawing Buffer and InterfaceClipRect (0x007AEC94, +0x30) the
- * RECT every one of those bodies hands to Buffer::set_clip. Each binding is an
- * `int *const`, which folds to the bare immediate, so the rename moves no byte.
+ * Remaining fixed-address interface surface and clip bindings. Panel styles
+ * below use the shared mutable InterfaceBoxStyles records; the interface
+ * Buffer at 0x7AEC64 and its clip at +0x30 still need source ownership.
  */
-static int *const BoxSpriteStyle0 = (int *)0x0078D528;
-static int *const BoxSpriteStyle3 = (int *)0x0078D5A0;
-static int *const BoxSpriteStyle33 = (int *)0x0078DA50;
 static int *const InterfaceBuffer = (int *)0x007AEC64;
 static int *const InterfaceClipRect = (int *)0x007AEC94;
 
@@ -527,15 +520,15 @@ void ReportIf::reset() {
     Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
 
     RECT *r1 = reinterpret_cast<RECT *>(self + 0x20);
-    buf->box_sprite(r1, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    buf->box_sprite(r1, &InterfaceBoxStyles[33]);
     RECT *r2 = reinterpret_cast<RECT *>(self + 0x30);
-    buf->box_sprite(r2, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    buf->box_sprite(r2, &InterfaceBoxStyles[33]);
     RECT *r3 = reinterpret_cast<RECT *>(self + 0x50);
-    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    buf->box_sprite(r3, &InterfaceBoxStyles[33]);
     RECT *r4 = reinterpret_cast<RECT *>(self + 0x40);
     buf->set_clip(r4);
     r4->left -= 7;
-    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle33));
+    buf->box_sprite(r4, &InterfaceBoxStyles[33]);
     r4->left += 7;
     buf->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
 
@@ -557,10 +550,10 @@ void ReportIf::reset() {
     r4->bottom -= 4;
     r4->left -= 3;
 
-    buf->box_sprite(r1, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
-    buf->box_sprite(r2, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
-    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
-    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle3));
+    buf->box_sprite(r1, &InterfaceBoxStyles[3]);
+    buf->box_sprite(r2, &InterfaceBoxStyles[3]);
+    buf->box_sprite(r3, &InterfaceBoxStyles[3]);
+    buf->box_sprite(r4, &InterfaceBoxStyles[3]);
 
     r3->left += 3;
     r3->right -= 3;
@@ -571,8 +564,8 @@ void ReportIf::reset() {
     r4->top += 3;
     r4->bottom -= 3;
 
-    buf->box_sprite(r3, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle0));
-    buf->box_sprite(r4, reinterpret_cast<BoxSpriteParams *>(BoxSpriteStyle0));
+    buf->box_sprite(r3, &InterfaceBoxStyles[0]);
+    buf->box_sprite(r4, &InterfaceBoxStyles[0]);
 
     r4->left += 3;
     r1->left -= 3;
@@ -600,4 +593,3 @@ void ReportIf::reset() {
     buf->set_text_color3(0xe1, -1, 1, 1);
     buf->clear_links();
 }
-

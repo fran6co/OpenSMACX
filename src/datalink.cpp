@@ -52,10 +52,8 @@ Datalink DatalinkMain;  // 0x00703EA0
  *                      packed four bytes apart (0x6832CC..0x6832E4), one per
  *                      category filler, and each filler appends it before the
  *                      id suffix that `GameState & 0x1000` asks for.
- * BoxSpriteStyle6      0x0078D618 - buffer.h documents this block as
- *                      ReplayWin's entry in the BoxSpriteParams pool, and
- *                      socialwin.cpp already carries the same binding under
- *                      this name; the pool index is the name.
+ * Panel frames borrow InterfaceBoxStyles[6], original 0x78D618, from the
+ * loader-owned shared pool rather than a fixed-address record.
  * CategoryEntryRect    the category_rect_ member, not a global - listed here
  *                      only to say the fillers share it.
  */
@@ -65,7 +63,6 @@ static const char *const ConceptArticle = (const char *)0x006832E8;
 static const char *const ConceptFile = (const char *)0x006832F8;
 static const char *const ConceptSection = (const char *)0x00683300;
 static const char *const AdvConceptFile = (const char *)0x00683310;
-static int *const BoxSpriteStyle6 = (int *)0x0078D618;
 
 /*
  * The rules tables the remaining fillers walk. Each is named from what its
@@ -980,7 +977,7 @@ void Datalink::set_cat_all() {
     set_cat_faction();
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1031,7 +1028,7 @@ void Datalink::set_cat_unit() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1080,7 +1077,7 @@ void Datalink::set_cat_chassis() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1133,7 +1130,7 @@ void Datalink::set_cat_reactor() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1179,7 +1176,7 @@ void Datalink::set_cat_weapon() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1225,7 +1222,7 @@ void Datalink::set_cat_defense() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1271,7 +1268,7 @@ void Datalink::set_cat_ability() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1324,7 +1321,7 @@ void Datalink::set_cat_facility() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1381,7 +1378,7 @@ void Datalink::set_cat_project() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1434,7 +1431,7 @@ void Datalink::set_cat_tech() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1490,7 +1487,7 @@ void Datalink::set_cat_concept() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1546,7 +1543,7 @@ void Datalink::set_cat_adv_concept() {
     text_close();
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1602,7 +1599,7 @@ void Datalink::set_cat_social() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1653,7 +1650,7 @@ void Datalink::set_cat_effect() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1705,7 +1702,7 @@ void Datalink::set_cat_faction() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;
@@ -1783,7 +1780,7 @@ void Datalink::set_cat_terraform() {
     }
 
     RECT rect = category_rect_;
-    box_sprite(&rect, (BoxSpriteParams *)BoxSpriteStyle6);
+    box_sprite(&rect, &InterfaceBoxStyles[6]);
 
     rect.left += 3;
     rect.right -= 3;

@@ -225,6 +225,29 @@ extern Sprite g_TER1_SENSOR_ARRAY_SPRITE;             // 0x007A6830
 // Shared interface choices: DipEdit uses elements 1 and 2 for its checkboxes.
 extern Sprite g_IFACE_CLOSE_X_SPRITES[3];
 
+// Existing interface assets populated by load_box_sprites; each numbered
+// array supplies the corresponding corner/edge of all 51 panel styles.
+extern Sprite g_IFACE_BOX_SPRITES1[51];
+extern Sprite g_IFACE_BOX_SPRITES2[51];
+extern Sprite g_IFACE_BOX_SPRITES3[51];
+extern Sprite g_IFACE_BOX_SPRITES4[51];
+extern Sprite g_IFACE_BOX_SPRITES5[51];
+extern Sprite g_IFACE_BOX_SPRITES6[51];
+extern Sprite g_IFACE_BOX_SPRITES7[51];
+extern Sprite g_IFACE_BOX_SPRITES8[51];
+extern Sprite g_IFACE_LOCK_SPRITES[2];
+extern Sprite g_IFACE_GREEN_RIGHT_ARROW_SPRITE[1];
+extern Sprite g_IFACE_MP_COMBO_ARROW_SPRITES[3];
+extern Sprite g_IFACE_TECH_TREE_ARROW_SPRITES[3];
+extern Sprite g_IFACE_STD_POPUPS_TOP_LEFT_SPRITE;
+extern Sprite g_IFACE_STD_POPUPS_TOP_MID_SPRITE;
+extern Sprite g_IFACE_STD_POPUPS_TOP_RIGHT_SPRITE;
+extern Sprite g_IFACE_STD_POPUPS_MID_LEFT_SPRITE;
+extern Sprite g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE;
+extern Sprite g_IFACE_STD_POPUPS_BOT_LEFT_SPRITE;
+extern Sprite g_IFACE_STD_POPUPS_BOT_MID_SPRITE;
+extern Sprite g_IFACE_STD_POPUPS_BOT_RIGHT_SPRITE;
+
 // Running total of Sprite-owned bytes. The constructor adds one object; the
 // release paths subtract the object plus its pixel buffer. The image holds
 // the counter in .bss at 0x009B6618 - zero at load - so the tree owns it as
