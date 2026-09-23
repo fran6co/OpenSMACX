@@ -239,6 +239,8 @@ void __cdecl load_fixed_sprites();                 // ?load_fixed_sprites@@YAXXZ
 void __cdecl load_box_sprites();
 // Complete terrain atlas extraction and shared rainfall/coast palette.
 void __cdecl load_terrain();
+void __cdecl load_vehicles();
+void __cdecl load_flags();
 extern unsigned char TerrainCoastPalette[12];
 void __cdecl textcolor_init();                     // ?textcolor_init@@YAXXZ
 // The fixed-art load itself. Six of the seven are still original bodies

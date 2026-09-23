@@ -57,6 +57,8 @@
 #include "caviar.h"
 #include "leaf_recoveries.h"
 #include "newtechwin.h"  // Existing technology-popup sprite assets.
+#include "infowin.h"  // Shared faction text/shadow colors.
+#include "maininterface.h"  // Shared chat foreground/shadow colors.
 
 // The rainfall loader publishes three rows of four colors, one byte after
 // each get_pixel. The coast renderer consumes row 1 forward or backward.
@@ -2375,57 +2377,179 @@ int __cdecl game_reload(int mode, int reload) {
 }
 
 // ORIGINAL: 0x00453F70 ?load_flags@@YAXXZ 0x00453F70-0x00454261;0x0065513A-0x0065515A FILE
-// size      785 bytes
-// prototype 
-// callers   4   call targets   8
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005D7470 0x005D7DE0 0x005DE580 0x005E39A0 0x005EAD9F 0x005EAE4F 0x006456E4 0x006457C2
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x00453F70
-// measured tier  MISMATCH
-// divergence     0
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/00453f70/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?load_flags@@YAXXZ  at 0x00453F70  (785 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
+// RECOVERY_BINDING: v1 {"reason":"Recover the complete faction flag sprite loader with real local lifetimes and shared palette/asset owners.","evidence":["Original453F70..454261 and unwind65513A..65515A construct fourteen local Sprites and destroy successful constructions in reverse. UNITS extracts seven pairs at y700/731; FLAGS extracts the same locals at y1/32, with repeated recolors before each extraction.","Every faction receives fourteen copies from UNITS, each followed by foreground then shadow recoloring. FLAGS replaces only factions whose live Players.rule_flags contains RFLAG_ALIEN; no expansion-aware extra guard. Color entries are reloaded after the preceding service call.","The shared PCX buffer closes once on ordinary completion, not during local Sprite exception cleanup. All service return values are ignored. Existing empty placeholder and obsolete image-string aliases are replaced; separate original-only callers and asset startup remain unfinished."]}
 
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const UnitsPcxPath = (int *)0x00685024;
-static int *const FlagsPcxPath = (int *)0x00685030;
+// The original owns two distinct UNITS.PCX strings, passed by the flag
+// and vehicle loaders respectively. Named constant arrays preserve those
+// separate storage identities without old-image pointers or literal pooling.
+// RECOVERY_OBJECT: v2 0x00685024 0x0068502E _FlagUnitSheet 0x00453F70
+static const char FlagUnitSheet[] = "UNITS.PCX";
+// RECOVERY_OBJECT: v2 0x00685058 0x00685062 _VehicleUnitSheet 0x00454270
+static const char VehicleUnitSheet[] = "UNITS.PCX";
 
 void __cdecl load_flags() {
-    return;
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    // RECOVERY_LITERAL: v1 0x00685030 0x0068503A ??_C@_09KHIG@FLAGS?4PCX?$AA@ 0x00453F70
+    Sprite source[14];
+    Buffer &sheet = g_PCX_PARSE_TEMP_BUFFER1;
+    sheet.load_pcx(FlagUnitSheet, 0, 10, 236);
+    int kind;
+    int frame;
+    int faction;
+    for (kind = 0; kind < 7; ++kind) {
+        for (frame = 0; frame < 2; ++frame) {
+            sheet.change_color(0x107, 0x109);
+            sheet.change_color(0x106, 0x109);
+            source[kind * 2 + frame].extract(
+                &sheet, 0x109, 1 + kind * 24, 700 + frame * 31, 23, 30, 0);
+        }
+    }
+    for (faction = 0; faction < 8; ++faction) {
+        for (kind = 0; kind < 14; ++kind) {
+            Sprite &destination = g_FLAGS_VEH_SPRITES[faction * 14 + kind];
+            source[kind].copy(&destination);
+            destination.change_color(0x104, InfoFactionTextColors[faction]);
+            destination.change_color(0x103, InfoFactionShadowColors[faction]);
+        }
+    }
+    sheet.load_pcx("FLAGS.PCX", 0, 10, 236);
+    for (kind = 0; kind < 7; ++kind) {
+        for (frame = 0; frame < 2; ++frame) {
+            sheet.change_color(0x107, 0x109);
+            sheet.change_color(0x106, 0x109);
+            source[kind * 2 + frame].extract(
+                &sheet, 0x109, 1 + kind * 24, 1 + frame * 31, 23, 30, 0);
+        }
+    }
+    for (faction = 0; faction < 8; ++faction) {
+        // Original tests the rule bit directly, not the expansion-aware helper.
+        if (Players[faction].rule_flags & RFLAG_ALIEN) {
+            for (kind = 0; kind < 14; ++kind) {
+                Sprite &destination = g_FLAGS_VEH_SPRITES[faction * 14 + kind];
+                source[kind].copy(&destination);
+                destination.change_color(0x104, InfoFactionTextColors[faction]);
+                destination.change_color(0x103, InfoFactionShadowColors[faction]);
+            }
+        }
+    }
+    sheet.close();
+}
 
+// ORIGINAL: 0x00454270 ?load_vehicles@@YAXXZ 0x00454270-0x004547DB;0x0065515A-0x00655182
+// RECOVERY_BINDING: v1 {"evidence": ["Original454270..4547DB plus unwind65515A..655182 constructs Sprite[2] then a singleton, and destroys them in reverse including partial unwind. All are real even though apparently unused; the shared PCX buffer is not a local lifetime.", "XI is9x16 sprites, XF is4 pairs of8 with receiver indices16*row+column and +8, not seed pointer+0x98. Original CRT construction/destruction independently bounds each Sprite bank. Four sheets perform244 extracts,74 Buffer recolors and37354 pixel queries before load_flags.", "Original palette loop only updates faction0, publishing each of four get_pixel results immediately into distinct eight-color owners. Two UNITS.PCX strings have distinct original storage685024 and685058; named constant arrays preserve the identities without old-image access or forced literal pooling.", "UNITS rows populate chassis9..18 with1,7 or3 variants; marker defaults and repeated get_pixel calls follow original order. The vertical marker scan uses sourceX-2/-1, not seed sourceY. Final chassis0..8 marker-Y stores target slot1 at4546CC while X uses slot0; no normalization or omitted ignored probes.", "load_flags is called after all marker scans; it closes the shared buffer once, followed by two further closes here. Service errors are ignored as in the original and exceptions only destroy locals. Existing unfinished loader/callee/runtime work remains separate; no byte claim or whole asset-startup acceptance."], "reason": "Recover the complete vehicle asset loader through genuine Sprite banks, chassis marker fields and shared palette owners."}
+void __cdecl load_vehicles() {
+    // RECOVERY_LITERAL: v1 0x0068503C 0x00685043 ??_C@_06FPN@XI?4PCX?$AA@ 0x00454270
+    // RECOVERY_LITERAL: v1 0x00685044 0x0068504B ??_C@_06GECN@XF?4PCX?$AA@ 0x00454270
+    // RECOVERY_LITERAL: v1 0x0068504C 0x00685058 ??_C@_0M@BHKA@PALETTE?4PCX?$AA@ 0x00454270
+    // These apparently unused objects are real original lifetimes: two array
+    // elements first, then a separate Sprite; exception cleanup reverses this.
+    Sprite scratch[2];
+    Sprite temporary;
+    Buffer &sheet = g_PCX_PARSE_TEMP_BUFFER1;
+    sheet.load_pcx("XI.PCX", 0, 0, 18);
+    sheet.change_color(253, 255);
+    int row;
+    int column;
+    int chassis;
+    int variant;
+    int x;
+    int y;
+    int marker_x;
+    int marker_y;
+    int y_offset;
+    for (row = 0; row < 9; ++row) {
+        for (column = 0; column < 16; ++column) {
+            g_XI_BOOM_VEH_SPRITES[row * 16 + column].extract(
+                &sheet, 255, 2 + column * 45, 2 + row * 49, 43, 47, 0);
+        }
+    }
+    sheet.load_pcx("XF.PCX", 0, 0, 18);
+    sheet.change_color(253, 255);
+    for (row = 0; row < 4; ++row) {
+        for (column = 0; column < 8; ++column) {
+            g_XF_BOOM_VEH_SPRITES[row * 16 + column].extract(
+                &sheet, 255, 2 + column * 102, 2 + row * 304, 100, 150, 0);
+            g_XF_BOOM_VEH_SPRITES[row * 16 + column + 8].extract(
+                &sheet, 255, 2 + column * 102, 154 + row * 304, 100, 150, 0);
+        }
+    }
+    sheet.load_pcx("PALETTE.PCX", 0, 10, 236);
+    // The original's eight-iteration loop performs work only for faction 0.
+    InfoFactionTextColors[0] = sheet.get_pixel(580, 23);
+    InfoFactionShadowColors[0] = sheet.get_pixel(580, 31);
+    ChatItemIdTable[0] = sheet.get_pixel(580, 39);
+    ChatShadowColors[0] = sheet.get_pixel(580, 47);
+    sheet.load_pcx(VehicleUnitSheet, 0, 10, 236);
+
+    for (chassis = 9; chassis < 19; ++chassis) {
+        int source_y = 2 + (chassis - 9) * 77;
+        int count = 1;
+        if (source_y == 233 || source_y == 79 || source_y == 310 || source_y == 387)
+            count = 7;
+        else if (source_y == 464)
+            count = 3;
+        for (variant = 0; variant < count; ++variant) {
+            int source_x = 2 + variant * 102;
+            if (chassis == 18) {
+                source_x = 716;
+                source_y = 233;
+            }
+            sheet.change_color(0x107, 0x109);
+            sheet.change_color(0x106, 0x109);
+            g_VEH_SPRITES[chassis * 8 + variant].extract(
+                &sheet, 0x109, source_x, source_y, 100, 75, 0);
+            RulesChassis &record = Chassis[chassis];
+            record.sprite_flag_y_off[variant] = 0;
+            record.sprite_flag_x_off[variant] = 0;
+            record.sprite_unk1_y_off[variant] = 0;
+            record.sprite_unk1_x_off[variant] = 0;
+            record.sprite_unk2_y_off[variant] = 157;
+            record.sprite_unk2_x_off[variant] = 157;
+            record.sprite_unk3_y_off[variant] = 157;
+            record.sprite_unk3_x_off[variant] = 157;
+            for (x = 0; x < 100; ++x) {
+                for (marker_y = source_y - 2; marker_y <= source_y - 1; ++marker_y) {
+                    // The first probe's result is ignored, but its call is real.
+                    sheet.get_pixel(source_x + x, marker_y - 1);
+                    if (sheet.get_pixel(source_x + x, marker_y) == 5)
+                        record.sprite_flag_x_off[variant] = static_cast<unsigned char>(x);
+                    if (sheet.get_pixel(source_x + x, marker_y) == 2)
+                        record.sprite_unk1_x_off[variant] = static_cast<unsigned char>(x);
+                }
+            }
+            for (y = 0; y < 75; ++y) {
+                for (marker_x = source_x - 2; marker_x <= source_x - 1; ++marker_x) {
+                    if (sheet.get_pixel(marker_x, source_y + y) == 5)
+                        record.sprite_flag_y_off[variant] = static_cast<unsigned char>(y);
+                    if (sheet.get_pixel(marker_x, source_y + y) == 2)
+                        record.sprite_unk1_y_off[variant] = static_cast<unsigned char>(y);
+                }
+            }
+        }
+    }
+    for (row = 0; row < 9; ++row) {
+        int border_y = 2 + row * 77;
+        for (x = 0; x < 100; ++x) {
+            for (y = border_y - 1; y <= border_y; ++y) {
+                sheet.get_pixel(918 + x, y - 1);
+                if (sheet.get_pixel(918 + x, y) == 5)
+                    Chassis[row].sprite_flag_x_off[0] = static_cast<unsigned char>(x);
+            }
+        }
+        for (y_offset = 0; y_offset < 75; ++y_offset) {
+            for (marker_x = 916; marker_x <= 917; ++marker_x) {
+                if (sheet.get_pixel(marker_x, border_y + 1 + y_offset) == 5) {
+                    // 4546CC adds the preceding final count (1) to 94A386.
+                    // Preserve this original asymmetry; do not normalize to 0.
+                    Chassis[row].sprite_flag_y_off[1] = static_cast<unsigned char>(y_offset);
+                }
+            }
+        }
+    }
+    load_flags();
+    sheet.close();
+    sheet.close();
+    // Automatic destructors: temporary first, then scratch[1], scratch[0].
+    // On exceptions there is no compensating close of the shared Buffer.
 }
 
 // ORIGINAL: 0x00524210 ?climactic_changes@@YAXXZ 0x00524210-0x005242C0 FILE

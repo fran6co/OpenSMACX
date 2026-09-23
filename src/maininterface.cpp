@@ -511,15 +511,19 @@ void MainInterface::on_status(int a1) {
 // here - its `range` collides with general.h's. It touches no member, so the
 // entry-vs-front receiver question does not arise.
 
-// 0x0068FA30, the table chat indexes with its second argument. Twenty-four
-// dwords are visible before the image's own data moves on to something else,
-// so the extent is a floor: the value is handed straight to
-// MessageWin::add_message as the item id, which packs it with 0x10000000 into
-// Dialog::item. Values recovered from the shipped image's .data.
-int ChatItemIdTable[24] = {
+// Eight faction foreground colors, independently paired with eight shadows.
+// load_faction_art4537D9/4537E8 writes the two banks and load_vehicles
+// 45443C/454446 publishes entry0. The following 68FA70 string is NOT an
+// array tail. Original chat caller537AD5 passes the packet faction index;
+// malformed packet indices remain unvalidated, not a larger storage owner.
+// Other original-only color users and load_faction_art still need recovery.
+// RECOVERY_OBJECT: v2 0x0068FA30 0x0068FA50 ?ChatItemIdTable@@3PAHA 0x00454270
+int ChatItemIdTable[8] = {
     249, 111, 252, 255, 251, 65, 102, 187,
+};
+// RECOVERY_OBJECT: v2 0x0068FA50 0x0068FA70 ?ChatShadowColors@@3PAHA 0x00454270
+int ChatShadowColors[8] = {
     134, 177, 172, 55, 146, 51, 145, 169,
-    15396, 77, 70, 78, 49, 50, 58, 62,
 };
 
 // ORIGINAL: 0x0045C0F0 ?set_message@MainInterface@@QAEXPADHHHH@Z 0x0045C0F0-0x0045C163;0x00655745-0x00655757 BYTE_EXACT

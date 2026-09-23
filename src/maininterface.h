@@ -16,6 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Shared palette indices, one foreground/shadow pair per faction.
+extern int ChatItemIdTable[8];
+extern int ChatShadowColors[8];
 #include "buttongroup.h"
 #include "flatbutton.h"
 #include "flic.h"

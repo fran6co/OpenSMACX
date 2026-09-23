@@ -118,6 +118,62 @@ void Sprite::close() {
 }
 
 
+// ORIGINAL: 0x005EAD9F ?change_color@Sprite@@QAEHHH@Z 0x005EAD9F-0x005EAE4E
+// RECOVERY_BINDING: v1 {"evidence": ["Original5EADA5 tests the pixel pointer; null returns7.5EADBC multiplies height by stride, not source or display width.5EADFA skips all work when the four-byte group count is zero, including non-null one-to-three-byte buffers; preserve that asymmetry rather than the seed full-scan loop.", "For valid nonnegative allocated sprite sizes, original unrolled byte comparisons and tail replace only matches after masking both colors to8bits. No transparency/metadata change or service call occurs; borrowed pixels are modified too. Malformed dimensions/overflowed allocation domains are not established as safe. Genuine C++ loop remains unclaimed; no assembly or copied machine code."], "reason": "Recover the sprite pixel recoloring service using the genuine owned/borrowed pixel pointer and stride."}
+int Sprite::change_color(int old_color, int new_color) {
+    if (pcBits_ == 0) {
+        return 7;
+    }
+    const unsigned int size = static_cast<unsigned int>(iSpriteHeight_)
+                           * static_cast<unsigned int>(iSpriteWidth2_);
+    // Original 5EADFA skips the tail as well when there is no four-byte
+    // group: buffers of one, two or three pixels are deliberately untouched.
+    if (size < 4) {
+        return 0;
+    }
+    const unsigned char from = static_cast<unsigned char>(old_color);
+    const unsigned char to = static_cast<unsigned char>(new_color);
+    unsigned char *pixels = reinterpret_cast<unsigned char *>(pcBits_);
+    for (unsigned int index = 0; index < size; ++index) {
+        if (pixels[index] == from) {
+            pixels[index] = to;
+        }
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x005EAE4F ?copy@Sprite@@QAEHPAUSprite@@@Z 0x005EAE4F-0x005EAF34
+// RECOVERY_BINDING: v1 {"evidence": ["5EAE57 checks source bits before touching destination.5EAE6C..5EAEC4 performs the same owned/borrowed cleanup and field clearing as Sprite::close, preserving the transparent key.5EAEC7 captures wrapped32bit stride*height only after cleanup; allocation pointer publishes before null failure4.", "5EAEEA rereads source bits after allocation;5EAEF5..5EAF29 reads metadata after memcpy, writes dimensions/offsets/key, clears borrowed status and copies stride last. Original has no pixel-allocation increment to SpriteMemoryUsed and no self/null destination guard. Valid pixel allocations and ordinary C++ memcpy domains remain required; no behavioral repair is invented."], "reason": "Recover source.copy(destination) through Sprite ownership and close semantics, retaining original allocation failure and metadata observation order."}
+// symbol    ?copy@Sprite@@QAEHPAV1@@Z
+int Sprite::copy(Sprite *destination) {
+    if (pcBits_ == 0) {
+        return 7;
+    }
+    // Original 5EAE6C..5EAEC4 inlines this cleanup. In particular it does
+    // not free borrowed pixels or clear the destination's transparent key.
+    destination->close();
+    const unsigned int size = static_cast<unsigned int>(iSpriteHeight_)
+                           * static_cast<unsigned int>(iSpriteWidth2_);
+    char *pixels = static_cast<char *>(mem_get(size));
+    destination->pcBits_ = pixels;
+    if (pixels == 0) {
+        return 4;
+    }
+    memcpy(pixels, pcBits_, size);
+    // These are fresh source reads AFTER copying, not a saved descriptor.
+    // The original does not charge this allocation to SpriteMemoryUsed.
+    destination->iSpriteWidth_ = iSpriteWidth_;
+    destination->iSpriteHeight_ = iSpriteHeight_;
+    destination->iWidth_ = iWidth_;
+    destination->iHeight_ = iHeight_;
+    destination->iLeftOffset_ = iLeftOffset_;
+    destination->iTopOffset_ = iTopOffset_;
+    destination->cTransparentIndex_ = cTransparentIndex_;
+    destination->fObj1Exists_ = 0;
+    destination->iSpriteWidth2_ = iSpriteWidth2_;
+    return 0;
+}
+
 // OBJECTS, NOT POINTERS: the image addresses 0x00696D18 and 0x00696D1C
 // directly - `mov esi, dword ptr [0x696d18]` - where a pointer variable
 // loads the pointer first.
@@ -1750,8 +1806,12 @@ Sprite g_TER1_SENSOR_ARRAY_SPRITE;
 // exit 0044F2C0 uses the same extent. Initial zero storage is not lifetime proof.
 // RECOVERY_OBJECT: v2 0x007ACBB8 0x007ACC10 ?g_RAINFALL_DOUBLE_TILE_SPRITES@@3PAVSprite@@A 0x00451C50
 Sprite g_RAINFALL_DOUBLE_TILE_SPRITES[2];
-Sprite g_VEH_SPRITES[152];  // 0x007777A0, 0x2c stride
-Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778, 0x2c stride
+// CRT 44F2E0 constructs152 Sprites; 44F310 destroys the same 0x2C-stride bank.
+// RECOVERY_OBJECT: v2 0x007777A0 0x007791C0 ?g_VEH_SPRITES@@3PAVSprite@@A 0x00454270
+Sprite g_VEH_SPRITES[152];
+// CRT 44F330/44F360 construct/destroy112 Sprites: fourteen for each faction.
+// RECOVERY_OBJECT: v2 0x0078B778 0x0078CAB8 ?g_FLAGS_VEH_SPRITES@@3PAVSprite@@A 0x00453F70
+Sprite g_FLAGS_VEH_SPRITES[112];
 // Original CRT 0x682358 constructs 16 Sprite(s) via 0x44F380
 // and registers 0x44F3B0 for teardown; element extent is 0x2C.
 // RECOVERY_OBJECT: v2 0x0075B450 0x0075B710 ?g_ICONS_GENERAL_SPRITES@@3PAVSprite@@A 0x004547E0
@@ -1804,8 +1864,13 @@ Sprite g_PEACE_SIGN_SPRITES[2];  // 0x0075AF10, 0x2c stride
 // and registers 0x44F840 for teardown; element extent is 0x2C.
 // RECOVERY_OBJECT: v2 0x00776728 0x00776754 ?g_ICON_TILE_SQUARE_SPRITE@@3VSprite@@A 0x004547E0
 Sprite g_ICON_TILE_SQUARE_SPRITE;  // 0x00776728
-Sprite g_XI_BOOM_VEH_SPRITES[144];  // 0x007A9B30, 0x2c stride
-Sprite g_XF_BOOM_VEH_SPRITES[64];  // 0x007AB460, 0x2c stride
+// CRT 44F850/44F880 construct/destroy144 Sprites at stride0x2C.
+// RECOVERY_OBJECT: v2 0x007A9B30 0x007AB3F0 ?g_XI_BOOM_VEH_SPRITES@@3PAVSprite@@A 0x00454270
+Sprite g_XI_BOOM_VEH_SPRITES[144];
+// CRT 44F8A0/44F8D0 construct/destroy64 Sprites. The loader's moving
+// bottom-row sentinel7AC0C0 is not the end of this object's storage.
+// RECOVERY_OBJECT: v2 0x007AB460 0x007ABF60 ?g_XF_BOOM_VEH_SPRITES@@3PAVSprite@@A 0x00454270
+Sprite g_XF_BOOM_VEH_SPRITES[64];
 Sprite g_BATTLE_MIND_WORM_SPRITE;  // 0x00779200
 Sprite g_BATTLE_ISLE_DEEP_SPRITE;  // 0x0076DC30
 Sprite g_BATTLE_LOCUSTS_CHIRON_SPRITE;  // 0x0078A4A0

@@ -99,6 +99,9 @@ class Sprite {
   int extract(Buffer *buffer, int a, int b, int c, int width, int height,
               TexHeap *heap);
   int create_blank(int width, int height, int depth);
+  // Copy this sprite's pixels/metadata into the destination, not vice versa.
+  int copy(Sprite *destination);
+  int change_color(int old_color, int new_color);
   // 0x005E3890, still FILE-only in src/unrecovered/005e3890.cpp. DECLARED
   // here because BasePop::start (0x00601BF0) calls it by name on the popup's
   // own `sprite_` - the access costs nothing and the definition stays where
@@ -293,6 +296,8 @@ typedef void *func_sprite_free(void *);
 extern int SpriteScaleNumerator;    // 0x00696D18, initially 1
 extern Sprite g_VEH_SPRITES[152];        // 0x007777A0
 extern Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778
+extern Sprite g_XI_BOOM_VEH_SPRITES[144];
+extern Sprite g_XF_BOOM_VEH_SPRITES[64];
 extern int SpriteScaleDenominator;  // 0x00696D1C, initially 1
 extern int SpriteCachedScaleNumerator;    // 0x00696D20, initially -1
 extern int SpriteCachedScaleDenominator;  // 0x00696D24, initially -1
