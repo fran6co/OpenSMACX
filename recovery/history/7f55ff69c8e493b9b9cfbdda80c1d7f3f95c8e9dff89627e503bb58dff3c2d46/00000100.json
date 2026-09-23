@@ -1,0 +1,21 @@
+{
+  "event_id": "08729d27c48dbb4ba35d87d16ad8cf941a1d471d73cfb92f38b788dc4a8f5b7f",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "caption-icons-borrowed-owner-20260923",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/win.cpp owns four independently mapped borrowed Sprite pointers. src/game.cpp game_init now publishes the actual menu Sprite elements [1],[2],[0] after start_timers and leaves Restore untouched, including on service failures. src/win.h declares the shared pointer owners rather than split integer aliases.",
+      "src/imagebutton.h owns Sprite* sprite_ at AB8 and both genuine init overloads. The original close/init identities and historical claims moved intact from leaf_recoveries.cpp to src/imagebutton.cpp; observed compiler symbols were reconciled through the native writer. Caption members are ImageButton*, redo uses inherited DIB width and set_sprite with callback rereads, and Win::close performs original virtual destruction before clearing each owner.",
+      "WinDynamicDefaultsTable now ends at 9B7B00 rather than overlapping the icon slots, MenuPopup and WinInstance. Independent original reads/writes and native layouts support four words; this semantic grouping does not establish a historical translation unit or larger table.",
+      "The bounded typed-owner discovery is incorporated, not a declaration of game or autonomous acceptance. Independent original/source review and fresh native matching, layout, initial-data, claim and reference checks support this source interpretation. Fresh clean-candidate build/link and post-integration checks remain required for manual merging.",
+      "Keep imagebutton-paint-and-caption-creation-20260923 pending: no paint override or actual caption creation has been recovered by this change. The existing slot12 hierarchy finding, startup dependencies, terrain work, faction-cache overread and user-deferred base_energy remain untouched."
+    ]
+  },
+  "previous_event": "83146f99686909546195f5e7d01583ecb19f0405a18eae3aeb0d860d9a71a53e",
+  "request_id": "caption-icons-typed-owners-incorporated-20260923",
+  "schema_version": 1,
+  "sequence": 100,
+  "stream": "task:vector-value-semantics"
+}

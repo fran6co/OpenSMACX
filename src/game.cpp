@@ -372,12 +372,6 @@ char PronounBuffer[256];  // 0x00945838 - see game.h for the naming evidence
 BOOL ExpansionEnabled;  // 0x009A6488
 uint32_t GamePreferences;  // 0x009A6490
 
-// The two caption-button icon slots win.h does not name. See the externs in
-// game.h for the identification, and game_init's closing stores for the
-// addresses the image puts in them.
-int WinCloseIcon;      // 0x009B7B00
-int WinMinimizeIcon;   // 0x009B7B0C
-
 uint32_t SystemInterfaceFlags;  // 0x00933420
 
 // colortables_init loads 256 palette indices from shadow.tmp or builds the
@@ -2033,9 +2027,9 @@ int __cdecl game_init(int mode, int reload) {
     // The three caption-button icons: sprite.cpp's array at 0x0075AE20, a 0x2c
     // stride, so these are its [1], [2] and [0]. WinRestoreIcon, the slot
     // between the last two, is not set here.
-    WinCloseIcon = 0x0075AE4C;
-    WinMaximizeIcon = 0x0075AE78;
-    WinMinimizeIcon = 0x0075AE20;
+    WinCloseIcon = &g_SILVER_MENU_ICON_SPRITES[1];
+    WinMaximizeIcon = &g_SILVER_MENU_ICON_SPRITES[2];
+    WinMinimizeIcon = &g_SILVER_MENU_ICON_SPRITES[0];
     return 0;
 }
 

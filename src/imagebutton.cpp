@@ -42,7 +42,7 @@ ImageButton::ImageButton() {
     // AFTER both vfptrs (0x006252F8, after 0x006252E8 and 0x006252EE), and
     // MSVC runs the list BEFORE the vfptr assignment - which is exactly how
     // ??0Win@@QAE@XZ's six stores had to move the other way.
-    field_AB8_ = 0;
+    sprite_ = 0;
 }
 
 /*
@@ -79,13 +79,11 @@ Status: Complete
 */
 
 /*
-Purpose: Initialise the button from its definition record. The record goes
-         into field_AB8_ - the same slot the nine-argument init overload fills
-         with its own first argument - and the width and height the base
-         initialiser wants are read back off that record at 0x18 and 0x1c,
-         which is why this form takes no explicit pair.
+Purpose: Initialise the button from a borrowed Sprite. Store it in sprite_,
+         as the explicit-size overload does, then pass its displayed width
+         and height at 0x18 and 0x1c to the base initialiser.
 // ORIGINAL: 0x00625380 sub_625380 0x00625380-0x006253C6 BYTE_EXACT
-// symbol    ?init@ImageButton@@QAEHPBHPBDHHHPAVWin@@H@Z
+// symbol    ?init@ImageButton@@QAEHPAVSprite@@PBDHHHPAVWin@@H@Z
 // size      70 bytes
 // prototype int (__thiscall sub_625380)(ImageButton* this, const int*, LPCSTR, int, int, int, Win*, int)
 // callers   0   call targets   1
@@ -103,16 +101,69 @@ Purpose: Initialise the button from its definition record. The record goes
 Return Value: whatever BaseButton::init returns
 Status: Complete
 */
-int ImageButton::init(const int *imageDef, LPCSTR name, int id, int x, int y,
+int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
                       Win *parent, int style_flag) {
-    if (imageDef == 0) {
+    if (sprite == 0) {
         return 3;
     }
-    field_AB8_ = reinterpret_cast<uint32_t>(imageDef);
-    // The record's own width and height, at 0x18 and 0x1c, read straight off
-    // it once and then handed to the base.
-    int height = imageDef[7];
-    int width = imageDef[6];
+    sprite_ = sprite;
+    int height = sprite->height();
+    int width = sprite->width();
     return BaseButton::init(name, id, x, y, width, height, parent,
                             style_flag);
+}
+
+/*
+Purpose: Clear the field, then close as a BaseButton.
+
+             mov dword [ecx+0xab8],0 / jmp ?close@BaseButton@@QAEXXZ
+
+         A TAIL jump, so BaseButton::close's return value is this function's -
+         but the mangled name says `X`, void, so nothing reads it. Declared
+         void to match the name, and the value is discarded rather than
+         quietly re-typed.
+
+// ORIGINAL: 0x00625330 ?close@ImageButton@@QAEXXZ 0x00625330-0x0062533F BYTE_EXACT
+// symbol    ?close@ImageButton@@QAEXXZ
+// size      15 bytes
+// prototype void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void ImageButton::close() {
+    sprite_ = 0;
+    BaseButton::close();
+}
+
+/*
+Purpose: Keep the first argument, hand the other eight to BaseButton::init.
+
+             mov eax,[esp+4] / mov edx,[esp+0x24] / mov [ecx+0xab8],eax
+             ...eight interleaved reads and pushes... / call BaseButton::init
+             ret 0x24
+
+         The reads and pushes alternate because each `[esp+0x20]` is taken
+         AFTER a push has moved ESP - so they walk backwards through the
+         arguments and re-push them in order. Nine arguments in (`ret 0x24`),
+         the first kept at 0xab8 and the remaining eight passed straight on.
+
+// ORIGINAL: 0x00625340 ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z 0x00625340-0x0062537A BYTE_EXACT
+// symbol    ?init@ImageButton@@QAEHPAVSprite@@PBDHHHHHPAVWin@@H@Z
+// size      58 bytes
+// prototype int (__thiscall ?init@ImageButton@@QAEHHPADHHHHHPAUWin@@H@Z)(ImageButton* this, int, int8*, int, int, int, int, int, Win*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00607210
+Return Value: whatever BaseButton::init returns
+Status: Complete
+*/
+int ImageButton::init(Sprite *sprite, LPCSTR name, int id, int x, int y,
+                      int width, int height, Win *parent, int style_flag) {
+    sprite_ = sprite;
+    return BaseButton::init(name, id, x, y, width, height, parent, style_flag);
 }

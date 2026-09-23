@@ -276,16 +276,6 @@ inline func_string_upper *&string_upper_slot() {
   return *reinterpret_cast<func_string_upper **>(0x0066931C);
 }
 
-// The caption-button icons game_init publishes. win.h names the two between
-// them - WinMaximizeIcon at 0x009B7B04 and WinRestoreIcon at 0x009B7B08 - so
-// the two flanking slots are the close and minimise icons of the same family.
-// game_init stores sprite-array addresses into all three except Restore, and
-// sprite.cpp's g_SILVER_MENU_ICON_SPRITES at 0x0075AE20 (0x2c stride) is where
-// those three addresses land: [1], [2] and [0] in that order. sprite.h does
-// not declare the array, so the elements are stored as the addresses they are.
-extern int WinCloseIcon;      // 0x009B7B00
-extern int WinMinimizeIcon;   // 0x009B7B0C
-
 // A flags dword nothing else in the image touches: system_init is its only
 // reader and its only writer, and it clears 0x8C0 - bits 0x40 and 0x800 - out
 // of it. Zero-initialised .data, so on the first pass the read and the masked

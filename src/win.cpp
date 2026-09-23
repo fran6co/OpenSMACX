@@ -27,6 +27,7 @@ typedef signed char int8;  // a scaffold spelling the artifacts use
 #include "vtable_shim.h"
 #include "scroll.h"
 #include "win.h"
+#include "imagebutton.h"
 #include <cstring>
 #include "palette.h"
 #include "general.h"
@@ -731,8 +732,17 @@ int WinClipWidth;            // 0x009B7A40
 int WinClipHeight;           // 0x009B7A44
 int WinDragOffsetX;          // 0x009B7A38
 int WinDragOffsetY;          // 0x009B7A3C
-int WinMaximizeIcon;         // 0x009B7B04
-int WinRestoreIcon;          // 0x009B7B08
+// Independent pointer slots, initially null. game_init (58F3FE/408/412)
+// publishes existing menu Sprite elements; redo_caption_buttons reads
+// maximize/restore at 5F27F0/5F27DC. No restore writer was found.
+// RECOVERY_OBJECT: v2 0x009B7B00 0x009B7B04 ?WinCloseIcon@@3PAVSprite@@A 0x0058F2F0
+Sprite *WinCloseIcon;        // 0x009B7B00
+// RECOVERY_OBJECT: v2 0x009B7B04 0x009B7B08 ?WinMaximizeIcon@@3PAVSprite@@A 0x005F2760
+Sprite *WinMaximizeIcon;     // 0x009B7B04
+// RECOVERY_OBJECT: v2 0x009B7B08 0x009B7B0C ?WinRestoreIcon@@3PAVSprite@@A 0x005F2760
+Sprite *WinRestoreIcon;      // 0x009B7B08
+// RECOVERY_OBJECT: v2 0x009B7B0C 0x009B7B10 ?WinMinimizeIcon@@3PAVSprite@@A 0x0058F2F0
+Sprite *WinMinimizeIcon;     // 0x009B7B0C
 int WinSizingFlag;           // 0x009B7AD4
 int WinModalDepth;           // 0x009B7AE4
 int WinKeyModifiers;         // 0x009B7B18
@@ -772,6 +782,10 @@ char WinKeyRing[10];       // 0x009B7B48
 char *WinKeyRingCursor = WinKeyRing;  // 0x00696D5C
 const uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
     247, 24, 0xffffffff, 1, 1, 8, 0xffffffff, 7, 2, 1};
+// Semantic defaults record: ctor 5EB485/4A9/4FD/515 and close
+// 5EBA46/5EBA5E/5EBABB/5EBAD2 read four independent fields only.
+// The original zero-filled extent ends before the caption-pointer owners.
+// RECOVERY_OBJECT: v2 0x009B7AF0 0x009B7B00 ?WinDynamicDefaults@@3UWinDynamicDefaultsTable@@A 0x005EB3D0
 WinDynamicDefaultsTable WinDynamicDefaults;  // 0x009B7AF0
 int WinBubbleActive;       // 0x009B7A50
 // on_char loads this pointer at 5F612F/5F615F; hide independently does
@@ -5186,22 +5200,16 @@ void Win::redo_caption_buttons() {
             border_thickness_ - caption_height_ - 2;
     if (close_button_ != 0) {
         close_button_->move(x, w);
-        x += -3 - *reinterpret_cast<int *>(
-                       reinterpret_cast<char *>(close_button_) + 0x4C4);
+        x += -3 - close_button_->dib_.bmiHeader.biWidth;
     }
     if (zoom_button_ != 0) {
         zoom_button_->move(x, w);
         if (IsZoomed(HandleMain) != 0) {
-            *reinterpret_cast<int *>(
-                reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
-                WinRestoreIcon;
+            zoom_button_->set_sprite(WinRestoreIcon);
         } else {
-            *reinterpret_cast<int *>(
-                reinterpret_cast<char *>(zoom_button_) + 0xAB8) =
-                WinMaximizeIcon;
+            zoom_button_->set_sprite(WinMaximizeIcon);
         }
-        x += -1 - *reinterpret_cast<int *>(
-                       reinterpret_cast<char *>(zoom_button_) + 0x4C4);
+        x += -1 - zoom_button_->dib_.bmiHeader.biWidth;
     }
     if (minimize_button_ != 0) {
         minimize_button_->move(x, w);
@@ -10877,23 +10885,23 @@ void Win::close() {
         field_E0_ = 0;
     }
     {
-        void *p0xE4 = minimize_button_;
-        if (p0xE4 != 0) {
-            delete p0xE4;
+        Win *button = minimize_button_;
+        if (button != 0) {
+            delete button;
             minimize_button_ = 0;
         }
     }
     {
-        void *p0xE8 = zoom_button_;
-        if (p0xE8 != 0) {
-            delete p0xE8;
+        Win *button = zoom_button_;
+        if (button != 0) {
+            delete button;
             zoom_button_ = 0;
         }
     }
     {
-        void *p0xEC = close_button_;
-        if (p0xEC != 0) {
-            delete p0xEC;
+        Win *button = close_button_;
+        if (button != 0) {
+            delete button;
             close_button_ = 0;
         }
     }

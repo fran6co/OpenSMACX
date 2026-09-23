@@ -43,20 +43,18 @@ class ImageButton : public BaseButton {
   ImageButton();
   ~ImageButton();
   void close();
-  int init(int a1, LPSTR name, int id, int x, int y, int width, int height,
+  int init(Sprite *sprite, LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
-  // 0x00625380, the second init, and the one that takes the button's own
-  // definition record instead of an explicit width and height. It stores the
-  // record in field_AB8_ exactly as the nine-argument form above stores its
-  // first argument, then reads the width and height off the record - the two
-  // ints at 0x18 and 0x1c, so `imageDef[6]` and `imageDef[7]` - and forwards
-  // the rest of its arguments to BaseButton::init unchanged. A null record
-  // returns 3 before touching anything. This is why the parameter is a
-  // pointer here and a plain int in the overload above: this body reads
-  // through it, so the body itself is the evidence of the type.
-  int init(const int *imageDef, LPCSTR name, int id, int x, int y,
+  // 625380 borrows the same Sprite as the explicit-size overload and reads
+  // its dimensions at +18/+1C. A null sprite returns 3 without a store.
+  int init(Sprite *sprite, LPCSTR name, int id, int x, int y,
            Win *parent, int style_flag);
+  void set_sprite(Sprite *sprite) { sprite_ = sprite; }
 
  private:
-  uint32_t field_AB8_;  // 0xAB8
+  // init 625340/625380 publish this borrowed pointer; paint 6253D0 reads
+  // Sprite transparency/source width and calls Sprite::draw. close clears
+  // it before BaseButton::close. The button never owns the Sprite lifetime.
+  // RECOVERY_MEMBER: v3 ImageButton sprite_ Sprite* 0xAB8 0x00625380
+  Sprite *sprite_;
 };

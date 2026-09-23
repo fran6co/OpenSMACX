@@ -25,6 +25,7 @@
 #include "sprite.h"
 
 class Menu; // forward declaration
+class ImageButton;
 // The ninth Win::init / GraphicWin::init argument, spelled PAUBorderSizing@@
 // in both mangled names - a struct, hence the tag.
 //
@@ -393,16 +394,18 @@ class Win : public AutoSound {
   WinNodeList list_;
   // 0xE0. Zeroed by the constructor; nothing yet reads it.
   uint32_t field_E0_;
-  // 0xE4, 0xE8, 0xEC. PROVEN pointers, not raw storage: `redo_caption_buttons`
-  // (0x005F2760) positions each with `move()` and reads a field at +0x4C4 on
-  // every one - past `sizeof(Win)`, so each points at a Win-derived object of
-  // its own. Processed right-to-left (the standard Windows caption-button
-  // order), and the one at +0xE8 alone swaps an icon by `IsZoomed()` -
-  // maximize/restore is the only caption button whose icon depends on zoom
-  // state. Names are INFERRED from that, not independently confirmed.
-  Win *minimize_button_;   // 0xE4
-  Win *zoom_button_;       // 0xE8
-  Win *close_button_;      // 0xEC
+  // redo_caption_buttons (5F2760) uses ImageButton's borrowed Sprite at
+  // +AB8 and its inherited Buffer DIB width at +444+7C+4. ImageButton
+  // init/paint (625380/6253D0) establish that Sprite relationship; ctor
+  // 6252E0 and deleting adjustor 6256F0 establish the Buffer base offset.
+  // The names follow right-to-left placement and IsZoomed selection.
+  // Actual caption-control creation remains an unestablished dependency.
+  // RECOVERY_MEMBER: v3 Win minimize_button_ ImageButton* 0xE4 0x005F2760
+  ImageButton *minimize_button_;
+  // RECOVERY_MEMBER: v3 Win zoom_button_ ImageButton* 0xE8 0x005F2760
+  ImageButton *zoom_button_;
+  // RECOVERY_MEMBER: v3 Win close_button_ ImageButton* 0xEC 0x005F2760
+  ImageButton *close_button_;
   Menu *menu_;
   uint32_t field_F4_;
   // THE WINDOW'S FONT, seeded from WinDynamicDefaults.default_font_ by the
@@ -924,8 +927,12 @@ extern int WinClipWidth;            // 0x009B7A40
 extern int WinClipHeight;           // 0x009B7A44
 extern int WinDragOffsetX;          // 0x009B7A38
 extern int WinDragOffsetY;          // 0x009B7A3C
-extern int WinMaximizeIcon;         // 0x009B7B04
-extern int WinRestoreIcon;          // 0x009B7B08
+// Borrowed caption sprites. game_init publishes close/maximize/minimize;
+// no original restore-icon writer was found. These do not own Sprite lifetime.
+extern Sprite *WinCloseIcon;        // 0x009B7B00
+extern Sprite *WinMaximizeIcon;     // 0x009B7B04
+extern Sprite *WinRestoreIcon;      // 0x009B7B08
+extern Sprite *WinMinimizeIcon;     // 0x009B7B0C
 extern int WinSizingFlag;           // 0x009B7AD4
 
 extern int WinModalDepth;           // 0x009B7AE4
@@ -987,7 +994,7 @@ extern char *WinKeyRingCursor;   // 0x00696D5C, initialised to the ring
 // 0x00696D5C, and the values are the image's own, read with
 // tools/image_data.py rather than left as an address.
 extern const uint32_t WinStaticDefaults[10];   // 0x00696D34
-// THE DYNAMIC WINDOW DEFAULTS, 0x009B7AF0 - ten dwords, of which slot 1 is
+// THE DYNAMIC WINDOW DEFAULTS, 0x009B7AF0 - four dwords, of which slot 1 is
 // named: it is THE DEFAULT WINDOW FONT (a Font* - the Win constructor seeds
 // every new window's field_F8_ from it, Win::close resets the same way, and
 // config_popups re-points it at the popup 12px font via find_font). It used
@@ -995,9 +1002,15 @@ extern const uint32_t WinStaticDefaults[10];   // 0x00696D34
 // was a second C++ object over these same bytes - the font never flowed in
 // the standalone build until the two became one.
 struct WinDynamicDefaultsTable {
+  // RECOVERY_MEMBER: v1 WinDynamicDefaultsTable field_0_ 0x0 0x005EB3D0
   uint32_t field_0_;      // was [0]
+  // RECOVERY_MEMBER: v3 WinDynamicDefaultsTable default_font_ Font* 0x4 0x005EB3D0
   Font *default_font_;    // 0x4; original address 0x009B7AF4, was [1] - see above
-  uint32_t rest_[8];      // 0x8; original addresses 0x009B7AF8..0x009B7B14, was [2]..[9]
+  // Win construction/close read AF8/AFC. The following four words are
+  // independent caption pointers, then MenuPopup and WinInstance, not
+  // additional defaults. No indexed access establishes a larger record.
+  // RECOVERY_MEMBER: v1 WinDynamicDefaultsTable rest_ 0x8 0x005EB3D0
+  uint32_t rest_[2];      // 0x8; original addresses 0x009B7AF8..0x009B7AFC
 };
 extern WinDynamicDefaultsTable WinDynamicDefaults;
 extern int WinBubbleActive;      // 0x009B7A50

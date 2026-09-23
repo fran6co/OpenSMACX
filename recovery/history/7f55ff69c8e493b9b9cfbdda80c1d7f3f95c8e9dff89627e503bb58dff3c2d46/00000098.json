@@ -1,0 +1,89 @@
+{
+  "event_id": "6dbd9fb4381c46c37878e47dfc53df09c9a364581c413b06f8d15b83d85156a6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_caption_icons.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/imagebutton.cpp",
+      "src/imagebutton.h",
+      "src/leaf_recoveries.cpp",
+      "src/leaf_recoveries.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Authorize the connected caption-icon ownership repair, not only changing three immediate stores: four borrowed Sprite pointers belong to window defaults, game_init supplies existing menu sprites [1],[2],[0], and restore remains independently zero-initialized with no observed writer. Preserve the original null and failure behavior; do not invent caption creation.",
+      "Independent whole-image direct-operand and stored-address censuses found the three game_init stores at58F3FE/408/412 and two redo reads at5F27DC/F0. No indexed table or escaping slot address was found. Source owners should be four scalars, not a fabricated array from adjacency.",
+      "WinDynamicDefaultsTable currently fabricates40 bytes overlapping those pointers and MenuPopup/WinInstance. Original ctor and close read only AF0,AF4,AF8,AFC; external configuration writes only the same font and two scalar fields. Correct the bounded semantic record to16 bytes, retaining its four values and source identity.",
+      "ImageButton init625380 stores a Sprite pointer and reads dimensions+18/+1C; paint6253D0 reads the same pointer, transparency+8 and source width+10 then calls Sprite::draw. Recover sprite_ as Sprite*, both genuine init overloads and close, rehoming the two leaf redirects without dropping historical markers/claims. Native observed-symbol writer must reconcile current method symbols.",
+      "ImageButton constructor installs Win atfront and Buffer at+444; original Buffer deleting adjustor subtracts444. Caption width+4C4 is the inherited DIB biWidth (+444+7C+4), not a new member. Use ImageButton* caption members and ordinary inherited access, retaining fresh member/global reads after move and IsZoomed.",
+      "Original Win::close5EBAF7..5EBB30 calls each caption virtual destructor before clearing its owner. Correct its three void* deletes to genuine polymorphic Win* deletion; retain already-correct do_caption_buttons deletion. No unrelated cleanup rewrite, no task baseline reset and no demotion of claims.",
+      "Require independent source/original/test review, current claim and symbol continuity, native layouts/initial-data/reference checks, protected family measurements and clean build/link before and after manual integration. Actual-source host tests use explicit dependency doubles and assertion-rejected mutations. Preserve unfinished terrain work, all prior findings and deferred base_energy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5829360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6236000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6235904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6206416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6207040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443744,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6444784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4e09d26172a7c66631003e518a68cbbdc1758a505a3f71d03b75f0b2753ee93e",
+  "request_id": "caption-icons-genuine-ownership-20260923",
+  "schema_version": 1,
+  "sequence": 98,
+  "stream": "task:vector-value-semantics"
+}

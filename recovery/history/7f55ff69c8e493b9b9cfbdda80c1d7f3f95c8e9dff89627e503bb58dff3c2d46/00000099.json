@@ -1,0 +1,24 @@
+{
+  "event_id": "83146f99686909546195f5e7d01583ecb19f0405a18eae3aeb0d860d9a71a53e",
+  "payload": {
+    "affects": [
+      "entity-75e867046253629d2976d090f164b056306779e2bb15577fbb127943cab8ad56",
+      "entity-b604606aa570e9e714af8e4c1c8b59ffa171eb11fea8b0aa6e754adc38aab987",
+      "entity-e1bdfa92003a060aa698fb82dc7421520ed0597237306c6ca1a88a6b28e73887"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "imagebutton-paint-and-caption-creation-20260923",
+    "evidence": [
+      "Original ImageButton Win table670A94 slot12 selects6253D0, slot62 selects5D5A70 and slot63 selects404290. Current ImageButton has no slot12 override, so typed storage alone does not restore its painting.",
+      "No original nonzero caption-child publisher or direct E8 call to ImageButton construction/init was established by this audit. Do not manufacture creation, change WinRestoreIcon null initialization or infer startup closure from tested helper bodies.",
+      "The existing Win/MapWin/PlanWin slot12 ownership finding remains pending. Coordinate the real ImageButton paint override with that naming/dispatch migration, not a hand-written vtable or an independent accidental on_redraw overload."
+    ],
+    "hypothesis": "Typed caption ownership does not establish ImageButton painting or actual caption-control creation; recover the paint override and independent lifecycle producers as connected work.",
+    "kind": "discovery"
+  },
+  "previous_event": "6dbd9fb4381c46c37878e47dfc53df09c9a364581c413b06f8d15b83d85156a6",
+  "request_id": "imagebutton-paint-and-caption-creation-20260923",
+  "schema_version": 1,
+  "sequence": 99,
+  "stream": "task:vector-value-semantics"
+}
