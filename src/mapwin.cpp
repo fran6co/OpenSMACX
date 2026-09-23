@@ -1234,7 +1234,7 @@ void MapWin::init_dummy() {
         free(owned_);
         owned_ = 0;
     }
-    owned_ = mem_get((MapArea + MapArea * 2) << 2);
+    owned_ = static_cast<TerrainCacheEntry *>(mem_get((MapArea + MapArea * 2) << 2));
     count = MapArea;
     if (count > 0) {
         offset = 0;
@@ -1523,7 +1523,7 @@ void __cdecl terrain_fixup(MapWin * window) {
             free(window->owned_);
             window->owned_ = 0;
         }
-        window->owned_ = mem_get(MapArea * 0xc);
+        window->owned_ = static_cast<TerrainCacheEntry *>(mem_get(MapArea * 0xc));
         if (MapArea > 0) {
             int offset = 0;
             do {
@@ -1572,11 +1572,16 @@ void MapWin::UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius) {
         int count = RadiusRange[radius + 1];
         if (count > 0) {
             do {
-                // the abstract-map index: y halved-width rows, x halved
+                // The original ignores x/y: these are offsets around
+                // owned_, not around a selected tile. They can be negative,
+                // so an ordinary allocation starting at owned_ is unsafe
+                // for such radii. No centering, wrapping or guard is added.
                 int idx = RadiusOffsetY[i] * (static_cast<int>(MapLongitude) >> 1)
                         + (RadiusOffsetX[i] >> 1);
                 i++;
-                (*reinterpret_cast<int **>(owned_))[idx * 3] = -1;
+                for (int corner = 0; corner < 4; ++corner) {
+                    owned_[idx].brightness[corner] = 0xFF;
+                }
             } while (i < count);
         }
     }
@@ -1813,7 +1818,7 @@ void MapWin::clear(int index) {
 
 // THE VISIBILITY RECORD, one 0xC-byte slot per half-map column and row, that
 // `owned_` points at. Bytes 0..3 hold the four cached corner brightnesses
-// (0 = "not computed", otherwise the value biased by 0x80) and bytes 10 and 11
+// (FF = "not computed", 80 = neutral zero) and bytes 10 and 11
 // hold the four altitude-detail nibbles `get_alt` leaves behind for the same
 // four corners. get_brighting walks it, so the helper is spelled once here and
 // expanded at every site - the image computes the address inline at each of
@@ -2641,70 +2646,24 @@ void MapWin::on_nc_left_down(int x_coord, int y_coord) {
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x0046FD90
-// measured tier  MISMATCH
-// divergence     0
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/0046fd90/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?clear_terrain@MapWin@@QAEXXZ  at 0x0046FD90  (110 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
+// Both passes load the owned pointer directly from MapWin+4. Clear every
+// brightness record before starting the altitude pass; bytes 9..11 retain
+// their terrain/detail state. A nonpositive signed MapArea does no writes.
 
 void MapWin::clear_terrain() {
-    unsigned char *field4 = *reinterpret_cast<unsigned char **>(owned_);
-    if (field4 != 0) {
-        if (0 < (int32_t)MapArea) {
-            int count = 0;
-            int base = 0;
-            do {
-                int i = 0;
-                do {
-                    int idx = base + i;
-                    ++i;
-                    field4[idx] = 0xFF;
-                } while (i < 4);
-                ++count;
-                base += 0xC;
-            } while (count < (int32_t)MapArea);
+    if (owned_ != 0) {
+        for (int entry = 0; entry < static_cast<int32_t>(MapArea); ++entry) {
+            for (int corner = 0; corner < 4; ++corner) {
+                owned_[entry].brightness[corner] = 0xFF;
+            }
         }
-        field4 = *reinterpret_cast<unsigned char **>(owned_);
-        if (field4 != 0 && 0 < (int32_t)MapArea) {
-            int count = 0;
-            int base = 0;
-            do {
-                int i = 0;
-                do {
-                    int idx = base + i;
-                    ++i;
-                    field4[idx + 4] = 0xFF;
-                } while (i < 5);
-                ++count;
-                base += 0xC;
-            } while (count < (int32_t)MapArea);
+        if (owned_ != 0) {
+            for (int altitude_entry = 0; altitude_entry < static_cast<int32_t>(MapArea);
+                 ++altitude_entry) {
+                for (int slot = 0; slot < 5; ++slot) {
+                    owned_[altitude_entry].altitude[slot] = -1;
+                }
+            }
         }
     }
 }

@@ -1,0 +1,56 @@
+{
+  "event_id": "55594d9bce6b277f43c1b8f24f1a7a9db8f55439b048e8031e0045d7089c36ac",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_cache.py",
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Native scope shows these cache bodies already belong to infowin-ownership, not the neighboring vector terrain-generation task. Authorize a bounded coupled cache-ownership repair in the existing isolated worker; retain the unrelated gen_terrain_poly source and vector discoveries74..77 without copying/resetting either task baseline.",
+      "Original46FD90/46FDA9/46FDDC and46FC83/46FCB9 load the member atMapWin+4 directly, not through cache contents. Replace both wrong extra dereferences and represent the real12-byte cache entry: unsigned brightness[4] at0, signed altitude[5] at4, terrain_bits byte9, altitude_detail WORD10. Original4705AF/4705B5 treatsFF as uncached brightness (80 is neutral0);46FF10 uses signed cached altitude;46FE4D/470396/4703DC observe detail nibbles. Names are evidence-based interpretations, not recovered historical spellings.",
+      "Authorize typing owned_ as a pointer to that POD, member/layout expectations, and corresponding casts at the two malloc-like mem_get assignments. Do not add constructors, value initialization, allocation-failure guards or clear detail bytes. Preserve byte9 first-map-tile climate provenance at470F3D..57/47120F..29. Other cache operations may continue their existing byte views; do not silently change their behavior. Correct contradictory current prose while retaining historical TRIED evidence.",
+      "clear_terrain resets all records brightness in its first pass then all altitude fields in its second, retaining bytes9..11 and null/MapArea signed guards. UNK6 intentionally ignores its two coordinate arguments in the original and indexes RadiusRange[radius+1] offsets around the allocation base, with no wrap/bounds check. Preserve that original unusual behavior and expose its unsafe normal-allocation domain; do not fix missing center coordinates speculatively. Both bodies are currently unclaimed; no demotion is authorized.",
+      "Require actual-source ASan/UBSan controls with poison/null/nonpositive counts, independently derived touched bytes and untouched tail, bounded radius storage and damaged-code controls; native matching/strict references, typed-pointer/member layouts, all MapWin historical claims and related map callers, fresh build/link, independent review, and fresh destination checks before concluding the manual checkpoint. This does not resolve terrain storage lifetime, virtual callback or whole-game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4652432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4652160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4656848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4657568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4654416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4652656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f75582ed0d122f9c3d06e40be4659b8808a1ee0c5531c0fe9c20f731743ea511",
+  "request_id": "terrain-cache-direct-ownership-repair-20260923",
+  "schema_version": 1,
+  "sequence": 140,
+  "stream": "task:infowin-ownership"
+}

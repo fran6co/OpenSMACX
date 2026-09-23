@@ -24,6 +24,27 @@
 #include "imagebutton.h"  // image_buttons_[4]
 #include "maininterface.h"   // MainInterfaceGlobal is one of these
 
+// One owned terrain-cache record per map tile. The resets at
+// 46FDA9..46FDC4 and 46FDDC..46FDF8 walk twelve-byte records, writing
+// bytes 0..3 and 4..8 separately. 4705AF/4705B5 identify FF as uncached
+// brightness (80 encodes neutral zero); 46FF10 loads signed altitude.
+// 470F3D..470F57 initializes byte 9 from the first map tile's climate,
+// while 46FE4D reads the detail word. Names describe these uses, not
+// recovered historical C++ spellings. No constructor or initialization
+// of the untouched detail bytes is implied.
+struct TerrainCacheEntry {
+    // RECOVERY_MEMBER: v1 TerrainCacheEntry brightness 0x0 0x0046FD90
+    unsigned char brightness[4];
+    // RECOVERY_MEMBER: v1 TerrainCacheEntry altitude 0x4 0x0046FD90
+    signed char altitude[5];
+    // RECOVERY_MEMBER: v1 TerrainCacheEntry terrain_bits 0x9 0x00470ED0
+    unsigned char terrain_bits;
+    // RECOVERY_MEMBER: v1 TerrainCacheEntry altitude_detail 0xA 0x0046FE70
+    unsigned short altitude_detail;
+};
+static_assert(sizeof(TerrainCacheEntry) == 12,
+              "terrain cache records have twelve-byte stride");
+
  /*
   * MapWin class
   *
@@ -150,8 +171,8 @@ class MapWin : public virtual GraphicWin {
   // mapwin.cpp) reaches it with a `call rel32` instead of loading
   // MapWinOriginalDrawRadius through an indirect call.
   void draw_radius(int x_coord, int y_coord, int a3, int draw_type);
-  // 0x0046FD90, not yet recovered - a pending_bodies forwarder.
-  // world_climate (src/map.cpp) calls it BY NAME.
+  // 0x0046FD90, resets brightness and altitude in the owned cache in two
+  // complete passes. world_climate (src/map.cpp) calls it by name.
   void clear_terrain();
   // OVERLOAD BLOCK homed from the archive in the mapwin homing pass. Each
   // body lives beside its marker in mapwin.cpp.
@@ -162,8 +183,8 @@ class MapWin : public virtual GraphicWin {
   int get_alt(int a1, int a2, int a3);
   // 0x00470550 and 0x00470790, homed from the archive in the mapwin homing
   // pass. get_brighting returns one corner's cached brightness in the
-  // 0xC-stride visibility record owned_ points at (0 means "uncached"; the
-  // stored byte is the value biased by 0x80), computing it from the two
+  // twelve-byte terrain record owned_ points at (FF means "uncached";
+  // 80 encodes neutral zero), computing it from the two
   // altitude-detail nibbles get_alt has just filled and the corner's run of
   // CornerLightTable. get_point_light walks those corners for a tile: corner
   // 0 averages all four, the rest sum the two neighbours the tile shares with
@@ -228,7 +249,8 @@ class MapWin : public virtual GraphicWin {
   int UNK1();
   void UNK3();
   // 0x0046FC80, homed from the archive. Walks RadiusRange/RadiusOffsetX/Y
-  // (map.h) clearing the altitude/contour record each tile owns.
+  // (map.h) clearing only brightness. The original ignores x/y and uses
+  // offsets around owned_ directly, including potentially negative indices.
   void UNK6(int UNUSED(x) x, int UNUSED(y) y, int radius);
   // 0x0046FB90, homed from the archive. Same three radius tables, walked to
   // reset the 0xC-stride visibility record `owned_` points at.
@@ -261,7 +283,8 @@ class MapWin : public virtual GraphicWin {
   // already carved members, so hiding the reset targets behind raw-offset
   // writes would model the same bytes twice. Access changes no offset; the
   // static_assert below still pins the layout.
-  void *owned_;
+  // RECOVERY_MEMBER: v3 MapWin owned_ TerrainCacheEntry* 0x4 0x0046FD90
+  TerrainCacheEntry *owned_;
   uint32_t field_8_;  // 0x8
   // THE MANAGED OBJECTS, CARVED 2026-08-30 out of what was the
   // field_8_[0x1DD64] slab. The image's own ??_M vector-destructor calls
