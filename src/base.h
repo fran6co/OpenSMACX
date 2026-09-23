@@ -325,6 +325,7 @@ struct Base {
     // RECOVERY_MEMBER: v1 Base faction_id_current 0x4 0x004E68B0
     uint8_t faction_id_current;
     uint8_t faction_id_former;
+    // RECOVERY_MEMBER: v1 Base population_size 0x6 0x004E80B0
     int8_t population_size;
     uint8_t assimilation_turns_left;
     uint8_t nerve_staple_turns_left;
@@ -334,27 +335,38 @@ struct Base {
     char name_string[25];
     int16_t unk_x; // terraforming related
     int16_t unk_y; // terraforming related
+    // RECOVERY_MEMBER: v1 Base state 0x30 0x004E80B0
     uint32_t state; // see base_state_bitfield
     uint32_t event; // see base_event_bitfield
+    // RECOVERY_MEMBER: v1 Base governor 0x38 0x004E80B0
     uint32_t governor; // see governor_base_bitfield
     int nutrients_accumulated;
     int minerals_accumulated;
     int production_id_last;
+    // RECOVERY_MEMBER: v1 Base eco_damage 0x48 0x004E80B0
     int eco_damage;
     uint32_t queue_size;
+    // RECOVERY_MEMBER: v1 Base queue_production_id 0x50 0x004E80B0
     int queue_production_id[10]; // items in the production queue
     // Original 0x004E6C7A tests neighboring bases' worked-square bits here.
     // RECOVERY_MEMBER: v1 Base resource_sqr_radius 0x78 0x004E68B0
     int resource_sqr_radius; // worked tiles
+    // RECOVERY_MEMBER: v1 Base specialist_total 0x7C 0x004E80B0
     int specialist_total;
-    int specialist_unk_1; // related to Governor controlling specialists, non-psych spec count?
+    // RECOVERY_MEMBER: v1 Base specialist_unk_1 0x80 0x004E80B0
+    // Allocation scratch count: initially the existing non-psych specialists,
+    // then the slots assigned by the weighted specialist search. Those new
+    // slots may have psych bonuses too; this is not a permanent non-psych total.
+    int specialist_unk_1;
     /*
     * Specialist types for the first 16 (see citizen_specialists, 4 bits per specialist)
     * Stored from left to right in base view, with left most represented by lower bits of spec
     * Specialists after 16th in base are auto assigned based on best_specialist()
     * Isn't correct when specialist_total is 0, not reset? Or Governor actively controlling specs?
     */
+    // RECOVERY_MEMBER: v1 Base spec 0x84 0x004E80B0
     uint32_t spec[2]; // specialist types
+    // RECOVERY_MEMBER: v1 Base facilities_built 0x8C 0x004E80B0
     uint8_t facilities_built[12];
     int mineral_surplus_final;
     int minerals_accumulated_2; // original minerals before retooling?
@@ -362,13 +374,21 @@ struct Base {
     int unk_7; // unused?
     int unk_8; // unused?
     int unk_9; // unused?
+    // RECOVERY_MEMBER: v1 Base nutrient_intake_1 0xB0 0x004E80B0
     int nutrient_intake_1;
+    // RECOVERY_MEMBER: v1 Base mineral_intake_1 0xB4 0x004E80B0
     int mineral_intake_1;
+    // RECOVERY_MEMBER: v1 Base energy_intake_1 0xB8 0x004E80B0
     int energy_intake_1;
+    // RECOVERY_MEMBER: v1 Base unused_intake_1 0xBC 0x004E80B0
     int unused_intake_1;
+    // RECOVERY_MEMBER: v1 Base nutrient_intake_2 0xC0 0x004E80B0
     int nutrient_intake_2;
+    // RECOVERY_MEMBER: v1 Base mineral_intake_2 0xC4 0x004E80B0
     int mineral_intake_2;
+    // RECOVERY_MEMBER: v1 Base energy_intake_2 0xC8 0x004E80B0
     int energy_intake_2;
+    // RECOVERY_MEMBER: v1 Base unused_intake_2 0xCC 0x004E80B0
     int unused_intake_2;
     int nutrient_surplus;
     int mineral_surplus;
@@ -422,10 +442,15 @@ static_assert(sizeof(RulesFacility) == 0x30,  // yitzi 0x30
 struct RulesCitizen {
     LPSTR singular_name;
     LPSTR plural_name;
+    // RECOVERY_MEMBER: v1 RulesCitizen preq_tech 0x8 0x004E80B0
     int preq_tech;
+    // RECOVERY_MEMBER: v1 RulesCitizen obsol_tech 0xC 0x004E80B0
     int obsol_tech;
+    // RECOVERY_MEMBER: v1 RulesCitizen ops_bonus 0x10 0x004E80B0
     int ops_bonus;
+    // RECOVERY_MEMBER: v1 RulesCitizen psych_bonus 0x14 0x004E80B0
     int psych_bonus;
+    // RECOVERY_MEMBER: v1 RulesCitizen research_bonus 0x18 0x004E80B0
     int research_bonus;
 };
 
@@ -457,6 +482,7 @@ struct BaseSecretProject {
     int cloning_vats;
     int self_aware_colony;
     int clinical_immortality;
+    // RECOVERY_MEMBER: v1 BaseSecretProject space_elevator 0x6C 0x004E80B0
     int space_elevator;
     int singularity_inductor;
     int bulk_matter_transmitter;
@@ -465,6 +491,7 @@ struct BaseSecretProject {
     int ascent_to_transcendence;
     int manifold_harmonics; // SMACX Only
     int nethack_terminus; // SMACX Only
+    // RECOVERY_MEMBER: v1 BaseSecretProject cloudbase_academy 0x8C 0x004E80B0
     int cloudbase_academy; // SMACX Only
     int planetary_energy_grid; // SMACX Only
     int user_defined_38; // no direct ref in code logic?
@@ -519,8 +546,8 @@ extern Base *BaseCurrent;
 extern int BaseComputedID;
 extern uint32_t ScnVictFacilityObj;
 extern uint32_t BaseUpkeepStage;
-uint32_t *const BaseCurrentConvoyFrom = (uint32_t *)0x0090E904; // resources convoyed from base
-uint32_t *const BaseCurrentConvoyTo = (uint32_t *)0x0090E93C; // resources convoyed/extracted to base
+extern uint32_t BaseCurrentConvoyFrom[4]; // resources convoyed from base
+extern uint32_t BaseCurrentConvoyTo[4]; // resources convoyed/extracted to base
 extern int BaseCurrentGrowthRate;
 extern uint32_t BaseCurrentVehPacifismCount;
 extern uint32_t BaseCurrentForcesSupported; // Forces Supported by Base
@@ -529,6 +556,8 @@ extern uint32_t BaseCurrentForcesMaintCount; // Forces past the free allowance; 
 extern int TileYieldRestricted; // resource a square lost to the per-square restriction
 extern uint32_t FarmStatus[25]; // per-position status; final four positions excluded
 extern uint32_t FarmUnavailableMask; // nonzero status among the first 21 positions
+extern int BasePopulationUnassigned; // remaining worker/specialist allocation count
+extern int BaseNutrientAdequate; // allocation-path result, retained on successful reuse
 extern int BaseSquareEnergy; // energy_yield's publication for a base square
 extern int GovernorFaction; // elected Planetary Governor; see the note in base.cpp
 extern int GlobalEnergyEventState; // energy tripling state driven by random_events

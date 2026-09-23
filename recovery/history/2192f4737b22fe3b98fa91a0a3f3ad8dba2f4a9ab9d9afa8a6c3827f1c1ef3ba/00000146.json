@@ -1,0 +1,31 @@
+{
+  "event_id": "88d2c4e6323cddf30603d691179a4c426232fe28651a30ef2272dd6946cde5d5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_yield.py",
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "Authorize replacing the owned base_yield4E80B0..4E954B empty placeholder with the complete resource allocation pass, using genuine Base/PlayerData/Rules/Citizen fields and existing direct callees. Keep original mapping and seed intact, no new claim, no task baseline reset. Preserve retained terrain work separately.",
+      "Follow pending discovery145: independently audit original branches, specialist packing, all four resource calls, signed population/division and wrap-defined scoring, live post-call BaseCurrent/map observations, mask publication and ecology accounting. Do not import the seed register machine or add arbitrary safety guards.",
+      "Recover source-owned counter90E938 and adequacy flag90E900, initiallyzero, with observed compiler symbols and independent original extents. Keep the flag reset only on the allocation path; fast reuse retains it. Flag consumer base_doctors remains unfinished, not replaced or reported functional. Record relevant member evidence beside existing declarations; outside-header edits require further scope.",
+      "No new original-address storage aliases or fake arrays across scalar fields. Existing world map ownership remains pending. Any newly discovered shared ownership/callee defect requires central review before expanding implementation, never a silent placeholder or weakening.",
+      "Require independent original/source review, actual-body host behavioral tests with failure controls, fresh native protected-claim/layout/data/reference checks and complete application build/link. Coordinator manual merge only after checks and destination recheck; neither a mismatched body nor host service doubles establish whole-game or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5144752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4da0829a00ae0aa8818c002202ed2c4441359874ef1d3c566900236bfa03b0ef",
+  "request_id": "base-yield-resource-consumer-20260923",
+  "schema_version": 1,
+  "sequence": 146,
+  "stream": "task:infowin-ownership"
+}

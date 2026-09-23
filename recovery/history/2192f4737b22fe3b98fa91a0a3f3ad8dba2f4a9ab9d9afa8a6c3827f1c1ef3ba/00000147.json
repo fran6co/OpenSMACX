@@ -1,0 +1,40 @@
+{
+  "event_id": "d5c759af7da95155bc8d7847619f28e93a6c89676fcdf9bafb3a0d3d019b44a6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_yield.py",
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "During base_yield recovery the actual earlier base_compute stage base_support was found writing BaseCurrentConvoyFrom/To fixed executable-address aliases. Authorize replacing only these aliases with source-owned uint32_t arrays of four elements in base.cpp and extern arrays in base.h, keeping all producer/consumer bodies and original obligations intact. All three live mapped functions already belong to this task; do not reset baseline.",
+      "Independent original audit: base_support4E9566..9599 clears exactly four DWORDs in each object; its4E9677/4E9738 To and4E9807 From stores are the only direct writers. Separate initial-zero spans90E904..90E914 and90E93C..90E94C. Native-observed symbols/initial data must be bound/checked before integration. The existing uint32_t spelling preserves source modulo arithmetic; it is not proof of a historical signed typedef.",
+      "Direct original readers: base_nutrient4E9BF4/4E9C0D, base_minerals4E9CBB/4E9DAC, base_energy4EB56B/4EB58E (product is explicitly empty), base_growth4EF204 (seed-only). Live source search finds no other raw-address producer/consumer or forwarder. Do not claim unfinished energy/growth work, delete their seeds or silently switch a live original-executable consumer.",
+      "Indexed accesses assume the observed resource domain0..3; original support uses an unguarded unsigned-byte convoy order selector. Invalid higher selectors are outside the recovered array domain, not evidence to grow storage or add invented guards. Require native data/claim/layout/build checks and host controls with failure witnesses; preserve wider map-storage/callee behavior debt separately."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5150032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5151600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5151920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "88d2c4e6323cddf30603d691179a4c426232fe28651a30ef2272dd6946cde5d5",
+  "request_id": "resource-convoy-storage-closure-20260923",
+  "schema_version": 1,
+  "sequence": 147,
+  "stream": "task:infowin-ownership"
+}

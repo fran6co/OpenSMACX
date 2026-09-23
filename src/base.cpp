@@ -47,7 +47,129 @@ uint32_t ScnVictFacilityObj;  // 0x009A6814
 // RECOVERY_OBJECT: v2 0x0090EA34 0x0090EA38 ?BaseUpkeepStage@@3IA 0x004E68B0
 uint32_t BaseUpkeepStage;  // 0x0090EA34
 
-// Link-only placeholders; these resource/production passes do not work yet.
+// Shared publications of the base resource-allocation pass, initially zero.
+// The adequacy flag is also read by base_doctors; successful reuse of an
+// existing allocation deliberately leaves its previous value untouched.
+// RECOVERY_OBJECT: v2 0x0090E938 0x0090E93C ?BasePopulationUnassigned@@3HA 0x004E80B0
+int BasePopulationUnassigned;
+// RECOVERY_OBJECT: v2 0x0090E900 0x0090E904 ?BaseNutrientAdequate@@3HA 0x004E80B0
+int BaseNutrientAdequate;
+
+// base_support clears four resource slots in each initially-zero publication.
+// Its convoy-order selector and the resource passes use the original 0..3
+// resource domain; invalid selectors are not evidence of larger arrays.
+// RECOVERY_OBJECT: v2 0x0090E904 0x0090E914 ?BaseCurrentConvoyFrom@@3PAIA 0x004E9550
+uint32_t BaseCurrentConvoyFrom[4];
+// RECOVERY_OBJECT: v2 0x0090E93C 0x0090E94C ?BaseCurrentConvoyTo@@3PAIA 0x004E9550
+uint32_t BaseCurrentConvoyTo[4];
+
+namespace {
+
+// The scoring expressions use x86 low-word arithmetic followed by signed
+// division. Express that wrapping without signed overflow or negative shifts.
+int base_yield_signed_bits(uint32_t value) {
+    return value <= 0x7FFFFFFFu ? static_cast<int>(value)
+        : -1 - static_cast<int>(0xFFFFFFFFu - value);
+}
+int base_yield_add(int left, int right) {
+    return base_yield_signed_bits(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
+}
+int base_yield_sub(int left, int right) {
+    return base_yield_signed_bits(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
+}
+int base_yield_mul(int left, int right) {
+    return base_yield_signed_bits(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
+}
+int base_yield_shift(int value, int shift) {
+    return base_yield_signed_bits(static_cast<uint32_t>(value) << shift);
+}
+int base_yield_denominator(int value) {
+    return value < 1 ? 1 : (value > 99 ? 99 : value);
+}
+
+// These are distinct scalar members, not an array spanning their addresses.
+int &base_yield_intake(Base &base, int resource, bool second) {
+    if (second) {
+        switch (resource) {
+        case 0: return base.nutrient_intake_2;
+        case 1: return base.mineral_intake_2;
+        case 2: return base.energy_intake_2;
+        default: return base.unused_intake_2;
+        }
+    }
+    switch (resource) {
+    case 0: return base.nutrient_intake_1;
+    case 1: return base.mineral_intake_1;
+    case 2: return base.energy_intake_1;
+    default: return base.unused_intake_1;
+    }
+}
+int base_yield_satellite(int faction, int resource) {
+    switch (resource) {
+    case 0: return base_yield_signed_bits(PlayersData[faction].satellites_nutrient);
+    case 1: return base_yield_signed_bits(PlayersData[faction].satellites_mineral);
+    default: return base_yield_signed_bits(PlayersData[faction].satellites_energy);
+    }
+}
+bool base_yield_has_facility(int facility) {
+    const int selected = BaseIDCurrentSelected;
+    int byte_index;
+    int mask;
+    bitmask(facility, &byte_index, &mask);
+    return (Bases[selected].facilities_built[byte_index]
+        & static_cast<unsigned char>(mask)) != 0;
+}
+int base_yield_specialist(Base *&base, int index) {
+    if (index < 16) {
+        return (base->spec[index >> 3] >> ((index & 7) * 4)) & 15;
+    }
+    const int result = best_specialist();
+    base = BaseCurrent;
+    return result;
+}
+void base_yield_set_specialist(Base *&base, int index, int specialist) {
+    if (index < 16) {
+        const int word = index >> 3;
+        const int shift = (index & 7) * 4;
+        base->spec[word] &= ~(15u << shift);
+        base = BaseCurrent;
+        base->spec[word] |= static_cast<uint32_t>(specialist) << shift;
+        base = BaseCurrent;
+    }
+}
+
+// The caller has already wrapped x. Invalid selected positions still consume
+// a worker, but perform no resource calls and do not refresh map_width.
+void base_yield_apply_tile(Base *&base, int &map_width, int x, int y, bool subtract) {
+    if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= map_width) {
+        return;
+    }
+    if ((map_tiles()[static_cast<int>(MapLongitude) * y + (x >> 1)].climate & 0xE0) < 0x60) {
+        base->state |= 0x8000;
+        base = BaseCurrent;
+    }
+    for (int resource = 0; resource < 4; ++resource) {
+        const int amount = resource_yield(resource, base->faction_id_current,
+                                          BaseIDCurrentSelected, x, y);
+        base = BaseCurrent;
+        int &intake = base_yield_intake(*base, resource, true);
+        intake = subtract ? base_yield_sub(intake, amount) : base_yield_add(intake, amount);
+        base = BaseCurrent;
+    }
+    // Resource 3 returns zero but clears TileYieldRestricted: keep its call.
+    map_width = MapLongitudeBounds;
+}
+int base_yield_wrap_x(int x, int map_width) {
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) x += map_width;
+        else if (x >= map_width) x -= map_width;
+    }
+    return x;
+}
+
+} // namespace
+
+// Link-only placeholder; this energy/production pass does not work yet.
 // ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
 void __cdecl base_energy() {
@@ -55,9 +177,299 @@ void __cdecl base_energy() {
 }
 
 // ORIGINAL: 0x004E80B0 ?base_yield@@YAXXZ 0x004E80B0-0x004E954B
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004e80b0.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004e80b0.cpp", "source:src/base.h", "image:0x004E80CC-0x004E80D9 signed population plus one publishes90E938;0x004E86D9 resets90E900 only on allocation, whereas0x004E8456 jumps to0x004E923D and retains it.", "image:0x004E83D9-0x004E8426 four resource calls per admitted tile;0x004E8E0C-0x004E923D performs one replacement with fresh-call undo;0x004E930C-0x004E954B publishes mask/specialists/intakes and accounts for all21valid radius positions."], "reason": "Recover the complete selected-base worker and specialist allocation pass with typed resource fields, real shared counters, original selection and replacement behavior, and final ecology accounting. Retain its seed identity and evidence; the former link-only placeholder is replaced, not accepted by a source binding."}
 void __cdecl base_yield() {
-    // BODY GOES HERE.
+    // Original domain: live selected base/map, valid specialist encodings and
+    // population counts, and a positive nutrient requirement for IDIV. The
+    // original does not guard malformed data or the zero-divisor rules case.
+    farm_compute();
+    Base *base = BaseCurrent;
+    const int faction = base->faction_id_current;
+    const uint32_t faction_bit = 1u << faction;
+    BasePopulationUnassigned = base->population_size + 1;
+    const bool automatic = (static_cast<unsigned char>(LockEnableMask) & faction_bit) == 0
+        || (base->governor & 0x80000040u) == 0x80000040u;
+    uint32_t worked = 0;
+    base->state &= ~0x8000u;
+    BaseCurrent->specialist_unk_1 = 0;
+    BaseCurrent->resource_sqr_radius &= ~FarmUnavailableMask | 1u;
+
+    int resource;
+    for (resource = 0; resource < 4; ++resource) {
+        if (resource < 3) {
+            base_yield_intake(*BaseCurrent, resource, true) = base_yield_satellite(faction, resource);
+            const bool aerospace = base_yield_has_facility(29);
+            bool full_yield = aerospace;
+            if (!full_yield && SecretProject.space_elevator >= 0) {
+                full_yield = Bases[SecretProject.space_elevator].faction_id_current == faction;
+            }
+            if (!full_yield && SecretProject.cloudbase_academy >= 0) {
+                full_yield = Bases[SecretProject.cloudbase_academy].faction_id_current == faction;
+            }
+            if (!full_yield) {
+                int &intake = base_yield_intake(*BaseCurrent, resource, true);
+                intake = base_yield_add(intake, 1) / 2;
+            }
+            Base *const selected = BaseCurrent;
+            int &intake = base_yield_intake(*selected, resource, true);
+            if (selected->population_size < intake) intake = selected->population_size;
+        } else {
+            base_yield_intake(*BaseCurrent, resource, true) = 0;
+        }
+    }
+
+    bool reuse_complete = false;
+    int map_width = MapLongitudeBounds;
+    if (!automatic || UnkGlobal0093A934 == 0) {
+        base = BaseCurrent;
+        if (automatic) {
+            for (int specialist = 0; specialist < base->specialist_total; ++specialist) {
+                const int type = base_yield_specialist(base, specialist);
+                if (Citizen[type].psych_bonus == 0) {
+                    ++base->specialist_unk_1;
+                    base = BaseCurrent;
+                }
+            }
+            base->specialist_total -= base->specialist_unk_1;
+        }
+        const int used = bit_count(BaseCurrent->resource_sqr_radius);
+        if (BasePopulationUnassigned >= used) {
+            base = BaseCurrent;
+            map_width = MapLongitudeBounds;
+            for (int position = 0; position < 21; ++position) {
+                const uint32_t bit = 1u << position;
+                if (position != 0 && (base->resource_sqr_radius & bit) == 0) continue;
+                worked |= bit;
+                const int x = base_yield_wrap_x(base->x + RadiusOffsetX[position], map_width);
+                const int y = base->y + RadiusOffsetY[position];
+                base_yield_apply_tile(base, map_width, x, y, false);
+                if (--BasePopulationUnassigned == 0) break;
+            }
+            reuse_complete = BasePopulationUnassigned
+                == base->specialist_total + base->specialist_unk_1;
+        }
+    }
+
+    if (!reuse_complete) {
+        base = BaseCurrent;
+        map_width = MapLongitudeBounds;
+        if (automatic && base->specialist_total != 0) {
+            // Preserve the original compaction: shift through the old endpoint,
+            // then advance the outer index instead of re-testing the replacement.
+            for (int index = 0; index < base->specialist_total + base->specialist_unk_1; ++index) {
+                const int type = base_yield_specialist(base, index);
+                if (index >= 16) map_width = MapLongitudeBounds;
+                if (Citizen[type].psych_bonus == 0) {
+                    for (int shift = index; shift < base->specialist_total + base->specialist_unk_1; ++shift) {
+                        const int next = base_yield_specialist(base, shift + 1);
+                        if (shift + 1 >= 16) map_width = MapLongitudeBounds;
+                        base_yield_set_specialist(base, shift, next);
+                        if (shift < 16) map_width = MapLongitudeBounds;
+                    }
+                    if (base->specialist_unk_1 != 0) {
+                        --base->specialist_unk_1;
+                        base = BaseCurrent;
+                        map_width = MapLongitudeBounds;
+                    }
+                }
+            }
+        }
+        if ((worked & 1) == 0) {
+            const int x = base_yield_wrap_x(base->x + RadiusOffsetX[0], map_width);
+            const int y = base->y + RadiusOffsetY[0];
+            base_yield_apply_tile(base, map_width, x, y, false);
+            worked |= 1;
+            --BasePopulationUnassigned;
+        }
+
+        // This reset is intentionally absent from the completed-reuse path.
+        BaseNutrientAdequate = 0;
+        int fight = 0, growth = 0, tech = 0, wealth = 0, power = 0;
+        if ((static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+            if ((base->governor & 0x80000000u) != 0) {
+                growth = (base->governor >> 24) & 1;
+                tech = (base->governor >> 24) & 2;
+                wealth = (base->governor >> 25) & 2;
+                power = (base->governor >> 26) & 2;
+                fight = power ? 2 : ((growth || wealth) ? 0 : (tech ? -2 : PlayersData[faction].ai_fight));
+            }
+        } else {
+            fight = PlayersData[faction].ai_fight;
+            growth = PlayersData[faction].ai_growth;
+            tech = PlayersData[faction].ai_tech;
+            wealth = PlayersData[faction].ai_wealth;
+            power = PlayersData[faction].ai_power;
+        }
+
+        for (;;) {
+            const bool replacing = BasePopulationUnassigned <= base->specialist_total + base->specialist_unk_1;
+            const uint32_t excluded = replacing ? 0 : worked;
+            int best_position = 0, best_score = 0;
+            int worst_position = -1, worst_score = 9999;
+            int max_nutrients = 0;
+            for (int position = 1; position < 21; ++position) {
+                const uint32_t bit = 1u << position;
+                if ((bit & (excluded | FarmUnavailableMask)) != 0) continue;
+                const int x = base_yield_wrap_x(base->x + RadiusOffsetX[position], map_width);
+                const int y = base->y + RadiusOffsetY[position];
+                if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= map_width) continue;
+                int nutrients = crop_yield(base->faction_id_current, BaseIDCurrentSelected, x, y, 0);
+                int minerals = mine_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
+                int energy = energy_yield(BaseCurrent->faction_id_current, BaseIDCurrentSelected, x, y, 0);
+                if (nutrients > max_nutrients) max_nutrients = nutrients;
+                base = BaseCurrent;
+                const int population = base->population_size;
+                const int requirement = static_cast<int>(Rules.nutrient_req_citizen);
+                const int needed = base_yield_mul(population, requirement);
+                const int intake = base->nutrient_intake_2;
+                int food_bonus = 0;
+                if (base_yield_add(BasePopulationUnassigned / requirement, intake) < needed) {
+                    food_bonus = base_yield_add(intake, BasePopulationUnassigned) >= needed ? 2 : 8;
+                    const int extra = nutrients < 0 ? 0 : (nutrients < food_bonus ? nutrients : food_bonus);
+                    nutrients = base_yield_add(nutrients, extra);
+                } else {
+                    BaseNutrientAdequate = 1;
+                }
+                nutrients = base_yield_add(nutrients, nutrients);
+                minerals = base_yield_add(minerals, minerals);
+                energy = base_yield_add(energy, energy);
+                if (intake <= base_yield_add(population, needed) && nutrients == 0) {
+                    minerals /= 2;
+                    energy /= 2;
+                }
+                if (minerals == 0 && food_bonus == 0) nutrients /= 2;
+                int denominator = base_yield_add(base_yield_sub(base_yield_sub(intake, population / 3), needed), BasePopulationUnassigned);
+                denominator = base_yield_denominator(base_yield_sub(base_yield_add(denominator, denominator), 2));
+                int score = base_yield_shift(base_yield_mul(base_yield_add(growth, 4), nutrients), 8) / denominator;
+                const int mineral_priority = base->queue_production_id[0] < -70 ? 2 : base_yield_sub(0, tech);
+                denominator = base_yield_denominator(base_yield_add(base_yield_sub(base->mineral_intake_2,
+                    base_yield_signed_bits(BaseCurrentForcesMaintCost)), 1) / 2);
+                int weight = base_yield_add(base_yield_add(base_yield_add(fight, mineral_priority), power), wealth);
+                weight = base_yield_add(weight, 6);
+                score = base_yield_add(score, base_yield_shift(base_yield_mul(base_yield_mul(weight, population), minerals), 6) / denominator);
+                weight = base_yield_add(base_yield_add(wealth, base_yield_mul(tech, 2)), 1);
+                const int energy_population = base_yield_denominator(base_yield_sub(population, power));
+                score = base_yield_add(score, base_yield_shift(base_yield_mul(base_yield_mul(weight, energy_population), energy), 6)
+                    / base_yield_denominator(base->energy_intake_2));
+                if ((worked & bit) != 0) {
+                    if (score < worst_score) { worst_score = score; worst_position = position; }
+                } else if (score > best_score) {
+                    best_score = score;
+                    best_position = position;
+                }
+                map_width = MapLongitudeBounds;
+            }
+
+            if (automatic && base->population_size >= 5
+                && (base->nutrient_intake_2 > base_yield_mul(base->population_size, static_cast<int>(Rules.nutrient_req_citizen))
+                    || max_nutrients == 0) && TurnCurrentNum > 100) {
+                for (int specialist = 0; specialist < 7; ++specialist) {
+                    if (has_tech(Citizen[specialist].preq_tech, faction)
+                        && !has_tech(Citizen[specialist].obsol_tech, faction)) {
+                        base = BaseCurrent;
+                        const int population = base->population_size;
+                        const int denominator = base_yield_denominator(base_yield_add(base->energy_intake_2, base->specialist_unk_1));
+                        int score = base_yield_shift(Citizen[specialist].psych_bonus, 6);
+                        int weight = base_yield_mul(base_yield_add(wealth, 2), population);
+                        score = base_yield_add(score, base_yield_shift(base_yield_mul(weight, Citizen[specialist].ops_bonus), 6) / denominator);
+                        weight = base_yield_mul(base_yield_add(tech, 2), population);
+                        score = base_yield_add(score, base_yield_shift(base_yield_mul(weight, Citizen[specialist].research_bonus), 6) / denominator);
+                        if (score > best_score) { best_score = score; best_position = -specialist - 1; }
+                    } else {
+                        base = BaseCurrent;
+                    }
+                }
+                map_width = MapLongitudeBounds;
+            }
+
+            if (!replacing) {
+                if (best_position < 0) {
+                    base_yield_set_specialist(base, base->specialist_unk_1, -best_position - 1);
+                    ++base->specialist_unk_1;
+                    base = BaseCurrent;
+                    map_width = MapLongitudeBounds;
+                } else if (best_position > 0) {
+                    worked |= 1u << best_position;
+                    const int x = base_yield_wrap_x(base->x + RadiusOffsetX[best_position], map_width);
+                    const int y = base->y + RadiusOffsetY[best_position];
+                    base_yield_apply_tile(base, map_width, x, y, false);
+                    --BasePopulationUnassigned;
+                } else {
+                    break;
+                }
+                if (BasePopulationUnassigned > base->specialist_total + base->specialist_unk_1) continue;
+                if (base->nutrient_intake_2 >= base_yield_mul(base->population_size,
+                        static_cast<int>(Rules.nutrient_req_citizen))) break;
+            } else {
+                if (best_position <= 0 || best_score <= worst_score || worst_position <= 0) break;
+                const uint32_t old_bit = 1u << worst_position;
+                const uint32_t new_bit = 1u << best_position;
+                worked = (worked & ~old_bit) | new_bit;
+                int x = base_yield_wrap_x(base->x + RadiusOffsetX[worst_position], map_width);
+                int y = base->y + RadiusOffsetY[worst_position];
+                base_yield_apply_tile(base, map_width, x, y, true);
+                x = base_yield_wrap_x(base->x + RadiusOffsetX[best_position], map_width);
+                y = base->y + RadiusOffsetY[best_position];
+                base_yield_apply_tile(base, map_width, x, y, false);
+                if (base->nutrient_intake_2 < base_yield_mul(base->population_size + 1,
+                        static_cast<int>(Rules.nutrient_req_citizen))) {
+                    worked = (worked & ~new_bit) | old_bit;
+                    x = base_yield_wrap_x(base->x + RadiusOffsetX[best_position], map_width);
+                    y = base->y + RadiusOffsetY[best_position];
+                    base_yield_apply_tile(base, map_width, x, y, true);
+                    x = base_yield_wrap_x(base->x + RadiusOffsetX[worst_position], map_width);
+                    y = base->y + RadiusOffsetY[worst_position];
+                    base_yield_apply_tile(base, map_width, x, y, false);
+                }
+                break;
+            }
+        }
+    }
+
+    // Fill remaining specialist slots. Unlike candidate scoring, this pass
+    // checks prerequisites only, and weights psych three times as heavily.
+    for (int index = base->specialist_total; index < BasePopulationUnassigned; ++index) {
+        int best = 0, best_bonus = -999;
+        for (int specialist = 0; specialist < 7; ++specialist) {
+            const bool known = has_tech(Citizen[specialist].preq_tech, base->faction_id_current);
+            base = BaseCurrent;
+            if (known) {
+                int bonus = base_yield_mul(Citizen[specialist].psych_bonus, 3);
+                if (base->population_size >= static_cast<int>(Rules.min_base_size_specialists)) {
+                    bonus = base_yield_add(bonus, base_yield_add(Citizen[specialist].ops_bonus, Citizen[specialist].research_bonus));
+                }
+                if (bonus > best_bonus) { best_bonus = bonus; best = specialist; }
+            }
+        }
+        base_yield_set_specialist(base, index, best);
+    }
+    base->resource_sqr_radius = worked;
+    BaseCurrent->specialist_total = BasePopulationUnassigned;
+    BaseCurrent->state &= ~0x100u;
+    for (resource = 0; resource < 4; ++resource) {
+        Base *const selected = BaseCurrent;
+        base_yield_intake(*selected, resource, false) = base_yield_intake(*selected, resource, true);
+    }
+
+    BaseCurrent->eco_damage = 0;
+    for (int position = 0; position < 21; ++position) {
+        base = BaseCurrent;
+        map_width = MapLongitudeBounds;
+        const int x = base_yield_wrap_x(base->x + RadiusOffsetX[position], map_width);
+        const int y = base->y + RadiusOffsetY[position];
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= map_width) continue;
+        const uint32_t improvements = map_tiles()[static_cast<int>(MapLongitude) * y + (x >> 1)].bit;
+        const bool used = (base->resource_sqr_radius & (1u << position)) != 0;
+        int damage = bit_count(improvements & 0x1C8805Cu);
+        if (used) damage += damage;
+        if ((improvements & 0x1000000) != 0) damage += 8;
+        if ((improvements & 0x800000) != 0) damage += 6;
+        if ((improvements & 0x400000) != 0) damage += 4;
+        if ((improvements & 0x200000) != 0) --damage;
+        if (base_yield_has_facility(13) && base_yield_has_facility(14)) damage = 0;
+        if (base_yield_has_facility(13) || base_yield_has_facility(14)) damage /= 2;
+        BaseCurrent->eco_damage = base_yield_add(BaseCurrent->eco_damage, damage);
+    }
 }
 
 // ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C
@@ -142,8 +554,8 @@ int TileYieldRestricted;  // 0x0090E998
 // Status bits: 1 excluded outer position, 2 off-map/unrevealed, 4 base tile,
 // 8 stack-check or visible non-allied vehicle, 0x10 another base's worked
 // square, 0x20 the foreign-territory rule below. These describe the observed
-// tests, not recovered historical names. farm_click/draw_farm read the words;
-// base_yield reads the mask. Their unfinished bodies are separate obligations.
+// tests, not recovered historical names. The recovered base_yield reads the
+// mask; the farm_click/draw_farm word consumers remain unfinished obligations.
 // RECOVERY_OBJECT: v2 0x0090E99C 0x0090EA00 ?FarmStatus@@3PAIA 0x004E68B0
 uint32_t FarmStatus[25];
 // RECOVERY_OBJECT: v2 0x0090EA00 0x0090EA04 ?FarmUnavailableMask@@3IA 0x004E68B0

@@ -1,0 +1,26 @@
+{
+  "event_id": "4da0829a00ae0aa8818c002202ed2c4441359874ef1d3c566900236bfa03b0ef",
+  "payload": {
+    "affects": [
+      "entity-3831d38d4dec7421e0102cab1dedab79741a8e694468c7911715ed3418b32383",
+      "entity-4f8be5f57a7de09da4b5f35b4ba42f10837382f85d9804e96a8edd5ba6ac17ab",
+      "entity-8252ad9b514fc77bba32541f37db3820422a32fbfebab5a1ef73f5d6cfeb6d64"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "base-yield-farm-consumer-lifecycle-20260923",
+    "evidence": [
+      "Independent bounded audit finds actual product bodies for all nine original direct targets: best_specialist4E4020, farm_compute4E68B0, crop_yield4E6E50, mine_yield4E7310, energy_yield4E7750, resource_yield4E7DC0, bitmask50BA00, bit_count50BA30 and has_tech5B9F20. Their existence is not whole behavior/reference proof; no partial base_yield was added in the producer checkpoint0534a19f.",
+      "Two new independently referenced scalar stores:90E938 remaining population-allocation counter, initialized to signed population+1 at4E80CC..D4 and decremented for assigned tiles before copying to Base.specialist_total at4E9318..1E;90E900 nutrient-adequacy flag, written0/1 by base_yield and read by placeholder base_doctors4F6117. Both initiallyzero. The flag reset is only4E86D9; existing-allocation fast path4E844C..8459 jumps4E923D and retains its prior value. Do not add unconditional per-call reset; test repeated invocations and fast paths.",
+      "Existing Base fields cover30state,38governor,48eco_damage,50production,78worked mask,7Cspecialist_total,80specialist_unk_1,84packed spec[2],B0..BF intake1 andC0..CF intake2. PlayerData AI preferences3DC..3EC and satellites808..810, Rules, seven Citizen records, SecretProject fields and existing map globals supply other data. Verify native layout for newly used fields and avoid fabricated arrays over adjacent scalar members.",
+      "Preserve four resource_yield calls per committed tile: type3 returnszero but clears TileYieldRestricted. Worker mask stays local until Base+78 publication4E930F. BaseCurrent/map reloads, seven-specialist selection, retained worker allocation, tile scoring/replacement, packed nibbles and final ecology accounting need independent controls. Original IDIV is signed despite some existing unsigned Rules declarations; implement truncation and low32 multiplication/shifts without seed signed-overflow/left-shift UB.",
+      "The selected original blocks revealed no further confirmed branch error, but the seed100-percent transcription note is not proof. Existing map_tiles world ownership and unfinished base_doctors remain pending. This finding preserves the next coupled scope; it neither authorizes edits nor resolves earlier terrain/farm-consumer discoveries."
+    ],
+    "hypothesis": "Replacing the base_yield placeholder can activate the recovered farm producer using existing direct callees, but requires correct shared-counter/flag lifecycle, typed resources and original signed arithmetic.",
+    "kind": "discovery"
+  },
+  "previous_event": "42b3e858eee72070e1b681de453ed9c12011ef4943267a95972fefb1b0601a33",
+  "request_id": "base-yield-farm-consumer-lifecycle-20260923",
+  "schema_version": 1,
+  "sequence": 145,
+  "stream": "task:infowin-ownership"
+}
