@@ -22,6 +22,10 @@ absolute even/odd and negative-Y parity, low-byte alternate colors, and the
 exactly-minus-one forward that precedes the lock. The countdown oracle and
 wide fixtures stay inside allocated arrays so rejected mutants fail by
 comparison rather than by writing out of bounds.
+
+The 61AC60 cutoff controls extract its whole body and real Gouraud helpers.
+Independent rectangular planes exercise every-row lighting, clipping and UV
+carries. Lock/FPU calls remain doubles, not native lock or x87-status proof.
 """
 
 from pathlib import Path
@@ -38,6 +42,11 @@ ROOT = Path(__file__).resolve().parents[2]
 def braced(source, signature):
     start = source.index(signature)
     brace = source.index("{", start)
+    # A helper may be forward-declared before the mapped caller. Extract the
+    # definition itself, never the declaration plus the next unrelated body.
+    while ";" in source[start:brace]:
+        start = source.index(signature, start + len(signature))
+        brace = source.index("{", start)
     depth = 0
     for end in range(brace, len(source)):
         depth += (source[end] == "{") - (source[end] == "}")
@@ -1128,4 +1137,281 @@ def test_keyed_lock_publication_cannot_be_captured_early(tmp_path, declaration):
     brace = method.index("{") + 1
     actual["draw_color_key"] = method[:brace] + "\n" + declaration + method[brace:]
     result = run_host(tmp_path, keyed_harness(actual))
+    assert result.returncode == 42, result.stderr
+
+
+def shaded_rows_bodies():
+    """Complete draw2 plus real helpers; its sentinel callee is isolated."""
+    source = (ROOT / "src/texture.cpp").read_text()
+    methods = raster_bodies()
+    del methods["draw_trans"]
+    for name in ("texture_gouraud_edge", "texture_advance_gouraud_edge"):
+        methods[name] = braced(source, "static int " + name + "(")
+    methods["texture_light_step"] = braced(source, "static unsigned short texture_light_step(")
+    methods["draw2"] = braced(source, "void Texture::draw2(")
+    return methods
+
+
+def shaded_rows_harness(methods):
+    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace("struct Texture {", "int forward_calls;\nstruct Texture {")
+    common = common.replace(
+        "void draw_trans(Buffer *, Vert *, int);",
+        "void draw2(Buffer *, Vert *, int *, int, Vert *, int, int);\n"
+        "void draw_below_cutoff(Buffer *b, Vert *v, int *z, int n, Vert *uv, int cutoff) {\n"
+        "    require(events.empty() && b == &buffer && v && z && uv);\n"
+        "    require(n == 4 && cutoff == 17); ++forward_calls;\n}")
+    common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
+                            "reinterpret_cast<intptr_t>(output + 7 * 16)")
+    cases = []
+    for width in (1, 2, 3, 7, 31, 255, 32767):
+        for delta in (0, 1, -1, 65536, -65536, 8388607, 8388608,
+                      -8388608, -8388609, 2147483647, -2147483648):
+            step = x87_span_step_expected(delta, width)
+            magnitude = abs(step) // 256
+            value = -magnitude if step < 0 else magnitude
+            expected = value & 0xffff if -32768 <= value <= 32767 else 0x8000
+            cases.append("{%d, %d, %d}" % (delta, width, expected))
+    return common + r'''
+        void start() {
+            events.clear(); forward_calls = 0;
+            std::memset(output, 0xee, sizeof(output));
+            std::memset(expected, 0xee, sizeof(expected));
+            for (unsigned i=0; i<sizeof(pixels); ++i) pixels[i] = 240 + i;
+            texture.pixels_ = pixels; texture.iWidth_ = texture.iHeight_ = 8;
+            texture.borrowed_ = 1;
+            buffer.rect1_ = {0,0,0,0}; buffer.stride_ = 8;
+            lock_clip = {0,-6,12,6}; lock_stride = 16;
+        }
+        void finish(Vert *vertices, int *z, int count, Vert *uv,
+                    int cutoff, int color, bool active=true) {
+            texture.draw2(&buffer, vertices, z, count, uv, cutoff, color);
+            const std::vector<int> raster = {1,2,3,4,5,2,3};
+            const std::vector<int> skipped = {1,2,3,5,2,3};
+            require(events == (active ? raster : skipped));
+            require(std::memcmp(output, expected, sizeof(output)) == 0);
+        }
+        int main() {
+            const int slopes[][3] = { LIGHT_CASES };
+            for (const auto &c : slopes)
+                require(texture_light_step(c[0], c[1]) == c[2]);
+            Vert vertices[] = {{1,1},{5,1},{5,5},{1,5}};
+            Vert uv[] = {{0,0},{0,0},{0,0},{0,0}};
+            int z[4] = {};
+            start();
+            texture.draw2(&buffer, vertices, z, 4, uv, 17, -1);
+            require(forward_calls == 1 && events.empty());
+            require(std::memcmp(output, expected, sizeof(output)) == 0);
+
+            // Full-int polygon admission differs from the per-pixel signed
+            // byte comparison. Odd rows shade; even rows fill regardless.
+            const int depths[] = {-129,-128,-1,0,1,126,127,128,255,256};
+            const int cutoffs[] = {-128,-1,0,1,127,128,129,256,257};
+            for (int depth : depths) for (int cutoff : cutoffs)
+            for (int top : {-3, 0, 1}) {
+                start();
+                vertices[0].y=vertices[1].y=top;
+                vertices[2].y=vertices[3].y=top+4;
+                for (int &value : z) value=depth;
+                const bool active = depth < cutoff;
+                if (active) for (int y=top; y<top+4; ++y)
+                for (int x=1; x<5; ++x) {
+                    if (!(y & 1)) expected[112+y*16+x]=0x43;
+                    else if ((int8_t)depth < (int8_t)cutoff)
+                        expected[112+y*16+x]=(unsigned char)(pixels[0]+(int8_t)depth);
+                }
+                finish(vertices,z,4,uv,cutoff,0x143,active);
+            }
+
+            // Four-row edge slopes: biased V=.5,.5+.875,...; horizontal
+            // U and light advance by one. This is an independent rectangle
+            // oracle, not a second implementation of the scan converter.
+            vertices[0].y=vertices[1].y=1;
+            vertices[2].y=vertices[3].y=5;
+            Vert mapped[]={{0,0},{4,0},{4,4},{0,4}};
+            int lit[]={0,4,8,4};
+            for (int left : {0,3}) {
+                start(); lock_clip.left=left;
+                for (int y=1; y<5; ++y) for (int x=1; x<5; ++x) {
+                    if (x < left) continue;
+                    if (!(y&1)) expected[112+y*16+x]=0x91;
+                    else if (y+x-2 < 3)
+                        expected[112+y*16+x]=(unsigned char)(pixels[(y-1)*8+x-1]+y+x-2);
+                }
+                finish(vertices,lit,4,mapped,3,0x91);
+            }
+
+            // Real Gouraud setup keeps the half-texel at the start but
+            // subtracts it when deriving the endpoint delta.
+            EdgeScan edge={}; edge.f0=-1;
+            require(texture_gouraud_edge(edge,0,vertices,mapped,lit,4,2)==1);
+            require(edge.accumA==32768 && edge.accumB==32768);
+            require(edge.deltaA==-8192 && edge.deltaB==57344);
+            require(edge.accumD==0 && edge.deltaD==65536);
+            require(texture_advance_gouraud_edge(edge,vertices,mapped,lit,4,2)==1);
+            require(edge.accumA==24576 && edge.accumB==90112 && edge.accumD==65536);
+            start();
+            finish(vertices,lit,0,mapped,3,0x91,false);
+            return 0;
+        }
+    '''.replace("LIGHT_CASES", ",".join(cases))
+
+
+def test_actual_shaded_alternating_rows(tmp_path):
+    result = run_host(tmp_path, shaded_rows_harness(shaded_rows_bodies()))
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("method,before,after", [
+    ("draw2", "fillColor == -1", "cutoff == -1"),
+    ("draw2", "zvals[in_front] < cutoff", "zvals[in_front] <= cutoff"),
+    ("draw2", "(y & 1) == 0", "(y & 1) != 0"),
+    ("draw2", "texel + shade", "texel"),
+    ("draw2", "shade < static_cast<signed char>(cutoff)",
+     "shade < cutoff"),
+    ("texture_gouraud_edge", "+ 0x8000u", "+ 0u"),
+    ("texture_advance_gouraud_edge", "edge.accumD) + edge.deltaD", "edge.accumD) + 0"),
+    ("texture_light_step", "return 0x8000u", "return 0u"),
+])
+def test_shaded_row_damage_is_observed(tmp_path, method, before, after):
+    methods = shaded_rows_bodies()
+    assert before in methods[method]
+    methods[method] = methods[method].replace(before, after)
+    result = run_host(tmp_path, shaded_rows_harness(methods))
+    assert result.returncode == 42, result.stderr
+
+
+def cutoff_bodies():
+    methods = shaded_rows_bodies()
+    del methods["draw2"]
+    methods["draw_below_cutoff"] = braced(
+        (ROOT / "src/texture.cpp").read_text(), "void Texture::draw_below_cutoff(")
+    return methods
+
+
+def cutoff_harness(methods):
+    common = raster_harness(methods).split("        void start() {", 1)[0]
+    common = common.replace(
+        "void draw_trans(Buffer *, Vert *, int);",
+        "void draw_below_cutoff(Buffer *, Vert *, int *, int, Vert *, int);")
+    common = common.replace("unsigned lock_key, lock_stride;",
+                            "unsigned lock_key, lock_stride; bool null_lock;")
+    common = common.replace("reinterpret_cast<intptr_t>(output + 16)",
+                            "null_lock ? 0 : reinterpret_cast<intptr_t>(output + 112)")
+    return common + r'''
+        void start() {
+            events.clear(); null_lock=false;
+            std::memset(output,0xee,sizeof(output));
+            std::memset(expected,0xee,sizeof(expected));
+            for (unsigned i=0; i<sizeof(pixels); ++i) pixels[i]=240+i;
+            texture.pixels_=pixels; texture.iWidth_=texture.iHeight_=8;
+            buffer.rect1_={0,0,0,0}; buffer.stride_=8;
+            lock_clip={0,-6,12,6}; lock_stride=16;
+            TextureRasterKey=240; lock_key=240;
+        }
+        void finish(Vert *v,int *z,int n,Vert *uv,int cutoff,bool raster=true) {
+            texture.draw_below_cutoff(&buffer,v,z,n,uv,cutoff);
+            const std::vector<int> active={1,2,3,4,5,2,3};
+            const std::vector<int> inactive={1,2,3,5,2,3};
+            require(events==(raster ? active : inactive));
+            require(std::memcmp(output,expected,sizeof(output))==0);
+        }
+        int floor_div(int numerator,int denominator) {
+            return numerator>=0 ? numerator/denominator
+                                : -((-numerator+denominator-1)/denominator);
+        }
+        int main() {
+            Vert v[]={{1,1},{5,1},{5,5},{1,5}};
+            Vert uv[]={{0,0},{0,0},{0,0},{0,0}};
+            int z[4]={};
+            // Original 61ACC9 admits by signed full integers, independently
+            // of the signed CH/AH comparison at 61B16C. No row parity, key,
+            // fill color, light clamp or special cutoff sentinel is involved.
+            for (int depth : {-129,-128,-1,0,1,126,127,128,255,256})
+            for (int cutoff : {-128,-1,0,1,127,128,129,256,257})
+            for (int top : {-3,0,1}) {
+                start();
+                v[0].y=v[1].y=top; v[2].y=v[3].y=top+4;
+                for (int &value : z) value=depth;
+                const bool admitted=depth<cutoff;
+                if (admitted && (int8_t)depth<(int8_t)cutoff)
+                    for (int y=top;y<top+4;++y) for (int x=1;x<5;++x)
+                        expected[112+y*lock_stride+x]=(unsigned char)(pixels[0]+(int8_t)depth);
+                finish(v,z,4,uv,cutoff,admitted);
+            }
+            v[0].y=v[1].y=1; v[2].y=v[3].y=5;
+            // Independent rational planes, in eighth-texel/half-light units.
+            // Both increasing and decreasing U,V and light have fractional
+            // carries. Power-of-two spans make these exact PC24 anchors.
+            // Biased edge starts approach the un-biased endpoint, hence
+            // vertical eighth-texel slopes +3 and -5, not +4 and -4.
+            // The original zero-extends the WORD light slope for clipping.
+            // Signed extension differs by whole 65536-unit light cycles and
+            // is pixel-equivalent after truncation here; these controls test
+            // the resulting negative-slope pixels, not that representation.
+            for (bool descending : {false,true})
+            for (int pitch : {12,16}) for (int left : {0,3,6})
+            for (int right : {4,12}) for (int top : {-6,2,5}) {
+                start(); lock_stride=pitch; lock_clip={left,top,right,6};
+                Vert rising[]={{1,1},{3,4},{5,6},{3,3}};
+                Vert falling[]={{5,6},{3,3},{1,1},{3,4}};
+                int bright[]={-3,3,7,1}; int dark[]={7,-3,-7,3};
+                for (int row=0;row<4;++row) for (int col=0;col<4;++col) {
+                    const int x=col+1,y=row+1;
+                    if (x<left || x>=right || y<top) continue;
+                    const int u=descending ? (44-5*row-4*col)/8 : (12+3*row+4*col)/8;
+                    const int w=descending ? (52-5*row-6*col)/8 : (12+3*row+6*col)/8;
+                    const int shade=floor_div(descending ? 14-2*row-5*col
+                                                         : -6+2*row+3*col,2);
+                    if (shade<4) expected[112+y*pitch+x]=(unsigned char)(pixels[w*8+u]+shade);
+                }
+                finish(v,descending ? dark : bright,4,descending ? falling : rising,4);
+            }
+            // Admission must inspect every vertex. Clipping away the polygon
+            // isolates admission/FPU sequencing without using another raster
+            // implementation to predict these nonplanar light values.
+            for (int low=0;low<4;++low) {
+                start(); lock_clip.bottom=1;
+                for (int &value : z) value=1;
+                z[low]=-1; finish(v,z,4,uv,0);
+            }
+            start(); finish(v,z,0,uv,0,false);
+            // Original release is still reached after a null data result on
+            // a safely rejected polygon. Active null-data drawing is outside
+            // this fixture's valid allocation domain, not invented recovery.
+            start(); null_lock=true; finish(v,z,0,uv,0,false);
+            start(); for (int &value : z) value=-1;
+            for (Vert &vertex : v) vertex.y=2;
+            finish(v,z,4,uv,0,false);
+            return 0;
+        }
+    '''
+
+
+def test_actual_full_cutoff_raster(tmp_path):
+    result = run_host(tmp_path, cutoff_harness(cutoff_bodies()))
+    assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("before,after", [
+    ("zvals[in_front] < cutoff", "zvals[in_front] <= cutoff"),
+    ("zvals[in_front] < cutoff", "static_cast<signed char>(zvals[in_front]) < static_cast<signed char>(cutoff)"),
+    ("shade < static_cast<signed char>(cutoff)", "shade < cutoff"),
+    ("shade < static_cast<signed char>(cutoff)", "shade <= static_cast<signed char>(cutoff)"),
+    ("if (shade <", "if ((y & 1) && shade <"),
+    ("texel + shade", "texel"),
+    ("const unsigned char texel = pixels[source];", "const unsigned char texel = pixels[source]; if (texel == TextureRasterKey) continue;"),
+    ("(static_cast<int64_t>(dz) * skip) >> 8", "(static_cast<int64_t>(dz) * skip) >> 16"),
+    ("(uf >> 16)", "0"),
+    ("static_cast<int64_t>(vf >> 16) * width", "0"),
+    ("light + dz", "light"),
+    ("buffer->stride_", "iWidth_"),
+    ("buffer->free_data(1)", "buffer->free_data(2)"),
+    ("texture_reset_fpu();", ";"),
+])
+def test_full_cutoff_damage_is_observed(tmp_path, before, after):
+    methods = cutoff_bodies()
+    assert before in methods["draw_below_cutoff"]
+    methods["draw_below_cutoff"] = methods["draw_below_cutoff"].replace(before, after)
+    result = run_host(tmp_path, cutoff_harness(methods))
     assert result.returncode == 42, result.stderr

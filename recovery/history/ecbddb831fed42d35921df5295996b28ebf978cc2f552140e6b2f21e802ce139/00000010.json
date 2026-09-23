@@ -1,0 +1,22 @@
+{
+  "event_id": "108dd7a882aa4152a74dcf2421a3161d09bbc43621e84f524291530d30757306",
+  "payload": {
+    "affects": [
+      "entity-2e75e48d0fdc3afd117f0ce51a30b5910e440ecba44709c36f285f8fc4719ec7"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-cutoff-texture-interface-20260923",
+    "evidence": [
+      "The existing Texture task owns61AC60 and texture.cpp/h. Original62469D forwards the UV pointer to61AC60; its Gouraud setup reads actual eight-byte vertex pairs. The product currently spells that argument as int while the separate6233C0 overload already has the corresponding Vert* signature. Do not introduce a duplicate overload or retain an integer solely to disambiguate misnamed catalogue entries.",
+      "Authorize an interface-only correction for61AC60: use the evidence-backed provisional name draw_below_cutoff and Vert* edgeVerts, updating the existing declaration/definition and the new draw2 sentinel call. Preserve the canonical ORIGINAL identity and existing incomplete kernel; root updates its emitted symbol via native writer after compilation. Its old scratch pointer publication still needs separate structural recovery; do not call the existing kernel complete. This source type/name change retains ABI pointer width and grants no matching claim.",
+      "No other existing body or shared helper behavior changes are authorized by this interface correction. Inspect compile/link callers and historical obligations; keep the remaining sentinel implementation dependency explicit."
+    ],
+    "hypothesis": "The draw2 sentinel dependency takes real UV vertices; its legacy integer parameter masks a collision between two differently behaving six-argument rasterizers.",
+    "kind": "discovery"
+  },
+  "previous_event": "b47d762a6d494310b7d1566ee111e2ce6d54a89320041b7cc83a4aaaec7d1f3c",
+  "request_id": "terrain-cutoff-texture-interface-20260923",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:texture-rasterizer-recovery"
+}

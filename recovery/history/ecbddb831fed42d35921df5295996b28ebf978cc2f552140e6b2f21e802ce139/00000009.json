@@ -1,0 +1,29 @@
+{
+  "event_id": "b47d762a6d494310b7d1566ee111e2ce6d54a89320041b7cc83a4aaaec7d1f3c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_texture_vertices.py",
+      "src/texture.cpp",
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Authorize the existing Texture owner to recover its seed-only draw2 dependency624670..624C6D in the retained coordinator terrain checkout. Root owns Git/measurements and source-binding publication; preserve this task original baseline and outstanding findings. This manual coupled recovery does not grant automatic acceptance or transfer the terrain owner.",
+      "Original review identifies the seventh color argument==-1 as the pre-lock forwarding sentinel to61AC60, not sixth cutoff==-1. Ordinary path acquires destination first, resets FPU and uses real Gouraud edges; whole-polygon full-int z cutoff skip still balances acquisition/reset. Odd absolute rows sample the width-strided texture, add signed light modulo256 and write only for signed8-bit light below signed8-bit cutoff; even rows fill low-byte color without that threshold. Endpoint-exclusive count and PC24/chop slopes must follow decoded instructions. Preserve original initial-read/exception/FP limitations explicitly; do not transplant the nonfunctional seed kernel or fake live ESP.",
+      "Prefer existing typed EdgeScan, PC24 and fixed-point helpers when their actual operations agree. No assembly, machine-code copying, raw stack frame or new image-address scratch. Analyze actual return contract before changing declaration. Add discriminating actual-source controls and independent native/original review before integration. Root will bind the new product body through the native seed binder; retain seed obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6440560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "09bb1cca75bced4e1b8a9a071f2d318b1da898b9c3efe225cbef285df6f5029f",
+  "request_id": "terrain-callee-texture-rasterizer-recovery-20260923",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:texture-rasterizer-recovery"
+}

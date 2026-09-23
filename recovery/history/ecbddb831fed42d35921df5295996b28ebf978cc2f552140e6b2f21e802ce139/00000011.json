@@ -1,0 +1,22 @@
+{
+  "event_id": "12bb52e0e4e2b6f151818bfea7f99bfbf4f0fed6cd947ebfac7b70b40e7bafe5",
+  "payload": {
+    "affects": [
+      "entity-2e75e48d0fdc3afd117f0ce51a30b5910e440ecba44709c36f285f8fc4719ec7"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "texture-cutoff-complete-shaded-kernel-20260923",
+    "evidence": [
+      "This explicitly extends the earlier interface-only61AC60 repair to its already-owned body and actual-source tests. Independent full original decode identifies the same61FC90 Gouraud edge setup and PC24/chop reciprocal/products as624670, with shaded sampling on every row, no alternating fill path and no sentinel forwarding. Reuse established typed helpers without changing their behavior; preserve canonical mapping, source symbol and seed evidence.",
+      "The original uses signed-byte cutoff, an unsigned16-bit light delta in left clipping, and independent UV steps/carries. Existing seed scaffold incorrectly cross-multiplies du/dv, uses unsigned cutoff and sign-extends clipped light delta. Slots6972C8/C4 are written UV integer steps, not external clamp configuration; there is no raster clamp or transparency-key read to invent. Only constant floating scales are consumed.",
+      "Require independent original review, bounded actual-source behavior and compiling damage controls, both configured native compiler trials, scoped byte/reference diagnostics and application build/link. Geometry, allocation, signed row-pointer order, callback/shared scratch and FPU-status limitations remain explicit. No claim is banked or demoted, and this decision does not establish complete function/game acceptance."
+    ],
+    "hypothesis": "Complete the draw2 sentinel callee as genuine typed C++ rather than retaining its scratch-address scaffold.",
+    "kind": "discovery"
+  },
+  "previous_event": "108dd7a882aa4152a74dcf2421a3161d09bbc43621e84f524291530d30757306",
+  "request_id": "texture-cutoff-complete-shaded-kernel-20260923",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:texture-rasterizer-recovery"
+}

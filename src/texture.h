@@ -169,11 +169,13 @@ class Texture {
   // Names marked with an address are this tree's, not the image's: those
   // bodies carry no symbol in the shipped binary, so the name says what the
   // body does and the address is the only handle the catalogue has.
-  void draw(Buffer *buffer, Vert *verts, int *zvals, int count,
-            int edgeVerts, int light_thresh);                                   // 0x0061AC60
-  int draw2(Buffer *buffer, Vert *verts, int *zvals, int count,
-            int *auxVerts, int zCutoff,
-            int fillColor);                                     // 0x00624670
+  void draw_below_cutoff(Buffer *buffer, Vert *verts, int *zvals, int count,
+                         Vert *edgeVerts, int light_thresh);                    // 0x0061AC60
+  // Alternating-row depth-cutoff fill; fillColor == -1 delegates to the
+  // ordinary cutoff rasterizer. UVs are coordinate pairs, not opaque words.
+  void draw2(Buffer *buffer, Vert *verts, int *zvals, int count,
+             Vert *uv, int zCutoff,
+             int fillColor);                                    // 0x00624670
   // THE SIX THE CATALOGUE NEVER NAMED. Their members keep the address-derived
   // name the catalogue gave them - it is the only handle the archive has for
   // them, and homing looks the definition up by it. What they are:

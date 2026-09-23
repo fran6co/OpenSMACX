@@ -3166,10 +3166,28 @@ cleanup:
     return 0;
 }
 
+// Local Gouraud helpers shared with draw2; their definitions follow the
+// rasterizer family below. Neither routine depends on image scratch storage.
+static int texture_gouraud_edge(EdgeScan &edge, int index,
+                               const Vert *vertices, const Vert *uv,
+                               const int *light, int count, int bottom);
+static int texture_advance_gouraud_edge(EdgeScan &edge, const Vert *vertices,
+                                       const Vert *uv, const int *light,
+                                       int count, int bottom);
+static unsigned short texture_light_step(int delta, int width);
+
+// The cutoff rasterizer uses draw2's shaded sampling kernel on every row.
+// The full signed cutoff first rejects polygons whose vertices are all at
+// or above it; each pixel then compares signed light/cutoff LOW bytes.
+// No transparency key or light clamp participates in this original entry.
+// Local scratch has the same bounded domain as draw2: established extrema,
+// convex geometry, valid UV allocations, fitting edge divisions, positive
+// pitch, nonwrapping source addresses and row addresses preserving signed
+// order. The original's unused terminal texel preload is omitted. Shared
+// scratch observations and FPU status during release callbacks are unproved.
 // ORIGINAL: 0x0061AC60 Texture::draw 0x0061AC60-0x0061B1E2 FILE
-// symbol    ?draw@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHHH@Z
+// symbol    ?draw_below_cutoff@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1H@Z
 // TRIED: MISMATCH #4. Same ESP-as-pixel-counter inner blitter as 0x006239E0's sibling - not reproducible without __asm. Body adds the gouraud light channel on top of that function's template: e1[13]/e1[14] confirmed as the light accumulator/step by hand-tracing the extra unconditional "e1[13]+=e1[14]" pair in the per-scanline update block (absent from the non-gouraud rasterizer), and the third fmul/fistp-to-word pair (scaled by 0x670a88 instead of 0x670a84) confirmed as the per-pixel light step feeding DAT_009bb52c.
-// working copy - scaffold materialised by --work
 // size      1410 bytes
 // prototype 
 // callers   1   call targets   3
@@ -3177,182 +3195,98 @@ cleanup:
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005E3373 0x005E34A3 0x0061FC90
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: Texture::draw  at 0x0061AC60  (1410 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
-
-void Texture::draw(Buffer *buf, Vert *verts, int *zvals, int count,
-                   int edgeVerts, int light_thresh) {
-    *blit_pixel_base = buf->get_data();
-    *blit_light_threshold = light_thresh;
-    *blit_edge_uvs_a = edgeVerts;
-    *blit_edge_uvs_b = (int)(long)verts;
-    *blit_vertex_count = count;
-    *blit_z_values = (int)(long)zvals;
-    *blit_texture_pixels = (int)(long)pixels_;
-    *blit_buffer_stride = (int)buf->stride_;
-    *blit_texture_width = (int)iWidth_;
-
-    int guard_i = 0;
-    for (int i = 0; i < count; ++i) {
-        if (zvals[i] < light_thresh) break;
-        ++guard_i;
+void Texture::draw_below_cutoff(Buffer *buffer, Vert *vertices, int *zvals, int count,
+                                Vert *uv, int cutoff) {
+    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    texture_reset_fpu();
+    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const int stride = static_cast<int>(buffer->stride_);
+    const int width = iWidth_;
+    int in_front = 0;
+    for (; in_front < count; ++in_front) {
+        if (zvals[in_front] < cutoff) break;
     }
-
-    if (guard_i != count && buf != 0) {
-        // The clip rectangle is Buffer's `rect1_` at 0x20, which is
-        // protected and friendshipless towards Texture, so it is reached by
-        // offset - the same spelling the other homed blitters use.
-        *blit_clip_right = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x28);
-        *blit_clip_left = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x20);
-        *blit_clip_bottom = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x2c);
-        *blit_clip_top = *reinterpret_cast<int *>(reinterpret_cast<char *>(buf) + 0x24);
-
-        int min_y = 0x7fff, min_y_idx = 0;
-        int max_y = (int)0xffff8003, max_y_idx = 0;
-        int min_x = 0x7fff;
-        int max_x = (int)0xffff8003;
-        if (count > 0) {
-            for (int i = 0; i < count; ++i) {
-                int y = reinterpret_cast<int *>(verts)[i * 2 + 1];
-                if (y < min_y) { min_y_idx = i; min_y = y; }
-                if (max_y < y) { max_y_idx = i; max_y = y; *blit_max_y_index = i; }
-                int x = reinterpret_cast<int *>(verts)[i * 2];
-                if (x < min_x) min_x = x;
-                if (max_x < x) max_x = x;
+    if (in_front != count) {
+        const RECT clip = buffer->rect1_;
+        int min_y = 0x7fff, max_y = -0x7ffd;
+        int top = 0, bottom = 0;
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
+            if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+        }
+        EdgeScan left, right;
+        left.f0 = -1;
+        right.f0 = 1;
+        if (min_y < max_y &&
+            texture_gouraud_edge(left, top, vertices, uv, zvals, count, bottom) &&
+            texture_gouraud_edge(right, top, vertices, uv, zvals, count, bottom)) {
+            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+            int du = 0, dv = 0;
+            unsigned short dz = 0;
+            int y = min_y;
+            if (y >= clip.bottom) {
+                buffer->free_data(1);
+                texture_reset_fpu();
+                return;
             }
-            if (min_y < max_y) {
-                *blit_row_offset = *blit_buffer_stride * min_y + *blit_pixel_base;
-                *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + *blit_pixel_base;
-                *blit_clip_top = *blit_clip_top * *blit_buffer_stride + *blit_pixel_base;
-
-                EdgeScan e1, e2;
-                e1.f0 = -1;
-                if (setup_edge_gouraud(&e1, min_y_idx) != 0) {
-                    e2.counter = 1;
-                    if (setup_edge_gouraud(&e2, min_y_idx) != 0) {
-                        double dy = (double)((e2.accumC - e1.accumC) << 16);
-                        double du = 0, dv = 0, dw = 0, inv_dy = 1;
-                        if (dy > 0) {
-                            du = (double)(e2.accumB - e1.accumB);
-                            dv = (double)(e2.accumA - e1.accumA);
-                            dw = (double)(e2.accumD - e1.accumD);
-                            inv_dy = 1.0 / dy;
-                        }
-
-                        bool done = false;
-                        while (*blit_row_offset < *blit_clip_bottom) {
-                            *blit_slot_498 = e1.accumD;
-                            *blit_slot_4c4 = e2.accumA;
-                            *blit_slot_4f8 = e1.accumA;
-                            *blit_slot_530 = e2.accumB;
-                            *blit_slot_53c = e1.accumB;
-                            *blit_span_right = e1.accumC;
-                            *blit_span_left = e2.accumC;
-
-                            e1.counter -= 1;
-                            if (e1.counter == 0) {
-                                if (setup_edge_gouraud(&e1, e1.id) == 0) {
-                                    done = true;
-                                    goto per_scanline_tail;
-                                }
-                            } else {
-                                edge_step(e1);
-                            }
-                            e2.counter -= 1;
-                            if (e2.counter == 0) {
-                                if (setup_edge_gouraud(&e2, e2.id) == 0) {
-                                    done = true;
-                                }
-                            } else {
-                                edge_step(e2);
-                            }
-
-                        per_scanline_tail:
-                            if (dy > 0) {
-                                *blit_slot_4e4 = (int)(dv * du * inv_dy * (double)*(float *)blit_scale_65536f);
-                                *blit_slot_4c8 = (int)(du * dv * inv_dy * (double)*(float *)blit_scale_65536f);
-                                *(short *)blit_light_pack_a = (short)(int)(du * inv_dy * dw * (double)*(float *)blit_scale_256f);
-                            }
-                            dy = (double)((e2.accumC - e1.accumC) << 16);
-                            if (dy > 0) {
-                                du = (double)(e2.accumB - e1.accumB);
-                                dv = (double)(e2.accumA - e1.accumA);
-                                dw = (double)(e2.accumD - e1.accumD);
-                                inv_dy = 1.0 / dy;
-                            }
-
-                            if (*blit_clip_bottom <= *blit_row_offset) break;
-                            if (*blit_clip_top <= *blit_row_offset && *blit_clip_left < *blit_span_left &&
-                                *blit_span_right < *blit_clip_right && *blit_span_right < *blit_span_left) {
-                                int right_x = *blit_span_left;
-                                if (*blit_clip_right <= *blit_span_left) right_x = *blit_clip_right;
-                                if (*blit_span_right < *blit_clip_left) {
-                                    int step = (*blit_span_right - *blit_clip_left) * -0x10000;
-                                    __int64 p1 = (__int64)*blit_slot_4e4 * (__int64)step;
-                                    *blit_slot_4f8 = (int)(((unsigned int)p1 >> 16) | ((int)((unsigned __int64)p1 >> 32) << 16)) + *blit_slot_4f8;
-                                    __int64 p2 = (__int64)*blit_slot_4c8 * (__int64)step;
-                                    *blit_slot_53c = *blit_slot_53c + (int)(((unsigned int)p2 >> 16) | ((int)((unsigned __int64)p2 >> 32) << 16));
-                                    __int64 p3 = (__int64)(short)*(short *)blit_light_pack_a * (__int64)step;
-                                    *blit_slot_498 = *blit_slot_498 + (int)(((unsigned int)p3 >> 8) | ((int)((unsigned __int64)p3 >> 32) << 24));
-                                    *blit_span_right = *blit_clip_left;
-                                }
-
-                                unsigned char *tex_row = (unsigned char *)(*blit_texture_pixels + *blit_texture_width * (*blit_slot_53c >> 16) + (*blit_slot_4f8 >> 16));
-                                char *dest = (char *)(long)(*blit_span_right + *blit_row_offset);
-                                *blit_alt_slot_524 = ((*blit_slot_4c8 >> 16) * *blit_texture_width + (*blit_slot_4e4 >> 16));
-                                *blit_alt_slot_520 = *blit_alt_slot_524 + *blit_texture_width;
-                                *blit_slot_528 = *blit_slot_4c8 << 16;
-
-                                unsigned int u_acc = concat22((unsigned short)*blit_slot_53c, (unsigned short)*blit_slot_4e4);
-                                unsigned int span = concat22((unsigned short)(((short)right_x - (short)*blit_span_right) - 1), (unsigned short)*blit_slot_4f8);
-                                *blit_slot_498 = *blit_slot_498 >> 8;
-                                unsigned short light = (unsigned short)*blit_slot_498;
-                                unsigned short light_step = *(unsigned short *)blit_light_pack_a;
-                                unsigned char threshold = *(unsigned char *)blit_light_threshold;
-
-                                unsigned char texel = *tex_row;
-                                unsigned int off = 0;
-                                for (;;) {
-                                    unsigned char light_hi = (unsigned char)(light >> 8);
-                                    int carry = carry4(u_acc, *(unsigned int *)blit_slot_528);
-                                    u_acc = u_acc + *(unsigned int *)blit_slot_528;
-                                    if (light_hi < threshold) {
-                                        *dest = (char)(texel + light_hi);
-                                    }
-                                    unsigned int selected_row = carry ? (unsigned int)*blit_alt_slot_520 : (unsigned int)*blit_alt_slot_524;
-                                    int next_span = (int)concat22((unsigned short)((unsigned int)span >> 16),
-                                                                   (unsigned short)((unsigned short)span + (unsigned short)u_acc));
-                                    off = selected_row + off + (unsigned int)(carry2((unsigned short)span, (unsigned short)u_acc) ? 1 : 0);
-                                    light = (unsigned short)(light + light_step);
-                                    dest = dest + 1;
-                                    texel = tex_row[(int)off];
-                                    span = (unsigned int)(next_span - 0x10000);
-                                    if ((int)span < 0) break;
-                                }
-                            }
-                            if (done) break;
-                            *blit_row_offset = *blit_row_offset + *blit_buffer_stride;
-                        }
+            for (;;) {
+                int x = left.accumC;
+                int end = right.accumC;
+                int u = left.accumA, v = left.accumB, z = left.accumD;
+                const int span = texture_fixed(texture_difference(end, x));
+                if (span > 0) {
+                    du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
+                    dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
+                    dz = texture_light_step(texture_difference(right.accumD, z), span >> 16);
+                }
+                const int done =
+                    !texture_advance_gouraud_edge(left, vertices, uv, zvals, count, bottom) ||
+                    !texture_advance_gouraud_edge(right, vertices, uv, zvals, count, bottom);
+                if (y >= clip.bottom) break;
+                if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
+                    if (end > clip.right) end = clip.right;
+                    if (x < clip.left) {
+                        const int skip = texture_fixed(texture_difference(clip.left, x));
+                        u = static_cast<int>(static_cast<unsigned int>(u) +
+                            static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                        v = static_cast<int>(static_cast<unsigned int>(v) +
+                            static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                        // 61B079..61B081 zero-extends the WORD slope before IMUL;
+                        // SHRD by eight brings the result back to 16.16.
+                        z = static_cast<int>(static_cast<unsigned int>(z) +
+                            static_cast<unsigned int>((static_cast<int64_t>(dz) * skip) >> 8));
+                        x = clip.left;
+                    }
+                    unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
+                    const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
+                    int64_t source =
+                        static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
+                            * static_cast<int64_t>(width)
+                        + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
+                    unsigned int uf = static_cast<unsigned short>(u);
+                    unsigned int vf = static_cast<unsigned short>(v);
+                    unsigned short light = static_cast<unsigned short>(z >> 8);
+                    const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
+                    for (unsigned int written = 0; written < remaining; ++written, ++out) {
+                        const unsigned char texel = pixels[source];
+                        const signed char shade = static_cast<signed char>(light >> 8);
+                        if (shade < static_cast<signed char>(cutoff))
+                            *out = static_cast<unsigned char>(texel + shade);
+                        uf += static_cast<unsigned short>(du);
+                        vf += static_cast<unsigned short>(dv);
+                        source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
+                        uf &= 0xffff;
+                        vf &= 0xffff;
+                        light = static_cast<unsigned short>(light + dz);
                     }
                 }
+                if (done) break;
+                ++y;
             }
         }
     }
-
-    if (buf != 0) {
-        buf->free_data(1);
-    }
+    buffer->free_data(1);
+    texture_reset_fpu();
 }
 
 // ORIGINAL: 0x006212B0 sub_6212b0 0x006212B0-0x00621868 FILE
@@ -6572,4 +6506,212 @@ void Texture::sub_624630(int a1, int a2, int a3, int a4, int a5, int a6,
     if (sentinel == -1) {
         sub_61df60(a1, a2, a3, a4, a5, a6, a7, a8, a9);
     }
+}
+
+// The Gouraud setup at 0x0061FC90 uses the same integer X edge as the
+// plain setup, but starts UVs at texel centres and adds an independent
+// 16.16 light channel. Its endpoint UV target deliberately has no half-
+// texel bias: subtract the biased start before the fixed-point division.
+static int texture_gouraud_edge(EdgeScan &edge, int index,
+                                 const Vert *vertices, const Vert *uv,
+                                 const int *light, int count, int bottom) {
+    if (index == bottom) return 0;
+    for (;;) {
+        int next = index + edge.f0;
+        if (next >= count) next = 0;
+        else if (next < 0) next = count - 1;
+        edge.counter = texture_difference(vertices[next].y, vertices[index].y);
+        if (edge.counter != 0) {
+            if (edge.counter < 0) return 0;
+            edge.id = next;
+            edge.accumA = static_cast<int>(
+                static_cast<unsigned int>(texture_fixed(uv[index].x)) + 0x8000u);
+            edge.accumB = static_cast<int>(
+                static_cast<unsigned int>(texture_fixed(uv[index].y)) + 0x8000u);
+            const int height = texture_fixed(edge.counter);
+            edge.deltaA = static_cast<int>(
+                static_cast<int64_t>(texture_difference(texture_fixed(uv[next].x), edge.accumA))
+                * 65536 / height);
+            edge.deltaB = static_cast<int>(
+                static_cast<int64_t>(texture_difference(texture_fixed(uv[next].y), edge.accumB))
+                * 65536 / height);
+            edge.accumC = vertices[index].x;
+            const int dx = texture_difference(vertices[next].x, vertices[index].x);
+            edge.deltaC = dx / edge.counter;
+            const int magnitude = dx < 0 ? texture_difference(0, dx) : dx;
+            edge.extraDeltaC = dx < 0 ? -1 : 1;
+            edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;
+            edge.fracSub = edge.counter;
+            edge.fracDelta = magnitude % edge.counter;
+            edge.accumD = texture_fixed(light[index]);
+            edge.deltaD = static_cast<int>(
+                static_cast<int64_t>(texture_difference(texture_fixed(light[next]), edge.accumD))
+                * 65536 / height);
+            return 1;
+        }
+        index = next;
+        if (index == bottom) return 0;
+    }
+}
+
+static int texture_advance_gouraud_edge(EdgeScan &edge, const Vert *vertices,
+                                         const Vert *uv, const int *light,
+                                         int count, int bottom) {
+    if (--edge.counter == 0)
+        return texture_gouraud_edge(edge, edge.id, vertices, uv, light, count, bottom);
+    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
+    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
+    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
+    edge.accumD = static_cast<int>(static_cast<unsigned int>(edge.accumD) + edge.deltaD);
+    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
+    if (edge.fracAccum > 0) {
+        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
+        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
+    }
+    return 1;
+}
+
+// PC24/chop reciprocal and product, as in texture_span_step, but the
+// final power-of-two scale is 256 and FISTP stores a signed WORD. Masked
+// conversion overflow produces the x87 integer-indefinite word 0x8000.
+// The resulting bits are reproduced; x87 exception status is not.
+static unsigned short texture_light_step(int delta, int width) {
+    const uint64_t denominator = static_cast<uint64_t>(width) << 16;
+    uint64_t upper_power = 1;
+    int reciprocal_shift = 23;
+    while (upper_power < denominator) {
+        upper_power <<= 1;
+        ++reciprocal_shift;
+    }
+    const uint64_t significand = (static_cast<uint64_t>(1) << reciprocal_shift) / denominator;
+    const uint64_t magnitude = delta < 0 ? -static_cast<int64_t>(delta) : delta;
+    uint64_t product = significand * magnitude;
+    int exponent = 8 - reciprocal_shift;
+    while (product >= (static_cast<uint64_t>(1) << 24)) {
+        product >>= 1;
+        ++exponent;
+    }
+    const uint64_t rounded = exponent >= 0 ? product << exponent : product >> -exponent;
+    if (rounded > (delta < 0 ? 32768u : 32767u)) return 0x8000u;
+    return static_cast<unsigned short>(
+        delta < 0 ? -static_cast<int64_t>(rounded) : static_cast<int64_t>(rounded));
+}
+
+// 0x00624670 alternates opaque fill rows with depth-tested, lit texture
+// rows. The seventh argument is the -1 forwarding sentinel, not the cutoff.
+// The ordinary path and mapped caller establish no meaningful return value.
+// Local scratch follows the recovered keyed rasterizers' bounded domain:
+// established extrema, convex geometry, valid UV allocations, fitting edge
+// divisions, positive pitch, nonwrapping source addresses and row addresses
+// preserving signed order (the original compares signed pointers, not y).
+// Shared-scratch observations
+// and FPU status inside release callbacks remain unproved. The original reads
+// one unused texel on fill rows and preloads an unused texel after the final
+// textured pixel; those unused reads are omitted, as in the keyed kernels.
+// The sentinel delegates to 0x0061AC60's shaded-every-row counterpart above.
+// ORIGINAL: 0x00624670 Texture::draw2 0x00624670-0x00624C6D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["624676..62469D identify seventh-argument minus-one forwarding; 6246B0 acquires the Buffer; 624B99..624BE9 select row parity and perform light-tested sampling; 61FC90 supplies the Gouraud edge interpretation. Bounded geometry and unused-read limitations are documented beside the source body."], "reason": "This Texture member alternates opaque fill rows with cutoff-tested lit texture rows, consuming real Buffer, vertex, depth and UV arrays. Original callers ignore EAX; the ordinary path has no meaningful return value."}
+// symbol    ?draw2@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1HH@Z
+void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
+                    Vert *uv, int cutoff, int fillColor) {
+    if (fillColor == -1) {
+        draw_below_cutoff(buffer, vertices, zvals, count, uv, cutoff);
+        return;
+    }
+
+    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    texture_reset_fpu();
+    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const int stride = static_cast<int>(buffer->stride_);
+    const int width = iWidth_;
+    int in_front = 0;
+    for (; in_front < count; ++in_front) {
+        if (zvals[in_front] < cutoff) break;
+    }
+    if (in_front != count) {
+        const RECT clip = buffer->rect1_;
+        int min_y = 0x7fff, max_y = -0x7ffd;
+        int top = 0, bottom = 0;
+        for (int i = 0; i < count; ++i) {
+            if (vertices[i].y < min_y) { min_y = vertices[i].y; top = i; }
+            if (vertices[i].y > max_y) { max_y = vertices[i].y; bottom = i; }
+        }
+        EdgeScan left, right;
+        left.f0 = -1;
+        right.f0 = 1;
+        if (min_y < max_y &&
+            texture_gouraud_edge(left, top, vertices, uv, zvals, count, bottom) &&
+            texture_gouraud_edge(right, top, vertices, uv, zvals, count, bottom)) {
+            _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+            int du = 0, dv = 0;
+            unsigned short dz = 0;
+            int y = min_y;
+            if (y >= clip.bottom) {
+                buffer->free_data(1);
+                texture_reset_fpu();
+                return;
+            }
+            for (;;) {
+                int x = left.accumC;
+                int end = right.accumC;
+                int u = left.accumA, v = left.accumB, z = left.accumD;
+                const int span = texture_fixed(texture_difference(end, x));
+                if (span > 0) {
+                    du = texture_span_step(texture_difference(right.accumA, u), span >> 16);
+                    dv = texture_span_step(texture_difference(right.accumB, v), span >> 16);
+                    dz = texture_light_step(texture_difference(right.accumD, z), span >> 16);
+                }
+                const int done =
+                    !texture_advance_gouraud_edge(left, vertices, uv, zvals, count, bottom) ||
+                    !texture_advance_gouraud_edge(right, vertices, uv, zvals, count, bottom);
+                if (y >= clip.bottom) break;
+                if (y >= clip.top && end > clip.left && x < clip.right && end > x) {
+                    if (end > clip.right) end = clip.right;
+                    if (x < clip.left) {
+                        const int skip = texture_fixed(texture_difference(clip.left, x));
+                        u = static_cast<int>(static_cast<unsigned int>(u) +
+                            static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                        v = static_cast<int>(static_cast<unsigned int>(v) +
+                            static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                        // 624AC9 zero-extends the WORD slope before IMUL;
+                        // SHRD by eight brings the result back to 16.16.
+                        z = static_cast<int>(static_cast<unsigned int>(z) +
+                            static_cast<unsigned int>((static_cast<int64_t>(dz) * skip) >> 8));
+                        x = clip.left;
+                    }
+                    unsigned char *out = destination + static_cast<int64_t>(y) * stride + x;
+                    const unsigned int remaining = texture_span_pixels(texture_difference(end, x));
+                    if ((y & 1) == 0) {
+                        for (unsigned int written = 0; written < remaining; ++written)
+                            out[written] = static_cast<unsigned char>(fillColor);
+                    } else {
+                        int64_t source =
+                            static_cast<unsigned short>(static_cast<unsigned int>(v) >> 16)
+                                * static_cast<int64_t>(width)
+                            + static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
+                        unsigned int uf = static_cast<unsigned short>(u);
+                        unsigned int vf = static_cast<unsigned short>(v);
+                        unsigned short light = static_cast<unsigned short>(z >> 8);
+                        const int64_t step = static_cast<int64_t>(dv >> 16) * width + (du >> 16);
+                        for (unsigned int written = 0; written < remaining; ++written, ++out) {
+                            const unsigned char texel = pixels[source];
+                            const signed char shade = static_cast<signed char>(light >> 8);
+                            if (shade < static_cast<signed char>(cutoff))
+                                *out = static_cast<unsigned char>(texel + shade);
+                            uf += static_cast<unsigned short>(du);
+                            vf += static_cast<unsigned short>(dv);
+                            source += step + (uf >> 16) + static_cast<int64_t>(vf >> 16) * width;
+                            uf &= 0xffff;
+                            vf &= 0xffff;
+                            light = static_cast<unsigned short>(light + dz);
+                        }
+                    }
+                }
+                if (done) break;
+                ++y;
+            }
+        }
+    }
+    buffer->free_data(1);
+    texture_reset_fpu();
 }
