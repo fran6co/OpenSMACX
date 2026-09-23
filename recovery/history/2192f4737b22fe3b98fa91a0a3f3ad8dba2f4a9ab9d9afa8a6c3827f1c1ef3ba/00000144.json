@@ -1,0 +1,28 @@
+{
+  "event_id": "42b3e858eee72070e1b681de453ed9c12011ef4943267a95972fefb1b0601a33",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_farm_compute.py",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Fresh native farm trial emits undefined ?add_goal@@YAXIHHHHH@Z because faction.h declares unsigned first argument, while actual faction.cpp1613 body and original source binding579A30 define signed ?add_goal@@YAXHHHHHH@Z. This is a mismatched public declaration, not a missing implementation. Existing infowin scope already owns add_goal; authorize correcting the public signature, not adding an unsigned stub/adapter or changing the actual body.",
+      "Require emitted farm calls to resolve the genuine signed callee, all157 protected base/map/veh/faction claims rechecked, mapped original callers audited, and fresh application build/link. Header correction can change symbols in other callers without changing argument bits; do not claim those references preserved without inspection. Preserve the existing500290 mapped-name unknown separately.",
+      "No source-owned claim edits/demotions or baseline reset. This newly demonstrated recovery blocker belongs to the same C++ producer checkpoint; no framework changes are authorized or required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5741104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "71d15bdc7eab12c4f480dcc88d8e7cce7bdd26a47f7a862ab28801d5183ed309",
+  "request_id": "farm-goal-callee-interface-repair-20260923",
+  "schema_version": 1,
+  "sequence": 144,
+  "stream": "task:infowin-ownership"
+}

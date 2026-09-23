@@ -30,6 +30,7 @@
 #include "netdaemon.h"
 #include "xpops.h"
 
+// RECOVERY_OBJECT: v2 0x00689370 0x00689374 ?BaseIDCurrentSelected@@3HA 0x004E68B0
 int BaseIDCurrentSelected = -1;  // 0x00689370
 // set_base publishes the pointer itself; resource computations and the popup
 // sound callback load it before accessing the selected Base's members.
@@ -39,9 +40,11 @@ Base *BaseCurrent;
 // Window refreshes invalidate this cache without changing the selected base.
 // RECOVERY_OBJECT: v2 0x00689374 0x00689378 ?BaseComputedID@@3HA 0x004EC3B0
 int BaseComputedID = -1;
+// RECOVERY_OBJECT: v2 0x009A64CC 0x009A64D0 ?BaseCurrentCount@@3HA 0x004E68B0
 int BaseCurrentCount;  // 0x009A64CC
 int BaseFindDist;  // 0x0090EA04
 uint32_t ScnVictFacilityObj;  // 0x009A6814
+// RECOVERY_OBJECT: v2 0x0090EA34 0x0090EA38 ?BaseUpkeepStage@@3IA 0x004E68B0
 uint32_t BaseUpkeepStage;  // 0x0090EA34
 
 // Link-only placeholders; these resource/production passes do not work yet.
@@ -131,6 +134,159 @@ uint32_t BaseCurrentForcesMaintCount;  // 0x0090EA08
  * Purpose is observed from those call sites; the executable does not name it.
  */
 int TileYieldRestricted;  // 0x0090E998
+
+// farm_compute publishes 25 status words, including four excluded outer
+// positions. The separate mask covers only the first 21 workable positions.
+// Both objects are initially zero in the image; their producer, not that
+// initial state, determines availability for the current base.
+// Status bits: 1 excluded outer position, 2 off-map/unrevealed, 4 base tile,
+// 8 stack-check or visible non-allied vehicle, 0x10 another base's worked
+// square, 0x20 the foreign-territory rule below. These describe the observed
+// tests, not recovered historical names. farm_click/draw_farm read the words;
+// base_yield reads the mask. Their unfinished bodies are separate obligations.
+// RECOVERY_OBJECT: v2 0x0090E99C 0x0090EA00 ?FarmStatus@@3PAIA 0x004E68B0
+uint32_t FarmStatus[25];
+// RECOVERY_OBJECT: v2 0x0090EA00 0x0090EA04 ?FarmUnavailableMask@@3IA 0x004E68B0
+uint32_t FarmUnavailableMask;
+
+// Requires the original game's valid faction, base, tile and vehicle indices
+// and well-formed vehicle chains. Keep the entry coordinates/faction separate
+// from the later BaseCurrent reload used to select nearby competing bases.
+// ORIGINAL: 0x004E68B0 ?farm_compute@@YAXXZ 0x004E68B0-0x004E6E4E FILE
+// RECOVERY_BINDING: v1 {"evidence": ["4E68B6 loads BaseCurrent pointer before signedshort x/y and unsignedbyte faction.4E68E3/4E6BA5 establish25 DWORD outputs, with final4 set1;4E6E23..43 reduce onlyfirst21 into90EA00.4E6C7A tests Base+78 worked mask, not seed+3C.", "4E6966/4E69C4/4E6B99 reload row stride after calls; map-pointer loads4E697C/4E6A0A/4E6A46 must remain live.4E6B38 exhausts vehicle iterator before territory check4E6B7C.4E6BE7 reloads BaseCurrent for neighbor admission, while inner radius matching retains entry coordinates."], "reason": "This no-argument resource pass computes shared per-radius availability from the selected Base, typed map/vehicle/diplomacy state and neighboring worked squares; it owns25 status words and a separate21-position mask."}
+void __cdecl farm_compute() {
+    Base *const base = BaseCurrent;
+    const int center_x = base->x;
+    const int center_y = base->y;
+    const int faction = base->faction_id_current;
+    int row_stride = static_cast<int>(MapLongitude);
+    int position;
+
+    for (position = 0; position < 25; ++position) {
+        if (position >= 21) {
+            FarmStatus[position] = 1;
+            continue;
+        }
+        const int x = xrange(center_x + RadiusOffsetX[position]);
+        const int y = center_y + RadiusOffsetY[position];
+        if (!on_map(x, y)) {
+            FarmStatus[position] = 2;
+            continue;
+        }
+
+        if (BaseUpkeepStage == 1) {
+            const int goody = goody_at(x, y);
+            row_stride = static_cast<int>(MapLongitude);
+            if (goody != 0
+                && (map_tiles()[row_stride * y + (x >> 1)].climate & 0xE0) >= 0x60) {
+                add_goal(faction, 3, 1, x, y, -1);
+                add_goal(faction, 2, 1, x, y, -1);
+                add_goal(faction, 0, 1, x, y, -1);
+                row_stride = static_cast<int>(MapLongitude);
+            }
+        }
+        if ((PlayersData[faction].flags & 0x200) == 0
+            && (map_tiles()[row_stride * y + (x >> 1)].visibility
+                & (1u << faction)) == 0) {
+            FarmStatus[position] = 2;
+            continue;
+        }
+
+        FarmStatus[position] = 0;
+        Map *const tile = &map_tiles()[row_stride * y + (x >> 1)];
+        if ((tile->bit & 1) != 0 && (tile->val2 & 0xF) < 8) {
+            FarmStatus[position] = 4;
+        }
+        int vehicle = stack_fix(veh_at(x, y));
+        if (vehicle >= 0) {
+            if (stack_check(vehicle, 9, 3, -1, -1) != 0) {
+                FarmStatus[position] |= 8;
+            }
+            while (Vehs[vehicle].prev_veh_id_stack >= 0) {
+                vehicle = Vehs[vehicle].prev_veh_id_stack;
+            }
+            for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
+                const int other_faction = Vehs[vehicle].faction_id;
+                if (other_faction != faction
+                    && (Vehs[vehicle].visibility & (1u << faction)) != 0
+                    && (PlayersData[faction].diplo_treaties[other_faction] & 3) == 0) {
+                    FarmStatus[position] |= 8;
+                }
+            }
+        }
+        const int territory = whose_territory(faction, x, y, nullptr, 0);
+        // The original uses the exhausted iterator here, not the saved stack
+        // head. Do not turn this into a new friendly-occupant exemption.
+        if (territory >= 0 && territory != faction
+            && ((PlayersData[faction].diplo_treaties[territory] & 3) != 0
+                || vehicle < 0 || Vehs[vehicle].faction_id != faction)) {
+            FarmStatus[position] |= 0x20;
+        }
+        row_stride = static_cast<int>(MapLongitude);
+    }
+
+    for (int other_id = 0; other_id < BaseCurrentCount; ++other_id) {
+        if (other_id == BaseIDCurrentSelected) {
+            continue;
+        }
+        Base *const other = &Bases[other_id];
+        Base *const current = BaseCurrent;
+        if (vector_dist(x_dist(current->x, other->x),
+                        abs(current->y - other->y)) > 5) {
+            continue;
+        }
+        int map_width = MapLongitudeBounds;
+        for (int worked = 0; worked < 21; ++worked) {
+            if (worked != 0 && (other->resource_sqr_radius & (1u << worked)) == 0) {
+                continue;
+            }
+            int x = other->x + RadiusOffsetX[worked];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) {
+                    x += map_width;
+                } else if (x >= map_width) {
+                    x -= map_width;
+                }
+            }
+            const int y = other->y + RadiusOffsetY[worked];
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= map_width) {
+                continue;
+            }
+            if (other->faction_id_current != faction
+                && (map_tiles()[MapLongitude * y + (x >> 1)].climate & 0xE0) >= 0x60) {
+                continue;
+            }
+            const int distance = vector_dist(x_dist(center_x, x), abs(center_y - y));
+            map_width = MapLongitudeBounds;
+            if (distance > 2) {
+                continue;
+            }
+            const int flat = MapIsFlat & 1;
+            for (position = 0; position < 21; ++position) {
+                int candidate_x = center_x + RadiusOffsetX[position];
+                if (!flat) {
+                    if (candidate_x < 0) {
+                        candidate_x += map_width;
+                    } else if (candidate_x >= map_width) {
+                        candidate_x -= map_width;
+                    }
+                }
+                if (candidate_x == x && center_y + RadiusOffsetY[position] == y) {
+                    FarmStatus[position] |= 0x10;
+                }
+            }
+        }
+    }
+
+    FarmUnavailableMask = 0;
+    uint32_t unavailable = 0;
+    for (position = 0; position < 21; ++position) {
+        if (FarmStatus[position] != 0) {
+            unavailable |= 1u << position;
+        }
+    }
+    FarmUnavailableMask = unavailable;
+}
 
 /*
  * general.h's swap() is `MEASURED inline`, so VC6 folds it into every caller

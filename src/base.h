@@ -317,8 +317,12 @@ enum CitizenSpecialists {
 };
 
 struct Base {
+    // farm_compute loads these through BaseCurrent at 0x004E68BE..004E68CA.
+    // RECOVERY_MEMBER: v1 Base x 0x0 0x004E68B0
     int16_t x;
+    // RECOVERY_MEMBER: v1 Base y 0x2 0x004E68B0
     int16_t y;
+    // RECOVERY_MEMBER: v1 Base faction_id_current 0x4 0x004E68B0
     uint8_t faction_id_current;
     uint8_t faction_id_former;
     int8_t population_size;
@@ -339,6 +343,8 @@ struct Base {
     int eco_damage;
     uint32_t queue_size;
     int queue_production_id[10]; // items in the production queue
+    // Original 0x004E6C7A tests neighboring bases' worked-square bits here.
+    // RECOVERY_MEMBER: v1 Base resource_sqr_radius 0x78 0x004E68B0
     int resource_sqr_radius; // worked tiles
     int specialist_total;
     int specialist_unk_1; // related to Governor controlling specialists, non-psych spec count?
@@ -521,12 +527,15 @@ extern uint32_t BaseCurrentForcesSupported; // Forces Supported by Base
 extern uint32_t BaseCurrentForcesMaintCost; // Minerals expended for Forces Supported maintenance
 extern uint32_t BaseCurrentForcesMaintCount; // Forces past the free allowance; never read back
 extern int TileYieldRestricted; // resource a square lost to the per-square restriction
+extern uint32_t FarmStatus[25]; // per-position status; final four positions excluded
+extern uint32_t FarmUnavailableMask; // nonzero status among the first 21 positions
 extern int BaseSquareEnergy; // energy_yield's publication for a base square
 extern int GovernorFaction; // elected Planetary Governor; see the note in base.cpp
 extern int GlobalEnergyEventState; // energy tripling state driven by random_events
 extern int UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
 BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
+void __cdecl farm_compute();
 void __cdecl say_base(LPSTR base_str, int base_id);
 int __cdecl base_at(int x, int y);
 int __cdecl base_find(int x, int y);

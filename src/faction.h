@@ -889,7 +889,7 @@ int __cdecl territory(int faction_id, int faction_id_with, int flags, int *base_
                                 int *count_out);
 void __cdecl rankings(int apply_ranks);
 int __cdecl guard_check(int faction_id, int region);
-void __cdecl add_goal(uint32_t faction_id, int type, int priority, int x, int y, 
+void __cdecl add_goal(int faction_id, int type, int priority, int x, int y,
                                 int base_id);
 void __cdecl add_site(int faction_id, int type, int priority, int x, int y);
 BOOL __cdecl at_goal(int faction_id, int type, int x, int y);

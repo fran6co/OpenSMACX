@@ -1,0 +1,31 @@
+{
+  "event_id": "71d15bdc7eab12c4f480dcc88d8e7cce7bdd26a47f7a862ab28801d5183ed309",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_farm_compute.py",
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "Authorize recovery of seed-only farm_compute4E68B0..4E6E4E as real free cdecl in base.cpp with declaration in base.h, using existing Base, PlayerData, Veh, Map and named global state. Fresh all-task scope audit finds no existing owner of this identity. Do not reset infowin baseline or touch unrelated retained terrain work.",
+      "Vector finding78 establishes25 DWORD flags90E99C..90EA00 and separate DWORD mask90EA00..04. Recover named source storage and evidence-backed meanings;21..24 get1, only0..20 enter mask. Bind native-observed object/function symbols and independently original-bounded initial state. Existing unbound source-owned base selection/count/upkeep globals directly used here may gain source bindings after initial-data and emitted-symbol verification; no new address aliases or invented owners.",
+      "Correct seed faults: dereference BaseCurrent pointer; signedshort x/y and unsignedbyte faction; neighboring resource_sqr_radius atBase+78; proper PlayersData[current].diplo_treaties[other] indexing; preserve map pointer reloads after actual callbacks and original vehicle-stack head/iterator distinctions. Derive conditions from original instructions, not seed output. No speculative safety guards or call removal.",
+      "Seven direct callees already have product bodies. Recover this producer without inserting partial base_yield or pretending its seed-only farm_click/draw_farm consumers work. Their incomplete behavior and wider shared-storage/lifetime discovery remain pending. Never replace recovered behavior with placeholders or switch original forwarders to new private state silently.",
+      "Require independent original/source review, actual-body ASan/UBSan controls covering every flag/mask, wrapping, callbacks, vehicle chains and neighboring worked tiles, and compiling damage controls. Native check protected base/map/vehicle/callee claims, relevant layouts/data/reference diagnostics and full fresh build/link before coordinator manual integration; reverify destination. No byte-claim demotion or automatic/game acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5138608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "45ef71e750755794377b17503cfcdef53b87c21bb3810e3428b9d69b6bfbf991",
+  "request_id": "farm-state-producer-recovery-20260923",
+  "schema_version": 1,
+  "sequence": 143,
+  "stream": "task:infowin-ownership"
+}
