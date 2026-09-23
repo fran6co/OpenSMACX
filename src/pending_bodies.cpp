@@ -524,11 +524,6 @@ void BaseWin::garrison_click(int vehID, int a2, int right, int is_double) {     
 }
 
 
-void GraphicWin::compute_min_size() {  // 0x005D7030
-    typedef void(__fastcall *pending)(GraphicWin *, void *);
-    PENDING_BODY(0x005D7030, pending)(this, nullptr);
-}
-
 
 
 

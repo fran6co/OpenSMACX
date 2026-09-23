@@ -642,11 +642,9 @@ void GraphicWin::soft_update(RECT *area) {
     InvalidateRect(HandleMain, &local, FALSE);
 }
 
-// GraphicWin::init's four remaining original dependencies. Win::init carries
-// the whole window-creation closure, compute_min_size is frame arithmetic,
-// nonclient_to_client converts an outer size to a client size in place, and
-// Buffer::init is DirectDraw/GDI surface creation; all four stay at their
-// original addresses until that closure is source-owned. Tests rebind them.
+// Frame minima below use real Sprite dimensions. Window creation, client-size
+// conversion and surface allocation remain separate recovery dependencies;
+// tests of this orchestration do not establish their complete behavior.
 
 
 /*
@@ -688,8 +686,7 @@ Purpose: Initialise a GraphicWin. Reset the window, republish the eleven
 // calls     0x005D4E40 0x005D7030 0x005D7210 0x005D7670 0x005DE8F0 0x005EBD80 0x005EEF60 0x0064557F 0x0064558A
 Return Value: 0 on success; otherwise the nonzero failure code passed straight
               through from Win::init or from Buffer::init
-Status: Complete with temporary Win init/nonclient_to_client, GraphicWin
-        compute_min_size and Buffer init dependencies
+Status: Source-owned orchestration; dependency and runtime acceptance are separate.
 Verification note: this function returns int, and the catalogue used to spell
         the name with an X - void. BaseButton::init calls it at 0x006072A2 and
         immediately does `test eax, eax` / `jne 0x0060734C` at 0x006072A7, and
@@ -1080,6 +1077,75 @@ void GraphicWin::load_nc_sprites_from_defs() {
         frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
         frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
         frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
+    }
+}
+
+// The query is a predicate, not the receiver for the update. A callback may
+// replace the current registry entry or change the live registry count.
+// load_interface calls this class-wide operation without a receiver.
+// ORIGINAL: 0x005D6F50 ?load_all_nc_sprites_from_defs@GraphicWin@@QAEXXZ 0x005D6F50-0x005D7022 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original4559FD calls5D6F50 without setting a receiver. The complete body iterates existing WinZOrderArray9B6630 with signed live WinZOrderCount9B7B30; slot61 get_graphic_win is only a predicate and the array receiver is reloaded after its callback.", "The existing real eleven-Sprite-pointer GraphicWinInitDefaults9B3394 record and load_nc_sprites_from_defs5D6EC0 implement the identical flags30000000 guarded copy. Preserve seed history/exact obligation and observe the emitted static function symbol."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
+// symbol    ?load_all_nc_sprites_from_defs@GraphicWin@@SAXXZ
+void GraphicWin::load_all_nc_sprites_from_defs() {
+    int index = 0;
+    if (0 < WinZOrderCount) {
+        Win **cursor = WinZOrderArray;
+        do {
+            if ((*cursor)->get_graphic_win() != nullptr) {
+                Win *window = *cursor;
+                // A callback can replace the entry with a plain unstyled Win.
+                // Test the base flags before assuming a GraphicWin receiver.
+                if (window->iFlags_ & 0x30000000) {
+                    GraphicWin *graphic = static_cast<GraphicWin *>(window);
+                    graphic->frame_top_left_ = GraphicWinInitDefaults.top_left;
+                    graphic->frame_top_right_ = GraphicWinInitDefaults.top_right;
+                    graphic->frame_bottom_left_ = GraphicWinInitDefaults.bottom_left;
+                    graphic->frame_bottom_right_ = GraphicWinInitDefaults.bottom_right;
+                    graphic->frame_top_ = GraphicWinInitDefaults.top;
+                    graphic->frame_bottom_ = GraphicWinInitDefaults.bottom;
+                    graphic->frame_left_ = GraphicWinInitDefaults.left;
+                    graphic->frame_right_ = GraphicWinInitDefaults.right;
+                    graphic->frame_noncaption_left_ = GraphicWinInitDefaults.noncaption_left;
+                    graphic->frame_noncaption_right_ = GraphicWinInitDefaults.noncaption_right;
+                    graphic->frame_noncaption_middle_ = GraphicWinInitDefaults.noncaption_middle;
+                }
+            }
+            ++index;
+            ++cursor;
+        } while (index < WinZOrderCount);
+    }
+}
+
+// x86 geometry adds wrap at 32 bits before signed comparison. Unsigned
+// addition avoids introducing signed-overflow UB for damaged sprite sizes.
+static int frame_dimension_sum(int first, int second) {
+    return static_cast<int>(static_cast<unsigned int>(first)
+                          + static_cast<unsigned int>(second));
+}
+
+// ORIGINAL: 0x005D7030 ?compute_min_size@GraphicWin@@QAEXXZ 0x005D7030-0x005D7140
+// RECOVERY_BINDING: v1 {"evidence": ["Complete original5D7030..5D7140 has no callees. Flag0x10 selects caption or noncaption top corners; bottom corners are shared. Every selected pointer must exist before either previous minimum changes.", "OriginalSprite displayed width18/height1C accesses and signed greater-than branches establish independent horizontal and vertical corner-sum maxima. Preserve low32-bit addition before signed comparison, real Sprite accessors and existing Win minimum members. Seed Buffer receiver casts are incorrect; remove the product pending forwarder without changing the historical unclaimed identity."], "reason": "Recover genuine GraphicWin frame behavior required by the interface asset loader, retaining its original seed identity."}
+// symbol    ?compute_min_size@GraphicWin@@QAEXXZ
+void GraphicWin::compute_min_size() {
+    Sprite *top_left = (iFlags_ & 0x10) ? frame_top_left_ : frame_noncaption_left_;
+    Sprite *top_right = (iFlags_ & 0x10) ? frame_top_right_ : frame_noncaption_right_;
+    Sprite *bottom_left = frame_bottom_left_;
+    Sprite *bottom_right = frame_bottom_right_;
+    if (!top_left || !top_right || !bottom_left || !bottom_right) {
+        return;
+    }
+
+    int width = frame_dimension_sum(top_left->width(), top_right->width());
+    field_134_ = width;
+    int bottom_width = frame_dimension_sum(bottom_right->width(), bottom_left->width());
+    if (bottom_width > width) {
+        field_134_ = bottom_width;
+    }
+    int height = frame_dimension_sum(top_left->height(), bottom_left->height());
+    field_138_ = height;
+    int right_height = frame_dimension_sum(bottom_right->height(), top_right->height());
+    if (right_height > height) {
+        field_138_ = right_height;
     }
 }
 

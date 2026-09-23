@@ -94,7 +94,7 @@ typedef void(__cdecl func_graphic_win_paint_hook)();
 // accessibility affects no offset, so the layout is untouched.
 class GraphicWin : public Win, public Buffer {
  public:
-  // 0x005D7030, a pending_bodies forwarder.
+  // Recompute frame minima only when all four selected corner sprites exist.
   void compute_min_size();
 
  public:
@@ -103,6 +103,7 @@ class GraphicWin : public Win, public Buffer {
   // Original caller supplies one explicit pointer and no receiver.
   static void __cdecl set_def_nc_sprites(NCSprites *sprites);
   void load_nc_sprites_from_defs();
+  static void load_all_nc_sprites_from_defs();
   friend class Scroll;
   // BaseButton's colour setters drive this buffer directly.
   friend class BaseButton;
@@ -326,18 +327,15 @@ int graphic_win_destructor_probe_order();
 extern unsigned char *GraphicWinColorMapTable;
 
 
-// GraphicWin::init's four remaining original dependencies. Win::init at
+// Historical seam declarations for GraphicWin::init dependencies. Win::init at
 // 0x005EBD80 (ret 0x24) is the 2285-byte window-creation body,
-// GraphicWin::compute_min_size at 0x005D7030 (bare ret) is 272 bytes of frame
-// arithmetic, Win::nonclient_to_client at 0x005EEF60 (ret 8) converts an outer
+// Win::nonclient_to_client at 0x005EEF60 (ret 8) converts an outer
 // size to a client size in place, and Buffer::init at 0x005D7670 (ret 0x10) is
-// the 847-byte DirectDraw/GDI surface creator. Tests rebind all four.
+// the 847-byte DirectDraw/GDI surface creator. Frame minima use real sprites.
 typedef int (OriginalObject::*func_win_init)(int, int, int, int, LPSTR, int, Win *, Menu *, BorderSizing *);
-typedef void (OriginalObject::*func_graphic_win_compute_min_size)();
 typedef void (OriginalObject::*func_win_nonclient_to_client)(int *, int *);
 typedef int (OriginalObject::*func_buffer_init)(int, int, int, void *);
 extern func_win_init WinOriginalInit;
-extern func_graphic_win_compute_min_size GraphicWinOriginalComputeMinSize;
 extern func_win_nonclient_to_client WinOriginalNonclientToClient;
 extern func_buffer_init BufferOriginalInit;
 
