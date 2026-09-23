@@ -65,6 +65,8 @@ class SocialWin : public GraphicWin, public SubInterface {
   ~SocialWin();
   void UNK2();
   void UNK3();
+  void on_iface_left_click(int x, int y);
+  void on_iface_right_click(int x, int y);
   void on_iface_left_down(int a1, int a2);
   void on_iface_mouse_move(int a1, int a2);
   void on_iface_mouse_leave(int a1, int a2);
@@ -335,10 +337,16 @@ class SocialWin : public GraphicWin, public SubInterface {
   uint8_t tooltipSocEng_[0x10];  // 0x1F110
   RECT tutRect4_;  // 0x1F120
   RECT tutRects3_[18];  // 0x1F130, 18 RECTs
-  uint8_t tooltipEffects_[0x10];  // 0x1F250
-  uint8_t tooltipEconomy_[0x10];  // 0x1F260
-  uint8_t tooltipLabs_[0x10];  // 0x1F270
-  uint8_t tooltipPsych_[0x10];  // 0x1F280
+  // Interface receiver is this+A14; right-click tests these real rectangles
+  // at receiver+1E84C/1E85C/1E86C/1E83C, in economy/labs/psych/effects order.
+  // RECOVERY_MEMBER: v2 SocialWin tooltipEffects_ tagRECT 0x1F250 0x004B2220
+  RECT tooltipEffects_;
+  // RECOVERY_MEMBER: v2 SocialWin tooltipEconomy_ tagRECT 0x1F260 0x004B2220
+  RECT tooltipEconomy_;
+  // RECOVERY_MEMBER: v2 SocialWin tooltipLabs_ tagRECT 0x1F270 0x004B2220
+  RECT tooltipLabs_;
+  // RECOVERY_MEMBER: v2 SocialWin tooltipPsych_ tagRECT 0x1F280 0x004B2220
+  RECT tooltipPsych_;
   RECT tutRect9_;  // 0x1F290
   uint8_t tooltipFactionPower_[0x10];  // 0x1F2A0
   RECT tutRect11_;  // 0x1F2B0
@@ -349,4 +357,3 @@ class SocialWin : public GraphicWin, public SubInterface {
 
 static_assert(sizeof(SocialWin) == 0x1F2F0,
               "SocialWin layout must match the original executable");
-

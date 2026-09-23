@@ -64,6 +64,7 @@ class TutWin : public Popup {
   int tut_win(void *owner, const char *text, int a3, int a4,
               Sprite *sprite, int a6, int a7, int a8);
   void on_move(int x, int y);
+  int reset();
   TutWin();
   // 0x004BE7D0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits

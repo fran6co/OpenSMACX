@@ -27,6 +27,7 @@
 #include "alpha.h"
 #include "spying_recovery.h"
 #include "mapwin.h"   // MainInterfaceGlobal, at 0x007AE820
+#include "tutwin.h"
 
 void __fastcall SocialWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
 void __fastcall SocialWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
@@ -136,6 +137,41 @@ Return Value: n/a
 Status: Complete
 */
 void SocialWin::UNK3() {
+}
+
+// Original interface slot 3 ignores its coordinates and dismisses the
+// tutorial. Its seed's int result is incidental EAX from reset; interface
+// callers consume no result. Installing the full interface contract remains
+// part of the shared SubInterface hierarchy recovery.
+// ORIGINAL: 0x004B2210 ?on_iface_left_click@SocialWin@@QAEHHH@Z 0x004B2210-0x004B221D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original4B2210 loads8C6E68 and calls4BDDE0, then returns with8bytes callee cleanup. Neither coordinate is read. Table66DA50 slot3 identifies the secondary-interface callback; the current incomplete SubInterface contract still needs coordinated repair.", "The catalogued int return forwards incidental EAX from reset; interface slot3 callers do not consume it and the family contract is void(int,int). Preserve the seed identity and original exact obligation while publishing the compiler-observed source symbol."], "reason": "Home the tutorial-dismissal interface handler on SocialWin using the real process-lifetime TutorialWindow and recovered reset service."}
+// symbol    ?on_iface_left_click@SocialWin@@QAEXHH@Z
+void SocialWin::on_iface_left_click(int, int) {
+    TutorialWindow.reset();
+}
+
+// ORIGINAL: 0x004B2220 ?on_iface_right_click@SocialWin@@QAEXHH@Z 0x004B2220-0x004B23FA
+// RECOVERY_BINDING: v1 {"evidence": ["Original4B2220..4B23FA first resets TutorialWindow then tests interface-relative1E84C/1E85C/1E86C/1E83C, which are complete-object rectangles1F260/1F270/1F280/1F250. Labels.strings_ptr offsetsD24/D28/D2C/D1C select labels841/842/843/839; first match wins.", "Original4B2256/59 swaps argument stack contents before passing their reversed slot addresses to MainInterfaceGlobal.client_to_screen; this preserves logical x/y rather than the swapped coordinates in the seed. Every matching path constructs a degenerate screen rectangle and calls set_bubble_text on7AE820; no match only dismisses the tutorial."], "reason": "Recover social-panel tooltip selection with genuine rectangle members, label storage and the main-interface window receiver."}
+void SocialWin::on_iface_right_click(int x, int y) {
+    TutorialWindow.reset();
+    int label;
+    if (in_box(x, y, &tooltipEconomy_)) {
+        label = 841;
+    } else if (in_box(x, y, &tooltipLabs_)) {
+        label = 842;
+    } else if (in_box(x, y, &tooltipPsych_)) {
+        label = 843;
+    } else if (in_box(x, y, &tooltipEffects_)) {
+        label = 839;
+    } else {
+        return;
+    }
+    char *text = label_get(label);
+    // The original reuses its argument slots after swapping their contents;
+    // the resulting conversion is still x then y, on the main interface.
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    RECT rectangle = {x, y, x, y};
+    MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
 }
 
 

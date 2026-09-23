@@ -25,13 +25,14 @@
 TutWin TutorialWindow;
 #include "win.h"
 #include "mapwin.h"
-#include "vtable_shim.h"
+#include "temp.h"     // do_all_draws
 #include "game.h"     // IsMultiplayerNet, GamePreferences - tut_check's gates
 #include "faction.h"  // Players/LocalFaction/RFLAG_ALIEN - the expansion gate
 
-// The tutorial's "already shown" marker, cleared alongside the window's own
-// state. Bound at its canonical address because nothing here owns it yet.
-uint32_t TutWinShownFlag;  // 0x008CC244
+// Reset at 0x004BDDE0 clears this process-wide marker after the tutorial's
+// own state; it is separate from TutorialWindow, whose extent ends at 8CC240.
+// RECOVERY_OBJECT: v2 0x008CC244 0x008CC248 ?TutWinShownFlag@@3IA 0x004BDDE0
+uint32_t TutWinShownFlag;
 
 // THE TWO TUTORIAL-SHOWN BIT SETS, one per checker. tut_check and tut_check2
 // each OR their argument in and refuse to fire again while the bit is set;
@@ -103,6 +104,42 @@ Status: Complete
 */
 void TutWin::UNK3(Win *a1) {
     field_53D4_ = a1;
+}
+
+// The active path clears the arrow state before virtual hide. Hide may
+// change the owner, so the owner's update dispatch must reload field_53D4_.
+// Drawing completes before either the owner or the shared marker is reset.
+// ORIGINAL: 0x004BDDE0 ?reset@TutWin@@QAEHXZ 0x004BDDE0-0x004BDE97 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original4BDDEE..4BDE07 clears53A4, calls this slot2, reloads owner53D4 for slot63 and then calls do_all_draws5FCBB0. The initial owner test selects the return value; callbacks precede all final reset stores.", "Both original tails clear owner53D4 and53A4, store minus one to5380/537C/539C, zero53A8, minus one53AC, zero53B8/53C4 and finally real TutWinShownFlag8CC244. Existing TutorialWindow and typed Win owner are preserved; no fixed-address aliases or VCall shim are required."], "reason": "Recover tutorial dismissal and owner notification through real members and virtual Win methods, retaining its original reset ordering and result."}
+int TutWin::reset() {
+    if (field_53D4_ != 0) {
+        field_53A4_ = 0;
+        hide();
+        field_53D4_->on_update();
+        do_all_draws();
+        field_53D4_ = 0;
+        field_53A4_ = 0;
+        field_5380_ = -1;
+        field_537C_ = -1;
+        field_539C_ = -1;
+        field_53A8_ = 0;
+        field_53AC_ = -1;
+        field_53B8_ = 0;
+        field_53C4_ = 0;
+        TutWinShownFlag = 0;
+        return 1;
+    }
+    field_53D4_ = 0;
+    field_53A4_ = 0;
+    field_5380_ = -1;
+    field_537C_ = -1;
+    field_539C_ = -1;
+    field_53A8_ = 0;
+    field_53AC_ = -1;
+    field_53B8_ = 0;
+    field_53C4_ = 0;
+    TutWinShownFlag = 0;
+    return 0;
 }
 
 
