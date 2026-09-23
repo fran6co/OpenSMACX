@@ -274,6 +274,39 @@ void BaseWin::gov_on(int priorities) {
     }
 }
 
+// Refresh only a visible base screen displaying the affected base. The
+// recomputation uses the already-selected current base: neither original
+// refresh hook calls set_base. Its first redraw is virtual; the subsequent
+// main-interface redraw explicitly calls the GraphicWin implementation.
+// ORIGINAL: 0x0041A7A0 ?check_base@BaseWin@@QAEXH@Z 0x0041A7A0-0x0041A7DF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original41A7A6 calls Win::is_visible before reading focusedBaseID_+40B0C.41A7BA rejects unequal base-id bits; the remaining chain is base_compute(1), virtual Win slot62 on this, then direct GraphicWin::redraw on MainInterfaceGlobal7AE820. No set_base or additional guard occurs.", "Existing source base_compute4EC3B0 has the observed void interface; the seed return-int declaration and manual VCall table are not the product model. Seed claim and full original span remain restoration obligations. Real downstream base-energy and BaseWin painting recovery remain separate."], "reason": "Recover the visible selected-base refresh through real BaseWin state and C++ dispatch, replacing the vehicle callers original-address seam."}
+void BaseWin::check_base(int base_id) {
+    if (Win::is_visible() && base_id == focusedBaseID_) {
+        base_compute(1);
+        redraw();
+        MainInterfaceGlobal.GraphicWin::redraw();
+    }
+}
+
+// Visibility gates every base-coordinate read. Original 0x0041A80A captures
+// the signed y coordinate before computing wrapped x distance. This uses
+// the game's existing hex metric, not square-grid or Euclidean distance.
+// ORIGINAL: 0x0041A7E0 ?check_loc@BaseWin@@QAEXHHH@Z 0x0041A7E0-0x0041A8A7
+// RECOVERY_BINDING: v1 {"evidence": ["Original41A7F3 uses focusedBaseID_+40B0C and Bases stride134;41A80A/11 sign extend y/x before distance calculation. Win visibility gates every coordinate access. MapIsFlat bit0, MapLongitude half-width and MapLongitudeBounds width govern the wrapped x difference.", "Original41A81B..41A87D is x_dist followed by abs(y-base_y) and the two-distance vector_dist metric;41A882 accepts distance equal to radius. The refresh chain forces base_compute once, virtual this redraw, then direct main-interface GraphicWin redraw, without selecting another current base. Existing helpers retain the finite valid-coordinate domain; no new malformed-index or overflow policy is introduced."], "reason": "Recover the visible base screen proximity refresh using typed Base coordinates and existing cylindrical-map hex distance helpers."}
+void BaseWin::check_loc(int x, int y, int radius) {
+    if (Win::is_visible()) {
+        const int base_y = Bases[focusedBaseID_].y;
+        const int base_x = Bases[focusedBaseID_].x;
+        const int dx = x_dist(x, base_x);
+        const int dy = abs(y - base_y);
+        if (vector_dist(dx, dy) <= radius) {
+            base_compute(1);
+            redraw();
+            MainInterfaceGlobal.GraphicWin::redraw();
+        }
+    }
+}
+
 // ORIGINAL: 0x0041AE40 ?soft_zoom@BaseWin@@QAEXH@Z 0x0041AE40-0x0041AF12 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0041AE40-0x0041AF12"], "reason": "Recover the original base-selection/cache operation with source-owned state and typed fields. The archived seed remains an obligation until this product definition is freshly remeasured."}
 void BaseWin::soft_zoom(int base_id) {

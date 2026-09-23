@@ -178,7 +178,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   void rename();                                        // 0x0041A2B0
   void exit();                                          // 0x0041A4C0
   void base_killed(int baseID);                         // 0x0041A620
-  void check_loc(int a1, int a2, int a3);               // 0x0041A7E0
+  void check_base(int base_id);                         // 0x0041A7A0
+  void check_loc(int x, int y, int radius);              // 0x0041A7E0
   void check_veh(int a1);                               // 0x0041A8B0
   void on_mouse_move(int xCoord, int yCoord);           // 0x0041B1F0
   void staple_the_bastards();                           // 0x0041B4F0

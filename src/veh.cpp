@@ -7347,23 +7347,6 @@ int *const VehFindBestDist = (int *)0x009B227C;
 uint32_t *const FactionAliveUnitCount = (uint32_t *)0x0096DA38;
 uint8_t *const FactionProtoSeenCount = (uint8_t *)0x0096D238;
 
-// The two BaseWin repaint hooks every vehicle and base removal lands on.
-// Both are still archive bodies - check_base (0x0041A7A0) is BYTE_EXACT there
-// and check_loc (0x0041A7E0) is MISMATCH - and veh.cpp is the first TU to call
-// either. Homing check_base would drag base_compute (0x004EC3B0, itself
-// archive-claimed) and base_yield / base_energy with it, so until BaseWin's
-// pass homes the family these go through the same original-body seam
-// mapwin.cpp uses for MapWin::draw_radius. `radius` is named from check_loc's
-// own body, which computes the hex distance from Bases[focusedBaseID_] and
-// repaints only when it is <= that third argument; veh_kill passes 0.
-typedef void (OriginalObject::*func_base_win_check_base)(int base_id);
-typedef void (OriginalObject::*func_base_win_check_loc)(int x, int y, int radius);
-func_base_win_check_base BaseWinOriginalCheckBase =
-    original_method<func_base_win_check_base>(0x0041A7A0);
-func_base_win_check_loc BaseWinOriginalCheckLoc =
-    original_method<func_base_win_check_loc>(0x0041A7E0);
-
-
 /*
 Purpose: Remove a vehicle from the game entirely.
 // ORIGINAL: 0x005C08C0 ?veh_kill@@YAXH@Z 0x005C08C0-0x005C0AF4
@@ -7473,8 +7456,8 @@ void __cdecl veh_kill(int veh_id) {
         }
     }
 
-    (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckLoc)(x, y, 0);
-    (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(home_base_id);
+    TutWinBaseWindow.check_loc(x, y, 0);
+    TutWinBaseWindow.check_base(home_base_id);
 }
 
 /*
@@ -7522,8 +7505,7 @@ void __cdecl kill(int veh_id) {
             // rather than sitting in the stack.
             if ((map_loc(x, y)->climate & 0xe0) >= 0x60) {
                 veh_kill(veh_id);
-                (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(
-                    home_base_id);
+                TutWinBaseWindow.check_base(home_base_id);
                 return;
             }
         } else if (x == -2) {
@@ -7535,7 +7517,7 @@ void __cdecl kill(int veh_id) {
         stack_kill(veh_id);
     }
 
-    (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(home_base_id);
+    TutWinBaseWindow.check_base(home_base_id);
 
     if (VehBattleUnkTgl[0] == 0 && y >= 0 && y < MapLatitudeBounds && x >= 0 &&
         x < MapLongitudeBounds) {
@@ -8799,16 +8781,15 @@ static Sprite *const VehSpriteSOIL = &g_TER1_SOIL_ENRICHER_SPRITES[3];
 static Sprite *const VehSpriteMINE = &g_TER1_MINE_SPRITE;
 static Sprite *const VehSpriteSOLAR = &g_TER1_SOLAR_COLLECTOR_SPRITE;
 
-// The third BaseWin repaint hook, beside check_base / check_loc above:
+// The remaining unrecovered BaseWin repaint hook:
 // recompute the one vehicle's defenders and garrison after its tile changed.
 typedef void (OriginalObject::*func_base_win_check_veh)(int veh_id);
 func_base_win_check_veh BaseWinOriginalCheckVeh =
     original_method<func_base_win_check_veh>(0x0041A8B0);
 
 // TutWin::tut_map (0x004BE650) is not recovered and tutwin.h declares no such
-// member; the terraform epilogue is the tree's first caller. Same seam as the
-// BaseWin pair - a member-pointer call into the original at the image's own
-// address, receiver TutWinGlobal.
+// member; the terraform epilogue is the tree's first caller. This still uses
+// a member-pointer call into the original, with receiver TutWinGlobal.
 typedef void (OriginalObject::*func_tut_win_tut_map)(const char *msg, int x,
                                                     int y, int noun,
                                                     void *sprite,
@@ -9118,7 +9099,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
                 parse_num(0, Rules.minerals_harvesting_forest);
                 NetMsgPopup->pop(VehLabelHARVESTFOREST, 5000, 0, 0);
             }
-            (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckBase)(near_base);
+            TutWinBaseWindow.check_base(near_base);
         }
         goto forest_shared;
     } else {
@@ -9158,7 +9139,7 @@ forest_shared:
     draw_tiles(x, y, 2);
     if (veh_count_before == VehCurrentCount) {
         (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckVeh)(veh_id);
-        (ORIGINAL(&TutWinBaseWindow)->*BaseWinOriginalCheckLoc)(x, y, 2);
+        TutWinBaseWindow.check_loc(x, y, 2);
     } else {
         TutWinBaseWindow.GraphicWin::redraw();
     }
