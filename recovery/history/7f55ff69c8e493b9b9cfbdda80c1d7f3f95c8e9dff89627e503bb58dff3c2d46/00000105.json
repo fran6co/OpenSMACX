@@ -1,0 +1,30 @@
+{
+  "event_id": "d28b5ea97242c0c3ef09fa2dd73df92c3ad9f9b3df8ef525a0fd0253ab6ef0e9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sprite_source_remap.py",
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Authorize the complete five-argument Sprite source-remap worker5E9D44..5EAAFF needed by terrain loader451C50, using existing genuine members, Buffer, scaling globals and clipped-table helpers. Preserve seed005e9d44 and all historical claims; use native binding and observed emitted symbol, no forwarder or placeholder.",
+      "Root and two independent readers examined all1258 original instructions. Unit/shrink remap every non-key source includingzero; expansion also skipszero. Expansion selector lowbyte1/2/3 maps source, every other selector draws4rows and maps the first destination byte. Preserve live source/destination/LUT alias order, per-block sampling and member/callback epochs.",
+      "Actual-source host tests must expose dependency doubles, ordinary bounded geometry/FPU limits and unsupported invalid table domains. No universal x87 equivalence or asynchronous aliasing of old assembler scratch is claimed. Require fresh native compilation, protected claims, references, layout and full build/link before coordinator-reviewed bounded integration and destination recheck.",
+      "Coordinator owns product, task and Git changes; test worker may edit only the named new test file outside measurement freeze. Terrain WIP/discoveries/baselines remain preserved; this method alone does not complete terrain recovery or game acceptance. base_energy initialization and faction-cache behavior changes remain deferred."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6200644,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f923530dcb2e0c0daeda85813ed8997ae5977a24c25265b7c54941aabe444545",
+  "request_id": "sprite-source-remap-complete-20260923",
+  "schema_version": 1,
+  "sequence": 105,
+  "stream": "task:vector-value-semantics"
+}

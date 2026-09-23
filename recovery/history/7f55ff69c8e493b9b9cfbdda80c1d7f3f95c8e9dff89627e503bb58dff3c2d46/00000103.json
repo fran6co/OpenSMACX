@@ -1,0 +1,39 @@
+{
+  "event_id": "d1e19c20e28c7ab59cac251c43fa39a0a7bcad158eb2b3fe06e168d82bebea13",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_terrain_shared_shades.py",
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "Authorize the coupled replacement of the new OceanCornerShades image pointer by its real sixteen-int zero-initialized owner, including the existing get_brighting consumer of its final DWORD bytes. Original writes46456D/4645DA and four-slice end464706 establish7F6644..7F6684; coast passes the same slices465362..46548D. Texture consumers may mutate these shade arrays, so preserve shared mutable lifetime and pointer identity.",
+      "Original get_brighting470704 reads signed bytes from biased7F6680 plus7*v1+v2. Its masked nibbles can produce indices0..3, selecting the four bytes of OceanCornerShades[15]. Preserve that observed alias explicitly with unsigned-byte extraction and signed conversion; do not assert an unproved1..7 domain, enlarge the array, initialize the gap, or split overlapping owners.",
+      "Only the known overlap is rehomed. Existing remaining CornerLightTable accesses, generated-light producer470420, startup, loaded/editor domains and other terrain storage remain unresolved. This is not permission to merge the retained terrain group or resolve its shared-storage finding. No historical claim demotion or original marker editing.",
+      "Require actual-source shared-tail tests over all signed-byte values and original nibble addressing, poison/persistence controls, independently decoded original evidence, native zero-data/symbol/layout/reference observations and affected protected matches. Root owns source, journals, Git and compiler epochs; preserve terrain WIP, base_energy deferral and all task baselines."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4654416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 8349252,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "febd50cc5ffb40cac6d588e386ed206d70fdb6622a1947d818f77c483fc23ecc",
+  "request_id": "ocean-shade-storage-with-biased-reader-20260923",
+  "schema_version": 1,
+  "sequence": 103,
+  "stream": "task:vector-value-semantics"
+}

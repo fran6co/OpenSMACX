@@ -1,0 +1,29 @@
+{
+  "event_id": "f923530dcb2e0c0daeda85813ed8997ae5977a24c25265b7c54941aabe444545",
+  "payload": {
+    "affects": [
+      "entity-2b7887219db9ace75879c64e6092ff73528b1cbe1e4352d2c3a296292188e143",
+      "entity-3d2ed9906a5d731cbf3ad8f2aa6a302a146a224324e08704fe21b89b56c93255",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-88ca33a70fbdb2c9f5d4c37d208e04c33391719d1d6060fdba3355d323cbecf1",
+      "entity-eb8384c1d804cf4d3bd78f8e3bfd39bdc0af4472206745a460f7abf3706eb1ba"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-loader-complete-original-and-live-dependencies-20260923",
+    "evidence": [
+      "Full original451C50..45370C (1715 decoded instructions, complete primary span) and6550F9..65513A unwind establish two local Sprite[4] arrays followed by one Buffer and reverse cleanup. Root and independent worker reviewed the original, not only the retained seed.",
+      "Seed correction:451CD2 publishes TextureRasterKey=9 BEFORE the first load_pcx451CDC, whereas seed publishes after it. Seed also omits local Buffer::init(100,62,0,nullptr) at452BB7, after TER1.PCX load452BA4 and before the remaining Sprite extracts. Preserve both callback-visible effects in a complete recovery.",
+      "Coast palette producer452215..452247 writes12 bytes row-major, x130/144/158/172 and y344/361/378, from get_pixel low bytes into787E54..787E60. Renderer slices+2/+7 must share that owner, never independent shadow arrays or constants.",
+      "Loader remap calls4522AF and45238B target genuine Sprite::draw(Buffer*,int,int,int,unsigned char*)5E9D44..5EAAFF (3515bytes). Current product Sprite has no authentic overload definition. Existing draw_dest has different semantics; neither it nor a stub may be called complete loader dependency recovery.",
+      "Separate clamp closure: original init6972CC/D0 is -256/+256 and renderer writes are4633CD/D7,464742/4C,466C5B/65. Six reader bodies are61B1F0,61C090,6212B0,621870,622DB0,6233C0. The sixth live621870 pending forwarder remains; allocating new globals only for the other five would split shared state.",
+      "Focus685478/7C initializes -99/-99; Console::new_base4CF7C0 is its sole original producer, publishing at4CFF65/6B before redraw/prompt then resetting Y/X at4CFF9E/A4. Its3202-byte body/38callees remain seed-only. A default-only focus owner is not that producer recovery. Preserve these findings and the existing hold on integrating retained terrain; no behavior change or full-game acceptance is authorized."
+    ],
+    "hypothesis": "Recover the complete terrain asset loader together with its authentic source-remap Sprite consumer; new storage declarations alone do not close mutable terrain dependencies.",
+    "kind": "discovery"
+  },
+  "previous_event": "d1e19c20e28c7ab59cac251c43fa39a0a7bcad158eb2b3fe06e168d82bebea13",
+  "request_id": "terrain-loader-complete-original-and-live-dependencies-20260923",
+  "schema_version": 1,
+  "sequence": 104,
+  "stream": "task:vector-value-semantics"
+}

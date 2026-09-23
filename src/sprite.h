@@ -64,6 +64,9 @@ class Sprite {
   int draw(Buffer *destination, int transparent, int x, int y,
            int numerator, int denominator);
   int draw(Buffer *destination, int transparent, int x, int y);
+  // Source remap; the historical four-row expansion maps destination instead.
+  int draw(Buffer *destination, int transparent, int x, int y,
+           unsigned char *table);
   // Terrain painters pass the stored unsigned palette key to draw().
   unsigned char transparent_index() const { return cTransparentIndex_; }
   int width() const { return iWidth_; }
