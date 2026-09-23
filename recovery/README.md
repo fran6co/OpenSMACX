@@ -6,6 +6,17 @@ verification run in the library; the former application operation bridge is
 removed. Local compiler scripts remain in `environment/`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
 
+The terrain loader needs one irregular palette-index table from the pinned
+original. CMake materializes it into ignored `build/recovery/preparation/terrain-data/`
+using the source-owned object binding and installed PE/source APIs. Set
+`OPENSMACX_IMAGE` to the absolute original executable for isolated checkouts,
+or configure ordinary CMake with `-DOPENSMACX_ORIGINAL_IMAGE=/absolute/path`.
+The ordinary default is `.opensmacx/game/terranx_original.exe` in this checkout.
+Missing/wrong images, unbacked or relocated data refuse configuration; there
+is no zero/stale fallback or runtime executable-address dependency. Preparation
+retains and fingerprints its generated header for measurements and overlays.
+The initializer is disposable data, never a matching or acceptance report.
+
 Compiler and toolchain JSON clients explicitly launch with `{framework_python}`
 and `-I -B`, so their framework imports use the caller's selected installation,
 not a retained worktree's older editable package. Compiler scripts and flags remain

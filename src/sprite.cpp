@@ -1634,35 +1634,122 @@ Sprite g_IFACE_STD_POPUPS_BOT_MID_SPRITE;
 Sprite g_IFACE_STD_POPUPS_MID_LEFT_SPRITE;
 // RECOVERY_OBJECT: v2 0x0075B058 0x0075B084 ?g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE@@3VSprite@@A 0x00453A70
 Sprite g_IFACE_STD_POPUPS_MID_RIGHT_SPRITE;
-Sprite g_TER1_WHITE_ORG_YEL_TILE_SPRITES[6];  // 0x00791C58, 0x2c stride
-Sprite g_TER1_BOTTOM_LEFT_TILE_SPRITES[9];  // 0x007A99A0, 0x2c stride
-Sprite g_TER1_UNUSED_SPRITES2[2];  // 0x00779420, 0x2c stride
-Sprite g_TER1_MINE_SPRITE;  // 0x00776A50
-Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;  // 0x007991F8
-Sprite g_TER1_TIDAL_HARNESS_SPRITE;  // 0x0078A5B0
-Sprite g_TER1_MINING_PLATFORM_SPRITE;  // 0x00789B68
-Sprite g_TER1_TUT_BLANK_SPRITE;  // 0x00798C40
-Sprite g_TER1_KELP_FARM_SPRITE;  // 0x007A6860
-Sprite g_TER1_CONDENSER_SPRITE;  // 0x00779390
-Sprite g_TER1_ECHELON_MIRROR_SPRITE;  // 0x007ABF60
-Sprite g_TER1_BOREHOLE_SPRITE;  // 0x0078DD20
-Sprite g_TER1_BOREHOLE_CLUSTER_SPRITE;  // 0x007ACB88
-Sprite g_TER1_MANIFOLD_NEXUS_SPRITES[6];  // 0x007AC098, 0x2c stride
-Sprite g_TER1WRECK_UNITY_WRECKAGE_SPRITES[15];  // 0x00776758, 0x2c stride
-Sprite g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[4];  // 0x00799658, 0x2c stride
-Sprite g_FOSSIL_FIELD_RIDGE_SPRITES[6];  // 0x007ACD70, 0x2c stride
-Sprite g_TER1_UNUSED_SPRITES1[5];  // 0x007792B0, 0x2c stride
-Sprite g_TER1_FARM_SPRITES[5];  // 0x00791FC8, 0x2c stride
-Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];  // 0x0079A710, 0x2c stride
-Sprite g_TER1_SEA_LAND_RESOURCE_SPRITES[12];  // 0x0075B230, 0x2c stride
-Sprite g_TER1_LANDMARK_RESOURCE_SPRITES[6];  // 0x0078A650, 0x2c stride
-Sprite g_GLOW_SPRITES[2];  // 0x00779770, 0x2c stride
-Sprite g_TER1_UNITY_POD_SPRITES[6];  // 0x0077AFF8, 0x2c stride
-Sprite g_TER1_MONOLITH_SPRITE;  // 0x0075B098
-Sprite g_TER1_BUNKER_SPRITE;  // 0x007AD010
-Sprite g_TER1_AIRBASE_SPRITE;  // 0x007ACC60
-Sprite g_TER1_SENSOR_ARRAY_SPRITE;  // 0x007A6830
-Sprite g_RAINFALL_DOUBLE_TILE_SPRITES[2];  // 0x007ACBB8, 0x2c stride
+// Original CRT 0044EB90 (table 006822DC) constructs 6 Sprite object(s);
+// exit 0044EBC0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00791C58 0x00791D60 ?g_TER1_WHITE_ORG_YEL_TILE_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_WHITE_ORG_YEL_TILE_SPRITES[6];
+// Original CRT 0044EBE0 (table 006822E0) constructs 9 Sprite object(s);
+// exit 0044EC10 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007A99A0 0x007A9B2C ?g_TER1_BOTTOM_LEFT_TILE_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_BOTTOM_LEFT_TILE_SPRITES[9];
+// Original CRT 0044EC30 (table 006822E4) constructs 2 Sprite object(s);
+// exit 0044EC60 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00779420 0x00779478 ?g_TER1_UNUSED_SPRITES2@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_UNUSED_SPRITES2[2];
+// Original CRT 0044EC80 (table 006822E8) constructs 1 Sprite object(s);
+// exit 0044ECA0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00776A50 0x00776A7C ?g_TER1_MINE_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_MINE_SPRITE;
+// Original CRT 0044ECB0 (table 006822EC) constructs 1 Sprite object(s);
+// exit 0044ECD0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007991F8 0x00799224 ?g_TER1_SOLAR_COLLECTOR_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_SOLAR_COLLECTOR_SPRITE;
+// Original CRT 0044ECE0 (table 006822F0) constructs 1 Sprite object(s);
+// exit 0044ED00 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0078A5B0 0x0078A5DC ?g_TER1_TIDAL_HARNESS_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_TIDAL_HARNESS_SPRITE;
+// Original CRT 0044ED10 (table 006822F4) constructs 1 Sprite object(s);
+// exit 0044ED30 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00789B68 0x00789B94 ?g_TER1_MINING_PLATFORM_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_MINING_PLATFORM_SPRITE;
+// Original CRT 0044ED40 (table 006822F8) constructs 1 Sprite object(s);
+// exit 0044ED60 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00798C40 0x00798C6C ?g_TER1_TUT_BLANK_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_TUT_BLANK_SPRITE;
+// Original CRT 0044ED70 (table 006822FC) constructs 1 Sprite object(s);
+// exit 0044ED90 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007A6860 0x007A688C ?g_TER1_KELP_FARM_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_KELP_FARM_SPRITE;
+// Original CRT 0044EDA0 (table 00682300) constructs 1 Sprite object(s);
+// exit 0044EDC0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00779390 0x007793BC ?g_TER1_CONDENSER_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_CONDENSER_SPRITE;
+// Original CRT 0044EDD0 (table 00682304) constructs 1 Sprite object(s);
+// exit 0044EDF0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007ABF60 0x007ABF8C ?g_TER1_ECHELON_MIRROR_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_ECHELON_MIRROR_SPRITE;
+// Original CRT 0044EE00 (table 00682308) constructs 1 Sprite object(s);
+// exit 0044EE20 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0078DD20 0x0078DD4C ?g_TER1_BOREHOLE_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_BOREHOLE_SPRITE;
+// Original CRT 0044EE30 (table 0068230C) constructs 1 Sprite object(s);
+// exit 0044EE50 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007ACB88 0x007ACBB4 ?g_TER1_BOREHOLE_CLUSTER_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_BOREHOLE_CLUSTER_SPRITE;
+// Original CRT 0044EE60 (table 00682310) constructs 6 Sprite object(s);
+// exit 0044EE90 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007AC098 0x007AC1A0 ?g_TER1_MANIFOLD_NEXUS_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_MANIFOLD_NEXUS_SPRITES[6];
+// Original CRT 0044EEB0 (table 00682314) constructs 15 Sprite object(s);
+// exit 0044EEE0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00776758 0x007769EC ?g_TER1WRECK_UNITY_WRECKAGE_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1WRECK_UNITY_WRECKAGE_SPRITES[15];
+// Original CRT 0044EF00 (table 00682318) constructs 4 Sprite object(s);
+// exit 0044EF30 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00799658 0x00799708 ?g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES[4];
+// Original CRT 0044EF50 (table 0068231C) constructs 6 Sprite object(s);
+// exit 0044EF80 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007ACD70 0x007ACE78 ?g_FOSSIL_FIELD_RIDGE_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_FOSSIL_FIELD_RIDGE_SPRITES[6];
+// Original CRT 0044EFA0 (table 00682320) constructs 5 Sprite object(s);
+// exit 0044EFD0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007792B0 0x0077938C ?g_TER1_UNUSED_SPRITES1@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_UNUSED_SPRITES1[5];
+// Original CRT 0044EFF0 (table 00682324) constructs 5 Sprite object(s);
+// exit 0044F020 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00791FC8 0x007920A4 ?g_TER1_FARM_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_FARM_SPRITES[5];
+// Original CRT 0044F040 (table 00682328) constructs 5 Sprite object(s);
+// exit 0044F070 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0079A710 0x0079A7EC ?g_TER1_SOIL_ENRICHER_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_SOIL_ENRICHER_SPRITES[5];
+// Original CRT 0044F090 (table 0068232C) constructs 12 Sprite object(s);
+// exit 0044F0C0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0075B230 0x0075B440 ?g_TER1_SEA_LAND_RESOURCE_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_SEA_LAND_RESOURCE_SPRITES[12];
+// Original CRT 0044F0E0 (table 00682330) constructs 6 Sprite object(s);
+// exit 0044F110 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0078A650 0x0078A758 ?g_TER1_LANDMARK_RESOURCE_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_LANDMARK_RESOURCE_SPRITES[6];
+// Original CRT 0044F130 (table 00682334) constructs 2 Sprite object(s);
+// exit 0044F160 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00779770 0x007797C8 ?g_GLOW_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_GLOW_SPRITES[2];
+// Original CRT 0044F180 (table 00682338) constructs 6 Sprite object(s);
+// exit 0044F1B0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0077AFF8 0x0077B100 ?g_TER1_UNITY_POD_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_TER1_UNITY_POD_SPRITES[6];
+// Original CRT 0044F1D0 (table 0068233C) constructs 1 Sprite object(s);
+// exit 0044F1F0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0075B098 0x0075B0C4 ?g_TER1_MONOLITH_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_MONOLITH_SPRITE;
+// Original CRT 0044F200 (table 00682340) constructs 1 Sprite object(s);
+// exit 0044F220 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007AD010 0x007AD03C ?g_TER1_BUNKER_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_BUNKER_SPRITE;
+// Original CRT 0044F230 (table 00682344) constructs 1 Sprite object(s);
+// exit 0044F250 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007ACC60 0x007ACC8C ?g_TER1_AIRBASE_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_AIRBASE_SPRITE;
+// Original CRT 0044F260 (table 00682348) constructs 1 Sprite object(s);
+// exit 0044F280 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007A6830 0x007A685C ?g_TER1_SENSOR_ARRAY_SPRITE@@3VSprite@@A 0x00451C50
+Sprite g_TER1_SENSOR_ARRAY_SPRITE;
+// Original CRT 0044F290 (table 0068234C) constructs 2 Sprite object(s);
+// exit 0044F2C0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007ACBB8 0x007ACC10 ?g_RAINFALL_DOUBLE_TILE_SPRITES@@3PAVSprite@@A 0x00451C50
+Sprite g_RAINFALL_DOUBLE_TILE_SPRITES[2];
 Sprite g_VEH_SPRITES[152];  // 0x007777A0, 0x2c stride
 Sprite g_FLAGS_VEH_SPRITES[112];  // 0x0078B778, 0x2c stride
 // Original CRT 0x682358 constructs 16 Sprite(s) via 0x44F380

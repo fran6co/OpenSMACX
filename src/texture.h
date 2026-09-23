@@ -299,6 +299,10 @@ extern Texture g_OCEAN_TEXTURES[2];                 // 0x007A7820
 extern Texture g_RIVER_TEXTURES[16];                // 0x007A7AA0
 extern Texture g_DUNE_LAND_TEXTURE;                 // 0x007AC220
 
+// Shared radius overlays, selected by the signed map-window zoom.
+extern Texture g_RADIUS1_TEXTURE;
+extern Texture g_RADIUS2_TEXTURE;
+
  /*
   * TextureStore class
   *

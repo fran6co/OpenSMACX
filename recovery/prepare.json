@@ -5,8 +5,8 @@
     {"argv": ["cmake", "-S", "{root}", "-B", "{build}", "-G", "Ninja", "-DCMAKE_BUILD_TYPE=Debug", "-DCMAKE_EXPORT_COMPILE_COMMANDS=ON", "-DCMAKE_DISABLE_PRECOMPILE_HEADERS=ON"], "timeout": 120}
   ],
   "outputs": [{"path": "compile_commands.json", "format": "compilation-database"}],
-  "inputs": ["CMakeLists.txt", "pyproject.toml", "uv.lock", "recovery/environment/vc6-cl", "recovery/environment/vc6-link", "recovery/environment/vc6-lib", "recovery/environment/wine.py", "recovery/environment/wine_repro.py", "recovery/environment/wine_compile.py"],
+  "inputs": ["CMakeLists.txt", "pyproject.toml", "uv.lock", "recovery/terrain_data.py", "recovery/environment/vc6-cl", "recovery/environment/vc6-link", "recovery/environment/vc6-lib", "recovery/environment/wine.py", "recovery/environment/wine_repro.py", "recovery/environment/wine_compile.py"],
   "versioned_inputs": ["CMakeLists.txt"],
   "input_roots": ["src", "cmake"],
-  "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_"]
+  "environment": ["VC6_PREFIX", "VC6_ROOT", "VC6_INCLUDE", "VC6_LIB", "WINEARCH", "CL", "_CL_", "OPENSMACX_IMAGE"]
 }

@@ -287,6 +287,35 @@ endif()
 # rather than a probe, and its name should say so.
 add_executable(OpenSMACX ${OPENSMACX_SOURCES})
 
+# Irregular terrain palette indices remain local derivatives of the pinned
+# original. Source owns their bounded object mapping; the include lives in
+# ignored preparation context, also for IDE builds outside the build/ tree.
+find_program(OPENSMACX_UV_EXECUTABLE NAMES uv REQUIRED)
+if(NOT DEFINED OPENSMACX_ORIGINAL_IMAGE)
+    if(DEFINED ENV{OPENSMACX_IMAGE})
+        set(OPENSMACX_ORIGINAL_IMAGE "$ENV{OPENSMACX_IMAGE}" CACHE FILEPATH "Pinned original for terrain data")
+    else()
+        set(OPENSMACX_ORIGINAL_IMAGE "${CMAKE_CURRENT_SOURCE_DIR}/.opensmacx/game/terranx_original.exe"
+            CACHE FILEPATH "Pinned original for terrain data")
+    endif()
+endif()
+set(OPENSMACX_TERRAIN_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}/build/recovery/preparation/terrain-data")
+set(OPENSMACX_TERRAIN_INCLUDE "${OPENSMACX_TERRAIN_DIRECTORY}/terrain_coast_remap.inc")
+execute_process(
+    COMMAND "${OPENSMACX_UV_EXECUTABLE}" run --project "${CMAKE_CURRENT_SOURCE_DIR}" python -c
+        "import sys; from pathlib import Path; from runpy import run_path; run_path(sys.argv[1])['terrain_coast_initializer'](Path(sys.argv[2]), Path(sys.argv[3]), Path(sys.argv[4]))"
+        "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py" "${CMAKE_CURRENT_SOURCE_DIR}"
+        "${OPENSMACX_ORIGINAL_IMAGE}" "${OPENSMACX_TERRAIN_INCLUDE}"
+    WORKING_DIRECTORY "${CMAKE_CURRENT_SOURCE_DIR}"
+    RESULT_VARIABLE OPENSMACX_TERRAIN_RESULT ERROR_VARIABLE OPENSMACX_TERRAIN_ERROR)
+if(NOT OPENSMACX_TERRAIN_RESULT EQUAL 0)
+    message(FATAL_ERROR "Pinned terrain data generation failed: ${OPENSMACX_TERRAIN_ERROR}")
+endif()
+set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
+    "${OPENSMACX_ORIGINAL_IMAGE}" "${CMAKE_CURRENT_SOURCE_DIR}/src/IMAGE_PIN"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/game.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py")
+target_include_directories(OpenSMACX PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
+
 target_compile_definitions(OpenSMACX PRIVATE
     $<$<CONFIG:Debug>:BUILD_DEBUG>
 )
@@ -332,7 +361,6 @@ target_link_options(OpenSMACX PRIVATE
 # addresses of an older build. It reads the executable, map and objects from
 # this build. Source path mapping and frame-base guarantees are toolchain policy,
 # not assumptions in the portable package; only Debug explicitly retains EBP.
-find_program(OPENSMACX_UV_EXECUTABLE NAMES uv REQUIRED)
 add_custom_command(TARGET OpenSMACX POST_BUILD
     COMMAND "${OPENSMACX_UV_EXECUTABLE}" run --project "${CMAKE_CURRENT_SOURCE_DIR}"
             recover debug-sidecar

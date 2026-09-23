@@ -479,30 +479,91 @@ TextureStore::TextureStore() {
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
 // In the shipped image these live at fixed data addresses and are
-// constructed before WinMain by the CRT's dynamic-initializer walk
-// (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
+// constructed before WinMain by the CRT's dynamic-initializer walk.
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
-Texture g_RADIUS1_TEXTURE;  // 0x00787FB8
-Texture g_RADIUS2_TEXTURE;  // 0x0075B858
-Texture g_ROCKY_TEXTURES[4];  // 0x0076E9E0, 0x70 stride
-Texture g_OCEAN_TEXTURES[2];  // 0x007A7820, 0x70 stride
-Texture g_FLAT_ARID_LAND_TEXTURE;  // 0x00799E48
-Texture g_MOIST_LAND_TEXTURES[16];  // 0x00799EB8, 0x70 stride
-Texture g_RAINY_LAND_TEXTURES[16];  // 0x00799738, 0x70 stride
-Texture g_JUNGLE_LAND_TEXTURES[15];  // 0x00789C28, 0x70 stride
-Texture g_DUNE_LAND_TEXTURE;  // 0x007AC220
-Texture g_SUNNY_MESA_TEXTURES[8];  // 0x007797F8, 0x70 stride
-Texture g_RAINFALL_SINGLE_TILE_TEXTURES[2];  // 0x0076E8A0, 0x70 stride
-Texture g_ROAD_TEXTURES[9];  // 0x00792218, 0x70 stride
-Texture g_MAGTUBE_TEXTURES[9];  // 0x00798E08, 0x70 stride
-Texture g_RIVER_TEXTURES[16];  // 0x007A7AA0, 0x70 stride
-Texture g_MOUNT_PLANET_TEXTURES[3];  // 0x0078A340, 0x70 stride
-Texture g_GARLAND_CRATER_TEXTURES[3];  // 0x00788100, 0x70 stride
-Texture g_FUNGUS_TEXTURES[30];  // 0x00776A80, 0x70 stride
-Texture g_FARM_TEXTURES[9];  // 0x00799238, 0x70 stride
-Texture g_FOREST_TEXTURES[16];  // 0x0078A758, 0x70 stride
-Texture g_RAINFALL_SINGLE_TILE_TEXTURE;  // 0x0078DD80
+// Both radius objects initially contain zeroes. Texture's constructor writes
+// through offset 0x6C; independently constructed CaviarData at 0x788028 and
+// Sprite[3] at 0x75B8C8 bound their storage, independently of this build's sizeof.
+// Original CRT entries 0x68228C/0x682290 invoke 0x44E5F0/0x44E620 in order;
+// their registered exits 0x44E610/0x44E640 call Texture::~Texture in reverse.
+// Asset extraction belongs to load_terrain (0x451C50), homed in game.cpp.
+// RECOVERY_OBJECT: v2 0x00787FB8 0x00788028 ?g_RADIUS1_TEXTURE@@3VTexture@@A 0x0044E5F0
+Texture g_RADIUS1_TEXTURE;
+// RECOVERY_OBJECT: v2 0x0075B858 0x0075B8C8 ?g_RADIUS2_TEXTURE@@3VTexture@@A 0x0044E620
+Texture g_RADIUS2_TEXTURE;
+// Original CRT 0044E650 (table 00682294) constructs 4 Texture object(s);
+// exit 0044E680 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0076E9E0 0x0076EBA0 ?g_ROCKY_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_ROCKY_TEXTURES[4];
+// Original CRT 0044E6A0 (table 00682298) constructs 2 Texture object(s);
+// exit 0044E6D0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007A7820 0x007A7900 ?g_OCEAN_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_OCEAN_TEXTURES[2];
+// Original CRT 0044E6F0 (table 0068229C) constructs 1 Texture object(s);
+// exit 0044E710 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00799E48 0x00799EB8 ?g_FLAT_ARID_LAND_TEXTURE@@3VTexture@@A 0x00451C50
+Texture g_FLAT_ARID_LAND_TEXTURE;
+// Original CRT 0044E720 (table 006822A0) constructs 16 Texture object(s);
+// exit 0044E750 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00799EB8 0x0079A5B8 ?g_MOIST_LAND_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_MOIST_LAND_TEXTURES[16];
+// Original CRT 0044E770 (table 006822A4) constructs 16 Texture object(s);
+// exit 0044E7A0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00799738 0x00799E38 ?g_RAINY_LAND_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_RAINY_LAND_TEXTURES[16];
+// Original CRT 0044E7C0 (table 006822A8) constructs 15 Texture object(s);
+// exit 0044E7F0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00789C28 0x0078A2B8 ?g_JUNGLE_LAND_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_JUNGLE_LAND_TEXTURES[15];
+// Original CRT 0044E810 (table 006822AC) constructs 1 Texture object(s);
+// exit 0044E830 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007AC220 0x007AC290 ?g_DUNE_LAND_TEXTURE@@3VTexture@@A 0x00451C50
+Texture g_DUNE_LAND_TEXTURE;
+// Original CRT 0044E840 (table 006822B0) constructs 8 Texture object(s);
+// exit 0044E870 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007797F8 0x00779B78 ?g_SUNNY_MESA_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_SUNNY_MESA_TEXTURES[8];
+// Original CRT 0044E890 (table 006822B4) constructs 2 Texture object(s);
+// exit 0044E8C0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0076E8A0 0x0076E980 ?g_RAINFALL_SINGLE_TILE_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_RAINFALL_SINGLE_TILE_TEXTURES[2];
+// Original CRT 0044E8E0 (table 006822B8) constructs 9 Texture object(s);
+// exit 0044E910 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00792218 0x00792608 ?g_ROAD_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_ROAD_TEXTURES[9];
+// Original CRT 0044E930 (table 006822BC) constructs 9 Texture object(s);
+// exit 0044E960 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00798E08 0x007991F8 ?g_MAGTUBE_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_MAGTUBE_TEXTURES[9];
+// Original CRT 0044E980 (table 006822C0) constructs 16 Texture object(s);
+// exit 0044E9B0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x007A7AA0 0x007A81A0 ?g_RIVER_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_RIVER_TEXTURES[16];
+// Original CRT 0044E9D0 (table 006822C4) constructs 3 Texture object(s);
+// exit 0044EA00 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0078A340 0x0078A490 ?g_MOUNT_PLANET_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_MOUNT_PLANET_TEXTURES[3];
+// Original CRT 0044EA20 (table 006822C8) constructs 3 Texture object(s);
+// exit 0044EA50 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00788100 0x00788250 ?g_GARLAND_CRATER_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_GARLAND_CRATER_TEXTURES[3];
+// Original CRT 0044EA70 (table 006822CC) constructs 30 Texture object(s);
+// exit 0044EAA0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00776A80 0x007777A0 ?g_FUNGUS_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_FUNGUS_TEXTURES[30];
+// Original CRT 0044EAC0 (table 006822D0) constructs 9 Texture object(s);
+// exit 0044EAF0 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x00799238 0x00799628 ?g_FARM_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_FARM_TEXTURES[9];
+// Original CRT 0044EB10 (table 006822D4) constructs 16 Texture object(s);
+// exit 0044EB40 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0078A758 0x0078AE58 ?g_FOREST_TEXTURES@@3PAVTexture@@A 0x00451C50
+Texture g_FOREST_TEXTURES[16];
+// Original CRT 0044EB60 (table 006822D8) constructs 1 Texture object(s);
+// exit 0044EB80 uses the same extent. Initial zero storage is not lifetime proof.
+// RECOVERY_OBJECT: v2 0x0078DD80 0x0078DDF0 ?g_RAINFALL_SINGLE_TILE_TEXTURE@@3VTexture@@A 0x00451C50
+Texture g_RAINFALL_SINGLE_TILE_TEXTURE;
 
 // Fixed-slot bindings carried from 0061ead0.cpp
 static int *const blit_scale_65536f = (int *)0x00670A84;

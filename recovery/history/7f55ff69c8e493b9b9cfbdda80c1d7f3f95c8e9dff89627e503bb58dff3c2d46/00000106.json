@@ -1,0 +1,48 @@
+{
+  "event_id": "7cf72f020d242bd4b5eafccbeafc64bcc1195faab00cfd48cc8fe59d9ca84263",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/README.md",
+      "recovery/build.json",
+      "recovery/prepare.json",
+      "recovery/terrain_data.py",
+      "recovery/tests/test_mapwin_generation.py",
+      "recovery/tests/test_terrain_data.py",
+      "recovery/tests/test_terrain_loader.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/mapwin.cpp",
+      "src/sprite.cpp",
+      "src/sprite.h",
+      "src/texture.cpp",
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Recover complete load_terrain451C50..45370C and its6550F9..65513A native cleanup in game.cpp, where literal pooling does not conflict with the distinct existing load_icons TER1WRECK literal. Full original/draft independently reviewed:163Texture extracts,101Sprite extracts,198recolors,5loads,3scratch init,12immediate palette publications,2source remaps,1fill,1explicit source close. Preserve ignored failures and two Sprite[4] arrays followed by Buffer with authentic unwind.",
+      "Bind the existing20Texture/29Sprite/sharedBuffer owners from their original vector/single CRT construction/teardown extents and native emitted symbols; add only five missing Sprite externs. No duplicate allocation, raw executable-address dispatch or change to their lifetime bodies. Existing lifetime/reference limitations stay visible.",
+      "Recover shared12-byte TerrainCoastPalette787E54..787E60 and replace both retained-renderer biased aliases together. Remap-source53bytes6846F8..68472D has one observed text read452258 and no observed writers, relocation escapes or noncode pointer references; static const is a bounded interpretation, not proof against arbitrary computed references.",
+      "Keep irregular original initializer bytes out of versioned source. Authorize narrow project-owned CMake materialization using installed source-binding/pinned PE APIs, only into ignored generated build context retained by native preparation; no new public CLI, format parser or framework rewrite. Explicit original-image input, fail-closed pin/bounds/relocation checks, fresh configure dependencies and damage tests required. Source retains object identity/type/bounds; generated include is disposable cache, not authority.",
+      "Coordinator owns product, build integration, binding/journal/Git and compiler leases. Test worker may edit only test_terrain_loader.py when separately released; freeze all checkout inputs during native measurement. Keep all historical claims/seeds/task baselines and unmerged terrain work. base_energy and faction-cache behavior changes remain deferred. Build/link, relevant byte/layout/data/reference checks, independent source review and destination rechecks required for manual integration; no full-game/automatic acceptance is claimed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4529232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d28b5ea97242c0c3ef09fa2dd73df92c3ad9f9b3df8ef525a0fd0253ab6ef0e9",
+  "request_id": "terrain-loader-complete-owners-20260923",
+  "schema_version": 1,
+  "sequence": 106,
+  "stream": "task:vector-value-semantics"
+}

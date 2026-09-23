@@ -227,6 +227,11 @@ extern Sprite g_TER1_MONOLITH_SPRITE;                 // 0x0075B098
 extern Sprite g_TER1_BUNKER_SPRITE;                   // 0x007AD010
 extern Sprite g_TER1_AIRBASE_SPRITE;                  // 0x007ACC60
 extern Sprite g_TER1_SENSOR_ARRAY_SPRITE;             // 0x007A6830
+extern Sprite g_RAINFALL_DOUBLE_TILE_SPRITES[2];
+extern Sprite g_GLOW_SPRITES[2];
+extern Sprite g_TER1_UNUSED_SPRITES2[2];
+extern Sprite g_TER1_TUT_BLANK_SPRITE;
+extern Sprite g_TER1_UNUSED_SPRITES1[5];
 
 // Shared interface choices: DipEdit uses elements 1 and 2 for its checkboxes.
 extern Sprite g_IFACE_CLOSE_X_SPRITES[3];

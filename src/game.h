@@ -237,6 +237,9 @@ void __cdecl load_fixed_sprites();                 // ?load_fixed_sprites@@YAXXZ
 // Populates shared panel styles and their existing sprite/mask assets.
 // The original load_interface caller remains a separate startup dependency.
 void __cdecl load_box_sprites();
+// Complete terrain atlas extraction and shared rainfall/coast palette.
+void __cdecl load_terrain();
+extern unsigned char TerrainCoastPalette[12];
 void __cdecl textcolor_init();                     // ?textcolor_init@@YAXXZ
 // The fixed-art load itself. Six of the seven are still original bodies
 // reached through pending_bodies.cpp forwarders - declared nowhere before
