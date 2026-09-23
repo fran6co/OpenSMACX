@@ -1,0 +1,69 @@
+{
+  "event_id": "be6efe7a5302eda98b105b78bd711e5bf5fd218e8730bc5daca35e66af26ab16",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_polygon.py",
+      "src/buffer.cpp",
+      "src/buffer.h",
+      "src/polygon.cpp"
+    ],
+    "evidence": [
+      "Authorize the unowned polygon family with its existing Buffer-side ownership, retaining this task baseline. Original direct references identify eight functions sharing9BC008..9BC04B:626470..626540 flat setup,626540..626597 flat advance,6265A0..626613 solid span,626620..626900 solid polygon,626900..6269F3 Gouraud setup,626A00..626D8B Gouraud polygon,626D90..626E0B remap span,626E10..627100 remap polygon. Preserve the exact advance seed obligation and every seed; no demotion is authorized.",
+      "Independent original review found Buffer::poly5DA690 calls626620 and BaseWin::draw_farm40F38C/40F40A call626E10. Full text direct-reference scanning found no scratch reader/writer outside the eight-function family and file-backed absolute-entry-pointer scanning found none; these bounded scans do not prove absence of indirect references. Proper typed C++ replaces the live626620 executable-address forwarder. CMake may add the polygon source owner, without changing compiler/link policy.",
+      "Six flat/solid/remap functions may be implemented and verified first, with individually owned shared scalar/pointer storage, not private per-call contexts.9BC020/03C/048 are flat coordinates but the remaining Gouraud function reuses the same physical slots for row addresses; do not add independent Gouraud storage or describe this partial stage as full state closure.9BC008 is int color,00C acquired byte pointer,010 bottom index,018 Vert pointer,01C clip left,020 clip top,030 live LUT pointer,038 vertex count,03C current y,040 pitch,044 clip right and048 clip bottom. Every selected slot is4 original bytes, not permission to swallow intervening words or neighboring log/language storage. Bind emitted names only after compilation.",
+      "Flat helpers use nine signed DWORD fields. Both public flat entries return16 for null buffer/vertices before acquisition; otherwise publish the actual get_data return and always free_data(1), including failed acquisition. Successful acquisition precedes reading pitch and clip; right-1 and bottom-1 are EXCLUSIVE. Walk backward then forward edges, preserving final global state and live LUT aliasing. Valid bounded geometry establishes min below32767 and max above-32765; do not disguise undefined/stale seed extrema as recovered malformed-input behavior.",
+      "Gouraud remains an explicit coupled recovery obligation: fixed four vertices,15-word edge shape, shared row slots converted to addresses, FNINIT and PC24/chop, undecremented clip bounds, advance-before-draw, inclusive right pixel, and unsigned-WORD clipped light product shifted right8. Do not reuse flat fill semantics. Any implementation needs independent original review and actual-source controls before integration.",
+      "Require original review, actual-source sanitizer tests with independent pixel/edge oracle and compiling damage controls, fresh native mappings/data/layout/reference diagnostics, historical Buffer/helper claim preservation and application build/link, followed by destination checks. Manual coordinator integration is authorized by the user; scoped tests and build success do not establish full-game or automatic acceptance. Keep the retained terrain source and all pending discoveries intact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6448240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6448448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6448544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6448672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6449408,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6449664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6450576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6450704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9d4c9cd08f10522fde4df3bc36d2c7a7936b1c7b94b9fe82a04e02583bbbbbcc",
+  "request_id": "terrain-polygon-shared-family-20260923",
+  "schema_version": 1,
+  "sequence": 137,
+  "stream": "task:infowin-ownership"
+}

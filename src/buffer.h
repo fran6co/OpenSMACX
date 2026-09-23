@@ -156,14 +156,9 @@ class Buffer {
   int write_right_l(char *text, RECT *area, int len);
 
  public:
-  // THE TWO TRAILING INTS ARE EVIDENCE-FREE, measured 2026-08-25 rather
-  // than left unfinished. `poly` forwards straight to `polygon`, `polygon`
-  // forwards to 0x00626620, and that function is 736 bytes and UNDECODED -
-  // buffer.cpp's own note says so. Nothing in the tree calls either with a
-  // literal that would name them, so the only honest spelling is the
-  // scaffold one. Naming them from the method's name alone would be a guess
-  // dressed as a fact.
-  int poly(Vert *verts, int a2, int a3);
+  // 0x00626620 stores the third argument as the vertex count and uses the
+  // fourth argument's low byte for solid spans. The member delegates to it.
+  int poly(Vert *verts, int count, int color);
   // 0x005D7210. The body is in buffer.cpp beside its marker.
   Buffer();
   // VIRTUAL, AND THE VPTR MEMBER IS GONE. What the image stores at offset
@@ -637,6 +632,10 @@ class Buffer {
   // rect1_ at 0x0061A2DA..0x0061A2F9. Its get_data call at 0x0061A253
   // acquires the pixels published in locked_bits_ for the rasterizer.
   friend class Texture;
+  // The free polygon family acquires this Buffer before reading its clip
+  // and pitch (0x00626648 / 0x00626E38), then releases the same acquisition.
+  friend int __cdecl polygon(Buffer *, Vert *, int, int);
+  friend int __cdecl polygon_dest(Buffer *, Vert *, int, unsigned char *);
   
   // DipEdit::init copies `rect2_` out as the starting point for its frame,
   // title field and button strip - a window body reading its own buffer's
@@ -895,13 +894,12 @@ extern const char BufferExtBmf[];
 extern const char BufferExtBmg[];
 extern const char BufferExtBmp[];
 
-// ?polygon@@YAHPAUBuffer@@PAUVert@@HH@Z at 0x00626620 is the 736-byte
-// rasteriser Buffer::poly hands its arguments to. YA = __cdecl, H = int, and
-// the arguments are (Buffer *, Vert *, int, int). Still unrecovered, so this
-// is a declaration with no definition - deliberately NOT a rebindable seam,
-// because Buffer::poly is byte-exact on a direct `call rel32` and a seam
-// would turn it into `call dword ptr [X]`.
-int polygon(Buffer *buffer, Vert *verts, int a3, int a4);
+// Solid and destination-remapping polygon rasterizers, owned by polygon.cpp.
+// The original remapping loop indexes the caller's live 256-byte table with
+// each unsigned destination pixel; it does not copy or null-check that table.
+int __cdecl polygon(Buffer *buffer, Vert *verts, int count, int color);
+int __cdecl polygon_dest(Buffer *buffer, Vert *verts, int count,
+                         unsigned char *colors);
 
 // DirectDraw surface vtable slots the data lock/release pair dispatches
 // through; both are stdcall COM methods on the surface interface.
