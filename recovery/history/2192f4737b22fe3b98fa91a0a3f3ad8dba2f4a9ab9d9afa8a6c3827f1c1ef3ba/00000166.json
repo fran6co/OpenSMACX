@@ -1,0 +1,24 @@
+{
+  "event_id": "0650463d1dbdef2e7be9f8f52922ad676aad6c12ce0b1308aa41b664b15e50c3",
+  "payload": {
+    "affects": [
+      "entity-1bd065e88de40f1bfb18de52c7647e9d34081144f9dba44b8660fff101cea077",
+      "entity-fda8ea135908a06e56ed0dd213df1cfc4b10e08cacc7f77c8047570c13e5595c"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-update-inline-sound-restoration-20260923",
+    "evidence": [
+      "Original5F4D38 calls5FD2B0; original5FD2B0..5FD2B3 is xor eax,eax;ret. Current autosound.h defines MEASURED inline int do_sound(){return0;}, so VC6 eliminates the unused call from Win::update in both fixed flag sets. Independent fresh-object review finds all remaining instructions match modulo relocation/branch positions:29 original instructions versus28 compiled,77 live bytes versus72. Do not add an observable pump effect or handcrafted byte filler to close matching.",
+      "Keep the typed Win Z-order dispatcher and its restored identity, nonstaticcdecl declaration, signed count and per-callback receiver reloads. It has no historical exact claim and is not banked as exact. The new host fixture deliberately uses observable service doubles for boundary timing; those doubles do not claim original do_sound has effects.",
+      "Future restoration must investigate genuine sound declaration/TU visibility and all affected original callers together, preserving existing sound/caller claims; this finding grants no sound-header changes during the window-hierarchy integration. Existing header history already reports both inlined and out-of-line original uses. No fake wrapper or global noinline policy is authorized.",
+      "The corrected cursor-mapwin-callback-closure-corrected-20260923 source relationships have been implemented and independently reviewed in this connected manual checkpoint. Keep its cross-owner finding pending: go_reset remains with control-sprite-defaults, and this is not native cross-owner/autonomous acceptance or full vtable/runtime closure."
+    ],
+    "hypothesis": "Win::update historical code restoration depends on the visibility/emission of the genuine do_sound no-op, not on extra Win state or an invented sound side effect.",
+    "kind": "discovery"
+  },
+  "previous_event": "9fe39431bd08fc9943206680e4bf1e5b4058750f781e1abce5ce9737bfa4b2c0",
+  "request_id": "win-update-inline-sound-restoration-20260923",
+  "schema_version": 1,
+  "sequence": 166,
+  "stream": "task:infowin-ownership"
+}

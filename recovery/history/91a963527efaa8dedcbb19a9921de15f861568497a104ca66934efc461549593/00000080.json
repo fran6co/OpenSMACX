@@ -1,0 +1,44 @@
+{
+  "event_id": "66d10835f31bfe810d7fbf78018547ad0762cb11449def9b23b583afd7708de0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/editbox_input_harness.cpp",
+      "recovery/tests/test_go_cursor_state.py",
+      "recovery/tests/test_window_dispatch.py",
+      "recovery/tests/win_keyboard_harness.cpp",
+      "src/editbox.cpp",
+      "src/time.cpp",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes the connected Win capture slot4 and surface-update slot63 hierarchy migration. Original constructor-installed tables establish MapWin capture and GraphicWin update, inherited by PlanWin/Console and graphical descendants. Native compiler overlays emitted exact original capture thunks421870/48BF60/51DE30 and exact8-byte GraphicWin update404290 without manual arithmetic or compiler-policy changes.",
+      "Retain catalogue names, original identities/spans and all byte claims while using observed emitted symbols and genuine product emission hosts. Rehome404290 from the unused AlphaMovie method to GraphicWin::on_update; remove the three replaced handwritten capture wrappers/declarations, not their mappings. Win defaults share the existing404280 empty body. Preserve the pending discovery until actual source, native checks and behavioral controls establish the bounded closure.",
+      "Preserve all retained terrain source and vector journal work; no change to base_energy. Coordinate overlapping headers and existing ownership centrally, with no task-baseline reset, automatic acceptance claim, demotion or placeholder. Native byte/reference checks, affected layout/table evidence, actual callback/reentrancy tests and fresh full build/link are required before manual integration and again at destination. Keep justified structural progress for restoration if measurements regress; no automatic revert.",
+      "Rename only the affected Win-family dispatch calls to their recovered virtual names. Actual MapWin capture now reenters go_reset: prove owner clearing before callback prevents recursive reentry from repeating capture, while preserving cursor/slot/cache timing. Do not substitute unrelated Sound-family vslot_63."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5304144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6381248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6250416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "39ff94477be9f96bf2beb70b249546027d52f0ca656548efff7a5b0fb164f516",
+  "request_id": "window-callback-hierarchy-20260923-control-sprite-defaults",
+  "schema_version": 1,
+  "sequence": 80,
+  "stream": "task:control-sprite-defaults"
+}

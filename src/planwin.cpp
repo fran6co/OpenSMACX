@@ -16,6 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
+// PlanWin constructor-installed Win branch: capture slot4, update slot63.
+// Table start is observed in the original constructor; full extent remains unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066D2AC ? ??_7PlanWin@@6BWin@@@ 0x0048BCD0
 #include "original_seam.h"
 #include "planwin.h"
 #include "mapwin.h"
@@ -254,3 +258,20 @@ void PlanWin::UNK1() {
                         -height);
 }
 
+
+// Compiler-generated Win-branch capture adjustor from the genuine
+// MapWin override and virtual GraphicWin base; no handwritten thunk body.
+/*
+Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
+         MapWin::on_lose_mouse_capture expects, then forward unchanged.
+// ORIGINAL: 0x0048BF60 ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ 0x0048BF60-0x0048BF6E FILE BYTE_EXACT
+// symbol    ?on_lose_mouse_capture@MapWin@@$4PPPPPPPM@FOE@AEXXZ
+// size      14 bytes
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/

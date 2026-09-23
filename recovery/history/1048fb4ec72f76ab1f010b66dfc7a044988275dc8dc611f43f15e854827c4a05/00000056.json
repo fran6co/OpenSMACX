@@ -1,0 +1,95 @@
+{
+  "event_id": "a290c8c360c72e7e73a830e37f01991e3e6fe9bb97b2495a05f1e16288863905",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_window_dispatch.py",
+      "recovery/tests/win_hide_harness.cpp",
+      "recovery/tests/win_keyboard_harness.cpp",
+      "src/basewin.cpp",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes the connected Win capture slot4 and surface-update slot63 hierarchy migration. Original constructor-installed tables establish MapWin capture and GraphicWin update, inherited by PlanWin/Console and graphical descendants. Native compiler overlays emitted exact original capture thunks421870/48BF60/51DE30 and exact8-byte GraphicWin update404290 without manual arithmetic or compiler-policy changes.",
+      "Retain catalogue names, original identities/spans and all byte claims while using observed emitted symbols and genuine product emission hosts. Rehome404290 from the unused AlphaMovie method to GraphicWin::on_update; remove the three replaced handwritten capture wrappers/declarations, not their mappings. Win defaults share the existing404280 empty body. Preserve the pending discovery until actual source, native checks and behavioral controls establish the bounded closure.",
+      "Preserve all retained terrain source and vector journal work; no change to base_energy. Coordinate overlapping headers and existing ownership centrally, with no task-baseline reset, automatic acceptance claim, demotion or placeholder. Native byte/reference checks, affected layout/table evidence, actual callback/reentrancy tests and fresh full build/link are required before manual integration and again at destination. Keep justified structural progress for restoration if measurements regress; no automatic revert.",
+      "Authorize counterpart caller renames for the existing BaseWin/Win owners and shared declarations in this one coordinator-reviewed checkpoint. No transfer of existing ownership to a duplicate task. Scope covers the coupled actual virtual calls, not unrelated Win or BaseWin recovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4304848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4316432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6216144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6217472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6217312,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6216912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6250416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6217392,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6207040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6245776,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6206416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4597472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4647824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9484901d9c922789eb697a32e4007f7e9744fffb776a0c0e8e8eed23ebd70acf",
+  "request_id": "window-callback-hierarchy-20260923-radiobutton-lifetime",
+  "schema_version": 1,
+  "sequence": 56,
+  "stream": "task:radiobutton-lifetime"
+}

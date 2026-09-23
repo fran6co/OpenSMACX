@@ -133,8 +133,10 @@ class MapWin : public virtual GraphicWin {
   void on_mouse_move(int a1, int a2);
 
  public:
-  // 0x0046EB90, a pending_bodies forwarder.
-  void on_lose_mouse_capture();
+  // 0x0046EB90 delegates to go_reset, including its reentrant capture cleanup.
+  // Win slot 4. MapWin, PlanWin and Console install compiler-generated
+  // vtordisp thunks to this override (0x00421870/0x0048BF60/0x0051DE30).
+  virtual void on_lose_mouse_capture();
 
  public:
   // 0x0046ED30, a pending_bodies forwarder.

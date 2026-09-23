@@ -67,7 +67,7 @@ void EditBox::vslot_20(int x, int) {
 void EditBox::vslot_21(int x, int) {
     if (WinPointerOwner3 == this) {
         WinPointerOwner3 = 0;
-        vslot_04();
+        on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;

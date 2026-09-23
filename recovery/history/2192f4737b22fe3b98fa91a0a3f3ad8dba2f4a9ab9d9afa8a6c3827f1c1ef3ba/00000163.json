@@ -1,0 +1,112 @@
+{
+  "event_id": "602aaf21efcb7f2658c5c5dcbc2f7f30b9ea55ac148e433880adedf4fb2f42d8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_window_dispatch.py",
+      "src/adjustor_thunks.cpp",
+      "src/adjustor_thunks.h",
+      "src/alphamovie.cpp",
+      "src/alphamovie.h",
+      "src/console.cpp",
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/planwin.cpp",
+      "src/pulldown.cpp",
+      "src/tutwin.cpp",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Coordinator authorizes the connected Win capture slot4 and surface-update slot63 hierarchy migration. Original constructor-installed tables establish MapWin capture and GraphicWin update, inherited by PlanWin/Console and graphical descendants. Native compiler overlays emitted exact original capture thunks421870/48BF60/51DE30 and exact8-byte GraphicWin update404290 without manual arithmetic or compiler-policy changes.",
+      "Retain catalogue names, original identities/spans and all byte claims while using observed emitted symbols and genuine product emission hosts. Rehome404290 from the unused AlphaMovie method to GraphicWin::on_update; remove the three replaced handwritten capture wrappers/declarations, not their mappings. Win defaults share the existing404280 empty body. Preserve the pending discovery until actual source, native checks and behavioral controls establish the bounded closure.",
+      "Preserve all retained terrain source and vector journal work; no change to base_energy. Coordinate overlapping headers and existing ownership centrally, with no task-baseline reset, automatic acceptance claim, demotion or placeholder. Native byte/reference checks, affected layout/table evidence, actual callback/reentrancy tests and fresh full build/link are required before manual integration and again at destination. Keep justified structural progress for restoration if measurements regress; no automatic revert.",
+      "Restore the lost Win::update5F4D00 binding from original77-byte body and surviving seed provenance after checking Git history. Retain the existing nonstatic __cdecl interface: absence of receiver use/direct callers is insufficient evidence for historical staticness. Replace double casts by the already typed WinZOrderArray, preserving receiver reloads before all three callbacks and signed count reload after callbacks. No bounds clamps or caching."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4211328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4211344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4331632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4767584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5365296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4766928,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4597472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4647824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5305440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6114544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6117040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6206416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6245632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4971952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6263152,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "dc535f66a61dc839ec78f5e170543182a8462f39cfa89888d43d600518024cee",
+  "request_id": "window-callback-hierarchy-20260923-infowin-ownership",
+  "schema_version": 1,
+  "sequence": 163,
+  "stream": "task:infowin-ownership"
+}

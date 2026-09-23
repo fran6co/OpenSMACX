@@ -16,6 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
+// AlphaMovie constructor-installed Win branch: capture slot4, update slot63.
+// Table start is observed in the original constructor; full extent remains unknown.
+// RECOVERY_GENERATED: v1 vtable 0x00669458 ? ??_7AlphaMovie@@6BWin@@@ 0x00404010
 #include "original_seam.h"
 #include "alphamovie.h"
 #include "alpha.h"  // prefs_get
@@ -242,19 +246,7 @@ void AlphaMovie::close() {
     reinterpret_cast<GraphicWin *>(self)->close();
 }
 
-/*
-// ORIGINAL: 0x00404290 ?update@AlphaMovie@@QAEXXZ 0x00404290-0x00404298 BYTE_EXACT
-// size      8 bytes
-// prototype void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
-// callers   0   call targets   1
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x005D56B0
-Status: Complete
-*/
-void AlphaMovie::update() {
-    reinterpret_cast<GraphicWin *>(this)->update(0);
-}
+
 
 func_mci_video_close MCIVideoOriginalClose =
     original_method<func_mci_video_close>(0x005FFDB0);

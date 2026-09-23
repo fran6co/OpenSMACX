@@ -1057,8 +1057,8 @@ void BaseWin::on_left_up(int xCoord, int yCoord) {
 
     if (WinPointerOwner3 == this) {
         WinPointerOwner3 = 0;
-        // Front vtable slot 4 (0x10) - Win's vslot_04, the shared no-op.
-        vslot_04();
+        // Front vtable slot 4 (0x10) - Win's on_lose_mouse_capture, the shared no-op.
+        on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
@@ -1384,7 +1384,7 @@ void __cdecl load_inverts() {
 //        three of its shims. `this` now IS the entry, so the three raw
 //        offsets are members (field_40B4C_/40B50_/40B54_, `Buffer::rect2_`
 //        for `self - 0x5a0`), the two cross-object casts are the plain
-//        `vslot_19(...)` / `vslot_04()` the front already spelled, and the
+//        `vslot_19(...)` / `on_lose_mouse_capture()` the front already spelled, and the
 //        `self + 0xa14` receiver of the old `VCall2::slot004` compare is a
 //        single `static_cast<BaseWin *>(this)` - the adjustment the receiver
 //        already carries, which is what 0x41DE26's one `add esi,0xfffff5ec`
@@ -1398,7 +1398,7 @@ void __cdecl load_inverts() {
 // LEVER: 2026-09-06, the derivation deleted the last of this body's puns.
 //        `this` IS the entry, so field_40B4C_/40B50_/40B54_ and
 //        `Buffer::rect2_` name the four raw offsets, the two cross-object
-//        casts are the front's own `vslot_19(...)` / `vslot_04()`, entry slot
+//        casts are the front's own `vslot_19(...)` / `on_lose_mouse_capture()`, entry slot
 //        3 spells `on_iface_left_click(...)`, and the capture-slot compare is
 //        one `static_cast<BaseWin *>(this)`. 91/97 before and after - the
 //        remaining six are the drop-rect copy's schedule, see the TRIED note.
@@ -1512,8 +1512,8 @@ void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
     BaseWin *const self = static_cast<BaseWin *>(this);
     if (IfaceCaptureSlot() == self) {
         IfaceCaptureSlot() = 0;
-        // Front vtable slot 4 (0x10) - Win's vslot_04, the shared no-op.
-        vslot_04();
+        // Front vtable slot 4 (0x10) - Win's on_lose_mouse_capture, the shared no-op.
+        on_lose_mouse_capture();
     }
     if (IfaceEnterSlot() == self) {
         IfaceEnterSlot() = 0;

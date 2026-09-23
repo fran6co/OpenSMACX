@@ -11,7 +11,7 @@ struct Win {
     int child_count_, released, modal_released, activated, query;
     void hide();
     int is_descendant(Win *window) { return window == descendant; }
-    void vslot_04() { ++released; }
+    void on_lose_mouse_capture() { ++released; }
     void release_modal() { ++modal_released; }
     int vslot_23() { return query; }
     void vslot_07() { ++activated; }

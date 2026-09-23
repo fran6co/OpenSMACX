@@ -1,0 +1,27 @@
+{
+  "event_id": "d0a9a21c2f2384ed99c03af7d7cae779e460b55859a3437e95b0becefc4ca192",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/tutwin.h"
+    ],
+    "evidence": [
+      "Authorize source-owned constructor-installed Win-branch vtable start interpretations for Win, GraphicWin, MapWin, PlanWin, Console and AlphaMovie. Leave whole table extents unknown: measured slots4/63 are not complete table recovery. Add AlphaMovie constructor404000 as bounded table evidence; preserve its historical claim.",
+      "Update TutWin field53D4 comment to the genuine on_update callback name. Its borrowed Win pointer and storage layout remain unchanged.",
+      "Git 3cb99d43^:src/recovered/units/005f4d00.cpp independently confirms the lost Win::update identity QAAXXZ and span5F4D00..5F4D4D with no historical exact claim. Bind the extant product body preserving this provenance and original signed-count/receiver reload semantics, without reviving retired scaffolding or changing calling convention."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4210688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "602aaf21efcb7f2658c5c5dcbc2f7f30b9ea55ac148e433880adedf4fb2f42d8",
+  "request_id": "window-callback-source-table-evidence-20260923",
+  "schema_version": 1,
+  "sequence": 164,
+  "stream": "task:infowin-ownership"
+}

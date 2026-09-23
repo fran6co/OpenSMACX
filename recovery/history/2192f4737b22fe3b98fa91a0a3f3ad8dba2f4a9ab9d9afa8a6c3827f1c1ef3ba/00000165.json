@@ -1,0 +1,25 @@
+{
+  "event_id": "9fe39431bd08fc9943206680e4bf1e5b4058750f781e1abce5ce9737bfa4b2c0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent source/original review corrects the coordinator typo in decision164: AlphaMovie constructor entry is404010, not404000. Store404049 installs table669458 within span404010..404067 plus unwind6506DC..6506EE. 404000 belongs to the preceding body and must not be treated as a new original constructor/function.",
+      "Supersede only decision164 constructor-address interpretation and the corresponding RECOVERY_GENERATED evidence anchor. Retain append-only history: the obsolete404000 permission names no source binding and grants no reinterpretation, recovery body or baseline reset. Actual table start, emitted symbol, existing constructor identity/claim and C++ are unchanged.",
+      "First native epoch already passed329 affected historical claims and both-flag strict checks for the3 generated capture thunks, actual capture body and GraphicWin callback. Correct this metadata outside the finished epoch, then perform fresh validation/build/link; no report is an acceptance receipt."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4210704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d0a9a21c2f2384ed99c03af7d7cae779e460b55859a3437e95b0becefc4ca192",
+  "request_id": "correct-alphamovie-table-anchor-20260923",
+  "schema_version": 1,
+  "sequence": 165,
+  "stream": "task:infowin-ownership"
+}

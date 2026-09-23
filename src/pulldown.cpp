@@ -495,7 +495,7 @@ int PullDown::show(int x, int y, int (*poll)()) {
     if (!win_parent_) {
         if (WinPointerOwner3 == this) {
             WinPointerOwner3 = 0;
-            vslot_04();
+            on_lose_mouse_capture();
         }
         if (WinPointerOwner4 == this) WinPointerOwner4 = 0;
     }

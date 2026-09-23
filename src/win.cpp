@@ -16,6 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
+// Win constructor-installed Win branch: capture slot4, update slot63.
+// Table start is observed in the original constructor; full extent remains unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066FDD0 ? ??_7Win@@6B@ 0x005EB3D0
 #include "net_class.h"
 #include "multidebug.h"
 
@@ -5796,7 +5800,7 @@ int Win::show_maximize() {
     WinPointerOwner2 = 0;
     if (active == this) {
         WinPointerOwner3 = 0;
-        this->vslot_04();
+        this->on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
@@ -5828,7 +5832,7 @@ int Win::maximize() {
     WinPointerOwner2 = 0;
     if (active == this) {
         WinPointerOwner3 = 0;
-        this->vslot_04();
+        this->on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
@@ -6127,7 +6131,7 @@ clear_focus:
 skip_all:
     if (WinPointerOwner3 == this) {
         WinPointerOwner3 = 0;
-        this->vslot_04();
+        this->on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
@@ -7039,13 +7043,16 @@ void Win::window_line_raw(int x2, int y2, int x1, int y1, int colour,
     }
 }
 
-// ===== homed from src/recovered/units/005f4d00.cpp =====
+// Dispatch through the live Z-order slot each time: callbacks can replace its
+// window and change the count. get_graphic_win is only the surface predicate.
 
+// ORIGINAL: 0x005F4D00 ?update@Win@@QAAXXZ 0x005F4D00-0x005F4D4D
+// RECOVERY_BINDING: v1 {"evidence": ["git:3cb99d43^:src/recovered/units/005f4d00.cpp historical identity/span, no byte claim.", "image:0x005F4D00-0x005F4D4D complete body, final RET before NOP padding.", "image:0x005F4D1A,0x005F4D24,0x005F4D32 dispatch on freshly reloaded WinZOrderArray elements; getter result is only a predicate, not the update receiver.", "image:0x005F4D38 sound pump only on nonnull getter; 0x005F4D3D reloads signed count after callbacks."], "reason": "Restore the lost mapping of the extant typed Win Z-order update dispatcher. Catalogue nonstatic __cdecl signature is retained; original caller/staticness evidence remains unavailable."}
 void __cdecl Win::update() {
     for (int i = 0; i < WinZOrderCount; ++i) {
-        reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->on_nc_paint(0, -1);
-        if (reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->get_graphic_win() != 0) {
-            reinterpret_cast<Win *>(reinterpret_cast<void **>(WinZOrderArray)[i])->vslot_63();
+        WinZOrderArray[i]->on_nc_paint(0, -1);
+        if (WinZOrderArray[i]->get_graphic_win() != 0) {
+            WinZOrderArray[i]->on_update();
             do_sound();
         }
     }
@@ -7724,7 +7731,7 @@ int Win::set_modal(int flags, int (__cdecl *callback)(), Win * owner) {
 
     void *prior = reinterpret_cast<void *>(reinterpret_cast<int>(WinPointerOwner3));
     if (prior != 0 && prior != this) {
-        reinterpret_cast<Win *>(prior)->vslot_04();
+        reinterpret_cast<Win *>(prior)->on_lose_mouse_capture();
         WinPointerOwner3 = 0;
     }
     WinInputFocus = 0;
@@ -8903,7 +8910,7 @@ void Win::on_char(char param2, int param3) {
 
             if (WinPointerOwner3 == &WinBubbleWindow) {
                 WinPointerOwner3 = 0;
-                (&WinBubbleWindow)->vslot_04();
+                (&WinBubbleWindow)->on_lose_mouse_capture();
             }
             if (WinPointerOwner4 == &WinBubbleWindow) {
                 WinPointerOwner4 = 0;
@@ -9412,7 +9419,7 @@ int Win::minimize() {
     WinPointerOwner2 = 0;
     if (active == this) {
         WinPointerOwner3 = 0;
-        this->vslot_04();
+        this->on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
@@ -10652,7 +10659,7 @@ void Win::close() {
 
     if (WinPointerOwner3 == this) {
         WinPointerOwner3 = 0;
-        this->vslot_04();
+        this->on_lose_mouse_capture();
     }
     if (WinPointerOwner4 == this) {
         WinPointerOwner4 = 0;
@@ -11579,7 +11586,7 @@ int Win::set_base_window(GraphicWin *window) {
             ++i;
         } while (i < WinRootCount);
     }
-    vslot_63();
+    on_update();
     return 0;
 }
 

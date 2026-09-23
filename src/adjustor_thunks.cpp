@@ -825,26 +825,7 @@ void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
     return (ORIGINAL(object - vtordisp)->*MapWinScalarDeleteTarget)(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x00421870 ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ 0x00421870-0x00421878 BYTE_EXACT
-// symbol    ?adjust_map_win1_on_lose_mouse_capture@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_lose_mouse_capture(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_lose_mouse_capture();
-}
+
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
@@ -1152,26 +1133,7 @@ void * __fastcall adjust_map_win2_scalar_delete(void *self, void *,
     return (ORIGINAL(object - vtordisp - 1092)->*MapWinScalarDeleteTarget)(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x0048BF60 ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ 0x0048BF60-0x0048BF6E BYTE_EXACT
-// symbol    ?adjust_map_win5_on_lose_mouse_capture@@YIXPAX0@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_lose_mouse_capture@thunk5_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_lose_mouse_capture(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_lose_mouse_capture();
-}
+
 
 /*
 Purpose: Adjust the receiver from PlanWin's thunk1 subobject to the one
@@ -1501,26 +1463,7 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
     return (ORIGINAL(object - vtordisp)->*ConsoleScalarDeleteTarget)(arg0);
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_lose_mouse_capture expects, then forward unchanged.
-// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E BYTE_EXACT
-// symbol    ?adjust_map_win4_on_lose_mouse_capture@@YIXPAX0@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_lose_mouse_capture(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_lose_mouse_capture();
-}
+
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one

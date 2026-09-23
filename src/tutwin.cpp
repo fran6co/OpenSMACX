@@ -437,9 +437,9 @@ Status: Complete
 */
 void TutWin::on_move(int x, int y) {
     // field_53D4_ holds a Win-family object pointer (now typed as one); the
-    // repaint is its declared vslot_63 virtual.
+    // repaint is its declared on_update virtual.
     if (field_53D4_) {
-        field_53D4_->vslot_63();
+        field_53D4_->on_update();
     }
 }
 

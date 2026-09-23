@@ -16,6 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
+// GraphicWin constructor-installed Win branch: capture slot4, update slot63.
+// Table start is observed in the original constructor; full extent remains unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066FC50 ? ??_7GraphicWin@@6BWin@@@ 0x005D4CF0
 #include "original_seam.h"
 #include "graphicwin.h"
 #include "buffer.h"
@@ -1166,4 +1170,22 @@ void GraphicWin::on_paint(RECT *area) {
     } else {
         ScreenBuffer.restore_clip();
     }
+}
+
+// Shared surface callback: GraphicWin constructor5D4D2B installs
+// table66FC50 slot63 ->404290; AlphaMovie/MapWin/PlanWin/Console inherit it.
+// The catalogue named AlphaMovie, but this body uses the GraphicWin receiver.
+/*
+// ORIGINAL: 0x00404290 ?update@AlphaMovie@@QAEXXZ 0x00404290-0x00404298 BYTE_EXACT
+// symbol    ?on_update@GraphicWin@@UAEXXZ
+// size      8 bytes
+// prototype void (__thiscall ?update@AlphaMovie@@QAEXXZ)(AlphaMovie* this)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D56B0
+Status: Complete
+*/
+void GraphicWin::on_update() {
+    update(0);
 }

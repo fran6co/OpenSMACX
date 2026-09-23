@@ -515,7 +515,11 @@ class Win : public AutoSound {
   virtual void show(int visible);  // slot 1  0x005ED9D0
   virtual void hide();  // slot 2  0x005EDCD0
   virtual int resize(int width, int height, int repaint);  // slot 3  0x005ED880
-  virtual void vslot_04() {}  // 0x00404280
+  // Slot 4: plain Win has no capture cleanup; MapWin overrides this.
+  // Win's constructor at 0x005EB402 installs table 0x0066FDD0, whose
+  // slot 4 selects the shared empty body catalogued as AlphaMovie::UNK7.
+  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_lose_mouse_capture@Win@@UAEXXZ 0x005EB3D0
+  virtual void on_lose_mouse_capture() {}
   virtual int vslot_05(int = 0, int = 0, int = 0) { return 0; }  // 0x00404220
   virtual int vslot_06() { return 0; }  // 0x00406B30
   virtual int vslot_07() { return 0; }  // 21 call sites pass nothing and
@@ -613,7 +617,10 @@ class Win : public AutoSound {
   virtual GraphicWin *get_graphic_win() { return nullptr; }  // 0x00406B30
   // Slot 62: plain Win has no surface; GraphicWin supplies the redraw.
   virtual void redraw() {}  // 0x00404280
-  virtual void vslot_63() {}  // 0x00404280
+  // Slot 63: no surface in plain Win; GraphicWin supplies the update.
+  // The same constructor-installed Win table selects the shared empty body.
+  // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_update@Win@@UAEXXZ 0x005EB3D0
+  virtual void on_update() {}
   virtual void pass_dialog_focus();  // slot 64  0x005ECD20
   virtual void set_dialog_focus(Win *target);  // slot 65  0x005ECC40
   virtual void set_rects();  // slot 66  0x005F2940

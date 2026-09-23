@@ -162,16 +162,13 @@ class GraphicWin : public Win, public Buffer {
   // its receiver is the GraphicWin subobject. The image's own thunk1/$4
   // adjustor thunks (EditGroup's 0x006127C0, SpriteBox's 0x006118E0) are
   // what perform the adjustment and land on these bodies. The catalogued
-  // QAEX spellings therefore name THUNK-TARGET bodies, not class-front
-  // overrides - and the census agrees: 75 of the 80 adjustor_thunks.cpp
-  // targets spell Q in the image and zero spell U, so this is not C++
-  // virtual dispatch.
-  // MODEL A NEW HANDLER FROM THAT SHAPE: its `this` is the adjusted
-  // subobject pointer, and the class's declared virtual bases decide the
-  // displacements. Do not model one as a class-front override of these
-  // slots - as a real override VC6 enters it vtordisp-adjusted and shifts
-  // every displacement (measured on EditGroup::on_dialog_focus: 24/26 as an
-  // override, 26/26 spelled plain; see editgroup.h).
+  // QAEX catalogue spellings are historical interpretations, not proof that
+  // these are nonvirtual methods. The older EditGroup experiment measured
+  // on_dialog_focus at 24/26 instructions as an override and 26/26 spelled
+  // plain (see editgroup.h); that local result does not settle its hierarchy.
+  // Recover each override with its original table, callers, base layout and
+  // compiler-generated adjustor. A temporary byte regression is a restoration
+  // obligation, not permission to keep a missing virtual relationship.
   virtual void on_dialog_focus(int) { ; }
   virtual void on_mouse_leave(int, int) { ; }
   // Returns `this`: the image's own closing `mov eax, esi` is the compiler
@@ -190,6 +187,9 @@ class GraphicWin : public Win, public Buffer {
   void fill(int color);
   // Win slot 62; original PushButton entry 0x00670D58 selects 0x005D5A70.
   virtual void redraw();
+  // Win slot 63: constructor-installed table 0x0066FC50 selects 0x00404290.
+  // AlphaMovie, MapWin and Console inherit this same surface-update callback.
+  virtual void on_update();
   // 0x005D56B0  ?update@GraphicWin@@QAEXPAUGraphicWin@@@Z - public,
   // __thiscall, void(GraphicWin *). The one-argument overload; the siblings
   // take (int, int, int, int, GraphicWin *) and (RECT *, GraphicWin *).

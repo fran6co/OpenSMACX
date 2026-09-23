@@ -12,7 +12,7 @@ struct Win {
     struct List { void *head_, *current_; int count_, tail_; } list_;
     Win *win_parent_;
     virtual void pass_dialog_focus() { passed = this; }
-    virtual void vslot_04() { ++releases; }
+    virtual void on_lose_mouse_capture() { ++releases; }
 };
 Win *WinPointerOwner3, *WinPointerOwner4;
 struct Buffer {

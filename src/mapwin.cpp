@@ -16,6 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
+// MapWin constructor-installed Win branch: capture slot4, update slot63.
+// Table start is observed in the original constructor; full extent remains unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066A57C ? ??_7MapWin@@6BWin@@@ 0x004626E0
 #include "original_seam.h"
 #include "mapwin.h"
 #include "lock.h"      // LockMapTable - terrain_fixup walks its records
@@ -655,6 +659,7 @@ int MapWinSelectedSlot = -1;
 
 /*
 // ORIGINAL: 0x0046EB90 ?on_lose_mouse_capture@MapWin@@QAEXXZ 0x0046EB90-0x0046EB95 BYTE_EXACT
+// symbol    ?on_lose_mouse_capture@MapWin@@UAEXXZ
 // size      5 bytes
 // prototype void (__thiscall ?on_lose_mouse_capture@MapWin@@QAEXXZ)(MapWin* this)
 // callers   0   call targets   0
@@ -2667,3 +2672,20 @@ void MapWin::clear_terrain() {
         }
     }
 }
+
+// Compiler-generated Win-branch capture adjustor from the genuine
+// MapWin override and virtual GraphicWin base; no handwritten thunk body.
+/*
+Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
+         MapWin::on_lose_mouse_capture expects, then forward unchanged.
+// ORIGINAL: 0x00421870 ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ 0x00421870-0x00421878 FILE BYTE_EXACT
+// symbol    ?on_lose_mouse_capture@MapWin@@$4PPPPPPPM@A@AEXXZ
+// size      8 bytes
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk1_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/

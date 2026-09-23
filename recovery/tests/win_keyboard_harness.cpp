@@ -24,7 +24,7 @@ struct Win {
     void show(int value) { assert(value == 0); ++shown; }
     void update_screen(RECT *, int value) { assert(value == 0); ++updated; }
     void flip(RECT *) { ++flipped; }
-    void vslot_04() { ++released; }
+    void on_lose_mouse_capture() { ++released; }
     void release_modal() { ++released; }
     int vslot_23() { return query; }
     void vslot_07() { ++activated; }

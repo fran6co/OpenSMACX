@@ -118,7 +118,7 @@ class TutWin : public Popup {
   uint32_t field_53C8_;  // 0x53C8
   uint32_t field_53CC_;  // 0x53CC
   uint32_t field_53D0_;  // 0x53D0
-  // HOLDS A WIN-FAMILY OBJECT POINTER (on_move dispatches vslot_63 through
+  // HOLDS A WIN-FAMILY OBJECT POINTER (on_move dispatches on_update through
   // it; UNK3 stores it as the int the image passes) - typed as the pointer
   // it is. Pointer = pointer: no layout change.
   Win *field_53D4_;

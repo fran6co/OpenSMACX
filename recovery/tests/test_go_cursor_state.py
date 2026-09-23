@@ -46,11 +46,11 @@ HARNESS=r'''
 void check(bool ok,int line){if(!ok){std::fprintf(stderr,"assertion line %d\n",line);std::exit(94);}}
 #define require(x) check((x),__LINE__)
 struct Sprite{};Sprite g_CURSOR_SPRITES[12];
-struct Win {virtual ~Win(){} virtual void hide();virtual void vslot_04(){}virtual void vslot_63(){}int set_cursor(int);};
+struct Win {virtual ~Win(){} virtual void hide();virtual void on_lose_mouse_capture(){}virtual void on_update(){}int set_cursor(int);};
 struct GraphicWin:virtual Win {int padding[5];};
 struct MapWin:virtual GraphicWin {
     ACTUAL_FIELDS
-    int id;void vslot_04() override;void vslot_63() override;
+    int id;void on_lose_mouse_capture() override;void on_update() override;
 };
 ACTUAL_BOUND
 MapWin windows[10];MapWin *MapWinTable[MapWinTableSlots];int MapWinSelectedSlot;
@@ -64,12 +64,12 @@ struct Status{void set_title(int n){require(n==0);seen.push_back({'T',-1});if(se
 Win *base(int id){return static_cast<GraphicWin*>(&windows[id]);}
 int slot_of(MapWin *window){for(size_t i=0;i<MapWinTableSlots;++i)if(MapWinTable[i]==window)return int(i);return -1;}
 bool cleared(const MapWin&w){return w.field_1DD88_==1 && w.field_1DD80_==0 && w.field_1DD8C_==0 && w.field_1DD84_==0 && w.field_1DE0C_==0xffffffffu;}
-void MapWin::vslot_04(){
+void MapWin::on_lose_mouse_capture(){
     require(WinPointerOwner3==nullptr && cleared(*this));seen.push_back({'A',id});
     if(replace_in04>=0){require(MapWinTable[replace_in04]==this);MapWinTable[replace_in04]=&windows[replace_id];replace_in04=-1;}
     if(owner4_after04>=0)WinPointerOwner4=base(owner4_after04);
 }
-void MapWin::vslot_63(){seen.push_back({'B',id});}
+void MapWin::on_update(){seen.push_back({'B',id});}
 int Win::set_cursor(int resource){
     MapWin *window=dynamic_cast<MapWin*>(this);require(window && resource==0x7f00);
     require(window->cursor_sprite_ || window->cursor_resource_id_!=0x7f00);
@@ -160,8 +160,8 @@ def test_actual_go_cursor_state(tmp_path):
 
 
 MUTANTS=[
-    ("main-live-dispatch","main","(*slot)->vslot_63();","window->vslot_63();"),
-    ("selected-live-dispatch","selected","(*slot)->vslot_63();","window->vslot_63();"),
+    ("main-live-dispatch","main","(*slot)->on_update();","window->on_update();"),
+    ("selected-live-dispatch","selected","(*slot)->on_update();","window->on_update();"),
     ("main-cached-owner4","main","WinPointerOwner4 == base","WinPointerOwner4 == static_cast<GraphicWin *>(*slot)"),
     ("selected-cached-owner4","selected","WinPointerOwner4 == base","WinPointerOwner4 == static_cast<GraphicWin *>(*slot)"),
     ("selected-retained-slot","selected","(*slot)->","MapWinTable[MapWinSelectedSlot]->"),

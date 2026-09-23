@@ -590,12 +590,12 @@ void __cdecl go_reset() {
             Win *const base = static_cast<GraphicWin *>(*slot);
             if (WinPointerOwner3 == base) {
                 WinPointerOwner3 = nullptr;
-                base->vslot_04();
+                base->on_lose_mouse_capture();
             }
             if (WinPointerOwner4 == base) {
                 WinPointerOwner4 = nullptr;
             }
-            (*slot)->vslot_63();
+            (*slot)->on_update();
             ConsoleStatusWin.set_title(0);
         }
     }
@@ -636,12 +636,12 @@ void __cdecl go_reset() {
         Win *const base = static_cast<GraphicWin *>(*slot);
         if (WinPointerOwner3 == base) {
             WinPointerOwner3 = nullptr;
-            base->vslot_04();
+            base->on_lose_mouse_capture();
         }
         if (WinPointerOwner4 == base) {
             WinPointerOwner4 = nullptr;
         }
-        (*slot)->vslot_63();
+        (*slot)->on_update();
         ConsoleStatusWin.set_title(0);
         MapWinSelectedSlot = -1;
     }

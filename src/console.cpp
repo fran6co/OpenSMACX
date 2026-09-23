@@ -16,6 +16,10 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
+// Console constructor-installed Win branch: capture slot4, update slot63.
+// Table start is observed in the original constructor; full extent remains unknown.
+// RECOVERY_GENERATED: v1 vtable 0x0066EC18 ? ??_7Console@@6BWin@@@ 0x0050F460
 #include "original_seam.h"
 #include "console.h"
 #include "dipedit.h"  // editor_diplomacy's stack DipEdit
@@ -3149,3 +3153,20 @@ void __cdecl auto_play_callback(int) {
     PostMessageA(HandleMain, WM_LBUTTONUP, 0,
                  static_cast<unsigned short>((y & 0xff) << 8) | (x & 0xff));
 }
+
+// Compiler-generated Win-branch capture adjustor from the genuine
+// MapWin override and virtual GraphicWin base; no handwritten thunk body.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_lose_mouse_capture expects, then forward unchanged.
+// ORIGINAL: 0x0051DE30 ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ 0x0051DE30-0x0051DE3E FILE BYTE_EXACT
+// symbol    ?on_lose_mouse_capture@MapWin@@$4PPPPPPPM@CDCI@AEXXZ
+// size      14 bytes
+// prototype void (__thiscall ?on_lose_mouse_capture@thunk4_MapWin@@QAEXXZ)(MapWin* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/

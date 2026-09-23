@@ -97,7 +97,6 @@ class MCIVideo {
 // unchanged.
 class AlphaMovie : public GraphicWin {
  public:
-  void update();
   void close();
   AlphaMovie();
   // ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070, still an original body
