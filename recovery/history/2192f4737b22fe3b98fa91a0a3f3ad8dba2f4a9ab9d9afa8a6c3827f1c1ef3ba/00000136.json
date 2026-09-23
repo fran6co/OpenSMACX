@@ -1,0 +1,21 @@
+{
+  "event_id": "9d4c9cd08f10522fde4df3bc36d2c7a7936b1c7b94b9fe82a04e02583bbbbbcc",
+  "payload": {
+    "affects": [
+      "entity-ba94e368185900491222d8b893844925ad841fb6adb512a4cad54c5c8784f932"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "world-altitude-ring-origin-20260923",
+    "evidence": [
+      "Independent complete original review plus coordinator decode5C209B/5C220D establish bound pointer66F8C8. Loads5C20A9/5C2221 use pointer-4 and current pointer. Pinned66F8C4.. values1,9,25,49 match source RadiusRange[0..]. With ring counter1, correct bounds are RadiusRange[i-1]..RadiusRange[i], not[i]..[i+1].",
+      "Scope135 already authorizes directly proven corrections inside this function. Fix both loop ranges, retaining the rest of the original predicates/control flow and historical mapping. Source comments preserve the range-origin interpretation; host controls must use actual header geometry and independent nearest-ring expectations rather than duplicate the wrong source indices. No lighting-domain resolution or byte claim follows."
+    ],
+    "hypothesis": "Both world_alt_set loops skipped the nearest ring because RadiusRange indices were one too large.",
+    "kind": "discovery"
+  },
+  "previous_event": "ed3711f754aaa1c2c8552c626485ca92e8a67d70db5468e7399621212acc96ed",
+  "request_id": "world-altitude-ring-origin-20260923",
+  "schema_version": 1,
+  "sequence": 136,
+  "stream": "task:infowin-ownership"
+}

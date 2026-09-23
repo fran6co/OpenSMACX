@@ -1,0 +1,29 @@
+{
+  "event_id": "ed3711f754aaa1c2c8552c626485ca92e8a67d70db5468e7399621212acc96ed",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_world_altitude.py",
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "The existing task owns world_alt_set5C2020. Authorize coordinator-reviewed recovery of its demonstrated lowering-ring defect in the retained terrain worktree, with actual-source controls. Original5C22AE compares existing altitude to ring cap;5C22B0 JLE skips, so only existing>cap is updated. Current source incorrectly uses< in both raising and lowering loops. Preserve the raising comparison, altitude bounds, early exit, setter selection, owner updates and global resets.",
+      "Review the complete original body and correct any further directly proven discrepancy within this same function, reporting evidence before implementation. Hoisting the existing i/alt declarations outside the first for loop is permitted to remove dependence on VC6 nonstandard for-initializer scope without changing behavior. Preserve the original mapping and all historical obligations; this function has no exact claim and no byte demotion is authorized.",
+      "Tests must execute the actual product body, cover higher/lower/equal neighbors, consecutive rings, early exits, wrapping/bounds, setter choice and owner-update behavior, and show compiled damage controls fail. Native compiler/strict diagnostics, preservation of existing map.cpp claims, independent review and fresh application build/link precede manual integration. No runtime/full-game acceptance follows from this bounded repair.",
+      "This repairs one original smoothing prerequisite only. Loaded/editor/direct-alt_set/cache states still do not prove the lighting nibble1..7 domain. Do not resolve that discovery, replace biased lighting storage or change outside-owner bodies as part of this attempt. Existing baseline and all source seeds/discoveries remain intact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6037536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "88de4dfa6eb83427f9b70b120eedc4d557867e41de95c603abb4fc5ec0a40ad8",
+  "request_id": "terrain-world-altitude-lowering-repair-20260923",
+  "schema_version": 1,
+  "sequence": 135,
+  "stream": "task:infowin-ownership"
+}

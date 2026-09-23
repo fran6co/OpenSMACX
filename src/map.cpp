@@ -2662,9 +2662,12 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
         is_set_both ? alt_set_both(x, y, altitude) : alt_set(x, y, altitude);
     }
     BOOL has_set_alt;
-    for (int i = 1, alt = altitude - 1; i < altitude; i++, alt--) {
+    int i, alt;
+    // RadiusRange[0..1] is [1,9): the eight nearest neighbors, not
+    // [9,25). Original 5C20A9/5C2221 reads one entry before its bound.
+    for (i = 1, alt = altitude - 1; i < altitude; i++, alt--) {
         has_set_alt = false;
-        for (int j = RadiusRange[i]; j < RadiusRange[i + 1]; j++) {
+        for (int j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
             int x_radius = xrange(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
             if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) < alt) {
@@ -2686,10 +2689,12 @@ void __cdecl world_alt_set(int x, int y, int altitude, BOOL is_set_both) {
     int max_alt = 8 - altitude;
     for (i = 1, alt = i + altitude; i < max_alt; i++, alt++) {
         has_set_alt = false;
-        for (int j = RadiusRange[i]; j < RadiusRange[i + 1]; j++) {
+        for (int j = RadiusRange[i - 1]; j < RadiusRange[i]; j++) {
             int x_radius = xrange(x + RadiusOffsetX[j]);
             int y_radius = y + RadiusOffsetY[j];
-            if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) < alt) {
+            // Original 5C22AE/5C22B0 skips existing heights <= this cap.
+            // This ring lowers high neighbors; it must not raise low ones.
+            if (on_map(x_radius, y_radius) && alt_at(x_radius, y_radius) > alt) {
                 if (is_set_both) {
                     alt_set_both(x_radius, y_radius, alt);
                     if (anything_at(x_radius, y_radius) < 0 && !bonus_at(x_radius, y_radius, 0)) {
