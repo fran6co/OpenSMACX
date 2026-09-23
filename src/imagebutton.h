@@ -42,7 +42,8 @@ class ImageButton : public BaseButton {
  public:
   ImageButton();
   ~ImageButton();
-  void close();
+  // Constructor6252E8 installs670A94: slot90 selects625330.
+  virtual void close();
   int init(Sprite *sprite, LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
   // 625380 borrows the same Sprite as the explicit-size overload and reads

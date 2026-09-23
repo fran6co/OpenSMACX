@@ -18,6 +18,8 @@
 #pragma once
 #include "basebutton.h"
 
+class Sprite;
+
  /*
   * FlatButton class
   */
@@ -36,7 +38,8 @@ class FlatButton : public BaseButton {
   // the move).
   MEASURED ~FlatButton() { close(); }
 
-  uint32_t close();
+  // Constructor607CFB installs669754: slot90 selects607DA0.
+  virtual void close();
   FlatButton *destroy();
 
  private:
@@ -44,7 +47,9 @@ class FlatButton : public BaseButton {
   // Original 607CF0 walks three columns, resetting each of these runs.
   uint32_t field_ABC_[3];
   uint32_t field_AC8_[3];
-  uint32_t field_AD4_[3];
+  // ReportIf4A431B..432F stores three borrowed Sprite pointers here;
+  // constructor/close clear them without destroying the sprites.
+  Sprite *field_AD4_[3];
  public:
   // THE 27 CONFIG DWORDS AT 0xAE0..0xB48, PUBLIC so BasePop::exec's
   // apply_button_config can name the array instead of walking the object
@@ -60,4 +65,3 @@ class FlatButton : public BaseButton {
 
 static_assert(sizeof(FlatButton) == 0xB4C,
               "FlatButton layout must match the legacy ABI");
-

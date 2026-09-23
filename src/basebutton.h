@@ -63,11 +63,11 @@ class BaseButton : public GraphicWin {
   ~BaseButton();
 
   BaseButton *construct();
-  // VOID, AND THE IMAGE IS WHAT SAYS SO: the catalogue spells it
-  // ?close@BaseButton@@QAEXXZ. The `uint32_t` this used to return was the
-  // free() residue in EAX that the image never sets on purpose, and spelling
-  // it cost one instruction (`xor eax,eax`) at the close of the body.
-  void close();
+  // BaseButton introduces slot 90 after GraphicWin's 88/89. Constructor
+  // 606F77 installs table 670290, whose +168 entry selects close6070C0;
+  // init607217 dispatches it before testing its arguments. Derived buttons
+  // override this cleanup; GraphicWin::close itself is not virtual.
+  virtual void close();
   virtual void hide();
   int init(LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
@@ -141,15 +141,8 @@ uint32_t *const BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
 // BaseButtonA98Default); the old `uint32_t *const BaseButtonDynamicDefaults`
 // pointer binding that stood here had zero users and is gone.
 
-BaseButton *__fastcall base_button_construct_redirect(BaseButton *self, void *);
-uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *);
-int __fastcall base_button_init_redirect(
-    BaseButton *self, void *, LPCSTR name, int id, int x, int y, int width,
-    int height, Win *parent, int style_flag);
-
-
 // Interleaved 3x4 default colour table and the three default font slots the
-// setters publish; tests outside the hybrid process rebind them.
+// setters publish and init consumes.
 uint32_t *const BaseButtonDefaultTextColors = (uint32_t *)0x00697060;
 extern Font *BaseButtonDefaultFonts[3];  // 0x009B8E34..E3C, defined in basebutton.cpp
 

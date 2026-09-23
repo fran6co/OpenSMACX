@@ -37,7 +37,6 @@ uint32_t ScrollCloseDynamicDefaults;  // 0x009B8DE0
 
 namespace {
 
-typedef uint32_t (OriginalObject::*func_noarg_virtual)();
 
 
 
@@ -420,10 +419,8 @@ uint32_t Scroll::close() {
     object[0x2144 / 4] = 0;
     object[0x2148 / 4] = 0;
 
-    (ORIGINAL(&flat_button_left_)->*original_slot<func_noarg_virtual>(
-        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_left_, 0)) + 0x168))();
-    (ORIGINAL(&flat_button_right_)->*original_slot<func_noarg_virtual>(
-        reinterpret_cast<const uint8_t *>(read_volatile_bits(&flat_button_right_, 0)) + 0x168))();
+    flat_button_left_.close();
+    flat_button_right_.close();
     return GraphicWin::close();
 }
 

@@ -8,7 +8,7 @@ from match_recovery.codeview import class_layout
 from match_recovery.compiler import Compiler
 from match_recovery.measurement import Measurement
 from match_recovery.pe_coff import Coff
-from test_application_link_recovery import ROOT, references, run_recovered_harness
+from test_application_link_recovery import ROOT, references, run_recovered_harness, symbol_at
 
 
 @pytest.fixture(scope="module")
@@ -73,7 +73,9 @@ def test_filewin_preserves_member_layout_and_constructs_each_once(control_object
         assert dtor.count("??1ListBox@@UAE@XZ") == 1
         assert dtor.count("??1Dialog@@UAE@XZ") == 1
         assert dtor.count("??1EditBox@@UAE@XZ") == 1
-        assert dtor.count("?close@FlatButton@@QAEIXZ") == 2
+        # The native binder owns the observed symbol after contract migration.
+        # Do not fabricate an ABI spelling from the catalogue's old signature.
+        assert dtor.count(symbol_at("src/flatbutton.cpp", 0x607DA0)) == 2
         assert not any(name in dtor for name in ("?destroy@ListBox@@QAEIXZ",
                                                 "?destroy@BaseButton@@QAEXXZ"))
 
@@ -85,6 +87,7 @@ def test_member_order_unwind_and_editbox_single_byte_initialization(tmp_path, mo
         ("// LIVE_EDITBOX_DTOR", "src/editbox.cpp", 0x408010),
         ("// LIVE_FILEWIN_CTOR", "src/filewin.cpp", 0x613850),
         ("// LIVE_FILEWIN_DTOR", "src/filewin.cpp", 0x407F00)], declarations=[
+        ("// LIVE_BASEBUTTON_CLOSE_DECL", "src/basebutton.h", "  virtual void close();", "  virtual void hide();"),
         ("// LIVE_EDITBOX_DECL", "src/editbox.h", "class EditBox :", "static_assert(sizeof(EditBox)"),
         ("// LIVE_FLATBUTTON_DECL", "src/flatbutton.h", "class FlatButton :", "static_assert(sizeof(FlatButton)"),
         ("// LIVE_FILEWIN_DECL", "src/filewin.h", "class FileWin {", "static_assert(sizeof(FileWin)")])

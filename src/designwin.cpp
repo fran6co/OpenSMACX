@@ -380,13 +380,8 @@ Purpose: Close the design window: dismiss all 25 palette buttons, release the
 Return Value: n/a
 Status: Complete
 */
-// The button loop dispatches slot 0x168 - BaseButton::close's slot, the same
-// walk BaseButton::init (basebutton.cpp) and Scroll::close make - through the
-// live vtable of whatever each button holds, with the receiver as the only
-// argument so no edx zeroing appears beside it.
 namespace {
 
-typedef void (__fastcall *func_design_win_button_close)(void *);
 // Slot 2, the DesignWin front vtable's own second entry.
 typedef void (__fastcall *func_design_win_slot002)(void *);
 
@@ -398,7 +393,7 @@ void DesignWin::close() {
     FlatButton *button = flatButtons_;
     int count = 0x19;
     do {
-        vtable_slot<func_design_win_button_close>(button, 0x168)(button);
+        button->close();
         ++button;
         --count;
     } while (count != 0);

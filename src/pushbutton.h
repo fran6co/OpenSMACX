@@ -24,8 +24,7 @@
  * Derives from BaseButton by ordinary single inheritance: base-edges.csv
  * records the edge as AGREED (constructor evidence), and the IDB member
  * table opens with a baseButton prefix sized exactly sizeof(BaseButton),
- * followed by eighteen four-byte fields ending at 0xB00. No method is
- * recovered and nothing pins the sizeof yet.
+ * followed by eighteen four-byte fields ending at 0xB00.
  */
 // The two virtual tables the destructor stages before delegating to
 
@@ -51,6 +50,8 @@ class PushButton : public BaseButton {
   // UAE rather than the catalogue's QAE; gamma.cpp binds that symbol
   // explicitly instead of treating the catalogue spelling as class evidence.
   ~PushButton();
+  // Constructor62BF28 installs670C60: slot90 selects62C030.
+  virtual void close();
 
  private:
   uint32_t field_AB8_;  // 0xAB8

@@ -117,6 +117,33 @@ Purpose: Destroy PushButton through its real BaseButton subobject.
 PushButton::~PushButton() {
 }
 
+// Reset the base first, then consume the current shared defaults. This is
+// slot90 of the PushButton primary table, not part of its destructor.
+// ORIGINAL: 0x0062C030 ?close@PushButton@@QAEXXZ 0x0062C030-0x0062C10C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original constructor62BF28 stages table670C60, whose slot90 targets complete body62C030..62C10C. GraphicWin ends at slot89; BaseButton introduces virtual void close and this body overrides it.", "Original62C033 calls BaseButton6070C0 directly before eighteen sequential default loads9BC118..9BC160 into existing fieldsAB8..B00. Source uses the existing PushButtonDefaults owner without caching across the base cleanup. Its load_interface producer remains unrecovered; this binding is not a full startup/storage-closure claim.", "Original62C010 destructor only stages tables and delegates to BaseButton destruction; no extra PushButton close belongs in the destructor. Preserve the exact seed identity/obligation while measuring the real void override."], "reason": "Recover the missing PushButton virtual cleanup in its genuine BaseButton hierarchy and owning translation unit."}
+// symbol    ?close@PushButton@@UAEXXZ
+void PushButton::close() {
+    BaseButton::close();
+    field_AB8_ = PushButtonDefaults[0];
+    field_ABC_ = PushButtonDefaults[1];
+    field_AC0_ = PushButtonDefaults[2];
+    field_AC4_ = PushButtonDefaults[3];
+    field_AC8_ = PushButtonDefaults[4];
+    field_ACC_ = PushButtonDefaults[5];
+    field_AD0_ = PushButtonDefaults[6];
+    field_AD4_ = PushButtonDefaults[7];
+    field_AD8_ = PushButtonDefaults[8];
+    field_ADC_ = PushButtonDefaults[9];
+    field_AE0_ = PushButtonDefaults[10];
+    field_AE4_ = PushButtonDefaults[11];
+    field_AE8_ = PushButtonDefaults[12];
+    field_AEC_ = PushButtonDefaults[13];
+    field_AF0_ = PushButtonDefaults[14];
+    field_AF4_ = PushButtonDefaults[15];
+    field_AF8_ = PushButtonDefaults[16];
+    field_AFC_ = PushButtonDefaults[17];
+}
+
 /*
 Purpose: Construct the gamma-correction dialog.
 // ORIGINAL: 0x005C8DA0 ??0Gamma@@QAE@XZ 0x005C8DA0-0x005C8E60;0x00662A70-0x00662AC8 BYTE_EXACT

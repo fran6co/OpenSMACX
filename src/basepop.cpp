@@ -2156,12 +2156,8 @@ BasePop::BasePop() {
 // calls     0x005D4580 0x005D4E40 0x005E3820 0x00609F20 0x0060D1B0 0x0060E7C0 0x00610280 0x00611A90 0x00644EF2
 // indirect  0x00601070 0x00601082 0x006010B4 0x006010C7 0x006010E3 0x00601133 0x00601148 0x00601163 0x0060119C
 
-// The two vtable slots close() dispatches through: slot 0x168 of each
-// embedded FlatButton's table (a nullary redraw request) and slot 0 of the
-// objects parked in zero_block_ (their one-int destructor, the deleting
-// slot). Neither receiver's type is declarable - the first is a FlatButton
-// whose table belongs to a class this tree keeps non-virtual, the second is
-// whatever the popup stored there - so the slots are read as they live.
+// The generic signature below is still used by the separate slot58 calls
+// in exec. Button cleanup itself now uses the real BaseButton slot90.
 typedef void (__fastcall *func_basepop_slot090)(void *);
 typedef void (OriginalObject::*func_basepop_list_destroy_dtor)(int);
 
@@ -2218,10 +2214,9 @@ void BasePop::close() {
     *(int *)(self + 0x21c8) = 0;
     *(int *)(self + 0x21cc) = -1;
 
-    // SLOT 0x168 OF EACH EMBEDDED FLAT BUTTON'S TABLE, called where it lives.
-    // 0xa5c and 0x15a8 are flat_button1_ and flat_button2_.
-    vtable_slot<func_basepop_slot090>(&flat_button1_, 0x168)(&flat_button1_);
-    vtable_slot<func_basepop_slot090>(&flat_button2_, 0x168)(&flat_button2_);
+    // Original601070/601082 dispatch each embedded button's close.
+    flat_button1_.close();
+    flat_button2_.close();
 
     // THE TWO LIST TEARDOWNS. The image inlines StringStruct::remove_all at
     // both - same guard on head_, same do/while over entry_count_, same three

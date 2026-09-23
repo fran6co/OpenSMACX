@@ -53,6 +53,7 @@ def actual_source():
         (r"int move\([^;]+;", r"void redo_caption_buttons\(\);", r"void do_caption_buttons\(\);"))
     parts["WIN_PAINT"] = braced(h["win"], "virtual void draw_contents()")
     parts["BASE_INIT_DECL"] = one(r"  int init\(LPCSTR name,[^;]+;", h["basebutton"])
+    parts["BASE_CLOSE_DECL"] = one(r"^  virtual void close\(\);", h["basebutton"])
     parts["DIB"] = braced(h["buffer"], "struct Dib : BITMAPINFO") + ";"
     parts["DIB_MEMBER"] = one(r"^  Dib dib_;", h["buffer"])
     parts["SPRITE_FIELDS"] = "\n".join(one(r"^  int " + n + r";", h["sprite"]) for n in
@@ -128,7 +129,7 @@ struct AutoSound {virtual ~AutoSound(){}};
 class ImageButton;
 WIN_BASE public: WIN_FIELDS WIN_METHODS WIN_PAINT int identity; };
 GRAPHICWIN_BASE public: };
-BASEBUTTON_BASE public: BASE_INIT_DECL void close(); };
+BASEBUTTON_BASE public: BASE_INIT_DECL BASE_CLOSE_DECL };
 IMAGE_DECL
 // Painting belongs to its own actual-body fixture. The caption service
 // projection must never reach it; keep the real override declaration linked
@@ -148,6 +149,9 @@ int BaseButton::init(LPCSTR name,int id,int x,int y,int width,int height,Win*par
     require(this==static_cast<BaseButton*>(expected_button));require(expected_button->sprite_==expected_sprite);
     require(name==expected_name&&parent==expected_parent);
     require(expected_arguments==std::vector<int>({id,x,y,width,height,style}));++base_calls;
+    // Explicit BaseButton service boundary, retaining its original slot90
+    // dispatch before guards. This is not extraction/proof of its full init.
+    close();
     if(mutate_base)expected_button->sprite_=&c;return base_result;}
 void BaseButton::close(){require(this==static_cast<BaseButton*>(expected_button)&&expected_button->sprite_==nullptr);
     ++base_closes;if(mutate_base)expected_button->sprite_=&c;}
@@ -178,16 +182,17 @@ void test_methods(){ImageButton button;Win parent;require(button.sprite_==nullpt
         base_result=result;mutate_base=mutation!=0;base_calls=base_closes=0;button.sprite_=&b;
         expected_sprite=&a;expected_arguments={27,-3,5,-41,19,-7};
         require(button.init(&a,name,27,-3,5,-41,19,&parent,-7)==result);
-        require(base_calls==1&&base_closes==0&&button.sprite_==(mutate_base?&c:&a));
+        require(base_calls==1&&base_closes==1&&button.sprite_==(mutate_base?&c:nullptr));
         expected_sprite=nullptr;expected_parent=nullptr;expected_arguments={28,4,-6,0,-23,9};
         require(button.init(nullptr,name,28,4,-6,0,-23,nullptr,9)==result);
-        require(base_calls==2&&base_closes==0&&button.sprite_==(mutate_base?&c:nullptr));
+        require(base_calls==2&&base_closes==2&&button.sprite_==(mutate_base?&c:nullptr));
         expected_parent=&parent;expected_sprite=&a;expected_arguments={31,7,-8,31,-17,-9};
         require(button.init(&a,name,31,7,-8,&parent,-9)==result);
-        require(base_calls==3&&base_closes==0&&button.sprite_==(mutate_base?&c:&a));
+        require(base_calls==3&&base_closes==3&&button.sprite_==(mutate_base?&c:nullptr));
         button.sprite_=&b;require(button.init(nullptr,name,1,2,3,&parent,4)==3);
-        require(base_calls==3&&base_closes==0&&button.sprite_==&b);
-        button.close();require(base_closes==1&&button.sprite_==(mutate_base?&c:nullptr));
+        require(base_calls==3&&base_closes==3&&button.sprite_==&b);
+        static_cast<BaseButton*>(&button)->close();
+        require(base_closes==4&&button.sprite_==(mutate_base?&c:nullptr));
     }
     // Publication borrows, never destroys or reconstructs the Sprite owner.
     require(a.iWidth_==31&&a.iHeight_==-17&&a.iSpriteWidth_==107&&a.iSpriteHeight_==109);

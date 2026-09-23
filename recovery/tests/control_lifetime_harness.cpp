@@ -35,20 +35,22 @@ struct BaseButton {
     int id;
     uint32_t field_A14_, field_A18_;
     BaseButton() : id(++buttons) { event(10 + id); }
-    ~BaseButton() { event(40 + id); }
+    virtual ~BaseButton() { event(40 + id); }
+    // LIVE_BASEBUTTON_CLOSE_DECL
     BaseButton *construct() { return new(this) BaseButton; }
 };
+void BaseButton::close() { assert(false); }
+class Sprite;
 #define MEASURED
 // LIVE_FLATBUTTON_DECL
 int FlatButtonDefaultsTable[27];
 // LIVE_FLATBUTTON_CTOR
-uint32_t FlatButton::close() {
+void FlatButton::close() {
     assert(field_A14_ == 0 && field_A18_ == 0 && field_AB8_ == 0xFFFFFFFFU);
     for (int i = 0; i < 3; ++i) {
         assert(field_ABC_[i] == 0xFFFFFFFFU && field_AC8_[i] == 0 && field_AD4_[i] == 0);
     }
     for (int j = 0; j < 27; ++j) assert(config[j] == static_cast<uint32_t>(FlatButtonDefaultsTable[j]));
-    return 0;
 }
 struct ListBox {
     ListBox() { event(30); if (fail_list) throw 30; }

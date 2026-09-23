@@ -129,7 +129,7 @@ Purpose: Clear the field, then close as a BaseButton.
          quietly re-typed.
 
 // ORIGINAL: 0x00625330 ?close@ImageButton@@QAEXXZ 0x00625330-0x0062533F BYTE_EXACT
-// symbol    ?close@ImageButton@@QAEXXZ
+// symbol    ?close@ImageButton@@UAEXXZ
 // size      15 bytes
 // prototype void (__thiscall ?close@ImageButton@@QAEXXZ)(ImageButton* this)
 // callers   0   call targets   0

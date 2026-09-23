@@ -89,45 +89,33 @@ this definition now calls the actual Time member.
 //   the image's `[ecx + 0x9b8e44]` form but loses more elsewhere: 21 of 41.
 //   Walking a SECOND pointer over the table alongside `dest` is far worse,
 //   0 of 41 at 46 instructions.
-// symbol    ?close@FlatButton@@QAEIXZ
+// symbol    ?close@FlatButton@@UAEXXZ
 // size      161 bytes
 // prototype void (__thiscall ?close@FlatButton@@QAEXXZ)(FlatButton* this)
 // callers   134   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x006070C0 0x00616780
-Return Value: Legacy final-loop residue (this + 0xAEC)
-Status: Complete
+Return Value: None; the old pointer-valued return reproduced incidental EAX.
+The LEVER/TRIED notes above describe historical spelling experiments, not a
+license to walk unrelated members or invent a result. Slot90 is genuine virtual
+cleanup; the shared default-table producer remains unrecovered.
 */
-uint32_t FlatButton::close() {
+void FlatButton::close() {
     time1_.close();
-    uint32_t *const object = reinterpret_cast<uint32_t *>(this);
-    object[0xA18 / 4] = 0;
-    object[0xA14 / 4] = 0;
-    object[0xAB8 / 4] = 0xFFFFFFFFU;
+    field_A18_ = 0;
+    field_A14_ = 0;
+    field_AB8_ = 0xFFFFFFFFU;
     BaseButton::close();
-
-    uint32_t *dest = object + 0xAE0 / 4;
-    for (int index = 0; index < 3; ++index) {
-        dest[-9] = 0xFFFFFFFFU;
-        dest[0] = static_cast<uint32_t>(FlatButtonDefaultsTable[0 * 3 + index]);
-        dest[3] = static_cast<uint32_t>(FlatButtonDefaultsTable[1 * 3 + index]);
-        dest[6] = static_cast<uint32_t>(FlatButtonDefaultsTable[2 * 3 + index]);
-        dest[9] = static_cast<uint32_t>(FlatButtonDefaultsTable[3 * 3 + index]);
-        dest[12] = static_cast<uint32_t>(FlatButtonDefaultsTable[4 * 3 + index]);
-        dest[15] = static_cast<uint32_t>(FlatButtonDefaultsTable[5 * 3 + index]);
-        dest[18] = static_cast<uint32_t>(FlatButtonDefaultsTable[6 * 3 + index]);
-        dest[21] = static_cast<uint32_t>(FlatButtonDefaultsTable[7 * 3 + index]);
-        dest[24] = static_cast<uint32_t>(FlatButtonDefaultsTable[8 * 3 + index]);
-        dest[-3] = 0;
-        dest[-6] = 0;
-        ++dest;
+    for (int column = 0; column < 3; ++column) {
+        field_ABC_[column] = 0xFFFFFFFFU;
+        for (int group = 0; group < 9; ++group) {
+            config[group * 3 + column] =
+                static_cast<uint32_t>(FlatButtonDefaultsTable[group * 3 + column]);
+        }
+        field_AD4_[column] = nullptr;
+        field_AC8_[column] = 0;
     }
-    // The return value IS the loop residue: `dest` finishes at this + 0xAEC,
-    // which is what the image leaves in EAX. Spelling it
-    // `reinterpret_cast<uintptr_t>(this) + 0xAECU` instead costs the extra
-    // `lea eax, [esi + 0xaec]` the image does not emit.
-    return reinterpret_cast<uintptr_t>(dest);
 }
 
 
@@ -152,9 +140,7 @@ Status: Complete
 // 0x00406880.
 
 FlatButton *FlatButton::destroy() {
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    close();
+    FlatButton::close();
     BaseButton::destroy();
     return this;
 }

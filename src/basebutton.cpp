@@ -91,25 +91,18 @@ BaseButton *BaseButton::construct() {
     return new (this) BaseButton();
 }
 
-BaseButton *__fastcall base_button_construct_redirect(
-        BaseButton *self, void *) {
-    self->construct();
-    return self;
-}
-
 /*
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
          process defaults, then release the owned name and bubble strings.
 // ORIGINAL: 0x006070C0 ?close@BaseButton@@QAEXXZ 0x006070C0-0x00607190 BYTE_EXACT
+// symbol    ?close@BaseButton@@UAEXXZ
 // size      208 bytes
 // prototype void (__thiscall ?close@BaseButton@@QAEXXZ)(BaseButton* this)
 // callers   3   call targets   2
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4E40 0x00644EF2
-Return Value: Zero when no bubble string is released; otherwise the executable
-              free routine's EAX residue
-Status: Complete; string storage remains owned by the executable CRT
+Return Value: None; EAX after free is not a result.
 */
 void BaseButton::close() {
     GraphicWin::close();
@@ -149,11 +142,6 @@ void BaseButton::close() {
         bubble_text_ = nullptr;
     }
     group_ = nullptr;
-}
-
-uint32_t __fastcall base_button_close_redirect(BaseButton *self, void *) {
-    self->close();
-    return 0;
 }
 
 /*
@@ -317,8 +305,10 @@ int BaseButton::set_name(LPCSTR input) {
 
 // The three default colour tiers interleave within one table: slot s and
 // tier t live at 0x00697060 + s * 0xC + t * 4, so each setter strides 0xC.
-Font *BaseButtonDefaultFonts[3];  // 0x009B8E34..E3C - the three default slots
-// Default font1/font2/font3 at 0x009B8E34, 0x009B8E38 and 0x009B8E3C.
+// set_def_font6074B0 writes all three slots; init607210 reads them after
+// setting colors. The existing owner is shared by producer and consumer.
+// RECOVERY_OBJECT: v2 0x009B8E34 0x009B8E40 ?BaseButtonDefaultFonts@@3PAPAVFont@@A 0x00607210
+Font *BaseButtonDefaultFonts[3];
 
 /*
 Purpose: Set the primary default text colours shared by every button.
@@ -607,21 +597,6 @@ int BaseButton::on_key_up(int a) {
 }
 
 
-namespace {
-
-typedef uint32_t (OriginalObject::*func_button_init_close_slot)();
-typedef void (OriginalObject::*func_button_init_show_slot)(int);
-
-// Both dispatches read the live vtable of whatever object is actually there
-// rather than going through a C++ virtual call, so a FlatButton entering this
-// body closes and shows through its own overrides. In the BaseButton table
-// slot 0x168 holds BaseButton::close and slot 0x04 holds Win::show, which
-// takes one int.
-static const size_t BaseButtonInitCloseSlot = 0x168;
-static const size_t BaseButtonInitShowSlot = 0x04;
-
-}  // namespace
-
 /*
 Purpose: Reinitialise a button - close whatever it currently holds, take a
          private copy of its name, build the GraphicWin base with the button
@@ -649,9 +624,6 @@ Verification note: the `return 4` arm is unreachable through the recovered
          stores, 0x0060724E tests - but no leaf fixture can drive that arm
          without replacing mem_get_old itself, so it is unobserved by
          construction rather than by omission.
-Verification note: mutating BaseButtonInitShowSlot from 0x04 to 0x05 folds to
-         the same `/ sizeof(void *)` index, so that mutant is equivalent by
-         construction - the same known-noise class as WinValueChangedSlot.
 Verification note: the eight arguments do NOT map straight through to
          GraphicWin::init. The name is not forwarded at all - a literal null
          goes into the caption slot at 0x00607296, and the Menu and
@@ -664,8 +636,7 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     // The close runs before every guard, so even a rejected init leaves the
     // button torn down. The original dispatches straight through `this` and
     // its vtable at 0x00607215 with no null check on either; none is added.
-    void **const close_vtable = *reinterpret_cast<void ***>(this);
-    (ORIGINAL(this)->*original_method<func_button_init_close_slot>(reinterpret_cast<unsigned long>(close_vtable[BaseButtonInitCloseSlot / sizeof(void *)])))();
+    close();
 
     // Both remaining arguments are read after the close, not cached across it.
     if (!parent) {
@@ -722,27 +693,17 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
 
     // The fourth font slot is a literal null pushed at 0x00607335, not a
     // fourth default. set_font's result is discarded, so an uninitialised
-    // primary font - its code 3 - does not fail init. Each slot is read as
-    // its own absolute lvalue - the named `Font **const` alias reloads the
-    // pointer at every use instead of folding to the immediate.
-    Buffer::set_font(*reinterpret_cast<Font **>(0x009B8E34),
-                      *reinterpret_cast<Font **>(0x009B8E38),
-                      *reinterpret_cast<Font **>(0x009B8E3C), nullptr);
+    // primary font - its code 3 - does not fail init. Read the same three
+    // source-owned slots that set_def_font publishes.
+    Buffer::set_font(BaseButtonDefaultFonts[0], BaseButtonDefaultFonts[1],
+                     BaseButtonDefaultFonts[2], nullptr);
 
     // Slot 0x04 is Win::show - a declared virtual, so the call is spelled as
     // one and the table is re-read at the call, after every GraphicWin::init
     // and Buffer setter above it, exactly as the image re-reads it at
-    // 0x00607341. The close dispatch above stays a raw walk: slot 0x168 is
-    // NOT one of Win's declared slots (they stop at 87), so there is no name
-    // to call it by.
+    // 0x00607341. BaseButton's own slot90 similarly uses real dispatch above.
     show(0);
     return 0;
-}
-
-int __fastcall base_button_init_redirect(
-        BaseButton *self, void *, LPCSTR name, int id, int x, int y,
-        int width, int height, Win *parent, int style_flag) {
-    return self->init(name, id, x, y, width, height, parent, style_flag);
 }
 
 /*
