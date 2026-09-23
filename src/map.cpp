@@ -5123,7 +5123,8 @@ void __cdecl world_mesa(int x, int y) {
         int y_radius = y + RadiusOffsetY[i];
         if (on_map(x_radius, y_radius)) {
             world_alt_set(x_radius, y_radius, (i < RadiusRange[2]) + ALT_SHORE_LINE, true);
-            bit2_set(x_radius, y_radius, LM_MESA, true);
+            // 5C80F5 supplies the terrain bit, not Natural[]'s landmark id.
+            bit2_set(x_radius, y_radius, BIT2_MESA, true);
             code_set(x_radius, y_radius, i);
         }
     }
