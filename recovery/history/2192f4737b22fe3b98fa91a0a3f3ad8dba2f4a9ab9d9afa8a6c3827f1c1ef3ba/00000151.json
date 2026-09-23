@@ -1,0 +1,34 @@
+{
+  "event_id": "2f9abb55210a5822f3d68be7dcf9b725a2c0ea82dcfbabd7a080e2b72ba8e6af",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_psych.py",
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "Authorize a bounded native object binding for the existing real BaseCurrentVehPacifismCount definition, not a new object or a changed support algorithm. Preserve its uint32_t source type, original support mapping and all claims. Observe its compiler symbol and verify initial data before publication.",
+      "Original storage is the separate initially zero DWORD at 90E980..90E984. Independent instruction/reference audit finds base_support as the only direct writer: reset 4E959F and increment store 4E9A76, with reads at 4E9A5F and 4E9AC4. The only external direct reads are base_psych at 4EAFBF, 4EB0CA and 4EB0E5.",
+      "Original psych at 4EB0CF compares this counter as signed against one; other psych additions and doubling retain 32-bit wrap. Implement explicit bit interpretation in the psych consumer, not an unsigned relational comparison or a source type change affecting support. Add bounded actual-body controls and remeasure protected base/vehicle/faction claims; this binding alone establishes no behavior or full acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5150032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5154112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "36f148ff4f4b3cbf8444913b7c4d6a76e91c1d02aec27f07113be00d7e5a2e65",
+  "request_id": "bind-existing-pacifism-counter-20260923",
+  "schema_version": 1,
+  "sequence": 151,
+  "stream": "task:infowin-ownership"
+}

@@ -327,7 +327,9 @@ struct Base {
     uint8_t faction_id_former;
     // RECOVERY_MEMBER: v1 Base population_size 0x6 0x004E80B0
     int8_t population_size;
+    // RECOVERY_MEMBER: v1 Base assimilation_turns_left 0x7 0x004EA540
     uint8_t assimilation_turns_left;
+    // RECOVERY_MEMBER: v1 Base nerve_staple_turns_left 0x8 0x004EA540
     uint8_t nerve_staple_turns_left;
     uint8_t unk_1; // AI plan state?
     uint8_t visibility; // faction bitfield of those who can see base (mapped: dim/bright)
@@ -403,6 +405,7 @@ struct Base {
     int energy_consumption;
     int unused_consumption;
     int economy_total;
+    // RECOVERY_MEMBER: v1 Base psych_total 0x104 0x004EA540
     int psych_total;
     int labs_total;
     int unk_10;
@@ -410,8 +413,11 @@ struct Base {
     int16_t auto_forward_sea_base_id;
     int16_t auto_forward_air_base_id;
     int16_t padding_0;
+    // RECOVERY_MEMBER: v1 Base talent_total 0x118 0x004EA540
     int talent_total;
+    // RECOVERY_MEMBER: v1 Base drone_total 0x11C 0x004EA540
     int drone_total;
+    // RECOVERY_MEMBER: v1 Base super_drone_total 0x120 0x004EA540
     int super_drone_total;
     int random_event_turns;
     int nerve_staple_count;
@@ -558,6 +564,9 @@ extern uint32_t FarmStatus[25]; // per-position status; final four positions exc
 extern uint32_t FarmUnavailableMask; // nonzero status among the first 21 positions
 extern int BasePopulationUnassigned; // remaining worker/specialist allocation count
 extern int BaseNutrientAdequate; // allocation-path result, retained on successful reuse
+extern int BasePsychTalents[5]; // social, spending, facilities, police, suppression
+extern int BasePsychDrones[5];
+extern int BasePsychSuperDrones[5];
 extern int BaseSquareEnergy; // energy_yield's publication for a base square
 extern int GovernorFaction; // elected Planetary Governor; see the note in base.cpp
 extern int GlobalEnergyEventState; // energy tripling state driven by random_events

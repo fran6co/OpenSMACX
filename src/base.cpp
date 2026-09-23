@@ -524,6 +524,7 @@ uint8_t *const FactionProtoSeenCount = (uint8_t *)0x0096D238;
 uint32_t UpgradePromptAnswered;  // 0x0090EA3C
 
 int BaseCurrentGrowthRate;  // 0x0090E918
+// RECOVERY_OBJECT: v2 0x0090E980 0x0090E984 ?BaseCurrentVehPacifismCount@@3IA 0x004E9550
 uint32_t BaseCurrentVehPacifismCount;  // 0x0090E980
 uint32_t BaseCurrentForcesSupported;  // 0x0090E8FC
 uint32_t BaseCurrentForcesMaintCost;  // 0x0090E91C
@@ -2929,136 +2930,251 @@ uint32_t __cdecl black_market(int energy) {
     return range(energy * dist_hq / ((8 - ineffciency) * 8), 0, energy);
 }
 
+// Five ordered stages: base/social, psych spending, facilities, police,
+// projects and suppression. These are independent shared publications, not
+// per-call locals; draw_psych and base_growth consume their original storage.
+// RECOVERY_OBJECT: v2 0x0090E984 0x0090E998 ?BasePsychTalents@@3PAHA 0x004EA540
+int BasePsychTalents[5];
+// RECOVERY_OBJECT: v2 0x0090E920 0x0090E934 ?BasePsychDrones@@3PAHA 0x004EA540
+int BasePsychDrones[5];
+// RECOVERY_OBJECT: v2 0x0090E94C 0x0090E960 ?BasePsychSuperDrones@@3PAHA 0x004EA540
+int BasePsychSuperDrones[5];
+
+namespace {
+
+int base_psych_clamp(int value, int maximum) {
+    return value < 0 || maximum < 0 ? 0 : (value > maximum ? maximum : value);
+}
+bool base_psych_project_owned(int project_base, int faction) {
+    return project_base >= 0 && Bases[project_base].faction_id_current == faction;
+}
+void base_psych_balance() {
+    Base *base = BaseCurrent;
+    for (;;) {
+        const int capacity = base_yield_sub(base->population_size, base->specialist_total);
+        const int total = base_yield_add(base_yield_add(base->super_drone_total,
+            base->talent_total), base->drone_total);
+        if (total <= capacity) return;
+        if (base->talent_total != 0) {
+            base->talent_total = base_yield_sub(base->talent_total, 1);
+            base = BaseCurrent;
+            if (base->super_drone_total != 0) {
+                base->super_drone_total = base_yield_sub(base->super_drone_total, 1);
+            } else if (base->drone_total != 0) {
+                base->drone_total = base_yield_sub(base->drone_total, 1);
+            }
+        } else if (base->drone_total > capacity) {
+            base->drone_total = base_yield_sub(base->drone_total, 1);
+        } else {
+            // Original early exit: this need not make D+S <= capacity.
+            base->super_drone_total = base_psych_clamp(base->super_drone_total, base->drone_total);
+            return;
+        }
+        base = BaseCurrent;
+    }
+}
+void base_psych_clamp_totals() {
+    Base *base = BaseCurrent;
+    base->drone_total = base_psych_clamp(base->drone_total, base->population_size);
+    base = BaseCurrent;
+    base->talent_total = base_psych_clamp(base->talent_total, base->population_size);
+    base_psych_balance();
+}
+void base_psych_publish(int stage) {
+    const Base *base = BaseCurrent;
+    BasePsychTalents[stage] = base->talent_total;
+    BasePsychDrones[stage] = base->drone_total;
+    BasePsychSuperDrones[stage] = base->super_drone_total;
+}
+bool base_psych_native_police(int vehicle, int faction) {
+    if ((Players[faction].rule_flags & 0x40) == 0) return false;
+    const int prototype = Vehs[vehicle].proto_id;
+    if (prototype >= 64) return false;
+    if (Weapon[VehPrototypes[prototype].weapon_id].offense_rating >= 0 && prototype != 15) return false;
+    return Chassis[VehPrototypes[prototype].chassis_id].triad == 0;
+}
+void base_psych_reduce_drone() {
+    Base *base = BaseCurrent;
+    if (base->drone_total != 0) base->drone_total = base_yield_sub(base->drone_total, 1);
+}
+
+} // namespace
+
 /*
 Purpose: Calculate the current base's psych values.
 // ORIGINAL: 0x004EA540 ?base_psych@@YAXXZ 0x004EA540-0x004EB481
-// size      3905 bytes
-// prototype 
-// callers   1   call targets   5
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x00421670 0x0050BA00 0x005B8E10 0x005BF1F0 0x005BFE90
-// LEVER (partial): the image's first drone/talent block calls the real,
-//        out-of-line `has_fac(facility_id, base_id, 0)` for GENEJACK_FACTORY,
-//        (what was FAC_CHILDREN_CRECHE), NETWORK_NODE, HOLOGRAM_THEATRE and
-//        PARADISE_GARDEN (`push facility_id_literal; push [0x689370]
-//        (BaseIDCurrentSelected); push 0; call 0x421670`), then switches to a
-//        real `bitmask()` call (`has_fac_built_call`) for RESEARCH_HOSPITAL,
-//        NANOHOSPITAL, PUNISHMENT_SPHERE and BROOD_PIT. Routed the call sites
-//        accordingly; call_diff still reports FEWER because this toolchain
-//        folds `has_fac(literal, BaseIDCurrentSelected, 0)` to
-//        `has_fac_built()` at compile time the same way it folds
-//        `has_fac_built()` itself - the same systemic over-inlining gap
-//        documented on `has_fac` at base.cpp:103, one level up the call
-//        chain. Left as the closer source shape (matches the image's own
-//        facility-id choice, at least) rather than reverting to
-//        `has_fac_built()`, since it does not measure worse.
-// BUG IN THE ORIGINAL (probably): the image's second has_fac() call in this
-//        function passes facility id 6 (FAC_RECREATION_COMMONS), not 2
-//        (FAC_CHILDREN_CRECHE) as the old body had - Rec Commons is the
-//        drone/psych facility thematically, Children's Creche is not.
-//        Reproduced deliberately.
-// STATUS: WIP past this point - the transcribed prefix ends around
-//        0x004EA9AD (the BROOD_PIT bitmask() call, ~2650 bytes of the 3905
-//        byte image); the remaining ~1250 bytes (soc_effect/celebration/
-//        stack_fix/has_abil/veh_at logic near the end of the function, see
-//        `osmx calls`) are not yet written. This already compiles
-//        (MISMATCH, not NO_COMPILE) and reproduces the leading control flow.
-// TRIED: transcription prefix only; the ~1250 tail bytes are unwritten, so the
-//        body stays MISMATCH until they land
-Return Value: n/a
-Status: WIP
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004EA540-0x004EB481 complete original body; 0x004EA712-0x004EA722 clamps the first NoDrone adjustment immediately, and 0x004EAA23-0x004EAA3E applies signed talent rather than police.", "image:0x004EAB85,0x004EACD1,0x004EAE30,0x004EB209,0x004EB3D1 publish the five independent stage histories; draw_psych and base_growth remain seed-only consumers.", "image:0x004EAEDF-0x004EB0C5 scans fresh vehicle stacks in two passes with repeated ability queries; 0x004EB0CA-0x004EB0E3 uses a signed pacifism-count comparison.", "image:0x004EA946 and 0x004EB44E-0x004EB45E use talent=i-4 and matrix row=i-1; original social_ai at 0x005B50DB-0x005B511A instead consumes row=clamp(talent+4,0,7). Preserve the original one-step discrepancy."], "reason": "Recover the complete five-stage psych calculation and shared stage histories, including social simulations followed by the actual case, using genuine base, faction, project and vehicle state. Existing partial source was not a verified prefix."}
+// Historical compiler lesson: the first facility queries are real has_fac
+// calls, followed by real bitmask calls for hospitals, punishment and brood
+// pit. Earlier inlining experiments lost calls despite similar source forms.
+// Historical reconstruction correction: the second has_fac uses facility 6,
+// Recreation Commons, not facility 2, Children's Creche. This is not evidence
+// of an original game bug. The old partial prefix also substituted police for
+// the signed talent effect and omitted the five-stage shared publications.
 */
 void __cdecl base_psych() {
-    uint32_t faction_id = BaseCurrent->faction_id_current;
-    int pop_size = BaseCurrent->population_size;
-    int drones_base;
-    int talents_base;
-    int diff_lvl = is_human(faction_id) ? PlayersData[faction_id].diff_level : DLVL_LIBRARIAN;
-    psych_check(faction_id, &drones_base, &talents_base);
-    if (talents_base) {
-        talents_base = range((BaseIDCurrentSelected % talents_base
-            + PlayersData[faction_id].current_num_bases - talents_base) 
-            / talents_base, 0, pop_size);
+    // Original domain: valid game indices, finite vehicle stacks, and valid
+    // faction rule divisors. No malformed-data guards are present in the image.
+    const int faction = BaseCurrent->faction_id_current;
+    const bool human = (static_cast<unsigned char>(LockEnableMask) & (1u << faction)) != 0;
+    const int difficulty = human ? PlayersData[faction].diff_level : 3;
+    const int content = base_yield_sub(6, difficulty);
+    const int efficiency = PlayersData[faction].soc_effect_pending.efficiency;
+    int bureaucracy = base_yield_mul(base_yield_mul(base_yield_add(content, 2),
+        base_yield_add(efficiency < 0 ? 0 : efficiency, 4)),
+        base_yield_signed_bits(MapAreaSqRoot)) / 56 / 2;
+    if (bureaucracy != 0) {
+        const int population = BaseCurrent->population_size;
+        const int count = base_yield_signed_bits(PlayersData[faction].current_num_bases);
+        bureaucracy = base_psych_clamp(base_yield_sub(base_yield_add(count,
+            BaseIDCurrentSelected % bureaucracy), bureaucracy) / bureaucracy, population);
     }
-    int psych_val = range(pop_size - drones_base, 0, pop_size);
-    psych_val += range((BaseCurrent->assimilation_turns_left + 9) / 10,
-        0, (pop_size + diff_lvl - 2) / 4);
-    if (Players[faction_id].rule_drone) {
-        psych_val += pop_size / Players[faction_id].rule_drone;
+    const int population = BaseCurrent->population_size;
+    const int assimilation_limit = base_yield_sub(base_yield_add(population,
+        human ? PlayersData[faction].diff_level : 3), 2) / 4;
+    int initial_drones = base_psych_clamp(base_yield_sub(population, content), population);
+    initial_drones = base_yield_add(initial_drones,
+        base_psych_clamp((BaseCurrent->assimilation_turns_left + 9) / 10, assimilation_limit));
+    if (Players[faction].rule_drone != 0) {
+        initial_drones = base_yield_add(initial_drones, population / Players[faction].rule_drone);
     }
-    int psych_val_2 = 0;
-    if (Players[faction_id].rule_talent) {
-        psych_val_2 += (Players[faction_id].rule_talent + pop_size - 1) 
-            / Players[faction_id].rule_talent;
+    int initial_talents = 0;
+    if (Players[faction].rule_talent != 0) {
+        initial_talents = base_yield_sub(base_yield_add(Players[faction].rule_talent, population), 1)
+            / Players[faction].rule_talent;
     }
-    for (int i = 0; i < Players[faction_id].faction_bonus_count; i++) {
-        if (Players[faction_id].faction_bonus_id[i] == RULE_NODRONE) {
-            psych_val -= Players[faction_id].faction_bonus_val1[i];
+    for (int bonus = 0; bonus < Players[faction].faction_bonus_count; ++bonus) {
+        if (Players[faction].faction_bonus_id[bonus] == RULE_NODRONE) {
+            initial_drones = base_yield_sub(initial_drones, Players[faction].faction_bonus_val1[bonus]);
+            if (initial_drones < 0) initial_drones = 0;
             break;
         }
     }
-    int drones = has_fac(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected, 0)
+
+    int facility_drones = has_fac(FAC_GENEJACK_FACTORY, BaseIDCurrentSelected, 0)
         ? Rules.drones_genejack_factory : 0;
-    // BUG IN THE ORIGINAL (probably): the image's second has_fac() call
-    // passes facility id 6 (FAC_RECREATION_COMMONS), not 2
-    // (FAC_CHILDREN_CRECHE) - thematically Rec Commons is the psych/drone
-    // facility, Children's Creche is a growth one. Reproduced deliberately.
-    if (has_fac(FAC_RECREATION_COMMONS, BaseIDCurrentSelected, 0)) {
-        drones -= 2;
-    }
-    if ((has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0) && has_project(SP_VIRTUAL_WORLD, faction_id))
+    if (has_fac(FAC_RECREATION_COMMONS, BaseIDCurrentSelected, 0)) facility_drones = base_yield_sub(facility_drones, 2);
+    if ((has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0)
+         && base_psych_project_owned(SecretProject.virtual_world, faction))
         || has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) {
-        drones -= 2;
+        facility_drones = base_yield_sub(facility_drones, 2);
     }
-    if (has_project(SP_PLANETARY_TRANS_SYS, faction_id) && pop_size <= 3) {
-        drones--;
-    }
-    int talents_fac = has_fac(FAC_PARADISE_GARDEN, BaseIDCurrentSelected, 0) ? 2 : 0;
-    if (has_fac_built_call(FAC_RESEARCH_HOSPITAL, BaseIDCurrentSelected)) {
-        drones--;
-    }
-    if (has_fac_built_call(FAC_NANOHOSPITAL, BaseIDCurrentSelected)) {
-        drones--;
-    }
-    int talents_sp = has_project(SP_HUMAN_GENOME_PROJ, faction_id) ? 1 : 0;
-    if (has_project(SP_CLINICAL_IMMORTALITY, faction_id)) {
-        talents_sp += 2; // TODO: eval - bug fix per manual: one extra talent at every base
-    }
-    BOOL has_punishment_sphere = has_fac_built_call(FAC_PUNISHMENT_SPHERE, BaseIDCurrentSelected);
-    for (i = 8; i >= 0; i--) {
-        int val;
-        if (!i) {
-            val = PlayersData[faction_id].soc_effect_pending.talent;
-        } else if(BaseUpkeepStage != 1) {
-            break;
-        } else {
-            val = i - 4;
-        }
-        for (int j = 9; j >= 0; j--) {
-            int val_2;// , k;
-            if (!j) {
-                val_2 = PlayersData[faction_id].soc_effect_pending.police
-                    + has_fac_built_call(FAC_BROOD_PIT, BaseIDCurrentSelected) * 2;
-                if (i) {
-                    break;
+    if (base_psych_project_owned(SecretProject.planetary_transit_system, faction)
+        && BaseCurrent->population_size <= 3) facility_drones = base_yield_sub(facility_drones, 1);
+    const int facility_talents = has_fac(FAC_PARADISE_GARDEN, BaseIDCurrentSelected, 0) ? 2 : 0;
+    if (base_yield_has_facility(FAC_RESEARCH_HOSPITAL)) facility_drones = base_yield_sub(facility_drones, 1);
+    if (base_yield_has_facility(FAC_NANOHOSPITAL)) facility_drones = base_yield_sub(facility_drones, 1);
+    int project_talents = base_psych_project_owned(SecretProject.human_genome_project, faction) ? 1 : 0;
+    if (base_psych_project_owned(SecretProject.clinical_immortality, faction)) project_talents += 2;
+    const bool punishment = base_yield_has_facility(FAC_PUNISHMENT_SPHERE);
+
+    for (int talent_case = 8; talent_case >= 0; --talent_case) {
+        if (talent_case != 0 && BaseUpkeepStage != 1) continue;
+        const int talent = talent_case != 0 ? talent_case - 4 : PlayersData[faction].soc_effect_pending.talent;
+        for (int police_case = 9; police_case >= 0; --police_case) {
+            int police;
+            if (police_case == 0) {
+                // This query also occurs at the end of each hypothetical row.
+                const bool brood_pit = base_yield_has_facility(FAC_BROOD_PIT);
+                police = base_yield_add(PlayersData[faction].soc_effect_pending.police, brood_pit ? 2 : 0);
+                if (talent_case != 0) continue;
+            } else {
+                if (BaseUpkeepStage != 1 || talent_case == 0) continue;
+                police = police_case - 6;
+            }
+            int police_limit = base_psych_clamp(base_yield_add(police, 2), 4);
+            if (police_limit > 1) --police_limit;
+
+            BaseCurrent->drone_total = initial_drones;
+            BaseCurrent->talent_total = initial_talents;
+            if (talent < 0) BaseCurrent->drone_total = base_yield_sub(BaseCurrent->drone_total, talent);
+            else BaseCurrent->talent_total = base_yield_add(BaseCurrent->talent_total, talent);
+            BaseCurrent->drone_total = base_yield_add(base_psych_clamp(BaseCurrent->drone_total,
+                BaseCurrent->population_size), bureaucracy);
+            BaseCurrent->super_drone_total = base_psych_clamp(base_yield_sub(BaseCurrent->drone_total,
+                BaseCurrent->population_size), BaseCurrent->population_size);
+            BaseCurrent->drone_total = base_psych_clamp(BaseCurrent->drone_total, BaseCurrent->population_size);
+            base_psych_balance();
+            base_psych_publish(0);
+
+            BaseCurrent->talent_total = base_yield_add(BaseCurrent->talent_total, BaseCurrent->psych_total / 2);
+            base_psych_clamp_totals();
+            base_psych_publish(1);
+
+            BaseCurrent->drone_total = base_yield_add(BaseCurrent->drone_total, facility_drones);
+            BaseCurrent->talent_total = base_yield_add(BaseCurrent->talent_total, facility_talents);
+            base_psych_clamp_totals();
+            base_psych_publish(2);
+
+            if (police_limit > 0) {
+                int used = 0;
+                if (base_psych_project_owned(SecretProject.self_aware_colony, faction)) {
+                    used = 1;
+                    base_psych_reduce_drone();
+                    if (police >= 3) base_psych_reduce_drone();
                 }
-            } else if (BaseUpkeepStage != 1 || !i) {
-                break;
-            } else {
-                val_2 = j - 6;
-                //val2 = val;
+                // Two fresh stack queries: enhanced/native police first,
+                // ordinary eligible units second. The original does not test
+                // vehicle ownership, nor cache the ability result for use.
+                for (int pass = 0; pass < 2 && used < police_limit; ++pass) {
+                    Base *const base = BaseCurrent;
+                    int vehicle = stack_fix(veh_at(base->x, base->y));
+                    while (vehicle >= 0) {
+                        const int prototype = Vehs[vehicle].proto_id;
+                        if (VehPrototypes[prototype].plan <= 3) {
+                            const bool enhanced = has_abil(prototype, 0x400000) != 0
+                                || base_psych_native_police(vehicle, faction);
+                            if (enhanced == (pass == 0)) {
+                                base_psych_reduce_drone();
+                                if (has_abil(Vehs[vehicle].proto_id, 0x400000)) base_psych_reduce_drone();
+                                if (police >= 3) base_psych_reduce_drone();
+                                if (base_psych_native_police(vehicle, faction)) base_psych_reduce_drone();
+                                if (++used >= police_limit) break;
+                            }
+                        }
+                        vehicle = Vehs[vehicle].next_veh_id_stack;
+                    }
+                }
             }
-            val_2 = range(val_2 + 2, 0, 4);
-            if (val_2 > 1) {
-                val_2--;
+            if (police < -2) {
+                const int away = base_yield_signed_bits(BaseCurrentVehPacifismCount);
+                int penalty;
+                if (police == -3) penalty = away > 1 ? base_yield_sub(away, 1) : 0;
+                else if (police == -4) penalty = away;
+                else penalty = base_yield_add(away, away);
+                BaseCurrent->drone_total = base_yield_add(BaseCurrent->drone_total, penalty);
             }
-            BaseCurrent->drone_total = drones_base;
-            BaseCurrent->talent_total = talents_base;
-            if (val_2 >= 0) {
-                BaseCurrent->talent_total += val_2;
-            } else {
-                BaseCurrent->drone_total -= val_2;
+            base_psych_clamp_totals();
+            base_psych_publish(3);
+
+            BaseCurrent->talent_total = base_yield_add(BaseCurrent->talent_total, project_talents);
+            if (base_psych_project_owned(SecretProject.longevity_vaccine, faction)) {
+                if (PlayersData[faction].soc_category_pending.economics == 2)
+                    BaseCurrent->drone_total = base_yield_sub(BaseCurrent->drone_total, 1);
+                if (PlayersData[faction].soc_category_pending.economics != 1)
+                    BaseCurrent->drone_total = base_yield_sub(BaseCurrent->drone_total, 1);
+            }
+            if (punishment || BaseCurrent->nerve_staple_turns_left != 0) {
+                BaseCurrent->drone_total = 0;
+                BaseCurrent->talent_total = 0;
+            }
+            base_psych_clamp_totals();
+            base_psych_publish(4);
+
+            if (talent_case != 0) {
+                const Base *const base = BaseCurrent;
+                int score = base_yield_sub(base->talent_total, base->drone_total);
+                if (score > 0 && (base->drone_total != 0
+                    || base_yield_add(base->talent_total, base->talent_total) < base->population_size)) score /= 2;
+                if (score < 0) {
+                    score = base_yield_sub(score, base->population_size);
+                    if (base->population_size < 6) score = base_yield_add(score, score);
+                }
+                // The original producer stores talent (case-4) at row case-1.
+                // social_ai instead reads row clamp(talent+4,0,7): preserve
+                // this observed one-step discrepancy, not a shifted matrix.
+                int &weight = PlayersData[faction].unk_39[talent_case - 1][police_case - 1];
+                weight = base_yield_add(weight, score);
             }
         }
     }

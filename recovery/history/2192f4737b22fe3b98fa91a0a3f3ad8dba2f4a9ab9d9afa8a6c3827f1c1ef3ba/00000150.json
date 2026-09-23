@@ -1,0 +1,23 @@
+{
+  "event_id": "36f148ff4f4b3cbf8444913b7c4d6a76e91c1d02aec27f07113be00d7e5a2e65",
+  "payload": {
+    "affects": [
+      "entity-415969aff399f8fc51dfc6ef6e933b5aed3e69b1b5d5e2fdb3f2cd7d5fe8ff4e",
+      "entity-d946563d73b4b0d2a260dd8e9492d17a875128ddf7e0c1ff277e6edc0ac2d257"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "original-psych-ai-talent-row-mismatch-20260923",
+    "evidence": [
+      "Independent reviewer and coordinator decoded the pinned image from complete function boundaries. At 4EA946, the producer uses talent = i - 4 for i = 8..1; at 4EA995 police = j - 6 for j = 9..1. Store 4EB44E..4EB45E uses biased base 96D068 + faction * 20CC + 4 * (9*i+j), equivalent to PlayersData[faction].unk_39[i-1][j-1] at the actual array base 96D090, member offset 6B0.",
+      "Original social_ai at 5B50DB..5B511A reads that same array with row clamp(talent+4,0,7) and column clamp(police+5,0,8). Therefore producer row zero represents talent -3, while consumer row zero requests talent -4. The police column aligns. This is not a candidate-only indexing defect.",
+      "The authorized psych recovery must retain the original producer indexing and accumulation; source evidence and behavioral controls will make the discrepancy visible. No faction.cpp changes, automatic correction, task baseline reset or new byte claim are authorized by this discovery. The larger base_energy original-defect interpretation remains separately pending."
+    ],
+    "hypothesis": "Original base_psych produces a social-evaluation talent row one step different from the original social_ai consumer. Preserve both algorithms during recovery; correcting the game rule would be a separate behavior-change decision.",
+    "kind": "discovery"
+  },
+  "previous_event": "b3e464eb38991c2a4da2d28ef7927477788e20ced9f9ea645780da31980a2183",
+  "request_id": "original-psych-ai-talent-row-mismatch-20260923",
+  "schema_version": 1,
+  "sequence": 150,
+  "stream": "task:infowin-ownership"
+}

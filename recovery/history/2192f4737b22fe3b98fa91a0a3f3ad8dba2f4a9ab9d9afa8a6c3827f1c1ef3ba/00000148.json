@@ -1,0 +1,29 @@
+{
+  "event_id": "c612fefc46c9e899f1ae0d7239df06e3d3a3bb084ee1e4c8b3a7a167b60eaaa9",
+  "payload": {
+    "affects": [
+      "entity-1c59933cf2aaf6a966010c527222be587159865cda835d79a88c67aeff5f1ee0",
+      "entity-4f8be5f57a7de09da4b5f35b4ba42f10837382f85d9804e96a8edd5ba6ac17ab",
+      "entity-d946563d73b4b0d2a260dd8e9492d17a875128ddf7e0c1ff277e6edc0ac2d257",
+      "entity-e8d4ef7bc4bb5beda673f1f99722dfe57412b635123309a98476a4d0a9111a96",
+      "entity-edfa78cec653bbabe362d1ff9938b29aefff7188f5f8ef634467686675a3f9c5"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "psych-pipeline-and-original-energy-defect-20260923",
+    "evidence": [
+      "Independent original audit after mergedde7a6e9e: all five actual direct base_psych callees have product bodies: has_fac421670,bitmask50BA00,veh_at5BFE90,stack_fix5B8E10,has_abil5BF1F0. A body existing is not runtime/whole-reference proof. Correct the existing implementation and complete all phases rather than adding a partial callee or another placeholder.",
+      "Existing prefix is not a verified transcription:4EA95F loads the talent social value intoEBX, and4EAA23..3E applies that signed value to talent/drone totals; current source instead uses clamped policeval_2, making its negative arm unreachable.4EA712..722 clamps the NoDrone subtraction immediately tozero; current code does not. Computed psych_val/psych_val_2 are unused in current source while original seeds totals from separate computed stack locals. Historical prose also miscounts:4EA9AD-4EA540=1133bytes, leaving2772bytes in the3905-byte extent, not a verified1250-byte tail.",
+      "Three independent int[5] stage publications are initiallyzero: talents90E984..90E998,drones90E920..90E934,superdrones90E94C..90E960. Original stages publish at4EAB85,4EACD1,4EAE30,4EB209,4EB3D1. Literal-reference audit finds onlybase_psych writers and seed-only readers draw_psych408B20 plus base_growth4EF1C0 at4EFA0C/4EFB05; no live original-address consumer found. Verify all original extents, symbols, data and indexed controls before introducing storage.",
+      "Preserve five phases: social/base,psych-spending,facilities,police/pacifism,projects/punishment/nerve-stapling; normalization against population-specialists; hypothetical loops8..1 by9..1 followedbyactual0/0.4EB434..45E uses a biased matrix address96D068+4*(9*i+j); existing PlayersData.unk_39[8][9] should be indexed[i-1][j-1], not a newglobal. social_ai already reads that member. Reuse BaseCurrentVehPacifismCount90E980 and typed Veh/VehPrototype/Weapon/Chassis fields; new layout evidence and outside-owner review remain necessary.",
+      "base_energy has six existing direct callee bodies but ends in the incompletebase_psych. Its original local[ebp-4] has a first possible store at4EB70D only after an eligible foreign trade partner and nonnegativebase_rank; skipped loops leave no initializer. Expansion+alienflag80 reaches4EB895INC/4EB8AAADD/4EB8B8MOV without another store or escaping localaddress; a no-contact/single-alien-base path satisfies the decoded branches and base_compute imposes no treaty prerequisite. This is an original-defect/domain interpretation, not permission to silently zero or invent prior stackbytes. Resolve before implementing energy; do not present seed uninitialized C++ as a verified robust model.",
+      "base_doctors is not an independent bypass:4F621D..6231 and4F62D3..62E7 invoke support,yield,nutrient,minerals,energy; it also calls still-forwardedpopb48C650. This discovery grants no C++ edits or scope/baseline changes. Master remains the verified allocation checkpoint, and retained terrain work remains separate."
+    ],
+    "hypothesis": "Complete and correct the existing base_psych implementation before recovering its energy caller. Preserve shared psych publications and the original energy uninitialized-stack defect as separate recovery decisions; merely filling energy or doctors does not close the pipeline.",
+    "kind": "discovery"
+  },
+  "previous_event": "d5c759af7da95155bc8d7847619f28e93a6c89676fcdf9bafb3a0d3d019b44a6",
+  "request_id": "psych-pipeline-and-original-energy-defect-20260923",
+  "schema_version": 1,
+  "sequence": 148,
+  "stream": "task:infowin-ownership"
+}

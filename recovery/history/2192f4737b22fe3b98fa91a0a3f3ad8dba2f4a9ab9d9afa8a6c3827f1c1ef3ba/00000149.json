@@ -1,0 +1,31 @@
+{
+  "event_id": "b3e464eb38991c2a4da2d28ef7927477788e20ced9f9ea645780da31980a2183",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_psych.py",
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "Authorize full recovery and correction of base_psych 4EA540..4EB481, following discovery 148. Preserve its original identity, seed and historical obligations; no new byte claim, baseline reset or acceptance waiver. The existing prefix is not an oracle.",
+      "Recover all five calculation stages, social simulation loops and actual-case publication from original evidence using real Base, PlayerData, Player, vehicle, prototype, weapon and chassis fields. Preserve original signed arithmetic, call order and reload behavior; no original-address calls, raw self offsets or new callee placeholders.",
+      "Introduce three independently bounded genuine int[5] publication arrays for talents 90E984..90E998, drones 90E920..90E934 and superdrones 90E94C..90E960, after independent writer/consumer closure. Coordinator publishes source metadata using observed compiler symbols and verifies initial data. Reuse the existing PlayerData matrix and pacifism counter, not surrogate arrays or objects.",
+      "Require original/source review, actual-body sanitizer controls, native protected claims, relevant layout/data/reference checks and fresh full application build/link before coordinator-reviewed manual integration and destination recheck. Preserve all unsupported cases and strict comparison failures as limitations, not acceptance.",
+      "Only these files and this body/storage are authorized for this step. Outside-header changes and newly discovered dependencies require coordinator review and further scope. Keep the original base_energy uninitialized-local defect and retained terrain generation work pending and untouched."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5154112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c612fefc46c9e899f1ae0d7239df06e3d3a3bb084ee1e4c8b3a7a167b60eaaa9",
+  "request_id": "complete-base-psych-stages-20260923",
+  "schema_version": 1,
+  "sequence": 149,
+  "stream": "task:infowin-ownership"
+}
