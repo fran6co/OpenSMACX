@@ -1,0 +1,29 @@
+{
+  "event_id": "88de4dfa6eb83427f9b70b120eedc4d557867e41de95c603abb4fc5ec0a40ad8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_line.py",
+      "src/buffer.cpp",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "The existing infowin-ownership scope already owns original5E15F0. Authorize this owner to implement its five-int void Buffer::line dependency in the retained coordinator terrain checkout, alongside but not inside the unchanged vector task scope. No other worker checkout is active; root controls compilation/Git. Preserve original task baseline and all discoveries; this is manual dependency recovery, not native campaign admission.",
+      "Original full-body review establishes five-int thiscall/ret14, vertical-before-horizontal dispatch, paired endpoint normalization, real get_data acquisition before general clipping and shared release after every acquired clipped rejection. Four octants advance a strict-positive-error Bresenham accumulator and retain half-open clip bounds, inclusive endpoints and low-byte color. The seed misplaces descending steep pixels and leaks lock state on clipped early returns. Correct the declaration to void and use typed Buffer members/get_data/free_data; no raw self offsets, original-address calls or invented return value.",
+      "Add actual-source tests for all octants, reversal, ties, clipping and acquisition failure/nesting/release, with compiling mutation controls and independent original-derived pixel expectations. Keep the original seed unchanged until its history is safely preserved; coordinator publishes product mapping through the native seed binder. Fresh compile, protected claims, relevant references and application link are required before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6166000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f59c678f3c8048e23e706aacf0b2335e96ec495c57a92a9f3f1d26115dd5ad76",
+  "request_id": "terrain-callee-infowin-ownership-20260923",
+  "schema_version": 1,
+  "sequence": 134,
+  "stream": "task:infowin-ownership"
+}

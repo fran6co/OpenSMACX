@@ -2190,6 +2190,141 @@ int Buffer::text_width(LPSTR text) {
 }
 
 
+// Draw an inclusive-endpoint segment inside the half-open active clip.
+// The original acquires before rejecting a non-axis-aligned segment and
+// releases on every acquired clipping exit. Clipping advances the original
+// Bresenham error; starting a new line at the clipped coordinates changes
+// the pixels at ties. The four octants share these two major-axis walks,
+// with descending lines starting at their left (higher-Y) endpoint.
+// The initial pixel precedes the endpoint check: a descending endpoint at
+// the excluded bottom edge can advance beyond the segment before that one
+// write (5E18B9, 5E18E4, 5E193C). Preserve this original boundary quirk.
+// As with the buffer's other pixel operations, the recovered geometry
+// contract requires representable coordinate/error arithmetic and addresses.
+// ORIGINAL: 0x005E15F0 ?line@Buffer@@QAEXHHHHH@Z 0x005E15F0-0x005E1A7F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["5E15FE..5E160A inspect Buffer storage; 5E1629/5E164A call its axis primitives; 5E1A7C returns0x14. The scoped source preserves the original error accumulator, lock lifetime and descending-bottom clipping quirk."], "reason": "The five-integer void drawing member uses Buffer storage and clip fields; its original thiscall entry and vertical/horizontal callees establish the owning class and signature."}
+void Buffer::line(int x1, int y1, int x2, int y2, int color) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
+    if (x1 == x2) {
+        vline(x1, y1, y2, color);
+        return;
+    }
+    if (y1 == y2) {
+        hline(x1, x2, y1, color);
+        return;
+    }
+    if (x2 < x1) {
+        int swap = x1;
+        x1 = x2;
+        x2 = swap;
+        swap = y1;
+        y1 = y2;
+        y2 = swap;
+    }
+    if (get_data() == 0) {
+        return;
+    }
+
+    // Lock may publish a new pitch or alter the clip. Read both afterwards.
+    const RECT clip = rect1_;
+    const int pitch = static_cast<int>(stride_);
+    unsigned char *const pixels = static_cast<unsigned char *>(locked_bits_);
+    const unsigned char ink = static_cast<unsigned char>(color);
+    const int dx = x2 - x1;
+    const int dy = y2 > y1 ? y2 - y1 : y1 - y2;
+    const int y_step = y2 > y1 ? 1 : -1;
+    int x = x1;
+    int y = y1;
+
+    do {
+        // These coarse tests retain the original strict comparisons; the
+        // entry checks below enforce the exclusive right and bottom edges.
+        if (x1 > clip.right || x2 < clip.left ||
+            (y_step > 0 ? (y1 > clip.bottom || y2 < clip.top)
+                        : (y1 < clip.top || y2 > clip.bottom))) {
+            break;
+        }
+        if (dx >= dy) {
+            int error = 2 * dy - dx;
+            const int along = 2 * dy;
+            const int diagonal = 2 * (dy - dx);
+            while (x < clip.left ||
+                   (y_step > 0 ? y < clip.top : y >= clip.bottom)) {
+                if (error > 0) {
+                    error += diagonal;
+                    y += y_step;
+                } else {
+                    error += along;
+                }
+                ++x;
+            }
+            if (x >= clip.right ||
+                (y_step > 0 ? y >= clip.bottom : y < clip.top)) {
+                break;
+            }
+            unsigned char *pixel = pixels + y * pitch + x;
+            *pixel = ink;
+            const int last_x = x2 < clip.right ? x2 : clip.right - 1;
+            while (x < last_x) {
+                if (error > 0) {
+                    y += y_step;
+                    if (y_step > 0 ? y >= clip.bottom : y < clip.top) {
+                        break;
+                    }
+                    error += diagonal;
+                    pixel += y_step * pitch;
+                } else {
+                    error += along;
+                }
+                ++x;
+                ++pixel;
+                *pixel = ink;
+            }
+        } else {
+            int error = 2 * dx - dy;
+            const int along = 2 * dx;
+            const int diagonal = 2 * (dx - dy);
+            while (x < clip.left ||
+                   (y_step > 0 ? y < clip.top : y >= clip.bottom)) {
+                if (error > 0) {
+                    error += diagonal;
+                    ++x;
+                } else {
+                    error += along;
+                }
+                y += y_step;
+            }
+            if (x >= clip.right ||
+                (y_step > 0 ? y >= clip.bottom : y < clip.top)) {
+                break;
+            }
+            unsigned char *pixel = pixels + y * pitch + x;
+            *pixel = ink;
+            const int last_y = y_step > 0
+                ? (y2 < clip.bottom ? y2 : clip.bottom - 1)
+                : (y2 >= clip.top ? y2 : clip.top);
+            while (y_step > 0 ? y < last_y : y > last_y) {
+                if (error > 0) {
+                    ++x;
+                    if (x >= clip.right) {
+                        break;
+                    }
+                    error += diagonal;
+                    ++pixel;
+                } else {
+                    error += along;
+                }
+                y += y_step;
+                pixel += y_step * pitch;
+                *pixel = ink;
+            }
+        }
+    } while (false);
+    free_data(1);
+}
+
 namespace {
 
 // RECT edges wrap as raw 32-bit values, exactly as the original's inc/dec

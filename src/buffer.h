@@ -424,7 +424,7 @@ class Buffer {
   void dotted_vline(int x, int y1, int y2, int color);
   int line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8,
            int a9);
-  int line(int a1, int a2, int a3, int a4, int a5);
+  void line(int x1, int y1, int x2, int y2, int color);
   int hline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
   int vline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
   int put_pixel(int x, int y, int color);
