@@ -1,0 +1,23 @@
+{
+  "event_id": "9b00946235806124177d061ae61e41c66da5e32a7ab0a76a128fe0b631f8525b",
+  "payload": {
+    "affects": [
+      "entity-2b19148d4d4334da66e9db02aab5e844197d1db0c74c43f7786af127e61e1862",
+      "entity-594d6733ec8f319baa4a9cd2b2458879a2cc10c67c3392d88fd7cba56a481956"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "cached-edge-scalar-storage-20260923",
+    "evidence": [
+      "Fresh typed625080 compilation exposes prior622200 stack overwrite: local_84/local_48 are individual int variables, yet helper initializes60-byte EdgeScan records and old caller reads14 words beyond each scalar. Original6223E0/6223F0 and622408/62240D form actual frame blocks atEBP-80 andEBP-44, exactly3C apart;6224FB/622564 reuse those same starts at refresh.",
+      "Authorize replacing just these scalar pseudo-records and their28 offset-reference aliases with two real EdgeScan locals and named fields, alongside already-authorized typed calls. Keep622200 incomplete pixel algorithm and historical seed/TRIED evidence, do not claim it fully recovered. No raw cast back to a scalar as a compilation workaround.",
+      "Native probe refused before emitting an object, source preserved, prefix lease exited normally. Full original span622200..62280C decoded with exact coverage before this structural repair. Existing protected claims remain obligations; no demotions or base resets."
+    ],
+    "hypothesis": "The cached-edge caller622200 models two full original stack records as single integers and accesses beyond them; typed helper compilation makes this pre-existing storage defect explicit.",
+    "kind": "discovery"
+  },
+  "previous_event": "58a6374b0a805930f3cc92ebd92b7353aa23db779796d5fdd9deee017a9c3e86",
+  "request_id": "cached-edge-scalar-storage-20260923",
+  "schema_version": 1,
+  "sequence": 110,
+  "stream": "task:vector-value-semantics"
+}

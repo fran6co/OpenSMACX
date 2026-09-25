@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 
-// MapWin constructor-installed Win branch: capture4, resize13, update63.
+// MapWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066A57C ? ??_7MapWin@@6BWin@@@ 0x004626E0
 #include "original_seam.h"
@@ -30,10 +30,21 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "texture.h"
+#include "sprite.h"    // g_TER1_* band: gen_terrain_poly's sprite receivers
+#include "random.h"    // Random local_rand - gen_terrain_poly's per-tile roll
+#include "path.h"      // Paths.get and the route-preview pathfinder.
+#include "general.h"   // range - veh.h's inline needs it (already below)
+#include "game.h"      // ShadowColorTable/TerritoryColorTables/state globals
+#include "veh.h"       // Vehs/VehPrototypes - the visibility walk
+#include "base.h"      // Bases/base_at/crop_yield
+#include "faction.h"   // PlayersData - visibility and treaty reads
+#include "infowin.h"   // InfoFactionTextColors - the territory fill colours
 #include "imagebutton.h"
 #include "map.h"       // MapLongitudeBounds / MapLatitudeBounds / MapIsFlat / map_tiles
 #include "general.h"   // mem_get, and the game-state flags the painters read
 #include "strings.h"   // StringTemp is also the shared main-caption scratch buffer.
+#include "temp.h"      // PlanLineCounter controls the patterned-line phase.
+#include "alpha.h"     // Rules movement rate and label_get text lookup.
 #include <cstring>
 #include <stdlib.h>
 
@@ -41,6 +52,47 @@
 // after constructing slots1..7. draw_tile bounds its walk at0x007D3C5C.
 // RECOVERY_OBJECT: v2 0x007D3C3C 0x007D3C5C ?MapWinTable@@3PAPAVMapWin@@A 0x0058F040
 MapWinSlots MapWinTable;
+
+// The farm display and terrain-fixup pass share one complete MapWin. Its
+// same-type heap allocation at 0x58F177 requests 0x22480 bytes; the constructor's
+// GraphicWin base at +0x21A6C writes through +0xA13, independently closing
+// that extent. All original image-initial bytes are zero.
+// CRT[0x682540] invokes 0x462080, constructing this most-derived object and
+// registering 0x4620A0. That exit destroys the MapWin own part (0x420F90),
+// then its GraphicWin virtual base (0x5D4DD0), both from receiver 0x7F5ACC.
+// C++ owns this complete lifetime; runtime init_dummy/cache population and
+// shutdown are separate, still-unfinished startup dependencies.
+// RECOVERY_OBJECT: v2 0x007D4060 0x007F64E0 ?FarmMapWindow@@3VMapWin@@A 0x00462080
+MapWin FarmMapWindow;
+
+// Four coordinate pairs: terrain copies eight DWORDs at464D12..464D21 and
+// draw_map translates four Vert objects at46A940..46A95D. The following
+// 7D3C28 rectangle is a separate object, not a fifth corner.
+// RECOVERY_OBJECT: v2 0x007D3BE8 0x007D3C08 ?MapCornerCopy@@3PAUVert@@A 0x0046A550
+Vert MapCornerCopy[4];
+// Terrain's four-corner producer and BaseWin's farm consumer share this buffer.
+// RECOVERY_OBJECT: v2 0x007D3C08 0x007D3C28 ?MapCornerScratch@@3PAUVert@@A 0x004632D0
+Vert MapCornerScratch[4];
+// Original46AB95/46ABDF call the actual USER32 rectangle predicate.
+// RECOVERY_IMPORT: v1 __imp__IsRectEmpty@4 USER32.dll name:IsRectEmpty
+
+// Initially zero; main_game's still-unfinished startup enables map input.
+// RECOVERY_OBJECT: v2 0x0090D938 0x0090D93C ?MapInputEnabled@@3HA 0x0046F000
+int MapInputEnabled;
+// All three original references are the mouse handler's pump-reentry guard.
+// RECOVERY_OBJECT: v2 0x007F67C4 0x007F67C8 ?MapMouseFeedbackBusy@@3HA 0x0046F000
+int MapMouseFeedbackBusy;
+// The route builder resets/accumulates this separately from corner storage.
+// RECOVERY_OBJECT: v2 0x007D3B70 0x007D3B74 ?MapDestinationCost@@3HA 0x00467430
+int MapDestinationCost;
+
+// Explicitly unfinished map editing. Mouse feedback exposes this dependency;
+// keep the source owner linkable without calling back into the old executable.
+// ORIGINAL: 0x0046B510 ?editor@MapWin@@QAEXHHH@Z 0x0046B510-0x0046BFCF
+// RECOVERY_BINDING: v1 {"evidence": ["Original46F000 calls46B510; src/unrecovered/0046b510.cpp retains the complete seed and original bounds.", "User-authorized unfinished-body policy; BODY GOES HERE remains and cannot bank a recovery claim."], "reason": "This newly referenced original MapWin editor has no recovered product implementation yet. The explicitly unfinished owning-TU definition preserves link continuity and original identity, not editing behavior."}
+void MapWin::editor(int tile_x, int tile_y, int erase) {
+    // BODY GOES HERE.
+}
 
 /*
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
@@ -101,23 +153,17 @@ Purpose: Tear down a map window's own members. Nothing here calls
 // calls     0x00462870 0x005D7410 0x00618EE0 0x006252B0 0x006456E4
 Return Value: n/a
 
-`this` IS NOT MapWin's own front, matching `guarded_teardowns.cpp`'s
-`reinterpret_cast<MapWin *>(TeardownObject007F5ACC)->MapWin::~MapWin()`:
-`TeardownObject007F5ACC` is `g_MAPWIN`'s own front (0x007D4060) plus
-0x21A6C, the offset of MapWin's own embedded GraphicWin virtual base. The
-destructor re-stores the same manual vtable pointers the constructor wrote,
-then reaches its own front (`self - 0x21a6c`) only to call `clear(0)`.
+The original receiver is the GraphicWin virtual-base subobject, not MapWin's
+front. FarmMapWindow's registered exit at 0x4620A0 passes 0x7F5ACC (its front
+plus 0x21A6C) first to this own-part destructor and then to GraphicWin's
+destructor at 0x5D4DD0. Complete destruction therefore includes both stages.
 
-HOMED INTO THE CLASS 2026-08-30: the hand-spelled body this spot carried
-measured MISMATCH (1/73) because everything but `clear` is compiler-owned -
-the EH frame, the vtable re-stores, the vtordisp zero, and the member
-teardown of the TextureStore/Buffer/Font/ImageButton members mapwin.h now
-declares. `MEASURED ~MapWin() { clear(0); }` in mapwin.h emits THIS piece
-as the out-of-line COMDAT `??_DMapWin@@QAEXXZ` (the base-object destructor;
-the `symbol` line above names it, per DECOMP_MAP's own rule for
-compiler-generated constructs the catalogue spells ??1) and inlines the
-same body into ??_DConsole. The funclet span 0x00651190-0x00651250 is that
-EH machinery's own.
+The in-class destructor in mapwin.h owns only clear(0) explicitly. The
+compiler supplies the EH frame, vtable transitions, vtordisp and member
+destruction, emitting the own-part symbol identified above. A complete
+object's generated destruction also tears down its GraphicWin virtual base;
+do not reproduce the original receiver adjustment or double-destroy that base
+by hand. The funclet span 0x00651190-0x00651250 belongs to the EH machinery.
 */
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -262,7 +308,7 @@ Return Value: n/a
 Status: Complete
 */
 void MapWin::on_left_click(int a1, int a2) {
-    if (*MapWinInputEnabled == 0) {
+    if (MapInputEnabled == 0) {
         return;
     }
     MapWin *const base = reinterpret_cast<MapWin *>(
@@ -284,7 +330,7 @@ Return Value: n/a
 Status: Complete
 */
 void MapWin::on_right_click(int a, int b) {
-    if (*MapWinInputEnabled == 0) {
+    if (MapInputEnabled == 0) {
         return;
     }
     MapWin *const base = reinterpret_cast<MapWin *>(
@@ -342,9 +388,6 @@ int MapWin::UNK2() {
 }
 
 
-func_map_win_draw_radius MapWinOriginalDrawRadius =
-    original_method<func_map_win_draw_radius>(0x0046A2A0);
-
 /*
 Purpose: Broadcast a single-tile redraw to every live map window. Walks the
          eight map-window slots at 0x007D3C3C, skips empty ones, and for every
@@ -381,7 +424,7 @@ Return Value: n/a. EAX on return is path-dependent leftover (draw_radius's own
               the last slot is empty), not a computed result, so unlike
               GraphicWin::close there is no residue to preserve and the void
               return is faithful.
-Status: Complete with temporary MapWin::draw_radius original dependency
+Status: Broadcast body complete; radius renderer dependencies remain unfinished.
 */
 // BODY IN mapwin.h, as `MEASURED inline`: the image writes it out at
 // some call sites and calls it at others, and a .cpp definition is only ever
@@ -408,7 +451,7 @@ Purpose: The radius-1 sibling of draw_tile - the identical 70-byte broadcast,
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0046A2A0
 Return Value: n/a; same path-dependent EAX leftover as draw_tile.
-Status: Complete with temporary MapWin::draw_radius original dependency
+Status: Broadcast body complete; radius renderer dependencies remain unfinished.
 */
 // BODY IN mapwin.h, as `MEASURED inline`: the image writes it out at
 // some call sites and calls it at others, and a .cpp definition is only ever
@@ -484,27 +527,907 @@ void MapWin::on_resize(int, int) {
     }
 }
 
-// The seam and definition for the unrecovered draw_map, at the end of the file
-// so no recovered body above shifts.
-//
-// auto_inline(off) is load-bearing, not tidiness. Left alone, VC6 expands this
-// one-line forwarder into MapWin::on_redraw (0x0046B1D0), reported as C4711 at
-// mapwin.cpp(313). on_redraw is BYTE_EXACT today precisely because the original
-// emits `call rel32` there, and an inlined `mov ecx / call [seam]` would break
-// it. OPENSMACX_NOINLINE is the tree's spelling for this, but it expands to
-// nothing on VC6 - the pragma is the only form cl 12.00 honours.
-#pragma auto_inline(off)
-func_map_win_draw_map MapWinOriginalDrawMap =
-    original_method<func_map_win_draw_map>(0x0046A550);
-
+// Scroll the retained image, then regenerate the exposed tile regions.
+// Tile damage uses inclusive Y and possibly wrapped X, unlike pixel RECTs.
+// The original's meaningful domain has live window/buffer objects and map
+// coordinates, dimensions and altitude sums representable as signed ints.
+// ORIGINAL: 0x0046A550 ?draw_map@MapWin@@QAEXH@Z 0x0046A550-0x0046AD51
+// RECOVERY_BINDING: v1 {"evidence": ["Original46A550..46AD51 and caller46B1D0; src/unrecovered/0046a550.cpp retained as seed evidence.", "Original46AC00..46ACCD establishes independent rectangle snapshots;46A940..46A95D translates four shared Vert values;46AD18/46AD42 dispatch through Win slots17/63.", "Original46A58D..46A5A7 snapshots old origin only for an existing incremental image; calculate_dimensions owns initialization on full rendering."], "reason": "MapWin owns this unadjusted-this map-scrolling controller; direct callers and its tile/damage members identify the owner. The original independently saves each tile region around two clipped generations, unlike the retained transcription seed."}
 void MapWin::draw_map(int draw_type) {
-    (ORIGINAL(this)->*MapWinOriginalDrawMap)(draw_type);
+    RECT horizontal_pixels = {0, 0, 0, 0};
+    RECT vertical_pixels = {0, 0, 0, 0};
+    Buffer *const canvas = static_cast<Buffer *>(this);
+
+    if (field_1DDAC_ != 0 || field_1DDB0_ != 0) {
+        field_21A44_ = 0;
+    }
+    // Initial full rendering has no previous origin: the constructor clears
+    // the flag, not these coordinates. calculate_dimensions does not enable
+    // incremental mode, so only snapshot an existing cached image.
+    int old_x = 0;
+    int old_y = 0;
+    if (field_21A44_ != 0) {
+        old_x = field_1DDA4_;
+        old_y = field_1DDA8_;
+    }
+    calculate_dimensions();
+
+    if (field_21A44_ != 0) {
+        const int new_x = field_1DDA4_;
+        const int new_y = field_1DDA8_;
+        if (old_x == new_x && old_y == new_y) {
+            return;
+        }
+
+        const int tile_width = field_1DDCC_ + field_1DDD4_;
+        const int tile_height = field_1DDD0_ + field_1DDD8_;
+        const MapTileDamageRect empty = {0, 0, 0, 0};
+        if (new_x == old_x) {
+            horizontal_damage_ = empty;
+        } else {
+            int left;
+            int right;
+            if (new_x > old_x) {
+                if (new_x - old_x > tile_width) {
+                    left = new_x - 1;
+                    right = MapLongitudeBounds + old_x + 1;
+                } else {
+                    left = tile_width + old_x - 2;
+                    right = tile_width + new_x;
+                }
+            } else {
+                if (old_x - new_x > tile_width) {
+                    left = tile_width + old_x - 1;
+                    right = MapLongitudeBounds + new_x + tile_width - 1;
+                } else {
+                    left = new_x;
+                    right = old_x + 1;
+                }
+            }
+            if ((MapIsFlat & 1) == 0) {
+                if (left < 0) {
+                    left += MapLongitudeBounds;
+                } else if (left >= MapLongitudeBounds) {
+                    left -= MapLongitudeBounds;
+                }
+                if (right < 0) {
+                    right += MapLongitudeBounds;
+                } else if (right >= MapLongitudeBounds) {
+                    right -= MapLongitudeBounds;
+                }
+            }
+            horizontal_damage_.left = left - 1;
+            horizontal_damage_.top = new_y;
+            horizontal_damage_.right = right + 1;
+            horizontal_damage_.bottom = new_y + tile_height;
+        }
+
+        if (new_y == old_y) {
+            vertical_damage_ = empty;
+        } else {
+            int left = new_x;
+            int right = new_x + tile_width;
+            if ((MapIsFlat & 1) == 0) {
+                if (left < 0) {
+                    left += MapLongitudeBounds;
+                } else if (left >= MapLongitudeBounds) {
+                    left -= MapLongitudeBounds;
+                }
+                if (right < 0) {
+                    right += MapLongitudeBounds;
+                } else if (right >= MapLongitudeBounds) {
+                    right -= MapLongitudeBounds;
+                }
+            }
+            vertical_damage_.left = left;
+            vertical_damage_.right = right;
+            if (new_y > old_y) {
+                vertical_damage_.top = tile_height + old_y - 1 - 4;
+                vertical_damage_.bottom = tile_height + new_y - 1 + 4;
+            } else {
+                vertical_damage_.top = new_y - 4;
+                vertical_damage_.bottom = old_y + 4;
+            }
+        }
+
+        int current_pixel_x;
+        int current_pixel_y;
+        tile_to_pixel(field_1DDA4_, field_1DDA8_,
+                      &current_pixel_x, &current_pixel_y);
+        // Conversion may change the origin. Cache it only after that call,
+        // then retain the same tile through all four altitude queries.
+        const int altitude_x = field_1DDA4_;
+        const int altitude_y = field_1DDA8_;
+        int altitude = get_alt(altitude_x, altitude_y, 4);
+        altitude += get_alt(altitude_x, altitude_y, 3);
+        altitude += get_alt(altitude_x, altitude_y, 2);
+        altitude += get_alt(altitude_x, altitude_y, 1);
+        // SAR rounds negative sums down, unlike signed division by four.
+        current_pixel_y += altitude >= 0 ? altitude / 4
+                                        : -1 - ((-1 - altitude) / 4);
+
+        int old_pixel_x;
+        int old_pixel_y;
+        tile_to_pixel(old_x, old_y, &old_pixel_x, &old_pixel_y);
+        altitude = get_alt(old_x, old_y, 4);
+        altitude += get_alt(old_x, old_y, 3);
+        altitude += get_alt(old_x, old_y, 2);
+        altitude += get_alt(old_x, old_y, 1);
+        old_pixel_y += altitude >= 0 ? altitude / 4
+                                    : -1 - ((-1 - altitude) / 4);
+
+        const int dx = old_pixel_x - current_pixel_x;
+        const int dy = old_pixel_y - current_pixel_y;
+        canvas->copy(canvas, dx < 0 ? -dx : 0, dy < 0 ? -dy : 0,
+                     dx > 0 ? dx : 0, dy > 0 ? dy : 0,
+                     canvas->dib_.bmiHeader.biWidth,
+                     -canvas->dib_.bmiHeader.biHeight);
+        for (int corner = 0; corner < 4; ++corner) {
+            MapCornerCopy[corner].x -= dx;
+            MapCornerCopy[corner].y -= dy;
+        }
+
+        // Copy can change window state. Decide seam direction from the
+        // current origin and extent, not the pre-copy tile geometry above.
+        const int live_x = field_1DDA4_;
+        const int tile_distance = live_x >= old_x ? live_x - old_x
+                                                  : old_x - live_x;
+        const bool crosses_seam =
+            tile_distance > field_1DDD4_ + field_1DDCC_;
+        const bool clear_right = crosses_seam ? live_x < old_x : dx < 0;
+        const int exposed_width = dx < 0 ? -dx : dx;
+        const int pixel_width = canvas->dib_.bmiHeader.biWidth;
+        const int pixel_height = -canvas->dib_.bmiHeader.biHeight;
+        horizontal_pixels.left = clear_right ? pixel_width - exposed_width : 0;
+        horizontal_pixels.top = 0;
+        horizontal_pixels.right = horizontal_pixels.left + exposed_width;
+        horizontal_pixels.bottom = pixel_height;
+        GraphicWin::fill(horizontal_pixels.left, 0, exposed_width,
+                         pixel_height, 0);
+
+        // Reload dimensions after the first fill, before the second one.
+        const int live_height = -canvas->dib_.bmiHeader.biHeight;
+        const int exposed_height = dy < 0 ? -dy : dy;
+        vertical_pixels.left = 0;
+        vertical_pixels.top = dy < 0 ? live_height - exposed_height : 0;
+        vertical_pixels.right = canvas->dib_.bmiHeader.biWidth;
+        vertical_pixels.bottom = vertical_pixels.top + exposed_height;
+        GraphicWin::fill(0, vertical_pixels.top, vertical_pixels.right,
+                         exposed_height, 0);
+    }
+
+    // Clearing may have disabled incremental rendering. Full rendering
+    // inherits the current clip and skips the incremental feedback/reset.
+    if (field_21A44_ == 0) {
+        const int faction = (GameState & 0x80) != 0
+                                ? -1 : ConsoleGlobal.faction_id_;
+        gen_map(faction, draw_type < 0);
+    } else {
+        if (IsRectEmpty(&vertical_pixels)) {
+            canvas->set_clip(&horizontal_pixels);
+            const int faction = (GameState & 0x80) != 0
+                                    ? -1 : ConsoleGlobal.faction_id_;
+            gen_map(faction, draw_type < 0);
+        } else if (IsRectEmpty(&horizontal_pixels)) {
+            vertical_pixels.top -= 10;
+            canvas->set_clip(&vertical_pixels);
+            const int faction = (GameState & 0x80) != 0
+                                    ? -1 : ConsoleGlobal.faction_id_;
+            gen_map(faction, draw_type < 0);
+        } else {
+            vertical_pixels.top -= 10;
+            const MapTileDamageRect saved_vertical = vertical_damage_;
+            vertical_damage_.left = horizontal_damage_.right;
+            canvas->set_clip(&horizontal_pixels);
+            int faction = (GameState & 0x80) != 0
+                              ? -1 : ConsoleGlobal.faction_id_;
+            gen_map(faction, draw_type < 0);
+            vertical_damage_ = saved_vertical;
+
+            // Save this rectangle AFTER the first generation: that call
+            // may have changed it. The old seed omitted this second save.
+            const MapTileDamageRect saved_horizontal = horizontal_damage_;
+            horizontal_damage_.left = horizontal_damage_.right;
+            canvas->set_clip(&vertical_pixels);
+            faction = (GameState & 0x80) != 0
+                          ? -1 : ConsoleGlobal.faction_id_;
+            gen_map(faction, draw_type < 0);
+            horizontal_damage_ = saved_horizontal;
+        }
+        if (field_1DD80_ != 0) {
+            int mouse_x;
+            int mouse_y;
+            ConsoleGlobal.get_mouse_pos(&mouse_x, &mouse_y);
+            on_mouse_feedback(mouse_x, mouse_y);
+        }
+        canvas->set_clip(&canvas->rect2_);
+    }
+    if (draw_type != 0) {
+        on_update();
+    }
 }
 
-void MapWin::draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
-    (ORIGINAL(this)->*MapWinOriginalDrawRadius)(x_coord, y_coord, a3, draw_type);
+namespace {
+int map_dest_signed(uint32_t value) {
+    return value <= 0x7fffffffU ? static_cast<int>(value)
+                              : -1 - static_cast<int>(0xffffffffU - value);
 }
-#pragma auto_inline(on)
+
+int map_dest_add(int left, int right) {
+    return map_dest_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
+}
+
+int map_dest_sub(int left, int right) {
+    return map_dest_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
+}
+
+int map_dest_mul(int left, int right) {
+    return map_dest_signed(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
+}
+
+int map_dest_abs(int value) {
+    return value < 0 ? map_dest_sub(0, value) : value;
+}
+
+int map_dest_half(int value) {
+    return value >= 0 ? value / 2 : -1 - ((-1 - value) / 2);
+}
+
+int map_dest_distance(int x1, int y1, int x2, int y2) {
+    int dx = map_dest_abs(map_dest_sub(x1, x2));
+    if ((MapIsFlat & 1) == 0 && dx > map_dest_signed(MapLongitude)) {
+        dx = map_dest_sub(MapLongitudeBounds, dx);
+    }
+    return map_dest_add(dx, map_dest_abs(map_dest_sub(y1, y2)));
+}
+
+bool map_dest_in_view(const MapWin &window, int x, int y) {
+    const int top = window.field_1DDA8_;
+    if (y < top) {
+        return false;
+    }
+    const int bottom = map_dest_add(map_dest_add(window.field_1DDD8_,
+                                                window.field_1DDD0_), top);
+    if (y >= bottom) {
+        return false;
+    }
+    const int left = window.field_1DDA4_;
+    const int right = map_dest_add(map_dest_add(window.field_1DDD4_,
+                                               window.field_1DDCC_), left);
+    // Normalize a probe, not the endpoints passed to direct_dest_line.
+    if ((MapIsFlat & 1) == 0) {
+        if (x < left) {
+            x = map_dest_add(x, MapLongitudeBounds);
+        }
+        if (x >= right) {
+            x = map_dest_sub(x, MapLongitudeBounds);
+        }
+    }
+    return x >= left && x < right;
+}
+}
+
+// ORIGINAL: 0x004672C0 ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z 0x004672C0-0x0046742C
+// RECOVERY_BINDING: v1 {"evidence": ["Original4672C0..46742C; src/recovered/units/004672c0.cpp retained as seed.", "Original467388 uses source Y as the default color; both tile conversions precede center-offset reads, and cover rendering performs both screen-to-client conversions."], "reason": "MapWin projects both endpoints and draws the route edge on either CoverWindow or its own Buffer. Preserve both target branches and the original phase/color selection; the patterned Buffer dependency remains explicitly unfinished."}
+void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
+                             int pattern_on, int pattern_off, int cover) {
+    Win::update_cursor(0, 1);
+    int pixel_x1;
+    int pixel_y1;
+    int pixel_x2;
+    int pixel_y2;
+    tile_to_pixel(x1, y1, &pixel_x1, &pixel_y1);
+    tile_to_pixel(x2, y2, &pixel_x2, &pixel_y2);
+    // Both center offsets are read after BOTH conversions, then reused.
+    const int center_x = map_dest_signed(field_1DDBC_);
+    const int center_y = map_dest_signed(field_1DDC0_);
+    pixel_x1 = map_dest_add(pixel_x1, center_x);
+    pixel_y1 = map_dest_add(pixel_y1, center_y);
+    pixel_x2 = map_dest_add(pixel_x2, center_x);
+    pixel_y2 = map_dest_add(pixel_y2, center_y);
+
+    int color;
+    switch (triad) {
+    case 0:
+        color = 0xfa;
+        break;
+    case 1:
+        color = 0xfe;
+        if (cover == 0) {
+            pixel_x1 = map_dest_add(pixel_x1, 1);
+            pixel_x2 = map_dest_add(pixel_x2, 1);
+            pixel_y1 = map_dest_add(pixel_y1, 1);
+            pixel_y2 = map_dest_add(pixel_y2, 1);
+        }
+        break;
+    case 2:
+        color = 0xf9;
+        if (cover == 0) {
+            pixel_y1 = map_dest_sub(pixel_y1, 1);
+            pixel_y2 = map_dest_sub(pixel_y2, 1);
+        }
+        break;
+    default:
+        // Original467388 loads the original source Y argument, not triad.
+        color = y1;
+        break;
+    }
+    if (field_1DD84_ != 0) {
+        color = 0xfb;
+    }
+
+    if (cover != 0) {
+        Win::screen_to_client(&pixel_x1, &pixel_y1);
+        Win::screen_to_client(&pixel_x2, &pixel_y2);
+        CoverWindow.Buffer::line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, color);
+    } else {
+        const int phase = map_dest_signed(
+            static_cast<uint32_t>(map_dest_sub(map_dest_add(pattern_on, pattern_off), 1)) &
+            static_cast<uint32_t>(PlanLineCounter));
+        // This genuine nine-argument dependency is not omitted: its owning
+        // Buffer implementation is a separate, explicit recovery obligation.
+        Buffer::line(pixel_x1, pixel_y1, pixel_x2, pixel_y2,
+                     0, color, pattern_on, pattern_off, phase);
+    }
+}
+
+// ORIGINAL: 0x00467430 ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z 0x00467430-0x00467958
+// RECOVERY_BINDING: v1 {"evidence": ["Original467430..467958; src/recovered/units/00467430.cpp retained as seed.", "Original467481/467483 establish connected-region admission;4676DD tests the pass index, not the per-pass step count. Cost writes46759x/467718/46792x own the separate7D3B70 scalar."], "reason": "MapWin owns route-preview traversal and cost publication. Original pass0 validates the whole route; pass1 charges and draws each edge. Connected land/sea uses path traversal and air/disconnected routes use the direct fallback."}
+void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
+                      int faction, int triad, int repeat,
+                      int pattern_on, int pattern_off, int cover) {
+    bool fallback = false;
+    if (triad == 0) {
+        // Original467481/483: equal regions RETAIN flag0 (path mode).
+        fallback = map_loc(x1, y1)->region != map_loc(x2, y2)->region;
+    } else if (triad == 1) {
+        const int base1 = base_at(x1, y1);
+        const int base2 = base_at(x2, y2);
+        // The map pointer/stride are loaded after the base_at callbacks.
+        if (base1 >= 0) {
+            if (base2 >= 0) {
+                fallback = port_to_port(base1, base2) == 0;
+            } else {
+                fallback = base_on_sea(base1, map_loc(x2, y2)->region) == 0;
+            }
+        } else if (base2 >= 0) {
+            fallback = base_on_sea(base2, map_loc(x1, y1)->region) == 0;
+        } else {
+            fallback = map_loc(x1, y1)->region != map_loc(x2, y2)->region;
+        }
+    } else if (triad == 2) {
+        fallback = true;
+    }
+
+    // Pass0 validates the WHOLE route. Pass1 charges and draws EVERY edge,
+    // including its first edge. The seed confused this pass index with the
+    // distinct per-pass step counter at original ebp-18.
+    for (int pass = 0; pass < 2 && !fallback; ++pass) {
+        Win::update_cursor(0, 1);
+        int current_x = x1;
+        int current_y = y1;
+        int steps = 0;
+        int last_direction = -1;
+        MapDestinationCost = 0;
+
+        for (;;) {
+            Win::update_cursor(0, 1);
+            int flags = repeat != 0 ? 0x80 : 0xc0;
+            if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating == 0) {
+                const int project_base = SecretProject.xenoempathy_dome;
+                if (project_base < 0 || Bases[project_base].faction_id_current != faction) {
+                    flags |= 0x10;
+                }
+            }
+
+            int direction;
+            const int distance = map_dest_signed(
+                static_cast<uint32_t>(map_dest_distance(current_x, current_y, x2, y2)) &
+                0xfffffffeU);
+            if (distance > 2) {
+                direction = Paths.find(current_x, current_y, x2, y2,
+                                       proto_id, faction, flags, last_direction);
+                if (direction < 0) {
+                    fallback = true;
+                    break;
+                }
+            } else {
+                direction = compass_move(current_x, current_y, x2, y2);
+            }
+            last_direction = direction;
+            int next_x = map_dest_add(current_x, VehMoveDeltaX[direction]);
+            if ((MapIsFlat & 1) == 0) {
+                if (next_x < 0) {
+                    next_x = map_dest_add(next_x, MapLongitudeBounds);
+                } else if (next_x >= MapLongitudeBounds) {
+                    next_x = map_dest_sub(next_x, MapLongitudeBounds);
+                }
+            }
+            const int next_y = map_dest_add(current_y, VehMoveDeltaY[direction]);
+
+            if (pass != 0) {
+                if (proto_id >= 0) {
+                    const int speed = speed_proto(proto_id);
+                    const int cost = hex_cost(proto_id, faction,
+                                              current_x, current_y, next_x, next_y,
+                                              speed == map_dest_signed(Rules.move_rate_roads));
+                    // hex_cost can update shared state: load the cost AFTER it.
+                    MapDestinationCost = map_dest_add(MapDestinationCost, cost);
+                }
+                if (map_dest_in_view(*this, current_x, current_y) ||
+                    map_dest_in_view(*this, next_x, next_y)) {
+                    direct_dest_line(current_x, current_y, next_x, next_y,
+                                     triad, pattern_on, pattern_off, cover);
+                }
+            }
+
+            // Arrival bypasses fog rejection and the safety step increment.
+            if (next_x == x2 && next_y == y2) {
+                break;
+            }
+            if ((PlayersData[faction].flags & 0x200) == 0 &&
+                (map_loc(next_x, next_y)->visibility &
+                 static_cast<uint8_t>(1U << (static_cast<uint32_t>(faction) & 31))) == 0 &&
+                (GameState & 0x80) == 0 && (GameRules & 0x100) == 0) {
+                fallback = true;
+            }
+            steps = map_dest_add(steps, 1);
+            if (steps > map_dest_mul(MapLongitudeBounds, 2)) {
+                fallback = true;
+            }
+            if (fallback) {
+                break;
+            }
+            current_x = next_x;
+            current_y = next_y;
+        }
+    }
+
+    if (fallback) {
+        MapDestinationCost = map_dest_mul(
+            map_dest_half(map_dest_distance(x1, y1, x2, y2)),
+            map_dest_signed(Rules.move_rate_roads));
+        direct_dest_line(x1, y1, x2, y2, triad, pattern_on, pattern_off, cover);
+    }
+}
+
+namespace {
+int mouse_feedback_signed(uint32_t value) {
+    return value <= 0x7fffffffU ? static_cast<int>(value)
+                              : -1 - static_cast<int>(0xffffffffU - value);
+}
+
+int mouse_feedback_add(int left, int right) {
+    return mouse_feedback_signed(static_cast<uint32_t>(left) +
+                                 static_cast<uint32_t>(right));
+}
+
+int mouse_feedback_sub(int left, int right) {
+    return mouse_feedback_signed(static_cast<uint32_t>(left) -
+                                 static_cast<uint32_t>(right));
+}
+
+int mouse_feedback_mul(int left, int right) {
+    return mouse_feedback_signed(static_cast<uint32_t>(left) *
+                                 static_cast<uint32_t>(right));
+}
+
+void mouse_feedback_store_x(MapWin &window, int index, int value) {
+    // The UI cycles count0..3 even in repeat mode (517E0A..517E66).
+    // Thus a five-segment path genuinely writes the next physical field:
+    // x[5] at1DDF8 aliases y[0]. Do not widen the five-element array.
+    if (index == 5) {
+        window.feedback_y_[0] = value;
+    } else {
+        window.feedback_x_[index] = value;
+    }
+}
+
+void mouse_feedback_store_y(MapWin &window, int index, int value) {
+    // Original y[5] at1DE0C aliases the cached hover-X field.
+    if (index == 5) {
+        window.field_1DE0C_ = static_cast<uint32_t>(value);
+    } else {
+        window.feedback_y_[index] = value;
+    }
+}
+}
+
+// ORIGINAL: 0x0046F000 ?on_mouse_move@MapWin@@QAEXHH@Z 0x0046F000-0x0046F651
+// RECOVERY_BINDING: v1 {"evidence": ["Original46F000..46F651; src/unrecovered/0046f000.cpp remains a seed, including its contradictory control flow and stride transcription.", "Original517DD3..517E66 permits repeat mode with waypoint count3; endpoint x[5]/y[5] physically alias y[0]/hoverX. The C++ explicitly names those fields rather than overrunning arrays.", "Original46F0E1/46F118 skip directly to CoverWindow update;46F3A2..46F3B0 retains the base-path endpoint quirk;46F5DD tests the shared string address."], "reason": "The original MapWin/PlanWin/Console Win-branch slot17 entries4218B0/48BFA0/51DE70 dispatch this two-coordinate notification. Genuine virtual inheritance owns the receiver adjustment; it is distinct from the four-argument Win mouse router."}
+// symbol    ?on_mouse_feedback@MapWin@@UAEXHH@Z
+void MapWin::on_mouse_feedback(int pixel_x, int pixel_y) {
+    if (MapMouseFeedbackBusy != 0 || UnkGlobal0093A934 != 0 ||
+        ConsoleControlTurnActive != 0 || MapInputEnabled == 0 ||
+        field_1DD78_ != 0) {
+        return;
+    }
+
+    int tile_x;
+    int tile_y;
+    if (pixel_to_tile(pixel_x, pixel_y, &tile_x, &tile_y) != 0 ||
+        tile_y < 0 || tile_y >= MapLatitudeBounds ||
+        tile_x < 0 || tile_x >= MapLongitudeBounds) {
+        return;
+    }
+    if (field_1DD8C_ != 0) {
+        editor(tile_x, tile_y, field_1DD8C_ == 2);
+        return;
+    }
+
+    if (ConsoleGlobal.selecting(tile_x, tile_y) == 0) {
+        if (cursor_sprite_ != 0 || cursor_resource_id_ != 0x7f00) {
+            Win::set_cursor(0x7f00);
+            cursor_resource_id_ = 0x7f00;
+            cursor_sprite_ = 0;
+        }
+        return;
+    }
+
+    // 46F0E1 and46F118 go directly to46F601, not the text builder.
+    if (field_1DD80_ == 0) {
+        CoverWindow.soft_update();
+        return;
+    }
+    MapMouseFeedbackBusy = 1;
+    do_all_non_input();
+    MapMouseFeedbackBusy = 0;
+    if (field_1DE0C_ == static_cast<uint32_t>(tile_x) &&
+        feedback_hover_y_ == tile_y) {
+        CoverWindow.soft_update();
+        return;
+    }
+
+    CoverWindow.fill(9);
+    field_1DE0C_ = static_cast<uint32_t>(tile_x);
+    feedback_hover_y_ = tile_y;
+
+    const int vehicle = ConsoleGlobal.selected_vehicle_;
+    if (vehicle < 0) {
+        Win::update_cursor(0, 1);
+        feedback_proto_ = 10;
+        feedback_x_[0] = Bases[field_1DE24_].x;
+        feedback_y_[0] = Bases[field_1DE24_].y;
+        // Original46F3A2 loads tile_y;46F3B0 writes the NEXT X slot.
+        // No store initializes y[1] on this branch. Preserve this quirk.
+        feedback_x_[1] = tile_y;
+        feedback_triad_ = 2;
+        feedback_repeat_ = 0;
+        feedback_segment_count_ = 1;
+        dest_line(feedback_x_[0], feedback_y_[0],
+                  feedback_x_[1], feedback_y_[1],
+                  feedback_proto_, ConsoleGlobal.faction_id_,
+                  feedback_triad_, feedback_repeat_, 3, 5, 1);
+    } else {
+        feedback_proto_ = Vehs[vehicle].proto_id;
+        feedback_repeat_ = ConsoleGlobal.field_23D10_ == 8;
+        if (feedback_repeat_ != 0 ||
+            (ConsoleGlobal.field_23D10_ == 1 &&
+             (Vehs[vehicle].state & 0x02000000U) != 0)) {
+            Vehs[vehicle].waypoint_x[Vehs[vehicle].waypoint_count] =
+                static_cast<int16_t>(tile_x);
+            Vehs[vehicle].waypoint_y[Vehs[vehicle].waypoint_count] =
+                static_cast<int16_t>(tile_y);
+        } else if (ConsoleGlobal.field_23D10_ == 1) {
+            Vehs[vehicle].waypoint_x[0] = static_cast<int16_t>(tile_x);
+            Vehs[vehicle].waypoint_y[0] = static_cast<int16_t>(tile_y);
+            Vehs[vehicle].waypoint_count = 0;
+        }
+        feedback_triad_ = Chassis[VehPrototypes[Vehs[vehicle].proto_id].chassis_id].triad;
+
+        // The original reloads both count and repeat each iteration, then
+        // pumps before reading the next segment's coordinates/count again.
+        for (int segment = 0;
+             segment < Vehs[vehicle].waypoint_count + 1 +
+                           (feedback_repeat_ != 0 && Vehs[vehicle].waypoint_count != 0);
+             ++segment) {
+            Win::update_cursor(0, 1);
+            const int start_x = segment == 0 ? Vehs[vehicle].x
+                                            : Vehs[vehicle].waypoint_x[segment - 1];
+            const int start_y = segment == 0 ? Vehs[vehicle].y
+                                            : Vehs[vehicle].waypoint_y[segment - 1];
+            const int next = (segment + 1) % (Vehs[vehicle].waypoint_count + 2);
+            const int end_x = next == 0 ? Vehs[vehicle].x
+                                       : Vehs[vehicle].waypoint_x[next - 1];
+            const int end_y = next == 0 ? Vehs[vehicle].y
+                                       : Vehs[vehicle].waypoint_y[next - 1];
+            mouse_feedback_store_x(*this, segment, start_x);
+            mouse_feedback_store_y(*this, segment, start_y);
+            mouse_feedback_store_x(*this, segment + 1, end_x);
+            mouse_feedback_store_y(*this, segment + 1, end_y);
+            feedback_segment_count_ = segment + 1;
+            // Arguments retain the locals even when the endpoint stores
+            // alias earlier fields. They are not reloaded from the arrays.
+            dest_line(start_x, start_y, end_x, end_y,
+                      feedback_proto_, ConsoleGlobal.faction_id_,
+                      feedback_triad_, feedback_repeat_, 3, 5, 1);
+        }
+    }
+
+    StringTemp[0] = '\0';
+    if (ConsoleGlobal.field_23D10_ == 8) {
+        strcat(StringTemp, label_get(410));
+    } else if (field_1DD84_ != 0) {
+        strcat(StringTemp, label_get(433));
+    } else {
+        strcat(StringTemp, label_get(411));
+    }
+    strcat(StringTemp, " ");
+    // These are the original conversion's saved outputs, not a second call.
+    say_loc(StringTemp, tile_x, tile_y, 0, 2, 0);
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, label_get(412));
+    strcat(StringTemp, " = ");
+    char number[0x40];
+    _itoa(MapDestinationCost / mouse_feedback_signed(Rules.move_rate_roads), number, 10);
+    strcat(StringTemp, number);
+    if (MapDestinationCost % mouse_feedback_signed(Rules.move_rate_roads) != 0) {
+        strcat(StringTemp, " ");
+        _itoa(MapDestinationCost % mouse_feedback_signed(Rules.move_rate_roads), number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, "/");
+        _itoa(mouse_feedback_signed(Rules.move_rate_roads), number, 10);
+        strcat(StringTemp, number);
+    }
+
+    CoverWindow.set_text_color(0x9f, 0x41, 1, 1);
+    CoverWindow.set_font(find_font(12, 1), 0, 0, 0);
+    const int width = ConsoleGlobal.dib_.bmiHeader.biWidth;
+    const int text_width = CoverWindow.text_width(StringTemp);
+    const int text_x = mouse_feedback_sub(pixel_x,
+        mouse_feedback_mul(text_width, pixel_x) / width);
+    const int text_y = mouse_feedback_add(
+        mouse_feedback_signed(ConsoleGlobal.field_1DDB8_), pixel_y);
+    // 46F5DD tests StringTemp's ADDRESS, not its first character. It is
+    // always nonnull for owned storage; empty strings still reach write_l.
+    CoverWindow.write_l(StringTemp, text_x, text_y, static_cast<int>(strlen(StringTemp)));
+    CoverWindow.soft_update();
+}
+
+namespace {
+int map_radius_wrap_x(int x) {
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) {
+            x = map_dest_add(x, MapLongitudeBounds);
+        } else if (x >= MapLongitudeBounds) {
+            x = map_dest_sub(x, MapLongitudeBounds);
+        }
+    }
+    return x;
+}
+
+bool map_radius_valid(int x, int y) {
+    return y >= 0 && y < MapLatitudeBounds &&
+           x >= 0 && x < MapLongitudeBounds;
+}
+
+int map_radius_half_width(int extent, int row) {
+    // This is intentionally NOT a symmetric diamond. Original4693A4..3BB
+    // narrows negative rows by their distance, but positive rows by parity.
+    const int inset = row < 0 ? map_dest_sub(0, row) : row & 1;
+    return map_dest_sub(extent, inset);
+}
+}
+
+// Original4216F0..42180C: genuine MapWin thiscall, not the seed's stdcall.
+// Proposed name; the original has no surviving decorated method identity.
+// ORIGINAL: 0x004216F0 sub_4216f0 0x004216F0-0x0042180C
+// RECOVERY_BINDING: v1 {"evidence": ["Original4216F0..42180C, retained src/unrecovered/004216f0.cpp; gen_radius469190 calls this method for overlay admission."], "reason": "The original uses a MapWin receiver and three stack arguments, testing its viewport and optional altitude margin. The seed stdcall declaration loses the genuine receiver; tile_in_view is a behavior-based provisional name."}
+// symbol    ?tile_in_view@MapWin@@QAEHHHH@Z
+int MapWin::tile_in_view(int x, int y, int margin) {
+    if (margin != 0 && map_radius_valid(x, y)) {
+        const int climate = map_loc(x, y)->climate;
+        if ((climate & 0xe0) > 0x60 &&
+            map_dest_add(map_dest_sub(y, climate >> 5), 3) <
+                map_dest_add(field_1DDA8_, margin)) {
+            return 0;
+        }
+    }
+    const int top = field_1DDA8_;
+    if (y < map_dest_add(top, margin)) {
+        return 0;
+    }
+    const int bottom = map_dest_add(
+        map_dest_sub(map_dest_add(field_1DDD8_, field_1DDD0_), margin), top);
+    if (y >= bottom) {
+        return 0;
+    }
+    const int left = map_dest_add(field_1DDA4_, margin);
+    const int right = map_dest_add(
+        map_dest_sub(map_dest_add(field_1DDD4_, field_1DDCC_), margin), field_1DDA4_);
+    if ((MapIsFlat & 1) == 0) {
+        if (x < left) {
+            x = map_dest_add(x, MapLongitudeBounds);
+        }
+        if (x >= right) {
+            x = map_dest_sub(x, MapLongitudeBounds);
+        }
+    }
+    return x >= left && x < right;
+}
+
+// Original4712D0..471316, historically claimed exact as mapwin_unk1.
+// The adapter itself is genuine code, with a nullable derived-to-base cast;
+// its gen_terrain_poly dependency remains the retained renderer obligation.
+// ORIGINAL: 0x004712D0 mapwin_unk1 0x004712D0-0x00471316 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original4712D0..471316 and retained src/recovered/units/004712d0.cpp, including its exactness obligation and historical ABI notes.", "Original conditional receiver conversion reads the GraphicWin virtual-base displacement and adds the Buffer subobject offset. C++ base conversion supplies the same null handling without manual vbtable arithmetic."], "reason": "This nine-argument cdecl adapter performs a nullable genuine MapWin-to-Buffer conversion before entering the common ten-argument renderer. Preserve its original mapwin_unk1 identity and historical seed obligation; gen_window_terrain describes the recovered source role."}
+// symbol    ?gen_window_terrain@@YAHPAVMapWin@@HHHHHHHH@Z
+int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
+                              int base_id, int flags, int x, int y,
+                              int pixel_x, int pixel_y) {
+    return gen_terrain_poly(static_cast<Buffer *>(window), window,
+                            zoom, faction, base_id, flags,
+                            x, y, pixel_x, pixel_y);
+}
+
+// Original468F90..469183: distinct from the five-argument tile renderer.
+// ORIGINAL: 0x00468F90 ?draw_vehicles@MapWin@@QAEXHHHH@Z 0x00468F90-0x00469183
+// RECOVERY_BINDING: v1 {"evidence": ["Original468F90..469183 and retained src/recovered/units/00468f90.cpp; original vehicle scan caps extension at10, unlike terrain and overlay scans."], "reason": "The four-argument MapWin overload scans a clipped radius and calls the distinct five-argument tile renderer. It preserves the capped upward extension, asymmetric rows and live viewport/center reads."}
+void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    int span = map_dest_add(map_dest_mul(radius, 2), 2);
+    int upper_tile_y = 32000;
+    int ignored_x;
+    pixel_to_tile(canvas->rect1_.left, canvas->rect1_.top,
+                  &ignored_x, &upper_tile_y);
+    while (upper_tile_y < map_dest_sub(y, span) && span < 10) {
+        span = map_dest_add(span, 2);
+    }
+    const int extent = map_dest_add(span, 2);
+    if (extent < 0) {
+        return;
+    }
+    for (int row = -extent; row <= extent + 1; ++row) {
+        int half_width = map_radius_half_width(extent, row);
+        if (radius == 0) {
+            half_width = map_dest_add(half_width, 2);
+        }
+        const int tile_y = map_dest_add(y, row);
+        for (int column = -half_width; column <= half_width; column += 2) {
+            const int tile_x = map_radius_wrap_x(map_dest_add(x, column));
+            if (map_radius_valid(tile_x, tile_y) &&
+                map_dest_in_view(*this, tile_x, tile_y)) {
+                int pixel_x;
+                int pixel_y;
+                tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+                draw_vehicles(tile_x, tile_y, pixel_x,
+                              map_dest_sub(pixel_y, field_1DDC0_), faction);
+            }
+        }
+    }
+}
+
+// Original469190..469718, not the register/goto seed's rectangle arguments.
+// ORIGINAL: 0x00469190 ?gen_radius@MapWin@@QAEXHHHHH@Z 0x00469190-0x00469718
+// RECOVERY_BINDING: v1 {"evidence": ["Original469190..469718 and retained src/recovered/units/00469190.cpp.", "Original469333..469355 converts left/top then right/top, not the transposed seed arguments;4691FB fills via the genuine GraphicWin receiver. Radius-zero scan widening does not apply to the overlay scan."], "reason": "MapWin owns clipped terrain, vehicle and overlay generation. The original scan is asymmetric; top-left and top-right clip conversions determine terrain extension, while overlays later recompute from the left conversion."}
+void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain) {
+    RECT clip;
+    if (compute_clip(x, y, radius, &clip) == 0) {
+        return;
+    }
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    canvas->set_clip(&clip);
+    if (radius == 0 && skip_terrain == 0) {
+        if ((field_1DD70_ & 0x10000000U) == 0) {
+            GraphicWin::fill(&clip, 0x41);
+        }
+        const int tile_y = map_dest_sub(y, 3);
+        for (int side = -1; side <= 1; side += 2) {
+            const int tile_x = map_radius_wrap_x(map_dest_add(x, side));
+            if (map_radius_valid(tile_x, tile_y)) {
+                int pixel_x;
+                int pixel_y;
+                tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+                gen_terrain_poly(canvas, this, field_1DD98_, faction, -1,
+                                 field_1DD70_, tile_x, tile_y, pixel_x, pixel_y);
+                on_map(tile_x, tile_y);
+            }
+        }
+    }
+
+    const int initial_span = map_dest_add(map_dest_mul(radius, 2), 2);
+    int span = initial_span;
+    int upper_left_y = 32000;
+    int upper_right_y = 32000;
+    int ignored_x;
+    pixel_to_tile(clip.left, clip.top, &ignored_x, &upper_left_y);
+    pixel_to_tile(clip.right, clip.top, &ignored_x, &upper_right_y);
+    const int upper_y = upper_left_y < upper_right_y ? upper_left_y : upper_right_y;
+    while (upper_y < map_dest_sub(y, span)) {
+        span = map_dest_add(span, 2);
+    }
+    const int terrain_extent = map_dest_add(span, 2);
+    if (skip_terrain == 0) {
+        for (int row = -terrain_extent; row <= terrain_extent + 1; ++row) {
+            int half_width = map_radius_half_width(terrain_extent, row);
+            if (radius == 0) {
+                half_width = map_dest_add(half_width, 2);
+            }
+            const int tile_y = map_dest_add(y, row);
+            for (int column = -half_width; column <= half_width; column += 2) {
+                const int tile_x = map_radius_wrap_x(map_dest_add(x, column));
+                if (map_radius_valid(tile_x, tile_y) &&
+                    map_dest_in_view(*this, tile_x, tile_y)) {
+                    int pixel_x;
+                    int pixel_y;
+                    tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+                    gen_window_terrain(this, field_1DD98_, faction, -1,
+                                       field_1DD70_, tile_x, tile_y, pixel_x, pixel_y);
+                }
+            }
+        }
+    }
+
+    draw_vehicles(x, y, radius, faction);
+    draw_base_names();
+    if ((field_1DD70_ & 0x2000) != 0) {
+        if (radius == 0) {
+            const int tile_y = map_dest_sub(y, 3);
+            for (int side = -1; side <= 1; side += 2) {
+                const int tile_x = map_radius_wrap_x(map_dest_add(x, side));
+                if (map_radius_valid(tile_x, tile_y)) {
+                    gen_overlays(tile_x, tile_y);
+                }
+            }
+        }
+        span = initial_span;
+        upper_left_y = 32000;
+        pixel_to_tile(clip.left, clip.top, &ignored_x, &upper_left_y);
+        while (upper_left_y < map_dest_sub(y, span)) {
+            span = map_dest_add(span, 2);
+        }
+        const int overlay_extent = map_dest_add(span, 2);
+        for (int row = -overlay_extent; row <= overlay_extent + 1; ++row) {
+            const int half_width = map_radius_half_width(overlay_extent, row);
+            const int tile_y = map_dest_add(y, row);
+            for (int column = -half_width; column <= half_width; column += 2) {
+                const int tile_x = map_radius_wrap_x(map_dest_add(x, column));
+                if (map_radius_valid(tile_x, tile_y) && tile_in_view(tile_x, tile_y, 0)) {
+                    gen_overlays(tile_x, tile_y);
+                }
+            }
+        }
+    }
+    if ((field_1DD70_ & 0x20000) != 0) {
+        draw_legend();
+    }
+    canvas->set_clip(&canvas->rect2_);
+}
+
+// Original46A2A0..46A496. This consumes the SAME copied vertices produced
+// by gen_terrain_poly, never a detached radius-local copy or address alias.
+// ORIGINAL: 0x0046A2A0 ?draw_radius@MapWin@@QAEXHHHH@Z 0x0046A2A0-0x0046A496
+// RECOVERY_BINDING: v1 {"evidence": ["Original46A2A0..46A496 and retained src/recovered/units/0046a2a0.cpp.", "Original46A437 passes shared7D3BE8 vertices to the selected genuine radius Texture; signed zoom selects the texture. Console state is observed after generation and soft_update precedes optional do_all_draws."], "reason": "This unadjusted MapWin receiver owns radius generation, the live console cursor-overlay decision and the bounded update. It consumes the same four copied vertices as the terrain producer and scroll controller."}
+void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
+    const int faction = (GameState & 0x80) != 0 ? -1 : ConsoleGlobal.faction_id_;
+    gen_radius(x, y, radius, faction, draw_type < 0);
+
+    if (ConsoleGlobal.cursor_active_ == 0) {
+        const int network = IsMultiplayerNet;
+        if ((network == 0 || ConsoleControlTurnActive == 0) && draw_type >= 0 &&
+            (ConsoleGlobal.field_23BF8_ != 0 || ConsoleGlobal.survey_mode_ != 0) &&
+            (ConsoleGlobal.field_23BE4_ != 0 || (network != 0 && (GameState & 2) != 0)) &&
+            (field_1DD78_ == 0 || (field_1DD70_ & 0x80000000U) != 0)) {
+            const int history = ConsoleGlobal.cursor_history_index_;
+            const int cursor_y = ConsoleGlobal.cursor_history_y_[history];
+            const int cursor_x = ConsoleGlobal.cursor_history_x_[history];
+            if (map_dest_in_view(*this, cursor_x, cursor_y)) {
+                Texture &texture = map_dest_signed(field_1DD98_) <= -8
+                                       ? g_RADIUS2_TEXTURE : g_RADIUS1_TEXTURE;
+                texture.draw_trans(static_cast<Buffer *>(this), MapCornerCopy, 0);
+            }
+        }
+    }
+    if (draw_type != 0) {
+        RECT clip;
+        if (compute_clip(x, y, radius, &clip) != 0) {
+            GraphicWin::soft_update(&clip);
+            if (draw_type >= 2) {
+                do_all_draws();
+            }
+        }
+    }
+}
 
 /*
 Purpose: Repaint every live MapWin slot - the FREE draw_map, not the method
@@ -551,12 +1474,9 @@ void __cdecl draw_map(int draw_type) {
 }
 
 /*
-Purpose: Repaint the radius around a tile on every live MapWin slot. Same
-         shape as the free draw_map above, and the same fix: dispatch through
-         the METHOD (MapWin::draw_radius), not the MapWinOriginalDrawRadius
-         seam directly - the image's own call site is `call 0x46a2a0`, a
-         direct rel32, where the seam variable loads through an indirect
-         call.
+Purpose: Repaint the radius around a tile on every live MapWin slot. Like
+         the free draw_map above, call the genuine MapWin method directly;
+         the original call site is a direct rel32 to 0x46A2A0.
 // ORIGINAL: 0x0046AEF0 ?draw_radius@@YAXHHHH@Z 0x0046AEF0-0x0046AF38 BYTE_EXACT
 // size      72 bytes
 // prototype void (__cdecl ?draw_radius@@YAXHHHH@Z)(int, int, int, int)
@@ -584,20 +1504,16 @@ void __cdecl draw_radius(int x_coord, int y_coord, int a3, int draw_type) {
     } while (cursor < end);
 }
 
-// Three fixed-address windows terrain_fixup() also reaches, each pushed as a
-// bare constant in the image (`push 0x8eb48c` etc.) rather than loaded
-// through a variable - none has an established identity, so each is a raw
-// address rather than a named accessor.
+// Two additional windows still lack source-owned identities. The third
+// original fixed receiver is the genuine FarmMapWindow declared above.
 static MapWin *const MapWinTerrainFixupExtra1 =
     reinterpret_cast<MapWin *>(0x008EB48C);
 static MapWin *const MapWinTerrainFixupExtra2 =
     reinterpret_cast<MapWin *>(0x006C5C9C);
-static MapWin *const MapWinTerrainFixupExtra3 =
-    reinterpret_cast<MapWin *>(0x007D4060);
 
 /*
-Purpose: Fix up terrain on every live MapWin slot, then on three more
-         fixed-address windows.
+Purpose: Fix up terrain on every live MapWin slot, then two unresolved
+         windows and the shared farm display window, in that order.
 // ORIGINAL: 0x00471240 ?mapwin_terrain_fixup@@YAXXZ 0x00471240-0x00471293 BYTE_EXACT
 // size      83 bytes
 // prototype void (__cdecl ?mapwin_terrain_fixup@@YAXXZ)()
@@ -628,7 +1544,7 @@ void __cdecl mapwin_terrain_fixup() {
     } while (cursor < end);
     terrain_fixup(MapWinTerrainFixupExtra1);
     terrain_fixup(MapWinTerrainFixupExtra2);
-    terrain_fixup(MapWinTerrainFixupExtra3);
+    terrain_fixup(&FarmMapWindow);
 }
 
 /*
@@ -716,8 +1632,16 @@ static const signed char *const AltLightBit1 = (const signed char *)0x00685A24;
 static const signed char *const AltLightBit2 = (const signed char *)0x00685B60;
 static const signed char *const AltLightBit200 = (const signed char *)0x007F6750;
 
-// 0x007F6680 - THE CORNER SLOPE-LIGHT TABLES. Four 0x31-byte 7x7 runs, one
-// per tile corner, each read as
+// Four mutable ocean-shade quads, shared across terrain calls. The renderer
+// publishes each cell before passing these same slices to Texture painters,
+// which may clamp the cells in place. Original storage is7F6644..7F6684.
+// The last DWORD is also the first four bytes addressed by the biased
+// corner-light lookup below; that consumer must observe this same owner.
+// RECOVERY_OBJECT: v2 0x007F6644 0x007F6684 _OceanCornerShades 0x004632D0
+static int OceanCornerShades[16];
+
+// 0x007F6680 is the BIASED corner slope-light lookup base, not a proved
+// allocation start. get_brighting reads each corner as
 //
 //     lea ebx, [eax*8] / sub ebx, eax            ; v * 7
 //     movsx ebx, byte ptr [ebx + eax + 0x7f6680] ; [v*7 + w]
@@ -728,12 +1652,17 @@ static const signed char *const AltLightBit200 = (const signed char *)0x007F6750
 // 0x7F66E2 and 0x7F6713, so the stride is 0x31 = 49 = 7*7 and this one base
 // serves all four.
 //
-// NOT the table `compute_lighting_table` (0x00470420) builds: that one walks
-// `lea eax, [eax + ebx + 0x7f6688]` with eax = 0x30*q - the same 4 x 49 shape
-// built from `-3*(x+y)/sqrt(x*x+y*y)` over a 7x7 slope grid, but starting
-// EIGHT BYTES HIGHER. The two runs overlap for 188 of their 196 bytes, so
-// they are not the same storage, and only the 0x7F6688 one has a recovered
-// writer. Bound here at the address `get_brighting` actually reads.
+// compute_lighting_table (470420) writes 4*49 bytes at 7F6688..7F674C.
+// For v,w in 1..7, 7*v+w = 8+7*(v-1)+(w-1): this lookup addresses that
+// SAME generated table. The eight-byte bias does not prove another object.
+// get_alt (47037A..47039C) stores (sum_four_tiers-4*recipient_tier+4)&15;
+// the 1..7 domain needs all other corner tiers within one of the recipient.
+// Without that invariant, reads can reach the ocean-shade tail at 7F6680
+// or beyond the generated table. Loaded/editor/cache states and the real
+// initializer path remain unresolved; do not silently clamp these indices
+// or split the storage into independent arrays on the bias alone. The
+// known four-byte ocean-tail overlap is handled explicitly by get_brighting;
+// the remaining generated-light storage and its initializer stay unresolved.
 static const signed char *const CornerLightTable = (const signed char *)0x007F6680;
 
 // 0x00685684 and the five tables behind it - THE ALTITUDE BONUS LOOKUP
@@ -805,6 +1734,2206 @@ static int *const KeyStatePollSuppressed = (int *)0x009393C0;
 // no other spelling for one.
 static int *const IAT_GetKeyState = (int *)0x0066932C;
 static int *const IAT_GetAsyncKeyState = (int *)0x00669330;
+
+// ====================
+// STORAGE gen_terrain_poly READS. Bounded source-owned tables below carry
+// object mappings; the remaining address aliases still need their storage
+// and producer closure. The terrain-band receivers themselves are the
+// declared objects in texture.h / sprite.h.
+
+// The shared raster light limits are owned by Texture (texture.h).
+// Land rendering temporarily selects -4/+4 and restores -256/+256.
+
+// Neighbour-mask texture and rotation pairs for moisture, jungle and fungus.
+// 463623..463629 zero the masks; 463BCA/463BD2 and 463D82..463DE5
+// only set bits 0..7. The six byte readers at 463EEB/463F64,
+// 464EB6/464EEB and 46506C/4650C0 therefore bound this table to
+// [685484,685684): 256 pairs, texture rows 0..14 and rotations 0..3.
+// No direct writer or escaped pointer occurs in the pinned image references.
+// Keep the original exceptional pairs for masks CA and DA ({11,2});
+// geometric diagonal normalization would change them to {5,1}.
+// RECOVERY_OBJECT: v2 0x00685484 0x00685684 _LandMoistureTable 0x004632D0
+static const unsigned char LandMoistureTable[256][2] = {
+    // Masks 00..0F.
+    {0, 0}, {0, 0}, {1, 0}, {1, 0}, {0, 0}, {0, 0}, {1, 0}, {1, 0},
+    {1, 3}, {1, 3}, {2, 0}, {2, 0}, {1, 3}, {1, 3}, {3, 0}, {3, 0},
+    // Masks 10..1F.
+    {0, 0}, {0, 0}, {1, 0}, {1, 0}, {0, 0}, {0, 0}, {1, 0}, {1, 0},
+    {1, 3}, {1, 3}, {2, 0}, {2, 0}, {1, 3}, {1, 3}, {3, 0}, {3, 0},
+    // Masks 20..2F.
+    {1, 2}, {1, 2}, {4, 0}, {4, 0}, {1, 2}, {1, 2}, {4, 0}, {4, 0},
+    {2, 3}, {2, 3}, {5, 0}, {5, 0}, {2, 3}, {2, 3}, {6, 0}, {6, 0},
+    // Masks 30..3F.
+    {1, 2}, {1, 2}, {4, 0}, {4, 0}, {1, 2}, {1, 2}, {4, 0}, {4, 0},
+    {3, 3}, {3, 3}, {7, 0}, {7, 0}, {3, 3}, {3, 3}, {8, 0}, {8, 0},
+    // Masks 40..4F.
+    {0, 0}, {0, 0}, {1, 0}, {1, 0}, {0, 0}, {0, 0}, {1, 0}, {1, 0},
+    {1, 3}, {1, 3}, {2, 0}, {2, 0}, {1, 3}, {1, 3}, {3, 0}, {3, 0},
+    // Masks 50..5F.
+    {0, 0}, {0, 0}, {1, 0}, {1, 0}, {0, 0}, {0, 0}, {1, 0}, {1, 0},
+    {1, 3}, {1, 3}, {2, 0}, {2, 0}, {1, 3}, {1, 3}, {3, 0}, {3, 0},
+    // Masks 60..6F.
+    {1, 2}, {1, 2}, {4, 0}, {4, 0}, {1, 2}, {1, 2}, {4, 0}, {4, 0},
+    {2, 3}, {2, 3}, {5, 0}, {5, 0}, {2, 3}, {2, 3}, {6, 0}, {6, 0},
+    // Masks 70..7F.
+    {1, 2}, {1, 2}, {4, 0}, {4, 0}, {1, 2}, {1, 2}, {4, 0}, {4, 0},
+    {3, 3}, {3, 3}, {7, 0}, {7, 0}, {3, 3}, {3, 3}, {8, 0}, {8, 0},
+    // Masks 80..8F.
+    {1, 1}, {1, 1}, {2, 1}, {3, 1}, {1, 1}, {1, 1}, {2, 1}, {3, 1},
+    {4, 3}, {4, 3}, {5, 1}, {6, 1}, {4, 3}, {4, 3}, {7, 1}, {8, 1},
+    // Masks 90..9F.
+    {1, 1}, {1, 1}, {2, 1}, {3, 1}, {1, 1}, {1, 1}, {2, 1}, {3, 1},
+    {4, 3}, {4, 3}, {5, 1}, {6, 1}, {4, 3}, {4, 3}, {7, 1}, {8, 1},
+    // Masks A0..AF.
+    {2, 2}, {2, 2}, {5, 2}, {7, 2}, {2, 2}, {2, 2}, {5, 2}, {7, 2},
+    {5, 3}, {5, 3}, {9, 0}, {10, 0}, {5, 3}, {5, 3}, {10, 3}, {11, 0},
+    // Masks B0..BF.
+    {2, 2}, {2, 2}, {5, 2}, {7, 2}, {2, 2}, {2, 2}, {5, 2}, {7, 2},
+    {6, 3}, {6, 3}, {10, 2}, {12, 0}, {6, 3}, {6, 3}, {11, 3}, {13, 0},
+    // Masks C0..CF.
+    {1, 1}, {1, 1}, {2, 1}, {3, 1}, {1, 1}, {1, 1}, {2, 1}, {3, 1},
+    {4, 3}, {4, 3}, {11, 2}, {6, 1}, {4, 3}, {4, 3}, {7, 1}, {8, 1},
+    // Masks D0..DF.
+    {1, 1}, {1, 1}, {2, 1}, {3, 1}, {1, 1}, {1, 1}, {2, 1}, {3, 1},
+    {4, 3}, {4, 3}, {11, 2}, {6, 1}, {4, 3}, {4, 3}, {7, 1}, {8, 1},
+    // Masks E0..EF.
+    {3, 2}, {3, 2}, {6, 2}, {8, 2}, {3, 2}, {3, 2}, {6, 2}, {8, 2},
+    {7, 3}, {7, 3}, {10, 1}, {11, 1}, {7, 3}, {7, 3}, {12, 3}, {13, 1},
+    // Masks F0..FF.
+    {3, 2}, {3, 2}, {6, 2}, {8, 2}, {3, 2}, {3, 2}, {6, 2}, {8, 2},
+    {8, 3}, {8, 3}, {11, 2}, {13, 2}, {8, 3}, {8, 3}, {13, 3}, {14, 0},
+};
+
+// 0x00685478 / 0x0068547C are the tile the
+// sensor-distance test measures from. The retained Console::new_base seed
+// at 0x004CF7C0 publishes this position before redraw and resets both to
+// -99 afterward; that producer still needs recovery.
+static int *const MapFocusX = (int *)0x00685478;
+static int *const MapFocusY = (int *)0x0068547C;
+
+// Original 46479D..464B62 reads signed receiver/rotation pairs. Only a
+// texture of -1 suppresses drawing: Crater row 31 uses texture 2 with
+// rotation -1, which the corner mask turns into rotation 3.
+struct LandmarkTextureChoice {
+    signed char texture;
+    signed char rotation;
+};
+static_assert(sizeof(LandmarkTextureChoice) == 2, "landmark pair stride");
+
+// The bounded read domain is 49 rows, not a claim about original allocator
+// metadata. Crater/Mesa enumerate 0..48 (5C5EBD/5C8113). Mount itself creates
+// nine codes, but explicit Mesa placement bypasses near_landmark at 5C7F50..67;
+// bit2_set preserves Mount's flag and code_set overwrites the shared code.
+// Overlapping row 48 is reachable, so Mount's sentinel tail must remain.
+// Monsoon overlap can retain these flags while publishing higher codes:
+// row 49 reaches the old alignment bytes, and row 119 another data owner.
+// Deliberate, user-approved behavior change: negative or out-of-table codes
+// skip only that landmark overlay. Never read a neighboring object, clamp
+// to a different row, or omit the remaining terrain work. This is not an
+// original-byte equivalence claim for those overlapping/loaded/edited codes.
+// No direct writers or pointer escapes were found for these data ranges.
+// Irregular pair initializers are materialized only in ignored build context.
+// RECOVERY_OBJECT: v2 0x00685A98 0x00685AFA _MountPlanetTable 0x004632D0
+static const LandmarkTextureChoice MountPlanetTable[49] = {
+#include "terrain_mount_planet.inc"
+};
+// RECOVERY_OBJECT: v2 0x00685AFC 0x00685B5E _SunnyMesaTable 0x004632D0
+static const LandmarkTextureChoice SunnyMesaTable[49] = {
+#include "terrain_sunny_mesa.inc"
+};
+// RECOVERY_OBJECT: v2 0x00685BD4 0x00685C36 _GarlandCraterTable 0x004632D0
+static const LandmarkTextureChoice GarlandCraterTable[49] = {
+#include "terrain_garland_crater.inc"
+};
+
+// OceanDetailShade is the shared load_cycling-owned table in game.cpp.
+// Unworked tiles use this separately owned scalar read at 464148 instead
+// of get_point_light's value; it is not part of that cycling table.
+// RECOVERY_OBJECT: v2 0x00686354 0x00686358 _UnworkedCornerLight 0x004632D0
+static int UnworkedCornerLight = 2;
+
+// Four land triangles, twelve (x,y) texel coordinates: 463E99..463F8B
+// visits the full array. Overlay base 686098 is vertex 1 of this SAME
+// allocation; 464ED2/465088 select vertex 3*rotation+1, with rotation&3.
+// The dune call at 464254..464353 borrows an unrotated triangle slice.
+// Keep that shared lifetime and mutable-pointer API, although the original
+// 6233C0/61B1F0 consumers only read UVs through 61FC90. The asymmetric
+// 27/28 centres and 1/2/53/54 edge coordinates are intentional data.
+// RECOVERY_OBJECT: v2 0x00686090 0x006860F0 _LandCornerUVs 0x004632D0
+static Vert LandCornerUVs[12] = {
+    {27, 28}, {0, 55}, {0, 1},
+    {27, 27}, {0, 0}, {54, 0},
+    {28, 27}, {55, 1}, {55, 53},
+    {28, 29}, {55, 55}, {2, 55},
+};
+
+// Four edge quads. 463FB1 increments the byte offset BEFORE loads using
+// displacement 6860E8, so the first vertex is 6860F0, not land vertex 11.
+// The offset terminates at 0x80 (464012): exactly sixteen vertices.
+// RECOVERY_OBJECT: v2 0x006860F0 0x00686170 _EdgeMidUVs 0x004632D0
+static const Vert EdgeMidUVs[16] = {
+    {27, 27}, {0, 27}, {0, 0}, {27, 0},
+    {28, 27}, {28, 0}, {55, 0}, {55, 27},
+    {28, 28}, {55, 28}, {55, 55}, {28, 55},
+    {27, 28}, {27, 55}, {0, 55}, {0, 28},
+};
+
+// Four ocean quads: 4645C4/CA read pairs, 4645E7 advances eight bytes,
+// and the four-by-four walk ends at 464706. No direct table writers occur
+// in the original references; these are texel coordinates, not pointers.
+// RECOVERY_OBJECT: v2 0x00685CA8 0x00685D28 _OceanCornerUVs 0x004632D0
+static const Vert OceanCornerUVs[16] = {
+    {27, 27}, {27, 55}, {0, 55}, {0, 0},
+    {27, 27}, {27, 0}, {55, 0}, {55, 55},
+    {27, 27}, {55, 27}, {55, 55}, {27, 55},
+    {27, 27}, {0, 27}, {0, 0}, {27, 0},
+};
+
+// 0x00684730 - the 53-entry coast-mask table draw_coast's remap comes from
+// (stride 8, one row per corner code). Values above 1 select bytes at
+// TerrainCoastPalette[value + 2]; code 7 repeats palette[7..4] three times.
+// load_terrain publishes this shared twelve-byte owner. The deep-radar walk
+// uses the existing Chassis[].triad member, not a separate character table.
+// 465379 selects a column using the three-bit coast mask, then advances
+// eight bytes for each of 53 remap entries. Values above 1 select the
+// separately mutable coast palette; this table does not own that palette.
+// RECOVERY_OBJECT: v2 0x00684730 0x006848D8 _CoastMaskTable 0x004632D0
+static const unsigned char CoastMaskTable[53][8] = {
+    {0, 0, 0, 0, 0, 0, 0, 0},
+    {0, 1, 0, 1, 0, 1, 0, 1},
+    {0, 1, 0, 1, 0, 1, 1, 1},
+    {0, 0, 0, 0, 1, 1, 1, 1},
+    {0, 0, 0, 1, 1, 1, 1, 1},
+    {0, 0, 0, 0, 0, 0, 0, 1},
+    {0, 5, 0, 5, 0, 5, 0, 5},
+    {0, 4, 0, 4, 0, 4, 0, 4},
+    {0, 3, 0, 3, 0, 3, 0, 3},
+    {0, 2, 0, 1, 0, 2, 0, 2},
+    {0, 0, 0, 0, 5, 5, 5, 5},
+    {0, 0, 0, 0, 4, 4, 4, 4},
+    {0, 0, 0, 0, 3, 3, 3, 3},
+    {0, 0, 0, 0, 2, 2, 2, 2},
+    {0, 0, 0, 0, 0, 0, 0, 5},
+    {0, 0, 0, 0, 0, 0, 0, 4},
+    {0, 0, 0, 0, 0, 0, 0, 3},
+    {0, 0, 0, 0, 0, 0, 0, 2},
+    {0, 5, 0, 5, 0, 5, 0, 1},
+    {0, 4, 0, 4, 0, 4, 0, 1},
+    {0, 3, 0, 3, 0, 3, 0, 1},
+    {0, 2, 0, 2, 0, 2, 0, 1},
+    {0, 0, 0, 0, 5, 5, 5, 1},
+    {0, 0, 0, 0, 4, 4, 4, 1},
+    {0, 0, 0, 0, 3, 3, 3, 1},
+    {0, 0, 0, 0, 2, 2, 2, 1},
+    {0, 0, 0, 5, 0, 0, 5, 1},
+    {0, 0, 0, 4, 0, 0, 4, 1},
+    {0, 0, 0, 3, 0, 0, 3, 1},
+    {0, 0, 0, 2, 0, 0, 2, 1},
+    {0, 1, 0, 1, 0, 1, 5, 1},
+    {0, 1, 0, 1, 0, 1, 4, 1},
+    {0, 1, 0, 1, 0, 1, 3, 1},
+    {0, 1, 0, 1, 0, 1, 2, 1},
+    {0, 0, 0, 5, 1, 1, 1, 1},
+    {0, 0, 0, 4, 1, 1, 1, 1},
+    {0, 0, 0, 3, 1, 1, 1, 1},
+    {0, 0, 0, 2, 1, 1, 1, 1},
+    {0, 5, 0, 1, 0, 5, 1, 1},
+    {0, 4, 0, 1, 0, 4, 1, 1},
+    {0, 3, 0, 1, 0, 3, 1, 1},
+    {0, 2, 0, 1, 0, 2, 1, 1},
+    {0, 0, 0, 1, 5, 5, 1, 1},
+    {0, 0, 0, 1, 4, 4, 1, 1},
+    {0, 0, 0, 1, 3, 3, 1, 1},
+    {0, 0, 0, 1, 2, 2, 1, 1},
+    {0, 5, 0, 1, 2, 0, 1, 1},
+    {0, 4, 0, 1, 3, 0, 1, 1},
+    {0, 3, 0, 1, 4, 0, 1, 1},
+    {0, 5, 5, 1, 5, 0, 1, 1},
+    {0, 4, 4, 1, 4, 0, 1, 1},
+    {0, 2, 0, 1, 0, 3, 1, 1},
+    {0, 0, 0, 1, 5, 3, 1, 1},
+};
+
+// Four triangles around the tile centre: left/top, top/right,
+// right/bottom, bottom/left. Corner IDs are centre=0, left=1, top=2,
+// right=3, bottom=4. The original normal walk (463E68..463F85) visits
+// twelve dwords per table; the wireframe walk (466ADC..466BAF) independently
+// visits four groups of three. These are real tables, not image pointers.
+// RECOVERY_OBJECT: v2 0x00685F20 0x00685F50 _LandCornerXStep 0x004632D0
+static const int LandCornerXStep[12] = {
+    0, -2, 0,  0, 0, 2,  0, 2, 0,  0, 0, -2
+};
+// RECOVERY_OBJECT: v2 0x00685F50 0x00685F80 _LandCornerYStep 0x004632D0
+static const int LandCornerYStep[12] = {
+    0, 0, -2,  0, -2, 0,  0, 0, 2,  0, 2, 0
+};
+// RECOVERY_OBJECT: v2 0x00685F80 0x00685FB0 _LandCornerId 0x004632D0
+static const int LandCornerId[12] = {
+    0, 1, 2,  0, 2, 3,  0, 3, 4,  0, 4, 1
+};
+
+// THE RENDERER'S SCRATCH, in .data immediately below MapWinTable:
+// 0x007D3C08 - the four primary corner vertices as eight ints (the image
+// reads the y half through the alias 0x007D3C0C, one int up);
+// 0x007D3BE8 - the eight-int copy the tile under the map landmark keeps;
+// 0x007D3AF0 - the sixteen ocean corner vertices (four per corner);
+// 0x007F6644 - the sixteen shared ocean shades defined beside their biased
+// lighting consumer above. gen_terrain_poly fills these after each
+// alt_get_ocean_detail call; the helper itself returns only the table index.
+// The four-by-four walk writes x/y at 46459E/4645AC and passes the
+// same four-vertex slices at 46466D/46469A/4646C6. All observed original
+// references belong to this renderer; 7D3B70 is a separate scalar.
+// Keep static zero-initialized storage, not a fresh per-call array.
+// RECOVERY_OBJECT: v2 0x007D3AF0 0x007D3B70 _OceanCornerVerts 0x004632D0
+static Vert OceanCornerVerts[16];
+
+// Terrain sprite draws read the unsigned palette key at original member +8.
+// Use Sprite's actual member rather than walking its object representation.
+static inline unsigned char sprite_transparent(const Sprite &sprite) {
+    return sprite.transparent_index();
+}
+
+// The worked-tile scan's missing-owner case is an original indexing bug:
+// 463927 sets owner=-1, then 463931-463943 reads a treaty bit with that
+// owner as its row. In the original layout the read aliases vehicle state,
+// not a diplomacy record. For the scan's valid faction domain 1..7, retain
+// the observed low bit through the actual owning fields. These are not
+// meaningful faction/vehicle relationships or a dummy "faction -1" row.
+static bool terrain_missing_owner_treaty_bit(int faction) {
+    switch (faction) {
+    case 1: return (Vehs[1895].waypoint_y[0] & 1) != 0;
+    case 2: return (Vehs[1895].waypoint_y[2] & 1) != 0;
+    case 3: return (Vehs[1895].morale & 1) != 0;
+    case 4: return (Vehs[1895].moves_expended & 1) != 0;
+    case 5: return (Vehs[1895].probe_action & 1) != 0;
+    case 6: return (Vehs[1895].next_veh_id_stack & 1) != 0;
+    case 7: return (Vehs[1896].x & 1) != 0;
+    }
+    // Behavior outside factions 1..7 is not recovered.
+    return false;
+}
+
+/*
+Purpose: Render one map tile's terrain polygon stack - the base land or
+         ocean fill with per-corner lighting, landmark overlays, farms,
+         jungle, fungus and forest, rivers and coasts, roads and magtubes,
+         improvement and wreck sprites, territory borders, wireframes, grid
+         overlays and the editor's numeric readouts.
+         The two compiled callers (gen_tile 0x00468C73 and gen_map's
+         terrain scan 0x00469E47) push ten words and clean up 0x28 bytes
+         themselves, so the body is the FREE __cdecl function those sites
+         spell; the catalogued member mangle below remains the identity of
+         record for the span (mapwin.h and pending_bodies.cpp document the
+         reinterpretation).
+
+         RECEIVER EVIDENCE (journal 55, terrain-poly-receivers-20260921,
+         re-verified per site against the pinned image): every one of the
+         44 blitter calls is __thiscall - each callee ends `ret imm16` and
+         no caller does `add esp` after it - and every ECX receiver traces
+         to a fixed terrain-band global from texture.h / sprite.h or to
+         the incoming Buffer* a1 (the three Buffer::line sites). Zero
+         receivers are MapWin fields or stack locals; the MapWin* a2
+         supplies lighting through get_alt/get_point_light, its visibility
+         record through owned_, and its font_b_ for the readouts.
+
+         THE EXTENT CAVEAT, RESOLVED (journal 56's mandatory pre-work):
+         g_ROCKY_TEXTURES stays [4] and g_FARM_TEXTURES stays [9].
+         load_terrain fills the rocky band with exactly four extracts -
+         bases 0x76E9E0 and 0x76EA50 (outer bound `cmp edi, 0x76EAC0` at
+         0x451D67), each extracting two slots 0xE0 apart - and the farm
+         band with exactly nine (three inner extracts a row from 0x799238,
+         outer `cmp esi, 0x799628` at 0x45213F = 9 * 0x70). The renderer's
+         rocky index `variant + 2 * rockiness - 2` stays inside 0..3 for
+         the real rockiness values 1..2 because Random::get(0, 2) can never
+         return 2: the recovered 0x00625770 body computes
+         ((range * (seed & 0xFFFF)) >> 16) + min, and with range == 2 the
+         product tops at 0x1FFFE, which shifts down to 1. The farm index
+         `aridity + 3 * variant` is bounded by 2 + 3 = 5 with this exclusive
+         roll, inside the nine filled slots.
+
+         THE THREE NEIGHBOUR-MASK LOOPS the scaffold carried empty,
+         restored from the image: 0x464E24-0x464EA2 walks the four
+         DIAGONAL neighbours (RiverStepX/Y) collecting a
+         land-with-base-radius corner mask into the dead a5 parameter
+         slot - the shipped binary then indexes the jungle textures with
+         the EARLIER 8-neighbour base mask at 0x464EB6, so the a5 mask is
+         dead from 0x464EA4 on; the loop stays because its reads are the
+         image's own behaviour. 0x464F5B-0x464FD6 collects the four-corner
+         fungus mask that selects g_FOREST_TEXTURES[mask], and
+         0x4654EC-0x46555F the four-corner river mask (neighbour
+         tile->bit & BIT_RIVER) that selects g_RIVER_TEXTURES[mask].
+// ORIGINAL: 0x004632D0 ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z 0x004632D0-0x00466C92;0x00655920-0x00655932 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original4632D0..466C92 and unwind655920..655932; retained src/unrecovered/004632d0.cpp records the same identity and spans, including historical missing-receiver analysis.", "Original4712D0..471316 explicitly converts its nullable MapWin argument to Buffer before forwarding ten arguments to this renderer. Original469190..469718 and40F0F0..40FCB3 also supply explicit buffer/window arguments.", "Original texture/sprite call sites require genuine object receivers; declaring Random local_rand gives the compiler ownership of constructor, destructor and exception cleanup. Original464D12..464D21 copies four shared corner vertices for the map-radius and scroll consumers."], "reason": "The source-owned terrain renderer is a cdecl free function with explicit Buffer and nullable MapWin arguments, not the catalogue member spelling. It owns the compiled candidate while the original seed remains provenance; storage, lifecycle and dependent-renderer discoveries remain unfinished recovery obligations."}
+// symbol    ?gen_terrain_poly@@YAHPAVBuffer@@PAVMapWin@@HHHHHHHH@Z
+// size      14804 bytes
+// prototype int (__cdecl ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z)(Buffer*, MapWin*, int, int, int, int, int, int, int, int)
+// callers   7   call targets   38
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00462190 0x0046FE70 0x00470790 0x004E3A50 0x004E3EF0 0x004E6E50 0x0050BA00 0x00591B50 0x00592030 0x00592140 0x005BF010 0x005BF1F0 0x005BFE90 0x005C4FD0 0x005DA680 0x005DAC70 0x005DACB0 0x005DD130 0x005E15F0 0x005E4B9A 0x005E5833 0x0061A760 0x0061B1F0 0x0061C090 0x0061E540 0x00622DB0 0x006233C0 0x006239E0 0x00623F80 0x00624670 0x00625730 0x00625740 0x00625750 0x00625770 0x00644F3A 0x006453E0 0x00645470 0x0064FC88
+// TRIED (seed src/unrecovered/004632d0.cpp, retired atomically by this
+//            body): the 113 fixed globals it reads are named in sprite.h /
+//            texture.h (the terrain Sprite/Texture band
+//            0x0075B098..0x007AD1B0, ~50 of them the +8
+//            `&name[k].cTransparentIndex_` companion of a named array);
+//            CornerOffsetX/Y, CornerLightTable, AltLightBit1/2/200 and
+//            AltDirectionTable are bound in map.h and above in this file;
+//            the rest are the named bindings above. Its BLOCKED note's
+//            56-call count was corrected to the machine's 44. The SEH
+//            frame and the Random ctor/dtor calls are the compiler's, from
+//            declaring `Random local_rand;` - the note's own TRIED result.
+*/
+int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
+                             int a5, int a6, int a7, int a8, int a9,
+                             int a10) {
+    uint8_t coast_remap[0x35];
+    uint8_t territory_mask[10];
+    char numbuf[80];
+    Vert rocky_uv[12];
+    Vert ocean_uv[16];
+    Vert edge_vertices[16];
+    Vert edge_uv[16];
+    Vert land_uv[12];
+    Vert land_vertices[12];
+    int triangle_light[3];
+    uint32_t local_11c;
+    int coastal_mask[4];
+    int result;
+    int local_c4;
+    uint32_t local_c0;
+    uint32_t local_bc;
+    int local_b8[4];
+    int local_a8;
+    int local_a4;
+    int local_a0;
+    int local_9c;
+    int local_98;
+    int local_94;
+    int local_90;
+    uint32_t local_8c;
+    int local_88;
+    uint32_t local_84;
+    int local_80;
+    int local_78;
+    int local_70;
+    Vert overlay_uv[4];
+    uint32_t territory_faction;
+    Map *road_neighbor;
+    uint32_t skip_terrain;
+    int focus_y;
+    uint32_t local_44;
+    uint32_t local_40;
+    uint32_t local_38;
+    uint32_t local_34;
+    uint32_t local_30;
+    uint32_t local_2c;
+    uint32_t local_28;
+    uint32_t local_24;
+    uint32_t local_20;
+    int local_1c;
+    uint32_t local_18;
+    int local_14;
+    uint32_t local_48b;
+    int local_30b;
+    uint32_t local_34b;
+    Random local_rand;
+    int crop_diff = 0;
+    int iVar5;
+    int iVar6;
+    int iVar7;
+    int iVar13;
+    int iVar19;
+    uint32_t uVar12;
+    uint32_t uVar16;
+    uint32_t uVar17;
+    int32_t uVar15;
+    int *puVar8;
+    uint8_t *pbVar18;
+    bool bVar23;
+    uint8_t bVar10;
+    uint8_t bVar11;
+    char cVar4;
+    unsigned int sVar9;
+    short sVar2;
+    uint8_t uVar1;
+    uint32_t uVar16b;
+
+    // -0x24 in the image: the viewing faction's tile-bit view (tile->bit
+    // for an observer or an explored map. The physical faction-zero slot
+    // is bit2; the seven ordinary faction slots are bit_visible[a4-1].
+    uint32_t tile_bits;
+    (void)uVar16b;
+    (void)uVar1;
+    (void)sVar2;
+    (void)uVar16;
+    (void)uVar17;
+    (void)cVar4;
+
+    if (a8 < 0 || MapLatitudeBounds <= a8 || a7 < 0 ||
+        MapLongitudeBounds <= a7) {
+        return 0;
+    }
+    local_14 = a7 >> 1;
+    iVar5 = *MapRowStride * a8 + local_14;
+    Map *const tile = &map_tiles()[iVar5];
+    uint32_t *const tile_bit2_ptr = &tile->bit2;
+    local_34 = tile->bit2;
+    result = 0;
+    if (window == MapWinTerrainFixupExtra1 && (a6 & 0x80000000) == 0 &&
+        (local_34 & 0x400000) == 0) {
+        return 1;
+    }
+    local_rand.reseed(static_cast<uint32_t>(reinterpret_cast<uintptr_t>(tile)));
+    pbVar18 = reinterpret_cast<uint8_t *>(tile);
+    local_18 = (uint32_t)((tile->climate & 0xe0) < 0x60);
+    if (local_18 == 0) {
+        TextureLightFloor = 0xfffffffc;
+        TextureLightCeiling = 4;
+    }
+    if ((local_34 & 0x103) != 0) {
+        local_94 = static_cast<int32_t>(tile->bit2) >> 24;
+    } else {
+        local_94 = 0;
+    }
+    if (MapWinCaptionScale < 1) {
+        iVar5 = (a3 * 5 + 0x50) * 10;
+        iVar5 = (int)(iVar5 + (iVar5 >> 0x1f & 0xfU)) >> 4;
+    } else {
+        iVar5 = MapWinCaptionScale * 0x32 / MapWinCaptionDivisor;
+    }
+    local_98 = (int)(iVar5 + 1 + (iVar5 + 1 >> 0x1f & 3U)) >> 2;
+    local_78 = local_98 * 2;
+    if (window == 0) {
+        local_44 = 0;
+    } else {
+        iVar5 = window->get_alt(a7, a8, 4);
+        iVar19 = window->get_alt(a7, a8, 3);
+        iVar6 = window->get_alt(a7, a8, 2);
+        iVar7 = window->get_alt(a7, a8, 1);
+        local_44 = iVar5 + iVar19 + iVar6 + iVar7 >> 2;
+    }
+    a10 = a10 + (int)local_44;
+    territory_faction = (uint32_t)a4;
+    if ((a4 < 0) &&
+        (bVar10 = tile->val3, territory_faction = bVar10 & 7,
+         (bVar10 & 7) == 0)) {
+        territory_faction = (uint32_t)ConsoleGlobal.faction_id_;
+    }
+    iVar5 = *MapRowStride * a8 + local_14;
+    pbVar18 = reinterpret_cast<uint8_t *>(&map_tiles()[iVar5]);
+    local_84 = (tile->climate & 0x18) >> 3;
+    local_8c = (uint32_t)(tile->climate >> 5);
+    local_38 = (uint32_t)(tile->val3 >> 6);
+    if (a4 < 0 || (PlayersData[a4].flags & 0x200) != 0) {
+        local_24 = tile->bit;
+    } else {
+        local_24 = a4 == 0 ? tile->bit2 : tile->bit_visible[a4 - 1];
+    }
+    tile_bits = local_24;
+    if (a3 < -6 || (a6 & 0x80000000) != 0) {
+        local_90 = 1;
+    } else {
+        local_90 = 0;
+    }
+    local_11c = a6 & 0x1000000;
+    bVar10 = (uint8_t)a4;
+    if ((a6 & 0x1000000) == 0) {
+        // At 4635C4, observer -1's flags lookup aliases the high byte of
+        // Vehs[1895].x in the original layout. Preserve that accidental
+        // dependency by its real field, not an out-of-bounds player row.
+        // Other out-of-range faction values have no recovered contract.
+        if ((((GameRules & 0x100) != 0) &&
+             ((GameState & 0x80) == 0) &&
+             ((a4 == -1 ? (Vehs[1895].x & 0x200)
+                        : (PlayersData[a4].flags & 0x200)) == 0) &&
+             ((tile->visibility & (uint8_t)(1u << (bVar10 & 0x1f))) == 0))) {
+            local_84 = 0;
+            local_38 = 0;
+            local_24 = local_24 & 0xffffffdf;
+            tile_bits = local_24;
+            local_70 = 1;
+            local_1c = 0;
+            uVar12 = tile->bit2 | 0x200000;
+            goto LAB_00463603;
+        }
+        local_70 = 0;
+        if (((GameState & 0x80) != 0) || a4 < 1 ||
+            ((GameMorePreferences & 1) == 0 || a3 < -7)) {
+            goto LAB_00463589;
+        }
+        local_1c = 0;
+        local_40 = 0;
+        do {
+            local_20 = RadiusOffsetX[local_40 >> 2] + a7;
+            if ((MapIsFlat & 1) == 0) {
+                if ((int)local_20 < 0) {
+                    local_20 = local_20 + MapLongitudeBounds;
+                } else if (MapLongitudeBounds <= (int)local_20) {
+                    local_20 = local_20 - MapLongitudeBounds;
+                }
+            }
+            iVar5 = RadiusOffsetY[local_40 >> 2] + a8;
+            if (iVar5 > -1 && iVar5 < MapLatitudeBounds &&
+                (int)local_20 > -1 && (int)local_20 < MapLongitudeBounds) {
+                if ((int)local_40 < 0x24) {
+                    iVar19 = *MapRowStride * iVar5 + ((int)local_20 >> 1);
+                    Map *const ntile = &map_tiles()[iVar19];
+                    if ((ntile->bit & 3) == 0) {
+                        uVar12 = 0xffffffff;
+                    } else {
+                        uVar12 = ntile->val2 & 0xf;
+                        if (7 < uVar12) {
+                            uVar12 = 0xffffffff;
+                        }
+                    }
+                    if (((int)uVar12 == a4) ||
+                        ((VehDrawPositionX > -1 &&
+                          Vehs[VehDrawPositionVehicle].faction_id ==
+                              (uint8_t)a4 &&
+                          VehDrawPositionX == (int)local_20 &&
+                          VehDrawPositionY == iVar5))) {
+                        goto LAB_00463b55;
+                    }
+                    // The image does not guard the no-owner -1 column:
+                    // 4637B9 then reads the preceding +0x14 member.
+                    const uint32_t treaty = (int)uVar12 == -1
+                        ? (uint32_t)PlayersData[a4].last_turn_new_base
+                        : PlayersData[a4].diplo_treaties[uVar12];
+                    if ((treaty & 1) != 0) {
+                        for (iVar19 = veh_at(local_20, iVar5); iVar19 > -1;
+                             iVar19 = Vehs[iVar19].next_veh_id_stack) {
+                            if (Vehs[iVar19].faction_id == (uint8_t)a4) {
+                                goto LAB_00463b55;
+                            }
+                            if (iVar19 < 0) {
+                                break;
+                            }
+                        }
+                        if (local_1c != 0) {
+                            goto LAB_0046358c;
+                        }
+                    }
+                }
+                uVar12 = local_20;
+                iVar6 = is_sensor(local_20, iVar5);
+                iVar19 = VehDrawPositionVehicle;
+                iVar7 = (int)uVar12 >> 1;
+                if (iVar6 != 0 &&
+                    map_tiles()[*MapRowStride * iVar5 + iVar7].territory ==
+                        a4) {
+                    goto LAB_00463b55;
+                }
+                iVar6 = *MapRowStride * iVar5 + iVar7;
+                Map *const stile = &map_tiles()[iVar6];
+                if ((stile->bit & 1) == 0) {
+                    uVar16b = 0xffffffff;
+                } else {
+                    uVar16b = stile->val2 & 0xf;
+                    if (7 < uVar16b) {
+                        uVar16b = 0xffffffff;
+                    }
+                }
+                if (((int)uVar16b == a4) ||
+                    ((VehDrawPositionX == uVar12 &&
+                      VehDrawPositionY == iVar5) &&
+                     (Vehs[VehDrawPositionVehicle].faction_id ==
+                          (uint8_t)a4 &&
+                      has_abil(Vehs[iVar19].proto_id, ABL_DEEP_RADAR) != 0 &&
+                      (Chassis[VehPrototypes[Vehs[iVar19].proto_id].chassis_id].triad == '\x02' ||
+                       local_18 ==
+                           (uint32_t)(Chassis[VehPrototypes[Vehs[iVar19].proto_id].chassis_id].triad == '\x01'))))) {
+                    goto LAB_00463b55;
+                }
+                Map *const vtile = &map_tiles()[iVar6];
+                if ((vtile->bit & 2) == 0) {
+                    uVar12 = 0xffffffff;
+                } else {
+                    uVar12 = vtile->val2 & 0xf;
+                    if (7 < uVar12) {
+                        uVar12 = 0xffffffff;
+                    }
+                }
+                if ((((int)uVar12 == a4) ||
+                     ((int)uVar12 == -1
+                          ? terrain_missing_owner_treaty_bit(a4)
+                          : (PlayersData[uVar12].diplo_treaties[a4] & 1) != 0)) &&
+                    (iVar5 = veh_at(local_20, iVar5), iVar5 > -1)) {
+                    sVar2 = Vehs[iVar5].prev_veh_id_stack;
+                    while (sVar2 > -1) {
+                        iVar5 = sVar2;
+                        sVar2 = Vehs[iVar5].prev_veh_id_stack;
+                    }
+                    if (iVar5 > -1) {
+                        while ((Vehs[iVar5].faction_id != (uint8_t)a4 ||
+                                has_abil(Vehs[iVar5].proto_id,
+                                         ABL_DEEP_RADAR) == 0) ||
+                               (Chassis[VehPrototypes[Vehs[iVar5].proto_id].chassis_id].triad != '\x02' &&
+                                local_18 !=
+                                    (uint32_t)(Chassis[VehPrototypes[Vehs[iVar5].proto_id].chassis_id].triad == '\x01'))) {
+                            if (iVar5 < 0) {
+                                goto LAB_00463a11;
+                            }
+                            iVar5 = Vehs[iVar5].next_veh_id_stack;
+                            if (iVar5 < 0) {
+                                goto LAB_00463a11;
+                            }
+                        }
+                        local_1c = 1;
+                    }
+                }
+            }
+LAB_00463a11:
+            local_40 = local_40 + 4;
+        } while ((int)local_40 < 100);
+        if (local_1c == 0) {
+            if (ExpansionEnabled != 0) {
+                iVar5 = 0;
+                do {
+                    iVar6 = RadiusOffsetY[iVar5 >> 2];
+                    iVar19 = RadiusOffsetX[iVar5 >> 2];
+                    iVar7 = (iVar6 - iVar19) >> 1;
+                    iVar13 = (iVar19 + iVar6) >> 1;
+                    if (iVar7 * iVar7 + iVar13 * iVar13 < 0x19) {
+                        iVar19 = iVar19 + a7;
+                        if ((MapIsFlat & 1) == 0) {
+                            if (iVar19 < 0) {
+                                iVar19 = iVar19 + MapLongitudeBounds;
+                            } else if (MapLongitudeBounds <= iVar19) {
+                                iVar19 = iVar19 - MapLongitudeBounds;
+                            }
+                        }
+                        iVar6 = iVar6 + a8;
+                        if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
+                            iVar19 > -1 && iVar19 < MapLongitudeBounds) {
+                            iVar7 = *MapRowStride * iVar6 + (iVar19 >> 1);
+                            Map *const ntile = &map_tiles()[iVar7];
+                            if ((ntile->bit & 1) == 0) {
+                                uVar12 = 0xffffffff;
+                            } else {
+                                uVar12 = ntile->val2 & 0xf;
+                                if (7 < uVar12) {
+                                    uVar12 = 0xffffffff;
+                                }
+                            }
+                            if ((int)uVar12 == a4) {
+                                iVar19 = base_at(iVar19, iVar6);
+                                int fac_off;
+                                int fac_mask;
+                                bitmask(0x29, &fac_off, &fac_mask);
+                                if ((Bases[iVar19]
+                                         .facilities_built[fac_off] &
+                                     (uint8_t)fac_mask) != 0) {
+                                    goto LAB_00463b55;
+                                }
+                            }
+                        }
+                    }
+                    iVar5 = iVar5 + 4;
+                } while (iVar5 < 0x144);
+            }
+            local_84 = 0;
+            local_38 = 0;
+            local_24 = local_24 & 0xffffffdf;
+            tile_bits = local_24;
+            local_70 = 1;
+            local_1c = 0;
+            uVar12 = tile->bit2 | 0x200000;
+            goto LAB_00463603;
+        }
+    } else {
+        local_84 = 0;
+        local_38 = 0;
+        local_24 = 0;
+        tile_bits = 0;
+        local_70 = 1;
+LAB_00463589:
+        local_1c = 1;
+    }
+LAB_00463b55:
+    local_1c = 1;
+LAB_0046358c:
+    uVar12 = tile->bit2 & 0xffdfffff;
+LAB_00463603:
+    *tile_bit2_ptr = uVar12;
+
+    // THE CORNER MASKS: which corners of a land tile touch ocean (the
+    // coastline gate), and the three 8-neighbour texture masks.
+    coastal_mask[0] = 0;
+    coastal_mask[1] = 0;
+    coastal_mask[2] = 0;
+    local_28 = 0;
+    local_40 = 0;
+    local_2c = 0;
+    local_30 = 0;
+    coastal_mask[3] = 0;
+    local_20 = a6 & 0x80000000;
+    if ((a6 & 0x80000000) == 0) {
+        if (local_18 == 0) {
+            uVar12 = 0;
+            do {
+                iVar5 = RadiusBaseX[uVar12] + a7;
+                if ((MapIsFlat & 1) == 0) {
+                    if (iVar5 < 0) {
+                        iVar5 = MapLongitudeBounds + iVar5;
+                    } else if (MapLongitudeBounds <= iVar5) {
+                        iVar5 = iVar5 - MapLongitudeBounds;
+                    }
+                }
+                iVar19 = RadiusBaseY[uVar12] + a8;
+                if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
+                    iVar5 > -1 && iVar5 < MapLongitudeBounds &&
+                    (map_tiles()[*MapRowStride * iVar19 + (iVar5 >> 1)]
+                         .climate &
+                     0xe0) < 0x60) {
+                    iVar5 = (int)uVar12 >> 1;
+                    if ((uVar12 & 1) == 0) {
+                        uVar17 = iVar5 + 1U & 3;
+                        puVar8 = coastal_mask + (iVar5 - 2U & 3);
+                        coastal_mask[uVar17] = coastal_mask[uVar17] | 4;
+                        uVar17 = *puVar8 | 1;
+                    } else {
+                        uVar17 = iVar5 - 2U & 3;
+                        puVar8 = coastal_mask + uVar17;
+                        uVar17 = coastal_mask[uVar17] | 2;
+                    }
+                    *puVar8 = uVar17;
+                }
+                uVar12 = uVar12 + 1;
+            } while ((int)uVar12 < 8);
+            local_30 = (uint32_t)((local_34 & 0x80000004) == 4);
+            if (local_84 != 0 || (local_24 & 0x20) != 0 || local_30 != 0) {
+                iVar5 = 0;
+                do {
+                    uVar12 = iVar5 - 1U & 7;
+                    iVar19 = RadiusBaseX[uVar12] + a7;
+                    if ((MapIsFlat & 1) == 0) {
+                        if (iVar19 < 0) {
+                            iVar19 = iVar19 + MapLongitudeBounds;
+                        } else if (MapLongitudeBounds <= iVar19) {
+                            iVar19 = iVar19 - MapLongitudeBounds;
+                        }
+                    }
+                    iVar6 = RadiusBaseY[uVar12] + a8;
+                    if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
+                        iVar19 > -1 && iVar19 < MapLongitudeBounds) {
+                        pbVar18 = reinterpret_cast<uint8_t *>(
+                            &map_tiles()[*MapRowStride * iVar6 +
+                                         (iVar19 >> 1)]);
+                        bVar11 = (uint8_t)iVar5;
+                        if ((*(uint32_t *)(pbVar18 + 8) & 0x20) != 0 &&
+                            0x3f < (*pbVar18 & 0xe0)) {
+                            local_40 = local_40 | 1 << (bVar11 & 0x1f);
+                        }
+                        if (local_30 != 0 &&
+                            (*(uint32_t *)(pbVar18 + 0xc) & 0x80000004) ==
+                                4 &&
+                            0x5f < (*pbVar18 & 0xe0)) {
+                            local_2c |= 1u << (bVar11 & 0x1f);
+                        }
+                        if (local_84 != 0 &&
+                            ((*pbVar18 & 0xe0) < 0x60 ||
+                             (int)local_84 <=
+                                 (int)(*pbVar18 >> 3 & 3))) {
+                            local_28 |= 1u << (bVar11 & 0x1f);
+                        }
+                    }
+                    iVar5 = iVar5 + 1;
+                } while (iVar5 < 8);
+            }
+        } else if ((local_24 & 0x20) != 0) {
+            iVar5 = 0;
+            do {
+                uVar12 = iVar5 - 1U & 7;
+                iVar19 = RadiusBaseX[uVar12] + a7;
+                if ((MapIsFlat & 1) == 0) {
+                    if (iVar19 < 0) {
+                        iVar19 = iVar19 + MapLongitudeBounds;
+                    } else if (MapLongitudeBounds <= iVar19) {
+                        iVar19 = iVar19 - MapLongitudeBounds;
+                    }
+                }
+                iVar6 = RadiusBaseY[uVar12] + a8;
+                if (iVar6 > -1 && iVar6 < MapLatitudeBounds &&
+                    iVar19 > -1 && iVar19 < MapLongitudeBounds) {
+                    pbVar18 = reinterpret_cast<uint8_t *>(
+                        &map_tiles()[*MapRowStride * iVar6 + (iVar19 >> 1)]);
+                    if ((*(uint32_t *)(pbVar18 + 8) & 0x20) != 0 &&
+                        0x3f < (*pbVar18 & 0xe0)) {
+                        local_40 = local_40 | 1 << ((uint8_t)iVar5 & 0x1f);
+                    }
+                }
+                iVar5 = iVar5 + 1;
+            } while (iVar5 < 8);
+        }
+    }
+    a10 = a10 + local_78;
+    a9 = a9 + local_78 * 2;
+
+    // THE WIREFRAME EXIT: a far-out zoom or an unexplored tile draws only
+    // the tile's diamond outline.
+    if (0x15 < a5 ||
+        (((GameRules & 0x100) == 0 && a4 > -1) &&
+         ((PlayersData[a4].flags & 0x200) == 0 &&
+          (tile->visibility & (uint8_t)(1u << (bVar10 & 0x1f))) == 0))) {
+        if (local_20 == 0) {
+            int step = 0;
+            int tri = 0;
+            do {
+                for (int c = 0; c < 3; c++) {
+                    land_vertices[tri * 3 + c].x =
+                        LandCornerXStep[step] * local_78 + a9;
+                    land_vertices[tri * 3 + c].y =
+                        LandCornerYStep[step] * local_98 + a10;
+                    if (window != 0) {
+                        int delta = 0;
+                        if (a8 < MapLatitudeBounds &&
+                            a7 < MapLongitudeBounds) {
+                            const int corner = LandCornerId[step];
+                            window->get_alt(a7, a8, corner);
+                            if (window->owned_ == 0) {
+                                delta = 0;
+                            } else {
+                                delta = reinterpret_cast<char *>(
+                                            window->owned_)
+                                    [((MapLongitudeBounds >> 1) * a8 +
+                                      local_14) *
+                                         0xc +
+                                     4 + corner];
+                            }
+                        }
+                        land_vertices[tri * 3 + c].y -= delta;
+                    }
+                    step = step + 1;
+                }
+                MapCornerScratch[tri].x = land_vertices[tri * 3 + 1].x;
+                MapCornerScratch[tri].y = land_vertices[tri * 3 + 1].y;
+                tri = tri + 1;
+            } while (tri < 4);
+            for (uVar12 = 1; uVar12 <= 4; uVar12++) {
+                buffer->line(
+                    MapCornerScratch[(uVar12 - 1)].x,
+                    MapCornerScratch[(uVar12 - 1)].y,
+                    MapCornerScratch[(uVar12 & 3)].x,
+                    MapCornerScratch[(uVar12 & 3)].y, 0xc2);
+            }
+            if (ConsoleGlobal.cursor_history_x_
+                        [ConsoleGlobal.cursor_history_index_] == a7 &&
+                ConsoleGlobal.cursor_history_y_
+                        [ConsoleGlobal.cursor_history_index_] == a8) {
+                for (iVar5 = 0; iVar5 < 4; iVar5++) {
+                    MapCornerCopy[iVar5] = MapCornerScratch[iVar5];
+                }
+            }
+        }
+        goto LAB_00466c32;
+    }
+
+    // Four triangle fans, three vertices apiece. The original uses byte
+    // offsets (463E99-463F8B); these arrays keep vertex/UV units explicit.
+    local_bc = 0;
+    local_c4 = local_rand.get(0, 2);
+    skip_terrain = a6 & 0x10000000;
+    if (skip_terrain != 0) {
+        goto LAB_00465605;
+    }
+    if ((a6 & 0x10000000) == 0) {
+        for (int tri = 0; tri < 4; ++tri) {
+            for (int corner = 0; corner < 3; ++corner) {
+                const int vertex = tri * 3 + corner;
+                land_vertices[vertex].x =
+                    LandCornerXStep[vertex] * local_78 + a9;
+                land_vertices[vertex].y =
+                    LandCornerYStep[vertex] * local_98 + a10;
+                int uv = vertex;
+                if (local_18 == 0 && (local_24 & 0x8000) == 0 &&
+                    local_84 != 0 && local_20 == 0) {
+                    uv = corner +
+                        ((LandMoistureTable[local_28][1] + tri) & 3) * 3;
+                }
+                // Both paths use 686090, not the overlay's shifted 686098.
+                land_uv[vertex].x = LandCornerUVs[uv].x;
+                land_uv[vertex].y = LandCornerUVs[uv].y;
+                if (local_38 != 0) {
+                    rocky_uv[vertex].x = LandCornerUVs[vertex].x;
+                    rocky_uv[vertex].y = LandCornerUVs[vertex].y;
+                }
+                if (2 < (int)local_8c && local_84 != 0) {
+                    local_bc = LandMoistureTable[local_28][0];
+                }
+            }
+        }
+        // 463F9F-46401E initializes four quads, not eight vertices.
+        for (int corner = 0; corner < 4; ++corner) {
+            for (int sub = 0; sub < 4; ++sub) {
+                const int vertex = corner * 4 + sub;
+                const int direction = (corner - 2 + sub) & 3;
+                edge_vertices[vertex].x =
+                    CornerOffsetX[corner][direction] * local_78 + a9;
+                edge_vertices[vertex].y =
+                    CornerOffsetY[corner][direction] * local_98 + a10;
+                edge_uv[vertex].x = EdgeMidUVs[vertex].x;
+                edge_uv[vertex].y = EdgeMidUVs[vertex].y;
+            }
+        }
+    }
+    local_80 = 0;
+    local_c0 = a6 & 0x10000;
+    if (local_c0 != 0 &&
+        (((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200) != 0 ||
+          (tile->visibility &
+           (uint8_t)(1 << ((uint8_t)ConsoleGlobal.faction_id_ & 0x1f))) !=
+              0) ||
+         (GameState & 0x80) != 0) &&
+        local_20 != 0) {
+        local_80 = 1;
+        territory_faction = whose_territory(ConsoleGlobal.faction_id_, a7, a8, 0, 0);
+    }
+
+    // Each triangle publishes its middle vertex and light as one corner
+    // of the shared diamond. The three lights form one real array.
+    {
+        for (int tri = 0; tri < 4; ++tri) {
+            for (int corner = 0; corner < 3; ++corner) {
+                const int vertex = tri * 3 + corner;
+                if ((int)local_8c < 3) {
+                    triangle_light[corner] = tri;
+                } else if (window != 0) {
+                    land_vertices[vertex].y -=
+                        window->get_alt(a7, a8, LandCornerId[vertex]);
+                    triangle_light[corner] = local_1c == 0
+                        ? UnworkedCornerLight
+                        : window->get_point_light(a7, a8, LandCornerId[vertex]);
+                } else {
+                    triangle_light[corner] = 0;
+                }
+            }
+            MapCornerScratch[tri].x = land_vertices[tri * 3 + 1].x;
+            MapCornerScratch[tri].y = land_vertices[tri * 3 + 1].y;
+            local_b8[tri] = triangle_light[1];
+            if (local_18 == 0 && (local_80 == 0 || (int)territory_faction < 1) &&
+                local_20 == 0) {
+                const int shade =
+                    (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41;
+                Vert *const verts = land_vertices + tri * 3;
+                Vert *const uvs = land_uv + tri * 3;
+                if (((local_24 & 0x8000) == 0) || ((a6 & 1) == 0)) {
+                    if ((local_34 & 0x40) != 0) {
+                        g_DUNE_LAND_TEXTURE.draw(
+                            buffer, verts, triangle_light, 3,
+                            LandCornerUVs + tri * 3, shade);
+                    } else if (local_84 == 2) {
+                        g_RAINY_LAND_TEXTURES[local_bc].draw(
+                            buffer, verts, triangle_light, 3, uvs, shade);
+                    } else if (local_84 == 1) {
+                        g_MOIST_LAND_TEXTURES[local_bc].draw(
+                            buffer, verts, triangle_light, 3, uvs, shade);
+                    } else if (local_84 == 0) {
+                        g_FLAT_ARID_LAND_TEXTURE.draw(
+                            buffer, verts, triangle_light, 3, uvs, shade);
+                    }
+                } else {
+                    g_FARM_TEXTURES[local_84 + 3 * local_c4].draw(
+                        buffer, verts, triangle_light, 3, uvs, shade);
+                }
+                if (local_38 != 0) {
+                    g_ROCKY_TEXTURES[local_c4 + 2 * local_38 - 2].draw_trans_3(
+                        buffer, verts, triangle_light, 3, rocky_uv + tri * 3, shade);
+                }
+            }
+        }
+    }
+
+    // THE SOLID-FILL EXIT: editor solid mode, known enemy
+    // territory, or the no-terrain flag stops at one flat polygon.
+    if (local_11c != 0) {
+        int fill;
+        if (local_18 != 0) {
+            fill = 0xa1;
+        } else if (territory_faction == 0xffffffff) {
+            fill = 0x11;
+        } else {
+LAB_0046441f:
+            fill = InfoFactionTextColors[territory_faction];
+        }
+        buffer->poly(MapCornerScratch, 4, fill);
+        TextureLightFloor = 0xffffff00;
+        TextureLightCeiling = 0x100;
+        return 1;
+    }
+    if (local_18 == 0) {
+        if (local_80 != 0 && 0 < (int)territory_faction) {
+            goto LAB_0046441f;
+        }
+        if (local_20 != 0) {
+            int fill;
+            if ((a6 & 0x10) == 0) {
+                fill = (0xe - (int)local_8c) * 2;
+            } else {
+                fill = ((tile->climate & 0x18) >> 3) * 2 + 0x95;
+            }
+            buffer->poly(MapCornerScratch, 4,
+                         fill);
+            TextureLightFloor = 0xffffff00;
+            TextureLightCeiling = 0x100;
+            return 1;
+        }
+    }
+
+    // Rotated edge quads join each fan's outer vertices and neighboring
+    // edge midpoints (46447D-464544).
+    {
+        for (int fan_index = 0; fan_index < 4; ++fan_index) {
+            const int next = (fan_index + 1) & 3;
+            Vert *const edge = edge_vertices + next * 4;
+            const Vert *const fan = land_vertices + fan_index * 3;
+            const Vert *const neighbor = land_vertices + next * 3;
+            edge[0] = fan[0];
+            edge[1].x = (fan[1].x + fan[2].x) >> 1;
+            edge[1].y = (fan[1].y + fan[2].y) >> 1;
+            edge[2] = fan[2];
+            edge[3].x = (neighbor[2].x + neighbor[1].x) >> 1;
+            edge[3].y = (neighbor[2].y + neighbor[1].y) >> 1;
+        }
+    }
+
+    // THE OCEAN PASS: per corner, four sub-vertices at the tiles that meet
+    // there, shaded through alt_get_ocean_detail (sites 4/5/6) and then
+    // the ocean wireframe fill. The image's per-corner shade run lives at
+    // 0x7F6644 and its vertices at 0x7D3AF0.
+    if ((a6 & 0x2000000) == 0) {
+        int corner = 0;  // the a5 slot again
+        int uv_off = 0;
+        do {
+            if (local_18 != 0 || coastal_mask[corner] != 0) {
+                int *const shades = OceanCornerShades + corner * 4;
+                Vert *const uvs = ocean_uv + corner * 4;
+                for (int sub = 0; sub < 4; sub++) {
+                    shades[sub] = 0;
+                    const int direction = (corner - 2 + sub) & 3;
+                    Vert *const vert =
+                        OceanCornerVerts + corner * 4 + sub;
+                    vert->x = CornerOffsetX[corner][direction] * local_78 + a9;
+                    vert->y = CornerOffsetY[corner][direction] * local_98 + a10;
+                    uvs[sub].x =
+                        OceanCornerUVs[corner * 4 + sub].x;
+                    uvs[sub].y =
+                        OceanCornerUVs[corner * 4 + sub].y;
+                    shades[sub] =
+                        OceanDetailShade[alt_get_ocean_detail(
+                            a7, a8, corner, sub)];
+                }
+                if (local_18 != 0 && local_20 == 0) {
+                    if (0xf < shades[0] || 0xf < shades[1] ||
+                        0xf < shades[2] || 0xf < shades[3]) {
+                        int ocean_zvals[4];
+                        for (int sub = 0; sub < 4; sub++) {
+                            ocean_zvals[sub] = shades[sub] - 0x10;
+                        }
+                        const int shade =
+                            (-(uint32_t)(local_1c != 0) & 0xffffffbe) +
+                            0x41;
+                        if (local_1c != 0) {
+                            g_OCEAN_TEXTURES[1].draw(
+                                buffer, OceanCornerVerts + corner * 4,
+                                ocean_zvals, 4, uvs);
+                        } else {
+                            g_OCEAN_TEXTURES[1].draw(
+                                buffer, OceanCornerVerts + corner * 4,
+                                ocean_zvals, 4, uvs, shade);
+                        }
+                    }
+                    g_OCEAN_TEXTURES[0].draw2(
+                        buffer, OceanCornerVerts + corner * 4, shades, 4,
+                        uvs, 0x10,
+                        (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                }
+            }
+            corner = corner + 1;
+            uv_off = uv_off + 8;
+        } while (corner < 4);
+    }
+    if (local_18 == 0 || local_20 == 0) {
+        goto landmark_chain;
+    }
+    buffer->poly(MapCornerScratch, 4, 0xbe);
+    TextureLightFloor = 0xffffff00;
+    TextureLightCeiling = 0x100;
+    return 1;
+
+landmark_chain:;
+    // THE LANDMARK OVERLAYS (sites 7-10): one quad per family, receiver
+    // index from the sequence-indexed table, vertices from the corner
+    // scratch the per-triangle loop filled.
+    iVar5 = local_94;
+    if (local_18 == 0 || local_20 == 0) {
+        if (local_70 == 0 && (local_34 & 2) != 0 && -1 < local_94 &&
+            local_94 < static_cast<int>(sizeof(MountPlanetTable) / sizeof(MountPlanetTable[0])) &&
+            MountPlanetTable[local_94].texture != -1) {
+            uVar12 = (uint32_t)MountPlanetTable[local_94].rotation;
+            {
+                Vert quad[4];
+                int quad_z[4];
+                const uint32_t k0 = uVar12 & 3;
+                const uint32_t k1 = (uVar12 + 1) & 3;
+                const uint32_t k2 = (uVar12 - 2) & 3;
+                const uint32_t k3 = (uVar12 - 1) & 3;
+                quad[0].x = MapCornerScratch[k0].x;
+                quad[0].y = MapCornerScratch[k0].y;
+                quad[1].x = MapCornerScratch[k1].x;
+                quad[1].y = MapCornerScratch[k1].y;
+                quad[2].x = MapCornerScratch[k2].x;
+                quad[2].y = MapCornerScratch[k2].y;
+                quad[3].x = MapCornerScratch[k3].x;
+                quad[3].y = MapCornerScratch[k3].y;
+                quad_z[0] = local_b8[k0];
+                quad_z[1] = local_b8[k1];
+                quad_z[2] = local_b8[k2];
+                quad_z[3] = local_b8[k3];
+            overlay_uv[0].x = 0;
+            overlay_uv[0].y = 0;
+            overlay_uv[1].x = 0x37;
+            overlay_uv[1].y = 0;
+            overlay_uv[2].x = 0x37;
+            overlay_uv[2].y = 0x37;
+            overlay_uv[3].x = 0;
+            overlay_uv[3].y = 0x37;
+            if (local_94 == 0) {
+                g_MOUNT_PLANET_TEXTURES[MountPlanetTable[local_94].texture]
+                    .draw_color_key(
+                        buffer, quad, 4,
+                        overlay_uv);
+            } else {
+                g_MOUNT_PLANET_TEXTURES[MountPlanetTable[local_94].texture]
+                    .draw_trans(
+                        buffer, quad, quad_z, 4,
+                        overlay_uv);
+            }
+            }
+        }
+        if ((local_34 & 0x100) != 0 && local_70 == 0 && -1 < iVar5 &&
+            iVar5 < static_cast<int>(sizeof(SunnyMesaTable) / sizeof(SunnyMesaTable[0])) &&
+            SunnyMesaTable[iVar5].texture != -1) {
+            uVar12 = (uint32_t)SunnyMesaTable[iVar5].rotation;
+            {
+                Vert quad[4];
+                int quad_z[4];
+                const uint32_t k0 = uVar12 & 3;
+                const uint32_t k1 = (uVar12 + 1) & 3;
+                const uint32_t k2 = (uVar12 - 2) & 3;
+                const uint32_t k3 = (uVar12 - 1) & 3;
+                quad[0].x = MapCornerScratch[k0].x;
+                quad[0].y = MapCornerScratch[k0].y;
+                quad[1].x = MapCornerScratch[k1].x;
+                quad[1].y = MapCornerScratch[k1].y;
+                quad[2].x = MapCornerScratch[k2].x;
+                quad[2].y = MapCornerScratch[k2].y;
+                quad[3].x = MapCornerScratch[k3].x;
+                quad[3].y = MapCornerScratch[k3].y;
+                quad_z[0] = local_b8[k0];
+                quad_z[1] = local_b8[k1];
+                quad_z[2] = local_b8[k2];
+                quad_z[3] = local_b8[k3];
+            overlay_uv[2].x = 0x37;
+            overlay_uv[1].x = 0;
+            overlay_uv[1].y = 0;
+            overlay_uv[2].y = 0;
+            overlay_uv[0].x = 0;
+            overlay_uv[3].x = 0x37;
+            overlay_uv[3].y = 0x37;
+            overlay_uv[0].y = 0x37;
+            g_SUNNY_MESA_TEXTURES[SunnyMesaTable[iVar5].texture]
+                .draw_trans(buffer, quad, quad_z, 4,
+                            overlay_uv);
+            }
+        }
+        if ((local_34 & 1) != 0 && local_70 == 0 && -1 < iVar5 &&
+            iVar5 < static_cast<int>(sizeof(GarlandCraterTable) / sizeof(GarlandCraterTable[0])) &&
+            GarlandCraterTable[iVar5].texture != -1) {
+            uVar12 = (uint32_t)GarlandCraterTable[iVar5].rotation;
+            {
+                Vert quad[4];
+                int quad_z[4];
+                const uint32_t k0 = uVar12 & 3;
+                const uint32_t k1 = (uVar12 + 1) & 3;
+                const uint32_t k2 = (uVar12 - 2) & 3;
+                const uint32_t k3 = (uVar12 - 1) & 3;
+                quad[0].x = MapCornerScratch[k0].x;
+                quad[0].y = MapCornerScratch[k0].y;
+                quad[1].x = MapCornerScratch[k1].x;
+                quad[1].y = MapCornerScratch[k1].y;
+                quad[2].x = MapCornerScratch[k2].x;
+                quad[2].y = MapCornerScratch[k2].y;
+                quad[3].x = MapCornerScratch[k3].x;
+                quad[3].y = MapCornerScratch[k3].y;
+                quad_z[0] = local_b8[k0];
+                quad_z[1] = local_b8[k1];
+                quad_z[2] = local_b8[k2];
+                quad_z[3] = local_b8[k3];
+            overlay_uv[2].x = 0x37;
+            overlay_uv[1].x = 0;
+            overlay_uv[1].y = 0;
+            overlay_uv[2].y = 0;
+            overlay_uv[0].x = 0;
+            overlay_uv[3].x = 0x37;
+            overlay_uv[3].y = 0x37;
+            overlay_uv[0].y = 0x37;
+            g_GARLAND_CRATER_TEXTURES[GarlandCraterTable[iVar5].texture]
+                .draw_trans(buffer, quad, quad_z, 4,
+                            overlay_uv);
+            }
+        }
+
+        // THE VIEW BORDER LINES: with the show-grid preference or the
+        // overlay flag, the tile outline is drawn 0x25/0xbe between this
+        // tile's corners and its west/north neighbours' (site: Buffer::line
+        // at 0x464CB3).
+        if ((((GamePreferences & 0x100) != 0 && local_20 == 0) ||
+             ((a6 & 0x4000000) != 0)) &&
+            ((0x5f < (tile->climate & 0xe0)) || local_20 != 0 ||
+             ((GameMorePreferences & 0x800000) != 0))) {
+            iVar5 = a7 + -1;
+            if ((MapIsFlat & 1) == 0) {
+                if (iVar5 < 0) {
+                    iVar5 = iVar5 + MapLongitudeBounds;
+                } else if (MapLongitudeBounds <= iVar5) {
+                    iVar5 = iVar5 - MapLongitudeBounds;
+                }
+            }
+            uVar12 = 1;
+            do {
+                iVar19 = a8 + -1;
+                if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
+                    iVar5 > -1 && iVar5 < MapLongitudeBounds) {
+                    bVar11 = map_tiles()[*MapRowStride * iVar19 +
+                                         (iVar5 >> 1)]
+                                 .climate &
+                             0xe0;
+                    if (bVar11 < 0x60) {
+                        if (local_20 != 0 ||
+                            ((GameMorePreferences & 0x800000) != 0)) {
+                            if (0x5f < bVar11) {
+                                goto border_bright;
+                            }
+                            goto border_dim;
+                        }
+                    } else {
+border_bright:
+                        uVar15 = 0x25;
+                        if ((tile->climate & 0xe0) < 0x60) {
+border_dim:
+                            uVar15 = 0xbe;
+                        }
+                        buffer->line(
+                            MapCornerScratch[(uVar12 - 1)].x,
+                            MapCornerScratch[(uVar12 - 1)].y,
+                            MapCornerScratch[(uVar12 & 3)].x,
+                            MapCornerScratch[(uVar12 & 3)].y,
+                            uVar15);
+                    }
+                }
+                iVar5 = iVar5 + 2;
+                if ((MapIsFlat & 1) == 0) {
+                    if (iVar5 < 0) {
+                        iVar5 = iVar5 + MapLongitudeBounds;
+                    } else if (MapLongitudeBounds <= iVar5) {
+                        iVar5 = iVar5 - MapLongitudeBounds;
+                    }
+                }
+                uVar12 = uVar12 + 1;
+            } while (uVar12 <= 2);
+        }
+        if (ConsoleGlobal.cursor_history_x_
+                    [ConsoleGlobal.cursor_history_index_] == a7 &&
+            ConsoleGlobal.cursor_history_y_
+                    [ConsoleGlobal.cursor_history_index_] == a8) {
+            for (iVar5 = 0; iVar5 < 4; iVar5++) {
+                MapCornerCopy[iVar5] = MapCornerScratch[iVar5];
+            }
+        }
+        a9 = a9 + local_78 * -2;
+        a10 = a10 - (local_44 + local_78);
+        if (MapWinCaptionScale < 1) {
+            SpriteScaleDenominator = 0x10;
+            SpriteScaleNumerator = a3 + 0x10;
+        } else {
+            SpriteScaleNumerator = MapWinCaptionScale;
+            SpriteScaleDenominator = MapWinCaptionDivisor;
+        }
+
+        // THE LANDMARK RESOURCE SPRITE (site 21).
+        if ((a6 & 0x200) != 0 && local_70 == 0) {
+            uVar12 = tile->bit2;
+            if ((uVar12 & 0x80000008) == 8) {
+                g_TER1_LANDMARK_RESOURCE_SPRITES[4].draw(
+                    buffer, sprite_transparent(g_TER1_LANDMARK_RESOURCE_SPRITES[4]),
+                    a9, a10);
+            } else if ((uVar12 & 0x80000400) == 0x400) {
+                g_TER1_LANDMARK_RESOURCE_SPRITES[5].draw(
+                    buffer, sprite_transparent(g_TER1_LANDMARK_RESOURCE_SPRITES[5]),
+                    a9, a10);
+            }
+        }
+
+        // THE JUNGLE OVERLAY (site 11), gated by base radius, unworked and
+        // unexplored-clear. The corner mask loop lands in the dead a5
+        // parameter slot; the receiver indexes with the EARLIER 8-neighbour
+        // base mask (see the header note).
+        if (local_30 != 0 && local_18 == 0 && local_70 == 0) {
+            a5 = 0;  // the image's dead-slot mask
+            for (int k = 0; k < 4; k++) {
+                int nx = RiverStepX[k] + a7;
+                if ((MapIsFlat & 1) == 0) {
+                    if (nx < 0) {
+                        nx += MapLongitudeBounds;
+                    } else if (MapLongitudeBounds <= nx) {
+                        nx -= MapLongitudeBounds;
+                    }
+                }
+                const int ny = RiverStepY[k] + a8;
+                if (ny > -1 && ny < MapLatitudeBounds && nx > -1 &&
+                    nx < MapLongitudeBounds) {
+                    Map *const ntile =
+                        &map_tiles()[*MapRowStride * ny + (nx >> 1)];
+                    if ((ntile->bit2 & 0x80000004) == 4 &&
+                        0x5f < (ntile->climate & 0xe0)) {
+                        a5 |= 1 << k;
+                    }
+                }
+            }
+            TextureRasterKey = 9;
+            uVar12 =
+                (uint32_t)(uint8_t)LandMoistureTable[local_2c][1];
+            {
+                int idx = 0;
+                for (int e = 0; e < 4; e++) {
+                    const uint32_t uVar17 = uVar12 & 3;
+                    uVar12 = uVar12 + 1;
+                    overlay_uv[e].x = LandCornerUVs[uVar17 * 3 + 1].x;
+                    overlay_uv[e].y = LandCornerUVs[uVar17 * 3 + 1].y;
+                    idx += 2;
+                }
+            }
+            g_JUNGLE_LAND_TEXTURES[LandMoistureTable[local_2c][0]]
+                .draw_color_key(buffer,
+                                MapCornerScratch,
+                                4, overlay_uv);
+        }
+
+        // THE FOREST OVERLAY (site 12): receiver = the four-corner fungus
+        // mask the loop above this in the image collects afresh here.
+        if ((local_24 & 0x200000) != 0 && 2 < (int)local_8c &&
+            (a6 & 1) != 0 && local_70 == 0) {
+            uVar12 = 0;  // esi in the image
+            for (int k = 0; k < 4; k++) {
+                int nx = RiverStepX[k] + a7;
+                if ((MapIsFlat & 1) == 0) {
+                    if (nx < 0) {
+                        nx += MapLongitudeBounds;
+                    } else if (MapLongitudeBounds <= nx) {
+                        nx -= MapLongitudeBounds;
+                    }
+                }
+                const int ny = RiverStepY[k] + a8;
+                if (ny > -1 && ny < MapLatitudeBounds && nx > -1 &&
+                    nx < MapLongitudeBounds) {
+                    Map *const ntile =
+                        &map_tiles()[*MapRowStride * ny + (nx >> 1)];
+                    if ((ntile->bit & 0x200000) != 0) {
+                        uVar12 |= 1u << k;
+                    }
+                }
+            }
+            overlay_uv[1].x = 0x37;
+            overlay_uv[2].x = 0x37;
+            overlay_uv[2].y = 0x37;
+            overlay_uv[3].y = 0x37;
+            overlay_uv[0].x = 0;
+            overlay_uv[0].y = 0;
+            overlay_uv[1].y = 0;
+            overlay_uv[3].x = 0;
+            TextureRasterKey = 9;
+            g_FOREST_TEXTURES[uVar12].draw_trans(
+                buffer, MapCornerScratch,
+                local_b8, 4, overlay_uv);
+        }
+
+        // THE FUNGUS OVERLAY (site 13): receiver row from the 8-neighbour
+        // land-with-fungus mask, +15 for water. The shade uses worked state.
+        if ((local_24 & 0x20) != 0 && 1 < (int)local_8c && local_70 == 0 &&
+            -10 < a3) {
+            TextureRasterKey = 9;
+            uVar12 =
+                (uint32_t)(uint8_t)LandMoistureTable[local_40][1];
+            {
+                int idx = 0;
+                for (int e = 0; e < 4; e++) {
+                    const uint32_t uVar17 = uVar12 & 3;
+                    uVar12 = uVar12 + 1;
+                    overlay_uv[e].x = LandCornerUVs[uVar17 * 3 + 1].x;
+                    overlay_uv[e].y = LandCornerUVs[uVar17 * 3 + 1].y;
+                    idx += 2;
+                }
+            }
+            g_FUNGUS_TEXTURES[LandMoistureTable[local_40][0] +
+                              15 * (local_18 != 0)]
+                .draw_color_key(
+                    buffer, MapCornerScratch,
+                    4, overlay_uv,
+                    (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+        }
+
+        // THE TERRITORY BORDER (site 14): the per-corner faction bytes the
+        // 8-neighbour walk collected, remapped through the shared table.
+        if (local_c0 != 0 &&
+            (((PlayersData[ConsoleGlobal.faction_id_].flags & 0x200) !=
+                  0 ||
+              (tile->visibility &
+               (uint8_t)(1 << ((uint8_t)ConsoleGlobal.faction_id_ &
+                               0x1f))) != 0) ||
+             (GameState & 0x80) != 0) &&
+            local_20 == 0) {
+            territory_faction = whose_territory(ConsoleGlobal.faction_id_, a7,
+                                          a8, 0, 0);
+            if (-1 < (int)territory_faction) {
+                territory_mask[1] = 0;
+                territory_mask[2] = 0;
+                territory_mask[3] = 0;
+                territory_mask[4] = 0;
+                territory_mask[0] = 0;
+                territory_mask[5] = 0;
+                territory_mask[6] = 0;
+                territory_mask[7] = 0;
+                territory_mask[8] = 0;
+                local_44 = 0;
+                territory_mask[9] = 0;
+                local_c0 = (uint32_t)tile->contour;
+                for (int k = 0; k < 8; k++) {
+                    iVar5 = RadiusBaseX[k] + a7;
+                    if ((MapIsFlat & 1) == 0) {
+                        if (iVar5 < 0) {
+                            iVar5 = MapLongitudeBounds + iVar5;
+                        } else if (MapLongitudeBounds <= iVar5) {
+                            iVar5 = iVar5 - MapLongitudeBounds;
+                        }
+                    }
+                    iVar19 = RadiusBaseY[k] + a8;
+                    if (iVar19 > -1 && iVar19 < MapLatitudeBounds &&
+                        iVar5 > -1 && iVar5 < MapLongitudeBounds &&
+                        (map_tiles()[*MapRowStride * iVar19 + (iVar5 >> 1)]
+                             .climate &
+                         0xe0) < 0x60 ==
+                            (tile->climate & 0xe0) < 0x60 &&
+                        map_tiles()[*MapRowStride * iVar19 + (iVar5 >> 1)]
+                                .contour == local_c0) {
+                        uVar12 = whose_territory(
+                            ConsoleGlobal.faction_id_, iVar5, iVar19, 0,
+                            0);
+                        if (territory_faction != uVar12) {
+                            local_44 = 1;
+                            cVar4 = (char)territory_faction;
+                            if (((uint32_t)k & 1) == 0) {
+                                if (k == 0) {
+                                    territory_mask[8] = cVar4 + 1;
+                                    territory_mask[2] = cVar4 + 1;
+                                    territory_mask[1] = cVar4 + 1;
+                                    goto LAB_004652ed;
+                                }
+                                territory_mask[k] = cVar4 + 1;
+                                territory_mask[k + 2] = cVar4 + 1;
+                            }
+                            territory_mask[k + 1] = cVar4 + 1;
+                        }
+LAB_004652ed:;
+                    }
+                }
+                if (local_44 != 0) {
+                    overlay_uv[1].x = 0x3b;
+                    overlay_uv[2].x = 0x3b;
+                    overlay_uv[2].y = 0x3b;
+                    overlay_uv[3].y = 0x3b;
+                    overlay_uv[0].x = 0;
+                    overlay_uv[0].y = 0;
+                    overlay_uv[1].y = 0;
+                    overlay_uv[3].x = 0;
+                    g_RAINFALL_SINGLE_TILE_TEXTURE.draw_mask_dest(
+                        buffer,
+                        MapCornerScratch,
+                        territory_mask,
+                        reinterpret_cast<uint8_t *>(TerritoryColorTables),
+                        4, overlay_uv);
+                }
+            }
+        }
+
+        // THE COAST OVERLAY (site 15): the 53-entry mask table per corner
+        // code, blitted against the rainfall single-tile band.
+        if (-8 < a3 && local_18 == 0) {
+            for (int corner = 0; corner < 4; corner++) {
+                uVar12 = (uint32_t)coastal_mask[corner];
+                if (uVar12 != 0) {
+                    iVar19 = 0;
+                    do {
+                        bVar11 = CoastMaskTable[iVar19][uVar12];
+                        coast_remap[iVar19] = bVar11;
+                        if (1 < bVar11) {
+                            coast_remap[iVar19] =
+                                TerrainCoastPalette[bVar11 + 2];
+                        }
+                        iVar19 = iVar19 + 1;
+                    } while (iVar19 < 0x35);
+                    if ((uVar12 == 7) && ((a8 - a7 & 2) != 0)) {
+                        coast_remap[5] = 0;
+                        coast_remap[0xe] = 0;
+                        coast_remap[0xf] = 0;
+                        coast_remap[0x10] = 0;
+                        coast_remap[0x11] = 0;
+                        // All three runs read the same four published colors
+                        // backward, not separate fixed-address storage.
+                        for (int run = 0; run < 3; ++run) {
+                            for (int shade = 0; shade < 4; ++shade) {
+                                coast_remap[0x12 + run * 4 + shade] =
+                                    TerrainCoastPalette[7 - shade];
+                            }
+                        }
+                    }
+                    // The image copies the mid-UV run for this corner
+                    // and passes the ocean shade run as zvals.
+                    for (int e = 0; e < 4; e++) {
+                        ocean_uv[corner * 4 + e] = edge_uv[corner * 4 + e];
+                    }
+                    g_OCEAN_TEXTURES[0].draw_coast(
+                        buffer,
+                        edge_vertices + corner * 4,
+                        OceanCornerShades + corner * 4,
+                        &g_RAINFALL_SINGLE_TILE_TEXTURES[0], coast_remap,
+                        4, ocean_uv + corner * 4,
+                        (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+                }
+            }
+        }
+
+        // THE RIVER OVERLAYS (sites 16/17): the corner river mask the
+        // diagonal walk collects selects the receiver row.
+        if ((a6 & 0x400) != 0 &&
+            (tile->bit & 0x80) != 0 && local_18 == 0) {
+            uVar12 = 0;  // ebx in the image
+            for (int k = 0; k < 4; k++) {
+                int nx = RiverStepX[k] + a7;
+                if ((MapIsFlat & 1) == 0) {
+                    if (nx < 0) {
+                        nx += MapLongitudeBounds;
+                    } else if (MapLongitudeBounds <= nx) {
+                        nx -= MapLongitudeBounds;
+                    }
+                }
+                const int ny = RiverStepY[k] + a8;
+                if (ny > -1 && ny < MapLatitudeBounds && nx > -1 &&
+                    nx < MapLongitudeBounds &&
+                    (map_tiles()[*MapRowStride * ny + (nx >> 1)].bit &
+                     0x80) != 0) {
+                    uVar12 |= 1u << k;
+                }
+            }
+            overlay_uv[0].x = 0;
+            overlay_uv[1].x = 0x37;
+            overlay_uv[2].x = 0x37;
+            overlay_uv[2].y = 0x37;
+            overlay_uv[3].y = 0x37;
+            overlay_uv[0].y = 0;
+            overlay_uv[1].y = 0;
+            overlay_uv[3].x = 0;
+            TextureRasterKey = 9;
+            g_RIVER_TEXTURES[uVar12].draw_trans_3(
+                buffer, MapCornerScratch,
+                local_b8, 4, overlay_uv,
+                (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+            if ((tile->bit & 0x200) != 0) {
+                g_RIVER_TEXTURES[0].draw_trans_3(
+                    buffer, MapCornerScratch,
+                    local_b8, 4, overlay_uv,
+                    (-(uint32_t)(local_1c != 0) & 0xffffffbe) + 0x41);
+            }
+        }
+        goto LAB_00465605;
+    }
+
+LAB_00465605:;
+    // THE SENSOR SWEEP: the distance class between the map focus tile and
+    // this tile (and each corner) decides whether the tile outline joins
+    // the sweep display (Buffer::line at 0x465A3B).
+    focus_y = *MapFocusY;
+    if (MapWinCaptionScale < 1) {
+        SpriteScaleDenominator = 0x10;
+        SpriteScaleNumerator = a3 + 0x10;
+    } else {
+        SpriteScaleNumerator = MapWinCaptionScale;
+        SpriteScaleDenominator = MapWinCaptionDivisor;
+    }
+    if ((local_20 != 0 && skip_terrain == 0) ||
+        (a4 > -1 && (PlayersData[a4].flags & 0x200) == 0 &&
+         (tile->visibility & (uint8_t)(1u << (bVar10 & 0x1f))) == 0)) {
+        goto LAB_00466c32;
+    }
+    if ((GamePreferences & 0x200) != 0 && local_20 == 0) {
+        uVar12 = tile->val3 & 7;
+        if (a4 > -1 && (int)uVar12 != a4 &&
+            (PlayersData[a4].diplo_treaties[uVar12] & 8) == 0) {
+            uVar12 = 0;
+        }
+        iVar5 = abs(a7 - *MapFocusX);
+        if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar5) {
+            iVar5 = MapLongitudeBounds - iVar5;
+        }
+        uVar15 = abs(a8 - focus_y);
+        iVar19 = abs(iVar5);
+        iVar6 = abs(uVar15);
+        iVar5 = iVar19 <= iVar6 ? iVar6 : iVar19;
+        iVar7 = iVar6 <= iVar19 ? iVar6 : iVar19;
+        if ((iVar5 - (((iVar19 + iVar6 >> 1) - iVar7) + 1 >> 1) < 3) +
+                uVar12 ==
+            0) {
+            iVar5 = abs(a7 - *MapFocusX);
+            if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar5) {
+                iVar5 = MapLongitudeBounds - iVar5;
+            }
+            uVar15 = abs(a8 - focus_y);
+            iVar19 = abs(iVar5);
+            iVar6 = abs(uVar15);
+            iVar5 = iVar19 <= iVar6 ? iVar6 : iVar19;
+            iVar7 = iVar6 <= iVar19 ? iVar6 : iVar19;
+            local_44 = (uint32_t)((-1 < (int)(((iVar5 -
+                                                  (((iVar19 + iVar6 >> 1) -
+                                                    iVar7) +
+                                                   1 >> 1)) < 3) +
+                                                 uVar12)) -
+                                  1);
+        } else {
+            local_44 = 1;
+        }
+        local_30b = 1;
+        local_2c = 0;
+        do {
+            iVar5 = RiverStepX[local_30b - 1] + a7;
+            if ((MapIsFlat & 1) == 0) {
+                if (iVar5 < 0) {
+                    iVar5 = iVar5 + MapLongitudeBounds;
+                } else if (MapLongitudeBounds <= iVar5) {
+                    iVar5 = iVar5 - MapLongitudeBounds;
+                }
+            }
+            local_34b = RiverStepY[local_30b - 1] + a8;
+            if ((int)local_34b > -1 && (int)local_34b < MapLatitudeBounds &&
+                iVar5 > -1 && iVar5 < MapLongitudeBounds) {
+                uVar17 = (uint32_t)(
+                    map_tiles()[*MapRowStride * (int)local_34b + (iVar5 >> 1)]
+                        .val3 &
+                    7);
+                if (a4 > -1 && uVar17 != (uint32_t)a4 &&
+                    (PlayersData[a4].diplo_treaties[uVar17] & 8) == 0) {
+                    uVar17 = 0;
+                }
+                focus_y = *MapFocusY;
+                iVar19 = abs(iVar5 - *MapFocusX);
+                if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar19) {
+                    iVar19 = MapLongitudeBounds - iVar19;
+                }
+                local_48b = (uint32_t)abs((int)local_34b - focus_y);
+                iVar6 = abs(iVar19);
+                iVar7 = abs((int)local_48b);
+                iVar19 = iVar6 <= iVar7 ? iVar7 : iVar6;
+                iVar13 = iVar7 <= iVar6 ? iVar7 : iVar6;
+                if ((uint32_t)((iVar19 -
+                                (((iVar6 + iVar7 >> 1) - iVar13) +
+                                 1 >> 1) < 3) +
+                               uVar17) == 0) {
+                    iVar5 = abs(iVar5 - *MapFocusX);
+                    if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar5) {
+                        iVar5 = MapLongitudeBounds - iVar5;
+                    }
+                    uVar15 = abs((int)local_34b - focus_y);
+                    iVar19 = abs(iVar5);
+                    iVar6 = abs(uVar15);
+                    iVar5 = iVar19 <= iVar6 ? iVar6 : iVar19;
+                    iVar7 = iVar6 <= iVar19 ? iVar6 : iVar19;
+                    uVar12 = (uint32_t)((-1 < (int)(((iVar5 -
+                                                       (((iVar19 + iVar6 >>
+                                                           1) -
+                                                          iVar7) +
+                                                         1 >> 1)) <
+                                                      3) +
+                                                     uVar17)) -
+                                        1);
+                } else {
+                    uVar12 = 1;
+                }
+                if (uVar12 != local_44) {
+                    uVar17 = local_30b + 1 & 3;
+                    buffer->line(
+                        MapCornerScratch[(local_30b & 3)].x,
+                        MapCornerScratch[(local_30b & 3)].y,
+                        MapCornerScratch[uVar17].x,
+                        MapCornerScratch[uVar17].y, 0xf9);
+                }
+            }
+            local_30b = local_30b + 1;
+        } while (local_30b < 5);
+    }
+
+    // THE KELP FARM SPRITE (site 22).
+    if ((a6 & 1) != 0 && (local_24 & 0x8000) != 0 && local_18 != 0) {
+        g_TER1_KELP_FARM_SPRITE.draw(
+            buffer, sprite_transparent(g_TER1_KELP_FARM_SPRITE), a9, a10);
+    }
+
+    // THE BASE/ROAD/MAGTUBE PASS (sites 18-20 and the sensor-array
+    // highlight): base_at's visibility first, then the eight neighbours'
+    // road bits pick the edge receivers.
+    local_30b = a6 & 0x20;
+    if (local_30b != 0) {
+        local_88 = base_at(a7, a8);
+        if ((int)local_88 > -1 && a4 > -1 &&
+            (Bases[(int)local_88].faction_id_current != a4 &&
+             (Bases[(int)local_88].visibility &
+              (uint8_t)(1 << (bVar10 & 0x1f))) == 0)) {
+            local_88 = -1;
+        }
+        if (local_18 == 0 &&
+            ((local_24 & 4) != 0 || (int)local_88 > -1)) {
+            if (((local_24 & 8) != 0) ||
+                (bVar23 = false, (int)local_88 > -1)) {
+                bVar23 = true;
+            }
+            local_94 = 0;
+            local_2c = 0;
+            {
+                int k = 0;
+                do {
+                    iVar5 = RadiusBaseX[k] + a7;
+                    if ((MapIsFlat & 1) == 0) {
+                        if (iVar5 < 0) {
+                            iVar5 = MapLongitudeBounds + iVar5;
+                        } else if (MapLongitudeBounds <= iVar5) {
+                            iVar5 = iVar5 - MapLongitudeBounds;
+                        }
+                    }
+                    local_34b = RadiusBaseY[k] + a8;
+                    if ((int)local_34b > -1 &&
+                        (int)local_34b < MapLatitudeBounds && iVar5 > -1 &&
+                        iVar5 < MapLongitudeBounds) {
+                        iVar19 = *MapRowStride * (int)local_34b + (iVar5 >> 1);
+                        road_neighbor = &map_tiles()[iVar19];
+                        if (0x5f < (road_neighbor->climate & 0xe0)) {
+                            if (a4 < 0) {
+                                local_44 = road_neighbor->bit;
+                            } else {
+                                local_44 = a4 == 0
+                                    ? map_tiles()[iVar19].bit2
+                                    : map_tiles()[iVar19].bit_visible[a4 - 1];
+                            }
+                            iVar5 = base_at(iVar5, (int)local_34b);
+                            if (iVar5 > -1 && a4 > -1 &&
+                                (Bases[iVar5].faction_id_current != a4 &&
+                                 (Bases[iVar5].visibility &
+                                  (uint8_t)(1 << (bVar10 & 0x1f))) == 0)) {
+                                iVar5 = -1;
+                            }
+                            if (((local_44 & 4) != 0) || iVar5 > -1) {
+                                local_94 = 1;
+                                overlay_uv[0].x = 0;
+                                overlay_uv[0].y = 0;
+                                overlay_uv[1].x = 0x37;
+                                overlay_uv[1].y = 0;
+                                overlay_uv[2].x = 0x37;
+                                overlay_uv[2].y = 0x37;
+                                overlay_uv[3].x = 0;
+                                overlay_uv[3].y = 0x37;
+                                if (bVar23 &&
+                                    (((local_44 & 8) != 0) ||
+                                     iVar5 > -1)) {
+                                    g_MAGTUBE_TEXTURES
+                                        [1 + ((k + 2) & 7)]
+                                            .draw_trans(
+                                                buffer,
+                                                MapCornerScratch,
+                                                local_b8, 4,
+                                                overlay_uv);
+                                    local_2c = 1;
+                                } else {
+                                    g_ROAD_TEXTURES[1 + ((k + 2) & 7)]
+                                        .draw_trans(
+                                            buffer,
+                                            MapCornerScratch,
+                                            local_b8, 4,
+                                            overlay_uv);
+                                }
+                            }
+                        }
+                    }
+                    k = k + 1;
+                } while (k < 8);
+            }
+            if ((int)local_88 < 0 &&
+                ((bVar23 && local_2c == 0) ||
+                 local_94 == 0)) {
+                overlay_uv[0].x = 0;
+                overlay_uv[0].y = 0;
+                overlay_uv[1].x = 0x37;
+                overlay_uv[1].y = 0;
+                overlay_uv[2].x = 0x37;
+                overlay_uv[2].y = 0x37;
+                overlay_uv[3].x = 0;
+                overlay_uv[3].y = 0x37;
+                if (bVar23) {
+                    g_MAGTUBE_TEXTURES[0].draw_trans(
+                        buffer,
+                        MapCornerScratch,
+                        local_b8, 4,
+                        overlay_uv);
+                } else {
+                    g_ROAD_TEXTURES[0].draw_trans(
+                        buffer,
+                        MapCornerScratch,
+                        local_b8, 4,
+                        overlay_uv);
+                }
+            }
+        }
+    }
+    if ((local_30b != 0 && (local_24 & 0x8000) != 0 && -8 < a3) ||
+        (a6 & 0x1000) != 0) {
+        crop_diff = crop_yield(territory_faction, 0xffffffff, a7, a8, 0);
+    }
+
+    // THE BONUS/RESOURCE SPRITES (sites 23/24).
+    if ((a6 & 0x200) != 0) {
+        iVar5 = bonus_at(a7, a8, 0);
+        if (iVar5 != 0 && -8 < a3) {
+            if (iVar5 == 4) {
+                g_TER1_LANDMARK_RESOURCE_SPRITES
+                    [4 + (local_18 != 0)]
+                        .draw(buffer, sprite_transparent(g_TER1_LANDMARK_RESOURCE_SPRITES [4 + (local_18 != 0)]),
+                              a9, a10);
+            } else {
+                g_TER1_SEA_LAND_RESOURCE_SPRITES
+                    [(((local_14 + a8 & 1U) - 4) +
+                      ((uint32_t)(local_18 != 0) + iVar5 * 2) * 2)]
+                        .draw_dest(
+                            buffer,
+                            sprite_transparent(
+                                g_TER1_SEA_LAND_RESOURCE_SPRITES
+                                    [(((local_14 + a8 & 1U) - 4) +
+                                      ((uint32_t)(local_18 != 0) +
+                                       iVar5 * 2) *
+                                          2)]),
+                            a9, a10, ShadowColorTable);
+            }
+        }
+    }
+    if (local_30b != 0) {
+        // THE IMPROVEMENT SPRITES (sites 25-35), each gated by its tile
+        // flag; receivers are the g_TER1_* band in flag order.
+        if ((local_24 & 0x800) != 0 && -8 < a3 && local_18 == 0) {
+            g_TER1_BUNKER_SPRITE.draw(
+                buffer, sprite_transparent(g_TER1_BUNKER_SPRITE), a9, a10);
+        }
+        if ((local_24 & 0x40000) != 0 && -8 < a3 && local_18 == 0) {
+            g_TER1_AIRBASE_SPRITE.draw(
+                buffer, sprite_transparent(g_TER1_AIRBASE_SPRITE), a9,
+                a10);
+        }
+        if ((local_24 & 0x80000000) != 0 && -8 < a3) {
+            g_TER1_SENSOR_ARRAY_SPRITE.draw_dest(
+                buffer, sprite_transparent(g_TER1_SENSOR_ARRAY_SPRITE),
+                a9, a10, ShadowColorTable);
+        }
+        if ((local_24 & 0x8000) != 0 && -8 < a3 && local_18 == 0) {
+            uVar12 = local_24 & 0x8000;
+            if ((local_24 & 0x80000) == 0) {
+                iVar5 = crop_diff + -1;
+                if (iVar5 < 0) {
+                    iVar5 = 0;
+                } else if (3 < iVar5) {
+                    iVar5 = 3;
+                }
+                g_TER1_FARM_SPRITES[iVar5].draw(
+                    buffer,
+                    sprite_transparent(g_TER1_FARM_SPRITES[iVar5]), a9,
+                    a10);
+            } else {
+                iVar5 = crop_diff + -1;
+                if (iVar5 < 0) {
+                    iVar5 = 0;
+                } else if (3 < iVar5) {
+                    iVar5 = 3;
+                }
+                g_TER1_SOIL_ENRICHER_SPRITES[iVar5].draw(
+                    buffer, sprite_transparent(g_TER1_SOIL_ENRICHER_SPRITES[iVar5]),
+                    a9, a10);
+            }
+        }
+        if ((local_24 & 0x10) != 0 && -8 < a3) {
+            if (local_18 == 0) {
+                g_TER1_MINE_SPRITE.draw(
+                    buffer, sprite_transparent(g_TER1_MINE_SPRITE), a9,
+                    a10);
+            } else if (ExpansionEnabled != 0 || (int)local_8c == 2) {
+                g_TER1_MINING_PLATFORM_SPRITE.draw(
+                    buffer,
+                    sprite_transparent(g_TER1_MINING_PLATFORM_SPRITE), a9,
+                    a10);
+            }
+        }
+        if ((local_24 & 0x40) != 0 && -8 < a3) {
+            if (local_18 == 0) {
+                g_TER1_SOLAR_COLLECTOR_SPRITE.draw(
+                    buffer,
+                    sprite_transparent(g_TER1_SOLAR_COLLECTOR_SPRITE), a9,
+                    a10);
+            } else if (ExpansionEnabled != 0 || (int)local_8c == 2) {
+                g_TER1_TIDAL_HARNESS_SPRITE.draw(
+                    buffer,
+                    sprite_transparent(g_TER1_TIDAL_HARNESS_SPRITE), a9,
+                    a10);
+            }
+        }
+        if ((local_24 & 0x400000) != 0 && -8 < a3) {
+            g_TER1_CONDENSER_SPRITE.draw(
+                buffer, sprite_transparent(g_TER1_CONDENSER_SPRITE), a9,
+                a10);
+        }
+        if ((local_24 & 0x800000) != 0 && -8 < a3) {
+            g_TER1_ECHELON_MIRROR_SPRITE.draw(
+                buffer, sprite_transparent(g_TER1_ECHELON_MIRROR_SPRITE),
+                a9, a10);
+        }
+        if ((local_24 & 0x1000000) != 0 && -8 < a3) {
+            uVar16b = sprite_transparent(g_TER1_BOREHOLE_SPRITE);
+            if ((tile->bit2 & 0x80001000) == 0x1000) {
+                uVar16b =
+                    sprite_transparent(g_TER1_BOREHOLE_CLUSTER_SPRITE);
+                g_TER1_BOREHOLE_CLUSTER_SPRITE.draw(buffer, uVar16b, a9,
+                                                    a10);
+            } else {
+                g_TER1_BOREHOLE_SPRITE.draw(buffer, uVar16b, a9, a10);
+            }
+        }
+        if ((local_24 & 0x8000) != 0 && -8 < a3 && local_18 == 0 &&
+            4 < crop_diff && (local_24 & 0x80000) != 0) {
+            g_TER1_SOIL_ENRICHER_SPRITES[0].draw(
+                buffer, sprite_transparent(g_TER1_SOIL_ENRICHER_SPRITES[0]),
+                a9, a10);
+        }
+        {
+            uVar12 = tile->bit2;
+            if ((uVar12 & 0x80002000) == 0x2000) {
+                iVar5 = (int)uVar12 >> 0x18;
+                if (0x1ffffff < (int)(uVar12 & 0xff000000)) {
+                    if ((int)(uVar12 & 0xff000000) < 0x4000001) {
+                        goto nexus_done;
+                    }
+                    iVar5 = iVar5 + -3;
+                }
+                g_TER1_MANIFOLD_NEXUS_SPRITES[iVar5].draw(
+                    buffer, sprite_transparent(g_TER1_MANIFOLD_NEXUS_SPRITES[iVar5]),
+                    a9, a10);
+            }
+        }
+nexus_done:;
+        {
+            uVar12 = tile->bit2;
+            if ((uVar12 & 0x80004000) == 0x4000 &&
+                ExpansionEnabled != 0) {
+                Sprite *wreck;
+                uVar16b = uVar12 & 0xff000000;
+                if (uVar16b == 0) {
+                    wreck = goody_at(a7, a8) == 0
+                                ? &g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES
+                                      [0]
+                                : &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[0];
+                } else if ((int)uVar16b < 0x8000000) {
+                    wreck = &g_TER1WRECK_UNITY_WRECKAGE_SPRITES
+                        [(int)uVar16b >> 0x18];
+                } else if (uVar16b == 0x8000000) {
+                    wreck = goody_at(a7, a8) == 0
+                                ? &g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES
+                                      [1]
+                                : &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[8];
+                } else if (uVar16b == 0xa000000) {
+                    wreck = goody_at(a7, a8) == 0
+                                ? &g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES
+                                      [2]
+                                : &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[9];
+                } else if (uVar16b == 0xc000000) {
+                    wreck = &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[10];
+                } else if (uVar16b == 0xf000000) {
+                    wreck = &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[11];
+                } else if (uVar16b == 0x10000000) {
+                    wreck = &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[12];
+                } else if (uVar16b == 0x13000000) {
+                    wreck = goody_at(a7, a8) == 0
+                                ? &g_TER1WRECK_UNITY_WRECKAGE_ALT_SPRITES
+                                      [3]
+                                : &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[13];
+                } else {
+                    if (uVar16b != 0x14000000) {
+                        goto wreck_done;
+                    }
+                    wreck = &g_TER1WRECK_UNITY_WRECKAGE_SPRITES[14];
+                }
+                wreck->draw(buffer, sprite_transparent(*wreck), a9,
+                            a10);
+            }
+        }
+wreck_done:;
+        {
+            uVar12 = tile->bit2;
+            if ((uVar12 & 0x80008000) == 0x8000 &&
+                ExpansionEnabled != 0 &&
+                (int)(uVar12 & 0xff000000) < 0x6000000) {
+                g_FOSSIL_FIELD_RIDGE_SPRITES[(int)uVar12 >> 0x18].draw(
+                    buffer, sprite_transparent(g_FOSSIL_FIELD_RIDGE_SPRITES[(int)uVar12 >> 0x18]),
+                    a9, a10);
+            }
+        }
+    }
+
+    // THE POD/MONOLITH/GRID OVERLAYS (sites 38-41).
+    if ((a6 & 0x200) != 0 && -8 < a3) {
+        iVar5 = goody_at(a7, a8);
+        if (iVar5 != 0) {
+            uVar12 = tile->bit2;
+            if ((uVar12 & 0x80004000) != 0x4000 ||
+                ((uVar12 = uVar12 & 0xff000000, uVar12 != 0 &&
+                  uVar12 != 0x8000000) &&
+                 (uVar12 != 0xa000000 && uVar12 != 0x13000000))) {
+                g_TER1_UNITY_POD_SPRITES
+                    [local_18 + ((int)(a7 * 7 + a8 * 5) % 3) * 2]
+                        .draw(buffer, sprite_transparent(g_TER1_UNITY_POD_SPRITES [local_18 + ((int)(a7 * 7 + a8 * 5) % 3) * 2]),
+                              a9, a10);
+            }
+        }
+        if ((tile->bit & 0x2000) != 0) {
+            g_TER1_MONOLITH_SPRITE.draw_dest(
+                buffer, sprite_transparent(g_TER1_MONOLITH_SPRITE), a9,
+                a10, ShadowColorTable);
+        }
+    }
+    if (local_18 == 0) {
+        if ((a6 & 8) != 0) {
+            g_TER1_WHITE_ORG_YEL_TILE_SPRITES
+                [local_90 + (tile->climate & 7) * 2]
+                    .draw(buffer, sprite_transparent(g_TER1_WHITE_ORG_YEL_TILE_SPRITES [local_90 + (tile->climate & 7) * 2]),
+                          a9, a10);
+        }
+        if (local_20 == 0 && (a6 & 0x10) != 0) {
+            if (local_90 != 0 && (a6 & 8) != 0) {
+                local_90 = local_90 + 1;
+            }
+            g_TER1_BOTTOM_LEFT_TILE_SPRITES
+                [local_90 +
+                 ((tile->climate & 0x18) >> 3) * 3]
+                    .draw(buffer, sprite_transparent(g_TER1_BOTTOM_LEFT_TILE_SPRITES [local_90 + ((tile->climate & 0x18) >> 3) * 3]),
+                          a9, a10);
+        }
+    }
+
+    // THE EDITOR READOUTS: the window's own Buffer (vbtable walk), the
+    // shared StringTemp scratch and window->font_b_.
+    if (window != 0) {
+        Buffer *const surface = window;
+        int width = local_78;
+        if ((a6 & 4) != 0) {
+            StringTemp[0] = 0;
+            width = local_78;
+            if ((tile->bit & 0x1000) == 0) {
+                uVar12 = (uint32_t)(tile->val2 >> 4);
+                if (uVar12 == 0) {
+                    uVar12 = (uint32_t)world_site(a7, a8, 0);
+                    site_set(a7, a8, uVar12);
+                }
+            } else {
+                uVar12 = 0;
+            }
+            _itoa(uVar12, numbuf, 10);
+            strcat(StringTemp, numbuf);
+            width = local_78;
+            local_a8 = a9;
+            local_a4 = a10;
+            local_9c = a10 + local_78 * 2;
+            local_a0 = a9 + local_78 * 4;
+            surface->set_text_color(
+                ((0x5f < (tile->climate & 0xe0)) - 1 & 0xfffffffd) + 0xff,
+                0, 1, 1);
+            surface->set_font(&window->font_b_, 0, 0, 0);
+            if (uVar12 != 0 && local_18 == 0) {
+                sVar9 = strlen(StringTemp);
+                RECT rect;
+                rect.left = local_a8;
+                rect.top = local_a4;
+                rect.right = local_a0;
+                rect.bottom = local_9c;
+                surface->write_cent_l(StringTemp, &rect, sVar9);
+            }
+        }
+        if ((a6 & 0x4000) != 0) {
+            StringTemp[0] = 0;
+            _itoa(Paths.get(a7, a8), numbuf, 10);
+            strcat(StringTemp, numbuf);
+            surface->set_text_color(0xff, 0, 1, 1);
+            surface->set_font(&window->font_b_, 0, 0, 0);
+            local_a8 = a9;
+            local_a4 = a10;
+            local_a0 = a9 + width * 4;
+            local_9c = a10 + width * 2;
+            sVar9 = strlen(StringTemp);
+            {
+                RECT rect;
+                rect.left = local_a8;
+                rect.top = local_a4;
+                rect.right = local_a0;
+                rect.bottom = local_9c;
+                surface->write_cent_l(StringTemp, &rect, sVar9);
+            }
+        }
+        // THE LOCK-FACTION READOUT, drawn twice in the image (both blocks
+        // identical, 0x466870 and 0x46699C - kept faithfully).
+        for (int pass = 0; pass < 2; pass++) {
+            if ((a6 & 0x80000) != 0 &&
+                (tile->val3 & 0x38) != 0) {
+                local_a8 = a9;
+                local_a4 = a10;
+                local_a0 = a9 + width * 4;
+                local_9c = a10 + width * 2;
+                surface->set_text_color(
+                    InfoFactionTextColors[(tile->val3 & 0x38) >> 3], 0,
+                    1, 1);
+                surface->set_font(&window->font_b_, 0, 0, 0);
+                StringTemp[0] = 0;
+                _itoa((tile->val3 & 0x38) >> 3, numbuf, 10);
+                strcat(StringTemp, numbuf);
+                sVar9 = strlen(StringTemp);
+                RECT rect;
+                rect.left = local_a8;
+                rect.top = local_a4;
+                rect.right = local_a0;
+                rect.bottom = local_9c;
+                surface->write_cent_l(StringTemp, &rect, sVar9);
+            }
+        }
+    }
+    result = 1;
+
+LAB_00466c32:;
+    // THE COMMON EXIT.
+    if (0 < MapWinCaptionScale && window != 0) {
+        window->field_8_ = 99999;
+    }
+    SpriteScaleNumerator = 1;
+    SpriteScaleDenominator = 1;
+    TextureLightFloor = 0xffffff00;
+    TextureLightCeiling = 0x100;
+    return result;
+}
 
 /*
 Purpose: Render one map tile - terrain first, then vehicles and overlays.
@@ -996,7 +4125,7 @@ Purpose: Generate the whole visible map - background, terrain, vehicles,
          interleave.
          Each visited column is seam-wrapped once against MapLongitudeBounds
          unless the map is flat, then bounds-gated, then optionally gated by
-         the two zoom rectangles at field_21A48_ and field_21A58_ - whose
+         the two zoom rectangles at horizontal_damage_.left and vertical_damage_.left - whose
          own left/right order may be swapped on a cylindrical map, in which
          case membership is the union of the two arcs. The vehicle and
          overlay scans admit a two-tile margin around those rectangles.
@@ -1056,18 +4185,18 @@ void MapWin::gen_map(int a1, int a2) {
                 if (row >= 0 && row < MapLatitudeBounds &&
                     wrapped >= 0 && wrapped < MapLongitudeBounds &&
                     (field_21A44_ == 0 ||
-                     (row >= (int)field_21A5C_ && row <= (int)field_21A64_ &&
-                      ((int)field_21A58_ > (int)field_21A60_ && flat == 0
-                           ? wrapped >= (int)field_21A58_ ||
-                                 wrapped < (int)field_21A60_
-                           : wrapped >= (int)field_21A58_ &&
-                                 wrapped < (int)field_21A60_)) ||
-                     (row >= (int)field_21A4C_ && row <= (int)field_21A54_ &&
-                      ((int)field_21A48_ > (int)field_21A50_ && flat == 0
-                           ? wrapped >= (int)field_21A48_ ||
-                                 wrapped < (int)field_21A50_
-                           : wrapped >= (int)field_21A48_ &&
-                                 wrapped < (int)field_21A50_)))) {
+                     (row >= (int)vertical_damage_.top && row <= (int)vertical_damage_.bottom &&
+                      ((int)vertical_damage_.left > (int)vertical_damage_.right && flat == 0
+                           ? wrapped >= (int)vertical_damage_.left ||
+                                 wrapped < (int)vertical_damage_.right
+                           : wrapped >= (int)vertical_damage_.left &&
+                                 wrapped < (int)vertical_damage_.right)) ||
+                     (row >= (int)horizontal_damage_.top && row <= (int)horizontal_damage_.bottom &&
+                      ((int)horizontal_damage_.left > (int)horizontal_damage_.right && flat == 0
+                           ? wrapped >= (int)horizontal_damage_.left ||
+                                 wrapped < (int)horizontal_damage_.right
+                           : wrapped >= (int)horizontal_damage_.left &&
+                                 wrapped < (int)horizontal_damage_.right)))) {
                     int px;
                     int py;
                     tile_to_pixel(wrapped, row, &px, &py);
@@ -1099,14 +4228,14 @@ void MapWin::gen_map(int a1, int a2) {
                 wrapped >= 0 && wrapped < map_width) {
                 bool generate = field_21A44_ == 0;
                 if (!generate) {
-                    const int left1 = field_21A58_ - 2;
-                    const int top1 = field_21A5C_ - 2;
-                    const int right1 = field_21A60_ + 2;
-                    const int bottom1 = field_21A64_ + 2;
-                    const int left2 = field_21A48_ - 2;
-                    const int top2 = field_21A4C_ - 2;
-                    const int right2 = field_21A50_ + 2;
-                    const int bottom2 = field_21A54_ + 2;
+                    const int left1 = vertical_damage_.left - 2;
+                    const int top1 = vertical_damage_.top - 2;
+                    const int right1 = vertical_damage_.right + 2;
+                    const int bottom1 = vertical_damage_.bottom + 2;
+                    const int left2 = horizontal_damage_.left - 2;
+                    const int top2 = horizontal_damage_.top - 2;
+                    const int right2 = horizontal_damage_.right + 2;
+                    const int bottom2 = horizontal_damage_.bottom + 2;
                     generate =
                         (row >= top1 && row <= bottom1 &&
                          (left1 > right1 && flat == 0
@@ -1149,14 +4278,14 @@ void MapWin::gen_map(int a1, int a2) {
                     wrapped >= 0 && wrapped < map_width) {
                     bool generate = field_21A44_ == 0;
                     if (!generate) {
-                        const int left1 = field_21A58_ - 2;
-                        const int top1 = field_21A5C_ - 2;
-                        const int right1 = field_21A60_ + 2;
-                        const int bottom1 = field_21A64_ + 2;
-                        const int left2 = field_21A48_ - 2;
-                        const int top2 = field_21A4C_ - 2;
-                        const int right2 = field_21A50_ + 2;
-                        const int bottom2 = field_21A54_ + 2;
+                        const int left1 = vertical_damage_.left - 2;
+                        const int top1 = vertical_damage_.top - 2;
+                        const int right1 = vertical_damage_.right + 2;
+                        const int bottom1 = vertical_damage_.bottom + 2;
+                        const int left2 = horizontal_damage_.left - 2;
+                        const int top2 = horizontal_damage_.top - 2;
+                        const int right2 = horizontal_damage_.right + 2;
+                        const int bottom2 = horizontal_damage_.bottom + 2;
                         generate =
                             (row >= top1 && row <= bottom1 &&
                              (left1 > right1 && flat == 0
@@ -1905,9 +5034,22 @@ int MapWin::get_brighting(int x, int y, int corner) {
     }
     int result;
     switch (corner) {
-    case 0:
-        result = CornerLightTable[v1 * 7 + v2];
+    case 0: {
+        const int index = v1 * 7 + v2;
+        if (index < 4) {
+            // Original470704's biased base7F6680 selects the bytes of the
+            // last ocean shade. Decode the x86 little-endian signed byte
+            // without an out-of-bounds array or a separate shadow owner.
+            const unsigned int byte =
+                (static_cast<unsigned int>(OceanCornerShades[15]) >>
+                 (index * 8)) & 0xffU;
+            result = byte < 0x80U ? static_cast<int>(byte)
+                                  : static_cast<int>(byte) - 0x100;
+        } else {
+            result = CornerLightTable[index];
+        }
         break;
+    }
     case 1:
         result = CornerLightTable[0x31 + v2 * 7 + v3];
         break;
@@ -2432,7 +5574,7 @@ class Slot17Shim { public:
 
 
 void MapWin::on_right_down(int x_coord, int y_coord) {
-    if (*MapWinInputEnabled == 0) {
+    if (MapInputEnabled == 0) {
         return;
     }
 
@@ -2702,6 +5844,23 @@ Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win slot17 receiver adjustment for MapWin mouse feedback.
+// The original catalogue name remains on the mapping below.
+/*
+Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
+         MapWin::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x004218B0 ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z 0x004218B0-0x004218B8 FILE BYTE_EXACT
+// symbol    ?on_mouse_feedback@MapWin@@$4PPPPPPPM@A@AEXHH@Z
+// size      8 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
 // calls     (none)
 Return Value: n/a
 Status: Complete

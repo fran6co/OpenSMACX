@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 
-// Win constructor-installed Win branch: capture4, resize13, update63.
+// Win constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066FDD0 ? ??_7Win@@6B@ 0x005EB3D0
 #include "net_class.h"
@@ -2583,7 +2583,7 @@ LRESULT __stdcall Win::window_proc(HWND window, UINT message, WPARAM wparam,
                         && (WinCursorMoved != 0 || over != WinHoverWindow)
                         && (WinPointerOwner3 == nullptr
                             || WinPointerOwner3 == WinHoverWindow)) {
-                        WinHoverWindow->vslot_18(x, y);
+                        WinHoverWindow->on_mouse_leave(x, y);
                     }
                     WinHoverWindow = over;
                     over->on_mouse_move(x, y, wparam, WinMouseDirect);
@@ -3706,7 +3706,7 @@ void Win::on_mouse_move(int x, int y, unsigned int keys, int from_parent) {
         if (fn != 0) {
             fn(x, y);
         }
-        this->vslot_17(x, y);
+        this->on_mouse_feedback(x, y);
         Win *const child = val_7_;
         if (child != 0) {
             if (child->vslot_23() == 0) {
@@ -5544,11 +5544,10 @@ struct PAINTSTRUCT_ {
 // `extern int WinRootWindows[];` and never defined it anywhere, so nothing
 // that used it could ever have linked.
 
-// SLOT 88 IS PAST WIN'S TABLE. Win's vtable is 88 entries, 0..87 - slot
-// 88 would be the first dword of the SECONDARY table at 0x0066FF30. So
-// this dispatch is not one of Win's virtuals and is left as a shim,
-// rather than inventing a 89th slot to make it compile.
-namespace { class Slot88Shim { public:
+// Remaining legacy menu-init shim: its declaration order does not model
+// original Menu slot90. This is an unresolved menu contract, not the
+// GraphicWin link hook (now dispatched through the real hierarchy below).
+namespace { class MenuInitLegacyShim { public:
   virtual void pad(); 
   virtual int slot088(int, int);
   virtual int slot090(Win *);
@@ -5598,7 +5597,7 @@ typedef int (__stdcall *NetCreateGroupFn)(Net *, int *, void *, int, int, int);
 // building a member-pointer out of the raw vtable entry through a
 // `SlotCCCast` union; with the slot declared, it is just a call.
 static void call_slot_cc(int *obj, int arg) {
-    reinterpret_cast<Win *>(obj)->vslot_51(arg);
+    reinterpret_cast<Win *>(obj)->on_dialog_focus(arg);
 }
 
 // The flip/restore helper block, taken whole from the artifact that
@@ -6177,28 +6176,17 @@ skip_all:
 
 // ===== homed from src/recovered/units/005f63c0.cpp =====
 
-// FINDING, not a layout to declare: this body reads PAST THE END OF Win.
-// `sizeof(Win)` is 0x444 (win.h's static_assert, and scroll_horz_ at 0x440
-// is the last member), so `self + 0x8f4` and `self + idx*4 + 0x900` are
-// 0x4B0 and beyond outside the object. A Win method cannot legally touch
-// them, so the receiver is wrong: this body belongs to a Win-DERIVED class
-// that the catalogue attributed to Win, the same way `adjust_menus` was
-// given a receiver it never had (0x005F0540, fixed and BYTE_EXACT).
-// Searched for the owner and did NOT find it: no declared class in this
-// tree puts a `Spot` at 0x8F4 - councwin.h has one at 0xA48, diplowin.h at
-// 0xED0, basewin.h at 0x40EB4. Until the class is identified the offsets
-// cannot be turned into members, and the `char *self` here is the honest
-// spelling of an access whose type is genuinely unknown.
-// The body is UNCLAIMED, so nothing in the image validates these offsets
-// either - they are the decompiler's, and they are what points at the
-// wrong receiver in the first place.
-void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl) {
-    char *self = reinterpret_cast<char *>(this);
-
+// Original5F64FB admits a GraphicWin via get_graphic_win but uses this,
+// not the getter result, for the subsequent hit test and link callback.
+// GraphicWin's Buffer base is444; its spot4B0 and owned text4BC therefore
+// explain8F4 and900. Win is Buffer's friend, so these are real members.
+// ORIGINAL: 0x005F63C0 ?on_l_button_down@Win@@UAEXJHHIH@Z 0x005F63C0-0x005F654E FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Historical3cb99d43^:src/recovered/units/005f63c0.cpp recorded unclaimed FILE398-byte5F63C0..5F654E under catalogue ?on_l_button_down@Win@@QAEXJHHIH@Z. Commit3cb99d431fb928d698e7eb29afee4ac2fc664027 deleted the seed without its source binding. No exact claim is inferred.", "Original Win-family tables place5F63C0 at slot81; observed actual compiler emits virtual UAEXJHHIH. Use that evidence-backed virtual name interpretation instead of retaining the old plain-method catalogue guess. Full original endsRET20 at5F654B; next two bytes are padding before5F6550.", "Original5F6442 fifth argument selects both capture owner and slot28/38; fourth WPARAM is unused. Pushes5F64B0/B1 and5F64D4/D5 deliver x,y; original seed had both coordinate reversals and wrong fourth-argument selector. Preserve live parent/related receiver reloads and virtual admission as predicate only.", "GraphicWin owns Buffer at444, Spot4B0 and link texts4BC. Original5F6523 loads this+900+4*index; slot88 on_link_clicked result controls left_down_event fallback. This binding does not verify every original-address service, class lifetime or full GUI."], "reason": "Restore original identity lost during Win rehoming; recover full left-down argument routing and genuine GraphicWin link dispatch."}
+void Win::on_l_button_down(long double_click, int x, int y, unsigned int, int from_parent) {
     Win *child = win_parent_;
     if (child != 0) {
         reinterpret_cast<Win *>(child)->bring_child_to_top(this);
-    } else if (reinterpret_cast<int32_t>(this) != 0 &&
+    } else if (this != nullptr &&
                (iFlags_ & 0x2000000) == 0) {
         int32_t idx = 0;
         int32_t count = WinRootCount;
@@ -6234,29 +6222,29 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
         reinterpret_cast<Win *>(child)->set_dialog_focus(this);
     }
 
-    if (keys == 0) {
-        WinPointerOwner2 = nullptr;
+    if (from_parent == 0) {
         WinPointerOwner1 = this;
+        WinPointerOwner2 = nullptr;
     } else {
-        WinPointerOwner1 = nullptr;
         WinPointerOwner2 = this;
+        WinPointerOwner1 = nullptr;
     }
 
     WinSizingFlag = 1;
-    if (flags != 0 &&
+    if (double_click != 0 &&
         (iFlags_ & 0x200200) == 0 &&
         (iSomeFlag_ & 8) == 0) {
         int32_t related;
-        if (keys == 0) {
+        if (from_parent == 0) {
             WinCallbackWindow = this;
             int32_t fp = field_40C_;
             if (fp != 0) {
                 reinterpret_cast<void(__cdecl *)(int, int)>(fp)(x, y);
             }
-            this->on_left_double_click(y, x);
+            this->on_left_double_click(x, y);
             related = val_17_;
         } else {
-            this->vslot_38(y, x);
+            this->vslot_38(x, y);
             related = val_26_;
         }
         if (related != 0 && reinterpret_cast<Win *>(related)->vslot_23() == 0) {
@@ -6267,10 +6255,10 @@ void Win::on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl)
     GraphicWin *hitTest = this->get_graphic_win();
     int32_t idx = 0;
     if (hitTest == 0 ||
-        reinterpret_cast<Spot *>(self + 0x8f4)->check(x, y, &idx, 0) < 0 ||
-        reinterpret_cast<Slot88Shim *>(self)->slot088(
-            idx, *reinterpret_cast<int32_t *>(self + idx * 4 + 0x900)) != 0) {
-        this->left_down_event(x, y, dbl);
+        static_cast<GraphicWin *>(this)->Buffer::spot_.check(x, y, &idx, 0) < 0 ||
+        static_cast<GraphicWin *>(this)->on_link_clicked(
+            idx, static_cast<char *>(static_cast<GraphicWin *>(this)->Buffer::owned_[idx])) != 0) {
+        this->left_down_event(x, y, from_parent);
     }
 }
 
@@ -7565,7 +7553,7 @@ void Win::show(int visible) {
         if (list_.count_ != 0 && list_.head_ != 0) {
             Win *obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(list_.current_) + 4);
             if (obj != 0) {
-                obj->vslot_51(1);
+                obj->on_dialog_focus(1);
             }
         }
 
@@ -8130,7 +8118,7 @@ int Win::init(int x, int y, int width, int height, char * caption,
     this->set_rects();
 
     if (menu != 0) {
-        int result = reinterpret_cast<Slot88Shim *>(menu)->slot090(this);
+        int result = reinterpret_cast<MenuInitLegacyShim *>(menu)->slot090(this);
         if (result != 0) {
             this->close();
             return result;
@@ -10579,12 +10567,12 @@ void Win::pass_dialog_focus() {
                 parent->list_.tail_ = 0;
             }
         }
-        this->vslot_51(0);
+        this->on_dialog_focus(0);
         parent = win_parent_;
         if (parent->list_.head_ != 0) {
             obj = *reinterpret_cast<Win **>(reinterpret_cast<char *>(parent->list_.current_) + 4);
             if (obj != 0) {
-                obj->vslot_51(1);
+                obj->on_dialog_focus(1);
             }
         }
     }
@@ -11030,7 +11018,7 @@ void __cdecl Win::OnMouseMove(void * hwnd, int x, int y, unsigned int keys) {
         if (WinHoverWindow != 0 &&
             (WinCursorMoved != 0 || hit != WinHoverWindow) &&
             (reinterpret_cast<int>(WinPointerOwner3) == 0 || WinPointerOwner3 == WinHoverWindow)) {
-            WinHoverWindow->vslot_18(x, y);
+            WinHoverWindow->on_mouse_leave(x, y);
         }
         WinHoverWindow = hit;
         hit->on_mouse_move(x, y, keys, WinMouseDirect);
@@ -11741,7 +11729,7 @@ void Win::dispatch_17(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        vslot_17(a, b);
+        on_mouse_feedback(a, b);
         Win *child = reinterpret_cast<Win *>(val_7_);
         if (child != 0) {
             if (child->vslot_23() == 0) {

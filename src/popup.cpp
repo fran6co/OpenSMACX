@@ -898,8 +898,7 @@ extern int BaseAtKeyPollFlag;  // 0x009BC070
 // this build run with zero page faults, repeatably:
 //
 //   cd .opensmacx/game
-//   WINEPREFIX=$HOME/opt/vc6/.wineprefix DISPLAY=:1 \
-//       wine explorer /desktop=smac,1024x768 <exe>
+//   WINEPREFIX=$HOME/opt/vc6/.wineprefix DISPLAY=:1 wine explorer /desktop=smac,1024x768 <exe>
 //
 // Under the DEFAULT prefix with no virtual desktop, the SHIPPED IMAGE faults
 // identically - at 0x005F7E90, its own `Win::is_visible`, reading 0x9C off a
@@ -1334,6 +1333,7 @@ void Popup::on_post_window_init() {
 }
 
 // ORIGINAL: 0x004050A0 ?on_link_clicked@Popup@@QAEHHPAD@Z 0x004050A0-0x00405131 FILE BYTE_EXACT
+// symbol    ?on_link_clicked@Popup@@UAEHHPAD@Z
 // size      145 bytes
 // prototype int (__thiscall ?on_link_clicked@Popup@@QAEHHPAD@Z)(Popup* this, int, int8*)
 // callers   0   call targets   4

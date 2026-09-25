@@ -1,0 +1,37 @@
+{
+  "event_id": "64bba1d627ff19b5e06d09496b80e7677b59fb276e559eb47200421de1a2d233",
+  "payload": {
+    "affects": [
+      "entity-061b1c77c6dc8ff5d24a77efa2dee7c418c98e00e908f8581979d87b32836862",
+      "entity-064ae9b99ab394c3e68d9ffa4c95e6a0eb385288564f0153b951c5ca014869c6",
+      "entity-3ca03a002f65165dfd489d34b58cb2649b861911fe8df9b34dd31a77db2be590",
+      "entity-43f14ea3ff5b4306e59d3d25f9cc23ce82acf35b0342d58930613e6f1e8b1af8",
+      "entity-57f6b0e5cf3bf462ee7f1a4881370be6c129a48ebc9038c3d133f32e95e00542",
+      "entity-8f336bd869c26659af02dc6060cecfb6e9dfe14cb0426ffa55c23da791460ef0",
+      "entity-989de6354180d338598eb22da7a7e21fdacfae103340e49aef1432eb1e340959",
+      "entity-b12ad9b6ca5b8175327f40eddd79eaa625f51e0845d44c988bd561d106233186",
+      "entity-c0b50e7e1b5d6f0b9c76e605f9b8f2a4a2e2a41f6a1b6143626cf7f0036e20b7",
+      "entity-c9c2c3b1e9fa185d957d7f9a45f1aea931343db9e406ebb5e93d8689321810c1",
+      "entity-ddb9cd51fdc9110e336f9ef1e56303d52b45e0fd227c074fd24dad59074e940c",
+      "entity-e2ef83fb7a182dbcb709855b01e125b9009dbd0ba93a105939357e5da0b03e32",
+      "entity-ff955166e37a90df083d5788c9dbfcb8328fe07adc86f7dd9a41c23b4c726d59"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "interface-concrete-owner-lifetime-closure-20260923",
+    "evidence": [
+      "Independent full-original SocialWin audit identifies real SocialCategory atCF8 and SocialEffect recordsD08/D34, not the current two Sprite objects. CheckButton constructor633750 runs three times atD6C withstrideA2C; current header startsD68 and compensates with a spurious trailing2BEC scalar. Retain the four-byte gap before the actual array and remove the compensating false field when migrating. Current constructor also placement-constructs its already-constructed GraphicWin base; full lifetime repair must remove that duplication.",
+      "SocialWin original slot12 is4B19A0, a377-byte dispatcher to existingdraw_social/draw_psych_alloc and missing helpers4AF1E0/4AF8C0/4AFB60/4B0410/4B08A0/4B0B00/4B1080. Status recovery must not inherit an empty painter as a substitute. Slot62 is existingGraphicWin::redraw5D5A70. Button-click additionally needs genuineenergy_compute445130 and its749AE4/749C0C producers; do not introduce default-only globals. Deferred base_energy behavior remains outside authority.",
+      "Both SocialWin destructor4B3C80 and ReportIf status-off4A5DDD/5DFB dispatch FlatButton close throughslot90(+168). FlatButton constructor607CFB installs669754 withslot90=607DA0; currentclose is nonvirtual, and BaseButton::init already manually dispatches that same slot. Audit and recover the true BaseButton/FlatButton close virtual contract, not a direct-call substitution or a new VCall shim. GraphicWin table stops afterslot89; following43800000 is floatdata, not another slot.",
+      "ReportIf apparent globals885F40 and8A4160 are its+8 mode and+1E228 faction;885F30 is ReportWin+FAB8, not separate storage.87BE24/28/80 are ReportWin+59AC/59B0/5A08;8824C0/CC belong to its ninth FlatButton BaseButton state/group pointer. ReportIf+1E254..20254 is512 real16-byte records of base-id/score/temporary-id/temporary-score. Recover actual ListBoxes, Spot, ButtonGroups, FlatButtons and complete lifetimes before defining real global receivers.8A6240 remains outside the currently proved owner extent and cannot be guessed into a new field or global.",
+      "Full-original ReportIf audit rejects seed errors: status saved-tech condition is GameState bit80 OR GameRules bit200 clear, seven button IDs areloopindex+2, final selected FlatButton strideB4C not20CC. Selected uses dereferenced BaseCurrent fieldsD4/D0/100/108/104, not the pointer slot or halved offsets. Governor-copy reloads BaseCurrent aftergov_activate; bulk base paths reloadcurrentfaction aftercallbacks. Preserve these contradictions as recovery inputs rather than trusting seed spelling.",
+      "These findings remain pending and do not authorize shared-header/owner edits, synthetic defaults, claim demotion or acceptance. Root is recovering the smaller real TutWin reset and SocialWin click prerequisites first, with complete bodies and tests. Expanding the full ReportIf/SocialWin lifetime/virtual closure must retain original mappings and protected obligations; DiploPop constructor remains unbanked and unmerged until its discovered hierarchy dependency is actually addressed."
+    ],
+    "hypothesis": "Genuine shared interface recovery exposes incorrect member lifetimes, a missing close virtual contract and nontrivial absent concrete handlers; preserve connected-owner evidence while recovering real prerequisites.",
+    "kind": "discovery"
+  },
+  "previous_event": "176ad61a6fa33bdc9b7044efdaf7295d02355aaaf089c5eba4bf491ef8f9cbf7",
+  "request_id": "interface-concrete-owner-lifetime-closure-20260923",
+  "schema_version": 1,
+  "sequence": 124,
+  "stream": "task:vector-value-semantics"
+}

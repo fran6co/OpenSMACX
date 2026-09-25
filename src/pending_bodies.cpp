@@ -823,11 +823,6 @@ DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
     PENDING_BODY(0x0043ECB0, pending)(this, nullptr);
 }
 
-DiploPop::~DiploPop() {  // ??1DiploPop@@QAE@XZ at 0x00440D50
-    typedef void(__fastcall *pending)(DiploPop *, void *);
-    PENDING_BODY(0x00440D50, pending)(this, nullptr);
-}
-
 DiploWin::~DiploWin() {  // ??1DiploWin@@QAE@XZ at 0x00444DB0
     typedef void(__fastcall *pending)(DiploWin *, void *);
     PENDING_BODY(0x00444DB0, pending)(this, nullptr);
@@ -1179,11 +1174,6 @@ void MapWin::on_left_down(int a1, int a2) {  // 0x0046ED30
 // ?MapWin::on_lose_mouse_capture at 0x0046EB90 - homed into mapwin.cpp on
 // 2026-08-29, so the forwarder that stood here is gone.
 
-void MapWin::on_mouse_move(int a1, int a2) {  // 0x0046F000
-    typedef void(__fastcall *pending)(MapWin *, void *, int, int);
-    PENDING_BODY(0x0046F000, pending)(this, nullptr, a1, a2);
-}
-
 int MapWin::on_nc_hittest(int x, int y) {  // 0x0046F660
     // RETURNS A HIT-TEST CODE, like the base it overrides. The `void` here
     // was a forwarder's guess; `?on_nc_hittest@Win@@QAEHH@Z` spells H, and
@@ -1204,25 +1194,6 @@ int MapWin::on_nc_hittest(int x, int y) {  // 0x0046F660
 // BY NAME; the declarations live in mapwin.h and these forwarders are their
 // definitions, so the application links while the scoped checks keep
 // carrying each callee as an unresolved target against the original image.
-
-// ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z at
-// 0x004632D0 - the terrain polygon renderer (seed src/unrecovered/
-// 004632d0.cpp), deliberately outside the generation batch: its own BLOCKED
-// note records the future work, re-deriving the receiver at each of its 56
-// call sites so the blitter calls can become member calls. The catalogue
-// scopes it in MapWin, but both compiled call sites that reach it (gen_tile at
-// 0x00468C73 and gen_map's terrain scan at 0x00469E47) push ten words with
-// the window as the SECOND argument and clean 0x28 themselves - no implicit
-// receiver rides the call - so mapwin.h declares it as the free __cdecl
-// function those sites spell, and this forwarder keeps that ABI.
-int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3, int a4,
-                             int a5, int a6, int a7, int a8, int a9,
-                             int a10) {
-    typedef int(__cdecl *pending)(Buffer *, MapWin *, int, int, int, int,
-                                   int, int, int, int);
-    return PENDING_BODY(0x004632D0, pending)(buffer, window, a3, a4, a5, a6,
-                                             a7, a8, a9, a10);
-}
 
 // ?draw_vehicles@MapWin@@QAEXHHHHH@Z at 0x00466CA0 (seed
 // src/recovered/units/00466ca0.cpp). gen_tile's vehicle tail (0x00468CB0)
@@ -2150,22 +2121,6 @@ int NetDaemon::action(int veh_id, int mode) {
     return PENDING_BODY(0x00532570, pending)(this, nullptr, veh_id, mode);
 }
 
-// 0x00621870 - Texture::sub_621870, 2433 bytes, still the image's own bytes.
-// Its marker in texture.cpp records the wall: an x87 `fdivr st(4)` whose five
-// locals stay live on the FPU stack across roughly 350 instructions and a
-// conditional pixel-blit loop, with the two loop paths leaving the stack at
-// different depths. No C spelling carries that. It is reached by name by
-// Texture::sub_624cd0, so this forwarder is the only compiled definition.
-//             body in src/unrecovered/00621870.cpp
-// ORIGINAL: 0x00621870 ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z 0x00621870-0x006221F1
-// RECOVERY_BINDING: v1 {"evidence": ["Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): sub_624cd0 trial bytes=unknown references=unknown with exactly one emitted reference ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z at offset 38 binding_address null; sibling sub_624c70 passes because its callee sub_6212b0 is defined in src/texture.cpp:6515-6520 - the cause is the cross-TU callee, not the wrapper spelling; the masked measure (16 instructions, 4 masked bytes) proves every other byte correct.", "Seed src/unrecovered/00621870.cpp line 1 catalogues ORIGINAL 0x00621870 sub_621870 0x00621870-0x006221F1 FILE; the forwarder at src/pending_bodies.cpp:2225-2231 emits the member symbol via its C++ definition and the task record preserves the already-exact caller sub_624ca0 untouched."], "reason": "The pending_bodies.cpp forwarder at the annotated line is the only compiled definition of Texture::sub_621870 (its comment records that it is reached by name by Texture::sub_624cd0); the extent is the seed's catalogue adopted verbatim so the by-name reference resolves against the original identity without homing the x87 body."}
-int Texture::sub_621870(Buffer *buf, Vert *verts, int *zvals, int count,
-                        int edgeVerts, int *out_flag) {
-    typedef int(__fastcall *pending)(Texture *, void *, Buffer *, Vert *,
-                                     int *, int, int, int *);
-    return PENDING_BODY(0x00621870, pending)(this, nullptr, buf, verts, zvals,
-                                             count, edgeVerts, out_flag);
-}
 
 // ?upgrade_prototype@@YAHHHHH@Z at 0x004EFE80 - the single-prototype upgrade
 // worker, still unrecovered. Its only homed caller is base.cpp's

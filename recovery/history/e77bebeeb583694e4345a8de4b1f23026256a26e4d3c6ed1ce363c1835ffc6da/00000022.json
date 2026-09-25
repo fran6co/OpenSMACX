@@ -1,0 +1,29 @@
+{
+  "event_id": "aa4024a630a7224b12780b01fe9e0ba28cab4e3c4c9c72f05155d4be50c76540",
+  "payload": {
+    "affects": [
+      "entity-0858967f56798cd0190e453c6448fa9352fba353b051e80e9b647597ea287c52",
+      "entity-133a08820aeb58ecd4eb442ca8224c7f560650b6b96fd92a7293082913a84918",
+      "entity-3c5c1e5d316e48bdc6319e0f9925f494fd2263dfa737f51ab7bd8638e275a252",
+      "entity-6d136b85512ea80b66c773e2e72410abcabf43e4110d15068cf19e2b212d3cff",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-977d75b7be3f9d548b714e0df1cb04cba88d99b1bf4b5265ea398994f48f73ba",
+      "entity-c9c2c3b1e9fa185d957d7f9a45f1aea931343db9e406ebb5e93d8689321810c1"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "button-default-producer-closure-20260923",
+    "evidence": [
+      "Commit17167c84 completes the reviewed button slot90 migration and homes the real PushButton close. It does not close shared default producers or the larger SocialWin/ReportIf/SubInterface lifetime dependency. Existing history, baseline and all pending findings remain intact; this is a next-step ownership decision, not a new acceptance receipt.",
+      "BaseButtonDefaultTextColors still aliases original697060 while the existing real DialogDefaults[37] begins69704C, placing the twelve interleaved button text colors at indices5..16. BaseButton::init and the three set_def_text_color methods consume/write that old alias. BaseButtonStaticDefaults69704C appears unused after current repository census. Investigate the complete original read/write population and existing Dialog owner before consolidating this shared storage; do not invent another zero/default-only array or infer an original allocation solely from candidate layout.",
+      "FlatButton close and constructor still read image-addressed9B8E44. Their original producer load_interface455610 writes the same run at455C05; its genuine recovery remains required. PushButton close and constructor now use existing PushButtonDefaults18, but load_interface still contains its original9BC118 producer. The button close body and strict target checks do not prove these producer/consumer states are connected in a standalone game.",
+      "Preserve the complete close-family recovery and its fresh native/host evidence while planning producer closure. No additional source edits, claim demotions, behavior fixes, duplicate storage, task baseline resets or full-game acceptance are granted by this pending finding. The authorized landmark-only bounds policy is unchanged; base_energy and faction-art changes remain deferred."
+    ],
+    "hypothesis": "The genuine close contract is recovered, but shared default aliases and the unrecovered interface loader still split producer and consumer ownership; plan their real closure rather than substitute default-only storage.",
+    "kind": "discovery"
+  },
+  "previous_event": "d0444148595334aa011b16313f741c9e4d715ef854fef532772f83084159d7d0",
+  "request_id": "button-default-producer-closure-20260923",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:frontend-presentation"
+}

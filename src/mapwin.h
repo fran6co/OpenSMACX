@@ -45,6 +45,17 @@ struct TerrainCacheEntry {
 static_assert(sizeof(TerrainCacheEntry) == 12,
               "terrain cache records have twelve-byte stride");
 
+// Tile-selection bounds shared by draw_map and gen_map, not pixel clipping.
+// X is half-open and may wrap around the map seam; Y includes both endpoints.
+// Original46AC00..46ACCD saves/restores each four-word region independently.
+struct MapTileDamageRect {
+    int left;
+    int top;
+    int right;
+    int bottom;
+};
+static_assert(sizeof(MapTileDamageRect) == 16, "four signed tile bounds");
+
  /*
   * MapWin class
   *
@@ -68,16 +79,15 @@ static_assert(sizeof(TerrainCacheEntry) == 12,
   * Access changes no offset;
   * sizeof(MapWin) and sizeof(Console) are both unmoved by it.
   *
-  * The size is the vbtable's, not a guess: the table at 0x0066C870 reads
-  * {0, 0x21A6C}, placing the virtual base at 0x21A6C, and GraphicWin is
-  * already pinned at 0xA14. Those sum to the 0x22480 asserted below.
-  * Independently, g_MAPWIN's global slot bounds the object above at 0x22798,
-  * which is consistent with 0x318 to spare - two readings sharing no evidence.
+  * The original vbtable at 0x66C870 reads {0, 0x21A6C}. Original heap
+  * construction at 0x58F177 allocates 0x22480 bytes for this class, and the
+  * GraphicWin constructor's last DWORD store reaches the complete object's
+  * offset 0x2247F. These bound the real FarmMapWindow as well; a gap before
+  * the next known global does not enlarge its storage.
   *
-  * The 0x21A6C bytes ahead of the base are not mapped. Fields must be carved
-  * out of derived_storage_ as methods are recovered, keeping the total fixed,
-  * rather than appended - appending would move the virtual base and break
-  * every offset in the class.
+  * The region before the virtual base contains the declared members and
+  * explicitly unfinished fields below. Further recovery must establish each
+  * member within this layout, not append storage and move the virtual base.
   */
 class MapWin : public virtual GraphicWin {
  public:
@@ -129,8 +139,16 @@ class MapWin : public virtual GraphicWin {
   int on_nc_hittest(int x, int y);
 
  public:
-  // 0x0046F000, a pending_bodies forwarder.
-  void on_mouse_move(int a1, int a2);
+  // 0x0046F000: map cursor, route preview and hover feedback.
+  // Win slot17; the catalogue called this on_mouse_move. Keep it distinct
+  // from the inherited four-argument event router at slot16.
+  virtual void on_mouse_feedback(int pixel_x, int pixel_y);
+  void dest_line(int x1, int y1, int x2, int y2, int prototype,
+                 int faction, int triad, int repeat, int pattern_on, int pattern_off,
+                 int cover);
+  void direct_dest_line(int x1, int y1, int x2, int y2,
+                        int triad, int pattern_on, int pattern_off, int cover);
+  void editor(int tile_x, int tile_y, int erase);
 
  public:
   // 0x0046EB90 delegates to go_reset, including its reentrant capture cleanup.
@@ -166,14 +184,14 @@ class MapWin : public virtual GraphicWin {
   // 0x00467970, a pending_bodies forwarder. line_timer (time.cpp) calls it
   // per live map-window slot with the literal 1.
   void draw_base_dest(int draw_type);
-  // ?draw_map@MapWin@@QAEXH@Z at 0x0046A550, still an original body: declared
-  // here so on_redraw's direct call compiles, resolved at link time.
+  // 0x0046A550: scroll the cached image and regenerate exposed tile regions.
   void draw_map(int draw_type);
-  // ?draw_radius@MapWin@@QAEXHHHH@Z at 0x0046A2A0, still an original body -
-  // same idiom as draw_map above, declared so the FREE draw_radius (end of
-  // mapwin.cpp) reaches it with a `call rel32` instead of loading
-  // MapWinOriginalDrawRadius through an indirect call.
-  void draw_radius(int x_coord, int y_coord, int a3, int draw_type);
+  // Original radius controller and clipped terrain/vehicle/overlay scans.
+  void draw_radius(int x, int y, int radius, int draw_type);
+  void gen_radius(int x, int y, int radius, int faction, int skip_terrain);
+  void draw_vehicles(int x, int y, int radius, int faction);
+  // Original4216F0: a genuine MapWin receiver, despite the seed's stdcall.
+  int tile_in_view(int x, int y, int margin);
   // 0x0046FD90, resets brightness and altitude in the owned cache in two
   // complete passes. world_climate (src/map.cpp) calls it by name.
   void clear_terrain();
@@ -238,16 +256,10 @@ class MapWin : public virtual GraphicWin {
   // member/vector ctor call, and the three vtable stores the old hand body
   // spelled are the compiler's, from the declarations below.
   MapWin();
-  // MEASURED IN-CLASS 2026-08-30, the same move as ~Console below it in
-  // console.h: the image's 0x00420F90 is the BASE-object destructor
-  // (??_DMapWin@@QAEXXZ - no caller in the image destroys a standalone
-  // MapWin completely, so no ??1 exists there to match). The bytes are the
-  // EH frame, the two vtable re-stores and the vtordisp zero on the
-  // GraphicWin vbase, the body's clear(0), and the member teardown of the
-  // carve above - compiler-emitted from these declarations, out-of-line as
-  // the COMDAT the unwind funclets jump to and inlined into ??_DConsole's
-  // normal path (its MapWin-part tail). The hand-spelled body this
-  // replaces measured MISMATCH on exactly the compiler-owned frame.
+  // Original 0x420F90 destroys the own part, from the GraphicWin virtual-base
+  // receiver. FarmMapWindow's registered exit then destroys that virtual base
+  // separately. Genuine C++ supplies both stages for a complete MapWin, and
+  // only the own part when destroying a MapWin base of Console/PlanWin.
   MEASURED ~MapWin() { clear(0); }
   int UNK1();
   void UNK3();
@@ -274,9 +286,8 @@ class MapWin : public virtual GraphicWin {
   void close();
   int UNK2();
   // Resets the "this window is live" flag (MapWinActiveOffset) and other
-  // per-window state; called by this class's own destructor and, directly,
-  // by PlanWin's and Console's (they never call MapWin::~MapWin() - see
-  // mapwin.cpp).
+  // per-window state; reached from this class's destructor, including the
+  // compiler-generated MapWin destruction within Console and PlanWin.
   void clear(int index);
 
   // THE FIELD BLOCK IS PUBLIC, deliberately. go_reset (time.cpp, a free
@@ -346,14 +357,31 @@ class MapWin : public virtual GraphicWin {
   int field_1DDD8_;
   uint32_t field_1DDDC_;  // 0x1DDDC
   uint32_t field_1DDE0_;  // 0x1DDE0
-  uint8_t field_1DDE4_[0x28];  // 0x1DDE4
-  // Carved out of what was field_1DDE4_[0x40] for go_reset (0x0050EF50), which
-  // writes -1 here for every window it resets - the only access the image makes
-  // to the offset. The trailing pad keeps the array's 0x40 extent, so no offset
-  // past it moves.
+  // Route endpoint sequences. Mode8/count3 can write one endpoint beyond
+  // each logical five-element sequence: original x[5] aliases y[0], and
+  // y[5] aliases the hover-X cache below. The handler spells those physical
+  // fields explicitly rather than performing out-of-bounds C++ accesses.
+  // RECOVERY_MEMBER: v1 MapWin feedback_x_ 0x1DDE4 0x0046F000
+  int feedback_x_[5];
+  // RECOVERY_MEMBER: v1 MapWin feedback_y_ 0x1DDF8 0x0046F000
+  int feedback_y_[5];
+  // Cached hover X; go_reset invalidates it with -1, mouse feedback reads
+  // and writes it. It also occupies the original y[5] endpoint address.
+  // RECOVERY_MEMBER: v1 MapWin field_1DE0C_ 0x1DE0C 0x0046F000
   uint32_t field_1DE0C_;  // 0x1DE0C
-  uint8_t field_1DE10_[0x14];  // 0x1DE10
-  uint32_t field_1DE24_;  // 0x1DE24
+  // RECOVERY_MEMBER: v1 MapWin feedback_hover_y_ 0x1DE10 0x0046F000
+  int feedback_hover_y_;
+  // RECOVERY_MEMBER: v1 MapWin feedback_proto_ 0x1DE14 0x0046F000
+  int feedback_proto_;
+  // RECOVERY_MEMBER: v1 MapWin feedback_triad_ 0x1DE18 0x0046F000
+  int feedback_triad_;
+  // RECOVERY_MEMBER: v1 MapWin feedback_repeat_ 0x1DE1C 0x0046F000
+  int feedback_repeat_;
+  // RECOVERY_MEMBER: v1 MapWin feedback_segment_count_ 0x1DE20 0x0046F000
+  int feedback_segment_count_;
+  // Base index used when no vehicle is selected.
+  // RECOVERY_MEMBER: v1 MapWin field_1DE24_ 0x1DE24 0x0046F000
+  int field_1DE24_;
   // THE THREE BUFFERS, carved from what was field_1DE28_[0x1098]: three
   // consecutive 0x588-byte Buffer objects, ??1Buffer@front+0x1E938/
   // +0x1E3B0/+0x1DE28 in ??_DMapWin's own call list. Declared in the
@@ -384,14 +412,10 @@ class MapWin : public virtual GraphicWin {
   // ??1ImageButton (0x00625310).
   ImageButton image_buttons_[4];  // 0x1EF54
   uint32_t field_21A44_;  // 0x21A44
-  uint32_t field_21A48_;  // 0x21A48
-  uint32_t field_21A4C_;  // 0x21A4C
-  uint32_t field_21A50_;  // 0x21A50
-  uint32_t field_21A54_;  // 0x21A54
-  uint32_t field_21A58_;  // 0x21A58
-  uint32_t field_21A5C_;  // 0x21A5C
-  uint32_t field_21A60_;  // 0x21A60
-  uint32_t field_21A64_;  // 0x21A64
+  // RECOVERY_MEMBER: v1 MapWin horizontal_damage_ 0x21A48 0x0046A550
+  MapTileDamageRect horizontal_damage_;
+  // RECOVERY_MEMBER: v1 MapWin vertical_damage_ 0x21A58 0x0046A550
+  MapTileDamageRect vertical_damage_;
 
  protected:
   // NOT MapWin data, and the only member here a derived class may name.
@@ -441,9 +465,12 @@ void __cdecl mapwin_system_shutdown();
 typedef void *func_map_win_free(void *);
 
 
-// MapWin's click handler and the input-enable flag it gates on are not
-// recovered; the flag lives at a fixed address and is rebindable for tests.
-int32_t *const MapWinInputEnabled = (int32_t *)0x0090D938;
+// The original main_game publisher enables input at4C49ED. Its unfinished
+// startup path is a dependency; this flag's initial image value is zero.
+extern int MapInputEnabled;
+extern int MapMouseFeedbackBusy;
+// Produced by MapWin::dest_line and displayed by mouse feedback.
+extern int MapDestinationCost;
 
 
 // The map-window slot array the free drawing helpers broadcast to: eight
@@ -461,6 +488,8 @@ int32_t *const MapWinInputEnabled = (int32_t *)0x0090D938;
 // - 19 of 85 instructions in `Console::focus` against 29.
 typedef MapWin *MapWinSlots[8];
 extern MapWinSlots MapWinTable;
+// One most-derived off-screen window, not an alias into the old executable.
+extern MapWin FarmMapWindow;
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4
 
 // 0x0068A5CC. THE SLOT OF THE WINDOW BEING WORKED WITH, or -1 for none.
@@ -484,15 +513,11 @@ extern int MapWinCaptionDivisor;  // 0x00691E70, initially -1
 // remains for older, not-yet-migrated consumers. New code uses the member.
 static const size_t MapWinActiveOffset = 0x1DD74;
 
-// MapWin::draw_radius at 0x0046A2A0 is still an original body: `ret 0x10` at
-// 0x0046A493 makes it __thiscall with four stack arguments, and `mov esi, ecx`
-// at 0x0046A2AF plus the vbtable walk at 0x0046A3FB confirm the incoming
-// pointer is an unadjusted MapWin*. It reaches gen_radius, Texture::draw_trans,
-// MapWin::compute_clip, GraphicWin::soft_update and do_all_draws, so it stays
-// original; bound through a rebindable seam so tests can substitute a probe
-// and the seam can later point at a recovered body.
-typedef void (OriginalObject::*func_map_win_draw_radius)(int x_coord, int y_coord, int a3, int draw_type);
-extern func_map_win_draw_radius MapWinOriginalDrawRadius;  // 0x0046A2A0
+// Original4712D0 performs a nullable MapWin-to-Buffer base conversion before
+// entering the common terrain renderer. It does not own another canvas.
+int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
+                              int base_id, int flags, int x, int y,
+                              int pixel_x, int pixel_y);
 
 // Free functions, __cdecl (the `ret` at 0x0046AF85 / 0x0046B185 pops nothing).
 // Redirected directly with no adapter; see src/mapwin.cpp.
@@ -509,32 +534,25 @@ void __cdecl draw_map(int draw_type);
 void __cdecl terrain_fixup(MapWin *window);
 
 // ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z at
-// 0x004632D0 - the terrain polygon renderer, still an original body
-// (src/unrecovered/004632d0.cpp) and deliberately out of scope of the
-// generation batch. The two compiled call sites that reach it (gen_tile at
-// 0x00468C73 and gen_map's terrain scan at 0x00469E47) push exactly ten
-// words - the window among them as the SECOND argument, a transformed-out
-// Buffer pointer first - and clean up 0x28 bytes themselves, so no implicit
-// receiver rides the call. It is declared as the free __cdecl function
-// those sites spell rather than as an instance member: a member call would
-// push an extra `this` the image does not have. Arguments 3..10 are, in
-// order, field_1DD98_, the caller's draw_type, the literal -1,
-// field_1DD70_, the original tile x, the original tile y, and the pair
-// tile_to_pixel wrote back.
+// 0x004632D0 - the terrain polygon renderer. TRANSCRIBED 2026-09-21 into
+// src/mapwin.cpp (journal 56, terrain-poly-transcription-scope-20260921):
+// the 44 blitter calls are __thiscall member calls on the terrain-band
+// globals, and the catalogued member mangle above stays the identity of
+// record for the span while the body is the free __cdecl function the two
+// compiled call sites (gen_tile at 0x00468C73 and gen_map's terrain scan
+// at 0x00469E47) spell - they push exactly ten words with the window as
+// the SECOND argument and clean up 0x28 bytes themselves, so no implicit
+// receiver rides the call. Arguments 3..10 are, in order, field_1DD98_,
+// the caller's draw_type, the literal -1, field_1DD70_, the original tile
+// x, the original tile y, and the pair tile_to_pixel wrote back.
 int __cdecl gen_terrain_poly(Buffer *buffer, MapWin *window, int a3,
                              int a4, int a5, int a6, int a7, int a8,
                              int a9, int a10);
 
-// ?draw_map@MapWin@@QAEXH@Z at 0x0046A550 - public, __thiscall, void(int) by
-// the mangled name, `ret 4` by the image - is 2049 bytes and still an original
-// body. The receiver is an unadjusted MapWin*, which is why MapWin::on_redraw
-// backs the 0x21A6C virtual-base displacement out before calling it. Defined
-// at the end of mapwin.cpp as a forwarder so that call links.
-// Console holds its own seam on the same address
-// (console.h, ConsoleOriginalMapWinDrawMap); the two are independent by
-// design - that one is a call site's, this one is the class's.
-typedef void (OriginalObject::*func_map_win_draw_map)(int draw_type);
-extern func_map_win_draw_map MapWinOriginalDrawMap;  // 0x0046A550
+// The terrain producer and its map/farm consumers share these four-corner
+// arrays. They are not aliases of the adjacent primary-view rectangle.
+extern Vert MapCornerCopy[4];
+extern Vert MapCornerScratch[4];
 
 MEASURED inline void __cdecl draw_tile(int x_coord, int y_coord, int draw_type) {
     for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {

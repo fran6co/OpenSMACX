@@ -37,8 +37,13 @@ def braced(text, signature):
 
 def actual_bodies():
     text = (ROOT / 'src/buffer.cpp').read_text()
-    return {name: braced(text, f'void Buffer::{name}(')
-            for name in ('line', 'hline', 'vline')}
+    bodies = {name: braced(text, f'void Buffer::{name}(')
+              for name in ('hline', 'vline')}
+    # The nine-argument patterned placeholder sits above the real renderer;
+    # this harness exercises the five-argument solid overload.
+    bodies['line'] = braced(
+        text, 'void Buffer::line(int x1, int y1, int x2, int y2, int color)')
+    return bodies
 
 
 def actual_fields():

@@ -46,7 +46,7 @@ def actual_bodies():
     source = (ROOT / "src/veh.cpp").read_text()
     removal = braced(source, source.index("void __cdecl veh_kill(int veh_id)"))
     start = removal.index("if (ConsoleGlobal.selected_vehicle_ == veh_id)")
-    end = removal.index("(ORIGINAL(&TutWinBaseWindow)", start)
+    end = removal.index("TutWinBaseWindow.check_loc(x, y, 0)", start)
     return definitions[0], spying, removal[start:end]
 
 

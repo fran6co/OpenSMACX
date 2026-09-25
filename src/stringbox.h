@@ -33,6 +33,7 @@
 // The base's real constructor runs implicitly either way.
 class StringBox : public GraphicWin {
  public:
+  virtual int on_link_clicked(int id, char *link);
   // 0x00629490, a pending_bodies forwarder.
   void add_fixup();
 
@@ -79,4 +80,3 @@ class StringBox : public GraphicWin {
 
 static_assert(sizeof(StringBox) == 0x2BA0,
               "StringBox layout must match the original executable");
-

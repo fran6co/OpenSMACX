@@ -550,8 +550,11 @@ class Win : public AutoSound {
   virtual void vslot_14() {}  // 0x00404280
   virtual void vslot_15(int = 0) {}  // 0x00404270
   virtual void on_mouse_move(int x, int y, unsigned int keys, int from_parent);  // slot 16  0x005F6320
-  virtual void vslot_17(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_18(int = 0, int = 0) {}  // 0x00404260
+  // Slot17 is the two-coordinate notification reached by the four-argument
+  // mouse router above, not another overload of that routing interface.
+  // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_mouse_feedback@Win@@UAEXHH@Z 0x005F6320
+  virtual void on_mouse_feedback(int, int) {}
+  virtual void on_mouse_leave(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_19(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_20(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_21(int = 0, int = 0) {}  // 0x00404260
@@ -617,7 +620,7 @@ class Win : public AutoSound {
   virtual void vslot_48(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_49(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_50(int = 0) {}  // 0x00404270
-  virtual void vslot_51(int = 0) {}  // 0x00404270
+  virtual void on_dialog_focus(int = 0) {}  // 0x00404270
   virtual void vslot_52() {}  // 0x00404280
   virtual void vslot_53(int = 0, int = 0) {}  // 0x00404260
   virtual void vslot_54(int = 0) {}  // 0x00404270
@@ -672,7 +675,7 @@ class Win : public AutoSound {
   // that claim one instruction; 0x005F6230 itself is unclaimed, so the
   // dispatch is the only measurement that speaks here.
   virtual int on_sys_key(unsigned int key, long flags, int repeat, unsigned int scan);  // slot 80  0x005F6230
-  virtual void on_l_button_down(long flags, int x, int y, unsigned int keys, int dbl);  // slot 81  0x005F63C0
+  virtual void on_l_button_down(long double_click, int x, int y, unsigned int keys, int from_parent);  // slot81,5F63C0
   virtual void on_l_button_up(int x, int y, unsigned int keys, int dbl);  // slot 82  0x005F6550
   virtual void on_r_button_down(long flags, int x, int y, unsigned int keys, int dbl);  // slot 83  0x005F6710
   virtual void on_r_button_up(int x, int y, unsigned int keys, int dbl);  // slot 84  0x005F6880

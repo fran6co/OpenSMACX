@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 
-// PlanWin constructor-installed Win branch: capture4, resize13, update63.
+// PlanWin constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066D2AC ? ??_7PlanWin@@6BWin@@@ 0x0048BCD0
 #include "original_seam.h"
@@ -288,6 +288,23 @@ Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win slot17 receiver adjustment for MapWin mouse feedback.
+// The original catalogue name remains on the mapping below.
+/*
+Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
+         MapWin::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x0048BFA0 ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z 0x0048BFA0-0x0048BFAE FILE BYTE_EXACT
+// symbol    ?on_mouse_feedback@MapWin@@$4PPPPPPPM@FOE@AEXHH@Z
+// size      14 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
 // calls     (none)
 Return Value: n/a
 Status: Complete

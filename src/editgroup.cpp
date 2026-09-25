@@ -20,27 +20,17 @@
 #include "editgroup.h"
 #include "editbox.h"
 
-func_edit_box_set_text EditBoxOriginalSetText =
-    original_method<func_edit_box_set_text>(0x006151E0);
-
 // EditGroupDefault - 0x009B8FCC. Read at construction time into field_84_;
 // a rebindable seam so tests can observe/control it, the same idiom
 // CheckBoxDefault1/2 use.
 uint32_t EditGroupDefault;
 
 /*
-Purpose: Compose an EditGroup from its two base-shaped subobjects
-         (GraphicWin, Dialog), install this class's own vtable/vtordisp
-         values into the object's vbtable-named slots, clear the box/limit
-         tables to their defaults, and read one more default field.
-
-         `a1` is the compiler's most-derived flag in the image
-         (??0EditGroup@@QAE@H@Z): nonzero means construct the two bases,
-         zero means skip straight to installing this class's own tables -
-         the same "am I the most-derived object" guard ListBox's constructor
-         uses. This class cannot let VC6 synthesise that flag (see the class
-         comment in editgroup.h), so it is modelled as an explicit parameter
-         instead and the guard is written out by hand.
+Purpose: Construct the shared GraphicWin and Dialog virtual bases, initialize
+         the separate control/text/limit arrays and read the process default.
+         The compiler owns the hidden most-derived flag, vbtables and vtordisp;
+         catalogue H is not a source parameter. Historical experiments below
+         predate this genuine hierarchy and do not establish current matching.
 // ORIGINAL: 0x00611940 ??0EditGroup@@QAE@H@Z 0x00611940-0x00611A15;0x00663020-0x00663047 SEMANTIC
 // symbol    ??0EditGroup@@QAE@XZ
 // size      252 bytes
@@ -72,14 +62,10 @@ EditGroup::EditGroup() {
 
     for (int i = 0; i < 10; ++i) {
         boxes_[i] = nullptr;
-        boxes_[10 + i] = nullptr;
+        text_buffers_[i] = nullptr;
         limits_[i] = 10;
     }
 
-    // THE RAW OFFSET, not `field_84_ = EditGroupDefault`. Both read the
-    // same global into the same slot, but a member access keeps `this`
-    // live differently and VC6 then holds it in ebx where the image uses
-    // ebp - 25 of 34 instead of 34 of 34.
     field_84_ = EditGroupDefault;
 }
 
@@ -152,9 +138,9 @@ Return Value: pointer to the box's text, null when there is no box
 Status: Complete
 */
 char *EditGroup::get_text(int index) {
-    void *const box = boxes_[index];
+    EditBox *const box = boxes_[index];
     if (box) {
-        return reinterpret_cast<char *>(box) + 0xA14;
+        return box->text_;
     }
     return nullptr;
 }
@@ -172,10 +158,10 @@ Return Value: n/a
 Status: Complete
 */
 void EditGroup::set_text(char *text, int index) {
-    void *const box = boxes_[index];
+    EditBox *const box = boxes_[index];
     if (box) {
         // A NAMED METHOD, not the seam: the image emits `call rel32` here.
-        reinterpret_cast<EditBox *>(box)->EditBox::set_text(text);
+        box->EditBox::set_text(text);
     }
 }
 
@@ -266,67 +252,6 @@ void EditGroup::close() {
 // Window-event handlers
 // ====================
 
-namespace {
-// A LOCAL SHIM, not vtable_shim.h's VCall, for the same reason as CloseVCall
-// above: only DECLARATION ORDER decides a slot, and the image's call site
-// (vtable slot 0xCC/4 = 51) pushes one int, where the shared VCall's
-// slot051 is nullary.
-class FocusVCall { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-    virtual void slot008();
-    virtual void slot009();
-    virtual void slot010();
-    virtual void slot011();
-    virtual void slot012();
-    virtual void slot013();
-    virtual void slot014();
-    virtual void slot015();
-    virtual void slot016();
-    virtual void slot017();
-    virtual void slot018();
-    virtual void slot019();
-    virtual void slot020();
-    virtual void slot021();
-    virtual void slot022();
-    virtual void slot023();
-    virtual void slot024();
-    virtual void slot025();
-    virtual void slot026();
-    virtual void slot027();
-    virtual void slot028();
-    virtual void slot029();
-    virtual void slot030();
-    virtual void slot031();
-    virtual void slot032();
-    virtual void slot033();
-    virtual void slot034();
-    virtual void slot035();
-    virtual void slot036();
-    virtual void slot037();
-    virtual void slot038();
-    virtual void slot039();
-    virtual void slot040();
-    virtual void slot041();
-    virtual void slot042();
-    virtual void slot043();
-    virtual void slot044();
-    virtual void slot045();
-    virtual void slot046();
-    virtual void slot047();
-    virtual void slot048();
-    virtual void slot049();
-    virtual void slot050();
-    virtual void slot051(int);  // <-- used
-};
-}  // namespace
-
 /*
 Purpose: Hand dialog focus to the group's edit boxes: with a nonzero value,
          to the first box only; with zero, to each of the ten in turn, each
@@ -334,7 +259,7 @@ Purpose: Hand dialog focus to the group's edit boxes: with a nonzero value,
          the GraphicWin-subobject adjusted pointer (the family's thunk
          convention), so the box-pointer array sits 0x88 below `this`.
 // ORIGINAL: 0x00612670 ?on_dialog_focus@EditGroup@@QAEXH@Z 0x00612670-0x006126B6 BYTE_EXACT
-// symbol    ?on_dialog_focus@EditGroup@@QAEXJ@Z
+// symbol    ?on_dialog_focus@EditGroup@@UAEXH@Z
 // size      70 bytes
 // prototype void (__thiscall ?on_dialog_focus@EditGroup@@QAEXH@Z)(EditGroup* this, int)
 // callers   1   call targets   0
@@ -348,30 +273,27 @@ Purpose: Hand dialog focus to the group's edit boxes: with a nonzero value,
 // virtual - makes VC6 enter it 0x90 high (vtordisp-adjusted) and fold that
 // into every displacement; inline casts vs a named `self` local made no
 // difference to it.
-// LEVER: LONG, NOT INT. The catalogue spells this member QAEX - a plain
-// member, no override - so the parameter became `long`, which no longer
-// overrides GraphicWin's `on_dialog_focus(int)` and drops the entry
-// adjustment entirely: 26/26. Same trick as init_class's QAAHX -> SAHX; the
-// `// symbol` fact records what the tree emits.
+// Original table6708D4 slot51 selects this body through thunk6127C0.
+// The old long overload matched a raw-offset body but left actual virtual
+// dispatch empty. Correct EditGroup ownership puts GraphicWin at8C, so the
+// compiler's real override can express the original member displacements.
 Return Value: n/a
 Status: Complete
 */
-void EditGroup::on_dialog_focus(long focus_id) {
+void EditGroup::on_dialog_focus(int focus_id) {
     if (focus_id != 0) {
-        FocusVCall *field = *reinterpret_cast<FocusVCall **>(
-            reinterpret_cast<char *>(this) - 0x88);
-        if (field != 0) {
-            field->slot051(focus_id);
+        EditBox *box = boxes_[0];
+        if (box != 0) {
+            box->on_dialog_focus(focus_id);
         }
         return;
     }
-    FocusVCall **slot = reinterpret_cast<FocusVCall **>(
-        reinterpret_cast<char *>(this) - 0x88);
+    EditBox **slot = boxes_;
     int count = 10;
     do {
-        FocusVCall *box = *slot;
+        EditBox *box = *slot;
         if (box != 0) {
-            box->slot051(0);
+            box->on_dialog_focus(0);
         }
         ++slot;
     } while (--count);

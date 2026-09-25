@@ -173,19 +173,19 @@ int main() {
     shift = 1;
     edit.vslot_20(17, 0);
     assert(edit.field_B40_ == 1 && edit.field_B44_ == 3);
-    edit.vslot_17(1, 0);
+    edit.on_mouse_feedback(1, 0);
     assert(edit.field_B44_ == 0);
     edit.vslot_21(9, 0);
     assert(!WinPointerOwner3 && releases == 1 && edit.field_B44_ == 2);
     reset(edit, "abcd", 4, 4);
-    edit.vslot_17(9, 0); assert(edit.field_B44_ == 4 && redraws == 0);
+    edit.on_mouse_feedback(9, 0); assert(edit.field_B44_ == 4 && redraws == 0);
     Win owner;
     WinPointerOwner3 = &owner; WinPointerOwner4 = &edit;
-    edit.vslot_17(9, 0); assert(edit.field_B44_ == 1);
+    edit.on_mouse_feedback(9, 0); assert(edit.field_B44_ == 1);
     edit.vslot_21(9, 0); assert(!WinPointerOwner4);
     edit.field_B48_ = 1;
-    edit.vslot_51(0); assert(stops == 1 && edit.field_B48_ == 0);
-    edit.vslot_51(1); assert(starts == 1);
+    edit.on_dialog_focus(0); assert(stops == 1 && edit.field_B48_ == 0);
+    edit.on_dialog_focus(1); assert(starts == 1);
 
     reset(edit, "abcd", 1, 3);
     edit.draw_contents();

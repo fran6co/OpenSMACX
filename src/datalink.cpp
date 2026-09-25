@@ -104,8 +104,7 @@ static const int *const TerraformFlagBase = (const int *)0x00691884;
 // The label each category's filler draws centred in the entry rectangle, read
 // out of the label blob the way dipedit.cpp reads it:
 // `mov eax, ds:0x9b90f8; mov ecx, [eax + <slot>]` - slot / 4 is the index.
-#define CATEGORY_LABEL(slot) \
-    StringTable.get((int) * ((LPSTR *)Labels.strings_ptr + (slot)))
+#define CATEGORY_LABEL(slot) StringTable.get((int) * ((LPSTR *)Labels.strings_ptr + (slot)))
 
 // See datalink.h. Defined out of line only so VCall's declaration, which
 // basewin.cpp also carries locally, is not dragged into every TU that includes
@@ -830,6 +829,7 @@ Purpose: Follow a hyperlink in the topic text: "category*10000+facility".
          whatever happened; the image returns 0 on the ignored path and
          falls off the end (also 0) after the chain.
 // ORIGINAL: 0x00431DC0 ?on_link_clicked@Datalink@@QAEHHPAD@Z 0x00431DC0-0x00431E64 FILE
+// symbol    ?on_link_clicked@Datalink@@UAEHHPAD@Z
 // MISMATCH 24/58, first divergence at 24 - the image reloads the facility slot after the set_cat call where ours folds it into the store. TRIED: the guard as `facility > 1000` in both polarities, and `atoi` against the CRT's own binding.
 // size      161 bytes
 // prototype int (__thiscall ?on_link_clicked@Datalink@@QAEHHPAD@Z)(Datalink* this, int, char *)

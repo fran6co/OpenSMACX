@@ -1,0 +1,36 @@
+{
+  "event_id": "c3d702118aff5b5a8ce067ed6fe7d7fac14136b659fe47658cbe38a11a51ae13",
+  "payload": {
+    "affects": [
+      "entity-01a00afdd51fac3ddf4cc9aa9449ccfaae62ebd32a9ed3ef85076c53f45654e4",
+      "entity-061b1c77c6dc8ff5d24a77efa2dee7c418c98e00e908f8581979d87b32836862",
+      "entity-3ca03a002f65165dfd489d34b58cb2649b861911fe8df9b34dd31a77db2be590",
+      "entity-4280d8be1e0c067fdf4cba314bb6e4ca98f48715f58d2fbc27b39ea23b718aeb",
+      "entity-43f14ea3ff5b4306e59d3d25f9cc23ce82acf35b0342d58930613e6f1e8b1af8",
+      "entity-57f6b0e5cf3bf462ee7f1a4881370be6c129a48ebc9038c3d133f32e95e00542",
+      "entity-7a9d40a74a5a31a4501e2e3a27a9e52e454ec4e291f5b282555c8fe7b7d88e22",
+      "entity-8f336bd869c26659af02dc6060cecfb6e9dfe14cb0426ffa55c23da791460ef0",
+      "entity-989de6354180d338598eb22da7a7e21fdacfae103340e49aef1432eb1e340959",
+      "entity-b12ad9b6ca5b8175327f40eddd79eaa625f51e0845d44c988bd561d106233186",
+      "entity-ddb9cd51fdc9110e336f9ef1e56303d52b45e0fd227c074fd24dad59074e940c",
+      "entity-e2ef83fb7a182dbcb709855b01e125b9009dbd0ba93a105939357e5da0b03e32",
+      "entity-ff955166e37a90df083d5788c9dbfcb8328fe07adc86f7dd9a41c23b4c726d59"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "subinterface-pure-base-phase-20260923",
+    "evidence": [
+      "Original DiploPop constructor store43F021 initializes the SubInterface base with table66A6E4, exactly19 consecutive purecall645844 entries. SocialWin store4AEA11 and ReportIf store4AD1A7 establish the same base phase. The current SubInterface declares one non-pure slot; IfaceRegistryEntry adds slots and concrete defaults, so neither declaration represents that original abstract contract.",
+      "The recovered DiploPop constructor reaches historical masked-byte equality under /Oy- but its native COFF relocation targets ??_7IfaceRegistryEntry@@6B@. Masked equality does not establish base-table identity. Coordinator refuses banking that constructor or declaring the lifecycle structurally complete; preserve the independently justified A94 member and Time/Flic offsets, ordinary lifetime recovery, global ownership and all historical obligations.",
+      "Minimum genuine correction places all19 pure virtual declarations, in evidenced order and without a virtual destructor, on SubInterface. DiploPop should derive directly and provide its own evidenced no-op slots6/17/18. Do not create a new interface wrapper or fabricate default bodies to avoid the dependent-owner work. Existing helper owners retain separate unresolved base-phase obligations.",
+      "SocialWin has a real TutWinSocWindow global and cannot be left abstract. Missing nontrivial concrete handlers are4B2120 status,4B2210 left-click,4B2220 right-click and4B2470 button-click; the first two retain exact seed obligations. Recover their members, services and callers rather than replacing them with no-ops. ReportIf additionally lacks handlers4A41D0/4A5F40/4A6050/4A6330/4A6D70 and its existing slot18 method must actually override the common declaration. Reconcile generated virtual symbols through the native source writer and remeasure protected callers.",
+      "This pending discovery grants no shared-header or additional-owner edit permission, changes no task baseline, demotes no claim and establishes no acceptance. Expand and verify the full dependent scope before shared structural edits. Keep the verified DiploPop work retained and unmerged meanwhile; the user-approved landmark-only bounds change remains independent, and base_energy/faction-art behavior changes remain unauthorized."
+    ],
+    "hypothesis": "A masked-exact DiploPop constructor exposes a wrong shared interface hierarchy; repair the genuine abstract contract with its affected concrete owners, not local spelling or fabricated defaults.",
+    "kind": "discovery"
+  },
+  "previous_event": "613bce74a9ed76d8b74b76108f6c37c8ad4edc07d6c252ebf9ca118b2e1a23b6",
+  "request_id": "subinterface-pure-base-phase-20260923",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:frontend-presentation"
+}

@@ -1,0 +1,53 @@
+{
+  "event_id": "71e8444ebf8fd9afca27779487a7e792a61e2bce501bc9bf33e656acb79aed14",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_socialwin_handlers.py",
+      "recovery/tests/test_tutorial_reset.py",
+      "src/socialwin.cpp",
+      "src/socialwin.h",
+      "src/tutwin.cpp",
+      "src/tutwin.h"
+    ],
+    "evidence": [
+      "Prepare the real SocialWin concrete handlers required by pending subinterface-pure-base-phase-20260923, including the shared missing TutWin::reset service. Full original tables66DA50 and66A6E4 establish the eventual pure contract; recover behavior before changing the shared header. This expansion does not resolve that discovery or authorize default methods for missing behavior.",
+      "Recover TutWin4BDDE0 through its existing typed Win owner at53D4, virtual hide and owner slot63, do_all_draws, existing fields and real TutWinShownFlag. Preserve callback ordering and reload the owner after hide. Preserve both return paths and reset-store ordering; keep its claimed seed as a restoration obligation. No new fixed-address aliases or fabricated global owners.",
+      "SocialWin slots0/3/4/13 are4B2120/4B2210/4B2220/4B2470. Inspect full originals before copying seeds, including secondary-base receiver adjustment, checkbox/FlatButton members, signed allocation arithmetic and shared interface return contract. Only evidence-backed member reinterpretation is authorized; further missing services and ownership changes need separate expansion. Current native slots/hierarchy remain explicitly unfinished until dependent closure is implemented.",
+      "Coordinator owns product edits, source binding, task journal, compiler lease and Git. Tests may be delegated only the named files. Require actual-source callback and boundary controls, original/native reference and layout checks, restoration of all touched historical claims, and full build/link before any manual integration. Preserve all retained terrain and DiploPop work. This permits no demotion, fake acceptance, or deferred base_energy/faction behavior fixes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4923680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4923920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4923936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4924528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4972000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c3d702118aff5b5a8ce067ed6fe7d7fac14136b659fe47658cbe38a11a51ae13",
+  "request_id": "social-interface-handlers-and-tutorial-reset-20260923",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:frontend-presentation"
+}

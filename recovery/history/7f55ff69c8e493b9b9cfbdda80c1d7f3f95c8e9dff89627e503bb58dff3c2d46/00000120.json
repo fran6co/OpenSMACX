@@ -1,0 +1,32 @@
+{
+  "event_id": "1a39c2e6abfc0063f27f75d35f49105a88c2b41a7523f93373ed5f25b81d506d",
+  "payload": {
+    "affects": [
+      "entity-01a00afdd51fac3ddf4cc9aa9449ccfaae62ebd32a9ed3ef85076c53f45654e4",
+      "entity-63c55760933e638774453552dea24947d1671716449259e75c2fb1d54f20ea0a",
+      "entity-7a9d40a74a5a31a4501e2e3a27a9e52e454ec4e291f5b282555c8fe7b7d88e22",
+      "entity-80a4fab6ee44f3597eb5af321a37154b7ab234f699cec850968b7ef75490fb8b",
+      "entity-999b6128dd767ab9db85ca79db758cf97512f1965c6f44353cf35d627f7e31f2",
+      "entity-c2b4d77c2844973657957b7ff1631e19c29b15e2dc393299a7a4b603d9c15cac",
+      "entity-c4a3d36bd9e265bcc1c9a5cf0c110d56f43e37988196acfdc0ed6f826f8c02bf",
+      "entity-ce2cfddba2bc6f7db46b3387f35ec5b06df5723ac48aa9b5d5e4f3b6ab0aac0e",
+      "entity-e46e96cf43c7b8ddc6d1728f03e8e170c370d40dba3b6e66b475d475e8483a83",
+      "entity-e6e477a47bf9da6cd4bdadb9449f7d12fe0a8958a04ee8b51ad37080fcad993f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "diplomacy-popup-member-lifetime-20260923",
+    "evidence": [
+      "Full independent constructor43EFF0..43F0EA/unwind654880..6548F4 and destructor440D50..440EB8/unwind6547B0..654871 establish a missing signed counterpart faction at+A94, two Times+A98/AC0 and Flics+AE8/15CC. Remove fictitious field20AC because it belongs inside the second Flic; preserve tail20B0..2154 and FlatButton[3]2158..433C. Existing exact raw-offset show/stop must migrate and retain their obligations, not veto this justified structure.",
+      "Recover ordinary C++ member/base construction and destruction, with own counterpart=-1 and field2154=1 stores only after every member constructor. Destructor closes then relies on reverse member destruction and native unwind, with no manual placement or vtable writes. Original CRT43EFC0 constructs733990 and registers43EFE0 for the same object (CRT table682080); bind the real process-lifetime DiplomacyPopup and independently observed generated entries if emitted.433C is the complete evidenced member footprint, not an invented allocation instruction.",
+      "Use real members in close/show/stop, preserve virtual hide versus qualified GraphicWin::close and Win::show, and use WinModalFocus->on_button_clicked for actual slot44. Remove the obsolete VCall shim and pending destructor forwarder; preserve unrelated pending_bodies edits and all seed/claim history. All required member/base lifecycle bodies exist, but SubInterface release mode and slot12 painter4402A0 remain unfinished; no full popup operation is claimed.",
+      "Coordinator owns source/binding/scope/Git/native work; tests may be delegated only the named new file. Require actual-source service/lifetime/failure controls, fresh full native layouts, unchanged protected claims, data/CRT observations, references and full build/link, then repeat relevant checks at any integration destination. Scope is not a claim demotion, acceptance waiver or permission for deferred base_energy/faction-art behavior fixes."
+    ],
+    "hypothesis": "The diplomacy receiver needed by the focus producer has a proven four-byte member-layout defect and forwarded destruction; recover its complete genuine lifetime before adding protocol callers.",
+    "kind": "discovery"
+  },
+  "previous_event": "e39ff4b2239e7190a999862b12c397a184988496a6749112317c52a9af314ff7",
+  "request_id": "diplomacy-popup-member-lifetime-20260923",
+  "schema_version": 1,
+  "sequence": 120,
+  "stream": "task:vector-value-semantics"
+}

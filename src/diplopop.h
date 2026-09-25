@@ -27,14 +27,9 @@
  /*
   * DiploPop class
   *
-  * Derives from GraphicWin by ordinary single inheritance - its constructor calls
-  * GraphicWin's on an unadjusted `this` - so it is written as the original wrote
-  * it and needs no ABI workaround. GraphicWin is pinned here, so the base region
-  * is exact; DiploPop's own extent is not established and nothing pins its
-  * sizeof.
-  *
-  * The methods below ignore their arguments and return a constant, which is
-  * why they can be replaced ahead of that mapping.
+  * GraphicWin is the primary base; the interface-mode base begins at 0xA14.
+  * Construction at 0x0043EFF0 and destruction at 0x00440D50 establish the
+  * member lifetimes below. In particular, 0xA94 is a faction id, not a Time.
   */
 class DiploPop : public GraphicWin, public IfaceRegistryEntry {
  public:
@@ -59,10 +54,7 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
 
  public:
   void hide();
-  DiploPop() { ; }
-  // 0x00440D50 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  DiploPop();
   ~DiploPop();
   void on_iface_left_click(int, int);
   void on_iface_right_click(int, int);
@@ -91,22 +83,29 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
   // Slot 16, 0x00440620.
   void on_iface_group_clicked(int group, int x_coord, int y_coord);
 
-  // Storage the image proves is here: its own methods reach 0x420C.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 49 member(s) from the IDA database, 10 named; it starts a member at 0xA14, which is where src/ ends.
-
   // PROVED, and now a real type rather than eight opaque bytes:
   // The SubInterface that used to sit here as a member is now the SECOND
   // BASE, above. MSVC lays non-virtual bases in declaration order, so it is
   // at sizeof(GraphicWin) == 0xA14 either way and no offset moves.
-  Font font1_;  // 0xA1C
-  Font font2_;  // 0xA44
-  Font font3_;  // 0xA6C
-  Time time1_;  // 0xA94
-  Time time2_;  // 0xABC
-  Flic flic1_;  // 0xAE4, declared Flic extent == 0xAE4
-  Flic flic2_;  // 0x15C8, declared Flic extent == 0xAE4
-  uint32_t field_20AC_;  // 0x20AC
+  // RECOVERY_MEMBER: v2 DiploPop font1_ Font 0xA1C 0x0043EFF0
+  Font font1_;
+  // RECOVERY_MEMBER: v2 DiploPop font2_ Font 0xA44 0x0043EFF0
+  Font font2_;
+  // RECOVERY_MEMBER: v2 DiploPop font3_ Font 0xA6C 0x0043EFF0
+  Font font3_;
+  // start stores its faction argument at 0x0043F30D. Construction, close
+  // and stop reset it to -1; show tests that sentinel before displaying.
+  // RECOVERY_MEMBER: v1 DiploPop counterpart_faction_ 0xA94 0x0043EFF0
+  int counterpart_faction_;
+  // RECOVERY_MEMBER: v2 DiploPop time1_ Time 0xA98 0x0043EFF0
+  Time time1_;
+  // RECOVERY_MEMBER: v2 DiploPop time2_ Time 0xAC0 0x0043EFF0
+  Time time2_;
+  // RECOVERY_MEMBER: v2 DiploPop flic1_ Flic 0xAE8 0x0043EFF0
+  Flic flic1_;
+  // The second Flic ends at 0x20B0; 0x20AC belongs to it, not a separate field.
+  // RECOVERY_MEMBER: v2 DiploPop flic2_ Flic 0x15CC 0x0043EFF0
+  Flic flic2_;
   uint32_t field_20B0_;  // 0x20B0
   uint32_t field_20B4_;  // 0x20B4
   uint32_t field_20B8_;  // 0x20B8
@@ -146,9 +145,13 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_214C_;  // 0x214C
   uint32_t field_2150_;  // 0x2150
   uint32_t field_2154_;  // 0x2154
-  // The IDB's last member: three FlatButtons ending at 0x433C, which is
-  // 0x130 past the hole this used to declare; the class carries no size
-  // assertion, so the declaration follows the member table.
-  FlatButton flatButtons_[3];  // 0x2158, IDB `flatButtons`, 3 * sizeof(FlatButton)
+  // Constructor 0x0043F08A..0x0043F0A6 supplies count 3 and stride 0xB4C;
+  // destructor 0x00440DBA..0x00440DEF tears down the same complete array.
+  // RECOVERY_MEMBER: v4 DiploPop flatButtons_ FlatButton[3] 0x2158 0x21E4 0x0043EFF0
+  FlatButton flatButtons_[3];
 };
 
+static_assert(sizeof(DiploPop) == 0x433C,
+              "DiploPop member lifetimes must cover the original footprint");
+
+extern DiploPop DiplomacyPopup;

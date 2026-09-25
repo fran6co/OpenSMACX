@@ -19,12 +19,12 @@ struct Time {
 };
 // LIVE_EDITBOX_DECL
 void EditBox::draw_contents() {}
-void EditBox::vslot_17(int, int) {}
+void EditBox::on_mouse_feedback(int, int) {}
 void EditBox::vslot_20(int, int) {}
 void EditBox::vslot_21(int, int) {}
 int EditBox::vslot_25(int, int) { return 0; }
 int EditBox::vslot_26(int) { return 0; }
-void EditBox::vslot_51(int) {}
+void EditBox::on_dialog_focus(int) {}
 void EditBox::pass_dialog_focus() {}
 uint32_t EditBoxDefaultB1C = 255, EditBoxDefaultB20 = -1, EditBoxDefaultB24 = -1;
 uint32_t EditBoxDefaultB28, EditBoxDefaultB2C, EditBoxDefaultB30 = 1, EditBoxDefaultB34 = 4;

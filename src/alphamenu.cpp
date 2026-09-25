@@ -43,4 +43,4 @@ void AlphaMenu::hide() {}
 void AlphaMenu::draw_contents() {}
 
 // 0x00403550 on_mouse_move@AlphaMenu - unrecovered; stub for slot 17.
-void AlphaMenu::vslot_17(int x, int y) {}
+void AlphaMenu::on_mouse_feedback(int x, int y) {}

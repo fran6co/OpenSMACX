@@ -22,6 +22,19 @@
 #include <cstring>
 #include "vtable_shim.h"
 
+// The getter is only an admission predicate. Reload the actual parent after
+// its callback; the returned GraphicWin pointer is not the dispatch receiver.
+// ORIGINAL: 0x00432720 ?on_link_clicked@StringBox@@QAEXHPAD@Z 0x00432720-0x00432761 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Full original432720..432761 returns1 on parent/getter refusal and forwards parent slot88 result otherwise; table66ADC8 selects the same override. The seed void+assembly return is an incorrect signature.", "Reload win_parent_ after virtual get_graphic_win. Its returned GraphicWin pointer is predicate-only; current parent is the callback receiver."], "reason": "Recover original GraphicWin link-hook overrides through the genuine slot88 hierarchy, preserving seed identity and historical obligations."}
+// symbol    ?on_link_clicked@StringBox@@UAEHHPAD@Z
+int StringBox::on_link_clicked(int id, char *link) {
+    Win *parent = win_parent_;
+    if (parent == 0 || parent->get_graphic_win() == 0) {
+        return 1;
+    }
+    return static_cast<GraphicWin *>(win_parent_)->on_link_clicked(id, link);
+}
+
 /*
 Purpose: Construct a StringBox: run the GraphicWin base construction, build
          the Scroll at 0xA20 and the StringList at 0x2B70, install this

@@ -1,0 +1,34 @@
+{
+  "event_id": "65712aac520530499a28898133a871bb48b0a0edf34d291426d2e9ec756cb55d",
+  "payload": {
+    "affects": [
+      "entity-443a1e7b4796d6a1db71e88cbfa3d7af85ae4d9692d112f42c3320aadd095e20",
+      "entity-7d8176751703cb7d8caa38917ee097499bb12c1624819b3dd971ad2d9ac57af6",
+      "entity-977d75b7be3f9d548b714e0df1cb04cba88d99b1bf4b5265ea398994f48f73ba",
+      "entity-b45f8b7bb6aba647522382131954544e265891cb57bd9476ba1ea8b84ffcee22",
+      "entity-c3261c8e579c0ee78b203c574c42dafcbbe6b6393c3cc992bf539dc061e4fd67",
+      "entity-c679673193b824bfbed01d01174dd51b0aca61973fa412146ea42e5b9da8b95e",
+      "entity-c9c2c3b1e9fa185d957d7f9a45f1aea931343db9e406ebb5e93d8689321810c1",
+      "entity-d4049b7f77c01cd253a628654623b728584ed6cc7093467bf610b1d5e6912d36",
+      "entity-f042259ef01ea326eced5ab25b63725a4f0cfbc5745852963dd706f0b4f9a367"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "complete-interface-loader-owner-closure-20260923",
+    "evidence": [
+      "Independent complete loader455610..455E41 reviews agree: mode argument unused; publication9B33C0=4554C0 precedes first load_pcx; two sheets iface.pcx/interface.pcx;41 extracts,83 recolors,10 immediate pixel publications,one shared-canvas close then real load_box_sprites. Seed omits callback publication and fabricates GraphicWin receiver from last Sprite for actual static5D6F50. Current prerequisite recovery preserves that static refresh and real minimum arithmetic, not full loader closure.",
+      "Corrected independent MapWinTable slice: source ownerbase7D3C3C; original starts7D3C40 and ends exclusive7D3C5C, hence slots1..7 only. Active admitted window gets existing SpriteVAR31@779240 in GraphicWin frame_top_right, calls compute_min_size, then reloads same table slot for genuine virtual on_redraw_nc(nullptr,-1). No second null/active guard. WinStaticDefaults[10] is already the owner of696D38/[1] and696D48/[5]; loader writes these AFTER window callbacks, so its current const declaration is wrong. Do not make duplicate defaults.",
+      "Original callback4554C0 and caller5D6567..658B establish void cdecl(GraphicWin*,char*,Buffer*), not integer slot storage or fabricated zero return. Existing GraphicWinFieldA0CDefault/memberA0C are uint32. Recover real callback and on_redraw_nc consumer together with font/colors/frame offsets and genuine WorldClimateWorldWin8E9F60 exclusion. GraphicWin::close currently returns that integer default/EAX residue; inspect return consumers before typing rather than cast the callback into an artificial uint32 return.",
+      "Full Flat painter607E50 and Push painter62C110 establish every27/18 default/member slot as borrowed Sprite*, not mixed integer values. Migrate existing BasePopDefaultBlock31B8/default_block27, Flat config27 and real Flat defaults, PushButtonDefaults18/member18 together; do not duplicate owners or truncate pointers. Existing BasePop::close has connected copy bug: after firstrow, source uses column+2,+5,...+23; original600F89 increments EAX before600F8F read9B8D18, yielding correct column+3,+6,...+24, as current ctor already does. Preserve historical obligations through this justified migration; painter recovery remains separate.",
+      "Independent CRT wrappers prove eleven existing frameSprite singleton44-byte owners at78DD50,789BC8,776580,7ABFD0,787F88,78A2D0,78E070,78A550,789BF8,75B150,7AD180: CRT6823E4..68240C -> constructors44FCF0..44FED0 with corresponding exitwrappers. BaseWin27 sprites77A5C8..77AA6C use ctor450D90/exit450DC0/CRT68252C and explicit count27 stride2C; closeX3 sprites7794D8..77955C use44CCA0/44CCD0/CRT6820B8. Bind existing objects, never create new duplicates. Loader pointers select BaseWin18..26.",
+      "Thirteen metric outputs79A5E4,7ACD2C,76DC90,75ADE8,759E20,779644,791D60,7ACF04,77970C,7ACE78,76DC8C,78DD7C,78A30C are observed separatezero DWORDs, not additions to preceding44-byte Sprites. Metric791D60 reads realVAR08@6A7250, NOT distinctVAR68@7A7250. Three extents75ADE8/759E20/779644 also feed seed-only popups_normal588460. Ten colors68A5A0..68A5C8 start98,231,232,233,145,148,36,30,86,50; actualTutWin::draw_arrow still aliases first originaladdress. Other observed color consumers include original-forwarded MainInterface::set_date, TutWin::tut_win and StatusWin::draw_active. A new real colorwriter alone would fork state; plan their complete producer/consumer closure.",
+      "All current source work, baselines, existing claims and pending findings remain preserved. This decision records full loader dependencies, corrected owner evidence and follow-up scope; it grants no new product edits beyond the separately authorized GraphicWin frame prerequisites and no acceptance. BaseButton textcolors also need the existing DialogDefaults[5..16] owner view, not another12elementcopy. Landmark-only behavior authorization unchanged; base_energy/faction changes deferred."
+    ],
+    "hypothesis": "Complete interface loader recovery requires shared typed defaults, a real caption callback/consumer contract and live color/metric producer-consumer closure; the frame prerequisite step does not close these owners.",
+    "kind": "discovery"
+  },
+  "previous_event": "e16df85de98c618a3daccfcf7044dd96fdfb14a633a7913421b41ff32a34eb43",
+  "request_id": "complete-interface-loader-owner-closure-20260923",
+  "schema_version": 1,
+  "sequence": 104,
+  "stream": "task:control-sprite-defaults"
+}

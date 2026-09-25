@@ -1,0 +1,34 @@
+{
+  "event_id": "aee70d34cfb58ea5c5eda586525a546e1c21790817aa5b76fd23161cb0bcd43d",
+  "payload": {
+    "affects": [
+      "entity-0878ec475aed78b8c3b6bde24e9d4498ccb5731a8141209bb5dd6b321f6d6c88",
+      "entity-2b7887219db9ace75879c64e6092ff73528b1cbe1e4352d2c3a296292188e143",
+      "entity-477a7d325bf9c957e372fa9ecfe8a5ec5deec0c7d40d760ee923fa055b96907b",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-594d6733ec8f319baa4a9cd2b2458879a2cc10c67c3392d88fd7cba56a481956",
+      "entity-654592795a5befa08598aa4233943dbd4b124618d409bca3df3921c49365aea5",
+      "entity-7d19e401fdbdbe5fe281e136b65a85e00736b9dfb503a32a3f64acde8b35d334",
+      "entity-912bc58d8f0606b37d81c3c6fb642d45380106dafca1378e3a441408a945f08f",
+      "entity-95970412edc585630b9d0a584f826b729978e564a70691a1801572fea420d8c1",
+      "entity-96d8ffae9bfded8a88e11a469ba44808fa98817aefd97d7ed4395f1ebaae3c9f",
+      "entity-d604d5f1fbecbfcba646f860f78c88c8a551b0aaa2f3893fa02fac506260c4c4"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "cached-lit-shared-state-and-cache-20260923",
+    "evidence": [
+      "Full pinned621870..6221F1 decode714instructions and625080..625294 decode183instructions independently reviewed. Helper cache uses flags/cursor at0/4 and10 records ofstride3C at8, total260, exactly matching existing TextureStore embedded extent. Flags bits2/1 govern geometry/light cache channels; cursor increments per positive-height edge and wraps exactly10. Existing opaque tail and iWidth label miss this structure.",
+      "Original621870 resets cache cursor before get_data; clears flags only for bbox-contained polygons, after free_data and FNINIT. Borrowed transitions use625080cache; owned transitions use61FC90uncachedGouraud helper. Native C++ must preserve both contracts, not ignore discovered class ownership as function-local scope.",
+      "Owned621E92 divides signed EDX:EAX with highwordrightedgeX still live from621E41. Equal-light rectangleX1..5 therefore stores lightstep4000, giving pixel shade additions0,64,128,192. 622078 shifts memoryV after loadingBX, unlike positiveU path. These are observed original behaviors, not approved bug fixes.",
+      "Owned branch reads9BB50C shared row-pitch scratch without assigning it here; entry stores this width into different9BB4A8. Several earlier typed rasterizers stopped publishing9BB50C, so replacing the read with current iWidth or introducing isolated default storage would lose cross-function behavior. Recover all observed current writers/readers together; do not claim producer completeness from a default value.",
+      "Seed x87 impossibility explanation misreads FDIVR: borrowed gradients admit explicitPC24/toward-zero reciprocal/product arithmetic, already modeled by texture_span_step/light_step. Preserve seeds/history and explicit geometry/FPU-status/shared-scratch limits, not guessed Ghidra products."
+    ],
+    "hypothesis": "The pending cached-light rasterizer exposes a real ten-EdgeScan TextureStore cache and cross-function row-pitch state omitted by several earlier genuine kernels; its owned branch also contains original arithmetic quirks that cannot be normalized silently.",
+    "kind": "discovery"
+  },
+  "previous_event": "7cf72f020d242bd4b5eafccbeafc64bcc1195faab00cfd48cc8fe59d9ca84263",
+  "request_id": "cached-lit-shared-state-and-cache-20260923",
+  "schema_version": 1,
+  "sequence": 107,
+  "stream": "task:vector-value-semantics"
+}

@@ -97,8 +97,8 @@ class Menu : public GraphicWin {
 
  public:
   // MENU'S OWN VTABLE SLOTS, derived from a dispatch the image spells out.
-  // Win declares 0..87 and GraphicWin appends on_dialog_focus and
-  // on_mouse_leave at 88 and 89, so Menu's first addition is 90.
+  // Win declares 0..87 and GraphicWin appends link and caption hooks
+  // at88 and89, so Menu's first addition is90.
   // `Win::adjust_menus` (0x005F0540, BYTE_EXACT) calls this object at
   // `[vtable + 0x174]` = slot 93, which is what fixes the count at four:
   // three unnamed slots and the one the dispatch proves exists. Naming any

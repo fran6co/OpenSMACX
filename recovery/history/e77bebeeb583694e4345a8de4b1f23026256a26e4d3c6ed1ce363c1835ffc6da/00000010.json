@@ -1,0 +1,84 @@
+{
+  "event_id": "1f56bd8d139449ae72d24e17ff0cad3e88af50df838b6fa276fa39765523270e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_generation.py",
+      "recovery/tests/test_texture_cached_lighting.py",
+      "recovery/tests/test_texture_vertices.py",
+      "src/mapwin.cpp",
+      "src/pending_bodies.cpp",
+      "src/texture.cpp",
+      "src/texture.h"
+    ],
+    "evidence": [
+      "Authorize complete621870forwarder replacement, typedTextureStore260-byte cache interpretation and625080cache logic, typedUV/cache declarations and624CD0caller updates with nativewriter symbol discipline. Recover both borrowed keyed and owned integer kernels; no skipped branch, invented fallback or changed originalbug behavior.",
+      "Couple real6972CC/D0clamps with every currentTexture reader and retainedterrainwriter, and real9BB50C row-pitch with every observed currentwriter/reader, including previously omitted publications in genuine kernels. Original globalrefs/fullfamily census precedes modifications; newevidence may require further scope. Source owns essential bounds/lifecycle/type/quirk evidence.",
+      "Use existing native framework measurement and source APIs; noframework work/CLI/newacceptancewaiver. Coordinator owns product/journal/Git/compiler changes. Testworker may edit only newtest_texture_cached_lighting.py when released; freeze wholecheckout for preparation/nativeverification.",
+      "Preserve all historicalclaims/seeds/originalidentities/baselines and otherterrainWIP. Relevantoriginal/sourceindependentreview, actual-source controls, bothnativeflagsets, protectedclaim/layout/data/reference checks, freshbuild/link and destinationrechecks precede manualintegration. Temporarymatching regressions remainunaccepted obligations; noautomaticdemotion. base_energy/factioncache behaviorfixes remain deferred."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6428784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6442192,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6421648,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6396128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6398528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6399840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6437344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "738ba6145661ffa3ef068a8c0e4e6ad82d14813629e82e9033161e8bdc3dca87",
+  "request_id": "cached-lit-raster-and-storage-20260923",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:frontend-presentation"
+}

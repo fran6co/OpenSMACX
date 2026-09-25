@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 
-// Console constructor-installed Win branch: capture4, resize13, update63.
+// Console constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
 // RECOVERY_GENERATED: v1 vtable 0x0066EC18 ? ??_7Console@@6BWin@@@ 0x0050F460
 #include "original_seam.h"
@@ -1280,6 +1280,64 @@ void Console::editor_clear_vehicles() {
 int CursorHotspotX[12] = {0};  // 0x0093AA10, defined here
 // RECOVERY_OBJECT: v2 0x0093AA40 0x0093AA70 ?CursorHotspotY@@3PAHA 0x00454FC0
 int CursorHotspotY[12] = {0};  // 0x0093AA40, defined here
+
+namespace {
+int selecting_signed(uint32_t value) {
+    return value <= 0x7fffffffU ? static_cast<int>(value)
+                              : -1 - static_cast<int>(0xffffffffU - value);
+}
+}
+
+// ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5
+// RECOVERY_BINDING: v1 {"evidence": ["Original5105C0..5107D5, with src/unrecovered/005105c0.cpp retained as a seed.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
+int Console::selecting(int tile_x, int tile_y) {
+    const uint32_t initial_mode = field_23D10_;
+    if (initial_mode == 1) {
+        return 1;
+    }
+    if (initial_mode == 0) {
+        return 0;
+    }
+
+    bool forbidden = false;
+    if (selecting_signed(field_23D14_) >= 0) {
+        const int vehicle = selected_vehicle_;
+        const int vehicle_x = Vehs[vehicle].x;
+        const int vehicle_y = Vehs[vehicle].y;
+        int dx = abs(tile_x - vehicle_x);
+        if ((MapIsFlat & 1) == 0 && dx > selecting_signed(MapLongitude)) {
+            dx = MapLongitudeBounds - dx;
+        }
+        const int distance_sum = dx + abs(tile_y - vehicle_y);
+        // Map coordinates have representable differences and sums. The
+        // original SAR floors negative odd sums rather than truncating.
+        const int distance = distance_sum >= 0 ? distance_sum / 2
+                           : -1 - ((-1 - distance_sum) / 2);
+        forbidden = distance > selecting_signed(field_23D14_);
+    }
+    if (!forbidden && field_23D10_ == 8) {
+        forbidden = valid_patrol(selected_vehicle_, tile_x, tile_y) == 0;
+    }
+
+    // Both refusals select sprite5. Capture an ordinary mode after the
+    // patrol call; preserve that choice through the window callbacks.
+    const int shape = forbidden ? 5 : selecting_signed(field_23D10_);
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != 0 && (slot == 0 || window->field_1DD74_ != 0)) {
+            Sprite *const sprite = &g_CURSOR_SPRITES[shape];
+            if (window->cursor_sprite_ != sprite) {
+                window->GraphicWin::set_cursor(sprite,
+                    CursorHotspotX[shape], CursorHotspotY[shape]);
+                // Write back to the called receiver, even if its callback
+                // replaced the table slot. Subsequent slots are read live.
+                window->cursor_sprite_ = sprite;
+            }
+        }
+    }
+    do_non_input();
+    return 1;
+}
 
 // ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
@@ -3180,6 +3238,23 @@ Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
 // symbol    ?on_resize@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
 // size      14 bytes
 // prototype void (__thiscall ?on_resize@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+
+// Compiler-generated Win slot17 receiver adjustment for MapWin mouse feedback.
+// The original catalogue name remains on the mapping below.
+/*
+Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
+         MapWin::on_mouse_move expects, then forward unchanged.
+// ORIGINAL: 0x0051DE70 ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z 0x0051DE70-0x0051DE7E FILE BYTE_EXACT
+// symbol    ?on_mouse_feedback@MapWin@@$4PPPPPPPM@CDCI@AEXHH@Z
+// size      14 bytes
+// prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
 // callers   0   call targets   0
 // kind      game
 // flags     sp_ready;purged_ok

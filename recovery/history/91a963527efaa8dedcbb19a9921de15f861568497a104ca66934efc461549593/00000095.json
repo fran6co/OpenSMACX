@@ -1,0 +1,29 @@
+{
+  "event_id": "95af64316abb1b6a8f59264599e357bbf9c16b18407e892c06d5a5e91aee1b22",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_generation.py",
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "User explicitly approved: \"Approve a bounds check that skips unsupported landmark indices\" in response to the original out-of-table renderer behavior question. This authorizes a deliberate behavioral difference for unsupported Mount, Mesa and Crater indices only; it is not permission for base_energy initialization, faction-cache repair or unrelated game changes.",
+      "Implement a per-table upper bound before its first texture/rotation read, retaining the original negative-code, fog and landmark gates. Skip only the unsupported landmark overlay, not the rest of terrain rendering. Do not clamp to a different row, reuse adjacent owner bytes or grow a table across other owners. Preserve all49 supported entries including Mount sentinels and Crater rotation-1.",
+      "Add actual-source boundary controls across all positive signed-byte codes49..127, negative codes and all landmark flag combinations, and prove subsequent terrain work still runs. Document this intentional original mismatch in source and future integration commit; do not bank the affected function as byte exact or use the approval to demote historical claims. Native and full build checks still required; approval is not acceptance.",
+      "The discovery landmark-overlap-out-of-object-20260923 stays historically preserved. The chosen resolution is bounded omission, not proof that the original array allocation or arbitrary loaded codes were safe. Other terrain ownership/lifetime findings remain pending."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1b7a74174b64d794bf41b6aba6a00cad8b39c230d2b7f8c947d3b95677cf6a74",
+  "request_id": "user-approved-landmark-bounds-20260923",
+  "schema_version": 1,
+  "sequence": 95,
+  "stream": "task:control-sprite-defaults"
+}

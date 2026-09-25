@@ -871,27 +871,7 @@ void __fastcall adjust_map_win1_on_sys_close(void *self, void *) {
     reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_sys_close();
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
-         MapWin::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x004218B0 ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z 0x004218B0-0x004218B8
-// symbol    ?adjust_map_win1_on_mouse_move@@YIXPAX0HH@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk1_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win1_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_mouse_move(arg0, arg1);
-}
+
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
@@ -1159,27 +1139,7 @@ void __fastcall adjust_map_win5_on_sys_close(void *self, void *) {
     reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_sys_close();
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
-         MapWin::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x0048BFA0 ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z 0x0048BFA0-0x0048BFAE
-// symbol    ?adjust_map_win5_on_mouse_move@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk5_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win5_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 1508)->MapWin::on_mouse_move(arg0, arg1);
-}
+
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk5 subobject to the one
@@ -1469,27 +1429,7 @@ void __fastcall adjust_console1_on_sys_close(void *self, void *) {
     reinterpret_cast<Console *>(object - vtordisp)->Console::on_sys_close();
 }
 
-/*
-Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
-         MapWin::on_mouse_move expects, then forward unchanged.
-// ORIGINAL: 0x0051DE70 ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z 0x0051DE70-0x0051DE7E
-// symbol    ?adjust_map_win4_on_mouse_move@@YIXPAX0HH@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_mouse_move@thunk4_MapWin@@QAEXHH@Z)(MapWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_map_win4_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_mouse_move(arg0, arg1);
-}
+
 
 /*
 Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one

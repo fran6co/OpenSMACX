@@ -19,7 +19,7 @@ struct Win {
     void bring_child_to_top(Win *window) { assert(window->win_parent_ == this); ++child_lifts; }
     void resize_event(int, int) {}
     void draw_contents() {}
-    void vslot_51(int) {}
+    void on_dialog_focus(int) {}
     int vslot_23() { return 1; }
     void vslot_07() {}
     void client_to_screen(int *, int *) {}

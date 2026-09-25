@@ -1,0 +1,29 @@
+{
+  "event_id": "d1859448f8f52f80ea3e9d4ba11764cf392ff472b91ae4b7edb92a490e193793",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_window_link_dispatch.py",
+      "recovery/tests/win_root_order_harness.cpp",
+      "src/buffer.cpp"
+    ],
+    "evidence": [
+      "Original Buffer5DCCCA stores owned_[count-1] atBuffer+4B8+count*4 after count increment; current producer incorrectly stores owned_[count]. Original Win5F6523 correctly reads owned_[Spot index] atGraphicWin+900+index*4. Restore producer, do not invent index normalization at consumer. This corrects decompilation, not game behavior.",
+      "StringBox432720 returns parent slot88 result despite void+asm seed. Getter return is predicate only and win_parent_ is freshly reloaded for dispatch. NewTechWin4838E0 uses existing IsMultiplayerNet, atoi, stores pending link686960 then virtual release_modal58. Initial pending DWORD=-1; direct consumers48479F/4847CE belong to seed-only NewTechWin::exec483F90..48480F. Preserve that explicit consumer recovery obligation; no working popup/modal flow or whole-program closure claim.",
+      "Pending menu-init shim in Win::init is separately broken (declares three slots for originalMenu90); slot88 recovery does not establish that menu contract. Record it for subsequent original-backed recovery, not silently count it fixed. Root owns all edits except previously delegated test_editgroup_focus.py."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6146784,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ee41ee9fa5b6e8aa27bf9863bd9de5c5334f783b7b2aa2bc320118c09769d2f8",
+  "request_id": "window-link-producer-restoration-20260923",
+  "schema_version": 1,
+  "sequence": 106,
+  "stream": "task:control-sprite-defaults"
+}

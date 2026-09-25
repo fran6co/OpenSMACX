@@ -1,0 +1,32 @@
+{
+  "event_id": "549201dee40cacda8c6aba628d4d4561bc55b6a2dc038e3e031ab2ea5719a390",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/texture.cpp"
+    ],
+    "evidence": [
+      "Fresh typed625080 compilation exposes prior622200 stack overwrite: local_84/local_48 are individual int variables, yet helper initializes60-byte EdgeScan records and old caller reads14 words beyond each scalar. Original6223E0/6223F0 and622408/62240D form actual frame blocks atEBP-80 andEBP-44, exactly3C apart;6224FB/622564 reuse those same starts at refresh.",
+      "Authorize replacing just these scalar pseudo-records and their28 offset-reference aliases with two real EdgeScan locals and named fields, alongside already-authorized typed calls. Keep622200 incomplete pixel algorithm and historical seed/TRIED evidence, do not claim it fully recovered. No raw cast back to a scalar as a compilation workaround.",
+      "Native probe refused before emitting an object, source preserved, prefix lease exited normally. Full original span622200..62280C decoded with exact coverage before this structural repair. Existing protected claims remain obligations; no demotions or base resets."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6431232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ed4a79f249bb2284e5e4fc27431524ae3aa018466f70367e7a29110de0e3e037",
+  "request_id": "cached-edge-real-locals-20260923",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:frontend-presentation"
+}

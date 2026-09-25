@@ -252,6 +252,7 @@ class Console : public MapWin {
   // will not add a second declaration for a name it already finds, so the
   // overload is spelled here.
   void cursor_on(int cursor_shape, int veh_id);
+  int selecting(int tile_x, int tile_y);
   // 0x004E0A50 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
   // scenario editor is working on. Declared here because its own body is
   // still blocked on a private-member access its transcription makes.
@@ -437,10 +438,12 @@ class Console : public MapWin {
   uint32_t field_23BEC_;  // 0x23BEC
   uint32_t field_23BF0_;  // 0x23BF0
   uint32_t field_23BF4_;  // 0x23BF4
+ public:
   // 0x9392A8 in ConsoleGlobal. Cursor/radius drawing tests this flag;
   // editor_generate clears it. Its broader meaning is still provisional.
   // RECOVERY_MEMBER: v1 Console field_23BF8_ 0x23BF8 0x004E0FD0
   uint32_t field_23BF8_;  // 0x23BF8
+ private:
   uint32_t field_23BFC_;  // 0x23BFC
  public:
   // survey cycles 0..3; a nonzero mode also suppresses free draw_cursor.
@@ -465,8 +468,12 @@ class Console : public MapWin {
   int32_t cursor_history_x_[32];  // 0x23C10
   // RECOVERY_MEMBER: v1 Console cursor_history_y_ 0x23C90 0x005109B0
   int32_t cursor_history_y_[32];  // 0x23C90
- private:
+ public:
+  // Cursor/interaction mode stored by cursor_on; MapWin feedback and this
+  // window's selecting predicate use the same state, not a global alias.
+  // RECOVERY_MEMBER: v1 Console field_23D10_ 0x23D10 0x0046F000
   uint32_t field_23D10_;  // 0x23D10
+ private:
   uint32_t field_23D14_;  // 0x23D14
   uint32_t field_23D18_;  // 0x23D18
   uint32_t field_23D1C_;  // 0x23D1C
@@ -581,12 +588,8 @@ inline MapWin *&console_map_win() {
 // pumps the message loop through check_net.
 typedef void(__cdecl func_console_flush_input)(void);
 
-// 0x0046A550 is NOT bound here. It is MapWin::draw_map's own address and
-// src/mapwin.h owns the seam for it (MapWinOriginalDrawMap). Seams dedupe on
-// the ADDRESS, never the name: two variables for one address is not a link
-// error, so a fixture rebinding one would leave the other still pointing at
-// the original image - which is why tools/test_generator_support.py refuses
-// a second binding, and it caught this one.
+// Map repainting uses MapWin::draw_map directly; there is no second
+// Console-owned pointer binding for the same original function.
 // 0x005FD120, defined in src/console.cpp.
 void __cdecl flush_input();
 // THE OBJECT, at 0x009156B0 in the image - REAL STORAGE, defined in

@@ -1,0 +1,27 @@
+{
+  "event_id": "4b504caf0db2e2a31b22853ccb9a952b15083bde714672ee5b4f3e66cf642bf4",
+  "payload": {
+    "affects": [
+      "entity-07f4eedfa4875f318534ba654e3984adce92fcf5282a905ae5bc93dc0221fbcc",
+      "entity-4617c79e106191bb106f3b37ddad59c1e4ce8c934114878b764a2e00141ea31e",
+      "entity-78de17f4c0b21236908669042286be5ef73ed50d1082825d7154574a2840bc5e",
+      "entity-bc004cbaa591cfa00117ddc61302b2ac4b0fb5c319c4908e069033e8fe781e9a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "vehicle-flag-asset-closure-20260923",
+    "evidence": [
+      "Recover the missing vehicle asset-loading closure after load_terrain: full load_vehicles454270..4547DB and cleanup65515A..655182, the empty product load_flags453F70..454261 and cleanup65513A..65515A, and genuine Sprite::change_color5EAD9F..5EAE4E and source.copy(destination)5EAE4F..5EAF34. Existing seeds remain hints and are retained; no original-address forwarding or byte claims are authorized.",
+      "Independent original decoding rejects seed omissions: load_vehicles constructs Sprite[2] then a separate Sprite; explosion receivers are actual contiguous Sprite elements, UNITS marker vertical scans use x not y, and final chassis flag-y publication targets slot1. Full load_flags constructs14 local sprites and uses real faction text/shadow colors, reading them after the preceding service call; alien replacement depends on live faction flags, not ExpansionEnabled.",
+      "Recover through existing Sprite assets, the shared PCX buffer and nineteen-record RulesChassis owner. Validate new bounded object/literal interpretations against independent CRT and call/data evidence. Existing ChatItemIdTable[24] at68FA30 appears to combine two eight-color owners and unrelated following data; investigate exact reader domains before narrowing or splitting. No adjacent-storage array invention or silent bounds fallback.",
+      "Sprite recolor original skips all non-null totals0..3, unlike the seed. Sprite copy has close-like destination cleanup, allocates stride*height, copies metadata after memcpy, and does not add allocation size to SpriteMemoryUsed. Preserve these original behaviors, borrowed storage and failure order; no new null/self guards or accounting fixes.",
+      "Coordinator owns product, bindings, task decisions, native preparation/compiler leases and Git. Test agents may edit only separately delegated new files. Require full-body independent review, actual-source host/damage tests, fresh affected-claim/layout/data/reference observations and full build/link before manual integration and recheck the destination. Preserve all prior terrain WIP, task baselines and claims; base_energy, faction-cache and landmark-overlap behavior decisions remain deferred/pending. This work does not establish automatic or game acceptance."
+    ],
+    "hypothesis": "Terrain asset startup still lacks its vehicle/flag loader closure; old seeds misidentify Sprite receivers, omit real lifetime and confuse marker array indices. Recover full owners and services together.",
+    "kind": "discovery"
+  },
+  "previous_event": "34adae0fafa4169d88d0cdb6ec0e148579429fa7034ec3c114434d2d82502d0c",
+  "request_id": "vehicle-flag-asset-closure-20260923",
+  "schema_version": 1,
+  "sequence": 115,
+  "stream": "task:vector-value-semantics"
+}

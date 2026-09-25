@@ -1,0 +1,29 @@
+{
+  "event_id": "34adae0fafa4169d88d0cdb6ec0e148579429fa7034ec3c114434d2d82502d0c",
+  "payload": {
+    "affects": [
+      "entity-16814ec5c671eb4041c4a5397a30bb982dc2b5af1250e429f58b933ae85895ae",
+      "entity-3f36ad512532cf30100c7c4825a4feb1d986bfc18865adba988cfad6f8f899c4",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-a0078c642527435d3dfa3ec4a68757afb95be9908f1efa0ee85bc09a4de6b966",
+      "entity-bdf28d8f54c48df41b7d32a600af69622e306c6dece039b1a5b4ed17bc641ff6",
+      "entity-c70b1b6715e65cb856a0f52acdb2bae48c9f6409a6b7794db70f35dbf477c4ea",
+      "entity-ca7f53ee172a3cefe8026e23b4b6e9d22d1b76600be0ed2311d5cf3677b2a90a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "landmark-overlap-out-of-object-20260923",
+    "evidence": [
+      "Mount requires at least49-row read behavior, not9: explicit Mesa center100,100 overlaps an existing Mount tile94,100 at final radiusindex48(-6,0). Original explicit-coordinate guard5C7F50..67 bypasses near_landmark; bit2_set preserves Mountbit2 and code_set overwrites only the shared sequence. delete_landmark5927D0 does not clear Mountflag. Truncating to9 would introduce an additional out-of-range access.",
+      "49 is not a global producer maximum: explicit Monsoon center100,100 overlaps Mounttile100,92 at radiusindex49(0,-8). Original5C5F23 jumps5C6124, absY<=8 admits it at5C615C, and index>=21 skips altitude at5C6175..78.5C61B1..B5 ORsflag4;5C61BD storescode49 while retaining Mountflag2. Renderer46479D then reads685AFA, the zeroalignmentpair after Mount49, selectingtexture0 on its noncenter shadedpath. Index119 can read another neighboring owner.",
+      "Keep source tables as explicitly bounded read interpretations and source comment naming unresolved higher-code overlaps. Do not extend an invented array across distinct owners, copy image layout as a substitute for genuine C++, add a silent clamp, or claim full-domain correctness. Preserve source work pending decision. Native data/layout and bounded host checks cannot close this finding.",
+      "Coordinator asked user asynchronously whether to defer the behavior change or authorize a documented skip for unsupportedindices. No response/bugfix authority yet. The independently evidenced world_mesa flag correction8→0x100 restores originalbehavior and remains authorized; base_energy and faction overread changes stay deferred."
+    ],
+    "hypothesis": "Explicit overlapping landmark placement can publish a sequence outside a renderer table footprint; the original reads neighboring image data. A bounded typed table cannot be claimed equivalent for that domain without an explicit behavior/ownership decision.",
+    "kind": "discovery"
+  },
+  "previous_event": "d609633c552ac747910b56bcba7a56ff4a4359f4f796976cd183ad9a8724fe62",
+  "request_id": "landmark-overlap-out-of-object-20260923",
+  "schema_version": 1,
+  "sequence": 114,
+  "stream": "task:vector-value-semantics"
+}

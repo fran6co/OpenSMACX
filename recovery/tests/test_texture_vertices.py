@@ -248,6 +248,7 @@ def raster_harness(methods):
             return 0;
         }
         unsigned int TextureRasterKey;
+        int TextureRowPitchScratch;
         struct RECT { int32_t left, top, right, bottom; };
         static unsigned char output[16 * 14], expected[16 * 14], pixels[8 * 8];
         RECT lock_clip;
@@ -894,6 +895,73 @@ def keyed_harness(methods, wide=False, main_body=KEYED_MAIN):
 def test_actual_explicit_uv_color_key_raster(tmp_path):
     result = run_host(tmp_path, keyed_harness(keyed_bodies()))
     assert result.returncode == 0, result.stderr
+
+
+@pytest.mark.parametrize("mutation", [None, "missing", "before_lock", "wrong_width"])
+@pytest.mark.parametrize("which", ["explicit", "embedded", "keyed", "alternating"])
+def test_shared_pitch_publication_and_callback_epoch(tmp_path, mutation, which):
+    """Four original entry publications, including no-pixel paths.
+
+    A lock callback changes the receiver width. Release observes the published
+    value and replaces it itself; publishing before lock, late after release,
+    or deriving pitch from stride must not pass. Service callbacks are doubles.
+    """
+    source = (ROOT / "src/texture.cpp").read_text()
+    signatures = {
+        "explicit": "void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv)",
+        "embedded": "void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)",
+        "keyed": "void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv)",
+        "alternating": "void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv, int color)",
+    }
+    bodies = raster_bodies()
+    del bodies["draw_trans"]
+    publication = "TextureRowPitchScratch = static_cast<int>(iWidth_);"
+    for name, signature in signatures.items():
+        body = braced(source, signature + " {")
+        assert body.count(publication) == 1
+        if name == which and mutation:
+            if mutation == "missing":
+                body = body.replace(publication, "")
+            elif mutation == "wrong_width":
+                body = body.replace(publication, "TextureRowPitchScratch = static_cast<int>(buffer->stride_);")
+            else:
+                body = body.replace(publication, "")
+                brace = body.index("{") + 1
+                body = body[:brace] + "\n" + publication + body[brace:]
+        bodies[name] = body
+    fixture = raster_harness(bodies).split("        void start() {", 1)[0]
+    fixture = fixture.replace("void draw_trans(Buffer *, Vert *, int);", """
+            void draw_trans(Buffer *, Vert *, int);
+            void draw_trans(Buffer *, Vert *, int, Vert *);
+            void draw_color_key(Buffer *, Vert *, int, Vert *);
+            void draw_color_key(Buffer *, Vert *, int, Vert *, int);
+    """)
+    fixture = fixture.replace("struct Buffer {", "void publish_width();\n        struct Buffer {")
+    fixture = fixture.replace("require(events.empty()); events.push_back(1);",
+                              "require(events.empty()); require(TextureRowPitchScratch == -19); publish_width(); events.push_back(1);")
+    fixture = fixture.replace("events.push_back(5);",
+                              "require(TextureRowPitchScratch == 37); TextureRowPitchScratch = -99; events.push_back(5);")
+    calls = {
+        "explicit": "texture.draw_trans(&buffer, vertices, 4, uv);",
+        "embedded": "texture.draw_trans(&buffer, vertices, 0);",
+        "keyed": "texture.draw_color_key(&buffer, vertices, 4, uv);",
+        "alternating": "texture.draw_color_key(&buffer, vertices, 4, uv, 7);",
+    }
+    fixture += """
+        void publish_width() { texture.iWidth_ = 37; }
+        int main() {
+            texture.iWidth_ = 11; texture.iHeight_ = 8; texture.borrowed_ = 1;
+            texture.pixels_ = pixels; TextureRowPitchScratch = -19;
+            buffer.stride_ = 6; lock_stride = 16; lock_clip = {0,0,12,12};
+            Vert vertices[4] = {{1,1},{2,1},{3,1},{4,1}};
+            Vert uv[4] = {};
+            CALL
+            require(TextureRowPitchScratch == -99);
+            require(events == std::vector<int>({1,2,3,5,2,3}));
+        }
+    """.replace("CALL", calls[which])
+    result = run_host(tmp_path, fixture)
+    assert result.returncode == (42 if mutation else 0), result.stderr
 
 
 def test_actual_explicit_uv_color_key_wide_boundaries(tmp_path):

@@ -222,3 +222,91 @@ def test_changed_authority_before_publication_refuses(tmp_path, hook, monkeypatc
     with pytest.raises(ValueError, match='inputs changed'):
         hook.terrain_coast_initializer(root, original, output)
     assert not output.exists()
+
+
+LANDMARKS = [
+    ('terrain_mount_planet.inc', '_MountPlanetTable'),
+    ('terrain_sunny_mesa.inc', '_SunnyMesaTable'),
+    ('terrain_garland_crater.inc', '_GarlandCraterTable'),
+]
+PAIR_PAYLOAD = bytes((index * 71 + 128) % 256 for index in range(98))
+
+
+def landmark_project(tmp_path, filename, expected_symbol, **options):
+    defaults = dict(raw=data_image(PAIR_PAYLOAD + b'neighbor'), size=98,
+                    symbol=expected_symbol, unit='mapwin.cpp')
+    defaults.update(options)
+    root, original, output = project(tmp_path, **defaults)
+    owner = root / 'src' / defaults['unit']
+    text = owner.read_text().split('\n', 1)[0]
+    owner.write_text(text + '\nstruct LandmarkTextureChoice { signed char texture, rotation; };\n'
+                     + 'static const LandmarkTextureChoice ' + defaults['symbol'].lstrip('_')
+                     + '[49] = {};\n')
+    return root, original, output.with_name(filename)
+
+
+@pytest.mark.parametrize('filename,symbol', LANDMARKS)
+def test_signed_landmark_pairs_are_source_bound_and_cached(tmp_path, hook, filename, symbol):
+    root, original, output = landmark_project(tmp_path, filename, symbol)
+    hook.terrain_landmark_initializer(root, original, output)
+    rows = re.findall(r'\{(-?\d+), (-?\d+)\},', output.read_text())
+    assert len(rows) == 49
+    actual = [int(value) for pair in rows for value in pair]
+    assert actual == [value if value < 128 else value - 256 for value in PAIR_PAYLOAD]
+    assert all(-128 <= value <= 127 for value in actual)
+    assert bytes(value & 255 for value in actual) == PAIR_PAYLOAD
+    before = output.stat()
+    hook.terrain_landmark_initializer(root, original, output)
+    assert output.stat().st_mtime_ns == before.st_mtime_ns
+    output.write_text('stale table\n')
+    hook.terrain_landmark_initializer(root, original, output)
+    assert len(re.findall(r'\{', output.read_text())) == 49
+
+
+@pytest.mark.parametrize('options', [
+    {'size': 18}, {'size': 97}, {'size': 99}, {'size': 100},
+    {'bounded': False}, {'unit': 'game.cpp'}, {'symbol': '_AnotherTable'},
+])
+def test_landmark_owner_extent_cannot_be_substituted(tmp_path, hook, options):
+    filename, symbol = LANDMARKS[0]
+    root, original, output = landmark_project(tmp_path, filename, symbol, **options)
+    output.parent.mkdir(parents=True)
+    output.write_text('previous cache\n')
+    with pytest.raises(ValueError):
+        hook.terrain_landmark_initializer(root, original, output)
+    assert output.read_text() == 'previous cache\n'
+
+
+@pytest.mark.parametrize('damage', ['pin', 'relocation', 'outside', 'unknown_name'])
+def test_landmark_input_and_destination_refusals(tmp_path, hook, damage):
+    filename, symbol = LANDMARKS[1]
+    options = {'raw': data_image(PAIR_PAYLOAD, absolute=31)} if damage == 'relocation' else {}
+    root, original, output = landmark_project(tmp_path, filename, symbol, **options)
+    if damage == 'pin':
+        (root / 'src/IMAGE_PIN').write_text('sha256 ' + '0' * 64 + '\n')
+    elif damage == 'outside':
+        output = tmp_path / filename
+    elif damage == 'unknown_name':
+        output = output.with_name('not_a_landmark.inc')
+    with pytest.raises(ValueError):
+        hook.terrain_landmark_initializer(root, original, output)
+    assert not output.exists()
+
+
+def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook):
+    payload = PAYLOAD + PAIR_PAYLOAD * 3
+    root, original, output = project(tmp_path, data_image(payload))
+    rows = ['struct LandmarkTextureChoice { signed char texture, rotation; };']
+    for index, (_, symbol) in enumerate(LANDMARKS):
+        start = 0x401000 + 53 + index * 98
+        rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} 0x{start + 98:08X} {symbol} 0x00401000')
+        rows.append('static const LandmarkTextureChoice ' + symbol.lstrip('_') + '[49] = {};')
+    source = root / 'src/mapwin.cpp'
+    source.write_text('\n'.join(rows) + '\n')
+    hook.terrain_initializers(root, original, output.parent)
+    assert {path.name for path in output.parent.iterdir()} == {
+        'terrain_coast_remap.inc', *(filename for filename, _ in LANDMARKS)}
+    source.write_text(source.read_text().replace('_GarlandCraterTable', '_OtherTable'))
+    # CMake must refuse even with all four earlier cache files still present.
+    with pytest.raises(ValueError):
+        hook.terrain_initializers(root, original, output.parent)

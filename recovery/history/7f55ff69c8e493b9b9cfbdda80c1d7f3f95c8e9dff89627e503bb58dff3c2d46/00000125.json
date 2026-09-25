@@ -1,0 +1,83 @@
+{
+  "event_id": "ebae9575fff3304a6559389a55bdea84e3bbacb21b9beeda4a11f573d1394d91",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/control_lifetime_harness.cpp",
+      "recovery/tests/test_button_close_dispatch.py",
+      "recovery/tests/test_caption_icons.py",
+      "recovery/tests/test_control_lifetimes.py",
+      "src/basebutton.cpp",
+      "src/basebutton.h",
+      "src/basepop.cpp",
+      "src/designwin.cpp",
+      "src/flatbutton.cpp",
+      "src/flatbutton.h",
+      "src/gamma.cpp",
+      "src/imagebutton.cpp",
+      "src/imagebutton.h",
+      "src/pushbutton.h",
+      "src/scroll.cpp"
+    ],
+    "evidence": [
+      "Constructor-backed original primary tables BaseButton670290, FlatButton669754, ImageButton670A94 and PushButton670C60 select close6070C0/607DA0/625330/62C030 at slot90. GraphicWin66FC50 ends at89. Authorize virtual void close on BaseButton, genuine derived overrides, and complete PushButton close in gamma.cpp using its existing eighteen fields and shared default owner. Keep GraphicWin nonvirtual and PushButton destructor empty, as original62C010 delegates directly to BaseButton destruction.",
+      "Replace only proved button slot90 callers BaseButton::init607210, DesignWin::close43C1A0, BasePop::close600F00 and Scroll::close605370 with real C++ dispatch. Preserve explicitly qualified parent calls and FlatButton-stage destroy adapter. Do not sweep other hierarchies slot90. Remove unused base_button redirect adapters only after full-repository consumer census.",
+      "FlatButton close has no result: original EAX is loop residue. Replace whole-object DWORD walking with existing named fields and arrays, retaining timer/base/order and live default reads. Original ReportIf4A431B..432F stores borrowed Sprite pointers into AD4 three-element run; preserve pointer layout. Shared FlatButton defaults still depend on unrecovered load_interface455610; do not create split zero-only storage to hide that dependency.",
+      "BaseButton init reads9B8E34/38/3C but set_def_font already writes real BaseButtonDefaultFonts. Use that existing owner, establish its independent12-byte storage binding from all three access sites and setters, and retain the original ImageButton init quirk: sprite assignment precedes virtual close, which clears it. No behavior-fix reordering is authorized.",
+      "Root owns product/journal/native compiler and Git; scoped tests may be delegated. Freeze every checkout input during measurements. Require native observed-symbol publication, slot90/qualified-target evidence, affected historical restoration, actual-body host controls and fresh full build/link before manual integration, followed by destination checks. Preserve all retained terrain/DiploPop WIP, historical claims and baselines. This does not resolve the larger interface discovery or prove autonomous/game acceptance. Landmark-only bounds authority is unchanged; base_energy/faction fixes remain deferred."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6320320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6323616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6443824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6471728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6320656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4440480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6295296,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6312816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6321328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "64bba1d627ff19b5e06d09496b80e7677b59fb276e559eb47200421de1a2d233",
+  "request_id": "button-family-virtual-close-20260923",
+  "schema_version": 1,
+  "sequence": 125,
+  "stream": "task:vector-value-semantics"
+}

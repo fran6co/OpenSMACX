@@ -51,7 +51,7 @@ class AlphaMenu : public Menu {
   // The image's slot 17 is the 2-argument on_mouse_move overload
   // (on_mouse_move@AlphaMenu, 0x00403550, unrecovered) - the same
   // slot-true stub.
-  void vslot_17(int x, int y);
+  void on_mouse_feedback(int x, int y);
   int requested_height();
   // 0x00460DD0 - the catalogue pins the name ?check@MainMenu@@QAEXH@Z on it,
   // but the object it runs on is THIS one (??0Console builds a Menu-shaped
@@ -71,4 +71,3 @@ class AlphaMenu : public Menu {
   // builds these three as part of building this object.
   Sprite sprites_[3];  // 0x1118
 };
-

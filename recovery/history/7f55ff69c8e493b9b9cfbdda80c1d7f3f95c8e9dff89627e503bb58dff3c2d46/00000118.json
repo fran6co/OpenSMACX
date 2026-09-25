@@ -1,0 +1,27 @@
+{
+  "event_id": "83f055e70c4490c3b60fd39ca05bcfaad41a7c19e17bba887611f629bd2086e7",
+  "payload": {
+    "affects": [
+      "entity-1112944abbd4e4d027f161cbb04ff73d999d631160ce23af133d61330782a2cd",
+      "entity-3cff0d33efae06d43b40455c0f961f0b865e41e15809beb0ff5f0b3b1ab77475",
+      "entity-45c648be1a8f20ae7cea7b474e5e6efde426d66ff5c4b0627a49c7d22794e239",
+      "entity-5accbb8d7dd08c1365c54f80b6ac1cd50ebab468a2d3ea7ed763c79ae9bcbe5c",
+      "entity-ddb8c3d1430cd39992fc797bae3d2fc190b4ef414b79a2376526772089a22746"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-focus-base-refresh-prerequisites-20260923",
+    "evidence": [
+      "Console::new_base4CF7C0 publishes both focus coordinates used only by gen_terrain_poly in the decoded direct-reference census; recovering the producer requires full dependencies, not disconnected default globals. Full draft and original evidence expose missing diplomacy, popup and action services, plus a signed name_base header mismatch. Initial focus values are-99; distinct diplomacy mode93FAC8 starts0 and is assigned8 by new_base. These larger discoveries remain pending.",
+      "Recover the complete BaseWin repaint prerequisite pair41A7A0..41A7DF and41A7E0..41A8A7 through genuine Win visibility, focusedBaseID_, Bases coordinates, existing map distance helpers, base_compute(1), virtual redraw then explicitly direct MainInterfaceGlobal.GraphicWin::redraw. Existing base_compute4EC3B0 is already source-owned/claimed; do not duplicate it or implement the deferred base_energy behavior change.",
+      "Migrate all six src/veh.cpp calls to these real methods and remove both fixed-address member-pointer forwarders and their stale dependency explanation. Preserve sibling check_veh forwarding and all other pending work. Existing check_base seed claim is a restoration obligation; native recorder alone may bank the product body. Preserve seed history, identities, task baselines and all claims.",
+      "Coordinator owns source, task decisions, bindings, compiler preparation/leases and Git. Delegate only the new actual-source host test file; freeze the entire checkout before native measurement. Review full original branches, test visibility/read order/virtual versus direct dispatch and distance seams, verify affected protected claims/layout/references, fresh build/link, and recheck any integrated destination. No automatic/game acceptance claim."
+    ],
+    "hypothesis": "The complete focus producer requires real base-refresh and diplomacy services; stale original-address repaint seams can now be replaced because base_compute is source-owned.",
+    "kind": "discovery"
+  },
+  "previous_event": "44cc4446d9ec19d97826cfb6f07c58e4d1890441877781a5d1929bbda92d9b9d",
+  "request_id": "terrain-focus-base-refresh-prerequisites-20260923",
+  "schema_version": 1,
+  "sequence": 118,
+  "stream": "task:vector-value-semantics"
+}

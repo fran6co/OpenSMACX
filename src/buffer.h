@@ -420,7 +420,7 @@ class Buffer {
   int dotted_box(RECT *area, int color);
   void dotted_hline(int x1, int x2, int y, int color);
   void dotted_vline(int x, int y1, int y2, int color);
-  int line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8,
+  void line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8,
            int a9);
   void line(int x1, int y1, int x2, int y2, int color);
   int hline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);

@@ -1,0 +1,46 @@
+{
+  "event_id": "f647b24bcde795010fb63e72b5cd96f2ea76f06905aa0177577e04209a0e631e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_frames.py",
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Complete original load_interface455610 calls5D6F50 without a receiver after static set_def_nc_sprites. Recover static GraphicWin registry refresh using the existing WinZOrderArray/count and frame-default owner, not the seed fake Sprite receiver or manual vtable shim. Original get_graphic_win result is predicate only; reload the current registry slot and live count after callbacks. Preserve historical exact seed5D6F50 and measure its real static symbol.",
+      "Recover complete compute_min_size5D7030 in graphicwin.cpp and remove only its pending forwarder/unused seam declaration. All four dimensions come from genuine Sprite width/height, not seed Buffer casts. Flag0x10 selects caption or noncaption top corners; retain all four null guards, signed maxima and low32-bit addition semantics. This seed is unclaimed, not an exact obligation. No Win layout or shared member rename is authorized in this step.",
+      "Root owns product edits, native bindings/symbols/recording, compiler and Git. A delegated actual-source host suite may edit only recovery/tests/test_graphicwin_frames.py. Freeze all inputs during native measurements. Require fresh affected historical matches, reference/layout evidence, source controls and full build/link before manual integration, followed by destination verification. Preserve unrelated terrain/DiploPop WIP, all history/baselines and previous findings.",
+      "Full loader still requires genuine callback4554C0 and typed caption contract, Sprite pointer defaults and mutable existing WinStaticDefaults, plus real metric/color storage. This prerequisite step does not satisfy that discovery or grant edits to those other owners. No behavior changes beyond prior landmark-only authorization, claim demotion, scope/baseline reset or automatic/game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6123344,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6123568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6123200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "aa4024a630a7224b12780b01fe9e0ba28cab4e3c4c9c72f05155d4be50c76540",
+  "request_id": "graphicwin-frame-loader-prerequisites-20260923",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:frontend-presentation"
+}

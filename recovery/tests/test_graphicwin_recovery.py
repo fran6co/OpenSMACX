@@ -1,6 +1,7 @@
 """Live project regression controls; no executable-derived fixtures are stored."""
 
 from pathlib import Path
+import os
 import shutil
 
 import pytest
@@ -41,6 +42,70 @@ def compiled():
 def symbol_at(path, address):
     record, = (record for record in read_file(ROOT / path) if record.address == address)
     return record.symbol or record.name
+
+
+def test_original_event_slots_and_editgroup_ownership(compiled):
+    """Original slots/layout, not a claim about all class lifetimes or GUI flow."""
+    compiler, settings, graphic_objects = compiled
+    image_path = Path(os.environ.get('OPENSMACX_IMAGE', ROOT / '.opensmacx/game/terranx_original.exe'))
+    image = PeImage(image_path.read_bytes(), image_pin(ROOT))
+
+    def section(obj, symbol):
+        entry, = (s for s in obj.symbols.values() if s.section > 0 and s.name == symbol)
+        assert entry.value == 0
+        return obj.sections[entry.section - 1]
+
+    def slots(obj, symbol):
+        table = section(obj, symbol)
+        assert len(table.data) == 90 * 4
+        return {offset // 4: obj.symbols[index].name for offset, index, _ in table.relocations}
+
+    def original_slot(table, slot):
+        from match_recovery.model import Span
+        return int.from_bytes(image.read(Span(table + slot * 4, table + slot * 4 + 4)), 'little')
+
+    from match_recovery.model import Span
+    for trial, flags in enumerate(settings.flag_sets):
+        graphic = slots(graphic_objects[trial], '??_7GraphicWin@@6BWin@@@')
+        assert graphic[18] == '?on_mouse_leave@Win@@UAEXHH@Z'
+        assert graphic[51] == '?on_dialog_focus@Win@@UAEXH@Z'
+        assert graphic[88] == '?on_link_clicked@GraphicWin@@UAEHHPAD@Z'
+        assert graphic[89] == '?on_draw_caption@GraphicWin@@UAEXPADPAVBuffer@@@Z'
+        assert [original_slot(0x66FC50, i) for i in (18, 51, 88, 89)] == [
+            0x404260, 0x404270, 0x4042A0, 0x404260]
+        group = Coff(compiler(ROOT / 'src/editgroup.cpp', (), flags + settings.layout_flags))
+        layout = class_layout(group, 'EditGroup')
+        assert layout['size'] == 0xB98
+        assert layout['members']['boxes_'] == 4
+        assert layout['members']['text_buffers_'] == 0x2C
+        assert layout['members']['limits_'] == 0x54
+        assert layout['members']['label_width_'] == 0x7C
+        assert layout['members']['edit_width_'] == 0x80
+        assert 'kind_' not in layout['members']
+        assert layout['member_types']['boxes_'] == {
+            'kind': 'array', 'target': {'kind': 'pointer', 'width': 4,
+            'target': {'kind': 'class_value', 'class': 'EditBox'}},
+            'size': 40, 'element_size': 4, 'count': 10}
+        # vbtable contents establish virtual-base offsets; sizeof alone cannot.
+        assert section(group, '??_8EditGroup@@7B@').data == image.read(Span(0x670A3C, 0x670A48))
+        group_slots = slots(group, '??_7EditGroup@@6BWin@@@')
+        assert group_slots[51] == '?on_dialog_focus@EditGroup@@$4PPPPPPPM@A@AEXH@Z'
+        assert calls(group, group_slots[51]) == [symbol_at('src/editgroup.cpp', 0x612670)]
+        assert original_slot(0x6708D4, 51) == 0x6127C0
+        assert group_slots[88] == graphic[88] and group_slots[89] == graphic[89]
+        dialogs = Coff(compiler(ROOT / 'src/dialogs.cpp', (), flags + settings.layout_flags))
+        layout = class_layout(dialogs, 'Dialogs')
+        assert layout['size'] == 0xC94 and layout['members']['kind_'] == 0x180
+        assert [(b['class'], b['offset']) for b in layout['bases'] if not b['virtual']] == [
+            ('ListBox', 0), ('RadioButton', 0x44), ('CheckBox', 0x58), ('SpriteBox', 0x70), ('EditGroup', 0xF8)]
+        for base, start in [('ListBox', 0x670A78), ('RadioButton', 0x670A6C),
+                            ('CheckBox', 0x670A60), ('SpriteBox', 0x670A54), ('EditGroup', 0x670A48)]:
+            assert section(dialogs, f'??_8Dialogs@@7B{base}@@@').data == image.read(Span(start, start + 12))
+        dialog_slots = slots(dialogs, '??_7Dialogs@@6BWin@@@')
+        assert dialog_slots[18] == '?on_mouse_leave@Dialogs@@$4PPPPPPPM@A@AEXHH@Z'
+        assert dialog_slots[51] == '?on_dialog_focus@Dialogs@@$4PPPPPPPM@A@AEXH@Z'
+        assert [original_slot(0x669BE8, i) for i in (18, 51)] == [0x4071A0, 0x407260]
+        assert dialog_slots[88] == graphic[88] and dialog_slots[89] == graphic[89]
 
 
 def calls(obj, symbol):
@@ -109,7 +174,7 @@ def test_frame_defaults_have_real_zero_initialized_storage(compiled):
         section = obj.sections[symbol.section - 1]
         assert section.flags & 0x80  # IMAGE_SCN_CNT_UNINITIALIZED_DATA
         assert symbol.value + 11 * 4 <= obj.section_sizes[symbol.section - 1]
-    image_path = ROOT / ".opensmacx/game/terranx_original.exe"
+    image_path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if image_path.is_file():
         image = PeImage(image_path.read_bytes(), image_pin(ROOT))
         region, _, raw_size = next(item for item in image.sections
@@ -132,7 +197,7 @@ def test_input_and_process_default_records_have_distinct_verified_layouts(compil
 
 def test_default_publisher_and_refresh_match_real_data_targets_and_reject_swapped_fields(compiled):
     compiler, settings, objects = compiled
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if not path.is_file():
         pytest.skip("pinned original image is required")
     pin = image_pin(ROOT)
@@ -190,7 +255,7 @@ def test_default_publisher_and_refresh_match_real_data_targets_and_reject_swappe
 
 def test_frame_overlay_uses_real_renderers_and_screen_coordinate_imports(compiled):
     compiler, settings, objects = compiled
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if not path.is_file():
         pytest.skip("pinned original image is required")
     image = PeImage(path.read_bytes(), image_pin(ROOT))
@@ -301,7 +366,7 @@ def test_redraw_publishes_its_receiver_in_real_global_storage(compiled):
 
 
 def test_sdk_import_pointer_is_verified_despite_vc6_function_type_hint(compiled):
-    path = ROOT / ".opensmacx/game/terranx_original.exe"
+    path = Path(os.environ.get("OPENSMACX_IMAGE", ROOT / ".opensmacx/game/terranx_original.exe"))
     if not path.is_file():
         pytest.skip("pinned original image is required")
     _, _, objects = compiled

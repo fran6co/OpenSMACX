@@ -33,11 +33,15 @@
 // The rasteriser uses the shared polygon vertex declaration in vert.h.
 // The remaining types are reached only through pointers here.
 class Buffer;
+class TextureStore;
 struct TexHeap;
 
 // Shared raster key/threshold; terrain initialization supplies its value.
 // Original storage and writer evidence are bound beside its definition.
 extern unsigned int TextureRasterKey;
+extern int TextureLightFloor;
+extern int TextureLightCeiling;
+extern int TextureRowPitchScratch;
 
 /*
  * THE EDGE SCANNER, one per polygon side, and the state `setup_edge` and
@@ -70,6 +74,7 @@ struct EdgeScan {
     int accumD;       // 0x34 gouraud light, accumulator
     int deltaD;       // 0x38 gouraud light, step
 };
+static_assert(sizeof(EdgeScan) == 0x3C, "cached edge record stride");
 
 /*
  * The texture's coordinate pairs, eight bytes each. setup_edge reads the
@@ -164,8 +169,8 @@ class Texture {
   //   * the `setup_edge` group interpolates position only, flat colour;
   //   * the `setup_edge_gouraud` group adds a per-pixel interpolant
   //     (u/v, or a light value on top);
-  //   * `sub_625080` is the per-span flat-fill helper the third group hands
-  //     each scanline to.
+  //   * `sub_625080` sets up Gouraud polygon edges through TextureStore's
+  //     independent geometry/light cache channels.
   // Names marked with an address are this tree's, not the image's: those
   // bodies carry no symbol in the shipped binary, so the name says what the
   // body does and the address is the only handle the catalogue has.
@@ -187,7 +192,7 @@ class Texture {
   //   sub_61df60  nine ints, gouraud family, depth-tested
   //   sub_61f0d0  gouraud family, hands each span to sub_620100
   //   sub_620a10  affine rasteriser, setup_edge family + sub_624eb0
-  //   sub_622200  flat-fill family: four sub_625080 span calls
+  //   sub_622200  cached-edge family: four sub_625080 setup call sites
   void sub_61b780(Buffer *bufParam, int *verts, int zvals, int mode);
   void sub_61c630(Buffer *bufIn, int *verts, Texture *texB, uint8_t *shadeTable,
                   int vertCount, int unusedIn);
@@ -231,11 +236,11 @@ class Texture {
   void sub_624c70(Buffer *buf, Vert *verts, int *zvals, int count,
                   int edgeVerts, int *out_flag,
                   int sentinel);                                 // 0x00624C70
-  // Forwards to sub_621870, itself a 6-argument member (ret 0x18) and still
-  // an original body - pending_bodies.cpp carries its forwarder.
-  void sub_624cd0(Buffer *buf, Vert *verts, int *zvals, int count,
-                  int edgeVerts, int *out_flag,
-                  int sentinel);                                 // 0x00624CD0
+  // The sentinel overload forwards only for -1; the cache owns ten
+  // lazily populated edge records, not a scalar output flag.
+  void draw_cached_lit(Buffer *buf, Vert *verts, int *zvals, int count,
+                        Vert *edgeVerts, TextureStore *cache,
+                        int sentinel);                                 // 0x00624CD0
   void sub_624d00(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
                   int a8, int sentinel);                         // 0x00624D00
   void sub_624d40(Buffer *buf, Vert *verts, int *zvals, int count,
@@ -243,10 +248,10 @@ class Texture {
                   int *out_flag, int sentinel);                  // 0x00624D40
   void sub_624630(int a1, int a2, int a3, int a4, int a5, int a6, int a7,
                   int a8, int a9, int sentinel);                 // 0x00624630
-  // 0x00621870. Still the image's own bytes - see the TRIED note beside its
-  // marker in texture.cpp.
-  int sub_621870(Buffer *buf, Vert *verts, int *zvals, int count,
-                 int edgeVerts, int *out_flag);
+  // 0x00621870: cached Gouraud polygon, keyed borrowed storage and
+  // unkeyed owned storage with the original integer-light arithmetic.
+  void draw_cached_lit(Buffer *buffer, Vert *vertices, int *light, int count,
+                        Vert *uv, TextureStore *cache);
 
  private:
   void *pixels_;        // 0x00
@@ -306,9 +311,10 @@ extern Texture g_RADIUS2_TEXTURE;
  /*
   * TextureStore class
   *
-  * Only its destructor is recovered. That writes two fields and calls nothing,
-  * leaving a count of 3 at offset 0 and clearing the field at 4 - so the
-  * object reaches at least 8. Nothing pins its size.
+  * Reusable polygon-edge cache. Original 625080 uses flag bits 1/2 to
+  * recompute light/geometry channels independently, and advances a ten-slot
+  * ring of 0x3C-byte records after each admitted positive-height edge.
+  * Both lifetime bodies set flags=3 and cursor=0 without clearing records.
   */
 class TextureStore {
  public:
@@ -321,23 +327,26 @@ class TextureStore {
   TextureStore();
   ~TextureStore();
 
- private:
-  // ANCHORED FROM THE CONSTRUCTOR. 0x006252A0 opens `mov eax, ecx` and
-  // writes `[eax] = 3` then `[eax+4] = 0` - this member and iWidth_, at
-  // the two offsets the walk gives them, and field_0_'s own name agrees.
-  uint32_t field_0_;  // 0x0
-  uint32_t iWidth_;
+  // Source names express the cache protocol, not recovered debug names.
+  // 625139/6251AC/62523B read flag bits; 6250E0..6250FA advances and wraps
+  // the cursor at exactly ten. A replay requires previously initialized
+  // selected channels; unused record fields intentionally remain untouched.
+  // RECOVERY_MEMBER: v1 TextureStore flags_ 0x0 0x00625080
+  unsigned int flags_;
+  // RECOVERY_MEMBER: v1 TextureStore next_record_ 0x4 0x00625080
+  int next_record_;
   // SIZED BY THE EMBEDDED ARRAYS, 2026-08-30. MapWin and Console carry
   // TextureStore BY VALUE as TextureStore[4] at front+0xC and
   // TextureStore[0xC4] at front+0x98C - the image's own ??_M element
   // destructor is ??1TextureStore (0x006252B0) in both - and the second
   // array's end lands exactly on the lone TextureStore at front+0x1DB0C,
-  // whose end is the field the map already names field_1DD6C_. That pins
-  // the stride at 0x260 per element: 0x98C = 0xC + 4*0x260 and
-  // 0x1DB0C = 0x98C + 0xC4*0x260. Nothing recovered touches bytes 8..0x260,
-  // so the tail stays an unnamed slab - a floor from the dtor's own two
-  // fields, a size from the two arrays' arithmetic.
-  uint8_t unmapped_[0x260 - 0x8];
+  // whose end is the field the map already names field_1DD6C_. This pins
+  // stride 0x260 independently of the helper: 0x98C = 0xC + 4*0x260 and
+  // 0x1DB0C = 0x98C + 0xC4*0x260. Helper6250EA..F4 selects +8+cursor*3C,
+  // and accesses the same UV/X/light fields as an EdgeScan. Do not zero
+  // the array in construction: the original initializes channels lazily.
+  // RECOVERY_MEMBER: v4 TextureStore edges_ EdgeScan[10] 0x8 0x258 0x00625080
+  EdgeScan edges_[10];
 };
 
 static_assert(sizeof(TextureStore) == 0x260,

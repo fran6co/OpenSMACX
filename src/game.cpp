@@ -932,7 +932,9 @@ int SunspotDuration;  // 0x009A6800
 uint32_t MountPlanetX;  // 0x009A6804
 uint32_t MountPlanetY;  // 0x009A6808
 int DustCloudDuration;  // 0x009A680C
-BOOL IsMultiplayerNet;  // 0x0093F660 // DirectPlay - Serial, Modem, Internet (TCP/IP)
+// Original4838E3 reads this DWORD network-game flag; initial image storage is0.
+// RECOVERY_OBJECT: v2 0x0093F660 0x0093F664 ?IsMultiplayerNet@@3HA 0x004838E0
+BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
 BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
 uint32_t NetTurnFlags;  // 0x009A681C
 int NetTurnFaction;  // 0x009A6820

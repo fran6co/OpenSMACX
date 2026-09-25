@@ -1,0 +1,19 @@
+{
+  "event_id": "88f056eefc2a2ab4dd734d9f2e481dbd5b53962919caef71cc583d9c1b0ee3f1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_graphicwin_recovery.py"
+    ],
+    "evidence": [
+      "Permit this existing regression suite to use OPENSMACX_IMAGE, matching the timer/control suites and native recovery commands, with its current checkout-local fallback. Isolated workers must be able to exercise the original-image controls without copying proprietary images. Preserve pin verification, every assertion, missing-image skips and all source/claim obligations. No compiler or acceptance policy change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "89ab54672b57480b84f9a8831b2fd35bfe967f4d726cc0982d5242bc1eee4d09",
+  "request_id": "graphicwin-controls-shared-image-path-20260923",
+  "schema_version": 1,
+  "sequence": 60,
+  "stream": "task:radiobutton-lifetime"
+}

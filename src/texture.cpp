@@ -418,8 +418,8 @@ int Texture::extract(Buffer *buffer, RECT *rect, int) {
 }
 
 /*
-Purpose: Tear down the store, leaving a count of 3 at offset 0 and clearing
-         the field at 4. Calls nothing.
+Purpose: Reset cache update flags to 3 and its next-record cursor to zero.
+         Cached records remain untouched. Calls nothing.
 // ORIGINAL: 0x006252B0 ??1TextureStore@@QAE@XZ 0x006252B0-0x006252BE BYTE_EXACT
 // size      14 bytes
 // prototype void (__thiscall ??1TextureStore@@QAE@XZ)(TextureStore* this)
@@ -436,9 +436,8 @@ TextureStore::~TextureStore() {
     // observe them and an optimising build is entitled to drop them. The
     // original performs them, and callers read the fields afterwards, so they
     // have to survive.
-    volatile uint32_t *const fields = reinterpret_cast<volatile uint32_t *>(this);
-    fields[0] = 3;
-    fields[1] = 0;
+    *reinterpret_cast<volatile unsigned int *>(&flags_) = 3;
+    *reinterpret_cast<volatile int *>(&next_record_) = 0;
 }
 
 
@@ -446,13 +445,13 @@ TextureStore::~TextureStore() {
 
 
 /*
-Purpose: Set the store's two fields to 3 and 0.
+Purpose: Invalidate both cache channels and reset the record cursor.
 
              mov eax,ecx / mov [eax],3 / mov [eax+4],0 / ret
 
-         `mov eax,ecx` first is the legacy EAX = this residue, carried by the
-         redirect. The 3 is a constant the original writes and is reproduced as
-         one; nothing here says what it means.
+         The constructor returns this in EAX. Flag bits 1 and 2 request fresh
+         light and geometry records respectively at original 0x00625080;
+         the record payload remains uninitialized until that helper fills it.
 // ORIGINAL: 0x006252A0 ??0TextureStore@@QAE@XZ 0x006252A0-0x006252B0 BYTE_EXACT
 // LEVER: a real constructor, OUT OF LINE, is what spells `mov eax, ecx` - the
 //            image's opening is VC6's own "return this", which every real
@@ -473,8 +472,8 @@ Return Value: this
 Status: Complete
 */
 TextureStore::TextureStore() {
-    field_0_ = 3;
-    iWidth_ = 0;
+    flags_ = 3;
+    next_record_ = 0;
 }
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
@@ -591,7 +590,12 @@ static int *const blit_slot_4f8 = (int *)0x009BB4F8;
 static int *const blit_slot_4fa = (int *)0x009BB4FA;
 static int *const blit_z_values = (int *)0x009BB4FC;
 static int *const blit_row_offset = (int *)0x009BB508;
-static int *const blit_texture_width2 = (int *)0x009BB50C;
+// Shared row pitch: 15 original entry sites publish their receiver width
+// after get_data. The owned cached-light path reads this history, not its
+// own width (which the original stores separately at 9BB4A8). Original
+// initial bytes are zero; no pointer escapes were found in the pinned image.
+// RECOVERY_OBJECT: v2 0x009BB50C 0x009BB510 ?TextureRowPitchScratch@@3HA 0x00621870
+int TextureRowPitchScratch;
 static int *const blit_slot_528 = (int *)0x009BB528;
 static int *const blit_light_pack_a = (int *)0x009BB52C;
 static int *const blit_slot_530 = (int *)0x009BB530;
@@ -638,7 +642,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
     blit_z_values[0] = reinterpret_cast<int>(a3);
     blit_remap_table[0] = reinterpret_cast<int>(a5);
     blit_texture_pixels[0] = self_int[0];
-    blit_texture_width2[0] = self_int[1];
+    TextureRowPitchScratch = self_int[1];
     blit_texture_height[0] = self_int[2];
     blit_vertex_count[0] = a6;
     blit_edge_uvs_a[0] = reinterpret_cast<int>(a7);
@@ -923,6 +927,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int count, Vert *uv) {
     unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
     texture_reset_fpu();
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
     const int stride = static_cast<int>(buffer->stride_);
     const RECT clip = buffer->rect1_;
 
@@ -1033,6 +1038,7 @@ void Texture::draw_trans(Buffer *buffer, Vert *vertices, int use_eight_vertices)
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
     const int width = static_cast<int>(iWidth_);
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
     const int stride = static_cast<int>(buffer->stride_);
     const RECT clip = buffer->rect1_;
 
@@ -1148,6 +1154,7 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
     const int width = static_cast<int>(iWidth_);
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
     const int stride = static_cast<int>(buffer->stride_);
     const RECT clip = buffer->rect1_;
 
@@ -1222,8 +1229,13 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
 }
 
 // Fixed-slot bindings carried from 0061b1f0.cpp
-static int *const blit_mask_0xffffff00 = (int *)0x006972CC;
-static int *const blit_step_0x100 = (int *)0x006972D0;
+// Shared signed light clamp: gen_terrain's three writer pairs temporarily
+// select -4/+4 and restore these initial -256/+256 limits. Six original
+// Texture entries clamp their input arrays against the same storage.
+// RECOVERY_OBJECT: v2 0x006972CC 0x006972D0 ?TextureLightFloor@@3HA 0x00621870
+int TextureLightFloor = -256;
+// RECOVERY_OBJECT: v2 0x006972D0 0x006972D4 ?TextureLightCeiling@@3HA 0x00621870
+int TextureLightCeiling = 256;
 
 // ORIGINAL: 0x0061B1F0 ?draw@Texture@@QAEXPAUBuffer@@PAUVert@@PAHHPAUVert@@@Z 0x0061B1F0-0x0061B778 FILE
 // symbol    ?draw@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1@Z
@@ -1291,9 +1303,9 @@ void Texture::draw(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
         if (n > 0) {
             do {
                 int v = *p;
-                if (*blit_step_0x100 <= v) v = *blit_step_0x100;
+                if (TextureLightCeiling <= v) v = TextureLightCeiling;
                 *p = v;
-                if (v <= *blit_mask_0xffffff00) v = *blit_mask_0xffffff00;
+                if (v <= TextureLightFloor) v = TextureLightFloor;
                 *p = v;
                 ++p;
                 --n;
@@ -1448,9 +1460,9 @@ void Texture::draw_trans(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5) {
         if (n > 0) {
             do {
                 int v = *p;
-                if (*blit_step_0x100 <= v) v = *blit_step_0x100;
+                if (TextureLightCeiling <= v) v = TextureLightCeiling;
                 *p = v;
-                if (v <= *blit_mask_0xffffff00) v = *blit_mask_0xffffff00;
+                if (v <= TextureLightFloor) v = TextureLightFloor;
                 *p = v;
                 ++p;
                 --n;
@@ -1603,7 +1615,7 @@ void Texture::draw_mask_dest(Buffer * a1, Vert * a2, unsigned char * a3, unsigne
         *reinterpret_cast<Vert **>(blit_edge_uvs_b) = a2;
         *reinterpret_cast<unsigned char **>(blit_remap_table) = a3;
         *blit_texture_pixels = *reinterpret_cast<int *>(this);
-        *blit_texture_width2 = reinterpret_cast<int *>(this)[1];
+        TextureRowPitchScratch = reinterpret_cast<int *>(this)[1];
         *blit_texture_height = reinterpret_cast<int *>(this)[2];
         *blit_edge_uvs_a = reinterpret_cast<int>(a6);
         *blit_vertex_count = a5;
@@ -1722,9 +1734,9 @@ void Texture::draw(Buffer * a1, Vert * a2, int * a3, int a4, Vert * a5, int a6) 
     if (reinterpret_cast<char *>(a1) + 0x20 != 0) {
         for (int i = 0; i < a4; ++i) {
             int v = a3[i];
-            if (v >= *blit_step_0x100) v = *blit_step_0x100;
+            if (v >= TextureLightCeiling) v = TextureLightCeiling;
             a3[i] = v;
-            if (v <= *blit_mask_0xffffff00) v = *blit_mask_0xffffff00;
+            if (v <= TextureLightFloor) v = TextureLightFloor;
             a3[i] = v;
         }
 
@@ -1901,7 +1913,7 @@ void Texture::draw_coast(Buffer * a1, Vert * a2, int * a3, Texture * a4, unsigne
         *blit_z_values = reinterpret_cast<int>(a3);
         *blit_remap_table = reinterpret_cast<int>(a5);
         *blit_texture_pixels = self[0];
-        *blit_texture_width2 = self[1];
+        TextureRowPitchScratch = self[1];
         *blit_texture_height = self[2];
         *blit_vertex_count = a6;
         *blit_edge_uvs_a = reinterpret_cast<int>(a7);
@@ -2196,7 +2208,7 @@ int Texture::draw_trans2(Buffer *a1, int *a2, int a3) {
     *blit_pixel_base = a1->get_data();
     *blit_edge_uvs_b = reinterpret_cast<int>(a2);
     *blit_texture_pixels = *reinterpret_cast<int *>(thisBytes);
-    *blit_texture_width2 = *reinterpret_cast<int *>(thisBytes + 4);
+    TextureRowPitchScratch = *reinterpret_cast<int *>(thisBytes + 4);
     *blit_texture_height = *reinterpret_cast<int *>(thisBytes + 8);
 
     if (a3 == 0) {
@@ -2445,9 +2457,9 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
     if (reinterpret_cast<char *>(a1) + 0x20 != 0) {
         for (int i = 0; i < a4; ++i) {
             int v = a3[i];
-            if (v >= *blit_step_0x100) v = *blit_step_0x100;
+            if (v >= TextureLightCeiling) v = TextureLightCeiling;
             a3[i] = v;
-            if (v <= *blit_mask_0xffffff00) v = *blit_mask_0xffffff00;
+            if (v <= TextureLightFloor) v = TextureLightFloor;
             a3[i] = v;
         }
 
@@ -2589,8 +2601,82 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
     return 0;
 }
 
+// Cached counterpart of the Gouraud edge setup. Only six channels in a
+// selected record are initialized; flags independently invalidate geometry
+// (bit 2) and lighting (bit 1). Empty/descending edges do not consume records.
+static int texture_cached_edge(EdgeScan &edge, int index,
+                               const Vert *vertices, const Vert *uv,
+                               const int *light, int count, int bottom,
+                               TextureStore &cache) {
+    if (index == bottom) return 0;
+    for (;;) {
+        int next = index + edge.f0;
+        if (next >= count) next = 0;
+        else if (next < 0) next = count - 1;
+        edge.counter = texture_difference(vertices[next].y, vertices[index].y);
+        if (edge.counter != 0) {
+            if (edge.counter < 0) return 0;
+            EdgeScan &record = cache.edges_[cache.next_record_++];
+            if (cache.next_record_ == 10) cache.next_record_ = 0;
+            edge.id = next;
+            edge.accumA = static_cast<int>(
+                static_cast<unsigned int>(texture_fixed(uv[index].x)) + 0x8000u);
+            edge.accumB = static_cast<int>(
+                static_cast<unsigned int>(texture_fixed(uv[index].y)) + 0x8000u);
+            const int height = texture_fixed(edge.counter);
+            if (cache.flags_ & 2) {
+                record.deltaA = static_cast<int>(static_cast<int64_t>(
+                    texture_difference(texture_fixed(uv[next].x), edge.accumA)) * 65536 / height);
+                record.deltaB = static_cast<int>(static_cast<int64_t>(
+                    texture_difference(texture_fixed(uv[next].y), edge.accumB)) * 65536 / height);
+            }
+            edge.deltaA = record.deltaA;
+            edge.deltaB = record.deltaB;
+            edge.accumC = vertices[index].x;
+            const int dx = texture_difference(vertices[next].x, vertices[index].x);
+            if (cache.flags_ & 2) {
+                record.deltaC = dx / edge.counter;
+                const int magnitude = dx < 0 ? texture_difference(0, dx) : dx;
+                record.fracDelta = magnitude % edge.counter;
+            }
+            edge.deltaC = record.deltaC;
+            edge.extraDeltaC = dx < 0 ? -1 : 1;
+            edge.fracAccum = dx < 0 ? 1 - edge.counter : 0;
+            edge.fracDelta = record.fracDelta;
+            edge.fracSub = edge.counter;
+            if (cache.flags_ & 1) {
+                record.accumD = texture_fixed(light[index]);
+                record.deltaD = static_cast<int>(static_cast<int64_t>(
+                    texture_difference(texture_fixed(light[next]), record.accumD)) * 65536 / height);
+            }
+            edge.accumD = record.accumD;
+            edge.deltaD = record.deltaD;
+            return 1;
+        }
+        index = next;
+        if (index == bottom) return 0;
+    }
+}
+
+static int texture_advance_cached_edge(EdgeScan &edge, const Vert *vertices,
+                                       const Vert *uv, const int *light,
+                                       int count, int bottom, TextureStore &cache) {
+    if (--edge.counter == 0)
+        return texture_cached_edge(edge, edge.id, vertices, uv, light, count, bottom, cache);
+    edge.accumA = static_cast<int>(static_cast<unsigned int>(edge.accumA) + edge.deltaA);
+    edge.accumB = static_cast<int>(static_cast<unsigned int>(edge.accumB) + edge.deltaB);
+    edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.deltaC);
+    edge.accumD = static_cast<int>(static_cast<unsigned int>(edge.accumD) + edge.deltaD);
+    edge.fracAccum = static_cast<int>(static_cast<unsigned int>(edge.fracAccum) + edge.fracDelta);
+    if (edge.fracAccum > 0) {
+        edge.accumC = static_cast<int>(static_cast<unsigned int>(edge.accumC) + edge.extraDeltaC);
+        edge.fracAccum = texture_difference(edge.fracAccum, edge.fracSub);
+    }
+    return 1;
+}
+
 // ORIGINAL: 0x00625080 sub_625080 0x00625080-0x00625294 FILE
-// symbol    ?sub_625080@@YAHPAHHPAE@Z
+// symbol    ?sub_625080@@YAHPAUEdgeScan@@HPAVTextureStore@@@Z
 // TRIED: verbatim zero-param head - disasm reads [esp+0x10]/[esp+0x14]/ [esp+0x1c] as three stack args before any push (IDA's 3-int guess confirmed by field roles: int*, int, byte*), so the head was widened to those 3 params; prologue order still diverges from the original's odd 2-push-then-arg2 pattern.
 // TRIED: consolidating blit_edge_uvs_a/b + blit_z_values onto ONE `int **const`
 //            binding per address (the duplicate_globals cleanup, 8 -> 5), in
@@ -2615,119 +2701,17 @@ int Texture::draw_trans_3(Buffer *a1, Vert *a2, int *a3, int a4, Vert *a5, int a
 // flags     hidden;sp_ready;purged_ok
 // calls     0x00628AD0
 
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: sub_625080  at 0x00625080  (532 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
+// The original three-argument entry consumes shared polygon context. Its
+// remaining legacy callers still publish that context to the old scratch
+// block; the genuine cached-light body passes its context directly to the
+// same typed implementation. Those old raster bodies remain recovery work.
 
-int __cdecl sub_625080(int *param1, int param2, unsigned char *param3) {
-    if (param2 == *blit_max_y_index) return 0;
-
-    for (;;) {
-        int idx = param1[0] + param2;
-        if (*blit_vertex_count - 1 < idx) {
-            idx = 0;
-        } else if (idx < 0) {
-            idx = *blit_vertex_count - 1;
-        }
-
-        int span = *(int *)((char *)*blit_edge_uvs_b + 4 + idx * 8) -
-                   *(int *)((char *)*blit_edge_uvs_b + 4 + param2 * 8);
-        param1[1] = span;
-
-        if (span != 0) {
-            if (span < 1) {
-                return 0;
-            }
-
-            int recIdx = *(int *)(param3 + 4);
-            int recIdx1 = recIdx + 1;
-            *(int *)(param3 + 4) = recIdx1;
-            int recOff = recIdx * 0x3c;
-            if (recIdx1 == 10) {
-                param3[4] = 0;
-                param3[5] = 0;
-                param3[6] = 0;
-                param3[7] = 0;
-            }
-
-            param1[2] = idx;
-            param1[3] = *(int *)((char *)*blit_edge_uvs_a + param2 * 8) * 0x10000 + 0x8000;
-            int shiftedSpan = param1[1] << 0x10;
-            param1[4] = *(int *)((char *)*blit_edge_uvs_a + 4 + param2 * 8) * 0x10000 + 0x8000;
-
-            if ((*param3 & 2) == 0) {
-                param1[5] = *(int *)(param3 + recOff + 0x1c);
-                param1[6] = *(int *)(param3 + recOff + 0x20);
-            } else {
-                int v1 = fixed_div(*(int *)((char *)*blit_edge_uvs_a + idx * 8) * 0x10000 - param1[3], shiftedSpan);
-                *(int *)(param3 + recOff + 0x1c) = v1;
-                param1[5] = v1;
-                int v2 = fixed_div(*(int *)((char *)*blit_edge_uvs_a + 4 + idx * 8) * 0x10000 - param1[4], shiftedSpan);
-                *(int *)(param3 + recOff + 0x20) = v2;
-                param1[6] = v2;
-            }
-
-            param1[7] = *(int *)((char *)*blit_edge_uvs_b + param2 * 8);
-            int delta = *(int *)((char *)*blit_edge_uvs_b + idx * 8) - *(int *)((char *)*blit_edge_uvs_b + param2 * 8);
-
-            if ((*param3 & 2) == 0) {
-                param1[8] = *(int *)(param3 + recOff + 0x28);
-                if (delta < 0) {
-                    param1[9] = -1;
-                    param1[10] = 1 - param1[1];
-                } else {
-                    param1[9] = 1;
-                    param1[10] = 0;
-                }
-                param1[0xb] = *(int *)(param3 + recOff + 0x34);
-                param1[0xc] = param1[1];
-            } else {
-                int q = delta / param1[1];
-                *(int *)(param3 + recOff + 0x28) = q;
-                param1[8] = q;
-                if (delta < 0) {
-                    delta = -delta;
-                    param1[9] = -1;
-                    param1[10] = 1 - param1[1];
-                } else {
-                    param1[9] = 1;
-                    param1[10] = 0;
-                }
-                int r = delta % param1[1];
-                *(int *)(param3 + recOff + 0x34) = r;
-                param1[0xc] = param1[1];
-                param1[0xb] = r;
-            }
-
-            if (*param3 & 1) {
-                int base = *(int *)((char *)*blit_z_values + param2 * 4);
-                int baseShifted = base * 0x10000;
-                *(int *)(param3 + recOff + 0x3c) = baseShifted;
-                param1[0xd] = baseShifted;
-                int v3 = fixed_div(*(int *)((char *)*blit_z_values + idx * 4) * 0x10000 - base * 0x10000, shiftedSpan);
-                *(int *)(param3 + recOff + 0x40) = v3;
-                param1[0xe] = v3;
-                return 1;
-            }
-
-            param1[0xd] = *(int *)(param3 + recOff + 0x3c);
-            param1[0xe] = *(int *)(param3 + recOff + 0x40);
-            return 1;
-        }
-
-        param2 = idx;
-        if (idx == *blit_max_y_index) return 0;
-    }
+int __cdecl sub_625080(EdgeScan *edge, int index, TextureStore *cache) {
+    return texture_cached_edge(*edge, index,
+        reinterpret_cast<const Vert *>(*blit_edge_uvs_b),
+        reinterpret_cast<const Vert *>(*blit_edge_uvs_a),
+        reinterpret_cast<const int *>(*blit_z_values),
+        *blit_vertex_count, *blit_max_y_index, *cache);
 }
 
 // Fixed-slot bindings carried from 00620100.cpp
@@ -3038,7 +3022,7 @@ int Texture::sub_61df60(int a1, int a2, int a3, int a4, int a5, int a6, int a7, 
         *blit_z_values = a3;
         *blit_remap_table = a5;
         *blit_texture_pixels = self[0];
-        *blit_texture_width2 = self[1];
+        TextureRowPitchScratch = self[1];
         *blit_texture_height = self[2];
         *blit_edge_uvs_a = a7;
         *blit_vertex_count = a6;
@@ -3392,9 +3376,9 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
     if (buf != 0) {
         for (int i = 0; i < count; ++i) {
             int v = zvals[i];
-            if (*blit_step_0x100 <= v) v = *blit_step_0x100;
+            if (TextureLightCeiling <= v) v = TextureLightCeiling;
             zvals[i] = v;
-            if (v <= *blit_mask_0xffffff00) v = *blit_mask_0xffffff00;
+            if (v <= TextureLightFloor) v = TextureLightFloor;
             zvals[i] = v;
         }
 
@@ -3430,9 +3414,9 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 
                 EdgeScan e1, e2;
                 e1.f0 = -1;
-                if (sub_625080(reinterpret_cast<int *>(&e1), min_y_idx, reinterpret_cast<unsigned char *>(out_flag)) != 0) {
+                if (sub_625080(&e1, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0) {
                     e2.counter = 1;
-                    if (sub_625080(reinterpret_cast<int *>(&e2), min_y_idx, reinterpret_cast<unsigned char *>(out_flag)) != 0 && borrowed_ != 0) {
+                    if (sub_625080(&e2, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0 && borrowed_ != 0) {
                         double dy = (double)((e2.accumC - e1.accumC) << 16);
                         double du = 0, dv = 0, dw = 0, inv_dy = 1;
                         if (dy > 0) {
@@ -3454,7 +3438,7 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
 
                             e1.counter -= 1;
                             if (e1.counter == 0) {
-                                if (sub_625080(reinterpret_cast<int *>(&e1), e1.id, reinterpret_cast<unsigned char *>(out_flag)) == 0) {
+                                if (sub_625080(&e1, e1.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
                                     done = true;
                                     goto per_scanline_tail;
                                 }
@@ -3463,7 +3447,7 @@ void Texture::sub_6212b0(Buffer *buf, Vert *verts, int *zvals, int count,
                             }
                             e2.counter -= 1;
                             if (e2.counter == 0) {
-                                if (sub_625080(reinterpret_cast<int *>(&e2), e2.id, reinterpret_cast<unsigned char *>(out_flag)) == 0) {
+                                if (sub_625080(&e2, e2.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
                                     done = true;
                                 }
                             } else {
@@ -3629,9 +3613,9 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 
                 EdgeScan e1, e2;
                 e1.f0 = -1;
-                if (sub_625080(reinterpret_cast<int *>(&e1), min_y_idx, reinterpret_cast<unsigned char *>(out_flag)) != 0) {
+                if (sub_625080(&e1, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0) {
                     e2.counter = 1;
-                    if (sub_625080(reinterpret_cast<int *>(&e2), min_y_idx, reinterpret_cast<unsigned char *>(out_flag)) != 0 && borrowed_ != 0) {
+                    if (sub_625080(&e2, min_y_idx, reinterpret_cast<TextureStore *>(out_flag)) != 0 && borrowed_ != 0) {
                         double dy = (double)((e2.accumC - e1.accumC) << 16);
                         double du = 0, dv = 0, dw = 0, inv_dy = 1;
                         if (dy > 0) {
@@ -3653,7 +3637,7 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
 
                             e1.counter -= 1;
                             if (e1.counter == 0) {
-                                if (sub_625080(reinterpret_cast<int *>(&e1), e1.id, reinterpret_cast<unsigned char *>(out_flag)) == 0) {
+                                if (sub_625080(&e1, e1.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
                                     done = true;
                                     goto per_scanline_tail;
                                 }
@@ -3662,7 +3646,7 @@ void Texture::sub_622810(Buffer *buf, Vert *verts, int *zvals, int count,
                             }
                             e2.counter -= 1;
                             if (e2.counter == 0) {
-                                if (sub_625080(reinterpret_cast<int *>(&e2), e2.id, reinterpret_cast<unsigned char *>(out_flag)) == 0) {
+                                if (sub_625080(&e2, e2.id, reinterpret_cast<TextureStore *>(out_flag)) == 0) {
                                     done = true;
                                 }
                             } else {
@@ -3789,7 +3773,7 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
             *blit_edge_uvs_b = a3;
             *blit_remap_table = a6;
             *blit_texture_pixels = self[0];
-            *blit_texture_width2 = self[1];
+            TextureRowPitchScratch = self[1];
             *blit_texture_height = self[2];
             *blit_vertex_count = a7;
             *blit_edge_uvs_a = a8;
@@ -3837,135 +3821,75 @@ void Texture::sub_622200(int a2, int a3, int a4, int a5, int a6, int a7, int a8,
                         *blit_clip_bottom = *blit_clip_bottom * *blit_buffer_stride + *blit_pixel_base;
                         *blit_clip_top = *blit_clip_top * *blit_buffer_stride + *blit_pixel_base;
 
-                        int local_84 = -1;
-                        if (sub_625080(reinterpret_cast<int *>(&local_84), minYIdx, reinterpret_cast<unsigned char *>(a9)) != 0) {
-                            int local_48 = 1;
-                            if (sub_625080(reinterpret_cast<int *>(&local_48), minYIdx, reinterpret_cast<unsigned char *>(a9)) != 0 && self[0x1b] != 0 &&
+                        EdgeScan left;
+                        left.f0 = -1;
+                        if (sub_625080(&left, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0) {
+                            EdgeScan right;
+                            right.f0 = 1;
+                            if (sub_625080(&right, minYIdx, reinterpret_cast<TextureStore *>(a9)) != 0 && self[0x1b] != 0 &&
                                 reinterpret_cast<int *>(a5)[0x1b] != 0) {
-                                // The `local_84`/`local_48` blocks are two edge-walk
-                                // records filled in by sub_625080: {count, x, dx,
-                                // u, du, v, dv, z, dz, ...} pairs walked per
-                                // scanline. Field names below are ebp-relative,
-                                // matching the Ghidra decode, not confirmed member
-                                // names.
-                                int &local_80 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 4);
-                                int &local_7c = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 8);
-                                int &local_78 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0xc);
-                                int &local_74 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x10);
-                                int &local_70 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x14);
-                                int &local_6c = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x18);
-                                int &local_68 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x1c);
-                                int &local_64 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x20);
-                                int &local_60 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x24);
-                                int &local_5c = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x28);
-                                int &local_58 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x2c);
-                                int &local_54 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x30);
-                                int &local_50 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x34);
-                                int &local_4c = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_84) + 0x38);
-
-                                int &local_44 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 4);
-                                int &local_40 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 8);
-                                int &local_3c = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0xc);
-                                int &local_38 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x10);
-                                int &local_34 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x14);
-                                int &local_30 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x18);
-                                int &local_2c = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x1c);
-                                int &local_28 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x20);
-                                int &local_24 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x24);
-                                int &local_20 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x28);
-                                int &local_1c = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x2c);
-                                int &local_18 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x30);
-                                int &local_14 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x34);
-                                int &local_10 = *reinterpret_cast<int *>(
-                                    reinterpret_cast<char *>(&local_48) + 0x38);
-
+                                // Two real 0x3C-byte edge records; remaining raster
+                                // arithmetic is retained incomplete recovery work.
                                 long double invDx = 1.0;
                                 long double dU = 1.0, dV = 1.0, dZ = 1.0;
-                                long edgeSpan = (local_2c - local_68) * 0x10000;
+                                long edgeSpan = (right.accumC - left.accumC) * 0x10000;
                                 if (0 < edgeSpan) {
-                                    dU = static_cast<long double>(local_14 - local_50);
-                                    dV = static_cast<long double>(local_38 - local_74);
-                                    dZ = static_cast<long double>(local_3c - local_78);
+                                    dU = static_cast<long double>(right.accumD - left.accumD);
+                                    dV = static_cast<long double>(right.accumB - left.accumB);
+                                    dZ = static_cast<long double>(right.accumA - left.accumA);
                                     invDx = 1.0 / static_cast<long double>(edgeSpan);
                                 }
 
                                 if (*blit_row_offset < *blit_clip_bottom) {
                                     bool doneEdges = false;
                                     do {
-                                        *blit_slot_498 = local_50;
-                                        *blit_slot_53c = local_74;
-                                        *blit_slot_4c4 = local_3c;
-                                        *blit_slot_530 = local_38;
-                                        *blit_slot_4f8 = local_78;
-                                        *blit_span_left = local_2c;
-                                        *blit_span_right = local_68;
-                                        --local_80;
-                                        if (local_80 == 0) {
-                                            if (sub_625080(reinterpret_cast<int *>(&local_84), local_7c, reinterpret_cast<unsigned char *>(a9)) != 0) {
+                                        *blit_slot_498 = left.accumD;
+                                        *blit_slot_53c = left.accumB;
+                                        *blit_slot_4c4 = right.accumA;
+                                        *blit_slot_530 = right.accumB;
+                                        *blit_slot_4f8 = left.accumA;
+                                        *blit_span_left = right.accumC;
+                                        *blit_span_right = left.accumC;
+                                        --left.counter;
+                                        if (left.counter == 0) {
+                                            if (sub_625080(&left, left.id, reinterpret_cast<TextureStore *>(a9)) != 0) {
                                                 goto scan_edge_b;
                                             }
                                             doneEdges = true;
                                         } else {
-                                            local_78 += local_70;
-                                            local_74 += local_6c;
-                                            local_68 += local_64;
-                                            local_50 += local_4c;
-                                            local_5c += local_58;
-                                            if (0 < local_5c) {
-                                                local_68 += local_60;
-                                                local_5c -= local_54;
+                                            left.accumA += left.deltaA;
+                                            left.accumB += left.deltaB;
+                                            left.accumC += left.deltaC;
+                                            left.accumD += left.deltaD;
+                                            left.fracAccum += left.fracDelta;
+                                            if (0 < left.fracAccum) {
+                                                left.accumC += left.extraDeltaC;
+                                                left.fracAccum -= left.fracSub;
                                             }
                                         scan_edge_b:
-                                            --local_44;
-                                            if (local_44 == 0) {
-                                                if (sub_625080(reinterpret_cast<int *>(&local_48), local_40, reinterpret_cast<unsigned char *>(a9)) == 0) {
+                                            --right.counter;
+                                            if (right.counter == 0) {
+                                                if (sub_625080(&right, right.id, reinterpret_cast<TextureStore *>(a9)) == 0) {
                                                     doneEdges = true;
                                                 }
                                             } else {
-                                                local_3c += local_34;
-                                                local_38 += local_30;
-                                                local_2c += local_28;
-                                                local_14 += local_10;
-                                                local_20 += local_1c;
-                                                if (0 < local_20) {
-                                                    local_2c += local_24;
-                                                    local_20 -= local_18;
+                                                right.accumA += right.deltaA;
+                                                right.accumB += right.deltaB;
+                                                right.accumC += right.deltaC;
+                                                right.accumD += right.deltaD;
+                                                right.fracAccum += right.fracDelta;
+                                                if (0 < right.fracAccum) {
+                                                    right.accumC += right.extraDeltaC;
+                                                    right.fracAccum -= right.fracSub;
                                                 }
                                             }
                                         }
 
-                                        edgeSpan = (local_2c - local_68) * 0x10000;
+                                        edgeSpan = (right.accumC - left.accumC) * 0x10000;
                                         if (0 < edgeSpan) {
-                                            dU = static_cast<long double>(local_14 - local_50);
-                                            dV = static_cast<long double>(local_38 - local_74);
-                                            dZ = static_cast<long double>(local_3c - local_78);
+                                            dU = static_cast<long double>(right.accumD - left.accumD);
+                                            dV = static_cast<long double>(right.accumB - left.accumB);
+                                            dZ = static_cast<long double>(right.accumA - left.accumA);
                                             invDx = 1.0 / static_cast<long double>(edgeSpan);
                                         }
 
@@ -4132,7 +4056,7 @@ void Texture::sub_61c630(Buffer * bufIn, int * verts, Texture * texB, unsigned c
         *blit_remap_table = reinterpret_cast<int>(shadeTable);
         *blit_edge_uvs_b = reinterpret_cast<int>(verts);
         *blit_texture_pixels = reinterpret_cast<int>(pixels_);
-        *blit_texture_width2 = static_cast<int>(iWidth_);
+        TextureRowPitchScratch = static_cast<int>(iWidth_);
         *blit_texture_height = static_cast<int>(iHeight_);
         *blit_vertex_count = vertCount;
         *blit_edge_uvs_a = unusedIn;
@@ -4348,7 +4272,7 @@ int Texture::sub_61d990(Buffer *a1, int *vertArray, int a3, Texture *a4,
         *blit_edge_uvs_b = reinterpret_cast<int>(vertArray);
         *blit_remap_table = reinterpret_cast<int>(table);
         *blit_texture_pixels = *reinterpret_cast<int *>(this);
-        *blit_texture_width2 = iWidth_;
+        TextureRowPitchScratch = iWidth_;
         *blit_texture_height = iHeight_;
 
         int vertCount;
@@ -4685,7 +4609,7 @@ void Texture::sub_620a10(Buffer *bufParam, int vertsParam, int countParam,
     *blit_pixel_base = dataPtr;
     *blit_edge_uvs_b = vertsParam;
     *blit_texture_pixels = (int)(long)pixels_;
-    *blit_texture_width2 = iWidth_;
+    TextureRowPitchScratch = iWidth_;
     *blit_texture_height = iHeight_;
     *blit_edge_uvs_a = edgeVerts;
     *blit_vertex_count = countParam;
@@ -5085,15 +5009,15 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
     int d_10 = *reinterpret_cast<int *>(p2 + 0x10) - *reinterpret_cast<int *>(p1 + 0x10);
     __int64 q_10 = (((__int64)d_10) << 16) / divisor64;
     int d10_step_raw = (int)q_10;
-    *blit_slot_4e8 = *blit_texture_width2;
+    *blit_slot_4e8 = TextureRowPitchScratch;
     int d10_step_adj = d10_step_raw;
     if (d10_step_raw < 0) {
-        *blit_slot_4e8 = -*blit_texture_width2;
+        *blit_slot_4e8 = -TextureRowPitchScratch;
         if ((q_10 & 0xffff) != 0) {
             d10_step_adj = d10_step_raw + 0x10000;
         }
     }
-    int cross_term = (d10_step_adj >> 16) * (*blit_texture_width2);
+    int cross_term = (d10_step_adj >> 16) * (TextureRowPitchScratch);
     int acc_x = (d10_step_adj >> 1) + *reinterpret_cast<int *>(p1 + 0x10);
 
     int p2_1c_clamped = p2_1c;
@@ -5113,7 +5037,7 @@ void __cdecl sub_61f800(void *param_1, void *param_2) {
 
     int acc_y_hi16 = acc_y >> 16;
     int acc_x_hi16 = acc_x >> 16;
-    int src_row_index = acc_y_hi16 + (unsigned short)(short)((short)acc_x_hi16 * (short)*blit_texture_width2);
+    int src_row_index = acc_y_hi16 + (unsigned short)(short)((short)acc_x_hi16 * (short)TextureRowPitchScratch);
 
     unsigned char *src = reinterpret_cast<unsigned char *>(src_row_index + *blit_texture_pixels);
     int out_seed = (*blit_row_offset) * (*blit_buffer_stride) + start_row + (*blit_pixel_base);
@@ -5229,7 +5153,7 @@ int Texture::sub_61cb50(int a1, int a2, int a3, int a4, int a5) {
         *blit_remap_table = a4;
         *blit_edge_uvs_b = a2;
         *blit_texture_pixels = *reinterpret_cast<int *>(self);
-        *blit_texture_width2 = *reinterpret_cast<int *>(self + 4);
+        TextureRowPitchScratch = *reinterpret_cast<int *>(self + 4);
         *blit_texture_height = *reinterpret_cast<int *>(self + 8);
 
         if (a5 != 0) {
@@ -5445,15 +5369,15 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
     int d_10 = *reinterpret_cast<int *>(p2 + 0x10) - *reinterpret_cast<int *>(p1 + 0x10);
     __int64 q_10 = (((__int64)d_10) << 16) / divisor64;
     int d10_step_raw = (int)q_10;
-    *blit_slot_4e8 = *blit_texture_width2;
+    *blit_slot_4e8 = TextureRowPitchScratch;
     int d10_step_adj = d10_step_raw;
     if (d10_step_raw < 0) {
-        *blit_slot_4e8 = -*blit_texture_width2;
+        *blit_slot_4e8 = -TextureRowPitchScratch;
         if ((q_10 & 0xffff) != 0) {
             d10_step_adj = d10_step_raw + 0x10000;
         }
     }
-    int cross_term = (d10_step_adj >> 16) * (*blit_texture_width2);
+    int cross_term = (d10_step_adj >> 16) * (TextureRowPitchScratch);
     int acc_x = (d10_step_adj >> 1) + *reinterpret_cast<int *>(p1 + 0x10);
 
     int p2_1c_clamped = p2_1c;
@@ -5474,7 +5398,7 @@ void __cdecl sub_6202e0(void *param_1, void *param_2) {
 
     int acc_y_hi16 = acc_y >> 16;
     int acc_x_hi16 = acc_x >> 16;
-    int out_row_index = acc_y_hi16 + (unsigned short)(short)((short)acc_x_hi16 * (short)*blit_texture_width2);
+    int out_row_index = acc_y_hi16 + (unsigned short)(short)((short)acc_x_hi16 * (short)TextureRowPitchScratch);
 
     unsigned char *src = reinterpret_cast<unsigned char *>(out_row_index + *blit_texture_pixels);
     *blit_slot_558 = out_row_index + *blit_shade_table;
@@ -5639,14 +5563,14 @@ void __cdecl sub_61fe70(int p1, int p2) {
         int dyRatio = (int)(((__int64)dyRaw << 16) / denom);
 
         int dyAdj = dyRatio;
-        *blit_slot_4e8 = *blit_texture_width2;
+        *blit_slot_4e8 = TextureRowPitchScratch;
         if (dyRatio < 0) {
-            *blit_slot_4e8 = -*blit_texture_width2;
+            *blit_slot_4e8 = -TextureRowPitchScratch;
             if ((dyRatio & 0xffff) != 0) {
                 dyAdj = dyRatio + 0x10000;
             }
         }
-        int colorStep = (dyAdj >> 16) * *blit_texture_width2;
+        int colorStep = (dyAdj >> 16) * TextureRowPitchScratch;
         int yAccum = (dyAdj >> 1) + p1_0x10;
 
         int clampedEnd = p2_0x1c;
@@ -5668,7 +5592,7 @@ void __cdecl sub_61fe70(int p1, int p2) {
         int count = clampedEnd - p1;
 
         unsigned short yHi = (unsigned short)((unsigned int)yAccum >> 16);
-        short prod16 = (short)((short)yHi * (short)(*blit_texture_width2 & 0xffff));
+        short prod16 = (short)((short)yHi * (short)(TextureRowPitchScratch & 0xffff));
         unsigned short xHi = (unsigned short)((unsigned int)xAccum >> 16);
         int srcAccum = (int)xHi + (unsigned short)prod16;
         srcAccum += *blit_texture_pixels;
@@ -5812,14 +5736,14 @@ void __cdecl sub_620640(int param_1, int param_2) {
     __int64 quot2_64 = num3 / static_cast<__int64>(dy16);
     int quot2 = static_cast<int>(quot2_64);
     int dzFracAdj = quot2;
-    *blit_slot_4e8 = *blit_texture_width2;
+    *blit_slot_4e8 = TextureRowPitchScratch;
     if (quot2 < 0) {
-        *blit_slot_4e8 = -*blit_texture_width2;
+        *blit_slot_4e8 = -TextureRowPitchScratch;
         if ((quot2_64 & 0xffff) != 0) {
             dzFracAdj = quot2 + 0x10000;
         }
     }
-    int zWholeStep = (dzFracAdj >> 0x10) * (*blit_texture_width2);
+    int zWholeStep = (dzFracAdj >> 0x10) * (TextureRowPitchScratch);
     unsigned int zAcc = static_cast<unsigned int>(dzFracAdj >> 1) +
                          *reinterpret_cast<unsigned int *>(param_1 + 0x10);
 
@@ -5840,7 +5764,7 @@ void __cdecl sub_620640(int param_1, int param_2) {
     int rowCount = yEnd - yStart;
 
     int rowOffset = static_cast<int>(xAcc >> 0x10) +
-                     static_cast<unsigned short>(static_cast<short>(zAcc >> 16) * static_cast<short>(*blit_texture_width2));
+                     static_cast<unsigned short>(static_cast<short>(zAcc >> 16) * static_cast<short>(TextureRowPitchScratch));
     unsigned char *srcPtr = reinterpret_cast<unsigned char *>(rowOffset + *blit_texture_pixels);
     *reinterpret_cast<unsigned char **>(blit_slot_558) =
         reinterpret_cast<unsigned char *>(rowOffset + *blit_shade_table);
@@ -6016,7 +5940,7 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
       (*blit_z_values) = param_4;
       (*blit_edge_uvs_b) = param_3;
       (*blit_texture_pixels) = *param_1;
-      (*blit_texture_width2) = param_1[1];
+      (TextureRowPitchScratch) = param_1[1];
       (*blit_texture_height) = param_1[2];
       if (param_8 == 0) {
         iVar10 = 4;
@@ -6087,11 +6011,11 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                               / (longlong)iVar3;
                       local_88 = (int)uVar2;
                       iVar3 = local_88;
-                      (*blit_slot_4e8) = (*blit_texture_width2);
-                      if ((local_88 < 0) && ((*blit_slot_4e8) = -(*blit_texture_width2), (uVar2 & 0xffff) != 0)) {
+                      (*blit_slot_4e8) = (TextureRowPitchScratch);
+                      if ((local_88 < 0) && ((*blit_slot_4e8) = -(TextureRowPitchScratch), (uVar2 & 0xffff) != 0)) {
                         iVar3 = local_88 + 0x10000;
                       }
-                      iVar4 = (iVar3 >> 0x10) * (*blit_texture_width2);
+                      iVar4 = (iVar3 >> 0x10) * (TextureRowPitchScratch);
                       param_7 = (iVar3 >> 1) + edge1.accumB;
                       iVar3 = edge2.accumC;
                       if ((*blit_clip_right) <= edge2.accumC) {
@@ -6115,7 +6039,7 @@ void Texture::sub_61f0d0(Buffer *param_2, int param_3, int param_4, int param_5,
                       }
                       iVar3 = iVar3 - iVar14;
                       iVar13 = ((uint)param_5 >> 0x10) +
-                               (uint)(ushort)((ushort)(param_7 >> 16) * (short)(*blit_texture_width2));
+                               (uint)(ushort)((ushort)(param_7 >> 16) * (short)(TextureRowPitchScratch));
                       pbVar12 = (byte *)(iVar13 + (*blit_texture_pixels));
                       (*blit_slot_558) = iVar13 + (*blit_shade_table);
                       iVar13 = (*blit_row_offset) * (*blit_buffer_stride) + iVar14 + (*blit_pixel_base);
@@ -6302,6 +6226,7 @@ void Texture::draw_color_key(Buffer *buffer, Vert *vertices, int count, Vert *uv
     const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
     const int width = static_cast<int>(iWidth_);
     const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
+    TextureRowPitchScratch = static_cast<int>(iWidth_);
     const int stride = static_cast<int>(buffer->stride_);
     const RECT clip = buffer->rect1_;
 
@@ -6492,7 +6417,7 @@ void Texture::sub_624c70(Buffer *buf, Vert *verts, int *zvals, int count,
 
 /*
 // ORIGINAL: 0x00624CD0 sub_624cd0 0x00624CD0-0x00624CFD BYTE_EXACT
-// symbol    ?sub_624cd0@Texture@@QAEXPAVBuffer@@PAUVert@@PAHHH2H@Z
+// symbol    ?draw_cached_lit@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1PAVTextureStore@@H@Z
 // size      45 bytes
 // callers   0   call targets   1
 // kind      game
@@ -6505,10 +6430,10 @@ void Texture::sub_624c70(Buffer *buf, Vert *verts, int *zvals, int count,
 Return Value: void
 Status: Complete
 */
-void Texture::sub_624cd0(Buffer *buf, Vert *verts, int *zvals, int count,
-                         int edgeVerts, int *out_flag, int sentinel) {
+void Texture::draw_cached_lit(Buffer *buf, Vert *verts, int *zvals, int count,
+                               Vert *edgeVerts, TextureStore *cache, int sentinel) {
     if (sentinel == -1) {
-        sub_621870(buf, verts, zvals, count, edgeVerts, out_flag);
+        draw_cached_lit(buf, verts, zvals, count, edgeVerts, cache);
     }
 }
 
@@ -6775,4 +6700,223 @@ void Texture::draw2(Buffer *buffer, Vert *vertices, int *zvals, int count,
     }
     buffer->free_data(1);
     texture_reset_fpu();
+}
+
+// ORIGINAL: 0x00621870 ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z 0x00621870-0x006221F1
+// RECOVERY_BINDING: v1 {"evidence": ["Coordinator investigation_deferred 2026-09-19 (run-z7f3353q): sub_624cd0 trial bytes=unknown references=unknown with exactly one emitted reference ?sub_621870@Texture@@QAEHPAVBuffer@@PAUVert@@PAHHH2@Z at offset 38 binding_address null; sibling sub_624c70 passes because its callee sub_6212b0 is defined in src/texture.cpp:6515-6520 - the cause is the cross-TU callee, not the wrapper spelling; the masked measure (16 instructions, 4 masked bytes) proves every other byte correct.", "Seed src/unrecovered/00621870.cpp line 1 catalogues ORIGINAL 0x00621870 sub_621870 0x00621870-0x006221F1 FILE; the forwarder at src/pending_bodies.cpp:2225-2231 emits the member symbol via its C++ definition and the task record preserves the already-exact caller sub_624ca0 untouched."], "reason": "The pending_bodies.cpp forwarder at the annotated line is the only compiled definition of Texture::sub_621870 (its comment records that it is reached by name by Texture::sub_624cd0); the extent is the seed's catalogue adopted verbatim so the by-name reference resolves against the original identity without homing the x87 body."}
+// symbol    ?draw_cached_lit@Texture@@QAEXPAVBuffer@@PAUVert@@PAHH1PAVTextureStore@@@Z
+// The historical binding above describes the preserved forwarder provenance.
+// This source home reconstructs both raster paths with a typed TextureStore;
+// the only mapped caller discards EAX, so the interface expresses void.
+// Bounded domain: valid receiver/buffer/cache/arrays, established extrema,
+// convex edges, positive pitch and nonwrapping signed-ordered row addresses,
+// fitting original signed divisions, and positive raw spans at most 32767.
+// Owned-storage spans must remain positive after clipping (its DEC/JNE loop
+// otherwise traverses the wrapped 32-bit count). The borrowed packed loop's
+// single write for an empty clipped span is retained, not silently discarded.
+// A larger positive raw span can make the original fixed width nonpositive
+// and consume stale global gradients; no invented zero-gradient fallback is
+// supplied for that unproved domain. Borrowed pixels retain the TexHeap's
+// 64-KiB-aligned payload and 256-byte row layout: 635390 rejects a
+// nonaligned heap cursor, 5D46CA returns it unchanged, and 6197CB/CF
+// publish pixels_/borrowed_ only on success. Sample offsets must remain
+// within that allocation; fabricated or mutated borrowed pointers are unproved.
+// Owned samples use the actual shared pitch scratch, including its history.
+//
+// Local scratch does not prove asynchronous observations of the original
+// scratch block. Explicit PC24 integer arithmetic reproduces numeric results,
+// not pending x87 registers/status observed inside release callbacks. The
+// original computes the next reciprocal before drawing this row; no ordinary
+// callback intervenes. Entry/exit FPU resets remain in their original order.
+void Texture::draw_cached_lit(Buffer *buffer, Vert *vertices, int *light,
+                              int count, Vert *uv, TextureStore *cache) {
+    cache->next_record_ = 0;
+    unsigned char *destination = reinterpret_cast<unsigned char *>(buffer->get_data());
+    const unsigned char key = static_cast<unsigned char>(TextureRasterKey);
+    texture_reset_fpu();
+    const unsigned char *pixels = static_cast<const unsigned char *>(pixels_);
+    const int stride = static_cast<int>(buffer->stride_);
+    for (int vertex = 0; vertex < count; ++vertex) {
+        int value = light[vertex];
+        if (value >= TextureLightCeiling) value = TextureLightCeiling;
+        light[vertex] = value;
+        if (value <= TextureLightFloor) value = TextureLightFloor;
+        light[vertex] = value;
+    }
+    const RECT clip = buffer->rect1_;
+    int min_y = 0x7fff, max_y = -0x7ffd;
+    int min_x = 0x7fff, max_x = -0x7ffd;
+    int top, bottom;
+    bool clipped = true;
+    for (int index = 0; index < count; ++index) {
+        if (vertices[index].y < min_y) { min_y = vertices[index].y; top = index; }
+        if (vertices[index].y > max_y) { max_y = vertices[index].y; bottom = index; }
+        if (vertices[index].x < min_x) min_x = vertices[index].x;
+        if (vertices[index].x > max_x) max_x = vertices[index].x;
+    }
+    if (min_y < max_y) {
+        const uintptr_t base = reinterpret_cast<uintptr_t>(destination);
+        uintptr_t row = base + static_cast<int64_t>(min_y) * stride;
+        const uintptr_t first_row = base + static_cast<int64_t>(clip.top) * stride;
+        const uintptr_t last_row = base + static_cast<int64_t>(clip.bottom) * stride;
+        if (min_x >= clip.left && min_y >= clip.top &&
+            max_x <= clip.right && max_y <= clip.bottom) clipped = false;
+        EdgeScan left, right;
+        left.f0 = -1;
+        right.f0 = 1;
+        if (texture_cached_edge(left, top, vertices, uv, light, count, bottom, *cache) &&
+            texture_cached_edge(right, top, vertices, uv, light, count, bottom, *cache)) {
+            if (borrowed_ != 0) {
+                _control87(_PC_24 | _RC_CHOP, _MCW_PC | _MCW_RC);
+                int du, dv;
+                unsigned short shade_step;
+                while (static_cast<intptr_t>(row) < static_cast<intptr_t>(last_row)) {
+                    int x = left.accumC;
+                    int end = right.accumC;
+                    int u = left.accumA, v = left.accumB, shade = left.accumD;
+                    const int span = texture_fixed(texture_difference(end, x));
+                    const int delta_u = texture_difference(right.accumA, u);
+                    const int delta_v = texture_difference(right.accumB, v);
+                    const int delta_shade = texture_difference(right.accumD, shade);
+                    // Preserve the cached-edge transition before the saved
+                    // terminal span is drawn; failure of the left skips right.
+                    const bool done =
+                        !texture_advance_cached_edge(left, vertices, uv, light, count, bottom, *cache) ||
+                        !texture_advance_cached_edge(right, vertices, uv, light, count, bottom, *cache);
+                    if (span > 0) {
+                        du = texture_span_step(delta_u, span >> 16);
+                        dv = texture_span_step(delta_v, span >> 16);
+                        shade_step = texture_light_step(delta_shade, span >> 16);
+                    }
+                    if (static_cast<intptr_t>(row) >= static_cast<intptr_t>(first_row) &&
+                        end > clip.left && x < clip.right && end > x) {
+                        if (end > clip.right) end = clip.right;
+                        if (x < clip.left) {
+                            const int skip = texture_fixed(texture_difference(clip.left, x));
+                            u = static_cast<int>(static_cast<unsigned int>(u) +
+                                static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                            v = static_cast<int>(static_cast<unsigned int>(v) +
+                                static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                            shade = static_cast<int>(static_cast<unsigned int>(shade) +
+                                static_cast<unsigned int>((static_cast<int64_t>(shade_step) * skip) >> 8));
+                            x = clip.left;
+                        }
+                        unsigned char *out = reinterpret_cast<unsigned char *>(row + x);
+                        unsigned int source_x = (static_cast<unsigned int>(u) >> 16) & 0xff;
+                        unsigned int source_y = (static_cast<unsigned int>(v) >> 16) & 0xff;
+                        unsigned int uf = static_cast<unsigned short>(u);
+                        unsigned int vf = static_cast<unsigned short>(v);
+                        unsigned short brightness = static_cast<unsigned short>(shade >> 8);
+                        const unsigned int length = texture_span_pixels(texture_difference(end, x));
+                        for (unsigned int column = 0; column < length; ++column) {
+                            const unsigned char texel = pixels[source_y * 256u + source_x];
+                            uf += static_cast<unsigned short>(du);
+                            vf += static_cast<unsigned short>(dv);
+                            source_x = (source_x + (static_cast<unsigned int>(du) >> 16) + (uf >> 16)) & 0xff;
+                            source_y = (source_y + (static_cast<unsigned int>(dv) >> 16) + (vf >> 16)) & 0xff;
+                            uf &= 0xffff;
+                            vf &= 0xffff;
+                            if (texel != key)
+                                out[column] = static_cast<unsigned char>(texel + (brightness >> 8));
+                            brightness = static_cast<unsigned short>(brightness + shade_step);
+                        }
+                    }
+                    if (done) break;
+                    row += stride;
+                }
+            } else {
+                while (static_cast<intptr_t>(row) < static_cast<intptr_t>(last_row)) {
+                    int x = left.accumC;
+                    int end = right.accumC;
+                    if (static_cast<intptr_t>(row) >= static_cast<intptr_t>(first_row) &&
+                        end > clip.left && x < clip.right && end > x) {
+                        int u = left.accumA, v = left.accumB;
+                        unsigned int shade = static_cast<unsigned int>(left.accumD);
+                        const int span = texture_fixed(texture_difference(end, x));
+                        // 621E92 has no CDQ: the high dividend is right X,
+                        // not the sign of the low, shifted light delta.
+                        const unsigned int low = static_cast<unsigned int>(
+                            texture_difference(right.accumD, left.accumD)) << 8;
+                        const int64_t numerator = static_cast<int64_t>(end) * 65536 * 65536 + low;
+                        const unsigned short shade_step = static_cast<unsigned short>(numerator / span);
+                        const int du = static_cast<int>(static_cast<int64_t>(
+                            texture_difference(right.accumA, u)) * 65536 / span);
+                        int dv = static_cast<int>(static_cast<int64_t>(
+                            texture_difference(right.accumB, v)) * 65536 / span);
+                        int adjusted_u = du;
+                        if (du < 0 && (static_cast<unsigned int>(du) & 0xffff))
+                            adjusted_u = static_cast<int>(static_cast<unsigned int>(du) + 0x10000u);
+                        const int whole_u = adjusted_u >> 16;
+                        u = static_cast<int>(static_cast<unsigned int>(u) + (adjusted_u >> 1));
+                        int adjusted_v = dv;
+                        int signed_pitch = TextureRowPitchScratch;
+                        if (dv < 0) {
+                            signed_pitch = texture_difference(0, signed_pitch);
+                            if (static_cast<unsigned int>(dv) & 0xffff)
+                                adjusted_v = static_cast<int>(static_cast<unsigned int>(dv) + 0x10000u);
+                        }
+                        const int whole_v = static_cast<int>(static_cast<unsigned int>(adjusted_v >> 16) *
+                                                             static_cast<unsigned int>(TextureRowPitchScratch));
+                        v = static_cast<int>(static_cast<unsigned int>(v) + (adjusted_v >> 1));
+                        if (end >= clip.right) end = clip.right;
+                        if (x < clip.left) {
+                            const int skip = texture_fixed(texture_difference(clip.left, x));
+                            u = static_cast<int>(static_cast<unsigned int>(u) +
+                                static_cast<unsigned int>((static_cast<int64_t>(du) * skip) >> 16));
+                            v = static_cast<int>(static_cast<unsigned int>(v) +
+                                static_cast<unsigned int>((static_cast<int64_t>(dv) * skip) >> 16));
+                            shade += static_cast<unsigned int>((static_cast<int64_t>(shade_step) * skip) >> 16);
+                            x = clip.left;
+                        }
+                        // The original 16-bit IMUL retains only AX; its row
+                        // offset is modulo 65536, not a full-width product.
+                        int64_t source = static_cast<unsigned short>(
+                            (static_cast<unsigned int>(v) >> 16) *
+                            static_cast<unsigned int>(TextureRowPitchScratch));
+                        source += static_cast<unsigned short>(static_cast<unsigned int>(u) >> 16);
+                        if (signed_pitch < 0) {
+                            dv = texture_difference(0, dv);
+                            v = ~v;
+                        }
+                        const bool reverse_u = du < 0;
+                        // 622078 shifts the now-unused V local, NOT the
+                        // copied packed low WORD. Negative U consequently
+                        // keeps all sixteen V fraction bits here.
+                        unsigned int fractions = reverse_u
+                            ? (static_cast<unsigned int>(~u) << 16) | static_cast<unsigned short>(v)
+                            : (static_cast<unsigned int>(u) << 16) | (static_cast<unsigned short>(v) >> 1);
+                        const unsigned int step =
+                            ((reverse_u ? 0u - static_cast<unsigned int>(du) : static_cast<unsigned int>(du)) << 16) |
+                            (static_cast<unsigned short>(dv) >> 1);
+                        const int whole_step = static_cast<int>(static_cast<unsigned int>(whole_u) + whole_v);
+                        unsigned char *out = reinterpret_cast<unsigned char *>(row + x);
+                        const int length = texture_difference(end, x);
+                        for (int column = 0; column < length; ++column) {
+                            const unsigned char texel = pixels[source];
+                            const unsigned int next = fractions + step;
+                            const bool carry = next < fractions;
+                            fractions = next;
+                            // Original SBB subtracts -whole_step and carry;
+                            // ADC adds whole_step and carry in the other arm.
+                            source += static_cast<int64_t>(whole_step) + (reverse_u ? -int(carry) : int(carry));
+                            out[column] = static_cast<unsigned char>(texel + ((shade >> 8) & 0xff));
+                            if (fractions & 0x8000u) {
+                                fractions &= ~0x8000u;
+                                source += signed_pitch;
+                            }
+                            shade = (shade & 0xffff0000u) | static_cast<unsigned short>(shade + shade_step);
+                        }
+                    }
+                    // Owned storage uses uncached Gouraud setup for later
+                    // edges; it does not consume further TextureStore rows.
+                    if (!texture_advance_gouraud_edge(left, vertices, uv, light, count, bottom) ||
+                        !texture_advance_gouraud_edge(right, vertices, uv, light, count, bottom)) break;
+                    row += stride;
+                }
+            }
+        }
+    }
+    buffer->free_data(1);
+    texture_reset_fpu();
+    if (!clipped) cache->flags_ = 0;
 }

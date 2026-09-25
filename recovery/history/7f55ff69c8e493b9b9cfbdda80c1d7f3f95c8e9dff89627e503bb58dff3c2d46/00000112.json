@@ -1,0 +1,29 @@
+{
+  "event_id": "967ee5fe30cb6837d149424999a2fbdeae28da22616c4b0c5ea41dc282e9870b",
+  "payload": {
+    "affects": [
+      "entity-16814ec5c671eb4041c4a5397a30bb982dc2b5af1250e429f58b933ae85895ae",
+      "entity-3f36ad512532cf30100c7c4825a4feb1d986bfc18865adba988cfad6f8f899c4",
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002",
+      "entity-9df5a49c60820cdd20780955b0fb4c1565164d9a36e8f1f3b84fd425976dfb50",
+      "entity-a0078c642527435d3dfa3ec4a68757afb95be9908f1efa0ee85bc09a4de6b966",
+      "entity-ca7f53ee172a3cefe8026e23b4b6e9d22d1b76600be0ed2311d5cf3677b2a90a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "landmark-table-producer-closure-20260923",
+    "evidence": [
+      "Original gen_terrain has nine direct MOVSX byte reads of landmark receiver/rotation pairs. No direct writers, pointer escapes or relocation-bearing elements found. Mesa/Crater original producers enumerate0..48; Mount producer0..8, while overlapping landmarks may overwrite a shared sequence without clearing other flags. Preserve this cross-producer question, do not truncate observed sentinel tails merely for a smaller declaration.",
+      "world_mesa original5C80F5 pushes0x100 tobit2_set591DB0; currentmap.cpp passesLM_MESA=8, confusing landmark catalogue id withBIT2_MESA. Correct this reconstruction defect tooriginalflag; it is not an authorized gameplaybugfix. Keepallunchangedproducerbehavior andexistingclaims.",
+      "Authorize real signed-byte receiver/rotation POD tables with source-owned bounded original interpretations, coupledgen_terrain indexed-member reads, and actual-source all-row/sentinel/rotation controls. Garlandrow31 hasvalidtexture2/rotation-1: onlytexture-1 skips. Tableboundshistoricalallocation and arbitraryeditedcodesremain explicituncertainties; addnoinventedboundsfallback.",
+      "Irregular proprietary initializer bytes stay inignored build materialization through existingterrain_data configure hook andnative PE/source APIs. Extendthat hook/CMake/tests minimally; noframework rewrite/newCLI. Wrongpin/unbacked/relocateddatarefuse, generatedincludes capturedbyexistingpreparation artifactroot. Nativeinitial-data/layout/protectedclaims/build checks remainrequired.",
+      "Coordinatorowns product/configuration/journal/Git/nativechanges. Testagents mayedit onlyseparately delegatedtestfiles; freezecheckoutbeforeprepare/nativechecks. Preserveotherterrainwork, base_energydeferredbehavior, originalidentities/seeds/baselines. Manualintegrationdoesnotestablishgameacceptance."
+    ],
+    "hypothesis": "Terrain landmark aliases hide real signed pair tables and a producer defect: world_mesa publishes the landmark id instead of its terrain bit. Bounds must account for shared-code overlap, not isolated producer loops alone.",
+    "kind": "discovery"
+  },
+  "previous_event": "2790f91b36ba20595789aacaee283ae5b2765a59e1d16b479424a4d447207d39",
+  "request_id": "landmark-table-producer-closure-20260923",
+  "schema_version": 1,
+  "sequence": 112,
+  "stream": "task:vector-value-semantics"
+}

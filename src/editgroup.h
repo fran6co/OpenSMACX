@@ -17,47 +17,17 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "dialog.h"
 #include "graphicwin.h"
 
- /*
-  * EditGroup class
-  *
-  * Virtually derives from GraphicWin: the vbtable at 0x00670A3C reads
-  * {0, 0x8C, 0xAA4}, so the base is held as a member at 0x8C and a Dialog
-  * follows four bytes past where it ends, the same shape as RadioButton and
-  * CheckBox.
-  *
-  * The three methods here are recoverable without that indirection because
-  * none of them touches a virtual base - they work on this class's own boxes
-  * and limits at 0x4 and 0x54. Anything on this class that does reach the
-  * base or the Dialog must read the offsets from the object's own vbtable at
-  * run time rather than from where they sit here; hardcoding them looks
-  * correct, passes tests built on a most-derived object, and breaks whenever
-  * the class is embedded in a larger one.
-  *
-  * Nothing pins this sizeof.
-  *
-  *   * MEASURED under VC6 12.00.8168, and the conclusion is OPEN, not closed.
-  * `: virtual GraphicWin, virtual Dialog` gives 0xB4C against the 0xB54 this
-  * class needs, and adding a virtual function to the DERIVED class gives
-  * 0xB50 - that +4 is its own vfptr. An earlier note here blamed vtordisp
-  * fields; that was WRONG and is withdrawn. A probe settles it: two bases
-  * with a virtual destructor grow 0x10 -> 0x14 EACH, and the derived total
-  * moves 0x34 -> 0x3C, so the missing 8 bytes are the two BASES' own vtable
-  * pointers, not a displacement.
-  *
-  * Which means the conversion is probably reachable and is blocked on
-  * something specific: GraphicWin and Dialog model their vtable as an opaque
-  * dword the original installs by hand, so neither declares a virtual. Giving
-  * them real virtual destructors is a coupled edit - the compiler then emits
-  * the vfptr, so the modelled dword has to come out in the same change - and
-  * `sizeof(GraphicWin) == 0xA14` is the check that would catch it going wrong.
-  * Do NOT read this paragraph as "cannot be done".
-  */
-// The bases are REAL. The vbtable pointer, the base constructions, the
-// vtordisp and the unwind all come from this declaration now.
+class EditBox;
+
+// Original vbtable670A3C = {0,0x8C,0xAA4}; constructor611940 constructs
+// GraphicWin at8C and Dialog atAA4. The ten controls, owned text buffers
+// and limits occupy4..7B. The own prefix ends88; the compiler emits the
+// GraphicWin vtordisp at88. Dialogs adds its own kind after that prefix.
+// RECOVERY_BASE: v1 EditGroup GraphicWin 0x8C 0x00611940
+// RECOVERY_BASE: v1 EditGroup Dialog 0xAA4 0x00611940
 class EditGroup : public virtual GraphicWin, public virtual Dialog {
  public:
   // 0x006126C0, a pending_bodies forwarder.
@@ -68,45 +38,22 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   void on_redraw();
 
  public:
-  // 0x00612670, recovered in editgroup.cpp. ONE IMAGE FUNCTION, TWO TREE
-  // SIGNATURES. The original hierarchy overrode GraphicWin's
-  // on_dialog_focus through the INT signature: the image carries its own $4
-  // vtordisp adjustor for exactly that slot (0x006127C0, claimed in
-  // editgroup.cpp), and such a thunk is emitted only while an int override
-  // exists - dropping the override made the thunk claim UNRESOLVED. The
-  // body here is spelled LONG for byte reasons alone: as a real override
-  // VC6 enters it 0x90 high via vtordisp and folds the adjustment into
-  // every displacement (TRIED, 24/26 in the marker), while the image's own
-  // entry is the plain QAEX spelling with no adjust. The `// symbol` fact
-  // on the body records what the tree emits instead; same trick as
-  // init_class's QAAHX->SAHX.
-  void on_dialog_focus(long focus_id);
-  // The int-signature override, kept EMPTY on purpose: it exists only to
-  // keep VC6 emitting the image's $4 vtordisp adjustor above. No tree code
-  // calls it - the real work lives in the long overload beside it, and
-  // any future caller of the image function must call THAT one.
-  void on_dialog_focus(int) { ; }
+  // Original slot51 in table6708D4 selects adjustor6127C0 -> body612670.
+  // A single real override handles both direct and virtual focus delivery.
+  virtual void on_dialog_focus(int focus_id);
 
  public:
   // 0x00611AF0, a pending_bodies forwarder.
   int attach(void * a1, int a2, int a3, int a4);
 
  public:
-  // ??0EditGroup@@QAE@H@Z at 0x00611940. The `int` is NOT a user parameter -
-  // EditGroup's layout is composed by hand (see the class comment above), so
-  // VC6 cannot inject the most-derived flag the way it would for a real
-  // `: virtual GraphicWin, virtual Dialog` declaration; this constructor
-  // takes an explicit flag instead and mirrors what the image's own guard
-  // does with it.
+  // The int in the catalogue is the compiler's hidden most-derived flag.
   EditGroup();
-  // The catalogued `??1EditGroup@@QAE@XZ` at 0x00611A20 is spelled as a
-  // METHOD, not a destructor: the image's body reinstalls the base
-  // vtables and calls `close()`, and never destroys `virtual_base_` or
-  // `dialog_`. A real `~EditGroup()` has to destroy both, which is an
-  // SEH frame and thirty extra instructions the image does not have.
+  // Unfinished lifetime reconstruction at611A20. This legacy helper and
+  // its raw receiver adjustment are not a substitute for a genuine C++
+  // destructor. Complete/base destruction entries still need recovery.
   void destruct();
-  // 0x00611A90, a pending_bodies forwarder. ~EditGroup calls it on the
-  // adjusted (true) object pointer.
+  // 0x00611A90, homed in editgroup.cpp; delete/free semantics remain there.
   void close();
   void set_text_limits(int limit);
   char *get_text(int index);
@@ -127,35 +74,24 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   int calculate_dimensions();
 
  private:
-  // The vbtable pointer is EMITTED by the compiler now.
-  // Indexed from 0x4 by both text accessors. The count is not established -
-  // the span up to the limits array holds twenty pointers, and only that the
-  // array starts at 0x4 is evidenced.
-  void *boxes_[20];
+  // Original6119E1..6119F2 initializes these three distinct ten-entry arrays.
+  // Attach611D63 constructs EditBox; close611A90 deletes controls but frees
+  // the independently allocated strings (also published by edit611F80).
+  // RECOVERY_MEMBER: v1 EditGroup boxes_ 0x4 0x00611940
+  EditBox *boxes_[10];
+  // RECOVERY_MEMBER: v1 EditGroup text_buffers_ 0x2C 0x00611940
+  char *text_buffers_[10];
+  // RECOVERY_MEMBER: v1 EditGroup limits_ 0x54 0x00611940
   uint32_t limits_[10];
-  uint8_t field_7C_[0x8];  // 0x7C
-  uint32_t field_84_;  // 0x84
-  // 0x88. Dialogs dispatches on this - at 0xF8 + 0x88 == 0x180, which that
-  // header called `kind_` while it could not name the base it belongs to.
-  // PUBLIC (was protected) so BasePop::on_key_down and BasePop::double_click
-  // can read it through their embedded Dialogs member the same way Dialogs'
-  // own dispatch does; access changes no offset and no mangled name.
- public:
-  int32_t kind_;  // 0x88
- private:
-  // GraphicWin and Dialog are VIRTUAL BASES, appended by the compiler.
+  // calculate_dimensions612150 clears/measures these; constructor leaves
+  // them untouched. The edit width includes twice Dialog's inner margin.
+  // RECOVERY_MEMBER: v1 EditGroup label_width_ 0x7C 0x00612150
+  int label_width_;
+  // RECOVERY_MEMBER: v1 EditGroup edit_width_ 0x80 0x00612150
+  int edit_width_;
+  uint32_t field_84_;  // 0x84; live construction/close default
+  // GraphicWin and Dialog are virtual bases, appended by the compiler.
 };
 
-// PINNED BEFORE CHANGING THE DECLARATION, so that replacing the hand-composed
-// vbtable pointer and embedded subobjects with a real
-// `: public virtual GraphicWin, public virtual Dialog` cannot move the layout
-// without failing here. 0x8C of own data, then GraphicWin 0xA14, then the
-// 4-byte vtordisp this header already carries as a gap, then Dialog 0xF4.
-static_assert(sizeof(EditGroup) == 0xB9C,
-              "EditGroup layout must match the original executable");
-
-// EditBox is not declared yet; its text setter is reached at its address, and
-// its text buffer sits 0xA14 into it.
-typedef void (OriginalObject::*func_edit_box_set_text)(char *);
-extern func_edit_box_set_text EditBoxOriginalSetText;
-
+static_assert(sizeof(EditGroup) == 0xB98,
+              "EditGroup ends at original Dialog offset 0xAA4 plus 0xF4");

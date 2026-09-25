@@ -106,7 +106,7 @@ Return Value: the widget's result, zero for kinds that hold no items
 Status: Complete
 */
 int Dialogs::item(char *text, int index) {
-    switch (EditGroup::kind_) {
+    switch (kind_) {
         case 2:
             // THE RECEIVER IS THIS OBJECT, reinterpreted: the image calls
             // ListBox::item with the Dialogs pointer unchanged, and
@@ -138,7 +138,7 @@ Return Value: the count, zero for kinds that hold no items
 Status: Complete
 */
 int Dialogs::get_num_items() {
-    switch (EditGroup::kind_) {
+    switch (kind_) {
         case 1:
         case 2:
         case 4:
@@ -671,7 +671,7 @@ void Dialogs::on_left_click(int a, int b) {
 // 0x006132A0  ?calculate_dimensions@Dialogs@@QAEHXZ  ->  ?calculate_dimensions@Dialogs@@QAEHXZ
 //
 // Re-derived in this tree's own style (2026-09-06) ahead of homing into
-// dialogs.cpp. The kind at EditGroup::kind_ (Dialogs+0x180) selects which of
+// dialogs.cpp. The kind at kind_ (Dialogs+0x180) selects which of
 // the five base subobjects lays itself out, and the dispatcher is a tail
 // jump per arm: `add ecx, <base offset>` then `jmp` the base's own
 // calculate_dimensions, because the caller has nothing on the stack to

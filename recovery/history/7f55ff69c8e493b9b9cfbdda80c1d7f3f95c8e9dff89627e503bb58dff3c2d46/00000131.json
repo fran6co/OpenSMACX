@@ -1,0 +1,31 @@
+{
+  "event_id": "1aa69e56c4523f1e80c9fd89047f1fedf7f6485d7572b18c01429eedffcad811",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_window_left_down.py",
+      "src/game.cpp",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Full original5F63C0..5F654E and historical deleted seed recovered from3cb99d43^ confirm unclaimed398-byte function; its ORIGINAL identity was lost during earlier rehoming. Restore via native binder after inspecting complete original, not handwritten marker. Win primary slot81 independently establishes owner.",
+      "Correct inherited seed defects: fifth argument (from-parent/direct selector), not unused fourth WPARAM, selects capture owners and slot28/38. Both callbacks receive x,y, not y,x. Preserve original owner1-before-owner2/owner2-before-owner1 order, fresh parent reload after zorder callback and related-pointer capture after double-click callback. Ordinary this!=nullptr replaces truncating int32 cast without introducing null-entry handling; original dereferences receiver before that predicate.",
+      "Actual-source full-body host controls complement the suffix tests. Existing IsMultiplayerNet BOOL owner93F660 is initializedzero and original4838E3 reads DWORD; add load-bearing4-byte object binding beside its existing definition, not duplicate storage. _atoi645DA7 identification is independently validated against pinned CRT atox member; deeper _atol dependencies remain unverified, not application recovery.",
+      "Previous frozen stage passed391 protected bodies,24 native/host class tests and fresh build/link. These are not reused for changed source: repeat relevant checks and build before manual integration. Preserve all prior source, seed, claim and unresolved lifetime/menu/NewTech::exec obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6251456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "13e0ad81a37341bc6e1695357f4d4ff988f395d122fac1e5ca511a9995bba4df",
+  "request_id": "restore-win-left-down-identity-and-prefix-20260923",
+  "schema_version": 1,
+  "sequence": 131,
+  "stream": "task:vector-value-semantics"
+}

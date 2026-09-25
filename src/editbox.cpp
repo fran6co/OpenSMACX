@@ -33,8 +33,8 @@ static void __fastcall stop_edit_timer(Time *timer) {
 // 615DF0. Calls slot 62 virtually, not slot 12 directly.
 // ORIGINAL: 0x00615DF0 ?on_dialog_focus@EditBox@@QAEXH@Z 0x00615DF0-0x00615E31 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615df0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?vslot_51@EditBox@@UAEXH@Z
-void EditBox::vslot_51(int focused) {
+// symbol    ?on_dialog_focus@EditBox@@UAEXH@Z
+void EditBox::on_dialog_focus(int focused) {
     if (focused) {
         time_.start();
     } else {
@@ -79,8 +79,8 @@ void EditBox::vslot_21(int x, int) {
 // 615F10. This is the TWO-argument slot 17, not slot 16's mouse router.
 // ORIGINAL: 0x00615F10 ?on_mouse_move@EditBox@@QAEXHH@Z 0x00615F10-0x00615F4E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615f10.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?vslot_17@EditBox@@UAEXHH@Z
-void EditBox::vslot_17(int x, int) {
+// symbol    ?on_mouse_feedback@EditBox@@UAEXHH@Z
+void EditBox::on_mouse_feedback(int x, int) {
     if (WinPointerOwner3 == this ||
         (WinPointerOwner4 == this && WinPointerOwner3 != 0 && WinPointerOwner4 != 0)) {
         field_B44_ = text_position(x);

@@ -6,8 +6,9 @@ verification run in the library; the former application operation bridge is
 removed. Local compiler scripts remain in `environment/`. See
 [the portable package](../packages/match-recovery/README.md) for starting an unrelated project.
 
-The terrain loader needs one irregular palette-index table from the pinned
-original. CMake materializes it into ignored `build/recovery/preparation/terrain-data/`
+The terrain loader and renderer need one palette-index table and three signed
+landmark receiver/rotation tables from the pinned original. CMake materializes
+them into ignored `build/recovery/preparation/terrain-data/`
 using the source-owned object binding and installed PE/source APIs. Set
 `OPENSMACX_IMAGE` to the absolute original executable for isolated checkouts,
 or configure ordinary CMake with `-DOPENSMACX_ORIGINAL_IMAGE=/absolute/path`.

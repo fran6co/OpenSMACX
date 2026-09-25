@@ -1,0 +1,51 @@
+{
+  "event_id": "bd7adb470444375884219bbe29bc0f12477d01b85fb4982952d162e8032a36e8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_basewin_refresh.py",
+      "src/basewin.cpp",
+      "src/basewin.h",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "Console::new_base4CF7C0 publishes both focus coordinates used only by gen_terrain_poly in the decoded direct-reference census; recovering the producer requires full dependencies, not disconnected default globals. Full draft and original evidence expose missing diplomacy, popup and action services, plus a signed name_base header mismatch. Initial focus values are-99; distinct diplomacy mode93FAC8 starts0 and is assigned8 by new_base. These larger discoveries remain pending.",
+      "Recover the complete BaseWin repaint prerequisite pair41A7A0..41A7DF and41A7E0..41A8A7 through genuine Win visibility, focusedBaseID_, Bases coordinates, existing map distance helpers, base_compute(1), virtual redraw then explicitly direct MainInterfaceGlobal.GraphicWin::redraw. Existing base_compute4EC3B0 is already source-owned/claimed; do not duplicate it or implement the deferred base_energy behavior change.",
+      "Migrate all six src/veh.cpp calls to these real methods and remove both fixed-address member-pointer forwarders and their stale dependency explanation. Preserve sibling check_veh forwarding and all other pending work. Existing check_base seed claim is a restoration obligation; native recorder alone may bank the product body. Preserve seed history, identities, task baselines and all claims.",
+      "Coordinator owns source, task decisions, bindings, compiler preparation/leases and Git. Delegate only the new actual-source host test file; freeze the entire checkout before native measurement. Review full original branches, test visibility/read order/virtual versus direct dispatch and distance seams, verify affected protected claims/layout/references, fresh build/link, and recheck any integrated destination. No automatic/game acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4302752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4302816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6031552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6032128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5020416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ea81e996e529db90044c5fdf5c533dc6f0539d53ac95d0a05d30546c67ffc093",
+  "request_id": "base-refresh-closure-source-20260923",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:frontend-presentation"
+}

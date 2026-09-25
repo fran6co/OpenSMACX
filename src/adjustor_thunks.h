@@ -103,8 +103,6 @@ void * __fastcall adjust_map_win1_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void __fastcall adjust_map_win1_on_redraw(void *self, void *);
 void __fastcall adjust_map_win1_on_sys_close(void *self, void *);
-void __fastcall adjust_map_win1_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1);
 void __fastcall adjust_map_win1_on_left_click(void *self, void *, int arg0,
                                               int arg1);
 void __fastcall adjust_map_win1_on_left_down(void *self, void *, int arg0,
@@ -127,8 +125,6 @@ void * __fastcall adjust_map_win2_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void __fastcall adjust_plan_win1_on_redraw(void *self, void *);
 void __fastcall adjust_map_win5_on_sys_close(void *self, void *);
-void __fastcall adjust_map_win5_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1);
 void __fastcall adjust_map_win5_on_left_click(void *self, void *, int arg0,
                                               int arg1);
 void __fastcall adjust_map_win5_on_left_down(void *self, void *, int arg0,
@@ -153,8 +149,6 @@ void * __fastcall adjust_console1_scalar_delete(void *self, void *,
                                                 unsigned int arg0);
 void __fastcall adjust_map_win4_on_redraw(void *self, void *);
 void __fastcall adjust_console1_on_sys_close(void *self, void *);
-void __fastcall adjust_map_win4_on_mouse_move(void *self, void *, int arg0,
-                                              int arg1);
 void __fastcall adjust_map_win4_on_left_click(void *self, void *, int arg0,
                                               int arg1);
 void __fastcall adjust_map_win4_on_left_down(void *self, void *, int arg0,

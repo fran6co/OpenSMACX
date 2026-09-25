@@ -29,6 +29,16 @@
 
 #include <new>
 
+// Patterned line rendering is still unfinished. This owning-TU body keeps
+// the non-cover route-preview branch linkable without an executable-address
+// call. The existing five-argument solid-line renderer remains unchanged.
+// ORIGINAL: 0x005E09D0 ?line@Buffer@@QAEXHHHHHHHHH@Z 0x005E09D0-0x005E10BA
+// RECOVERY_BINDING: v1 {"evidence": ["Original4672C0 calls5E09D0; src/unrecovered/005e09d0.cpp retains its original span and seed.", "The original void catalogue and ignored-result call sites support the declaration; BODY GOES HERE does not implement pattern rendering."], "reason": "The non-cover direct route renderer references this nine-argument patterned Buffer line, distinct from the recovered five-argument solid overload. Its owning-TU placeholder is explicitly unfinished and only preserves linking."}
+void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
+                  int second_color, int pattern_on, int pattern_off, int phase) {
+    // BODY GOES HERE.
+}
+
 // THE ORIGINAL'S MIN, which evaluates both arguments twice. `write_cent_l`
 // calls `strlen` four times because it uses this twice, and that is not a
 // transcription artefact - it is what a macro does and what the image has.
@@ -2640,7 +2650,7 @@ PROMOTED FROM src/unrecovered/005dcae0.cpp, which reached every field through
 
 THE MEASURER'S TWIN. `text_width` walks the same markup and the same four
 fonts; this one draws it, and additionally OWNS THE LINK TABLE: `$LINK<`
-opens a region, `=` captures its label into `owned_[link_count_]`, and each
+opens a region, `=` captures its label into `owned_[link_count_ - 1]`, and each
 completed run is handed to `spot_` as a hit rectangle whose height comes from
 the link font - `unk_1_` when negative, `height_ + unk_1_` when not, which is
 the same reading `Win::flip` needs for its bubble.
@@ -2741,7 +2751,7 @@ int Buffer::write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord,
                 if (link_count_ < 20) {
                     const int label = static_cast<int>(close - text);
                     char *const kept = static_cast<char *>(mem_get(label + 1));
-                    owned_[link_count_] = kept;
+                    owned_[link_count_ - 1] = kept;
                     if (kept) {
                         memcpy(kept, text, label);
                         kept[label] = '\0';

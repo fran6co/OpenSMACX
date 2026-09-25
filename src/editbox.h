@@ -39,22 +39,20 @@ class EditBox : public GraphicWin {
   // is recovered in editbox.cpp, with compiler-owned base/member construction.
   EditBox();
 
-  // Override the existing Win slots; adding catalogue-named virtuals would
-  // append new slots or select GraphicWin's unrelated mouse/focus overloads.
+  // Override the existing Win slots; focus belongs to Win slot51, not an
+  // additional GraphicWin slot. Other unnamed events retain their positions.
   virtual void draw_contents();        // slot 12
-  virtual void vslot_17(int x, int y);   // on_mouse_move
+  virtual void on_mouse_feedback(int x, int y); // Win slot17
   virtual void vslot_20(int x, int y);   // on_left_down
   virtual void vslot_21(int x, int y);   // on_left_up
   virtual int vslot_25(int key, int repeat); // on_key_click
   virtual int vslot_26(int key);         // on_key_down
-  virtual void vslot_51(int focused);    // on_dialog_focus
+  virtual void on_dialog_focus(int focused);    // on_dialog_focus
   virtual void pass_dialog_focus();     // slot 64
   int text_fits();
   int text_position(int x);
 
-  // 0x006151E0, a pending_bodies forwarder. `EditGroup::set_text` reached it
-  // through a `func_edit_box_set_text` pointer-to-member seam, which emits
-  // `call dword ptr [...]` where the image emits `call rel32`.
+  // 0x006151E0, a pending_bodies forwarder; EditGroup calls it directly.
   void set_text(char *text);
 
   // Reusable close at 0x00614F30; this does not end member lifetimes.

@@ -1,0 +1,53 @@
+{
+  "event_id": "23dda778bb6cfad3866ab35cb8d478b131fbffee2ac01b00411afa2d0e4c5d34",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_sprite_asset_copy.py",
+      "recovery/tests/test_vehicle_asset_loader.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/infowin.cpp",
+      "src/infowin.h",
+      "src/maininterface.cpp",
+      "src/maininterface.h",
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Recover the missing vehicle asset-loading closure after load_terrain: full load_vehicles454270..4547DB and cleanup65515A..655182, the empty product load_flags453F70..454261 and cleanup65513A..65515A, and genuine Sprite::change_color5EAD9F..5EAE4E and source.copy(destination)5EAE4F..5EAF34. Existing seeds remain hints and are retained; no original-address forwarding or byte claims are authorized.",
+      "Independent original decoding rejects seed omissions: load_vehicles constructs Sprite[2] then a separate Sprite; explosion receivers are actual contiguous Sprite elements, UNITS marker vertical scans use x not y, and final chassis flag-y publication targets slot1. Full load_flags constructs14 local sprites and uses real faction text/shadow colors, reading them after the preceding service call; alien replacement depends on live faction flags, not ExpansionEnabled.",
+      "Recover through existing Sprite assets, the shared PCX buffer and nineteen-record RulesChassis owner. Validate new bounded object/literal interpretations against independent CRT and call/data evidence. Existing ChatItemIdTable[24] at68FA30 appears to combine two eight-color owners and unrelated following data; investigate exact reader domains before narrowing or splitting. No adjacent-storage array invention or silent bounds fallback.",
+      "Sprite recolor original skips all non-null totals0..3, unlike the seed. Sprite copy has close-like destination cleanup, allocates stride*height, copies metadata after memcpy, and does not add allocation size to SpriteMemoryUsed. Preserve these original behaviors, borrowed storage and failure order; no new null/self guards or accounting fixes.",
+      "Coordinator owns product, bindings, task decisions, native preparation/compiler leases and Git. Test agents may edit only separately delegated new files. Require full-body independent review, actual-source host/damage tests, fresh affected-claim/layout/data/reference observations and full build/link before manual integration and recheck the destination. Preserve all prior terrain WIP, task baselines and claims; base_energy, faction-cache and landmark-overlap behavior decisions remain deferred/pending. This work does not establish automatic or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4538992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4538224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6204831,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6205007,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4b504caf0db2e2a31b22853ccb9a952b15083bde714672ee5b4f3e66cf642bf4",
+  "request_id": "vehicle-flag-asset-closure-source-20260923",
+  "schema_version": 1,
+  "sequence": 116,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,61 @@
+{
+  "event_id": "18db11b8c9d16a4feeb8c3081872c26ca868db4953a4e0f1264d5cce1f49e48d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/README.md",
+      "recovery/terrain_data.py",
+      "recovery/tests/test_mapwin_generation.py",
+      "recovery/tests/test_terrain_data.py",
+      "recovery/tests/test_world_landmark_producers.py",
+      "src/map.cpp",
+      "src/mapwin.cpp"
+    ],
+    "evidence": [
+      "Original gen_terrain has nine direct MOVSX byte reads of landmark receiver/rotation pairs. No direct writers, pointer escapes or relocation-bearing elements found. Mesa/Crater original producers enumerate0..48; Mount producer0..8, while overlapping landmarks may overwrite a shared sequence without clearing other flags. Preserve this cross-producer question, do not truncate observed sentinel tails merely for a smaller declaration.",
+      "world_mesa original5C80F5 pushes0x100 tobit2_set591DB0; currentmap.cpp passesLM_MESA=8, confusing landmark catalogue id withBIT2_MESA. Correct this reconstruction defect tooriginalflag; it is not an authorized gameplaybugfix. Keepallunchangedproducerbehavior andexistingclaims.",
+      "Authorize real signed-byte receiver/rotation POD tables with source-owned bounded original interpretations, coupledgen_terrain indexed-member reads, and actual-source all-row/sentinel/rotation controls. Garlandrow31 hasvalidtexture2/rotation-1: onlytexture-1 skips. Tableboundshistoricalallocation and arbitraryeditedcodesremain explicituncertainties; addnoinventedboundsfallback.",
+      "Irregular proprietary initializer bytes stay inignored build materialization through existingterrain_data configure hook andnative PE/source APIs. Extendthat hook/CMake/tests minimally; noframework rewrite/newCLI. Wrongpin/unbacked/relocateddatarefuse, generatedincludes capturedbyexistingpreparation artifactroot. Nativeinitial-data/layout/protectedclaims/build checks remainrequired.",
+      "Coordinatorowns product/configuration/journal/Git/nativechanges. Testagents mayedit onlyseparately delegatedtestfiles; freezecheckoutbeforeprepare/nativechecks. Preserveotherterrainwork, base_energydeferredbehavior, originalidentities/seeds/baselines. Manualintegrationdoesnotestablishgameacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4600528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6061888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6057392,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6052976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5840304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5840384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a1fbfe1f3bfa1197f24edb278a9a77446fa4130940ec694de1c8affdf146e2b6",
+  "request_id": "landmark-source-owners-20260923",
+  "schema_version": 1,
+  "sequence": 93,
+  "stream": "task:control-sprite-defaults"
+}

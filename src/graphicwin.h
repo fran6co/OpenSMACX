@@ -124,58 +124,17 @@ class GraphicWin : public Win, public Buffer {
   // this derived entry (0x005D63E0), which delegates to Win::set_rects.
   virtual void set_rects();
 
-  // VIRTUAL, AND THE IMAGE IS WHAT SAYS SO. A body entered on a subobject
-  // opens by adjusting `this` back by that subobject's offset, and that is the
-  // signature of an override reached through a base's vtable. In CheckBox -
-  // own data to 0x1C, GraphicWin at 0x1C - exactly three bodies open
-  // `mov eax, [ecx - 0x1c]`: ??1CheckBox (0x0060E740), on_dialog_focus
-  // (0x0060FB90) and on_mouse_leave (0x0060FC30). So these are GraphicWin's
-  // virtuals, overridden there.
-  //
-  // `close()` is NOT one, by the same test: 0x0060E7C0 and 0x0060D1B0 both
-  // open `mov esi, ecx` on an UNADJUSTED receiver. Declaring it virtual to
-  // earn a vtordisp was measured and is wrong - it moves every derived
-  // close() onto the base's entry convention, which no call site in the image
-  // uses.
-  // DEFINED EMPTY, NOT PURE. The image has no GraphicWin body for either -
-  // these are vtable SLOTS that the derived classes fill, and every call
-  // reaches one through a derived override. `= 0` would be the natural
-  // spelling for that and cannot be used: GraphicWin is still a concrete type
-  // here (BaseWin embeds one as `graphicWin2_`, and several bodies construct
-  // and cast to it), so making it abstract breaks those. A virtual with no
-  // definition does not link at all - it has to be in the vtable - which is
-  // what 2 unresolved externals across 30 objects said.
-  // THE WINDOW-EVENT ENTRY CONVENTION, proved by the promotion pass against
-  // six BYTE_EXACT bodies. The image's window-event handlers for the
-  // virtually-derived window classes are ENTERED ON A BASE-SUBOBJECT-
-  // ADJUSTED RECEIVER, not on the class front - even though every catalogued
-  // symbol spells QAEX, a plain member. The bodies prove it themselves, by
-  // the displacements they open with:
-  //   RadioButton::on_left_double_click (0x0060E1E0) reads its vbtable at
-  //   this-0x18; CheckBox::on_left_double_click (0x0060FA80) at this-0x1C;
-  //   SpriteBox::on_left_down (0x00611150) and on_left_double_click
-  //   (0x006112E0) find their Spot table at this-0x7C; Dialogs::on_left_click
-  //   (0x00612E80) and on_scroll_delete (0x00613260) read the kind
-  //   discriminator at this-8, on_scroll_delete's vbtable at this-0x188.
-  // Those displacements only add up counted from a subobject inside the
-  // object, never from the front - EditGroup::on_dialog_focus (0x00612670)
-  // reads its box array at this-0x88 where the array lives at front+4, so
-  // its receiver is the GraphicWin subobject. The image's own thunk1/$4
-  // adjustor thunks (EditGroup's 0x006127C0, SpriteBox's 0x006118E0) are
-  // what perform the adjustment and land on these bodies. The catalogued
-  // QAEX catalogue spellings are historical interpretations, not proof that
-  // these are nonvirtual methods. The older EditGroup experiment measured
-  // on_dialog_focus at 24/26 instructions as an override and 26/26 spelled
-  // plain (see editgroup.h); that local result does not settle its hierarchy.
-  // Recover each override with its original table, callers, base layout and
-  // compiler-generated adjustor. A temporary byte regression is a restoration
-  // obligation, not permission to keep a missing virtual relationship.
-  virtual void on_dialog_focus(int) { ; }
-  virtual void on_mouse_leave(int, int) { ; }
-  // Returns `this`: the image's own closing `mov eax, esi` is the compiler
-  // returning the receiver, matching a real constructor's ABI even though
-  // this is spelled as a method (see the `symbol` fact on its ORIGINAL
-  // marker in graphicwin.cpp for why).
+  // Original table66FC50 ends with these two slots after Win's88 slots.
+  // Win::on_l_button_down5F652E consumes slot88's result: nonzero continues
+  // ordinary left-down delivery. StringBox432720 forwards the same hook.
+  // Slot89 is invoked at5D6591 after the caption callback, with live text
+  // and canvas pointers. All observed original derived tables inherit it.
+  virtual int on_link_clicked(int, char *) { return 1; }  // slot88,4042A0
+  virtual void on_draw_caption(char *, Buffer *) {}       // slot89,404260
+  // Focus and mouse-leave override Win slots51 and18 respectively. They
+  // must not be appended here merely to produce matching adjustor thunks.
+  // Nonvirtual reusable cleanup. Its artificial integer return and manual
+  // owned-buffer deletion still need the separately reviewed void migration.
   uint32_t close();
   // 0x00589550, a 5-byte `jmp` to GraphicWin::close, homed into general.cpp.
   // A plain member: no virtual, so nothing adjusts the receiver and VC6 can
