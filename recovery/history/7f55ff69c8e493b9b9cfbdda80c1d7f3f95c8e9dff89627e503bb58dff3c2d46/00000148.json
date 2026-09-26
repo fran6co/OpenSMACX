@@ -1,0 +1,22 @@
+{
+  "event_id": "f490211aa8587c3e9fd4e0bee6be5b0692275d73169e304a34e1e1f964414704",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/general.cpp",
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "Coverage-first wave 1 group (re-appended from the worktree fork onto the canonical chain; master discovery 2778d0da is the wave authority): transcribe the class:Sprite group's seed-only entities per the partition's source_homes as real compiling bodies with their ORIGINAL markers, retiring each seed atomically. Executed as 16 retirements (11 verified stale duplicates + 5 genuine transcriptions incl. the draw_dest wrapper family with three image-backed scaffold corrections and the recorder-banked BYTE_EXACT claim on 0x5E73CC per event 143's record-then-retire policy), reviewed and approved with all gates at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3348d37921657f7db724fdf7eebd185c24fb677ed8fc5c1af0f0aa4df00d434b",
+  "request_id": "cover-sprite-20260926-scope",
+  "schema_version": 1,
+  "sequence": 148,
+  "stream": "task:vector-value-semantics"
+}
