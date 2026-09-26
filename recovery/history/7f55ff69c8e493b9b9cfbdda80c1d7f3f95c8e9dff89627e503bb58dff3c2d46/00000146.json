@@ -1,0 +1,20 @@
+{
+  "event_id": "87da7880ee0cde222403c138d2b061de2a4cd335e6bc3f2cbe3e60d9c91ee2d2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Coverage-first wave 1 group (re-appended from the worktree fork onto the canonical chain; master discovery 2778d0da is the wave authority): transcribe the 137 sub-200-line leaf_recoveries.cpp seeds into the owning TU as real compiling bodies with their ORIGINAL markers (FILE or the file's redirect convention, no byte claims), retiring each seed atomically; no byte-convergence iteration. Executed as 40 retirements (29 bodies + 2 CRT-iterator facts + 9 verified stale duplicates), reviewed with one identity correction (sub_634720 span restored to the catalogued 0x00634720-0x006347BE / 158 bytes after image ground-truth proved the truncated extent mid-instruction) and all gates re-confirmed at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7ae432c5e1c7360efefc64a3ac3e175cd4d6fa1421a35d62f661598ba33d119c",
+  "request_id": "cover-leaves-20260926-scope",
+  "schema_version": 1,
+  "sequence": 146,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "95c16cdd2a7ab4e8bead052b3d3cb9f1ec8425f4b52ef60b1b23db7b22aa861e",
+  "payload": {
+    "affects": [
+      "entity-e31ec79f5212bd670c987cbfa157ed13059c96ebfcc3b622bbb305e81fe5d675"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sprite-shrink-drift-20260926",
+    "evidence": [
+      "Instruction anchors: 0x5E4477 (draw), 0x5E5EA5..0x5E5EC6 (draw_dest), 0x5E7A16..0x5E7A37 (draw_dest_source), 0x5E6CA9..0x5E6CD0 (draw_dest_unk1), and the shrink helper 0x5EACFF (source_count = sum of entries, raw steps).",
+      "This is a behavioral correctness defect in landed recovery code (visible drift in downscaled sprite rendering), not a byte-aesthetic issue: repair it in a near-term batch with per-path disassembly verification rather than deferring to the global convergence pass."
+    ],
+    "hypothesis": "Three landed Sprite blitters have a shrink-path source-advance defect: Sprite::draw_mono (0x5E3E50), Sprite::draw (0x5E4B9A) and Sprite::draw_dest (0x5E5833) skip the last column's source advance and step source_row by pitch*(unsigned char)rows[row], while the original advances by the x-table entry on EVERY column and steps pitch*(selector-1) + (pitch - source_columns) - netting exactly pitch*selector per row; the landed spelling advances source_count minus the last entry MORE, drifting the source forward every shrink row (~2px/row at 2:1). The four bodies transcribed this wave (draw_dest_unk1, its scale wrapper, draw_dest_source, and the shrink helper's reading) already spell the faithful shape.",
+    "kind": "discovery"
+  },
+  "previous_event": "3303cc4b92842a1054b5497a1f4068f7dd7b392103340047c1cfd8661500aefa",
+  "request_id": "sprite-shrink-drift-20260926",
+  "schema_version": 1,
+  "sequence": 144,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "3303cc4b92842a1054b5497a1f4068f7dd7b392103340047c1cfd8661500aefa",
+  "payload": {
+    "affects": [
+      "entity-e31ec79f5212bd670c987cbfa157ed13059c96ebfcc3b622bbb305e81fe5d675"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "claim-migration-policy-20260926",
+    "evidence": [
+      "The Sprite worker's execution: seed 005e73cc.cpp carried FILE BYTE_EXACT; the transcribed tree-style wrapper measured BYTE_EXACT via recover measure (22/22 instructions, mnemonic similarity 1.0) and recover record 0x5e73cc --in src/sprite.cpp banked the claim onto sprite.cpp:1237 with the recorder's own publication (seed temporarily restored for the historical bytes, then deleted); check-matches held the 2283 baseline and check-claims passed.",
+      "This resolves the blocker category both bulk-TU workers reported (35 stringstruct + 8 leaves claim-bearing seeds): the policy is record-then-retire when the body converges for free, seed-stays when it does not - coverage never trades a claim."
+    ],
+    "hypothesis": "Claim-bearing seeds retire under coverage mode through the recorder, not around it: transcribe the body, measure it fresh, bank with recover record --in <owning-tu>, then delete the seed in the same change - proven on 0x005E73CC (Sprite::draw_dest_unk1 scale wrapper: transcribed, measured BYTE_EXACT 22/22, recorder-stamped, seed retired, claim tally preserved). When record refuses because the fresh body is not exact, the seed stays and the function is convergence-pass scope; the claim is never dropped for coverage.",
+    "kind": "discovery"
+  },
+  "previous_event": "d1e16df689d2149424614e04310e1844754f753de427ed1a16ccda588639665f",
+  "request_id": "claim-migration-policy-20260926",
+  "schema_version": 1,
+  "sequence": 143,
+  "stream": "task:vector-value-semantics"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "d1e16df689d2149424614e04310e1844754f753de427ed1a16ccda588639665f",
+  "payload": {
+    "affects": [
+      "entity-e31ec79f5212bd670c987cbfa157ed13059c96ebfcc3b622bbb305e81fe5d675"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "leaves-unblock-wave2-20260926",
+    "evidence": [
+      "The leaves wave-1 worker's categorized blockers: fourteen seeds (0x006095F0, 0x0060E020, 0x0060E980, 0x0060F8B0, 0x0060FBB0, 0x006108E0, 0x00611380, 0x00611F80, 0x006120D0, 0x006151E0, 0x0062B8A0, 0x00633010, 0x006340C0, 0x00634200) each hold transcribable bodies while pending_bodies.cpp defines their symbols as forwarders (e.g. Dialog::init at line 636, SpriteBox::sprite at 441) - a same-name member is an ODR conflict and the file's own header says 'When a body lands in a compiled unit, DELETE its forwarder, AND REPOINT ITS CALLERS'.",
+      "Link failure observed for 0x00634280/0x00634330: zlib.lib leaves _z_errmsg/_zcalloc/_zcfree/_adler32/_inflate_mask/_inflate_flush unresolved because CMakeLists.txt's add_library(zlib STATIC ...) omits zutil.c/adler32.c (present in src/vendor/zlib-1.0.2, compiled by no target). And 0x0062E420's seed mangle ?on_player_added@Net@@QAEHPADI@Z conflicts with net_class.h:294's 'virtual void on_player_added(char*, unsigned long)' - same parameters, different return type and virtuality, ill-formed as an overload; the image's identity wins."
+    ],
+    "hypothesis": "Coverage wave 2 for the leaf families unblocks 17 more seeds with three coordinator actions: delete the fourteen PENDING_BODY forwarders whose same-name member bodies are now transcribable (repointing their callers per pending_bodies.cpp's own departure instructions, declaring the members in net_class.h where needed), add the missing vendored-zlib members (zutil.c, adler32.c and the infbits/infutil companions) so the single-shot wrappers 0x00634280/0x00634330 link, and correct Net::on_player_added's declaration in net_class.h to the image's mangled identity (non-virtual __thiscall returning int, not virtual void) so 0x0062E420 can land.",
+    "kind": "discovery"
+  },
+  "previous_event": "4c9acc0acfe938e87075b4467ae38b5e2e86c99b159f2007467a5350aa5305c7",
+  "request_id": "leaves-unblock-wave2-20260926",
+  "schema_version": 1,
+  "sequence": 142,
+  "stream": "task:vector-value-semantics"
+}

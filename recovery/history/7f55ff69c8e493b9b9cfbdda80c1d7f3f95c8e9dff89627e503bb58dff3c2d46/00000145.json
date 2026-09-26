@@ -1,0 +1,21 @@
+{
+  "event_id": "7ae432c5e1c7360efefc64a3ac3e175cd4d6fa1421a35d62f661598ba33d119c",
+  "payload": {
+    "affects": [
+      "entity-e31ec79f5212bd670c987cbfa157ed13059c96ebfcc3b622bbb305e81fe5d675"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "designwin-second-base-receivers-20260926",
+    "evidence": [
+      "Disassembly anchors: 0x43D220 lea ecx,[esi+0x11D44]; mov [esi+0x137E4],eax; add esi,0xFFFFF5EC (-0xA14); 0x43D290 same family; 0x43D120 reads flatButtons at +0x2D8 then -0xA14.",
+      "Related unblock inventory from the same batch for wave 2: pending_bodies.cpp:661 forwarder blocks select_special 0x0043AC70; select_reactor 0x0043AA00 needs SelectPartWin ctor 0x004328B0 and exec 0x00433F70 homed (prodpicker/pending_bodies); designwin.cpp now carries four link-only BODY GOES HERE placeholders for preserved-unit members (select_chassis/weapon/armor/reactor); and six unhomed callees reached through documented seams (proto_sort_2 0x005A63D0, name_proto 0x0057E040, retire_proto 0x0057F1D0, prune_protos 0x0057F4B0, say_stats_3 0x0057D7D0, diplo_lock/unlock 0x00539820/0x005398C0)."
+    ],
+    "hypothesis": "The DesignWin interface-table slot bodies receive the SECOND-BASE pointer (DesignWin+0xA14), not the object: on_iface_left_click 0x0043D220 computes spot1_ at +0x12758 and protoID_ at +0x141F8 only if esi is the +0xA14 subobject, then subtracts 0xA14 before Win calls; on_iface_right_click 0x0043D290 and on_status 0x0043D120 follow the same convention. The tree's remaining PENDING forwarders for on_iface_left_click/mouse_move/mouse_leave (preserved units src/recovered/units/0043d220/0043d350/0043d3c0.cpp) pass the FULL this - wrong receiver by +0xA14 if ever executed; the two recovered slot bodies are spelled as plain overrides whose slot adjustors emit the correction, which is behaviorally identical and the correct long-term shape for the preserved units too.",
+    "kind": "discovery"
+  },
+  "previous_event": "95c16cdd2a7ab4e8bead052b3d3cb9f1ec8425f4b52ef60b1b23db7b22aa861e",
+  "request_id": "designwin-second-base-receivers-20260926",
+  "schema_version": 1,
+  "sequence": 145,
+  "stream": "task:vector-value-semantics"
+}
