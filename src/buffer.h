@@ -131,6 +131,10 @@ class Buffer {
  public:
   // homed from 005d7b40.cpp
   int __stdcall load_tga(const char * a1, Palette * a2, int a3, int a4);
+  // 0x005D7B20 - `?load_tga@Buffer@@QAGHPBD@Z`, the one-argument overload:
+  // forwards to the four-argument loader above with no palette and the full
+  // 256-entry colour count. __stdcall like the loader pair (QAG, not QAE).
+  int __stdcall load_tga(const char *filename);
 
  public:
   // Blit this buffer into a window's client area. Called by the homed
@@ -343,6 +347,11 @@ class Buffer {
   int copy(Buffer *buffer, int xCoord, int yCoord, int width, int height);
   int copy(Buffer *buffer, RECT *rect);
   int box(RECT *rect, int color1, int color2);
+  // 0x005D8840 - `?draw_mono@Buffer@@QAEHPAVBuffer@@HHHH@Z`, the fixed-size
+  // member of the draw_mono family: target, transparency, position and
+  // colour, with the scale denominators the seven-argument form takes left
+  // at the Sprite defaults.
+  int draw_mono(Buffer *target, int transparent, int x, int y, int colour);
   // 0x005DA6C0 - `?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z`. The same
   // rectangle tiled through a mask colour: `box_sprite` paints every frame
   // element twice, once as the sprite and once as its shadow.
@@ -388,6 +397,9 @@ class Buffer {
   // loader pair was declared with the explicit convention.
   int __stdcall load_bmp(const char *filename, Palette *palette, int a3,
                          int a4);
+  // 0x005D7C80 - `?load_bmp@Buffer@@QAGHPBD@Z`, the one-argument overload:
+  // the same forwarder shape as the one-argument load_tga above.
+  int __stdcall load_bmp(const char *filename);
   // OVERLOAD BLOCK, homed from the archive in the buffer homing pass. The
   // catalogue's own prototypes; each body lives beside its marker in
   // buffer.cpp. The five-int `draw` above is the six-argument form the
@@ -403,8 +415,8 @@ class Buffer {
   int draw_multi_table_dest(Buffer *source, int a, int b, int c, int d);
   int draw_multi_table_dest(Buffer *source, int a, int b, int c, int d, int e,
                             unsigned char *bits);
-  int copy(Buffer *source, int x, int y, int w, int h, int sw, int sh,
-           int a8, int a9);
+  int copy(Buffer *source, int src_x, int src_y, int src_w, int src_h,
+           int dest_x, int dest_y, int dest_w, int dest_h);
   // Coordinate bounds are exclusive. The RECT overload additionally
   // subtracts one from right/bottom, as in the original remapping path.
   int map_colors(int left, int top, int right, int bottom, unsigned char *table);
@@ -423,8 +435,16 @@ class Buffer {
   void line(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8,
            int a9);
   void line(int x1, int y1, int x2, int y2, int color);
-  int hline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
-  int vline(int a1, int a2, int a3, int a4, int a5, int a6, int a7, int a8);
+  // THE PATTERNED RUN PAIR, 0x005E10C0 and 0x005E1350
+  // (`?hline@Buffer@@QAEXHHHHHHHH@Z` / `?vline@Buffer@@QAEXHHHHHHHH@Z`): the
+  // clipped writers above with a dash pattern - two colours, an on length,
+  // an off length and a phase - beside the nine-argument `line` that names
+  // the same five pattern words. VOID in the image (QAEX); the old `int`
+  // spelled a symbol nothing holds.
+  void hline(int x1, int x2, int y, int first_color, int second_color,
+             int pattern_on, int pattern_off, int phase);
+  void vline(int x, int y1, int y2, int first_color, int second_color,
+             int pattern_on, int pattern_off, int phase);
   int put_pixel(int x, int y, int color);
   int change_color(int a1, int a2);
   int change_color(RECT *area, int a2, int a3);
@@ -447,6 +467,9 @@ class Buffer {
   int write_right_l(Font *font, char *text, int x_coord, int y_coord,
                     int width, int len);
   int write_right_l(Font *font, char *text, int x_coord, int y_coord, int len);
+  // 0x005DB930 - the RECT member of the Font-first family: same temporary
+  // font-slot override around the four-argument RECT writer below.
+  int write_right_l(Font *font, char *text, RECT *area, int len);
   int write_right_l(char *text, int x_coord, int y_coord, int width);
   int wrap(Font *font, char *text, RECT *area);
   int wrap(char *text, RECT *area);
