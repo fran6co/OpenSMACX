@@ -198,6 +198,82 @@ def test_actual_constructor_and_virtual_focus(tmp_path):
     assert result.returncode == 0, result.stderr
 
 
+def adjustor_bodies(text=None):
+    """The on_redraw adjustor walks, extracted from the actual source.
+
+    0x006127B0 (thunk1, 8 bytes) is the vtordisp rebase alone; 0x00612820
+    (thunk3, 14 bytes) adds the static Dialog-to-GraphicWin delta 0xA18
+    (2584) the image spells `sub ecx, 0xa18`. Both carry `- 0xAA4` because
+    EditGroup::on_redraw is an implicit override of the Dialog virtual base
+    (Dialog at 0xAA4 after the verified hierarchy repair) and VC6 folds
+    `add ecx, 0xAA4` into any qualified EditGroup::on_redraw call - the
+    pre-subtraction cancels it, so the receiver stays the GraphicWin-adjusted
+    pointer the original body 0x612450 opens with.
+    """
+    source = text if text is not None else (ROOT / 'src/adjustor_thunks.cpp').read_text()
+    return {
+        'ON_REDRAW1': braced(source, 'void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {'),
+        'ON_REDRAW3': braced(source, 'void __fastcall adjust_edit_group3_on_redraw(void *self, void *) {'),
+        'FOCUS1': braced(source, 'void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {'),
+        'SPRITE3': braced(source, 'void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {'),
+    }
+
+
+THUNK1_WALK = 'reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA4)->EditGroup::on_redraw();'
+THUNK3_WALK = 'reinterpret_cast<EditGroup *>(object - vtordisp - 2584 - 0xAA4)->EditGroup::on_redraw();'
+
+
+def assert_repaired_walks(bodies):
+    assert THUNK1_WALK in bodies['ON_REDRAW1']
+    assert THUNK3_WALK in bodies['ON_REDRAW3']
+    # The pre-repair Dialog offset 0xAA8 is gone from both walks.
+    assert '- 0xAA8' not in bodies['ON_REDRAW1']
+    assert '- 0xAA8' not in bodies['ON_REDRAW3']
+
+
+def test_editgroup_on_redraw_walks_match_the_repaired_hierarchy():
+    assert_repaired_walks(adjustor_bodies())
+
+
+def test_editgroup_on_redraw_claims_stay_banked():
+    source = (ROOT / 'src/adjustor_thunks.cpp').read_text()
+    assert re.search(r'^// ORIGINAL: 0x006127B0 \?on_redraw@thunk1_EditGroup@@QAEXXZ .*\bBYTE_EXACT$',
+                     source, re.M)
+    assert re.search(r'^// ORIGINAL: 0x00612820 \?on_redraw@thunk3_EditGroup@@QAEXXZ .*\bBYTE_EXACT$',
+                     source, re.M)
+
+
+def test_untouched_neighbor_walks_keep_their_proven_shapes():
+    bodies = adjustor_bodies()
+    # pass_dialog_focus stays Win-qualified: no fold, vtordisp only (8 bytes).
+    assert 'reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();' in bodies['FOCUS1']
+    # The SpriteBox sibling keeps the same compensated shape that still
+    # measures BYTE_EXACT at 0x00611930.
+    assert ('reinterpret_cast<SpriteBox *>(object - vtordisp - 2584 - 0xAA4)'
+            '->SpriteBox::on_redraw();') in bodies['SPRITE3']
+
+
+ADJUSTOR_MUTATIONS = {
+    # Reintroducing the pre-repair Dialog offset must fail the walk control.
+    'stale_pre_repair_offset': (THUNK1_WALK, THUNK1_WALK.replace('- 0xAA4', '- 0xAA8')),
+    # Dropping the fold cancellation makes VC6 emit `add ecx, 0xAA4`.
+    'missing_fold_cancel': (THUNK1_WALK, 'reinterpret_cast<EditGroup *>(object - vtordisp)->EditGroup::on_redraw();'),
+    # A wrong static Dialog-to-GraphicWin delta breaks the 0xA18 immediate.
+    'wrong_static_delta': (THUNK3_WALK, THUNK3_WALK.replace('- 2584 -', '- 2585 -')),
+    # Dropping the static delta leaves only the folded walk.
+    'missing_static_delta': (THUNK3_WALK, THUNK1_WALK),
+}
+
+
+@pytest.mark.parametrize('name', tuple(ADJUSTOR_MUTATIONS))
+def test_adjustor_walk_damage_is_rejected(name):
+    before, after = ADJUSTOR_MUTATIONS[name]
+    source = (ROOT / 'src/adjustor_thunks.cpp').read_text()
+    assert source.count(before) >= 1, name
+    with pytest.raises(AssertionError):
+        assert_repaired_walks(adjustor_bodies(source.replace(before, after)))
+
+
 MUTATIONS = {
     'first_receiver': ('BODY', 'EditBox *box = boxes_[0];', 'EditBox *box = boxes_[1];'),
     'negative_is_nonzero': ('BODY', 'focus_id != 0', 'focus_id > 0'),

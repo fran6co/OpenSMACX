@@ -1,0 +1,24 @@
+{
+  "event_id": "cda4943c43dc8993c65769e9e5dd9f569ee1c79d53d8707bfa054e43e6168bdf",
+  "payload": {
+    "affects": [
+      "entity-e31ec79f5212bd670c987cbfa157ed13059c96ebfcc3b622bbb305e81fe5d675",
+      "entity-edfdfa113b4118c9252aa2bddd08dcc9efa6e4071594a95cdb7a354cd63932f9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "win-slot12-on-redraw-rename-prerequisite-20260926",
+    "evidence": [
+      "vtable 0x006708D4 slot12 = 0x006127B0 -> 0x00612450 ?on_redraw@EditGroup@@QAEXXZ; slots 0-15 match win.h declarations slot-by-slot (show/hide/resize/on_lose_mouse_capture/vslots).",
+      "vtable 0x006708C0 (installed at complete+0xAA4 by constructor 0x00611940, vbtable 0x00670A3C {0,0x8C,0xAA4}) slot2 = 0x00612820 -> 0x00612450; slot1 = 0x00612810 -> 0x00611AF0 attach.",
+      "win.h:544-545 models slot12 as virtual void draw_contents() {} with RECOVERY_SHARED 0x00404280 ?draw_contents@Win (a folded shared body); councwin.h:104 and alphamenu.h:47 record that every derived slot12 override is map-named on_redraw (?on_redraw@CouncWin 0x00426AA0, on_redraw@AlphaMenu).",
+      "Measured: reinterpret_cast<EditGroup*>(object - vtordisp)->EditGroup::on_redraw() compiles to sub ecx,[ecx-4]; add ecx,0xaa4; jmp (the qualified-call receiver fold), so a Dialog-only override cannot produce the image's 14-byte sub ecx,[ecx-4]; sub ecx,0xA18; jmp. The repaired walks object - vtordisp - 0xAA4 and object - vtordisp - 2584 - 0xAA4 now measure BYTE_EXACT at both addresses, matching the SpriteBox sibling 0x00611930."
+    ],
+    "hypothesis": "The two EditGroup on_redraw adjustors (0x6127B0, 0x612820) can only be retired in favor of compiler-generated thunks after Win slot12 is renamed tree-wide from draw_contents to on_redraw: the original method overrode the same-named virtual in both virtual bases (Win slot12 via virtual GraphicWin, entry 0x6708D4+0x30; Dialog slot2, table 0x6708C0 at complete+0xAA4), and VC6 only emits the 14-byte Dialog-path thunk with the static 0xA18 delta for a function overriding both; with the tree's split names a Dialog-only override measures a delta-0 8-byte thunk (verified on the passing attach thunk 0x612810 and by the measured +0xAA4 call fold). The rename touches win.h/win.cpp plus the EditBox, MultiDebug, AlphaMenu and CouncWin overriders and callers.",
+    "kind": "discovery"
+  },
+  "previous_event": "19fe894cbd36fc2318ce0297c55a2a6b0ddf0ea2c42b14c1aae0bc8527926322",
+  "request_id": "win-slot12-on-redraw-rename-prerequisite-20260926",
+  "schema_version": 1,
+  "sequence": 134,
+  "stream": "task:vector-value-semantics"
+}

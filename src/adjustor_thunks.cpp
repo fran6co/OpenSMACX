@@ -2393,6 +2393,14 @@ Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (EditGroup adjustor retirement batch): the pre-repair
+//            spelling walked `object - vtordisp - 0xAA8` and measured 1/3 -
+//            a stale Dialog offset from the pre-hierarchy layout. Under the
+//            genuine hierarchy Dialog sits at 0xAA4 and EditGroup::on_redraw
+//            is its implicit override, so the qualified call itself folds
+//            `add ecx, 0xAA4` into the receiver (measured: the bare
+//            vtordisp-only walk emits exactly that). Pre-subtracting 0xAA4
+//            nets zero and leaves the image's two instructions.
 Return Value: n/a
 Status: Complete
 */
@@ -2400,7 +2408,11 @@ void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA8)->EditGroup::on_redraw();
+    // The -0xAA4 cancels the compiler's own +0xAA4 receiver fold for the
+    // Dialog virtual base, so the receiver handed to EditGroup::on_redraw
+    // stays the GraphicWin-adjusted pointer the original body at 0x612450
+    // opens with (`mov eax, [esi - 0x8C]`).
+    reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA4)->EditGroup::on_redraw();
 }
 
 
@@ -2441,6 +2453,14 @@ Purpose: Adjust the receiver from EditGroup's thunk3 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (EditGroup adjustor retirement batch): the pre-repair
+//            spelling walked `object - vtordisp - 2584 - 0xAA8` and measured
+//            2/3 - the same stale Dialog offset as the thunk1 sibling,
+//            visible as the wrong `sub ecx, 0xa1c` immediate. Post-repair
+//            the walk is the vtordisp rebase plus the static
+//            Dialog-to-GraphicWin delta 0xA18 (2584), with -0xAA4
+//            cancelling the qualified call's +0xAA4 fold; the emitted body
+//            is the image's `sub ecx,[ecx-4]; sub ecx, 0xA18`.
 Return Value: n/a
 Status: Complete
 */
@@ -2448,5 +2468,9 @@ void __fastcall adjust_edit_group3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<EditGroup *>(object - vtordisp - 2584 - 0xAA8)->EditGroup::on_redraw();
+    // 2584 is 0xA18, the fixed Dialog-to-GraphicWin gap that standalone
+    // EditGroup (0xAA4 - 0x8C) and the Dialogs embedding (0xBA0 - 0x188)
+    // share; the -0xAA4 cancels the call's receiver fold as in the thunk1
+    // sibling, leaving the GraphicWin-adjusted receiver for 0x612450.
+    reinterpret_cast<EditGroup *>(object - vtordisp - 2584 - 0xAA4)->EditGroup::on_redraw();
 }
