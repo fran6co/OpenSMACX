@@ -1,0 +1,33 @@
+{
+  "event_id": "20bed9268a2d40e1fe037da29fa5913657b289429c9a1454f5dcdca03fb421a5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_editgroup_focus.py",
+      "src/adjustor_thunks.cpp",
+      "src/alphamenu.cpp",
+      "src/alphamenu.h",
+      "src/councwin.cpp",
+      "src/councwin.h",
+      "src/editbox.cpp",
+      "src/editbox.h",
+      "src/editgroup.h",
+      "src/multidebug.cpp",
+      "src/multidebug.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Authorize the tree-wide Win slot-12 rename from draw_contents to on_redraw per journal event 134's discovery: with both virtual bases carrying the same name, a single EditGroup override compiles the dual-base thunks VC6 emits for the original (Win slot12 via virtual GraphicWin, entry 0x6708D4+0x30; Dialog slot2, table 0x6708C0 at complete+0xAA4 with the static 0xA18 delta), which no split-name spelling can produce. Rename the declaration and body in win.h/win.cpp, every derived override and caller in EditBox, MultiDebug, AlphaMenu and CouncWin (and any other overriders a tree-wide grep finds), preserving the RECOVERY_SHARED attribution comment and every ORIGINAL marker identity - names change, claims and spans do not.",
+      "Then retire the two handwritten adjustors (0x6127B0 adjust_edit_group1_on_redraw, 0x612820 adjust_edit_group3_on_redraw) in favor of the compiler-generated thunks under the renamed dual-base override - the MapWin slot17 trio recipe - keeping both BYTE_EXACT claims (re-measured exact on the generated functions), removing the handwritten bodies and their header declarations, and re-homing the markers. Require fresh protected-byte/scoped checks with zero collateral regressions in the touched TUs' claims, claim continuity, application compile/link, coordinator original/source review and destination rechecks before manual integration; ceilings to measured counts in the same commit. No framework change, flag change or claim demotion is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "41a047d4d2558878766a62b836139ffb8d19ac76f584c2e47a43a13fad45604c",
+  "request_id": "win-slot12-rename-scope-20260926",
+  "schema_version": 1,
+  "sequence": 137,
+  "stream": "task:vector-value-semantics"
+}
