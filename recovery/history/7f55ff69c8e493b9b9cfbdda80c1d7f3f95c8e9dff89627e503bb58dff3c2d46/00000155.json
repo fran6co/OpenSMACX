@@ -1,0 +1,39 @@
+{
+  "event_id": "5c0f90f2758de0ab386d6ca442440a0990642bdf356c7da59337a1e08c319949",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/audits.json",
+      "src/console.cpp",
+      "src/councwin.h",
+      "src/designwin.cpp",
+      "src/dialogs.h",
+      "src/editbox.h",
+      "src/editgroup.cpp",
+      "src/leaf_recoveries.cpp",
+      "src/listbox.h",
+      "src/mapwin.cpp",
+      "src/mapwin.h",
+      "src/multidebug.h",
+      "src/net_class.h",
+      "src/netwin.h",
+      "src/pending_bodies.cpp",
+      "src/scroll.h",
+      "src/sprite.cpp",
+      "src/sprite.h",
+      "src/stringstruct.cpp",
+      "src/worldwin.h"
+    ],
+    "evidence": [
+      "Wave 2 forwarder-retirement batch (re-appended from the worktree fork onto the canonical chain; master discovery 1c707a7c): twenty-one PENDING_BODY forwarders retired with real bodies transcribed into their owning TUs, callers repointed per the departure instructions; the vendored-zlib member fix (zutil/adler32/infutil from the pinned archive) with the two wrapper bodies; designwin's one-line repair rides content-identical to master's a8044076. Console::on_key_click stays authorized-but-undelivered (its seed is a placeholder with no body). Reviewed and approved after the stale-citation comment fix, with all bodies sampled at instruction level and every gate green."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "aa89ab98fa75c4a78420f78b674129fd03b03d817b2a5d8f83b903c72f2dbdaa",
+  "request_id": "w2-forwarders-scope",
+  "schema_version": 1,
+  "sequence": 155,
+  "stream": "task:vector-value-semantics"
+}
