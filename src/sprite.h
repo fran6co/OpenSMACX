@@ -79,6 +79,13 @@ class Sprite {
                 unsigned char *table);
   int draw_dest(Buffer *destination, int transparent, int x, int y,
                 int numerator, int denominator, unsigned char *table);
+  // Destination remap with no transparency key of its own: a zero source
+  // byte sends the destination pixel through the table and every other
+  // destination pixel is left untouched. The six-argument overload
+  // substitutes a temporary scale, like the wider draw overloads.
+  int draw_dest_unk1(Buffer *destination, int x, int y, unsigned char *table);
+  int draw_dest_unk1(Buffer *destination, int x, int y, int numerator,
+                     int denominator, unsigned char *table);
   int draw_dest_unk2(Buffer *buffer, int a, int b, int c, unsigned char *bits);
   int draw_dest_unk2(Buffer *buffer, int a, int b, int c, int x, int y,
                      unsigned char *bits);
@@ -87,7 +94,10 @@ class Sprite {
   int draw_multi_table_dest(Buffer *buffer, int a, int b, int c, int x, int y,
                             unsigned char *bits);
   // Buffer's software drawing wrappers borrow the shared Sprite descriptor.
-  int draw_dest_source(Buffer *buffer, int a, int b, int c, int d);
+  // The catalogue's five-argument form takes the transparency key and the
+  // remap table (`HHHPAE`), not four ints.
+  int draw_dest_source(Buffer *buffer, int transparent, int x, int y,
+                       unsigned char *table);
   int draw_dest_source(Buffer *buffer, int a, int b, int c, int d, int e,
                        unsigned char *bits);
   int draw_mono(Buffer *destination, int transparent, int x, int y, int color);
@@ -102,6 +112,13 @@ class Sprite {
   // Copy this sprite's pixels/metadata into the destination, not vice versa.
   int copy(Sprite *destination);
   int change_color(int old_color, int new_color);
+  // The Filemap-backed persistence pair; the image spells the single
+  // parameter `int` and hands it to Filemap::create/open as the mapped file's
+  // name. load() parses into the EXISTING pixel block: its head is close()'s
+  // cleanup, so pcBits_ only survives it when fObj1Exists_ marks the pixels
+  // borrowed - that is the caller domain the 0x19-byte header parse runs in.
+  int save(int filename);
+  int load(int filename);
   // 0x005E3890, still FILE-only in src/unrecovered/005e3890.cpp. DECLARED
   // here because BasePop::start (0x00601BF0) calls it by name on the popup's
   // own `sprite_` - the access costs nothing and the definition stays where
