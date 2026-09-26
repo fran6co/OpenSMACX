@@ -1,0 +1,21 @@
+{
+  "event_id": "e98b7f3e452faebb233cf6ac2ce479f0aec8725a8a268107be3d99759bfcb6aa",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "editgroup-adjustor-retirement-20260926",
+    "evidence": [
+      "The integrated EditGroup hierarchy repair (2ffb7f62) is verified correct against vbtable 0x670A3C {0, 0x8C, 0xAA4} and the slot51 thunk chain 0x6708D4 -> 0x6127C0 (sub ecx,[ecx-4]; jmp 0x612670); the same WIP retired three handwritten MapWin slot17 adjustors (0x4218B0/0x48BFA0/0x51DE70) in favor of compiler-generated ones from a genuine virtual override and all three re-measured BYTE_EXACT.",
+      "The two failing bodies are the remaining handwritten EditGroup vtordisp walks: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ (8 bytes, currently 1/3 measured) reads the vtordisp at object-4 and calls EditGroup::on_redraw at object - vtordisp - 0xAA8; 0x00612820 ?on_redraw@thunk3_EditGroup@@QAEXXZ (14 bytes, currently 2/3) is its thunk3 sibling. Their BYTE_EXACT claims are retained restoration obligations of the verified repair - the remedy is to make the genuine hierarchy emit them (or repair the vtordisp arithmetic from the disassembly), never to demote the claims or revert the hierarchy."
+    ],
+    "hypothesis": "The two retained EditGroup adjustor regressions (adjustor_thunks.cpp 0x6127B0 adjust_edit_group1_on_redraw 1/3 and 0x612820 adjust_edit_group3_on_redraw 2/3) are artifacts of the pre-repair handwritten thunk spellings; under the genuine vbtable-verified hierarchy the compiler can emit both originals itself, as it now does for the three retired MapWin slot17 adjustors.",
+    "kind": "discovery"
+  },
+  "previous_event": "1aa69e56c4523f1e80c9fd89047f1fedf7f6485d7572b18c01429eedffcad811",
+  "request_id": "editgroup-adjustor-retirement-20260926",
+  "schema_version": 1,
+  "sequence": 132,
+  "stream": "task:vector-value-semantics"
+}

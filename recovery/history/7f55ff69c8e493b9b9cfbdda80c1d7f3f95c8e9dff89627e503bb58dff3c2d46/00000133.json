@@ -1,0 +1,26 @@
+{
+  "event_id": "19fe894cbd36fc2318ce0297c55a2a6b0ddf0ea2c42b14c1aae0bc8527926322",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_editgroup_focus.py",
+      "src/adjustor_thunks.cpp",
+      "src/adjustor_thunks.h",
+      "src/dialogs.cpp",
+      "src/dialogs.h",
+      "src/editgroup.cpp",
+      "src/editgroup.h"
+    ],
+    "evidence": [
+      "Authorize the EditGroup adjustor retirement batch from the editgroup-adjustor-retirement-20260926 discovery: retire or repair the two handwritten on_redraw adjustors (0x6127B0, 0x612820) under the genuine hierarchy - the compiler-generated-thunk route if the spelling converges, else a disassembly-verified repair of the vtordisp arithmetic - keeping both BYTE_EXACT claims intact, re-pointing any consumers, and re-measuring both addresses plus the surrounding EditGroup claims (no collateral regressions).",
+      "Require actual-source controls extending test_editgroup_focus.py for whichever route lands (thunk emission shape or corrected walk), fresh protected-byte/scoped checks on the two addresses, claim continuity, application compile/link and coordinator original/source review before manual integration; ceilings lowered or raised to measured counts in the same commit. No framework change, flag change, hierarchy revert or claim demotion is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e98b7f3e452faebb233cf6ac2ce479f0aec8725a8a268107be3d99759bfcb6aa",
+  "request_id": "editgroup-adjustor-scope-20260926",
+  "schema_version": 1,
+  "sequence": 133,
+  "stream": "task:vector-value-semantics"
+}
