@@ -1,0 +1,23 @@
+{
+  "event_id": "c46c15bc054fc610e1755e309a60b96f4abb8941c45ed869a09cf750137065b0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/caviar.cpp",
+      "src/listbox.cpp",
+      "src/socialwin.cpp",
+      "src/socialwin.h"
+    ],
+    "evidence": [
+      "Wave 2 ranked groups (re-appended from the worktree fork onto the canonical chain; master discovery 1c707a7c): transcribe class:SocialWin, the caviar remainder and class:ListBox per the coverage protocol. Executed as 18 retirements + 1 restored seed (the reviewer's keep) with two claims recorder-banked (immune 82/82, on_status 77/77), calculate_dimensions rewritten to the image's named-field model after review, draw_overview's span restored to the catalogue extent, and the five new listbox markers carrying RECOVERY_BINDING rationales; the faction.h social_calc parameter repair and four forwarder retirements ride along; all gates at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5c0f90f2758de0ab386d6ca442440a0990642bdf356c7da59337a1e08c319949",
+  "request_id": "w2-social-scope",
+  "schema_version": 1,
+  "sequence": 156,
+  "stream": "task:vector-value-semantics"
+}
