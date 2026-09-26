@@ -31,11 +31,11 @@
         "deleting_thunks.cpp markers": 70,
         "delegation_thunks.cpp markers": 25,
         "field_accessors.cpp markers": 38,
-        "leaf_recoveries.cpp markers": 90,
+        "leaf_recoveries.cpp markers": 97,
         "nullsub_thunks.cpp markers": 52,
-        "PENDING_BODY forwarders": 216,
+        "PENDING_BODY forwarders": 214,
         "artifact files (recovered/)": 935,
-        "unrecovered files": 878,
+        "unrecovered files": 871,
         "hypothesis_layouts.h lines": 2734,
         "stringstruct.cpp markers": 32
       },
@@ -142,12 +142,12 @@
         "unk-method": 199,
         "evidence-free unk": 39,
         "function-address binding": 2,
-        "orphan redirect": 187,
+        "orphan redirect": 190,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
         "raw self-access": 167,
         "pointer-parameter as int": 93,
-        "scaffold name": 3091
+        "scaffold name": 3079
       },
       "counters": []
     }

@@ -602,19 +602,15 @@ void ListBox::set_selected_pos(int position, int notify) {
 // Dialog::init(int) at 0x006095F0 WAS HERE and is gone: the body is homed
 // into src/leaf_recoveries.cpp 2026-09-27, beside its sibling overloads.
 
+// Dialog::init(Heap *) at 0x006098D0 and Dialog::init(int, int, int, int,
+// Heap *) at 0x00609730 WAS HERE and are gone: the bodies are homed into
+// src/leaf_recoveries.cpp 2026-09-27, beside their sibling overloads.
+// SpriteBox::init's two tail-forwards reach them by name through the
+// embedded Dialog base, unchanged.
+
 int Dialog::init(RECT * a1, int a2) {  // 0x00609470
     typedef int(__fastcall *pending)(Dialog *, void *, RECT *, int);
     return PENDING_BODY(0x00609470, pending)(this, nullptr, a1, a2);
-}
-
-int Dialog::init(Heap * a1) {  // 0x006098D0
-    typedef int(__fastcall *pending)(Dialog *, void *, Heap *);
-    return PENDING_BODY(0x006098D0, pending)(this, nullptr, a1);
-}
-
-int Dialog::init(int a1, int a2, int a3, int a4, Heap * a5) {  // 0x00609730
-    typedef int(__fastcall *pending)(Dialog *, void *, int, int, int, int, Heap *);
-    return PENDING_BODY(0x00609730, pending)(this, nullptr, a1, a2, a3, a4, a5);
 }
 
 void Datalink::draw_entry() {  // 0x0042BF10
