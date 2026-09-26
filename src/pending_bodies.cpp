@@ -233,17 +233,13 @@ void __cdecl consider_designs(uint32_t faction_id) {
 // 2026-08-29; the linker (LNK2005) enforced it exactly as the note at the
 // top of this file says it would.
 
-// sub_4c86d0 at 0x004C86D0 and sub_633010 at 0x00633010 - the teardowns the
-// Video and 0x633160 deleting thunks call. See the note in
-// `deleting_thunks.h`.
+// sub_4c86d0 at 0x004C86D0 - the teardown the Video deleting thunks call. See
+// the note in `deleting_thunks.h`. (sub_633010 at 0x00633010, the teardown
+// the 0x633160 deleting thunk calls, WAS HERE and is gone: its body is homed
+// into src/leaf_recoveries.cpp 2026-09-27.)
 void __fastcall sub_4c86d0(void *self) {
     typedef void(__fastcall *pending)(void *);
     PENDING_BODY(0x004C86D0, pending)(self);
-}
-
-void __fastcall sub_633010(void *self) {
-    typedef void(__fastcall *pending)(void *);
-    PENDING_BODY(0x00633010, pending)(self);
 }
 
 // ?clear@MapWin@@QAEXH@Z at 0x00462870 - HOMED into src/mapwin.cpp
@@ -276,12 +272,9 @@ void *__cdecl WaveOperatorNew(unsigned int size) {
     return PENDING_BODY(0x0064558A, pending)(size);
 }
 
-// ?set_text@EditBox@@QAEXPAD@Z at 0x006151E0 - reached from
-// `EditGroup::set_text`. See the note in `editbox.h`.
-void EditBox::set_text(char *text) {
-    typedef void(__fastcall *pending)(EditBox *, void *, char *);
-    PENDING_BODY(0x006151E0, pending)(this, nullptr, text);
-}
+// ?set_text@EditBox@@QAEXPAD@Z at 0x006151E0 - WAS HERE and is gone: the body
+// is homed into src/leaf_recoveries.cpp 2026-09-27, and EditGroup::set_text
+// reaches it by name again. See the note in `editbox.h`.
 
 // ?message_data@@YAXHHHHHH@Z at 0x00592EE0 - broadcasts a game event. It
 // cannot be homed into netdaemon.cpp beside its family: the catalogue spells
@@ -309,17 +302,10 @@ void MapWin::click(int a1, int a2, int a3) {  // 0x0046D5D0
 // ?render@Caviar@@QAEHPAUBuffer@@HHH@Z at 0x00617230 is HOMED into
 // src/caviar.cpp (2026-09-05, caviar class pass), so this forwarder is gone.
 
-// ?init@Sprite@@QAEXPADHH@Z at 0x005E3890 - BasePop::start (0x00601BF0)
-// calls it BY NAME on the popup's own `sprite_` for the "sprite" directive,
-// so the call site needs the member's real address to emit the image's `E8`.
-// The claim in src/unrecovered/005e3890.cpp is FILE-only, so this forwarder
-// is the only compiled definition and the landmine check stays clear.
-int Sprite::init(char *filename, int width, int height) {
-    typedef int(__fastcall *pending)(Sprite *, void *, char *, int, int);
-    return PENDING_BODY(0x005E3890, pending)(this, nullptr, filename, width,
-                                             height);
-}
-
+// ?init@Sprite@@QAEXPADHH@Z at 0x005E3890 - WAS HERE and is gone: the body is
+// homed into src/sprite.cpp 2026-09-27. BasePop::start (0x00601BF0) calls it
+// BY NAME on the popup's own `sprite_` for the "sprite" directive, so the
+// call site keeps the member's real address and the image's `E8`.
 // ?get_pcx_dimensions@Buffer@@QAEHPBDPAH1@Z at 0x005E2480 - BasePop::start
 // (0x00601BF0) calls it for the "sprite" directive. The image's body never
 // reads the receiver ECX (its first instructions overwrite it), so the call
@@ -331,23 +317,9 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
                                              height);
 }
 
-// Remaining specialized Sprite workers, called by their scale wrappers.
-// Plain draw and draw_dest now live in sprite.cpp.
-int Sprite::draw_dest_unk2(Buffer *buffer, int a, int b, int c,
-                           unsigned char *bits) {
-    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int,
-                                     unsigned char *);
-    return PENDING_BODY(0x005E81BC, pending)(this, nullptr, buffer, a, b, c,
-                                             bits);
-}
-
-int Sprite::draw_multi_table_dest(Buffer *buffer, int a, int b, int c,
-                                  unsigned char *bits) {
-    typedef int(__fastcall *pending)(Sprite *, void *, Buffer *, int, int, int,
-                                     unsigned char *);
-    return PENDING_BODY(0x005E8FF5, pending)(this, nullptr, buffer, a, b, c,
-                                             bits);
-}
+// Remaining specialized Sprite workers, called by their scale wrappers. Plain
+// draw, draw_dest and - since 2026-09-27 - draw_dest_unk2 (0x005E81BC) and
+// draw_multi_table_dest (0x005E8FF5) live in sprite.cpp.
 
 // Two __cdecl free functions the editor commands call, still original
 // bodies. Declared at the top of console.cpp beside the bodies that reach
@@ -434,12 +406,10 @@ void ListBox::on_mousewheel(int a) {
 
 
 
-// ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z at 0x006108E0 - popup.cpp's
-// `pops()` calls it BY NAME so it emits the image's `call rel32`.
-int SpriteBox::sprite(Sprite *a1, char *a2, int a3) {
-    typedef int(__fastcall *pending)(SpriteBox *, void *, Sprite *, char *, int);
-    return PENDING_BODY(0x006108E0, pending)(this, nullptr, a1, a2, a3);
-}
+// ?sprite@SpriteBox@@QAEHPAUSprite@@PADH@Z at 0x006108E0 - WAS HERE and is
+// gone: the body is homed into src/leaf_recoveries.cpp 2026-09-27. popup.cpp's
+// `pops()` still calls it BY NAME, so the call site keeps the image's
+// `call rel32`.
 
 // ?X_pops@@... at 0x005BF930 and ?X_pop@@... at 0x005BF480 - the two full
 // builders every xpops wrapper funnels into.
@@ -566,10 +536,8 @@ void StatusWin::set_title(int title_id) {
     PENDING_BODY(0x004B4A20, pending)(this, nullptr, title_id);
 }
 
-int ButtonGroup::button_click(int a1) {  // 0x0062B8A0
-    typedef int(__fastcall *pending)(ButtonGroup *, void *, int);
-    return PENDING_BODY(0x0062B8A0, pending)(this, nullptr, a1);
-}
+// ButtonGroup::button_click (0x0062B8A0) WAS HERE and is gone: the body is
+// homed into src/leaf_recoveries.cpp 2026-09-27.
 
 void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
     typedef void(__fastcall *pending)(Datalink *, void *, unsigned int, int);
@@ -625,18 +593,14 @@ void ListBox::set_selected_pos(int position, int notify) {
 }
 
 // ?item@CheckBox@@QAEHPADHH@Z - DipEdit::init adds one item per treaty flag.
-int CheckBox::item(char *text, int id, int state) {
-    typedef int(__fastcall *pending)(CheckBox *, void *, char *, int, int);
-    return PENDING_BODY(0x0060E980, pending)(this, nullptr, text, id, state);
-}
+// WAS HERE and is gone: the body is homed into src/leaf_recoveries.cpp
+// 2026-09-27.
 
 
 
 
-int Dialog::init(int a1) {  // 0x006095F0
-    typedef int(__fastcall *pending)(Dialog *, void *, int);
-    return PENDING_BODY(0x006095F0, pending)(this, nullptr, a1);
-}
+// Dialog::init(int) at 0x006095F0 WAS HERE and is gone: the body is homed
+// into src/leaf_recoveries.cpp 2026-09-27, beside its sibling overloads.
 
 int Dialog::init(RECT * a1, int a2) {  // 0x00609470
     typedef int(__fastcall *pending)(Dialog *, void *, RECT *, int);
@@ -658,10 +622,10 @@ void Datalink::draw_entry() {  // 0x0042BF10
     PENDING_BODY(0x0042BF10, pending)(this, nullptr);
 }
 
-void DesignWin::select_special(int a1) {  // 0x0043AC70
-    typedef void(__fastcall *pending)(DesignWin *, void *, int);
-    PENDING_BODY(0x0043AC70, pending)(this, nullptr, a1);
-}
+// DesignWin::select_special (0x0043AC70) WAS HERE and is gone: the body is
+// homed into src/designwin.cpp 2026-09-27, at the end of the file so no
+// recovered body above it shifts. Both byte-exact select_special_N thunks and
+// draw_flash still reach it by name.
 
 void CouncWin::draw_leader(int factionID) {  // 0x00425DB0
     typedef void(__fastcall *pending)(CouncWin *, void *, int);
@@ -740,13 +704,10 @@ void ReplayWin::timer_callback() {  // 0x005AD9E0
 
 
 
-// ?edit@EditGroup@@QAEHPADPADH@Z at 0x00611F80 - DipEdit::on_button_clicked
+// ?edit@EditGroup@@QAEHPADPADH@Z at 0x00611F80 - WAS HERE and is gone: the
+// body is homed into src/editgroup.cpp 2026-09-27. DipEdit::on_button_clicked
 // drives it twice on BasePop's EditGroup subobject at 0x22C8 (see
 // BasePop::edit_group), once per atrocity-prompt field.
-int EditGroup::edit(char *a1, char *a2, int a3) {
-    typedef int(__fastcall *pending)(EditGroup *, void *, char *, char *, int);
-    return PENDING_BODY(0x00611F80, pending)(this, nullptr, a1, a2, a3);
-}
 
 // ?X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z at 0x005BFD70 - the four-argument
 // numeric-entry prompt. Its three-argument sibling (0x005BFD10) is the real
@@ -980,19 +941,13 @@ int CheckBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060E800
     return PENDING_BODY(0x0060E800, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
-int CheckBox::on_key_down(int a1) {  // 0x0060F8B0
-    typedef int(__fastcall *pending)(CheckBox *, void *, int);
-    return PENDING_BODY(0x0060F8B0, pending)(this, nullptr, a1);
-}
+// CheckBox::on_key_down (0x0060F8B0) and CheckBox::on_mouse_move (0x0060FBB0)
+// WERE HERE and are gone: both bodies are homed into src/leaf_recoveries.cpp
+// 2026-09-27.
 
 void CheckBox::on_left_down(int a1, int a2) {  // 0x0060F700
     typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
     PENDING_BODY(0x0060F700, pending)(this, nullptr, a1, a2);
-}
-
-void CheckBox::on_mouse_move(int a1, int a2) {  // 0x0060FBB0
-    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
-    PENDING_BODY(0x0060FBB0, pending)(this, nullptr, a1, a2);
 }
 
 void CheckBox::on_redraw() {  // 0x0060FAB0
@@ -1005,25 +960,19 @@ int Console::on_key_click(int a1, int a2) {  // 0x005178C0
     return PENDING_BODY(0x005178C0, pending)(this, nullptr, a1, a2);
 }
 
+// Console::on_nc_left_down (0x0050FB10) and Console::on_nc_mouse_move
+// (0x00510110) WERE HERE and are gone: both bodies are homed into
+// src/console.cpp 2026-09-27.
+
 int Console::on_nc_hittest(int x, int y) {  // 0x0050F680
     // Same correction as MapWin's: the base returns a hit-test code.
     typedef int(__fastcall *pending)(Console *, void *, int, int);
     return PENDING_BODY(0x0050F680, pending)(this, nullptr, x, y);
 }
 
-void Console::on_nc_left_down(int a1, int a2) {  // 0x0050FB10
-    typedef void(__fastcall *pending)(Console *, void *, int, int);
-    PENDING_BODY(0x0050FB10, pending)(this, nullptr, a1, a2);
-}
-
 void Console::on_nc_left_up(int a1, int a2) {  // 0x0050FE70
     typedef void(__fastcall *pending)(Console *, void *, int, int);
     PENDING_BODY(0x0050FE70, pending)(this, nullptr, a1, a2);
-}
-
-void Console::on_nc_mouse_move(int a1, int a2) {  // 0x00510110
-    typedef void(__fastcall *pending)(Console *, void *, int, int);
-    PENDING_BODY(0x00510110, pending)(this, nullptr, a1, a2);
 }
 
 void Console::on_post_redraw_nc_buffer(void * a1, int a2) {  // 0x0050F960
@@ -1086,13 +1035,10 @@ void Dialogs::pass_dialog_focus() {  // 0x00613180
     PENDING_BODY(0x00613180, pending)(this, nullptr);
 }
 
-// ?set_default@EditGroup@@QAEHPADH@Z at 0x006120D0 - BasePop::start
-// (0x00601BF0) calls it BY NAME with the caller's override text, so the call
-// site needs the member's real address to emit the image's `E8`.
-int EditGroup::set_default(char *text, int index) {  // 0x006120D0
-    typedef int(__fastcall *pending)(EditGroup *, void *, char *, int);
-    return PENDING_BODY(0x006120D0, pending)(this, nullptr, text, index);
-}
+// ?set_default@EditGroup@@QAEHPADH@Z at 0x006120D0 - WAS HERE and is gone:
+// the body is homed into src/editgroup.cpp 2026-09-27. BasePop::start
+// (0x00601BF0) still calls it BY NAME with the caller's override text, so the
+// call site keeps the image's `E8`.
 
 // ?calculate_dimensions@EditGroup@@QAEHXZ at 0x00612150 - Dialogs
 // ::calculate_dimensions (0x006132A0) tail-calls it for kind 4. The body is
@@ -1277,10 +1223,8 @@ int RadioButton::attach(void * a1, int a2, int a3, int a4) {  // 0x0060D1F0
     return PENDING_BODY(0x0060D1F0, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
-int RadioButton::on_key_down(int a1) {  // 0x0060E020
-    typedef int(__fastcall *pending)(RadioButton *, void *, int);
-    return PENDING_BODY(0x0060E020, pending)(this, nullptr, a1);
-}
+// RadioButton::on_key_down (0x0060E020) WAS HERE and is gone: the body is
+// homed into src/leaf_recoveries.cpp 2026-09-27.
 
 void RadioButton::on_left_down(int a1, int a2) {  // 0x0060DE10
     typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
@@ -1320,10 +1264,8 @@ void SpriteBox::on_left_click(int a1, int a2) {  // 0x00611060
     PENDING_BODY(0x00611060, pending)(this, nullptr, a1, a2);
 }
 
-void SpriteBox::on_redraw() {  // 0x00611380
-    typedef void(__fastcall *pending)(SpriteBox *, void *);
-    PENDING_BODY(0x00611380, pending)(this, nullptr);
-}
+// SpriteBox::on_redraw (0x00611380) WAS HERE and is gone: the body is homed
+// into src/leaf_recoveries.cpp 2026-09-27.
 
 // ?check@MainMenu@@QAEXH@Z at 0x00460DD0. The catalogue's class name for the
 // object at Console+0x22A2C is MainMenu, but that object is AlphaMenu-shaped
@@ -1913,24 +1855,21 @@ int __cdecl veh_pick(int a1, const char *label, int a3) {
 // the marker there), so this file no longer carries it.
 
 // Two callees the diplomacy bodies homed into src/faction.cpp reach with the
-// image's `call rel32`, and neither has a product body yet:
+// image's `call rel32`:
 //   ?pop@NetMsg@@QAEXPBDHHPBD@Z   0x0047A890
-//       (src/recovered/units/0047a890.cpp - measured NO_COMPILE there)
-//   ?get_he_she@@YAPADHH@Z        0x0058FCE0
-//       (src/unrecovered/0058fce0.cpp)
-// Both are FILE-only, so these forwarders are the only definitions in the
-// build; neither address carries a claim an extra definition could landmine.
+//       (src/recovered/units/0047a890.cpp - measured NO_COMPILE there) - the
+//       only one of the two still forwarded here.
+//   ?get_he_she@@YAPADHH@Z        0x0058FCE0 - WAS HERE and is gone: the body
+//       is homed into src/stringstruct.cpp 2026-09-27.
+// The seed under the remaining forwarder is FILE-only, so it is the only
+// definition in the build and carries no claim an extra definition could
+// landmine.
 void NetMsg::pop(const char *label, int duration, int channel,
                  const char *target) {
     typedef void(__fastcall *pending)(NetMsg *, void *, const char *, int, int,
                                       const char *);
     PENDING_BODY(0x0047A890, pending)(this, nullptr, label, duration, channel,
                                       target);
-}
-
-char *__cdecl get_he_she(int faction_id, int sentence_form) {
-    typedef char *(__cdecl *pending)(int, int);
-    return PENDING_BODY(0x0058FCE0, pending)(faction_id, sentence_form);
 }
 
 // The cross-TU callees faction.h declares for the net_* / diplomacy bodies.
@@ -2008,21 +1947,10 @@ int __cdecl order_veh(int veh_id, int x, int y) {
     return PENDING_BODY(0x005947C0, pending)(veh_id, x, y);
 }
 
-int NetFifo::sub_634200(void *data, int key, int type, int len) {
-    // ?sub_634200@@YGEHPAXHHH@Z-shaped thunk at 0x00634200, archived. Its
-    // receiver is the queue at Net+0x10C, which is why the member has to be
-    // real for the caller's `add ecx, 0x10c` to exist at all.
-    typedef int(__fastcall *pending)(NetFifo *, void *, void *, int, int, int);
-    return PENDING_BODY(0x00634200, pending)(this, nullptr, data, key, type,
-                                             len);
-}
-
-int NetFifo::sub_6340c0(void *data, int key, int type, int len) {
-    // 0x006340C0, archived - the second reader on the queue at Net+0x10C.
-    typedef int(__fastcall *pending)(NetFifo *, void *, void *, int, int, int);
-    return PENDING_BODY(0x006340C0, pending)(this, nullptr, data, key, type,
-                                             len);
-}
+// NetFifo::sub_634200 (0x00634200) and NetFifo::sub_6340c0 (0x006340C0) WERE
+// HERE and are gone: both bodies are homed into src/leaf_recoveries.cpp
+// 2026-09-27. Their receiver is the queue at Net+0x10C, and Net::sub_630980 /
+// Net::sub_6309c0 still reach them by name.
 
 int ServiceStruct::add(int slot) {
     // ?add@ServiceStruct@@QAEHH@Z at 0x00401760, archived beside

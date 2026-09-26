@@ -22,6 +22,9 @@
 
 #include "heap.h"  // StringAllocationHeap
 #include "general.h"  // mem_get
+#include "faction.h"  // Players, for get_he_she below
+#include "alpha.h"  // Labels, same body
+#include "game.h"  // PronounBuffer, same body
 
 // The allocation-base table at 0x6693AC dispatches this scalar deleting
 // entry. The compiler supplies its flag handling and class-specific delete;
@@ -1372,4 +1375,46 @@ extern "C" int __fastcall sub_5d50f0(GraphicWin *self, int a1, int a2, int a3,
         }
     }
     return result;
+}
+
+/*
+Purpose: The third pronoun fetcher beside game.cpp's get_his_her/get_him_her:
+         pick the he/she label by the faction leader's gender, copy the string
+         table's text into the shared pronoun buffer, and uppercase it in
+         place when the sentence form asks.
+
+// ORIGINAL: 0x0058FCE0 ?get_he_she@@YAPADHH@Z 0x0058FCE0-0x0058FD6B FILE
+// size      139 bytes
+// prototype char* (__cdecl ?get_he_she@@YAPADHH@Z)(int, int)
+// callers   6   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645460
+// indirect  0x0058FD43 0x0058FD5E
+// TRIED (seed): caching the CharUpperA pointer in a local vs calling through
+//         the import slot at each site - both land 18 bytes over (157-160 vs
+//         139), extra push/push in the prologue before the a1*0x167 multiply;
+//         root cause not found. The fixed-address bindings are renamed to the
+//         tree's own models: Players (faction.h), Labels (alpha.h),
+//         StringTable (strings.h), the CharUpperA import slot (windows.h) and
+//         0x00945838 as PronounBuffer (game.h) - the same census-named buffer
+//         get_his_her and get_him_her fill.
+Status: Coverage transcription - unclaimed body
+*/
+char *__cdecl get_he_she(int faction_id, int sentence_form) {
+    const int code = 0xd1 + (Players[faction_id].is_leader_female != 0);
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    strcpy(PronounBuffer, StringTable.get((int)labels[code]));
+    if (sentence_form != 0) {
+        if (sentence_form == 1) {
+            char buf[2];
+            buf[0] = PronounBuffer[0];
+            buf[1] = 0;
+            CharUpperA(buf);
+            PronounBuffer[0] = buf[0];
+            return PronounBuffer;
+        }
+        CharUpperA(PronounBuffer);
+    }
+    return PronounBuffer;
 }

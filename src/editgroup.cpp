@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "editgroup.h"
 #include "editbox.h"
+#include "general.h"  // mem_get, for the two coverage bodies below
 
 // EditGroupDefault - 0x009B8FCC. Read at construction time into field_84_;
 // a rebindable seam so tests can observe/control it, the same idiom
@@ -344,4 +345,86 @@ void EditGroup::on_dialog_focus(int focus_id) {
         }
         ++slot;
     } while (--count);
+}
+
+/*
+Purpose: Add one labelled edit field to the group: the group keeps ten boxes,
+         and this refuses the eleventh. The box's stored text is replaced (or
+         allocated) from the initial text, the label is published for the item
+         list's insertion hook, the entry is appended under the field's
+         ordinal, and the character limit lands in the group's limit array.
+
+// ORIGINAL: 0x00611F80 ?edit@EditGroup@@QAEHPADPADH@Z 0x00611F80-0x00612040 FILE
+// size      192 bytes
+// prototype int (__thiscall ?edit@EditGroup@@QAEHPADPADH@Z)(EditGroup* this, int8*, int8*, int)
+// callers   1   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00401100
+// TRIED (forwarder): DipEdit::on_button_clicked drives it twice on BasePop's
+//         EditGroup subobject at 0x22C8 (see BasePop::edit_group), once per
+//         atrocity-prompt field.
+Status: Coverage transcription - unclaimed body
+*/
+int EditGroup::edit(char *label_text, char *initial_text, int limit_value) {
+    const int index = item_list_.entry_count_;
+    if (index == 10) {
+        return 1;
+    }
+    if (initial_text != 0) {
+        if (text_buffers_[index] != 0) {
+            free(text_buffers_[index]);
+        }
+        text_buffers_[index] =
+            static_cast<char *>(mem_get(strlen(initial_text) + 1));
+        if (text_buffers_[index] == 0) {
+            return 4;
+        }
+        text_buffers_[index][0] = 0;
+        strcat(text_buffers_[index], initial_text);
+    }
+    item_list_.pending_text_ = label_text;
+    item_list_.field_20_ = 0;
+    item_list_.field_24_ = 0;
+    if (item_list_.add(index) != 0) {
+        return 4;
+    }
+    limits_[index] = limit_value;
+    return 0;
+}
+
+/*
+Purpose: Replace the standing default text of one field: a null label clears
+         the stored copy in place, otherwise the stored copy is reallocated
+         to the new text. The entry list is not touched.
+
+// ORIGINAL: 0x006120D0 ?set_default@EditGroup@@QAEHPADH@Z 0x006120D0-0x00612144 FILE
+// size      116 bytes
+// prototype int (__thiscall ?set_default@EditGroup@@QAEHPADH@Z)(EditGroup* this, int8*, int)
+// callers   1   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// TRIED (forwarder): BasePop::start (0x00601BF0) calls it BY NAME with the
+//         caller's override text, so the call site needs the member's real
+//         address to emit the image's `E8`.
+Status: Coverage transcription - unclaimed body
+*/
+int EditGroup::set_default(char *default_text, int index) {
+    if (default_text == 0) {
+        if (text_buffers_[index] != 0) {
+            text_buffers_[index][0] = 0;
+        }
+        return 0;
+    }
+    if (text_buffers_[index] != 0) {
+        free(text_buffers_[index]);
+    }
+    text_buffers_[index] =
+        static_cast<char *>(mem_get(strlen(default_text) + 1));
+    if (text_buffers_[index] == 0) {
+        return 4;
+    }
+    text_buffers_[index][0] = 0;
+    strcat(text_buffers_[index], default_text);
+    return 0;
 }
