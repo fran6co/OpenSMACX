@@ -1,0 +1,21 @@
+{
+  "event_id": "6408b233496a9d6fd7003b7d683fab3ad140e9efa247aaed35639f79f3fe157c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/console.cpp",
+      "src/console.h"
+    ],
+    "evidence": [
+      "Coverage-first wave 1 group (re-appended from the worktree fork onto the canonical chain; master discovery 2778d0da is the wave authority): transcribe the class:Console group's seed-only entities into src/console.cpp as real compiling bodies with their ORIGINAL markers (FILE, no byte claims), retiring each seed atomically. Executed as 12 retirements plus one sanctioned editor_who placeholder (seed preserved), with the reviewer's three instruction-verified destroy fidelity fixes applied (invented lock-failure pop removed, SIMULNO/UNITMOVED guard strings un-swapped, the break-treaty vehicle lock released) and both previously-unreachable regions disassembly-confirmed; console.h's stale editor_who address corrected to the catalogued 0x004D9AD0; all gates at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f490211aa8587c3e9fd4e0bee6be5b0692275d73169e304a34e1e1f964414704",
+  "request_id": "cover-console-20260926-scope",
+  "schema_version": 1,
+  "sequence": 149,
+  "stream": "task:vector-value-semantics"
+}
