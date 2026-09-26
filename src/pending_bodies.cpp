@@ -380,13 +380,6 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
                                              height, parent, setting, options);
 }
 
-// ?item@ListBox@@QAEHPADH@Z at 0x0060C920 - the item adder `Dialogs::item`
-// dispatches to for a ListBox.
-int ListBox::item(char *text, int index) {
-    typedef int(__fastcall *pending)(ListBox *, void *, char *, int);
-    return PENDING_BODY(0x0060C920, pending)(this, nullptr, text, index);
-}
-
 // 0x0060C5D0 - ListBox::on_scrolling, dispatched to by kind from dialogs.cpp.
 void ListBox::on_scrolling(int a, int b) {
     typedef void(__fastcall *pending)(ListBox *, void *, int, int);
@@ -1064,28 +1057,9 @@ void EditGroup::pass_dialog_focus() {  // 0x006126C0
 }
 
 
-// ?calculate_dimensions@ListBox@@QAEHXZ at 0x0060A1E0 - Dialogs
-// ::calculate_dimensions (0x006132A0) tail-calls it for kind 2. The body is
-// still FILE-only in src/unrecovered/0060a1e0.cpp, so this forwarder is the
-// only compiled definition and the landmine check stays clear.
-int ListBox::calculate_dimensions() {  // 0x0060A1E0
-    typedef int(__fastcall *pending)(ListBox *, void *);
-    return PENDING_BODY(0x0060A1E0, pending)(this, nullptr);
-}
-
-int ListBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060A670
-    typedef int(__fastcall *pending)(ListBox *, void *, void *, int, int, int);
-    return PENDING_BODY(0x0060A670, pending)(this, nullptr, a1, a2, a3, a4);
-}
-
 void ListBox::on_key_down(int a1) {  // 0x0060AF90
     typedef void(__fastcall *pending)(ListBox *, void *, int);
     PENDING_BODY(0x0060AF90, pending)(this, nullptr, a1);
-}
-
-void ListBox::on_left_double_click(int a1, int a2) {  // 0x0060C710
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060C710, pending)(this, nullptr, a1, a2);
 }
 
 void ListBox::on_left_down(int a1, int a2) {  // 0x0060AA60

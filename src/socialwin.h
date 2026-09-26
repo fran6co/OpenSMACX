@@ -44,6 +44,69 @@ class SocialWin : public GraphicWin, public SubInterface {
   void allocate_energy(int a1, int a2);
 
  public:
+  // 0x004AEBF0 ?UNK1@SocialWin@@QAEXHH@Z. Recomputes the social model for one
+  // category: stores the chosen model, redraws it, copies the working
+  // socEffect_ into socEffectOrig_, runs social_calc against both the window's
+  // own blocks and the player's, then recomputes energy.
+  void UNK1(int soc_category, int soc_model);
+
+ public:
+  // 0x004AF110 ?maximize_effect@SocialWin@@QAEXH@Z. Maximize one effect column
+  // across all four categories and leave the selection armed until the next
+  // group click.
+  void maximize_effect(int effect_id);
+
+ public:
+  // 0x004B2120 ?on_status@SocialWin@@QAEXH@Z, the SubInterface status slot.
+  void on_status(int mode);
+
+ public:
+  // 0x004B0FA0 ?immune@SocialWin@@QAEHHHH@Z. True when the faction may take
+  // one social effect: the effect entry is negative for the player's own
+  // category/model picks, probed against both the probe and compare base ids.
+  int immune(int soc_category, int soc_model, int effect_id);
+
+ public:
+  // 0x004B1CE0 ?on_group_clicked@SocialWin@@QAEXHH@Z.
+  void on_group_clicked(int a1, int a2);
+
+ public:
+  // 0x004B1D70 ?on_button_passover@SocialWin@@QAEXHH@Z. Tracks the hovered
+  // button per region: category rows highlight through draw_mouseover, the
+  // effect column through draw_overview.
+  void on_button_passover(int a1, int a2);
+
+ public:
+  // 0x004B1080 ?draw_mouseover@SocialWin@@QAEXXZ.
+  void draw_mouseover();
+
+ public:
+  // 0x004AFB60 ?draw_info@SocialWin@@QAEXXZ.
+  void draw_info();
+
+ public:
+  // 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ is not recovered; the
+  // passover path needs it to link. Explicitly unfinished.
+  void draw_overview();
+
+ public:
+  // 0x004AECE0 ?reset@SocialWin@@QAEXXZ is not recovered; init needs it to
+  // link. Explicitly unfinished.
+  void reset();
+
+ public:
+  // 0x004B2740 ?init@SocialWin@@QAEXH@Z.
+  void init(int faction_id);
+
+ public:
+  // 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z.
+  void on_mouse_move(int a1, int a2);
+
+ public:
+  // 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z.
+  int on_button_text_draw(GraphicWin *window, char *text, int a4);
+
+ public:
   // homed from 004b0d50.cpp
   void draw_psych_alloc();
 
