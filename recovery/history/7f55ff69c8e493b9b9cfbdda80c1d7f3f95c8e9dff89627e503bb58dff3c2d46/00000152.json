@@ -1,0 +1,23 @@
+{
+  "event_id": "00cd52c2fa23fa4d765456af70a24d355bcacb80f42cdb286156762fce5bd0a6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/net_class.cpp",
+      "src/net_class.h",
+      "src/netwin.cpp",
+      "src/netwin.h"
+    ],
+    "evidence": [
+      "Wave 2 ranked groups (re-appended from the worktree fork onto the canonical chain; master discovery 1c707a7c): transcribe class:NetWin and class:Net seed-only entities into their owning TUs under the coverage protocol, with the on_player_added correction per event 142 as amended by the worker's compiler probe: VC6 treats unsigned int/unsigned long as distinct overload types, so the corrected QAEXH identity landed as a non-virtual overload BESIDE the virtual (the six-slot vtable 0x66EB04 needs the virtual slot; drop_player dispatches slot 5), and the body documents the EnumSessions argument crossing. Executed as 7 retirements plus 5 claim-preserved homings; reviewed and approved with all gates at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "77b0a142ebfdd3ff7f81ba2fb79043a8011f058d66e76131784d96d006db757a",
+  "request_id": "w2-net-scope",
+  "schema_version": 1,
+  "sequence": 152,
+  "stream": "task:vector-value-semantics"
+}
