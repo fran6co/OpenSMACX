@@ -1,0 +1,21 @@
+{
+  "event_id": "209c672e1874c3e3f9f3d8356bb5190b58257aa379d73b5f3f74dc23cec8cc91",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/buffer.cpp",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "Coverage-first wave 1 group (re-appended from the worktree fork onto the canonical chain; master discovery 2778d0da): transcribe the class:Buffer group's seed-only entities into src/buffer.cpp as real compiling bodies with their ORIGINAL markers, retiring each claim-free seed atomically and preserving claim-bearing seeds as historical holders. Executed as 12 homings (9 retirements incl. two recovered/units duplicates, 3 claim-preserved beside their retained seeds after honest record attempts measured MISMATCH), reviewer-corrected (the draw fast path returns the colour-key argument per 0x5D83CA, five markers' inventory fact rows restored verbatim from the retired seeds); all gates at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "00cd52c2fa23fa4d765456af70a24d355bcacb80f42cdb286156762fce5bd0a6",
+  "request_id": "cover-buffer-20260926-scope",
+  "schema_version": 1,
+  "sequence": 153,
+  "stream": "task:vector-value-semantics"
+}
