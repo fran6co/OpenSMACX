@@ -1,0 +1,21 @@
+{
+  "event_id": "aa89ab98fa75c4a78420f78b674129fd03b03d817b2a5d8f83b903c72f2dbdaa",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Wave 2 ranked group (re-appended from the worktree fork onto the canonical chain; master discovery 1c707a7c): transcribe source:src/veh.cpp's seed-only entities under the coverage protocol. Executed as 13 stale-duplicate retirements — every identity already carried by landed veh.cpp bodies — with the single claim-bearing seed's obligation preserved and freshly re-proven on its product host (0x4C1D10 1/1, 0x4C3800 54/54, both BYTE_EXACT); the duplicate tally point retires with the seed per the claims-count-non-regression arithmetic (the reviewer reconciled baseline 2497 -> 2496 with zero veh fails and the claim surviving). Reviewed and approved with all gates green on the fixed tree."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "209c672e1874c3e3f9f3d8356bb5190b58257aa379d73b5f3f74dc23cec8cc91",
+  "request_id": "w2-veh-scope",
+  "schema_version": 1,
+  "sequence": 154,
+  "stream": "task:vector-value-semantics"
+}
