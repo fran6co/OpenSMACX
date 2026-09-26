@@ -150,6 +150,11 @@ char *__cdecl get_noun_phrase(int phrase_id, int faction_id);            // 0x00
 // at 0 and the auto-play never fires until something - Console::on_key_click,
 // which registers the callback - starts it.
 int AutoPlayCounter = 0;  // 0x00939FD0, defined here
+// The splitter-drag line's last drawn position, the pair the nc handlers
+// draw over with window_line_raw before the next move repaints it.
+// 0x00939FD8 (vertical line x) and 0x00939FDC (horizontal line y).
+int ConsoleDragLineX = 0;  // 0x00939FD8, defined here
+int ConsoleDragLineY = 0;  // 0x00939FDC, defined here
 
 // HANDOFF: the process-wide WorldWin at 0x008E9F60 is map.cpp's
 // WorldClimateWorldWin - that file defines it and world_climate clears its
@@ -4071,4 +4076,257 @@ void Console::time_controls() {
 
     message_data(0x4C02, 0, result, 0, 0, 0);
     popup.close();
+}
+
+/*
+Purpose: A non-client left press on the console frame: the minimize and
+         maximize caption boxes, then the right-edge splitter (choosing the
+         nearer of its two drag slots) and the bottom-edge splitter, each
+         claiming the shared input-focus pair when nothing owns it yet.
+
+// ORIGINAL: 0x0050FB10 ?on_nc_left_down@Console@@QAEXHH@Z 0x0050FB10-0x0050FE69 FILE
+// size      857 bytes
+// prototype void (__thiscall ?on_nc_left_down@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005EDE60 0x005EDEB0 0x005FA7E0
+// TRIED (seed): minimize/maximize hit-tests then two edge-distance blocks
+//         (right vs left/right splitter, sign-tested via a discarded add
+//         whose flags a later `js` reuses) reusing the same client_rect_/
+//         outer_rect_/caption_height_/border_thickness_ offsets confirmed on
+//         0x00510110. The seed's raw -0x23cXX reads are the runtime vbtable
+//         walk (the body is entered on the GraphicWin subobject, the virtual
+//         base at Console+0x23d94); the real virtual entry lets the compiler
+//         own that walk, and the four drag slots are the fields at
+//         Console+0x23d80..0x23d8c.
+Status: Coverage transcription - unclaimed body
+*/
+void Console::on_nc_left_down(int x_coord, int y_coord) {
+    RECT box;
+    box.left = 0;
+    box.top = 0xE;
+    box.right = 0x11;
+    box.bottom = 0x1F;
+
+    box.left = client_rect_.right - client_rect_.left - 0x5b;
+    box.right = box.left + 0x11;
+    if (in_box(x_coord, y_coord, &box)) {
+        minimize();
+        return;
+    }
+
+    box.left += 0x15;
+    box.right += 0x15;
+    if (in_box(x_coord, y_coord, &box)) {
+        maximize();
+        return;
+    }
+
+    const int border = (bottom_border_thickness_ >= 0)
+        ? bottom_border_thickness_ : border_thickness_;
+    if (x_coord > client_rect_.right - border_thickness_ - client_rect_.left) {
+        const int extent = client_rect_.top - client_rect_.bottom -
+                           outer_rect_.top + outer_rect_.bottom -
+                           static_cast<int>(field_23D88_) + border;
+        int left_reach;
+        if (extent + y_coord >= 0) {
+            left_reach = extent + y_coord;
+        } else {
+            left_reach = client_rect_.bottom - client_rect_.top -
+                         outer_rect_.bottom + outer_rect_.top - border -
+                         y_coord + static_cast<int>(field_23D88_);
+        }
+
+        int right_reach;
+        if (extent + y_coord >= 0) {
+            right_reach = extent - static_cast<int>(field_23D8C_) + y_coord;
+        } else {
+            right_reach = client_rect_.bottom - client_rect_.top -
+                          outer_rect_.bottom - caption_height_ +
+                          outer_rect_.top - border - y_coord +
+                          static_cast<int>(field_23D8C_) + caption_height_;
+        }
+
+        if (left_reach < right_reach) {
+            field_23D88_ = 0xFFFFFFFFu;
+        } else {
+            field_23D8C_ = 0xFFFFFFFFu;
+        }
+
+        if (WinPointerOwner4 == 0) {
+            WinPointerOwner3 = 0;
+            WinPointerOwner4 = this;
+        }
+    }
+
+    const int bottom_border = (bottom_border_thickness_ >= 0)
+        ? bottom_border_thickness_ : border_thickness_;
+    if (y_coord > client_rect_.bottom - client_rect_.top - bottom_border) {
+        const int edge = border_thickness_;
+
+        const int to_top_slot = x_coord - edge -
+                                static_cast<int>(field_23D80_);
+        const int dist_top = (to_top_slot >= 0) ? to_top_slot : -to_top_slot;
+
+        const int to_bottom_slot = x_coord - edge -
+                                   static_cast<int>(field_23D84_);
+        const int dist_bottom = (to_bottom_slot >= 0) ? to_bottom_slot
+                                                      : -to_bottom_slot;
+
+        if (dist_top < dist_bottom) {
+            field_23D80_ = 0xFFFFFFFFu;
+        } else {
+            field_23D84_ = 0xFFFFFFFFu;
+        }
+
+        if (WinPointerOwner4 == 0) {
+            WinPointerOwner3 = 0;
+            WinPointerOwner4 = this;
+        }
+    }
+}
+
+/*
+Purpose: A non-client mouse move while a splitter drag is armed: whichever of
+         the four drag slots holds a live position follows the cursor between
+         its half-track clamp bounds, the dragged edge repaints without the
+         line, and the crossing drag line is drawn at the new position.
+
+// ORIGINAL: 0x00510110 ?on_nc_mouse_move@Console@@QAEXHH@Z 0x00510110-0x005103FF FILE
+// size      751 bytes
+// prototype void (__thiscall ?on_nc_mouse_move@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005D55D0 0x005F2AC0 0x005F4C30 0x005F4CA0
+// TRIED (seed): two near-duplicate splitter-drag blocks (vertical/horizontal),
+//         each a 3-way slot-select then clamp-to-half then
+//         redraw_nc_buffer/update_nc_buffer, sharing one last-value pair
+//         threaded into a final draw section. The five-argument
+//         GraphicWin::update (0x005D55D0, BYTE_EXACT in the retained unit) is
+//         not declared on the class, so the final section's two invalidation
+//         calls go through the original's address.
+Status: Coverage transcription - unclaimed body
+*/
+void Console::on_nc_mouse_move(int x_coord, int y_coord) {
+    int line_x;
+    int line_y;
+
+    // Sprite keeps its geometry private and Console is not among its friends,
+    // so the two track extents keep the image's own offsets (+0x18 into the
+    // vertical drag sprite, +0x1c into the horizontal one).
+    const int track_height = static_cast<int>(*reinterpret_cast<const int *>(
+        reinterpret_cast<const uint8_t *>(&sprite_a_) + 0x18));
+    const int track_width = static_cast<int>(*reinterpret_cast<const int *>(
+        reinterpret_cast<const uint8_t *>(&sprite_b_) + 0x1C));
+
+    if (field_23D80_ == 0xFFFFFFFFu) {
+        const int half = track_height / 2;
+        field_23D80_ =
+            static_cast<uint32_t>(x_coord - border_thickness_);
+        if (static_cast<int>(field_23D80_) < half) {
+            field_23D80_ = static_cast<uint32_t>(half);
+        }
+        const int limit = client_rect_.right - client_rect_.left -
+                          border_thickness_ * 2 - half;
+        if (static_cast<int>(field_23D80_) > limit) {
+            field_23D80_ = static_cast<uint32_t>(limit);
+        }
+        line_x = static_cast<int>(field_23D80_);
+        line_y = static_cast<int>(field_23D88_);
+        redraw_nc_buffer(2);
+        field_23D80_ = 0xFFFFFFFFu;
+        update_nc_buffer(2);
+    } else if (field_23D84_ == 0xFFFFFFFFu) {
+        const int half = track_height / 2;
+        field_23D84_ =
+            static_cast<uint32_t>(x_coord - border_thickness_);
+        if (static_cast<int>(field_23D84_) < half) {
+            field_23D84_ = static_cast<uint32_t>(half);
+        }
+        const int limit = client_rect_.right - client_rect_.left -
+                          border_thickness_ * 2 - half;
+        if (static_cast<int>(field_23D84_) > limit) {
+            field_23D84_ = static_cast<uint32_t>(limit);
+        }
+        line_x = static_cast<int>(field_23D84_);
+        line_y = static_cast<int>(field_23D88_);
+        redraw_nc_buffer(2);
+        field_23D84_ = 0xFFFFFFFFu;
+        update_nc_buffer(2);
+    } else {
+        line_x = x_coord;
+        line_y = x_coord;
+    }
+
+    if (field_23D88_ == 0xFFFFFFFFu) {
+        const int bottom_border = (bottom_border_thickness_ >= 0)
+            ? bottom_border_thickness_ : border_thickness_;
+        const int extent = client_rect_.top - caption_height_ -
+                           client_rect_.bottom - outer_rect_.top +
+                           outer_rect_.bottom + caption_height_ +
+                           bottom_border;
+        const int half = track_width / 2;
+        field_23D88_ = static_cast<uint32_t>(extent + y_coord);
+        if (static_cast<int>(field_23D88_) < half) {
+            field_23D88_ = static_cast<uint32_t>(half);
+        }
+        const int limit = client_rect_.bottom - client_rect_.top -
+                          caption_height_ - bottom_border - half;
+        if (static_cast<int>(field_23D88_) > limit) {
+            field_23D88_ = static_cast<uint32_t>(limit);
+        }
+        line_x = static_cast<int>(field_23D80_);
+        line_y = static_cast<int>(field_23D88_);
+        redraw_nc_buffer(1);
+        field_23D88_ = 0xFFFFFFFFu;
+        update_nc_buffer(1);
+    } else if (field_23D8C_ == 0xFFFFFFFFu) {
+        const int bottom_border = (bottom_border_thickness_ >= 0)
+            ? bottom_border_thickness_ : border_thickness_;
+        const int extent = client_rect_.top - caption_height_ -
+                           client_rect_.bottom - outer_rect_.top +
+                           outer_rect_.bottom + caption_height_ +
+                           bottom_border;
+        const int half = track_width / 2;
+        field_23D8C_ = static_cast<uint32_t>(extent + y_coord);
+        if (static_cast<int>(field_23D8C_) < half) {
+            field_23D8C_ = static_cast<uint32_t>(half);
+        }
+        const int limit = client_rect_.bottom - client_rect_.top -
+                          caption_height_ - bottom_border - half;
+        if (static_cast<int>(field_23D8C_) > limit) {
+            field_23D8C_ = static_cast<uint32_t>(limit);
+        }
+        line_x = static_cast<int>(field_23D84_);
+        line_y = static_cast<int>(field_23D8C_);
+        redraw_nc_buffer(1);
+        field_23D8C_ = 0xFFFFFFFFu;
+        update_nc_buffer(1);
+    }
+
+    if (field_23D80_ != 0xFFFFFFFFu && field_23D84_ != 0xFFFFFFFFu &&
+        field_23D88_ != 0xFFFFFFFFu && field_23D8C_ != 0xFFFFFFFFu) {
+        return;
+    }
+
+    // The five-argument GraphicWin::update (0x005D55D0) has no declaration on
+    // the class, so the two surface invalidations go through the original.
+    typedef void(__fastcall *UpdateRectSeam)(void *, void *, int, int, int,
+                                             int, GraphicWin *);
+    reinterpret_cast<UpdateRectSeam>(
+        static_cast<unsigned long>(0x005D55D0))(
+        this, nullptr, 0, ConsoleDragLineY,
+        static_cast<int>(dib_.bmiHeader.biWidth), 1, nullptr);
+    reinterpret_cast<UpdateRectSeam>(
+        static_cast<unsigned long>(0x005D55D0))(
+        this, nullptr, ConsoleDragLineX, 0, 1,
+        -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+    window_line_raw(static_cast<int>(dib_.bmiHeader.biWidth), line_y,
+                    static_cast<int>(dib_.bmiHeader.biWidth), 0, 0, 1, 0);
+    window_line_raw(line_x, -static_cast<int>(dib_.bmiHeader.biHeight),
+                    line_x, 0, 0, 1, 0);
+    ConsoleDragLineX = line_x;
+    ConsoleDragLineY = line_y;
 }

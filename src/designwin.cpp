@@ -136,6 +136,26 @@ static char *const EditorDotSpace = (char *)0x00683920;
 static char *const EditorColonSpace = (char *)0x00682E90;
 static char *const EditorHashSign = (char *)0x00683918;
 
+// The unit-special picker popups select_special raises. The labels are
+// alpha(x).txt keys (the popp convention), and the alien-faction variants
+// swap unit_sm.pcx for alunit_sm.pcx. The four stat fragments are the
+// arithmetic the item labels are built from; the image holds duplicated
+// copies of each (0x6838d0/d4/d8, 0x6838dc/e4/ec, 0x6838e0/e8/f0) and the
+// bindings below name the first of each run.
+static char *const SpecialTwoPopupLabel = (char *)0x0068385C;        // TWOSPECIAL
+static char *const SpecialTwoPopupAlienLabel = (char *)0x00683894;   // TWOSPECIAL
+static char *const SpecialMissilePopupLabel = (char *)0x00683878;    // MISSILESPECIAL
+static char *const SpecialMissilePopupAlienLabel = (char *)0x006838AC;
+static char *const SpecialUnitsPopupLabel = (char *)0x006838BC;      // UNITSPECIAL
+static char *const SpecialTwoPopupSprite = (char *)0x00683888;       // unit_sm.pcx
+static char *const SpecialTwoPopupAlienSprite = (char *)0x0068384C;  // alunit_sm.pcx
+static char *const SpecialMissilePopupSprite = (char *)0x006838A0;   // unit_sm.pcx
+static char *const SpecialMissilePopupAlienSprite = (char *)0x00683868;
+static char *const SpecialSlashSign = (char *)0x006838CC;            // "/"
+static char *const SpecialMinusOneText = (char *)0x006838D0;         // "-1"
+static char *const SpecialPlusSignText = (char *)0x006838DC;         // "+"
+static char *const SpecialMinusTwoText = (char *)0x006838E0;         // "-2"
+
 static int *const AbilityLabelIds = (int *)0x009AB540;
 static int *const AbilityLabelIdsEnd = (int *)0x009AB86C;
     // The ability-label id table draw_flash's stat line walks - 39 dwords at
@@ -352,7 +372,7 @@ int DesignWin::on_iface_button_pressed(int button_id) {
 // slide and show the window - or close it all back down.
 void DesignWin::on_status(int mode) {
     if (mode != 0) {
-        static_cast<GraphicWin *>(this)->draw_contents();
+        static_cast<GraphicWin *>(this)->on_redraw();
         FlatButton *button = flatButtons_;
         int count = 0x19;
         do {
@@ -2097,4 +2117,327 @@ void DesignWin::draw_flash() {
     MainInterfaceGlobal.soft_update(reinterpret_cast<RECT *>(&field_B1C_));
     canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
     draw_stack();
+}
+
+/*
+Purpose: The unit-special ability picker both select_special_N thunks tail
+         into: gate the popup on the faction's tech state and chassis kind,
+         list every special ability the prototype may take (tech-gated,
+         condition-gated, not already built, not already picked), exec it,
+         store the pick into the prototype's two ability slots, rebuild the
+         ability flag word, and repaint the panels.
+
+// ORIGINAL: 0x0043AC70 ?select_special@DesignWin@@QAEXH@Z 0x0043AC70-0x0043BDE9;0x00654410-0x00654416,0x0065441E-0x00654437,0x00654439-0x006544C5 FILE
+// size      5166 bytes
+// prototype void (__thiscall ?select_special@DesignWin@@QAEXH@Z)(DesignWin* this, int)
+// callers   3   call targets   34
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401060 0x00402970 0x004048A0 0x00404900 0x004064D0 0x004066C0 0x00406880 0x00406910 0x00406E60 0x004346A0 0x00435B30 0x00435DE0 0x00436090 0x0043DD50 0x0043EF70 0x0048C0A0 0x00584B50 0x005B9F20 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00625E50 0x00645470 0x00645550 0x0064FC88
+// TRIED (seed): transcribed the full control flow with the Popup/BasePop/
+//         Dialogs layouts; roughly 85-90% of the call sequence by count. The
+//         VC6 /GX SEH frame (fs:[0], the unwind-state byte, the funclet table
+//         at 0x654410+) is compiler-synthesized plumbing outside the
+//         function's own logic; the Dialogs item()-vs-dtor 0x188 adjustment
+//         is not modelled; the two 0x40-byte helper objects were raw buffers.
+//         The real locals below give the compiler the whole cleanup chain:
+//         the two helpers ARE StringLists (0x004066C0 is ??1StringList, see
+//         stringstruct.cpp), and the Dialogs/Spot/StringStruct destructors
+//         the seed open-coded are the compiler's at every exit.
+// TRIED (forwarder): the shared body both byte-exact select_special_N thunks
+//         tail into - the definition lived in pending_bodies.cpp until this
+//         transcription landed it at the end of this file so no recovered
+//         body above shifts.
+// NOTES: the four panel repaints after a successful pick (0x00435DE0
+//         draw_special_2, 0x00435B30 draw_special_1, 0x00436090
+//         draw_vehicle, 0x004346A0 draw_info) are unhomed, so they go
+//         through the original's addresses; abil_cond (0x00584B50) is
+//         unhomed the same way. The trailing slot-63 virtual is Win's
+//         on_update.
+Status: Coverage transcription - unclaimed body
+*/
+void DesignWin::select_special(int which) {
+    Popup popup;
+    // Popup keeps scroll_ private and no accessor exists; the member is
+    // pinned at 0x3230 - exactly sizeof(BasePop) - see popup.h.
+    Scroll *const popup_scroll = reinterpret_cast<Scroll *>(
+        reinterpret_cast<uint8_t *>(&popup) + 0x3230);
+
+    const int faction = static_cast<int>(factionID_);
+    // Per-faction flag block (PlayerFlagBlocks, sizeof(Player) stride): bit
+    // 0x80 of the first byte selects the alien popup set.
+    const unsigned char faction_first_byte =
+        PlayerFlagBlocks[faction * 0x59C];
+    if ((faction_first_byte & 0x80) != 0) {
+        if (which != 0) {
+            const int tech_id = static_cast<int>(Rules.tech_two_spec_abilities);
+            if (!has_tech(tech_id, faction)) {
+                parse_say(0,
+                          reinterpret_cast<int>(Technology[tech_id].name),
+                          -1, -1);
+                popp(ScriptTxtID, SpecialTwoPopupAlienLabel, 0,
+                     SpecialTwoPopupAlienSprite, pop_wait);
+                popup.close();
+                popup_scroll->close();
+                return;
+            }
+        }
+        if (Chassis[protoChassisType_].missile != 0) {
+            popp(ScriptTxtID, SpecialMissilePopupAlienLabel, 0,
+                 SpecialMissilePopupAlienSprite, pop_wait);
+            popup.close();
+            popup_scroll->close();
+            return;
+        }
+    } else {
+        if (which != 0) {
+            const int tech_id = static_cast<int>(Rules.tech_two_spec_abilities);
+            if (!has_tech(tech_id, faction)) {
+                parse_say(0,
+                          reinterpret_cast<int>(Technology[tech_id].name),
+                          -1, -1);
+                popp(ScriptTxtID, SpecialTwoPopupLabel, 0,
+                     SpecialTwoPopupSprite, pop_wait);
+                popup.close();
+                popup_scroll->close();
+                return;
+            }
+        }
+        if (Chassis[protoChassisType_].missile != 0) {
+            popp(ScriptTxtID, SpecialMissilePopupLabel, 0,
+                 SpecialMissilePopupSprite, pop_wait);
+            popup.close();
+            popup_scroll->close();
+            return;
+        }
+    }
+
+    popup.start(PopupStartCaption, SpecialUnitsPopupLabel, -1, nullptr,
+                0x200042);
+
+    Dialogs dialogs;
+    Spot spot;
+    StringList helper_list_a;
+    StringList helper_list_b;
+    StringStruct stat_list_a;
+    StringStruct stat_list_b;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get((int)reinterpret_cast<LPSTR *>(
+               Labels.strings_ptr)[0x88]));
+    dialogs.item(StringTemp, 0x1D);
+
+    int items_added = 1;
+    // The special-ability records: 39 entries at the 0x1C Ability stride,
+    // walked from Ability[0].cost_factor (0x009AB544) to the table end
+    // (0x009AB870).
+    for (int ability = 0; ability < 39; ++ability) {
+        const int16_t preq_tech = Ability[ability].preq_tech;
+        if (!has_tech(preq_tech, faction)) {
+            continue;
+        }
+        typedef int(__cdecl *AbilCondSeam)(int, int, int, int);
+        if (reinterpret_cast<AbilCondSeam>(
+                static_cast<unsigned long>(0x00584B50))(
+                ability, static_cast<int>(protoChassisType_),
+                static_cast<int>(protoWeaponType_),
+                static_cast<int>(protoArmorType_)) == 0) {
+            continue;
+        }
+
+        // Already built by this faction: one of its 0x29 build slots (the
+        // paired kind/id dwords at +8/+0x28 of the flag block) holds this
+        // ability.
+        int already_built = 0;
+        {
+            const int *const built_kind = reinterpret_cast<const int *>(
+                PlayerFlagBlocks + 8 + faction * 0x59C);
+            const int *const built_id = reinterpret_cast<const int *>(
+                PlayerFlagBlocks + 0x28 + faction * 0x59C);
+            for (int slot = 0; slot < 0x29; ++slot) {
+                if (built_kind[slot] == 0xF && built_id[slot] == ability) {
+                    already_built = 1;
+                }
+            }
+        }
+        if (already_built != 0) {
+            continue;
+        }
+        if (protoAbilityID1_ == static_cast<uint32_t>(ability)
+            || protoAbilityID2_ == static_cast<uint32_t>(ability)) {
+            continue;
+        }
+
+        StringTemp[0] = 0;
+        const int kind = static_cast<int>(Ability[ability].cost_factor);
+        if (kind >= 0) {
+            // Plain abilities quote their one-based pick position; when the
+            // chassis's triad byte is clear they quote the zero-based one
+            // and open the stat fragment group.
+            if ((Ability[ability].flags & 0x400) != 0
+                || Chassis[faction].triad != 0) {
+                char digits[0x20];
+                _itoa(ability + 1, digits, 10);
+                strcat(StringTemp, digits);
+            } else {
+                char digits[0x20];
+                _itoa(ability, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+            }
+        } else if (kind >= -7) {
+            const unsigned char weapon_cost =
+                Weapon[protoWeaponType_].cost;
+            const unsigned char armor_cost = Armor[protoArmorType_].cost;
+            const unsigned char chassis_speed =
+                Chassis[protoChassisType_].speed;
+            char digits[0x20];
+            LPSTR *const labels =
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr);
+            switch (kind + 7) {
+            case 6: {
+                int ratio = static_cast<int>(weapon_cost) /
+                            static_cast<int>(armor_cost);
+                if (ratio < 0) {
+                    ratio = 0;
+                } else if (ratio > 2) {
+                    ratio = 2;
+                }
+                _itoa(ratio, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
+                strcat(StringTemp, SpecialSlashSign);
+                strcat(StringTemp, StringTable.get((int)labels[0x154]));
+                strcat(StringTemp, EditorCloseParen);
+                break;
+            }
+            case 5:
+                _itoa(static_cast<int>(weapon_cost) - 1, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
+                strcat(StringTemp, SpecialMinusOneText);
+                strcat(StringTemp, EditorCloseParen);
+                break;
+            case 4:
+                _itoa(static_cast<int>(armor_cost) - 1, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, StringTable.get((int)labels[0x154]));
+                strcat(StringTemp, SpecialMinusOneText);
+                strcat(StringTemp, EditorCloseParen);
+                break;
+            case 3:
+                _itoa(static_cast<int>(chassis_speed) - 1, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, StringTable.get((int)labels[0xB14]));
+                strcat(StringTemp, SpecialMinusOneText);
+                strcat(StringTemp, EditorCloseParen);
+                break;
+            case 2:
+                _itoa(static_cast<int>(armor_cost + weapon_cost) - 2, digits,
+                      10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
+                strcat(StringTemp, SpecialPlusSignText);
+                strcat(StringTemp, StringTable.get((int)labels[0x154]));
+                strcat(StringTemp, SpecialMinusTwoText);
+                strcat(StringTemp, EditorCloseParen);
+                break;
+            case 1:
+                _itoa(static_cast<int>(chassis_speed + weapon_cost) - 2,
+                      digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, StringTable.get((int)labels[0x1F0]));
+                strcat(StringTemp, SpecialPlusSignText);
+                strcat(StringTemp, StringTable.get((int)labels[0xB14]));
+                strcat(StringTemp, SpecialMinusTwoText);
+                strcat(StringTemp, EditorCloseParen);
+                break;
+            case 0:
+                _itoa(static_cast<int>(chassis_speed + armor_cost) - 2, digits,
+                      10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                strcat(StringTemp, StringTable.get((int)labels[0x154]));
+                strcat(StringTemp, SpecialPlusSignText);
+                strcat(StringTemp, StringTable.get((int)labels[0xB14]));
+                strcat(StringTemp, SpecialMinusTwoText);
+                strcat(StringTemp, EditorCloseParen);
+                break;
+            default:
+                break;
+            }
+        }
+
+        dialogs.item(StringTemp, static_cast<int>(protoChassisType_));
+        ++items_added;
+    }
+
+    if (items_added == 0) {
+        popup.close();
+        popup_scroll->close();
+        return;
+    }
+
+    const int exec_result = popup.exec(0, pop_wait);
+    if (exec_result < 0) {
+        popup.close();
+        popup_scroll->close();
+        return;
+    }
+
+    int picked = exec_result;
+    if (picked >= 0x1D) {
+        picked = -1;
+    }
+    if (which == 0) {
+        protoAbilityID1_ = static_cast<uint32_t>(picked);
+    } else {
+        protoAbilityID2_ = static_cast<uint32_t>(picked);
+    }
+    protoAbilityFlags_ = 0;
+    {
+        uint32_t bits = 0;
+        for (int slot = 0; slot < 2; ++slot) {
+            const int value = static_cast<int>(slot == 0 ? protoAbilityID1_
+                                                         : protoAbilityID2_);
+            if (value >= 0) {
+                bits |= 1u << static_cast<unsigned>(value);
+            }
+        }
+        protoAbilityFlags_ = bits;
+    }
+
+    // The four panel repaints are unhomed; they go through the original's
+    // addresses like the rest of this file's pending seams.
+    typedef void(__fastcall *DesignWinIntSeam)(void *, void *, int);
+    reinterpret_cast<DesignWinIntSeam>(
+        static_cast<unsigned long>(0x00435DE0))(this, nullptr, 0);
+    reinterpret_cast<DesignWinIntSeam>(
+        static_cast<unsigned long>(0x00435B30))(this, nullptr, 0);
+    reinterpret_cast<DesignWinIntSeam>(
+        static_cast<unsigned long>(0x00436090))(this, nullptr, 0);
+    draw_flash();
+    reinterpret_cast<DesignWinIntSeam>(
+        static_cast<unsigned long>(0x004346A0))(this, nullptr, 0);
+    on_update();
+
+    stat_list_a.remove_all();
+    stat_list_b.remove_all();
+    popup.close();
+    popup_scroll->close();
 }

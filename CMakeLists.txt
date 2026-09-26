@@ -97,13 +97,16 @@ endif()
 # 1.0.2 must compile as C: it uses K&R parameter definitions that no C++
 # compiler will parse.
 add_library(zlib STATIC
+    src/vendor/zlib-1.0.2/adler32.c
     src/vendor/zlib-1.0.2/deflate.c
     src/vendor/zlib-1.0.2/infblock.c
     src/vendor/zlib-1.0.2/infcodes.c
     src/vendor/zlib-1.0.2/inffast.c
     src/vendor/zlib-1.0.2/inflate.c
     src/vendor/zlib-1.0.2/inftrees.c
+    src/vendor/zlib-1.0.2/infutil.c
     src/vendor/zlib-1.0.2/trees.c
+    src/vendor/zlib-1.0.2/zutil.c
 )
 target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/zlib-1.0.2")
 # `/W0` and no forced include: PROVENANCE.md's whole point is that these

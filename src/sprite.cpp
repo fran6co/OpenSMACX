@@ -2754,3 +2754,398 @@ void __cdecl load_icons() {
     // loads and extractions. Close occurs only after all 86 extraction attempts.
     buffer.close();
 }
+
+// ORIGINAL: 0x005E8FF5 ?draw_multi_table_dest@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E8FF5-0x005E9D44 FILE
+// draw_dest's 16-bit-table sibling: every drawn destination pixel samples the
+// 64K combined table at (source << 8) | destination, and the transparency key
+// compares SIGNED (the image's `char` loads). The original's inner copy loop
+// is a hand-unrolled Duff's device that computes its own re-entry address at
+// runtime; this body keeps the guard clauses, the scale-ratio gate and the
+// rect intersection and performs the same per-pixel operation with plain
+// nested loops. The seed's scaled walkers dropped the y-table row repeats and
+// the per-run replication; the family's verified walk (see draw_dest above)
+// supplies both, and the disassembly at 0x005E929A..0x005E92AC (the seed's
+// four re-entry labels) is the same sampler.
+// TRIED (forwarder): the remaining specialized Sprite workers were reached
+// through this forwarder until the body landed here beside its family.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: pushf/popf around the unrolled copy
+// - semantic equivalence is the honest ceiling; the answer is not `__asm`.
+int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
+                                  int y, unsigned char *multi_table) {
+    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0)
+        return 3;
+
+    if (SpriteScaleNumerator != SpriteScaleDenominator &&
+        (SpriteCachedScaleNumerator != SpriteScaleNumerator ||
+         SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
+        SpriteScalingRatio = static_cast<float>(
+            static_cast<double>(SpriteScaleNumerator) / SpriteScaleDenominator);
+        if (SpriteScalingRatio > 4.0) {
+            destination->free_data(1);
+            return 0;
+        }
+        fill_scaling_table();
+        SpriteCachedScaleNumerator = SpriteScaleNumerator;
+        SpriteCachedScaleDenominator = SpriteScaleDenominator;
+    }
+
+    const int source_pitch = iSpriteWidth2_;
+    int destination_pitch = static_cast<int>(destination->stride_);
+    const unsigned char *const scaled_source =
+        reinterpret_cast<const unsigned char *>(pcBits_);
+
+    if (SpriteScaleNumerator == SpriteScaleDenominator) {
+        RECT original;
+        original.top = y + iTopOffset_;
+        original.left = x + iLeftOffset_;
+        original.right = original.left + iSpriteWidth_;
+        original.bottom = original.top + iSpriteHeight_;
+        RECT clipped = original;
+        if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row =
+            reinterpret_cast<const unsigned char *>(pcBits_) +
+            (clipped.left - original.left) +
+            (clipped.top - original.top) * source_pitch;
+        unsigned char *destination_row =
+            static_cast<unsigned char *>(destination->locked_bits_) +
+            clipped.left + clipped.top * destination_pitch;
+        const int columns = clipped.right - clipped.left;
+        const int rows = clipped.bottom - clipped.top;
+        for (int row = 0; row < rows; ++row) {
+            for (int column = 0; column < columns; ++column) {
+                if (static_cast<char>(source_row[column]) !=
+                    static_cast<char>(transparent)) {
+                    destination_row[column] = multi_table[
+                        (source_row[column] << 8) | destination_row[column]];
+                }
+            }
+            if (row + 1 < rows) {
+                source_row += source_pitch;
+                destination_row += destination_pitch;
+            }
+        }
+        destination->free_data(1);
+        return 1;
+    }
+
+    const int scaled_height = static_cast<int>(
+        static_cast<double>(iSpriteHeight_) * SpriteScalingRatio);
+    const int scaled_width = static_cast<int>(
+        static_cast<double>(iSpriteWidth_) * SpriteScalingRatio);
+    const int top = static_cast<int>(
+        static_cast<double>(y) + static_cast<double>(iTopOffset_) * SpriteScalingRatio);
+    const int left = static_cast<int>(
+        static_cast<double>(x) + static_cast<double>(iLeftOffset_) * SpriteScalingRatio);
+    RECT original = {left, top, left + scaled_width, top + scaled_height};
+    RECT clipped = original;
+    if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+        destination->free_data(1);
+        return 0;
+    }
+    unsigned char *const destination_bits =
+        static_cast<unsigned char *>(destination->locked_bits_);
+    const int base_offset = original.left + original.top * destination_pitch;
+    destination_pitch = static_cast<int>(destination->stride_);
+    int source_x, source_y, destination_x, destination_y;
+    int source_columns, source_rows, destination_columns, destination_rows;
+
+    if (SpriteScaleNumerator < SpriteScaleDenominator) {
+        if (original.right - original.left < SpriteMinimumScaledWidth ||
+            original.bottom - original.top < SpriteMinimumScaledHeight) {
+            destination->free_data(1);
+            return 0;
+        }
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+            &destination_x, &source_x, &destination_columns, &source_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+            &destination_y, &source_y, &destination_rows, &source_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < destination_rows; ++row) {
+            const unsigned char *source = source_row;
+            for (int column = 0; column < destination_columns; ++column) {
+                if (static_cast<char>(*source) != static_cast<char>(transparent)) {
+                    destination_row[column] =
+                        multi_table[(*source << 8) | destination_row[column]];
+                }
+                if (column + 1 < destination_columns) source += columns[column];
+            }
+            if (row + 1 < destination_rows) {
+                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+                destination_row += destination_pitch;
+            }
+        }
+    } else {
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+            &source_x, &destination_x, &source_columns, &destination_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+            &source_y, &destination_y, &source_rows, &destination_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < source_rows; ++row) {
+            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+            const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
+            int output_column = 0;
+            for (int column = 0; column < source_columns; ++column) {
+                const unsigned char pixel_value = source_row[column];
+                if (static_cast<char>(pixel_value) !=
+                    static_cast<char>(transparent)) {
+                    for (int repeat = 0; repeat < repeats; ++repeat)
+                        for (int pixel = 0; pixel < columns[column]; ++pixel) {
+                            unsigned char &target = destination_row[
+                                repeat * destination_pitch + output_column + pixel];
+                            target = multi_table[(pixel_value << 8) | target];
+                        }
+                }
+                output_column += columns[column];
+            }
+            if (row + 1 < source_rows) {
+                source_row += source_pitch;
+                destination_row += repeats * destination_pitch;
+            }
+        }
+    }
+    destination->free_data(1);
+    return 1;
+}
+
+// ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE
+// draw_dest's stencil sibling: the transparency key passes untouched, a zero
+// source byte passes untouched, and everything else is remapped - the uniform
+// and shrink walks remap through the DESTINATION pixel (table[dst]) while the
+// expanded runs replicate table[source] over the run. The original's inner
+// loops are a hand-unrolled Duff's device (pushf/popf protected); this body
+// keeps the guards, the scale gate and the clipping and performs the same
+// per-pixel operations with plain nested loops, on the family's verified walk.
+// HAND-WRITTEN ASSEMBLY IN THE ORIGINAL: the shipped bytes save and restore
+// the FLAGS around the unrolled block - byte-exactness is not reachable from
+// C++ here; the honest ceiling is semantic equivalence.
+// TRIED (seed): two indirect back-edges (jmp edx @0x5E8420, jmp [0x9B3AC4]
+//         @0x5E8766) are Duff's-device dispatch; rewritten as a
+//         switch(remainder) on the loop-invariant state. The row-repeat count
+//         loop @0x5E87F8-0x5E8817 (esi += stride, N-1 times from a y-table
+//         byte) is a case Ghidra silently dropped; reconstructed from raw
+//         bytes.
+int Sprite::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
+                           unsigned char *table) {
+    if (pcBits_ == 0 || destination == 0 || destination->get_data() == 0)
+        return 3;
+
+    if (SpriteScaleNumerator != SpriteScaleDenominator &&
+        (SpriteCachedScaleNumerator != SpriteScaleNumerator ||
+         SpriteCachedScaleDenominator != SpriteScaleDenominator)) {
+        SpriteScalingRatio = static_cast<float>(
+            static_cast<double>(SpriteScaleNumerator) / SpriteScaleDenominator);
+        if (SpriteScalingRatio > 4.0) {
+            destination->free_data(1);
+            return 0;
+        }
+        fill_scaling_table();
+        SpriteCachedScaleNumerator = SpriteScaleNumerator;
+        SpriteCachedScaleDenominator = SpriteScaleDenominator;
+    }
+
+    const unsigned char key = static_cast<unsigned char>(transparent);
+    const int source_pitch = iSpriteWidth2_;
+    int destination_pitch = static_cast<int>(destination->stride_);
+    const unsigned char *const scaled_source =
+        reinterpret_cast<const unsigned char *>(pcBits_);
+
+    if (SpriteScaleNumerator == SpriteScaleDenominator) {
+        RECT original;
+        original.top = y + iTopOffset_;
+        original.left = x + iLeftOffset_;
+        original.right = original.left + iSpriteWidth_;
+        original.bottom = original.top + iSpriteHeight_;
+        RECT clipped = original;
+        if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row =
+            reinterpret_cast<const unsigned char *>(pcBits_) +
+            (clipped.left - original.left) +
+            (clipped.top - original.top) * source_pitch;
+        unsigned char *destination_row =
+            static_cast<unsigned char *>(destination->locked_bits_) +
+            clipped.left + clipped.top * destination_pitch;
+        const int columns = clipped.right - clipped.left;
+        const int rows = clipped.bottom - clipped.top;
+        for (int row = 0; row < rows; ++row) {
+            for (int column = 0; column < columns; ++column) {
+                const unsigned char source = source_row[column];
+                if (source != key && source != 0)
+                    destination_row[column] = table[destination_row[column]];
+            }
+            if (row + 1 < rows) {
+                source_row += source_pitch;
+                destination_row += destination_pitch;
+            }
+        }
+        destination->free_data(1);
+        return 0;
+    }
+
+    const int scaled_height = static_cast<int>(
+        static_cast<double>(iSpriteHeight_) * SpriteScalingRatio);
+    const int scaled_width = static_cast<int>(
+        static_cast<double>(iSpriteWidth_) * SpriteScalingRatio);
+    const int top = static_cast<int>(
+        static_cast<double>(y) + static_cast<double>(iTopOffset_) * SpriteScalingRatio);
+    const int left = static_cast<int>(
+        static_cast<double>(x) + static_cast<double>(iLeftOffset_) * SpriteScalingRatio);
+    RECT original = {left, top, left + scaled_width, top + scaled_height};
+    RECT clipped = original;
+    if (!IntersectRect(&clipped, &clipped, &destination->rect1_)) {
+        destination->free_data(1);
+        return 0;
+    }
+    unsigned char *const destination_bits =
+        static_cast<unsigned char *>(destination->locked_bits_);
+    const int base_offset = original.left + original.top * destination_pitch;
+    destination_pitch = static_cast<int>(destination->stride_);
+    int source_x, source_y, destination_x, destination_y;
+    int source_columns, source_rows, destination_columns, destination_rows;
+
+    if (SpriteScaleNumerator < SpriteScaleDenominator) {
+        if (original.right - original.left < SpriteMinimumScaledWidth ||
+            original.bottom - original.top < SpriteMinimumScaledHeight) {
+            destination->free_data(1);
+            return 0;
+        }
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_shrink(&original, &clipped,
+            &destination_x, &source_x, &destination_columns, &source_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_shrink(&original, &clipped,
+            &destination_y, &source_y, &destination_rows, &source_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < destination_rows; ++row) {
+            const unsigned char *source = source_row;
+            for (int column = 0; column < destination_columns; ++column) {
+                if (*source != key && *source != 0)
+                    destination_row[column] = table[*source];
+                if (column + 1 < destination_columns) source += columns[column];
+            }
+            if (row + 1 < destination_rows) {
+                source_row += source_pitch * static_cast<unsigned char>(rows[row]);
+                destination_row += destination_pitch;
+            }
+        }
+    } else {
+        IntersectRect(&clipped, &original, &destination->rect1_);
+        int *const columns = get_clipped_x_table_expand(&original, &clipped,
+            &source_x, &destination_x, &source_columns, &destination_columns);
+        if (columns == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        int *const rows = get_clipped_y_table_expand(&original, &clipped,
+            &source_y, &destination_y, &source_rows, &destination_rows);
+        if (rows == 0) {
+            destination->free_data(1);
+            return 0;
+        }
+        const unsigned char *source_row = scaled_source + (source_x + source_pitch * source_y);
+        unsigned char *destination_row = destination_bits + (base_offset +
+            destination_x + destination_pitch * destination_y);
+        for (int row = 0; row < source_rows; ++row) {
+            const unsigned char selector = static_cast<unsigned char>(rows[row]);
+            const int repeats = selector == 1 ? 1 : selector == 2 ? 2 : selector == 3 ? 3 : 4;
+            int output_column = 0;
+            for (int column = 0; column < source_columns; ++column) {
+                const unsigned char pixel_value = source_row[column];
+                if (pixel_value != key && pixel_value != 0) {
+                    const unsigned char mapped = table[pixel_value];
+                    for (int repeat = 0; repeat < repeats; ++repeat)
+                        for (int pixel = 0; pixel < columns[column]; ++pixel) {
+                            destination_row[
+                                repeat * destination_pitch + output_column +
+                                pixel] = mapped;
+                        }
+                }
+                output_column += columns[column];
+            }
+            if (row + 1 < source_rows) {
+                source_row += source_pitch;
+                destination_row += repeats * destination_pitch;
+            }
+        }
+    }
+    destination->free_data(1);
+    return 0;
+}
+
+// ORIGINAL: 0x005E3890 ?init@Sprite@@QAEHPADHH@Z 0x005E3890-0x005E3953 FILE
+// Re-target a live sprite at a new PCX file: release the previous pixel block
+// (charging its size back to SpriteMemoryUsed) and file name, clear the
+// geometry, copy the new name into heap storage, and store the requested
+// width/height into both the source and the displayed dimension pairs.
+int Sprite::init(char *filename, int width, int height) {
+    if (filename == 0) {
+        return 0x10;
+    }
+    if (fObj1Exists_ == 0 && pcBits_ != 0) {
+        SpriteMemoryUsed -= iSpriteHeight_ * iSpriteWidth_;
+        if (pcBits_ != 0) {
+            free(pcBits_);
+        }
+        pcBits_ = 0;
+    }
+    if (ppszFileName_ != 0) {
+        free(ppszFileName_);
+        ppszFileName_ = 0;
+    }
+    iSpriteWidth2_ = 0;
+    iSpriteWidth_ = 0;
+    iSpriteHeight_ = 0;
+    iWidth_ = 0;
+    iHeight_ = 0;
+    iLeftOffset_ = 0;
+    iTopOffset_ = 0;
+    fObj1Exists_ = 0;
+    ppszFileName_ = static_cast<char *>(mem_get(strlen(filename) + 1));
+    if (ppszFileName_ == 0) {
+        return 4;
+    }
+    ppszFileName_[0] = 0;
+    strcat(ppszFileName_, filename);
+    iSpriteWidth2_ = width;
+    iSpriteWidth_ = width;
+    iSpriteHeight_ = height;
+    iWidth_ = width;
+    iHeight_ = height;
+    return 0;
+}
