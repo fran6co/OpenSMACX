@@ -33,6 +33,17 @@ void __fastcall SocialWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButto
 void __fastcall SocialWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 void __fastcall SocialWinCheckButtonCtor(void *self) { reinterpret_cast<CheckButton *>(self)->CheckButton::CheckButton(); }
 void __fastcall SocialWinCheckButtonDtor(void *self) { reinterpret_cast<CheckButton *>(self)->~CheckButton(); }
+// CheckButton's own init (0x006337E0) is out of this file's scope, so init
+// reaches it raw, the same way the constructor/destructor pair above is
+// reached: a __fastcall wrapper whose second parameter consumes edx while
+// ecx carries the receiver.
+static int __fastcall SocialWinCheckButtonInit(void *self, void *, int label_a,
+    int label_b, GraphicWin *owner, int flags) {
+    typedef int (__fastcall *pending)(void *, void *, int, int, GraphicWin *,
+                                      int);
+    return reinterpret_cast<pending>(0x006337E0)(self, 0, label_a, label_b,
+                                                 owner, flags);
+}
 void __fastcall SocialWinButtonGroupCtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->ButtonGroup::ButtonGroup(); }
 void __fastcall SocialWinButtonGroupDtor(void *self) { reinterpret_cast<ButtonGroup *>(self)->~ButtonGroup(); }
 
@@ -876,5 +887,1425 @@ void SocialWin::allocate_energy(int a1, int a2) {
             ++attempts;
             ++idx;
         } while (attempts < 3);
+    }
+}
+
+// Unrecovered callees the new bodies reach. Both stay forwarders: the
+// originals are seed-only (src/unrecovered/00445130.cpp,
+// src/recovered/units/0045d440.cpp, src/recovered/units/0045d970.cpp), their
+// owners are outside this file's scope, and the link still needs the names.
+// Retire each the moment its seed is homed.
+void __cdecl energy_compute(int faction_id, int mode);   // 0x00445130
+void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
+void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
+void __cdecl do_all_draws();                             // 0x005FCBB0, in temp.cpp
+
+// energy_compute is seed-only (src/unrecovered/00445130.cpp) and no landed TU
+// defines it, so this file carries the __cdecl call the image's own
+// `call rel32` reaches - the same forwarder councwin.cpp defines for
+// slide_show/slide_hide. Retire it the moment 00445130 is homed.
+void __cdecl energy_compute(int faction_id, int mode) {
+    typedef void(__cdecl *pending)(int, int);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00445130))(faction_id,
+                                                                      mode);
+}
+
+// Fixed-slot bindings carried from the 004aebf0 work, named from the roles
+// their stores fill. Each folds to the bare immediate, so a rename moves no
+// byte.
+// PlayerSocialCategoryBlock 0x0096CC08 / PlayerSocialEffectBlock 0x0096CC2C -
+// the per-faction social blocks social_calc consumes, reached through
+// PlayersData's own 0x20CC stride (0x96C9E0 + 0x228 / + 0x24C). No catalogue
+// names; the parameter types come from social_calc's own signature.
+// BreakthroughTurnsGlobal 0x00749AE4 / NetIncomeGlobal 0x00749C0C - the two
+// globals UNK1 copies into breakthroughTurns_ and netIncome_.
+static SocialCategory *const PlayerSocialCategoryBlock = (SocialCategory *)0x0096CC08;
+static SocialEffect *const PlayerSocialEffectBlock = (SocialEffect *)0x0096CC2C;
+static int *const BreakthroughTurnsGlobal = (int *)0x00749AE4;
+static int *const NetIncomeGlobal = (int *)0x00749C0C;
+
+/*
+ * Purpose: Recompute the social model for one category. Stores the chosen
+ *          model in the category slot, redraws it, snapshots the working
+ *          effect block as the undo copy, recalculates the player's pending
+ *          and stored effect rows, then recomputes energy from the new model.
+ *          The category itself stays 0 for the player-block walks; the faction
+ *          index selects them.
+// ORIGINAL: 0x004AEBF0 ?UNK1@SocialWin@@QAEXHH@Z 0x004AEBF0-0x004AECD2 FILE
+// size      226 bytes
+// prototype void (__thiscall ?UNK1@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
+// callers   2   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00445130 0x004AF310 0x005B4210
+*/
+void SocialWin::UNK1(int soc_category, int soc_model) {
+    field_A1C_ = 0xFFFFFFFFU;
+    reinterpret_cast<int *>(socCategory_)[soc_category] = soc_model;
+    draw_social(soc_category);
+
+    // The original hand-copies the 11-int effect block with a dec/jne loop;
+    // a plain loop or block copy compiles to `rep movsd` instead. Keeping the
+    // counter `volatile` blocks that recognition without spilling the cursor.
+    int *dst = reinterpret_cast<int *>(&socEffectOrig_);
+    volatile int count = 11;
+    do {
+        *dst = dst[-11];
+        dst = dst + 1;
+        count = count - 1;
+    } while (count != 0);
+
+    social_calc(reinterpret_cast<SocialCategory *>(socCategory_),
+                reinterpret_cast<SocialEffect *>(&socEffect_), factionID_, 0, 0);
+    social_calc(reinterpret_cast<SocialCategory *>(socCategory_),
+                reinterpret_cast<SocialEffect *>(
+                    reinterpret_cast<char *>(PlayerSocialEffectBlock)
+                    + factionID_ * sizeof(PlayerData)),
+                factionID_, 0, 0);
+
+    energy_compute(factionID_, 1);
+
+    breakthroughTurns_ = *BreakthroughTurnsGlobal;
+    netIncome_ = *NetIncomeGlobal;
+
+    social_calc(reinterpret_cast<SocialCategory *>(
+                    reinterpret_cast<char *>(PlayerSocialCategoryBlock)
+                    + factionID_ * sizeof(PlayerData)),
+                reinterpret_cast<SocialEffect *>(
+                    reinterpret_cast<char *>(PlayerSocialEffectBlock)
+                    + factionID_ * sizeof(PlayerData)),
+                factionID_, 0, 0);
+    // The image's third social_calc call pushes only four arguments - the
+    // fifth slot is left to stack residue, which no C spelling can
+    // reproduce; this call passes 0 where the image reads garbage.
+}
+
+/*
+ * Purpose: Maximize one effect column: arm effectMaximize_, then for every
+ *          category walk the four model rows for the best available score on
+ *          that effect, select it in the category's button group and apply it
+ *          through UNK1. A trailing redraw leaves the panels in step, and the
+ *          arm clears once the clicks that follow consume it.
+// ORIGINAL: 0x004AF110 ?maximize_effect@SocialWin@@QAEXH@Z 0x004AF110-0x004AF1D7 FILE
+// size      199 bytes
+// prototype void (__thiscall ?maximize_effect@SocialWin@@QAEXH@Z)(SocialWin* this, int effectID)
+// callers   1   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004AEBF0 0x005B4730 0x0062B870
+// indirect  0x004AF1BE
+*/
+void SocialWin::maximize_effect(int effect_id) {
+    effectMaximize_ = effect_id;
+    int cat_base = 0;
+    ButtonGroup *group = buttonGroups_;
+    for (int category = 0; category < 4; ++category) {
+        int best_score = 0;
+        int best_model = 0;
+        int model = 0;
+        int row = 0;
+        do {
+            int avail = society_avail(category, row, factionID_);
+            if (avail != 0 && best_score < SocialEffectTable[cat_base + model + effect_id]) {
+                best_model = row;
+                best_score = SocialEffectTable[cat_base + model + effect_id];
+            }
+            model += 0xb;
+            ++row;
+        } while (model < 0x2c);
+        group->set(best_model + category * 4, 1);
+        UNK1(category, best_model);
+        cat_base += 0x35;
+        ++group;
+    }
+    redraw();
+    effectMaximize_ = 0xFFFFFFFFU;
+}
+
+/*
+ * Purpose: The SubInterface status slot. Opening repaints the front, shows
+ *          every flat button and energy lock, refreshes the main view, slides
+ *          the window in and shows it; closing slides it back out, hides it,
+ *          and hides the same buttons again.
+// ORIGINAL: 0x004B2120 ?on_status@SocialWin@@QAEXH@Z 0x004B2120-0x004B2204 FILE BYTE_EXACT
+// symbol    ?on_status@SocialWin@@UAEXH@Z
+// size      228 bytes
+// prototype void (__thiscall ?on_status@SocialWin@@QAEXH@Z)(SocialWin* this, int)
+// callers   0   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0045D440 0x0045D970 0x005D56B0 0x005ED9D0 0x005EDCD0 0x005FCBB0
+// indirect  0x004B213E 0x004B2152 0x004B216F 0x004B21D6 0x004B21F1
+*/
+void SocialWin::on_status(int mode) {
+    if (mode != 0) {
+        static_cast<GraphicWin *>(this)->on_redraw();
+        FlatButton *button = flatButtons_;
+        int count = 0x23;
+        do {
+            button->show(0);
+            ++button;
+            --count;
+        } while (count != 0);
+        // The lock array is reached at its measured 0xD6C, not the header's
+        // 0xD68 - the same boundary the constructor already reaches raw (see
+        // the note beside energyLockButtons_ in socialwin.h).
+        CheckButton *lock = reinterpret_cast<CheckButton *>(
+            reinterpret_cast<char *>(this) + 0xD6C);
+        count = 3;
+        do {
+            lock->show(0);
+            ++lock;
+            --count;
+        } while (count != 0);
+        MainInterfaceGlobal.update(0);
+        do_all_draws();
+        slide_show(this, 0);
+        this->Win::show(3);
+    } else {
+        slide_hide(this, 0);
+        this->Win::hide();
+        do_all_draws();
+        FlatButton *button = flatButtons_;
+        int count = 0x23;
+        do {
+            button->hide();
+            ++button;
+            --count;
+        } while (count != 0);
+        CheckButton *lock = reinterpret_cast<CheckButton *>(
+            reinterpret_cast<char *>(this) + 0xD6C);
+        count = 3;
+        do {
+            lock->hide();
+            ++lock;
+            --count;
+        } while (count != 0);
+    }
+}
+
+/*
+ * Purpose: True when the faction may take one social effect. A negative
+ *          entry in the player's own effect table marks a blocked pick, and
+ *          both halves gate on a base id whose owner is this faction: the
+ *          compare id for the category/model pairs, the probe id for the
+ *          frenzy row. The comparison has to survive as a VALUE across the
+ *          join below, or VC6 folds it into a `cmp`/`jne` pair and keeps
+ *          `this` in ecx.
+// ORIGINAL: 0x004B0FA0 ?immune@SocialWin@@QAEHHHH@Z 0x004B0FA0-0x004B1074 FILE BYTE_EXACT
+// LEVER: push/mov the faction test lives in an `int` set on BOTH paths of the
+//        `baseID >= 0` branch and tested after the join, not inside it. The
+//        join forces VC6 to MATERIALISE the comparison (`xor eax,eax; sete al;
+//        test eax,eax`) instead of folding it into `cmp/jne`, and that one
+//        extra live value is what pushes `this` out of ecx into the
+//        callee-saved edi (`mov edi, ecx`) - the whole prologue interleave
+//        follows from it.
+// size      212 bytes
+// prototype int (__thiscall ?immune@SocialWin@@QAEHHHH@Z)(SocialWin* this, int, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+*/
+int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
+    int faction_owns_base = 0;
+    int base_id = *SocBaseIdCompare;
+    if (base_id >= 0) {
+        unsigned char base_faction_id = *reinterpret_cast<unsigned char *>(
+            reinterpret_cast<int *>(SpyingBaseFactionBytes) + base_id * 77);
+        faction_owns_base = (static_cast<int>(base_faction_id) == factionID_);
+    }
+    if (faction_owns_base) {
+        if ((soc_category == 2 && soc_model == 1)
+            || (soc_category == 3 && soc_model == soc_category)) {
+            if (SocialEffectTable[soc_model * 11 + effect_id + soc_category * 53] < 0) {
+                return 1;
+            }
+        }
+    }
+
+    faction_owns_base = 0;
+    base_id = *SocBaseIdProbe;
+    if (base_id >= 0) {
+        unsigned char base_faction_id = *reinterpret_cast<unsigned char *>(
+            reinterpret_cast<int *>(SpyingBaseFactionBytes) + base_id * 77);
+        faction_owns_base = (static_cast<int>(base_faction_id) == factionID_);
+    }
+    if (faction_owns_base) {
+        if (soc_category == 3 && soc_model == 1) {
+            if (SocialEffectRow[effect_id] < 0) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/*
+ * Purpose: Dispatch a click on the social panel's button grid. The right
+ *          column (0x11..0x1a) is the maximize column: the row picks which
+ *          effect to maximize, skipping the separator slot after the third
+ *          row. The left grid (0..0xf) applies one model per category: the
+ *          row is the category, the column the model, and when no maximize is
+ *          armed and nothing is pending the group deselects and the panels
+ *          redraw.
+// ORIGINAL: 0x004B1CE0 ?on_group_clicked@SocialWin@@QAEXHH@Z 0x004B1CE0-0x004B1D64 FILE
+// size      132 bytes
+// prototype void (__thiscall ?on_group_clicked@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004AEBF0 0x004AF110 0x0062B870
+// indirect  0x004B1D59
+*/
+void SocialWin::on_group_clicked(int a1, int a2) {
+    if (a2 >= 0x11 && a2 < 0x1b) {
+        int effect = a2 - 0x11;
+        if (effect >= 3) {
+            ++effect;
+        }
+        maximize_effect(effect);
+        return;
+    }
+    if (a2 >= 0 && a2 < 0x10) {
+        int model = a2 % 4;
+        int category = a2 / 4;
+        UNK1(category, model);
+        if (effectMaximize_ == 0xFFFFFFFFU && field_2C28_ == 0) {
+            buttonGroup_.set(-1, 1);
+            redraw();
+        }
+    }
+}
+
+/*
+ * Purpose: Track the pointer across the social panel's two hover regions.
+ *          Rows 0..0xf are the category/model buttons: entering a new one
+ *          repaints just the mouseover panel. Rows 0x11..0x1b are the effect
+ *          column: entering clears to -1 and repaints the overview (leaving
+ *          the hover cleared), otherwise the new effect id repaints it too.
+ *          Every path ends in the shared do_all_draws pass.
+// ORIGINAL: 0x004B1D70 ?on_button_passover@SocialWin@@QAEXHH@Z 0x004B1D70-0x004B1DF3 FILE
+// size      131 bytes
+// prototype void (__thiscall ?on_button_passover@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004B0410 0x004B1080 0x005FCBB0
+*/
+void SocialWin::on_button_passover(int a1, int a2) {
+    if (a1 >= 0 && a1 < 0x10 && a2 != 0 && field_A2C_ != static_cast<uint32_t>(a1)) {
+        field_A2C_ = static_cast<uint32_t>(a1);
+        draw_mouseover();
+    }
+    if (a1 >= 0x11 && a1 <= 0x1b) {
+        if (a2 == 0) {
+            if (field_A30_ != 0xFFFFFFFFU) {
+                field_A30_ = 0xFFFFFFFFU;
+                draw_overview();
+                do_all_draws();
+                return;
+            }
+        } else if (field_A30_ != static_cast<uint32_t>(a1)) {
+            field_A30_ = static_cast<uint32_t>(a1);
+            draw_overview();
+        }
+    }
+    do_all_draws();
+}
+
+// Link-only placeholders; the passover path and init are what reference them.
+// ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b0410.cpp", "source:src/socialwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void SocialWin::draw_overview() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004AECE0 ?reset@SocialWin@@QAEXXZ 0x004AECE0-0x004AEEF1
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004aece0.cpp", "source:src/socialwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void SocialWin::reset() {
+    // BODY GOES HERE.
+}
+
+// Fixed-slot binding carried from the 004b17a0 work: the "+" the effect
+// count is prefixed with. Image .data reads "+" (0x006874AC, beside
+// "socwin.pcx"); no catalogue name.
+static char *const PlusText = (char *)0x006874AC;
+
+/*
+ * Purpose: Track the pointer over the social panel: the bubble is cleared
+ *          (twice, exactly as the original does), then the four category
+ *          tooltip rectangles are scanned row by row - each available row
+ *          tests its grid rectangle against the cursor, and the inner row
+ *          scan stops at a hit while the outer category scan keeps running,
+ *          so a later category's hit wins. The faction-power rectangle maps
+ *          the hover to -2, anything else to the grid index or -1, and a
+ *          changed hover repaints the mouseover panel.
+// ORIGINAL: 0x004B1EC0 ?on_mouse_move@SocialWin@@QAEXHH@Z 0x004B1EC0-0x004B1FB2 FILE
+// size      242 bytes
+// prototype void (__thiscall ?on_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
+// callers   0   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004B1080 0x005B4730 0x005F8500 0x005FA7E0
+*/
+void SocialWin::on_mouse_move(int a1, int a2) {
+    ::Win::clear_bubble_text();
+    ::Win::clear_bubble_text();
+
+    int hover = -1;
+    // The four category tooltip rectangles: tooltipSocEng_ plus the three
+    // RECT-sized slots that follow it, one per category.
+    RECT *category_rect = reinterpret_cast<RECT *>(tooltipSocEng_);
+    for (int category = 0; category < 4; ++category) {
+        for (int row = 0; row < 4; ++row) {
+            if (society_avail(category, row, factionID_) == 0) {
+                continue;
+            }
+            RECT rect = *category_rect;
+            RECT *grid = &tutRects3_[2 + row + category * 4];
+            rect.left = grid->left;
+            rect.right = grid->right;
+            if (in_box(a1, a2, &rect) != 0) {
+                hover = row + category * 4;
+                break;
+            }
+        }
+        ++category_rect;
+    }
+
+    if (in_box(a1, a2, reinterpret_cast<RECT *>(&tooltipFactionPower_)) != 0) {
+        hover = -2;
+    }
+    if (field_A2C_ != static_cast<uint32_t>(hover)) {
+        field_A2C_ = static_cast<uint32_t>(hover);
+        draw_mouseover();
+    }
+}
+
+/*
+ * Purpose: Draw one social button's text band: the effect icon at the left
+ *          (its colour picked from the button's status), the effect name, and
+ *          the count on the right - signed "+" and recoloured when it differs
+ *          from the faction's stored value. Invoked for the effect column's
+ *          buttons only (0x11..0x1a), with the separator slot skipped.
+// ORIGINAL: 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z 0x004B17A0-0x004B1991 FILE
+// symbol    ?on_button_text_draw@SocialWin@@QAEHPAVGraphicWin@@PADH@Z
+// TRIED: strlen/strcat named plainly get inlined by /O2 (fixed via the nullary
+//        _strlen/_strcat function-pointer lever, sim 0.71->0.90); remaining
+//        divergence at #17 is this/a1 register-allocation (esi vs edi) not
+//        chased further; not byte-exact.
+// size      497 bytes
+// prototype int (__thiscall ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z)(SocialWin* this, GraphicWin*, int8*, int)
+// callers   0   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005DACB0 0x005DCF40 0x005DD450 0x005E4B4A 0x006453E0 0x00645470 0x0064FC88
+*/
+int SocialWin::on_button_text_draw(GraphicWin *window, char *text, int button_id) {
+    if (button_id < 0x11 || button_id >= 0x1b) {
+        return 0;
+    }
+    int effect = button_id - 0x11;
+    if (effect >= 3) {
+        ++effect;
+    }
+
+    char *win = reinterpret_cast<char *>(window);
+    Buffer *win_buffer = reinterpret_cast<Buffer *>(win + 0x444);
+
+    // The buffer's own working rectangle (Buffer::rect2_, 0x474).
+    RECT rect;
+    RECT *source = reinterpret_cast<RECT *>(win + 0x474);
+    rect.left = source->left;
+    rect.top = source->top;
+    rect.right = source->right;
+    rect.bottom = source->bottom;
+    int line_base = effectIcons_[0].height();
+    int y_center = (rect.bottom - line_base - rect.top) / 2;
+
+    char *button = reinterpret_cast<char *>(flatButtons_) + button_id * 0xB4C;
+    int status = *reinterpret_cast<int *>(button + 0xAB8);
+    int flag;
+    if (status == 0) {
+        flag = 1;
+    } else if (status == 1 || status == 2
+               || *reinterpret_cast<int *>(button + 0xA18) != 0) {
+        flag = 0;
+    } else {
+        flag = (*reinterpret_cast<int *>(button + 0xA74) == 0) ? 1 : 0;
+    }
+
+    Buffer *icon_buffer = (window != 0) ? win_buffer : 0;
+    int sprite_index = flag + button_id * 3;
+    unsigned char sprite_frame = *reinterpret_cast<unsigned char *>(
+        reinterpret_cast<char *>(this) + 0x13D4 + sprite_index * 0x84);
+    Sprite *sprite = reinterpret_cast<Sprite *>(
+        reinterpret_cast<char *>(this) + 0x13CC + sprite_index * 0x84);
+    sprite->draw(icon_buffer, sprite_frame, 5, y_center, 1, 1);
+
+    win_buffer->set_text_color(0, -1, 1, 1);
+    rect.left += 0x25;
+    if (text != 0) {
+        win_buffer->write_l(text, &rect, strlen(text));
+    }
+
+    int current = reinterpret_cast<const int *>(&socEffect_)[effect];
+    int stored = reinterpret_cast<const int *>(PlayerSocialEffectBlock)
+        [2099 * factionID_ + effect];
+    if (current > stored) {
+        win_buffer->set_text_color(0xfa, -1, 1, 1);
+    } else if (current < stored) {
+        win_buffer->set_text_color(0xf9, -1, 1, 1);
+    }
+
+    StringTemp[0] = 0;
+    if (current > 0) {
+        strcat(StringTemp, PlusText);
+    }
+    char number[80];
+    reinterpret_cast<ItoaFn>(_itoa)(current, number, 10);
+    strcat(StringTemp, number);
+
+    rect.right -= 3;
+    if (StringTemp != 0) {
+        win_buffer->write_right_l(StringTemp, &rect, strlen(StringTemp));
+    }
+    return 1;
+}
+
+// Fixed-slot bindings carried from the 004b1080 work, named from the same
+// evidence datalink.cpp records for the shared tables.
+// SocialCategoryRow   0x0094B014 - SocialCategories + 0x14; the header id
+//                     the mouseover title reads, indexed
+//                     [category * 0x35 + row].
+// SocialEffectRowBase 0x00946598 - SocialEffects + 0x18; the effect name
+//                     strings, rows 0x68 apart.
+// PlayerPowerBlock    0x0096CCB0 - the per-faction power integers the -2
+//                     (faction-power) hover reads, PlayersData stride.
+// MinusText 0x006874A4 / MouseoverPlusText 0x006874A8 - image .data reads
+//                     "-" and "+" (beside the count prefix PlusText below).
+static const int *const SocialCategoryRow = (const int *)0x0094B014;
+static const char *const SocialEffectRowBase = (const char *)0x00946598;
+static int *const PlayerPowerBlock = (int *)0x0096CCB0;
+static char *const MinusText = (char *)0x006874A4;
+static char *const MouseoverPlusText = (char *)0x006874A8;
+
+/*
+ * Purpose: Repaint the mouseover panel. The header shows the hovered effect's
+ *          name centred; the body then walks the eleven effects of the current
+ *          category (skipping the Null row 3), counting the live ones and
+ *          drawing each as sign, magnitude, name and icon - skipping entries
+ *          the faction's own base probes mark unavailable. The -2 hover (the
+ *          faction-power rectangle) shows the faction's power column instead,
+ *          and -1 draws the empty frame only.
+// ORIGINAL: 0x004B1080 ?draw_mouseover@SocialWin@@QAEXXZ 0x004B1080-0x004B178F FILE
+// TRIED: MISMATCH #9 'call' vs 'mov' (framed build, sim 0.57). Diplomacy mood
+//        tooltip: two nested 11-slot table walks (skipping index 3, the "self"
+//        faction) with two neg/border-guard special cases.
+// size      1807 bytes
+// prototype void (__thiscall ?draw_mouseover@SocialWin@@QAEXXZ)(SocialWin* this)
+// callers   4   call targets   13
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005E2DD3 0x005E4B4A 0x005FD2B0 0x006169A0 0x006453E0 0x00645470 0x0064FC88
+// indirect  0x004B1162 0x004B12CA
+*/
+void SocialWin::draw_mouseover() {
+    Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
+
+    buf->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+
+    RECT *header_rect = &tutRect9_;
+    RECT rect1 = *header_rect;
+
+    buf->box_sprite(&rect1, &InterfaceBoxStyles[3]);
+
+    RECT rect2;
+    rect2.left = rect1.left + 3;
+    rect2.top = rect1.top + 3;
+    rect2.right = rect1.right - 3;
+    rect2.bottom = rect1.top + 0x17;
+    rect1 = rect2;
+
+    buf->box_sprite(&rect2, &InterfaceBoxStyles[6]);
+
+    int mode = static_cast<int>(field_A2C_);
+    int cat_idx = 0;
+    int row_idx = 0;
+
+    if (mode != -1) {
+        int table_index;
+        if (mode == -2) {
+            table_index = *reinterpret_cast<int *>(
+                reinterpret_cast<char *>(Labels.strings_ptr) + 0xB94);
+        } else {
+            cat_idx = mode / 4;
+            row_idx = mode % 4;
+            table_index = SocialCategoryRow[row_idx + cat_idx * 0x35];
+        }
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(table_index));
+        CharUpperA(StringTemp);
+        buf->set_font(&font1_, NULL, NULL, NULL);
+        buf->set_text_color(0x9f, -1, 1, 1);
+        buf->write_cent_l(StringTemp, &rect1, strlen(StringTemp));
+    }
+
+    rect1.top = rect2.bottom + 2;
+    buf->box_sprite(&rect1, &InterfaceBoxStyles[0]);
+
+    if (field_A2C_ != 0xFFFFFFFFU) {
+        rect1.left += 3;
+        rect1.right -= 3;
+        rect1.top += 3;
+        rect1.bottom -= 3;
+
+        int count = 0;
+        int self_faction = factionID_;
+
+        for (int i = 0; i < 11; ++i) {
+            if (i == 3) {
+                continue;
+            }
+            int v;
+            if (field_A2C_ == 0xFFFFFFFEU) {
+                v = PlayerPowerBlock[i + self_faction * 2099];
+            } else {
+                bool skip = false;
+                if (*SocBaseIdCompare >= 0 &&
+                    SpyingBaseFactionBytes[*SocBaseIdCompare * 0x134] ==
+                        static_cast<unsigned int>(self_faction)) {
+                    if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
+                        if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
+                            skip = true;
+                        }
+                    }
+                }
+                if (!skip && *SocBaseIdProbe >= 0 &&
+                    SpyingBaseFactionBytes[*SocBaseIdProbe * 0x134] ==
+                        static_cast<unsigned int>(self_faction) &&
+                    cat_idx == 3 && row_idx == 1 &&
+                    SocialEffectRow[i] < 0) {
+                    skip = true;
+                }
+                if (skip) {
+                    continue;
+                }
+                v = SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)];
+            }
+            if (v < 0) {
+                v = -v;
+            }
+            if (v != 0) {
+                ++count;
+            }
+        }
+
+        int line_height = effectIcons_[0].height();
+        buf->set_font(&font3_, NULL, NULL, NULL);
+
+        rect1.top += ((rect1.bottom - line_height * count) - rect1.top) / 2;
+        rect1.left += 3;
+        rect1.bottom = line_height + rect1.top;
+
+        for (int pass = 0; pass < 2; ++pass) {
+            for (int i = 0; i < 11; ++i) {
+                if (i == 3) {
+                    continue;
+                }
+                if (*SocBaseIdCompare >= 0 &&
+                    SpyingBaseFactionBytes[*SocBaseIdCompare * 0x134] ==
+                        static_cast<unsigned int>(self_faction)) {
+                    if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
+                        if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
+                            continue;
+                        }
+                    }
+                }
+                if (*SocBaseIdProbe >= 0 &&
+                    SpyingBaseFactionBytes[*SocBaseIdProbe * 0x134] ==
+                        static_cast<unsigned int>(self_faction) &&
+                    cat_idx == 3 && row_idx == 1 &&
+                    SocialEffectRow[i] < 0) {
+                    continue;
+                }
+
+                int v2;
+                if (field_A2C_ == 0xFFFFFFFEU) {
+                    v2 = PlayerPowerBlock[i + self_faction * 2099];
+                } else {
+                    v2 = SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)];
+                }
+
+                if (v2 == 0) {
+                    continue;
+                }
+                bool draw = (pass == 0) ? (v2 >= 0) : (v2 < 0);
+                if (!draw) {
+                    continue;
+                }
+
+                StringTemp[0] = 0;
+                int color_id;
+                if (v2 < 0) {
+                    strcat(StringTemp, MinusText);
+                    color_id = 0x67;
+                } else {
+                    strcat(StringTemp, MouseoverPlusText);
+                    color_id = 0x98;
+                }
+                buf->set_text_color(color_id, -1, 1, 1);
+
+                int magnitude = (v2 < 0) ? -v2 : v2;
+                char number[80];
+                reinterpret_cast<ItoaFn>(_itoa)(magnitude, number, 10);
+                strcat(StringTemp, number);
+                buf->write_l(StringTemp, &rect1, strlen(StringTemp));
+
+                int icon_row = i + (v2 >= 0 ? 2 : 1);
+                Sprite *icon = &effectIcons_[6 + icon_row];
+                unsigned char frame = reinterpret_cast<unsigned char *>(icon)[8];
+                icon->draw(buf, frame, rect1.left + 0x10, rect1.top, 1, 1);
+
+                StringTemp[0] = 0;
+                rect1.left = rect1.left + 0x10 + effectIcons_[0].width();
+                strcat(StringTemp, SocialEffectRowBase + i * 0x68);
+                buf->write_l(StringTemp, &rect1, strlen(StringTemp));
+                rect1.left = rect1.left - 0x10 - effectIcons_[0].width();
+                rect1.top += line_height;
+                rect1.bottom += line_height;
+            }
+        }
+    }
+
+    reinterpret_cast<GraphicWin *>(this)->soft_update(header_rect);
+    do_sound();
+}
+
+// Fixed-slot bindings carried from the 004afb60 work, named from what their
+// reads feed. PlayerUpheavalBlock 0x0096CC28 - the per-faction upheaval
+// baseline social_upheaval's result is compared against. CommaSpaceText
+// 0x00682E90 and ColonSpaceText 0x00682E94 - image .data reads ", " and ": ".
+// PercentSpaceText{A,B,C,D} 0x00687480/84/88/8C - four distinct image copies
+// of "% " the deficit text concatenates.
+static int *const PlayerUpheavalBlock = (int *)0x0096CC28;
+static char *const CommaSpaceText = (char *)0x00682E90;
+static char *const ColonSpaceText = (char *)0x00682E94;
+static char *const PercentSpaceTextA = (char *)0x00687480;
+static char *const PercentSpaceTextB = (char *)0x00687484;
+static char *const PercentSpaceTextC = (char *)0x00687488;
+static char *const PercentSpaceTextD = (char *)0x0068748C;
+// UpheavalPlusText 0x00687490 - image .data reads "+" (beside "SOCIO...").
+static char *const UpheavalPlusText = (char *)0x00687490;
+
+/*
+ * Purpose: Repaint the info header above the social panel: the category
+ *          title, the energy line (net income and the per-turn breakthrough
+ *          figure), the environment line showing how far the pending
+ *          allocation sits from balanced (each unit of imbalance is a
+ *          percentage, signed and recoloured), and the upheaval line showing
+ *          what the pending model change costs. Clipped to the panel
+ *          rectangle, which is restored as the buffer's own clip on the way
+ *          out.
+// ORIGINAL: 0x004AFB60 ?draw_info@SocialWin@@QAEXXZ 0x004AFB60-0x004B0405 FILE
+// TRIED: checked the return-type flag directly - the disassembly has exactly
+//        ONE `ret` (0x004B0404), reached only via fallthrough after `call
+//        set_clip`, with no `mov eax,N` immediately before it and no
+//        early-exit paths. The 4/0x28/0x50 values the audit saw are
+//        percentage-bar clamp bounds, not return-value setup; `void` stands.
+//        Reaches MISMATCH #4 'mov' vs 'push' (register/stack allocation), not
+//        chased further given size (2213 bytes).
+// size      2213 bytes
+// prototype void (__thiscall ?draw_info@SocialWin@@QAEXXZ)(SocialWin* this)
+// callers   1   call targets   13
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005B4550 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCEA0 0x005DD130 0x005E2DD3 0x005FD2B0 0x006169A0 0x006453E0 0x00645470 0x0064FC88
+*/
+void SocialWin::draw_info() {
+    Buffer *own_buffer = reinterpret_cast<Buffer *>(
+        reinterpret_cast<char *>(this) + 0x444);
+    Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
+
+    own_buffer->set_clip(&tutRect14_);
+
+    RECT header;
+    header.left = tutRect14_.left;
+    header.top = tutRect14_.top;
+    header.right = tutRect14_.right;
+    header.bottom = tutRect14_.bottom;
+
+    RECT title;
+    title.left = header.left;
+    title.top = header.top;
+    title.bottom = header.top + 0x14;
+    title.right = header.right;
+    buf->box_sprite(&title, &InterfaceBoxStyles[6]);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x2BB));
+    CharUpperA(StringTemp);
+
+    buf->set_font(&font1_, 0, 0, 0);
+    buf->set_text_color(0x9c, -1, 1, 1);
+    buf->write_cent_l(StringTemp, &title, strlen(StringTemp));
+
+    int text_top = title.bottom + 2;
+    buf->box_sprite(&tutRect14_, &InterfaceBoxStyles[0]);
+    tutRect14_.right -= 3;
+    tutRect14_.bottom -= 3;
+    int text_left = tutRect14_.left + 3;
+    text_top += 3;
+    buf->set_font(&font6_, 0, 0, 0);
+
+    int upheaval = static_cast<int>(social_upheaval(
+        factionID_, reinterpret_cast<SocialCategory *>(socCategory_)));
+    upheaval -= PlayerUpheavalBlock[factionID_ * 2099];
+
+    int text_y;
+    int row_y;
+    if (WinScreenWidth == 800) {
+        text_y = font6_.line_advance() + text_top;
+    } else {
+        text_y = ((tutRect14_.bottom + font6_.line_advance() * -2) - text_top) / 2
+            + text_top;
+        row_y = text_y;
+    }
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x3BF));
+    strcat(StringTemp, ColonSpaceText);
+    char number[80];
+    reinterpret_cast<ItoaFn>(_itoa)(*NetIncomeGlobal, number, 10);
+    strcat(StringTemp, number);
+    buf->set_text_color(0xa0, -1, 1, 1);
+    buf->write_l(StringTemp, text_left, text_y, strlen(StringTemp));
+
+    row_y = text_y + font6_.line_advance();
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(150));
+    strcat(StringTemp, ColonSpaceText);
+    reinterpret_cast<ItoaFn>(_itoa)(*BreakthroughTurnsGlobal, number, 10);
+    strcat(StringTemp, number);
+    strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+    strcat(StringTemp, label_get(49));
+    buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
+
+    if (WinScreenWidth == 800) {
+        row_y += font6_.line_advance();
+    } else {
+        text_left += (tutRect14_.right - tutRect14_.left) / 2;
+        row_y -= font6_.line_advance();
+    }
+
+    int faction_stride = factionID_ * 2099;
+    int imbalance = SocialAllocTable[faction_stride] - 10
+        + SocialAllocTable[faction_stride + 1] * 2;
+    if (imbalance < 0) {
+        imbalance = (5 - SocialAllocTable[faction_stride + 1]) * 2
+            - SocialAllocTable[faction_stride];
+    }
+    int model_shift = reinterpret_cast<const int *>(&socEffect_)[1];
+    imbalance /= 2;
+    int clamped_shift;
+    if (model_shift < -4) {
+        clamped_shift = -4;
+    } else {
+        clamped_shift = model_shift;
+        if (4 < model_shift) {
+            clamped_shift = 4;
+        }
+    }
+    int shift_side;
+    if (clamped_shift - 4 < 0) {
+        if (model_shift < -4) {
+            model_shift = -4;
+        } else if (4 < model_shift) {
+            model_shift = 4;
+        }
+        shift_side = 4 - model_shift;
+    } else {
+        if (model_shift < -4) {
+            model_shift = -4;
+        } else if (4 < model_shift) {
+            model_shift = 0;
+            goto scaled;
+        }
+        model_shift = model_shift - 4;
+    }
+scaled:
+    shift_side *= 2;
+
+    if (imbalance != 0 && shift_side != 0) {
+        StringTemp[0] = 0;
+        int reserve = SocialAllocTable[faction_stride + 1];
+        if ((10 - SocialAllocTable[faction_stride]) - reserve < reserve) {
+            int percent = shift_side * imbalance;
+            int shown = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
+            reinterpret_cast<ItoaFn>(_itoa)(-shown, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, PercentSpaceTextA);
+            strcat(StringTemp, label_get(60));
+
+            if (10 - SocialAllocTable[faction_stride] != reserve) {
+                strcat(StringTemp, CommaSpaceText);
+                int percent2 = shift_side * imbalance * 2;
+                percent2 = (percent2 < 0) ? 0 : ((0x50 < percent2) ? 0x50 : percent2);
+                reinterpret_cast<ItoaFn>(_itoa)(-percent2, number, 10);
+                strcat(StringTemp, number);
+                strcat(StringTemp, PercentSpaceTextB);
+                strcat(StringTemp, label_get(169));
+            }
+        } else {
+            if (reserve != 0) {
+                int percent = shift_side * imbalance * 2;
+                percent = (percent < 0) ? 0 : ((0x50 < percent) ? 0x50 : percent);
+                reinterpret_cast<ItoaFn>(_itoa)(-percent, number, 10);
+                strcat(StringTemp, number);
+                strcat(StringTemp, PercentSpaceTextC);
+                strcat(StringTemp, label_get(60));
+                strcat(StringTemp, CommaSpaceText);
+            }
+            int percent = shift_side * imbalance;
+            percent = (percent < 0) ? 0 : ((0x28 < percent) ? 0x28 : percent);
+            reinterpret_cast<ItoaFn>(_itoa)(-percent, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, PercentSpaceTextD);
+            strcat(StringTemp, label_get(169));
+        }
+
+        buf->set_text_color(0xf9, -1, 1, 1);
+        buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
+
+        row_y += font6_.line_advance();
+    }
+
+    if (upheaval < 0) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(222));
+        strcat(StringTemp, ColonSpaceText);
+        strcat(StringTemp, UpheavalPlusText);
+        reinterpret_cast<ItoaFn>(_itoa)(-upheaval, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+        strcat(StringTemp, label_get(230));
+        buf->set_text_color(0xa0, -1, 1, 1);
+    } else if (upheaval >= 1) {
+        buf->set_text_color(0xf9, -1, 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(221));
+        strcat(StringTemp, ColonSpaceText);
+        reinterpret_cast<ItoaFn>(_itoa)(upheaval, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+        strcat(StringTemp, label_get(230));
+    }
+    if (upheaval != 0) {
+        buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
+    }
+
+    MainInterfaceGlobal.soft_update(&tutRect14_);
+    do_sound();
+    own_buffer->set_clip(reinterpret_cast<RECT *>(
+        reinterpret_cast<char *>(own_buffer) + 0x30));
+}
+
+
+// Fixed-slot bindings carried from the 004b2740 work, named from the roles
+// their reads fill.
+// SocialSubInterfaceSlot 0x007AE7F8 - the interface-slot object pointer the
+//                     interface-mode registry walks.
+// InterfaceScreenRect 0x007AF5B0 - the RECT battlewin.cpp binds; the panel
+//                     rectangle MainInterface keeps at front+0xD90.
+// MainPanelRect       0x007AF5C0 - the full panel rectangle tutRect14_ copies
+//                     and insets.
+// MainPanelLeft/Top/Right 0x007AF5A0/A4/A8 and SocialColumnTop/Right/Bottom
+//                     0x007AF5D4/D8/DC - the layout edges the tooltip and
+//                     column rectangles derive from.
+// MainPanelHeight     0x007AF59C - the height the window's y centres against.
+// FontNameArialSlot 0x00691B2C / FontNameNarrowSlot 0x00691B30 - char* slots
+//                     holding "Arial" and "Arial Narrow".
+// SocWinPcxName 0x006874B0 - image .data reads "socwin.pcx".
+// TutorialStage 0x008CC228 - the int the tutorial entry stores 5 into.
+// TutorialSocRect 0x008C5380 - the RECT TutWin::soc_rect fills.
+// TutSocWinText 0x006874BC - image .data reads "SOCWIN", the tutorial call's
+//                     text.
+// ConsoleIfaceSlot 0x009156B0 - console.h's ConsoleGlobal; this TU reaches
+//                     only its first two dwords, so the binding stays local.
+static int *const SocialSubInterfaceSlot = (int *)0x007AE7F8;
+static RECT *const InterfaceScreenRect = (RECT *)0x007AF5B0;
+static RECT *const MainPanelRect = (RECT *)0x007AF5C0;
+static int *const MainPanelLeft = (int *)0x007AF5A0;
+static int *const MainPanelTop = (int *)0x007AF5A4;
+static int *const MainPanelRight = (int *)0x007AF5A8;
+static int *const SocialColumnTop = (int *)0x007AF5D4;
+static int *const SocialColumnRight = (int *)0x007AF5D8;
+static int *const SocialColumnBottom = (int *)0x007AF5DC;
+static int *const MainPanelHeight = (int *)0x007AF59C;
+static char **const FontNameArialSlot = (char **)0x00691B2C;
+static char **const FontNameNarrowSlot = (char **)0x00691B30;
+static char *const SocWinPcxName = (char *)0x006874B0;
+static int *const TutorialStage = (int *)0x008CC228;
+static RECT *const TutorialSocRect = (RECT *)0x008C5380;
+static char *const TutSocWinText = (char *)0x006874BC;
+static int *const ConsoleIfaceSlot = (int *)0x009156B0;
+int __cdecl pop_wait();  // 0x005398E0, defined in faction.cpp
+int __cdecl tut_check2(int veh_id);  // 0x004BA650, defined in tutwin.cpp
+
+/*
+ * Purpose: Build the social panel for one faction: close every button and
+ *          group, reset the hover state, lay out the panel's rectangles and
+ *          fonts from MainInterface's screen metrics, extract the sprite
+ *          sheets into the icon runs, size the window over the main view,
+ *          seed the allocation sliders from SocialAllocTable, then create the
+ *          category grid, the effect column, the energy locks and the six
+ *          header toggles - each with its label and bubble text. A negative
+ *          faction id builds without the tutorial hand-off.
+// ORIGINAL: 0x004B2740 ?init@SocialWin@@QAEXH@Z 0x004B2740-0x004B3C7D;0x00659A0A-0x00659A1F FILE
+// TRIED: full-function transcription (~1448 instructions, sim 0.57 vs
+//        original at /O2 /Oy-); diverges at instr #9. Receivers for member
+//        calls were traced by hand from `mov ecx,...` immediately preceding
+//        each call site.
+// size      5458 bytes
+// prototype void (__thiscall ?init@SocialWin@@QAEXH@Z)(SocialWin* this, int factionID)
+// callers   2   call targets   26
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0045D380 0x004AECE0 0x004BA650 0x004BC640 0x004BDFE0 0x005B4730 0x005D4EF0 0x005D5250 0x005D7210 0x005D7410 0x005D7670 0x005D7DE0 0x005DAC70 0x005DFF00 0x005E2DD3 0x005E39A0 0x00607210 0x00607550 0x006169A0 0x00618F40 0x0062B7F0 0x0062B810 0x0062B850 0x0062B870 0x006337E0 0x00645470
+*/
+void SocialWin::init(int faction_id) {
+    char *self = reinterpret_cast<char *>(this);
+    Buffer sheet;
+
+    for (int i = 0; i < 0x23; ++i) {
+        flatButtons_[i].close();
+    }
+    for (int group_index = 0; group_index < 4; ++group_index) {
+        buttonGroups_[group_index].close();
+    }
+    buttonGroup_.close();
+
+    field_A2C_ = 0xFFFFFFFFU;
+    field_A30_ = 0xFFFFFFFFU;
+    field_2C28_ = 0;
+    effectMaximize_ = 0xFFFFFFFFU;
+    // The interface-mode registry's own state: the SubInterface base pointer
+    // and its mode field.
+    *SocialSubInterfaceSlot = reinterpret_cast<int>(
+        static_cast<SubInterface *>(this));
+    field_4_ = 2;
+    int a1 = faction_id;
+    int positive = (a1 < 0) ? 1 : 0;
+    if (a1 < 0) {
+        a1 = -a1;
+    }
+    factionID_ = a1;
+    int wide_screen = (WinScreenWidth != 800) ? 1 : 0;
+    (void)wide_screen;
+
+    tutRect14_ = *MainPanelRect;
+    tutRect14_.left += 4;
+    tutRect14_.right -= 4;
+    tutRect14_.top += 4;
+    tutRect14_.bottom -= 4;
+
+    tutRect1_.left = 0x271;
+    tutRect1_.top = 4;
+    tutRect1_.right = 0x306;
+    tutRect1_.bottom = 0xfa;
+
+    {
+        int v = 0x1d;
+        for (int i = 0; i < 10; ++i) {
+            tutRects2_[i].left = 0x274;
+            tutRects2_[i].top = v;
+            tutRects2_[i].right = 0x303;
+            tutRects2_[i].bottom = v + 0x14;
+            v += 0x16;
+        }
+    }
+
+    tutRect13_.left = 0x9a; tutRect13_.top = 0x13a; tutRect13_.right = 0x13c; tutRect13_.bottom = 0x14e;
+    tutRect12_.left = 0x13f; tutRect12_.top = 0x13a; tutRect12_.right = 0x1e1; tutRect12_.bottom = 0x14e;
+    tutRect11_.left = 0x1e4; tutRect11_.top = 0x13a; tutRect11_.right = 0x286; tutRect11_.bottom = 0x14e;
+    *reinterpret_cast<int *>(&tooltipSocEng_[0]) = 0x1a;
+    *reinterpret_cast<int *>(&tooltipSocEng_[4]) = 4;
+    *reinterpret_cast<int *>(&tooltipSocEng_[8]) = 0x26e;
+    *reinterpret_cast<int *>(&tooltipSocEng_[0xc]) = 0x4a;
+    tutRect4_.left = 0x1a; tutRect4_.top = 0x4d; tutRect4_.right = 0x26e; tutRect4_.bottom = 0x93;
+    tutRects3_[0].left = 0x1a; tutRects3_[0].top = 0x96; tutRects3_[0].right = 0x26e; tutRects3_[0].bottom = 0xdc;
+    tutRects3_[1].left = 0x1a; tutRects3_[1].top = 0xdf; tutRects3_[1].right = 0x26e; tutRects3_[1].bottom = 0x125;
+    tutRects3_[2].left = 0x1d; tutRects3_[2].top = 0x1d; tutRects3_[2].right = 0xaf; tutRects3_[2].bottom = 0x31;
+    tutRects3_[3].left = 0xb1; tutRects3_[3].top = 0x1d; tutRects3_[3].right = 0x143; tutRects3_[3].bottom = 0x31;
+    tutRects3_[4].left = 0x145; tutRects3_[4].top = 0x1d; tutRects3_[4].right = 0x1d7; tutRects3_[4].bottom = 0x31;
+    tutRects3_[5].left = 0x1d9; tutRects3_[5].top = 0x1d; tutRects3_[5].right = 0x26b; tutRects3_[5].bottom = 0x31;
+    tutRects3_[6].left = 0x1d; tutRects3_[6].top = 0x66; tutRects3_[6].right = 0xaf; tutRects3_[6].bottom = 0x7a;
+    tutRects3_[7].left = 0xb1; tutRects3_[7].top = 0x66; tutRects3_[7].right = 0x143; tutRects3_[7].bottom = 0x7a;
+    tutRects3_[8].left = 0x145; tutRects3_[8].top = 0x66; tutRects3_[8].right = 0x1d7; tutRects3_[8].bottom = 0x7a;
+    tutRects3_[9].left = 0x1d9; tutRects3_[9].top = 0x66; tutRects3_[9].right = 0x26b; tutRects3_[9].bottom = 0x7a;
+    tutRects3_[10].left = 0x1d; tutRects3_[10].top = 0xaf; tutRects3_[10].right = 0xaf; tutRects3_[10].bottom = 0xc3;
+    tutRects3_[11].left = 0xb1; tutRects3_[11].top = 0xaf; tutRects3_[11].right = 0x143; tutRects3_[11].bottom = 0xc3;
+    tutRects3_[12].left = 0x145; tutRects3_[12].top = 0xaf; tutRects3_[12].right = 0x1d7; tutRects3_[12].bottom = 0xc3;
+    tutRects3_[13].left = 0x1d9; tutRects3_[13].top = 0xaf; tutRects3_[13].right = 0x26b; tutRects3_[13].bottom = 0xc3;
+    tutRects3_[14].left = 0x1d; tutRects3_[14].top = 0xf8; tutRects3_[14].right = 0xaf; tutRects3_[14].bottom = 0x10c;
+    tutRects3_[15].left = 0xb1; tutRects3_[15].top = 0xf8; tutRects3_[15].right = 0x143; tutRects3_[15].bottom = 0x10c;
+    tutRects3_[16].left = 0x145; tutRects3_[16].top = 0xf8; tutRects3_[16].right = 0x1d7; tutRects3_[16].bottom = 0x10c;
+    tutRects3_[17].left = 0x1d9; tutRects3_[17].top = 0xf8; tutRects3_[17].right = 0x26b; tutRects3_[17].bottom = 0x10c;
+    *reinterpret_cast<int *>(&tooltipFactionPower_[0]) = 0x271;
+    *reinterpret_cast<int *>(&tooltipFactionPower_[4]) = 0xfd;
+    *reinterpret_cast<int *>(&tooltipFactionPower_[8]) = 0x306;
+    *reinterpret_cast<int *>(&tooltipFactionPower_[0xc]) = 0x12d;
+
+    {
+        int left = *MainPanelLeft + 7;
+        int bottom = *SocialColumnBottom - 7;
+        int top = *SocialColumnTop + 7;
+        int split = ((*SocialColumnRight - left) - 4) / 3 - 3 + left;
+        tooltipEconomy_.left = left;
+        tooltipEconomy_.top = top;
+        tooltipEconomy_.right = split;
+        tooltipEconomy_.bottom = bottom;
+        int width = (split - left) + 3;
+        split += width;
+        tooltipPsych_.left = left + width;
+        tooltipPsych_.top = top;
+        tooltipPsych_.right = split;
+        tooltipPsych_.bottom = bottom;
+        int right = *SocialColumnRight - 7;
+        tooltipLabs_.left = split + 3;
+        tooltipLabs_.top = top;
+        tooltipLabs_.right = right;
+        tooltipLabs_.bottom = bottom;
+        tutRect9_.left = *MainPanelLeft + 4;
+        tutRect9_.top = *MainPanelTop + 4;
+        tutRect9_.right = *MainPanelRight - 4;
+        tutRect9_.bottom = tooltipLabs_.top - 6;
+        tooltipEffects_ = *InterfaceScreenRect;
+        tooltipEffects_.left += 4;
+        tooltipEffects_.right -= 4;
+        tooltipEffects_.top += 4;
+        tooltipEffects_.bottom -= 4;
+    }
+
+    // The three category frames and their header strips, inside
+    // tutRects1_[3..8].
+    RECT *frame = &tutRects1_[3];
+    frame[0].left = tooltipEconomy_.left + 3;
+    frame[0].top = tooltipEconomy_.top + 3;
+    frame[0].right = tooltipEconomy_.left + 0x17;
+    frame[0].bottom = tooltipEconomy_.top + 0x17;
+    frame[1].left = tooltipEconomy_.right - 0x17;
+    frame[1].top = tooltipEconomy_.top + 3;
+    frame[1].right = tooltipEconomy_.right - 3;
+    frame[1].bottom = tooltipEconomy_.top + 0x17;
+    frame[2].left = tooltipPsych_.left + 3;
+    frame[2].top = tooltipPsych_.top + 3;
+    frame[2].right = tooltipPsych_.left + 0x17;
+    frame[2].bottom = tooltipPsych_.top + 0x17;
+    frame[3].left = tooltipPsych_.right - 0x17;
+    frame[3].top = tooltipPsych_.top + 3;
+    frame[3].right = tooltipPsych_.right - 3;
+    frame[3].bottom = tooltipPsych_.top + 0x17;
+    frame[4].left = tooltipLabs_.left + 3;
+    frame[4].top = tooltipLabs_.top + 3;
+    frame[4].right = tooltipLabs_.left + 0x17;
+    frame[4].bottom = tooltipLabs_.top + 0x17;
+    frame[5].left = tooltipLabs_.right - 0x17;
+    frame[5].top = tooltipLabs_.top + 3;
+    frame[5].right = tooltipLabs_.right - 3;
+    frame[5].bottom = tooltipLabs_.top + 0x17;
+
+    tutRects1_[0].left = tooltipEconomy_.left + 3;
+    tutRects1_[0].top = tooltipEconomy_.bottom - 0x11;
+    tutRects1_[0].right = tooltipEconomy_.left + 0x1b;
+    tutRects1_[0].bottom = tooltipEconomy_.bottom - 3;
+    tutRects1_[1].left = tooltipPsych_.left + 3;
+    tutRects1_[1].top = tooltipPsych_.bottom - 0x11;
+    tutRects1_[1].right = tooltipPsych_.left + 0x1b;
+    tutRects1_[1].bottom = tooltipPsych_.bottom - 3;
+    tutRects1_[2].left = tooltipLabs_.left + 3;
+    tutRects1_[2].top = tooltipLabs_.bottom - 0x11;
+    tutRects1_[2].right = tooltipLabs_.left + 0x1b;
+    tutRects1_[2].bottom = tooltipLabs_.bottom - 3;
+
+    font1_.init(*FontNameArialSlot, 0xe, 1);
+    font2_.init(*FontNameArialSlot, 0xe, 1);
+    font3_.init(*FontNameNarrowSlot, 0xe, 1);
+    font4_.init(*FontNameNarrowSlot, 0xe, 1);
+    font5_.init(*FontNameArialSlot, 0xc, 0);
+    font6_.init(*FontNameArialSlot, 0xb, 1);
+    font6_.unk_1_ = 3;
+    font7_.init(*FontNameArialSlot, 0xb, 0);
+    font7_.unk_1_ = 3;
+    font8_.init(*FontNameNarrowSlot, 0xe, 1);
+    font9_.init(*FontNameNarrowSlot, 0xe, 1);
+
+    if (*reinterpret_cast<int *>(
+            reinterpret_cast<char *>(&effectIcons_[0]) + 4) == 0) {
+        sheet.load_pcx(SocWinPcxName, 0, 10, 0xec);
+        Sprite *icon = effectIcons_;
+        int row = 1;
+        for (int r = 0; r < 10; ++r) {
+            int col = 1;
+            for (int c = 0; c < 9; ++c) {
+                icon->extract(&sheet, WinFillColour, col, row, 0x1a, 0x1a, 0);
+                ++icon;
+                col += 0x1b;
+            }
+            row += 0x1b;
+        }
+        effectIcons_[0].extract(&sheet, WinFillColour, 0xf5, 1, 0x18, 0xe, 0);
+        effectIcons_[0].extract(&sheet, WinFillColour, 0xf5, 0x10, 0x18, 0xe, 0);
+        for (int x = 1; x < 0x40; x += 0x15) {
+            energyAllocLock_[0].extract(&sheet, WinFillColour, 0x13b, x, 0x14, 0x14, 0);
+            energyAllocArrow_[0].extract(&sheet, WinFillColour, 0x150, x, 0x14, 0x14, 0);
+        }
+        {
+            int y = 0x10e;
+            Buffer *slider = energyAllocSlider_;
+            for (int r = 0; r < 3; ++r) {
+                int x = 1;
+                for (int c = 0; c < 2; ++c) {
+                    slider->init(0xe, 0xe, 0, 0);
+                    // The original's call pushes seven arguments; the two
+                    // trailing parameters read stack residue.
+                    sheet.copy(slider, y, x, 0, 0, 0xe, 0xe);
+                    x += 0xf;
+                    ++slider;
+                }
+                y += 0xf;
+            }
+        }
+    }
+    {
+        int y = 0x115;
+        for (int i = 0; i < 5; ++i) {
+            socEngModifierNums_[i].extract(&sheet, WinFillColour, y, 0x6f, 0xd, 0xd, 0);
+            socEngModifierNums_[1 + i].extract(&sheet, WinFillColour, y, 0x7d, 0xd, 0xd, 0);
+            y += 0xe;
+        }
+    }
+
+    {
+        int cx = (WinScreenWidth - 0x321) / 2;
+        int cy = (WinScreenHeight - *MainPanelHeight) - 0x162;
+        int flags = 0x1000000
+            | (*reinterpret_cast<int *>(reinterpret_cast<char *>(ConsoleIfaceSlot) + 4)
+               + reinterpret_cast<int>(ConsoleIfaceSlot));
+        GraphicWin::init(cx, cy, 0x341, 0x162, 0, flags, 0, 0, 0);
+    }
+    GraphicWin::fill(9);
+    {
+        RECT box_rect;
+        box_rect.left = 0x17;
+        box_rect.top = 0;
+        box_rect.right = 0x30a;
+        box_rect.bottom = 0x162;
+        reinterpret_cast<Buffer *>(self + 0x444)->box_sprite(&box_rect,
+            &InterfaceBoxStyles[9]);
+    }
+    {
+        int stride = factionID_ * 2099;
+        int net_min = 10 - SocialAllocTable[stride + 1] - SocialAllocTable[stride];
+        economyAllocOrig_ = net_min;
+        economyAllocPending_ = net_min;
+        economyAlloc3_ = net_min;
+        int lo = SocialAllocTable[stride];
+        psychAllocOrig_ = lo;
+        psychAllocPending_ = lo;
+        psychAlloc3_ = lo;
+        int hi = SocialAllocTable[stride + 1];
+        labsAllocOrig_ = hi;
+        labsAllocPending_ = hi;
+        labsAlloc3_ = hi;
+    }
+    reset();
+
+    {
+        ButtonGroup *group = buttonGroups_;
+        int row = 0;
+        int row_accum = 0;
+        do {
+            group->init(row, 0);
+            for (int col = 0; col < 4; ++col) {
+                if (society_avail(row, col, factionID_) == 0) {
+                    continue;
+                }
+                StringTemp[0] = 0;
+                strcat(StringTemp, StringTable.get(SocialCategoryRow[row_accum + col]));
+                CharUpperA(StringTemp);
+                int idx = col + row * 4;
+                RECT *cell = &tutRects3_[2 + idx];
+                FlatButton *button = &flatButtons_[idx];
+                reinterpret_cast<BaseButton *>(button)->init(StringTemp, idx,
+                    cell->left, cell->top, cell->right - cell->left,
+                    cell->bottom - cell->top, this, 0);
+                button->hide();
+                reinterpret_cast<Buffer *>(reinterpret_cast<char *>(button) + 0x444)
+                    ->set_font(&font2_, 0, 0, 0);
+                button->redraw();
+                reinterpret_cast<BaseButton *>(button)->set_bubble_text(
+                    StringTable.get(*reinterpret_cast<int *>(
+                        reinterpret_cast<char *>(Labels.strings_ptr) + 0xCF0)));
+                group->add(reinterpret_cast<BaseButton *>(button));
+            }
+            group->set(reinterpret_cast<int *>(socCategory_)[row], 1);
+            ++row;
+            row_accum += 0x35;
+            ++group;
+        } while (row_accum < 0xd4);
+    }
+
+    buttonGroup_.init(2, 0);
+    {
+        const char *name = SocialEffectRowBase;
+        const char *name_end = SocialEffectRowBase + 0x138;
+        const char *name_stop = SocialEffectRowBase + 0x478;
+        int row = 0;
+        int button_offset = 0;
+        int entry = 0;
+        while (name < name_stop) {
+            if (name != name_end) {
+                int col;
+                int offset;
+                if (name < name_end) {
+                    col = row * 4;
+                    offset = button_offset;
+                } else {
+                    col = row * 4 - 4;
+                    entry -= 1;
+                    offset = button_offset - 0xB4C;
+                }
+                StringTemp[0] = 0;
+                strcat(StringTemp, name);
+                CharUpperA(StringTemp);
+                RECT *cell = &tutRects2_[entry];
+                int y = cell->top;
+                int x = cell->left;
+                BaseButton *button = reinterpret_cast<BaseButton *>(
+                    self + 0x1202C + offset);
+                button->init(StringTemp, col + 0x11, x, y,
+                    cell->right - x, cell->bottom - y, this, 0);
+                button->hide();
+                reinterpret_cast<Buffer *>(reinterpret_cast<char *>(button) + 0x444)
+                    ->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
+                button->redraw();
+                reinterpret_cast<BaseButton *>(button)->set_bubble_text(
+                    StringTable.get(*reinterpret_cast<int *>(
+                        reinterpret_cast<char *>(Labels.strings_ptr)
+                        + col * 4 + 0xCF4)));
+            }
+            name += 0x68;
+            ++row;
+            entry += 1;
+            button_offset += 0xB4C;
+        }
+    }
+
+    {
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(*reinterpret_cast<int *>(
+            reinterpret_cast<char *>(Labels.strings_ptr) + 0x198)));
+        if (*reinterpret_cast<int *>(0x009BC054) != 2) {
+            CharUpperA(StringTemp);
+        }
+        FlatButton *button = &flatButtons_[16];
+        reinterpret_cast<BaseButton *>(button)->init(StringTemp, 0x10,
+            tutRect11_.left, tutRect11_.top, tutRect11_.right - tutRect11_.left,
+            tutRect11_.bottom - tutRect11_.top, this, 0);
+        button->hide();
+        reinterpret_cast<Buffer *>(reinterpret_cast<char *>(button) + 0x444)
+            ->set_font(reinterpret_cast<Font *>(0), 0, 0, 0);
+        button->redraw();
+    }
+
+    reinterpret_cast<BaseButton *>(self + 0x19124)->set_bubble_text(
+        StringTable.get(*reinterpret_cast<int *>(
+            reinterpret_cast<char *>(Labels.strings_ptr) + 0x4F4)));
+
+    reinterpret_cast<BaseButton *>(self + 0x19C70)->set_bubble_text(
+        StringTable.get(*reinterpret_cast<int *>(
+            reinterpret_cast<char *>(Labels.strings_ptr) + 0xD34)));
+
+    {
+        CheckButton *lock0 = reinterpret_cast<CheckButton *>(self + 0xD6C);
+        CheckButton *lock1 = reinterpret_cast<CheckButton *>(self + 0x1798);
+        CheckButton *lock2 = reinterpret_cast<CheckButton *>(self + 0x21C4);
+        // Each lock links its own sprite pointers to the energy lock and
+        // arrow runs.
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock0) + 0xA24)
+            = reinterpret_cast<int>(self + 0x3D90);
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock0) + 0xA28)
+            = reinterpret_cast<int>(self + 0x3DBC);
+        SocialWinCheckButtonInit(lock0, 0, tutRects1_[0].left,
+            tutRects1_[0].top, &MainInterfaceGlobal, 0);
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock1) + 0xA24)
+            = reinterpret_cast<int>(self + 0x3D90);
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock1) + 0xA28)
+            = reinterpret_cast<int>(self + 0x3DBC);
+        SocialWinCheckButtonInit(lock1, 0, tutRects1_[1].left,
+            tutRects1_[1].top, &MainInterfaceGlobal, 0);
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock2) + 0xA24)
+            = reinterpret_cast<int>(self + 0x3D90);
+        *reinterpret_cast<int *>(reinterpret_cast<char *>(lock2) + 0xA28)
+            = reinterpret_cast<int>(self + 0x3DBC);
+        SocialWinCheckButtonInit(lock2, 0, tutRects1_[2].left,
+            tutRects1_[2].top, &MainInterfaceGlobal, 0);
+
+        lock0->hide();
+        lock1->hide();
+        lock2->hide();
+    }
+
+    // The six header toggles: the original reaches each at its own raw
+    // offset (0x2D3 stride, receivers that are not FlatButton boundaries),
+    // links it to one of the two arrow-sprite triplets, and reads its frame
+    // from tutRects1_[3..8].
+    static const int toggle_offsets[6] = {
+        0x1A7BC, 0x1B308, 0x1BE54, 0x1C9A0, 0x1D4EC, 0x1E038 };
+    static const int toggle_links[6] = {
+        0x1B290, 0x1BDCC, 0x1C928, 0x1D474, 0x1DFC0, 0x1EB0C };
+    static const int toggle_bubbles[6] = { 0xD24, 0xD24, 0xD28, 0xD28, 0xD2C, 0xD2C };
+    for (int toggle_index = 0; toggle_index < 6; ++toggle_index) {
+        BaseButton *toggle = reinterpret_cast<BaseButton *>(
+            self + toggle_offsets[toggle_index]);
+        const RECT &rect = tutRects1_[3 + toggle_index];
+        toggle->init(0, 0x1d + toggle_index, rect.left, rect.top,
+            rect.right - rect.left, rect.bottom - rect.top,
+            &MainInterfaceGlobal, 0);
+        toggle->hide();
+        int first = (toggle_index % 2 == 0) ? 0 : 3;
+        reinterpret_cast<int *>(self + toggle_links[toggle_index])[0]
+            = reinterpret_cast<int>(self + 0x3DE8 + (first + 0) * 0x2C);
+        reinterpret_cast<int *>(self + toggle_links[toggle_index])[1]
+            = reinterpret_cast<int>(self + 0x3DE8 + (first + 1) * 0x2C);
+        reinterpret_cast<int *>(self + toggle_links[toggle_index])[2]
+            = reinterpret_cast<int>(self + 0x3DE8 + (first + 2) * 0x2C);
+        toggle->set_bubble_text(StringTable.get(*reinterpret_cast<int *>(
+            reinterpret_cast<char *>(Labels.strings_ptr)
+            + toggle_bubbles[toggle_index])));
+    }
+
+    if (positive == 0) {
+        if (tut_check2(8) != 0) {
+            show(0);
+            *TutorialStage = 5;
+            int out_a = 0;
+            int out_b = 0;
+            TutorialWindow.soc_rect(TutorialSocRect, &out_a, &out_b);
+            int *base_object = *reinterpret_cast<int **>(0x007D3C3C);
+            int window_arg = 0;
+            if (base_object != 0) {
+                window_arg = *reinterpret_cast<int *>(
+                    *reinterpret_cast<int *>(base_object) + 4)
+                    + reinterpret_cast<int>(base_object);
+            }
+            TutorialWindow.tut_win(reinterpret_cast<GraphicWin *>(window_arg),
+                TutSocWinText, out_a, out_b, 0, 1, -1, -1);
+        }
+        set_modal(0, pop_wait, &MainInterfaceGlobal);
+        release_iface_mode();
     }
 }

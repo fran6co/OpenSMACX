@@ -350,3 +350,684 @@ void ListBox::on_right_double_click(int a1, int a2) {
     on_left_double_click(a1, a2);
     ListBoxClickGuard = 0;
 }
+
+// Shared ListBox globals the 0060c9b0/0060c920/0060a1e0 bodies read. Both are
+// evidence-free in leaf_recoveries.cpp's sense - no catalogue name - so the
+// bindings carry their addresses, the way ListBoxDefault24 does.
+static int *const ListBoxGlobalDD4 = (int *)0x009B8DD4;
+static int *const ListBoxGlobalDDC = (int *)0x009B8DDC;
+
+/*
+Purpose: Recompute the list's layout metrics from the Dialog entry list: the
+         widest entry text sets the width, the entry height and column count
+         follow, and the two overflow bits in field_C_ report a column or row
+         shortfall the caller reacts to.
+// ORIGINAL: 0x0060A1E0 ?calculate_dimensions@ListBox@@QAEHXZ 0x0060A1E0-0x0060A66B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060a1e0.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// TRIED: direct named-member access on dialog_/virtual_base_ instead of the
+//        original's dynamic vbtable-index lookup (vtable[8]=dialog_
+//        displacement, vtable[4]=GraphicWin displacement, confirmed by
+//        matching field offsets 0x7c-0xa8 to Dialog's text_color/font fields
+//        and 0xc4-0xd0 to its entry list). Diverges at #2 (compiler emits a
+//        fixed-offset load, not the indirection).
+// size      1163 bytes
+// prototype int (__thiscall ?calculate_dimensions@ListBox@@QAEHXZ)(ListBox* this)
+// calls     0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005DC790 0x005DCAB0
+*/
+int ListBox::calculate_dimensions() {
+    char *self = reinterpret_cast<char *>(this);
+    int *vbt = *reinterpret_cast<int **>(self);
+    char *gw_base = self + vbt[1];
+    char *dlg_base = self + vbt[2];
+    Buffer *buf = reinterpret_cast<Buffer *>(gw_base + 0x444);
+
+    if (*reinterpret_cast<uint32_t *>(dlg_base + 0xcc) == 0) {
+        return 7;
+    }
+    field_C_ = 0;
+
+    buf->set_text_color(*reinterpret_cast<int *>(dlg_base + 0x7c),
+                        *reinterpret_cast<int *>(dlg_base + 0x88),
+                        *reinterpret_cast<int *>(dlg_base + 0x94),
+                        *reinterpret_cast<int *>(dlg_base + 0xa0));
+    buf->set_text_color2(*reinterpret_cast<int *>(dlg_base + 0x80),
+                         *reinterpret_cast<int *>(dlg_base + 0x8c),
+                         *reinterpret_cast<int *>(dlg_base + 0x98),
+                         *reinterpret_cast<int *>(dlg_base + 0xa4));
+    buf->set_text_color3(*reinterpret_cast<int *>(dlg_base + 0x84),
+                         *reinterpret_cast<int *>(dlg_base + 0x90),
+                         *reinterpret_cast<int *>(dlg_base + 0x9c),
+                         *reinterpret_cast<int *>(dlg_base + 0xa8));
+    buf->set_font(*reinterpret_cast<Font **>(dlg_base + 0xac),
+                  *reinterpret_cast<Font **>(dlg_base + 0xb0),
+                  *reinterpret_cast<Font **>(dlg_base + 0xb4), 0);
+
+    int visible_rows = *reinterpret_cast<int *>(dlg_base + 0x50);
+    int rows = *reinterpret_cast<int *>(dlg_base + 0xcc);
+    if (visible_rows <= rows) {
+        rows = visible_rows;
+    }
+    *reinterpret_cast<int *>(dlg_base + 0x58) = rows;
+
+    int max_width = 0;
+    int n = 0;
+    if (*reinterpret_cast<int *>(dlg_base + 0xcc) > 0) {
+        do {
+            char *name;
+            int head = *reinterpret_cast<int *>(dlg_base + 0xc4);
+            if (head != 0) {
+                int current = *reinterpret_cast<int *>(dlg_base + 0xc8);
+                current = *reinterpret_cast<int *>(current + 0xc);
+                *reinterpret_cast<int *>(dlg_base + 0xc8) = current;
+                int pos = *reinterpret_cast<int *>(dlg_base + 0xd0) + 1;
+                *reinterpret_cast<int *>(dlg_base + 0xd0) = pos;
+                if (pos == *reinterpret_cast<int *>(dlg_base + 0xcc)) {
+                    *reinterpret_cast<int *>(dlg_base + 0xd0) = 0;
+                }
+            }
+            if (*reinterpret_cast<int *>(dlg_base + 0xc8) == 0) {
+                name = 0;
+            } else if (head == 0) {
+                name = *reinterpret_cast<char **>(4);
+            } else {
+                name = *reinterpret_cast<char **>(
+                    *reinterpret_cast<int *>(
+                        *reinterpret_cast<int *>(dlg_base + 0xc8) + 8)
+                    + 4);
+            }
+            int width = buf->text_width(name);
+            if (max_width < width) {
+                max_width = width;
+            }
+            ++n;
+        } while (n < *reinterpret_cast<int *>(dlg_base + 0xcc));
+        if (max_width != 0) {
+            goto have_width;
+        }
+    }
+    max_width = *reinterpret_cast<int *>(dlg_base + 0x2c);
+
+have_width:
+    *reinterpret_cast<int *>(dlg_base + 0x64) =
+        *reinterpret_cast<int *>(dlg_base + 0x44) + 2 + field_2C_ * 2
+        + *reinterpret_cast<int *>(dlg_base + 0x34) + max_width;
+
+    if (*reinterpret_cast<int *>(dlg_base + 0x48) == -1) {
+        *reinterpret_cast<int *>(dlg_base + 0x68) =
+            buf->text_line_height() + *reinterpret_cast<int *>(dlg_base + 0x44);
+    } else {
+        *reinterpret_cast<int *>(dlg_base + 0x68) =
+            *reinterpret_cast<int *>(dlg_base + 0x48);
+    }
+
+    int tmp;
+    if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 2) == 0
+        || (tmp = *reinterpret_cast<int *>(dlg_base + 0x2c), tmp == 0)) {
+        int divisor = *reinterpret_cast<int *>(dlg_base + 0x4c);
+        if (divisor == 1) {
+            int width = *reinterpret_cast<int *>(dlg_base + 0x64)
+                + *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
+            int min_width = *reinterpret_cast<int *>(dlg_base + 0x2c);
+            if (width < min_width) {
+                width = min_width;
+            }
+            *reinterpret_cast<int *>(dlg_base + 0x5c) = width;
+            *reinterpret_cast<int *>(dlg_base + 0x64) =
+                *reinterpret_cast<int *>(dlg_base + 0x5c)
+                - *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
+        } else {
+            int margin = *reinterpret_cast<int *>(dlg_base + 0x44);
+            *reinterpret_cast<int *>(dlg_base + 0x64) =
+                (*reinterpret_cast<int *>(dlg_base + 0x5c)
+                 - *reinterpret_cast<int *>(dlg_base + 0x40) * 2 + margin)
+                / divisor - margin;
+            int width = *reinterpret_cast<int *>(dlg_base + 0x44);
+            width = ((*reinterpret_cast<int *>(dlg_base + 0x64) + width)
+                     * *reinterpret_cast<int *>(dlg_base + 0x4c)
+                     + *reinterpret_cast<int *>(dlg_base + 0x40) * 2) - width;
+            int min_width = *reinterpret_cast<int *>(dlg_base + 0x2c);
+            if (width < min_width) {
+                width = min_width;
+            }
+            *reinterpret_cast<int *>(dlg_base + 0x5c) = width;
+        }
+        *reinterpret_cast<int *>(dlg_base + 0x54) =
+            *reinterpret_cast<int *>(dlg_base + 0x4c);
+    } else {
+        *reinterpret_cast<int *>(dlg_base + 0x5c) = tmp;
+        *reinterpret_cast<int *>(dlg_base + 0x54) =
+            *reinterpret_cast<int *>(dlg_base + 0x4c);
+        if (*reinterpret_cast<int *>(dlg_base + 0x54) == 1) {
+            *reinterpret_cast<int *>(dlg_base + 0x64) =
+                *reinterpret_cast<int *>(dlg_base + 0x5c)
+                - *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
+        } else {
+            *reinterpret_cast<int *>(dlg_base + 0x64) =
+                *reinterpret_cast<int *>(dlg_base + 0x64)
+                - *reinterpret_cast<int *>(dlg_base + 0x44);
+        }
+    }
+
+    if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 1) == 0
+        || (tmp = *reinterpret_cast<int *>(dlg_base + 0x30), tmp == 0)) {
+        *reinterpret_cast<int *>(dlg_base + 0x60) =
+            (*reinterpret_cast<int *>(dlg_base + 0x68)
+             * *reinterpret_cast<int *>(dlg_base + 0x58)
+             - *reinterpret_cast<int *>(dlg_base + 0x44))
+            + *reinterpret_cast<int *>(dlg_base + 0x3c)
+            + *reinterpret_cast<int *>(dlg_base + 0x38);
+    } else {
+        *reinterpret_cast<int *>(dlg_base + 0x60) = tmp;
+        *reinterpret_cast<int *>(dlg_base + 0x58) =
+            ((*reinterpret_cast<int *>(dlg_base + 0x60)
+              - *reinterpret_cast<int *>(dlg_base + 0x3c))
+             - *reinterpret_cast<int *>(dlg_base + 0x38)
+             + *reinterpret_cast<int *>(dlg_base + 0x44))
+            / *reinterpret_cast<int *>(dlg_base + 0x68);
+        if ((*reinterpret_cast<uint32_t *>(gw_base + 0x98) & 0x40) == 0) {
+            int columns = *reinterpret_cast<int *>(dlg_base + 0x54);
+            if (*reinterpret_cast<int *>(dlg_base + 0x58) * columns
+                < static_cast<int>(field_20_)) {
+                if (columns < 2) {
+                    *reinterpret_cast<int *>(dlg_base + 0x5c) =
+                        *reinterpret_cast<int *>(dlg_base + 0x2c) - *ListBoxGlobalDD4;
+                    *reinterpret_cast<int *>(dlg_base + 0x54) = 1;
+                } else {
+                    *reinterpret_cast<int *>(dlg_base + 0x60) =
+                        *reinterpret_cast<int *>(dlg_base + 0x30) - *ListBoxGlobalDD4;
+                    *reinterpret_cast<int *>(dlg_base + 0x58) =
+                        *reinterpret_cast<int *>(dlg_base + 0x60)
+                        / *reinterpret_cast<int *>(dlg_base + 0x68);
+                }
+            }
+        }
+    }
+
+    *reinterpret_cast<int *>(dlg_base + 0x68) =
+        *reinterpret_cast<int *>(dlg_base + 0x68)
+        - *reinterpret_cast<int *>(dlg_base + 0x44);
+    int margin = *reinterpret_cast<int *>(dlg_base + 0x44);
+    if (*reinterpret_cast<int *>(dlg_base + 0xcc)
+        <= ((*reinterpret_cast<int *>(dlg_base + 0x60)
+             - *reinterpret_cast<int *>(dlg_base + 0x3c))
+            - *reinterpret_cast<int *>(dlg_base + 0x38) + margin)
+        / (*reinterpret_cast<int *>(dlg_base + 0x68) + margin)) {
+        if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 2) == 0) {
+            *reinterpret_cast<int *>(dlg_base + 0x64) =
+                *reinterpret_cast<int *>(dlg_base + 0x5c)
+                - *reinterpret_cast<int *>(dlg_base + 0x40) * 2;
+        } else {
+            *reinterpret_cast<int *>(dlg_base + 0x64) =
+                (*reinterpret_cast<int *>(dlg_base + 0x5c)
+                 - *reinterpret_cast<int *>(dlg_base + 0x40) * 2 + margin)
+                / *reinterpret_cast<int *>(dlg_base + 0x54) - margin;
+        }
+    }
+
+    int total = *reinterpret_cast<int *>(dlg_base + 0x58)
+        * *reinterpret_cast<int *>(dlg_base + 0x54);
+    field_1C_ = static_cast<uint32_t>(total);
+    if (total < static_cast<int>(field_20_)) {
+        if (1 < *reinterpret_cast<int *>(dlg_base + 0x54)) {
+            Win *win = reinterpret_cast<Win *>(gw_base);
+            if ((*reinterpret_cast<uint32_t *>(gw_base + 0x98) & 0x40) == 0) {
+                *reinterpret_cast<int *>(dlg_base + 0x60) =
+                    *reinterpret_cast<int *>(dlg_base + 0x60) + *ListBoxGlobalDD4;
+            }
+            field_C_ = field_C_ | 1;
+            return 0;
+        }
+        if ((*reinterpret_cast<uint32_t *>(gw_base + 0x98) & 0x40) == 0) {
+            *reinterpret_cast<int *>(dlg_base + 0x5c) =
+                *reinterpret_cast<int *>(dlg_base + 0x5c) + *ListBoxGlobalDD4;
+        }
+        if ((*reinterpret_cast<unsigned char *>(dlg_base + 0x20) & 2) != 0) {
+            *reinterpret_cast<int *>(dlg_base + 0x64) =
+                *reinterpret_cast<int *>(dlg_base + 0x64)
+                - *ListBoxGlobalDD4 / *reinterpret_cast<int *>(dlg_base + 0x54);
+        }
+        field_C_ = field_C_ | 2;
+    }
+    return 0;
+}
+
+/*
+Purpose: Attach the list to a parent window rectangle: run the layout pass,
+         transfer the style flags (handing the horizontal/vertical scroll
+         choice to the caller's bits), init the GraphicWin frame over the
+         given position, prime the scroll ranges and paging from the entry
+         metrics, land the scroll position, and copy the Dialog's colours and
+         fonts into the window's buffer.
+// ORIGINAL: 0x0060A670 ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060A670-0x0060AA15 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060a670.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// symbol    ?attach@ListBox@@UAEHPAXHHH@Z
+// TRIED: raw self+/-offset pointer chasing throughout (this points 0xa60 into
+//        the ListBox object; base=self-0xa60 is the real ListBox start reached
+//        via calculate_dimensions()); re-deriving the vbtable-style P1/P2
+//        pointers fresh at each use instead of caching, to match the original's
+//        reloads across calls. Reaches MISMATCH #44 'lea' vs 'add'.
+// size      933 bytes
+// prototype int (__thiscall ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)
+// calls     0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005EE030 0x005EE070 0x005EE0B0 0x005EE0D0 0x005EE0F0 0x005EE110 0x0060A1E0
+*/
+int ListBox::attach(void *a1, int a2, int a3, int a4) {
+    if (a1 == 0) {
+        return 3;
+    }
+    if (HandleMain == 0) {
+        return 7;
+    }
+
+    char *self = reinterpret_cast<char *>(this);
+    // attach is entered on the Dialog virtual base: the ListBox front is
+    // 0xA60 below.
+    char *front = self - 0xA60;
+
+    int flags = (a4 & 0xfffffff3) | 0x20;
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        *reinterpret_cast<int *>(self + vbt[1] - 0x9C8) = flags;
+    }
+
+    int dim_result = reinterpret_cast<ListBox *>(front)->calculate_dimensions();
+    if (dim_result != 0) {
+        if (dim_result != 7) {
+            return dim_result;
+        }
+        {
+            int *vbt = *reinterpret_cast<int **>(front);
+            char *dlg_base = self + vbt[2];
+            *reinterpret_cast<int *>(dlg_base - 0xA04)
+                = *reinterpret_cast<int *>(dlg_base - 0xA34);
+        }
+        {
+            int *vbt = *reinterpret_cast<int **>(front);
+            char *dlg_base = self + vbt[2];
+            *reinterpret_cast<int *>(dlg_base - 0xA00)
+                = *reinterpret_cast<int *>(dlg_base - 0xA30);
+        }
+        {
+            int *vbt = *reinterpret_cast<int **>(front);
+            char *dlg_base = self + vbt[2];
+            *reinterpret_cast<int *>(dlg_base - 0xA0C) = 1;
+        }
+        {
+            int *vbt = *reinterpret_cast<int **>(front);
+            char *dlg_base = self + vbt[2];
+            *reinterpret_cast<int *>(dlg_base - 0xA08) = 1;
+        }
+    }
+
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        *reinterpret_cast<int *>(dlg_base - 0xA3C) = a2;
+    }
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        *reinterpret_cast<int *>(dlg_base - 0xA38) = a3;
+    }
+
+    if (*reinterpret_cast<int *>(front + 0x20) > *reinterpret_cast<int *>(front + 0x1C)) {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        if (*reinterpret_cast<int *>(dlg_base - 0xA0C) > 1) {
+            flags |= 4;
+        } else {
+            flags |= 8;
+        }
+    }
+
+    {
+        int a1_flags = *reinterpret_cast<int *>(
+            reinterpret_cast<char *>(a1) + 0x98);
+        if ((a1_flags & 0x1000) == 0) {
+            flags |= 0x100000;
+        }
+    }
+    if (flags & 0x40) {
+        flags |= 0x800;
+    }
+
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        char *gw_base = self + vbt[1] - 0xA60;
+        int init_result = reinterpret_cast<GraphicWin *>(gw_base)->init(
+            a2, a3,
+            *reinterpret_cast<int *>(dlg_base - 0xA00),
+            *reinterpret_cast<int *>(dlg_base - 0xA04),
+            0, flags, reinterpret_cast<Win *>(a1), 0, 0);
+        if (init_result != 0) {
+            return init_result;
+        }
+    }
+
+    if (flags & 8) {
+        int *vbt = *reinterpret_cast<int **>(front);
+        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
+        win->set_vert_range(0,
+            *reinterpret_cast<int *>(self + vbt[2] - 0x994) - 1);
+        vbt = *reinterpret_cast<int **>(front);
+        win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
+        win->set_vert_paging(
+            *reinterpret_cast<int *>(self + vbt[2] - 0xA08) - 1);
+    } else if (flags & 4) {
+        int *vbt = *reinterpret_cast<int **>(front);
+        int numerator = *reinterpret_cast<int *>(self + vbt[2] - 0x994);
+        char *dlg_base = self + vbt[2];
+        int quotient = numerator / *reinterpret_cast<int *>(dlg_base - 0xA08);
+        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
+        win->set_horz_range(0, quotient - 1);
+        vbt = *reinterpret_cast<int **>(front);
+        win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
+        win->set_horz_paging(*reinterpret_cast<int *>(self + vbt[2] - 0xA0C));
+    }
+
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        if (*reinterpret_cast<int *>(dlg_base - 0x994) == 0) {
+            *reinterpret_cast<int *>(front + 0x18) = 0;
+        } else {
+            while (*reinterpret_cast<int *>(dlg_base - 0x974)
+                   >= *reinterpret_cast<int *>(front + 0x1C)
+                       + *reinterpret_cast<int *>(front + 0x18)) {
+                int step;
+                if (*reinterpret_cast<int *>(dlg_base - 0xA0C) > 1) {
+                    step = *reinterpret_cast<int *>(dlg_base - 0xA08);
+                } else {
+                    step = 1;
+                }
+                *reinterpret_cast<int *>(front + 0x18) += step;
+
+                vbt = *reinterpret_cast<int **>(front);
+                dlg_base = self + vbt[2];
+            }
+        }
+    }
+
+    if (*reinterpret_cast<int *>(front + 0x20) > *reinterpret_cast<int *>(front + 0x1C)) {
+        int *vbt = *reinterpret_cast<int **>(front);
+        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
+        if (*reinterpret_cast<int *>(self + vbt[2] - 0xA0C) > 1) {
+            win->set_horz_pos(*reinterpret_cast<int *>(front + 0x18));
+        } else {
+            win->set_vert_pos(*reinterpret_cast<int *>(front + 0x18));
+        }
+    }
+
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
+        buf->set_text_color(*reinterpret_cast<int *>(dlg_base - 0x9E4),
+                            *reinterpret_cast<int *>(dlg_base - 0x9D8),
+                            *reinterpret_cast<int *>(dlg_base - 0x9CC),
+                            *reinterpret_cast<int *>(dlg_base - 0x9C0));
+    }
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
+        buf->set_text_color2(*reinterpret_cast<int *>(dlg_base - 0x9E0),
+                             *reinterpret_cast<int *>(dlg_base - 0x9D4),
+                             *reinterpret_cast<int *>(dlg_base - 0x9C8),
+                             *reinterpret_cast<int *>(dlg_base - 0x9BC));
+    }
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
+        buf->set_text_color3(*reinterpret_cast<int *>(dlg_base - 0x9DC),
+                             *reinterpret_cast<int *>(dlg_base - 0x9D0),
+                             *reinterpret_cast<int *>(dlg_base - 0x9C4),
+                             *reinterpret_cast<int *>(dlg_base - 0x9B8));
+    }
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        char *dlg_base = self + vbt[2];
+        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] - 0x61C);
+        buf->set_font(*reinterpret_cast<Font **>(dlg_base - 0x9F0),
+                      *reinterpret_cast<Font **>(dlg_base - 0x9EC),
+                      *reinterpret_cast<Font **>(dlg_base - 0x9E8), 0);
+    }
+
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
+        win->set_vert_pos(*reinterpret_cast<int *>(front + 0x18));
+    }
+    {
+        int *vbt = *reinterpret_cast<int **>(front);
+        int position = *reinterpret_cast<int *>(front + 0x18);
+        int quotient = position / *reinterpret_cast<int *>(self + vbt[2] - 0xA0C);
+        Win *win = reinterpret_cast<Win *>(self + vbt[1] - 0xA60);
+        win->set_horz_pos(quotient);
+    }
+
+    return 0;
+}
+
+/*
+Purpose: Run the double-click notification: remember the hovered window,
+         fire the installed callback with the selected id, then walk the
+         selected entry's notification chain (slots 56 and 55 of the target
+         window, then the child object's 23/7 pair) - and raise the click
+         guard's counter value through it.
+// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
+// size      171 bytes
+// prototype void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
+// calls     0x00609A50
+// indirect  0x0060C73B 0x0060C761 0x0060C789 0x0060C7A8 0x0060C7B3
+*/
+void ListBox::on_left_double_click(int, int) {
+    char *self = reinterpret_cast<char *>(this);
+    char *front = self - 0x48;
+    int *vbt = *reinterpret_cast<int **>(front);
+    char *gw_walk = self + vbt[1];
+    WinCallbackWindow = *reinterpret_cast<Win **>(gw_walk + 0x7C);
+
+    typedef void (__cdecl *callback_fn)(int);
+    callback_fn cb = *reinterpret_cast<callback_fn *>(self - 8);
+    if (cb != 0) {
+        vbt = *reinterpret_cast<int **>(front);
+        Dialog *dlg = reinterpret_cast<Dialog *>(self - 0x48 + vbt[2]);
+        cb(dlg->get_selected_id());
+    }
+
+    vbt = *reinterpret_cast<int **>(front);
+    gw_walk = self + vbt[1];
+    Win *target = *reinterpret_cast<Win **>(gw_walk + 0x7C);
+    if (target != 0) {
+        vbt = *reinterpret_cast<int **>(front);
+        Dialog *dlg = reinterpret_cast<Dialog *>(self - 0x48 + vbt[2]);
+        typedef int (OriginalObject::*slot056_fn)(int);
+        (ORIGINAL(target)->*vtable_method<slot056_fn>(target, 56 * 4))(
+            dlg->get_selected_id());
+    }
+
+    int guard = ListBoxClickGuard;
+    vbt = *reinterpret_cast<int **>(front);
+    char *dlg_walk = self - 0x48 + vbt[2];
+    int selected = reinterpret_cast<Dialog *>(dlg_walk)->get_selected_id();
+    vbt = *reinterpret_cast<int **>(front);
+    gw_walk = self + vbt[1];
+    target = *reinterpret_cast<Win **>(gw_walk + 0x7C);
+    typedef void (OriginalObject::*slot055_fn)(int, int);
+    (ORIGINAL(target)->*vtable_method<slot055_fn>(target, 55 * 4))(selected,
+                                                                   guard);
+
+    vbt = *reinterpret_cast<int **>(front);
+    gw_walk = self + vbt[1];
+    Win *final_target = *reinterpret_cast<Win **>(gw_walk + 0x7C);
+    Win *child = *reinterpret_cast<Win **>(
+        reinterpret_cast<char *>(final_target) + 0x94);
+    if (child != 0) {
+        // The original calls slot 7 only when slot 23 returns zero; the
+        // shared shim spells slot 23 void, so the test is reached raw.
+        typedef int (OriginalObject::*slot023_fn)();
+        if ((ORIGINAL(child)->*vtable_method<slot023_fn>(child, 23 * 4))() == 0) {
+            reinterpret_cast<VCall *>(child)->slot007();
+        }
+    }
+}
+
+/*
+Purpose: Add one entry: measure the string at the current width, grow the
+         list height, remember the string in the entry table and append the
+         id. Returns whatever the entry append reports.
+// ORIGINAL: 0x0060C920 ?item@ListBox@@QAEHPADH@Z 0x0060C920-0x0060C9A9 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c920.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// size      137 bytes
+// prototype int (__thiscall ?item@ListBox@@QAEHPADH@Z)(ListBox* this, int8* lpString, int)
+// calls     0x00401100 0x005DC360
+*/
+int ListBox::item(char *text, int id) {
+    char *self = reinterpret_cast<char *>(this);
+    if (text == 0) {
+        return 3;
+    }
+
+    int *vbt = *reinterpret_cast<int **>(self);
+    char *dlg_base = self + vbt[2];
+    int count = *reinterpret_cast<int *>(dlg_base + 0x2C) - *ListBoxGlobalDD4;
+
+    if (count > 0) {
+        vbt = *reinterpret_cast<int **>(self);
+        Buffer *buf = reinterpret_cast<Buffer *>(self + vbt[1] + 0x444);
+        buf->wrap_height(text, count);
+    }
+
+    int height;
+    if (count > 0) {
+        vbt = *reinterpret_cast<int **>(self);
+        char *gw_base = self + vbt[1];
+        height = *reinterpret_cast<int *>(gw_base + 0x45C);
+    } else {
+        height = 1;
+    }
+
+    field_20_ += height;
+
+    vbt = *reinterpret_cast<int **>(self);
+    char *dlg_walk = self + vbt[2];
+    *reinterpret_cast<char **>(dlg_walk + 0xD8) = text;
+
+    StringStruct *entries = reinterpret_cast<StringStruct *>(dlg_walk + 0xBC);
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(entries) + 0x20) = 0;
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(entries) + 0x24) = height;
+
+    return entries->add(id);
+}
+
+/*
+Purpose: Refresh the list after its entries changed: run the layout pass and
+         re-select when only the selection moved, rebuild the whole window
+         (attach) when entries were added or removed, re-arm the scroll
+         ranges from the new metrics, then fire the callback and the
+         notification slots. Returns 7 when there is no main window, or the
+         attach result on failure.
+// ORIGINAL: 0x0060C9B0 ?update_changes@ListBox@@QAEHXZ 0x0060C9B0-0x0060CB63 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c9b0.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// size      435 bytes
+// prototype int (__thiscall ?update_changes@ListBox@@QAEHXZ)(ListBox* this)
+// calls     0x005ED9D0 0x005EE0B0 0x005EE0D0 0x005EE0F0 0x005EE110 0x005F7E90 0x00609A50 0x0060A020 0x0060A1E0 0x0060A670
+// indirect  0x0060CA47 0x0060CAF0 0x0060CB15 0x0060CB39 0x0060CB44 0x0060CB56
+*/
+int ListBox::update_changes() {
+    typedef int (__stdcall *release_capture_fn)();
+    typedef void (__cdecl *callback_fn)(int);
+
+    char *self = reinterpret_cast<char *>(this);
+    if (HandleMain == 0) {
+        return 7;
+    }
+
+    int *vbt = *reinterpret_cast<int **>(self);
+    char *gw_base = self + vbt[1];
+    char *dlg_base = self + vbt[2];
+    int was_visible = reinterpret_cast<Win *>(gw_base)->is_visible();
+
+    reinterpret_cast<Dialog *>(dlg_base)->get_selected_id();
+
+    int old_child_count = field_C_;
+    int old_selected = *reinterpret_cast<int *>(dlg_base + 0xEC);
+    calculate_dimensions();
+
+    if (old_child_count == field_C_) {
+        set_selected_pos(old_selected, 1);
+    } else {
+        int a4 = *reinterpret_cast<int *>(gw_base + 0x98);
+        int a1 = *reinterpret_cast<int *>(gw_base + 0xC4);
+        int a2 = *reinterpret_cast<int *>(dlg_base + 0x24);
+        int a3 = *reinterpret_cast<int *>(dlg_base + 0x28);
+        int result = reinterpret_cast<ListBox *>(self + 0xA60)->attach(
+            reinterpret_cast<GraphicWin *>(a1), a2, a3, a4);
+        if (result != 0) {
+            return result;
+        }
+        set_selected_pos((old_selected == -1) ? -1 : 0, 1);
+        (*reinterpret_cast<release_capture_fn>(0x006692E0))();
+        if (was_visible != 0) {
+            reinterpret_cast<Win *>(gw_base)->show(0);
+        }
+    }
+
+    {
+        unsigned int win_flags = *reinterpret_cast<unsigned int *>(gw_base + 0x98);
+        if (win_flags & 8) {
+            Win *win = reinterpret_cast<Win *>(gw_base);
+            win->set_vert_range(0,
+                *reinterpret_cast<int *>(dlg_base + 0xCC) - 1);
+            win->set_vert_paging(
+                *reinterpret_cast<int *>(dlg_base + 0x58) - 1);
+        } else if (win_flags & 4) {
+            Win *win = reinterpret_cast<Win *>(gw_base);
+            win->set_horz_range(0,
+                *reinterpret_cast<int *>(dlg_base + 0xCC)
+                    / *reinterpret_cast<int *>(dlg_base + 0x58) - 1);
+            win->set_horz_paging(*reinterpret_cast<int *>(dlg_base + 0x54));
+        }
+    }
+
+    {
+        callback_fn cb = *reinterpret_cast<callback_fn *>(self + 0x3C);
+        if (cb != 0) {
+            cb(reinterpret_cast<Dialog *>(dlg_base)->get_selected_id());
+        }
+    }
+
+    {
+        Win *target = *reinterpret_cast<Win **>(gw_base + 0xC4);
+        if (target != 0) {
+            typedef void (OriginalObject::*slot054_fn)(int);
+            (ORIGINAL(target)->*vtable_method<slot054_fn>(target, 54 * 4))(
+                reinterpret_cast<Dialog *>(dlg_base)->get_selected_id());
+        }
+    }
+
+    {
+        Win *target = *reinterpret_cast<Win **>(gw_base + 0xC4);
+        if (target != 0) {
+            Win *child = *reinterpret_cast<Win **>(
+                reinterpret_cast<char *>(target) + 0x90);
+            if (child != 0) {
+                typedef int (OriginalObject::*slot023_fn)();
+                if ((ORIGINAL(child)->*vtable_method<slot023_fn>(child, 23 * 4))()
+                    == 0) {
+                    reinterpret_cast<VCall *>(child)->slot007();
+                }
+            }
+        }
+    }
+
+    if (was_visible != 0) {
+        reinterpret_cast<VCall *>(gw_base)->slot062();
+    }
+
+    return 0;
+}

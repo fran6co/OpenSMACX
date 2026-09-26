@@ -909,7 +909,7 @@ int __cdecl corner_market(int faction_id);
 void __cdecl see_map_check();
 void __cdecl compute_faction_modifiers(int faction_id);
 void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, 
-                                   uint32_t faction_id, BOOL toggle, BOOL is_quick_calc);
+                                   int faction_id, BOOL toggle, BOOL is_quick_calc);
 void __cdecl social_upkeep(int faction_id);
 BOOL __cdecl society_avail(int soc_category, int soc_model, int faction_id);
 void __cdecl social_ai(uint32_t faction_id, int growth_val, int tech_val, int wealth_val, 
