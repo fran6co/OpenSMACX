@@ -3346,6 +3346,69 @@ int Buffer::draw_mono(Buffer *destination, int transparent, int x, int y,
     return result;
 }
 
+// ORIGINAL: 0x005D8840 ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHH@Z 0x005D8840-0x005D892E
+// symbol    ?draw_mono@Buffer@@QAEHPAV1@HHHH@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, so the fact names what
+//           this tree actually emits.
+// size      238 bytes
+// prototype int (__thiscall ?draw_mono@Buffer@@QAEHPAVBuffer@@HHHH@Z)(Buffer* this, Buffer*, int, int, int, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3E50
+// indirect  0x005D88F7
+// provenance (retired seed): src/unrecovered/005d8840.cpp. Homed for COVERAGE,
+// no byte claim. The seed inlined the descriptor preamble and lock pair that
+// `setup_buff_sprite` owns, exactly as the seven-argument draw_mono above
+// spells the same sequence; the callee is Sprite::draw_mono's fixed-size
+// member at 0x005E3E50.
+int Buffer::draw_mono(Buffer *target, int transparent, int x, int y,
+                      int colour) {
+    setup_buff_sprite(transparent);
+    int result = g_BUFFER_SPRITE.draw_mono(target, transparent, x, y, colour);
+    release_buff_sprite();
+    return result;
+}
+
+// ORIGINAL: 0x005D8370 ?draw@Buffer@@QAEHPAVBuffer@@HHH@Z 0x005D8370-0x005D84B7
+// symbol    ?draw@Buffer@@QAEHPAV1@HHH@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, so the fact names what
+//           this tree actually emits.
+// size      327 bytes
+// prototype int (__thiscall ?draw@Buffer@@QAEHPAVBuffer@@HHH@Z)(Buffer* this, Buffer*, int, int, int)
+// callers   3   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E4B9A
+// indirect  0x005D83B2 0x005D83C7 0x005D8485
+// provenance (retired seed): src/unrecovered/005d8370.cpp. Homed for COVERAGE,
+// no byte claim. The four-argument member of the draw family: the DirectDraw
+// fast path of the landed six-argument `draw` above with the WHOLE surface as
+// the rectangle - Blt(NULL, ..., DDBLT_WAIT | DDBLT_KEYSRC, NULL) - returning
+// the colour-key argument the same word stored into both DDCOLORKEY fields
+// (the image reloads it at 0x005D83CA), as the scaled path returns its own
+// denominator; 0x10 for a null destination, and the software path through the
+// shared Sprite.
+int Buffer::draw(Buffer *destination, int index, int x, int y) {
+    if (destination == 0) {
+        return 0x10;
+    }
+    if (surface_ != 0 && destination->surface_ != 0) {
+        DDCOLORKEY key;
+        key.dwColorSpaceLowValue = index;
+        key.dwColorSpaceHighValue = index;
+        surface_->SetColorKey(DDCKEY_SRCBLT, &key);
+        destination->surface_->Blt(0, surface_, 0, DDBLT_WAIT | DDBLT_KEYSRC, 0);
+        return index;
+    }
+    setup_buff_sprite(index);
+    int result = g_BUFFER_SPRITE.draw(destination, index, x, y);
+    release_buff_sprite();
+    return result;
+}
+
 // DirectDraw surface vtable slots 0x19 (Lock) and 0x20 (Unlock), reached the
 // way win.cpp reaches its own: an explicit index through the interface's
 // vtable. A `VCall` shim would say the same thing in bytes and cost the
@@ -7023,4 +7086,784 @@ void Buffer::resize(int width, int height) {
         return;
     }
     init(width, height, init_flags_, nullptr);
+}
+
+// ---------------------------------------------------------------------------
+// COVERAGE HOMES, 2026-09-26. The class:Buffer seed-only group, transcribed
+// into real member bodies (FILE markers, no byte claims) from their retired
+// seeds. Each seed read its fields through fixed offsets and its surfaces
+// through raw vtable-slot pushes; here that state is the named members and
+// the typed interface calls the rest of this file already uses, and the
+// shared lock pair is `get_data` / `free_data`.
+// ---------------------------------------------------------------------------
+
+// ORIGINAL: 0x005D7B20 ?load_tga@Buffer@@QAGHPBD@Z 0x005D7B20-0x005D7B36
+// size      22 bytes
+// prototype int (__stdcall ?load_tga@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7B40
+// provenance (retired seed): src/recovered/units/005d7b20.cpp. Homed for
+// COVERAGE, no byte claim: the palette-less loader entry hands the file name
+// to the four-argument loader with the full 256-entry colour count.
+int __stdcall Buffer::load_tga(const char *filename) {
+    return load_tga(filename, nullptr, 0, 0x100);
+}
+
+// ORIGINAL: 0x005D7C80 ?load_bmp@Buffer@@QAGHPBD@Z 0x005D7C80-0x005D7C96
+// size      22 bytes
+// prototype int (__stdcall ?load_bmp@Buffer@@QAGHPBD@Z)(Buffer* this, int8*)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D7CA0
+// provenance (retired seed): src/recovered/units/005d7c80.cpp. Homed for
+// COVERAGE, no byte claim: the same forwarder shape as load_tga above.
+int __stdcall Buffer::load_bmp(const char *filename) {
+    return load_bmp(filename, nullptr, 0, 0x100);
+}
+
+// ORIGINAL: 0x005D9610 ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z 0x005D9610-0x005D98EA
+// symbol    ?copy@Buffer@@QAEHPAV1@HHHHHHHH@Z
+//           The image spells the leading `Buffer *` as `PAVBuffer@@`; VC6 emits
+//           the back-reference `PAV1@` for the same type, so the fact names what
+//           this tree actually emits.
+// size      730 bytes
+// prototype int (__thiscall ?copy@Buffer@@QAEHPAVBuffer@@HHHHHHHH@Z)(Buffer* this, Buffer*, int, int, int, int, int, int, int, int)
+// callers   4   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3503 0x005E3563 0x005FE560
+// indirect  0x005D9637 0x005D966F 0x005D967A 0x005D96A6 0x005D96D2 0x005D96DD 0x005D9732 0x005D973D 0x005D97A5 0x005D9817 0x005D986D 0x005D98BC 0x005D98C7
+// provenance (retired seed): src/unrecovered/005d9610.cpp. Homed for COVERAGE,
+// no byte claim. GDI StretchBlt between the two buffers' device contexts: each
+// context comes from `get_hdc` and goes back through `release_hdc`, and each
+// colour table goes through the five-line palette publish `sync_to_palette`
+// owns - inlined twice here because the blit touches two buffers, which is
+// how buffer.h already describes this family.
+int Buffer::copy(Buffer *destination, int src_x, int src_y, int src_w,
+                 int src_h, int dest_x, int dest_y, int dest_w, int dest_h) {
+    if (destination == 0) {
+        return 0x10;
+    }
+    HDC destination_dc = destination->get_hdc();
+    if (destination_dc == 0) {
+        return 7;
+    }
+    HDC source_dc = get_hdc();
+    if (source_dc == 0) {
+        destination->release_hdc(1);
+        return 7;
+    }
+
+    if (dib_bits_ != 0 && PaletteActive != 0) {
+        if (palette_seed_ != PaletteActive->seed_) {
+            palette_seed_ = PaletteActive->seed_;
+            RGBQUAD *const table = dib_.bmiColors;
+            PaletteActive->get_rgbquad(table, 0, 0x100);
+            if (get_hdc() != 0) {
+                SetDIBColorTable(hdc2_, 0, 0x100, table);
+                release_hdc(1);
+            }
+        }
+        has_palette_ = 1;
+        palette_ = PaletteActive;
+    }
+    if (destination->dib_bits_ != 0 && PaletteActive != 0) {
+        if (destination->palette_seed_ != PaletteActive->seed_) {
+            destination->palette_seed_ = PaletteActive->seed_;
+            RGBQUAD *const table = destination->dib_.bmiColors;
+            PaletteActive->get_rgbquad(table, 0, 0x100);
+            if (destination->get_hdc() != 0) {
+                SetDIBColorTable(destination->hdc2_, 0, 0x100, table);
+                destination->release_hdc(1);
+            }
+        }
+        destination->has_palette_ = 1;
+        destination->palette_ = PaletteActive;
+    }
+
+    StretchBlt(destination_dc, dest_x, dest_y, dest_w, dest_h, source_dc,
+               src_x, src_y, src_w, src_h, SRCCOPY);
+
+    destination->release_hdc(1);
+    release_hdc(1);
+    return 0;
+}
+
+// The per-entry callback `write_strings_height` consults with each id and
+// payload pair before measuring it. The pointer lives in the buffer word the
+// header still names `field_C_`.
+typedef void(__cdecl *WriteStringsCallback)(int, int);
+
+// ORIGINAL: 0x005DAD70 ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z 0x005DAD70-0x005DB03E
+// symbol    ?write_strings_height@Buffer@@QAEHPAVStringList@@HH@Z
+//           The image spells the list `PAUStringList@@`; this tree declares
+//           `class StringList`, and the first visible tag declaration fixes
+//           VC6's mangling key, so the object holds `PAVStringList@@` - the
+//           same type, spelled the way this tree emits it.
+// size      718 bytes
+// prototype int (__thiscall ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z)(Buffer* this, StringList*, int, int)
+// callers   4   call targets   11
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00402500 0x00402530 0x005DC360 0x005DC410 0x005DCAB0 0x005DDDA0 0x005DDDE0 0x005DDEF0 0x005E3630 0x005E3650 0x006453E0
+// indirect  0x005DADCB 0x005DAF78
+// provenance (retired seed): src/unrecovered/005dad70.cpp. Homed for COVERAGE,
+// no byte claim. Measures a StringList without drawing it. The entry payload's
+// metadata word picks the per-entry path - 3 is a bare font advance, 2 a
+// manual find_line_break_l walk, anything else the flying writer's own
+// measurement - and `width` is stored as the wrap width the flying family
+// reads back.
+int Buffer::write_strings_height(StringList *strings, int width, int flags) {
+    if (strings == 0) {
+        return 0;
+    }
+    if ((flags & 2) == 0 && strings->entry_count_ - 1 >= 0) {
+        strings->current_position_ = 0;
+        strings->current_ = strings->head_;
+    }
+
+    // The payload node's metadata word (+8) and text (+4) are what
+    // StringStructPayload declares; `current_entry` walks to the current one.
+    int payload = strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+
+    if (field_C_ != 0) {
+        const int id = strings->head_ != 0 ? strings->current_->id : 0;
+        reinterpret_cast<WriteStringsCallback>(field_C_)(id, payload);
+    }
+
+    int total_height = 0;
+    if (payload == 3) {
+        if (font1_ == 0) {
+            font1_ = FontDefault;
+        }
+        total_height = font1_->line_advance();
+        field_18_ = 0;
+        field_14_ = field_10_;
+        markup_pending_ = 0;
+        *FlyingTextHeight = width;
+        *FlyingTextY = 0;
+        BufferStrHeight = 0;
+        wrap_height_flying(nullptr);
+    } else if (payload == 2) {
+        char *text = strings->head_ != 0 ? strings->current_entry()->text : 0;
+        if (text != 0) {
+            field_18_ = 0;
+            BufferStrHeight = 0;
+            field_14_ = field_10_;
+            int remaining_width = width;
+            do {
+                const int len = strlen(text);
+                int break_width = remaining_width;
+                text = find_line_break_l(text, &break_width, len);
+                BufferStrHeight = 0;
+                total_height += text_line_height();
+                field_18_ = field_18_ + 1;
+                if (field_14_ != 0) {
+                    remaining_width -= field_14_;
+                    field_14_ = 0;
+                }
+            } while (text != 0);
+        }
+        field_18_ = 0;
+        field_14_ = field_10_;
+        markup_pending_ = 0;
+        BufferStrHeight = 0;
+        *FlyingTextHeight = width;
+        *FlyingTextY = 0;
+        wrap_height_flying(nullptr);
+    } else {
+        const int id = strings->head_ != 0 ? strings->current_->id : 0;
+        char *text = strings->head_ != 0 ? strings->current_entry()->text : 0;
+        field_18_ = 0;
+        field_14_ = field_10_;
+        markup_pending_ = 0;
+        BufferStrHeight = 0;
+        *FlyingTextHeight = width;
+        *FlyingTextY = 0;
+        wrap_height_flying(text);
+    }
+
+    if (strings->current_position_ < strings->entry_count_ - 1) {
+        do {
+            strings->next_entry();
+            if (strings->current_ != 0) {
+                strings->current_entry();
+            }
+
+            const int line_payload =
+                strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+
+            if (field_C_ != 0) {
+                const int id =
+                    strings->head_ != 0 ? strings->current_->id : 0;
+                reinterpret_cast<WriteStringsCallback>(field_C_)(id,
+                                                                 line_payload);
+            }
+
+            if (strings->head_ == 0 || line_payload == 0) {
+                wrap_height_flying(strings->current_text());
+            } else {
+                total_height += wrap_height_flying_flush();
+
+                if (line_payload == 3) {
+                    total_height += text_line_height();
+                    wrap_height_flying(nullptr, width);
+                } else if (line_payload == 2) {
+                    total_height += wrap_height(strings->current_text(), width);
+                    wrap_height_flying(nullptr, width);
+                } else {
+                    wrap_height_flying(strings->current_text(), width);
+                }
+            }
+        } while (strings->current_position_ < strings->entry_count_ - 1);
+    }
+
+    return wrap_height_flying_flush() + total_height;
+}
+
+// ORIGINAL: 0x005DB930 ?write_right_l@Buffer@@QAEHPAUFont@@PADPAURECT@@H@Z 0x005DB930-0x005DB984
+// symbol    ?write_right_l@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@H@Z
+//           The image spells the rectangle `PAURECT@@`; windows.h declares
+//           `struct tagRECT` behind the RECT define, so the object holds
+//           `PAUtagRECT@@` - the same type, spelled the way this tree emits it.
+// size      84 bytes
+// prototype int (__thiscall ?write_right_l@Buffer@@QAEHPAVFont@@PADPAURECT@@H@Z)(Buffer* this, Font*, char*, RECT*, int)
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD450
+// provenance (retired seed): src/recovered/units/005db930.cpp. Homed for
+// COVERAGE, no byte claim. The RECT member of the Font-first family, spelled
+// exactly like its coordinate-vector sibling above: the three writer font
+// slots overridden while the four-argument RECT writer runs.
+int Buffer::write_right_l(Font *font, char *text, RECT *area, int len) {
+    Font *saved_font1 = font1_;
+    Font *saved_font2 = font2_;
+    Font *saved_font3 = font3_;
+    if (font != 0 && font->font_obj_ != 0) {
+        font1_ = font;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = write_right_l(text, area, len);
+    font1_ = saved_font1;
+    font2_ = saved_font2;
+    font3_ = saved_font3;
+    return result;
+}
+
+// ORIGINAL: 0x005DE730 ?change_color@Buffer@@QAEHPAURECT@@HH@Z 0x005DE730-0x005DE8EB
+// symbol    ?change_color@Buffer@@QAEHPAUtagRECT@@HH@Z
+//           The image spells the rectangle `PAURECT@@`; windows.h declares
+//           `struct tagRECT` behind the RECT define, so the object holds
+//           `PAUtagRECT@@` - the same type, spelled the way this tree emits it.
+// size      443 bytes
+// prototype int (__thiscall ?change_color@Buffer@@QAEHPAURECT@@HH@Z)(Buffer* this, RECT*, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005DE79D 0x005DE80C 0x005DE8D4
+// provenance (retired seed): src/unrecovered/005de730.cpp. Homed for COVERAGE,
+// no byte claim: the rectangle remap of the scalar `change_color` overloads,
+// over the same IntersectRect clip and `get_data`/`free_data` lock pair the
+// blitters use, replacing `find_color` with `replace_color` in place.
+int Buffer::change_color(RECT *area, int find_color, int replace_color) {
+    if (area == 0) {
+        return 3;
+    }
+    if (dib_bits_ == 0 && surface_ == 0) {
+        return 7;
+    }
+
+    RECT clipped;
+    clipped.left = area->left;
+    clipped.top = area->top;
+    clipped.right = clipped.left + (area->right - area->left);
+    clipped.bottom = clipped.top + (area->bottom - area->top);
+    if (!IntersectRect(&clipped, &rect1_, &clipped)) {
+        return 0;
+    }
+    if (!(clipped.left < dib_.bmiHeader.biWidth
+          && clipped.top < -dib_.bmiHeader.biHeight)) {
+        return 7;
+    }
+    if (get_data() == 0) {
+        return 7;
+    }
+
+    uint8_t *pixel = static_cast<uint8_t *>(locked_bits_)
+        + stride_ * clipped.top + clipped.left;
+    if (pixel == 0) {
+        return 7;
+    }
+    const int width = clipped.right - clipped.left;
+    const int height = clipped.bottom - clipped.top;
+    const int remainder = static_cast<int>(stride_) - width;
+    const uint8_t find = static_cast<uint8_t>(find_color);
+    const uint8_t replace = static_cast<uint8_t>(replace_color);
+    for (int row = 0; row < height; ++row) {
+        for (int col = 0; col < width; ++col) {
+            if (*pixel == find) {
+                *pixel = replace;
+            }
+            ++pixel;
+        }
+        pixel += remainder;
+    }
+
+    free_data(1);
+    return 0;
+}
+
+// ORIGINAL: 0x005DF590 ?write_pcx@Buffer@@QAEHPAD@Z 0x005DF590-0x005DF907;0x00662BFC-0x00662C11
+// size      908 bytes
+// prototype int (__thiscall ?write_pcx@Buffer@@QAEHPAD@Z)(Buffer* this, char*)
+// callers   2   call targets   8
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00628380 0x006283E0 0x00628650 0x00628810 0x00628AF0 0x006453E0 0x00645470 0x00645930
+// indirect  0x005DF668 0x005DF716 0x005DF8C0
+// provenance (retired seed): src/unrecovered/005df590.cpp. Homed for COVERAGE,
+// no byte claim. A type-5 eight-bit PCX writer: 0x80-byte header, the DIB rows
+// RLE-run-encoded through `stride_`, one 0x0c separator, then the 256 palette
+// entries as the RGB triplets the DIB stores BGRX. `.pcx` is appended when the
+// caller's name carries no extension, and 4 reports a file that would not
+// open. The `Filemap` local is what carries the EH frame, as in load_pcx.
+int Buffer::write_pcx(char *filename) {
+    Filemap map;
+
+    char name[300];
+    name[0] = '\0';
+    strcat(name, filename);
+    if (memrchr(name, name + strlen(name), '.') == 0) {
+        strcat(name, ".pcx");
+    }
+
+    if (get_data() == 0) {
+        return 3;
+    }
+
+    const int width = dib_.bmiHeader.biWidth;
+    const int height = dib_.bmiHeader.biHeight;
+    unsigned char *view = static_cast<unsigned char *>(map.create(
+        name, static_cast<uint32_t>(width * height * -2 + 0x80), 1));
+    if (view != 0) {
+        unsigned char header[0x80];
+        header[0] = 10;  // the ZSoft manufacturer byte
+        header[1] = 5;   // version 3.0: a 256-entry palette follows
+        header[2] = 1;   // run-length encoded
+        header[3] = 8;   // eight bits per plane
+        *reinterpret_cast<short *>(header + 4) = 0;
+        *reinterpret_cast<short *>(header + 6) = 0;
+        *reinterpret_cast<short *>(header + 8) = static_cast<short>(width) - 1;
+        *reinterpret_cast<short *>(header + 0xA) =
+            -1 - static_cast<short>(height);
+        *reinterpret_cast<short *>(header + 0xC) = 0;
+        *reinterpret_cast<short *>(header + 0xE) = 0;
+        header[0x40] = 0;
+        header[0x41] = 1;
+        *reinterpret_cast<short *>(header + 0x42) =
+            static_cast<short>(stride_);
+        *reinterpret_cast<short *>(header + 0x44) = 0;
+        *reinterpret_cast<short *>(header + 0x46) = 0;
+        *reinterpret_cast<short *>(header + 0x48) = 0;
+        memcpy(view, header, 0x80);
+
+        const uint8_t *bits = static_cast<const uint8_t *>(locked_bits_);
+        unsigned char *out = view + 0x80;
+        int rows_left = -height;
+        if (height != 0 && rows_left >= 0) {
+            do {
+                unsigned int col = 0;
+                const int row_width = stride_;
+                if (row_width != 0) {
+                    do {
+                        const uint8_t value = bits[col];
+                        unsigned int run = 1;
+                        uint8_t count = 1;
+                        if (value == bits[col + 1]) {
+                            unsigned int probe = col + 1;
+                            do {
+                                if (static_cast<unsigned int>(row_width) <= probe
+                                    || count > 0x3e) {
+                                    break;
+                                }
+                                count = count + 1;
+                                run = count;
+                                probe = count + col;
+                            } while (value == bits[probe]);
+                            if (count < 2) {
+                                if (value > 0x3f) {
+                                    *out++ =
+                                        static_cast<uint8_t>(count | 0xc0);
+                                }
+                            } else {
+                                *out++ = static_cast<uint8_t>(count | 0xc0);
+                            }
+                        } else {
+                            if (value > 0x3f) {
+                                *out++ = static_cast<uint8_t>(count | 0xc0);
+                            }
+                        }
+                        *out++ = value;
+                        col += run;
+                    } while (col < static_cast<unsigned int>(row_width));
+                }
+                bits += stride_;
+                --rows_left;
+            } while (rows_left != 0);
+        }
+        *out++ = 0xc;
+
+        // PCX wants RGB triplets; the DIB table is BGRX, so each entry is
+        // written red, green, blue past the blue byte it starts on.
+        const RGBQUAD *table = dib_.bmiColors;
+        for (int entry = 0; entry < 0x100; ++entry) {
+            out[0] = table[entry].rgbRed;
+            out[1] = table[entry].rgbGreen;
+            out[2] = table[entry].rgbBlue;
+            out += 3;
+        }
+
+        free_data(1);
+        map.close(out);
+        return 0;
+    }
+
+    free_data(1);
+    return 4;
+}
+
+// ORIGINAL: 0x005DF910 ?write_bmp@Buffer@@QAEHPAD@Z 0x005DF910-0x005DFB48
+// size      568 bytes
+// prototype int (__thiscall ?write_bmp@Buffer@@QAEHPAD@Z)(Buffer* this, char*)
+// callers   0   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00634BB0 0x00645470 0x00645598 0x0064603F
+// indirect  0x005DF9AD 0x005DFB1C
+// provenance (retired seed): src/unrecovered/005df910.cpp. Homed for COVERAGE,
+// no byte claim. An uncompressed 8-bit BMP: ".bmp" appended unconditionally,
+// the 14-byte file header and 40-byte info header, the DIB's own colour table,
+// then the rows bottom-up (`biHeight` is stored negative). 1 reports a file
+// that would not open.
+int Buffer::write_bmp(char *filename) {
+    char name[0xB0];
+    name[0] = '\0';
+    strcat(name, filename);
+    strcat(name, ".bmp");
+    FILE *file = env_open(name, "w+b");
+    if (file == 0) {
+        return 1;
+    }
+
+    if (get_data() == 0) {
+        fclose(file);
+        return 3;
+    }
+
+    const int width = dib_.bmiHeader.biWidth;
+    const int height = dib_.bmiHeader.biHeight;
+
+    BITMAPFILEHEADER file_header;
+    BITMAPINFOHEADER info_header;
+    file_header.bfType = 0x4d42;  // 'B','M'
+    file_header.bfSize = static_cast<DWORD>(0x436 - stride_ * height);
+    file_header.bfReserved1 = 0;
+    file_header.bfReserved2 = 0;
+    file_header.bfOffBits = 0x436;
+
+    info_header.biSize = 0x28;
+    info_header.biWidth = width;
+    info_header.biHeight = -height;
+    info_header.biPlanes = 1;
+    info_header.biBitCount = 8;
+    info_header.biCompression = BI_RGB;
+    info_header.biSizeImage = -(width * height);
+    info_header.biXPelsPerMeter = 0;
+    info_header.biYPelsPerMeter = 0;
+    info_header.biClrUsed = 0x100;
+    info_header.biClrImportant = 0x100;
+
+    fwrite(&file_header, 0xe, 1, file);
+    fwrite(&info_header, 0x28, 1, file);
+    fwrite(dib_.bmiColors, 0x400, 1, file);
+
+    // The LAST row first: `height` is negative, so the start sits
+    // (rows - 1) rows into the pixel block and walks backwards.
+    uint8_t *row = static_cast<uint8_t *>(locked_bits_)
+        - (height + 1) * static_cast<int>(stride_);
+    int rows = -height;
+    if (height != 0 && rows > -1) {
+        do {
+            fwrite(row, width, 1, file);
+            row -= stride_;
+            rows--;
+        } while (rows != 0);
+    }
+
+    free_data(1);
+    fclose(file);
+    return 0;
+}
+
+// ORIGINAL: 0x005E10C0 ?hline@Buffer@@QAEXHHHHHHHH@Z 0x005E10C0-0x005E134E
+// size      654 bytes
+// prototype void (__thiscall ?hline@Buffer@@QAEXHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E11DF 0x005E1339
+// provenance (retired seed): src/recovered/units/005e10c0.cpp. Homed for
+// COVERAGE, no byte claim. The clipped horizontal writer with a dash pattern
+// beside it: two colours, an on length, an off length and a phase, the same
+// five words the nine-argument `line` names. Reversing the run re-expresses
+// the phase against the swapped on/off lengths.
+void Buffer::hline(int x1, int x2, int y, int first_color, int second_color,
+                   int pattern_on, int pattern_off, int phase) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
+    if (y < rect1_.top || y >= rect1_.bottom) {
+        return;
+    }
+    if (x1 == x2) {
+        return;
+    }
+    if (first_color == -1 && second_color == -1) {
+        return;
+    }
+    if (x2 < x1) {
+        int swap = x1;
+        x1 = x2;
+        x2 = swap;
+        swap = first_color;
+        first_color = second_color;
+        second_color = swap;
+        phase = (pattern_off - phase) + pattern_on;
+        swap = pattern_on;
+        pattern_on = pattern_off;
+        pattern_off = swap;
+    }
+    if (x1 >= rect1_.right) {
+        return;
+    }
+    if (x2 < rect1_.left) {
+        return;
+    }
+    if (x1 < rect1_.left) {
+        x1 = rect1_.left;
+    }
+    if (x2 >= rect1_.right) {
+        x2 = rect1_.right - 1;
+    }
+    if (x1 >= dib_.bmiHeader.biWidth) {
+        return;
+    }
+    if (y >= -dib_.bmiHeader.biHeight) {
+        return;
+    }
+    if (get_data() == 0) {
+        return;
+    }
+
+    uint8_t *bits = static_cast<uint8_t *>(locked_bits_) + stride_ * y + x1;
+    if (bits == nullptr) {
+        return;
+    }
+
+    int phase_value = phase % (pattern_on + pattern_off);
+    if (phase_value < pattern_on) {
+        phase_value = phase_value - pattern_on;
+    } else {
+        phase_value = (pattern_on - phase_value) + pattern_off;
+    }
+    const int negated_on = -pattern_on;
+    int count = (x2 - x1) + 1;
+
+    if (first_color == -1) {
+        // Only the second colour paints; the pattern marks the gaps.
+        do {
+            if (phase_value < 0) {
+                ++phase_value;
+                if (phase_value == 0) {
+                    phase_value = pattern_off;
+                }
+            } else {
+                *bits = static_cast<uint8_t>(second_color);
+                --phase_value;
+                if (phase_value == 0) {
+                    phase_value = negated_on;
+                }
+            }
+            ++bits;
+        } while (--count != 0);
+    } else if (second_color == -1) {
+        do {
+            if (phase_value < 0) {
+                *bits = static_cast<uint8_t>(first_color);
+                ++phase_value;
+                if (phase_value == 0) {
+                    phase_value = pattern_off;
+                }
+            } else {
+                --phase_value;
+                if (phase_value == 0) {
+                    phase_value = negated_on;
+                }
+            }
+            ++bits;
+        } while (--count != 0);
+    } else {
+        do {
+            if (phase_value < 0) {
+                *bits = static_cast<uint8_t>(first_color);
+                ++phase_value;
+                if (phase_value == 0) {
+                    phase_value = pattern_off;
+                }
+            } else {
+                *bits = static_cast<uint8_t>(second_color);
+                --phase_value;
+                if (phase_value == 0) {
+                    phase_value = negated_on;
+                }
+            }
+            ++bits;
+        } while (--count != 0);
+    }
+
+    free_data(1);
+}
+
+// ORIGINAL: 0x005E1350 ?vline@Buffer@@QAEXHHHHHHHH@Z 0x005E1350-0x005E15E7
+// size      663 bytes
+// prototype void (__thiscall ?vline@Buffer@@QAEXHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int)
+// callers   1   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x005E1471 0x005E15D2
+// provenance (retired seed): src/recovered/units/005e1350.cpp. Homed for
+// COVERAGE, no byte claim. The patterned `hline` above with the run walking
+// down a whole `stride_` per pixel instead of one byte.
+void Buffer::vline(int x, int y1, int y2, int first_color, int second_color,
+                   int pattern_on, int pattern_off, int phase) {
+    if (dib_bits_ == nullptr && surface_ == nullptr) {
+        return;
+    }
+    if (x < rect1_.left || x >= rect1_.right) {
+        return;
+    }
+    if (y1 == y2) {
+        return;
+    }
+    if (first_color == -1 && second_color == -1) {
+        return;
+    }
+    if (y2 < y1) {
+        int swap = y1;
+        y1 = y2;
+        y2 = swap;
+        swap = first_color;
+        first_color = second_color;
+        second_color = swap;
+        phase = (pattern_off - phase) + pattern_on;
+        swap = pattern_on;
+        pattern_on = pattern_off;
+        pattern_off = swap;
+    }
+    if (y1 >= rect1_.bottom) {
+        return;
+    }
+    if (rect1_.top > y2) {
+        return;
+    }
+    if (y1 < rect1_.top) {
+        y1 = rect1_.top;
+    }
+    if (y2 >= rect1_.bottom) {
+        y2 = rect1_.bottom - 1;
+    }
+    if (x >= dib_.bmiHeader.biWidth) {
+        return;
+    }
+    if (y1 >= -dib_.bmiHeader.biHeight) {
+        return;
+    }
+    if (get_data() == 0) {
+        return;
+    }
+
+    uint8_t *bits = static_cast<uint8_t *>(locked_bits_) + stride_ * y1 + x;
+    if (bits == nullptr) {
+        return;
+    }
+
+    int phase_value = phase % (pattern_on + pattern_off);
+    if (phase_value < pattern_on) {
+        phase_value = phase_value - pattern_on;
+    } else {
+        phase_value = (pattern_on - phase_value) + pattern_off;
+    }
+    const int negated_on = -pattern_on;
+    int count = (y2 - y1) + 1;
+
+    if (first_color == -1) {
+        do {
+            if (phase_value < 0) {
+                ++phase_value;
+                if (phase_value == 0) {
+                    phase_value = pattern_off;
+                }
+            } else {
+                *bits = static_cast<uint8_t>(second_color);
+                --phase_value;
+                if (phase_value == 0) {
+                    phase_value = negated_on;
+                }
+            }
+            bits += stride_;
+        } while (--count != 0);
+    } else if (second_color == -1) {
+        do {
+            if (phase_value < 0) {
+                *bits = static_cast<uint8_t>(first_color);
+                ++phase_value;
+                if (phase_value == 0) {
+                    phase_value = pattern_off;
+                }
+            } else {
+                --phase_value;
+                if (phase_value == 0) {
+                    phase_value = negated_on;
+                }
+            }
+            bits += stride_;
+        } while (--count != 0);
+    } else {
+        do {
+            if (phase_value < 0) {
+                *bits = static_cast<uint8_t>(first_color);
+                ++phase_value;
+                if (phase_value == 0) {
+                    phase_value = pattern_off;
+                }
+            } else {
+                *bits = static_cast<uint8_t>(second_color);
+                --phase_value;
+                if (phase_value == 0) {
+                    phase_value = negated_on;
+                }
+            }
+            bits += stride_;
+        } while (--count != 0);
+    }
+
+    free_data(1);
 }
