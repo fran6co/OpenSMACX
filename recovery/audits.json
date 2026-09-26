@@ -35,8 +35,9 @@
         "nullsub_thunks.cpp markers": 52,
         "PENDING_BODY forwarders": 237,
         "artifact files (recovered/)": 937,
-        "unrecovered files": 979,
-        "hypothesis_layouts.h lines": 2734
+        "unrecovered files": 963,
+        "hypothesis_layouts.h lines": 2734,
+        "stringstruct.cpp markers": 31
       },
       "counters": [
         {
@@ -99,14 +100,27 @@
           "name": "hypothesis_layouts.h lines",
           "kind": "lines",
           "path": "src/hypothesis_layouts.h"
+        },
+        {
+          "name": "stringstruct.cpp markers",
+          "kind": "text",
+          "path": "src/stringstruct.cpp",
+          "pattern": "ORIGINAL: 0x"
         }
       ]
     },
     "storage": {
       "ruleset": "cpp-storage-v1",
-      "unit_extensions": [".cpp", ".c"],
-      "interface_extensions": [".h"],
-      "exclude_roots": ["src/vendor"],
+      "unit_extensions": [
+        ".cpp",
+        ".c"
+      ],
+      "interface_extensions": [
+        ".h"
+      ],
+      "exclude_roots": [
+        "src/vendor"
+      ],
       "ceilings": {
         "duplicate global identities": 5,
         "scaled class-pointer sum": 0

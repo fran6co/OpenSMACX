@@ -1,0 +1,20 @@
+{
+  "event_id": "3348d37921657f7db724fdf7eebd185c24fb677ed8fc5c1af0f0aa4df00d434b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Coverage-first wave 1 group (re-appended from the worktree fork onto the canonical chain; master discovery 2778d0da is the wave authority): transcribe the stringstruct-owned sub-200-line seeds into the owning TU as real compiling bodies with their ORIGINAL markers (FILE, no byte claims), retiring each seed atomically. Executed as 16 retirements (sixteen genuine bodies incl. the free-function painters, the directory rewriter pair, the StringStruct selection pass with its documented goto-to-flag restructure, the GraphicWin re-init, the flying-text wrapper), reviewer-corrected documentation (the restructure note, the restored PROPOSAL with supersession, the load-bearing 0x4C8910 shared-tail TRIED note back in-source, the citation fix) and all gates re-confirmed at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "87da7880ee0cde222403c138d2b061de2a4cd335e6bc3f2cbe3e60d9c91ee2d2",
+  "request_id": "cover-stringstruct-20260926-scope",
+  "schema_version": 1,
+  "sequence": 147,
+  "stream": "task:vector-value-semantics"
+}
