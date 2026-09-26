@@ -22,6 +22,10 @@ struct IDirectPlay2;
 #include "sound.h"          // VoiceTx's base
 #include "stringstruct.h"      // StringAllocationBase - the virtual base of Net's subobjects
 #include "hypothesis_layouts.h"  // NetFifo
+// DPNAME names the player-callback record enum_players reads; the typedef
+// has no struct tag, so the DirectPlay header is what makes the parameter
+// spellable in the class's own declaration.
+#include <dplay.h>
 
  /*
   * VoiceTx class
@@ -292,6 +296,14 @@ class Net {
   // RECOVERY_GENERATED: v1 vtable 0x0066EB04 0x0066EB1C ??_7Net@@6B@ 0x0062D6A0
   virtual void on_net_event_0(int, int);
   virtual void on_player_added(char *name, unsigned long id);
+  // The image carries a SECOND, non-virtual member of the same name at
+  // 0x0062E420: ?on_player_added@Net@@QAEHPADI@Z returns int and spells the
+  // id `unsigned int` (PADI - `I`, not the table slot's `K`). VC6 mangles
+  // `unsigned int` and `unsigned long` as distinct types, so this overload
+  // coexists with the virtual slot above instead of replacing it; the
+  // published six-slot table at 0x0066EB04 keeps its ret-8 default, and the
+  // 278-byte body below is the real function the setup dialog drives.
+  int on_player_added(char *name, unsigned int id);
   virtual void on_player_deleted(char *name, unsigned long id);
   virtual void on_player_name_changed(char *name, unsigned long id);
   virtual void on_session_lost();
@@ -353,6 +365,10 @@ class Net {
   // every packet it builds, so the receiver has to be real for that call to
   // keep the image's `E8`.
   int send(void *data, int mode, unsigned long who, int size);
+  // 0x00630C80. The DirectPlay player-callback body: appends one NetPlayer
+  // record through the write seam below NetGetScratch and answers 1.
+  int enum_players(unsigned long player_id, unsigned long, const DPNAME *name,
+                   unsigned long, void *);
 
  public:
   // 0x0062E010, a pending_bodies forwarder.

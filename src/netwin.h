@@ -41,6 +41,10 @@ struct MessageFactionData {
   uint8_t field_12_[1];    // 0x12 - the rest of the cloned block
 };
 
+// faction.h's per-faction record; fill_player writes the name/title text
+// block of one. Opaque here - only the pointer travels.
+struct PlayerData;
+
  /*
   * NetWin class
   *
@@ -69,6 +73,38 @@ class NetWin : public ConstructedGraphicWin {
   int on_key_click(int a, int b);
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
+  // 0x0047B380. Resolves the colour byte a faction list draws its player
+  // rows with: the static table's entry for the faction, or the first index
+  // no earlier faction's record and no other player's copy claims.
+  int get_player_color(int faction);
+  // 0x00481D10. Drops the two faction-record blocks, resets the dialog words
+  // at 0x761C/0x7620, and closes the embedded controls.
+  void close();
+  // 0x00483190. The modal pump's callback: drains the daemon's receive queue,
+  // pokes the dialog's own slot-12 virtual, and answers whether the wait
+  // should end (0) or keep going (1).
+  int modal_callback();
+  // 0x004832D0. The chat edit's string callback: repaints the message list's
+  // text colour from the faction colour of the id handed in.
+  void string_callback(int payload, int);
+  // 0x00483310. Enter sends the chat line, Escape tears the session dialogs
+  // down, everything else goes to the edit box's own key handling.
+  int on_key_down(int key);
+  // 0x00483420. Formats one chat line - upper-cased sender name, ": ", a
+  // space, the text - and hands it to the message list.
+  void new_chat(char *message, int slot);
+  // 0x0047FE80. Paints the three dialog panel sprites through the Buffer at
+  // +0x444.
+  void UNK3();
+  // 0x004837F0. Destroys the CheckBox view at +0x1C, the Dialog at +0xA34,
+  // and the GraphicWin at +0x1C - the CheckBox vbtable's own two displacements.
+  void UNK4();
+  // 0x00481DA0. Copies one faction record's name/title block into a
+  // PlayerData, or just clears +0x45 and re-reads it for slot -1.
+  void fill_player(PlayerData *player_data, int slot);
+  // 0x00483240. The fixed dialog's twin of modal_callback (the catalogue's
+  // QAAHX prefix is public, like every other NetWin member mangle).
+  int modal_callback_daemon();
 
   // Storage the image proves is here: its own methods reach 0x7730.
   // Extent only - this class carries no size assertion, and the bound is a floor.
