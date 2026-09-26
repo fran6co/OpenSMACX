@@ -125,6 +125,7 @@ void DipEdit::on_left_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x004D9DD0 ?on_redraw@DipEdit@@QAEXXZ 0x004D9DD0-0x004D9DD1 BYTE_EXACT
+// symbol    ?on_redraw@DipEdit@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?on_redraw@DipEdit@@QAEXXZ)(DipEdit* this)
 // callers   0   call targets   0

@@ -496,17 +496,28 @@ int MapWin::UNK1() {
 
 /*
 // ORIGINAL: 0x0046B1D0 ?on_redraw@MapWin@@QAEXXZ 0x0046B1D0-0x0046B1E8 BYTE_EXACT
+// symbol    ?on_redraw@MapWin@@UAEXXZ
 // size      24 bytes
 // prototype void (__thiscall ?on_redraw@MapWin@@QAEXXZ)(MapWin* this)
 // callers   0   call targets   1
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     0x0046A550
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the rename made
+//            this a genuine Win slot12 override, so VC6 now enters it with
+//            the GraphicWin-subobject receiver instead of the complete
+//            object (-0x21A6C delta folded into every this-relative
+//            displacement). The raw offsets were re-anchored for that
+//            convention: the flag read is +4 and the draw_map receiver is
+//            the unadjusted this, which emits the image's
+//            `mov eax,[ecx-0x21a68] ... add ecx,0xfffde594; call 0x46a550`.
+//            The pre-rename spellings (-0x21a68 read, -0x21a6c receiver)
+//            measured BYTE_EXACT only while the function overrode nothing.
 Status: Complete
 */
 void MapWin::on_redraw() {
-    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(this) - 0x21a68)) {
-        reinterpret_cast<MapWin *>(reinterpret_cast<char *>(this) - 0x21a6c)->draw_map(1);
+    if (*reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 4)) {
+        draw_map(1);
     }
 }
 

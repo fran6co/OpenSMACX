@@ -225,6 +225,4 @@ void __fastcall adjust_sprite_box1_on_left_double_click(void *self, void *,
 void __fastcall adjust_sprite_box1_on_right_double_click(void *self, void *,
                                                          int arg0, int arg1);
 void __fastcall adjust_sprite_box3_on_redraw(void *self, void *);
-void __fastcall adjust_edit_group1_on_redraw(void *self, void *);
 void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *);
-void __fastcall adjust_edit_group3_on_redraw(void *self, void *);

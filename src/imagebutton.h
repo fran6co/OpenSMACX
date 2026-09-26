@@ -52,7 +52,7 @@ class ImageButton : public BaseButton {
            Win *parent, int style_flag);
   void set_sprite(Sprite *sprite) { sprite_ = sprite; }
   // Win slot 12; the constructor-installed table selects original 6253D0.
-  virtual void draw_contents();
+  virtual void on_redraw();
 
  private:
   // init 625340/625380 publish this borrowed pointer; paint 6253D0 reads

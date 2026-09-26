@@ -44,10 +44,10 @@ class AlphaMenu : public Menu {
   ~AlphaMenu();
   // The two slots this class overrides in the Win-family surface, at the
   // positions the image's AlphaMenu vtable carries them: Win::hide's slot 2
-  // and draw_contents at slot 12 (its image entry is on_redraw@AlphaMenu,
+  // and on_redraw at slot 12 (image entry on_redraw@AlphaMenu,
   // 0x00403340). Both bodies are unrecovered; the stubs keep the slots true.
   void hide();
-  virtual void draw_contents();
+  virtual void on_redraw();
   // The image's slot 17 is the 2-argument on_mouse_move overload
   // (on_mouse_move@AlphaMenu, 0x00403550, unrecovered) - the same
   // slot-true stub.

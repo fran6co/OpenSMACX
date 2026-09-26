@@ -39,7 +39,7 @@ class MultiDebug : public GraphicWin {
   // Time passes one cdecl integer payload, not a hidden member receiver.
   static void __cdecl timer_callback_daemon(int context);
   // Original primary vtable slot 12 paints the network diagnostics.
-  virtual void draw_contents();
+  virtual void on_redraw();
   MultiDebug();
   // Clear the session, then destroy the declared timer, font and base.
   ~MultiDebug();

@@ -188,14 +188,14 @@ int main() {
     edit.on_dialog_focus(1); assert(starts == 1);
 
     reset(edit, "abcd", 1, 3);
-    edit.draw_contents();
+    edit.on_redraw();
     assert(strcmp(painted, "abcd") == 0 && fills == 1 && colors == 3);
     assert(recolor[0][0] == 10 && recolor[0][1] == 21);
     assert(recolor[1][0] == 20 && recolor[1][1] == 10);
     assert(recolor[2][0] == 21 && recolor[2][1] == 20);
     reset(edit, "abcd", 3, 1);
     edit.field_B3C_ = 2; edit.field_B48_ = 1;
-    edit.draw_contents(); assert(strcmp(painted, "****") == 0 && lines == 1);
+    edit.on_redraw(); assert(strcmp(painted, "****") == 0 && lines == 1);
 
     reset(edit, "", 0, 0);
     edit.pass_dialog_focus(); assert(!passed);

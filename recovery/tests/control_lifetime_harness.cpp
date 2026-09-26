@@ -18,7 +18,7 @@ struct Time {
     ~Time() { event(24); }
 };
 // LIVE_EDITBOX_DECL
-void EditBox::draw_contents() {}
+void EditBox::on_redraw() {}
 void EditBox::on_mouse_feedback(int, int) {}
 void EditBox::vslot_20(int, int) {}
 void EditBox::vslot_21(int, int) {}

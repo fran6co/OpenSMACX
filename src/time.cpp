@@ -722,7 +722,10 @@ void __cdecl line_timer(int a1) {
         return;
     }
     --PlanLineCounter;
-    LineTimerPlanWindow->on_redraw();
+    // The image makes this a DIRECT call (0x50EEBF -> 0x48AF30
+    // ?on_redraw@PlanWin@@QAEXXZ), not a slot-12 dispatch; the qualified
+    // spelling suppresses the virtual call the shared name now implies.
+    LineTimerPlanWindow->PlanWin::on_redraw();
 
     for (MapWin *const *slot = &MapWinTable[0];
          reinterpret_cast<int32_t>(slot) <

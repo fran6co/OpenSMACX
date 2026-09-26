@@ -1836,3 +1836,11 @@ void Datalink::on_button_clicked(int button_id) {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00431EC0))(
         this, nullptr, button_id);
 }
+
+// Win slot 12 went live for Datalink when the tree-wide slot-12 rename made
+// the declared on_redraw an override (0x00431E70 ?on_redraw@Datalink@@QAEXXZ;
+// src/recovered/units/00431e70.cpp remains the seed). Link-only placeholder;
+// the datalink painting is not implemented here.
+void Datalink::on_redraw() {
+    // BODY GOES HERE.
+}

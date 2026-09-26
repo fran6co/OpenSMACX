@@ -195,6 +195,53 @@ Status: Complete
 */
 
 /*
+Purpose: Adjust the receiver from the Win/GraphicWin-path thunk1 subobject
+         back to EditGroup and tail-jump to the override. THE COMPILER WRITES
+         THIS BODY - the claim names VC6's own vtordisp adjustor thunk, emitted
+         because the single EditGroup::on_redraw declaration overrides Win
+         slot12 through the virtual GraphicWin base as well as Dialog slot2.
+         There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ 0x006127B0-0x006127B8 BYTE_EXACT
+// symbol    ?on_redraw@EditGroup@@$4PPPPPPPM@A@AEXXZ
+// size      8 bytes
+// kind      game
+// TRIED 2026-09-26 (EditGroup adjustor retirement batch): a handwritten walk
+//            carried this claim until the rename; it walked
+//            `object - vtordisp - 0xAA8` (1/3, stale pre-hierarchy Dialog
+//            offset), then the repaired `- 0xAA4` fold cancellation, and after
+//            the tree-wide Win slot-12 on_redraw rename `- 0x8C` (the
+//            GraphicWin fold), all measured BYTE_EXACT from
+//            src/adjustor_thunks.cpp. The generated thunk measures the same
+//            span (`2b 49 fc e9 <rel32>`); the marker moved here when the
+//            handwritten body was retired.
+Status: Complete
+*/
+
+/*
+Purpose: Adjust the receiver from the Dialog-path thunk3 subobject back to
+         EditGroup and tail-jump to the override. THE COMPILER WRITES THIS
+         BODY - the claim names VC6's own two-step vtordisp adjustor thunk,
+         emitted because the single EditGroup::on_redraw declaration overrides
+         Dialog slot2 (table6708C0 at complete+0xAA4) as well as Win slot12;
+         only a function overriding both virtual bases carries the static
+         0xA18 Dialog-to-GraphicWin delta.
+         There is no C++ here to get right, only a name to record.
+// ORIGINAL: 0x00612820 ?on_redraw@thunk3_EditGroup@@QAEXXZ 0x00612820-0x0061282E BYTE_EXACT
+// symbol    ?on_redraw@EditGroup@@$4PPPPPPPM@KBI@AEXXZ
+// size      14 bytes
+// kind      game
+// TRIED 2026-09-26 (EditGroup adjustor retirement batch): a handwritten walk
+//            carried this claim until the rename; it walked
+//            `object - vtordisp - 2584 - 0xAA8` (2/3, wrong 0xa1c immediate),
+//            then the repaired `- 2584 - 0xAA4`, and after the rename
+//            `- 0xAA4` alone, all measured BYTE_EXACT from
+//            src/adjustor_thunks.cpp. The generated thunk measures the same
+//            span (`2b 49 fc 81 e9 18 0a 00 00 e9 <rel32>`); the marker moved
+//            here when the handwritten body was retired.
+Status: Complete
+*/
+
+/*
 Purpose: Tear down all ten controls - close each one, free its heap text - then
          republish the default and delegate to the Dialog base.
 // ORIGINAL: 0x00611A90 ?close@EditGroup@@QAEXXZ 0x00611A90-0x00611AF0 FILE BYTE_EXACT

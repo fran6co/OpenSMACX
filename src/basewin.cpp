@@ -1671,3 +1671,11 @@ void BaseWin::on_iface_mouse_leave(int a1, int a2) {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x0041E3E0))(
         this, nullptr, a1, a2);
 }
+
+// Win slot 12 went live for BaseWin when the tree-wide slot-12 rename made
+// the declared on_redraw an override (the header maps it to 0x0041E790 and
+// src/unrecovered/0041e790.cpp remains the seed). Link-only placeholder;
+// the pane painting is not implemented here.
+void BaseWin::on_redraw() {
+    // BODY GOES HERE.
+}

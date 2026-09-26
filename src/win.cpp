@@ -7545,7 +7545,7 @@ void Win::show(int visible) {
             resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
         }
         if ((visible & 1) == 0) {
-            this->draw_contents();
+            this->on_redraw();
         }
         if (menu_ != 0) {
             menu_->redraw();
@@ -9003,7 +9003,7 @@ shared:
         poWinBase_->resize(width, height, 0);
     }
     resize_event(outer_rect_.right - outer_rect_.left, outer_rect_.bottom - outer_rect_.top);
-    this->draw_contents();
+    this->on_redraw();
     return 0;
 }
 
