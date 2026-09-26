@@ -1,0 +1,21 @@
+{
+  "event_id": "77b0a142ebfdd3ff7f81ba2fb79043a8011f058d66e76131784d96d006db757a",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "coverage-wave2-20260927",
+    "evidence": [
+      "Wave-1 worker reports categorized every blocker with instruction-level evidence; event 142 carries the fourteen leaf forwarders with the departure-instruction citation; the Sprite/DesignWin/Console/stringstruct reports name their forwarder-blocked and declaration-blocked seeds precisely; the partition ranking (entities whose only candidates are seed paths, recovery partition --details) orders the named groups.",
+      "Protocol unchanged from the wave authority (2778d0da): real compiling bodies, FILE markers, no byte claims, atomic seed retirement, no convergence iteration; record-then-retire only when a claim-bearing seed's fresh body measures exact. Gates per batch: build/link, claim counts not regressing, symbols, suites, ceilings to measured counts."
+    ],
+    "hypothesis": "Coverage wave 2: retire the twenty-two PENDING_BODY forwarders whose member bodies are transcribable (fourteen leaf-family per event 142, three Sprite per its worker, select_special, three Console nc-handlers, get_he_she), land the ranked named groups (ReportWin 13, veh 13, NetWin 12, Net 12, SocialWin 11, ReportIf 11, caviar 10, ListBox 8), apply the vendored-zlib member fix and the Net::on_player_added signature correction, and follow the record-then-retire policy (event 143) for any claim-bearing seed that converges for free.",
+    "kind": "discovery"
+  },
+  "previous_event": "bbffd9995c7d27d84edf2986ed42b7939608dc8a5c8956ff5bc581ed358d8289",
+  "request_id": "coverage-wave2-20260927",
+  "schema_version": 1,
+  "sequence": 151,
+  "stream": "task:vector-value-semantics"
+}
