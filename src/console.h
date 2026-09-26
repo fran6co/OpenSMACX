@@ -253,9 +253,12 @@ class Console : public MapWin {
   // overload is spelled here.
   void cursor_on(int cursor_shape, int veh_id);
   int selecting(int tile_x, int tile_y);
-  // 0x004E0A50 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
+  // 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
   // scenario editor is working on. Declared here because its own body is
   // still blocked on a private-member access its transcription makes.
+  // (Corrected 2026-09-26: the catalogue and the partition place the mangled
+  // name at 0x004D9AD0, span 0x004D9AD0-0x004D9DB4; the older 0x004E0A50 here
+  // was editor_paints' homed address.)
   int editor_who(int a1, int a2);
   // 0x00511480 ?set_view@Console@@QAEXH@Z - the view-mode setter every editor
   // toggle drives. Declared ahead of its own body landing because
@@ -263,6 +266,54 @@ class Console : public MapWin {
   void set_view(int force_update);
   void set_move(int force_update);  // 0x00511520
   void editor_edit_veh(int veh_id);  // 0x004DDA50
+
+ public:
+  // homed from 004e0120.cpp
+  void editor_energy();
+
+ public:
+  // homed from 004d7ee0.cpp
+  void set_patrol(int veh_id);
+
+ public:
+  // homed from 00514f50.cpp
+  void set_ai(int faction_id);
+
+ public:
+  // homed from 004e0ea0.cpp
+  void editor_set_brush();
+
+ public:
+  // homed from 0051bba0.cpp
+  void load_proc(int save_slot, int faction_id);
+
+ public:
+  // homed from 00513fc0.cpp
+  void end_of_turn();
+
+ public:
+  // homed from 004d8cd0.cpp
+  void set_bombing_run(int veh_id, int x_coord, int y_coord);
+
+ public:
+  // homed from 004d7de0.cpp
+  void go_home(int veh_id);
+
+ public:
+  // homed from 004d52a0.cpp
+  void destroy(int veh_id);
+
+ public:
+  // homed from 004dccc0.cpp
+  void editor_scen_param();
+
+ public:
+  // homed from 004dd1b0.cpp
+  void custom_my_faction();
+
+ public:
+  // homed from 00515900.cpp
+  void time_controls();
 
  public:
   // homed from 004e1300.cpp

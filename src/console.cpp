@@ -43,6 +43,7 @@
 #include "texture.h"
 #include "vector_teardown.h"
 #include "veh.h"  // Vehs - the group table is the Vehs[i].state run
+#include "faction.h"  // Players/PlayersData - the per-faction records editor_energy and set_ai walk
 #include "xpops.h"  // X_pop - editor_on and friends raise the message pops
 #include "lock.h"  // LockMapTable - editor_clear_vehicles rewrites its records
 #include "log.h"  // log_say - the chat / message handlers report through it
@@ -55,6 +56,7 @@
 #include "random.h"  // random - the editor's randomizer and the AI orders
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
 #include "worldwin.h"  // WorldClimateWorldWin - editor_flat / editor_clear redraw it
+#include "terraforming.h"  // Terraforming - destroy's option list reads its bit/label rows
 #include "buttongroup.h"  // ButtonGroup::set - the editor brush/paint selectors
 #include <cstring>
 
@@ -87,6 +89,7 @@ int ConsoleControlTurnActive;
 // header lands, delete the line here. Their forwarders are at the end of
 // src/pending_bodies.cpp.
 int __cdecl veh_ready(int veh_id);                        // 0x005C1B70 ?veh_ready@@YAHH@Z
+void __cdecl action_destroy(int veh_id, int choice, int a3, int a4);  // 0x004CAA50 ?action_destroy@@YAXHHHH@Z
 void __cdecl draw_cursor();                               // 0x0046AE00 ?draw_cursor@@YAXXZ
 int __cdecl tut_check(int veh_id);                            // 0x004BA5F0 ?tut_check@@YAHH@Z
 int __cdecl tut_check2(int veh_id);                           // 0x004BA650 ?tut_check2@@YAHH@Z
@@ -1141,6 +1144,104 @@ static int *const VersionReleaseTextSlot = (int *)0x00691870;
 static int *const VersionBuildDateSlot = (int *)0x00691874;
 
 typedef int (__cdecl *NullCallback)(void);
+
+// .rdata strings the newly homed bodies hand to the pop helpers, read out of
+// the image exactly like the sibling bindings above: the image PUSHES each
+// address as an immediate, so the binding keeps the image's address and the
+// literal is the comment.
+static const char *const StrEditorEnergy = (const char *)0x006890E0;  // "EDITORENERGY"
+static const char *const StrBrush = (const char *)0x00689140;         // "BRUSH"
+static const char *const StrTechRandom = (const char *)0x0068A8C8;    // "TECHRANDOM"
+
+// .rdata labels the order handlers raise through NetMsgPopup, read out of the
+// image. SIMULNO and UNITMOVED each exist twice - the image pushes two
+// distinct .rdata copies of the same text from different guards, so each
+// address keeps its own binding.
+static const char *const StrSimulNo = (const char *)0x00688C68;        // "SIMULNO"
+static const char *const StrUnitMoved = (const char *)0x00688C70;      // "UNITMOVED"
+static const char *const StrSimulNo2 = (const char *)0x00688C7C;       // "SIMULNO"
+static const char *const StrUnitMoved2 = (const char *)0x00688C84;     // "UNITMOVED"
+static const char *const StrOnlyCombat = (const char *)0x00688C90;     // "ONLYCOMBAT"
+static const char *const StrNotBase = (const char *)0x00688C9C;        // "NOTBASE"
+static const char *const StrNotInTriad = (const char *)0x00688CA4;     // "NOTINTRIAD"
+static const char *const StrDestroyBomb = (const char *)0x00688CB0;    // "DESTROYBOMB"
+static const char *const StrDestroy = (const char *)0x00688CBC;        // "DESTROY"
+static const char *const StrNotHere = (const char *)0x00688CC4;        // "NOTHERE"
+static const char *const StrNoBomb = (const char *)0x00688EC0;         // "NOBOMB"
+static const char *const StrScenParam = (const char *)0x00688FF4;      // "SCENPARAM"
+static const char *const StrEditorWhoListTitle = (const char *)0x00688F6C;  // "EDITORWHO"
+static const char *const StrCustomNames = (const char *)0x00689000;    // "CUSTOMNAMES"
+static const char *const StrHostTime = (const char *)0x0068A93C;       // "HOSTTIME"
+static const char *const StrCustomTime = (const char *)0x0068A948;     // "CUSTOMTIME"
+
+// THE TIME-CONTROLS STATE the CUSTOMTIME dialog drives: 0x009A64E0 is the
+// preselected row (start's value slot copies it into the popup) and
+// 0x0094F25C..0x0094F274 are alpha.h's TimeControl[5].turn/.base/.unit/
+// .event/.extra/.refresh/.accumulated - the six parse_says'd fields plus the
+// seventh stored on accept.
+static int *const TimeControlsSelection = (int *)0x009A64E0;
+
+// The turn-assignment guard: game.cpp owns the same storage as its TU-private
+// TurnsAssigned static at 0x0093E8C0. Until that static is exported this
+// accessor reaches it without a second definition (the storage audit counts
+// cross-TU duplicate identities).
+inline int &console_turns_assigned() { return *reinterpret_cast<int *>(0x0093E8C0); }
+
+// THE POPUP CHECKBOX ANSWER BYTE at 0x009BC06C. popup.cpp's pops() owns this
+// storage as its TU-private PopupWriteCheckState (read before write_check,
+// overwritten from read_check's result); until that static is exported this
+// file reaches the same dword through a rebindable byte-wide slot - set_ai
+// seeds the four AI checkboxes through it and reads the answer back after
+// x_pop_short, both as a single byte.
+inline unsigned char &console_popup_check_state() {
+    return *reinterpret_cast<unsigned char *>(0x009BC06C);
+}
+
+// THE SCENARIO-EDITOR BRUSH STATE, unbound anywhere in the tree: 0x00945AE4
+// is the current brush id (the BRUSH picker seeds its list from it and the
+// answer is stored back), 0x007CD254 is the editor palette's ButtonGroup and
+// 0x007CD2D8 (group + 0x84) the id of the palette button currently checked -
+// editor_set_brush re-checks the new brush's button only when it differs.
+static int *const EditorBrushId = (int *)0x00945AE4;
+static ButtonGroup *const EditorBrushButtonGroup = (ButtonGroup *)0x007CD254;
+static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
+
+// THE GAME-IN-PROGRESS FLAG at 0x009B2074, between game.h's ControlTurnPhase
+// (0x009B2070) and SaveNameBuffer (0x009B2078). load_proc reopens a running
+// game through game_reload when it is set and re-initialises the desktop when
+// it is clear. No tree binding owns it yet.
+static int *const GameSessionActive = (int *)0x009B2074;
+
+// THE TUTORIAL-PENDING FLAG at 0x008CC248, the dword beside tutwin.cpp's
+// TutWinShownFlag (0x008CC244). The turn boundary consumes it: when set it
+// clears and TutWin::tour (0x004BC6E0) launches.
+static int *const TutWinTourPending = (int *)0x008CC248;
+
+// TutWin::tour (0x004BC6E0) is still original and tutwin.h declares no seam
+// for it yet, so end_of_turn reaches it through the pinned member-pointer
+// form - the receiver rides in ECX, which is the whole point of
+// original_seam.h's machinery.
+typedef void (OriginalObject::*func_tut_win_tour)(void);
+static func_tut_win_tour TutWinTour = original_method<func_tut_win_tour>(0x004BC6E0);
+
+// break_treaty (0x0055F770) and action_destroy (0x004CAA50) are still
+// original and have no pending_bodies forwarder yet, so destroy reaches them
+// through local __cdecl seams - plain function pointers, since no receiver is
+// involved (original_seam.h's member-pointer machinery is for __thiscall).
+typedef void (__cdecl *func_action_destroy)(int veh_id, int choice, int a3, int a4);
+static func_action_destroy ActionDestroy = (func_action_destroy)0x004CAA50;
+typedef int (__cdecl *func_break_treaty)(int faction_id, int faction_id_with, int treaty);
+static func_break_treaty BreakTreaty = (func_break_treaty)0x0055F770;
+
+// BaseWin::on_redraw (0x0041E790) and BaseWin::exit (0x0041A4C0) are declared
+// in basewin.h but not recovered - like its draw_facilities/garrison_click
+// stand-ins, they are reached through the pinned member-pointer form until
+// their bodies land.
+typedef void (OriginalObject::*func_base_win_on_redraw)(void);
+static func_base_win_on_redraw BaseWinOnRedraw =
+    original_method<func_base_win_on_redraw>(0x0041E790);
+typedef void (OriginalObject::*func_base_win_exit)(void);
+static func_base_win_exit BaseWinExit = original_method<func_base_win_exit>(0x0041A4C0);
 
 // ORIGINAL: 0x004DBB40 ?editor_reset_faction@Console@@QAEXXZ 0x004DBB40-0x004DBC32 FILE
 // TRIED: nothing yet - MISMATCH #16 mov/push (94% mnemonic sim), a push/store reordering around the `compute_faction_modifiers` call; not chased further. `this` is unused throughout (thiscall receiver never touched).
@@ -3262,3 +3363,712 @@ Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
 Return Value: n/a
 Status: Complete
 */
+
+/*
+Purpose: Ask the energy priority for one faction and refresh it - seeding the
+         parser's per-faction defaults while the prompt loop runs.
+// ORIGINAL: 0x004E0120 ?editor_energy@Console@@QAEXXZ 0x004E0120-0x004E020E FILE
+// TRIED (seed history): statement order for the two loop-body stores - the
+//        original interleaves `push edi` BETWEEN the two default stores
+//        (push -1,-1,esi; store; push edi; store; call) where this body's
+//        natural statement order schedules both stores before the 4th push.
+//        Every spelling lands the same 76 mnemonics; two-instruction swap.
+// size      238 bytes
+// prototype void (__thiscall ?editor_energy@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0041E790 0x004D9AD0 0x00514880 0x005ABF20 0x005BFD10 0x00625E30 0x00625EC0
+*/
+void Console::editor_energy() {
+    auto_undo();
+    const int faction = editor_who(ConsoleGlobal.faction_id_, 1);
+    if (faction >= 0) {
+        parse_says(0, Players[faction].adj_name_faction, -1, -1);
+        // The prompt loop walks factions 1..7: each pass re-derives the
+        // parser's gender default from that faction's leader record and feeds
+        // the faction label (Players[f].name_leader) plus its unk_48 value to
+        // the script parser.
+        for (int loop_faction = 1; loop_faction < MaxPlayerNum; ++loop_faction) {
+            GenderDefault = Players[loop_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(loop_faction, Players[loop_faction].name_leader, -1, -1);
+            parse_num(loop_faction, PlayersData[loop_faction].unk_48);
+        }
+
+        const int answer = X_pop_ask_number(
+            StrEditorEnergy, PlayersData[faction].energy_reserves,
+            (NullCallback)0);
+        if (answer == 0) {
+            PlayersData[faction].energy_reserves = ParseNumTable[0];
+            (ORIGINAL(&TutWinBaseWindow)->*BaseWinOnRedraw)();
+            ConsoleGlobal.update_data(0);
+        }
+    }
+}
+
+/*
+Purpose: Clear one vehicle's waypoint run and switch every live map window to
+         the patrol cursor.
+// ORIGINAL: 0x004D7EE0 ?set_patrol@Console@@QAEXH@Z 0x004D7EE0-0x004D7F5F FILE
+// TRIED (seed history): reached SHAPE_EXACT in the seed - same 38 mnemonics;
+//        remaining diffs are embedded constants (reload `*p` for the
+//        draw_base_dest call instead of reusing the cached window local, and
+//        the signed slot-pointer compare).
+// size      127 bytes
+// prototype void (__thiscall ?set_patrol@Console@@QAEXH@Z)(Console* this, int vehID)
+// callers   2   call targets   3
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00467970 0x00510490 0x00510520
+*/
+void Console::set_patrol(int veh_id) {
+    Vehs[veh_id].waypoint_count = 0;
+    if (field_23D10_ == 8) {
+        cursor_off();
+        return;
+    }
+    // The image walks the MapWinTable slot pointers from 0x007D3C3C to the
+    // exclusive 0x007D3C5C end: the primary window always repaints, slots
+    // 1..7 only when field_1DD74_ says they hold a live view.
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != 0 && (slot == 0 || window->field_1DD74_ != 0)) {
+            window->field_1DD70_ |= 0x400000;
+            window->draw_base_dest(1);
+        }
+    }
+    ConsoleGlobal.cursor_on(8, -1);
+}
+
+/*
+Purpose: Edit one faction's four AI priority toggles through the checkbox
+         popup, store the answer back and resync that faction's AI.
+// ORIGINAL: 0x00514F50 ?set_ai@Console@@QAEXH@Z 0x00514F50-0x0051500F FILE
+// TRIED (seed history): closest at 171/191 bytes (mnemonic similarity 0.80) -
+//        VC6 folds each field access into a `[eax*4+CONST]` SIB scale instead
+//        of materialising the full byte offset once, either spelling; not
+//        chased further.
+// size      191 bytes
+// prototype void (__thiscall ?set_ai@Console@@QAEXH@Z)(Console* this, int factionID)
+// callers   3   call targets   2
+// calls     0x00593310 0x005BF3F0
+*/
+void Console::set_ai(int faction_id) {
+    // The four toggles live at PlayersData + 0x3E0: the third dword of the
+    // faction's unk_38 run.
+    int *const entry = PlayersData[faction_id].unk_38 + 2;
+    unsigned char flags = (entry[0] != 0) ? 1 : 0;
+    if (entry[1] != 0) {
+        flags |= 2;
+    } else {
+        flags &= 0xFD;
+    }
+    if (entry[2] != 0) {
+        flags |= 4;
+    } else {
+        flags &= 0xFB;
+    }
+    if (entry[3] != 0) {
+        flags |= 8;
+    } else {
+        flags &= 0xF7;
+    }
+    console_popup_check_state() = flags;
+    if (x_pop_short(StrTechRandom, 1, (NullCallback)0) >= 0) {
+        const char answer = static_cast<char>(console_popup_check_state());
+        entry[0] = answer & 1;
+        entry[1] = (answer & 2) >> 1;
+        entry[2] = (answer & 4) >> 2;
+        entry[3] = (answer & 8) >> 3;
+        synch_ai(faction_id);
+    }
+}
+
+/*
+Purpose: Ask which terrain-improvement brush the scenario editor paints with
+         and refresh the interface panes around the answer.
+// ORIGINAL: 0x004E0EA0 ?editor_set_brush@Console@@QAEXXZ 0x004E0EA0-0x004E0F22 FILE
+// size      130 bytes
+// prototype void (__thiscall ?editor_set_brush@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00458910 0x0045B550 0x005BF390 0x0062B870
+*/
+void Console::editor_set_brush() {
+    PopupModalState = 6;
+    const int answer =
+        x_pop_value_flags(StrBrush, *EditorBrushId, 0x40, (NullCallback)0);
+    PopupModalState = 0;
+    if (answer >= 0) {
+        *EditorBrushId = answer;
+    }
+    ConsoleInfoWin.set_redraw_phase(7);
+    ConsoleInfoWin.on_redraw();
+    MainInterfaceGlobal.draw_edit_pane();
+    if (WinScreenWidth != 0x320) {
+        const int brush_button = *EditorBrushId + 0x40C;
+        if (*EditorBrushButtonGroupSelection != brush_button) {
+            EditorBrushButtonGroup->set(brush_button, 1);
+        }
+    }
+}
+
+/*
+Purpose: Load a saved game: leave the base window, refuse outside an active
+         network/PBEM session, then rebuild the desktop or reload the running
+         game and redraw the world.
+// ORIGINAL: 0x0051BBA0 ?load_proc@Console@@QAEXHH@Z 0x0051BBA0-0x0051BC62 FILE
+// size      194 bytes
+// prototype void (__thiscall ?load_proc@Console@@QAEXHH@Z)(Console* this, int, int)
+// callers   2   call targets   9
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0041A4C0 0x00460DD0 0x0046B190 0x0058EE60 0x0058F450 0x005AAAB0 0x005D5A70 0x005FCBB0 0x00644DFF
+*/
+void Console::load_proc(int save_slot, int faction_id) {
+    (ORIGINAL(&TutWinBaseWindow)->*BaseWinExit)();
+    if (IsMultiplayerNet != 0 && (GameState & 0x1000) == 0) {
+        return;
+    }
+    if (IsMultiplayerPBEM != 0 && (GameState & 0x1000) == 0) {
+        return;
+    }
+    if (load_game(save_slot, faction_id) != 0) {
+        return;
+    }
+    if (*GameSessionActive == 0) {
+        desktop_init(0);
+    } else if (game_reload(1, 0) != 0) {
+        exit(3);
+    }
+    if (save_slot != 0) {
+        GameState |= 0xE0;
+        do_all_draws();
+        ::draw_map(1);
+        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.GraphicWin::redraw();
+    }
+    alpha_menu_.check(selected_vehicle_);
+}
+
+/*
+Purpose: Play out the turn boundary until the game says to stop: drive
+         end_of_game, wait out the loop's queued work, and launch the tutorial
+         when it was requested.
+// ORIGINAL: 0x00513FC0 ?end_of_turn@Console@@QAEXXZ 0x00513FC0-0x0051404E FILE
+// size      142 bytes
+// prototype void (__thiscall ?end_of_turn@Console@@QAEXXZ)(Console* this)
+// callers   0   call targets   3
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BC6E0 0x0051F200 0x00524870
+*/
+void Console::end_of_turn() {
+    field_23BE4_ = 1;
+    const int saved_group_count = *ConsoleGroupCount;
+
+    if (ConsoleGlobal.cursor_active_ == 0) {
+        for (;;) {
+            if (field_23BE4_ == 0) break;
+            if (field_23BE8_ == 0) break;
+            if (ExitTurnLoop != 0) break;
+
+            if (end_of_game(0) != 0) break;
+            if (saved_group_count != *ConsoleGroupCount) break;
+
+            if (IsMultiplayerNet != 0) {
+                if ((GameState & 0x800) != 0) break;
+            }
+
+            wait_loop();
+            if (*TutWinTourPending != 0) {
+                *TutWinTourPending = 0;
+                (ORIGINAL(TutWinGlobal)->*TutWinTour)();
+            }
+            if (ConsoleGlobal.cursor_active_ != 0) break;
+        }
+    }
+
+    field_23BE4_ = 0;
+}
+
+// 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
+// scenario editor is working on. The catalogue, the partition and
+// editor_energy's own call list all name this address (span
+// 0x004D9AD0-0x004D9DB4); the console.h declaration carries the corrected
+// address too.
+// Link-only placeholder: the seed (src/unrecovered/004d9ad0.cpp) is preserved
+// and its transcription is still blocked on the private-member access the
+// console.h note records.
+// ORIGINAL: 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z 0x004D9AD0-0x004D9DB4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004d9ad0.cpp", "source:src/console.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+int Console::editor_who(int, int) {
+    // BODY GOES HERE.
+    // This definition provides build continuity only - editor_energy calls
+    // it; the seed body is preserved, not transcribed.
+    return 0;
+}
+
+/*
+Purpose: Order one air unit on a bombing run against a tile: refuse unless the
+         tile's base owner is at vendetta with us, lock the unit over the net,
+         restate its order and resync.
+// ORIGINAL: 0x004D8CD0 ?set_bombing_run@Console@@QAEXHHH@Z 0x004D8CD0-0x004D8DBE FILE
+// TRIED (seed history): computing the veh_id*0xd flag-slot index once vs
+//        re-indexing read+write - both compile; landed at MISMATCH (edit_count
+//        3, 97% mnemonic similarity) with the array-indexed form.
+// size      238 bytes
+// prototype void (__thiscall ?set_bombing_run@Console@@QAEXHHH@Z)(Console* this, int vehID, int xCoord, int yCoord)
+// callers   2   call targets   6
+// calls     0x0047A890 0x004E3A50 0x00531020 0x005310F0 0x00531480 0x00593220
+*/
+void Console::set_bombing_run(int veh_id, int x_coord, int y_coord) {
+    const int base_id = base_at(x_coord, y_coord);
+    // The gate is the base owner's diplomacy word: no vendetta against that
+    // faction, no bombing run.
+    if (base_id < 0 ||
+        (PlayersData[Vehs[veh_id].faction_id]
+             .diplo_treaties[Bases[base_id].faction_id_current] &
+         DTREATY_VENDETTA) == 0) {
+        NetMsgPopup->pop(StrNoBomb, 5000, 0, 0);
+        return;
+    }
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
+        return;
+    }
+    // Drop the two stale order bits (0x03000000) and mark the 0x200 order
+    // bit, then park the target in waypoint slot 1 as an auto bombing run.
+    Vehs[veh_id].state = (Vehs[veh_id].state & 0xFCFFFFFFu) | 0x200;
+    Vehs[veh_id].order_auto_type = ORDERA_BOMBING_RUN;
+    Vehs[veh_id].waypoint_x[1] = static_cast<int16_t>(x_coord);
+    Vehs[veh_id].waypoint_y[1] = static_cast<int16_t>(y_coord);
+    synch_veh(veh_id);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+}
+
+/*
+Purpose: Send one vehicle home: lock it, find the base it stands on, hand it
+         to that base (or its transport) and resync.
+// ORIGINAL: 0x004D7DE0 ?go_home@Console@@QAEXH@Z 0x004D7DE0-0x004D7EDA FILE
+// TRIED (seed history): structure (lock_veh via &veh_id, base_at, owner-byte
+//        compare against the veh table, synch/await/unlock NetDaemon calls,
+//        BaseWin::check_base x2, Console::update_data) all match in order;
+//        remaining ~9-edit MISMATCH is mostly frame-pointer allocation.
+// size      250 bytes
+// prototype void (__thiscall ?go_home@Console@@QAEXH@Z)(Console* this, int vehID)
+// callers   3   call targets   8
+// calls     0x0041A7A0 0x004CBAA0 0x004E3A50 0x00514880 0x00531020 0x005310F0 0x00531480 0x00593220
+*/
+void Console::go_home(int veh_id) {
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) == 0) {
+        const int x = Vehs[veh_id].x;
+        const int y = Vehs[veh_id].y;
+        const int base_id = base_at(x, y);
+        bool matched = false;
+        if (base_id >= 0) {
+            // A base counts as home when its current owner is ours.
+            matched = Bases[base_id].faction_id_current == Vehs[veh_id].faction_id;
+        } else {
+            action_home(veh_id, 0);
+            synch_veh(veh_id);
+            NetDaemonNet.await_synch();
+        }
+        if (matched) {
+            const int16_t old_base = Vehs[veh_id].home_base_id;
+            Vehs[veh_id].home_base_id = static_cast<int16_t>(base_id);
+            synch_veh(veh_id);
+            NetDaemonNet.await_synch();
+            NetDaemonNet.unlock_veh();
+            if (old_base >= 0) {
+                TutWinBaseWindow.check_base(old_base);
+            }
+            TutWinBaseWindow.check_base(base_id);
+            update_data(0);
+            return;
+        }
+        NetDaemonNet.unlock_veh();
+    }
+}
+
+// editor_scen_param's repeated "render the field value into StringTemp and
+// hand the text to the script parser" triple. The original serves it from a
+// shared subroutine (one itoa/strcat family in its call list); the file-static
+// helper gives this TU the same shape.
+static void parse_field_number(int index, int value) {
+    char num_buf[0x40];
+    StringTemp[0] = '\0';
+    _itoa(value, num_buf, 10);
+    strcat(StringTemp, num_buf);
+    parse_says(index, StringTemp, -1, -1);
+}
+
+// The CUSTOMTIME accept path clamps every re-parsed field to 0..9999.
+static int parse_turn_time_clamped(const char256 &text) {
+    int value = atoi(text.str);
+    if (value < 0) {
+        value = 0;
+    } else if (value > 0x270F) {
+        value = 0x270F;
+    }
+    return value;
+}
+
+/*
+Purpose: Edit the seven scenario victory parameters on one SCENPARAM popup and
+         re-parse the edited fields back into the game's objective globals.
+// ORIGINAL: 0x004DCCC0 ?editor_scen_param@Console@@QAEXXZ 0x004DCCC0-0x004DD1A1;0x0065B6A4-0x0065B7B0 FILE
+// TRIED (seed history): mirrors the recovered AlphaNet::create/join siblings -
+//        a stack `Popup popup;` gives the SEH frame/alloca/dtor cascade for
+//        free; inlining all seven itoa/strcat/parse_says triples drops the
+//        frame entirely past the third copy, the static-local-helper shape
+//        keeps it (MISMATCH #9 `push` vs `lea` with the full logic intact).
+// size      1517 bytes
+// prototype void (__thiscall ?editor_scen_param@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   22
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406820 0x00406880 0x00406AF0 0x005ABF20 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00625EC0 0x00645470 0x00645550 0x00645DA7 0x0064FC88
+*/
+void Console::editor_scen_param() {
+    Popup popup;
+
+    auto_undo();
+
+    parse_field_number(0, ObjectiveReqVictory);
+    parse_field_number(1, ObjectivesSuddenDeathVictory);
+    parse_field_number(2, ObjectiveAchievePts);
+    parse_field_number(3, VictoryAchieveBonusPts);
+    parse_field_number(4, StartingMissionYear);
+    parse_field_number(5, EndingMissionYear);
+    parse_field_number(6, SunspotDuration);
+
+    popup.start(PopupStartCaption, StrScenParam, -1, nullptr, 0x44, nullptr);
+
+    if (popup.exec(0, 0) < 0) {
+        popup.close();
+        return;
+    }
+
+    // The parser parked each field's text in ParseStrBuffer; read the edited
+    // values back out.
+    ObjectiveReqVictory = atoi(ParseStrBuffer[0].str);
+    ObjectivesSuddenDeathVictory = atoi(ParseStrBuffer[1].str);
+    ObjectiveAchievePts = atoi(ParseStrBuffer[2].str);
+    VictoryAchieveBonusPts = atoi(ParseStrBuffer[3].str);
+    StartingMissionYear = atoi(ParseStrBuffer[4].str);
+    EndingMissionYear = atoi(ParseStrBuffer[5].str);
+    SunspotDuration = atoi(ParseStrBuffer[6].str);
+
+    popup.close();
+}
+
+/*
+Purpose: Run the destroy-order dialog on one vehicle: eligibility guards, the
+         terraforming-option picker, the diplomacy consequences of attacking
+         inside another faction's territory, then the destroy itself.
+// ORIGINAL: 0x004D52A0 ?destroy@Console@@QAEXH@Z 0x004D52A0-0x004D5D23;0x0065AB02-0x0065AD6A FILE
+// TRIED (seed history): an SEH-heavy function (7+ automatic RAII objects);
+//        the guard-clause prefix is transcribed from the raw disassembly and
+//        the post-exec tail is structurally present but its trailing
+//        confirmation-dialog construction is simplified away rather than
+//        reproduced - treat that half as unverified.
+// size      3307 bytes
+// prototype void (__thiscall ?destroy@Console@@QAEXH@Z)(Console* this, int vehID)
+// callers   3   call targets   33
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406820 0x00406880 0x00406910 0x00406E60 0x0047A890 0x004CAA50 0x004E3EF0 0x0050BCC0 0x0052DC70 0x00531020 0x005310F0 0x00531300 0x0055F770 0x00592E10 0x00592EE0 0x005C1B70 0x005D45B0 0x005D4DD0 0x005E3820 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00645550
+*/
+void Console::destroy(int veh_id) {
+    // The original wraps this body in an SEH frame from a chain of automatic
+    // objects (Popup, Scroll, two FlatButtons, a GraphicWin); declaring the
+    // real RAII locals reproduces the constructor/destructor cascade rather
+    // than hand-tracking the compiler's unwind states.
+    Popup popup;
+    Scroll scroll;
+
+    if (not_my_turn()) {
+        NetMsgPopup->pop(StrSimulNo, 5000, 0, 0);
+        return;
+    }
+    if (veh_ready(veh_id) == 0) {
+        NetMsgPopup->pop(StrUnitMoved, 5000, 0, 0);
+        return;
+    }
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, -1) != 0) {
+        return;
+    }
+    if (not_my_turn()) {
+        NetMsgPopup->pop(StrSimulNo2, 5000, 0, 0);
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+    if (veh_ready(veh_id) == 0) {
+        NetMsgPopup->pop(StrUnitMoved2, 5000, 0, 0);
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+
+    const int vy = Vehs[veh_id].y;
+    const int vx = Vehs[veh_id].x;
+    const uint8_t faction = Vehs[veh_id].faction_id;
+    const int x_half = vx >> 1;
+    Map *const tile = map_loc(vx, vy);
+    const bool not_ocean = (tile->climate & 0xE0) < 0x60;
+    const int proto_id = Vehs[veh_id].proto_id;
+    const int weapon_id = VehPrototypes[proto_id].weapon_id;
+
+    if ((Weapon[weapon_id].offense_rating == 0) &&
+        (Weapon[weapon_id].mode != WPN_MODE_TERRAFORMER)) {
+        NetMsgPopup->pop(StrOnlyCombat, 5000, 0, 0);
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+    if (((tile->bit & 1) != 0) && ((tile->val2 & 0xF) < 8) &&
+        ((tile->val2 & 0xF) >= 0)) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop(StrNotBase, 5000, 0, 0);
+        return;
+    }
+
+    const int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
+    if ((triad != 2) && (static_cast<int>(not_ocean) != (triad == 1))) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop(StrNotInTriad, 5000, 0, 0);
+        return;
+    }
+
+    FlatButton btn1;
+    FlatButton btn2;
+    GraphicWin win;
+
+    const uint32_t tile_flags = tile->bit;
+    const char *title = (triad == 2) ? StrDestroyBomb : StrDestroy;
+    popup.start(PopupStartCaption, title, tile_flags, nullptr, 0x40, nullptr);
+
+    Dialogs dialogs;
+    int item_count = 0;
+    for (int a = 0; a < 0x13; a++) {
+        const uint32_t abil_flag = Terraforming[a].bit;
+        if (abil_flag == 0 || (tile_flags & abil_flag) == 0 || a == 10) {
+            continue;
+        }
+        // The rules' label fields carry StringTable offsets; the original
+        // reads the a-th row's int at byte offset x_half*4 of the
+        // Terraforming table and resolves it through the string table.
+        const int label_key = reinterpret_cast<const int *>(Terraforming)[x_half + a * 8];
+        dialogs.item(StringTable.get(label_key), abil_flag);
+        item_count++;
+    }
+
+    if (item_count == 0) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop(StrNotHere, 5000, 0, 0);
+        return;
+    }
+
+    int32_t result = -1;
+    if (item_count >= 2) {
+        result = popup.exec(0, 0);
+    }
+    if (result == -1) {
+        return;
+    }
+
+    int owner;
+    const int territory = whose_territory(faction, vx, vy, &owner, 0);
+    if ((territory >= 0) && (territory != faction)) {
+        if (BreakTreaty(faction, territory, 7) != 0) {
+            NetDaemonNet.unlock_veh();
+            return;
+        }
+        if ((PlayersData[territory].diplo_treaties[faction] & DTREATY_VENDETTA) == 0) {
+            if (IsMultiplayerNet != 0) {
+                message_data(0x2440, 0, 0, faction, territory, -1);
+                NetDaemonNet.await_exec(0);
+                message_data(0x2214, 0, 0, 0, 0, 0);
+            } else {
+                double_cross(faction, territory, -1);
+            }
+        }
+    }
+
+    field_23BE4_ = 0;
+    if (IsMultiplayerNet != 0) {
+        message_veh(0x2406, veh_id, result, 0);
+        NetDaemonNet.await_exec(1);
+    } else {
+        ActionDestroy(veh_id, result, -1, -1);
+    }
+}
+
+/*
+Purpose: Customise one faction's leader and faction names: pick the faction on
+         a who-list popup, edit its five name fields, and resync the faction.
+// ORIGINAL: 0x004DD1B0 ?custom_my_faction@Console@@QAEXXZ 0x004DD1B0-0x004DD6E5;0x0065B7B0-0x0065B872 FILE
+// TRIED (seed history): two `Popup` locals matching the disassembly's two
+//        separate constructor calls; BasePop::dialogs_ reached the inner
+//        popup's Dialogs sub-object. MISMATCH #0 (no SEH frame at all) - the
+//        frame threshold was not isolated before the seed's budget ran out.
+// size      1527 bytes
+// prototype void (__thiscall ?custom_my_faction@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   20
+// calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406880 0x00406C00 0x00406E60 0x0043EF70 0x00532E00 0x005D4DD0 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00611F80 0x00612A70 0x006169A0 0x00645460 0x00645550 0x0064FDF0
+*/
+void Console::custom_my_faction() {
+    Popup popup;
+    char name_buf[0xC8];
+    int faction_idx;
+
+    const unsigned char state = static_cast<unsigned char>(GameState);
+    if ((state & 0x40) != 0 && (state & 0x80) != 0) {
+        int chosen;
+        {
+            Popup popup2;
+            // start's third argument is the popup's value - the initial
+            // list selection - which the original re-stores after start()
+            // when the current faction is a playable one.
+            popup2.start(PopupStartCaption, StrEditorWhoListTitle,
+                         (ConsoleGlobal.faction_id_ >= 0) ? ConsoleGlobal.faction_id_ : -1,
+                         nullptr, 0x40);
+            PopupModalState = 6;
+            // The who list walks factions 1..7 by noun record: each item's
+            // text is the faction's noun, with its gender/plurality feeding
+            // the parser defaults.
+            int idx = 1;
+            int *entry = &Players[1].noun_gender;
+            do {
+                PluralityDefault = entry[1];
+                GenderDefault = entry[0];
+                popup2.dialogs().item(reinterpret_cast<char *>(entry - 6), idx);
+                entry += 0x167;
+                idx++;
+            } while (entry < &Players[MaxPlayerNum].noun_gender);
+            chosen = popup2.exec(0, 0);
+            PopupModalState = 0;
+        }
+        if (chosen < 0) {
+            popup.close();
+            return;
+        }
+        faction_idx = chosen;
+    } else {
+        faction_idx = ConsoleGlobal.faction_id_;
+    }
+
+    Player &player = Players[faction_idx];
+    // The label pool's key table: slots 0x2E2/0x2E3 pick the custom-name
+    // question's wording, the edit fields' captions sit around 0xAE and 0x1E3.
+    const int *const label_keys = reinterpret_cast<const int *>(Labels.strings_ptr);
+    const int key = (player.is_leader_female == 0) ? label_keys[0x2E2] : label_keys[0x2E3];
+    strcpy(name_buf, StringTable.get(key));
+
+    popup.start(PopupStartCaption, StrCustomNames, -1, nullptr, 0x44, nullptr);
+
+    char *const f1 = player.name_leader;
+    char *const f2 = player.formal_name_faction;
+    char *const f3 = player.noun_faction;
+    char *const f4 = player.adj_name_faction;
+    char *const f5 = player.title_leader;
+    char *const f6 = player.adj_leader;
+
+    popup.dialogs().edit(StringTable.get(label_keys[0x2B8 / 4]), f1, 0x17);
+    popup.dialogs().edit(StringTable.get(label_keys[0x2BC / 4]), f2, 0x27);
+    popup.dialogs().edit(StringTable.get(label_keys[0x2C0 / 4]), f3, 0x17);
+    popup.dialogs().edit(StringTable.get(label_keys[0x2C4 / 4]), f4, 0x17);
+    popup.dialogs().edit(StringTable.get(label_keys[0x78C / 4]), f5, 0x17);
+    popup.dialogs().edit(StringTable.get(label_keys[0x790 / 4]), f6, 0x17);
+    popup.dialogs().edit(StringTable.get(label_keys[0x794 / 4]), name_buf, 0x17);
+
+    const int result = popup.exec(0, 0);
+    if (result < 0) {
+        popup.close();
+        return;
+    }
+
+    strcpy(ParseStrBuffer[0].str, f1);
+    strcpy(ParseStrBuffer[1].str, f2);
+    strcpy(ParseStrBuffer[2].str, f3);
+    strcpy(ParseStrBuffer[3].str, f4);
+    strcpy(ParseStrBuffer[4].str, f5);
+    strcpy(ParseStrBuffer[5].str, f6);
+
+    // The entered leader name counts as female when its first letter matches
+    // the female wording of the question.
+    const char *const match_name = StringTable.get(label_keys[0x2E3]);
+    const int cmp = _strnicmp(match_name, name_buf, 1);
+    player.is_leader_female = (cmp == 0) ? 1 : 0;
+
+    NetDaemonNet.synch(7, faction_idx, 0, 0, nullptr, 1, 0x2101);
+
+    popup.close();
+}
+
+/*
+Purpose: Open the multiplayer time-controls dialog, and on a CUSTOMTIME accept
+         re-parse and clamp the seven per-faction turn times and resync.
+// ORIGINAL: 0x00515900 ?time_controls@Console@@QAEXXZ 0x00515900-0x00515EE6;0x0065D2EF-0x0065D3F3 FILE
+// TRIED (seed history): a single automatic `Popup popup;` local standing in
+//        for the ~20 individual unwind funclets of the original's Popup
+//        sub-objects (Spot/Dialogs/Dialog/Sprite/FlatButton x2/Heap inside
+//        Popup's own footprint); compiled and matched through instruction 10.
+//        The seed's literal vtable re-stores before each close() are
+//        compiler-owned with a real local here and are not spelled.
+// size      1770 bytes
+// prototype void (__thiscall ?time_controls@Console@@QAEXXZ)(Console* this)
+// callers   2   call targets   12
+// calls     0x004048A0 0x00404900 0x004059A0 0x00406380 0x004064D0 0x00406C00 0x00589330 0x00593250 0x005D45B0 0x005D4DD0 0x005E3820 0x00625EC0
+*/
+void Console::time_controls() {
+    Popup popup;
+
+    if (IsMultiplayerNet == 0) {
+        popup.close();
+        return;
+    }
+
+    if (console_turns_assigned() == 0) {
+        NetMsgPopup->pop(StrHostTime, 5000, 0, 0);
+        popup.close();
+        return;
+    }
+
+    time_controls_dialog(&popup);
+    // BasePop's value slot (basepop.h's private value_ at 0xA44): the row the
+    // dialog opens preselected. editor_diplomacy spells the same write the
+    // same way.
+    *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(&popup) + 0xa44) =
+        static_cast<uint32_t>(*TimeControlsSelection);
+    const int result = popup.exec(0, 0);
+    if (result < 0) {
+        popup.close();
+        return;
+    }
+
+    if (result == 5) {
+        // The six editable turn times go through the parser in this order,
+        // then the accept path re-parses and clamps all seven fields of the
+        // active TimeControl row.
+        parse_field_number(0, TimeControl[5].base);
+        parse_field_number(1, TimeControl[5].unit);
+        parse_field_number(2, TimeControl[5].event);
+        parse_field_number(3, TimeControl[5].turn);
+        parse_field_number(4, TimeControl[5].extra);
+        parse_field_number(result, TimeControl[5].refresh);
+
+        popup.start(PopupStartCaption, StrCustomTime, -1, nullptr, 0x44, nullptr);
+        if (popup.exec(0, 0) >= 0) {
+            TimeControl[5].base = parse_turn_time_clamped(ParseStrBuffer[0]);
+            TimeControl[5].unit = parse_turn_time_clamped(ParseStrBuffer[1]);
+            TimeControl[5].event = parse_turn_time_clamped(ParseStrBuffer[2]);
+            TimeControl[5].turn = parse_turn_time_clamped(ParseStrBuffer[3]);
+            TimeControl[5].extra = parse_turn_time_clamped(ParseStrBuffer[4]);
+            TimeControl[5].refresh = parse_turn_time_clamped(ParseStrBuffer[5]);
+            TimeControl[5].accumulated = parse_turn_time_clamped(ParseStrBuffer[6]);
+
+            NetDaemonNet.synch(0x85, 0, 0, 0, nullptr, 1, 0x2101);
+        }
+    }
+
+    message_data(0x4C02, 0, result, 0, 0, 0);
+    popup.close();
+}
