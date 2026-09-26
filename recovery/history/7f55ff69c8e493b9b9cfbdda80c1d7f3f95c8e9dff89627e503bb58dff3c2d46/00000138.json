@@ -1,0 +1,21 @@
+{
+  "event_id": "9a9eff90412842772f47b40cbb89271f660967e07446a342c90fc852f9ce95dc",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "coverage-first-wave-20260926",
+    "evidence": [
+      "Seed census: 1019 files, 1245976 scaffold lines; histogram <200:307/25856, 200-500:35/9551, 500-1000:128/90616, 1000-2500:431/771272, 2500+:118/348681. TU ownership derived from each seed's ORIGINAL address against the existing product TUs' marker ranges.",
+      "Coverage protocol per function: transcribe the seed into the owning TU as a real body (typed receivers, member spellings, ABI resolved from the pinned image where the scaffold is ambiguous), land the ORIGINAL marker with the body (FILE, no byte claim), retire the seed atomically - and do NOT iterate on byte convergence; that is the later global pass. Gates per batch: application compile/link, claim counts unchanged-or-better, symbols, existing suites green, audit ceilings set to measured counts with justification."
+    ],
+    "hypothesis": "User-directed strategy shift (2026-09-26): cover the FULL recovery surface first - every catalogued function landed as genuine compiling C++ even without byte claims - so later passes can repair shared data structures with every user visible and converge globally. The 307 sub-200-line seeds partition into exactly two owning TUs (stringstruct.cpp 170 seeds/16871 lines, leaf_recoveries.cpp 137 seeds/8985 lines), making them the first parallel coverage wave; the 35 small (200-500 lines), 128 medium (500-1000), 431 large (1000-2500) and 118 giant (2500+) seeds follow in dependency-friendly waves.",
+    "kind": "discovery"
+  },
+  "previous_event": "20bed9268a2d40e1fe037da29fa5913657b289429c9a1454f5dcdca03fb421a5",
+  "request_id": "coverage-first-wave-20260926",
+  "schema_version": 1,
+  "sequence": 138,
+  "stream": "task:vector-value-semantics"
+}
