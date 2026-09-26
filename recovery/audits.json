@@ -35,7 +35,7 @@
         "nullsub_thunks.cpp markers": 52,
         "PENDING_BODY forwarders": 237,
         "artifact files (recovered/)": 935,
-        "unrecovered files": 912,
+        "unrecovered files": 899,
         "hypothesis_layouts.h lines": 2734,
         "stringstruct.cpp markers": 31
       },
@@ -145,7 +145,7 @@
         "orphan redirect": 187,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 167,
+        "raw self-access": 164,
         "pointer-parameter as int": 93,
         "scaffold name": 3143
       },
