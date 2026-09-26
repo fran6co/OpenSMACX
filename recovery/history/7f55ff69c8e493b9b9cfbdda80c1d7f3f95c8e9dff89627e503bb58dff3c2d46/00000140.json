@@ -1,0 +1,20 @@
+{
+  "event_id": "c89daa65ac99788717ae448955909e65b1b1cb5ec233db27e8f678a3fb9291d1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basewin.cpp",
+      "src/datalink.cpp"
+    ],
+    "evidence": [
+      "Ratify the worker's two beyond-list edits (re-appended on the canonical chain): the rename turned the declared-but-undefined BaseWin::on_redraw and Datalink::on_redraw into live Win slot-12 overrides referenced by every BaseWin/Datalink vtable (LNK2001 otherwise). The link-only empty bodies with // BODY GOES HERE. sentinels in their OWNING TUs follow the documented unimplemented-dependency policy; they reference the existing mappings (BaseWin 0x0041E790 seed src/unrecovered/0041e790.cpp; Datalink 0x00431E70 seed src/recovered/units/00431e70.cpp), add no hand-typed markers and bank no claims. The real bodies remain future recovery work."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cb9bb6acd90e1b4b69eebda340272058db01a203bda7205bf718b91b9b73692c",
+  "request_id": "slot12-ratify-link-placeholders-20260926",
+  "schema_version": 1,
+  "sequence": 140,
+  "stream": "task:vector-value-semantics"
+}

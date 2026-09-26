@@ -1,0 +1,38 @@
+{
+  "event_id": "cb9bb6acd90e1b4b69eebda340272058db01a203bda7205bf718b91b9b73692c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/control_lifetime_harness.cpp",
+      "recovery/tests/editbox_input_harness.cpp",
+      "recovery/tests/multidebug_paint_harness.cpp",
+      "recovery/tests/test_caption_icons.py",
+      "recovery/tests/test_editbox_recovery.py",
+      "recovery/tests/test_imagebutton_paint.py",
+      "recovery/tests/test_multidebug_lifetime.py",
+      "recovery/tests/win_root_order_harness.cpp",
+      "src/adjustor_thunks.h",
+      "src/basepop.cpp",
+      "src/dipedit.cpp",
+      "src/editgroup.cpp",
+      "src/graphicwin.cpp",
+      "src/imagebutton.cpp",
+      "src/imagebutton.h",
+      "src/mapwin.cpp",
+      "src/time.cpp",
+      "src/worldwin.cpp"
+    ],
+    "evidence": [
+      "Complete the slot-12 rename's true footprint per the worker's discoveries (issued in the slot-12 worktree; re-appended here to keep the journal canonical after the parallel wave fork): the three C2065 TUs (graphicwin.cpp:516, worldwin.cpp:189/205/221, basepop.cpp:986-988), the ImageButton override rename with its emitted symbol republished, the BasePop/MapWin/DipEdit QAEXXZ->UAEXXZ facts, the time.cpp line_timer direct-call spelling restoring 0x0050EE80, and the eight test files embedding the old name.",
+      "Also the step-2 publication now that it is measured: re-home the two EditGroup adjustor markers onto the compiler-generated thunks via record 0x6127B0 0x612820 --in src/editgroup.cpp, delete the two handwritten bodies, remove the adjustor_thunks.h declarations, lower the adjustor_thunks.cpp marker ceiling accordingly. The 13-sibling retirement stays out. Build/link, zero collateral claim movement, coordinator review (delivered: approve) and destination rechecks gate integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9a9eff90412842772f47b40cbb89271f660967e07446a342c90fc852f9ce95dc",
+  "request_id": "win-slot12-completion-scope-20260926",
+  "schema_version": 1,
+  "sequence": 139,
+  "stream": "task:vector-value-semantics"
+}

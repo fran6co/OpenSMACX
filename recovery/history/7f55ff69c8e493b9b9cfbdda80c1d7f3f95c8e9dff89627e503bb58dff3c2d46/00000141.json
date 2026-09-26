@@ -1,0 +1,21 @@
+{
+  "event_id": "4c9acc0acfe938e87075b4467ae38b5e2e86c99b159f2007467a5350aa5305c7",
+  "payload": {
+    "affects": [
+      "entity-e31ec79f5212bd670c987cbfa157ed13059c96ebfcc3b622bbb305e81fe5d675"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "slot12-convention-and-siblings-20260926",
+    "evidence": [
+      "Measured in the slot-12 batch: MapWin::on_redraw 0x0046B1D0 regressed to SHAPE_EXACT with constants shifted by exactly -0x21A6C before the in-place re-anchor restored BYTE_EXACT; family fold constants: Dialog offset D with GraphicWin G=D-0xA18, MapWin 0x21A6C, PlanWin 0x22050.",
+      "All 13 sibling walks repaired and re-measured BYTE_EXACT; the EditGroup precedent completed in the same batch: record 0x6127B0 0x612820 --in src/editgroup.cpp stamped both thunks BYTE_EXACT after the annotations moved to the vtable-emitting TU, with the adjustor marker ceiling lowered 104 to 102. The coordinated sibling sweep (listbox, checkbox, radiobutton, spritebox, dialogs, mapwin, planwin) would lower it by up to 13 more."
+    ],
+    "hypothesis": "The slot-12 rename shifts VC6's entry convention for on_redraw bodies in virtually-derived classes (a -0x21A6C GraphicWin-subobject delta folded into MapWin's this-relative displacements, analogous offsets for PlanWin and the Dialog family), and after the rename VC6 emits genuine receiver thunks for the whole family - so the 13 remaining handwritten on_redraw adjustor walks (RadioButton/Dialogs/MapWin/PlanWin/ListBox/CheckBox/SpriteBox) can be retired onto their compiler-generated equivalents in the vtable-emitting TUs, mirroring the completed EditGroup pair.",
+    "kind": "discovery"
+  },
+  "previous_event": "c89daa65ac99788717ae448955909e65b1b1cb5ec233db27e8f678a3fb9291d1",
+  "request_id": "slot12-convention-and-siblings-20260926",
+  "schema_version": 1,
+  "sequence": 141,
+  "stream": "task:vector-value-semantics"
+}
