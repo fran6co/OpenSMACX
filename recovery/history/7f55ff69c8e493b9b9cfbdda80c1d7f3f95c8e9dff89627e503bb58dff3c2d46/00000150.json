@@ -1,0 +1,21 @@
+{
+  "event_id": "bbffd9995c7d27d84edf2986ed42b7939608dc8a5c8956ff5bc581ed358d8289",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/designwin.cpp",
+      "src/designwin.h"
+    ],
+    "evidence": [
+      "Coverage-first wave 1 group (re-appended from the worktree fork onto the canonical chain; master discovery 2778d0da is the wave authority): transcribe the class:DesignWin group's seed-only entities into src/designwin.cpp as real compiling bodies with their ORIGINAL markers (FILE, no byte claims except the recorder-banked on_status claim), retiring each seed atomically. Executed as 9 retirements with the reviewer's corrections applied (symbol facts for the two virtual-form overrides, draw_flash's identity restored to the seed's exact catalogue spans, the mechanically-wrong adjustor comment replaced by the verified no-adjustor fact) and the lost on_status claim re-banked through the recorder per event 143 (BYTE_EXACT 78/78, seed restored for the historical obligation then re-retired); all gates at baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6408b233496a9d6fd7003b7d683fab3ad140e9efa247aaed35639f79f3fe157c",
+  "request_id": "cover-designwin-20260926-scope",
+  "schema_version": 1,
+  "sequence": 150,
+  "stream": "task:vector-value-semantics"
+}
