@@ -319,6 +319,112 @@ void Net::on_session_lost() { }
 // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?on_host_changed@Net@@UAEXXZ 0x0062D6A0
 void Net::on_host_changed() { }
 
+// 0x009BE4E8, two slots above ActiveNet: the hand-off dword on_player_added
+// parks its list argument in for the length of the EnumSessions scan. The
+// callback reads it back out; nothing else in the image writes the slot.
+// The `T *const` spelling folds to the bare immediate the image stores.
+static unsigned int *const NetEnumListGuard = (unsigned int *)0x009BE4E8;
+
+// The StringStruct selection-sort pass, defined in stringstruct.cpp (extern
+// "C" __fastcall); no header declares it, so this file restates the link
+// shape the same way designwin.cpp restates slide_show.
+extern "C" void __fastcall sub_5d49d0(StringStruct *self);
+
+/*
+Purpose: Run one lobby enumeration for the setup dialog's player-added path:
+         guard the handed-in list, scan the session list through DirectPlay's
+         EnumSessions (whose callback fills the list through the guard), then
+         sort the received list and step its cursor to the last entry.
+
+         The catalogue spells this ?on_player_added@Net@@QAEHPADI@Z, the
+         NON-virtual overload - the virtual table slot's void(unsigned long)
+         default above is a different, shared body. The parameter names follow
+         the body, not the demangler's reading of PADI: the first stack slot
+         (the `char *`) is the list the callers build, and the second (the
+         `unsigned int`) is the name text pointer, cast at use. Callers push
+         the buffer first (0x0063132B, 0x006313A5) and the callee's tail walks
+         the first argument as the StringStruct whose fields sit at
+         +0x08/+0x0C/+0x10/+0x14.
+// ORIGINAL: 0x0062E420 ?on_player_added@Net@@QAEHPADI@Z 0x0062E420-0x0062E536 FILE
+// symbol    ?on_player_added@Net@@QAEHPADI@Z
+// size      278 bytes
+// prototype int (__thiscall ?on_player_added@Net@@QAEHPADI@Z)(Net* this, char*, unsigned int)
+// callers   4   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D49D0 0x00644F3A 0x006465F0
+// indirect  0x0062E4C4
+// Homed from src/unrecovered/0062e420.cpp: the signature correction of wave
+// event 142 - the image's own QAEXH identity, an overload beside the virtual
+// slot, not its replacement.
+Return Value: 7 with no DirectPlay session, 0x10 with no list, 1 when the
+         enumeration reported a failure, else 0
+Status: Coverage transcription - unclaimed body
+*/
+int Net::on_player_added(char *list, unsigned int name) {
+    if (NetDirectPlay == 0) {
+        return 7;
+    }
+    if (list == 0) {
+        return 0x10;
+    }
+
+    unsigned char desc[0x50];
+    memset(desc, 0, 0x50);
+    *reinterpret_cast<unsigned int *>(desc) = 0x50;
+
+    // The session GUID the session was opened with goes into the scan's
+    // guidSession - four dwords copied out of the saved pointer.
+    const unsigned int *guid =
+        reinterpret_cast<const unsigned int *>(guid_6E8_);
+    *reinterpret_cast<unsigned int *>(desc + 0x18) = guid[0];
+    *reinterpret_cast<unsigned int *>(desc + 0x1C) = guid[1];
+    *reinterpret_cast<unsigned int *>(desc + 0x20) = guid[2];
+    *reinterpret_cast<unsigned int *>(desc + 0x24) = guid[3];
+
+    // The name text travels as a plain pointer field: an empty (or null)
+    // string is stored as no name at all.
+    const char *name_text = 0;
+    if (name != 0 && *reinterpret_cast<const char *>(name) != 0) {
+        name_text = reinterpret_cast<const char *>(name);
+    }
+    *reinterpret_cast<const char **>(desc + 0x34) = name_text;
+
+    // The enumeration callback (0x00630C30, still its own preserved seed)
+    // fills the caller's list through the guard dword.
+    *NetEnumListGuard = static_cast<unsigned int>(reinterpret_cast<unsigned long>(list));
+    LPDPENUMSESSIONSCALLBACK2 callback = reinterpret_cast<LPDPENUMSESSIONSCALLBACK2>(
+        static_cast<unsigned long>(0x00630C30));
+    int result = NetDirectPlay->EnumSessions(
+        reinterpret_cast<LPDPSESSIONDESC2>(desc), 0, callback, 0, 1);
+    *NetEnumListGuard = 0;
+
+    // The received list is sorted (sub_5d49d0, the one-pass selection sort)
+    // and its cursor is parked on the last entry.
+    sub_5d49d0(reinterpret_cast<StringStruct *>(list));
+    if (result != 0) {
+        return 1;
+    }
+
+    StringStruct *received = reinterpret_cast<StringStruct *>(list);
+    if (received->entry_count_ - 1 >= -1) {
+        int limit = received->entry_count_;
+        received->current_ = received->head_;
+        int n = abs(-1);
+        if (n <= limit) {
+            n = abs(-1);
+            if (n > 0) {
+                do {
+                    n--;
+                    received->current_ = received->current_->previous;
+                } while (n != 0);
+            }
+            received->current_position_ = received->entry_count_ - 1;
+        }
+    }
+    return 0;
+}
+
 Net::Net() {
     // voice_tx_ (0x58), jackal_voice_rx_ (0xB0), three queues (0xE8..0x14B)
     // and allocation_node_ (0x700) construct implicitly. The node's virtual
@@ -917,6 +1023,74 @@ int Net::get(unsigned long *a, unsigned long *b) {
         }
     }
     return 0;
+}
+
+// The player-table write seam, 0x009BC4B8 - the dword just below NetGetScratch
+// - and the table base it indexes, 0x009BE4BC just above the scratch's end.
+// enum_players appends one 0x58-byte NetPlayer record per DirectPlay player
+// callback through this pair; init neither reads nor writes either slot in its
+// recovered body, so they stay independent bindings, not Net member aliases.
+static unsigned int *const NetPlayerWriteIndex = (unsigned int *)0x009BC4B8;
+static unsigned char **const NetPlayerTable = (unsigned char **)0x009BE4BC;
+
+/*
+Purpose: Append one player to the table the receive loop serves from: record
+         the DirectPlay id, ask the interface which flags this player carries
+         (slot +0x50, four stack arguments), merge in the connection's voice
+         bit, copy the DPNAME long text, and publish the id as the polling
+         target when the player is local.
+// ORIGINAL: 0x00630C80 ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z 0x00630C80-0x00630D6B FILE
+// size      227 bytes
+// prototype int (__thiscall ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z)(Net* this, unsigned long, unsigned long, const DPNAME*, unsigned long, void*)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00645460
+// indirect  0x00630CC5
+// Homed from src/unrecovered/00630c80.cpp.
+Return Value: 1, always
+Status: Coverage transcription - unclaimed body
+*/
+int Net::enum_players(unsigned long player_id, unsigned long, const DPNAME *name,
+                      unsigned long, void *) {
+    int index = static_cast<int>(*NetPlayerWriteIndex);
+    NetPlayer *slot =
+        reinterpret_cast<NetPlayer *>(*NetPlayerTable) + index;
+
+    slot->field_0_ = player_id;
+
+    // Slot +0x50 of the live interface: a four-argument read that reports
+    // this player's flags through the last argument. The receiver is the
+    // interface object as an explicit first stack argument (__stdcall), so
+    // the dispatch is spelled through its plain function type.
+    unsigned int player_flags = 1;
+    void *interface_object = NetDirectPlay;
+    typedef int (__stdcall *player_data_fn)(void *, unsigned long, void *,
+                                            unsigned int *);
+    player_data_fn read_player_data = *reinterpret_cast<player_data_fn *>(
+        reinterpret_cast<unsigned char *>(*reinterpret_cast<void **>(
+            interface_object)) + 0x50);
+    read_player_data(interface_object, player_id, &player_id, &player_flags);
+
+    slot->flags_14_ = static_cast<uint8_t>(player_flags);
+
+    if (ActiveNet != 0 && (ActiveNet->voice_flags_D8_ & 2) != 0) {
+        slot->flags_14_ = static_cast<uint8_t>(slot->flags_14_ | 2);
+    }
+
+    slot->name_and_tail_[0] = 0;
+    // The image's build is ANSI: the byte string the callback hands in sits
+    // in the DPNAME's A-side union slot, and the record's name text is
+    // appended straight from it.
+    strcat(slot->name_and_tail_,
+           reinterpret_cast<const char *>(name->lpszLongName));
+
+    if ((player_flags & 1) != 0 && ActiveNet != 0) {
+        ActiveNet->field_764_ = player_id;
+    }
+
+    *NetPlayerWriteIndex = *NetPlayerWriteIndex + 1;
+    return 1;
 }
 
 /*
