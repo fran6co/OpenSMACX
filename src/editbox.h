@@ -41,7 +41,7 @@ class EditBox : public GraphicWin {
 
   // Override the existing Win slots; focus belongs to Win slot51, not an
   // additional GraphicWin slot. Other unnamed events retain their positions.
-  virtual void draw_contents();        // slot 12
+  virtual void on_redraw();            // slot 12
   virtual void on_mouse_feedback(int x, int y); // Win slot17
   virtual void vslot_20(int x, int y);   // on_left_down
   virtual void vslot_21(int x, int y);   // on_left_up

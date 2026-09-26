@@ -541,8 +541,12 @@ class Win : public AutoSound {
   virtual int vslot_11(int = 0, int = 0, int = 0, int = 0) { return 0; }  // 0x00404240
   // Slot 12 paints the contents; redraw() at slot 62 drives this callback.
   // Constructor 5EB3D0 installs table66FDD0, selecting the shared empty body.
+  // The virtual is spelled on_redraw like every original derived override
+  // (thunk1/thunk3 pairs in ListBox/SpriteBox/EditGroup prove one original
+  // name served both this slot and Dialog slot2); the folded shared body's
+  // catalogue name above stays what the image calls it.
   // RECOVERY_SHARED: v1 0x00404280 0x00404281 ?draw_contents@Win@@UAEXXZ 0x005EB3D0
-  virtual void draw_contents() {}  // 0x00404280
+  virtual void on_redraw() {}  // 0x00404280
   // Slot 13: Win's constructor-installed table66FDD0 selects the shared RET8.
   // MapWin supplies a genuine override; this is not MainInterface's slot13.
   // RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_resize@Win@@UAEXHH@Z 0x005EB3D0

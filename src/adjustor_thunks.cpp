@@ -159,6 +159,14 @@ Purpose: Adjust the receiver from RadioButton's thunk1 subobject to the one
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, RadioButton::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xA30 to the GraphicWin offset 0x18. The walk now
+//            pre-subtracts 0x18 to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xA30 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
 Return Value: n/a
 Status: Complete
 */
@@ -166,7 +174,7 @@ void __fastcall adjust_radio_button1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp - 0xA30)->RadioButton::on_redraw();
+    reinterpret_cast<RadioButton *>(object - vtordisp - 0x18)->RadioButton::on_redraw();
 }
 
 /*
@@ -268,6 +276,13 @@ Purpose: Adjust the receiver from RadioButton's thunk3 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
+//            +0x18 (GraphicWin), so the walk keeps only the Dialog offset 0xA30; the
+//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
+//            Dialog-to-GraphicWin gap 0xA30 - 0x18). The pre-rename spelling also
+//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
+//            The compiler now emits its own two-step thunk for this slot; this
+//            handwritten walk stays the claim host pending coordinated retirement.
 Return Value: n/a
 Status: Complete
 */
@@ -275,7 +290,7 @@ void __fastcall adjust_radio_button3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<RadioButton *>(object - vtordisp - 2584 - 0xA30)->RadioButton::on_redraw();
+    reinterpret_cast<RadioButton *>(object - vtordisp - 0xA30)->RadioButton::on_redraw();
 }
 
 /*
@@ -354,6 +369,14 @@ Purpose: Adjust the receiver from Dialogs's thunk1 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, Dialogs::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xBA0 to the GraphicWin offset 0x188. The walk now
+//            pre-subtracts 0x188 to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xBA0 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
 Return Value: n/a
 Status: Complete
 */
@@ -361,7 +384,7 @@ void __fastcall adjust_dialogs1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)->Dialogs::on_redraw();
+    reinterpret_cast<Dialogs *>(object - vtordisp - 0x188)->Dialogs::on_redraw();
 }
 
 /*
@@ -793,6 +816,13 @@ Purpose: Adjust the receiver from Dialogs's thunk3 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
+//            +0x188 (GraphicWin), so the walk keeps only the Dialog offset 0xBA0; the
+//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
+//            Dialog-to-GraphicWin gap 0xBA0 - 0x188). The pre-rename spelling also
+//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
+//            The compiler now emits its own two-step thunk for this slot; this
+//            handwritten walk stays the claim host pending coordinated retirement.
 Return Value: n/a
 Status: Complete
 */
@@ -800,7 +830,7 @@ void __fastcall adjust_dialogs3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Dialogs *>(object - vtordisp - 2584 - 0xBA0)->Dialogs::on_redraw();
+    reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)->Dialogs::on_redraw();
 }
 
 /*
@@ -838,6 +868,12 @@ Purpose: Adjust the receiver from MapWin's thunk1 subobject to the one
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): MapWin::on_redraw
+//            previously overrode nothing (Win slot12 was draw_contents), so the
+//            qualified call carried no receiver fold. The rename makes it a genuine
+//            Win slot12 override through the virtual GraphicWin base, and VC6 folds
+//            `add ecx, 0x21a6c` into the qualified call; the walk pre-subtracts that
+//            GraphicWin offset so the image's bare vtordisp thunk survives.
 Return Value: n/a
 Status: Complete
 */
@@ -845,7 +881,7 @@ void __fastcall adjust_map_win1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp)->MapWin::on_redraw();
+    reinterpret_cast<MapWin *>(object - vtordisp - 0x21A6C)->MapWin::on_redraw();
 }
 
 
@@ -1106,6 +1142,12 @@ Purpose: Adjust the receiver from PlanWin's thunk1 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): PlanWin::on_redraw
+//            previously overrode nothing (Win slot12 was draw_contents), so the
+//            qualified call carried no receiver fold. The rename makes it a genuine
+//            Win slot12 override, and VC6 folds `add ecx, 0x22050` into the qualified
+//            call; the walk pre-subtracts that offset so the image's bare vtordisp
+//            thunk survives.
 Return Value: n/a
 Status: Complete
 */
@@ -1113,7 +1155,7 @@ void __fastcall adjust_plan_win1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<PlanWin *>(object - vtordisp)->PlanWin::on_redraw();
+    reinterpret_cast<PlanWin *>(object - vtordisp - 0x22050)->PlanWin::on_redraw();
 }
 
 
@@ -1396,6 +1438,10 @@ Purpose: Adjust the receiver from MapWin's thunk4 subobject to the one
 // kind      game
 // flags     sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): same rename, now the
+//            qualified call folds `add ecx, 0x21a6c`, so the walk cancels it on top
+//            of the static 9000 Console-to-MapWin delta; the emitted body stays the
+//            image's `sub ecx,[ecx-4]; sub ecx, 0x2328`.
 Return Value: n/a
 Status: Complete
 */
@@ -1403,7 +1449,7 @@ void __fastcall adjust_map_win4_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<MapWin *>(object - vtordisp - 9000)->MapWin::on_redraw();
+    reinterpret_cast<MapWin *>(object - vtordisp - 9000 - 0x21A6C)->MapWin::on_redraw();
 }
 
 
@@ -1751,6 +1797,14 @@ Purpose: Adjust the receiver from ListBox's thunk1 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, ListBox::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xA60 to the GraphicWin offset 0x48. The walk now
+//            pre-subtracts 0x48 to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xA60 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
 Return Value: n/a
 Status: Complete
 */
@@ -1759,11 +1813,12 @@ void __fastcall adjust_list_box1_on_redraw(void *self, void *) {
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
     // MINUS THE BASE OFFSET, so the compiler's own adjustment nets to zero.
-    // on_redraw is a Dialog virtual now, so a qualified call on a ListBox*
-    // emits `add ecx, 0xa60` to reach the Dialog subobject - an instruction
-    // the image's two-instruction thunk does not have. Handing it a pointer
-    // already 0xA60 low lets it fold the pair away.
-    reinterpret_cast<ListBox *>(object - vtordisp - 0xA60)->ListBox::on_redraw();
+    // on_redraw now overrides Win slot12 through GraphicWin as well, so a
+    // qualified call on a ListBox* emits `add ecx, 0x48` to reach the
+    // GraphicWin subobject - an instruction the image's two-instruction
+    // thunk does not have. Handing it a pointer already 0x48 low lets it
+    // fold the pair away.
+    reinterpret_cast<ListBox *>(object - vtordisp - 0x48)->ListBox::on_redraw();
 }
 
 /*
@@ -1976,6 +2031,13 @@ Purpose: Adjust the receiver from ListBox's thunk3 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
+//            +0x48 (GraphicWin), so the walk keeps only the Dialog offset 0xA60; the
+//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
+//            Dialog-to-GraphicWin gap 0xA60 - 0x48). The pre-rename spelling also
+//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
+//            The compiler now emits its own two-step thunk for this slot; this
+//            handwritten walk stays the claim host pending coordinated retirement.
 Return Value: n/a
 Status: Complete
 */
@@ -1983,7 +2045,7 @@ void __fastcall adjust_list_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<ListBox *>(object - vtordisp - 2584 - 0xA60)->ListBox::on_redraw();
+    reinterpret_cast<ListBox *>(object - vtordisp - 0xA60)->ListBox::on_redraw();
 }
 
 /*
@@ -1997,6 +2059,14 @@ Purpose: Adjust the receiver from CheckBox's thunk1 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, CheckBox::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xA34 to the GraphicWin offset 0x1C. The walk now
+//            pre-subtracts 0x1C to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xA34 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
 Return Value: n/a
 Status: Complete
 */
@@ -2004,7 +2074,7 @@ void __fastcall adjust_check_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp - 0xA34)->CheckBox::on_redraw();
+    reinterpret_cast<CheckBox *>(object - vtordisp - 0x1C)->CheckBox::on_redraw();
 }
 
 /*
@@ -2108,6 +2178,13 @@ Purpose: Adjust the receiver from CheckBox's thunk3 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
+//            +0x1C (GraphicWin), so the walk keeps only the Dialog offset 0xA34; the
+//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
+//            Dialog-to-GraphicWin gap 0xA34 - 0x1C). The pre-rename spelling also
+//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
+//            The compiler now emits its own two-step thunk for this slot; this
+//            handwritten walk stays the claim host pending coordinated retirement.
 Return Value: n/a
 Status: Complete
 */
@@ -2115,7 +2192,7 @@ void __fastcall adjust_check_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<CheckBox *>(object - vtordisp - 2584 - 0xA34)->CheckBox::on_redraw();
+    reinterpret_cast<CheckBox *>(object - vtordisp - 0xA34)->CheckBox::on_redraw();
 }
 
 /*
@@ -2129,6 +2206,14 @@ Purpose: Adjust the receiver from SpriteBox's thunk1 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): with Win slot12 renamed
+//            on_redraw, SpriteBox::on_redraw overrides that slot through GraphicWin as
+//            well as Dialog slot2, so the qualified call's receiver fold moved from
+//            the Dialog offset 0xAA4 to the GraphicWin offset 0x8C. The walk now
+//            pre-subtracts 0x8C to cancel it, leaving the image's bare vtordisp thunk;
+//            the old 0xAA4 walk emitted an extra `sub ecx, 0xa18` here. The compiler
+//            now emits its own vtordisp thunk for this slot; this handwritten walk
+//            stays the claim host pending coordinated retirement onto it.
 Return Value: n/a
 Status: Complete
 */
@@ -2136,7 +2221,7 @@ void __fastcall adjust_sprite_box1_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp - 0xAA4)->SpriteBox::on_redraw();
+    reinterpret_cast<SpriteBox *>(object - vtordisp - 0x8C)->SpriteBox::on_redraw();
 }
 
 /*
@@ -2372,6 +2457,13 @@ Purpose: Adjust the receiver from SpriteBox's thunk3 subobject to the one
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
+// TRIED 2026-09-26 (Win slot-12 on_redraw rename batch): the receiver fold is now
+//            +0x8C (GraphicWin), so the walk keeps only the Dialog offset 0xAA4; the
+//            net adjustment is the image's `sub ecx, 0xa18` (the family-wide
+//            Dialog-to-GraphicWin gap 0xAA4 - 0x8C). The pre-rename spelling also
+//            pre-subtracted 2584 and emitted `sub ecx, 0x1430` after the rename.
+//            The compiler now emits its own two-step thunk for this slot; this
+//            handwritten walk stays the claim host pending coordinated retirement.
 Return Value: n/a
 Status: Complete
 */
@@ -2379,40 +2471,7 @@ void __fastcall adjust_sprite_box3_on_redraw(void *self, void *) {
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<SpriteBox *>(object - vtordisp - 2584 - 0xAA4)->SpriteBox::on_redraw();
-}
-
-/*
-Purpose: Adjust the receiver from EditGroup's thunk1 subobject to the one
-         EditGroup::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x006127B0 ?on_redraw@thunk1_EditGroup@@QAEXXZ 0x006127B0-0x006127B8 BYTE_EXACT
-// symbol    ?adjust_edit_group1_on_redraw@@YIXPAX0@Z
-// size      8 bytes
-// prototype void (__thiscall ?on_redraw@thunk1_EditGroup@@QAEXXZ)(EditGroup* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (EditGroup adjustor retirement batch): the pre-repair
-//            spelling walked `object - vtordisp - 0xAA8` and measured 1/3 -
-//            a stale Dialog offset from the pre-hierarchy layout. Under the
-//            genuine hierarchy Dialog sits at 0xAA4 and EditGroup::on_redraw
-//            is its implicit override, so the qualified call itself folds
-//            `add ecx, 0xAA4` into the receiver (measured: the bare
-//            vtordisp-only walk emits exactly that). Pre-subtracting 0xAA4
-//            nets zero and leaves the image's two instructions.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_edit_group1_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    // The -0xAA4 cancels the compiler's own +0xAA4 receiver fold for the
-    // Dialog virtual base, so the receiver handed to EditGroup::on_redraw
-    // stays the GraphicWin-adjusted pointer the original body at 0x612450
-    // opens with (`mov eax, [esi - 0x8C]`).
-    reinterpret_cast<EditGroup *>(object - vtordisp - 0xAA4)->EditGroup::on_redraw();
+    reinterpret_cast<SpriteBox *>(object - vtordisp - 0xAA4)->SpriteBox::on_redraw();
 }
 
 
@@ -2442,35 +2501,3 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
 }
 
 
-/*
-Purpose: Adjust the receiver from EditGroup's thunk3 subobject to the one
-         EditGroup::on_redraw expects, then forward unchanged.
-// ORIGINAL: 0x00612820 ?on_redraw@thunk3_EditGroup@@QAEXXZ 0x00612820-0x0061282E BYTE_EXACT
-// symbol    ?adjust_edit_group3_on_redraw@@YIXPAX0@Z
-// size      14 bytes
-// prototype void (__thiscall ?on_redraw@thunk3_EditGroup@@QAEXXZ)(EditGroup* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// TRIED 2026-09-26 (EditGroup adjustor retirement batch): the pre-repair
-//            spelling walked `object - vtordisp - 2584 - 0xAA8` and measured
-//            2/3 - the same stale Dialog offset as the thunk1 sibling,
-//            visible as the wrong `sub ecx, 0xa1c` immediate. Post-repair
-//            the walk is the vtordisp rebase plus the static
-//            Dialog-to-GraphicWin delta 0xA18 (2584), with -0xAA4
-//            cancelling the qualified call's +0xAA4 fold; the emitted body
-//            is the image's `sub ecx,[ecx-4]; sub ecx, 0xA18`.
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall adjust_edit_group3_on_redraw(void *self, void *) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    const int32_t vtordisp =
-        *reinterpret_cast<const int32_t *>(object - 4);
-    // 2584 is 0xA18, the fixed Dialog-to-GraphicWin gap that standalone
-    // EditGroup (0xAA4 - 0x8C) and the Dialogs embedding (0xBA0 - 0x188)
-    // share; the -0xAA4 cancels the call's receiver fold as in the thunk1
-    // sibling, leaving the GraphicWin-adjusted receiver for 0x612450.
-    reinterpret_cast<EditGroup *>(object - vtordisp - 2584 - 0xAA4)->EditGroup::on_redraw();
-}

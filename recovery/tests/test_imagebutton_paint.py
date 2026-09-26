@@ -40,7 +40,7 @@ def actual():
     headers = {n: (ROOT / "src" / (n + ".h")).read_text() for n in
                ("win", "buffer", "graphicwin", "basebutton", "imagebutton", "sprite", "palette", "temp")}
     cpp = (ROOT / "src/imagebutton.cpp").read_text()
-    parts = {"BODY": braced(cpp, "void ImageButton::draw_contents()")}
+    parts = {"BODY": braced(cpp, "void ImageButton::on_redraw()")}
     parts["HELPERS"] = "\n".join(braced(cpp, signature) for signature in (
         "int image_button_paint_signed(", "int image_button_paint_add(",
         "int image_button_paint_sub(", "int image_button_paint_half(",
@@ -50,7 +50,7 @@ def actual():
         parts[cls.upper() + "_BASE"] = one(r"^class " + cls + r" : [^{]+\{", headers[unit])
     parts["WIN_FIELDS"] = one(r"^  Win \*win_parent_;", headers["win"])
     parts["WIN_METHODS"] = "\n".join(one(pattern, headers["win"]) for pattern in
-        (r"^  virtual void draw_contents\(\)[^\n]*", r"^  int is_dialog_focus\(\);"))
+        (r"^  virtual void on_redraw\(\)[^\n]*", r"^  int is_dialog_focus\(\);"))
     parts["BUFFER_RECT"] = one(r"^  RECT rect2_;", headers["buffer"])
     parts["BUFFER_METHODS"] = "\n".join(one(pattern, headers["buffer"]) for pattern in
         (r"^  int sync_to_palette\(Palette \*palette\);", r"^  int box\(RECT \*rect, int color1, int color2\);",
@@ -59,7 +59,7 @@ def actual():
     parts["BASE_FIELDS"] = "\n".join(one(r"^  (?:uint32_t |LPSTR )" + name + ";", headers["basebutton"])
         for name in ("name_", "color_", "bevel_upper_", "bevel_lower_", "bevel_thickness_", "field_A94_", "field_A9C_"))
     parts["IMAGE_FIELDS"] = one(r"^  Sprite \*sprite_;", headers["imagebutton"])
-    parts["IMAGE_METHOD"] = one(r"^  virtual void draw_contents\(\);", headers["imagebutton"])
+    parts["IMAGE_METHOD"] = one(r"^  virtual void on_redraw\(\);", headers["imagebutton"])
     parts["SPRITE_FIELDS"] = "\n".join(one(r"^  (?:int |unsigned char )" + name + ";", headers["sprite"])
         for name in ("cTransparentIndex_", "iSpriteWidth_", "iWidth_", "iHeight_"))
     parts["SPRITE_METHODS"] = "\n".join(braced(headers["sprite"], sig) for sig in
@@ -121,7 +121,7 @@ int main(){ImageButton b;Sprite a{241,100,13,9}, second{230,7,31,17};
  for(int focused=0;focused<2;++focused)for(int thick=0;thick<=3;++thick)
  for(int narrow=0;narrow<2;++narrow)for(int null_sprite=0;null_sprite<2;++null_sprite){
   a.iSpriteWidth_=narrow?100:5;reset(b,null_sprite?nullptr:&a);b.field_A9C_=pressed;b.field_A94_=outline?104:uint32_t(-1);
-  focus=focused;b.bevel_thickness_=thick;static_cast<Win*>(&b)->draw_contents();
+  focus=focused;b.bevel_thickness_=thick;static_cast<Win*>(&b)->on_redraw();
   require(events.size()>=2);require(events[0].kind=='P'&&events[0].who==&palettes[0]);require(events[1].kind=='F'&&events[1].a==101);
   require(WinCallbackWindow==&parents[0]);require(kind('Q').size()==unsigned(outline));
   int focus_layer=outline&&focused;int bevels=thick>focus_layer?thick-focus_layer:0;
@@ -135,16 +135,16 @@ int main(){ImageButton b;Sprite a{241,100,13,9}, second{230,7,31,17};
   auto texts=kind('T');require(texts.size()==1&&texts[0].text=="Caption"&&texts[0].a==7);
   int shift=pressed*thick;rect_eq(texts[0].area,{10+total+shift,20+total+shift,70-total+shift,60-total+shift});
  }
- reset(b,&a);HandleMain=nullptr;static_cast<Win*>(&b)->draw_contents();require(events.empty()&&WinCallbackWindow==&parents[1]);
- reset(b,&a);b.win_parent_=nullptr;b.draw_contents();require(events.empty()&&WinCallbackWindow==&parents[1]);
+ reset(b,&a);HandleMain=nullptr;static_cast<Win*>(&b)->on_redraw();require(events.empty()&&WinCallbackWindow==&parents[1]);
+ reset(b,&a);b.win_parent_=nullptr;b.on_redraw();require(events.empty()&&WinCallbackWindow==&parents[1]);
  // Negative odd centering uses floor SAR, not C++ truncation or an origin add.
- reset(b,&a);b.rect2_={10,20,16,24};b.bevel_thickness_=0;b.name_=nullptr;b.draw_contents();
+ reset(b,&a);b.rect2_={10,20,16,24};b.bevel_thickness_=0;b.name_=nullptr;b.on_redraw();
  auto d=kind('S')[0];require(d.b==-4&&d.c==-3&&d.d==6&&d.e==100);require(kind('T').empty());
  // Palette callback precedes rectangle/color snapshot; fill changes live
  // geometry for centering but must not change the saved frame rectangle.
  reset(b,&a);hook=[&](char c,int,RECT*){if(c=='P'){require(WinCallbackWindow==&parents[0]);b.rect2_={3,7,53,37};b.color_=201;b.win_parent_=&parents[1];}
   if(c=='F'){b.rect2_={1,2,102,63};b.name_=replacement;HandleMain=nullptr;}};
- b.draw_contents();require(events[1].a==201);rect_eq(kind('B')[0].area,{3,7,53,37});d=kind('S')[0];require(d.b==43&&d.c==25);
+ b.on_redraw();require(events[1].a==201);rect_eq(kind('B')[0].area,{3,7,53,37});d=kind('S')[0];require(d.b==43&&d.c==25);
  require(kind('T')[0].text=="New text"&&WinCallbackWindow==&parents[0]);
  // Focus outline rereads color, preserves callee RECT changes, and the
  // center is computed after focus but before the first bevel callback.
@@ -152,30 +152,30 @@ int main(){ImageButton b;Sprite a{241,100,13,9}, second{230,7,31,17};
  hook=[&](char c,int n,RECT*r){if(c=='B'&&n==1){r->left=30;b.field_A94_=105;}
   if(c=='Q'){b.field_A94_=106;b.rect2_={0,0,43,33};}
   if(c=='B'&&n==3){b.sprite_=&second;b.rect2_={0,0,999,999};b.name_=replacement;}};
- b.draw_contents();auto bx=kind('B');require(bx.size()==3&&bx[0].a==104&&bx[1].a==106);rect_eq(bx[1].area,{31,21,69,59});
+ b.on_redraw();auto bx=kind('B');require(bx.size()==3&&bx[0].a==104&&bx[1].a==106);rect_eq(bx[1].area,{31,21,69,59});
  d=kind('S')[0];require(d.who==&second&&d.a==230&&d.b==14&&d.c==11&&d.d==1&&d.e==1);
  // Branch selected once; thickness and bevel colors remain live, including
  // fresh thickness after Sprite draw for the text rectangle translation.
  reset(b,&a);b.field_A9C_=1;
  hook=[&](char c,int n,RECT*){if(c=='B'&&n==1){b.field_A9C_=0;b.bevel_thickness_=3;b.bevel_upper_=202;b.bevel_lower_=203;}
   if(c=='S'){b.bevel_thickness_=7;b.name_=replacement;}};
- b.draw_contents();bx=kind('B');require(bx.size()==3&&bx[1].a==203&&bx[1].b==202);d=kind('S')[0];require(d.b==25&&d.c==17&&d.d==51&&d.e==100);
+ b.on_redraw();bx=kind('B');require(bx.size()==3&&bx[1].a==203&&bx[1].b==202);d=kind('S')[0];require(d.b==25&&d.c==17&&d.d==51&&d.e==100);
  rect_eq(kind('T')[0].area,{20,30,74,64});require(kind('T')[0].text=="New text");
  // Removing a sprite after centering suppresses its call; no false draw.
- reset(b,&a);hook=[&](char c,int,RECT*){if(c=='B')b.sprite_=nullptr;};b.draw_contents();require(kind('S').empty());
+ reset(b,&a);hook=[&](char c,int,RECT*){if(c=='B')b.sprite_=nullptr;};b.on_redraw();require(kind('S').empty());
  // Signed thickness and no-outline sentinel are full 32-bit fields.
- reset(b,&a);b.bevel_thickness_=uint32_t(-1);b.color_=uint32_t(-2);b.draw_contents();require(kind('B').empty()&&events[1].a==-2);
+ reset(b,&a);b.bevel_thickness_=uint32_t(-1);b.color_=uint32_t(-2);b.on_redraw();require(kind('B').empty()&&events[1].a==-2);
  require(kind('S')[0].b==24&&kind('S')[0].c==16);
  // Exact source-width fit takes the unscaled1/1 arm, not56/56.
- reset(b,&a);a.iSpriteWidth_=56;b.draw_contents();d=kind('S')[0];require(d.d==1&&d.e==1);a.iSpriteWidth_=100;
+ reset(b,&a);a.iSpriteWidth_=56;b.on_redraw();d=kind('S')[0];require(d.d==1&&d.e==1);a.iSpriteWidth_=100;
  // Fill may add an initial sprite (before centering), focus may change the
  // pressed branch, and the shared callback owner is not restored on return.
  reset(b,nullptr);b.field_A94_=104;focus=1;
  hook=[&](char c,int,RECT*){if(c=='F')b.sprite_=&a;if(c=='Q'){b.field_A9C_=1;WinCallbackWindow=&parents[1];}};
- b.draw_contents();require(WinCallbackWindow==&parents[1]);d=kind('S')[0];require(d.b==24&&d.c==16);
+ b.on_redraw();require(WinCallbackWindow==&parents[1]);d=kind('S')[0];require(d.b==24&&d.c==16);
  require(kind('B').back().a==103&&kind('B').back().b==102);
  // Even a sprite-less pressed button translates text after its bevels.
- reset(b,nullptr);b.field_A9C_=1;b.draw_contents();rect_eq(kind('T')[0].area,{14,24,70,60});
+ reset(b,nullptr);b.field_A9C_=1;b.on_redraw();rect_eq(kind('T')[0].area,{14,24,70,60});
  puts("imagebutton paint controls passed");}
 '''
 
@@ -244,8 +244,8 @@ def test_painter_rejects_compiling_damage(tmp_path, damage):
     if damage == "missing_override":
         # Removing the redundant virtual keyword would still override Win;
         # rename both declaration and body to remove dispatch genuinely.
-        parts["IMAGE_METHOD"] = parts["IMAGE_METHOD"].replace("draw_contents", "wrong_contents")
-        parts["BODY"] = parts["BODY"].replace("ImageButton::draw_contents", "ImageButton::wrong_contents")
+        parts["IMAGE_METHOD"] = parts["IMAGE_METHOD"].replace("on_redraw", "wrong_contents")
+        parts["BODY"] = parts["BODY"].replace("ImageButton::on_redraw", "ImageButton::wrong_contents")
     elif damage in ("pressed_cached_early", "text_cached_early", "text_thickness_cached"):
         declaration, replacement = {
             "pressed_cached_early": ("const bool pressed = field_A9C_ != 0;", ""),
@@ -260,7 +260,7 @@ def test_painter_rejects_compiling_damage(tmp_path, damage):
         else:
             assert body.count(declaration) == 1
             body = body.replace(declaration, replacement)
-        parts["BODY"] = body.replace("void ImageButton::draw_contents() {", "void ImageButton::draw_contents() {\n" + declaration)
+        parts["BODY"] = body.replace("void ImageButton::on_redraw() {", "void ImageButton::on_redraw() {\n" + declaration)
     else:
         part, good, bad = DAMAGE[damage]
         assert parts[part].count(good) == 1, damage

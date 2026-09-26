@@ -34,8 +34,12 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   void pass_dialog_focus();
 
  public:
-  // 0x00612450, a pending_bodies forwarder.
-  void on_redraw();
+  // 0x00612450, a pending_bodies forwarder. One override serves both virtual
+  // bases: Win slot12 through GraphicWin (table6708D4+0x30 -> 0x6127B0) and
+  // Dialog slot2 (table6708C0 at complete+0xAA4 -> 0x612820). VC6 emits both
+  // receiver thunks from this single declaration because Win's slot-12
+  // virtual carries the same original name as Dialog's.
+  virtual void on_redraw();
 
  public:
   // Original slot51 in table6708D4 selects adjustor6127C0 -> body612670.

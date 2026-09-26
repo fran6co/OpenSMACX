@@ -983,9 +983,9 @@ int BasePop::exec(int flags, int (__cdecl *callback)()) {
         }
     }
 
-    // DRAW IT. Slot 0x30 - Win::draw_contents, which BasePop's table points at
-    // on_redraw (0x00604AB0).
-    draw_contents();
+    // DRAW IT. Slot 0x30 - Win::on_redraw, which BasePop's table points at
+    // its own override (0x00604AB0).
+    on_redraw();
 
     // THE ROW ORIGIN. Slot 0x178 hands all three back through pointers, which
     // is why the three exist before it runs. `origin` is the value it wrote;
@@ -3987,6 +3987,7 @@ int BasePop::calculate_dimensions() {
 }
 
 // ORIGINAL: 0x00604AB0 ?on_redraw@BasePop@@QAEXXZ 0x00604AB0-0x00604E31 FILE
+// symbol    ?on_redraw@BasePop@@UAEXXZ
 // size      897 bytes
 // prototype void (__thiscall ?on_redraw@BasePop@@QAEXXZ)(BasePop* this)
 // callers   0   call targets   12

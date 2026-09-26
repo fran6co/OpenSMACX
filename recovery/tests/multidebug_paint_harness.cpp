@@ -20,14 +20,14 @@ struct Buffer {
     int buffer_identity;
 };
 struct Win {
-    virtual void draw_contents() { assert(false); }
+    virtual void on_redraw() { assert(false); }
     int win_identity;
 };
 struct GraphicWin : Win, Buffer { void fill(int); };
 struct MultiDebug : GraphicWin {
     Font font_;
     Net *net_;
-    virtual void draw_contents();
+    virtual void on_redraw();
 };
 MultiDebug window;
 Net sessions[17];
@@ -129,7 +129,7 @@ int main() {
     for (int empty = 0; empty != 2; ++empty) {
         prepare(empty);
         Win *base = &window;
-        base->draw_contents();
+        base->on_redraw();
         assert(draws == (empty ? 2 : 16));
         assert(heights == (empty ? 2 : 14));
         assert(draws == expected_count && heights == expected_heights && setup_stage == 3);

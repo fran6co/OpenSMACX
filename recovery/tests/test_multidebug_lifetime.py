@@ -30,7 +30,7 @@ TIME_START = "?start@Time@@QAEIP6AXH@ZHII@Z"
 TIME_DTOR = "??1Time@@QAE@XZ"
 FONT_DTOR = "??1Font@@QAE@XZ"
 BASE_DTOR = "??1GraphicWin@@UAE@XZ"
-PAINT = "?draw_contents@MultiDebug@@UAEXXZ"
+PAINT = "?on_redraw@MultiDebug@@UAEXXZ"
 GLOBAL = "?WinBubbleWindow@@3VMultiDebug@@A"
 CTOR = "??0MultiDebug@@QAE@XZ"
 
@@ -252,7 +252,7 @@ def test_live_paint_formats_all_slots_and_rereads_callback_state(tmp_path, monke
     # belongs in this fixture, never the complete translation unit or a copy.
     run_recovered_harness(tmp_path, monkeypatch, "multidebug_paint_harness.cpp", [], declarations=[
         ("// LIVE_PLAYER", "src/net_class.h", "class NetPlayer {", "\n\nstruct ServiceList;"),
-        ("// LIVE_PAINT", UNIT, "void MultiDebug::draw_contents() {",
+        ("// LIVE_PAINT", UNIT, "void MultiDebug::on_redraw() {",
          "\n/*\nPurpose: Step the receiver back to the subobject ??_GMultiDebug@@")])
 
 
@@ -263,7 +263,7 @@ def test_live_paint_controls_reject_formatting_and_stale_session(tmp_path, monke
     def damaged_read(path, *args, **kwargs):
         text = original_read(path, *args, **kwargs)
         if path == ROOT / UNIT:
-            start = "void MultiDebug::draw_contents() {"
+            start = "void MultiDebug::on_redraw() {"
             end = "\n/*\nPurpose: Step the receiver back to the subobject ??_GMultiDebug@@"
             assert text.count(start) == text.count(end) == 1
             first, last = text.index(start), text.index(end)
