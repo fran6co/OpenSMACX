@@ -1,0 +1,21 @@
+{
+  "event_id": "caf413fabea06916b1c8f368e887f55755a4956898433dd1b40cce304d41bddf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Wave 3 (re-appended from the worktree fork onto the canonical chain): continue the leaf_recoveries coverage into its 200-1000-line queue. Executed as 7 retirements - the PickTech text writer, the display-device presenter, the three Dialog::init overload members (two forwarders retired with the departure note), Video_unk12, and the UV2Player writer with its named 0x8CC254 storage - with the claim-bearing UV2Player seed preserved after two honest MISMATCH attempts and seven blockers journaled (PickTech vtable model, draw_item callee, unbound arrays, Video_unk1 chain, the FileWin pair's mixed ownership). Reviewed and approved with all four sampled bodies verified instruction-by-instruction and every gate exact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c46c15bc054fc610e1755e309a60b96f4abb8941c45ed869a09cf750137065b0",
+  "request_id": "w3-leaves2-scope",
+  "schema_version": 1,
+  "sequence": 157,
+  "stream": "task:vector-value-semantics"
+}
