@@ -136,6 +136,41 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   // DesignWin's and not Win's shared no-op.
   void on_button_clicked(int button_id);
 
+  // 0x004345D0 ?UNK2@DesignWin@@QAEHH@Z - true when VehPrototypes[proto_id]
+  // holds exactly the chassis/weapon/armor/reactor/ability set the editor
+  // currently has selected.
+  int UNK2(int proto_id);
+
+  // 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z - a click on the prototype
+  // palette (spot2_) picks the component the spot type names.
+  void on_left_click(int a1, int a2);
+
+  // 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z - keyboard scrolling of the
+  // prototype stack and the shared slot-44 button keys.
+  int on_key_click(int a1, int a2);
+
+  // 0x0043D490 ?center_stack@DesignWin@@QAEXHH@Z - scroll the stack window so
+  // proto_id sits five rows from the top.
+  void center_stack(int proto_id, int redraw);
+
+  // 0x0043D510 ?draw_stack@DesignWin@@QAEXXZ
+  void draw_stack();
+
+  // 0x00437BF0 ?design_it@DesignWin@@QAEHXZ - commit the editor's component
+  // set as a prototype: reuse a matching slot, else take/confirm a slot and
+  // rebuild it. Answers 1 when the selection landed.
+  int design_it();
+
+  // 0x0043DD50 ?draw_flash@DesignWin@@QAEXXZ - the vehicle preview panel.
+  void draw_flash();
+
+  // The palette pick handlers on_left_click dispatches to, 0x00439F20 /
+  // 0x0043A300 / 0x0043A760 / 0x0043AA00.
+  void select_chassis();
+  void select_weapon();
+  void select_armor();
+  void select_reactor();
+
   // Storage the image proves is here: its own methods reach 0x14210.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 259 member(s) from the IDA database, 14 named; it starts a member at 0xA14, which is where src/ ends.

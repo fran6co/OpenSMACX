@@ -29,6 +29,118 @@
 #include "temp.h"
 #include "general.h"
 #include "veh.h"
+#include "tutwin.h"     // TutWinGlobal - the tutorial popup every click dismisses
+#include "alpha.h"      // Labels - the label-id block on_left_click reads
+#include "netdaemon.h"  // synch_proto, message_data, NetDaemonNet
+#include "xpops.h"      // x_pop_caption_label
+
+// ---- shared seams and bindings the recovered bodies reach -----------------
+
+// The slide helpers are still original bodies (0x0045D440 / 0x0045D970);
+// councwin.cpp declares and forwards them, and the definitions are
+// external-linkage so this TU links against those (same shape as
+// battlewin.cpp).
+void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
+void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
+
+// 0x00945B40 / 0x00945B44 - the prototype ranking proto_sort fills. map.cpp
+// owns the sort and defines the same-named pair (as internal-linkage const
+// bindings, so they cannot be externed from here); the addresses and roles
+// are restated for this file's stack bodies: count first, then the id list.
+static int *const ProtoSortCount = (int *)0x00945B40;
+static int *const ProtoSortIds = (int *)0x00945B44;
+
+// 0x009A64C0 - the interface flag byte scenario.cpp documents (`or dword
+// [0x9A64C0], 0xE0`, `test byte [0x9A64C0], 0x80` and `, 0x40`). Bit 0x40
+// unhides the two toggle buttons flatButtons_[2] and [3] while the design
+// window is open. No catalogue name for the byte.
+static unsigned char *const InterfaceFlagByte = (unsigned char *)0x009A64C0;
+
+// 0x00749C88 - menu.cpp's g_MENU_UP_WAVE; on_status plays it when the window
+// opens. Defined (and owned) there; no header declares it.
+extern Wave g_MENU_UP_WAVE;
+
+// ---- editor-panel bindings (the per-file convention basewin.cpp and
+// socialwin.cpp use; each folds to a bare immediate) ------------------------
+
+static int *const InterfaceBuffer = (int *)0x007AEC64;   // the shared
+    // full-screen drawing Buffer - the same binding battlewin.cpp,
+    // basewin.cpp, maininterface.cpp, reportif.cpp and socialwin.cpp carry.
+static int *const InterfaceClipRect = (int *)0x007AEC94; // InterfaceBuffer+0x30,
+    // the RECT every one of those bodies hands to Buffer::set_clip.
+// draw_flash picks its small font size off WinScreenWidth (win.h, 0x320 on
+// the shipped UI).
+static unsigned char *const InterfaceFlagTail = (unsigned char *)0x009A64C1;
+    // InterfaceFlagByte's next byte; bit 0x10 unhides the prototype numbers.
+
+static Buffer **const StackTileBufferSlot = (Buffer **)0x0078D6B0;
+    // The tile source draw_stack fills its panel from; basewin.cpp documents
+    // the address as a member slot holding a Buffer *, not a Buffer.
+static int *const StackTitleColorMain = (int *)0x008C6CA4;
+static int *const StackTitleColorShadow = (int *)0x008C6CA8;
+static int *const StackTextColorMain = (int *)0x008C6B94;
+static int *const StackTextColorShadow = (int *)0x008C6B98;
+    // Two text color pairs the preview panel draws with (main, shadow), read
+    // straight into Buffer::set_text_color - the bold title line and the stat
+    // lines respectively. No catalogue name for any.
+
+static unsigned char *const WeaponClassRows = (unsigned char *)0x0094AE68;
+    // weapon_id-strided class rows technology.cpp's note describes; the row's
+    // first byte is negative for weapons the editor cannot offer.
+static char *const ProtoAbilityIdBase = (char *)0x00952832;
+    // Per-prototype 0x34-stride shorts just past ReactorPickTable (the
+    // 4x12-byte picker table at 0x00952800 draw_reactor scans): the ability
+    // prototype id the stack/stat views quote for prototype proto. The same
+    // table console.cpp reaches as `0x952832 + id * 0x34`.
+static unsigned char *const PlayerFlagBlocks = (unsigned char *)0x00946F58;
+    // Per-faction byte blocks at sizeof(Player) stride; bit 0x80 of the first
+    // byte selects the alien-faction popup set. The Player array front is
+    // 0x00946A50, so this is +0x508 into player 0. No catalogue name.
+
+// diplo_lock (0x00539820) and diplo_unlock (0x005398C0) are unhomed;
+// design_it reaches them through their original addresses like the other
+// pending seams.
+
+// 0x005398E0 ?pop_wait@@YAHXZ - defined in faction.cpp (BYTE_EXACT); no
+// header declares it, and the editor popups pass it as their wait callback.
+int __cdecl pop_wait();
+
+// The alpha(x).txt keys and panel sprites the editor popups raise (popp's
+// label argument is an alpha.txt key, not display text; the `alunit_sm.pcx`
+// forms are the alien-faction variants). SpaceText's convention applies:
+// the image's .data carries the literal, the address is what the code holds.
+static char *const EditorNamePopupLabel = (char *)0x00683604;   // INTRINSICNAME
+static char *const EditorNamePopupAlienLabel = (char *)0x006835E8;
+static char *const EditorNamePopupSprite = (char *)0x006835F8;  // unit_sm.pcx
+static char *const EditorNamePopupAlienSprite = (char *)0x006835D8;
+static char *const EditorNameXPopCaption = (char *)0x0068367C;  // INTRINSICNAME
+static char *const EditorNameXPopAlienCaption = (char *)0x00683660;
+static char *const EditorNameXPopSprite = (char *)0x00683670;   // unit_sm.pcx
+static char *const EditorNameXPopAlienSprite = (char *)0x00683650;
+static char *const EditorTypePopupLabel = (char *)0x00683640;   // INTRINSICTYPE
+static char *const EditorTypePopupAlienLabel = (char *)0x00683624;
+static char *const EditorTypePopupSprite = (char *)0x00683634;  // unit_sm.pcx
+static char *const EditorTypePopupAlienSprite = (char *)0x00683614;
+static char *const EditorOverwritePopupLabel = (char *)0x006836B8;  // OVERWRITEPROTO
+static char *const EditorOverwritePopupAlienLabel = (char *)0x0068369C;
+static char *const EditorOverwritePopupSprite = (char *)0x006836AC;
+static char *const EditorOverwritePopupAlienSprite = (char *)0x0068368C;
+
+// Stack-panel string fragments the image holds beside SpaceText: "(", ")",
+// ". ", ": " and "#".
+static char *const EditorOpenParen = (char *)0x00682E9C;
+static char *const SpaceText = (char *)0x00682820;   // " " - the same binding
+    // buffer.cpp, popup.cpp and socialwin.cpp carry under this name.
+static char *const EditorCloseParen = (char *)0x00682E98;
+static char *const EditorDotSpace = (char *)0x00683920;
+static char *const EditorColonSpace = (char *)0x00682E90;
+static char *const EditorHashSign = (char *)0x00683918;
+
+static int *const AbilityLabelIds = (int *)0x009AB540;
+static int *const AbilityLabelIdsEnd = (int *)0x009AB86C;
+    // The ability-label id table draw_flash's stat line walks - 39 dwords at
+    // a 0x1C stride, one per ABL_ bit, each an alpha.txt label StringTable
+    // resolves; SocialEffectRow/RowEnd is the same pointer-pair convention.
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -220,17 +332,58 @@ int DesignWin::on_iface_button_pressed(int button_id) {
 
 // ---- slots still carrying an original body ------------------------------
 
-// PENDING 0x0043D120 ?on_status@DesignWin@@QAEXH@Z 0x0043D120-0x0043D215
+// The interface slot bodies run with the second-base receiver in the image
+// (the slot holds the raw body address, so ECX is DesignWin+0xA14 - the
+// seed for this body proves it: `self - 0xa14` is handed to the Win base,
+// and flatButtons_ appears at ECX+0x2D8). The tree spells the body as a
+// plain override and the compiled object shows NO adjustor thunks: the body
+// compiles straight to the original's receiver convention, byte for byte.
+// ORIGINAL: 0x0043D120 ?on_status@DesignWin@@QAEXH@Z 0x0043D120-0x0043D215 FILE BYTE_EXACT
 // symbol    ?on_status@DesignWin@@UAEXH@Z
 // size      245 bytes
 // prototype void (__thiscall ?on_status@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   3
 // kind      game
 // flags     hidden;sp_ready;purged_ok
+// calls     0x0045D440 0x0045D970 0x004C6920 0x005D56B0 0x005ED9D0 0x005EDCD0 0x005FCBB0
+// Homed from src/unrecovered/0043d120.cpp: open the design interface - paint
+// the front's contents, show the 25 palette buttons (and the two toggles when
+// interface bit 0x40 allows), update the main view, play the menu-up sound,
+// slide and show the window - or close it all back down.
 void DesignWin::on_status(int mode) {
-    typedef void(__fastcall *pending)(DesignWin *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D120))(
-        this, nullptr, mode);
+    if (mode != 0) {
+        static_cast<GraphicWin *>(this)->draw_contents();
+        FlatButton *button = flatButtons_;
+        int count = 0x19;
+        do {
+            button->show(4);
+            ++button;
+            --count;
+        } while (count != 0);
+        if (*InterfaceFlagByte & 0x40) {
+            flatButtons_[2].show(0);
+            flatButtons_[3].show(0);
+        } else {
+            flatButtons_[2].hide();
+            flatButtons_[3].hide();
+        }
+        MainInterfaceGlobal.update(0);
+        do_all_draws();
+        g_MENU_UP_WAVE.play();
+        slide_show(this, 0);
+        this->Win::show(3);
+    } else {
+        FlatButton *button = flatButtons_;
+        int count = 0x19;
+        do {
+            button->hide();
+            ++button;
+            --count;
+        } while (count != 0);
+        slide_hide(this, 0);
+        this->Win::hide();
+        do_all_draws();
+    }
 }
 
 // PENDING 0x0043D220 ?on_iface_left_click@DesignWin@@QAEXHH@Z 0x0043D220-0x0043D281
@@ -247,17 +400,41 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
         this, nullptr, a1, a2);
 }
 
-// PENDING 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327
+// ORIGINAL: 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327 FILE
 // symbol    ?on_iface_right_click@DesignWin@@UAEXHH@Z
 // size      151 bytes
 // prototype void (__thiscall ?on_iface_right_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
-// callers   0   call targets   3
+// callers   0   call targets   5
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-void DesignWin::on_iface_right_click(int a1, int a2) {
-    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D290))(
-        this, nullptr, a1, a2);
+// calls     0x004BDDE0 0x005ED240 0x005F83D0 0x005FAB00 0x006169A0
+// Homed from src/unrecovered/0043d290.cpp: a right-click on the prototype
+// stack (spot1_) raises the tutorial-style bubble naming the prototype under
+// the pointer - the label id comes out of the game block at
+// Labels.strings_ptr+0xCE8, and the bubble anchor is that map square pushed
+// through the main interface's client_to_screen.
+void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
+    TutWinGlobal->reset();
+    int position;
+    int type;
+    if (spot1_.check(xCoord, yCoord, &position, &type) != -1 && position >= 0) {
+        // The image swaps its two argument slots so the client_to_screen call
+        // receives (&xCoord, &yCoord); the anchor rect is that screen square.
+        MainInterfaceGlobal.client_to_screen(&xCoord, &yCoord);
+        // The label id sits at byte offset 0xCE8 of the game block - slot
+        // 0x33A of the LPSTR array, the same walk datalink.cpp's
+        // CATEGORY_LABEL makes over Labels.strings_ptr.
+        int label_id = (int)reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x33A];
+        RECT rect;
+        rect.left = xCoord;
+        rect.top = yCoord;
+        rect.right = xCoord;
+        rect.bottom = yCoord;
+        // MainInterface declares its own (button_id, text) set_bubble_text,
+        // which would hide the Win member the image calls directly.
+        MainInterfaceGlobal.Win::set_bubble_text(StringTable.get(label_id),
+                                                 &rect);
+    }
 }
 
 // PENDING 0x0043D350 ?on_iface_mouse_move@DesignWin@@QAEXHH@Z 0x0043D350-0x0043D3B9
@@ -1074,3 +1251,850 @@ void DesignWin::shut_that_badboy_down() {
 // it. Ruled out rather than re-derive: this is a same-shape sibling of the
 // documented INSTRUCTION SCHEDULING wall, but for cross-call register
 // liveness instead of instruction order.
+
+
+// ==== coverage batch: 004345d0 / 00439960 / 00439a20 / 0043d490 ============
+
+// ORIGINAL: 0x004345D0 ?UNK2@DesignWin@@QAEHH@Z 0x004345D0-0x00434649 FILE
+// size      121 bytes
+// prototype int (__thiscall ?UNK2@DesignWin@@QAEHH@Z)(DesignWin* this, int protoID)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// Homed from src/unrecovered/004345d0.cpp: the editor's "is this the same
+// design" test - VehPrototypes[proto_id] against the component set the window
+// currently holds. The seed's opaque `g_design_table` at 0x9AB888 is
+// VehPrototypes shifted past veh_name: 0x9AB888 is [0].ability_flags and
+// 0x9AB88C..[.F] the chassis/weapon/armor/reactor bytes.
+int DesignWin::UNK2(int proto_id) {
+    const VehPrototype &proto = VehPrototypes[proto_id];
+    if (protoChassisType_ != proto.chassis_id) {
+        return 0;
+    }
+    if (protoWeaponType_ != proto.weapon_id) {
+        return 0;
+    }
+    if (protoArmorType_ != proto.armor_id) {
+        return 0;
+    }
+    if (protoReactorType_ != proto.reactor_id) {
+        return 0;
+    }
+    return protoAbilityFlags_ == proto.ability_flags;
+}
+
+// ORIGINAL: 0x00439960 ?on_left_click@DesignWin@@QAEXHH@Z 0x00439960-0x004399FA FILE
+// size      154 bytes
+// prototype void (__thiscall ?on_left_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
+// callers   0   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00439F20 0x0043A300 0x0043A760 0x0043AA00 0x0043AC70 0x004BDDE0 0x005FAB00
+// Homed from src/unrecovered/00439960.cpp: a click on the palette spots
+// (spot2_) picks the component its type names; types 4 and 5 are the two
+// special-ability slots.
+void DesignWin::on_left_click(int xCoord, int yCoord) {
+    TutWinGlobal->reset();
+    int position;
+    int type;
+    if (spot2_.check(xCoord, yCoord, &position, &type) != -1) {
+        switch (type) {
+        case 0:
+            select_chassis();
+            return;
+        case 1:
+            select_weapon();
+            return;
+        case 2:
+            select_armor();
+            return;
+        case 3:
+            select_reactor();
+            return;
+        case 4:
+            select_special(0);
+            return;
+        case 5:
+            select_special(1);
+            return;
+        }
+    }
+}
+
+// ORIGINAL: 0x00439A20 ?on_key_click@DesignWin@@QAEHHH@Z 0x00439A20-0x00439B3B FILE
+// size      283 bytes
+// prototype int (__thiscall ?on_key_click@DesignWin@@QAEHHH@Z)(DesignWin* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0043D510 0x004BDDE0
+// indirect  0x00439A5D 0x00439AE1 0x00439AEF 0x00439B15 0x00439B2B
+// Homed from src/unrecovered/00439a20.cpp: the second argument scrolls the
+// prototype stack (page up/down/home/end by nines) or forwards to the front
+// vtable's slot 44 (on_button_clicked) with 4/8/0x17/0x18; the first
+// argument forwards 6 or 7 the same way. Always answers 1.
+int DesignWin::on_key_click(int a1, int a2) {
+    TutWinGlobal->reset();
+    switch (a2) {
+    case 0x0D:
+        on_button_clicked(4);
+        break;
+    case 0x1B:
+        on_button_clicked(8);
+        break;
+    case 0x21:
+    case 0x69: {
+        int moved = (field_CE4_ + *ProtoSortCount - 9) % *ProtoSortCount;
+        field_CE4_ = (moved < 0) ? 0 : moved;
+        draw_stack();
+        break;
+    }
+    case 0x22:
+    case 0x63: {
+        int moved = (field_CE4_ + *ProtoSortCount + 9) % *ProtoSortCount;
+        field_CE4_ = (moved < 0) ? 0 : moved;
+        draw_stack();
+        break;
+    }
+    case 0x23:
+    case 0x61: {
+        int bottom = *ProtoSortCount - 10;
+        field_CE4_ = (bottom < 0) ? 0 : bottom;
+        draw_stack();
+        break;
+    }
+    case 0x24:
+    case 0x67:
+        field_CE4_ = 0;
+        draw_stack();
+        break;
+    case 0x25:
+    case 0x64:
+        on_button_clicked(0x17);
+        break;
+    case 0x27:
+    case 0x66:
+        on_button_clicked(0x18);
+        break;
+    }
+    switch (a1) {
+    case 0x4D:
+    case 0x4F:
+    case 0x6D:
+    case 0x6F:
+        on_button_clicked(6);
+        break;
+    case 0x55:
+    case 0x75:
+        on_button_clicked(7);
+        break;
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x0043D490 ?center_stack@DesignWin@@QAEXHH@Z 0x0043D490-0x0043D50B FILE
+// size      123 bytes
+// prototype void (__thiscall ?center_stack@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0043D510 0x005A63D0
+// Homed from src/unrecovered/0043d490.cpp: re-rank the faction's prototypes,
+// find proto_id in the ranked list and move the stack window's anchor
+// (field_CE4_) so that entry sits five rows from the top.
+void DesignWin::center_stack(int proto_id, int redraw) {
+    // proto_sort_2 (0x005A63D0, catalogued ?proto_sort_2@@YAXH@Z) is unhomed;
+    // its sibling proto_sort lives in map.cpp, which also owns the
+    // map.cpp sort pair this body reads. Called through the
+    // original body's address like the other pending seams.
+    typedef void(__cdecl *proto_sort_2_seam)(int);
+    reinterpret_cast<proto_sort_2_seam>(static_cast<unsigned long>(0x005A63D0))(
+        factionID_);
+
+    int count = *ProtoSortCount;
+    int start = field_CE4_;
+    bool found = false;
+    int rem = 0;
+    if (start < start + count) {
+        int scan = start;
+        do {
+            rem = scan % count;
+            if (proto_id == ProtoSortIds[rem]) {
+                found = true;
+                break;
+            }
+            ++scan;
+        } while (scan < field_CE4_ + count);
+    }
+    if (found) {
+        int old = field_CE4_;
+        int centred = (rem + count - 5) % count;
+        field_CE4_ = centred;
+        if (redraw != 0 && centred != old) {
+            draw_stack();
+        }
+    }
+}
+
+// ---- link-only placeholders ----------------------------------------------
+// The palette pick handlers on_left_click dispatches to, and draw_stack the
+// key/scroll paths call, are still preserved units (src/recovered/units/...),
+// not yet homed into designwin.cpp.
+
+// ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439f20.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void DesignWin::select_chassis() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0043A300 ?select_weapon@DesignWin@@QAEXXZ 0x0043A300-0x0043A754;0x00654281-0x00654306
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043a300.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void DesignWin::select_weapon() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0043A760 ?select_armor@DesignWin@@QAEXXZ 0x0043A760-0x0043A9F8;0x00654306-0x0065438B
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043a760.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+void DesignWin::select_armor() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0043aa00.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; the real transcription lands in the next coverage sub-batch."}
+void DesignWin::select_reactor() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0043D510 ?draw_stack@DesignWin@@QAEXXZ 0x0043D510-0x0043DD43;0x006546DA-0x006546EC FILE
+// size      2117 bytes
+// prototype void (__thiscall ?draw_stack@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   5   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005594F0 0x0057D7D0 0x005A63D0 0x005B9F20 0x005C1D50 0x005D5930 0x005D8000 0x005DA860 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005DDAB0 0x005E2DD3 0x005FA960 0x005FAA90 0x006169A0 0x00618EA0 0x00618EE0 0x00618F40 0x00619280 0x006453E0 0x00645470 0x00645DD0 0x0064FC88
+// Homed from src/unrecovered/0043d510.cpp: the prototype stack panel - tile
+// the background, frame it, then walk the ranked prototype list drawing up to
+// ten entries (box style 2 = the edited prototype, 1 = the highlighted one),
+// registering each spot for on_left_click.
+void DesignWin::draw_stack() {
+    Font font;
+    RECT area = *reinterpret_cast<RECT *>(&field_B0C_);
+    Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    canvas->tile(*StackTileBufferSlot, area.left, area.top, area.left, area.top,
+                 area.right - area.left, area.bottom - area.top);
+    canvas->box_sprite(&area, &InterfaceBoxStyles[3]);
+
+    RECT rc = area;
+    rc.bottom -= 3;
+    rc.right = static_cast<int>(field_CCC_) - 3;
+    int span = rc.right - (static_cast<int>(field_CC4_) + 3) + 2;
+    int spacer = span / 10 - 2;
+    int x_base = static_cast<int>(field_CC4_) + 3;
+    rc.left = x_base;
+    int y_base = rc.top + 3;
+    rc.top = y_base;
+
+    font.init(DefaultFontFace, 10, 0);
+    canvas->set_text_color(0x9F, -1, 1, 1);
+    canvas->set_font(&font, 0, 0, 0);
+    spot1_.kill_type(0);
+
+    rc.bottom = rc.bottom - rc.top + y_base;
+    rc.left = x_base;
+    rc.top = y_base;
+    rc.right = x_base + spacer;
+
+    // proto_sort_2 (0x005A63D0, catalogued ?proto_sort_2@@YAXH@Z) is unhomed;
+    // its sibling proto_sort lives in map.cpp, which also owns the
+    // map.cpp sort pair. Called through the original body's
+    // address like the other pending seams.
+    typedef void(__cdecl *proto_sort_2_seam)(int);
+    reinterpret_cast<proto_sort_2_seam>(static_cast<unsigned long>(0x005A63D0))(
+        factionID_);
+
+    int divisor = *ProtoSortCount;
+    int entry = static_cast<int>(field_CE4_);
+    int loop_end = entry + divisor;
+    int drawn = 0;
+    while (drawn < 10 && entry < loop_end) {
+        int proto_id = ProtoSortIds[entry % divisor];
+        ++entry;
+        // Validity: own faction prototypes need their tech and an offerable
+        // weapon class (and never slot 0xF); borrowed ones only their faction.
+        if (proto_id / 64 == 0) {
+            if (!has_tech(VehPrototypes[proto_id].preq_tech, factionID_)) {
+                continue;
+            }
+            if (proto_id < 0x40) {
+                if (static_cast<signed char>(
+                        WeaponClassRows[VehPrototypes[proto_id].weapon_id * 16]) < 0) {
+                    continue;
+                }
+                if (proto_id == 0xF) {
+                    continue;
+                }
+            }
+        } else if (proto_id / 64 != factionID_) {
+            continue;
+        }
+
+        int selector = 0;
+        if (proto_id == static_cast<int>(protoID_)) {
+            selector = 2;
+        } else if (proto_id == static_cast<int>(field_CE0_)) {
+            selector = 1;
+        }
+        ++drawn;
+        canvas->box_sprite(&rc, &InterfaceBoxStyles[selector]);
+        spot1_.add(proto_id, 0, rc.left, rc.top, rc.right - rc.left,
+                   rc.bottom - rc.top);
+        rc.left += 2;
+        rc.top += 2;
+        rc.right -= 2;
+        rc.bottom -= 2;
+        canvas->set_clip(&rc);
+
+        if (VehPrototypes[proto_id].flags & PROTO_ACTIVE) {
+            int unit_id = veh_fake(proto_id, factionID_);
+            StringTemp[0] = '\0';
+            veh_draw(canvas, unit_id, x_base + 0xF, y_base + 0xC, -10, 0x1048, 0);
+
+            RECT label_rect = rc;
+            canvas->set_text_color(0x9F, -1, 1, 1);
+            StringTemp[0] = '\0';
+            if (proto_id < 0x40) {
+                if (VehPrototypes[proto_id].obsolete_factions
+                    & (1 << (factionID_ & 0x1F))) {
+                    canvas->set_text_color(0xF8, -1, 1, 1);
+                    // The label id the interface keeps in the game block at
+                    // Labels.strings_ptr+0xE40 (slot 0x390) - same walk as
+                    // on_iface_right_click's 0xCE8.
+                    strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
+                        Labels.strings_ptr)[0x390]));
+                } else {
+                    strcat(StringTemp, VehPrototypes[proto_id].veh_name);
+                }
+            } else if (VehPrototypes[proto_id].obsolete_factions
+                & (1 << (factionID_ & 0x1F))) {
+                unsigned char seen =
+                    PlayersData[factionID_].proto_id_active[proto_id];
+                canvas->set_text_color(0xF8 + ((-(seen != 0)) & 7), -1, 1, 1);
+                strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
+                    Labels.strings_ptr)[0x390]));
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                char digits[0x20];
+                _itoa(proto_id % 64 + 1, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, EditorCloseParen);
+            } else {
+                char digits[0x20];
+                _itoa(proto_id % 64 + 1, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, EditorDotSpace);
+                strcat(StringTemp, VehPrototypes[proto_id].veh_name);
+            }
+
+            label_rect.left += 3;
+            label_rect.right -= 3;
+            if (StringTemp[0] != '\0') {
+                while (font.width(StringTemp)
+                       > label_rect.right - label_rect.left) {
+                    StringTemp[strlen(StringTemp) - 1] = '\0';
+                    if (StringTemp[0] == '\0') {
+                        break;
+                    }
+                }
+            }
+            char *first_space = strchr(StringTemp, ' ');
+            if (first_space != 0) {
+                char *second_space = strchr(first_space + 1, ' ');
+                if (second_space != 0) {
+                    *second_space = '\0';
+                }
+            }
+            label_rect.bottom = label_rect.top + font.line_advance();
+            canvas->set_clip(&label_rect);
+            canvas->write_l(StringTemp, &label_rect, strlen(StringTemp));
+            canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+
+            RECT stats_rect = rc;
+            stats_rect.top = rc.bottom - font.line_advance();
+            StringTemp[0] = '\0';
+            // say_stats_3 (0x0057D7D0) is declared in veh.h but not homed.
+            typedef void(__cdecl *say_stats_3_seam)(char *, unsigned int);
+            reinterpret_cast<say_stats_3_seam>(
+                static_cast<unsigned long>(0x0057D7D0))(
+                StringTemp,
+                *reinterpret_cast<const short *>(ProtoAbilityIdBase
+                                                 + unit_id * 0x34));
+            if ((*InterfaceFlagByte & 0x40) != 0
+                && (*InterfaceFlagTail & 0x10) != 0) {
+                strcat(StringTemp, SpaceText);
+                strcat(StringTemp, EditorOpenParen);
+                char digits[0x20];
+                _itoa(proto_id, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, EditorCloseParen);
+            }
+            canvas->write_cent_l(StringTemp, &stats_rect, strlen(StringTemp));
+            spot1_.add(proto_id, 0, rc.left, rc.top, rc.right - rc.left,
+                       rc.bottom - rc.top);
+
+            x_base += spacer + 2;
+            rc.top -= 2;
+            rc.bottom += 2;
+            rc.left += spacer;
+            rc.right += spacer + 4;
+        } else {
+            StringTemp[0] = '\0';
+            // Slot 0x6E of the same label block: the "undesigned" caption.
+            strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
+                Labels.strings_ptr)[0x6E]));
+            strcat(StringTemp, SpaceText);
+            strcat(StringTemp, EditorHashSign);
+            char digits[0x20];
+            _itoa(proto_id % 64 + 1, digits, 10);
+            strcat(StringTemp, digits);
+            canvas->set_text_color(0x9F, -1, 1, 1);
+            canvas->set_font(&font, 0, 0, 0);
+            canvas->wrap_cent(StringTemp, &rc);
+
+            x_base += spacer + 2;
+            rc.top -= 2;
+            rc.bottom += 2;
+            rc.left += spacer;
+            rc.right += spacer + 4;
+            canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+        }
+    }
+
+    MainInterfaceGlobal.soft_update(&area);
+    canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+}
+
+
+// ORIGINAL: 0x00437BF0 ?design_it@DesignWin@@QAEHXZ 0x00437BF0-0x00438455 FILE
+// size      2149 bytes
+// prototype int (__thiscall ?design_it@DesignWin@@QAEHXZ)(DesignWin* this)
+// callers   1   call targets   17
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0048C0A0 0x00531300 0x00539820 0x005398C0 0x0057E040 0x0057F1D0 0x0057F4B0 0x00592EE0 0x005933F0 0x005A5D40 0x005B9F20 0x005BF330 0x00625E30 0x00625EC0 0x006453E0 0x00645460 0x00645660
+// Homed from src/unrecovered/00437bf0.cpp: commit the editor selection as a
+// prototype. The scan covers the faction's own 64 slots plus the 64 borrowed
+// ones; a slot that already holds exactly this design is re-selected (and
+// un-obsoleted), otherwise the current slot is rebuilt, a free one is taken,
+// or an occupied one is overwritten behind its confirmation popup.
+int DesignWin::design_it() {
+    // Unhomed callees, called through the original bodies' addresses like the
+    // other pending seams: name_proto (0x0057E040), retire_proto (0x0057F1D0)
+    // and prune_protos (0x0057F4B0) have no tree homes yet (their sibling
+    // make_proto is veh.h's).
+    typedef void(__cdecl *name_proto_seam)(char *, int, int, int, int, int, int, int);
+    typedef void(__cdecl *retire_proto_seam)(int, int);
+    typedef void(__cdecl *prune_protos_seam)(int, int, int);
+    typedef int(__cdecl *diplo_lock_seam)(int);
+    typedef void(__cdecl *diplo_unlock_seam)();
+
+    char *name = reinterpret_cast<char *>(&field_14220_);
+
+    // ---- scan all 128 slots (own 64 + up to 64 borrowed) ------------------
+    int scan = 0;
+    do {
+        int slot = scan;
+        if (slot > 0x3F) {
+            slot = factionID_ * 0x40 + slot % 0x40;
+        }
+        VehPrototype &proto = VehPrototypes[slot];
+        bool fields_match = (proto.flags & PROTO_ACTIVE) != 0
+            && protoChassisType_ == proto.chassis_id
+            && protoWeaponType_ == proto.weapon_id
+            && protoArmorType_ == proto.armor_id
+            && protoReactorType_ == proto.reactor_id
+            && protoAbilityFlags_ == proto.ability_flags
+            && (slot > 0x3F || has_tech(proto.preq_tech, factionID_));
+
+        if (fields_match) {
+            if (slot != static_cast<int>(protoID_)) {
+                if (proto.obsolete_factions & (1 << (factionID_ & 0x1F))) {
+                    // Flag bit 0x8 has no name in veh.h's enum yet: it marks
+                    // a prototype the faction re-designed over.
+                    proto.flags |= 8;
+                }
+                proto.obsolete_factions &= ~(1 << (factionID_ & 0x1F));
+            }
+            if (slot < 0x40) {
+                if (strlen(name) != 0
+                    && strcmp(name, proto.veh_name) != 0) {
+                    parse_says(0, proto.veh_name, -1, -1);
+                    if ((*PlayerFlagBlocks & 0x80) == 0) {
+                        popp(ScriptTxtID, EditorNamePopupLabel, 0,
+                             EditorNamePopupSprite, pop_wait);
+                    } else {
+                        popp(ScriptTxtID, EditorNamePopupAlienLabel, 0,
+                             EditorNamePopupAlienSprite, pop_wait);
+                    }
+                }
+            } else if (strlen(name) != 0
+                && (VehPrototypes[protoID_].flags & PROTO_CUSTOM_NAME_SET)) {
+                proto.flags |= PROTO_CUSTOM_NAME_SET;
+                strcpy(proto.veh_name, name);
+            }
+            synch_proto(slot);
+            protoID_ = slot;
+            return 1;
+        }
+        ++scan;
+    } while (scan < 0x80);
+
+    // ---- no exact match: fall back to the currently-selected slot ---------
+    if (protoID_ < 0x40) {
+        const VehPrototype &current = VehPrototypes[protoID_];
+        bool current_match = protoChassisType_ == current.chassis_id
+            && protoWeaponType_ == current.weapon_id
+            && protoArmorType_ == current.armor_id
+            && protoAbilityFlags_ == current.ability_flags
+            && protoReactorType_ == current.reactor_id;
+        if (current_match) {
+            if (strlen(name) == 0) {
+                return 0;
+            }
+            if (strcmp(name, current.veh_name) == 0) {
+                return 0;
+            }
+            parse_says(0, current.veh_name, -1, -1);
+            if ((*PlayerFlagBlocks & 0x80) == 0) {
+                x_pop_caption_label(EditorNameXPopCaption,
+                                    EditorNameXPopSprite, pop_wait);
+            } else {
+                x_pop_caption_label(EditorNameXPopAlienCaption,
+                                    EditorNameXPopAlienSprite,
+                                    pop_wait);
+            }
+            return 0;
+        }
+
+        // The components changed under this slot: take the first own slot
+        // this faction marked obsolete that carries nothing live, else the
+        // last inactive one, and ask before its type is overwritten.
+        int own = factionID_ * 0x40;
+        unsigned char *flags_walk =
+            reinterpret_cast<unsigned char *>(&VehPrototypes[own].flags);
+        int mask = 1 << (factionID_ & 0x1F);
+        int checked = 0;
+        do {
+            if ((flags_walk[-4] & mask) != 0
+                && PlayersData[factionID_].proto_id_active[own] == 0
+                && PlayersData[factionID_].proto_id_queue[own] == 0) {
+                protoID_ = own;
+                break;
+            }
+            if ((*flags_walk & PROTO_ACTIVE) == 0) {
+                protoID_ = own;
+            }
+            ++checked;
+            flags_walk += 0x34;
+            ++own;
+        } while (checked < 0x40);
+
+        if (protoID_ < 0x40) {
+            parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
+            if ((*PlayerFlagBlocks & 0x80) == 0) {
+                popp(ScriptTxtID, EditorTypePopupLabel, 0,
+                     EditorTypePopupSprite, pop_wait);
+            } else {
+                popp(ScriptTxtID, EditorTypePopupAlienLabel, 0,
+                     EditorTypePopupAlienSprite, pop_wait);
+            }
+            return 0;
+        }
+    }
+
+    // ---- the settled slot holds a DIFFERENT design: search for the best
+    //      replacement and, if needed, confirm overwriting it --------------
+    if ((VehPrototypes[protoID_].flags & PROTO_ACTIVE) != 0
+        && (protoChassisType_ != VehPrototypes[protoID_].chassis_id
+            || protoWeaponType_ != VehPrototypes[protoID_].weapon_id
+            || protoArmorType_ != VehPrototypes[protoID_].armor_id
+            || protoAbilityFlags_ != VehPrototypes[protoID_].ability_flags
+            || protoReactorType_ != VehPrototypes[protoID_].reactor_id)) {
+        int search = factionID_ * 0x40;
+        char *category_walk =
+            reinterpret_cast<char *>(&VehPrototypes[search].unk_1);
+        char current_category =
+            VehPrototypes[protoID_].unk_1;
+        int replaced = 0;
+        int looked = 0;
+        do {
+            if ((category_walk[5] & PROTO_ACTIVE) == 0) {
+                protoID_ = search;
+                goto settled;
+            }
+            if ((category_walk[1] & (1 << (factionID_ & 0x1F))) != 0
+                && (*category_walk == current_category
+                    || PlayersData[factionID_].proto_id_active[search] == 0)
+                && PlayersData[factionID_].proto_id_active[search] == 0) {
+                if (PlayersData[factionID_].proto_id_queue[search] == 0) {
+                    protoID_ = search;
+                    replaced = 1;
+                } else if (replaced == 0 && *category_walk == current_category) {
+                    protoID_ = search;
+                }
+            }
+            category_walk += 0x34;
+            ++looked;
+            ++search;
+        } while (looked < 0x40);
+
+        if (replaced == 0) {
+            if (PlayersData[factionID_].proto_id_active[protoID_] != 0
+                && (VehPrototypes[protoID_].flags & PROTO_ACTIVE) != 0) {
+                parse_says(0, VehPrototypes[protoID_].veh_name, -1, -1);
+                parse_num(0, PlayersData[factionID_].proto_id_active[protoID_]);
+                char *label;
+                char *sprite;
+                if ((*PlayerFlagBlocks & 0x80) == 0) {
+                    label = EditorOverwritePopupLabel;
+                    sprite = EditorOverwritePopupSprite;
+                } else {
+                    label = EditorOverwritePopupAlienLabel;
+                    sprite = EditorOverwritePopupAlienSprite;
+                }
+                if (popp(ScriptTxtID, label, 0, sprite, pop_wait) == 0) {
+                    return 0;
+                }
+                if (!IsMultiplayerNet) {
+                    reinterpret_cast<retire_proto_seam>(static_cast<unsigned long>(
+                        0x0057F1D0))(protoID_, factionID_);
+                } else {
+                    typedef int(__cdecl *diplo_lock_seam)(int);
+                    if (reinterpret_cast<diplo_lock_seam>(
+                            static_cast<unsigned long>(0x00539820))(0x32)
+                        != 0) {
+                        return 0;
+                    }
+                    message_data(0x2415, 0, protoID_, factionID_, 0, 0);
+                    NetDaemonNet.await_exec(0);
+                    reinterpret_cast<diplo_unlock_seam>(
+                        static_cast<unsigned long>(0x005398C0))();
+                }
+            }
+        }
+    }
+
+settled:
+    make_proto(protoID_, protoChassisType_, protoWeaponType_, protoArmorType_,
+               protoAbilityFlags_, protoReactorType_);
+    VehPrototypes[protoID_].flags &= 0x3F;
+    if (strlen(name) == 0) {
+        // No name typed: generate one straight into the name buffer and trim
+        // it to the field's 31 characters.
+        reinterpret_cast<name_proto_seam>(static_cast<unsigned long>(0x0057E040))(
+            name, protoID_, factionID_, protoChassisType_, protoWeaponType_,
+            protoArmorType_, protoAbilityFlags_, protoReactorType_);
+        name[0x1F] = '\0';
+        VehPrototypes[protoID_].flags &= 0xFD;
+    } else {
+        char generated[256];
+        reinterpret_cast<name_proto_seam>(static_cast<unsigned long>(0x0057E040))(
+            generated, protoID_, factionID_, protoChassisType_, protoWeaponType_,
+            protoArmorType_, protoAbilityFlags_, protoReactorType_);
+        if (strcmp(generated, name) != 0) {
+            VehPrototypes[protoID_].flags |= PROTO_CUSTOM_NAME_SET;
+        }
+    }
+    strcpy(VehPrototypes[protoID_].veh_name, name);
+    synch_proto(protoID_);
+    reinterpret_cast<prune_protos_seam>(static_cast<unsigned long>(0x0057F4B0))(
+        factionID_, protoID_, 1);
+    return 1;
+}
+
+
+
+// ORIGINAL: 0x0043DD50 ?draw_flash@DesignWin@@QAEXXZ 0x0043DD50-0x0043E486;0x006546EC-0x00654709 FILE
+// size      1875 bytes
+// prototype void (__thiscall ?draw_flash@DesignWin@@QAEXXZ)(DesignWin* this)
+// callers   0   call targets   19
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005A63D0 0x005B9F20 0x005D8000 0x005E2DD3 0x005E3820 0x005DAC70 0x005DACB0 0x005DD130 0x005DDAB0 0x00618EA0 0x00618EE0 0x00618F40 0x00619280 0x006453E0 0x00645470 0x00645DD0 0x0064FC88
+// Homed from src/unrecovered/0043dd50.cpp: publish the editor selection into
+// the vehdraw stat block, then draw the preview panel - the framed box, the
+// spinning unit, its generated or typed name, and its stat line. Ends by
+// driving draw_stack, whose panel sits under this one.
+void DesignWin::draw_flash() {
+    char *name = reinterpret_cast<char *>(&field_14220_);
+
+    *VehDrawChassis = static_cast<unsigned char>(protoChassisType_);
+    *VehDrawWeapon = static_cast<unsigned char>(protoWeaponType_);
+    *VehDrawArmor = static_cast<unsigned char>(protoArmorType_);
+    *VehDrawReactor = static_cast<unsigned char>(protoReactorType_);
+    *VehDrawAbilityFlags = static_cast<int>(protoAbilityFlags_);
+    *VehDrawComponentTail = 0xFF;
+
+    Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    int shown = static_cast<int>(field_CE0_);
+    if (shown == 0x3F
+        && protoChassisType_ == VehPrototypes[protoID_].chassis_id
+        && protoWeaponType_ == VehPrototypes[protoID_].weapon_id
+        && protoArmorType_ == VehPrototypes[protoID_].armor_id
+        && protoReactorType_ == VehPrototypes[protoID_].reactor_id
+        && protoAbilityFlags_ == VehPrototypes[protoID_].ability_flags) {
+        shown = static_cast<int>(protoID_);
+    }
+
+    canvas->set_clip(reinterpret_cast<RECT *>(&field_B1C_));
+    RECT rc = *reinterpret_cast<RECT *>(&field_B1C_);
+    canvas->box_sprite(&rc, &InterfaceBoxStyles[3]);
+
+    rc.left += 3;
+    rc.right -= 3;
+    rc.top += 3;
+    rc.bottom -= 3;
+    canvas->box_sprite(&rc, &InterfaceBoxStyles[0]);
+
+    rc.left += 3;
+    rc.right -= 3;
+    rc.top += 3;
+    rc.bottom -= 3;
+
+    // The entry under the cursor resolves to a drawable unit only while its
+    // prototype is active, with its tech owned for own-faction entries.
+    bool drawable = true;
+    if (shown != 0x3F) {
+        if ((VehPrototypes[shown].flags & PROTO_ACTIVE) == 0) {
+            drawable = false;
+        } else if (shown >> 6 == 0
+            && !has_tech(VehPrototypes[shown].preq_tech, factionID_)) {
+            drawable = false;
+        }
+    }
+    if (shown < 0) {
+        drawable = false;
+    }
+
+    if (drawable) {
+        Font title_font;
+        Font stat_font;
+        int face_size = (WinScreenWidth == 0x320) ? 10 : 12;
+        stat_font.init(DefaultFontFace, face_size, 0);
+        title_font.init(DefaultFontFace, 12, 1);
+
+        int top = rc.top;
+        int left = rc.left;
+        int right = (rc.right - left + 3) / 2 + left - 3;
+        int centre_x = (right + left) / 2;
+        int bottom = rc.bottom;
+        int centre_y = (top + bottom) / 2;
+
+        int unit_id = veh_fake(shown, factionID_);
+        veh_draw(canvas, unit_id, centre_x - 0x32, centre_y - 0x25, 0, 0x48, 0);
+
+        rc.right = right + (right - left + 3);
+        rc.top = top;
+        rc.left = left + (right - left + 3);
+        rc.bottom = bottom;
+        rc.top = top + 3;
+
+        StringTemp[0] = '\0';
+        if (shown == 0x3F) {
+            if (strlen(name) == 0) {
+                // Unhomed name_proto (0x0057E040) - see design_it.
+                typedef void(__cdecl *name_proto_seam)(char *, int, int, int,
+                                                       int, int, int, int);
+                reinterpret_cast<name_proto_seam>(
+                    static_cast<unsigned long>(0x0057E040))(
+                    StringTemp, 0x3F, factionID_, protoChassisType_,
+                    protoWeaponType_, protoArmorType_, protoAbilityFlags_,
+                    protoReactorType_);
+            } else {
+                strcat(StringTemp, name);
+            }
+        } else {
+            int ability_id = *reinterpret_cast<const short *>(
+                ProtoAbilityIdBase + shown * 0x34);
+            strcat(StringTemp, VehPrototypes[ability_id].veh_name);
+        }
+        string_upper_slot()(StringTemp);
+
+        canvas->set_text_color(*StackTitleColorMain, *StackTitleColorShadow,
+                               1, 1);
+        canvas->set_font(&title_font, 0, 0, 0);
+
+        int wrap_height = canvas->wrap_cent(StringTemp, &rc);
+        rc.right -= 2;
+        rc.top = wrap_height + 2;
+        rc.left += 2;
+        rc.bottom -= 2;
+        rc.bottom -= stat_font.line_advance();
+        canvas->set_font(&stat_font, 0, 0, 0);
+
+        canvas->set_text_color(*StackTextColorMain, *StackTextColorShadow, 1, 1);
+
+        int line_top = rc.top;
+        int line_left = rc.left;
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, EditorOpenParen);
+        int ability_id = *reinterpret_cast<const short *>(
+            ProtoAbilityIdBase + shown * 0x34);
+        // Unhomed say_stats_3 (0x0057D7D0) - see draw_stack.
+        typedef void(__cdecl *say_stats_3_seam)(char *, unsigned int);
+        reinterpret_cast<say_stats_3_seam>(static_cast<unsigned long>(0x0057D7D0))(
+            StringTemp, static_cast<unsigned int>(ability_id));
+        int ability_bit = 0;
+        for (int *label = AbilityLabelIds; label < AbilityLabelIdsEnd;
+             ++label, ++ability_bit) {
+            if (VehPrototypes[ability_id].ability_flags & (1 << ability_bit)) {
+                if (strlen(StringTable.get(*label)) != 0) {
+                    strcat(StringTemp, EditorColonSpace);
+                    strcat(StringTemp, StringTable.get(*label));
+                }
+            }
+        }
+        strcat(StringTemp, EditorCloseParen);
+        line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
+                                     rc.right - rc.left);
+
+        if (shown != 0x3F) {
+            char digits[0x20];
+            StringTemp[0] = '\0';
+            _itoa(PlayersData[factionID_].proto_id_active[shown], digits, 10);
+            strcat(StringTemp, digits);
+            strcat(StringTemp, SpaceText);
+            strcat(StringTemp,
+                   StringTable.get((int)reinterpret_cast<LPSTR *>(
+                       Labels.strings_ptr)[0x3A0]));
+            line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
+                                         rc.right - rc.left);
+
+            StringTemp[0] = '\0';
+            _itoa(PlayersData[factionID_].proto_id_queue[shown], digits, 10);
+            strcat(StringTemp, digits);
+            strcat(StringTemp, SpaceText);
+            strcat(StringTemp,
+                   StringTable.get((int)reinterpret_cast<LPSTR *>(
+                       Labels.strings_ptr)[0x3A1]));
+            line_top = canvas->wrap_cent(StringTemp, line_left, line_top,
+                                         rc.right - rc.left);
+
+            if (VehPrototypes[shown].obsolete_factions
+                & (1 << (factionID_ & 0x1F))) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, StringTable.get((int)reinterpret_cast<LPSTR *>(
+                    Labels.strings_ptr)[0x390]));
+                string_upper_slot()(StringTemp);
+                canvas->wrap_cent(StringTemp, line_left, line_top,
+                                  rc.right - rc.left);
+            }
+        }
+    }
+
+    MainInterfaceGlobal.soft_update(reinterpret_cast<RECT *>(&field_B1C_));
+    canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    draw_stack();
+}
