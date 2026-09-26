@@ -352,7 +352,7 @@ int DesignWin::on_iface_button_pressed(int button_id) {
 // slide and show the window - or close it all back down.
 void DesignWin::on_status(int mode) {
     if (mode != 0) {
-        static_cast<GraphicWin *>(this)->draw_contents();
+        static_cast<GraphicWin *>(this)->on_redraw();
         FlatButton *button = flatButtons_;
         int count = 0x19;
         do {
