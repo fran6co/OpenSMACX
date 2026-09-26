@@ -413,7 +413,9 @@ def test_generation_damage_is_observed(tmp_path, old, new):
 # three-vertex land fans, sixteen ocean vertices, rotated coast quads,
 # light-array strides, all 53 coast-remap bytes and landmark rotations.
 # Receiver checks cover land/moisture/farm/rockiness, landmarks, fungus,
-# road/magtube, river, selected improvements, wrecks and grid overlays.
+# jungle (the dead a5 diagonal slot versus the live 8-neighbour mask),
+# road/magtube edges and base selection, river, selected improvements,
+# wrecks and grid overlays.
 # The work scan checks both missing-owner routes for factions 1..7 and
 # asymmetric ordinary treaty rows/columns, with actual Veh declarations
 # and original-address offset assertions. Field controls distinguish visibility,
@@ -1456,6 +1458,46 @@ int main() {
         check(g_FUNGUS_TEXTURES[4].key5 == 0);
     }
 
+    // ---- the jungle overlay: base-radius mask row, keyed quad ----
+    // Original 464E24..464EA2 collects a DIAGONAL neighbour mask into the
+    // dead a5 slot, then 464EB6 indexes the receiver with the EARLIER
+    // 8-neighbour base-radius mask. A non-diagonal base-radius neighbour
+    // selects its row while the diagonal mask stays empty, and a diagonal
+    // neighbour must not redirect the row through the dead a5 slot.
+    {
+        treset();
+        tile->climate = 0x60 | 0;
+        tile->bit2 = 0x4;               // base radius in range: local_30
+        map_tiles()[1].climate = 0x60;  // RadiusBase[1] = (2,0): mask bit 2
+        map_tiles()[1].bit2 = 0x4;      // land neighbour with base radius
+        LandMoistureTable_storage[4][0] = 7;   // row 7 for mask 4
+        gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
+        check(g_JUNGLE_LAND_TEXTURES[7].key4 == 1);
+        check(g_JUNGLE_LAND_TEXTURES[0].key4 == 0);  // not the empty diagonal mask
+        treset();
+        tile->climate = 0x60 | 0;
+        tile->bit2 = 0x4;
+        map_tiles()[4].climate = 0x60;  // RiverStep[1] = (1,1): a5 bit 1
+        map_tiles()[4].bit2 = 0x4;      // and RadiusBase[2]: mask bit 3
+        LandMoistureTable_storage[8][0] = 6;   // 8-neighbour row 6
+        LandMoistureTable_storage[8][1] = 2;   // rotation 2
+        LandMoistureTable_storage[2][0] = 1;   // dead a5 row: must not win
+        gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 0, 0, 100, 100);
+        check(g_JUNGLE_LAND_TEXTURES[6].key4 == 1);
+        check(g_JUNGLE_LAND_TEXTURES[1].key4 == 0);
+        check(draws.size() == 5);
+        const Draw &d = draws.back();
+        check(d.kind == "key4" && d.receiver == &g_JUNGLE_LAND_TEXTURES[6]);
+        check(d.vertices.size() == 4 && d.light.empty());
+        for (int corner = 0; corner < 4; ++corner) {
+            const int vertex = ((2 + corner) & 3) * 3 + 1;
+            check(d.vertices[corner].x == 164);
+            check(d.vertices[corner].y == 100 + corner * 16);
+            check(d.uv[corner].x == 10 + vertex * 2);
+            check(d.uv[corner].y == 11 + vertex * 2);
+        }
+    }
+
     // ---- the road/magtube edges and the base selection ----
     {
         treset();
@@ -1477,6 +1519,25 @@ int main() {
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 0x21, 0, 0, 100, 100);
         check(g_MAGTUBE_TEXTURES[1 + ((2 + 2) & 7)].trans == 1);
         check(g_ROAD_TEXTURES[1].trans == 0);
+        // no road/base neighbours at all: the base selection draws the
+        // plain centre tile from row 0 of the matching family
+        treset();
+        tile->climate = 0x60 | 0;
+        tile->bit = 0x4;
+        gen_terrain_poly(&buffer, &window, 5, 1, 0, 0x21, 0, 0, 100, 100);
+        check(g_ROAD_TEXTURES[0].trans == 1);
+        check(g_MAGTUBE_TEXTURES[0].trans == 0);
+        for (int i = 1; i < 9; ++i) {
+            check(g_ROAD_TEXTURES[i].trans == 0);
+            check(g_MAGTUBE_TEXTURES[i].trans == 0);
+        }
+        // a magtube on this tile (bit 3) flips the row-0 family too
+        treset();
+        tile->climate = 0x60 | 0;
+        tile->bit = 0xc;
+        gen_terrain_poly(&buffer, &window, 5, 1, 0, 0x21, 0, 0, 100, 100);
+        check(g_MAGTUBE_TEXTURES[0].trans == 1);
+        check(g_ROAD_TEXTURES[0].trans == 0);
     }
 
     // ---- fresh river-neighbour mask, plus independent source overlay ----
@@ -1847,6 +1908,9 @@ def test_actual_land_fan_tables():
     ('g_TER1_CONDENSER_SPRITE.draw(', 'g_TER1_BUNKER_SPRITE.draw('),
     ('(tile->climate & 7) * 2', '(tile->climate & 7) * 1'),
     ('g_RIVER_TEXTURES[uVar12]', 'g_RIVER_TEXTURES[0]'),
+    ('g_JUNGLE_LAND_TEXTURES[LandMoistureTable[local_2c][0]]',
+     'g_JUNGLE_LAND_TEXTURES[LandMoistureTable[a5 & 0xff][0]]'),
+    ('g_ROAD_TEXTURES[0].draw_trans(', 'g_ROAD_TEXTURES[1].draw_trans('),
     ('LandCornerXStep[vertex] * local_78 + a9',
      'LandCornerXStep[vertex] * local_78 + a10'),
     ('LandCornerUVs[uv].y', 'LandCornerUVs[uv].x'),

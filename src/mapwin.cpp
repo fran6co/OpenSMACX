@@ -2023,8 +2023,9 @@ Purpose: Render one map tile's terrain polygon stack - the base land or
          terrain scan 0x00469E47) push ten words and clean up 0x28 bytes
          themselves, so the body is the FREE __cdecl function those sites
          spell; the catalogued member mangle below remains the identity of
-         record for the span (mapwin.h and pending_bodies.cpp document the
-         reinterpretation).
+         record for the span (mapwin.h documents the reinterpretation; the
+         former pending_bodies.cpp forwarder was removed when this body
+         landed, journal 64).
 
          RECEIVER EVIDENCE (journal 55, terrain-poly-receivers-20260921,
          re-verified per site against the pinned image): every one of the
@@ -2063,7 +2064,7 @@ Purpose: Render one map tile's terrain polygon stack - the base land or
          0x4654EC-0x46555F the four-corner river mask (neighbour
          tile->bit & BIT_RIVER) that selects g_RIVER_TEXTURES[mask].
 // ORIGINAL: 0x004632D0 ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z 0x004632D0-0x00466C92;0x00655920-0x00655932 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4632D0..466C92 and unwind655920..655932; retained src/unrecovered/004632d0.cpp records the same identity and spans, including historical missing-receiver analysis.", "Original4712D0..471316 explicitly converts its nullable MapWin argument to Buffer before forwarding ten arguments to this renderer. Original469190..469718 and40F0F0..40FCB3 also supply explicit buffer/window arguments.", "Original texture/sprite call sites require genuine object receivers; declaring Random local_rand gives the compiler ownership of constructor, destructor and exception cleanup. Original464D12..464D21 copies four shared corner vertices for the map-radius and scroll consumers."], "reason": "The source-owned terrain renderer is a cdecl free function with explicit Buffer and nullable MapWin arguments, not the catalogue member spelling. It owns the compiled candidate while the original seed remains provenance; storage, lifecycle and dependent-renderer discoveries remain unfinished recovery obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4632D0..466C92 and unwind655920..655932; the retired seed git:c4688c7b:src/unrecovered/004632d0.cpp records the same identity and spans, including historical missing-receiver analysis (its durable facts live in the TRIED note below; the seed file's deletion and this body's landing are one change).", "Original4712D0..471316 explicitly converts its nullable MapWin argument to Buffer before forwarding ten arguments to this renderer. Original469190..469718 and40F0F0..40FCB3 also supply explicit buffer/window arguments.", "Original texture/sprite call sites require genuine object receivers; declaring Random local_rand gives the compiler ownership of constructor, destructor and exception cleanup. Original464D12..464D21 copies four shared corner vertices for the map-radius and scroll consumers."], "reason": "The source-owned terrain renderer is a cdecl free function with explicit Buffer and nullable MapWin arguments, not the catalogue member spelling. It owns the compiled candidate while the original seed remains provenance; storage, lifecycle and dependent-renderer discoveries remain unfinished recovery obligations."}
 // symbol    ?gen_terrain_poly@@YAHPAVBuffer@@PAVMapWin@@HHHHHHHH@Z
 // size      14804 bytes
 // prototype int (__cdecl ?gen_terrain_poly@MapWin@@QAAHPAUBuffer@@PAUMapWin@@HHHHHHHH@Z)(Buffer*, MapWin*, int, int, int, int, int, int, int, int)
@@ -2071,14 +2072,20 @@ Purpose: Render one map tile's terrain polygon stack - the base land or
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00462190 0x0046FE70 0x00470790 0x004E3A50 0x004E3EF0 0x004E6E50 0x0050BA00 0x00591B50 0x00592030 0x00592140 0x005BF010 0x005BF1F0 0x005BFE90 0x005C4FD0 0x005DA680 0x005DAC70 0x005DACB0 0x005DD130 0x005E15F0 0x005E4B9A 0x005E5833 0x0061A760 0x0061B1F0 0x0061C090 0x0061E540 0x00622DB0 0x006233C0 0x006239E0 0x00623F80 0x00624670 0x00625730 0x00625740 0x00625750 0x00625770 0x00644F3A 0x006453E0 0x00645470 0x0064FC88
-// TRIED (seed src/unrecovered/004632d0.cpp, retired atomically by this
-//            body): the 113 fixed globals it reads are named in sprite.h /
+// TRIED (seed git:c4688c7b:src/unrecovered/004632d0.cpp, retired
+//            atomically by this body): the 113 fixed globals it reads are
+//            named in sprite.h /
 //            texture.h (the terrain Sprite/Texture band
 //            0x0075B098..0x007AD1B0, ~50 of them the +8
 //            `&name[k].cTransparentIndex_` companion of a named array);
 //            CornerOffsetX/Y, CornerLightTable, AltLightBit1/2/200 and
 //            AltDirectionTable are bound in map.h and above in this file;
 //            the rest are the named bindings above. Its BLOCKED note's
+//            remaining unnamed .rdata/BSS list (684730, 685478..,
+//            685A98.., 686090.., 6861F0, 686354, 68E564.., 952832..,
+//            96C9E1, 97D04A, 9A6490.., 9AB88C, 9BB548) is discharged by
+//            the bounded RECOVERY_OBJECT tables above this body, not by
+//            fresh fixed-address bindings. Its BLOCKED note's
 //            56-call count was corrected to the machine's 44. The SEH
 //            frame and the Random ctor/dtor calls are the compiler's, from
 //            declaring `Random local_rand;` - the note's own TRIED result.
