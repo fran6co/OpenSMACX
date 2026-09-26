@@ -1,0 +1,22 @@
+{
+  "event_id": "50d927bd498f4f9aca88283f38c0d57f8ef4553005211fc9826f3210e02e4cab",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "terrain-poly-transcription-refresh-20260926",
+    "evidence": [
+      "Standing authorization d6b6ed4c (events 55/56) recorded the 44-site receiver table with instruction anchors; since then the terrain-sheet loaders, the landmark owners and the receiver-band named bindings landed (2ffb7f62 and prior), so the transcription consumes existing named receivers instead of introducing new fixed-address bindings.",
+      "Extent caveats from event 55 still bind: resolve g_ROCKY_TEXTURES/g_FARM_TEXTURES extents from texture.cpp's real definitions before writing indexed accesses (site 0x004643A9 indexes to 6 against a declared [4]; site 0x00464215 to 9 against [9] if Random::get(0,2) is inclusive); the three scaffold-empty neighbour-mask loops (0x464E24-0x464EA2, 0x464F5B-0x464FD6, 0x4654EC-0x46555F) must be restored; the cold EH span 0x00655920-32 holds only unwind funclets; use the machine call-site count 44.",
+      "The seed src/unrecovered/004632d0.cpp (3997 lines) is the transcription base and retires atomically with the real body; the mapwin.cpp:1251 comment records the retained renderer obligation this batch discharges; pending_bodies.cpp carries the forwarder to remove once mapwin.cpp defines it."
+    ],
+    "hypothesis": "gen_terrain_poly (0x004632D0-0x00466C92, 14786 bytes) is now transcribable end-to-end on the current tree: every one of its 44 blitter receivers is derived and named (journal event 55's table), the terrain-band globals it reads are landed as named bindings in mapwin.cpp, and the ten-word free __cdecl ABI is established image-wide (gen_tile/gen_map/gen_radius call sites).",
+    "kind": "discovery"
+  },
+  "previous_event": "cda4943c43dc8993c65769e9e5dd9f569ee1c79d53d8707bfa054e43e6168bdf",
+  "request_id": "terrain-poly-transcription-refresh-20260926",
+  "schema_version": 1,
+  "sequence": 135,
+  "stream": "task:vector-value-semantics"
+}
