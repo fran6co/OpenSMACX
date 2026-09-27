@@ -1,0 +1,20 @@
+{
+  "event_id": "c1ddfbaadb374457b404cddf91c54bae3871fcbee8e834a287ea5814bde315df",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Large band third c (re-appended from the worktree fork onto the canonical chain; discovery 698d504a): the ~126 seeds of /tmp/large-band-c.txt. Executed as 23 retirements (22 stale artifacts against already-homed bodies across nine owning TUs, verified per-address, plus one new body: ListBox::UNK2 0x60C7D0's wrapped-selection walk, unclaimed MISMATCH 0.86) and two full transcriptions (CheckBox/RadioButton::calculate_dimensions) completed, measured, then WITHDRAWN on the pending-body collision - their texts preserved durably at build/recovery/parts/ for the forwarder sweep that owns their blockers. The close_sat record-block the worker discovered is fixed on master (18dc8256). Reviewer-approved with the new body verified instruction-level and all 23 retirements confirmed claim-free."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7c55ca17c3135aa584ea4812256c875836597003d335e9cbbb45403f0a5330c2",
+  "request_id": "w6-lc-scope",
+  "schema_version": 1,
+  "sequence": 169,
+  "stream": "task:vector-value-semantics"
+}
