@@ -329,11 +329,6 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
 //             world_rocky in src/map.cpp - the forwarders are gone rather
 //             than duplicated beside the real definitions.
 
-// DeletionList::add_deletion (0x0052DE70) - FILE-tier in
-// src/unrecovered/0052de70.cpp. veh_kill (veh.cpp) is its first caller, so the
-// declaration in deletionlist.h needs a definition to link against; the
-// DeletionList pass should replace this forwarder with the homed body.
-//
 // THE PENDING_BODY CEILING: 252 -> 253, this batch. Three forwarders added -
 // battle_kill (0x00505D80), battle_fight's seven-parameter overload
 // (0x00506AF0) and the add_deletion below - and two retired, veh_kill
@@ -341,11 +336,6 @@ int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
 // moved into src/veh.cpp. All three new targets are FILE-tier in the archives
 // (no claim, so address_index's archive-only floor stays at 0); tools/
 // address_index.py --check reports 0 landmines.
-void DeletionList::add_deletion(int veh_id) {
-    typedef void(__fastcall *pending)(DeletionList *, void *, int);
-    PENDING_BODY(0x0052DE70, pending)(this, nullptr, veh_id);
-}
-
 // ?battle_kill@@YAHHPAHPAHPAHHH@Z at 0x00505D80, 938 bytes, FILE-tier in
 // src/unrecovered/00505d80.cpp. battle_kill_chaff (veh.cpp) is its one caller
 // this batch reached; the declaration is local to veh.cpp, so retiring this
@@ -507,11 +497,6 @@ int NetDaemon::order_veh(int veh_id, int payload_10, int payload_1C) {
                                              payload_1C);
 }
 
-void FX::play(int effect) {  // 0x00446A00
-    typedef void(__fastcall *pending)(FX *, void *, int);
-    PENDING_BODY(0x00446A00, pending)(this, nullptr, effect);
-}
-
 void PrefWin::display(int page) {  // 0x0048FA00
     typedef void(__fastcall *pending)(PrefWin *, void *, int);
     PENDING_BODY(0x0048FA00, pending)(this, nullptr, page);
@@ -535,11 +520,6 @@ void StatusWin::set_title(int title_id) {
 void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
     typedef void(__fastcall *pending)(Datalink *, void *, unsigned int, int);
     PENDING_BODY(0x00429180, pending)(this, nullptr, topic, index);
-}
-
-void Gamma::adjust_palette() {  // 0x005C9520
-    typedef void(__fastcall *pending)(Gamma *, void *);
-    PENDING_BODY(0x005C9520, pending)(this, nullptr);
 }
 
 void InfoWin::timer_proc(int a1) {  // 0x00459150
@@ -1163,16 +1143,6 @@ void MapWin::draw_wars() {
 void MapWin::draw_base_dest(int draw_type) {  // 0x00467970
     typedef void(__fastcall *pending)(MapWin *, void *, int);
     PENDING_BODY(0x00467970, pending)(this, nullptr, draw_type);
-}
-
-// ?draw_cursor@MapWin@@QAEXXZ at 0x0046AD60 - the per-window cursor repaint,
-// distinct from the free ?draw_cursor@@YAXXZ at 0x0046AE00 that mapwin.cpp
-// defines. Console::set_cursor, move_cursor, prev_cursor and set_view call it
-// on the current map window; its own body is still
-//             body in src/unrecovered/0046ad60.cpp
-void MapWin::draw_cursor() {  // 0x0046AD60
-    typedef void(__fastcall *pending)(MapWin *, void *);
-    PENDING_BODY(0x0046AD60, pending)(this, nullptr);
 }
 
 void PlanWin::on_redraw() {  // 0x0048AF30
@@ -1927,14 +1897,6 @@ int ServiceStruct::add(int slot) {
     // stringstruct.cpp's class. Net's enumeration callback appends through it.
     typedef int(__fastcall *pending)(ServiceStruct *, void *, int);
     return PENDING_BODY(0x00401760, pending)(this, nullptr, slot);
-}
-
-int DeletionList::convert(int a1, int a2) {
-    // ?convert@DeletionList@@QAEHHH@Z at 0x0052DDC0, archived beside
-    // deletionlist.cpp's class. NetDaemon::fixup_message reaches it through
-    // its lock table at this+0x158C.
-    typedef int(__fastcall *pending)(DeletionList *, void *, int, int);
-    return PENDING_BODY(0x0052DDC0, pending)(this, nullptr, a1, a2);
 }
 
 int AlphaNet::setup(int option) {  // ?setup@AlphaNet@@QAEHH@Z at 0x004E31E0
