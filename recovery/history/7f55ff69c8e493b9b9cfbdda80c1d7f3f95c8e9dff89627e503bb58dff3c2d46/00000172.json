@@ -1,0 +1,20 @@
+{
+  "event_id": "4e78589e7e35949bccb84aa638745463508f34716a7acd67bee345ff264c6af2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Wave 7 large-band third (re-appended from the worktree fork onto the canonical chain; discovery b07f023f): the ~118 seeds of /tmp/large2-a.txt. Executed as 12 bodies (MapWin::UNK5 through the Console member model, AlphaMenu::compute with the MenuEntry byte-test kept raw, the Credits ctor filling its own placeholder, the Popup item-back draw, the SelectPartWin ctor plus its five-part draw family freeing the member dispatch, DiploWin::on_key_click with the VCall shims replaced by real slot virtuals, and UV2Player::play with the COM/DirectDraw chain) - all unclaimed transcriptions, every seed preserved (all twelve record attempts measured MISMATCH). Four blockers journaled as task discoveries (QuayleWin's ctor declaration, the PickTech draw home, the sentinel owners, the Console vbptr finding); the raw vptr stores and ComVCall scaffold are documented restoration obligations. Reviewer-approved with all four sampled bodies deep-verified."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "50515f7b27b6218e6aa2305f469865d00fd6f139f8bc74835c3ed2a25ab3d85d",
+  "request_id": "w7-ma-scope",
+  "schema_version": 1,
+  "sequence": 172,
+  "stream": "task:vector-value-semantics"
+}
