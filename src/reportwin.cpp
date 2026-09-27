@@ -721,6 +721,10 @@ common_tail:
     }
     buffer->box_sprite(work_rect, box_style);
     buffer->restore_clip();
+}
+
+
+/*
 Purpose: Advance the satellite orbital overlay one tick: clear the orbit
          rectangle, integrate the sixteen satellites' positions from their
          velocities and the ReportWin's own step scalar at 0xEE30, decode
