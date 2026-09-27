@@ -1,0 +1,20 @@
+{
+  "event_id": "41f14c97864746bf9dae59bbada96e9f475957169117cf54b4ce49d2f44f10c4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Wave 7 large-band third (re-appended from the worktree fork onto the canonical chain; discovery b07f023f): the ~118 seeds of /tmp/large2-b.txt. Executed as 2 claim migrations (X_text_open 51/51 and tech_advance 126/126 - the latter byte-validating the council-tables-are-PlayerData-fields resolution: diplo_treaties +0x18, unk_29 +0x400, unk_30 +0x42C, faction stride 0x20CC), the say trio honestly left unretired (fresh MISMATCH on receiver hoisting; mechanical fix queued), three unclaimed bodies (bases_reset, map_data with the seed's Ghidra frame-extent artifact corrected to the exact four-buffer tiling, council_get_vote at 0.927), two link-only placeholders (wants_prop, tech_selection), and game_io attempted-then-withdrawn (0.017 vs the seed's near-match). The designwin check-source findings are pre-existing on master and stay for their owner. Reviewer-approved with the PlayerData resolution independently offset-verified and map_data's tiling confirmed gap-free against the disassembly."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0d0b9a45fa2507afcde3df88a9f9f05086fe2acc630cf316d5eeb6191db42674",
+  "request_id": "w7-mb-scope",
+  "schema_version": 1,
+  "sequence": 174,
+  "stream": "task:vector-value-semantics"
+}
