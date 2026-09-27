@@ -1,0 +1,20 @@
+{
+  "event_id": "0d0b9a45fa2507afcde3df88a9f9f05086fe2acc630cf316d5eeb6191db42674",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Wave 7 large-band third (re-appended from the worktree fork onto the canonical chain; discovery b07f023f): the ~118 seeds of /tmp/large2-c.txt. Executed as 6 retirements - Buffer::draw_dest_source 0x5D8DF0 promoted to the real declared member and recorder-banked BYTE_EXACT 76/76 (resolving the claim dropped in the 2026-08-16 polymorphic-Buffer era; the PAV1@ back-reference mirrors the homed sibling) plus five unclaimed transcriptions of the view-matrix tier with named file-local bindings keeping the anonymous ceiling at 0 (the scale builder, the bbox projector, the voxel walk, the WinCallbackWindow display dispatch with its documented return-value caveat, the wide-line filler); the frameless-/Oy originals' divergence documented as structural cause. Blockers journaled: the three byte-exact Buffer draw siblings with their promotion route, 22 pending-body promotions, the 22-header declaration list, the do_all_tasks name collision, the arithmetic-leaf wall. Reviewer-approved with the banked claim re-measured and all sampled bodies' bindings verified against image operands."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4e78589e7e35949bccb84aa638745463508f34716a7acd67bee345ff264c6af2",
+  "request_id": "w7-mc-scope",
+  "schema_version": 1,
+  "sequence": 173,
+  "stream": "task:vector-value-semantics"
+}
