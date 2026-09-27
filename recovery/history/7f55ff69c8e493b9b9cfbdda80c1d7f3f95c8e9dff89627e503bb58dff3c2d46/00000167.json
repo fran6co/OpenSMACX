@@ -1,0 +1,20 @@
+{
+  "event_id": "4a6a8c4c7516df5b2202b87e0fcf148f48956fd3084f96befef8b0680f21bed8",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "large-band-20260927",
+    "evidence": [
+      "Census of src/unrecovered at master 25c0645e: 765 files total; 376 in the 1000-2500 tier. The waves' established protocol chain governs (discovery 2778d0da -> event 143 claim policy -> forwarder departure rules -> tmp discipline)."
+    ],
+    "hypothesis": "The large band (376 seeds of 1000-2500 lines remaining in src/unrecovered) splits into three address thirds of ~125 each (/tmp/large-band-{a,b,c}.txt). Coverage protocol lands them by the nearest-owner rule with leaf_recoveries.cpp as the catch-all; the giants (2500+) stay for a later wave.",
+    "kind": "discovery"
+  },
+  "previous_event": "a252d76d3b54c816c22e50cbb37deb32f8aa1b82198690b42e829498cafafced",
+  "request_id": "large-band-20260927",
+  "schema_version": 1,
+  "sequence": 167,
+  "stream": "task:vector-value-semantics"
+}
