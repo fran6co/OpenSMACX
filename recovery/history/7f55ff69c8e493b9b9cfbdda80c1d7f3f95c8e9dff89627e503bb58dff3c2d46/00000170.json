@@ -1,0 +1,20 @@
+{
+  "event_id": "4d3e27322d981d5cc0911de98fb3a37b4109436fd3207f4839de5573f446bfe3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Large band third b (re-appended from the worktree fork onto the canonical chain; discovery 698d504a): the ~125 seeds of /tmp/large-band-b.txt. Executed as 11 rules-table bodies (X_text_open and the say_facility/ability/society trio with their PAX signatures corrected after the worker's own symbol check caught the char* mis-mangle, yearmotize with real isdigit via #undef, can_convoy, abil_cond decoded onto the Ability/Chassis/Weapon/Armor tables, break_treaty with the name/title staging corrected after review caught the swap against the Player layout, contiguous, can_call_council, net_upkeep_phase) - all unclaimed transcriptions with seeds preserved (the record path was blocked by the close_sat gap, now fixed on master); blockers journaled coordinator-side (25 pending-body addresses, the ABI trio, Gamma::on_redraw's declaration). Reviewer-approved post-fix."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c1ddfbaadb374457b404cddf91c54bae3871fcbee8e834a287ea5814bde315df",
+  "request_id": "w6-lb-scope",
+  "schema_version": 1,
+  "sequence": 170,
+  "stream": "task:vector-value-semantics"
+}
