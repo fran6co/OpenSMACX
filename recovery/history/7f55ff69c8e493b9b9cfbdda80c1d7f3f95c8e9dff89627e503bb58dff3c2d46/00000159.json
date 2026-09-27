@@ -1,0 +1,23 @@
+{
+  "event_id": "0f94b85c6cde43db473c2b53aaaf428e729faeaee11aeb3e664184ce96f5faf1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/net_class.cpp",
+      "src/net_class.h",
+      "src/netwin.cpp",
+      "src/netwin.h"
+    ],
+    "evidence": [
+      "Wave 3 (re-appended from the worktree fork onto the canonical chain): the NetWin/Net remainders. Executed as 21 bodies (the eight pick-template family with their shared send-state helper preserving the original's uninitialized packet bytes, the three draw panels, config_players, on_redraw, and the Net session six incl. drop_player's tolerance ladder and handle_sys_msg's flags_14_ write) with 21 retirements (20 claim-free + enable_join via record-then-retire, recorder-banked 42/42); 14 remain with enumerated blockers. Reviewer corrections applied: the enable_join claim discipline resolved through the recorder, draw_session_info's orphaned 52-byte second span restored, and the two trimmed pick spans returned to their seed catalogues. All gates green on the fixed tree."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "550c570fc7d7447a02b8bcdfe6f5de4c9742746f04b9f2c9bbd5655eb801c4af",
+  "request_id": "w3-netwin2-scope",
+  "schema_version": 1,
+  "sequence": 159,
+  "stream": "task:vector-value-semantics"
+}
