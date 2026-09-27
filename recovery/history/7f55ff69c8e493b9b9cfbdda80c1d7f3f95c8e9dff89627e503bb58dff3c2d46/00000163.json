@@ -1,0 +1,20 @@
+{
+  "event_id": "664f1aba3f6708d9ae09c8d21859198226668637941b97ece282c7e2061af670",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Unassigned cohort band c (re-appended from the worktree fork onto the canonical chain — the forked event-160 file is NOT merged; discovery d2760c26 governs): the multimedia band [0x560000,0x700000). Executed as 12 bodies (the IDCT butterfly with the hidden-ESI channel verified end-to-end and the fstp-qword/low-dword scratch reuse reproduced, the 8x8 block builder, the mmio ring, the round-half-up flat-fill scale after review's simulation catch, the COM create, the dequant with the spurious >>16 dropped from both arms, the DirectSound service, the frame tick, the queue-token wait and input-hook WndProc with their seed errors corrected from the image, the Video registrars) + 3 continuity empties for the 49-52KB callees; the EXCLUDED/import-thunk/zlib/SELFMOD policy list and 31 forwarder/seam blockers journaled. All gates green post-repair."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bc8093ee978b8ef605996c2c941c6fa8609cd868c9334244e459c429c34609fd",
+  "request_id": "w4-unc-scope",
+  "schema_version": 1,
+  "sequence": 163,
+  "stream": "task:vector-value-semantics"
+}
