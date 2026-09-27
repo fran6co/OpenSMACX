@@ -1,0 +1,20 @@
+{
+  "event_id": "5d67af05a0df80fd05dee867ff2e2621174b49e7e85d4ab4bedb4f55837bca9a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Wave 3 (master discovery 2778d0da chain): continue the stringstruct coverage into its 200-1000-line seed queue (~115 seeds by partition). Same protocol: real bodies, FILE markers, no byte claims, atomic retirement, record-then-retire for claim-bearing seeds, forwarder departure rules. Sub-batch smallest-first; gates per the wave authority."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5c0f90f2758de0ab386d6ca442440a0990642bdf356c7da59337a1e08c319949",
+  "request_id": "w3-stringstruct2-scope",
+  "schema_version": 1,
+  "sequence": 156,
+  "stream": "task:vector-value-semantics"
+}

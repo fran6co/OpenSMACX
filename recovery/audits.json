@@ -33,11 +33,11 @@
         "field_accessors.cpp markers": 38,
         "leaf_recoveries.cpp markers": 90,
         "nullsub_thunks.cpp markers": 52,
-        "PENDING_BODY forwarders": 216,
+        "PENDING_BODY forwarders": 211,
         "artifact files (recovered/)": 935,
-        "unrecovered files": 878,
+        "unrecovered files": 844,
         "hypothesis_layouts.h lines": 2734,
-        "stringstruct.cpp markers": 32
+        "stringstruct.cpp markers": 59
       },
       "counters": [
         {
