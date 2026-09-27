@@ -1,0 +1,20 @@
+{
+  "event_id": "bc8093ee978b8ef605996c2c941c6fa8609cd868c9334244e459c429c34609fd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Unassigned cohort band b (re-appended from the worktree fork onto the canonical chain; discovery d2760c26): the 133 entities in [0x460000,0x560000). Executed as 21 bodies / 18 retirements with seven recorder-measured claim migrations (sub_51e6f0, the veh-sprite pair, diplo_lock, the fixup pair, send_session_packet - all BYTE_EXACT fresh) and two honestly-documented dual-host regressions whose seed claims stay preserved; read_tamper lands its registry chain with two evidenced storages, dont_withdrawal's seed stride error (0x9A vs the image's 0x134) corrected from disassembly, and the monument trio pinned to its tables. One hand-carried unprovenanced token (sub_4c99d0) was caught by review and removed - the body stays unclaimed, the claim count dropped exactly one. Reviewer-verified gates green."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "33d8181842e871f56ffeb1a479e80da5abb34fc38f376befe49317be967a00f9",
+  "request_id": "w4-unb-scope",
+  "schema_version": 1,
+  "sequence": 162,
+  "stream": "task:vector-value-semantics"
+}
