@@ -20,6 +20,7 @@
 #include <cstring>
 #include "net_class.h"
 #include "original_seam.h"
+#include "popup.h"    // pop_caption / pop_caption_value_title, drop_player's asks
 #include "stringstruct.h"
 #include "hypothesis_layouts.h"
 #include "vtable_shim.h"
@@ -784,11 +785,193 @@ int Net::sub_62f390(void *data, int mode, unsigned long who, int size,
         this, nullptr, data, mode, who, size, flags);
 }
 
-// 0x00632350, unrecovered - in-file forwarder, same shape as sub_62f390's.
+// 0x009B2068 - the flag the "ok to drop the hosts?" answer lights: that
+// answer returns 1 with this set and no player cut.
+static unsigned int *const NetDropAbortFlag = (unsigned int *)0x009B2068;
+
+// 0x009BE5FC, four dwords below ActiveNet: the outgoing field_764_ the host
+// change publishes before the new host's id overwrites it.
+static unsigned int *const NetHostChangeSlot = (unsigned int *)0x009BE5FC;
+
+/*
+Purpose: Cut one player out of the session by id, or everyone when the caller
+         hands 0xFFFFFFFF. The interactive half (reason 0) asks first: the
+         dropped side is named through parse_says - both hosts when the timer
+         words disagree and the target is not the host slot, the target alone
+         otherwise - and a "jackal" popup answers; the dismissal answer can
+         instead open NET_ADJUSTTOLERANCE and re-arm the staleness threshold
+         to five, ten, twenty or thirty seconds. The cut itself closes the
+         player's slot (later records shift down, the top slot's data left
+         duplicated behind them), republishes the host id and raises
+         on_host_changed when it was the polling target, counts 0x6DC down,
+         raises on_player_deleted with the kept name, and unlinkes the
+         player's voice-receiver entry - payload deleted, node freed through
+         its StringAllocationBase. A reason-0 cut then announces itself with
+         a mode-4 0x80-byte packet whose body is the frame slot the image
+         passes through unwritten.
+// ORIGINAL: 0x00632350 ?drop_player@Net@@QAEHKH@Z 0x00632350-0x00632716 FILE
+// size      966 bytes
+// prototype int (__thiscall ?drop_player@Net@@QAEHKH@Z)(Net* this, unsigned int, int)
+// callers   2   call targets   5
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x00625EC0 0x00627160 0x00627200 0x0062F8A0 0x00645470
+// indirect  0x00632612 0x00632633 0x006326A3 0x006326B1 0x006326CC
+// Homed from src/unrecovered/00632350.cpp; this body replaces the in-file
+// forwarder that stood here for check_polling.
+Return Value: 1 when a player was found (cut, or the abort answer taken), 0
+         when the id named nobody
+Status: Coverage transcription - unclaimed body
+*/
 int Net::drop_player(unsigned long key, int reason) {
-    typedef int(__fastcall *pending)(Net *, void *, unsigned long, int);
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00632350))(
-        this, nullptr, key, reason);
+    int index = 0;
+    while (index < 0x10 && players_[index].field_0_ != key) {
+        ++index;
+    }
+    if (index == 0x10) {
+        return 0;
+    }
+
+    if (reason == 0) {
+        if (field_760_ != field_764_ && key != players_[1].field_0_) {
+            // The two hosts are named - the grammar slots 0 and 1 - and the
+            // plural question asked.
+            parse_says(0, get_player_name(players_[0].field_0_), -1, -1);
+            parse_says(1, get_player_name(players_[1].field_0_), -1, -1);
+            int answer = pop_caption_value_title(
+                const_cast<char *>("jackal"),
+                const_cast<char *>("NET_OKTODROPHOSTS"), 1, 0, 0);
+            if (answer == 0) {
+                *NetDropAbortFlag = 1;
+                return 1;
+            }
+            if (answer == 1 || answer > 2) {
+                return 0;
+            }
+            // answer 2: the tolerance popup, then no cut.
+            int tolerance = pop_caption(
+                const_cast<char *>("jackal"),
+                const_cast<char *>("NET_ADJUSTTOLERANCE"), 0);
+            switch (tolerance) {
+            case 0:
+                poll_timeout_E0_ = 5000;
+                break;
+            case 1:
+                poll_timeout_E0_ = 10000;
+                break;
+            case 2:
+                poll_timeout_E0_ = 20000;
+                break;
+            case 3:
+                poll_timeout_E0_ = 30000;
+                break;
+            default:
+                break;
+            }
+            return 0;
+        }
+        // Dropping the paired host or client: the caption names which side.
+        parse_says(0, get_player_name(key), -1, -1);
+        char *caption = field_760_ == field_764_
+            ? const_cast<char *>("NET_OKTODROPCLIENT")
+            : const_cast<char *>("NET_OKTODROPHOST");
+        int answer = pop_caption_value_title(
+            const_cast<char *>("jackal"), caption, 1, 0, 0);
+        if (answer == 1) {
+            return 0;
+        }
+        if (answer == 2) {
+            int tolerance = pop_caption(
+                const_cast<char *>("jackal"),
+                const_cast<char *>("NET_ADJUSTTOLERANCE"), 0);
+            switch (tolerance) {
+            case 0:
+                poll_timeout_E0_ = 5000;
+                break;
+            case 1:
+                poll_timeout_E0_ = 10000;
+                break;
+            case 2:
+                poll_timeout_E0_ = 20000;
+                break;
+            case 3:
+                poll_timeout_E0_ = 30000;
+                break;
+            default:
+                break;
+            }
+            return 0;
+        }
+        // The confirming answer (0) falls through to the cut.
+    }
+
+    // The removal. The name rides the frame for the on_player_deleted notice,
+    // emptied up front the way the image does when the id has already gone.
+    char name[0x100];
+    name[0] = 0;
+    char *named = get_player_name(key);
+    if (named != 0) {
+        strcpy(name, named);
+        // Close the slot: every later record shifts down one. The image does
+        // not clear the top slot, so its data stays duplicated behind.
+        for (int moved = index; moved < 0xF; ++moved) {
+            players_[moved] = players_[moved + 1];
+        }
+    }
+
+    if (key == field_764_) {
+        *NetHostChangeSlot = field_764_;
+        field_764_ = players_[0].field_0_;
+        on_host_changed();
+    }
+
+    --field_6DC_;
+    on_player_deleted(name, key);
+
+    // The voice receiver loses this player's entry: walk from its cursor,
+    // unlink, hand the departing payload to the first hook, delete it through
+    // Sound's own deleting destructor, and free the node through its virtual
+    // base - the vbase-adjusted call the image makes.
+    if (jackal_voice_rx_.head_ != 0) {
+        int scanned = 0;
+        while (scanned < jackal_voice_rx_.count_
+               && jackal_voice_rx_.cursor_->id_ != key) {
+            jackal_voice_rx_.cursor_ = jackal_voice_rx_.cursor_->next_;
+            ++scanned;
+        }
+        if (scanned < jackal_voice_rx_.count_) {
+            VoiceReceiverEntry *entry = jackal_voice_rx_.cursor_;
+            entry->next_->previous_ = entry->previous_;
+            entry->previous_->next_ = entry->next_;
+            if (entry == jackal_voice_rx_.head_) {
+                jackal_voice_rx_.head_ = entry->next_;
+            }
+            jackal_voice_rx_.cursor_ = entry->next_;
+            Sound *payload = entry->payload_;
+            jackal_voice_rx_.on_insert(payload);
+            if (payload != 0) {
+                delete payload;
+            }
+            entry->payload_ = 0;
+            if (entry != 0) {
+                StringAllocationBase *node = entry;
+                delete node;
+            }
+            --jackal_voice_rx_.count_;
+        }
+        if (jackal_voice_rx_.count_ == 0) {
+            jackal_voice_rx_.head_ = 0;
+        }
+        jackal_voice_rx_.cursor_index_ = jackal_voice_rx_.count_ - 1;
+    }
+
+    if (reason == 0) {
+        // The frame slot the image passes through unwritten: mode 4, 0x80
+        // bytes of it, flagged 1.
+        int notice;
+        send_packet_type(&notice, 4, 0, 0x80, 1);
+    }
+    return 1;
 }
 
 /*
@@ -1783,6 +1966,254 @@ int Net::poll_services(ServiceList *list) {
   return result != 0;
 }
 
+// 0x009BE4C0 - the DPCAPS the service join reads the provider's latency out
+// of. GetCaps refuses a zero dwSize, so join_service sizes it to the full
+// 0x28 before the call. Real storage beside NetGetScratch's end and the
+// player-table pointer above, not a Net member.
+static DPCAPS NetServiceCaps;  // 0x009BE4C0
+
+// 0x00697578, the launcher executable the internet service joins: the image
+// runs it through its WinExec import at 0x669180 when the kept provider GUID
+// matches. A `char *const` at namespace scope so VC6 folds the push.
+static char *const NetZoneLauncher = (char *)0x00697578;  // "mplaynow.exe"
+
+// 0x00631BA0, unrecovered (827 bytes): the DirectPlay DPERR interpreter the
+// join paths hand their failing HRESULT to - a flat switch over the known
+// DPERR_ values ending in the matching in-game error dialog. Still its own
+// preserved seed (unrecovered/00631ba0.cpp), so this file carries the same
+// forwarder shape sub_62f390 does.
+static int sub_631ba0(int error) {
+    typedef int(__stdcall *pending)(int);
+    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00631BA0))(
+        error);
+}
+
+/*
+Purpose: Join one enumerated service provider: copy the provider GUID into
+         the session's 0x6EC slot, and when it is the internet TCP/IP service
+         the enumeration kept, just launch the Zone's "mplaynow.exe" - the
+         DirectPlay lobby does the rest. Anything else creates the DirectPlay
+         object directly, publishes it as the shared interface (the same
+         0x9BE600 word every other entry point tests), reads the provider's
+         latency, and seeds all sixteen player slots with it - 100 ms when
+         the provider does not say.
+// ORIGINAL: 0x0062E2A0 ?join_service@Net@@QAEHPAUServiceStruct@@@Z 0x0062E2A0-0x0062E41C FILE
+// size      380 bytes
+// prototype int (__thiscall ?join_service@Net@@QAEHPAUServiceStruct@@@Z)(Net* this, ServiceStruct*)
+// callers   2   call targets   4
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     0x00631BA0 0x00645C70 0x006465F0 0x00650214
+// indirect  0x0062E2F2 0x0062E33B 0x0062E353 0x0062E373 0x0062E3A8
+// Homed from src/unrecovered/0062e2a0.cpp.
+Return Value: 0x10 with no service record, 1 after any reported failure, 1
+         when the launcher exited below 21, 0x16 when it did not, else 0
+Status: Coverage transcription - unclaimed body
+*/
+int Net::join_service(ServiceStruct *service) {
+    if (service == 0) {
+        return 0x10;
+    }
+
+    // The provider GUID the enumeration stored at record+8 travels twice:
+    // once into the session's own 0x6EC slot, once as the create/QI/compare
+    // operand. Four dword copies, not a block move, is what the image does.
+    const unsigned int *provider =
+        reinterpret_cast<const unsigned int *>(&service->field_8_);
+    unsigned int *kept = reinterpret_cast<unsigned int *>(field_6EC_);
+    kept[0] = provider[0];
+    kept[1] = provider[1];
+    kept[2] = provider[2];
+    kept[3] = provider[3];
+
+    if (memcmp(provider, &KeptServiceProviderGuid, 0x10) == 0) {
+        // The internet service: hand off to the Zone launcher. SW_SHOW, and
+        // anything under a successful-process answer reports "failed".
+        unsigned int started = WinExec(NetZoneLauncher, SW_SHOW);
+        return started < 0x15 ? 1 : 0x16;
+    }
+
+    void *direct_play = 0;
+    // The DX1 create signature - the image's one DirectPlayCreate import,
+    // filled through the out parameter the caller owns.
+    HRESULT result = DirectPlayCreate(reinterpret_cast<LPGUID>(
+                                          const_cast<unsigned int *>(provider)),
+                                      reinterpret_cast<LPDIRECTPLAY *>(
+                                          &direct_play),
+                                      0);
+    if (result != 0) {
+        sub_631ba0(result);
+        return 1;
+    }
+
+    // QueryInterface for the Ansi IDirectPlay2 the rest of Net dispatches
+    // through, publish it, and release the creator either way.
+    result = static_cast<IDirectPlay2 *>(direct_play)->QueryInterface(
+        IID_IDirectPlay2A,
+        reinterpret_cast<void **>(&NetDirectPlay));
+    direct_play_1c_ = NetDirectPlay;
+    if (result != 0) {
+        static_cast<IDirectPlay2 *>(direct_play)->Release();
+        sub_631ba0(result);
+        return 1;
+    }
+    static_cast<IDirectPlay2 *>(direct_play)->Release();
+
+    memset(&NetServiceCaps, 0, 0x28);
+    NetServiceCaps.dwSize = 0x28;
+    if (NetDirectPlay->GetCaps(&NetServiceCaps, 1) != 0) {
+        return 1;
+    }
+
+    voice_flags_D8_ &= 0xEFFFFFFF;
+
+    // The provider's latency estimate (0 when it would not say - the image
+    // stores the whole dword, and a zero means the 100 default) lands in
+    // every player slot's third word and in the 0x6D4 default beside them.
+    unsigned long latency = NetServiceCaps.dwLatency;
+    uint32_t *slot = &players_[0].field_C_;
+    int count = 0x10;
+    if (latency != 0) {
+        do {
+            *slot = latency;
+            slot += 0x58 / sizeof(*slot);
+            --count;
+        } while (count != 0);
+        field_6D4_ = latency;
+    } else {
+        do {
+            *slot = 100;
+            slot += 0x58 / sizeof(*slot);
+            --count;
+        } while (count != 0);
+        field_6D4_ = 100;
+    }
+    return 0;
+}
+
+// The modem and serial service-provider address GUIDs the DX5 SDK spells
+// DPAID_Modem / DPAID_Serial - dpaddr.h is not in this include set, so the
+// two create_session compares join NetLobbyAppGuid and
+// KeptServiceProviderGuid as literals read off the image (0x006717F0 /
+// 0x00671800). Two-player sessions are forced for both.
+static const GUID NetModemServiceGuid = {
+    0x44EAA760, 0xCB68, 0x11CF, {0x9C, 0x4E, 0x00, 0xA0, 0xC9, 0x05, 0x42, 0x5E}};
+static const GUID NetSerialServiceGuid = {
+    0x0F1D6860, 0x88D9, 0x11CF, {0x9C, 0x4E, 0x00, 0xA0, 0xC9, 0x05, 0x42, 0x5E}};
+
+/*
+Purpose: Host a named session: close any live one, size it to two players
+         when the joined provider was the modem or the serial service, open
+         the DPSESSIONDESC2 (MIGRATEHOST, the session GUID from init as the
+         application GUID, the option word at 0x44 riding dwUser2), then
+         re-read the live description through GetSessionDesc and file its
+         name, password, instance GUID, flags and player ceiling in the
+         allocation node at 0x700 - the same record the enumeration callback
+         fills for received sessions. Leaves the 0x10000 "in a lobby session"
+         bit lit.
+// ORIGINAL: 0x0062EAA0 ?create_session@Net@@QAEHPADHPAD@Z 0x0062EAA0-0x0062ED2F FILE
+// size      655 bytes
+// prototype int (__thiscall ?create_session@Net@@QAEHPADHPAD@Z)(Net* this, int8*, int, int8*)
+// callers   3   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2 0x006453E0 0x00645470 0x00645C70 0x006465F0
+// indirect  0x0062EB08 0x0062EBD3 0x0062EBF4 0x0062EC20 0x0062EC60
+// Homed from src/unrecovered/0062eaa0.cpp.
+Return Value: the allocation node's address, or 0 when any stage failed
+Status: Coverage transcription - unclaimed body
+*/
+int Net::create_session(char *name, int max_players, char *password) {
+    if (NetDirectPlay == 0 || name == 0 || max_players < 2) {
+        return 0;
+    }
+
+    if (allocation_node_.session_name_ != 0) {
+        free(allocation_node_.session_name_);
+        allocation_node_.session_name_ = 0;
+        // The replaced session is closed through the interface.
+        NetDirectPlay->Close();
+    }
+    if (allocation_node_.password_ != 0) {
+        free(allocation_node_.password_);
+        allocation_node_.password_ = 0;
+    }
+
+    // The modem and serial providers host exactly two players.
+    const unsigned int *provider =
+        reinterpret_cast<const unsigned int *>(field_6EC_);
+    int seeded_max_players = max_players;
+    if (memcmp(provider, &NetModemServiceGuid, 0x10) == 0
+        || memcmp(provider, &NetSerialServiceGuid, 0x10) == 0) {
+        seeded_max_players = 2;
+    }
+
+    DPSESSIONDESC2 desc;
+    memset(&desc, 0, 0x50);
+    desc.dwSize = 0x50;
+    desc.dwFlags = DPSESSION_MIGRATEHOST;
+    const unsigned int *session_guid =
+        reinterpret_cast<const unsigned int *>(guid_6E8_);
+    unsigned int *application =
+        reinterpret_cast<unsigned int *>(&desc.guidApplication);
+    application[0] = session_guid[0];
+    application[1] = session_guid[1];
+    application[2] = session_guid[2];
+    application[3] = session_guid[3];
+    desc.dwMaxPlayers = seeded_max_players;
+    desc.lpszSessionNameA = name;
+    desc.lpszPasswordA =
+        password != 0 && *password != 0 ? password : 0;
+    desc.dwUser2 = field_44_;
+
+    if (NetDirectPlay->Open(&desc, DPOPEN_CREATE) != 0) {
+        return 0;
+    }
+
+    unsigned long size;
+    NetDirectPlay->GetSessionDesc(0, &size);
+
+    memset(&NetServiceCaps, 0, 0x28);
+    NetServiceCaps.dwSize = 0x28;
+    if (NetDirectPlay->GetCaps(&NetServiceCaps, 1) != 0) {
+        return 0;
+    }
+
+    DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(mem_get(size));
+    if (live == 0) {
+        return 0;
+    }
+    if (NetDirectPlay->GetSessionDesc(live, &size) != 0) {
+        return 0;
+    }
+
+    allocation_node_.session_name_ =
+        static_cast<char *>(mem_get(strlen(name) + 1));
+    *allocation_node_.session_name_ = 0;
+    strcpy(allocation_node_.session_name_, name);
+    if (password != 0 && *password != 0) {
+        allocation_node_.password_ =
+            static_cast<char *>(mem_get(strlen(password) + 1));
+        *allocation_node_.password_ = 0;
+        strcpy(allocation_node_.password_, password);
+    }
+
+    const unsigned int *live_guid =
+        reinterpret_cast<const unsigned int *>(&live->guidInstance);
+    unsigned int *node_guid =
+        reinterpret_cast<unsigned int *>(&allocation_node_.instance_guid_);
+    node_guid[0] = live_guid[0];
+    node_guid[1] = live_guid[1];
+    node_guid[2] = live_guid[2];
+    node_guid[3] = live_guid[3];
+    allocation_node_.session_flags_ = live->dwFlags;
+    allocation_node_.max_players_ = max_players;
+    allocation_node_.current_players_ = 0;
+    free(live);
+    voice_flags_D8_ |= 0x10000;
+    return reinterpret_cast<int>(&allocation_node_);
+}
+
 // ORIGINAL: 0x00630A40 sub_630a40 0x00630A40-0x00630A7D BYTE_EXACT
 // symbol    ?sub_630a40@Net@@QAEHHH@Z
 // size      62 bytes
@@ -1872,4 +2303,214 @@ void Net::set_polling(int flag) {
   } else {
     voice_flags_D8_ &= 0xFFFBFFFF;
   }
+}
+
+// ---------------------------------------------------------------------------
+// THE SESSION LOCK TOGGLES. close_game and enable_join are one body twice:
+// only the DPSESSION_JOINDISABLED bit they store differs. Both gate on the
+// 0x10000 bit of the 0xD8 flag word - the "joined a lobby session" state
+// check_for_lobby lights - because the round-trip is a lobby-session call.
+// ---------------------------------------------------------------------------
+
+/*
+Purpose: Close the joined session to further joins: read the session
+         description back through the interface, light DPSESSION_JOINDISABLED
+         in its flags dword, and store it again.
+// ORIGINAL: 0x00631B30 ?close_game@Net@@QAEXXZ 0x00631B30-0x00631B9A FILE
+// size      106 bytes
+// prototype void (__thiscall ?close_game@Net@@QAEXXZ)(Net* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2
+// indirect  0x00631B51 0x00631B71 0x00631B87
+// Homed from src/recovered/units/00631b30.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void Net::close_game() {
+    if (NetDirectPlay == 0 || (voice_flags_D8_ & 0x10000) == 0) {
+        return;
+    }
+    // Size pass, then the real read: GetSessionDesc(NULL, &size) answers the
+    // needed byte count without touching a buffer.
+    unsigned long size;
+    NetDirectPlay->GetSessionDesc(0, &size);
+    DPSESSIONDESC2 *desc = static_cast<DPSESSIONDESC2 *>(mem_get(size));
+    NetDirectPlay->GetSessionDesc(desc, &size);
+    // The flags dword at desc+4: the whole dword is read back, bit 5 set, and
+    // the dword stored - a byte `or` inside a dword read-modify-write.
+    desc->dwFlags |= DPSESSION_JOINDISABLED;
+    NetDirectPlay->SetSessionDesc(desc, 0);
+    if (desc != 0) {
+        free(desc);
+    }
+}
+
+/*
+Purpose: Reopen the joined session to joins - close_game's mirror, clearing
+         DPSESSION_JOINDISABLED by the same read-modify-store round trip.
+// ORIGINAL: 0x00632070 ?enable_join@Net@@QAEXXZ 0x00632070-0x006320DA FILE BYTE_EXACT
+// size      106 bytes
+// prototype void (__thiscall ?enable_join@Net@@QAEXXZ)(Net* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4510 0x00644EF2
+// Homed from src/recovered/units/00632070.cpp, retired 2026-09-27 by
+// record-then-retire: this body was fresh-measured 42/42 BYTE_EXACT in this
+// TU and the claim now banks here.
+Return Value: n/a
+Status: Complete
+*/
+void Net::enable_join() {
+    if (NetDirectPlay == 0 || (voice_flags_D8_ & 0x10000) == 0) {
+        return;
+    }
+    unsigned long size;
+    NetDirectPlay->GetSessionDesc(0, &size);
+    DPSESSIONDESC2 *desc = static_cast<DPSESSIONDESC2 *>(mem_get(size));
+    NetDirectPlay->GetSessionDesc(desc, &size);
+    // Bit 5 of the low byte, exactly like close_game sets it - `and al, 0xdf`.
+    desc->dwFlags &= ~DPSESSION_JOINDISABLED;
+    NetDirectPlay->SetSessionDesc(desc, 0);
+    if (desc != 0) {
+        free(desc);
+    }
+}
+
+// 0x009BE4EC - the DPNAME record the 3-case's GetPlayerName fills; its
+// lpszLongNameA slot at +0xC is the text that case forwards. Fixed storage
+// beside NetServiceCaps, not a Net member.
+static unsigned char *const NetPlayerNameRecord =
+    (unsigned char *)0x009BE4EC;
+
+// 0x00632CC0, unrecovered (234 bytes). Both handle_sys_msg call sites pass
+// this receiver - the image sets ecx to Net - and answer through the three
+// stack arguments the catalogued `ret 0xc` cleans up. In-file forwarder, the
+// same shape drop_player's carried.
+int Net::sub_632cc0(char *text, int id, unsigned char flag) {
+    typedef int(__fastcall *pending)(Net *, void *, char *, int, unsigned char);
+    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00632CC0))(
+        this, nullptr, text, id, flag);
+}
+
+/*
+Purpose: Drain the system-message queue: one 0x28-byte record at a time off
+         the third fifo, each either a DPSYS_* envelope the image keys on the
+         queue's routing key or a peer packet keyed on its first byte.
+
+           key != 0 - a routed peer message:
+             byte 0 bit 0x80 set            -> cut the named player;
+             byte 0 bit 0x10 set            -> refresh the join list, one
+                                               0x28-byte entry per record;
+           key == 0 - a system envelope, by the type byte:
+             3    both timer words agree and the payload says so
+                  -> re-read the player's name and refresh one join-list entry;
+             5    -> cut the named player (reason 1);
+             0x31 -> the session was lost: raise it and close the connection;
+             0x102 -> stamp the named player's slot byte from the message;
+             0x103 -> the player's name changed (virtual slot 3).
+
+         The receive scratch doubles as the message body: the type byte at 0,
+         two dwords at 4 and 8, a name pointer at 0xC whose storage ALSO
+         fronts the 0x28-stride join-list entries, and text pointers at 0x10
+         and 0x18.
+// ORIGINAL: 0x00632DB0 ?handle_sys_msg@Net@@QAEXXZ 0x00632DB0-0x00632F97 FILE
+// size      487 bytes
+// prototype void (__thiscall ?handle_sys_msg@Net@@QAEXXZ)(Net* this)
+// callers   7   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0062E010 0x00632350 0x00632CC0 0x00633F70
+// indirect  0x00632EDB 0x00632F0C 0x00632F34
+// Homed from src/recovered/units/00632db0.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void Net::handle_sys_msg() {
+    if (NetDirectPlay == 0) {
+        return;
+    }
+    unsigned int key;
+    // The pop-the-head read: the routing key comes out with the message, and
+    // the scratch receives the body either way.
+    while (queue_130_.get(NetGetScratch, &key,
+                          reinterpret_cast<int *>(0),
+                          reinterpret_cast<unsigned int *>(0)) != 0) {
+        unsigned char *packet = NetGetScratch;
+        unsigned long word_4 =
+            *reinterpret_cast<unsigned long *>(packet + 4);
+        unsigned long id = *reinterpret_cast<unsigned long *>(packet + 8);
+        if (key != 0) {
+            unsigned char flags = packet[0];
+            if ((flags & 0x80) != 0) {
+                drop_player(id, 1);
+            } else if ((flags & 0x10) != 0) {
+                // The join-list refresh: one 0x28-byte entry per count byte,
+                // walked in place over the storage the name pointer fronts.
+                const unsigned char *entry = packet + 0xC;
+                unsigned char count =
+                    static_cast<unsigned char>(id);
+                for (unsigned char seen = 0; seen < count; ++seen) {
+                    sub_632cc0(
+                        reinterpret_cast<char *>(
+                            const_cast<unsigned char *>(entry + 4)),
+                        *reinterpret_cast<const unsigned long *>(entry),
+                        entry[0x24]);
+                    entry += 0x28;
+                }
+            }
+            continue;
+        }
+        switch (packet[0]) {
+        case 3:
+            // Refresh one player's name: only while the two timer words name
+            // the same target and the payload word agrees to re-read it.
+            if (field_760_ == field_764_ && word_4 == 1) {
+                unsigned long size = 0x100;
+                NetDirectPlay->GetPlayerName(id, NetPlayerNameRecord, &size);
+                unsigned char *text =
+                    *reinterpret_cast<unsigned char **>(packet + 0x10);
+                int first = text != 0 ? text[0] : 0;
+                sub_632cc0(
+                    *reinterpret_cast<char **>(NetPlayerNameRecord + 0xC), id,
+                    static_cast<unsigned char>(first));
+            }
+            break;
+        case 5:
+            if (word_4 == 1) {
+                drop_player(id, 1);
+            }
+            break;
+        case 0x31:
+            // The host moved on or the session died: raise it, then close.
+            on_session_lost();
+            close();
+            break;
+        case 0x102: {
+            // Stamp the named player's slot byte from the message's own text.
+            int index = 0;
+            while (index < 0x10 && players_[index].field_0_ != id) {
+                ++index;
+            }
+            if (index == 0x10) {
+                break;
+            }
+            unsigned char *text =
+                *reinterpret_cast<unsigned char **>(packet + 0xC);
+            if (text == 0) {
+                break;
+            }
+            players_[index].flags_14_ = text[0];
+            break;
+        }
+        case 0x103:
+            on_player_name_changed(
+                *reinterpret_cast<char **>(packet + 0x18), id);
+            break;
+        default:
+            break;
+        }
+    }
 }
