@@ -1,0 +1,23 @@
+{
+  "event_id": "9b2d0a0df9d4f877dab03b812eff436717d1c3dc905d8fd335f2a284aaaacad7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/reportif.cpp",
+      "src/reportif.h",
+      "src/reportwin.cpp",
+      "src/reportwin.h"
+    ],
+    "evidence": [
+      "Wave 2 ranked groups (re-appended from the worktree fork onto the canonical chain; master discovery 2778d0da): the ReportWin/ReportIf families. Executed as batch A's four bodies (on_iface_left_click with the Spot arg order, close_sat's flatButtons teardown, on_key_click with both jump tables decoded entry-by-entry, on_selected over the two process-wide ListBoxes) + batch B's labs_line and the two sanctioned placeholders (ReportIf::report, draw_energy); the ReportWinGlobal/ReportIfGlobal process-wide objects land with dynamic-initializer evidence, retiring the ReportIfModalWindow misreading. close_sat's seed carried BYTE_EXACT but the recorder refuses while report()'s sentinel shares the TU - the obligation stays formally pending (check-claims missing 1 on this tree, re-bank via record once report() lands), never a silent regression. Reviewed and approved with all four bodies verified instruction-level."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "664f1aba3f6708d9ae09c8d21859198226668637941b97ece282c7e2061af670",
+  "request_id": "w2-report-scope",
+  "schema_version": 1,
+  "sequence": 164,
+  "stream": "task:vector-value-semantics"
+}
