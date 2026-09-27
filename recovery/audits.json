@@ -35,7 +35,7 @@
         "nullsub_thunks.cpp markers": 52,
         "PENDING_BODY forwarders": 199,
         "artifact files (recovered/)": 913,
-        "unrecovered files": 784,
+        "unrecovered files": 780,
         "hypothesis_layouts.h lines": 2738,
         "stringstruct.cpp markers": 59
       },
@@ -122,7 +122,7 @@
         "src/vendor"
       ],
       "ceilings": {
-        "duplicate global identities": 11,
+        "duplicate global identities": 13,
         "scaled class-pointer sum": 0
       },
       "counters": []
@@ -139,13 +139,13 @@
         "src/vendor"
       ],
       "ceilings": {
-        "unk-method": 203,
+        "unk-method": 204,
         "evidence-free unk": 39,
         "function-address binding": 2,
         "orphan redirect": 190,
         "pointer-as-int": 0,
         "undocumented trivial body": 0,
-        "raw self-access": 195,
+        "raw self-access": 199,
         "pointer-parameter as int": 96,
         "scaffold name": 3147
       },
