@@ -247,12 +247,10 @@ void __fastcall sub_4c86d0(void *self) {
 // destructor and PlanWin's/Console's each reach it directly.
 
 
-// ?close@FileWin@@QAEXXZ at 0x00613900 - FileWin's own close(), which its
-// destructor calls first. See the note in filewin.h.
-void FileWin::close() {
-    typedef void(__fastcall *pending)(FileWin *, void *);
-    PENDING_BODY(0x00613900, pending)(this, nullptr);
-}
+// ?close@FileWin@@QAEXXZ at 0x00613900 WAS HERE: the body is homed into
+// src/filewin.cpp 2026-09-27 (wave-5 sweep), beside ~FileWin which calls
+// it first. No caller repointing was needed - the member's mangled name is
+// the one the forwarder defined.
 
 
 // ?close@UV2Player@@QAEXXZ at 0x004BF400 - reached by ~UV2Player. See the
@@ -370,17 +368,12 @@ int Scroll::init(int x, int y, int width, int height, Win *parent,
                                              height, parent, setting, options);
 }
 
-// 0x0060C5D0 - ListBox::on_scrolling, dispatched to by kind from dialogs.cpp.
-void ListBox::on_scrolling(int a, int b) {
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060C5D0, pending)(this, nullptr, a, b);
-}
-
-// 0x0060CB70 - ListBox::on_mousewheel, dispatched to by kind from dialogs.cpp.
-void ListBox::on_mousewheel(int a) {
-    typedef void(__fastcall *pending)(ListBox *, void *, int);
-    PENDING_BODY(0x0060CB70, pending)(this, nullptr, a);
-}
+// 0x0060C5D0 ListBox::on_scrolling and 0x0060CB70 ListBox::on_mousewheel
+// WERE HERE (dispatched to by kind from dialogs.cpp): both bodies are homed
+// into src/leaf_recoveries.cpp 2026-09-27, with on_scrolling's entered-
+// receiver walk re-taken from the image. draw_item (0x0060B530) and UNK2
+// (0x0060C7D0) are DECLARED on the class now (listbox.h) for the follow-up
+// pass their large/undecompiled seeds still need.
 
 // ?close@BasePop@@QAEXXZ at 0x00600F00 and
 // ?start@Popup@@QAEXPADPBDHPADHPAUGraphicWin@@@Z at 0x00406380 - the two
@@ -547,12 +540,10 @@ void BaseButton::timer_callback(int a1) {  // 0x00607B30
 // src/buffer.cpp, along with both `tile` overloads (0x005DA860/0x005DA9F0)
 // and tile_mask's per-tile blit ?copy_mask@Buffer@@ (0x005E2B00).
 
-// ?set_selected_id@ListBox@@QAEXH@Z - DipEdit::init lands the list selection
-// on the row matching its own faction.
-void ListBox::set_selected_id(int id) {
-    typedef void(__fastcall *pending)(ListBox *, void *, int);
-    PENDING_BODY(0x00609FA0, pending)(this, nullptr, id);
-}
+// ?set_selected_id@ListBox@@QAEXH@Z - DipEdit::init lands the list
+// selection on the row matching its own faction. WAS HERE: the body is
+// homed into src/leaf_recoveries.cpp 2026-09-27 (the id walk over the
+// Dialog entry list, selecting through current_position_).
 
 // ?set_selected_pos@ListBox@@QAEXHH@Z at 0x0060A020 - the sibling of the
 // above. BasePop::calculate_dimensions (0x00603800) calls it BY NAME on the
@@ -618,10 +609,10 @@ void Menu::mouse_move(int a1, int a2) {  // 0x005FBDB0
     PENDING_BODY(0x005FBDB0, pending)(this, nullptr, a1, a2);
 }
 
-void ReportWin::sat_anim() {  // 0x0049FE40
-    typedef void(__fastcall *pending)(ReportWin *, void *);
-    PENDING_BODY(0x0049FE40, pending)(this, nullptr);
-}
+// ReportWin::sat_anim (0x0049FE40) WAS HERE: the body is homed into
+// src/reportwin.cpp 2026-09-27 (the sixteen-satellite orbital tick). Its
+// daemon wrapper sat_anim_daemon (leaf_recoveries.cpp) already called it
+// by name, so no caller repointing was needed.
 
 void ReportWin::exp_anim() {  // 0x004A0100
     typedef void(__fastcall *pending)(ReportWin *, void *);
@@ -768,10 +759,10 @@ MainInterface::~MainInterface() {  // ??1MainInterface@@QAE@XZ at 0x0045EB80
     PENDING_BODY(0x0045EB80, pending)(this, nullptr);
 }
 
-Menu::~Menu() {  // ??1Menu@@QAE@XZ at 0x005FAD00
-    typedef void(__fastcall *pending)(Menu *, void *);
-    PENDING_BODY(0x005FAD00, pending)(this, nullptr);
-}
+// Menu::~Menu (??1Menu@@QAE@XZ at 0x005FAD00) WAS HERE: the body is homed
+// into src/menu.cpp 2026-09-27, mirroring the constructor's entry reset
+// loop and releasing each pull-down through `delete` (the image's slot-0
+// deleting-destructor dispatch). Console::close already called it by name.
 
 NetMsg::~NetMsg() {  // ??1NetMsg@@QAE@XZ at 0x0047ADA0
     typedef void(__fastcall *pending)(NetMsg *, void *);

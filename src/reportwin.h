@@ -48,7 +48,10 @@ class ReportWin : public GraphicWin {
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
   // The two animation ticks the daemons in leaf_recoveries.cpp drive. Public,
-  // __thiscall, void(void); both unrecovered.
+  // __thiscall, void(void). sat_anim is homed in reportwin.cpp (2026-09-27,
+  // the sixteen-satellite orbital tick); exp_anim (0x004A0100) is still a
+  // pending_bodies forwarder - its callee action_sat_attack (0x004CF480)
+  // and the 0x007AA370-family sprite table it reads are not recovered yet.
   void sat_anim();  // 0x0049FE40  ?sat_anim@ReportWin@@QAEXXZ
   void exp_anim();  // 0x004A0100  ?exp_anim@ReportWin@@QAEXXZ
   // 0x00496BB0 ?reset@ReportWin@@QAEXXZ, unrecovered. DECLARATION ONLY:
@@ -252,3 +255,6 @@ extern ListBox ReportWinListBox2;  // 0x00890D5C
 // Neither animation tick is recovered; both forward to the original image.
 // ?sat_anim@ReportWin@@QAEXXZ and ?exp_anim@ReportWin@@QAEXXZ are public,
 // __thiscall, void(void), so one pointer-to-member shape serves both.
+// sat_anim is homed in reportwin.cpp; exp_anim still forwards to the
+// original image through pending_bodies.cpp. Both are public, __thiscall,
+// void(void), so one pointer-to-member shape serves the remaining seam.

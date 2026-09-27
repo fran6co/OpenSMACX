@@ -30,9 +30,13 @@ class DeletionList {
   DeletionList() { ; }
   ~DeletionList() { ; }
   void clear(int index);
-  // 0x0052DE70 ?add_deletion@@QAEHH@Z. veh_kill (0x005C08C0) enqueues every
-  // multiplayer deletion here before it compacts Vehs; still an original body
-  // (src/unrecovered/0052de70.cpp), so the declaration is all veh.cpp needs.
+  // 0x0052DE70 ?add_deletion@DeletionList@@QAEHH@Z. veh_kill (0x005C08C0)
+  // enqueues every multiplayer deletion here before it compacts Vehs. The
+  // body is homed in stringstruct.cpp (retired seed
+  // git:117282ee:src/unrecovered/0052de70.cpp records the identity and
+  // spans); the image's symbol ends H@Z - it returns the pre-increment
+  // count - and the void spelling below is the coupled correction still to
+  // make with that body (see the note there).
   void add_deletion(int veh_id);
   // 0x0052DDC0, a pending_bodies forwarder (archived in 0052ddc0.cpp) -
   // rebinds one deletion-list slot to another owner.

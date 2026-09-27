@@ -171,15 +171,31 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   int attach(void * a1, int a2, int a3, int a4);
 
  public:
-  // 0x0060C5D0, a pending_bodies forwarder.
+  // 0x0060C5D0, homed in leaf_recoveries.cpp (2026-09-27): the entered-
+  // receiver WM_VSCROLL step over the Dialog entry list.
   void on_scrolling(int a, int b);
-  // 0x0060CB70, a pending_bodies forwarder.
+  // 0x0060CB70, homed in leaf_recoveries.cpp (2026-09-27): the wheel-notch
+  // loop over the Win virtual base's two scrollbar clicks.
   void on_mousewheel(int a);
+  // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes, seed
+  // src/unrecovered/0060b530.cpp). DECLARATION ONLY: on_scrolling's body
+  // (0x0060C5D0) reaches it twice on the front receiver - once for the row
+  // the scroll left, once for the row it landed on - and UNK2's (0x0060C7D0)
+  // record walk reads the text pointer the row holds. The body is a large
+  // transcription (highlighted/normal text-draw tails over the
+  // style-descriptor fields); the declaration lets callers name it first.
+  void draw_item(int index);
+  // 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z (336 bytes, seed
+  // src/unrecovered/0060c7d0.cpp). DECLARATION ONLY, same reason: the seed
+  // carries analysis (the [esi] read is the GraphicWin vbtable walk) but no
+  // decompiled body yet. int-returning, char *-taking.
+  int UNK2(char *text);
  public:
   // 0x0060C920, still a pending_bodies forwarder.
   int item(char *text, int index);
-  // 0x00609FA0, also a pending_bodies forwarder. DipEdit::init adds one item
-  // per rival faction and then lands the selection on the matching one.
+  // 0x00609FA0, homed in leaf_recoveries.cpp (2026-09-27). DipEdit::init
+  // adds one item per rival faction and then lands the selection on the
+  // matching one through this id walk.
   void set_selected_id(int id);
   // 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z, the sibling of the above
   // and the only one of the pair BasePop::calculate_dimensions reaches (it

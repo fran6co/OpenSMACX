@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "filewin.h"
+#include "sprite.h"
 #include "text.h"
 #include "dialog.h"
 #include "basebutton.h"
@@ -30,6 +31,20 @@
 // reads up to the first NUL either way, and the `push offset` folds to the
 // same instruction, the displacement relocated.
 static const char FileWinTextTableDefault[4] = {'.', 0, 0, 0};  // 0x00697118
+
+// The table's NEXT entry (0x0069711C), also "." in the shipped image:
+// close() resets the name buffer to it, exactly as the constructor resets
+// the buffer to the first. Same real-storage argument as above.
+static const char FileWinTextTableDefaultNext[4] = {'.', 0, 0, 0};  // 0x0069711C
+
+// The dialog's three fixed sprites, 0x30 apart (0x009B9018/0x009B9048/
+// 0x009B9078). Their individual roles are not established - the dialog's
+// own bring-up loads them and close() reaches Sprite::close (0x005E3820)
+// on each, in this order. Named bindings rather than array indexing:
+// sizeof(Sprite) is not pinned to the 0x30 stride.
+static Sprite *const FileWinFixedSprite0 = reinterpret_cast<Sprite *>(0x009B9018);
+static Sprite *const FileWinFixedSprite1 = reinterpret_cast<Sprite *>(0x009B9048);
+static Sprite *const FileWinFixedSprite2 = reinterpret_cast<Sprite *>(0x009B9078);
 
 /*
 Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
@@ -89,6 +104,51 @@ Status: Complete
 */
 FileWin::~FileWin() {
     close();
+}
+
+/*
+Purpose: Close the file dialog: close the two button strips, the edit box
+         and the list (each a virtual or member close on its subobject),
+         reset the window's own name/selection fields and append the text
+         table's second '.' entry, close the dialog's three fixed sprites,
+         drop the selection word, and destroy the dialog's own window
+         handle if one was created.
+
+// ORIGINAL: 0x00613900 ?close@FileWin@@QAEXXZ 0x00613900-0x006139AC FILE
+// size      172 bytes
+// prototype void (__thiscall ?close@FileWin@@QAEXXZ)(FileWin* this)
+// callers   5   call targets   4
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005E3820 0x00609F20 0x00614F30 0x00645470
+// indirect  0x00613910 0x00613922 0x0061399D
+// TRIED (seed): DestroyWindowFn via *g_0066930c (established lever from
+//         00635750.cpp/00635450.cpp) compiles clean; mnemonic sim 0.95,
+//         one pop/pop vs add-esp reorder right after the strcat call (#23)
+//         not chased further. The two indirect sites are the FlatButton
+//         slot-90 closes (BaseButton's virtual close, basebutton.h); the
+//         third is user32!DestroyWindow through its import slot.
+Status: Coverage transcription - unclaimed body
+*/
+void FileWin::close() {
+    flat_button2_.close();
+    flat_button1_.close();
+    edit_box_.close();
+    list_box_.close();
+    field_208_ = 0;
+    field_30C_ = 0;
+    field_410_ = 0;
+    field_514_ = 0;
+    field_531_ = 0;
+    strcat(reinterpret_cast<char *>(&field_531_), FileWinTextTableDefaultNext);
+    FileWinFixedSprite0->close();
+    FileWinFixedSprite1->close();
+    FileWinFixedSprite2->close();
+    field_63C_ = 0;
+    if (field_33C0_ != 0) {
+        DestroyWindow(reinterpret_cast<HWND>(field_33C0_));
+        field_33C0_ = 0;
+    }
 }
 
 /*

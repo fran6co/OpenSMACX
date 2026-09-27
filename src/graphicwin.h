@@ -154,6 +154,17 @@ class GraphicWin : public Win, public Buffer {
   // __thiscall, void(GraphicWin *). The one-argument overload; the siblings
   // take (int, int, int, int, GraphicWin *) and (RECT *, GraphicWin *).
   void update(GraphicWin *target);
+  // 0x005D55D0 ?update@GraphicWin@@QAEXHHHHPAUGraphicWin@@@Z (95 bytes).
+  // The five-argument overload: build the client rectangle (left, top,
+  // right = x+width, bottom = y+height), update_window it, convert it to
+  // screen coordinates and static-flip that region. The fifth argument is
+  // part of the symbol but dead in the body (verified against the image:
+  // every one of the 95 bytes is spelled by the four calls and the
+  // rectangle arithmetic). The body is homed in leaf_recoveries.cpp;
+  // Console's editor commands (console.cpp:4314..4323) still spell the two
+  // calls as raw-address casts, which this declaration now unblocks
+  // repointing.
+  void update(int x, int y, int width, int height, GraphicWin *source);
   // 0x005D5630 returns zero on both paths; the second argument is unused.
   int update(RECT *area, GraphicWin *target);
   // Invalidate the full Buffer rectangle, or a clipped client rectangle.
