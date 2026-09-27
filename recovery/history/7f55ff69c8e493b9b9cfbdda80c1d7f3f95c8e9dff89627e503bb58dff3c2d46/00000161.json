@@ -1,0 +1,21 @@
+{
+  "event_id": "33d8181842e871f56ffeb1a479e80da5abb34fc38f376befe49317be967a00f9",
+  "payload": {
+    "affects": [
+      "entity-e31ec79f5212bd670c987cbfa157ed13059c96ebfcc3b622bbb305e81fe5d675"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "monument-flag-misindex-20260927",
+    "evidence": [
+      "Disassembly 0x00476A50: lea-chain ecx=359*faction then test byte ptr [ecx*4 + 0x946f58], 0x80 — the byte test scales 0x59C*faction, not 4*0x59C*faction.",
+      "tutwin.cpp:597 documents 0x00946F58 as Players[0].rule_flags with the image scaling its index by 0x59C; xpops.cpp:522 carries the same binding; stringstruct.cpp:2698 declares the int*-typed const that produces the mis-index."
+    ],
+    "hypothesis": "stringstruct.cpp's recovered monument (0x00476A50) mis-indexes the faction flag word: FactionMonumentFlags is declared int* and the body reads [faction*0x59C] (a 4x-too-far byte offset), while the image tests a byte at byte offset 0x59C*faction; the correct in-tree spelling is Players[f].rule_flags & 0x80 (the tutwin.cpp:597 and xpops.cpp:522 binding). Latent for local faction 0, wrong for any other faction.",
+    "kind": "discovery"
+  },
+  "previous_event": "af98330508fa37e63a121da120f5980859e1df612898fd62af77442036808e32",
+  "request_id": "monument-flag-misindex-20260927",
+  "schema_version": 1,
+  "sequence": 161,
+  "stream": "task:vector-value-semantics"
+}
