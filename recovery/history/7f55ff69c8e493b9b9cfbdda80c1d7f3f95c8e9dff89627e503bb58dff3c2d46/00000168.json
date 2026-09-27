@@ -1,0 +1,20 @@
+{
+  "event_id": "7c55ca17c3135aa584ea4812256c875836597003d335e9cbbb45403f0a5330c2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Large band third a (re-appended from the worktree fork onto the canonical chain; discovery 698d504a): the ~125 seeds of /tmp/large-band-a.txt. Executed as 8 real bodies (Datalink::on_status with the +0xA14 inner-receiver documented and the 18-flatButton run, farm_get with the radius_move inline wall, the five mon_* triggers over the file-local MonRecord, and action_build fully typed with the home_base_id stride corrected from the seed's unmeasured 0x1A to the pinned 0x2E) - all unclaimed transcriptions with documented divergences, every claim seed preserved; blockers (23 pending-body addresses, the missing-declaration families, the seams base_init/mon_colony_founded) journaled coordinator-side per the reviewer's caveat. Reviewer-approved with all four sampled bodies deep-verified against image, seeds, and pinned layouts."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4a6a8c4c7516df5b2202b87e0fcf148f48956fd3084f96befef8b0680f21bed8",
+  "request_id": "w6-la-scope",
+  "schema_version": 1,
+  "sequence": 168,
+  "stream": "task:vector-value-semantics"
+}
