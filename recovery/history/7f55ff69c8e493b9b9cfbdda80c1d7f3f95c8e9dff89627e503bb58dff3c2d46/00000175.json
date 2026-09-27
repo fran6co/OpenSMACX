@@ -1,0 +1,20 @@
+{
+  "event_id": "fabde95c2fbcde03757e41d79f8569d60a30762f1a487634743eb124ef164b80",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "large-band-3-20260928",
+    "evidence": [
+      "Post-wave-7 census at d67b54bc."
+    ],
+    "hypothesis": "Wave 8 continues the large band: ~290 seeds remain in the 1000-2500 tier (/tmp/large3-{a,b,c}.txt). Protocol chain unchanged; the wave-7 blocker ledger rides in the worker reports; the say-trio mechanical fix (receiver hoisting) is a first-in-line candidate.",
+    "kind": "discovery"
+  },
+  "previous_event": "41f14c97864746bf9dae59bbada96e9f475957169117cf54b4ce49d2f44f10c4",
+  "request_id": "large-band-3-20260928",
+  "schema_version": 1,
+  "sequence": 175,
+  "stream": "task:vector-value-semantics"
+}
