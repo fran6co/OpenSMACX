@@ -1,0 +1,20 @@
+{
+  "event_id": "af98330508fa37e63a121da120f5980859e1df612898fd62af77442036808e32",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "unassigned-cohorts-20260927",
+    "evidence": [
+      "Fresh partition census (band lists at /tmp/unnamed-band-{a,b,c}.txt); the waves' established protocol chain (discovery 2778d0da -> event 143 claim policy -> forwarder departure rules) governs."
+    ],
+    "hypothesis": "The 445 unassigned seed-only entities (partition group 'unassigned', no source homes) are mostly free functions and small helpers addressable in three bands: 22 in [0x401000,0x460000), 133 in [0x460000,0x560000), 290 in [0x560000,0x700000). Coverage protocol lands them under the nearest-owner rule (partition candidates' owner hints or the marker-range census), with leaf_recoveries.cpp as the catch-all for truly orphan identities.",
+    "kind": "discovery"
+  },
+  "previous_event": "0f94b85c6cde43db473c2b53aaaf428e729faeaee11aeb3e664184ce96f5faf1",
+  "request_id": "unassigned-cohorts-20260927",
+  "schema_version": 1,
+  "sequence": 160,
+  "stream": "task:vector-value-semantics"
+}
