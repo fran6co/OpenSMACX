@@ -1,0 +1,21 @@
+{
+  "event_id": "550c570fc7d7447a02b8bcdfe6f5de4c9742746f04b9f2c9bbd5655eb801c4af",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/pending_bodies.cpp",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Wave 3 (re-appended from the worktree fork onto the canonical chain): the stringstruct 200-1000 tier. Executed as 27 real bodies + 7 duplicate retirements (34 seeds): the PullDown family with the reviewer-corrected menu hand-off (menu_ at +0xF30, outer-rect left/top deltas on both objects), the five member landings retiring their forwarders (FX::play, MapWin::draw_cursor, the DeletionList pair, Gamma::adjust_palette), three C++-linkage conversions, PrevWndFunc's CallWindowProcA routing, and the typed-receiver free-function tier; the NetWin::close claim seed preserved after the checker caught its missing requirement, and two twin-claimed duplicate consolidations retained in their owning TUs."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "caf413fabea06916b1c8f368e887f55755a4956898433dd1b40cce304d41bddf",
+  "request_id": "w3-stringstruct2-scope",
+  "schema_version": 1,
+  "sequence": 158,
+  "stream": "task:vector-value-semantics"
+}
