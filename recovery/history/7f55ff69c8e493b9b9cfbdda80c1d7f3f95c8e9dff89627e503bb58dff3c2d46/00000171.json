@@ -1,0 +1,20 @@
+{
+  "event_id": "50515f7b27b6218e6aa2305f469865d00fd6f139f8bc74835c3ed2a25ab3d85d",
+  "payload": {
+    "affects": [
+      "entity-546c2a42d275b8a5e1f0a466a9395421124e340fe373c4b74a6dd49114355002"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "large-band-2-20260927",
+    "evidence": [
+      "Post-wave-6 census at 1ed59304: 743 files total, 353 in the large tier. Protocol chain unchanged (2778d0da -> event 143 -> forwarder rules -> tmp discipline); the blocker ledger from wave 6's three thirds rides in their worker reports."
+    ],
+    "hypothesis": "Wave 7 continues the large band: 353 seeds remain in the 1000-2500 tier (/tmp/large2-{a,b,c}.txt, ~118 each). The wave-6 protocol carries over unchanged; the close_sat record-block is fixed (18dc8256) so claim recording works again; the four proven-exact third-b bodies (X_text_open, say trio) are first-in-line record-then-retire candidates for whichever worker's band contains them.",
+    "kind": "discovery"
+  },
+  "previous_event": "4d3e27322d981d5cc0911de98fb3a37b4109436fd3207f4839de5573f446bfe3",
+  "request_id": "large-band-2-20260927",
+  "schema_version": 1,
+  "sequence": 171,
+  "stream": "task:vector-value-semantics"
+}
