@@ -145,3 +145,88 @@ Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+/*
+Purpose: Advance the satellite orbital overlay one tick: clear the orbit
+         rectangle, integrate the sixteen satellites' positions from their
+         velocities and the ReportWin's own step scalar at 0xEE30, decode
+         the next Flic frame under them, composite it through the second
+         surface buffer, then fill one 2x2 marker per live satellite and
+         publish the orbit rectangle.
+
+// ORIGINAL: 0x0049FE40 ?sat_anim@ReportWin@@QAEXXZ 0x0049FE40-0x0049FFB7 FILE
+// size      375 bytes
+// prototype void (__thiscall ?sat_anim@ReportWin@@QAEXXZ)(ReportWin* this)
+// callers   3   call targets   6
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D5350 0x005D5440 0x005D5930 0x005D8370 0x0062A070 0x006458C8
+// Homed from src/recovered/units/0049fe40.cpp. The four float arrays live
+// in field_F938_'s storage (0xF938..0xFAB8): position pairs at 0xF938/
+// 0xF978, scratch results at 0xF9B8/0xF9F8, velocities at 0xFA38, the
+// live-satellite flags at 0xFA78; the loop cursor sits just before
+// field_E2B0_ at 0xE29C. The 0xEE30 scalar is field_EE30_ (see the layout
+// note above: it is NOT the Flic, which starts at 0xEE34), and the frame
+// counters the decode reads are the Flic's own at 0xF3E0/0xF3E4.
+Status: Coverage transcription - unclaimed body
+*/
+void ReportWin::sat_anim() {
+    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
+    int *const index = reinterpret_cast<int *>(self + 0xE29C);
+
+    fill(reinterpret_cast<RECT *>(self + 0xE2B0), 0x41);
+
+    *index = 0;
+    do {
+        int i = *index;
+        reinterpret_cast<float *>(self + 0xF9B8)[i] =
+            reinterpret_cast<float *>(self + 0xF9B8)[i] -
+            reinterpret_cast<float *>(self + 0xFA38)[i] *
+                reinterpret_cast<float *>(self + 0xF938)[i];
+
+        i = *index;
+        reinterpret_cast<float *>(self + 0xF9F8)[i] =
+            reinterpret_cast<float *>(self + 0xF9F8)[i] -
+            reinterpret_cast<float *>(self + 0xFA38)[i] *
+                reinterpret_cast<float *>(self + 0xF978)[i];
+
+        i = *index;
+        reinterpret_cast<float *>(self + 0xF938)[i] =
+            reinterpret_cast<float *>(self + 0xF9B8)[i] * field_EE30_ +
+            reinterpret_cast<float *>(self + 0xF938)[i];
+
+        i = *index;
+        reinterpret_cast<float *>(self + 0xF978)[i] =
+            reinterpret_cast<float *>(self + 0xF9F8)[i] * field_EE30_ +
+            reinterpret_cast<float *>(self + 0xF978)[i];
+
+        *index = *index + 1;
+    } while (*index < 0x10);
+
+    reinterpret_cast<Flic *>(self + 0xEE34)->decode_frame(
+        *reinterpret_cast<int *>(self + 0xF3E0),
+        *reinterpret_cast<int *>(self + 0xF3E4));
+
+    reinterpret_cast<Buffer *>(self + 0xE8A8)->draw(
+        reinterpret_cast<Buffer *>(self + 0x444), 9,
+        *reinterpret_cast<int *>(self + 0xE2A0),
+        *reinterpret_cast<int *>(self + 0xE2A4));
+
+    *index = 0;
+    do {
+        if (reinterpret_cast<int *>(self + 0xFA78)[*index] != 0) {
+            const int marker_y =
+                static_cast<int>(
+                    reinterpret_cast<float *>(self + 0xF978)[*index]) +
+                *reinterpret_cast<int *>(self + 0xE2AC);
+            const int marker_x =
+                static_cast<int>(
+                    reinterpret_cast<float *>(self + 0xF938)[*index]) +
+                *reinterpret_cast<int *>(self + 0xE2A8);
+            fill(marker_x, marker_y, 2, 2, 0xFF);
+        }
+        *index = *index + 1;
+    } while (*index < 0x10);
+
+    soft_update(reinterpret_cast<RECT *>(self + 0xE2B0));
+}

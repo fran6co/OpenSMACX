@@ -2202,7 +2202,11 @@ class SelectPartWin {
 };
 
 /* 0x24 bytes, 9 member(s), 0 named. From the IDB. 3 function(s) in the image. */
-class ServiceStruct {
+// STRUCT, not class: the VC6 U/V mangle key comes from this first visible
+// tag declaration, and the image spells every pointer to it with U -
+// ?join_service@Net@@QAEHPAUServiceStruct@@@Z. A `class` key emits PAV and
+// the symbol stops resolving (measured 2026-09-27, the wave-5 sweep).
+struct ServiceStruct {
  public:
   // 0x00401760, a pending_bodies forwarder (archived in 00401760.cpp). The
   // service-provider list append; Net's enumeration callback reaches it.

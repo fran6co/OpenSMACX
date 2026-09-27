@@ -201,6 +201,13 @@ class Buffer {
 
   void clear_links();
   void set_markup_enabled(int enabled) { markup_enabled_ = enabled; }
+  // 0x10, the wrap width every writer measures against: wrap_height and
+  // wrap_height_flying seed their running width from it
+  // (`field_14_ = field_10_`, src/buffer.cpp), and NetWin::draw_session_info
+  // opens its eight-row panel by storing 0x14 into it (netwin.cpp:726, the
+  // raw store that body still spells through the layout). Named from that
+  // evidence; the field stays protected, only the store goes public.
+  void set_wrap_width(uint32_t width) { field_10_ = width; }
   // InfoWin resets both the drawing and measuring markup cursors between
   // partially revealed text runs (0x00458803-0x00458819).
   void reset_text_state() {

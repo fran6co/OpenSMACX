@@ -1208,3 +1208,51 @@ Wave g_MENU_DOWN_WAVE;  // 0x0074D960
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
+
+/*
+Purpose: Tear the menu bar down: free every entry's label text, reset the
+         entry (id, flags, mnemonic), release the entry's pull-down through
+         its virtual deleting destructor, and return the menu to its
+         just-constructed state - no proc, no items, no selection.
+
+// ORIGINAL: 0x005FAD00 ??1Menu@@QAE@XZ 0x005FAD00-0x005FADC1;0x00662D02-0x00662D22 FILE
+// symbol    ??1Menu@@UAE@XZ
+// size      225 bytes
+// prototype void (__thiscall ??1Menu@@QAE@XZ)(Menu* this)
+// callers   3   call targets   3
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4DD0 0x005FA870 0x00644EF2
+// indirect  0x005FAD6E
+// TRIED (seed): the fs:[0] SEH frame is reachable with real Spot/GraphicWin
+//         members and auto member/base destruction - entries_[15] cleanup is
+//         hand-written (free()/vtable-slot0 delete), MenuEntry has no dtor;
+//         bytes otherwise matched exactly 193/193, with only the pull_down
+//         null-check hoisted one step early in the working copy.
+// Homed from src/unrecovered/005fad00.cpp. The per-entry walk matches the
+// constructor's own reset loop field for field (menu.cpp above); the image
+// reaches each pull-down through vtable slot 0 with flag one, which
+// `delete` spells. The two stores at offsets 0 and 0x444 are the
+// destruction-stage table stores (the seed's fixed-global values), emitted
+// with the rest of the destructor machinery.
+Status: Coverage transcription - unclaimed body
+*/
+Menu::~Menu() {
+    for (int i = 0; i < 15; i++) {
+        if (entries_[i].text != nullptr) {
+            free(entries_[i].text);
+        }
+        entries_[i].text = nullptr;
+        entries_[i].id = -1;
+        entries_[i].flags = 0;
+        entries_[i].mnemonic = nullptr;
+        if (entries_[i].pull_down != nullptr) {
+            delete entries_[i].pull_down;
+        }
+        entries_[i].pull_down = nullptr;
+    }
+    proc_ = nullptr;
+    count_ = 0;
+    field_A20_ = 0;
+    field_A24_ = 0xFFFFFFFF;
+}
