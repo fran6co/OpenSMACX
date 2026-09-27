@@ -56,6 +56,27 @@ class ReportIf : public SubInterface {
   // 0x004A4060  ?bl_anim@ReportIf@@QAEXXZ - public, __thiscall, void(void),
   // unrecovered. The bl_daemon thunk in leaf_recoveries.cpp calls it.
   void bl_anim();
+  // 0x004A3950  ?report@ReportIf@@QAEXHHH@Z - public, __thiscall,
+  // void(int, int, int), unrecovered. on_iface_left_click and ReportWin's
+  // on_key_click reach it on the singleton below; the retained unit's own
+  // prototype names the second argument factionID (it feeds has_tech and the
+  // per-faction spy lists), stores the report id at +0x1E228 and the third
+  // argument at +0x1E22C.
+  void report(int report_id, int faction_id, int selection);
+  // homed from 004a5f40.cpp
+  void on_iface_left_click(int x_coord, int y_coord);
+  // homed from 004ab550.cpp
+  void close_sat();
+
+ public:
+  // 0x8 - the ACTIVE REPORT CATEGORY of the singleton below, not private
+  // state: ReportWin's on_redraw seed switches its 0..8 range to pick the
+  // panel it redraws, and ReportWin::on_key_click and
+  // ReportIf::on_iface_left_click both write 2..8 into it (0x00885F40 -
+  // 0x00885F38 == 8, and the retained report unit re-reads the same dword as
+  // `self + 8`), so it is spelled public for those cross-class sites like
+  // the rest of the layout block.
+  uint32_t field_8_;  // 0x8
 
  private:
   // ??0ReportIf@@QAE@XZ installs the SubInterface vftable 0x0066A6E4 into
@@ -64,7 +85,6 @@ class ReportIf : public SubInterface {
   // (`ReportIf,0x0,subIFace,8`), which is why src/reportif.cpp already has to
   // reach the sub-object with `reinterpret_cast<SubInterface *>(this)`.
   // SubInterface is the BASE, above, so its 8 bytes are at 0.
-  uint32_t field_8_;  // 0x8
   uint32_t field_C_;  // 0xC
   uint32_t field_10_;  // 0x10
   uint32_t field_14_;  // 0x14
@@ -166,6 +186,16 @@ class ReportIf : public SubInterface {
 // then. The `close()` receiver keeps its folded form, the displacement
 // relocated.
 extern ListBox ReportIfEnergyListBox;  // 0x0087BE84
+
+
+// The process-wide ReportIf. THE OBJECT, at 0x00885F38 in the image - REAL
+// STORAGE, defined in reportif.cpp: the original's dynamic initializer at
+// 0x00496900 constructs it (`mov ecx, 0x885f38; call ??0ReportIf@@QAE@XZ`,
+// followed by the atexit registration), exactly the WorldClimateWorldWin
+// shape. ReportWin::on_key_click calls SubInterface::release_iface_mode and
+// report() on it through `mov ecx, 0x885f38`, and the +8 category above is
+// its field_8_ (0x00885F40).
+extern ReportIf ReportIfGlobal;  // 0x00885F38
 
 
 // ReportIf::bl_anim is not recovered, so the body at the end of reportif.cpp

@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "reportif.h"
+#include "reportwin.h"  // ReportWinGlobal - the window done() un-modals
 #include "worldwin.h"
 #include "menu.h"
 #include "win.h"
@@ -26,6 +27,8 @@
 #include "sprite.h"
 #include "buttongroup.h"
 #include "spot.h"
+#include "time.h"  // SatPanelTimer1/2 - close_sat stops both
+#include "maininterface.h"  // MainInterfaceGlobal - the set_modal owner
 #include "vector_teardown.h"
 
 
@@ -405,14 +408,14 @@ void ReportIf::close_energy() {
 // calls     0x0045D380 0x005EE280
 Status: Complete
 */
-// The window whose modal ReportIf::done releases - the image calls
-// release_modal on the fixed Win at 0x00876478; nothing else in the tree
-// names it, so it is modelled as real storage (the WorldClimateWorldWin
-// idiom). Its identity beyond "the window done() un-modals" is unrecovered.
-Win ReportIfModalWindow;
-
+// The window whose modal ReportIf::done releases, 0x00876478 - now IDENTIFIED
+// as the process-wide ReportWin singleton reportwin.cpp defines: the original
+// dynamic initializer at 0x00496930 constructs it (`mov ecx, 0x876478; call
+// ??0ReportWin@@QAE@XZ`, followed by the atexit registration), and
+// ReportWin::on_key_click closes the same object with Win::release_modal.
+// done() releases its modal loop and gives up the active interface mode.
 void ReportIf::done() {
-    ReportIfModalWindow.Win::release_modal();
+    ReportWinGlobal.Win::release_modal();
     reinterpret_cast<SubInterface *>(this)->release_iface_mode();
 }
 
@@ -465,6 +468,11 @@ void SubInterface::release_iface_mode() {
 // ListBox's constructor here is the empty inline the tree models, so the
 // object is the zero storage the image leaves until then.
 ListBox ReportIfEnergyListBox;  // 0x0087BE84
+
+// The process-wide ReportIf itself, 0x00885F38 - see reportif.h. The
+// image's dynamic initializer at 0x00496900 constructs it through the real
+// recovered constructor above, so the storage sits here.
+ReportIf ReportIfGlobal;  // 0x00885F38
 
 /*
  * Remaining fixed-address interface surface and clip bindings. Panel styles
@@ -592,4 +600,189 @@ void ReportIf::reset() {
     buf->set_text_color2(0x99, -1, 1, 1);
     buf->set_text_color3(0xe1, -1, 1, 1);
     buf->clear_links();
+}
+
+// ---- fixed interface bindings the recovered bodies reach ------------------
+//
+// The pair below is maininterface.cpp's spelling of the same two addresses
+// (restated per file, the designwin.cpp convention): IfaceIdToSlot maps the
+// active interface id to its sub-interface slot, ActiveIfaceId is the id.
+static int *const IfaceIdToSlot = (int *)0x007AE778;
+static int *const ActiveIfaceId = (int *)0x007D392C;
+
+// 0x008A4160 - the faction the report is displayed for. ReportIf::report's
+// retained unit names its second argument factionID (it feeds has_tech and
+// the per-faction spy lists), and on_iface_left_click / ReportWin's
+// on_key_click pass this dword there. No catalogue name.
+static int *const ReportFactionId = (int *)0x008A4160;
+
+// 0x008846E8 - set to 1 when a topic in the intel list (field_8_ == 7) is
+// clicked. Its neighbour 0x008846E4 gates the report scroll on_status shows.
+// No catalogue name for either.
+static int *const IntelTopicSelectFlag = (int *)0x008846E8;
+
+// 0x00939284 - game.cpp's LocalFaction (base.cpp's do_upgrade note names the
+// address). close_sat keeps the local player's own panel button alive.
+static int *const LocalFaction = (int *)0x00939284;
+
+// The three satellite-panel windows close_sat hides directly, each with its
+// (flag, state) pair - the image clears the state only when the flag is
+// already zero. Addresses carry the evidence; the panel identities are
+// unnamed in every catalogue.
+static Win *const SatPanelWindow1 = (Win *)0x00881A24;
+static int *const SatPanelFlag1 = (int *)0x008824CC;
+static int *const SatPanelState1 = (int *)0x008824C0;
+static Win *const SatPanelWindow2 = (Win *)0x0088038C;
+static int *const SatPanelFlag2 = (int *)0x00880E34;
+static int *const SatPanelState2 = (int *)0x00880E28;
+static Win *const SatPanelWindow3 = (Win *)0x00880ED8;
+static int *const SatPanelFlag3 = (int *)0x00881980;
+static int *const SatPanelState3 = (int *)0x00881974;
+
+// The satellite panel's two animation timers, stopped by close_sat and
+// driven by the same family the leaf daemons tick.
+static Time *const SatPanelTimer1 = (Time *)0x00884738;
+static Time *const SatPanelTimer2 = (Time *)0x00884760;
+
+// 0x005398E0 ?pop_wait@@YAHXZ - defined in faction.cpp (BYTE_EXACT); no
+// header declares it, and the set_modal popups pass it as their wait
+// callback (the designwin.cpp spelling).
+int __cdecl pop_wait();
+
+/*
+Purpose: Show the report window modally with pop_wait as its poll callback,
+         or re-report the intel category when the active interface is the
+         world map's slot 5.
+
+             cmp  [esi+8], 7 / jne ret          - intel panel only
+             push y / push x / lea ecx,[esi+0x1E1BC] / call Spot::check
+                                                - (x, y, &y, &x): the spot
+                                                  index lands in y, the type
+                                                  in x
+             inc eax / je ret                   - -1 means "no spot"
+             [esi+0x1E244] = y                  - the clicked topic
+             [0x008846E8] = 1
+             [0x00885F40] = 7                   - switch to the intel report
+             cmp IfaceIdToSlot[ActiveIfaceId], 5 - world map keeps its own
+                                                  modal owner
+             set_modal(0, pop_wait, MainInterfaceGlobal) - slot 0xE4
+             report(7, ReportFactionId, 0) on the 0x00885F38 singleton
+// ORIGINAL: 0x004A5F40 ?on_iface_left_click@ReportIf@@QAEXHH@Z 0x004A5F40-0x004A5FD6 FILE
+// size      150 bytes
+// prototype void (__thiscall ?on_iface_left_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004A3950 0x005FAB00
+// indirect  0x004A5FB1
+// Homed from src/unrecovered/004a5f40.cpp.
+*/
+void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
+    if (field_8_ != 7) {
+        return;
+    }
+
+    // check() answers the hit index and hands the spot's position and type
+    // back through the two argument slots - the push order is &y_coord then
+    // &x_coord, so the position lands in the y argument, the type in the x.
+    if (reinterpret_cast<Spot *>(spot_)->check(x_coord, y_coord,
+                                               &y_coord, &x_coord) == -1) {
+        return;
+    }
+    *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x1E244) =
+        y_coord;
+
+    *IntelTopicSelectFlag = 1;
+    field_8_ = 7;
+
+    if (IfaceIdToSlot[*ActiveIfaceId] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+        return;
+    }
+
+    ReportIfGlobal.report(7, *ReportFactionId, 0);
+}
+
+/*
+Purpose: Close the satellite report: hide every faction's panel button
+         except the local player's, hide the five bottom buttons, clear-and-
+         hide the three satellite windows, stop both timers.
+
+             esi = 1; edi = self + 0x13778 (flatButtonsC_)
+             do { if (esi != LocalFaction) slot002(edi)      - FlatButton::
+                                                                close, the
+                                                                virtual
+                  esi++; edi += 0xB4C } while (esi < 8)
+             esi = self + 0x18720 (flatButtonsD_); five slot002 calls at
+             0xB4C strides
+             the three (flag, state) pairs, then the three Win::hide calls -
+             DIRECT `call 0x5EDCD0`, the qualified-base spelling
+             Time::stop on 0x00884738 and 0x00884760
+// ORIGINAL: 0x004AB550 ?close_sat@ReportIf@@QAEXXZ 0x004AB550-0x004AB5F9 FILE
+// size      169 bytes
+// prototype void (__thiscall ?close_sat@ReportIf@@QAEXXZ)(ReportIf* this)
+// callers   2   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005EDCD0 0x00616730
+// indirect  0x004AB56C 0x004AB58A
+// Homed from src/unrecovered/004ab550.cpp. The seed carried FILE
+// BYTE_EXACT; the token is the recorder's to re-bank on this body once
+// this file's link-only placeholder (ReportIf::report) is implemented, so
+// it is not hand-carried here.
+*/
+void ReportIf::close_sat() {
+    // Both runs are the image's do/while over a walking pointer: the first
+    // steps flatButtonsC_ (esi = 1, 0xB4C strides, `cmp esi, 8` at the
+    // bottom), keeping the local player's own faction button; the second
+    // counts flatButtonsD_ down from 5.
+    FlatButton *button = flatButtonsC_;
+    int faction = 1;
+    do {
+        if (faction != *LocalFaction) {
+            button->close();
+        }
+        ++button;
+        ++faction;
+    } while (faction < 8);
+
+    button = flatButtonsD_;
+    int count = 5;
+    do {
+        button->close();
+        ++button;
+        --count;
+    } while (count != 0);
+
+    if (*SatPanelFlag1 == 0) {
+        *SatPanelState1 = 0;
+    }
+    SatPanelWindow1->Win::hide();
+    if (*SatPanelFlag2 == 0) {
+        *SatPanelState2 = 0;
+    }
+    SatPanelWindow2->Win::hide();
+    if (*SatPanelFlag3 == 0) {
+        *SatPanelState3 = 0;
+    }
+    SatPanelWindow3->Win::hide();
+    SatPanelTimer1->stop();
+    SatPanelTimer2->stop();
+}
+
+/*
+Purpose: Unimplemented dependency - the retained report unit is not
+         recovered yet; this body only keeps on_iface_left_click (and
+         ReportWin::on_key_click) linking.
+// ORIGINAL: 0x004A3950 ?report@ReportIf@@QAEXHHH@Z 0x004A3950-0x004A3CD3 FILE
+// size      899 bytes
+// prototype void (__thiscall ?report@ReportIf@@QAEXHHH@Z)(ReportIf* this, int, int, int)
+// callers   12   call targets   18
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0045DEA0 0x0045E540 0x004A3D20 0x004A7000 0x004A84A0 0x004A9050 0x004A9F90 0x004AA0B0 0x004AA970 0x004AB550 0x004AB600 0x004ABE70 0x004AC140 0x004C3A40 0x005B9F20 0x005D5890 0x005D5A70 0x00609F20
+Status: Link-only placeholder from src/recovered/units/004a3950.cpp; original behavior is not implemented.
+*/
+void ReportIf::report(int report_id, int faction_id, int selection) {
+    // BODY GOES HERE.
 }
