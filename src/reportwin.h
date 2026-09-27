@@ -56,6 +56,26 @@ class ReportWin : public GraphicWin {
   // 0x00876478 object reportif.cpp names ReportIfModalWindow - both before
   // and after it rewrites the category.
   void reset();
+  // 0x00498280 ?on_key_click@ReportWin@@QAEHHH@Z - public, __thiscall,
+  // int(int, int). Always answers 1; Enter dismisses, F1-F8 (0x70-0x77) pick
+  // the report category, 0x21-0x28 drive the scroll, 0x30-0x5A/Escape
+  // dismiss.
+  int on_key_click(int key, int code);
+  // 0x0049BCD0 ?draw_energy@ReportWin@@QAEXXZ - public, __thiscall,
+  // void(void), unrecovered: the energy panel redraw. on_selected refreshes
+  // it after every topic selection.
+  void draw_energy();
+  // 0x0049B450 ?labs_line@ReportWin@@QAEXHHHHHHH@Z - public, __thiscall,
+  // void(int, int, int, int, int, int, int), unrecovered: one lab-connection
+  // line of the research tree. The third argument is unused by the body
+  // (ret 0x20); the last selects the box-style pair.
+  void labs_line(int first_id, int second_id, int, int branch_id,
+                 int x_offset, int line_height, int style_select);
+  // 0x0049D490 ?on_selected@ReportWin@@QAEXHH@Z - public, __thiscall,
+  // void(int, int). The topic-panel selection callback: the id below 0x400
+  // is a base id, above it a tech id; the pair at 0x59AC/0x59B0 remembers
+  // the selection kind. The second argument is unused (ret 8).
+  void on_selected(int selection_id, int);
 
   // Storage the image proves is here: its own methods reach 0xFABC.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -207,6 +227,26 @@ class ReportWin : public GraphicWin {
 
 static_assert(sizeof(ReportWin) == 0xFABC,
               "ReportWin layout must match the legacy ABI");
+
+
+// The process-wide report window. THE OBJECT, at 0x00876478 in the image -
+// REAL STORAGE, defined in reportwin.cpp: the original's dynamic initializer
+// at 0x00496930 constructs it (`mov ecx, 0x876478; call ??0ReportWin@@QAE@XZ`
+// plus the atexit registration), the WorldClimateWorldWin shape.
+// reportif.cpp's done() releases its modal loop, ReportWin::on_key_click
+// closes it, and on_selected/on_button_clicked drive its two list boxes
+// below.
+extern ReportWin ReportWinGlobal;  // 0x00876478
+
+// The topic panel's two process-wide selection list boxes, 0x00890208 and
+// 0x00890D5C in the image - adjacent (0xB54 == sizeof(ListBox) apart), REAL
+// STORAGE, defined in reportwin.cpp. on_selected and the recovered-units
+// on_button_clicked are their only callers, always through `mov ecx, imm32`
+// - the addresses are the OBJECTS, not pointers - and no mapped code
+// constructs them (like ReportIfEnergyListBox, the zero storage the image
+// leaves until its own init runs).
+extern ListBox ReportWinListBox1;  // 0x00890208
+extern ListBox ReportWinListBox2;  // 0x00890D5C
 
 
 // Neither animation tick is recovered; both forward to the original image.
