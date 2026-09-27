@@ -21,10 +21,13 @@
 #include "alpha.h"     // read_faction
 #include "buffer.h"    // the local Buffer load_pcx / get_pixel run on
 #include "dialog.h"    // Dialog - the +0xA34 base UNK4 destroys
+#include "dialogs.h"   // Dialogs - the pick_* option lists
 #include "faction.h"   // Player - the record read_faction fills
 #include "game.h"      // ExitTurnLoop, the modal callbacks' stop flag
 #include "netdaemon.h" // NetDaemonNet, message_chat - the pump and the chat send
 #include "original_seam.h"  // vtable_slot - the unmodelled virtual slots
+#include "popmenu.h"   // PopMenu - the pickers' popup and its exec
+#include "pulldown.h"  // PullDown - the pickers' second pane
 #include "strings.h"   // StringTemp, the pcx path the records name
 #include "text.h"      // text_open / text_get / text_item / text_close
 
@@ -84,6 +87,7 @@ struct NetWinSlotRecord {
     unsigned char tail_[0x19C - 4];
 };
 static NetWinSlotRecord *const NetWinSlotRecords = (NetWinSlotRecord *)0x0093D51C;
+
 
 // The two control bodies the dialog's teardown paths reach that are still
 // their own preserved seeds in the StringBox / EditBox groups. The same
@@ -469,6 +473,1332 @@ void NetWin::fill_player(PlayerData *player_data, int slot) {
     strcpy(reinterpret_cast<char *>(target + 0xDD), record + 0xFA);
     strcpy(reinterpret_cast<char *>(target + 0xF5), record + 0x112);
     target[0x175] = static_cast<unsigned char>(record[0x192]);
+}
+
+// 0x0090E778 / 0x0090E79C - the two words beside the seven records
+// config_players seeds: the eighth slot's dword and its mode byte.
+static unsigned int *const NetWinEighthSlotWord = (unsigned int *)0x0090E778;
+static unsigned char *const NetWinScenarioText = (unsigned char *)0x0090E79C;
+
+// 0x0090E8E0 - the ninth slot's colour/mode prefix: 0xFF, the colour byte
+// read from 0x93D4B0, 2 - with the zeroed pair at +4/+5, the mode bytes 2 at
+// +6..+0xA and the 0xFF at +0xB.
+static unsigned char *const NetWinNinthSlot = (unsigned char *)0x0090E8E0;
+
+// 0x0093D4B0 - the colour byte beside the player-id slots; the ninth slot's
+// prefix is seeded from it.
+static unsigned char *const NetWinConfigColor = (unsigned char *)0x0093D4B0;
+
+// 0x00947020 - the default faction records the seven base slots are seeded
+// from: one 0x59C-byte Player-shaped record each, the same stride the
+// Players array walks. config_players copies the name and leader text out.
+static char *const NetWinFactionTemplate = (char *)0x00947020;
+
+/*
+Purpose: Seed the seven base faction records of the static faction table.
+         Each record's colour/mode prefix is rewritten - 0xFF, 0, 2, 0xFF, 2,
+         with the dword at +0x177 cleared - the name, formal-name and leader
+         text copied out of the template record at the same index, the title
+         re-read through the string table, the +0x174 byte taken from the
+         template, and the trailing eighth/ninth slot words reset (the ninth
+         slot's prefix carrying the colour byte at 0x93D4B0). The image
+         writes the prefix twice per record - the second pass re-stores
+         0xFF/0xFF/2/0 over the same bytes - so only the net values land.
+// ORIGINAL: 0x00481E90 ?config_players@NetWin@@QAEXXZ 0x00481E90-0x00481FC9 FILE
+// size      313 bytes
+// prototype void (__thiscall ?config_players@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006169A0 0x00645460
+// Homed from src/recovered/units/00481e90.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::config_players() {
+    unsigned char color = *NetWinConfigColor;
+    *NetWinEighthSlotWord = 0;
+    *NetWinScenarioText = 0;
+    NetWinNinthSlot[0] = 0xFF;
+    NetWinNinthSlot[4] = 0;
+    NetWinNinthSlot[5] = 0;
+    NetWinNinthSlot[0xB] = 0xFF;
+    NetWinNinthSlot[1] = color;
+    NetWinNinthSlot[2] = 2;
+    NetWinNinthSlot[6] = 2;
+    NetWinNinthSlot[7] = 2;
+    NetWinNinthSlot[8] = 2;
+    NetWinNinthSlot[9] = 2;
+    NetWinNinthSlot[0xA] = 2;
+
+    char *record = NetWinFactionTable + 0x17A;
+    char *template_record = NetWinFactionTemplate;
+    do {
+        *reinterpret_cast<unsigned int *>(record + 0x177) = 0;
+        record[-1] = 0xFF;
+        record[0] = 0;
+        record[1] = 2;
+        record[2] = 0xFF;
+        record[3] = 2;
+        strcpy(record + 4, template_record);
+        strcpy(record + 0x1C, template_record + 0x350);
+        strcpy(record + 0x44,
+               StringTable.get(
+                   *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
+        strcpy(record + 0x5C, template_record + 0x31C);
+        strcpy(record + 0xDC, template_record + 0x18);
+        strcpy(record + 0xF4, template_record + 0x30);
+        record[0x174] = template_record[0xC];
+        record += 0x17C;
+        template_record += 0x59C;
+    } while (record < NetWinFactionTable + 0x17A + 7 * 0x17C);
+}
+
+/*
+Purpose: Repaint the setup dialog: the guard test, the panel sprites (the
+         map frame at 0x474, the banner rectangle copied from 0xA14 and then
+         inset by three, and the three helper panels at 0xCE4/0xCD4/0xCC4,
+         each through its shared InterfaceBoxStyles entry), the centered
+         session title upper-cased out of the string table, and the five
+         content groups - draw_custom_rules, draw_player_names, draw_diffs,
+         draw_factions, draw_session_info - then soft_update.
+// ORIGINAL: 0x00481AD0 ?on_redraw@NetWin@@QAEXXZ 0x00481AD0-0x00481C50 FILE
+// size      384 bytes
+// prototype void (__thiscall ?on_redraw@NetWin@@QAEXXZ)(NetWin* this)
+// callers   3   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047F960 0x0047FED0 0x00480180 0x00480370 0x00480900 0x005882F0 0x005D5890 0x005DAC70 0x005DACB0 0x005DD130 0x005E2DD3 0x005F7E90 0x006169A0 0x006453E0 0x00645470
+// Homed from src/recovered/units/00481ad0.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::on_redraw() {
+    if (is_visible() == 0) {
+        return;
+    }
+    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0x474),
+                       &InterfaceBoxStyles[3]);
+
+    // The banner rectangle: painted as 0xA14 holds it, then inset by three
+    // on every side and painted again - the inset copy is the one the title
+    // is centred in.
+    RECT banner = *reinterpret_cast<RECT *>(&field_A14_);
+    buffer->box_sprite(&banner, &InterfaceBoxStyles[1]);
+    banner.left += 3;
+    banner.top += 3;
+    banner.right -= 3;
+    banner.bottom -= 3;
+    buffer->box_sprite(&banner, &InterfaceBoxStyles[2]);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(*reinterpret_cast<int *>(Labels.strings_ptr
+                                                    + 0x3F0)));
+    string_upper_slot()(StringTemp);
+    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
+    buffer->set_text_color(0xE1, -1, 1, 1);
+    if (StringTemp != 0) {
+        buffer->write_cent_l(StringTemp, &banner,
+                             strlen(StringTemp));
+    }
+
+    draw_custom_rules();
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCE4),
+                       &InterfaceBoxStyles[1]);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCD4),
+                       &InterfaceBoxStyles[0]);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCC4),
+                       &InterfaceBoxStyles[0]);
+    draw_player_names();
+    draw_diffs();
+    draw_factions();
+    draw_session_info();
+    soft_update();
+}
+
+// 0x0096C85C - alpha.cpp's file-local Difficulty[] name-index table (its own
+// static binding, not extern): draw_diffs indexes it with the record's mode
+// byte and reads the string-table index it holds.
+static char **const NetWinDifficultyNames = (char **)0x0096C85C;
+
+// 0x0090E8EC / 0x0090E8F0 - the custom-rules bit fields the eighteen
+// draw_custom_rules rows read their checkbox state from (the ability and
+// allowed-unit bits); 0x0090E8F4 carries the free-tech bit the standing
+// checkbox inverts.
+static unsigned int *const NetWinRuleBitsA = (unsigned int *)0x0090E8EC;
+static unsigned int *const NetWinRuleBitsB = (unsigned int *)0x0090E8F0;
+static unsigned int *const NetWinRuleBitsC = (unsigned int *)0x0090E8F4;
+
+// 0x0093E8C0 - the gate the custom-rules rows test before registering their
+// spots; no recovered body writes it and no catalogue names it.
+static int *const NetWinRulesGate = (int *)0x0093E8C0;
+
+// 0x0078DCA8 - the ready/check panel descriptors the player rows draw their
+// slot state from (element [2*ready] of a 0x28-stride BoxSpriteParams
+// array); its storage has no RECOVERY_OBJECT binding yet, so the pointer
+// names the image's block and the object admission is still the
+// coordinator's.
+static BoxSpriteParams *const NetWinReadyPanels =
+    (BoxSpriteParams *)0x0078DCA8;
+
+// 0x00669328 - the runtime three-rectangle slot StatusWin::redraw also goes
+// through; its target is still the original body's to name. Stdcall with
+// three rectangle pointers.
+static void *const NetWinRectSlot = (void *)0x00669328;
+
+// 0x0093D494 - the char * slot the joined session's name is read from for
+// the session-info title (empty until a session names itself).
+static char **const NetWinSessionName = (char **)0x0093D494;
+
+// 0x0080A6F0 - the planet-size name count beside the fixed dialog (the
+// names themselves ride the 0x80-stride block at 0x6614).
+static int *const NetWinPlanetSizeCount = (int *)0x0080A6F0;
+
+// 0x009B39D8 - the x coordinate wrap() finished the wrapped rules line at,
+// which the combo-arrow chip of that line is placed beside.
+static int *const NetWinWrapX = (int *)0x009B39D8;
+
+/*
+Purpose: Paint the eight session-info rows: the panel and title frames, the
+         centred session name (or the connected game's), then the labelled
+         value rows - map size, rules/scenario, opponent difficulty, the four
+         rule toggles - each "<label>: } <value>" with the label braced, the
+         combo-arrow chip on the host's rows, and each row handed to the spot
+         list. Ends with the connected-players tally for a hosted or joined
+         game.
+// ORIGINAL: 0x00480900 ?draw_session_info@NetWin@@QAEXXZ 0x00480900-0x00481AC2;0x0065745D-0x00657491 FILE
+// size      4598 bytes
+// prototype void (__thiscall ?draw_session_info@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   20
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00401000 0x005882F0 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DACE0 0x005DC790 0x005DCAB0 0x005DCEA0 0x005DD130 0x005DD730 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0 0x00645470 0x0064FC88
+// indirect  0x004809CD 0x004819B0 0x004819C2 0x004819DE 0x00481A37 0x00481A49 0x00481A65
+// Homed from src/unrecovered/00480900.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_session_info() {
+    spot_.kill_type(0);
+    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    StringStruct list;
+
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xA44),
+                       &InterfaceBoxStyles[1]);
+    RECT *title_rect = reinterpret_cast<RECT *>(self + 0xA34);
+    buffer->box_sprite(title_rect, &InterfaceBoxStyles[2]);
+
+    StringTemp[0] = 0;
+    if (*NetWinSessionName != 0) {
+        strcat(StringTemp, *NetWinSessionName);
+    }
+    string_upper_slot()(StringTemp);
+    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
+    buffer->set_text_color(0xE1, -1, 1, 1);
+    buffer->set_clip(title_rect);
+    if (*StringTemp != 0) {
+        buffer->write_cent_l(StringTemp, title_rect,
+                             strlen(StringTemp));
+    }
+    buffer->set_clip(reinterpret_cast<RECT *>(self + 0x474));
+
+    RECT *panel = reinterpret_cast<RECT *>(self + 0xA24);
+    buffer->box_sprite(panel, &InterfaceBoxStyles[0]);
+    RECT field;
+    field.left = panel->left + 4;
+    field.top = panel->top + 4;
+    field.right = panel->right - 4;
+    field.bottom = panel->bottom - 4;
+    buffer->set_clip(&field);
+
+    buffer->set_text_color(0xDF, -1, 1, 1);
+    buffer->set_text_color2(0xE2, -1, 1, 1);
+
+    const int col = field.left;
+    int row = field.top;
+    // The wrapped-text width every write_l measures against; 0x14 is the
+    // body's own starting value. Buffer keeps it protected, so the store
+    // goes through the object's own layout - a public setter is still owed.
+    *reinterpret_cast<uint32_t *>(reinterpret_cast<unsigned char *>(buffer)
+                                  + 0x10) = 0x14;
+
+    // ---- session name: {Name: } <global difficulty> ----
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp,
+           StringTable.get(
+               *reinterpret_cast<int *>(Labels.strings_ptr + 0xFA4)));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    {
+        int difficulty = NetWinNinthSlot[2];
+        if (difficulty < 0) {
+            difficulty = 0;
+        } else if (6 < difficulty) {
+            difficulty = 6;
+        }
+        strcat(StringTemp,
+               StringTable.get(
+                   reinterpret_cast<int>(NetWinDifficultyNames[difficulty])));
+    }
+    {
+        int written = buffer->write_l(StringTemp, col, row,
+                                      strlen(StringTemp));
+        if (*NetWinRulesGate != 0) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(buffer, arrow.transparent_index(), written + 3, row);
+        }
+        spot_.add(2, 0, col, row, 0x1E, buffer->text_line_height());
+        row += buffer->text_line_height();
+    }
+
+    // ---- map size: {Size: } <time-control name> ----
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp,
+           StringTable.get(
+               *reinterpret_cast<int *>(Labels.strings_ptr + 0x100C)));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    strcat(StringTemp,
+           StringTable.get(*reinterpret_cast<int *>(
+               &TimeControl[static_cast<unsigned char>(NetWinNinthSlot[3])])));
+    {
+        int written = buffer->write_l(StringTemp, col, row,
+                                      strlen(StringTemp));
+        if (*NetWinRulesGate != 0) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(buffer, arrow.transparent_index(), written + 3, row);
+        }
+        spot_.add(3, 0, col, row, 0x1E, buffer->text_line_height());
+        row += buffer->text_line_height() * 2;
+    }
+
+    // ---- rules / scenario: {Rules: } <name or scenario text> ----
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp,
+           StringTable.get(
+               *reinterpret_cast<int *>(Labels.strings_ptr + 0x1078)));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (*NetWinScenarioText == 0) {
+        strcat(StringTemp,
+               StringTable.get(
+                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x107C)));
+    } else {
+        strcat(StringTemp,
+               reinterpret_cast<const char *>(NetWinScenarioText));
+    }
+    if (*NetWinEighthSlotWord == 1) {
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "(");
+        strcat(StringTemp,
+               StringTable.get(
+                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x10)));
+    } else if (*NetWinEighthSlotWord == 2) {
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "(");
+        strcat(StringTemp,
+               StringTable.get(
+                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x1018)));
+    } else if (*NetWinEighthSlotWord == 3) {
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "(");
+        strcat(StringTemp,
+               StringTable.get(
+                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x1014)));
+    }
+    {
+        int bottom = buffer->wrap(StringTemp, col, row,
+                                  panel->right - panel->left - 0x1E);
+        if (*NetWinRulesGate != 0) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(buffer, arrow.transparent_index(), *NetWinWrapX + 3,
+                       bottom - buffer->text_line_height());
+        }
+        spot_.add(0, 0, col, row, panel->right - panel->left, bottom - row);
+        row = bottom;
+    }
+
+    // ---- opponent difficulty ----
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp,
+           StringTable.get(
+               *reinterpret_cast<int *>(Labels.strings_ptr + 0xFAC)));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, "}");
+    strcat(StringTemp, " ");
+    if (*NetWinScenarioText == 0) {
+        int opponent = NetWinNinthSlot[4];
+        if (opponent == -1) {
+            strcat(StringTemp,
+                   StringTable.get(
+                       *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)));
+        } else {
+            if (opponent < 0) {
+                opponent = 0;
+            } else if (0x1F < opponent) {
+                opponent = 0x1F;
+            }
+            strcat(StringTemp,
+                   *reinterpret_cast<char **>(
+                       reinterpret_cast<char *>(Labels.strings_ptr)
+                       + opponent * 0x80 + 0x6614));
+        }
+    } else {
+        char tally[80];
+        _itoa(NetWinNinthSlot[4], tally, 10);
+        strcat(StringTemp, tally);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "X");
+        strcat(StringTemp, " ");
+        _itoa((*reinterpret_cast<unsigned long *>(&NetWinNinthSlot[4])
+                  >> 8) & 0xFF, tally, 10);
+        strcat(StringTemp, tally);
+    }
+    {
+        int avail = panel->right - col - 10;
+        int bottom;
+        if (avail < buffer->text_width(StringTemp)) {
+            bottom = buffer->wrap(StringTemp, col, row, avail);
+        } else {
+            buffer->write_l(StringTemp, col, row, strlen(StringTemp));
+            bottom = buffer->text_line_height() + row;
+        }
+        if (*NetWinRulesGate != 0 && *NetWinScenarioText == 0) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(buffer, arrow.transparent_index(), col + 3, row);
+            spot_.add(4, 0, col, row, 0x1E, bottom - row);
+        }
+        row = bottom;
+    }
+
+    // ---- the four rule toggles ----
+    for (int rule = 0; rule < 4; ++rule) {
+        static const char *const kLabels[4] = {"{", "{", "{", "{"};
+        static const char *const kLabelEnds[4] = {"}", "}", "}", "}"};
+        static const int kTextOffsets[4] = {0xFB0, 0xFB4, 0xFB8, 0xFBC};
+        static const int kSpotIds[4] = {5, 6, 7, 8};
+        static const int kTableBases[4] = {0x3D8, 0x3DB, 0x3E1, 0x3E4};
+        signed char flag =
+            static_cast<signed char>(NetWinNinthSlot[5 + rule]);
+
+        StringTemp[0] = 0;
+        strcat(StringTemp, kLabels[rule]);
+        strcat(StringTemp,
+               StringTable.get(*reinterpret_cast<int *>(
+                   Labels.strings_ptr + kTextOffsets[rule])));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, kLabelEnds[rule]);
+        strcat(StringTemp, " ");
+
+        int text_id;
+        if (*NetWinScenarioText == 0) {
+            if (flag == -1) {
+                text_id = *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4);
+            } else {
+                text_id = *reinterpret_cast<int *>(
+                    Labels.strings_ptr
+                    + (flag + kTableBases[rule]) * 4);
+            }
+        } else {
+            text_id = *reinterpret_cast<int *>(Labels.strings_ptr + 0x1000);
+        }
+        strcat(StringTemp, StringTable.get(text_id));
+
+        int avail = panel->right - col - 10;
+        int bottom;
+        if (avail < buffer->text_width(StringTemp)) {
+            bottom = buffer->wrap(StringTemp, col, row, avail);
+        } else {
+            buffer->write_l(StringTemp, col, row, strlen(StringTemp));
+            bottom = buffer->text_line_height() + row;
+        }
+        if (*NetWinRulesGate != 0 && *NetWinScenarioText == 0) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(buffer, arrow.transparent_index(), col + 3, row);
+            spot_.add(kSpotIds[rule], 0, col, row, 0x1E, bottom - row);
+        }
+        row = bottom;
+    }
+
+    row = buffer->text_line_height() + row;
+
+    if (*NetWinEighthSlotWord == 3 || *NetWinEighthSlotWord == 2) {
+        // The unclaimed-faction tally: every record whose claimed id matches
+        // nobody in the lobby.
+        int connected = 0;
+        for (int slot = 8; slot != 0; --slot) {
+            unsigned long owned = *reinterpret_cast<unsigned long *>(
+                static_cast<char *>(faction_records_) + (8 - slot) * 0x190
+                + 4);
+            if (owned != 0) {
+                int seen = 0;
+                if (*NetWinPlayerCount > 0) {
+                    unsigned long *scan = reinterpret_cast<unsigned long *>(
+                        NetWinFactionTable + 0x2F1);
+                    while (seen < *NetWinPlayerCount) {
+                        if (*scan == owned) {
+                            break;
+                        }
+                        ++seen;
+                        scan += 0x5F;
+                    }
+                }
+                if (seen == *NetWinPlayerCount) {
+                    ++connected;
+                }
+            }
+        }
+
+        buffer->set_text_color((connected != 0 ? 8 : 0) - 0xF, -1, 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "{");
+        strcat(StringTemp,
+               StringTable.get(
+                   *reinterpret_cast<int *>(Labels.strings_ptr + 0x113C)));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, "}");
+        strcat(StringTemp, " ");
+        char tally[80];
+        _itoa(connected, tally, 10);
+        strcat(StringTemp, tally);
+
+        int avail = panel->right - col - 10;
+        if (avail < buffer->text_width(StringTemp)) {
+            buffer->wrap(StringTemp, col, row, avail);
+        } else {
+            buffer->write_l(StringTemp, col, row,
+                            strlen(StringTemp));
+        }
+    }
+
+    buffer->set_clip(reinterpret_cast<RECT *>(self + 0x474));
+    soft_update(reinterpret_cast<RECT *>(self + 0xA44));
+}
+
+/*
+Purpose: Paint the player rows: the panel and title frames, the centred
+         title, and one row per lobby slot record - the row frame with its
+         ready glyph, the lock chip (the lock sprite when the row's chosen
+         faction is already claimed elsewhere), the player's name or
+         "Computer", the ": <faction>" suffix with a duplicate count, and the
+         row, colour and name rectangles handed to the spot list as type-2
+         and type-5 icons. Ends by renaming the left flat button for the
+         unconnected case.
+// ORIGINAL: 0x00480370 ?draw_player_names@NetWin@@QAEXXZ 0x00480370-0x004808F2 FILE
+// size      1410 bytes
+// prototype void (__thiscall ?draw_player_names@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   21
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D5930 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005E2DD3 0x005E4B4A 0x005E4B9A 0x005FA960 0x005FAA90 0x006074E0 0x006169A0 0x00631A20 0x006453E0 0x00645470 0x00645660 0x0064FC88
+// indirect  0x00669328
+// Homed from src/recovered/units/00480370.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_player_names() {
+    spot_.kill_type(2);
+    spot_.kill_type(5);
+    int pid_idx = NetDaemonNet.pid_2_idx(NetWinPlayerId);
+    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xA64),
+                       &InterfaceBoxStyles[1]);
+    RECT *title_rect = reinterpret_cast<RECT *>(self + 0xA54);
+    buffer->box_sprite(title_rect, &InterfaceBoxStyles[2]);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(
+               *reinterpret_cast<int *>(Labels.strings_ptr + 0x414)));
+    string_upper_slot()(StringTemp);
+    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
+    buffer->set_text_color(0xE1, -1, 1, 1);
+    if (StringTemp != 0) {
+        buffer->write_cent_l(StringTemp, title_rect,
+                             strlen(StringTemp));
+    }
+
+    unsigned char *record = reinterpret_cast<unsigned char *>(
+        NetWinFactionTable + 0x2F1);
+    NetWinSlotRecord *slot_record = NetWinSlotRecords + 1;
+    RECT *rects = reinterpret_cast<RECT *>(self + 0xA74);
+    for (int row = 0; slot_record < NetWinSlotRecords + 8;
+         ++row, record += 0x17C, slot_record += 1) {
+        if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
+            && row >= static_cast<unsigned char>(
+                          static_cast<char *>(faction_records_)[0])) {
+            break;
+        }
+        RECT *name_rect = &rects[row * 3];
+        RECT *colour_rect = &rects[row * 3 + 3];
+        RECT *row_rect = &rects[row * 3 + 6];
+
+        // The ready glyph: element 2 when the record block's leading byte
+        // says the slot holds a player.
+        int ready = record[-0x177] != 0 ? 2 : 0;
+        buffer->box_sprite(row_rect, &NetWinReadyPanels[ready]);
+
+        if (*NetWinEighthSlotWord == 3 && record[-0x178] == 0xFF) {
+            continue;
+        }
+
+        // The lock chip: the chosen faction's own id field against the
+        // record's claim dword, only while the eighth word is 2 or 3.
+        signed char mode = static_cast<signed char>(record[-0x175]);
+        int locked;
+        if (*NetWinEighthSlotWord == 2 || *NetWinEighthSlotWord == 3) {
+            locked = 0;
+            if (mode != -1) {
+                unsigned long claimed =
+                    *reinterpret_cast<unsigned long *>(record);
+                unsigned long owned = *reinterpret_cast<unsigned long *>(
+                    static_cast<char *>(faction_records_) + mode * 0x190
+                    + 4);
+                locked = owned != 0 && owned != claimed;
+            }
+        } else {
+            locked = *reinterpret_cast<unsigned long *>(record) != 0;
+        }
+        Sprite &chip = locked ? g_IFACE_LOCK_SPRITES[1]
+                              : g_IFACE_LOCK_SPRITES[0];
+        chip.draw(buffer, chip.transparent_index(), colour_rect->left + 1,
+                  colour_rect->top, 1, 1);
+
+        // The name field: inset, then the row text.
+        RECT field = *name_rect;
+        field.left += 4;
+        field.right -= 4;
+
+        if (*NetWinEighthSlotWord == 0 || *NetWinEighthSlotWord == 1) {
+            if (row + 1 == NetDaemonNet.pid_2_idx(NetWinPlayerId)) {
+                Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+                arrow.draw(buffer, arrow.transparent_index(),
+                           field.right - 0xA,
+                           field.top
+                               + (field.bottom - arrow.height() - field.top)
+                                     / 2);
+            }
+        }
+
+        buffer->set_font(find_font(0xE, 1), 0, 0, 0);
+        buffer->set_text_color(get_player_color(row + 1), 0, 1, 1);
+        buffer->set_clip(&field);
+
+        StringTemp[0] = 0;
+        if (record[-0x178] == 0xFF) {
+            strcat(StringTemp, "Computer");
+        } else {
+            strcat(StringTemp,
+                   NetDaemonNet.get_player_name(slot_record->id));
+        }
+        if (record[-0x175] != 0xFF) {
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp,
+                   reinterpret_cast<const char *>(record - 0x173));
+            if (slot_record > NetWinSlotRecords + 1) {
+                // Count the static records whose name text matches, and
+                // append the tally when there is more than one.
+                int matches = 0;
+                const char *name =
+                    reinterpret_cast<const char *>(record - 0x173);
+                const char *scan =
+                    reinterpret_cast<const char *>(NetWinFactionTable + 0x17E);
+                for (int seen = row; seen != 0; --seen) {
+                    if (strcmp(name, scan) == 0) {
+                        ++matches;
+                    }
+                    scan += 0x17C;
+                }
+                if (matches != 0) {
+                    char tally[0xA];
+                    _itoa(matches, tally, 10);
+                    strcat(StringTemp, tally);
+                }
+            }
+        }
+        if (StringTemp != 0) {
+            buffer->write_l(StringTemp, &field, strlen(StringTemp));
+        }
+        buffer->restore_clip();
+
+        typedef void(__stdcall *rect_slot_fn)(void *, void *, void *);
+        reinterpret_cast<rect_slot_fn *>(NetWinRectSlot)[0](
+            name_rect, row_rect, &field);
+
+        spot_.add(row, 2, row_rect->left, row_rect->top,
+                  row_rect->right - row_rect->left,
+                  row_rect->bottom - row_rect->top);
+        if (*NetWinEighthSlotWord == 0 || *NetWinEighthSlotWord == 1) {
+            spot_.add(row, 2, name_rect->left, name_rect->top,
+                      name_rect->right - name_rect->left,
+                      name_rect->bottom - name_rect->top);
+        }
+        spot_.add(row, 5, colour_rect->left, colour_rect->top,
+                  colour_rect->right - colour_rect->left,
+                  colour_rect->bottom - colour_rect->top);
+        soft_update(&field);
+    }
+
+    if (*NetWinRulesGate == 0) {
+        // Not connected: the left button takes the connect label.
+        unsigned char color =
+            NetWinFactionTable[pid_idx * 0x17C];
+        const char *label = color != 0
+            ? reinterpret_cast<const char *>(Labels.strings_ptr
+                                             + 0x1054)
+            : reinterpret_cast<const char *>(Labels.strings_ptr + 0x1050);
+        flatButton1_.set_name(const_cast<char *>(StringTable.get(
+            *reinterpret_cast<const int *>(label))));
+        typedef void (__fastcall *button_slot_fn)(void *);
+        vtable_slot<button_slot_fn>(&flatButton1_, 0xF8)(&flatButton1_);
+    }
+}
+
+/*
+Purpose: Paint the custom-rules panel: the panel and title frames, the
+         centred title, and the eighteen RULES-text rows - each a checkbox
+         glyph whose state is one ability/allowed bit of the custom-rules
+         words (the bit per row in the image's own jump-table order), the
+         row's label from the RULES text section, coloured by its state, and
+         the row handed to the spot list as a type-1 icon when the gate word
+         is set. The standing free-technology checkbox (row id 100, the
+         inverted 0x10 bit) is drawn before the text opens; row 15 draws
+         nothing; after row 7 the walk jumps to the second column.
+// ORIGINAL: 0x0047F960 ?draw_custom_rules@NetWin@@QAEXXZ 0x0047F960-0x0047FE2E FILE
+// size      1230 bytes
+// prototype void (__thiscall ?draw_custom_rules@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005882F0 0x005BECA0 0x005DAC70 0x005DACB0 0x005DCF40 0x005DD130 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x005FD530 0x005FD570 0x006169A0 0x006453E0 0x00645470
+// Homed from src/recovered/units/0047f960.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_custom_rules() {
+    spot_.kill_type(1);
+    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xD04),
+                       &InterfaceBoxStyles[1]);
+    RECT *title_rect = reinterpret_cast<RECT *>(self + 0xCF4);
+    buffer->box_sprite(title_rect, &InterfaceBoxStyles[0]);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(
+               *reinterpret_cast<int *>(Labels.strings_ptr + 0xF9C)));
+    string_upper_slot()(StringTemp);
+    buffer->set_font(find_font(0xE, 1), 0, 0, 0);
+    buffer->set_text_color(0xE1, -1, 1, 1);
+    if (StringTemp != 0) {
+        buffer->write_cent_l(StringTemp, title_rect,
+                             strlen(StringTemp));
+    }
+
+    RECT *rules_rect = reinterpret_cast<RECT *>(self + 0xD14);
+    buffer->box_sprite(rules_rect, &InterfaceBoxStyles[0]);
+    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xD24),
+                       &InterfaceBoxStyles[0]);
+
+    // The four layout words double as the row rectangle: left/top advance per
+    // row while right/bottom stay put, and write_l reads them as a RECT.
+    int left = rules_rect->left - 0x14;
+    int top = *reinterpret_cast<int *>(self + 0xD18);
+    buffer->set_font(find_font(0xC, 1), 0, 0, 0);
+    int right = (rules_rect->right - rules_rect->left) + left - 6;
+    int bottom = top + 0x12;
+    RECT row_rect;
+    row_rect.left = left;
+    row_rect.top = top;
+    row_rect.right = right;
+    row_rect.bottom = bottom;
+
+    // The standing free-technology checkbox, spot id 100.
+    int free_tech = (*NetWinRuleBitsC & 0x10) == 0 ? 2 : 0;
+    Sprite &standing = g_IFACE_CLOSE_X_SPRITES[free_tech];
+    standing.draw(buffer, standing.transparent_index(), left, top);
+    if (*NetWinRulesGate != 0) {
+        spot_.add(0x64, 1, left, top, right - left, bottom - top);
+    }
+
+    if (text_open(AlphaxFileID, "RULES") != 0) {
+        return;
+    }
+    // The label lines; '#' lines are comments and do not name a row.
+    char *line;
+    do {
+        line = text_get();
+    } while (line[0] == '#');
+
+    for (int row = 0; row <= 0x11; ++row) {
+        unsigned int state;
+        unsigned int bits = *NetWinRuleBitsA;
+        switch (row) {
+        case 0:
+            state = bits & 0x800;
+            break;
+        case 1:
+            state = bits & 0x2;
+            break;
+        case 2:
+            state = bits & 0x8;
+            break;
+        case 3:
+            state = bits & 0x4;
+            break;
+        case 4:
+            state = bits & 0x1000;
+            break;
+        case 5:
+            state = bits & 0x1;
+            break;
+        case 6:
+            state = bits & 0x10;
+            break;
+        case 7:
+            state = bits & 0x20;
+            break;
+        case 8:
+            state = bits & 0x4000;
+            break;
+        case 9:
+            state = bits & 0x200;
+            break;
+        case 10:
+            state = bits & 0x40;
+            break;
+        case 11:
+            state = (bits & 0x100) == 0;
+            break;
+        case 12:
+            state = bits & 0x2000;
+            break;
+        case 13:
+            state = bits & 0x8000;
+            break;
+        case 14:
+            state = bits & 0x80;
+            break;
+        case 16:
+            state = *NetWinRuleBitsB & 0x800000;
+            break;
+        case 17:
+            state = *NetWinRuleBitsB & 0x1000000;
+            break;
+        default:
+            // Row 15 draws nothing - the separator line in the RULES text.
+            line = text_get();
+            continue;
+        }
+
+        int on = state != 0 ? 2 : 0;
+        Sprite &check = g_IFACE_CLOSE_X_SPRITES[on];
+        check.draw(buffer, check.transparent_index(), left + 0x19, top);
+        if (*NetWinRulesGate != 0) {
+            spot_.add(row, 1, left + 0x19, top, right - left - 0x19,
+                      bottom - top);
+        }
+
+        buffer->set_text_color(state != 0 ? 0xDE : 0xE4, -1, 1, 1);
+        row_rect.left = left;
+        row_rect.top = top;
+        row_rect.right = right;
+        row_rect.bottom = bottom;
+        buffer->write_l(const_cast<char *>(line), &row_rect,
+                        static_cast<int>(strlen(line)));
+
+        if (row == 7) {
+            // The second column: back to the top, 0x18A to the right.
+            left += 0x18A;
+            right += 0x18A;
+            top -= 0xA0;
+            bottom -= 0xA0;
+        } else {
+            top += 0x14;
+            bottom += 0x14;
+        }
+        line = text_get();
+    }
+    text_close();
+}
+
+/*
+Purpose: Paint the difficulty rows: one framed row per base faction record
+         (the box sprite, the combo-arrow chip for the player's own slot, the
+         difficulty name drawn left-aligned inside an inset field, and the
+         row handed to the spot list as a type-4 icon). The icon walk stops
+         early while the eighth slot word says 3 and the faction-record
+         block's count byte covers fewer rows, and a 0xFF-prefixed record
+         keeps its frame but no content.
+// ORIGINAL: 0x00480180 ?draw_diffs@NetWin@@QAEXXZ 0x00480180-0x0048036F FILE
+// size      495 bytes
+// prototype void (__thiscall ?draw_diffs@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   13
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0
+// Homed from src/recovered/units/00480180.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_diffs() {
+    spot_.kill_type(4);
+    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    RECT *rect = reinterpret_cast<RECT *>(self + 0xB54);
+    unsigned char *record =
+        reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179;
+    for (int index = 0; record < reinterpret_cast<unsigned char *>(NetWinFactionTable)
+                   + 0x179 + 7 * 0x17C;
+         ++index, record += 0x17C, ++rect) {
+        if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
+            && index >= static_cast<unsigned char>(
+                            static_cast<char *>(faction_records_)[0])) {
+            break;
+        }
+        buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
+        if (*NetWinEighthSlotWord == 3 && record[0] == 0xFF) {
+            continue;
+        }
+
+        // The combo-arrow chip: the player's own slot, or - with the two ids
+        // still equal - the row whose prefix is the 0xFF default.
+        int slot = index + 1;
+        if (slot == NetDaemonNet.pid_2_idx(NetWinPlayerId)
+            || (NetWinPlayerId == NetWinOtherPlayerId
+                && record[0] == 0xFF)) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(buffer, arrow.transparent_index(),
+                       rect->right - 0xA,
+                       rect->top
+                           + (rect->bottom - arrow.height() - rect->top) / 2);
+        }
+
+        buffer->set_font(find_font(0xE, 1), 0, 0, 0);
+        buffer->set_text_color(get_player_color(slot), 0, 1, 1);
+        RECT field = *rect;
+        field.left += 4;
+        field.right -= 4;
+        buffer->set_clip(&field);
+        char *name = StringTable.get(
+            reinterpret_cast<int>(NetWinDifficultyNames[record[2]]));
+        if (name != 0) {
+            buffer->write_l(name, &field, strlen(name));
+        }
+        buffer->restore_clip();
+        spot_.add(index, 4, rect->left, rect->top,
+                  rect->right - rect->left, rect->bottom - rect->top);
+    }
+}
+
+/*
+Purpose: Paint the faction rows: the same framed-row walk as draw_diffs one
+         panel over - box sprite, chip for the player's own slot, the row
+         clipped to a vertically inset field - with the row's text built from
+         the allocated faction record the row's mode byte names (its noun at
+         +0x62 of the 0x190-stride record) or the string table when the byte
+         is -1, and the static table's title appended after ": " whenever it
+         differs. Each row lands in the spot list as a type-3 icon.
+// ORIGINAL: 0x0047FED0 ?draw_factions@NetWin@@QAEXXZ 0x0047FED0-0x00480173 FILE
+// size      675 bytes
+// prototype void (__thiscall ?draw_factions@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   15
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0047B380 0x004E25E0 0x005882F0 0x005D8000 0x005DAC70 0x005DACB0 0x005DCF40 0x005E2DD3 0x005E4B9A 0x005FA960 0x005FAA90 0x006169A0 0x006453E0 0x00645470 0x00645660
+// Homed from src/recovered/units/0047fed0.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::draw_factions() {
+    spot_.kill_type(3);
+    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
+    Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
+    RECT *rect = reinterpret_cast<RECT *>(self + 0xAE4);
+    unsigned char *record =
+        reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179 + 0x45;
+    for (int index = 0;
+         record < reinterpret_cast<unsigned char *>(NetWinFactionTable)
+                   + 0x179 + 0x45 + 7 * 0x17C;
+         ++index, record += 0x17C, ++rect) {
+        if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
+            && index >= static_cast<unsigned char>(
+                            static_cast<char *>(faction_records_)[0])) {
+            break;
+        }
+        buffer->box_sprite(rect, &InterfaceBoxStyles[0]);
+        if (*NetWinEighthSlotWord == 3 && record[-0x45] == 0xFF) {
+            continue;
+        }
+
+        int slot = index + 1;
+        int mode = static_cast<signed char>(record[-0x42]);
+        if (slot == NetDaemonNet.pid_2_idx(NetWinPlayerId)
+            || (NetWinPlayerId == NetWinOtherPlayerId
+                && record[-0x45] == 0xFF)) {
+            Sprite &arrow = g_IFACE_MP_COMBO_ARROW_SPRITES[0];
+            arrow.draw(buffer, arrow.transparent_index(),
+                       rect->right - 0xA,
+                       rect->top
+                           + (rect->bottom - arrow.height() - rect->top) / 2);
+        }
+
+        buffer->set_font(find_font(0xE, 1), 0, 0, 0);
+        buffer->set_text_color(get_player_color(slot), 0, 1, 1);
+        RECT field = *rect;
+        field.top += 4;
+        field.bottom -= 0xB;
+        buffer->set_clip(&field);
+
+        StringTemp[0] = 0;
+        const char *named;
+        if (mode != -1) {
+            named = static_cast<char *>(faction_records_) + mode * 0x190
+                    + 0x62;
+        } else {
+            named = StringTable.get(
+                *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4));
+        }
+        strcat(StringTemp, named);
+        if (strcmp(named, reinterpret_cast<const char *>(record)) != 0) {
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, reinterpret_cast<const char *>(record));
+        }
+        buffer->write_l(StringTemp, &field, strlen(StringTemp));
+        buffer->restore_clip();
+        spot_.add(index, 3, rect->left, rect->top,
+                  rect->right - rect->left, rect->bottom - rect->top);
+    }
+}
+
+// The exec callback every pick_* hands PopMenu::exec: the image passes its
+// own modal_callback_daemon address, reached here through the fixed dialog.
+static int __cdecl pick_daemon_callback() {
+    return NetWinDialog.modal_callback_daemon();
+}
+
+// 0x00589330, unrecovered: fills a popup with the time-control list (the
+// TimeControl entries' names off the rules text). Still its own preserved
+// seed, so this file carries the forwarder shape the other unrecovered
+// callees use.
+static void sub_589330(void *popup) {
+    typedef void(__cdecl *pending)(void *);
+    reinterpret_cast<pending>(static_cast<unsigned long>(0x00589330))(popup);
+}
+
+// The shared tail of the eight pick_* dialogs: the mode byte is in, the
+// daemon knows the local slot, and the ninth slot's block rides a 0x2F02
+// packet to the other player.
+static void pick_send_state(unsigned char *mode_byte) {
+    NetDaemonNet.pid_2_idx(NetWinPlayerId);
+    unsigned char packet[0x2E];
+    *reinterpret_cast<unsigned short *>(packet) = 0x2F02;
+    memcpy(packet + 0x10, NetWinNinthSlot, 0x18);
+    NetDaemonNet.send(packet, 0x28, NetWinOtherPlayerId, 1);
+}
+
+// The option pick itself: mouse position to screen coordinates, then the
+// popup run modally with the daemon callback; the answer is the chosen item
+// index, negative when the pick was dismissed.
+static int pick_answer(NetWin &self, PopMenu &pop_menu) {
+    int x;
+    int y;
+    self.get_mouse_pos(&x, &y);
+    self.client_to_screen(&x, &y);
+    return pop_menu.exec(x, y, pick_daemon_callback);
+}
+
+/*
+Purpose: The cloud-cover picker: a popup titled from the string table with
+         the two cloud options, the answer stored in the ninth slot's cloud
+         byte and sent to the peer.
+// ORIGINAL: 0x0047F5F0 ?pick_clouds@NetWin@@QAEXXZ 0x0047F5F0-0x0047F91C;0x00657385-0x0065745D FILE
+// size      1028 bytes
+// prototype void (__thiscall ?pick_clouds@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047f5f0.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_clouds() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    Dialogs dialogs;
+    dialogs.item(StringTable.get(
+                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
+                 0);
+    int index = 1;
+    for (int offset = 0xF84; offset < 0xF90; offset += 4) {
+        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
+                         Labels.strings_ptr + offset)),
+                     index++);
+    }
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[0xA] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[0xA]);
+    }
+}
+
+/*
+Purpose: The ocean-coverage picker: the same popup walk with the three ocean
+         options; the answer lands in the ninth slot's ocean byte.
+// ORIGINAL: 0x0047EC60 ?pick_ocean@NetWin@@QAEXXZ 0x0047EC60-0x0047EF8C;0x006570FD-0x006571D5 FILE
+// size      1028 bytes
+// prototype void (__thiscall ?pick_ocean@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047ec60.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_ocean() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    Dialogs dialogs;
+    dialogs.item(StringTable.get(
+                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
+                 0);
+    int index = 1;
+    for (int offset = 0xF60; offset < 0xF6C; offset += 4) {
+        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
+                         Labels.strings_ptr + offset)),
+                     index++);
+    }
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[7] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[7]);
+    }
+}
+
+/*
+Purpose: The erosion picker: the same popup walk with the three erosion
+         options; the answer lands in the ninth slot's erosion byte.
+// ORIGINAL: 0x0047EF90 ?pick_erosion@NetWin@@QAEXXZ 0x0047EF90-0x0047F2BC;0x006571D5-0x006572AD FILE
+// size      1028 bytes
+// prototype void (__thiscall ?pick_erosion@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047ef90.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_erosion() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    Dialogs dialogs;
+    dialogs.item(StringTable.get(
+                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
+                 0);
+    int index = 1;
+    for (int offset = 0xF6C; offset < 0xF78; offset += 4) {
+        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
+                         Labels.strings_ptr + offset)),
+                     index++);
+    }
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[8] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[8]);
+    }
+}
+
+/*
+Purpose: The native-life picker: the same popup walk with the three fungal
+         options; the answer lands in the ninth slot's native byte.
+// ORIGINAL: 0x0047F2C0 ?pick_native@NetWin@@QAEXXZ 0x0047F2C0-0x0047F5EC;0x006572AD-0x00657385 FILE
+// size      1028 bytes
+// prototype void (__thiscall ?pick_native@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047f2c0.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_native() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    Dialogs dialogs;
+    dialogs.item(StringTable.get(
+                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
+                 0);
+    int index = 1;
+    for (int offset = 0xF90; offset < 0xF9C; offset += 4) {
+        dialogs.item(StringTable.get(*reinterpret_cast<int *>(
+                         Labels.strings_ptr + offset)),
+                     index++);
+    }
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[9] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[9]);
+    }
+}
+
+/*
+Purpose: The planet-size picker: a popup with the title and one entry per
+         name in the 0x80-stride name block at 0x6614, counted by the word at
+         0x80A6F0; the answer lands in the ninth slot's planet byte.
+// ORIGINAL: 0x0047E930 ?pick_planet_size@NetWin@@QAEXXZ 0x0047E930-0x0047EC60;0x00657025-0x006570FD FILE
+// size      1032 bytes
+// prototype void (__thiscall ?pick_planet_size@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047e930.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_planet_size() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    Dialogs dialogs;
+    dialogs.item(StringTable.get(
+                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
+                 0);
+    int count = *NetWinPlanetSizeCount;
+    for (int index = 0; index < count; ++index) {
+        dialogs.item(reinterpret_cast<char *>(
+                         reinterpret_cast<unsigned char *>(this) + 0x6614
+                         + index * 0x80),
+                     index + 1);
+    }
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[6] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[6]);
+    }
+}
+
+/*
+Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
+         the entry itself the answer; the ninth slot's player byte stores
+         count - 1.
+// ORIGINAL: 0x0047E010 ?pick_num_players@NetWin@@QAEXXZ 0x0047E010-0x0047E33B;0x00656D9D-0x00656E75 FILE
+// size      1027 bytes
+// prototype void (__thiscall ?pick_num_players@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550 0x0064FC88
+// Homed from src/recovered/units/0047e010.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_num_players() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    Dialogs dialogs;
+    int first = *NetWinPlayerCount;
+    if (first < 2) {
+        first = 2;
+    }
+    for (int count = first; count < 8; ++count) {
+        char number[0xA];
+        StringTemp[0] = 0;
+        _itoa(count, number, 10);
+        strcat(StringTemp, number);
+        dialogs.item(StringTemp, count);
+    }
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[1] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[1]);
+    }
+}
+
+/*
+Purpose: The global-difficulty picker: a popup with the title and the six
+         difficulty names off alpha's table; the ninth slot's global byte
+         stores the answer.
+// ORIGINAL: 0x0047E340 ?pick_global_diff@NetWin@@QAEXXZ 0x0047E340-0x0047E640;0x00656E75-0x00656F4D FILE
+// size      984 bytes
+// prototype void (__thiscall ?pick_global_diff@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   26
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047e340.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_global_diff() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    Dialogs dialogs;
+    dialogs.item(StringTable.get(
+                     *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
+                 0);
+    for (int index = 0; index < 6; ++index) {
+        dialogs.item(StringTable.get(reinterpret_cast<int>(
+                         NetWinDifficultyNames[index])),
+                     index + 1);
+    }
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[2] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[2]);
+    }
+}
+
+/*
+Purpose: The time-control picker: the popup is filled by the unrecovered
+         list builder at 0x589330 (the TimeControl names), then the same
+         modal walk; the ninth slot's time byte stores the answer.
+// ORIGINAL: 0x0047E640 ?pick_time@NetWin@@QAEXXZ 0x0047E640-0x0047E924;0x00656F4D-0x00657025 FILE
+// size      956 bytes
+// prototype void (__thiscall ?pick_time@NetWin@@QAEXXZ)(NetWin* this)
+// callers   1   call targets   25
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004048A0 0x00404900 0x004066C0 0x00406820 0x00406880 0x00406910 0x004E25E0 0x00588330 0x0059D250 0x0059D3A0 0x005D45B0 0x005D4DD0 0x005E3820 0x005EC8A0 0x005ED240 0x005F8800 0x005F88A0 0x005FA870 0x00600F00 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00612A70 0x006169A0 0x00630080 0x00645550
+// Homed from src/recovered/units/0047e640.cpp.
+Return Value: n/a
+Status: Coverage transcription - unclaimed body
+*/
+void NetWin::pick_time() {
+    PopMenu pop_menu;
+    PullDown pull_down;
+    pop_menu.init();
+    sub_589330(&pop_menu);
+    int answer = pick_answer(*this, pop_menu);
+    if (answer >= 0) {
+        NetWinNinthSlot[3] = static_cast<unsigned char>(answer - 1);
+        pick_send_state(&NetWinNinthSlot[3]);
+    }
 }
 
 /*

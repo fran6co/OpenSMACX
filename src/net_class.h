@@ -158,6 +158,9 @@ struct VoiceReceiverEntry : public virtual StringAllocationBase {
 // catalogue labels sharing the same leaf bytes. Payload's precise static type
 // remains unresolved here.
 class JackalVoiceRx : public virtual StringAllocationBase {
+  // Net::drop_player unlinkes one entry here directly - the image inlines the
+  // walk inside the Net member - so the receiver's fields are Net-visible.
+  friend class Net;
  public:
   // Body assignments preserve the original table-then-state initialization
   // order under VC6; member initializers put these stores before its vfptr.
@@ -338,10 +341,33 @@ class Net {
   // nothing has identified yet; the forwarder that gives its callers the
   // image's `E8` lives in net_class.cpp beside process_voice.
   int sub_62f390(void *data, int mode, unsigned long who, int size, int flags);
-  // 0x00632350, still unrecovered (966 bytes, archived). check_polling calls
-  // it to cut a stale player - by key, or 0xFFFFFFFF for everyone - and reads
-  // a zero answer as "cut", which is when it refreshes the player's stamp.
+  // 0x00632350, homed into net_class.cpp. check_polling calls it to cut a
+  // stale player - by key, or 0xFFFFFFFF for everyone - and reads a zero
+  // answer as "cut", which is when it refreshes the player's stamp.
   int drop_player(unsigned long key, int reason);
+  // 0x00632CC0, still unrecovered (234 bytes, archived). Both of
+  // handle_sys_msg's call sites pass the Net receiver with three stack
+  // arguments - the join-list refresh entries and the re-read player name.
+  int sub_632cc0(char *text, int id, unsigned char flag);
+  // 0x0062E2A0. Joins one enumerated service provider: copies its GUID into
+  // the 0x6EC session slot, launches the Zone's "mplaynow.exe" for the
+  // internet service, and otherwise creates and publishes the DirectPlay
+  // object and seeds the sixteen player slots with the provider's latency.
+  int join_service(ServiceStruct *service);
+  // 0x0062EAA0. Hosts a named session: opens the migrated-host session
+  // description (two players on the modem/serial services) and files the
+  // live session's name, password, GUID, flags and ceiling in the
+  // allocation node, answering its address.
+  int create_session(char *name, int max_players, char *password);
+  // 0x00631B30. Closes the joined lobby session to further joins by the
+  // GetSessionDesc/SetSessionDesc round trip; enable_join is its mirror.
+  void close_game();
+  // 0x00632070. Reopens the joined session to joins - close_game's mirror.
+  void enable_join();
+  // 0x00632DB0. Drains the system-message queue: the DPSYS_* envelopes and
+  // peer packets the session thread receives, dispatching lost sessions,
+  // name changes, player cuts and the join-list refresh.
+  void handle_sys_msg();
   int get(unsigned long *a, unsigned long *b);
   // 0x0062EDB0 and 0x0062EDD0, homed into net_class.cpp: the DirectPlay
   // group calls. add_to_group's two ids travel in this order; the catalogue

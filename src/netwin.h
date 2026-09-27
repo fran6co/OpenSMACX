@@ -102,6 +102,24 @@ class NetWin : public ConstructedGraphicWin {
   // 0x00481DA0. Copies one faction record's name/title block into a
   // PlayerData, or just clears +0x45 and re-reads it for slot -1.
   void fill_player(PlayerData *player_data, int slot);
+  // 0x00481E90. Seeds the seven base faction records of the static faction
+  // table from the 0x59C-stride template records, and resets the trailing
+  // eighth/ninth slot words.
+  void config_players();
+  // 0x00481AD0. Repaints the dialog: the panel sprites, the centred session
+  // title, and the five content groups - draw_custom_rules, draw_player_names,
+  // draw_diffs, draw_factions, draw_session_info - then soft_update.
+  void on_redraw();
+  // 0x0047F960. The custom-rules panel of the redraw.
+  void draw_custom_rules();
+  // 0x00480370. The player-name rows of the redraw.
+  void draw_player_names();
+  // 0x00480180. The difficulty rows of the redraw.
+  void draw_diffs();
+  // 0x0047FED0. The faction rows of the redraw.
+  void draw_factions();
+  // 0x00480900. The eight session-info rows of the redraw.
+  void draw_session_info();
   // 0x00483240. The fixed dialog's twin of modal_callback (the catalogue's
   // QAAHX prefix is public, like every other NetWin member mangle).
   int modal_callback_daemon();
@@ -340,6 +358,16 @@ class NetWin : public ConstructedGraphicWin {
   // 0x0047C970. The password prompt the setup dialog ends with; 1 is what
   // process_message's 0xF06 case passes it after is_visible agrees.
   int pick_pass(int payload);
+  // The eight setup pickers: one popup each, the answer stored in the ninth
+  // slot's byte and announced to the peer in a 0x2F02 packet.
+  void pick_num_players();      // 0x0047E010
+  void pick_global_diff();      // 0x0047E340
+  void pick_time();             // 0x0047E640
+  void pick_planet_size();      // 0x0047E930
+  void pick_ocean();            // 0x0047EC60
+  void pick_erosion();          // 0x0047EF90
+  void pick_native();           // 0x0047F2C0
+  void pick_clouds();           // 0x0047F5F0
 };
 
 // THE MULTIPLAYER SETUP DIALOG - the single NetWin instance in the image, at
