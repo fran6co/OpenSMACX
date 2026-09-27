@@ -1,0 +1,38 @@
+{
+  "event_id": "e97392f74a631d1ae9969777ff5ed62a802b198020d2b15b6547ceeb6094bc7c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/alphamovie.cpp",
+      "src/buffer.h",
+      "src/caviar.cpp",
+      "src/deletionlist.h",
+      "src/designwin.cpp",
+      "src/filewin.cpp",
+      "src/game.cpp",
+      "src/graphicwin.h",
+      "src/hypothesis_layouts.h",
+      "src/leaf_recoveries.cpp",
+      "src/listbox.h",
+      "src/menu.cpp",
+      "src/monuwin.cpp",
+      "src/pending_bodies.cpp",
+      "src/popup.cpp",
+      "src/reportif.cpp",
+      "src/reportif.h",
+      "src/reportwin.cpp",
+      "src/reportwin.h"
+    ],
+    "evidence": [
+      "The coordinator forwarder sweep (re-appended from the worktree fork onto the canonical chain): executed as 6 forwarder retirements (FileWin::close with its text-table reset and named fixed sprites, the ListBox trio with on_scrolling's sign-extension repaired after review decoded the -0x30 displacement byte, ReportWin::sat_anim, Menu::~Menu with the virtual UAE fact) plus GraphicWin::update 0x5D55D0 homed from raw-address casts with its claim recorder-banked BYTE_EXACT and ListBox::draw_item pinned as the sanctioned continuity placeholder. Four named owner repairs landed (listbox.h's two declarations, ServiceStruct struct-key resolving join_service's symbol, graphicwin.h's update declaration, buffer.h's set_wrap_width setter); the add_deletion return type and monument spelling remain coupled edits for stringstruct.cpp's owner. Reviewer's three corrections applied: the position slot at all five sites, the dispatch anchors per the sibling idiom, the honest TRIED note; the deletionlist citation and buffer.h comment pinned. All gates green post-repair."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9b2d0a0df9d4f877dab03b812eff436717d1c3dc905d8fd335f2a284aaaacad7",
+  "request_id": "w5-forwarder-sweep-scope",
+  "schema_version": 1,
+  "sequence": 165,
+  "stream": "task:vector-value-semantics"
+}
