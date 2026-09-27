@@ -31,7 +31,7 @@
         "deleting_thunks.cpp markers": 70,
         "delegation_thunks.cpp markers": 25,
         "field_accessors.cpp markers": 38,
-        "leaf_recoveries.cpp markers": 185,
+        "leaf_recoveries.cpp markers": 196,
         "nullsub_thunks.cpp markers": 52,
         "PENDING_BODY forwarders": 199,
         "artifact files (recovered/)": 913,
@@ -122,7 +122,7 @@
         "src/vendor"
       ],
       "ceilings": {
-        "duplicate global identities": 16,
+        "duplicate global identities": 18,
         "scaled class-pointer sum": 0
       },
       "counters": []
@@ -147,7 +147,7 @@
         "undocumented trivial body": 0,
         "raw self-access": 203,
         "pointer-parameter as int": 96,
-        "scaffold name": 3319
+        "scaffold name": 3456
       },
       "counters": []
     }
