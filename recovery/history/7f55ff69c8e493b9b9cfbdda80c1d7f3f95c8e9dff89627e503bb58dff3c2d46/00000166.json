@@ -1,0 +1,20 @@
+{
+  "event_id": "a252d76d3b54c816c22e50cbb37deb32f8aa1b82198690b42e829498cafafced",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Unassigned cohort band a (re-appended from the worktree fork onto the canonical chain; discovery d2760c26): the 22 entities in [0x401000,0x460000). Executed as 15 retirements with three claims recorder-banked fresh (sub_44af90, hof_save 33/33, hof_load 34/34, hof-family 42/42 - CRT callees through the map.cpp treaty names), seven continuity placeholders with claim tokens stripped so obligations stay on their retained artifacts (the seventh, StringBox::clear, lands for sub_441100's caller), four first-ever measurements with new fastcall symbol facts, and twelve honest MISMATCH transcriptions with documented divergences. Seven forwarder/thunk blockers preserved and journaled. Reviewer-approved with all sampled bodies verified; check-mappings carries 7 new transitional placeholder pairs (accepted condition, resolvable by explicit --in when the bodies land)."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e97392f74a631d1ae9969777ff5ed62a802b198020d2b15b6547ceeb6094bc7c",
+  "request_id": "w5-una-scope",
+  "schema_version": 1,
+  "sequence": 166,
+  "stream": "task:vector-value-semantics"
+}
