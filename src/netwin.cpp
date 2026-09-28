@@ -32,6 +32,11 @@
 #include "text.h"      // text_open / text_get / text_item / text_close
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 
+// These application entry points are source-owned in pending_bodies.cpp and
+// are also used by Console. Their implementations remain preserved forwarders.
+int __cdecl load_game(int save_slot, int faction_id);
+int __cdecl load_map();
+
 // THE SETUP DIALOG, real storage at the image's fixed address - see
 // netwin.h. The image reaches it from an unannotated initialiser at
 // 0x007AFF0 (`mov ecx, 0x80a6f8 / call 0x481c50`); this build runs the same
@@ -1659,7 +1664,44 @@ void NetWin::pick_diff(int) {
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
 // TRIED: time-boxed - setup (Popup/PullDown/Buffer RAII, PopMenu init/exec, four Dialogs::item calls, mouse pos) and the top-level choice dispatch (load_map/load_game/parse_num LAN-limit check) are transcribed against the disassembly; the network-host session-record population (~30 field strcpy calls into an unverified struct layout) is a deliberate stub rather than fabricated field offsets. MISMATCH #10, well past the prologue.
 void NetWin::pick_map() {
-    // BODY GOES HERE.
+    PopMenu pop_menu;
+    pop_menu.init();
+
+    Dialogs dialogs;
+    dialogs.item(label_get(0x107C / 4), 0);
+    dialogs.item(label_get(0x0FD8 / 4), 1);
+    dialogs.item(label_get(0x0FDC / 4), 2);
+    dialogs.item(label_get(0x0FE0 / 4), 3);
+
+    const int choice = pick_answer(*this, pop_menu);
+    if (choice < 0) {
+        return;
+    }
+
+    // Choice zero builds and sends the network-host session descriptor. Its
+    // record shape is not established by the typed NetWin session models.
+    if (choice == 0) {
+        // BODY GOES HERE.
+        return;
+    }
+    if (choice == 1) {
+        if (load_map() != 0) {
+            return;
+        }
+    } else if (choice == 2) {
+        // The host-load branch's seat-count guard reads an as-yet-unowned
+        // scenario player mask. Do not start the load without that check.
+        // BODY GOES HERE.
+        return;
+    } else if (choice == 3) {
+        if (load_game(0, 0) != 0) {
+            return;
+        }
+    } else {
+        return;
+    }
+
+    pick_send_state();
 }
 
 /*
