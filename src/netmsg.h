@@ -48,6 +48,7 @@ class NetMsg : public Popup {
   // nothing and the deleting destructor needs a `call rel32`.
   ~NetMsg();
   void close();
+  void on_button_clicked(int button_id);
   // 0x0047A890  ?pop@NetMsg@@QAEXPBDHHPBD@Z - still unrecovered
   // (src/recovered/units/0047a890.cpp, forwarded in pending_bodies.cpp).
   // Declared so the diplomacy bodies can name it: every one of them reaches
@@ -74,4 +75,3 @@ class NetMsg : public Popup {
 // both sides, so the fold costs nothing. Read off 0055c730 and 0053e4c0, which
 // both reach pop through it; timer_daemon (0x0047A800) closes the same address.
 NetMsg *const NetMsgPopup = (NetMsg *)0x00805338;
-

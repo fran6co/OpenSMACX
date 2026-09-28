@@ -89,6 +89,21 @@ void NetMsg::close() {
     }
 }
 
+/*
+Purpose: Stop the message timer and hide the popup when a message is active.
+*/
+// ORIGINAL: 0x0047A860 ?on_button_clicked@NetMsg@@QAEXH@Z 0x0047A860-0x0047A88D BYTE_EXACT
+// symbol    ?on_button_clicked@NetMsg@@UAEXH@Z
+// Win's recovered slot-44 declaration makes this a virtual override in the
+// current class model; the original catalogue spelling is retained above.
+void NetMsg::on_button_clicked(int) {
+    if (field_5384_) {
+        field_5384_ = 0;
+        timer_.close();
+        Popup::hide();
+    }
+}
+
 
 /*
 Purpose: Step the receiver back to the subobject ??_GNetMsg@@UAEPAXI@Z expects,
