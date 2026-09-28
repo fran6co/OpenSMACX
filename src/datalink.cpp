@@ -667,6 +667,24 @@ void Datalink::construct_id(char *out, int category, int suffix) {
     _itoa(category * 10000 + suffix, out, 10);
 }
 
+/*
+Purpose: Append one clickable cross-reference to a caller-owned help buffer.
+         The original strings at 0x00683544/40/3C are "$LINK<", "=" and
+         ">", respectively; the caller supplies visible text and its id.
+// ORIGINAL: 0x0044CB80 ?help_create_link@@YAXPAD00@Z 0x0044CB80-0x0044CBC2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0068353C-0x0068354A contains the original markup strings >, = and $LINK<", "source:src/recovered/units/0044cb80.cpp preserves five strcat calls and the original 0x0044CB80 span", "source:src/leaf_recoveries.cpp help builders call this free helper"], "reason": "Home the Datalink-family link formatter as ordinary C++ markup construction in the product TU, replacing the empty leaf placeholder while retaining the original identity."}
+// size      66 bytes
+Return Value: n/a
+Status: Product body; measure before granting a byte claim.
+*/
+void __cdecl help_create_link(char *out, char *label, char *id) {
+    strcat(out, "$LINK<");
+    strcat(out, label);
+    strcat(out, "=");
+    strcat(out, id);
+    strcat(out, ">");
+}
+
 
 /*
 // ORIGINAL: 0x00432040 ?on_selected@Datalink@@QAEXH@Z 0x00432040-0x00432052 BYTE_EXACT
