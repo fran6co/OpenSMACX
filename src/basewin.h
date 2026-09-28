@@ -77,6 +77,10 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
  public:
   // homed from 004103b0.cpp
   void draw_garrison(int a1);
+  // 0x00415DD0 selects the focused base for current-base computation.
+  void focus();
+  // 0x00415E60 also changes the focused base, then invalidates its computed id.
+  void UNK3(int base_id);
 
  public:
   // homed from 00420a40.cpp

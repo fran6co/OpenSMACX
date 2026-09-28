@@ -328,6 +328,40 @@ void BaseWin::soft_zoom(int base_id) {
     zoom(base_id, 0);
 }
 
+// ORIGINAL: 0x00415DD0 ?focus@BaseWin@@QAEXXZ 0x00415DD0-0x00415E52 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00415DD0-0x00415E52 reads focusedBaseID_ and Base::resource_sqr_radius, selects and computes that base, then conditionally acquires/releases the multiplayer base lock after observing a changed radius.", "source:src/basewin.h", "source:src/base.h", "source:src/game.h", "source:src/console.h", "source:src/netdaemon.h"], "reason": "Recover BaseWin focus through its source-owned focused base, typed Base fields and NetDaemon lock interface while retaining the original refresh and lock sequence."}
+void BaseWin::focus() {
+    const int base_id = static_cast<int>(focusedBaseID_);
+    const int worked_tiles = Bases[base_id].resource_sqr_radius;
+    set_base(base_id);
+    base_compute(0);
+    if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0
+        && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        }
+    }
+}
+
+// ORIGINAL: 0x00415E60 ?UNK3@BaseWin@@QAEXH@Z 0x00415E60-0x00415EFB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00415E60-0x00415EFB stores its argument in BaseWin+0x40B0C, invalidates BaseComputedID at 0x00689374, compares Base::resource_sqr_radius before and after set_base/base_compute, and conditionally locks/unlocks the selected multiplayer base.", "source:src/basewin.h", "source:src/base.h", "source:src/base.cpp", "source:src/game.h", "source:src/console.h", "source:src/netdaemon.h"], "reason": "Recover the focused-base selection entry through typed BaseWin/Base state and the existing NetDaemon API, preserving its cache invalidation and conditional lock behavior."}
+// SEED LEVER: legacy table[i*77] is Bases[i].resource_sqr_radius at +0x78
+// in the 0x134-byte Base record. focusedBaseID_ is at +0x40B0C; the earlier
+// scaffold's pad-derived field name was based on the wrong +0x40B10 offset.
+void BaseWin::UNK3(int base_id) {
+    focusedBaseID_ = static_cast<uint32_t>(base_id);
+    BaseComputedID = -1;
+    const int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
+    set_base(static_cast<int>(focusedBaseID_));
+    base_compute(0);
+    if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0
+        && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        }
+    }
+}
+
 /*
 Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
          second GraphicWin, several Sprite runs, a FlatButton, a Buffer, a
