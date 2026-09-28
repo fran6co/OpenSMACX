@@ -1,0 +1,22 @@
+{
+  "event_id": "abea16402e723a8a20ca29974909061d174c82fda10d5f1029f76ff140953d08",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netwin_lobby_click.py",
+      "src/netwin.cpp",
+      "src/netwin.h"
+    ],
+    "evidence": [
+      "User directs finishing retained work. Complete pending47B450 as real NetWin member using existing7614/faction-record owner, typed wire packet records and one evidence-backed owner for overlapping eight17C lobby rows. Include producer/consumer uses in netwin.cpp and leaf_recoveries.cpp; investigate initial storage and shared-count/state ownership before replacing aliases. Preserve complete row/packet evidence and existing exact claims; stop with discovery if unknown data/lifetime prevents correctness, no fabricated fields. Correct pending433A10 key selector to original second argument, preserving its separate genuine SelectPartWin hierarchy/lifetime migration obligation. Fresh build/link and scoped regression evidence before integration.",
+      "Canonical coordinator preservation of stopped pa decision 50fc8a89e04c9050c1d0585de7bd6d012420bdce9f8a1fc9602b58b53db07721; original baseline retained. Not acceptance or resolution."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d0672084584e21479ab7a5f52517c15bbc9653147cd672d7c9e7bfa2b50d1a7f",
+  "request_id": "w8-pa-netwin-owner-completion-20260928",
+  "schema_version": 1,
+  "sequence": 184,
+  "stream": "task:vector-value-semantics"
+}

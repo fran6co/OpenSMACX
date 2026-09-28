@@ -1,0 +1,80 @@
+{
+  "event_id": "968cc861052de27db3ce7013ea5d3f663e86bea09215664543bbf02cb9df301f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Pinned SelectPartWin primary vtable66B2B8 differs from GraphicWin66FC50 at slots0,12,17,21,25,48,49: targets43EDE0,4339C0,433820,433940,433A10,433F30,433F50. Complete these coupled original class/lifetime identities in the authorized real SelectPartWin owner; use existing inherited provisional vslot_21/25/48/49 names as genuine overrides rather than broad Win renaming or manual vtables.",
+      "Preserve every seed and historical obligation. New image-only product bindings must be published via native seed binding, never manual ORIGINAL/BYTE_EXACT insertion. Implement existing seed-supported behavior, report contradictory or unavailable evidence, and remeasure claims/layout/references/build before manual integration. This scope expansion is not temporary regression acceptance or complete game proof.",
+      "Canonical coordinator preservation of stopped pa decision 0db59ae497360cb155255f7d432cb4602c14fdff1edb6fbc20c0bcd75dcb36e1; original baseline retained. Not acceptance or resolution."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4401328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4401520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4405280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4405568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4405696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4405776,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4407088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4407120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4451808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4451856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4452272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4406624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "22aa708747bb12281c2d1c766aee68fed4f418e6e5aabce140ec7576c7c8aeea",
+  "request_id": "w8-pa-selectpart-virtual-family-20260928",
+  "schema_version": 1,
+  "sequence": 186,
+  "stream": "task:vector-value-semantics"
+}

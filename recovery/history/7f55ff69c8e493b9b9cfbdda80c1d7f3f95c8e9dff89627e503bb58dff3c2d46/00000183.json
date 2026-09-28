@@ -1,0 +1,21 @@
+{
+  "event_id": "d0672084584e21479ab7a5f52517c15bbc9653147cd672d7c9e7bfa2b50d1a7f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Wave 8 large-band third (discovery large-band-3-20260928): the ~116 seeds in /tmp/large3-a.txt. Coverage protocol per the chain; record-then-retire; DO NOT edit pending_bodies.cpp; smallest first; stop cleanly at a context boundary.",
+      "Canonical coordinator preservation of stopped pa decision 53d5fdb74d56393d7ba96d0927a80a24479d891ff89f0fc9760910b538ee0ef6; original baseline retained. Not acceptance or resolution."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c1a4b9821e8e5073a6540075540e7d0d96846e3f883142228ef51b50ede9bfe4",
+  "request_id": "w8-pa-scope",
+  "schema_version": 1,
+  "sequence": 183,
+  "stream": "task:vector-value-semantics"
+}

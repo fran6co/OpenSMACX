@@ -1,0 +1,22 @@
+{
+  "event_id": "e2d0e23127ad699e9cbc7cbefbe145f952320f37760becff6a1767c81244f2ab",
+  "payload": {
+    "affects": [
+      "entity-2cbdb7e623234ef1c9366c6c38d6d948a04572f8217cdb7b988456078651b110"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "w8-pa-unspecified-lobby-packet-bytes-20260928",
+    "evidence": [
+      "Pinned47B450 disassembly: full0xA74 and single0x18C packets write bytes0..1,4..11 and payload16..end, leaving2..3 and12..15 without stores before send; leave0x20 writes only the type word before send, leaving2..31 unspecified.",
+      "Coordinator asked the user explicitly whether to zero all unspecified bytes while preserving message types, payloads and lengths. No answer yet; keep NetWin candidate unaccepted and do not merge this behavior change on an inferred approval. SelectPartWin work proceeds separately.",
+      "Canonical coordinator preservation of stopped pa decision 24df56d0c82aa21eaaf7087203cce13c9d6c2217ebfe959d411d6f67d6b5b48e; original baseline retained. Not acceptance or resolution."
+    ],
+    "hypothesis": "The original NetWin button handler transmits uninitialized packet bytes. The pending typed implementation zero-initializes them, a deliberate safety change awaiting user authorization, not an exact-behavior recovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "968cc861052de27db3ce7013ea5d3f663e86bea09215664543bbf02cb9df301f",
+  "request_id": "w8-pa-unspecified-lobby-packet-bytes-20260928",
+  "schema_version": 1,
+  "sequence": 187,
+  "stream": "task:vector-value-semantics"
+}

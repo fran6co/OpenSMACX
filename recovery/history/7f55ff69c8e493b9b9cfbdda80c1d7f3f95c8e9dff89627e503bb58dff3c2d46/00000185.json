@@ -1,0 +1,28 @@
+{
+  "event_id": "22aa708747bb12281c2d1c766aee68fed4f418e6e5aabce140ec7576c7c8aeea",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/tests/test_selectpartwin_navigation.py",
+      "src/delegation_thunks.cpp",
+      "src/deleting_thunks.cpp",
+      "src/hypothesis_layouts.h",
+      "src/pending_bodies.cpp",
+      "src/scroll.h",
+      "src/selectpartwin.cpp",
+      "src/selectpartwin.h"
+    ],
+    "evidence": [
+      "Complete the already pending SelectPartWin433A10 keyboard recovery as a real class rather than accepting new raw self-offset accesses and VCall. Original4328B0 constructor and43EE10 teardown evidence couples GraphicWin base, Scroll+A14, Caviar+2B9C, Buffer+406C and two Fonts+45F4/+461C. Authorize class promotion, owning TU, replacing manual construction and forwarded destruction, typed existing draw/close/navigation methods, generated deleting/adjustor bindings where observed and direct Scroll state access with controlled friendship. Preserve all original identities, seeds and historical close/deleting/scrolling claims; no automatic reverts/demotion, new asm, vtable stores, behavior changes, or unrelated owner work. Report any missing override/lifetime dependency before fabricating it. Scope authority is not permission to merge unmeasured regressions.",
+      "Canonical coordinator preservation of stopped pa decision 53f024e25c1447da0928536201a08c00793056fef7ea2596abd77d243c82b190; original baseline retained. Not acceptance or resolution."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "abea16402e723a8a20ca29974909061d174c82fda10d5f1029f76ff140953d08",
+  "request_id": "w8-pa-selectpart-owner-completion-20260928",
+  "schema_version": 1,
+  "sequence": 185,
+  "stream": "task:vector-value-semantics"
+}
