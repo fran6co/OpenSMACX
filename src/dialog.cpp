@@ -20,6 +20,13 @@
 #include "dialog.h"
 #include "stringstruct.h"
 
+// ORIGINAL: 0x00609970 ?UNK1@Dialog@@QAEXHH@Z 0x00609970-0x0060998A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The retained 0x00609970 seed body passes its first argument unchanged into Dialog virtual slot 1, then supplies Dialog fields at +0x24 and +0x28, then its second argument; it does not read or write those fields itself.", "src/dialog.h declares Dialog slot 1 as attach(GraphicWin*, int, int, int), and the Dialog-part vtable evidence recorded there identifies slot 1 as attach. Existing callers of the corresponding attach slot use GraphicWin* for its first parameter."], "reason": "Bind the seed-only two-argument Dialog helper to the real typed virtual attach operation and Dialog members, preserving its historical mapping and claim."}
+// symbol    ?attach_at_stored_position@Dialog@@QAEXPAVGraphicWin@@H@Z
+void Dialog::attach_at_stored_position(GraphicWin *window, int flags) {
+    attach(window, field_24_, field_28_, flags);
+}
+
 /*
 Purpose: Compiler-generated complete StringList destructor. Dialog owns a
          real StringList member, so its normal and unwind lifetimes emit this
