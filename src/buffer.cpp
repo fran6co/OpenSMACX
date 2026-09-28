@@ -7741,6 +7741,161 @@ void Buffer::hline(int x1, int x2, int y, int first_color, int second_color,
     free_data(1);
 }
 
+
+// Original entries 5D8650, 5D8FE0 and 5D91D0 have the same Buffer receiver,
+// field accesses and shared Sprite publisher as draw_dest_source at 5D8DF0.
+// These are actual Buffer members, not an invented subclass or a second
+// Sprite layout. Existing Buffer friendship grants access to the real owner.
+// draw_unk2 is provisional; its callee at 5E4AEA is an original zero-return
+// drawing hook. The destination remains a genuine Buffer pointer throughout.
+// ORIGINAL: 0x005D8650 sub_5d8650 0x005D8650-0x005D873E FILE BYTE_EXACT
+// symbol    ?draw_unk2@Buffer@@QAEHPAV1@HHHH@Z
+// size      238 bytes
+int Buffer::draw_unk2(Buffer *source, int transparent_in, int x, int y,
+                           int table) {
+    int transparent = transparent_in;
+    if (surface_ == 0) {
+        if (transparent_in == -1) {
+            transparent = WinFillColour;
+        }
+        locked_bits_ = dib_bits_;
+        if (locked_bits_ != nullptr) {
+            surface_lock_count_ = surface_lock_count_ + 1;
+        }
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+
+        if (surface_ == 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if ((int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+        } else {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+            surface_->Unlock(locked_bits_);
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+tail:
+    {
+        int result = g_BUFFER_SPRITE.draw_noop(source,
+                                          transparent_in, x, y, table);
+        g_BUFFER_SPRITE.pcBits_ = 0;
+        return result;
+    }
+}
+
+
+// ORIGINAL: 0x005D8FE0 sub_5d8fe0 0x005D8FE0-0x005D90CE FILE BYTE_EXACT
+// symbol    ?draw@Buffer@@QAEHPAV1@HHHPAE@Z
+// size      238 bytes
+int Buffer::draw(Buffer *source, int transparent_in, int x, int y,
+                           unsigned char *table) {
+    int transparent = transparent_in;
+    if (surface_ == 0) {
+        if (transparent_in == -1) {
+            transparent = WinFillColour;
+        }
+        locked_bits_ = dib_bits_;
+        if (locked_bits_ != nullptr) {
+            surface_lock_count_ = surface_lock_count_ + 1;
+        }
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+
+        if (surface_ == 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if ((int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+        } else {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+            surface_->Unlock(locked_bits_);
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+tail:
+    {
+        int result = g_BUFFER_SPRITE.draw(source, transparent_in, x, y, table);
+        g_BUFFER_SPRITE.pcBits_ = 0;
+        return result;
+    }
+}
+
+
+// ORIGINAL: 0x005D91D0 sub_5d91d0 0x005D91D0-0x005D92BE FILE BYTE_EXACT
+// symbol    ?draw_dest_unk2@Buffer@@QAEHPAV1@HHHPAE@Z
+// size      238 bytes
+int Buffer::draw_dest_unk2(Buffer *source, int transparent_in, int x, int y,
+                           unsigned char *table) {
+    int transparent = transparent_in;
+    if (surface_ == 0) {
+        if (transparent_in == -1) {
+            transparent = WinFillColour;
+        }
+        locked_bits_ = dib_bits_;
+        if (locked_bits_ != nullptr) {
+            surface_lock_count_ = surface_lock_count_ + 1;
+        }
+        g_BUFFER_SPRITE.pcBits_ = static_cast<char *>(locked_bits_);
+        g_BUFFER_SPRITE.iSpriteWidth2_ = stride_;
+        g_BUFFER_SPRITE.iSpriteWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iSpriteHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iWidth_ = dib_.bmiHeader.biWidth;
+        g_BUFFER_SPRITE.iHeight_ = -dib_.bmiHeader.biHeight;
+        g_BUFFER_SPRITE.iLeftOffset_ = 0;
+        g_BUFFER_SPRITE.iTopOffset_ = 0;
+        g_BUFFER_SPRITE.cTransparentIndex_ = (unsigned char)transparent;
+        g_BUFFER_SPRITE.fObj1Exists_ = 0;
+
+        if (surface_ == 0) {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if ((int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+        } else {
+            surface_lock_count_ = surface_lock_count_ - 1;
+            if (locked_bits_ == nullptr || (int)surface_lock_count_ > 0) {
+                goto tail;
+            }
+            surface_->Unlock(locked_bits_);
+        }
+        locked_bits_ = nullptr;
+        surface_lock_count_ = 0;
+    }
+tail:
+    {
+        int result = g_BUFFER_SPRITE.draw_dest_unk2(source, transparent_in, x,
+                                                    y, table);
+        g_BUFFER_SPRITE.pcBits_ = 0;
+        return result;
+    }
+}
+
 // ORIGINAL: 0x005E1350 ?vline@Buffer@@QAEXHHHHHHHH@Z 0x005E1350-0x005E15E7
 // size      663 bytes
 // prototype void (__thiscall ?vline@Buffer@@QAEXHHHHHHHH@Z)(Buffer* this, int, int, int, int, int, int, int, int)
