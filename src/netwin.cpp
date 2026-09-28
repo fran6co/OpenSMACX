@@ -532,17 +532,17 @@ void NetWin::config_players() {
     unsigned char color = *NetWinConfigColor;
     *NetWinEighthSlotWord = 0;
     *NetWinScenarioText = 0;
-    NetWinNinthSlot[0] = 0xFF;
-    NetWinNinthSlot[4] = 0;
-    NetWinNinthSlot[5] = 0;
-    NetWinNinthSlot[0xB] = 0xFF;
-    NetWinNinthSlot[1] = color;
-    NetWinNinthSlot[2] = 2;
-    NetWinNinthSlot[6] = 2;
-    NetWinNinthSlot[7] = 2;
-    NetWinNinthSlot[8] = 2;
-    NetWinNinthSlot[9] = 2;
-    NetWinNinthSlot[0xA] = 2;
+    NetWinSessionOptions.status_ = 0xFF;
+    NetWinSessionOptions.option_4_ = 0;
+    NetWinSessionOptions.option_5_ = 0;
+    NetWinSessionOptions.reserved_B_ = 0xFF;
+    NetWinSessionOptions.player_count_ = color;
+    NetWinSessionOptions.difficulty_ = 2;
+    NetWinSessionOptions.planet_size_ = 2;
+    NetWinSessionOptions.ocean_coverage_ = 2;
+    NetWinSessionOptions.erosion_ = 2;
+    NetWinSessionOptions.native_life_ = 2;
+    NetWinSessionOptions.cloud_cover_ = 2;
 
     char *record = NetWinFactionTable + 0x17A;
     char *template_record = NetWinFactionTemplate;
@@ -645,8 +645,9 @@ static unsigned int *const NetWinRuleBitsA = &NetWinSessionOptions.rule_bits_a_;
 static unsigned int *const NetWinRuleBitsB = &NetWinSessionOptions.rule_bits_b_;
 static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.rule_bits_c_;
 
-// 0x0093E8C0 - the gate the custom-rules rows test before registering their
-// spots; no recovered body writes it and no catalogue names it.
+// 0x0093E8C0 is NetDaemonNet.lock_state_[0].dword_[1] (+0x1B30), initialized
+// by NetDaemon's constructor. The game and stringstruct turn-flow bodies
+// refer to the same storage as TurnsAssigned; it is not a separate global.
 static unsigned int *const NetWinRulesGate =
     &NetDaemonNet.lock_state_[0].dword_[1];
 
@@ -750,7 +751,7 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
     {
-        int difficulty = NetWinNinthSlot[2];
+        int difficulty = NetWinSessionOptions.difficulty_;
         if (difficulty < 0) {
             difficulty = 0;
         } else if (6 < difficulty) {
@@ -852,7 +853,7 @@ void NetWin::draw_session_info() {
     strcat(StringTemp, "}");
     strcat(StringTemp, " ");
     if (*NetWinScenarioText == 0) {
-        int opponent = NetWinNinthSlot[4];
+        int opponent = NetWinSessionOptions.option_4_;
         if (opponent == -1) {
             strcat(StringTemp,
                    StringTable.get(
@@ -870,13 +871,12 @@ void NetWin::draw_session_info() {
         }
     } else {
         char tally[80];
-        _itoa(NetWinNinthSlot[4], tally, 10);
+        _itoa(NetWinSessionOptions.option_4_, tally, 10);
         strcat(StringTemp, tally);
         strcat(StringTemp, " ");
         strcat(StringTemp, "X");
         strcat(StringTemp, " ");
-        _itoa((*reinterpret_cast<unsigned long *>(&NetWinNinthSlot[4])
-                  >> 8) & 0xFF, tally, 10);
+        _itoa(NetWinSessionOptions.option_5_, tally, 10);
         strcat(StringTemp, tally);
     }
     {
@@ -903,8 +903,13 @@ void NetWin::draw_session_info() {
         static const int kTextOffsets[4] = {0xFB0, 0xFB4, 0xFB8, 0xFBC};
         static const int kSpotIds[4] = {5, 6, 7, 8};
         static const int kTableBases[4] = {0x3D8, 0x3DB, 0x3E1, 0x3E4};
-        signed char flag =
-            static_cast<signed char>(NetWinNinthSlot[5 + rule]);
+        signed char flag;
+        switch (rule) {
+        case 0: flag = static_cast<signed char>(NetWinSessionOptions.option_5_); break;
+        case 1: flag = static_cast<signed char>(NetWinSessionOptions.planet_size_); break;
+        case 2: flag = static_cast<signed char>(NetWinSessionOptions.ocean_coverage_); break;
+        default: flag = static_cast<signed char>(NetWinSessionOptions.erosion_); break;
+        }
 
         StringTemp[0] = 0;
         strcat(StringTemp, kLabels[rule]);
@@ -1515,15 +1520,26 @@ static void sub_589330(void *popup) {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00589330))(popup);
 }
 
+// The pickers send the complete 0x18-byte ninth-slot state after a 16-byte
+// message header. The protocol leaves the intervening header words reserved;
+// the coordinator-approved packet form initializes those bytes to zero.
+struct NetWinSessionOptionsPacket {
+    uint16_t opcode_;
+    uint8_t reserved_[0x0E];
+    NetWinSessionOptionsState options_;
+};
+static_assert(sizeof(NetWinSessionOptionsPacket) == 0x28,
+              "session options packet size");
+
 // The shared tail of the eight pick_* dialogs: the mode byte is in, the
-// daemon knows the local slot, and the ninth slot's block rides a 0x2F02
-// packet to the other player.
-static void pick_send_state(unsigned char *mode_byte) {
+// daemon knows the local slot, and the complete state rides to the peer.
+static void pick_send_state() {
     NetDaemonNet.pid_2_idx(NetWinPlayerId);
-    unsigned char packet[0x2E];
-    *reinterpret_cast<unsigned short *>(packet) = 0x2F02;
-    memcpy(packet + 0x10, NetWinNinthSlot, 0x18);
-    NetDaemonNet.send(packet, 0x28, NetWinOtherPlayerId, 1);
+    NetWinSessionOptionsPacket packet;
+    memset(&packet, 0, sizeof(packet));
+    packet.opcode_ = 0x2F02;
+    packet.options_ = NetWinSessionOptions;
+    NetDaemonNet.send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
 }
 
 // The option pick itself: mouse position to screen coordinates, then the
@@ -1535,6 +1551,115 @@ static int pick_answer(NetWin &self, PopMenu &pop_menu) {
     self.get_mouse_pos(&x, &y);
     self.client_to_screen(&x, &y);
     return pop_menu.exec(x, y, pick_daemon_callback);
+}
+
+/*
+Purpose: Dispatch a lobby spot click to the map/options/faction/player action
+         represented by that spot. Rule toggles update the typed session state
+         and send the zero-initialized 0x2F02 state packet.
+// ORIGINAL: 0x0047B760 ?on_left_click@NetWin@@QAEXHH@Z 0x0047B760-0x0047BAF6
+*/
+void NetWin::on_left_click(int x, int y) {
+    int spot_position;
+    int spot_type;
+    spot_.check(x, y, &spot_position, &spot_type);
+
+    switch (spot_type) {
+    case 0:
+        if (*NetWinRulesGate == 0) {
+            return;
+        }
+        switch (spot_position) {
+        case 0: pick_map(); return;
+        case 1: pick_num_players(); return;
+        case 2: pick_global_diff(); return;
+        case 3: pick_time(); return;
+        case 4: pick_planet_size(); return;
+        case 5: pick_ocean(); return;
+        case 6: pick_erosion(); return;
+        case 7: pick_native(); return;
+        case 8: pick_clouds(); return;
+        }
+        return;
+    case 1:
+        if (*NetWinRulesGate == 0) {
+            return;
+        }
+        switch (spot_position) {
+        case 0: NetWinSessionOptions.rule_bits_a_ ^= 0x800; break;
+        case 1: NetWinSessionOptions.rule_bits_a_ ^= 0x2; break;
+        case 2: NetWinSessionOptions.rule_bits_a_ ^= 0x8; break;
+        case 3: NetWinSessionOptions.rule_bits_a_ ^= 0x4; break;
+        case 4: NetWinSessionOptions.rule_bits_a_ ^= 0x1000; break;
+        case 5: NetWinSessionOptions.rule_bits_a_ ^= 0x1; break;
+        case 6: NetWinSessionOptions.rule_bits_a_ ^= 0x10; break;
+        case 7: NetWinSessionOptions.rule_bits_a_ ^= 0x20; break;
+        case 8: NetWinSessionOptions.rule_bits_a_ ^= 0x4000; break;
+        case 9: NetWinSessionOptions.rule_bits_a_ ^= 0x200; break;
+        case 10: NetWinSessionOptions.rule_bits_a_ ^= 0x40; break;
+        case 11: NetWinSessionOptions.rule_bits_a_ ^= 0x100; break;
+        case 12: NetWinSessionOptions.rule_bits_a_ ^= 0x2000; break;
+        case 13: NetWinSessionOptions.rule_bits_a_ ^= 0x8000; break;
+        case 14: NetWinSessionOptions.rule_bits_a_ ^= 0x80; break;
+        case 16: NetWinSessionOptions.rule_bits_b_ ^= 0x800000; break;
+        case 17: NetWinSessionOptions.rule_bits_b_ ^= 0x1000000; break;
+        case 100: NetWinSessionOptions.rule_bits_c_ ^= 0x10; break;
+        default: return;
+        }
+        pick_send_state();
+        return;
+    case 2:
+        if (NetWinSlotRecords[spot_position + 1].id ==
+            static_cast<unsigned long>(NetWinPlayerId)) {
+            pick_player();
+        }
+        return;
+    case 3:
+    case 4:
+        if (NetWinSlotRecords[spot_position + 1].id ==
+                static_cast<unsigned long>(NetWinPlayerId) ||
+            (NetWinLobbyRows[spot_position + 1].prefix_ == 0xFF &&
+             NetWinPlayerId == NetWinOtherPlayerId)) {
+            if (spot_type == 3) {
+                pick_faction(spot_position + 1);
+            } else {
+                pick_diff(spot_position + 1);
+            }
+        }
+        return;
+    case 5:
+        if ((NetWinSessionData.mode_ == 0 || NetWinSessionData.mode_ == 1) &&
+            NetWinSlotRecords[spot_position + 1].id ==
+                static_cast<unsigned long>(NetWinPlayerId)) {
+            pick_pass(0);
+        }
+        return;
+    }
+}
+
+// These selection callees still have preserved seed-only bodies in the
+// recovery artifacts. Keep the product call graph linkable while those bodies
+// are not yet migrated; the sentinel makes their unfinished status explicit.
+// ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9
+// TRIED: no real SEH frame (raw scratch buffer + manual destructor calls instead of automatic-local RAII); sub_4066c0/ sub_406820/sub_406af0 called with no receiver since their declared prototype is a 0-arg extern "C" and changing it would break linkage to the real symbol. Field offsets into `Players` (0x00946A50 array, stride 0x59C) cross-checked against src/faction.h's `Player` struct.
+void NetWin::pick_player() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
+void NetWin::pick_faction(int) {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
+void NetWin::pick_diff(int) {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
+// TRIED: time-boxed - setup (Popup/PullDown/Buffer RAII, PopMenu init/exec, four Dialogs::item calls, mouse pos) and the top-level choice dispatch (load_map/load_game/parse_num LAN-limit check) are transcribed against the disassembly; the network-host session-record population (~30 field strcpy calls into an unverified struct layout) is a deliberate stub rather than fabricated field offsets. MISMATCH #10, well past the prologue.
+void NetWin::pick_map() {
+    // BODY GOES HERE.
 }
 
 /*
@@ -1568,8 +1693,9 @@ void NetWin::pick_clouds() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[0xA] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[0xA]);
+        NetWinSessionOptions.cloud_cover_ =
+            static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 
@@ -1603,8 +1729,9 @@ void NetWin::pick_ocean() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[7] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[7]);
+        NetWinSessionOptions.ocean_coverage_ =
+            static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 
@@ -1638,8 +1765,9 @@ void NetWin::pick_erosion() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[8] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[8]);
+        NetWinSessionOptions.erosion_ =
+            static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 
@@ -1673,8 +1801,9 @@ void NetWin::pick_native() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[9] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[9]);
+        NetWinSessionOptions.native_life_ =
+            static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 
@@ -1710,8 +1839,9 @@ void NetWin::pick_planet_size() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[6] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[6]);
+        NetWinSessionOptions.planet_size_ =
+            static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 
@@ -1748,8 +1878,8 @@ void NetWin::pick_num_players() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[1] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[1]);
+        NetWinSessionOptions.player_count_ = static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 
@@ -1783,8 +1913,9 @@ void NetWin::pick_global_diff() {
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[2] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[2]);
+        NetWinSessionOptions.difficulty_ =
+            static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 
@@ -1810,8 +1941,9 @@ void NetWin::pick_time() {
     sub_589330(&pop_menu);
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
-        NetWinNinthSlot[3] = static_cast<unsigned char>(answer - 1);
-        pick_send_state(&NetWinNinthSlot[3]);
+        NetWinSessionOptions.time_control_ =
+            static_cast<unsigned char>(answer - 1);
+        pick_send_state();
     }
 }
 

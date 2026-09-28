@@ -1,4 +1,3 @@
-// ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5 FILE
 // size      1164 bytes
 // prototype void (__thiscall ?pick_diff@NetWin@@QAEXH@Z)(NetWin* this, int)
 // callers   1   call targets   25

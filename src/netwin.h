@@ -47,7 +47,18 @@ struct NetWinSessionBlock {
 static_assert(sizeof(NetWinSessionBlock) == 0x168, "session block extent");
 extern NetWinSessionBlock NetWinSessionData; // 0x0090E778, after the rows
 struct NetWinSessionOptionsState {
-  uint8_t prefix_[0xC];
+  uint8_t status_;          // +0
+  uint8_t player_count_;    // +1, pick_num_players stores answer - 1
+  uint8_t difficulty_;      // +2
+  uint8_t time_control_;    // +3
+  uint8_t option_4_;        // +4
+  uint8_t option_5_;        // +5
+  uint8_t planet_size_;     // +6
+  uint8_t ocean_coverage_;  // +7
+  uint8_t erosion_;         // +8
+  uint8_t native_life_;     // +9
+  uint8_t cloud_cover_;     // +0xA
+  uint8_t reserved_B_;      // +0xB
   uint32_t rule_bits_a_; // +0xC, 0x0090E8EC
   uint32_t rule_bits_b_; // +0x10, 0x0090E8F0
   uint32_t rule_bits_c_; // +0x14, 0x0090E8F4
@@ -126,6 +137,7 @@ class NetWin : public ConstructedGraphicWin {
   void UNK2();
   void alloc_slots();
   void on_button_clicked(int clicked_id); // 0x0047B450
+  void on_left_click(int x, int y); // 0x0047B760
   int on_key_click(int a, int b);
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
@@ -414,6 +426,10 @@ class NetWin : public ConstructedGraphicWin {
   // 0x0047C970. The password prompt the setup dialog ends with; 1 is what
   // process_message's 0xF06 case passes it after is_visible agrees.
   int pick_pass(int payload);
+  void pick_player();
+  void pick_faction(int slot);
+  void pick_diff(int slot);
+  void pick_map();
   // The eight setup pickers: one popup each, the answer stored in the ninth
   // slot's byte and announced to the peer in a 0x2F02 packet.
   void pick_num_players();      // 0x0047E010

@@ -1,4 +1,3 @@
-// ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4 FILE
 // size      1280 bytes
 // prototype void (__thiscall ?pick_faction@NetWin@@QAEXH@Z)(NetWin* this, int)
 // callers   1   call targets   19
