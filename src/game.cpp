@@ -3748,6 +3748,32 @@ char *__cdecl get_his_her(int faction_id, int sentence_form) {
     return PronounBuffer;
 }
 
+/*
+Purpose: Fetch the "him/her" pronoun into the shared game pronoun buffer,
+         optionally upper-casing it, beside the sibling get_his_her body.
+// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original58FC50..58FCDB; retired seed git:b18d3ac8:src/unrecovered/0058fc50.cpp records the same identity and spans.", "The fixed-address bindings rename to the tree's own models exactly as game.cpp's sibling get_his_her (0x0058FBC0) already does: Players (faction.h, the 0x167-stride first word is is_leader_female), Labels (alpha.h), StringTable (strings.h), PronounBuffer (game.h, 0x00945838) and the CharUpperA import the header supplies.", "Label code 0xC7/0xC8 and the sentence-form handling are the seed's measured behaviour."], "reason": "Home the sibling pronoun fetcher beside its shared buffer and get_his_her in the game source."}
+Return Value: PronounBuffer
+Status: Coverage transcription - unclaimed body
+*/
+char *__cdecl get_him_her(int faction_id, int sentence_form) {
+    const int code = 0xC7 + (Players[faction_id].is_leader_female != 0);
+    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
+    strcpy(PronounBuffer, StringTable.get((int)labels[code]));
+    if (sentence_form != 0) {
+        if (sentence_form == 1) {
+            char buf[2];
+            buf[0] = PronounBuffer[0];
+            buf[1] = 0;
+            CharUpperA(buf);
+            PronounBuffer[0] = buf[0];
+            return PronounBuffer;
+        }
+        CharUpperA(PronounBuffer);
+    }
+    return PronounBuffer;
+}
+
 // ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61 FILE
 // LEVER: the five fixed-address bindings renamed to the tree's own models - see
 //         get_pacts above for the address map. No anonymous g_ binding arrived.

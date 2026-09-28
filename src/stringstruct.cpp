@@ -99,6 +99,44 @@ void StringList::on_remove(StringStructPayload *payload) {
     }
 }
 
+/*
+Purpose: Sort the circular list by payload text, keeping each ID with its
+         payload and retaining the original cursor side effects.
+// ORIGINAL: 0x006087A0 ?sort@StringList@@QAEXH@Z 0x006087A0-0x00608980
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a retained the historical selection-pass seed at 0x006087A0-0x00608980 before its product migration", "image:0x006087A0 scans StringStructEntry next links, compares payload text with strcmp, then swaps the winning entry's id and payload", "source:src/stringstruct.h declares the real circular StringStructEntry and StringStructPayload members and the inherited seek_pos cursor operation"], "reason": "Replace Datalink's fixed-image sort forwarder with a typed StringList selection sort in the list's owning translation unit."}
+// size      480 bytes
+// callers   3   call targets   3
+// calls     0x004015B0 0x00644F3A 0x00645660
+Return Value: n/a
+Status: Product behavior; historical seed remains an unclaimed measurement.
+*/
+void StringList::sort(int) {
+    for (int position = 0; position < entry_count_ - 1; ++position) {
+        seek_pos(position);
+        StringStructEntry *const first = current_;
+        StringStructEntry *smallest = first;
+
+        for (int candidate = position + 1; candidate < entry_count_;
+             ++candidate) {
+            next_entry();
+            if (strcmp(current_->payload->text,
+                       smallest->payload->text) < 0) {
+                smallest = current_;
+            }
+        }
+
+        if (smallest != first) {
+            seek_pos(position);
+            const int id = first->id;
+            StringStructPayload *const payload = first->payload;
+            first->id = smallest->id;
+            first->payload = smallest->payload;
+            smallest->id = id;
+            smallest->payload = payload;
+        }
+    }
+}
+
 namespace {
 // 0x00401100 selects the list's allocator before its inherited allocation
 // owner. Heap exhaustion is fatal; CRT allocation failure returns a null node.
@@ -806,33 +844,6 @@ extern "C" void __fastcall sub_4c74f0(char **table, char *directory) {
         }
         table = table + 1;
     }
-}
-
-/*
-Purpose: Fetch the "him/her" pronoun for a faction's leader into the shared
-         pronoun buffer, optionally upper-casing it (first letter only when
-         sentence_form is one).
-// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original58FC50..58FCDB; retired seed git:b18d3ac8:src/unrecovered/0058fc50.cpp records the same identity and spans.", "The fixed-address bindings rename to the tree's own models exactly as game.cpp's sibling get_his_her (0x0058FBC0) already does: Players (faction.h, the 0x167-stride first word is is_leader_female), Labels (alpha.h), StringTable (strings.h), PronounBuffer (game.h, 0x00945838) and the CharUpperA import the header supplies.", "Label code 0xC7/0xC8 and the sentence-form handling are the seed's measured behaviour."], "reason": "Coverage transcription of the pronoun fetcher in the established get_his_her idiom of the owning string family."}
-Return Value: PronounBuffer
-Status: Coverage transcription - unclaimed body
-*/
-char *__cdecl get_him_her(int faction_id, int sentence_form) {
-    const int code = 0xC7 + (Players[faction_id].is_leader_female != 0);
-    LPSTR *labels = (LPSTR *)Labels.strings_ptr;
-    strcpy(PronounBuffer, StringTable.get((int)labels[code]));
-    if (sentence_form != 0) {
-        if (sentence_form == 1) {
-            char buf[2];
-            buf[0] = PronounBuffer[0];
-            buf[1] = 0;
-            CharUpperA(buf);
-            PronounBuffer[0] = buf[0];
-            return PronounBuffer;
-        }
-        CharUpperA(PronounBuffer);
-    }
-    return PronounBuffer;
 }
 
 /*
