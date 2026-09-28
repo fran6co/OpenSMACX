@@ -1301,6 +1301,62 @@ uint32_t Scroll::set_thumb_rect() {
 
 
 
+// ORIGINAL: 0x006061E0 ?on_left_down@Scroll@@QAEXHH@Z 0x006061E0-0x006062B8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/006061e0.cpp", "Scroll thumb and range members in src/scroll.h", "Win::on_mouse_feedback and WinPointerOwner3/4 in src/win.h"], "reason": "Recover the Scroll thumb press handler using its typed orientation, thumb geometry, parent callback and capture-owner state."}
+void Scroll::on_left_down(int x, int y) {
+    if (win_parent_ == 0) {
+        return;
+    }
+    if (-dib_.bmiHeader.biHeight < dib_.bmiHeader.biWidth) {
+        if (x < thumb_rect_.left) {
+            field_A44_ = 0xffffffffU;
+            field_A38_ = 0;
+            on_mouse_feedback(x, y);
+            goto track_scroll;
+        }
+        if (thumb_rect_.right < x) {
+            field_A44_ = 1;
+            field_A38_ = 0;
+            on_mouse_feedback(x, y);
+            goto track_scroll;
+        }
+        field_A44_ = 0;
+    } else {
+        if (y < thumb_rect_.top) {
+            field_A44_ = 0xffffffffU;
+        } else {
+            if (y <= thumb_rect_.bottom) {
+                field_A44_ = 0;
+                goto track_scroll;
+            }
+            field_A44_ = 1;
+        }
+        field_A38_ = 0;
+        on_mouse_feedback(x, y);
+    }
+
+track_scroll:
+    if (WinPointerOwner3 == 0) {
+        WinPointerOwner4 = 0;
+        WinPointerOwner3 = this;
+    }
+}
+
+// ORIGINAL: 0x006062C0 ?on_left_up@Scroll@@QAEXHH@Z 0x006062C0-0x00606304 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/006062c0.cpp", "Scroll::win_parent_ and inherited redraw/capture virtuals", "WinPointerOwner3/4 in src/win.h"], "reason": "Recover Scroll thumb release redraw and conditional capture cleanup with typed base and process-owned pointer state; the historical byte-exact seed remains preserved."}
+void Scroll::on_left_up(int, int) {
+    if (win_parent_ != 0) {
+        redraw();
+        if (WinPointerOwner3 == this) {
+            WinPointerOwner3 = 0;
+            on_lose_mouse_capture();
+        }
+        if (WinPointerOwner4 == this) {
+            WinPointerOwner4 = 0;
+        }
+    }
+}
+
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00606310 ?on_left_click@Scroll@@QAEHHH@Z 0x00606310-0x00606313 BYTE_EXACT

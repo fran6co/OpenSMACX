@@ -77,6 +77,8 @@ class Scroll : public ScrollGraphicWin {
   // ?on_left_click@Scroll@@QAEHHH@Z returns H; the body is empty and VC6
   // emits the same `ret 8`.
   int on_left_click(int a1, int a2);
+  void on_left_down(int x, int y);
+  void on_left_up(int x, int y);
   // 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z and
   // 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z - public, __thiscall,
   // void(int). Both are still unrecovered; the declarations exist because the
