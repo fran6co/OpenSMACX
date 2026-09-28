@@ -22,6 +22,41 @@
 #include "stringbox.h"
 #include "editbox.h"
 #include "checkbox.h"
+#include <cstddef>
+
+// One original zero-filled .data object at 0x0090DB98. The second row begins
+// at 0x0090DD14; its seven-row suffix is the 0xA64-byte state payload.
+// The leading row's tail dword is the owner scanned via 0x0090DD10.
+struct NetWinLobbyRow {
+  uint8_t prefix_;                  // +0
+  uint8_t ready_or_occupied_;       // +1
+  uint8_t field_2_;                 // +2
+  int8_t faction_or_color_;         // +3
+  uint8_t record_[0x174];          // +4..+177, text and settings
+  uint32_t owner_;                  // +178
+};
+static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
+static_assert(offsetof(NetWinLobbyRow, owner_) == 0x178, "lobby owner slot");
+extern NetWinLobbyRow NetWinLobbyRows[8]; // 0x0090DB98
+// send_session2_packet copies this whole 0x168-byte block; the first dword
+// is the mode tested by the setup dialog.
+struct NetWinSessionBlock {
+  uint32_t mode_;
+  uint8_t state_[0x164];
+};
+static_assert(sizeof(NetWinSessionBlock) == 0x168, "session block extent");
+extern NetWinSessionBlock NetWinSessionData; // 0x0090E778, after the rows
+struct NetWinSessionOptionsState {
+  uint8_t prefix_[0xC];
+  uint32_t rule_bits_a_; // +0xC, 0x0090E8EC
+  uint32_t rule_bits_b_; // +0x10, 0x0090E8F0
+  uint32_t rule_bits_c_; // +0x14, 0x0090E8F4
+};
+static_assert(sizeof(NetWinSessionOptionsState) == 0x18,
+              "session option extent");
+static_assert(offsetof(NetWinSessionOptionsState, rule_bits_a_) == 0xC,
+              "first session rule word");
+extern NetWinSessionOptionsState NetWinSessionOptions; // 0x0090E8E0
 
  /*
   * MessageFactionData
