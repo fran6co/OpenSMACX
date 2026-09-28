@@ -37,6 +37,16 @@
 // recovered constructor through its own startup instead.
 NetWin NetWinDialog;  // 0x0080A6F8
 
+// The pinned PE's .data raw contents end at 0x006A8000, while its virtual
+// extent includes 0x0090DB98..0x0090E778: these rows start zero-filled.
+// config_players and the network receive path subsequently populate them.
+// RECOVERY_OBJECT: v2 0x0090DB98 0x0090E778 ?NetWinLobbyRows@@3PAUNetWinLobbyRow@@A 0x0047B450
+NetWinLobbyRow NetWinLobbyRows[8];
+// RECOVERY_OBJECT: v2 0x0090E778 0x0090E8E0 ?NetWinSessionData@@3UNetWinSessionBlock@@A 0x0047B450
+NetWinSessionBlock NetWinSessionData;
+// RECOVERY_OBJECT: v2 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450
+NetWinSessionOptionsState NetWinSessionOptions;
+
 // The two player-id slots. Nothing in .text writes either; see netwin.h.
 int NetWinPlayerId;       // 0x0093D4F0
 int NetWinOtherPlayerId;  // 0x0093D4F4
@@ -70,14 +80,15 @@ static void *memcpy_call(void *dst, const void *src, unsigned len) {
 // player count. get_player_color bounds a colour search with it and
 // modal_callback scans the static faction records with it; no recovered
 // body writes it and no catalogue names it.
-static int *const NetWinPlayerCount = (int *)0x0093D4F8;
+static int *const NetWinPlayerCount = &NetDaemonNet.player_count_;
 
 // 0x0090DB9B - the static faction-record table the dialog reads directly
 // (the allocated copies live in faction_records_): the colour byte of record
 // `faction` sits at [faction * 0x17C], the record block the modal pump
 // scans starts 0x17A bytes in at 0x0090DD15, and the localized name text of
 // each record starts one byte later at 0x0090DD17. Record stride 0x17C.
-static char *const NetWinFactionTable = (char *)0x0090DB9B;
+static char *const NetWinFactionTable =
+    reinterpret_cast<char *>(&NetWinLobbyRows[0].faction_or_color_);
 
 // 0x0093D51C - the per-slot records the chat line names its sender from:
 // 103 dwords (0x19C) per slot with the DirectPlay id first, indexed by the
@@ -477,13 +488,14 @@ void NetWin::fill_player(PlayerData *player_data, int slot) {
 
 // 0x0090E778 / 0x0090E79C - the two words beside the seven records
 // config_players seeds: the eighth slot's dword and its mode byte.
-static unsigned int *const NetWinEighthSlotWord = (unsigned int *)0x0090E778;
-static unsigned char *const NetWinScenarioText = (unsigned char *)0x0090E79C;
+static unsigned int *const NetWinEighthSlotWord = &NetWinSessionData.mode_;
+static unsigned char *const NetWinScenarioText = &NetWinSessionData.state_[0x20];
 
 // 0x0090E8E0 - the ninth slot's colour/mode prefix: 0xFF, the colour byte
 // read from 0x93D4B0, 2 - with the zeroed pair at +4/+5, the mode bytes 2 at
 // +6..+0xA and the 0xFF at +0xB.
-static unsigned char *const NetWinNinthSlot = (unsigned char *)0x0090E8E0;
+static unsigned char *const NetWinNinthSlot =
+    reinterpret_cast<unsigned char *>(&NetWinSessionOptions);
 
 // 0x0093D4B0 - the colour byte beside the player-id slots; the ninth slot's
 // prefix is seeded from it.
@@ -628,13 +640,14 @@ static char **const NetWinDifficultyNames = (char **)0x0096C85C;
 // draw_custom_rules rows read their checkbox state from (the ability and
 // allowed-unit bits); 0x0090E8F4 carries the free-tech bit the standing
 // checkbox inverts.
-static unsigned int *const NetWinRuleBitsA = (unsigned int *)0x0090E8EC;
-static unsigned int *const NetWinRuleBitsB = (unsigned int *)0x0090E8F0;
-static unsigned int *const NetWinRuleBitsC = (unsigned int *)0x0090E8F4;
+static unsigned int *const NetWinRuleBitsA = &NetWinSessionOptions.rule_bits_a_;
+static unsigned int *const NetWinRuleBitsB = &NetWinSessionOptions.rule_bits_b_;
+static unsigned int *const NetWinRuleBitsC = &NetWinSessionOptions.rule_bits_c_;
 
 // 0x0093E8C0 - the gate the custom-rules rows test before registering their
 // spots; no recovered body writes it and no catalogue names it.
-static int *const NetWinRulesGate = (int *)0x0093E8C0;
+static unsigned int *const NetWinRulesGate =
+    &NetDaemonNet.lock_state_[0].dword_[1];
 
 // 0x0078DCA8 - the ready/check panel descriptors the player rows draw their
 // slot state from (element [2*ready] of a 0x28-stride BoxSpriteParams
