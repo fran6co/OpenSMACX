@@ -1,0 +1,20 @@
+{
+  "event_id": "111adcfff5d17424939cc044af8df807e9d5b26a143230314949b36c856ef88f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_wave8_opening_radius.py"
+    ],
+    "evidence": [
+      "User directs finishing all retained branches. Complete existing change_opening and sub_565160 transcriptions using actual GraphicWin/Buffer and Map/PlayerData members and Win slot63 instead of new VCall and raw offsets, preserving original control flow and seed claims. Existing opening_window global accessor lifetime ownership remains explicitly pending rather than inventing new fixed-address globals. Add focused actual-source host controls, remeasure three say claims and require fresh build/link. No baselines or gates weakened.",
+      "Canonical coordinator authorization preserving stopped pb decision 600e7fa5a962d72835a21205310a11599fe41810e5c224af9af6ae8810d2c557. Original task baseline and all findings remain; this is neither a copied divergent journal nor acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1454ef8f5ea943934115b5825c2fd09093fc8b96e28524c989190a37678d2e74",
+  "request_id": "canonical-w8-pb-real-window-members-20260928",
+  "schema_version": 1,
+  "sequence": 181,
+  "stream": "task:vector-value-semantics"
+}

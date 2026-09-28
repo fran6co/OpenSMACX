@@ -1,0 +1,20 @@
+{
+  "event_id": "8957acbde452def6e135dd5a22f9ef1fa2a540aa1b040cf6faea03c1e67505c1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Fresh strict checks of5D8650/5D8FE0/5D91D0 expose the existing WinFillColour unsigned-char definition at696D14 lacking a native bounded object binding. Inspect original byte use and pinned initial data, observe compiler symbol/extent, then annotate its existing owner without changing value or lifecycle. Also publish the existing Sprite5E81BC real Buffer-class symbol from current COFF. These repairs close reference identity gaps, not whole-game acceptance or callee behavioral proof.",
+      "Canonical coordinator authorization preserving stopped pc decision 40e4bc6358f0ba7891ba765f84eb080cec6558582cf0ba799088a074f36ea6ce. Original task baseline and all findings remain; this is neither a copied divergent journal nor acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "94ec4043dd7c27ae7d1615d07e96555a640e213e0c0b3bc1b91524043d11fd64",
+  "request_id": "canonical-w8-pc-fill-colour-binding-20260928",
+  "schema_version": 1,
+  "sequence": 179,
+  "stream": "task:vector-value-semantics"
+}

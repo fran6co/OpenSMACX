@@ -1,0 +1,21 @@
+{
+  "event_id": "c1a4b9821e8e5073a6540075540e7d0d96846e3f883142228ef51b50ede9bfe4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp",
+      "src/map.cpp"
+    ],
+    "evidence": [
+      "Finish the pending 589A30 opening-window and565160 map-neighbor recoveries in their existing game.cpp and map.cpp owners instead of increasing leaf-recovery debt. Preserve every original mapping, seed and historical claim; do not change byte policies, original behavior or task baseline. Recheck native compilation, affected claims and build/link after rehoming; tests follow actual owning source.",
+      "Canonical coordinator authorization preserving stopped pb decision 35c0fe1d960b74de3d17f8f323a0469b6fd45c31d9812646540f058a72c0a446. Original task baseline and all findings remain; this is neither a copied divergent journal nor acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "111adcfff5d17424939cc044af8df807e9d5b26a143230314949b36c856ef88f",
+  "request_id": "canonical-w8-pb-owned-homes-20260928",
+  "schema_version": 1,
+  "sequence": 182,
+  "stream": "task:vector-value-semantics"
+}
