@@ -344,6 +344,9 @@ static_assert(sizeof(Datalink) == 0x1B394,
 // `mov ecx, <reloc>`) and `->` becomes `.`.
 extern Datalink DatalinkMain;  // 0x00703EA0
 
+// Append the original help markup to an existing caller-owned text buffer.
+void __cdecl help_create_link(char *out, char *label, char *id);
+
 // Datalink::draw_entry (0x0042BF10) is likewise unrecovered; on_selected calls
 // it, so its definition is a seam into the original image.
 
