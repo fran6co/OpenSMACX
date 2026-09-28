@@ -88,6 +88,7 @@ class InfoWin {
   // Arity and return type come off the image's mangled symbols.
   void setup_text();                                  // 0x00456300
   void draw_text(int a1);                             // 0x00458420
+  void UNK2();                                        // 0x004588B0
   // UNK4 IS EVIDENCE-FREE AS A NAME. Searched 2026-09-06: the catalogue
   // records callers 0 and call targets 0 for 0x00458D60, the mangled name is
   // `QAEX` so it is not virtual and no vtable slot names it, and

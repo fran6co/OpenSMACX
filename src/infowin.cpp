@@ -190,6 +190,22 @@ void InfoWin::draw_text(int pane) {
     TutorialWindow.draw_arrow();
 }
 
+// Refresh the active pane's border and contents. The sprite parameters at
+// 0x0078D7F8 are InterfaceBoxStyles[18] (game.cpp's table begins at
+// 0x0078D528 and each BoxSpriteParams occupies 0x28 bytes). The seed's
+// `if (this + 0x88)` tests the address of pane state, so its body is
+// unconditional for every valid InfoWin object.
+// ORIGINAL: 0x004588B0 ?UNK2@InfoWin@@QAEXXZ 0x004588B0-0x004588FE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004588b0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles", "source:src/buffer.h:BoxSpriteParams"], "reason": "Home the active-pane refresh with its embedded rectangle, shared buffer, and source-owned box style; preserve the measured legacy claim while replacing opaque offsets with InfoWin members."}
+void InfoWin::UNK2() {
+    MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
+                                   &InterfaceBoxStyles[18]);
+    visible_characters_[0] = 0;
+    visible_characters_[1] = 0;
+    setup_text();
+    draw_text(active_pane_);
+}
+
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
 // ORIGINAL: 0x004562F0 ?UNK1@InfoWin@@QAEXXZ 0x004562F0-0x004562F1 BYTE_EXACT
@@ -294,6 +310,36 @@ int InfoWin::state_valid(int state) {
         }
     }
     return 0;
+}
+
+// Select a valid presentation state for the active pane, reset its display
+// budget, and redraw it. The original's final `this + 0x88 != 0` is an
+// address check and is always true for a valid object; consequently the
+// visible-character counters are always reset regardless of a2.
+// TRIED (seed): 0.986 mnemonic similarity, one instruction off (`jns` vs
+// `jge`) on the sign test after masking; VC6 emitted a fresh compare rather
+// than reusing the AND flags. The seed's other two divergences were fixed by
+// emitting the a2==0 ternary arms else-first.
+// ORIGINAL: 0x00458F10 ?set_state@InfoWin@@QAEXHH@Z 0x00458F10-0x00458FEA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00458f10.cpp", "source:src/infowin.h", "source:src/infowin.cpp:state_valid"], "reason": "Replace the offset-based seed with the InfoWin's active-pane and presentation-state members and its existing eligibility method."}
+void InfoWin::set_state(int state, int) {
+    if (state < 0) state = 0;
+    int &pane_state = pane_states_[active_pane_];
+    pane_state = state;
+    while (!state_valid(pane_state)) {
+        int next = pane_state + 1;
+        next &= 0x80000007;
+        if (next < 0) next = ((next - 1) | 0xFFFFFFF8) + 1;
+        pane_state = next;
+    }
+    field_94_ = 0;
+    visible_characters_[0] = 0;
+    visible_characters_[1] = 0;
+    field_A8_ = 0;
+    MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
+                                   &InterfaceBoxStyles[18]);
+    setup_text();
+    draw_text(active_pane_);
 }
 
 
