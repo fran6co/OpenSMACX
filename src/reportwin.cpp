@@ -34,6 +34,12 @@ const void *const ReportWinFlatButtonDtor = (const void *)0x00406880;
 // constructor below, so the storage sits here, ahead of the two list boxes.
 ReportWin ReportWinGlobal;  // 0x00876478
 
+// ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "source:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h declares the typed ReportWin callback"], "reason": "Provide only the explicitly authorized link-continuity body for Datalink's typed callback; behavior is not recovered and the seed remains preserved."}
+void ReportWin::on_button_passover(int button_id, int state) {
+    // BODY GOES HERE.
+}
+
 // The topic panel's two process-wide selection list boxes - see reportwin.h.
 // Nothing in mapped code constructs them (the image leaves them zero until
 // ReportWin's own init fills the panel), and ListBox's constructor here is

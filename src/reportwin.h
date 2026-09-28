@@ -45,6 +45,9 @@ class ReportWin : public GraphicWin {
   ~ReportWin();
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
+  // 0x0049B220 is called by Datalink when its report-category buttons
+  // receive passover. Its behavior remains explicitly unfinished here.
+  void on_button_passover(int button_id, int state);
   // The two animation ticks the daemons in leaf_recoveries.cpp drive. Public,
   // __thiscall, void(void). sat_anim is homed in reportwin.cpp (2026-09-27,
   // the sixteen-satellite orbital tick); exp_anim (0x004A0100) is still a

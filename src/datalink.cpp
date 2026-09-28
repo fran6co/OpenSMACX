@@ -1872,6 +1872,23 @@ void Datalink::on_button_clicked(int button_id) {
     }
 }
 
+// ORIGINAL: 0x00432010 ?on_button_passover@Datalink@@QAEXHH@Z 0x00432010-0x00432032 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00432010-0x00432032 tests Datalink category at +0x29DC against 0xE before forwarding both arguments", "source:src/datalink.h field_29DC_ is the category at 0x29DC", "source:src/reportwin.h declares ReportWin::on_button_passover; its authorized link-only body remains explicitly unfinished in reportwin.cpp"], "reason": "Forward button passover only while the Datalink is displaying report category 0xE, using the established category member and typed ReportWin callback."}
+void Datalink::on_button_passover(int button_id, int state) {
+    if (field_29DC_ == 0xe) {
+        ReportWinGlobal.on_button_passover(button_id, state);
+    }
+}
+
+// ORIGINAL: 0x0042BCC0 ?set_index@Datalink@@QAEXHH@Z 0x0042BCC0-0x0042BD14 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042BCC0-0x0042BD14 stores the first argument at Datalink+0x29E0, combines it with category at +0x29DC for ListBox::set_selected_id, then dispatches GraphicWin redraw through the embedded list", "source:src/datalink.h maps history_[0], field_29DC_ and listBox_ at those offsets", "source:src/datalink.cpp repaint_slot names the embedded ListBox redraw operation"], "reason": "Select a Datalink entry through its typed history/category/ListBox state and the already named repaint operation, replacing seed receiver arithmetic and an opaque slot shim."}
+void Datalink::set_index(int index, int) {
+    const int category = field_29DC_;
+    history_[0] = index;
+    listBox_.set_selected_id(category * 10000 + index);
+    repaint_slot();
+}
+
 /*
 Purpose: Restore the interface and Datalink surface clips, repaint the
          interface background, then draw the selected Datalink entry.
