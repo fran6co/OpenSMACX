@@ -272,6 +272,7 @@ class MapWin : public virtual GraphicWin {
   void clear_alt(int x, int y, int radius);
   void do_image_buttons();
   void main_caption();
+  void standard_caption();
   // 0x0046AD60, NOT the free ::draw_cursor at 0x0046AE00 that mapwin.cpp
   // defines. The cursor's own repaint runs per window and reads the shared
   // ConsoleGlobal cursor history plus this window's clip fields, so it

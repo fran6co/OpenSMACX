@@ -224,6 +224,26 @@ void MapWin::main_caption() {
 
 
 /*
+Purpose: Build the map-window caption from the selected label and publish it
+         through the window's real GraphicWin/Win base.
+*/
+// ORIGINAL: 0x0046FB20 ?standard_caption@MapWin@@QAEXXZ 0x0046FB20-0x0046FB7B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retained original 0x0046FB20 seed; MapWin mode field and virtual GraphicWin/Win base; Labels and StringTemp source owners"], "reason": "Home the map window caption in the typed MapWin owner translation unit"}
+void MapWin::standard_caption() {
+    StringTemp[0] = '\0';
+    int text_id;
+    if ((field_1DD70_ & 0x40000000U) != 0) {
+        text_id = reinterpret_cast<int *>(Labels.strings_ptr)[0x100];
+    } else {
+        text_id = reinterpret_cast<int *>(Labels.strings_ptr)[0x101];
+    }
+    strcat(StringTemp, StringTable.get(text_id));
+
+    Win::set_caption(StringTemp);
+}
+
+
+/*
 Purpose: Close the map window - free the buffer it owns at 0x4, then close its
          graphic base. The base is located through the object's own vbtable,
          not a fixed offset, so an embedded MapWin closes its own base.
