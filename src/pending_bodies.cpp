@@ -304,17 +304,6 @@ void MapWin::click(int a1, int a2, int a3) {  // 0x0046D5D0
 // homed into src/sprite.cpp 2026-09-27. BasePop::start (0x00601BF0) calls it
 // BY NAME on the popup's own `sprite_` for the "sprite" directive, so the
 // call site keeps the member's real address and the image's `E8`.
-// ?get_pcx_dimensions@Buffer@@QAEHPBDPAH1@Z at 0x005E2480 - BasePop::start
-// (0x00601BF0) calls it for the "sprite" directive. The image's body never
-// reads the receiver ECX (its first instructions overwrite it), so the call
-// site's `this` is dead either way; the tree types it as a Buffer member and
-// start passes the owner window's.
-int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
-    typedef int(__fastcall *pending)(Buffer *, void *, const char *, int *, int *);
-    return PENDING_BODY(0x005E2480, pending)(this, nullptr, filename, width,
-                                             height);
-}
-
 // Remaining specialized Sprite workers, called by their scale wrappers. Plain
 // draw, draw_dest and - since 2026-09-27 - draw_dest_unk2 (0x005E81BC) and
 // draw_multi_table_dest (0x005E8FF5) live in sprite.cpp.

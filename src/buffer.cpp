@@ -1495,6 +1495,63 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
                     palette, tgl, height);
 }
 
+// Read the dimensions from the mapped PCX header without loading its image
+// data into a Buffer. The file carries the same optional asset watermark as
+// the regular PCX decoder above. BasePop::start calls it through its Buffer
+// owner; the original body never reads its receiver.
+// ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005e2480.cpp", "pinned-image:0x00696BF8,0x00696CFC,0x00696D04,0x00696D0C"], "reason": "Home PCX header dimension decoding in Buffer using its Filemap lifecycle and source-owned format literals"}
+// symbol    ?get_pcx_dimensions@Buffer@@QAEHPBDPAH1@Z
+int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
+    Filemap map;
+    if (filename == nullptr || width == nullptr || height == nullptr) {
+        return 3;
+    }
+
+    char path[MAX_PATH];
+    path[0] = '\0';
+    strcat(path, filename);
+    char *scan = path + strlen(filename);
+    while (scan != path && *scan != '.') {
+        --scan;
+    }
+    if (scan == path) {
+        const char *extension;
+        switch (Language) {
+            case 1: extension = ".pcf"; break;
+            case 2: extension = ".pcg"; break;
+            default: extension = ".pcx"; break;
+        }
+        strcat(path, extension);
+    }
+
+    if (map.open_read(path, TRUE) == nullptr) {
+        return 6;
+    }
+    GetFileSize(map.get_handle(), nullptr);
+
+    const char *content = static_cast<const char *>(map.get_view());
+    const size_t prefix_length = strlen(PcxAssetPrefix);
+    if (strncmp(content, PcxAssetPrefix, prefix_length) == 0) {
+        content += prefix_length + 1;
+    }
+
+    unsigned char header[0x80];
+    memcpy(header, content, sizeof(header));
+    if (header[0] == '\n' && header[2] == 1) {
+        const int xmin = header[4] | (header[5] << 8);
+        const int ymin = header[6] | (header[7] << 8);
+        const int xmax = header[8] | (header[9] << 8);
+        const int ymax = header[10] | (header[11] << 8);
+        *width = xmax - xmin + 1;
+        *height = ymax - ymin + 1;
+        map.close();
+        return 0;
+    }
+
+    return 3;
+}
+
 /*
 Purpose: THE BLITTER. Copy a rectangle out of this buffer into `buffer`,
          clipping the read against this buffer's own extent and the write
