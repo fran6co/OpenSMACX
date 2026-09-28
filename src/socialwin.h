@@ -23,6 +23,7 @@
 #include "graphicwin.h"
 #include "subinterface.h"
 #include "checkbutton.h"
+#include "faction.h"
 
  /*
   * SocialWin class
@@ -32,11 +33,10 @@
   * virtually-derived windows this one is written as the original wrote it and
   * needs no ABI workaround.
   *
-  * The layout is not established. The constructor's own fields begin at 0xA14,
-  * immediately after the base, and where the object ends is unknown, so
-  * nothing pins its sizeof and the fields between are not modelled. The
-  * methods recovered here are bare returns that touch no field, which is why
-  * they can be replaced ahead of that mapping.
+  * The complete layout and object extent are not established. The constructor's
+  * own fields begin at 0xA14, immediately after the base; only evidenced
+  * storage is typed below. The recovered methods use those declarations and do
+  * not treat the remaining gaps as known structure.
   */
 class SocialWin : public GraphicWin, public SubInterface {
  public:
@@ -85,13 +85,11 @@ class SocialWin : public GraphicWin, public SubInterface {
   void draw_info();
 
  public:
-  // 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ is not recovered; the
-  // passover path needs it to link. Explicitly unfinished.
+  // 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ.
   void draw_overview();
 
  public:
-  // 0x004AECE0 ?reset@SocialWin@@QAEXXZ is not recovered; init needs it to
-  // link. Explicitly unfinished.
+  // 0x004AECE0 ?reset@SocialWin@@QAEXXZ restores the pending faction model.
   void reset();
 
  public:
@@ -329,9 +327,9 @@ class SocialWin : public GraphicWin, public SubInterface {
   uint32_t field_CEC_;  // 0xCEC
   uint32_t field_CF0_;  // 0xCF0
   uint32_t factionID_;  // 0xCF4
-  uint8_t socCategory_[0x10];  // 0xCF8
-  Sprite socEffect_;  // 0xD08, size == sizeof(Sprite)
-  Sprite socEffectOrig_;  // 0xD34, size == sizeof(Sprite)
+  SocialCategory socCategory_;  // 0xCF8
+  SocialEffect socEffect_;  // 0xD08
+  SocialEffect socEffectOrig_;  // 0xD34
   uint32_t netIncome_;  // 0xD60
   uint32_t breakthroughTurns_;  // 0xD64
   // MEASURED against the constructor's own disassembly (0x004AE9E0): the

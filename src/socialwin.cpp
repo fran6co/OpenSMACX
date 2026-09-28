@@ -103,19 +103,11 @@ SocialWin::SocialWin() {
     new (static_cast<GraphicWin *>(this)) GraphicWin();
     char *const self = reinterpret_cast<char *>(this);
 
-    // spot_, socEffect_, socEffectOrig_, energyLockButtons_, flatButtons_,
-    // buttonGroups_, buttonGroup_ and font1_..font9_ are REAL members in
-    // socialwin.h already (not raw storage) - they build IMPLICITLY, in
-    // declaration order, before this body runs. The explicit placement-new
-    // calls that used to stand here duplicated that construction: since the
-    // header already types these as real classes, C++ constructs them
-    // whether or not the body also does, and the old explicit calls at the
-    // same raw offsets meant every one of these sub-objects was built TWICE.
-    // Only the sub-objects that are STILL raw storage (four Sprite runs the
-    // header cannot yet type - see socEngModifierNums_/effectIcons_/
-    // energyAllocLock_/energyAllocArrow_ - and the Buffer[6] run inside
-    // energyAllocSlider_, which is larger than 6 Buffers and not fully
-    // accounted for) stay explicit below.
+    // spot_, controls, button groups and fonts are class members and follow
+    // normal C++ construction. socCategory_ and the two SocialEffect records
+    // are POD state, initialized by reset rather than object constructors.
+    // The remaining image-only sprite/buffer runs are still explicit because
+    // their complete member ownership has not been established.
 
     factionID_ = 0xFFFFFFFFU;
 }
@@ -672,6 +664,7 @@ static int *const SpaceText = (int *)0x00682820;
 static int *const PercentText = (int *)0x00682EA0;
 static int *const InterfaceBuffer = (int *)0x007AEC64;
 static int *const InterfaceClipRect = (int *)0x007AEC94;
+static int *const InterfacePaletteIndex = (int *)0x007AEC74;
 static int *const SocialAllocTable = (int *)0x0096CD04;
 
 typedef char *(__cdecl *ItoaFn)(int, char *, int);
@@ -896,6 +889,7 @@ void SocialWin::allocate_energy(int a1, int a2) {
 // owners are outside this file's scope, and the link still needs the names.
 // Retire each the moment its seed is homed.
 void __cdecl energy_compute(int faction_id, int mode);   // 0x00445130
+void __cdecl social_set(uint32_t faction_id);             // 0x005B4790
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 void __cdecl do_all_draws();                             // 0x005FCBB0, in temp.cpp
@@ -924,6 +918,41 @@ static SocialEffect *const PlayerSocialEffectBlock = (SocialEffect *)0x0096CC2C;
 static int *const BreakthroughTurnsGlobal = (int *)0x00749AE4;
 static int *const NetIncomeGlobal = (int *)0x00749C0C;
 
+static int social_category_value(const SocialCategory &category, int index) {
+    switch (index) {
+    case 0: return static_cast<int>(category.politics);
+    case 1: return static_cast<int>(category.economics);
+    case 2: return static_cast<int>(category.values);
+    default: return static_cast<int>(category.future);
+    }
+}
+
+static void set_social_category_value(SocialCategory &category, int index,
+                                      int value) {
+    switch (index) {
+    case 0: category.politics = value; break;
+    case 1: category.economics = value; break;
+    case 2: category.values = value; break;
+    default: category.future = value; break;
+    }
+}
+
+static int social_effect_value(const SocialEffect &effect, int index) {
+    switch (index) {
+    case 0: return effect.economy;
+    case 1: return effect.efficiency;
+    case 2: return effect.support;
+    case 3: return effect.talent;
+    case 4: return effect.morale;
+    case 5: return effect.police;
+    case 6: return effect.growth;
+    case 7: return effect.planet;
+    case 8: return effect.probe;
+    case 9: return effect.industry;
+    default: return effect.research;
+    }
+}
+
 /*
  * Purpose: Recompute the social model for one category. Stores the chosen
  *          model in the category slot, redraws it, snapshots the working
@@ -941,23 +970,16 @@ static int *const NetIncomeGlobal = (int *)0x00749C0C;
 */
 void SocialWin::UNK1(int soc_category, int soc_model) {
     field_A1C_ = 0xFFFFFFFFU;
-    reinterpret_cast<int *>(socCategory_)[soc_category] = soc_model;
+    set_social_category_value(socCategory_, soc_category, soc_model);
     draw_social(soc_category);
 
     // The original hand-copies the 11-int effect block with a dec/jne loop;
     // a plain loop or block copy compiles to `rep movsd` instead. Keeping the
     // counter `volatile` blocks that recognition without spilling the cursor.
-    int *dst = reinterpret_cast<int *>(&socEffectOrig_);
-    volatile int count = 11;
-    do {
-        *dst = dst[-11];
-        dst = dst + 1;
-        count = count - 1;
-    } while (count != 0);
+    socEffectOrig_ = socEffect_;
 
-    social_calc(reinterpret_cast<SocialCategory *>(socCategory_),
-                reinterpret_cast<SocialEffect *>(&socEffect_), factionID_, 0, 0);
-    social_calc(reinterpret_cast<SocialCategory *>(socCategory_),
+    social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
+    social_calc(&socCategory_,
                 reinterpret_cast<SocialEffect *>(
                     reinterpret_cast<char *>(PlayerSocialEffectBlock)
                     + factionID_ * sizeof(PlayerData)),
@@ -1215,16 +1237,186 @@ void SocialWin::on_button_passover(int a1, int a2) {
 }
 
 // Link-only placeholders; the passover path and init are what reference them.
+// The section keys and short UI strings are image-owned read-only data. The
+// file, rows and receiver are product objects; these four strings are the
+// remaining immutable resources the original painter reads directly.
+static const char *const SocialOverviewSection = "SOCIO";
+static const char *const SocialOverviewPath = (const char *)0x0068749c;
+static const char *const SocialOverviewPlus = (const char *)0x006874a0;
 // ORIGINAL: 0x004B0410 ?draw_overview@SocialWin@@QAEXXZ 0x004B0410-0x004B089A
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b0410.cpp", "source:src/socialwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004B0410-0x004B089A draws the effects overview, skips the reserved fourth row, loads each SocialEffects section and repaints the selected/comparison rows", "source:src/socialwin.h: tooltipEffects_, effectMaximize_, socEffect_, font1_ and font7_ are the corresponding declared members", "source:src/faction.h: SocialEffect and RulesSocialEffect define the eleven live rows and their section names"], "reason": "Home the overview painter on the SocialWin-owned rectangles, effects, fonts and rules records; preserve its original identity while replacing the seed's opaque object accesses with the product model."}
 void SocialWin::draw_overview() {
-    // BODY GOES HERE.
+    Buffer *buffer = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    int selected = static_cast<int>(field_A30_);
+    int selected_effect = -1;
+    if (selected >= 0) {
+        selected_effect = selected - 0x11;
+        if (selected_effect > 2) {
+            selected_effect = selected - 0x10;
+        }
+    }
+
+    buffer->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    *InterfacePaletteIndex = 5;
+
+    RECT panel = tooltipEffects_;
+    buffer->box_sprite(&panel, &InterfaceBoxStyles[3]);
+    RECT interior = {panel.left + 3, panel.top + 3,
+                     panel.right - 3, panel.bottom - 3};
+    buffer->box_sprite(&interior, &InterfaceBoxStyles[6]);
+
+    buffer->set_font(&font1_, 0, 0, 0);
+    buffer->set_text_color(0x9f, -1, 1, 1);
+
+    char *title = label_get(0x2e4);
+    if (title != 0) {
+        buffer->write_cent_l(title, &interior, strlen(title));
+    }
+
+    interior.top = panel.top + 0x1c;
+    RECT effects_area = {interior.left, interior.top,
+                         interior.right, interior.bottom};
+    buffer->box_sprite(&effects_area, &InterfaceBoxStyles[0]);
+    buffer->set_font(&font7_, 0, 0, 0);
+
+    int text_x = effects_area.left + 0x14;
+    int number_x = effects_area.left + 0xf;
+    int text_right = effects_area.right - 3;
+    int text_bottom = effects_area.bottom - 3;
+    const int available_width = text_right - text_x;
+    const SocialEffect &player_effect = PlayersData[factionID_].soc_effect_pending;
+    char descriptions[MaxSocialEffectNum][256];
+    int content_height = 0;
+
+    text_open(AlphaxFileID, SocialOverviewSection);
+
+    // Each rules entry names one SOCIAL section. The fourth entry is the
+    // reserved slot at index 3 and has no section, as shown by the seed's
+    // 0x009466B8 skip (three 0x68-byte records after SocialEffects).
+    int effect;
+    for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
+        descriptions[effect][0] = 0;
+        if (effect == 3) {
+            continue;
+        }
+
+        char section[64];
+        strcpy(section, SocialOverviewPath);
+        strcat(section, SocialEffects[effect].set1);
+        if (text_open(0, section) != 0) {
+            text_close();
+            return;
+        }
+
+        text_get();
+        int row = text_item_number();
+        strcpy(descriptions[effect], text_item());
+        while (row < social_effect_value(socEffect_, effect)) {
+            char *line = text_get();
+            if (line == 0 || line[0] == 0) {
+                break;
+            }
+            row = text_item_number();
+            strcpy(descriptions[effect], text_item());
+        }
+        content_height += buffer->wrap_height(descriptions[effect], available_width);
+    }
+    text_close();
+
+    int y = effects_area.top
+        + ((text_bottom - content_height) - effects_area.top) / 2;
+    for (effect = 0; effect < MaxSocialEffectNum; ++effect) {
+        if (effect == 3) {
+            continue;
+        }
+        if (selected_effect == effect) {
+            buffer->set_text_color(0xff, -1, 1, 1);
+        } else {
+            int color;
+            if (effectMaximize_ == static_cast<uint32_t>(effect)) {
+                color = 0x9c;
+            } else if (social_effect_value(socEffect_, effect)
+                       == social_effect_value(player_effect, effect)) {
+                color = 0xa0;
+            } else if (social_effect_value(player_effect, effect)
+                       < social_effect_value(socEffect_, effect)) {
+                color = 0xfa;
+            } else {
+                color = 0xf9;
+            }
+            buffer->set_text_color(color, -1, 1, 1);
+        }
+
+        StringTemp[0] = 0;
+        const int value = social_effect_value(socEffect_, effect);
+        if (value > 0) {
+            strcat(StringTemp, SocialOverviewPlus);
+        }
+        char number[32];
+        reinterpret_cast<ItoaFn>(_itoa)(value, number, 10);
+        strcat(StringTemp, number);
+        buffer->write_right_l(StringTemp, number_x, y, strlen(StringTemp));
+
+        RECT description = {text_x, y, text_right, text_bottom};
+        y = buffer->wrap(descriptions[effect], &description);
+        // The original uses Font::line_height for negative entries and
+        // Font::height + value for nonnegative entries. Font currently only
+        // exposes line_advance(), so the typed path uses its configured height
+        // plus the effect adjustment; exact negative-row pitch remains open.
+        y += font7_.line_advance() - font7_.unk_1_
+            + (value > 0 ? value : 0);
+    }
+
+    *InterfacePaletteIndex = 5;
+    soft_update(&tooltipEffects_);
+    do_sound();
 }
 
 // ORIGINAL: 0x004AECE0 ?reset@SocialWin@@QAEXXZ 0x004AECE0-0x004AEEF1
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004aece0.cpp", "source:src/socialwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004AECE0-0x004AEEF1 resets the selected category, button groups, effect snapshots, social allocation values, calculated energy and visible-window redraw", "source:src/faction.h: PlayersData owns the pending SocialCategory, SocialEffect and social allocation values", "source:src/socialwin.h: SocialWin owns the working/original values and category button groups"], "reason": "Restore the panel from its owning PlayerData record through typed social calculation and button-group operations while retaining the mapped reset identity."}
 void SocialWin::reset() {
-    // BODY GOES HERE.
+    field_A1C_ = 0xFFFFFFFFU;
+    social_ai(factionID_, -1, -1, -1, -1, 0);
+
+    field_2C28_ = 1;
+    SocialCategory &pending_category = PlayersData[factionID_].soc_category_pending;
+    for (int category = 0; category < 4; ++category) {
+        const int model = social_category_value(pending_category, category);
+        set_social_category_value(socCategory_, category, model);
+        buttonGroups_[category].set(model + category * 4, 1);
+    }
+    field_2C28_ = 0;
+
+    const SocialEffect &pending_effect = PlayersData[factionID_].soc_effect_pending;
+    socEffect_ = pending_effect;
+    socEffectOrig_ = pending_effect;
+
+    PlayerData &player = PlayersData[factionID_];
+    const bool allocations_changed =
+        player.se_alloc_psych != static_cast<int>(psychAllocOrig_) ||
+        player.se_alloc_labs != static_cast<int>(labsAllocOrig_);
+    psychAllocOrig_ = static_cast<uint32_t>(player.se_alloc_psych);
+    labsAllocOrig_ = static_cast<uint32_t>(player.se_alloc_labs);
+
+    economyAllocPending_ = economyAllocOrig_;
+    psychAllocPending_ = psychAllocOrig_;
+    labsAllocPending_ = labsAllocOrig_;
+
+    if (allocations_changed) {
+        social_set(factionID_);
+        social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
+        social_calc(&socCategory_, &player.soc_effect_pending, factionID_, 0, 0);
+    }
+
+    energy_compute(factionID_, 1);
+    breakthroughTurns_ = *BreakthroughTurnsGlobal;
+    netIncome_ = *NetIncomeGlobal;
+    social_calc(&player.soc_category_pending, &player.soc_effect_pending,
+                factionID_, 0, 0);
+
+    if (is_visible()) {
+        redraw();
+    }
 }
 
 // Fixed-slot binding carried from the 004b17a0 work: the "+" the effect
@@ -1660,7 +1852,7 @@ void SocialWin::draw_info() {
     buf->set_font(&font6_, 0, 0, 0);
 
     int upheaval = static_cast<int>(social_upheaval(
-        factionID_, reinterpret_cast<SocialCategory *>(socCategory_)));
+        factionID_, &socCategory_));
     upheaval -= PlayerUpheavalBlock[factionID_ * 2099];
 
     int text_y;
@@ -1707,7 +1899,7 @@ void SocialWin::draw_info() {
         imbalance = (5 - SocialAllocTable[faction_stride + 1]) * 2
             - SocialAllocTable[faction_stride];
     }
-    int model_shift = reinterpret_cast<const int *>(&socEffect_)[1];
+    int model_shift = socEffect_.efficiency;
     imbalance /= 2;
     int clamped_shift;
     if (model_shift < -4) {
@@ -2151,7 +2343,7 @@ void SocialWin::init(int faction_id) {
                         reinterpret_cast<char *>(Labels.strings_ptr) + 0xCF0)));
                 group->add(reinterpret_cast<BaseButton *>(button));
             }
-            group->set(reinterpret_cast<int *>(socCategory_)[row], 1);
+            group->set(social_category_value(socCategory_, row), 1);
             ++row;
             row_accum += 0x35;
             ++group;
