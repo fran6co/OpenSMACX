@@ -563,7 +563,8 @@ void MapWin::on_resize(int, int) {
 // The original's meaningful domain has live window/buffer objects and map
 // coordinates, dimensions and altitude sums representable as signed ints.
 // ORIGINAL: 0x0046A550 ?draw_map@MapWin@@QAEXH@Z 0x0046A550-0x0046AD51
-// RECOVERY_BINDING: v1 {"evidence": ["Original46A550..46AD51 and caller46B1D0; src/unrecovered/0046a550.cpp retained as seed evidence.", "Original46AC00..46ACCD establishes independent rectangle snapshots;46A940..46A95D translates four shared Vert values;46AD18/46AD42 dispatch through Win slots17/63.", "Original46A58D..46A5A7 snapshots old origin only for an existing incremental image; calculate_dimensions owns initialization on full rendering."], "reason": "MapWin owns this unadjusted-this map-scrolling controller; direct callers and its tile/damage members identify the owner. The original independently saves each tile region around two clipped generations, unlike the retained transcription seed."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original46A550..46AD51 and caller46B1D0; retired seed git:b55fcf8b:src/unrecovered/0046a550.cpp records this identity and exact span.", "Original46AC00..46ACCD establishes independent rectangle snapshots;46A940..46A95D translates four shared Vert values;46AD18/46AD42 dispatch through Win slots17/63.", "Original46A58D..46A5A7 snapshots old origin only for an existing incremental image; calculate_dimensions owns initialization on full rendering."], "reason": "MapWin owns this unadjusted-this map-scrolling controller; direct callers and its tile/damage members identify the owner. The original independently saves each tile region around two clipped generations, unlike the retained transcription seed."}
+// TRIED (retired seed git:b55fcf8b:src/unrecovered/0046a550.cpp): prologue diverges at #6 (orig 'push edi' before 'xor edi,edi', rebuilt reorders them) regardless of where the vbase/mapBuf virtual-base pointer is computed (top of function vs. first use) or where 'int edi' is declared/initialised; body is otherwise a full instruction-level transcription (goto per original jcc, register-named locals, stack slots as vXX locals) reaching 319/702 common mnemonics.
 void MapWin::draw_map(int draw_type) {
     RECT horizontal_pixels = {0, 0, 0, 0};
     RECT vertical_pixels = {0, 0, 0, 0};
@@ -839,7 +840,7 @@ bool map_dest_in_view(const MapWin &window, int x, int y) {
 }
 
 // ORIGINAL: 0x004672C0 ?direct_dest_line@MapWin@@QAEXHHHHHHHH@Z 0x004672C0-0x0046742C
-// RECOVERY_BINDING: v1 {"evidence": ["Original4672C0..46742C; src/recovered/units/004672c0.cpp retained as seed.", "Original467388 uses source Y as the default color; both tile conversions precede center-offset reads, and cover rendering performs both screen-to-client conversions."], "reason": "MapWin projects both endpoints and draws the route edge on either CoverWindow or its own Buffer. Preserve both target branches and the original phase/color selection; the patterned Buffer dependency remains explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4672C0..46742C; retired seed git:b55fcf8b:src/recovered/units/004672c0.cpp records this identity and exact span.", "Original467388 uses source Y as the default color; both tile conversions precede center-offset reads, and cover rendering performs both screen-to-client conversions."], "reason": "MapWin projects both endpoints and draws the route edge on either CoverWindow or its own Buffer. Preserve both target branches and the original phase/color selection; the patterned Buffer dependency remains explicitly unfinished."}
 void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
                              int pattern_on, int pattern_off, int cover) {
     Win::update_cursor(0, 1);
@@ -903,7 +904,7 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
 }
 
 // ORIGINAL: 0x00467430 ?dest_line@MapWin@@QAEXHHHHHHHHHHH@Z 0x00467430-0x00467958
-// RECOVERY_BINDING: v1 {"evidence": ["Original467430..467958; src/recovered/units/00467430.cpp retained as seed.", "Original467481/467483 establish connected-region admission;4676DD tests the pass index, not the per-pass step count. Cost writes46759x/467718/46792x own the separate7D3B70 scalar."], "reason": "MapWin owns route-preview traversal and cost publication. Original pass0 validates the whole route; pass1 charges and draws each edge. Connected land/sea uses path traversal and air/disconnected routes use the direct fallback."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original467430..467958; retired seed git:b55fcf8b:src/recovered/units/00467430.cpp records this identity and exact span.", "Original467481/467483 establish connected-region admission;4676DD tests the pass index, not the per-pass step count. Cost writes46759x/467718/46792x own the separate7D3B70 scalar."], "reason": "MapWin owns route-preview traversal and cost publication. Original pass0 validates the whole route; pass1 charges and draws each edge. Connected land/sea uses path traversal and air/disconnected routes use the direct fallback."}
 void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                       int faction, int triad, int repeat,
                       int pattern_on, int pattern_off, int cover) {
@@ -1064,8 +1065,27 @@ void mouse_feedback_store_y(MapWin &window, int index, int value) {
 }
 }
 
+// The custom title strip returns HTCLIENT; points outside it use Win's normal
+// non-client hit test through the genuine virtual GraphicWin/Win base.
+// ORIGINAL: 0x0046F660 ?on_nc_hittest@MapWin@@QAEXHH@Z 0x0046F660-0x0046F6F9
+// RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8b:src/unrecovered/0046f660.cpp; retained identity, exact span, and return-register evidence.", "src/mapwin.h:MapWin::on_nc_hittest and src/win.h:Win::on_nc_hittest/client_rect_ establish the owner, inherited hit-test contract, and named client rectangle fields.", "src/adjustor_thunks.cpp:adjust_map_win1_on_nc_hittest and adjust_map_win5_on_nc_hittest call the MapWin implementation through genuine virtual-base adjustment."], "reason": "Home the original map-window non-client hit test in its typed owner, returning the client hit code for the custom title strip and delegating other points to the genuine Win base."}
+// symbol    ?on_nc_hittest@MapWin@@UAEHHH@Z
+// TRIED (retired seed git:b55fcf8b:src/unrecovered/0046f660.cpp): the seed's int return was contradicted by its standalone scaffold's void declaration (C2556/C2371); keeping void dropped the mov eax,1 custom-hit result. Its remaining MISMATCH #6 ('mov' vs 'push') concerns instruction scheduling around the in_box/RECT stores.
+int MapWin::on_nc_hittest(int x, int y) {
+    RECT title_strip;
+    title_strip.left = client_rect_.right - client_rect_.left - 0x5b;
+    title_strip.top = 0xe;
+    title_strip.right = title_strip.left + 0x50;
+    title_strip.bottom = 0x1f;
+    if (in_box(x, y, &title_strip)) {
+        return 1;
+    }
+    return Win::on_nc_hittest(x, y);
+}
+
 // ORIGINAL: 0x0046F000 ?on_mouse_move@MapWin@@QAEXHH@Z 0x0046F000-0x0046F651
-// RECOVERY_BINDING: v1 {"evidence": ["Original46F000..46F651; src/unrecovered/0046f000.cpp remains a seed, including its contradictory control flow and stride transcription.", "Original517DD3..517E66 permits repeat mode with waypoint count3; endpoint x[5]/y[5] physically alias y[0]/hoverX. The C++ explicitly names those fields rather than overrunning arrays.", "Original46F0E1/46F118 skip directly to CoverWindow update;46F3A2..46F3B0 retains the base-path endpoint quirk;46F5DD tests the shared string address."], "reason": "The original MapWin/PlanWin/Console Win-branch slot17 entries4218B0/48BFA0/51DE70 dispatch this two-coordinate notification. Genuine virtual inheritance owns the receiver adjustment; it is distinct from the four-argument Win mouse router."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original46F000..46F651; retired seed git:b55fcf8b:src/unrecovered/0046f000.cpp records this identity and exact span.", "Original517DD3..517E66 permits repeat mode with waypoint count3; endpoint x[5]/y[5] physically alias y[0]/hoverX. The C++ explicitly names those fields rather than overrunning arrays.", "Original46F0E1/46F118 skip directly to CoverWindow update;46F3A2..46F3B0 retains the base-path endpoint quirk;46F5DD tests the shared string address."], "reason": "The original MapWin/PlanWin/Console Win-branch slot17 entries4218B0/48BFA0/51DE70 dispatch this two-coordinate notification. Genuine virtual inheritance owns the receiver adjustment; it is distinct from the four-argument Win mouse router."}
+// TRIED (retired seed git:b55fcf8b:src/unrecovered/0046f000.cpp): 'this' treated as a secondary-base receiver (MapWin front recovered via self - 0x21a6c, verified against field_1EF4C_/field_1EF50_ in the existing MapWin scaffold layout), with the per-unit waypoint loop and vbtable-adjusted set_cursor thunk transcribed mechanically field-offset-by-field-offset against raw disassembly. It compiles and reaches instruction #3 before diverging (prologue register-save order); not chased further given the function's size and fixed-point waypoint bookkeeping in the middle third.
 // symbol    ?on_mouse_feedback@MapWin@@UAEXHH@Z
 void MapWin::on_mouse_feedback(int pixel_x, int pixel_y) {
     if (MapMouseFeedbackBusy != 0 || UnkGlobal0093A934 != 0 ||
@@ -1243,7 +1263,8 @@ int map_radius_half_width(int extent, int row) {
 // Original4216F0..42180C: genuine MapWin thiscall, not the seed's stdcall.
 // Proposed name; the original has no surviving decorated method identity.
 // ORIGINAL: 0x004216F0 sub_4216f0 0x004216F0-0x0042180C
-// RECOVERY_BINDING: v1 {"evidence": ["Original4216F0..42180C, retained src/unrecovered/004216f0.cpp; gen_radius469190 calls this method for overlay admission."], "reason": "The original uses a MapWin receiver and three stack arguments, testing its viewport and optional altitude margin. The seed stdcall declaration loses the genuine receiver; tile_in_view is a behavior-based provisional name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4216F0..42180C; retired seed git:b55fcf8b:src/unrecovered/004216f0.cpp records this identity and exact span; gen_radius469190 calls this method for overlay admission."], "reason": "The original uses a MapWin receiver and three stack arguments, testing its viewport and optional altitude margin. The seed stdcall declaration loses the genuine receiver; tile_in_view is a behavior-based provisional name."}
+// TRIED (retired seed git:b55fcf8b:src/unrecovered/004216f0.cpp): the synthetic Obj4216F0 __thiscall receiver was rejected because disassembly reads [ecx+0x1ddaN] without loading ecx from the stack; this is the this-not-a-parameter signal, so IDA's guessed __stdcall(int,int,int) was wrong (a proposal, not a catalogue fact; no mangled name survives). The seed landed at 0.74 similarity: its tile-pointer expression collapsed arithmetic that the original keeps as an explicit zeroed accumulator beside imul, a register-allocation difference that plain restatement did not move.
 // symbol    ?tile_in_view@MapWin@@QAEHHHH@Z
 int MapWin::tile_in_view(int x, int y, int margin) {
     if (margin != 0 && map_radius_valid(x, y)) {
@@ -1281,7 +1302,7 @@ int MapWin::tile_in_view(int x, int y, int margin) {
 // The adapter itself is genuine code, with a nullable derived-to-base cast;
 // its gen_terrain_poly dependency remains the retained renderer obligation.
 // ORIGINAL: 0x004712D0 mapwin_unk1 0x004712D0-0x00471316 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original4712D0..471316 and retained src/recovered/units/004712d0.cpp, including its exactness obligation and historical ABI notes.", "Original conditional receiver conversion reads the GraphicWin virtual-base displacement and adds the Buffer subobject offset. C++ base conversion supplies the same null handling without manual vbtable arithmetic."], "reason": "This nine-argument cdecl adapter performs a nullable genuine MapWin-to-Buffer conversion before entering the common ten-argument renderer. Preserve its original mapwin_unk1 identity and historical seed obligation; gen_window_terrain describes the recovered source role."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4712D0..471316; retired seed git:b55fcf8b:src/recovered/units/004712d0.cpp records this identity and exact span, including its BYTE_EXACT obligation and historical ABI notes.", "Original conditional receiver conversion reads the GraphicWin virtual-base displacement and adds the Buffer subobject offset. C++ base conversion supplies the same null handling without manual vbtable arithmetic."], "reason": "This nine-argument cdecl adapter performs a nullable genuine MapWin-to-Buffer conversion before entering the common ten-argument renderer. Preserve its original mapwin_unk1 identity and historical seed obligation; gen_window_terrain describes the recovered source role."}
 // symbol    ?gen_window_terrain@@YAHPAVMapWin@@HHHHHHHH@Z
 int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
                               int base_id, int flags, int x, int y,
@@ -1293,7 +1314,7 @@ int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
 
 // Original468F90..469183: distinct from the five-argument tile renderer.
 // ORIGINAL: 0x00468F90 ?draw_vehicles@MapWin@@QAEXHHHH@Z 0x00468F90-0x00469183
-// RECOVERY_BINDING: v1 {"evidence": ["Original468F90..469183 and retained src/recovered/units/00468f90.cpp; original vehicle scan caps extension at10, unlike terrain and overlay scans."], "reason": "The four-argument MapWin overload scans a clipped radius and calls the distinct five-argument tile renderer. It preserves the capped upward extension, asymmetric rows and live viewport/center reads."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original468F90..469183; retired seed git:b55fcf8b:src/recovered/units/00468f90.cpp records this identity and exact span; the original vehicle scan caps extension at10, unlike terrain and overlay scans."], "reason": "The four-argument MapWin overload scans a clipped radius and calls the distinct five-argument tile renderer. It preserves the capped upward extension, asymmetric rows and live viewport/center reads."}
 void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
     Buffer *const canvas = static_cast<Buffer *>(this);
     int span = map_dest_add(map_dest_mul(radius, 2), 2);
@@ -1330,7 +1351,7 @@ void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
 
 // Original469190..469718, not the register/goto seed's rectangle arguments.
 // ORIGINAL: 0x00469190 ?gen_radius@MapWin@@QAEXHHHHH@Z 0x00469190-0x00469718
-// RECOVERY_BINDING: v1 {"evidence": ["Original469190..469718 and retained src/recovered/units/00469190.cpp.", "Original469333..469355 converts left/top then right/top, not the transposed seed arguments;4691FB fills via the genuine GraphicWin receiver. Radius-zero scan widening does not apply to the overlay scan."], "reason": "MapWin owns clipped terrain, vehicle and overlay generation. The original scan is asymmetric; top-left and top-right clip conversions determine terrain extension, while overlays later recompute from the left conversion."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original469190..469718; retired seed git:b55fcf8b:src/recovered/units/00469190.cpp records this identity and exact span.", "Original469333..469355 converts left/top then right/top, not the transposed seed arguments;4691FB fills via the genuine GraphicWin receiver. Radius-zero scan widening does not apply to the overlay scan."], "reason": "MapWin owns clipped terrain, vehicle and overlay generation. The original scan is asymmetric; top-left and top-right clip conversions determine terrain extension, while overlays later recompute from the left conversion."}
 void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain) {
     RECT clip;
     if (compute_clip(x, y, radius, &clip) == 0) {
@@ -1428,7 +1449,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
 // Original46A2A0..46A496. This consumes the SAME copied vertices produced
 // by gen_terrain_poly, never a detached radius-local copy or address alias.
 // ORIGINAL: 0x0046A2A0 ?draw_radius@MapWin@@QAEXHHHH@Z 0x0046A2A0-0x0046A496
-// RECOVERY_BINDING: v1 {"evidence": ["Original46A2A0..46A496 and retained src/recovered/units/0046a2a0.cpp.", "Original46A437 passes shared7D3BE8 vertices to the selected genuine radius Texture; signed zoom selects the texture. Console state is observed after generation and soft_update precedes optional do_all_draws."], "reason": "This unadjusted MapWin receiver owns radius generation, the live console cursor-overlay decision and the bounded update. It consumes the same four copied vertices as the terrain producer and scroll controller."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original46A2A0..46A496; retired seed git:b55fcf8b:src/recovered/units/0046a2a0.cpp records this identity and exact span.", "Original46A437 passes shared7D3BE8 vertices to the selected genuine radius Texture; signed zoom selects the texture. Console state is observed after generation and soft_update precedes optional do_all_draws."], "reason": "This unadjusted MapWin receiver owns radius generation, the live console cursor-overlay decision and the bounded update. It consumes the same four copied vertices as the terrain producer and scroll controller."}
 void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
     const int faction = (GameState & 0x80) != 0 ? -1 : ConsoleGlobal.faction_id_;
     gen_radius(x, y, radius, faction, draw_type < 0);
@@ -4178,8 +4199,8 @@ Purpose: Generate the whole visible map - background, terrain, vehicles,
          cannot be dropped without changing behavior visible to a replacing
          callee.
 // ORIGINAL: 0x00469CA0 ?gen_map@MapWin@@QAEXHH@Z 0x00469CA0-0x0046A292 FILE
-// TRIED: faithful three-loop transcription (retained seed src/unrecovered/
-//            00469ca0.cpp) matched through instruction #28 and diverged at
+// RECOVERY_BINDING: v1 {"evidence": ["Original469CA0..46A292; retired seed git:b55fcf8b:src/unrecovered/00469ca0.cpp records this identity and exact span."], "reason": "The three scan passes are implemented as a typed MapWin member over its owned viewport and damage rectangles, with the image's terrain, vehicle, overlay, label and legend helpers retained as real calls."}
+// TRIED (retired seed git:b55fcf8b:src/unrecovered/00469ca0.cpp): faithful three-loop transcription matched through instruction #28 and diverged at
 //            #29 on the i&1 parity scheduling in the row/column base
 //            computation; hoisting `i & 1` to a temp changed nothing. The
 //            body below spells the scans idiomatically instead.

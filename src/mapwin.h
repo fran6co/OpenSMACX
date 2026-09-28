@@ -135,7 +135,8 @@ class MapWin : public virtual GraphicWin {
   void on_nc_left_down(int x_coord, int y_coord);
 
  public:
-  // 0x0046F660, a pending_bodies forwarder.
+  // 0x0046F660, the custom non-client title-strip test; other points defer
+  // to Win::on_nc_hittest through the real virtual base.
   int on_nc_hittest(int x, int y);
 
  public:

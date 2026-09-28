@@ -956,18 +956,6 @@ void MapWin::on_left_down(int a1, int a2) {  // 0x0046ED30
 // ?MapWin::on_lose_mouse_capture at 0x0046EB90 - homed into mapwin.cpp on
 // 2026-08-29, so the forwarder that stood here is gone.
 
-int MapWin::on_nc_hittest(int x, int y) {  // 0x0046F660
-    // RETURNS A HIT-TEST CODE, like the base it overrides. The `void` here
-    // was a forwarder's guess; `?on_nc_hittest@Win@@QAEHH@Z` spells H, and
-    // declaring Win's virtual is what made the two disagree out loud.
-    typedef int(__fastcall *pending)(MapWin *, void *, int, int);
-    return PENDING_BODY(0x0046F660, pending)(this, nullptr, x, y);
-}
-
-
-
-
-
 // MapWin::on_sys_close WAS HERE, forwarding to 0x0046F880. Homed into
 // mapwin.cpp 2026-08-29.
 
