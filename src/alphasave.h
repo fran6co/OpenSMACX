@@ -26,6 +26,10 @@ class AlphaSave : public GraphicWin {
   void close();
   void on_double_clicked(int button_id);
   int on_listbox_scroll_delete(Scroll *scroll);
+  int on_listbox_scroll_create();
+  void on_key_click(int key, int flags);
+  void on_scrolling(int code, int pos);
+  void on_scrolled(int code, int pos);
 
  private:
   FileWin file_win_;             // 0x0A14

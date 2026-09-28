@@ -16,6 +16,8 @@
 AlphaSave *ActiveAlphaSave = 0;
 
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
+void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
+void __cdecl scroll_normal();
 
 // ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60
 AlphaSave::AlphaSave() {
@@ -47,4 +49,47 @@ int AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
         scroll_hide(this, scroll);
     }
     return 0;
+}
+
+// ORIGINAL: 0x00407D10 ?on_key_click@AlphaSave@@QAEXHH@Z 0x00407D10-0x00407D62 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407d10.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+void AlphaSave::on_key_click(int key, int flags) {
+    switch (flags) {
+    case 0x21:
+    case 0x22:
+    case 0x26:
+    case 0x28:
+        file_win_.list_box_.key_down_event(flags);
+        break;
+    default:
+        file_win_.edit_box_.key_down_event(flags);
+        file_win_.edit_box_.key_click_event(key, flags);
+        break;
+    }
+}
+
+// ORIGINAL: 0x004080E0 ?on_scrolling@AlphaSave@@QAEXHH@Z 0x004080E0-0x0040810C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004080e0.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+void AlphaSave::on_scrolling(int code, int pos) {
+    // The embedded ListBox dispatches this notification through its Win base.
+    file_win_.list_box_.vslot_48(code, pos);
+}
+
+// ORIGINAL: 0x00408110 ?on_scrolled@AlphaSave@@QAEXHH@Z 0x00408110-0x0040813C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00408110.cpp and original symbol"], "reason": "Existing AlphaSave owner forwards to its typed FileWin subobjects; original symbol and seed establish identity and extent"}
+void AlphaSave::on_scrolled(int code, int pos) {
+    // This is the next Win virtual notification, not ListBox's direct handler.
+    file_win_.list_box_.vslot_49(code, pos);
+}
+
+// ORIGINAL: 0x00407E80 ?on_listbox_scroll_create@AlphaSave@@QAEHXZ 0x00407E80-0x00407ECA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00407e80.cpp;src/popup.cpp:Popup::on_listbox_scroll_create;src/alphasave.h:scroll_"], "reason": "AlphaSave owns the Scroll at 0x3DD8; original call sequence matches the typed Popup scroll-create pattern and seed evidence"}
+int AlphaSave::on_listbox_scroll_create() {
+    scroll_normal();
+    scroll_.init(0x147, 0x15, 0x18, 0xd8, this, -1, 1);
+    scroll_.hide();
+    if (Win::is_visible()) {
+        scroll_show(this, &scroll_);
+    }
+    return reinterpret_cast<int>(&scroll_);
 }

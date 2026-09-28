@@ -34,6 +34,9 @@
   * The layout is not established and nothing pins its sizeof.
 */
 class FileWin {
+  // AlphaSave embeds this owner and forwards its keyboard/scroll events to
+  // these actual EditBox and ListBox subobjects.
+  friend class AlphaSave;
  public:
   // `static`: the image's name ends in `QAA` - a public member declared
   // __cdecl, taking no receiver - and jackal_init_real calls it with no
