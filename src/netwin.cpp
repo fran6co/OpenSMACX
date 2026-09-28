@@ -30,6 +30,7 @@
 #include "pulldown.h"  // PullDown - the pickers' second pane
 #include "strings.h"   // StringTemp, the pcx path the records name
 #include "text.h"      // text_open / text_get / text_item / text_close
+#include "xpops.h"     // x_pop_caption_label for lobby validation prompts
 
 // THE SETUP DIALOG, real storage at the image's fixed address - see
 // netwin.h. The image reaches it from an unannotated initialiser at
@@ -2250,6 +2251,166 @@ NetWin::NetWin() {
     // the body's own work - 0x772C and 0x7730, the faction-record blocks.
     faction_records_ = 0;
     faction_records_copy_ = 0;
+}
+
+// The wire header is 16 bytes. The high byte of the original 0x0F04
+// message word is also the flags byte: the full-state send sets bit 0x40.
+struct NetWinLobbyPacketHeader {
+    uint8_t opcode_;
+    uint8_t flags_;
+    uint16_t field_2_;
+    int32_t slot_;
+    int32_t field_8_;
+    uint32_t field_C_;
+};
+static_assert(sizeof(NetWinLobbyPacketHeader) == 0x10,
+              "NetWin packet header size");
+struct NetWinLobbyFullPacket {
+    NetWinLobbyPacketHeader header_;
+    NetWinLobbyRow rows_[7];
+};
+struct NetWinLobbySinglePacket {
+    NetWinLobbyPacketHeader header_;
+    NetWinLobbyRow row_;
+};
+struct NetWinLobbyLeavePacket {
+    NetWinLobbyPacketHeader header_;
+    uint8_t trailing_[0x10];
+};
+static_assert(sizeof(NetWinLobbyFullPacket) == 0xA74,
+              "full lobby packet size");
+static_assert(sizeof(NetWinLobbySinglePacket) == 0x18C,
+              "single lobby packet size");
+static_assert(sizeof(NetWinLobbyLeavePacket) == 0x20,
+              "leave lobby packet size");
+
+/*
+Purpose: Answer the multiplayer setup dialog's button click. Id -2 hangs up
+         the session (store -1 into the dialog's +0x7614 slot) and every id
+         but 10 returns; id 10 - the join/start button - validates the lobby
+         before broadcasting: the local slot's ready byte is set and every
+         peer row probed for a free slot (any free slot, or the
+         NOTALLREADY prompt refuses), a running session re-scans its
+         faction-record run against the occupied slot rows so a duplicated
+         faction raises the PASSWORDSNOTVALIDATED prompt and a 0x2f0e
+         leave packet instead, and only then does the click re-mark the
+         lobby rows and send either the 0x4f04 full-state packet (0xa74
+         bytes including its header) or the single-slot 0x2f04 packet
+         (0x18c bytes, when the local slot is at least one).
+
+The coordinator explicitly approved zero-initialized lobby packet buffers;
+the original packet layouts include reserved fields which remain zero here.
+*/
+// ORIGINAL: 0x0047B450 ?on_button_clicked@NetWin@@QAEXH@Z 0x0047B450-0x0047B746 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The original NetWin constructor installs primary vtable 0x0066CCEC; inherited Win slot 44 at 0x0066CD9C targets 0x0047B450.", "NetDaemon::on_player_deleted directly calls 0x0047B450 with NetWinDialog as receiver and -2 as argument; retired seed git:7eb4d2e7:src/unrecovered/0047b450.cpp records the historical body."], "reason": "NetWin owns the lobby button handler as its inherited Win callback and shares the typed lobby rows and session storage with its network senders."}
+// symbol    ?on_button_clicked@NetWin@@UAEXH@Z
+// TRIED: no SEH frame here (plain `sub esp,0xd9c`, no fs:[0] chain), so this is a direct disassembly transcription rather than a lever candidate. Used one flat byte buffer plus raw `base - N` stores/memcpy matching each `ebp - N` write and each record's 0x17c-byte stride, rather than named locals, since the frame mixes several differently-shaped record buffers with no natural C struct boundary between them.
+// size      758 bytes
+// prototype void (__thiscall ?on_button_clicked@NetWin@@QAEXH@Z)(NetWin* this, int)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004E25E0 0x005BF330 0x00630080 0x00645930
+// Return Value: n/a
+// Status: Recovered lobby click handling; original seed retired.
+#if defined(_MSC_VER) && _MSC_VER == 1200
+#pragma function(memcpy)
+#endif
+void NetWin::on_button_clicked(int clicked_id) {
+    if (clicked_id == -2) {
+        field_7614_ = -1;
+        return;
+    }
+    if (clicked_id != 10) {
+        return;
+    }
+
+    const int local_slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
+    const int player_count = NetDaemonNet.player_count_;
+
+    if (NetDaemonNet.lock_state_[0].dword_[1] != 0) {
+        uint8_t &ready = NetWinLobbyRows[local_slot].ready_or_occupied_;
+        const int slot_count = player_count + 1;
+        int slot = 1;
+        ready = 1;
+        if (slot_count > 1) {
+            do {
+                if (NetWinLobbyRows[slot].ready_or_occupied_ == 0) {
+                    break;
+                }
+                ++slot;
+            } while (slot < slot_count);
+        }
+        ready = 0;
+
+        if (slot != slot_count &&
+            x_pop_caption_label((char *)*ClimatePopupTitle, "NOTALLREADY",
+                                0) != 0) {
+            return;
+        }
+
+        const int transport = NetWinSessionData.mode_;
+        if (transport == 2 || transport == 3) {
+            const NetWinFactionRecord *const records =
+                static_cast<const NetWinFactionRecord *>(faction_records_);
+            for (int faction = 1; faction < 8; ++faction) {
+                const uint32_t owner = records[faction].owner_;
+                if (owner != 0) {
+                    const int scan_count = player_count + 1;
+                    int scan = 1;
+                    if (scan_count > 1) {
+                        do {
+                            if (NetWinLobbyRows[scan].faction_or_color_ ==
+                                faction) {
+                                break;
+                            }
+                            ++scan;
+                        } while (scan < scan_count);
+                    }
+                    if (scan == scan_count ||
+                        owner != NetWinLobbyRows[scan].owner_) {
+                        x_pop_caption_label((char *)*ClimatePopupTitle,
+                                            "PASSWORDSNOTVALIDATED", 0);
+                        NetWinLobbyLeavePacket packet;
+                        memset(&packet, 0, sizeof(packet));
+                        packet.header_.opcode_ = 0x0E;
+                        packet.header_.flags_ = 0x2F;
+                        NetDaemonNet.Net::send(&packet, sizeof(packet),
+                                               NetWinOtherPlayerId, 1);
+                        return;
+                    }
+                }
+            }
+        }
+
+        for (int ready_slot = 1; ready_slot <= player_count; ++ready_slot) {
+            NetWinLobbyRows[ready_slot].ready_or_occupied_ = 1;
+        }
+
+        if (NetDaemonNet.lock_state_[0].dword_[1] == 0) {
+            return;
+        }
+        NetWinLobbyFullPacket packet;
+        memset(&packet, 0, sizeof(packet));
+        packet.header_.opcode_ = 0x04;
+        packet.header_.flags_ = 0x4F;
+        packet.header_.slot_ = -1;
+        memcpy(packet.rows_, &NetWinLobbyRows[1], sizeof(packet.rows_));
+        NetDaemonNet.Net::send(&packet, sizeof(packet), 0, 1);
+    } else {
+        NetWinLobbyRow row = NetWinLobbyRows[local_slot];
+        row.ready_or_occupied_ = row.ready_or_occupied_ == 0 ? 1 : 0;
+        if (local_slot >= 1) {
+            NetWinLobbySinglePacket packet;
+            memset(&packet, 0, sizeof(packet));
+            packet.header_.opcode_ = 0x04;
+            packet.header_.flags_ = 0x2F;
+            packet.header_.slot_ = local_slot;
+            packet.row_ = row;
+            NetDaemonNet.Net::send(&packet, sizeof(packet),
+                                   NetWinOtherPlayerId, 1);
+        }
+    }
 }
 
 /*
