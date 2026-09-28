@@ -395,3 +395,16 @@ Status: Complete
 void __cdecl teardown_00422ec0() {
     sub_interface_global()->release_iface_mode();
 }
+
+// ORIGINAL: 0x00421B20 ?pulse_timer@BattleWin@@QAEXXZ 0x00421B20-0x00421B37 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The image's 0x00421B20 adds eight to the BattleWin receiver before calling Time::pulse at 0x006164D0, with callback 0x00422EC0, zero parameter, period 0x1388 and resolution 5.", "BattleWin's constructor and destructor establish a real Time member at +8; 0x00422EC0 is the existing source-owned teardown callback."], "reason": "Home the timer pulse through BattleWin's typed Time member and existing callback."}
+void BattleWin::pulse_timer() {
+    time_.pulse(reinterpret_cast<void (__cdecl *)(int)>(&teardown_00422ec0),
+                0, 0x1388, 5);
+}
+
+// ORIGINAL: 0x00421B40 ?stop_timer@BattleWin@@QAEXXZ 0x00421B40-0x00421B48 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The image's 0x00421B40 adds eight to the receiver and tail-jumps to Time::stop.", "BattleWin's constructor and destructor establish a real Time member at +8."], "reason": "Home the timer stop through BattleWin's typed Time member."}
+void BattleWin::stop_timer() {
+    time_.stop();
+}

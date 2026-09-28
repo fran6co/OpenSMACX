@@ -54,6 +54,8 @@ class BattleWin : public IfaceRegistryEntry {
   void on_iface_button_toggled(int, int) {}
 
   void on_status(int mode);
+  void pulse_timer();
+  void stop_timer();
   void on_iface_left_click(int, int);
   void on_iface_right_click(int, int);
   void on_iface_left_down(int x_coord, int y_coord);
@@ -139,4 +141,3 @@ class BattleWin : public IfaceRegistryEntry {
 
 static_assert(sizeof(BattleWin) == 0xA0,
               "BattleWin layout must match the original executable");
-
