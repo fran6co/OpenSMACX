@@ -172,6 +172,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   void draw_misc(int a1);                               // 0x00415730
   void draw_info(int a1);                               // 0x00415B20
   void gov_on(int a1);                                  // 0x00415F70
+  void gov_activate();                                  // 0x00415F00
+  void recompute(int a1);                               // 0x00416D90
   void add_queue(int a1, int a2);                       // 0x00416DE0
   void delete_queue(int a1);                            // 0x00416FB0
   void production(int a1, int a2);                      // 0x00417040
@@ -522,7 +524,7 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40AF4_;  // 0x40AF4
   uint32_t field_40AF8_;  // 0x40AF8
   uint32_t field_40AFC_;  // 0x40AFC
-  uint32_t field_40B00_;  // 0x40B00
+  int32_t field_40B00_;  // 0x40B00; signed hover selection, -1 means none
   uint32_t field_40B04_;  // 0x40B04
   uint32_t field_40B08_;  // 0x40B08
   uint32_t focusedBaseID_;  // 0x40B0C

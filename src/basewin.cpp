@@ -274,6 +274,168 @@ void BaseWin::gov_on(int priorities) {
     }
 }
 
+// ORIGINAL: 0x00415F00 ?gov_activate@BaseWin@@QAEXXZ 0x00415F00-0x00415F70 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00415F00-0x00415F70 governor flags and Base field accesses", "source:src/base.h", "source:src/base.cpp"], "reason": "Activate the selected base's configured governor through typed Base state and existing base computation helpers; preserve the source seed's historical exact claim."}
+void BaseWin::gov_activate() {
+    if (BaseCurrent->governor & GOV_ACTIVE) {
+        if (BaseCurrent->governor & GOV_MANAGES_PRODUCTION) {
+            BaseCurrent->state &= ~BSTATE_UNK_8000000000;
+            BaseCurrent->queue_size = 0;
+            base_reset(BaseIDCurrentSelected, 1);
+        }
+        if (BaseCurrent->governor & GOV_MANAGES_CITIZENS_SPECS) {
+            BaseCurrent->resource_sqr_radius = 0;
+            BaseCurrent->specialist_total = 0;
+            BaseCurrent->specialist_unk_1 = 0;
+            base_compute(1);
+            base_doctors();
+        }
+    }
+}
+
+// ORIGINAL: 0x00416D90 ?recompute@BaseWin@@QAEXH@Z 0x00416D90-0x00416DCA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416D90-0x00416DCA tests Win visibility, selects focusedBaseID_, recomputes, dispatches Win redraw slot 62 and directly redraws MainInterfaceGlobal", "source:src/basewin.h", "source:src/base.h", "source:src/maininterface.h"], "reason": "Refresh the selected base through typed focus state and real virtual/direct redraw calls; the integer argument is unused by the original."}
+void BaseWin::recompute(int) {
+    if (Win::is_visible()) {
+        set_base(static_cast<int>(focusedBaseID_));
+        base_compute(1);
+        redraw();
+        MainInterfaceGlobal.GraphicWin::redraw();
+    }
+}
+
+// The queue's rendered panel is still unimplemented. Queue mutation itself
+// uses the typed Base queue and BaseWin selection state recovered from the
+// original record strides; the unfinished drawing dependency remains visible.
+// ORIGINAL: 0x00415080 ?draw_queue@BaseWin@@QAEXH@Z 0x00415080-0x00415724;0x00651B93-0x00651BB0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00415080.cpp", "source:src/basewin.h"], "reason": "Keep the declared BaseWin drawing dependency linkable while its original panel behavior remains in the retained seed."}
+// TRIED: instruction-level transcription with real Font locals (to get the SEH frame/dtor thunks) and byte-offset casts for BaseWin fields; compiles, control flow/offsets/call order match the disasm, sim 0.70 framed build. Extra RECT-copy temporaries (rectA/rectQ/rectR/rectP vs the original's reused stack slots) keep it off byte-exact. Not retried with slot reuse given size (1729 bytes, SEH).
+void BaseWin::draw_queue(int) {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0040E360 ?draw_production@BaseWin@@QAEXH@Z 0x0040E360-0x0040F0E5;0x00651ACD-0x00651AF8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040e360.cpp", "source:src/basewin.h"], "reason": "Keep the BaseWin production-panel dependency linkable while its original rendering behavior remains in the retained seed."}
+// TRIED: BaseWin is opaque past field_40b10_ in this scaffold, so every `this`-relative access below 0x40C6C etc. is a raw I32/B8 cast rather than a named member; the two Font locals + one Sprite local (matching the two Font ctor calls and the single Sprite ctor/close pair in the disassembly) reproduce that RAII shape. The header/border setup and the unit-vs-facility info panel are transcribed from the disassembly; the queue-grid cell-size search and its per-item draw loop (~110 instructions) are replaced with a single representative call rather than the original's two-pass sizing + nested row/column loop, since the unnamed FUN_ callees for that section have no recovered signature to transcribe against.
+void BaseWin::draw_production(int) {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00416DE0 ?add_queue@BaseWin@@QAEXHH@Z 0x00416DE0-0x00416FA8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416DE0-0x00416FA8 queue index/count and production-id accesses", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id", "source:src/basewin.h:BaseWin queue selection fields"], "reason": "Apply the original queue insert/replace, sentinel removal and redraw sequence through typed Base queue storage; drawing remains an explicit unfinished dependency."}
+void BaseWin::add_queue(int insert, int production_id) {
+    int index = static_cast<int>(field_40B2C_);
+    if (index == 0 || index == 9) {
+        return;
+    }
+    if (insert == 0 && BaseCurrent->queue_production_id[index] == production_id
+        && BaseCurrent->queue_size >= static_cast<uint32_t>(index)) {
+        return;
+    }
+
+    if (production_id < 0
+        && (-production_id < 0x41 || (production_id != -0x44 && -production_id > 0x43))) {
+        int slot = 1;
+        while (slot < 9) {
+            if (BaseCurrent->queue_production_id[slot] == production_id) {
+                if (slot < index) {
+                    field_40B2C_ = static_cast<uint32_t>(index - 1);
+                }
+                --BaseCurrent->queue_size;
+                if (slot < 8) {
+                    int offset = slot;
+                    do {
+                        BaseCurrent->queue_production_id[offset] =
+                            BaseCurrent->queue_production_id[offset + 1];
+                        ++offset;
+                    } while (offset < 8);
+                }
+                break;
+            }
+            ++slot;
+        }
+    }
+
+    if (insert != 0) {
+        int end = 9;
+        if (field_40B2C_ < 9) {
+            do {
+                BaseCurrent->queue_production_id[end] =
+                    BaseCurrent->queue_production_id[end - 1];
+                --end;
+            } while (field_40B2C_ < static_cast<uint32_t>(end));
+        }
+        if (BaseCurrent->queue_size < 9) {
+            ++BaseCurrent->queue_size;
+        }
+    }
+
+    index = static_cast<int>(field_40B2C_);
+    BaseCurrent->queue_production_id[index] = production_id;
+    if (BaseCurrent->queue_size < static_cast<uint32_t>(index)) {
+        ++BaseCurrent->queue_size;
+    }
+
+    int visited = 0;
+    if (insert != 0) {
+        const int count = static_cast<int>(BaseCurrent->queue_size);
+        field_40B30_ = 0;
+        field_40B2C_ = static_cast<uint32_t>(count + 1);
+    }
+
+    int count = static_cast<int>(BaseCurrent->queue_size);
+    if (count + 1 > 0) {
+        int slot = 0;
+        do {
+            if (BaseCurrent->queue_production_id[slot] == -0x45 && visited < count) {
+                for (int following = slot; following < 9; ++following) {
+                    BaseCurrent->queue_production_id[following] =
+                        BaseCurrent->queue_production_id[following + 1];
+                }
+                --BaseCurrent->queue_size;
+                count = static_cast<int>(BaseCurrent->queue_size);
+                if (count < static_cast<int>(field_40B2C_)) {
+                    if (count < 2) {
+                        count = 1;
+                    }
+                    field_40B2C_ = static_cast<uint32_t>(count);
+                }
+                draw_queue(1);
+            }
+            draw_production(1);
+            ++visited;
+            ++slot;
+            count = static_cast<int>(BaseCurrent->queue_size);
+        } while (visited < count + 1);
+    }
+    draw_queue(1);
+}
+
+// ORIGINAL: 0x00416FB0 ?delete_queue@BaseWin@@QAEXH@Z 0x00416FB0-0x0041703C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00416FB0-0x0041703C removes one queue entry, shifts later ids, clamps the selected index to at least one, and redraws the queue", "source:src/base.h:Base::queue_size", "source:src/base.h:Base::queue_production_id"], "reason": "Delete a selected production queue entry through the typed Base queue representation; the drawing dependency remains explicitly unfinished."}
+void BaseWin::delete_queue(int index) {
+    if (index > static_cast<int>(BaseCurrent->queue_size)) {
+        int selection = static_cast<int>(field_40B2C_) - 1;
+        if (selection <= 1) {
+            selection = 1;
+        }
+        field_40B2C_ = static_cast<uint32_t>(selection);
+        return;
+    }
+    if (index < 9) {
+        for (int slot = index; slot < 9; ++slot) {
+            BaseCurrent->queue_production_id[slot] =
+                BaseCurrent->queue_production_id[slot + 1];
+        }
+    }
+    --BaseCurrent->queue_size;
+    const int count = static_cast<int>(BaseCurrent->queue_size);
+    if (count < static_cast<int>(field_40B2C_)) {
+        field_40B2C_ = static_cast<uint32_t>(count <= 1 ? 1 : count);
+    }
+    draw_queue(1);
+}
+
 // Refresh only a visible base screen displaying the affected base. The
 // recomputation uses the already-selected current base: neither original
 // refresh hook calls set_base. Its first redraw is virtual; the subsequent
@@ -1702,27 +1864,39 @@ void BaseWin::on_iface_mouse_move(int a1, int a2) {
 }
 
 /*
-Purpose: The interface's mouse-leave report. Unrecovered - 224 bytes that
-         clear the queue panel's hover and repaint the status line.
-// PENDING 0x0041E3E0 ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z 0x0041E3E0-0x0041E4C0
+Purpose: Clear the queue hover and restore the base-production selection
+         when the pointer leaves the BaseWin interface.
+// ORIGINAL: 0x0041E3E0 ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z 0x0041E3E0-0x0041E4C0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0041E3E0-0x0041E4C0 clears the bubble twice, conditionally clears queue hover, resets fields 0x400EC/0x400F0, recomputes focused base, and invokes the multiplayer radius lock path", "source:src/basewin.h:BaseWin focused/queue fields", "source:src/base.h:Base records", "source:src/win.h:Win::clear_bubble_text", "source:src/netdaemon.h"], "reason": "Recover the mouse-leave state transition with typed BaseWin/Base state and existing Win, base-computation, NetDaemon and panel interfaces; panel rendering remains explicitly unfinished."}
 // symbol    ?on_iface_mouse_leave@BaseWin@@UAEXHH@Z
-// PENDING BODY - the receiver is solved (every member in the artifact's
-//   transcription is entry-relative: 0x4011c, 0x400ec, 0x40b0c) and the shape
-//   is MainInterface::on_iface_mouse_leave's - an early test, a guard, a
-//   `draw_queue(0)`, then the redraw. The two `call 0x5f8500` pairs that open
-//   it are unaccounted for in every reading tried so far, which is why the
-//   artifact is NOT_MATCHING and this is a forwarder.
-// size      224 bytes
-// prototype void (__thiscall ?on_iface_mouse_leave@BaseWin@@QAEXHH@Z)(BaseWin* this, int, int)
-// callers   0   call targets   8
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x005F8500 0x00415080 0x004E39D0 0x004EC3B0
+// TRIED: two `char*` bases (self, self-0xa14) computed via arithmetic instead of matching the single-esi-reuse register shape
 */
-void BaseWin::on_iface_mouse_leave(int a1, int a2) {
-    typedef void(__fastcall *pending)(BaseWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041E3E0))(
-        this, nullptr, a1, a2);
+void BaseWin::on_iface_mouse_leave(int, int) {
+    Win::clear_bubble_text();
+    Win::clear_bubble_text();
+
+    if (field_40B30_ != 0) {
+        field_40B30_ = 0;
+        draw_queue(0);
+    }
+
+    if (field_40B00_ >= 0) {
+        field_40B00_ = -1;
+        field_40B04_ = 0;
+
+        const int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
+        set_base(static_cast<int>(focusedBaseID_));
+        base_compute(0);
+
+        if (IsMultiplayerNet != 0 && ConsoleControlTurnActive == 0
+            && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius) {
+            if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            }
+        }
+
+        draw_production(1);
+    }
 }
 
 // Win slot 12 went live for BaseWin when the tree-wide slot-12 rename made
