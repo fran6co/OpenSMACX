@@ -802,7 +802,8 @@ int __fastcall adjust_dialogs1_attach(void *self, void *, void *arg0,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    return reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)->Dialogs::attach(arg0, arg1, arg2, arg3);
+    return reinterpret_cast<Dialogs *>(object - vtordisp - 0xBA0)
+        ->Dialogs::attach(static_cast<GraphicWin *>(arg0), arg1, arg2, arg3);
 }
 
 /*
@@ -2499,5 +2500,4 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
     // emits only the vtordisp adjust.
     reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();
 }
-
 

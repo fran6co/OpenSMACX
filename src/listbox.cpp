@@ -182,7 +182,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to ListBox and
          MOVED HERE from filewin.cpp 2026-09-03, for the same reason as
          on_dialog_focus's marker directly above.
 // ORIGINAL: 0x0060D040 ?attach@thunk1_ListBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060D040-0x0060D048 BYTE_EXACT
-// symbol    ?attach@ListBox@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// symbol    ?attach@ListBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
 // size      8 bytes
 // kind      game
 Status: Complete
@@ -610,7 +610,7 @@ Purpose: Attach the list to a parent window rectangle: run the layout pass,
 // prototype int (__thiscall ?attach@ListBox@@QAEHPAUGraphicWin@@HHH@Z)(ListBox* this, GraphicWin*, int, int, int)
 // calls     0x005D4EF0 0x005DAC70 0x005DACB0 0x005DACE0 0x005DAD10 0x005EE030 0x005EE070 0x005EE0B0 0x005EE0D0 0x005EE0F0 0x005EE110 0x0060A1E0
 */
-int ListBox::attach(void *a1, int a2, int a3, int a4) {
+int ListBox::attach(GraphicWin *a1, int a2, int a3, int a4) {
     if (a1 == 0) {
         return 3;
     }

@@ -82,7 +82,7 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x0060E800, a pending_bodies forwarder.
-  int attach(void * a1, int a2, int a3, int a4);
+  int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
   // 0x0060ECE0. BasePop::write_check reaches it on the CheckBox at its own

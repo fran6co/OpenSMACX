@@ -883,8 +883,8 @@ int CheckBox::calculate_dimensions() {  // 0x0060ED10
     return PENDING_BODY(0x0060ED10, pending)(this, nullptr);
 }
 
-int CheckBox::attach(void * a1, int a2, int a3, int a4) {  // 0x0060E800
-    typedef int(__fastcall *pending)(CheckBox *, void *, void *, int, int, int);
+int CheckBox::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x0060E800
+    typedef int(__fastcall *pending)(CheckBox *, void *, GraphicWin *, int, int, int);
     return PENDING_BODY(0x0060E800, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
@@ -936,45 +936,14 @@ void Console::end_my_turn() {
     PENDING_BODY(0x005169F0, pending)(this, nullptr);
 }
 
-int Dialogs::attach(void * a1, int a2, int a3, int a4) {  // 0x00612FE0
-    typedef int(__fastcall *pending)(Dialogs *, void *, void *, int, int, int);
-    return PENDING_BODY(0x00612FE0, pending)(this, nullptr, a1, a2, a3, a4);
-}
-
-void Dialogs::on_dialog_focus(int a1) {  // 0x006130E0
-    typedef void(__fastcall *pending)(Dialogs *, void *, int);
-    PENDING_BODY(0x006130E0, pending)(this, nullptr, a1);
-}
-
-int Dialogs::on_key_down(int a1) {  // 0x00612CC0
-    typedef int(__fastcall *pending)(Dialogs *, void *, int);
-    return PENDING_BODY(0x00612CC0, pending)(this, nullptr, a1);
-}
-
-void Dialogs::on_left_double_click(int a1, int a2) {  // 0x00612D60
-    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
-    PENDING_BODY(0x00612D60, pending)(this, nullptr, a1, a2);
-}
-
-void Dialogs::on_left_down(int a1, int a2) {  // 0x00612C20
-    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
-    PENDING_BODY(0x00612C20, pending)(this, nullptr, a1, a2);
-}
-
-void Dialogs::on_mouse_leave(int a1, int a2) {  // 0x00612AE0
-    typedef void(__fastcall *pending)(Dialogs *, void *, int, int);
-    PENDING_BODY(0x00612AE0, pending)(this, nullptr, a1, a2);
-}
-
-
 void Dialogs::on_redraw() {  // 0x00612E00
     typedef void(__fastcall *pending)(Dialogs *, void *);
     PENDING_BODY(0x00612E00, pending)(this, nullptr);
 }
 
-void Dialogs::on_scroll_create() {  // 0x00613220
-    typedef void(__fastcall *pending)(Dialogs *, void *);
-    PENDING_BODY(0x00613220, pending)(this, nullptr);
+int Dialogs::on_scroll_create() {  // 0x00613220
+    typedef int(__fastcall *pending)(Dialogs *, void *);
+    return PENDING_BODY(0x00613220, pending)(this, nullptr);
 }
 
 void Dialogs::pass_dialog_focus() {  // 0x00613180
@@ -995,8 +964,8 @@ int EditGroup::calculate_dimensions() {  // 0x00612150
     return PENDING_BODY(0x00612150, pending)(this, nullptr);
 }
 
-int EditGroup::attach(void * a1, int a2, int a3, int a4) {  // 0x00611AF0
-    typedef int(__fastcall *pending)(EditGroup *, void *, void *, int, int, int);
+int EditGroup::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x00611AF0
+    typedef int(__fastcall *pending)(EditGroup *, void *, GraphicWin *, int, int, int);
     return PENDING_BODY(0x00611AF0, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
@@ -1136,8 +1105,8 @@ int RadioButton::calculate_dimensions() {  // 0x0060D380
     return PENDING_BODY(0x0060D380, pending)(this, nullptr);
 }
 
-int RadioButton::attach(void * a1, int a2, int a3, int a4) {  // 0x0060D1F0
-    typedef int(__fastcall *pending)(RadioButton *, void *, void *, int, int, int);
+int RadioButton::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x0060D1F0
+    typedef int(__fastcall *pending)(RadioButton *, void *, GraphicWin *, int, int, int);
     return PENDING_BODY(0x0060D1F0, pending)(this, nullptr, a1, a2, a3, a4);
 }
 
@@ -1167,8 +1136,8 @@ int SpriteBox::calculate_dimensions() {  // 0x00610970
     return PENDING_BODY(0x00610970, pending)(this, nullptr);
 }
 
-int SpriteBox::attach(void * a1, int a2, int a3, int a4) {  // 0x00610540
-    typedef int(__fastcall *pending)(SpriteBox *, void *, void *, int, int, int);
+int SpriteBox::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x00610540
+    typedef int(__fastcall *pending)(SpriteBox *, void *, GraphicWin *, int, int, int);
     return PENDING_BODY(0x00610540, pending)(this, nullptr, a1, a2, a3, a4);
 }
 

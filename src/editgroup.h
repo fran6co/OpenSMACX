@@ -48,7 +48,7 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x00611AF0, a pending_bodies forwarder.
-  int attach(void * a1, int a2, int a3, int a4);
+  int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
   // The int in the catalogue is the compiler's hidden most-derived flag.

@@ -704,3 +704,129 @@ int Dialogs::calculate_dimensions() {
         return 0;
     }
 }
+
+// These recovered dispatch bodies preserve the archived case maps but route
+// through declared C++ subobjects. The image's per-base thunks account for the
+// different receiver seen by the old bodies (the GraphicWin view is +0x188);
+// this source implementation begins with a proper Dialogs receiver, reads
+// kind_ and lets qualified base calls perform the compiler-known adjustment.
+// ORIGINAL: 0x00612C20 ?on_left_down@Dialogs@@QAEXHH@Z 0x00612C20-0x00612C98
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612C20 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_left_down as a typed Dialogs kind dispatcher"}
+void Dialogs::on_left_down(int x, int y) {
+    switch (kind_) {
+    case 1:
+        check_box_view().CheckBox::on_left_down(x, y);
+        break;
+    case 2:
+        list_box_view().ListBox::on_left_down(x, y);
+        break;
+    case 8:
+        sprite_box_view().SpriteBox::on_left_down(x, y);
+        break;
+    case 16:
+        radio_button_view().RadioButton::on_left_down(x, y);
+        break;
+    }
+}
+
+// ORIGINAL: 0x00612D60 ?on_left_double_click@Dialogs@@QAEXHH@Z 0x00612D60-0x00612DD8
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612D60 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_left_double_click as a typed Dialogs kind dispatcher"}
+// symbol    ?on_left_double_click@Dialogs@@UAEXHH@Z
+void Dialogs::on_left_double_click(int x, int y) {
+    switch (kind_) {
+    case 1:
+        check_box_view().CheckBox::on_left_double_click(x, y);
+        break;
+    case 2:
+        list_box_view().ListBox::on_left_double_click(x, y);
+        break;
+    case 8:
+        sprite_box_view().SpriteBox::on_left_double_click(x, y);
+        break;
+    case 16:
+        radio_button_view().RadioButton::on_left_double_click(x, y);
+        break;
+    }
+}
+
+// ORIGINAL: 0x00612AE0 ?on_mouse_leave@Dialogs@@QAEXHH@Z 0x00612AE0-0x00612B58
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612AE0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_mouse_leave as a typed Dialogs kind dispatcher"}
+// symbol    ?on_mouse_leave@Dialogs@@UAEXHH@Z
+void Dialogs::on_mouse_leave(int x, int y) {
+    switch (kind_) {
+    case 1:
+        check_box_view().CheckBox::on_mouse_leave(x, y);
+        break;
+    case 2:
+        list_box_view().ListBox::on_mouse_leave(x, y);
+        break;
+    case 8:
+        sprite_box_view().SpriteBox::on_mouse_leave(x, y);
+        break;
+    case 16:
+        radio_button_view().RadioButton::on_mouse_leave(x, y);
+        break;
+    }
+}
+
+// ORIGINAL: 0x00612CC0 ?on_key_down@Dialogs@@QAEHH@Z 0x00612CC0-0x00612D29
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612CC0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_key_down as a typed Dialogs kind dispatcher"}
+int Dialogs::on_key_down(int key) {
+    switch (kind_) {
+    case 16:
+        return radio_button_view().RadioButton::on_key_down(key);
+    case 2:
+        list_box_view().ListBox::on_key_down(key);
+        break;
+    case 1:
+        return check_box_view().CheckBox::on_key_down(key);
+    case 8:
+        return sprite_box_view().SpriteBox::on_key_down(key);
+    default:
+        return 0;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x006130E0 ?on_dialog_focus@Dialogs@@QAEXH@Z 0x006130E0-0x00613154
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x006130E0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home on_dialog_focus as a typed Dialogs kind dispatcher"}
+// symbol    ?on_dialog_focus@Dialogs@@UAEXH@Z
+void Dialogs::on_dialog_focus(int focus_id) {
+    switch (kind_) {
+    case 1: case 6: case 11:
+        radio_button_view().RadioButton::on_dialog_focus(focus_id);
+        break;
+    case 2: case 7: case 12:
+        list_box_view().ListBox::on_dialog_focus(focus_id);
+        break;
+    case 3: case 8: case 13:
+        check_box_view().CheckBox::on_dialog_focus(focus_id);
+        break;
+    case 4: case 9: case 14:
+        sprite_box_view().SpriteBox::on_dialog_focus(focus_id);
+        break;
+    case 5: case 10: case 15: case 16:
+        edit_group_view().EditGroup::on_dialog_focus(focus_id);
+        break;
+    }
+}
+
+// ORIGINAL: 0x00612FE0 ?attach@Dialogs@@QAEHPAUGraphicWin@@HHH@Z 0x00612FE0-0x006130AE
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x00612FE0 seed; shared virtual Dialog and GraphicWin bases; Dialogs kind_ and named widget base APIs"], "reason": "Home attach as a typed Dialogs kind dispatcher"}
+// symbol    ?attach@Dialogs@@UAEHPAVGraphicWin@@HHH@Z
+int Dialogs::attach(GraphicWin *parent, int x, int y, int flags) {
+    switch (kind_) {
+    case 1: case 2: case 3:
+        return radio_button_view().RadioButton::attach(parent, x, y, flags);
+    case 4: case 5: case 6:
+        return list_box_view().ListBox::attach(parent, x, y, flags);
+    case 7: case 8: case 9:
+        return check_box_view().CheckBox::attach(parent, x, y, flags);
+    case 10: case 11: case 12:
+        return sprite_box_view().SpriteBox::attach(parent, x, y, flags);
+    case 13: case 14: case 15: case 16:
+        return edit_group_view().EditGroup::attach(parent, x, y, flags);
+    default:
+        return 7;
+    }
+}

@@ -24,6 +24,8 @@
 
 #include <cstddef>
 
+class GraphicWin;
+
 
  /*
   * Dialog class
@@ -72,7 +74,7 @@ class Dialog {
   // down with `call ??1Dialog` - so the definition must not be inline-visible
   // in those TUs. Defined in dialog.cpp.
   virtual ~Dialog();
-  virtual int attach(void *a1, int a2, int a3, int a4) { return 0; }
+  virtual int attach(GraphicWin *a1, int a2, int a3, int a4) { return 0; }
   virtual void on_redraw() { ; }
   // 0x00608F50: reusable, non-virtual reset. The control families call this
   // directly; it clears entries before resetting their heap and settings.

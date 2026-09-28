@@ -64,7 +64,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x00610540, a pending_bodies forwarder.
-  int attach(void * a1, int a2, int a3, int a4);
+  int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
   void on_right_down(int a, int b);

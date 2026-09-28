@@ -41,7 +41,8 @@ class Dialogs : public ListBox,
                 public SpriteBox,
                 public EditGroup {
  public:
-  // 0x00613180, a pending_bodies forwarder.
+  // 0x00613180, still forwarded: kinds 1-4 reach a Win chosen through the
+  // seed's vbtable walk, not a uniquely named Dialogs Win member.
   void pass_dialog_focus();
 
  public:
@@ -50,8 +51,9 @@ class Dialogs : public ListBox,
   int on_scroll_delete(void *scroll);
 
  public:
-  // 0x00613220, a pending_bodies forwarder.
-  void on_scroll_create();
+  // 0x00613220, still a pending_bodies forwarder: its seed's indirect
+  // slot-8 target has no source-owned typed operation yet.
+  int on_scroll_create();
 
  public:
   // 0x00612E00, a pending_bodies forwarder.
@@ -62,33 +64,25 @@ class Dialogs : public ListBox,
   void on_mouse_move(int a1, int a2);
 
  public:
-  // 0x00612AE0, a pending_bodies forwarder.
-  //
-  // WHY THE KIND-SWITCH EVENT FAMILY HERE IS STILL A FORWARDER (2026-09-06,
-  //        dialogs finisher, measured on the artifacts): on_redraw
-  //        (0x00612E00), on_mouse_leave (0x00612AE0), on_left_down
-  //        (0x00612C20), on_left_double_click (0x00612D60), on_key_down
-  //        (0x00612CC0), on_dialog_focus (0x006130E0) and on_scroll_create
-  //        (0x00613220) all open on a receiver that is NOT the Dialogs
-  //        object - they read a kind tag at `this - 8` and then call the
-  //        widget's method at `this - 0x11C` (CheckBox), `this - 0x148`
-  //        (ListBox), `this - 0x8C` (SpriteBox), `this - 0x12C`
-  //        (RadioButton) and `this - 4` (EditGroup). Those are the widgets'
-  //        DIALOG-PART views - the same adjusted receivers the vtordisp
-  //        thunks enter on - and no member of this class names them, so the
-  //        honest spelling needs a `char *self = (char *)this` walk, which
-  //        class_debt counts and this tree holds at its measured ceiling.
-  //        Naming the five views (a per-widget constant like
-  //        StringStructCloseAdjustment, or a base-relative accessor) is the
-  //        unlock; until then the forwarders stay.
+  // HISTORICAL RECEIVER NOTE (2026-09-06): the archived event bodies read
+  // kind at this-8 and dispatch through adjusted widget/Dialog views (the
+  // observed offsets were -0x11C CheckBox, -0x148 ListBox, -0x8C SpriteBox,
+  // -0x12C RadioButton and -4 EditGroup). Dialogs' dispatch thunks document
+  // the separate +0x188 GraphicWin receiver adjustment. The source bodies
+  // below now express the same case maps from a complete Dialogs object and
+  // use its five declared direct bases; no executable or byte-offset view is
+  // used. on_scroll_create remains forwarded because its slot-8 target and
+  // associated state are not identified. pass_dialog_focus also stays
+  // forwarded: kinds 1-4 invoke a vbtable-selected Win, whose owning object
+  // is not proven to be Dialogs' shared GraphicWin base.
   void on_mouse_leave(int a1, int a2);
 
  public:
-  // 0x00612C20, a pending_bodies forwarder.
+  // 0x00612C20, kind-dispatched through typed base views in dialogs.cpp.
   void on_left_down(int a1, int a2);
 
  public:
-  // 0x00612D60, a pending_bodies forwarder.
+  // 0x00612D60, kind-dispatched through typed base views in dialogs.cpp.
   void on_left_double_click(int a1, int a2);
 
  public:
@@ -96,16 +90,16 @@ class Dialogs : public ListBox,
   void on_left_click(int a, int b);
 
  public:
-  // 0x00612CC0, a pending_bodies forwarder.
+  // 0x00612CC0, kind-dispatched through typed base views in dialogs.cpp.
   int on_key_down(int a);
 
  public:
-  // 0x006130E0, a pending_bodies forwarder.
+  // 0x006130E0, kind-dispatched through typed base views in dialogs.cpp.
   void on_dialog_focus(int a1);
 
  public:
-  // 0x00612FE0, a pending_bodies forwarder.
-  int attach(void * a1, int a2, int a3, int a4);
+  // 0x00612FE0, kind-dispatched through typed base views in dialogs.cpp.
+  int attach(GraphicWin *a1, int a2, int a3, int a4);
 
  public:
   // ??0Dialogs@@QAE@H@Z (0x00612830), the bare real constructor - the H is
@@ -151,6 +145,16 @@ class Dialogs : public ListBox,
   // member untouched, then establishes vtordisp184/GraphicWin188/DialogBA0.
   // RECOVERY_MEMBER: v1 Dialogs kind_ 0x180 0x00612970
   int32_t kind_;
+
+ private:
+  // The archived dispatch bodies address these widget receivers by byte
+  // offsets. The real multiple-inheritance graph already names them; use
+  // C++ base conversions so the compiler follows the declared subobjects.
+  ListBox &list_box_view() { return static_cast<ListBox &>(*this); }
+  RadioButton &radio_button_view() { return static_cast<RadioButton &>(*this); }
+  CheckBox &check_box_view() { return static_cast<CheckBox &>(*this); }
+  SpriteBox &sprite_box_view() { return static_cast<SpriteBox &>(*this); }
+  EditGroup &edit_group_view() { return static_cast<EditGroup &>(*this); }
 
 };
 

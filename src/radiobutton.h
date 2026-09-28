@@ -59,7 +59,7 @@ class RadioButton : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x0060D1F0, a pending_bodies forwarder.
-  int attach(void * a1, int a2, int a3, int a4);
+  int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
   // `static`: the image's name ends in `QAA` - a public member declared

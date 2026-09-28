@@ -168,7 +168,7 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
 
  public:
   // 0x0060A670, a pending_bodies forwarder.
-  int attach(void * a1, int a2, int a3, int a4);
+  int attach(GraphicWin * a1, int a2, int a3, int a4);
 
  public:
   // 0x0060C5D0, homed in leaf_recoveries.cpp (2026-09-27): the entered-
