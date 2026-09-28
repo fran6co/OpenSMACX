@@ -27,6 +27,7 @@
 #include "technology.h"
 #include "veh.h"
 #include "console.h"
+#include "datalink.h"
 #include "netdaemon.h"
 #include "xpops.h"
 
@@ -62,6 +63,11 @@ int BaseNutrientAdequate;
 uint32_t BaseCurrentConvoyFrom[4];
 // RECOVERY_OBJECT: v2 0x0090E93C 0x0090E94C ?BaseCurrentConvoyTo@@3PAIA 0x004E9550
 uint32_t BaseCurrentConvoyTo[4];
+
+// Defined beside base_claimed below; base_reset uses them as the four
+// mutable candidate-site publications returned by base_build.
+extern int BaseSiteClaimX[4];
+extern int BaseSiteClaimY[4];
 
 namespace {
 
@@ -478,10 +484,113 @@ void __cdecl base_doctors() {
     // BODY GOES HERE.
 }
 
-// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5fe0.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
-void __cdecl base_reset(int, int) {
+// These dependencies retain their complete historical seeds under
+// src/unrecovered/004f81a0.cpp and src/recovered/units/004e5a60.cpp. Their
+// owning-TU bodies remain explicitly unfinished while those independent
+// recoveries are pending.
+// ORIGINAL: 0x004F81A0 ?base_build@@YAHHPAH00@Z 0x004F81A0-0x004FFFB8
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f81a0.cpp", "source:src/base.cpp:base_reset"], "reason": "Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; full 72-arm build-selection behavior remains in its seed"}
+int __cdecl base_build(int, int *, int *, int *) {
     // BODY GOES HERE.
+    return -1; // Seed's no-candidate sentinel; selection is still unfinished.
+}
+
+// ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5a60.cpp", "source:src/base.cpp:base_reset"], "reason": "Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; production-change behavior remains in its seed"}
+void __cdecl base_change(int, int) {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5fe0.cpp", "source:src/base.h", "source:src/base.cpp:BaseSiteClaimX/BaseSiteClaimY are the four 0x0090EA44/54 site-output arrays", "source:src/base.h:Base.location is the 0x130 field read as 0x0097D090 + base_id*0x134", "pinned image:0x00689484 contains secproj_sm.pcx;0x00689494 contains GOVPROJECT"], "reason": "Recover the base reset/site selection operation using the typed Base and faction state, four source-owned site claims, and source-owned popup text. Preserve the existing seed and mismatch obligation; base_build/base_change remain explicit link-only dependencies."}
+void __cdecl base_reset(int base_id, int force) {
+    const uint8_t faction = Bases[base_id].faction_id_current;
+    const uint8_t faction_bit = static_cast<uint8_t>(1u << faction);
+    const uint8_t active_mask = static_cast<uint8_t>(LockEnableMask);
+    uint32_t state = Bases[base_id].state;
+
+    if ((faction_bit & active_mask) != 0
+        && (state & BSTATE_UNK_8000000000) != 0 && force != 0) {
+        int loop_count = 0;
+        for (int site = 0; site < 4; ++site) {
+            BaseSiteClaimX[site] = 0;
+            BaseSiteClaimY[site] = 999999;
+        }
+
+        if ((state & 0x0F000000u) != 0) {
+            for (;;) {
+                Bases[base_id].state = (Bases[base_id].state & 0xF1FFFFFFu)
+                    | BSTATE_UNK_1000000;
+                BaseSiteClaimX[0] = base_build(base_id, 0, 0, &BaseSiteClaimY[0]);
+                Bases[base_id].state = (Bases[base_id].state & 0xF2FFFFFFu)
+                    | BSTATE_UNK_2000000;
+                BaseSiteClaimX[1] = base_build(base_id, 0, 0, &BaseSiteClaimY[1]);
+                if (BaseSiteClaimX[0] == BaseSiteClaimX[1]) {
+                    ++loop_count;
+                    if (loop_count < 8) continue;
+                }
+
+                Bases[base_id].state = (Bases[base_id].state & 0xF4FFFFFFu)
+                    | BSTATE_UNK_4000000;
+                BaseSiteClaimX[2] = base_build(base_id, 0, 0, &BaseSiteClaimY[2]);
+                if ((BaseSiteClaimX[0] != BaseSiteClaimX[2]
+                     && BaseSiteClaimX[1] != BaseSiteClaimX[2])
+                    || (++loop_count, loop_count > 7)) {
+                    Bases[base_id].state = (Bases[base_id].state & 0xF8FFFFFFu)
+                        | BSTATE_UNK_8000000;
+                    BaseSiteClaimX[3] = base_build(base_id, 0, 0, &BaseSiteClaimY[3]);
+                    if ((BaseSiteClaimX[0] != BaseSiteClaimX[3]
+                         && BaseSiteClaimX[1] != BaseSiteClaimX[3]
+                         && BaseSiteClaimX[2] != BaseSiteClaimX[3])
+                        || (++loop_count, loop_count > 7)) {
+                        Bases[base_id].state = state;
+                        break;
+                    }
+                }
+            }
+        }
+
+        const int production = base_build(base_id, 0, 0, &loop_count);
+        base_change(base_id, production);
+        return;
+    }
+
+    const int location = Bases[base_id].location;
+    int production = base_build(base_id, 0, 0, 0);
+    base_change(base_id, production);
+
+    const uint8_t current_active_mask = static_cast<uint8_t>(LockEnableMask);
+    if ((faction_bit & current_active_mask) == 0) return;
+    if ((Bases[base_id].state & BSTATE_UNK_8000000000) == 0) return;
+    if (location <= -0x46) return;
+    if (Bases[base_id].location > -0x46) return;
+    if (IsMultiplayerNet != 0) return;
+    if ((GameState & STATE_UNK_1) != 0) return;
+
+    const int absolute_location = location < 0 ? -location : location;
+    const char *const base_name = Bases[base_id].name_string;
+    int say_result;
+    for (;;) {
+        parse_says(0, base_name, -1, -1);
+        say_result = parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+                                   Facility[absolute_location].name)), -1, -1);
+        // These two original .data slots contain these NUL-terminated strings
+        // in the pinned PE; use application-owned literals in the rebuilt tree.
+        if (popp(reinterpret_cast<LPCSTR>(ClimatePopupTitle[0]), "GOVPROJECT", 0,
+                 "secproj_sm.pcx", 0) != 3) {
+            break;
+        }
+        help_topic(0x0B, absolute_location);
+    }
+
+    if (say_result == 0) return;
+
+    production = base_build(-1 - base_id, 0, 0, 0);
+    base_change(base_id, production);
+    if (say_result <= 1) return;
+
+    BaseCurrent->governor &= ~0x00040000u;
+    PlayersData[faction].flags &= ~0x00040000u;
 }
 
 // The cached path has no result contract: its EAX is the selected id, while

@@ -422,7 +422,9 @@ struct Base {
     int random_event_turns;
     int nerve_staple_count;
     int unk_11; // effectively unused, only set to 0 by base_init()
-    int unk_12; // effectively unused, only set to 0 by base_init()
+    // base_reset reads this stored site value at 0x004E5FE0.
+    // RECOVERY_MEMBER: v1 Base location 0x130 0x004E5FE0
+    int location;
 };
 
 static_assert(sizeof(Base) == 0x134, "Base layout must match terranx.exe");  // yitzi 0x134
@@ -610,6 +612,8 @@ void __cdecl base_nutrient();
 void __cdecl base_minerals();
 void __cdecl base_energy();
 void __cdecl base_compute(int force);
+int __cdecl base_build(int base_id, int *arg2, int *arg3, int *arg4); // 0x004F81A0
+void __cdecl base_change(int base_id, int production_id); // 0x004E5A60
 void __cdecl base_reset(int base_id, int force);  // 0x004E5FE0
 void __cdecl base_doctors();                     // 0x004F5F30
 uint32_t __cdecl black_market(int energy);
