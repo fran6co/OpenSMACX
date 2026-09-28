@@ -22,9 +22,8 @@
  /*
   * MCIVideo class
   *
-  * The MCI video subobject AlphaMovie embeds at +0xA14. Declared, not laid
-  * out: close() is the only member reached from here and the address is
-  * computed by hand at the call site, so nothing needs the size.
+  * The MCI video subobject AlphaMovie embeds at +0xA14. Its member extent is
+  * only bounded by the accesses recovered so far.
   * ?close@MCIVideo@@QAEXXZ (0x005FFDB0) is still an original body: what is
   * here forwards to the image rather than reproducing it.
   */
@@ -32,6 +31,8 @@ class MCIVideo {
  public:
   MCIVideo();  // ??0MCIVideo@@QAE@XZ  0x005FFD80
   void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
+  void play();  // ?play@MCIVideo@@QAEXXZ  0x006001E0
+  void stop();  // ?stop@MCIVideo@@QAEXXZ  0x00600270
   // 0x00600330, homed into general.cpp: copies the posted frame into the
   // window's own device context. No catalogue name - `blit_frame` is the
   // tree's, recorded on the body's `symbol` fact.
@@ -52,19 +53,18 @@ class MCIVideo {
   // written through a 16-bit alias there rather than assigned directly -
   // see MCIVideo::MCIVideo() in alphamovie.cpp.
   uint32_t mciId_;  // 0x4
-  // 0x8, named from 0x00600330: it is the argument to both GetDC and
-  // ReleaseDC, so it is the window the frame is blitted into.
+  // 0x8, named from 0x00600330: it is the HWND passed to GetDC and
+  // ReleaseDC. play() also reads its low word as the MCI notify callback.
   HWND field_8_;  // 0x8
-  uint32_t field_C_;  // 0xC
+  HPALETTE field_C_;  // 0xC
   // Sized and pinned: sizeof(Palette) == 0x454 (palette.h), exactly the
   // extent this field already carried as raw bytes. The constructor at
   // 0x005FFD80 placement-constructs a real Palette here (`call 0x5FE2A0`
   // on `this + 0x10`).
   Palette palette_;  // 0x10
   uint32_t field_464_;  // 0x464
-  // 0x468, named from 0x00600330: the frame blit returns without touching a
-  // device context when it is clear, so it gates on "a frame is posted".
-  uint32_t frame_posted_;  // 0x468
+  // 0x468, stored by load() from its Win* argument and checked by blit_frame.
+  Win *target_window_;  // 0x468
   // 0x46C..0x478, named from 0x00600330: BitBlt's destination x, y, width
   // and height in that order, passed straight through as the four
   // destination arguments.

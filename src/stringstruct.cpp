@@ -2552,53 +2552,6 @@ void __cdecl sat_edit(int body, int faction_id, int type) {
 }
 
 // ---------------------------------------------------------------------------
-// MCIVideo::play, 0x006001E0. The intro video's start: register this player
-// as the active one, install its palette, then start the MCI device with the
-// play-from-start windowed command and flag the player as started. MCIVideo
-// has no header of its own, so the receiver travels explicitly; the original
-// is a __thiscall member.
-/*
-Purpose: Start the MCI video device and flag the player as playing.
-// ORIGINAL: 0x006001E0 ?play@MCIVideo@@QAEXXZ 0x006001E0-0x00600270 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original6001E0..600270; retired seed git:117282ee:src/unrecovered/006001e0.cpp records the same identity and spans.", "The active-player slot is 0x009B8190 beside palette.h's PaletteActive (0x009B8180), the receiver's palette subobject sits at +0x10 and palette.h's own set() installs it, and the device id/position are the words at +4/+8.", "The MCI commands go through the mciSendCommand import slot 0x0066937C: 0x841 MCI_WINDOW with MCI_DGV_WINDOW_PARBS 0x40000 (the 3-int parameter block whose tail is 5), then 0x806 MCI_PLAY with MCI_FROM 1 from position 0."], "reason": "Coverage transcription of the video start with the MCI import slot bound and the two-command sequence the seed measures."}
-Status: Coverage transcription - unclaimed body
-*/
-namespace {
-// The active video player slot (beside palette.h's PaletteActive) and the
-// WINMM mciSendCommand import slot.
-static void **const ActiveVideoSlot = (void **)0x009B8190;
-static int *const IAT_MciSendCommand = (int *)0x0066937C;
-}
-
-extern "C" void __fastcall mcivideo_play(char *self, void *) {
-    *ActiveVideoSlot = self;
-    reinterpret_cast<Palette *>(self + 0x10)->set();
-
-    typedef unsigned long (__stdcall *MciSendFn)(unsigned int, unsigned int,
-                                                 unsigned long, unsigned long);
-    MciSendFn mci_send = reinterpret_cast<MciSendFn>(*IAT_MciSendCommand);
-    const unsigned int device_id = *reinterpret_cast<unsigned short *>(self + 4);
-
-    int window_params[3];
-    window_params[2] = 5;
-    if (mci_send(device_id, 0x841, 0x40000,
-                 reinterpret_cast<unsigned long>(window_params)) != 0) {
-        return;
-    }
-
-    int play_params[3];
-    play_params[2] = 0;
-    play_params[1] = 0;
-    play_params[0] = *reinterpret_cast<unsigned short *>(self + 8);
-    if (mci_send(device_id, 0x806, 1,
-                 reinterpret_cast<unsigned long>(play_params)) != 0) {
-        return;
-    }
-
-    *reinterpret_cast<int *>(self) |= 1;
-}
-
-// ---------------------------------------------------------------------------
 // monument, 0x00476A50. The monument pop's trigger: when the local faction's
 // monument flag is unset and the game state allows it, count the faction's
 // finished monuments and open the monument window once any are complete.

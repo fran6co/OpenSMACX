@@ -29,6 +29,58 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "uv2player.h"  // amovie_project's player
+#include <mmsystem.h>
+#include <digitalv.h>
+
+// The original play/stop bodies write one pointer-sized slot at 0x009B8190;
+// the same slot is consumed by the video-window handlers. The dword write in
+// play at 0x006001E0 independently bounds this initial storage to four bytes.
+// RECOVERY_OBJECT: v2 0x009B8190 0x009B8194 ?ActiveVideoPlayer@@3PAVMCIVideo@@A 0x006001E0
+MCIVideo *ActiveVideoPlayer;
+
+// ORIGINAL: 0x006001E0 ?play@MCIVideo@@QAEXXZ 0x006001E0-0x00600270 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The original member accesses the active-player slot at 0x009B8190, invokes Palette::set on its embedded palette at +0x10, and sends MCI_WINDOW followed by MCI_PLAY through the WINMM import.", "MCIVideo::blit_frame uses +0x8 as the HWND passed to GetDC and ReleaseDC; the play body loads that field's low word into MCI_PLAY_PARMS::dwCallback. This unusual truncation is preserved as observed; the MCI device id occupies the low word at +0x4.", "MCIVideo::load stores its Win* argument at +0x468 and blit_frame tests it before blitting; the separate close path clears this window pointer."], "reason": "Move the existing play identity into MCIVideo's owning translation unit and express the receiver, palette, window handle and MCI parameter blocks as typed members."}
+void MCIVideo::play() {
+    ActiveVideoPlayer = this;
+    palette_.set();
+
+    MCI_DGV_WINDOW_PARMS windowParams = {0};
+    windowParams.nCmdShow = SW_SHOW;
+    if (mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_WINDOW,
+                        MCI_DGV_WINDOW_STATE,
+                        reinterpret_cast<DWORD_PTR>(&windowParams)) != 0) {
+        return;
+    }
+
+    MCI_PLAY_PARMS playParams = {0};
+    playParams.dwCallback = static_cast<DWORD>(
+        reinterpret_cast<UINT_PTR>(field_8_) & 0xffff);
+    if (mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_PLAY,
+                        MCI_NOTIFY, reinterpret_cast<DWORD_PTR>(&playParams)) != 0) {
+        return;
+    }
+
+    field_0_ |= 1;
+}
+
+// ORIGINAL: 0x00600270 ?stop@MCIVideo@@QAEXXZ 0x00600270-0x006002EB FILE
+void MCIVideo::stop() {
+    const MCIDEVICEID deviceId = static_cast<MCIDEVICEID>(mciId_ & 0xffff);
+    if (deviceId != 0) {
+        MCI_DGV_WINDOW_PARMS windowParams = {0};
+        MCI_GENERIC_PARMS stopParams = {0};
+        MCI_GENERIC_PARMS closeParams = {0};
+        mciSendCommandA(deviceId, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
+                       reinterpret_cast<DWORD_PTR>(&windowParams));
+        mciSendCommandA(deviceId, MCI_STOP, 0,
+                       reinterpret_cast<DWORD_PTR>(&stopParams));
+        mciSendCommandA(deviceId, MCI_CLOSE, 0,
+                       reinterpret_cast<DWORD_PTR>(&closeParams));
+        mciId_ &= 0xffff0000;
+        ActiveVideoPlayer = 0;
+        field_0_ &= ~1u;
+    }
+}
 
 // Not independently claimed here (0x005FFD80 is not in this batch; a
 // staged, unclaimed transcription already exists at
@@ -44,7 +96,7 @@ MCIVideo::MCIVideo() {
     *reinterpret_cast<short *>(&mciId_) = 0;
     field_8_ = 0;
     field_C_ = 0;
-    frame_posted_ = 0;
+    target_window_ = 0;
 }
 
 /*

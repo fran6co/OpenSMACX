@@ -4952,7 +4952,7 @@ after_move:
 //        0x00600320 (is_playing) is the byte before it and MCIVideo is the
 //        only class in the tree whose fields reach 0x478.
 void MCIVideo::blit_frame() {
-    if (frame_posted_ == 0) {
+    if (target_window_ == 0) {
         return;
     }
 
