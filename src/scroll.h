@@ -42,6 +42,7 @@ struct ScrollGraphicWin : public GraphicWin {
 };
 
 class Scroll : public ScrollGraphicWin {
+  friend class ReportWin;  // ReportWin::UNK1 sets this embedded scroll's paging_ field
  public:
   // 0x006051D0. Defined in scroll.cpp, alongside close() which resets the
   // same fields from the same two process-default tables.

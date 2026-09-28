@@ -23,6 +23,7 @@
 #include "sprite.h"  // g_IFACE_TECH_TREE_ARROW_SPRITES - labs_line's arrow
 #include "datalink.h"  // DatalinkMain - the research screen's host window
 #include "maininterface.h"  // MainInterfaceGlobal - the set_modal owner
+#include "tutwin.h"  // TutWinBaseWindow - the report's base-map zoom target
 #include "vector_teardown.h"
 
 const void *const ReportWinFlatButtonCtor = (const void *)0x00607CF0;
@@ -122,7 +123,7 @@ ReportWin::ReportWin() {
     new (flatButton7_) FlatButton();
     new (flatButton8_) FlatButton();
     new (flatButton9_) FlatButton();
-    new (scroll_) Scroll();
+    new (scroll_.address()) Scroll();
     new (time1_) Time();
     new (time2_) Time();
     new (time3_) Time();
@@ -180,6 +181,116 @@ void ReportWin::reset() {
     report_frame_rect_.bottom -= 3;
 }
 
+// ORIGINAL: 0x004A5F00 ?show@ReportWin@@QAEXH@Z 0x004A5F00-0x004A5F16 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Home the existing ReportWin show identity in its class owner, retaining its measured byte-exact claim.","evidence":["src/recovered/004a5f00.cpp records the original 0x004A5F00-0x004A5F16 body and BYTE_EXACT claim.","ReportWin derives from Win and ReportIfGlobal owns the interface-mode transitions used by the seed."]}
+// symbol    ?show@ReportWin@@UAEXH@Z
+/*
+Purpose: Enter or leave the report interface mode only when its window changes
+         visibility. The visibility check belongs to the inherited Win base;
+         mode ownership belongs to the process-wide ReportIf subinterface.
+*/
+void ReportWin::show(int) {
+    if (!is_visible()) {
+        ReportIfGlobal.set_iface_mode();
+    }
+}
+
+// ORIGINAL: 0x004A5F20 ?hide@ReportWin@@QAEXXZ 0x004A5F20-0x004A5F34 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Home the existing ReportWin hide identity in its class owner, retaining its measured byte-exact claim.","evidence":["src/recovered/units/004a5f20.cpp records the original 0x004A5F20-0x004A5F34 body and BYTE_EXACT claim.","ReportWin derives from Win and ReportIfGlobal owns the interface-mode transitions used by the seed."]}
+// symbol    ?hide@ReportWin@@UAEXXZ
+void ReportWin::hide() {
+    if (is_visible()) {
+        ReportIfGlobal.release_iface_mode();
+    }
+}
+
+// ORIGINAL: 0x00497A60 ?on_left_double_click@ReportWin@@QAEXHH@Z 0x00497A60-0x00497AB2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Home ReportWin's existing double-click handler against its declared Spot member and the verified base-window object.","evidence":["src/recovered/units/00497a60.cpp records the original 0x00497A60-0x00497AB2 method and BYTE_EXACT claim.","src/reportwin.h places spot_ at 0x5994; src/tutwin.h binds TutWinBaseWindow at the seed's 0x006A7628 zoom receiver."]}
+// symbol    ?on_left_double_click@ReportWin@@UAEXHH@Z
+/*
+Purpose: Double-click the currently hit report spot to zoom to a base when
+         the active report page is the base report (page 4).
+*/
+void ReportWin::on_left_double_click(int x, int y) {
+    int spot_position;
+    int spot_type;
+    int result = spot_.check(x, y, &spot_position, &spot_type);
+    if (result >= 0 && ReportIfGlobal.field_8_ == 4 &&
+        spot_position >= 0x400) {
+        int base_id = spot_position - 0x400;
+        if (base_id < 0x400) {
+            TutWinBaseWindow.zoom(base_id, 0);
+        }
+    }
+}
+
+// ORIGINAL: 0x00498180 ?on_scrolled@ReportWin@@QAEXHH@Z 0x00498180-0x004981D8
+// RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scrollbar callback using its declared position member and inherited redraw virtual.","evidence":["src/recovered/units/00498180.cpp records the original 0x00498180-0x004981D8 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
+/*
+Purpose: Track the report scrollbar's committed position and repaint the
+         project page directly; recognized remaining pages use the window's
+         redraw virtual, while unlisted pages do nothing.
+*/
+void ReportWin::on_scrolled(int, int pos) {
+    field_C0FC_ = pos;
+    switch (ReportIfGlobal.field_8_) {
+    case 5:
+        reset();
+        draw_projects();
+        soft_update();
+        return;
+    case 0:
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+    case 7:
+    case 8:
+        redraw();
+        return;
+    }
+}
+
+// ORIGINAL: 0x00498200 ?on_scrolling@ReportWin@@QAEXHH@Z 0x00498200-0x00498258
+// RECOVERY_BINDING: v1 {"reason":"Home the ReportWin scroll-in-progress callback using the same source-owned position and redraw behavior.","evidence":["src/recovered/units/00498200.cpp records the original 0x00498200-0x00498258 handler and page dispatch.","src/reportwin.h places field_C0FC_ at 0xC0FC; src/graphicwin.h identifies redraw as Win slot 62."]}
+void ReportWin::on_scrolling(int, int pos) {
+    field_C0FC_ = pos;
+    switch (ReportIfGlobal.field_8_) {
+    case 5:
+        reset();
+        draw_projects();
+        soft_update();
+        return;
+    case 0:
+    case 2:
+    case 3:
+    case 4:
+    case 6:
+    case 7:
+    case 8:
+        redraw();
+        return;
+    }
+}
+
+// ORIGINAL: 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z 0x00498110-0x00498174
+// RECOVERY_BINDING: v1 {"reason":"Home ReportWin's range callback and type its embedded Scroll storage while preserving the constructor's explicit placement order.","evidence":["src/recovered/units/00498110.cpp records the original 0x00498110-0x00498174 method and its position/range/paging updates.","src/reportwin.h places Scroll at 0xC10C; src/scroll.h places paging_ at Scroll+0xA40, which is the seed's 0xCB4C write."]}
+/*
+Purpose: Store the active position and range, update the embedded Scroll's
+         page size and position, then clear the ReportWin page-transition flag.
+*/
+void ReportWin::UNK1(int position, int minimum, int maximum, int page_size) {
+    field_C0FC_ = position;
+    field_C100_ = minimum;
+    field_C104_ = maximum;
+    field_C108_ = page_size;
+    Scroll &scroll = scroll_.as_scroll();
+    scroll.set_range(minimum, maximum);
+    scroll.paging_ = page_size;
+    scroll.set_pos(field_C0FC_);
+    field_E270_ = 0;
+}
+
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004980F0 ?on_mouse_move@ReportWin@@QAEXHH@Z 0x004980F0-0x004980F3 BYTE_EXACT
@@ -232,6 +343,13 @@ Purpose: Step the receiver back to the subobject ??_GReportWin@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// ORIGINAL: 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ 0x0049EB10-0x0049F343
+// RECOVERY_BINDING: v1 {"reason":"Keep the unresolved projects-page dependency linkable in ReportWin while retaining its original span and trial history for later recovery.","evidence":["src/unrecovered/0049eb10.cpp records the original 0x0049EB10-0x0049F343 draw_projects body and its TRIED reconstruction note.","The recovered on_scrolled/on_scrolling callbacks call ReportWin::draw_projects for page 5; the original 2099-byte renderer remains unrecovered."]}
+// TRIED: full transcription (call-argument order verified against raw disasm for add/box_sprite/draw_mono/write_l/write_cent_l/ set_text_color/Strings::get, all matched Ghidra) reaches MISMATCH #3 'mov' vs 'push' - a prologue-level register/stack allocation divergence, not a logic error; not chased further given function size (2099 bytes, nested loops with gotos).
+void ReportWin::draw_projects() {
+    // BODY GOES HERE.
+}
 
 /*
 Purpose: Unimplemented dependency - the retained draw_energy unit is not
@@ -522,7 +640,7 @@ int ReportWin::on_key_click(int, int code) {
     }
 
     if (field_C0F8_ != 0) {
-        reinterpret_cast<Scroll *>(scroll_)->set_pos(field_C0FC_);
+        scroll_.as_scroll().set_pos(field_C0FC_);
         redraw();
     }
     return 1;

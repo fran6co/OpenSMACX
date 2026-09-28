@@ -31,12 +31,10 @@
   *
   * Derives from GraphicWin by ordinary single inheritance - its constructor calls
   * GraphicWin's on an unadjusted `this` - so it is written as the original wrote
-  * it and needs no ABI workaround. GraphicWin is pinned here, so the base region
-  * is exact; ReportWin's own extent is not established and nothing pins its
-  * sizeof.
-  *
-  * The methods below ignore their arguments and return a constant, which is
-  * why they can be replaced ahead of that mapping.
+  * it and needs no ABI workaround. GraphicWin and ReportWin's current 0xFABC
+  * extent are pinned by their layout assertions. Subobjects whose constructor
+  * order cannot be represented by normal member initialization remain typed
+  * placement storage with accessors.
   */
 class ReportWin : public GraphicWin {
  public:
@@ -57,6 +55,14 @@ class ReportWin : public GraphicWin {
   // 0x00496BB0 ?reset@ReportWin@@QAEXXZ resets the report controls, working
   // rectangle and the two report panel frames.
   void reset();
+  void show(int visible);
+  void hide();
+  void on_left_double_click(int x, int y);
+  void on_scrolled(int code, int pos);
+  void on_scrolling(int code, int pos);
+  // 0x00498110 ?UNK1@ReportWin@@QAEXHHHH@Z sets the embedded scroll range,
+  // page size and selected position.
+  void UNK1(int position, int minimum, int maximum, int page_size);
   // 0x00498280 ?on_key_click@ReportWin@@QAEHHH@Z - public, __thiscall,
   // int(int, int). Always answers 1; Enter dismisses, F1-F8 (0x70-0x77) pick
   // the report category, 0x21-0x28 drive the scroll, 0x30-0x5A/Escape
@@ -66,6 +72,9 @@ class ReportWin : public GraphicWin {
   // void(void), unrecovered: the energy panel redraw. on_selected refreshes
   // it after every topic selection.
   void draw_energy();
+  // 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ - unfinished placeholder;
+  // on_scrolled/on_scrolling select this page renderer at page 5.
+  void draw_projects();
   // 0x0049B450 ?labs_line@ReportWin@@QAEXHHHHHHH@Z - public, __thiscall,
   // void(int, int, int, int, int, int, int), unrecovered: one lab-connection
   // line of the research tree. The third argument is unused by the body
@@ -154,11 +163,16 @@ class ReportWin : public GraphicWin {
   uint8_t flatButton8_[0xB4C];  // 0xAA60
   uint8_t flatButton9_[0xB4C];  // 0xB5AC
   uint32_t field_C0F8_;  // 0xC0F8
-  uint32_t field_C0FC_;  // 0xC0FC
+  uint32_t field_C0FC_;  // 0xC0FC, selected scroll position
   uint32_t field_C100_;  // 0xC100
   uint32_t field_C104_;  // 0xC104
   uint32_t field_C108_;  // 0xC108
-  uint8_t scroll_[0x214C];  // 0xC10C, sizeof(Scroll)
+  struct ScrollStorage {
+    uint32_t words_[0x214C / sizeof(uint32_t)];
+    void *address() { return words_; }
+    Scroll &as_scroll() { return *reinterpret_cast<Scroll *>(words_); }
+  };
+  ScrollStorage scroll_;  // 0xC10C, placement-constructed Scroll
   uint32_t field_E258_;  // 0xE258
   uint32_t field_E25C_;  // 0xE25C
   uint32_t field_E260_;  // 0xE260
