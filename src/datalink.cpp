@@ -1864,10 +1864,21 @@ void Datalink::on_button_clicked(int button_id) {
         this, nullptr, button_id);
 }
 
-// Win slot 12 went live for Datalink when the tree-wide slot-12 rename made
-// the declared on_redraw an override (0x00431E70 ?on_redraw@Datalink@@QAEXXZ;
-// src/recovered/units/00431e70.cpp remains the seed). Link-only placeholder;
-// the datalink painting is not implemented here.
+/*
+Purpose: Restore the interface and Datalink surface clips, repaint the
+         interface background, then draw the selected Datalink entry.
+// ORIGINAL: 0x00431E70 ?on_redraw@Datalink@@QAEXXZ 0x00431E70-0x00431EA6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431E70-0x00431EA6 calls Buffer::set_clip twice, MainInterface::restore_back and Datalink::draw_entry", "image:0x007AEC64 is the Buffer base of MainInterfaceGlobal at 0x007AE820+0x444; 0x007AEC94 is its rect2_ at +0x474", "source:src/recovered/units/00431e70.cpp preserves the byte-exact historical unit"], "reason": "Use the existing MainInterface object and real Buffer bases instead of fixed executable addresses and a raw Datalink offset."}
+// symbol    ?on_redraw@Datalink@@UAEXXZ
+// size      54 bytes
+// callers   0   call targets   3
+// calls     0x0042BF10 0x0045C290 0x005D8000
+Return Value: n/a
+Status: Product body; historical seed claim remains a restoration obligation.
+*/
 void Datalink::on_redraw() {
-    // BODY GOES HERE.
+    MainInterfaceGlobal.restore_clip();
+    restore_clip();
+    MainInterfaceGlobal.restore_back(1);
+    draw_entry();
 }
