@@ -25,14 +25,14 @@
   * A family of game-event hooks - a turn beginning, a technology discovered, a
   * base founded - that the original dispatches through a vtable so each
   * faction flavour can respond. The variants recovered here respond to none of
-  * them: every one of these methods is a bare return in the original.
+ * them: the already modeled faction variants ignore their declared events.
   *
-  * None of these layouts is established. Both derived constructors write their
-  * own fields starting at 0x58, which places the shared base's extent there and
-  * is what base_storage_ models, including the vtable pointer the original
-  * keeps at offset zero - held as opaque bytes so no vtable is generated here
-  * that could disagree with it. Where the objects end is unknown, so nothing
-  * pins their sizeof and no field may be appended without deriving it first.
+ * The other variant layouts remain incomplete. Their constructors write
+ * variant fields starting at 0x58, which places the shared base's extent
+ * there and is what base_storage_ models, including the vtable pointer the
+ * original keeps at offset zero - held as opaque bytes so no vtable is
+ * generated here that could disagree with it. BAmbience is modeled below
+ * from its constructor and event accesses, with its 0x80-byte extent pinned.
   *
   * THE FIRST 0x54 OF base_storage_ IS A SOUND. ??0Ambience@@QAE@XZ
   * (0x004C8460) replays ??0Sound@@QAE@XZ (0x004C6080) instruction for
@@ -113,6 +113,45 @@ class Ambience : public Sound {
   ~Ambience();
 
 };
+
+
+// The original B faction ambience extends the common sound/sequencer object
+// with the event counters consumed by its short callbacks.  Its constructor
+// starts these fields immediately after Ambience's 0x58-byte base.
+class BAmbience : public Ambience {
+ public:
+  // 0x004478D0 remains seed-owned. Do not synthesize an implicit constructor:
+  // Ambience's original construction has state changes beyond Sound's own.
+  BAmbience();
+  void begin();
+  // This store was formerly represented by the seed-only byte accessor at
+  // 0x00447AB0; the mapped body and constructor both identify byte +0x6D.
+  void design_window_show();
+  void design_window_hide();
+  void new_base();
+  void base_liberated();
+  // Known original members retained as declarations while their global state
+  // dependencies remain unbound in product source.
+  void general();
+  void hostility();
+
+ private:
+  uint32_t field_58_;
+  uint32_t field_5C_;
+  uint32_t field_60_;
+  uint32_t field_64_;
+  uint32_t field_68_;
+  uint8_t field_6C_;
+  uint8_t field_6D_;
+  uint8_t pad_6E_[2];
+  int32_t field_70_;
+  int32_t field_74_;
+  int32_t field_78_;
+  int32_t field_7C_;
+};
+
+static_assert(sizeof(BAmbience) == 0x80,
+              "BAmbience layout must match its constructor and event accesses");
 
 
 
@@ -334,4 +373,3 @@ class GAmbience : public Ambience {
 
 static_assert(sizeof(GAmbience) == 0x74,
               "GAmbience layout must match the original executable");
-

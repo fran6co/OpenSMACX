@@ -2038,3 +2038,38 @@ void GAmbience::new_base() {
     field_70_ = 0;
     this->play_trackset(0x19);
 }
+
+// ORIGINAL: 0x00447920 ?begin@BAmbience@@QAEXXZ 0x00447920-0x00447936 BYTE_EXACT
+void BAmbience::begin() {
+    play_trackset(0x1A);
+    play();
+}
+
+// ORIGINAL: 0x00447AB0 ?design_window_show@BAmbience@@QAEXXZ 0x00447AB0-0x00447AB5 BYTE_EXACT
+void BAmbience::design_window_show() {
+    field_6D_ = 1;
+}
+
+// ORIGINAL: 0x00447AC0 ?design_window_hide@BAmbience@@QAEXXZ 0x00447AC0-0x00447AEB BYTE_EXACT
+void BAmbience::design_window_hide() {
+    field_6D_ = 0;
+    stop_trackset(0x14);
+    stop_trackset(0x15);
+    stop_trackset(0x16);
+}
+
+// ORIGINAL: 0x00447B30 ?new_base@BAmbience@@QAEXXZ 0x00447B30-0x00447B58 BYTE_EXACT
+void BAmbience::new_base() {
+    const int reported = field_74_;
+    field_70_ += 1;
+    xpose_trackset(0x0D, reported);
+    play_trackset(0x0D);
+}
+
+// ORIGINAL: 0x00447B60 ?base_liberated@BAmbience@@QAEXXZ 0x00447B60-0x00447B8B BYTE_EXACT
+void BAmbience::base_liberated() {
+    stop_trackset(0x1B);
+    if (!is_trackset_playing(0x64)) {
+        play_trackset(0x64);
+    }
+}

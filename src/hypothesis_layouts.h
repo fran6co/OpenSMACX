@@ -52,6 +52,13 @@
 #include "wave.h"   // Effect derives from Wave
 #include "selectpartwin.h"  // genuine GraphicWin-derived design-parts window
 
+// BAmbience's former 0x80-byte opaque hypothesis (IDB fields through +0x7E)
+// is superseded by the constructor-backed Sound/Ambience hierarchy and typed
+// event fields in ambience.h. The image constructor at 0x004478D0 initializes
+// through +0x7C after calling Ambience's constructor; the event bodies at
+// 0x00447B30 and 0x00447B60 independently confirm +0x70/+0x74 and slots
+// 67-70. No layout evidence is being discarded by retiring that placeholder.
+
 /* 0x72 bytes, 9 member(s), 1 named. From the IDB. 3 function(s) in the image. */
 class AAmbience {
  public:
@@ -158,24 +165,6 @@ struct BASE {
   uint8_t field_12E_;  // 0x12E
   uint8_t field_12F_;  // 0x12F
   uint32_t field_130_;  // 0x130
-};
-
-/* 0x80 bytes, 13 member(s), 1 named. From the IDB, extended to the access bound. 8 function(s) in the image. */
-class BAmbience {
- public:
-  uint8_t ambience_[0x58];  // 0x0
-  uint32_t field_58_;  // 0x58
-  uint32_t field_5C_;  // 0x5C
-  uint32_t field_60_;  // 0x60
-  uint32_t field_64_;  // 0x64
-  uint32_t field_68_;  // 0x68
-  uint8_t field_6C_;  // 0x6C
-  uint8_t field_6D_;  // 0x6D
-  uint8_t field_6E_[0x4];  // 0x6E
-  uint8_t field_72_[0x4];  // 0x72
-  uint8_t field_76_[0x4];  // 0x76
-  uint8_t field_7A_[0x4];  // 0x7A
-  uint16_t field_7E_;  // 0x7E
 };
 
 /* 0x18 bytes, 6 member(s), 6 named. From Thinker. */
