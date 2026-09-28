@@ -1,0 +1,21 @@
+{
+  "event_id": "b86338eb68c9069b04d5fe3a50f3e8ab0a7aa453a80fc941854e0ce1ac1f79f5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Wave 8 large-band third (discovery large-band-3-20260928): the ~116 seeds in /tmp/large3-c.txt. Coverage protocol per the chain; record-then-retire; DO NOT edit pending_bodies.cpp; smallest first; stop cleanly at a context boundary.",
+      "Canonical coordinator authorization for retained pc work from d67b54bc; preserves worker decision 10106021c9070c8cdf69d2988bc804270a4e3a4942cce65160fcbc2bfa950220 (w8-pc-scope). Reappend against current master history; do not copy divergent journal links or reset the task baseline. Scope is not recovery acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "fabde95c2fbcde03757e41d79f8569d60a30762f1a487634743eb124ef164b80",
+  "request_id": "canonical-w8-pc-scope",
+  "schema_version": 1,
+  "sequence": 176,
+  "stream": "task:vector-value-semantics"
+}

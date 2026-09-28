@@ -1,0 +1,22 @@
+{
+  "event_id": "cb801863a44bf8742216f1d7f2e588b279e919254faf78eec88795dce050bbeb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_buffer_draw_siblings.py",
+      "src/buffer.cpp",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "User directs finishing all retained worktrees. Original entries5D8650/5D8FE0/5D91D0 use the Buffer receiver and the same shared Sprite as5D8DF0. Replace invented BufferSelf inheritance and SpritePublish alias with actual Buffer members using its existing Sprite friendship; preserve original mappings and all recorded claims, remeasure after the structural migration, require focused tests and build/link. No baseline reset, compiler-policy changes or automatic acceptance waiver.",
+      "Canonical coordinator authorization for retained pc work from d67b54bc; preserves worker decision 0854fc389fded56ca1dd6fa047e89e4537679907eef55005512d9c59f6b5337c (w8-pc-real-buffer-members-20260928). Reappend against current master history; do not copy divergent journal links or reset the task baseline. Scope is not recovery acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b86338eb68c9069b04d5fe3a50f3e8ab0a7aa453a80fc941854e0ce1ac1f79f5",
+  "request_id": "canonical-w8-pc-real-buffer-members-20260928",
+  "schema_version": 1,
+  "sequence": 177,
+  "stream": "task:vector-value-semantics"
+}

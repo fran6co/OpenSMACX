@@ -1,0 +1,21 @@
+{
+  "event_id": "94ec4043dd7c27ae7d1615d07e96555a640e213e0c0b3bc1b91524043d11fd64",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/sprite.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "The recovered5D8650 Buffer method passes its Buffer destination into original Sprite5E4AEA, a five-argument zero-return drawing hook. Give that actual Sprite method the provisional behavior name draw_noop and Buffer-pointer parameter evidenced by its caller, removing the integer-pointer cast and unresolved UNK2 call. Preserve original identity and byte obligation; publish only actual compiler-observed symbols, check callee+caller strict references and fresh historical matching. This is a coupled API repair, not permission to fake original names or change flags.",
+      "Canonical coordinator authorization for retained pc work from d67b54bc; preserves worker decision 8f39ea31705f05fe8475145a2f5a40eed95063579eae7a27a2d5e7c8858fd60f (w8-pc-sprite-draw-noop-contract-20260928). Reappend against current master history; do not copy divergent journal links or reset the task baseline. Scope is not recovery acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cb801863a44bf8742216f1d7f2e588b279e919254faf78eec88795dce050bbeb",
+  "request_id": "canonical-w8-pc-sprite-draw-noop-contract-20260928",
+  "schema_version": 1,
+  "sequence": 178,
+  "stream": "task:vector-value-semantics"
+}
