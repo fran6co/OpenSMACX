@@ -34,6 +34,12 @@ class WorldWin : public GraphicWin {
  public:
   // 0x004C3D40, a pending_bodies forwarder.
   void click(int a1, int a2, int button, int is_double);
+  int pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y);
+  int tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y);
+  // 0x004C4230 regenerates and blits the overview image.
+  void refresh_world_map(int resize_buffers);
+  // 0x004C47F0 draws the projected viewport outline in the climate window.
+  void draw_viewport_outline();
 
  public:
   void follow_center(int xCoord, int yCoord);
@@ -65,8 +71,12 @@ class WorldWin : public GraphicWin {
   uint8_t field_239AC_[0x10];  // 0x239AC
   uint32_t field_239BC_;  // 0x239BC
   uint32_t field_239C0_;  // 0x239C0
-  uint32_t field_239C4_;  // 0x239C4
-  uint32_t field_239C8_;  // 0x239C8
+  // Signed pixel origin used by the coordinate converters and projected
+  // viewport painter; zero/zero selects the full-world view.
+  // RECOVERY_MEMBER: v1 WorldWin field_239C4_ 0x239C4 0x004C43F0
+  int32_t field_239C4_;  // 0x239C4
+  // RECOVERY_MEMBER: v1 WorldWin field_239C8_ 0x239C8 0x004C43F0
+  int32_t field_239C8_;  // 0x239C8
   // Remembered map choice, not current visibility: set_detail_map writes 1,
   // set_world_map (0x004C3990) writes 0, and show_all (0x004C39D0) tests it.
   // hide_all (0x004C3A40) hides both views without changing the selection.
@@ -89,5 +99,8 @@ class WorldWin : public GraphicWin {
 // definition was reachable only as a private spelling and game.cpp reached
 // the address as a cast literal.
 extern WorldWin WorldClimateWorldWin;  // 0x008E9F60
+// Read/set/clear guard for WorldWin::refresh_world_map. It is a distinct
+// four-byte object immediately after, not an alias of, MapInputEnabled.
+extern int WorldWinRebuildBusy;  // 0x0090D93C
 
 // WorldWin's shared click handler is not recovered.

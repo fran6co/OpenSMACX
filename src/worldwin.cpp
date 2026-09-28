@@ -18,6 +18,16 @@
 #include "stdafx.h"
 #include "worldwin.h"
 #include "maininterface.h"
+#include "map.h"
+
+// 0x004C4230 reads this flag and stores one/zero around the overview rebuild.
+// Its address is adjacent to, but distinct from, MapInputEnabled at 0x0090D938.
+// RECOVERY_OBJECT: v2 0x0090D93C 0x0090D940 ?WorldWinRebuildBusy@@3HA 0x004C4230
+int WorldWinRebuildBusy = 0;
+
+void __cdecl set_dirty();
+void __cdecl clear_dirty();
+
 
 // The primary deleting destructor and the Buffer-base adjustor are emitted by
 // WorldWin's genuine inherited virtual destructor. Constructor 4C4C49 installs
@@ -220,4 +230,215 @@ Status: Complete
 void WorldWin::follow_center(int xCoord, int yCoord) {
     on_redraw();
     GraphicWin::soft_update();
+}
+
+// ORIGINAL: 0x004C43F0 ?pixel_to_tile@WorldWin@@QAEHHHPAH0@Z 0x004C43F0-0x004C44D3
+// frame retention and the right clip-test polarity were sensitive. Its last
+// mismatch was spill/register scheduling. This typed owner body is a fresh
+// structural expression, not a claim that the old attempt's bytes match.
+int WorldWin::pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y) {
+    const int origin_x = field_239C4_;
+    int width;
+    int negative_height;
+    int relative_x;
+    int relative_y;
+
+    if (origin_x == 0 && field_239C8_ == 0) {
+        relative_x = pixel_x;
+        relative_y = pixel_y;
+        width = Buffer::dib_.bmiHeader.biWidth;
+        negative_height = -Buffer::dib_.bmiHeader.biHeight;
+    } else {
+        if (pixel_x < origin_x) {
+            return 1;
+        }
+        const int origin_y = field_239C8_;
+        if (pixel_y < origin_y) {
+            return 1;
+        }
+
+        const int view_width = mapWin_.GraphicWin::dib_.bmiHeader.biWidth;
+        if (pixel_x >= view_width + origin_x) {
+            return 1;
+        }
+        const int view_height = mapWin_.GraphicWin::dib_.bmiHeader.biHeight;
+        if (pixel_y >= origin_y - view_height) {
+            return 1;
+        }
+        width = view_width;
+        negative_height = -view_height;
+        relative_x = pixel_x - origin_x;
+        relative_y = pixel_y - origin_y;
+    }
+
+    *tile_x = (MapLongitudeBounds * relative_x) / width;
+    int row = (MapLatitudeBounds * relative_y) / negative_height;
+    *tile_y = row;
+    if ((*tile_x & 1) == 0) {
+        row &= 0xFFFFFFFE;
+    } else {
+        row |= 1;
+    }
+    *tile_y = row;
+
+    if (row >= 0 && row < MapLatitudeBounds &&
+        *tile_x >= 0 && *tile_x < MapLongitudeBounds) {
+        return 0;
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x004C44E0 ?tile_to_pixel@WorldWin@@QAEHHHPAH0@Z 0x004C44E0-0x004C45D2
+// TRIED: nested `if`/`else if` clamp plus a single `||`-chained bounds check (`if (row<0 || row>=numRows || a1<0 || a1>=numCols) return 1;`) matches the prologue's push/pop set exactly (fixed by caching `numCols` in a local reused for BOTH final `idiv`s, matching `ebx` being loaded once and never reloaded) but stalls at 258B vs 242B: the last bounds check (`a1 < numCols`) always compiles to the INVERSE polarity (`jge`) of the original's `jl`, regardless of whether it is spelled as part of one big `||`, as a chain of nested positive `if`s, or with explicit `goto fail;` for the first three conditions - all three spellings produced byte-identical output, so the compiler's block layout here does not appear to be steerable from this function's own source text. Adding a `goto check_upper;` that skips the (proveably redundant) `row < 0` re-check on the zero-clamp path - mirroring the original's own `jmp` that skips exactly that check - got closest (240B vs 242B, divergence moves later) but the compiler then proves the SAME check dead on the OTHER path too (max-clamp / unclamped), deleting it where the original keeps it; splitting `row<0 || maxRow<0` into two independent `if`s so each one only proves ITS OWN half made this worse, not better. Best landed: the `goto check_upper` version. numCols is cached (`ebx`-shaped); numRows is cached for the bounds check (`edi`-shaped) but read fresh from `*g_00949874` for the final divisions, matching `idiv dword ptr [0x949874]` reloading rather than reusing a register.
+// compiler inverted the final upper-bound branch, and a goto attempt caused
+// a redundant lower-bound test to be optimized away. Kept as seed history;
+// the typed body below has not yet been byte-measured.
+int WorldWin::tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y) {
+    const int columns = MapLongitudeBounds;
+    if ((MapIsFlat & 1) == 0) {
+        if (tile_x < 0) {
+            tile_x += columns;
+        } else if (tile_x >= columns) {
+            tile_x -= columns;
+        }
+    }
+
+    const int rows = MapLatitudeBounds;
+    const int max_row = rows - 1;
+    int row = tile_y;
+    if (row < 0 || max_row < 0) {
+        row = 0;
+        goto check_upper;
+    }
+    if (row > max_row) {
+        row = max_row;
+    }
+    if (row < 0) {
+        goto fail;
+    }
+check_upper:
+    if (row >= rows || tile_x < 0 || tile_x >= columns) {
+        goto fail;
+    }
+
+    if (field_239C4_ == 0 && field_239C8_ == 0) {
+        *pixel_x = (Buffer::dib_.bmiHeader.biWidth * tile_x) / columns;
+        *pixel_y = -((Buffer::dib_.bmiHeader.biHeight * row) /
+                     MapLatitudeBounds);
+        return 0;
+    }
+
+    *pixel_x = (mapWin_.GraphicWin::dib_.bmiHeader.biWidth * tile_x) /
+                   columns + field_239C4_;
+    *pixel_y = field_239C8_ -
+               (mapWin_.GraphicWin::dib_.bmiHeader.biHeight * row) /
+                   MapLatitudeBounds;
+    return 0;
+
+fail:
+    return 1;
+}
+
+// ORIGINAL: 0x004C47F0 ?UNK3@WorldWin@@QAEXXZ 0x004C47F0-0x004C499C
+// symbol    ?draw_viewport_outline@WorldWin@@QAEXXZ
+void WorldWin::draw_viewport_outline() {
+    if (viewport_outline_enabled_ == 0) {
+        return;
+    }
+
+    MapWin *detail_map = MapWinTable[1];
+    RECT rect;
+    int left;
+    int top;
+    int right;
+    int bottom;
+    if (tile_to_pixel(detail_map->field_1DDA4_, detail_map->field_1DDA8_,
+                      &left, &top) != 0) {
+        return;
+    }
+    if (tile_to_pixel(detail_map->field_1DDD4_ + detail_map->field_1DDCC_ +
+                          detail_map->field_1DDA4_,
+                      detail_map->field_1DDD8_ + detail_map->field_1DDD0_ +
+                          detail_map->field_1DDA8_,
+                      &right, &bottom) != 0) {
+        return;
+    }
+    rect.left = left;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = bottom;
+
+    if (rect.left <= rect.right) {
+        Buffer::box(&rect, 0xFB, 0xFB);
+        return;
+    }
+
+    const int line_top = rect.top;
+    const int line_left = rect.left;
+    const int line_right = rect.right - 1;
+    const int line_bottom = rect.bottom - 1;
+    Buffer::hline(field_239C4_, line_right, line_top, 0xFB);
+    Buffer::hline(field_239C4_, line_right - 1, line_bottom, 0xFB);
+    Buffer::vline(line_right, line_top + 1, line_bottom, 0xFB);
+
+    const int right_edge = field_239C4_ != 0
+                               ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                                     field_239C4_ - 1
+                               : Buffer::dib_.bmiHeader.biWidth - 1;
+    Buffer::hline(line_left + 1, right_edge, line_top, 0xFB);
+
+    const int bottom_edge = field_239C4_ != 0
+                                ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                                      field_239C4_ - 1
+                                : Buffer::dib_.bmiHeader.biWidth - 1;
+    Buffer::hline(line_right, bottom_edge, line_bottom, 0xFB);
+    Buffer::vline(line_right, line_top, line_bottom - 1, 0xFB);
+}
+
+// ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0
+// symbol    ?refresh_world_map@WorldWin@@QAEXH@Z
+void WorldWin::refresh_world_map(int resize_buffers) {
+    if (WorldWinRebuildBusy != 0) {
+        return;
+    }
+    WorldWinRebuildBusy = 1;
+
+    int scale = 6;
+    if (MapWinCaptionScale > 0) {
+        scale = (MapWinCaptionScale * 50) / MapWinCaptionDivisor;
+    }
+    const int cell_size = ((scale + 1) / 4) * 4;
+
+    field_A14_ = (MapLongitudeBounds / 2) * cell_size * 2;
+    field_A18_ = (MapLatitudeBounds / 2 - 2) * cell_size;
+    mapWin_.field_1DD9C_ = MapLongitudeBounds / 2;
+    mapWin_.field_1DD98_ = -14;
+    mapWin_.field_1DDA0_ = MapLatitudeBounds / 2;
+    mapWin_.field_1DD70_ = 0x80000000;
+
+    Buffer *map_surface = static_cast<Buffer *>(
+        static_cast<GraphicWin *>(&mapWin_));
+    if (resize_buffers != 0) {
+        set_dirty();
+        mapWin_.resize(static_cast<int>(field_A14_),
+                       static_cast<int>(field_A18_), 1);
+        buffer2_.resize(static_cast<int>(field_A14_),
+                         static_cast<int>(field_A18_));
+        buffer1_.resize(static_cast<int>(field_A14_),
+                         static_cast<int>(field_A18_));
+        static_cast<GraphicWin &>(mapWin_).fill(0);
+    } else {
+        buffer2_.copy(map_surface, 0, 0, 0, 0,
+                      static_cast<int>(field_A14_),
+                      static_cast<int>(field_A18_));
+    }
+
+    mapWin_.field_1DD70_ = 0x80000000;
+    mapWin_.draw_map(0);
+    map_surface->copy(&buffer2_, 0, 0, 0, 0,
+                      static_cast<int>(field_A14_),
+                      static_cast<int>(field_A18_));
+
+    clear_dirty();
+    WorldWinRebuildBusy = 0;
 }
