@@ -188,6 +188,7 @@ class MapWin : public virtual GraphicWin {
   void draw_map(int draw_type);
   // Original radius controller and clipped terrain/vehicle/overlay scans.
   void draw_radius(int x, int y, int radius, int draw_type);
+  void draw_radius(int x, int y, int draw_type);
   void gen_radius(int x, int y, int radius, int faction, int skip_terrain);
   void draw_vehicles(int x, int y, int radius, int faction);
   // Original4216F0: a genuine MapWin receiver, despite the seed's stdcall.
@@ -270,6 +271,7 @@ class MapWin : public virtual GraphicWin {
   // 0x0046FB90, homed from the archive. Same three radius tables, walked to
   // reset the 0xC-stride visibility record `owned_` points at.
   void clear_alt(int x, int y, int radius);
+  void UNK8(int x, int y, int radius);
   void do_image_buttons();
   void main_caption();
   void standard_caption();

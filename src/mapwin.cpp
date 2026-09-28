@@ -1460,6 +1460,12 @@ void MapWin::draw_radius(int x, int y, int radius, int draw_type) {
     }
 }
 
+// The three-argument overload is the original radius-1 convenience call.
+// ORIGINAL: 0x0046A530 ?draw_radius@MapWin@@QAEXHHH@Z 0x0046A530-0x0046A54A BYTE_EXACT
+void MapWin::draw_radius(int x, int y, int draw_type) {
+    draw_radius(x, y, 1, draw_type);
+}
+
 /*
 Purpose: Repaint every live MapWin slot - the FREE draw_map, not the method
          above. Mirrors draw_tile/draw_tiles in mapwin.h: slot 0 is exempt
@@ -4799,6 +4805,14 @@ void MapWin::clear_alt(int x, int y, int radius) {
             } while (i < count);
         }
     }
+}
+
+// The original invalidates brightness around the cache origin, then resets
+// altitude data around the requested tile. UNK6 owns the first typed walk.
+// ORIGINAL: 0x0046FD20 ?UNK8@MapWin@@QAEXHHH@Z 0x0046FD20-0x0046FD83 FILE
+void MapWin::UNK8(int x, int y, int radius) {
+    UNK6(x, y, radius);
+    clear_alt(x, y, radius);
 }
 
 // ORIGINAL: 0x0046FCE0 ?UNK7@MapWin@@QAEXXZ 0x0046FCE0-0x0046FD1A FILE BYTE_EXACT
