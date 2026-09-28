@@ -50,6 +50,7 @@
 
 #include "stdafx.h"
 #include "wave.h"   // Effect derives from Wave
+#include "selectpartwin.h"  // genuine GraphicWin-derived design-parts window
 
 /* 0x72 bytes, 9 member(s), 1 named. From the IDB. 3 function(s) in the image. */
 class AAmbience {
@@ -2103,103 +2104,7 @@ struct ResValue {
   uint32_t unused_;  // 0xC
 };
 
-/* 0x464C bytes, 87 member(s), 6 named. From the IDB. 17 function(s) in the image. */
-class SelectPartWin {
- public:
-  // 0x0043EE10 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~SelectPartWin();
 
- public:
-  uint8_t graphicWin_[0xA14];  // 0x0
-  uint8_t scroll_[0x214C];  // 0xA14
-  uint32_t field_2B60_;  // 0x2B60
-  uint32_t field_2B64_;  // 0x2B64
-  uint32_t field_2B68_;  // 0x2B68
-  uint32_t field_2B6C_;  // 0x2B6C
-  uint32_t field_2B70_;  // 0x2B70
-  uint32_t field_2B74_;  // 0x2B74
-  uint32_t field_2B78_;  // 0x2B78
-  uint32_t field_2B7C_;  // 0x2B7C
-  uint32_t field_2B80_;  // 0x2B80
-  uint32_t field_2B84_;  // 0x2B84
-  uint32_t field_2B88_;  // 0x2B88
-  uint32_t field_2B8C_;  // 0x2B8C
-  uint32_t field_2B90_;  // 0x2B90
-  uint32_t field_2B94_;  // 0x2B94
-  uint32_t field_2B98_;  // 0x2B98
-  uint8_t caviar_[0x13D0];  // 0x2B9C
-  uint32_t field_3F6C_;  // 0x3F6C
-  uint32_t field_3F70_;  // 0x3F70
-  uint32_t field_3F74_;  // 0x3F74
-  uint32_t field_3F78_;  // 0x3F78
-  uint32_t field_3F7C_;  // 0x3F7C
-  uint32_t field_3F80_;  // 0x3F80
-  uint32_t field_3F84_;  // 0x3F84
-  uint32_t field_3F88_;  // 0x3F88
-  uint32_t field_3F8C_;  // 0x3F8C
-  uint32_t field_3F90_;  // 0x3F90
-  uint32_t field_3F94_;  // 0x3F94
-  uint32_t field_3F98_;  // 0x3F98
-  uint32_t field_3F9C_;  // 0x3F9C
-  uint32_t field_3FA0_;  // 0x3FA0
-  uint32_t field_3FA4_;  // 0x3FA4
-  uint32_t field_3FA8_;  // 0x3FA8
-  uint32_t field_3FAC_;  // 0x3FAC
-  uint32_t field_3FB0_;  // 0x3FB0
-  uint32_t field_3FB4_;  // 0x3FB4
-  uint32_t field_3FB8_;  // 0x3FB8
-  uint32_t field_3FBC_;  // 0x3FBC
-  uint32_t field_3FC0_;  // 0x3FC0
-  uint32_t field_3FC4_;  // 0x3FC4
-  uint32_t field_3FC8_;  // 0x3FC8
-  uint32_t field_3FCC_;  // 0x3FCC
-  uint32_t field_3FD0_;  // 0x3FD0
-  uint32_t field_3FD4_;  // 0x3FD4
-  uint32_t field_3FD8_;  // 0x3FD8
-  uint32_t field_3FDC_;  // 0x3FDC
-  uint32_t field_3FE0_;  // 0x3FE0
-  uint32_t field_3FE4_;  // 0x3FE4
-  uint32_t field_3FE8_;  // 0x3FE8
-  uint32_t field_3FEC_;  // 0x3FEC
-  uint32_t field_3FF0_;  // 0x3FF0
-  uint32_t field_3FF4_;  // 0x3FF4
-  uint32_t field_3FF8_;  // 0x3FF8
-  uint32_t field_3FFC_;  // 0x3FFC
-  uint32_t field_4000_;  // 0x4000
-  uint32_t field_4004_;  // 0x4004
-  uint32_t field_4008_;  // 0x4008
-  uint32_t field_400C_;  // 0x400C
-  uint32_t field_4010_;  // 0x4010
-  uint32_t field_4014_;  // 0x4014
-  uint32_t field_4018_;  // 0x4018
-  uint32_t field_401C_;  // 0x401C
-  uint32_t field_4020_;  // 0x4020
-  uint32_t field_4024_;  // 0x4024
-  uint32_t field_4028_;  // 0x4028
-  uint32_t field_402C_;  // 0x402C
-  uint32_t field_4030_;  // 0x4030
-  uint32_t field_4034_;  // 0x4034
-  uint32_t field_4038_;  // 0x4038
-  uint32_t field_403C_;  // 0x403C
-  uint32_t field_4040_;  // 0x4040
-  uint32_t field_4044_;  // 0x4044
-  uint32_t field_4048_;  // 0x4048
-  uint32_t field_404C_;  // 0x404C
-  uint32_t field_4050_;  // 0x4050
-  uint32_t field_4054_;  // 0x4054
-  uint32_t field_4058_;  // 0x4058
-  uint32_t field_405C_;  // 0x405C
-  uint32_t field_4060_;  // 0x4060
-  uint32_t field_4064_;  // 0x4064
-  uint32_t field_4068_;  // 0x4068
-  uint8_t buffer_[0x588];  // 0x406C
-  uint8_t font1_[0x28];  // 0x45F4
-  uint8_t font2_[0x28];  // 0x461C
-  uint32_t field_4644_;  // 0x4644
-  uint32_t field_4648_;  // 0x4648
-};
 
 /* 0x24 bytes, 9 member(s), 0 named. From the IDB. 3 function(s) in the image. */
 // STRUCT, not class: the VC6 U/V mangle key comes from this first visible

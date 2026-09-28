@@ -86,6 +86,7 @@ class Scroll : public ScrollGraphicWin {
   void on_mousewheel_up(int delta);
  private:
   friend class Win;
+  friend class SelectPartWin;  // key navigation reads the clamped position after set_pos
 
   uint32_t field_A14_;  // 0x0a14
   uint32_t field_A18_;

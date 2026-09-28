@@ -134,11 +134,7 @@ void *__fastcall adjust_this_string_box(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_datalink(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_design_win(void *self, void *,
                                           unsigned int arg0);
-void *__fastcall scalar_delete_select_part_win(void *self, void *,
-                                               unsigned int arg0);
 void *__fastcall adjust_this_design_win(void *self, void *, unsigned int arg0);
-void *__fastcall adjust_this_select_part_win(void *self, void *,
-                                             unsigned int arg0);
 void *__fastcall scalar_delete_diplo_pop(void *self, void *,
                                          unsigned int arg0);
 void *__fastcall adjust_this_diplo_pop(void *self, void *, unsigned int arg0);

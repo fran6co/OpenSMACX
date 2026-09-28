@@ -1,0 +1,1064 @@
+#include "stdafx.h"
+#include "selectpartwin.h"
+#include "technology.h"
+#include "general.h"
+#include "leaf_recoveries.h"
+#include "console.h"  // ConsoleGlobal.faction_id_ owns old 0x00939284
+#include "veh.h"
+#include "alpha.h"
+#include "game.h"
+#include "strings.h"
+#include <cstring>
+
+// Constructor 0x4328B0 installs these two compiler-owned tables. Their
+// extents remain unproved; native table diagnostics are positional evidence.
+// RECOVERY_GENERATED: v1 vtable 0x0066B2B8 ? ??_7SelectPartWin@@6BWin@@@ 0x004328B0
+// RECOVERY_GENERATED: v1 vtable 0x0066B2B0 ? ??_7SelectPartWin@@6BBuffer@@@ 0x004328B0
+
+/*
+Purpose: Reset six fields, then close the window and its Buffer.
+
+             xor eax,eax / mov [esi+0x2b60],eax / mov [esi+0x2b6c],eax
+             mov [esi+0x2b70],eax / mov [esi+0x2b80],eax
+             mov [esi+0x2b68],0xffffffff / mov [esi+0x4648],eax
+             call GraphicWin::close / lea ecx,[esi+0x406c]
+             call Buffer::close / ret
+
+         Five of the six are cleared and ONE - 0x2b68 - is set to -1. It is
+         written FIFTH, between 0x2b80 and 0x4648, so the write order is not
+         ascending and the odd value is not at the end either.
+
+         GraphicWin::close is called on `this` itself; Buffer::close on the
+         subobject at 0x406c.
+
+// ORIGINAL: 0x00432970 ?close@SelectPartWin@@QAEXXZ 0x00432970-0x004329AF BYTE_EXACT
+// symbol    ?close@SelectPartWin@@QAEXXZ
+// size      63 bytes
+// prototype void (__thiscall ?close@SelectPartWin@@QAEXXZ)(SelectPartWin* this)
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005D4E40 0x005D7470
+Return Value: n/a
+Status: Complete
+*/
+void SelectPartWin::close() {
+    field_2B60_ = 0;
+    field_2B6C_ = 0;
+    field_2B70_ = 0;
+    field_2B80_ = 0;
+    field_2B68_ = -1;
+    field_4648_ = 0;
+    GraphicWin::close();
+    buffer_.close();
+}
+
+/*
+Purpose: Construct the SelectPartWin frame: the GraphicWin base, the Scroll
+         (0xa14), Caviar (0x2b9c), Buffer (0x406c) and two Font members, the
+         five cleared state fields, and the two vtable stores the window and
+         its Buffer subobject carry.
+
+// ORIGINAL: 0x004328B0 ??0SelectPartWin@@QAE@XZ 0x004328B0-0x00432961;0x00653F10-0x00653F5A FILE BYTE_EXACT
+// symbol   ??0SelectPartWin@@QAE@XZ
+// size      251 bytes
+// prototype void (__thiscall ??0SelectPartWin@@QAE@XZ)(SelectPartWin* this)
+// callers   1   call targets   6
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// notes     Seed provenance (TRIED): the placement-new sequence, the five
+//           zeroed fields and the two vtable stores reproduce the call
+//           order but not the SEH-unwind prologue the image opens with -
+//           the same wall as the Credits constructor (placement-new
+//           registers no unwinding; real members would).
+Return Value: n/a
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/004328b0.cpp retained.
+*/
+SelectPartWin::SelectPartWin() {
+    field_2B6C_ = 0;
+    field_2B70_ = 0;
+    field_2B80_ = 0;
+    field_4648_ = 0;
+    field_2B60_ = 0;
+}
+
+/*
+Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
+         move the highlight one cell within the current row and scroll the
+         list when the selection leaves the visible page, the page keys move
+         the first-shown row by one page step, end snaps to the last entry
+         and home clears both anchor slots, escape drops the selection, and
+         Enter releases the modal window. Whenever the anchor
+         moved the window's slot-62 redraw fires; otherwise a moved highlight redraws
+         only the old and new cells through draw_part and parks its result
+         in the window's +0x4648 slot. Every path reaching the common tail,
+         including unhandled keys, invokes slot 63; boundary-key early
+         returns do not.
+
+// ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; src/unrecovered/00433a10.cpp remains a seed."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
+// symbol   ?vslot_25@SelectPartWin@@UAEHHH@Z
+// size      704 bytes
+// prototype int (__thiscall ?on_key_click@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00433D60 0x00605D20
+Return Value: 1 for every key, handled or not
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/00433a10.cpp retained. The switch below is spelled
+        over `key - 13` because that is the subtraction the image folds into
+        its two-level jump-table index; the numpad keys share their arrow
+        blocks exactly as the image's table cells do.
+*/
+int SelectPartWin::vslot_25(int, int key) {
+    const int first_cached = field_2B60_;
+    const int highlight = field_2B80_;
+
+    switch (key - 13) {
+        case 0:  // 13, Enter: release modal
+            release_modal();
+            break;
+        case 14:  // 27, escape: drop the selection, then release modal
+            field_2B80_ = -1;
+            release_modal();
+            break;
+        case 20:  // 33, page up
+            if (field_2B74_ <= field_2B64_) return 1;
+            scroll_.set_pos(scroll_.position_ - scroll_.paging_);
+            field_2B60_ = field_2B6C_ * scroll_.position_;
+            break;
+        case 21:  // 34, page down
+            if (field_2B74_ <= field_2B64_) return 1;
+            scroll_.set_pos(scroll_.paging_ + scroll_.position_);
+            field_2B60_ = field_2B6C_ * scroll_.position_;
+            break;
+        case 22: {  // 35, end: highlight the last entry, re-anchor its row
+            const int count = field_2B74_;
+            field_2B80_ = count - 1;
+            if (field_2B64_ < count) {
+                field_2B60_ =
+                    field_2B6C_ *
+                        ((count - 1) /
+                             field_2B6C_ +
+                         1) -
+                    field_2B64_;
+            }
+            break;
+        }
+        case 23:  // 36, home: clear both anchor slots
+            field_2B60_ = 0;
+            field_2B80_ = 0;
+            break;
+        case 24:   // 37, left
+        case 87: { // 100, numpad 4
+            const int per_row =
+                field_2B6C_;
+            const int row_start = highlight / per_row * per_row;
+            int limit = row_start + per_row - 1;
+            if (limit >
+                field_2B74_ - 1) {
+                limit = field_2B74_ - 1;
+            }
+            const int target = highlight - 1;
+            field_2B80_ = target;
+            if (target < row_start || limit < row_start) {
+                field_2B80_ = row_start;
+            } else if (target > limit) {
+                field_2B80_ = limit;
+            }
+            break;
+        }
+        case 26:   // 39, right
+        case 89: { // 102, numpad 6
+            const int per_row =
+                field_2B6C_;
+            const int row_start = highlight / per_row * per_row;
+            int limit = row_start + per_row - 1;
+            if (limit >
+                field_2B74_ - 1) {
+                limit = field_2B74_ - 1;
+            }
+            const int target = highlight + 1;
+            field_2B80_ = target;
+            if (target < row_start || limit < row_start) {
+                field_2B80_ = row_start;
+            } else if (target > limit) {
+                field_2B80_ = limit;
+            }
+            break;
+        }
+        case 25:   // 38, up
+        case 91: { // 104, numpad 8
+            const int per_row =
+                field_2B6C_;
+            if (highlight < per_row) return 1;
+            do {
+                field_2B80_ -= per_row;
+            } while (field_2B80_ >= first_cached + field_2B64_);
+            if (field_2B80_ < first_cached) {
+                field_2B60_ -= per_row;
+                scroll_.set_pos(scroll_.position_ - 1);
+            }
+            break;
+        }
+        case 27:   // 40, down
+        case 85: { // 98, numpad 2
+            const int per_row =
+                field_2B6C_;
+            const int count = field_2B74_;
+            if (highlight > count - per_row - 1) {
+                if (count <= field_2B64_) return 1;
+                scroll_.set_pos(scroll_.position_ + 1);
+                field_2B60_ = per_row * scroll_.position_;
+            } else {
+                int moved = field_2B80_;
+                do {
+                    moved += per_row;
+                } while (moved < first_cached);
+                field_2B80_ = moved;
+                if (moved >= first_cached + field_2B64_) {
+                    field_2B60_ = first_cached + per_row;
+                    scroll_.set_pos(scroll_.position_ + 1);
+                }
+            }
+            break;
+        }
+        default:
+            break;
+    }
+
+    if (field_2B60_ != first_cached) {
+        redraw();
+    } else if (field_2B80_ != highlight) {
+        draw_part(highlight, 0);
+        field_4648_ = draw_part(field_2B80_, 1);
+    }
+    on_update();
+    return 1;
+}
+
+/*
+Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
+         vtable, forwarding 2 argument(s).
+// ORIGINAL: 0x00433F50 ?on_scrolling@SelectPartWin@@QAEXHH@Z 0x00433F50-0x00433F67 BYTE_EXACT
+// symbol    ?vslot_49@SelectPartWin@@UAEXHH@Z
+// size      23 bytes
+// prototype void (__thiscall ?on_scrolling@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00433F5D
+Return Value: n/a
+Status: Complete
+*/
+void SelectPartWin::vslot_49(int a1, int a2) {
+    vslot_48(a1, a2);
+}
+
+// 0x0043EE10 destructor seed: reset and close the enclosing GraphicWin and
+// owned Buffer, then let C++ destroy Font, Buffer, Caviar, Scroll and the base
+// in reverse construction order. The compiler owns both vptrs and EH unwind.
+// Source seed: src/recovered/units/0043ee10.cpp (measured MISMATCH).
+// ORIGINAL: 0x0043EE10 ??1SelectPartWin@@UAE@XZ 0x0043EE10-0x0043EF6A;0x00654720-0x006547AC
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/units/0043ee10.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The original complete destructor resets/closes the GraphicWin and embedded Buffer before reverse member destruction. The real SelectPartWin destructor owns that lifecycle."}
+SelectPartWin::~SelectPartWin() {
+    close();
+}
+
+// 0x004339C0 on_redraw: redraw only the visible cells, selecting the current
+// highlight. Source seed: src/recovered/units/004339c0.cpp (image-only exact).
+// ORIGINAL: 0x004339C0 ?on_redraw@SelectPartWin@@UAEXXZ 0x004339C0-0x00433A02 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/units/004339c0.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 12; the real GraphicWin-derived override retains its provisional inherited name."}
+void SelectPartWin::on_redraw() {
+    for (int i = field_2B60_; i < field_2B60_ + field_2B64_; ++i) {
+        draw_part(i, field_2B80_ == i);
+    }
+}
+
+// 0x00433820: the catalogue/seed calls this on_mouse_move, while inherited
+// Win slot 17 is still provisionally named on_mouse_feedback. The image's
+// SelectPartWin vtable selects this body at slot 17. Grid cells are 108x94
+// with a 4px inset.
+// Source seed: src/recovered/units/00433820.cpp (measured MISMATCH).
+// ORIGINAL: 0x00433820 ?on_mouse_feedback@SelectPartWin@@UAEXHH@Z 0x00433820-0x00433934
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
+void SelectPartWin::on_mouse_feedback(int x, int y) {
+    int old = field_2B80_;
+    if (x >= 4 && y >= 4 &&
+        x < field_2B6C_ * 108 + 4 && y < field_2B70_ * 94 + 4) {
+        int next = (y - 4) / 94 * field_2B6C_ + (x - 4) / 108 + field_2B60_;
+        if (next == old) {
+            return;
+        }
+        if (next < field_2B74_) {
+            field_4648_ = draw_part(next, 1);
+            if (old >= 0) {
+                draw_part(old, 0);
+            }
+            field_2B80_ = next;
+            on_update();
+            return;
+        }
+    }
+    if (old >= 0) {
+        draw_part(old, 0);
+    }
+    field_4648_ = 0;
+    field_2B80_ = -1;
+}
+
+// 0x00433940 on_left_up: release the pointer capture and modal state after
+// forwarding the point through the real inherited feedback virtual.
+// Source seed: src/unrecovered/00433940.cpp.
+// ORIGINAL: 0x00433940 ?vslot_21@SelectPartWin@@UAEXHH@Z 0x00433940-0x004339BF
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/unrecovered/00433940.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 21; the real GraphicWin-derived override retains its provisional inherited name."}
+void SelectPartWin::vslot_21(int x, int y) {
+    on_mouse_feedback(x, y);
+    if (field_4648_ == 0) {
+        field_2B80_ = -1;
+        if (WinPointerOwner3 == this) {
+            WinPointerOwner3 = 0;
+            on_lose_mouse_capture();
+        }
+    } else if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
+    }
+    release_modal();
+}
+
+// 0x00433F30 on_scrolled: the Scroll reports its row in the second argument.
+// Source seed: src/recovered/00433f30.cpp (image-only exact).
+// ORIGINAL: 0x00433F30 ?vslot_48@SelectPartWin@@UAEXHH@Z 0x00433F30-0x00433F4F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/00433f30.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 48; the real GraphicWin-derived override retains its provisional inherited name."}
+void SelectPartWin::vslot_48(int, int row) {
+    field_2B60_ = field_2B6C_ * row;
+    redraw();
+}
+
+// The design-parts rendering data is still bound in its first product reader.
+// Its tables are independent of the window object and require separate owners.
+
+// SelectPartWin draw family, owned by the genuine window class.
+
+// SelectPartWin::draw_chassis's own slots: the 9-record chassis table the
+// part lists walk (0x0094A3BE, 0x90-byte records, signed-short enabled flag
+// at [record]), its end marker (0x0094A8CE), the record's string id and
+// count bytes (0x0094A330/0x0094A378/0x0094A379 bases, record-strided), the
+// per-record string id table those bytes index (0x0094F1A8), and the four
+// text-colour words the label halves alternate between (0x008C6DD4..E0).
+// Nothing else in the tree names these addresses yet, so they travel beside
+// their first recovered reader, the UV2PlayerActive idiom.
+// The chassis record's trailing enable word (Chassis[0]+0x8E) and the two
+// per-record label bytes (0x0094A378/0x0094A379) have no carved names yet;
+// the name and label id reads go through the real Chassis[]/Triad[] arrays.
+static short *const ChassisEnableTable = (short *)0x0094A3BE;
+static char *const ChassisTableEnd = (char *)0x0094A8CE;
+static unsigned char *const ChassisCountByteTable = (unsigned char *)0x0094A378;
+static unsigned char *const ChassisOrderByteTable = (unsigned char *)0x0094A379;
+static int *const PartLabelColorA1 = (int *)0x008C6DD4;
+static int *const PartLabelColorA2 = (int *)0x008C6DD8;
+static int *const PartLabelColorB1 = (int *)0x008C6DDC;
+static int *const PartLabelColorB2 = (int *)0x008C6DE0;
+
+
+/*
+Purpose: Draw one entry of the design parts list: translate the entry index
+         into the grid cell inside the scroll's viewport, clip there, draw
+         the panel box in the requested style half, then hand the inset cell
+         to whichever of the four part drawers the window's mode field
+         selects; out-of-range entries tile the background sprite instead.
+
+// ORIGINAL: 0x00433D60 ?draw_part@SelectPartWin@@QAEHHH@Z 0x00433D60-0x00433F1D FILE
+// symbol   ?draw_part@SelectPartWin@@QAEHHH@Z
+// size      445 bytes
+// prototype int (__thiscall ?draw_part@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
+// callers   4   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004329B0 0x00432CC0 0x00433170 0x00433520 0x005D8000 0x005DA9F0 0x005E2DD3
+// notes     The four dispatch targets are same-class members hypothesis_
+//           layouts.h does not declare; they land beside this body as free
+//           functions and the switch calls them by name.
+Return Value: 1 the cell was drawn or tiled, 0 the index was past the table
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/00433d60.cpp retained.
+*/
+int SelectPartWin::draw_part(int a1, int a2) {
+    const int base = field_2B60_;
+
+    if (a1 >= base && a1 < base + field_2B64_) {
+        const int rel = a1 - base;
+        const int per_row = field_2B6C_;
+        const int col = rel / per_row;
+        const int row = rel % per_row;
+
+        // The seed's own axis naming: the row-scaled pair lands in the
+        // rect's left/right slots and the col-scaled pair in top/bottom.
+        const int x0 = row * 0x6C + 0x1B;
+        const int x1 = row * 0x6C + 0x84;
+        const int y0 = col * 0x5E + 4;
+        const int y1 = col * 0x5E + 0x5F;
+
+        if (a1 < field_2B74_) {
+            RECT rect;
+            rect.left = x0;
+            rect.top = y0;
+            rect.right = x1;
+            rect.bottom = y1;
+
+            Buffer *const buf = static_cast<Buffer *>(this);
+            buf->set_clip(&rect);
+
+            buf->box_sprite(
+                &rect, &InterfaceBoxStyles[2 * (a2 != 0 ? 1 : 0)]);
+
+            rect.left += 3;
+            rect.top += 3;
+            rect.right -= 3;
+            rect.bottom -= 3;
+
+            int result;
+            switch (field_2B84_) {
+                case 0:
+                    result = draw_chassis(a1, &rect,
+                                                        a2);
+                    break;
+                case 1:
+                    result = draw_weapon(a1, &rect,
+                                                       a2);
+                    break;
+                case 2:
+                    result = draw_armor(a1, &rect,
+                                                      a2);
+                    break;
+                case 3:
+                    result = draw_reactor(a1, &rect,
+                                                        a2);
+                    break;
+                default:
+                    buf->restore_clip();
+                    return reinterpret_cast<int>(buf);
+            }
+            buf->restore_clip();
+            return result;
+        }
+
+        static_cast<Buffer *>(this)
+            ->tile(reinterpret_cast<Sprite *>(0x006B33F8), x0, y0, x0,
+                   y0, 0x69, 0x5B);
+    }
+    return 1;
+}
+
+/*
+Purpose: Draw one chassis entry's label and render: find the a1'th enabled
+         record of the chassis table, reject it when the window's faction
+         lacks the record's tech, build the chassis into the window's Caviar
+         renderer at the cell centre (greyed to the missing-tech colour when
+         incomplete), then write the record's upper-cased name centred above
+         the cell and its count/order byte values in the two label corners.
+
+// ORIGINAL: 0x004329B0 ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z 0x004329B0-0x00432CB1 FILE
+// symbol   ?draw_chassis@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
+// size      769 bytes
+// prototype int (__thiscall ?draw_chassis@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// notes     Seed provenance (TRIED): MISMATCH #6 push/mov - direct
+//           self+offset pointer arithmetic gave the allocator no reason to
+//           keep `this` pinned in edi across the body the way the image
+//           does. Not measured exact.
+Return Value: 1 the entry was drawn, 0 the index ran past the table
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/004329b0.cpp retained.
+*/
+int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
+
+    // The 9-record, 0x90-byte-stride chassis table: walk the records whose
+    // first signed short is an enabled slot (>= -1) until the a1'th one.
+    short *entry = ChassisEnableTable;
+    int idx = 0;
+    int slot = 0;
+    int has_all_tech_flag = 0;
+
+    for (;;) {
+        if (*entry >= -1) {
+            if (idx == a1) {
+                const int tech_id = *entry;
+                if (has_tech(tech_id,
+                             field_2B68_) == 0) {
+                    has_all_tech_flag = 1;
+                }
+                break;
+            }
+            idx++;
+        }
+        entry += 0x48;
+        slot++;
+        if (!(reinterpret_cast<char *>(entry) <
+              reinterpret_cast<char *>(ChassisTableEnd))) {
+            break;
+        }
+    }
+
+    if (slot == 9) {
+        return 0;
+    }
+
+    caviar_.reset_objects();
+    vehdraw_construct_chassis(field_2B68_, slot,
+                              0, 0, field_2B98_,
+                              &caviar_);
+    caviar_.set_scaling_bits(0x3D75C28F);
+
+    Buffer *const buf = static_cast<Buffer *>(this);
+    const int x_avg = (a2->right + a2->left) / 2;
+    const int y_avg = (a2->bottom + a2->top) / 2;
+
+    if (has_all_tech_flag != 0) {
+        caviar_.render_mono(buf, x_avg, y_avg, 0xB9, 6);
+        return has_all_tech_flag == 0;
+    }
+
+    caviar_.render(buf, x_avg, y_avg, 6);
+
+    buf->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+
+    Font *const font1 = &font1_;
+    Font *const font2 = &font2_;
+    const int rec_off = slot * 0x90;
+    RECT temp;
+
+    temp.left = a2->left;
+    temp.right = a2->right;
+    temp.top = a2->top;
+    temp.bottom = a2->top + font1->line_advance();
+
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(*reinterpret_cast<const int *>(
+               &Chassis[slot].offsv_1_name)));
+    string_upper_slot()(StringTemp);
+    buf->wrap_cent(font1, StringTemp, &temp);
+
+    buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+
+    temp.left = a2->left;
+    temp.right = a2->right;
+    temp.bottom = a2->bottom;
+    temp.top = a2->bottom - font1->line_advance();
+
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(*reinterpret_cast<const int *>(
+               &Triad[ChassisOrderByteTable[rec_off]])));
+
+    buf->set_font(font1, 0, 0, 0);
+    buf->write_l(StringTemp, &temp,
+                 static_cast<int>(strlen(StringTemp)));
+
+    char itoa_buf[80];
+    _itoa(ChassisCountByteTable[rec_off], itoa_buf, 10);
+    StringTemp[0] = 0;
+    strcat(StringTemp, itoa_buf);
+
+    buf->set_font(font2, 0, 0, 0);
+    buf->write_right_l(StringTemp, &temp,
+                       static_cast<int>(strlen(StringTemp)));
+
+    return has_all_tech_flag == 0;
+}
+
+// The reactor walk runs on veh.h's Reactor[] itself: the enable test reads
+// Reactor[i].preq_tech, and the tech-id and name reads sit one record back
+// (the image bases them at 0x009527F4/0x009527EC, Reactor-4/-12).
+
+/*
+Purpose: Draw one reactor entry of the design parts list: find the a1'th
+         enabled reactor record, reject on the faction's missing tech, build
+         the reactor into the window's Caviar renderer at the cell centre
+         (greyed when the tech is missing), then write the record's name
+         centred above the cell, the fixed "Reactors" label below-left, and
+         the reactor's own number below-right.
+
+// ORIGINAL: 0x00433520 ?draw_reactor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433520-0x00433811 FILE
+// symbol   ?draw_reactor@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
+// size      753 bytes
+// prototype int (__thiscall ?draw_reactor@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// notes     Seed provenance (TRIED): instruction-for-instruction on the
+//           table scan, has_tech dispatch and every call target/argument
+//           order; the prologue register assignment differs (the image
+//           keeps this in ebx, the slot counter in esi, the tech flag in
+//           edi). Not measured exact.
+Return Value: 1 the entry was drawn, 0 the index ran past the table
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/00433520.cpp retained.
+*/
+int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
+
+    int slot = 1;
+    int valid_count = 0;
+    int has_tech_failed = 0;
+    int i;
+    for (i = 0; i < 4; ++i) {
+        if (Reactor[i].preq_tech >= -1) {
+            if (valid_count == a1) {
+                const short tech_id = Reactor[slot - 1].preq_tech;
+                if (!has_tech(tech_id,
+                              field_2B68_)) {
+                    has_tech_failed = 1;
+                }
+                break;
+            }
+            ++valid_count;
+        }
+        ++slot;
+    }
+
+    if (slot == 5) {
+        return 0;
+    }
+
+    caviar_.reset_objects();
+    vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
+                              field_2B88_,
+                              field_2B8C_, slot,
+                              field_2B94_,
+                              &caviar_);
+    caviar_.set_scaling(0.2f);
+
+    Buffer *const buf = static_cast<Buffer *>(this);
+    const int cy = (a2->bottom + a2->top) / 2;
+    const int cx = (a2->right + a2->left) / 2;
+
+    if (has_tech_failed != 0) {
+        caviar_.render_mono(buf, cx, cy, 0xB9, 6);
+        return has_tech_failed == 0;
+    }
+
+    caviar_.render(buf, cx, cy, 6);
+
+    buf->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+
+    Font *const font1 = &font1_;
+    RECT rect1;
+    rect1.left = a2->left;
+    rect1.top = a2->top;
+    rect1.right = a2->right;
+    rect1.bottom = a2->top + font1->line_advance();
+    buf->set_font(font1, 0, 0, 0);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(*reinterpret_cast<const int *>(
+               &Reactor[slot - 1].name)));
+    string_upper_slot()(StringTemp);
+    buf->wrap_cent(StringTemp, &rect1);
+
+    buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+
+    RECT rect2;
+    rect2.left = a2->left;
+    rect2.right = a2->right;
+    rect2.bottom = a2->bottom;
+    rect2.top = rect2.bottom - font1->line_advance();
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(*reinterpret_cast<const int *>(
+                           Labels.strings_ptr + 0x1E4)));
+    buf->write_l(StringTemp, &rect2,
+                 static_cast<int>(strlen(StringTemp)));
+
+    buf->set_font(&font2_, 0, 0, 0);
+
+    char itoa_buf[80];
+    StringTemp[0] = 0;
+    _itoa(slot, itoa_buf, 10);
+    strcat(StringTemp, itoa_buf);
+    buf->write_right_l(StringTemp, &rect2,
+                       static_cast<int>(strlen(StringTemp)));
+
+    return has_tech_failed == 0;
+}
+
+// SelectPartWin::draw_armor's own slots: the per-chassis armor flag byte
+// (0x0094A3BD+4, record-strided) and the armor walk's end marker
+// (0x0094F364). The walked table is veh.h's Armor[] itself - the walk starts
+// on Armor[0].preq_tech and steps one 0x10 record at a time - and the name,
+// label and level reads go through Armor[slot]'s own members.
+static unsigned char *const ArmorChassisFlagTable =
+    (unsigned char *)0x0094A37D;
+static char *const ArmorTableEnd = (char *)0x0094F364;
+
+/*
+Purpose: Draw one armor entry of the design parts list: reject chassis zero
+         outright, find the a1'th enabled armor record otherwise, build the
+         armor into the window's Caviar renderer (the fifth slot through the
+         multi-table destination renderer, the rest plainly, greyed when the
+         faction lacks the tech), then write the record's upper-cased name
+         centred above the cell and the label/level pair below it.
+
+// ORIGINAL: 0x00433170 ?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00433170-0x0043351C FILE
+// symbol   ?draw_armor@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
+// size      940 bytes
+// prototype int (__thiscall ?draw_armor@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// notes     Seed provenance (TRIED): the goto-literal transliteration
+//           reaches MISMATCH #5 (prologue push order) - a register
+//           allocation difference, not chased further. Not measured exact.
+Return Value: 1 the entry was drawn, 0 the index ran past the table
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/00433170.cpp retained.
+*/
+int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
+    Buffer *const buf444 = static_cast<Buffer *>(this);
+    Caviar *const cav2b9c = &caviar_;
+
+    int slot;
+    int noTechFlag = 0;
+    RECT rectScratch;
+
+    const int chassis = field_2B88_;
+    const unsigned char flagByte = ArmorChassisFlagTable[chassis * 0x90];
+
+    if (flagByte != 0) {
+        slot = 0;
+    } else {
+        const int target = a1;
+        int idx = 0;
+        int activeCount = 0;
+        const int16_t *entry = &Armor[0].preq_tech;
+        bool matched = false;
+        for (;;) {
+            if (*entry > -2) {
+                if (activeCount == target) {
+                    slot = idx;
+                    const short techShort = *entry;
+                    if (has_tech(techShort,
+                                 field_2B68_) ==
+                        0) {
+                        noTechFlag = 1;
+                    }
+                    matched = true;
+                    break;
+                }
+                activeCount++;
+            }
+            entry += 8;
+            idx++;
+            if (reinterpret_cast<const char *>(entry) >= ArmorTableEnd) {
+                break;
+            }
+        }
+        if (!matched) {
+            slot = idx;
+        }
+    }
+
+    if (slot == 0xE) {
+        return 0;
+    }
+
+    if (slot != 0) {
+        const int v2b8c = field_2B8C_;
+        const int v2b88 = field_2B88_;
+        caviar_.reset_objects();
+        vehdraw_construct_armor(ConsoleGlobal.faction_id_, v2b88, v2b8c, slot, 1,
+                                cav2b9c);
+        cav2b9c->set_scaling(0.1f);
+    }
+
+    if (noTechFlag != 0) {
+        if (slot != 0) {
+            const int midY = (a2->bottom + a2->top) / 2;
+            const int midX = (a2->right + a2->left) / 2;
+            cav2b9c->render_mono(buf444, midX, midY, 0xB9, 6);
+            return noTechFlag == 0;
+        }
+    } else if (slot != 0) {
+        const int midY = (a2->bottom + a2->top) / 2;
+        const int midX = (a2->right + a2->left) / 2;
+        if (slot == 5) {
+            cav2b9c->render_multi_table_dest(buf444, midX, midY, 0x18,
+                reinterpret_cast<unsigned char *>(0x6EEF7C), 6);
+        } else {
+            cav2b9c->render(buf444, midX, midY, 6);
+        }
+    }
+
+    buf444->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+    {
+        Font *const font45f4 = &font1_;
+        rectScratch.left = a2->left;
+        rectScratch.top = a2->top;
+        rectScratch.right = a2->right;
+        rectScratch.bottom = a2->bottom;
+        rectScratch.bottom = rectScratch.top + font45f4->line_advance();
+        buf444->set_font(0, 0, 0, font45f4);
+    }
+    {
+        const int slot16 = slot << 4;
+        StringTemp[0] = 0;
+        strcat(StringTemp,
+               StringTable.get(
+                   *reinterpret_cast<const int *>(&Armor[slot].name)));
+        string_upper_slot()(StringTemp);
+        buf444->wrap_cent(StringTemp, &rectScratch);
+        buf444->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+
+        Font *const font45f4b = &font1_;
+        rectScratch.left = a2->left;
+        rectScratch.top = a2->top;
+        rectScratch.right = a2->right;
+        rectScratch.bottom = a2->bottom;
+        rectScratch.top =
+            a2->bottom - font45f4b->line_advance();
+
+        const unsigned char flag2 = Armor[slot].mode;
+        if (flag2 < 3) {
+            strcat(StringTemp,
+                   StringTable.get(*reinterpret_cast<const int *>(
+                       Labels.strings_ptr + 0x1F8)));
+        }
+        buf444->write_l(StringTemp, &rectScratch,
+                        static_cast<int>(strlen(StringTemp)));
+
+        const signed char armLevel = Armor[slot].defense_rating;
+        StringTemp[0] = 0;
+        if (armLevel < 0) {
+            strcat(StringTemp,
+                   StringTable.get(*reinterpret_cast<const int *>(
+                       Labels.strings_ptr + 0x310)));
+        } else {
+            char itoaBuf[32];
+            _itoa(armLevel, itoaBuf, 10);
+            strcat(StringTemp, itoaBuf);
+        }
+
+        buf444->set_font(0, 0, 0,
+                         &font2_);
+        buf444->write_right_l(StringTemp, &rectScratch,
+                              static_cast<int>(strlen(StringTemp)));
+    }
+
+    return noTechFlag == 0;
+}
+
+// SelectPartWin::draw_weapon's own slot: the selected weapon's sprite index
+// the mode-0xB rows read (0x009AB9CE, signed char). Nothing else names it.
+static signed char *const WeaponSpriteIndexSlot = (signed char *)0x009AB9CE;
+
+/*
+Purpose: Draw one weapon entry of the design parts list: find the a1'th
+         weapon whose preq_tech is enabled, build it into the window's
+         Caviar renderer - the five special-cased prototypes through their
+         CaviarData definitions, the rest through vehdraw_construct_weapon
+         with the class-dependent scale - overlay the class icon sprite,
+         grey the render when the tech is missing, and write the weapon's
+         upper-cased name, its attack/defense label and its count.
+
+// ORIGINAL: 0x00432CC0 ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z 0x00432CC0-0x00433167 FILE
+// symbol   ?draw_weapon@SelectPartWin@@QAEHHPAUtagRECT@@H@Z
+// size      1191 bytes
+// prototype int (__thiscall ?draw_weapon@SelectPartWin@@QAEHHPAURECT@@H@Z)(SelectPartWin* this, int, int, RECT*, int)
+// callers   1   call targets   7
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// notes     Seed provenance (TRIED): direct transcription of the Ghidra
+//           decompile; diverges at instruction #0 on the frame-pointer vs
+//           ESP-frame prologue shape, not control flow. Not measured exact.
+Return Value: 1 the entry was drawn, 0 the index ran past the table
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/00432cc0.cpp retained.
+*/
+int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
+    int visibleCount = 0;
+    int weaponMissing = 0;
+    int idx = 0;
+
+    do {
+        if (Weapon[idx].preq_tech > -2) {
+            if (visibleCount == a1) {
+                visibleCount =
+                    has_tech(Weapon[idx].preq_tech,
+                             field_2B68_)
+                        ? 1
+                        : 0;
+                if (visibleCount == 0) {
+                    weaponMissing = 1;
+                }
+                break;
+            }
+            visibleCount = visibleCount + 1;
+        }
+        idx = idx + 1;
+    } while (idx < 0x1A);
+    if (idx == 0x1A) {
+        return 0;
+    }
+
+    caviar_.reset_objects();
+    Caviar *const caviar = &caviar_;
+    float scale_imm;
+    if (idx == 0) {
+        caviar->add_object(&g_VW00_CAVIARDATA, 0);
+        scale_imm = 0.2f;
+    } else if (idx == 0x10) {
+        caviar->add_object(&g_VM13_CAVIARDATA, 0);
+        scale_imm = 0.06f;
+    } else if (idx == 0x17) {
+        caviar->add_object(&g_VM_CAVIARDATA, 0);
+        scale_imm = 0.06f;
+    } else if (idx == 0x18) {
+        caviar->add_object(&g_VM_CAVIARDATA, 0);
+        caviar->add_object(&g_TECLOAD_CAVIARDATA, 0);
+        scale_imm = 0.06f;
+    } else if (idx == 0x19) {
+        caviar->add_object(&g_VM_CAVIARDATA, 0);
+        caviar->add_object(&g_FUNLOAD_CAVIARDATA, 0);
+        scale_imm = 0.06f;
+    } else {
+        vehdraw_construct_weapon(field_2B68_, -1,
+                                 idx, caviar);
+        const unsigned char weapon_class = Weapon[idx].mode;
+        if (weapon_class < 3) {
+            scale_imm = 0.2f;
+        } else if (weapon_class == 9) {
+            scale_imm = 0.08f;
+        } else if (weapon_class == 0xB) {
+            scale_imm = 0.2f;
+        } else {
+            scale_imm = 0.1f;
+        }
+    }
+    caviar->set_scaling(scale_imm);
+
+    const unsigned char cat_byte = Weapon[idx].mode;
+    int sprite_idx = -1;
+    bool have_sprite_idx = false;
+    if (cat_byte == 8 || cat_byte == 9) {
+        sprite_idx = Weapon[idx].icon;
+        have_sprite_idx = true;
+    } else if (cat_byte == 0xB) {
+        sprite_idx = *WeaponSpriteIndexSlot;
+        have_sprite_idx = true;
+    }
+    if (have_sprite_idx && sprite_idx >= 0) {
+        Buffer *const buf_target = static_cast<Buffer *>(this);
+        Sprite *const spr =
+            reinterpret_cast<Sprite *>(0x778400 + sprite_idx * 0x160);
+        const int x_coord = ((a2->right - a2->left) - 100) / 2 + a2->left;
+        const int y_coord = ((a2->bottom - a2->top) - 0x4B) / 2 + a2->top;
+        spr->draw(buf_target, spr->transparent_index(), x_coord, y_coord);
+    }
+
+    if (weaponMissing != 0) {
+        Buffer *const buf_target = static_cast<Buffer *>(this);
+        caviar->render_mono(buf_target, (a2->right + a2->left) / 2,
+                            (a2->bottom + a2->top) / 2, 0xB9, 6);
+        return weaponMissing == 0;
+    }
+
+    caviar->render(static_cast<Buffer *>(this),
+                   (a2->right + a2->left) / 2, (a2->bottom + a2->top) / 2, 6);
+
+    Buffer *const panel_buf = static_cast<Buffer *>(this);
+    panel_buf->set_text_color(*PartLabelColorA1, *PartLabelColorA2, 1, 1);
+
+    Font *const font45f4 = &font1_;
+    RECT tmp_rect;
+    tmp_rect.left = a2->left;
+    tmp_rect.top = a2->top;
+    tmp_rect.right = a2->right;
+    tmp_rect.bottom = a2->top + font45f4->line_advance();
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(*reinterpret_cast<const int *>(&Weapon[idx].name)));
+    panel_buf->set_font(font45f4, 0, 0, 0);
+    string_upper_slot()(StringTemp);
+    panel_buf->wrap_cent(StringTemp, &tmp_rect);
+    panel_buf->set_text_color(*PartLabelColorB1, *PartLabelColorB2, 1, 1);
+
+    tmp_rect.left = a2->left;
+    tmp_rect.right = a2->right;
+    tmp_rect.bottom = a2->bottom;
+    tmp_rect.top = tmp_rect.bottom - font45f4->line_advance();
+    StringTemp[0] = 0;
+    strcat(StringTemp,
+           StringTable.get(*reinterpret_cast<const int *>(
+               Labels.strings_ptr + (cat_byte < 3 ? 0x204 : 0x200))));
+    panel_buf->write_l(StringTemp, &tmp_rect,
+                       static_cast<int>(strlen(StringTemp)));
+
+    panel_buf->set_font(&font2_, 0, 0, 0);
+    signed char count_char = Weapon[idx].offense_rating;
+    StringTemp[0] = 0;
+    if (count_char == -1) {
+        strcat(StringTemp,
+               StringTable.get(*reinterpret_cast<const int *>(
+                   Labels.strings_ptr + 0x310)));
+    } else {
+        char num_buf[80];
+        if (cat_byte > 2) {
+            count_char = Weapon[idx].cost;
+        }
+        _itoa(count_char, num_buf, 10);
+        strcat(StringTemp, num_buf);
+    }
+    panel_buf->write_right_l(StringTemp, &tmp_rect,
+                             static_cast<int>(strlen(StringTemp)));
+
+    return weaponMissing == 0;
+}
+
+// These mappings describe the compiler-generated deletion and secondary-base
+// adjustment for the real class above; no handwritten thunk is installed.
+/*
+Purpose: The compiler-generated scalar deleting destructor at
+         ??_GSelectPartWin@@UAEPAXI@Z: run the complete destructor, then
+         release the storage through the executable's operator delete only when
+         bit 0 of the flags asks.
+// ORIGINAL: 0x0043EDE0 ??_GSelectPartWin@@UAEPAXI@Z 0x0043EDE0-0x0043EE01 FILE BYTE_EXACT
+// symbol    ??_GSelectPartWin@@UAEPAXI@Z
+// size      33 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x0043EE10 0x0064557F
+Return Value: the object pointer
+Status: Complete
+*/
+
+/*
+Purpose: Step the receiver back to the subobject ??_GSelectPartWin@@UAEPAXI@Z
+         expects, then forward unchanged.
+// ORIGINAL: 0x0043EFB0 ??_GSelectPartWin@@WEEE@AEPAXI@Z 0x0043EFB0-0x0043EFBB FILE BYTE_EXACT
+// symbol    ??_ESelectPartWin@@WEEE@AEPAXI@Z
+// CORRECTED from ??3SelectPartWin@@SAXPAXI@Z
+//   11 bytes, `sub ecx, 0x444; jmp 0x0043EDE0` into
+//   ??_GSelectPartWin@@UAEPAXI@Z, which executes `ret 4`; no stack
+//   access and the receiver stays in ECX. `WEEE@` re-demangles to
+//   adjustor{1092} and 1092 == 0x444, the constant subtracted
+// size      11 bytes
+// prototype
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the forwarded call's
+Status: Complete
+*/

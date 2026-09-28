@@ -1,0 +1,20 @@
+{
+  "event_id": "82c7663b7fad4e951e9831317b7ba8b9d5ab1e731b8a26629dca40a3f99c3299",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/delegation_thunks.h",
+      "src/leaf_recoveries.h"
+    ],
+    "evidence": [
+      "Post-migration source review found only stale declarations of select_part_win_on_scrolling_redirect and leaf_00432970_redirect. Their original bodies/mappings are preserved as SelectPartWin::vslot_49 and SelectPartWin::close; fresh native recording passes both and no callers remain. Remove those obsolete declarations alongside the retired wrappers, not unrelated source APIs."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "376bf8e8c93b78f9edc2d85b3ee676669e85c5e8757378803b19599437d0f827",
+  "request_id": "w8-pa-obsolete-wrapper-declarations",
+  "schema_version": 1,
+  "sequence": 189,
+  "stream": "task:vector-value-semantics"
+}
