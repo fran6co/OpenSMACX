@@ -37,6 +37,14 @@ class StringBox : public GraphicWin {
   // 0x00629490, a pending_bodies forwarder.
   void add_fixup();
 
+  // Original StringBox list operations, kept on the StringBox receiver.
+  void on_scrolling(int code, int position);
+  int add_special(char *text);
+  void close();
+  void UNK1(int id);
+  void UNK2(int first_bound, int second_bound);
+  void clip_ids(unsigned long count);
+
  public:
   // (code, pos), the Win32 WM_VSCROLL shape the image mirrors. Evidence
   // is in the bodies: BaseWin::on_scrolled does `switch (a1)` and then

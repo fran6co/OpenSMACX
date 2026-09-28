@@ -274,6 +274,9 @@ class StringList : public StringStruct {
   // payload. The int argument is unused by the original implementation.
   // 0x006087A0 is the source-owned StringList::sort body in stringlist.cpp.
   void sort(int key);
+  // 0x00608BA0 parses the caret prefix into pending-text metadata and inserts
+  // ID zero through the inherited StringStruct::add operation.
+  int add_special(char *text);
   // Load a text section into this list. The callback remains part of the
   // original interface; the original body does not invoke it.
   int load(LPSTR file_name, LPSTR section_id, int clear_existing,

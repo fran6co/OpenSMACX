@@ -54,6 +54,35 @@ void StringList::on_remove(StringStructPayload *payload) {
     }
 }
 
+// Parse the caret-prefix convention into pending insertion fields, then
+// return the original normalized StringStruct::add result.
+// ORIGINAL: 0x00608BA0 ?add_special@StringList@@QAEHPAD@Z 0x00608BA0-0x00608BFC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/recovered/units/00608ba0.cpp; src/stringstruct.h StringList pending fields and inherited StringStruct::add"], "reason": "Recover caret-prefix parsing and normalized ID-zero insertion on the real StringList owner."}
+int StringList::add_special(char *text) {
+    int kind = 0;
+    if (*text == '^') {
+        if (text[1] != '\0') {
+            if (text[1] != '^') {
+                kind = 1;
+                ++text;
+            } else if (text[2] == '^') {
+                kind = 2;
+                text += 3;
+            } else {
+                kind = 2;
+                text += 2;
+            }
+        } else {
+            kind = 3;
+            ++text;
+        }
+    }
+    pending_text_ = text;
+    field_20_ = static_cast<uint32_t>(kind);
+    field_24_ = 0;
+    return add(0) != 0;
+}
+
 /*
 Purpose: Sort the circular list by payload text, keeping each ID with its
          payload and retaining the original cursor side effects.

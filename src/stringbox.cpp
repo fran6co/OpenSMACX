@@ -20,7 +20,30 @@
 #include "stringbox.h"
 #include "stringstruct.h"
 #include <cstring>
-#include "vtable_shim.h"
+
+namespace {
+
+// Remove the entry currently selected by the typed StringList cursor. The
+// list owns both allocations; its virtual remove hook owns any copied text.
+void erase_string_list_current(StringList &list) {
+    StringStructEntry *const entry = list.current_;
+    StringStructEntry *const next = entry->next;
+    entry->previous->next = next;
+    next->previous = entry->previous;
+    if (entry == list.head_) {
+        list.head_ = next;
+    }
+    list.current_ = next;
+
+    StringStructPayload *const payload = entry->payload;
+    list.on_remove(payload);
+    delete payload;
+    entry->payload = 0;
+    delete entry;
+    --list.entry_count_;
+}
+
+}
 
 // The getter is only an admission predicate. Reload the actual parent after
 // its callback; the returned GraphicWin pointer is not the dispatch receiver.
@@ -33,6 +56,134 @@ int StringBox::on_link_clicked(int id, char *link) {
         return 1;
     }
     return static_cast<GraphicWin *>(win_parent_)->on_link_clicked(id, link);
+}
+
+// The StringBox scroll-in-progress hook is Win slot 48. Use the real
+// inherited virtual member; the two values are the original event code and
+// position.
+// ORIGINAL: 0x00629D40 ?on_scrolling@StringBox@@QAEXHH@Z 0x00629D40-0x00629D55 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/recovered/00629d40.cpp", "src/stringbox.h: StringBox derives directly from GraphicWin", "src/win.h: Win::vslot_48(int,int)"], "reason": "Forward StringBox scroll-in-progress events through inherited Win slot 48 using its two integer arguments."}
+void StringBox::on_scrolling(int code, int position) {
+    vslot_48(code, position);
+}
+
+// The owned StringList handles caret parsing and ID-zero insertion; a
+// successful insertion asks the box to re-fit its visible rows.
+// ORIGINAL: 0x00629750 ?add_special@StringBox@@QAEHPAD@Z 0x00629750-0x00629774
+// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/recovered/units/00629750.cpp", "src/stringlist.cpp StringList::add_special; src/stringstruct.h", "src/stringbox.h"], "reason": "Delegate caret-prefix parsing and ID-zero insertion to the owned StringList, then request row fitting after a successful insert."}
+int StringBox::add_special(char *text) {
+    if (stringList_.add_special(text) == 0) {
+        add_fixup();
+    }
+    return 0;
+}
+
+// Close the real GraphicWin base, clear the owned StringList, and reset its
+// cursor before closing the embedded Scroll. The list's typed removal path
+// dispatches StringList::on_remove and destroys both node types.
+// ORIGINAL: 0x00629210 ?close@StringBox@@QAEXXZ 0x00629210-0x006292C9
+// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629210.cpp", "src/stringbox.h", "src/stringstruct.h", "src/scroll.h"], "reason": "Close the GraphicWin base, release owned StringList entries through their typed virtual removal hook, reset the list cursor, and close the embedded Scroll."}
+void StringBox::close() {
+    visible_rows_ = 0xffffffff;
+    top_line_ = 0;
+    list_override_ = 0;
+    per_line_draw_ = 0;
+    GraphicWin::close();
+    stringList_.remove_all();
+    stringList_.current_position_ = 0;
+    scroll_.close();
+}
+
+// Remove the first list entry with this ID, retaining the original cursor
+// position side effect and then re-fitting the visible rows.
+// ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B
+// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/006298b0.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove the first StringList entry with the requested ID, preserve its cursor effects, and re-fit visible rows."}
+void StringBox::UNK1(int id) {
+    StringList &list = stringList_;
+    if (list.head_ != 0) {
+        const int count = list.entry_count_;
+        int visited = 0;
+        bool found = false;
+        if (count > 0) {
+            do {
+                if (list.current_->id == id) {
+                    found = true;
+                    break;
+                }
+                list.current_ = list.current_->next;
+                ++visited;
+            } while (visited < count);
+        }
+        if (found) {
+            erase_string_list_current(list);
+        }
+        if (list.entry_count_ == 0) {
+            list.head_ = 0;
+        }
+        list.current_position_ = list.entry_count_ - 1;
+    }
+    add_fixup();
+}
+
+// Preserve the seed's inverted/wrapping predicate exactly: retain an ID only
+// when ID < first_bound && ID > second_bound. Remove all others while the
+// cursor and changing count follow the original list walk.
+// ORIGINAL: 0x00629980 ?UNK2@StringBox@@QAEXHH@Z 0x00629980-0x00629A63 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629980.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Retain IDs in the original descending-bound interval and remove other entries, preserving the changing-count list walk."}
+void StringBox::UNK2(int first_bound, int second_bound) {
+    StringList &list = stringList_;
+    if (list.head_ != 0) {
+        int visited = 0;
+        if (list.entry_count_ > 0) {
+            do {
+                const uint32_t id = static_cast<uint32_t>(list.current_->id);
+                if (id < static_cast<uint32_t>(first_bound) &&
+                    id > static_cast<uint32_t>(second_bound)) {
+                    list.current_ = list.current_->next;
+                } else {
+                    erase_string_list_current(list);
+                }
+                ++visited;
+            } while (visited < list.entry_count_);
+        }
+        if (list.entry_count_ == 0) {
+            list.head_ = 0;
+        }
+        list.current_position_ = list.entry_count_ - 1;
+    }
+    add_fixup();
+}
+
+// Drop IDs at or below count; higher IDs are rebased by count. Only a
+// removal changes the scrollbar fit, matching the original operation.
+// ORIGINAL: 0x00629A70 ?clip_ids@StringBox@@QAEXK@Z 0x00629A70-0x00629B69
+// RECOVERY_BINDING: v1 {"evidence": ["git:93d09e9c95484465004f450350b6cffe1e09f40e:src/unrecovered/00629a70.cpp", "src/stringbox.h", "src/stringstruct.h", "src/recovered/units/00629490.cpp"], "reason": "Remove list IDs at or below the clipping count and rebase larger IDs while preserving list cursor and fit behavior."}
+void StringBox::clip_ids(unsigned long count) {
+    StringList &list = stringList_;
+    if (list.head_ != 0) {
+        bool removed = false;
+        int visited = 0;
+        if (list.entry_count_ > 0) {
+            do {
+                const uint32_t id = static_cast<uint32_t>(list.current_->id);
+                if (id <= count) {
+                    removed = true;
+                    erase_string_list_current(list);
+                } else {
+                    list.current_->id = static_cast<int>(id - count);
+                    list.current_ = list.current_->next;
+                }
+                ++visited;
+            } while (visited < list.entry_count_);
+        }
+        if (list.entry_count_ == 0) {
+            list.head_ = 0;
+        }
+        list.current_position_ = list.entry_count_ - 1;
+        if (removed) {
+            add_fixup();
+        }
+    }
 }
 
 /*
