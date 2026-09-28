@@ -41,7 +41,7 @@
   *     recovery/environment/vc6-cl, and VC6 places a virtual base exactly
   *     where the vbtable names it. Probed with the same `cl` verify_member_offsets uses, this
   *     declaration puts field_21A6C_ at 0x21A6C, buffer_ at 0x21A70,
-  *     field_21FF8_ at 0x21FF8 and sizeof at 0x22A64 - the image's numbers,
+  *     line_count_ at 0x21FF8 and sizeof at 0x22A64 - the image's numbers,
   *     with no GraphicWin member declared at all.
   *   - "That base ends at 0x21A68 ... which is why MapWin's pinned 0x21A6C is
   *     4 more than the data PlanWin inherits." Right about the image, and not
@@ -58,13 +58,22 @@
   *     Inside a PlanWin the MapWin base is not most-derived, gets no
   *     vtordisp, and stops at the image's 0x21A68; PlanWin's own fields
   *     therefore start there, which is why field_21A68_ below is named and
-  *     derived_tail_ gives four bytes back. sizeof was blind to the whole
+  *     line_colors_ and line_records_ account for the exact tail. sizeof was blind to the whole
   *     exchange - `clear_lines` wrote 0x21FF4 against the image's 0x21FF8.
   *
   * PlanWin's own fields are still carved out of the storage between the base
   * and 0x22050 rather than appended: appending would move the virtual base
   * and break every offset in the class.
-  */
+ */
+struct PlanLineRecord {
+  int32_t x1;
+  int32_t y1;
+  int32_t x2;
+  int32_t y2;
+};
+static_assert(sizeof(PlanLineRecord) == 0x10,
+              "PlanWin line records contain four coordinates");
+
 class PlanWin : public MapWin {
  public:
   // 0x0048AF30, a pending_bodies forwarder.
@@ -84,6 +93,9 @@ class PlanWin : public MapWin {
   PlanWin();
   ~PlanWin();
   void clear_lines();
+  void add_line(int x1, int y1, int x2, int y2, int color);
+  void add_line(int base_id1, int base_id2, int color);
+  void back_redraw();
   void close();
   void blink();
   void UNK1();
@@ -109,11 +121,14 @@ class PlanWin : public MapWin {
   // zero-length. VC6 rejects that - it is an MSVC extension - and a
   // zero-length member contributes nothing to the layout the
   // static_assert below pins.
-  int32_t field_21FF8_;  // 0x21FF8
-  // Four bytes shorter than the arithmetic suggests: naming the 0x21A68
-  // filler above pushed every field back into its image position, so the
-  // tail has to give those four back to keep the boundary at 0x22050.
-  uint8_t derived_tail_[0x22050 - 0x21FFC - 4];  // 0x21FFC
+  // The PlanWin line drawer has four records. The counter, color palette and
+  // four-coordinate lines occupy the 0x50-byte tail before the vbase slot.
+  // RECOVERY_MEMBER: v1 PlanWin line_count_ 0x21FF8 0x0048AE40
+  int32_t line_count_;  // 0x21FF8
+  // RECOVERY_MEMBER: v1 PlanWin line_colors_ 0x21FFC 0x0048AE40
+  int32_t line_colors_[4];  // 0x21FFC, four 4-byte colors
+  // RECOVERY_MEMBER: v1 PlanWin line_records_ 0x2200C 0x0048AE40
+  PlanLineRecord line_records_[4];  // 0x2200C, four 16-byte line records
 };
 
 static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe");

@@ -23,6 +23,7 @@
 #include "original_seam.h"
 #include "planwin.h"
 #include "mapwin.h"
+#include "base.h"
 #include "spritebox.h"
 #include "net_class.h"
 #include "texture.h"
@@ -154,8 +155,61 @@ Purpose: Clear the plan window's line count.
 Return Value: n/a
 Status: Complete
 */
+
+// ORIGINAL: 0x0048AE40 ?add_line@PlanWin@@QAEXHHHHH@Z 0x0048AE40-0x0048AE90 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original accepts four signed coordinates and one color, storing the coordinates at +0x2200C + count*0x10 and the color at +0x21FFC + count*4.", "PlanWin's line_count_, line_colors_, and line_records_ declarations occupy those measured offsets and preserve the 0x50-byte derived tail."], "reason": "Home the coordinate-based plan-line insertion through typed PlanWin line storage."}
+void PlanWin::add_line(int x1, int y1, int x2, int y2, int color) {
+    if (line_count_ >= 4) {
+        return;
+    }
+
+    PlanLineRecord &line = line_records_[line_count_];
+    line.x1 = x1;
+    line.y1 = y1;
+    line.x2 = x2;
+    line.y2 = y2;
+    line_colors_[line_count_] = color;
+    ++line_count_;
+}
+
+// ORIGINAL: 0x0048AE90 ?add_line@PlanWin@@QAEXHHH@Z 0x0048AE90-0x0048AF14 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The original overload treats its first two arguments as Base indices and reads their source-owned signed x/y members before storing the four coordinates and color in the same PlanWin arrays.", "Base::x and Base::y are declared at offsets 0 and 2 with RECOVERY_MEMBER evidence; PlanWin's line arrays occupy +0x21FFC and +0x2200C."], "reason": "Home the base-to-base plan line using the existing Base and PlanWin members instead of address arithmetic."}
+void PlanWin::add_line(int base_id1, int base_id2, int color) {
+    if (line_count_ >= 4) {
+        return;
+    }
+
+    const Base &first = Bases[base_id1];
+    const Base &second = Bases[base_id2];
+    PlanLineRecord &line = line_records_[line_count_];
+    line.x1 = first.x;
+    line.y1 = first.y;
+    line.x2 = second.x;
+    line.y2 = second.y;
+    line_colors_[line_count_] = color;
+    ++line_count_;
+}
+
+// ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The body sets MapWin +0x1DD70, fills the GraphicWin virtual base, redraws the MapWin, then copies that base's Buffer into PlanWin's own Buffer using DIB width and top-down height.", "MapWin virtually inherits GraphicWin and PlanWin declares its own Buffer at +0x21A70. Typed base conversions follow the vbtable; Buffer::dib_ supplies the observed +0x4C4/+0x4C8 dimensions."], "reason": "Recover PlanWin's backing-image refresh through its real MapWin/GraphicWin hierarchy and typed buffers."}
+void PlanWin::back_redraw() {
+    field_1DD70_ = 0x84010002;
+
+    // This conversion follows MapWin's virtual GraphicWin base (the image's
+    // vbtable-selected +0x22050 subobject), then calls its inherited Buffer.
+    GraphicWin *graphics = static_cast<GraphicWin *>(this);
+    graphics->fill(0);
+    draw_map(0);
+
+    // Recompute the virtual-base path after draw_map just as the original
+    // reloads the vbtable before accessing the source surface.
+    graphics = static_cast<GraphicWin *>(this);
+    Buffer *source = static_cast<Buffer *>(graphics);
+    buffer_.copy(source, 0, 0, source->dib_.bmiHeader.biWidth,
+                 -source->dib_.bmiHeader.biHeight);
+}
 void PlanWin::clear_lines() {
-    field_21FF8_ = 0;
+    line_count_ = 0;
 }
 
 
