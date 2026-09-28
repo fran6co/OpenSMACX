@@ -1870,7 +1870,7 @@ void Console::menu_simple() {
     X_pop(StrMenuSimple, 0);
 }
 
-// ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961
+// ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["The 0x00516930 seed sets GameMorePreferences bit 0x200000, calls the Console member at +0x22A2C using its current vehicle, and passes the image string at 0x0068A9C0 to X_pop.", "src/console.h identifies alpha_menu_ at Console +0x22A2C and selected_vehicle_; src/console.cpp already binds the matching MENUDETAIL text as StrMenuDetail, and alpha.h names GameMorePreferences."], "reason": "Express menu detail activation through the existing preference flag, typed AlphaMenu member, Console selection state and established string binding."}
 void Console::menu_detail() {
     GameMorePreferences |= 0x200000;
