@@ -1836,14 +1836,40 @@ void Datalink::set_cat_terraform() {
 // real list nodes in stringstruct.cpp, and ListBox::update_changes lives in
 // listbox.cpp. The old fixed-image reset forwarder is retired.
 
-// 0x00431EC0 ?on_button_clicked@Datalink@@QAEXH@Z - still an original body
-// (src/unrecovered/00431ec0.cpp, claimed). The void spelling makes it a real
-// override of Win's slot-44 on_button_clicked, so the link needs a definition
-// this soon; the forwarder retires when the body homes.
+// ORIGINAL: 0x00431EC0 ?on_button_clicked@Datalink@@QAEXH@Z 0x00431EC0-0x00431FA9 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover Datalink's history and report-button dispatch in its owning class rather than forwarding into the original image.","evidence":["image:0x00431EC0-0x00431FA9 dispatches button ids 0x10/0x11 and calls Datalink::set_cat, ListBox::set_selected_id, Datalink::draw_entry and ReportWin::on_button_clicked","source:src/win.h identifies virtual slot 58 at +0xE8 as release_modal; source:src/reportwin.h binds ReportWinGlobal to 0x00876478","source:src/datalink.h places history_, field_2A34_, field_29DC_ and listBox_ at the original offsets"]}
+// symbol    ?on_button_clicked@Datalink@@UAEXH@Z
+// Purpose: Route history controls and report-window buttons from the Datalink panel.
 void Datalink::on_button_clicked(int button_id) {
-    typedef void(__fastcall *pending)(Datalink *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00431EC0))(
-        this, nullptr, button_id);
+    switch (button_id) {
+    default:
+        if (field_29DC_ == 0xe) {
+            ReportWinGlobal.on_button_clicked(button_id);
+        }
+        break;
+    case 0x10: {
+        if (field_2A34_ <= 1) {
+            release_modal();
+            return;
+        }
+
+        --field_2A34_;
+        const int entry = history_[field_2A34_];
+        const int category = entry / 10000;
+        const int item = entry - category * 10000;
+        set_cat(static_cast<unsigned int>(category), 0);
+        history_[0] = item;
+
+        const int selected = field_29DC_ * 10000 + item;
+        listBox_.set_selected_id(selected);
+        repaint_slot();
+        draw_entry();
+        break;
+    }
+    case 0x11:
+        release_modal();
+        break;
+    }
 }
 
 /*
