@@ -408,6 +408,9 @@ class Console : public MapWin {
   // MISMATCH (88 of 180), so this reaches the image through a
   // pending_bodies.cpp forwarder rather than a claimed body.
   void end_my_turn();
+  void menu_detail();
+  void show_scen_objectives();
+  void zoom_to_upkeep_base();
   void clear_group();
   void set_preferences();
   void set_auto_preferences();

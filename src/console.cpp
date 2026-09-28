@@ -24,6 +24,7 @@
 #include "console.h"
 #include "dipedit.h"  // editor_diplomacy's stack DipEdit
 #include "game.h"
+#include "base.h"
 #include "general.h"
 #include "popup.h"  // editor_diplomacy's modal faction picker
 #include "infowin.h"
@@ -41,6 +42,7 @@
 #include "sprite.h"
 #include "time.h"
 #include "texture.h"
+#include "strings.h"  // StringTemp - scenario-objective text scratch buffer
 #include "vector_teardown.h"
 #include "veh.h"  // Vehs - the group table is the Vehs[i].state run
 #include "faction.h"  // Players/PlayersData - the per-faction records editor_energy and set_ai walk
@@ -1210,6 +1212,8 @@ static const char *const StrMapFlat = (const char *)0x00689148;      // "MAPFLAT
 static const char *const StrMapRound = (const char *)0x00689150;     // "MAPROUND"
 static const char *const StrEditorYear = (const char *)0x006890F0;   // "EDITORYEAR"
 static const char *const StrMenuDetail = (const char *)0x0068A9C0;   // "MENUDETAIL"
+static const char StrScenarioObjectivesPopup[] = "THEYFAILEDFLECHETTE";
+static char StrScenarioObjectivesTitle[] = "FLECHETTE";
 static const char *const StrFungosity = (const char *)0x0068915C;    // "FUNGOSITY"
 static const char *const StrFungmotize = (const char *)0x00689168;   // "FUNGMOTIZE"
 static const char *const StrProtectOff = (const char *)0x00689198;   // "PROTECTOFF"
@@ -1864,6 +1868,41 @@ void Console::menu_simple() {
     GameMorePreferences &= 0xffdfffff;
     alpha_menu_.check(selected_vehicle_);
     X_pop(StrMenuSimple, 0);
+}
+
+// ORIGINAL: 0x00516930 ?menu_detail@Console@@QAEXXZ 0x00516930-0x00516961
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516930 seed sets GameMorePreferences bit 0x200000, calls the Console member at +0x22A2C using its current vehicle, and passes the image string at 0x0068A9C0 to X_pop.", "src/console.h identifies alpha_menu_ at Console +0x22A2C and selected_vehicle_; src/console.cpp already binds the matching MENUDETAIL text as StrMenuDetail, and alpha.h names GameMorePreferences."], "reason": "Express menu detail activation through the existing preference flag, typed AlphaMenu member, Console selection state and established string binding."}
+void Console::menu_detail() {
+    GameMorePreferences |= 0x200000;
+    alpha_menu_.check(selected_vehicle_);
+    X_pop(StrMenuDetail, 0);
+}
+
+// ORIGINAL: 0x00516C50 ?show_scen_objectives@Console@@QAEXXZ 0x00516C50-0x00516D98
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x00516C50 seed parses ObjectiveReqVictory, ObjectivesSuddenDeathVictory and EndingMissionYear before processing faction-specific names.", "src/faction.h defines Players as 0x59C Player records: the seed's 0x00946A50, 0x00946A9C, 0x00946A84, 0x00946D4C, 0x00946D50 and 0x00946D34 references correspond to Player::is_leader_female, title_leader, name_leader, noun_gender, is_noun_plural and noun_faction.", "src/game.h owns GameRules and victory settings; general.h owns GenderDefault, PluralityDefault, parse_num, parse_says and say_year; strings.h owns StringTemp. The two popup strings at 0x0068AA0C and 0x0068AA18 were read from the pinned image as THEYFAILEDFLECHETTE and FLECHETTE.", "The seed's 0x005BF330 caption/label/callback call is represented by xpops.h's x_pop_caption_label, whose implementation forwards with the defaults (-1, no override, flags 0) to the typed full popup."], "reason": "Render scenario objectives through the existing faction, game-state, parser, scratch-buffer and popup owners, using the exact popup key values without raw data addresses."}
+void Console::show_scen_objectives() {
+    const int faction_id = ConsoleGlobal.faction_id_;
+    const Player &faction = Players[faction_id];
+    parse_num(0, ObjectiveReqVictory);
+    parse_num(1, ObjectivesSuddenDeathVictory);
+    parse_num(2, num_objectives(faction_id, GameRules & 0x1000));
+    parse_num(3, EndingMissionYear);
+
+    GenderDefault = faction.is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, faction.title_leader, -1, -1);
+    GenderDefault = faction.is_leader_female;
+    PluralityDefault = 0;
+    parse_says(2, faction.name_leader, -1, -1);
+    GenderDefault = faction.noun_gender;
+    PluralityDefault = faction.is_noun_plural;
+    parse_says(3, faction.noun_faction, -1, -1);
+
+    StringTemp[0] = 0;
+    say_year(StringTemp);
+    parse_says(4, StringTemp, -1, -1);
+    parse_says(0, StringTemp, -1, -1);
+    x_pop_caption_label(StrScenarioObjectivesTitle, StrScenarioObjectivesPopup, 0);
 }
 
 // Fixed-slot bindings carried from 004dbc40.cpp
@@ -3837,6 +3876,43 @@ void Console::end_of_turn() {
     }
 
     field_23BE4_ = 0;
+}
+
+// ORIGINAL: 0x005165B0 ?zoom_to_upkeep_base@Console@@QAEXXZ 0x005165B0-0x005166C3
+// RECOVERY_BINDING: v1 {"evidence": ["The retained 0x005165B0 seed selects the nearest own base carrying Base::state bit 0x10, using the current MapWin camera coordinates and wraps X on round maps.", "base.h names the 0x0097D040 array as Bases with 0x134-byte Base records; its x/y/faction/state members are at offsets 0/2/4/0x30, matching all seed reads.", "MapWin fields 0x1DD9C/0x1DDA0 supply the camera point; map.cpp binds MapLongitude/MapIsFlat/MapLongitudeBounds; tutwin.h binds the image's BaseWin at 0x006A7628 as TutWinBaseWindow."], "reason": "Choose the nearest base of ConsoleGlobal's current faction with the seed's wrapped-map distance calculation and pass its typed index to the established BaseWin zoom path."}
+void Console::zoom_to_upkeep_base() {
+    const MapWin *map_window = console_map_win();
+    const int camera_x = static_cast<int>(map_window->field_1DD9C_);
+    const int camera_y = static_cast<int>(map_window->field_1DDA0_);
+    int best_distance = 99999;
+    int best_base = -1;
+
+    if (BaseCurrentCount > 0) {
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            const Base &base = Bases[base_id];
+            if (base.faction_id_current == ConsoleGlobal.faction_id_ &&
+                (base.state & BSTATE_UNK_10) != 0) {
+                int dx = abs(camera_x - base.x);
+                if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) {
+                    dx = MapLongitudeBounds - dx;
+                }
+                const int dy = abs(camera_y - base.y);
+                const int abs_dx = abs(dx);
+                const int abs_dy = abs(dy);
+                const int high = (abs_dx > abs_dy) ? abs_dx : abs_dy;
+                const int low = (abs_dx < abs_dy) ? abs_dx : abs_dy;
+                const int distance = high - (((abs_dx + abs_dy >> 1) - low) + 1 >> 1);
+                if (distance <= best_distance) {
+                    best_base = base_id;
+                    best_distance = distance;
+                }
+            }
+        }
+
+        if (best_base >= 0) {
+            TutWinBaseWindow.zoom(best_base, 0);
+        }
+    }
 }
 
 // 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
