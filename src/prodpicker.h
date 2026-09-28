@@ -28,32 +28,29 @@
  /*
   * ProdPicker class
   *
-  * Derives from GraphicWin by ordinary single inheritance - its constructor calls
-  * GraphicWin's on an unadjusted `this` - so it is written as the original wrote
-  * it and needs no ABI workaround. GraphicWin is pinned here, so the base region
-  * is exact; ProdPicker's own extent is not established and nothing pins its
-  * sizeof.
+  * Uses ConstructedGraphicWin to express the image's explicit GraphicWin
+  * construction before the real embedded members. GraphicWin's base region is
+  * pinned; ProdPicker's member extent is now layout-asserted at 0xA840.
   *
-  * Most methods below ignore their arguments and return a constant, which is
-  * why they could be replaced ahead of that mapping. close reaches one real
-  * field: because GraphicWin is pinned at exactly 0xA14, the dword it clears
-  * at 0xA14 is ProdPicker's own first field, which is exact rather than a
-  * guess. Nothing past it is established.
+  * Several methods remain simple stubs, while close and lifecycle now use
+  * source-owned state. The member map is based on the constructor/destructor
+  * sequence and methods that reach those offsets.
   */
-class ProdPicker : public GraphicWin {
+class ProdPicker : public ConstructedGraphicWin {
  public:
   ProdPicker();
-  // 0x00421100 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // The destructor closes picker behavior before its typed members tear down.
   ~ProdPicker();
   int UNK1(int pos);
   void on_mouse_move(int a1, int a2);
   void UNK3(int a1);
   void close();
+  void draw_item(int item, int update);
   int edbc_fac(int facility_id);   // 0x00493B70, editor category
   int edbc_unit(int prototype_id); // 0x00493AF0, prototype category
   void on_mousewheel(int delta);   // 0x00493C20, embedded Scroll
+  void on_left_click(int x, int y);
+  void on_scrolled(int code, int position);
   // PAURECT@@H, per ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z; the body is
   // `ret 8` either way and only the decorated name moves.
   void on_redraw_nc(RECT *, int);
@@ -61,47 +58,31 @@ class ProdPicker : public GraphicWin {
  private:
   int32_t field_A14_;   // first field past the pinned GraphicWin base
 
-  // Storage the image proves is here: its own methods reach 0x7124.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 22 member(s) from the IDA database, 18 named; it starts a member at 0xA18, which is where src/ ends.
+  // Partial named field coverage within a class whose total image extent is
+  // asserted below; several interior regions remain byte storage pending
+  // stronger member evidence.
 
-  // The constructor placement-news every sub-object below EXPLICITLY, in the
-  // exact order the disassembly shows - GraphicWin::construct() has to run
-  // BEFORE any of them, and ordinary by-value members with a real constructor
-  // are default-constructed by C++ before the constructor BODY ever runs, so
-  // implicit member construction cannot reproduce this order. Raw storage
-  // placement-new'd from the .cpp; every offset above lands on a 4-byte
-  // boundary already, from the field sizes alone, so a plain `uint8_t[]`
-  // needs no explicit alignment (VC6 has no `__declspec(align)` to give it
-  // one - see vc6_compat.h).
-  //
-  // MEASURED: converting these to real declared members (Sprite[3], Font x4,
-  // Time, FlatButton[9], Scroll, Caviar), built implicitly, was tried and
-  // made this WORSE - 8/127 agreeing instructions against this baseline's
-  // 11/127. The image's own `sub esp, 8` at instruction 7 (matching what
-  // explicit placement-new already reproduces here) is NOT the null-guard
-  // spill slot the PLACEMENT-NEW-COSTS-A-NULL-GUARD lever targets elsewhere
-  // in this batch (ReportIf, SocialWin, PickWin, ReportWin): this
-  // constructor's SEH prologue already agrees with the image 7/7 either way,
-  // and real members instead cost the push ebx/esi/edi register-save order
-  // the image actually has. Reverted.
-  uint8_t sprites_[3 * 0x2C];  // 0xA18, 3 * sizeof(Sprite)
-  uint8_t font1_[0x28];  // 0xA9C, sizeof(Font)
-  uint8_t font2_[0x28];  // 0xAC4, sizeof(Font)
-  uint8_t font3_[0x28];  // 0xAEC, sizeof(Font)
-  uint8_t font4_[0x28];  // 0xB14, sizeof(Font)
-  uint8_t time_[0x28];  // 0xB3C, sizeof(Time)
+  // Real members keep the image's address layout and, with
+  // ConstructedGraphicWin as the base, construct after the GraphicWin base.
+  // Their declaration order matches the observed constructor order. This
+  // intentionally replaces raw storage/placement-new with C++ lifetime.
+  Sprite sprites_[3];  // 0xA18
+  Font font1_;  // 0xA9C
+  Font font2_;  // 0xAC4
+  Font font3_;  // 0xAEC
+  Font font4_;  // 0xB14
+  Time time_;  // 0xB3C
   uint32_t field_B64_;  // 0xB64
   uint32_t field_B68_;  // 0xB68
   uint32_t field_B6C_;  // 0xB6C
   uint32_t field_B70_;  // 0xB70
-  uint8_t flatButtons_[9 * 0xB4C];  // 0xB74, 9 * sizeof(FlatButton)
-  uint8_t scroll_[0x214C];  // 0x7120, sizeof(Scroll)
+  FlatButton flatButtons_[9];  // 0xB74
+  Scroll scroll_;  // 0x7120
 
-  uint8_t caviar_[0x13D0];  // 0x926C, sizeof(Caviar)
+  Caviar caviar_;  // 0x926C
 
-  // Storage the image proves is here: its own methods reach 0xA840.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // Remaining interior fields retain measured offsets and byte extent where
+  // no stronger source type is established.
   uint8_t field_A63C_[0x100];  // 0xA63C
   uint32_t field_A73C_;  // 0xA73C
   uint32_t field_A740_;  // 0xA740
@@ -122,10 +103,9 @@ class ProdPicker : public GraphicWin {
   // StringAllocationBase capture at +0x28/+0x2C, the primary vptr, the five
   // list-field zeros, then the derived-table refresh - exactly the
   // compiler-emitted StringList construction the declaration below now owns.
-  // REAL MEMBERS, not placement-new: the placement census only lowers, and
-  // the construction-order divergence (the image builds these three last,
-  // after Scroll and Caviar; implicit member construction runs them first)
-  // is accepted by direction - the ctor is unclaimed at 11/127 either way.
+  // Real members: their construction/destruction follows C++ declaration
+  // order. The earlier placement-new experiment's byte score is historical;
+  // structural ownership takes precedence over that local similarity result.
   StringList prod_a_;  // 0xA780
   StringList prod_b_;  // 0xA7B0
   StringList prod_c_;  // 0xA7E0

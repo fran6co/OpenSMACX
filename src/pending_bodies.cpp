@@ -736,11 +736,6 @@ PickWin::~PickWin() {  // ??1PickWin@@QAE@XZ at 0x0048A8E0
     PENDING_BODY(0x0048A8E0, pending)(this, nullptr);
 }
 
-ProdPicker::~ProdPicker() {  // ??1ProdPicker@@QAE@XZ at 0x00421100
-    typedef void(__fastcall *pending)(ProdPicker *, void *);
-    PENDING_BODY(0x00421100, pending)(this, nullptr);
-}
-
 ReplayWin::~ReplayWin() {  // ??1ReplayWin@@QAE@XZ at 0x005ADF10
     typedef void(__fastcall *pending)(ReplayWin *, void *);
     PENDING_BODY(0x005ADF10, pending)(this, nullptr);

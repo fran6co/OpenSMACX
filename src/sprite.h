@@ -199,6 +199,11 @@ class Sprite {
 
 static_assert(sizeof(Sprite) == 0x2C, "Sprite layout must match the legacy ABI");
 
+// Vehicle and project icon tables used by ProdPicker. Definitions and their
+// bounded extents are owned by sprite.cpp.
+extern Sprite g_FACILITY_ICON_SPRITES[70];
+extern Sprite g_SECRET_PROJECT_ICON_SPRITES[64];
+
 /*
  * THE TERRAIN-ART SHEET, the band of Sprite storage 0x0075B098..0x007AD1B0
  * that `load_terrain` (0x00451C50) fills and the map renderer draws through.

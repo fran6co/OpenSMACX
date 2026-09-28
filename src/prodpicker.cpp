@@ -21,8 +21,22 @@
 #include "prodpicker.h"
 #include "general.h"  // range used by veh.h's inline helpers
 #include "veh.h"
+#include "alpha.h"    // label_get
+#include "base.h"     // BaseCurrent, BaseIDCurrentSelected
+#include "map.h"      // mandate_color
+#include "mapwin.h"   // shared caption scaling slots
+#include "strings.h"  // StringTemp, StringTable
+#include "buffer.h"   // BoxSpriteParams, InterfaceBoxStyles
 #include "vector_teardown.h"
 #include <cstring>
+
+// The production preview's rotation conversion and model-size multiplier.
+// The seed at 0x004927C0 uses the words at 0x0066AA2C/30 as float
+// multipliers; both operands are immutable .rdata, not mutable globals.
+// Exact little-endian PE evidence (file offsets 0x26AA2C and 0x26AA30):
+// A7 E7 8E 3C = 0.017444444820284843f; 34 80 37 3A = 0.000699999975040555f.
+static const float ProdPickerRotationRadiansPerDegree = 0.017444444820284843f;
+static const float ProdPickerVehicleScaleFactor = 0.000699999975040555f;
 
 // The production editor groups facilities into four display categories.
 // ORIGINAL: 0x00493B70 ?edbc_fac@ProdPicker@@QAEHH@Z 0x00493B70-0x00493BB3 FILE BYTE_EXACT
@@ -65,30 +79,218 @@ int ProdPicker::edbc_unit(int prototype_id) {
 // ORIGINAL: 0x00493C20 ?on_mousewheel@ProdPicker@@QAEXH@Z 0x00493C20-0x00493C68 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step to ProdPicker's real embedded Scroll rather than a raw receiver offset or vtable shim. The source form currently mismatches; retain the seed's historical exact claim as a restoration obligation, without demotion."}
 void ProdPicker::on_mousewheel(int delta) {
-    Scroll *scroll = reinterpret_cast<Scroll *>(scroll_);
     // x86 NEG leaves INT_MIN negative; the original's positive-count test
     // therefore sends no steps for that otherwise overflowing input.
     if (delta == (-2147483647 - 1)) return;
     while (delta < 0) {
-        scroll->on_mousewheel_down(1);
+        scroll_.on_mousewheel_down(1);
         ++delta;
     }
     while (delta > 0) {
-        scroll->on_mousewheel_up(1);
+        scroll_.on_mousewheel_up(1);
         --delta;
     }
 }
 
-// Sprite and FlatButton are constructed in a loop through the CRT's own
-// vector constructor iterator - see vector_teardown.h. The addresses are the
-// two element types' own real constructor/destructor.
-// The element callbacks, spelled for real against the recovered
-// constructors and destructors (the image passes 0x005E37E0, 0x00406850,
-// 0x00607CF0 and 0x00406880 - Sprite and FlatButton lifecycle bodies).
-void __fastcall ProdPickerSpriteCtor(void *self) { reinterpret_cast<Sprite *>(self)->Sprite::Sprite(); }
-void __fastcall ProdPickerSpriteDtor(void *self) { reinterpret_cast<Sprite *>(self)->~Sprite(); }
-void __fastcall ProdPickerFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
-void __fastcall ProdPickerFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
+// ORIGINAL: 0x004927C0 ?draw_item@ProdPicker@@QAEXHH@Z 0x004927C0-0x00492F9F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004927c0.cpp", "source:src/prodpicker.h", "source:src/stringstruct.h", "source:src/buffer.h", "source:src/sprite.h", "source:src/veh.h"], "reason": "Paint production-picker cells through typed item lists, buffer/base services, sprite tables and Caviar rendering; preserve observed wrapped icon and panel-style data views."}
+// TRIED: direct translation of Ghidra's (already-clean) pseudocode into RD()-based offset access, matching the bounds check / grid position calc / set_clip+ box_sprite / three seek-list blocks / mandate_color+wrap_cent name draw / veh_fake+veh_draw+Caviar render-or-Sprite::draw_mono branch / veh_cost string; MISMATCH #0 (prologue/frame) not chased further. Typed source now measures 583 compiled instructions versus 672 original, with first divergence in stack-frame setup. The original sign-based icon dispatch conflicts with the positive IDs visible from StringList::current_id(); this source preserves the ID unchanged and leaves that producer/consumer discrepancy unresolved.
+void ProdPicker::draw_item(int item, int update) {
+    const int firstVisible = field_A77C_;
+    if (item < firstVisible || field_A82C_ + firstVisible <= item) return;
+
+    const int relativeItem = item - firstVisible;
+    const int row = relativeItem / field_A810_;
+    int left = (relativeItem % field_A810_) * field_A81C_;
+    const int top = row * field_A820_;
+    const int cellTop = top + 4;
+    const int cellRight = field_A81C_ + left + 0x18;
+    const int cellBottom = top + field_A820_ + 1;
+    left += 0x1B;
+
+    RECT cell = { left, cellTop, cellRight, cellBottom };
+    set_clip(&cell);
+    BoxSpriteParams *frame = &InterfaceBoxStyles[0];
+    if (field_A774_ == static_cast<uint32_t>(item)) {
+        // The seed passes base+20 bytes for selected entries. This is the
+        // original overlapping view beginning at edge1_, not style [1].
+        frame = reinterpret_cast<BoxSpriteParams *>(&InterfaceBoxStyles[0].edge1_);
+    }
+    box_sprite(&cell, frame);
+    if (field_A818_ <= static_cast<uint32_t>(item)) return;
+
+    ++cell.left;
+    --cell.right;
+    ++cell.top;
+    --cell.bottom;
+
+    StringList *lists[3] = { &prod_a_, &prod_c_, &prod_b_ };
+    const int counts[3] = { prod_a_.entry_count_, prod_c_.entry_count_, prod_b_.entry_count_ };
+    for (int i = 0; i < 3; ++i) {
+        if (item <= counts[i] - 1) lists[i]->seek_pos(item);
+    }
+
+    int productionId = 0;
+    uint32_t itemFlags = 0;
+    StringStructPayload *nameEntry = prod_a_.current_entry();
+    if (nameEntry) {
+        productionId = prod_a_.current_id();
+        itemFlags = nameEntry->field_8_;
+    }
+    // Preserve the current StringList ID exactly: current_id() returns the
+    // stored ID unchanged. The original draw code tests its sign to choose an
+    // icon family, while calculate's visible facility path appears to add
+    // positive IDs; that producer/consumer discrepancy remains unresolved.
+    const int displayId = productionId;
+    StringStructPayload *name = prod_a_.current_entry();
+    StringStructPayload *cost = prod_c_.current_entry();
+    char *nameText = name ? name->text : 0;
+    char *costText = cost ? cost->text : 0;
+
+    StringTemp[0] = 0;
+    const int textColor = mandate_color(itemFlags & 0xF);
+    StringTemp[0] = 0;
+    set_text_color(textColor, -1, 1, 1);
+    set_font(&font1_, 0, 0, 0);
+    const int nameLineHeight = font1_.line_advance();
+    RECT nameArea = { cell.left, cell.top + 5, cell.right,
+                      cell.top + nameLineHeight * 3 + 5 };
+    wrap_cent(nameText, &nameArea);
+
+    font3_.unk_1_ = 3;
+    set_text_color(0xA1, -1, 1, 1);
+    set_font(&font3_, 0, 0, 0);
+    const int textLeft = cell.left + 2;
+    const int textRight = cell.right - 2;
+    int costBottom = cell.bottom;
+    const int costHeight = wrap_height(costText, textRight - textLeft);
+    int costTop = costBottom - costHeight;
+    RECT costArea = { textLeft, costTop, textRight, costBottom };
+    wrap_cent(costText, &costArea);
+
+    const int costLineHeight = font3_.line_advance();
+    int turnsTop = costTop - costLineHeight;
+    if (prod_b_.head_) {
+        StringStructPayload *turns = prod_b_.current_entry();
+        if (turns && turns->text) {
+            RECT turnsArea = { textLeft, turnsTop, textRight, costBottom };
+            write_cent_l(turns->text, &turnsArea, static_cast<int>(strlen(turns->text)));
+        }
+    }
+
+    int hasPrototypeCost = 0;
+    if (displayId < 0) {
+        const int iconId = -displayId;
+        Sprite *icon = iconId < 0x46
+            ? &g_FACILITY_ICON_SPRITES[iconId]
+            : &g_SECRET_PROJECT_ICON_SPRITES[iconId - 0x46];
+        const int iconSize = (field_A820_ * 3) / 7;
+        const int iconX = (cell.bottom - cell.left) / 2 - iconSize / 2;
+        const int iconY = (cell.right - cell.left) / 2 - iconSize / 2;
+        icon->draw_mono(this, icon->transparent_index(), iconY + cell.left,
+                        cell.left + iconX, textColor, iconSize, icon->width());
+    } else {
+        const int iconSize = (field_A820_ << 1) / 3;
+        const int modelSize = (iconSize * 0x4B) / 100;
+        const int fakeId = veh_fake(displayId, BaseCurrent->faction_id_current);
+        const int rotation = field_A774_ == static_cast<uint32_t>(item)
+            ? static_cast<int>(field_B64_) : 0;
+        MapWinCaptionScale = iconSize;
+        MapWinCaptionDivisor = 100;
+        const int rendered = veh_draw(this, fakeId,
+            (cell.bottom - cell.left) / 2 - iconSize / 2 + cell.left,
+            cell.left + ((cell.right - cell.left) / 2 - modelSize / 2),
+            1, 0xCC, 0);
+        if (rendered) {
+            caviar_.reset_objects();
+            vehdraw_construct_vehicle(fakeId, &caviar_);
+            caviar_.set_scaling(static_cast<float>(iconSize) * ProdPickerVehicleScaleFactor);
+            caviar_.set_scene_rotation(static_cast<float>(rotation + 0x1E)
+                * ProdPickerRotationRadiansPerDegree, 0, 0);
+            caviar_.render(this, (cell.bottom - cell.left) / 2 + cell.left,
+                           cell.left + (cell.right - cell.left) / 2, 0);
+        }
+        MapWinCaptionScale = -1;
+        MapWinCaptionDivisor = -1;
+        veh_cost(displayId, BaseIDCurrentSelected, &hasPrototypeCost);
+        if (hasPrototypeCost) {
+            set_font(&font3_, 0, 0, 0);
+            set_text_color(0xFA, -1, 1, 1);
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(185));
+            strcat(StringTemp, " +");
+            char number[64];
+            _itoa(prototype_factor(displayId), number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, "%");
+            write_cent_l(StringTemp, &cell, static_cast<int>(strlen(StringTemp)));
+        }
+    }
+
+    if (field_A774_ == static_cast<uint32_t>(item)) box(&cell, 0xFF, 0xFF);
+    set_clip(&rect2_);
+    if (update) {
+        RECT updateArea = { left, cellTop, cellRight, cellBottom };
+        soft_update(&updateArea);
+    }
+}
+
+// ORIGINAL: 0x004941C0 ?on_left_click@ProdPicker@@QAEXHH@Z 0x004941C0-0x0049422F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004941c0.cpp", "source:src/prodpicker.h", "source:src/prodpicker.cpp"], "reason": "Apply the click-to-grid selection through the picker’s measured geometry and redraw both changed cells through draw_item and GraphicWin."}
+void ProdPicker::on_left_click(int x, int y) {
+    const int row = y / field_A820_;
+    const uint32_t oldSelection = field_A774_;
+    const int column = x / field_A81C_;
+    const uint32_t newSelection = field_A77C_ + row * field_A810_ + column;
+    field_A774_ = newSelection;
+    if (oldSelection != newSelection) {
+        field_B64_ = 0;
+        draw_item(static_cast<int>(oldSelection), 0);
+        draw_item(static_cast<int>(field_A774_), 0);
+        soft_update();
+    }
+}
+
+// ORIGINAL: 0x00493CB0 ?on_scrolled@ProdPicker@@QAEXHH@Z 0x00493CB0-0x00493E6F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493cb0.cpp", "source:src/prodpicker.h", "source:src/buffer.h", "source:src/win.h"], "reason": "Scroll the displayed item window using measured picker geometry, its real Buffer blit operation, draw_item, and inherited redraw virtual."}
+void ProdPicker::on_scrolled(int, int position) {
+    const int pageSize = static_cast<int>(field_A810_);
+    const int oldPosition = static_cast<int>(field_A77C_);
+    const int newPosition = pageSize * position;
+    field_A77C_ = static_cast<uint32_t>(newPosition);
+
+    int distance = newPosition - oldPosition;
+    if (distance < 0) distance = -distance;
+    if (distance > pageSize) {
+        redraw();
+        soft_update();
+        return;
+    }
+
+    if (newPosition < oldPosition) {
+        set_clip(&rect2_);
+        copy(this, 0x15, 4, 0x15, static_cast<int>(field_A820_) + 4,
+             static_cast<int>(field_A81C_) * pageSize + 4,
+             (static_cast<int>(field_A814_) - 1) * static_cast<int>(field_A820_)
+                 + 4 + static_cast<int>(field_A820_)
+                 - (static_cast<int>(field_A820_) + 4));
+
+        int first = static_cast<int>(field_A77C_);
+        const int end = static_cast<int>(field_A810_ + field_A77C_);
+        while (first < end) draw_item(first++, 0);
+    } else if (newPosition != oldPosition) {
+        set_clip(&rect2_);
+        copy(this, 0x15, static_cast<int>(field_A820_) + 4, 0x15, 4,
+             static_cast<int>(field_A81C_) * pageSize + 4,
+             (static_cast<int>(field_A814_) - 1) * static_cast<int>(field_A820_));
+
+        const int first = (static_cast<int>(field_A814_) - 1) * pageSize
+            + static_cast<int>(field_A77C_);
+        const int end = first + static_cast<int>(field_A810_);
+        for (int item = first; item < end; ++item) draw_item(item, 0);
+    }
+    soft_update();
+}
 
 // The three 0x30-byte blocks at 0xA780/0xA7B0/0xA7E0 - read once as unnamed
 // "generic sub-objects" staged through a computed adjustor - are StringLists
@@ -111,13 +313,12 @@ void __fastcall ProdPickerFlatButtonDtor(void *self) { reinterpret_cast<FlatButt
 //            gets reloaded) varies between the three in the image in a way
 //            plain repeated C++ does not reproduce.
 // TRIED: real declared members (Sprite[3]/Font x4/Time/FlatButton[9]/
-//            Scroll/Caviar) built implicitly instead of placement-new -
-//            measured WORSE, 8/127 against this baseline's 11/127. This
-//            constructor's image already emits `sub esp, 8` at instruction 7
-//            (the placement-new-costs-a-null-guard lever's target elsewhere
-//            in this batch does NOT apply here: this frame slot is already
-//            reproduced by the explicit body), and real members instead cost
-//            the push ebx/esi/edi order, so the placement-new form stands.
+//            Scroll/Caviar) built implicitly instead of placement-new
+//            measured WORSE, 8/127 against the raw-storage baseline's 11/127.
+//            That byte-only experiment is superseded: the class now has a
+//            verified same-size typed layout and real lifetime, so the lower
+//            constructor score is retained as a restoration obligation rather
+//            than a reason to keep explicit placement-new.
 // size      806 bytes
 // prototype void (__thiscall ??0ProdPicker@@QAE@XZ)(ProdPicker* this)
 // callers   1   call targets   7
@@ -125,36 +326,21 @@ void __fastcall ProdPickerFlatButtonDtor(void *self) { reinterpret_cast<FlatButt
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D4CF0 0x006051D0 0x006161D0 0x00616DA0 0x00618EA0 0x006456E4 0x006457C2
 */
-// The construction chain is GraphicWin::construct(), not a base constructor
-// call - GraphicWin's own constructor is the empty inline stub, and every
-// sub-object below is placement-new'd explicitly, in the exact order the
-// disassembly shows, because C++'s implicit member construction would run
-// them all BEFORE this body - and GraphicWin::construct() has to be first.
+// C++ constructs ConstructedGraphicWin/GraphicWin before these typed members;
+// declaration order follows the image's subobject order. Their destructors
+// similarly own teardown after this destructor body.
 ProdPicker::ProdPicker() {
-    new (static_cast<GraphicWin *>(this)) GraphicWin();
-
-    VectorCtorIterator(sprites_, 0x2C, 3, ProdPickerSpriteCtor, ProdPickerSpriteDtor);
-
-    new (font1_) Font();
-    new (font2_) Font();
-    new (font3_) Font();
-    new (font4_) Font();
-    new (time_) Time();
-
-    VectorCtorIterator(flatButtons_, 0xB4C, 9, ProdPickerFlatButtonCtor, ProdPickerFlatButtonDtor);
-
-    new (scroll_) Scroll();
-    new (caviar_) Caviar();
-
-    // prod_a_/prod_b_/prod_c_ construct from the declaration - implicitly,
-    // before this body, where the image builds them here last. Order
-    // divergence accepted by direction; see the note in prodpicker.h.
-
     field_A830_ = 0x86;
     field_A834_ = 0x86;
     field_A14_ = 0;
     field_A838_ = 0x6C;
     field_A83C_ = 0x5E;
+}
+
+// ORIGINAL: 0x00421100 ??1ProdPicker@@QAE@XZ 0x00421100-0x00421392;0x00651250-0x00651376
+// RECOVERY_BINDING: v1 {"evidence": ["git:1b3ed0614446d5283fe4cbd2392cbb64b49db601:src/recovered/units/00421100.cpp", "source:src/prodpicker.h"], "reason": "Home the ProdPicker destructor in its real owning TU; typed embedded members own their cleanup after close(), replacing the external hand-offset teardown forwarder."}
+ProdPicker::~ProdPicker() {
+    close();
 }
 
 /*
