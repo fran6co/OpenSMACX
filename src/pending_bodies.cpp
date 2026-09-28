@@ -496,11 +496,6 @@ void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
     PENDING_BODY(0x00429180, pending)(this, nullptr, topic, index);
 }
 
-void InfoWin::timer_proc(int a1) {  // 0x00459150
-    typedef void(__fastcall *pending)(InfoWin *, void *, int);
-    PENDING_BODY(0x00459150, pending)(this, nullptr, a1);
-}
-
 void StringBox::add_fixup() {  // 0x00629490
     typedef void(__fastcall *pending)(StringBox *, void *);
     PENDING_BODY(0x00629490, pending)(this, nullptr);

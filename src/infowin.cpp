@@ -44,6 +44,39 @@ void InfoWin::setup_text() {
 // drawing work below use real InfoWin members.
 static int *const InfoAnimationCounters = (int *)0x007AF174;
 
+// Reveal the active pane until it has reached its timed limit. The final
+// pause is suppressed while the adjacent main-interface control is visible.
+// That control is flat_button_[11]: MainInterfaceGlobal is at 0x007AE820,
+// the array begins at +0xE00, and each FlatButton occupies 0xB4C bytes
+// (flatbutton.h:66), placing element 11 at 0x007B7264.
+// ORIGINAL: 0x00459150 ?timer_proc@InfoWin@@QAEXH@Z 0x00459150-0x00459260
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00459150.cpp"], "reason": "Home InfoWin timer behavior with typed pane members and MainInterface flat-button slot"}
+void InfoWin::timer_proc(int a1) {
+    if (field_AC_ != 0) return;
+    if (active_interface_slot_occupied()) return;
+    if (MainInterfaceGlobal.flat_button_[11].is_visible() != 0) return;
+
+    const int pane = active_pane_;
+    const int count = ++visible_characters_[pane];
+    const int length = text_lengths_[pane];
+    if (count > length + 0x32) {
+        int mouse_x;
+        int mouse_y;
+        MainInterfaceGlobal.get_mouse_pos(&mouse_x, &mouse_y);
+        if (in_box(mouse_x, mouse_y, &bounds_) != 0 ||
+            field_A8_ != 0 || field_94_ != 0) {
+            visible_characters_[pane] = length + 0x28;
+            field_94_ = field_94_ == 0 ? 1 : 0;
+            draw_text(-1);
+            return;
+        }
+        timer_change(a1);
+        return;
+    }
+
+    if (count <= length + 1) draw_text(pane);
+}
+
 // Advance the selected information pane through its valid display states,
 // then repaint the newly selected pane.
 // ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141

@@ -47,7 +47,7 @@ class InfoWin {
   void UNK5(int, int, int, int, int);
 
  public:
-  // 0x00459150, a pending_bodies forwarder.
+  // 0x00459150, timed pane reveal/advance callback; implemented in infowin.cpp.
   void timer_proc(int a1);
 
  public:
@@ -161,8 +161,6 @@ class InfoWin {
   PushButton button_;
 };
 
-
-// InfoWin::timer_proc is not recovered yet.
 
 // right_menu is still a seam-forwarded body: it calls help_any and
 // GraphicWin::update(RECT *, GraphicWin *), and until that overload is
