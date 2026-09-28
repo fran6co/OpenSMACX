@@ -41,6 +41,9 @@ class DiploWin : public GraphicWin {
  public:
   // homed from 00442510.cpp
   void on_left_click(int a1, int a2);
+  int on_key_click(int repeat, int key);
+  int on_key_down(int key);
+  void done_deal();
 
  public:
   // homed from 00441490.cpp
@@ -125,7 +128,7 @@ class DiploWin : public GraphicWin {
   uint32_t field_AAC_;  // 0xAAC
   uint32_t field_AB0_;  // 0xAB0
   uint32_t field_AB4_;  // 0xAB4
-  uint32_t field_AB8_;  // 0xAB8
+  int32_t faction_id_with_;  // 0xAB8, the diplomacy counterpart used by offer/chat messages
   uint32_t field_ABC_;  // 0xABC
   uint32_t field_AC0_;  // 0xAC0
   uint32_t field_AC4_;  // 0xAC4
@@ -510,4 +513,3 @@ class DiploWin : public GraphicWin {
   // The IDB's last member: the class ends where editBox_ ends, 0xE5F0.
   EditBox editBox_;  // 0xDA7C, IDB `editBox`, size == sizeof(EditBox) == 0xB74
 };
-

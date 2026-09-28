@@ -20,6 +20,11 @@
 #include "vtable_shim.h"
 #include "netdaemon.h"
 #include "basepop.h"
+#include "console.h"
+#include "faction.h"
+#include "game.h"
+
+static int *const DiploOffersDirty = (int *)0x007492D0;
 
 // Slot 62, 0xF8 - the DiploWin front vtable's update entry, the one
 // done_deal tails into with the image's own `jmp dword ptr [eax + 0xf8]`.
@@ -29,6 +34,60 @@ typedef void (__fastcall *func_diplo_win_slot062)(void *);
 // DiploWin::show reaches the SubInterface subobject the original places at
 // +0xA14 by casting a hand-computed address, so the type must be complete.
 #include "subinterface.h"
+
+// ORIGINAL: 0x00442560 ?on_key_down@DiploWin@@QAEHH@Z 0x00442560-0x0044258A BYTE_EXACT
+int DiploWin::on_key_down(int key) {
+    if (key == 0x0D || key == 0x1B) {
+        return 0;
+    }
+    return editBox_.vslot_26(key);
+}
+
+// ORIGINAL: 0x004429C0 ?done_deal@DiploWin@@QAEXXZ 0x004429C0-0x004429E7 BYTE_EXACT
+void DiploWin::done_deal() {
+    field_A28_ = 3;
+    field_A24_ = 3;
+    field_A20_ = 0;
+    field_A1C_ = 0;
+    redraw();
+}
+
+// Historical TRIED entries below describe the scaffolded seed, not this typed member body.
+// ORIGINAL: 0x00442590 ?on_key_click@DiploWin@@QAEHHH@Z 0x00442590-0x004426ED
+// TRIED: Seed provenance: 0.74 mnemonic similarity - the edit box's slot-25 vtable call needed a shim in the scaffold; the tree's own Win::vslot_25 declares the same two-int signature, and Win slot 58 is release_modal, so both dispatch through the real declarations here. The private DiploWin state stays raw-offset (0xAB8, the 0xE490 edit text, stringBox_, editBox_).
+// TRIED: DAT_00946a50/DAT_00946a84 are per-faction record fields (stride 1436 = 0x59C) whose address itself is indexed - declared as extern arrays instead of the auto-scaffold's plain const-pointer globals (which would fold the stride multiply away), per the same lever as 0x00423000's g_faction_table. slot 25 on the edit_box_ sub-object takes two ints (a1,a2) - the auto-emitted VCall shim is nullary, so a second small vtable-shim class (VCall25) declares only the 26 ordinals needed with the right signature on the last one; a bare __thiscall function-pointer cast is C4234 on VC6. Landed at 0.74 mnemonic similarity.
+int DiploWin::on_key_click(int repeat, int key) {
+    if (key == 0x1B) {
+        release_modal();
+        return 1;
+    }
+    if (key == 0x0D) {
+        if (strlen(editBox_.text_) != 0) {
+            const int faction = ConsoleGlobal.faction_id_;
+            message_chat(0x1E00, faction_id_with_, editBox_.text_);
+
+            char line[256];
+            line[0] = 0;
+            PluralityDefault = 0;
+            GenderDefault = Players[faction].is_leader_female;
+            strcat(line, Players[faction].name_leader);
+            string_upper_slot()(line);
+            strcat(line, ": ");
+            strcat(line, " ");
+            strcat(line, editBox_.text_);
+
+            stringBox_.add(line, faction, 1);
+            *DiploOffersDirty = 1;
+            editBox_.set_text(0);
+            return 1;
+        }
+        release_modal();
+        return 1;
+    }
+    editBox_.vslot_25(repeat, key);
+    return 1;
+}
+
 
 /*
 Purpose: Unknown; the legacy implementation is a bare return with no body.
@@ -363,7 +422,6 @@ void DiploWin::hide() {
 // kill_offer, new_chat and on_button_clicked all set it to 1 as they change the
 // offer lists; exec (0x00443F10) tests it and clears it. `int *const` folds to
 // the bare immediate, so the rename moves no byte.
-static int *const DiploOffersDirty = (int *)0x007492D0;
 
 // ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z 0x004413F0-0x0044148C FILE
 // TRIED: `int idx = a2;` declared inside the inner `if (a2 < count - 1)` (mismatch, idx assign shifted 5 instructions late) and hoisted above it with a separate `countMinus1` temp (MNEMONIC_ONLY, worse). Landed the inner-if placement: MISMATCH #23, mnemonic similarity 0.98, same byte count (156/156).
@@ -578,4 +636,3 @@ void DiploWin::on_left_click(int a1, int a2) {
         vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
     }
 }
-
