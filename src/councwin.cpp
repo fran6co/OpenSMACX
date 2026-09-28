@@ -22,6 +22,13 @@
 #include "temp.h"     // do_all_draws
 #include "worldwin.h"
 #include "menu.h"
+#include "alpha.h"       // label_get and the source-owned council label table
+#include "base.h"        // GovernorFaction (the elected Planetary Governor)
+#include "faction.h"     // Players, PlayersData, and LockEnableMask
+#include "game.h"        // IsMultiplayerNet and string_upper_slot
+#include "general.h"     // GenderDefault and PluralityDefault
+#include "infowin.h"     // InfoFactionShadowColors
+#include "strings.h"     // StringTemp
 
 // Two of on_status's callees are still original bodies the tree has not homed
 // (0x0045D440 / 0x0045D970, both archive copies in src/recovered/units, which
@@ -434,17 +441,165 @@ void CouncWin::show(int visible) {
     }
 }
 
-// The seam and definition for the unrecovered draw_leader, at the end of the
-// file so no recovered body above shifts.
-//
-// auto_inline(off) is load-bearing, not tidiness. Left alone, VC6 expands this
-// one-line forwarder into draw_all_leaders (0x00425D90) and on_mouse_leave,
-// which reported it as C4711 at councwin.cpp(215) and (225). Both callers are
-// BYTE_EXACT today precisely because the original emits `call rel32` there, and
-// an inlined `mov ecx / call [seam]` would break them. OPENSMACX_NOINLINE is
-// the tree's spelling for this, but it expands to nothing on VC6 - the pragma
-// is the only form cl 12.00 honours.
+// Recover the complete leader rendering path through CouncWin's paired
+// sprite/rectangle members. The retained 0x00425DB0 seed supplies the
+// case map and call evidence; source ownership and exactness are checked
+// separately.
+// ORIGINAL: 0x00425DB0 ?draw_leader@CouncWin@@QAEXH@Z 0x00425DB0-0x00426459
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00425db0.cpp"], "reason": "Home leader rendering in CouncWin with typed faction, portrait and label members"}
+void CouncWin::draw_leader(int factionID) {
+    if (factionID == 0 || (Players[factionID].rule_flags & RFLAG_ALIEN) != 0) {
+        return;
+    }
 
+    int activeFactions = 0;
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0) {
+            ++activeFactions;
+        }
+    }
+    const int rankBase = (7 - activeFactions) / 2;
+
+    int precedingFactions = 0;
+    for (int precedingFaction = 1; precedingFaction < factionID; ++precedingFaction) {
+        if ((Players[precedingFaction].rule_flags & RFLAG_ALIEN) == 0) {
+            ++precedingFactions;
+        }
+    }
+
+    int rank = rankBase + precedingFactions + 1;
+    if (GovernorFaction == factionID) {
+        rank = 4;
+    } else if (GovernorFaction >= 0 && rank == 4) {
+        int governorPreceding = 0;
+        for (int governorFaction = 1; governorFaction < GovernorFaction; ++governorFaction) {
+            if ((Players[governorFaction].rule_flags & RFLAG_ALIEN) == 0) {
+                ++governorPreceding;
+            }
+        }
+        rank = rankBase + governorPreceding + 1;
+    }
+
+    const int layout = GovernorFaction < 0 ? 1 : 0;
+    RECT rect = leader_rects_[layout + rank * 2];
+    spot_.kill_type(rank);
+    spot_.add(factionID, rank, rect.left, rect.top,
+              rect.right - rect.left, rect.bottom - rect.top);
+
+    // GraphicWin contains Buffer as its second base, so this cast expresses
+    // the actual subobject rather than the seed's `this + 0x444` arithmetic.
+    Buffer *buffer = &static_cast<Buffer &>(*this);
+    buffer->box_sprite(&rect, &InterfaceBoxStyles[0]);
+    ++rect.left;
+    --rect.right;
+    ++rect.top;
+    --rect.bottom;
+
+    const int selectedVariant = GovernorFaction == factionID ? 1 : 0;
+    Sprite *backing = leader_backing_[factionID][selectedVariant];
+    backing->draw(buffer, backing->transparent_index(), rect.left, rect.top, 1, 1);
+
+    const int centerX = (rect.left + rect.right) / 2;
+    int textY = backing->height() + rect.top + 4;
+    buffer->set_text_color(0xA0, -1, 1, 1);
+    buffer->set_font(&font3_, 0, 0, 0);
+
+    GenderDefault = Players[factionID].is_leader_female;
+    PluralityDefault = 0;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, Players[factionID].title_leader);
+    buffer->write_cent_l(StringTemp, centerX, textY, static_cast<int>(strlen(StringTemp)));
+
+    textY += font3_.line_advance();
+    StringTemp[0] = '\0';
+    GenderDefault = Players[factionID].is_leader_female;
+    PluralityDefault = 0;
+    strcat(StringTemp, Players[factionID].name_leader);
+    buffer->write_cent_l(StringTemp, centerX, textY, static_cast<int>(strlen(StringTemp)));
+
+    RECT badgeRect = rect;
+    const int portraitY = textY + font3_.line_advance() + 10;
+    badgeRect.top = portraitY;
+    const int portraitVariant = field_A34_ != factionID ? 1 : 0;
+    Sprite *portrait = leader_portraits_[factionID][portraitVariant];
+    Sprite *portraitSize = leader_portraits_[factionID][0];
+    const int portraitX = rect.left + (rect.right - portraitSize->width() - rect.left) / 2;
+    portrait->draw(buffer, portrait->transparent_index(), portraitX, portraitY, 1, 1);
+
+    const int labelKind = static_cast<int>(leader_label_kind_[factionID]);
+    if (labelKind != 0) {
+        bool showLabel = true;
+        if (IsMultiplayerNet != 0) {
+            const uint8_t humans = static_cast<uint8_t>(LockEnableMask & 0xFF);
+            const uint8_t alive = static_cast<uint8_t>((LockEnableMask >> 8) & 0xFF);
+            showLabel = (field_A44_ & alive & humans) == humans;
+        }
+        if (showLabel) {
+            buffer->set_text_color(0x41, -1, 1, 1);
+            StringTemp[0] = '\0';
+            switch (labelKind) {
+            case -5:
+                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[31]);
+                strcat(StringTemp, label_get(0x7BC / 4));
+                break;
+            case -4:
+                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[30]);
+                strcat(StringTemp, label_get(0x7C0 / 4));
+                break;
+            case -3:
+                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
+                strcat(StringTemp, label_get(0x7C4 / 4));
+                break;
+            case -2:
+                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
+                strcat(StringTemp, label_get(0x7D4 / 4));
+                break;
+            case -1:
+                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[32]);
+                strcat(StringTemp, label_get(0x7D8 / 4));
+                break;
+            default: {
+                buffer->box_sprite(&badgeRect, &InterfaceBoxStyles[0]);
+                const int textColor = labelKind < 0
+                    ? InfoFactionShadowColors[labelKind + 8]
+                    : ChatItemIdTable[labelKind];
+                buffer->set_text_color(textColor, -1, 1, 1);
+                GenderDefault = Players[factionID].is_leader_female;
+                PluralityDefault = 0;
+                strcat(StringTemp, Players[factionID].name_leader);
+                break;
+            }
+            }
+            string_upper_slot()(StringTemp);
+            buffer->set_font(&font4_, 0, 0, 0);
+            buffer->write_cent_l(StringTemp, &badgeRect,
+                                 static_cast<int>(strlen(StringTemp)));
+        }
+    }
+
+    if (field_A1C_ <= 1) {
+        const int techId = leader_tech_[factionID];
+        const uint8_t alive = static_cast<uint8_t>((LockEnableMask >> 8) & 0xFF);
+        if (techId != 0 && (alive & (1 << (factionID & 0x1F))) != 0 &&
+            PlayersData[factionID].major_atrocities == 0) {
+            RECT techRect = badgeRect;
+            techRect.left -= 0x14;
+            techRect.top -= 0x14;
+            char number[32];
+            StringTemp[0] = '\0';
+            _itoa(techId, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get((techId == 1 ? 0x808 : 0x80C) / 4));
+            string_upper_slot()(StringTemp);
+            buffer->set_text_color(0xA0, -1, 1, 1);
+            buffer->write_cent_l(StringTemp, &techRect,
+                                 static_cast<int>(strlen(StringTemp)));
+        }
+    }
+
+    soft_update(&rect);
+}
 
 // ---------------------------------------------------------------------------
 // DEFINED IN THE HEADER, CLAIMED HERE.

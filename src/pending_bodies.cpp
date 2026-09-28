@@ -568,11 +568,6 @@ void Datalink::draw_entry() {  // 0x0042BF10
 // recovered body above it shifts. Both byte-exact select_special_N thunks and
 // draw_flash still reach it by name.
 
-void CouncWin::draw_leader(int factionID) {  // 0x00425DB0
-    typedef void(__fastcall *pending)(CouncWin *, void *, int);
-    PENDING_BODY(0x00425DB0, pending)(this, nullptr, factionID);
-}
-
 // ?update_window@Win@@QAEHPAURECT@@@Z at 0x005F74A0 - GraphicWin::update
 
 // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0, the RECT overload -

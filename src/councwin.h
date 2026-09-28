@@ -134,22 +134,8 @@ class CouncWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_A40_;  // 0xA40
   uint32_t field_A44_;  // 0xA44
   Spot spot_;  // 0xA48
-  uint32_t field_A54_;  // 0xA54
-  uint32_t field_A58_;  // 0xA58
-  uint32_t field_A5C_;  // 0xA5C
-  uint32_t field_A60_;  // 0xA60
-  uint32_t field_A64_;  // 0xA64
-  uint32_t field_A68_;  // 0xA68
-  uint32_t field_A6C_;  // 0xA6C
-  uint32_t field_A70_;  // 0xA70
-  uint32_t field_A74_;  // 0xA74
-  uint32_t field_A78_;  // 0xA78
-  uint32_t field_A7C_;  // 0xA7C
-  uint32_t field_A80_;  // 0xA80
-  uint32_t field_A84_;  // 0xA84
-  uint32_t field_A88_;  // 0xA88
-  uint32_t field_A8C_;  // 0xA8C
-  uint32_t field_A90_;  // 0xA90
+  uint32_t leader_label_kind_[8];  // 0xA54, values select panel badge/text cases
+  int leader_tech_[8];             // 0xA74, technology ids for war badges
   uint32_t field_A94_;  // 0xA94
   uint32_t field_A98_;  // 0xA98
   uint32_t field_A9C_;  // 0xA9C
@@ -176,118 +162,10 @@ class CouncWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_BC8_;  // 0xBC8
   uint32_t field_BCC_;  // 0xBCC
   uint32_t field_BD0_;  // 0xBD0
-  uint32_t field_BD4_;  // 0xBD4
-  uint32_t field_BD8_;  // 0xBD8
-  uint32_t field_BDC_;  // 0xBDC
-  uint32_t field_BE0_;  // 0xBE0
-  uint32_t field_BE4_;  // 0xBE4
-  uint32_t field_BE8_;  // 0xBE8
-  uint32_t field_BEC_;  // 0xBEC
-  uint32_t field_BF0_;  // 0xBF0
-  uint32_t field_BF4_;  // 0xBF4
-  uint32_t field_BF8_;  // 0xBF8
-  uint32_t field_BFC_;  // 0xBFC
-  uint32_t field_C00_;  // 0xC00
-  uint32_t field_C04_;  // 0xC04
-  uint32_t field_C08_;  // 0xC08
-  uint32_t field_C0C_;  // 0xC0C
-  uint32_t field_C10_;  // 0xC10
-  uint32_t field_C14_;  // 0xC14
-  uint32_t field_C18_;  // 0xC18
-  uint32_t field_C1C_;  // 0xC1C
-  uint32_t field_C20_;  // 0xC20
-  uint32_t field_C24_;  // 0xC24
-  uint32_t field_C28_;  // 0xC28
-  uint32_t field_C2C_;  // 0xC2C
-  uint32_t field_C30_;  // 0xC30
-  uint32_t field_C34_;  // 0xC34
-  uint32_t field_C38_;  // 0xC38
-  uint32_t field_C3C_;  // 0xC3C
-  uint32_t field_C40_;  // 0xC40
-  uint32_t field_C44_;  // 0xC44
-  uint32_t field_C48_;  // 0xC48
-  uint32_t field_C4C_;  // 0xC4C
-  uint32_t field_C50_;  // 0xC50
-  uint32_t field_C54_;  // 0xC54
-  uint32_t field_C58_;  // 0xC58
-  uint32_t field_C5C_;  // 0xC5C
-  uint32_t field_C60_;  // 0xC60
-  uint32_t field_C64_;  // 0xC64
-  uint32_t field_C68_;  // 0xC68
-  uint32_t field_C6C_;  // 0xC6C
-  uint32_t field_C70_;  // 0xC70
-  uint32_t field_C74_;  // 0xC74
-  uint32_t field_C78_;  // 0xC78
-  uint32_t field_C7C_;  // 0xC7C
-  uint32_t field_C80_;  // 0xC80
-  uint32_t field_C84_;  // 0xC84
-  uint32_t field_C88_;  // 0xC88
-  uint32_t field_C8C_;  // 0xC8C
-  uint32_t field_C90_;  // 0xC90
-  uint32_t field_C94_;  // 0xC94
-  uint32_t field_C98_;  // 0xC98
-  uint32_t field_C9C_;  // 0xC9C
-  uint32_t field_CA0_;  // 0xCA0
-  uint32_t field_CA4_;  // 0xCA4
-  uint32_t field_CA8_;  // 0xCA8
-  uint32_t field_CAC_;  // 0xCAC
-  uint32_t field_CB0_;  // 0xCB0
-  uint32_t field_CB4_;  // 0xCB4
-  uint32_t field_CB8_;  // 0xCB8
-  uint32_t field_CBC_;  // 0xCBC
-  uint32_t field_CC0_;  // 0xCC0
-  uint32_t field_CC4_;  // 0xCC4
-  uint32_t field_CC8_;  // 0xCC8
-  uint32_t field_CCC_;  // 0xCCC
-  uint32_t field_CD0_;  // 0xCD0
-  uint32_t field_CD4_;  // 0xCD4
-  uint32_t field_CD8_;  // 0xCD8
-  uint32_t field_CDC_;  // 0xCDC
-  uint32_t field_CE0_;  // 0xCE0
-  uint32_t field_CE4_;  // 0xCE4
-  uint32_t field_CE8_;  // 0xCE8
-  uint32_t field_CEC_;  // 0xCEC
-  uint32_t field_CF0_;  // 0xCF0
-  uint32_t field_CF4_;  // 0xCF4
-  uint32_t field_CF8_;  // 0xCF8
-  uint32_t field_CFC_;  // 0xCFC
-  uint32_t field_D00_;  // 0xD00
-  uint32_t field_D04_;  // 0xD04
-  uint32_t field_D08_;  // 0xD08
-  uint32_t field_D0C_;  // 0xD0C
-  uint32_t field_D10_;  // 0xD10
-  uint32_t field_D14_;  // 0xD14
-  uint32_t field_D18_;  // 0xD18
-  uint32_t field_D1C_;  // 0xD1C
-  uint32_t field_D20_;  // 0xD20
-  uint32_t field_D24_;  // 0xD24
-  uint32_t field_D28_;  // 0xD28
-  uint32_t field_D2C_;  // 0xD2C
-  uint32_t field_D30_;  // 0xD30
-  uint32_t field_D34_;  // 0xD34
-  uint32_t field_D38_;  // 0xD38
-  uint32_t field_D3C_;  // 0xD3C
-  uint32_t field_D40_;  // 0xD40
-  uint32_t field_D44_;  // 0xD44
-  uint32_t field_D48_;  // 0xD48
-  uint32_t field_D4C_;  // 0xD4C
-  uint32_t field_D50_;  // 0xD50
-  uint32_t field_D54_;  // 0xD54
-  uint32_t field_D58_;  // 0xD58
-  uint32_t field_D5C_;  // 0xD5C
-  uint32_t field_D60_;  // 0xD60
-  uint32_t field_D64_;  // 0xD64
-  uint32_t field_D68_;  // 0xD68
-  uint32_t field_D6C_;  // 0xD6C
-  uint32_t field_D70_;  // 0xD70
-  uint32_t field_D74_;  // 0xD74
-  uint32_t field_D78_;  // 0xD78
-  uint32_t field_D7C_;  // 0xD7C
-  uint32_t field_D80_;  // 0xD80
-  uint32_t field_D84_;  // 0xD84
-  uint32_t field_D88_;  // 0xD88
-  uint32_t field_D8C_;  // 0xD8C
-  uint32_t field_D90_;  // 0xD90
+  // The original selects paired hit-boxes by two layout variants and rank.
+  RECT leader_rects_[20];  // 0xBD4
+  Sprite *leader_backing_[8][2];  // 0xD14
+  Sprite *leader_portraits_[8][2]; // 0xD54
   // AN ARRAY, not six separate members: ~CouncWin tears the six down through
   // ONE `??_M` vector-destructor-iterator call (`push 0x406880; push 6;
   // push 0xB4C; push eax; call 0x6456E4` at 0x0042856F), which only an array
@@ -299,6 +177,5 @@ class CouncWin : public GraphicWin, public IfaceRegistryEntry {
 
 
 // ?draw_leader@CouncWin@@QAEXH@Z at 0x00425DB0 - public, __thiscall,
-// void(int) - is 1705 bytes and unrecovered. draw_all_leaders and
-// on_mouse_leave both reach it with a direct `call rel32`, so it is declared
-// on the class and defined at the end of councwin.cpp as a forwarder.
+// void(int) - 1705-byte owner method. draw_all_leaders and on_mouse_leave
+// both reach it with direct calls; its implementation lives in councwin.cpp.
