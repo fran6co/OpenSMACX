@@ -119,6 +119,10 @@ class SocialWin : public GraphicWin, public SubInterface {
  public:
   void hide();
   void show(int visible);
+  int on_left_click(int x, int y);
+  void on_right_click(int x, int y);
+  void on_mouse_leave(int x, int y);
+  void close();
   SocialWin();
   // 0x004B3C80 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
@@ -395,7 +399,8 @@ class SocialWin : public GraphicWin, public SubInterface {
   RECT tutRects1_[9];  // 0x1EFD0, 9 RECTs
   RECT tutRect1_;  // 0x1F060
   RECT tutRects2_[10];  // 0x1F070, 10 RECTs
-  uint8_t tooltipSocEng_[0x10];  // 0x1F110
+  // RECOVERY_MEMBER: v2 SocialWin tooltipSocEng_ tagRECT 0x1F110 0x004B1BC0
+  RECT tooltipSocEng_;
   RECT tutRect4_;  // 0x1F120
   RECT tutRects3_[18];  // 0x1F130, 18 RECTs
   // Interface receiver is this+A14; right-click tests these real rectangles
@@ -409,7 +414,8 @@ class SocialWin : public GraphicWin, public SubInterface {
   // RECOVERY_MEMBER: v2 SocialWin tooltipPsych_ tagRECT 0x1F280 0x004B2220
   RECT tooltipPsych_;
   RECT tutRect9_;  // 0x1F290
-  uint8_t tooltipFactionPower_[0x10];  // 0x1F2A0
+  // RECOVERY_MEMBER: v2 SocialWin tooltipFactionPower_ tagRECT 0x1F2A0 0x004B1BC0
+  RECT tooltipFactionPower_;
   RECT tutRect11_;  // 0x1F2B0
   RECT tutRect12_;  // 0x1F2C0
   RECT tutRect13_;  // 0x1F2D0

@@ -177,6 +177,65 @@ void SocialWin::on_iface_right_click(int x, int y) {
     MainInterfaceGlobal.Win::set_bubble_text(text, &rectangle);
 }
 
+// ORIGINAL: 0x004B1B20 ?on_left_click@SocialWin@@QAEHHH@Z 0x004B1B20-0x004B1B2D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1B20 body ignores its coordinates and returns TutWin::reset at 0x004BDDE0 on the process-lifetime object at 0x008C6E68.", "src/tutwin.cpp owns that object as TutorialWindow and its reset service returns int."], "reason": "Home the SocialWin click dismissal through the typed tutorial singleton."}
+int SocialWin::on_left_click(int, int) {
+    return TutorialWindow.reset();
+}
+
+// ORIGINAL: 0x004B1BC0 ?on_right_click@SocialWin@@QAEXHH@Z 0x004B1BC0-0x004B1CD1 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1BC0 body resets TutorialWindow, probes four contiguous category rectangles beginning at +0x1F110 then the faction-power rectangle at +0x1F2A0, and retrieves label slots 828 or 840.", "The existing SocialWin layout has those rectangles and the on_iface_right_click body establishes label_get, client_to_screen and set_bubble_text as the typed tooltip path."], "reason": "Recover the SocialWin right-click tooltip through real rectangle members and source-owned labels."}
+void SocialWin::on_right_click(int x, int y) {
+    TutorialWindow.reset();
+    RECT *categories[4] = {&tooltipSocEng_, &tutRect4_,
+                           &tutRects3_[0], &tutRects3_[1]};
+    int label = -1;
+    for (int i = 0; i < 4; ++i) {
+        if (in_box(x, y, categories[i])) {
+            label = 828;
+            break;
+        }
+    }
+    if (label < 0 && in_box(x, y, &tooltipFactionPower_)) {
+        label = 840;
+    }
+    if (label < 0) {
+        return;
+    }
+    char *text = label_get(label);
+    client_to_screen(&x, &y);
+    RECT rectangle = {x, y, x, y};
+    Win::set_bubble_text(text, &rectangle);
+}
+
+// ORIGINAL: 0x004B1FC0 ?on_mouse_leave@SocialWin@@QAEXHH@Z 0x004B1FC0-0x004B1FEC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x004B1FC0 body calls Win::clear_bubble_text twice, then checks the signed hover value at +0xA2C and redraws mouseover only while it is nonnegative.", "The sibling on_iface_mouse_leave already proves the double clear is intentional, and draw_mouseover uses field_A2C_ as its hover selection."], "reason": "Home the mouse-leave path through the existing hover member and typed Win service."}
+// symbol    ?on_mouse_leave@SocialWin@@UAEXHH@Z
+void SocialWin::on_mouse_leave(int, int) {
+    ::Win::clear_bubble_text();
+    ::Win::clear_bubble_text();
+    if (static_cast<int>(field_A2C_) >= 0) {
+        field_A2C_ = 0xFFFFFFFFU;
+        draw_mouseover();
+    }
+}
+
+// ORIGINAL: 0x004B26D0 ?close@SocialWin@@QAEXXZ 0x004B26D0-0x004B273C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The 0x004B26D0 body closes 35 FlatButton objects from +0x6020 at sizeof(FlatButton) stride, then four ButtonGroup objects from +0x1EB84 and a final group at +0x1EDD4.", "The existing SocialWin layout declares those exact arrays and the image finishes by clearing +0x2C28 and setting hover/effect selectors +0xA2C,+0xA30,+0x2C24 to minus one."], "reason": "Recover SocialWin cleanup through its real button arrays and named state members."}
+void SocialWin::close() {
+    for (int i = 0; i < 35; ++i) {
+        flatButtons_[i].close();
+    }
+    for (int j = 0; j < 4; ++j) {
+        buttonGroups_[j].close();
+    }
+    buttonGroup_.close();
+    field_2C28_ = 0;
+    field_A2C_ = 0xFFFFFFFFU;
+    field_A30_ = 0xFFFFFFFFU;
+    effectMaximize_ = 0xFFFFFFFFU;
+}
+
 
 
 /*
@@ -1448,13 +1507,14 @@ void SocialWin::on_mouse_move(int a1, int a2) {
     int hover = -1;
     // The four category tooltip rectangles: tooltipSocEng_ plus the three
     // RECT-sized slots that follow it, one per category.
-    RECT *category_rect = reinterpret_cast<RECT *>(tooltipSocEng_);
+    RECT *category_rects[4] = {&tooltipSocEng_, &tutRect4_,
+                               &tutRects3_[0], &tutRects3_[1]};
     for (int category = 0; category < 4; ++category) {
         for (int row = 0; row < 4; ++row) {
             if (society_avail(category, row, factionID_) == 0) {
                 continue;
             }
-            RECT rect = *category_rect;
+            RECT rect = *category_rects[category];
             RECT *grid = &tutRects3_[2 + row + category * 4];
             rect.left = grid->left;
             rect.right = grid->right;
@@ -1463,10 +1523,9 @@ void SocialWin::on_mouse_move(int a1, int a2) {
                 break;
             }
         }
-        ++category_rect;
     }
 
-    if (in_box(a1, a2, reinterpret_cast<RECT *>(&tooltipFactionPower_)) != 0) {
+    if (in_box(a1, a2, &tooltipFactionPower_) != 0) {
         hover = -2;
     }
     if (field_A2C_ != static_cast<uint32_t>(hover)) {
@@ -2122,10 +2181,10 @@ void SocialWin::init(int faction_id) {
     tutRect13_.left = 0x9a; tutRect13_.top = 0x13a; tutRect13_.right = 0x13c; tutRect13_.bottom = 0x14e;
     tutRect12_.left = 0x13f; tutRect12_.top = 0x13a; tutRect12_.right = 0x1e1; tutRect12_.bottom = 0x14e;
     tutRect11_.left = 0x1e4; tutRect11_.top = 0x13a; tutRect11_.right = 0x286; tutRect11_.bottom = 0x14e;
-    *reinterpret_cast<int *>(&tooltipSocEng_[0]) = 0x1a;
-    *reinterpret_cast<int *>(&tooltipSocEng_[4]) = 4;
-    *reinterpret_cast<int *>(&tooltipSocEng_[8]) = 0x26e;
-    *reinterpret_cast<int *>(&tooltipSocEng_[0xc]) = 0x4a;
+    tooltipSocEng_.left = 0x1a;
+    tooltipSocEng_.top = 4;
+    tooltipSocEng_.right = 0x26e;
+    tooltipSocEng_.bottom = 0x4a;
     tutRect4_.left = 0x1a; tutRect4_.top = 0x4d; tutRect4_.right = 0x26e; tutRect4_.bottom = 0x93;
     tutRects3_[0].left = 0x1a; tutRects3_[0].top = 0x96; tutRects3_[0].right = 0x26e; tutRects3_[0].bottom = 0xdc;
     tutRects3_[1].left = 0x1a; tutRects3_[1].top = 0xdf; tutRects3_[1].right = 0x26e; tutRects3_[1].bottom = 0x125;
@@ -2145,10 +2204,10 @@ void SocialWin::init(int faction_id) {
     tutRects3_[15].left = 0xb1; tutRects3_[15].top = 0xf8; tutRects3_[15].right = 0x143; tutRects3_[15].bottom = 0x10c;
     tutRects3_[16].left = 0x145; tutRects3_[16].top = 0xf8; tutRects3_[16].right = 0x1d7; tutRects3_[16].bottom = 0x10c;
     tutRects3_[17].left = 0x1d9; tutRects3_[17].top = 0xf8; tutRects3_[17].right = 0x26b; tutRects3_[17].bottom = 0x10c;
-    *reinterpret_cast<int *>(&tooltipFactionPower_[0]) = 0x271;
-    *reinterpret_cast<int *>(&tooltipFactionPower_[4]) = 0xfd;
-    *reinterpret_cast<int *>(&tooltipFactionPower_[8]) = 0x306;
-    *reinterpret_cast<int *>(&tooltipFactionPower_[0xc]) = 0x12d;
+    tooltipFactionPower_.left = 0x271;
+    tooltipFactionPower_.top = 0xfd;
+    tooltipFactionPower_.right = 0x306;
+    tooltipFactionPower_.bottom = 0x12d;
 
     {
         int left = *MainPanelLeft + 7;
