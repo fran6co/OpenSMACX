@@ -548,11 +548,6 @@ void ListBox::set_selected_pos(int position, int notify) {
 // SpriteBox::init's two tail-forwards reach them by name through the
 // embedded Dialog base, unchanged.
 
-int Dialog::init(RECT * a1, int a2) {  // 0x00609470
-    typedef int(__fastcall *pending)(Dialog *, void *, RECT *, int);
-    return PENDING_BODY(0x00609470, pending)(this, nullptr, a1, a2);
-}
-
 void Datalink::draw_entry() {  // 0x0042BF10
     typedef void(__fastcall *pending)(Datalink *, void *);
     PENDING_BODY(0x0042BF10, pending)(this, nullptr);

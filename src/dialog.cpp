@@ -192,6 +192,59 @@ void Dialog::set_style_bit_1(int on) {
 }
 
 /*
+Purpose: Initialize the dialog geometry and optional item-list heap.
+// TRIED (seed): field_D4_ was tentatively read as either &heap_ or the stack
+//   slot holding rect->left. The pinned body stores its saved `this + 4`
+//   heap pointer into StringList::allocator_ after successful allocation, and
+//   clears that allocator on the zero-size path.
+Status: Genuine C++ recovery; strict reference and behavioral acceptance remain pending.
+*/
+// ORIGINAL: 0x00609470 ?init@Dialog@@QAEHPAURECT@@H@Z 0x00609470-0x006095EE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned image inspect 0x00609470 decodes exactly 382 bytes. It snapshots all RECT fields before direct Dialog::close, calls Heap::init at 0x006094D5, returns 4 immediately on allocation error, and uses the saved this+4 heap pointer for StringList::allocator_ only on success; the zero-size branch clears that allocator. The retained 0x00609470 seed carried the alternative heap/stack-slot interpretation, resolved by the pinned stores at 0x0060955F and 0x006095DF."], "reason": "Recover the original Dialog RECT initializer in dialog.cpp using the real Dialog, Heap, and StringList members; its pointer validation, saved rectangle coordinates, close, geometry setup, and allocator ownership follow the pinned body."}
+// symbol    ?init@Dialog@@QAEHPAUtagRECT@@H@Z
+// size      382 bytes
+// prototype int (__thiscall ?init@Dialog@@QAEHPAURECT@@H@Z)(Dialog* this, RECT*, int)
+// callers   13   call targets   2
+// kind      game
+// calls     0x005D4620 0x00608F50
+// indirect  0x00609514 0x00609526 0x00609542 0x00609598 0x006095AA 0x006095C6
+int Dialog::init(RECT *rect, int heap_size) {
+    if (rect == 0) {
+        return 3;
+    }
+
+    const int left = rect->left;
+    const int top = rect->top;
+    const int right = rect->right;
+    const int bottom = rect->bottom;
+
+    close();
+
+    field_24_ = left;
+    field_28_ = top;
+    field_2C_ = right - left;
+    field_30_ = bottom - top;
+    field_20_ |= 3U;
+    field_1C_ = static_cast<uint32_t>(heap_size);
+
+    if (heap_size == 0) {
+        item_list_.remove_all();
+        item_list_.current_position_ = 0;
+        item_list_.allocator_ = 0;
+        return 0;
+    }
+
+    if (heap_.init(static_cast<size_t>(heap_size))) {
+        return 4;
+    }
+
+    item_list_.remove_all();
+    item_list_.allocator_ = &heap_;
+    item_list_.current_position_ = 0;
+    return 0;
+}
+
+/*
 Purpose: Find an item ID's bounded position in the dialog string list.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
 // MEASURED inline: the body lives at the end of dialog.h. The image keeps
