@@ -48,19 +48,18 @@ struct TexHeap {
   */
 class Sprite {
  public:
-  // THE FOUR UNK METHODS ARE EVIDENCE-FREE, and for a reason that is worth
-  // stating precisely because it also disqualifies the one clue they seem to
-  // have. UNK1 is `xor eax,eax; ret 0x1c` and UNK2 `xor eax,eax; ret 0x14`:
-  // five-byte stubs. VC6 FOLDS IDENTICAL BODIES PROGRAM-WIDE, so those bytes
-  // are not uniquely Sprite's - every 7-argument and 5-argument stub in the
-  // image shares them - and the single `caller` each records is whichever
-  // one the catalogue happened to attribute, not evidence about Sprite.
-  // win.h records the same folding for the 51 vtable slots the catalogue
-  // hands to AlphaMovie.
+  // The remaining UNK methods are EVIDENCE-FREE: their empty bodies do not
+  // establish original names or parameter meanings. UNK1 returns zero and
+  // pops seven arguments; identical bytes alone do not establish ownership.
+  // The five-argument zero-return hook below also has no original name, but
+  // Buffer's 5D8650 call supplies the actual shared Sprite receiver and a
+  // Buffer destination, so that specific call contract is recoverable.
   // UNK3 and UNK4 have EMPTY bodies, so their two ints are unused and
   // nothing in the body can name them either.
   int UNK1(int a, int b, int c, int d, int e, int f, int g);
-  int UNK2(int a, int b, int c, int d, int e);
+  // Original 5E4AEA returns zero; Buffer 5D8650 supplies the destination.
+  // Descriptive provisional name, not a recovered original source spelling.
+  int draw_noop(Buffer *destination, int transparent, int x, int y, int table);
   int draw(Buffer *destination, int transparent, int x, int y,
            int numerator, int denominator);
   int draw(Buffer *destination, int transparent, int x, int y);

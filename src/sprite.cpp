@@ -1495,6 +1495,7 @@ int Sprite::UNK1(int, int, int, int, int, int, int) {
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
 // ORIGINAL: 0x005E4AEA ?UNK2@Sprite@@QAEHHHHHH@Z 0x005E4AEA-0x005E4AEF BYTE_EXACT
+// symbol    ?draw_noop@Sprite@@QAEHPAVBuffer@@HHHH@Z
 // size      5 bytes
 // prototype int (__thiscall ?UNK2@Sprite@@QAEHHHHHH@Z)(Sprite* this, int, int, int, int, int)
 // callers   1   call targets   0
@@ -1503,7 +1504,7 @@ Purpose: Legacy stub; the original body returns 0 without reading its
 // calls     (none)
 Status: Complete
 */
-int Sprite::UNK2(int, int, int, int, int) {
+int Sprite::draw_noop(Buffer *, int, int, int, int) {
     return 0;
 }
 
@@ -2933,6 +2934,7 @@ int Sprite::draw_multi_table_dest(Buffer *destination, int transparent, int x,
 }
 
 // ORIGINAL: 0x005E81BC ?draw_dest_unk2@Sprite@@QAEHPAUBuffer@@HHHPAE@Z 0x005E81BC-0x005E8FA5 FILE
+// symbol    ?draw_dest_unk2@Sprite@@QAEHPAVBuffer@@HHHPAE@Z
 // draw_dest's stencil sibling: the transparency key passes untouched, a zero
 // source byte passes untouched, and everything else is remapped - the uniform
 // and shrink walks remap through the DESTINATION pixel (table[dst]) while the

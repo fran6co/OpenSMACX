@@ -412,6 +412,12 @@ class Buffer {
   // buffer.cpp. The five-int `draw` above is the six-argument form the
   // sprite-sheet callers use.
   int draw(Buffer *source, int a, int b, int c);
+  // Original 5D8650/5D8FE0/5D91D0: shared-Sprite publishing draw siblings.
+  int draw_unk2(Buffer *destination, int transparent, int x, int y, int table);
+  int draw(Buffer *destination, int transparent, int x, int y,
+           unsigned char *table);
+  int draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
+                     unsigned char *table);
   int draw_dest(Buffer *source, int a, int b, int c, int d);
   int draw_dest(Buffer *source, int a, int b, int c, int d, int e,
                 unsigned char *bits);
