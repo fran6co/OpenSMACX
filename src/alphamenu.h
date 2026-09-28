@@ -53,6 +53,8 @@ class AlphaMenu : public Menu {
   // slot-true stub.
   void on_mouse_feedback(int x, int y);
   int requested_height();
+  void on_adjust_pulldown_pos(int *x, int *y);
+  static int backfill_func(GraphicWin *target);
   // 0x00460DD0 - the catalogue pins the name ?check@MainMenu@@QAEXH@Z on it,
   // but the object it runs on is THIS one (??0Console builds a Menu-shaped
   // object at this+0x22A2C and then calls 0x00460DD0 on it), so the method

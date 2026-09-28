@@ -172,6 +172,9 @@ class GraphicWin : public Win, public Buffer {
   // repaints synchronously or modifies a borrowed rectangle.
   void soft_update();
   void soft_update(RECT *area);
+  // The AlphaMenu backfill callback draws into the supplied window's Buffer
+  // working rectangle (Buffer::rect2_, original offset 0x474).
+  RECT *buffer_working_rect() { return &rect2_; }
  private:
   // Borrowed frame sprites. overlay_nonclient supplies each as Sprite's
   // receiver or Buffer::tile's Sprite argument, reading +8/+0x18/+0x1C.

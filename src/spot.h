@@ -53,6 +53,14 @@ class Spot {
   int check(int x, int y, int *spot_pos, int *spot_type, RECT *spot_rect);
   int get_rect(int position, int type, RECT *spot_rect);
 
+  // The AlphaMenu pull-down adjustment receives the index returned by
+  // check(), then reads that exact SpotInternal record without filtering by
+  // position or type (0x00403620, index * 0x18, RECT at offset zero).
+  // Keep that verified index relation typed and explicit for that caller.
+  void get_rect_at(int index, RECT *spot_rect) const {
+    *spot_rect = spots_[index].rect;
+  }
+
  private:
   struct SpotInternal {
       RECT rect;

@@ -88,6 +88,10 @@ class Menu : public GraphicWin {
   int UNK12(int menu_id, int item_id);
 
  private:
+  // AlphaMenu::on_adjust_pulldown_pos is an inherited-owner operation: the
+  // original directly reads Menu's active entry index and embedded Spot.
+  friend class AlphaMenu;
+
   MenuProc proc_;
   int count_;
   uint32_t field_A1C_;  // 0x0a1c
