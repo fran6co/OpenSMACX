@@ -25,6 +25,7 @@
 #include "statuswin.h"
 #include "spritebox.h"
 #include "font.h"
+#include "infowin.h"
 #include "win.h"
 #include "graphicwin.h"
 #include "mapwin.h"  // MainInterfaceGlobal
@@ -381,12 +382,8 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
-// Two StatusWin members the image's click handlers need by name, both still
-// original bodies this build does not own: draw_active (0x004B4CF0, 6203
-// bytes, src/unrecovered/004b4cf0.cpp) and on_left_click (0x004B8E40, 403
-// bytes with a jump table, src/recovered/units/004b8e40.cpp). Neither carries
-// a BYTE_EXACT claim, so a forwarder is allowed; homing them retires these.
-// reset_active and on_left_double_click call them BY NAME.
+// StatusWin::draw_active (0x004B4CF0, 6203 bytes) remains an original body;
+// reset_active and the click handlers call this method by name.
 
 void StatusWin::draw_active(int first, int second, int flag) {  // 0x004B4CF0
     typedef void(__fastcall *pending)(StatusWin *, void *, int, int, int);
@@ -394,10 +391,108 @@ void StatusWin::draw_active(int first, int second, int flag) {  // 0x004B4CF0
         this, nullptr, first, second, flag);
 }
 
-void StatusWin::on_left_click(int x, int y) {  // 0x004B8E40
-    typedef void(__fastcall *pending)(StatusWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x004B8E40))(
-        this, nullptr, x, y);
+// ORIGINAL: 0x004B8E40 ?on_left_click@StatusWin@@QAEXHH@Z 0x004B8E40-0x004B8FD3 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b8e40.cpp", "StatusWin spot, click and toggle members in src/statuswin.h", "Console, NetDaemon, Bases and PlayersData owners in src/"], "reason": "Recover the click branches through owned C++ objects and preserve the historical original span."}
+void StatusWin::on_left_click(int x, int y) {
+    if (fInOnClick_ == 0) {
+        ConsoleInfoWin.reset();
+        if (field_15D4_ != 0) {
+            field_15D4_ = 0;
+            sub_interface_global()->release_iface_mode();
+        }
+        TutWinBaseWindow.cancel_zoom_wait();
+
+        int veh_id;
+        int kind;
+        if (spot_.check(x, y, &veh_id, &kind) < 0) {
+            return;
+        }
+        switch (kind) {
+        case 0:
+        case 10:
+            if (veh_selectable(veh_id)) {
+                ConsoleGlobal.selected_vehicle_ = veh_id;
+                if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) == 0) {
+                    veh_wake(veh_id);
+                    synch_veh(veh_id);
+                    NetDaemonNet.await_synch();
+                    NetDaemonNet.unlock_veh();
+                }
+                ConsoleGlobal.set_move(1);
+                return;
+            }
+            break;
+        case 1:
+        case 11: {
+            const int owner = Bases[veh_id].faction_id_current;
+            if ((GameState & STATE_OMNISCIENT_VIEW) != 0
+                || owner == ConsoleGlobal.faction_id_
+                || spying(owner)
+                || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1) != 0) {
+                TutWinBaseWindow.zoom(veh_id, 0);
+                return;
+            }
+            break;
+        }
+        case 3:
+            field_15A8_ = ~field_15A8_;
+            draw_status(-1, -1, -1, -1, 0);
+            break;
+        }
+    }
+}
+
+// ORIGINAL: 0x004B4A20 ?set_title@StatusWin@@QAEXH@Z 0x004B4A20-0x004B4BE3 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b4a20.cpp", "StringTemp, label_get and vehicle/console declarations in src/", "StatusWin tile members in src/statuswin.h"], "reason": "Recover title assembly using source-owned string, label, console and vehicle state."}
+void StatusWin::set_title(int title_id) {
+    static const char *const SpaceText = " ";
+    static const char *const ColonSpaceText = ": ";
+    const unsigned int flags = static_cast<unsigned int>(title_id);
+    StringTemp[0] = '\0';
+
+    if (flags != 0) {
+        int label_offset;
+        if (flags & 1) {
+            label_offset = 0x6B4;
+        } else if (flags & 0x10) {
+            label_offset = 0x6F8;
+        } else if (flags & 8) {
+            label_offset = 0x6FC;
+        } else if (flags & 2) {
+            label_offset = 0x6B8;
+        } else {
+            label_offset = 0x250;
+        }
+        strcat(StringTemp, label_get(label_offset / 4));
+        return;
+    }
+
+    strcat(StringTemp, label_get(0x8C / 4));
+    if (TurnCurrentNum != 0) {
+        strcat(StringTemp, ColonSpaceText);
+        int x;
+        int y;
+        if (ConsoleGlobal.cursor_active_ == 0) {
+            strcat(StringTemp, label_get(0xC / 4));
+            x = iTileX_;
+            y = iTileY_;
+        } else {
+            strcat(StringTemp, label_get(8 / 4));
+            const int veh_id = ConsoleGlobal.selected_vehicle_;
+            if (veh_id < 0) {
+                return;
+            }
+            strcat(StringTemp, SpaceText);
+            const Veh &veh = Vehs[veh_id];
+            x = veh.x;
+            y = veh.y;
+            strcat(StringTemp, VehPrototypes[veh.proto_id].veh_name);
+            strcat(StringTemp, SpaceText);
+        }
+        strcat(StringTemp, SpaceText);
+        say_loc(StringTemp, x, y, ConsoleGlobal.cursor_active_,
+                ConsoleGlobal.cursor_active_ == 0, ConsoleGlobal.cursor_active_);
+    }
 }
 
 // ORIGINAL: 0x004B4970 ?say_orders@@YAXH@Z 0x004B4970-0x004B4987 BYTE_EXACT

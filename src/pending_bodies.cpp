@@ -499,14 +499,6 @@ void PrefWin::display(int page) {  // 0x0048FA00
 // original body. StatusWin::redraw (src/statuswin.cpp) calls it BY NAME.
 
 
-// ?set_title@StatusWin@@QAEXH@Z at 0x004B4A20 - 451 bytes, still an original
-// body. go_reset (src/time.cpp) calls it twice, so it needs a definition the
-// build owns; the body is in src/recovered/units/004b4a20.cpp.
-void StatusWin::set_title(int title_id) {
-    typedef void(__fastcall *pending)(StatusWin *, void *, int);
-    PENDING_BODY(0x004B4A20, pending)(this, nullptr, title_id);
-}
-
 // ButtonGroup::button_click (0x0062B8A0) WAS HERE and is gone: the body is
 // homed into src/leaf_recoveries.cpp 2026-09-27.
 
