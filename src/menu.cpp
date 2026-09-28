@@ -1155,6 +1155,71 @@ Status: Complete
 void Menu::on_adjust_pulldown_pos(int *, int *) {
 }
 
+// Close the highlighted pull-down and publish the cleared selection through
+// the same redraw, input-flush, and task-pump sequence used by menu events.
+// ORIGINAL: 0x005FC620 ?hide_menus@Menu@@QAEXXZ 0x005FC620-0x005FC67C
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FC620 seed, typed MenuEntry and PullDown owners, MenuSelection source global, redraw and task-pump callees"], "reason": "Home the highlighted pull-down close sequence in Menu owner source"}
+void Menu::hide_menus() {
+    if (field_A24_ == -1) {
+        return;
+    }
+
+    MenuEntry &entry = entries_[field_A24_];
+    entry.pull_down->hide();
+    field_A24_ = -1;
+    MenuSelection = -1;
+    redraw();
+    flush_input();
+    do_all_tasks(entry.pull_down);
+    do_all_tasks(this);
+}
+
+// ORIGINAL: 0x005FBAC0 ?on_left_up@Menu@@QAEXHH@Z 0x005FBAC0-0x005FBC1A
+// RECOVERY_BINDING: v1 {"evidence": ["Retained 0x005FBAC0 seed, typed MenuEntry and PullDown item storage, Spot, callback, window parent and task helpers"], "reason": "Home the Menu release and selected-item dispatch in its owner translation unit"}
+void Menu::on_left_up(int xCoord, int yCoord) {
+    if (field_A24_ == -1) {
+        return;
+    }
+
+    if (spot_.check(xCoord, yCoord, &yCoord, 0) != -1) {
+        return;
+    }
+
+    const int highlighted = field_A24_;
+    hide_menus();
+    do_all_draws();
+
+    PullDown *pull_down = entries_[highlighted].pull_down;
+    const int selected = pull_down->get_selected();
+    if (selected == -1) {
+        return;
+    }
+
+    int selected_id = -1;
+    if (selected < 0x40) {
+        selected_id = pull_down->items_[selected].id;
+    }
+
+    hide_menus();
+    if ((field_A28_ & 4) == 0) {
+        hide();
+    }
+
+    MenuProc callback = proc_;
+    if (callback == 0) {
+        return;
+    }
+    callback(selected_id);
+
+    if (win_parent_ == 0) {
+        return;
+    }
+    Win *target = win_parent_->event_window();
+    if (target != 0 && !target->vslot_23()) {
+        target->vslot_07();
+    }
+}
+
 
 /*
 // ORIGINAL: 0x005FC680 ?on_mouse_move@Menu@@QAEXHH@Z 0x005FC680-0x005FC692 BYTE_EXACT
