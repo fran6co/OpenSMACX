@@ -24,18 +24,54 @@
 
 #include "original_seam.h"
 #include "graphicwin.h"
+#include "subinterface.h"
 
- /*
-  * Datalink class
+/*
+ * Datalink's interface subobject is the second base at +0xA14. The constructor
+ * installs the Datalink interface table at that address after initializing
+ * SubInterface's base table, while GraphicWin remains the primary base.
+ * Its 19-slot table is recorded in the pinned image at 0x66AF30; see the slot
+ * order below. This replaces the two former dword placeholders without moving
+ * any following member.
+ *
+ * The object layout beyond the established member map remains incomplete.
+ */
+class DatalinkIface : public SubInterface {
+ public:
+  virtual void on_status(int) = 0;                         // 0
+  virtual void on_iface_scrolled(int, int) {}              // 1, shared ret 8
+  virtual void on_iface_scrolling(int, int) {}              // 2, shared ret 8
+  virtual void on_iface_left_click(int, int) = 0;           // 3
+  virtual void on_iface_right_click(int, int) = 0;          // 4
+  virtual void on_iface_left_down(int, int) = 0;            // 5
+  virtual void on_iface_left_up(int, int) {}                // 6, shared ret 8
+  virtual void on_iface_right_down(int, int) = 0;           // 7
+  virtual void on_iface_mouse_move(int, int) = 0;            // 8
+  virtual void on_iface_mouse_leave(int, int) = 0;           // 9
+  virtual void on_iface_selected(int, int) = 0;              // 10
+  virtual void on_iface_left_double_click(int, int) = 0;     // 11
+  virtual void on_iface_right_double_click(int, int) = 0;    // 12
+  virtual void on_iface_button_clicked(int) = 0;             // 13
+  virtual int on_iface_button_pressed(int) { return 0; }     // 14, shared ret 0
+  virtual void on_iface_button_toggled(int, int) = 0;        // 15
+  virtual void on_iface_group_clicked(int, int, int) = 0;    // 16
+  virtual int vslot_17(GraphicWin *) { return 0; }            // 17, shared ret 0
+  virtual int vslot_18(GraphicWin *, int, int, RECT *) { return 0; } // 18
+};
+
+/*
+ * Datalink class
+ *
+ * The primary GraphicWin is at zero; DatalinkIface is the secondary base at
+ * +0xA14, as established by the constructor's vftable stores and the image's
+ * Datalink-specific 19-slot table. The table puts 0x432060 in slot 0,
+ * 0x432160..0x432210 in their event slots, and shared return stubs in 1, 2,
+ * 6, 14, 17 and 18. This typed hierarchy is the C++ representation of that
+ * evidence, not a hand-built vtable.
   *
-  * Derives from GraphicWin in the original by ordinary single inheritance -
-  * its constructor calls GraphicWin's on an unadjusted `this` - so unlike the
-  * virtually-derived windows this one is written as the original wrote it and
-  * needs no ABI workaround.
-  *
-  * The layout is not established. The constructor's own fields begin at 0xA14,
-  * immediately after the base, and where the object ends is unknown, so
-  * nothing pins its sizeof and the fields between are not modelled. The
+ * The member layout is partial. Its declared state begins at 0xA1C after the
+ * proved interface base; where the object ends is unknown, so nothing pins
+ * its sizeof and most fields between are not modelled. The
   * methods recovered here are bare returns that touch no field, which is why
   * they can be replaced ahead of that mapping.
   */
@@ -47,7 +83,9 @@
 // one-int struct would state a size the evidence does not support.
 struct DatalinkID;
 
-class Datalink : public GraphicWin {
+// RECOVERY_BASE: v1 Datalink GraphicWin 0x0 0x00428FC0
+// RECOVERY_BASE: v1 Datalink DatalinkIface 0xA14 0x00428FC0
+class Datalink : public GraphicWin, public DatalinkIface {
  public:
   // 0x00429180, a pending_bodies forwarder.
   void exec(unsigned int topic, int index);
@@ -66,6 +104,8 @@ class Datalink : public GraphicWin {
   // nothing and the deleting destructor needs a `call rel32`.
   ~Datalink();
   int UNK1(int a1, int a2);
+  // 0x0042A0B0 parses a decimal topic id and writes its category and entry.
+  void UNK2(char *text, int *category, int *entry);
   void parse_id(int id, DatalinkID *out_id, int *out_remainder);
   // These three are catalogued ?UNK3@Datalink@@QAEXIH@Z,
   // ?UNK4@Datalink@@QAEXHH@Z and ?UNK5@Datalink@@QAEXXZ. The names
@@ -163,11 +203,9 @@ class Datalink : public GraphicWin {
 
 
  private:
-  // GraphicWin is pinned at 0xA14, which fixes the origin. Everything between
-  // there and the three fields close() clears is unmapped; the span holds
-  // their offsets in place and the test checks them directly.
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
+  // DatalinkIface ends at 0xA1C. Everything between that base and the three
+  // fields close() clears is unmapped; the span holds their offsets in place.
+  // DatalinkIface occupies [0xA14, 0xA1C), replacing the former raw dwords.
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
   uint32_t field_A24_;  // 0xA24

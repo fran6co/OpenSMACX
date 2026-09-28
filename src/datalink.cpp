@@ -212,6 +212,7 @@ void Datalink::on_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00432160 ?on_iface_left_click@Datalink@@QAEXHH@Z 0x00432160-0x00432163 BYTE_EXACT
+// symbol    ?on_iface_left_click@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -228,6 +229,7 @@ void Datalink::on_iface_left_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00432170 ?on_iface_right_click@Datalink@@QAEXHH@Z 0x00432170-0x00432173 BYTE_EXACT
+// symbol    ?on_iface_right_click@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -244,6 +246,7 @@ void Datalink::on_iface_right_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00432180 ?on_iface_left_down@Datalink@@QAEXHH@Z 0x00432180-0x00432183 BYTE_EXACT
+// symbol    ?on_iface_left_down@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -260,6 +263,7 @@ void Datalink::on_iface_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00432190 ?on_iface_right_down@Datalink@@QAEXHH@Z 0x00432190-0x00432193 BYTE_EXACT
+// symbol    ?on_iface_right_down@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_down@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -276,6 +280,7 @@ void Datalink::on_iface_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004321A0 ?on_iface_mouse_move@Datalink@@QAEXHH@Z 0x004321A0-0x004321A3 BYTE_EXACT
+// symbol    ?on_iface_mouse_move@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_mouse_move@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -292,6 +297,7 @@ void Datalink::on_iface_mouse_move(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004321B0 ?on_iface_mouse_leave@Datalink@@QAEXHH@Z 0x004321B0-0x004321B3 BYTE_EXACT
+// symbol    ?on_iface_mouse_leave@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_mouse_leave@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -308,6 +314,7 @@ void Datalink::on_iface_mouse_leave(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004321C0 ?on_iface_selected@Datalink@@QAEXHH@Z 0x004321C0-0x004321C3 BYTE_EXACT
+// symbol    ?on_iface_selected@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_selected@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -324,6 +331,7 @@ void Datalink::on_iface_selected(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004321D0 ?on_iface_left_double_click@Datalink@@QAEXHH@Z 0x004321D0-0x004321D3 BYTE_EXACT
+// symbol    ?on_iface_left_double_click@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -340,6 +348,7 @@ void Datalink::on_iface_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004321E0 ?on_iface_right_double_click@Datalink@@QAEXHH@Z 0x004321E0-0x004321E3 BYTE_EXACT
+// symbol    ?on_iface_right_double_click@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -356,6 +365,7 @@ void Datalink::on_iface_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004321F0 ?on_iface_button_clicked@Datalink@@QAEXH@Z 0x004321F0-0x004321F3 BYTE_EXACT
+// symbol    ?on_iface_button_clicked@Datalink@@UAEXH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_button_clicked@Datalink@@QAEXH@Z)(Datalink* this, int)
 // callers   0   call targets   0
@@ -372,6 +382,7 @@ void Datalink::on_iface_button_clicked(int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00432200 ?on_iface_button_toggled@Datalink@@QAEXHH@Z 0x00432200-0x00432203 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@Datalink@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_button_toggled@Datalink@@QAEXHH@Z)(Datalink* this, int, int)
 // callers   0   call targets   0
@@ -382,6 +393,17 @@ Return Value: n/a
 Status: Complete
 */
 void Datalink::on_iface_button_toggled(int, int) {
+}
+
+
+// The image routes this callback through DatalinkIface slot 16. Its recovered
+// implementation remains in the preserved historical seed until its member
+// accesses can be expressed against the secondary-base receiver safely.
+// ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00432210.cpp preserves the 123-byte BYTE_EXACT historical callback; image:0x0066AF30 slot 16 points to 0x00432210; source:src/datalink.h models DatalinkIface at +0xA14"], "reason": "Bind the DatalinkIface slot-16 callback to its product class declaration and owner-TU body; the complete behavior remains explicitly unfinished while translating accesses from the secondary receiver."}
+// symbol    ?on_iface_group_clicked@Datalink@@UAEXHHH@Z
+void Datalink::on_iface_group_clicked(int, int, int) {
+    // BODY GOES HERE.
 }
 
 
@@ -651,6 +673,21 @@ void Datalink::parse_id(int id, DatalinkID *out_id, int *out_remainder) {
     *reinterpret_cast<int32_t *>(out_id) = quotient;
     *out_remainder = static_cast<int32_t>(
         static_cast<uint32_t>(id) - static_cast<uint32_t>(quotient) * 10000U);
+}
+
+/*
+Purpose: Parse a decimal Datalink id into its category and entry components.
+         The quotient/remainder are the same split used by parse_id; this
+         overload receives the encoded id as text from a link target.
+*/
+// ORIGINAL: 0x0042A0B0 ?UNK2@Datalink@@QAEXPADPAHPAH@Z 0x0042A0B0-0x0042A0F1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0042A0B0-0x0042A0F1 calls atoi then stores quotient and remainder; git:08336bcc:src/recovered/units/0042a0b0.cpp contains the historical analysis and source:src/datalink.cpp:parse_id implements the matching numeric split"], "reason": "The product Datalink parser owns this text-to-category/remainder operation; its original span and name are preserved in Git provenance."}
+// symbol    ?UNK2@Datalink@@QAEXPADPAH1@Z
+void Datalink::UNK2(char *text, int *category, int *entry) {
+    const int id = atoi(text);
+    const int quotient = id / 10000;
+    *category = quotient;
+    *entry = id - quotient * 10000;
 }
 
 /*
@@ -1906,4 +1943,18 @@ void Datalink::on_redraw() {
     restore_clip();
     MainInterfaceGlobal.restore_back(1);
     draw_entry();
+}
+
+// Escape and Enter close the Datalink; other keys are delegated to its entry
+// list's Win key handler.
+// ORIGINAL: 0x00431FC0 ?on_key_click@Datalink@@QAEHHH@Z 0x00431FC0-0x00431FFB BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00431FC0-0x00431FFB branches on key codes 0x0D and 0x1B, dynamically calls ListBox slot 26 otherwise, then Win slot 58; git:08336bcc:src/recovered/units/00431fc0.cpp; source:src/datalink.h embeds ListBox listBox_; source:src/win.h names slot 58 release_modal and slot 26 vslot_26"], "reason": "The Datalink key callback closes the modal window for Enter/Escape and delegates other keys through its embedded ListBox Win handler."}
+int Datalink::on_key_click(int, int key) {
+    if (key != 0x0D) {
+        if (key != 0x1B) {
+            return listBox_.vslot_26(key);
+        }
+    }
+    release_modal();
+    return 1;
 }
