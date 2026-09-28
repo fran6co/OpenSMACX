@@ -67,9 +67,8 @@ class StatusWin {
   void UNK2();                                 // 0x004B4CD0
   void UNK3();                                 // 0x004B8DF0
   void UNK4();                                 // 0x004B9E90
-  // 0x004B4A20, 451 bytes - still an original body (an archived artifact in
-  // src/recovered/units/004b4a20.cpp), declared here so go_reset's direct
-  // `call 0x4b4a20` at 0x0050F020 / 0x0050F150 compiles and links.
+  // 0x004B4A20, 451 bytes - homed in statuswin.cpp. go_reset calls this
+  // member twice; the typed body still has a byte-restoration obligation.
   void set_title(int title_id);
 
 
