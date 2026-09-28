@@ -27,6 +27,46 @@
 // 0x009B8AA8 under two names. Defined there; used here.
 
 /*
+Purpose: Raise a popup with caller-supplied override text, using its string
+         length and the default pair of enabled flags.
+// size      60 bytes
+// kind      game
+Return Value: whatever the full form returns, or -1 for a null text pointer
+Status: Complete
+*/
+// ORIGINAL: 0x005BF6F0 ?X_pops@@YAHPADPBDPADHPAUSprite@@P6AHXZ@Z 0x005BF6F0-0x005BF72C BYTE_EXACT
+// symbol    ?X_pops@@YAHPADPBD0HPAVSprite@@P6AHXZ@Z
+int __cdecl X_pops(char *caption, const char *label, char *text, int value,
+                   Sprite *sprite, int (__cdecl *callback)()) {
+    if (text == nullptr) {
+        return -1;
+    }
+    const int length = static_cast<int>(std::strlen(text));
+    return X_pops(caption, label, length, text, value, sprite, 1, 1,
+                  callback);
+}
+
+/*
+Purpose: Raise a popup with caller-supplied override text and flags.
+// size      64 bytes
+// kind      game
+Return Value: whatever the full form returns, or -1 for a null text pointer
+Status: Complete
+*/
+// ORIGINAL: 0x005BF730 ?X_pops@@YAHPADPBDPADHPAUSprite@@HHP6AHXZ@Z 0x005BF730-0x005BF770 BYTE_EXACT
+// symbol    ?X_pops@@YAHPADPBD0HPAVSprite@@HHP6AHXZ@Z
+int __cdecl X_pops(char *caption, const char *label, char *text, int value,
+                   Sprite *sprite, int flag1, int flag2,
+                   int (__cdecl *callback)()) {
+    if (text == nullptr) {
+        return -1;
+    }
+    const int length = static_cast<int>(std::strlen(text));
+    return X_pops(caption, label, length, text, value, sprite, flag1, flag2,
+                  callback);
+}
+
+/*
 Purpose: Raise a popup with the defaults the short form implies - the shared
          caption buffer, no title, no override text, and both flags set.
 // ORIGINAL: 0x005BF7D0 ?X_pops@@YAHPBDHPAUSprite@@P6AHXZ@Z 0x005BF7D0-0x005BF7FA BYTE_EXACT
@@ -591,4 +631,19 @@ Status: Complete
 int __cdecl X_pop_ask_number(const char *label, int value,
                              int (__cdecl *callback)()) {
     return X_pop_ask_number(PopupStartCaption, label, value, callback);
+}
+
+/*
+Purpose: The caption-taking numeric-entry form with the value defaulted.
+         Preserve the supplied caption and use the original zero default.
+// size      27 bytes
+// kind      game
+Return Value: whatever the four-argument form returns
+Status: Complete
+*/
+// ORIGINAL: 0x005BFD30 ?X_pop_ask_number@@YAHPADPBDP6AHXZ@Z 0x005BFD30-0x005BFD4B BYTE_EXACT
+// symbol    ?X_pop_ask_number@@YAHPADPBDP6AHXZ@Z
+int __cdecl X_pop_ask_number(char *caption, const char *label,
+                             int (__cdecl *callback)()) {
+    return X_pop_ask_number(caption, label, 0, callback);
 }

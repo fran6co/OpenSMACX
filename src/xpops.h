@@ -31,6 +31,12 @@
 int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
                    Sprite *sprite, int a7, int a8, int (__cdecl *callback)());
 
+int __cdecl X_pops(char *caption, const char *label, char *text, int value,
+                   Sprite *sprite, int (__cdecl *callback)());
+int __cdecl X_pops(char *caption, const char *label, char *text, int value,
+                   Sprite *sprite, int flag1, int flag2,
+                   int (__cdecl *callback)());
+
 int __cdecl x_pops_short(const char *label, int value, Sprite *sprite,
                                    int (__cdecl *callback)());
 int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
@@ -63,6 +69,9 @@ int __cdecl X_pop_ask_number(const char *label, int value,
 // 0x005BFD70, its four-argument sibling, which the three-argument form
 // forwards to with PopupStartCaption. Still a pending_bodies forwarder.
 int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
+                             int (__cdecl *callback)());
+// 0x005BFD30, its caption-taking overload with the numeric value defaulted.
+int __cdecl X_pop_ask_number(char *caption, const char *label,
                              int (__cdecl *callback)());
 
 int __cdecl x_pop_caption_label(char *caption, const char *label,
