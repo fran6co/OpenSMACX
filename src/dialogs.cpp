@@ -975,3 +975,48 @@ int Dialogs::attach(GraphicWin *parent, int x, int y, int flags) {
         return 7;
     }
 }
+
+// ORIGINAL: 0x00612970 ?attach@Dialogs@@QAEHHPAUGraphicWin@@HHH@Z 0x00612970-0x00612A48 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00612970 masks its first argument with 0x1f, stores the result in Dialogs::kind_, then directly dispatches cases 16, 2, 1, 8 and 4 to RadioButton, ListBox, CheckBox, SpriteBox and EditGroup::attach respectively; the default returns 3.","The source declares those five direct widget bases and their attach(GraphicWin*,int,int,int) methods. Qualified base calls let C++ select the existing subobjects and apply their compiler-known adjustments."],"reason":"Home the kind-selecting attach entry through Dialogs::kind_ and its real widget base subobjects."}
+// symbol    ?attach@Dialogs@@QAEHHPAVGraphicWin@@HHH@Z
+// LEVER: switch case DECLARATION ORDER matched the jump-table's physical block layout (0x10, 2, 1, 8, 4, default) - not case-value order and not Ghidra's own printed order (1, 2, default, 4, 8, 0x10).
+int Dialogs::attach(int kind, GraphicWin *parent, int x, int y, int flags) {
+    kind_ = kind & 0x1f;
+    switch (kind_) {
+    case 16:
+        return radio_button_view().RadioButton::attach(parent, x, y, flags);
+    case 2:
+        return list_box_view().ListBox::attach(parent, x, y, flags);
+    case 1:
+        return check_box_view().CheckBox::attach(parent, x, y, flags);
+    case 8:
+        return sprite_box_view().SpriteBox::attach(parent, x, y, flags);
+    case 4:
+        return edit_group_view().EditGroup::attach(parent, x, y, flags);
+    default:
+        return 3;
+    }
+}
+
+// ORIGINAL: 0x00612E00 ?on_redraw@Dialogs@@QAEXXZ 0x00612E00-0x00612E4D
+// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00612E00 reads the selector from the shared GraphicWin receiver's -8 location, corresponding to Dialogs::kind_ at complete-object +0x180.","The retained seed's direct tail targets identify cases 1/2/4/8/16 as CheckBox/ListBox/EditGroup/SpriteBox/RadioButton::on_redraw. The five typed base views are already declared by Dialogs."],"reason":"Home the redraw kind dispatcher through its named selector and declared widget base subobjects."}
+// symbol    ?on_redraw@Dialogs@@UAEXXZ
+void Dialogs::on_redraw() {
+    switch (kind_) {
+    case 1:
+        check_box_view().CheckBox::on_redraw();
+        break;
+    case 2:
+        list_box_view().ListBox::on_redraw();
+        break;
+    case 4:
+        edit_group_view().EditGroup::on_redraw();
+        break;
+    case 8:
+        sprite_box_view().SpriteBox::on_redraw();
+        break;
+    case 16:
+        radio_button_view().RadioButton::on_redraw();
+        break;
+    }
+}

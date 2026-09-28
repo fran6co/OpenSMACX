@@ -905,11 +905,6 @@ void Console::end_my_turn() {
     PENDING_BODY(0x005169F0, pending)(this, nullptr);
 }
 
-void Dialogs::on_redraw() {  // 0x00612E00
-    typedef void(__fastcall *pending)(Dialogs *, void *);
-    PENDING_BODY(0x00612E00, pending)(this, nullptr);
-}
-
 int Dialogs::on_scroll_create() {  // 0x00613220
     typedef int(__fastcall *pending)(Dialogs *, void *);
     return PENDING_BODY(0x00613220, pending)(this, nullptr);

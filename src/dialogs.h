@@ -56,7 +56,7 @@ class Dialogs : public ListBox,
   int on_scroll_create();
 
  public:
-  // 0x00612E00, a pending_bodies forwarder.
+  // 0x00612E00, kind-dispatched through typed widget base views in dialogs.cpp.
   void on_redraw();
 
  public:
@@ -100,6 +100,8 @@ class Dialogs : public ListBox,
  public:
   // 0x00612FE0, kind-dispatched through typed base views in dialogs.cpp.
   int attach(GraphicWin *a1, int a2, int a3, int a4);
+  // Kind-selecting attachment entry at 0x00612970.
+  int attach(int kind, GraphicWin *parent, int x, int y, int flags);
 
  public:
   // ??0Dialogs@@QAE@H@Z (0x00612830), the bare real constructor - the H is
