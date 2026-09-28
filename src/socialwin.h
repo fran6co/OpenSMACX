@@ -104,9 +104,18 @@ class SocialWin : public GraphicWin, public SubInterface {
   // 0x004B17A0 ?on_button_text_draw@SocialWin@@QAEHPAUGraphicWin@@PADH@Z.
   int on_button_text_draw(GraphicWin *window, char *text, int a4);
 
+  // 0x004B19A0 ?on_redraw@SocialWin@@QAEXXZ.
+  virtual void on_redraw();
+
+  // 0x004AF1E0. Paint the presets panel heading.
+  void draw_presets();
+
  public:
   // homed from 004b0d50.cpp
   void draw_psych_alloc();
+  void draw_economy_alloc();
+  void draw_labs_alloc();
+  void draw_faction_basal();
 
  public:
   // homed from 004af310.cpp
