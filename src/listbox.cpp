@@ -249,6 +249,73 @@ void ListBox::on_mouse_leave(int a1, int a2) {
     redraw();
 }
 
+// The retained seed at 0x0060A020 establishes selection storage, page-sized
+// scroll adjustment and scrollbar updates. Its remaining item notification
+// dispatches are deliberately not guessed: the image calls target slots 54,
+// 53 and a nested object's 23/7 pair, but this owner has no typed interface
+// for those object identities yet.
+// BODY GOES HERE. Missing behavior is the notify-gated item/nested-object
+// callback sequence (historical slots 54, 53, 23 and 7); see the retained seed.
+// ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD
+// RECOVERY_BINDING: v1 {"evidence": ["git:8b4810c297d1ba1554b5cb067b814d532906dcc7:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h"], "reason": "Recover the evidenced ListBox selection state, viewport scroll adjustment and scrollbar update using typed owner and base members. The notify-gated item/nested-object dispatch remains explicit BODY GOES HERE because slots 54/53 and nested slots 23/7 do not yet have source-owned receiver interfaces; preserve the original seed and claim for coordinator measurement."}
+void ListBox::set_selected_pos(int position, int notify) {
+    if (Dialog::selected_position_ == position && field_8_ == 0) {
+        redraw();
+        return;
+    }
+
+    Dialog::selected_position_ = position;
+    if (position >= 0) {
+        const int page_size = static_cast<int>(field_1C_);
+        const int item_count = Dialog::item_list_.entry_count_;
+        const int step = Dialog::field_54_ < 2
+            ? 1 : static_cast<int>(Dialog::field_58_);
+        int scroll_position = static_cast<int>(field_18_);
+        bool moved_up = false;
+        bool update_scrollbar = false;
+
+        while (Dialog::selected_position_ < scroll_position) {
+            scroll_position -= step;
+            if (scroll_position < 0) {
+                scroll_position = 0;
+            }
+            moved_up = true;
+        }
+
+        if (page_size < item_count) {
+            while (Dialog::selected_position_ >= scroll_position + page_size) {
+                scroll_position += step;
+            }
+            update_scrollbar = true;
+        } else {
+            scroll_position = 0;
+            update_scrollbar = moved_up;
+        }
+
+        field_18_ = static_cast<uint32_t>(scroll_position);
+        if (update_scrollbar) {
+            Win *window = static_cast<GraphicWin *>(this);
+            if (Dialog::field_54_ < 2) {
+                window->set_vert_pos(scroll_position);
+            } else {
+                window->set_horz_pos(scroll_position);
+            }
+        }
+
+        if (double_click_callback_ != 0) {
+            double_click_callback_(Dialog::get_selected_id());
+        }
+        if (notify != 0) {
+            // TODO: the exact notifications are visible in the archived
+            // disassembly, but their receiver interfaces are not source-owned.
+        }
+    }
+
+    // The seed's final call is Win virtual slot 62 on the GraphicWin base;
+    // this is the inherited typed redraw operation.
+    redraw();
+}
+
 /*
 Purpose: Report a right press: raise the click guard, forward (a1, a2) through
          GraphicWin vtable slot 20, drop the guard.

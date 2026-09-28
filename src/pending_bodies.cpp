@@ -516,17 +516,6 @@ void WorldWin::click(int a1, int a2, int button, int is_double) {  // 0x004C3D40
 // homed into src/leaf_recoveries.cpp 2026-09-27 (the id walk over the
 // Dialog entry list, selecting through current_position_).
 
-// ?set_selected_pos@ListBox@@QAEXHH@Z at 0x0060A020 - the sibling of the
-// above. BasePop::calculate_dimensions (0x00603800) calls it BY NAME on the
-// ListBox base of dialogs_, so the member is what that body needs; the
-// address's own claim lives in src/recovered/units/0060a020.cpp, which the
-// build does not compile, so this forwarder is the only definition and is
-// landmine-free.
-void ListBox::set_selected_pos(int position, int notify) {
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060A020, pending)(this, nullptr, position, notify);
-}
-
 // ?item@CheckBox@@QAEHPADHH@Z - DipEdit::init adds one item per treaty flag.
 // WAS HERE and is gone: the body is homed into src/leaf_recoveries.cpp
 // 2026-09-27.
