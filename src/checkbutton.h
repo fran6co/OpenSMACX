@@ -31,6 +31,8 @@
   */
 class CheckButton : public GraphicWin {
  public:
+  typedef void (__cdecl *ToggleCallback)(int);
+
   CheckButton();
   // NOT a constructor: the image carries no SEH frame at 0x00633750 (no
   // `frame` flag), whereas a REAL derived-class constructor calling
@@ -43,6 +45,14 @@ class CheckButton : public GraphicWin {
   ~CheckButton();
   static void close_class();
   static int init_class();
+  int init(int x, int y, GraphicWin *parent, int toggle_argument);
+  void on_left_click(int x, int y);
+
+  // STRUCTURAL DISCOVERY: the CheckButton seeds identify on_redraw and
+  // on_left_double_click with QAE (nonvirtual) symbols, but Win currently
+  // models same-named virtual slots in this inheritance path. Until original
+  // vtable membership is established, neither method is declared here as an
+  // override or forced into the current base-class model.
 
   // Storage the image proves is here: its own methods reach 0xA2C.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -50,12 +60,11 @@ class CheckButton : public GraphicWin {
 
   uint32_t field_A14_;  // 0xA14
   uint32_t isToggled_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
+  ToggleCallback field_A1C_;  // 0xA1C, called with isToggled_
+  ToggleCallback field_A20_;  // 0xA20, called with isToggled_ on double-click
+  Sprite *field_A24_;  // 0xA24, unchecked sprite
+  Sprite *field_A28_;  // 0xA28, checked sprite
 };
 
 static_assert(sizeof(CheckButton) == 0xA2C,
               "CheckButton layout must match the original executable");
-

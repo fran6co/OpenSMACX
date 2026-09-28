@@ -52,8 +52,8 @@ CheckButton::CheckButton() {
     isToggled_ = 0;
     field_A1C_ = 0;
     field_A20_ = 0;
-    field_A28_ = reinterpret_cast<uint32_t>(CheckButtonDefaultA28);
-    field_A24_ = reinterpret_cast<uint32_t>(CheckButtonDefaultA24);
+    field_A28_ = CheckButtonDefaultA28;
+    field_A24_ = CheckButtonDefaultA24;
 }
 
 /*
@@ -88,6 +88,50 @@ Status: Complete
 */
 int CheckButton::init_class() {
     return 0;
+}
+
+// CheckButton's parent is a GraphicWin because this control's init contract
+// takes that exact type. GraphicWin::init sets up the base window and the
+// image then hides the newly initialized control until its caller shows it.
+// ORIGINAL: 0x006337E0 ?init@CheckButton@@QAEHHHPAUGraphicWin@@H@Z 0x006337E0-0x00633841
+// RECOVERY_BINDING: v1 {"evidence":["partition class:CheckButton at master 9db3d883","git:9db3d883:src/unrecovered/006337e0.cpp original signature, spans, calls and member accesses","src/graphicwin.h GraphicWin::init signature","src/sprite.h Sprite::width/height accessors and +0x18/+0x1C member offsets"],"reason":"The existing seed identity is implemented by the typed CheckButton member. Sprite::width and Sprite::height preserve the seed's reads from the selected Sprite members at +0x18 and +0x1C; GraphicWin::init and Win::show express its base setup and final hide operation."}
+// symbol    ?init@CheckButton@@QAEHHHPAVGraphicWin@@H@Z
+int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
+    if (parent == 0) {
+        return 3;
+    }
+
+    // The seed reads the checked Sprite's iWidth_ at +0x18 and the
+    // unchecked Sprite's iHeight_ at +0x1C.
+    const int width = field_A28_->width();
+    const int height = field_A24_->height();
+    const int result = GraphicWin::init(x, y, width, height, 0, 0x1020,
+                                        parent, 0, 0);
+    if (result != 0) {
+        return result;
+    }
+
+    isToggled_ = toggle_argument;
+    show(0);
+    return 0;
+}
+
+// A click toggles the stored state, repaints around the callback, and sends
+// the button event through the parent's established Win virtual slot.
+// ORIGINAL: 0x00633920 ?on_left_click@CheckButton@@QAEXHH@Z 0x00633920-0x0063397F
+// RECOVERY_BINDING: v1 {"evidence":["partition class:CheckButton at master 9db3d883","src/recovered/units/00633920.cpp original signature, spans, call order and member accesses","src/win.h Win::redraw and Win::on_button_clicked virtual slots"],"reason":"The existing seed identity is implemented by the typed CheckButton member. It preserves the seed's parent guard, toggle, redraw, callback, parent notification and final redraw sequence through current Win APIs."}
+void CheckButton::on_left_click(int, int) {
+    if (win_parent_ == 0) {
+        return;
+    }
+
+    field_A14_ = field_A14_ == 0;
+    redraw();
+    if (field_A1C_ != 0) {
+        field_A1C_(isToggled_);
+    }
+    win_parent_->on_button_clicked(isToggled_);
+    redraw();
 }
 
 
