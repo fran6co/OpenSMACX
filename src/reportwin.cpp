@@ -56,6 +56,15 @@ static int *const ReportFactionId = (int *)0x008A4160;
 // callback (the designwin.cpp spelling).
 int __cdecl pop_wait();
 
+// These two pointer cells are read by ReportWin::reset at 0x00496C30 and
+// 0x00496C3E. Other seed units also read them as indirect font/table slots,
+// but the current source has no owning declarations or reliable semantic
+// names. Keep the evidence-backed pointer type and fixed binding local until
+// their shared owner is recovered; they are not assumed to be the unrelated
+// BaseButton defaults or FontDefault.
+static Font **const ReportResetFontSlot1 = (Font **)0x008A40BC;
+static Font **const ReportResetFontSlot2 = (Font **)0x008A40C8;
+
 /*
 Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
          Spot, a ListBox(1), nine individually-constructed FlatButtons split
@@ -117,12 +126,58 @@ ReportWin::ReportWin() {
     new (time1_) Time();
     new (time2_) Time();
     new (time3_) Time();
-    new (buffer1_) Buffer();
+    new (buffer1_.address()) Buffer();
     new (buffer2_) Buffer();
 
     typedef void(__fastcall *pending_flic_ctor)(void *, void *);
     reinterpret_cast<pending_flic_ctor>(0x00629D60)(flic_, nullptr);
 
+}
+
+/*
+Purpose: Reset the seven report buttons, initialize the report text buffer,
+         copy the current report bounds, draw both panel frames, and restore
+         the inset frame rectangle after its temporary expansion.
+// ORIGINAL: 0x00496BB0 ?reset@ReportWin@@QAEXXZ 0x00496BB0-0x00496CFC
+// RECOVERY_BINDING: v1 {"evidence":["Independent IDA/Ghidra function records agree on the original extent 0x00496BB0-0x00496CFC and classify it as game code.","git:caf4963a:src/recovered/units/00496bb0.cpp records the button-close loop, Buffer font/color setup, rectangle copies and box_sprite calls in this order.","docs/recovery/member-accesses.csv records reset's writes through the report geometry and embedded button/panel members; reportwin.h provides the corresponding source-owned member layout."],"reason":"Recover the report reset in its existing ReportWin owner using the declared button array, buffer storage, rectangles and shared interface box styles."}
+// prototype void (__thiscall ?reset@ReportWin@@QAEXXZ)(ReportWin* this)
+// kind      game
+// calls     0x005D5890 0x005E2DD3
+// Homed from src/recovered/units/00496bb0.cpp.
+*/
+void ReportWin::reset() {
+    for (int button = 0; button != 7; ++button) {
+        flatButtons1_[button].close();
+    }
+
+    Buffer &buffer = buffer1_.as_buffer();
+    buffer.set_font(*ReportResetFontSlot1, *ReportResetFontSlot1,
+                    *ReportResetFontSlot2, nullptr);
+    buffer.set_text_color(0x99, -1, 1, 1);
+    buffer.set_text_color2(0xF2, -1, 1, 1);
+    buffer.set_text_color3(0xE1, -1, 1, 1);
+
+    rect1_.left = field_5974_;
+    rect1_.top = field_5978_;
+    rect1_.right = field_597C_ - field_5974_;
+    rect1_.bottom = field_5980_ - field_5978_;
+
+    field_E258_ = field_5974_;
+    field_E25C_ = field_5978_;
+    field_E260_ = field_597C_;
+    field_E264_ = field_5980_;
+
+    buffer.box_sprite(&report_panel_rect_, &InterfaceBoxStyles[9]);
+
+    report_frame_rect_.left -= 3;
+    report_frame_rect_.top -= 3;
+    report_frame_rect_.right += 3;
+    report_frame_rect_.bottom += 3;
+    buffer.box_sprite(&report_frame_rect_, &InterfaceBoxStyles[3]);
+    report_frame_rect_.left += 3;
+    report_frame_rect_.top += 3;
+    report_frame_rect_.right -= 3;
+    report_frame_rect_.bottom -= 3;
 }
 
 /*

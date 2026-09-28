@@ -1832,15 +1832,9 @@ void Datalink::set_cat_terraform() {
 
 // ---- seams the category fillers call out to -------------------------------
 //
-// ReportWin::reset is still an original-image seam needed by the category
-// fillers. StringList::sort now lives with its real list nodes in
-// stringstruct.cpp, and ListBox::update_changes lives in listbox.cpp.
-
-void ReportWin::reset() {  // 0x00496BB0
-    typedef void(__fastcall *pending)(ReportWin *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00496BB0))(this,
-                                                                     nullptr);
-}
+// ReportWin::reset now lives in reportwin.cpp; StringList::sort lives with its
+// real list nodes in stringstruct.cpp, and ListBox::update_changes lives in
+// listbox.cpp. The old fixed-image reset forwarder is retired.
 
 // 0x00431EC0 ?on_button_clicked@Datalink@@QAEXH@Z - still an original body
 // (src/unrecovered/00431ec0.cpp, claimed). The void spelling makes it a real

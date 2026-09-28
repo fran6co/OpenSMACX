@@ -54,10 +54,8 @@ class ReportWin : public GraphicWin {
   // and the 0x007AA370-family sprite table it reads are not recovered yet.
   void sat_anim();  // 0x0049FE40  ?sat_anim@ReportWin@@QAEXXZ
   void exp_anim();  // 0x004A0100  ?exp_anim@ReportWin@@QAEXXZ
-  // 0x00496BB0 ?reset@ReportWin@@QAEXXZ, unrecovered. DECLARATION ONLY:
-  // Datalink::set_cat resets the topic panel's report window - the fixed
-  // 0x00876478 object reportif.cpp names ReportIfModalWindow - both before
-  // and after it rewrites the category.
+  // 0x00496BB0 ?reset@ReportWin@@QAEXXZ resets the report controls, working
+  // rectangle and the two report panel frames.
   void reset();
   // 0x00498280 ?on_key_click@ReportWin@@QAEHHH@Z - public, __thiscall,
   // int(int, int). Always answers 1; Enter dismisses, F1-F8 (0x70-0x77) pick
@@ -114,10 +112,7 @@ class ReportWin : public GraphicWin {
   uint32_t field_5978_;  // 0x5978
   uint32_t field_597C_;  // 0x597C
   uint32_t field_5980_;  // 0x5980
-  uint32_t field_5984_;  // 0x5984
-  uint32_t field_5988_;  // 0x5988
-  uint32_t field_598C_;  // 0x598C
-  uint32_t field_5990_;  // 0x5990
+  RECT report_panel_rect_;  // 0x5984, passed to Buffer::box_sprite
   Spot spot_;  // 0x5994
   uint32_t field_59A0_;  // 0x59A0
   uint32_t field_59A4_;  // 0x59A4
@@ -149,10 +144,7 @@ class ReportWin : public GraphicWin {
   uint8_t listBox_[0xB54];  // 0x5A0C, sizeof(ListBox)
   uint8_t flatButton2_[0xB4C];  // 0x6560
   uint8_t flatButton3_[0xB4C];  // 0x70AC
-  uint32_t field_7BF8_;  // 0x7BF8
-  uint32_t field_7BFC_;  // 0x7BFC
-  uint32_t field_7C00_;  // 0x7C00
-  uint32_t field_7C04_;  // 0x7C04
+  RECT report_frame_rect_;  // 0x7BF8, expanded and restored around box_sprite
   uint8_t buttonGroup1_[0x94];  // 0x7C08, sizeof(ButtonGroup)
   uint8_t flatButton4_[0xB4C];  // 0x7C9C
   uint8_t flatButton5_[0xB4C];  // 0x87E8
@@ -190,7 +182,15 @@ class ReportWin : public GraphicWin {
   uint32_t field_E314_;  // 0xE314
   uint32_t field_E318_;  // 0xE318
   uint32_t field_E31C_;  // 0xE31C
-  uint8_t buffer1_[0x588];  // 0xE320, sizeof(Buffer)
+  // The image constructs buffers explicitly after Scroll/Time. Keep aligned
+  // storage, with typed access after that placement construction, so C++ does
+  // not move Buffer's constructor into the implicit member preamble.
+  struct BufferStorage {
+    uint32_t words_[0x588 / sizeof(uint32_t)];
+    void *address() { return words_; }
+    Buffer &as_buffer() { return *reinterpret_cast<Buffer *>(words_); }
+  };
+  BufferStorage buffer1_;  // 0xE320, placement-constructed Buffer
   uint8_t buffer2_[0x588];  // 0xE8A8, sizeof(Buffer)
   // 0xEE30 is a float of ReportWin's own, NOT the head of the Flic. The Flic
   // starts four bytes later, and the image says so four separate times:

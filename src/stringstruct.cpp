@@ -25,6 +25,7 @@
 #include "faction.h"  // Players, for get_he_she below
 #include "alpha.h"  // Labels, same body
 #include "game.h"  // PronounBuffer, same body
+#include "reportwin.h"  // ReportWinGlobal owns the original 0x00876478 window
 
 // The allocation-base table at 0x6693AC dispatches this scalar deleting
 // entry. The compiler supplies its flag handling and class-specific delete;
@@ -2594,15 +2595,13 @@ extern "C" void __fastcall Interlude_close(Interlude *self_raw, void *) {
 Purpose: Step one faction's satellite count for a body, with the shift-key
          downward path clamped and the seen map refreshed.
 // ORIGINAL: 0x004A0810 ?sat_edit@@YAXHHH@Z 0x004A0810-0x004A08D2 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp records the same identity and spans.", "The three per-faction fields are PlayerData (faction.h, the 0x833-dword stride the header pins) at +0x808 (the satellite count stepped by body), +0x814 (the seen-map target) and +0x364 (the seen-map floor); the shift state comes through the USER32 GetAsyncKeyState import slot 0x00669330 that mapwin.cpp binds the same way.", "The repaint is see_map_check (faction.h's own) and redraw on reportif.cpp's fixed Win ReportIfModalWindow (0x00876478) through its virtual slot."], "reason": "Coverage transcription of the satellite editor click with the PlayerData offsets documented and the repaint through the tree's own names."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4A0810..4A08D2; retired seed git:117282ee:src/unrecovered/004a0810.cpp records the same identity and spans.", "The three per-faction fields are PlayerData (faction.h, the 0x833-dword stride the header pins) at +0x808 (the satellite count stepped by body), +0x814 (the seen-map target) and +0x364 (the seen-map floor); the shift state comes through the USER32 GetAsyncKeyState import slot 0x00669330 that mapwin.cpp binds the same way.", "The repaint is see_map_check (faction.h's own) and redraw on the source-owned ReportWinGlobal (reportwin.h, original 0x00876478) through its inherited virtual slot."], "reason": "Coverage transcription of the satellite editor click with the PlayerData offsets documented and the repaint through the tree's own names."}
 Status: Coverage transcription - unclaimed body
 */
 namespace {
 // The USER32 GetAsyncKeyState import slot, the same one mapwin.cpp binds.
 static int *const IAT_GetAsyncKeyState = (int *)0x00669330;
 }
-
-extern Win ReportIfModalWindow;  // 0x00876478, reportif.cpp's definition
 
 void __cdecl sat_edit(int body, int faction_id, int type) {
     if (type < 4 && body != 0) {
@@ -2628,12 +2627,12 @@ void __cdecl sat_edit(int body, int faction_id, int type) {
                 reinterpret_cast<int *>(&PlayersData[faction_id])[0x364 / 4]
                     = reinterpret_cast<const int *>(&PlayersData[faction_id])[0x814 / 4];
                 see_map_check();
-                ReportIfModalWindow.redraw();
+                ReportWinGlobal.redraw();
                 return;
             }
         }
         see_map_check();
-        ReportIfModalWindow.redraw();
+        ReportWinGlobal.redraw();
     }
 }
 
