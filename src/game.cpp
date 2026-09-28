@@ -24,6 +24,7 @@
 #include "base.h"
 #include "basepop.h"  // BasePopDefaultField322C
 #include "buffer.h"  // g_PCX_PARSE_TEMP_BUFFER1
+#include "graphicwin.h"  // opening window's Buffer base and virtual update
 #include "sprite.h"  // Sprite::extract
 #include "texture.h" // Terrain-sheet texture assets.
 #include "basewin.h"  // BaseWin::close
@@ -1977,6 +1978,51 @@ void __cdecl desktop_close() {
     // directly (`call 0x5d4e40` on `mov ecx, 0x7fd648`).
     reinterpret_cast<GraphicWin *>(&MultiWindow)->close();
     MainInterfaceGlobal.Win::hide();
+}
+
+/*
+Purpose: Swap the opening logo the desktop shows: load the PCX named a1 into
+         a local Buffer, blit it into the opening GraphicWin's Buffer base
+         from the decoded DIB, then call the window's virtual on_update
+         (Win slot 63) so it repaints.
+         Returns 7 when no opening window is up.
+
+// ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A FILE
+// TRIED (seed): reproducing the SEH frame/unwind funclet for the local
+//            `Buffer buf` explicitly - a real local of non-trivial type
+//            (ctor/dtor declared, undefined) makes MSVC generate its own
+//            construction/destruction and unwind automatically; landed
+//            relying on that instead of hand-writing the funclet.
+// size      258 bytes
+// prototype int (__cdecl ?change_opening@@YAHPAD@Z)(int8* a1)
+// callers   1   call targets   4
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x005D7210 0x005D7410 0x005D7DE0 0x005D9610
+Return Value: 0 when the opening swapped, 7 when there is no opening window
+Status: Coverage transcription - unclaimed body. The original mapping and
+        seed evidence remain in src/unrecovered/00589a30.cpp without a
+        BYTE_EXACT claim. The second ORIGINAL span is the local Buffer's
+        unwind funclet and scope descriptor. opening_window() still reaches
+        original storage; its producer and lifetime consumers need a
+        coordinated migration. The window is reloaded after load_pcx and
+        before on_update, as in the image.
+*/
+int __cdecl change_opening(char *filename) {
+    Buffer buf;
+    if (opening_window() == 0) {
+        return 7;
+    }
+    buf.load_pcx(filename, 0, 10, 0xec);
+    GraphicWin *window = opening_window();
+    Buffer *surface = window != 0 ? static_cast<Buffer *>(window) : 0;
+    int c1 = surface->dib_.bmiHeader.biWidth;
+    int c2 = -surface->dib_.bmiHeader.biHeight;
+    int p1 = buf.dib_.bmiHeader.biWidth;
+    int p2 = -static_cast<int>(buf.dib_.bmiHeader.biHeight);
+    buf.copy(surface, 0, 0, p1, p2, 0, 0, c1, c2);
+    opening_window()->on_update();
+    return 0;
 }
 
 /*

@@ -1496,6 +1496,102 @@ Status: Complete
 //            there regardless of the forwarder. Not added.
 
 /*
+Purpose: Return 1 immediately for a unity-bonus tile. Otherwise select the
+         last pact or own base in the eight-neighbor movement table, stopping
+         early on an own base. Return 1 if that base has an adjacent tile
+         other than the input whose altitude is below shore and which either
+         lacks fungus or lies below the ocean-shelf altitude; else return 0.
+
+// ORIGINAL: 0x00565160 sub_565160 0x00565160-0x0056531A FILE
+// symbol    _sub_565160
+// TRIED (seed): two-phase radius-table scan (find owning base, then scan
+//            around it) with direct treaty-flags array indexing; reaches #11
+//            before the second bonus_at-style helper call ordering
+// size      442 bytes
+// prototype
+// callers   0   call targets   2
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x004E3A50 0x00592030
+Return Value: 1 for the bonus or a qualifying neighbor, 0 otherwise.
+Status: Coverage transcription - unclaimed body. The original mapping and
+        seed evidence remain in src/unrecovered/00565160.cpp without a
+        BYTE_EXACT claim. VehMoveDeltaX/Y provide the scan order, Bases
+        provide the x/y/owner triple, PlayersData owns the pact flags, and
+        Map owns the climate and fungus bits. The image calls bonus_at out
+        of line; source inlining remains a separate measurement question.
+*/
+extern "C" int __cdecl sub_565160(int faction_id, int tile_x, int tile_y) {
+    if (bonus_at(tile_x, tile_y, 0) == 3) {
+        return 1;
+    }
+    int found = -1;
+    unsigned int owner = 0;
+    for (int idx = 0; idx < 8; ++idx) {
+        int x = VehMoveDeltaX[idx] + tile_x;
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) {
+                x += MapLongitudeBounds;
+            } else if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
+            }
+        }
+        int y = VehMoveDeltaY[idx] + tile_y;
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
+            continue;
+        }
+        int base_id = base_at(x, y);
+        if (base_id < 0) {
+            continue;
+        }
+        owner = Bases[base_id].faction_id_current;
+        if (owner != static_cast<unsigned int>(faction_id)) {
+            if ((PlayersData[faction_id].diplo_treaties[owner] & DTREATY_PACT) == 0) {
+                continue;
+            }
+        }
+        found = base_id;
+        if (owner == static_cast<unsigned int>(faction_id)) {
+            break;
+        }
+    }
+    if (found < 0) {
+        return 0;
+    }
+    short base_x = Bases[found].x;
+    short base_y = Bases[found].y;
+    int no_wrap = MapIsFlat & 1;
+    for (int g = 0; g < 8; ++g) {
+        int x = VehMoveDeltaX[g] + base_x;
+        if (no_wrap == 0) {
+            if (x < 0) {
+                x += MapLongitudeBounds;
+            } else if (x >= MapLongitudeBounds) {
+                x -= MapLongitudeBounds;
+            }
+        }
+        int y = VehMoveDeltaY[g] + base_y;
+        if (x == tile_x && y == tile_y) {
+            continue;
+        }
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 || x >= MapLongitudeBounds) {
+            continue;
+        }
+        const Map *tile = map_tiles() + MapLongitude * y + (x >> 1);
+        unsigned char altitude = tile->climate & 0xe0;
+        if (altitude < ALT_BIT_SHORE_LINE) {
+            if ((tile->bit & BIT_FUNGUS) == 0) {
+                return 1;
+            }
+            if (altitude < ALT_BIT_OCEAN_SHELF) {
+                return 1;
+            }
+        }
+    }
+    return 0;
+}
+
+/*
 Purpose: Determine if the tile has a supply pod and if so what type.
 // ORIGINAL: 0x00592140 ?goody_at@@YAHHH@Z 0x00592140-0x00592248
 // TRIED: --all-flags's winner (39/114, the default set) already beats every other set
