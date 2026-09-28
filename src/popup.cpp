@@ -1077,6 +1077,39 @@ void __cdecl scroll_normal() {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00588340))();
 }
 
+// ORIGINAL: 0x00404B00 ?on_redraw@Popup@@QAEXXZ 0x00404B00-0x00404B05 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/unrecovered/00404b00.cpp;src/basepop.cpp:BasePop::on_redraw"], "reason": "Popup draw callback forwards to its real BasePop owner; image and historical seed establish the five-byte tail-call identity"}
+// LEVER: The retired seed matched through a synthetic reinterpret-cast shim with masked relocation targets. This real inherited call preserves its measured body without retaining that false class shape.
+// symbol    ?on_redraw@Popup@@UAEXXZ
+void Popup::on_redraw() {
+    BasePop::on_redraw();
+}
+
+// ORIGINAL: 0x00405050 ?on_adjust_button_placement@Popup@@QAEXPAH00@Z 0x00405050-0x00405093 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/recovered/units/00405050.cpp;src/basepop.h:field_30AC_"], "reason": "Popup button-placement adjustment reads its inherited auto-hide mode and external window pointer, matching the original owner fields"}
+void Popup::on_adjust_button_placement(int *, int *y, int *) {
+    if (static_cast<int>(field_30AC_) / 10000 != 1000) {
+        if (external_window_ != 0) {
+            *y = -30;
+        } else {
+            *y += 3;
+        }
+    }
+}
+
+// ORIGINAL: 0x00406330 ?on_listbox_scroll_delete@Popup@@QAEHPAUScroll@@@Z 0x00406330-0x0040637C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/recovered/units/00406330.cpp;src/popup.cpp:scroll_hide"], "reason": "Popup owns the scroll lifecycle callback and forwards visibility cleanup to the existing scroll_hide helper"}
+// symbol    ?on_listbox_scroll_delete@Popup@@QAEHPAVScroll@@@Z
+int Popup::on_listbox_scroll_delete(Scroll *scroll) {
+    if (static_cast<int>(field_30AC_) / 10000 == 1000) {
+        return reinterpret_cast<int>(scroll);
+    }
+    if (Win::is_visible()) {
+        scroll_hide(this, scroll);
+    }
+    return 0;
+}
+
 // ORIGINAL: 0x00404A80 ?hide@Popup@@QAEXXZ 0x00404A80-0x00404AFF FILE
 // symbol    ?hide@Popup@@UAEXXZ
 // size      127 bytes

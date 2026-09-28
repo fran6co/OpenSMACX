@@ -51,6 +51,9 @@ class Popup : public BasePop {
  public:
   // 0x00404A80, homed in popup.cpp.
   void hide();
+  void on_redraw();
+  void on_adjust_button_placement(int *x, int *y, int *unused);
+  int on_listbox_scroll_delete(Scroll *scroll);
 
  public:
   int on_nc_hittest(int x, int y);
