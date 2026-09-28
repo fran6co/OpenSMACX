@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "alphasave.h"
 #include "caviar.h"
 #include "font.h"
 #include "game.h"
@@ -768,11 +769,6 @@ StringBox::~StringBox() {  // ??1StringBox@@QAE@XZ at 0x004325C0
 TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0
     typedef void(__fastcall *pending)(TutWin *, void *);
     PENDING_BODY(0x004BE7D0, pending)(this, nullptr);
-}
-
-AlphaSave::~AlphaSave() {  // ??1AlphaSave@@QAE@XZ at 0x00408170
-    typedef void(__fastcall *pending)(AlphaSave *, void *);
-    PENDING_BODY(0x00408170, pending)(this, nullptr);
 }
 
 FameWin::~FameWin() {  // ??1FameWin@@QAE@XZ at 0x0044B100

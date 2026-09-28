@@ -116,6 +116,7 @@ target_compile_options(zlib PRIVATE /W0)
 
 set(OPENSMACX_SOURCES
     src/alpha.cpp
+    src/alphasave.cpp
     src/main.cpp
     src/pending_bodies.cpp
     src/adjustor_thunks.cpp

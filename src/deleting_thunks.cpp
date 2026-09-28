@@ -70,6 +70,7 @@
 #include "flatbutton.h"
 #include "fx.h"
 #include "graphicwin.h"
+#include "alphasave.h"
 #include "pulldown.h"
 #include "scroll.h"
 #include "alphamenu.h"

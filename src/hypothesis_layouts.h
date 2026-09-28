@@ -73,25 +73,6 @@ class AAmbience {
   uint8_t field_6E_[0x4];  // 0x6E
 };
 
-/* 0x6058 bytes, 8 member(s), 8 named. From the IDB. 19 function(s) in the image. */
-class AlphaSave {
- public:
-  // 0x00408170 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~AlphaSave();
-
- public:
-  uint8_t graphicWin_[0xA14];  // 0x0
-  uint8_t fileWin_[0x33C4];  // 0xA14
-  uint8_t scroll_[0x214C];  // 0x3DD8
-  uint8_t sprite1_[0x2C];  // 0x5F24
-  uint8_t sprites2_[0x84];  // 0x5F50
-  uint8_t sprite3_[0x2C];  // 0x5FD4
-  uint8_t sprite4_[0x2C];  // 0x6000
-  uint8_t sprite5_[0x2C];  // 0x602C
-};
-
 /* 0x134 bytes, 71 member(s), 60 named. From Thinker. */
 struct BASE {
   uint16_t x_;  // 0x0
