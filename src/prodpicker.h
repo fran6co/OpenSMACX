@@ -50,6 +50,9 @@ class ProdPicker : public ConstructedGraphicWin {
   int edbc_unit(int prototype_id); // 0x00493AF0, prototype category
   void on_mousewheel(int delta);   // 0x00493C20, embedded Scroll
   void on_left_click(int x, int y);
+  void on_redraw();
+  void on_left_double_click(int x, int y);
+  void on_button_clicked(int button_id);
   void on_scrolled(int code, int position);
   // PAURECT@@H, per ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z; the body is
   // `ret 8` either way and only the decorated name moves.

@@ -251,6 +251,76 @@ void ProdPicker::on_left_click(int x, int y) {
     }
 }
 
+// ORIGINAL: 0x00493C70 ?on_redraw@ProdPicker@@QAEXXZ 0x00493C70-0x00493CA6
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00493c70.cpp"], "reason": "Home the redraw callback in ProdPicker; it repaints exactly the currently visible item interval through the typed draw_item operation."}
+// symbol    ?on_redraw@ProdPicker@@UAEXXZ
+void ProdPicker::on_redraw() {
+    const int first = static_cast<int>(field_A77C_);
+    const int end = first + static_cast<int>(field_A82C_);
+    for (int item = first; item < end; ++item) {
+        draw_item(item, 0);
+    }
+}
+
+// ORIGINAL: 0x00494230 ?on_left_double_click@ProdPicker@@QAEXHH@Z 0x00494230-0x00494271 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:20b88b523285a816ba99f503d727b761b89b227f:src/recovered/units/00494230.cpp", "source:src/win.h:Win::vslot_19", "source:src/prodpicker.h:ProdPicker::on_button_clicked"], "reason": "Home the measured left double click event in ProdPicker and forward its notification and button selection through inherited virtual behavior."}
+// symbol    ?on_left_double_click@ProdPicker@@UAEXHH@Z
+void ProdPicker::on_left_double_click(int x, int y) {
+    vslot_19(x, y);
+    if (field_B68_ == 0) {
+        on_button_clicked(-1);
+    } else {
+        on_button_clicked(5);
+    }
+}
+
+// ORIGINAL: 0x004945D0 ?on_button_clicked@ProdPicker@@QAEXH@Z 0x004945D0-0x004946A1
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004945d0.cpp"], "reason": "Recover product-selection button routing against ProdPicker selection and action members, then release modality and hide when the cancel action closes a modal picker."}
+// symbol    ?on_button_clicked@ProdPicker@@UAEXH@Z
+void ProdPicker::on_button_clicked(int button_id) {
+    switch (button_id) {
+    case 0:
+        if (field_A774_ == static_cast<uint32_t>(-1)) return;
+        field_A778_ = 1;
+        break;
+    case 1:
+        field_A778_ = 2;
+        break;
+    case 2:
+        if (field_A774_ == static_cast<uint32_t>(-1)) return;
+        // fall through
+    case 7:
+        field_A778_ = 7;
+        break;
+    case 3:
+        field_A778_ = 3;
+        break;
+    case 4:
+        field_A778_ = 4;
+        break;
+    case 5:
+        if (field_A774_ == static_cast<uint32_t>(-1)) return;
+        field_A778_ = 5;
+        break;
+    case 6:
+        field_A778_ = 6;
+        break;
+    case -2:
+        field_A778_ = 0;
+        field_A774_ = static_cast<uint32_t>(-1);
+        break;
+    case -1:
+        field_A778_ = 0;
+        break;
+    default:
+        return;
+    }
+    release_modal();
+    if (field_B68_ != 0 && (button_id == -1 || button_id == -2)) {
+        hide();
+    }
+}
+
 // ORIGINAL: 0x00493CB0 ?on_scrolled@ProdPicker@@QAEXHH@Z 0x00493CB0-0x00493E6F
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493cb0.cpp", "source:src/prodpicker.h", "source:src/buffer.h", "source:src/win.h"], "reason": "Scroll the displayed item window using measured picker geometry, its real Buffer blit operation, draw_item, and inherited redraw virtual."}
 void ProdPicker::on_scrolled(int, int position) {
