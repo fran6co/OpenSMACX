@@ -109,6 +109,8 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   void on_iface_right_double_click(int, int);
   void on_iface_button_toggled(int, int);
   void on_iface_group_clicked(int, int, int);
+  // Palette hover uses spot2_; interface-mode hover uses spot1_.
+  void on_mouse_move(int, int);
 
   // ---- the interface table, slot for slot against 0x66B0F4 ----------------
   // Slots 1, 2, 6, 17 and 18 hold the shared no-ops every window carries

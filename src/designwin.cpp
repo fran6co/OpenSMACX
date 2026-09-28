@@ -458,30 +458,72 @@ void DesignWin::on_iface_right_click(int xCoord, int yCoord) {
     }
 }
 
-// PENDING 0x0043D350 ?on_iface_mouse_move@DesignWin@@QAEXHH@Z 0x0043D350-0x0043D3B9
+// ORIGINAL: 0x00437BA0 ?on_mouse_move@DesignWin@@QAEXHH@Z 0x00437BA0-0x00437BD5 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00437ba0.cpp", "DesignWin spot2_ member and Win::clear_bubble_text in src/"], "reason": "Home the direct pointer hover handler through the real DesignWin spot member and Win interface."}
+// size      53 bytes
+// prototype void (__thiscall ?on_mouse_move@DesignWin@@QAEXHH@Z)(DesignWin* this, int xCoord, int yCoord)
+// callers   0   call targets   2
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x005F8500 0x005FAB00
+// Homed from src/recovered/units/00437ba0.cpp.
+void DesignWin::on_mouse_move(int xCoord, int yCoord) {
+    Win::clear_bubble_text();
+    Win::clear_bubble_text();
+
+    int position;
+    int type;
+    spot2_.check(xCoord, yCoord, &position, &type);
+}
+
+// ORIGINAL: 0x0043D350 ?on_iface_mouse_move@DesignWin@@QAEXHH@Z 0x0043D350-0x0043D3B9 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043d350.cpp", "DesignWin spot1_, field_CE0_ and draw_flash in src/", "Existing secondary-interface override symbol mapping"], "reason": "Replace the original-address forwarder with a typed interface hover handler while retaining the historical exact seed for restoration."}
 // symbol    ?on_iface_mouse_move@DesignWin@@UAEXHH@Z
 // size      105 bytes
 // prototype void (__thiscall ?on_iface_mouse_move@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
+// Homed from src/recovered/units/0043d350.cpp.
 void DesignWin::on_iface_mouse_move(int a1, int a2) {
-    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D350))(
-        this, nullptr, a1, a2);
+    Win::clear_bubble_text();
+    Win::clear_bubble_text();
+
+    int position;
+    int type;
+    int result = spot1_.check(a1, a2, &position, &type);
+    int selected_spot;
+    if (result != -1) {
+        selected_spot = position;
+        if (field_CE0_ == selected_spot) {
+            return;
+        }
+    } else {
+        selected_spot = 0x3F;
+        if (field_CE0_ == selected_spot) {
+            return;
+        }
+    }
+    field_CE0_ = selected_spot;
+    draw_flash();
 }
 
-// PENDING 0x0043D3C0 ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z 0x0043D3C0-0x0043D3F1
+// ORIGINAL: 0x0043D3C0 ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z 0x0043D3C0-0x0043D3F1 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043d3c0.cpp", "DesignWin field_CE0_, draw_flash and Win::clear_bubble_text in src/", "Existing secondary-interface override symbol mapping"], "reason": "Replace the original-address forwarder with a typed interface leave handler while retaining the historical exact seed for restoration."}
 // symbol    ?on_iface_mouse_leave@DesignWin@@UAEXHH@Z
 // size      49 bytes
 // prototype void (__thiscall ?on_iface_mouse_leave@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
 // callers   0   call targets   2
 // kind      game
-// flags     frame;hidden;sp_ready;purged_ok
+// flags     sp_ready;purged_ok
+// Homed from src/recovered/units/0043d3c0.cpp.
 void DesignWin::on_iface_mouse_leave(int a1, int a2) {
-    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D3C0))(
-        this, nullptr, a1, a2);
+    Win::clear_bubble_text();
+    Win::clear_bubble_text();
+    if (field_CE0_ != 0x3F) {
+        field_CE0_ = 0x3F;
+        draw_flash();
+    }
 }
 
 
