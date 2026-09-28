@@ -19,6 +19,94 @@
 #include "wave.h"
 #include "credits.h"
 
+extern Wave g_CREDITS_WAVE;
+
+// Credits' list is populated with owned C-heap strings by load(); unload()
+// releases every slot and clears both count fields before releasing audio.
+// ORIGINAL: 0x00428830 ?unload@Credits@@QAEXXZ 0x00428830-0x0042887D BYTE_EXACT
+void Credits::unload() {
+  for (int i = 0; i < 512; ++i) {
+    if (lines_[i] != 0) {
+      free(lines_[i]);
+      lines_[i] = 0;
+    }
+  }
+  line_count_ = 0;
+  frame_count_ = 0;
+  g_CREDITS_WAVE.unload();
+}
+
+// Close the owned timer and graphics window, then the embedded button.
+// ORIGINAL: 0x004289C0 ?close@Credits@@QAEXXZ 0x004289C0-0x004289E9 BYTE_EXACT
+void Credits::close() {
+  time_.close();
+  GraphicWin::close();
+  flatButton_.close();
+}
+
+// The timer entry points and renderer are expressed through the Credits
+// members and embedded GraphicWin/Buffer rather than seed pointer arithmetic.
+// ORIGINAL: 0x00428DC0 ?timer_callback_daemon@Credits@@QAEXXZ 0x00428DC0-0x00428DCB BYTE_EXACT
+void Credits::timer_callback_daemon() {
+  ++frame_count_;
+  draw_credits();
+}
+
+// ORIGINAL: 0x00428DD0 ?timer_callback_daemon@Credits@@QAAXH@Z 0x00428DD0-0x00428DE7 BYTE_EXACT
+void __cdecl Credits::timer_callback_daemon(int) {
+  if (this) {
+    ++frame_count_;
+    draw_credits();
+  }
+}
+
+// ORIGINAL: 0x00428C00 ?draw_credits@Credits@@QAEXXZ 0x00428C00-0x00428D5C
+void Credits::draw_credits() {
+  Buffer *canvas = static_cast<Buffer *>(&graphicWin2_);
+  graphicWin2_.fill(9);
+
+  const int height = graphicWin2_.dib_.bmiHeader.biHeight;
+  const int width = graphicWin2_.dib_.bmiHeader.biWidth;
+  int y = -(static_cast<int>(frame_count_) + height);
+  int line_index = 0;
+  if (y <= -static_cast<int>(line_height_)) {
+    line_index = -(y / static_cast<int>(line_height_));
+    y %= static_cast<int>(line_height_);
+  }
+  if (line_index >= static_cast<int>(line_count_)) {
+    release_modal();
+    return;
+  }
+
+  if (y < -height) {
+    int index = line_index;
+    do {
+      if (index >= static_cast<int>(line_count_)) {
+        break;
+      }
+      canvas->set_text_color(0, -1, 1, 1);
+      char *line = lines_[index];
+      if (line != 0) {
+        canvas->write_cent_l(line, 0, y, width, strlen(line));
+      }
+      ++index;
+      y += static_cast<int>(line_height_);
+      ++line_index;
+    } while (y < -height);
+  }
+
+  int x = 0;
+  int y2 = 0;
+  for (int count = 7; count >= 0; --count) {
+    canvas->change_color(0, x, width, 2, 0, count);
+    const int lower_y = y2 - height - 1;
+    canvas->change_color(0, lower_y, width, 2, 0, count);
+    x += 2;
+    y2 -= 2;
+  }
+  graphicWin2_.on_update();
+}
+
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x00428D80 ?on_left_down@Credits@@QAEXHH@Z 0x00428D80-0x00428D83 BYTE_EXACT

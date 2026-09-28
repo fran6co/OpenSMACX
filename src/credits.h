@@ -44,24 +44,38 @@ class Credits : public GraphicWin {
   void on_mouse_move(int a1, int a2);
   void on_button_clicked(int a1);
 
+  // Lifecycle and timer methods recovered from the Credits-owned image
+  // functions. The callback's no-argument overload advances the text frame;
+  // the integer overload is the timer-dispatch entry point.
+  void unload();
+  void close();
+  void draw_credits();
+  void timer_callback_daemon();
+  void __cdecl timer_callback_daemon(int a1);
+
   // Storage the image proves is here: its own methods reach 0xA18.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 1 member(s) from the IDA database, 0 named; it starts a member at 0xA14, which is where src/ ends.
 
-  uint32_t field_A14_;  // 0xA14
+  // RECOVERY_MEMBER: v1 Credits frame_count_ 0xA14 0x00428DC0
+  uint32_t frame_count_;  // 0xA14
 
   // Storage the image proves is here: its own methods reach 0x2640.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 12 member(s) from the IDA database, 4 named; it starts a member at 0xA18, which is where src/ ends.
 
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint8_t field_A20_[0x7FC];  // 0xA20
+  // RECOVERY_MEMBER: v1 Credits line_count_ 0xA18 0x00428C00
+  uint32_t line_count_;  // 0xA18
+  // draw_credits indexes this owned string table; unload frees all 512
+  // slots, establishing the pointer element width and complete extent.
+  char *lines_[512];  // 0xA1C
   uint32_t field_121C_;  // 0x121C
   uint32_t field_1220_;  // 0x1220
   uint32_t field_1224_;  // 0x1224
   uint32_t field_1228_;  // 0x1228
-  uint32_t field_122C_;  // 0x122C
+  // Source draw_credits divides the vertical position by this row step.
+  // RECOVERY_MEMBER: v1 Credits line_height_ 0x122C 0x00428C00
+  uint32_t line_height_;  // 0x122C
   uint32_t field_1230_;  // 0x1230
   // Typed from the sizes the tree already asserts: GraphicWin 0xA14,
   // Font 0x28, Buffer 0x588, each verified against the real class by
@@ -73,4 +87,3 @@ class Credits : public GraphicWin {
   FlatButton flatButton_;  // 0x21F8, IDB `flatButton`, size == sizeof(FlatButton)
   Time time_;  // 0x2D44, IDB `time`, size == sizeof(Time); ends 0x2D6C
 };
-
