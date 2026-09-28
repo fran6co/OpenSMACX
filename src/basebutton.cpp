@@ -706,6 +706,36 @@ int BaseButton::init(LPCSTR name, int id, int x, int y, int width, int height,
     return 0;
 }
 
+// ORIGINAL: 0x00607190 ?UNK1@BaseButton@@QAEHPAUFont@@PADHHHHPAUWin@@H@Z 0x00607190-0x0060720A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:9db3d883:src/unrecovered/00607190.cpp", "source:src/font.h:Font::height_", "source:src/graphicwin.h:GraphicWin inherits Buffer"], "reason": "Size the button from the supplied font's own height, initialize its typed BaseButton owner, select the font on the inherited Buffer and redraw."}
+// symbol    ?UNK1@BaseButton@@QAEHPAVFont@@PADHHHHPAVWin@@H@Z
+int BaseButton::UNK1(Font *font, char *name, int id, int x, int y,
+                     int width, Win *parent, int style_flag) {
+    if (font == 0) return 3;
+    const int height = font->height_ * 7 / 4;
+    const int result = init(name, id, x, y, width, height, parent, style_flag);
+    if (result != 0) return result;
+    static_cast<Buffer *>(this)->set_font(font, 0, 0, 0);
+    redraw();
+    return 0;
+}
+
+// ORIGINAL: 0x00607820 ?on_mouse_leave@BaseButton@@QAEXHH@Z 0x00607820-0x0060784D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:9db3d883:src/recovered/units/00607820.cpp", "source:src/win.h:WinPointerOwner1/WinPointerOwner2/WinSizingFlag", "source:src/win.h:on_mouse_feedback is slot 17"], "reason": "Dispatch the leave feedback through the real Win virtual when this button is the active pointer owner."}
+// symbol    ?on_mouse_leave@BaseButton@@UAEXHH@Z
+void BaseButton::on_mouse_leave(int x, int y) {
+    Win *active = WinPointerOwner1 ? WinPointerOwner1 : WinPointerOwner2;
+    if (active == this && WinSizingFlag == 1) {
+        on_mouse_feedback(x, y);
+    }
+}
+
+// ORIGINAL: 0x00607C30 ?UNK2@BaseButton@@QAEXXZ 0x00607C30-0x00607C74 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00607c30.cpp", "source:src/basebutton.cpp:BaseButton::set"], "reason": "Toggle through the already-typed value setter so redraw and parent notification use the same proven ownership path; the seed's exact claim remains a restoration obligation."}
+void BaseButton::UNK2() {
+    set(field_A18_ == 0);
+}
+
 /*
 // ORIGINAL: 0x00607A00 ?on_right_click@BaseButton@@QAEXHH@Z 0x00607A00-0x00607A14 BYTE_EXACT
 // size      20 bytes

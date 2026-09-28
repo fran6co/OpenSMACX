@@ -71,6 +71,10 @@ class BaseButton : public GraphicWin {
   virtual void hide();
   int init(LPCSTR name, int id, int x, int y, int width, int height,
            Win *parent, int style_flag);
+  int UNK1(Font *font, char *name, int id, int x, int y, int width,
+           Win *parent, int style_flag);
+  void UNK2();
+  void on_mouse_leave(int x, int y);
   BaseButton *destroy();
   void set_text_color(int color1, int color2, int color3, int color4);
   void set_text_color2(int color1, int color2, int color3, int color4);

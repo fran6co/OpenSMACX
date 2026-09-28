@@ -102,6 +102,8 @@ class Font {
   static void __cdecl close_font_class();
 
  private:
+  // BaseButton::UNK1 sizes its label from the original Font height word.
+  friend class BaseButton;
   friend class CheckBox;
   // Buffer::text_height reads the resolved font's height directly.
   friend class Buffer;
