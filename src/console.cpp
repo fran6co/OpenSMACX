@@ -60,11 +60,90 @@
 #include "buttongroup.h"  // ButtonGroup::set - the editor brush/paint selectors
 #include <cstring>
 
-// Link-only placeholders; movement selection and vehicle editing are unfinished.
+void __cdecl draw_cursor();                               // 0x0046AE00
+
 // ORIGINAL: 0x00511520 ?set_move@Console@@QAEXH@Z 0x00511520-0x005117FD
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00511520.cpp", "source:src/console.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
-void Console::set_move(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963abb2ef8a11892e1d754d80934bd50b12e:src/recovered/units/00511520.cpp", "source:src/console.h", "source:src/veh.h", "source:src/game.h", "source:src/mapwin.h"], "reason": "Coverage transcription using Console members, ConsoleGlobal, Vehs, and named game/network owners in place of seed receiver offsets and duplicate absolute aliases. The ready helper's selection operation is represented by ready_search. Preserved discoveries from the seed: ambience_veh (0x00446D10) and spot_all (0x005B6260) are not product-bound, the multiplayer guards at 0x0093E944 / 0x0093E8E0 are unowned, and 0x0093E8EC is a faction-indexed waiting latch. Their owners need recovery before those effects can be restored here."}
+void Console::set_move(int force_update) {
+    // A network handoff or automated turn owns movement input. not_my_turn()
+    // already combines the network flag, handoff bit and active faction.
+    if (IsMultiplayerNet &&
+        (ConsoleControlTurnActive != 0 || not_my_turn() != 0)) {
+        return;
+    }
+
+    bool did_reset = false;
+    if (ConsoleGlobal.cursor_active_ == 0 || force_update != 0) {
+        cursor_active_ = 0;
+        field_23BF8_ = 0;
+        field_23BFC_ = 1;
+        did_reset = true;
+
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        cursor_active_ = 1;
+        field_23BE4_ = 0;
+    }
+
+    // The seed calls an unhomed Console::ready() helper here. Its recovered
+    // selection algorithm is ready_search; this preserves unit coverage while
+    // leaving the helper's additional presentation effects for its own task.
+    if (veh_selectable(selected_vehicle_) == 0) {
+        selected_vehicle_ = ready_search(-1);
+        did_reset = false;
+    }
+
+    if (selected_vehicle_ >= 0 && veh_selectable(selected_vehicle_) != 0) {
+        const int veh_id = selected_vehicle_;
+        const int tile_x = Vehs[veh_id].x;
+        const int tile_y = Vehs[veh_id].y;
+        field_23BF8_ = 0;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        console_map_win()->draw_cursor();
+        cursor_next(tile_x, tile_y);
+
+        if (did_reset) {
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            console_map_win()->main_caption();
+            const int faction = ConsoleGlobal.cursor_history_index_;
+            focus(ConsoleGlobal.cursor_history_x_[faction],
+                  ConsoleGlobal.cursor_history_y_[faction],
+                  Vehs[veh_id].faction_id);
+            alpha_menu_.check(veh_id);
+        }
+        field_23BF4_ = 1;
+        return;
+    }
+
+    field_23BE4_ = 0;
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+
+    const int index = ConsoleGlobal.cursor_history_index_;
+    const int tile_x = ConsoleGlobal.cursor_history_x_[index];
+    const int tile_y = ConsoleGlobal.cursor_history_y_[index];
+    ConsoleStatusWin.set_loc(tile_x, tile_y);
+    focus(tile_x, tile_y, faction_id_);
 }
 
 // ORIGINAL: 0x004DDA50 ?editor_edit_veh@Console@@QAEXH@Z 0x004DDA50-0x004DE95B;0x0065B97E-0x0065BC13
@@ -90,7 +169,6 @@ int ConsoleControlTurnActive;
 // src/pending_bodies.cpp.
 int __cdecl veh_ready(int veh_id);                        // 0x005C1B70 ?veh_ready@@YAHH@Z
 void __cdecl action_destroy(int veh_id, int choice, int a3, int a4);  // 0x004CAA50 ?action_destroy@@YAXHHHH@Z
-void __cdecl draw_cursor();                               // 0x0046AE00 ?draw_cursor@@YAXXZ
 int __cdecl tut_check(int veh_id);                            // 0x004BA5F0 ?tut_check@@YAHH@Z
 int __cdecl tut_check2(int veh_id);                           // 0x004BA650 ?tut_check2@@YAHH@Z
 int __cdecl save_game(int save_slot);                            // 0x005A9EB0 ?save_game@@YAHH@Z
@@ -118,7 +196,6 @@ void __cdecl diplomacy_ends(int faction_id, int faction_id_with);              /
 int __cdecl diplo_lock(int faction_id);                           // 0x00539820 ?diplo_lock@@YAHH@Z
 int __cdecl break_treaty(int faction_id, int faction_id_with, int treaty);         // 0x0055F770 ?break_treaty@@YAHHHH@Z
 void __cdecl double_cross(int faction_id, int faction_id_with, int treaty);        // 0x0050BCC0 ?double_cross@@YAXHHH@Z
-void __cdecl spot_all(int x, int y);                    // 0x005B6260 ?spot_all@@YAXHH@Z
 int __cdecl upgrade_cost(int facility_id, int base_id, int flags);         // 0x004EFD50 ?upgrade_cost@@YAHHHH@Z
 int __cdecl resource_yield(int x, int y, int resource_kind, int faction_id, int a5); // 0x004E7DC0 ?resource_yield@@YAHHHHHH@Z
 int __cdecl can_convoy(int faction_id, int veh_id);                   // 0x00564D90 ?can_convoy@@YAHHH@Z
