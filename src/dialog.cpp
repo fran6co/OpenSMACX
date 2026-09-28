@@ -245,6 +245,68 @@ int Dialog::init(RECT *rect, int heap_size) {
 }
 
 /*
+Purpose: Initialize the dialog's absolute geometry and optional embedded
+         item-list heap. A failed Heap::init returns 4; success reconnects the
+         list allocator to Dialog's own Heap, while a zero size clears it.
+*/
+// ORIGINAL: 0x00609300 ?init@Dialog@@QAEHHHHHH@Z 0x00609300-0x00609465
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned recover inspect 0x00609300: calls Dialog::close before writing left/top/right/bottom at +0x24/+0x28/+0x2c/+0x30, ORs style bits 3, stores heap_size at +0x1c, then calls Heap::init on this+4 only for nonzero size. The test at 0x00609350 branches to success on zero; nonzero returns 4.", "Pinned recover inspect 0x00609360-0x006093e1 confirms successful nonzero setup clears the item list, stores the embedded Heap pointer to StringList::allocator_, resets current_position_, and returns 0; the zero-size branch also clears the list and allocator."], "reason": "Recover the five-integer Dialog initializer as a typed member using the real embedded Heap and StringList. The image reuses a stack slot as EDI only when the list teardown loop runs, yielding the original left argument as allocator; close() already empties this list before the repeated clear, so preserve the owning &heap_ reference rather than the stale-register artifact."}
+// TRIED: the two branches each inline the SAME list-teardown loop; the field at list+0x18 is set to `a1` in the `a5 != 0` branch (matching Ghidra) since the stale-register case is not expressible from source. 0.89 mnemonic similarity.
+// Historical redirect emitted symbol: ?dialog_init_six_redirect@@YIHPAX0HHHHH@Z
+int Dialog::init(int left, int top, int right, int bottom, int heap_size) {
+    close();
+
+    field_24_ = static_cast<uint32_t>(left);
+    field_28_ = static_cast<uint32_t>(top);
+    field_2C_ = static_cast<uint32_t>(right);
+    field_30_ = static_cast<uint32_t>(bottom);
+    field_20_ |= 3U;
+    field_1C_ = static_cast<uint32_t>(heap_size);
+
+    if (heap_size != 0 && heap_.init(static_cast<size_t>(heap_size))) {
+        return 4;
+    }
+
+    item_list_.remove_all();
+    item_list_.current_position_ = 0;
+    item_list_.allocator_ = heap_size == 0 ? 0 : &heap_;
+    return 0;
+}
+
+/*
+Purpose: Initialize a dialog from an absolute rectangle and caller-owned
+         heap, copying the rectangle before close() resets dialog state.
+*/
+// ORIGINAL: 0x006097F0 ?init@Dialog@@QAEHPAURECT@@PAUHeap@@@Z 0x006097F0-0x006098C8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned recover inspect 0x006097F0 rejects a null RECT with 3, snapshots left/top/right/bottom before calling Dialog::close, computes width=right-left and height=bottom-top, then stores left/top/width/height at +0x24/+0x28/+0x2c/+0x30 and the supplied Heap* at +0x18.", "Pinned recover inspect 0x00609841-0x006098c5 confirms item-list removal, current_position_ reset, allocator_ set to the supplied heap, and return 0."], "reason": "Recover the rectangle-and-heap overload on Dialog using its typed geometry, heap pointer, and embedded StringList members."}
+// symbol    ?init@Dialog@@QAEHPAUtagRECT@@PAVHeap@@@Z
+// TRIED: separate width/height locals vs `right -= left; bottom -= top;` in place - both diverge at the same instruction (the field_2c/30 store). This is the "this-adjusting thunk" shape (vtbl[1] holds a byte offset, not a function pointer) modelled with a single-virtual-slot shim plus raw pointer chasing.
+int Dialog::init(RECT *rect, Heap *heap) {
+    if (rect == 0) {
+        return 3;
+    }
+
+    const int left = rect->left;
+    const int top = rect->top;
+    const int width = rect->right - left;
+    const int height = rect->bottom - top;
+
+    close();
+
+    field_24_ = static_cast<uint32_t>(left);
+    field_28_ = static_cast<uint32_t>(top);
+    field_2C_ = static_cast<uint32_t>(width);
+    field_30_ = static_cast<uint32_t>(height);
+    field_20_ |= 3U;
+    heap_ptr_ = heap;
+
+    item_list_.remove_all();
+    item_list_.current_position_ = 0;
+    item_list_.allocator_ = heap;
+    return 0;
+}
+
+/*
 Purpose: Find an item ID's bounded position in the dialog string list.
 // ORIGINAL: 0x00609AF0 ?id_to_pos@Dialog@@QAEHH@Z 0x00609AF0-0x00609B4B BYTE_EXACT
 // MEASURED inline: the body lives at the end of dialog.h. The image keeps
