@@ -71,9 +71,10 @@ class ReportIf : public SubInterface {
   // void(int, int, int), unrecovered. on_iface_left_click and ReportWin's
   // on_key_click reach it on the singleton below; the retained unit's own
   // prototype names the second argument factionID (it feeds has_tech and the
-  // per-faction spy lists), stores the report id at +0x1E228 and the third
+  // per-faction spy lists), stores the faction id at +0x1E228 and the third
   // argument at +0x1E22C.
   void report(int report_id, int faction_id, int selection);
+  int report_faction_id() const { return report_faction_id_; }
   // homed from 004a5f40.cpp
   void on_iface_left_click(int x_coord, int y_coord);
   // homed from 004ab550.cpp
@@ -177,7 +178,22 @@ class ReportIf : public SubInterface {
   uint8_t flatButton14_[0xB4C];  // 0x1D634
   uint8_t gap_1E180_[0x3C];  // 0x1E180
   uint8_t spot_[0xC];  // 0x1E1BC, sizeof(Spot)
-  uint8_t gap_1E1C8_[0x80];  // 0x1E1C8
+  uint8_t gap_1E1C8_[0x60];  // 0x1E1C8
+  // ReportIf::report stores its faction and selection arguments here; the
+  // singleton's 0x008A4160 address is this + 0x1E228, not separate storage.
+  // RECOVERY_MEMBER: v1 ReportIf report_faction_id_ 0x1E228 0x004A3950
+  int32_t report_faction_id_;  // 0x1E228
+  // RECOVERY_MEMBER: v1 ReportIf report_selection_ 0x1E22C 0x004A3950
+  int32_t report_selection_;  // 0x1E22C
+  uint8_t gap_1E230_[0x10];  // 0x1E230
+  // ReportIf::init writes 0 and 4 to these adjacent dwords at +0x1E240
+  // and +0x1E244. ReportWin::on_group_clicked writes its third argument
+  // to the first when the clicked group id is 4. Their meanings remain
+  // unresolved; retain neutral names until the shared state is understood.
+  // RECOVERY_MEMBER: v1 ReportIf field_1E240_ 0x1E240 0x004A3494
+  int32_t field_1E240_;  // 0x1E240
+  // RECOVERY_MEMBER: v1 ReportIf field_1E244_ 0x1E244 0x004A3494
+  int32_t field_1E244_;  // 0x1E244
   // RECOVERY_MEMBER: v1 ReportIf animation_state_ 0x1E248 0x004A4060
   uint32_t animation_state_;  // 0x1E248
   // RECOVERY_MEMBER: v1 ReportIf animation_x_ 0x1E24C 0x004A4060

@@ -53,11 +53,6 @@ ListBox ReportWinListBox2;  // 0x00890D5C
 static int *const IfaceIdToSlot = (int *)0x007AE778;
 static int *const ActiveIfaceId = (int *)0x007D392C;
 
-// 0x008A4160 - the faction the report is displayed for; ReportIf::report's
-// retained unit names its second argument factionID, and on_key_click passes
-// this dword there. No catalogue name.
-static int *const ReportFactionId = (int *)0x008A4160;
-
 // 0x005398E0 ?pop_wait@@YAHXZ - defined in faction.cpp (BYTE_EXACT); no
 // header declares it, and the set_modal popups pass it as their wait
 // callback (the designwin.cpp spelling).
@@ -448,7 +443,7 @@ Purpose: The report window's keyboard handler. Always answers 1.
                                                  minimum
              0x30-0x5A or Escape               - release the modal loop and
                                                  the active interface mode
-// ORIGINAL: 0x00498280 ?on_key_click@ReportWin@@QAEHHH@Z 0x00498280-0x00498691 FILE
+// ORIGINAL: 0x00498280 ?on_key_click@ReportWin@@QAEHHH@Z 0x00498280-0x00498691
 // size      1041 bytes
 // prototype int (__thiscall ?on_key_click@ReportWin@@QAEHHH@Z)(ReportWin* this, int, int)
 // callers   0   call targets   4
@@ -500,7 +495,8 @@ int ReportWin::on_key_click(int, int code) {
         }
 
         if (IfaceIdToSlot[*ActiveIfaceId] == 5) {
-            ReportIfGlobal.report(report_code, *ReportFactionId, 0);
+            ReportIfGlobal.report(report_code,
+                                  ReportIfGlobal.report_faction_id(), 0);
             return 1;
         }
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
@@ -555,7 +551,8 @@ int ReportWin::on_key_click(int, int code) {
         }
 
         if (IfaceIdToSlot[*ActiveIfaceId] == 5) {
-            ReportIfGlobal.report(report_code, *ReportFactionId, 0);
+            ReportIfGlobal.report(report_code,
+                                  ReportIfGlobal.report_faction_id(), 0);
             return 1;
         }
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);

@@ -676,12 +676,6 @@ void ReportIf::reset() {
 static int *const IfaceIdToSlot = (int *)0x007AE778;
 static int *const ActiveIfaceId = (int *)0x007D392C;
 
-// 0x008A4160 - the faction the report is displayed for. ReportIf::report's
-// retained unit names its second argument factionID (it feeds has_tech and
-// the per-faction spy lists), and on_iface_left_click / ReportWin's
-// on_key_click pass this dword there. No catalogue name.
-static int *const ReportFactionId = (int *)0x008A4160;
-
 // 0x008846E8 - set to 1 when a topic in the intel list (field_8_ == 7) is
 // clicked. Its neighbour 0x008846E4 gates the report scroll on_status shows.
 // No catalogue name for either.
@@ -732,8 +726,8 @@ Purpose: Show the report window modally with pop_wait as its poll callback,
              cmp IfaceIdToSlot[ActiveIfaceId], 5 - world map keeps its own
                                                   modal owner
              set_modal(0, pop_wait, MainInterfaceGlobal) - slot 0xE4
-             report(7, ReportFactionId, 0) on the 0x00885F38 singleton
-// ORIGINAL: 0x004A5F40 ?on_iface_left_click@ReportIf@@QAEXHH@Z 0x004A5F40-0x004A5FD6 FILE
+             report(7, report_faction_id_, 0) on the 0x00885F38 singleton
+// ORIGINAL: 0x004A5F40 ?on_iface_left_click@ReportIf@@QAEXHH@Z 0x004A5F40-0x004A5FD6
 // size      150 bytes
 // prototype void (__thiscall ?on_iface_left_click@ReportIf@@QAEXHH@Z)(ReportIf* this, int, int)
 // callers   0   call targets   2
@@ -755,8 +749,7 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
                                                &y_coord, &x_coord) == -1) {
         return;
     }
-    *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x1E244) =
-        y_coord;
+    field_1E244_ = y_coord;
 
     *IntelTopicSelectFlag = 1;
     field_8_ = 7;
@@ -766,7 +759,7 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
         return;
     }
 
-    ReportIfGlobal.report(7, *ReportFactionId, 0);
+    ReportIfGlobal.report(7, report_faction_id_, 0);
 }
 
 /*
