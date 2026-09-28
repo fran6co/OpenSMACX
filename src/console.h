@@ -327,6 +327,12 @@ class Console : public MapWin {
   // homed from 004d2ac0.cpp
   void disband(int veh_id);
 
+  // Unit-order commands homed from the recovered 0x004D04xx/0x004D8xxx seeds.
+  void skip(int veh_id);
+  void hold(int veh_id, int waypoint_y);
+  void unload(int veh_id);
+  void set_road_to(int veh_id, int x_coord, int y_coord, int order);
+
  public:
   // homed from 00515740.cpp
   void toggle_dest();

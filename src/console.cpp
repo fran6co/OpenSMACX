@@ -1255,6 +1255,169 @@ static const char *const StrEditorWhoListTitle = (const char *)0x00688F6C;  // "
 static const char *const StrCustomNames = (const char *)0x00689000;    // "CUSTOMNAMES"
 static const char *const StrHostTime = (const char *)0x0068A93C;       // "HOSTTIME"
 static const char *const StrCustomTime = (const char *)0x0068A948;     // "CUSTOMTIME"
+// ORIGINAL: 0x004D0450 ?skip@Console@@QAEXH@Z 0x004D0450-0x004D0494 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004D0450-0x004D0494", "source:src/netdaemon.h", "source:src/veh.h", "source:src/game.h", "source:src/console.h"], "reason": "Home the skip order through the typed vehicle-ready predicate, turn guard and NetDaemon order API, and the already named Console skip-state member; remove the seed's receiver/table pointer arithmetic."}
+// The seed's blocked callee at 0x00531780 is now NetDaemon::order_veh; its
+// not_my_turn seed warning remains relevant because that predicate is inline
+// here while the original contains a call at 0x0052DC70.
+void Console::skip(int veh_id) {
+    if (veh_ready(veh_id) != 0 && not_my_turn() == 0) {
+        NetDaemonNet.order_veh(veh_id, -1, 0);
+        return;
+    }
+    field_23BE4_ = 0;
+}
+
+// ORIGINAL: 0x004D8DC0 ?set_road_to@Console@@QAEXHHHH@Z 0x004D8DC0-0x004D8F37
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004D8DC0-0x004D8F37", "source:src/veh.h", "source:src/map.h", "source:src/netdaemon.h"], "reason": "Represent the road target in Veh waypoint members and compare typed Map region values; use the existing map dimensions and NetDaemon vehicle-lock lifecycle rather than seed globals and byte offsets."}
+void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
+    if (y_coord < 0 || y_coord >= MapLatitudeBounds ||
+        x_coord < 0 || x_coord >= MapLongitudeBounds) {
+        return;
+    }
+
+    Veh &vehicle = Vehs[veh_id];
+    int distance_x = abs(x_coord - vehicle.x);
+    if ((MapIsFlat & 1) == 0 && distance_x > static_cast<int>(MapLongitude)) {
+        distance_x = MapLongitudeBounds - distance_x;
+    }
+    const int distance_y = abs(y_coord - vehicle.y);
+    if (((distance_y + distance_x) & ~1) < 2) {
+        return;
+    }
+
+    const int target_index = MapLongitude * y_coord + (x_coord >> 1);
+    const int origin_index = MapLongitude * vehicle.y + (vehicle.x >> 1);
+    if ((map_tiles()[target_index].climate & ~0x1F) < 0x60) {
+        NetMsgPopup->pop(StrNotHere, 5000, 0, 0);
+        return;
+    }
+    if (map_tiles()[target_index].region != map_tiles()[origin_index].region) {
+        return;
+    }
+
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
+        return;
+    }
+    Vehs[veh_id].order = static_cast<int8_t>(order);
+    Vehs[veh_id].waypoint_x[0] = static_cast<int16_t>(x_coord);
+    Vehs[veh_id].waypoint_y[0] = static_cast<int16_t>(y_coord);
+    synch_veh(veh_id);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+}
+
+// ORIGINAL: 0x004D24C0 ?hold@Console@@QAEXHH@Z 0x004D24C0-0x004D2697
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004D24C0-0x004D2697", "source:src/veh.h", "source:src/map.h", "source:src/netdaemon.h", "source:src/basewin.h"], "reason": "Recover the hold order with Veh stack/waypoint state, typed map terrain and region bits, RulesChassis traits, and NetDaemon synchronization; base and tile refreshes use their product owners."}
+void Console::hold(int veh_id, int waypoint_y) {
+    int lock_vehicle = veh_id;
+    if (NetDaemonNet.lock_veh(&lock_vehicle, 0, -1, -1, 0) != 0) {
+        return;
+    }
+
+    const Veh &vehicle = Vehs[veh_id];
+    const int x_coord = vehicle.x;
+    const int y_coord = vehicle.y;
+    const int tile_index = MapLongitude * y_coord + (x_coord >> 1);
+    const Map &tile = map_tiles()[tile_index];
+    const RulesChassis &chassis = Chassis[VehPrototypes[vehicle.proto_id].chassis_id];
+
+    bool should_hold = (tile.climate & 0xE0) >= 0x60 || chassis.triad != 0;
+    if (!should_hold) {
+        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) < 8) {
+            NetDaemonNet.unlock_veh();
+            return;
+        }
+    }
+
+    if (chassis.triad == TRIAD_AIR && chassis.range != 0) {
+        if ((tile.bit & 1) == 0 || (tile.val2 & 0x0F) >= 8) {
+            if ((tile.bit & 0x40000) == 0) {
+                NetDaemonNet.unlock_veh();
+                return;
+            }
+        }
+    }
+
+    Vehs[veh_id].waypoint_y[0] = static_cast<int16_t>(waypoint_y);
+    Vehs[veh_id].order = ORDER_HOLD;
+    synch_veh(veh_id);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+    TutWinBaseWindow.check_veh(veh_id);
+    draw_tile(x_coord, y_coord, 1);
+
+    if (VehPrototypes[Vehs[veh_id].proto_id].plan != PLAN_ALIEN_ARTIFACT) {
+        return;
+    }
+    int owner = -1;
+    if (map_tiles()[tile_index].bit & 1) {
+        owner = map_tiles()[tile_index].val2 & 0x0F;
+        if (owner > 7) {
+            owner = -1;
+        }
+    }
+    if (static_cast<uint8_t>(owner) == Vehs[veh_id].faction_id) {
+        NetDaemonNet.order_veh(veh_id, -1, 0);
+    }
+}
+
+// ORIGINAL: 0x004D04E0 ?unload@Console@@QAEXH@Z 0x004D04E0-0x004D06B6
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004D04E0-0x004D06B6", "image:.data:0x00688568 contains UNLOADNO and .data:0x00688574 contains UNLOADNEXT", "source:src/veh.h", "source:src/netdaemon.h", "source:src/netmsg.h", "source:src/console.h"], "reason": "Recover cargo unloading through Veh stack links, chassis traits and source-owned movement/ability predicates; preserve the daemon lock/synchronization lifecycle, selected-vehicle Console state, and the image's localization keys without absolute-address aliases."}
+void Console::unload(int veh_id) {
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
+        return;
+    }
+
+    const int carrier_proto = Vehs[veh_id].proto_id;
+    const bool has_carried_vehicles = veh_cargo(veh_id) != 0;
+    const bool carrier_ability = has_abil(carrier_proto, 0x80) != 0;
+    if (!has_carried_vehicles && !carrier_ability) {
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+
+    const int wanted_triad = carrier_ability ? 2 : 0;
+    int first_cargo = veh_id;
+    if (first_cargo < 0) {
+        first_cargo = -1;
+    } else {
+        while (Vehs[first_cargo].next_veh_id_stack >= 0) {
+            first_cargo = Vehs[first_cargo].next_veh_id_stack;
+        }
+    }
+
+    int flags = 0;
+    for (int cargo_id = first_cargo; cargo_id >= 0;
+         cargo_id = Vehs[cargo_id].prev_veh_id_stack) {
+        Veh &cargo = Vehs[cargo_id];
+        if (cargo.year_end_lurking == 1) {
+            cargo.year_end_lurking = 0;
+            synch_veh(cargo_id);
+        }
+
+        const RulesChassis &chassis = Chassis[VehPrototypes[cargo.proto_id].chassis_id];
+        if (chassis.triad == wanted_triad) {
+            flags |= 1;
+            if (veh_unmoved(cargo_id) != 0 && cargo.year_end_lurking == 0) {
+                ConsoleGlobal.selected_vehicle_ = cargo_id;
+                flags |= 2;
+            }
+        }
+    }
+
+    NetDaemonNet.unlock_veh();
+    if (flags == 0) {
+        NetMsgPopup->pop("UNLOADNO", 0x1388, 0, nullptr);
+        return;
+    }
+    if ((flags & 2) == 0) {
+        NetMsgPopup->pop("UNLOADNEXT", 0x1388, 0, nullptr);
+        return;
+    }
+    field_23BE4_ = 0;
+    set_move(1);
+}
 
 // THE TIME-CONTROLS STATE the CUSTOMTIME dialog drives: 0x009A64E0 is the
 // preselected row (start's value slot copies it into the popup) and

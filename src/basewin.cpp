@@ -362,6 +362,25 @@ void BaseWin::UNK3(int base_id) {
     }
 }
 
+// ORIGINAL: 0x0041A8B0 ?check_veh@BaseWin@@QAEXH@Z 0x0041A8B0-0x0041A91D
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0041A8B0-0x0041A91D multiplies the vehicle index by 0x34 and focusedBaseID_ by 0x134 before reading coordinates/home_base_id.", "source:src/veh.h", "source:src/base.h", "source:src/basewin.h", "source:src/graphicwin.h"], "reason": "Refresh the visible base when a vehicle is physically at the focused base or lists it as home, using the established Veh/Base records and virtual GraphicWin redraw."}
+// The recovered seed's `int *` indexed expressions accidentally scaled those
+// byte strides by four. Direct typed array indexing preserves the disassembly's
+// 0x34 Veh and 0x134 Base strides without an intermediate pointer.
+void BaseWin::check_veh(int veh_id) {
+    if (!is_visible()) {
+        return;
+    }
+
+    const Veh &vehicle = Vehs[veh_id];
+    const Base &base = Bases[focusedBaseID_];
+    if ((vehicle.x == base.x && vehicle.y == base.y) ||
+        vehicle.home_base_id == static_cast<int16_t>(focusedBaseID_)) {
+        base_compute(1);
+        redraw();
+    }
+}
+
 /*
 Purpose: Construct BaseWin's large aggregate of sub-windows: a ProdPicker, a
          second GraphicWin, several Sprite runs, a FlatButton, a Buffer, a
