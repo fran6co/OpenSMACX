@@ -195,9 +195,9 @@ void PlanWin::add_line(int base_id1, int base_id2, int color) {
 // MapWin receiver, offsets them by the map's current pixel center, then draws
 // a four-on/four-off patterned line on the virtual GraphicWin Buffer. The
 // nine-argument Buffer overload remains an explicit unfinished dependency.
-void PlanWin::draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
 // ORIGINAL: 0x0048BB80 ?draw_line@PlanWin@@QAEXHHHHH@Z 0x0048BB80-0x0048BC14
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0048bb80.cpp"], "reason": "Home tile-projected patterned PlanWin line in its real Buffer base path"}
+void PlanWin::draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
                         int color) {
     int pixel_x1;
     int pixel_y1;
