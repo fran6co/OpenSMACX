@@ -141,4 +141,29 @@ int SetupWin::do_menu(char* a1, int a2, int a3) {
     }
 }
 
+// ORIGINAL: 0x004AE380 ?on_mouse_move@SetupWin@@QAEHHH@Z 0x004AE380-0x004AE3DA
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ae380.cpp"], "reason": "Home SetupWin hover selection through typed Spot and selected-item fields"}
+int SetupWin::on_mouse_move(int x, int y) {
+    int position;
+    const int hit_type = spot_.check(x, y, &position, 0);
+    if (hit_type == -1) {
+        return -1;
+    }
 
+    if (position == static_cast<int>(field_FD0_)) {
+        return static_cast<int>(field_FD0_);
+    }
+
+    draw_item(static_cast<int>(field_FD0_), 0);
+    field_FD0_ = static_cast<uint32_t>(position);
+    draw_item(position, 1);
+    soft_update();
+    return 0;
+}
+
+// ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ae4d0.cpp"], "reason": "Explicit unfinished SetupWin-owned draw-item dependency needed by recovered hover handler; source seed retained for behavioral recovery"}
+int SetupWin::draw_item(int, int) {
+    // BODY GOES HERE.
+    return 0;
+}
