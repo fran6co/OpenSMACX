@@ -75,9 +75,9 @@ FileWin::FileWin() {
     field_30C_ = 0;
     field_410_ = 0;
     field_514_ = 0;
-    field_531_ = 0;
-    strcat(reinterpret_cast<char *>(&field_531_), FileWinTextTableDefault);
-    field_63C_ = 0;
+    directory_[0] = 0;
+    strcat(directory_, FileWinTextTableDefault);
+    modal_window_ = 0;
     field_33C0_ = 0;
 }
 
@@ -139,12 +139,12 @@ void FileWin::close() {
     field_30C_ = 0;
     field_410_ = 0;
     field_514_ = 0;
-    field_531_ = 0;
-    strcat(reinterpret_cast<char *>(&field_531_), FileWinTextTableDefaultNext);
+    directory_[0] = 0;
+    strcat(directory_, FileWinTextTableDefaultNext);
     FileWinFixedSprite0->close();
     FileWinFixedSprite1->close();
     FileWinFixedSprite2->close();
-    field_63C_ = 0;
+    modal_window_ = 0;
     if (field_33C0_ != 0) {
         DestroyWindow(reinterpret_cast<HWND>(field_33C0_));
         field_33C0_ = 0;
@@ -200,8 +200,32 @@ void FileWin::UNK1() {
     field_208_ = 0;
     field_30C_ = 0;
     field_410_ = 0;
-    field_531_ = 0;
+    directory_[0] = 0;
     field_514_ = 0;
+}
+
+// Copy a caller-supplied path into FileWin's own directory storage. A null
+// path clears it; an overlong path leaves the previous value intact.
+// ORIGINAL: 0x006142D0 ?set_directory@FileWin@@QAEHPAD@Z 0x006142D0-0x0061431E BYTE_EXACT
+int FileWin::set_directory(char *directory) {
+    if (directory == 0) {
+        directory_[0] = 0;
+        return 0;
+    }
+    if (strlen(directory) > 0x104) {
+        return 3;
+    }
+    directory_[0] = 0;
+    strcat(directory_, directory);
+    return 0;
+}
+
+// This was a fabricated slot-58 shim in the exact seed. Win establishes
+// slot 58 as release_modal, and field +0x63C holds that Win receiver.
+// ORIGINAL: 0x00614B60 ?UNK5@FileWin@@QAEXXZ 0x00614B60-0x00614B78 BYTE_EXACT
+void FileWin::UNK5() {
+    field_638_ = 0x12c;
+    modal_window_->release_modal();
 }
 
 

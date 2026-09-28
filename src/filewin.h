@@ -45,6 +45,8 @@ class FileWin {
   void UNK6();
   void UNK1();
   void UNK2(int pos);
+  int set_directory(char *directory);
+  void UNK5();
   // 0x006146A0 ?UNK4@FileWin@@QAEXXZ - public, __thiscall, void(void). Still
   // unrecovered; declared because the recovered on_double_clicked calls it
   // with a direct `call rel32`, which is what makes that body byte-exact.
@@ -72,10 +74,9 @@ class FileWin {
   uint8_t unmapped_411_[0x514 - 0x411];
   int32_t field_514_;
   uint8_t unmapped_518_[0x531 - 0x518];
-  uint8_t field_531_;
-  uint8_t field_532_[0x106];  // 0x532
+  char directory_[0x107];  // 0x531: bounded path storage
   uint32_t field_638_;  // 0x638
-  uint32_t field_63C_;  // 0x63C
+  Win *modal_window_;  // 0x63C: release_modal target
   uint32_t field_640_;  // 0x640
   uint32_t field_644_;  // 0x644
   uint32_t field_648_;  // 0x648
