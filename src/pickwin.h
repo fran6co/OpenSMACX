@@ -43,6 +43,11 @@ class PickWin : public GraphicWin {
   // nothing and the deleting destructor needs a `call rel32`.
   ~PickWin();
   void on_button_passover(int a1, int a2);
+  // Small picker actions homed from their historical seeds. `on_key_click`
+  // is a non-virtual helper; its button actions dispatch through Win's slot 44.
+  void close();                    // 0x00489B00, qualified GraphicWin close
+  int on_key_click(int flags, int key);  // 0x0048A7C0
+  int go_girl();                   // 0x0048A810
 
   // Storage the image proves is here: its own methods reach 0x12644.
   // Extent only - this class carries no size assertion, and the bound is a floor.
@@ -456,4 +461,3 @@ class PickWin : public GraphicWin {
 
 static_assert(sizeof(PickWin) == 0x12650,
               "PickWin layout must match the legacy ABI");
-

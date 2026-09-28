@@ -132,3 +132,31 @@ Purpose: Step the receiver back to the subobject ??_GPickWin@@UAEPAXI@Z
 Return Value: the forwarded call's
 Status: Complete
 */
+
+// ORIGINAL: 0x00489B00 ?close@PickWin@@QAEXXZ 0x00489B00-0x00489B05 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The seed body dispatches to GraphicWin::close through the PickWin base subobject; PickWin derives directly from GraphicWin without receiver adjustment."], "reason": "Express the close thunk as an ordinary qualified base call in PickWin's product source."}
+void PickWin::close() {
+    GraphicWin::close();
+}
+
+// ORIGINAL: 0x0048A7C0 ?on_key_click@PickWin@@QAEHHH@Z 0x0048A7C0-0x0048A80D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The seed uses Win vtable slot 44 for on_button_clicked with 0x103 on Escape and 0x108 on Enter; Escape and other keys clear PickWin field +0x5DA4, while Enter returns before the clear.", "PickWin's class storage declares field_5DA4_ at the measured +0x5DA4 offset, and its inherited on_button_clicked is Win's slot-44 virtual."], "reason": "Home the compact key handler through PickWin's typed field and inherited Win behavior."}
+int PickWin::on_key_click(int, int key) {
+    if (key == 0x1B) {
+        on_button_clicked(0x103);
+    } else if (key == 0x0D) {
+        on_button_clicked(0x108);
+        return 1;
+    }
+    field_5DA4_ = 0;
+    return 1;
+}
+
+// ORIGINAL: 0x0048A810 ?go_girl@PickWin@@QAEHXZ 0x0048A810-0x0048A83C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The seed's three virtual calls resolve to Win/GraphicWin redraw (slot 62), show (slot 1), and set_modal (slot 57) on the same receiver.", "PickWin's declared field_5DA8_ is the returned value at +0x5DA8."], "reason": "Replace opaque vtable-slot replay with the inherited Win interface and PickWin's typed result field."}
+int PickWin::go_girl() {
+    redraw();
+    show(0);
+    set_modal(0, nullptr, nullptr);
+    return field_5DA8_;
+}
