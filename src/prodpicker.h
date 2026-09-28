@@ -51,6 +51,9 @@ class ProdPicker : public GraphicWin {
   void on_mouse_move(int a1, int a2);
   void UNK3(int a1);
   void close();
+  int edbc_fac(int facility_id);   // 0x00493B70, editor category
+  int edbc_unit(int prototype_id); // 0x00493AF0, prototype category
+  void on_mousewheel(int delta);   // 0x00493C20, embedded Scroll
   // PAURECT@@H, per ?on_redraw_nc@ProdPicker@@QAEXPAURECT@@H@Z; the body is
   // `ret 8` either way and only the decorated name moves.
   void on_redraw_nc(RECT *, int);
@@ -142,4 +145,3 @@ class ProdPicker : public GraphicWin {
 
 static_assert(sizeof(ProdPicker) == 0xA840,
               "ProdPicker layout must match the original executable");
-

@@ -19,8 +19,65 @@
 #include "basepop.h"
 #include "stringstruct.h"  // StringAllocationHeap; the staged vbtable constants
 #include "prodpicker.h"
+#include "general.h"  // range used by veh.h's inline helpers
+#include "veh.h"
 #include "vector_teardown.h"
 #include <cstring>
+
+// The production editor groups facilities into four display categories.
+// ORIGINAL: 0x00493B70 ?edbc_fac@ProdPicker@@QAEHH@Z 0x00493B70-0x00493BB3 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:9a9fb225:src/recovered/units/00493b70.cpp", "source:src/prodpicker.h"], "reason": "Home the category mapping in the real ProdPicker owner; this method reads no object storage and needs no fixed-image binding."}
+int ProdPicker::edbc_fac(int facility_id) {
+    if (facility_id >= 0x46) return 1;
+    switch (facility_id) {
+    case 4: case 0x1B: case 0x1C: case 0x1D: case 0x1E: case 0x44:
+        return 3;
+    case 3: case 0x1F: case 0x20:
+        return 0;
+    case 8: case 0xF: case 0x10: case 0x11:
+        return 1;
+    default:
+        return 2;
+    }
+}
+
+// The original 0x009AB892/+0x009AB898 reads are plan and flags members of
+// the 0x34-byte VehPrototypes entries, not independent address constants.
+// ORIGINAL: 0x00493AF0 ?edbc_unit@ProdPicker@@QAEHH@Z 0x00493AF0-0x00493B4A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:9a9fb225:src/unrecovered/00493af0.cpp", "source:src/veh.h:VehPrototype"], "reason": "Recover prototype category selection through the source-owned prototype array and its named plan/flags members."}
+int ProdPicker::edbc_unit(int prototype_id) {
+    const VehPrototype &prototype = VehPrototypes[prototype_id];
+    if (prototype_id >= 0x40 && (prototype.flags & 4) == 0) return 1;
+    switch (prototype.plan) {
+    case 3: case 7: case 8:
+        return 0;
+    case 9: case 10:
+        return 2;
+    case 11:
+        return 1;
+    default:
+        return 3;
+    }
+}
+
+// The constructor owns a Scroll at +0x7120, currently explicit storage to
+// preserve construction order. Wheel events are delivered to that object.
+// ORIGINAL: 0x00493C20 ?on_mousewheel@ProdPicker@@QAEXH@Z 0x00493C20-0x00493C68 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00493c20.cpp", "source:src/prodpicker.h", "source:src/scroll.h"], "reason": "Dispatch each wheel step to ProdPicker's real embedded Scroll rather than a raw receiver offset or vtable shim. The source form currently mismatches; retain the seed's historical exact claim as a restoration obligation, without demotion."}
+void ProdPicker::on_mousewheel(int delta) {
+    Scroll *scroll = reinterpret_cast<Scroll *>(scroll_);
+    // x86 NEG leaves INT_MIN negative; the original's positive-count test
+    // therefore sends no steps for that otherwise overflowing input.
+    if (delta == (-2147483647 - 1)) return;
+    while (delta < 0) {
+        scroll->on_mousewheel_down(1);
+        ++delta;
+    }
+    while (delta > 0) {
+        scroll->on_mousewheel_up(1);
+        --delta;
+    }
+}
 
 // Sprite and FlatButton are constructed in a loop through the CRT's own
 // vector constructor iterator - see vector_teardown.h. The addresses are the
