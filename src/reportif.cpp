@@ -17,6 +17,8 @@
  */
 #include "stdafx.h"
 #include "reportif.h"
+#include "base.h"    // BaseCurrentCount bounds the report's fixed sort workspace
+#include "general.h" // swap for the original reversed-bound normalization
 #include "reportwin.h"  // ReportWinGlobal - the window done() un-modals
 #include "worldwin.h"
 #include "menu.h"
@@ -292,6 +294,66 @@ Status: Complete
 void ReportIf::on_iface_button_toggled(int, int) {
 }
 
+// The original range normalization and merge algorithm operate on a fixed
+// 0x200-row workspace inside ReportIf. Keys are ordered descending; each
+// merge writes the scratch pair, then publishes it back to the primary pair.
+// ORIGINAL: 0x004ACC30 ?merge_sort@ReportIf@@QAEXHH@Z 0x004ACC30-0x004ACD98
+// RECOVERY_BINDING: v1 {"evidence": ["git:4097a7c0:src/recovered/units/004acc30.cpp;source:src/reportif.h;source:src/base.h:BaseCurrentCount;source:src/general.h:swap"], "reason": "Recover the ReportIf base-ranking merge sort over its measured 0x200-entry, 16-byte scratch workspace, using the source-owned BaseCurrentCount bound and preserving original range normalization and key-prefetch order."}
+void ReportIf::merge_sort(int first, int last) {
+    const int maximum = BaseCurrentCount - 1;
+    if (first < 0 || maximum < 0) {
+        first = 0;
+    } else if (first > maximum) {
+        first = maximum;
+    }
+
+    int high = maximum;
+    if (last < 0 || maximum < 0) {
+        high = 0;
+    } else if (last <= high) {
+        high = last;
+    }
+
+    if (first == high) return;
+
+    int end = high;
+    if (high < first) swap(&first, &end);
+
+    const int middle = (end + first) / 2;
+    merge_sort(first, middle);
+    int right = middle + 1;
+    merge_sort(right, end);
+
+    int left = first;
+    int output = first;
+    // Preserve the original unchecked key prefetch: it reads both cursors'
+    // values before testing which half is exhausted, including an endpoint
+    // read adjacent to the active range. Do not turn this into a guarded,
+    // conventional merge without a separate behavior decision.
+    while (output <= end) {
+        int selected;
+        if (sort_entries_[left].value < sort_entries_[right].value) {
+            if (right <= end) {
+                selected = right++;
+            } else {
+                selected = left++;
+            }
+        } else if (left <= middle) {
+            selected = left++;
+        } else {
+            selected = right++;
+        }
+        sort_entries_[output].sorted_base_id = sort_entries_[selected].base_id;
+        sort_entries_[output].sorted_value = sort_entries_[selected].value;
+        ++output;
+    }
+
+    for (int i = first; i <= end; ++i) {
+        sort_entries_[i].base_id = sort_entries_[i].sorted_base_id;
+        sort_entries_[i].value = sort_entries_[i].sorted_value;
+    }
+}
+
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
 // ORIGINAL: 0x004AC130 ?close_score@ReportIf@@QAEXXZ 0x004AC130-0x004AC131 BYTE_EXACT
@@ -307,14 +369,18 @@ Status: Complete
 void ReportIf::close_score() {
 }
 
-
-
-
-
-
-
-
-
+// Close the project page's global map overlay and the two project-selector
+// buttons owned by MainInterface, not by ReportIf.
+// ORIGINAL: 0x004AA930 ?close_projects@ReportIf@@QAEXXZ 0x004AA930-0x004AA964 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:4097a7c0:src/recovered/004aa930.cpp;source:src/reportif.h;source:src/worldwin.h;source:src/maininterface.h;source:src/flatbutton.h"], "reason": "Close the project report overlay by its real WorldWin and MainInterface owners when the active report is not one of the two map categories."}
+void ReportIf::close_projects() {
+    const int state = field_8_;
+    if (state != 4 && state != 5) {
+        WorldClimateWorldWin.hide_all();
+        MainInterfaceGlobal.flat_button_[6].hide();
+        MainInterfaceGlobal.flat_button_[7].hide();
+    }
+}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.

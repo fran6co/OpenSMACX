@@ -20,6 +20,15 @@
 #include "listbox.h"
 #include "subinterface.h"
 
+struct ReportSortEntry {
+  int32_t base_id;
+  int32_t value;
+  int32_t sorted_base_id;
+  int32_t sorted_value;
+};
+static_assert(sizeof(ReportSortEntry) == 0x10,
+              "ReportIf merge-sort row must match the original 16-byte stride");
+
  /*
   * ReportIf class
   *
@@ -42,6 +51,7 @@ class ReportIf : public SubInterface {
   ~ReportIf();
   void close_energy();
   void close_intel();
+  void close_projects();
   void on_iface_right_click(int, int);
   void on_iface_left_double_click(int, int);
   void on_iface_right_double_click(int, int);
@@ -50,6 +60,7 @@ class ReportIf : public SubInterface {
   void on_iface_mouse_move(int, int);
   void on_iface_mouse_leave(int, int);
   void on_iface_button_toggled(int, int);
+  void merge_sort(int first, int last);
   void close_score();
   // PAUGraphicWin@@HHPAURECT@@, per the catalogued mangled name.
   int on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *);
@@ -166,7 +177,17 @@ class ReportIf : public SubInterface {
   uint8_t flatButton14_[0xB4C];  // 0x1D634
   uint8_t gap_1E180_[0x3C];  // 0x1E180
   uint8_t spot_[0xC];  // 0x1E1BC, sizeof(Spot)
-  uint8_t gap_1E1C8_[0x208C];  // 0x1E1C8
+  uint8_t gap_1E1C8_[0x80];  // 0x1E1C8
+  // RECOVERY_MEMBER: v1 ReportIf animation_state_ 0x1E248 0x004A4060
+  uint32_t animation_state_;  // 0x1E248
+  // RECOVERY_MEMBER: v1 ReportIf animation_x_ 0x1E24C 0x004A4060
+  int32_t animation_x_;       // 0x1E24C
+  // RECOVERY_MEMBER: v1 ReportIf animation_y_ 0x1E250 0x004A4060
+  int32_t animation_y_;       // 0x1E250
+  // The image's merge_sort addresses four dwords per row, 0x10 bytes apart,
+  // from 0x1E254 through the Sprite run at 0x20254 (512 rows total).
+  // RECOVERY_MEMBER: v1 ReportIf sort_entries_ 0x1E254 0x004ACC30
+  ReportSortEntry sort_entries_[0x200];  // 0x1E254
   Sprite spritesB_[4];  // 0x20254, 4 * sizeof(Sprite), vector ctor iterator
 };
 
