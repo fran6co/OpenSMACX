@@ -224,6 +224,7 @@ set(OPENSMACX_SOURCES
     src/sprite.cpp
     src/stdafx.cpp
     src/stringbox.cpp
+    src/stringlist.cpp
     src/stringstruct.cpp
     src/strings.cpp
     src/technology.cpp

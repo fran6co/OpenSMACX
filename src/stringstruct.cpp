@@ -26,6 +26,7 @@
 #include "alpha.h"  // Labels, same body
 #include "game.h"  // PronounBuffer, same body
 #include "reportwin.h"  // ReportWinGlobal owns the original 0x00876478 window
+#include "text.h"
 
 // The allocation-base table at 0x6693AC dispatches this scalar deleting
 // entry. The compiler supplies its flag handling and class-specific delete;
@@ -52,91 +53,12 @@ StringAllocationBase::~StringAllocationBase() {
     StringAllocationHeap = allocation_owner_;
 }
 
-namespace {
-// The cleanup path at 0x00608783 tests the captured text pointer again before
-// calling free. This is a local null-safe release idiom, not an original symbol.
-inline void release_text(char *text) {
-    if (text != 0) {
-        free(text);
-    }
-}
-}
-
 // The original primary table uses these shared defaults. Hook names describe
 // their list role; the catalogue's unrelated class names are retained as seeds.
 // RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_insert@StringStruct@@UAEHPAVStringStructPayload@@@Z 0x006086F0
 int StringStruct::on_insert(StringStructPayload *) { return 0; }
 // RECOVERY_SHARED: v1 0x00404270 0x00404273 ?on_remove@StringStruct@@UAEXPAVStringStructPayload@@@Z 0x006086F0
 void StringStruct::on_remove(StringStructPayload *) { }
-
-// ORIGINAL: 0x006086F0 ?on_insert@StringList@@UAEHPAVStringStructPayload@@@Z 0x006086F0-0x00608761 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot0 targets this body. Original StringStruct::add at 0x4012ED/0x4014F7 passes its 0x18 allocation as the one hook argument; this body writes text at +4 and metadata at +8/+C. The retained seed and its extent remain unchanged.", "Original 0x6086FD bypasses the text store when the source is null; preserve that behavior without assuming zeroed allocation. Receiver +0x18 is passed to Heap::get. No byte claim is banked by this binding."], "reason": "Recover the StringList insertion virtual using its allocated payload type; on_insert is a descriptive name, not a recovered original spelling."}
-int StringList::on_insert(StringStructPayload *payload) {
-    if (pending_text_ != 0) {
-        char *copy;
-        if (allocator_ != 0) {
-            copy = static_cast<char *>(allocator_->get(strlen(pending_text_) + 1));
-        } else {
-            copy = static_cast<char *>(mem_get(strlen(pending_text_) + 1));
-        }
-        payload->text = copy;
-        if (copy == 0) {
-            return 4;
-        }
-        *payload->text = 0;
-        strcat(payload->text, pending_text_);
-    }
-    payload->field_8_ = field_20_;
-    payload->field_C_ = field_24_;
-    return 0;
-}
-
-// ORIGINAL: 0x00608770 ?on_remove@StringList@@UAEXPAVStringStructPayload@@@Z 0x00608770-0x0060879B BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Primary table 0x6698C4 slot1 targets this body; original 0x608775 loads payload text at +4, then 0x60877C checks the list allocator at +0x18. Only a null allocator permits free and clearing text. on_remove is descriptive; the kill_entry seed and its historical claim remain intact."], "reason": "Recover allocator-aware StringList text cleanup as a real virtual method; the payload node lifetime remains owned by enclosing list teardown."}
-void StringList::on_remove(StringStructPayload *payload) {
-    if (payload->text != 0 && allocator_ == 0) {
-        release_text(payload->text);
-        payload->text = 0;
-    }
-}
-
-/*
-Purpose: Sort the circular list by payload text, keeping each ID with its
-         payload and retaining the original cursor side effects.
-// ORIGINAL: 0x006087A0 ?sort@StringList@@QAEXH@Z 0x006087A0-0x00608980
-// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a retained the historical selection-pass seed at 0x006087A0-0x00608980 before its product migration", "image:0x006087A0 scans StringStructEntry next links, compares payload text with strcmp, then swaps the winning entry's id and payload", "source:src/stringstruct.h declares the real circular StringStructEntry and StringStructPayload members and the inherited seek_pos cursor operation"], "reason": "Replace Datalink's fixed-image sort forwarder with a typed StringList selection sort in the list's owning translation unit."}
-// size      480 bytes
-// callers   3   call targets   3
-// calls     0x004015B0 0x00644F3A 0x00645660
-Return Value: n/a
-Status: Product behavior; historical seed remains an unclaimed measurement.
-*/
-void StringList::sort(int) {
-    for (int position = 0; position < entry_count_ - 1; ++position) {
-        seek_pos(position);
-        StringStructEntry *const first = current_;
-        StringStructEntry *smallest = first;
-
-        for (int candidate = position + 1; candidate < entry_count_;
-             ++candidate) {
-            next_entry();
-            if (strcmp(current_->payload->text,
-                       smallest->payload->text) < 0) {
-                smallest = current_;
-            }
-        }
-
-        if (smallest != first) {
-            seek_pos(position);
-            const int id = first->id;
-            StringStructPayload *const payload = first->payload;
-            first->id = smallest->id;
-            first->payload = smallest->payload;
-            smallest->id = id;
-            smallest->payload = payload;
-        }
-    }
-}
 
 namespace {
 // 0x00401100 selects the list's allocator before its inherited allocation
@@ -243,13 +165,6 @@ inline void finish_list_teardown(StringStruct *self) {
 }
 }
 
-// Derived cleanup must run before the base destructor changes virtual dispatch:
-// 0x004066C0 first selects StringList's hooks, then enters the StringStruct stage.
-// ORIGINAL: 0x004066C0 ??1StringList@@UAE@XZ 0x004066C0-0x00406818;0x00650980-0x00650995
-// RECOVERY_BINDING: v1 {"evidence": ["Original 4066C0 installs derived tables6698C4/6698C0 and clears entries before switching to base tables6693A4/6693A0; primary removal slot selects the text-cleanup hook during the derived stage. Implicit base-only cleanup cannot preserve that lifecycle.", "Original bounds4066C0-406818 and650980-650995 retained in 7eb1b2b0 parent src/stringstruct.cpp. Support code650980 adjusts the saved virtual-base receiver by -0xC before jumping to StringStruct base teardown401060. These are original identity/ownership interpretations, not a matching claim."], "reason": "Restore the original two-stage StringList destructor identity to its real C++ destructor, including its historical EH support span."}
-StringList::~StringList() {
-    finish_list_teardown(this);
-}
 
 /*
 Purpose: Return the current string-list item ID.

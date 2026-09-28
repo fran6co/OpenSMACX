@@ -272,8 +272,12 @@ class StringList : public StringStruct {
 
   // Sort the circular list by payload text, retaining each ID with its
   // payload. The int argument is unused by the original implementation.
-  // 0x006087A0 is the source-owned StringList::sort body in stringstruct.cpp.
+  // 0x006087A0 is the source-owned StringList::sort body in stringlist.cpp.
   void sort(int key);
+  // Load a text section into this list. The callback remains part of the
+  // original interface; the original body does not invoke it.
+  int load(LPSTR file_name, LPSTR section_id, int clear_existing,
+           void (__cdecl *callback)(LPSTR));
   // PUBLIC, not private: the image pokes these three fields directly from
   // outside the class - Dialog::item writes pending_text_/field_20_/field_24_
   // of its embedded list (dialog.cpp) - and access specifiers do not change
