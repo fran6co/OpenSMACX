@@ -38,6 +38,8 @@ class MultiDebug : public GraphicWin {
  public:
   // Time passes one cdecl integer payload, not a hidden member receiver.
   static void __cdecl timer_callback_daemon(int context);
+  // The original instance callback dispatches the inherited redraw slot.
+  void timer_callback();
   // Original primary vtable slot 12 paints the network diagnostics.
   virtual void on_redraw();
   MultiDebug();

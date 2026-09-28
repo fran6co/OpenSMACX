@@ -150,6 +150,12 @@ void __cdecl MultiDebug::timer_callback_daemon(int context) {
     }
 }
 
+// ORIGINAL: 0x005C98F0 ?timer_callback@MultiDebug@@QAEXXZ 0x005C98F0-0x005C98F8 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"Recover MultiDebug's existing instance callback as a typed call to its inherited redraw slot, replacing the seed-only vtable-shaped shim.","evidence":["original:0x005C98F0 dispatches the receiver through virtual slot 62", "source:src/win.h declares redraw at slot 62 and src/graphicwin.h provides the inherited redraw implementation", "source:src/multidebug.cpp timer_callback_daemon already dispatches self->redraw() on the same MultiDebug receiver"]}
+void MultiDebug::timer_callback() {
+    redraw();
+}
+
 // ORIGINAL: 0x005C9920 ?on_redraw@MultiDebug@@QAEXXZ 0x005C9920-0x005C9DF9 FILE
 // symbol    ?on_redraw@MultiDebug@@UAEXXZ
 // The original primary table's slot 12 selects this painter. The timer's

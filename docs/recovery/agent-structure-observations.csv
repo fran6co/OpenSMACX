@@ -12,7 +12,6 @@ address,kind,subject,offset,detail,evidence,status
 0x006252C0,table,the class read by sub_6252c0,0x8,"10 slots of 15 dwords each, with a wrapping cursor",counter at +4 incremented and reset at 10; slot address is base+8+cursor*60,open
 0x00421B40,embedded,BattleWin,0x8,a Time sub-object,"add ecx, 8 then a tail jmp into the already-recovered Time::stop at 0x616730",open
 0x00404200,vtable-slot,AlphaMovie,0xE8,"slot 58, nullary","mov eax,[ecx]; jmp [eax+0xe8]; byte-exact through a 59-slot shim",open
-0x005C98F0,vtable-slot,MultiDebug,0xF8,"slot 62, nullary","mov eax,[ecx]; jmp [eax+0xf8]; byte-exact",open
 0x00447840,vtable-slot,SAmbience,0x10C,slot 67 takes one int; called with 15,push 0xf; call [eax+0x10c]; byte-exact only with the argument declared,open
 0x00447550,vtable-slot,UAmbience,0x110,slot 68 takes one int; called with 6,push 6; call [eax+0x110]; byte-exact,open
 0x005F4CA0,vtable-slot,Win,0x128,"slot 74 takes two ints; called with (0, arg)",two pushes then call [eax+0x128]; byte-exact,open
