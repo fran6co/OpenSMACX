@@ -251,7 +251,7 @@ Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
          returns do not.
 
 // ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; src/unrecovered/00433a10.cpp remains a seed."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; original seed at git:08336bcc:src/unrecovered/00433a10.cpp."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
 // symbol   ?vslot_25@SelectPartWin@@UAEHHH@Z
 // size      704 bytes
 // prototype int (__thiscall ?on_key_click@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
@@ -260,8 +260,8 @@ Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x00433D60 0x00605D20
 Return Value: 1 for every key, handled or not
-Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/00433a10.cpp retained. The switch below is spelled
+Status: Coverage transcription - unclaimed body; historical seed at
+        git:08336bcc:src/unrecovered/00433a10.cpp. The switch below is spelled
         over `key - 13` because that is the subtraction the image folds into
         its two-level jump-table index; the numpad keys share their arrow
         blocks exactly as the image's table cells do.
@@ -423,9 +423,9 @@ SelectPartWin::~SelectPartWin() {
 }
 
 // 0x004339C0 on_redraw: redraw only the visible cells, selecting the current
-// highlight. Source seed: src/recovered/units/004339c0.cpp (image-only exact).
+// highlight. Historical seed: git:08336bcc:src/recovered/units/004339c0.cpp.
 // ORIGINAL: 0x004339C0 ?on_redraw@SelectPartWin@@UAEXXZ 0x004339C0-0x00433A02 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/units/004339c0.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 12; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/units/004339c0.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 12; the real GraphicWin-derived override retains its provisional inherited name."}
 void SelectPartWin::on_redraw() {
     for (int i = field_2B60_; i < field_2B60_ + field_2B64_; ++i) {
         draw_part(i, field_2B80_ == i);
@@ -436,9 +436,9 @@ void SelectPartWin::on_redraw() {
 // Win slot 17 is still provisionally named on_mouse_feedback. The image's
 // SelectPartWin vtable selects this body at slot 17. Grid cells are 108x94
 // with a 4px inset.
-// Source seed: src/recovered/units/00433820.cpp (measured MISMATCH).
+// Historical seed: git:08336bcc:src/recovered/units/00433820.cpp (measured MISMATCH).
 // ORIGINAL: 0x00433820 ?on_mouse_feedback@SelectPartWin@@UAEXHH@Z 0x00433820-0x00433934
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/units/00433820.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 17; the real GraphicWin-derived override retains its provisional inherited name."}
 void SelectPartWin::on_mouse_feedback(int x, int y) {
     int old = field_2B80_;
     if (x >= 4 && y >= 4 &&
@@ -466,9 +466,9 @@ void SelectPartWin::on_mouse_feedback(int x, int y) {
 
 // 0x00433940 on_left_up: release the pointer capture and modal state after
 // forwarding the point through the real inherited feedback virtual.
-// Source seed: src/unrecovered/00433940.cpp.
+// Historical seed: git:08336bcc:src/unrecovered/00433940.cpp.
 // ORIGINAL: 0x00433940 ?vslot_21@SelectPartWin@@UAEXHH@Z 0x00433940-0x004339BF
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/unrecovered/00433940.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 21; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/unrecovered/00433940.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 21; the real GraphicWin-derived override retains its provisional inherited name."}
 void SelectPartWin::vslot_21(int x, int y) {
     on_mouse_feedback(x, y);
     if (field_4648_ == 0) {
@@ -488,9 +488,9 @@ void SelectPartWin::vslot_21(int x, int y) {
 }
 
 // 0x00433F30 on_scrolled: the Scroll reports its row in the second argument.
-// Source seed: src/recovered/00433f30.cpp (image-only exact).
+// Historical seed: git:08336bcc:src/recovered/00433f30.cpp (image-only exact).
 // ORIGINAL: 0x00433F30 ?vslot_48@SelectPartWin@@UAEXHH@Z 0x00433F30-0x00433F4F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original seed src/recovered/00433f30.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 48; the real GraphicWin-derived override retains its provisional inherited name."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original seed at git:08336bcc:src/recovered/00433f30.cpp; its original spans and historical obligations are retained.", "SelectPartWin constructor 0x004328B0 establishes GraphicWin, Scroll+0xA14, Caviar+0x2B9C, Buffer+0x406C and Font members+0x45F4/+0x461C."], "reason": "The SelectPartWin primary vtable at 0x0066B2B8 selects this original body in slot 48; the real GraphicWin-derived override retains its provisional inherited name."}
 void SelectPartWin::vslot_48(int, int row) {
     field_2B60_ = field_2B6C_ * row;
     redraw();
@@ -541,8 +541,8 @@ Purpose: Draw one entry of the design parts list: translate the entry index
 //           layouts.h does not declare; they land beside this body as free
 //           functions and the switch calls them by name.
 Return Value: 1 the cell was drawn or tiled, 0 the index was past the table
-Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/00433d60.cpp retained.
+Status: Coverage transcription - unclaimed body; historical seed at
+        git:08336bcc:src/unrecovered/00433d60.cpp.
 */
 int SelectPartWin::draw_part(int a1, int a2) {
     const int base = field_2B60_;
@@ -631,8 +631,8 @@ Purpose: Draw one chassis entry's label and render: find the a1'th enabled
 //           keep `this` pinned in edi across the body the way the image
 //           does. Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
-Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/004329b0.cpp retained.
+Status: Coverage transcription - unclaimed body; historical seed at
+        git:08336bcc:src/unrecovered/004329b0.cpp.
 */
 int SelectPartWin::draw_chassis(int a1, RECT *a2, int a3) {
 
@@ -756,8 +756,8 @@ Purpose: Draw one reactor entry of the design parts list: find the a1'th
 //           keeps this in ebx, the slot counter in esi, the tech flag in
 //           edi). Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
-Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/00433520.cpp retained.
+Status: Coverage transcription - unclaimed body; historical seed at
+        git:08336bcc:src/unrecovered/00433520.cpp.
 */
 int SelectPartWin::draw_reactor(int a1, RECT *a2, int a3) {
 
@@ -874,8 +874,8 @@ Purpose: Draw one armor entry of the design parts list: reject chassis zero
 //           reaches MISMATCH #5 (prologue push order) - a register
 //           allocation difference, not chased further. Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
-Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/00433170.cpp retained.
+Status: Coverage transcription - unclaimed body; historical seed at
+        git:08336bcc:src/unrecovered/00433170.cpp.
 */
 int SelectPartWin::draw_armor(int a1, RECT *a2, int a3) {
     Buffer *const buf444 = static_cast<Buffer *>(this);
@@ -1035,8 +1035,8 @@ Purpose: Draw one weapon entry of the design parts list: find the a1'th
 //           decompile; diverges at instruction #0 on the frame-pointer vs
 //           ESP-frame prologue shape, not control flow. Not measured exact.
 Return Value: 1 the entry was drawn, 0 the index ran past the table
-Status: Coverage transcription - unclaimed body, seed
-        src/unrecovered/00432cc0.cpp retained.
+Status: Coverage transcription - unclaimed body; historical seed at
+        git:08336bcc:src/unrecovered/00432cc0.cpp.
 */
 int SelectPartWin::draw_weapon(int a1, RECT *a2, int a3) {
     int visibleCount = 0;
