@@ -553,3 +553,18 @@ void StatusWin::on_redraw() {
 void StatusWin::UNK4() {
     *StatusFlagsPtr |= 0x20;
 }
+
+// ORIGINAL: 0x004B8DF0 ?UNK3@StatusWin@@QAEXXZ 0x004B8DF0-0x004B8E31
+// RECOVERY_BINDING: v1 {"evidence": ["The historical body tests StatusWin offsets +0x15BC and +0x15C0; statuswin.h maps these to iUnitIndex_ and iCityIndex_.", "The store at 0x0093928C is ConsoleGlobal.selected_vehicle_ (Console offset +0x23BDC), and the remaining dispatches match veh_wake, Console::set_move, and TutWinBaseWindow.zoom."], "reason": "Home the compact selected-unit/base action in StatusWin using the recovered members and process-owned C++ objects."}
+void StatusWin::UNK3() {
+    if (iUnitIndex_ >= 0) {
+        veh_wake(iUnitIndex_);
+        ConsoleGlobal.selected_vehicle_ = iUnitIndex_;
+        ConsoleGlobal.set_move(1);
+        return;
+    }
+
+    if (iCityIndex_ >= 0) {
+        TutWinBaseWindow.zoom(iCityIndex_, 0);
+    }
+}
