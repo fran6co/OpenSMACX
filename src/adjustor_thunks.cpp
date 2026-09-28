@@ -1740,7 +1740,8 @@ void __fastcall adjust_console1_on_post_redraw_nc_buffer(void *self, void *,
     uint8_t *const object = static_cast<uint8_t *>(self);
     const int32_t vtordisp =
         *reinterpret_cast<const int32_t *>(object - 4);
-    reinterpret_cast<Console *>(object - vtordisp)->Console::on_post_redraw_nc_buffer(arg0, arg1);
+    reinterpret_cast<Console *>(object - vtordisp)->Console::on_post_redraw_nc_buffer(
+        static_cast<Buffer *>(arg0), arg1);
 }
 
 /*
@@ -2500,4 +2501,3 @@ void __fastcall adjust_edit_group1_pass_dialog_focus(void *self, void *) {
     // emits only the vtordisp adjust.
     reinterpret_cast<Win *>(object - vtordisp)->Win::pass_dialog_focus();
 }
-

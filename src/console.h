@@ -345,8 +345,8 @@ class Console : public MapWin {
   void toggle_dest();
 
  public:
-  // 0x0050F960, a pending_bodies forwarder.
-  void on_post_redraw_nc_buffer(void *a1, int a2);
+  // 0x0050F960, draws Console's splitter sprites into the non-client buffer.
+  void on_post_redraw_nc_buffer(Buffer *buffer, int which);
 
  public:
   // 0x00510110, a pending_bodies forwarder.
@@ -361,7 +361,7 @@ class Console : public MapWin {
   void on_nc_left_down(int a1, int a2);
 
  public:
-  // 0x0050F680, a pending_bodies forwarder.
+  // 0x0050F680, hit-tests the Console's splitter and caption regions.
   int on_nc_hittest(int x, int y);
 
  public:

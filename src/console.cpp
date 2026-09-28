@@ -4431,6 +4431,117 @@ void Console::time_controls() {
     popup.close();
 }
 
+// ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0050f680.cpp"], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
+// symbol    ?on_nc_hittest@Console@@UAEHHH@Z
+int Console::on_nc_hittest(int x_coord, int y_coord) {
+    // The original exits with EAX=1 while any split line is armed.  The
+    // archived unit's catalogued void prototype was therefore incomplete;
+    // the virtual slot and the product declaration both return int.
+    if (field_23D80_ == 0xFFFFFFFFu || field_23D84_ == 0xFFFFFFFFu ||
+        field_23D88_ == 0xFFFFFFFFu || field_23D8C_ == 0xFFFFFFFFu) {
+        return 1;
+    }
+
+    RECT caption_box;
+    caption_box.top = 0xE;
+    caption_box.bottom = 0x1F;
+    caption_box.left = client_rect_.right - client_rect_.left - 0x5b;
+    caption_box.right = caption_box.left + 0x26;
+    if (in_box(x_coord, y_coord, &caption_box)) {
+        return 1;
+    }
+
+    const int width = client_rect_.right - client_rect_.left;
+    const int height = client_rect_.bottom - client_rect_.top;
+    const int border = border_thickness_;
+    const int bottom_border = bottom_border_thickness_ >= 0
+        ? bottom_border_thickness_ : border_thickness_;
+    const int sprite_a_width = sprite_a_.width();
+    const int sprite_b_height = sprite_b_.height();
+
+    if (x_coord <= width - border) {
+        if (y_coord <= height - bottom_border || x_coord < bottom_border ||
+            x_coord > width - border) {
+            return 1;
+        }
+        const int first_left = static_cast<int>(field_23D80_) -
+                               sprite_a_width + border;
+        const int first_right = static_cast<int>(field_23D80_) +
+                                border + sprite_a_width;
+        if (x_coord >= first_left && x_coord <= first_right) {
+            return 1;
+        }
+        const int second_left = static_cast<int>(field_23D84_) -
+                                sprite_a_width + border;
+        if (x_coord < second_left) {
+            return 1;
+        }
+        const int second_right = static_cast<int>(field_23D84_) +
+                                 border + sprite_a_width;
+        if (x_coord > second_right) {
+            return 1;
+        }
+        return 0;
+    }
+
+    // These are the bottom non-client track limits expressed in Win's real
+    // client/outer rectangles. The two handles use the shared drag slots.
+    const int track_top = height - (outer_rect_.bottom - outer_rect_.top) -
+                          bottom_border;
+    if (y_coord < track_top || y_coord > height - bottom_border) {
+        return 1;
+    }
+    const int first_top = track_top - sprite_b_height +
+                          static_cast<int>(field_23D88_);
+    const int first_bottom = track_top + static_cast<int>(field_23D88_) +
+                             sprite_b_height;
+    if (y_coord >= first_top && y_coord <= first_bottom) {
+        return 1;
+    }
+    const int second_top = track_top - sprite_b_height +
+                           static_cast<int>(field_23D8C_);
+    if (y_coord < second_top) {
+        return 1;
+    }
+    const int second_bottom = track_top + static_cast<int>(field_23D8C_) +
+                              sprite_b_height;
+    return y_coord > second_bottom ? 1 : 0;
+}
+
+// ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0050f960.cpp"], "reason": "Render the two Console non-client splitter handles with their owned Sprite members and the Window client/outer geometry; the archived scaffold confirms two handles per orientation and the image buffer dimensions."}
+// symbol    ?on_post_redraw_nc_buffer@Console@@QAEXPAVBuffer@@H@Z
+void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
+    if (buffer == nullptr) {
+        return;
+    }
+
+    if (which == 1) {
+        const int border = bottom_border_thickness_ >= 0
+            ? bottom_border_thickness_ : border_thickness_;
+        const int track_top = client_rect_.bottom - client_rect_.top -
+                              outer_rect_.bottom - caption_height_ +
+                              outer_rect_.top;
+        const int x = buffer->dib_.bmiHeader.biWidth - sprite_b_.width();
+        const int first_y = track_top - sprite_b_.height() / 2 +
+                            static_cast<int>(field_23D88_) - border;
+        const int second_y = track_top - sprite_b_.height() / 2 +
+                             static_cast<int>(field_23D8C_) - border;
+        sprite_b_.draw(buffer, sprite_b_.transparent_index(), x, first_y, 1, 1);
+        sprite_b_.draw(buffer, sprite_b_.transparent_index(), x, second_y, 1, 1);
+    } else if (which == 2) {
+        const int image_bottom = -buffer->dib_.bmiHeader.biHeight;
+        const int y = image_bottom - sprite_a_.height();
+        const int first_x = static_cast<int>(field_23D80_) -
+                            sprite_a_.width() / 2 + border_thickness_;
+        const int second_x = static_cast<int>(field_23D84_) -
+                             sprite_a_.width() / 2 + border_thickness_;
+        sprite_a_.draw(buffer, sprite_a_.transparent_index(), first_x, y, 1, 1);
+        sprite_a_.draw(buffer, sprite_a_.transparent_index(), second_x, y, 1, 1);
+    }
+}
+
 /*
 Purpose: A non-client left press on the console frame: the minimize and
          maximize caption boxes, then the right-edge splitter (choosing the

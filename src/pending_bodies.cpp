@@ -844,20 +844,9 @@ int Console::on_key_click(int a1, int a2) {  // 0x005178C0
 // (0x00510110) WERE HERE and are gone: both bodies are homed into
 // src/console.cpp 2026-09-27.
 
-int Console::on_nc_hittest(int x, int y) {  // 0x0050F680
-    // Same correction as MapWin's: the base returns a hit-test code.
-    typedef int(__fastcall *pending)(Console *, void *, int, int);
-    return PENDING_BODY(0x0050F680, pending)(this, nullptr, x, y);
-}
-
 void Console::on_nc_left_up(int a1, int a2) {  // 0x0050FE70
     typedef void(__fastcall *pending)(Console *, void *, int, int);
     PENDING_BODY(0x0050FE70, pending)(this, nullptr, a1, a2);
-}
-
-void Console::on_post_redraw_nc_buffer(void * a1, int a2) {  // 0x0050F960
-    typedef void(__fastcall *pending)(Console *, void *, void *, int);
-    PENDING_BODY(0x0050F960, pending)(this, nullptr, a1, a2);
 }
 
 // ?end_my_turn@Console@@QAEXXZ at 0x005169F0 - the turn handoff
