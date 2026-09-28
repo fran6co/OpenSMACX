@@ -29,6 +29,70 @@
 #include "general.h"     // GenderDefault and PluralityDefault
 #include "infowin.h"     // InfoFactionShadowColors
 #include "strings.h"     // StringTemp
+#include "console.h"     // ConsoleGlobal's local faction id
+#include "netmsg.h"      // NetMsgPopup
+
+// The CouncWin methods below used to be measured only in isolated seed
+// scaffolds. These bodies keep their receiver as the declared CouncWin and
+// express the embedded windows, fonts, Spot, and local faction by owner.
+
+// ORIGINAL: 0x004271C0 ?arrived@CouncWin@@QAEXH@Z 0x004271C0-0x0042722D
+// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::field_A44_; src/temp.h TurnRedrawPending; src/faction.h LockEnableMask; src/graphicwin.h GraphicWin::redraw; src/netmsg.h NetMsgPopup; image data at 0x00683228 identifies the label VOTINGOPEN"], "reason": "Track faction arrival on the CouncWin receiver, redraw through GraphicWin, and signal the voting-open label when all active humans have arrived."}
+void CouncWin::arrived(int faction_id) {
+    field_A44_ |= (1 << faction_id);
+    if (TurnRedrawPending != 0) {
+        static_cast<GraphicWin *>(this)->redraw();
+        const uint32_t status = LockEnableMask;
+        const uint8_t humans = static_cast<uint8_t>(status);
+        const uint8_t alive = static_cast<uint8_t>(status >> 8);
+        if (((alive & humans) & field_A44_) == humans) {
+            NetMsgPopup->pop("VOTINGOPEN", 1000, 1, 0);
+        }
+    }
+}
+
+// ORIGINAL: 0x00427160 ?close@CouncWin@@QAEXXZ 0x00427160-0x004271BE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::buttons_[6] and font1_..font5_; src/flatbutton.h FlatButton::close; src/font.h Font::close"], "reason": "Close CouncWin embedded buttons and owned fonts through their typed members."}
+void CouncWin::close() {
+    for (int i = 0; i < 6; ++i) {
+        buttons_[i].close();
+    }
+    font1_.close();
+    font2_.close();
+    font3_.close();
+    font4_.close();
+    font5_.close();
+}
+
+// ORIGINAL: 0x00426EE0 ?on_mouse_move@CouncWin@@QAEXHH@Z 0x00426EE0-0x00426F78 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::spot_, field_A34_, buttons_[6], draw_leader; src/console.h ConsoleGlobal.faction_id_; git:1b3ed0614446d5283fe4cbd2392cbb64b49db601:src/unrecovered/00426ee0.cpp"], "reason": "Update the selected Council leader from a typed Spot hit test and the six-button/font owner state."}
+void CouncWin::on_mouse_move(int x, int y) {
+    const int check_result = spot_.check(x, y, &y, 0);
+    if (check_result == -1) {
+        const int leader = static_cast<int>(field_A34_);
+        if (leader != -1) {
+            field_A34_ = static_cast<uint32_t>(-1);
+            draw_leader(leader);
+        }
+        return;
+    }
+    if (buttons_[5].is_visible()) {
+        return;
+    }
+    if (y == ConsoleGlobal.faction_id_) {
+        return;
+    }
+    const int current = static_cast<int>(field_A34_);
+    if (current == y) {
+        return;
+    }
+    if (current != -1) {
+        field_A34_ = static_cast<uint32_t>(-1);
+        draw_leader(current);
+    }
+    field_A34_ = static_cast<uint32_t>(y);
+    draw_leader(y);
+}
 
 // Two of on_status's callees are still original bodies the tree has not homed
 // (0x0045D440 / 0x0045D970, both archive copies in src/recovered/units, which

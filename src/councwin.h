@@ -37,13 +37,20 @@
   */
 class CouncWin : public GraphicWin, public IfaceRegistryEntry {
  public:
+  // The seed at 0x00427150 is catalogued as `int CouncWin::hide()`, but
+  // Win already owns virtual `void hide()`. These signatures differ only by
+  // return type, so the alleged derived method cannot be expressed in C++;
+  // retain that seed pending evidence for its identity/alias.
   // 0x00425DB0  ?draw_leader@CouncWin@@QAEXH@Z - public, __thiscall,
   // void(int), unrecovered. Declared so draw_all_leaders and on_mouse_leave,
   // which each reach it with a direct `call rel32`, can name it.
   void draw_leader(int factionID);
   void show(int visible);
+  void close();
+  void arrived(int faction_id);
   void draw_all_leaders();
   void on_mouse_leave(int a1, int a2);
+  void on_mouse_move(int x, int y);
   // 0x00428620, defined out of line at the foot of councwin.cpp: the image
   // has a real body there (231 bytes) and it is not inlined anywhere.
   CouncWin();
