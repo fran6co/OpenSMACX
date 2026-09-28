@@ -25,6 +25,7 @@
 #include "net_class.h"
 #include "basepop.h"
 #include "general.h"
+#include "listbox.h"
 
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
@@ -1354,6 +1355,176 @@ void Scroll::on_left_up(int, int) {
         if (WinPointerOwner4 == this) {
             WinPointerOwner4 = 0;
         }
+    }
+}
+
+// ORIGINAL: 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z 0x00606320-0x0060643E
+void Scroll::on_mousewheel_down(int delta) {
+    Win *const parent = win_parent_;
+    if (parent == nullptr) {
+        return;
+    }
+    WinCallbackWindow = parent;
+
+    int next = position_ + 1;
+    const int maximum = range_maximum_;
+    if (next > maximum) {
+        next = maximum;
+    }
+    position_ = next;
+    if (range_reversed_ != 0U) {
+        position_ = (range_minimum_ - position_) + maximum;
+    }
+
+    if (delta != 0) {
+        int notified_position = position_;
+        if (range_reversed_ != 0U) {
+            notified_position = (range_minimum_ - position_) + range_maximum_;
+        }
+        parent->vslot_48(field_A18_, notified_position);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_, notified_position);
+        }
+    }
+
+    field_A3C_ = 0xFFFFFFFFU;
+    redraw();
+}
+
+// ORIGINAL: 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z 0x00606440-0x0060655C
+void Scroll::on_mousewheel_up(int delta) {
+    Win *const parent = win_parent_;
+    if (parent == nullptr) {
+        return;
+    }
+    WinCallbackWindow = parent;
+
+    if (position_ - 1 < range_minimum_) {
+        position_ = range_minimum_;
+    } else {
+        --position_;
+    }
+    if (range_reversed_ != 0U) {
+        position_ = (range_maximum_ - position_) + range_minimum_;
+    }
+
+    if (delta != 0) {
+        int notified_position = position_;
+        if (range_reversed_ != 0U) {
+            notified_position = (range_maximum_ - position_) + range_minimum_;
+        }
+        parent->vslot_48(field_A18_, notified_position);
+        if (field_2144_ != nullptr) {
+            field_2144_(field_A18_, notified_position);
+        }
+    }
+
+    Win *const target = parent->scroll_event_target();
+    if (target != nullptr && target->vslot_23() == 0) {
+        target->vslot_07();
+    }
+
+    field_A3C_ = 0xFFFFFFFFU;
+    redraw();
+}
+
+// ORIGINAL: 0x00606B20 ?on_button_clicked@Scroll@@QAEXH@Z 0x00606B20-0x00606C43 BYTE_EXACT
+// symbol    ?on_button_clicked@Scroll@@UAEXH@Z
+void Scroll::on_button_clicked(int button_id) {
+    Win *const parent = win_parent_;
+    if (parent == nullptr) {
+        return;
+    }
+
+    field_A38_ = 0;
+    WinCallbackWindow = parent;
+    ListBoxGlobalDDC = 0;
+
+    if (button_id == 1) {
+        if (position_ > range_minimum_) {
+            --position_;
+        }
+    } else if (button_id == 2 && position_ < range_maximum_) {
+        ++position_;
+    }
+
+    int notified_position = position_;
+    if (range_reversed_ != 0U) {
+        notified_position = (range_maximum_ - position_) + range_minimum_;
+    }
+    parent->vslot_48(field_A18_, notified_position);
+    if (field_2144_ != nullptr) {
+        field_2144_(field_A18_, notified_position);
+    }
+
+    Win *const target = parent->scroll_event_target();
+    if (target != nullptr && target->vslot_23() == 0) {
+        target->vslot_07();
+    }
+
+    field_A3C_ = 0xFFFFFFFFU;
+    redraw();
+}
+
+// ORIGINAL: 0x006069A0 ?on_button_pressed@Scroll@@QAEXH@Z 0x006069A0-0x00606B14
+void Scroll::on_button_pressed(int button_id) {
+    Win *const parent = win_parent_;
+    if (parent == nullptr) {
+        return;
+    }
+
+    const DWORD start_time = timeGetTime();
+    const int last_time = field_A38_;
+    if (last_time != 0) {
+        const DWORD now = timeGetTime();
+        if (static_cast<int>(now - static_cast<DWORD>(last_time)) <
+            static_cast<int>(field_A30_)) {
+            return;
+        }
+        if (field_A38_ == 0) {
+            field_A38_ = static_cast<int>(timeGetTime());
+        }
+    } else {
+        field_A38_ = static_cast<int>(timeGetTime());
+    }
+
+    ListBoxGlobalDDC = 0;
+    const int old_position = position_;
+    if (button_id == 1) {
+        if (range_minimum_ < old_position) {
+            position_ = old_position - 1;
+        }
+    } else if (button_id == 2 && old_position < range_maximum_) {
+        position_ = old_position + 1;
+    }
+
+    WinCallbackWindow = parent;
+    if (old_position != position_) {
+        int notified_position = position_;
+        if (range_reversed_ != 0U) {
+            notified_position = (range_minimum_ - position_) + range_maximum_;
+        }
+        parent->vslot_49(field_A18_, notified_position);
+        int callback_position = position_;
+        if (range_reversed_ != 0U) {
+            callback_position = (range_minimum_ - position_) + range_maximum_;
+        }
+        if (field_2148_ != nullptr) {
+            field_2148_(field_A18_, callback_position);
+        }
+    }
+
+    Win *const target = parent->scroll_event_target();
+    if (target != nullptr && target->vslot_23() == 0) {
+        target->vslot_07();
+    }
+
+    field_A3C_ = 0xFFFFFFFFU;
+    redraw();
+    const DWORD elapsed = timeGetTime() - start_time;
+    const DWORD duration = 1000U / static_cast<DWORD>(field_A34_);
+    if (elapsed < duration) {
+        Sleep(duration - elapsed);
     }
 }
 

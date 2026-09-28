@@ -293,6 +293,9 @@ static_assert(sizeof(ListBox) == 0xB54,
 // test pin the offsets instead.
 
 extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0
+// RECOVERY_OBJECT binding is in listbox.cpp: Scroll and ListBox's event
+// paths share this process-wide notification gate.
+extern int ListBoxGlobalDDC;
 // Raised to 1 around on_right_down's and on_right_double_click's virtual-base
 // dispatch, dropped to 0 after (0x0060AA20, 0x0060C6D0).
 extern int ListBoxClickGuard;                          // 0x009B8EEC

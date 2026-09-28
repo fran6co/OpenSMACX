@@ -1504,10 +1504,12 @@ void Win::set_scroll_sprite(int value) {
     // Each scrollbar is optional and tested separately, so one attached bar
     // is still updated when the other is absent.
     if (scroll_vert_) {
-        scroll_vert_->field_2144_ = static_cast<uint32_t>(value);
+        scroll_vert_->field_2144_ =
+            reinterpret_cast<void (__cdecl *)(int, int)>(value);
     }
     if (scroll_horz_) {
-        scroll_horz_->field_2144_ = static_cast<uint32_t>(value);
+        scroll_horz_->field_2144_ =
+            reinterpret_cast<void (__cdecl *)(int, int)>(value);
     }
 }
 
@@ -1524,10 +1526,12 @@ Status: Complete
 */
 void Win::UNK9(int value) {
     if (scroll_vert_) {
-        scroll_vert_->field_2148_ = static_cast<uint32_t>(value);
+        scroll_vert_->field_2148_ =
+            reinterpret_cast<void (__cdecl *)(int, int)>(value);
     }
     if (scroll_horz_) {
-        scroll_horz_->field_2148_ = static_cast<uint32_t>(value);
+        scroll_horz_->field_2148_ =
+            reinterpret_cast<void (__cdecl *)(int, int)>(value);
     }
 }
 

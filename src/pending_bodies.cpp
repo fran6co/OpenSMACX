@@ -612,16 +612,6 @@ uint32_t SpriteBox::close() {  // 0x00610280
     return 0;
 }
 
-void Scroll::on_mousewheel_down(int a1) {  // 0x00606320
-    typedef void(__fastcall *pending)(Scroll *, void *, int);
-    PENDING_BODY(0x00606320, pending)(this, nullptr, a1);
-}
-
-void Scroll::on_mousewheel_up(int a1) {  // 0x00606440
-    typedef void(__fastcall *pending)(Scroll *, void *, int);
-    PENDING_BODY(0x00606440, pending)(this, nullptr, a1);
-}
-
 void ReplayWin::timer_callback() {  // 0x005AD9E0
     typedef void(__fastcall *pending)(ReplayWin *, void *);
     PENDING_BODY(0x005AD9E0, pending)(this, nullptr);

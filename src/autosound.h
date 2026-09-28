@@ -68,6 +68,11 @@ class AutoSound {
   // close(), deletes only when the caller's flag says so.
   void *scalar_delete(unsigned int mode);
 
+  // Scroll's retained event seeds follow this settings slot at +0x84 as a
+  // window and dispatch vslot_23/vslot_07 on it. Keep its broader meaning
+  // numbered until other owners establish it.
+  Win *scroll_event_target() const { return val_33_; }
+
  protected:
   // PROTECTED, NOT PRIVATE: Win derives from AutoSound and the homed window
   // bodies read these directly - which is what the image does, since they are
@@ -122,7 +127,8 @@ class AutoSound {
   int val_30_;
   int val_31_;
   int val_32_;
-  int val_33_;
+  // RECOVERY_MEMBER: v3 AutoSound val_33_ Win* 0x84 0x006069A0
+  Win *val_33_;
   // Menu::menu_event (0x005FB8B8) reads this as a window and dispatches
   // its event slots. The precise relationship remains unnamed.
   Win *event_window_;  // 0x88

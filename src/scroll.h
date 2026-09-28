@@ -79,13 +79,11 @@ class Scroll : public ScrollGraphicWin {
   int on_left_click(int a1, int a2);
   void on_left_down(int x, int y);
   void on_left_up(int x, int y);
-  // 0x00606320 ?on_mousewheel_down@Scroll@@QAEXH@Z and
-  // 0x00606440 ?on_mousewheel_up@Scroll@@QAEXH@Z - public, __thiscall,
-  // void(int). Both are still unrecovered; the declarations exist because the
-  // recovered Win::on_mousewheel_* wrappers call them directly, and the
-  // definitions at the end of scroll.cpp forward to the original image.
+  // Input handlers reached by recovered Win and FlatButton dispatch paths.
   void on_mousewheel_down(int delta);
   void on_mousewheel_up(int delta);
+  void on_button_pressed(int button_id);
+  void on_button_clicked(int button_id);
  private:
   friend class Win;
   friend class SelectPartWin;  // key navigation reads the clamped position after set_pos
@@ -127,8 +125,8 @@ class Scroll : public ScrollGraphicWin {
   Sprite *sprite_down3_;
   FlatButton flat_button_left_;
   FlatButton flat_button_right_;
-  uint32_t field_2144_;
-  uint32_t field_2148_;
+  void (__cdecl *field_2144_)(int, int);
+  void (__cdecl *field_2148_)(int, int);
 };
 
 static_assert(sizeof(Scroll) == 0x214C,
@@ -144,9 +142,3 @@ extern uint32_t ScrollCloseDynamicDefaults;
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
 void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
                                              unsigned int mode);
-
-// The two mouse-wheel handlers are still original bodies: 286 and 284 bytes of
-// paging arithmetic that reach the unrecovered thumb and repaint paths. Both
-// are public, __thiscall, void(int), and both are forwarded to the original
-// image. Bound through rebindable seams so tests can substitute probes and so
-// each seam can later be repointed at a recovered body.

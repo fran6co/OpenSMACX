@@ -351,11 +351,15 @@ void ListBox::on_right_double_click(int a1, int a2) {
     ListBoxClickGuard = 0;
 }
 
-// Shared ListBox globals the 0060c9b0/0060c920/0060a1e0 bodies read. Both are
-// evidence-free in leaf_recoveries.cpp's sense - no catalogue name - so the
-// bindings carry their addresses, the way ListBoxDefault24 does.
+// Shared ListBox globals the 0060c9b0/0060c920/0060a1e0 bodies read. The
+// 0x009B8DD4 word remains an unresolved fixed alias; 0x009B8DDC is the
+// shared scroll-notify gate used by these ListBox bodies and Scroll events.
 static int *const ListBoxGlobalDD4 = (int *)0x009B8DD4;
-static int *const ListBoxGlobalDDC = (int *)0x009B8DDC;
+// ORIGINAL storage binding: Scroll input methods clear the gate before
+// notifying their parent; the ListBox scrolled path reads it before changing
+// selection.
+// RECOVERY_OBJECT: v1 0x009B8DDC ?ListBoxGlobalDDC@@3HA
+int ListBoxGlobalDDC;
 
 /*
 Purpose: Recompute the list's layout metrics from the Dialog entry list: the
