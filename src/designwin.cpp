@@ -35,6 +35,9 @@
 #include "netdaemon.h"  // synch_proto, message_data, NetDaemonNet
 #include "xpops.h"      // x_pop_caption_label
 
+int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
+                     int armor_id);  // 0x00584B50, implemented in leaf_recoveries.cpp
+
 // ---- shared seams and bindings the recovered bodies reach -----------------
 
 // The slide helpers are still original bodies (0x0045D440 / 0x0045D970);
@@ -1540,14 +1543,48 @@ static void redraw_design_picker_changes(DesignWin *window) {
     window->on_update();
 }
 
-// These ten DesignWin methods have retained implementation seeds, but those
-// seed TUs are not part of the application source set yet. Keep their original
-// identities in this owner and provide only the explicitly unfinished bodies
-// needed for picker link continuity; the seeds remain the behavior evidence.
-// ORIGINAL: 0x00439C00 ?check_abil@DesignWin@@QAEXXZ 0x00439C00-0x00439D24 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439c00.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// The unported DesignWin seeds remain alongside the product owner as evidence.
+// check_abil uses the class's named selection state rather than reproducing
+// the seed's byte-offset view of the same object.
+// ORIGINAL: 0x00439C00 ?check_abil@DesignWin@@QAEXXZ 0x00439C00-0x00439D24
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439c00.cpp", "DesignWin selection members in src/designwin.h", "abil_cond in src/leaf_recoveries.cpp"], "reason": "Validate each selected ability against the current chassis/weapon/armor and maintain the two displayed ability slots."}
 void DesignWin::check_abil() {
-    // BODY GOES HERE.
+    if (Chassis[protoChassisType_].missile != 0) {
+        protoAbilityFlags_ = 0;
+        protoAbilityID1_ = static_cast<uint32_t>(-1);
+        protoAbilityID2_ = static_cast<uint32_t>(-1);
+        return;
+    }
+
+    for (int ability_id = 0; ability_id < 0x1D; ++ability_id) {
+        const uint32_t bit = 1u << ability_id;
+        if ((protoAbilityFlags_ & bit) == 0) {
+            continue;
+        }
+
+        if ((bit == 0x80 && (protoAbilityFlags_ & 0x40) != 0)
+            || !abil_cond(ability_id, static_cast<int>(protoChassisType_),
+                          static_cast<int>(protoWeaponType_),
+                          static_cast<int>(protoArmorType_))
+            || (bit_count(static_cast<int>(protoAbilityFlags_)) > 1
+                && (bit_count(static_cast<int>(protoAbilityFlags_)) != 2
+                    || !has_tech(Rules.tech_two_spec_abilities,
+                                 static_cast<int>(factionID_))))) {
+            protoAbilityFlags_ &= ~bit;
+            protoAbilityID1_ = static_cast<uint32_t>(-1);
+            protoAbilityID2_ = static_cast<uint32_t>(-1);
+            for (int candidate = 0; candidate < 0x1D; ++candidate) {
+                if ((protoAbilityFlags_ & (1u << candidate)) == 0) {
+                    continue;
+                }
+                if (protoAbilityID1_ == static_cast<uint32_t>(-1)) {
+                    protoAbilityID1_ = static_cast<uint32_t>(candidate);
+                } else if (protoAbilityID2_ == static_cast<uint32_t>(-1)) {
+                    protoAbilityID2_ = static_cast<uint32_t>(candidate);
+                }
+            }
+        }
+    }
 }
 
 // ORIGINAL: 0x00439D30 ?suggest_abil@DesignWin@@QAEXH@Z 0x00439D30-0x00439EA3 FILE
