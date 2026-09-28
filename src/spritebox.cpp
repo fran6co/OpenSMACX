@@ -552,6 +552,21 @@ int SpriteBox::init(int file_name) {
         + *reinterpret_cast<int *>(*reinterpret_cast<char **>(this) + 8))->init(file_name);
 }
 
+// ORIGINAL: 0x00610440 ?init@SpriteBox@@QAEHHHHHH@Z 0x00610440-0x00610471 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00610440-0x00610471 calls SpriteBox::close at 0x00610280, then forwards all five integer arguments to Dialog::init through the virtual-base displacement in vbtable[2].","src/dialog.h declares Dialog::init(int,int,int,int,int)."],"reason":"Preserve the seed wrapper as a typed SpriteBox member; C++ performs the virtual Dialog base adjustment and the qualified base call forwards the original arguments."}
+int SpriteBox::init(int a1, int a2, int a3, int a4, int a5) {
+    close();
+    return Dialog::init(a1, a2, a3, a4, a5);
+}
+
+// ORIGINAL: 0x00610510 ?init@SpriteBox@@QAEHPAUHeap@@PAUHeap@@@Z 0x00610510-0x00610532 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Pinned image 0x00610510-0x00610532 calls SpriteBox::close at 0x00610280, then forwards stack arguments 1 and 2 unchanged to Dialog::init at 0x006097F0 through vbtable[2]; argument 1 is RECT*, despite the catalogue symbol's Heap* spelling.","src/dialog.h declares Dialog::init(RECT*,Heap*)."],"reason":"Preserve the exact seed identity with the observed RECT*/Heap* signature and a typed call through SpriteBox's virtual Dialog base."}
+// symbol    ?init@SpriteBox@@QAEHPAUtagRECT@@PAVHeap@@@Z
+int SpriteBox::init(RECT *rect, Heap *heap) {
+    close();
+    return Dialog::init(rect, heap);
+}
+
 /*
 // ORIGINAL: 0x006104B0 ?init@SpriteBox@@QAEHPAUHeap@@@Z 0x006104B0-0x006104CD BYTE_EXACT
 // symbol    ?init@SpriteBox@@QAEHPAVHeap@@@Z
@@ -602,7 +617,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to SpriteBox and
          SpriteBox::attach overrides a virtual reached through a virtual
          base. There is no C++ here to get right, only a name to record.
 // ORIGINAL: 0x00611920 ?attach@thunk1_SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00611920-0x00611928 BYTE_EXACT
-// symbol    ?attach@SpriteBox@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// symbol    ?attach@SpriteBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
 // size      8 bytes
 // kind      game
 Status: Complete

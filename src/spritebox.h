@@ -81,6 +81,11 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   int init(RECT* group_id, int flags);
   int init(int file_name);
   int init(Heap *file_name);
+  // 0x00610440: forward the five integer arguments to the virtual Dialog base.
+  int init(int a1, int a2, int a3, int a4, int a5);
+  // 0x00610510: image arguments are RECT* and Heap* (catalogue's first
+  // parameter spelling is wrong); forward both unchanged to Dialog.
+  int init(RECT *rect, Heap *heap);
   // 0x006104D0  ?init@SpriteBox@@QAEHHHHHPAUHeap@@@Z - the five-argument
   // overload, recovered and byte-exact. It was the only one of the four with
   // no declaration, which is why its body could not be integrated.
