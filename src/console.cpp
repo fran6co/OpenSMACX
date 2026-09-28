@@ -29,6 +29,7 @@
 #include "popup.h"  // editor_diplomacy's modal faction picker
 #include "infowin.h"
 #include "map.h"
+#include "path.h"  // Paths - map reset rebuilds the editor's path tables
 #include "mapwin.h"
 #include "maininterface.h"
 #include "statuswin.h"
@@ -1619,6 +1620,42 @@ void Console::editor_clear_vehicles() {
     }
     reset_territory();
     ::draw_map(1);
+}
+
+// ORIGINAL: 0x004E1290 ?editor_clear@Console@@QAEXXZ 0x004E1290-0x004E12FB
+// RECOVERY_BINDING: v1 {"evidence": ["git:d5d0b2c01472baa3cf01dda67b73e270d64b4db7:src/recovered/units/004e1290.cpp;source:src/console.cpp:Console::editor_clear_vehicles;source:src/map.h;source:src/path.h;source:src/worldwin.h;source:src/game.h;source:src/veh.h;source:src/base.h;source:src/console.h"], "reason": "Recover the editor map-reset coordinator through the typed GameState, vehicle/base counts, Console cursor state, map lifecycle, Path and WorldWin owners. The historical body establishes the ordered reset and redraw operations."}
+void Console::editor_clear() {
+    auto_undo();
+    GameState |= STATE_UNK_4;
+    VehCurrentCount = 0;
+    BaseCurrentCount = 0;
+    ConsoleGlobal.cursor_active_ = 0;
+    ConsoleGlobal.selected_vehicle_ = -1;
+    map_wipe();
+    size_of_planet(2);
+    map_shutdown();
+    map_init();
+    Paths.init();
+    map_wipe();
+    draw_map(1);
+    WorldClimateWorldWin.redraw();
+}
+
+// ORIGINAL: 0x004E0210 ?editor_date@Console@@QAEXXZ 0x004E0210-0x004E0282
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e0210.cpp;source:src/console.cpp:StrEditorYear;source:src/game.h:game_year;source:src/game.h:TurnCurrentNum;source:src/game.h:StartingMissionYear;source:src/temp.h:ParseNumTable;source:src/mapwin.h:MapWinTable;source:src/win.h:Win::on_redraw;source:src/basewin.h:BaseWin::on_redraw;source:src/console.h:Console::update_data"], "reason": "Recover the editor year prompt from its named EDITORYEAR string, the current turn/year fields, and the existing Console, MapWin and BaseWin owners. The seed’s indirect call through the primary MapWin pointer reaches the virtual GraphicWin base at Win::on_redraw slot 12."}
+void Console::editor_date() {
+    auto_undo();
+    const int accepted = X_pop_ask_number(
+        StrEditorYear, static_cast<int>(game_year(TurnCurrentNum)), 0);
+    if (accepted == 0) {
+        TurnCurrentNum = ParseNumTable[0] - static_cast<int>(StartingMissionYear);
+        if (TurnCurrentNum < 1) {
+            TurnCurrentNum = 1;
+        }
+        MapWinTable[0]->on_redraw();
+        TutWinBaseWindow.on_redraw();
+        ConsoleGlobal.update_data(0);
+    }
 }
 
 // THE CURSOR HOTSPOT TABLES, two int runs immediately ahead of the cursor

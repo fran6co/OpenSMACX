@@ -320,6 +320,13 @@ class Console : public MapWin {
   void editor_clear_vehicles();
 
  public:
+  // Original 0x004E1290; resets the map editor's current world and path data.
+  void editor_clear();
+
+  // Original 0x004E0210; changes the current mission year from the editor.
+  void editor_date();
+
+ public:
   // homed from 004dbb40.cpp
   void editor_reset_faction();
 
