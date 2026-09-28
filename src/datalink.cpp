@@ -653,6 +653,20 @@ void Datalink::parse_id(int id, DatalinkID *out_id, int *out_remainder) {
         static_cast<uint32_t>(id) - static_cast<uint32_t>(quotient) * 10000U);
 }
 
+/*
+Purpose: Format a category and entry suffix as the decimal Datalink id.
+         This is the inverse of parse_id's quotient/remainder split.
+// ORIGINAL: 0x0042A080 ?construct_id@Datalink@@QAEXPADIH@Z 0x0042A080-0x0042A0AD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0042a080.cpp preserves the 45-byte one-call seed and original span", "source:src/datalink.cpp parse_id divides the same combined id by 10000", "source:src/leaf_recoveries.cpp help builders call the declared Datalink member"], "reason": "The original Datalink member formats category*10000 plus entry into its caller-provided buffer; the former leaf-TU link-only body is replaced in the owning product TU."}
+// symbol    ?construct_id@Datalink@@QAEXPADHH@Z
+// size      45 bytes
+Return Value: n/a
+Status: Product body; measure before granting any new byte claim.
+*/
+void Datalink::construct_id(char *out, int category, int suffix) {
+    _itoa(category * 10000 + suffix, out, 10);
+}
+
 
 /*
 // ORIGINAL: 0x00432040 ?on_selected@Datalink@@QAEXH@Z 0x00432040-0x00432052 BYTE_EXACT
