@@ -110,6 +110,12 @@ class Dialogs : public ListBox,
   // 0x2B0 bytes on. kind_ is not initialized here; sizeof stays 0xC94.
   Dialogs();
   void close();  // hides ListBox::close; the image's body is one `ret`
+  // Four recovered initialization overloads. Each initializes the same
+  // shared virtual Dialog after closing the widget-specific state.
+  int init(RECT *group_id, int flags);
+  int init(int file_name);
+  int init(int x, int y, int width, int height, Heap *heap);
+  int init(Heap *heap);
   // The recovered complete-object destructor body (0x00406910), modelled on
   // the primary this (the allocation base); the original enters at
   // this + 0x188 and the redirect recovers the base, as ListBox's does. The

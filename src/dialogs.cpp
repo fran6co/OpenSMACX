@@ -54,6 +54,105 @@ Dialogs::Dialogs() { }
 void Dialogs::close() {
 }
 
+// Seed catalogue: 0 callers; callees 0x00609470, 0x00609F20, 0x0060D1B0,
+// 0x0060E7C0, 0x00610480, 0x00611A90.
+// ORIGINAL: 0x00613400 ?init@Dialogs@@QAEHPAURECT@@H@Z 0x00613400-0x00613491
+// RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613400 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the RECT/flags initializer as typed Dialogs base operations"}
+// symbol    ?init@Dialogs@@QAEHPAUtagRECT@@H@Z
+int Dialogs::init(RECT *group_id, int flags) {
+    RadioButton::close();
+    int result = Dialog::init(group_id, flags);
+    if (result != 0) return result;
+
+    ListBox::close();
+    result = Dialog::init(group_id, flags);
+    if (result != 0) return result;
+
+    CheckBox::close();
+    result = Dialog::init(group_id, flags);
+    if (result != 0) return result;
+
+    result = SpriteBox::init(group_id, flags);
+    if (result != 0) return result;
+
+    EditGroup::close();
+    return Dialog::init(group_id, flags);
+}
+
+// Seed catalogue: 1 caller; callees 0x006095F0, 0x00609F20, 0x0060D1B0,
+// 0x0060E7C0, 0x00610420, 0x00611A90.
+// ORIGINAL: 0x006134A0 ?init@Dialogs@@QAEHH@Z 0x006134A0-0x00613524
+// RECOVERY_BINDING: v1 {"evidence":["Retained 0x006134A0 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the file-name initializer as typed Dialogs base operations"}
+int Dialogs::init(int file_name) {
+    RadioButton::close();
+    int result = Dialog::init(file_name);
+    if (result != 0) return result;
+
+    ListBox::close();
+    result = Dialog::init(file_name);
+    if (result != 0) return result;
+
+    CheckBox::close();
+    result = Dialog::init(file_name);
+    if (result != 0) return result;
+
+    result = SpriteBox::init(file_name);
+    if (result != 0) return result;
+
+    EditGroup::close();
+    return Dialog::init(file_name);
+}
+
+// Seed catalogue: 0 callers; callees 0x00609730, 0x00609F20, 0x0060D1B0,
+// 0x0060E7C0, 0x006104D0, 0x00611A90.
+// ORIGINAL: 0x00613530 ?init@Dialogs@@QAEHHHHHPAUHeap@@@Z 0x00613530-0x00613602
+// RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613530 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the geometry and heap initializer as typed Dialogs base operations"}
+// symbol    ?init@Dialogs@@QAEHHHHHPAVHeap@@@Z
+int Dialogs::init(int x, int y, int width, int height, Heap *heap) {
+    RadioButton::close();
+    int result = Dialog::init(x, y, width, height, heap);
+    if (result != 0) return result;
+
+    ListBox::close();
+    result = Dialog::init(x, y, width, height, heap);
+    if (result != 0) return result;
+
+    CheckBox::close();
+    result = Dialog::init(x, y, width, height, heap);
+    if (result != 0) return result;
+
+    result = SpriteBox::init(x, y, width, height, heap);
+    if (result != 0) return result;
+
+    EditGroup::close();
+    return Dialog::init(x, y, width, height, heap);
+}
+
+// Seed catalogue: 1 caller; callees 0x006098D0, 0x00609F20, 0x0060D1B0,
+// 0x0060E7C0, 0x006104B0, 0x00611A90.
+// ORIGINAL: 0x006136B0 ?init@Dialogs@@QAEHPAUHeap@@@Z 0x006136B0-0x00613734 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["Retained 0x006136B0 seed and direct-call order in pinned image; Dialogs' declared shared virtual Dialog and five widget bases"],"reason":"Home the heap initializer as typed Dialogs base operations while retaining its historical byte claim"}
+// symbol    ?init@Dialogs@@QAEHPAVHeap@@@Z
+int Dialogs::init(Heap *heap) {
+    RadioButton::close();
+    int result = Dialog::init(heap);
+    if (result != 0) return result;
+
+    ListBox::close();
+    result = Dialog::init(heap);
+    if (result != 0) return result;
+
+    CheckBox::close();
+    result = Dialog::init(heap);
+    if (result != 0) return result;
+
+    result = SpriteBox::init(heap);
+    if (result != 0) return result;
+
+    EditGroup::close();
+    return Dialog::init(heap);
+}
+
 // Everything after the prologue is the compiler's: the five vbtable
 // pointers, the GraphicWin and Dialog virtual-base construction, and the
 // five base constructors (ListBox/RadioButton/CheckBox/SpriteBox/EditGroup,
