@@ -1832,21 +1832,9 @@ void Datalink::set_cat_terraform() {
 
 // ---- seams the category fillers call out to -------------------------------
 //
-// Two bodies set_cat reaches are real image functions nobody has recovered
-// yet, and their declarations above need definitions or the link breaks. These
-// are the pending-body forwarders they need, parked HERE rather than in
-// pending_bodies.cpp so the datalink batch stays one file's work; they retire
-// the day the real bodies land in stringstruct.cpp and reportwin.cpp (the
-// ListBox::update_changes seam already retired into listbox.cpp), and until
-// then each one jumps into the image's own address, which is the loud failure
-// the pending-body convention asks for.
-
-void StringList::sort(int key) {  // 0x006087A0
-    typedef void(__fastcall *pending)(StringList *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x006087A0))(this,
-                                                                     nullptr,
-                                                                     key);
-}
+// ReportWin::reset is still an original-image seam needed by the category
+// fillers. StringList::sort now lives with its real list nodes in
+// stringstruct.cpp, and ListBox::update_changes lives in listbox.cpp.
 
 void ReportWin::reset() {  // 0x00496BB0
     typedef void(__fastcall *pending)(ReportWin *, void *);

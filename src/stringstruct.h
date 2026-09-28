@@ -270,8 +270,9 @@ class StringList : public StringStruct {
     return head_ != 0 ? current_->payload->text : 0;
   }
 
-  // 0x006087A0 ?sort@StringList@@QAEXH@Z, unrecovered. DECLARATION ONLY:
-  // Datalink::set_cat tail-calls it on the entry list it has just emptied.
+  // Sort the circular list by payload text, retaining each ID with its
+  // payload. The int argument is unused by the original implementation.
+  // 0x006087A0 is the source-owned StringList::sort body in stringstruct.cpp.
   void sort(int key);
   // PUBLIC, not private: the image pokes these three fields directly from
   // outside the class - Dialog::item writes pending_text_/field_20_/field_24_
