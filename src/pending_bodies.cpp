@@ -507,12 +507,6 @@ void WorldWin::click(int a1, int a2, int button, int is_double) {  // 0x004C3D40
     PENDING_BODY(0x004C3D40, pending)(this, nullptr, a1, a2, button, is_double);
 }
 
-void BaseButton::timer_callback(int a1) {  // 0x00607B30
-    typedef void(__fastcall *pending)(BaseButton *, void *, int);
-    PENDING_BODY(0x00607B30, pending)(this, nullptr, a1);
-}
-
-
 // ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (0x005DA6C0) - homed into
 // src/buffer.cpp, along with both `tile` overloads (0x005DA860/0x005DA9F0)
 // and tile_mask's per-tile blit ?copy_mask@Buffer@@ (0x005E2B00).

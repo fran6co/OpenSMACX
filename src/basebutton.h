@@ -40,9 +40,8 @@ class BaseButton : public GraphicWin {
   // 0x00607B30  ?timer_callback@BaseButton@@QAEXH@Z - public, __thiscall,
   // void(int). Public is load-bearing: the non-member daemon fn_00607b10
   // reaches it through a BaseButton * it was handed.
-  // The int stays scaffold: the body is not recovered (it forwards to the
-  // image), and BaseWin::timer_callback's own `(int key, int context)` is a
-  // different arity on a different class, so it is not evidence for this one.
+  // BaseWin::timer_callback's `(int key, int context)` is a different arity
+  // on a different class and is not evidence for this callback's argument.
   void timer_callback(int a1);
   // These return `int`, not `void`. Each body is `xor eax, eax; ret N`, and
   // the sibling class BasePop declares the same three handlers `int`. The
@@ -157,5 +156,4 @@ extern Font *BaseButtonDefaultFonts[3];  // 0x009B8E34..E3C, defined in basebutt
 // the same address through a cast.
 
 
-// The timer tick declared above is not recovered; it forwards to the original
-// image. ?timer_callback@BaseButton@@QAEXH@Z is public, __thiscall, void(int).
+// ?timer_callback@BaseButton@@QAEXH@Z is public, __thiscall, void(int).

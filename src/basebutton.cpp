@@ -35,7 +35,7 @@ uint32_t BaseButtonA98Default;  // 0x009B8E30
 #include <new>
 
 // ORIGINAL: 0x00406860 ?hide@BaseButton@@QAEXXZ 0x00406860-0x00406879 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original FlatButton constructor0x00607CFB installs table0x00669754; its slot2 targets the complete25-byte function0x00406860-0x00406879.", "Original0x00406860 tests the ButtonGroup pointer at+0xAA8, clears the dword at+0xA9C when null, then jumps to Win::hide0x005EDCD0. Existing BaseButton members group_ and field_A9C_ own these offsets.", "Historical seed src/recovered/units/00406860.cpp supplies the preserved original identity and span; the product override uses the existing GraphicWin/Win inheritance rather than raw self offsets."], "reason": "FlatButton primary vtable selects the BaseButton hide override, which conditionally clears its ungrouped state before invoking Win::hide."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original FlatButton constructor0x00607CFB installs table0x00669754; its slot2 targets the complete25-byte function0x00406860-0x00406879.", "Original0x00406860 tests the ButtonGroup pointer at+0xAA8, clears the dword at+0xA9C when null, then jumps to Win::hide0x005EDCD0. Existing BaseButton members group_ and field_A9C_ own these offsets.", "Historical seed git:b55fcf8b:src/recovered/units/00406860.cpp supplies the preserved original identity and span; the product override uses the existing GraphicWin/Win inheritance rather than raw self offsets."], "reason": "FlatButton primary vtable selects the BaseButton hide override, which conditionally clears its ungrouped state before invoking Win::hide."}
 // symbol    ?hide@BaseButton@@UAEXXZ
 void BaseButton::hide() {
     if (group_ == 0) {
@@ -771,5 +771,37 @@ Status: Complete
 void __cdecl fn_00607b10(int a1, BaseButton* button) {
     if (button) {
         button->timer_callback(a1);
+    }
+}
+
+// The first timer stage shows the button's bubble at its screen position;
+// the second schedules the repeating stage. Other ticks use Win's actual
+// virtual callback rather than a synthetic slot-table shim.
+// ORIGINAL: 0x00607B30 ?timer_callback@BaseButton@@QAEXH@Z 0x00607B30-0x00607C29
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607b30.cpp;src/basebutton.h:Time members;image:0x00607B30-0x00607C29"], "reason": "The BaseButton timer stage owns bubble positioning, repeat scheduling, and its inherited Win callback; the former pending forwarder has been replaced by typed state and calls."}
+void BaseButton::timer_callback(int stage) {
+    if (stage == 0) {
+        time1_.stop();
+        if (bubble_text_ != 0) {
+            RECT area = outer_rect_;
+            int x = 0;
+            int y = 0;
+            client_to_screen(&x, &y);
+            const int width = area.right - area.left;
+            const int height = area.bottom - area.top;
+            area.left = x;
+            area.top = y;
+            area.right = x + width;
+            area.bottom = y + height;
+            Win::set_bubble_text(bubble_text_, &area);
+        }
+    } else if (stage == 1) {
+        const uint32_t interval = static_cast<int>(field_A48_) > 0
+                                      ? field_A48_ : field_A44_;
+        // Time's recorded ABI carries its pointer payload as an int.
+        time2_.start(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
+                     2, reinterpret_cast<int>(this), interval, 5);
+    } else {
+        vslot_20(0, 0);
     }
 }
