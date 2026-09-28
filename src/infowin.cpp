@@ -33,11 +33,46 @@
 #include "maininterface.h"
 #include <cstring>
 
-// Link-only placeholder; timed pane changes are not implemented.
-// ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00458ff0.cpp", "source:src/infowin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
-void InfoWin::timer_change(int) {
+// ORIGINAL: 0x00456300 ?setup_text@InfoWin@@QAEXXZ 0x00456300-0x0045838D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00456300.cpp", "source:src/infowin.h"], "reason": "InfoWin::timer_change now calls this original 8333-byte panel-content builder. Its existing seed is incomplete; an explicitly unfinished owning-TU definition preserves link continuity without claiming that panel content has been recovered."}
+void InfoWin::setup_text() {
     // BODY GOES HERE.
+}
+
+// The four animation counters have not yet been given source-owned storage.
+// Keep their binding explicit until that owner is migrated; pane state and
+// drawing work below use real InfoWin members.
+static int *const InfoAnimationCounters = (int *)0x007AF174;
+
+// Advance the selected information pane through its valid display states,
+// then repaint the newly selected pane.
+// ORIGINAL: 0x00458FF0 ?timer_change@InfoWin@@QAEXH@Z 0x00458FF0-0x00459141
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00458ff0.cpp", "source:src/infowin.h", "source:src/game.cpp:InterfaceBoxStyles"], "reason": "Home the timed pane transition with the owned InfoWin state, real pane rectangle and source-owned box style; retain the unresolved active-interface and animation-counter storage bindings as explicit dependencies."}
+void InfoWin::timer_change(int) {
+    if (active_interface_slot_occupied()) return;
+
+    const int old_pane = active_pane_;
+    field_94_ = 0;
+    active_pane_ = WinScreenWidth == 800 ? 0 : (old_pane - 1) & 1;
+
+    bool first = true;
+    for (;;) {
+        const int source_state = redraw_phase_ >= 0
+            ? redraw_phase_ : pane_states_[first ? old_pane : active_pane_];
+        pane_states_[active_pane_] = (source_state + 1) % 8;
+        redraw_phase_ = -1;
+        first = false;
+        if (state_valid(pane_states_[active_pane_])) break;
+    }
+
+    for (int index = 0; index != 4; ++index) InfoAnimationCounters[index] = 0;
+    visible_characters_[0] = 0;
+    visible_characters_[1] = 0;
+    field_A8_ = 0;
+    MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
+                                   &InterfaceBoxStyles[18]);
+    setup_text();
+    draw_text(active_pane_);
 }
 
 // Primary normal/revealed and secondary normal/revealed foreground/shadow

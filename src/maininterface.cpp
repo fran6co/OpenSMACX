@@ -706,6 +706,10 @@ static int *const IfaceIdToSlot = (int *)0x007AE778;
 static int *const IfaceRegistry = (int *)0x007AE7F0;
 static int *const ActiveIfaceId = (int *)0x007D392C;
 
+bool __cdecl active_interface_slot_occupied() {
+    return IfaceIdToSlot[*ActiveIfaceId] != 0;
+}
+
 // The MessageWin the interface events are delivered to is now the real global
 // InterfaceMessageWin (messagewin.h / messagewin.cpp) - game.cpp's system_init
 // builds the same object through messagewin_init, and the image's handlers

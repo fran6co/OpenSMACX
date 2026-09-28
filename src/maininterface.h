@@ -646,3 +646,8 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
 void __cdecl desktop_update();
 
 extern MainInterface MainInterfaceGlobal;
+
+// The active interface's registry slot is owned by the interface dispatcher.
+// Other windows ask this owner rather than duplicating its provisional
+// fixed-address bindings.
+bool __cdecl active_interface_slot_occupied();
