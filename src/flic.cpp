@@ -701,11 +701,11 @@ void Flic::decode_byte_run() {
     int x = field_5AC_;
     int height = field_5A0_;
     int width = field_59C_;
-    uint32_t *rect = &field_58C_;
-    rect[0] = x;
-    rect[1] = y;
-    rect[2] = x + width;
-    rect[3] = y + height;
+    RECT *rect = &update_rect_;
+    rect->left = x;
+    rect->top = y;
+    rect->right = x + width;
+    rect->bottom = y + height;
 
     for (int row = 0; row < static_cast<int>(field_5A0_); row++) {
         uint8_t *row_dst = dst;
@@ -896,10 +896,10 @@ void Flic::decode_delta_flc() {
     if (work_buf != nullptr) {
         free(work_buf);
     }
-    field_58C_ = field_5AC_ + min_touched;
-    field_590_ = field_5B0_ + first_row;
-    field_594_ = field_5AC_ + 1 + max_touched;
-    field_598_ = field_5B0_ + 1 + last_row;
+    update_rect_.left = field_5AC_ + min_touched;
+    update_rect_.top = field_5B0_ + first_row;
+    update_rect_.right = field_5AC_ + 1 + max_touched;
+    update_rect_.bottom = field_5B0_ + 1 + last_row;
 }
 
 /*
@@ -927,10 +927,10 @@ void Flic::fill() {
     // `add eax,esi` after both `mov [ecx+0x58c/0x590]`), while every
     // plain-sum spelling - including `x += width`, `width + x` and named
     // sum locals - hoists both adds above the stores, and every read-back
-    // spelling (`rect[2] = rect[0] + width`) anchors its adds after the
-    // FIRST store only: VC6 store-forwards rect[0] back to the x register,
+    // spelling (`rect->right = rect->left + width`) anchors its adds after the
+    // FIRST store only: VC6 store-forwards rect->left back to the x register,
     // both adds become free-floating register ops again and the scheduler
-    // lifts them above the rect1 store, and whichever local rect[0]
+    // lifts them above the rect1 store, and whichever local rect->left
     // stores loads last instead of second. Declaration-order permutations
     // and swapping the sum operands do not restore the load order.
     // CORRECTION 2026-09-18 (deck dchunk-arm-readback, five arm
@@ -953,17 +953,17 @@ void Flic::fill() {
     // and reloads. Extended 2026-09-17 with fifteen disassembled local
     // /O2 compiles: two further anchor mechanisms exist, neither
     // combines the image's prologue loads with its x/y destinations. A
-    // fresh member read inside the sum (`rect[2] = x + field_59C_`)
+    // fresh member read inside the sum (`rect->right = x + field_59C_`)
     // keeps its load at the sum and anchors the add after both stores -
     // the y-sum's destination lands on eax, the image's register - but
     // the x-sum still accumulates into the fresh width register and
     // neither load reaches the prologue (96 bytes). A read-back left
-    // operand (`rect[2] = rect[0] + width`) steers the FIRST add's
+    // operand (`rect->right = rect->left + width`) steers the FIRST add's
     // destination onto x's register through store forwarding, but the
     // second always lands on height's, the loads reorder to
     // y,height,width,x, and every operand-swap spelling of it emits one
     // identical body (112 bytes). Direct-member sum stores after the
-    // pointer stores (`field_594_ = x + width`) keep both plain stores
+    // pointer stores (`update_rect_.right = x + width`) keep both plain stores
     // first but sink both sum stores below the call's reload sequence.
     // All-member spelling (no locals) disables the load cache
     // entirely - every operand reloads at every use. Thirty-four
@@ -971,7 +971,7 @@ void Flic::fill() {
     // prologue loads is VC6-internal allocation no spelling reaches.
     // Closed 2026-09-17 (round 2, three fresh /O2 compiles): the
     // statement-order form - destructive updates interleaved between
-    // the store pairs (`rect[1]=y; x+=width; y+=height; rect[2]=x;`)
+    // the store pairs (`rect->top=y; x+=width; y+=height; rect->right=x;`)
     // - compiles BYTE-IDENTICAL to the plain-sum baseline, compound
     // and assignment spellings both: x and y are dead after their
     // sums, so VC6 canonicalizes the interleaving away and nothing
@@ -989,11 +989,11 @@ void Flic::fill() {
     int x = field_5AC_;
     int height = field_5A0_;
     int width = field_59C_;
-    uint32_t *rect = &field_58C_;
-    rect[0] = x;
-    rect[1] = y;
-    rect[2] = x + width;
-    rect[3] = y + height;
+    RECT *rect = &update_rect_;
+    rect->left = x;
+    rect->top = y;
+    rect->right = x + width;
+    rect->bottom = y + height;
     buffer2_->fill(field_5AC_, field_5B0_, field_59C_, field_5A0_, 0);
 }
 
@@ -1008,7 +1008,7 @@ Purpose: Decode a type-0x10 (FLI COPY) chunk: the rows follow verbatim in
 // kind      game
 // flags     hidden;sp_ready;purged_ok
 // calls     0x005D4510 0x005E33F3 0x00644EF2 0x00646178
-// TRIED: plain sums here (`rect[2] = x + width`) are the image's
+// TRIED: plain sums here (`rect->right = x + width`) are the image's
 //        spelling - loads y-first into eax/ecx, adds pinned between the
 //        store pairs, 310 code bytes + NOP pad, extent boundary passes -
 //        while the read-back spelling flips the loads x-first. The
@@ -1032,11 +1032,11 @@ void Flic::decode_fli_copy() {
     int x = field_5AC_;
     int height = field_5A0_;
     int width = field_59C_;
-    uint32_t *rect = &field_58C_;
-    rect[0] = x;
-    rect[1] = y;
-    rect[2] = x + width;
-    rect[3] = y + height;
+    RECT *rect = &update_rect_;
+    rect->left = x;
+    rect->top = y;
+    rect->right = x + width;
+    rect->bottom = y + height;
 
     uint8_t *dst = reinterpret_cast<uint8_t *>(
         buffer2_->get_data(field_5AC_, field_5B0_));
@@ -1165,11 +1165,11 @@ void Flic::decode_chunk(DataChunk *chunk) {
             int x = field_5AC_;
             int height = field_5A0_;
             int width = field_59C_;
-            uint32_t *rect = &field_58C_;
-            rect[0] = x;
-            rect[1] = y;
-            rect[2] = x + width;
-            rect[3] = y + height;
+            RECT *rect = &update_rect_;
+            rect->left = x;
+            rect->top = y;
+            rect->right = x + width;
+            rect->bottom = y + height;
             if (field_0_ != 0) {
                 int (Buffer::*copy)(Buffer *, int, int, int, int, int,
                                     int) = &Buffer::copy;
@@ -1204,11 +1204,11 @@ skip:
             int x = field_5AC_;
             int height = field_5A0_;
             int width = field_59C_;
-            uint32_t *rect = &field_58C_;
-            rect[0] = x;
-            rect[1] = y;
-            rect[2] = x + width;
-            rect[3] = y + height;
+            RECT *rect = &update_rect_;
+            rect->left = x;
+            rect->top = y;
+            rect->right = x + width;
+            rect->bottom = y + height;
             buffer2_->fill(field_5AC_, field_5B0_, field_59C_,
                            field_5A0_, 0);
             break;
@@ -1291,11 +1291,11 @@ void Flic::decode_byte_run_trans() {
     int x = field_5AC_;
     int height = field_5A0_;
     int width = field_59C_;
-    uint32_t *rect = &field_58C_;
-    rect[0] = x;
-    rect[1] = y;
-    rect[2] = x + width;
-    rect[3] = y + height;
+    RECT *rect = &update_rect_;
+    rect->left = x;
+    rect->top = y;
+    rect->right = x + width;
+    rect->bottom = y + height;
 
     int (Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *row_dst = reinterpret_cast<uint8_t *>(
@@ -1534,10 +1534,10 @@ void Flic::decode_delta_flc_trans() {
             row++;
         } while (row < static_cast<int>(line_count));
     }
-    field_58C_ = field_5AC_ + min_x;
-    field_590_ = field_5B0_ + min_y;
-    field_594_ = field_5AC_ + 1 + max_x;
-    field_598_ = field_5B0_ + 1 + max_y;
+    update_rect_.left = field_5AC_ + min_x;
+    update_rect_.top = field_5B0_ + min_y;
+    update_rect_.right = field_5AC_ + 1 + max_x;
+    update_rect_.bottom = field_5B0_ + 1 + max_y;
 }
 
 /*
@@ -1558,11 +1558,11 @@ void Flic::decode_black_trans() {
     int x = field_5AC_;
     int height = field_5A0_;
     int width = field_59C_;
-    uint32_t *rect = &field_58C_;
-    rect[0] = x;
-    rect[1] = y;
-    rect[2] = x + width;
-    rect[3] = y + height;
+    RECT *rect = &update_rect_;
+    rect->left = x;
+    rect->top = y;
+    rect->right = x + width;
+    rect->bottom = y + height;
     if (field_0_ != 0) {
         int (Buffer::*copy)(Buffer *, int, int, int, int, int, int) =
             &Buffer::copy;
@@ -1591,11 +1591,11 @@ void Flic::decode_fli_copy_trans() {
     int x = field_5AC_;
     int height = field_5A0_;
     int width = field_59C_;
-    uint32_t *rect = &field_58C_;
-    rect[0] = x;
-    rect[1] = y;
-    rect[2] = x + width;
-    rect[3] = y + height;
+    RECT *rect = &update_rect_;
+    rect->left = x;
+    rect->top = y;
+    rect->right = x + width;
+    rect->bottom = y + height;
 
     int (Buffer::*get_data)() = &Buffer::get_data;
     uint8_t *dst = reinterpret_cast<uint8_t *>(

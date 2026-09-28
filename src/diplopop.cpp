@@ -406,3 +406,32 @@ int DiploPop::set_modal(int flag, int (__cdecl *poll)(), Win *owner) {
 void DiploPop::release_modal() {
     reinterpret_cast<Win *>(this)->Win::release_modal();
 }
+
+// ORIGINAL: 0x0043F190 ?portrait_anim@DiploPop@@QAEXXZ 0x0043F190-0x0043F1BF FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original decodes the Flic at DiploPop +0xAE8 using its stored x/y at Flic +0x5AC/+0x5B0, then passes Flic +0x58C to the main interface's soft_update.", "DiploPop::flic1_ is the constructed Flic at +0xAE8, and MainInterfaceGlobal is the existing GraphicWin owner at 0x007AE820."], "reason": "Home the portrait animation using its embedded Flic, typed update rectangle, and process-owned update window."}
+void DiploPop::portrait_anim() {
+    flic1_.decode_stored_frame();
+    MainInterfaceGlobal.soft_update(flic1_.update_rect());
+}
+
+// ORIGINAL: 0x0043F1C0 ?bioscan_anim@DiploPop@@QAEXXZ 0x0043F1C0-0x0043F1FC FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["The original increments DiploPop +0x20B0, decodes the Flic at +0x15CC using its stored x/y at Flic +0x5AC/+0x5B0, and updates Flic +0x58C.", "DiploPop::flic2_ is the constructed Flic at +0x15CC; its footprint ends at +0x20B0, where the existing animation counter begins."], "reason": "Home the bioscan animation through its typed Flic member, update rectangle, and owner counter."}
+void DiploPop::bioscan_anim() {
+    ++field_20B0_;
+    flic2_.decode_stored_frame();
+    MainInterfaceGlobal.soft_update(flic2_.update_rect());
+}
+
+// ORIGINAL: 0x0043F200 ?timer_callback_daemon@DiploPop@@QAAXHH@Z 0x0043F200-0x0043F245
+// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); it does not use ECX as a hidden DiploPop receiver.", "The callback's Flic2 decode, animation counter increment, and update rectangle are exactly the work owned by DiploPop::bioscan_anim."], "reason": "Keep the timer entry a real two-argument cdecl callback and route its explicit popup parameter into the typed owner method."}
+// symbol    ?timer_callback_daemon@@YAXHPAVDiploPop@@@Z
+void __cdecl timer_callback_daemon(int, DiploPop *popup) {
+    popup->bioscan_anim();
+}
+
+// ORIGINAL: 0x0043F250 ?timer_callback_daemon2@DiploPop@@QAAXHH@Z 0x0043F250-0x0043F288 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Disassembly reads the popup pointer from the second cdecl stack argument ([ebp+0xC]); this is a free callback, not a DiploPop member entry despite the historical catalog symbol spelling.", "The callback's Flic1 decode and update rectangle are the work owned by DiploPop::portrait_anim."], "reason": "Preserve the timer callback's actual cdecl stack ABI and use the typed portrait animation implementation."}
+// symbol    ?timer_callback_daemon2@@YAXHPAVDiploPop@@@Z
+void __cdecl timer_callback_daemon2(int, DiploPop *popup) {
+    popup->portrait_anim();
+}

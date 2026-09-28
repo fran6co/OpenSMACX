@@ -56,6 +56,8 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
   void hide();
   DiploPop();
   ~DiploPop();
+  void portrait_anim();
+  void bioscan_anim();
   void on_iface_left_click(int, int);
   void on_iface_right_click(int, int);
   void on_iface_left_down(int, int);
@@ -155,3 +157,8 @@ static_assert(sizeof(DiploPop) == 0x433C,
               "DiploPop member lifetimes must cover the original footprint");
 
 extern DiploPop DiplomacyPopup;
+
+// Time invokes these as plain two-argument __cdecl callbacks. The second
+// stack argument is the DiploPop receiver; neither callback has hidden this.
+void __cdecl timer_callback_daemon(int unused, DiploPop *popup);
+void __cdecl timer_callback_daemon2(int unused, DiploPop *popup);

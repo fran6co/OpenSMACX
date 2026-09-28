@@ -94,20 +94,28 @@ class Flic {
   void fill();
   void UNK9();
 
+  // Diplomacy animation methods decode at these stored coordinates and pass
+  // the corresponding destination bounds to their owner window.
+  int decode_stored_frame() {
+    return decode_frame(static_cast<int>(field_5AC_),
+                        static_cast<int>(field_5B0_));
+  }
+  RECT *update_rect() { return &update_rect_; }
+
  private:
   // Only the low byte is ever stored (`mov byte ptr [esi], bl`).
   uint8_t field_0_;  // 0x0
   Buffer buffer_;    // 0x4
-  uint32_t field_58C_;
-  uint32_t field_590_;
-  uint32_t field_594_;
-  uint32_t field_598_;
+  // RECOVERY_MEMBER: v1 Flic update_rect_ 0x58C 0x0043F190
+  RECT update_rect_;  // passed to GraphicWin::soft_update
   uint32_t field_59C_;
   uint32_t field_5A0_;
   uint32_t field_5A4_;
   Buffer *buffer2_;
-  uint32_t field_5AC_;
-  uint32_t field_5B0_;
+  // RECOVERY_MEMBER: v1 Flic field_5AC_ 0x5AC 0x0043F190
+  uint32_t field_5AC_;  // first stored Flic::decode_frame coordinate
+  // RECOVERY_MEMBER: v1 Flic field_5B0_ 0x5B0 0x0043F190
+  uint32_t field_5B0_;  // second stored Flic::decode_frame coordinate
   uint32_t field_5B4_;
   FILE *file_;
   // A REAL embedded Palette, not a pointer: the constructor
