@@ -31,6 +31,7 @@ class MCIVideo {
  public:
   MCIVideo();  // ??0MCIVideo@@QAE@XZ  0x005FFD80
   void close();  // ?close@MCIVideo@@QAEXXZ  0x005FFDB0
+  int load(char *movie_path, Win *target_window, int x, int y);
   void play();  // ?play@MCIVideo@@QAEXXZ  0x006001E0
   void stop();  // ?stop@MCIVideo@@QAEXXZ  0x00600270
   // 0x00600330, homed into general.cpp: copies the posted frame into the
@@ -43,7 +44,7 @@ class MCIVideo {
   // MCIVideo destroys at scope exit.
   ~MCIVideo();
 
-  // Storage the image proves is here: its own methods reach 0x474.
+  // Storage the image proves is here: its own methods reach 0x47C.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 7 member(s) from the IDA database, 2 named; it starts a member at 0x0, which is where src/ ends.
 
@@ -53,25 +54,25 @@ class MCIVideo {
   // written through a 16-bit alias there rather than assigned directly -
   // see MCIVideo::MCIVideo() in alphamovie.cpp.
   uint32_t mciId_;  // 0x4
-  // 0x8, named from 0x00600330: it is the HWND passed to GetDC and
-  // ReleaseDC. play() also reads its low word as the MCI notify callback.
-  HWND field_8_;  // 0x8
-  HPALETTE field_C_;  // 0xC
+  // MCI_STATUS returns this handle; load, play, and blit_frame pass it to
+  // window/GDI APIs. play also preserves the image's low-word MCI callback.
+  HWND window_handle_;  // 0x8
+  HPALETTE palette_handle_;  // 0xC
   // Sized and pinned: sizeof(Palette) == 0x454 (palette.h), exactly the
   // extent this field already carried as raw bytes. The constructor at
   // 0x005FFD80 placement-constructs a real Palette here (`call 0x5FE2A0`
   // on `this + 0x10`).
   Palette palette_;  // 0x10
-  uint32_t field_464_;  // 0x464
+  WNDPROC previous_window_proc_;  // 0x464
   // 0x468, stored by load() from its Win* argument and checked by blit_frame.
   Win *target_window_;  // 0x468
   // 0x46C..0x478, named from 0x00600330: BitBlt's destination x, y, width
   // and height in that order, passed straight through as the four
   // destination arguments.
-  uint32_t blit_x_;       // 0x46C
-  uint32_t blit_y_;       // 0x470
-  uint32_t blit_width_;   // 0x474
-  uint32_t blit_height_;  // 0x478
+  int blit_x_;       // 0x46C
+  int blit_y_;       // 0x470
+  int blit_width_;   // 0x474
+  int blit_height_;  // 0x478
 };
 
  /*
@@ -85,8 +86,9 @@ class MCIVideo {
   * The layout is not established. The constructor's own fields begin at 0xA14,
   * immediately after the base, and where the object ends is unknown, so
   * nothing pins its sizeof and the fields between are not modelled. The
-  * methods recovered here are bare returns that touch no field, which is why
-  * they can be replaced ahead of that mapping.
+  * `exec` reaches the embedded MCIVideo and GraphicWin base through their
+  * source-owned members. Its object extent remains unpinned beyond those
+  * observed regions.
   */
 // GraphicWin DIRECTLY, not through ConstructedGraphicWin - same reason
 // StringBox drops the shim (see stringbox.h): ConstructedGraphicWin's inlined
@@ -99,14 +101,12 @@ class AlphaMovie : public GraphicWin {
  public:
   void close();
   AlphaMovie();
-  // ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070, still an original body
-  // (src/unrecovered/00404070.cpp); the definition in pending_bodies.cpp
-  // forwards to it. amovie_project reaches it on a stack GraphicWin it has
-  // dressed with AlphaMovie's vtables, so the forwarder is the call's target.
+  // ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070; implemented in
+  // alphamovie.cpp from the compatible seed and routed through its embedded
+  // MCIVideo member. amovie_project constructs a real AlphaMovie receiver.
   int exec(char *movie_name);
-  // 0x00404310 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // 0x00404310 closes the MCI stream and GraphicWin base in the body;
+  // the compiler then destroys the embedded MCIVideo and base naturally.
   ~AlphaMovie();
   void UNK7();
   int UNK2(int a1, int a2, int a3);
@@ -124,11 +124,9 @@ class AlphaMovie : public GraphicWin {
   // `lea edi, [esi + 0xa14]` at 0x00404342. sizeof(GraphicWin) is pinned at
   // 0xA14, so this is the first member after the base.
   //
-  // NO SIZE ASSERTION FOLLOWS, deliberately. It would have to be
-  // 0xA14 + sizeof(MCIVideo), and MCIVideo's own end is only bracketed:
-  // ?load@MCIVideo@@QAEHPADPAUWin@@HH@Z writes [esi + 0x470] at 0x005FFFCD,
-  // a floor of 0x474, while the IDB claims 0x46C. The upper bound comes from
-  // ?amovie_project@@YAXPAD@Z's stack frame and is 0x47C.
+  // NO SIZE ASSERTION FOLLOWS, deliberately. MCIVideo's storage reaches
+  // 0x47C through its height member, with the containing local bracketed by
+  // amovie_project's stack frame at 0x47C.
   MCIVideo mciVideo_;  // 0xA14
 };
 

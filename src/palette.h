@@ -19,6 +19,7 @@
 #include "time.h"
 
 class Win;     // forward declaration
+class MCIVideo; // imports the MCI device palette into this Palette's entries
 struct Dib;    // <buffer.h>, where the DIB block is declared
 class Buffer;  // forward declaration
 struct IDirectDrawPalette;  // <ddraw.h>, included where it is called
@@ -167,6 +168,9 @@ class Palette {
   // Buffer caches this generation tag to skip republishing an unchanged
   // palette; see Buffer::sync_to_palette.
   friend class Buffer;
+  // MCIVideo::load imports the device's PALETTEENTRY records verbatim; its
+  // 0xEC-entry copy must preserve the returned flags as well as RGB values.
+  friend class MCIVideo;
   // Win compares its cached `field_184_` against the palette's seed to decide
   // whether it must re-realise - the image reads it directly, and the two
   // are one collaboration. Same reason Buffer is a friend above.

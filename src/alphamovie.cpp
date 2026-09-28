@@ -29,6 +29,10 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "uv2player.h"  // amovie_project's player
+#include "mapwin.h"  // MainInterfaceGlobal, the owner passed to GraphicWin::init
+#include "console.h"  // flush_input
+#include "temp.h"  // do_all_non_input
+#include "wave_device.h"  // WaveDeviceGlobal
 #include <mmsystem.h>
 #include <digitalv.h>
 
@@ -37,6 +41,37 @@
 // play at 0x006001E0 independently bounds this initial storage to four bytes.
 // RECOVERY_OBJECT: v2 0x009B8190 0x009B8194 ?ActiveVideoPlayer@@3PAVMCIVideo@@A 0x006001E0
 MCIVideo *ActiveVideoPlayer;
+
+// MCI video window procedure fallback, set to the application's main HWND by
+// MCIVideo::load before installing the window hook.
+// RECOVERY_OBJECT: v2 0x009B8194 0x009B8198 ?MciVideoCallbackWindow@@3PAUHWND__@@A 0x005FFF90
+HWND MciVideoCallbackWindow;
+
+// ORIGINAL: 0x005FFEC0 sub_5ffec0 0x005FFEC0-0x005FFF8B
+// RECOVERY_BINDING: v1 {"evidence": ["The pinned 0x005FFEC0 body forwards WM_KEYDOWN and WM_LBUTTONDOWN through DefWindowProcA using the HWND stored by MCIVideo::load at 0x009B8194; its 0x3B9 case clears the active MCIVideo flag, and remaining messages call the saved WNDPROC at MCIVideo+0x464 or fall back to DefWindowProcA.", "The MCI video owner stores its active receiver at 0x009B8190; MCIVideo::play is the source-owned writer of that storage and close/stop clear it."], "reason": "Move the MCI window hook into its owning source file and route through the typed active MCIVideo fields and SDK window-procedure APIs."}
+// symbol    ?MciVideoWindowProc@@YGJPAUHWND__@@IIJ@Z
+LRESULT CALLBACK MciVideoWindowProc(HWND window, UINT message,
+                                    WPARAM wparam, LPARAM lparam) {
+    switch (message) {
+    case WM_KEYDOWN:
+    case WM_LBUTTONDOWN:
+        DefWindowProcA(MciVideoCallbackWindow, message, wparam, lparam);
+        return 0;
+    case 0x3b9:
+        if (ActiveVideoPlayer != 0) {
+            ActiveVideoPlayer->field_0_ &= ~1u;
+        }
+        break;
+    default:
+        break;
+    }
+
+    if (ActiveVideoPlayer != 0) {
+        return CallWindowProcA(ActiveVideoPlayer->previous_window_proc_,
+                               window, message, wparam, lparam);
+    }
+    return DefWindowProcA(window, message, wparam, lparam);
+}
 
 // ORIGINAL: 0x006001E0 ?play@MCIVideo@@QAEXXZ 0x006001E0-0x00600270 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["The original member accesses the active-player slot at 0x009B8190, invokes Palette::set on its embedded palette at +0x10, and sends MCI_WINDOW followed by MCI_PLAY through the WINMM import.", "MCIVideo::blit_frame uses +0x8 as the HWND passed to GetDC and ReleaseDC; the play body loads that field's low word into MCI_PLAY_PARMS::dwCallback. This unusual truncation is preserved as observed; the MCI device id occupies the low word at +0x4.", "MCIVideo::load stores its Win* argument at +0x468 and blit_frame tests it before blitting; the separate close path clears this window pointer."], "reason": "Move the existing play identity into MCIVideo's owning translation unit and express the receiver, palette, window handle and MCI parameter blocks as typed members."}
@@ -54,13 +89,93 @@ void MCIVideo::play() {
 
     MCI_PLAY_PARMS playParams = {0};
     playParams.dwCallback = static_cast<DWORD>(
-        reinterpret_cast<UINT_PTR>(field_8_) & 0xffff);
+        reinterpret_cast<UINT_PTR>(window_handle_) & 0xffff);
     if (mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_PLAY,
                         MCI_NOTIFY, reinterpret_cast<DWORD_PTR>(&playParams)) != 0) {
         return;
     }
 
     field_0_ |= 1;
+}
+
+// ORIGINAL: 0x005FFF90 ?load@MCIVideo@@QAEHPADPAUWin@@HH@Z 0x005FFF90-0x006001D2
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned-image recover inspect at 0x005FFF90; matching MCIVideo callers and field accesses at 0x005FFFC0, 0x0060008A, 0x00600161-0x006001AC; AlphaMovie::exec source member ownership."], "reason": "Recover MCI device setup, palette import, destination scaling and window procedure installation in MCIVideo using source-owned members and Win32 structures."}
+// symbol    ?load@MCIVideo@@QAEHPADPAVWin@@HH@Z
+int MCIVideo::load(char *moviePath, Win *targetWindow, int x, int y) {
+    if (moviePath == 0 || targetWindow == 0) {
+        return 0x10;
+    }
+
+    target_window_ = targetWindow;
+    blit_y_ = y;
+    blit_x_ = x;
+    WaveDeviceGlobal.disable();
+
+    char deviceType[] = "avivideo";
+    MCI_DGV_OPEN_PARMS openParams = {0};
+    openParams.lpstrDeviceType = deviceType;
+    openParams.lpstrElementName = moviePath;
+    openParams.dwStyle = WS_CHILD;
+    openParams.hWndParent = HandleMain;
+    MciVideoCallbackWindow = HandleMain;
+
+    const DWORD openFlags = MCI_OPEN_TYPE | MCI_OPEN_ELEMENT |
+                            MCI_DGV_OPEN_WS | MCI_DGV_OPEN_PARENT;
+    if (mciSendCommandA(0, MCI_OPEN, openFlags,
+                        reinterpret_cast<DWORD_PTR>(&openParams)) != 0) {
+        return 1;
+    }
+    mciId_ = (mciId_ & 0xffff0000u) | (openParams.wDeviceID & 0xffffu);
+
+    MCI_DGV_STATUS_PARMS statusParams = {0};
+    statusParams.dwItem = MCI_DGV_STATUS_HWND;
+    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_STATUS,
+                    MCI_STATUS_ITEM,
+                    reinterpret_cast<DWORD_PTR>(&statusParams));
+    window_handle_ = reinterpret_cast<HWND>(statusParams.dwReturn);
+
+    statusParams.dwItem = MCI_DGV_STATUS_HPAL;
+    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_STATUS,
+                    MCI_STATUS_ITEM,
+                    reinterpret_cast<DWORD_PTR>(&statusParams));
+    palette_handle_ = reinterpret_cast<HPALETTE>(statusParams.dwReturn);
+
+    PALETTEENTRY entries[256];
+    GetPaletteEntries(palette_handle_, 0, 0x100, entries);
+    palette_.init();
+    // The original copies RGB for entries 10..245 but skips each fourth
+    // peFlags byte, retaining the flags established by Palette::init().
+    for (int index = 10; index < 246; ++index) {
+        palette_.entries_[index].peRed = entries[index].peRed;
+        palette_.entries_[index].peGreen = entries[index].peGreen;
+        palette_.entries_[index].peBlue = entries[index].peBlue;
+    }
+    palette_.reseed();
+
+    MCI_DGV_WHERE_PARMS sourceParams = {0};
+    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_WHERE,
+                    MCI_DGV_WHERE_SOURCE,
+                    reinterpret_cast<DWORD_PTR>(&sourceParams));
+    const RECT sourceRect = sourceParams.rc;
+    const int width = (sourceRect.right - sourceRect.left) * 2;
+    const int height = (sourceRect.bottom - sourceRect.top) * 2;
+
+    MCI_DGV_PUT_PARMS destinationParams = {0};
+    destinationParams.rc.left = sourceRect.left;
+    destinationParams.rc.top = sourceRect.top;
+    destinationParams.rc.right = sourceRect.right * 2 - sourceRect.left;
+    destinationParams.rc.bottom = sourceRect.bottom * 2 - sourceRect.top;
+    mciSendCommandA(static_cast<MCIDEVICEID>(mciId_ & 0xffff), MCI_PUT,
+                    MCI_DGV_RECT | MCI_DGV_PUT_DESTINATION,
+                    reinterpret_cast<DWORD_PTR>(&destinationParams));
+
+    previous_window_proc_ = reinterpret_cast<WNDPROC>(SetWindowLongA(
+        window_handle_, GWL_WNDPROC,
+        reinterpret_cast<LONG>(&MciVideoWindowProc)));
+    blit_width_ = width;
+    blit_height_ = height;
+    MoveWindow(window_handle_, x, y, width, height, FALSE);
+    return 0;
 }
 
 // ORIGINAL: 0x00600270 ?stop@MCIVideo@@QAEXXZ 0x00600270-0x006002EB FILE
@@ -94,8 +209,8 @@ void MCIVideo::stop() {
 MCIVideo::MCIVideo() {
     palette_.Palette::Palette();
     *reinterpret_cast<short *>(&mciId_) = 0;
-    field_8_ = 0;
-    field_C_ = 0;
+    window_handle_ = 0;
+    palette_handle_ = 0;
     target_window_ = 0;
 }
 
@@ -138,6 +253,78 @@ Return Value: n/a
 Status: Complete
 */
 AlphaMovie::AlphaMovie() {
+}
+
+/*
+Purpose: Initialize the movie window, try the supplied path and then the
+         game's fallback path, play the loaded clip, and restore the active
+         palette and window state.
+
+The embedded MCIVideo owns the MCI load/play/stop state and its Palette. The
+old transcription assembled the fallback in StringTemp but passed an empty
+stack buffer to MCI. Use the evidenced k:\\game\\ prefix in the retry path.
+
+The existing amovie_project caller now dispatches this member on a real
+AlphaMovie local, so member and base lifetime follow the declared structure.
+*/
+// ORIGINAL: 0x00404070 ?exec@AlphaMovie@@QAEHPAD@Z 0x00404070-0x004041BF
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00404070.cpp", "source:src/alphamovie.h:AlphaMovie"], "reason": "Home AlphaMovie playback on a real GraphicWin-derived receiver with its embedded MCIVideo member; repair the seed's empty fallback load argument using its evidenced path prefix"}
+int AlphaMovie::exec(char *movie_name) {
+    if (movie_name == 0) {
+        return 0x10;
+    }
+
+    const int screen_width = WinScreenWidth;
+    const int screen_height = WinScreenHeight;
+    init(0, 0, screen_width, screen_height, 0, 0x00404000,
+         &MainInterfaceGlobal, 0, 0);
+    fill(0);
+    show(0);
+    do_all_non_input();
+
+    int result = mciVideo_.load(movie_name, this, 0, 0);
+    if (result != 0) {
+        char fallback_path[260];
+        const char prefix[] = "k:\\game\\";
+        if (strlen(movie_name) > sizeof(fallback_path) - sizeof(prefix)) {
+            return result;
+        }
+        strcpy(fallback_path, prefix);
+        strcat(fallback_path, movie_name);
+        result = mciVideo_.load(fallback_path, this, 0, 0);
+        if (result != 0) {
+            return result;
+        }
+    }
+
+    const int video_height = static_cast<int>(mciVideo_.blit_height_);
+    const int video_width = static_cast<int>(mciVideo_.blit_width_);
+    const int y = (screen_height - video_height) / 2;
+    const int x = (screen_width - video_width) / 2;
+    HWND const window = mciVideo_.window_handle_;
+    MoveWindow(window, x, y, video_width, video_height, FALSE);
+
+    mciVideo_.palette_.set();
+    mciVideo_.play();
+    flush_input();
+    set_modal(0, 0, 0);
+    mciVideo_.stop();
+    g_PALETTE1.set();
+    ShowWindow(window, SW_HIDE);
+    hide();
+    do_all_non_input();
+    return 0;
+}
+
+/*
+Purpose: Close the MCI stream and window. The MCIVideo member and GraphicWin
+         base are then destroyed naturally by C++ in member/base order.
+*/
+// ORIGINAL: 0x00404310 ??1AlphaMovie@@QAE@XZ 0x00404310-0x00404395;0x00650710-0x0065073B
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00404310.cpp", "source:src/alphamovie.cpp:amovie_project"], "reason": "Model AlphaMovie teardown as a C++ destructor with explicit close and compiler-managed MCIVideo/member and GraphicWin/base destruction"}
+// symbol    ??1AlphaMovie@@UAE@XZ
+AlphaMovie::~AlphaMovie() {
+    close();
 }
 
 /*
@@ -293,9 +480,8 @@ int AlphaMovie::UNK8(int, int) {
 Status: Complete
 */
 void AlphaMovie::close() {
-    char *self = reinterpret_cast<char *>(this);
-    reinterpret_cast<MCIVideo *>(self + 0xa14)->close();
-    reinterpret_cast<GraphicWin *>(self)->close();
+    mciVideo_.close();
+    GraphicWin::close();
 }
 
 
@@ -364,7 +550,8 @@ Purpose: Play the opening movie. Builds the player and a stack window dressed
 //   tail's `call 0x4bf400` (UV2Player::close) then `call 0x5d7410`
 //   (~Buffer on player.buffer_) is ~UV2Player itself, already BYTE_EXACT at
 //   0x004043D0 - the image inlines it here.
-// STRUCTURE: the stack GraphicWin is DRESSED AS AN ALPHAMOVIE. The image
+// STRUCTURE (historical source model before the typed migration): the stack
+// GraphicWin is DRESSED AS AN ALPHAMOVIE. The image
 //   overwrites the window's two vtable pointers (primary 0x00669458, Buffer
 //   subobject at +0x444 with 0x00669450 - AlphaMovie's, NOT GraphicWin's
 //   0x66fc50/0x66fc48) and dispatches AlphaMovie::exec on it; the mciVideo_
@@ -388,18 +575,14 @@ Status: Complete
 */
 void __cdecl amovie_project(char *movie) {
     UV2Player player;
-    GraphicWin win;
-    MCIVideo video;
+    AlphaMovie win;
     char movie_path[260];
     char movie_file[208];
 
-    // The image turns the stack GraphicWin into an AlphaMovie for the length
-    // of the playback: it overwrites the window's two vtable pointers with
-    // AlphaMovie's (primary 0x00669458, Buffer subobject at +0x444 with
-    // 0x00669450), then dispatches AlphaMovie::exec through the object, and
-    // re-installs the pair after every play. No C++ declaration can express a
-    // base vtable swap, so the stores are spelled the way
-    // GraphicWin::construct spells its own.
+    // Keep the window and its embedded MCI player in one AlphaMovie object.
+    // The original body dressed a GraphicWin and an adjacent MCIVideo local
+    // with AlphaMovie's vtables; the typed object gives exec a real receiver
+    // and the correct member lifetime.
 
     movie_path[0] = 0;
     strcat(movie_path, "movies\\");
@@ -410,8 +593,6 @@ void __cdecl amovie_project(char *movie) {
     char *found = filefind_get(movie_file);
     if (found != 0) {
         player.exec(found, 0x280, 0x1E0, 0xC);
-        video.close();
-        win.close();
         return;
     }
 
@@ -423,8 +604,6 @@ void __cdecl amovie_project(char *movie) {
         found = filefind_get(movie_file);
         if (found != 0) {
             player.exec(found, 0x280, 0x1E0, 0xC);
-            video.close();
-            win.close();
             return;
         }
     }
@@ -434,9 +613,7 @@ void __cdecl amovie_project(char *movie) {
     strcat(movie_file, ".avi");
     found = filefind_get(movie_file);
     if (found != 0) {
-        static_cast<AlphaMovie *>(&win)->exec(found);
-        video.close();
-        win.close();
+        win.exec(found);
         return;
     }
 
@@ -447,13 +624,9 @@ void __cdecl amovie_project(char *movie) {
         strcat(movie_file, ".avi");
         found = filefind_get(movie_file);
         if (found != 0) {
-            static_cast<AlphaMovie *>(&win)->exec(found);
-            video.close();
-            win.close();
+            win.exec(found);
             return;
         }
     }
 
-    video.close();
-    win.close();
 }

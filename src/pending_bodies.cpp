@@ -685,11 +685,6 @@ AlphaMenu::~AlphaMenu() {  // ??1AlphaMenu@@QAE@XZ at 0x0051DC10
     PENDING_BODY(0x0051DC10, pending)(this, nullptr);
 }
 
-AlphaMovie::~AlphaMovie() {  // ??1AlphaMovie@@QAE@XZ at 0x00404310
-    typedef void(__fastcall *pending)(AlphaMovie *, void *);
-    PENDING_BODY(0x00404310, pending)(this, nullptr);
-}
-
 BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
     typedef void(__fastcall *pending)(BaseWin *, void *);
     PENDING_BODY(0x00420A70, pending)(this, nullptr);
@@ -1414,13 +1409,6 @@ void __cdecl mapwin_system_shutdown() {
 // ?close@DesignWin@@QAEXXZ at 0x0043C1A0 - homed into designwin.cpp on
 // 2026-08-29, so the forwarder that stood here is gone. desktop_close closes
 // the process-wide design window through this member.
-
-// ?exec@AlphaMovie@@QAEHPAD@Z at 0x00404070 - body in src/unrecovered/00404070.cpp.
-// amovie_project plays the .avi candidates through it.
-int AlphaMovie::exec(char *movie_name) {
-    typedef int(__fastcall *pending)(AlphaMovie *, void *, char *);
-    return PENDING_BODY(0x00404070, pending)(this, nullptr, movie_name);
-}
 
 // ?exec@UV2Player@@QAEHPADHHH@Z at 0x004BEA50 - body in src/unrecovered/004bea50.cpp.
 // amovie_project plays the .wve candidates through it.

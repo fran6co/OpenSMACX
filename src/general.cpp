@@ -4956,7 +4956,7 @@ void MCIVideo::blit_frame() {
         return;
     }
 
-    HDC hdc = GetDC(field_8_);
+    HDC hdc = GetDC(window_handle_);
     if (hdc == nullptr) {
         return;
     }
@@ -4969,7 +4969,7 @@ void MCIVideo::blit_frame() {
            0, SRCCOPY);
 
     Win::release_hdc();
-    ReleaseDC(field_8_, hdc);
+    ReleaseDC(window_handle_, hdc);
 }
 
 // ORIGINAL: 0x00579510 ?enemy_turn@@YAHH@Z 0x00579510-0x00579769
