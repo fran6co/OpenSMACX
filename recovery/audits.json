@@ -21,7 +21,7 @@
         "hand-walked vbtable": 0,
         "VCall shim": 6,
         "ORIGINAL() vtable-slot dispatch": 25,
-        "ORIGINAL() named-pointer seam": 84,
+        "ORIGINAL() named-pointer seam": 83,
         "vtable-as-member": 3,
         "vtable-initialiser store": 0,
         "vtable address constant": 0,
@@ -34,7 +34,7 @@
         "leaf_recoveries.cpp markers": 188,
         "nullsub_thunks.cpp markers": 52,
         "PENDING_BODY forwarders": 179,
-        "artifact files (recovered/)": 792,
+        "artifact files (recovered/)": 791,
         "unrecovered files": 675,
         "hypothesis_layouts.h lines": 2613,
         "stringstruct.cpp markers": 54

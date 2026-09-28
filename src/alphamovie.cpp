@@ -197,15 +197,10 @@ void MCIVideo::stop() {
     }
 }
 
-// Not independently claimed here (0x005FFD80 is not in this batch; a
-// staged, unclaimed transcription already exists at
-// src/recovered/005ffd80.cpp - left as-is). This definition exists so
-// AlphaMovie::AlphaMovie(), below, has something to auto-construct
-// `mciVideo_` through: `palette_.Palette::Palette();` is the explicit
-// member-function-call placement syntax (the fixed-address Palette
-// placements the retired init_thunks.cpp used to spell) rather than a
-// `new`-expression, which pulls in an SEH frame the image does not have
-// here.
+// Explicitly invoke the by-value Palette constructor; spelling this as a
+// new-expression adds an SEH frame that the original constructor does not have.
+// ORIGINAL: 0x005FFD80 ??0MCIVideo@@QAE@XZ 0x005FFD80-0x005FFDA1
+// RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/recovered/005ffd80.cpp", "source:src/alphamovie.h:MCIVideo"], "reason": "Bind the existing source-owned MCIVideo constructor to the image entry: it constructs palette_ at +0x10 and initializes the evidenced handle fields, matching the original constructor sequence."}
 MCIVideo::MCIVideo() {
     palette_.Palette::Palette();
     *reinterpret_cast<short *>(&mciId_) = 0;
@@ -486,27 +481,33 @@ void AlphaMovie::close() {
 
 
 
-func_mci_video_close MCIVideoOriginalClose =
-    original_method<func_mci_video_close>(0x005FFDB0);
-
-/*
-Purpose: Shut the MCI video device down.
-Forwards To: 005FFDB0
-Return Value: n/a
-Status: Original dependency - forwards to the original image.
-
-The auto_inline(off) is load-bearing. VC6 at /Ob2 defers codegen to the end of
-the translation unit, so being defined after AlphaMovie::close does not stop
-it folding this forwarder into that recovered body: measured, the caller's
-`lea ecx,[esi+0xa14]; call rel32` became `lea ecx,[esi+0xa14]; call dword ptr
-[MCIVideoOriginalClose]`. The pragma keeps the caller's direct call and leaves
-this a separate thunk.
-*/
-#pragma auto_inline(off)
+// ORIGINAL: 0x005FFDB0 ?close@MCIVideo@@QAEXXZ 0x005FFDB0-0x005FFE3D
+// RECOVERY_BINDING: v1 {"evidence": ["git:b55fcf8bd32d532e5050a5aaadf011bcff4394b5:src/unrecovered/005ffdb0.cpp", "source:src/alphamovie.h:MCIVideo", "original:0x005FFDB0"], "reason": "Recover the MCI device shutdown and handle reset on its owning MCIVideo member using the pinned call sequence and existing typed state."}
+// Stop and close the MCI device, clear the window/player state, and restore
+// wave output.
 void MCIVideo::close() {
-    (ORIGINAL(this)->*MCIVideoOriginalClose)();
+    const MCIDEVICEID deviceId = static_cast<MCIDEVICEID>(mciId_ & 0xffff);
+    if (deviceId != 0) {
+        MCI_DGV_WINDOW_PARMS windowParams = {0};
+        MCI_GENERIC_PARMS stopParams = {0};
+        MCI_GENERIC_PARMS closeParams = {0};
+        mciSendCommandA(deviceId, MCI_WINDOW, MCI_DGV_WINDOW_STATE,
+                       reinterpret_cast<DWORD_PTR>(&windowParams));
+        mciSendCommandA(deviceId, MCI_STOP, 0,
+                       reinterpret_cast<DWORD_PTR>(&stopParams));
+        mciSendCommandA(deviceId, MCI_CLOSE, 0,
+                       reinterpret_cast<DWORD_PTR>(&closeParams));
+        mciId_ &= 0xffff0000u;
+        ActiveVideoPlayer = 0;
+        field_0_ &= ~1u;
+    }
+
+    mciId_ &= 0xffff0000u;
+    window_handle_ = 0;
+    palette_handle_ = 0;
+    target_window_ = 0;
+    WaveDeviceGlobal.enable();
 }
-#pragma auto_inline(on)
 
 /*
 Purpose: Step the receiver back to the subobject ??_GAlphaMovie@@UAEPAXI@Z

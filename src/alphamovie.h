@@ -16,16 +16,13 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "original_seam.h"
 #include "graphicwin.h"
 
  /*
   * MCIVideo class
   *
-  * The MCI video subobject AlphaMovie embeds at +0xA14. Its member extent is
-  * only bounded by the accesses recovered so far.
-  * ?close@MCIVideo@@QAEXXZ (0x005FFDB0) is still an original body: what is
-  * here forwards to the image rather than reproducing it.
+ * The MCI video subobject AlphaMovie embeds at +0xA14. Its member extent is
+ * only bounded by the accesses recovered so far.
   */
 class MCIVideo {
  public:
@@ -130,10 +127,3 @@ class AlphaMovie : public GraphicWin {
   MCIVideo mciVideo_;  // 0xA14
 };
 
-
-// MCIVideo::close is still an original body - 141 bytes that shut down the MCI
-// device through winmm - so the definition at the end of alphamovie.cpp
-// forwards to it. Public, __thiscall, void(void). Rebindable so tests can
-// substitute a probe and so the seam can later point at a recovered body.
-typedef void (OriginalObject::*func_mci_video_close)();
-extern func_mci_video_close MCIVideoOriginalClose;  // 0x005FFDB0
