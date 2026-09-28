@@ -54,6 +54,52 @@ Dialogs::Dialogs() { }
 void Dialogs::close() {
 }
 
+// ORIGINAL: 0x00613320 ?init@Dialogs@@QAEHHHHHH@Z 0x00613320-0x006133F2
+// RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613320 seed records the five-integer Dialogs initializer's direct call order: RadioButton::close, shared Dialog initialization, ListBox::close, shared Dialog initialization, CheckBox::close, shared Dialog initialization, SpriteBox initialization, EditGroup::close, then shared Dialog initialization.","The pinned image's callee 0x00609300 is Dialog::init(int,int,int,int,int); the corresponding typed overload is declared and defined in dialog.h/dialog.cpp."],"reason":"Home the five-integer Dialogs initializer through its real widget base subobjects and shared virtual Dialog."}
+// TRIED: 208 vs 210 bytes; the RadioButton::close() receiver compiles to `mov ecx,eax; call` instead of a direct `lea ecx,[..]; call`. Tried a shared base-address local, no local at all, and a named typed-pointer local for the receiver; all three landed on the same divergence, so it looks like inherent codegen for a computed `this` into a non-virtual thiscall call, not a source-form choice.
+int Dialogs::init(int left, int top, int right, int bottom, int heap_size) {
+    RadioButton::close();
+    int result = Dialog::init(left, top, right, bottom, heap_size);
+    if (result != 0) return result;
+
+    ListBox::close();
+    result = Dialog::init(left, top, right, bottom, heap_size);
+    if (result != 0) return result;
+
+    CheckBox::close();
+    result = Dialog::init(left, top, right, bottom, heap_size);
+    if (result != 0) return result;
+
+    result = SpriteBox::init(left, top, right, bottom, heap_size);
+    if (result != 0) return result;
+
+    EditGroup::close();
+    return Dialog::init(left, top, right, bottom, heap_size);
+}
+
+// ORIGINAL: 0x00613610 ?init@Dialogs@@QAEHPAURECT@@PAUHeap@@@Z 0x00613610-0x006136A1
+// RECOVERY_BINDING: v1 {"evidence":["Retained 0x00613610 seed plus pinned inspect show the first argument remains RECT* through each direct Dialog call to 0x006097F0 and through SpriteBox::init at 0x00610510.","Dialog::init(RECT*,Heap*) is source-owned in dialog.cpp; the retained generated scaffold's reinterpret_cast<Heap*>(rect) is disproved by those target signatures."],"reason":"Home the rectangle-and-heap Dialogs initializer with the image's genuine RECT* and Heap* arguments."}
+// symbol    ?init@Dialogs@@QAEHPAUtagRECT@@PAVHeap@@@Z
+int Dialogs::init(RECT *rect, Heap *heap) {
+    RadioButton::close();
+    int result = Dialog::init(rect, heap);
+    if (result != 0) return result;
+
+    ListBox::close();
+    result = Dialog::init(rect, heap);
+    if (result != 0) return result;
+
+    CheckBox::close();
+    result = Dialog::init(rect, heap);
+    if (result != 0) return result;
+
+    result = SpriteBox::init(rect, heap);
+    if (result != 0) return result;
+
+    EditGroup::close();
+    return Dialog::init(rect, heap);
+}
+
 // Seed catalogue: 0 callers; callees 0x00609470, 0x00609F20, 0x0060D1B0,
 // 0x0060E7C0, 0x00610480, 0x00611A90.
 // ORIGINAL: 0x00613400 ?init@Dialogs@@QAEHPAURECT@@H@Z 0x00613400-0x00613491

@@ -114,6 +114,8 @@ class Dialogs : public ListBox,
   // shared virtual Dialog after closing the widget-specific state.
   int init(RECT *group_id, int flags);
   int init(int file_name);
+  int init(int left, int top, int right, int bottom, int heap_size);
+  int init(RECT *rect, Heap *heap);
   int init(int x, int y, int width, int height, Heap *heap);
   int init(Heap *heap);
   // The recovered complete-object destructor body (0x00406910), modelled on
