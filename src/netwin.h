@@ -76,6 +76,26 @@ struct MessageFactionData {
   uint8_t field_12_[1];    // 0x12 - the rest of the cloned block
 };
 
+// The heap clone advances by 0x190 bytes per faction. Its first record also
+// carries the table type/count; subsequent records use the same prefix for
+// their own data. setup_faction_data writes +4, +8 and +9, while
+// get_player_color reads the first count and each record's colour byte.
+struct NetWinFactionRecord {
+  uint8_t record_type_;      // +0; table type in record zero
+  uint8_t record_count_;     // +1; table count in record zero
+  uint8_t field_2_[2];      // +2..+3
+  uint32_t owner_;           // +4
+  uint8_t color_;            // +8
+  uint8_t active_;           // +9
+  uint8_t data_[0x186];     // +0xA..+0x18F
+};
+static_assert(sizeof(NetWinFactionRecord) == 0x190,
+              "faction record stride");
+static_assert(offsetof(NetWinFactionRecord, owner_) == 4,
+              "faction owner offset");
+static_assert(offsetof(NetWinFactionRecord, color_) == 8,
+              "faction colour offset");
+
 // faction.h's per-faction record; fill_player writes the name/title text
 // block of one. Opaque here - only the pointer travels.
 struct PlayerData;

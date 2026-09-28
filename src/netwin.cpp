@@ -334,38 +334,39 @@ int NetWin::get_player_color(int faction) {
     if (faction_records_ == 0) {
         return 0;
     }
-    int color = NetWinFactionTable[faction * 0x17C];
+    const NetWinFactionRecord *const records =
+        static_cast<const NetWinFactionRecord *>(faction_records_);
+    int color = NetWinLobbyRows[faction].faction_or_color_;
     if (color == -1) {
         return 0xFF;
     }
     int taken = 1;
     if (faction > 1) {
-        char *name = NetWinFactionTable + 0x17C;
+        const NetWinLobbyRow *row = &NetWinLobbyRows[1];
         do {
-            if (*name == color) {
+            if (row->faction_or_color_ == color) {
                 break;
             }
             taken++;
-            name += 0x17C;
+            ++row;
         } while (taken < faction);
     }
     int index = 0;
     if (taken != faction) {
         index = 0;
-        int record_count =
-            static_cast<unsigned char>(static_cast<char *>(faction_records_)[1]);
+        int record_count = records[0].record_count_;
         if (record_count != 0) {
             int bound = *NetWinPlayerCount + 1;
             for (;;) {
                 int found = 1;
                 if (bound > 1) {
-                    char *name = NetWinFactionTable + 0x17C;
+                    const NetWinLobbyRow *row = &NetWinLobbyRows[1];
                     do {
-                        if (*name == index) {
+                        if (row->faction_or_color_ == index) {
                             break;
                         }
                         found++;
-                        name += 0x17C;
+                        ++row;
                     } while (found < bound);
                 }
                 if (found == bound) {
@@ -378,8 +379,7 @@ int NetWin::get_player_color(int faction) {
             }
         }
     }
-    return static_cast<unsigned char>(
-        static_cast<char *>(faction_records_)[8 + index * 400]);
+    return records[index].color_;
 }
 
 /*
