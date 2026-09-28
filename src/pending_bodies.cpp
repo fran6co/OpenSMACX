@@ -866,11 +866,6 @@ QuayleWin::~QuayleWin() {  // ??1QuayleWin@@QAE@XZ at 0x00496710
     PENDING_BODY(0x00496710, pending)(this, nullptr);
 }
 
-SelectPartWin::~SelectPartWin() {  // ??1SelectPartWin@@QAE@XZ at 0x0043EE10
-    typedef void(__fastcall *pending)(SelectPartWin *, void *);
-    PENDING_BODY(0x0043EE10, pending)(this, nullptr);
-}
-
 VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
     typedef void(__fastcall *pending)(VoiceRx *, void *);
     PENDING_BODY(0x004C8A50, pending)(this, nullptr);

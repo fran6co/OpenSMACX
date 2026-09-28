@@ -131,25 +131,7 @@ void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a
     (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
 }
 
-/*
-Purpose: ?on_scrolling@SelectPartWin@@QAEXHH@Z - dispatch to slot 0xc0 of this object's OWN
-         vtable, forwarding 2 argument(s).
-// ORIGINAL: 0x00433F50 ?on_scrolling@SelectPartWin@@QAEXHH@Z 0x00433F50-0x00433F67 BYTE_EXACT
-// symbol    ?select_part_win_on_scrolling_redirect@@YIXPAX0HH@Z
-// size      23 bytes
-// prototype void (__thiscall ?on_scrolling@SelectPartWin@@QAEXHH@Z)(SelectPartWin* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x00433F5D
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall select_part_win_on_scrolling_redirect(void *self, void *, int a1, int a2) {
-    void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)(ORIGINAL(self)->*original_method<func_delegation_2>(reinterpret_cast<unsigned long>(vtable[0xc0 / sizeof(void *)])))(a1, a2);
-}
+
 
 /*
 Purpose: ?on_key_down@Interlude@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN

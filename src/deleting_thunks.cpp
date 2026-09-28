@@ -601,56 +601,6 @@ void *__fastcall scalar_delete_design_win(void *self, void *,
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at
-         ??_GSelectPartWin@@UAEPAXI@Z: run the complete destructor, then
-         release the storage through the executable's operator delete only when
-         bit 0 of the flags asks.
-// ORIGINAL: 0x0043EDE0 ??_GSelectPartWin@@UAEPAXI@Z 0x0043EDE0-0x0043EE01 BYTE_EXACT
-// symbol    ?scalar_delete_select_part_win@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype 
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x0043EE10 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_select_part_win(void *self, void *,
-                                               unsigned int arg0) {
-    static_cast<SelectPartWin *>(self)->SelectPartWin::~SelectPartWin();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
-
-/*
-Purpose: Step the receiver back to the subobject ??_GSelectPartWin@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x0043EFB0 ??_GSelectPartWin@@WEEE@AEPAXI@Z 0x0043EFB0-0x0043EFBB
-// symbol    ?adjust_this_select_part_win@@YIPAXPAX0I@Z
-// CORRECTED from ??3SelectPartWin@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0043EDE0` into
-//   ??_GSelectPartWin@@UAEPAXI@Z, which executes `ret 4`; no stack
-//   access and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_select_part_win(void *self, void *,
-                                             unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_select_part_win(object - 0x444, nullptr, arg0);
-}
-
-/*
-Purpose: The compiler-generated scalar deleting destructor at
          ??_GDiploPop@@UAEPAXI@Z: run the complete destructor, then release the
          storage through the executable's operator delete only when bit 0 of
          the flags asks.

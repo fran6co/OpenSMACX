@@ -125,6 +125,7 @@ set(OPENSMACX_SOURCES
     src/nullsub_thunks.cpp
     src/field_accessors.cpp
     src/leaf_recoveries.cpp
+    src/selectpartwin.cpp
     src/global_arith.cpp
     src/fx.cpp
     src/vector_teardown.cpp

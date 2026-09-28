@@ -1,0 +1,20 @@
+{
+  "event_id": "376bf8e8c93b78f9edc2d85b3ee676669e85c5e8757378803b19599437d0f827",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/deleting_thunks.h"
+    ],
+    "evidence": [
+      "Fresh COFF proves SelectPartWin real generated scalar deleting destructor and Buffer-base adjustor emission. Authorize removing obsolete handwritten wrappers and declarations after native mapping migration, retaining original identities and historical claims.",
+      "Independent pinned-image review found inherited draw_part433D60 marker end4341AD corrupt: original final ret8 occupies433F1A..433F1C; seed src/unrecovered/00433d60.cpp and IDA/Ghidra catalogues agree end433F1D and size445. Authorize native-writer correction of this unclaimed product extent to433F1D, preserving identity and seed. Following433F20 jump table is data, not overlapping function code;433F30/433F50 are independent virtual methods. This is evidence-backed span repair, not permission to weaken claims or accept regressions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e2d0e23127ad699e9cbc7cbefbe145f952320f37760becff6a1767c81244f2ab",
+  "request_id": "w8-pa-generated-lifetime-and-span-repair",
+  "schema_version": 1,
+  "sequence": 188,
+  "stream": "task:vector-value-semantics"
+}
