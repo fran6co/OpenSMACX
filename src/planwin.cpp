@@ -28,6 +28,7 @@
 #include "net_class.h"
 #include "texture.h"
 #include "imagebutton.h"
+#include "temp.h"
 #include "vector_teardown.h"
 #include <cstring>
 
@@ -188,6 +189,32 @@ void PlanWin::add_line(int base_id1, int base_id2, int color) {
     line.y2 = second.y;
     line_colors_[line_count_] = color;
     ++line_count_;
+}
+
+// The original body at 0x0048BB80 projects both tile endpoints through the
+// MapWin receiver, offsets them by the map's current pixel center, then draws
+// a four-on/four-off patterned line on the virtual GraphicWin Buffer. The
+// nine-argument Buffer overload remains an explicit unfinished dependency.
+void PlanWin::draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
+// ORIGINAL: 0x0048BB80 ?draw_line@PlanWin@@QAEXHHHHH@Z 0x0048BB80-0x0048BC14
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0048bb80.cpp"], "reason": "Home tile-projected patterned PlanWin line in its real Buffer base path"}
+                        int color) {
+    int pixel_x1;
+    int pixel_y1;
+    int pixel_x2;
+    int pixel_y2;
+    tile_to_pixel(tile_x1, tile_y1, &pixel_x1, &pixel_y1);
+    tile_to_pixel(tile_x2, tile_y2, &pixel_x2, &pixel_y2);
+
+    pixel_x1 += field_1DDBC_;
+    pixel_y1 += field_1DDC0_;
+    pixel_x2 += field_1DDBC_;
+    pixel_y2 += field_1DDC0_;
+
+    GraphicWin *const graphics = static_cast<GraphicWin *>(this);
+    Buffer *const drawing_buffer = static_cast<Buffer *>(graphics);
+    drawing_buffer->line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, 0, color,
+                         4, 4, PlanLineCounter);
 }
 
 // ORIGINAL: 0x0048B3F0 ?back_redraw@PlanWin@@QAEXXZ 0x0048B3F0-0x0048B445 FILE

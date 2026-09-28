@@ -95,6 +95,8 @@ class PlanWin : public MapWin {
   void clear_lines();
   void add_line(int x1, int y1, int x2, int y2, int color);
   void add_line(int base_id1, int base_id2, int color);
+  void draw_line(int tile_x1, int tile_y1, int tile_x2, int tile_y2,
+                 int color);
   void back_redraw();
   void close();
   void blink();
