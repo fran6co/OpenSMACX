@@ -171,6 +171,19 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   void select_armor();
   void select_reactor();
 
+  // Existing DesignWin preview/ability implementations live in their own
+  // recovered translation units; picker handlers need their typed interface.
+  void check_abil();
+  void suggest_abil(int ability);
+  void draw_chassis(int redraw);
+  void draw_weapon(int redraw);
+  void draw_armor(int redraw);
+  void draw_reactor(int redraw);
+  void draw_special_1(int redraw);
+  void draw_special_2(int redraw);
+  void draw_vehicle(int redraw);
+  void draw_info();
+
   // Storage the image proves is here: its own methods reach 0x14210.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 259 member(s) from the IDA database, 14 named; it starts a member at 0xA14, which is where src/ ends.

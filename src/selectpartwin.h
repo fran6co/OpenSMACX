@@ -20,6 +20,9 @@ class SelectPartWin : public GraphicWin {
   int draw_weapon(int index, RECT *rect, int selected);
   int draw_armor(int index, RECT *rect, int selected);
   int draw_reactor(int index, RECT *rect, int selected);
+  int exec(int x, int y, int value0, int kind, int selected,
+           int value5, int value6, int value7, int value8, int value9,
+           unsigned char *palette);
 
   virtual void on_redraw();
   virtual void on_mouse_feedback(int x, int y);

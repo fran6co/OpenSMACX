@@ -29,6 +29,7 @@
 #include "temp.h"
 #include "general.h"
 #include "veh.h"
+#include "selectpartwin.h"
 #include "tutwin.h"     // TutWinGlobal - the tutorial popup every click dismisses
 #include "alpha.h"      // Labels - the label-id block on_left_click reads
 #include "netdaemon.h"  // synch_proto, message_data, NetDaemonNet
@@ -1457,33 +1458,269 @@ void DesignWin::center_stack(int proto_id, int redraw) {
     }
 }
 
-// ---- link-only placeholders ----------------------------------------------
-// The palette pick handlers on_left_click dispatches to, and draw_stack the
-// key/scroll paths call, are still preserved units (src/recovered/units/...),
-// not yet homed into designwin.cpp.
+// ---- component picker -----------------------------------------------------
+template <typename Record>
+static int picker_row_before(int selected, const Record *records, int count) {
+    int row = 0;
+    for (int index = 0; index < count; ++index) {
+        if (records[index].preq_tech >= -1) {
+            if (index == selected) return row;
+            ++row;
+        }
+    }
+    return row;
+}
+
+template <typename Record>
+static int picker_record_at(int row, const Record *records, int count) {
+    for (int index = 0; index < count; ++index) {
+        if (records[index].preq_tech >= -1) {
+            if (row == 0) return index;
+            --row;
+        }
+    }
+    return count;
+}
+
+static const int DesignSelectableChassisCount = CHSI_MISSILE + 1;
+
+static void redraw_design_picker_changes(DesignWin *window) {
+    window->check_abil();
+    window->draw_chassis(0);
+    window->draw_armor(0);
+    window->draw_reactor(0);
+    window->draw_weapon(0);
+    window->draw_vehicle(0);
+    window->draw_special_1(0);
+    window->draw_special_2(0);
+    window->draw_flash();
+    window->draw_info();
+    window->on_update();
+}
+
+// These ten DesignWin methods have retained implementation seeds, but those
+// seed TUs are not part of the application source set yet. Keep their original
+// identities in this owner and provide only the explicitly unfinished bodies
+// needed for picker link continuity; the seeds remain the behavior evidence.
+// ORIGINAL: 0x00439C00 ?check_abil@DesignWin@@QAEXXZ 0x00439C00-0x00439D24 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439c00.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::check_abil() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00439D30 ?suggest_abil@DesignWin@@QAEXH@Z 0x00439D30-0x00439EA3 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439d30.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::suggest_abil(int ability) {
+    (void)ability;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434bc0.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_chassis(int redraw) {
+    (void)redraw;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434f40.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_weapon(int redraw) {
+    (void)redraw;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435400.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_armor(int redraw) {
+    (void)redraw;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435800.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_reactor(int redraw) {
+    (void)redraw;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00435B30 ?draw_special_1@DesignWin@@QAEXH@Z 0x00435B30-0x00435DD1 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435b30.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_special_1(int redraw) {
+    (void)redraw;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00435DE0 ?draw_special_2@DesignWin@@QAEXH@Z 0x00435DE0-0x00436081 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435de0.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_special_2(int redraw) {
+    (void)redraw;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00436090.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_vehicle(int redraw) {
+    (void)redraw;
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004346A0 ?draw_info@DesignWin@@QAEXXZ 0x004346A0-0x00434BB4;0x00653FFE-0x00654010 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004346a0.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+void DesignWin::draw_info() {
+    // BODY GOES HERE.
+}
 
 // ORIGINAL: 0x00439F20 ?select_chassis@DesignWin@@QAEXXZ 0x00439F20-0x0043A300;0x006541FC-0x00654281
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439f20.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/00439f20.cpp", "RulesChassis in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the chassis picker, translate its eligible-row result into the chassis table, preserve chassis-dependent weapon and ability constraints, and redraw the design preview."}
 void DesignWin::select_chassis() {
-    // BODY GOES HERE.
+    SelectPartWin picker;
+    const int row = picker_row_before(protoChassisType_, Chassis,
+                                      DesignSelectableChassisCount);
+    const int selected_row = picker.exec(
+        outer_rect_.left, outer_rect_.top, factionID_, 0, row,
+        protoChassisType_, protoWeaponType_, protoArmorType_,
+        protoAbilityFlags_, protoReactorType_, 0);
+    const int previous_kind = Chassis[protoChassisType_].triad;
+    const int next_chassis = picker_record_at(selected_row, Chassis,
+                                              DesignSelectableChassisCount);
+    protoChassisType_ = next_chassis;
+
+    if (Chassis[next_chassis].missile == 0) {
+        protoArmorType_ = 0;
+        const int weapon_kind = static_cast<unsigned char>(
+            Weapon[protoWeaponType_].offense_rating);
+        if (weapon_kind >= 2) protoWeaponType_ = 0;
+        if (protoWeaponType_ != 0x10 && protoWeaponType_ != 0x18 &&
+            protoWeaponType_ != 0x19) {
+            protoWeaponType_ = 0x17;
+        }
+    } else {
+        const int weapon_kind = static_cast<unsigned char>(
+            Weapon[protoWeaponType_].offense_rating);
+        if (weapon_kind >= 0x63 || protoWeaponType_ == 0x17 ||
+            protoWeaponType_ == 0x18 || protoWeaponType_ == 0x19) {
+            protoWeaponType_ = 0;
+        }
+    }
+
+    const int next_kind = Chassis[next_chassis].triad;
+    if (next_kind != previous_kind) {
+        if (next_kind != 0) {
+            suggest_abil(2);
+            if (next_kind == 2) {
+                if (Weapon[protoWeaponType_].mode == 0x0b) {
+                    protoWeaponType_ = 0;
+                }
+                if (Weapon[protoWeaponType_].mode == 9 &&
+                    Chassis[next_chassis].range != 0) {
+                    protoWeaponType_ = 0;
+                }
+            }
+        } else if ((protoAbilityFlags_ & 2) != 0) {
+            protoAbilityFlags_ &= ~2U;
+            protoAbilityID1_ = -1;
+            protoAbilityID2_ = -1;
+            for (int bit = 0; bit < 0x1d; ++bit) {
+                if ((protoAbilityFlags_ & (1U << bit)) == 0) continue;
+                if (static_cast<int32_t>(protoAbilityID1_) < 0) {
+                    protoAbilityID1_ = bit;
+                } else if (static_cast<int32_t>(protoAbilityID2_) < 0) {
+                    protoAbilityID2_ = bit;
+                }
+            }
+        }
+    }
+    redraw_design_picker_changes(this);
 }
 
 // ORIGINAL: 0x0043A300 ?select_weapon@DesignWin@@QAEXXZ 0x0043A300-0x0043A754;0x00654281-0x00654306
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043a300.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a300.cpp", "RulesWeapon/RulesArmor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the weapon picker, apply the selected record's chassis restrictions, update implicit abilities, and redraw the design preview."}
 void DesignWin::select_weapon() {
-    // BODY GOES HERE.
+    SelectPartWin picker;
+    const int row = picker_row_before(protoWeaponType_, Weapon, MaxWeaponNum);
+    const int selected_row = picker.exec(
+        outer_rect_.left, outer_rect_.top, factionID_, 1, row,
+        protoChassisType_, protoWeaponType_, protoArmorType_,
+        protoAbilityFlags_, protoReactorType_, 0);
+    const int previous_weapon = protoWeaponType_;
+    const int selected_weapon = picker_record_at(selected_row, Weapon,
+                                                 MaxWeaponNum);
+    protoWeaponType_ = selected_weapon;
+    const int chassis_kind = Chassis[protoChassisType_].triad;
+
+    if (chassis_kind == 2) {
+        if (Weapon[selected_weapon].mode == 0x0b) {
+            protoWeaponType_ = previous_weapon;
+        }
+        if (Weapon[protoWeaponType_].mode == 9 &&
+            Chassis[protoChassisType_].range != 0) {
+            protoWeaponType_ = previous_weapon;
+        }
+        const int compatibility = Chassis[protoChassisType_].missile;
+        if (compatibility != 0 && protoWeaponType_ != 0x10 &&
+            protoWeaponType_ != 0x18 && protoWeaponType_ != 0x19) {
+            protoWeaponType_ = 0x17;
+        } else if (compatibility == 0 &&
+                   (protoWeaponType_ == 0x10 || protoWeaponType_ == 0x17 ||
+                    protoWeaponType_ == 0x18)) {
+            protoWeaponType_ = previous_weapon;
+        }
+    } else if (selected_weapon == 0x10 || protoWeaponType_ == 0x17 ||
+               protoWeaponType_ == 0x18) {
+        protoWeaponType_ = previous_weapon;
+    }
+    if (protoWeaponType_ == 0x19) protoWeaponType_ = previous_weapon;
+
+    if (static_cast<unsigned char>(
+            Weapon[protoWeaponType_].offense_rating) > 'b') {
+        protoAbilityID1_ = -1;
+        protoAbilityID2_ = -1;
+        protoAbilityFlags_ = 0;
+    }
+    if (protoAbilityFlags_ == 0 && protoWeaponType_ != previous_weapon) {
+        if (Weapon[protoWeaponType_].mode == 7) suggest_abil(0x80000);
+        if (Weapon[protoWeaponType_].mode == 9) {
+            suggest_abil(1);
+            suggest_abil(0x2000);
+        }
+        if (Weapon[protoWeaponType_].offense_rating >=
+            Armor[protoArmorType_].defense_rating * 2) {
+            suggest_abil(0x20000);
+        }
+    }
+    redraw_design_picker_changes(this);
 }
 
 // ORIGINAL: 0x0043A760 ?select_armor@DesignWin@@QAEXXZ 0x0043A760-0x0043A9F8;0x00654306-0x0065438B
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043a760.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/recovered/units/0043a760.cpp", "RulesArmor/RulesWeapon in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the armor picker, preserve the armor/weapon compatibility suggestion, and redraw the design preview."}
 void DesignWin::select_armor() {
-    // BODY GOES HERE.
+    SelectPartWin picker;
+    const int row = picker_row_before(protoArmorType_, Armor, MaxArmorNum);
+    const int selected_row = picker.exec(
+        outer_rect_.left, outer_rect_.top, factionID_, 2, row,
+        protoChassisType_, protoWeaponType_, protoArmorType_,
+        protoAbilityFlags_, protoReactorType_, 0);
+    protoArmorType_ = picker_record_at(selected_row, Armor, MaxArmorNum);
+    if (Armor[protoArmorType_].defense_rating > 1 &&
+        Weapon[protoWeaponType_].offense_rating <= 1) {
+        suggest_abil(0x200);
+    }
+    redraw_design_picker_changes(this);
 }
 
 // ORIGINAL: 0x0043AA00 ?select_reactor@DesignWin@@QAEXXZ 0x0043AA00-0x0043AC69;0x0065438B-0x00654410
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0043aa00.cpp", "source:src/designwin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; the real transcription lands in the next coverage sub-batch."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/0043aa00.cpp", "RulesReactor in src/veh.h", "DesignWin component members in src/designwin.h", "SelectPartWin::exec in src/selectpartwin.cpp"], "reason": "Open the reactor picker, translate its enabled-row result, update the reactor selection, and redraw the design preview."}
 void DesignWin::select_reactor() {
-    // BODY GOES HERE.
+    SelectPartWin picker;
+    const int row = picker_row_before(protoReactorType_, Reactor,
+                                      MaxReactorNum);
+    const int selected_row = picker.exec(
+        protoReactorType_, protoAbilityFlags_, protoArmorType_, 3,
+        protoChassisType_, row, 3, factionID_, outer_rect_.top,
+        outer_rect_.left, 0);
+    protoReactorType_ = picker_record_at(selected_row - 1, Reactor,
+                                         MaxReactorNum);
+    redraw_design_picker_changes(this);
 }
 
 // ORIGINAL: 0x0043D510 ?draw_stack@DesignWin@@QAEXXZ 0x0043D510-0x0043DD43;0x006546DA-0x006546EC FILE

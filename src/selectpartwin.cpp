@@ -8,7 +8,161 @@
 #include "alpha.h"
 #include "game.h"
 #include "strings.h"
+#include "temp.h"       // do_all_draws
 #include <cstring>
+
+// These image-owned tables and callbacks have not yet been given C++ data
+// owners. Their use here is limited to the picker background, camera scale,
+// renderer origin, and modal pump protocol established by the retained exec
+// seed at 0x00433F70.
+static Sprite *const SelectPartTile = (Sprite *)0x006B33F8;
+static const unsigned char *const SelectPartTileColour =
+    (const unsigned char *)0x006B3400;
+static float *const SelectPartCameraScale = (float *)0x0066AA40;
+static VOX_Vect *const SelectPartCameraOrigin = (VOX_Vect *)0x00687AD8;
+static int (*const SelectPartModalPump)() =
+    (int (*)())0x005398E0;
+
+void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
+void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
+
+// ORIGINAL: 0x00433F70 ?exec@SelectPartWin@@QAEHHHHHHHHHHHPAE@Z 0x00433F70-0x0043446F;0x00653F5A-0x00653F6F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:caf4963a:src/unrecovered/00433f70.cpp", "SelectPartWin member layout in src/selectpartwin.h", "Caviar renderer API in src/caviar.h", "RulesChassis/RulesWeapon/RulesArmor/RulesReactor in src/veh.h"], "reason": "Implement the shared part-picker modal with typed window, buffer, renderer, scroll and rules-table members while retaining the unresolved image-owned renderer/modal seams."}
+int SelectPartWin::exec(int x, int y, int value0, int kind, int selected,
+                        int chassis, int weapon, int armor, int abilities,
+                        int reactor, unsigned char *palette) {
+    (void)x;
+    (void)y;
+    (void)value0;
+    const int saved_selection = selected;
+    field_2B68_ = value0;
+    field_2B88_ = chassis;
+    field_2B8C_ = weapon;
+    field_2B90_ = armor;
+    field_2B84_ = kind;
+    field_2B94_ = abilities;
+    field_2B98_ = reactor;
+    field_4644_ = reinterpret_cast<uint32_t>(palette);
+    if (kind == 3) {
+        --selected;
+    }
+
+    caviar_.init();
+    caviar_.field_A4_ = 0;
+    font1_.init(DefaultFontFace, 10, 0);
+    font2_.init(DefaultFontFace, 12, 1);
+    static_cast<Buffer *>(this)->set_font(&font1_, 0, 0, 0);
+
+    union { uint32_t bits; float value; } view_angle;
+    view_angle.bits = 0x3f48f5c3;
+    float angles[3] = {0.0f, 0.0f, view_angle.value};
+    VOX_Matrix rotation;
+    caviar_apply_rotation(angles, &rotation);
+    VOX_Vect camera;
+    for (int axis = 0; axis < 3; ++axis) {
+        camera.values[axis] = -rotation.values[2][axis] *
+                              *SelectPartCameraScale;
+    }
+    caviar_.set_camera_direct(&camera, &rotation);
+    union { uint32_t bits; float value; } scene_angle;
+    scene_angle.bits = 0x3f05f92d;
+    caviar_.set_scene_rotation(scene_angle.value, 0.0f, 0.0f);
+    caviar_.light_vector_ = *SelectPartCameraOrigin;
+    caviar_.shadow_vector_ = *SelectPartCameraOrigin;
+
+    field_2B74_ = 0;
+    switch (kind) {
+        case 0: {
+            for (int i = 0; i <= CHSI_MISSILE; ++i) {
+                if (Chassis[i].preq_tech >= -1) ++field_2B74_;
+            }
+            break;
+        }
+        case 1: {
+            for (int i = 0; i < MaxWeaponNum; ++i) {
+                if (Weapon[i].preq_tech >= -1) ++field_2B74_;
+            }
+            break;
+        }
+        case 2: {
+            if (Chassis[chassis].missile == 0) {
+                for (int i = 0; i < MaxArmorNum; ++i) {
+                    if (Armor[i].preq_tech >= -1) ++field_2B74_;
+                }
+            } else {
+                field_2B74_ = 1;
+            }
+            break;
+        }
+        case 3: {
+            for (int i = 0; i < MaxReactorNum; ++i) {
+                if (Reactor[i].preq_tech >= -1) ++field_2B74_;
+            }
+            break;
+        }
+        default:
+            return saved_selection;
+    }
+
+    field_2B6C_ = 5;
+    field_2B70_ = 4;
+    field_2B64_ = 0x14;
+
+    Buffer backdrop;
+    backdrop.init(10, 10, 0, 0);
+    SelectPartTile->draw(&backdrop, *SelectPartTileColour & 0xff,
+                         0, 0, 1, 1);
+
+    const int width = WinScreenWidth;
+    const int height = WinScreenHeight;
+    GraphicWin::init(0, 0, width, height, 0, 0x1000020,
+                     static_cast<Win *>(this), 0, 0);
+    GraphicWin::fill(9);
+    RECT frame = {0x17, 0, width - 0x37, height};
+    static_cast<Buffer *>(this)->box_sprite(&frame, &InterfaceBoxStyles[0]);
+
+    if (field_2B74_ > 0x12) {
+        scroll_.init(width - 0x2b, 0x15, 0x18, 0xf6,
+                     static_cast<Win *>(this), 0, 1);
+        scroll_.hide();
+        field_2B60_ = 0;
+        scroll_.set_range(0, field_2B74_ / field_2B6C_ - field_2B70_ + 2);
+        scroll_.paging_ = field_2B70_ - 1;
+        scroll_.field_A30_ = 0;
+        scroll_.redraw();
+    }
+
+    field_2B60_ = 0;
+    if (selected >= field_2B64_) {
+        int first_visible = 0;
+        do {
+            first_visible += field_2B6C_;
+            field_2B60_ = first_visible;
+            scroll_.set_pos(first_visible / field_2B6C_);
+        } while (selected >= first_visible + field_2B64_);
+    }
+    for (int index = field_2B60_;
+         index < field_2B60_ + field_2B64_; ++index) {
+        draw_part(index, selected == index ? 1 : 0);
+    }
+
+    field_2B80_ = selected;
+    if (field_2B64_ < field_2B74_) {
+        scroll_show(this, &scroll_);
+    }
+    set_modal(1, SelectPartModalPump, 0);
+    if (field_2B64_ < field_2B74_) {
+        scroll_hide(this, &scroll_);
+    }
+    scroll_.show(0);
+    GraphicWin::hide();
+    do_all_draws();
+
+    if (field_2B80_ >= 0 && field_4648_ != 0) {
+        return field_2B80_ + (kind == 3 ? 1 : 0);
+    }
+    return saved_selection;
+}
 
 // Constructor 0x4328B0 installs these two compiler-owned tables. Their
 // extents remain unproved; native table diagnostics are positional evidence.
