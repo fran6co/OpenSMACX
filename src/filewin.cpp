@@ -22,6 +22,7 @@
 #include "dialog.h"
 #include "basebutton.h"
 #include "buffer.h"
+#include "temp.h"  // HandleMain
 
 // The modal Win's focus-list nodes carry a window pointer at +4 and a next
 // pointer at +0xC. WinNodeList owns the sequence and cursor; this view only
@@ -65,15 +66,84 @@ void FileWin::on_button_clicked(int button_id) {
     }
     if (button_id == 3) {
         SetCurrentDirectoryA("..");
-        UNK3(".");
+        populate_directory(".");
     }
 }
 
 // ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694
-// Directory enumeration, filtering and list repopulation remain to recover.
-int FileWin::UNK3(char *) {
-    // BODY GOES HERE.
-    return 0;
+// symbol    ?populate_directory@FileWin@@QAEHPAD@Z
+// The two DlgDirListA passes fill the temporary Win32 list control, while
+// ListBox owns the displayed entries. The suffix table is FileWin storage.
+// The final attach-versus-refresh decision is approximated by update_changes;
+// retain the seed until its list lifecycle and return path are restored.
+int FileWin::populate_directory(char *directory) {
+    if (directory == 0) {
+        return 0;
+    }
+
+    GetCurrentDirectoryA(260, previous_directory_);
+    if (!SetCurrentDirectoryA(directory) &&
+        !SetCurrentDirectoryA(previous_directory_)) {
+        return 0;
+    }
+
+    Dialog &dialog = list_box_;
+    dialog.item_list_.remove_all();
+    dialog.selected_position_ = 0;
+    list_box_.field_18_ = 0;
+    list_box_.field_20_ = 0;
+
+    char entry[260];
+    char pattern[260] = ".";
+    // The original consumes this record even if FindFirstFileA fails. Keep
+    // that error-path behavior pending a separately authorized bug fix.
+    WIN32_FIND_DATAA found;
+    const HWND list_handle = directory_list_handle_;
+    if (!DlgDirListA(HandleMain, pattern, 1, 0, 0x8010)) {
+        GetLastError();
+        return 1;
+    }
+    const int directory_count = static_cast<int>(
+        SendMessageA(list_handle, LB_GETCOUNT, 0, 0));
+    for (int i = 0; i < directory_count; ++i) {
+        SendMessageA(list_handle, LB_GETTEXT, i,
+                     reinterpret_cast<LPARAM>(entry));
+        if (strcmp(entry, "[..]") == 0) {
+            list_box_.item("..", 2);
+        } else {
+            const size_t length = strlen(entry);
+            entry[length - 1] = 0;
+            const HANDLE handle = FindFirstFileA(entry + 1, &found);
+            FindClose(handle);
+            list_box_.item(found.cFileName, 0);
+        }
+    }
+
+    strcpy(pattern, ".");
+    if (!DlgDirListA(HandleMain, pattern, 1, 0, 0x20)) {
+        GetLastError();
+        return 1;
+    }
+    const int file_count = static_cast<int>(
+        SendMessageA(list_handle, LB_GETCOUNT, 0, 0));
+    for (int file_index = 0; file_index < file_count; ++file_index) {
+        SendMessageA(list_handle, LB_GETTEXT, file_index,
+                     reinterpret_cast<LPARAM>(entry));
+        const char *suffix = strrchr(entry, '.');
+        if (suffix == 0) {
+            continue;
+        }
+        for (int filter = 0; filter < extension_count_; ++filter) {
+            if (_strcmpi(suffix, extension_filters_[filter]) == 0) {
+                const HANDLE handle = FindFirstFileA(entry, &found);
+                FindClose(handle);
+                list_box_.item(found.cFileName, 1);
+                break;
+            }
+        }
+    }
+
+    return list_box_.update_changes() == 0 ? directory_count : 1;
 }
 
 // The default file-name suffix appended to field_531_ at construction - REAL
@@ -131,11 +201,11 @@ FileWin::FileWin() {
     field_208_ = 0;
     field_30C_ = 0;
     field_410_ = 0;
-    field_514_ = 0;
+    extension_count_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefault);
     modal_window_ = 0;
-    field_33C0_ = 0;
+    directory_list_handle_ = 0;
 }
 
 /*
@@ -195,16 +265,16 @@ void FileWin::close() {
     field_208_ = 0;
     field_30C_ = 0;
     field_410_ = 0;
-    field_514_ = 0;
+    extension_count_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefaultNext);
     FileWinSprite0.close();
     FileWinSprite1.close();
     FileWinSprite2.close();
     modal_window_ = 0;
-    if (field_33C0_ != 0) {
-        DestroyWindow(reinterpret_cast<HWND>(field_33C0_));
-        field_33C0_ = 0;
+    if (directory_list_handle_ != 0) {
+        DestroyWindow(directory_list_handle_);
+        directory_list_handle_ = 0;
     }
 }
 
@@ -282,7 +352,7 @@ void FileWin::UNK1() {
     field_30C_ = 0;
     field_410_ = 0;
     directory_[0] = 0;
-    field_514_ = 0;
+    extension_count_ = 0;
 }
 
 // Copy a caller-supplied path into FileWin's own directory storage. A null
