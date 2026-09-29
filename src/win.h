@@ -279,6 +279,7 @@ class Win : public AutoSound {
   // before its epilogue, which a void-returning method never emits.
   int move(int x, int y);
   int is_visible();
+  const RECT &outer_rect() const { return outer_rect_; }
   int is_descendant(Win *candidate);
   int is_dialog_focus();
   int set_cursor(int name);

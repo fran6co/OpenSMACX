@@ -45,8 +45,8 @@ class ReportWin : public GraphicWin {
   ~ReportWin();
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
-  // 0x0049B220 is called by Datalink when its report-category buttons
-  // receive passover. Its behavior remains explicitly unfinished here.
+  // 0x0049B220 highlights report-category buttons and redraws their lab
+  // connectors on this window or Datalink's canvas.
   void on_button_passover(int button_id, int state);
   // The two animation ticks the daemons in leaf_recoveries.cpp drive. Public,
   // __thiscall, void(void). sat_anim is homed in reportwin.cpp (2026-09-27,
@@ -176,10 +176,9 @@ class ReportWin : public GraphicWin {
     Scroll &as_scroll() { return *reinterpret_cast<Scroll *>(words_); }
   };
   ScrollStorage scroll_;  // 0xC10C, placement-constructed Scroll
-  uint32_t field_E258_;  // 0xE258
-  uint32_t field_E25C_;  // 0xE25C
-  uint32_t field_E260_;  // 0xE260
-  uint32_t field_E264_;  // 0xE264
+  // The original redraw and passover paths share this full rectangle.
+  // RECOVERY_MEMBER: v1 ReportWin report_work_rect_ 0xE258 0x0049B220
+  RECT report_work_rect_;  // 0xE258
   uint32_t field_E268_;  // 0xE268
   uint32_t field_E26C_;  // 0xE26C
   uint32_t field_E270_;  // 0xE270

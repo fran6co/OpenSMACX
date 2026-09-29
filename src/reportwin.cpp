@@ -34,10 +34,62 @@ const void *const ReportWinFlatButtonDtor = (const void *)0x00406880;
 // constructor below, so the storage sits here, ahead of the two list boxes.
 ReportWin ReportWinGlobal;  // 0x00876478
 
+// Existing interface-slot bindings. These predate the typed passover body;
+// their data ownership remains a separate structural recovery task.
+static int *const IfaceIdToSlot = (int *)0x007AE778;
+static int *const ActiveIfaceId = (int *)0x007D392C;
+
 // ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "source:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h declares the typed ReportWin callback"], "reason": "Provide only the explicitly authorized link-continuity body for Datalink's typed callback; behavior is not recovered and the seed remains preserved."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "source:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
 void ReportWin::on_button_passover(int button_id, int state) {
-    // BODY GOES HERE.
+    GraphicWin *host = IfaceIdToSlot[*ActiveIfaceId] == 8
+        ? static_cast<GraphicWin *>(&DatalinkMain)
+        : static_cast<GraphicWin *>(this);
+    if (ReportIfGlobal.field_8_ != 2 || button_id < 0x378) return;
+
+    const int index = button_id - 0x378;
+    // Only seven category controls are owned by this array. The image does
+    // not guard larger IDs, but they cannot name a valid FlatButton here.
+    if (index >= 7) return;
+    report_work_rect_ = flatButtons1_[index].outer_rect();
+
+    int first_x = static_cast<int>(field_5950_);
+    int first_y = static_cast<int>(field_5958_);
+    int last_x = report_work_rect_.left;
+    int last_y = report_work_rect_.top;
+    if (index >= 3) {
+        first_x = report_work_rect_.left;
+        first_y = report_work_rect_.top;
+        last_x = static_cast<int>(field_5950_);
+        last_y = static_cast<int>(field_5958_);
+    }
+
+    report_work_rect_.left -= 3;
+    report_work_rect_.top -= 3;
+    report_work_rect_.right += 3;
+    report_work_rect_.bottom += 3;
+
+    const int center_y = (static_cast<int>(field_A34_)
+        + static_cast<int>(field_A2C_) - static_cast<int>(field_A24_)) / 2;
+    RECT marker = {
+        static_cast<int>(field_A28_) - 3,
+        center_y - 9,
+        static_cast<int>(field_59A8_ + field_A28_) + 3,
+        static_cast<int>(field_A24_) + center_y + 6
+    };
+    Buffer *canvas = static_cast<Buffer *>(host);
+    BoxSpriteParams *style = state == 0
+        ? &InterfaceBoxStyles[3] : &InterfaceBoxStyles[5];
+    canvas->box_sprite(&marker, style);
+    marker.left += 3;
+    marker.top += 3;
+    marker.right -= 3;
+    marker.bottom -= 3;
+    canvas->box_sprite(&report_work_rect_, style);
+    labs_line(first_x, first_y, last_x, last_y,
+              static_cast<int>(field_59A0_), static_cast<int>(field_59A4_),
+              state != 0);
+    host->soft_update();
 }
 
 // The topic panel's two process-wide selection list boxes - see reportwin.h.
@@ -46,12 +98,6 @@ void ReportWin::on_button_passover(int button_id, int state) {
 // the empty inline the tree models, so the objects are that zero storage.
 ListBox ReportWinListBox1;  // 0x00890208
 ListBox ReportWinListBox2;  // 0x00890D5C
-
-// maininterface.cpp's interface-id bindings, restated per file (the
-// designwin.cpp convention): IfaceIdToSlot maps the active interface id to
-// its sub-interface slot, ActiveIfaceId is the id.
-static int *const IfaceIdToSlot = (int *)0x007AE778;
-static int *const ActiveIfaceId = (int *)0x007D392C;
 
 // 0x005398E0 ?pop_wait@@YAHXZ - defined in faction.cpp (BYTE_EXACT); no
 // header declares it, and the set_modal popups pass it as their wait
@@ -164,10 +210,10 @@ void ReportWin::reset() {
     rect1_.right = field_597C_ - field_5974_;
     rect1_.bottom = field_5980_ - field_5978_;
 
-    field_E258_ = field_5974_;
-    field_E25C_ = field_5978_;
-    field_E260_ = field_597C_;
-    field_E264_ = field_5980_;
+    report_work_rect_.left = field_5974_;
+    report_work_rect_.top = field_5978_;
+    report_work_rect_.right = field_597C_;
+    report_work_rect_.bottom = field_5980_;
 
     buffer.box_sprite(&report_panel_rect_, &InterfaceBoxStyles[9]);
 
@@ -707,7 +753,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
                                      ? &InterfaceBoxStyles[3]
                                      : &InterfaceBoxStyles[5];
 
-    RECT *work_rect = reinterpret_cast<RECT *>(&field_E258_);
+    RECT *work_rect = &report_work_rect_;
 
     int line_id = fields[0x1654];
     int half_height = line_height / 2;
