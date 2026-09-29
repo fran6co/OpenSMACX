@@ -2,6 +2,8 @@
 #include "multiwin.h"
 #include "game.h"
 #include "console.h"
+#include "faction.h"
+#include "palette.h"
 #include "wave.h"
 
 // The original show/hide pair publishes its visible state here. The zero
@@ -13,6 +15,12 @@ int MultiWindowVisibilityState;
 // animations also read this original data object.
 // RECOVERY_OBJECT: v2 0x00691AF8 0x00691AFC ?WindowAnimationFrameDelay@@3HA 0x00479C00
 int WindowAnimationFrameDelay = 20;
+
+// The original draw suppresses its soft update while show calls the redraw callback.
+// The original show writes this dword on both sides of that callback;
+// MultiWin::draw at 0x00479330 reads it before soft_update.
+// RECOVERY_OBJECT: v2 0x007FFF70 0x007FFF74 ?MultiWindowRedrawSuppressed@@3HA 0x00479970
+int MultiWindowRedrawSuppressed;
 
 // 0x0047A590 and 0x0047A430. The compiler owns construction, exception
 // cleanup and reverse destruction of the subobjects declared in multiwin.h.
@@ -66,6 +74,63 @@ void MultiWin::on_redraw() { draw(0); }
 // symbol    ?on_button_clicked@MultiWin@@UAEXH@Z
 void MultiWin::on_button_clicked(int) {
   // BODY GOES HERE.
+}
+
+// 0x00479970. The panel is redrawn into its owned buffer and optionally
+// slides upward over the screen before Win publishes it in solo play.
+// ORIGINAL: 0x00479970 ?show@MultiWin@@QAEXXZ 0x00479970-0x00479BF1;0x006563F5-0x0065640A
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479970.cpp; src/multiwin.h; src/faction.h; src/console.h; src/wave.cpp"], "reason": "The original show uses MultiWin's owned controls and GraphicWin buffer, the local Console faction, Player rule flags, process window animation state, and the source-owned wave, screen, visibility and frame-delay objects."}
+void MultiWin::show() {
+  Buffer background;
+  if (IsMultiplayerNet == 0 && field_A24_ != 0) return;
+
+  hovered_spot_ = -1;
+  // The seed sets each button's Win visibility bit directly. Use the real
+  // control interface here; reconcile any callback difference with draw().
+  if (ExpansionEnabled == 0 ||
+      (Players[ConsoleGlobal.faction_id_].rule_flags & 0x80) == 0) {
+    flat_button1_.show(1);
+  }
+  if (IsMultiplayerNet != 0) flat_button2_.show(1);
+
+  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.play();
+  MultiWindowVisibilityState = 2;
+  field_A24_ = 1;
+  MultiWindowRedrawSuppressed = 1;
+  on_redraw();
+  MultiWindowRedrawSuppressed = 0;
+
+  const int width = dib_.bmiHeader.biWidth;
+  const int height = -dib_.bmiHeader.biHeight;
+  background.resize(width, height);
+  background.fill(WinFillColour);
+  update_window_to_buffer(&background);
+
+  RECT screen_rect = rect2_;
+  client_to_screen(&screen_rect);
+  int position = screen_rect.bottom - sprite3_.height();
+  if (IsMultiplayerNet != 0) position -= 14 + sprite4_.height();
+  const int slide = (position - screen_rect.top) / 5;
+  ScreenBuffer.set_clip(&screen_rect);
+
+  if ((GamePreferences & 0x8000000) != 0 && IsMultiplayerNet == 0) {
+    WinFlipClipped = 1;
+    for (int frame = 0; frame < 6; ++frame) {
+      const DWORD start = timeGetTime();
+      ScreenBuffer.draw(&background, 9, screen_rect.left, position, 1, 1);
+      Win::flip(&screen_rect);
+      position -= slide;
+      do_sound();
+      while (timeGetTime() - start < static_cast<DWORD>(WindowAnimationFrameDelay)) {
+        do_sound();
+      }
+    }
+    ScreenBuffer.set_clip(&WinScreenClipRect);
+    WinFlipClipped = 0;
+  }
+
+  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.fade(50);
+  if (IsMultiplayerNet == 0) Win::show(3);
 }
 
 // 0x00479C00. The Win slot-2 override hides the multi-player panel, restores
