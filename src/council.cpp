@@ -20,6 +20,14 @@
 #include "council.h"
 #include "base.h"
 
+// The council dialog remains an explicit dependency of MultiWin's button
+// callback. Its full historical body is retained in the seed, not discarded.
+// ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0052c880.cpp", "src/council.h", "src/multiwin.cpp"], "reason": "The original MultiWin council button calls this faction-taking council dialog. This linkable placeholder preserves the dependency until the council owner recovers its complex dialog body."}
+void __cdecl call_council(int) {
+    // BODY GOES HERE.
+}
+
 
 /*
 Purpose: Calculate faction's vote count. Used for Planetary Governor and Supreme Leader.

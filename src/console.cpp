@@ -160,6 +160,58 @@ void Console::editor_edit_veh(int) {
 // RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50
 int ConsoleControlTurnActive;
 
+// The original chat dialog passes 0x00939FE8 as its editable text buffer.
+// X_pop_ask receives 0xFF as its dialog value, not an established bound.
+// Reserve 256 bytes for the editable text here; its original storage extent
+// and containing object are unproven, so bind only the observed start.
+// RECOVERY_OBJECT: v1 0x00939FE8 ?ConsoleChatInput@@3PADA
+char ConsoleChatInput[256];
+
+// ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00515770.cpp", "src/netdaemon.h", "src/xpops.h"], "reason": "The chat command belongs to Console, reads network lock state through NetDaemonNet, and uses source-owned text buffers and message services rather than fixed executable addresses; seed matching alone is not structural proof."}
+void Console::chat(int target_faction) {
+    if (!IsMultiplayerNet) return;
+
+    const LockStateEntry *state = NetDaemonNet.lock_state_;
+    const unsigned int local_bit = 1u << (ConsoleGlobal.faction_id_ & 31);
+    if (ConsoleControlTurnActive &&
+        (state[1].dword_[1] & local_bit) == 0 &&
+        state[0].dword_[9] == 0) {
+        NetMsgPopup->pop("FINISHUPKEEP", 1000, 0, 0);
+        return;
+    }
+
+    if (X_pop_ask("CHATASK", 0xff, ConsoleChatInput, pop_wait, 0) != 0)
+        return;
+
+    char *message = ParseStrBuffer[0].str;
+    if (message[0] == '!') {
+        message_chat(0x4e00, 0, message + 1);
+        log_say("Sent CHAT ALL(1)", message, 0, 0, 0);
+        return;
+    }
+
+    const unsigned int enabled = LockEnableMask & 0xff;
+    if (state[0].dword_[5] >= 2 &&
+        (enabled & state[2].dword_[11]) != enabled) {
+        for (int faction = 1; faction < 8; ++faction) {
+            const unsigned int bit = 1u << faction;
+            if (!(enabled & bit)) continue;
+            const bool selected = target_faction > 0
+                ? faction == target_faction
+                : CommlinkPending ? faction == CommlinkFaction
+                : TurnRedrawPending || (state[2].dword_[11] & bit) != 0;
+            if (!selected) continue;
+            message_chat(0x1e00, faction, message);
+            log_say("Sent CHAT", message, faction, 0, 0);
+        }
+        return;
+    }
+
+    message_chat(0x4e00, 0, message);
+    log_say("Sent CHAT ALL(2)", message, 0, 0, 0);
+}
+
 // FREE FUNCTIONS THE CONSOLE BODIES CALL that no header in src/ declares yet.
 // Each line carries the image address its catalogue entry names, and the
 // argument list is decoded from that entry's mangled name - not guessed.

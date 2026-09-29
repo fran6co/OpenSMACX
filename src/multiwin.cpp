@@ -268,13 +268,16 @@ void MultiWin::on_mouse_leave(int, int) {
 // symbol    ?on_redraw@MultiWin@@UAEXXZ
 void MultiWin::on_redraw() { draw(0); }
 
-// 0x00477F00. The seed's chat and council dependencies still lack typed
-// product declarations; keep the override explicit for the vtable.
-// ORIGINAL: 0x00477F00 ?on_button_clicked@MultiWin@@QAEXH@Z 0x00477F00-0x00477F30
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477f00.cpp; src/win.h"], "reason": "The original button callback branches on two button IDs to chat and council actions; the product override remains explicitly unfinished."}
+// 0x00477F00. The chat branch is restored; the council dialog remains an
+// explicitly unfinished, separately mapped dependency.
+// ORIGINAL: 0x00477F00 ?on_button_clicked@MultiWin@@QAEXH@Z 0x00477F00-0x00477F30 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00477f00.cpp", "src/console.cpp", "src/council.cpp", "src/win.h"], "reason": "The original button callback branches on chat and council button IDs. The typed override now preserves both calls; the separately mapped council dialog remains explicitly unfinished."}
 // symbol    ?on_button_clicked@MultiWin@@UAEXH@Z
-void MultiWin::on_button_clicked(int) {
-  // BODY GOES HERE.
+void MultiWin::on_button_clicked(int button_id) {
+  switch (button_id) {
+    case 0: ConsoleGlobal.chat(0); break;
+    case 1: call_council(ConsoleGlobal.faction_id_); break;
+  }
 }
 
 // 0x00479970. The panel is redrawn into its owned buffer and optionally

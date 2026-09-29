@@ -105,6 +105,7 @@ extern int CursorHotspotY[12];
   */
 class Console : public MapWin {
  public:
+  void chat(int faction_id);
   void road_to(int veh_id, int cursor_mode);
   void automate(int veh_id, int order);
   void convoy(int veh_id);

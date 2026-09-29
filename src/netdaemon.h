@@ -248,6 +248,8 @@ class NetDaemon : public AlphaNet {
 // receiver keeps its folded `mov ecx, imm32` form, the displacement
 // relocated, and `->` becomes `.`.
 extern NetDaemon NetDaemonNet;  // 0x0093CD90
+extern int CommlinkPending;     // 0x007492CC
+extern int CommlinkFaction;     // 0x0073B790
 
 // The wait-loop callees the daemon's lock and synch bodies poll through, so
 // those bodies can home here without dragging in the whole window stack.

@@ -51,4 +51,5 @@ static const int MaxProposalNum = 11;
 extern RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
 
 int __cdecl council_votes(int faction_id);
+void __cdecl call_council(int faction_id);
 BOOL __cdecl eligible(int faction_id);
