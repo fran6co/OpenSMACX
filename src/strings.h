@@ -32,6 +32,10 @@
 // `->str`; with the object itself declared there is nothing to wrap.
 extern char StringTemp[1032];    // 0x009B86A0
 
+// Shared scratch-buffer operations adjacent in the original executable.
+void __cdecl clear();
+void __cdecl says(const char *text);
+
 void __cdecl say_reactor(void *output, int reactor_id, int with_detail);
 void __cdecl say_weapon(void *output, int weapon_id, int with_detail);
 void __cdecl say_armor(void *output, int armor_id, int with_detail);

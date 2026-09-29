@@ -24,6 +24,20 @@
 // RECOVERY_OBJECT: v1 0x009B86A0 ?StringTemp@@3PADA
 char StringTemp[1032];   // 0x009B86A0
 
+// Clear the first character without disturbing the reusable buffer storage.
+// ORIGINAL: 0x00500120 ?clear@@YAXXZ 0x00500120-0x00500128 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00500120-0x00500128 writes 0x009B86A0", "git:0cb1eb5c:src/recovered/00500120.cpp;source:src/strings.cpp:StringTemp"], "reason": "The original zeroes the first byte of the shared scratch buffer, whose real storage is StringTemp in this translation unit."}
+void __cdecl clear() {
+    StringTemp[0] = 0;
+}
+
+// Append a caller-supplied string to the shared scratch buffer.
+// ORIGINAL: 0x00500130 ?says@@YAXPBD@Z 0x00500130-0x00500146 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00500130-0x00500146 calls strcat with 0x009B86A0", "git:0cb1eb5c:src/recovered/units/00500130.cpp;source:src/strings.cpp:StringTemp"], "reason": "The original appends a caller string into the source-owned shared StringTemp buffer."}
+void __cdecl says(const char *text) {
+    strcat(StringTemp, text);
+}
+
 // The one game-wide string table, 0x009B90D8 in the image - REAL STORAGE,
 // not the `static Strings *const` binding that named terranx.exe's address
 // (see strings.h). The image's ??__E runs the real constructor against it;
