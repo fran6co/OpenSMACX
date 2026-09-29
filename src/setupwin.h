@@ -20,6 +20,7 @@
 #include "buffer.h"
 #include "original_seam.h"
 #include "graphicwin.h"
+class StringList;
 
  /*
   * SetupWin class
@@ -63,19 +64,18 @@ class SetupWin : public GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 93 member(s) from the IDA database, 3 named; it starts a member at 0xA1C, which is where src/ ends.
 
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
+  // RECOVERY_MEMBER: v1 SetupWin overlay_buffers_ 0xA1C 0x004AE4D0
+  Buffer *overlay_buffers_[3];  // 0xA1C..0xA28, selected row's overlay
+  // RECOVERY_MEMBER: v1 SetupWin overlay_x_ 0xA28 0x004AE4D0
+  int overlay_x_[3];            // 0xA28..0xA34
+  // RECOVERY_MEMBER: v1 SetupWin overlay_y_ 0xA34 0x004AE4D0
+  int overlay_y_[3];            // 0xA34..0xA40
   uint32_t field_A40_;  // 0xA40
   Buffer buffer_;  // 0xA44
-  uint32_t field_FCC_;  // 0xFCC
-  uint32_t field_FD0_;  // 0xFD0
+  // RECOVERY_MEMBER: v1 SetupWin row_count_ 0xFCC 0x004AE4D0
+  uint32_t row_count_;  // 0xFCC
+  // RECOVERY_MEMBER: v1 SetupWin selected_row_ 0xFD0 0x004AE380
+  uint32_t selected_row_;  // 0xFD0
   Spot spot_;  // 0xFD4
   uint32_t field_FE0_;  // 0xFE0
   uint32_t field_FE4_;  // 0xFE4
@@ -89,7 +89,8 @@ class SetupWin : public GraphicWin {
   uint32_t field_1004_;  // 0x1004
   uint32_t field_1008_;  // 0x1008
   uint32_t field_100C_;  // 0x100C
-  uint32_t field_1010_;  // 0x1010
+  // RECOVERY_MEMBER: v3 SetupWin item_texts_ StringList* 0x1010 0x004AE4D0
+  StringList *item_texts_;  // 0x1010, list head/current/count at +8/+C/+10
   uint32_t field_1014_;  // 0x1014
   uint32_t field_1018_;  // 0x1018
   uint32_t field_101C_;  // 0x101C

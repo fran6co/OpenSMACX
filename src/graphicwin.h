@@ -174,6 +174,7 @@ class GraphicWin : public Win, public Buffer {
   // repaints synchronously or modifies a borrowed rectangle.
   void soft_update();
   void soft_update(RECT *area);
+  void soft_update(int x, int y, int width, int height);
   // The AlphaMenu backfill callback draws into the supplied window's Buffer
   // working rectangle (Buffer::rect2_, original offset 0x474).
   RECT *buffer_working_rect() { return &rect2_; }

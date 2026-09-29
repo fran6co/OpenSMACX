@@ -642,6 +642,20 @@ void GraphicWin::soft_update(RECT *area) {
     InvalidateRect(HandleMain, &local, FALSE);
 }
 
+// ORIGINAL: 0x005D5720 ?soft_update@GraphicWin@@QAEXHHHH@Z 0x005D5720-0x005D588C
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/005d5720.cpp","source:src/graphicwin.cpp:GraphicWin::soft_update"],"reason":"Own the four-coordinate invalidation path required by SetupWin and other window painters; clip against the client rectangle, translate to screen, and invalidate without erasing."}
+void GraphicWin::soft_update(int x, int y, int width, int height) {
+    if (!Win::is_visible()) return;
+    RECT local = {x, y, x + width, y + height};
+    if (!IntersectRect(&local, &local, &client_rect_)) return;
+
+    int origin_x = 0;
+    int origin_y = 0;
+    Win::client_to_screen(&origin_x, &origin_y);
+    OffsetRect(&local, origin_x, origin_y);
+    InvalidateRect(HandleMain, &local, FALSE);
+}
+
 // Frame minima below use real Sprite dimensions. Window creation, client-size
 // conversion and surface allocation remain separate recovery dependencies;
 // tests of this orchestration do not establish their complete behavior.

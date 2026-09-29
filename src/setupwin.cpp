@@ -18,6 +18,9 @@
 #include "stdafx.h"
 #include "setupwin.h"
 #include "filewin.h"
+#include "game.h"
+#include "stringstruct.h"
+#include <cstring>
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
@@ -150,20 +153,80 @@ int SetupWin::on_mouse_move(int x, int y) {
         return -1;
     }
 
-    if (position == static_cast<int>(field_FD0_)) {
-        return static_cast<int>(field_FD0_);
+    if (position == static_cast<int>(selected_row_)) {
+        return static_cast<int>(selected_row_);
     }
 
-    draw_item(static_cast<int>(field_FD0_), 0);
-    field_FD0_ = static_cast<uint32_t>(position);
+    draw_item(static_cast<int>(selected_row_), 0);
+    selected_row_ = static_cast<uint32_t>(position);
     draw_item(position, 1);
     soft_update();
     return 0;
 }
 
 // ORIGINAL: 0x004AE4D0 ?draw_item@SetupWin@@QAEHHH@Z 0x004AE4D0-0x004AE757
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ae4d0.cpp"], "reason": "Explicit unfinished SetupWin-owned draw-item dependency needed by recovered hover handler; source seed retained for behavioral recovery"}
-int SetupWin::draw_item(int, int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ae4d0.cpp", "source:src/setupwin.h:SetupWin", "source:src/stringstruct.h:StringList", "source:src/game.h:opening_window"], "reason": "Restore the item-row painter, text cursor, and selected overlay through typed SetupWin members and a real StringList; the opening-window producer remains a separate storage migration."}
+int SetupWin::draw_item(int position, int selected) {
+    if (position >= static_cast<int>(row_count_)) {
+        return 0;
+    }
+
+    RECT row;
+    spot_.get_rect(position, 0, &row);
+    row.top += 31;
+    row.bottom = row.top + 26;
+    buffer_.set_clip(&row);
+    buffer_.set_text_color(selected ? 0xCA : 0xCD, -1, 1, 1);
+
+    buffer2_.copy(&buffer_, 0, 0, row.left - 15, row.top - 31,
+                  buffer2_.dib_.bmiHeader.biWidth,
+                  -buffer2_.dib_.bmiHeader.biHeight);
+
+    row.top += 2;
+    row.bottom -= 2;
+    row.left += 12;
+    row.right += 4;
+
+    if (position >= 0 && item_texts_ != 0) {
+        if (position < item_texts_->entry_count_) {
+            item_texts_->current_ = item_texts_->head_;
+            for (int i = position; i > 0 && item_texts_->current_ != 0; --i) {
+                item_texts_->current_ = item_texts_->current_->next;
+            }
+            item_texts_->current_position_ = position;
+        }
+        StringStructEntry *entry = item_texts_->current_;
+        char *name = item_texts_->head_ != 0 && entry != 0 &&
+                     entry->payload != 0 ? entry->payload->text : 0;
+        if (name != 0) {
+            CharUpperA(name);
+            char *pipe = strchr(name, '|');
+            if (pipe != 0) *pipe = ' ';
+            char *paren = strchr(name, '(');
+            if (paren != 0 && paren > name) paren[-1] = 0;
+            buffer_.write_cent_l(name, &row, static_cast<int>(strlen(name)));
+        }
+    }
+
+    GraphicWin *opening = opening_window();
+    if (selected && opening != 0 &&
+        (WinScreenWidth == 800 || WinScreenWidth == 1024)) {
+        int index = position < 0 ? 0 : position > 2 ? 2 : position;
+        Buffer *overlay = overlay_buffers_[index];
+        if (overlay != 0) {
+            Buffer *destination = static_cast<Buffer *>(opening);
+            const int x = overlay_x_[index];
+            const int y = overlay_y_[index];
+            const int width = overlay->dib_.bmiHeader.biWidth;
+            const int height = -overlay->dib_.bmiHeader.biHeight;
+            if (overlay->get_pixel(0, 0) == 9) {
+                overlay->draw(destination, 9, x, y, 1, 1);
+            } else {
+                overlay->copy(destination, 0, 0, x, y, width, height);
+            }
+            opening->soft_update(x, y, width, height);
+        }
+    }
+    buffer_.restore_clip();
     return 0;
 }

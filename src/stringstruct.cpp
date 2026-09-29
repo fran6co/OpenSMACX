@@ -1967,8 +1967,8 @@ Status: Coverage transcription - unclaimed body
 */
 extern "C" void __fastcall SetupWin_close(SetupWin *self, void *) {
     char *const base = reinterpret_cast<char *>(self);
-    self->field_FD0_ = 0;
-    self->field_FCC_ = 0;
+    self->selected_row_ = 0;
+    self->row_count_ = 0;
     self->field_A14_ = 0;
     self->field_A18_ = 0;
     self->buffer_.close();
