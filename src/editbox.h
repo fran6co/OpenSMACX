@@ -52,6 +52,8 @@ class EditBox : public GraphicWin {
   int text_fits();
   int text_position(int x);
   int init(int x, int y, int width, int height, Win *parent, int focus_wrap);
+  int init_with_font(Font *font, int x, int y, int width, Win *parent,
+                     int unused);
 
   // 0x006151E0, a pending_bodies forwarder; EditGroup calls it directly.
   void set_text(char *text);

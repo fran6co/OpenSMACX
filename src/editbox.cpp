@@ -544,6 +544,19 @@ int EditBox::init(int x, int y, int width, int height, Win *parent,
     return 0;
 }
 
+// ORIGINAL: 0x00615180 ?UNK1@EditBox@@QAEHPAUFont@@HHHPAUWin@@@Z 0x00615180-0x006151D6 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00615180.cpp records six stack arguments and a font-height call", "GraphicWin's Buffer base begins at EditBox+0x444", "EditBox::init at 0x00614FE0 consumes the derived height"], "reason": "Initialize the real Buffer font and use its measured line height to size the edit box; retain the sixth ABI argument although the original body does not read it."}
+// The historical label omits the sixth stack argument; the source symbol
+// records the actual C++ ABI and the recovered Win/Font class spellings.
+// symbol    ?init_with_font@EditBox@@QAEHPAVFont@@HHHPAVWin@@H@Z
+int EditBox::init_with_font(Font *font, int x, int y, int width,
+                            Win *parent, int) {
+    if (font == 0) return 3;
+    Buffer::set_font(font, 0, 0, 0);
+    const int height = Buffer::text_line_height() + 2;
+    return init(x, y, width, height, parent, 0);
+}
+
 
 /*
 Purpose: Construct the GraphicWin base and trailing Time member, then publish
