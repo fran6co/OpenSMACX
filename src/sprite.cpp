@@ -1439,6 +1439,25 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
     return 0;
 }
 
+/*
+Purpose: Draw with destination-source remapping under a temporary scale.
+// ORIGINAL: 0x005E811C ?draw_dest_source@Sprite@@QAEHPAUBuffer@@HHHHHPAE@Z 0x005E811C-0x005E816C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The seven-argument seed substitutes the scale pair around the already source-owned destination-source remapping overload.","evidence":["Original 0x005E811C-0x005E816C saves 0x00696D18/1C, calls the five-argument overload at 0x005E741C and restores the two globals in reverse order.","src/sprite.cpp owns the callee and typed scale globals; git:d2e09e91:src/recovered/units/005e811c.cpp retains the historical exact seed."]}
+// symbol    ?draw_dest_source@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
+*/
+int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
+                             int numerator, int denominator,
+                             unsigned char *table) {
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = numerator;
+    SpriteScaleDenominator = denominator;
+    const int result = draw_dest_source(destination, transparent, x, y, table);
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
+    return result;
+}
+
 // Shared four-byte sprite-memory counter: the constructor at 0x005E37E6/
 // 0x005E37EF reads/writes it, and close at 0x005E3833/0x005E383F updates
 // the same scalar. Its original storage is in .data's loader-zero-filled
@@ -1446,6 +1465,24 @@ int Sprite::draw_dest_source(Buffer *destination, int transparent, int x, int y,
 // pixel-release paths subtract pixel area, so full accounting is still unclear.
 // RECOVERY_OBJECT: v2 0x009B6618 0x009B661C ?SpriteMemoryUsed@@3HA 0x005E37E0
 int SpriteMemoryUsed = 0;
+
+/*
+Purpose: Draw with a temporary scale and a destination remap table.
+// ORIGINAL: 0x005E4AFA ?draw@Sprite@@QAEHPAUBuffer@@HHHHHH@Z 0x005E4AFA-0x005E4B4A FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The seven-argument seed is a scale-substitution wrapper around the already source-owned table-remapping Sprite::draw overload; its final catalogued int is a pointer to the remap table.","evidence":["Original 0x005E4AFA-0x005E4B4A saves the dwords at 0x00696D18/1C, substitutes numerator/denominator, calls 0x005E9D44 and restores in reverse order.","src/sprite.cpp owns 0x005E9D44 and binds both scale globals; git:d2e09e91:src/recovered/units/005e4afa.cpp retains the historical exact seed."]}
+// symbol    ?draw@Sprite@@QAEHPAVBuffer@@HHHHHPAE@Z
+*/
+int Sprite::draw(Buffer *destination, int transparent, int x, int y,
+                 int numerator, int denominator, unsigned char *table) {
+    const int saved_numerator = SpriteScaleNumerator;
+    const int saved_denominator = SpriteScaleDenominator;
+    SpriteScaleNumerator = numerator;
+    SpriteScaleDenominator = denominator;
+    const int result = draw(destination, transparent, x, y, table);
+    SpriteScaleDenominator = saved_denominator;
+    SpriteScaleNumerator = saved_numerator;
+    return result;
+}
 
 /*
 Purpose: Draw the sprite with a temporarily substituted uniform scale ratio.
@@ -1692,6 +1729,21 @@ int TexHeap::get_tex_mem(int size) {
         }
     }
     return 0;
+}
+
+/*
+Purpose: Extract a sprite from a rectangle, rejecting a null region.
+// ORIGINAL: 0x005E3960 ?extract@Sprite@@QAEHPAUBuffer@@HPAURECT@@PAUTexHeap@@@Z 0x005E3960-0x005E399E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The rectangle overload forwards its bounds to the source-owned coordinate extractor, returning 3 for a null rectangle.","evidence":["Original 0x005E3960-0x005E399E loads RECT.left/top/right/bottom, computes right-left and bottom-top, and calls 0x005E39A0.","src/sprite.cpp owns the coordinate overload at 0x005E39A0; git:d2e09e91:src/recovered/units/005e3960.cpp retains the historical exact seed."]}
+// symbol    ?extract@Sprite@@QAEHPAVBuffer@@HPAUtagRECT@@PAUTexHeap@@@Z
+*/
+int Sprite::extract(Buffer *buffer, int transparent, RECT *region, TexHeap *heap) {
+    if (region == 0) {
+        return 3;
+    }
+    return extract(buffer, transparent, region->left, region->top,
+                   region->right - region->left, region->bottom - region->top,
+                   heap);
 }
 
 /*

@@ -62,6 +62,8 @@ class Sprite {
   int draw_noop(Buffer *destination, int transparent, int x, int y, int table);
   int draw(Buffer *destination, int transparent, int x, int y,
            int numerator, int denominator);
+  int draw(Buffer *destination, int transparent, int x, int y,
+           int numerator, int denominator, unsigned char *table);
   int draw(Buffer *destination, int transparent, int x, int y);
   // Source remap; the historical four-row expansion maps destination instead.
   int draw(Buffer *destination, int transparent, int x, int y,
@@ -107,6 +109,7 @@ class Sprite {
   // a texture-heap pointer most callers pass as null.
   int extract(Buffer *buffer, int a, int b, int c, int width, int height,
               TexHeap *heap);
+  int extract(Buffer *buffer, int transparent, RECT *region, TexHeap *heap);
   int create_blank(int width, int height, int depth);
   // Copy this sprite's pixels/metadata into the destination, not vice versa.
   int copy(Sprite *destination);
