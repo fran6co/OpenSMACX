@@ -17,6 +17,9 @@
  */
 #pragma once
 
+// Network-aware research choice, source-owned by technology.cpp.
+int __cdecl tech_selection(int faction);  // 0x005BE380
+
  /*
   * Technology related objects, variables and functions.
   */

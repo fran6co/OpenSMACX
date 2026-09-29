@@ -26,6 +26,61 @@
 #include "random.h"
 #include "strings.h"
 #include "veh.h"
+#include "faction.h"
+#include "console.h"
+#include "netdaemon.h"
+#include "netmsg.h"
+
+int __cdecl tech_pick(int faction, int mode, int suggested,
+                      const char *section);
+
+// The research slot is PlayersData[faction].tech_id_researching, not a
+// separate absolute table. A remote human's title/name are announced once
+// while the network loop waits for their choice. tech_pick and NetMsg::pop
+// retain their own unfinished recovery obligations.
+// ORIGINAL: 0x005BE380 ?tech_selection@@YAHH@Z 0x005BE380-0x005BE52A
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:0c8bccd8:src/unrecovered/005be380.cpp records the two network wait paths and pop-up order", "PlayersData[faction].tech_id_researching is the seed's 0x0096CDAC+faction*0x20CC slot; Player title/name and general.h's default noun globals cover its 0x00946A50-based records", "ConsoleGlobal.faction_id_ owns the 0x00939284 local-faction slot"], "reason": "Home the typed faction research selection and network wait in the technology owner, retaining the picker and popup owner's separate unfinished obligations."}
+int __cdecl tech_selection(int faction) {
+    int &selected = PlayersData[faction].tech_id_researching;
+    const unsigned int faction_bit = 1u << (faction & 31);
+    const bool network_human =
+        IsMultiplayerNet != 0 &&
+        (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0;
+
+    if (network_human && faction != ConsoleGlobal.faction_id_) {
+        bool announced = false;
+        while (ExitTurnLoop == 0 && selected < 0) {
+            NetDaemonNet.net_tasks();
+            if (!announced) {
+                announced = true;
+                PluralityDefault = 0;
+                GenderDefault = Players[faction].is_leader_female;
+                parse_says(0, Players[faction].title_leader, -1, -1);
+                GenderDefault = Players[faction].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[faction].name_leader, -1, -1);
+                NetMsgPopup->pop("PICKINGTECH", 0, 0, 0);
+            }
+        }
+        NetMsgPopup->close();
+        return selected;
+    }
+
+    const int result = tech_pick(faction, 0, -1, 0);
+    const bool network_game = IsMultiplayerNet != 0;
+    selected = result;
+    if (network_game &&
+        (static_cast<unsigned char>(LockEnableMask) & faction_bit) != 0) {
+        synch_researching(faction);
+        int stop = ExitTurnLoop;
+        selected = -1;
+        while (stop == 0 && selected < 0) {
+            NetDaemonNet.net_tasks();
+            stop = ExitTurnLoop;
+        }
+    }
+    return result;
+}
 
 // RECOVERY_OBJECT: v1 0x00949730 ?TechValidCount@@3HA
 int TechValidCount;  // 0x00949730
