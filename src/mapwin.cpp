@@ -702,6 +702,24 @@ void __cdecl mapwin_system_init(int reset_windows) {
     FarmMapWindow.init_dummy();
 }
 
+// An indirect caller can request another map view centered on a tile. Slot
+// zero is the console; only an allocated, inactive secondary slot is reused.
+// ORIGINAL: 0x00470FA0 sub_470fa0 0x00470FA0-0x0047102D
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00470FA0-0x0047102D scans MapWinTable slots 1..7 for a nonnull receiver with field_1DD74_ clear, calls clear and init, writes its 0x1DD9C/0x1DDA0 center, then invokes Win virtual slot 1 with zero", "src/unrecovered/00470fa0.cpp retains the two-argument seed and its compiler trials; src/win.h identifies virtual slot 1 as show(int)"], "reason": "Recover activation of a free secondary map view using its real MapWin receiver and inherited virtual show operation, not an invented vtable class."}
+// symbol    ?mapwin_activate_free_slot@@YAXHH@Z
+void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y) {
+    for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
+        MapWin *window = MapWinTable[slot];
+        if (window == nullptr || window->field_1DD74_ != 0) continue;
+        window->clear(window->field_1DD78_);
+        window->init(0, 1);
+        window->field_1DD9C_ = tile_x;
+        window->field_1DDA0_ = tile_y;
+        window->show(0);
+        return;
+    }
+}
+
 /*
 Purpose: Answer WM_SYSCLOSE: clear the window's per-slot state words, then run
          close() - the same owned-pointer free and vbtable walk, inlined.

@@ -489,6 +489,7 @@ static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe")
 // window closes and the final hide. The source-owned body is in mapwin.cpp.
 void __cdecl mapwin_system_shutdown();
 void __cdecl mapwin_system_init(int reset_windows);
+void __cdecl mapwin_activate_free_slot(int tile_x, int tile_y);
 
 
 // The heap pointer at 0x4 is freed through the game's CRT boundary, the same
