@@ -43,6 +43,7 @@ struct ScrollGraphicWin : public GraphicWin {
 
 class Scroll : public ScrollGraphicWin {
   friend class ReportWin;  // ReportWin::UNK1 sets this embedded scroll's paging_ field
+  friend class Gamma;  // Gamma::exec configures its embedded scroll's defaults
  public:
   // 0x006051D0. Defined in scroll.cpp, alongside close() which resets the
   // same fields from the same two process-default tables.
@@ -110,7 +111,9 @@ class Scroll : public ScrollGraphicWin {
   RECT thumb_rect_;
   uint32_t color_;
   int bar_thickness_;
-  Buffer *buffer_;
+  // Gamma::exec writes palette index 0xF8 here; this word is not a Buffer*.
+  // RECOVERY_MEMBER: v1 Scroll field_A64_ 0xA64 0x005C8E60
+  int field_A64_;
   uint32_t bevel_thickness_;
   uint32_t bevel_upper_;
   uint32_t bevel_lower_;

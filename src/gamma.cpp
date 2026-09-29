@@ -18,12 +18,130 @@
 #include "stdafx.h"
 #include "gamma.h"
 #include "worldwin.h"
+#include "basepop.h"
+#include "temp.h"
 #include <math.h>
 
 namespace {
 const double GammaPositionScale = 0.01;
 const double GammaComponentScale = 1.0 / 235.0;
 const double GammaByteScale = 235.99;
+const float GammaSliderScale = 100.0f;
+}
+
+// ORIGINAL: 0x005C8E60 ?exec@Gamma@@QAEXPAUPalette@@MH@Z 0x005C8E60-0x005C9325
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c8e60.cpp records the control setup and modal call sequence", "src/gamma.h identifies five consecutive RECTs and the Palette/Scroll/EditBox/PushButton members", "Pinned disassembly 0x005C8F89 and 0x005C9119 shows the accept button uses the RECT at +0xA44, correcting the seed's +0xA34", "At 0x005C8ECC/0x005C8ED1 VC6 overwrites the former argument slots with WinScreenHeight/Width before GraphicWin::init reloads them at 0x005C903B; the call does not pass a Palette pointer as a dimension", "WinScreenWidth/Height and BasePopDefaultOkText/CancelText are existing source-bound globals", "Original format/font bytes at 0x00691E74 read Arial"], "reason": "Run Gamma's palette apply-only or modal editor flow using real controls, owned rectangles and their member APIs rather than raw receiver offsets and vtable arrays."}
+// symbol    ?exec@Gamma@@QAEXPAVPalette@@MH@Z
+void Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
+    target_palette_ = target;
+    initialGamma_ = initial_gamma;
+    if (apply_only != 0) {
+        adjust_pal(static_cast<double>(initial_gamma));
+        return;
+    }
+
+    rect1_.left = 0;
+    rect1_.top = 0;
+    rect1_.right = 236;
+    rect1_.bottom = 32;
+    const int horizontal_offset =
+        (WinScreenWidth - rect1_.right + rect1_.left) / 2;
+    rect1_.left += horizontal_offset;
+    rect1_.right += horizontal_offset;
+    const int vertical_offset =
+        (WinScreenHeight - rect1_.bottom + rect1_.top) / 2;
+    rect1_.top += vertical_offset;
+    rect1_.bottom += vertical_offset;
+
+    rect2_ = rect1_;
+    const int row_offset = rect2_.bottom - rect2_.top + 3;
+    rect2_.top += row_offset;
+    rect2_.bottom += row_offset;
+
+    rect3_ = rect1_;
+    const int scroll_offset = rect1_.bottom - rect1_.top + 3;
+    rect3_.top += scroll_offset + 4;
+    rect3_.bottom += scroll_offset - 4;
+
+    rect4_ = rect3_;
+    const int button_offset = rect4_.bottom - rect4_.top + 3;
+    rect4_.top += button_offset;
+    rect4_.bottom = rect4_.top + 20;
+    rect4_.right = rect4_.left + (rect4_.right - rect4_.left + 3) / 2 - 3;
+
+    rect5_ = rect4_;
+    const int second_button_offset = rect5_.right - rect5_.left + 3;
+    rect5_.left += second_button_offset;
+    rect5_.right += second_button_offset;
+
+    font_.init("Arial", 14, 1);
+    GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0,
+                     0, 0, 0);
+    GraphicWin::fill(0xF8);
+
+    scroll_.init(&rect3_, this, 0, 0);
+    scroll_.set_border_color(0);
+    scroll_.field_A64_ = 0xF8;
+    scroll_.field_A48_ = 7;
+    scroll_.set_button_color(7);
+    scroll_.set_bevel_thickness(2);
+    scroll_.set_bevel_upper(7);
+    scroll_.set_bevel_lower(0);
+    scroll_.paging_ = 10;
+    scroll_.field_A74_ = 0;
+    scroll_.set_sprite_left(0, 0, 0);
+    scroll_.set_sprite_right(0, 0, 0);
+    scroll_.set_range(1, 400);
+    scroll_.set_pos(static_cast<int>(initial_gamma * GammaSliderScale));
+    scroll_.show(0);
+
+    pushButton1_.init(BasePopDefaultOkText, -1,
+                      rect4_.left, rect4_.top,
+                      rect4_.right - rect4_.left,
+                      rect4_.bottom - rect4_.top, this, 0);
+    pushButton1_.Buffer::set_font(&font_, 0, 0, 0);
+    pushButton1_.redraw();
+    pushButton1_.set_text_color(0, -1, 1, 1);
+    pushButton1_.color_ = 0xF8;
+    pushButton1_.bevel_upper_ = 7;
+    pushButton1_.bevel_lower_ = 0;
+    pushButton1_.bevel_thickness_ = 2;
+    pushButton1_.field_AC8_ = 0;
+    pushButton1_.field_AEC_ = 0;
+    pushButton1_.field_AC0_ = 0;
+    pushButton1_.field_AE4_ = 0;
+    pushButton1_.field_ACC_ = 0;
+    pushButton1_.field_AF0_ = 0;
+    pushButton1_.redraw();
+
+    pushButton2_.init(BasePopDefaultCancelText, -2,
+                      rect5_.left, rect5_.top,
+                      rect5_.right - rect5_.left,
+                      rect5_.bottom - rect5_.top, this, 0);
+    pushButton2_.Buffer::set_font(&font_, 0, 0, 0);
+    pushButton2_.redraw();
+    pushButton2_.set_text_color(0, -1, 1, 1);
+    pushButton2_.color_ = 0xF8;
+    pushButton2_.bevel_upper_ = 7;
+    pushButton2_.bevel_lower_ = 0;
+    pushButton2_.bevel_thickness_ = 2;
+    pushButton2_.field_AC8_ = 0;
+    pushButton2_.field_AEC_ = 0;
+    pushButton2_.field_AC0_ = 0;
+    pushButton2_.field_AE4_ = 0;
+    pushButton2_.field_ACC_ = 0;
+    pushButton2_.field_AF0_ = 0;
+    pushButton2_.redraw();
+
+    show(1);
+    do_all_draws();
+    adjust_palette();
+    redraw();
+    set_modal(0, 0, 0);
+    hide();
+    do_all_draws();
+    adjust_pal(gamma_);
+    close();
 }
 
 // ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0

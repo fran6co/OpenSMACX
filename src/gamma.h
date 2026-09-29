@@ -55,29 +55,25 @@ class Gamma : public GraphicWin {
   void on_button_clicked(int button_id);
   void adjust_pal(double gamma);
   virtual void on_redraw();
+  void exec(Palette *target, float initial_gamma, int apply_only);
   int on_key_click(int a, int b);
 
   // Storage the image proves is here: its own methods reach 0x1920.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 24 member(s) from the IDA database, 4 named; it starts a member at 0xA14, which is where src/ ends.
 
-  RECT rect1_;  // 0xA14, IDB `rect1`
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
-  uint32_t field_A40_;  // 0xA40
-  uint32_t field_A44_;  // 0xA44
-  uint32_t field_A48_;  // 0xA48
-  uint32_t field_A4C_;  // 0xA4C
-  uint32_t field_A50_;  // 0xA50
-  uint32_t field_A54_;  // 0xA54
-  uint32_t field_A58_;  // 0xA58
-  uint32_t field_A5C_;  // 0xA5C
-  uint32_t field_A60_;  // 0xA60
+  // exec builds five consecutive RECTs from the screen dimensions. Their
+  // offsets and four-word copy/adjustment pattern are explicit in the seed.
+  // RECOVERY_MEMBER: v2 Gamma rect1_ tagRECT 0xA14 0x005C8E60
+  RECT rect1_;  // 0xA14, palette strip
+  // RECOVERY_MEMBER: v2 Gamma rect2_ tagRECT 0xA24 0x005C8E60
+  RECT rect2_;  // 0xA24, scrollbar
+  // RECOVERY_MEMBER: v2 Gamma rect3_ tagRECT 0xA34 0x005C8E60
+  RECT rect3_;  // 0xA34, scrollbar bounds
+  // RECOVERY_MEMBER: v2 Gamma rect4_ tagRECT 0xA44 0x005C8E60
+  RECT rect4_;  // 0xA44, accept button bounds
+  // RECOVERY_MEMBER: v2 Gamma rect5_ tagRECT 0xA54 0x005C8E60
+  RECT rect5_;  // 0xA54, cancel button bounds
   // exec stores its Palette* argument here and adjust_pal edits that palette.
   // RECOVERY_MEMBER: v3 Gamma target_palette_ Palette* 0xA64 0x005C8E60
   Palette *target_palette_;  // 0xA64

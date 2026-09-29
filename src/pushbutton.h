@@ -29,6 +29,7 @@
 // The two virtual tables the destructor stages before delegating to
 
 class PushButton : public BaseButton {
+  friend class Gamma;  // Gamma::exec configures its two embedded buttons
   // Original destructor 0x0062C010 stages these two compiler-owned tables.
   // Starts are known; their complete original extents remain unestablished.
   // These mappings do not define tables or claim their contents match.
