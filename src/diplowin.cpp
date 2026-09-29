@@ -24,7 +24,33 @@
 #include "faction.h"
 #include "game.h"
 
-static int *const DiploOffersDirty = (int *)0x007492D0;
+// The diplomacy window's redraw latch is writable application storage, not a
+// pointer into the original executable. on_key_click and the offer paths write it.
+// RECOVERY_OBJECT: v2 0x007492D0 0x007492D4 ?DiploOffersDirty@@3HA 0x00442590
+int DiploOffersDirty;
+
+// ORIGINAL: 0x004412D0 ?UNK1@DiploWin@@QAEXXZ 0x004412D0-0x004412ED BYTE_EXACT
+void DiploWin::UNK1() {
+    stringBox_.clear();
+    editBox_.set_text(0);
+}
+
+// ORIGINAL: 0x004412F0 ?new_chat@DiploWin@@QAEXPADH@Z 0x004412F0-0x004413A7
+// Historical seed evidence: the faction record is indexed by its 0x59C stride;
+// the seed's remaining register-order difference was not a structural clue.
+void DiploWin::new_chat(char *text, int faction_id) {
+    char line[256];
+    line[0] = 0;
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    strcat(line, Players[faction_id].name_leader);
+    string_upper_slot()(line);
+    strcat(line, ": ");
+    strcat(line, " ");
+    strcat(line, text);
+    stringBox_.add(line, faction_id, 1);
+    DiploOffersDirty = 1;
+}
 
 // Slot 62, 0xF8 - the DiploWin front vtable's update entry, the one
 // done_deal tails into with the image's own `jmp dword ptr [eax + 0xf8]`.
@@ -77,7 +103,7 @@ int DiploWin::on_key_click(int repeat, int key) {
             strcat(line, editBox_.text_);
 
             stringBox_.add(line, faction, 1);
-            *DiploOffersDirty = 1;
+            DiploOffersDirty = 1;
             editBox_.set_text(0);
             return 1;
         }
@@ -420,8 +446,7 @@ void DiploWin::hide() {
 
 // DiploOffersDirty (0x007492D0) - the diplomacy-window redraw latch. add_offer,
 // kill_offer, new_chat and on_button_clicked all set it to 1 as they change the
-// offer lists; exec (0x00443F10) tests it and clears it. `int *const` folds to
-// the bare immediate, so the rename moves no byte.
+// offer lists; exec (0x00443F10) tests it and clears it. It is now owned storage.
 
 // ORIGINAL: 0x004413F0 ?kill_offer@DiploWin@@QAEXHH@Z 0x004413F0-0x0044148C FILE
 // TRIED: `int idx = a2;` declared inside the inner `if (a2 < count - 1)` (mismatch, idx assign shifted 5 instructions late) and hoisted above it with a separate `countMinus1` temp (MNEMONIC_ONLY, worse). Landed the inner-if placement: MISMATCH #23, mnemonic similarity 0.98, same byte count (156/156).
@@ -454,7 +479,7 @@ void DiploWin::kill_offer(int a1, int a2) {
         }
         count = *reinterpret_cast<int *>(self + 0xA1C + a1 * 4) - 1;
         *reinterpret_cast<int *>(self + 0xA1C + a1 * 4) = count;
-        *DiploOffersDirty = 1;
+        DiploOffersDirty = 1;
         *reinterpret_cast<int *>(self + 0xA24) = 0;
         *reinterpret_cast<int *>(self + 0xA28) = 0;
         vtable_slot<func_diplo_win_slot062>(this, 0xf8)(this);
@@ -510,7 +535,7 @@ void DiploWin::add_offer(int a1, int a2, int a3) {
     int *type_arr = reinterpret_cast<int *>(self + 0xa2c);
     int *val_arr = reinterpret_cast<int *>(self + 0xa6c);
 
-    *DiploOffersDirty = 1;
+    DiploOffersDirty = 1;
 
     int i;
     for (i = 0; i < count_arr[a1]; i++) {

@@ -31,11 +31,9 @@
   * virtually-derived windows this one is written as the original wrote it and
   * needs no ABI workaround.
   *
-  * The layout is not established. The constructor's own fields begin at 0xA14,
-  * immediately after the base, and where the object ends is unknown, so
-  * nothing pins its sizeof and the fields between are not modelled. The
-  * methods recovered here are bare returns that touch no field, which is why
-  * they can be replaced ahead of that mapping.
+  * The complete layout is not established. The constructor's own fields begin
+  * at 0xA14, immediately after the base; known controls are modelled at their
+  * observed offsets while the intervening fields remain provisional.
   */
 class DiploWin : public GraphicWin {
  public:
@@ -44,6 +42,8 @@ class DiploWin : public GraphicWin {
   int on_key_click(int repeat, int key);
   int on_key_down(int key);
   void done_deal();
+  void UNK1();
+  void new_chat(char *text, int faction_id);
 
  public:
   // homed from 00441490.cpp
