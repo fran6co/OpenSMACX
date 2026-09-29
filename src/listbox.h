@@ -198,18 +198,13 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // 0x0060CB70, homed in leaf_recoveries.cpp (2026-09-27): the wheel-notch
   // loop over the Win virtual base's two scrollbar clicks.
   void on_mousewheel(int a);
-  // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes, seed
-  // src/unrecovered/0060b530.cpp). DECLARATION ONLY: on_scrolling's body
-  // (0x0060C5D0) reaches it twice on the front receiver - once for the row
-  // the scroll left, once for the row it landed on - and UNK2's (0x0060C7D0)
-  // record walk reads the text pointer the row holds. The body is a large
-  // transcription (highlighted/normal text-draw tails over the
-  // style-descriptor fields); the declaration lets callers name it first.
+  // 0x0060B530 ?draw_item@ListBox@@QAEXH@Z (3240 bytes), source-owned in
+  // leaf_recoveries.cpp. on_scrolling reaches it twice on the front receiver.
+  // The original raw-offset transcription survives in Git history at
+  // e853f54d^:src/unrecovered/0060b530.cpp for restoration work.
   void draw_item(int index);
-  // 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z (336 bytes, seed
-  // src/unrecovered/0060c7d0.cpp). DECLARATION ONLY, same reason: the seed
-  // carries analysis (the [esi] read is the GraphicWin vbtable walk) but no
-  // decompiled body yet. int-returning, char *-taking.
+  // 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z (336 bytes), source-owned in
+  // leaf_recoveries.cpp. Its retired seed is retrievable from Git history.
   int UNK2(char *text);
  public:
   // 0x0060C920, still a pending_bodies forwarder.
@@ -315,9 +310,12 @@ static_assert(sizeof(ListBox) == 0xB54,
 extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0
 // The current ListBox whose draw callback is running. Original draw_item
 // stores its front receiver here at 0x0060BCAD, before invoking callbacks;
-// its current source body is still an unfinished placeholder. The callback
-// at 0x004072D0 walks this object's Dialog virtual base for selection state.
+// the source row renderer now performs that write. The callback at 0x004072D0
+// walks this object's Dialog virtual base for selection state.
 extern ListBox *CurrentListBoxDraw;
+// Shared row offset in the original scrolling/redraw paths. Its full set of
+// source writers is not yet restored; the default zero is still meaningful.
+extern int ListBoxDrawOffset;
 // RECOVERY_OBJECT binding is in listbox.cpp: Scroll and ListBox's event
 // paths share this process-wide notification gate.
 extern int ListBoxGlobalDDC;
