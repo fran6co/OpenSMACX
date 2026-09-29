@@ -30,16 +30,212 @@
 #include "datalink.h"
 #include "netdaemon.h"
 #include "xpops.h"
+#include "buffer.h"
+#include "font.h"
+#include "infowin.h"
+#include "maininterface.h"
+#include "mapwin.h"
+#include "spying_recovery.h"
+
+// The base-caption renderer retains the font selected from its shared queue.
+// Original storage: 0x0093FC24. No other product owner currently publishes it.
+// RECOVERY_OBJECT: v2 0x0093FC24 0x0093FC28 ?BaseDrawFont@@3PAVFont@@A 0x0055AF20
+Font *BaseDrawFont;
 
 // base_draw is the 2073-byte base renderer reached by MapWin::draw_bases.
-// Its retained seed has a full transcription but no typed product body yet.
-// Keep the dependency linkable and visibly unfinished while ownership of
-// its font, sprite and visibility paths is recovered.
+// The seed's coordinate, sprite, caption, visibility and status branches are
+// expressed through their owning objects below. The original span and seed
+// remain available for compiler and reference comparison.
 // ORIGINAL: 0x0055AF20 ?base_draw@@YAXPAUBuffer@@HHHHH@Z 0x0055AF20-0x0055B739
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0055af20.cpp retains the 2073-byte transcription and original span; BODY GOES HERE remains visible."], "reason": "Bind the newly referenced base renderer as an explicitly unfinished owner body to preserve link continuity."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0055af20.cpp retains the 2073-byte transcription and original span; the seed's Base, Map, Sprite, FontQueue and Buffer dependencies have typed product owners."], "reason": "Recover the base renderer's distant zoom badge, faction sprite, population caption, visibility check and riot marker through typed objects; compiler and runtime verification remain separate."}
+// symbol    ?base_draw@@YAXPAVBuffer@@HHHHH@Z
 void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
                        int style, int flags) {
-    // BODY GOES HERE.
+    Base &base = Bases[base_id];
+    const int faction = base.faction_id_current;
+    RECT rect;
+
+    // At distant zoom, show the base as a colored lozenge rather than a
+    // building sprite and population caption.
+    if ((style < -8 || (flags & 0x100)) && !(flags & (8 | 0x800))) {
+        int height;
+        int width;
+        int inset;
+        if (MapWinCaptionScale < 1) {
+            height = ((style * 5 + 80) * 10) / 16;
+            width = ((style * 5 + 80) * 20) / 16;
+            inset = (style * 4 + 64) / 16;
+        } else {
+            height = MapWinCaptionScale * 50 / MapWinCaptionDivisor;
+            width = MapWinCaptionScale * 100 / MapWinCaptionDivisor;
+            inset = MapWinCaptionScale * 4 / MapWinCaptionDivisor;
+        }
+        if (flags & 0x200) {
+            rect.left = pixel_x - 2;
+            rect.right = pixel_x + width + 2;
+            rect.top = pixel_y - 2;
+            rect.bottom = pixel_y + height + 2;
+            inset = 2;
+        } else {
+            rect.left = pixel_x + inset;
+            rect.right = pixel_x + width - inset;
+            rect.top = pixel_y + inset;
+            rect.bottom = pixel_y + height - inset;
+        }
+        const int horizontal_trim = (rect.right - rect.bottom - rect.left + rect.top) / 2;
+        rect.left += horizontal_trim;
+        rect.right -= horizontal_trim;
+        const int vertical_shift = MapWinCaptionScale < 1
+            ? (style * 3 + 48) * 2 / 16
+            : MapWinCaptionScale * 6 / MapWinCaptionDivisor;
+        rect.top += vertical_shift - inset;
+        rect.bottom += vertical_shift - inset;
+        const int border = strcmp(Players[faction].search_key, "SPARTANS") == 0 ? 44 : 0;
+        target->box(&rect, border, border);
+        ++rect.left;
+        --rect.right;
+        ++rect.top;
+        --rect.bottom;
+        target->fill(&rect, InfoFactionTextColors[faction]);
+        return;
+    }
+
+    if (MapWinCaptionScale < 1) {
+        SpriteScaleNumerator = style + 16;
+        SpriteScaleDenominator = 16;
+    } else {
+        SpriteScaleNumerator = MapWinCaptionScale;
+        SpriteScaleDenominator = MapWinCaptionDivisor;
+    }
+
+    const int population = base.population_size;
+    int mode = 3;
+    if (population < 4) {
+        mode = 0;
+    } else if (population < static_cast<int>(Rules.pop_limit_sans_hab_complex + 1 < 8
+                                      ? 7 : Rules.pop_limit_sans_hab_complex + 1)) {
+        mode = 1;
+    } else if (population < static_cast<int>(Rules.pop_limit_sans_hab_dome + 1 < 11
+                                      ? 10 : Rules.pop_limit_sans_hab_dome + 1)) {
+        mode = 2;
+    }
+    int byte_index, bit;
+    bitmask(1, &byte_index, &bit);
+    if (base.facilities_built[byte_index] & bit && mode < 3) ++mode;
+    int danger = 0;
+    bitmask(4, &byte_index, &bit);
+    if ((base.facilities_built[byte_index] & bit)
+        || (SecretProject.citizens_defense_force >= 0
+            && Bases[SecretProject.citizens_defense_force].faction_id_current == faction)) {
+        danger = 1;
+    }
+    bitmask(5, &byte_index, &bit);
+    if (base.facilities_built[byte_index] & bit) danger = 2;
+
+    if (!(flags & 0x800)) {
+        Map *tile = map_loc(base.x, base.y);
+        const int terrain = (static_cast<unsigned char>(tile->bit) & 0xE0) < 0x60 ? 1 : 0;
+        Sprite *sprite = FactionBaseSprites[base.faction_id_former][terrain][mode][danger];
+        sprite->draw_dest(target, sprite->transparent_index(), pixel_x, pixel_y,
+                          ShadowColorTable);
+    }
+
+    BaseDrawFont = g_FONTQUEUE_VAL1.get_zoom(style, 1, 3, 1);
+    if (flags & 0x40) {
+        SpriteScaleNumerator = 1;
+        SpriteScaleDenominator = 1;
+        return;
+    }
+
+    char number[80];
+    char measure_text[80] = "";
+    char caption[80] = "";
+    _itoa(population, number, 10);
+    strcat(caption, number);
+    strcat(measure_text, "8");
+    if (population >= 10) strcat(measure_text, "8");
+    rect.left = pixel_x;
+    rect.right = pixel_x + BaseDrawFont->width(measure_text) + 5;
+    rect.top = pixel_y;
+    rect.bottom = pixel_y + BaseDrawFont->pixel_height() + 4;
+
+    Map *tile = map_loc(base.x, base.y);
+    int visible_occupier = -1;
+    if (tile->bit & 2) {
+        visible_occupier = tile->val2 & 15;
+        if (visible_occupier > 7) visible_occupier = -1;
+    }
+    bool reveal = false;
+    const int viewer = ConsoleGlobal.faction_id_;
+    if (visible_occupier < 0) {
+        reveal = (PlayersData[faction].diplo_treaties[viewer] & 1)
+            || spying(faction)
+            || (GameState & STATE_OMNISCIENT_VIEW)
+            || (PlayersData[viewer].flags & PFLAG_MAP_REVEALED)
+            || faction == viewer;
+        if (!reveal) {
+            for (int direction = 0; direction < 8; ++direction) {
+                int nx = base.x + VehMoveDeltaX[direction];
+                if (!(MapIsFlat & 1)) {
+                    if (nx < 0) nx += MapLongitudeBounds;
+                    else if (nx >= MapLongitudeBounds) nx -= MapLongitudeBounds;
+                }
+                const int ny = base.y + VehMoveDeltaY[direction];
+                if (ny >= 0 && ny < MapLatitudeBounds
+                    && nx >= 0 && nx < MapLongitudeBounds) {
+                    Map *neighbor = map_loc(nx, ny);
+                    int occupant = -1;
+                    if (neighbor->bit & 2) {
+                        occupant = neighbor->val2 & 15;
+                        if (occupant > 7) occupant = -1;
+                    }
+                    if (occupant == viewer) { reveal = true; break; }
+                }
+            }
+        }
+    }
+
+    if (reveal) {
+        rect.left = 0;
+        rect.top = 0;
+        target->box(&rect, 0, 0);
+        ++rect.left;
+        --rect.right;
+        ++rect.top;
+        --rect.bottom;
+        target->set_font(BaseDrawFont, 0, 0, 0);
+        target->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+    } else {
+        const int border = strcmp(Players[faction].search_key, "SPARTANS") == 0
+            ? InfoFactionShadowColors[faction] : 0;
+        target->box(&rect, border, border);
+        ++rect.left;
+        --rect.right;
+        ++rect.top;
+        --rect.bottom;
+        target->fill(&rect, InfoFactionTextColors[faction]);
+        target->set_font(BaseDrawFont, 0, 0, 0);
+        target->set_text_color(strcmp(Players[faction].search_key, "SPARTANS") == 0
+                                   ? 44 : 0, -1, 1, 1);
+    }
+    target->write_l(caption, rect.bottom + 2, rect.top + 1, strlen(caption));
+    --rect.left;
+    ++rect.right;
+    --rect.top;
+    ++rect.bottom;
+    if (base.state & BSTATE_DRONE_RIOTS_ACTIVE) {
+        int icon_x = pixel_x + 2 + rect.right - rect.left;
+        int icon_y = pixel_y;
+        Sprite *icon = &g_RED_MALE_HEAD_ICON_SPRITE;
+        if (Players[faction].rule_flags & RFLAG_ALIEN) {
+            icon = &g_RED_ALIEN_HEAD_ICON_SPRITE;
+            icon_x += 2;
+            icon_y -= 6;
+        }
+        icon->draw(target, icon->transparent_index(), icon_x, icon_y);
+    }
+    SpriteScaleNumerator = 1;
+    SpriteScaleDenominator = 1;
 }
 
 // RECOVERY_OBJECT: v2 0x00689370 0x00689374 ?BaseIDCurrentSelected@@3HA 0x004E68B0
