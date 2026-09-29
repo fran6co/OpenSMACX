@@ -1529,6 +1529,142 @@ uint32_t Scroll::set_thumb_rect() {
 
 
 
+/*
+Purpose: Drag the thumb or repeat a track-page movement while the scroll owns
+         the pointer, then notify its parent of an actual position change.
+// ORIGINAL: 0x00605D90 ?on_mouse_move@Scroll@@QAEXHH@Z 0x00605D90-0x006061DB FILE
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00605d90.cpp","source:src/scroll.h:Scroll","source:src/win.h:WinPointerOwner1","source:src/win.h:WinSizingFlag"],"reason":"Home the drag and held-track behavior on real Scroll/Win members, source-owned pointer state and parent callbacks; remove seed vtable facades and executable-address globals."}
+*/
+void Scroll::on_mouse_move(int x, int y) {
+    Win *const parent = win_parent_;
+    if (parent == nullptr) {
+        return;
+    }
+
+    Win *active = WinPointerOwner1;
+    if (active == nullptr) {
+        active = WinPointerOwner2;
+    }
+    if (active != this || WinSizingFlag == 0) {
+        return;
+    }
+
+    RECT local = {0, 0, rect2_.right - rect2_.left,
+                  rect2_.bottom - rect2_.top};
+    if (!in_box(x, y, &local)) {
+        return;
+    }
+
+    ListBoxGlobalDDC = 0;
+    const int saved_position = position_;
+    const bool horizontal = -dib_.bmiHeader.biHeight < dib_.bmiHeader.biWidth;
+    if (field_A44_ == 0) {
+        const int extent = thumb_rect_.right - thumb_rect_.left;
+        int denominator = extent * -3;
+        if (border_color_ != -1) {
+            denominator -= 2;
+        }
+
+        int next_position;
+        if (horizontal) {
+            int offset = x - extent;
+            if (border_color_ != -1) {
+                --offset;
+            }
+            next_position = (offset - (extent >> 1))
+                            * (range_maximum_ - range_minimum_)
+                            / (denominator + dib_.bmiHeader.biWidth)
+                            + range_minimum_;
+            field_A3C_ = offset;
+        } else {
+            int offset = y - extent;
+            if (border_color_ != -1) {
+                ++offset;
+            }
+            field_A3C_ = offset;
+            next_position = (offset - (extent >> 1))
+                            * (range_maximum_ - range_minimum_)
+                            / (denominator - dib_.bmiHeader.biHeight)
+                            + range_minimum_;
+        }
+
+        if (next_position > range_maximum_) {
+            next_position = range_maximum_;
+        }
+        if (next_position < range_minimum_) {
+            next_position = range_minimum_;
+        }
+        position_ = next_position;
+    } else {
+        const DWORD now = timeGetTime();
+        const DWORD last_time = field_A38_;
+        if (last_time != 0 &&
+            static_cast<int>(now - last_time) <
+                static_cast<int>(field_A30_ * 2U)) {
+            if (get_lbutton_state() == 0) {
+                return;
+            }
+            get_mouse_pos(&x, &y);
+            const LPARAM point = static_cast<LPARAM>(
+                (static_cast<uint32_t>(y) << 16) |
+                (static_cast<uint32_t>(x) & 0xFFFFU));
+            PostMessageA(HandleMain, WM_MOUSEMOVE, 0, point);
+            return;
+        }
+        if (last_time == 0) {
+            field_A38_ = timeGetTime();
+        }
+
+        const int direction = static_cast<int>(field_A44_);
+        if (horizontal) {
+            if (x > thumb_rect_.right && direction > 0) {
+                const int next = position_ + paging_;
+                position_ = next > range_maximum_ ? range_maximum_ : next;
+            } else if (x < thumb_rect_.left && direction < 0) {
+                const int next = position_ - paging_;
+                position_ = next < range_minimum_ ? range_minimum_ : next;
+            }
+        } else if (y > thumb_rect_.bottom && direction > 0) {
+            const int next = position_ + paging_;
+            position_ = next > range_maximum_ ? range_maximum_ : next;
+        } else if (y < thumb_rect_.top && direction < 0) {
+            const int next = position_ - paging_;
+            position_ = next < range_minimum_ ? range_minimum_ : next;
+        }
+
+        get_mouse_pos(&x, &y);
+        if (get_lbutton_state() != 0) {
+            const LPARAM point = static_cast<LPARAM>(
+                (static_cast<uint32_t>(y) << 16) |
+                (static_cast<uint32_t>(x) & 0xFFFFU));
+            PostMessageA(HandleMain, WM_MOUSEMOVE, 0, point);
+        }
+    }
+
+    WinCallbackWindow = parent;
+    if (saved_position != position_) {
+        int notified_position = position_;
+        if (range_reversed_ != 0U) {
+            notified_position = (range_minimum_ - position_) + range_maximum_;
+        }
+        parent->vslot_49(field_A18_, notified_position);
+        if (field_2148_ != nullptr) {
+            int callback_position = position_;
+            if (range_reversed_ != 0U) {
+                callback_position = (range_minimum_ - position_)
+                                    + range_maximum_;
+            }
+            field_2148_(field_A18_, callback_position);
+        }
+    }
+
+    Win *const target = parent->scroll_event_target();
+    if (target != nullptr && target->vslot_23() == 0) {
+        target->vslot_07();
+    }
+    redraw();
+}
+
 // ORIGINAL: 0x006061E0 ?on_left_down@Scroll@@QAEXHH@Z 0x006061E0-0x006062B8 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/006061e0.cpp", "Scroll thumb and range members in src/scroll.h", "Win::on_mouse_feedback and WinPointerOwner3/4 in src/win.h"], "reason": "Recover the Scroll thumb press handler using its typed orientation, thumb geometry, parent callback and capture-owner state."}
 void Scroll::on_left_down(int x, int y) {

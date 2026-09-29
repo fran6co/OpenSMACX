@@ -80,6 +80,7 @@ class Scroll : public ScrollGraphicWin {
   // ?on_left_click@Scroll@@QAEHHH@Z returns H; the body is empty and VC6
   // emits the same `ret 8`.
   int on_left_click(int a1, int a2);
+  void on_mouse_move(int x, int y);
   void on_left_down(int x, int y);
   void on_left_up(int x, int y);
   // Input handlers reached by recovered Win and FlatButton dispatch paths.
