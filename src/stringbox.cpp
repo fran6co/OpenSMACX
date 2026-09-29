@@ -194,12 +194,12 @@ void StringBox::add_fixup() {
     }
 }
 
-// Structural candidate for original 0x00629780. Its exact-claimed product
-// binding still belongs to the link-only sub_629780 in leaf_recoveries.cpp;
-// do not count this method as recovered until that binding is guardedly
-// rehomed and the affected claim remeasured. Clearing may target a borrowed
-// alternate list; destruction of that list is still its owner's responsibility.
-// The typed removal path invokes the list's virtual text-release hook.
+// This is the canonical product body for original 0x00629780. Clearing may
+// target a borrowed alternate list; destruction of that list remains its
+// owner's responsibility. The typed removal path invokes the virtual
+// text-release hook instead of treating the list as raw offsets.
+// ORIGINAL: 0x00629780 ?clear@StringBox@@QAEXXZ 0x00629780-0x006298A4
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00629780.cpp; image:0x00629780-0x006298A4; source:src/stringbox.h:StringBox; source:src/leaf_recoveries.cpp:sub_441100"], "reason": "Replace the old link-only shim with the real StringBox method: original code selects the borrowed or embedded StringList, destroys its entries, hides the Scroll, zeros the top line, and redraws if visible. Typed ownership expresses those effects without raw self offsets."}
 void StringBox::clear() {
     StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
     list.remove_all();
