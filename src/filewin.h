@@ -47,6 +47,8 @@ class FileWin {
   void on_double_clicked(int a1);
   void on_button_clicked(int button_id);
   int populate_directory(char *directory);
+  void save();
+  void load();
   FileWin();
   ~FileWin();
   void UNK6();
@@ -75,13 +77,14 @@ class FileWin {
   // reads each back where the original writes it.
   // RECOVERY_MEMBER: v1 FileWin previous_directory_ 0x0 0x00614360
   char previous_directory_[260];  // GetCurrentDirectoryA output
-  uint8_t unmapped_104_[0x104];
+  // RECOVERY_MEMBER: v1 FileWin current_directory_ 0x104 0x00613D50
+  char current_directory_[260];
   uint8_t field_208_;
   uint8_t unmapped_209_[0x30C - 0x209];
   uint8_t field_30C_;
   uint8_t unmapped_30D_[0x410 - 0x30D];
-  uint8_t field_410_;
-  uint8_t unmapped_411_[0x514 - 0x411];
+  // RECOVERY_MEMBER: v1 FileWin file_name_ 0x410 0x00613D50
+  char file_name_[260];
   // RECOVERY_MEMBER: v1 FileWin extension_count_ 0x514 0x00614360
   int32_t extension_count_;  // number of five-byte suffix entries
   // RECOVERY_MEMBER: v1 FileWin extension_filters_ 0x518 0x00614360
@@ -108,10 +111,15 @@ class FileWin {
   ListBox list_box_;  // 0x286C, sizeof 0xB54, ends 0x33C0
   // RECOVERY_MEMBER: v1 FileWin directory_list_handle_ 0x33C0 0x00614360
   HWND directory_list_handle_;
+
+  void run_file_dialog(bool saving);
 };
 
 static_assert(sizeof(FileWin) == 0x33C4,
               "FileWin layout must match the original executable");
+
+// The modal file-dialog path publishes its active FileWin here.
+extern FileWin *ActiveFileWin;
 
 
 // ?UNK4@FileWin@@QAEXXZ (0x006146A0). Unrecovered; on_double_clicked calls it,

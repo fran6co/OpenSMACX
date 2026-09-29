@@ -36,6 +36,8 @@ class AlphaSave : public GraphicWin {
   void show_save_window(int mode);
   void hide_save_window();
   void on_selected(int selection_id);
+  void save();
+  void load();
 
  private:
   FileWin file_win_;             // 0x0A14

@@ -10,6 +10,11 @@
 #include "stdafx.h"
 #include "alphasave.h"
 #include "console.h"
+#include "alpha.h"
+#include "font.h"
+#include "game.h"
+#include "netdaemon.h"
+#include "strings.h"
 
 // Image references from AlphaSave::show/save/load store this, hide clears it,
 // and filebox_draw tests it. The storage is distinct from ConsoleGlobal.
@@ -157,4 +162,76 @@ void AlphaSave::on_selected(int) {
     file_win_.edit_box_.select_all_text();
     file_win_.edit_box_.redraw();
     file_win_.edit_box_.redraw();
+}
+
+// ORIGINAL: 0x00407920 ?save@AlphaSave@@QAEXXZ 0x00407920-0x00407A7E
+// The caption is label slot 674; the paired load dialog uses 673. The
+// original temporarily disables the two Net voice hotkeys while modal.
+// The retired standalone transcription reached the correct owner calls but
+// diverged early in VC6 register scheduling; this typed body is not exact.
+void AlphaSave::save() {
+    RECT caption = *buffer_working_rect();
+    if (ConsoleGlobal.is_visible()) {
+        caption.left += 0x17;
+        caption.right -= 0x37;
+    } else {
+        caption.left += 9;
+        caption.top += 9;
+        caption.right -= 9;
+    }
+    caption.left += 6;
+    caption.top += 6;
+    caption.right -= 6;
+    caption.bottom = caption.top + 0x14;
+
+    Buffer *canvas = this;
+    canvas->box_sprite(&caption, &InterfaceBoxStyles[6]);
+    canvas->set_text_color(0xA0, -1, 1, 1);
+    canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(674));
+    string_upper_slot()(StringTemp);
+    canvas->write_cent_l(StringTemp, &caption, strlen(StringTemp));
+
+    ActiveAlphaSave = this;
+    NetDaemonNet.voice_hotkey_48_ = 0;
+    NetDaemonNet.voice_hotkey_4c_ = 0;
+    file_win_.save();
+    NetDaemonNet.voice_hotkey_48_ = 0xDC;
+    NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
+}
+
+// ORIGINAL: 0x00407A80 ?load@AlphaSave@@QAEXXZ 0x00407A80-0x00407BDE
+// The retired standalone spelling could not reproduce VC6's two-register
+// frame, but its call order and owner identities are retained here.
+void AlphaSave::load() {
+    RECT caption = *buffer_working_rect();
+    if (ConsoleGlobal.is_visible()) {
+        caption.left += 0x17;
+        caption.right -= 0x37;
+    } else {
+        caption.left += 9;
+        caption.top += 9;
+        caption.right -= 9;
+    }
+    caption.left += 6;
+    caption.top += 6;
+    caption.right -= 6;
+    caption.bottom = caption.top + 0x14;
+
+    Buffer *canvas = this;
+    canvas->box_sprite(&caption, &InterfaceBoxStyles[6]);
+    canvas->set_text_color(0xA0, -1, 1, 1);
+    canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(673));
+    string_upper_slot()(StringTemp);
+    canvas->write_cent_l(StringTemp, &caption, strlen(StringTemp));
+
+    ActiveAlphaSave = this;
+    NetDaemonNet.voice_hotkey_48_ = 0;
+    NetDaemonNet.voice_hotkey_4c_ = 0;
+    file_win_.load();
+    NetDaemonNet.voice_hotkey_48_ = 0xDC;
+    NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
 }

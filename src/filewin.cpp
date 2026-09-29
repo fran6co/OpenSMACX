@@ -24,6 +24,9 @@
 #include "buffer.h"
 #include "temp.h"  // HandleMain
 
+// RECOVERY_OBJECT: v2 0x009B90AC 0x009B90B0 ?ActiveFileWin@@3PAVFileWin@@A 0x00613D50
+FileWin *ActiveFileWin = 0;
+
 // The modal Win's focus-list nodes carry a window pointer at +4 and a next
 // pointer at +0xC. WinNodeList owns the sequence and cursor; this view only
 // describes a node encountered by the file-dialog callback.
@@ -68,6 +71,86 @@ void FileWin::on_button_clicked(int button_id) {
         SetCurrentDirectoryA("..");
         populate_directory(".");
     }
+}
+
+// ORIGINAL: 0x00613D50 ?save@FileWin@@QAEXXZ 0x00613D50-0x00613F5C
+// The sibling load path differs in its action code and filename fallback.
+// Both use FileWin's real directory, suffix and control subobjects instead
+// of the old standalone unit's self-offset and IAT-pointer scaffolding.
+// The retired seed's VC6 frame diverged at instruction zero: the original
+// reserves 0x144 bytes without EBP, whereas the standalone spelling used
+// an EBP frame for WIN32_FIND_DATA. Both image bodies also leave EAX as 0
+// or this+0x208 despite their void-decorated symbols; return intent is open.
+void FileWin::save() {
+    run_file_dialog(true);
+}
+
+// ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133
+void FileWin::load() {
+    run_file_dialog(false);
+}
+
+void FileWin::run_file_dialog(bool saving) {
+    if (modal_window_ == 0) {
+        return;
+    }
+
+    field_638_ = saving ? 0x64 : 0xC8;
+    GetCurrentDirectoryA(260, current_directory_);
+    previous_directory_[0] = 0;
+    strcat(previous_directory_, current_directory_);
+    populate_directory(directory_);
+
+    if (file_name_[0] != 0) {
+        char *suffix = strrchr(file_name_, '.');
+        if (suffix == 0) {
+            strcat(file_name_, extension_filters_[0]);
+        } else {
+            bool matched = false;
+            for (int index = 0; index < extension_count_; ++index) {
+                if (_strcmpi(suffix, extension_filters_[index]) == 0) {
+                    matched = true;
+                    break;
+                }
+                // The original load path clears a nonmatching name inside
+                // the scan; save waits until every suffix has been tried.
+                if (!saving) {
+                    file_name_[0] = 0;
+                }
+            }
+            if (saving && !matched) {
+                file_name_[0] = 0;
+            }
+        }
+
+        WIN32_FIND_DATAA found;
+        HANDLE handle = FindFirstFileA(file_name_, &found);
+        if (handle != INVALID_HANDLE_VALUE) {
+            const int position = list_box_.UNK2(found.cFileName);
+            if (position >= 0) {
+                list_box_.set_selected_pos(position, 1);
+                list_box_.redraw();
+            }
+            FindClose(handle);
+        } else if (saving) {
+            edit_box_.set_text(file_name_);
+            edit_box_.select_all_text();
+            edit_box_.redraw();
+        }
+    }
+
+    ActiveFileWin = this;
+    modal_window_->set_modal(1, 0, 0);
+    modal_window_->hide();
+
+    if (field_638_ != 0x12C) {
+        GetCurrentDirectoryA(260, previous_directory_);
+        if (strlen(previous_directory_) < 261) {
+            directory_[0] = 0;
+            strcat(directory_, previous_directory_);
+        }
+    }
+    SetCurrentDirectoryA(current_directory_);
 }
 
 // ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694
@@ -200,7 +283,7 @@ FileWin::FileWin() {
     // most-derived flag is a compiler ABI argument, not a second construction.
     field_208_ = 0;
     field_30C_ = 0;
-    field_410_ = 0;
+    file_name_[0] = 0;
     extension_count_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefault);
@@ -264,7 +347,7 @@ void FileWin::close() {
     list_box_.close();
     field_208_ = 0;
     field_30C_ = 0;
-    field_410_ = 0;
+    file_name_[0] = 0;
     extension_count_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefaultNext);
@@ -350,7 +433,7 @@ Status: Complete
 void FileWin::UNK1() {
     field_208_ = 0;
     field_30C_ = 0;
-    field_410_ = 0;
+    file_name_[0] = 0;
     directory_[0] = 0;
     extension_count_ = 0;
 }
