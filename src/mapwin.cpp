@@ -1698,6 +1698,60 @@ static const signed char *const AltLightBit200 = (const signed char *)0x007F6750
 // RECOVERY_OBJECT: v2 0x007F6644 0x007F6684 _OceanCornerShades 0x004632D0
 static int OceanCornerShades[16];
 
+// The initializer at 0x00470420 writes four consecutive 49-byte corner-light
+// tables. This storage begins after the separately owned ocean-shade tail and
+// ends at the observed exclusive boundary 0x007F674C.
+// RECOVERY_OBJECT: v2 0x007F6688 0x007F674C ?MapLightingTable@@3PACA 0x00470420
+signed char MapLightingTable[4 * 49];
+static bool MapLightingTableInitialized;
+
+static void fill_map_lighting_table() {
+    for (int quadrant = 0; quadrant < 4; ++quadrant) {
+        int index = 0;
+        for (int row = -3; row <= 3; ++row) {
+            for (int column = -3; column <= 3; ++column) {
+                int x;
+                int y;
+                switch (quadrant) {
+                case 0:
+                    x = row;
+                    y = column;
+                    break;
+                case 1:
+                    x = -column;
+                    y = row;
+                    break;
+                case 2:
+                    x = -row;
+                    y = -column;
+                    break;
+                default:
+                    x = column;
+                    y = -row;
+                    break;
+                }
+                x *= 100;
+                y *= 100;
+                const int root = quick_root(x * x + y * y);
+                int light = -3 * (x + y);
+                if (root != 0) {
+                    light /= root;
+                }
+                MapLightingTable[quadrant * 49 + index] =
+                    static_cast<signed char>(light);
+                ++index;
+            }
+        }
+    }
+    MapLightingTableInitialized = true;
+}
+
+static void ensure_map_lighting_table() {
+    if (!MapLightingTableInitialized) {
+        fill_map_lighting_table();
+    }
+}
+
 // 0x007F6680 is the BIASED corner slope-light lookup base, not a proved
 // allocation start. get_brighting reads each corner as
 //
@@ -1710,18 +1764,24 @@ static int OceanCornerShades[16];
 // 0x7F66E2 and 0x7F6713, so the stride is 0x31 = 49 = 7*7 and this one base
 // serves all four.
 //
-// compute_lighting_table (470420) writes 4*49 bytes at 7F6688..7F674C.
+// compute_lighting_table (470420) writes MapLightingTable at 7F6688..7F674C.
 // For v,w in 1..7, 7*v+w = 8+7*(v-1)+(w-1): this lookup addresses that
 // SAME generated table. The eight-byte bias does not prove another object.
 // get_alt (47037A..47039C) stores (sum_four_tiers-4*recipient_tier+4)&15;
 // the 1..7 domain needs all other corner tiers within one of the recipient.
-// Without that invariant, reads can reach the ocean-shade tail at 7F6680
-// or beyond the generated table. Loaded/editor/cache states and the real
-// initializer path remain unresolved; do not silently clamp these indices
-// or split the storage into independent arrays on the bias alone. The
-// known four-byte ocean-tail overlap is handled explicitly by get_brighting;
-// the remaining generated-light storage and its initializer stay unresolved.
+// Without that invariant, reads can reach the ocean-shade tail at 7F6680,
+// the four-byte gap before MapLightingTable, or beyond the generated table.
+// Keep those exceptional cache states visible; do not silently clamp them.
 static const signed char *const CornerLightTable = (const signed char *)0x007F6680;
+
+static __forceinline signed char corner_light_value(int biased_index) {
+    const int generated_index = biased_index - 8;
+    if (biased_index >= 8 && biased_index < 8 + 4 * 49) {
+        ensure_map_lighting_table();
+        return MapLightingTable[generated_index];
+    }
+    return CornerLightTable[biased_index];
+}
 
 // 0x00685684 and the five tables behind it - THE ALTITUDE BONUS LOOKUP
 // `get_alt` walks. 0x00685684 is the direction table (five bytes a direction,
@@ -5119,18 +5179,18 @@ int MapWin::get_brighting(int x, int y, int corner) {
             result = byte < 0x80U ? static_cast<int>(byte)
                                   : static_cast<int>(byte) - 0x100;
         } else {
-            result = CornerLightTable[index];
+            result = corner_light_value(index);
         }
         break;
     }
     case 1:
-        result = CornerLightTable[0x31 + v2 * 7 + v3];
+        result = corner_light_value(0x31 + v2 * 7 + v3);
         break;
     case 2:
-        result = CornerLightTable[0x62 + v3 * 7 + v4];
+        result = corner_light_value(0x62 + v3 * 7 + v4);
         break;
     case 3:
-        result = CornerLightTable[0x93 + v4 * 7 + v1];
+        result = corner_light_value(0x93 + v4 * 7 + v1);
         break;
     default:
         result = (int)v0;
@@ -5139,6 +5199,12 @@ int MapWin::get_brighting(int x, int y, int corner) {
     char *finalTile = brighting_tile(owned_, row, colHalf);
     finalTile[corner] = (char)(result + 0x80);
     return result;
+}
+
+// ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470420.cpp: complete transcription of the 0x00470420..0x00470536 body", "src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and CornerLightTable consumer", "src/general.h: quick_root(int)"], "reason": "Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
+void MapWin::compute_lighting_table() {
+    fill_map_lighting_table();
 }
 
 // Fixed-slot bindings carried from 00470790.cpp
