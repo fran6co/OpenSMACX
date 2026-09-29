@@ -51,6 +51,7 @@ class EditBox : public GraphicWin {
   virtual void pass_dialog_focus();     // slot 64
   int text_fits();
   int text_position(int x);
+  int init(int x, int y, int width, int height, Win *parent, int focus_wrap);
 
   // 0x006151E0, a pending_bodies forwarder; EditGroup calls it directly.
   void set_text(char *text);
@@ -88,6 +89,10 @@ class EditBox : public GraphicWin {
   // RECOVERY_MEMBER: v2 EditBox time_ Time 0xB4C 0x00614E50
   Time time_;  // 0xB4C, the IDB's trailing member; the class ends at 0xB74
 };
+
+// Timer callback at 0x00615E40. The image takes an integer pointer payload
+// from the stack; this is not an EditBox member despite its catalogue label.
+void __cdecl edit_box_caret_callback(int edit_box_address);
 
 
 static_assert(sizeof(EditBox) == 0xb74,

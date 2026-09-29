@@ -62,6 +62,7 @@ class EditGroup : public virtual GraphicWin, public virtual Dialog {
   void set_text_limits(int limit);
   char *get_text(int index);
   void set_text(char *text, int index);
+  void append_text(char *text, int index);
   // 0x00611F80, a pending_bodies forwarder. DipEdit::on_button_clicked drives
   // it twice on the EditGroup subobject BasePop carries at 0x22C8, once per
   // prompt field: (caption, buffer, character limit).

@@ -30,6 +30,15 @@ static void __fastcall stop_edit_timer(Time *timer) {
     timer->stop();
 }
 
+// ORIGINAL: 0x00615E40 ?caret_callback@EditBox@@QAEXH@Z 0x00615E40-0x00615E5F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned disassembly 0x00615E40 reads its only receiver from [esp+4] and ends with a tail jump through the receiver's redraw slot", "src/unrecovered/00614fe0.cpp passes EditBox this as Time's integer callback payload", "src/editbox.h field_B48_ is the caret visibility state"], "reason": "Treat the timer entry as a free callback taking an EditBox pointer payload, not a member with an invented implicit receiver."}
+// symbol    ?edit_box_caret_callback@@YAXH@Z
+void __cdecl edit_box_caret_callback(int edit_box_address) {
+    EditBox *const box = reinterpret_cast<EditBox *>(edit_box_address);
+    box->field_B48_ = box->field_B48_ == 0;
+    box->redraw();
+}
+
 // 615DF0. Calls slot 62 virtually, not slot 12 directly.
 // ORIGINAL: 0x00615DF0 ?on_dialog_focus@EditBox@@QAEXH@Z 0x00615DF0-0x00615E31 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/00615df0.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
@@ -477,6 +486,63 @@ uint32_t EditBoxDefaultB2C;
 uint32_t EditBoxDefaultB30 = 1;
 // RECOVERY_OBJECT: v2 0x006971E4 0x006971E8 ?EditBoxDefaultB34@@3IA 0x00614E50
 uint32_t EditBoxDefaultB34 = 4;
+
+// The initializer reads these four consecutive colour defaults. The first
+// occupies zero-filled storage; the others are initialized image data.
+// RECOVERY_OBJECT: v2 0x009B90C0 0x009B90C4 ?EditBoxTextColor1@@3HA 0x00614FE0
+int EditBoxTextColor1;
+// RECOVERY_OBJECT: v2 0x006971E8 0x006971EC ?EditBoxTextColor2@@3HA 0x00614FE0
+int EditBoxTextColor2 = -1;
+// RECOVERY_OBJECT: v2 0x006971EC 0x006971F0 ?EditBoxTextColor3@@3HA 0x00614FE0
+int EditBoxTextColor3 = 1;
+// RECOVERY_OBJECT: v2 0x006971F0 0x006971F4 ?EditBoxTextColor4@@3HA 0x00614FE0
+int EditBoxTextColor4 = 1;
+
+// ORIGINAL: 0x00614FE0 ?init@EditBox@@QAEHHHHHPAUWin@@H@Z 0x00614FE0-0x00615179
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00614fe0.cpp", "EditBox member offsets in src/editbox.h", "Buffer::markup_enabled_ lies at GraphicWin+0x964", "Original image values at 0x006971E8-0x006971F3"], "reason": "Initialize the real editor, base window, text buffer and owned timer; install the free caret callback rather than a synthetic vtable receiver."}
+// The recovered Win base is declared as a class; VC6 consequently spells its
+// pointer PAVWin rather than the historical PAUWin without changing the ABI.
+// symbol    ?init@EditBox@@QAEHHHHHPAVWin@@H@Z
+int EditBox::init(int x, int y, int width, int height, Win *parent,
+                  int focus_wrap) {
+    field_B14_ = 10;
+    text_[0] = 0;
+    field_B28_ = EditBoxDefaultB28;
+    field_B2C_ = EditBoxDefaultB2C;
+    field_B30_ = EditBoxDefaultB30;
+    field_B34_ = EditBoxDefaultB34;
+    field_B1C_ = EditBoxDefaultB1C;
+    field_B20_ = EditBoxDefaultB20;
+    field_B24_ = EditBoxDefaultB24;
+    field_B38_ = 0;
+    field_B40_ = 0;
+    field_B44_ = 0;
+    field_B48_ = 0;
+    field_B18_ = 0;
+    field_B3C_ = 0;
+
+    time_.close();
+    GraphicWin::close();
+    if (parent == 0) return 3;
+
+    const int style_flags = (parent->iFlags_ & 0x1000) ? 0x2020 : 0x102020;
+    const int result = GraphicWin::init(x, y, width, height, 0,
+                                        style_flags, parent, 0, 0);
+    if (result != 0) return result;
+
+    Buffer::set_markup_enabled(0);
+    Buffer::set_text_color(EditBoxTextColor1, EditBoxTextColor2,
+                           EditBoxTextColor3, EditBoxTextColor4);
+    Win::set_cursor(0x7f01);
+    field_B40_ = 0;
+    field_B44_ = strlen(text_);
+    redraw();
+    time_.init(edit_box_caret_callback, reinterpret_cast<int>(this), 0x1f4, 5);
+    redraw();
+    if (focus_wrap) field_B3C_ |= 1;
+    else field_B3C_ &= ~1u;
+    return 0;
+}
 
 
 /*

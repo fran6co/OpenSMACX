@@ -146,6 +146,17 @@ char *EditGroup::get_text(int index) {
     return nullptr;
 }
 
+// ORIGINAL: 0x00612080 ?append_text@EditGroup@@QAEXPADH@Z 0x00612080-0x006120AA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612080.cpp retains the exact seed", "src/editgroup.h boxes_[10] are EditBox owners at offset 0x4", "src/editbox.h EditBox::text_ starts at offset 0xA14"], "reason": "Copy the selected editor's text through its real EditBox member instead of indexing receiver bytes."}
+// symbol    ?append_text@EditGroup@@QAEXPADH@Z
+void EditGroup::append_text(char *text, int index) {
+    EditBox *const box = boxes_[index];
+    if (box != 0 && text != 0) {
+        text[0] = 0;
+        strcat(text, box->text_);
+    }
+}
+
 /*
 Purpose: Set one box's text, doing nothing when that box is absent.
 // ORIGINAL: 0x00612040 ?set_text@EditGroup@@QAEXPADH@Z 0x00612040-0x00612059 BYTE_EXACT
@@ -176,7 +187,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to EditGroup and
          EditGroup::attach overrides a virtual reached through a virtual
          base. There is no C++ here to get right, only a name to record.
 // ORIGINAL: 0x00612810 ?attach@thunk1_EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00612810-0x00612818 BYTE_EXACT
-// symbol    ?attach@EditGroup@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// symbol    ?attach@EditGroup@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
 // size      8 bytes
 // kind      game
 Status: Complete
@@ -355,6 +366,7 @@ Purpose: Add one labelled edit field to the group: the group keeps ten boxes,
          ordinal, and the character limit lands in the group's limit array.
 
 // ORIGINAL: 0x00611F80 ?edit@EditGroup@@QAEHPADPADH@Z 0x00611F80-0x00612040 FILE
+// symbol    ?edit@EditGroup@@QAEHPAD0H@Z
 // size      192 bytes
 // prototype int (__thiscall ?edit@EditGroup@@QAEHPADPADH@Z)(EditGroup* this, int8*, int8*, int)
 // callers   1   call targets   3
