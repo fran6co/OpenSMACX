@@ -1364,7 +1364,7 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 #include "lock.h"      // LockEnableMask - the deletion-record occupancy mask
 #include "log.h"       // log_say - both deletion paths report through it
 #include "fx.h"        // FX - play is defined in this wave
-#include "deletionlist.h"  // DeletionList - both bodies are defined in this wave
+#include "deletionlist.h"  // DeletionList conversion and deletion enqueue
 #include "pulldown.h"   // PullDown - the menu handlers are defined in this wave
 #include "reportwin.h"  // ReportWin - on_redraw is defined in this wave
 #include "diplopop.h"   // DiploPop - on_redraw is defined in this wave
@@ -2066,30 +2066,27 @@ Status: Coverage transcription - unclaimed body
 int DeletionList::convert(int original_id, int new_owner) {
     int result = original_id;
     int search = new_owner + 1;
-    const int total = static_cast<int>(field_5A0_);
+    const int total = current_owner_;
     if (search <= total) {
         const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
         do {
-            char *rec = reinterpret_cast<char *>(this);
             for (int slot = 0; slot < 0x18; slot++) {
-                if ((*reinterpret_cast<unsigned char *>(rec) & mask) != mask
-                    && *reinterpret_cast<int *>(rec + 4) == search) {
-                    int count = *reinterpret_cast<short *>(rec + 8);
+                const DeletionRecord &record = records_[slot];
+                if ((record.acknowledgements_ & mask) != mask
+                    && record.owner_ == search) {
+                    int count = record.count_;
                     if (count > 0) {
-                        short *p = reinterpret_cast<short *>(rec + 0xA);
-                        do {
-                            if (*p == result) {
+                        for (int index = 0; index < count; ++index) {
+                            const int deleted_id = record.vehicle_ids_[index];
+                            if (deleted_id == result) {
                                 result = -1;
-                            } else if (*p < result) {
+                            } else if (deleted_id < result) {
                                 result--;
                             }
-                            p++;
-                            count--;
-                        } while (count != 0);
+                        }
                     }
                     break;
                 }
-                rec += 0x3C;
             }
             search++;
         } while (search <= total);
@@ -2109,67 +2106,27 @@ int DeletionList::convert(int original_id, int new_owner) {
 /*
 Purpose: Queue one vehicle deletion against its owner's deletion record.
 // ORIGINAL: 0x0052DE70 ?add_deletion@DeletionList@@QAEHH@Z 0x0052DE70-0x0052DF2E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original52DE70..52DF2E; retired seed git:117282ee:src/unrecovered/0052de70.cpp records the same identity and spans with its raw-offset TRIED note kept below.", "The vehicles are veh.h's own Vehs (0x00952828, 0x34 stride) whose x/y words open the record; the occupancy mask is lock.h's LockEnableMask and the owner count sits at +0x5A0, with 0x1E ids per 0x3C record exactly as the seed indexes them."], "reason": "Coverage transcription of the deletion enqueue on the typed DeletionList receiver with Vehs and LockEnableMask named from their owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original52DE70..52DF2E; retired seed git:117282ee:src/unrecovered/0052de70.cpp records the same identity and spans with its raw-offset TRIED note kept below.", "The vehicles are veh.h's own Vehs (0x00952828, 0x34 stride) whose x/y words open the record; the occupancy mask is lock.h's LockEnableMask and the owner count sits at +0x5A0. The original uses 0x1E shorts as each 0x3C-byte record stride; 25 shorts fit after its 0xA-byte header."], "reason": "Coverage transcription of the deletion enqueue on the typed DeletionList receiver with Vehs and LockEnableMask named from their owners."}
 Status: Coverage transcription - unclaimed body
 */
-// deletionlist.h spells this member void, but the image's symbol ends H@Z -
-// it returns the pre-increment count. veh_kill, the one caller, ignores the
-// result, so the void spelling loses nothing; the header's return type is
-// the coordinator's correction to make.
-void DeletionList::add_deletion(int veh_id) {
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    const short vx = *reinterpret_cast<const short *>(
-        reinterpret_cast<const char *>(&Vehs[veh_id]));
-    const short vy = *reinterpret_cast<const short *>(
-        reinterpret_cast<const char *>(&Vehs[veh_id]) + 2);
-    log_say(StrDeletingVehicle, veh_id, vx, vy);
+int DeletionList::add_deletion(int veh_id) {
+    log_say(StrDeletingVehicle, veh_id, Vehs[veh_id].x, Vehs[veh_id].y);
 
-    const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
-    int idx = 0;
-    int found = -1;
-    unsigned char *rec = self;
-    do {
-        if ((rec[0] & mask) != mask) {
-            if (*reinterpret_cast<int *>(rec + 4)
-                == *reinterpret_cast<int *>(self + 0x5A0)) {
-                found = idx;
-                break;
-            }
-        }
-        ++idx;
-        rec += 0x3C;
-    } while (idx < 0x18);
-
-    if (found < 0) {
-        idx = 0;
-        rec = self;
-        do {
-            if ((rec[0] & mask) == mask) {
-                break;
-            }
-            ++idx;
-            rec += 0x3C;
-        } while (idx < 0x18);
-        if (idx >= 0x18) {
-            idx = 0;
-        }
-        rec = self + idx * 0x3C;
-        rec[0] = 0xFF;
-        *reinterpret_cast<short *>(rec + 8) = 0;
-        *reinterpret_cast<int *>(rec + 4) =
-            *reinterpret_cast<int *>(self + 0x5A0);
-        rec[0] = 0;
-    } else {
-        idx = found;
+    int slot = find_owner_slot(current_owner_);
+    if (slot < 0) {
+        slot = find_free_slot();
+        DeletionRecord &new_record = records_[slot];
+        new_record.acknowledgements_ = 0xFF;
+        new_record.count_ = 0;
+        new_record.owner_ = current_owner_;
+        new_record.acknowledgements_ = 0;
     }
 
-    short *const count_ptr = reinterpret_cast<short *>(self + idx * 0x3C + 8);
-    const int bucket = *count_ptr + idx * 0x1E;
-    *reinterpret_cast<short *>(self + bucket * 2 + 10) =
-        static_cast<short>(veh_id);
-    *count_ptr = static_cast<short>(*count_ptr + 1);
-    // The image returns *count_ptr - 1 here (its symbol ends H@Z); the
-    // in-tree declaration is void and nothing consumes the value.
+    DeletionRecord &record = records_[slot];
+    const int old_count = record.count_;
+    record.vehicle_ids_[old_count] = static_cast<short>(veh_id);
+    record.count_ = static_cast<short>(old_count + 1);
+    return old_count;
 }
 
 // ---------------------------------------------------------------------------

@@ -17,7 +17,7 @@
  */
 #include "stdafx.h"
 #include "deletionlist.h"
-#include <cstring>
+#include "lock.h"
 
 /*
 Purpose: Reset one deletion-list entry to its empty state - an 0xFF marker byte
@@ -33,11 +33,65 @@ Return Value: n/a
 Status: Complete
 */
 void DeletionList::clear(int index) {
-    uint8_t *const entry =
-        reinterpret_cast<uint8_t *>(this) + static_cast<size_t>(index) * 0x3C;
-    const uint8_t marker = 0xFF;
-    std::memcpy(entry, &marker, sizeof(marker));
-    const uint16_t zero = 0;
-    std::memcpy(entry + 8, &zero, sizeof(zero));
+    records_[index].acknowledgements_ = 0xFF;
+    records_[index].count_ = 0;
 }
 
+/*
+Purpose: Find a reusable deletion record. The image returns slot zero if all
+         24 slots are occupied, rather than reporting an error.
+// ORIGINAL: 0x0052DCF0 ?UNK1@DeletionList@@QAEHXZ 0x0052DCF0-0x0052DD10 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The seed's unnamed member scans the deletion-record acknowledgement bytes for a slot whose active-faction bits are all set.","evidence":["Original 0x0052DCF0-0x0052DD10 reads 0x009A64E8, advances the receiver by 0x3C and tests exactly 24 entries; git:bdab0bfb:src/recovered/0052dcf0.cpp preserves the historical exact spelling.","src/lock.cpp binds 0x009A64E8 as LockEnableMask; DeletionList's neighboring methods use the same record stride and mask."]}
+// symbol    ?find_free_slot@DeletionList@@QAEHXZ
+*/
+int DeletionList::find_free_slot() {
+    DeletionRecord *record = records_;
+    const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
+    int slot;
+    for (slot = 0; slot < 24; ) {
+        if ((record->acknowledgements_ & mask) == mask) {
+            return slot;
+        }
+        ++slot;
+        ++record;
+    }
+    return 0;
+}
+
+/*
+Purpose: Find the occupied deletion record for an owner, or return -1.
+// ORIGINAL: 0x0052DD10 ?UNK2@DeletionList@@QAEHH@Z 0x0052DD10-0x0052DD4B FILE
+// RECOVERY_BINDING: v1 {"reason":"The seed's unnamed member scans occupied 0x3C-byte records and compares the owner word at +4 with its argument.","evidence":["Original 0x0052DD10-0x0052DD4B scans 24 entries, tests the 0x009A64E8 acknowledgement mask, compares +4 with its argument and returns -1 on exhaustion.","src/recovered/units/0052dd10.cpp retains the earlier candidate and its failed standalone compilation evidence."]}
+// symbol    ?find_owner_slot@DeletionList@@QAEHH@Z
+*/
+int DeletionList::find_owner_slot(int owner) {
+    const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
+    for (int slot = 0; slot < 24; ++slot) {
+        const DeletionRecord &record = records_[slot];
+        if ((record.acknowledgements_ & mask) != mask && record.owner_ == owner) {
+            return slot;
+        }
+    }
+    return -1;
+}
+
+/*
+Purpose: Mark a faction's acknowledgement for an owner's pending deletions;
+         free the record once every active faction has acknowledged it.
+// ORIGINAL: 0x0052DD50 ?ack@DeletionList@@QAEXHH@Z 0x0052DD50-0x0052DDB5 FILE
+// RECOVERY_BINDING: v1 {"reason":"The owner/mask search and flag update in the seed are one acknowledgement operation over the typed deletion records.","evidence":["Original 0x0052DD50-0x0052DDB5 scans 24 records, compares owner at +4, sets a faction bit in byte zero and writes 0xFF when active bits are complete.","src/recovered/units/0052dd50.cpp preserves the earlier candidate; src/lock.cpp owns the active-faction mask at 0x009A64E8."]}
+*/
+void DeletionList::ack(int owner, int faction) {
+    const int slot = find_owner_slot(owner);
+    if (slot < 0) {
+        return;
+    }
+    DeletionRecord &record = records_[slot];
+    const unsigned char bit = static_cast<unsigned char>(1u << (faction & 31));
+    const unsigned char acknowledgements = record.acknowledgements_ | bit;
+    record.acknowledgements_ = acknowledgements;
+    const unsigned char mask = static_cast<unsigned char>(LockEnableMask);
+    if ((acknowledgements & mask) == mask) {
+        record.acknowledgements_ = 0xFF;
+    }
+}
