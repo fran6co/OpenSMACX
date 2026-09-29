@@ -27,7 +27,7 @@ int __cdecl fn_0064558a();
 // them that way gets the call INLINED into a `repne scasb`/`rep movsd`
 // expansion the original does not have here. Spelling them `_strlen`/
 // `_strcpy` (a plain, non-"recognised" identifier - precedent in
-// src/recovered/005bf350.cpp) keeps them real calls.
+// git:3f34af2cde626ce68311a71f2a29818e510298d7:src/recovered/005bf350.cpp) keeps them real calls.
 //
 // Binding `this`/`name` to a named local flips the esi/edi assignment
 // (both ways tried: named locals for both, named locals for just one,

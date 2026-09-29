@@ -1290,7 +1290,7 @@ int __cdecl pop_ask_number(char *label, int initial, int (__cdecl *callback)()) 
 // their own original identities; this body uses the caller's caption rather
 // than the shared default and retains the same popup state/lifetime path.
 // ORIGINAL: 0x00627C30 ?pop_ask_number@@YAHPADPADHP6AHXZ@Z 0x00627C30-0x00627CFC BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00627c30.cpp"], "reason": "Home the original caption-and-label numeric popup in its typed popup owner; the X_pop_ask_number routing requires both arguments and this independent original span is established by the retained seed."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/unrecovered/00627c30.cpp"], "reason": "Home the original caption-and-label numeric popup in its typed popup owner; the X_pop_ask_number routing requires both arguments and this independent original span is established by the retained seed."}
 // symbol    ?pop_ask_number@@YAHPAD0HP6AHXZ@Z
 int __cdecl pop_ask_number(char *caption, char *label, int initial,
                            int (__cdecl *callback)()) {

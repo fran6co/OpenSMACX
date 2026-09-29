@@ -624,7 +624,7 @@ int __cdecl X_pop(const char *label, int (__cdecl *callback)()) {
 // Text-bearing X_pop overload: reject a missing text buffer, otherwise pass
 // its actual length to the common six-argument implementation.
 // ORIGINAL: 0x005BF350 ?X_pop@@YAHPADPBDPADHP6AHXZ@Z 0x005BF350-0x005BF384 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005bf350.cpp", "src/xpops.h", "src/xpops.cpp"], "reason": "Recover the caption, label, override-text and value overload as a null-checked length-calculating wrapper over the existing typed X_pop core."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/recovered/005bf350.cpp", "source:src/xpops.h"], "reason": "Recover the caption, label, override-text and value overload as a null-checked length-calculating wrapper over the existing typed X_pop core."}
 // symbol    ?X_pop@@YAHPADPBD0HP6AHXZ@Z
 int __cdecl X_pop(char *caption, const char *label, char *text, int value,
                   int (__cdecl *callback)()) {
@@ -635,7 +635,7 @@ int __cdecl X_pop(char *caption, const char *label, char *text, int value,
 
 // X_pop_ask with shared caption, caller-provided initial value and text.
 // ORIGINAL: 0x005BFAB0 ?X_pop_ask@@YAHPBDHPADP6AHXZH@Z 0x005BFAB0-0x005BFAD6 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005bfab0.cpp", "src/xpops.h"], "reason": "Recover the shared-caption X_pop_ask overload as a typed delegation to its captioned body."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/recovered/005bfab0.cpp", "source:src/xpops.h"], "reason": "Recover the shared-caption X_pop_ask overload as a typed delegation to its captioned body."}
 int __cdecl X_pop_ask(const char *label, int value, char *text,
                       int (__cdecl *callback)(), int flags) {
     return X_pop_ask(PopupStartCaption, label, value, text, callback, flags);
@@ -643,7 +643,7 @@ int __cdecl X_pop_ask(const char *label, int value, char *text,
 
 // Captioned X_pop_ask with no initial text buffer.
 // ORIGINAL: 0x005BFAE0 ?X_pop_ask@@YAHPADPBDHP6AHXZH@Z 0x005BFAE0-0x005BFB03 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005bfae0.cpp", "src/xpops.h"], "reason": "Recover the captioned X_pop_ask overload that defaults its optional text buffer to null."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/recovered/005bfae0.cpp", "source:src/xpops.h"], "reason": "Recover the captioned X_pop_ask overload that defaults its optional text buffer to null."}
 int __cdecl X_pop_ask(char *caption, const char *label, int value,
                       int (__cdecl *callback)(), int flags) {
     return X_pop_ask(caption, label, value, nullptr, callback, flags);
@@ -651,7 +651,7 @@ int __cdecl X_pop_ask(char *caption, const char *label, int value,
 
 // Captioned X_pop_ask overload that derives its initial length from text.
 // ORIGINAL: 0x005BFB40 ?X_pop_ask@@YAHPADPBDPADP6AHXZH@Z 0x005BFB40-0x005BFB74 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005bfb40.cpp", "src/xpops.h"], "reason": "Recover the text-bearing X_pop_ask overload with null guard and computed text length."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/recovered/005bfb40.cpp", "source:src/xpops.h"], "reason": "Recover the text-bearing X_pop_ask overload with null guard and computed text length."}
 // symbol    ?X_pop_ask@@YAHPADPBD0P6AHXZH@Z
 int __cdecl X_pop_ask(char *caption, const char *label, char *text,
                       int (__cdecl *callback)(), int flags) {
@@ -664,7 +664,7 @@ int __cdecl X_pop_ask(char *caption, const char *label, char *text,
 // the corresponding optional script file, then fall back to the caller's
 // caption if the alternate dialog cannot be opened or accepted.
 // ORIGINAL: 0x005BFBC0 ?X_pop_ask@@YAHPADPBDHPADP6AHXZH@Z 0x005BFBC0-0x005BFD02 BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005bfbc0.cpp", "src/xpops.h", "src/popup.h", "src/faction.h"], "reason": "Recover the mod-aware shared X_pop_ask core through typed faction, popup-file, and popup-dialog owners."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/unrecovered/005bfbc0.cpp", "source:src/xpops.h", "source:src/popup.h", "source:src/faction.h"], "reason": "Recover the mod-aware shared X_pop_ask core through typed faction, popup-file, and popup-dialog owners."}
 // symbol    ?X_pop_ask@@YAHPADPBDH0P6AHXZH@Z
 int __cdecl X_pop_ask(char *caption, const char *label, int value,
                       char *text, int (__cdecl *callback)(), int flags) {
@@ -737,7 +737,7 @@ int __cdecl X_pop_ask_number(char *caption, const char *label,
 
 // Numeric-entry convenience form: shared caption and initial value zero.
 // ORIGINAL: 0x005BFD50 ?X_pop_ask_number@@YAHPBDP6AHXZ@Z 0x005BFD50-0x005BFD6C BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005bfd50.cpp", "src/xpops.h", "src/popup.h"], "reason": "Recover the shared-caption numeric X_pop_ask_number convenience overload with its original zero default."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f34af2cde626ce68311a71f2a29818e510298d7:src/recovered/005bfd50.cpp", "source:src/xpops.h", "source:src/popup.h"], "reason": "Recover the shared-caption numeric X_pop_ask_number convenience overload with its original zero default."}
 int __cdecl X_pop_ask_number(const char *label,
                              int (__cdecl *callback)()) {
     return X_pop_ask_number(PopupStartCaption, label, 0, callback);
