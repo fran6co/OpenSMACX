@@ -21,6 +21,9 @@
 #include "listbox.h"
 #include "stringbox.h"
 
+extern int MessageWinTextColor;
+extern int MessageWinTextBackground;
+
  /*
   * MessageWin class
   *

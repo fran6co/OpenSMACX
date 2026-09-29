@@ -7,6 +7,8 @@
 #include "font.h"
 #include "spot.h"
 
+extern int MultiWindowRedrawSuppressed;
+
 // The constructor at 0x0047A590 constructs GraphicWin first, then Buffer,
 // two three-element Sprite arrays, five more Sprites, two FlatButtons, two
 // Fonts and Spot. The destructor at 0x0047A430 destroys them in reverse.
@@ -23,6 +25,8 @@ class MultiWin : public GraphicWin {
   ~MultiWin();
 
   void draw(int draw_type);
+  void draw_player(int faction_id, int row, RECT *bounds);
+  void draw_time(RECT *bounds, int draw_type);
   void on_mouse_move(int x, int y);
   virtual void on_mouse_leave(int x, int y);
   virtual void on_button_clicked(int button);

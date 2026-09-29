@@ -5,6 +5,207 @@
 #include "faction.h"
 #include "palette.h"
 #include "wave.h"
+#include "base.h"
+#include "council.h"
+#include "lock.h"
+#include "strings.h"
+#include "alpha.h"
+#include "messagewin.h"
+#include "spying_recovery.h"
+#include "maininterface.h"
+#include "general.h"
+
+static_assert(offsetof(PlayerData, time_bonus_count) == 0x2054,
+              "MultiWin time-bonus source offset");
+
+// ORIGINAL: 0x00478630 ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z 0x00478630-0x00478BDB
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478630.cpp", "src/multiwin.h", "src/faction.h", "src/maininterface.h"], "reason": "The original row painter uses MultiWin's owned Spot, sprite array and first font, typed faction names and treaties, and shared chat colors. Network turn-state suffixes remain pending their global owners."}
+// symbol    ?draw_player@MultiWin@@QAEXHHPAUtagRECT@@@Z
+void MultiWin::draw_player(int faction_id, int row, RECT *bounds) {
+  Buffer *canvas = static_cast<Buffer *>(this);
+  canvas->set_font(&font1_, 0, 0, 0);
+
+  const int row_height = bounds->bottom - bounds->top;
+  const int icon_left = bounds->left + 7;
+  const int text_left = icon_left + (IsMultiplayerNet ? row_height : 0) + 3;
+  const int text_right = bounds->right - 10;
+  const unsigned int faction_bit = 1u << faction_id;
+  if (IsMultiplayerNet && (LockEnableMask & faction_bit)) {
+    spot_.add(faction_id, 0, icon_left, bounds->top, row_height, row_height);
+    Sprite &icon = sprites2_[0];
+    icon.draw(canvas, icon.transparent_index(), icon_left,
+              bounds->top + (row_height - icon.height()) / 2, 1, 1);
+  }
+  spot_.add(faction_id, 1, text_left, bounds->top,
+            text_right - text_left, row_height);
+  canvas->set_text_color(ChatItemIdTable[faction_id],
+                         ChatShadowColors[faction_id], 1, 1);
+
+  StringTemp[0] = 0;
+  char row_text[32];
+  _itoa(row, row_text, 10);
+  strcat(StringTemp, row_text);
+  strcat(StringTemp, " ");
+  GenderDefault = Players[faction_id].is_leader_female;
+  PluralityDefault = 0;
+  strcat(StringTemp, Players[faction_id].name_leader);
+  RECT text_bounds = *bounds;
+  text_bounds.left = text_left;
+  text_bounds.right = text_right;
+  canvas->write_l(StringTemp, &text_bounds, strlen(StringTemp));
+
+  StringTemp[0] = 0;
+  if (!IsMultiplayerNet) {
+    const unsigned int treaties =
+        PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction_id];
+    int label_index = -1;
+    if (treaties & 1) label_index = 0x34c / 4;
+    else if (treaties & 2) label_index = 0x350 / 4;
+    else if (treaties & 4) label_index = 0x354 / 4;
+    else if (treaties & 0x10) label_index = 0x358 / 4;
+    if (label_index >= 0) strcat(StringTemp, label_get(label_index));
+  }
+  // Pending: network control and countdown suffixes require the
+  // unbound 0x0093E8xx turn state and its PlayerLock ownership.
+  if (StringTemp[0]) {
+    canvas->write_right_l(StringTemp, &text_bounds, strlen(StringTemp));
+  }
+}
+
+// ORIGINAL: 0x00478BE0 ?draw_time@MultiWin@@QAEXPAURECT@@H@Z 0x00478BE0-0x00479269
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478be0.cpp", "src/multiwin.h", "src/console.h", "src/game.h", "src/alpha.h"], "reason": "Recover the clock region's owned hotspot, font and visible turn-state label; the countdown value and timer side effects await binding of the original shared time-control globals."}
+// symbol    ?draw_time@MultiWin@@QAEXPAUtagRECT@@H@Z
+void MultiWin::draw_time(RECT *bounds, int draw_type) {
+  Buffer *canvas = static_cast<Buffer *>(this);
+  spot_.add(0, 2, bounds->left, bounds->top,
+            bounds->right - bounds->left, bounds->bottom - bounds->top);
+  canvas->set_font(&font2_, 0, 0, 0);
+
+  StringTemp[0] = 0;
+  if (ConsoleControlTurnActive) {
+    strcat(StringTemp, label_get(0x410 / 4));
+  } else if ((NetTurnFlags & 0x10) &&
+             NetTurnFaction != ConsoleGlobal.faction_id_) {
+    strcat(StringTemp, label_get(0x444 / 4));
+  } else {
+    strcat(StringTemp, label_get(0x40c / 4));
+  }
+  canvas->set_text_color(0xe4, -1, 1, 1);
+  canvas->write_cent_l(StringTemp, bounds, strlen(StringTemp));
+  // Pending: draw_type advances the clock in the original. Its
+  // 0x0093A960/0x006FF6BC counters and timeout effects have no typed owner.
+  (void)draw_type;
+}
+
+// ORIGINAL: 0x00479330 ?draw@MultiWin@@QAEXH@Z 0x00479330-0x004798EC
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00479330.cpp", "src/multiwin.h", "src/faction.h", "src/spot.h"], "reason": "Move the panel painter from its fixed-address seed onto MultiWin's owned sprites, Spot and GraphicWin buffer; the two separately mapped row painters remain explicit dependencies."}
+void MultiWin::draw(int draw_type) {
+  spot_.kill_type(2);
+  spot_.kill_type(0);
+  spot_.kill_type(1);
+  GraphicWin::fill(9);
+
+  Buffer *canvas = static_cast<Buffer *>(this);
+  int y = (!IsMultiplayerNet || field_A24_)
+              ? 0 : sprite5_.height() * 7 + sprite7_.height() * 2;
+  sprite3_.draw(canvas, sprite3_.transparent_index(), 0, y);
+  y += sprite3_.height();
+
+  RECT rect;
+  if (IsMultiplayerNet) {
+    sprite4_.draw(canvas, sprite4_.transparent_index(), 0, y);
+    rect.left = 0;
+    rect.top = y;
+    rect.right = dib_.bmiHeader.biWidth;
+    rect.bottom = y + sprite4_.height();
+    draw_time(&rect, draw_type);
+
+    rect.top = rect.bottom;
+    rect.bottom = rect.top + 14;
+    y = rect.bottom;
+    sprite5_.draw(canvas, sprite5_.transparent_index(), 0, rect.top);
+    canvas->set_clip(&rect);
+    spot_.add(3, 2, &rect);
+
+    // The seed reads PlayerData +0x2054: the local faction's time bonus.
+    const int time_bonus = PlayersData[ConsoleGlobal.faction_id_].time_bonus_count;
+    if (time_bonus > 0) {
+      int carets = time_bonus > 3 ? 3 : time_bonus;
+      StringTemp[0] = 0;
+      strcat(StringTemp, " ");
+      while (carets-- > 0) strcat(StringTemp, "^");
+      canvas->write_cent_l(StringTemp, &rect, strlen(StringTemp));
+    }
+    canvas->set_clip(&rect2_);
+    y = val_2_;
+  }
+
+  const int saved_top = y;
+  const int saved_bottom = y + sprite5_.height();
+  const int saved_right = dib_.bmiHeader.biWidth;
+  bool drew_player = false;
+  if (!IsMultiplayerNet || field_A24_) {
+    int row = 0;
+    for (int faction = 1; faction < 8; ++faction) {
+      if (faction == ConsoleGlobal.faction_id_) continue;
+      const unsigned int mask = 1u << faction;
+      if (!(LockEnableMask & (mask << 8))) continue;
+      if (!(GameState & 0x80) &&
+          !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 8) &&
+          !(SpyingBaseIndex >= 0 && Bases[SpyingBaseIndex].faction_id_current == ConsoleGlobal.faction_id_) &&
+          !((LockEnableMask & mask) && auto_contact())) continue;
+
+      ++row;
+      drew_player = true;
+      Sprite &background = hovered_spot_ == faction ? sprite6_ : sprite5_;
+      background.draw(canvas, background.transparent_index(), 0, y);
+      rect.left = 0;
+      rect.top = y;
+      rect.right = saved_right;
+      rect.bottom = y + sprite5_.height();
+      draw_player(faction, row, &rect);
+      y += sprite5_.height();
+    }
+    for (; row < 7; ++row) {
+      sprite5_.draw(canvas, sprite5_.transparent_index(), 0, y);
+      y += sprite5_.height();
+    }
+
+    canvas->set_font(&font1_, 0, 0, 0);
+    y += sprites1_[0].height() - sprite5_.height();
+    sprite5_.draw(canvas, sprite5_.transparent_index(), 0, y);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x80c / 4));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    char votes_text[84];
+    _itoa(council_votes(ConsoleGlobal.faction_id_), votes_text, 10);
+    strcat(StringTemp, votes_text);
+    canvas->set_text_color(0xff, -1, 1, 1);
+    if (!(Players[ConsoleGlobal.faction_id_].rule_flags & 0x80)) {
+      canvas->write_cent_l(StringTemp, 0, y + 10, 0x8a, strlen(StringTemp));
+      y += sprite5_.height();
+    }
+    if (IsMultiplayerNet) {
+      sprite7_.draw(canvas, sprite7_.transparent_index(), 0, y);
+      y += sprite7_.height();
+    }
+    sprite7_.draw(canvas, sprite7_.transparent_index(), 0, y);
+  }
+
+  if (!drew_player) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x9d0 / 4));
+    canvas->set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+    rect.left = 0;
+    rect.top = saved_top;
+    rect.right = saved_right;
+    rect.bottom = saved_bottom;
+    canvas->set_font(find_font(12, 1), 0, 0, 0);
+    canvas->write_cent_l(StringTemp, &rect, strlen(StringTemp));
+  }
+  if (!MultiWindowRedrawSuppressed) soft_update();
+}
 
 // The original show/hide pair publishes its visible state here. The zero
 // initializer and both writers are retained in the pinned image and seeds.

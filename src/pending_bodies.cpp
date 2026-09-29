@@ -719,13 +719,6 @@ MonuWin::~MonuWin() {  // ??1MonuWin@@QAE@XZ at 0x00477B10
     PENDING_BODY(0x00477B10, pending)(this, nullptr);
 }
 
-// ?draw@MultiWin@@QAEXH@Z at 0x00479330. turn_timer (time.cpp) reaches it on
-// the fixed MultiWin at 0x007FD648 with the literal 1.
-void MultiWin::draw(int draw_type) {  // 0x00479330
-    typedef void(__fastcall *pending)(MultiWin *, void *, int);
-    PENDING_BODY(0x00479330, pending)(this, nullptr, draw_type);
-}
-
 PickTech::~PickTech() {  // ??1PickTech@@QAE@XZ at 0x00488690
     typedef void(__fastcall *pending)(PickTech *, void *);
     PENDING_BODY(0x00488690, pending)(this, nullptr);
