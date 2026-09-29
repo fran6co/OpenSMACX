@@ -81,6 +81,14 @@ class BaseButton : public GraphicWin {
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
   void set(int value);
+  // ReportIf::close_ops (0x004A9F90) clears this established state word
+  // only when the button is not attached to a ButtonGroup. Keep both fields
+  // encapsulated here rather than exposing their legacy storage offsets.
+  void reset_field_A9C_if_ungrouped() {
+    if (group_ == 0) {
+      field_A9C_ = 0;
+    }
+  }
 
   // Static defaults shared by every button; the legacy bodies are __cdecl
   // rather than __thiscall because they take no instance.

@@ -574,17 +574,6 @@ void MainInterface::on_iface_button_clicked(int a1) {  // 0x0045D170
     PENDING_BODY(0x0045D170, pending)(this, nullptr, a1);
 }
 
-void ReportIf::bl_anim() {  // 0x004A4060
-    typedef void(__fastcall *pending)(ReportIf *, void *);
-    PENDING_BODY(0x004A4060, pending)(this, nullptr);
-}
-
-
-
-
-
-
-
 int SetupWin::do_menu_rightside(char *a1, int a2) {  // 0x004ADB70
     typedef int(__fastcall *pending)(SetupWin *, void *, char *, int);
     return PENDING_BODY(0x004ADB70, pending)(this, nullptr, a1, a2);

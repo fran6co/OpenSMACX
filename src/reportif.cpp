@@ -467,6 +467,105 @@ void ReportIf::close_energy() {
     reinterpret_cast<ListBox *>(self + 0xAE24)->close();
 }
 
+// The constructor placement-news this ListBox and these FlatButtons in the
+// named storage below; the retained close_labs seed closes/hides those same
+// objects in this order. Slot 2 is the inherited Win::hide virtual.
+// ORIGINAL: 0x004A8470 ?close_labs@ReportIf@@QAEXXZ 0x004A8470-0x004A849E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004a8470.cpp", "source:src/reportif.h", "source:src/flatbutton.h", "source:src/listbox.h"], "reason": "Close the ReportIf lab list and hide its two placement-constructed FlatButtons through their typed Win virtual method."}
+void ReportIf::close_labs() {
+    reinterpret_cast<ListBox *>(listBox1_)->close();
+    reinterpret_cast<FlatButton *>(flatButton1_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton2_)->hide();
+}
+
+// The three FlatButtons are placement-new'd ReportIf subobjects. The seed
+// calls Win slot 2 on them in this order; keep the original object identities
+// while using the source-owned virtual method instead of a vtable shim.
+// ORIGINAL: 0x004ABE30 ?close_security@ReportIf@@QAEXXZ 0x004ABE30-0x004ABE62 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004abe30.cpp", "source:src/reportif.h", "source:src/flatbutton.h", "source:src/win.h"], "reason": "Hide the three ReportIf security FlatButtons through Win slot 2 in retained-seed order."}
+void ReportIf::close_security() {
+    reinterpret_cast<FlatButton *>(flatButton12_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton14_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton13_)->hide();
+}
+
+// ReportWin owns these three controls in placement storage; close_ops clears
+// each ungrouped state word before hiding it. ReportIf's own controls and the
+// final MainInterface pair remain their respective typed owners.
+// ORIGINAL: 0x004A9F90 ?close_ops@ReportIf@@QAEXXZ 0x004A9F90-0x004AA0AF
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a9f90.cpp", "source:src/reportif.h", "source:src/reportwin.h", "source:src/basebutton.h"], "reason": "Close the ReportIf and ReportWin operation controls through their named owners, preserve conditional map cleanup, and clear only ungrouped ReportWin BaseButton state through an encapsulated helper."}
+void ReportIf::close_ops() {
+    reinterpret_cast<ListBox *>(listBox1_)->close();
+    reinterpret_cast<FlatButton *>(flatButton3_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton4_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton5_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton6_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton7_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton8_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton9_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton10_)->hide();
+    reinterpret_cast<FlatButton *>(flatButton11_)->hide();
+
+    FlatButton *button = reinterpret_cast<FlatButton *>(ReportWinGlobal.flatButton4_);
+    button->reset_field_A9C_if_ungrouped();
+    button->hide();
+    button = reinterpret_cast<FlatButton *>(ReportWinGlobal.flatButton5_);
+    button->reset_field_A9C_if_ungrouped();
+    button->hide();
+    button = reinterpret_cast<FlatButton *>(ReportWinGlobal.flatButton6_);
+    button->reset_field_A9C_if_ungrouped();
+    button->hide();
+
+    if (field_8_ != 4 && field_8_ != 5) {
+        WorldClimateWorldWin.hide_all();
+        MainInterfaceGlobal.flat_button_[6].hide();
+        MainInterfaceGlobal.flat_button_[7].hide();
+    }
+}
+
+// Animation storage is the ReportIf sprite run; the destination is the
+// Buffer base of the global WorldClimateWorldWin. Its timeout lives in the
+// ReportWin-owned placement storage constructed as Time by that owner.
+// ORIGINAL: 0x004A4060 ?bl_anim@ReportIf@@QAEXXZ 0x004A4060-0x004A4191
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a4060.cpp", "source:src/reportif.h", "source:src/worldwin.h", "source:src/reportwin.h", "source:src/sprite.h"], "reason": "Advance ReportIf animation with the declared sprite run and coordinate state, drawing to the WorldClimateWorldWin Buffer base and stopping the ReportWin-owned Time at terminal frame 10."}
+void ReportIf::bl_anim() {
+    WorldClimateWorldWin.redraw();
+    Buffer *const destination = static_cast<Buffer *>(&WorldClimateWorldWin);
+    switch (animation_state_) {
+    case -1:
+    case 0:
+    case 8:
+    case 9:
+        spritesB_[0].draw(destination, spritesB_[0].transparent_index(),
+                          animation_x_, animation_y_);
+        ++animation_state_;
+        return;
+    case 1:
+    case 7:
+        spritesB_[1].draw(destination, spritesB_[1].transparent_index(),
+                          animation_x_, animation_y_);
+        ++animation_state_;
+        return;
+    case 2:
+    case 4:
+    case 6:
+        spritesB_[2].draw(destination, spritesB_[2].transparent_index(),
+                          animation_x_, animation_y_);
+        ++animation_state_;
+        return;
+    case 3:
+    case 5:
+        spritesB_[3].draw(destination, spritesB_[3].transparent_index(),
+                          animation_x_, animation_y_);
+        ++animation_state_;
+        return;
+    case 10:
+        reinterpret_cast<Time *>(ReportWinGlobal.time1_)->stop();
+        break;
+    }
+    ++animation_state_;
+}
+
 
 /*
 // ORIGINAL: 0x004A3930 ?done@ReportIf@@QAEXXZ 0x004A3930-0x004A3946 BYTE_EXACT

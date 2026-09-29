@@ -49,8 +49,11 @@ class ReportIf : public SubInterface {
   void done();
   ReportIf();
   ~ReportIf();
+  void close_labs();
+  void close_ops();
   void close_energy();
   void close_intel();
+  void close_security();
   void close_projects();
   void on_iface_right_click(int, int);
   void on_iface_left_double_click(int, int);
@@ -238,7 +241,7 @@ class ReportIf : public SubInterface {
   // RECOVERY_MEMBER: v1 ReportIf field_1E244_ 0x1E244 0x004A3494
   int32_t field_1E244_;  // 0x1E244
   // RECOVERY_MEMBER: v1 ReportIf animation_state_ 0x1E248 0x004A4060
-  uint32_t animation_state_;  // 0x1E248
+  int32_t animation_state_;  // 0x1E248; seed compares it with signed -1
   // RECOVERY_MEMBER: v1 ReportIf animation_x_ 0x1E24C 0x004A4060
   int32_t animation_x_;       // 0x1E24C
   // RECOVERY_MEMBER: v1 ReportIf animation_y_ 0x1E250 0x004A4060
@@ -278,7 +281,6 @@ extern ListBox ReportIfEnergyListBox;  // 0x0087BE84
 extern ReportIf ReportIfGlobal;  // 0x00885F38
 
 
-// ReportIf::bl_anim is not recovered, so the body at the end of reportif.cpp
-// forwards through this seam. leaf_recoveries.cpp calls it, which is what
-// keeps the definition: `__declspec(dllexport)` on the class once demanded a
-// definition for every member, and that demand is gone.
+// ReportIf::bl_anim (0x004A4060) is now owned by reportif.cpp and uses the
+// declared sprite run, animation state, WorldClimateWorldWin buffer and
+// ReportWin timer storage. leaf_recoveries.cpp calls the typed member.
