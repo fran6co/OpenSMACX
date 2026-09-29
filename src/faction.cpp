@@ -34,6 +34,54 @@
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
+// ORIGINAL: 0x00559060 ?get_name@@YAPADH@Z 0x00559060-0x00559092 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559060.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::name_leader after selecting leader gender and singular grammar; Player fields have the original stride."}
+char *__cdecl get_name(int faction_id) {
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    return Players[faction_id].name_leader;
+}
+
+// ORIGINAL: 0x005590A0 ?get_title@@YAPADH@Z 0x005590A0-0x005590D2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/005590a0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::title_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
+char *__cdecl get_title(int faction_id) {
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    return Players[faction_id].title_leader;
+}
+
+// ORIGINAL: 0x005590E0 ?get_adjective_leader@@YAPADH@Z 0x005590E0-0x005590FA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/005590e0.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_leader from the typed Player row; the Player type establishes this field and the original record stride."}
+char *__cdecl get_adjective_leader(int faction_id) {
+    return Players[faction_id].adj_leader;
+}
+
+// ORIGINAL: 0x00559100 ?get_adjective_insult_leader@@YAPADH@Z 0x00559100-0x0055911A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559100.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_leader from the typed Player row; the Player type establishes this field and the original record stride."}
+char *__cdecl get_adjective_insult_leader(int faction_id) {
+    return Players[faction_id].adj_insult_leader;
+}
+
+// ORIGINAL: 0x00559120 ?get_adjective_faction@@YAPADH@Z 0x00559120-0x0055913A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559120.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_faction from the typed Player row; the Player type establishes this field and the original record stride."}
+char *__cdecl get_adjective_faction(int faction_id) {
+    return Players[faction_id].adj_faction;
+}
+
+// ORIGINAL: 0x00559140 ?get_adjective_insult_faction@@YAPADH@Z 0x00559140-0x0055915A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559140.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::adj_insult_faction from the typed Player row; the Player type establishes this field and the original record stride."}
+char *__cdecl get_adjective_insult_faction(int faction_id) {
+    return Players[faction_id].adj_insult_faction;
+}
+
+// ORIGINAL: 0x00559160 ?get_insult_leader@@YAPADH@Z 0x00559160-0x00559192 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:c86818d859992f5766b6584955cdba0f7694627d:src/recovered/00559160.cpp", "source:src/faction.h"], "reason": "The pinned entry returns Player::insult_leader after selecting leader gender and singular grammar; the Player type establishes this field and the original record stride."}
+char *__cdecl get_insult_leader(int faction_id) {
+    PluralityDefault = 0;
+    GenderDefault = Players[faction_id].is_leader_female;
+    return Players[faction_id].insult_leader;
+}
+
 // Construction455F10 and destruction456010 enumerate the same37 Sprite
 // members, including cleanup on partial construction. Real member lifetime
 // supplies those operations and unwind actions exactly once.

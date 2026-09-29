@@ -991,6 +991,16 @@ MEASURED inline LPSTR __cdecl get_adjective(int faction_id) {
     return Players[faction_id].adj_name_faction;
 }
 
+// Faction dialogue forms. The leader-name/title/insult forms also select
+// singular grammar and the leader's gender for the next parse_says call.
+char *__cdecl get_name(int faction_id);
+char *__cdecl get_title(int faction_id);
+char *__cdecl get_adjective_leader(int faction_id);
+char *__cdecl get_adjective_insult_leader(int faction_id);
+char *__cdecl get_adjective_faction(int faction_id);
+char *__cdecl get_adjective_insult_faction(int faction_id);
+char *__cdecl get_insult_leader(int faction_id);
+
 // INLINE: the image has no is_human - it open-codes what this names.
 inline uint8_t __cdecl factions_status_byte(int index) {
     // the image's FactionsStatus byte view of the LockEnableMask dword
