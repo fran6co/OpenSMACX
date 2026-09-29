@@ -190,8 +190,19 @@ int __cdecl load_sound_dll();
 typedef void *SoundDllProcsTable[11];
 extern SoundDllProcsTable SoundDllProcs;
 typedef unsigned int (__cdecl *func_sound_dll_version)();
-typedef void (__cdecl *func_sound_dll_init)(int, int);
+// Ordinal 3 is called both during sound setup (its result is ignored) and
+// through init_sound_timer (which returns the result to its caller).
+typedef int (__cdecl *func_sound_dll_init)(unsigned long, unsigned long);
+// The image's forwarding thunk for ordinal 2 returns its EAX value. The
+// Wave/Midi release call sites use the same slot as void(void*) and ignore
+// EAX; retain that caller view while spelling the thunk's own result here.
+typedef int (__cdecl *func_sound_dll_release_result)(void *);
 extern HMODULE SoundDllModule;
+
+// Product wrappers around the loader-owned module/export table.
+void __cdecl unload_sound_dll();
+int __cdecl init_sound_timer(unsigned long timer, unsigned long resolution);
+int __cdecl get_sound_version();
 // Two slots read by role: index 10 is the version probe load_sound_dll
 // checks the game's sound headers against; index 2 is the hook init_sound
 // calls once with two zero arguments as soon as the DLL is up. A slot is
