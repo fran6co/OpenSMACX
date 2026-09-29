@@ -2476,9 +2476,7 @@ void BaseWin::draw_pop(int update_mode) {
     canvas->set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip", "src/unrecovered/00410870.cpp explicitly marks its alien military-score branch as approximate"], "reason": "Recover the commerce panel and normal-faction partner rows through owned BaseWin rectangles, typed diplomacy state and source-owned commerce ledgers; the alien score remains an explicit restoration obligation."}
-// The alien military-score branch at 0x00410B3C-0x00410D54 remains incomplete.
-// The seed invents a comparison there; never copy it to appear complete.
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410B3C-0x00410D54 counts the first 70 Base facility bits and 64 SecretProject homes at the current base, weights projects five, then formats the alien score or sanction warning", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip"], "reason": "Recover the commerce panel's alien score and normal-faction partner rows through owned BaseWin rectangles, typed Base/SecretProject/diplomacy state and source-owned commerce ledgers; original compiler/reference/runtime proof remains separate."}
 void BaseWin::draw_commerce(int update_mode) {
     Buffer *canvas = this;
     RECT saved_clip = canvas->rect1_;
@@ -2516,7 +2514,49 @@ void BaseWin::draw_commerce(int update_mode) {
     const int row_pitch = (report.bottom - report.top) / 6;
     int row_y = report.top;
     bool wrote_row = false;
-    if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) == 0) {
+    if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) != 0) {
+        canvas->set_font(&font1_, nullptr, nullptr, nullptr);
+        int current_base_id = 0;
+        for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+            if (&Bases[candidate] == BaseCurrent) current_base_id = candidate;
+        }
+        int score = 0;
+        for (int facility = 0; facility < 70; ++facility) {
+            if ((BaseCurrent->facilities_built[facility >> 3] &
+                 (1u << (facility & 7))) != 0) ++score;
+        }
+        // The original's 64 dword slots are the whole BaseSecretProject ABI
+        // record. Copy its representation into a homogeneous local view so
+        // this census does not walk across C++ struct members by pointer.
+        typedef char ProjectRecordSizeCheck[
+            sizeof(BaseSecretProject) == MaxSecretProjectNum * sizeof(int) ? 1 : -1];
+        (void)sizeof(ProjectRecordSizeCheck);
+        int project_homes[MaxSecretProjectNum];
+        memcpy(project_homes, &SecretProject, sizeof(project_homes));
+        for (int project = 0; project < MaxSecretProjectNum; ++project) {
+            if (project_homes[project] == current_base_id) score += 5;
+        }
+        score /= 2;
+        StringTemp[0] = 0;
+        if (PlayersData[BaseCurrent->faction_id_current].sanction_turns != 0) {
+            canvas->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+            strcat(StringTemp, label_get(1125));
+            wrote_row = true;
+        } else if (score != 0) {
+            canvas->set_text_color(0xFF, -1, 1, 1);
+            char number[32];
+            strcat(StringTemp, "+");
+            _itoa(score, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(36));
+            wrote_row = true;
+        }
+        if (wrote_row) {
+            string_upper_slot()(StringTemp);
+            canvas->write_cent_l(StringTemp, &report, strlen(StringTemp));
+        }
+    } else {
         const int owner = BaseCurrent->faction_id_current;
         for (int partner = 1; partner < MaxPlayerNum; ++partner) {
             const int slot = partner - 1;
