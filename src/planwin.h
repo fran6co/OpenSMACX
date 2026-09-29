@@ -92,6 +92,11 @@ class PlanWin : public MapWin {
   // conversion cannot break a call site.
   PlanWin();
   ~PlanWin();
+  void init(char *caption);
+  void find_view(int x1, int y1, int x2, int y2,
+                 int x3, int y3, int x4, int y4);
+  void opticenter(int x1, int y1, int x2, int y2, int force_redraw);
+  void monocenter(int x, int y, int force_redraw);
   void clear_lines();
   void add_line(int x1, int y1, int x2, int y2, int color);
   void add_line(int base_id1, int base_id2, int color);

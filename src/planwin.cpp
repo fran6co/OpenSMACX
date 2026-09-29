@@ -23,6 +23,7 @@
 #include "original_seam.h"
 #include "planwin.h"
 #include "mapwin.h"
+#include "map.h"
 #include "base.h"
 #include "spritebox.h"
 #include "net_class.h"
@@ -106,6 +107,160 @@ PlanWin::~PlanWin() {
     // The declared Buffer, MapWin base and virtual GraphicWin base own their
     // destruction in reverse construction order. The old hand teardown
     // invoked those same destructors a second time before this epilogue.
+}
+
+// Initialize the plan display using its inherited MapWin and virtual
+// GraphicWin state. The image does not read the caption argument.
+// ORIGINAL: 0x0048BC60 ?init@PlanWin@@QAEXPAD@Z 0x0048BC60-0x0048BCC5
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048BC60-0x0048BCC5;git:a899c9ea:src/recovered/units/0048bc60.cpp", "source:src/planwin.h:PlanWin;source:src/mapwin.h:MapWin;source:src/buffer.h:Buffer"], "reason": "The PlanWin member initializes its inherited MapWin fields and its own Buffer from the virtual GraphicWin dimensions, preserving the observed object relationships."}
+void PlanWin::init(char *) {
+    field_21A68_ = 1;
+    line_count_ = 0;
+    field_1DD78_ = 1;
+    MapWin::clear(1);
+    MapWin::init(3, 0);
+    field_1DD98_ = -14;
+
+    GraphicWin *graphic = this;
+    buffer_.init(graphic->dib_.bmiHeader.biWidth,
+                 -graphic->dib_.bmiHeader.biHeight, 0, 0);
+}
+
+// Midpoint along the shorter horizontal interval on a wrapped map. The
+// original uses the same three-stage calculation for two input pairs and
+// then for their midpoints; on a flat map it does not wrap the result.
+static int plan_horizontal_midpoint(int left, int right) {
+    const int distance = abs(right - left);
+    const int width = MapLongitudeBounds;
+    const bool flat = (MapIsFlat & 1) != 0;
+    int center;
+    if (!flat && distance > width / 2) {
+        center = (distance - width / 2) / 2
+                 + (left > right ? left : right);
+    } else {
+        center = distance / 2 + (left < right ? left : right);
+    }
+    if (!flat) {
+        if (center < 0) {
+            center += width;
+        } else if (center >= width) {
+            center -= width;
+        }
+    }
+    return center;
+}
+
+// Center the view between two horizontal pairs and their vertical spans.
+// ORIGINAL: 0x0048B450 ?find_view@PlanWin@@QAEXHHHHHHHH@Z 0x0048B450-0x0048B629
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B450-0x0048B629;git:a899c9ea:src/recovered/units/0048b450.cpp", "source:src/map.h:MapLongitudeBounds,MapIsFlat;source:src/mapwin.h:field_1DD9C_,field_1DDA0_"], "reason": "The eight-argument PlanWin member selects the horizontal center of two map-view pairs and their vertical midpoint using inherited MapWin view fields."}
+void PlanWin::find_view(int x1, int y1, int x2, int y2,
+                        int x3, int y3, int x4, int y4) {
+    const int first_x = plan_horizontal_midpoint(x1, x2);
+    const int second_x = plan_horizontal_midpoint(x3, x4);
+    field_1DD9C_ = plan_horizontal_midpoint(first_x, second_x);
+    field_1DDA0_ = ((y1 + y2) / 2 + (y3 + y4) / 2) / 2;
+}
+
+// A point's map tiles must fit the calculated viewport. Out-of-map samples
+// do not constrain the zoom, as in the original center routines.
+static bool plan_tiles_fit(const PlanWin &view, int center_x, int center_y,
+                           int sample_count) {
+    const bool flat = (MapIsFlat & 1) != 0;
+    const int width = MapLongitudeBounds;
+    const int height = MapLatitudeBounds;
+    const int left = view.field_1DDA4_;
+    const int top = view.field_1DDA8_;
+    const int right = left + view.field_1DDCC_ + view.field_1DDD4_;
+    const int bottom = top + view.field_1DDD0_ + view.field_1DDD8_;
+    for (int index = 0; index < sample_count; ++index) {
+        int x = center_x + RadiusOffsetX[index];
+        if (!flat) {
+            if (x < 0) {
+                x += width;
+            } else if (x >= width) {
+                x -= width;
+            }
+        }
+        const int y = center_y + RadiusOffsetY[index];
+        if (x < 0 || x >= width || y < 0 || y >= height) {
+            continue;
+        }
+        if (y < top || y >= bottom) {
+            return false;
+        }
+        if (!flat) {
+            if (x < left) {
+                x += width;
+            }
+            if (x >= right) {
+                x -= width;
+            }
+        }
+        if (x < left || x >= right) {
+            return false;
+        }
+    }
+    return true;
+}
+
+// Zoom until both selected points and their neighboring tiles fit the view.
+// ORIGINAL: 0x0048B630 ?opticenter@PlanWin@@QAEXHHHHH@Z 0x0048B630-0x0048B8D6
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B630-0x0048B8D6;git:a899c9ea:src/recovered/units/0048b630.cpp", "source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/mapwin.h:viewport fields"], "reason": "The PlanWin member varies the inherited MapWin zoom until the selected two points and their radius samples fit the calculated viewport."}
+void PlanWin::opticenter(int x1, int y1, int x2, int y2, int force_redraw) {
+    const uint32_t old_zoom = field_1DD98_;
+    const uint32_t old_x = field_1DD9C_;
+    const uint32_t old_y = field_1DDA0_;
+    field_1DD9C_ = x1;
+    field_1DDA0_ = y1;
+    field_1DD98_ = static_cast<uint32_t>(-14);
+
+    do {
+        ++field_1DD98_;
+        calculate_dimensions();
+        if (!plan_tiles_fit(*this, x1, y1, 25) ||
+            !plan_tiles_fit(*this, x2, y2, 25)) {
+            --field_1DD98_;
+            break;
+        }
+    } while (static_cast<int>(field_1DD98_) < -10);
+
+    calculate_dimensions();
+    if (force_redraw || old_zoom != field_1DD98_ ||
+        old_x != field_1DD9C_ || old_y != field_1DDA0_) {
+        back_redraw();
+    }
+}
+
+// Zoom around the current center until one point's neighborhood no longer
+// fits, then repaint the inherited GraphicWin surface if the view changed.
+// ORIGINAL: 0x0048B8E0 ?monocenter@PlanWin@@QAEXHHH@Z 0x0048B8E0-0x0048BAA1
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0048B8E0-0x0048BAA1;git:a899c9ea:src/recovered/units/0048b8e0.cpp", "source:src/planwin.h:PlanWin;source:src/map.h:RadiusOffsetX,RadiusOffsetY;source:src/buffer.h:Buffer"], "reason": "The PlanWin member varies inherited MapWin zoom until one point and its neighborhood fit, then redraws its real GraphicWin surface and owned Buffer."}
+void PlanWin::monocenter(int x, int y, int force_redraw) {
+    const uint32_t old_zoom = field_1DD98_;
+    const uint32_t old_x = field_1DD9C_;
+    const uint32_t old_y = field_1DDA0_;
+    field_1DD98_ = static_cast<uint32_t>(-14);
+
+    do {
+        ++field_1DD98_;
+        calculate_dimensions();
+        if (!plan_tiles_fit(*this, x, y, 81)) {
+            --field_1DD98_;
+            break;
+        }
+    } while (static_cast<int>(field_1DD98_) <= -11);
+
+    calculate_dimensions();
+    if (force_redraw || old_zoom != field_1DD98_ ||
+        old_x != field_1DD9C_ || old_y != field_1DDA0_) {
+        field_1DD70_ = 0x84010002U;
+        GraphicWin *graphic = this;
+        graphic->fill(0);
+        draw_map(0);
+        static_cast<Buffer *>(graphic)->copy(
+            &buffer_, 0, 0, graphic->dib_.bmiHeader.biWidth,
+            -graphic->dib_.bmiHeader.biHeight);
+    }
 }
 
 /*
