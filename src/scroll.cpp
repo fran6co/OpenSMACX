@@ -1557,6 +1557,65 @@ void Scroll::on_mousewheel_up(int delta) {
     redraw();
 }
 
+/*
+Purpose: Move a scrollbar to an endpoint with Home/End when horizontal, or
+         advance one page with Page Up/Down when vertical; notify its owner.
+// ORIGINAL: 0x00606560 ?on_key_click@Scroll@@QAEHHH@Z 0x00606560-0x006066EC FILE
+// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00606560.cpp","source:src/scroll.cpp:Scroll::on_mousewheel_up","source:src/listbox.cpp:ListBoxGlobalDDC"],"reason":"Home the key navigation on Scroll's inherited Buffer, range members, real parent dispatch and source-owned notification globals; no vtable stand-ins or fixed executable addresses."}
+// The old seed's spelling diverged at its prologue; this typed owner body is
+// deliberately unclaimed until it is remeasured and restored.
+*/
+int Scroll::on_key_click(int, int key) {
+    Win *const parent = win_parent_;
+    if (parent == nullptr) {
+        return 0;
+    }
+
+    ListBoxGlobalDDC = 1;
+    const int width = dib_.bmiHeader.biWidth;
+    const int height = -dib_.bmiHeader.biHeight;
+    if (width > height) {
+        if (key == VK_END) {
+            position_ = range_maximum_;
+        } else if (key == VK_HOME) {
+            position_ = range_minimum_;
+        } else {
+            return 0;
+        }
+    } else if (key == VK_PRIOR) {
+        position_ -= paging_;
+        if (position_ < range_minimum_) {
+            position_ = range_minimum_;
+        }
+    } else if (key == VK_NEXT) {
+        position_ += paging_;
+        if (position_ > range_maximum_) {
+            position_ = range_maximum_;
+        }
+    } else {
+        return 0;
+    }
+
+    WinCallbackWindow = parent;
+    int notified_position = position_;
+    if (range_reversed_ != 0U) {
+        notified_position = (range_maximum_ - position_) + range_minimum_;
+    }
+    parent->vslot_48(field_A18_, notified_position);
+    if (field_2144_ != nullptr) {
+        field_2144_(field_A18_, notified_position);
+    }
+
+    Win *const target = parent->scroll_event_target();
+    if (target != nullptr && target->vslot_23() == 0) {
+        target->vslot_07();
+    }
+
+    field_A3C_ = 0xFFFFFFFFU;
+    redraw();
+    return 1;
+}
+
 // ORIGINAL: 0x00606B20 ?on_button_clicked@Scroll@@QAEXH@Z 0x00606B20-0x00606C43 BYTE_EXACT
 // symbol    ?on_button_clicked@Scroll@@UAEXH@Z
 void Scroll::on_button_clicked(int button_id) {
