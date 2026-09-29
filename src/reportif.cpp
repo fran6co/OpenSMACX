@@ -1266,9 +1266,88 @@ void ReportIf::draw_ops() {
 }
 
 // ORIGINAL: 0x004AA0B0 ?draw_projects@ReportIf@@QAEXXZ 0x004AA0B0-0x004AA921;0x00659595-0x006595C9
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aa0b0.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aa0b0.cpp", "source:src/reportif.h"], "reason": "Partial panel recovery: typed clipping, frames, headings and faction caption; selected-project description and panel button behavior remain unfinished. Retained seed establishes identity and extent."}
 void ReportIf::draw_projects() {
-    // BODY GOES HERE.
+    Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buffer->set_clip(&field_20_);
+    field_C_ = field_20_.left + 6;
+    field_10_ = field_20_.top + 6;
+    field_14_ = field_20_.right - field_20_.left - 12;
+    field_18_ = field_20_.bottom - field_20_.top - 12;
+
+    // The seed draws a narrow title frame followed by a second frame around
+    // the selected project's description.  Both use the shared work rectangle.
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = field_10_;
+    draw_workspace_rect_.right = field_C_ + field_14_;
+    draw_workspace_rect_.bottom = field_10_ + field_1C_ + 6;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
+    draw_workspace_rect_.bottom = field_20_.bottom - 6;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+
+    draw_workspace_rect_.left += 3;
+    draw_workspace_rect_.right -= 3;
+    draw_workspace_rect_.top += 3;
+    draw_workspace_rect_.bottom -= 3;
+    buffer->set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x32A));
+    buffer->write_cent_l(StringTemp, draw_workspace_rect_.left, field_10_ + 4,
+                         field_14_, static_cast<int>(strlen(StringTemp)));
+
+    // The project selection and its StringList description still depend on
+    // an unnamed global selection and base-production record in the seed.
+    // BODY GOES HERE: render the selected project's description.
+
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    buffer->set_clip(&field_50_);
+    field_10_ = field_50_.top;
+    const int inset = field_1E230_ ? 0x4C : 0;
+    field_C_ = field_50_.left + inset;
+    field_14_ = field_50_.right - field_50_.left - inset;
+    field_18_ = field_50_.bottom - field_50_.top;
+    buffer->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    buffer->set_text_color(0xE1, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x2B4));
+    if (field_1E230_) {
+        strcat(StringTemp, ", ");
+        strcat(StringTemp, " ");
+        strcat(StringTemp, label_get(0x2DA));
+        strcat(StringTemp, " ");
+        say_year(StringTemp);
+    }
+    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
+                         static_cast<int>(strlen(StringTemp)));
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+
+    buffer->set_clip(&field_30_);
+    field_C_ = field_30_.left + 6;
+    field_10_ = field_30_.top + 6;
+    field_14_ = field_30_.right - field_30_.left - 12;
+    field_18_ = field_30_.bottom - field_30_.top - 12;
+    buffer->box_sprite(&field_30_, &InterfaceBoxStyles[33]);
+    draw_workspace_rect_.left = field_C_ - 3;
+    draw_workspace_rect_.top = field_10_ - 3;
+    draw_workspace_rect_.right = field_C_ + field_14_ + 3;
+    draw_workspace_rect_.bottom = field_10_ + field_1C_ + 9;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
+    draw_workspace_rect_.left += 3;
+    draw_workspace_rect_.top += 3;
+    draw_workspace_rect_.right -= 3;
+    draw_workspace_rect_.bottom -= 3;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    buffer->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x3C3));
+    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_,
+                         static_cast<int>(strlen(StringTemp)));
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    MainInterfaceGlobal.set_date(StringTemp);
 }
 
 // ORIGINAL: 0x004AA970 ?draw_sat@ReportIf@@QAEXXZ 0x004AA970-0x004AB54B
@@ -1278,9 +1357,75 @@ void ReportIf::draw_sat() {
 }
 
 // ORIGINAL: 0x004AB600 ?draw_security@ReportIf@@QAEXXZ 0x004AB600-0x004ABE24
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ab600.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ab600.cpp", "source:src/reportif.h"], "reason": "Partial panel recovery: typed clipping, frames, headings and faction caption; five security totals, Spot rows and panel button behavior remain unfinished. Retained seed establishes identity and extent."}
 void ReportIf::draw_security() {
-    // BODY GOES HERE.
+    Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buffer->set_clip(&field_20_);
+    field_C_ = field_20_.left + 6;
+    field_10_ = field_20_.top + 6;
+    field_14_ = field_20_.right - field_20_.left - 12;
+    field_18_ = field_20_.bottom - field_20_.top - 12;
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = field_10_;
+    draw_workspace_rect_.right = field_C_ + field_14_;
+    draw_workspace_rect_.bottom = field_10_ + field_1C_ + 6;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
+    draw_workspace_rect_.bottom = field_20_.bottom - 6;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    draw_workspace_rect_.left += 3;
+    draw_workspace_rect_.top += 3;
+    draw_workspace_rect_.right -= 3;
+    draw_workspace_rect_.bottom -= 3;
+    buffer->set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x38A));
+    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_,
+                         static_cast<int>(strlen(StringTemp)));
+
+    // BODY GOES HERE: the seed's five security totals and their Spot rows
+    // require typed unit, faction and base records before they can be moved.
+
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    buffer->set_clip(&field_50_);
+    const int inset = field_1E230_ ? 0x4C : 0;
+    field_C_ = field_50_.left + inset;
+    field_10_ = field_50_.top;
+    field_14_ = field_50_.right - field_50_.left - inset;
+    field_18_ = field_50_.bottom - field_50_.top;
+    buffer->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    buffer->set_text_color(0xE1, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x2B6));
+    if (field_1E230_) {
+        strcat(StringTemp, ", ");
+        strcat(StringTemp, " ");
+        strcat(StringTemp, label_get(0x2DA));
+        strcat(StringTemp, " ");
+        say_year(StringTemp);
+    }
+    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
+                         static_cast<int>(strlen(StringTemp)));
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    buffer->set_clip(&field_30_);
+    field_C_ = field_30_.left + 6;
+    field_10_ = field_30_.top + 6;
+    field_14_ = field_30_.right - field_30_.left - 12;
+    field_18_ = field_30_.bottom - field_30_.top - 12;
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = field_10_;
+    draw_workspace_rect_.right = field_C_ + field_14_;
+    draw_workspace_rect_.bottom = field_10_ + field_1C_ + 6;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    buffer->set_font(field_1E184_, field_1E194_, field_1E198_, nullptr);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x3BB));
+    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_,
+                         static_cast<int>(strlen(StringTemp)));
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
 }
 
 // ORIGINAL: 0x004AC140 ?draw_intel@ReportIf@@QAEXXZ 0x004AC140-0x004AC977
