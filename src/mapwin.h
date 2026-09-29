@@ -24,6 +24,14 @@
 #include "imagebutton.h"  // image_buttons_[4]
 #include "maininterface.h"   // MainInterfaceGlobal is one of these
 
+// Shared scenario-editor selection state. Console chooses the tool/brush;
+// MapWin applies it to tiles. The mask helpers model the tools' terrain rules,
+// not a pointer back into the original executable's UI descriptor table.
+extern int MapEditorPaintId;
+extern int MapEditorBrushId;
+uint32_t map_editor_paint_mask(int tool_id);
+uint32_t map_editor_erase_mask(int tool_id);
+
 // One owned terrain-cache record per map tile. The resets at
 // 46FDA9..46FDC4 and 46FDDC..46FDF8 walk twelve-byte records, writing
 // bytes 0..3 and 4..8 separately. 4705AF/4705B5 identify FF as uncached

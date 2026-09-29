@@ -1633,12 +1633,10 @@ inline unsigned char &console_popup_check_state() {
     return *reinterpret_cast<unsigned char *>(0x009BC06C);
 }
 
-// THE SCENARIO-EDITOR BRUSH STATE, unbound anywhere in the tree: 0x00945AE4
-// is the current brush id (the BRUSH picker seeds its list from it and the
-// answer is stored back), 0x007CD254 is the editor palette's ButtonGroup and
+// The scenario-editor brush is MapEditorBrushId (mapwin.cpp). 0x007CD254 is
+// the editor palette's ButtonGroup and
 // 0x007CD2D8 (group + 0x84) the id of the palette button currently checked -
 // editor_set_brush re-checks the new brush's button only when it differs.
-static int *const EditorBrushId = (int *)0x00945AE4;
 static ButtonGroup *const EditorBrushButtonGroup = (ButtonGroup *)0x007CD254;
 static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
 
@@ -3622,19 +3620,15 @@ void Console::show_version() {
          (NullCallback)0);
 }
 
-// Fixed-slot bindings carried from 004e0a50.cpp
-// EditorPaintId: use-site evidence, see editor_paints
-static int *const EditorPaintId = (int *)0x00945AE0;
-// EditorPaintSlotsLow: use-site evidence, see editor_paints
-static int *const EditorPaintSlotsLow = (int *)0x00691888;
-// EditorPaintSlotsHigh: use-site evidence, see editor_paints
-static int *const EditorPaintSlotsHigh = (int *)0x00691AE8;
+// Fixed-slot palette-control bindings carried from 004e0a50.cpp. Tool
+// selection and improvement masks are now owned by mapwin.cpp.
 // PaintCycleGroup: use-site evidence, see editor_paints
 static ButtonGroup *const PaintCycleGroup = (ButtonGroup *)0x007CD1C0;
 // PaintCycleSelection: use-site evidence, see editor_paints
 static int *const PaintCycleSelection = (int *)0x007CD244;
 
 // ORIGINAL: 0x004E0A50 ?editor_paints@Console@@QAEXH@Z 0x004E0A50-0x004E0ACF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e0a50.cpp", "src/mapwin.cpp:EditorTerrainRules", "image:0x00691888-0x00691B08 first descriptor words select paint availability"], "reason": "Share a typed paint selection and source-level terrain rules with MapWin instead of reading the original executable's fixed descriptor table; prior TRIED notes below describe the older spelling."}
 // TRIED: `a1 > 5` (jl/jle flip at #12, fixed by `a1 >= 6`); `counter = a1 - 6` as one expression (lea vs sub at #15, tried splitting into `counter=a1; counter-=6;`, no change). Same size as original (127/127), mismatch only at #15.
 // size      127 bytes
 // prototype void (__thiscall ?editor_paints@Console@@QAEXH@Z)(Console* this, int)
@@ -3658,28 +3652,22 @@ static int *const PaintCycleSelection = (int *)0x007CD244;
 //   did not reach it either (also tried against the archive, see its TRIED).
 //   30 of 38 agree; both remaining runs are these two.
 void Console::editor_paints(int paint_id) {
-    // Use-site names (the census rule): 0x00945AE0 is written here and read
-    // by every editor_* painter as the current paint id; 0x00691AE8..0x00691888
-    // is the paint-availability walk's table (8-int stride, high end down);
+    // The original paint-availability walk runs the 20 tool rules high to low;
     // 0x007CD1C0/0x007CD244 are the map-paint cycle ButtonGroup and its
     // selected-slot int (set(result, 1) only when different).
     InfoWin *const win = &ConsoleInfoWin;
-    *EditorPaintId = paint_id;
+    MapEditorPaintId = paint_id;
     ConsoleInfoWin.set_redraw_phase(7);
     win->on_redraw();
     MainInterfaceGlobal.draw_edit_pane();
     int result = paint_id + 0x3f3;
     if (paint_id >= 6 && paint_id < 0x1a) {
         int counter = paint_id - 6;
-        int limit = 0x13;
-        int *p = EditorPaintSlotsHigh;
-        do {
-            if (*p == 0 && limit <= counter) {
+        for (int limit = 19; limit >= 0; --limit) {
+            if (map_editor_paint_mask(limit + 6) == 0 && limit <= counter) {
                 --counter;
             }
-            p -= 8;
-            --limit;
-        } while (p >= EditorPaintSlotsLow);
+        }
         result = counter + 0x3f9;
     }
     if (*PaintCycleSelection != result) {
@@ -4043,16 +4031,16 @@ Purpose: Ask which terrain-improvement brush the scenario editor paints with
 void Console::editor_set_brush() {
     PopupModalState = 6;
     const int answer =
-        x_pop_value_flags(StrBrush, *EditorBrushId, 0x40, (NullCallback)0);
+        x_pop_value_flags(StrBrush, MapEditorBrushId, 0x40, (NullCallback)0);
     PopupModalState = 0;
     if (answer >= 0) {
-        *EditorBrushId = answer;
+        MapEditorBrushId = answer;
     }
     ConsoleInfoWin.set_redraw_phase(7);
     ConsoleInfoWin.on_redraw();
     MainInterfaceGlobal.draw_edit_pane();
     if (WinScreenWidth != 0x320) {
-        const int brush_button = *EditorBrushId + 0x40C;
+        const int brush_button = MapEditorBrushId + 0x40C;
         if (*EditorBrushButtonGroupSelection != brush_button) {
             EditorBrushButtonGroup->set(brush_button, 1);
         }

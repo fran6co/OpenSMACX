@@ -242,12 +242,242 @@ int MapMouseFeedbackBusy;
 // RECOVERY_OBJECT: v2 0x007D3B70 0x007D3B74 ?MapDestinationCost@@3HA 0x00467430
 int MapDestinationCost;
 
-// Explicitly unfinished map editing. Mouse feedback exposes this dependency;
-// keep the source owner linkable without calling back into the old executable.
+// RECOVERY_OBJECT: v2 0x00945AE0 0x00945AE4 ?MapEditorPaintId@@3HA 0x0046B510
+int MapEditorPaintId;
+// RECOVERY_OBJECT: v2 0x00945AE4 0x00945AE8 ?MapEditorBrushId@@3HA 0x0046B510
+int MapEditorBrushId;
+
+struct EditorTerrainRule { uint32_t paint; uint32_t erase_first; };
+static const uint32_t remove_mine_or_solar = BIT_SENSOR_ARRAY |
+    BIT_THERMAL_BORE | BIT_ECH_MIRROR | BIT_CONDENSER | BIT_FOREST |
+    BIT_SOLAR_TIDAL | BIT_MINE;
+// Tools 6..25: source-level terrain rules corresponding to the first two
+// words of each original 0x20-byte UI descriptor. The remaining descriptor
+// words are presentation data, not read by either recovered caller.
+static const EditorTerrainRule EditorTerrainRules[20] = {
+    {BIT_FARM, BIT_FOREST},
+    {BIT_SOIL_ENRICHER, BIT_FOREST},
+    {BIT_MINE, remove_mine_or_solar},
+    {BIT_SOLAR_TIDAL, remove_mine_or_solar},
+    {BIT_FOREST, BIT_THERMAL_BORE | BIT_ECH_MIRROR | BIT_CONDENSER |
+                 BIT_FOREST | BIT_SOIL_ENRICHER | BIT_FARM |
+                 BIT_SOLAR_TIDAL | BIT_FUNGUS | BIT_MINE},
+    {BIT_ROAD, 0},
+    {BIT_MAGTUBE, 0},
+    {BIT_BUNKER, BIT_AIRBASE},
+    {BIT_AIRBASE, BIT_BUNKER},
+    {BIT_SENSOR_ARRAY, BIT_THERMAL_BORE | BIT_ECH_MIRROR | BIT_CONDENSER |
+                       BIT_SOLAR_TIDAL | BIT_MINE},
+    {0, BIT_FUNGUS},
+    {BIT_FUNGUS, BIT_FOREST | BIT_SOIL_ENRICHER | BIT_FARM |
+                 BIT_SOLAR_TIDAL | BIT_MINE},
+    {BIT_CONDENSER, remove_mine_or_solar},
+    {BIT_ECH_MIRROR, remove_mine_or_solar},
+    {BIT_THERMAL_BORE, remove_mine_or_solar | BIT_FARM},
+    {0, 0}, {0, 0}, {0, 0}, {0, 0},
+    {BIT_MONOLITH, BIT_SUPPLY_POD | BIT_NUTRIENT_RSC | BIT_RSC_BONUS},
+};
+
+uint32_t map_editor_paint_mask(int tool_id) {
+    return tool_id >= 6 && tool_id < 26
+        ? EditorTerrainRules[tool_id - 6].paint : 0;
+}
+
+uint32_t map_editor_erase_mask(int tool_id) {
+    return tool_id >= 6 && tool_id < 26
+        ? EditorTerrainRules[tool_id - 6].erase_first : 0;
+}
+
+// Original46B510's retained seed supplies the control flow and tool cases.
+// The tile and redraw receivers now use their source-owned C++ objects.
 // ORIGINAL: 0x0046B510 ?editor@MapWin@@QAEXHHH@Z 0x0046B510-0x0046BFCF
-// RECOVERY_BINDING: v1 {"evidence": ["Original46F000 calls46B510; src/unrecovered/0046b510.cpp retains the complete seed and original bounds.", "User-authorized unfinished-body policy; BODY GOES HERE remains and cannot bank a recovery claim."], "reason": "This newly referenced original MapWin editor has no recovered product implementation yet. The explicitly unfinished owning-TU definition preserves link continuity and original identity, not editing behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original46F000 calls46B510; src/unrecovered/0046b510.cpp retains the complete seed and original bounds.", "Map tile, MapWin receiver, radius, faction and base uses resolve through typed source declarations; original 0x00691888 tool descriptor words 0/1 are modeled as named terrain rules shared with Console."], "reason": "Implement the original map-editing paths and shared editor selection in source-owned C++ while retaining the seed and original identity; this is coverage work, not a measured matching claim."}
 void MapWin::editor(int tile_x, int tile_y, int erase) {
-    // BODY GOES HERE.
+    if (field_1DD8C_ != 0) {
+        if (tile_x == static_cast<int>(field_1DD90_) &&
+            tile_y == static_cast<int>(field_1DD94_)) return;
+        field_1DD90_ = tile_x;
+        field_1DD94_ = tile_y;
+    }
+
+    int step = MapEditorBrushId == 1 ? 2 : 1;
+    int radius = MapEditorBrushId;
+    if (radius > 1) --radius;
+    int limit = RadiusRange[radius];
+    int first = 0;
+    uint32_t river_changed = 1;
+    int changed = 0;
+    bool stop = false;
+    bool used_outer_ring = false;
+    int width = MapLongitudeBounds;
+
+    for (int pass = 0; pass <= 8 && !stop;) {
+        if (pass != 0) {
+            if (MapEditorBrushId != 0 || field_1DD8C_ != 0) break;
+            first = RadiusRange[pass - 1];
+            limit = RadiusRange[pass];
+            step = 1;
+            used_outer_ring = true;
+        }
+        for (int index = first; index < limit && !stop;
+             index += index == 0 ? 1 : step) {
+            int x = tile_x + RadiusOffsetX[index];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) x += width;
+                else if (x >= width) x -= width;
+            }
+            const int y = tile_y + RadiusOffsetY[index];
+            if (x < 0 || x >= width || y < 0 || y >= MapLatitudeBounds)
+                continue;
+
+            Map &tile = map_tiles()[MapLongitude * y + (x >> 1)];
+            Map &origin = map_tiles()[MapLongitude * tile_y + (tile_x >> 1)];
+            switch (MapEditorPaintId) {
+            case 0:
+                if (field_1DD8C_ != 0) {
+                    if (erase != 0) {
+                        if ((tile.climate & 0xE0) >= 0x60)
+                            world_alt_set(x, y, 3, 1);
+                    } else if ((tile.climate & 0xE0) < 0x60) {
+                        world_alt_set(x, y, 2, 1);
+                    }
+                } else if (erase != 0) {
+                    world_lower_alt(x, y);
+                } else {
+                    world_raise_alt(x, y);
+                }
+                changed = 1;
+                break;
+            case 1: {
+                const int rocky = tile.val3 >> 6;
+                const int next = erase ? (rocky > 0 ? rocky - 1 : 0)
+                                       : (rocky < 2 ? rocky + 1 : 2);
+                rocky_set(x, y, next);
+                if (next != rocky) changed = 1;
+                break;
+            }
+            case 2:
+                river_changed = erase ? origin.bit & BIT_RIVERBED
+                                      : (~origin.bit >> 8) & 1;
+                bit_set(tile_x, tile_y, BIT_RIVERBED, erase == 0);
+                stop = true;
+                break;
+            case 3:
+                if (erase != 0) {
+                    bit_set(tile_x, tile_y, BIT_RSC_BONUS | BIT_NUTRIENT_RSC, 0);
+                } else if ((origin.bit & BIT_RSC_BONUS) == 0) {
+                    bit_set(tile_x, tile_y, BIT_RSC_BONUS | BIT_NUTRIENT_RSC, 1);
+                    bit_set(tile_x, tile_y, BIT_SUPPLY_POD, 0);
+                } else if ((origin.bit & BIT_ENERGY_RSC) == 0) {
+                    if ((origin.bit & BIT_MINERAL_RSC) == 0)
+                        bit_set(tile_x, tile_y, BIT_ENERGY_RSC, 1);
+                    else bit_set(tile_x, tile_y, BIT_MINERAL_RSC, 0);
+                } else {
+                    bit_set(tile_x, tile_y, BIT_ENERGY_RSC, 0);
+                    bit_set(tile_x, tile_y, BIT_MINERAL_RSC, 1);
+                }
+                stop = true;
+                break;
+            case 4:
+                if (erase == 0) {
+                    if ((tile.bit & BIT_SUPPLY_REMOVE) != 0 ||
+                        (tile.bit & BIT_SUPPLY_POD) == 0) changed = 1;
+                    bit_set(x, y, BIT_SUPPLY_POD, 1);
+                    bit_set(x, y, BIT_SUPPLY_REMOVE | BIT_NUTRIENT_RSC |
+                                      BIT_RSC_BONUS, 0);
+                } else {
+                    if ((tile.bit & BIT_SUPPLY_POD) != 0 ||
+                        (tile.bit & BIT_SUPPLY_REMOVE) == 0) changed = 1;
+                    bit_set(x, y, BIT_SUPPLY_POD, 0);
+                    bit_set(x, y, BIT_SUPPLY_REMOVE, 1);
+                }
+                break;
+            case 5: {
+                const int faction = ConsoleGlobal.faction_id_;
+                const unsigned char visibility = 1 << faction;
+                if (erase == 0) {
+                    if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) == 0 &&
+                        (tile.visibility & visibility) == 0) changed = 1;
+                    spot_loc(x, y, faction);
+                    synch_bit(x, y, faction);
+                } else {
+                    if ((PlayersData[faction].flags & PFLAG_MAP_REVEALED) != 0 ||
+                        (tile.visibility & visibility) != 0) changed = 1;
+                    tile.visibility &= ~visibility;
+                    const int base_id = base_at(x, y);
+                    if (base_id >= 0) Bases[base_id].visibility &= ~visibility;
+                }
+                break;
+            }
+            case 26:
+                changed = (tile.bit2 & 0x80000004u) == 4 &&
+                          (tile.climate & 0xE0) >= 0x60;
+                bit2_set(x, y, BIT2_JUNGLE, 0);
+                break;
+            case 27:
+            case 28:
+            case 29: {
+                const uint32_t flag = MapEditorPaintId == 27 ? BIT2_DUNES :
+                    MapEditorPaintId == 28 ? BIT2_URANIUM : BIT2_GEOTHERMAL;
+                changed = ((tile.bit2 & (0x80000000u | flag)) == flag) ==
+                          (erase != 0);
+                bit2_set(x, y, flag, erase == 0);
+                if (erase == 0) bit2_set(x, y, BIT2_UNK_80000000, 0);
+                break;
+            }
+            default: {
+                const int tool = MapEditorPaintId;
+                if (tool < 6 || tool >= 26) break;
+                uint32_t mask = map_editor_paint_mask(tool);
+                const bool same_side = ((tile.climate & 0xE0) < 0x60) ==
+                    ((origin.climate & 0xE0) < 0x60);
+                if (!same_side) break;
+                if (erase == 0) {
+                    if ((tile.bit & mask) == 0)
+                        changed = (mask & 0xC) != 0 ? 2 : 1;
+                    if ((mask & BIT_MAGTUBE) != 0) mask |= BIT_ROAD;
+                    bit_set(x, y, map_editor_erase_mask(tool), 0);
+                    bit_set(x, y, mask, 1);
+                } else {
+                    if ((tile.bit & mask) != 0) changed = 1;
+                    bit_set(x, y, mask, 0);
+                }
+                break;
+            }
+            }
+            for (int faction = 1; faction < 8; ++faction)
+                synch_bit(x, y, faction);
+            width = MapLongitudeBounds;
+        }
+        ++pass;
+        if (changed != 0) break;
+    }
+
+    if (field_1DD8C_ != 0 && (field_1DD8C_ & 4) == 0) {
+        draw_radius(tile_x, tile_y, radius, 2);
+        return;
+    }
+    const int tool = MapEditorPaintId;
+    if ((tool == 0 || tool == 2) && river_changed == 0) return;
+    const bool climate_changed = tool == 0 || tool == 2 ||
+                                 (tool == 0x12 && changed != 0);
+    if (climate_changed) {
+        world_climate();
+    }
+    if (climate_changed || used_outer_ring || MapEditorBrushId != 0 ||
+        changed > 1) {
+        for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+            MapWin *window = MapWinTable[slot];
+            if (window && (slot == 0 || window->field_1DD74_ != 0))
+                window->draw_map(1);
+        }
+    } else if (changed != 0) {
+        for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+            MapWin *window = MapWinTable[slot];
+            if (window && (slot == 0 || window->field_1DD74_ != 0))
+                window->draw_radius(tile_x, tile_y, 0, 2);
+        }
+    }
 }
 
 /*
