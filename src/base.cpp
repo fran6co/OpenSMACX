@@ -382,11 +382,104 @@ int base_yield_wrap_x(int x, int map_width) {
 
 } // namespace
 
-// Link-only placeholder; this energy/production pass does not work yet.
+// The seed shows a selected-base energy pass: convoys and inefficiency first,
+// then commerce, allocation, specialists and facility multipliers. The first
+// and last stages below use their owning C++ objects. Pending: faction trade
+// credits, Planetary Energy Grid, specialist upgrades, research allocation
+// effects and the final energy-production special case still need translation
+// from the preserved seed before this is a complete behavioral recovery.
 // ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "source:src/base.h"], "reason": "Recover the selected-base convoy, inefficiency, allocation, specialist and facility stages through typed owners. Commerce and several late modifiers remain pending; this binding makes no exactness claim."}
 void __cdecl base_energy() {
-    // BODY GOES HERE.
+    Base &base = *BaseCurrent;
+    const int faction = base.faction_id_current;
+    base.energy_intake_2 += BaseCurrentConvoyTo[2];
+    base.energy_consumption = BaseCurrentConvoyFrom[2];
+    int available = base.energy_intake_2 - base.energy_consumption;
+    base.energy_inefficiency = black_market(available);
+    base.energy_surplus = available - base.energy_inefficiency;
+
+    // Pending: commerce between factions changes energy_intake_2 here. The
+    // seed ranks same-faction bases and records per-partner receipts. Recompute
+    // inefficiency after that stage, as the original does, so the partial pass
+    // still publishes internally consistent selected-base values.
+    available = base.energy_intake_2 - base.energy_consumption;
+    base.energy_inefficiency = black_market(available);
+    base.energy_surplus = available - base.energy_inefficiency;
+    int distributed = base.energy_surplus;
+    if (distributed < 0) distributed = 0;
+    if (distributed > 9999) distributed = 9999;
+
+    const int psych_share = PlayersData[faction].se_alloc_psych;
+    const int labs_share = PlayersData[faction].se_alloc_labs;
+    int psych = (psych_share * distributed + 4) / 10;
+    if (psych < 0) psych = 0;
+    if (psych > distributed) psych = distributed;
+    int economy = ((10 - labs_share - psych_share) * distributed + 4) / 10;
+    if (economy < 0) economy = 0;
+    if (economy > distributed - psych) economy = distributed - psych;
+    base.psych_total = psych;
+    base.economy_total = economy;
+    base.labs_total = distributed - psych - economy;
+
+    // The extra allocation is retained separately by the original pass.
+    int research_allocation = ((9 - labs_share - psych_share) * distributed + 4) / 10;
+    if (research_allocation < 0) research_allocation = 0;
+    if (research_allocation > distributed - psych) research_allocation = distributed - psych;
+    base.unk_10 = research_allocation;
+
+    for (int citizen = 0; citizen < base.specialist_total; ++citizen) {
+        int specialist = citizen < 16
+            ? (base.spec[citizen >> 3] >> ((citizen & 7) * 4)) & 15
+            : static_cast<int>(best_specialist());
+        if (specialist < 0) specialist = 0;
+        if (specialist > 6) specialist = 6;
+        // Pending: obsolete specialists are promoted according to the seed's
+        // technology and yield comparison, updating the stored nibble.
+        base.economy_total += Citizen[specialist].ops_bonus;
+        base.psych_total += Citizen[specialist].psych_bonus;
+        base.labs_total += Citizen[specialist].research_bonus;
+    }
+
+    base.labs_total += Players[faction].rule_research;
+    if (has_fac(FAC_BIOLOGY_LAB, BaseIDCurrentSelected, 0)) base.labs_total += 2;
+
+    int psych_multiplier = 4;
+    if (has_fac(FAC_HOLOGRAM_THEATRE, BaseIDCurrentSelected, 0)) psych_multiplier = 6;
+    int labs_multiplier = has_fac(FAC_NETWORK_NODE, BaseIDCurrentSelected, 0) ? 6 : 4;
+    int economy_multiplier = has_fac(FAC_ENERGY_BANK, BaseIDCurrentSelected, 0) ? 6 : 4;
+    if (has_fac(FAC_RESEARCH_HOSPITAL, BaseIDCurrentSelected, 0)) {
+        psych_multiplier += 1;
+        labs_multiplier += 2;
+    }
+    if (has_fac(FAC_NANOHOSPITAL, BaseIDCurrentSelected, 0)) {
+        psych_multiplier += 1;
+        labs_multiplier += 2;
+    }
+    if (has_fac(FAC_TREE_FARM, BaseIDCurrentSelected, 0)) {
+        psych_multiplier += 2;
+        economy_multiplier += 2;
+    }
+    if (has_fac(FAC_HYBRID_FOREST, BaseIDCurrentSelected, 0)) {
+        psych_multiplier += 2;
+        economy_multiplier += 2;
+    }
+    if (has_fac(FAC_FUSION_LAB, BaseIDCurrentSelected, 0)) {
+        economy_multiplier += 2;
+        labs_multiplier += 2;
+    }
+    if (has_fac(FAC_QUANTUM_LAB, BaseIDCurrentSelected, 0)) {
+        economy_multiplier += 2;
+        labs_multiplier += 2;
+    }
+    base.psych_total = (base.psych_total * psych_multiplier + 3) / 4;
+    base.labs_total = (base.labs_total * labs_multiplier + 3) / 4;
+    base.economy_total = (base.economy_total * economy_multiplier + 3) / 4;
+    base.unk_10 = (base.unk_10 * economy_multiplier + 3) / 4;
+
+    // Pending: Secret Project, faction efficiency, Network Backbone and
+    // research-allocation modifiers follow these multipliers in the seed.
+    base_psych();
 }
 
 // ORIGINAL: 0x004E80B0 ?base_yield@@YAXXZ 0x004E80B0-0x004E954B
