@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "wave.h"
 #include "credits.h"
+#include "text.h"
 
 extern Wave g_CREDITS_WAVE;
 
@@ -34,6 +35,34 @@ void Credits::unload() {
   line_count_ = 0;
   frame_count_ = 0;
   g_CREDITS_WAVE.unload();
+}
+
+// The credits text section owns up to 512 heap-allocated lines. The source
+// fields and the Text buffer pointer replace the retained seed's raw offsets
+// and fixed executable addresses; its original error paths are preserved.
+// ORIGINAL: 0x00428880 ?load@Credits@@QAEXXZ 0x00428880-0x004289BA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:9957b40d:src/recovered/units/00428880.cpp preserves the original call order and field offsets", "Credits::unload and Credits::draw_credits establish the owned 512-line array and font usage"], "reason": "Home the credits text loader on its real Credits owner with typed members and project globals."}
+void Credits::load() {
+  unload();
+  g_CREDITS_WAVE.load(const_cast<char *>("fx\\opening menu.wav"), 2);
+
+  if (text_open("CREDITS", "CREDITS") == 0) {
+    field_1230_ = 0;
+    while (*text_get() != '#') {
+      char *line = TextBufferGetPtr;
+      char *stored = static_cast<char *>(mem_get(strlen(line) + 1));
+      lines_[line_count_] = stored;
+      if (stored != 0) {
+        ++line_count_;
+        strcpy(stored, line);
+        const int width = font_.width(stored);
+        if (static_cast<int>(field_1230_) <= width) {
+          field_1230_ = width;
+        }
+      }
+    }
+    text_close();
+  }
 }
 
 // Close the owned timer and graphics window, then the embedded button.

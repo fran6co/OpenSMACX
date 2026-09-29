@@ -48,6 +48,7 @@ class Credits : public GraphicWin {
   // functions. The callback's no-argument overload advances the text frame;
   // the integer overload is the timer-dispatch entry point.
   void unload();
+  void load();
   void close();
   void draw_credits();
   void timer_callback_daemon();
