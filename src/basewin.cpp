@@ -2476,10 +2476,9 @@ void BaseWin::draw_pop(int update_mode) {
     canvas->set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410D54-0x00410EAB selects partner rows and reads the base_energy commerce ledgers", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip", "src/unrecovered/00410870.cpp explicitly marks its alien score and message selection as approximate"], "reason": "Recover the commerce panel and normal-faction partner rows through owned BaseWin rectangles, typed diplomacy state and source-owned commerce ledgers. The alien score and finer status strings remain obligations in the retained seed."}
-// The alien military-score branch and the sanctioned-loan/status text after
-// 0x00410EAB remain incomplete. The seed invents a comparison there; never
-// copy it to make this body appear complete.
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410D54-0x0041111C selects partner rows and formats receipts, pact/treaty status, unequal exchanges and sanctions from Base/PlayerData fields", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip", "src/unrecovered/00410870.cpp explicitly marks its alien military-score branch as approximate"], "reason": "Recover the commerce panel and normal-faction partner rows through owned BaseWin rectangles, typed diplomacy state and source-owned commerce ledgers; the alien score remains an explicit restoration obligation."}
+// The alien military-score branch at 0x00410B3C-0x00410D54 remains incomplete.
+// The seed invents a comparison there; never copy it to appear complete.
 void BaseWin::draw_commerce(int update_mode) {
     Buffer *canvas = this;
     RECT saved_clip = canvas->rect1_;
@@ -2536,8 +2535,9 @@ void BaseWin::draw_commerce(int update_mode) {
             StringTemp[0] = 0;
             strcat(StringTemp, Players[partner].noun_faction);
             string_upper_slot()(StringTemp);
-            if (PlayersData[owner].sanction_turns == 0 &&
-                PlayersData[partner].sanction_turns == 0) {
+            const int own_sanctions = PlayersData[owner].sanction_turns;
+            const int partner_sanctions = PlayersData[partner].sanction_turns;
+            if (own_sanctions == 0 && partner_sanctions == 0) {
                 char amount[32];
                 strcat(StringTemp, ": +");
                 _itoa(BaseCommerceReceipts[slot], amount, 10);
@@ -2546,10 +2546,36 @@ void BaseWin::draw_commerce(int update_mode) {
             canvas->write_l(StringTemp, report.left, row_y, strlen(StringTemp));
 
             StringTemp[0] = 0;
-            strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
-                                          & DTREATY_PACT) != 0 ? 645 : 644));
-            canvas->write_l(StringTemp, report.left + 5,
-                            row_y + font.line_advance(), strlen(StringTemp));
+            const int detail_y = row_y + font.line_advance();
+            if (own_sanctions != 0 || partner_sanctions != 0) {
+                canvas->set_text_color(TextColourTable[110], TextColourTable[111], 1, 1);
+                strcat(StringTemp, label_get(450));
+                strcat(StringTemp, " (");
+                char turns[32];
+                _itoa(own_sanctions > partner_sanctions
+                          ? own_sanctions : partner_sanctions, turns, 10);
+                strcat(StringTemp, turns);
+                strcat(StringTemp, ")");
+                string_upper_slot()(StringTemp);
+                canvas->write_l(StringTemp, report.left + 5, detail_y,
+                                strlen(StringTemp));
+            } else {
+                strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
+                                              & DTREATY_PACT) != 0 ? 645 : 644));
+                int text_end = canvas->write_l(StringTemp, report.left + 5,
+                                               detail_y, strlen(StringTemp));
+                if (BaseCommercePartnerReceipts[slot] != BaseCommerceReceipts[slot]) {
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, " (");
+                    strcat(StringTemp, label_get(648));
+                    strcat(StringTemp, " +");
+                    char partner_amount[32];
+                    _itoa(BaseCommercePartnerReceipts[slot], partner_amount, 10);
+                    strcat(StringTemp, partner_amount);
+                    strcat(StringTemp, ")");
+                    canvas->write_l(StringTemp, text_end, detail_y, strlen(StringTemp));
+                }
+            }
             row_y += row_pitch;
         }
     }
