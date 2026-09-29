@@ -17,6 +17,9 @@
  */
 #include "stdafx.h"
 #include "strings.h"
+#include "alpha.h"
+#include "technology.h"
+#include "veh.h"
 
 // RECOVERY_OBJECT: v1 0x009B86A0 ?StringTemp@@3PADA
 char StringTemp[1032];   // 0x009B86A0
@@ -148,6 +151,126 @@ LPSTR Strings::get(int address) {
             ? (LPSTR)address : NULL;
     }
     return LPSTR(get_base()); // return base
+}
+
+// The five part-name formatters share the same label table, string table,
+// scratch buffer, and rules records as the neighboring say_* functions.
+// Their optional suffixes deliberately append a label to StringTemp before
+// continuing the destination; that side effect is present in the original.
+// ORIGINAL: 0x00590510 ?say_reactor@@YAXPAXHH@Z 0x00590510-0x005905B5
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x00590510-0x005905B5;seed:src/unrecovered/00590510.cpp;source:src/veh.h:Reactor;source:src/strings.h:StringTable"], "reason": "This free formatter reads the real Reactor record and shared Strings and Labels objects, matching the original name, call ABI, and bounded body."}
+void __cdecl say_reactor(void *output, int reactor_id, int with_detail) {
+    char *text = static_cast<char *>(output);
+    strcat(text, StringTable.get(reinterpret_cast<int>(Reactor[reactor_id].name)));
+    if (with_detail != 0) {
+        strcat(text, " ");
+        strcat(text, "(");
+        strcat(StringTemp, StringTable.get(
+            *reinterpret_cast<int *>(Labels.strings_ptr + 0x13C)));
+        strcat(text, ": ");
+        char number[80];
+        _itoa(reactor_id + 1, number, 10);
+        strcat(text, number);
+        strcat(text, ")");
+    }
+}
+
+// ORIGINAL: 0x005905C0 ?say_weapon@@YAXPAXHH@Z 0x005905C0-0x005906EC
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x005905C0-0x005906EC;seed:src/recovered/units/005905c0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Weapon records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
+void __cdecl say_weapon(void *output, int weapon_id, int with_detail) {
+    char *text = static_cast<char *>(output);
+    const RulesWeapon &weapon = Weapon[weapon_id];
+    strcat(text, StringTable.get(reinterpret_cast<int>(weapon.name)));
+    if (with_detail != 0) {
+        strcat(text, " ");
+        strcat(text, "(");
+        if (weapon.offense_rating == 0) {
+            strcat(text, StringTable.get(
+                *reinterpret_cast<int *>(Labels.strings_ptr + 0x284)));
+        } else {
+            strcat(text, StringTable.get(
+                *reinterpret_cast<int *>(Labels.strings_ptr + 0x204)));
+            strcat(text, ": ");
+            if (weapon.offense_rating < 0) {
+                strcat(text, StringTable.get(
+                    *reinterpret_cast<int *>(Labels.strings_ptr + 0x310)));
+            } else {
+                char number[80];
+                _itoa(weapon.offense_rating, number, 10);
+                strcat(text, number);
+            }
+            for (int i = 0; i < weapon.mode; ++i) {
+                strcat(text, "*");
+            }
+        }
+        strcat(text, ")");
+    }
+}
+
+// ORIGINAL: 0x005906F0 ?say_armor@@YAXPAXHH@Z 0x005906F0-0x005907F5
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x005906F0-0x005907F5;seed:src/recovered/units/005906f0.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Armor records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
+void __cdecl say_armor(void *output, int armor_id, int with_detail) {
+    char *text = static_cast<char *>(output);
+    const RulesArmor &armor = Armor[armor_id];
+    strcat(text, StringTable.get(reinterpret_cast<int>(armor.name)));
+    if (with_detail != 0) {
+        strcat(text, " ");
+        strcat(text, "(");
+        strcat(StringTemp, StringTable.get(
+            *reinterpret_cast<int *>(Labels.strings_ptr + 0x154)));
+        strcat(text, ": ");
+        if (armor.defense_rating < 0) {
+            strcat(text, StringTable.get(
+                *reinterpret_cast<int *>(Labels.strings_ptr + 0x310)));
+        } else {
+            char number[80];
+            _itoa(armor.defense_rating, number, 10);
+            strcat(text, number);
+        }
+        for (int i = 0; i < armor.mode; ++i) {
+            strcat(text, "*");
+        }
+        strcat(text, ")");
+    }
+}
+
+// ORIGINAL: 0x00590800 ?say_chassis@@YAXPAXHH@Z 0x00590800-0x0059090D
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x00590800-0x0059090D;seed:src/recovered/units/00590800.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Chassis records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
+void __cdecl say_chassis(void *output, int chassis_id, int with_detail) {
+    char *text = static_cast<char *>(output);
+    const RulesChassis &chassis = Chassis[chassis_id];
+    strcat(text, StringTable.get(reinterpret_cast<int>(chassis.offsv_1_name)));
+    if (with_detail != 0) {
+        strcat(text, " ");
+        strcat(text, "(");
+        strcat(StringTemp, StringTable.get(
+            *reinterpret_cast<int *>(Labels.strings_ptr + 0x140)));
+        strcat(text, ": ");
+        char number[80];
+        _itoa(chassis.speed, number, 10);
+        strcat(text, number);
+        if (chassis.triad == 1 || chassis.triad == 2) {
+            strcat(text, " ");
+            const int offset = chassis.triad == 1 ? 0x28C : 0x288;
+            strcat(text, StringTable.get(
+                *reinterpret_cast<int *>(Labels.strings_ptr + offset)));
+        }
+        strcat(text, ")");
+    }
+}
+
+// ORIGINAL: 0x00590B30 ?say_techs@@YAXPAXHH@Z 0x00590B30-0x00590B9A
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x00590B30-0x00590B9A;seed:src/recovered/units/00590b30.cpp;source:src/strings.h:StringTable;source:src/alpha.h:Labels"], "reason": "This free formatter uses the established Technology records and shared Strings and Labels objects with the original name, call ABI, and bounded body."}
+void __cdecl say_techs(void *output, int tech_id, int with_detail) {
+    char *text = static_cast<char *>(output);
+    say_tech(text, tech_id, with_detail);
+    if (with_detail != 0) {
+        strcat(text, " ");
+        strcat(text, "(");
+        strcat(StringTemp, StringTable.get(
+            *reinterpret_cast<int *>(Labels.strings_ptr + 0x274)));
+        strcat(text, ")");
+    }
 }
 
 // global

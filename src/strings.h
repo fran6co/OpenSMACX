@@ -32,6 +32,12 @@
 // `->str`; with the object itself declared there is nothing to wrap.
 extern char StringTemp[1032];    // 0x009B86A0
 
+void __cdecl say_reactor(void *output, int reactor_id, int with_detail);
+void __cdecl say_weapon(void *output, int weapon_id, int with_detail);
+void __cdecl say_armor(void *output, int armor_id, int with_detail);
+void __cdecl say_chassis(void *output, int chassis_id, int with_detail);
+void __cdecl say_techs(void *output, int tech_id, int with_detail);
+
 // APPEND A DECIMAL NUMBER TO StringTemp, and IN THE HEADER because the
 // image has it BOTH WAYS: a standalone body at 0x0050B8A0 with three
 // callers, and folded into `prefs_get`, whose first eight instructions are
