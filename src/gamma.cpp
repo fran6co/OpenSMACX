@@ -88,7 +88,7 @@ void Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     scroll_.set_bevel_upper(7);
     scroll_.set_bevel_lower(0);
     scroll_.paging_ = 10;
-    scroll_.field_A74_ = 0;
+    scroll_.thumb_sprite_ = nullptr;
     scroll_.set_sprite_left(0, 0, 0);
     scroll_.set_sprite_right(0, 0, 0);
     scroll_.set_range(1, 400);

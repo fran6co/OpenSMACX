@@ -742,6 +742,97 @@ uint32_t Scroll::set_bevel_lower(int color) {
 #pragma warning(pop)
 
 /*
+Purpose: Resize the scrollbar track and its right/down arrow after the parent
+         changes size. The smaller axis sets the track thickness.
+// ORIGINAL: 0x00606860 ?on_resize@Scroll@@QAEXHH@Z 0x00606860-0x0060699B FILE
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/00606860.cpp","source:src/scroll.h:Scroll","source:src/win.h:Win::on_resize"],"reason":"Home the resize handler on the actual Scroll layout and dispatch the embedded FlatButton through its inherited virtual resize, without raw self offsets or an invented vtable."}
+// symbol    ?on_resize@Scroll@@UAEXHH@Z
+// The catalogue spells this QAE, but the real Win base declares slot 13;
+// Scroll's emitted override is UAE, as independently checked with VC6.
+*/
+void Scroll::on_resize(int width, int height) {
+    const int thickness = width > height ? height : width;
+    bar_thickness_ = thickness;
+    thumb_rect_.left = 0;
+    thumb_rect_.top = 0;
+    thumb_rect_.right = thickness;
+    thumb_rect_.bottom = thickness;
+
+    if (border_color_ != -1) {
+        thumb_rect_.left = 1;
+        --thumb_rect_.right;
+        ++thumb_rect_.top;
+        --thumb_rect_.bottom;
+    }
+
+    if (border_color_ != -1) {
+        const int button_size = bar_thickness_ - 2;
+        flat_button_right_.resize(button_size, button_size, 0);
+        if (width <= height) {
+            flat_button_right_.move(width - bar_thickness_ + 1,
+                                    height - bar_thickness_ + 1);
+        } else {
+            flat_button_right_.move(1, 1);
+        }
+        return;
+    }
+
+    flat_button_right_.resize(bar_thickness_, bar_thickness_, 0);
+    if (width <= height) {
+        flat_button_right_.move(width - bar_thickness_, height - bar_thickness_);
+    } else {
+        flat_button_right_.move(0, 0);
+    }
+}
+
+/*
+Purpose: Paint the arrow buttons, track, optional pattern and the thumb's
+         sprite and bevel on this window's inherited Buffer.
+// ORIGINAL: 0x006066F0 ?on_redraw@Scroll@@QAEXXZ 0x006066F0-0x00606854 FILE
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/006066f0.cpp","source:src/scroll.h:Scroll","source:src/graphicwin.h:GraphicWin","source:src/buffer.h:Buffer"],"reason":"Home the redraw path on the real GraphicWin/Buffer hierarchy, embedded FlatButtons and source-owned thumb sprite instead of seed vtable and raw-offset stand-ins."}
+// symbol    ?on_redraw@Scroll@@UAEXXZ
+// Likewise, this is Win's slot 12 override despite the catalogue's QAE name.
+// The separately claimed seed remains a restoration obligation while this
+// structurally homed body does not yet reproduce its compiled instructions.
+*/
+void Scroll::on_redraw() {
+    flat_button_left_.redraw();
+    flat_button_right_.redraw();
+    fill(field_A64_);
+
+    if (border_color_ != -1) {
+        const unsigned char color = static_cast<unsigned char>(border_color_);
+        Buffer::box(&rect2_, color, color);
+    }
+
+    RECT thumb;
+    compute_thumb_rect(&thumb);
+    fill(&thumb, field_A64_);
+
+    if (field_A78_ != nullptr) {
+        Buffer::tile(field_A78_, 0, 0, 0, 0,
+                     dib_.bmiHeader.biWidth, -dib_.bmiHeader.biHeight);
+    }
+
+    if (thumb_sprite_ != nullptr) {
+        const int x = (thumb.right - thumb_sprite_->width() - thumb.left) / 2
+                      + thumb.left;
+        const int y = (thumb.bottom - thumb_sprite_->height() - thumb.top) / 2
+                      + thumb.top;
+        thumb_sprite_->draw(static_cast<Buffer *>(this),
+                            thumb_sprite_->transparent_index(), x, y, 1, 1);
+    }
+
+    for (unsigned int layer = 0; layer < bevel_thickness_; ++layer) {
+        Buffer::box(&thumb, bevel_upper_, bevel_lower_);
+        ++thumb.left;
+        --thumb.right;
+        ++thumb.top;
+        --thumb.bottom;
+    }
+}
+
+/*
 Purpose: Set the scrollbar thickness and reset its thumb rectangle.
 // ORIGINAL: 0x00605B80 ?set_bar_thickness@Scroll@@QAEXH@Z 0x00605B80-0x00605BE0
 // TRIED: dropping the `volatile` casts on `bar_thickness_`, `border_color_`

@@ -87,6 +87,8 @@ class Scroll : public ScrollGraphicWin {
   void on_mousewheel_up(int delta);
   void on_button_pressed(int button_id);
   void on_button_clicked(int button_id);
+  void on_redraw();
+  void on_resize(int width, int height);
  private:
   friend class Win;
   friend class SelectPartWin;  // key navigation reads the clamped position after set_pos
@@ -117,7 +119,8 @@ class Scroll : public ScrollGraphicWin {
   uint32_t bevel_thickness_;
   uint32_t bevel_upper_;
   uint32_t bevel_lower_;
-  uint32_t field_A74_;
+  // RECOVERY_MEMBER: v3 Scroll thumb_sprite_ Sprite* 0xA74 0x006066F0
+  Sprite *thumb_sprite_;
   Sprite *field_A78_;
   Sprite *sprite_left1_;
   Sprite *sprite_left2_;
