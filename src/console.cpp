@@ -1028,17 +1028,13 @@ void Console::editor_diplomacy() {
         for (int i = 1; i < MaxPlayerNum; i++) {
             GenderDefault = Players[i].noun_gender;
             PluralityDefault = Players[i].is_noun_plural;
-            reinterpret_cast<Dialogs *>(reinterpret_cast<uint8_t *>(&popup)
-                                            + 0x21d0)
-                ->Dialogs::item(Players[i].noun_faction, i);
+            popup.dialogs().item(Players[i].noun_faction, i);
         }
 
         // BasePop's default answer: when the player accepts without picking,
         // the popup hands back the faction already being played.
         if (faction >= 0) {
-            *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(&popup)
-                                              + 0xa44) =
-                static_cast<uint32_t>(faction);
+            popup.set_value(faction);
         }
 
         result = popup.exec(0, 0);
@@ -4168,16 +4164,28 @@ void Console::zoom_to_upkeep_base() {
 // editor_energy's own call list all name this address (span
 // 0x004D9AD0-0x004D9DB4); the console.h declaration carries the corrected
 // address too.
-// Link-only placeholder: the seed (src/unrecovered/004d9ad0.cpp) is preserved
-// and its transcription is still blocked on the private-member access the
-// console.h note records.
+// The picker calls Dialogs::item on the Popup's +0x21D0 member: original
+// popup stack slot -0x5388 plus 0x21D0 equals the item receiver -0x31B8.
+// Its automatic destructor owns the historical teardown sequence.
 // ORIGINAL: 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z 0x004D9AD0-0x004D9DB4 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004d9ad0.cpp", "source:src/console.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
-int Console::editor_who(int, int) {
-    // BODY GOES HERE.
-    // This definition provides build continuity only - editor_energy calls
-    // it; the seed body is preserved, not transcribed.
-    return 0;
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004d9ad0.cpp", "source:src/console.cpp:Console::editor_diplomacy", "source:src/faction.h:Player", "source:src/basepop.h:BasePop"], "reason": "Recover the editor faction picker through the typed popup, dialog member, faction nouns and post-start default value; C++ lifetime replaces the seed's explicit teardown."}
+int Console::editor_who(int default_faction, int first_faction) {
+    Popup popup;
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, StrEditorWhoListTitle, -1, 0, 0x40);
+
+    for (int faction = first_faction < 0 ? 0 : first_faction;
+         faction < MaxPlayerNum; ++faction) {
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        popup.dialogs().item(Players[faction].noun_faction, faction);
+    }
+    if (default_faction >= 0) {
+        popup.set_value(default_faction);
+    }
+    const int selected = popup.exec(0, 0);
+    PopupModalState = 0;
+    return selected;
 }
 
 /*

@@ -258,8 +258,8 @@ class Console : public MapWin {
   void cursor_on(int cursor_shape, int veh_id);
   int selecting(int tile_x, int tile_y);
   // 0x004D9AD0 ?editor_who@Console@@QAEHHH@Z - which faction/personality the
-  // scenario editor is working on. Declared here because its own body is
-  // still blocked on a private-member access its transcription makes.
+  // scenario editor is working on. The body uses Popup's typed Dialogs
+  // member and default-answer setter rather than private-member offsets.
   // (Corrected 2026-09-26: the catalogue and the partition place the mangled
   // name at 0x004D9AD0, span 0x004D9AD0-0x004D9DB4; the older 0x004E0A50 here
   // was editor_paints' homed address.)
