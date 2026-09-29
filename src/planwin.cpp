@@ -26,21 +26,14 @@
 #include "base.h"
 #include "spritebox.h"
 #include "net_class.h"
-#include "texture.h"
-#include "imagebutton.h"
 #include "temp.h"
-#include "vector_teardown.h"
 #include <cstring>
 
-// The element dtors for PlanWin's shared MapWin-layout arrays - see
-// mapwin.cpp's callback note.
-static void __fastcall planwin_texture_store_element_dtor(void *self) {
-    reinterpret_cast<TextureStore *>(self)->~TextureStore();
-}
-static void __fastcall planwin_image_button_element_dtor(void *self) {
-    reinterpret_cast<ImageButton *>(self)->~ImageButton();
-}
-
+// Original CRT slot 0x00682570 selects the PlanWin initializer at 0x0048AE00.
+// Its most-derived construction begins at 0x00834D70 and the registered
+// teardown destroys that same complete object through its virtual base.
+// RECOVERY_OBJECT: v2 0x00834D70 0x008577D4 ?PlanWindow@@3VPlanWin@@A 0x0048AE00
+PlanWin PlanWindow;
 
 // The dword immediately ahead of MapWin's virtual base. MapWin used to
 // declare it as a member; VC6 owns those four bytes as MapWin's vtordisp
@@ -89,8 +82,7 @@ PlanWin::PlanWin() {
 }
 
 /*
-Purpose: Tear down a plan window's own buffer and the MapWin fields it holds
-         directly, without a separate call into MapWin's own destructor.
+Purpose: Destroy the complete PlanWin through C++ member and base lifetimes.
 // ORIGINAL: 0x0048BD80 ??1PlanWin@@QAE@XZ 0x0048BD80-0x0048BED6;0x00658210-0x006582DE
 // symbol    ??1PlanWin@@UAE@XZ
 // size      548 bytes
@@ -101,47 +93,19 @@ Purpose: Tear down a plan window's own buffer and the MapWin fields it holds
 // calls     0x00462870 0x005D7410 0x00618EE0 0x006252B0 0x006456E4
 Return Value: n/a
 
-`this` IS NOT PlanWin's own front: `guarded_teardowns.cpp` already calls
-`reinterpret_cast<PlanWin *>(TeardownObject00856DC0)->PlanWin::~PlanWin()`
-with the address of the embedded GraphicWin virtual base
-(front + 0x22050 - `TeardownObject00856DC0` minus `g_PLANWIN`'s own
-0x00834D70 is exactly that), matching what this body's own arithmetic reads
-throughout. That is the image's own convention, not a bug reproduced here -
-`??__Fg_PLANWIN` calls this and then `GraphicWin::~GraphicWin()` on the same
-address, in that order.
-
-KNOWN DIVERGENCE: `PlanWin` publicly inherits `MapWin`, and `MapWin` now has
-a genuine `~MapWin()` (needed so `guarded_teardowns.cpp`'s own already-matching
-`->MapWin::~MapWin()` keeps compiling), so this destructor's epilogue gets an
-EXTRA, compiler-inserted call into `MapWin::~MapWin()` that the image does not
-make. The image tears down MapWin's own fields here directly, calling
-`MapWin::clear` for the "this window is live" flag - PlanWin's destructor never
-calls MapWin's own separate destructor at 0x00420F90.
-// TRIED: public inheritance of MapWin with its real destructor; the
-//        compiler-inserted ~MapWin epilogue call is the divergence - the
-//        MapWin/PlanWin boundary needs class modelling, not a body edit
+The original exit wrapper enters through the virtual GraphicWin base at
+0x00856DC0 and manually destroys the MapWin members before tearing down that
+base. The old source copied those destructor calls into this body while also
+declaring real C++ members and a real MapWin base. VC6 then emitted automatic
+teardown as well, so the source would destroy those objects twice. The
+complete PlanWindow above owns the lifetime; its generated destructor now
+performs the member, MapWin and virtual GraphicWin stages once. This changes
+the unclaimed body shape while preserving the original object relationship.
 */
 PlanWin::~PlanWin() {
-    char *const self = reinterpret_cast<char *>(this);
-    reinterpret_cast<Buffer *>(self - 0x5e0)->~Buffer();
-
-    char *const base = self - 0x5e4;
-    reinterpret_cast<MapWin *>(base - 0x21a6c)->clear(0);
-
-    
-VectorDtorIterator(base - 0x2b18, 0xabc, 4,
-                        planwin_image_button_element_dtor);
-    reinterpret_cast<Font *>(base - 0x2b4c)->~Font();
-    reinterpret_cast<Font *>(base - 0x2b78)->~Font();
-    reinterpret_cast<Font *>(base - 0x2ba4)->~Font();
-    reinterpret_cast<Buffer *>(base - 0x3134)->~Buffer();
-    reinterpret_cast<Buffer *>(base - 0x36bc)->~Buffer();
-    reinterpret_cast<Buffer *>(base - 0x3c44)->~Buffer();
-    reinterpret_cast<TextureStore *>(base - 0x3f60)->~TextureStore();
-    VectorDtorIterator(base - 0x210e0, 0x260, 0xc4,
-                        planwin_texture_store_element_dtor);
-    VectorDtorIterator(base - 0x21a60, 0x260, 4,
-                        planwin_texture_store_element_dtor);
+    // The declared Buffer, MapWin base and virtual GraphicWin base own their
+    // destruction in reverse construction order. The old hand teardown
+    // invoked those same destructors a second time before this epilogue.
 }
 
 /*

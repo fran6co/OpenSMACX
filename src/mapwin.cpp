@@ -24,6 +24,8 @@
 #include "mapwin.h"
 #include "lock.h"      // LockMapTable - terrain_fixup walks its records
 #include "console.h"
+#include "planwin.h"   // PlanWindow is the complete MapWin-derived singleton.
+#include "diplopop.h"  // PlanWin receiver checks popup visibility.
 #include "tutwin.h"    // TutWinGlobal - draw_cursor ends on its draw_arrow
 #include "statuswin.h"
 #include "worldwin.h"
@@ -161,7 +163,7 @@ void MapWin::init(int mode, int update) {
 }
 
 // ORIGINAL: 0x00470920 ?init@MapWin@@QAEXPAURECT@@PADH@Z 0x00470920-0x00470A90
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470920.cpp; original calls clear, cache setup, GraphicWin init; MapWin::init_dummy already owns equivalent cache setup."], "reason": "Home the rectangle initializer for embedded WorldWin, secondary table slot, and ordinary receivers through typed GraphicWin and parent objects; the PlanWin singleton branch remains explicit."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470920.cpp; original calls clear, cache setup and GraphicWin::init(RECT*) for the PlanWin, secondary MapWin slot, WorldWin and ordinary receivers.", "Original 0x004709EB identifies the complete PlanWin at 0x00834D70 and 0x004709F3 tests DiplomacyPopup; 0x005D50A0 supplies null-RECT behavior."], "reason": "Home receiver selection through real PlanWin, popup, interface and WorldWin owners and the original GraphicWin rectangle overload."}
 // symbol    ?init@MapWin@@QAEXPAUtagRECT@@PADH@Z
 void MapWin::init(RECT *bounds, char *caption, int flags) {
     clear(field_1DD78_);
@@ -171,34 +173,22 @@ void MapWin::init(RECT *bounds, char *caption, int flags) {
     if ((field_1DD70_ & 0x1000000U) != 0 || this == MapWinTable[0]) {
         return;
     }
-    if (this == &WorldClimateWorldWin.mapWin_) {
-        if (bounds != 0) {
-            GraphicWin::init(bounds->left, bounds->top,
-                             bounds->right - bounds->left,
-                             bounds->bottom - bounds->top,
-                             0, 0, 0, 0, 0);
-        }
-        return;
-    }
-    if (bounds == 0) {
-        // BODY GOES HERE: the rectangle-taking GraphicWin initializer's
-        // null-bounds behavior is not represented by the coordinate overload.
+    if (this == static_cast<MapWin *>(&PlanWindow)) {
+        // Both original visibility paths pass the same parent and style;
+        // the first returns directly and the second joins the common tail.
+        DiplomacyPopup.is_visible();
+        GraphicWin::init(bounds, caption, flags, &MainInterfaceGlobal, 0, 0);
         return;
     }
     if (this == MapWinTable[1]) {
-        GraphicWin::init(bounds->left, bounds->top,
-                         bounds->right - bounds->left,
-                         bounds->bottom - bounds->top,
-                         0, 0x20, &MainInterfaceGlobal, 0, 0);
+        GraphicWin::init(bounds, 0, 0x20, &MainInterfaceGlobal, 0, 0);
         return;
     }
-    // BODY GOES HERE: the PlanWin singleton branch selects MainInterface as
-    // parent and suppresses this call while DiplomacyPopup is visible. Its
-    // complete global receiver is not source-owned yet.
-    GraphicWin::init(bounds->left, bounds->top,
-                     bounds->right - bounds->left,
-                     bounds->bottom - bounds->top,
-                     caption, flags | 0x30000000, 0, 0, 0);
+    if (this == &WorldClimateWorldWin.mapWin_) {
+        GraphicWin::init(bounds, 0, 0, 0, 0, 0);
+        return;
+    }
+    GraphicWin::init(bounds, caption, flags | 0x30000000, 0, 0, 0);
 }
 
 // 0x006874C4: draw_my_dest publishes a vehicle index after validation;

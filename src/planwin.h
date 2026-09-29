@@ -134,3 +134,7 @@ class PlanWin : public MapWin {
 };
 
 static_assert(sizeof(PlanWin) == 0x22A64, "PlanWin layout must match terranx.exe");
+
+// The CRT constructs the complete PlanWin front at 0x00834D70; its
+// GraphicWin virtual base then begins at 0x00856DC0.
+extern PlanWin PlanWindow;

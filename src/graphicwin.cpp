@@ -724,6 +724,18 @@ Verification note: the original has no null check on title, parent, menu,
         border or on `this`, and none on the operator-new result beyond
         skipping the constructor. Their absence is deliberate.
 */
+// ORIGINAL: 0x005D50A0 ?init@GraphicWin@@QAEHPAURECT@@PADHPAUWin@@PAUMenu@@PAUBorderSizing@@@Z 0x005D50A0-0x005D50E8
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005d50a0.cpp retains the measured 72-byte overload; original 0x005D50A0-0x005D50E8 returns 0x10 for null bounds and forwards nonnull rectangle coordinates to 0x005D4EF0."], "reason": "Home the rectangle initializer in GraphicWin so MapWin and other owners use its real null behavior and base lifetime."}
+// symbol    ?init@GraphicWin@@QAEHPAUtagRECT@@PADHPAVWin@@PAVMenu@@PAUBorderSizing@@@Z
+int GraphicWin::init(RECT *bounds, char *caption, int flags, Win *parent,
+                     Menu *menu, BorderSizing *border) {
+    if (bounds == 0) return 0x10;
+    return init(bounds->left, bounds->top,
+                bounds->right - bounds->left,
+                bounds->bottom - bounds->top,
+                caption, flags, parent, menu, border);
+}
+
 int GraphicWin::init(int x, int y, int width, int height, LPSTR title,
                      int flags, Win *parent, Menu *menu,
                      BorderSizing *border) {

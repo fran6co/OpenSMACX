@@ -142,6 +142,8 @@ class GraphicWin : public Win, public Buffer {
   void j_close();
   int init(int x, int y, int width, int height, LPSTR title, int flags,
            Win *parent, Menu *menu, BorderSizing *border);
+  int init(RECT *bounds, char *caption, int flags, Win *parent,
+           Menu *menu, BorderSizing *border);
   int fill(int x1, int y1, int x2, int y2, int color);
   int fill(RECT *area, int color);
   void fill(int color);

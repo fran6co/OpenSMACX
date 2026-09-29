@@ -35,18 +35,8 @@ int Blink2Counter;      // 0x009392B4
 int PlanLineCounter;    // 0x00939FD4
 int TurnRedrawPending;  // 0x00703DE0
 
-// The PlanWin the line timer repaints; the image loads the receiver as an
-// immediate (`mov ecx, 0x856dc0`), which a header binding folds to.
-// LEFT AS A BINDING, measured 2026-08-29: the image's CRT initializer table
-// (89 entries at 0x682568) has NO ??__E that constructs 0x00856DC0 - unlike
-// the six timers below - and PlanWin deliberately declares no constructor
-// (planwin.h), so a real `PlanWin` global would emit an implicit default
-// constructor building its Buffer member pre-WinMain, construction the
-// image does not perform at this address. The only use (line_timer,
-// BYTE_EXACT) folds to the image's own `mov ecx, imm32` receiver, and
-// PlanWin::on_redraw is a pending-body forwarder that faults on entry
-// before anything dereferences the receiver.
-static PlanWin *const LineTimerPlanWindow = (PlanWin *)0x00856DC0;
+// PlanWindow's virtual GraphicWin base begins at the timer's historical
+// receiver 0x00856DC0. The real PlanWin object owns that base and lifetime.
 // The MultiWin the turn timer redraws (`mov ecx, 0x7fd648`) is the REAL
 // object MultiWindow in game.cpp; game.cpp closes its GraphicWin front for
 // desktop_close - the same fixed address, one object.
@@ -725,7 +715,7 @@ void __cdecl line_timer(int a1) {
     // The image makes this a DIRECT call (0x50EEBF -> 0x48AF30
     // ?on_redraw@PlanWin@@QAEXXZ), not a slot-12 dispatch; the qualified
     // spelling suppresses the virtual call the shared name now implies.
-    LineTimerPlanWindow->PlanWin::on_redraw();
+    PlanWindow.PlanWin::on_redraw();
 
     for (MapWin *const *slot = &MapWinTable[0];
          reinterpret_cast<int32_t>(slot) <
