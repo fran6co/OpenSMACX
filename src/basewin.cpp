@@ -1258,17 +1258,15 @@ static int *const MainInterfaceScreenClipBottom = (int *)0x007AECA0;
 // Garrison frames use style3. Original 0x410485 loads style9's mask pointer
 // from 0x78D6B0; that address is a member slot, not a Buffer object itself.
 // ORIGINAL: 0x004103B0 ?draw_garrison@BaseWin@@QAEXH@Z 0x004103B0-0x00410868;0x00651B0D-0x00651B22 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004104DD-0x004107F9 typed stack links, column layout, vehicle drawing and hit regions", "src/veh.h:Vehs and veh_at", "src/veh.cpp:say_stats_3 and veh_draw", "src/basewin.h:BaseWin garrison_rect_ and spot1_", "src/maininterface.h:MainInterfaceGlobal"], "reason": "Render the first row of the current base's real vehicle stack through owned game state and drawing APIs. The three original overflow-control objects remain unidentified and are an explicit restoration obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004104DD-0x004107F9 typed stack links, column layout, vehicle drawing and hit regions", "image:0x00410573-0x004105E5 controls at 0x007B5080/5BCC/6718 are MainInterfaceGlobal.flat_button_[8..10] by 0xB4C stride", "src/veh.h:Vehs and veh_at", "src/veh.cpp:say_stats_3 and veh_draw", "src/basewin.h:BaseWin garrison_rect_ and spot1_", "src/maininterface.h:MainInterfaceGlobal"], "reason": "Render the current base's real vehicle stack through owned game state, drawing APIs and typed MainInterface buttons. Overflow viewport resizing and scrolling remain restoration obligations."}
 // size      1208 bytes
 // prototype void (__thiscall ?draw_garrison@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// The body now walks Vehs' typed stack links and renders each visible vehicle.
-// The original's overflow/scroll controls at 0x007B5080, 0x007B5BCC and
-// 0x007B6718 are still unidentified owners: this implementation clips to the
-// first row instead of inventing vtables or binding old executable addresses.
-// Recover those controls before claiming this panel's full behavior.
+// The body walks Vehs' typed stack links and renders visible vehicles. The
+// original's overflow viewport resize and scroll-position behavior still
+// need recovery; this implementation currently starts with the first vehicle.
 // LEVER: 0x40C2C is one RECT, not the four unnamed dwords the IDB records -
 //  set_clip takes it whole and the tile/frame sizing reads its fields.
 //  0x00691B2C is font.h's DefaultFontFace, passed as the pointer it is; the
@@ -1331,9 +1329,24 @@ void BaseWin::draw_garrison(int update_mode) {
         }
     }
 
-    int column = 0;
     const int capacity = spacing + 5 > 0
         ? (frame_rect.right - frame_rect.left) / (spacing + 5) : 0;
+    if (vehicle >= 0) {
+        int stack_count = 0;
+        for (int at = vehicle; at >= 0; at = Vehs[at].next_veh_id_stack) {
+            ++stack_count;
+        }
+        MainInterfaceGlobal.flat_button_[8].hide();
+        if (stack_count <= capacity) {
+            MainInterfaceGlobal.flat_button_[9].hide();
+            MainInterfaceGlobal.flat_button_[10].hide();
+        } else {
+            MainInterfaceGlobal.flat_button_[9].show(0);
+            MainInterfaceGlobal.flat_button_[10].show(0);
+        }
+    }
+
+    int column = 0;
     int column_left = frame_rect.left;
     while (vehicle >= 0 && column < capacity) {
         canvas->set_clip(column_left, frame_rect.top, spacing,
