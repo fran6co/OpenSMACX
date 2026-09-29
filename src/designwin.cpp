@@ -38,6 +38,15 @@
 int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
                      int armor_id);  // 0x00584B50, implemented in leaf_recoveries.cpp
 
+// DISCOVERY 0x00439D30: suggest_abil reads ability prerequisites at
+// 0x009AB550 (14 shorts per ability row), checks editor gating at 0x009A6490,
+// consults research at 0x00949780, and scans 0x359-stride tables at
+// 0x00946F60/0x00946F80 using the faction id at 0x00939284. The recovered
+// seed confirms these roles and behavior, but current source has not assigned
+// those tables/flags to their owning typed globals. Keep the product body
+// unfinished until those owners are established; do not carry new fixed-address
+// aliases into this translation unit.
+
 // ---- shared seams and bindings the recovered bodies reach -----------------
 
 // The slide helpers are still original bodies (0x0045D440 / 0x0045D970);
@@ -424,7 +433,8 @@ void DesignWin::on_iface_left_click(int a1, int a2) {
         this, nullptr, a1, a2);
 }
 
-// ORIGINAL: 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327 FILE
+// ORIGINAL: 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327
+// RECOVERY_BINDING: v1 {"evidence": ["src/designwin.cpp:DesignWin::on_iface_right_click", "src/designwin.h:spot1_", "src/alpha.h:Labels.strings_ptr"], "reason": "Resolve the prototype-stack hover target and show its localized label at the target's screen-space anchor."}
 // symbol    ?on_iface_right_click@DesignWin@@UAEXHH@Z
 // size      151 bytes
 // prototype void (__thiscall ?on_iface_right_click@DesignWin@@QAEXHH@Z)(DesignWin* this, int, int)
@@ -690,7 +700,8 @@ DesignWin TutWinDesWindow;  // 0x0071F2B0
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
 
-// ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0 FILE
+// ORIGINAL: 0x00439670 ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z 0x00439670-0x004396B0
+// RECOVERY_BINDING: v1 {"evidence": ["src/designwin.cpp:DesignWin::bubble_me_elmo2", "Win::client_to_screen and Win::set_bubble_text"], "reason": "Convert the pointer anchor from client to screen coordinates and raise the named bubble through the real Win base interface."}
 // size      64 bytes
 // prototype void (__thiscall ?bubble_me_elmo2@DesignWin@@QAEXPADHH@Z)(DesignWin* this, LPCSTR, int, int)
 // callers   0   call targets   2
@@ -753,16 +764,17 @@ DesignWin TutWinDesWindow;  // 0x0071F2B0
 
 
 void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
-    reinterpret_cast<Win *>(this)->client_to_screen(&a2, &a3);
-    int rc[4];
-    rc[0] = a2;
-    rc[2] = a2;
-    rc[1] = a3;
-    rc[3] = a3;
-    reinterpret_cast<Win *>(this)->set_bubble_text(a1, reinterpret_cast<RECT *>(rc));
+    client_to_screen(&a2, &a3);
+    RECT anchor;
+    anchor.left = a2;
+    anchor.top = a3;
+    anchor.right = a2;
+    anchor.bottom = a3;
+    set_bubble_text(a1, &anchor);
 }
 
-// ORIGINAL: 0x00439EB0 ?delete_abil@DesignWin@@QAEXH@Z 0x00439EB0-0x00439F18 FILE
+// ORIGINAL: 0x00439EB0 ?delete_abil@DesignWin@@QAEXH@Z 0x00439EB0-0x00439F18
+// RECOVERY_BINDING: v1 {"evidence": ["src/designwin.h:protoAbilityFlags_ at 0x14208", "src/designwin.h:protoAbilityID1_ and protoAbilityID2_ at 0x14218/0x1421C"], "reason": "Remove one selected ability flag and rebuild the two displayed ability identifiers from the remaining flags."}
 // size      104 bytes
 // prototype void (__thiscall ?delete_abil@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   0
@@ -825,33 +837,20 @@ void DesignWin::bubble_me_elmo2(char *a1, int a2, int a3) {
 
 
 void DesignWin::delete_abil(int a1) {
-    char *self = reinterpret_cast<char *>(this);
-    unsigned int *flags = reinterpret_cast<unsigned int *>(self + 0x14208);
-
-    if (a1 & *flags) {
-        // WALL: register allocation. Every one of the 40 mnemonics below
-        // matches the original in order; only WHICH callee-saved register
-        // (esi vs edi) holds `this` versus the `slots` pointer is swapped
-        // throughout (the original saves `this` unconditionally into esi
-        // and the slots pointer conditionally into edi; this compile makes
-        // the opposite choice). No reordering of these declarations changed
-        // which register the backend picked - ruled out as unfixable via
-        // source spelling.
-        int *slots = reinterpret_cast<int *>(self + 0x14218);
-        *flags = ~a1 & *flags;
-        slots[0] = -1;
-        slots[1] = -1;
+    if ((static_cast<uint32_t>(a1) & protoAbilityFlags_) != 0) {
+        // Keep the UI slots in named object state; the old seed's
+        // register-allocation observation does not apply to this body.
+        protoAbilityFlags_ &= ~static_cast<uint32_t>(a1);
+        protoAbilityID1_ = static_cast<uint32_t>(-1);
+        protoAbilityID2_ = static_cast<uint32_t>(-1);
         int i = 0;
         do {
-            if (*flags & (1 << i)) {
-                int j = 0;
-                do {
-                    if (slots[j] < 0) {
-                        slots[j] = i;
-                        break;
-                    }
-                    j++;
-                } while (j < 2);
+            if ((protoAbilityFlags_ & (1u << i)) != 0) {
+                if (protoAbilityID1_ == static_cast<uint32_t>(-1)) {
+                    protoAbilityID1_ = static_cast<uint32_t>(i);
+                } else if (protoAbilityID2_ == static_cast<uint32_t>(-1)) {
+                    protoAbilityID2_ = static_cast<uint32_t>(i);
+                }
             }
             i++;
         } while (i < 0x1d);
@@ -1543,11 +1542,10 @@ static void redraw_design_picker_changes(DesignWin *window) {
     window->on_update();
 }
 
-// The unported DesignWin seeds remain alongside the product owner as evidence.
-// check_abil uses the class's named selection state rather than reproducing
-// the seed's byte-offset view of the same object.
+// check_abil uses the class's named selection state and the project Rules
+// object rather than reproducing the seed's byte-offset view.
 // ORIGINAL: 0x00439C00 ?check_abil@DesignWin@@QAEXXZ 0x00439C00-0x00439D24
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439c00.cpp", "DesignWin selection members in src/designwin.h", "abil_cond in src/leaf_recoveries.cpp"], "reason": "Validate each selected ability against the current chassis/weapon/armor and maintain the two displayed ability slots."}
+// RECOVERY_BINDING: v1 {"evidence": ["DesignWin selection members in src/designwin.h", "abil_cond and bit_count in src/leaf_recoveries.cpp", "Rules.tech_two_spec_abilities in src/alpha.h"], "reason": "Validate each selected ability against the current chassis/weapon/armor and maintain the two displayed ability slots."}
 void DesignWin::check_abil() {
     if (Chassis[protoChassisType_].missile != 0) {
         protoAbilityFlags_ = 0;
