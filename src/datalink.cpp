@@ -396,14 +396,21 @@ void Datalink::on_iface_button_toggled(int, int) {
 }
 
 
-// The image routes this callback through DatalinkIface slot 16. Its recovered
-// implementation remains in the preserved historical seed until its member
-// accesses can be expressed against the secondary-base receiver safely.
+// The image routes this callback through DatalinkIface slot 16. The compiler
+// adjusts the secondary-base receiver back to Datalink; the seed's +0xEC14
+// ListBox access from that receiver is the owned listBox_ at +0xF628.
 // ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00432210.cpp preserves the 123-byte BYTE_EXACT historical callback; image:0x0066AF30 slot 16 points to 0x00432210; source:src/datalink.h models DatalinkIface at +0xA14"], "reason": "Bind the DatalinkIface slot-16 callback to its product class declaration and owner-TU body; the complete behavior remains explicitly unfinished while translating accesses from the secondary receiver."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00432210.cpp preserves the 123-byte BYTE_EXACT historical callback; image:0x0066AF30 slot 16 points to 0x00432210; source:src/datalink.h models DatalinkIface at +0xA14 and ListBox at +0xF628"], "reason": "Restore the category-click path through the real Datalink owner and ListBox member, with the compiler's secondary-base adjustment rather than seed pointer arithmetic."}
 // symbol    ?on_iface_group_clicked@Datalink@@UAEXHHH@Z
-void Datalink::on_iface_group_clicked(int, int, int) {
-    // BODY GOES HERE.
+void Datalink::on_iface_group_clicked(int, int, int category) {
+    if (listBox_.item_list_.entry_count_ != 0) {
+        set_cat(category, 0);
+        field_2024_ = 1;
+        listBox_.set_selected_pos(0, 1);
+        field_2024_ = 0;
+        listBox_.redraw();
+        draw_entry();
+    }
 }
 
 
