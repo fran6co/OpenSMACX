@@ -73,10 +73,6 @@ void __cdecl replay_base(int type, int x, int y, int faction_id);
 
 class ReplayWin : public GraphicWin {
  public:
-  // 0x005AD9E0  ?timer_callback@ReplayWin@@QAEXXZ - public, __thiscall,
-  // void(void), unrecovered. Declared so timer_callback_daemon, the free
-  // forwarder in replaywin.cpp that reaches it with a direct `call rel32`,
-  // can name it.
   void timer_callback();
   ReplayWin() { ; }
   // 0x005ADF10 is not recovered: a
@@ -98,14 +94,16 @@ class ReplayWin : public GraphicWin {
   // [0, 0xA14) is the GraphicWin base subobject; the class's own storage
   // starts here, immediately after it.
   uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
+  // RECOVERY_MEMBER: v1 ReplayWin replay_turn_ 0xA18 0x005AD9E0
+  int replay_turn_;  // 0xA18
+  // RECOVERY_MEMBER: v1 ReplayWin event_offset_ 0xA1C 0x005AD9E0
+  int event_offset_;  // byte offset into ReplayEvents
   // 0x005AD598 starts at this+0xA20 and visits exactly 0x200 records with
   // a 0xC stride. The next known member starts at 0x2220.
   // RECOVERY_MEMBER: v1 ReplayWin base_sites_ 0xA20 0x005AD560
   ReplayBaseSite base_sites_[512];  // 0xA20..0x2220
-  uint8_t field_2220_;  // 0x2220
-  uint8_t field_2221_[0xFF];  // 0x2221
+  // RECOVERY_MEMBER: v1 ReplayWin year_label_ 0x2220 0x005AD9E0
+  char year_label_[0x100];  // 0x2220..0x2320
   uint32_t field_2320_;  // 0x2320
   uint32_t field_2324_;  // 0x2324
   uint8_t field_2328_[0x1DD68];  // 0x2328
@@ -126,12 +124,3 @@ class ReplayWin : public GraphicWin {
 };
 static_assert(sizeof(ReplayWin) == 0x252F0,
               "ReplayWin ownership must preserve the original object extent");
-
-
-// timer_callback is declared on the class because fn_005adbd0, the recovered
-// free forwarder in replaywin.cpp, reaches it with a direct `call rel32`, but
-// its 492-byte body is not recovered, so the DLL has nothing to link that
-// call against. It stands in with a forward to the original image until the
-// body lands.
-//   ?timer_callback@ReplayWin@@QAEXXZ  0x005AD9E0
-//     public, __thiscall, void(void)

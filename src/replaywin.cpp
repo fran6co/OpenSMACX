@@ -24,6 +24,7 @@
 #include "base.h"
 #include "map.h"
 #include "game.h"
+#include "alpha.h"
 #include "log.h"
 
 // setup_game clears 0x800 dwords at 0x00950324 and timer_callback reads
@@ -32,6 +33,11 @@
 ReplayEventRecord ReplayEvents[1024];
 // RECOVERY_OBJECT: v2 0x009469F8 0x009469FC ?ReplayEventBytes@@3HA 0x005ADE80
 int ReplayEventBytes;
+
+// The language-specific replay prefix at 0x00945E00 is writable storage
+// adjacent to the replay sound object, not an image-text pointer.
+// RECOVERY_OBJECT: v2 0x00945E00 0x00945E08 ?ReplayLocalizedPrefix@@3PADA 0x005AD9E0
+char ReplayLocalizedPrefix[8];
 
 // ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0
 // RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration."}
@@ -75,6 +81,53 @@ void ReplayWin::remove_base_site(int x, int y, int) {
             return;
         }
     }
+}
+
+// ORIGINAL: 0x005AD9E0 ?timer_callback@ReplayWin@@QAEXXZ 0x005AD9E0-0x005ADBCC
+// RECOVERY_BINDING: v1 {"evidence": ["git:7f24e1c4:src/recovered/units/005ad9e0.cpp", "image:0x005AD9E0-0x005ADBCC", "src/replaywin.h replay_turn_, event_offset_, year_label_ and base_sites_", "src/win.h release_modal slot58 and redraw slot62"], "reason": "Consume typed replay events and update the ReplayWin-owned site table; replace the original-image forwarder without raw self-offsets or vtable shims. The retained seed remains a restoration input, not a product body."}
+void ReplayWin::timer_callback() {
+    if (replay_turn_ >= TurnCurrentNum) {
+        if (replay_turn_ >= TurnCurrentNum + 50) {
+            release_modal();
+        }
+        return;
+    }
+
+    int next_turn = replay_turn_ + 1;
+    while (event_offset_ < ReplayEventBytes) {
+        const ReplayEventRecord event =
+            ReplayEvents[event_offset_ / sizeof(ReplayEventRecord)];
+        if (event.turn > replay_turn_) {
+            next_turn = event.turn;
+            break;
+        }
+        event_offset_ += sizeof(ReplayEventRecord);
+        if (event.turn == replay_turn_) {
+            switch (event.type) {
+            case 0:
+                add_base_site(event.x, event.y,
+                              static_cast<int8_t>(event.faction_id));
+                break;
+            case 1:
+                update_base_site(event.x, event.y,
+                                 static_cast<int8_t>(event.faction_id));
+                break;
+            case 2:
+                remove_base_site(event.x, event.y, 0);
+                break;
+            }
+        }
+    }
+
+    year_label_[0] = 0;
+    strcat(year_label_, Language != 0 ? ReplayLocalizedPrefix : "Replay: ");
+    char year[80];
+    _itoa_s(game_year(replay_turn_), year, sizeof(year), 10);
+    strcat(year_label_, year);
+
+    make_bases();
+    redraw();
+    replay_turn_ = next_turn;
 }
 
 // ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03

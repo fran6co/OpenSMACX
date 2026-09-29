@@ -575,14 +575,6 @@ uint32_t SpriteBox::close() {  // 0x00610280
     return 0;
 }
 
-void ReplayWin::timer_callback() {  // 0x005AD9E0
-    typedef void(__fastcall *pending)(ReplayWin *, void *);
-    PENDING_BODY(0x005AD9E0, pending)(this, nullptr);
-}
-
-
-
-
 // ?edit@EditGroup@@QAEHPADPADH@Z at 0x00611F80 - WAS HERE and is gone: the
 // body is homed into src/editgroup.cpp 2026-09-27. DipEdit::on_button_clicked
 // drives it twice on BasePop's EditGroup subobject at 0x22C8 (see
