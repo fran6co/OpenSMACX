@@ -256,6 +256,10 @@ void ListBox::on_mouse_leave(int a1, int a2) {
 // for those object identities yet.
 // BODY GOES HERE. Missing behavior is the notify-gated item/nested-object
 // callback sequence (historical slots 54, 53, 23 and 7); see the retained seed.
+// The related on_left_double_click body (0x0060C710-0x0060C7BB) loads its child
+// pointer from target Win+0x94 before slots 23/7. Win has no source-owned member
+// binding for that link. Preserve this dependency for the Win owner rather than
+// guessing a field name or spelling the receiver as a raw offset.
 // ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD
 // RECOVERY_BINDING: v1 {"evidence": ["git:8b4810c297d1ba1554b5cb067b814d532906dcc7:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h"], "reason": "Recover the evidenced ListBox selection state, viewport scroll adjustment and scrollbar update using typed owner and base members. The notify-gated item/nested-object dispatch remains explicit BODY GOES HERE because slots 54/53 and nested slots 23/7 do not yet have source-owned receiver interfaces; preserve the original seed and claim for coordinator measurement."}
 void ListBox::set_selected_pos(int position, int notify) {
