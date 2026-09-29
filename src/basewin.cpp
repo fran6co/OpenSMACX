@@ -2106,9 +2106,63 @@ void BaseWin::draw_expenses(int) {
     // BODY GOES HERE.
 }
 // ORIGINAL: 0x00415B20 ?draw_info@BaseWin@@QAEXH@Z 0x00415B20-0x00415DCE
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415b20.cpp", "src/basewin.h"], "reason": "Preserve the separately identified information panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
-void BaseWin::draw_info(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415b20.cpp", "src/basewin.h", "src/base.h", "src/faction.h", "src/maininterface.h", "src/buffer.h"], "reason": "Recover the base title panel through owned BaseWin rectangles and Sprite dimensions, MainInterface's Buffer and shared frame styles, and typed Base/Player name and grammar fields. The seed retains compiler/reference evidence."}
+void BaseWin::draw_info(int update_mode) {
+    Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
+
+    RECT outer = rect12_;
+    outer.left -= 3;
+    outer.top -= 3;
+    outer.right += 3;
+    outer.bottom += 3;
+    screen->set_clip(&outer);
+    screen->box_sprite(&outer, &InterfaceBoxStyles[3]);
+
+    RECT panel = info_title_rect_;
+    screen->set_clip(&panel);
+    RECT previous_clip = screen->rect1_;
+    screen->box_sprite(&panel, &InterfaceBoxStyles[3]);
+
+    const int trim = -6 - sprites8_[6].width();
+    panel.left -= trim;
+    panel.right += trim;
+    panel.top += 3;
+    panel.bottom -= 3;
+    screen->box_sprite(&panel, &InterfaceBoxStyles[0]);
+    panel.bottom -= 3;
+    panel.left += 3;
+    panel.right -= 3;
+    panel.top += 3;
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, BaseCurrent->name_string);
+    const int faction = BaseCurrent->faction_id_current;
+    if (faction != ConsoleGlobal.faction_id_) {
+        strcat(StringTemp, " ");
+        strcat(StringTemp, "(");
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        strcat(StringTemp, Players[faction].noun_faction);
+        strcat(StringTemp, ")");
+    }
+    string_upper_slot()(StringTemp);
+
+    int font_size = 32;
+    do {
+        Font *candidate = find_font(font_size, 1);
+        if (candidate->width(StringTemp) <= panel.right - panel.left) break;
+        font_size -= 2;
+    } while (font_size > 0);
+
+    screen->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+    screen->set_font(find_font(font_size, 1), 0, 0, 0);
+    screen->write_cent_l(StringTemp, &panel, strlen(StringTemp));
+    if (update_mode == 0) {
+        MainInterfaceGlobal.soft_update(&info_title_rect_);
+    } else {
+        MainInterfaceGlobal.update(&info_title_rect_, nullptr);
+    }
+    screen->set_clip(&previous_clip);
 }
 // ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h"], "reason": "Preserve the separately identified miscellaneous panel reached by BaseWin redraw as an explicitly unfinished linkable body."}

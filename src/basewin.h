@@ -638,10 +638,10 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40CA0_;  // 0x40CA0
   uint32_t field_40CA4_;  // 0x40CA4
   uint32_t field_40CA8_;  // 0x40CA8
-  uint32_t field_40CAC_;  // 0x40CAC
-  uint32_t field_40CB0_;  // 0x40CB0
-  uint32_t field_40CB4_;  // 0x40CB4
-  uint32_t field_40CB8_;  // 0x40CB8
+  // The title panel copies these four consecutive words as one RECT before
+  // clipping, framing and presenting it.
+  // RECOVERY_MEMBER: v1 BaseWin info_title_rect_ 0x40CAC 0x00415B20
+  RECT info_title_rect_;
   uint32_t field_40CBC_;  // 0x40CBC
   uint32_t field_40CC0_;  // 0x40CC0
   uint32_t field_40CC4_;  // 0x40CC4
