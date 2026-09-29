@@ -511,11 +511,6 @@ void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
 // SpriteBox::init's two tail-forwards reach them by name through the
 // embedded Dialog base, unchanged.
 
-void Datalink::draw_entry() {  // 0x0042BF10
-    typedef void(__fastcall *pending)(Datalink *, void *);
-    PENDING_BODY(0x0042BF10, pending)(this, nullptr);
-}
-
 // DesignWin::select_special (0x0043AC70) WAS HERE and is gone: the body is
 // homed into src/designwin.cpp 2026-09-27, at the end of the file so no
 // recovered body above it shifts. Both byte-exact select_special_N thunks and

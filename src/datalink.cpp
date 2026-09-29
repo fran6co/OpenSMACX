@@ -36,12 +36,272 @@
 #include "text.h"
 #include "faction.h"
 #include "general.h"
+#include "popup.h"
+#include "reportif.h"
+#include "technology.h"
+
+extern int MainInterfaceTileFlag;
+extern int ReportIfTechFocus;
+// RECOVERY_OBJECT: v2 0x00691B60 0x00691B66 ?DatalinkHelpFileText@@3PADA 0x00430770
+char DatalinkHelpFileText[] = "HELPX";
+// RECOVERY_OBJECT: v2 0x00691B68 0x00691B70 ?DatalinkBlurbFileText@@3PADA 0x00430B30
+char DatalinkBlurbFileText[] = "BLURBSX";
+// RECOVERY_OBJECT: v2 0x00691B00 0x00691B04 ?DatalinkHelpFile@@3PADA 0x00430770
+char *DatalinkHelpFile = DatalinkHelpFileText;
+// RECOVERY_OBJECT: v2 0x00691B04 0x00691B08 ?DatalinkBlurbFile@@3PADA 0x00430B30
+char *DatalinkBlurbFile = DatalinkBlurbFileText;
 
 // The Datalink singleton, 0x00703EA0 in the shipped image - the storage the
 // `Datalink *const DatalinkMain` binding used to name (see datalink.h). Plain
 // data, not a call target; the Datalink constructor that builds it runs from
 // the game's class bring-up, as in the image.
 Datalink DatalinkMain;  // 0x00703EA0
+
+// ORIGINAL: 0x0042C9C0 ?draw_unit@Datalink@@QAEXXZ 0x0042C9C0-0x0042D608;0x00653712-0x00653746
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042c9c0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_unit() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0042D610 ?draw_chassis@Datalink@@QAEXXZ 0x0042D610-0x0042DEEF;0x00653746-0x0065377A
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042d610.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_chassis() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0042DEF0 ?draw_reactor@Datalink@@QAEXXZ 0x0042DEF0-0x0042E2D3;0x0065377A-0x006537AE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0042def0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_reactor() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0042E2E0 ?draw_weapon@Datalink@@QAEXXZ 0x0042E2E0-0x0042E8D3;0x006537AE-0x006537E2
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042e2e0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_weapon() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0042E8E0 ?draw_defense@Datalink@@QAEXXZ 0x0042E8E0-0x0042EE26;0x006537E2-0x00653816
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0042e8e0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_defense() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0042EE30 ?draw_ability@Datalink@@QAEXXZ 0x0042EE30-0x0042F468;0x00653816-0x0065384A
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042ee30.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_ability() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00431180 ?draw_terraform@Datalink@@QAEXXZ 0x00431180-0x00431D51;0x00653C7A-0x00653E66
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00431180.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_terraform() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042f490.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_facility() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0042FAD0 ?draw_project@Datalink@@QAEXXZ 0x0042FAD0-0x00430087;0x00653927-0x006539F9
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042fad0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_project() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00430090 ?draw_social@Datalink@@QAEXXZ 0x00430090-0x00430765;0x006539F9-0x00653AD6
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00430090.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_social() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00430c80.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+void Datalink::draw_faction() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A100", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042a100.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// symbol    ?on_dialog_back_draw@Datalink@@QAEHPAVGraphicWin@@@Z
+int Datalink::on_dialog_back_draw(GraphicWin *win) {
+    RECT rect = win->clip_rect();
+    const RECT &outer = win->outer_rect();
+    win->tile(InterfaceBoxStyles[0].mask_, outer.left, outer.top,
+              0, 0, rect.right - rect.left, rect.bottom - rect.top);
+    return 1;
+}
+
+// ORIGINAL: 0x0042A150 ?on_dialog_item_back_draw@Datalink@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0042A150-0x0042A260
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42A150", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/unrecovered/0042a150.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// symbol    ?on_dialog_item_back_draw@Datalink@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: computing width/height/x/y once and branching only on the `tile()` colour argument folds the compiler's output to 187 bytes (vs 272) - VC6 does not hoist a same-polarity guard's body out of line (see 0x0042A100's sibling note), so each of the three `a3` cases needs its own fully-duplicated width/height/x/y/call block. That form (cand2, below) reaches 0.834 mnemonic similarity but still differs on the exact ebx/esi/edi register allocation the original chose; landing the closest.
+int Datalink::on_dialog_item_back_draw(GraphicWin *win, int id, int mode,
+                                      RECT *rect) {
+    const RECT &outer = win->outer_rect();
+    int style = mode == 2 ? 28 : (mode == 1 ? 27 : 0);
+    win->tile(InterfaceBoxStyles[style].mask_, outer.left + rect->left,
+              outer.top + rect->top, rect->left, rect->top,
+              rect->right - rect->left, rect->bottom - rect->top);
+    if (field_29DC_ == 12) {
+        win->set_text_color(255 - (id % 10000) / 5, -1, 1, 1);
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x0042BEB0 ?UNK7@Datalink@@QAEXPADPAD@Z 0x0042BEB0-0x0042BEFA BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BEB0", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/0042beb0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+// symbol    ?UNK7@Datalink@@QAEXPAD0@Z
+void Datalink::UNK7(char *file, char *section) {
+    if (MainInterfaceTileFlag) {
+        blurb_box_.clear();
+        blurb_box_.strings().load(file, section, 1, 0);
+        blurb_box_.add_fixup();
+        blurb_box_.show(0);
+    }
+}
+
+// ORIGINAL: 0x0042C2E0 ?draw_concept@Datalink@@QAEXXZ 0x0042C2E0-0x0042C64D;0x0065358E-0x00653650
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C2E0", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c2e0.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+void Datalink::draw_concept() {
+    Popup popup;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    listBox_.item_list_.seek_id(history_[0]);
+    strcat(StringTemp, listBox_.item_list_.current_text());
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "CONCEPT");
+    char number[80];
+    _itoa(history_[0], number, 10);
+    strcat(StringTemp, number);
+    concept_box_.clear();
+    concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
+    concept_box_.add_fixup();
+    concept_box_.show(0);
+    soft_update(&description_rect_);
+}
+
+// ORIGINAL: 0x0042C650 ?draw_adv_concept@Datalink@@QAEXXZ 0x0042C650-0x0042C9C0;0x00653650-0x00653712
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42C650", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042c650.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+void Datalink::draw_adv_concept() {
+    Popup popup;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    listBox_.item_list_.seek_id(history_[0] + 10000);
+    strcat(StringTemp, listBox_.item_list_.current_text());
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "ADVCONCEPT");
+    char number[80];
+    _itoa(history_[0], number, 10);
+    strcat(StringTemp, number);
+    concept_box_.clear();
+    concept_box_.strings().load("CONCEPTSX", StringTemp, 1, 0);
+    concept_box_.add_fixup();
+    concept_box_.show(0);
+    soft_update(&description_rect_);
+}
+
+// ORIGINAL: 0x00430770 ?draw_effect@Datalink@@QAEXXZ 0x00430770-0x00430B30;0x00653AD6-0x00653BA8
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x430770", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430770.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
+void Datalink::draw_effect() {
+    Popup popup;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, SocialEffects[history_[0]].set2);
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPEFFECT");
+    char number[80];
+    _itoa(history_[0], number, 10);
+    strcat(StringTemp, number);
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    // The original Popup starts at [ebp-0x53F0] (0x430797/0x4308A3).
+    // 0x430909 passes [ebp-0x3270] to Buffer::write_strings: exactly
+    // Popup+0x2180, BasePop's constructed unit_ids_ text list. BasePop::start
+    // appends parsed ordinary lines to that list; no separate local list
+    // is constructed here.
+    write_strings(&popup.unit_ids_, description_rect_.left + 3,
+                  description_rect_.top + 3,
+                  description_rect_.right - description_rect_.left - 6, 0);
+}
+
+// ORIGINAL: 0x00430B30 ?draw_tech@Datalink@@QAEXXZ 0x00430B30-0x00430C76
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x430B30", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/00430b30.cpp"], "reason": "Recover the preserved topic drawer with source-owned state and real popup/window lifetimes."}
+void Datalink::draw_tech() {
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Technology[history_[0]].name)));
+    CharUpperA(StringTemp);
+    // Both the standalone original (0x430BA5..0x430BAC) and draw_entry's
+    // inline technology case (0x42C1A7..0x42C1AE) test the buffer ADDRESS,
+    // not its first byte. StringTemp has real storage, so even an empty
+    // technology title reaches write_cent_l.
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    ReportWinGlobal.reset();
+    ReportIfTechFocus = history_[0];
+    ReportIfGlobal.field_8_ = 2;
+    ReportWinGlobal.draw_labs();
+    StringTemp[0] = 0;
+    strcat(StringTemp, "TECH");
+    char number[80];
+    _itoa(history_[0], number, 10);
+    strcat(StringTemp, number);
+    UNK7(DatalinkBlurbFile, StringTemp);
+}
+
+// ORIGINAL: 0x0042BF10 ?draw_entry@Datalink@@QAEXXZ 0x0042BF10-0x0042C29A
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x42BF10", "git:8e3029104ab590bec35cc6932e637765b2ea4074:src/recovered/units/0042bf10.cpp"], "reason": "Recover the seed identity as a typed Datalink member using real window, font, list, and popup lifetimes."}
+void Datalink::draw_entry() {
+    restore_clip();
+    if (field_29DC_ == 2) {
+        ReportWinGlobal.reset();
+    }
+    clear_links();
+    int selected = listBox_.get_selected_id();
+    int category = selected / 10000;
+    history_[0] = selected - category * 10000;
+    if (!field_2A38_) {
+        push_history(category, history_[0]);
+    }
+    set_clip(&entry_clip_rect_);
+    RECT frame = entry_frame_rect_;
+    frame.left -= 23;
+    frame.right -= 9;
+    box_sprite(&frame, &InterfaceBoxStyles[9]);
+    restore_clip();
+    box_sprite(&panel_rect_, &InterfaceBoxStyles[0]);
+    box_sprite(&title_rect_, &InterfaceBoxStyles[6]);
+    blurb_box_.hide();
+    concept_box_.hide();
+    detail_box_.hide();
+    stringBox_.hide();
+    switch (category) {
+    case 0: draw_concept(); break;
+    case 1: draw_adv_concept(); break;
+    case 2: break;
+    case 3: draw_unit(); break;
+    case 4: draw_chassis(); break;
+    case 5: draw_reactor(); break;
+    case 6: draw_weapon(); break;
+    case 7: draw_defense(); break;
+    case 8: draw_ability(); break;
+    case 9: draw_terraform(); break;
+    case 10: draw_facility(); break;
+    case 11: draw_project(); break;
+    case 12: draw_social(); break;
+    case 13: draw_effect(); break;
+    case 14: draw_tech(); break;
+    case 15: draw_faction(); break;
+    }
+    soft_update(&entry_update_rect_);
+    MainInterfaceGlobal.soft_update(&interface_update_rect_);
+}
 
 /*
  * Fixed-slot bindings the homed category fillers arrived carrying, named from

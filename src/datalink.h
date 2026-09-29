@@ -94,9 +94,7 @@ class Datalink : public GraphicWin, public DatalinkIface {
   void hide();
   void show(int visible);
   void on_selected(int index);
-  // 0x0042BF10  ?draw_entry@Datalink@@QAEXXZ - public, __thiscall, void(void),
-  // unrecovered. Declared so on_selected, which reaches it with a direct
-  // `call rel32` on an unadjusted `this`, can name it.
+  // 0x0042BF10: restore the entry panel and dispatch its selected topic.
   void draw_entry();
   Datalink() { ; }
   // 0x00432290 is not recovered: a
@@ -115,6 +113,7 @@ class Datalink : public GraphicWin, public DatalinkIface {
   void push_history(int category, int facility);
   void pop_history();
   void UNK6();
+  void UNK7(char *file, char *section);
   void UNK8();
   void UNK9();
   void close();
@@ -188,7 +187,7 @@ class Datalink : public GraphicWin, public DatalinkIface {
   void construct_id(char *out, int index, int suffix);
   void set_index(int, int);
   // 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
-  void on_dialog_back_draw(GraphicWin *win);
+  int on_dialog_back_draw(GraphicWin *win);
 
   // EVERY TOPIC CHANGE ENDS WITH THE SAME CALL, and the image inlines it at
   // all five sites: the GraphicWin-part virtual at vtable offset 0xF8 of the
@@ -268,49 +267,25 @@ class Datalink : public GraphicWin, public DatalinkIface {
   // Storage the image proves is here: its own methods reach 0x1B394.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   uint8_t field_101F4_[0x50];  // 0x101F4
-  uint32_t field_10244_;  // 0x10244
-  uint8_t field_10248_[0xC];  // 0x10248
-  uint32_t field_10254_;  // 0x10254
-  uint8_t field_10258_[0x3C];  // 0x10258
-  uint32_t field_10294_;  // 0x10294
-  uint8_t field_10298_[0x9C];  // 0x10298
-  uint32_t field_10334_;  // 0x10334
-  uint32_t field_10338_;  // 0x10338
-  uint32_t field_1033C_;  // 0x1033C
-  uint32_t field_10340_;  // 0x10340
+  // RECOVERY_MEMBER: v2 Datalink body_font_ Font 0x10244 0x004308B4
+  Font body_font_;  // 0x10244
+  uint8_t field_1026C_[0x50];
+  // RECOVERY_MEMBER: v2 Datalink link_font_ Font 0x102BC 0x004308AE
+  Font link_font_;  // 0x102BC
+  uint8_t field_102E4_[0x50];
+  RECT panel_rect_;  // 0x10334
   uint8_t field_10344_[0x10];  // 0x10344
-  uint32_t field_10354_;  // 0x10354
-  uint32_t field_10358_;  // 0x10358
-  uint32_t field_1035C_;  // 0x1035C
-  uint32_t field_10360_;  // 0x10360
-  uint32_t field_10364_;  // 0x10364
-  uint32_t field_10368_;  // 0x10368
-  uint32_t field_1036C_;  // 0x1036C
-  uint32_t field_10370_;  // 0x10370
-  uint32_t field_10374_;  // 0x10374
-  uint32_t field_10378_;  // 0x10378
-  uint32_t field_1037C_;  // 0x1037C
-  uint32_t field_10380_;  // 0x10380
-  uint32_t field_10384_;  // 0x10384
-  uint32_t field_10388_;  // 0x10388
-  uint32_t field_1038C_;  // 0x1038C
-  uint32_t field_10390_;  // 0x10390
+  RECT illustration_rect_;  // 0x10354
+  RECT title_rect_;  // 0x10364
+  RECT interface_update_rect_;  // 0x10374
+  RECT description_rect_;  // 0x10384
   uint32_t field_10394_;  // 0x10394
   uint32_t field_10398_;  // 0x10398
   uint32_t field_1039C_;  // 0x1039C
   uint32_t field_103A0_;  // 0x103A0
-  uint32_t field_103A4_;  // 0x103A4
-  uint32_t field_103A8_;  // 0x103A8
-  uint32_t field_103AC_;  // 0x103AC
-  uint32_t field_103B0_;  // 0x103B0
-  uint32_t field_103B4_;  // 0x103B4
-  uint32_t field_103B8_;  // 0x103B8
-  uint32_t field_103BC_;  // 0x103BC
-  uint32_t field_103C0_;  // 0x103C0
-  uint32_t field_103C4_;  // 0x103C4
-  uint32_t field_103C8_;  // 0x103C8
-  uint32_t field_103CC_;  // 0x103CC
-  uint32_t field_103D0_;  // 0x103D0
+  RECT entry_clip_rect_;  // 0x103A4
+  RECT entry_update_rect_;  // 0x103B4
+  RECT entry_frame_rect_;  // 0x103C4
   // 0x103D4: the entry-list rectangle every set_cat_* filler frames and every
   // draw_* topic drawer paints into - four dwords in the image, read as
   // left/top/right/bottom.
@@ -337,24 +312,12 @@ class Datalink : public GraphicWin, public DatalinkIface {
   uint32_t field_10508_;  // 0x10508
   uint32_t field_1050C_;  // 0x1050C
   uint32_t field_10510_;  // 0x10510
-  uint32_t field_10514_;  // 0x10514
-  uint8_t field_10518_[0x440];  // 0x10518
-  uint32_t field_10958_;  // 0x10958
-  uint8_t field_1095C_[0x2750];  // 0x1095C
-  uint32_t field_130AC_;  // 0x130AC
-  uint32_t field_130B0_;  // 0x130B0
-  uint32_t field_130B4_;  // 0x130B4
-  uint8_t field_130B8_[0x440];  // 0x130B8
-  uint32_t field_134F8_;  // 0x134F8
-  uint8_t field_134FC_[0x2750];  // 0x134FC
-  uint32_t field_15C4C_;  // 0x15C4C
-  uint32_t field_15C50_;  // 0x15C50
-  uint32_t field_15C54_;  // 0x15C54
-  uint8_t field_15C58_[0x440];  // 0x15C58
-  uint32_t field_16098_;  // 0x16098
-  uint8_t field_1609C_[0x2750];  // 0x1609C
-  uint32_t field_187EC_;  // 0x187EC
-  uint32_t field_187F0_;  // 0x187F0
+  // RECOVERY_MEMBER: v2 Datalink concept_box_ StringBox 0x10514 0x0042C438
+  StringBox concept_box_;  // 0x10514
+  // RECOVERY_MEMBER: v2 Datalink blurb_box_ StringBox 0x130B4 0x0042BEC0
+  StringBox blurb_box_;  // 0x130B4
+  // RECOVERY_MEMBER: v2 Datalink detail_box_ StringBox 0x15C54 0x0042C07C
+  StringBox detail_box_;  // 0x15C54
 
   // 0x187F4, sizeof(StringBox) 0x2BA0, ends 0x1B394 = the end of the object.
   // exec (0x00429180) inits it with a rectangle and two fonts and draws the
@@ -384,9 +347,6 @@ extern Datalink DatalinkMain;  // 0x00703EA0
 
 // Append the original help markup to an existing caller-owned text buffer.
 void __cdecl help_create_link(char *out, char *label, char *id);
-
-// Datalink::draw_entry (0x0042BF10) is likewise unrecovered; on_selected calls
-// it, so its definition is a seam into the original image.
 
 void __cdecl help_tech(int id);
 

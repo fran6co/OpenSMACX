@@ -3,10 +3,16 @@
   "base_revision": "3f6ab06bdf3b791aa23454e19f71b4e8b5935caf",
   "editable_files": [
     "src/datalink.cpp",
-    "src/datalink.h"
+    "src/datalink.h",
+    "src/stringbox.h",
+    "src/reportwin.h",
+    "src/buffer.h",
+    "src/pending_bodies.cpp"
   ],
   "evidence": [
-    "Live partition identifies 23 seed-only Datalink identities, including related topic drawers; coordinator selects this independent owner for parallel recovery coverage."
+      "Live partition identifies 23 seed-only Datalink identities, including related topic drawers; coordinator selects this independent owner for parallel recovery coverage.",
+      "Coordinator authorizes narrow shared-header additions for StringBox::strings, Buffer::clip_rect and ReportWin::draw_labs, discovered by original-backed Datalink topic recovery. Preserve the original task baseline and all mapped renderer obligations; the coordinator owns the corresponding shared definitions and integration.",
+      "Fresh destination linking identifies an obsolete unannotated Datalink::draw_entry original-address forwarder in pending_bodies.cpp. Coordinator authorizes removing only that replaced forwarder; the actual owner retains its original identity, spans and preserved seed provenance."
   ],
   "intent": "Recover Datalink topic rendering and dialog behavior in a coherent compiling batch, using typed owners and evidence-backed shared objects while preserving original identities and historical obligations.",
   "schema_version": 1,
