@@ -878,6 +878,106 @@ static Time *const SatPanelTimer2 = (Time *)0x00884760;
 // callback (the designwin.cpp spelling).
 int __cdecl pop_wait();
 
+// The eight menu commands all use the same already-owned report window and
+// interface mode. Retained seeds at 0x004AC9A0..0x004ACC29 establish each
+// category value and the modal-versus-direct branch.
+// ORIGINAL: 0x004AC9A0 ?report_labs@@YAXXZ 0x004AC9A0-0x004AC9EC
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ac9a0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_labs seed identifies this free report command and its original extent. Category 2 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_labs() {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 2;
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(2, ReportIfGlobal.report_faction_id(), 0);
+    }
+}
+
+// ORIGINAL: 0x004AC9F0 ?report_energy@@YAXXZ 0x004AC9F0-0x004ACA3C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ac9f0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_energy seed identifies this free report command and its original extent. Category 3 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_energy() {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 3;
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(3, ReportIfGlobal.report_faction_id(), 0);
+    }
+}
+
+// ORIGINAL: 0x004ACA40 ?report_ops@@YAXXZ 0x004ACA40-0x004ACA8C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004aca40.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_ops seed identifies this free report command and its original extent. Category 4 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_ops() {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 4;
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(4, ReportIfGlobal.report_faction_id(), 0);
+    }
+}
+
+// ORIGINAL: 0x004ACA90 ?report_projects@@YAXXZ 0x004ACA90-0x004ACADC
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aca90.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_projects seed identifies this free report command and its original extent. Category 5 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_projects() {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 5;
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(5, ReportIfGlobal.report_faction_id(), 0);
+    }
+}
+
+// ORIGINAL: 0x004ACAE0 ?report_sat@@YAXXZ 0x004ACAE0-0x004ACB2C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acae0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_sat seed identifies this free report command and its original extent. Category 6 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_sat() {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 6;
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(6, ReportIfGlobal.report_faction_id(), 0);
+    }
+}
+
+// ORIGINAL: 0x004ACB30 ?report_security@@YAXXZ 0x004ACB30-0x004ACB7C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acb30.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_security seed identifies this free report command and its original extent. Category 7 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_security() {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 7;
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(7, ReportIfGlobal.report_faction_id(), 0);
+    }
+}
+
+// ORIGINAL: 0x004ACB80 ?report_score@@YAXH@Z 0x004ACB80-0x004ACBCC
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acb80.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_score seed identifies this free report command and its original extent. Category 8 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_score(int) {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 8;
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(8, ReportIfGlobal.report_faction_id(), 0);
+    }
+}
+
+// ORIGINAL: 0x004ACBD0 ?report_intel@@YAXH@Z 0x004ACBD0-0x004ACC29
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acbd0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_intel seed identifies this free report command and its original extent. Category 0 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
+void __cdecl report_intel(int selection) {
+    int active_iface = *ActiveIfaceId;
+    ReportIfGlobal.field_8_ = 0;
+    ReportIfGlobal.set_report_selection(selection);
+    if (IfaceIdToSlot[active_iface] != 5) {
+        ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
+    } else {
+        ReportIfGlobal.report(0, ReportIfGlobal.report_faction_id(), selection);
+    }
+}
+
 /*
 Purpose: Show the report window modally with pop_wait as its poll callback,
          or re-report the intel category when the active interface is the

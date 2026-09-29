@@ -78,6 +78,7 @@ class ReportIf : public SubInterface {
   // argument at +0x1E22C.
   void report(int report_id, int faction_id, int selection);
   int report_faction_id() const { return report_faction_id_; }
+  void set_report_selection(int selection) { report_selection_ = selection; }
   // Drawing entry points selected by report() and ReportWin::on_redraw.
   void draw_security();
   void draw_score();
@@ -279,6 +280,17 @@ extern ListBox ReportIfEnergyListBox;  // 0x0087BE84
 // report() on it through `mov ecx, 0x885f38`, and the +8 category above is
 // its field_8_ (0x00885F40).
 extern ReportIf ReportIfGlobal;  // 0x00885F38
+
+// Report menu commands. The original free functions share ReportIf's page
+// state and either open ReportWin modally or refresh the active map report.
+void __cdecl report_labs();
+void __cdecl report_energy();
+void __cdecl report_ops();
+void __cdecl report_projects();
+void __cdecl report_sat();
+void __cdecl report_security();
+void __cdecl report_score(int);
+void __cdecl report_intel(int selection);
 
 
 // ReportIf::bl_anim (0x004A4060) is now owned by reportif.cpp and uses the
