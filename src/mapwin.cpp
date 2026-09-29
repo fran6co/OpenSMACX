@@ -659,6 +659,21 @@ void MapWin::close() {
     GraphicWin::close();
 }
 
+// The primary console occupies slot zero and is closed by its own owner.
+// Shutdown closes only populated secondary windows, then the separately
+// constructed farm window, whose owned buffer is released by MapWin::close.
+// ORIGINAL: 0x004710E0 ?mapwin_system_shutdown@@YAXXZ 0x004710E0-0x0047115F
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004710e0.cpp retains the original loop over MapWinTable at 0x007D3C3C..0x007D3C5C and the final receiver at 0x007D4060", "src/mapwin.cpp binds those receivers as MapWinTable and FarmMapWindow; MapWin::close releases owned_ before GraphicWin::close"], "reason": "Replace the executable forwarder with typed shutdown of active secondary map windows and the independent farm window; preserve the seed for restoration measurement."}
+void __cdecl mapwin_system_shutdown() {
+    for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
+        MapWin *window = MapWinTable[slot];
+        if (window != nullptr && window->field_1DD74_ != 0) {
+            window->close();
+        }
+    }
+    FarmMapWindow.close();
+}
+
 /*
 Purpose: Answer WM_SYSCLOSE: clear the window's per-slot state words, then run
          close() - the same owned-pointer free and vbtable walk, inlined.

@@ -1272,14 +1272,6 @@ void __cdecl system_close() {
 // ?amovie_project@@YAXPAD@Z at 0x00403BE0 - homed into alphamovie.cpp on
 // 2026-08-29, so the forwarder that stood here is gone.
 
-// ?mapwin_system_shutdown@@YAXXZ at 0x004710E0 - body in src/unrecovered/004710e0.cpp.
-// desktop_close tears the map-window system down between the window closes
-// and the final hide.
-void __cdecl mapwin_system_shutdown() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x004710E0, pending)();
-}
-
 // ?close@DesignWin@@QAEXXZ at 0x0043C1A0 - homed into designwin.cpp on
 // 2026-08-29, so the forwarder that stood here is gone. desktop_close closes
 // the process-wide design window through this member.

@@ -485,9 +485,8 @@ class MapWin : public virtual GraphicWin {
 static_assert(sizeof(MapWin) == 0x22480, "MapWin layout must match terranx.exe");
 
 
-// 0x004710E0, still an original body (src/unrecovered/004710e0.cpp); the
-// definition in pending_bodies.cpp forwards to it. desktop_close tears the
-// map-window system down between the window closes and the final hide.
+// 0x004710E0; desktop_close tears the map-window system down between the
+// window closes and the final hide. The source-owned body is in mapwin.cpp.
 void __cdecl mapwin_system_shutdown();
 
 
