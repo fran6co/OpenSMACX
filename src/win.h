@@ -79,6 +79,8 @@ class Win : public AutoSound {
   // FileWin's button callback restores the modal window's focus-list cursor
   // when the filename editor had focus. The list remains owned by Win.
   friend class FileWin;
+  // Credits configures its embedded GraphicWin's multi-table draw path.
+  friend class Credits;
   // Reaches Win's fields directly: the byte-exact body for 0x005F5080
   // is a free function (both member spellings were measured and
   // refuted), and it reads `iFlags_` the way the image does.

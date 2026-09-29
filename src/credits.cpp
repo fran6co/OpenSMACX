@@ -19,8 +19,30 @@
 #include "wave.h"
 #include "credits.h"
 #include "text.h"
+#include "strings.h"
+#include "game.h"
+
+int __cdecl pop_wait();
 
 extern Wave g_CREDITS_WAVE;
+
+// ORIGINAL: 0x00428780 ??0Credits@@QAE@XZ 0x00428780-0x00428830;0x00653110-0x0065315A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:024b38ed:src/unrecovered/00428780.cpp records the member construction order and zero-filled line array", "Credits embeds real GraphicWin, Font, Buffer, FlatButton and Time members of the original sizes"], "reason": "Use genuine C++ base and member construction instead of fixed vtable stores and placement-new at raw offsets."}
+Credits::Credits() : frame_count_(0), line_count_(0) {
+  memset(lines_, 0, sizeof(lines_));
+}
+
+// ORIGINAL: 0x00428E90 ??1Credits@@QAE@XZ 0x00428E90-0x00428F72;0x00653170-0x006531D0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:024b38ed:src/recovered/units/00428e90.cpp records close followed by reverse member/base teardown", "The class declares the original typed owned subobjects"], "reason": "Let VC6 destroy the real C++ members and base after the image's explicit close phase."}
+// symbol    ??1Credits@@UAE@XZ
+// GraphicWin's inherited virtual destructor makes this destructor virtual.
+Credits::~Credits() {
+  close();
+}
+
+static void __cdecl credits_timer_tick(int owner) {
+  reinterpret_cast<Credits *>(owner)->timer_callback_daemon(0);
+}
 
 // Credits' list is populated with owned C-heap strings by load(); unload()
 // releases every slot and clears both count fields before releasing audio.
@@ -71,6 +93,44 @@ void Credits::close() {
   time_.close();
   GraphicWin::close();
   flatButton_.close();
+}
+
+// The roll owns its outer window, a child drawing surface, font, timer and
+// line storage. The retained seed's virtual slots 1/57/90 are Win::show,
+// Win::set_modal and FlatButton::close on these real subobjects.
+// ORIGINAL: 0x004289F0 ?exec@Credits@@QAEXXZ 0x004289F0-0x00428BF2 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["retired seed git:024b38ed:src/recovered/units/004289f0.cpp records the 514-byte call order", "Win virtual slots 1 and 57 are show and set_modal; Credits::close owns the same Time/GraphicWin/FlatButton teardown"], "reason": "Run the credits lifecycle through real C++ owners instead of an empty link placeholder and hand-built vtable calls."}
+void Credits::exec() {
+  close();
+  GraphicWin::init(0, 0, WinScreenWidth, WinScreenHeight, 0, 0, 0, 0, 0);
+
+  StringTemp[0] = 0;
+  strcat(StringTemp, WinScreenWidth == 800 ? "credits.pcx" : "credits2.pcx");
+  Buffer::load_pcx(StringTemp, 0, 10, 0xEC);
+
+  graphicWin2_.init(30, WinScreenWidth == 800 ? 100 : 200,
+                    400, 400, 0, 0x1000020, this, 0, 0);
+  graphicWin2_.fill(9);
+  graphicWin2_.field_A4_ = reinterpret_cast<uint32_t>(FadeColorTables);
+  graphicWin2_.show(0);
+
+  frame_count_ = 0;
+  font_.init("Alpha Centauri", 14, 1);
+  line_height_ = font_.line_advance();
+  load();
+  static_cast<Buffer *>(&graphicWin2_)->set_font(&font_, 0, 0, 0);
+  static_cast<Buffer *>(this)->set_font(&font_, 0, 0, 0);
+
+  time_.set_modal();
+  time_.start(credits_timer_tick, reinterpret_cast<int>(this), 30, 5);
+  if ((GamePreferences & 0x800) != 0) {
+    g_CREDITS_WAVE.play();
+  }
+  show(0);
+  set_modal(0, pop_wait, 0);
+  time_.release_modal();
+  unload();
+  close();
 }
 
 // The timer entry points and renderer are expressed through the Credits

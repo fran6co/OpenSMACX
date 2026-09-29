@@ -25,19 +25,15 @@
   *
   * Derives from GraphicWin by ordinary single inheritance - its constructor calls
   * GraphicWin's on an unadjusted `this` - so it is written as the original wrote
-  * it and needs no ABI workaround. GraphicWin is pinned here, so the base region
-  * is exact; Credits's own extent is not established and nothing pins its
-  * sizeof.
+  * it and needs no ABI workaround. GraphicWin is pinned here, and the
+  * constructor's allocation plus the final Time member pin the 0x2D6C extent.
   *
-  * The methods below ignore their arguments and return a constant, which is
-  * why they can be replaced ahead of that mapping.
+  * The event callbacks below ignore their arguments; the lifecycle owns the
+  * embedded windows, font, line array, button and timer as real C++ members.
   */
 class Credits : public GraphicWin {
  public:
-  Credits() { ; }
-  // 0x00428E90 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  Credits();
   ~Credits();
   void on_left_down(int a1, int a2);
   void on_right_down(int a, int b);
@@ -49,6 +45,7 @@ class Credits : public GraphicWin {
   // the integer overload is the timer-dispatch entry point.
   void unload();
   void load();
+  void exec();
   void close();
   void draw_credits();
   void timer_callback_daemon();
@@ -61,8 +58,8 @@ class Credits : public GraphicWin {
   // RECOVERY_MEMBER: v1 Credits frame_count_ 0xA14 0x00428DC0
   uint32_t frame_count_;  // 0xA14
 
-  // Storage the image proves is here: its own methods reach 0x2640.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
+  // Storage the image proves is here: the timer ends at 0x2D6C.
+  // The constructor allocation and size assertion pin the full extent.
   // 12 member(s) from the IDA database, 4 named; it starts a member at 0xA18, which is where src/ ends.
 
   // RECOVERY_MEMBER: v1 Credits line_count_ 0xA18 0x00428C00
@@ -88,3 +85,4 @@ class Credits : public GraphicWin {
   FlatButton flatButton_;  // 0x21F8, IDB `flatButton`, size == sizeof(FlatButton)
   Time time_;  // 0x2D44, IDB `time`, size == sizeof(Time); ends 0x2D6C
 };
+static_assert(sizeof(Credits) == 0x2D6C, "Credits image extent");

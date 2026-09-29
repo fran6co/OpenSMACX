@@ -77,7 +77,6 @@
 #include "temp.h"
 #include "alphamenu.h"
 #include "alphamovie.h"
-#include "credits.h"
 #include "diplopop.h"
 #include "diplowin.h"
 #include "netmsg.h"
@@ -627,11 +626,6 @@ BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
 CheckButton::~CheckButton() {  // ??1CheckButton@@QAE@XZ at 0x004B3EC0
     typedef void(__fastcall *pending)(CheckButton *, void *);
     PENDING_BODY(0x004B3EC0, pending)(this, nullptr);
-}
-
-Credits::~Credits() {  // ??1Credits@@QAE@XZ at 0x00428E90
-    typedef void(__fastcall *pending)(Credits *, void *);
-    PENDING_BODY(0x00428E90, pending)(this, nullptr);
 }
 
 Datalink::~Datalink() {  // ??1Datalink@@QAE@XZ at 0x00432290
