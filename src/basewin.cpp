@@ -304,6 +304,85 @@ void BaseWin::recompute(int) {
     }
 }
 
+// The image walks Bases by the 0x134-byte Base record and compares names
+// case-insensitively.  The first qualifying name in the requested direction
+// wins; the second comparison supplies the wrap-around candidate.
+// ORIGINAL: 0x0041A010 ?prev@BaseWin@@QAEXXZ 0x0041A010-0x0041A15D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a010.cpp;source:src/base.h;image:0x0041A010-0x0041A15D"], "reason": "Recover previous base selection through the actual Base array, selected-base member, faction context and case-insensitive name order."}
+void BaseWin::prev() {
+    set_base(static_cast<int>(focusedBaseID_));
+    if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
+        && !(GameState & STATE_OMNISCIENT_VIEW)) {
+        return;
+    }
+    if (ConsoleControlTurnActive) {
+        X_pop("ARROWUPKEEP", nullptr);
+        return;
+    }
+
+    int selected = static_cast<int>(focusedBaseID_);
+    int nearest = -1;
+    for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+        if (candidate == static_cast<int>(focusedBaseID_)
+            || Bases[candidate].faction_id_current != Bases[focusedBaseID_].faction_id_current) {
+            continue;
+        }
+        const int comparison = _strcmpi(Bases[candidate].name_string,
+                                         Bases[focusedBaseID_].name_string);
+        if (comparison < 0
+            && (nearest < 0 || _strcmpi(Bases[candidate].name_string,
+                                         Bases[nearest].name_string) > 0)) {
+            nearest = candidate;
+        }
+        if (_strcmpi(Bases[candidate].name_string, Bases[selected].name_string) > 0) {
+            selected = candidate;
+        }
+    }
+    if (nearest >= 0) {
+        selected = nearest;
+    }
+    focusedBaseID_ = selected;
+    zoom(selected, 0);
+}
+
+// ORIGINAL: 0x0041A160 ?next@BaseWin@@QAEXXZ 0x0041A160-0x0041A2AD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a160.cpp;source:src/base.h;image:0x0041A160-0x0041A2AD"], "reason": "Recover next base selection through the actual Base array, selected-base member, faction context and case-insensitive name order."}
+void BaseWin::next() {
+    set_base(static_cast<int>(focusedBaseID_));
+    if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
+        && !(GameState & STATE_OMNISCIENT_VIEW)) {
+        return;
+    }
+    if (ConsoleControlTurnActive) {
+        X_pop("ARROWUPKEEP", nullptr);
+        return;
+    }
+
+    int selected = static_cast<int>(focusedBaseID_);
+    int nearest = -1;
+    for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+        if (candidate == static_cast<int>(focusedBaseID_)
+            || Bases[candidate].faction_id_current != Bases[focusedBaseID_].faction_id_current) {
+            continue;
+        }
+        const int comparison = _strcmpi(Bases[candidate].name_string,
+                                         Bases[focusedBaseID_].name_string);
+        if (comparison > 0
+            && (nearest < 0 || _strcmpi(Bases[candidate].name_string,
+                                         Bases[nearest].name_string) < 0)) {
+            nearest = candidate;
+        }
+        if (_strcmpi(Bases[candidate].name_string, Bases[selected].name_string) < 0) {
+            selected = candidate;
+        }
+    }
+    if (nearest >= 0) {
+        selected = nearest;
+    }
+    focusedBaseID_ = selected;
+    zoom(selected, 0);
+}
+
 // The queue's rendered panel is still unimplemented. Queue mutation itself
 // uses the typed Base queue and BaseWin selection state recovered from the
 // original record strides; the unfinished drawing dependency remains visible.
