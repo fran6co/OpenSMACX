@@ -629,11 +629,6 @@ int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)()) { 
     return PENDING_BODY(0x0048C0A0, pending)(a1, a2, a3, a4, a5);
 }
 
-AlphaMenu::~AlphaMenu() {  // ??1AlphaMenu@@QAE@XZ at 0x0051DC10
-    typedef void(__fastcall *pending)(AlphaMenu *, void *);
-    PENDING_BODY(0x0051DC10, pending)(this, nullptr);
-}
-
 BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
     typedef void(__fastcall *pending)(BaseWin *, void *);
     PENDING_BODY(0x00420A70, pending)(this, nullptr);

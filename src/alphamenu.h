@@ -38,9 +38,8 @@
 class AlphaMenu : public Menu {
  public:
   AlphaMenu() { ; }
-  // 0x0051DC10 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Member destruction follows the original 0x0051DC10 reverse-lifetime
+  // trace: three Sprites, the leading Sprite, Buffer, then Menu.
   ~AlphaMenu();
   // The two slots this class overrides in the Win-family surface, at the
   // positions the image's AlphaMenu vtable carries them: Win::hide's slot 2

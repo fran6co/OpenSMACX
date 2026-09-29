@@ -24,6 +24,9 @@
 
 class PullDown;
 
+// Source-owned original menu highlight at 0x00696E3C (defined in menu.cpp).
+extern int MenuSelection;
+
 typedef void (__cdecl *MenuProc)(int);
 
 struct MenuEntry {

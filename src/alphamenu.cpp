@@ -19,6 +19,14 @@
 #include "alphamenu.h"
 #include "buffer.h"
 
+// The compiler destroys sprites_[2..0], sprite1_, buffer_, then the Menu
+// base in the order observed at 0x0051DC10. Keep this as C++ ownership,
+// not a manual walk over the object bytes.
+// ORIGINAL: 0x0051DC10 ??1AlphaMenu@@QAE@XZ 0x0051DC10-0x0051DC86;0x0065D220-0x0065D24E
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0051dc10.cpp"], "reason": "C++ AlphaMenu owns Menu, Buffer and Sprite members whose reverse lifetime order follows the original destructor and exception-unwind trace."}
+// symbol    ??1AlphaMenu@@UAE@XZ
+AlphaMenu::~AlphaMenu() {}
+
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 0.
 // ORIGINAL: 0x00403610 ?requested_height@AlphaMenu@@QAEHXZ 0x00403610-0x00403613 BYTE_EXACT
@@ -63,5 +71,37 @@ int AlphaMenu::backfill_func(GraphicWin *target) {
 void AlphaMenu::hide() {}
 void AlphaMenu::on_redraw() {}
 
-// 0x00403550 on_mouse_move@AlphaMenu - unrecovered; stub for slot 17.
-void AlphaMenu::on_mouse_feedback(int x, int y) {}
+// The image's on_mouse_move identity is Win slot 17: it tracks the
+// highlighted Spot and releases capture when the pointer leaves the menu.
+// Unlike the old seed scaffold, this uses Menu's actual Spot and Win's
+// source-owned capture globals and virtual callbacks.
+// ORIGINAL: 0x00403550 ?on_mouse_move@AlphaMenu@@QAEXHH@Z 0x00403550-0x0040360F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00403550.cpp"], "reason": "The original menu mouse body updates Menu spot selection and Win pointer capture through the inherited slot-17 callback, whose product spelling is on_mouse_feedback."}
+// symbol    ?on_mouse_feedback@AlphaMenu@@UAEXHH@Z
+void AlphaMenu::on_mouse_feedback(int x, int y) {
+    if (field_A24_ != -1) {
+        Menu::on_mouse_move(x, y);
+    } else if (WinPointerOwner3 == 0) {
+        WinPointerOwner3 = this;
+        WinPointerOwner4 = 0;
+    }
+
+    int position = y;
+    const int hit = spot_.check(x, y, &position, 0);
+    if (hit == -1) {
+        MenuSelection = -1;
+        redraw();
+        on_update();
+        if (WinPointerOwner3 == this) {
+            WinPointerOwner3 = 0;
+            on_lose_mouse_capture();
+        }
+        if (WinPointerOwner4 == this) {
+            WinPointerOwner4 = 0;
+        }
+    } else {
+        MenuSelection = position;
+        redraw();
+        on_update();
+    }
+}
