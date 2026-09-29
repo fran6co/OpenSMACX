@@ -618,10 +618,9 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40C50_;  // 0x40C50
   uint32_t field_40C54_;  // 0x40C54
   uint32_t field_40C58_;  // 0x40C58
-  uint32_t field_40C5C_;  // 0x40C5C
-  uint32_t field_40C60_;  // 0x40C60
-  uint32_t field_40C64_;  // 0x40C64
-  uint32_t field_40C68_;  // 0x40C68
+  // The population panel clips, frames, and updates this whole rectangle.
+  // RECOVERY_MEMBER: v1 BaseWin population_rect_ 0x40C5C 0x00414B40
+  RECT population_rect_;
   uint32_t field_40C6C_;  // 0x40C6C
   uint32_t field_40C70_;  // 0x40C70
   uint32_t field_40C74_;  // 0x40C74

@@ -2245,9 +2245,71 @@ void BaseWin::draw_farm(int) {
     // BODY GOES HERE.
 }
 // ORIGINAL: 0x00414B40 ?draw_pop@BaseWin@@QAEXH@Z 0x00414B40-0x00415078;0x00651B76-0x00651B93
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00414b40.cpp", "src/basewin.h"], "reason": "Preserve the separately identified population panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
-void BaseWin::draw_pop(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00414b40.cpp", "image:0x00414C58-0x00414CA3 population spacing uses panel width minus height", "image:0x00414CB4-0x00414CDD expansion and alien rule select alien sprites", "src/sprite.cpp", "src/base.h", "src/faction.h", "src/basewin.h"], "reason": "Draw the current base's citizen and specialist row through owned BaseWin panel and Spot members, typed Base mood/specialist fields, and the four real large-sprite arrays. The retained seed reverses the alien branch and mistranscribes the spacing; the pinned instructions resolve both."}
+void BaseWin::draw_pop(int update_mode) {
+    Font font;
+    Random random;
+    random.reseed(timeGetTime());
+
+    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    RECT saved_clip = canvas->rect1_;
+    RECT inner = population_rect_;
+    canvas->set_clip(&inner);
+    canvas->box_sprite(&population_rect_, &InterfaceBoxStyles[3]);
+    font.init(DefaultFontFace, 9, 1);
+    spot1_.kill_type(1);
+
+    inner.left += 3;
+    inner.top += 3;
+    inner.right -= 3;
+    inner.bottom -= 3;
+    canvas->set_clip(&inner);
+
+    const int height = inner.bottom - inner.top;
+    const int width = inner.right - inner.left;
+    const int population = BaseCurrent->population_size;
+    int spacing = height;
+    if (population > 1) {
+        spacing = (width - height) / (population - 1);
+        if (spacing < 1 || height < 1) spacing = 1;
+        else if (spacing > height) spacing = height;
+    }
+
+    const int faction = BaseCurrent->faction_id_current;
+    const bool alien = ExpansionEnabled != 0
+        && (Players[faction].rule_flags & 0x80) != 0;
+    Sprite *citizens = alien ? g_AL_CITIZEN_LG_CURSOR_SPRITES
+                             : g_CITIZEN_LG_CURSOR_SPRITES;
+    Sprite *specialists = alien ? g_AL_SPECIALIST_LG_CURSOR_SPRITES
+                                : g_SPECIALIST_LG_CURSOR_SPRITES;
+    int x = inner.left;
+    for (int i = 0; i < BaseCurrent->population_size; ++i) {
+        const Base *base = BaseCurrent;
+        const int citizen_count = base->population_size - base->specialist_total;
+        const int y = inner.top + (height - 48) / 2;
+        if (i < citizen_count) {
+            int mood = i >= base->talent_total ? 1 : 0;
+            if (i >= citizen_count - base->drone_total) mood = 2;
+            if (i >= citizen_count - base->super_drone_total) mood = 3;
+            const int variant = alien ? 0 : static_cast<int>(random.get(0, 2));
+            Sprite &sprite = citizens[variant * 4 + mood];
+            sprite.draw(canvas, sprite.transparent_index(), x, y, 1, 1);
+            spot1_.add(-1, 1, x, inner.top, height, height);
+        } else {
+            const int specialist = i - citizen_count;
+            const int type = specialist < 16
+                ? (base->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15
+                : best_specialist();
+            Sprite &sprite = specialists[type];
+            sprite.draw(canvas, sprite.transparent_index(), x, y, 1, 1);
+            spot1_.add(specialist, 1, x, inner.top, height, height);
+        }
+        x += spacing;
+    }
+
+    if (update_mode == 0) MainInterfaceGlobal.soft_update(&population_rect_);
+    else MainInterfaceGlobal.update(&population_rect_, nullptr);
+    canvas->set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00410870.cpp", "src/basewin.h"], "reason": "Preserve the separately identified commerce panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
