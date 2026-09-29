@@ -1987,7 +1987,7 @@ Purpose: Swap the opening logo the desktop shows: load the PCX named a1 into
          (Win slot 63) so it repaints.
          Returns 7 when no opening window is up.
 
-// ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A FILE
+// ORIGINAL: 0x00589A30 ?change_opening@@YAHPAD@Z 0x00589A30-0x00589B1D;0x00660255-0x0066026A
 // TRIED (seed): reproducing the SEH frame/unwind funclet for the local
 //            `Buffer buf` explicitly - a real local of non-trivial type
 //            (ctor/dtor declared, undefined) makes MSVC generate its own
@@ -2000,13 +2000,12 @@ Purpose: Swap the opening logo the desktop shows: load the PCX named a1 into
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D7210 0x005D7410 0x005D7DE0 0x005D9610
 Return Value: 0 when the opening swapped, 7 when there is no opening window
-Status: Coverage transcription - unclaimed body. The original mapping and
-        seed evidence remain in src/unrecovered/00589a30.cpp without a
-        BYTE_EXACT claim. The second ORIGINAL span is the local Buffer's
-        unwind funclet and scope descriptor. opening_window() still reaches
-        original storage; its producer and lifetime consumers need a
-        coordinated migration. The window is reloaded after load_pcx and
-        before on_update, as in the image.
+The second ORIGINAL span is the local Buffer's unwind funclet and scope
+descriptor. opening_window() still reaches original storage; its producer and
+lifetime consumers need a coordinated migration. The window is reloaded after
+load_pcx and before on_update, as in the image. The retained seed's SEH attempt
+relies on the compiler-generated unwind for the real local Buffer rather than
+hand-writing a funclet.
 */
 int __cdecl change_opening(char *filename) {
     Buffer buf;
@@ -2306,8 +2305,8 @@ int __cdecl game_init(int mode, int reload) {
 // 685168; a pooled compiler literal is not one shared original identity.
 // RECOVERY_LITERAL: v1 0x00685148 0x00685150 ??_C@_07MAH@cycling?$AA@ 0x00455400
 // RECOVERY_LITERAL: v1 0x00685158 0x00685165 ??_C@_0N@GLFC@oceanoffsets?$AA@ 0x00455400
-// ORIGINAL: 0x00455400 ?load_cycling@@YAXXZ 0x00455400-0x004554C0 FILE BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["45540F guards both sections; 455432..45546B read three cycle arguments and call Palette init/start in order; 45547C..4554B9 accept ASCII-digit-led ocean lines with an eighty-entry bound and one trailing read. The original seed and exact startup table are retained."], "reason": "The original ordered configuration loader owns palette cycle setup and writes the shared eighty-entry ocean shade table consumed by terrain generation."}
+// ORIGINAL: 0x00455400 ?load_cycling@@YAXXZ 0x00455400-0x004554C0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["45540F guards both sections; 455432..45546B read three cycle arguments and call Palette init/start in order; 45547C..4554B9 accept ASCII-digit-led ocean lines with an eighty-entry bound and one trailing read. The retained seed and exact startup table remain available."], "reason": "The original ordered configuration loader owns palette cycle setup and writes the shared eighty-entry ocean shade table consumed by terrain generation."}
 void __cdecl load_cycling() {
     if (text_open("system", "cycling") != 0) {
         return;
@@ -3632,7 +3631,7 @@ extern "C" int __cdecl directplay_install_is_complete() {
     return result;
 }
 
-// ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA FILE
+// ORIGINAL: 0x0058FA70 ?get_pacts@@YAPADHH@Z 0x0058FA70-0x0058FAFA
 // working copy - scaffold materialised by --work
 // size      138 bytes
 // prototype 
@@ -3714,7 +3713,7 @@ int __cdecl generators(int faction_id, int *count_out) {
     return count;
 }
 
-// ORIGINAL: 0x0058FBC0 ?get_his_her@@YAPADHH@Z 0x0058FBC0-0x0058FC4B FILE
+// ORIGINAL: 0x0058FBC0 ?get_his_her@@YAPADHH@Z 0x0058FBC0-0x0058FC4B
 // LEVER: the fixed-address bindings renamed to the tree's own models - Players
 //         (faction.h), Labels (alpha.h), StringTable (strings.h), the CharUpperA
 //         import slot (windows.h) and 0x00945838 as PronounBuffer below. The
@@ -3751,7 +3750,7 @@ char *__cdecl get_his_her(int faction_id, int sentence_form) {
 /*
 Purpose: Fetch the "him/her" pronoun into the shared game pronoun buffer,
          optionally upper-casing it, beside the sibling get_his_her body.
-// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB FILE
+// ORIGINAL: 0x0058FC50 ?get_him_her@@YAPADHH@Z 0x0058FC50-0x0058FCDB
 // RECOVERY_BINDING: v1 {"evidence": ["Original58FC50..58FCDB; retired seed git:b18d3ac8:src/unrecovered/0058fc50.cpp records the same identity and spans.", "The fixed-address bindings rename to the tree's own models exactly as game.cpp's sibling get_his_her (0x0058FBC0) already does: Players (faction.h, the 0x167-stride first word is is_leader_female), Labels (alpha.h), StringTable (strings.h), PronounBuffer (game.h, 0x00945838) and the CharUpperA import the header supplies.", "Label code 0xC7/0xC8 and the sentence-form handling are the seed's measured behaviour."], "reason": "Home the sibling pronoun fetcher beside its shared buffer and get_his_her in the game source."}
 Return Value: PronounBuffer
 Status: Coverage transcription - unclaimed body
@@ -3774,7 +3773,7 @@ char *__cdecl get_him_her(int faction_id, int sentence_form) {
     return PronounBuffer;
 }
 
-// ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61 FILE
+// ORIGINAL: 0x0058FB00 ?get_pact_hood@@YAPADHH@Z 0x0058FB00-0x0058FB61
 // LEVER: the five fixed-address bindings renamed to the tree's own models - see
 //         get_pacts above for the address map. No anonymous g_ binding arrived.
 // TRIED: `int code = 0xcd; if (...) code = 0xce;`, the ternary form, and a
