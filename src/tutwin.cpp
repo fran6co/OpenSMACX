@@ -28,6 +28,28 @@ TutWin TutorialWindow;
 #include "temp.h"     // do_all_draws
 #include "game.h"     // IsMultiplayerNet, GamePreferences - tut_check's gates
 #include "faction.h"  // Players/LocalFaction/RFLAG_ALIEN - the expansion gate
+#include "console.h"  // ConsoleGlobal.faction_id_ supplies the active faction
+#include "veh.h"      // the recovered vehicle painter
+
+// ORIGINAL: 0x004BDF20 ?terrain_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF20-0x004BDF66 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF20-0x004BDF66; seed:src/recovered/004bdf20.cpp; source:src/mapwin.h:gen_terrain_poly; source:src/tutwin.h:TutorialWindow"], "reason": "The draw callback takes no receiver and reads the singleton tutorial tile state while invoking the typed terrain renderer."}
+// symbol    ?tut_terrain_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl tut_terrain_draw(Sprite *, GraphicWin *window, int,
+                              int pixel_x, int pixel_y) {
+    Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
+    gen_terrain_poly(canvas, 0, 0, ConsoleGlobal.faction_id_, -1, 0x621,
+                     TutorialWindow.field_537C_, TutorialWindow.field_5380_,
+                     pixel_x, pixel_y);
+}
+
+// ORIGINAL: 0x004BDF70 ?veh_draw@TutWin@@QAAXPAUSprite@@PAUGraphicWin@@HHH@Z 0x004BDF70-0x004BDFA0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BDF70-0x004BDFA0; seed:src/recovered/004bdf70.cpp; source:src/veh.h:veh_draw; source:src/graphicwin.h:Buffer base"], "reason": "The tutorial vehicle draw callback has no receiver and forwards a typed GraphicWin canvas to the recovered renderer."}
+// symbol    ?tut_veh_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl tut_veh_draw(Sprite *, GraphicWin *window, int vehicle,
+                          int pixel_x, int pixel_y) {
+    Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
+    veh_draw(canvas, vehicle, pixel_x, pixel_y, 0, 0, 0);
+}
 
 // Reset at 0x004BDDE0 clears this process-wide marker after the tutorial's
 // own state; it is separate from TutorialWindow, whose extent ends at 8CC240.
@@ -479,6 +501,39 @@ void TutWin::on_move(int x, int y) {
         field_53D4_->on_update();
     }
 }
+
+// ORIGINAL: 0x004BA770 ?on_key_click@TutWin@@QAEHHH@Z 0x004BA770-0x004BA82E BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004BA770-0x004BA82E; seed:src/unrecovered/004ba770.cpp; source:src/win.h:Win::release_modal,Win::hide,Win::on_update"], "reason": "The tutorial key callback owns its modal dismissal, saved key tuple, and TutWin state reset."}
+int TutWin::on_key_click(int key, int code) {
+    if (field_53B8_ != 0) {
+        release_modal();
+        if (field_53D4_ != 0) {
+            field_53A4_ = 0;
+            hide();
+            field_53D4_->on_update();
+            do_all_draws();
+        }
+        field_53D4_ = 0;
+        field_5380_ = -1;
+        field_537C_ = -1;
+        field_539C_ = -1;
+        field_53AC_ = -1;
+        field_53A4_ = 0;
+        field_53A8_ = 0;
+        field_53B8_ = 0;
+        field_53C4_ = 0;
+        TutWinShownFlag = 0;
+        if (code == 0x1b) {
+            field_53B4_ = 0;
+        }
+        field_53C4_ = 1;
+        field_53C8_ = key;
+        field_53CC_ = code;
+        return 1;
+    }
+    return 0;
+}
+
 
 
 // ---------------------------------------------------------------------------

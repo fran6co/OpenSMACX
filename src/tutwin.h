@@ -58,12 +58,16 @@
   */
 class TutWin : public Popup {
  public:
+  // These draw callbacks have no TutWin receiver in the original call ABI;
+  // they read tutorial tile state from the process-wide window instead.
+  friend void __cdecl tut_terrain_draw(Sprite *, GraphicWin *, int, int, int);
   // 0x004BDFE0, a pending_bodies forwarder.
   // The owner arrives as a raw address computed off a vbtable, which is
   // why it is `void *` here rather than `GraphicWin *`.
   int tut_win(void *owner, const char *text, int a3, int a4,
               Sprite *sprite, int a6, int a7, int a8);
   void on_move(int x, int y);
+  int on_key_click(int key, int code);
   int reset();
   TutWin();
   // 0x004BE7D0 is not recovered: a
@@ -124,6 +128,11 @@ class TutWin : public Popup {
   // it is. Pointer = pointer: no layout change.
   Win *field_53D4_;
 };
+
+void __cdecl tut_terrain_draw(Sprite *sprite, GraphicWin *window,
+                              int unused, int pixel_x, int pixel_y);
+void __cdecl tut_veh_draw(Sprite *sprite, GraphicWin *window,
+                          int vehicle, int pixel_x, int pixel_y);
 
 static_assert(sizeof(TutWin) == 0x53D8,
               "TutWin layout must match the original executable");
