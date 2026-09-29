@@ -98,7 +98,9 @@ struct NetWinFactionRecord {
   uint32_t owner_;           // +4
   uint8_t color_;            // +8
   uint8_t active_;           // +9
-  uint8_t data_[0x186];     // +0xA..+0x18F
+  uint8_t data_before_noun_[0x58]; // +0xA..+0x61
+  char noun_faction_[0x18]; // +0x62..+0x79, copied from Player::noun_faction
+  uint8_t data_after_noun_[0x116]; // +0x7A..+0x18F
 };
 static_assert(sizeof(NetWinFactionRecord) == 0x190,
               "faction record stride");
@@ -106,6 +108,10 @@ static_assert(offsetof(NetWinFactionRecord, owner_) == 4,
               "faction owner offset");
 static_assert(offsetof(NetWinFactionRecord, color_) == 8,
               "faction colour offset");
+static_assert(offsetof(NetWinFactionRecord, noun_faction_) == 0x62,
+              "faction noun offset");
+static_assert(sizeof(((NetWinFactionRecord *)0)->noun_faction_) == 0x18,
+              "faction noun extent");
 
 // faction.h's per-faction record; fill_player writes the name/title text
 // block of one. Opaque here - only the pointer travels.

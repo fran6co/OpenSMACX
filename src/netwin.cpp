@@ -1525,6 +1525,24 @@ static void sub_589330(void *popup) {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00589330))(popup);
 }
 
+// The single-row picker packet shares the lobby button handler's wire header.
+struct NetWinLobbyPacketHeader {
+    uint8_t opcode_;
+    uint8_t flags_;
+    uint16_t field_2_;
+    int32_t slot_;
+    int32_t field_8_;
+    uint32_t field_C_;
+};
+static_assert(sizeof(NetWinLobbyPacketHeader) == 0x10,
+              "NetWin packet header size");
+struct NetWinLobbySinglePacket {
+    NetWinLobbyPacketHeader header_;
+    NetWinLobbyRow row_;
+};
+static_assert(sizeof(NetWinLobbySinglePacket) == 0x18C,
+              "single lobby packet size");
+
 // The pickers send the complete 0x18-byte ninth-slot state after a 16-byte
 // message header. The protocol leaves the intervening header words reserved;
 // the coordinator-approved packet form initializes those bytes to zero.
@@ -1652,13 +1670,91 @@ void NetWin::pick_player() {
 }
 
 // ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
-void NetWin::pick_faction(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047c530.cpp:NetWin::pick_faction", "src/netwin.h:NetWinFactionRecord and NetWinLobbyRow", "src/netwin.cpp:NetWin::pick_pass and NetWinLobbySinglePacket"], "reason": "Recover faction selection through the typed faction records, lobby rows, popup dialog and single-row packet."}
+void NetWin::pick_faction(int slot) {
+    PopMenu pop_menu;
+    pop_menu.init();
+
+    pop_menu.dialogs().item(label_get(0xFE4 / 4), 0);
+
+    NetWinFactionRecord *const records =
+        static_cast<NetWinFactionRecord *>(faction_records_);
+    const int count = records[0].record_count_;
+    for (int faction = 0; faction < count; ++faction) {
+        if (records[faction].active_ == 0) {
+            continue;
+        }
+
+        bool already_selected = false;
+        if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
+            const int player_count = *NetWinPlayerCount;
+            for (int player = 1; player <= player_count; ++player) {
+                if (NetWinLobbyRows[player].faction_or_color_ == faction) {
+                    already_selected = true;
+                    break;
+                }
+            }
+        }
+        if (!already_selected) {
+            pop_menu.dialogs().item(records[faction].noun_faction_, faction + 1);
+        }
+    }
+
+    const int answer = pick_answer(*this, pop_menu);
+    if (answer < 0) {
+        return;
+    }
+
+    const int chosen_faction = pop_menu.get_selected_id() - 1;
+    const int8_t previous = NetWinLobbyRows[slot].faction_or_color_;
+    NetWinLobbyRows[slot].faction_or_color_ =
+        static_cast<int8_t>(chosen_faction);
+    const int accepted = pick_pass(1);
+    NetWinLobbyRows[slot].faction_or_color_ = previous;
+    if (accepted == 0) {
+        return;
+    }
+
+    if (slot >= 1) {
+        NetWinLobbySinglePacket packet;
+        memset(&packet, 0, sizeof(packet));
+        packet.header_.opcode_ = 0x04;
+        packet.header_.flags_ = 0x2F;
+        packet.header_.slot_ = slot;
+        packet.row_ = NetWinLobbyRows[slot];
+        packet.row_.faction_or_color_ =
+            static_cast<int8_t>(chosen_faction);
+        NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
+    }
 }
 
 // ORIGINAL: 0x0047CF40 ?pick_diff@NetWin@@QAEXH@Z 0x0047CF40-0x0047D2F4;0x00656AED-0x00656BC5
-void NetWin::pick_diff(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0047cf40.cpp:NetWin::pick_diff", "src/netwin.cpp:pick_global_diff and sibling pickers", "src/netwin.cpp:NetWinLobbySinglePacket and NetWin::on_button_clicked"], "reason": "Recover the per-slot difficulty picker using the established popup objects, difficulty text table, typed lobby row and typed single-row packet."}
+void NetWin::pick_diff(int slot) {
+    PopMenu pop_menu;
+    pop_menu.init();
+
+    for (int index = 0; index < 6; ++index) {
+        const int string_id =
+            reinterpret_cast<int>(NetWinDifficultyNames[index]);
+        pop_menu.dialogs().item(StringTable.get(string_id), index);
+    }
+
+    const int answer = pick_answer(*this, pop_menu);
+    NetWinLobbyRow row = NetWinLobbyRows[slot];
+    if (answer >= 0) {
+        row.field_2_ = static_cast<uint8_t>(answer);
+    }
+
+    if (slot >= 1) {
+        NetWinLobbySinglePacket packet;
+        memset(&packet, 0, sizeof(packet));
+        packet.header_.opcode_ = 0x04;
+        packet.header_.flags_ = 0x2F;
+        packet.header_.slot_ = slot;
+        packet.row_ = row;
+        NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
+    }
 }
 
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
@@ -1667,11 +1763,10 @@ void NetWin::pick_map() {
     PopMenu pop_menu;
     pop_menu.init();
 
-    Dialogs dialogs;
-    dialogs.item(label_get(0x107C / 4), 0);
-    dialogs.item(label_get(0x0FD8 / 4), 1);
-    dialogs.item(label_get(0x0FDC / 4), 2);
-    dialogs.item(label_get(0x0FE0 / 4), 3);
+    pop_menu.dialogs().item(label_get(0x107C / 4), 0);
+    pop_menu.dialogs().item(label_get(0x0FD8 / 4), 1);
+    pop_menu.dialogs().item(label_get(0x0FDC / 4), 2);
+    pop_menu.dialogs().item(label_get(0x0FE0 / 4), 3);
 
     const int choice = pick_answer(*this, pop_menu);
     if (choice < 0) {
@@ -2427,25 +2522,9 @@ NetWin::NetWin() {
     faction_records_copy_ = 0;
 }
 
-// The wire header is 16 bytes. The high byte of the original 0x0F04
-// message word is also the flags byte: the full-state send sets bit 0x40.
-struct NetWinLobbyPacketHeader {
-    uint8_t opcode_;
-    uint8_t flags_;
-    uint16_t field_2_;
-    int32_t slot_;
-    int32_t field_8_;
-    uint32_t field_C_;
-};
-static_assert(sizeof(NetWinLobbyPacketHeader) == 0x10,
-              "NetWin packet header size");
 struct NetWinLobbyFullPacket {
     NetWinLobbyPacketHeader header_;
     NetWinLobbyRow rows_[7];
-};
-struct NetWinLobbySinglePacket {
-    NetWinLobbyPacketHeader header_;
-    NetWinLobbyRow row_;
 };
 struct NetWinLobbyLeavePacket {
     NetWinLobbyPacketHeader header_;
@@ -2453,8 +2532,6 @@ struct NetWinLobbyLeavePacket {
 };
 static_assert(sizeof(NetWinLobbyFullPacket) == 0xA74,
               "full lobby packet size");
-static_assert(sizeof(NetWinLobbySinglePacket) == 0x18C,
-              "single lobby packet size");
 static_assert(sizeof(NetWinLobbyLeavePacket) == 0x20,
               "leave lobby packet size");
 

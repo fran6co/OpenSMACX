@@ -85,6 +85,9 @@ class PopMenu : public Popup {
   // The caller at 0x004B9178 switches on the selected index returned in EAX;
   // the catalogue's void return omitted that observed result.
   int exec(int x, int y, int (*poll)());
+  // exec returns a slot; picker handlers sometimes need the action ID stored
+  // in that slot (which need not equal its index after filtering).
+  int get_selected_id() { return pull_down_.get_selected_id(); }
 
  private:
   PullDown pull_down_;  // 0x537C
