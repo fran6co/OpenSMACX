@@ -98,7 +98,12 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   // 0x0043BF50. Rebuild the design preview after the component selection is
   // settled, temporarily applying the automatic-build weapon rule.
   void construct_vehicle();
-  DesignWin() { ; }
+  DesignWin();
+  static void __cdecl timer_function(int tick);
+  void setup_veh(int proto_id, int automatic);
+  void on_right_click(int x, int y);
+  void on_redraw();
+  void select_name();
   // 0x0043ECB0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -217,18 +222,15 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_A60_;  // 0xA60
   uint32_t field_A64_;  // 0xA64
   uint32_t field_A68_;  // 0xA68
-  uint32_t field_A6C_;  // 0xA6C
-  uint32_t field_A70_;  // 0xA70
-  uint32_t field_A74_;  // 0xA74
-  uint32_t field_A78_;  // 0xA78
+  // Original on_redraw copies this rectangle before shrinking its caption.
+  // RECOVERY_MEMBER: v2 DesignWin caption_rect_ tagRECT 0xA6C 0x004379A0
+  RECT caption_rect_;  // 0xA6C
   uint32_t field_A7C_;  // 0xA7C
   uint32_t field_A80_;  // 0xA80
   uint32_t field_A84_;  // 0xA84
   uint32_t field_A88_;  // 0xA88
-  uint32_t field_A8C_;  // 0xA8C
-  uint32_t field_A90_;  // 0xA90
-  uint32_t field_A94_;  // 0xA94
-  uint32_t field_A98_;  // 0xA98
+  // RECOVERY_MEMBER: v2 DesignWin frame_rect_ tagRECT 0xA8C 0x004379A0
+  RECT frame_rect_;  // 0xA8C
   // init assigns each rectangle as four consecutive coordinates; the panel
   // methods consume the same groups with set_clip/copy. The vehicle rectangle
   // is used by draw_vehicle; the next six are the component panel clips.
@@ -278,14 +280,11 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_B80_;  // 0xB80
   uint32_t field_B84_;  // 0xB84
   uint32_t field_B88_;  // 0xB88
-  uint32_t field_B8C_;  // 0xB8C
-  uint32_t field_B90_;  // 0xB90
-  uint32_t field_B94_;  // 0xB94
-  uint32_t field_B98_;  // 0xB98
-  uint32_t field_B9C_;  // 0xB9C
-  uint32_t field_BA0_;  // 0xBA0
-  uint32_t field_BA4_;  // 0xBA4
-  uint32_t field_BA8_;  // 0xBA8
+  // The lower component-group border is the union of these three panels.
+  // RECOVERY_MEMBER: v2 DesignWin lower_panel_rect_ tagRECT 0xB8C 0x004379A0
+  RECT lower_panel_rect_;  // 0xB8C
+  // RECOVERY_MEMBER: v2 DesignWin lower_panel_extra_rect_ tagRECT 0xB9C 0x004379A0
+  RECT lower_panel_extra_rect_;  // 0xB9C
   uint32_t field_BAC_;  // 0xBAC
   uint32_t field_BB0_;  // 0xBB0
   uint32_t field_BB4_;  // 0xBB4
@@ -294,10 +293,8 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_BC0_;  // 0xBC0
   uint32_t field_BC4_;  // 0xBC4
   uint32_t field_BC8_;  // 0xBC8
-  uint32_t field_BCC_;  // 0xBCC
-  uint32_t field_BD0_;  // 0xBD0
-  uint32_t field_BD4_;  // 0xBD4
-  uint32_t field_BD8_;  // 0xBD8
+  // RECOVERY_MEMBER: v2 DesignWin lower_panel_end_rect_ tagRECT 0xBCC 0x004379A0
+  RECT lower_panel_end_rect_;  // 0xBCC
   uint32_t field_BDC_;  // 0xBDC
   uint32_t field_BE0_;  // 0xBE0
   uint32_t field_BE4_;  // 0xBE4
@@ -467,19 +464,9 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t mineralCostFactor_;  // 0x14214
   uint32_t protoAbilityID1_;  // 0x14218
   uint32_t protoAbilityID2_;  // 0x1421C
-  // BYTE in the image: DesignWin::close writes it `mov byte ptr
-  // [esi+0x14220], bl` (0x0043C23C) - the only access to the offset. The
-  // dword the IDA database typed here was its own rounding; the pad keeps
-  // every offset past it where it was.
-  uint8_t field_14220_;  // 0x14220
-  uint8_t field_14221_[3];  // 0x14221
-  uint32_t field_14224_;  // 0x14224
-  uint32_t field_14228_;  // 0x14228
-  uint32_t field_1422C_;  // 0x1422C
-  uint32_t field_14230_;  // 0x14230
-  uint32_t field_14234_;  // 0x14234
-  uint32_t field_14238_;  // 0x14238
-  uint32_t field_1423C_;  // 0x1423C
+  // setup_veh copies a prototype's 32-byte name here; select_name bounds
+  // its copy to 32 and terminates byte 0x1423F. close clears the first byte.
+  char prototype_name_[32];  // 0x14220
   uint32_t field_14240_;  // 0x14240
   uint32_t field_14244_;  // 0x14244
   uint32_t field_14248_;  // 0x14248

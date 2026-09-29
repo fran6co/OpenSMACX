@@ -17,8 +17,8 @@
  */
 #pragma once
 // Prototype naming is mapped but unfinished; retained seed owns the behavior lead.
-void __cdecl name_proto(char *name, int chassis, int faction, int weapon,
-                       int armor, int reactor, int abilities, int plan);
+void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
+                       int weapon, int armor, int abilities, int reactor);
 
 struct VOX_Vect;
 struct VOX_Matrix;

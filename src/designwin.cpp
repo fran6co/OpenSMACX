@@ -50,6 +50,252 @@ int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
 // out-of-bounds scan remains a separate obligation.
 
 // ---- shared seams and bindings the recovered bodies reach -----------------
+void __cdecl proto_sort_2(int faction);
+extern int ProtoSortCount;
+extern int ProtoSortIds[128];
+void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
+                       int weapon, int armor, int abilities, int reactor);
+
+// The automatic-design editor exchanges these fields with consider_designs
+// (0x00581260). setup_veh writes them, enables the override, then reloads
+// the resulting component choices. Their shared consumer remains unfinished.
+// RECOVERY_OBJECT: v2 0x0093FC34 0x0093FC38 ?DesignConsiderAbilities@@3IA 0x0043E490
+uint32_t DesignConsiderAbilities;
+// RECOVERY_OBJECT: v2 0x0093FC38 0x0093FC3C ?DesignConsiderPrototype@@3HA 0x0043E490
+int DesignConsiderPrototype;
+// RECOVERY_OBJECT: v2 0x0093FC3C 0x0093FC40 ?DesignConsiderWeapon@@3HA 0x0043E490
+int DesignConsiderWeapon;
+// RECOVERY_OBJECT: v2 0x0093FC40 0x0093FC44 ?DesignConsiderChassis@@3HA 0x0043E490
+int DesignConsiderChassis;
+// RECOVERY_OBJECT: v2 0x0093FC50 0x0093FC54 ?DesignConsiderArmor@@3HA 0x0043E490
+int DesignConsiderArmor;
+// RECOVERY_OBJECT: v2 0x0093FC54 0x0093FC58 ?DesignConsiderOverride@@3HA 0x0043E490
+int DesignConsiderOverride;
+
+// Three separate, four-byte zero-initialized string stores are passed to
+// strcpy on the original setup paths, at E679, E6A9 and E829 respectively.
+// RECOVERY_OBJECT: v2 0x00733980 0x00733984 ?DesignDefaultName@@3PADA 0x0043E490
+char DesignDefaultName[4];
+// RECOVERY_OBJECT: v2 0x00733984 0x00733988 ?DesignPredefinedName@@3PADA 0x0043E490
+char DesignPredefinedName[4];
+// RECOVERY_OBJECT: v2 0x00733988 0x0073398C ?DesignAutomaticName@@3PADA 0x0043E490
+char DesignAutomaticName[4];
+
+// ORIGINAL: 0x00434480 ??0DesignWin@@QAE@XZ 0x00434480-0x004345B5;0x00653F6F-0x00653FFE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00434480.cpp"], "reason": "Natural bases and embedded members construct once; original initializes editor component state after their construction."}
+DesignWin::DesignWin() {
+    factionID_ = 0;
+    protoID_ = 0;
+    protoChassisType_ = 0;
+    protoWeaponType_ = 0;
+    protoArmorType_ = 0;
+    protoAbilityFlags_ = 0;
+    protoReactorType_ = 1;
+    field_14210_ = 0;
+    mineralCostFactor_ = 0;
+    prototype_name_[0] = 0;
+}
+
+// ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/00439700.cpp"], "reason": "Spot palette categories select localized help labels; the two ability categories share a label."}
+void DesignWin::on_right_click(int x, int y) {
+    TutorialWindow.reset();
+    int position;
+    int category;
+    if (spot2_.check(x, y, &position, &category) == -1 ||
+        static_cast<unsigned int>(category) > 5) return;
+    // Both special-ability spots (4 and 5) use the same help label.
+    int label = 0xCD4 / 4 + (category == 5 ? 4 : category);
+    char *text = StringTable.get(
+        reinterpret_cast<int>(reinterpret_cast<LPSTR *>(Labels.strings_ptr)[label]));
+    client_to_screen(&x, &y);
+    RECT rect = {x, y, x, y};
+    set_bubble_text(text, &rect);
+}
+
+// ORIGINAL: 0x004379A0 ?on_redraw@DesignWin@@QAEXXZ 0x004379A0-0x00437B95
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/004379a0.cpp;InterfaceBoxStyles source ownership in src/game.cpp;MainInterface primary_font and working rectangle"], "reason": "Restore the design frame and caption through real screen and embedded Buffer objects, redraw all editor panels, and frame the union of the lower panels."}
+// symbol    ?on_redraw@DesignWin@@UAEXXZ
+void DesignWin::on_redraw() {
+    Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
+    screen->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    Buffer::set_clip(buffer_working_rect());
+    MainInterfaceGlobal.restore_back(1);
+    screen->box_sprite(&frame_rect_, &InterfaceBoxStyles[3]);
+    RECT caption = caption_rect_;
+    screen->box_sprite(&caption, &InterfaceBoxStyles[6]);
+    caption.left += 3;
+    caption.top += 3;
+    caption.right -= 3;
+    caption.bottom -= 3;
+    StringTemp[0] = 0;
+    screen->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+        reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xA70 / 4])));
+    screen->set_text_color(0xF0, -1, 1, 1);
+    CharUpperA(StringTemp);
+    screen->write_cent_l(StringTemp, &caption, strlen(StringTemp));
+    check_abil();
+    draw_chassis(0);
+    draw_weapon(0);
+    draw_armor(0);
+    draw_reactor(0);
+    draw_special_1(0);
+    draw_special_2(0);
+    draw_vehicle(0);
+    draw_info();
+    draw_stack();
+    draw_flash();
+    Buffer::set_clip(buffer_working_rect());
+    UnionRect(&caption, &lower_panel_end_rect_, &lower_panel_rect_);
+    UnionRect(&caption, &caption, &lower_panel_extra_rect_);
+    caption.left -= 3;
+    caption.top -= 3;
+    caption.right += 3;
+    caption.bottom += 3;
+    Buffer::box_sprite(&caption, &InterfaceBoxStyles[3]);
+}
+
+// ORIGINAL: 0x0043E490 ?setup_veh@DesignWin@@QAEXHH@Z 0x0043E490-0x0043E952
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x43E496,0x43E6D1;git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043e490.cpp"], "reason": "Original first argument is the prototype and second enables automatic component selection; real prototype records, component tables and shared design state preserve each branch."}
+void DesignWin::setup_veh(int proto_id, int automatic) {
+    // Original E496 reads the FIRST argument as the prototype index; the
+    // retained seed reversed the formals and also used byte-array flags
+    // with half the real VehPrototype stride. The image uses 0x34 throughout.
+    if (proto_id < 0 || !(VehPrototypes[proto_id].flags & 1) ||
+        (proto_id < 64 &&
+         (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0 ||
+          proto_id == 15))) {
+        proto_sort_2(factionID_);
+        int row = 0;
+        while (row < ProtoSortCount &&
+               (VehPrototypes[ProtoSortIds[row]].flags & 1)) ++row;
+        protoID_ = row == ProtoSortCount ? factionID_ << 6 : ProtoSortIds[row];
+    } else {
+        protoID_ = proto_id;
+    }
+    protoReactorType_ = best_reactor(factionID_);
+    VehPrototype &prototype = VehPrototypes[protoID_];
+    if (prototype.flags & 1) {
+        prototype.flags &= ~0x80;
+        protoChassisType_ = prototype.chassis_id;
+        protoWeaponType_ = prototype.weapon_id;
+        protoArmorType_ = prototype.armor_id;
+        protoAbilityFlags_ = prototype.ability_flags;
+        protoReactorType_ = prototype.reactor_id;
+        protoAbilityID1_ = protoAbilityID2_ = static_cast<uint32_t>(-1);
+        for (int ability = 0; ability < 29; ++ability) {
+            if (protoAbilityFlags_ & (1u << ability)) {
+                if (static_cast<int>(protoAbilityID1_) < 0) protoAbilityID1_ = ability;
+                else if (static_cast<int>(protoAbilityID2_) < 0) protoAbilityID2_ = ability;
+            }
+        }
+        if ((prototype.flags & 2) && static_cast<int>(protoID_) >= 64) {
+            strcpy(prototype_name_, prototype.veh_name);
+            char generated_name[80];
+            name_proto(generated_name, protoID_, factionID_, protoChassisType_,
+                       protoWeaponType_, protoArmorType_, protoAbilityFlags_,
+                       protoReactorType_);
+            if (strcmp(prototype_name_, generated_name) == 0) {
+                strcpy(prototype_name_, DesignDefaultName);
+                prototype.flags &= ~2;
+            }
+        } else {
+            prototype.flags &= ~2;
+            strcpy(prototype_name_, DesignPredefinedName);
+        }
+        field_14210_ = 0;
+        return;
+    }
+
+    protoArmorType_ = protoWeaponType_ = 0;
+    if (automatic == 0) {
+        protoChassisType_ = protoAbilityFlags_ = 0;
+        protoReactorType_ = 1;
+        protoAbilityID1_ = protoAbilityID2_ = static_cast<uint32_t>(-1);
+        field_14210_ = 0;
+        return;
+    }
+    protoAbilityFlags_ = 0;
+    int best = 0;
+    int rating = 0;
+    for (protoChassisType_ = 0; protoChassisType_ < 9; ++protoChassisType_) {
+        const RulesChassis &chassis = Chassis[protoChassisType_];
+        if (has_tech(chassis.preq_tech, factionID_) && chassis.triad == 0 &&
+            chassis.speed >= rating) {
+            best = protoChassisType_;
+            rating = chassis.speed;
+        }
+    }
+    protoChassisType_ = best;
+    best = rating = 0;
+    for (protoWeaponType_ = 0; protoWeaponType_ < 26; ++protoWeaponType_) {
+        const RulesWeapon &weapon = Weapon[protoWeaponType_];
+        if (has_tech(weapon.preq_tech, factionID_) && weapon.offense_rating < 99 &&
+            weapon.offense_rating >= rating) {
+            best = protoWeaponType_;
+            rating = weapon.offense_rating;
+        }
+    }
+    protoWeaponType_ = best;
+    best = rating = 0;
+    for (protoArmorType_ = 0; protoArmorType_ < 14; ++protoArmorType_) {
+        const RulesArmor &armor = Armor[protoArmorType_];
+        if (has_tech(armor.preq_tech, factionID_) && armor.defense_rating >= rating) {
+            best = protoArmorType_;
+            rating = armor.defense_rating;
+        }
+    }
+    protoArmorType_ = best;
+    strcpy(prototype_name_, DesignAutomaticName);
+    DesignConsiderWeapon = protoWeaponType_;
+    DesignConsiderArmor = protoArmorType_;
+    DesignConsiderChassis = protoChassisType_;
+    DesignConsiderAbilities = protoAbilityFlags_;
+    DesignConsiderOverride = 1;
+    DesignConsiderPrototype = -1;
+    consider_designs(factionID_);
+    protoWeaponType_ = DesignConsiderWeapon;
+    protoArmorType_ = DesignConsiderArmor;
+    protoChassisType_ = DesignConsiderChassis;
+    protoAbilityFlags_ = DesignConsiderAbilities;
+    protoAbilityID1_ = protoAbilityID2_ = static_cast<uint32_t>(-1);
+    for (int bit = 0; bit < 29; ++bit) {
+        if (protoAbilityFlags_ & (1u << bit)) {
+            if (static_cast<int>(protoAbilityID1_) < 0) protoAbilityID1_ = bit;
+            else if (static_cast<int>(protoAbilityID2_) < 0) protoAbilityID2_ = bit;
+        }
+    }
+    DesignConsiderOverride = 0;
+    prototype.flags &= ~0x80;
+    field_14210_ = 0;
+}
+
+// ORIGINAL: 0x0043BE30 ?select_name@DesignWin@@QAEXXZ 0x0043BE30-0x0043BF4C
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043be30.cpp;ParseStrBuffer in src/temp.h;image:0x6838F4 DESIGNNAME;typed32-byte prototype name"], "reason": "Prompt for the prototype name through the shared popup helper, preserve cancellation and unchanged-name paths, update its custom-name flag and redraw through the genuine virtual update slot."}
+void DesignWin::select_name() {
+    char name[80];
+    strcpy(name, prototype_name_);
+    if (strlen(name) == 0) {
+        name_proto(name, protoID_, factionID_, protoChassisType_, protoWeaponType_,
+                   protoArmorType_, protoAbilityFlags_, protoReactorType_);
+        VehPrototypes[protoID_].flags &= ~2;
+    }
+    name[31] = 0;
+    // The original prompt token at 0x006838F4 is DESIGNNAME.
+    if (X_pop_ask("DESIGNNAME", 31, name, 0, 0) == 0) {
+        if (strlen(ParseStrBuffer[0].str) == 0) {
+            prototype_name_[0] = 0;
+            VehPrototypes[protoID_].flags &= ~2;
+        } else if (strcmp(name, ParseStrBuffer[0].str) != 0) {
+            strncpy(prototype_name_, ParseStrBuffer[0].str, sizeof(prototype_name_));
+            prototype_name_[31] = 0;
+            VehPrototypes[protoID_].flags |= 2;
+        }
+        draw_vehicle(0);
+        on_update();
+    }
+}
 
 // The slide helpers are still original bodies (0x0045D440 / 0x0045D970);
 // councwin.cpp declares and forwards them, and the definitions are
@@ -424,10 +670,18 @@ void DesignWin::on_status(int mode) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x005FAB00 0x005169F0
+// ORIGINAL: 0x0043D220 ?on_iface_left_click@DesignWin@@QAEXHH@Z 0x0043D220-0x0043D281 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x43D243,0x43D260,0x43D274;git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/units/0043d220.cpp"], "reason": "Interface secondary-base callback selects a stack prototype and invokes setup plus virtual redraw through the genuine DesignWin inheritance."}
+// symbol    ?on_iface_left_click@DesignWin@@UAEXHH@Z
 void DesignWin::on_iface_left_click(int a1, int a2) {
-    typedef void(__fastcall *pending)(DesignWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0043D220))(
-        this, nullptr, a1, a2);
+    int position;
+    int type;
+    TutorialWindow.reset();
+    if (spot1_.check(a1, a2, &position, &type) != -1 && position >= 0) {
+        protoID_ = position;
+        setup_veh(position, 0);
+        redraw();
+    }
 }
 
 // ORIGINAL: 0x0043D290 ?on_iface_right_click@DesignWin@@QAEXHH@Z 0x0043D290-0x0043D327
@@ -665,7 +919,7 @@ void DesignWin::close() {
     field_14210_ = 0;
     mineralCostFactor_ = 0;
     field_CE0_ = static_cast<uint32_t>(-1);
-    field_14220_ = 0;
+    prototype_name_[0] = 0;
     font1_.close();
     font2_.close();
     font3_.close();
@@ -1250,7 +1504,21 @@ void DesignWin::UNK3() {
 // state byte the exec/tutor path sets to 1/2 and clears here; 0x00733970 is
 // the DesignWin *exec stores so timer_function can find the window again.
 static int *const DesignTutorState = (int *)0x0073396C;
-static DesignWin **const DesignWindowSelf = (DesignWin **)0x00733970;
+// exec stores its receiver here before starting time_; shutdown clears it.
+// RECOVERY_OBJECT: v2 0x00733970 0x00733974 ?DesignWindowSelf@@3PAVDesignWin@@A 0x0043C170
+DesignWin *DesignWindowSelf;
+
+// ORIGINAL: 0x0043C170 ?timer_function@DesignWin@@QAAXH@Z 0x0043C170-0x0043C19B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/0043c170.cpp;Time cdecl callback interface"], "reason": "Receiver-free timer callback reloads the shared active design owner between preview drawing and rectangle update, then draws the tutorial arrow."}
+// symbol    ?timer_function@DesignWin@@SAXH@Z
+void __cdecl DesignWin::timer_function(int) {
+    DesignWin *window = DesignWindowSelf;
+    window->draw_vehicle(0);
+    // The callback reloads the shared owner after draw_vehicle returns.
+    window = DesignWindowSelf;
+    window->update(&window->vehicle_panel_rect_, 0);
+    TutorialWindow.draw_arrow();
+}
 
 // ORIGINAL: 0x0043E960 ?shut_that_badboy_down@DesignWin@@QAEXXZ 0x0043E960-0x0043E99D FILE
 // size      61 bytes
@@ -1320,7 +1588,7 @@ void DesignWin::shut_that_badboy_down() {
         vtable_slot<func_design_win_slot002>(this, 0x8)(this);
         do_all_draws();
         Time *modal = &time_;
-        *DesignWindowSelf = 0;
+        DesignWindowSelf = 0;
         modal->stop();
         modal->release_modal();
     }
@@ -1504,6 +1772,7 @@ int DesignWin::on_key_click(int a1, int a2) {
 // find proto_id in the ranked list and move the stack window's anchor
 // (field_CE4_) so that entry sits five rows from the top.
 void DesignWin::center_stack(int proto_id, int redraw) {
+    // Re-rank through the source-owned map helper and its shared sort state.
     proto_sort_2(factionID_);
 
     int count = ProtoSortCount;
@@ -2151,6 +2420,7 @@ void DesignWin::draw_stack() {
     rc.top = y_base;
     rc.right = x_base + spacer;
 
+    // Re-rank through the source-owned map helper and its shared sort state.
     proto_sort_2(factionID_);
 
     int divisor = ProtoSortCount;
@@ -2338,7 +2608,7 @@ int DesignWin::design_it() {
     typedef int(__cdecl *diplo_lock_seam)(int);
     typedef void(__cdecl *diplo_unlock_seam)();
 
-    char *name = reinterpret_cast<char *>(&field_14220_);
+    char *name = prototype_name_;
 
     // ---- scan all 128 slots (own 64 + up to 64 borrowed) ------------------
     int scan = 0;
@@ -2566,7 +2836,7 @@ settled:
 // spinning unit, its generated or typed name, and its stat line. Ends by
 // driving draw_stack, whose panel sits under this one.
 void DesignWin::draw_flash() {
-    char *name = reinterpret_cast<char *>(&field_14220_);
+    char *name = prototype_name_;
 
     *VehDrawChassis = static_cast<unsigned char>(protoChassisType_);
     *VehDrawWeapon = static_cast<unsigned char>(protoWeaponType_);
