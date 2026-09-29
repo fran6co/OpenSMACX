@@ -347,17 +347,6 @@ int __cdecl battle_fight(int veh_id, int dir, int x, int y, int src_mode,
                                              allow_interceptor, odds_out);
 }
 
-// ?init@Scroll@@QAEHHHHHPAUWin@@HH@Z at 0x006054D0 - the primary scrollbar
-// init every other overload funnels into.
-//             body in src/unrecovered/006054d0.cpp
-int Scroll::init(int x, int y, int width, int height, Win *parent,
-                 int setting, int options) {
-    typedef int(__fastcall *pending)(Scroll *, void *, int, int, int, int,
-                                     Win *, int, int);
-    return PENDING_BODY(0x006054D0, pending)(this, nullptr, x, y, width,
-                                             height, parent, setting, options);
-}
-
 // 0x0060C5D0 ListBox::on_scrolling and 0x0060CB70 ListBox::on_mousewheel
 // WERE HERE (dispatched to by kind from dialogs.cpp): both bodies are homed
 // into src/leaf_recoveries.cpp 2026-09-27, with on_scrolling's entered-

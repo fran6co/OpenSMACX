@@ -46,6 +46,15 @@ class FlatButton : public BaseButton {
   void set_report_page_state(int state) {
     field_AB8_ = static_cast<uint32_t>(state);
   }
+  // Scroll uses the inherited generic three-slot settings run as borrowed
+  // arrow sprites. Other windows use those same AutoSound slots differently,
+  // so keep this interpretation local to a FlatButton configured by Scroll.
+  void set_scroll_icons(Sprite *normal, Sprite *hover, Sprite *pressed) {
+    static_assert(sizeof(Sprite *) == sizeof(int), "legacy icon slots are 32-bit");
+    val_10_ = reinterpret_cast<int>(normal);
+    val_11_ = reinterpret_cast<int>(hover);
+    val_12_ = reinterpret_cast<int>(pressed);
+  }
   void set_border_styles(BoxSpriteParams *normal, BoxSpriteParams *hover,
                          BoxSpriteParams *pressed) {
     border_styles_[0] = normal;

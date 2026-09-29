@@ -464,6 +464,104 @@ uint32_t Scroll::close() {
 }
 
 /*
+Purpose: Initialize the scrollbar track and its two optional embedded arrow
+         buttons, choosing horizontal or vertical sprites from the layout.
+// ORIGINAL: 0x006054D0 ?init@Scroll@@QAEHHHHHPAUWin@@HH@Z 0x006054D0-0x0060583F FILE
+// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/006054d0.cpp","original:0x00605701-0x00605788","source:src/scroll.h:Scroll","source:src/flatbutton.h:FlatButton"],"reason":"Home the primary initializer on Scroll's real hierarchy and embedded buttons. The executable's branch/register data corrects the seed's zero-size horizontal right button, while generic inherited settings are encapsulated by FlatButton."}
+// symbol    ?init@Scroll@@QAEHHHHHPAVWin@@HH@Z
+// The retired seed's near match was a spelling experiment, not a structural
+// model; this body remains unclaimed until freshly restored.
+*/
+int Scroll::init(int x, int y, int width, int height, Win *parent,
+                 int setting, int options) {
+    if (parent == nullptr || width == 0 || height == 0) {
+        return 3;
+    }
+    if (HandleMain == nullptr) {
+        return 7;
+    }
+
+    close();
+    field_A14_ |= static_cast<uint32_t>(options);
+    field_A18_ = static_cast<uint32_t>(setting);
+    range_minimum_ = 0;
+
+    const bool horizontal = width > height;
+    bar_thickness_ = horizontal ? height : width;
+    make_rect(&thumb_rect_, 0, 0, bar_thickness_, bar_thickness_);
+    if (border_color_ != -1) {
+        expand_rect(&thumb_rect_, -1, -1);
+    }
+    range_maximum_ = horizontal ? width - 2 * height : height - 2 * width;
+
+    int flags = (field_A14_ & 1U) != 0U ? 0x80000 : 0;
+    flags |= ScrollNonClientInit != 0 ? 0x9020 : 0x1020;
+    int result = GraphicWin::init(x, y, width, height, nullptr, flags,
+                                  parent, nullptr, nullptr);
+    if (result != 0) {
+        return result;
+    }
+
+    if ((field_A14_ & 2U) == 0U) {
+        const int inset = border_color_ != -1 ? 1 : 0;
+        const int button_size = bar_thickness_ - 2 * inset;
+        result = flat_button_left_.init(nullptr, 1, inset, inset,
+                                        button_size, button_size, this, 0);
+        if (result != 0) {
+            return result;
+        }
+
+        if (horizontal) {
+            flat_button_left_.set_scroll_icons(sprite_left1_, sprite_left2_,
+                                                sprite_left3_);
+        } else {
+            flat_button_left_.set_scroll_icons(sprite_up1_, sprite_up2_,
+                                                sprite_up3_);
+        }
+        flat_button_left_.color_ = color_;
+        flat_button_left_.bevel_thickness_ = bevel_thickness_;
+        flat_button_left_.bevel_upper_ = bevel_upper_;
+        flat_button_left_.bevel_lower_ = bevel_lower_;
+        flat_button_left_.field_AA0_ = 0;
+        flat_button_left_.field_A44_ = 0x32;
+        flat_button_left_.redraw();
+
+        const int second_x = horizontal
+                                 ? dib_.bmiHeader.biWidth - bar_thickness_ + inset
+                                 : inset;
+        const int second_y = horizontal
+                                 ? inset
+                                 : -dib_.bmiHeader.biHeight - bar_thickness_ + inset;
+        result = flat_button_right_.init(nullptr, 2, second_x, second_y,
+                                         button_size, button_size, this, 0);
+        if (result != 0) {
+            return result;
+        }
+
+        if (horizontal) {
+            flat_button_right_.set_scroll_icons(sprite_right1_, sprite_right2_,
+                                                 sprite_right3_);
+        } else {
+            flat_button_right_.set_scroll_icons(sprite_down1_, sprite_down2_,
+                                                 sprite_down3_);
+        }
+        flat_button_right_.color_ = color_;
+        flat_button_right_.bevel_thickness_ = bevel_thickness_;
+        flat_button_right_.bevel_upper_ = bevel_upper_;
+        flat_button_right_.bevel_lower_ = bevel_lower_;
+        flat_button_right_.field_AA0_ = 0;
+        flat_button_right_.field_A44_ = 0x32;
+        flat_button_right_.redraw();
+    }
+
+    position_ = range_minimum_;
+    field_A3C_ = 0xFFFFFFFFU;
+    show(0);
+    ScrollNonClientInit = 0;
+    return 0;
+}
+
+/*
 Purpose: Initialize a scrollbar from a rectangle.
 // ORIGINAL: 0x00605840 ?init@Scroll@@QAEHPAURECT@@PAUWin@@HH@Z 0x00605840-0x00605885 BYTE_EXACT
 // symbol    ?init@Scroll@@QAEHPAUtagRECT@@PAVWin@@HH@Z
