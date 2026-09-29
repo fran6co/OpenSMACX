@@ -7,12 +7,15 @@
     "src/stringbox.h",
     "src/reportwin.h",
     "src/buffer.h",
-    "src/pending_bodies.cpp"
+    "src/pending_bodies.cpp",
+    "src/leaf_recoveries.cpp"
   ],
   "evidence": [
       "Live partition identifies 23 seed-only Datalink identities, including related topic drawers; coordinator selects this independent owner for parallel recovery coverage.",
       "Coordinator authorizes narrow shared-header additions for StringBox::strings, Buffer::clip_rect and ReportWin::draw_labs, discovered by original-backed Datalink topic recovery. Preserve the original task baseline and all mapped renderer obligations; the coordinator owns the corresponding shared definitions and integration.",
-      "Fresh destination linking identifies an obsolete unannotated Datalink::draw_entry original-address forwarder in pending_bodies.cpp. Coordinator authorizes removing only that replaced forwarder; the actual owner retains its original identity, spans and preserved seed provenance."
+      "Fresh destination linking identifies an obsolete unannotated Datalink::draw_entry original-address forwarder in pending_bodies.cpp. Coordinator authorizes removing only that replaced forwarder; the actual owner retains its original identity, spans and preserved seed provenance.",
+      "Coupled topic lifetime review establishes Flic, Caviar, eighteen FlatButtons and eleven Fonts in the original constructor/destructor. Coordinator authorizes native homing of both Datalink lifecycle bodies and removal of only the replaced unannotated destructor forwarder from pending_bodies.cpp; preserve original task baseline, spans, claims and seed lessons.",
+      "The existing Datalink::on_status body in leaf_recoveries.cpp accesses the eighteen topic buttons by walking separate scalar members. Coordinator authorizes replacing only those two starts with the evidence-backed real topic_buttons_ array, updating its adjacent array explanation and binding its physically observed virtual symbol ?on_status@Datalink@@UAEXH@Z for fresh measurement; all unrelated leaf owners and historical mappings remain untouched."
   ],
   "intent": "Recover Datalink topic rendering and dialog behavior in a coherent compiling batch, using typed owners and evidence-backed shared objects while preserving original identities and historical obligations.",
   "schema_version": 1,

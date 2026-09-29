@@ -39,6 +39,9 @@
 #include "popup.h"
 #include "reportif.h"
 #include "technology.h"
+#include "console.h"
+#include "terraforming.h"
+#include "texture.h"
 
 extern int MainInterfaceTileFlag;
 extern int ReportIfTechFocus;
@@ -51,66 +54,859 @@ char *DatalinkHelpFile = DatalinkHelpFileText;
 // RECOVERY_OBJECT: v2 0x00691B04 0x00691B08 ?DatalinkBlurbFile@@3PADA 0x00430B30
 char *DatalinkBlurbFile = DatalinkBlurbFileText;
 
+// draw_terraform passes this writable empty string. Only its initial NUL is
+// established; the complete original storage extent remains unresolved.
+// RECOVERY_OBJECT: v1 0x0071F238 ?DatalinkTerraformExtraText@@3PADA
+char DatalinkTerraformExtraText[1];
+
+static void datalink_vehicle_line_start(int label) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(label));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "{");
+}
+
+static void datalink_vehicle_line_finish(StringList &list) {
+    strcat(StringTemp, "}");
+    list.pending_text_ = StringTemp;
+    list.field_20_ = 4;
+    list.field_24_ = 0;
+    list.add(0);
+}
+
+static void datalink_vehicle_append_number(int value) {
+    char number[80];
+    _itoa(value, number, 10);
+    strcat(StringTemp, number);
+}
+
+static void datalink_vehicle_append_rating(int rating) {
+    if (rating < 0) {
+        strcat(StringTemp, label_get(0x310 / 4));
+    } else {
+        datalink_vehicle_append_number(rating);
+    }
+}
+
+static void datalink_vehicle_append_tech(int tech) {
+    char name[256];
+    name[0] = 0;
+    say_tech(name, tech, 0);
+    if (tech < 0) {
+        strcat(StringTemp, name);
+    } else {
+        char id[256];
+        id[0] = 0;
+        _itoa(tech + 140000, id, 10);
+        help_create_link(StringTemp, name, id);
+    }
+}
+
 // The Datalink singleton, 0x00703EA0 in the shipped image - the storage the
 // `Datalink *const DatalinkMain` binding used to name (see datalink.h). Plain
 // data, not a call target; the Datalink constructor that builds it runs from
 // the game's class bring-up, as in the image.
 Datalink DatalinkMain;  // 0x00703EA0
 
+// Member/base lifetimes run naturally in declaration order. The original
+// ListBox constructor's extra 1 is its hidden most-derived ABI flag, not an
+// explicit C++ parameter: the real virtual bases generate it automatically.
+// ORIGINAL: 0x00428FC0 ??0Datalink@@QAE@XZ 0x00428FC0-0x00429178;0x00653450-0x00653579 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00428fc0.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: the scaffold's own guessed Datalink layout (FlatButton x18, 3 Fonts, raw byte fields) does not match this ctor's real member offsets at all; rebuilt from the disassembly's own lea/call offsets instead (Flic@0xa28, Caviar@0x150c, an 18x0xb4c array block@0x2a3c, ButtonGroup@0xf594, ListBox(1)@0xf628, 11 Fonts, 4 StringBoxes), using `uint8_t pad[N - sizeof(Prev)]` gaps so the compiler validates each offset by refusing a negative/zero array. Declaring explicit `~Type()` on each real member (absent from the header) is what makes MSVC synthesize the EH frame/state-byte machinery at all - matches the original prologue, all 20 constructor calls incl. exact per-member SEH checkpoint values 0x0-0x13, and the whole epilogue byte-for-byte. Only remaining diff: one `lea`/`push` scheduling swap around the array block's argument setup (register-allocator choice, not a source-form lever found).
+Datalink::Datalink() {
+    history_[0] = 0;
+    field_2A34_ = 0;
+    field_2A38_ = 0;
+    field_29DC_ = 2;
+}
+
+// Reverse-order member/base destruction belongs to the compiler. In particular,
+// Caviar::~Caviar owns close(); this body must not close the renderer twice.
+// ORIGINAL: 0x00432290 ??1Datalink@@QAE@XZ 0x00432290-0x004325AA;0x006531D0-0x006533A2
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/00432290.cpp"], "reason": "Original construction and reverse teardown establish real Flic/Caviar, an eighteen-element FlatButton array and eleven Font members. The owner performs its scalar initialization/reset; genuine member/base lifetimes replace manual vtables and original-address teardown."}
+// symbol    ??1Datalink@@UAE@XZ
+Datalink::~Datalink() {
+    history_[0] = 0;
+    field_2A34_ = 0;
+    field_2A38_ = 0;
+}
+
 // ORIGINAL: 0x0042C9C0 ?draw_unit@Datalink@@QAEXXZ 0x0042C9C0-0x0042D608;0x00653712-0x00653746
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042c9c0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042c9c0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: RAII StringStruct local (declared ~StringStruct() to force a real dtor call) in place of the original's inlined vtable-pointer-swap destructor state machine (local_3c/ local_40/local_18/local_14) - diverges at instr #0, prologue entirely different SEH shape; the inlined dtor loop appears twice in the original (second copy is dead - guard is always false at runtime) and was not hand-modeled given the 3196-byte scope. The 7 repeated get-string/strcat/itoa/add() blocks and the veh_fake/veh_draw calls ARE transcribed field-for-field.
 void Datalink::draw_unit() {
-    // BODY GOES HERE.
+    StringList description;
+    const int id = history_[0];
+    const VehPrototype &unit = VehPrototypes[id];
+    const RulesWeapon &weapon = Weapon[unit.weapon_id];
+    const RulesArmor &armor = Armor[unit.armor_id];
+    const RulesChassis &chassis = Chassis[unit.chassis_id];
+    const int vehicle = veh_fake(id, ConsoleGlobal.faction_id_);
+    Vehs[vehicle].morale = 4; // 0x42CA86: Vehs+0x24, stride 0x34.
+    set_clip(&illustration_rect_);
+    veh_draw(static_cast<Buffer *>(this), vehicle, illustration_rect_.left,
+             illustration_rect_.top, 4, 0x40, 0);
+    restore_clip();
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    // Original reloads the selected prototype id at 0x42CAEC, not fake id2048.
+    strcat(StringTemp, unit.veh_name);
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    const int left = description_rect_.left + 9
+                   + illustration_rect_.right - illustration_rect_.left;
+    description.remove_all();
+    if (weapon.mode < 3) {
+        datalink_vehicle_line_start(0x204 / 4);
+        datalink_vehicle_append_rating(weapon.offense_rating);
+    } else {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x200 / 4));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, " ");
+        if (weapon.mode > 6 && weapon.mode < 13) {
+            strcat(StringTemp, "{");
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(weapon.name)));
+        } else {
+            strcat(StringTemp, label_get(0x204 / 4));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "{");
+            datalink_vehicle_append_rating(weapon.offense_rating);
+        }
+    }
+    datalink_vehicle_line_finish(description);
+    datalink_vehicle_line_start(0x154 / 4);
+    datalink_vehicle_append_rating(armor.defense_rating);
+    datalink_vehicle_line_finish(description);
+    datalink_vehicle_line_start(0x1C / 4);
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Triad[chassis.triad])));
+    strcat(StringTemp, " ");
+    datalink_vehicle_append_number(chassis.speed);
+    datalink_vehicle_line_finish(description);
+    if (unit.carry_capacity) {
+        datalink_vehicle_line_start(0x360 / 4);
+        datalink_vehicle_append_number(unit.carry_capacity);
+        datalink_vehicle_line_finish(description);
+    }
+    if (chassis.triad == 2 && chassis.range) {
+        datalink_vehicle_line_start(0x30C / 4);
+        datalink_vehicle_append_number(chassis.range);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, label_get(chassis.range == 1 ? 0xC0 / 4 : 0xC4 / 4));
+        datalink_vehicle_line_finish(description);
+    }
+    datalink_vehicle_line_start(0x160 / 4);
+    datalink_vehicle_append_number(cost_factor(ConsoleGlobal.faction_id_, 1, -1) * unit.cost);
+    datalink_vehicle_line_finish(description);
+    datalink_vehicle_line_start(0xF24 / 4);
+    datalink_vehicle_append_tech(unit.preq_tech);
+    datalink_vehicle_line_finish(description);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    // 0x42D416 loads description right, not bottom (seed uses bottom).
+    write_strings(&description, left, description_rect_.top + 6,
+                  description_rect_.right - 6 - left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "UNITDESC");
+    datalink_vehicle_append_number(id);
+    detail_box_.clear();
+    if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
+        detail_box_.add_fixup();
+        detail_box_.show(0);
+    }
+    // 0x42D4A6 selects the whole entry update rectangle (+0x103B4).
+    soft_update(&entry_update_rect_);
 }
 // ORIGINAL: 0x0042D610 ?draw_chassis@Datalink@@QAEXXZ 0x0042D610-0x0042DEEF;0x00653746-0x0065377A
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042d610.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042d610.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: full transcription landed (MISMATCH #2, no SEH frame reproduced). Caught a real Ghidra error via byte-level cross check: Ghidra's `write_strings(&local_44,local_54,local_50, local_4c-local_54,0)` invents a `local_54` stack slot that never appears anywhere in the raw disassembly (only -0x50, -0x4c, -0x48, -0x44 are ever touched); the real call reads [ebp-0x50] and [ebp-0x48] for the width term. Used the StringStruct(0) local + explicit remove_all()/add(0) calls, matching this function's calls to those symbols directly (unlike the inlined form seen on other StringStruct-using functions in this batch).
 void Datalink::draw_chassis() {
-    // BODY GOES HERE.
+    StringList description;
+    const int id = history_[0];
+    const RulesChassis &chassis = Chassis[id];
+    caviar_.reset_objects();
+    vehdraw_construct_chassis(ConsoleGlobal.faction_id_, id, 0, 0, 1, &caviar_);
+    caviar_.set_scaling(0.1f);
+    caviar_.render(static_cast<Buffer *>(this),
+                   (illustration_rect_.left + illustration_rect_.right) / 2,
+                   (illustration_rect_.top + illustration_rect_.bottom) / 2, 6);
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(chassis.offsv_1_name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    const int left = description_rect_.left + 9
+                   + illustration_rect_.right - illustration_rect_.left;
+    description.remove_all();
+    datalink_vehicle_line_start(0x1C / 4);
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Triad[chassis.triad])));
+    strcat(StringTemp, " ");
+    datalink_vehicle_append_number(chassis.speed);
+    datalink_vehicle_line_finish(description);
+    if (chassis.cargo) {
+        datalink_vehicle_line_start(0x360 / 4);
+        datalink_vehicle_append_number(chassis.cargo);
+        if (chassis.triad == 1) {
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0xF34 / 4));
+        }
+        datalink_vehicle_line_finish(description);
+    }
+    if (chassis.triad == 2) {
+        datalink_vehicle_line_start(0x30C / 4);
+        if (!chassis.range) {
+            strcat(StringTemp, label_get(0xF30 / 4));
+        } else {
+            datalink_vehicle_append_number(chassis.range);
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(chassis.range == 1 ? 0xC0 / 4 : 0xC4 / 4));
+        }
+        datalink_vehicle_line_finish(description);
+    }
+    datalink_vehicle_line_start(0x160 / 4);
+    datalink_vehicle_append_number(chassis.cost);
+    datalink_vehicle_line_finish(description);
+    datalink_vehicle_line_start(0xF24 / 4);
+    datalink_vehicle_append_tech(chassis.preq_tech);
+    datalink_vehicle_line_finish(description);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&description, left, description_rect_.top + 6,
+                  description_rect_.right - 6 - left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "CHASSISDESC");
+    datalink_vehicle_append_number(id);
+    detail_box_.clear();
+    if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
+        detail_box_.add_fixup();
+        detail_box_.show(0);
+    }
+    soft_update(&description_rect_);
+    description.remove_all();
 }
 // ORIGINAL: 0x0042DEF0 ?draw_reactor@Datalink@@QAEXXZ 0x0042DEF0-0x0042E2D3;0x0065377A-0x006537AE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0042def0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/0042def0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 void Datalink::draw_reactor() {
-    // BODY GOES HERE.
+    StringList description;
+    const int id = history_[0];
+    // Original indexes 0x9527EC; the source-owned array begins at0x9527F8.
+    const RulesReactor &reactor = Reactor[id - 1];
+    caviar_.reset_objects();
+    vehdraw_construct_reactor(ConsoleGlobal.faction_id_, -1, -1, id, 0, &caviar_);
+    caviar_.set_scaling(0.2f);
+    caviar_.render(static_cast<Buffer *>(this),
+                   (illustration_rect_.left + illustration_rect_.right) / 2,
+                   (illustration_rect_.top + illustration_rect_.bottom) / 2, 6);
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(reactor.name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    const int left = description_rect_.left + 9
+                   + illustration_rect_.right - illustration_rect_.left;
+    parse_num(0, id);
+    parse_says(1, tech_name(reactor.preq_tech, 0), -1, -1);
+    parse_num(1, reactor.preq_tech + 140000);
+    description.remove_all();
+    description.load(DatalinkHelpFile, "HELPREACTOR", 1, 0);
+    set_font(&body_font_, 0, 0, reactor.preq_tech < 0 ? 0 : &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&description, left, description_rect_.top + 6,
+                  description_rect_.right - 6 - left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "REACTORDESC");
+    detail_box_.clear();
+    if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
+        detail_box_.add_fixup();
+        detail_box_.show(0);
+    }
+    soft_update(&description_rect_);
+    description.remove_all();
 }
 // ORIGINAL: 0x0042E2E0 ?draw_weapon@Datalink@@QAEXXZ 0x0042E2E0-0x0042E8D3;0x006537AE-0x006537E2
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042e2e0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042e2e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: the SEH __try/__finally frame and the local StringList's multiple-inheritance secondary-vtable adjustor (the two funclets at 0x006537C5/0x006537CD exist only for that); the entry-deleting virtual call is a double-indirected adjustor thunk (vtable[1] read back as a BYTE OFFSET to a second vtable pointer) that no portable dispatch can reproduce, so it goes through the VCall shim directly instead; several argument orders for batched-__cdecl-cleanup call clusters (parse_num/ parse_says/tech_name) are best-guessed from push proximity to the call, not fully hand-verified against the stack-adjustment bytes.
 void Datalink::draw_weapon() {
-    // BODY GOES HERE.
+    StringList description;
+    const int id = history_[0];
+    const RulesWeapon &weapon = Weapon[id];
+    set_clip(&illustration_rect_);
+    caviar_.reset_objects();
+    if (id == 0) {
+        caviar_.add_object(&g_VW00_CAVIARDATA, 0);
+    } else {
+        vehdraw_construct_weapon(ConsoleGlobal.faction_id_, -1, id, &caviar_);
+    }
+    caviar_.set_scaling(id == 0x10 || id == 0x17 ? 0.1f
+                         : (weapon.mode < 3 ? 0.3f : 0.2f));
+    caviar_.render(static_cast<Buffer *>(this),
+                   (illustration_rect_.left + illustration_rect_.right) / 2,
+                   (illustration_rect_.top + illustration_rect_.bottom) / 2, 6);
+    restore_clip();
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(weapon.name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    const int left = description_rect_.left + 12
+                   + illustration_rect_.right - illustration_rect_.left;
+    StringTemp[0] = 0;
+    if (weapon.offense_rating < 0) {
+        strcat(StringTemp, label_get(0x310 / 4));
+    } else if (weapon.mode < 3) {
+        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(OffenseModes[weapon.mode].name)));
+    } else {
+        strcat(StringTemp, label_get(0x200 / 4));
+    }
+    parse_says(1, StringTemp, -1, -1);
+    parse_num(0, weapon.offense_rating);
+    parse_num(1, weapon.cost);
+    parse_says(2, tech_name(weapon.preq_tech, 0), -1, -1);
+    parse_num(2, weapon.preq_tech + 140000);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPWEAPON");
+    if (weapon.offense_rating == weapon.cost) {
+        datalink_vehicle_append_number(2);
+    }
+    description.remove_all();
+    description.load(DatalinkHelpFile, StringTemp, 1, 0);
+    set_font(&body_font_, 0, 0, weapon.preq_tech < 0 ? 0 : &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&description, left, description_rect_.top + 6,
+                  description_rect_.right - 6 - left, 0);
+    description.remove_all();
+    StringTemp[0] = 0;
+    strcat(StringTemp, "WEAPONDESC");
+    datalink_vehicle_append_number(id); // 0x42E711 loads saved weapon id.
+    detail_box_.clear();
+    if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
+        detail_box_.add_fixup();
+        detail_box_.show(0); // 0x42E76E is virtual slot1, not seed slot0.
+    }
+    soft_update(&description_rect_);
 }
 // ORIGINAL: 0x0042E8E0 ?draw_defense@Datalink@@QAEXXZ 0x0042E8E0-0x0042EE26;0x006537E2-0x00653816
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0042e8e0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/recovered/units/0042e8e0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
 void Datalink::draw_defense() {
-    // BODY GOES HERE.
+    StringList help;
+    const int armor_id = history_[0];
+    const RulesArmor &armor = Armor[armor_id];
+    RECT text = description_rect_;
+    text.left += 6;
+    text.top += 6;
+    text.right -= 6;
+    if (armor_id != 0) {
+        set_clip(&illustration_rect_);
+        caviar_.reset_objects();
+        vehdraw_construct_armor(ConsoleGlobal.faction_id_, -1, -1,
+                                armor_id, 1, &caviar_);
+        caviar_.set_scaling(armor_id == 8 ? 0.15f : 0.20f);
+        const int x = (illustration_rect_.left + illustration_rect_.right) / 2;
+        const int y = (illustration_rect_.top + illustration_rect_.bottom) / 2;
+        if (armor_id == 5) {
+            caviar_.render_multi_table_dest(static_cast<Buffer *>(this), x, y,
+                24, reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables), 6);
+        } else {
+            caviar_.render(static_cast<Buffer *>(this), x, y, 6);
+        }
+        set_clip(buffer_working_rect());
+    }
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(armor.name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    text.left += illustration_rect_.right - illustration_rect_.left + 3;
+    StringTemp[0] = 0;
+    const int mode_name = armor.defense_rating < 0
+        ? reinterpret_cast<int>(reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x310 / 4])
+        : reinterpret_cast<int>(DefenseModes[armor.mode].name);
+    strcat(StringTemp, StringTable.get(mode_name));
+    parse_says(1, StringTemp, -1, -1);
+    parse_num(0, armor.defense_rating);
+    parse_says(2, tech_name(armor.preq_tech, 0), -1, -1);
+    parse_num(2, armor.preq_tech + 140000);
+    help.remove_all();
+    help.load(DatalinkHelpFile,
+              armor.defense_rating < 0 ? "HELPDEFENSE2" : "HELPDEFENSE", 1, 0);
+    set_font(&body_font_, 0, 0, armor.preq_tech < 0 ? 0 : &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&help, text.left, text.top, text.right - text.left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "ARMORDESC");
+    if (armor_id >= 9) {
+        char number[80];
+        _itoa(armor_id, number, 10);
+        strcat(StringTemp, number);
+    }
+    detail_box_.clear();
+    if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
+        detail_box_.add_fixup();
+        detail_box_.show(0);
+    }
+    soft_update(&description_rect_);
 }
 // ORIGINAL: 0x0042EE30 ?draw_ability@Datalink@@QAEXXZ 0x0042EE30-0x0042F468;0x00653816-0x0065384A
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042ee30.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042ee30.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: a genuine `StringStruct local40(0);` local to pick up the compiler's own /GX SEH frame (as worked elsewhere) still diverges at instruction #2 (sub vs push) - this function's frame layout (0x98-byte locals, three linked-list teardown passes at the tail) needs more than one matching ctor call to reproduce. Landed the full field-setup/string-building/switch/ StringList::load/write_strings/StringBox path faithfully (reusing the same local as StringStruct then StringList via reinterpret_cast, matching the disassembly's own reuse of one `this` across two mangled entry points); the two vtable-walk destructor passes at the end are omitted as they only free temporaries and don't produce any value this function returns.
 void Datalink::draw_ability() {
-    // BODY GOES HERE.
+    StringList help;
+    const int ability_id = history_[0];
+    const RulesAbility &ability = Ability[ability_id];
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(ability.name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    StringTemp[0] = 0;
+    if (ability.cost_factor >= 0) {
+        char number[80];
+        _itoa(ability.cost_factor, number, 10);
+        strcat(StringTemp, number);
+    } else {
+        switch (ability.cost_factor) {
+        case -1:
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, "/");
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            break;
+        case -2:
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, "-1");
+            break;
+        case -3:
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            strcat(StringTemp, "-1");
+            break;
+        case -4:
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xB14 / 4])));
+            strcat(StringTemp, "-1");
+            break;
+        case -5:
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, "+");
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            strcat(StringTemp, "-2");
+            break;
+        case -6:
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1F0 / 4])));
+            strcat(StringTemp, "+");
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xB14 / 4])));
+            strcat(StringTemp, "-2");
+            break;
+        case -7:
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x154 / 4])));
+            strcat(StringTemp, "+");
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+                reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0xB14 / 4])));
+            strcat(StringTemp, "-2");
+            break;
+        }
+    }
+    parse_says(1, tech_name(ability.preq_tech, 0), -1, -1);
+    parse_say(2, reinterpret_cast<int>(ability.description), -1, -1);
+    parse_says(3, StringTemp, -1, -1);
+    parse_num(0, ability.preq_tech + 140000);
+    help.remove_all();
+    help.load(DatalinkHelpFile, "HELPABIL", 1, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&help, description_rect_.left + 6,
+                  description_rect_.top + 6,
+                  description_rect_.right - description_rect_.left - 12, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "ABILDESC");
+    char number[80];
+    _itoa(ability_id, number, 10);
+    strcat(StringTemp, number);
+    detail_box_.clear();
+    if (detail_box_.strings().load(DatalinkHelpFile, StringTemp, 1, 0) == 0) {
+        detail_box_.add_fixup();
+        detail_box_.show(0);
+    }
+    soft_update(&description_rect_);
 }
 // ORIGINAL: 0x00431180 ?draw_terraform@Datalink@@QAEXXZ 0x00431180-0x00431D51;0x00653C7A-0x00653E66
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00431180.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00431180.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: no SEH/frame modelling (plain body, not try/finally); the giant local widget teardown (Popup/Scroll/2xFlatButton/Spot/Dialogs region/Sprite/2xFlatButton/Heap) modelled as one raw ebp-relative byte buffer with explicit close()/dtor calls in original order, rather than real RAII locals - the vtable-poke-then-call shape the original uses for each teardown step is not reproduced, only the call itself (identity of the call target is masked by the scorer regardless). MISMATCH at instruction #0 (prologue: no SEH frame).
 void Datalink::draw_terraform() {
-    // BODY GOES HERE.
+    Popup popup;
+    const int topic = history_[0];
+    const bool land = topic < 20;
+    const int action = topic % 20;
+    const bool illustration = action < 16 || action > 18;
+    const int x = description_rect_.left + 5;
+    const int y = description_rect_.top + 5;
+    Vert quad[4] = {{x, y + 50}, {x + 50, y + 25},
+                    {x + 100, y + 50}, {x + 50, y + 75}};
+    Vert uv[4] = {{0, 0}, {55, 0}, {55, 55}, {0, 55}};
+    int z[4] = {0, 0, 0, 0};
+    Buffer *canvas = static_cast<Buffer *>(this);
+    if (illustration) {
+        Texture &ground = land ? g_MOIST_LAND_TEXTURES[0] : g_OCEAN_TEXTURES[1];
+        ground.draw(canvas, quad, z, 4, uv);
+    }
+    Sprite *sprite = 0;
+    switch (action) {
+    case 0:
+        if (land) g_FARM_TEXTURES[0].draw(canvas, quad, z, 4, uv);
+        else sprite = &g_TER1_KELP_FARM_SPRITE;
+        break;
+    case 1: sprite = &g_TER1_SOIL_ENRICHER_SPRITES[0]; break;
+    case 2:
+        sprite = land ? &g_TER1_MINE_SPRITE : &g_TER1_MINING_PLATFORM_SPRITE;
+        break;
+    case 3:
+        sprite = land ? &g_TER1_SOLAR_COLLECTOR_SPRITE : &g_TER1_TIDAL_HARNESS_SPRITE;
+        break;
+    case 4: g_FOREST_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
+    case 5: g_ROAD_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
+    case 6: g_MAGTUBE_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
+    case 7: sprite = &g_TER1_BUNKER_SPRITE; break;
+    case 8: sprite = &g_TER1_AIRBASE_SPRITE; break;
+    case 9: sprite = &g_TER1_SENSOR_ARRAY_SPRITE; break;
+    case 11:
+        g_FUNGUS_TEXTURES[land ? 0 : 15].draw_trans(canvas, quad, z, 4, uv);
+        break;
+    case 12: sprite = &g_TER1_CONDENSER_SPRITE; break;
+    case 13: sprite = &g_TER1_ECHELON_MIRROR_SPRITE; break;
+    case 14: sprite = &g_TER1_BOREHOLE_SPRITE; break;
+    case 15: g_RIVER_TEXTURES[0].draw_trans(canvas, quad, z, 4, uv); break;
+    case 19: sprite = &g_TER1_MONOLITH_SPRITE; break;
+    }
+    if (sprite != 0) {
+        sprite->draw(canvas, sprite->transparent_index(), x, y + 25, 1, 1);
+    }
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    const RulesOrder &order = Order[action + 4];
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(
+        land ? order.order : order.order_sea)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    const RulesTerraforming &terraform = Terraforming[action];
+    const int technology = land ? terraform.preq_tech : terraform.preq_tech_sea;
+    parse_says(1, tech_name(technology, 0), -1, -1);
+    parse_num(0, technology + 140000);
+    parse_num(1, terraform.rate);
+    char *extra = DatalinkTerraformExtraText;
+    if (action == 3 || action == 5 || action == 6) {
+        extra = StringTable.get(reinterpret_cast<int>(
+            reinterpret_cast<LPSTR *>(Labels.strings_ptr)[0x1110 / 4]));
+    }
+    parse_says(2, extra, -1, -1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPTERRAFORM");
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    const int text_left = x + (illustration ? 103 : 0);
+    write_strings(&popup.unit_ids_, text_left, y,
+                  description_rect_.right - 5 - text_left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPTERRA");
+    strcat(StringTemp, land ? "LAND" : "SEA");
+    char number[16];
+    _itoa(action, number, 10);
+    strcat(StringTemp, number);
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    const int second_left = static_cast<int>(field_10394_) + 5 +
+                            (illustration ? 103 : 0);
+    write_strings(&popup.unit_ids_, second_left,
+                  static_cast<int>(field_10398_) + 5,
+                  static_cast<int>(field_1039C_) - 5 - second_left, 0);
 }
 // ORIGINAL: 0x0042F490 ?draw_facility@Datalink@@QAEXXZ 0x0042F490-0x0042FAC5;0x0065384A-0x00653927
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042f490.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042f490.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: this function's tail is a compiler-generated SEH unwind chain for ~20 local C++ objects (Popup embeds Scroll+BasePop, and BasePop already embeds Heap/2xFlatButton/Sprite/dialogs_ per the scaffold, so declaring one `Popup popup;` local reproduces a lot of that chain automatically); the separate Dialog/StringStruct/sub_4066c0 teardown calls visible in the disassembly are NOT accounted for by any local this body declares, since their true declared type/order could not be pinned down from the given evidence - left unmodelled rather than guessed. Ghidra's own decompile of this function is unusable (SEH state-machine noise, not real control flow); this body was written directly from the raw disassembly instead. popup.start()/write_strings() receiver args (the ebp-0x3274 StringList) are approximated with a fresh default-constructed local, since the real asm never visibly initializes that memory in view.
 void Datalink::draw_facility() {
-    // BODY GOES HERE.
+    Popup popup;
+    int id = history_[0];
+    int left = description_rect_.left + 3;
+    int top = description_rect_.top + 3;
+    int right = description_rect_.right - 3;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[id].name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    Sprite &icon = g_FACILITY_ICON_SPRITES[id];
+    int image_width = illustration_rect_.right - illustration_rect_.left;
+    icon.draw(this, icon.transparent_index(), illustration_rect_.left,
+              illustration_rect_.top, image_width, icon.width());
+    left += image_width + 6;
+    parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
+    parse_num(1, fac_maint(id, ConsoleGlobal.faction_id_));
+    int technology = Facility[id].preq_tech;
+    parse_says(1, tech_name(technology, 0), -1, -1);
+    parse_num(2, technology + 140000);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPFAC");
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPFAC");
+    char number[80];
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, technology >= 0 ? &link_font_ : 0);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    left = field_10394_ + 3;
+    top = field_10398_ + 3;
+    right = field_1039C_ - 3;
+    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPFAC");
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
+    if (MainInterfaceTileFlag) {
+        blurb_box_.clear();
+        blurb_box_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
+        blurb_box_.add_fixup();
+        blurb_box_.show(0);
+    }
 }
 // ORIGINAL: 0x0042FAD0 ?draw_project@Datalink@@QAEXXZ 0x0042FAD0-0x00430087;0x00653927-0x006539F9
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0042fad0.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/0042fad0.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: exact local-object footprint for Popup's embedded destructor cascade (same shape as 0x00430C80's draw_faction) - modelled as a single `Popup popup;` with popup.close() and implicit dtor; business logic (project/tech title, cost_factor/parse_num/ tech_name/parse_says formatting, sprite draw, two write_strings panels, StringBox blurb branch) transcribed field-by-field.
 void Datalink::draw_project() {
-    // BODY GOES HERE.
+    Popup popup;
+    int id = history_[0];
+    int left = description_rect_.left + 3;
+    int top = description_rect_.top + 3;
+    int right = description_rect_.right - 3;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[id].name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    Sprite &icon = g_SECRET_PROJECT_ICON_SPRITES[id - 70];
+    int image_width = illustration_rect_.right - illustration_rect_.left;
+    // 42FBEC loads the first project sprite's +0x18, without indexing it.
+    icon.draw(this, icon.transparent_index(), illustration_rect_.left,
+              illustration_rect_.top, image_width, g_SECRET_PROJECT_ICON_SPRITES[0].width());
+    left += image_width + 6;
+    parse_num(0, cost_factor(ConsoleGlobal.faction_id_, 1, -1) * Facility[id].cost);
+    parse_num(1, Facility[id].maint);
+    int technology = Facility[id].preq_tech;
+    parse_says(1, tech_name(technology, 0), -1, -1);
+    parse_num(2, technology + 140000);
+    popup.start(DatalinkHelpFile, "HELPPROJ", -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPPROJ");
+    char number[80];
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    left = field_10394_ + 3;
+    top = field_10398_ + 3;
+    right = field_1039C_ - 3;
+    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "PROJECT");
+    _itoa(id, number, 10);
+    strcat(StringTemp, number);
+    if (MainInterfaceTileFlag) {
+        blurb_box_.clear();
+        blurb_box_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
+        blurb_box_.add_fixup();
+        blurb_box_.show(0);
+    }
 }
 // ORIGINAL: 0x00430090 ?draw_social@Datalink@@QAEXXZ 0x00430090-0x00430765;0x006539F9-0x00653AD6
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00430090.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00430090.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: Popup popup; (RAII) for the outer object, mechanical RD()-based field reads for the tech-tier/quotient-remainder lookups, itoa/strcat scratch buffer building, and the per-faction tally loop; deliberately did NOT model the second local object built by sub_4066c0 (Dialog/Dialogs/ StringStruct/Sprite/extra FlatButtons torn down around 0x430642) - its class is unrecoverable from this brief, so popup.close() + RAII stands in for that whole cascade. NO_COMPILE C2660 (set_font arg count) fixed first; MISMATCH #0 (prologue) not chased further.
 void Datalink::draw_social() {
-    // BODY GOES HERE.
+    Popup popup;
+    int category = history_[0] / 5;
+    int model = history_[0] % 5 - 1;
+    int left = description_rect_.left + 3;
+    int top = description_rect_.top + 3;
+    int right = description_rect_.right - 3;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    char *name = model < 0 ? SocialCategories[category].type : SocialCategories[category].name[model];
+    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(name)));
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    if (model >= 0) {
+        int technology = SocialCategories[category].preq_tech[model];
+        parse_says(0, tech_name(technology, 0), -1, -1);
+        parse_num(0, technology + 140000);
+    }
+    StringTemp[0] = 0;
+    strcat(StringTemp, "HELPSOC");
+    char number[80];
+    _itoa(category, number, 10);
+    strcat(StringTemp, number);
+    if (model >= 0) {
+        _itoa(model, number, 10);
+        strcat(StringTemp, number);
+    }
+    popup.start(DatalinkHelpFile, StringTemp, -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, &link_font_);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0x96, -1, 1, 1);
+    write_strings(&popup.unit_ids_, left, top, right - left, 0);
+    left = field_10394_ + 3;
+    top = field_10398_ + 3;
+    right = field_1039C_ - 3;
+    int bottom = field_103A0_ - 3;
+    if (model >= 0) {
+        const SocialEffect &effect = SocialCategories[category].model_effect[model];
+        int values[11] = {effect.economy, effect.efficiency, effect.support,
+            effect.talent, effect.morale, effect.police, effect.growth,
+            effect.planet, effect.probe, effect.industry, effect.research};
+        int count = 0;
+        int i;
+        for (i = 0; i < 11; ++i) if (values[i] != 0) ++count;
+        left += 20;
+        if (count == 0) {
+            char *text = label_get(0xFD4 / 4);
+            if (text) {
+                RECT rect = {left, top, right, bottom};
+                write_l(text, &rect, strlen(text));
+            }
+        } else {
+            int line_height = body_font_.line_advance();
+            int y = top + (bottom - line_height * count - top) / 2;
+            for (i = 0; i < 11; ++i) {
+                if (values[i] != 0) {
+                    StringTemp[0] = 0;
+                    _itoa(values[i], number, 10);
+                    strcat(StringTemp, number);
+                    write_right_l(StringTemp, left, y, strlen(StringTemp));
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, " ");
+                    char link[80];
+                    _itoa(i + 130000, link, 10);
+                    strcat(StringTemp, "$LINK<");
+                    strcat(StringTemp, SocialEffects[i].set2);
+                    strcat(StringTemp, "=");
+                    strcat(StringTemp, link);
+                    strcat(StringTemp, ">");
+                    write_l(StringTemp, left, y, strlen(StringTemp));
+                    y += body_font_.line_advance();
+                }
+            }
+        }
+    }
 }
 // ORIGINAL: 0x00430C80 ?draw_faction@Datalink@@QAEXXZ 0x00430C80-0x0043117E;0x00653BA8-0x00653C7A
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00430c80.cpp"], "reason": "Datalink entry dispatch reaches this original topic owner. Preserve the retained renderer seed and original intervals; explicit unfinished body maintains linking until its parallel typed recovery is integrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:6201d294:src/unrecovered/00430c80.cpp"], "reason": "The Datalink owner implements this original topic renderer through typed rules, real Buffer/Caviar members and constructed Popup/StringList lifetimes; original intervals and seed provenance remain restoration inputs."}
+// Historical scaffold experiment, retained from the replaced seed:
+// TRIED: exact local-object footprint for Popup's embedded Scroll/FlatButton/ Heap/Sprite/Spot/Dialogs cascade (huge MI vtable-poke cleanup chain, 0x53a0-byte frame) - modelled as a single `Popup popup;` with popup.close() and implicit dtor instead of the full inlined destructor cascade; business logic (font/text-color/string/sprite/ popup.start branches) transcribed field-by-field from the disasm.
 void Datalink::draw_faction() {
-    // BODY GOES HERE.
+    Popup popup;
+    int faction = history_[0];
+    int left = panel_rect_.left + 5;
+    int top = panel_rect_.top + 5;
+    int right = panel_rect_.right - 5;
+    set_font(&font1_, 0, 0, 0);
+    set_text_color(0xE0, -1, 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, Players[faction].formal_name_faction);
+    CharUpperA(StringTemp);
+    write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
+    Sprite &portrait = FactionsArt[faction].datalink;
+    portrait.draw(this, portrait.transparent_index(), left, top, 1, 1);
+    left += portrait.width() + 5;
+    char *file = Players[faction].filename;
+    popup.start(file, "DATALINKS1", -1, 0, 0, 0);
+    set_font(&body_font_, 0, 0, 0);
+    set_wrap_width(20);
+    set_text_color(0x98, -1, 1, 1);
+    set_text_color2(0x96, -1, 1, 1);
+    set_text_color_hyper(0xFE, -1, 1, 1);
+    int width = right - left;
+    top = write_strings(&popup.unit_ids_, left, top, width, 0) + body_font_.line_advance();
+    if (WinScreenWidth == 800) {
+        set_wrap_width(0);
+        stringBox_.clear();
+        if (stringBox_.strings().load(file, "DATALINKS2", 1, 0) == 0) {
+            stringBox_.add_fixup();
+            stringBox_.show(0);
+        }
+    } else {
+        popup.start(file, "DATALINKS2", -1, 0, 0, 0);
+        set_font(&secondary_body_font_, 0, 0, 0);
+        write_strings(&popup.unit_ids_, left, top, width, 0);
+        set_wrap_width(0);
+    }
+    popup.start(file, "BLURB", -1, 0, 0, 0);
+    if (MainInterfaceTileFlag) {
+        blurb_box_.clear();
+        blurb_box_.strings().load(file, "BLURB", 1, 0);
+        blurb_box_.add_fixup();
+        blurb_box_.show(0);
+    }
 }
 
 // ORIGINAL: 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z 0x0042A100-0x0042A150 BYTE_EXACT
@@ -659,15 +1455,17 @@ void Datalink::on_iface_button_toggled(int, int) {
 // The image routes this callback through DatalinkIface slot 16. The compiler
 // adjusts the secondary-base receiver back to Datalink; the seed's +0xEC14
 // ListBox access from that receiver is the owned listBox_ at +0xF628.
-// ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B
+// ORIGINAL: 0x00432210 ?on_iface_group_clicked@Datalink@@QAEXHHH@Z 0x00432210-0x0043228B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00432210.cpp preserves the 123-byte BYTE_EXACT historical callback; image:0x0066AF30 slot 16 points to 0x00432210; source:src/datalink.h models DatalinkIface at +0xA14 and ListBox at +0xF628"], "reason": "Restore the category-click path through the real Datalink owner and ListBox member, with the compiler's secondary-base adjustment rather than seed pointer arithmetic."}
 // symbol    ?on_iface_group_clicked@Datalink@@UAEXHHH@Z
 void Datalink::on_iface_group_clicked(int, int, int category) {
     if (listBox_.item_list_.entry_count_ != 0) {
         set_cat(category, 0);
-        field_2024_ = 1;
+        // 0x43224B/0x43225A use the secondary receiver (full this+0xA14).
+        // Its +0x2024 is full Datalink+0x2A38: suppress history during selection.
+        field_2A38_ = 1;
         listBox_.set_selected_pos(0, 1);
-        field_2024_ = 0;
+        field_2A38_ = 0;
         listBox_.redraw();
         draw_entry();
     }

@@ -21,6 +21,8 @@
 #include "listbox.h"
 #include "font.h"
 #include "stringbox.h"
+#include "caviar.h"
+#include "flic.h"
 
 #include "original_seam.h"
 #include "graphicwin.h"
@@ -96,10 +98,7 @@ class Datalink : public GraphicWin, public DatalinkIface {
   void on_selected(int index);
   // 0x0042BF10: restore the entry panel and dispatch its selected topic.
   void draw_entry();
-  Datalink() { ; }
-  // 0x00432290 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  Datalink();
   ~Datalink();
   int UNK1(int a1, int a2);
   // 0x0042A0B0 parses a decimal topic id and writes its category and entry.
@@ -208,20 +207,13 @@ class Datalink : public GraphicWin, public DatalinkIface {
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
   uint32_t field_A24_;  // 0xA24
-  uint8_t field_A28_[0xB44];  // 0xA28
-  uint32_t field_156C_;  // 0x156C
-  uint32_t field_1570_;  // 0x1570
-  uint32_t field_1574_;  // 0x1574
-  uint32_t field_1578_;  // 0x1578
-  uint32_t field_157C_;  // 0x157C
-  uint32_t field_1580_;  // 0x1580
-  uint8_t field_1584_[0x2C];  // 0x1584
-  uint8_t field_15B0_;  // 0x15B0
-  uint8_t field_15B1_[0xA73];  // 0x15B1
-  uint32_t field_2024_;  // 0x2024
-  uint32_t field_2028_;  // 0x2028
-  uint8_t field_202C_[0x8AC];  // 0x202C
-  uint32_t field_28D8_;  // 0x28D8
+  // Constructor428FFA and destructor43256B use this real animation owner.
+  // RECOVERY_MEMBER: v2 Datalink animation_ Flic 0xA28 0x00428FC0
+  Flic animation_;  // 0xA28, ends at 0x150C
+  // Topic drawers construct/render through this receiver. Their reset at
+  // Datalink+0x28D8 is Caviar's instance count at +0x13CC, not a separate field.
+  // RECOVERY_MEMBER: v2 Datalink caviar_ Caviar 0x150C 0x0042D610
+  Caviar caviar_;  // 0x150C, ends at 0x28DC
   uint8_t field_28DC_[0x100];  // 0x28DC
   uint32_t field_29DC_;  // 0x29DC
   // 0x29E0 .. 0x2A34: the twenty-one slot "where have I been" ring that UNK4
@@ -231,30 +223,18 @@ class Datalink : public GraphicWin, public DatalinkIface {
   // pushed, while its store writes `0x29e4 + count*4`.
   int32_t history_[21];  // 0x29E0, slot 0 is the facility id
   int32_t field_2A34_;   // 0x2A34, how many slots are filled
+  // Category callback writes secondary-base +0x2024, full Datalink+0x2A38;
+  // history insertion reads the same flag while list selection is in progress.
+  // RECOVERY_MEMBER: v1 Datalink field_2A38_ 0x2A38 0x00432210
   int32_t field_2A38_;   // 0x2A38
 
   // Storage the image proves is here: its own methods reach 0xF62C.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 20 member(s) from the IDA database, 20 named; it starts a member at 0x2A3C, which is where src/ ends.
 
-  FlatButton flatButton1_;  // 0x2A3C
-  FlatButton flatButton2_;  // 0x3588
-  FlatButton flatButton3_;  // 0x40D4
-  FlatButton flatButton4_;  // 0x4C20
-  FlatButton flatButton5_;  // 0x576C
-  FlatButton flatButton6_;  // 0x62B8
-  FlatButton flatButton7_;  // 0x6E04
-  FlatButton flatButton8_;  // 0x7950
-  FlatButton flatButton9_;  // 0x849C
-  FlatButton flatButton10_;  // 0x8FE8
-  FlatButton flatButton11_;  // 0x9B34
-  FlatButton flatButton12_;  // 0xA680
-  FlatButton flatButton13_;  // 0xB1CC
-  FlatButton flatButton14_;  // 0xBD18
-  FlatButton flatButton15_;  // 0xC864
-  FlatButton flatButton16_;  // 0xD3B0
-  FlatButton flatButton17_;  // 0xDEFC
-  FlatButton flatButton18_;  // 0xEA48
+  // Original vector construction/destruction uses 18 elements at stride0xB4C.
+  // RECOVERY_MEMBER: v4 Datalink topic_buttons_ FlatButton[18] 0x2A3C 0xCB58 0x00428FC0
+  FlatButton topic_buttons_[18];  // 0x2A3C, ends at 0xF594
   ButtonGroup buttonGroup_;  // 0xF594
   ListBox listBox_;  // 0xF628
 
@@ -266,13 +246,23 @@ class Datalink : public GraphicWin, public DatalinkIface {
 
   // Storage the image proves is here: its own methods reach 0x1B394.
   // Extent only - this class carries no size assertion, and the bound is a floor.
-  uint8_t field_101F4_[0x50];  // 0x101F4
+  // Original constructor and reverse destructor walk all eleven Font objects.
+  // RECOVERY_MEMBER: v2 Datalink auxiliary_font4_ Font 0x101F4 0x00428FC0
+  Font auxiliary_font4_;  // 0x101F4
+  // RECOVERY_MEMBER: v2 Datalink auxiliary_font5_ Font 0x1021C 0x00428FC0
+  Font auxiliary_font5_;  // 0x1021C
   // RECOVERY_MEMBER: v2 Datalink body_font_ Font 0x10244 0x004308B4
   Font body_font_;  // 0x10244
-  uint8_t field_1026C_[0x50];
+  // RECOVERY_MEMBER: v2 Datalink secondary_body_font_ Font 0x1026C 0x00430C80
+  Font secondary_body_font_;  // 0x1026C
+  // RECOVERY_MEMBER: v2 Datalink auxiliary_font8_ Font 0x10294 0x00428FC0
+  Font auxiliary_font8_;  // 0x10294
   // RECOVERY_MEMBER: v2 Datalink link_font_ Font 0x102BC 0x004308AE
   Font link_font_;  // 0x102BC
-  uint8_t field_102E4_[0x50];
+  // RECOVERY_MEMBER: v2 Datalink auxiliary_font10_ Font 0x102E4 0x00428FC0
+  Font auxiliary_font10_;  // 0x102E4
+  // RECOVERY_MEMBER: v2 Datalink auxiliary_font11_ Font 0x1030C 0x00428FC0
+  Font auxiliary_font11_;  // 0x1030C
   RECT panel_rect_;  // 0x10334
   uint8_t field_10344_[0x10];  // 0x10344
   RECT illustration_rect_;  // 0x10354
