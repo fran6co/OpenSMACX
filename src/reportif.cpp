@@ -1286,7 +1286,7 @@ void ReportIf::draw_labs() {
     dialog.set_dialog_text_color(0x99, -1, 1, 1);
     dialog.set_dialog_text_color2(0x99, -1, 1, 1);
     dialog.set_dialog_text_color3(0x99, -1, 1, 1);
-    // BODY GOES HERE: faction base rows and sorted technology rows.
+    // Pending: faction base rows and sorted technology rows.
 }
 
 // ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017
@@ -1326,7 +1326,7 @@ void ReportIf::draw_energy() {
     dialog.set_dialog_text_color(0x99, -1, 1, 1);
     dialog.set_dialog_text_color2(0x99, -1, 1, 1);
     dialog.set_dialog_text_color3(0x99, -1, 1, 1);
-    // BODY GOES HERE: base energy rows, list selection and report caption.
+    // Pending: base energy rows, list selection and report caption.
 }
 
 // ORIGINAL: 0x004A9050 ?draw_ops@ReportIf@@QAEXXZ 0x004A9050-0x004A9F85
