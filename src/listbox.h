@@ -115,6 +115,22 @@
 //   the two forwarders below.
 class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
+  typedef int (__cdecl *DrawCallback)(GraphicWin *, int, int, int, int, int);
+  typedef int (__cdecl *WriteCallback)(GraphicWin *, int, int, RECT *, char *);
+  typedef int (__cdecl *FillCallback)(GraphicWin *, int, int, RECT *);
+  // MessageWin::init installs the three callback slots at ListBox +0x30,
+  // +0x34 and +0x38. The image writes function pointers, not integer state.
+  void set_callbacks(DrawCallback draw, WriteCallback write,
+                     FillCallback fill) {
+    draw_callback_ = draw;
+    write_callback_ = write;
+    fill_callback_ = fill;
+  }
+  void set_message_initial_state() {
+    field_10_ = 0;
+    field_14_ = static_cast<uint32_t>(-1);
+    field_2C_ = 0;
+  }
   // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_right_down,
   // on_scrolled, on_right_double_click) are entered with `this` on the
   // GraphicWin virtual base and fold the walk back to the ListBox front into
@@ -271,9 +287,9 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // below pins the layout.
   uint32_t field_2C_;             // 0x2C
  private:
-  uint32_t field_30_;             // 0x30
-  uint32_t field_34_;             // 0x34
-  uint32_t field_38_;             // 0x38
+  DrawCallback draw_callback_;    // 0x30
+  WriteCallback write_callback_;  // 0x34
+  FillCallback fill_callback_;    // 0x38
   uint32_t field_3C_;             // 0x3C
  public:
   // Notification installed by BasePop::calculate_dimensions and invoked

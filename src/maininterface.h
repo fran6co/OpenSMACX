@@ -158,6 +158,10 @@ class IfaceRegistryEntry : public SubInterface {
   * MainInterface class
   */
 class MainInterface : public GraphicWin, public IfaceRegistryEntry {
+  // MessageWin::init copies the pane bounds at +0xD1C..+0xD28 into its
+  // own RECT. This grants that owner typed access while this region awaits
+  // a named MainInterface rectangle member.
+  friend class MessageWin;
  public:
   // homed from 00459680.cpp
   int init(int a1);
