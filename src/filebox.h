@@ -16,6 +16,10 @@
 // 0x104, so the old 0x41C-byte catalogue extent was only a lower bound.
 class FileBox {
  public:
+  FileBox();
+  ~FileBox();
+  void reset();
+
   int set_def_ext(const char *extension);
   int set_def_name(const char *name);
   int set_initial_dir(const char *directory);
@@ -34,4 +38,3 @@ static_assert(offsetof(FileBox, filter_) == 0x30C, "FileBox filter offset");
 static_assert(offsetof(FileBox, filter_cursor_) == 0x410, "FileBox cursor offset");
 static_assert(offsetof(FileBox, def_ext_) == 0x414, "FileBox extension offset");
 static_assert(offsetof(FileBox, initial_dir_) == 0x418, "FileBox directory offset");
-

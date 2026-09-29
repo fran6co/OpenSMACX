@@ -12,6 +12,48 @@
 #include <cstring>
 
 /*
+Purpose: Construct the dialog's editable buffers and filter cursor.
+// ORIGINAL: 0x00634BE0 ??0FileBox@@QAE@XZ 0x00634BE0-0x00634C13 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The constructor initializes the same inline buffers and filter cursor observed in FileBox's dialog consumers, replacing the unused raw-offset redirect.","evidence":["Original 0x00634BE0-0x00634C13 stores zero at +0x30d, +0, +0x30c, +0x104, +0x208, +0x414 and +0x418 and points +0x410 at +0x30c.","The source-owned fields and offsets are declared in src/filebox.h; historical exact redirect: git:a4e385ab:src/field_accessors.cpp."]}
+// symbol    ??0FileBox@@QAE@XZ
+*/
+FileBox::FileBox() {
+    filter_[1] = 0;
+    filter_cursor_ = filter_;
+    file_[0] = 0;
+    filter_[0] = 0;
+    def_name_[0] = 0;
+    field_208_[0] = 0;
+    def_ext_[0] = 0;
+    initial_dir_[0] = 0;
+}
+
+/*
+Purpose: Destruct the dialog's inline storage; there are no owned allocations.
+// ORIGINAL: 0x00634C20 ??1FileBox@@QAE@XZ 0x00634C20-0x00634C21 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The original destructor is an empty return; FileBox's buffers are inline and the filter cursor is non-owning.","evidence":["Original 0x00634C20-0x00634C21 is a single ret instruction.","Historical exact redirect: git:a4e385ab:src/field_accessors.cpp."]}
+// symbol    ??1FileBox@@QAE@XZ
+*/
+FileBox::~FileBox() {}
+
+/*
+Purpose: Reset the editable dialog buffers without reconstructing the object.
+// ORIGINAL: 0x00634F70 ?UNK2@FileBox@@QAEXXZ 0x00634F70-0x00634FA1 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The unnamed member resets the inline filter cursor and all seven leading characters, so it belongs to FileBox rather than a raw-offset helper.","evidence":["Original 0x00634F70-0x00634FA1 writes +0x410, +0x30d, +0x30c, +0, +0x104, +0x208, +0x414 and +0x418 in that order.","The source-owned fields and offsets are declared in src/filebox.h; historical exact redirect: git:a4e385ab:src/field_accessors.cpp."]}
+// symbol    ?reset@FileBox@@QAEXXZ
+*/
+void FileBox::reset() {
+    filter_cursor_ = filter_;
+    filter_[1] = 0;
+    filter_[0] = 0;
+    file_[0] = 0;
+    def_name_[0] = 0;
+    field_208_[0] = 0;
+    def_ext_[0] = 0;
+    initial_dir_[0] = 0;
+}
+
+/*
 Purpose: Set the default extension passed to the common dialog.
 // ORIGINAL: 0x00634E80 ?set_def_ext@FileBox@@QAEHPAD@Z 0x00634E80-0x00634ECC FILE BYTE_EXACT
 // RECOVERY_BINDING: v1 {"reason":"The source member is the four-byte inline extension buffer at +0x414, not an executable pointer or a dword value.","evidence":["Original 0x00634E80-0x00634ECC clears byte +0x414 on null and otherwise checks strlen against three before appending to that byte address.","The save/load dialog bodies in src/leaf_recoveries.cpp pass +0x414 to the common-dialog API; git:fee2514f:src/recovered/units/00634e80.cpp retains the historical candidate."]}
