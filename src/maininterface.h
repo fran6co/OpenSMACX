@@ -149,10 +149,10 @@ class IfaceRegistryEntry : public SubInterface {
 // The 12 interface-mode slots at 0x007AE7F0, each either null or a live
 // SubInterface subobject; delete_iface_mode (0x0045D2E0) walks the table
 // zeroing the slot that matches its own `this`. The registry, the id-to-slot
-// map at 0x007AE778 and the active id at 0x007D392C are bound in
-// maininterface.cpp - as IfaceRegistry, IfaceIdToSlot and ActiveIfaceId -
-// because this header is included by every TU that names a MainInterface and
-// a second name per address is a duplicate the gate counts.
+// map at 0x007AE778 and active id at 0x007D392C have source-owned storage
+// in maininterface.cpp. The adjacent interface registry remains transitional.
+extern int IfaceIdToSlotStorage[30];  // 0x007AE778, before registry at 0x007AE7F0
+extern int ActiveIfaceIdStorage;      // 0x007D392C
 
  /*
   * MainInterface class

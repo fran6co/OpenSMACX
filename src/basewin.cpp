@@ -2026,10 +2026,76 @@ void BaseWin::on_iface_mouse_leave(int, int) {
     }
 }
 
-// Win slot 12 went live for BaseWin when the tree-wide slot-12 rename made
-// the declared on_redraw an override (the header maps it to 0x0041E790 and
-// src/unrecovered/0041e790.cpp remains the seed). Link-only placeholder;
-// the pane painting is not implemented here.
+// The original redraws the production selection buttons and every base-screen
+// pane while interface mode 3 is active. The three receivers are successive
+// FlatButtons in this object's established array at 0x13D6C, 0x148B8 and
+// 0x15404; the seed's raw receiver arithmetic is unnecessary.
+// ORIGINAL: 0x0041E790 ?on_redraw@BaseWin@@QAEXXZ 0x0041E790-0x0041E885 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0041e790.cpp", "src/basewin.h"], "reason": "Recover the BaseWin redraw call sequence through its owned FlatButton array, panel methods and source-owned interface mode globals; panel implementations remain independent obligations."}
+// symbol    ?on_redraw@BaseWin@@UAEXXZ
 void BaseWin::on_redraw() {
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 3) return;
+
+    MainInterfaceGlobal.restore_back(1);
+    update_gov_buttons();
+    flatButtons_[10].set(field_40AFC_ == 0);
+    flatButtons_[11].set(field_40AFC_ == 1);
+    flatButtons_[9].set(field_40AFC_ == 2);
+    draw_production(0);
+    draw_expenses(0);
+    draw_queue(0);
+    draw_info(0);
+    draw_misc(0);
+    draw_farm(0);
+    draw_pop(0);
+    draw_facilities(0);
+    draw_commerce(0);
+    draw_nutrients(0);
+    draw_supported(0);
+    draw_garrison(0);
+    GraphicWin::soft_update();
+    MainInterfaceGlobal.soft_update();
+}
+
+// The redraw callback reaches these separately owned panels. Their historical
+// seed bodies are retained; these link-only bodies do not pretend to paint.
+// ORIGINAL: 0x0041E560 ?update_gov_buttons@BaseWin@@QAEXXZ 0x0041E560-0x0041E788
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0041e560.cpp", "src/basewin.h"], "reason": "Preserve the separately identified governor-button owner reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::update_gov_buttons() {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00412AA0 ?draw_expenses@BaseWin@@QAEXH@Z 0x00412AA0-0x00414B38;0x00651B61-0x00651B76
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00412aa0.cpp", "src/basewin.h"], "reason": "Preserve the separately identified expenses panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::draw_expenses(int) {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00415B20 ?draw_info@BaseWin@@QAEXH@Z 0x00415B20-0x00415DCE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415b20.cpp", "src/basewin.h"], "reason": "Preserve the separately identified information panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::draw_info(int) {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h"], "reason": "Preserve the separately identified miscellaneous panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::draw_misc(int) {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x0040F0F0 ?draw_farm@BaseWin@@QAEXH@Z 0x0040F0F0-0x0040FCB3
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0040f0f0.cpp", "src/basewin.h"], "reason": "Preserve the separately identified farm panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::draw_farm(int) {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00414B40 ?draw_pop@BaseWin@@QAEXH@Z 0x00414B40-0x00415078;0x00651B76-0x00651B93
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00414b40.cpp", "src/basewin.h"], "reason": "Preserve the separately identified population panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::draw_pop(int) {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00410870.cpp", "src/basewin.h"], "reason": "Preserve the separately identified commerce panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::draw_commerce(int) {
+    // BODY GOES HERE.
+}
+// ORIGINAL: 0x00411240 ?draw_nutrients@BaseWin@@QAEXH@Z 0x00411240-0x00411973;0x00651B37-0x00651B4C
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00411240.cpp", "src/basewin.h"], "reason": "Preserve the separately identified nutrients panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
+void BaseWin::draw_nutrients(int) {
     // BODY GOES HERE.
 }
