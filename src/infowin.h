@@ -92,14 +92,10 @@ class InfoWin {
   void setup_text();                                  // 0x00456300
   void draw_text(int a1);                             // 0x00458420
   void UNK2();                                        // 0x004588B0
-  // UNK4 IS EVIDENCE-FREE AS A NAME. Searched 2026-09-06: the catalogue
-  // records callers 0 and call targets 0 for 0x00458D60, the mangled name is
-  // `QAEX` so it is not virtual and no vtable slot names it, and
-  // docs/recovery/behaviour-member-names.csv has no InfoWin entry. The body
-  // only re-derives the two info-panel sizes (0xc8 x 0xb4 under 1000 px,
-  // 0xfa x 0xd4 at and above) into the same globals InfoWin::init reads, so
-  // its purpose is legible even though its name is not.
-  void UNK4();                                        // 0x00458D60
+  // The catalog's UNK4 at 0x00458D60 only configures the global panel RECT
+  // and sets its initialization bit. No caller or vtable slot names it;
+  // `configure_panel_bounds` is a behavior-based source name.
+  void configure_panel_bounds();                       // 0x00458D60
   int state_valid(int state);                         // 0x00458DC0
   void set_state(int a1, int a2);                     // 0x00458F10
   void timer_change(int a1);                          // 0x00458FF0

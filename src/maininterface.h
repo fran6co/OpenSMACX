@@ -332,6 +332,7 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   const RECT &status_hit_rect() const { return status_hit_rect_; }
   const RECT &status_left_rect() const { return status_left_rect_; }
   const RECT &status_right_rect() const { return status_right_rect_; }
+  const RECT &info_panel_frame() const { return info_panel_frame_; }
   ButtonGroup &button_group(int index) { return button_group_[index]; }
 
  private:
@@ -566,10 +567,10 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_D94_;
   uint32_t field_D98_;
   uint32_t field_D9C_;
-  uint32_t field_DA0_;
-  uint32_t field_DA4_;
-  uint32_t field_DA8_;
-  uint32_t field_DAC_;
+  // InfoWin::init reads all four coordinates at MainInterfaceGlobal+0xDA0;
+  // SocialWin copies the same original interval as one panel rectangle.
+  // RECOVERY_MEMBER: v2 MainInterface info_panel_frame_ tagRECT 0xDA0 0x004592A0
+  RECT info_panel_frame_;
   uint32_t field_DB0_;
   uint32_t field_DB4_;
   uint32_t field_DB8_;

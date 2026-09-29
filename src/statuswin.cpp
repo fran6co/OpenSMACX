@@ -42,6 +42,11 @@
 
 void __cdecl help_any();
 
+// The status and information-panel initialization latch is shared across
+// three window owners. The pinned image places this zero-filled word here.
+// RECOVERY_OBJECT: v2 0x00939ED8 0x00939EDC ?StatusFlags@@3IA 0x00458D60
+uint32_t StatusFlags;
+
 // The route destination renderer is called by MapWin::set_center. Its
 // retained seed indexes genuine Veh and chassis records, then publishes the
 // signed vehicle ID shared with StatusWin's selection lifecycle.
@@ -1017,7 +1022,7 @@ void StatusWin::on_redraw() {
 /*
 // ORIGINAL: 0x004B9E90 ?UNK4@StatusWin@@QAEXXZ 0x004B9E90-0x004B9E97
 // TRIED: the scaffold bound the word as `static int *const g_00939ed8`, which
-//        hid its meaning. Named here as StatusFlagsPtr (statuswin.h).
+//        hid its meaning. It is now the source-owned StatusFlags object.
 // TRIED: 2026-09-03 homing pass, 4 spellings (declared `int` storage, inline
 //        pointer accessor, inline reference accessor, named const-pointer
 //        binding). All four agree with the image on every mnemonic and
@@ -1031,7 +1036,7 @@ void StatusWin::on_redraw() {
 //        faithful 3 instructions.
 */
 void StatusWin::UNK4() {
-    *StatusFlagsPtr |= 0x20;
+    StatusFlags |= 0x20;
 }
 
 // ORIGINAL: 0x004B8DF0 ?UNK3@StatusWin@@QAEXXZ 0x004B8DF0-0x004B8E31

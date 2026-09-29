@@ -145,16 +145,7 @@ inline SubInterface *sub_interface_global() {
 }
 
 
-// 0x00939ED8, a status word. The corpus shows it cleared (00515430), read-
-// modify-written (00458d60) and tested bit by bit; UNK4 sets bit 0x20 in it
-// and 0x00479F90 sets bit 0x40. The name is the archived body's own local
-// spelling for it, not a recovered symbol.
-//
-// An inline accessor rather than a declared `int`, deliberately: the image
-// reads and writes the word through its LITERAL address (`mov eax, [0x939ed8]`),
-// and a real variable's address is a relocation, which the comparison cannot
-// mask. Same shape as sub_interface_global() below.
-// The address as a CONSTANT, not a pointer variable: the image's
-// `mov eax, [0x939ed8]` is a memory operand at a literal address, and a
-// variable holding the pointer costs the load it does not make.
-int *const StatusFlagsPtr = (int *)0x00939ED8;
+// The process-wide status/layout initialization bits at original 0x00939ED8.
+// InfoWin sets bit 4, WorldWin bit 8, and StatusWin bit 0x20. This is real
+// source storage, not a pointer back into the retired executable image.
+extern uint32_t StatusFlags;

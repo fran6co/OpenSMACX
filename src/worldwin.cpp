@@ -45,7 +45,7 @@ int __cdecl pop_expire();
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3a70.cpp and original disassembly 0x004C3A70-0x004C3AA9; MainInterfaceGlobal + 0xCFC is 0x007AF51C."], "reason": "Move the existing seed into the WorldWin owner using the MainInterface tutorial RECT and active map bounds, preserving the status bit operation."}
 void WorldWin::UNK1() {
     WorldMapBounds = MainInterfaceGlobal.tutorial_bounds_;
-    *StatusFlagsPtr |= 8;
+    StatusFlags |= 8;
 }
 
 // The original startup path copies the tutorial bounds once, resets the
@@ -53,7 +53,7 @@ void WorldWin::UNK1() {
 // ORIGINAL: 0x004C49A0 ?init@WorldWin@@QAEXH@Z 0x004C49A0-0x004C4A66
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004c49a0.cpp complete seed; original 0x004C49A0-0x004C4A66 shows tutorial RECT copy, map clear/init, Win::init and virtual show."], "reason": "Home WorldWin startup through owned map, tutorial bounds and Win base; MapWin::init remains an explicit unfinished dependency."}
 void WorldWin::init(int reset_map) {
-    if ((*StatusFlagsPtr & 8) == 0) {
+    if ((StatusFlags & 8) == 0) {
         UNK1();
     }
     MapInputEnabled = 1;

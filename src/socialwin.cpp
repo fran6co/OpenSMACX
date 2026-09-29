@@ -2383,8 +2383,8 @@ scaled:
 //                     interface-mode registry walks.
 // InterfaceScreenRect 0x007AF5B0 - the RECT battlewin.cpp binds; the panel
 //                     rectangle MainInterface keeps at front+0xD90.
-// MainPanelRect       0x007AF5C0 - the full panel rectangle tutRect14_ copies
-//                     and insets.
+// The full panel rectangle copied into tutRect14_ is the now-typed
+// MainInterfaceGlobal.info_panel_frame_ at original 0x007AF5C0.
 // MainPanelLeft/Top/Right 0x007AF5A0/A4/A8 and SocialColumnTop/Right/Bottom
 //                     0x007AF5D4/D8/DC - the layout edges the tooltip and
 //                     column rectangles derive from.
@@ -2400,7 +2400,6 @@ scaled:
 //                     only its first two dwords, so the binding stays local.
 static int *const SocialSubInterfaceSlot = (int *)0x007AE7F8;
 static RECT *const InterfaceScreenRect = (RECT *)0x007AF5B0;
-static RECT *const MainPanelRect = (RECT *)0x007AF5C0;
 static int *const MainPanelLeft = (int *)0x007AF5A0;
 static int *const MainPanelTop = (int *)0x007AF5A4;
 static int *const MainPanelRight = (int *)0x007AF5A8;
@@ -2469,7 +2468,7 @@ void SocialWin::init(int faction_id) {
     int wide_screen = (WinScreenWidth != 800) ? 1 : 0;
     (void)wide_screen;
 
-    tutRect14_ = *MainPanelRect;
+    tutRect14_ = MainInterfaceGlobal.info_panel_frame();
     tutRect14_.left += 4;
     tutRect14_.right -= 4;
     tutRect14_.top += 4;
