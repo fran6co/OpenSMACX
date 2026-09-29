@@ -5202,7 +5202,7 @@ int MapWin::get_brighting(int x, int y, int corner) {
 }
 
 // ORIGINAL: 0x00470420 ?compute_lighting_table@MapWin@@QAEXXZ 0x00470420-0x00470536
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470420.cpp: complete transcription of the 0x00470420..0x00470536 body", "src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and CornerLightTable consumer", "src/general.h: quick_root(int)"], "reason": "Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00470420..0x00470536 body fills four 49-byte tables using quick_root; its retired transcription remains in Git history", "src/mapwin.cpp: MapLightingTable bounds 0x007F6688..0x007F674C and CornerLightTable consumer", "src/general.h: quick_root(int)"], "reason": "Build the four 7-by-7 signed corner-light tables in their source-owned storage using the existing integer-root routine."}
 void MapWin::compute_lighting_table() {
     fill_map_lighting_table();
 }
