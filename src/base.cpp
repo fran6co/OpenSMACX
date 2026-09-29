@@ -397,7 +397,7 @@ int base_yield_wrap_x(int x, int map_width) {
 // effects and the final energy-production special case still need translation
 // from the preserved seed before this is a complete behavioral recovery.
 // ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964", "source:src/base.h", "source:src/faction.h"], "reason": "Recover selected-base convoy, commerce rank/ledger, inefficiency, allocation, specialist and facility stages through typed owners. The original scenario-dependent commerce multiplier and several late modifiers remain pending; this binding makes no exactness claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964; its commerce base doubles when 0x009A6628 is below 0x009A6624", "source:src/base.h", "source:src/faction.h"], "reason": "Recover selected-base convoy, commerce rank/ledger and rate modifier, inefficiency, allocation, specialist and facility stages through typed owners. Several late modifiers remain pending; this binding makes no exactness claim."}
 void __cdecl base_energy() {
     Base &base = *BaseCurrent;
     const int faction = base.faction_id_current;
@@ -433,6 +433,7 @@ void __cdecl base_energy() {
         if (partner_base < 0) continue;
         int commerce_base = (Bases[partner_base].energy_intake_1 + 7 +
                              base.energy_intake_1) / 8;
+        if (CommerceDoubleProgress < CommerceDoubleTarget) commerce_base *= 2;
         const int divisor = TechCommerceCount + 1;
         if (divisor <= 0) continue;
         int partner_receipt = ((PlayersData[partner].tech_commerce_bonus + 1) *
@@ -456,10 +457,6 @@ void __cdecl base_energy() {
         BaseCommercePartnerReceipts[slot] = partner_receipt;
         base.energy_intake_2 += receipt;
     }
-    // The original doubles commerce_base under a pair of still-unowned
-    // 0x009A6624/0x009A6628 scenario counters. That modifier remains a
-    // restoration obligation; the published ledgers otherwise use its
-    // complete typed eligibility, rank, bonus, pact and sanction sequence.
     available = base.energy_intake_2 - base.energy_consumption;
     base.energy_inefficiency = black_market(available);
     base.energy_surplus = available - base.energy_inefficiency;
@@ -1300,6 +1297,14 @@ int BaseSquareEnergy;  // 0x0090E914
  * rebinding one does not rebind the other.
  */
 int GovernorFaction;  // 0x009A6614
+// base_energy tests progress < target before doubling the exchange base.
+// call_council (0x0052C880) compares the same words when enabling its
+// proposals; make_a_proposal (0x0054F420) tests them independently. Neither
+// original use proves the counters' broader political names or producers.
+// RECOVERY_OBJECT: v2 0x009A6624 0x009A6628 ?CommerceDoubleTarget@@3HA 0x004EB560
+int CommerceDoubleTarget;
+// RECOVERY_OBJECT: v2 0x009A6628 0x009A662C ?CommerceDoubleProgress@@3HA 0x004EB560
+int CommerceDoubleProgress;
 
 /*
  * A two-turn state advanced by random_events (0x0051F2F4 steps it 1 -> 2 -> 0

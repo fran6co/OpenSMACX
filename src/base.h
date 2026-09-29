@@ -577,6 +577,11 @@ extern int BasePsychDrones[5];
 extern int BasePsychSuperDrones[5];
 extern int BaseSquareEnergy; // energy_yield's publication for a base square
 extern int GovernorFaction; // elected Planetary Governor; see the note in base.cpp
+// These two council-state counters gate the doubled base-commerce rate.
+// Their wider council meaning is not established, so the names describe the
+// observed role rather than a guessed proposal or victory condition.
+extern int CommerceDoubleTarget;
+extern int CommerceDoubleProgress;
 extern int GlobalEnergyEventState; // energy tripling state driven by random_events
 extern int UnkGlobal0093A934; // TODO: identify global; selects the bit above
 
