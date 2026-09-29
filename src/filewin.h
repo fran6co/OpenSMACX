@@ -43,6 +43,7 @@ class FileWin {
   // ecx set up, so `Class::method()` is the only legal spelling.
   static int init_class();   // 00614D90
   void on_double_clicked(int a1);
+  void on_button_clicked(int button_id);
   FileWin();
   ~FileWin();
   void UNK6();

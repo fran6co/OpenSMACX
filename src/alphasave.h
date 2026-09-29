@@ -25,6 +25,7 @@ class AlphaSave : public GraphicWin {
 
   void close();
   void on_double_clicked(int button_id);
+  void forward_button_click(int button_id);
   int on_listbox_scroll_delete(Scroll *scroll);
   int on_listbox_scroll_create();
   void on_key_click(int key, int flags);

@@ -23,6 +23,13 @@
 #include "basebutton.h"
 #include "buffer.h"
 
+// ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40
+// This callback's seed has a nontrivial directory/list-selection path. Keep
+// the owner symbol linkable while that behavior is recovered; no match claim.
+void FileWin::on_button_clicked(int) {
+    // BODY GOES HERE.
+}
+
 // The default file-name suffix appended to field_531_ at construction - REAL
 // STORAGE seeded from the image's own .data bytes (image_data.py, 0x00697118:
 // 2e 00 00 00 - a "." entry in the dword-slotted text table that continues

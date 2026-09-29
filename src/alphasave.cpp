@@ -42,6 +42,14 @@ void AlphaSave::on_double_clicked(int button_id) {
     file_win_.on_double_clicked(button_id);
 }
 
+// ORIGINAL: 0x00407CD0 ?on_button_clicked@AlphaSave@@QAEXH@Z 0x00407CD0-0x00407CE6 BYTE_EXACT
+// symbol    ?forward_button_click@AlphaSave@@QAEXH@Z
+// The image symbol is nonvirtual; using that spelling here would override
+// Win::on_button_clicked and change AlphaSave's vtable.
+void AlphaSave::forward_button_click(int button_id) {
+    file_win_.on_button_clicked(button_id);
+}
+
 // ORIGINAL: 0x00407ED0 ?on_listbox_scroll_delete@AlphaSave@@QAEHPAUScroll@@@Z 0x00407ED0-0x00407EF3 BYTE_EXACT
 // symbol    ?on_listbox_scroll_delete@AlphaSave@@QAEHPAVScroll@@@Z
 int AlphaSave::on_listbox_scroll_delete(Scroll *scroll) {
