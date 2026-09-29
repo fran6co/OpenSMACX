@@ -142,7 +142,9 @@ extern int ScrollNonClientInit;
 // constants; the dynamic table spans seventeen process-owned slots, including
 // the sprite defaults and one intentionally unused hole.
 extern uint32_t ScrollCloseStaticDefaults;
-extern uint32_t ScrollCloseDynamicDefaults;
+extern uint32_t ScrollCloseDynamicDefaults[17];
+void __cdecl scroll_normal();
+void __cdecl scroll_small();
 RECT *__cdecl expand_rect(RECT *rect, int horizontal, int vertical);
 void *__fastcall scroll_scalar_dtor_redirect(Scroll *self, void *,
                                              unsigned int mode);

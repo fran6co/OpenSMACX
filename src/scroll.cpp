@@ -34,7 +34,45 @@
 int ScrollDefaultThickness;  // 0x009B8DD4
 int ScrollNonClientInit;  // 0x009B8E24
 uint32_t ScrollCloseStaticDefaults = 2;  // 0x00697020
-uint32_t ScrollCloseDynamicDefaults;  // 0x009B8DE0
+// RECOVERY_OBJECT: v2 0x009B8DE0 0x009B8E24 ?ScrollCloseDynamicDefaults@@3PAIA 0x006051D0
+uint32_t ScrollCloseDynamicDefaults[17];  // 0x009B8DE0; the sprite slots start at +8
+
+// The original setters populate the same twelve sprite slots in four
+// triplets. These are source-owned sprite pointers, not addresses in the old
+// executable. Index 14 is an untouched gap; index 16 is another process
+// default that neither setter changes.
+static __forceinline void set_scroll_icon_defaults(Sprite *arrows,
+                                                    Sprite *filler,
+                                                    int thickness) {
+    ScrollCloseDynamicDefaults[5] = reinterpret_cast<uint32_t>(&arrows[0]);
+    ScrollCloseDynamicDefaults[6] = reinterpret_cast<uint32_t>(&arrows[1]);
+    ScrollCloseDynamicDefaults[7] = reinterpret_cast<uint32_t>(&arrows[2]);
+    ScrollCloseDynamicDefaults[11] = reinterpret_cast<uint32_t>(&arrows[3]);
+    ScrollCloseDynamicDefaults[12] = reinterpret_cast<uint32_t>(&arrows[4]);
+    ScrollCloseDynamicDefaults[13] = reinterpret_cast<uint32_t>(&arrows[5]);
+    ScrollCloseDynamicDefaults[2] = reinterpret_cast<uint32_t>(&arrows[6]);
+    ScrollCloseDynamicDefaults[3] = reinterpret_cast<uint32_t>(&arrows[7]);
+    ScrollCloseDynamicDefaults[4] = reinterpret_cast<uint32_t>(&arrows[8]);
+    ScrollCloseDynamicDefaults[8] = reinterpret_cast<uint32_t>(&arrows[9]);
+    ScrollCloseDynamicDefaults[9] = reinterpret_cast<uint32_t>(&arrows[10]);
+    ScrollCloseDynamicDefaults[10] = reinterpret_cast<uint32_t>(&arrows[11]);
+    ScrollCloseDynamicDefaults[15] = reinterpret_cast<uint32_t>(filler);
+    ScrollDefaultThickness = thickness;
+}
+
+// ORIGINAL: 0x00588340 ?scroll_normal@@YAXXZ 0x00588340-0x005883CD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00588340.cpp","source:src/sprite.cpp","source:src/scroll.cpp:ScrollCloseDynamicDefaults"],"reason":"Populate the source-owned Scroll defaults from the normal-sized sprite objects and restore the normal thickness; retain the exact historical seed as a restoration obligation."}
+void __cdecl scroll_normal() {
+    set_scroll_icon_defaults(g_SCROLL_BAR_ARROW_ICON_SPRITES,
+                             &g_SCROLL_BAR_FILLER_ICON_SPRITES, 20);
+}
+
+// ORIGINAL: 0x005883D0 ?scroll_small@@YAXXZ 0x005883D0-0x0058845D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/005883d0.cpp","source:src/sprite.cpp","source:src/scroll.cpp:ScrollCloseDynamicDefaults"],"reason":"Populate the same source-owned Scroll defaults from the small sprite objects and restore the small thickness; no fixed executable sprite addresses remain in this body."}
+void __cdecl scroll_small() {
+    set_scroll_icon_defaults(g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES,
+                             &g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE, 12);
+}
 
 namespace {
 
@@ -269,7 +307,7 @@ Scroll::Scroll() {
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
 
     uint32_t *const fixed = &ScrollCloseStaticDefaults;
-    uint32_t *const dynamic = &ScrollCloseDynamicDefaults;
+    uint32_t *const dynamic = ScrollCloseDynamicDefaults;
 
     object[0xA14 / 4] = dynamic[0];
     object[0xA1C / 4] = fixed[3];
@@ -384,7 +422,7 @@ uint32_t Scroll::close() {
     uint32_t *const object =
         reinterpret_cast<uint32_t *>(this);
     uint32_t *const fixed = &ScrollCloseStaticDefaults;
-    uint32_t *const dynamic = &ScrollCloseDynamicDefaults;
+    uint32_t *const dynamic = ScrollCloseDynamicDefaults;
 
     object[0xA14 / 4] = dynamic[0];
     object[0xA1C / 4] = fixed[3];

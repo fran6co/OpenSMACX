@@ -38,7 +38,6 @@
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);  // 0x0045E540
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);  // 0x0045DEA0
-void __cdecl scroll_normal();                            // 0x00588340
 
 
 /*
@@ -1070,17 +1069,6 @@ void __cdecl scroll_show(GraphicWin *window, Scroll *scroll) {
     typedef void(__cdecl *pending)(GraphicWin *, Scroll *);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x0045DEA0))(window,
                                                                       scroll);
-}
-
-void __cdecl scroll_normal() {
-    typedef void(__cdecl *pending)();
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00588340))();
-}
-
-// ORIGINAL: 0x005883D0 ?scroll_small@@YAXXZ 0x005883D0-0x0058845D
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005883d0.cpp", "source:src/reportif.cpp:ReportIf::draw_labs", "source:src/reportif.cpp:ReportIf::draw_energy"], "reason": "Keep the original small-scroll dependency source-mapped and linkable for ReportIf panels; its retained seed and byte claim remain restoration obligations, and behavior is unfinished."}
-void __cdecl scroll_small() {
-    // BODY GOES HERE.
 }
 
 // ORIGINAL: 0x00404B00 ?on_redraw@Popup@@QAEXXZ 0x00404B00-0x00404B05 BYTE_EXACT
