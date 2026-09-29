@@ -679,8 +679,8 @@ uint32_t __cdecl transport_val(uint32_t chassis_id, uint32_t ability,
                                          uint32_t reactor_id);
 void __cdecl say_offense(LPSTR stat, int proto_id);
 void __cdecl say_defense(LPSTR stat, int proto_id);
-void __cdecl say_stats_3(LPSTR stat, uint32_t proto_id);
-void __cdecl say_stats_3(uint32_t proto_id);
+void __cdecl say_stats_3(LPSTR stat, int proto_id);
+void __cdecl say_stats_3(int proto_id);
 void __cdecl say_stats_2(LPSTR stat, int proto_id);
 void __cdecl say_stats(LPSTR stat, int proto_id, LPSTR custom_spacer);
 uint32_t __cdecl best_reactor(int faction_id);

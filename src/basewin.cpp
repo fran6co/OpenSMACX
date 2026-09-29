@@ -1257,33 +1257,30 @@ static int *const MainInterfaceScreenClipBottom = (int *)0x007AECA0;
 
 // Garrison frames use style3. Original 0x410485 loads style9's mask pointer
 // from 0x78D6B0; that address is a member slot, not a Buffer object itself.
-// The shared full-screen drawing Buffer, the same binding maininterface.cpp,
-// reportif.cpp and socialwin.cpp carry; InterfaceClipRect above is its +0x30.
-static int *const InterfaceBuffer = (int *)0x007AEC64;
-
 // ORIGINAL: 0x004103B0 ?draw_garrison@BaseWin@@QAEXH@Z 0x004103B0-0x00410868;0x00651B0D-0x00651B22 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004104DD-0x004107F9 typed stack links, column layout, vehicle drawing and hit regions", "src/veh.h:Vehs and veh_at", "src/veh.cpp:say_stats_3 and veh_draw", "src/basewin.h:BaseWin garrison_rect_ and spot1_", "src/maininterface.h:MainInterfaceGlobal"], "reason": "Render the first row of the current base's real vehicle stack through owned game state and drawing APIs. The three original overflow-control objects remain unidentified and are an explicit restoration obligation."}
 // size      1208 bytes
 // prototype void (__thiscall ?draw_garrison@BaseWin@@QAEXH@Z)(BaseWin* this, int)
 // callers   0   call targets   3
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
-// TRIED: bodied for COVERAGE up to the vehicle walk. The transcription stops
-//  where the image enters it: a linked-list walk over the vehicle stack (the
-//  0x00952858 / 0x0095285A pair), an idiv-based column layout, a dispatch
-//  through [edx+8] and the veh_draw / write_cent_l / set_text_color labelling
-//  that follows - a long, branch-heavy loop where this tree's register
-//  allocation differs with no source-level lever that pins it. The artifact
-//  this was homed from also read 0x0090EA30 - BaseCurrent's own pointer slot -
-//  as two `short` map coordinates to feed veh_at, which cannot be what the
-//  image does; that line is left out rather than homed as a defect.
+// The body now walks Vehs' typed stack links and renders each visible vehicle.
+// The original's overflow/scroll controls at 0x007B5080, 0x007B5BCC and
+// 0x007B6718 are still unidentified owners: this implementation clips to the
+// first row instead of inventing vtables or binding old executable addresses.
+// Recover those controls before claiming this panel's full behavior.
 // LEVER: 0x40C2C is one RECT, not the four unnamed dwords the IDB records -
 //  set_clip takes it whole and the tile/frame sizing reads its fields.
 //  0x00691B2C is font.h's DefaultFontFace, passed as the pointer it is; the
 //  artifact's `*DefaultFontFace` through a pointer-to-pointer is two loads
 //  where the image has one.
-void BaseWin::draw_garrison(int) {
-    Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
+// 0x004104E6-0x004104F9 scales the column pitch by 100, not 20 as the
+// earlier partial transcription did. The stack starts at veh_at(base.x,y),
+// climbs prev_veh_id_stack and then walks next_veh_id_stack.
+void BaseWin::draw_garrison(int update_mode) {
+    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
 
+    RECT saved_clip = canvas->rect1_;
     RECT clip_rect = garrison_rect_;
     canvas->set_clip(&clip_rect);
 
@@ -1292,9 +1289,7 @@ void BaseWin::draw_garrison(int) {
 
     // The row pitch every garrison line uses: `height_ + unk_1_` when the
     // font's own ascent adjustment is not negative, `line_height_` when it is.
-    int line_height = (font.unk_1_ >= 0) ? (font.height_ + font.unk_1_)
-                                         : font.line_height_;
-    (void)line_height;
+    int line_height = font.line_advance();
 
     int left = garrison_rect_.left;
     int top = garrison_rect_.top;
@@ -1323,16 +1318,54 @@ void BaseWin::draw_garrison(int) {
     spot1_.kill_type(6);
 
     int spacing;
-    if (MapWinCaptionScale > 0) {
-        spacing = (MapWinCaptionScale * 20) / MapWinCaptionDivisor;
+    if (MapWinCaptionScale > 0 && MapWinCaptionDivisor != 0) {
+        spacing = (MapWinCaptionScale * 100) / MapWinCaptionDivisor;
     } else {
         spacing = 0x38;
     }
-    (void)spacing;
 
-    // WALL - the vehicle walk described in the TRIED note above starts here,
-    // and it is the part that reads the argument this transcription leaves
-    // unnamed: nothing before it touches it.
+    int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+    if (vehicle >= 0) {
+        while (Vehs[vehicle].prev_veh_id_stack >= 0) {
+            vehicle = Vehs[vehicle].prev_veh_id_stack;
+        }
+    }
+
+    int column = 0;
+    const int capacity = spacing + 5 > 0
+        ? (frame_rect.right - frame_rect.left) / (spacing + 5) : 0;
+    int column_left = frame_rect.left;
+    while (vehicle >= 0 && column < capacity) {
+        canvas->set_clip(column_left, frame_rect.top, spacing,
+                         frame_rect.bottom - frame_rect.top);
+        veh_draw(canvas, vehicle, column_left, frame_rect.top, -7, 72, 0);
+        veh_draw(canvas, vehicle, column_left, frame_rect.top, 0, 0x1800, 0);
+
+        StringTemp[0] = 0;
+        say_stats_3(StringTemp, Vehs[vehicle].proto_id);
+        if ((GameState & 0x1040) == 0x1040) {
+            char number[80];
+            strcat(StringTemp, " (");
+            _itoa(vehicle, number, 10);
+            strcat(StringTemp, number);
+            strcat(StringTemp, ")");
+        }
+        canvas->set_font(&font, nullptr, nullptr, nullptr);
+        canvas->set_text_color(TextColourTable[112], TextColourTable[113], 1, 1);
+        canvas->write_cent_l(StringTemp, column_left,
+                             frame_rect.bottom - line_height + 6, spacing,
+                             strlen(StringTemp));
+        spot1_.add(vehicle, 6, column_left, frame_rect.top,
+                   spacing + 5, frame_rect.bottom - frame_rect.top);
+        column_left += spacing + 5;
+        vehicle = Vehs[vehicle].next_veh_id_stack;
+        ++column;
+    }
+
+    canvas->set_clip(&clip_rect);
+    if (update_mode != 0) MainInterfaceGlobal.update(&garrison_rect_, nullptr);
+    else MainInterfaceGlobal.soft_update(&garrison_rect_);
+    canvas->set_clip(&saved_clip);
 }
 
 // ORIGINAL: 0x0041AFD0 ?on_left_up@BaseWin@@QAEXHH@Z 0x0041AFD0-0x0041B10D FILE
