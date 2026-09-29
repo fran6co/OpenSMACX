@@ -142,3 +142,19 @@ void AlphaSave::hide_save_window() {
     ActiveAlphaSave = 0;
     Win::hide();
 }
+
+// ORIGINAL: 0x00407D90 ?on_selected@AlphaSave@@QAEXH@Z 0x00407D90-0x00407E7B
+// The callback argument is unused in the image. The selected position is
+// held by the embedded ListBox's Dialog virtual base, whose StringList
+// supplies the filename. The retired seed reached 96.4% mnemonic similarity
+// with raw offsets but could not make VC6 assign the original ebx=this,
+// esi=list-base, edi=count register trio. The typed body is not yet exact;
+// restore its historical extent through the source identity above.
+void AlphaSave::on_selected(int) {
+    Dialog &dialog = file_win_.list_box_;
+    dialog.item_list_.seek_pos(dialog.selected_position_);
+    file_win_.edit_box_.set_text(dialog.item_list_.current_text());
+    file_win_.edit_box_.select_all_text();
+    file_win_.edit_box_.redraw();
+    file_win_.edit_box_.redraw();
+}

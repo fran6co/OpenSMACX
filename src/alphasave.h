@@ -35,6 +35,7 @@ class AlphaSave : public GraphicWin {
   // virtual, so these cannot use those names without changing the vtable.
   void show_save_window(int mode);
   void hide_save_window();
+  void on_selected(int selection_id);
 
  private:
   FileWin file_win_;             // 0x0A14

@@ -55,6 +55,14 @@ class EditBox : public GraphicWin {
   // 0x006151E0, a pending_bodies forwarder; EditGroup calls it directly.
   void set_text(char *text);
 
+  // File selectors replace the name and select its entire editable range.
+  // Keep the cursor bookkeeping with the editor rather than exposing its
+  // storage offsets to each dialog that performs this operation.
+  void select_all_text() {
+    field_B40_ = 0;
+    field_B44_ = strlen(text_);
+  }
+
   // Reusable close at 0x00614F30; this does not end member lifetimes.
   void close();
 
