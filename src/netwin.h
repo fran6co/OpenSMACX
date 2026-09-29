@@ -32,10 +32,29 @@ struct NetWinLobbyRow {
   uint8_t ready_or_occupied_;       // +1
   uint8_t field_2_;                 // +2
   int8_t faction_or_color_;         // +3
-  uint8_t record_[0x174];          // +4..+177, text and settings
+  uint8_t field_4_;                 // +4
+  char leader_name_[0x18];         // +5
+  char formal_faction_name_[0x28]; // +0x1D
+  char noun_faction_[0x18];        // +0x45
+  char adjective_faction_[0x80];   // +0x5D
+  char leader_title_[0x18];        // +0xDD
+  char adjective_leader_[0x80];    // +0xF5
+  uint8_t tail_[3];                // +0x175..+0x177
   uint32_t owner_;                  // +178
 };
 static_assert(sizeof(NetWinLobbyRow) == 0x17C, "lobby row stride");
+static_assert(offsetof(NetWinLobbyRow, leader_name_) == 5,
+              "lobby leader-name offset");
+static_assert(offsetof(NetWinLobbyRow, formal_faction_name_) == 0x1D,
+              "lobby formal-name offset");
+static_assert(offsetof(NetWinLobbyRow, noun_faction_) == 0x45,
+              "lobby faction-noun offset");
+static_assert(offsetof(NetWinLobbyRow, adjective_faction_) == 0x5D,
+              "lobby faction-adjective offset");
+static_assert(offsetof(NetWinLobbyRow, leader_title_) == 0xDD,
+              "lobby leader-title offset");
+static_assert(offsetof(NetWinLobbyRow, adjective_leader_) == 0xF5,
+              "lobby leader-adjective offset");
 static_assert(offsetof(NetWinLobbyRow, owner_) == 0x178, "lobby owner slot");
 extern NetWinLobbyRow NetWinLobbyRows[8]; // 0x0090DB98
 // send_session2_packet copies this whole 0x168-byte block; the first dword

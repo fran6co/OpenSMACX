@@ -1660,13 +1660,72 @@ void NetWin::on_left_click(int x, int y) {
     }
 }
 
-// These selection callees still have preserved seed-only bodies in the
-// recovery artifacts. Keep the product call graph linkable while those bodies
-// are not yet migrated; the sentinel makes their unfinished status explicit.
+// A picker edits a temporary row and publishes it through the same single-row
+// lobby packet as the faction and difficulty pickers. EditGroup owns its text
+// while the modal window is open, so copy it before the popup is destroyed.
+static void netwin_copy_lobby_text(char *destination, size_t capacity,
+                                   const char *source) {
+    if (source == 0 || capacity == 0) {
+        return;
+    }
+    strncpy(destination, source, capacity - 1);
+    destination[capacity - 1] = 0;
+}
+
 // ORIGINAL: 0x0047BBF0 ?pick_player@NetWin@@QAEXXZ 0x0047BBF0-0x0047C527;0x00656740-0x006568F9
-// TRIED: no real SEH frame (raw scratch buffer + manual destructor calls instead of automatic-local RAII); sub_4066c0/ sub_406820/sub_406af0 called with no receiver since their declared prototype is a 0-arg extern "C" and changing it would break linkage to the real symbol. Field offsets into `Players` (0x00946A50 array, stride 0x59C) cross-checked against src/faction.h's `Player` struct.
+// TRIED: retained seed src/unrecovered/0047bbf0.cpp mixes an approximate
+// stack-frame reconstruction with untyped widget cleanup and custom/default
+// radio selection. This source recovers the typed six-field edit and outgoing
+// lobby update; its radio/default-faction branch still needs restoration.
 void NetWin::pick_player() {
-    // BODY GOES HERE.
+    if (NetWinSessionData.mode_ == 2 || NetWinSessionData.mode_ == 3) {
+        return;
+    }
+    const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
+    if (slot < 0 || slot >= 8) {
+        return;
+    }
+
+    NetWinLobbyRow updated = NetWinLobbyRows[slot];
+    Popup popup;
+    popup.start(PopupStartCaption, "CUSTOMNAMES", -1, 0, 0x200044, 0);
+    EditGroup &fields = static_cast<EditGroup &>(popup.dialogs());
+    fields.edit(label_get(0x2B8 / 4), updated.leader_name_, 0x17);
+    fields.edit(label_get(0x2BC / 4), updated.formal_faction_name_, 0x27);
+    fields.edit(label_get(0x2C0 / 4), updated.noun_faction_, 0x17);
+    fields.edit(label_get(0x2C4 / 4), updated.adjective_faction_, 0x17);
+    fields.edit(label_get(0x78C / 4), updated.leader_title_, 0x17);
+    fields.edit(label_get(0x790 / 4), updated.adjective_leader_, 0x17);
+    popup.set_loc(0x1000, 0x1000);
+    if (popup.exec(0, pick_daemon_callback) < 0) {
+        return;
+    }
+
+    netwin_copy_lobby_text(updated.leader_name_,
+                           sizeof(updated.leader_name_), fields.get_text(0));
+    netwin_copy_lobby_text(updated.formal_faction_name_,
+                           sizeof(updated.formal_faction_name_), fields.get_text(1));
+    netwin_copy_lobby_text(updated.noun_faction_,
+                           sizeof(updated.noun_faction_), fields.get_text(2));
+    netwin_copy_lobby_text(updated.adjective_faction_,
+                           sizeof(updated.adjective_faction_), fields.get_text(3));
+    netwin_copy_lobby_text(updated.leader_title_,
+                           sizeof(updated.leader_title_), fields.get_text(4));
+    netwin_copy_lobby_text(updated.adjective_leader_,
+                           sizeof(updated.adjective_leader_), fields.get_text(5));
+
+    if (slot == 0) {
+        NetWinLobbyRows[0] = updated;
+        return;
+    }
+
+    NetWinLobbySinglePacket packet;
+    memset(&packet, 0, sizeof(packet));
+    packet.header_.opcode_ = 0x04;
+    packet.header_.flags_ = 0x2F;
+    packet.header_.slot_ = slot;
+    packet.row_ = updated;
+    NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
 }
 
 // ORIGINAL: 0x0047C530 ?pick_faction@NetWin@@QAEXH@Z 0x0047C530-0x0047C965;0x006568F9-0x006569C4
@@ -1758,7 +1817,9 @@ void NetWin::pick_diff(int slot) {
 }
 
 // ORIGINAL: 0x0047D300 ?pick_map@NetWin@@QAEXXZ 0x0047D300-0x0047E003;0x00656BC5-0x00656D9D
-// TRIED: time-boxed - setup (Popup/PullDown/Buffer RAII, PopMenu init/exec, four Dialogs::item calls, mouse pos) and the top-level choice dispatch (load_map/load_game/parse_num LAN-limit check) are transcribed against the disassembly; the network-host session-record population (~30 field strcpy calls into an unverified struct layout) is a deliberate stub rather than fabricated field offsets. MISMATCH #10, well past the prologue.
+// TRIED: the popup and load-map/game dispatch are transcribed; the scenario
+// host guard now uses LockEnableMask's live-faction byte. Choice zero still
+// lacks the original session-record population and is explicitly unfinished.
 void NetWin::pick_map() {
     PopMenu pop_menu;
     pop_menu.init();
@@ -1784,10 +1845,19 @@ void NetWin::pick_map() {
             return;
         }
     } else if (choice == 2) {
-        // The host-load branch's seat-count guard reads an as-yet-unowned
-        // scenario player mask. Do not start the load without that check.
-        // BODY GOES HERE.
-        return;
+        if (load_game(1, 0) != 0) {
+            return;
+        }
+        // Byte one of the source-owned LockEnableMask is the live-faction
+        // mask. The scenario host path excludes its neutral slot before
+        // comparing available factions with network seats.
+        const int scenario_factions =
+            bit_count(static_cast<int>((LockEnableMask >> 8) & 0xFEu));
+        if (scenario_factions < *NetWinPlayerCount) {
+            parse_num(scenario_factions, 0);
+            X_pop("TOOMANYFORSCENARIO", 0);
+            return;
+        }
     } else if (choice == 3) {
         if (load_game(0, 0) != 0) {
             return;
