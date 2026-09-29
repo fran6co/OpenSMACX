@@ -2165,9 +2165,79 @@ void BaseWin::draw_info(int update_mode) {
     screen->set_clip(&previous_clip);
 }
 // ORIGINAL: 0x00415730 ?draw_misc@BaseWin@@QAEXH@Z 0x00415730-0x00415B15
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h"], "reason": "Preserve the separately identified miscellaneous panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
-void BaseWin::draw_misc(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00415730.cpp", "src/basewin.h", "src/alpha.h", "src/faction.h", "src/base.h", "src/palette.cpp", "src/font.h"], "reason": "Recover the miscellaneous base panel through its owned rectangle, label and string table, live Base and PlayerData fields, font line advance, and shared palette rather than executable addresses and raw self-offsets. The retained seed remains for byte restoration."}
+void BaseWin::draw_misc(int update_mode) {
+    Buffer *canvas = this;
+    RECT panel = rect5_;
+    canvas->set_clip(&panel);
+    canvas->box_sprite(&panel, &InterfaceBoxStyles[3]);
+    panel.left += 3;
+    panel.top += 3;
+    panel.right -= 3;
+    panel.bottom -= 3;
+    canvas->box_sprite(&panel, &InterfaceBoxStyles[0]);
+    panel.left += 3;
+    panel.top += 3;
+    panel.right -= 3;
+    panel.bottom -= 3;
+
+    Font *font = find_font(12, 0);
+    canvas->set_font(font, nullptr, nullptr, nullptr);
+    const int advance = font->line_advance();
+    const int row_height = panel.bottom - advance * 3 - panel.top;
+    int y = panel.top + row_height / 2;
+    int x = panel.left;
+
+    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(730));
+    x = canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+
+    canvas->set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, " ");
+    say_year(StringTemp);
+    canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+
+    y += font->line_advance();
+    x = panel.left;
+    const int faction = BaseCurrent->faction_id_current;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(36));
+    strcat(StringTemp, ": ");
+    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    x = canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+
+    const int reserves = PlayersData[faction].energy_reserves;
+    const int hurry_cost = PlayersData[faction].hurry_cost_total;
+    StringTemp[0] = 0;
+    char number[80];
+    _itoa(reserves - hurry_cost, number, 10);
+    strcat(StringTemp, number);
+    canvas->set_text_color(TextColourTable[106], TextColourTable[107], 1, 1);
+    canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+
+    y += font->line_advance();
+    x = panel.left;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(958));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    const int eco_damage = BaseCurrent->eco_damage;
+    _itoa(eco_damage, number, 10);
+    strcat(StringTemp, number);
+    if (eco_damage != 0) {
+        canvas->set_text_color(TextColourTable[100], TextColourTable[101], 1, 1);
+    } else {
+        canvas->set_text_color(TextColourTable[98], TextColourTable[99], 1, 1);
+    }
+    canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+
+    if (update_mode != 0) {
+        update(&rect5_, nullptr);
+    } else {
+        soft_update(&rect5_);
+    }
 }
 // ORIGINAL: 0x0040F0F0 ?draw_farm@BaseWin@@QAEXH@Z 0x0040F0F0-0x0040FCB3
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0040f0f0.cpp", "src/basewin.h"], "reason": "Preserve the separately identified farm panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
