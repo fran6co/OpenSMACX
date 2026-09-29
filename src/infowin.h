@@ -49,6 +49,9 @@ class InfoWin {
  public:
   // 0x00459150, timed pane reveal/advance callback; implemented in infowin.cpp.
   void timer_proc(int a1);
+  // The timer's C callback has no receiver. The historical Q-prefixed label
+  // does not override the stack-only callback ABI seen at 0x00459260.
+  static void __cdecl timer_daemon(int tick);
 
  public:
   // 0x00458930  ?on_left_click@InfoWin@@QAEXHH@Z - public, __thiscall,

@@ -29,6 +29,7 @@
 #include "font.h"
 #include "pushbutton.h"
 #include "game.h"
+#include "map.h"
 #include "faction.h"
 #include "maininterface.h"
 #include <cstring>
@@ -43,6 +44,17 @@ void InfoWin::setup_text() {
 // Keep their binding explicit until that owner is migrated; pane state and
 // drawing work below use real InfoWin members.
 static int *const InfoAnimationCounters = (int *)0x007AF174;
+
+// The timer dispatches a plain C callback. Its argument is forwarded as the
+// timer stage, while the process-wide information window owns the state.
+// ORIGINAL: 0x00459260 ?timer_daemon@InfoWin@@QAAXH@Z 0x00459260-0x0045927C BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00459260-0x0045927C", "git:c732d1a0:src/recovered/00459260.cpp", "source:src/console.cpp:ConsoleInfoWin", "source:src/map.cpp:WorldClimateSkipTerrainClear"], "reason": "The stack-only callback forwards its tick argument to the process-wide InfoWin timer_proc unless climate terrain clearing is active; the old Q-prefixed catalog label is not evidence for an instance receiver."}
+// symbol    ?timer_daemon@InfoWin@@SAXH@Z
+void __cdecl InfoWin::timer_daemon(int tick) {
+    if (WorldClimateSkipTerrainClear == 0) {
+        ConsoleInfoWin.timer_proc(tick);
+    }
+}
 
 // Reveal the active pane until it has reached its timed limit. The final
 // pause is suppressed while the adjacent main-interface control is visible.
