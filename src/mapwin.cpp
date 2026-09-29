@@ -54,36 +54,114 @@
 // RECOVERY_OBJECT: v2 0x007D3C3C 0x007D3C5C ?MapWinTable@@3PAPAVMapWin@@A 0x0058F040
 MapWinSlots MapWinTable;
 
-// The mode-one world map path uses the same active RECT WorldWin published.
-// Other modes still need the year/layout/caption tables and update callback.
+// The original layout writer MapWin_UNK5 and mode-zero initializer share
+// these two 16-byte records and their accumulated dirty bits.
+// RECOVERY_OBJECT: v2 0x00939F48 0x00939F68 ?MapPanelRects@@3PAUMapPanelRect@@A 0x0046FA20
+MapPanelRect MapPanelRects[2];
+// RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
+uint32_t MapPanelDirtyMask;
+
+void __fastcall MapWin_UNK5(MapWin *window, void *, int panel);
+
+// The active map bounds, panel layouts, faction caption records and tutorial
+// base rectangle all have source-owned receivers below.
 // ORIGINAL: 0x00470A90 ?init@MapWin@@QAEXHH@Z 0x00470A90-0x00470EC2
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; its mode-one branch reads WorldMapBounds and calls the separate MapWin rectangle initializer."], "reason": "Home the WorldWin mode-one startup through typed bounds and the owned rectangle initializer; other modes and the display-preference branch remain explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; mode zero uses MapWin_UNK5 panels and Players records, mode two uses BaseWin::rect1_, and mode three selects label 0x204.", "src/recovered/units/00588aa0.cpp stores find_font(10, 1) at the original display-font slot."], "reason": "Home the map modes through typed source owners; resolve the font through its real lookup while its startup cache remains unowned."}
 void MapWin::init(int mode, int update) {
     buffer_a_.init(100, 50, 0, 0);
     field_1DD74_ = 1;
-    if (mode != 1) {
-        // BODY GOES HERE: mode zero's layout/year records, mode two's
-        // tutorial rectangle, and mode three's alternate caption.
-        return;
+    RECT bounds;
+    if (this == MapWinTable[1]) {
+        bounds = WorldMapBounds;
+        field_1DD98_ = -8;
+    } else if (mode == 0) {
+        unsigned int index = field_1DD78_;
+        const int panel_count = IsMultiplayerNet ? 2 : 1;
+        if (index < static_cast<unsigned int>(panel_count)) {
+            if ((MapPanelDirtyMask & (1U << index)) == 0) {
+                MapWin_UNK5(this, 0, index);
+            }
+            bounds.left = MapPanelRects[index].left;
+            bounds.top = MapPanelRects[index].top;
+            bounds.right = MapPanelRects[index].right;
+            bounds.bottom = MapPanelRects[index].bottom;
+            if (index != 0) field_1DD98_ = -8;
+        } else {
+            bounds.left = static_cast<int>(index * 0x28);
+            bounds.top = bounds.left;
+            bounds.right = bounds.left + 0x190;
+            bounds.bottom = bounds.top + 0x190;
+        }
+    } else if (mode == 2) {
+        bounds = TutWinBaseWindow.rect1_;
+    } else {
+        bounds = WorldMapBounds;
     }
-    RECT bounds = WorldMapBounds;
+
     StringTemp[0] = '\0';
-    strcat(StringTemp, label_get(0x1E));
-    int flags = 0x20000430;
+    if (mode == 0) {
+        strcat(StringTemp, label_get(0x1D));
+        if (field_1DD78_ == 0) {
+            StringTemp[0] = '\0';
+            const Player &player = Players[ConsoleGlobal.faction_id_];
+            GenderDefault = player.noun_gender;
+            PluralityDefault = player.is_noun_plural;
+            strcat(StringTemp, player.formal_name_faction);
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, label_get(0));
+            strcat(StringTemp, " ");
+            say_year(StringTemp);
+        } else {
+            strcat(StringTemp, " ");
+            strcat(StringTemp, "#");
+            char number[80];
+            _itoa(static_cast<int>(field_1DD78_) + 1, number, 10);
+            strcat(StringTemp, number);
+        }
+    } else {
+        strcat(StringTemp, label_get(mode == 3 ? 0x204 : 0x1E));
+    }
+
+    int flags = mode == 3 ? 0x400020 : 0x20000430;
+    if (mode == 0 && field_1DD78_ != 0) flags = 0x20010430;
     if (this == &WorldClimateWorldWin.mapWin_) {
         flags = (flags & ~0x10) | 0x40400001;
     }
     init(&bounds, StringTemp, flags);
-    field_1DD70_ = 0x80000082;
-    field_1DD98_ = -7;
+    if (mode == 0) {
+        field_1DD70_ = 0x10EE3;
+        field_1DD98_ = field_1DD78_ != 0 ? -8 : 0;
+    } else {
+        field_1DD70_ = 0x80000082;
+        field_1DD98_ = -7;
+    }
     if (field_1DD78_ != 0) {
-        // BODY GOES HERE: the inherited Win field receives the original
-        // display preference at 0x00945778 on nonzero map slots.
+        // The original font-table initializer caches find_font(10, 1) at
+        // 0x00945778. Resolve the same Font through its typed owner until
+        // that initializer and cache have source-owned lifetimes.
+        Win::field_F8_ = find_font(10, 1);
+    }
+    if (mode == 0) {
+        do_image_buttons();
+        field_1DD70_ &= 0x9FFFFFFF;
+        if (field_1DD78_ == 0) {
+            field_1DD70_ |= IsMultiplayerNet ? 0x20000000 : 0x60000000;
+        } else {
+            if (field_1DD78_ == 1) field_1DD70_ |= 0x40000000;
+            standard_caption();
+        }
+        if (update == 0) {
+            if (WorldClimateSkipTerrainClear != 0) {
+                field_1DD70_ &= 0xFFFFF73F;
+            }
+            redraw();
+            field_1DD70_ |= 0x8C0;
+        }
     }
 }
 
 // ORIGINAL: 0x00470920 ?init@MapWin@@QAEXPAURECT@@PADH@Z 0x00470920-0x00470A90
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470920.cpp; original calls clear, cache setup, GraphicWin init; MapWin::init_dummy already owns equivalent cache setup."], "reason": "Home the retained MapWin rectangle initializer for the embedded WorldWin map; preserve cache lifecycle and GraphicWin receiver, leaving other receivers explicit."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470920.cpp; original calls clear, cache setup, GraphicWin init; MapWin::init_dummy already owns equivalent cache setup."], "reason": "Home the rectangle initializer for embedded WorldWin, secondary table slot, and ordinary receivers through typed GraphicWin and parent objects; the PlanWin singleton branch remains explicit."}
 // symbol    ?init@MapWin@@QAEXPAUtagRECT@@PADH@Z
 void MapWin::init(RECT *bounds, char *caption, int flags) {
     clear(field_1DD78_);
@@ -102,10 +180,25 @@ void MapWin::init(RECT *bounds, char *caption, int flags) {
         }
         return;
     }
-    // BODY GOES HERE: MainInterface, farm map, and other MapWin receivers
-    // select different parent, caption, and style inputs.
-    (void)caption;
-    (void)flags;
+    if (bounds == 0) {
+        // BODY GOES HERE: the rectangle-taking GraphicWin initializer's
+        // null-bounds behavior is not represented by the coordinate overload.
+        return;
+    }
+    if (this == MapWinTable[1]) {
+        GraphicWin::init(bounds->left, bounds->top,
+                         bounds->right - bounds->left,
+                         bounds->bottom - bounds->top,
+                         0, 0x20, &MainInterfaceGlobal, 0, 0);
+        return;
+    }
+    // BODY GOES HERE: the PlanWin singleton branch selects MainInterface as
+    // parent and suppresses this call while DiplomacyPopup is visible. Its
+    // complete global receiver is not source-owned yet.
+    GraphicWin::init(bounds->left, bounds->top,
+                     bounds->right - bounds->left,
+                     bounds->bottom - bounds->top,
+                     caption, flags | 0x30000000, 0, 0, 0);
 }
 
 // 0x006874C4: draw_my_dest publishes a vehicle index after validation;
