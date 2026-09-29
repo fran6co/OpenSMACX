@@ -123,6 +123,9 @@ class CheckBox : public virtual GraphicWin, public virtual Dialog {
   int UNK2(int pos);
   void set_state_pos(int pos, int state);
   void set_state_id(int id, int value);
+  // 0x0060EA10: find the item by id and toggle its bit in Dialog's shared
+  // selected-position word.
+  void flip_state_id(int id);
   // 0x0060EC10, defined in src/checkbox.cpp beside set_state_id above - the
   // read-side twin: walks the same list for `id` and returns
   // `(1 << bit) & flags`, nonzero when the box with this id is checked.

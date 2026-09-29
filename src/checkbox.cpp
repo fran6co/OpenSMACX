@@ -555,28 +555,22 @@ Return Value: n/a
 Status: Complete
 */
 void CheckBox::set_state_id(int id, int value) {
-    int base = *(int *)(*(int *)this + 8);
-    char *list = (char *)this + base + 0xbc;
-    int head = *(int *)(list + 8);
-    if (head != 0) {
-        int count = *(int *)(list + 0x10);
-        int idx;
-        *(int *)(list + 0x14) = 0;
-        *(int *)(list + 0xc) = head;
-        for (idx = 0; idx < count; idx = idx + 1) {
-            int cur = *(int *)(list + 0xc);
-            if (*(int *)(cur + 4) == id) break;
-            *(int *)(list + 0x14) = *(int *)(list + 0x14) + 1;
-            *(int *)(list + 0xc) = *(int *)(cur + 0xc);
-        }
-    }
+    Dialog::item_list_.seek_id(id);
+    const uint32_t mask =
+        1U << (static_cast<uint32_t>(Dialog::item_list_.current_position_) & 31U);
     if (value != 0) {
-        *(unsigned int *)((int)this + *(int *)(*(int *)this + 8) + 0xec) |=
-            1 << *(int *)((int)this + *(int *)(*(int *)this + 8) + 0xd0);
+        Dialog::selected_position_ |= mask;
     } else {
-        *(unsigned int *)((int)this + *(int *)(*(int *)this + 8) + 0xec) &=
-            ~(1 << *(int *)((int)this + *(int *)(*(int *)this + 8) + 0xd0));
+        Dialog::selected_position_ &= ~mask;
     }
+}
+
+// ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060ea10.cpp shows the original id search and toggles the bit indexed by the Dialog item list current position; src/dialog.h exposes item_list_ and selected_position_; src/stringstruct.h documents seek_id cursor updates and return semantics."], "reason": "Recover CheckBox state toggling in the product class: seek_id updates the Dialog item-list cursor and selected_position_ is the shared state-bit word."}
+void CheckBox::flip_state_id(int id) {
+    Dialog::item_list_.seek_id(id);
+    Dialog::selected_position_ ^=
+        1U << (static_cast<uint32_t>(Dialog::item_list_.current_position_) & 31U);
 }
 
 /*
@@ -602,23 +596,10 @@ Return Value: (1 << ordinal) & state word - nonzero when `id`'s box is checked
 Status: Complete
 */
 int CheckBox::get_state_id(int id) {
-    int base = *(int *)(*(int *)this + 8);
-    char *list = (char *)this + base + 0xbc;
-    int head = *(int *)(list + 8);
-    if (head != 0) {
-        int count = *(int *)(list + 0x10);
-        int idx;
-        *(int *)(list + 0x14) = 0;
-        *(int *)(list + 0xc) = head;
-        for (idx = 0; idx < count; idx = idx + 1) {
-            int cur = *(int *)(list + 0xc);
-            if (*(int *)(cur + 4) == id) break;
-            *(int *)(list + 0x14) = *(int *)(list + 0x14) + 1;
-            *(int *)(list + 0xc) = *(int *)(cur + 0xc);
-        }
-    }
-    return (1 << *(int *)((int)this + *(int *)(*(int *)this + 8) + 0xd0)) &
-           *(unsigned int *)((int)this + *(int *)(*(int *)this + 8) + 0xec);
+    Dialog::item_list_.seek_id(id);
+    const uint32_t mask =
+        1U << (static_cast<uint32_t>(Dialog::item_list_.current_position_) & 31U);
+    return static_cast<int>(Dialog::selected_position_ & mask);
 }
 
 // ====================
