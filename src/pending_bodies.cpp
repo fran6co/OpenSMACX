@@ -498,11 +498,6 @@ void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
     PENDING_BODY(0x00429180, pending)(this, nullptr, topic, index);
 }
 
-void StringBox::add_fixup() {  // 0x00629490
-    typedef void(__fastcall *pending)(StringBox *, void *);
-    PENDING_BODY(0x00629490, pending)(this, nullptr);
-}
-
 void WorldWin::click(int a1, int a2, int button, int is_double) {  // 0x004C3D40
     typedef void(__fastcall *pending)(WorldWin *, void *, int, int, int, int);
     PENDING_BODY(0x004C3D40, pending)(this, nullptr, a1, a2, button, is_double);
@@ -712,11 +707,6 @@ SetupWin::~SetupWin() {  // ??1SetupWin@@QAE@XZ at 0x004AE790
 SocialWin::~SocialWin() {  // ??1SocialWin@@QAE@XZ at 0x004B3C80
     typedef void(__fastcall *pending)(SocialWin *, void *);
     PENDING_BODY(0x004B3C80, pending)(this, nullptr);
-}
-
-StringBox::~StringBox() {  // ??1StringBox@@QAE@XZ at 0x004325C0
-    typedef void(__fastcall *pending)(StringBox *, void *);
-    PENDING_BODY(0x004325C0, pending)(this, nullptr);
 }
 
 TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0

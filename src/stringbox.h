@@ -34,8 +34,11 @@
 class StringBox : public GraphicWin {
  public:
   virtual int on_link_clicked(int id, char *link);
-  // 0x00629490, a pending_bodies forwarder.
+  void init(int x, int y, int width, int height, Win *parent,
+            StringList *list, int flags);
   void add_fixup();
+  void clear();
+  virtual void on_redraw();
 
   // Original StringBox list operations, kept on the StringBox receiver.
   void on_scrolling(int code, int position);
@@ -55,9 +58,6 @@ class StringBox : public GraphicWin {
   // 0x00629110. A REAL constructor: the image constructs its GraphicWin
   // base and its Scroll member, and carries the unwind frame that implies.
   StringBox();
-  // 0x004325C0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
   ~StringBox();
   void add(char *text, int index, int flag);
 
@@ -79,7 +79,7 @@ class StringBox : public GraphicWin {
   // An optional ALTERNATE StringList. add_fixup and on_redraw both read it
   // first and fall back to the embedded list when it is null, so measuring,
   // trimming and drawing all target the override while one is installed.
-  uint32_t list_override_;  // 0x2b6c
+  StringList *list_override_;  // 0x2b6c, borrowed alternate list
   // 0x2B70. The StringList, constructed IMPLICITLY - the image inlines its
   // constructor here, which is why the image's vftable stores for StringBox
   // itself land after this block.

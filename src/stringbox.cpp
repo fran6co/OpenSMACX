@@ -94,6 +94,191 @@ void StringBox::close() {
     scroll_.close();
 }
 
+// Reinitialization closes the old window/list/scroll before installing a new
+// GraphicWin surface. An optional caller list is borrowed, not copied.
+// ORIGINAL: 0x006292D0 ?init@StringBox@@QAEXHHHHPAUWin@@PAUStringList@@H@Z 0x006292D0-0x00629486
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x006292D0-0x00629486;seed:src/recovered/units/006292d0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Reinitialize GraphicWin, StringList and embedded Scroll through their real owned subobjects."}
+// symbol    ?init@StringBox@@QAEXHHHHPAVWin@@PAVStringList@@H@Z
+void StringBox::init(int x, int y, int width, int height, Win *parent,
+                     StringList *list, int flags) {
+    close();
+    if (flags == -1) {
+        flags = 0x1000120;
+    }
+    if (GraphicWin::init(x, y, width, height, 0, flags, parent, 0, 0) != 0) {
+        return;
+    }
+    if (list != 0) {
+        list_override_ = list;
+    } else {
+        stringList_.remove_all();
+    }
+    stringList_.current_position_ = 0;
+    stringList_.allocator_ = 0;
+    scroll_.init_vert(height - ScrollDefaultThickness, 0,
+                      -dib_.bmiHeader.biHeight, this, 0);
+    scroll_.hide();
+    scroll_.range_minimum_ = 0;
+    scroll_.range_maximum_ = 0;
+}
+
+// Refit the selected list to the visible row budget and keep the embedded
+// scrollbar's range, paging and cursor synchronized with the measured text.
+// ORIGINAL: 0x00629490 ?add_fixup@StringBox@@QAEXXZ 0x00629490-0x00629703
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x00629490-0x00629703;seed:src/recovered/units/00629490.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Fit the selected StringList to the visible text area and synchronize the embedded Scroll state."}
+void StringBox::add_fixup() {
+    int line_height = text_line_height();
+    if (line_height == 0) {
+        line_height = 12;
+    }
+    StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
+    const int width = dib_.bmiHeader.biWidth;
+    const int text_width = (scroll_.iSomeFlag_ & WinFlagVisible) != 0
+                               ? width - scroll_.bar_thickness_ : width;
+
+    if (static_cast<int>(visible_rows_) > 0) {
+        int measured = write_strings_height(&list, text_width, 0);
+        while (measured / line_height > static_cast<int>(visible_rows_)) {
+            if (list.entry_count_ > 0) {
+                list.current_ = list.head_;
+                list.current_position_ = 0;
+            }
+            if (list.head_ != 0) {
+                erase_string_list_current(list);
+                if (list.entry_count_ == 0) {
+                    list.head_ = 0;
+                }
+                if (list.current_position_ > list.entry_count_ - 1) {
+                    list.current_position_ = list.entry_count_ - 1;
+                }
+            }
+            measured = write_strings_height(&list, text_width, 0);
+        }
+    }
+
+    scroll_.range_maximum_ = list.entry_count_;
+    scroll_.paging_ = -1 - (dib_.bmiHeader.biHeight / line_height);
+    if ((scroll_.iSomeFlag_ & WinFlagVisible) == 0) {
+        if (write_strings_height(&list, width, 0) > -dib_.bmiHeader.biHeight) {
+            scroll_.show(0);
+        } else {
+            scroll_.hide();
+        }
+    }
+
+    if (is_visible() != 0) {
+        if ((scroll_.iSomeFlag_ & WinFlagVisible) != 0) {
+            if (list.entry_count_ > 0) {
+                list.current_ = list.head_;
+                list.current_position_ = 0;
+            }
+            if (-(text_line_height() + dib_.bmiHeader.biHeight) >= 0) {
+                int measured = 0;
+                do {
+                    if (list.head_ != 0) {
+                        list.current_ = list.current_->previous;
+                        if (--list.current_position_ == -1) {
+                            list.current_position_ = list.entry_count_ - 1;
+                        }
+                    }
+                    char *text = list.current_ != 0
+                                     ? list.current_entry()->text : 0;
+                    measured += wrap_height(text, width);
+                } while (measured <= -(text_line_height() + dib_.bmiHeader.biHeight));
+            }
+            list.next_entry();
+            scroll_.set_pos(list.current_position_);
+            top_line_ = scroll_.position_;
+        }
+        redraw();
+    }
+}
+
+// Structural candidate for original 0x00629780. Its exact-claimed product
+// binding still belongs to the link-only sub_629780 in leaf_recoveries.cpp;
+// do not count this method as recovered until that binding is guardedly
+// rehomed and the affected claim remeasured. Clearing may target a borrowed
+// alternate list; destruction of that list is still its owner's responsibility.
+// The typed removal path invokes the list's virtual text-release hook.
+void StringBox::clear() {
+    StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
+    list.remove_all();
+    scroll_.hide();
+    top_line_ = 0;
+    if (is_visible() != 0) {
+        redraw();
+    }
+}
+
+// ORIGINAL: 0x00629B70 ?on_redraw@StringBox@@QAEXXZ 0x00629B70-0x00629D1C
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x00629B70-0x00629D1C;seed:src/recovered/units/00629b70.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Render the selected StringList through inherited Buffer and GraphicWin drawing methods."}
+// symbol    ?on_redraw@StringBox@@UAEXXZ
+void StringBox::on_redraw() {
+    clear_links();
+    StringList &list = list_override_ != 0 ? *list_override_ : stringList_;
+    fill(9);
+    int text_width = dib_.bmiHeader.biWidth;
+    if ((scroll_.iSomeFlag_ & WinFlagVisible) != 0) {
+        text_width -= scroll_.bar_thickness_;
+    }
+
+    int position = static_cast<int>(top_line_);
+    if (position <= list.entry_count_ - 1) {
+        list.current_ = list.head_;
+        if (position < 0) {
+            int steps = abs(position);
+            if (steps <= list.entry_count_) {
+                while (steps-- > 0) {
+                    list.current_ = list.current_->previous;
+                }
+                position += list.entry_count_;
+                list.current_position_ = position;
+            }
+        } else {
+            int steps = position;
+            while (steps-- > 0) {
+                list.current_ = list.current_->next;
+            }
+            list.current_position_ = position;
+        }
+    }
+
+    if (per_line_draw_ == 0) {
+        write_strings(&list, 0, 0, text_width, 2);
+        return;
+    }
+    int remaining = -dib_.bmiHeader.biHeight;
+    for (int index = 0; index < list.entry_count_ && remaining > 0; ++index) {
+        StringStructPayload *payload = list.head_ != 0
+                                           ? list.current_->payload : 0;
+        char *text = payload != 0 ? payload->text : 0;
+        remaining -= wrap_height(text, text_width);
+        if (remaining < 0) {
+            break;
+        }
+        if (payload == 0 || (payload->field_8_ & 2) == 0) {
+            wrap(text, 0, remaining, text_width);
+        } else {
+            wrap_cent(text, 0, remaining, text_width);
+        }
+        if (list.head_ != 0) {
+            list.current_ = list.current_->next;
+            if (++list.current_position_ == list.entry_count_) {
+                list.current_position_ = 0;
+            }
+        }
+    }
+}
+
+// The member and base destructors follow this body implicitly, in reverse
+// construction order: StringList, Scroll, then GraphicWin.
+// ORIGINAL: 0x004325C0 ??1StringBox@@QAE@XZ 0x004325C0-0x00432713;0x006533B0-0x0065341D
+// RECOVERY_BINDING: v1 {"evidence": ["original:0x004325C0-0x00432713;0x006533B0-0x0065341D;seed:src/recovered/units/004325c0.cpp;source:src/stringbox.h;source:src/stringstruct.h;source:src/scroll.h"], "reason": "Run StringBox cleanup then let C++ destroy its StringList, Scroll and GraphicWin subobjects in lifetime order."}
+// symbol    ??1StringBox@@UAE@XZ
+StringBox::~StringBox() {
+    close();
+}
+
 // Remove the first list entry with this ID, retaining the original cursor
 // position side effect and then re-fitting the visible rows.
 // ORIGINAL: 0x006298B0 ?UNK1@StringBox@@QAEXH@Z 0x006298B0-0x0062997B

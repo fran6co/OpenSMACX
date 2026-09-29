@@ -88,6 +88,9 @@ class Scroll : public ScrollGraphicWin {
  private:
   friend class Win;
   friend class SelectPartWin;  // key navigation reads the clamped position after set_pos
+  // StringBox embeds this Scroll and the original fit/draw paths read its
+  // live range, position, paging and bar-thickness words directly.
+  friend class StringBox;
 
   uint32_t field_A14_;  // 0x0a14
   uint32_t field_A18_;
