@@ -21,6 +21,31 @@
 #include "basebutton.h"
 #include "menu.h"
 #include "win.h"
+#include "base.h"
+#include "map.h"
+#include "game.h"
+
+// ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}
+void ReplayWin::make_bases() {
+    BaseCurrentCount = 0;
+    for (int tile = 0; tile < static_cast<int>(MapArea); ++tile) {
+        map_tiles()[tile].bit &= ~1u;
+    }
+    for (int site_id = 0; site_id < 512; ++site_id) {
+        const ReplayBaseSite &site = base_sites_[site_id];
+        if (site.x < 0) continue;
+        Base &base = Bases[BaseCurrentCount];
+        base.x = static_cast<int16_t>(site.x);
+        base.y = static_cast<int16_t>(site.y);
+        base.population_size = 1;
+        base.faction_id_current = static_cast<uint8_t>(site.faction_id);
+        bit_set(base.x, base.y, 1, 1);
+        owner_set(base.x, base.y, base.faction_id_current);
+        ++BaseCurrentCount;
+    }
+    reset_territory();
+}
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -135,4 +160,3 @@ void __cdecl fn_005adbd0(ReplayWin* a1) {
         a1->timer_callback();
     }
 }
-

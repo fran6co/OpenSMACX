@@ -45,12 +45,18 @@
   * 0x484+0x590 == 0xA14) are gone, and sizeof(ReplayWin) is unchanged at
   * 0x252F0.
   *
-  * Past the base the layout is still not established; its methods reach as
-  * far as 0x252EC, so the object is at least that large. The stubs recovered
-  * here are constant returns that touch no field, which is why they can be
-  * replaced without that mapping - the opaque storage below is only large
-  * enough to give the canary an object to seed.
+  * Past the base only the 512 replay base sites at 0xA20..0x2220 are typed.
+  * Other methods reach as far as 0x252EC, and their remaining storage is
+  * deliberately opaque until independent layout evidence identifies it.
   */
+struct ReplayBaseSite {
+  int x;
+  int y;
+  int faction_id;
+};
+static_assert(sizeof(ReplayBaseSite) == 0xC,
+              "Replay base site must keep the original twelve-byte stride");
+
 class ReplayWin : public GraphicWin {
  public:
   // 0x005AD9E0  ?timer_callback@ReplayWin@@QAEXXZ - public, __thiscall,
@@ -69,6 +75,7 @@ class ReplayWin : public GraphicWin {
   void on_right_down(int, int);
   void on_left_down(int, int);
   void on_left_up(int, int);
+  void make_bases();
 
  private:
   // [0, 0xA14) is the GraphicWin base subobject; the class's own storage
@@ -76,10 +83,10 @@ class ReplayWin : public GraphicWin {
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
   uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint8_t field_A2C_[0x17F4];  // 0xA2C
+  // 0x005AD598 starts at this+0xA20 and visits exactly 0x200 records with
+  // a 0xC stride. The next known member starts at 0x2220.
+  // RECOVERY_MEMBER: v1 ReplayWin base_sites_ 0xA20 0x005AD560
+  ReplayBaseSite base_sites_[512];  // 0xA20..0x2220
   uint8_t field_2220_;  // 0x2220
   uint8_t field_2221_[0xFF];  // 0x2221
   uint32_t field_2320_;  // 0x2320
@@ -100,6 +107,8 @@ class ReplayWin : public GraphicWin {
   uint32_t field_25270_;  // 0x25270
   uint8_t field_25274_[0x7C];  // 0x25274
 };
+static_assert(sizeof(ReplayWin) == 0x252F0,
+              "ReplayWin ownership must preserve the original object extent");
 
 
 // timer_callback is declared on the class because fn_005adbd0, the recovered
