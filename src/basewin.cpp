@@ -2536,11 +2536,6 @@ void BaseWin::draw_commerce(int update_mode) {
             StringTemp[0] = 0;
             strcat(StringTemp, Players[partner].noun_faction);
             string_upper_slot()(StringTemp);
-            canvas->write_l(StringTemp, report.left, row_y, strlen(StringTemp));
-
-            StringTemp[0] = 0;
-            strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
-                                          & DTREATY_PACT) != 0 ? 645 : 644));
             if (PlayersData[owner].sanction_turns == 0 &&
                 PlayersData[partner].sanction_turns == 0) {
                 char amount[32];
@@ -2548,6 +2543,11 @@ void BaseWin::draw_commerce(int update_mode) {
                 _itoa(BaseCommerceReceipts[slot], amount, 10);
                 strcat(StringTemp, amount);
             }
+            canvas->write_l(StringTemp, report.left, row_y, strlen(StringTemp));
+
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
+                                          & DTREATY_PACT) != 0 ? 645 : 644));
             canvas->write_l(StringTemp, report.left + 5,
                             row_y + font.line_advance(), strlen(StringTemp));
             row_y += row_pitch;
