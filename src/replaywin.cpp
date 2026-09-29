@@ -39,6 +39,39 @@ int ReplayEventBytes;
 // RECOVERY_OBJECT: v2 0x00945E00 0x00945E08 ?ReplayLocalizedPrefix@@3PADA 0x005AD9E0
 char ReplayLocalizedPrefix[8];
 
+// ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x004210D0-0x004210E7;0x00662360-0x0066244C
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:d7a40721:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}
+// symbol    ??1ReplayWin@@UAE@XZ
+ReplayWin::~ReplayWin() {
+}
+
+// ORIGINAL: 0x005AD610 ?on_redraw@ReplayWin@@QAEXXZ 0x005AD610-0x005AD71F
+// RECOVERY_BINDING: v1 {"evidence": ["git:d7a40721:src/recovered/units/005ad610.cpp", "image:0x005AD610-0x005AD71F", "src/replaywin.h map_win_ and year_label_", "src/buffer.h InterfaceBoxStyles[9] and [6]", "src/maininterface.h MainInterfaceGlobal.font1_ at original 0x007CFE8C"], "reason": "Paint the replay title through real GraphicWin/Buffer bases, shared style and font owners, then dispatch the embedded MapWin's virtual redraw; retain the exact seed for byte restoration."}
+// symbol    ?on_redraw@ReplayWin@@UAEXXZ
+void ReplayWin::on_redraw() {
+    GraphicWin::fill(9);
+    Buffer *canvas = static_cast<Buffer *>(this);
+    RECT title = *buffer_working_rect();
+    canvas->box_sprite(&title, &InterfaceBoxStyles[9]);
+
+    title.left += 4;
+    title.right -= 4;
+    title.top += 4;
+    title.bottom = title.top + 0x14;
+    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+
+    title.left += 3;
+    title.right -= 3;
+    title.top += 3;
+    title.bottom -= 3;
+    canvas->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    canvas->set_text_color(TextColourTitleMain, TextColourTitleShadow, 1, 1);
+    canvas->write_cent_l(year_label_, &title, strlen(year_label_));
+
+    make_bases();
+    map_win_.on_redraw();
+}
+
 // ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0
 // RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration."}
 // symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z

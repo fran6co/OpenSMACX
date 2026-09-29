@@ -19,6 +19,9 @@
 
 #include "original_seam.h"
 #include "graphicwin.h"
+#include "mapwin.h"
+#include "flatbutton.h"
+#include "time.h"
 
  /*
   * ReplayWin class
@@ -42,12 +45,13 @@
   * / `[eax+4]` - so it sits at offset 0 and covers [0, 0xA14), which is
   * sizeof(GraphicWin) as this tree declares it. The seven opaque members that
   * spanned exactly those bytes (field_0_ .. field_484_[0x590], ending at
-  * 0x484+0x590 == 0xA14) are gone, and sizeof(ReplayWin) is unchanged at
-  * 0x252F0.
+  * 0x484+0x590 == 0xA14) are gone.
   *
-  * Past the base only the 512 replay base sites at 0xA20..0x2220 are typed.
-  * Other methods reach as far as 0x252EC, and their remaining storage is
-  * deliberately opaque until independent layout evidence identifies it.
+  * The 512 replay base sites at 0xA20..0x2220, the MapWin at 0x2320,
+  * FlatButton at 0x247A0 and Time at 0x252EC are now typed. The latter
+  * ends at 0x25314: show_replay constructs it at EBP-0x38 and the original
+  * destructor tears it down before the other two. The earlier 0x252F0
+  * size assertion ended inside that Time object and is withdrawn.
   */
 struct ReplayBaseSite {
   int x;
@@ -75,9 +79,6 @@ class ReplayWin : public GraphicWin {
  public:
   void timer_callback();
   ReplayWin() { ; }
-  // 0x005ADF10 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
   ~ReplayWin();
   void on_left_double_click(int, int);
   void on_right_double_click(int, int);
@@ -85,6 +86,7 @@ class ReplayWin : public GraphicWin {
   void on_right_down(int, int);
   void on_left_down(int, int);
   void on_left_up(int, int);
+  void on_redraw();
   void add_base_site(int x, int y, int faction_id);
   int update_base_site(int x, int y, int faction_id);
   void remove_base_site(int x, int y, int unused);
@@ -104,23 +106,15 @@ class ReplayWin : public GraphicWin {
   ReplayBaseSite base_sites_[512];  // 0xA20..0x2220
   // RECOVERY_MEMBER: v1 ReplayWin year_label_ 0x2220 0x005AD9E0
   char year_label_[0x100];  // 0x2220..0x2320
-  uint32_t field_2320_;  // 0x2320
-  uint32_t field_2324_;  // 0x2324
-  uint8_t field_2328_[0x1DD68];  // 0x2328
-  uint32_t field_20090_;  // 0x20090
-  uint8_t field_20094_[0x24];  // 0x20094
-  uint32_t field_200B8_;  // 0x200B8
-  uint32_t field_200BC_;  // 0x200BC
-  uint32_t field_200C0_;  // 0x200C0
-  uint8_t field_200C4_[0x46DC];  // 0x200C4
-  uint32_t field_247A0_;  // 0x247A0
-  uint8_t field_247A4_[0x440];  // 0x247A4
-  uint32_t field_24BE4_;  // 0x24BE4
-  uint8_t field_24BE8_[0x680];  // 0x24BE8
-  uint32_t field_25268_;  // 0x25268
-  uint32_t field_2526C_;  // 0x2526C
-  uint32_t field_25270_;  // 0x25270
-  uint8_t field_25274_[0x7C];  // 0x25274
+  // The original show_replay constructs these three complete subobjects in
+  // order at offsets 0x2320, 0x247A0 and 0x252EC. Its destructor tears
+  // them down in reverse order. The former opaque tail ended inside Time.
+  // RECOVERY_MEMBER: v1 ReplayWin map_win_ 0x2320 0x005ADF10
+  MapWin map_win_;
+  // RECOVERY_MEMBER: v1 ReplayWin flat_button_ 0x247A0 0x005ADF10
+  FlatButton flat_button_;
+  // RECOVERY_MEMBER: v1 ReplayWin timer_ 0x252EC 0x005ADF10
+  Time timer_;
 };
-static_assert(sizeof(ReplayWin) == 0x252F0,
+static_assert(sizeof(ReplayWin) == 0x25314,
               "ReplayWin ownership must preserve the original object extent");

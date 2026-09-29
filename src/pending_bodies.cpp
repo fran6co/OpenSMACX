@@ -670,11 +670,6 @@ PickWin::~PickWin() {  // ??1PickWin@@QAE@XZ at 0x0048A8E0
     PENDING_BODY(0x0048A8E0, pending)(this, nullptr);
 }
 
-ReplayWin::~ReplayWin() {  // ??1ReplayWin@@QAE@XZ at 0x005ADF10
-    typedef void(__fastcall *pending)(ReplayWin *, void *);
-    PENDING_BODY(0x005ADF10, pending)(this, nullptr);
-}
-
 ReportWin::~ReportWin() {  // ??1ReportWin@@QAE@XZ at 0x004AD3B0
     typedef void(__fastcall *pending)(ReportWin *, void *);
     PENDING_BODY(0x004AD3B0, pending)(this, nullptr);
