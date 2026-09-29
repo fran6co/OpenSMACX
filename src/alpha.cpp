@@ -22,6 +22,7 @@
 #include "base.h"
 #include "council.h"
 #include "game.h"
+#include "halloffame.h"
 #include "general.h"
 #include "map.h"
 #include "mapwin.h"  // MainInterfaceGlobal
@@ -110,6 +111,11 @@ Landmark MapLandmark[MaxLandmarkNum];                       // 0x00949894
 Continent Continents[MaxContinentNum];                      // 0x009AA730
 uint32_t FactionRankings[MaxPlayerNum];                     // 0x009A64EC
 uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
+// hof_save/hof_load transfer this complete zero-initialized 0x1324-byte
+// block, and FameWin indexes it in 0x8C-byte records. The original address
+// is evidence of identity, not a pointer used by the product build.
+HallOfFameRecord HallOfFameRecords[HallOfFameRecordCount];  // 0x009A3840
+int HallOfFameIOMode;  // 0x00759194
 char MapFilePath[80];                                       // 0x0094A2BC
 // read_tech walks the array from `mov esi, 0x94F360` (&Technology[0].id,
 // base+8 over flags/name) with the 0x2C stride declared in technology.h.
