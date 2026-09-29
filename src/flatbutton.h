@@ -41,6 +41,11 @@ class FlatButton : public BaseButton {
   // Constructor607CFB installs669754: slot90 selects607DA0.
   virtual void close();
   FlatButton *destroy();
+  // ReportIf::report writes the per-page state at FlatButton+0xAB8 before
+  // redrawing its seven category controls (original 0x004A3950).
+  void set_report_page_state(int state) {
+    field_AB8_ = static_cast<uint32_t>(state);
+  }
 
  private:
   uint32_t field_AB8_;  // 0x0ab8

@@ -34,8 +34,13 @@
 #include "alpha.h"  // Labels
 #include "faction.h"  // Players
 #include "game.h"  // say_year
+#include "technology.h"  // has_tech_call
 #include "strings.h"  // StringTable, StringTemp
 #include "vector_teardown.h"
+
+// Popup's scroll lifecycle callbacks operate on ReportWin's embedded Scroll.
+void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
+void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 
 
 
@@ -638,6 +643,14 @@ void SubInterface::release_iface_mode() {
 // object is the zero storage the image leaves until then.
 ListBox ReportIfEnergyListBox;  // 0x0087BE84
 
+// ReportIf-owned research focus, carried between page changes. The retained
+// report seed and the draw_energy (004a84a0) / draw_labs (004a7000) seeds
+// read 0x0087BE24 and 0x00885F30 respectively. Neither location falls inside
+// ReportIfEnergyListBox or ReportIfGlobal; these are separate process words.
+// These declarations express ownership, not a claim of linked data placement.
+int ReportIfTechFocusPending;  // 0x0087BE24
+int ReportIfTechFocus;  // 0x00885F30
+
 // The process-wide ReportIf itself, 0x00885F38 - see reportif.h. The
 // image's dynamic initializer at 0x00496900 constructs it through the real
 // recovered constructor above, so the storage sits here.
@@ -1109,8 +1122,169 @@ Purpose: Unimplemented dependency - the retained report unit is not
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x0045DEA0 0x0045E540 0x004A3D20 0x004A7000 0x004A84A0 0x004A9050 0x004A9F90 0x004AA0B0 0x004AA970 0x004AB550 0x004AB600 0x004ABE70 0x004AC140 0x004C3A40 0x005B9F20 0x005D5890 0x005D5A70 0x00609F20
-Status: Link-only placeholder from src/recovered/units/004a3950.cpp; original behavior is not implemented.
+Status: Report dispatch and state transition recovered; seven referenced page
+        renderers remain explicit, link-only placeholders.
 */
 void ReportIf::report(int report_id, int faction_id, int selection) {
+    const int previous_page = report_page_history_[0];
+    switch (previous_page) {
+    case 2:
+        reinterpret_cast<ListBox *>(listBox1_)->close();
+        reinterpret_cast<FlatButton *>(flatButton1_)->hide();
+        reinterpret_cast<FlatButton *>(flatButton2_)->hide();
+        break;
+    case 3:
+        ReportIfEnergyListBox.close();
+        // Fall through: energy and intel share both embedded lists.
+    case 0:
+        reinterpret_cast<ListBox *>(listBox1_)->close();
+        reinterpret_cast<ListBox *>(listBox2_)->close();
+        break;
+    case 4:
+        close_ops();
+        break;
+    case 5:
+        if (field_8_ != 4 && field_8_ != 5) {
+            WorldClimateWorldWin.hide_all();
+            MainInterfaceGlobal.flat_button_[6].hide();
+            MainInterfaceGlobal.flat_button_[7].hide();
+        }
+        break;
+    case 6:
+        close_sat();
+        break;
+    case 7:
+        reinterpret_cast<FlatButton *>(flatButton12_)->hide();
+        reinterpret_cast<FlatButton *>(flatButton14_)->hide();
+        reinterpret_cast<FlatButton *>(flatButton13_)->hide();
+        break;
+    }
+
+    // The original category run is 2..8; category 1 has no report page or
+    // typed control in the class layout. Zero denotes the intel list.
+    if (previous_page >= 2 && previous_page <= 8) {
+        FlatButton &old_button = flatButtonsB_[previous_page - 2];
+        old_button.set_report_page_state(-1);
+        old_button.redraw();
+    }
+    if (report_id >= 2 && report_id <= 8) {
+        FlatButton &new_button = flatButtonsB_[report_id - 2];
+        new_button.set_report_page_state(2);
+        new_button.redraw();
+    }
+
+    report_selection_ = selection;
+    field_8_ = report_id;
+    report_faction_id_ = faction_id;
+
+    if (previous_page != 2 && ReportIfTechFocusPending != -1) {
+        int next_focus;
+        if (!(GameState & STATE_OMNISCIENT_VIEW)
+            && (GameRules & RULES_BLIND_RESEARCH)) {
+            if (ReportIfTechFocus >= 0 && ReportIfTechFocus <= 0x59
+                && has_tech_call(ReportIfTechFocus, faction_id)) {
+                next_focus = ReportIfTechFocus;
+            } else {
+                next_focus = ReportIfTechFocus;
+                for (int tech_id = 0; tech_id < 0x59; ++tech_id) {
+                    if (has_tech_call(tech_id, faction_id)) {
+                        next_focus = tech_id;
+                        break;
+                    }
+                }
+            }
+        } else {
+            next_focus = PlayersData[faction_id].tech_id_researching;
+        }
+        ReportIfTechFocus = next_focus;
+        if (ReportIfTechFocus < 0 || ReportIfTechFocus > 0x59) {
+            ReportIfTechFocus = 0;
+        }
+        ReportIfTechFocusPending = -1;
+    }
+
+    if (faction_id <= 0) {
+        return;
+    }
+
+    for (int index = 18; index > 0; --index) {
+        report_page_history_[index] = report_page_history_[index - 1];
+    }
+    report_page_history_[0] = field_8_;
+    const int current_page = report_page_history_[0];
+    if (current_page == 4 || current_page == 5 || current_page == 7) {
+        if (current_page != report_page_history_[1] || report_topic_changed_) {
+            ReportWinGlobal.field_E270_ = 1;
+            report_topic_changed_ = 0;
+        }
+    } else if (ReportWinGlobal.field_C0F8_ != 0) {
+        scroll_hide(&ReportWinGlobal, &ReportWinGlobal.scroll_.as_scroll());
+        ReportWinGlobal.field_E270_ = 0;
+        ReportWinGlobal.field_E26C_ = 0;
+        ReportWinGlobal.field_C0F8_ = 0;
+    }
+
+    reset();
+    switch (field_8_) {
+    case 0: draw_intel(); break;
+    case 2: draw_labs(); break;
+    case 3: draw_energy(); break;
+    case 4: draw_ops(); break;
+    case 5: draw_projects(); break;
+    case 6: draw_sat(); break;
+    case 7: draw_security(); break;
+    case 8: draw_score(); break;
+    }
+    MainInterfaceGlobal.soft_update();
+    ReportWinGlobal.redraw();
+    if (ReportWinGlobal.field_E26C_ != 0 && !report_scroll_blocked_) {
+        scroll_show(&ReportWinGlobal, &ReportWinGlobal.scroll_.as_scroll());
+        ReportWinGlobal.field_E26C_ = 0;
+        ReportWinGlobal.field_C0F8_ = 1;
+    }
+}
+
+// These panel renderers are same-owner dependencies of report(). Their
+// original bodies remain in the retained seeds; these definitions are link
+// continuity only and must not be counted as recovered behavior.
+// ORIGINAL: 0x004A7000 ?draw_labs@ReportIf@@QAEXXZ 0x004A7000-0x004A842F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a7000.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+void ReportIf::draw_labs() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a84a0.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+void ReportIf::draw_energy() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004A9050 ?draw_ops@ReportIf@@QAEXXZ 0x004A9050-0x004A9F85
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a9050.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+void ReportIf::draw_ops() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004AA0B0 ?draw_projects@ReportIf@@QAEXXZ 0x004AA0B0-0x004AA921;0x00659595-0x006595C9
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aa0b0.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+void ReportIf::draw_projects() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004AA970 ?draw_sat@ReportIf@@QAEXXZ 0x004AA970-0x004AB54B
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aa970.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+void ReportIf::draw_sat() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004AB600 ?draw_security@ReportIf@@QAEXXZ 0x004AB600-0x004ABE24
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ab600.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+void ReportIf::draw_security() {
+    // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004AC140 ?draw_intel@ReportIf@@QAEXXZ 0x004AC140-0x004AC977
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004ac140.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+void ReportIf::draw_intel() {
     // BODY GOES HERE.
 }

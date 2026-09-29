@@ -71,7 +71,7 @@ class ReportIf : public SubInterface {
   // unrecovered. The bl_daemon thunk in leaf_recoveries.cpp calls it.
   void bl_anim();
   // 0x004A3950  ?report@ReportIf@@QAEXHHH@Z - public, __thiscall,
-  // void(int, int, int), unrecovered. on_iface_left_click and ReportWin's
+  // void(int, int, int). on_iface_left_click and ReportWin's
   // on_key_click reach it on the singleton below; the retained unit's own
   // prototype names the second argument factionID (it feeds has_tech and the
   // per-faction spy lists), stores the faction id at +0x1E228 and the third
@@ -83,6 +83,11 @@ class ReportIf : public SubInterface {
   void draw_security();
   void draw_score();
   void draw_intel();
+  void draw_labs();
+  void draw_energy();
+  void draw_ops();
+  void draw_projects();
+  void draw_sat();
   // homed from 004a5f40.cpp
   void on_iface_left_click(int x_coord, int y_coord);
   // homed from 004ab550.cpp
@@ -222,7 +227,10 @@ class ReportIf : public SubInterface {
   // workspace have not been interpreted.
   // RECOVERY_MEMBER: v2 ReportIf draw_workspace_rect_ tagRECT 0x1E1C8 0x004A707F
   RECT draw_workspace_rect_;  // 0x1E1C8
-  uint8_t gap_1E1D8_[0x50];  // 0x1E1D8
+  uint32_t field_1E1D8_;  // 0x1E1D8
+  // report() shifts this 19-entry page history right before drawing a new
+  // faction. The first entry is the currently drawn report category.
+  int32_t report_page_history_[19];  // 0x1E1DC..0x1E227
   // ReportIf::report stores its faction and selection arguments here; the
   // singleton's 0x008A4160 address is this + 0x1E228, not separate storage.
   // RECOVERY_MEMBER: v1 ReportIf report_faction_id_ 0x1E228 0x004A3950
@@ -232,7 +240,9 @@ class ReportIf : public SubInterface {
   // draw_score tests this dword to select its extended report heading.
   // RECOVERY_MEMBER: v1 ReportIf field_1E230_ 0x1E230 0x004ABE70
   uint32_t field_1E230_;  // 0x1E230
-  uint8_t gap_1E234_[0xC];  // 0x1E234
+  uint32_t field_1E234_;  // 0x1E234
+  int32_t report_scroll_blocked_;  // 0x1E238
+  int32_t report_topic_changed_;  // 0x1E23C
   // ReportIf::init writes 0 and 4 to these adjacent dwords at +0x1E240
   // and +0x1E244. ReportWin::on_group_clicked writes its third argument
   // to the first when the clicked group id is 4. Their meanings remain
