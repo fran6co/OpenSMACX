@@ -640,8 +640,10 @@ extern int VehBattleModifier[8];  // 0x009155F0
 extern LPSTR VehBattleDisplay[160];  // 0x0090F554
 extern LPSTR VehBattleDisplayTerrain;
 
-void __cdecl say_morale(LPSTR morale_output, uint32_t veh_id, int faction_id_vs_native);
-void __cdecl say_morale(uint32_t veh_id, int faction_id_vs_native);
+// The original symbols are ?say_morale@@YAXPADHH@Z and
+// ?say_morale@@YAXHH@Z; veh.cpp defines these signed-ID overloads.
+void __cdecl say_morale(LPSTR morale_output, int veh_id, int faction_id_vs_native);
+void __cdecl say_morale(int veh_id, int faction_id_vs_native);
 int __cdecl drop_range(int faction_id);
 // `int` throughout, per the catalogue: the original exports this as
 // `?defense_value@@YAHHHHHH@Z` - all `H`, no `I`.

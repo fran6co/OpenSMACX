@@ -420,11 +420,9 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
 
 // ORIGINAL: 0x004B4CF0 ?draw_active@StatusWin@@QAEXHHH@Z 0x004B4CF0-0x004B652B
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004b4cf0.cpp retained full transcription and original span", "MainInterfaceGlobal Buffer and status_left_rect_ layout", "Veh and Base records, destination state and box styles in source"], "reason": "Home the active-status panel's frame, unit/base identity display, selection spots and destination lifecycle in their real owners; retain omitted detail branches as restoration obligations."}
-// This is a partial behavioral recovery. The retained seed still describes
-// morale, ability, movement, base-intelligence and production detail lines,
-// plus the original colours and formatting of the cargo and damage lines.
-// Those must be restored before this can replace the original
-// renderer for a playable game; a build or byte score alone cannot grant that.
+// The retained seed is the restoration reference for the colour palette,
+// punctuation and disputed row layout. Compiling this body does not establish
+// exact display behavior or byte restoration.
 void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
     Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
     screen->set_font(&font1_, &font3_, &font2_, 0);
@@ -459,6 +457,14 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
         screen->set_font(&font1_, 0, 0, 0);
         StringTemp[0] = '\0';
         strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+        if ((GameState & STATE_SCENARIO_EDITOR) &&
+            (GameState & STATE_DEBUG_MODE)) {
+            char digits[80];
+            strcat(StringTemp, "(");
+            _itoa(vehicle_id, digits, 10);
+            strcat(StringTemp, digits);
+            strcat(StringTemp, ")");
+        }
         int line_y = screen->wrap_cent(&font3_, StringTemp, content_x,
                                        content_y + title_offset + 8, content_width);
         if (vehicle.faction_id != 0 &&
@@ -469,13 +475,41 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                                        content_width);
         }
 
-        // The seed appends ability names and, where visible, morale before
-        // these order lines. Their text and colour decisions remain pending.
         StringTemp[0] = '\0';
+        strcat(StringTemp, "(");
         say_orders(StringTemp, vehicle.proto_id);
+        if (vehicle.state & VSTATE_DESIGNATE_DEFENDER) {
+            strcat(StringTemp, "#");
+        }
+        for (int ability = 0; ability < MaxAbilityNum; ++ability) {
+            if (has_abil(vehicle.proto_id, 1 << ability)) {
+                char *name = StringTable.get(
+                    reinterpret_cast<int>(Ability[ability].abbreviation));
+                if (*name != '\0') {
+                    strcat(StringTemp, ", ");
+                    strcat(StringTemp, name);
+                }
+            }
+        }
+        strcat(StringTemp, ")");
         line_y = screen->wrap_cent(StringTemp, content_x, line_y, content_width);
-        if (vehicle.faction_id == ConsoleGlobal.faction_id_ ||
-            (GameState & STATE_OMNISCIENT_VIEW)) {
+        const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+        const bool own_or_omniscient =
+            vehicle.faction_id == ConsoleGlobal.faction_id_ ||
+            (GameState & STATE_OMNISCIENT_VIEW) != 0;
+        const bool known_orders = own_or_omniscient ||
+            (PlayersData[ConsoleGlobal.faction_id_]
+                 .diplo_treaties[vehicle.faction_id] & 1) != 0;
+        if ((vehicle.faction_id != 0 && prototype.plan < 8) ||
+            (prototype.plan == PLAN_INFO_WARFARE &&
+             morale_veh(vehicle_id, 1, 0) > 1)) {
+            StringTemp[0] = '\0';
+            say_morale(StringTemp, vehicle_id, 0);
+            line_y = own_or_omniscient
+                ? screen->wrap(StringTemp, content_x, line_y, content_width)
+                : screen->wrap_cent(StringTemp, content_x, line_y, content_width);
+        }
+        if (own_or_omniscient) {
             StringTemp[0] = '\0';
             if (vehicle.home_base_id >= 0 && vehicle.home_base_id < BaseCurrentCount) {
                 strcat(StringTemp, Bases[vehicle.home_base_id].name_string);
@@ -483,9 +517,68 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                 strcat(StringTemp, label_get(0x308 / 4));
             }
             line_y = screen->wrap(StringTemp, content_x, line_y, content_width);
-            StringTemp[0] = '\0';
-            say_orders(StringTemp, vehicle_id);
-            line_y = screen->wrap(StringTemp, content_x, line_y, content_width);
+            if (vehicle.faction_id == ConsoleGlobal.faction_id_) {
+                const int maximum = speed(vehicle_id, 0);
+                const int remaining = maximum - vehicle.moves_expended;
+                StringTemp[0] = '\0';
+                if (remaining < 0 || remaining == 0) {
+                    strcat(StringTemp, label_get(0x9e4 / 4));
+                    screen->set_text_color(0xf9, -1, 1, 1);
+                } else {
+                    char digits[80];
+                    const int clamped = range(remaining, 0, 999);
+                    strcat(StringTemp, label_get(0x1c / 4));
+                    strcat(StringTemp, ": ");
+                    _itoa(clamped / Rules.move_rate_roads, digits, 10);
+                    strcat(StringTemp, digits);
+                    const int fraction = clamped % Rules.move_rate_roads;
+                    if (fraction != 0) {
+                        strcat(StringTemp, " ");
+                        _itoa(fraction, digits, 10);
+                        strcat(StringTemp, digits);
+                        strcat(StringTemp, "/");
+                        _itoa(Rules.move_rate_roads, digits, 10);
+                        strcat(StringTemp, digits);
+                    }
+                }
+                line_y = screen->wrap(StringTemp, content_x, line_y,
+                                      content_width);
+            }
+            const RulesChassis &chassis = Chassis[prototype.chassis_id];
+            if (chassis.range != 0) {
+                char digits[80];
+                const int movement = speed(vehicle_id, 0);
+                const int remaining = range(movement - vehicle.moves_expended,
+                                            0, 999);
+                const int current =
+                    (movement * (chassis.range + (remaining == 0 ? 1 : 0)) -
+                     vehicle.terraforming_turns - vehicle.moves_expended) /
+                    Rules.move_rate_roads;
+                const int maximum = movement * chassis.range /
+                                    Rules.move_rate_roads;
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0x30c / 4));
+                strcat(StringTemp, ": ");
+                const int next_x = screen->write_l(StringTemp, content_x,
+                                                   line_y, strlen(StringTemp));
+                _itoa(current, digits, 10);
+                StringTemp[0] = '\0';
+                strcat(StringTemp, digits);
+                strcat(StringTemp, "/");
+                _itoa(maximum, digits, 10);
+                strcat(StringTemp, digits);
+                screen->set_text_color(0xfa, -1, 1, 1);
+                if ((vehicle.terraforming_turns != 0 &&
+                     chassis.range / 2 <= vehicle.terraforming_turns) ||
+                    (chassis.range == 1 && remaining <= movement / 2)) {
+                    screen->set_text_color(0xfb, -1, 1, 1);
+                }
+                if (action_home(vehicle_id, -1) != 0) {
+                    screen->set_text_color(0xf9, -1, 1, 1);
+                }
+                screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
+                line_y += font1_.line_advance();
+            }
             const int capacity = veh_cargo(vehicle_id);
             if (capacity != 0) {
                 char count_text[32];
@@ -502,18 +595,58 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             }
         }
         if (vehicle.dmg_incurred != 0) {
-            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
-            const int hit_points = prototype.plan == 12 ? 1
+            const int hit_points = prototype.plan == PLAN_ALIEN_ARTIFACT ? 1
                 : range(prototype.reactor_id, 1, 100) * 10;
-            const int damage = range(vehicle.dmg_incurred, 0, 9999);
+            const int remaining = range(hit_points - vehicle.dmg_incurred,
+                                        0, 9999);
             char percent_text[32];
-            _itoa(damage * 100 / hit_points, percent_text, 10);
+            _itoa((hit_points - remaining) * 100 / hit_points,
+                  percent_text, 10);
             StringTemp[0] = '\0';
             strcat(StringTemp, label_get(0x628 / 4));
             strcat(StringTemp, ": ");
+            const int next_x = screen->write_l(StringTemp, content_x,
+                                               line_y, strlen(StringTemp));
+            screen->set_text_color(0xfa, -1, 1, 1);
+            if (hit_points / 3 <= vehicle.dmg_incurred) {
+                screen->set_text_color(0xfb, -1, 1, 1);
+            }
+            if (hit_points * 2 / 3 <= vehicle.dmg_incurred) {
+                screen->set_text_color(0xf9, -1, 1, 1);
+            }
+            StringTemp[0] = '\0';
             strcat(StringTemp, percent_text);
             strcat(StringTemp, "%");
-            screen->wrap(StringTemp, content_x, line_y, content_width);
+            screen->write_l(StringTemp, next_x, line_y, strlen(StringTemp));
+            line_y += font1_.line_advance();
+        }
+        if ((vehicle.state & VSTATE_DESIGNATE_DEFENDER) && known_orders) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0x1048 / 4));
+            screen->set_text_color(0xfb, -1, 1, 1);
+            screen->write_l(StringTemp, content_x, line_y, strlen(StringTemp));
+            line_y += font1_.line_advance();
+        }
+        if (known_orders) {
+            StringTemp[0] = '\0';
+            say_orders(StringTemp, vehicle_id);
+            line_y = screen->wrap(StringTemp, content_x, line_y,
+                                  content_width);
+            if (vehicle.order > 3 && vehicle.order < 0x18) {
+                char digits[80];
+                const int turns = action_terraform(vehicle_id,
+                                                    vehicle.order - 4, 0);
+                StringTemp[0] = '\0';
+                strcat(StringTemp, "[");
+                strcat(StringTemp, label_get(0x71c / 4));
+                strcat(StringTemp, ": ");
+                _itoa(turns + 1, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, "]");
+                screen->set_text_color(0xfb, -1, 1, 1);
+                screen->write_l(StringTemp, content_x, line_y,
+                                strlen(StringTemp));
+            }
         }
         if (add_spot != 0) {
             spot_.add(vehicle_id, 10, area.left, area.top,
@@ -523,7 +656,7 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
             (vehicle.faction_id == ConsoleGlobal.faction_id_ ||
              (GameState & STATE_OMNISCIENT_VIEW)) &&
             vehicle.order == 0x18 &&
-            (GameMorePreferences & 0x2000000) == 0;
+            (GameMorePreferences & MPREF_MAP_HIDE_ACTIVE_VEH_GOTO_PATH) == 0;
         if (show_destination) {
             draw_my_dest(vehicle_id);
             CoverWindow.Win::show(0);
@@ -547,10 +680,92 @@ void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
                                        content_y + title_offset + 8, content_width);
         if (base.faction_id_current != ConsoleGlobal.faction_id_) {
             StringTemp[0] = '\0';
-            strcat(StringTemp, Players[base.faction_id_current].adj_name_faction);
-            screen->wrap_cent(StringTemp, content_x, line_y, content_width);
+            const Player &owner = Players[base.faction_id_current];
+            if (Language == 0) {
+                strcat(StringTemp, owner.adj_name_faction);
+            } else {
+                GenderDefault = owner.noun_gender;
+                PluralityDefault = owner.is_noun_plural;
+                strcat(StringTemp, "(");
+                strcat(StringTemp, owner.noun_faction);
+                strcat(StringTemp, ")");
+            }
+            line_y = screen->wrap_cent(StringTemp, content_x, line_y,
+                                       content_width);
+            StringTemp[0] = '\0';
+            const int condition_label = has_fac_built(FAC_HEADQUARTERS,
+                                                       base_id) ? 0x5c4 :
+                base.population_size < 2 ? 0x2f0 :
+                base.population_size > static_cast<int>(Rules.pop_limit_sans_hab_complex)
+                    ? 0x570 : 0x2f4;
+            strcat(StringTemp, label_get(condition_label / 4));
+            line_y = screen->wrap_cent(StringTemp, content_x, line_y,
+                                       content_width);
+            StringTemp[0] = '\0';
+            const int facility_id = has_fac_built(FAC_RECREATION_COMMONS,
+                                                  base_id)
+                ? FAC_RECREATION_COMMONS
+                : has_fac_built(FAC_TACHYON_FIELD, base_id)
+                    ? FAC_TACHYON_FIELD : 0;
+            if (facility_id != 0) {
+                strcat(StringTemp, StringTable.get(
+                    reinterpret_cast<int>(Facility[facility_id].name)));
+                line_y = screen->wrap_cent(StringTemp, content_x, line_y,
+                                           content_width);
+            }
+            if (base.state & BSTATE_DRONE_RIOTS_ACTIVE) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0xb04 / 4));
+                screen->set_text_color(0xf9, -1, 1, 1);
+                line_y = screen->wrap_cent(StringTemp, content_x, line_y,
+                                           content_width);
+            }
+            if (base.nerve_staple_turns_left != 0) {
+                char digits[80];
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0xb08 / 4));
+                strcat(StringTemp, ": ");
+                _itoa(base.nerve_staple_turns_left, digits, 10);
+                strcat(StringTemp, digits);
+                screen->set_text_color(0xfb, -1, 1, 1);
+                line_y = screen->wrap_cent(StringTemp, content_x, line_y,
+                                           content_width);
+            }
         }
-        // Base intelligence and production text are retained in the seed.
+        const int owner_id = base.faction_id_current;
+        if (owner_id == ConsoleGlobal.faction_id_ ||
+            (GameState & STATE_OMNISCIENT_VIEW) ||
+            (PlayersData[ConsoleGlobal.faction_id_]
+                 .diplo_treaties[owner_id] & 1) != 0 || spying(owner_id)) {
+            const int production = base.queue_production_id[0];
+            char digits[80];
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0x798 / 4));
+            strcat(StringTemp, ": ");
+            int production_cost;
+            if (production < 0) {
+                strcat(StringTemp, StringTable.get(
+                    reinterpret_cast<int>(Facility[-production].name)));
+                production_cost = Facility[-production].cost;
+            } else {
+                strcat(StringTemp, VehPrototypes[production].veh_name);
+                production_cost = VehPrototypes[production].cost;
+            }
+            if (production != -69) {
+                strcat(StringTemp, " (");
+                _itoa(base.minerals_accumulated, digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, "/");
+                _itoa(cost_factor(owner_id, 1, -1) * production_cost,
+                      digits, 10);
+                strcat(StringTemp, digits);
+                strcat(StringTemp, ")");
+            }
+            if (StringTemp[0] != '\0') {
+                screen->wrap_cent(StringTemp, content_x, line_y,
+                                  content_width);
+            }
+        }
         if (add_spot != 0) {
             spot_.add(base_id, 1, area.left, area.top,
                       content_width, area.bottom - area.top);
