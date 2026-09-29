@@ -418,25 +418,146 @@ void StatusWin::draw(int tile_x, int tile_y, int city_index, int unit_index,
     MainInterfaceGlobal.soft_update(&localRect);
 }
 
-// StatusWin::draw_active (0x004B4CF0, 6203 bytes) remains an original body;
-// reset_active and the click handlers call this method by name.
+// ORIGINAL: 0x004B4CF0 ?draw_active@StatusWin@@QAEXHHH@Z 0x004B4CF0-0x004B652B
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004b4cf0.cpp retained full transcription and original span", "MainInterfaceGlobal Buffer and status_left_rect_ layout", "Veh and Base records, destination state and box styles in source"], "reason": "Home the active-status panel's frame, unit/base identity display, selection spots and destination lifecycle in their real owners; retain omitted detail branches as restoration obligations."}
+// This is a partial behavioral recovery. The retained seed still describes
+// morale, ability, movement, base-intelligence and production detail lines,
+// plus the original colours and formatting of the cargo and damage lines.
+// Those must be restored before this can replace the original
+// renderer for a playable game; a build or byte score alone cannot grant that.
+void StatusWin::draw_active(int vehicle_id, int base_id, int add_spot) {
+    Buffer *screen = static_cast<Buffer *>(&MainInterfaceGlobal);
+    screen->set_font(&font1_, &font3_, &font2_, 0);
 
-void StatusWin::draw_active(int first, int second, int flag) {  // 0x004B4CF0
-    typedef void(__fastcall *pending)(StatusWin *, void *, int, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x004B4CF0))(
-        this, nullptr, first, second, flag);
-    // Transitional state handoff for the original renderer: its vehicle
-    // branch writes the old image's destination dword, while C++ set_center
-    // consumes DestinationVehicleId. The retained draw_active seed has no
-    // early return before this branch; it selects the same eligibility gate.
-    if (second < 0 && first >= 0 && first < VehCurrentCount &&
-        (Vehs[first].faction_id == ConsoleGlobal.faction_id_ ||
-         (GameState & STATE_OMNISCIENT_VIEW)) &&
-        Vehs[first].order == 0x18 &&
-        (GameMorePreferences & 0x2000000) == 0) {
-        DestinationVehicleId = first;
+    // The image copies the left panel rectangle, draws two inset frames,
+    // then reserves another three pixels on every side for active content.
+    RECT area = MainInterfaceGlobal.status_left_rect();
+    screen->box_sprite(&area, &InterfaceBoxStyles[21]);
+    area.bottom -= 3;
+    area.left += 3;
+    area.right -= 3;
+    area.top += 3;
+    screen->box_sprite(&area, &InterfaceBoxStyles[18]);
+    area.left += 3;
+    area.right -= 3;
+    area.top += 3;
+    area.bottom -= 3;
+    const int content_x = area.left;
+    const int content_y = area.top;
+    const int content_width = area.right - area.left;
+    const int sprite_width = MapWinCaptionScale < 1 ? 75
+        : MapWinCaptionScale * 100 / MapWinCaptionDivisor;
+    const int sprite_x = ((area.right - sprite_width) - area.left) / 2 + content_x;
+    const int title_offset = MapWinCaptionScale < 1 ? 56
+        : MapWinCaptionScale * 75 / MapWinCaptionDivisor;
+
+    if (base_id < 0 && vehicle_id >= 0 && vehicle_id < VehCurrentCount) {
+        Veh &vehicle = Vehs[vehicle_id];
+        screen->set_clip(&area);
+        veh_draw(screen, vehicle_id, sprite_x, content_y, -4, 0x48, 0);
+        veh_draw(screen, vehicle_id, content_x, content_y, 0, 0x1800, 0);
+        screen->set_font(&font1_, 0, 0, 0);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, VehPrototypes[vehicle.proto_id].veh_name);
+        int line_y = screen->wrap_cent(&font3_, StringTemp, content_x,
+                                       content_y + title_offset + 8, content_width);
+        if (vehicle.faction_id != 0 &&
+            vehicle.faction_id != ConsoleGlobal.faction_id_) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, Players[vehicle.faction_id].adj_name_faction);
+            line_y = screen->wrap_cent(StringTemp, content_x, line_y,
+                                       content_width);
+        }
+
+        // The seed appends ability names and, where visible, morale before
+        // these order lines. Their text and colour decisions remain pending.
+        StringTemp[0] = '\0';
+        say_orders(StringTemp, vehicle.proto_id);
+        line_y = screen->wrap_cent(StringTemp, content_x, line_y, content_width);
+        if (vehicle.faction_id == ConsoleGlobal.faction_id_ ||
+            (GameState & STATE_OMNISCIENT_VIEW)) {
+            StringTemp[0] = '\0';
+            if (vehicle.home_base_id >= 0 && vehicle.home_base_id < BaseCurrentCount) {
+                strcat(StringTemp, Bases[vehicle.home_base_id].name_string);
+            } else {
+                strcat(StringTemp, label_get(0x308 / 4));
+            }
+            line_y = screen->wrap(StringTemp, content_x, line_y, content_width);
+            StringTemp[0] = '\0';
+            say_orders(StringTemp, vehicle_id);
+            line_y = screen->wrap(StringTemp, content_x, line_y, content_width);
+            const int capacity = veh_cargo(vehicle_id);
+            if (capacity != 0) {
+                char count_text[32];
+                StringTemp[0] = '\0';
+                strcat(StringTemp, label_get(0x360 / 4));
+                strcat(StringTemp, ": ");
+                _itoa(capacity - stack_veh(vehicle_id, 0), count_text, 10);
+                strcat(StringTemp, count_text);
+                strcat(StringTemp, "/");
+                _itoa(capacity, count_text, 10);
+                strcat(StringTemp, count_text);
+                line_y = screen->wrap(StringTemp, content_x, line_y,
+                                      content_width);
+            }
+        }
+        if (vehicle.dmg_incurred != 0) {
+            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+            const int hit_points = prototype.plan == 12 ? 1
+                : range(prototype.reactor_id, 1, 100) * 10;
+            const int damage = range(vehicle.dmg_incurred, 0, 9999);
+            char percent_text[32];
+            _itoa(damage * 100 / hit_points, percent_text, 10);
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0x628 / 4));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, percent_text);
+            strcat(StringTemp, "%");
+            screen->wrap(StringTemp, content_x, line_y, content_width);
+        }
+        if (add_spot != 0) {
+            spot_.add(vehicle_id, 10, area.left, area.top,
+                      content_width, area.bottom - area.top);
+        }
+        const bool show_destination =
+            (vehicle.faction_id == ConsoleGlobal.faction_id_ ||
+             (GameState & STATE_OMNISCIENT_VIEW)) &&
+            vehicle.order == 0x18 &&
+            (GameMorePreferences & 0x2000000) == 0;
+        if (show_destination) {
+            draw_my_dest(vehicle_id);
+            CoverWindow.Win::show(0);
+        } else {
+            UNK2();
+        }
+        base_id = -1;
     } else {
-        DestinationVehicleId = -1;
+        UNK2();
+    }
+
+    screen->restore_clip();
+    if (base_id >= 0 && base_id < BaseCurrentCount) {
+        Base &base = Bases[base_id];
+        base_draw(screen, base_id, sprite_x, content_y, -4, 0x40);
+        base_draw(screen, base_id, sprite_x, content_y, 0, 0x1800);
+        screen->set_font(&font1_, 0, 0, 0);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, base.name_string);
+        int line_y = screen->wrap_cent(&font3_, StringTemp, content_x,
+                                       content_y + title_offset + 8, content_width);
+        if (base.faction_id_current != ConsoleGlobal.faction_id_) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, Players[base.faction_id_current].adj_name_faction);
+            screen->wrap_cent(StringTemp, content_x, line_y, content_width);
+        }
+        // Base intelligence and production text are retained in the seed.
+        if (add_spot != 0) {
+            spot_.add(base_id, 1, area.left, area.top,
+                      content_width, area.bottom - area.top);
+        }
+    }
+    if (add_spot == 0) {
+        MainInterfaceGlobal.update(&area, static_cast<GraphicWin *>(0));
     }
 }
 
