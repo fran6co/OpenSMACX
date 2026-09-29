@@ -22,6 +22,13 @@
 #include "stringstruct.h"
 #include <cstring>
 
+// 0x008A6268 is the sole original reference to this process-wide filename
+// scratch space (SetupWin::do_menu at 0x004ADB4B). The right-side menu may
+// append a filename suffix. Its original extent is not established; reserve
+// ample product storage without asserting an exact original data span.
+// RECOVERY_OBJECT: v1 0x008A6268 ?SetupMenuFileScratch@@3PADA
+char SetupMenuFileScratch[1024];
+
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 0.
 // ORIGINAL: 0x004ADAD0 ?UNK3@SetupWin@@QAEHH@Z 0x004ADAD0-0x004ADAD5 BYTE_EXACT
@@ -141,6 +148,23 @@ int SetupWin::do_menu(char* a1, int a2, int a3) {
             return do_menu_rightside(a1, a3);
         default:
             return -1;
+    }
+}
+
+// ORIGINAL: 0x004ADB20 ?do_menu@SetupWin@@QAEHPAUPopup@@HH@Z 0x004ADB20-0x004ADB66 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004adb20.cpp; image:0x004ADB20-0x004ADB66; source:src/setupwin.h:SetupWin"], "reason": "Original method stores the incoming Popup at receiver+0x1014, dispatches menu kind 1 through do_menu_rightside with the original process-wide filename scratch address, then clears the non-owning popup member on both paths."}
+// symbol    ?do_menu@SetupWin@@QAEHPAVPopup@@HH@Z
+int SetupWin::do_menu(Popup *popup, int menu_kind, int flags) {
+    menu_popup_ = popup;
+    switch (menu_kind) {
+    case 1: {
+        const int result = do_menu_rightside(SetupMenuFileScratch, flags);
+        menu_popup_ = nullptr;
+        return result;
+    }
+    default:
+        menu_popup_ = nullptr;
+        return -1;
     }
 }
 

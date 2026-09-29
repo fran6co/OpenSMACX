@@ -21,6 +21,7 @@
 #include "original_seam.h"
 #include "graphicwin.h"
 class StringList;
+class Popup;
 
  /*
   * SetupWin class
@@ -37,6 +38,7 @@ class StringList;
 class SetupWin : public GraphicWin {
  public:
   int do_menu(char* a1, int a2, int a3);
+  int do_menu(Popup *popup, int menu_kind, int flags);
   // 0x004ADB70  ?do_menu_rightside@SetupWin@@QAEHPADH@Z - public, __thiscall,
   // int(char*, int), unrecovered. Declared so do_menu, which reaches it with a
   // direct `call rel32`, can name it.
@@ -91,7 +93,8 @@ class SetupWin : public GraphicWin {
   uint32_t field_100C_;  // 0x100C
   // RECOVERY_MEMBER: v3 SetupWin item_texts_ StringList* 0x1010 0x004AE4D0
   StringList *item_texts_;  // 0x1010, list head/current/count at +8/+C/+10
-  uint32_t field_1014_;  // 0x1014
+  // RECOVERY_MEMBER: v1 SetupWin menu_popup_ 0x1014 0x004ADB20
+  Popup *menu_popup_;  // 0x1014, non-owning during do_menu_rightside
   uint32_t field_1018_;  // 0x1018
   uint32_t field_101C_;  // 0x101C
   uint32_t field_1020_;  // 0x1020
