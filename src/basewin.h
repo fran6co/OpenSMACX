@@ -595,15 +595,13 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40BF0_;  // 0x40BF0
   uint32_t field_40BF4_;  // 0x40BF4
   uint32_t field_40BF8_;  // 0x40BF8
-  RECT rect4_;  // 0x40BFC, IDB `rect4`
-  uint32_t field_40C0C_;  // 0x40C0C
-  uint32_t field_40C10_;  // 0x40C10
-  uint32_t field_40C14_;  // 0x40C14
-  uint32_t field_40C18_;  // 0x40C18
-  uint32_t field_40C1C_;  // 0x40C1C
-  uint32_t field_40C20_;  // 0x40C20
-  uint32_t field_40C24_;  // 0x40C24
-  uint32_t field_40C28_;  // 0x40C28
+  // The nutrient renderer frames content, caption and outer bounds in order.
+  // RECOVERY_MEMBER: v1 BaseWin nutrient_content_rect_ 0x40BFC 0x00411240
+  RECT nutrient_content_rect_;
+  // RECOVERY_MEMBER: v1 BaseWin nutrient_title_rect_ 0x40C0C 0x00411240
+  RECT nutrient_title_rect_;
+  // RECOVERY_MEMBER: v1 BaseWin nutrient_outer_rect_ 0x40C1C 0x00411240
+  RECT nutrient_outer_rect_;
   // 0x40C2C, sixteen bytes that the IDB leaves as four unnamed dwords and
   // draw_garrison reads as one RECT: it is copied into set_clip's argument
   // whole, then its left/top/right/bottom are read separately to size the

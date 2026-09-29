@@ -2481,7 +2481,115 @@ void BaseWin::draw_commerce(int) {
     // BODY GOES HERE.
 }
 // ORIGINAL: 0x00411240 ?draw_nutrients@BaseWin@@QAEXH@Z 0x00411240-0x00411973;0x00651B37-0x00651B4C
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00411240.cpp", "src/basewin.h"], "reason": "Preserve the separately identified nutrients panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
-void BaseWin::draw_nutrients(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00411240.cpp:1912-2151", "src/basewin.h:nutrient rectangles and sprites3_", "src/base.h:Base nutrients_accumulated and nutrient_surplus", "src/base.cpp:BaseIDCurrentSelected and cost_factor", "image:0x00682B20-0x00682B28 nutrient punctuation"], "reason": "Render the growth grid and caption through owned BaseWin rectangles, sprites, current Base and label table. Retain the instruction-level seed for restoration rather than hardcoding its self/global addresses."}
+void BaseWin::draw_nutrients(int update_mode) {
+    Buffer *canvas = this;
+    RECT saved_clip = canvas->rect1_;
+    canvas->set_clip(&nutrient_outer_rect_);
+    canvas->box_sprite(&nutrient_outer_rect_, &InterfaceBoxStyles[3]);
+
+    Font font;
+    font.init(DefaultFontFace, WinScreenWidth == 800 ? 10 : 12, 0);
+    RECT title = nutrient_title_rect_;
+    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+    title.left += 3;
+    title.top += 3;
+    title.right -= 3;
+    title.bottom -= 3;
+    canvas->set_font(&font1_, nullptr, nullptr, nullptr);
+    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(520));
+    string_upper_slot()(StringTemp);
+    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
+
+    RECT content = nutrient_content_rect_;
+    canvas->box_sprite(&content, &InterfaceBoxStyles[0]);
+    content.left += 3;
+    content.top += 3;
+    content.right -= 3;
+    content.bottom -= 3;
+    canvas->set_font(&font, nullptr, nullptr, nullptr);
+    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    const int line_height = font.line_advance();
+    const int grid_bottom = content.bottom - 2 * line_height;
+    const int stored = BaseCurrent->nutrients_accumulated;
+    const int surplus = BaseCurrent->nutrient_surplus;
+    const int growth_cost = cost_factor(BaseCurrent->faction_id_current, 0,
+                                        BaseIDCurrentSelected);
+    const int total = (BaseCurrent->population_size + 1) * growth_cost;
+
+    if (total > 0 && growth_cost > 0) {
+        const int width = content.right - content.left;
+        const int height = grid_bottom - content.top;
+        int columns = growth_cost;
+        if (columns * 2 < width) {
+            while (height <= (total / columns) * 2 && height != (total / columns) * 2)
+                columns *= 2;
+        } else {
+            columns = 0;
+            do { ++columns; } while (columns * columns < total);
+            columns += 2;
+        }
+        const int rows = (total + columns - 1) / columns;
+        if (rows > 0) {
+            const int cell_width = width / columns;
+            const int cell_height = height / rows;
+            int left = content.left + (width - cell_width * columns) / 2;
+            int top = content.top + (height - cell_height * rows) / 2;
+            if (cell_height > 7) { ++left; ++top; }
+            for (int index = 0; index < total; ++index) {
+                const int column = index % columns;
+                const int row = index / columns;
+                RECT cell = {left + column * cell_width, top + row * cell_height,
+                             left + (column + 1) * cell_width - 1,
+                             top + (row + 1) * cell_height - 1};
+                if (index < stored) {
+                    if (cell_height < 8) GraphicWin::fill(&cell, 0x95);
+                    else canvas->tile(&sprites3_[1], cell.left, cell.top,
+                                      cell.left, cell.top, cell_width - 1, cell_height - 1);
+                } else {
+                    if (cell_height > 7) canvas->tile(&sprites3_[0], cell.left, cell.top,
+                                      cell.left, cell.top, cell_width - 1, cell_height - 1);
+                    else GraphicWin::fill(&cell, 0x98);
+                }
+                if (surplus < 0 && index >= stored + surplus && index < stored)
+                    canvas->box(&cell, 0x6c, 0x6c);
+                else if (surplus > 0 && index >= stored && index < stored + surplus)
+                    canvas->box(&cell, 0x95, 0x95);
+            }
+        }
+    }
+
+    const int remaining = growth_cost * (BaseCurrent->population_size + 1) - stored;
+    int turns = 1;
+    if (remaining > 0) {
+        if (surplus > 0) turns = (surplus - 1 + remaining) / surplus + 1;
+        else if (surplus < 0) turns = (-surplus - 1 + stored) / -surplus + 1;
+        else turns = update_mode;
+    }
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(surplus < 0 ? 51 : 47));
+    if (surplus == 0 && remaining > 0) {
+        strcat(StringTemp, ": -");
+        strcat(StringTemp, label_get(50));
+        strcat(StringTemp, "-");
+    } else if (surplus < 0 && remaining > 0) {
+        strcat(StringTemp, "!");
+    } else {
+        char number[32];
+        if (turns < 0) turns = 0;
+        if (turns > 9999) turns = 9999;
+        strcat(StringTemp, ": ");
+        _itoa(turns, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, label_get(turns == 1 ? 48 : 49));
+    }
+    canvas->write_cent_l(StringTemp, content.left,
+                         content.bottom - line_height - 2,
+                         content.right - content.left, strlen(StringTemp));
+    if (update_mode == 0) MainInterfaceGlobal.soft_update(&nutrient_outer_rect_);
+    else MainInterfaceGlobal.update(&nutrient_outer_rect_, nullptr);
+    canvas->set_clip(&saved_clip);
 }
