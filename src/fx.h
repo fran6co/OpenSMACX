@@ -39,6 +39,8 @@ class FX {
   void fade(int a1);
   void release(int a1);
   void stop(int a1);
+  void set_pitch(int effect, int pitch);
+  void engine_pitch(int pitch);
   FX();
   ~FX();
 
@@ -46,8 +48,9 @@ class FX {
   // RECOVERY_MEMBER: v4 FX effects_ Effect[97] 0x0 0x28EC 0x004482A0
   Effect effects_[97];
 
-  // FX::init writes -1 here at 0x00445CD9, after the complete Effect array.
-  uint32_t field_28EC_;  // 0x28EC
+  // FX::init writes -1 here; engine_pitch uses the signed index.
+  // RECOVERY_MEMBER: v1 FX engine_effect_index_ 0x28EC 0x00446B10
+  int engine_effect_index_;  // 0x28EC
 };
 
 static_assert(sizeof(FX) == 0x28F0,

@@ -104,6 +104,26 @@ void FX::fade(int a1) {
     effects_[a1].fade();
 }
 
+/*
+Purpose: Set a selected effect's pitch through the real virtual method.
+// ORIGINAL: 0x00446AF0 ?set_pitch@FX@@QAEXHH@Z 0x00446AF0-0x00446B10 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The 0x6C-stride receiver is the FX-owned Effect array, and slot 38 is Wave::set_pitch in the established virtual hierarchy.","evidence":["Original 0x00446AF0-0x00446B10 multiplies the effect index by 0x6C and dispatches slot 38 with the pitch argument.","fx.h owns Effect[97] at offset zero; wave.h declares virtual set_pitch at slot 38; git:b7e5b127:src/recovered/units/00446af0.cpp preserves the historical exact seed."]}
+*/
+void FX::set_pitch(int effect, int pitch) {
+    effects_[effect].set_pitch(pitch);
+}
+
+/*
+Purpose: Adjust the active engine effect's pitch if one is selected.
+// ORIGINAL: 0x00446B10 ?engine_pitch@FX@@QAEXH@Z 0x00446B10-0x00446B37 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"reason":"The trailing signed FX member selects one Effect, and the indirect call is its inherited virtual Wave::set_pitch.","evidence":["Original 0x00446B10-0x00446B37 reads signed this+0x28EC, skips negative values and calls slot 38 on the 0x6C-stride Effect array.","FX::init writes -1 to the trailing member; git:b7e5b127:src/recovered/00446b10.cpp preserves the historical exact seed and its signedness note."]}
+*/
+void FX::engine_pitch(int pitch) {
+    if (engine_effect_index_ >= 0) {
+        effects_[engine_effect_index_].set_pitch(pitch);
+    }
+}
+
 // FX publishes these existing owners; they are defined in their domain TUs.
 extern uint32_t BasePopDefaultBlock2E64[70];
 extern uint32_t AutoSoundDefaults[37];
@@ -120,7 +140,7 @@ const BasePopTextBlock FxPopupSoundDefaults = {"", -1, 127, 50, 0, 0};
 // ORIGINAL: 0x00445CD0 ?init@FX@@QAEXXZ 0x00445CD0-0x004468E1
 // RECOVERY_BINDING: v1 {"evidence": ["Existing seed src/unrecovered/00445cd0.cpp preserves original span445CD0..4468E1 and is retained as a hint.", "Original instructions store this+28EC=-1, publish callback4456B0, copy70words from683AD8, initialize/group the Effect array and global Wave objects, and reset37words at9BC080. The sole indirect call446034 targets Effect[4] virtual set_pitch at slot38."], "reason": "Initialize the real effect and CPU-voice banks and publish source-owned popup/audio defaults; replaces the executable-address forwarder."}
 void FX::init() {
-    field_28EC_ = 0xffffffff;
+    engine_effect_index_ = -1;
     BasePopDefaultField3094 = popup_wave_callback;
     memcpy(BasePopDefaultBlock2E64, &FxPopupSoundDefaults, sizeof(FxPopupSoundDefaults));
 
