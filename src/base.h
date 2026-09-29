@@ -558,6 +558,10 @@ extern uint32_t ScnVictFacilityObj;
 extern uint32_t BaseUpkeepStage;
 extern uint32_t BaseCurrentConvoyFrom[4]; // resources convoyed from base
 extern uint32_t BaseCurrentConvoyTo[4]; // resources convoyed/extracted to base
+// Entries correspond to other-faction slots 1..7. base_energy publishes both
+// sides of each commerce exchange; BaseWin::draw_commerce reads them.
+extern int BaseCommerceReceipts[7];
+extern int BaseCommercePartnerReceipts[7];
 extern int BaseCurrentGrowthRate;
 extern uint32_t BaseCurrentVehPacifismCount;
 extern uint32_t BaseCurrentForcesSupported; // Forces Supported by Base

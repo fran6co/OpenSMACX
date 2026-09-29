@@ -271,6 +271,14 @@ uint32_t BaseCurrentConvoyFrom[4];
 // RECOVERY_OBJECT: v2 0x0090E93C 0x0090E94C ?BaseCurrentConvoyTo@@3PAIA 0x004E9550
 uint32_t BaseCurrentConvoyTo[4];
 
+// Original base_energy writes one entry for each partner faction 1..7 and
+// draw_commerce reads those same 4-byte slots. The adjacent known objects at
+// 0x0090E980 and 0x0090EA30 bound each seven-entry publication.
+// RECOVERY_OBJECT: v2 0x0090EA10 0x0090EA2C ?BaseCommerceReceipts@@3PAHA 0x004EB560
+int BaseCommerceReceipts[7];
+// RECOVERY_OBJECT: v2 0x0090E964 0x0090E980 ?BaseCommercePartnerReceipts@@3PAHA 0x004EB560
+int BaseCommercePartnerReceipts[7];
+
 // Defined beside base_claimed below; base_reset uses them as the four
 // mutable candidate-site publications returned by base_build.
 extern int BaseSiteClaimX[4];
@@ -389,7 +397,7 @@ int base_yield_wrap_x(int x, int map_width) {
 // effects and the final energy-production special case still need translation
 // from the preserved seed before this is a complete behavioral recovery.
 // ORIGINAL: 0x004EB560 ?base_energy@@YAXXZ 0x004EB560-0x004EC3A6
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "source:src/base.h"], "reason": "Recover the selected-base convoy, inefficiency, allocation, specialist and facility stages through typed owners. Commerce and several late modifiers remain pending; this binding makes no exactness claim."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004eb560.cpp", "image:0x004EB560-0x004EC3A6 ranks the selected base and publishes seven commerce pairs at 0x0090EA10/0x0090E964", "source:src/base.h", "source:src/faction.h"], "reason": "Recover selected-base convoy, commerce rank/ledger, inefficiency, allocation, specialist and facility stages through typed owners. The original scenario-dependent commerce multiplier and several late modifiers remain pending; this binding makes no exactness claim."}
 void __cdecl base_energy() {
     Base &base = *BaseCurrent;
     const int faction = base.faction_id_current;
@@ -399,10 +407,59 @@ void __cdecl base_energy() {
     base.energy_inefficiency = black_market(available);
     base.energy_surplus = available - base.energy_inefficiency;
 
-    // Pending: commerce between factions changes energy_intake_2 here. The
-    // seed ranks same-faction bases and records per-partner receipts. Recompute
-    // inefficiency after that stage, as the original does, so the partial pass
-    // still publishes internally consistent selected-base values.
+    // Rank the selected base among its own faction by pre-commerce energy.
+    // base_rank sorts that same signed key in descending order and returns a
+    // partner's base at the corresponding rank (or -1 if it has fewer bases).
+    int commerce_rank = 0;
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        const Base &candidate = Bases[base_id];
+        if (candidate.faction_id_current == faction &&
+            base.energy_intake_1 * 512 + BaseIDCurrentSelected <
+                candidate.energy_intake_1 * 512 + base_id) {
+            ++commerce_rank;
+        }
+    }
+    for (int partner = 1; partner < MaxPlayerNum; ++partner) {
+        const int slot = partner - 1;
+        BaseCommerceReceipts[slot] = 0;
+        BaseCommercePartnerReceipts[slot] = 0;
+        if (partner == faction ||
+            ((PlayersData[faction].diplo_treaties[partner] & DTREATY_TREATY) == 0 &&
+             (PlayersData[partner].diplo_treaties[faction] & DTREATY_TREATY) == 0) ||
+            PlayersData[partner].current_num_bases == 0) {
+            continue;
+        }
+        const int partner_base = base_rank(partner, commerce_rank);
+        if (partner_base < 0) continue;
+        int commerce_base = (Bases[partner_base].energy_intake_1 + 7 +
+                             base.energy_intake_1) / 8;
+        const int divisor = TechCommerceCount + 1;
+        if (divisor <= 0) continue;
+        int partner_receipt = ((PlayersData[partner].tech_commerce_bonus + 1) *
+                               commerce_base + divisor / 2) / divisor;
+        int receipt = ((PlayersData[faction].tech_commerce_bonus + 1) *
+                       commerce_base + divisor / 2) / divisor;
+        if ((PlayersData[faction].diplo_treaties[partner] & DTREATY_PACT) == 0) {
+            receipt /= 2;
+            partner_receipt /= 2;
+        }
+        if (GovernorFaction == faction) ++receipt;
+        if (GovernorFaction == partner) ++partner_receipt;
+        if (PlayersData[faction].sanction_turns != 0 ||
+            PlayersData[partner].sanction_turns != 0 ||
+            (Players[faction].rule_flags & RFLAG_ALIEN) != 0 ||
+            (Players[partner].rule_flags & RFLAG_ALIEN) != 0) {
+            receipt = 0;
+            partner_receipt = 0;
+        }
+        BaseCommerceReceipts[slot] = receipt;
+        BaseCommercePartnerReceipts[slot] = partner_receipt;
+        base.energy_intake_2 += receipt;
+    }
+    // The original doubles commerce_base under a pair of still-unowned
+    // 0x009A6624/0x009A6628 scenario counters. That modifier remains a
+    // restoration obligation; the published ledgers otherwise use its
+    // complete typed eligibility, rank, bonus, pact and sanction sequence.
     available = base.energy_intake_2 - base.energy_consumption;
     base.energy_inefficiency = black_market(available);
     base.energy_surplus = available - base.energy_inefficiency;

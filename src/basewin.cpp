@@ -2476,10 +2476,10 @@ void BaseWin::draw_pop(int update_mode) {
     canvas->set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip", "src/unrecovered/00410870.cpp explicitly marks its faction-report loop and military-score branch as approximate"], "reason": "Recover the verified commerce panel frame, title and refresh through owned BaseWin rectangles and typed faction data; retain the seed for the as-yet-unrecovered report rows rather than import its fabricated branch."}
-// The body is incomplete: the faction report at 0x00410B3C-0x004111DE still
-// needs its diplomatic relation/message logic recovered from the image. The
-// retained seed invents a comparison in that branch and must not be copied.
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x00410D54-0x00410EAB selects partner rows and reads the base_energy commerce ledgers", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip", "src/unrecovered/00410870.cpp explicitly marks its alien score and message selection as approximate"], "reason": "Recover the commerce panel and normal-faction partner rows through owned BaseWin rectangles, typed diplomacy state and source-owned commerce ledgers. The alien score and finer status strings remain obligations in the retained seed."}
+// The alien military-score branch and the sanctioned-loan/status text after
+// 0x00410EAB remain incomplete. The seed invents a comparison there; never
+// copy it to make this body appear complete.
 void BaseWin::draw_commerce(int update_mode) {
     Buffer *canvas = this;
     RECT saved_clip = canvas->rect1_;
@@ -2510,6 +2510,56 @@ void BaseWin::draw_commerce(int update_mode) {
     canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
     RECT report = commerce_report_rect_;
     canvas->box_sprite(&report, &InterfaceBoxStyles[0]);
+    report.left += 3;
+    report.top += 3;
+    report.right -= 3;
+    report.bottom -= 3;
+    const int row_pitch = (report.bottom - report.top) / 6;
+    int row_y = report.top;
+    bool wrote_row = false;
+    if ((Players[BaseCurrent->faction_id_current].rule_flags & RFLAG_ALIEN) == 0) {
+        const int owner = BaseCurrent->faction_id_current;
+        for (int partner = 1; partner < MaxPlayerNum; ++partner) {
+            const int slot = partner - 1;
+            if (partner == owner ||
+                (PlayersData[owner].diplo_treaties[partner] &
+                 (DTREATY_PACT | DTREATY_TREATY)) == 0 ||
+                (BaseCommerceReceipts[slot] == 0 &&
+                 BaseCommercePartnerReceipts[slot] == 0) ||
+                (Players[partner].rule_flags & RFLAG_ALIEN) != 0) {
+                continue;
+            }
+            wrote_row = true;
+            GenderDefault = Players[partner].noun_gender;
+            PluralityDefault = Players[partner].is_noun_plural;
+            canvas->set_text_color(ChatItemIdTable[partner], -1, 1, 1);
+            StringTemp[0] = 0;
+            strcat(StringTemp, Players[partner].noun_faction);
+            string_upper_slot()(StringTemp);
+            canvas->write_l(StringTemp, report.left, row_y, strlen(StringTemp));
+
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get((PlayersData[owner].diplo_treaties[partner]
+                                          & DTREATY_PACT) != 0 ? 645 : 644));
+            if (PlayersData[owner].sanction_turns == 0 &&
+                PlayersData[partner].sanction_turns == 0) {
+                char amount[32];
+                strcat(StringTemp, ": +");
+                _itoa(BaseCommerceReceipts[slot], amount, 10);
+                strcat(StringTemp, amount);
+            }
+            canvas->write_l(StringTemp, report.left + 5,
+                            row_y + font.line_advance(), strlen(StringTemp));
+            row_y += row_pitch;
+        }
+    }
+    if (!wrote_row) {
+        canvas->set_font(&font1_, nullptr, nullptr, nullptr);
+        canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(25));
+        canvas->write_cent_l(StringTemp, &commerce_report_rect_, strlen(StringTemp));
+    }
     if (update_mode == 0) MainInterfaceGlobal.soft_update(&commerce_outer_rect_);
     else MainInterfaceGlobal.update(&commerce_outer_rect_, nullptr);
     canvas->set_clip(&saved_clip);
