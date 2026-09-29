@@ -36,7 +36,7 @@ static_assert(offsetof(DeletionRecord, count_) == 8,
 
 class DeletionList {
  public:
-  DeletionList() { ; }
+  DeletionList();
   ~DeletionList() { ; }
 
   void clear(int index);
