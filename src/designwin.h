@@ -206,10 +206,10 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_A40_;  // 0xA40
   uint32_t field_A44_;  // 0xA44
   uint32_t field_A48_;  // 0xA48
-  uint32_t field_A4C_;  // 0xA4C
-  uint32_t field_A50_;  // 0xA50
-  uint32_t field_A54_;  // 0xA54
-  uint32_t field_A58_;  // 0xA58
+  // The info panel hands these four adjacent values to Buffer::set_clip as a
+  // RECT (0x004346DB..0x004346F1).
+  // RECOVERY_MEMBER: v2 DesignWin info_panel_rect_ tagRECT 0xA4C 0x004346A0
+  RECT info_panel_rect_;  // 0xA4C
   uint32_t field_A5C_;  // 0xA5C
   uint32_t field_A60_;  // 0xA60
   uint32_t field_A64_;  // 0xA64
@@ -226,34 +226,23 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_A90_;  // 0xA90
   uint32_t field_A94_;  // 0xA94
   uint32_t field_A98_;  // 0xA98
-  uint32_t field_A9C_;  // 0xA9C
-  uint32_t field_AA0_;  // 0xAA0
-  uint32_t field_AA4_;  // 0xAA4
-  uint32_t field_AA8_;  // 0xAA8
-  uint32_t field_AAC_;  // 0xAAC
-  uint32_t field_AB0_;  // 0xAB0
-  uint32_t field_AB4_;  // 0xAB4
-  uint32_t field_AB8_;  // 0xAB8
-  uint32_t field_ABC_;  // 0xABC
-  uint32_t field_AC0_;  // 0xAC0
-  uint32_t field_AC4_;  // 0xAC4
-  uint32_t field_AC8_;  // 0xAC8
-  uint32_t field_ACC_;  // 0xACC
-  uint32_t field_AD0_;  // 0xAD0
-  uint32_t field_AD4_;  // 0xAD4
-  uint32_t field_AD8_;  // 0xAD8
-  uint32_t field_ADC_;  // 0xADC
-  uint32_t field_AE0_;  // 0xAE0
-  uint32_t field_AE4_;  // 0xAE4
-  uint32_t field_AE8_;  // 0xAE8
-  uint32_t field_AEC_;  // 0xAEC
-  uint32_t field_AF0_;  // 0xAF0
-  uint32_t field_AF4_;  // 0xAF4
-  uint32_t field_AF8_;  // 0xAF8
-  uint32_t field_AFC_;  // 0xAFC
-  uint32_t field_B00_;  // 0xB00
-  uint32_t field_B04_;  // 0xB04
-  uint32_t field_B08_;  // 0xB08
+  // init assigns each rectangle as four consecutive coordinates; the panel
+  // methods consume the same groups with set_clip/copy. The vehicle rectangle
+  // is used by draw_vehicle; the next six are the component panel clips.
+  // RECOVERY_MEMBER: v2 DesignWin vehicle_panel_rect_ tagRECT 0xA9C 0x00436090
+  RECT vehicle_panel_rect_;  // 0xA9C
+  // RECOVERY_MEMBER: v2 DesignWin chassis_panel_rect_ tagRECT 0xAAC 0x00434BC0
+  RECT chassis_panel_rect_;  // 0xAAC
+  // RECOVERY_MEMBER: v2 DesignWin weapon_panel_rect_ tagRECT 0xABC 0x00434F40
+  RECT weapon_panel_rect_;  // 0xABC
+  // RECOVERY_MEMBER: v2 DesignWin armor_panel_rect_ tagRECT 0xACC 0x00435400
+  RECT armor_panel_rect_;  // 0xACC
+  // RECOVERY_MEMBER: v2 DesignWin reactor_panel_rect_ tagRECT 0xADC 0x00435800
+  RECT reactor_panel_rect_;  // 0xADC
+  // RECOVERY_MEMBER: v2 DesignWin special_one_panel_rect_ tagRECT 0xAEC 0x00435B30
+  RECT special_one_panel_rect_;  // 0xAEC
+  // RECOVERY_MEMBER: v2 DesignWin special_two_panel_rect_ tagRECT 0xAFC 0x00435DE0
+  RECT special_two_panel_rect_;  // 0xAFC
   uint32_t field_B0C_;  // 0xB0C
   uint32_t field_B10_;  // 0xB10
   uint32_t field_B14_;  // 0xB14

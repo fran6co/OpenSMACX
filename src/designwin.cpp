@@ -1594,32 +1594,174 @@ void DesignWin::suggest_abil(int ability) {
     // BODY GOES HERE.
 }
 
-// ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434bc0.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434bc0.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the chassis panel caption, selected chassis name and model preview; the seed retains unresolved specification text and palette behavior."}
 void DesignWin::draw_chassis(int redraw) {
     (void)redraw;
-    // BODY GOES HERE.
+    Buffer *canvas = static_cast<Buffer *>(this);
+    RECT preview = chassis_panel_rect_;
+    canvas->set_clip(&preview);
+    buffer_.copy(canvas, &preview);
+
+    const int title_height = font2_.unk_1_ < 0
+        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+    RECT title = preview;
+    title.bottom = title.top + title_height;
+    canvas->set_text_color(0xE0, -1, 1, 1);
+    char *caption = label_get(0x140 / 4);
+    canvas->write_cent_l(&font2_, caption, &title,
+                         static_cast<int>(strlen(caption)));
+
+    const int chassis = static_cast<int>(protoChassisType_);
+    char *name = Chassis[chassis].offsv_1_name;
+    if (name != 0) {
+        RECT name_area = preview;
+        name_area.top += title_height;
+        name_area.bottom = name_area.top + font1_.height_;
+        canvas->write_cent_l(&font1_, name, &name_area,
+                             static_cast<int>(strlen(name)));
+    }
+
+    preview.top += title_height + font1_.height_;
+    preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
+    vehdraw_construct_chassis(static_cast<int>(factionID_), chassis,
+                              static_cast<int>(protoWeaponType_), 0,
+                              static_cast<int>(protoReactorType_), &caviar_);
+    caviar_.set_scaling(0.05f);
+    caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
+    caviar_.render(canvas, (preview.left + preview.right) / 2,
+                   (preview.top + preview.bottom) / 2, 2);
+    // BODY GOES HERE. The seed's remaining chassis specification lines and
+    // their distinct palette are not yet represented by typed project data.
 }
 
-// ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434f40.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00434f40.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the weapon panel caption, selected weapon name and model preview; the seed retains unresolved class, range and ammunition text and palette behavior."}
 void DesignWin::draw_weapon(int redraw) {
     (void)redraw;
-    // BODY GOES HERE.
+    Buffer *canvas = static_cast<Buffer *>(this);
+    RECT preview = weapon_panel_rect_;
+    canvas->set_clip(&preview);
+    buffer_.copy(canvas, &preview);
+
+    const int weapon = static_cast<int>(protoWeaponType_);
+    const int title_height = font2_.unk_1_ < 0
+        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+    RECT title = preview;
+    title.bottom = title.top + title_height;
+    canvas->set_text_color(0xE0, -1, 1, 1);
+    char *name = label_get((Weapon[weapon].offense_rating == 0
+                                ? 0x200 : 0x204) / 4);
+    if (name != 0) {
+        canvas->write_cent_l(&font2_, name, &title,
+                             static_cast<int>(strlen(name)));
+    }
+
+    RECT name_area = preview;
+    name_area.top += title_height;
+    name_area.bottom = name_area.top + font1_.height_;
+    if (weapon != 0 && Weapon[weapon].name != 0) {
+        canvas->write_cent_l(&font1_, Weapon[weapon].name, &name_area,
+                             static_cast<int>(strlen(Weapon[weapon].name)));
+    }
+
+    preview.top += title_height + font1_.height_;
+    preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
+    if (weapon == 0) {
+        CaviarData empty_weapon;
+        caviar_.add_object(&empty_weapon, 0);
+        caviar_.set_scaling(0.15f);
+    } else {
+        vehdraw_construct_weapon(static_cast<int>(factionID_),
+                                 static_cast<int>(protoChassisType_), weapon,
+                                 &caviar_);
+        const uint8_t rarity = Weapon[weapon].mode;
+        caviar_.set_scaling(rarity < 3 ? 0.15f : (rarity == 9 ? 0.06f : 0.08f));
+    }
+    caviar_.set_scene_rotation(0.5323889f, 0.0f, 0.0f);
+    caviar_.render(canvas, (preview.left + preview.right) / 2,
+                   (preview.top + preview.bottom) / 2, 6);
+    // BODY GOES HERE. Remaining weapon class/range or ammunition lines and
+    // their original palette still need typed source bindings.
 }
 
-// ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435400.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435400.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the armor panel caption and selected armor model preview; the seed retains unresolved armor detail text, palette and alternate render behavior."}
 void DesignWin::draw_armor(int redraw) {
     (void)redraw;
-    // BODY GOES HERE.
+    Buffer *canvas = static_cast<Buffer *>(this);
+    RECT preview = armor_panel_rect_;
+    canvas->set_clip(&preview);
+    buffer_.copy(canvas, &preview);
+
+    const int title_height = font2_.unk_1_ < 0
+        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+    RECT title = preview;
+    title.bottom = title.top + title_height;
+    char *caption = label_get(0x1F8 / 4);
+    canvas->set_text_color(0xE0, -1, 1, 1);
+    canvas->write_cent_l(&font2_, caption, &title,
+                         static_cast<int>(strlen(caption)));
+
+    const int armor = static_cast<int>(protoArmorType_);
+    if (armor != 0) {
+        preview.top += title_height;
+        preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
+        vehdraw_construct_armor(static_cast<int>(factionID_),
+                                static_cast<int>(protoChassisType_),
+                                static_cast<int>(protoWeaponType_), armor, 1,
+                                &caviar_);
+        caviar_.set_scaling(0.07f);
+        caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
+        caviar_.render(canvas, (preview.left + preview.right) / 2,
+                       (preview.top + preview.bottom) / 2, 6);
+    }
+    // BODY GOES HERE. Armor rating text and the special multi-table render
+    // path need the still-unmodelled stat/palette resources.
 }
 
-// ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435800.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435800.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the reactor panel caption, selected reactor name and model preview; the seed retains unresolved ability-aware description, numeric detail and palette behavior."}
 void DesignWin::draw_reactor(int redraw) {
     (void)redraw;
-    // BODY GOES HERE.
+    Buffer *canvas = static_cast<Buffer *>(this);
+    RECT preview = reactor_panel_rect_;
+    canvas->set_clip(&preview);
+    buffer_.copy(canvas, &preview);
+
+    const int title_height = font2_.unk_1_ < 0
+        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+    RECT title = preview;
+    title.bottom = title.top + title_height;
+    char *caption = label_get(0x13C / 4);
+    canvas->set_text_color(0xE0, -1, 1, 1);
+    canvas->write_cent_l(&font2_, caption, &title,
+                         static_cast<int>(strlen(caption)));
+
+    const int reactor = static_cast<int>(protoReactorType_);
+    if (reactor >= 0 && reactor < MaxReactorNum) {
+        char *name = Reactor[reactor].name;
+        RECT name_area = preview;
+        name_area.top += title_height;
+        name_area.bottom = name_area.top + font1_.height_;
+        if (name != 0) {
+            canvas->write_cent_l(&font1_, name, &name_area,
+                                 static_cast<int>(strlen(name)));
+        }
+
+        preview.top += title_height + font1_.height_;
+        preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
+        vehdraw_construct_reactor(static_cast<int>(factionID_),
+                                  static_cast<int>(protoChassisType_),
+                                  static_cast<int>(protoWeaponType_), reactor,
+                                  protoAbilityFlags_, &caviar_);
+        caviar_.set_scaling(0.2f);
+        caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
+        caviar_.render(canvas, (preview.left + preview.right) / 2,
+                       (preview.top + preview.bottom) / 2, 6);
+    }
+    // BODY GOES HERE. Ability-aware reactor description and numeric detail
+    // text remain unresolved until their label/stat resources are modelled.
 }
 
 // ORIGINAL: 0x00435B30 ?draw_special_1@DesignWin@@QAEXH@Z 0x00435B30-0x00435DD1 FILE

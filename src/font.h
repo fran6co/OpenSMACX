@@ -122,6 +122,9 @@ class Font {
   // read `Win::flip` makes for the bubble. Compile-time access only:
   // no offset moves and no emitted byte changes.
   friend class BaseWin;
+  // DesignWin panel drawing reads the same font height and line advance
+  // words to size its caption and preview regions.
+  friend class DesignWin;
 
  public:
   // PUBLIC because the image writes it from outside: StatusWin sets
