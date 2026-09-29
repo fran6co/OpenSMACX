@@ -16,6 +16,9 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Prototype naming is mapped but unfinished; retained seed owns the behavior lead.
+void __cdecl name_proto(char *name, int chassis, int faction, int weapon,
+                       int armor, int reactor, int abilities, int plan);
 
 struct VOX_Vect;
 struct VOX_Matrix;

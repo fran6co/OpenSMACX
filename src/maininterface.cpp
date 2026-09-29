@@ -565,7 +565,8 @@ void MainInterface::chat(char *text, int channel) {
 // Fixed-slot bindings carried from 0045c290.cpp
 static int *const InterfaceBuffer = (int *)0x007AEC64;
 static int *const InterfaceClipRect = (int *)0x007AEC94;
-static int *const MainInterfaceTileFlag = (int *)0x007D3930;
+// RECOVERY_OBJECT: v2 0x007D3930 0x007D3934 ?MainInterfaceTileFlag@@3HA 0x0045C290
+int MainInterfaceTileFlag;
 
 // ORIGINAL: 0x0045C290 ?restore_back@MainInterface@@QAEXH@Z 0x0045C290-0x0045C393 FILE
 // size      259 bytes
@@ -624,7 +625,7 @@ void MainInterface::restore_back(int a1) {
     }
 
     {
-        int *r = *MainInterfaceTileFlag != 0
+        int *r = MainInterfaceTileFlag != 0
             ? reinterpret_cast<int *>(self + 0xdd0)
             : reinterpret_cast<int *>(self + 0xdb0);
         int x = r[0];
@@ -635,7 +636,7 @@ void MainInterface::restore_back(int a1) {
     }
 
     {
-        int *r = *MainInterfaceTileFlag != 0
+        int *r = MainInterfaceTileFlag != 0
             ? reinterpret_cast<int *>(self + 0xdc0)
             : reinterpret_cast<int *>(self + 0xda0);
         int x = r[0] + 1;

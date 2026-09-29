@@ -16,6 +16,11 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Shared prototype ordering produced by proto_sort and proto_sort_2.
+extern int ProtoSortCount;
+extern int ProtoSortIds[128];
+void __cdecl proto_sort(int faction_id);
+void __cdecl proto_sort_2(int faction_id);
 
 #include "game.h"      // GameRules and its flags, which bonus_at inlines
 #include "faction.h"   // MaxPlayerNum, which base_who inlines

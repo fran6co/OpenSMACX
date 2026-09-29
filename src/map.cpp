@@ -6626,12 +6626,14 @@ Purpose: Rank the prototypes a faction can build, best first, into ProtoSortIds.
 Return Value: n/a
 Status: Complete
 */
-int *const ProtoSortCount = (int *)0x00945B40;
-int *const ProtoSortIds = (int *)0x00945B44;
+// RECOVERY_OBJECT: v2 0x00945B40 0x00945B44 ?ProtoSortCount@@3HA 0x005A63D0
+int ProtoSortCount;
+// RECOVERY_OBJECT: v2 0x00945B44 0x00945D44 ?ProtoSortIds@@3PAHA 0x005A63D0
+int ProtoSortIds[128];
 
 void __cdecl proto_sort(int faction_id) {
     int sort_keys[128];
-    *ProtoSortCount = 0;
+    ProtoSortCount = 0;
     int i = 0;
     do {
         int proto_id = (i % 64) + (i >= MaxVehProtoFactionNum ? faction_id * 64 : 0);
@@ -6644,7 +6646,7 @@ void __cdecl proto_sort(int faction_id) {
                 key = 999999999;
             } else {
                 key = 0x34FB5E38;
-                (*ProtoSortCount)++;
+                ProtoSortCount++;
             }
         } else {
             key = (Chassis[VehPrototypes[proto_id].chassis_id].triad
@@ -6652,11 +6654,55 @@ void __cdecl proto_sort(int faction_id) {
             key += (32 - weap_val(proto_id, faction_id)) << 9;
             key += (8 - Chassis[VehPrototypes[proto_id].chassis_id].speed) << 6;
             key += 8 - arm_val(VehPrototypes[proto_id].armor_id, faction_id);
-            (*ProtoSortCount)++;
+            ProtoSortCount++;
         }
         sort_keys[i] = key;
         i++;
     } while (i < 128);
+    sort(128, ProtoSortIds, sort_keys);
+}
+
+// Order design choices by availability and obsolete status. Original IDs stay
+// in the output table; the added status bands are sorting keys only.
+// ORIGINAL: 0x005A63D0 ?proto_sort_2@@YAXH@Z 0x005A63D0-0x005A650B
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x005A63D0-0x005A650B", "source:src/recovered/units/005a63d0.cpp", "source:src/faction.h:PlayerData.proto_id_active"], "reason": "Recover design-choice ordering with typed prototype, weapon and faction state and source-owned shared output; original IDs remain separate from status ranking keys."}
+void __cdecl proto_sort_2(int faction_id) {
+    ProtoSortCount = 0;
+    int sort_keys[128];
+    for (int index = 0; index < 128; ++index) {
+        int prototype_id = index % MaxVehProtoFactionNum;
+        if (index >= MaxVehProtoFactionNum) {
+            prototype_id += faction_id * MaxVehProtoFactionNum;
+        }
+        ProtoSortIds[index] = prototype_id;
+        const VehPrototype &prototype = VehPrototypes[prototype_id];
+        int key = prototype_id;
+        bool available = (prototype.flags & PROTO_ACTIVE) != 0;
+        if (available && prototype_id < MaxVehProtoFactionNum) {
+            available = Weapon[prototype.weapon_id].offense_rating >= 0
+                && prototype_id != 15
+                && has_tech_call(prototype.preq_tech, faction_id);
+        }
+        if (!available) {
+            if (prototype_id < MaxVehProtoFactionNum) {
+                key = 999999999;
+            } else {
+                key += 0x400;
+                ++ProtoSortCount;
+            }
+        } else {
+            if (prototype.obsolete_factions & (1 << faction_id)) {
+                if (prototype_id < MaxVehProtoFactionNum) {
+                    key += 0x2000;
+                } else {
+                    key += PlayersData[faction_id].proto_id_active[prototype_id]
+                        ? 0x800 : 0x1000;
+                }
+            }
+            ++ProtoSortCount;
+        }
+        sort_keys[index] = key;
+    }
     sort(128, ProtoSortIds, sort_keys);
 }
 

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+extern int MainInterfaceTileFlag;
 // Shared palette indices, one foreground/shadow pair per faction.
 extern int ChatItemIdTable[8];
 extern int ChatShadowColors[8];

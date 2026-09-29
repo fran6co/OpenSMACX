@@ -40,6 +40,7 @@
 #include "font.h"
 #include "infowin.h"
 #include "worldwin.h"
+
 #include "wave.h"
 #include <mmsystem.h>
 #include "designwin.h" // Crawler animation advances while the design window is visible.
@@ -48,6 +49,12 @@
 #include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
+
+// ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057e040.cpp", "image:0x0057E040-0x0057EF95"], "reason": "The recovered DesignWin setup path requires the original prototype naming entry. Retain its full seed and explicit unfinished owner body for link continuity pending recovery of the name-generation behavior."}
+void __cdecl name_proto(char *, int, int, int, int, int, int, int) {
+    // BODY GOES HERE.
+}
 
 int VehCurrentCount;  // 0x009A64C8
 int VehDropLiftVehID;  // 0x009B2280

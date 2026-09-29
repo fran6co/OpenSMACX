@@ -28,6 +28,12 @@
 #include "alpha.h"
 #include "socialwin.h"
 
+// ORIGINAL: 0x00498B30 ?draw_labs@ReportWin@@QAEXXZ 0x00498B30-0x0049B1DC
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "source:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp"], "reason": "Datalink draw_tech and draw_entry reference this report-page owner. Preserve the original identity and retained incomplete renderer seed; explicitly unfinished body maintains build continuity while the full renderer remains a recovery obligation."}
+void ReportWin::draw_labs() {
+    // BODY GOES HERE.
+}
+
 const void *const ReportWinFlatButtonCtor = (const void *)0x00607CF0;
 const void *const ReportWinFlatButtonDtor = (const void *)0x00406880;
 

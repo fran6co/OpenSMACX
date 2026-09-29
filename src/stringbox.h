@@ -33,6 +33,7 @@
 // The base's real constructor runs implicitly either way.
 class StringBox : public GraphicWin {
  public:
+  StringList &strings() { return stringList_; }
   virtual int on_link_clicked(int id, char *link);
   void init(int x, int y, int width, int height, Win *parent,
             StringList *list, int flags);

@@ -58,6 +58,8 @@ class ReportWin : public GraphicWin {
   // 0x00496BB0 ?reset@ReportWin@@QAEXXZ resets the report controls, working
   // rectangle and the two report panel frames.
   void reset();
+  // 0x00498B30: referenced by Datalink; full report-page recovery is pending.
+  void draw_labs();
   void show(int visible);
   void hide();
   void on_left_double_click(int x, int y);

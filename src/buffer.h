@@ -221,6 +221,7 @@ class Buffer {
     markup_pending_ = 0;
   }
   void restore_clip() { set_clip(&rect2_); }
+  const RECT &clip_rect() const { return rect2_; }
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
   void set_text_color(int color1, int color2, int color3, int color4);
   void set_text_color2(int color1, int color2, int color3, int color4);

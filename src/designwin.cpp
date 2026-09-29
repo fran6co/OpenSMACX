@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "map.h"
 #include "wave.h"
 #include "designwin.h"
 #include "win.h"
@@ -57,12 +58,7 @@ int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
 void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 
-// 0x00945B40 / 0x00945B44 - the prototype ranking proto_sort fills. map.cpp
-// owns the sort and defines the same-named pair (as internal-linkage const
-// bindings, so they cannot be externed from here); the addresses and roles
-// are restated for this file's stack bodies: count first, then the id list.
-static int *const ProtoSortCount = (int *)0x00945B40;
-static int *const ProtoSortIds = (int *)0x00945B44;
+// map.cpp owns the prototype ranking shared with this window's stack list.
 
 // 0x009A64C0 - the interface flag byte scenario.cpp documents (`or dword
 // [0x9A64C0], 0xE0`, `test byte [0x9A64C0], 0x80` and `, 0x40`). Bit 0x40
@@ -1449,21 +1445,21 @@ int DesignWin::on_key_click(int a1, int a2) {
         break;
     case 0x21:
     case 0x69: {
-        int moved = (field_CE4_ + *ProtoSortCount - 9) % *ProtoSortCount;
+        int moved = (field_CE4_ + ProtoSortCount - 9) % ProtoSortCount;
         field_CE4_ = (moved < 0) ? 0 : moved;
         draw_stack();
         break;
     }
     case 0x22:
     case 0x63: {
-        int moved = (field_CE4_ + *ProtoSortCount + 9) % *ProtoSortCount;
+        int moved = (field_CE4_ + ProtoSortCount + 9) % ProtoSortCount;
         field_CE4_ = (moved < 0) ? 0 : moved;
         draw_stack();
         break;
     }
     case 0x23:
     case 0x61: {
-        int bottom = *ProtoSortCount - 10;
+        int bottom = ProtoSortCount - 10;
         field_CE4_ = (bottom < 0) ? 0 : bottom;
         draw_stack();
         break;
@@ -1508,15 +1504,9 @@ int DesignWin::on_key_click(int a1, int a2) {
 // find proto_id in the ranked list and move the stack window's anchor
 // (field_CE4_) so that entry sits five rows from the top.
 void DesignWin::center_stack(int proto_id, int redraw) {
-    // proto_sort_2 (0x005A63D0, catalogued ?proto_sort_2@@YAXH@Z) is unhomed;
-    // its sibling proto_sort lives in map.cpp, which also owns the
-    // map.cpp sort pair this body reads. Called through the
-    // original body's address like the other pending seams.
-    typedef void(__cdecl *proto_sort_2_seam)(int);
-    reinterpret_cast<proto_sort_2_seam>(static_cast<unsigned long>(0x005A63D0))(
-        factionID_);
+    proto_sort_2(factionID_);
 
-    int count = *ProtoSortCount;
+    int count = ProtoSortCount;
     int start = field_CE4_;
     bool found = false;
     int rem = 0;
@@ -2161,15 +2151,9 @@ void DesignWin::draw_stack() {
     rc.top = y_base;
     rc.right = x_base + spacer;
 
-    // proto_sort_2 (0x005A63D0, catalogued ?proto_sort_2@@YAXH@Z) is unhomed;
-    // its sibling proto_sort lives in map.cpp, which also owns the
-    // map.cpp sort pair. Called through the original body's
-    // address like the other pending seams.
-    typedef void(__cdecl *proto_sort_2_seam)(int);
-    reinterpret_cast<proto_sort_2_seam>(static_cast<unsigned long>(0x005A63D0))(
-        factionID_);
+    proto_sort_2(factionID_);
 
-    int divisor = *ProtoSortCount;
+    int divisor = ProtoSortCount;
     int entry = static_cast<int>(field_CE4_);
     int loop_end = entry + divisor;
     int drawn = 0;
