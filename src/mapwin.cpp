@@ -56,6 +56,12 @@
 // RECOVERY_OBJECT: v2 0x007D3C3C 0x007D3C5C ?MapWinTable@@3PAPAVMapWin@@A 0x0058F040
 MapWinSlots MapWinTable;
 
+// The original startup pass writes all 256 dwords immediately after the
+// map-window slots (with one intervening dword). Its consumers and meaning
+// remain to be identified; keep the storage distinct from MapWinTable.
+// RECOVERY_OBJECT: v2 0x007D3C60 0x007D4060 ?MapWinStartupWords@@3PAHA 0x00471030
+int MapWinStartupWords[256];
+
 // The original layout writer MapWin_UNK5 and mode-zero initializer share
 // these two 16-byte records and their accumulated dirty bits.
 // RECOVERY_OBJECT: v2 0x00939F48 0x00939F68 ?MapPanelRects@@3PAUMapPanelRect@@A 0x0046FA20
@@ -672,6 +678,28 @@ void __cdecl mapwin_system_shutdown() {
         }
     }
     FarmMapWindow.close();
+}
+
+// ORIGINAL: 0x00471030 ?mapwin_system_init@@YAXH@Z 0x00471030-0x004710DF
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x00471030-0x004710DF fills 0x007D3C60..0x007D4060, calls compute_lighting_table, clears/reinitializes eight MapWinTable slots, then initializes the FarmMapWindow cache", "src/unrecovered/00471030.cpp retains the seed; src/mapwin.cpp owns the table, FarmMapWindow and each called method"], "reason": "Recover map-window system startup with typed slot and storage ownership; leave the startup-word table's wider meaning open until consumers are identified."}
+void __cdecl mapwin_system_init(int reset_windows) {
+    FarmMapWindow.compute_lighting_table();
+    for (size_t word = 0; word < 256; ++word) {
+        MapWinStartupWords[word] = word >= 10 && word <= 65 ? 1 : 0;
+    }
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        MapWin *window = MapWinTable[slot];
+        if (window == nullptr) continue;
+        if (reset_windows != 0) {
+            window->clear(static_cast<int>(slot));
+            window->field_1DD74_ = slot == 0;
+            if (slot == 1) MapWinTable[1]->field_1DD74_ = 1;
+        }
+        if (slot == 0 || window->field_1DD74_ != 0) {
+            window->init(0, 0);
+        }
+    }
+    FarmMapWindow.init_dummy();
 }
 
 /*
