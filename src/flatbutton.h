@@ -46,12 +46,18 @@ class FlatButton : public BaseButton {
   void set_report_page_state(int state) {
     field_AB8_ = static_cast<uint32_t>(state);
   }
+  void set_border_styles(BoxSpriteParams *normal, BoxSpriteParams *hover,
+                         BoxSpriteParams *pressed) {
+    border_styles_[0] = normal;
+    border_styles_[1] = hover;
+    border_styles_[2] = pressed;
+  }
 
  private:
   uint32_t field_AB8_;  // 0x0ab8
   // Original 607CF0 walks three columns, resetting each of these runs.
   uint32_t field_ABC_[3];
-  uint32_t field_AC8_[3];
+  BoxSpriteParams *border_styles_[3];  // 0xAC8, borrowed style records
   // ReportIf4A431B..432F stores three borrowed Sprite pointers here;
   // constructor/close clear them without destroying the sprites.
   Sprite *field_AD4_[3];

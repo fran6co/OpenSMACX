@@ -27,6 +27,7 @@
 #include "game.h"  // PronounBuffer, same body
 #include "reportwin.h"  // ReportWinGlobal owns the original 0x00876478 window
 #include "text.h"
+#include "console.h"  // ConsoleGlobal owns the cursor history read by draw_cursor.
 
 // The allocation-base table at 0x6693AC dispatches this scalar deleting
 // entry. The compiler supplies its flag handling and class-specific delete;
@@ -1398,12 +1399,6 @@ static char *const CaretSeparator = (char *)0x006867C0;         // "^"
 // faction.cpp both reach it by address; nothing declares it yet.
 static int *const LocalFactionSlot = (int *)0x00939284;
 
-// The MultiWin cursor tables: the current terrain cursor index and the two
-// parallel x/y lookup tables beside it. Nothing in the tree reads them yet.
-static const int *const CursorIndexSlot = (const int *)0x009392B8;
-static const int *const CursorXTable = (const int *)0x009392C0;
-static const int *const CursorYTable = (const int *)0x00939340;
-
 // The spot label is built in strings.h's StringTemp (0x009B86A0), the same
 // shared scratch the sibling alpha.cpp prefs paths fill.
 
@@ -2033,13 +2028,13 @@ extern "C" void __fastcall SetupWin_close(SetupWin *self, void *) {
 /*
 Purpose: Repaint the map tile under the terrain cursor.
 // ORIGINAL: 0x0046AD60 ?draw_cursor@MapWin@@QAEXXZ 0x0046AD60-0x0046ADF1 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original46AD60..46ADF1; retired seed git:117282ee:src/unrecovered/0046ad60.cpp records the same identity and spans with its table-addressing TRIED note kept below.", "The receiver is mapwin.h's own window: the view fields 0x1DDA4..0x1DDD8 are declared members and draw_radius is declared beside them; 0x0094988C is map.cpp's MapIsFlat and 0x00949870 its MapLongitudeBounds.", "The cursor index and the two parallel tables (0x009392B8/0x009392C0/0x00939340) are bound here because nothing in the tree reads them yet."], "reason": "Coverage transcription of the cursor repaint on the typed MapWin receiver with the wrap test exactly as the seed orders it."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original46AD60..46ADF1; retired seed git:117282ee:src/unrecovered/0046ad60.cpp records the same identity and spans with its table-addressing TRIED note kept below.", "The receiver is mapwin.h's own window: the view fields 0x1DDA4..0x1DDD8 are declared members and draw_radius is declared beside them; 0x0094988C is map.cpp's MapIsFlat and 0x00949870 its MapLongitudeBounds.", "The cursor index and parallel x/y arrays at 0x009392B8/0x009392C0/0x00939340 are ConsoleGlobal members, as declared in console.h."], "reason": "Coverage transcription of terrain cursor repaint on the typed MapWin receiver using the Console owner for cursor history."}
 Status: Coverage transcription - unclaimed body
 */
 void MapWin::draw_cursor() {
-    const int index = *CursorIndexSlot;
-    const int x = CursorXTable[index];
-    const int y = CursorYTable[index];
+    const int index = ConsoleGlobal.cursor_history_index_;
+    const int x = ConsoleGlobal.cursor_history_x_[index];
+    const int y = ConsoleGlobal.cursor_history_y_[index];
 
     if (y < field_1DDA8_) {
         return;

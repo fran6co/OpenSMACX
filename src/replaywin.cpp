@@ -26,6 +26,9 @@
 #include "game.h"
 #include "alpha.h"
 #include "log.h"
+#include "console.h"
+
+void __cdecl fn_005adbd0(ReplayWin *window);
 
 // setup_game clears 0x800 dwords at 0x00950324 and timer_callback reads
 // eight-byte records from the same interval. The counter advances in bytes.
@@ -38,6 +41,70 @@ int ReplayEventBytes;
 // adjacent to the replay sound object, not an image-text pointer.
 // RECOVERY_OBJECT: v2 0x00945E00 0x00945E08 ?ReplayLocalizedPrefix@@3PADA 0x005AD9E0
 char ReplayLocalizedPrefix[8];
+// The short localized replay title at 0x00945DFC is a distinct four-byte
+// writable object, immediately before ReplayLocalizedPrefix.
+// RECOVERY_OBJECT: v2 0x00945DFC 0x00945E00 ?ReplayLocalizedTitle@@3PADA 0x005AD720
+char ReplayLocalizedTitle[4];
+
+// ORIGINAL: 0x005AD720 ?init@ReplayWin@@QAEXXZ 0x005AD720-0x005AD99A
+// RECOVERY_BINDING: v1 {"evidence": ["git:c4098269:src/recovered/units/005ad720.cpp", "src/replaywin.h owns GraphicWin, MapWin, FlatButton and Time at the original offsets", "src/console.h ConsoleGlobal cursor history occupies 0x009392B8/0x009392C0/0x00939340"], "reason": "Initialize the real replay window and its owned controls, using Console cursor history and typed shared styles instead of fixed addresses and vtable arithmetic; retain the seed for byte restoration."}
+// symbol    ?init@ReplayWin@@QAEXXZ
+void ReplayWin::init() {
+    field_A14_ = 0;
+    for (int index = 0; index < 512; ++index) {
+        base_sites_[index].x = -1;
+        base_sites_[index].y = -1;
+        base_sites_[index].faction_id = -1;
+    }
+
+    RECT rect = {0, 0, 0x320, 0x258};
+    GraphicWin::init(&rect, 0, 0x1000000, 0, 0, 0);
+    Win::center();
+
+    const int zoom_x = (((rect.right - rect.left) * 2) /
+                        MapLongitudeBounds << 4) / 100 - 0x10;
+    const int zoom_y = (((rect.bottom - rect.top) * 2) /
+                        MapLatitudeBounds << 4) / 50 - 0x10;
+    const int zoom = zoom_x < zoom_y ? zoom_x : zoom_y;
+
+    year_label_[0] = 0;
+    strcat(year_label_, Language != 0 ? ReplayLocalizedTitle : "Replay: ");
+
+    rect.left += 3;
+    rect.bottom -= 0x17;
+    rect.right -= 3;
+    rect.bottom -= 3;
+    rect.top += 0x1A;
+    map_win_.init(&rect, 0, 0x20);
+    map_win_.GraphicWin::init(&rect, 0, 0x200020, this, 0, 0);
+    map_win_.field_1DD98_ = zoom;
+    map_win_.field_1DD70_ = 0x85010080;
+    const int cursor = ConsoleGlobal.cursor_history_index_;
+    map_win_.field_1DD9C_ = ConsoleGlobal.cursor_history_x_[cursor];
+    map_win_.field_1DDA0_ = ConsoleGlobal.cursor_history_y_[cursor];
+
+    rect.top = rect.bottom + 3;
+    rect.bottom = rect.top + 0x14;
+    flat_button_.BaseButton::init(label_get(0xDB), -1, rect.left, rect.top,
+                                  rect.right - rect.left,
+                                  rect.bottom - rect.top, this, 0);
+    flat_button_.set_text_color(0x41, -1, 1, 1);
+    flat_button_.set_border_styles(&InterfaceBoxStyles[27],
+                                    &InterfaceBoxStyles[29],
+                                    &InterfaceBoxStyles[29]);
+    flat_button_.Buffer::set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    flat_button_.redraw();
+    map_win_.show(0);
+    map_win_.field_1DD70_ |= 0x2000000;
+
+    replay_turn_ = 0;
+    event_offset_ = 0;
+    timer_.set_modal();
+    timer_.start(reinterpret_cast<void (__cdecl *)(int)>(&fn_005adbd0),
+                 reinterpret_cast<int>(this), 0x64, 5);
+    set_modal(0, 0, 0);
+    timer_.release_modal();
+}
 
 // ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x004210D0-0x004210E7;0x00662360-0x0066244C
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005ADBF0 constructs GraphicWin, MapWin, FlatButton and Time at offsets 0, 0x2320, 0x247A0 and 0x252EC", "image:0x005ADF32 destructs Time at 0x252EC before FlatButton at 0x247A0", "git:d7a40721:src/recovered/units/005adf10.cpp", "src/replaywin.h declares all three complete subobjects"], "reason": "Let C++ destroy ReplayWin's real members in reverse construction order instead of forwarding the complete destructor to original image code."}

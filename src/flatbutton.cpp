@@ -114,7 +114,7 @@ void FlatButton::close() {
                 static_cast<uint32_t>(FlatButtonDefaultsTable[group * 3 + column]);
         }
         field_AD4_[column] = nullptr;
-        field_AC8_[column] = 0;
+        border_styles_[column] = 0;
     }
 }
 
@@ -274,7 +274,7 @@ FlatButton::FlatButton() {
                 static_cast<uint32_t>(FlatButtonDefaultsTable[group * 3 + index]);
         }
         field_AD4_[index] = 0;
-        field_AC8_[index] = 0;
+        border_styles_[index] = 0;
     }
 }
 

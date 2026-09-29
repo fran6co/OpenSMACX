@@ -78,6 +78,7 @@ void __cdecl replay_base(int type, int x, int y, int faction_id);
 class ReplayWin : public GraphicWin {
  public:
   void timer_callback();
+  void init();
   ReplayWin() { ; }
   ~ReplayWin();
   void on_left_double_click(int, int);
