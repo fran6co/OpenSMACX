@@ -26,8 +26,9 @@
   * despite sitting beside the virtually-derived buttons. Its own fields begin
   * at 0xA14; where the object ends is not established.
   *
-  * The methods recovered here are bare returns or a bare constant, touching
-  * no field, which is why they can be replaced ahead of that mapping.
+  * The complete object is now source-owned. The two Sprite members and two
+  * callbacks have distinct roles; the constructor and close preserve their
+  * original layout and default-pointer bindings.
   */
 class CheckButton : public GraphicWin {
  public:
@@ -39,31 +40,37 @@ class CheckButton : public GraphicWin {
   // `GraphicWin::construct()` picks one up under /GX - see FlatButton's
   // and PullDown's own notes (flatbutton.cpp, pulldown.cpp) for the full
   // measurement. An ordinary method drops it, same as Win/GraphicWin/Log.
-  // 0x004B3EC0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Out-of-line: the deleting destructor needs a real complete-object body.
   ~CheckButton();
+  void close();
   static void close_class();
   static int init_class();
   int init(int x, int y, GraphicWin *parent, int toggle_argument);
   void on_left_click(int x, int y);
 
-  // STRUCTURAL DISCOVERY: the CheckButton seeds identify on_redraw and
-  // on_left_double_click with QAE (nonvirtual) symbols, but Win currently
-  // models same-named virtual slots in this inheritance path. Until original
-  // vtable membership is established, neither method is declared here as an
-  // override or forced into the current base-class model.
+  // Constructor 0x63375A installs the vtable at 0x66DC14. Its words at
+  // 0x66DC40 and 0x66DC84 select 0x633850 and 0x633980 respectively, so
+  // these handlers are genuine overrides despite the catalogue's QAE labels.
+  void on_redraw();
+  void on_left_double_click(int x, int y);
 
   // Storage the image proves is here: its own methods reach 0xA2C.
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 6 member(s) from the IDA database, 1 named; it starts a member at 0xA14, which is where src/ ends.
 
-  uint32_t field_A14_;  // 0xA14
-  uint32_t isToggled_;  // 0xA18
-  ToggleCallback field_A1C_;  // 0xA1C, called with isToggled_
-  ToggleCallback field_A20_;  // 0xA20, called with isToggled_ on double-click
-  Sprite *field_A24_;  // 0xA24, unchecked sprite
-  Sprite *field_A28_;  // 0xA28, checked sprite
+  // RECOVERY_MEMBER: v1 CheckButton checked_ 0xA14 0x00633850
+  uint32_t checked_;
+  // The callback argument is distinct from the checked-state word.
+  // RECOVERY_MEMBER: v1 CheckButton toggle_argument_ 0xA18 0x00633980
+  uint32_t toggle_argument_;
+  // RECOVERY_MEMBER: v1 CheckButton click_callback_ 0xA1C 0x00633920
+  ToggleCallback click_callback_;
+  // RECOVERY_MEMBER: v1 CheckButton double_click_callback_ 0xA20 0x00633980
+  ToggleCallback double_click_callback_;
+  // RECOVERY_MEMBER: v3 CheckButton unchecked_sprite_ Sprite* 0xA24 0x00633850
+  Sprite *unchecked_sprite_;
+  // RECOVERY_MEMBER: v3 CheckButton checked_sprite_ Sprite* 0xA28 0x00633850
+  Sprite *checked_sprite_;
 };
 
 static_assert(sizeof(CheckButton) == 0xA2C,

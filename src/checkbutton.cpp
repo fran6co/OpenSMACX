@@ -48,12 +48,78 @@ Return Value: n/a
 Status: Complete
 */
 CheckButton::CheckButton() {
-    field_A14_ = 0;
-    isToggled_ = 0;
-    field_A1C_ = 0;
-    field_A20_ = 0;
-    field_A28_ = CheckButtonDefaultA28;
-    field_A24_ = CheckButtonDefaultA24;
+    checked_ = 0;
+    toggle_argument_ = 0;
+    click_callback_ = 0;
+    double_click_callback_ = 0;
+    checked_sprite_ = CheckButtonDefaultA28;
+    unchecked_sprite_ = CheckButtonDefaultA24;
+}
+
+/*
+Purpose: Reset CheckButton's toggle and callback state, restore its two
+         borrowed default sprites, and close the GraphicWin base.
+// ORIGINAL: 0x006337A0 ?close@CheckButton@@QAEXXZ 0x006337A0-0x006337D6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/006337a0.cpp","source:src/checkbutton.cpp:CheckButton::CheckButton","source:src/checkbutton.h:CheckButton"],"reason":"Use the real CheckButton members and source-owned default sprite pointers instead of the seed's raw offsets and executable data addresses."}
+*/
+void CheckButton::close() {
+    checked_ = 0;
+    toggle_argument_ = 0;
+    click_callback_ = nullptr;
+    double_click_callback_ = nullptr;
+    checked_sprite_ = CheckButtonDefaultA28;
+    unchecked_sprite_ = CheckButtonDefaultA24;
+    GraphicWin::close();
+}
+
+/*
+Purpose: Tear down CheckButton and its GraphicWin base through ordinary C++
+         destruction, preserving the compiler's exception-cleanup path.
+// ORIGINAL: 0x004B3EC0 ??1CheckButton@@QAE@XZ 0x004B3EC0-0x004B3F18;0x00659880-0x00659892 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/units/004b3ec0.cpp","original:0x004B3EC0-0x004B3F18","source:src/checkbutton.h:CheckButton"],"reason":"Let C++ emit the base teardown and exception cleanup instead of patching vtable addresses and manually invoking a base destructor."}
+// symbol    ??1CheckButton@@UAE@XZ
+*/
+CheckButton::~CheckButton() {
+    close();
+}
+
+/*
+Purpose: Copy the button's surface into its parent and draw the selected
+         checked or unchecked sprite onto that surface.
+// ORIGINAL: 0x00633850 ?on_redraw@CheckButton@@QAEXXZ 0x00633850-0x00633912 FILE
+// RECOVERY_BINDING: v1 {"evidence":["source:src/unrecovered/00633850.cpp","original:0x0066DC40","source:src/checkbutton.h:CheckButton","source:src/buffer.h:Buffer"],"reason":"Use the confirmed virtual override, inherited GraphicWin/Buffer hierarchy, typed parent and sprite members rather than seed vtable arithmetic."}
+// symbol    ?on_redraw@CheckButton@@UAEXXZ
+*/
+void CheckButton::on_redraw() {
+    if (win_parent_ == nullptr) {
+        return;
+    }
+
+    GraphicWin *const parent = static_cast<GraphicWin *>(win_parent_);
+    Buffer *const destination = static_cast<Buffer *>(parent);
+    Buffer *const source = static_cast<Buffer *>(this);
+    destination->copy(source,
+                      client_rect_.left - rect2_.left,
+                      client_rect_.top - rect2_.top,
+                      0, 0,
+                      dib_.bmiHeader.biWidth,
+                      -dib_.bmiHeader.biHeight);
+
+    Sprite *const sprite = checked_ != 0 ? checked_sprite_ : unchecked_sprite_;
+    sprite->draw(source, sprite->transparent_index(), 0, 0);
+}
+
+/*
+Purpose: Invoke the registered double-click callback with the stored toggle
+         argument; the click coordinates are not consumed by this handler.
+// ORIGINAL: 0x00633980 ?on_left_double_click@CheckButton@@QAEXHH@Z 0x00633980-0x00633997 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence":["source:src/recovered/00633980.cpp","original:0x0066DC84","source:src/checkbutton.h:CheckButton"],"reason":"Use the confirmed virtual override and typed callback/state members; the guarded recorder banks the freshly exact owner source before the duplicate seed is retired."}
+// symbol    ?on_left_double_click@CheckButton@@UAEXHH@Z
+*/
+void CheckButton::on_left_double_click(int, int) {
+    if (double_click_callback_ != nullptr) {
+        double_click_callback_(toggle_argument_);
+    }
 }
 
 /*
@@ -103,15 +169,15 @@ int CheckButton::init(int x, int y, GraphicWin *parent, int toggle_argument) {
 
     // The seed reads the checked Sprite's iWidth_ at +0x18 and the
     // unchecked Sprite's iHeight_ at +0x1C.
-    const int width = field_A28_->width();
-    const int height = field_A24_->height();
+    const int width = checked_sprite_->width();
+    const int height = unchecked_sprite_->height();
     const int result = GraphicWin::init(x, y, width, height, 0, 0x1020,
                                         parent, 0, 0);
     if (result != 0) {
         return result;
     }
 
-    isToggled_ = toggle_argument;
+    toggle_argument_ = toggle_argument;
     show(0);
     return 0;
 }
@@ -125,12 +191,12 @@ void CheckButton::on_left_click(int, int) {
         return;
     }
 
-    field_A14_ = field_A14_ == 0;
+    checked_ = checked_ == 0;
     redraw();
-    if (field_A1C_ != 0) {
-        field_A1C_(isToggled_);
+    if (click_callback_ != 0) {
+        click_callback_(toggle_argument_);
     }
-    win_parent_->on_button_clicked(isToggled_);
+    win_parent_->on_button_clicked(toggle_argument_);
     redraw();
 }
 

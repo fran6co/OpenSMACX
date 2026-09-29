@@ -604,11 +604,6 @@ BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
     PENDING_BODY(0x00420A70, pending)(this, nullptr);
 }
 
-CheckButton::~CheckButton() {  // ??1CheckButton@@QAE@XZ at 0x004B3EC0
-    typedef void(__fastcall *pending)(CheckButton *, void *);
-    PENDING_BODY(0x004B3EC0, pending)(this, nullptr);
-}
-
 Datalink::~Datalink() {  // ??1Datalink@@QAE@XZ at 0x00432290
     typedef void(__fastcall *pending)(Datalink *, void *);
     PENDING_BODY(0x00432290, pending)(this, nullptr);
