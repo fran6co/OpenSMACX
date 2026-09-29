@@ -685,10 +685,89 @@ void __cdecl base_yield() {
     }
 }
 
+namespace {
+
+// The original repeats this choice in each direction of its worker/specialist
+// search. Keep the scoring and packed storage in Base's own representation.
+int base_doctors_best_specialist(const Base &base) {
+    int best = CITIZEN_TECHNICIAN;
+    int best_score = -999;
+    for (int type = 0; type < MaxSpecialistNum; ++type) {
+        if (!has_tech(Citizen[type].preq_tech, base.faction_id_current)) continue;
+        int score = Citizen[type].psych_bonus * 3;
+        if (base.population_size >= static_cast<int>(Rules.min_base_size_specialists)) {
+            score += Citizen[type].ops_bonus + Citizen[type].research_bonus;
+        }
+        if (score > best_score) {
+            best = type;
+            best_score = score;
+        }
+    }
+    return best;
+}
+
+void base_doctors_add_specialist(Base &base) {
+    const unsigned int slot = static_cast<unsigned int>(base.specialist_total++);
+    if (slot < 16) {
+        const unsigned int shift = (slot & 7u) * 4;
+        uint32_t &word = base.spec[slot >> 3];
+        word = (word & ~(15u << shift))
+             | (static_cast<uint32_t>(base_doctors_best_specialist(base)) << shift);
+    }
+}
+
+void base_doctors_recompute() {
+    BaseComputedID = BaseIDCurrentSelected;
+    base_support();
+    base_yield();
+    base_nutrient();
+    base_minerals();
+    base_energy();
+}
+
+bool base_doctors_project_owned(int project, int faction) {
+    const int owner = base_project(project);
+    return owner >= 0 && Bases[owner].faction_id_current == faction;
+}
+
+} // namespace
+
 // ORIGINAL: 0x004F5F30 ?base_doctors@@YAXXZ 0x004F5F30-0x004F650C
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004f5f30.cpp", "source:src/base.h"], "reason": "Recover the selected Base's specialist/worker adjustment and repeated resource recomputation through typed Base, citizen and project state. Riot surcharge and warning popup paths remain unresolved; this is not a byte or behavioral claim."}
 void __cdecl base_doctors() {
-    // BODY GOES HERE.
+    Base &base = *BaseCurrent;
+    const int faction = base.faction_id_current;
+    const bool matrix = base_doctors_project_owned(SP_TELEPATHIC_MATRIX, faction);
+
+    // A human governor only changes citizen allocation when both its citizen
+    // option and active state are set. The nutrient flag is published by
+    // base_yield and can survive a cached allocation.
+    if ((static_cast<unsigned char>(LockEnableMask) & (1u << faction))
+        && (base.governor & (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE))
+            != (GOV_MANAGES_CITIZENS_SPECS | GOV_ACTIVE)) return;
+
+    for (int attempt = 0; attempt < 9; ++attempt) {
+        const bool needs_psych = BaseNutrientAdequate != 0
+            && base.drone_total > base.talent_total && !matrix;
+        if (needs_psych) {
+            base_doctors_add_specialist(base);
+            base_doctors_recompute();
+            if (base.drone_total <= base.talent_total || matrix) return;
+            continue;
+        }
+
+        // A non-psych specialist can return to the fields only if there is
+        // an allocated slot beyond the protected specialist count. Recompute
+        // the yields after each removal, as the original does.
+        if (base.specialist_total <= base.specialist_unk_1
+            || (base.state & BSTATE_DRONE_RIOTS_ACTIVE)) return;
+        --base.specialist_total;
+        base_doctors_recompute();
+        if (base.drone_total > base.talent_total && !matrix) {
+            base_doctors_add_specialist(base);
+            return;
+        }
+    }
 }
 
 // These dependencies retain their complete historical seeds under
@@ -703,9 +782,33 @@ int __cdecl base_build(int, int *, int *, int *) {
 }
 
 // ORIGINAL: 0x004E5A60 ?base_change@@YAXHH@Z 0x004E5A60-0x004E5FDC
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5a60.cpp", "source:src/base.cpp:base_reset"], "reason": "Explicitly unfinished Base-owned dependency required to link the recovered base_reset caller; production-change behavior remains in its seed"}
-void __cdecl base_change(int, int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004e5a60.cpp", "source:src/base.cpp:base_reset", "source:src/base.cpp:base_lose_minerals"], "reason": "Recover production selection, retool mineral adjustment and radius redraw through the typed Base and Rules. Project announcement and faction production counts remain unresolved; this is not a byte or behavioral claim."}
+void __cdecl base_change(int base_id, int production_id) {
+    if (production_id == 99999) return;
+
+    Base &base = Bases[base_id];
+    const int previous = base.queue_production_id[0];
+    base.queue_production_id[0] = production_id;
+    if (previous == production_id) return;
+
+    // Switching production applies the rule's retool penalty to the stored
+    // minerals, while keeping the unpenalized turn total for later accounting.
+    // base_lose_minerals already owns the matching classification and arithmetic.
+    int loss = 0;
+    if (Rules.retool_pct_pen_prod_chg
+        && (static_cast<unsigned char>(LockEnableMask)
+            & (1u << base.faction_id_current))
+        && base_making(base.production_id_last, base_id)
+            != base_making(production_id, base_id)
+        && base.minerals_accumulated_2 > static_cast<int>(Rules.retool_exemption)) {
+        const int exempt = static_cast<int>(Rules.retool_exemption);
+        const int penalty = static_cast<int>(Rules.retool_pct_pen_prod_chg);
+        loss = base.minerals_accumulated_2
+             - (base.minerals_accumulated_2 - exempt) * (100 - penalty) / 100
+             - exempt;
+    }
+    base.minerals_accumulated = base.minerals_accumulated_2 - loss;
+    draw_radius(base.x, base.y, 2, 2);
 }
 
 // ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB
