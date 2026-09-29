@@ -79,6 +79,7 @@ class ReplayWin : public GraphicWin {
  public:
   void timer_callback();
   void init();
+  void close();
   ReplayWin() { ; }
   ~ReplayWin();
   void on_left_double_click(int, int);

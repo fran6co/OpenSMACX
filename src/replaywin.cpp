@@ -27,6 +27,7 @@
 #include "alpha.h"
 #include "log.h"
 #include "console.h"
+#include "temp.h"  // save_daemon, load_daemon and do_all_draws
 
 void __cdecl fn_005adbd0(ReplayWin *window);
 
@@ -104,6 +105,42 @@ void ReplayWin::init() {
                  reinterpret_cast<int>(this), 0x64, 5);
     set_modal(0, 0, 0);
     timer_.release_modal();
+}
+
+// ORIGINAL: 0x005AD9A0 ?close@ReplayWin@@QAEXXZ 0x005AD9A0-0x005AD9E0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005ad9a0.cpp retains the original exact close seed", "src/replaywin.h owns the GraphicWin base and embedded MapWin", "src/mapwin.cpp MapWin::close releases owned_ and clears it"], "reason": "Close both real window subobjects through their owners, then preserve the original post-close safety check on the typed map cache pointer."}
+// symbol    ?close@ReplayWin@@QAEXXZ
+void ReplayWin::close() {
+    GraphicWin::close();
+    map_win_.close();
+    if (map_win_.owned_ != 0) {
+        free(map_win_.owned_);
+        map_win_.owned_ = 0;
+    }
+}
+
+// The original calls save_daemon with the bare autosave name, then reloads
+// its .SAV path after the replay window closes. Both image strings are at
+// 0x00691408 and 0x00691424 respectively.
+static const char ReplaySaveName[] = "Alpha Centauri Autosave 1";
+static const char ReplaySaveFile[] = "Alpha Centauri Autosave 1.SAV";
+
+// ORIGINAL: 0x005ADBF0 ?show_replay@@YAXXZ 0x005ADBF0-0x005ADE7B;0x004210D0-0x004210E7;0x00662240-0x00662355
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005adbf0.cpp retains the SHARED_TAIL seed and construction sequence", "image strings at 0x00691408 and 0x00691424 name the save and reload paths", "src/map.cpp owns WorldClimateSkipTerrainClear at 0x0068F21C", "src/game.cpp owns GameState at 0x009A64C0", "src/replaywin.h models the GraphicWin, MapWin, FlatButton and Time subobjects"], "reason": "Run the replay through a real local ReplayWin lifetime and typed game/climate state instead of a manually patched vtable and fixed executable addresses; retain the seed's unmodeled temporary objects as restoration work."}
+// symbol    ?show_replay@@YAXXZ
+void __cdecl show_replay() {
+    ReplayWin replay;
+    WorldClimateSkipTerrainClear = 2;
+    save_daemon(ReplaySaveName);
+    GameState |= 0x80;
+
+    replay.init();
+    replay.close();
+
+    do_all_draws();
+    load_daemon(ReplaySaveFile, 0);
+    flush_input();
+    WorldClimateSkipTerrainClear = 0;
 }
 
 // ORIGINAL: 0x005ADF10 ??1ReplayWin@@QAE@XZ 0x005ADF10-0x005AE0A8;0x004210D0-0x004210E7;0x00662360-0x0066244C
