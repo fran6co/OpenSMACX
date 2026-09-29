@@ -31,8 +31,12 @@
 #include "game.h"
 #include "map.h"
 #include "faction.h"
+#include "alpha.h"
+#include "pulldown.h"
 #include "maininterface.h"
 #include <cstring>
+
+void __cdecl help_any();
 
 // ORIGINAL: 0x00456300 ?setup_text@InfoWin@@QAEXXZ 0x00456300-0x0045838D
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00456300.cpp", "source:src/infowin.h"], "reason": "InfoWin::timer_change now calls this original 8333-byte panel-content builder. Its existing seed is incomplete; an explicitly unfinished owning-TU definition preserves link continuity without claiming that panel content has been recovered."}
@@ -484,20 +488,47 @@ void InfoWin::on_right_click(int a, int b) {
     right_menu(a, b);
 }
 
-func_info_win_right_menu InfoWinOriginalRightMenu =
-    original_method<func_info_win_right_menu>(0x004589C0);
-
-// right_menu's own body has NOT homed yet: it calls help_any (0x0044CB30),
-// which this TU now defines, but it also needs GraphicWin::update(RECT *,
-// GraphicWin *), which is neither declared nor defined anywhere in the tree -
-// see the HANDOFF in the report. So the out-of-line forwarder stays until that
-// declaration lands. The auto_inline(off) is load-bearing and being defined
-// after the caller is NOT enough on its own: VC6 at /Ob2 defers codegen to the
-// end of the translation unit and would fold the forwarder back into
-// on_right_click, losing the 20-byte BYTE_EXACT match.
+// The original pulls each menu caption from the label table, then applies
+// the chosen state to the active pane. The menu's stored item ID is not the
+// same as its selected slot; PullDown owns that translation.
 #pragma auto_inline(off)
-void InfoWin::right_menu(int a1, int a2) {
-    (ORIGINAL(this)->*InfoWinOriginalRightMenu)(a1, a2);
+// ORIGINAL: 0x004589C0 ?right_menu@InfoWin@@QAEXHH@Z 0x004589C0-0x00458D3A;0x00655280-0x00655295
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004589C0-0x00458D3A", "image:0x00655280-0x00655295", "git:e3121de9:src/recovered/units/004589c0.cpp", "source:src/pulldown.h:get_selected_id"], "reason": "Home the information-pane context menu with the real PullDown item-ID API, source-owned label table, pane state and MainInterface renderer; retain the original secondary EH span as a restoration obligation."}
+void InfoWin::right_menu(int x, int y) {
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    PullDown menu;
+    menu.init(0);
+    static const int label_slots[8] = {
+        0x92C / 4, 0x930 / 4, 0x934 / 4, 0x938 / 4,
+        0x948 / 4, 0x94C / 4, 0x950 / 4, 0x954 / 4
+    };
+    for (int state = 0; state != 8; ++state) {
+        if (state_valid(state)) menu.add_item(state, label_get(label_slots[state]));
+    }
+    menu.add_separator(99);
+    menu.add_item(20, label_get(0x8FC / 4));
+    menu.show(x, y, pop_expire);
+
+    if ((GameState & STATE_UNK_800) != 0) return;
+    const int selection = menu.get_selected_id();
+    if (selection >= 0 && selection <= 16 && state_valid(selection)) {
+        pane_states_[active_pane_] = selection;
+        while (!state_valid(pane_states_[active_pane_])) {
+            pane_states_[active_pane_] = (pane_states_[active_pane_] + 1) % 8;
+        }
+        field_94_ = 0;
+        visible_characters_[0] = text_lengths_[0] + 1;
+        visible_characters_[1] = text_lengths_[1] + 1;
+        field_A8_ = 0;
+        MainInterfaceGlobal.box_sprite(&pane_rects_[active_pane_],
+                                       &InterfaceBoxStyles[18]);
+        visible_characters_[0] = 0;
+        visible_characters_[1] = 0;
+        setup_text();
+        draw_text(active_pane_);
+    } else if (selection == 20) {
+        help_any();
+    }
 }
 #pragma auto_inline(on)
 

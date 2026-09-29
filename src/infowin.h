@@ -61,17 +61,9 @@ class InfoWin {
   void on_left_click(int xCoord, int yCoord);
 
   void on_right_click(int a, int b);
-  // 0x004589C0  ?right_menu@InfoWin@@QAEXHH@Z - public, __thiscall,
-  // void(int, int). Still an original body, so the definition at the END of
-  // infowin.cpp forwards to it. on_right_click is NOT routed through that seam
-  // itself, ON PURPOSE: its whole 20-byte body is `push a2; push a1; call
-  // rel32` (byte-match.csv:3554 BYTE_EXACT 20/20), and calling the seam from
-  // inside it turns that direct call into `call dword ptr [global]`, which
-  // loses the match and takes the body out of the census - every one of the
-  // 753 seam-using bodies scores NO_COMPILE there because the scaffolding
-  // cannot see the seam global. Giving right_menu its own out-of-line
-  // forwarder keeps on_right_click's `call rel32` intact; the forwarder is
-  // placed after on_right_click so /Ob2 cannot inline it back in.
+  // 0x004589C0: menu rows are chosen from the two-pane state table, and
+  // the selected action either switches a pane or opens help. Kept
+  // out-of-line after on_right_click to preserve its direct call.
   void right_menu(int a1, int a2);
   InfoWin();
   ~InfoWin();
@@ -161,13 +153,6 @@ class InfoWin {
   PushButton button_;
 };
 
-
-// right_menu is still a seam-forwarded body: it calls help_any and
-// GraphicWin::update(RECT *, GraphicWin *), and until that overload is
-// declared and defined the real body cannot home. Rebindable so tests can
-// substitute a probe.
-typedef void (OriginalObject::*func_info_win_right_menu)(int, int);
-extern func_info_win_right_menu InfoWinOriginalRightMenu;  // 0x004589C0
 
 // Actual palette-index owners shared by information and vehicle overlays.
 extern int InfoFactionTextColors[8];

@@ -164,7 +164,6 @@ GraphicWinOverlayNonclient,ui_dependency,recover_graphic_win_overlay,GraphicWin:
 ImageButtonDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x00625310 that the recovered ImageButton scalar deleting thunk runs before releasing the object; recovering ImageButton's destructor retires this
 InfoWinCtorTarget,ui_dependency,recover_owning_class,Constructor at 0x00459500 that the recovered InfoWin initializer thunk runs on the process-global storage; the thunk is opaque about the class, so recovering InfoWin's constructor retires this
 InfoWinDtorTarget,ui_dependency,recover_owning_class,Destructor at 0x004594A0 that the recovered InfoWin atexit thunk runs on the process-global storage; recovering InfoWin's destructor retires this
-InfoWinOriginalRightMenu,ui_dependency,recover_owning_class,Temporary dependency for the recovered forwarders until InfoWin::right_menu is source-owned
 InfoWinOriginalTimerProc,ui_dependency,recover_info_win_timer_proc,Temporary dependency for the recovered InfoWin reset guard until the timer callback is source-owned
 InterludeDtorTarget,ui_dependency,recover_owning_class,Complete destructor at 0x0045F740 that the recovered Interlude scalar deleting thunk runs before releasing the object; recovering Interlude's destructor retires this
 line_timer,timer_callback,recover_timer_callback,Replace line animation callback

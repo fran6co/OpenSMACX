@@ -672,6 +672,7 @@ uint32_t *const DiploLoanPaymentTable = (uint32_t *)0x0096CAC4;
 // observable behaviour, not a catalogue label.
 extern int PopupWaitActive;  // 0x0093FAC4
 int __cdecl pop_wait();      // 0x005398E0, text-dialog wait callback
+int __cdecl pop_expire();    // 0x00539920, turn-expiry wait callback
 
 // introduce enters diplomacy; diplomacy_ends clears this shared state.
 extern int DiplomacyActive;
