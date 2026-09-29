@@ -159,6 +159,9 @@ class Wave : public Sound {
   uint32_t group_slot_;          // 0x68, pulled from its device group when < 0x10
 };
 
+// Owned by the original process at 0x007FFF00, directly after MultiWindow.
+extern Wave g_MULTIWIN_WAVE;
+
 // The process-wide wave, at the fixed address wave.cpp pins it to. Declared
 // here so control_game (game.cpp) reaches it by name.
 extern Wave g_WAVE_GENERAL;  // 0x00945ED0

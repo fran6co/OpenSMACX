@@ -2,6 +2,17 @@
 #include "multiwin.h"
 #include "game.h"
 #include "console.h"
+#include "wave.h"
+
+// The original show/hide pair publishes its visible state here. The zero
+// initializer and both writers are retained in the pinned image and seeds.
+// RECOVERY_OBJECT: v2 0x007CFF04 0x007CFF08 ?MultiWindowVisibilityState@@3HA 0x00479970
+int MultiWindowVisibilityState;
+
+// Shared animation frame interval (20 ms in the pinned image). Other window
+// animations also read this original data object.
+// RECOVERY_OBJECT: v2 0x00691AF8 0x00691AFC ?WindowAnimationFrameDelay@@3HA 0x00479C00
+int WindowAnimationFrameDelay = 20;
 
 // 0x0047A590 and 0x0047A430. The compiler owns construction, exception
 // cleanup and reverse destruction of the subobjects declared in multiwin.h.
@@ -57,11 +68,76 @@ void MultiWin::on_button_clicked(int) {
   // BODY GOES HERE.
 }
 
-// 0x00479C00. A required Win slot-2 override; its resource teardown is
-// retained in the historical seed pending typed recovery.
+// 0x00479C00. The Win slot-2 override hides the multi-player panel, restores
+// its background and runs the original optional slide-out animation.
 // ORIGINAL: 0x00479C00 ?hide@MultiWin@@QAEXXZ 0x00479C00-0x00479F8E;0x0065640A-0x0065641F
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479c00.cpp; src/win.h"], "reason": "The original MultiWin window teardown overrides Win slot two; typed teardown remains explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00479c00.cpp; src/win.h; src/buffer.h; src/wave.cpp"], "reason": "The original panel teardown uses its real GraphicWin Buffer extent, owned animation buffer and sprites, typed console/screen globals, and Win/GraphicWin callbacks. The retained seed preserves the historical byte obligation until remeasurement."}
 // symbol    ?hide@MultiWin@@UAEXXZ
 void MultiWin::hide() {
-  // BODY GOES HERE.
+  Buffer background;
+  if (IsMultiplayerNet == 0 && field_A24_ == 0) return;
+
+  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.play();
+  hovered_spot_ = -1;
+  MultiWindowVisibilityState = 0;
+
+  const int width = dib_.bmiHeader.biWidth;
+  const int height = -dib_.bmiHeader.biHeight;
+  background.resize(width, height);
+  background.fill(WinFillColour);
+  update_window_to_buffer(&background);
+  on_redraw();
+
+  RECT screen_rect = rect2_;
+  client_to_screen(&screen_rect);
+  RECT console_rect = screen_rect;
+  ConsoleGlobal.screen_to_client(&console_rect);
+
+  buffer_.init(width, height, 0, 0);
+  static_cast<Buffer *>(&ConsoleGlobal)->copy(
+      &buffer_, console_rect.left, console_rect.top, 0, 0, width, height);
+
+  int limit = screen_rect.bottom - sprite3_.height();
+  if (IsMultiplayerNet != 0) limit -= 14 + sprite4_.height();
+  const int slide = (limit - screen_rect.top) / 5;
+  ScreenBuffer.set_clip(&screen_rect);
+
+  if ((GamePreferences & 0x8000000) != 0 && IsMultiplayerNet == 0) {
+    WinFlipClipped = 1;
+    int position = screen_rect.top;
+    for (int frame = 0; frame < 6; ++frame) {
+      const DWORD start = timeGetTime();
+      buffer_.copy(&ScreenBuffer, 0, 0, screen_rect.left, screen_rect.top,
+                   width, height);
+      background.draw(&ScreenBuffer, 9, screen_rect.left, position, 1, 1);
+      Win::flip(&screen_rect);
+      position += slide;
+      if (position >= limit) position = limit;
+      do_sound();
+      while (timeGetTime() - start < static_cast<DWORD>(WindowAnimationFrameDelay)) {
+        do_sound();
+      }
+    }
+    if (position < limit) {
+      buffer_.copy(&ScreenBuffer, 0, 0, screen_rect.left, screen_rect.top,
+                   width, height);
+      static_cast<Buffer *>(this)->draw(
+          &ScreenBuffer, 9, screen_rect.left, limit, 1, 1);
+      Win::flip(&screen_rect);
+    }
+    ScreenBuffer.set_clip(&WinScreenClipRect);
+    WinFlipClipped = 0;
+  }
+
+  if (GamePreferences & 0x400) g_MULTIWIN_WAVE.fade(50);
+  field_A24_ = 0;
+  if (IsMultiplayerNet == 0) {
+    Win::hide();
+  } else {
+    flat_button2_.hide();
+    flat_button1_.hide();
+    on_redraw();
+    on_update();
+  }
+  buffer_.close();
 }

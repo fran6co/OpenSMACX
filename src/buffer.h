@@ -689,6 +689,9 @@ class Buffer {
   // Win, Caviar and DipEdit.
   friend class BaseWin;
   friend class MapWin;
+  // MultiWin::hide reads its GraphicWin Buffer extent and working rectangle
+  // before copying the console background into its owned animation buffer.
+  friend class MultiWin;
 
   // 0x4. The window the surface belongs to - `GraphicWin::init` stores its
   // `this` here before the minimum-size computation, and nothing recovered
