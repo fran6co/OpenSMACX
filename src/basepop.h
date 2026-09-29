@@ -181,6 +181,8 @@ class BasePop : public GraphicWin {
                              int flags);
   friend int __cdecl pop_ask_number(char *label, int initial,
                                     int (__cdecl *callback)());
+  friend int __cdecl pop_ask_number(char *caption, char *label, int initial,
+                                    int (__cdecl *callback)());
   friend int __cdecl pop_ask_number(char *label, int (__cdecl *callback)());
 
  public:

@@ -609,16 +609,6 @@ void ReplayWin::timer_callback() {  // 0x005AD9E0
 // drives it twice on BasePop's EditGroup subobject at 0x22C8 (see
 // BasePop::edit_group), once per atrocity-prompt field.
 
-// ?X_pop_ask_number@@YAHPADPBDHP6AHXZ@Z at 0x005BFD70 - the four-argument
-// numeric-entry prompt. Its three-argument sibling (0x005BFD10) is the real
-// body in xpops.cpp and forwards here with PopupStartCaption.
-int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
-                             int (__cdecl *callback)()) {
-    typedef int(__cdecl *pending)(char *, const char *, int,
-                                  int (__cdecl *)());
-    return PENDING_BODY(0x005BFD70, pending)(caption, label, value, callback);
-}
-
 // ?get@NetFifo@@QAEHPAXPAIPAHPAI@Z at 0x00633F70 WERE HERE and is gone: the
 // body is homed into net_class.cpp beside the rest of its class.
 

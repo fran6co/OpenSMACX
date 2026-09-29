@@ -56,8 +56,27 @@ int __cdecl x_pops_minimal(const char *label, Sprite *sprite,
 // with the function overload below it, so the binding hid this one entirely.
 int __cdecl X_pop(const char *label, int (__cdecl *callback)());
 
+// 0x005BF350, override-text overload; derives the initial field length from
+// the supplied text before dispatching to the full X_pop form.
+int __cdecl X_pop(char *caption, const char *label, char *text, int value,
+                  int (__cdecl *callback)());
+
 int __cdecl X_pop(char *caption, const char *label, int a3, char *a4, int a5,
                   int (__cdecl *callback)());
+
+// The X_pop_ask overload family opens the corresponding text-edit dialog.
+// Its long form shares the mod-aware caption/file routing of the X_pop
+// family, but dispatches through pop_ask rather than the ordinary popup.
+int __cdecl X_pop_ask(char *caption, const char *label, int value,
+                      char *text, int (__cdecl *callback)(), int flags);
+int __cdecl X_pop_ask(char *caption, const char *label, int value,
+                      int (__cdecl *callback)(), int flags);
+int __cdecl X_pop_ask(char *caption, const char *label, char *text,
+                      int (__cdecl *callback)(), int flags);
+int __cdecl X_pop_ask(const char *label, int value, char *text,
+                      int (__cdecl *callback)(), int flags);
+int __cdecl X_pop_ask(const char *label, int value, int (__cdecl *callback)(),
+                      int flags);
 
 // 0x005BFD10, defined in xpops.cpp - the numeric-entry prompt of the X_pop
 // family: it asks for a number against `label` (a label token such as
@@ -73,6 +92,7 @@ int __cdecl X_pop_ask_number(char *caption, const char *label, int value,
 // 0x005BFD30, its caption-taking overload with the numeric value defaulted.
 int __cdecl X_pop_ask_number(char *caption, const char *label,
                              int (__cdecl *callback)());
+int __cdecl X_pop_ask_number(const char *label, int (__cdecl *callback)());
 
 int __cdecl x_pop_caption_label(char *caption, const char *label,
                                           int (__cdecl *callback)());

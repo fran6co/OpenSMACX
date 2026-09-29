@@ -1286,6 +1286,41 @@ int __cdecl pop_ask_number(char *label, int initial, int (__cdecl *callback)()) 
     return execResult;
 }
 
+// Caption-and-label numeric prompt. The other numeric forms intentionally keep
+// their own original identities; this body uses the caller's caption rather
+// than the shared default and retains the same popup state/lifetime path.
+// ORIGINAL: 0x00627C30 ?pop_ask_number@@YAHPADPADHP6AHXZ@Z 0x00627C30-0x00627CFC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00627c30.cpp"], "reason": "Home the original caption-and-label numeric popup in its typed popup owner; the X_pop_ask_number routing requires both arguments and this independent original span is established by the retained seed."}
+// symbol    ?pop_ask_number@@YAHPAD0HP6AHXZ@Z
+int __cdecl pop_ask_number(char *caption, char *label, int initial,
+                           int (__cdecl *callback)()) {
+    char number_text[80];
+    const BOOL winVisible = PopupInstanceSlotA->is_visible();
+    Win *win = PopupInstanceSlotB;
+    if (!winVisible) {
+        win = PopupInstanceSlotA;
+    }
+    BasePop *pop = reinterpret_cast<BasePop *>(win);
+
+    StringTemp[0] = 0;
+    _itoa(initial, number_text, 10);
+    strcat(StringTemp, number_text);
+
+    if (pop->start(caption, label, 9, StringTemp, 0x44, 0)) {
+        return -1;
+    }
+
+    pop->write_check(PopupWriteCheckState);
+    int execResult = pop->exec(0, callback);
+    if (pop->external_window_ == 0) {
+        do_all_draws();
+    }
+    BaseAtKeyPollFlag = pop->field_3100_;
+    ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
+    pop->close();
+    return execResult;
+}
+
 // ORIGINAL: 0x00627B60 ?pop_ask_number@@YAHPADP6AHXZ@Z 0x00627B60-0x00627C28 FILE BYTE_EXACT
 // size      200 bytes
 // prototype
