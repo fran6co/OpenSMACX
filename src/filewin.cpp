@@ -21,6 +21,7 @@
 #include "text.h"
 #include "dialog.h"
 #include "basebutton.h"
+#include "buffer.h"
 
 // The default file-name suffix appended to field_531_ at construction - REAL
 // STORAGE seeded from the image's own .data bytes (image_data.py, 0x00697118:
@@ -37,14 +38,17 @@ static const char FileWinTextTableDefault[4] = {'.', 0, 0, 0};  // 0x00697118
 // the buffer to the first. Same real-storage argument as above.
 static const char FileWinTextTableDefaultNext[4] = {'.', 0, 0, 0};  // 0x0069711C
 
-// The dialog's three fixed sprites, 0x30 apart (0x009B9018/0x009B9048/
-// 0x009B9078). Their individual roles are not established - the dialog's
-// own bring-up loads them and close() reaches Sprite::close (0x005E3820)
-// on each, in this order. Named bindings rather than array indexing:
-// sizeof(Sprite) is not pinned to the 0x30 stride.
-static Sprite *const FileWinFixedSprite0 = reinterpret_cast<Sprite *>(0x009B9018);
-static Sprite *const FileWinFixedSprite1 = reinterpret_cast<Sprite *>(0x009B9048);
-static Sprite *const FileWinFixedSprite2 = reinterpret_cast<Sprite *>(0x009B9078);
+// Original .data at 0x00697128 contains "jackal.pcx"; the filename is an
+// ordinary source literal, not a pointer into the shipped executable.
+static const char FileWinSpriteSheet[] = "jackal.pcx";
+
+// Three independently owned dialog sprites. The image places them at
+// 0x009B9018, 0x009B9048 and 0x009B9078, but those are original storage
+// identities, not addresses for this build to dereference. Their particular
+// UI roles have not been established, so retain neutral names.
+static Sprite FileWinSprite0;
+static Sprite FileWinSprite1;
+static Sprite FileWinSprite2;
 
 /*
 Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
@@ -141,14 +145,38 @@ void FileWin::close() {
     field_514_ = 0;
     directory_[0] = 0;
     strcat(directory_, FileWinTextTableDefaultNext);
-    FileWinFixedSprite0->close();
-    FileWinFixedSprite1->close();
-    FileWinFixedSprite2->close();
+    FileWinSprite0.close();
+    FileWinSprite1.close();
+    FileWinSprite2.close();
     modal_window_ = 0;
     if (field_33C0_ != 0) {
         DestroyWindow(reinterpret_cast<HWND>(field_33C0_));
         field_33C0_ = 0;
     }
+}
+
+// ORIGINAL: 0x00613BA0 ?prepare_sprites@FileWin@@QAEHXZ 0x00613BA0-0x00613D47;0x00663114-0x00663129
+// FileWin::prepare_sprites builds the three independent dialog sprites from
+// the PCX sheet, or creates blank substitutes when the sheet cannot load.
+// The original has a separate cold unwind span; the source-owned Buffer
+// lifetime lets C++ generate that cleanup without encoding its old address.
+int FileWin::prepare_sprites() {
+    Buffer sheet;
+    int result;
+    if (sheet.load_pcx(FileWinSpriteSheet, 0, 10, 0xEC) == 0) {
+        result = FileWinSprite1.extract(&sheet, 9, 1, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
+        result = FileWinSprite0.extract(&sheet, 9, 0x12, 1, 0x10, 0x10, 0);
+        if (result != 0) return result;
+        result = FileWinSprite2.extract(&sheet, 9, 0x23, 1, 0x10, 0x10, 0);
+    } else {
+        result = FileWinSprite1.create_blank(0x10, 0x10, 9);
+        if (result != 0) return result;
+        result = FileWinSprite0.create_blank(0x10, 0x10, 9);
+        if (result != 0) return result;
+        result = FileWinSprite2.create_blank(0x10, 0x10, 9);
+    }
+    return result;
 }
 
 /*

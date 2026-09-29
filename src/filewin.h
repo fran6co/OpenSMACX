@@ -49,6 +49,7 @@ class FileWin {
   void UNK1();
   void UNK2(int pos);
   int set_directory(char *directory);
+  int prepare_sprites();
   void UNK5();
   // 0x006146A0 ?UNK4@FileWin@@QAEXXZ - public, __thiscall, void(void). Still
   // unrecovered; declared because the recovered on_double_clicked calls it
