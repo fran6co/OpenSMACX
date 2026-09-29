@@ -126,6 +126,31 @@ void Menu::set_menu_proc(MenuProc proc) {
     proc_ = proc;
 }
 
+// The retained 0x005FAE70 seed clears the menu's entry run without tearing
+// down its GraphicWin base. Menu::~Menu has the same entry ownership pattern;
+// keep this operation limited to the exact Menu fields the seed resets.
+// ORIGINAL: 0x005FAE70 ?UNK1@Menu@@QAEXXZ 0x005FAE70-0x005FAED8
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fae70.cpp", "source:src/menu.h", "source:src/menu.cpp"], "reason": "Clear Menu-owned entry text, IDs, flags, mnemonics and PullDowns, then reset only the Menu scalar state that the retained seed clears; keep the GraphicWin base alive."}
+void Menu::UNK1() {
+    for (int i = 0; i < 15; ++i) {
+        if (entries_[i].text != nullptr) {
+            free(entries_[i].text);
+        }
+        entries_[i].text = nullptr;
+        entries_[i].id = -1;
+        entries_[i].flags = 0;
+        entries_[i].mnemonic = nullptr;
+        if (entries_[i].pull_down != nullptr) {
+            delete entries_[i].pull_down;
+        }
+        entries_[i].pull_down = nullptr;
+    }
+    proc_ = nullptr;
+    count_ = 0;
+    field_A20_ = 0;
+    field_A24_ = 0xFFFFFFFF;
+}
+
 /*
 Purpose: Find the first menu entry with the requested ID.
 // ORIGINAL: 0x005FB990 ?id_to_index@Menu@@QAEHH@Z 0x005FB990-0x005FB9B8 BYTE_EXACT

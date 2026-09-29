@@ -49,6 +49,7 @@ static_assert(offsetof(MenuEntry, flags) == 0x8,
 class Menu : public GraphicWin {
  public:
   void on_left_up(int xCoord, int yCoord);
+  void UNK1();
   void hide_menus();
   void on_mouse_move(int a1, int a2);
   // ?mouse_move@Menu@@QAEXHH@Z (0x005FBDB0, 333 bytes) is unrecovered;
