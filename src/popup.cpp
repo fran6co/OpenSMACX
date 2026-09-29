@@ -1077,6 +1077,12 @@ void __cdecl scroll_normal() {
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00588340))();
 }
 
+// ORIGINAL: 0x005883D0 ?scroll_small@@YAXXZ 0x005883D0-0x0058845D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005883d0.cpp", "source:src/reportif.cpp:ReportIf::draw_labs", "source:src/reportif.cpp:ReportIf::draw_energy"], "reason": "Keep the original small-scroll dependency source-mapped and linkable for ReportIf panels; its retained seed and byte claim remain restoration obligations, and behavior is unfinished."}
+void __cdecl scroll_small() {
+    // BODY GOES HERE.
+}
+
 // ORIGINAL: 0x00404B00 ?on_redraw@Popup@@QAEXXZ 0x00404B00-0x00404B05 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:243a2cfd:src/unrecovered/00404b00.cpp;src/basepop.cpp:BasePop::on_redraw"], "reason": "Popup draw callback forwards to its real BasePop owner; image and historical seed establish the five-byte tail-call identity"}
 // LEVER: The retired seed matched through a synthetic reinterpret-cast shim with masked relocation targets. This real inherited call preserves its measured body without retaining that false class shape.

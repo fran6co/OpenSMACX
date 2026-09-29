@@ -38,6 +38,9 @@
 #include "strings.h"  // StringTable, StringTemp
 #include "vector_teardown.h"
 
+void __cdecl energy_compute(int faction_id, int mode);
+void __cdecl scroll_small();
+
 // Popup's scroll lifecycle callbacks operate on ReportWin's embedded Scroll.
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
@@ -1245,24 +1248,138 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
 }
 
 // These panel renderers are same-owner dependencies of report(). Their
-// original bodies remain in the retained seeds; these definitions are link
-// continuity only and must not be counted as recovered behavior.
+// original bodies and unresolved rows remain in the retained seeds.
 // ORIGINAL: 0x004A7000 ?draw_labs@ReportIf@@QAEXXZ 0x004A7000-0x004A842F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a7000.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a7000.cpp", "source:src/reportif.h"], "reason": "Same-owner panel dependency: typed frame and list setup recovered from retained seed; row generation remains unfinished."}
 void ReportIf::draw_labs() {
-    // BODY GOES HERE.
+    Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buffer->set_clip(&field_20_);
+    field_C_ = field_20_.left + 6;
+    field_10_ = field_20_.top + 6;
+    field_14_ = field_20_.right - field_20_.left - 12;
+    field_18_ = field_20_.bottom - field_20_.top - 12;
+
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = field_10_;
+    draw_workspace_rect_.right = field_C_ + field_14_;
+    draw_workspace_rect_.bottom = field_10_ + 26;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
+    draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
+    draw_workspace_rect_.bottom = field_20_.bottom - 6;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+
+    field_10_ += 32;
+    field_18_ -= 32;
+    draw_workspace_rect_.left = field_C_ + 3;
+    draw_workspace_rect_.top = field_10_ + 3;
+    draw_workspace_rect_.right = field_C_ + field_14_ - 3;
+    draw_workspace_rect_.bottom = field_10_ + field_18_ - 3;
+    scroll_small();
+    // The constructor places this ListBox at +0xA2D0. It is still raw
+    // storage because its one-argument construction is unresolved.
+    ListBox &list = *reinterpret_cast<ListBox *>(listBox1_);
+    list.close();
+    Dialog &dialog = static_cast<Dialog &>(list);
+    dialog.init(&draw_workspace_rect_, 0);
+    dialog.field_48_ = field_1C_ + 3;
+    dialog.set_dialog_font(field_1E184_, field_1E184_, field_1E184_);
+    dialog.set_dialog_text_color(0x99, -1, 1, 1);
+    dialog.set_dialog_text_color2(0x99, -1, 1, 1);
+    dialog.set_dialog_text_color3(0x99, -1, 1, 1);
+    // BODY GOES HERE: faction base rows and sorted technology rows.
 }
 
 // ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a84a0.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a84a0.cpp", "source:src/reportif.h"], "reason": "Same-owner panel dependency: typed energy calculation, frame and list setup recovered from retained seed; rows remain unfinished."}
 void ReportIf::draw_energy() {
-    // BODY GOES HERE.
+    energy_compute(0, report_faction_id_);
+    Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buffer->set_clip(&field_20_);
+    field_C_ = field_20_.left + 6;
+    field_10_ = field_20_.top + 6;
+    field_14_ = field_20_.right - field_20_.left - 12;
+    field_18_ = field_20_.bottom - field_20_.top - 12;
+    buffer->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = field_10_;
+    draw_workspace_rect_.right = field_C_ + field_1C_ + 6;
+    draw_workspace_rect_.bottom = field_10_ + field_14_;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = draw_workspace_rect_.bottom + 2;
+    draw_workspace_rect_.right = field_10_ + field_18_;
+    draw_workspace_rect_.bottom = field_14_ + field_C_;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    draw_workspace_rect_.left += 3;
+    draw_workspace_rect_.top += 3;
+    draw_workspace_rect_.right -= 3;
+    draw_workspace_rect_.bottom -= 3;
+    scroll_small();
+    ListBox &list = *reinterpret_cast<ListBox *>(listBox1_);
+    list.close();
+    Dialog &dialog = static_cast<Dialog &>(list);
+    dialog.init(&draw_workspace_rect_, 0);
+    dialog.field_48_ = field_1C_ + 3;
+    dialog.set_dialog_font(field_1E184_, field_1E184_, field_1E184_);
+    dialog.set_dialog_text_color(0x99, -1, 1, 1);
+    dialog.set_dialog_text_color2(0x99, -1, 1, 1);
+    dialog.set_dialog_text_color3(0x99, -1, 1, 1);
+    // BODY GOES HERE: base energy rows, list selection and report caption.
 }
 
 // ORIGINAL: 0x004A9050 ?draw_ops@ReportIf@@QAEXXZ 0x004A9050-0x004A9F85
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a9050.cpp", "source:src/reportif.h"], "reason": "Link-only same-owner panel dependency called by recovered ReportIf report; retained seed establishes identity and extent; body remains explicitly unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a9050.cpp", "source:src/reportif.h"], "reason": "Same-owner panel dependency: typed operational frame and list setup recovered from retained seed; operational rows remain unfinished."}
 void ReportIf::draw_ops() {
-    // BODY GOES HERE.
+    if (report_page_history_[1] != 4 && report_page_history_[1] != 5) {
+        WorldClimateWorldWin.show_all();
+        // The seed also redraws four adjacent windows whose ownership is
+        // unresolved; keep that dependency for the owning panel batch.
+    }
+    Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
+    buffer->set_clip(&field_20_);
+    field_C_ = field_20_.left + 9;
+    field_10_ = field_20_.top + 40;
+    field_14_ = field_20_.right - field_20_.left - 18;
+    field_18_ = field_20_.bottom - field_20_.top - 46;
+
+    draw_workspace_rect_.left = field_20_.left + 6;
+    draw_workspace_rect_.top = field_20_.top + 6;
+    draw_workspace_rect_.right = field_20_.right - 6;
+    draw_workspace_rect_.bottom = field_20_.top + 32;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
+    draw_workspace_rect_.top = draw_workspace_rect_.bottom;
+    draw_workspace_rect_.bottom = field_20_.bottom - 6;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
+
+    // The seed's list page is selected by a neighboring button state. Its
+    // page-specific row generation and alternate graphic view remain pending.
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    buffer->set_clip(&field_30_);
+    field_C_ = field_30_.left + 6;
+    field_10_ = field_30_.top + 6;
+    field_14_ = field_30_.right - field_30_.left - 12;
+    field_18_ = field_30_.bottom - field_30_.top - 12;
+    buffer->box_sprite(&field_30_, &InterfaceBoxStyles[33]);
+    draw_workspace_rect_.left = field_C_ - 3;
+    draw_workspace_rect_.top = field_10_ - 3;
+    draw_workspace_rect_.right = field_C_ + field_14_ + 3;
+    draw_workspace_rect_.bottom = field_10_ + field_1C_ + 9;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[3]);
+    draw_workspace_rect_.left += 3;
+    draw_workspace_rect_.top += 3;
+    draw_workspace_rect_.right -= 3;
+    draw_workspace_rect_.bottom -= 3;
+    buffer->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    buffer->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xF0C));
+    buffer->write_cent_l(StringTemp, field_C_, field_10_ + 4, field_14_,
+                         static_cast<int>(strlen(StringTemp)));
+    buffer->set_clip(MainInterfaceGlobal.buffer_working_rect());
+    StringTemp[0] = 0;
+    MainInterfaceGlobal.set_date(StringTemp);
 }
 
 // ORIGINAL: 0x004AA0B0 ?draw_projects@ReportIf@@QAEXXZ 0x004AA0B0-0x004AA921;0x00659595-0x006595C9
