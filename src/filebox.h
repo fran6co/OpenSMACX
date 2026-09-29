@@ -23,6 +23,9 @@ class FileBox {
   int set_def_ext(const char *extension);
   int set_def_name(const char *name);
   int set_initial_dir(const char *directory);
+  void save();
+  void load();
+  int add_filter(char *pattern, char *label);
 
   char file_[0x104];
   char def_name_[0x104];

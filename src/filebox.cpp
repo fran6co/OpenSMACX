@@ -9,6 +9,7 @@
  */
 #include "stdafx.h"
 #include "filebox.h"
+#include <commdlg.h>
 #include <cstring>
 
 /*
@@ -51,6 +52,108 @@ void FileBox::reset() {
     field_208_[0] = 0;
     def_ext_[0] = 0;
     initial_dir_[0] = 0;
+}
+
+/*
+Purpose: Show the common save dialog over FileBox's own editable buffers.
+// ORIGINAL: 0x00634C30 ?save@FileBox@@QAEXXZ 0x00634C30-0x00634CEE FILE
+// RECOVERY_BINDING: v1 {"reason":"The dialog fields are FileBox's inline filename, title, filter, extension and initial-directory buffers, not an independent leaf redirect.","evidence":["Original 0x00634C30-0x00634CEE calls strcat and GetSaveFileNameA using offsets +0, +0x104, +0x30c, +0x414 and +0x418.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
+// symbol    ?save@FileBox@@QAEXXZ
+*/
+void FileBox::save() {
+    char *const file = file_;
+    char *const title = def_name_;
+    if (*title != 0) {
+        *file = 0;
+        strcat(file, title);
+    }
+    OPENFILENAMEA ofn;
+    ofn.lStructSize = 0x4C;
+    ofn.hwndOwner = 0;
+    ofn.hInstance = 0;
+    ofn.lpstrFilter = filter_;
+    ofn.lpstrCustomFilter = 0;
+    ofn.nMaxCustFilter = 0;
+    ofn.nFilterIndex = 0;
+    ofn.lpstrFile = file;
+    ofn.nMaxFile = 0x104;
+    ofn.lpstrFileTitle = title;
+    ofn.nMaxFileTitle = 0x104;
+    ofn.lpstrInitialDir = initial_dir_[0] ? initial_dir_ : 0;
+    ofn.lpstrTitle = def_ext_[0] ? def_ext_ : 0;
+    ofn.Flags = 0;
+    ofn.nFileOffset = 0xE;
+    ofn.nFileExtension = 0;
+    ofn.lpstrDefExt = 0;
+    ofn.lCustData = 0;
+    ofn.lpfnHook = 0;
+    ofn.lpTemplateName = 0;
+    GetSaveFileNameA(&ofn);
+}
+
+/*
+Purpose: Show the common open dialog using FileBox's saved filter and defaults.
+// ORIGINAL: 0x00634CF0 ?load@FileBox@@QAEXXZ 0x00634CF0-0x00634DAE FILE
+// RECOVERY_BINDING: v1 {"reason":"The open dialog reads and writes the same inline FileBox buffers as the save dialog, with open-specific flags and default extension.","evidence":["Original 0x00634CF0-0x00634DAE calls strcat and GetOpenFileNameA with FileBox offsets +0, +0x104, +0x30c, +0x414 and +0x418.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
+// symbol    ?load@FileBox@@QAEXXZ
+*/
+void FileBox::load() {
+    char *const file = file_;
+    char *const title = def_name_;
+    if (*title != 0) {
+        *file = 0;
+        strcat(file, title);
+    }
+    OPENFILENAMEA ofn;
+    ofn.lStructSize = 0x4C;
+    ofn.hwndOwner = 0;
+    ofn.hInstance = 0;
+    ofn.lpstrCustomFilter = 0;
+    ofn.nMaxCustFilter = 0;
+    ofn.lpstrFilter = filter_;
+    ofn.nMaxFile = 0x104;
+    ofn.nMaxFileTitle = 0x104;
+    ofn.lpstrFile = file;
+    ofn.lpstrFileTitle = title;
+    ofn.lpstrInitialDir = initial_dir_[0] ? initial_dir_ : 0;
+    ofn.lpstrTitle = 0;
+    ofn.Flags = 0x180E;
+    ofn.nFileOffset = 0;
+    ofn.nFileExtension = 0;
+    ofn.lpstrDefExt = def_ext_[0] ? def_ext_ : 0;
+    ofn.lCustData = 0;
+    ofn.lpfnHook = 0;
+    ofn.lpTemplateName = 0;
+    GetOpenFileNameA(&ofn);
+}
+
+/*
+Purpose: Append one label/pattern pair to the double-NUL filter buffer.
+// ORIGINAL: 0x00634DB0 ?add_filter@FileBox@@QAEHPADPAD@Z 0x00634DB0-0x00634E73 FILE
+// RECOVERY_BINDING: v1 {"reason":"The cursor at +0x410 advances within FileBox's inline filter buffer at +0x30c; this operation belongs to that class.","evidence":["Original 0x00634DB0-0x00634E73 checks two strings and available filter bytes, appends both pieces and updates +0x410.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
+// symbol    ?add_filter@FileBox@@QAEHPAD0@Z
+*/
+int FileBox::add_filter(char *pattern, char *label) {
+    if (pattern != 0 && label != 0) {
+        char *position = filter_cursor_;
+        const unsigned int pattern_length = strlen(pattern);
+        const unsigned int label_length = strlen(label);
+        const int remaining = (0x104 - static_cast<int>(pattern_length))
+                              - static_cast<int>(label_length);
+        const int filter_used = static_cast<int>(position - filter_);
+        if (remaining < filter_used) {
+            return 4;
+        }
+        strcat(position, label);
+        position += strlen(position) + 1;
+        *position = 0;
+        strcat(position, pattern);
+        position += strlen(position) + 1;
+        *position = 0;
+        filter_cursor_ = position;
+        return 0;
+    }
+    return 3;
 }
 
 /*
