@@ -18,6 +18,128 @@
 #include "stdafx.h"
 #include "gamma.h"
 #include "worldwin.h"
+#include <math.h>
+
+namespace {
+const double GammaPositionScale = 0.01;
+const double GammaComponentScale = 1.0 / 235.0;
+const double GammaByteScale = 235.99;
+}
+
+// ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0
+// RECOVERY_BINDING: v1 {"evidence": ["Earlier source-owned body in src/stringstruct.cpp and retained original seed at git:117282ee", "Gamma's Scroll position occupies Gamma+0x191C and Palette entries begin at Gamma+0xA68", "Original ramp writes 236 RGB triples, reseeds and sets the Palette, then calls Win slot 12"], "reason": "Keep gamma-ramp behavior in its owning translation unit and operate on Palette entries and Scroll state rather than executable addresses or object offsets."}
+// symbol    ?adjust_palette@Gamma@@QAEXXZ
+void Gamma::adjust_palette() {
+    gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
+    for (int i = 0; i < 236; ++i) {
+        double value = pow(static_cast<double>(i) * GammaComponentScale,
+                           1.0 / gamma_);
+        if (value < 0.0) value = 0.0;
+        else if (value > 1.0) value = 1.0;
+        const unsigned char shade = static_cast<unsigned char>(
+            static_cast<int>(value * GammaByteScale));
+        PALETTEENTRY &entry = palette_.entries_[i + 10];
+        entry.peRed = shade;
+        entry.peGreen = shade;
+        entry.peBlue = shade;
+    }
+    palette_.reseed();
+    palette_.set();
+    on_redraw();
+}
+
+// ORIGINAL: 0x005C9420 ?on_redraw@Gamma@@QAEXXZ 0x005C9420-0x005C951D
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005c9420.cpp records the 236-line palette strip and the gamma label", "src/gamma.h owns rect1_, font_, gamma_ and the Buffer base at their measured offsets", "Original format string at 0x00691E7C is %f"], "reason": "Draw the dialog's colour ramp and current gamma through its actual GraphicWin and Buffer bases, overriding Win's slot 12."}
+// Gamma overrides the existing Win redraw slot; its emitted method is virtual.
+// symbol    ?on_redraw@Gamma@@UAEXXZ
+void Gamma::on_redraw() {
+    RECT label_area = rect1_;
+    int x = label_area.left;
+    for (int color = 10; color < 246; ++color) {
+        Buffer::line(x, label_area.top, x, label_area.bottom, color);
+        ++x;
+    }
+
+    const int delta = label_area.top - label_area.bottom - 3;
+    label_area.top += delta;
+    label_area.bottom += delta;
+    GraphicWin::fill(&label_area, 0xF8);
+    Buffer::set_font(&font_, 0, 0, 0);
+    Buffer::set_text_color(0, -1, 1, 1);
+
+    char value_text[80];
+    sprintf(value_text, "%f", gamma_);
+    Buffer::write_cent_l(value_text, &label_area, strlen(value_text));
+    GraphicWin::soft_update();
+}
+
+// ORIGINAL: 0x005C9330 ?close@Gamma@@QAEXXZ 0x005C9330-0x005C938B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c9330.cpp records the cleanup order", "src/gamma.h owns the Palette, Scroll, EditBox and two PushButton subobjects at the measured offsets", "PushButton::close is the virtual slot 90 selected by the original"], "reason": "Close Gamma's real owned controls and base window rather than dispatching through fabricated vtable arrays and raw offsets."}
+// symbol    ?close@Gamma@@QAEXXZ
+void Gamma::close() {
+    target_palette_ = 0;
+    palette_.close();
+    scroll_.close();
+    editBox_.close();
+    pushButton1_.close();
+    pushButton2_.close();
+    GraphicWin::close();
+}
+
+// ORIGINAL: 0x005C95E0 ?adjust_pal@Gamma@@QAEXN@Z 0x005C95E0-0x005C97B1
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c95e0.cpp walks the target Palette from entry 10 through 245", "src/recovered/units/005c8e60.cpp stores the Palette* argument at Gamma+0xA64", "src/palette.h places PALETTEENTRY records at the start of Palette and exposes reseed/set"], "reason": "Apply gamma to the target palette's RGB entries as typed palette data, then publish its new seed and colours."}
+// symbol    ?adjust_pal@Gamma@@QAEXN@Z
+void Gamma::adjust_pal(double gamma) {
+    Palette *const target = target_palette_;
+    if (target == 0) return;
+
+    const double inverse_gamma = 1.0 / gamma;
+    for (int index = 10; index < 246; ++index) {
+        PALETTEENTRY &entry = target->entries_[index];
+        double red = pow(entry.peRed * GammaComponentScale, inverse_gamma);
+        double green = pow(entry.peGreen * GammaComponentScale, inverse_gamma);
+        double blue = pow(entry.peBlue * GammaComponentScale, inverse_gamma);
+
+        if (red < 0.0) red = 0.0;
+        else if (red > 1.0) red = 1.0;
+        if (green < 0.0) green = 0.0;
+        else if (green > 1.0) green = 1.0;
+        if (blue < 0.0) blue = 0.0;
+        else if (blue > 1.0) blue = 1.0;
+
+        entry.peRed = static_cast<unsigned char>(
+            static_cast<int>(red * GammaByteScale));
+        entry.peGreen = static_cast<unsigned char>(
+            static_cast<int>(green * GammaByteScale));
+        entry.peBlue = static_cast<unsigned char>(
+            static_cast<int>(blue * GammaByteScale));
+    }
+    target->reseed();
+    target->set();
+}
+
+// ORIGINAL: 0x00456110 ??1Gamma@@QAE@XZ 0x00456110-0x00456275;0x00655190-0x00655240
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00456110.cpp shows a Gamma::close call followed by reverse subobject teardown", "src/gamma.h declares the real member order and GraphicWin base", "C++ destruction emits subobject and EH cleanup without writing historical vtable addresses"], "reason": "Use compiler-owned lifetime for Gamma's embedded controls and base, preserving the explicit dialog close before automatic destruction."}
+// symbol    ??1Gamma@@UAE@XZ
+Gamma::~Gamma() {
+    close();
+}
+
+// ORIGINAL: 0x005C93C0 ?on_button_clicked@Gamma@@QAEXH@Z 0x005C93C0-0x005C9406
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c93c0.cpp separates button -1 scroll acceptance from button -2 initial-gamma restoration", "src/gamma.h identifies gamma_, initialGamma_ and the embedded Scroll", "Win slot 58 is release_modal, the original indirect target"], "reason": "Apply or cancel the gamma adjustment and close the modal dialog through its real virtual method."}
+// symbol    ?on_button_clicked@Gamma@@UAEXH@Z
+void Gamma::on_button_clicked(int button_id) {
+    if (button_id != -2) {
+        if (button_id == -1) {
+            gamma_ = static_cast<double>(scroll_.position()) * GammaPositionScale;
+            release_modal();
+            return;
+        }
+    } else {
+        gamma_ = initialGamma_;
+    }
+    release_modal();
+}
 
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns 1.
@@ -175,7 +297,7 @@ Gamma::Gamma() {
     // rather than emitted by a constructor VC6 would generate.
     // The store order matters; see the LEVER line on the marker above.
     gamma_ = 1.0;
-    field_A64_ = 0;
+    target_palette_ = 0;
 }
 
 /*

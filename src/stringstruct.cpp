@@ -1364,7 +1364,6 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 #include "lock.h"      // LockEnableMask - the deletion-record occupancy mask
 #include "log.h"       // log_say - both deletion paths report through it
 #include "fx.h"        // FX - play is defined in this wave
-#include "gamma.h"     // Gamma - adjust_palette is defined in this wave
 #include "deletionlist.h"  // DeletionList - both bodies are defined in this wave
 #include "pulldown.h"   // PullDown - the menu handlers are defined in this wave
 #include "reportwin.h"  // ReportWin - on_redraw is defined in this wave
@@ -1373,23 +1372,12 @@ char *__cdecl get_he_she(int faction_id, int sentence_form) {
 #include "mapwin.h"    // MapWin + MainInterfaceGlobal (0x007AE820)
 #include "map.h"       // MapIsFlat / MapLongitudeBounds - the cursor wrap
 #include "maininterface.h"  // MainInterface::restore_back - DiploPop's opener
-#include <math.h>      // pow - adjust_palette's gamma ramp
 
 namespace {
 // The .rdata strings the deletion paths hand to log_say, read out of the
 // image beside the bindings the same family already carries in veh.cpp.
 static char *const StrDeletingVehicle = (char *)0x0068C134;    // "Deleting vehicle"
 static char *const StrDelConvertedIndex = (char *)0x0068C120;  // "DelConverted index"
-
-// The image's gamma-ramp constants (all .rdata doubles, read by
-// Gamma::adjust_palette at 0x005C9520): the percent scale palette.cpp binds
-// as hsv_percent_scale, the 1/235 ramp step, the clamp ceiling 1.0, the
-// clamp floor 0.0 and the 235.99 byte scale the ramp's tail multiplies by.
-static const double *const GammaPercentScale = (const double *)0x0066EB38;  // 0.01
-static const double *const GammaRampStep = (const double *)0x0066FA78;      // 1/235
-static const double *const GammaClampHigh = (const double *)0x0066D8D8;     // 1.0
-static const double *const GammaClampLow = (const double *)0x0066FA70;      // 0.0
-static const double *const GammaByteScale = (const double *)0x0066FA68;     // 235.99
 
 // The one-space join string this file's flying-text wrapper already binds as
 // SpaceText, and the caret separator MultiWin's spot label builds from.
@@ -2182,54 +2170,6 @@ void DeletionList::add_deletion(int veh_id) {
     *count_ptr = static_cast<short>(*count_ptr + 1);
     // The image returns *count_ptr - 1 here (its symbol ends H@Z); the
     // in-tree declaration is void and nothing consumes the value.
-}
-
-// ---------------------------------------------------------------------------
-// Gamma::adjust_palette, 0x005C9520. The gamma dialog's ramp: recompute the
-// gamma from the scrollbar position, rebuild the 236-entry palette ramp
-// under the clamped power curve, then reseed and install the palette and
-// refresh the window through the receiver's slot 12. gamma.h declares the
-// member; its forwarder retires from pending_bodies.cpp in this change.
-/*
-Purpose: Rebuild the palette gamma ramp from the dialog's scrollbar and
-         install it.
-// ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5C9520..5C95E0; retired seed git:117282ee:src/unrecovered/005c9520.cpp records the same identity and spans with its pow/FPU TRIED note kept below.", "The receivers are gamma.h's own model: gamma_ is the 0xEE8 double the scrollbar position (scroll_ + 0xA2C) times 0.01 recomputes, palette_ at 0xA68 reseeds and sets, and the ramp table starts at +0xA91 with a 4-byte stride for 0xEC entries.", "The five .rdata doubles (0x0066EB38 percent scale, 0x0066FA78 1/235 step, 0x0066D8D8 1.0, 0x0066FA70 0.0, 0x0066FA68 235.99 byte scale) are bound beside the body; pow is the CRT's own."], "reason": "Coverage transcription of the gamma ramp on the typed Gamma receiver with the clamp order the seed measures."}
-// TRIED (seed): reordering the table-pointer vs base-double locals did not
-//         change the FPU stack scheduling; MISMATCH from #5 onward.
-Status: Coverage transcription - unclaimed body
-*/
-void Gamma::adjust_palette() {
-    char *const base = reinterpret_cast<char *>(this);
-    // The scrollbar's clamped position (scroll_ + 0xA2C, what Scroll::set_pos
-    // stores) times the percent scale is the gamma this ramp installs.
-    const double gamma = static_cast<double>(
-        *reinterpret_cast<const int *>(base + 0x191C)) * (*GammaPercentScale);
-    gamma_ = gamma;
-
-    unsigned char *table = reinterpret_cast<unsigned char *>(base + 0xA91);
-    for (int i = 0; i < 0xEC; ++i) {
-        double value = pow(static_cast<double>(i) * (*GammaRampStep),
-                           *GammaClampHigh / gamma);
-        if (value < *GammaClampLow) {
-            value = *GammaClampLow;
-        } else if (value > *GammaClampHigh) {
-            value = *GammaClampHigh;
-        }
-        const unsigned char byte_value = static_cast<unsigned char>(
-            static_cast<int>(value * (*GammaByteScale)));
-        table[-1] = byte_value;
-        table[0] = byte_value;
-        table[1] = byte_value;
-        table += 4;
-    }
-
-    palette_.reseed();
-    palette_.set();
-    // The dialog's own slot-12 refresh of the frame.
-    NullSlotShim refresh;
-    refresh.raw = (*reinterpret_cast<void ***>(this))[12];
-    (reinterpret_cast<NullSlotObj *>(this)->*refresh.fn)();
 }
 
 // ---------------------------------------------------------------------------

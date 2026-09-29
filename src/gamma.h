@@ -32,8 +32,8 @@
   * is exact; Gamma's own extent is not established and nothing pins its
   * sizeof.
   *
-  * The methods below ignore their arguments and return a constant, which is
-  * why they can be replaced ahead of that mapping.
+  * The palette, scrollbar, editor and button members below are now used by
+  * the recovered dialog lifecycle and gamma-ramp methods.
   */
 class Gamma : public GraphicWin {
  public:
@@ -48,10 +48,13 @@ class Gamma : public GraphicWin {
   // The first is switched on, the second is kept - a code and a position.
   void on_scrolled(int code, int pos);
   Gamma();
-  // 0x00456110 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // 0x00456110 lives in gamma.cpp. C++ emits the reverse member teardown;
+  // the body first closes the dialog's owned controls.
   ~Gamma();
+  void close();
+  void on_button_clicked(int button_id);
+  void adjust_pal(double gamma);
+  virtual void on_redraw();
   int on_key_click(int a, int b);
 
   // Storage the image proves is here: its own methods reach 0x1920.
@@ -75,7 +78,9 @@ class Gamma : public GraphicWin {
   uint32_t field_A58_;  // 0xA58
   uint32_t field_A5C_;  // 0xA5C
   uint32_t field_A60_;  // 0xA60
-  uint32_t field_A64_;  // 0xA64
+  // exec stores its Palette* argument here and adjust_pal edits that palette.
+  // RECOVERY_MEMBER: v3 Gamma target_palette_ Palette* 0xA64 0x005C8E60
+  Palette *target_palette_;  // 0xA64
   Palette palette_;  // 0xA68, IDB `palette`, size == sizeof(Palette)
   Font font_;  // 0xEBC
   // 0xEE4 and 0xEE8 are floating point, and the IDB's three dwords here were
@@ -129,6 +134,5 @@ class Gamma : public GraphicWin {
 };
 
 
-// ?adjust_palette@Gamma@@QAEXXZ (0x005C9520) is not recovered. Gamma::on_scrolled
-// is nothing but a call to it, so the call goes through a rebindable seam
-// rather than a member this DLL cannot define.
+// ?adjust_palette@Gamma@@QAEXXZ (0x005C9520) is source-owned in gamma.cpp.
+// Gamma::on_scrolled calls it by name.

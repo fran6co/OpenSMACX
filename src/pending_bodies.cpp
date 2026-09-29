@@ -635,11 +635,6 @@ DiploWin::~DiploWin() {  // ??1DiploWin@@QAE@XZ at 0x00444DB0
     PENDING_BODY(0x00444DB0, pending)(this, nullptr);
 }
 
-Gamma::~Gamma() {  // ??1Gamma@@QAE@XZ at 0x00456110
-    typedef void(__fastcall *pending)(Gamma *, void *);
-    PENDING_BODY(0x00456110, pending)(this, nullptr);
-}
-
 MainInterface::~MainInterface() {  // ??1MainInterface@@QAE@XZ at 0x0045EB80
     typedef void(__fastcall *pending)(MainInterface *, void *);
     PENDING_BODY(0x0045EB80, pending)(this, nullptr);

@@ -171,6 +171,7 @@ class Palette {
   // MCIVideo::load imports the device's PALETTEENTRY records verbatim; its
   // 0xEC-entry copy must preserve the returned flags as well as RGB values.
   friend class MCIVideo;
+  friend class Gamma;  // gamma dialog transforms entries 10..245 in place
   // Win compares its cached `field_184_` against the palette's seed to decide
   // whether it must re-realise - the image reads it directly, and the two
   // are one collaboration. Same reason Buffer is a friend above.
