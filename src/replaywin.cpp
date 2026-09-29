@@ -33,6 +33,50 @@ ReplayEventRecord ReplayEvents[1024];
 // RECOVERY_OBJECT: v2 0x009469F8 0x009469FC ?ReplayEventBytes@@3HA 0x005ADE80
 int ReplayEventBytes;
 
+// ORIGINAL: 0x005AD470 sub_5ad470 0x005AD470-0x005AD4C0
+// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/recovered/units/005ad470.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20", "0x005AD560 make_bases consumes the same 512 records"], "reason": "Own insertion in ReplayWin rather than an isolated raw-offset table class; retain the byte-exact seed for restoration."}
+// symbol    ?add_base_site@ReplayWin@@QAEXHHH@Z
+void ReplayWin::add_base_site(int x, int y, int faction_id) {
+    for (int index = 0; index < 512; ++index) {
+        ReplayBaseSite &site = base_sites_[index];
+        if (site.x < 0) {
+            site.x = x;
+            site.y = y;
+            site.faction_id = faction_id;
+            return;
+        }
+    }
+}
+
+// ORIGINAL: 0x005AD4C0 sub_5ad4c0 0x005AD4C0-0x005AD500
+// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/leaf_recoveries.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20"], "reason": "Recover keyed site update on the ReplayWin owner; the original returns three times the slot index on a hit, and 512 on a miss."}
+// symbol    ?update_base_site@ReplayWin@@QAEHHHH@Z
+int ReplayWin::update_base_site(int x, int y, int faction_id) {
+    for (int index = 0; index < 512; ++index) {
+        ReplayBaseSite &site = base_sites_[index];
+        if (site.x == x && site.y == y) {
+            site.faction_id = faction_id;
+            return index * 3;
+        }
+    }
+    return 512;
+}
+
+// ORIGINAL: 0x005AD500 sub_5ad500 0x005AD500-0x005AD560
+// RECOVERY_BINDING: v1 {"evidence": ["git:7ba7935c:src/unrecovered/005ad500.cpp", "src/replaywin.h ReplayWin base_sites_ at 0xA20"], "reason": "Recover keyed site invalidation on the real ReplayWin owner rather than a raw-offset table stand-in; retain the exact seed as restoration evidence."}
+// symbol    ?remove_base_site@ReplayWin@@QAEXHHH@Z
+void ReplayWin::remove_base_site(int x, int y, int) {
+    for (int index = 0; index < 512; ++index) {
+        ReplayBaseSite &site = base_sites_[index];
+        if (site.x == x && site.y == y) {
+            site.faction_id = -1;
+            site.y = -1;
+            site.x = -1;
+            return;
+        }
+    }
+}
+
 // ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
 void __cdecl replay_base(int type, int x, int y, int faction_id) {
