@@ -158,6 +158,7 @@ extern int ActiveIfaceIdStorage;      // 0x007D392C
   * MainInterface class
   */
 class MainInterface : public GraphicWin, public IfaceRegistryEntry {
+  friend class BaseWin;  // draw_garrison uses the adjacent panel rectangles.
   friend class WorldWin;  // UNK1 copies the owned tutorial rectangle.
   // MessageWin::init copies the pane bounds at +0xD1C..+0xD28 into its
   // own RECT. This grants that owner typed access while this region awaits
@@ -381,14 +382,13 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_AB0_;
   uint32_t field_AB4_;
   uint32_t field_AB8_;
-  uint32_t field_ABC_;
-  uint32_t field_AC0_;
-  uint32_t field_AC4_;
-  uint32_t field_AC8_;
-  uint32_t field_ACC_;
-  uint32_t field_AD0_;
-  uint32_t field_AD4_;
-  uint32_t field_AD8_;
+  // 0x0043C89C copies the second four-word run as one RECT. The garrison
+  // overflow path at 0x004105A7 reads the gap from the first run's right
+  // edge (+0xAC4) to the second run's left edge (+0xACC).
+  // RECOVERY_MEMBER: v1 MainInterface adjacent_panel_left_rect_ 0xABC 0x004105A7
+  RECT adjacent_panel_left_rect_;
+  // RECOVERY_MEMBER: v1 MainInterface adjacent_panel_right_rect_ 0xACC 0x0043C89C
+  RECT adjacent_panel_right_rect_;
   uint32_t field_ADC_;
   uint32_t field_AE0_;
   uint32_t field_AE4_;
