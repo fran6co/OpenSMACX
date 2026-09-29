@@ -639,6 +639,24 @@ void Console::cursor_next(int x_coord, int y_coord) {
     cursor_history_y_[reIdx] = y_coord;
 }
 
+// The retained exact seed establishes a Console receiver, two tile
+// coordinates and this sequence of cursor-overlay operations. The original
+// symbol has no semantic name, so keep its neutral identity.
+// ORIGINAL: 0x00510C90 sub_510c90 0x00510C90-0x00510CE0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510c90.cpp", "source:src/console.h", "source:src/mapwin.h"], "reason": "The retained exact seed shows an unchanged Console receiver, two tile coordinates, and the overlay-clear, redraw, cursor-next call sequence. The image supplies no semantic name."}
+// symbol    ?sub_510c90@Console@@QAEHHH@Z
+int Console::sub_510c90(int x_coord, int y_coord) {
+    const int had_survey = survey_mode_;
+    field_23BF8_ = 0;
+    if (had_survey != 0) {
+        survey_mode_ = 0;
+        console_map_win()->draw_map(1);
+    }
+    console_map_win()->draw_cursor();
+    cursor_next(x_coord, y_coord);
+    return 0;
+}
+
 /*
 Purpose: Point the map windows at one tile on behalf of one faction. Build a
          view-tag mask from the faction argument, walk the eight map-window

@@ -375,6 +375,7 @@ class Console : public MapWin {
 
  public:
   void cursor_next(int x_coord, int y_coord);
+  int sub_510c90(int x_coord, int y_coord);
 
  public:
   void editor_polar();
