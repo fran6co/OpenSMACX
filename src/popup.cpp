@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include <mmsystem.h>
+#include <cstring>
 #include "original_seam.h"
 #include "popup.h"
 #include "wave.h"
@@ -1254,6 +1255,33 @@ int __cdecl pop_ask(char *section, int value, char *override_text,
 int __cdecl pop_ask(char *section, int value,
                     int (__cdecl *callback)(), int flags) {
     return pop_ask(PopupStartCaption, section, value, nullptr,
+                   callback, flags);
+}
+
+// Text-taking overloads reject a null pointer before computing its length;
+// the shorter one supplies the same process-wide default text file.
+// ORIGINAL: 0x00627890 ?pop_ask@@YAHPADPADPADP6AHXZH@Z 0x00627890-0x006278C4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00627890.cpp; image:0x00627890-0x006278C4; source:src/popup.cpp:pop_ask"], "reason": "Original text-taking popup overload returns -1 on null text, otherwise passes strlen(text) and all caller arguments to the six-argument implementation."}
+// symbol    ?pop_ask@@YAHPAD00P6AHXZH@Z
+int __cdecl pop_ask(char *text_file, char *section, char *override_text,
+                    int (__cdecl *callback)(), int flags) {
+    if (override_text == nullptr) {
+        return -1;
+    }
+    return pop_ask(text_file, section, static_cast<int>(strlen(override_text)),
+                   override_text, callback, flags);
+}
+
+// ORIGINAL: 0x006278D0 ?pop_ask@@YAHPADPADP6AHXZH@Z 0x006278D0-0x00627904 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/006278d0.cpp; image:0x006278D0-0x00627904; source:src/popup.cpp:pop_ask"], "reason": "Original short text-taking popup overload returns -1 on null text, otherwise supplies PopupStartCaption, strlen(text), and caller arguments to the six-argument implementation."}
+// symbol    ?pop_ask@@YAHPAD0P6AHXZH@Z
+int __cdecl pop_ask(char *section, char *override_text,
+                    int (__cdecl *callback)(), int flags) {
+    if (override_text == nullptr) {
+        return -1;
+    }
+    return pop_ask(PopupStartCaption, section,
+                   static_cast<int>(strlen(override_text)), override_text,
                    callback, flags);
 }
 
