@@ -144,6 +144,7 @@ set(OPENSMACX_SOURCES
     src/dialog.cpp
     src/dialogs.cpp
     src/faction.cpp
+    src/famewin.cpp
     src/filemap.cpp
     src/flatbutton.cpp
     src/flic.cpp

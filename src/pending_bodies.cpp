@@ -51,6 +51,7 @@
 #include "lock.h"
 #include "fx.h"
 #include "hypothesis_layouts.h"
+#include "famewin.h"
 #include "statuswin.h"
 #include "console.h"
 #include "buttongroup.h"
@@ -726,11 +727,6 @@ StringBox::~StringBox() {  // ??1StringBox@@QAE@XZ at 0x004325C0
 TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0
     typedef void(__fastcall *pending)(TutWin *, void *);
     PENDING_BODY(0x004BE7D0, pending)(this, nullptr);
-}
-
-FameWin::~FameWin() {  // ??1FameWin@@QAE@XZ at 0x0044B100
-    typedef void(__fastcall *pending)(FameWin *, void *);
-    PENDING_BODY(0x0044B100, pending)(this, nullptr);
 }
 
 Interlude::~Interlude() {  // ??1Interlude@@QAE@XZ at 0x0045F740

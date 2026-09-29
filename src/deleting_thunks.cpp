@@ -102,6 +102,7 @@
 #include "stringbox.h"
 #include "tutwin.h"
 #include "hypothesis_layouts.h"
+#include "famewin.h"
 #include "editbox.h"
 #include "net_class.h"
 

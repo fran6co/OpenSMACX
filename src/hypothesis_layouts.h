@@ -1160,66 +1160,6 @@ struct Faction {
   uint32_t field_46C_;  // 0x46C
 };
 
-/* 0xB69C bytes, 49 member(s), 10 named. From the IDB. 13 function(s) in the image. */
-class FameWin {
- public:
-  // 0x0044B100 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~FameWin();
-
- public:
-  uint8_t graphicWin_[0xA14];  // 0x0
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
-  uint32_t field_A40_;  // 0xA40
-  uint32_t field_A44_;  // 0xA44
-  uint32_t field_A48_;  // 0xA48
-  uint32_t factionID_;  // 0xA4C
-  uint8_t spot_[0xC];  // 0xA50
-  uint8_t flatButtons1_[0x4F14];  // 0xA5C
-  uint8_t buttonGroup_[0x94];  // 0x5970
-  uint8_t flatButtons2_[0x43C8];  // 0x5A04
-  uint8_t flatButton3_[0xB4C];  // 0x9DCC
-  uint32_t field_A918_;  // 0xA918
-  uint8_t buffer1_[0x588];  // 0xA91C
-  uint8_t buffer2_[0x588];  // 0xAEA4
-  uint32_t field_B42C_;  // 0xB42C
-  uint32_t field_B430_;  // 0xB430
-  uint32_t field_B434_;  // 0xB434
-  uint32_t field_B438_;  // 0xB438
-  uint32_t field_B43C_;  // 0xB43C
-  uint32_t field_B440_;  // 0xB440
-  uint32_t field_B444_;  // 0xB444
-  uint32_t field_B448_;  // 0xB448
-  uint32_t field_B44C_;  // 0xB44C
-  uint32_t field_B450_;  // 0xB450
-  uint32_t field_B454_;  // 0xB454
-  uint32_t field_B458_;  // 0xB458
-  uint32_t field_B45C_;  // 0xB45C
-  uint32_t field_B460_;  // 0xB460
-  uint32_t field_B464_;  // 0xB464
-  uint32_t field_B468_;  // 0xB468
-  uint32_t field_B46C_;  // 0xB46C
-  uint32_t field_B470_;  // 0xB470
-  uint32_t field_B474_;  // 0xB474
-  uint32_t field_B478_;  // 0xB478
-  uint32_t field_B47C_;  // 0xB47C
-  uint32_t field_B480_;  // 0xB480
-  uint32_t field_B484_;  // 0xB484
-  uint32_t field_B488_;  // 0xB488
-  uint8_t sprites_[0x210];  // 0xB48C
-};
-
 /* 0x41C bytes, 7 member(s), 4 named. From the IDB. 9 function(s) in the image. */
 class FileBox {
  public:
