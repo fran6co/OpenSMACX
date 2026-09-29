@@ -105,6 +105,10 @@ extern int CursorHotspotY[12];
   */
 class Console : public MapWin {
  public:
+  void road_to(int veh_id, int cursor_mode);
+  void automate(int veh_id, int order);
+  void convoy(int veh_id);
+  void next_cursor();
   // homed from 004d7cf0.cpp
   void designate(int veh_id);
 

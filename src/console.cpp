@@ -1113,6 +1113,174 @@ InfoWin ConsoleInfoWin;
 // RECOVERY_OBJECT: v1 0x009156B0 ?ConsoleGlobal@@3VConsole@@A
 Console ConsoleGlobal;
 
+// The original order at 0x004D7BE0 checks the rover's plan, chassis and
+// current terrain before placing a road cursor.
+// ORIGINAL: 0x004D7BE0 ?road_to@Console@@QAEXHH@Z 0x004D7BE0-0x004D7CED
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d7be0.cpp"], "reason": "Seed 004d7be0 identifies the Console road cursor order and extent; typed vehicle, prototype, terrain and technology owners preserve the sequence."}
+void Console::road_to(int veh_id, int cursor_mode) {
+    const Veh &vehicle = Vehs[veh_id];
+    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+    if (prototype.plan != 9) {
+        NetMsgPopup->pop("NEEDTERRAFORMERS", 5000, 0, 0);
+        return;
+    }
+    if (Chassis[prototype.chassis_id].triad != TRIAD_LAND) {
+        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, 0);
+        return;
+    }
+    const Map &tile = map_tiles()[vehicle.y * MapLongitude + (vehicle.x >> 1)];
+    if ((tile.climate & ~0x1F) < 0x60) {
+        NetMsgPopup->pop("NOTINOCEAN", 5000, 0, 0);
+        return;
+    }
+    if (cursor_mode != 0x1C ||
+        has_tech(Terraforming[TERRA_FARM].preq_tech, vehicle.faction_id)) {
+        ConsoleGlobal.cursor_on((cursor_mode == 0x1C) + 2, -1);
+    }
+}
+
+// Advance the view history after clearing the transient survey overlay.
+// ORIGINAL: 0x00510B70 ?next_cursor@Console@@QAEXXZ 0x00510B70-0x00510C89 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510b70.cpp"], "reason": "Seed 00510b70 and adjacent recovered prev_cursor establish the next history transition on Console cursor fields."}
+void Console::next_cursor() {
+    field_23BF8_ = 0;
+    if (survey_mode_ != 0) {
+        survey_mode_ = 0;
+        console_map_win()->draw_map(1);
+    }
+    console_map_win()->draw_cursor();
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            console_map_win()->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        console_map_win()->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+    if (cursor_history_index_ != cursor_history_head_) {
+        cursor_history_index_ = (cursor_history_index_ + 1) % 32;
+        const int slot = ConsoleGlobal.cursor_history_index_;
+        ConsoleStatusWin.set_loc(ConsoleGlobal.cursor_history_x_[slot],
+                                 ConsoleGlobal.cursor_history_y_[slot]);
+        const int slot_now = ConsoleGlobal.cursor_history_index_;
+        console_map_win()->focus(ConsoleGlobal.cursor_history_x_[slot_now],
+                                 ConsoleGlobal.cursor_history_y_[slot_now]);
+    }
+}
+
+// Assign an automated order while holding the vehicle's network lock.
+// ORIGINAL: 0x004D8A70 ?automate@Console@@QAEXHH@Z 0x004D8A70-0x004D8CC9
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8a70.cpp"], "reason": "Seed 004d8a70 identifies the automation order and extent; typed Veh, prototype, chassis, terrain and NetDaemon owners match its accessed records."}
+void Console::automate(int veh_id, int order) {
+    Veh &vehicle = Vehs[veh_id];
+    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+    const RulesChassis &chassis = Chassis[prototype.chassis_id];
+    const Map &tile = map_tiles()[vehicle.y * MapLongitude + (vehicle.x >> 1)];
+    bool direct_lock = false;
+    if (prototype.plan == 9) {
+        if (order == 1 || order == 2) {
+            if (chassis.triad != TRIAD_LAND || (tile.climate & 0xE0) < 0x60) {
+                return;
+            }
+        }
+        if (order == 2) {
+            if (!has_tech(Terraforming[TERRA_FARM].preq_tech,
+                          vehicle.faction_id)) {
+                return;
+            }
+            direct_lock = true;
+        }
+        if (!direct_lock && (order == 4 || order == 5) &&
+            (tile.bit & 1) != 0 && (tile.val2 & 0x0F) < 8) {
+            return;
+        }
+    }
+    if (!direct_lock && order == 10) {
+        if (chassis.triad != TRIAD_AIR ||
+            Weapon[prototype.weapon_id].offense_rating == 0) {
+            return;
+        }
+        vehicle.order = 0;
+        ConsoleGlobal.cursor_on(0xB, -1);
+        return;
+    }
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
+        return;
+    }
+    if (order == 0xB) {
+        vehicle.waypoint_x[1] = vehicle.x;
+        vehicle.waypoint_y[1] = vehicle.y;
+        if (chassis.range != 0) {
+            action_home(veh_id, 0);
+            if (vehicle.order == 0x18) {
+                vehicle.waypoint_x[1] = vehicle.waypoint_x[0];
+                vehicle.waypoint_y[1] = vehicle.waypoint_y[0];
+            }
+            vehicle.order = 0;
+        }
+    }
+    vehicle.order_auto_type = static_cast<uint8_t>(order);
+    vehicle.order = 0;
+    vehicle.state = (vehicle.state & 0xFCFFFFFF) | 0x200;
+    vehicle.waypoint_count = 0;
+    synch_veh(veh_id);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+}
+
+// A convoy either opens the supply panel at its base or chooses an extraction
+// resource at its current site. The vehicle lock covers both interactions.
+// Resource labels are RulesResource members. The original also sets an
+// unowned net action slot at 0x0093E904 before opening supply_options;
+// that effect still requires its owner.
+// ORIGINAL: 0x004D8FA0 ?convoy@Console@@QAEXH@Z 0x004D8FA0-0x004D916D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d8fa0.cpp", "source:src/alpha.h"], "reason": "Seed 004d8fa0 identifies the Console convoy order and lock lifecycle; typed Veh, Base and RulesResource records replace receiver and table offsets. The resource label run at 0x0094615C is Resource[0].name_plural, with the singular member selected for a yield of one. The net action slot at 0x0093E904 remains an external ownership discovery; this binding does not claim that effect."}
+void Console::convoy(int veh_id) {
+    if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
+        return;
+    }
+    Veh &vehicle = Vehs[veh_id];
+    const int base_id = base_at(vehicle.x, vehicle.y);
+    if (base_id >= 0) {
+        supply_options(veh_id, base_id);
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+    if (vehicle.home_base_id >= 0) {
+        if (can_convoy(vehicle.x, vehicle.y) == 0) {
+            NetMsgPopup->pop("CANTCONVOY", 5000, 0, 0);
+            NetDaemonNet.unlock_veh();
+            return;
+        }
+        for (int resource = 0; resource < 3; ++resource) {
+            const int amount = resource_yield(resource, faction_id_,
+                                              vehicle.home_base_id,
+                                              vehicle.x, vehicle.y);
+            parse_num(resource, amount);
+            const char *name = amount == 1
+                ? Resource[resource].name_singular
+                : Resource[resource].name_plural;
+            parse_say(resource, reinterpret_cast<int>(name), -1, -1);
+        }
+        parse_says(3, Bases[vehicle.home_base_id].name_string, -1, -1);
+        const int choice = x_pop_short("SUPPLYEXTRACT", 0x40, 0);
+        if (choice >= 0) {
+            vehicle.order = 3;
+            vehicle.order_auto_type = static_cast<uint8_t>(choice);
+            synch_veh(veh_id);
+            NetDaemonNet.await_synch();
+        }
+    }
+    NetDaemonNet.unlock_veh();
+}
+
 // ORIGINAL: 0x00515740 ?toggle_dest@Console@@QAEXXZ 0x00515740-0x00515758 BYTE_EXACT
 // size      24 bytes
 // prototype void (__thiscall ?toggle_dest@Console@@QAEXXZ)(Console* this)
