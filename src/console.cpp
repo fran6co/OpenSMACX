@@ -1676,7 +1676,7 @@ int selecting_signed(uint32_t value) {
 }
 
 // ORIGINAL: 0x005105C0 ?selecting@Console@@QAEHHH@Z 0x005105C0-0x005107D5
-// RECOVERY_BINDING: v1 {"evidence": ["Original5105C0..5107D5, with src/unrecovered/005105c0.cpp retained as a seed.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original 0x005105C0..0x005107D5 and its retired transcription preserved in Git history.", "Original early mode1/mode0 returns skip pumping. Ordinary cursor mode is captured after valid_patrol; each called receiver is retained for cache writeback while subsequent table slots and hotspots are read live.", "Original68FAF0 is MapLongitude, the half-width used by the wrap test; valid initialized vehicle/window state and representable coordinate arithmetic are required by the original."], "reason": "Console owns selection-mode admission and the shared map-window cursor update. Recover genuine receivers and cursor globals; the range and patrol refusals both select loaded sprite5."}
 int Console::selecting(int tile_x, int tile_y) {
     const uint32_t initial_mode = field_23D10_;
     if (initial_mode == 1) {
@@ -1724,6 +1724,43 @@ int Console::selecting(int tile_x, int tile_y) {
     }
     do_non_input();
     return 1;
+}
+
+// The editor's landmark removal command. The original uses the current
+// cursor-history coordinate when either supplied coordinate is outside the
+// map, then asks for confirmation before deleting the named landmark.
+// The three popup keys are the strings at 0x0068A994/0x0068A9A4/0x0068A9B0.
+// ORIGINAL: 0x00516490 ?erase_landmark@Console@@QAEXHH@Z 0x00516490-0x005165A6
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x00516490..0x005165A6 seed searches a landmark, checks editor permission, confirms LANDMARKKILL, then either sends a multiplayer message or deletes and redraws locally.", "src/map.h owns MapLandmark, MapLandmarkCount, map bounds and landmark helpers; src/console.h owns cursor-history coordinates and faction_id_; src/game.h owns GameState and IsMultiplayerNet.", "The pinned image stores popup keys LANDMARKNONE, LANDMARKNO and LANDMARKKILL at 0x0068A994, 0x0068A9A4 and 0x0068A9B0."], "reason": "Recover the Console landmark removal command through typed map, game and cursor owners while preserving its historical byte claim in the separate seed until remeasurement."}
+void Console::erase_landmark(int x_coord, int y_coord) {
+    if (y_coord < 0 || y_coord >= MapLatitudeBounds ||
+        x_coord < 0 || x_coord >= MapLongitudeBounds) {
+        const int index = ConsoleGlobal.cursor_history_index_;
+        x_coord = ConsoleGlobal.cursor_history_x_[index];
+        y_coord = ConsoleGlobal.cursor_history_y_[index];
+    }
+
+    const int landmark_id = find_landmark(x_coord, y_coord, 1);
+    if (landmark_id < 0) {
+        NetMsgPopup->pop("LANDMARKNONE", 5000, 0, nullptr);
+        return;
+    }
+    if ((GameState & 0x80) == 0 &&
+        valid_landmark(x_coord, y_coord, ConsoleGlobal.faction_id_) == 0) {
+        NetMsgPopup->pop("LANDMARKNO", 5000, 0, nullptr);
+        return;
+    }
+
+    parse_says(0, MapLandmark[landmark_id].name, -1, -1);
+    if (X_pop("LANDMARKKILL", nullptr) == 0) {
+        return;
+    }
+    if (IsMultiplayerNet != 0) {
+        message_data(0x2e02, 0, x_coord, y_coord, 0, 0);
+        return;
+    }
+    kill_landmark(MapLandmark[landmark_id].x, MapLandmark[landmark_id].y);
+    ::draw_map(1);
 }
 
 // ORIGINAL: 0x00510400 ?cursor_on@Console@@QAEXH@Z 0x00510400-0x00510490 FILE BYTE_EXACT
@@ -4432,7 +4469,7 @@ void Console::time_controls() {
 }
 
 // ORIGINAL: 0x0050F680 ?on_nc_hittest@Console@@QAEXHH@Z 0x0050F680-0x0050F951
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0050f680.cpp"], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F680..0x0050F951 disassembly exits return EAX values 1 or 0; its retired transcription is preserved in Git history."], "reason": "Translate the Console non-client hit-test into its existing virtual method; the disassembly exits return EAX values 1 or 0, correcting the seed-only void prototype."}
 // symbol    ?on_nc_hittest@Console@@UAEHHH@Z
 int Console::on_nc_hittest(int x_coord, int y_coord) {
     // The original exits with EAX=1 while any split line is armed.  The
@@ -4510,7 +4547,7 @@ int Console::on_nc_hittest(int x_coord, int y_coord) {
 }
 
 // ORIGINAL: 0x0050F960 ?on_post_redraw_nc_buffer@Console@@QAEXPAUBuffer@@H@Z 0x0050F960-0x0050FB08
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0050f960.cpp"], "reason": "Render the two Console non-client splitter handles with their owned Sprite members and the Window client/outer geometry; the archived scaffold confirms two handles per orientation and the image buffer dimensions."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0050F960..0x0050FB08 draws two splitter handles per orientation; its retired transcription remains in Git history."], "reason": "Render the two Console non-client splitter handles with their owned Sprite members and the Window client/outer geometry; the archived scaffold confirms two handles per orientation and the image buffer dimensions."}
 // symbol    ?on_post_redraw_nc_buffer@Console@@QAEXPAVBuffer@@H@Z
 void Console::on_post_redraw_nc_buffer(Buffer *buffer, int which) {
     if (buffer == nullptr) {
