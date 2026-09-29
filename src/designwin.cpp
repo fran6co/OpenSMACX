@@ -34,18 +34,19 @@
 #include "alpha.h"      // Labels - the label-id block on_left_click reads
 #include "netdaemon.h"  // synch_proto, message_data, NetDaemonNet
 #include "xpops.h"      // x_pop_caption_label
+#include "console.h"    // ConsoleGlobal.faction_id_ is the local faction
 
 int __cdecl abil_cond(int ability_id, int chassis_id, int weapon_id,
                      int armor_id);  // 0x00584B50, implemented in leaf_recoveries.cpp
 
-// DISCOVERY 0x00439D30: suggest_abil reads ability prerequisites at
-// 0x009AB550 (14 shorts per ability row), checks editor gating at 0x009A6490,
-// consults research at 0x00949780, and scans 0x359-stride tables at
-// 0x00946F60/0x00946F80 using the faction id at 0x00939284. The recovered
-// seed confirms these roles and behavior, but current source has not assigned
-// those tables/flags to their owning typed globals. Keep the product body
-// unfinished until those owners are established; do not carry new fixed-address
-// aliases into this translation unit.
+// DISCOVERY 0x00439D30: the retained seed's 0x009AB550 is
+// Ability[].preq_tech, 0x009A6490 is GamePreferences, 0x00949780 is
+// Rules.tech_two_spec_abilities and 0x00939284 is ConsoleGlobal.faction_id_.
+// Its faction-stride scan reaches Players[].faction_bonus_id/val1. The seed
+// scans 41 dwords starting at bonus_id[1], past the eight declared bonus
+// slots and even the Player object. The typed implementation limits this
+// check to the faction's declared bonus entries; exact restoration of that
+// out-of-bounds scan remains a separate obligation.
 
 // ---- shared seams and bindings the recovered bodies reach -----------------
 
@@ -1624,10 +1625,42 @@ void DesignWin::check_abil() {
 }
 
 // ORIGINAL: 0x00439D30 ?suggest_abil@DesignWin@@QAEXH@Z 0x00439D30-0x00439EA3 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439d30.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00439d30.cpp", "src/veh.h:RulesAbility and abil_index", "src/faction.h:Player faction bonus members", "src/game.h:GamePreferences", "src/alpha.h:Rules.tech_two_spec_abilities", "src/console.h:ConsoleGlobal.faction_id_"], "reason": "Suggest a valid researched ability through the real design selection and faction bonus records, retaining the original seed's anomalous bonus scan as a restoration obligation."}
 void DesignWin::suggest_abil(int ability) {
-    (void)ability;
-    // BODY GOES HERE.
+    check_abil();
+    if ((GamePreferences & 0x4000) == 0) return;
+
+    const int ability_id = abil_index(ability);
+    const int faction = static_cast<int>(factionID_);
+    if (!has_tech(Ability[ability_id].preq_tech, faction)
+        || !abil_cond(ability_id, static_cast<int>(protoChassisType_),
+                      static_cast<int>(protoWeaponType_),
+                      static_cast<int>(protoArmorType_))
+        || bit_count(static_cast<int>(protoAbilityFlags_)) > 1
+        || (protoAbilityFlags_ != 0
+            && !has_tech(Rules.tech_two_spec_abilities, faction))) {
+        return;
+    }
+
+    const Player &local = Players[ConsoleGlobal.faction_id_];
+    for (int i = 0; i < local.faction_bonus_count && i < 8; ++i) {
+        if (local.faction_bonus_id[i] == 15
+            && local.faction_bonus_val1[i] == ability_id) {
+            return;
+        }
+    }
+
+    protoAbilityFlags_ |= static_cast<uint32_t>(ability);
+    protoAbilityID1_ = static_cast<uint32_t>(-1);
+    protoAbilityID2_ = static_cast<uint32_t>(-1);
+    for (int id = 0; id < 0x1D; ++id) {
+        if ((protoAbilityFlags_ & (1u << id)) == 0) continue;
+        if (protoAbilityID1_ == static_cast<uint32_t>(-1)) {
+            protoAbilityID1_ = static_cast<uint32_t>(id);
+        } else if (protoAbilityID2_ == static_cast<uint32_t>(-1)) {
+            protoAbilityID2_ = static_cast<uint32_t>(id);
+        }
+    }
 }
 
 // ORIGINAL: 0x00434BC0 ?draw_chassis@DesignWin@@QAEXH@Z 0x00434BC0-0x00434F36
@@ -1742,7 +1775,7 @@ void DesignWin::draw_weapon(int redraw) {
 }
 
 // ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435400.cpp", "docs/recovery/member-accesses.csv"], "reason": "Partial typed recovery draws the armor panel caption and selected armor model preview; the seed retains unresolved armor detail text, palette and alternate render behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435400.cpp", "src/caviar.h:Caviar::render_multi_table_dest", "src/game.h:ArmorTransparentColorTables", "docs/recovery/member-accesses.csv"], "reason": "Draw the selected armor preview, including the special transparent armor render path; the seed retains unresolved armor detail text and palette behavior."}
 void DesignWin::draw_armor(int redraw) {
     (void)redraw;
     Buffer *canvas = static_cast<Buffer *>(this);
@@ -1763,17 +1796,24 @@ void DesignWin::draw_armor(int redraw) {
     if (armor != 0) {
         preview.top += title_height;
         preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
+        caviar_.reset_objects();
         vehdraw_construct_armor(static_cast<int>(factionID_),
                                 static_cast<int>(protoChassisType_),
                                 static_cast<int>(protoWeaponType_), armor, 1,
                                 &caviar_);
         caviar_.set_scaling(0.07f);
         caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
-        caviar_.render(canvas, (preview.left + preview.right) / 2,
-                       (preview.top + preview.bottom) / 2, 6);
+        const int centre_x = (preview.left + preview.right) / 2;
+        const int centre_y = (preview.top + preview.bottom) / 2;
+        if (armor == 5) {
+            caviar_.render_multi_table_dest(canvas, centre_x, centre_y, 24,
+                reinterpret_cast<unsigned char *>(&ArmorTransparentColorTables), 6);
+        } else {
+            caviar_.render(canvas, centre_x, centre_y, 6);
+        }
     }
-    // BODY GOES HERE. The seed's armor detail also selects a special
-    // multi-table render path and translated rating table not yet owned here.
+    // BODY GOES HERE. The seed's armor detail uses a separate translated
+    // rating table not yet owned here.
 }
 
 // ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29
