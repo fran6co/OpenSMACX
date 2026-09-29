@@ -566,7 +566,7 @@ void CheckBox::set_state_id(int id, int value) {
 }
 
 // ORIGINAL: 0x0060EA10 ?flip_state_id@CheckBox@@QAEXH@Z 0x0060EA10-0x0060EB48
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060ea10.cpp shows the original id search and toggles the bit indexed by the Dialog item list current position; src/dialog.h exposes item_list_ and selected_position_; src/stringstruct.h documents seek_id cursor updates and return semantics."], "reason": "Recover CheckBox state toggling in the product class: seek_id updates the Dialog item-list cursor and selected_position_ is the shared state-bit word."}
+// RECOVERY_BINDING: v1 {"evidence": ["The original 0x0060EA10 body searches the item list by id and toggles the bit indexed by the Dialog item-list current position; src/dialog.h exposes item_list_ and selected_position_; src/stringstruct.h documents seek_id cursor updates and return semantics."], "reason": "Recover CheckBox state toggling in the product class: seek_id updates the Dialog item-list cursor and selected_position_ is the shared state-bit word."}
 void CheckBox::flip_state_id(int id) {
     Dialog::item_list_.seek_id(id);
     Dialog::selected_position_ ^=
