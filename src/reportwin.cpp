@@ -25,6 +25,8 @@
 #include "maininterface.h"  // MainInterfaceGlobal - the set_modal owner
 #include "tutwin.h"  // TutWinBaseWindow - the report's base-map zoom target
 #include "vector_teardown.h"
+#include "alpha.h"
+#include "socialwin.h"
 
 const void *const ReportWinFlatButtonCtor = (const void *)0x00607CF0;
 const void *const ReportWinFlatButtonDtor = (const void *)0x00406880;
@@ -205,15 +207,12 @@ void ReportWin::reset() {
     buffer.set_text_color2(0xF2, -1, 1, 1);
     buffer.set_text_color3(0xE1, -1, 1, 1);
 
-    rect1_.left = field_5974_;
-    rect1_.top = field_5978_;
-    rect1_.right = field_597C_ - field_5974_;
-    rect1_.bottom = field_5980_ - field_5978_;
+    rect1_.left = energy_panel_rect_.left;
+    rect1_.top = energy_panel_rect_.top;
+    rect1_.right = energy_panel_rect_.right - energy_panel_rect_.left;
+    rect1_.bottom = energy_panel_rect_.bottom - energy_panel_rect_.top;
 
-    report_work_rect_.left = field_5974_;
-    report_work_rect_.top = field_5978_;
-    report_work_rect_.right = field_597C_;
-    report_work_rect_.bottom = field_5980_;
+    report_work_rect_ = energy_panel_rect_;
 
     buffer.box_sprite(&report_panel_rect_, &InterfaceBoxStyles[9]);
 
@@ -399,20 +398,55 @@ void ReportWin::draw_projects() {
 }
 
 /*
-Purpose: Unimplemented dependency - the retained draw_energy unit is not
-         recovered yet; this body only keeps on_selected linking until its
-         own body lands.
+Purpose: Draw the energy page's five-panel frame and calculate the faction's
+         underlying accounts. Text, row breakdowns and selection are pending.
 // ORIGINAL: 0x0049BCD0 ?draw_energy@ReportWin@@QAEXXZ 0x0049BCD0-0x0049D481 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0049bcd0.cpp", "src/reportwin.h", "src/socialwin.cpp"], "reason": "Recover the energy-page frame and shared accounting through owned ReportWin geometry and the typed energy computation; preserve the remaining row and selection work explicitly."}
 // size      6065 bytes
 // prototype void (__thiscall ?draw_energy@ReportWin@@QAEXXZ)(ReportWin* this)
 // callers   3   call targets   30
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00445130 0x0048C060 0x004E3A00 0x004F6510 0x0050BA00 0x00590910 0x005DACB0 0x005DACE0 0x005DAD10 0x005DCEA0 0x005DD130 0x005DD300 0x005DDF60 0x005DE1D0 0x005E2DD3 0x00609470 0x00609C60 0x00609C90 0x00609CC0 0x00609CF0 0x00609F20 0x00609FA0 0x0060A670 0x0060C920 0x006169A0 0x00625E30 0x00625EC0 0x006453E0 0x00645470 0x0064FC88
-Status: Link-only placeholder from src/unrecovered/0049bcd0.cpp; original behavior is not implemented.
+Status: Partial typed recovery; the retained seed remains restoration evidence.
 */
 void ReportWin::draw_energy() {
-    // BODY GOES HERE.
+    Buffer *canvas = static_cast<Buffer *>(this);
+    const int viewer = ReportIfGlobal.report_faction_id();
+    const int line_height = static_cast<int>(field_E268_);
+    const int middle = (energy_panel_rect_.left + energy_panel_rect_.right) / 2;
+    const int first_break = energy_panel_rect_.top + line_height + 9;
+    const int second_break = first_break + line_height + 9;
+
+    RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+                  energy_panel_rect_.right - 3, first_break};
+    RECT reserves = {energy_panel_rect_.left + 3, first_break + 2,
+                     middle - 1, second_break};
+    RECT income = {middle + 2, first_break + 2,
+                   energy_panel_rect_.right - 3, second_break};
+    RECT expenses = {energy_panel_rect_.left + 3, second_break + 2,
+                     middle - 1, energy_panel_rect_.bottom - 3};
+    RECT balance = {middle + 2, second_break + 2,
+                    energy_panel_rect_.right - 3,
+                    energy_panel_rect_.bottom - 3};
+    canvas->box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[3]);
+    canvas->box_sprite(&title, &InterfaceBoxStyles[1]);
+    canvas->box_sprite(&reserves, &InterfaceBoxStyles[1]);
+    canvas->box_sprite(&income, &InterfaceBoxStyles[1]);
+    canvas->box_sprite(&expenses, &InterfaceBoxStyles[0]);
+    canvas->box_sprite(&balance, &InterfaceBoxStyles[0]);
+    canvas->set_text_color(0x99, -1, 1, 1);
+    canvas->set_text_color2(0xf2, -1, 1, 1);
+    canvas->set_text_color3(0xe1, -1, 1, 1);
+
+    energy_compute(viewer, 0);
+    rect1_.left = middle + 8;
+    rect1_.top = second_break + 8;
+    rect1_.right = -15;
+
+    // The retained 6065-byte body supplies the remaining title, accounting
+    // rows, commerce breakdown and interactive selections. Keep its evidence
+    // while the report's shared text and row owners are recovered.
 }
 
 /*

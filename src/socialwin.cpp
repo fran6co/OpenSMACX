@@ -24,6 +24,9 @@
 #include "strings.h"
 #include "text.h"
 #include "faction.h"
+#include "base.h"
+#include "technology.h"
+#include "lock.h"
 #include "alpha.h"
 #include "spying_recovery.h"
 #include "mapwin.h"   // MainInterfaceGlobal, at 0x007AE820
@@ -1181,29 +1184,111 @@ void __cdecl slide_show(GraphicWin *window, int mode);   // 0x0045D440
 void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 void __cdecl do_all_draws();                             // 0x005FCBB0, in temp.cpp
 
-// energy_compute is seed-only (src/unrecovered/00445130.cpp) and no landed TU
-// defines it, so this file carries the __cdecl call the image's own
-// `call rel32` reaches - the same forwarder councwin.cpp defines for
-// slide_show/slide_hide. Retire it the moment 00445130 is homed.
-void __cdecl energy_compute(int faction_id, int mode) {
-    typedef void(__cdecl *pending)(int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00445130))(faction_id,
-                                                                      mode);
+// The report and social screens share this accounting block. The original
+// accesses a 512-entry per-base table immediately after the maintenance sum,
+// followed by three totals, 70 facility counters, and commerce/net totals.
+// RECOVERY_OBJECT: v2 0x007492DC 0x007492E0 ?EnergyMaintenanceTotal@@3HA 0x00445130
+int EnergyMaintenanceTotal;
+// RECOVERY_OBJECT: v2 0x007492E0 0x00749AE0 ?EnergyBaseMaintenance@@3PAHA 0x00445130
+int EnergyBaseMaintenance[MaxBaseNum];
+// RECOVERY_OBJECT: v2 0x00749AE0 0x00749AE4 ?EnergyLabsTotal@@3HA 0x00445130
+int EnergyLabsTotal;
+// RECOVERY_OBJECT: v2 0x00749AE4 0x00749AE8 ?BreakthroughTurnsGlobal@@3HA 0x00445130
+int BreakthroughTurnsGlobal;
+// RECOVERY_OBJECT: v2 0x00749AE8 0x00749AEC ?EnergyEconomyTotal@@3HA 0x00445130
+int EnergyEconomyTotal;
+// RECOVERY_OBJECT: v2 0x00749AEC 0x00749C04 ?EnergyFacilityCounts@@3PAHA 0x00445130
+int EnergyFacilityCounts[70];
+// RECOVERY_OBJECT: v2 0x00749C04 0x00749C08 ?EnergyCommerceDelta@@3HA 0x00445130
+int EnergyCommerceDelta;
+// RECOVERY_OBJECT: v2 0x00749C0C 0x00749C10 ?NetIncomeGlobal@@3HA 0x00445130
+int NetIncomeGlobal;
+// The original halves maintenance for bases belonging to this indexed
+// selected base. The owner/writer of the selector is not yet established.
+// RECOVERY_OBJECT: v2 0x009A6578 0x009A657C ?EnergyDiscountBaseIndex@@3HA 0x00445130
+int EnergyDiscountBaseIndex = -1;
+
+// ORIGINAL: 0x00445130 ?energy_compute@@YAXHH@Z 0x00445130-0x00445433
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00445130.cpp", "src/base.h", "src/faction.h", "src/hypothesis_layouts.h"], "reason": "Recover the shared energy accounting pass through Base and PlayerData fields, owning its report totals and per-base/facility tables instead of calling a fixed executable address."}
+void __cdecl energy_compute(int faction_id, int recompute_bases) {
+    memset(EnergyFacilityCounts, 0, sizeof(EnergyFacilityCounts));
+    EnergyLabsTotal = 0;
+    NetIncomeGlobal = 0;
+    EnergyMaintenanceTotal = 0;
+    EnergyEconomyTotal = 0;
+    EnergyCommerceDelta = 0;
+
+    int discount_carry = 0;
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        EnergyBaseMaintenance[base_id] = 0;
+        Base &base = Bases[base_id];
+        if (base.faction_id_current != faction_id) continue;
+        if (recompute_bases) {
+            set_base(base_id);
+            base_compute(1);
+        }
+
+        int maintenance = 0;
+        for (int facility = 0; facility < 70; ++facility) {
+            if (facility < 65 && has_fac_built(facility, base_id)) {
+                ++EnergyFacilityCounts[facility];
+                maintenance += fac_maint(facility, faction_id);
+            }
+        }
+        if (EnergyDiscountBaseIndex >= 0 &&
+            EnergyDiscountBaseIndex < BaseCurrentCount &&
+            Bases[EnergyDiscountBaseIndex].faction_id_current == faction_id) {
+            // The image carries the odd half-maintenance remainder across
+            // bases; keep its order rather than rounding each base alone.
+            if (discount_carry) ++maintenance;
+            discount_carry = maintenance & 1;
+            maintenance /= 2;
+        }
+
+        EnergyBaseMaintenance[base_id] = maintenance;
+        EnergyLabsTotal += base.labs_total;
+        EnergyEconomyTotal += base.economy_total;
+        NetIncomeGlobal += base.economy_total - maintenance;
+        EnergyMaintenanceTotal += maintenance;
+    }
+
+    const int research_cost = tech_rate(faction_id);
+    int research_level = PlayersData[faction_id].soc_effect_pending.research;
+    if (research_level < -5) research_level = -5;
+    if (research_level > 5) research_level = 5;
+    EnergyLabsTotal = (research_level + 10) * EnergyLabsTotal * 10;
+    BreakthroughTurnsGlobal = EnergyLabsTotal <= 0 ? 9999
+        : (EnergyLabsTotal - 1 + research_cost * 100) / EnergyLabsTotal;
+
+    const unsigned int alive = (LockEnableMask >> 8) & 0xffu;
+    for (int other = 1; other < 8; ++other) {
+        if (other == faction_id ||
+            !(alive & (1u << other)) || !(alive & (1u << faction_id)) ||
+            (PlayersData[faction_id].diplo_treaties[other] & 0x10u)) continue;
+
+        if (PlayersData[faction_id].loan_balance[other] &&
+            !PlayersData[other].sanction_turns) {
+            const int payment = PlayersData[faction_id].loan_payment[other];
+            NetIncomeGlobal -= payment;
+            EnergyCommerceDelta -= payment;
+        }
+        if (PlayersData[other].loan_balance[faction_id] &&
+            !PlayersData[faction_id].sanction_turns) {
+            const int payment = PlayersData[other].loan_payment[faction_id];
+            NetIncomeGlobal += payment;
+            EnergyCommerceDelta += payment;
+        }
+    }
 }
 
 // Fixed-slot bindings carried from the 004aebf0 work, named from the roles
-// their stores fill. Each folds to the bare immediate, so a rename moves no
-// byte.
+// their stores fill. The report totals above now have genuine storage.
 // PlayerSocialCategoryBlock 0x0096CC08 / PlayerSocialEffectBlock 0x0096CC2C -
 // the per-faction social blocks social_calc consumes, reached through
 // PlayersData's own 0x20CC stride (0x96C9E0 + 0x228 / + 0x24C). No catalogue
 // names; the parameter types come from social_calc's own signature.
-// BreakthroughTurnsGlobal 0x00749AE4 / NetIncomeGlobal 0x00749C0C - the two
-// globals UNK1 copies into breakthroughTurns_ and netIncome_.
 static SocialCategory *const PlayerSocialCategoryBlock = (SocialCategory *)0x0096CC08;
 static SocialEffect *const PlayerSocialEffectBlock = (SocialEffect *)0x0096CC2C;
-static int *const BreakthroughTurnsGlobal = (int *)0x00749AE4;
-static int *const NetIncomeGlobal = (int *)0x00749C0C;
 
 static int social_category_value(const SocialCategory &category, int index) {
     switch (index) {
@@ -1274,8 +1359,8 @@ void SocialWin::UNK1(int soc_category, int soc_model) {
 
     energy_compute(factionID_, 1);
 
-    breakthroughTurns_ = *BreakthroughTurnsGlobal;
-    netIncome_ = *NetIncomeGlobal;
+    breakthroughTurns_ = BreakthroughTurnsGlobal;
+    netIncome_ = NetIncomeGlobal;
 
     social_calc(reinterpret_cast<SocialCategory *>(
                     reinterpret_cast<char *>(PlayerSocialCategoryBlock)
@@ -1696,8 +1781,8 @@ void SocialWin::reset() {
     }
 
     energy_compute(factionID_, 1);
-    breakthroughTurns_ = *BreakthroughTurnsGlobal;
-    netIncome_ = *NetIncomeGlobal;
+    breakthroughTurns_ = BreakthroughTurnsGlobal;
+    netIncome_ = NetIncomeGlobal;
     social_calc(&player.soc_category_pending, &player.soc_effect_pending,
                 factionID_, 0, 0);
 
@@ -2156,7 +2241,7 @@ void SocialWin::draw_info() {
     strcat(StringTemp, label_get(0x3BF));
     strcat(StringTemp, ColonSpaceText);
     char number[80];
-    reinterpret_cast<ItoaFn>(_itoa)(*NetIncomeGlobal, number, 10);
+    reinterpret_cast<ItoaFn>(_itoa)(NetIncomeGlobal, number, 10);
     strcat(StringTemp, number);
     buf->set_text_color(0xa0, -1, 1, 1);
     buf->write_l(StringTemp, text_left, text_y, strlen(StringTemp));
@@ -2166,7 +2251,7 @@ void SocialWin::draw_info() {
     StringTemp[0] = 0;
     strcat(StringTemp, label_get(150));
     strcat(StringTemp, ColonSpaceText);
-    reinterpret_cast<ItoaFn>(_itoa)(*BreakthroughTurnsGlobal, number, 10);
+    reinterpret_cast<ItoaFn>(_itoa)(BreakthroughTurnsGlobal, number, 10);
     strcat(StringTemp, number);
     strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
     strcat(StringTemp, label_get(49));

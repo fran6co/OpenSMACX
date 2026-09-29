@@ -433,3 +433,12 @@ class SocialWin : public GraphicWin, public SubInterface {
 
 static_assert(sizeof(SocialWin) == 0x1F2F0,
               "SocialWin layout must match the original executable");
+
+// Shared faction energy accounting consumed by SocialWin and both report UIs.
+void __cdecl energy_compute(int faction_id, int recompute_bases);
+extern int EnergyMaintenanceTotal;
+extern int EnergyLabsTotal;
+extern int EnergyEconomyTotal;
+extern int EnergyCommerceDelta;
+extern int NetIncomeGlobal;
+extern int BreakthroughTurnsGlobal;

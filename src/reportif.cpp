@@ -1290,9 +1290,9 @@ void ReportIf::draw_labs() {
 }
 
 // ORIGINAL: 0x004A84A0 ?draw_energy@ReportIf@@QAEXXZ 0x004A84A0-0x004A9017
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a84a0.cpp", "source:src/reportif.h"], "reason": "Same-owner panel dependency: typed energy calculation, frame and list setup recovered from retained seed; rows remain unfinished."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a84a0.cpp", "source:src/reportif.h", "image:0x004A84AE-0x004A84BC pushes mode zero then report faction for the cdecl energy_compute call"], "reason": "Same-owner panel dependency: typed energy calculation, frame and list setup recovered from retained seed; correct the seed's reversed displayed arguments using the original push order. Rows remain unfinished."}
 void ReportIf::draw_energy() {
-    energy_compute(0, report_faction_id_);
+    energy_compute(report_faction_id_, 0);
     Buffer *const buffer = static_cast<Buffer *>(&MainInterfaceGlobal);
     buffer->set_clip(&field_20_);
     field_C_ = field_20_.left + 6;

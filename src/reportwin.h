@@ -120,10 +120,8 @@ class ReportWin : public GraphicWin {
   uint32_t field_5968_;  // 0x5968
   uint32_t field_596C_;  // 0x596C
   uint32_t field_5970_;  // 0x5970
-  uint32_t field_5974_;  // 0x5974
-  uint32_t field_5978_;  // 0x5978
-  uint32_t field_597C_;  // 0x597C
-  uint32_t field_5980_;  // 0x5980
+  // RECOVERY_MEMBER: v1 ReportWin energy_panel_rect_ 0x5974 0x0049BCD0
+  RECT energy_panel_rect_;  // 0x5974; all four edges form one frame
   RECT report_panel_rect_;  // 0x5984, passed to Buffer::box_sprite
   Spot spot_;  // 0x5994
   uint32_t field_59A0_;  // 0x59A0
