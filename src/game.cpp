@@ -1748,8 +1748,13 @@ GraphicWin CoverWindow;  // 0x00937118
 
 // The multiplayer window - REAL STORAGE at the image's 0x007FD648, not the
 // `GraphicWin *const MultiWindow` binding (see game.h). Its class is
-// MultiWin, and nothing constructs it before the game's own init does, so
-// the object is the zero storage the image leaves until then.
+// MultiWin. The source now uses its real C++ constructor and destructor;
+// their placement in the original initializer/finalizer sequence is still
+// an independent restoration obligation.
+// Its 0x28B8-byte owned layout ends at the independently catalogued
+// g_MULTIWIN_WAVE pointer at 0x007FFF00. The game object file emits
+// ?MultiWindow@@3VMultiWin@@A with real constructor/destructor references.
+// RECOVERY_OBJECT: v2 0x007FD648 0x007FFF00 ?MultiWindow@@3VMultiWin@@A 0x0047A590
 MultiWin MultiWindow;  // 0x007FD648
 
 // 0x00689218 - the DirectPlay application GUID the lobby check registers the

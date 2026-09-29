@@ -51,6 +51,7 @@
 #include "stdafx.h"
 #include "wave.h"   // Effect derives from Wave
 #include "selectpartwin.h"  // genuine GraphicWin-derived design-parts window
+#include "multiwin.h"  // constructor-backed multiplayer window
 
 // BAmbience's former 0x80-byte opaque hypothesis (IDB fields through +0x7E)
 // is superseded by the constructor-backed Sound/Ambience hierarchy and typed
@@ -1477,52 +1478,6 @@ class MonuWin {
 /* 0x334 bytes, 1 member(s), 1 named. From Thinker. */
 struct Monument {
   uint8_t data1_[0x334];  // 0x0
-};
-
-/* 0x28B8 bytes, 31 member(s), 14 named. From the IDB. 20 function(s) in the image. */
-class MultiWin {
- public:
-  // 0x0047A430 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~MultiWin();
-
-  // 0x00479330, a pending_bodies forwarder. turn_timer (time.cpp) reaches it
-  // on the fixed MultiWin at 0x007FD648 with the literal 1.
-  void draw(int draw_type);
-
- public:
-  uint8_t graphicWin_[0xA14];  // 0x0
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
-  uint32_t field_A40_;  // 0xA40
-  uint32_t field_A44_;  // 0xA44
-  uint32_t field_A48_;  // 0xA48
-  uint32_t field_A4C_;  // 0xA4C
-  uint32_t field_A50_;  // 0xA50
-  uint8_t buffer_[0x588];  // 0xA54
-  uint8_t sprites1_[0x84];  // 0xFDC
-  uint8_t sprites2_[0x84];  // 0x1060
-  uint8_t sprite3_[0x2C];  // 0x10E4
-  uint8_t sprite4_[0x2C];  // 0x1110
-  uint8_t sprite5_[0x2C];  // 0x113C
-  uint32_t field_1168_;  // 0x1168
-  uint8_t sprite6_[0x2C];  // 0x116C
-  uint8_t sprite7_[0x2C];  // 0x1198
-  uint8_t flatButton1_[0xB4C];  // 0x11C4
-  uint8_t flatButton2_[0xB4C];  // 0x1D10
-  uint8_t font1_[0x28];  // 0x285C
-  uint8_t font2_[0x28];  // 0x2884
-  uint8_t spot_[0xC];  // 0x28AC
 };
 
 /* 0x260 bytes, 3 member(s), 0 named. From Thinker. */

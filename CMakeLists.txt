@@ -119,6 +119,7 @@ set(OPENSMACX_SOURCES
     src/alphasave.cpp
     src/main.cpp
     src/pending_bodies.cpp
+    src/multiwin.cpp
     src/adjustor_thunks.cpp
     src/deleting_thunks.cpp
     src/delegation_thunks.cpp
