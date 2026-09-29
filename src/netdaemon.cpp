@@ -32,6 +32,7 @@
 #include "map.h"           // the map bounds, PlayersData and Bases it sums
 #include "technology.h"    // GameTechAchieved
 #include "game.h"          // IsMultiplayerNet: the application's shared flag
+#include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
 // The next dword after IsMultiplayerNet. Every sender in this file
 // increments it around one send_message call, every wait loop increments it
@@ -40,11 +41,8 @@
 // is zero - so it counts the network exchanges currently in flight.
 int NetBusyCount;  // 0x0093F664
 
-// The replay recorder's event count: ReplayWin::timer_callback
-// (0x005AD9E0) walks its recorded events while its cursor is below it and
-// setup_game (0x005B3920) clears it with the rest of the per-game state.
-// send_game synchs the replay only when it is nonzero.
-int ReplayEventCount;  // 0x009469F8
+// send_game synchs replay records only when the recorder has bytes to send;
+// the counter and buffer are owned together by replaywin.cpp.
 
 // Four bytes below IsMultiplayerNet. on_player_deleted
 // (0x0052E370) sets it when a client leaves; a lock whose wait saw it comes
@@ -888,7 +886,7 @@ void NetDaemon::send_game() {
         process_message((char *)id, f, e);
     }
 
-    if (ReplayEventCount != 0) {
+    if (ReplayEventBytes != 0) {
         synch(0x22, 0, 0, 0, 0, 1, 0x2101);
         for (;;) {
             id = NetDaemonNet.Net::get(&e, &f);

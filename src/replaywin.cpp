@@ -24,6 +24,29 @@
 #include "base.h"
 #include "map.h"
 #include "game.h"
+#include "log.h"
+
+// setup_game clears 0x800 dwords at 0x00950324 and timer_callback reads
+// eight-byte records from the same interval. The counter advances in bytes.
+// RECOVERY_OBJECT: v2 0x00950324 0x00952324 ?ReplayEvents@@3PAUReplayEventRecord@@A 0x005ADE80
+ReplayEventRecord ReplayEvents[1024];
+// RECOVERY_OBJECT: v2 0x009469F8 0x009469FC ?ReplayEventBytes@@3HA 0x005ADE80
+int ReplayEventBytes;
+
+// ORIGINAL: 0x005ADE80 ?replay_base@@YAXHHHH@Z 0x005ADE80-0x005ADF03
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005ADE80-0x005ADF03 logs Replay Base and Replay Base Info, packs four arguments and TurnCurrentNum into eight bytes at 0x00950324 plus the byte counter at 0x009469F8, then adds eight", "src/unrecovered/005b3920.cpp clears 0x800 dwords of that buffer; ReplayWin timer_callback reads the same eight-byte records"], "reason": "Own replay-event storage and byte-length accounting in the replay subsystem, replacing fixed-address writes with a typed event record."}
+void __cdecl replay_base(int type, int x, int y, int faction_id) {
+    log_say("Replay Base", x, y, faction_id);
+    log_say("Replay Base Info", TurnCurrentNum, type, ReplayEventBytes);
+    ReplayEventRecord event;
+    event.type = static_cast<uint8_t>(type);
+    event.faction_id = static_cast<uint8_t>(faction_id);
+    event.turn = static_cast<int16_t>(TurnCurrentNum);
+    event.x = static_cast<int16_t>(x);
+    event.y = static_cast<int16_t>(y);
+    ReplayEvents[ReplayEventBytes / sizeof(ReplayEventRecord)] = event;
+    ReplayEventBytes += sizeof(ReplayEventRecord);
+}
 
 // ORIGINAL: 0x005AD560 ?make_bases@ReplayWin@@QAEXXZ 0x005AD560-0x005AD607
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x005AD560-0x005AD607 clears Map::bit bit zero over MapArea, then walks 512 twelve-byte records at ReplayWin+0xA20", "The original writes Bases with 0x134 stride, storing x/y/faction/population before bit_set, owner_set and reset_territory; src/unrecovered/005ad560.cpp preserves the seed"], "reason": "Rebuild bases from typed replay-owned records into the real Base array and map, without self-offset arithmetic or fixed executable addresses."}

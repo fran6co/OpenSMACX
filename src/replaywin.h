@@ -57,6 +57,20 @@ struct ReplayBaseSite {
 static_assert(sizeof(ReplayBaseSite) == 0xC,
               "Replay base site must keep the original twelve-byte stride");
 
+struct ReplayEventRecord {
+  uint8_t type;
+  uint8_t faction_id;
+  int16_t turn;
+  int16_t x;
+  int16_t y;
+};
+static_assert(sizeof(ReplayEventRecord) == 8,
+              "Replay events must keep the original eight-byte stride");
+
+extern ReplayEventRecord ReplayEvents[1024];
+extern int ReplayEventBytes;
+void __cdecl replay_base(int type, int x, int y, int faction_id);
+
 class ReplayWin : public GraphicWin {
  public:
   // 0x005AD9E0  ?timer_callback@ReplayWin@@QAEXXZ - public, __thiscall,
