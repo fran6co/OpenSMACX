@@ -2391,7 +2391,7 @@ Purpose: Fill SinTable, the 256-entry fixed-point sine table the game's own
 //   `call _sin` / `call __ftol` included, so it is the intrinsic axis and
 //   nothing else. `#pragma function(sin)` beside the `strcat`/`strcpy`/
 //   `strlen`/`strcmp` list in stdafx.h is the source-side fix, and
-//   src/recovered/00634f20.cpp and 00627440.cpp both show per-file
+//   the retired 0x00634F20 seed (git fee2514f) and 00627440.cpp both show per-file
 //   `#pragma function` is an established device in this tree - but it is
 //   either a shared-file edit or a pragma, and this pass is barred from both.
 // LEVER: index the table (`SinTable[sample]`) and test the int counter signed;

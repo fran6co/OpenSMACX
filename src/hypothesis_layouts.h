@@ -1161,17 +1161,9 @@ struct Faction {
   uint32_t field_46C_;  // 0x46C
 };
 
-/* 0x41C bytes, 7 member(s), 4 named. From the IDB. 9 function(s) in the image. */
-class FileBox {
- public:
-  uint8_t field_0_[0x104];  // 0x0
-  uint8_t def_name_[0x104];  // 0x104
-  uint8_t field_208_[0x104];  // 0x208
-  uint8_t filter_[0x104];  // 0x30C
-  uint32_t ptrFilter_;  // 0x410
-  uint32_t def_ext_;  // 0x414
-  uint32_t field_418_;  // 0x418
-};
+// FileBox's original 0x41C catalogue extent omitted the inline directory
+// buffer at +0x418. The typed owner and source methods live together.
+#include "filebox.h"
 
 /* 0x500 bytes, 5 member(s), 5 named. From Thinker. */
 struct FileFindPath {
