@@ -42,6 +42,42 @@
 
 void __cdecl help_any();
 
+// The route destination renderer is called by MapWin::set_center. Its
+// retained seed indexes genuine Veh and chassis records, then publishes the
+// signed vehicle ID shared with StatusWin's selection lifecycle.
+// ORIGINAL: 0x004B4BF0 ?draw_my_dest@@YAXH@Z 0x004B4BF0-0x004B4CC5
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004b4bf0.cpp retained BYTE_EXACT seed; Vehs stride 0x34, VehPrototypes chassis_id offset 0x24, Chassis triad offset 0x49."], "reason": "Home the destination vehicle route painter reached by MapWin recentering using Veh and Chassis records."}
+void __cdecl draw_my_dest(int vehicle_id) {
+    if (vehicle_id < 0 || vehicle_id >= VehCurrentCount) {
+        return;
+    }
+    Veh &vehicle = Vehs[vehicle_id];
+    if (vehicle.faction_id != ConsoleGlobal.faction_id_ &&
+        (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        return;
+    }
+    if (vehicle.order != 0x18) {
+        return;
+    }
+    CoverWindow.fill(9);
+    const int prototype_id = vehicle.proto_id;
+    const int chassis_id = VehPrototypes[prototype_id].chassis_id;
+    const int route_color = Chassis[chassis_id].triad;
+    ConsoleGlobal.dest_line(vehicle.x, vehicle.y,
+                            vehicle.waypoint_x[0], vehicle.waypoint_y[0],
+                            prototype_id, vehicle.faction_id, route_color,
+                            0, 3, 5, 1);
+    CoverWindow.update(static_cast<GraphicWin *>(0));
+    DestinationVehicleId = vehicle_id;
+}
+
+// ORIGINAL: 0x004B4CD0 ?UNK2@StatusWin@@QAEXXZ 0x004B4CD0-0x004B4CE4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004B4CD0-0x004B4CE4: store -1 at 0x006874C4, set ECX 0x00937118, tail-call Win::hide."], "reason": "Home the destination hide operation over the typed destination vehicle state and CoverWindow."}
+void StatusWin::UNK2() {
+    DestinationVehicleId = -1;
+    CoverWindow.Win::hide();
+}
+
 // ORIGINAL: 0x004B9010 ?on_right_click@StatusWin@@QAEXHHH@Z 0x004B9010-0x004B9DF8;0x00659AA0-0x00659BCA
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x4b9010"], "reason": "Recover the full original operation using owned C++ members and base lifetimes; retain all original branches and expose unresolved callees instead of executing original-address forwarders."}
 void StatusWin::on_right_click(int x, int y, int) {
@@ -389,6 +425,19 @@ void StatusWin::draw_active(int first, int second, int flag) {  // 0x004B4CF0
     typedef void(__fastcall *pending)(StatusWin *, void *, int, int, int);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x004B4CF0))(
         this, nullptr, first, second, flag);
+    // Transitional state handoff for the original renderer: its vehicle
+    // branch writes the old image's destination dword, while C++ set_center
+    // consumes DestinationVehicleId. The retained draw_active seed has no
+    // early return before this branch; it selects the same eligibility gate.
+    if (second < 0 && first >= 0 && first < VehCurrentCount &&
+        (Vehs[first].faction_id == ConsoleGlobal.faction_id_ ||
+         (GameState & STATE_OMNISCIENT_VIEW)) &&
+        Vehs[first].order == 0x18 &&
+        (GameMorePreferences & 0x2000000) == 0) {
+        DestinationVehicleId = first;
+    } else {
+        DestinationVehicleId = -1;
+    }
 }
 
 // ORIGINAL: 0x004B8E40 ?on_left_click@StatusWin@@QAEXHH@Z 0x004B8E40-0x004B8FD3 FILE

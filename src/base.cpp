@@ -31,6 +31,17 @@
 #include "netdaemon.h"
 #include "xpops.h"
 
+// base_draw is the 2073-byte base renderer reached by MapWin::draw_bases.
+// Its retained seed has a full transcription but no typed product body yet.
+// Keep the dependency linkable and visibly unfinished while ownership of
+// its font, sprite and visibility paths is recovered.
+// ORIGINAL: 0x0055AF20 ?base_draw@@YAXPAUBuffer@@HHHHH@Z 0x0055AF20-0x0055B739
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0055af20.cpp retains the 2073-byte transcription and original span; BODY GOES HERE remains visible."], "reason": "Bind the newly referenced base renderer as an explicitly unfinished owner body to preserve link continuity."}
+void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
+                       int style, int flags) {
+    // BODY GOES HERE.
+}
+
 // RECOVERY_OBJECT: v2 0x00689370 0x00689374 ?BaseIDCurrentSelected@@3HA 0x004E68B0
 int BaseIDCurrentSelected = -1;  // 0x00689370
 // set_base publishes the pointer itself; resource computations and the popup

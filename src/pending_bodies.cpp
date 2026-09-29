@@ -498,11 +498,6 @@ void Datalink::exec(unsigned int topic, int index) {  // 0x00429180
     PENDING_BODY(0x00429180, pending)(this, nullptr, topic, index);
 }
 
-void WorldWin::click(int a1, int a2, int button, int is_double) {  // 0x004C3D40
-    typedef void(__fastcall *pending)(WorldWin *, void *, int, int, int, int);
-    PENDING_BODY(0x004C3D40, pending)(this, nullptr, a1, a2, button, is_double);
-}
-
 // ?tile_mask@Buffer@@QAEHPAVBuffer@@HHHHHHH@Z (0x005DA6C0) - homed into
 // src/buffer.cpp, along with both `tile` overloads (0x005DA860/0x005DA9F0)
 // and tile_mask's per-tile blit ?copy_mask@Buffer@@ (0x005E2B00).
@@ -1726,15 +1721,6 @@ void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) 
 // the forwarder goes when the claimed body homes.
 //             body homed into src/console.cpp (set_view, BYTE_EXACT)
 
-
-// ?set_center@MapWin@@QAEXHHH@Z at 0x0046B1F0 - recenter the map.
-//             body in src/recovered/units/0046b1f0.cpp
-void MapWin::set_center(int x_coord, int y_coord,
-                        int draw_type) {  // 0x0046B1F0
-    typedef void(__fastcall *pending)(MapWin *, void *, int, int, int);
-    PENDING_BODY(0x0046B1F0, pending)(this, nullptr, x_coord, y_coord,
-                                     draw_type);
-}
 
 // ?veh_init@@YAHHHHH@Z at 0x005C03D0 - world_fungus (map.cpp) is its only
 // caller in the product, seeding a fungus vehicle on the tiles it just

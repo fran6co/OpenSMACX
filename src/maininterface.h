@@ -158,6 +158,7 @@ class IfaceRegistryEntry : public SubInterface {
   * MainInterface class
   */
 class MainInterface : public GraphicWin, public IfaceRegistryEntry {
+  friend class WorldWin;  // UNK1 copies the owned tutorial rectangle.
   // MessageWin::init copies the pane bounds at +0xD1C..+0xD28 into its
   // own RECT. This grants that owner typed access while this region awaits
   // a named MainInterface rectangle member.
@@ -523,10 +524,11 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   RECT status_left_rect_;
   // RECOVERY_MEMBER: v2 MainInterface status_hit_rect_ tagRECT 0xCEC 0x00459680
   RECT status_hit_rect_;
-  uint32_t field_CFC_;
-  uint32_t field_D00_;
-  uint32_t field_D04_;
-  uint32_t field_D08_;
+  // Global 0x007AF51C is this member of MainInterfaceGlobal. Tutorial
+  // drawing consumes all four coordinates as a RECT; WorldWin copies it
+  // to the active map bounds.
+  // RECOVERY_MEMBER: v2 MainInterface tutorial_bounds_ tagRECT 0xCFC 0x004C3A70
+  RECT tutorial_bounds_;
   uint32_t field_D0C_;
   uint32_t field_D10_;
   uint32_t field_D14_;

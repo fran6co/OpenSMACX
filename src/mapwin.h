@@ -169,9 +169,11 @@ class MapWin : public virtual GraphicWin {
   // 0x0046B310, a pending_bodies forwarder.
   int focus(int x_coord, int y_coord);
   // 0x0046B1F0. Console::center and the editor's goto paths recenter the map
-  // through it on the current window. Body still unrecovered - a
-  // pending_bodies forwarder.
+  // through the source-owned body in mapwin.cpp.
   void set_center(int x_coord, int y_coord, int draw_type);
+  void gen_bases_only();
+  void draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
+                  int faction_id);
 
  public:
   // 0x0046D5D0, a pending_bodies forwarder. The two click handlers reach it
@@ -203,6 +205,8 @@ class MapWin : public virtual GraphicWin {
   void draw_tile(int a1, int a2, int a3);
   void tile_to_pixel(int a1, int a2, int *a3, int *a4);
   void init_dummy();
+  void init(int mode, int update);
+  void init(RECT *bounds, char *caption, int flags);
   int get_alt(int a1, int a2, int a3);
   // 0x00470550 and 0x00470790, homed from the archive in the mapwin homing
   // pass. get_brighting returns one corner's cached brightness in the
@@ -495,6 +499,9 @@ extern int MapDestinationCost;
 // - 19 of 85 instructions in `Console::focus` against 29.
 typedef MapWin *MapWinSlots[8];
 extern MapWinSlots MapWinTable;
+// StatusWin clears this signed vehicle ID to -1 when no route destination
+// remains. MapWin::set_center uses it to redraw a selected destination.
+extern int DestinationVehicleId;
 // One most-derived off-screen window, not an alias into the old executable.
 extern MapWin FarmMapWindow;
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4

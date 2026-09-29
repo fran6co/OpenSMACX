@@ -40,6 +40,7 @@
 #include "faction.h"   // PlayersData - visibility and treaty reads
 #include "infowin.h"   // InfoFactionTextColors - the territory fill colours
 #include "imagebutton.h"
+#include "basewin.h"
 #include "map.h"       // MapLongitudeBounds / MapLatitudeBounds / MapIsFlat / map_tiles
 #include "general.h"   // mem_get, and the game-state flags the painters read
 #include "strings.h"   // StringTemp is also the shared main-caption scratch buffer.
@@ -52,6 +53,78 @@
 // after constructing slots1..7. draw_tile bounds its walk at0x007D3C5C.
 // RECOVERY_OBJECT: v2 0x007D3C3C 0x007D3C5C ?MapWinTable@@3PAPAVMapWin@@A 0x0058F040
 MapWinSlots MapWinTable;
+
+// The mode-one world map path uses the same active RECT WorldWin published.
+// Other modes still need the year/layout/caption tables and update callback.
+// ORIGINAL: 0x00470A90 ?init@MapWin@@QAEXHH@Z 0x00470A90-0x00470EC2
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470a90.cpp retains the complete 1074-byte seed; its mode-one branch reads WorldMapBounds and calls the separate MapWin rectangle initializer."], "reason": "Home the WorldWin mode-one startup through typed bounds and the owned rectangle initializer; other modes and the display-preference branch remain explicitly unfinished."}
+void MapWin::init(int mode, int update) {
+    buffer_a_.init(100, 50, 0, 0);
+    field_1DD74_ = 1;
+    if (mode != 1) {
+        // BODY GOES HERE: mode zero's layout/year records, mode two's
+        // tutorial rectangle, and mode three's alternate caption.
+        return;
+    }
+    RECT bounds = WorldMapBounds;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x1E));
+    int flags = 0x20000430;
+    if (this == &WorldClimateWorldWin.mapWin_) {
+        flags = (flags & ~0x10) | 0x40400001;
+    }
+    init(&bounds, StringTemp, flags);
+    field_1DD70_ = 0x80000082;
+    field_1DD98_ = -7;
+    if (field_1DD78_ != 0) {
+        // BODY GOES HERE: the inherited Win field receives the original
+        // display preference at 0x00945778 on nonzero map slots.
+    }
+}
+
+// ORIGINAL: 0x00470920 ?init@MapWin@@QAEXPAURECT@@PADH@Z 0x00470920-0x00470A90
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00470920.cpp; original calls clear, cache setup, GraphicWin init; MapWin::init_dummy already owns equivalent cache setup."], "reason": "Home the retained MapWin rectangle initializer for the embedded WorldWin map; preserve cache lifecycle and GraphicWin receiver, leaving other receivers explicit."}
+// symbol    ?init@MapWin@@QAEXPAUtagRECT@@PADH@Z
+void MapWin::init(RECT *bounds, char *caption, int flags) {
+    clear(field_1DD78_);
+    init_dummy();
+    field_1DD74_ = 1;
+
+    if ((field_1DD70_ & 0x1000000U) != 0 || this == MapWinTable[0]) {
+        return;
+    }
+    if (this == &WorldClimateWorldWin.mapWin_) {
+        if (bounds != 0) {
+            GraphicWin::init(bounds->left, bounds->top,
+                             bounds->right - bounds->left,
+                             bounds->bottom - bounds->top,
+                             0, 0, 0, 0, 0);
+        }
+        return;
+    }
+    // BODY GOES HERE: MainInterface, farm map, and other MapWin receivers
+    // select different parent, caption, and style inputs.
+    (void)caption;
+    (void)flags;
+}
+
+// 0x006874C4: draw_my_dest publishes a vehicle index after validation;
+// StatusWin clears it to -1. Pinned original .data bytes at 0x006874C4 are
+// FF FF FF FF; the initializer preserves that startup sentinel. The typed
+// source owner below records the corresponding four-byte original interval.
+// RECOVERY_OBJECT: v2 0x006874C4 0x006874C8 ?DestinationVehicleId@@3HA 0x004B4BF0
+int DestinationVehicleId = -1;
+
+// 0x0093A940 gates base-overlay visibility alongside ControlTurnPhase.
+// Pinned PE section evidence places exactly this four-byte read in the
+// zero-fill tail of .data, initialized to 0; its producer remains unknown.
+// RECOVERY_OBJECT: v2 0x0093A940 0x0093A944 ?MapBaseDisplayOverride@@3HA 0x00467190
+int MapBaseDisplayOverride;
+
+void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
+                       int style, int flags);
+
+void __cdecl draw_my_dest(int vehicle_id);
 
 // The farm display and terrain-fixup pass share one complete MapWin. Its
 // same-type heap allocation at 0x58F177 requests 0x22480 bytes; the constructor's
@@ -511,6 +584,124 @@ Status: Complete
 */
 int MapWin::UNK1() {
     return this == reinterpret_cast<MapWin *>(&ConsoleGlobal) ? 1 : 0;
+}
+
+// ORIGINAL: 0x0046B1F0 ?set_center@MapWin@@QAEXHHH@Z 0x0046B1F0-0x0046B303
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046b1f0.cpp and original 0x0046B1F0-0x0046B303; Vehs+0xE is faction_id."], "reason": "Home map recentering with real receiver fields, destination vehicle state and redraw."}
+void MapWin::set_center(int x, int y, int draw_type) {
+    TutWinGlobal->reset();
+    if ((x ^ y) & 1) {
+        if (x & 1) {
+            --x;
+        }
+        if (y & 1) {
+            ++x;
+        }
+    }
+    const int old_x = field_1DD9C_;
+    const int old_y = field_1DDA0_;
+    int wrapped = x;
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) {
+            wrapped += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            wrapped -= MapLongitudeBounds;
+        }
+    }
+    field_1DD9C_ = wrapped;
+    field_1DDA0_ = y;
+
+    int destination = -1;
+    if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
+        destination = DestinationVehicleId;
+        if (destination >= 0 &&
+            (Vehs[destination].faction_id == ConsoleGlobal.faction_id_ ||
+             (GameState & STATE_OMNISCIENT_VIEW)) &&
+            !(GameMorePreferences & 0x2000000)) {
+            CoverWindow.fill(9);
+        }
+    }
+    if (old_x != field_1DD9C_ || old_y != field_1DDA0_) {
+        draw_map(draw_type);
+        if (field_1DD78_ == 0) {
+            WorldClimateWorldWin.follow_center(x, y);
+        }
+    }
+    if (destination >= 0) {
+        draw_my_dest(destination);
+    }
+}
+
+// The binder recorded the formerly unfinished state; the tile walker is now
+// source-owned. base_draw remains the explicit unfinished rendering callee.
+// ORIGINAL: 0x00469B40 ?gen_bases_only@MapWin@@QAEXXZ 0x00469B40-0x00469C9F
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469b40.cpp retains the complete tile-walk seed; MapWin fields at 0x1DDA4..0x1DDD8 and map_loc determine the source-owned traversal."], "reason": "Home the base-only tile traversal reached by WorldWin redraw; base_draw remains an explicitly unfinished rendering dependency."}
+void MapWin::gen_bases_only() {
+    const int rows = field_1DDD0_ + field_1DDD8_ + 1;
+    for (int row = 0; row < rows; ++row) {
+        const int tile_y = field_1DDA8_ + row;
+        int tile_x = field_1DDA4_ + (row & 1);
+        int count = (row & 1) == 0 ? field_1DDD4_ : field_1DDCC_;
+        while (count-- > 0) {
+            int wrapped_x = tile_x;
+            if ((MapIsFlat & 1) == 0) {
+                if (wrapped_x < 0) {
+                    wrapped_x += MapLongitudeBounds;
+                } else if (wrapped_x >= MapLongitudeBounds) {
+                    wrapped_x -= MapLongitudeBounds;
+                }
+            }
+            if (tile_y >= 0 && tile_y < MapLatitudeBounds &&
+                wrapped_x >= 0 && wrapped_x < MapLongitudeBounds) {
+                Map *tile = map_loc(wrapped_x, tile_y);
+                if ((tile->bit & 1) != 0 && (tile->val2 & 0xF) < 8) {
+                    int pixel_x;
+                    int pixel_y;
+                    tile_to_pixel(wrapped_x, tile_y, &pixel_x, &pixel_y);
+                    const int faction = (GameState & STATE_OMNISCIENT_VIEW)
+                                            ? -1 : ConsoleGlobal.faction_id_;
+                    draw_bases(wrapped_x, tile_y, pixel_x,
+                               pixel_y - field_1DDC0_, faction);
+                }
+            }
+            tile_x += 2;
+        }
+    }
+}
+
+// ORIGINAL: 0x00467190 ?draw_bases@MapWin@@QAEXHHHHH@Z 0x00467190-0x004672B8
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467190.cpp complete 296-byte seed; pinned original 0x00467190-0x004672B8; BaseWin+0x40B0C owns focused base id."], "reason": "Home map base-overlay eligibility and typed Base/Map visibility checks; base_draw remains explicitly unfinished."}
+void MapWin::draw_bases(int tile_x, int tile_y, int pixel_x, int pixel_y,
+                        int faction_id) {
+    if ((field_1DD70_ & 0x200080) == 0) {
+        return;
+    }
+    if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
+        (GameRules & 0x80) == 0) {
+        return;
+    }
+    const int base_id = base_at(tile_x, tile_y);
+    if (base_id < 0) {
+        return;
+    }
+    if ((GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        if ((PlayersData[faction_id].flags & 0x200) == 0 &&
+            (map_loc(tile_x, tile_y)->visibility & (1 << faction_id)) == 0) {
+            return;
+        }
+        if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_ &&
+            (Bases[base_id].visibility &
+             (1 << ConsoleGlobal.faction_id_)) == 0) {
+            return;
+        }
+    }
+    if ((field_1DD70_ & 0x200000) != 0 &&
+        base_id != TutWinBaseWindow.focused_base_id()) {
+        return;
+    }
+    base_draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)), base_id,
+              pixel_x, pixel_y, field_1DD98_,
+              (field_1DD70_ >> 18) & 8);
 }
 
 

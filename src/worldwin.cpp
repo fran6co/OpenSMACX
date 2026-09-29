@@ -19,6 +19,131 @@
 #include "worldwin.h"
 #include "maininterface.h"
 #include "map.h"
+#include "alpha.h"
+#include "basewin.h"
+#include "console.h"
+#include "faction.h"
+#include "game.h"
+#include "infowin.h"
+#include "pulldown.h"
+#include "palette.h"
+#include "statuswin.h"
+#include "strings.h"
+#include "tutwin.h"
+
+void __cdecl help_any();
+
+// Four consecutive original dwords at 0x00939F08..14 are written by
+// WorldWin::UNK1 and read as one RECT by MapWin::init. This interval lies in
+// the pinned image's zero-fill data tail; the original starts all zero.
+// RECOVERY_OBJECT: v2 0x00939F08 0x00939F18 ?WorldMapBounds@@3UtagRECT@@A 0x004C3A70
+RECT WorldMapBounds;
+
+int __cdecl pop_expire();
+
+// ORIGINAL: 0x004C3A70 ?UNK1@WorldWin@@QAEXXZ 0x004C3A70-0x004C3AA9
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3a70.cpp and original disassembly 0x004C3A70-0x004C3AA9; MainInterfaceGlobal + 0xCFC is 0x007AF51C."], "reason": "Move the existing seed into the WorldWin owner using the MainInterface tutorial RECT and active map bounds, preserving the status bit operation."}
+void WorldWin::UNK1() {
+    WorldMapBounds = MainInterfaceGlobal.tutorial_bounds_;
+    *StatusFlagsPtr |= 8;
+}
+
+// The original startup path copies the tutorial bounds once, resets the
+// embedded map and passes the same typed rectangle to the Win base init.
+// ORIGINAL: 0x004C49A0 ?init@WorldWin@@QAEXH@Z 0x004C49A0-0x004C4A66
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004c49a0.cpp complete seed; original 0x004C49A0-0x004C4A66 shows tutorial RECT copy, map clear/init, Win::init and virtual show."], "reason": "Home WorldWin startup through owned map, tutorial bounds and Win base; MapWin::init remains an explicit unfinished dependency."}
+void WorldWin::init(int reset_map) {
+    if ((*StatusFlagsPtr & 8) == 0) {
+        UNK1();
+    }
+    MapInputEnabled = 1;
+    field_239BC_ = 0;
+    field_239C0_ = 0;
+    detail_map_selected_ = 0;
+    viewport_outline_enabled_ = 0;
+    mapWin_.field_1DD74_ = 1;
+    if (reset_map != 0) {
+        mapWin_.clear(1);
+    }
+    mapWin_.init(1, 0);
+    field_239BC_ = 8;
+    Win::init(&WorldMapBounds, 0, 0x20, &MainInterfaceGlobal, 0, 0);
+    show(0);
+}
+
+// ORIGINAL: 0x004C3AB0 ?right_menu@WorldWin@@QAEXHH@Z 0x004C3AB0-0x004C3D0C;0x00659E80-0x00659E95
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3ab0.cpp and original 0x004C3AB0 disassembly; PullDown::get_selected_id owns 0xA20 item indexing."], "reason": "Home the retained world context menu over PullDown and owned map windows, preserving the EH cleanup span."}
+void WorldWin::right_menu(int x, int y) {
+    PullDown menu;
+    int tile_x = 0;
+    int tile_y = 0;
+    bool in_range = pixel_to_tile(x, y, &tile_x, &tile_y) == 0;
+    if (tile_x < 0 || tile_x >= MapLongitudeBounds ||
+        tile_y < 0 || tile_y >= MapLatitudeBounds) {
+        in_range = false;
+    }
+    Win::client_to_screen(&x, &y);
+    menu.init(0);
+    menu.add_item(4, label_get(0x300));
+    menu.add_separator(0x63);
+    if (in_range) {
+        menu.add_item(1, label_get(0x244));
+        menu.add_item(2, label_get(0x245));
+    }
+    menu.add_separator(0x63);
+    menu.add_item(0x14, label_get(0x23F));
+    menu.show(x, y, pop_expire);
+
+    if ((GameState & 0x800) != 0) {
+        return;
+    }
+    switch (menu.get_selected_id()) {
+    case 1:
+        MapWinTable[0]->set_center(tile_x, tile_y, 1);
+        break;
+    case 2:
+        on_redraw();
+        GraphicWin::soft_update();
+        break;
+    case 4:
+        MapWinTable[1]->set_center(MapWinTable[0]->field_1DD9C_,
+                                   MapWinTable[0]->field_1DDA0_, 1);
+        set_detail_map();
+        MainInterfaceGlobal.button_group(1).set(1007, 1);
+        break;
+    case 0x14:
+        help_any();
+        break;
+    }
+}
+
+// ORIGINAL: 0x004C3D40 ?click@WorldWin@@QAEXHHHH@Z 0x004C3D40-0x004C3E48
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c3d40.cpp; original disassembly 0x004C3D40-0x004C3E48; BaseWin+0x40B28 is 0x006E8150."], "reason": "Home the shared world click handler using owned tutorial state and map windows."}
+void WorldWin::click(int x, int y, int button, int is_double) {
+    TutWinBaseWindow.cancel_zoom_wait();
+    if (button != 0) {
+        right_menu(x, y);
+        return;
+    }
+    const bool detail_click = (GetKeyState(VK_SHIFT) & 0x8000) != 0 || is_double != 0;
+    int tile_x;
+    int tile_y;
+    if (pixel_to_tile(x, y, &tile_x, &tile_y) != 0 ||
+        tile_y < 0 || tile_y >= MapLatitudeBounds ||
+        tile_x < 0 || tile_x >= MapLongitudeBounds) {
+        return;
+    }
+    if (detail_click) {
+        MapWinTable[1]->set_center(MapWinTable[0]->field_1DD9C_,
+                                   MapWinTable[0]->field_1DDA0_, 1);
+        MainInterfaceGlobal.button_group(1).set(1007, 0);
+        detail_map_selected_ = 1;
+        MapWinTable[1]->show(0);
+        WorldClimateWorldWin.Win::hide();
+    } else {
+        MapWinTable[0]->set_center(tile_x, tile_y, 1);
+    }
+}
 
 // 0x004C4230 reads this flag and stores one/zero around the overview rebuild.
 // Its address is adjacent to, but distinct from, MapInputEnabled at 0x0090D938.
@@ -393,6 +518,119 @@ void WorldWin::draw_viewport_outline() {
                                 : Buffer::dib_.bmiHeader.biWidth - 1;
     Buffer::hline(line_right, bottom_edge, line_bottom, 0xFB);
     Buffer::vline(line_right, line_top, line_bottom - 1, 0xFB);
+}
+
+// ORIGINAL: 0x004C4630 ?draw_box@WorldWin@@QAEXXZ 0x004C4630-0x004C47E7
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004c4630.cpp; original 0x0093347C is ConsoleGlobal / MapWinTable[0] plus member offset 0x1DDCC."], "reason": "Home the selection outline over the primary MapWin member state and Buffer drawing."}
+void WorldWin::draw_box() {
+    MapWin *primary_map = MapWinTable[0];
+    if (primary_map->field_1DDCC_ == 0 ||
+        primary_map->field_1DDAC_ != 0 ||
+        primary_map->field_1DDB0_ != 0) {
+        return;
+    }
+    RECT rect;
+    int left;
+    int top;
+    int right;
+    int bottom;
+    if (tile_to_pixel(primary_map->field_1DDA4_, primary_map->field_1DDA8_,
+                      &left, &top) != 0 ||
+        tile_to_pixel(primary_map->field_1DDD4_ + primary_map->field_1DDA4_ +
+                          primary_map->field_1DDCC_,
+                      primary_map->field_1DDD8_ + primary_map->field_1DDD0_ +
+                          primary_map->field_1DDA8_,
+                      &right, &bottom) != 0) {
+        return;
+    }
+    rect.left = left;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = bottom;
+    if (rect.left <= rect.right) {
+        Buffer::box(&rect, 0xFF, 0xFF);
+        return;
+    }
+    Buffer::hline(field_239C4_, rect.right - 1, rect.top, 0xFF);
+    Buffer::hline(field_239C4_, rect.right - 2, rect.bottom - 1, 0xFF);
+    Buffer::vline(rect.right - 1, rect.top + 1, rect.bottom - 1, 0xFF);
+    const int edge = field_239C4_ != 0
+                         ? mapWin_.GraphicWin::dib_.bmiHeader.biWidth +
+                               field_239C4_ - 1
+                         : Buffer::dib_.bmiHeader.biWidth - 1;
+    Buffer::hline(rect.left + 1, edge, rect.top, 0xFF);
+    Buffer::hline(rect.left, edge, rect.bottom - 1, 0xFF);
+    Buffer::vline(rect.left, rect.top, rect.bottom - 2, 0xFF);
+}
+
+// The redraw rebuilds the owned MapWin and buffers according to field_239BC_.
+// All receiver offsets in the original are these declared subobjects.
+// ORIGINAL: 0x004C3EC0 ?on_redraw@WorldWin@@QAEXXZ 0x004C3EC0-0x004C4227
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 0x004C3EC0-0x004C4227 disassembly via recover inspect; src/recovered/units/004c3ec0.cpp seed has no implementation."], "reason": "Recover WorldWin redraw control flow through owned MapWin and Buffer subobjects while recording base-only overlay as an unfinished dependency."}
+// symbol    ?on_redraw@WorldWin@@UAEXXZ
+void WorldWin::on_redraw() {
+    int scale = 6;
+    if (MapWinCaptionScale > 0) {
+        scale = MapWinCaptionScale * 50 / MapWinCaptionDivisor;
+    }
+    const int cell_size = ((scale + 1) / 4) * 4;
+    Buffer *map_surface = static_cast<Buffer *>(
+        static_cast<GraphicWin *>(&mapWin_));
+    if (field_239BC_ & 8) {
+        field_239BC_ |= 4;
+        field_A14_ = (MapLongitudeBounds / 2) * cell_size * 2;
+        field_A18_ = (MapLatitudeBounds / 2 - 2) * cell_size;
+        mapWin_.field_1DDAC_ = 0;
+        mapWin_.field_1DDB0_ = 0;
+        mapWin_.field_1DD9C_ = MapLongitudeBounds / 2;
+        mapWin_.field_1DD98_ = -14;
+        mapWin_.field_1DDA0_ = MapLatitudeBounds / 2;
+        mapWin_.field_1DD70_ = 0x80000000;
+        mapWin_.resize(field_A14_, field_A18_, 1);
+        buffer2_.init(field_A14_, field_A18_, 0, 0);
+        buffer2_.sync_to_palette(PaletteActive);
+        buffer1_.init(field_A14_, field_A18_, 0, 0);
+        buffer1_.sync_to_palette(PaletteActive);
+    }
+    if (field_239BC_ & 5) {
+        if (field_239BC_ & 4) {
+            set_dirty();
+            mapWin_.GraphicWin::fill(0);
+        } else {
+            buffer2_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+        }
+        mapWin_.field_1DD70_ = 0x80000000;
+        mapWin_.draw_map(0);
+        buffer2_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+        clear_dirty();
+    }
+    if (field_239BC_ & 6) {
+        buffer2_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+        mapWin_.field_1DD70_ = 0x80000080;
+        mapWin_.gen_bases_only();
+        buffer1_.copy(map_surface, 0, 0, 0, 0, field_A14_, field_A18_);
+    }
+    const int client_width = Buffer::dib_.bmiHeader.biWidth;
+    const int client_height = -Buffer::dib_.bmiHeader.biHeight;
+    if (client_width >= static_cast<int>(field_A14_) &&
+        client_height >= static_cast<int>(field_A18_)) {
+        field_239C4_ = (client_width - field_A14_) / 2;
+        field_239C8_ = -(Buffer::dib_.bmiHeader.biHeight + field_A18_) / 2;
+        buffer1_.copy(static_cast<Buffer *>(this), 0, 0,
+                      field_239C4_, field_239C8_,
+                      mapWin_.GraphicWin::dib_.bmiHeader.biWidth,
+                      -mapWin_.GraphicWin::dib_.bmiHeader.biHeight);
+    } else {
+        SetStretchBltMode(Buffer::get_hdc(), 0);
+        Buffer::release_hdc(1);
+        buffer1_.copy(static_cast<Buffer *>(this), 0, 0,
+                      field_A14_, field_A18_, 0, 0,
+                      client_width, client_height);
+        field_239C4_ = 0;
+        field_239C8_ = 0;
+    }
+    draw_box();
+    field_239BC_ = 0;
 }
 
 // ORIGINAL: 0x004C4230 ?UNK2@WorldWin@@QAEXH@Z 0x004C4230-0x004C43F0

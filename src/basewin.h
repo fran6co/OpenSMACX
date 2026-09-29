@@ -92,6 +92,7 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   void soft_zoom(int base_id);  // 0x0041AE40, prepare a base without opening its window
   // Release zoom's optional wait without hiding or destroying the window.
   void cancel_zoom_wait() { zoom_wait_pending_ = 0; }
+  int focused_base_id() const { return static_cast<int>(focusedBaseID_); }
 
  public:
   // homed from 0041e8b0.cpp

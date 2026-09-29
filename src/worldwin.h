@@ -31,9 +31,13 @@
   * The known member layout does not yet establish the complete object extent.
   */
 class WorldWin : public GraphicWin {
+  friend class MapWin;  // MapWin::init identifies the embedded world map.
  public:
-  // 0x004C3D40, a pending_bodies forwarder.
+  void UNK1();
+  void right_menu(int x, int y);
   void click(int a1, int a2, int button, int is_double);
+  void draw_box();
+  virtual void on_redraw();
   int pixel_to_tile(int pixel_x, int pixel_y, int *tile_x, int *tile_y);
   int tile_to_pixel(int tile_x, int tile_y, int *pixel_x, int *pixel_y);
   // 0x004C4230 regenerates and blits the overview image.
@@ -52,6 +56,7 @@ class WorldWin : public GraphicWin {
   // Original CRT initializer 0x004C38B0 constructs WorldClimateWorldWin.
   // Declared members, including mapWin_'s virtual base, construct automatically.
   WorldWin();
+  void init(int reset_map);
   // Implicit destruction owns mapWin_, both Buffers and the GraphicWin base.
   // Its naturally emitted 0x004C4A70 identity is mapped in worldwin.cpp.
   void clear_terrain();
@@ -99,6 +104,7 @@ class WorldWin : public GraphicWin {
 // definition was reachable only as a private spelling and game.cpp reached
 // the address as a cast literal.
 extern WorldWin WorldClimateWorldWin;  // 0x008E9F60
+extern RECT WorldMapBounds;  // 0x00939F08; copied from MainInterface.
 // Read/set/clear guard for WorldWin::refresh_world_map. It is a distinct
 // four-byte object immediately after, not an alias of, MapInputEnabled.
 extern int WorldWinRebuildBusy;  // 0x0090D93C

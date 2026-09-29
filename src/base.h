@@ -19,6 +19,8 @@
 
 #include "general.h"  // bitmask, which has_fac_built below inlines
 
+class Buffer;
+
  /*
   * Base related objects, variables and functions.
   */
@@ -578,6 +580,8 @@ BOOL __cdecl has_fac(int facility_id, int base_id, int queue_count);
 void __cdecl farm_compute();
 void __cdecl say_base(LPSTR base_str, int base_id);
 int __cdecl base_at(int x, int y);
+void __cdecl base_draw(Buffer *target, int base_id, int pixel_x, int pixel_y,
+                       int style, int flags);
 int __cdecl base_find(int x, int y);
 // ?base_find@@YAHHHH@Z - three H.
 int __cdecl base_find(int x, int y, int faction_id);
