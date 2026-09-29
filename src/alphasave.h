@@ -31,6 +31,10 @@ class AlphaSave : public GraphicWin {
   void on_key_click(int key, int flags);
   void on_scrolling(int code, int pos);
   void on_scrolled(int code, int pos);
+  // The image's Q-spelled functions are nonvirtual; Win::show/hide are
+  // virtual, so these cannot use those names without changing the vtable.
+  void show_save_window(int mode);
+  void hide_save_window();
 
  private:
   FileWin file_win_;             // 0x0A14

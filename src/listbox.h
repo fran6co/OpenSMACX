@@ -115,6 +115,10 @@
 //   the two forwarders below.
 class ListBox : public virtual GraphicWin, public virtual Dialog {
  public:
+  // AlphaSave's show/hide tests the Win state of this embedded list, reached
+  // through ListBox's GraphicWin virtual base in the original image.
+  bool has_scroll_flags() const { return (iFlags_ & 0xC) != 0; }
+
   typedef int (__cdecl *DrawCallback)(GraphicWin *, int, int, int, int, int);
   typedef int (__cdecl *WriteCallback)(GraphicWin *, int, int, RECT *, char *);
   typedef int (__cdecl *FillCallback)(GraphicWin *, int, int, RECT *);

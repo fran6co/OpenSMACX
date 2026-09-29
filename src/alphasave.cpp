@@ -9,6 +9,7 @@
  */
 #include "stdafx.h"
 #include "alphasave.h"
+#include "console.h"
 
 // Image references from AlphaSave::show/save/load store this, hide clears it,
 // and filebox_draw tests it. The storage is distinct from ConsoleGlobal.
@@ -18,6 +19,8 @@ AlphaSave *ActiveAlphaSave = 0;
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_normal();
+void __cdecl slide_show(GraphicWin *window, int mode);
+void __cdecl slide_hide(GraphicWin *window, int mode);
 
 // ORIGINAL: 0x00407350 ??0AlphaSave@@QAE@XZ 0x00407350-0x00407410;0x00650BF0-0x00650C60
 AlphaSave::AlphaSave() {
@@ -100,4 +103,42 @@ int AlphaSave::on_listbox_scroll_create() {
         scroll_show(this, &scroll_);
     }
     return reinterpret_cast<int>(&scroll_);
+}
+
+// ORIGINAL: 0x00407BE0 ?show@AlphaSave@@QAEXH@Z 0x00407BE0-0x00407C57 BYTE_EXACT
+// symbol    ?show_save_window@AlphaSave@@QAEXH@Z
+// The exact standalone unit was retired after this source body was recorded.
+// This routine does not read its argument: the choice is whether the main
+// Console is already visible, not the caller's requested display mode.
+void AlphaSave::show_save_window(int) {
+    if (Win::is_visible()) {
+        return;
+    }
+    if (ConsoleGlobal.is_visible()) {
+        slide_show(this, 0);
+        if (file_win_.list_box_.has_scroll_flags()) {
+            scroll_show(this, &scroll_);
+        }
+        Win::show(3);
+    } else {
+        Win::show(2);
+    }
+    ActiveAlphaSave = this;
+}
+
+// ORIGINAL: 0x00407C60 ?hide@AlphaSave@@QAEXXZ 0x00407C60-0x00407CC4 BYTE_EXACT
+// symbol    ?hide_save_window@AlphaSave@@QAEXXZ
+// The exact standalone unit was retired after this typed path was recorded.
+void AlphaSave::hide_save_window() {
+    if (!Win::is_visible()) {
+        return;
+    }
+    if (ConsoleGlobal.is_visible()) {
+        if (file_win_.list_box_.has_scroll_flags()) {
+            scroll_hide(this, &scroll_);
+        }
+        slide_hide(this, 0);
+    }
+    ActiveAlphaSave = 0;
+    Win::hide();
 }
