@@ -249,19 +249,12 @@ void ListBox::on_mouse_leave(int a1, int a2) {
     redraw();
 }
 
-// The retained seed at 0x0060A020 establishes selection storage, page-sized
-// scroll adjustment and scrollbar updates. Its remaining item notification
-// dispatches are deliberately not guessed: the image calls target slots 54,
-// 53 and a nested object's 23/7 pair, but this owner has no typed interface
-// for those object identities yet.
-// BODY GOES HERE. Missing behavior is the notify-gated item/nested-object
-// callback sequence (historical slots 54, 53, 23 and 7); see the retained seed.
-// The related on_left_double_click body (0x0060C710-0x0060C7BB) loads its child
-// pointer from target Win+0x94 before slots 23/7. Win has no source-owned member
-// binding for that link. Preserve this dependency for the Win owner rather than
-// guessing a field name or spelling the receiver as a raw offset.
+// The retained seed at 0x0060A020 also supplies the notify-gated calls: the
+// GraphicWin base's Win::win_parent_ receives slots 54/53, then its numbered
+// AutoSound window at +0x90 receives slots 23/7. These typed owners and
+// receiver slots follow the seed's vbtable walk and callsites.
 // ORIGINAL: 0x0060A020 ?set_selected_pos@ListBox@@QAEXHH@Z 0x0060A020-0x0060A1DD
-// RECOVERY_BINDING: v1 {"evidence": ["git:8b4810c297d1ba1554b5cb067b814d532906dcc7:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h"], "reason": "Recover the evidenced ListBox selection state, viewport scroll adjustment and scrollbar update using typed owner and base members. The notify-gated item/nested-object dispatch remains explicit BODY GOES HERE because slots 54/53 and nested slots 23/7 do not yet have source-owned receiver interfaces; preserve the original seed and claim for coordinator measurement."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0060a020.cpp", "source:src/listbox.h", "source:src/dialog.h", "source:src/win.h", "source:src/autosound.h"], "reason": "Recover ListBox selection, viewport and notify-gated item callbacks through its typed Dialog, GraphicWin and Win owners. The retained seed's vbtable walk resolves to Win::win_parent_ and its AutoSound val_36_ window; preserve the original seed and historical claim."}
 void ListBox::set_selected_pos(int position, int notify) {
     if (Dialog::selected_position_ == position && field_8_ == 0) {
         redraw();
@@ -310,8 +303,23 @@ void ListBox::set_selected_pos(int position, int notify) {
             double_click_callback_(Dialog::get_selected_id());
         }
         if (notify != 0) {
-            // TODO: the exact notifications are visible in the archived
-            // disassembly, but their receiver interfaces are not source-owned.
+            Win *parent = static_cast<GraphicWin *>(this)->parent_window();
+            if (parent != 0) {
+                parent->vslot_54(Dialog::pos_to_id(position));
+            }
+
+            parent = static_cast<GraphicWin *>(this)->parent_window();
+            if (parent != 0) {
+                parent->vslot_53(Dialog::pos_to_id(position), 0);
+            }
+
+            parent = static_cast<GraphicWin *>(this)->parent_window();
+            if (parent != 0) {
+                Win *child = parent->legacy_window_36();
+                if (child != 0 && child->vslot_23() == 0) {
+                    child->vslot_07();
+                }
+            }
         }
     }
 
@@ -891,8 +899,8 @@ Purpose: Run the double-click notification: remember the hovered window,
          selected entry's notification chain (slots 56 and 55 of the target
          window, then the child object's 23/7 pair) - and raise the click
          guard's counter value through it.
-// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU; the retained seed stays beside the landed transcription."}
+// ORIGINAL: 0x0060C710 ?on_left_double_click@ListBox@@QAEXHH@Z 0x0060C710-0x0060C7BB
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0060c710.cpp", "source:src/listbox.h", "source:src/autosound.h", "source:src/win.h"], "reason": "Recover ListBox double-click callbacks through typed GraphicWin, Dialog and the Win windows at AutoSound offsets 0x7c and 0x94, following the retained seed's virtual-base adjustments and slot calls."}
 // symbol    ?on_left_double_click@ListBox@@UAEXHH@Z
 // size      171 bytes
 // prototype void (__thiscall ?on_left_double_click@ListBox@@QAEXHH@Z)(ListBox* this, int, int)
@@ -900,53 +908,30 @@ Purpose: Run the double-click notification: remember the hovered window,
 // indirect  0x0060C73B 0x0060C761 0x0060C789 0x0060C7A8 0x0060C7B3
 */
 void ListBox::on_left_double_click(int, int) {
-    char *self = reinterpret_cast<char *>(this);
-    char *front = self - 0x48;
-    int *vbt = *reinterpret_cast<int **>(front);
-    char *gw_walk = self + vbt[1];
-    WinCallbackWindow = *reinterpret_cast<Win **>(gw_walk + 0x7C);
+    GraphicWin *graphic = static_cast<GraphicWin *>(this);
+    Dialog *dialog = static_cast<Dialog *>(this);
+    Win *target = graphic->legacy_window_31();
+    WinCallbackWindow = target;
 
-    typedef void (__cdecl *callback_fn)(int);
-    callback_fn cb = *reinterpret_cast<callback_fn *>(self - 8);
-    if (cb != 0) {
-        vbt = *reinterpret_cast<int **>(front);
-        Dialog *dlg = reinterpret_cast<Dialog *>(self - 0x48 + vbt[2]);
-        cb(dlg->get_selected_id());
+    WinNotificationCallback callback = double_click_callback_;
+    if (callback != 0) {
+        callback(dialog->get_selected_id());
     }
 
-    vbt = *reinterpret_cast<int **>(front);
-    gw_walk = self + vbt[1];
-    Win *target = *reinterpret_cast<Win **>(gw_walk + 0x7C);
+    target = graphic->legacy_window_31();
     if (target != 0) {
-        vbt = *reinterpret_cast<int **>(front);
-        Dialog *dlg = reinterpret_cast<Dialog *>(self - 0x48 + vbt[2]);
-        typedef int (OriginalObject::*slot056_fn)(int);
-        (ORIGINAL(target)->*vtable_method<slot056_fn>(target, 56 * 4))(
-            dlg->get_selected_id());
+        target->vslot_56(dialog->get_selected_id());
     }
 
-    int guard = ListBoxClickGuard;
-    vbt = *reinterpret_cast<int **>(front);
-    char *dlg_walk = self - 0x48 + vbt[2];
-    int selected = reinterpret_cast<Dialog *>(dlg_walk)->get_selected_id();
-    vbt = *reinterpret_cast<int **>(front);
-    gw_walk = self + vbt[1];
-    target = *reinterpret_cast<Win **>(gw_walk + 0x7C);
-    typedef void (OriginalObject::*slot055_fn)(int, int);
-    (ORIGINAL(target)->*vtable_method<slot055_fn>(target, 55 * 4))(selected,
-                                                                   guard);
+    const int guard = ListBoxClickGuard;
+    target = graphic->legacy_window_31();
+    target->vslot_55(dialog->get_selected_id(), guard);
 
-    vbt = *reinterpret_cast<int **>(front);
-    gw_walk = self + vbt[1];
-    Win *final_target = *reinterpret_cast<Win **>(gw_walk + 0x7C);
-    Win *child = *reinterpret_cast<Win **>(
-        reinterpret_cast<char *>(final_target) + 0x94);
+    target = graphic->legacy_window_31();
+    Win *child = target->legacy_window_37();
     if (child != 0) {
-        // The original calls slot 7 only when slot 23 returns zero; the
-        // shared shim spells slot 23 void, so the test is reached raw.
-        typedef int (OriginalObject::*slot023_fn)();
-        if ((ORIGINAL(child)->*vtable_method<slot023_fn>(child, 23 * 4))() == 0) {
-            reinterpret_cast<VCall *>(child)->slot007();
+        if (child->vslot_23() == 0) {
+            child->vslot_07();
         }
     }
 }

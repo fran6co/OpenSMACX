@@ -33,6 +33,8 @@ class Win;  // the window this record is embedded at offset 0 of
   *   val_7_   0x1C  the child `on_mouse_move` notifies when a position
   *                  arrives that is NOT the window's own - `Win *`
   *   val_19_  0x4C  the same slot for the from-parent arm - `Win *`
+  * ListBox callsites independently use val_31_ (0x7C), val_36_ (0x90) and
+  * val_37_ (0x94) as Win receivers for their notification slots.
   * These uses null-test the windows and dispatch vslot_23/vslot_07.
   * The defaults block stores
   * whatever pointer value it was filled with, so the int was storage
@@ -72,6 +74,13 @@ class AutoSound {
   // window and dispatch vslot_23/vslot_07 on it. Keep its broader meaning
   // numbered until other owners establish it.
   Win *scroll_event_target() const { return val_33_; }
+
+  // ListBox notification paths treat these numbered settings as windows.
+  // Keep their names cautious: the seed callsites establish receiver types
+  // and slots, not a general-purpose relationship among the fields.
+  Win *legacy_window_31() const { return val_31_; }
+  Win *legacy_window_36() const { return val_36_; }
+  Win *legacy_window_37() const { return val_37_; }
 
  protected:
   // PROTECTED, NOT PRIVATE: Win derives from AutoSound and the homed window
@@ -125,7 +134,9 @@ class AutoSound {
   int val_28_;
   int val_29_;
   int val_30_;
-  int val_31_;
+  // ListBox double-click notification calls slots 56/55 on this window.
+  // RECOVERY_MEMBER: v3 AutoSound val_31_ Win* 0x7C 0x0060C710
+  Win *val_31_;
   int val_32_;
   // RECOVERY_MEMBER: v3 AutoSound val_33_ Win* 0x84 0x006069A0
   Win *val_33_;
@@ -133,8 +144,12 @@ class AutoSound {
   // its event slots. The precise relationship remains unnamed.
   Win *event_window_;  // 0x88
   int val_35_;
-  int val_36_;
-  int val_37_;
+  // ListBox selection notification calls slots 23/7 on this window.
+  // RECOVERY_MEMBER: v3 AutoSound val_36_ Win* 0x90 0x0060A020
+  Win *val_36_;
+  // ListBox double-click notification calls slots 23/7 on this window.
+  // RECOVERY_MEMBER: v3 AutoSound val_37_ Win* 0x94 0x0060C710
+  Win *val_37_;
 };
 
 static_assert(sizeof(AutoSound) == 0x98,

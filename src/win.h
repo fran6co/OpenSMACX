@@ -341,6 +341,7 @@ class Win : public AutoSound {
   static HDC get_hdc();
   static void release_hdc();
   void client_to_screen(int *x, int *y);
+  Win *parent_window() const { return win_parent_; }
   Win *event_window() const { return event_window_; }
   // ?client_to_screen@Win@@QAEXPAURECT@@@Z at 0x005ECFE0 - the RECT
   // overload, distinct from the (int*, int*) one above. Not yet recovered,
