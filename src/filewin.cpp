@@ -23,11 +23,57 @@
 #include "basebutton.h"
 #include "buffer.h"
 
+// The modal Win's focus-list nodes carry a window pointer at +4 and a next
+// pointer at +0xC. WinNodeList owns the sequence and cursor; this view only
+// describes a node encountered by the file-dialog callback.
+struct FileWinFocusNode {
+    void *tag;
+    Win *window;
+    void *payload;
+    FileWinFocusNode *next;
+};
+
 // ORIGINAL: 0x00614B90 ?on_button_clicked@FileWin@@QAEXH@Z 0x00614B90-0x00614C40
-// This callback's seed has a nontrivial directory/list-selection path. Keep
-// the owner symbol linkable while that behavior is recovered; no match claim.
-void FileWin::on_button_clicked(int) {
+// Historical seed evidence: a nested -2/-1/3 decision, with the -1 arm
+// rewinding the modal WinNodeList before UNK4. Compiler branch ordering in
+// the old standalone scaffold was inconclusive and is not a structural rule.
+void FileWin::on_button_clicked(int button_id) {
+    if (button_id == -2) {
+        field_638_ = 0x12C;
+        modal_window_->release_modal();
+        return;
+    }
+    if (button_id == -1) {
+        if (WinPendingFocus == static_cast<Win *>(&edit_box_)) {
+            WinNodeList &focus = modal_window_->list_;
+            if (focus.head_ != 0) {
+                focus.tail_ = 0;
+                focus.current_ = focus.head_;
+                for (int index = 0; index < focus.count_; ++index) {
+                    FileWinFocusNode *node =
+                        static_cast<FileWinFocusNode *>(focus.current_);
+                    if (node->window == static_cast<Win *>(&edit_box_)) {
+                        break;
+                    }
+                    ++focus.tail_;
+                    focus.current_ = node->next;
+                }
+            }
+        }
+        UNK4();
+        return;
+    }
+    if (button_id == 3) {
+        SetCurrentDirectoryA("..");
+        UNK3(".");
+    }
+}
+
+// ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694
+// Directory enumeration, filtering and list repopulation remain to recover.
+int FileWin::UNK3(char *) {
     // BODY GOES HERE.
+    return 0;
 }
 
 // The default file-name suffix appended to field_531_ at construction - REAL

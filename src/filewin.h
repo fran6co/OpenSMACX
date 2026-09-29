@@ -44,6 +44,7 @@ class FileWin {
   static int init_class();   // 00614D90
   void on_double_clicked(int a1);
   void on_button_clicked(int button_id);
+  int UNK3(char *directory);
   FileWin();
   ~FileWin();
   void UNK6();
