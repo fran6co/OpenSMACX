@@ -490,6 +490,12 @@ void BaseWin::soft_zoom(int base_id) {
     zoom(base_id, 0);
 }
 
+// ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a920.cpp", "source:src/basewin.h:BaseWin::zoom", "source:src/basewin.cpp:BaseWin::soft_zoom calls zoom after the window becomes visible"], "reason": "Bind the existing BaseWin map-centering dependency in its owning translation unit. The body is intentionally unfinished; the retained seed still carries the original behavior and must not be replaced by a forwarding shim."}
+void BaseWin::zoom(int, int) {
+    // BODY GOES HERE.
+}
+
 // ORIGINAL: 0x00415DD0 ?focus@BaseWin@@QAEXXZ 0x00415DD0-0x00415E52 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00415DD0-0x00415E52 reads focusedBaseID_ and Base::resource_sqr_radius, selects and computes that base, then conditionally acquires/releases the multiplayer base lock after observing a changed radius.", "source:src/basewin.h", "source:src/base.h", "source:src/game.h", "source:src/console.h", "source:src/netdaemon.h"], "reason": "Recover BaseWin focus through its source-owned focused base, typed Base fields and NetDaemon lock interface while retaining the original refresh and lock sequence."}
 void BaseWin::focus() {

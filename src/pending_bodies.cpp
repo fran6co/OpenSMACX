@@ -1772,14 +1772,6 @@ void __cdecl atrocity(int faction_id, int faction_id_victim, int kind, int unk) 
 //             body homed into src/console.cpp (set_view, BYTE_EXACT)
 
 
-// ?zoom@BaseWin@@QAEXHH@Z at 0x0041A920 - centre the map on a base.
-// Console::base_me asks it for the base under the cursor's last position.
-//             body in src/recovered/units/0041a920.cpp
-void BaseWin::zoom(int base_id, int wait_done) {  // 0x0041A920
-    typedef void(__fastcall *pending)(BaseWin *, void *, int, int);
-    PENDING_BODY(0x0041A920, pending)(this, nullptr, base_id, wait_done);
-}
-
 // ?set_center@MapWin@@QAEXHHH@Z at 0x0046B1F0 - recenter the map.
 //             body in src/recovered/units/0046b1f0.cpp
 void MapWin::set_center(int x_coord, int y_coord,
