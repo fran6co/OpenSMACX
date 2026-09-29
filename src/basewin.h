@@ -625,18 +625,13 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40C70_;  // 0x40C70
   uint32_t field_40C74_;  // 0x40C74
   uint32_t field_40C78_;  // 0x40C78
-  uint32_t field_40C7C_;  // 0x40C7C
-  uint32_t field_40C80_;  // 0x40C80
-  uint32_t field_40C84_;  // 0x40C84
-  uint32_t field_40C88_;  // 0x40C88
-  uint32_t field_40C8C_;  // 0x40C8C
-  uint32_t field_40C90_;  // 0x40C90
-  uint32_t field_40C94_;  // 0x40C94
-  uint32_t field_40C98_;  // 0x40C98
-  uint32_t field_40C9C_;  // 0x40C9C
-  uint32_t field_40CA0_;  // 0x40CA0
-  uint32_t field_40CA4_;  // 0x40CA4
-  uint32_t field_40CA8_;  // 0x40CA8
+  // The queue renderer frames these three consecutive regions separately.
+  // RECOVERY_MEMBER: v1 BaseWin queue_title_rect_ 0x40C7C 0x00415080
+  RECT queue_title_rect_;
+  // RECOVERY_MEMBER: v1 BaseWin queue_content_rect_ 0x40C8C 0x00415080
+  RECT queue_content_rect_;
+  // RECOVERY_MEMBER: v1 BaseWin queue_outer_rect_ 0x40C9C 0x00415080
+  RECT queue_outer_rect_;
   // The title panel copies these four consecutive words as one RECT before
   // clipping, framing and presenting it.
   // RECOVERY_MEMBER: v1 BaseWin info_title_rect_ 0x40CAC 0x00415B20

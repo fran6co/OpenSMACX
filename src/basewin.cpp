@@ -384,14 +384,127 @@ void BaseWin::next() {
     zoom(selected, 0);
 }
 
-// The queue's rendered panel is still unimplemented. Queue mutation itself
-// uses the typed Base queue and BaseWin selection state recovered from the
-// original record strides; the unfinished drawing dependency remains visible.
+// Queue mutation and its rendered panel use the same typed Base queue and
+// BaseWin selection state recovered from the original record strides.
 // ORIGINAL: 0x00415080 ?draw_queue@BaseWin@@QAEXH@Z 0x00415080-0x00415724;0x00651B93-0x00651BB0 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00415080.cpp", "source:src/basewin.h"], "reason": "Keep the declared BaseWin drawing dependency linkable while its original panel behavior remains in the retained seed."}
-// TRIED: instruction-level transcription with real Font locals (to get the SEH frame/dtor thunks) and byte-offset casts for BaseWin fields; compiles, control flow/offsets/call order match the disasm, sim 0.70 framed build. Extra RECT-copy temporaries (rectA/rectQ/rectR/rectP vs the original's reused stack slots) keep it off byte-exact. Not retried with slot reuse given size (1729 bytes, SEH).
-void BaseWin::draw_queue(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00415080.cpp", "src/basewin.h:queue rectangles and font1_", "src/base.h:Base queue and Facility", "src/veh.h:VehPrototypes", "src/alpha.h:Labels and Language", "src/buffer.h:InterfaceBoxStyles", "image:0x00682BAC-0x00682BC0 queue strings"], "reason": "Render the eight queued production rows through owned BaseWin rectangles, game queue and prototype/facility records, shared interface styles and palette. Retain the original seed for byte restoration; the old raw self-offset transcription is not product source."}
+// TRIED: the retained instruction-level seed with local Font lifetimes and
+// raw self offsets scored about 0.70 in a framed build. Its several RECT-copy
+// temporaries blocked byte restoration; this typed body keeps that evidence
+// without treating those stack-slot spellings as the class model.
+void BaseWin::draw_queue(int update_mode) {
+    Font row_font;
+    Font compact_font;
+    Buffer *canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    if (update_mode != 0 && !is_visible()) return;
+
+    RECT saved_clip = canvas->rect1_;
+    RECT outer = queue_outer_rect_;
+    canvas->set_clip(&outer);
+    canvas->box_sprite(&queue_outer_rect_, &InterfaceBoxStyles[3]);
+
+    const bool low_resolution = WinScreenWidth == 0x320;
+    row_font.init(DefaultFontFace, low_resolution ? 10 : 12, 0);
+    row_font.unk_1_ = 4;
+    compact_font.init(DefaultFontFace, low_resolution ? 8 : 10, 0);
+    compact_font.unk_1_ = 4;
+    spot1_.kill_type(8);
+
+    RECT title = queue_title_rect_;
+    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+    title.left += 3;
+    title.top += 3;
+    title.right -= 3;
+    title.bottom -= 3;
+    canvas->set_font(&font1_, nullptr, nullptr, nullptr);
+    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(479));
+    string_upper_slot()(StringTemp);
+    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
+
+    canvas->set_font(&row_font, nullptr, nullptr, nullptr);
+    RECT content = queue_content_rect_;
+    canvas->box_sprite(&content, &InterfaceBoxStyles[0]);
+    const int margin = low_resolution ? 5 : 2;
+    content.left += margin;
+    content.top += margin;
+    content.right -= margin;
+    content.bottom -= margin;
+
+    int row_top = content.top;
+    for (int queue_index = 1; queue_index <= 8; ++queue_index) {
+        canvas->set_font(&row_font, nullptr, nullptr, nullptr);
+        const int row_height = row_font.line_advance();
+        RECT row = {content.left, row_top, content.right, row_top + row_height};
+        spot1_.add(queue_index + 2, 8, row.left, row.top,
+                   row.right - row.left, row_height);
+
+        const bool selected = field_40B2C_ == static_cast<uint32_t>(queue_index)
+            || field_40B30_ == static_cast<uint32_t>(queue_index);
+        if (selected) {
+            Buffer *pattern = field_40B2C_ == static_cast<uint32_t>(queue_index)
+                ? InterfaceBoxStyles[29].mask_ : InterfaceBoxStyles[27].mask_;
+            canvas->tile(pattern, row.left, row.top, row.left, row.top,
+                         row.right - row.left, row.bottom - row.top);
+        }
+
+        StringTemp[0] = 0;
+        char number[64];
+        _itoa(queue_index, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ". ");
+
+        char item_name[256];
+        item_name[0] = 0;
+        if (queue_index > static_cast<int>(BaseCurrent->queue_size)) {
+            canvas->set_text_color(TextColourTable[138], TextColourTable[139], 1, 1);
+            strcat(item_name, label_get(460));
+        } else {
+            canvas->set_text_color(TextColourTable[136], TextColourTable[137], 1, 1);
+            const int production = BaseCurrent->queue_production_id[queue_index];
+            if (production >= 0) {
+                strcat(item_name, VehPrototypes[production].veh_name);
+            } else {
+                // Facility.name holds the StringTable key in the original;
+                // StatusWin resolves the same field through get().
+                strcat(item_name, StringTable.get(
+                    reinterpret_cast<int>(Facility[-production].name)));
+            }
+        }
+        if (selected) canvas->set_text_color(0x41, -1, 1, 1);
+        const char *display_name = item_name;
+        if (Language == 0 && strncmp(item_name, "The ", 4) == 0) {
+            display_name += 4;
+        }
+        strcat(StringTemp, display_name);
+
+        RECT text_rect = row;
+        if (row_font.width(StringTemp) <= text_rect.right - text_rect.left) {
+            canvas->set_clip(&text_rect);
+            canvas->write_l(StringTemp, &text_rect, strlen(StringTemp));
+            canvas->set_clip(&canvas->rect2_);
+        } else {
+            canvas->set_font(&compact_font, nullptr, nullptr, nullptr);
+            const bool truncated = compact_font.width(StringTemp)
+                > text_rect.right - text_rect.left;
+            if (truncated) text_rect.right -= compact_font.width("+");
+            canvas->set_clip(&text_rect);
+            if (StringTemp[0] != 0) {
+                canvas->write_l(StringTemp, &text_rect, strlen(StringTemp));
+            }
+            canvas->set_clip(&canvas->rect2_);
+            if (truncated) {
+                text_rect.left = text_rect.right;
+                canvas->write_l("+", &text_rect, 1);
+            }
+        }
+        row_top += row_font.line_advance();
+    }
+
+    if (update_mode != 0) MainInterfaceGlobal.update(&queue_content_rect_, nullptr);
+    else MainInterfaceGlobal.soft_update(&queue_content_rect_);
+    canvas->set_clip(&saved_clip);
 }
 
 // ORIGINAL: 0x0040E360 ?draw_production@BaseWin@@QAEXH@Z 0x0040E360-0x0040F0E5;0x00651ACD-0x00651AF8 FILE
