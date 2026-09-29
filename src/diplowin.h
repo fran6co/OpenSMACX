@@ -42,6 +42,11 @@ class DiploWin : public GraphicWin {
   int on_key_click(int repeat, int key);
   int on_key_down(int key);
   void done_deal();
+  void check_done();
+  void do_it();
+  void draw_who();
+  void draw_whom();
+  void draw_offers();
   void UNK1();
   void new_chat(char *text, int faction_id);
 
@@ -84,8 +89,7 @@ class DiploWin : public GraphicWin {
   // GraphicWin base; everything between is unmapped.
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
+  int offer_count_[2];  // 0xA1C: one count for each party
   int32_t field_A24_;
   int32_t field_A28_;
 
@@ -93,41 +97,11 @@ class DiploWin : public GraphicWin {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 418 member(s) from the IDA database, 5 named; it starts a member at 0xA2C, which is where src/ ends.
 
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
-  uint32_t field_A40_;  // 0xA40
-  uint32_t field_A44_;  // 0xA44
-  uint32_t field_A48_;  // 0xA48
-  uint32_t field_A4C_;  // 0xA4C
-  uint32_t field_A50_;  // 0xA50
-  uint32_t field_A54_;  // 0xA54
-  uint32_t field_A58_;  // 0xA58
-  uint32_t field_A5C_;  // 0xA5C
-  uint32_t field_A60_;  // 0xA60
-  uint32_t field_A64_;  // 0xA64
-  uint32_t field_A68_;  // 0xA68
-  uint32_t field_A6C_;  // 0xA6C
-  uint32_t field_A70_;  // 0xA70
-  uint32_t field_A74_;  // 0xA74
-  uint32_t field_A78_;  // 0xA78
-  uint32_t field_A7C_;  // 0xA7C
-  uint32_t field_A80_;  // 0xA80
-  uint32_t field_A84_;  // 0xA84
-  uint32_t field_A88_;  // 0xA88
-  uint32_t field_A8C_;  // 0xA8C
-  uint32_t field_A90_;  // 0xA90
-  uint32_t field_A94_;  // 0xA94
-  uint32_t field_A98_;  // 0xA98
-  uint32_t field_A9C_;  // 0xA9C
-  uint32_t field_AA0_;  // 0xAA0
-  uint32_t field_AA4_;  // 0xAA4
-  uint32_t field_AA8_;  // 0xAA8
+  int offer_type_[2][8];  // 0xA2C
+  int offer_value_[2][8];  // 0xA6C
   uint32_t field_AAC_;  // 0xAAC
   uint32_t field_AB0_;  // 0xAB0
-  uint32_t field_AB4_;  // 0xAB4
+  int faction_id_;  // 0xAB4, the local party to the exchange
   int32_t faction_id_with_;  // 0xAB8, the diplomacy counterpart used by offer/chat messages
   uint32_t field_ABC_;  // 0xABC
   uint32_t field_AC0_;  // 0xAC0
@@ -423,22 +397,8 @@ class DiploWin : public GraphicWin {
   uint32_t field_F50_;  // 0xF50
   uint32_t field_F54_;  // 0xF54
   uint32_t field_F58_;  // 0xF58
-  uint32_t field_F5C_;  // 0xF5C
-  uint32_t field_F60_;  // 0xF60
-  uint32_t field_F64_;  // 0xF64
-  uint32_t field_F68_;  // 0xF68
-  uint32_t field_F6C_;  // 0xF6C
-  uint32_t field_F70_;  // 0xF70
-  uint32_t field_F74_;  // 0xF74
-  uint32_t field_F78_;  // 0xF78
-  uint32_t field_F7C_;  // 0xF7C
-  uint32_t field_F80_;  // 0xF80
-  uint32_t field_F84_;  // 0xF84
-  uint32_t field_F88_;  // 0xF88
-  uint32_t field_F8C_;  // 0xF8C
-  uint32_t field_F90_;  // 0xF90
-  uint32_t field_F94_;  // 0xF94
-  uint32_t field_F98_;  // 0xF98
+  RECT portrait_rect_[2];  // 0xF5C, 0xF6C
+  RECT leader_rect_[2];  // 0xF7C, 0xF8C
   uint32_t field_F9C_;  // 0xF9C
   uint32_t field_FA0_;  // 0xFA0
   uint32_t field_FA4_;  // 0xFA4
