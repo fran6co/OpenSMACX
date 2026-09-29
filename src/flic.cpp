@@ -291,7 +291,7 @@ Purpose: Open a FLIC file and prepare the first frame: zero the per-file
          state, read and validate the 128-byte header, cache both ring
          frame headers, prime the embedded scratch buffer with the first
          frame and blit it to the destination at (x, y).
-// ORIGINAL: 0x00629E50 ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z 0x00629E50-0x0062A068 FILE
+// ORIGINAL: 0x00629E50 ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z 0x00629E50-0x0062A068
 // symbol    ?init@Flic@@QAEHPAVBuffer@@PADHHH@Z
 // size      536 bytes
 // prototype int (__thiscall ?init@Flic@@QAEHPAUBuffer@@PADHHH@Z)(Flic* this, Buffer*, char*, int, int, int)
@@ -412,7 +412,7 @@ int Flic::decode_frame(int x, int y) {
 Purpose: Decode the next frame in transparent mode - identical to
          decode_frame except the transparent bit is set for the duration
          of the decode and cleared again on every exit.
-// ORIGINAL: 0x0062A120 ?UNK1@Flic@@QAEHHH@Z 0x0062A120-0x0062A202 FILE
+// ORIGINAL: 0x0062A120 ?UNK1@Flic@@QAEHHH@Z 0x0062A120-0x0062A202
 // size      226 bytes
 // prototype int (__thiscall ?UNK1@Flic@@QAEHHH@Z)(Flic* this, int, int)
 // callers   0   call targets   4
@@ -521,7 +521,7 @@ Purpose: Advance the animation to an arbitrary frame. When the target is
          frame whose subchunks are all still decodable (types other than
          7 and 0xC), and finally the remembered position is re-seeked and
          frames are decoded forward until the target is reached.
-// ORIGINAL: 0x0062A2C0 ?UNK3@Flic@@QAEHH@Z 0x0062A2C0-0x0062A4FA FILE
+// ORIGINAL: 0x0062A2C0 ?UNK3@Flic@@QAEHH@Z 0x0062A2C0-0x0062A4FA
 // size      570 bytes
 // prototype int (__thiscall ?UNK3@Flic@@QAEHH@Z)(Flic* this, int)
 // callers   0   call targets   5
@@ -648,7 +648,7 @@ Purpose: Decode a type-0xF (FLI BYTE RUN) chunk: per row, a packet count
          the file. When a colour offset is set the literal path is
          staged through a scratch row so the offset can be added per
          byte.
-// ORIGINAL: 0x0062A500 ?decode_byte_run@Flic@@QAEXXZ 0x0062A500-0x0062A70F FILE
+// ORIGINAL: 0x0062A500 ?decode_byte_run@Flic@@QAEXXZ 0x0062A500-0x0062A70F
 // size      527 bytes
 // prototype void (__thiscall ?decode_byte_run@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   6
@@ -753,7 +753,7 @@ Purpose: Decode a type-7 (FLC DELTA) chunk: word-run deltas. Per line a
          positive one copies that many words, staged through a scratch
          row when a colour offset is set. The dirty rectangle tracks the
          first and last line touched and the least and greatest column.
-// ORIGINAL: 0x0062A720 ?decode_delta_flc@Flic@@QAEXXZ 0x0062A720-0x0062AAE7 FILE
+// ORIGINAL: 0x0062A720 ?decode_delta_flc@Flic@@QAEXXZ 0x0062A720-0x0062AAE7
 // size      967 bytes
 // prototype void (__thiscall ?decode_delta_flc@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   5
@@ -905,7 +905,7 @@ void Flic::decode_delta_flc() {
 /*
 Purpose: Fill the rectangle the animation occupies on the destination
          buffer with color zero and mark it dirty.
-// ORIGINAL: 0x0062AB10 ?fill@Flic@@QAEXXZ 0x0062AB10-0x0062AB72 FILE
+// ORIGINAL: 0x0062AB10 ?fill@Flic@@QAEXXZ 0x0062AB10-0x0062AB72
 // size      98 bytes
 // prototype void (__thiscall ?fill@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
@@ -1001,7 +1001,7 @@ void Flic::fill() {
 Purpose: Decode a type-0x10 (FLI COPY) chunk: the rows follow verbatim in
          the file. When a colour offset is set each row is staged through
          a scratch row so the offset can be added per byte.
-// ORIGINAL: 0x0062AB80 ?decode_fli_copy@Flic@@QAEXXZ 0x0062AB80-0x0062ACB6 FILE
+// ORIGINAL: 0x0062AB80 ?decode_fli_copy@Flic@@QAEXXZ 0x0062AB80-0x0062ACB6
 // size      310 bytes
 // prototype void (__thiscall ?decode_fli_copy@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   4
@@ -1066,7 +1066,7 @@ Purpose: Dispatch one chunk: a type-0xF1FA frame ring recurses over its
          transparent variants when the transparent bit is set. Afterwards
          the file position is corrected by whatever the decoder did not
          consume.
-// ORIGINAL: 0x0062ACD0 ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z 0x0062ACD0-0x0062AF40 FILE
+// ORIGINAL: 0x0062ACD0 ?decode_chunk@Flic@@QAEXPAUDataChunk@@@Z 0x0062ACD0-0x0062AF40
 // size      624 bytes  (extent corrected 2026-09-17: 541 code-to-ret bytes plus the
 //             two switch jump-table pairs the original image carries at 0x0062AEED-
 //             0x0062AF38 and VC6 emits inside this COMDAT under both campaign flag
@@ -1239,7 +1239,7 @@ Purpose: Decode a type-0xF (FLI BYTE RUN) chunk in transparent mode: as
          decode_byte_run, but every pixel whose offset-adjusted value
          equals the transparent color is taken from the embedded scratch
          buffer instead of the file.
-// ORIGINAL: 0x0062AF40 ?decode_byte_run_trans@Flic@@QAEXXZ 0x0062AF40-0x0062B186 FILE
+// ORIGINAL: 0x0062AF40 ?decode_byte_run_trans@Flic@@QAEXXZ 0x0062AF40-0x0062B186
 // size      582 bytes
 // prototype void (__thiscall ?decode_byte_run_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   8
@@ -1362,7 +1362,7 @@ Purpose: Decode a type-7 (FLC DELTA) chunk in transparent mode: as
          decode_delta_flc, but every pixel whose offset-adjusted value
          equals the transparent color is taken from the embedded scratch
          buffer instead of the file, per pixel or per RLE-word half.
-// ORIGINAL: 0x0062B190 ?decode_delta_flc_trans@Flic@@QAEXXZ 0x0062B190-0x0062B5ED FILE
+// ORIGINAL: 0x0062B190 ?decode_delta_flc_trans@Flic@@QAEXXZ 0x0062B190-0x0062B5ED
 // size      1117 bytes
 // prototype void (__thiscall ?decode_delta_flc_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   4
@@ -1543,7 +1543,7 @@ void Flic::decode_delta_flc_trans() {
 /*
 Purpose: Handle a type-0xD (FLI BLACK) chunk in transparent mode: restore
          the embedded scratch buffer over the animation's rectangle.
-// ORIGINAL: 0x0062B600 ?decode_black_trans@Flic@@QAEXXZ 0x0062B600-0x0062B66E FILE
+// ORIGINAL: 0x0062B600 ?decode_black_trans@Flic@@QAEXXZ 0x0062B600-0x0062B66E
 // size      110 bytes
 // prototype void (__thiscall ?decode_black_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   0   call targets   1
@@ -1576,7 +1576,7 @@ Purpose: Decode a type-0x10 (FLI COPY) chunk in transparent mode: the
          rows follow verbatim in the file, and every pixel whose
          offset-adjusted value equals the transparent color is taken from
          the embedded scratch buffer instead.
-// ORIGINAL: 0x0062B670 ?decode_fli_copy_trans@Flic@@QAEXXZ 0x0062B670-0x0062B776 FILE
+// ORIGINAL: 0x0062B670 ?decode_fli_copy_trans@Flic@@QAEXXZ 0x0062B670-0x0062B776
 // size      262 bytes
 // prototype void (__thiscall ?decode_fli_copy_trans@Flic@@QAEXXZ)(Flic* this)
 // callers   1   call targets   3
