@@ -586,15 +586,14 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40BC0_;  // 0x40BC0
   uint32_t field_40BC4_;  // 0x40BC4
   uint32_t field_40BC8_;  // 0x40BC8
-  uint32_t field_40BCC_;  // 0x40BCC
-  uint32_t field_40BD0_;  // 0x40BD0
-  uint32_t field_40BD4_;  // 0x40BD4
-  uint32_t field_40BD8_;  // 0x40BD8
-  RECT rect3_;  // 0x40BDC, IDB `rect3`
-  uint32_t field_40BEC_;  // 0x40BEC
-  uint32_t field_40BF0_;  // 0x40BF0
-  uint32_t field_40BF4_;  // 0x40BF4
-  uint32_t field_40BF8_;  // 0x40BF8
+  // Three consecutive rectangles used by the commerce title, report and
+  // containing panel; the original copies/frames each as a whole RECT.
+  // RECOVERY_MEMBER: v1 BaseWin commerce_title_rect_ 0x40BCC 0x00410870
+  RECT commerce_title_rect_;
+  // RECOVERY_MEMBER: v1 BaseWin commerce_report_rect_ 0x40BDC 0x00410870
+  RECT commerce_report_rect_;
+  // RECOVERY_MEMBER: v1 BaseWin commerce_outer_rect_ 0x40BEC 0x00410870
+  RECT commerce_outer_rect_;
   // The nutrient renderer frames content, caption and outer bounds in order.
   // RECOVERY_MEMBER: v1 BaseWin nutrient_content_rect_ 0x40BFC 0x00411240
   RECT nutrient_content_rect_;

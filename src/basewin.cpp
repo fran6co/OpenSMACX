@@ -2476,9 +2476,43 @@ void BaseWin::draw_pop(int update_mode) {
     canvas->set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00410870 ?draw_commerce@BaseWin@@QAEXH@Z 0x00410870-0x00411235;0x00651B22-0x00651B37
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00410870.cpp", "src/basewin.h"], "reason": "Preserve the separately identified commerce panel reached by BaseWin redraw as an explicitly unfinished linkable body."}
-void BaseWin::draw_commerce(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x004108CC-0x00410A95 copies/clips three BaseWin rectangles, initializes a Font, draws the title and sets the report palette", "image:0x004111DE-0x00411211 updates the outer rectangle and restores the clip", "src/unrecovered/00410870.cpp explicitly marks its faction-report loop and military-score branch as approximate"], "reason": "Recover the verified commerce panel frame, title and refresh through owned BaseWin rectangles and typed faction data; retain the seed for the as-yet-unrecovered report rows rather than import its fabricated branch."}
+// The body is incomplete: the faction report at 0x00410B3C-0x004111DE still
+// needs its diplomatic relation/message logic recovered from the image. The
+// retained seed invents a comparison in that branch and must not be copied.
+void BaseWin::draw_commerce(int update_mode) {
+    Buffer *canvas = this;
+    RECT saved_clip = canvas->rect1_;
+    canvas->set_clip(&commerce_outer_rect_);
+    canvas->box_sprite(&commerce_outer_rect_, &InterfaceBoxStyles[3]);
+
+    Font font;
+    font.init(DefaultFontFace, 10, 1);
+    RECT title = commerce_title_rect_;
+    canvas->box_sprite(&title, &InterfaceBoxStyles[6]);
+    title.left += 3;
+    title.top += 3;
+    title.right -= 3;
+    title.bottom -= 3;
+    canvas->set_font(&font1_, nullptr, nullptr, nullptr);
+    canvas->set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    const int faction = Bases[focusedBaseID_].faction_id_current;
+    StringTemp[0] = 0;
+    if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+        strcat(StringTemp, label_get(1107));
+    } else {
+        strcat(StringTemp, label_get(313));
+        string_upper_slot()(StringTemp);
+    }
+    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
+
+    canvas->set_font(&font, nullptr, nullptr, nullptr);
+    canvas->set_text_color(TextColourTable[104], TextColourTable[105], 1, 1);
+    RECT report = commerce_report_rect_;
+    canvas->box_sprite(&report, &InterfaceBoxStyles[0]);
+    if (update_mode == 0) MainInterfaceGlobal.soft_update(&commerce_outer_rect_);
+    else MainInterfaceGlobal.update(&commerce_outer_rect_, nullptr);
+    canvas->set_clip(&saved_clip);
 }
 // ORIGINAL: 0x00411240 ?draw_nutrients@BaseWin@@QAEXH@Z 0x00411240-0x00411973;0x00651B37-0x00651B4C
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00411240.cpp:1912-2151", "src/basewin.h:nutrient rectangles and sprites3_", "src/base.h:Base nutrients_accumulated and nutrient_surplus", "src/base.cpp:BaseIDCurrentSelected and cost_factor", "image:0x00682B20-0x00682B28 nutrient punctuation"], "reason": "Render the growth grid and caption through owned BaseWin rectangles, sprites, current Base and label table. Retain the instruction-level seed for restoration rather than hardcoding its self/global addresses."}
