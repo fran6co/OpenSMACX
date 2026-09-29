@@ -1649,15 +1649,6 @@ void DesignWin::draw_chassis(int redraw) {
                          static_cast<int>(strlen(caption)));
 
     const int chassis = static_cast<int>(protoChassisType_);
-    char *name = Chassis[chassis].offsv_1_name;
-    if (name != 0) {
-        RECT name_area = preview;
-        name_area.top += title_height;
-        name_area.bottom = name_area.top + font1_.height_;
-        canvas->write_cent_l(&font1_, name, &name_area,
-                             static_cast<int>(strlen(name)));
-    }
-
     preview.top += title_height + font1_.height_;
     preview.bottom -= static_cast<int>(font1_.height_) * 2 + 5;
     vehdraw_construct_chassis(static_cast<int>(factionID_), chassis,
@@ -1667,8 +1658,33 @@ void DesignWin::draw_chassis(int redraw) {
     caviar_.set_scene_rotation(0.5233333706855774f, 0, 0);
     caviar_.render(canvas, (preview.left + preview.right) / 2,
                    (preview.top + preview.bottom) / 2, 2);
-    // BODY GOES HERE. The seed's remaining chassis specification lines and
-    // their distinct palette are not yet represented by typed project data.
+
+    canvas->set_font(&font1_, 0, 0, 0);
+    RECT detail = preview;
+    detail.top = preview.bottom;
+    detail.bottom = detail.top + font1_.height_;
+    char *name = StringTable.get(
+        reinterpret_cast<int>(Chassis[chassis].offsv_1_name));
+    if (name != 0) {
+        canvas->write_cent_l(name, &detail, static_cast<int>(strlen(name)));
+    }
+
+    detail.top += font1_.height_ + 3;
+    detail.bottom += font1_.height_ + 3;
+    const int triad = Chassis[chassis].triad;
+    if (triad < MaxTriadNum) {
+        StringTemp[0] = '\0';
+        char *triad_name = StringTable.get(reinterpret_cast<int>(Triad[triad]));
+        if (triad_name != 0) {
+            strcat(StringTemp, triad_name);
+            strcat(StringTemp, SpaceText);
+        }
+        char speed[16];
+        _itoa(static_cast<int>(Chassis[chassis].speed), speed, 10);
+        strcat(StringTemp, speed);
+        canvas->write_cent_l(StringTemp, &detail,
+                             static_cast<int>(strlen(StringTemp)));
+    }
 }
 
 // ORIGINAL: 0x00434F40 ?draw_weapon@DesignWin@@QAEXH@Z 0x00434F40-0x004353FF
@@ -1697,8 +1713,12 @@ void DesignWin::draw_weapon(int redraw) {
     name_area.top += title_height;
     name_area.bottom = name_area.top + font1_.height_;
     if (weapon != 0 && Weapon[weapon].name != 0) {
-        canvas->write_cent_l(&font1_, Weapon[weapon].name, &name_area,
-                             static_cast<int>(strlen(Weapon[weapon].name)));
+        char *weapon_name = StringTable.get(
+            reinterpret_cast<int>(Weapon[weapon].name));
+        if (weapon_name != 0) {
+            canvas->write_cent_l(&font1_, weapon_name, &name_area,
+                                 static_cast<int>(strlen(weapon_name)));
+        }
     }
 
     preview.top += title_height + font1_.height_;
@@ -1717,8 +1737,8 @@ void DesignWin::draw_weapon(int redraw) {
     caviar_.set_scene_rotation(0.5323889f, 0.0f, 0.0f);
     caviar_.render(canvas, (preview.left + preview.right) / 2,
                    (preview.top + preview.bottom) / 2, 6);
-    // BODY GOES HERE. Remaining weapon class/range or ammunition lines and
-    // their original palette still need typed source bindings.
+    // BODY GOES HERE. The seed's weapon class/range/ammunition detail uses
+    // several separate rules tables not yet owned by this source group.
 }
 
 // ORIGINAL: 0x00435400 ?draw_armor@DesignWin@@QAEXH@Z 0x00435400-0x00435800
@@ -1752,8 +1772,8 @@ void DesignWin::draw_armor(int redraw) {
         caviar_.render(canvas, (preview.left + preview.right) / 2,
                        (preview.top + preview.bottom) / 2, 6);
     }
-    // BODY GOES HERE. Armor rating text and the special multi-table render
-    // path need the still-unmodelled stat/palette resources.
+    // BODY GOES HERE. The seed's armor detail also selects a special
+    // multi-table render path and translated rating table not yet owned here.
 }
 
 // ORIGINAL: 0x00435800 ?draw_reactor@DesignWin@@QAEXH@Z 0x00435800-0x00435B29
@@ -1776,7 +1796,8 @@ void DesignWin::draw_reactor(int redraw) {
 
     const int reactor = static_cast<int>(protoReactorType_);
     if (reactor >= 0 && reactor < MaxReactorNum) {
-        char *name = Reactor[reactor].name;
+        char *name = StringTable.get(
+            reinterpret_cast<int>(Reactor[reactor].name));
         RECT name_area = preview;
         name_area.top += title_height;
         name_area.bottom = name_area.top + font1_.height_;
@@ -1796,22 +1817,102 @@ void DesignWin::draw_reactor(int redraw) {
         caviar_.render(canvas, (preview.left + preview.right) / 2,
                        (preview.top + preview.bottom) / 2, 6);
     }
-    // BODY GOES HERE. Ability-aware reactor description and numeric detail
-    // text remain unresolved until their label/stat resources are modelled.
+    // BODY GOES HERE. The seed's ability-aware reactor description and
+    // numeric detail use separate label/stat resources not yet owned here.
 }
 
 // ORIGINAL: 0x00435B30 ?draw_special_1@DesignWin@@QAEXH@Z 0x00435B30-0x00435DD1 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435b30.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435b30.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID1_ and panel/font members in src/designwin.h"], "reason": "Draw the first selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_1(int redraw) {
     (void)redraw;
-    // BODY GOES HERE.
+    Buffer *canvas = static_cast<Buffer *>(this);
+    RECT area = special_one_panel_rect_;
+    canvas->set_clip(&area);
+    buffer_.copy(canvas, &area);
+
+    const int title_height = font2_.unk_1_ < 0
+        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+    RECT title = area;
+    title.bottom = title.top + title_height;
+    canvas->set_text_color(0xE0, -1, 1, 1);
+    char *caption = label_get(0x228 / 4);
+    if (caption != 0) {
+        canvas->write_cent_l(&font2_, caption, &title,
+                             static_cast<int>(strlen(caption)));
+    }
+
+    RECT text = area;
+    text.left += 5;
+    text.right -= 5;
+    text.top += title_height + 2;
+    const int ability = static_cast<int>(protoAbilityID1_);
+    if (ability < 0 || ability >= MaxAbilityNum) {
+        char *empty = label_get(0x64 / 4);
+        if (empty != 0) {
+            canvas->write_cent_l(&font1_, empty, &text,
+                                 static_cast<int>(strlen(empty)));
+        }
+        return;
+    }
+
+    const RulesAbility &record = Ability[ability];
+    char *name = StringTable.get(reinterpret_cast<int>(record.name));
+    char *description = StringTable.get(reinterpret_cast<int>(record.description));
+    if (name != 0) {
+        canvas->set_text_color(0xE0, -1, 1, 1);
+        text.top = canvas->wrap_cent(&font2_, name, &text);
+    }
+    if (description != 0) {
+        canvas->set_text_color(0xE0, -1, 1, 1);
+        canvas->wrap_cent(&font1_, description, &text);
+    }
 }
 
 // ORIGINAL: 0x00435DE0 ?draw_special_2@DesignWin@@QAEXH@Z 0x00435DE0-0x00436081 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435de0.cpp"], "reason": "Link-continuity placeholder only; retain the seed until this original body is migrated."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00435de0.cpp", "RulesAbility and StringTable in src/veh.h and src/strings.h", "DesignWin::protoAbilityID2_ and panel/font members in src/designwin.h"], "reason": "Draw the second selected special ability through the typed ability record and the existing DesignWin panel, font and selection state."}
 void DesignWin::draw_special_2(int redraw) {
     (void)redraw;
-    // BODY GOES HERE.
+    Buffer *canvas = static_cast<Buffer *>(this);
+    RECT area = special_two_panel_rect_;
+    canvas->set_clip(&area);
+    buffer_.copy(canvas, &area);
+
+    const int title_height = font2_.unk_1_ < 0
+        ? font2_.line_height_ : font2_.height_ + font2_.unk_1_;
+    RECT title = area;
+    title.bottom = title.top + title_height;
+    canvas->set_text_color(0xE0, -1, 1, 1);
+    char *caption = label_get(0x228 / 4);
+    if (caption != 0) {
+        canvas->write_cent_l(&font2_, caption, &title,
+                             static_cast<int>(strlen(caption)));
+    }
+
+    RECT text = area;
+    text.left += 5;
+    text.right -= 5;
+    text.top += title_height + 2;
+    const int ability = static_cast<int>(protoAbilityID2_);
+    if (ability < 0 || ability >= MaxAbilityNum) {
+        char *empty = label_get(0x64 / 4);
+        if (empty != 0) {
+            canvas->write_cent_l(&font1_, empty, &text,
+                                 static_cast<int>(strlen(empty)));
+        }
+        return;
+    }
+
+    const RulesAbility &record = Ability[ability];
+    char *name = StringTable.get(reinterpret_cast<int>(record.name));
+    char *description = StringTable.get(reinterpret_cast<int>(record.description));
+    if (name != 0) {
+        canvas->set_text_color(0xE0, -1, 1, 1);
+        text.top = canvas->wrap_cent(&font2_, name, &text);
+    }
+    if (description != 0) {
+        canvas->set_text_color(0xE0, -1, 1, 1);
+        canvas->wrap_cent(&font1_, description, &text);
+    }
 }
 
 // ORIGINAL: 0x00436090 ?draw_vehicle@DesignWin@@QAEXH@Z 0x00436090-0x00437999 FILE
