@@ -31,6 +31,10 @@
 #include "spot.h"
 #include "time.h"  // SatPanelTimer1/2 - close_sat stops both
 #include "maininterface.h"  // MainInterfaceGlobal - the set_modal owner
+#include "alpha.h"  // Labels
+#include "faction.h"  // Players
+#include "game.h"  // say_year
+#include "strings.h"  // StringTable, StringTemp
 #include "vector_teardown.h"
 
 
@@ -541,14 +545,13 @@ ListBox ReportIfEnergyListBox;  // 0x0087BE84
 ReportIf ReportIfGlobal;  // 0x00885F38
 
 /*
- * Remaining fixed-address interface surface and clip bindings. Panel styles
- * below use the shared mutable InterfaceBoxStyles records; the interface
- * Buffer at 0x7AEC64 and its clip at +0x30 still need source ownership.
+ * Panel drawing uses the shared mutable InterfaceBoxStyles records and the
+ * Buffer subobject owned by MainInterfaceGlobal. Its working rectangle is
+ * exposed by GraphicWin::buffer_working_rect().
  */
-static int *const InterfaceBuffer = (int *)0x007AEC64;
-static int *const InterfaceClipRect = (int *)0x007AEC94;
 
-// ORIGINAL: 0x004A3D20 ?reset@ReportIf@@QAEXXZ 0x004A3D20-0x004A3FBF FILE
+// ORIGINAL: 0x004A3D20 ?reset@ReportIf@@QAEXXZ 0x004A3D20-0x004A3FBF
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/maininterface.h:MainInterfaceGlobal", "source:src/graphicwin.h:GraphicWin::buffer_working_rect", "source:src/datalink.cpp:1933", "docs/recovery/member-accesses.csv:ReportIf offsets 0x20, 0x30, 0x40, 0x50"], "reason": "Draw through the MainInterfaceGlobal Buffer base and its owned working clip rectangle, with typed ReportIf panel rectangles."}
 // size      671 bytes
 // prototype void (__thiscall ?reset@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   5   call targets   7
@@ -590,21 +593,20 @@ static int *const InterfaceClipRect = (int *)0x007AEC94;
 
 
 void ReportIf::reset() {
-    char *self = reinterpret_cast<char *>(this);
-    Buffer *buf = reinterpret_cast<Buffer *>(InterfaceBuffer);
+    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
 
-    RECT *r1 = reinterpret_cast<RECT *>(self + 0x20);
+    RECT *r1 = &field_20_;
     buf->box_sprite(r1, &InterfaceBoxStyles[33]);
-    RECT *r2 = reinterpret_cast<RECT *>(self + 0x30);
+    RECT *r2 = &field_30_;
     buf->box_sprite(r2, &InterfaceBoxStyles[33]);
-    RECT *r3 = reinterpret_cast<RECT *>(self + 0x50);
+    RECT *r3 = &field_50_;
     buf->box_sprite(r3, &InterfaceBoxStyles[33]);
-    RECT *r4 = reinterpret_cast<RECT *>(self + 0x40);
+    RECT *r4 = &field_40_;
     buf->set_clip(r4);
     r4->left -= 7;
     buf->box_sprite(r4, &InterfaceBoxStyles[33]);
     r4->left += 7;
-    buf->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
+    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
 
     r1->left += 3;
     r1->right -= 3;
@@ -659,13 +661,81 @@ void ReportIf::reset() {
     r4->top -= 7;
     r4->bottom += 7;
 
-    Font *f0 = *reinterpret_cast<Font **>(self + 0x1e180);
-    Font *f1 = *reinterpret_cast<Font **>(self + 0x1e184);
-    buf->set_font(f0, f1, f1, 0);
+    buf->set_font(field_1E180_, field_1E184_, field_1E184_, 0);
     buf->set_text_color(0x99, -1, 1, 1);
     buf->set_text_color2(0x99, -1, 1, 1);
     buf->set_text_color3(0xe1, -1, 1, 1);
     buf->clear_links();
+}
+
+// ORIGINAL: 0x004ABE70 ?draw_score@ReportIf@@QAEXXZ 0x004ABE70-0x004AC127
+// The report renderer uses the ReportIf-owned panel rectangles and fonts,
+// MainInterfaceGlobal's Buffer base, and the source-owned faction/string
+// tables. The original's two static separators are represented by ordinary
+// literals; their bytes at 0x00682820 and 0x00682E90 are respectively " "
+// and ", ".
+void ReportIf::draw_score() {
+    Buffer *buf = static_cast<Buffer *>(&MainInterfaceGlobal);
+    RECT *first_panel = &field_20_;
+
+    buf->set_clip(first_panel);
+    field_C_ = first_panel->left + 6;
+    field_10_ = first_panel->top + 6;
+    field_14_ = first_panel->right - first_panel->left - 0xC;
+    field_18_ = first_panel->bottom - first_panel->top - 0xC;
+
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = field_10_;
+    draw_workspace_rect_.right = field_C_ + field_14_;
+    draw_workspace_rect_.bottom = field_10_ + field_18_;
+    buf->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
+
+    RECT *score_panel = &field_50_;
+    buf->set_clip(score_panel);
+    field_10_ = score_panel->top;
+    const int left_inset = field_1E230_ != 0 ? 0x4C : 0;
+    field_C_ = score_panel->left + left_inset;
+    field_14_ = score_panel->right - left_inset - score_panel->left;
+    field_18_ = score_panel->bottom - score_panel->top;
+
+    buf->set_font(field_1E190_, field_1E194_, field_1E198_, nullptr);
+    buf->set_text_color(0xE1, -1, 1, 1);
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, Players[report_faction_id_].adj_name_faction);
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x2B7));
+
+    if (field_1E230_ != 0) {
+        strcat(StringTemp, ", ");
+        strcat(StringTemp, " ");
+        strcat(StringTemp, label_get(0x2DA));
+        strcat(StringTemp, " ");
+        say_year(StringTemp);
+    }
+
+    buf->write_cent_l(StringTemp, field_C_, field_10_ + 10, field_14_,
+                      static_cast<int>(strlen(StringTemp)));
+
+    buf->set_font(field_1E180_, field_1E180_, field_1E180_, nullptr);
+    buf->set_text_color(0x99, -1, 1, 1);
+    field_10_ += field_1C_ * 2;
+    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
+
+    RECT *last_panel = &field_30_;
+    buf->set_clip(last_panel);
+    field_C_ = last_panel->left + 6;
+    field_10_ = last_panel->top + 6;
+    field_14_ = last_panel->right - last_panel->left - 0xC;
+    field_18_ = last_panel->bottom - last_panel->top - 0xC;
+    draw_workspace_rect_.left = field_C_;
+    draw_workspace_rect_.top = field_10_;
+    draw_workspace_rect_.right = field_C_ + field_14_;
+    draw_workspace_rect_.bottom = field_10_ + field_18_;
+    buf->box_sprite(&draw_workspace_rect_, &InterfaceBoxStyles[0]);
+    buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
 }
 
 // ---- fixed interface bindings the recovered bodies reach ------------------
@@ -777,7 +847,7 @@ Purpose: Close the satellite report: hide every faction's panel button
              the three (flag, state) pairs, then the three Win::hide calls -
              DIRECT `call 0x5EDCD0`, the qualified-base spelling
              Time::stop on 0x00884738 and 0x00884760
-// ORIGINAL: 0x004AB550 ?close_sat@ReportIf@@QAEXXZ 0x004AB550-0x004AB5F9 FILE
+// ORIGINAL: 0x004AB550 ?close_sat@ReportIf@@QAEXXZ 0x004AB550-0x004AB5F9
 // size      169 bytes
 // prototype void (__thiscall ?close_sat@ReportIf@@QAEXXZ)(ReportIf* this)
 // callers   2   call targets   2

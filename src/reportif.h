@@ -75,6 +75,10 @@ class ReportIf : public SubInterface {
   // argument at +0x1E22C.
   void report(int report_id, int faction_id, int selection);
   int report_faction_id() const { return report_faction_id_; }
+  // Drawing entry points selected by report() and ReportWin::on_redraw.
+  void draw_security();
+  void draw_score();
+  void draw_intel();
   // homed from 004a5f40.cpp
   void on_iface_left_click(int x_coord, int y_coord);
   // homed from 004ab550.cpp
@@ -97,27 +101,26 @@ class ReportIf : public SubInterface {
   // (`ReportIf,0x0,subIFace,8`), which is why src/reportif.cpp already has to
   // reach the sub-object with `reinterpret_cast<SubInterface *>(this)`.
   // SubInterface is the BASE, above, so its 8 bytes are at 0.
+  // Shared drawing cursor/extent written by the ReportIf panel renderers.
+  // RECOVERY_MEMBER: v1 ReportIf field_C_ 0xC 0x004A7027
   uint32_t field_C_;  // 0xC
+  // RECOVERY_MEMBER: v1 ReportIf field_10_ 0x10 0x004A702A
   uint32_t field_10_;  // 0x10
+  // RECOVERY_MEMBER: v1 ReportIf field_14_ 0x14 0x004A7039
   uint32_t field_14_;  // 0x14
+  // RECOVERY_MEMBER: v1 ReportIf field_18_ 0x18 0x004A7053
   uint32_t field_18_;  // 0x18
   uint32_t field_1C_;  // 0x1C
-  uint32_t field_20_;  // 0x20
-  uint32_t field_24_;  // 0x24
-  uint32_t field_28_;  // 0x28
-  uint32_t field_2C_;  // 0x2C
-  uint32_t field_30_;  // 0x30
-  uint32_t field_34_;  // 0x34
-  uint32_t field_38_;  // 0x38
-  uint32_t field_3C_;  // 0x3C
-  uint32_t field_40_;  // 0x40
-  uint32_t field_44_;  // 0x44
-  uint32_t field_48_;  // 0x48
-  uint32_t field_4C_;  // 0x4C
-  uint32_t field_50_;  // 0x50
-  uint32_t field_54_;  // 0x54
-  uint32_t field_58_;  // 0x58
-  uint32_t field_5C_;  // 0x5C
+  // init copies four coordinates from the shared report panel definition;
+  // the adjacent draws pass the complete 16-byte regions to Buffer::set_clip.
+  // RECOVERY_MEMBER: v2 ReportIf field_20_ tagRECT 0x20 0x004A35F6
+  RECT field_20_;  // 0x20
+  // RECOVERY_MEMBER: v2 ReportIf field_30_ tagRECT 0x30 0x004A361B
+  RECT field_30_;  // 0x30
+  // RECOVERY_MEMBER: v2 ReportIf field_40_ tagRECT 0x40 0x004A3640
+  RECT field_40_;  // 0x40
+  // RECOVERY_MEMBER: v2 ReportIf field_50_ tagRECT 0x50 0x004A3667
+  RECT field_50_;  // 0x50
   uint32_t field_60_;  // 0x60
   uint32_t field_64_;  // 0x64
   uint32_t field_68_;  // 0x68
@@ -176,16 +179,56 @@ class ReportIf : public SubInterface {
   uint8_t flatButton12_[0xB4C];  // 0x1BF9C
   uint8_t flatButton13_[0xB4C];  // 0x1CAE8
   uint8_t flatButton14_[0xB4C];  // 0x1D634
-  uint8_t gap_1E180_[0x3C];  // 0x1E180
+  // init fills this run with find_font results; draw_score passes its relevant
+  // entries directly to Buffer::set_font. Names stay neutral because their
+  // per-panel roles are not established across all renderers.
+  // RECOVERY_MEMBER: v3 ReportIf field_1E180_ Font* 0x1E180 0x004A3807
+  Font *field_1E180_;  // 0x1E180
+  // RECOVERY_MEMBER: v3 ReportIf field_1E184_ Font* 0x1E184 0x004A3807
+  Font *field_1E184_;  // 0x1E184
+  // RECOVERY_MEMBER: v3 ReportIf field_1E188_ Font* 0x1E188 0x004A3807
+  Font *field_1E188_;  // 0x1E188
+  // RECOVERY_MEMBER: v3 ReportIf field_1E18C_ Font* 0x1E18C 0x004A3807
+  Font *field_1E18C_;  // 0x1E18C
+  // RECOVERY_MEMBER: v3 ReportIf field_1E190_ Font* 0x1E190 0x004A3807
+  Font *field_1E190_;  // 0x1E190
+  // RECOVERY_MEMBER: v3 ReportIf field_1E194_ Font* 0x1E194 0x004A3807
+  Font *field_1E194_;  // 0x1E194
+  // RECOVERY_MEMBER: v3 ReportIf field_1E198_ Font* 0x1E198 0x004A3807
+  Font *field_1E198_;  // 0x1E198
+  // RECOVERY_MEMBER: v3 ReportIf field_1E19C_ Font* 0x1E19C 0x004A3807
+  Font *field_1E19C_;  // 0x1E19C
+  // RECOVERY_MEMBER: v3 ReportIf field_1E1A0_ Font* 0x1E1A0 0x004A3807
+  Font *field_1E1A0_;  // 0x1E1A0
+  // RECOVERY_MEMBER: v3 ReportIf field_1E1A4_ Font* 0x1E1A4 0x004A3807
+  Font *field_1E1A4_;  // 0x1E1A4
+  // RECOVERY_MEMBER: v3 ReportIf field_1E1A8_ Font* 0x1E1A8 0x004A3807
+  Font *field_1E1A8_;  // 0x1E1A8
+  // RECOVERY_MEMBER: v3 ReportIf field_1E1AC_ Font* 0x1E1AC 0x004A3807
+  Font *field_1E1AC_;  // 0x1E1AC
+  // RECOVERY_MEMBER: v3 ReportIf field_1E1B0_ Font* 0x1E1B0 0x004A3807
+  Font *field_1E1B0_;  // 0x1E1B0
+  // RECOVERY_MEMBER: v3 ReportIf field_1E1B4_ Font* 0x1E1B4 0x004A3807
+  Font *field_1E1B4_;  // 0x1E1B4
+  // RECOVERY_MEMBER: v3 ReportIf field_1E1B8_ Font* 0x1E1B8 0x004A3807
+  Font *field_1E1B8_;  // 0x1E1B8
   uint8_t spot_[0xC];  // 0x1E1BC, sizeof(Spot)
-  uint8_t gap_1E1C8_[0x60];  // 0x1E1C8
+  // draw_labs and draw_score both populate/pass this 16-byte rectangle to
+  // Buffer::box_sprite. Keep the following bytes opaque; other fields in this
+  // workspace have not been interpreted.
+  // RECOVERY_MEMBER: v2 ReportIf draw_workspace_rect_ tagRECT 0x1E1C8 0x004A707F
+  RECT draw_workspace_rect_;  // 0x1E1C8
+  uint8_t gap_1E1D8_[0x50];  // 0x1E1D8
   // ReportIf::report stores its faction and selection arguments here; the
   // singleton's 0x008A4160 address is this + 0x1E228, not separate storage.
   // RECOVERY_MEMBER: v1 ReportIf report_faction_id_ 0x1E228 0x004A3950
   int32_t report_faction_id_;  // 0x1E228
   // RECOVERY_MEMBER: v1 ReportIf report_selection_ 0x1E22C 0x004A3950
   int32_t report_selection_;  // 0x1E22C
-  uint8_t gap_1E230_[0x10];  // 0x1E230
+  // draw_score tests this dword to select its extended report heading.
+  // RECOVERY_MEMBER: v1 ReportIf field_1E230_ 0x1E230 0x004ABE70
+  uint32_t field_1E230_;  // 0x1E230
+  uint8_t gap_1E234_[0xC];  // 0x1E234
   // ReportIf::init writes 0 and 4 to these adjacent dwords at +0x1E240
   // and +0x1E244. ReportWin::on_group_clicked writes its third argument
   // to the first when the clicked group id is 4. Their meanings remain
