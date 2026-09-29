@@ -2060,9 +2060,45 @@ void BaseWin::on_redraw() {
 // The redraw callback reaches these separately owned panels. Their historical
 // seed bodies are retained; these link-only bodies do not pretend to paint.
 // ORIGINAL: 0x0041E560 ?update_gov_buttons@BaseWin@@QAEXXZ 0x0041E560-0x0041E788
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0041e560.cpp", "src/basewin.h"], "reason": "Preserve the separately identified governor-button owner reached by BaseWin redraw as an explicitly unfinished linkable body."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0041e560.cpp", "src/basewin.h", "src/base.h", "src/faction.h", "src/basebutton.h"], "reason": "Recover governor-priority button state through BaseCurrent, typed PlayerData AI preferences, the BaseWin FlatButton array and BaseButton's owned auxiliary state. The retained seed remains the measurement reference."}
+// The seed's four 0x0096CDC0..0x0096CDCC indexed words are
+// PlayersData[faction].ai_growth/ai_tech/ai_wealth/ai_power: each index step
+// is 2099 dwords, the established 0x20CC-byte PlayerData stride.
 void BaseWin::update_gov_buttons() {
-    // BODY GOES HERE.
+    const Base &base = *BaseCurrent;
+    const int faction = base.faction_id_current;
+    const unsigned int governor = base.governor;
+    const bool human = (LockEnableMask & (1u << faction)) != 0;
+
+    flatButtons_[8].set((governor & GOV_ACTIVE) != 0);
+
+    const bool explore_priority = human
+        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_EXPLORE)) ==
+              (GOV_ACTIVE | GOV_PRIORITY_EXPLORE)
+        : PlayersData[faction].ai_growth != 0;
+    flatButtons_[4].set(explore_priority);
+    if (!explore_priority) flatButtons_[4].clear_auxiliary_state_for_disabled_button();
+
+    const bool discover_priority = human
+        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_DISCOVER)) ==
+              (GOV_ACTIVE | GOV_PRIORITY_DISCOVER)
+        : PlayersData[faction].ai_tech != 0;
+    flatButtons_[5].set(discover_priority);
+    if (!discover_priority) flatButtons_[5].clear_auxiliary_state_for_disabled_button();
+
+    const bool build_priority = human
+        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_BUILD)) ==
+              (GOV_ACTIVE | GOV_PRIORITY_BUILD)
+        : PlayersData[faction].ai_wealth != 0;
+    flatButtons_[6].set(build_priority);
+    if (!build_priority) flatButtons_[6].clear_auxiliary_state_for_disabled_button();
+
+    const bool conquer_priority = human
+        ? (governor & (GOV_ACTIVE | GOV_PRIORITY_CONQUER)) ==
+              (GOV_ACTIVE | GOV_PRIORITY_CONQUER)
+        : PlayersData[faction].ai_power != 0;
+    flatButtons_[7].set(conquer_priority);
+    if (!conquer_priority) flatButtons_[7].clear_auxiliary_state_for_disabled_button();
 }
 // ORIGINAL: 0x00412AA0 ?draw_expenses@BaseWin@@QAEXH@Z 0x00412AA0-0x00414B38;0x00651B61-0x00651B76
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00412aa0.cpp", "src/basewin.h"], "reason": "Preserve the separately identified expenses panel reached by BaseWin redraw as an explicitly unfinished linkable body."}

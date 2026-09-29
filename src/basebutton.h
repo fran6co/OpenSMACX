@@ -81,6 +81,14 @@ class BaseButton : public GraphicWin {
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
   void set(int value);
+  // The base governor panel clears this auxiliary state when a priority
+  // becomes unavailable, then repaints through Win's virtual redraw slot.
+  void clear_auxiliary_state_for_disabled_button() {
+    if (field_A74_ != 0) {
+      field_A74_ = 0;
+      redraw();
+    }
+  }
   // ReportIf::close_ops (0x004A9F90) clears this established state word
   // only when the button is not attached to a ButtonGroup. Keep both fields
   // encapsulated here rather than exposing their legacy storage offsets.
