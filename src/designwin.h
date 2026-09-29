@@ -95,6 +95,9 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   // 0x0043C1A0, homed into designwin.cpp. desktop_close closes the
   // process-wide design window through this member.
   void close();
+  // 0x0043BF50. Rebuild the design preview after the component selection is
+  // settled, temporarily applying the automatic-build weapon rule.
+  void construct_vehicle();
   DesignWin() { ; }
   // 0x0043ECB0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits

@@ -937,15 +937,53 @@ void DesignWin::construct_chassis() {
                               protoReactorType_, &caviar_);
 }
 
-// Fixed-slot bindings carried from 0043c0a0.cpp
-// DesignWin's auto-build latch, 0x00733974. The image holds the int directly;
-// a file-scope `int *const` folds to the bare immediate at every read.
-// Name is the ROLE, read off the three sites that touch it: DesignWin::
-// construct_vehicle sets it to 1 around its construct_weapon call and back to
-// 0 after, while construct_weapon (0x0043C0A0) and draw_weapon (0x00434F40)
-// read it to decide whether the chassis slot is authoritative or should be
-// passed as -1. No catalogue name for the slot.
-static int *const DesignAutoBuildActive = (int *)0x00733974;
+// The image's shared design-window auto-build latch at 0x00733974. The
+// construct_vehicle seed brackets its automatic weapon construction with
+// writes of 1 and 0; construct_weapon and draw_weapon read the same slot.
+// Keep it as source-owned mutable state rather than an alias into the image.
+// RECOVERY_OBJECT: v1 0x00733974 ?DesignAutoBuildActive@@3HA
+int DesignAutoBuildActive = 0;
+
+// ORIGINAL: 0x0043BF50 ?construct_vehicle@DesignWin@@QAEXXZ 0x0043BF50-0x0043C062 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0043bf50.cpp; src/designwin.h:DesignWin prototype and Caviar members; src/veh.h:RulesArmor and vehdraw_construct_*"], "reason": "Rebuild all component preview objects from the selected DesignWin state, using the typed armor table and existing vehicle-render helpers."}
+void DesignWin::construct_vehicle() {
+    caviar_.reset_objects();
+
+    const int saved_chassis = static_cast<int>(protoChassisType_);
+    if (protoWeaponType_ == 0x15 && saved_chassis == 1
+        && Armor[protoArmorType_].defense_rating <= 1) {
+        protoChassisType_ = 0;
+    }
+    if (protoID_ == 0x14) {
+        protoChassisType_ = 0;
+    }
+
+    vehdraw_construct_chassis(static_cast<int>(factionID_),
+                              static_cast<int>(protoChassisType_),
+                              static_cast<int>(protoWeaponType_),
+                              static_cast<int>(protoArmorType_),
+                              static_cast<int>(protoReactorType_), &caviar_);
+
+    DesignAutoBuildActive = 1;
+    vehdraw_construct_weapon(static_cast<int>(factionID_),
+                             static_cast<int>(protoChassisType_),
+                             static_cast<int>(protoWeaponType_), &caviar_);
+    DesignAutoBuildActive = 0;
+
+    vehdraw_construct_armor(ConsoleGlobal.faction_id_,
+                            static_cast<int>(protoChassisType_),
+                            static_cast<int>(protoWeaponType_),
+                            static_cast<int>(protoArmorType_), 0, &caviar_);
+    vehdraw_construct_reactor(ConsoleGlobal.faction_id_,
+                              static_cast<int>(protoChassisType_),
+                              static_cast<int>(protoWeaponType_),
+                              static_cast<int>(protoReactorType_),
+                              static_cast<int>(protoAbilityFlags_), &caviar_);
+    vehdraw_construct_abil(protoAbilityFlags_, &caviar_,
+                           static_cast<int>(factionID_));
+
+    protoChassisType_ = static_cast<uint32_t>(saved_chassis);
+}
 
 // ORIGINAL: 0x0043C0A0 ?construct_weapon@DesignWin@@QAEXXZ 0x0043C0A0-0x0043C0EF FILE BYTE_EXACT
 // size      79 bytes
@@ -1010,7 +1048,7 @@ static int *const DesignAutoBuildActive = (int *)0x00733974;
 
 void DesignWin::construct_weapon() {
     int weapon_id = protoWeaponType_;
-    if (weapon_id == 0x15 && *DesignAutoBuildActive == 0) {
+    if (weapon_id == 0x15 && DesignAutoBuildActive == 0) {
         vehdraw_construct_weapon(factionID_, -1, 0x15, &caviar_);
         return;
     }
