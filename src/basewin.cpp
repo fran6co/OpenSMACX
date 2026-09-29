@@ -45,6 +45,7 @@
 #include "xpops.h"
 #include "alpha.h"
 #include "faction.h"
+#include "fx.h"
 #include "game.h"
 #include "random.h"
 #include <mmsystem.h>
@@ -570,9 +571,50 @@ void BaseWin::soft_zoom(int base_id) {
 }
 
 // ORIGINAL: 0x0041A920 ?zoom@BaseWin@@QAEXHH@Z 0x0041A920-0x0041AE40
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a920.cpp", "source:src/basewin.h:BaseWin::zoom", "source:src/basewin.cpp:BaseWin::soft_zoom calls zoom after the window becomes visible"], "reason": "Bind the existing BaseWin map-centering dependency in its owning translation unit. The body is intentionally unfinished; the retained seed still carries the original behavior and must not be replaced by a forwarding shim."}
-void BaseWin::zoom(int, int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a920.cpp", "image:0x0041A920-0x0041AE40 sets base focus, recomputes, refreshes the interface, then waits on zoom_wait_pending_", "source:src/basewin.h:BaseWin::zoom_wait_pending_", "source:src/worldwin.cpp:WorldWin::click cancels the same zoom wait"], "reason": "Recover the base selection and display lifecycle through owned objects and typed state. The tutorial-message branches in the retained seed are still pending; preserve that seed and do not claim a byte match."}
+void BaseWin::zoom(int base_id, int wait) {
+    field_40B00_ = -1;
+    TutorialWindow.reset();
+    focusedBaseID_ = base_id;
+    BaseComputedID = -1;
+
+    const int worked_tiles = Bases[focusedBaseID_].resource_sqr_radius;
+    set_base(focusedBaseID_);
+    base_compute(0);
+    if (IsMultiplayerNet && !ConsoleControlTurnActive
+        && worked_tiles != Bases[focusedBaseID_].resource_sqr_radius
+        && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    }
+
+    BaseCurrent->state &= ~BSTATE_UNK_10;
+    zoom_wait_pending_ = 1;
+    field_40B10_ = 0;
+    field_40B14_ = 0;
+    field_40B18_ = 1;
+    displayed_production_id_ = BaseCurrent->queue_production_id[0];
+
+    g_FX.play(15);
+    ambience(30);
+    if (!Win::is_visible()) {
+        show(0);
+    } else {
+        redraw();
+    }
+    MainInterfaceGlobal.GraphicWin::redraw();
+    field_1E670_ = 0;
+
+    // The original runs several tutorial-message branches here. Their
+    // rectangles, messages, and faction-state ownership still need recovery.
+    if (wait != 0) {
+        while (zoom_wait_pending_ && Win::is_visible() && !ExitTurnLoop) {
+            if (IsMultiplayerNet) {
+                NetDaemonNet.net_tasks();
+            } else {
+                wait_task();
+            }
+        }
+    }
 }
 
 // ORIGINAL: 0x00415DD0 ?focus@BaseWin@@QAEXXZ 0x00415DD0-0x00415E52 BYTE_EXACT
