@@ -1237,6 +1237,26 @@ int __cdecl pop_ask(char *text_file, char *text_label, int value,
     return execResult;
 }
 
+// The short popup overloads supply the process-wide default text file and
+// delegate to the six-argument implementation above. Their original bodies
+// contain no popup lifetime of their own.
+// ORIGINAL: 0x00627800 ?pop_ask@@YAHPADHPADP6AHXZH@Z 0x00627800-0x00627827 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00627800.cpp; image:0x00627800-0x00627827; source:src/popup.cpp:pop_ask"], "reason": "Original forwarding wrapper passes the process-wide PopupStartCaption and all five input arguments unchanged to the six-argument pop_ask; this is the matching product overload."}
+// symbol    ?pop_ask@@YAHPADH0P6AHXZH@Z
+int __cdecl pop_ask(char *section, int value, char *override_text,
+                    int (__cdecl *callback)(), int flags) {
+    return pop_ask(PopupStartCaption, section, value, override_text,
+                   callback, flags);
+}
+
+// ORIGINAL: 0x00627860 ?pop_ask@@YAHPADHP6AHXZH@Z 0x00627860-0x00627884 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/00627860.cpp; image:0x00627860-0x00627884; source:src/popup.cpp:pop_ask"], "reason": "Original forwarding wrapper supplies PopupStartCaption and a null override-text argument to the six-argument pop_ask; this is the matching product overload."}
+int __cdecl pop_ask(char *section, int value,
+                    int (__cdecl *callback)(), int flags) {
+    return pop_ask(PopupStartCaption, section, value, nullptr,
+                   callback, flags);
+}
+
 // ORIGINAL: 0x006279C0 ?pop_ask_number@@YAHPADHP6AHXZ@Z 0x006279C0-0x00627A8B FILE BYTE_EXACT
 // working copy - scaffold materialised by --work
 // size      203 bytes
