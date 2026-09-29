@@ -129,6 +129,8 @@ extern BoxSpriteParams InterfaceBoxStyles[51];
 
 class Buffer {
  public:
+  // The list-box draw callback uses the DIB's live width at Buffer+0x80.
+  int pixel_width() const { return dib_.bmiHeader.biWidth; }
   // homed from 005d7b40.cpp
   int __stdcall load_tga(const char * a1, Palette * a2, int a3, int a4);
   // 0x005D7B20 - `?load_tga@Buffer@@QAGHPBD@Z`, the one-argument overload:

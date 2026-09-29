@@ -21,6 +21,26 @@
 // RECOVERY_OBJECT: v2 0x006A7524 0x006A7528 ?ActiveAlphaSave@@3PAVAlphaSave@@A 0x00407BE0
 AlphaSave *ActiveAlphaSave = 0;
 
+// ORIGINAL: 0x004072D0 ?filebox_draw@AlphaSave@@QAAXPAUGraphicWin@@HHHHH@Z 0x004072D0-0x00407348
+// symbol    ?alpha_save_filebox_draw@@YAXPAVGraphicWin@@HHHHH@Z
+// The catalogue's member spelling would push a seventh, unused receiver.
+// The selected row lives in CurrentListBoxDraw's Dialog virtual base.
+// The retired seed corrected Ghidra's missing dereference in this vbtable
+// walk; its five default-colour load orderings topped out at 90.7% mnemonic
+// similarity because of VC6 instruction scheduling, not a proven layout
+// difference. This typed source spelling remains an unclaimed mismatch.
+void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
+                                    int item_id, int x, int y, int height) {
+    if (CurrentListBoxDraw == 0 || ActiveAlphaSave == 0) {
+        return;
+    }
+    Buffer *background = CurrentListBoxDraw->Dialog::selected_position_ == item_id
+        ? InterfaceBoxStyles[29].mask_ : InterfaceBoxStyles[0].mask_;
+    Buffer *canvas = static_cast<Buffer *>(window);
+    canvas->tile(background, x, y, x, y, canvas->pixel_width(), height);
+    filebox_draw(window, item_kind, item_id, x, y, height);
+}
+
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_normal();

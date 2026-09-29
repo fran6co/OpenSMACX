@@ -256,6 +256,41 @@ static Sprite FileWinSprite0;
 static Sprite FileWinSprite1;
 static Sprite FileWinSprite2;
 
+// ORIGINAL: 0x00614C50 ?filebox_draw@FileWin@@QAAXPAUGraphicWin@@HHHHH@Z 0x00614C50-0x00614D84 BYTE_EXACT
+// symbol    ?filebox_draw@@YAXPAVGraphicWin@@HHHHH@Z
+// The six-argument callback has no hidden FileWin receiver. The three
+// process sprites belong to this TU; their width, height and transparent
+// index are Sprite members rather than separate address-bound integers.
+void __cdecl filebox_draw(GraphicWin *window, int item_kind, int,
+                         int x, int y, int height) {
+    if (CurrentListBoxDraw == 0) {
+        return;
+    }
+    switch (item_kind) {
+    case 0: {
+        Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
+        FileWinSprite1.draw(canvas, FileWinSprite1.transparent_index(),
+                            x + FileWinSprite1.width() / 4,
+                            y + (height - FileWinSprite1.height()) / 2, 1, 1);
+        break;
+    }
+    case 1: {
+        Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
+        FileWinSprite0.draw(canvas, FileWinSprite0.transparent_index(),
+                            x + FileWinSprite1.width() / 4,
+                            y + (height - FileWinSprite0.height()) / 2, 1, 1);
+        break;
+    }
+    case 2: {
+        Buffer *canvas = window ? static_cast<Buffer *>(window) : 0;
+        FileWinSprite2.draw(canvas, FileWinSprite2.transparent_index(),
+                            x + FileWinSprite1.width() / 4,
+                            y + (height - FileWinSprite2.height()) / 2, 1, 1);
+        break;
+    }
+    }
+}
+
 /*
 Purpose: Compose a FileWin from four member subobjects (two FlatButtons, an
          EditBox, a most-derived ListBox), then clear the window's own

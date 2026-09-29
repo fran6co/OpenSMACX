@@ -313,6 +313,11 @@ static_assert(sizeof(ListBox) == 0xB54,
 // test pin the offsets instead.
 
 extern uint32_t ListBoxCloseDynamicDefault;            // 0x009B8EE0
+// The current ListBox whose draw callback is running. Original draw_item
+// stores its front receiver here at 0x0060BCAD, before invoking callbacks;
+// its current source body is still an unfinished placeholder. The callback
+// at 0x004072D0 walks this object's Dialog virtual base for selection state.
+extern ListBox *CurrentListBoxDraw;
 // RECOVERY_OBJECT binding is in listbox.cpp: Scroll and ListBox's event
 // paths share this process-wide notification gate.
 extern int ListBoxGlobalDDC;

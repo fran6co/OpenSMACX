@@ -43,6 +43,8 @@ void ListBox::on_dialog_focus(int) {
 // Independent DWORD reads at 609E6F and 609F55 feed ListBox+28.
 // RECOVERY_OBJECT: v2 0x009B8EE0 0x009B8EE4 ?ListBoxCloseDynamicDefault@@3IA 0x00609DB0
 uint32_t ListBoxCloseDynamicDefault;
+// RECOVERY_OBJECT: v2 0x009B8EE4 0x009B8EE8 ?CurrentListBoxDraw@@3PAVListBox@@A 0x004072D0
+ListBox *CurrentListBoxDraw = 0;
 // Destination-based names: the semantic meaning of these fields is unproved.
 // Original 609F4C/5E/67/70 read independent DWORDs into fields24/2C/10/14.
 // RECOVERY_OBJECT: v2 0x006970E0 0x006970E4 ?ListBoxDefault24@@3IA 0x00609F20

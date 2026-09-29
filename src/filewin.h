@@ -118,6 +118,11 @@ class FileWin {
 static_assert(sizeof(FileWin) == 0x33C4,
               "FileWin layout must match the original executable");
 
+// The image labels this as a FileWin __cdecl member, but the entered stack
+// has six explicit arguments and no hidden receiver. It is a free callback.
+void __cdecl filebox_draw(GraphicWin *window, int item_kind, int item_id,
+                         int x, int y, int height);
+
 // The modal file-dialog path publishes its active FileWin here.
 extern FileWin *ActiveFileWin;
 

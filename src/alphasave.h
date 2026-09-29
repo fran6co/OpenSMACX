@@ -53,5 +53,9 @@ class AlphaSave : public GraphicWin {
 // owner pointer. Its image slot is 0x006A7524; it is not a FileWin member.
 extern AlphaSave *ActiveAlphaSave;
 
+// Image 0x004072D0 takes six stack arguments, not a hidden AlphaSave receiver.
+void __cdecl alpha_save_filebox_draw(GraphicWin *window, int item_kind,
+                                    int item_id, int x, int y, int height);
+
 static_assert(sizeof(AlphaSave) == 0x6058,
               "AlphaSave ownership layout must match the image");
