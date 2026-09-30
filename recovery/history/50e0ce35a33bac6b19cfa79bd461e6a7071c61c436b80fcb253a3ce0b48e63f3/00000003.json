@@ -1,0 +1,21 @@
+{
+  "event_id": "443c3b35f8aca7fa7ea0512bc6077daa2ffc125768ba22363448ff028f2fe1e5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pulldown.cpp",
+      "src/pulldown.h"
+    ],
+    "evidence": [
+      "Popup normal/config producers mutate PullDownDefaultFont9B7B68, existing PullDownBorderPadding696E1C andpalette/defaultcells696E08..18/9B7B60/64. Own these at actual PullDown declarations and replace raw consumers rather than introducing duplicate Menu storage or wrong geometry names.",
+      "Worker confirmed no active compiler/measurement before this scope publication. All existing claims and task baseline remain obligations; new owner/storage hypotheses still require original-backed review and fresh measurement."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4250e1ae183645d50a37f2622c68b9542ebb32608d0aa61766cf4110b14d3e6b",
+  "request_id": "popup-font-pulldown-owner",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:popup-font-configuration-owner-closure"
+}
