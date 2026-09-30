@@ -235,14 +235,14 @@ void DiploPop::on_status(int mode) {
 }
 
 // PENDING 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604
-// symbol    ?vslot_13@DiploPop@@UAEXH@Z
+// Historical emitted spelling was ?vslot_13@DiploPop@@UAEXH@Z.
 // size      180 bytes
 // prototype void (__thiscall ?on_iface_button_clicked@DiploPop@@QAEXH@Z)(DiploPop* this, int)
 // callers   0   call targets   4
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // indirect  0x00440582
-void DiploPop::vslot_13(int button_id) {
+void DiploPop::on_iface_button_clicked(int button_id) {
     typedef void(__fastcall *pending)(DiploPop *, void *, int);
     reinterpret_cast<pending>(static_cast<unsigned long>(0x00440550))(
         this, nullptr, button_id);

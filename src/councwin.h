@@ -92,20 +92,15 @@ class CouncWin : public GraphicWin, public IfaceRegistryEntry {
   // Slot 0 - 0x00426FA0, 180 bytes. The interface-mode entry point: mode
   // nonzero shows the council pane and mode zero tears it down.
   void on_status(int mode);
-  // Slot 13 - 0x004270F0, 29 bytes, no caller anywhere in .text: it is only
-  // ever reached through the table. The base names this slot `vslot_13`
-  // because MainInterface's same-named body is reached DIRECTLY by BattleWin
-  // and an override would turn that rel32 into a dispatch; CouncWin has no
-  // such direct caller, so overriding the slot is the faithful spelling and
-  // puts 0x004270F0 at the offset the image's own table has it.
-  void vslot_13(int button_id);
+  // Slot13, 0x004270F0: dispatch the front window's button-click event.
+  void on_iface_button_clicked(int button_id);
 
   // ---- slots of the FRONT vtable (0x66AAE8) that CouncWin implements ------
   // The image's catalogue names them on_redraw / on_button_clicked; Win's
   // slot-12 virtual now carries that same original name, so the override
   // keeps its position under the image's own spelling. Both bodies are
   // unrecovered,
-  // so both are forwarders - but on_status reaches slot 12 and vslot_13
+  // so both are forwarders - but on_status reaches slot12 and on_iface_button_clicked
   // reaches slot 44 through a live `call dword ptr [eax+N]`, so the entries
   // have to be CouncWin's and not Win's shared no-ops for those dispatches to
   // mean what the image's mean.

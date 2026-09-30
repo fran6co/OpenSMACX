@@ -378,28 +378,6 @@ int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
 
 
 
-// Five more bodies the tree called through function pointers. Each is
-// declared on its class now, so the call sites emit `call rel32`.
-void MainInterface::set_date(char *text) {              // 0x0045BE80
-    typedef void(__fastcall *pending)(MainInterface *, void *, char *);
-    PENDING_BODY(0x0045BE80, pending)(this, nullptr, text);
-}
-
-// ?redraw_complete@MainInterface@@QAEXXZ at 0x0045C3A0. blink2_timer
-// (time.cpp) reaches it on the fixed MainInterface at 0x007AE820.
-void MainInterface::redraw_complete() {                 // 0x0045C3A0
-    typedef void(__fastcall *pending)(MainInterface *, void *);
-    PENDING_BODY(0x0045C3A0, pending)(this, nullptr);
-}
-
-// ?draw_edit_pane@MainInterface@@QAEXXZ at 0x0045B550. Console's editor
-// commands repaint the pane through it after turning an editor flag.
-//             body in src/unrecovered/0045b550.cpp
-void MainInterface::draw_edit_pane() {                  // 0x0045B550
-    typedef void(__fastcall *pending)(MainInterface *, void *);
-    PENDING_BODY(0x0045B550, pending)(this, nullptr);
-}
-
 // ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z at 0x004BE650. Console::survey2
 // raises the map-square tutorial popup on the fixed TutWin at 0x008C6E68.
 //             body in src/unrecovered/004be650.cpp
@@ -528,11 +506,6 @@ void Menu::mouse_move(int a1, int a2) {  // 0x005FBDB0
 // daemon wrapper sat_anim_daemon (leaf_recoveries.cpp) already called it
 // by name, so no caller repointing was needed.
 
-void MainInterface::on_iface_button_clicked(int a1) {  // 0x0045D170
-    typedef void(__fastcall *pending)(MainInterface *, void *, int);
-    PENDING_BODY(0x0045D170, pending)(this, nullptr, a1);
-}
-
 int SetupWin::do_menu_rightside(char *a1, int a2) {  // 0x004ADB70
     typedef int(__fastcall *pending)(SetupWin *, void *, char *, int);
     return PENDING_BODY(0x004ADB70, pending)(this, nullptr, a1, a2);
@@ -592,11 +565,6 @@ DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
 DiploWin::~DiploWin() {  // ??1DiploWin@@QAE@XZ at 0x00444DB0
     typedef void(__fastcall *pending)(DiploWin *, void *);
     PENDING_BODY(0x00444DB0, pending)(this, nullptr);
-}
-
-MainInterface::~MainInterface() {  // ??1MainInterface@@QAE@XZ at 0x0045EB80
-    typedef void(__fastcall *pending)(MainInterface *, void *);
-    PENDING_BODY(0x0045EB80, pending)(this, nullptr);
 }
 
 // Menu::~Menu (??1Menu@@QAE@XZ at 0x005FAD00) WAS HERE: the body is homed
@@ -1115,12 +1083,6 @@ void __cdecl config_popups() {
 void __cdecl bung_momma() {
     typedef void(__cdecl *pending)();
     PENDING_BODY(0x004595C0, pending)();
-}
-
-// ?init@MainInterface@@QAEHH@Z at 0x00459680
-int __fastcall maininterface_init(MainInterface *self, int mode) {
-    typedef int(__fastcall *pending)(MainInterface *, int);
-    return PENDING_BODY(0x00459680, pending)(self, mode);
 }
 
 // ?init@BattleWin@@QAEXXZ at 0x004219E0

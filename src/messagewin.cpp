@@ -409,10 +409,7 @@ void MessageWin::init() {
     Buffer scratch;
     scratch.close();
 
-    bounds_.left = MainInterfaceGlobal.field_D1C_;
-    bounds_.top = MainInterfaceGlobal.field_D20_;
-    bounds_.right = MainInterfaceGlobal.field_D24_;
-    bounds_.bottom = MainInterfaceGlobal.field_D28_;
+    bounds_ = MainInterfaceGlobal.message_bounds_;
 
     listBox_.close();
     Dialog &dialog = listBox_;

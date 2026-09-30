@@ -2999,7 +2999,7 @@ void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
 
 
 // ORIGINAL: 0x0041E510 ?on_iface_button_clicked@BaseWin@@QAEXH@Z 0x0041E510-0x0041E52D BYTE_EXACT
-// symbol    ?vslot_13@BaseWin@@UAEXH@Z
+// symbol    ?on_iface_button_clicked@BaseWin@@UAEXH@Z
 // LEVER: the derivation deleted this body's shim. The image is one dispatch -
 //        `mov eax,[ecx-0xa14] / add ecx,-0xa14 / call [eax+0xb0]` - and 0xb0
 //        is the FRONT vtable's slot 44, which Win spells on_button_clicked. Naming it
@@ -3014,16 +3014,10 @@ void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
 // calls     (none)
 // indirect  0x0041E523
 // 0x0041E510  ?on_iface_button_clicked@BaseWin@@QAEXH@Z  ->  ?on_iface_button_clicked@BaseWin@@QAEXH@Z
-// HANDOFF (basewin, not the pass that wrote this): the `// symbol` fact above
-//        is now the only thing keeping 0x0041E510 measurable. Renaming this
-//        method to the image's `on_iface_button_clicked` (which is what the
-//        fact is standing in for) needs MainInterface::vslot_13 decided
-//        first - maininterface.h:130 documents why MainInterface must NOT
-//        override that slot by name, and renaming BaseWin's does not change
-//        that, but the two tables are the same slot index so the rename has
-//        to be checked against BattleWin::on_iface_button_clicked's rel32 to
-//        0x0045D170 on both sides. Measured here, not assumed.
-void BaseWin::vslot_13(int button_id) {
+// The genuine interface name shares slot13 across owners. BattleWin's direct
+// call to MainInterface uses qualification, so it does not require an empty
+// differently named slot or a false nonvirtual MainInterface callback.
+void BaseWin::on_iface_button_clicked(int button_id) {
     on_button_clicked(button_id);
 }
 

@@ -566,7 +566,7 @@ void DesignWin::on_button_clicked(int button_id) {
 
 /*
 // ORIGINAL: 0x0043D430 ?on_iface_button_clicked@DesignWin@@QAEXH@Z 0x0043D430-0x0043D44D BYTE_EXACT
-// symbol    ?vslot_13@DesignWin@@UAEXH@Z
+// symbol    ?on_iface_button_clicked@DesignWin@@UAEXH@Z
 // size      29 bytes
 // prototype void (__thiscall ?on_iface_button_clicked@DesignWin@@QAEXH@Z)(DesignWin* this, int)
 // callers   0   call targets   0
@@ -581,7 +581,7 @@ Status: Complete
 //   adjustment to the front) and the dispatch is the front's slot 44, so the
 //   whole body is one unqualified virtual call - `on_button_clicked(button_id)` is the
 //   image's `call dword ptr [eax + 0xb0]`.
-void DesignWin::vslot_13(int button_id) {
+void DesignWin::on_iface_button_clicked(int button_id) {
     on_button_clicked(button_id);
 }
 

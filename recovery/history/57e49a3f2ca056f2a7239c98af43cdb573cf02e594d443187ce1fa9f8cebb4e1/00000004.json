@@ -1,0 +1,54 @@
+{
+  "event_id": "02322ea52ad7dbcef1f4b6f54257a2bda101e964fbdd0e55e94617da0678ea82",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basewin.cpp",
+      "src/basewin.h",
+      "src/battlewin.cpp",
+      "src/battlewin.h",
+      "src/councwin.cpp",
+      "src/councwin.h",
+      "src/designwin.cpp",
+      "src/designwin.h",
+      "src/diplopop.cpp",
+      "src/diplopop.h"
+    ],
+    "evidence": [
+      "Original interface tables bind slot13 to genuine on_iface_button_clicked. Empty vslot13 base suppresses newly recovered MainInterface behavior. Rename existing same-position contract and concrete implementations without adding slots; preserve direct BattleWin call through explicit MainInterface qualification and real singleton conversion. Compiler-observed symbol updates and all touched protected bodies must be remeasured; no claim demotion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4318480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4337088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4354288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4445232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4457808,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "dc6a7608eba22dc5453ea363fdfc3e112be81537a3ddf42ff5238dfe9aa8f3e7",
+  "request_id": "maininterface-real-interface-button-slot",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:maininterface-owner-coverage"
+}

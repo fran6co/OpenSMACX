@@ -17,6 +17,10 @@
  */
 #pragma once
 extern int MainInterfaceTileFlag;
+extern int MainInterfaceStatusRedrawFlag;
+extern int MainInterfaceRedrawCount;
+extern int MainInterfaceTimersStopped;
+extern int MainInterfaceEndTurnAnimation;
 // Shared palette indices, one foreground/shadow pair per faction.
 extern int ChatItemIdTable[8];
 extern int ChatShadowColors[8];
@@ -86,9 +90,8 @@ extern int ChatShadowColors[8];
  * ptr [edx+0x34]` - is a call by name and the VCall shims it stood in for are
  * gone. The slots MainInterface implements are pure, which is what the image's
  * own base table (0x66A6E4, nineteen consecutive __purecall slots) says they
- * are; slot 13 stays a defined vslot because the image reaches
- * on_iface_button_clicked DIRECTLY from BattleWin and an override would turn
- * that rel32 into a dispatch.
+ * are. Direct calls to a virtual callback use explicit C++ qualification;
+ * virtuality must not be suppressed to protect a caller's spelling.
  */
 class IfaceRegistryEntry : public SubInterface {
  public:
@@ -129,22 +132,16 @@ class IfaceRegistryEntry : public SubInterface {
   virtual void on_iface_selected(int, int);      // slot 10 0x45D140
   virtual void on_iface_left_double_click(int, int);   // slot 11 0x45CD80
   virtual void on_iface_right_double_click(int, int) = 0;  // 12 0x45CDB0
-  // Slot 13 (0x45D170) is deliberately NOT named on_iface_button_clicked.
-  // MainInterface does implement that method - it is declared below, and
-  // pending_bodies.cpp forwards it to 0x45D170 - but the image reaches it
-  // DIRECTLY, never through this slot: BattleWin::on_iface_button_clicked
-  // (0x00422DC0) ends in `call 0x45d170`, a rel32, not a dispatch. Naming the
-  // slot on_iface_button_clicked makes MainInterface's version an override,
-  // which turns that rel32 into `mov eax,[0x7afc48] / call [eax+..]` and
-  // costs BattleWin its BYTE_EXACT. So the slot keeps the same vslot_N
-  // spelling slot 6 has: present in the table, no MainInterface override, and
-  // the real body reachable the way the image reaches it.
-  virtual void vslot_13(int button_id) {}  // slot 13 0x45D170, 0x34
+  // Slot13 is the real button-click callback. BattleWin's original direct
+  // call is preserved through explicit MainInterface qualification.
+  virtual void on_iface_button_clicked(int button_id) = 0;
   virtual int on_iface_button_pressed(int button_id) = 0;  // 14 0x45D160
   virtual void on_iface_button_toggled(int, int) = 0;      // 15 0x45CCA0
   virtual void on_iface_group_clicked(int, int, int) = 0;  // 16 0x45CCB0
-  virtual int on_dialog_back_draw(GraphicWin *a1) { return 0; }  // slot 17 0x404250
-  virtual int on_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { return 0; }  // 18
+  // Secondary callbacks are distinct from the primary Win dispatchers.
+  // Original66C588/66C58C contain404250(ret4)/404240(ret16), returning zero.
+  virtual int on_iface_dialog_back_draw(GraphicWin *) { return 0; }
+  virtual int on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { return 0; }
 };
 
 // The 12 interface-mode slots at 0x007AE7F0, each either null or a live
@@ -154,6 +151,8 @@ class IfaceRegistryEntry : public SubInterface {
 // in maininterface.cpp. The adjacent interface registry remains transitional.
 extern int IfaceIdToSlotStorage[30];  // 0x007AE778, before registry at 0x007AE7F0
 extern int ActiveIfaceIdStorage;      // 0x007D392C
+extern SubInterface *InterfaceRegistry[12];
+void register_iface_mode(int slot, SubInterface *interface_entry);
 
  /*
   * MainInterface class
@@ -169,6 +168,11 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   // The shared UI font at global 0x007CFE8C is this object's font1_ at
   // +0x2166C. ReplayWin's title and other windows borrow it, not own it.
   Font *primary_font() { return &font1_; }
+  FlatButton &flat_button(int index) { return flat_button_[index]; }
+  const RECT &main_frame_rect() const { return rect4_; }
+  const RECT &info_frame_rect() const { return info_panel_frame_; }
+  const RECT &right_frame_rect() const { return right_frame_rect_; }
+  const RECT &lower_frame_rect() const { return lower_frame_rect_; }
   // homed from 00459680.cpp
   int init(int a1);
 
@@ -262,21 +266,20 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   void timer_callback_daemon(int a1);
 
  public:
-  // 0x0045BE80, a pending_bodies forwarder.
+  // 0x0045BE80: redraw date and available energy for the current interface.
   void set_date(char *text);
-  MainInterface() { ; }
-  // 0x0045EB80 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  MainInterface();
+  // Ordinary C++ teardown releases owned members in reverse declaration order.
   ~MainInterface();
 
   int set_bubble_text(uint32_t button_id, LPCSTR text);
   void clear_message();
   // 0x0045B550. The editor-mode button pane: Console::editor_paints,
   // editor_lock2, editor_set_brush and set_view all redraw it after turning
-  // an editor flag. Body still unrecovered - a pending_bodies forwarder.
+  // an editor flag.
   void draw_edit_pane();
-  // 0x0045C3A0, a pending_bodies forwarder. blink2_timer (time.cpp) reaches
+  virtual void on_redraw();
+  // 0x0045C3A0. blink2_timer (time.cpp) reaches
   // it on the fixed MainInterface at 0x007AE820 as its whole tick body.
   void redraw_complete();
   void UNK2();
@@ -299,15 +302,10 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   // header, and declaring them here would only move them without changing a
   // byte. Every other slot MainInterface implements IS declared here, because
   // an override is what makes the entry's slot link.
-  // 0x0045CA40, slot 0 - 568 bytes, still the image's own body; the
-  // definition in maininterface.cpp is a forwarder.
+  // 0x0045CA40, secondary slot0: show/hide owned interface controls.
   void on_status(int a1);
   int on_iface_button_pressed(int a1);
-  // ?on_iface_button_clicked@MainInterface@@QAEXH@Z (0x0045D170), unrecovered.
-  // BattleWin::on_iface_button_clicked forwards to it on the fixed-address
-  // MainInterface singleton at 0x007AF234. NOT an override of the entry's
-  // slot 13 - see vslot_13 above: the image calls it directly, and the direct
-  // call is what keeps BattleWin's own body byte-exact.
+  // 0x0045D170: genuine slot13 override, also reached by qualified calls.
   void on_iface_button_clicked(int a1);
   // The rest of the interface table - slots 3, 4, 5, 7, 8, 9 and 16. All
   // seven take the ENTRY as their receiver, and all seven reach the front's
@@ -353,40 +351,16 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   // unqualified `redraw_complete()` to `lea ecx,[esi-0xa14]`, both of which
   // the earlier field_A14_/field_A18_ spelling could not produce at any
   // offset. Every offset after 0xA1C is unchanged, 0xA14 + 8 == 0xA1C.
-  uint32_t field_A1C_;
-  uint32_t field_A20_;
-  uint32_t field_A24_;
-  uint32_t field_A28_;
-  uint32_t field_A2C_;
-  uint32_t field_A30_;
-  uint32_t field_A34_;
-  uint32_t field_A38_;
-  uint32_t field_A3C_;
-  uint32_t field_A40_;
-  uint32_t field_A44_;
-  uint32_t field_A48_;
-  uint32_t field_A4C_;
-  uint32_t field_A50_;
-  uint32_t field_A54_;
-  uint32_t field_A58_;
-  uint32_t field_A5C_;
-  uint32_t field_A60_;
-  uint32_t field_A64_;
-  uint32_t field_A68_;
-  uint32_t field_A6C_;
-  uint32_t field_A70_;
-  uint32_t field_A74_;
-  uint32_t field_A78_;
-  uint32_t field_A7C_;
-  uint32_t field_A80_;
-  uint32_t field_A84_;
-  uint32_t field_A88_;
+  RECT window_bounds_;  // A1C, init passes the four coordinates to GraphicWin
+  RECT scroll_up_rect_;
+  RECT scroll_down_rect_;
+  RECT editor_tab_rect_;
+  RECT menu_button_rect_;
+  RECT multiplayer_button_rect_;
+  RECT end_turn_rect_;
   RECT rect2_;
   RECT rect3_;
-  uint32_t field_AAC_;
-  uint32_t field_AB0_;
-  uint32_t field_AB4_;
-  uint32_t field_AB8_;
+  RECT stack_button_rect_;
   // 0x0043C89C copies the second four-word run as one RECT. The garrison
   // overflow path at 0x004105A7 reads the gap from the first run's right
   // edge (+0xAC4) to the second run's left edge (+0xACC).
@@ -394,130 +368,8 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   RECT adjacent_panel_left_rect_;
   // RECOVERY_MEMBER: v1 MainInterface adjacent_panel_right_rect_ 0xACC 0x0043C89C
   RECT adjacent_panel_right_rect_;
-  uint32_t field_ADC_;
-  uint32_t field_AE0_;
-  uint32_t field_AE4_;
-  uint32_t field_AE8_;
-  uint32_t field_AEC_;
-  uint32_t field_AF0_;
-  uint32_t field_AF4_;
-  uint32_t field_AF8_;
-  uint32_t field_AFC_;
-  uint32_t field_B00_;
-  uint32_t field_B04_;
-  uint32_t field_B08_;
-  uint32_t field_B0C_;
-  uint32_t field_B10_;
-  uint32_t field_B14_;
-  uint32_t field_B18_;
-  uint32_t field_B1C_;
-  uint32_t field_B20_;
-  uint32_t field_B24_;
-  uint32_t field_B28_;
-  uint32_t field_B2C_;
-  uint32_t field_B30_;
-  uint32_t field_B34_;
-  uint32_t field_B38_;
-  uint32_t field_B3C_;
-  uint32_t field_B40_;
-  uint32_t field_B44_;
-  uint32_t field_B48_;
-  uint32_t field_B4C_;
-  uint32_t field_B50_;
-  uint32_t field_B54_;
-  uint32_t field_B58_;
-  uint32_t field_B5C_;
-  uint32_t field_B60_;
-  uint32_t field_B64_;
-  uint32_t field_B68_;
-  uint32_t field_B6C_;
-  uint32_t field_B70_;
-  uint32_t field_B74_;
-  uint32_t field_B78_;
-  uint32_t field_B7C_;
-  uint32_t field_B80_;
-  uint32_t field_B84_;
-  uint32_t field_B88_;
-  uint32_t field_B8C_;
-  uint32_t field_B90_;
-  uint32_t field_B94_;
-  uint32_t field_B98_;
-  uint32_t field_B9C_;
-  uint32_t field_BA0_;
-  uint32_t field_BA4_;
-  uint32_t field_BA8_;
-  uint32_t field_BAC_;
-  uint32_t field_BB0_;
-  uint32_t field_BB4_;
-  uint32_t field_BB8_;
-  uint32_t field_BBC_;
-  uint32_t field_BC0_;
-  uint32_t field_BC4_;
-  uint32_t field_BC8_;
-  uint32_t field_BCC_;
-  uint32_t field_BD0_;
-  uint32_t field_BD4_;
-  uint32_t field_BD8_;
-  uint32_t field_BDC_;
-  uint32_t field_BE0_;
-  uint32_t field_BE4_;
-  uint32_t field_BE8_;
-  uint32_t field_BEC_;
-  uint32_t field_BF0_;
-  uint32_t field_BF4_;
-  uint32_t field_BF8_;
-  uint32_t field_BFC_;
-  uint32_t field_C00_;
-  uint32_t field_C04_;
-  uint32_t field_C08_;
-  uint32_t field_C0C_;
-  uint32_t field_C10_;
-  uint32_t field_C14_;
-  uint32_t field_C18_;
-  uint32_t field_C1C_;
-  uint32_t field_C20_;
-  uint32_t field_C24_;
-  uint32_t field_C28_;
-  uint32_t field_C2C_;
-  uint32_t field_C30_;
-  uint32_t field_C34_;
-  uint32_t field_C38_;
-  uint32_t field_C3C_;
-  uint32_t field_C40_;
-  uint32_t field_C44_;
-  uint32_t field_C48_;
-  uint32_t field_C4C_;
-  uint32_t field_C50_;
-  uint32_t field_C54_;
-  uint32_t field_C58_;
-  uint32_t field_C5C_;
-  uint32_t field_C60_;
-  uint32_t field_C64_;
-  uint32_t field_C68_;
-  uint32_t field_C6C_;
-  uint32_t field_C70_;
-  uint32_t field_C74_;
-  uint32_t field_C78_;
-  uint32_t field_C7C_;
-  uint32_t field_C80_;
-  uint32_t field_C84_;
-  uint32_t field_C88_;
-  uint32_t field_C8C_;
-  uint32_t field_C90_;
-  uint32_t field_C94_;
-  uint32_t field_C98_;
-  uint32_t field_C9C_;
-  uint32_t field_CA0_;
-  uint32_t field_CA4_;
-  uint32_t field_CA8_;
-  uint32_t field_CAC_;
-  uint32_t field_CB0_;
-  uint32_t field_CB4_;
-  uint32_t field_CB8_;
-  uint32_t field_CBC_;
-  uint32_t field_CC0_;
-  uint32_t field_CC4_;
-  uint32_t field_CC8_;
+  RECT editor_button_rects_[25];  // ADC..C6B, 25 rectangles written by init
+  RECT brush_button_rects_[6];    // C6C..CCB, six rectangles written by init
   // init (0x00459680) retains the outer receiver in esi, copies four
   // coordinates at +0xCCC/+0xCDC/+0xCEC and insets their edges. Its split
   // puts +0xCCC to the right of +0xCDC; the separate +0xCEC rectangle is
@@ -534,61 +386,25 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   // to the active map bounds.
   // RECOVERY_MEMBER: v2 MainInterface tutorial_bounds_ tagRECT 0xCFC 0x004C3A70
   RECT tutorial_bounds_;
-  uint32_t field_D0C_;
-  uint32_t field_D10_;
-  uint32_t field_D14_;
-  uint32_t field_D18_;
-  uint32_t field_D1C_;
-  uint32_t field_D20_;
-  uint32_t field_D24_;
-  uint32_t field_D28_;
-  uint32_t field_D2C_;
-  uint32_t field_D30_;
-  uint32_t field_D34_;
-  uint32_t field_D38_;
-  uint32_t field_D3C_;
-  uint32_t field_D40_;
-  uint32_t field_D44_;
-  uint32_t field_D48_;
-  uint32_t field_D4C_;
-  uint32_t field_D50_;
-  uint32_t field_D54_;
-  uint32_t field_D58_;
-  uint32_t field_D5C_;
-  uint32_t field_D60_;
-  uint32_t field_D64_;
-  uint32_t field_D68_;
-  uint32_t field_D6C_;
-  uint32_t field_D70_;
-  uint32_t field_D74_;
-  uint32_t field_D78_;
+  RECT date_rect_;
+  RECT message_bounds_;
+  RECT title_bounds_;
+  RECT bottom_bounds_;
+  RECT editor_panel_rect_;
+  RECT editor_tools_rect_;
+  RECT editor_text_rect_;
   uint32_t field_D7C_;
   RECT rect4_;  // 0xD80, the IDB names the 16 bytes at 0xD80 rect4
-  uint32_t field_D90_;
-  uint32_t field_D94_;
-  uint32_t field_D98_;
-  uint32_t field_D9C_;
+  RECT right_frame_rect_;
   // InfoWin::init reads all four coordinates at MainInterfaceGlobal+0xDA0;
   // SocialWin copies the same original interval as one panel rectangle.
   // RECOVERY_MEMBER: v2 MainInterface info_panel_frame_ tagRECT 0xDA0 0x004592A0
   RECT info_panel_frame_;
-  uint32_t field_DB0_;
-  uint32_t field_DB4_;
-  uint32_t field_DB8_;
-  uint32_t field_DBC_;
+  RECT lower_frame_rect_;
   RECT rect1_;
-  uint32_t field_DD0_;
-  uint32_t field_DD4_;
-  uint32_t field_DD8_;
-  uint32_t field_DDC_;
-  uint32_t field_DE0_;
-  uint32_t field_DE4_;
-  uint32_t field_DE8_;
-  uint32_t field_DEC_;
-  uint32_t field_DF0_;
-  uint32_t field_DF4_;
-  uint32_t field_DF8_;
-  uint32_t field_DFC_;
+  RECT lower_animation_bounds_;
+  RECT menu_animation_bounds_;
+  RECT multiplayer_animation_bounds_;
  public:
   // PUBLIC 2026-09-06, the same compile-time-only move spot_ needed below:
   // the four buttons the interface shows and hides when a battle goes up and

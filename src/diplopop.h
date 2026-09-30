@@ -78,10 +78,8 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
   void on_iface_scrolling(int, int) {}
   int on_iface_button_pressed(int) { return 0; }
   void on_status(int mode);
-  // Slot 13, 0x00440550. The catalogue names it on_iface_button_clicked; it
-  // keeps the base's `vslot_13` spelling so that it overrides the slot rather
-  // than shadowing it. Nothing in .text calls it directly - only the table.
-  void vslot_13(int button_id);
+  // Slot13, 0x00440550: original-address forwarding remains unfinished.
+  void on_iface_button_clicked(int button_id);
   // Slot 16, 0x00440620.
   void on_iface_group_clicked(int group, int x_coord, int y_coord);
 

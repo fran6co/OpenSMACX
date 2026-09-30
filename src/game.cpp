@@ -2206,7 +2206,7 @@ int __cdecl system_init() {
     SystemInterfaceFlags &= ~0x8C0u;
     MapWinTable[0] = &ConsoleGlobal;
 
-    maininterface_init(&MainInterfaceGlobal, 0);
+    MainInterfaceGlobal.init(0);
     battlewin_init(static_cast<BattleWin *>(sub_interface_global()));
     console_init(&ConsoleGlobal, 0);
 

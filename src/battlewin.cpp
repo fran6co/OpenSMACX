@@ -241,7 +241,7 @@ void BattleWin::on_iface_selected(int, int) {
 
 /*
 // ORIGINAL: 0x00422DC0 ?on_iface_button_clicked@BattleWin@@QAEXH@Z 0x00422DC0-0x00422DDA BYTE_EXACT
-// symbol    ?vslot_13@BattleWin@@UAEXH@Z
+// symbol    ?on_iface_button_clicked@BattleWin@@UAEXH@Z
 // size      26 bytes
 // prototype void (__thiscall ?on_iface_button_clicked@BattleWin@@QAEXH@Z)(BattleWin* this, int)
 // callers   0   call targets   2
@@ -251,12 +251,11 @@ void BattleWin::on_iface_selected(int, int) {
 Status: Complete
 */
 // LEVER: the second call is a DIRECT `call 0x45d170` in the image, so it stays
-//   qualified - `MainInterface::on_iface_button_clicked` is deliberately NOT
-//   the interface's slot 13 (see maininterface.h), and naming it as a
-//   qualification is what keeps this a rel32 rather than a dispatch.
-void BattleWin::vslot_13(int button_id) {
+//   qualified. Explicit C++ qualification keeps the direct call even though
+//   MainInterface correctly implements the interface's virtual slot13.
+void BattleWin::on_iface_button_clicked(int button_id) {
     reinterpret_cast<SubInterface*>(this)->release_iface_mode();
-    reinterpret_cast<MainInterface*>(0x7af234)->MainInterface::on_iface_button_clicked(button_id);
+    MainInterfaceGlobal.MainInterface::on_iface_button_clicked(button_id);
 }
 
 /*

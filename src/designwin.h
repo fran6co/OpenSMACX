@@ -132,16 +132,14 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   void on_iface_right_click(int, int);
   void on_iface_mouse_move(int, int);
   void on_iface_mouse_leave(int, int);
-  // Slot 13, 0x0043D430. The catalogue names it on_iface_button_clicked; it
-  // keeps the base's `vslot_13` spelling so that it overrides the slot rather
-  // than shadowing it. Nothing in .text calls it directly - only the table.
-  void vslot_13(int button_id);
+  // Slot13, 0x0043D430: dispatch the front window's button-click event.
+  void on_iface_button_clicked(int button_id);
   // Slot 14, 0x0043D450 - DesignWin's own, not the shared no-op.
   int on_iface_button_pressed(int button_id);
 
   // Slot 44 of the front vtable (0x66B148) - the catalogue's
   // ?on_button_clicked@DesignWin@@QAEXH@Z, 0x00438460, 4481 bytes,
-  // unrecovered. Both vslot_13 and on_iface_button_pressed dispatch to it
+  // unrecovered. Both on_iface_button_clicked and on_iface_button_pressed dispatch to it
   // with a live `call dword ptr [eax + 0xb0]`, so the entry has to be
   // DesignWin's and not Win's shared no-op.
   void on_button_clicked(int button_id);

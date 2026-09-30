@@ -1,0 +1,29 @@
+{
+  "event_id": "40bec7dbaea554e67d2ecd31460d697fc21dca78fdb699ac2ed875b586fd4be8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/0045bc50.cpp",
+      "src/recovered/units/0045be80.cpp",
+      "src/recovered/units/0045c3a0.cpp",
+      "src/recovered/units/0045ca40.cpp",
+      "src/recovered/units/0045cf40.cpp",
+      "src/recovered/units/0045d170.cpp",
+      "src/recovered/units/0045ef10.cpp",
+      "src/unrecovered/00459680.cpp",
+      "src/unrecovered/0045b550.cpp",
+      "src/unrecovered/0045ccb0.cpp",
+      "src/unrecovered/0045eb80.cpp"
+    ],
+    "evidence": [
+      "All eleven original identities now own genuine full compiling/linking MainInterface definitions. Constructor45EF10 andhistoricallyclaimed45CF40 freshlymeasuredandnativelybanked; preserve3legacyTRIEDnotes withcurrentownerandhistoricalreferencesbeforedeletingonlytheir superseded opaque standalone derivative seeds. Keepallmappings/spans/claims; no deletingunfinishedotherowners orpretending runtime/fullacceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "02322ea52ad7dbcef1f4b6f54257a2bda101e964fbdd0e55e94617da0678ea82",
+  "request_id": "maininterface-retire-superseded-eleven-seeds",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:maininterface-owner-coverage"
+}

@@ -308,12 +308,10 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   void on_iface_mouse_leave(int a1, int a2);             // slot 9  0x0041E3E0
   // Slot 13 - 0x0041E510, 29 bytes, no direct caller anywhere in .text: it is
   // only ever reached through the table. The catalogue names it
-  // on_iface_button_clicked, and it keeps the base's `vslot_13` spelling so
-  // that it overrides the slot (the image's table holds it at 0x34) rather
-  // than shadowing it with a new virtual of its own. Its body dispatches the
+  // on_iface_button_clicked, at interface slot13 (0x34). Its body dispatches the
   // FRONT vtable's slot 44 - on_button_clicked - which is the same
   // interface-delegates-to-front pair slot 15 shows.
-  void vslot_13(int button_id);                          // slot 13 0x0041E510
+  void on_iface_button_clicked(int button_id);          // slot13 0x0041E510
 
   static void timer_callback(int key, int context);
   void on_left_click(int xCoord, int yCoord);

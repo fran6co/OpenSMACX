@@ -21,10 +21,7 @@
 #include "worldwin.h"
 #include "graphicwin.h"
 #include "filewin.h"
-// Homed MainInterface bodies call the free helpers the archive binds by
-// address: say_year (game.h), base_at (base.h). veh.h is left out on
-// purpose - its `range` collides with general.h's, and the two headers
-// cannot both be read here.
+// Owner operations use the shared year, base, vehicle and faction interfaces.
 #include "game.h"
 #include "base.h"
 #include "map.h"  // WorldClimateSkipTerrainClear
@@ -32,6 +29,610 @@
 #include "infowin.h"
 #include "console.h"   // ConsoleStatusWin, 0x008C5568
 #include "alpha.h"     // label_get, the Labels.strings_ptr walk
+#include "veh.h"
+#include "faction.h"
+#include "multiwin.h"
+#include "reportif.h"
+#include "mapwin.h"
+#include "terraforming.h"
+#include "netdaemon.h"
+#include "wave.h"
+#include "strings.h"
+
+extern int InfoTextColors[4][2];
+// Original dword writes/reads in45D170,45C3A0,45CA40 respectively.
+// Independently read initial bytes:7D3934/7D3938/7D3944 all zero;
+// 68526C is initialized to one. Names retain bounded observed roles.
+// RECOVERY_OBJECT: v2 0x007D3934 0x007D3938 ?MainInterfaceStatusRedrawFlag@@3HA 0x0045D170
+int MainInterfaceStatusRedrawFlag;
+// RECOVERY_OBJECT: v2 0x007D3938 0x007D393C ?MainInterfaceRedrawCount@@3HA 0x0045C3A0
+int MainInterfaceRedrawCount;
+// RECOVERY_OBJECT: v2 0x007D3944 0x007D3948 ?MainInterfaceTimersStopped@@3HA 0x0045CA40
+int MainInterfaceTimersStopped;
+// RECOVERY_OBJECT: v2 0x0068526C 0x00685270 ?MainInterfaceEndTurnAnimation@@3HA 0x0045C3A0
+int MainInterfaceEndTurnAnimation = 1;
+// Original4596C8..6D5 clears twelve pointer slots; its first registration
+// is the actual secondary base at this+A14. Mixed derived interfaces are
+// registered as SubInterface, not falsely presented as IfaceRegistryEntry.
+// RECOVERY_OBJECT: v2 0x007AE7F0 0x007AE820 ?InterfaceRegistry@@3PAPAVSubInterface@@A 0x00459680
+SubInterface *InterfaceRegistry[12];
+void register_iface_mode(int slot, SubInterface *interface_entry) {
+    InterfaceRegistry[slot] = interface_entry;
+}
+
+// ORIGINAL: 0x0045B550 ?draw_edit_pane@MainInterface@@QAEXXZ 0x0045B550-0x0045BBF7 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/unrecovered/0045b550.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+// Historical seed interpretation below mistook retained font arguments
+// for extra find_font arguments; original45B5B7..45B5E5 retains all three.
+// TRIED: the 30-way switch is transcribed from the actual jump table (0x0045BBF8) and case table (0x0045BC24) read out of the image with pefile, not hand-decoded, so the VALUES it produces should be right even though the emitted `cmp`/`jmp` shape won't match a real jump table; find_font's three call sites each push one more dword than the declared 2-int signature consumes (`add esp,8` after three pushes) - the extra value is dropped rather than guessed at.
+void MainInterface::draw_edit_pane() {
+    if (WinScreenWidth < 1024 || MainInterfaceGlobal.button_group_[0].field_84_ != 1002) return;
+    Buffer &canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
+    RECT rect = editor_text_rect_;
+    canvas.set_text_color(InfoTextColors[0][0], InfoTextColors[0][1], 1, 1);
+    Font *style_one = find_font(10, 1);
+    Font *style_two = find_font(10, 2);
+    Font *normal = find_font(10, 0);
+    canvas.set_font(normal, style_two, style_one, 0);
+    canvas.box_sprite(&rect, &InterfaceBoxStyles[0]);
+    const int x = rect.left + 4;
+    int y = rect.top + 4;
+    char line[300], number[80];
+    line[0] = 0;
+    strcat(line, label_get(0x6A8 / 4));
+    strcat(line, ": "); strcat(line, "{");
+    strcat(line, MapFilePath); strcat(line, "}");
+    canvas.write_l(line, x, y, strlen(line));
+    y += canvas.text_line_height();
+    line[0] = 0;
+    strcat(line, label_get(0x6A4 / 4)); strcat(line, ": ");
+    const char *tool;
+    switch (MapEditorPaintId) {
+    case 0: tool = label_get(0xEBC / 4); break;
+    case 1: tool = label_get(0xEC0 / 4); break;
+    case 2: tool = label_get(0xEC4 / 4); break;
+    case 3: tool = label_get(0xEC8 / 4); break;
+    case 4: tool = label_get(0xECC / 4); break;
+    case 5: tool = label_get(0xED0 / 4); break;
+    case 26: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[2].name_short))); break;
+    case 27: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[6].name_short))); break;
+    case 28: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[3].name_short))); break;
+    case 29: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Natural[10].name_short))); break;
+    default: tool = reinterpret_cast<const char *>(StringTable.get(reinterpret_cast<int>(Terraforming[MapEditorPaintId - 6].name))); break;
+    }
+    strcat(line, tool);
+    canvas.write_l(line, x, y, strlen(line));
+    y += canvas.text_line_height();
+    line[0] = 0;
+    strcat(line, label_get(0x684 / 4)); strcat(line, ": ");
+    if (MapEditorBrushId == 1) strcat(line, label_get(0x688 / 4));
+    else {
+        _itoa(MapEditorBrushId == 0 ? 0 : MapEditorBrushId - 1, number, 10);
+        strcat(line, number);
+    }
+    canvas.write_l(line, x, y, strlen(line));
+    y += canvas.text_line_height();
+    line[0] = 0;
+    strcat(line, label_get(0xD7C / 4)); strcat(line, ": ");
+    _itoa(MapLongitudeBounds / 2, number, 10); strcat(line, number);
+    strcat(line, "x");
+    _itoa(MapLatitudeBounds, number, 10); strcat(line, number);
+    strcat(line, " ");
+    strcat(line, label_get((MapIsFlat & 1 ? 0xD80 : 0xD84) / 4));
+    canvas.write_l(line, x, y, strlen(line));
+    y += canvas.text_line_height();
+    line[0] = 0;
+    strcat(line, label_get(0x84 / 4)); strcat(line, ": "); strcat(line, "{");
+    strcat(line, label_get(0x50 / 4 + MapSizePlanet)); strcat(line, "}");
+    canvas.write_l(line, x, y, strlen(line));
+    y += canvas.text_line_height();
+    // The original deliberately appends to the preceding planet-size line.
+    strcat(line, "{");
+    int label;
+    if (GetKeyState(VK_SCROLL) & 1) label = 0xF50;
+    else label = ConsoleGlobal.edit_lock() ? 0x1020 : 0xF54;
+    strcat(line, label_get(label / 4)); strcat(line, "}");
+    canvas.write_l(line, x, y, strlen(line));
+    canvas.text_line_height();
+    soft_update(&editor_text_rect_);
+}
+
+// ORIGINAL: 0x0045C3A0 ?redraw_complete@MainInterface@@QAEXXZ 0x0045C3A0-0x0045C5AF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045c3a0.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+void MainInterface::redraw_complete() {
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0
+        && MainInterfaceGlobal.field_4_ != 10) return;
+    Buffer &canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
+    char text[256] = "";
+    RECT button_rect;
+    canvas.set_text_color(0x65, -1, 1, 1);
+    strcat(text, label_get(0x68 / 4));
+    CharUpperA(text);
+    spot_.get_rect(5, 0, &button_rect);
+    canvas.set_font(&font1_, 0, 0, 0);
+    const uint32_t ready = NetDaemonNet.lock_state_[0].dword_[12];
+    if ((GameState & 2) && (!IsMultiplayerNet
+        || !(NetTurnFlags & 0x10) || NetTurnFaction == ConsoleGlobal.faction_id_)
+        && (ConsoleGlobal.field_23BE4_ || (IsMultiplayerNet && ready != 0xFF && ready != 0))) {
+        flic2_.decode_stored_frame();
+        MainInterfaceEndTurnAnimation = 1;
+    } else {
+        flic2_.rewind();
+        flic2_.decode_stored_frame();
+        MainInterfaceEndTurnAnimation = 0;
+    }
+    const uint32_t label_ready = NetDaemonNet.lock_state_[0].dword_[12];
+    const int label = !IsMultiplayerNet || !(GameState & 2) || (NetTurnFlags & 0x10)
+        || label_ready == 0xFF || !(label_ready & (1u << (ConsoleGlobal.faction_id_ & 31)))
+        ? 0x68 / 4 : 0x3FC / 4;
+    text[0] = 0;
+    strcat(text, label_get(label));
+    ++MainInterfaceRedrawCount;
+    CharUpperA(text);
+    canvas.set_text_color(0x65, -1, 1, 1);
+    canvas.write_cent_l(text, &button_rect, strlen(text));
+    MainInterfaceGlobal.soft_update(&button_rect);
+}
+
+// ORIGINAL: 0x0045EF10 ??0MainInterface@@QAE@XZ 0x0045EF10-0x0045F1BE;0x00655530-0x00655723 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045ef10.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+MainInterface::MainInterface() {
+    // Genuine embedded members and both bases construct in declaration order.
+}
+
+extern Wave g_MAININTERFACE_WAVE;
+void __cdecl timer_callback_daemon(int, int);
+
+// ORIGINAL: 0x00459680 ?init@MainInterface@@QAEHH@Z 0x00459680-0x0045B500;0x00655730-0x00655745 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/unrecovered/00459680.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+int MainInterface::init(int) {
+    Buffer assets;
+    const bool compact_view = WinScreenWidth == 800;
+    field_1EAC8_ = 0;
+    memset(InterfaceRegistry, 0, sizeof(InterfaceRegistry));
+    memset(IfaceIdToSlotStorage, 0, sizeof(IfaceIdToSlotStorage));
+    field_4_ = 0;
+    register_iface_mode(0, this);
+    alert_ = -1;
+    field_216E8_ = iface_redraw_pending_ = field_216E4_ = 0;
+    spot_.init(1);
+    field_D7C_ = 213;
+    SetRect(&rect4_, 4, 56, 245, 252);
+    if (compact_view) {
+        SetRect(&right_frame_rect_, 555, 57, 796, 253);
+        SetRect(&info_panel_frame_, 261, 66, 540, 172);
+        SetRect(&lower_frame_rect_, 244, 188, 544, 252);
+        SetRect(&window_bounds_, 0, 343, 800, 600);
+        SetRect(&menu_button_rect_, 10, 20, 116, 34);
+        SetRect(&multiplayer_button_rect_, 684, 22, 790, 36);
+        SetRect(&menu_animation_bounds_, 116, 0, 247, 51);
+        SetRect(&multiplayer_animation_bounds_, 516, 17, 682, 65);
+        SetRect(&title_bounds_, 253, 0, 586, 43);
+        if (assets.load_pcx("console_A.pcx", 0, 10, 236)) return 1;
+    } else {
+        SetRect(&right_frame_rect_, 779, 56, 1020, 252);
+        SetRect(&info_panel_frame_, 262, 66, 763, 172);
+        SetRect(&lower_frame_rect_, 244, 188, 768, 252);
+        const int x = (WinScreenWidth - 1024) / 2;
+        SetRect(&window_bounds_, x, WinScreenHeight - 257, x + 1024, WinScreenHeight);
+        SetRect(&menu_button_rect_, 11, 20, 117, 34);
+        SetRect(&multiplayer_button_rect_, 908, 22, 1014, 36);
+        SetRect(&menu_animation_bounds_, 118, 0, 282, 60);
+        SetRect(&multiplayer_animation_bounds_, 742, 10, 906, 74);
+        SetRect(&title_bounds_, 282, 0, 787, 42);
+    }
+    rect1_ = info_panel_frame_;
+    rect1_.bottom += 62;
+    lower_animation_bounds_ = lower_frame_rect_;
+    lower_animation_bounds_.top += 62;
+    const int height = window_bounds_.bottom - window_bounds_.top;
+    SetRect(&bottom_bounds_, 244, height - 96, 779, height);
+    SetRect(&scroll_up_rect_, info_panel_frame_.right - 29, info_panel_frame_.top + 9,
+            info_panel_frame_.right - 9, info_panel_frame_.top + 29);
+    SetRect(&scroll_down_rect_, info_panel_frame_.right - 29, info_panel_frame_.bottom - 29,
+            info_panel_frame_.right - 9, info_panel_frame_.bottom - 9);
+    SetRect(&editor_tab_rect_, scroll_up_rect_.left, scroll_up_rect_.bottom + 5,
+            scroll_up_rect_.right, scroll_down_rect_.top - 5);
+    SetRect(&message_bounds_, info_panel_frame_.left + 7, info_panel_frame_.top + 7,
+            scroll_down_rect_.left - 10, info_panel_frame_.bottom - 7);
+    status_left_rect_ = rect4_;
+    status_left_rect_.right = (rect4_.right - rect4_.left) * 7 / 12;
+    InflateRect(&status_left_rect_, -4, -4);
+    status_hit_rect_ = lower_frame_rect_;
+    InflateRect(&status_hit_rect_, -4, -4);
+    status_hit_rect_.left = status_left_rect_.right + 3;
+    status_right_rect_ = rect4_;
+    status_right_rect_.left = status_left_rect_.right + 4;
+    status_right_rect_.top += 4; status_right_rect_.right -= 4;
+    status_right_rect_.bottom = status_hit_rect_.top - 3;
+    SetRect(&end_turn_rect_, right_frame_rect_.left + 4, right_frame_rect_.top + 5,
+            right_frame_rect_.left + 237, right_frame_rect_.top + 28);
+    SetRect(&tutorial_bounds_, right_frame_rect_.left + 1, end_turn_rect_.bottom + 4,
+            right_frame_rect_.right - 1, 0);
+    tutorial_bounds_.bottom = tutorial_bounds_.top +
+        (tutorial_bounds_.right - tutorial_bounds_.left) / 2;
+    SetRect(&rect3_, right_frame_rect_.right - 60, right_frame_rect_.bottom - 38,
+            right_frame_rect_.right - 6, right_frame_rect_.bottom - 6);
+    rect2_ = rect3_;
+    OffsetRect(&rect2_, rect3_.left - rect3_.right - 2, 0);
+    SetRect(&date_rect_, right_frame_rect_.left + 6, right_frame_rect_.bottom - 38,
+            rect2_.left - 3, right_frame_rect_.bottom - 6);
+    font1_.init(DefaultFontFace, 14, 1);
+    font2_.init(DefaultFontFace, 12, 0);
+    font3_.init(DefaultFontFace, 12, 1);
+    if (assets.load_pcx(compact_view ? "console_A.pcx" : "console2_A.pcx", 0, 10, 236)) return 1;
+    spot_.add(5, 0, &end_turn_rect_);
+    GraphicWin::init(window_bounds_.left, window_bounds_.top,
+                    window_bounds_.right - window_bounds_.left, height,
+                    0, 0x1400000, 0, 0, 0);
+    Buffer &canvas = *static_cast<Buffer *>(this);
+    assets.copy(&canvas, 0, 0, assets.pixel_width(), assets.pixel_height(),
+                0, 0, canvas.pixel_width(), canvas.pixel_height());
+    sprites13_[0].init(compact_view ? "iface_up_A.pcx" : "iface_up2_A.pcx", 0, 0);
+    sprites13_[1].init(compact_view ? "iface_down_A.pcx" : "iface_down2_A.pcx", 0, 0);
+    sprites13_[0].iWidth_ = sprites13_[1].iWidth_ = 535;
+    sprites13_[0].iHeight_ = sprites13_[1].iHeight_ = 96;
+    flic2_.init(&canvas, "turn.flc", end_turn_rect_.left, end_turn_rect_.top, 1);
+    assets.load_pcx(compact_view ? "console_x_A.pcx" : "console_x2_A.pcx", 0, 10, 236);
+    int i, frame;
+    for (i = 0; i < 10; ++i)
+        sprites6_[i].extract(&assets, WinFillColour, 1 + (i / 5) * 191,
+                            1 + (i % 5) * 27, 190, 26, 0);
+    sprites4_[0].extract(&assets, WinFillColour, 194, 136, compact_view ? 131 : 164, compact_view ? 51 : 60, 0);
+    sprites4_[1].extract(&assets, WinFillColour, 194, compact_view ? 188 : 197,
+                        compact_view ? 166 : 164, compact_view ? 48 : 64, 0);
+    sprites3_[0].extract(&assets, WinFillColour, 194, compact_view ? 237 : 262,
+                        compact_view ? 131 : 164, compact_view ? 51 : 60, 0);
+    sprites3_[1].extract(&assets, WinFillColour, 194, compact_view ? 289 : 323,
+                        compact_view ? 166 : 164, compact_view ? 48 : 64, 0);
+    for (i = 0; i < 5; ++i) {
+        sprites5_[2*i].extract(&assets, WinFillColour, 384, 1 + i * (compact_view ? 52 : 61),
+                              compact_view ? 131 : 164, compact_view ? 51 : 60, 0);
+    }
+    for (i = 0; i < 5; ++i) {
+        sprites5_[2*i+1].extract(&assets, WinFillColour, compact_view ? 516 : 549,
+                                1 + i * (compact_view ? 49 : 65), compact_view ? 166 : 164,
+                                compact_view ? 48 : 64, 0);
+    }
+    for (i = 0; i < 3; ++i)
+        sprites8_[i].extract(&assets, WinFillColour, 1, 217 + i*15, 106, 14, 0);
+    const int columns[4] = {683, 699, 708, 717};
+    const int widths[4] = {15, 8, 8, 15};
+    for (i = 0; i < 4; ++i)
+        sprites2_[i].extract(&assets, WinFillColour, columns[i] + (compact_view ? 0 : 30),
+                            1, widths[i], 529, 0);
+    const int rows[4] = {279, 306, 341, 367};
+    const int heights[4] = {26, 34, 25, 34};
+    for (i = 0; i < 4; ++i)
+        sprites1_[i].extract(&assets, WinFillColour, 1, rows[i], 32, heights[i], 0);
+    assets.load_pcx("interface.pcx", 0, 10, 236);
+    for (i = 0; i < 6; ++i)
+        sprites7_[i].extract(&assets, WinFillColour, 532 + (i/3)*55,
+                            143 + (i%3)*33, 54, 32, 0);
+    sprite11_.extract(&assets, WinFillColour, 212, 1, 9, 147, 0);
+    for (i = 0; i < 6; ++i)
+        sprites12_[i].extract(&assets, WinFillColour, 397 + (i%3)*13,
+                             153 + (i/3)*43, 12, 42, 0);
+    for (i = 0; i < 25; ++i) {
+        for (frame = 0; frame < 3; ++frame)
+            sprites9_[3*i+frame].extract(&assets, WinFillColour,
+                350 + (i%8)*44, 245 + (i/8)*57 + frame*19, 43, 18, 0);
+    }
+    for (i = 0; i < 18; ++i)
+        sprites10_[i].extract(&assets, WinFillColour, 465 + (i/3)*25,
+                             438 + (i%3)*25, 24, 24, 0);
+    assets.close();
+    int top = status_hit_rect_.top +
+        (status_hit_rect_.bottom - status_hit_rect_.top - sprites12_[0].height()) / 2;
+    SetRect(&stack_button_rect_, status_hit_rect_.left + 4, top,
+            status_hit_rect_.left + 4 + sprites12_[0].width(), top + sprites12_[0].height());
+    SetRect(&adjacent_panel_left_rect_, lower_frame_rect_.left, top,
+            lower_frame_rect_.left + sprites12_[0].width(), top + sprites12_[0].height());
+    adjacent_panel_right_rect_ = adjacent_panel_left_rect_;
+    OffsetRect(&adjacent_panel_right_rect_, status_hit_rect_.right - sprites12_[0].width() - 4
+               - adjacent_panel_right_rect_.left, 0);
+    canvas.set_font(&font1_, 0, 0, 0);
+    canvas.set_text_color(64, -1, 1, 1);
+    for (i = 0; i < 4; ++i) button_group_[i].init(i, i >= 2);
+    RECT *rects[11] = {&scroll_up_rect_, &scroll_down_rect_, &editor_tab_rect_,
+        &menu_button_rect_, &multiplayer_button_rect_, 0, &rect2_, &rect3_,
+        &stack_button_rect_, &adjacent_panel_left_rect_, &adjacent_panel_right_rect_};
+    // Buttons are initialized in the original order: down, up, editor, menu,
+    // multiplayer, the two map selectors and the three stack controls.
+    const int order[10] = {1, 0, 2, 3, 4, 6, 7, 8, 9, 10};
+    for (int step = 0; step < 10; ++step) {
+        i = order[step];
+        RECT &r = *rects[i];
+        char *caption = 0;
+        if (i < 3) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, label_get(i == 0 ? 0xAC0/4 : i == 1 ? 0xABC/4 : 0xDBC/4));
+            StringTemp[1] = 0;
+            caption = StringTemp;
+        } else if (i == 3 || i == 4) caption = label_get(i == 3 ? 0x9C0/4 : 0x83C/4);
+        flat_button_[i].init(caption, 1000+i, r.left, r.top,
+                            r.right-r.left, r.bottom-r.top, this, 0);
+        if (i < 3) {
+            flat_button_[i].set_bubble_text(label_get(i == 0 ? 0xC44/4 : i == 1 ? 0xC48/4 : 0xDC0/4));
+            if (i == 2) {
+                flat_button_[i].set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28], &InterfaceBoxStyles[29]);
+                flat_button_[i].hide();
+            }
+            if (i == 2) {
+                for (int j = 0; j < 3; ++j) {
+                    button_group_[0].add(&flat_button_[j]);
+                    static_cast<Buffer *>(&flat_button_[j])->set_font(&font1_, 0, 0, 0);
+                    flat_button_[j].redraw(); flat_button_[j].redraw();
+                }
+                button_group_[0].set(1, 1);
+            }
+        } else if (i == 3 || i == 4) {
+            flat_button_[i].field_AD4_[0] = &sprites8_[0];
+            flat_button_[i].field_AD4_[1] = i == 3 ? &sprites8_[1] : 0;
+            flat_button_[i].field_AD4_[2] = &sprites8_[2];
+            static_cast<Buffer *>(&flat_button_[i])->set_font(&font1_, 0, 0, 0);
+            flat_button_[i].redraw();
+            flat_button_[i].set_text_color(64, -1, 1, 1);
+            flat_button_[i].field_ABC_[0] = 101;
+            flat_button_[i].field_ABC_[1] = flat_button_[i].field_ABC_[2] = 65;
+            flat_button_[i].redraw();
+            flat_button_[i].set_bubble_text(label_get(i == 3 ? 0xC3C/4 : 0xC40/4));
+        } else if (i == 6 || i == 7) {
+            flat_button_[i].set_bubble_text(label_get(i == 6 ? 0x4C8/4 : 0xF20/4));
+            for (frame = 0; frame < 3; ++frame)
+                flat_button_[i].field_AD4_[frame] = &sprites7_[3*(i-6)+frame];
+            if (i == 7) {
+                for (int j = 6; j < 8; ++j) {
+                    button_group_[1].add(&flat_button_[j]); flat_button_[j].redraw();
+                }
+                button_group_[1].set(1006, 1);
+            }
+        } else {
+            flat_button_[i].hide();
+            int sprite = i == 10 ? 3 : 0;
+            for (frame = 0; frame < 3; ++frame)
+                flat_button_[i].field_AD4_[frame] = &sprites12_[sprite+frame];
+        }
+    }
+    int left = info_panel_frame_.left + 7;
+    top = info_panel_frame_.top + 7;
+    top += (info_panel_frame_.bottom - 7 - 5*sprites9_[0].height() - top - 4) / 2;
+    for (i = 0; i < 25; ++i) {
+        SetRect(&editor_button_rects_[i], left + (i/5)*(sprites9_[0].width()+1),
+            top + (i%5)*(sprites9_[0].height()+1),
+            left + (i/5)*(sprites9_[0].width()+1) + sprites9_[0].width(),
+            top + (i%5)*(sprites9_[0].height()+1) + sprites9_[0].height());
+    }
+    left = editor_button_rects_[24].right + 9;
+    top = info_panel_frame_.top + 7;
+    top += (info_panel_frame_.bottom - 7 - 3*sprites10_[0].height() - 2 - top) / 2;
+    for (i = 0; i < 6; ++i) {
+        SetRect(&brush_button_rects_[i], left + (i/3)*(sprites10_[0].width()+1),
+            top + (i%3)*(sprites10_[0].height()+1),
+            left + (i/3)*(sprites10_[0].width()+1) + sprites10_[0].width(),
+            top + (i%3)*(sprites10_[0].height()+1) + sprites10_[0].height());
+    }
+    editor_panel_rect_.left = editor_panel_rect_.right = 0;
+    for (i = 0; i < 25; ++i) {
+        RECT &r = editor_button_rects_[i];
+        UnionRect(&editor_panel_rect_, &editor_panel_rect_, &r);
+        FlatButton &b = flat_button_[i+11];
+        b.init(0, 1011+i, r.left, r.top, r.right-r.left, r.bottom-r.top, this, 0);
+        b.hide();
+        for (frame = 0; frame < 3; ++frame) b.field_AD4_[frame] = &sprites9_[3*i+frame];
+        int tool = i - 6;
+        if (i >= 6 && i <= 20) {
+            for (int t = 0; t < 20; ++t) if (Terraforming[t].bit == 0 && tool >= t) ++tool;
+            b.set_bubble_text(StringTable.get(reinterpret_cast<int>(Terraforming[tool].name)));
+        } else {
+            StringTemp[0] = 0;
+            if (i < 6) strcat(StringTemp, label_get(0xEBC/4 + i));
+            else if (i == 21) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[2].name_short)));
+            else if (i == 22) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[6].name_short)));
+            else if (i == 23) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[3].name_short)));
+            else if (i == 24) strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Natural[10].name_short)));
+            b.set_bubble_text(StringTemp);
+        }
+        button_group_[2].add(&b);
+    }
+    InflateRect(&editor_panel_rect_, 3, 3);
+    button_group_[2].set(1011, 1);
+    editor_tools_rect_.left = editor_tools_rect_.right = 0;
+    if (!compact_view) {
+        for (i = 0; i < 6; ++i) {
+            RECT &r = brush_button_rects_[i];
+            UnionRect(&editor_tools_rect_, &editor_tools_rect_, &r);
+            FlatButton &b = flat_button_[36+i];
+            b.init(0, 1036+i, r.left, r.top, r.right-r.left, r.bottom-r.top, this, 0);
+            b.hide();
+            for (frame = 0; frame < 3; ++frame) b.field_AD4_[frame] = &sprites10_[3*i+frame];
+            b.set_bubble_text(label_get(0xF64/4+i)); button_group_[3].add(&b);
+        }
+        InflateRect(&editor_tools_rect_, 3, 3); button_group_[3].set(1036, 1);
+    }
+    editor_text_rect_ = editor_tools_rect_;
+    editor_text_rect_.left = editor_tools_rect_.right + 3;
+    editor_text_rect_.right = scroll_down_rect_.left - 3;
+    time1_.init(::timer_callback_daemon, 0, reinterpret_cast<int>(this), 4000, 5);
+    time2_.init(::timer_callback_daemon, 1, reinterpret_cast<int>(this), 100, 5);
+    g_MAININTERFACE_WAVE.init("fx\\main menu.wav", 4);
+    g_MAININTERFACE_WAVE.set_volume(35);
+    return 0;
+}
+
+// ORIGINAL: 0x0045EB80 ??1MainInterface@@QAE@XZ 0x0045EB80-0x0045EF0A;0x006552C0-0x0065552F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/unrecovered/0045eb80.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+// symbol    ??1MainInterface@@UAE@XZ
+// TRIED: plain reinterpret_cast pointer-offset calls into close()/dtors in disasm order (same shape as 0x00408170's AlphaSave dtor); compiles and matches through instruction #17, then diverges because the real destructor's ~35-state SEH unwind table (one `mov byte ptr [ebp-4], N` per sub-object cleanup, with matching funclets) only emerges from genuine implicit member/base destruction, not explicit calls in a hand-written body.
+MainInterface::~MainInterface() {
+    // Reverse member/base order supplies ordinary and exceptional teardown.
+}
+
+// ORIGINAL: 0x0045BC50 ?on_redraw@MainInterface@@QAEXXZ 0x0045BC50-0x0045BE7D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045bc50.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+// symbol    ?on_redraw@MainInterface@@UAEXXZ
+void MainInterface::on_redraw() {
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 0) {
+        restore_back(1);
+        RECT rect = info_panel_frame_;
+        const int state = button_group_[0].field_84_;
+        Buffer &canvas = *static_cast<Buffer *>(this);
+        switch (state) {
+        case 1000:
+        case 1001: {
+            rect.left += 4; rect.top += 4;
+            rect.right -= 4; rect.bottom -= 4;
+            canvas.box_sprite(&rect, &InterfaceBoxStyles[3]);
+            if (state == 1000) {
+                InterfaceMessageWin.listBox_.show(0);
+            } else {
+                canvas.box_sprite(&ConsoleInfoWin.pane_rects_[0], &InterfaceBoxStyles[18]);
+                canvas.box_sprite(&ConsoleInfoWin.pane_rects_[1], &InterfaceBoxStyles[18]);
+                ConsoleInfoWin.reset();
+                InterfaceMessageWin.listBox_.hide();
+                ConsoleInfoWin.timer_.start();
+            }
+            for (int button = 11; button < 42; ++button) flat_button_[button].hide();
+            break;
+        }
+        case 1002: {
+            canvas.box_sprite(&editor_panel_rect_, &InterfaceBoxStyles[3]);
+            if (WinScreenWidth != 800)
+                canvas.box_sprite(&editor_tools_rect_, &InterfaceBoxStyles[3]);
+            InterfaceMessageWin.listBox_.hide();
+            ConsoleInfoWin.timer_.stop();
+            for (int button = 11; button < 42; ++button) {
+                if (WinScreenWidth == 800 && button == 36) break;
+                flat_button_[button].show(0);
+            }
+            draw_edit_pane();
+            break;
+        }
+        }
+    }
+    ConsoleGlobal.update_data(1);
+    redraw_complete();
+}
+
+// ORIGINAL: 0x0045CA40 ?on_status@MainInterface@@QAEXH@Z 0x0045CA40-0x0045CC78 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045ca40.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+// symbol    ?on_status@MainInterface@@UAEXH@Z
+void MainInterface::on_status(int active) {
+    if (!active) {
+        ConsoleInfoWin.timer_.stop();
+        const int mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
+        if (mode != 10 && mode != 3 && mode != 2) {
+            stop_timers();
+            MainInterfaceTimersStopped = 1;
+        }
+        ConsoleGlobal.alpha_menu_.hide();
+        MultiWindow.hide();
+        InterfaceMessageWin.listBox_.hide();
+        for (int button = 0; button < 42; ++button) flat_button_[button].hide();
+        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 10) string_box_.hide();
+        const int destination = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
+        if (destination != 10 && !(destination == 5
+            && (ReportIfGlobal.field_8_ == 4 || ReportIfGlobal.field_8_ == 5))) {
+            WorldClimateWorldWin.hide_all();
+            return;
+        }
+    } else {
+        flic2_.rewind();
+        for (int button = 0; button < 42; ++button) {
+            if (button == 2) {
+                if ((GameState & 0xC0) == 0xC0) flat_button_[button].show(0);
+            } else if (button >= 8 && button <= 10) {
+                flat_button_[button].hide();
+            } else if (button < 11 || button > 41 || button_group_[0].field_84_ == 1002) {
+                flat_button_[button].show(0);
+            } else flat_button_[button].hide();
+        }
+        on_redraw();
+        ConsoleStatusWin.on_redraw();
+        WorldClimateWorldWin.show_all();
+        if (MainInterfaceGlobal.button_group_[0].field_84_ == 1000)
+            InterfaceMessageWin.listBox_.show(0);
+        button_group_[1].set(1006, 1);
+        string_box_.show(0);
+        ConsoleInfoWin.timer_.start();
+        if (MainInterfaceTimersStopped) start_timers();
+        MainInterfaceTimersStopped = 0;
+        MainInterfaceGlobal.soft_update();
+    }
+}
+
+// ORIGINAL: 0x0045D170 ?on_iface_button_clicked@MainInterface@@QAEXH@Z 0x0045D170-0x0045D271 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045d170.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+// symbol    ?on_iface_button_clicked@MainInterface@@UAEXH@Z
+void MainInterface::on_iface_button_clicked(int button) {
+    switch (button) {
+    case 1008:
+    case 1009: {
+        int vehicle = veh_at(ConsoleStatusWin.iTileX_, ConsoleStatusWin.iTileY_);
+        if (vehicle < 0) return;
+        veh_demote(vehicle);
+        break;
+    }
+    case 1010: {
+        int vehicle = veh_at(ConsoleStatusWin.iTileX_, ConsoleStatusWin.iTileY_);
+        if (vehicle < 0) return;
+        while (Vehs[vehicle].next_veh_id_stack >= 0)
+            vehicle = Vehs[vehicle].next_veh_id_stack;
+        veh_promote(vehicle);
+        break;
+    }
+    case 1003:
+        if (ConsoleGlobal.alpha_menu_.is_visible()) {
+            ConsoleGlobal.alpha_menu_.hide_menus();
+            ConsoleGlobal.alpha_menu_.hide();
+        } else ConsoleGlobal.alpha_menu_.show(0);
+        return;
+    case 1004:
+        if (MultiWindowOpen) MultiWindow.hide();
+        else MultiWindow.show();
+        return;
+    default: return;
+    }
+    MainInterfaceStatusRedrawFlag = 1;
+    ConsoleStatusWin.on_redraw();
+    MainInterfaceStatusRedrawFlag = 0;
+}
+
+// ORIGINAL: 0x0045BE80 ?set_date@MainInterface@@QAEXPAD@Z 0x0045BE80-0x0045C0AF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:b4601390:recovery/tasks/maininterface-owner-coverage.json", "git:f7bbce35:src/recovered/units/0045be80.cpp"], "reason": "Original owner calls, secondary interface receiver and ordinary embedded-member lifecycle identify this MainInterface operation; compatible historical seed spans are retained, without a matching claim."}
+void MainInterface::set_date(char *) {
+    const int mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
+    if (mode != 0 && mode != 10
+        && !(mode == 5 && (ReportIfGlobal.field_8_ == 4 || ReportIfGlobal.field_8_ == 5))) return;
+    Buffer &canvas = *static_cast<Buffer *>(this);
+    canvas.set_font(&font2_, 0, 0, 0);
+    canvas.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+    RECT outline;
+    UnionRect(&outline, &date_rect_, &rect3_);
+    outline.left -= 3; outline.top -= 3;
+    outline.right += 3; outline.bottom += 3;
+    Buffer &global_canvas = *static_cast<Buffer *>(&MainInterfaceGlobal);
+    global_canvas.box_sprite(&outline, &InterfaceBoxStyles[21]);
+    global_canvas.box_sprite(&date_rect_, &InterfaceBoxStyles[18]);
+    const int x = date_rect_.left + 3;
+    int y = date_rect_.top + 3;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0));
+    strcat(StringTemp, " ");
+    say_year(StringTemp);
+    canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+    y += canvas.text_line_height();
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x90 / 4));
+    strcat(StringTemp, ": ");
+    char number[80];
+    const PlayerData &player = PlayersData[ConsoleGlobal.faction_id_];
+    _itoa(static_cast<int>(static_cast<uint32_t>(player.energy_reserves)
+          - player.hurry_cost_total), number, 10);
+    strcat(StringTemp, number);
+    canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+    soft_update(&outline);
+}
 
  /*
  Purpose: Set the flat button's bubble text.
@@ -296,24 +897,14 @@ void MainInterface::on_iface_mouse_leave(int, int) {
     }
 }
 
-// PENDING 0x0045CF40 ?on_iface_left_down@MainInterface@@QAEXHH@Z 0x0045CF40-0x0045CF75
+// The original secondary receiver reaches spot_ at entry+24620; the
+// declared secondary base supplies the complete-object adjustment.
+// ORIGINAL: 0x0045CF40 ?on_iface_left_down@MainInterface@@QAEXHH@Z 0x0045CF40-0x0045CF75 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:f7bbce35:src/recovered/units/0045cf40.cpp"], "reason": "Original secondary interface receiver, spot hit test and mapped owner callbacks identify this MainInterface operation; compatible historical seed and its obligations remain retained."}
 // symbol    ?on_iface_left_down@MainInterface@@UAEXHH@Z
-// PENDING BODY - the receiver is solved (spot_ is entry+0x24620, so `add ecx,
-//   0x24620` is `spot_.check(...)`) and the body is one line and a guard, but
-//   it ends in Console::end_my_turn (0x005169F0) and console.h does not
-//   declare that method yet. HANDOFF to console.h: name end_my_turn and this
-//   becomes `int result = spot_.check(a1, a2, &a2, 0); if (result != -1 &&
-//   a2 == 5) ConsoleGlobal.end_my_turn();`
-// size      53 bytes
-// prototype void (__thiscall ?on_iface_left_down@MainInterface@@QAEXHH@Z)(MainInterface* this, int, int)
-// callers   0   call targets   2
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x005169F0 0x005FAB00
 void MainInterface::on_iface_left_down(int a1, int a2) {
-    typedef void(__fastcall *pending)(MainInterface *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CF40))(
-        this, nullptr, a1, a2);
+    if (spot_.check(a1, a2, &a2, 0) != -1 && a2 == 5)
+        ConsoleGlobal.end_my_turn();
 }
 
 // ORIGINAL: 0x0045CDC0 ?on_iface_left_click@MainInterface@@QAEXHH@Z 0x0045CDC0-0x0045CE72 BYTE_EXACT
@@ -377,26 +968,31 @@ void MainInterface::on_iface_right_click(int x, int y) {
     }
 }
 
-// PENDING 0x0045CCB0 ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z 0x0045CCB0-0x0045CD75
+// Group0 dispatches the primary window's virtual on_redraw slot12.
+// Its secondary receiver is adjusted by the declared C++ base, not offsets.
+// ORIGINAL: 0x0045CCB0 ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z 0x0045CCB0-0x0045CD75 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/maininterface.h", "git:f7bbce35:src/unrecovered/0045ccb0.cpp"], "reason": "Original secondary interface receiver, spot hit test and mapped owner callbacks identify this MainInterface operation; compatible historical seed and its obligations remain retained."}
 // symbol    ?on_iface_group_clicked@MainInterface@@UAEXHHH@Z
-// PENDING BODY - the receiver is solved and the switch is transcribable, but
-//   its `a1 == 0` arm calls the front's PRIMARY vtable slot 12, which is
-//   on_redraw (0x0045BC50, 2274 lines, unhomed) and the call is
-//   `mov edx,[ecx-0xa14] / add ecx,-0xA14 / call [edx+0x30]` - a dispatch, so
-//   on_redraw would have to be virtual to reproduce it. HANDOFF: home
-//   on_redraw first, decide virtuality second; this then spells directly.
-//   Everything else in the arm is named - ConsoleGlobal.editor_paints,
-//   MainInterfaceGlobal.draw_edit_pane, WorldWin's two map setters.
-// size      197 bytes
-// prototype void (__thiscall ?on_iface_group_clicked@MainInterface@@QAEXHHH@Z)(MainInterface* this, int, int, int)
-// callers   0   call targets   5
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0045BC50 0x0045B550 0x004C3990 0x004C3950 0x004E0A50
-void MainInterface::on_iface_group_clicked(int a1, int a2, int a3) {
-    typedef void(__fastcall *pending)(MainInterface *, void *, int, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CCB0))(
-        this, nullptr, a1, a2, a3);
+void MainInterface::on_iface_group_clicked(int group, int, int selected) {
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 0 || selected < 0) return;
+    if (group == 0) { on_redraw(); return; }
+    const int value = selected - 1000;
+    if (group == 2) {
+        if (value >= 17) {
+            int tool = value - 17;
+            for (int index = 0; index < MaxTerrainNum; ++index)
+                if (!Terraforming[index].bit && index <= tool) ++tool;
+            ConsoleGlobal.editor_paints(tool + 6);
+        } else ConsoleGlobal.editor_paints(value - 11);
+        return;
+    }
+    if (group == 3) {
+        MapEditorBrushId = value - 36;
+        MainInterfaceGlobal.draw_edit_pane();
+        return;
+    }
+    if (value == 6) WorldClimateWorldWin.set_world_map();
+    else WorldClimateWorldWin.set_detail_map();
 }
 
 // ORIGINAL: 0x0045CF80 ?on_iface_right_down@MainInterface@@QAEXHH@Z 0x0045CF80-0x0045CFFD
@@ -480,36 +1076,6 @@ void MainInterface::on_iface_mouse_move(int a1, int a2) {
         redraw_complete();
     }
 }
-
-// PENDING 0x0045CA40 ?on_status@MainInterface@@QAEXH@Z 0x0045CA40-0x0045CC78
-// symbol    ?on_status@MainInterface@@UAEXH@Z
-// PENDING BODY - slot 0 of the interface table, 568 bytes, and the reason
-//   IfaceRegistryEntry's slot 0 links at all. It takes the ENTRY as `this`
-//   like the rest of the table: `lea esi,[edi+0x3ec]` is flat_button_[0] and
-//   `lea ecx,[edi-0xa14]` is the front, both read off edi = the subobject.
-//   The artifact at src/recovered/units/0045ca40.cpp is a raw-offset
-//   transcription written against the front, so it cannot be dropped in
-//   until its offsets are rebased onto the entry.
-// size      568 bytes
-// prototype void (__thiscall ?on_status@MainInterface@@QAEXH@Z)(MainInterface* this, int)
-// callers   0   call targets   8
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x00403830 0x0045BC50 0x0050F440 0x005D6310 0x00616730
-void MainInterface::on_status(int a1) {
-    typedef void(__fastcall *pending)(MainInterface *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0045CA40))(this,
-                                                                      nullptr,
-                                                                      a1);
-}
-
-// 0x0045D170 ?on_iface_button_clicked@MainInterface@@QAEXH@Z stays in
-// pending_bodies.cpp, which already defines the override as a forwarder: the
-// 257-byte switch over the five button ids (0x3EB menu, 0x3EC multiplayer,
-// 0x3F0/0x3F1 demote, 0x3F2 promote) reaches three globals this tree has not
-// named yet (0x009380DC, 0x007FD648, 0x00952858), and veh.h cannot be read
-// here - its `range` collides with general.h's. It touches no member, so the
-// entry-vs-front receiver question does not arise.
 
 // Eight faction foreground colors, independently paired with eight shadows.
 // load_faction_art4537D9/4537E8 writes the two banks and load_vehicles
@@ -693,8 +1259,7 @@ void MainInterface::timer_callback_daemon(int a1) {
         }
         alert_ += 1;
         UnionRect(&local,
-                  reinterpret_cast<RECT *>(&field_DE0_),
-                  reinterpret_cast<RECT *>(&field_DF0_));
+                  &menu_animation_bounds_, &multiplayer_animation_bounds_);
         GraphicWin::soft_update(&local);
         break;
     }
@@ -707,7 +1272,6 @@ void MainInterface::timer_callback_daemon(int a1) {
 // Bind its start; the exact historical allocation remains to be checked.
 // RECOVERY_OBJECT: v1 0x007AE778 ?IfaceIdToSlotStorage@@3PAHA
 int IfaceIdToSlotStorage[30];
-static int *const IfaceRegistry = (int *)0x007AE7F0;
 // RECOVERY_OBJECT: v1 0x007D392C ?ActiveIfaceIdStorage@@3HA
 int ActiveIfaceIdStorage;
 
@@ -823,7 +1387,7 @@ void MainInterface::on_scrolling(int a1, int a2) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
         if (target != 0) {
             target->on_iface_scrolling(a1, a2);
         }
@@ -900,7 +1464,7 @@ void MainInterface::on_left_double_click(int a1, int a2) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
         if (target != 0) {
             target->on_iface_left_double_click(a1, a2);
         }
@@ -974,7 +1538,7 @@ void MainInterface::on_right_double_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
         if (target != 0) {
             target->on_iface_right_double_click(a1, a2);
         }
@@ -1048,7 +1612,7 @@ void MainInterface::on_left_up(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[group];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[group];
         if (target) {
             target->on_iface_left_up(a1, a2);
         }
@@ -1124,7 +1688,7 @@ void MainInterface::on_left_click(int a1, int a2) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
         if (target != 0) {
             target->on_iface_left_click(a1, a2);
         }
@@ -1198,7 +1762,7 @@ void MainInterface::on_right_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
         if (target != 0) {
             target->on_iface_right_click(a1, a2);
         }
@@ -1272,7 +1836,7 @@ void MainInterface::on_left_down(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[group];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[group];
         if (target) {
             target->on_iface_left_down(a1, a2);
         }
@@ -1346,7 +1910,7 @@ void MainInterface::on_right_down(int a1, int a2) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
         if (target != 0) {
             target->on_iface_right_click(a1, a2);
         }
@@ -1424,7 +1988,7 @@ int MainInterface::on_button_pressed(int a1) {
         int index1 = ActiveIfaceIdStorage;
         int index2 = IfaceIdToSlotStorage[index1];
         IfaceRegistryEntry *obj =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[index2];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[index2];
         if (obj != 0) {
             return obj->on_iface_button_pressed(a1);
         }
@@ -1505,7 +2069,7 @@ void MainInterface::on_button_toggled(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
         if (target != 0) {
             target->on_iface_button_toggled(a1, a2);
         }
@@ -1514,7 +2078,6 @@ void MainInterface::on_button_toggled(int a1, int a2) {
 
 
 // ORIGINAL: 0x0045C8B0 ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z 0x0045C8B0-0x0045C8E6 FILE BYTE_EXACT
-// symbol    ?on_dialog_back_draw@MainInterface@@UAEHPAVGraphicWin@@@Z
 // symbol    ?on_dialog_back_draw@MainInterface@@QAEHPAVGraphicWin@@@Z
 // size      54 bytes
 // prototype int (__thiscall ?on_dialog_back_draw@MainInterface@@QAEHPAUGraphicWin@@@Z)(MainInterface* this, GraphicWin*)
@@ -1582,16 +2145,15 @@ int MainInterface::on_dialog_back_draw(GraphicWin* a1) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index2 = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *obj =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[index2];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[index2];
         if (obj != 0) {
-            return obj->on_dialog_back_draw(a1);
+            return obj->on_iface_dialog_back_draw(a1);
         }
     }
     return 0;
 }
 
 // ORIGINAL: 0x0045C8F0 ?on_dialog_item_back_draw@MainInterface@@QAEHPAUGraphicWin@@HHPAURECT@@@Z 0x0045C8F0-0x0045C932 FILE BYTE_EXACT
-// symbol    ?on_dialog_item_back_draw@MainInterface@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // symbol    ?on_dialog_item_back_draw@MainInterface@@QAEHPAVGraphicWin@@HHPAUtagRECT@@@Z
 // size      66 bytes
 // prototype int (__thiscall ?on_dialog_item_back_draw@MainInterface@@QAEHPAUGraphicWin@@HHPAURECT@@@Z)(MainInterface* this, GraphicWin*, int, int, RECT*)
@@ -1660,9 +2222,9 @@ int MainInterface::on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT
         int idx1 = ActiveIfaceIdStorage;
         int idx2 = IfaceIdToSlotStorage[idx1];
         IfaceRegistryEntry *obj =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[idx2];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[idx2];
         if (obj != 0) {
-            return obj->on_dialog_item_back_draw(a1, a2, a3, a4);
+            return obj->on_iface_dialog_item_back_draw(a1, a2, a3, a4);
         }
     }
     return 0;
@@ -1688,7 +2250,7 @@ int MainInterface::on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT
 void MainInterface::on_mouse_move(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int mid = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *obj = reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[mid];
+        IfaceRegistryEntry *obj = reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[mid];
         if (obj != 0) {
             obj->on_iface_mouse_move(a1, a2);
         }
@@ -1761,7 +2323,7 @@ void MainInterface::on_mouse_move(int a1, int a2) {
 void MainInterface::on_group_clicked(int a1, int a2, int a3) {
     if (WorldClimateSkipTerrainClear != 1u) {
         IfaceRegistryEntry *target = reinterpret_cast<IfaceRegistryEntry **>(
-            IfaceRegistry)[IfaceIdToSlotStorage[ActiveIfaceIdStorage]];
+            InterfaceRegistry)[IfaceIdToSlotStorage[ActiveIfaceIdStorage]];
         if (target != 0) {
             target->on_iface_group_clicked(a1, a2, a3);
         }
@@ -1791,7 +2353,7 @@ void MainInterface::on_mouse_leave(int a1, int a2) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
         if (target != 0) {
             target->on_iface_mouse_leave(a1, a2);
         }
@@ -1865,7 +2427,7 @@ void MainInterface::on_selected(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[interface_index];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
         if (target != 0) {
             target->on_iface_selected(a1, a2);
         }
@@ -1966,7 +2528,7 @@ void MainInterface::on_scrolled(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[group];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[group];
         if (target) {
             target->on_iface_scrolled(a1, a2);
         }
@@ -2044,9 +2606,9 @@ void MainInterface::on_button_clicked(int a1) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
         IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(IfaceRegistry)[subindex];
+            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
         if (target != 0) {
-            target->vslot_13(a1);
+            target->on_iface_button_clicked(a1);
         }
     }
 }

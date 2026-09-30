@@ -1,0 +1,28 @@
+{
+  "event_id": "dc6a7608eba22dc5453ea363fdfc3e112be81537a3ddf42ff5238dfe9aa8f3e7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_maininterface_redraw_complete.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator-reviewed integration of genuine MainInterface11 requires removing duplicated original-address forwarding definitions in pending_bodies and routing existing system_init through actual MainInterface::init; preserve source identities, seeds and claims. Independent review corrected init slot62 redraw and multiplayer readiness/flag handling. Host control uses extracted actual C++ body, not game/runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5828672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5f73a9f7a9d5dceacbf27a3082586d6cb6a0f6bce8ce02507853bbadce140980",
+  "request_id": "maininterface-native-owner-integration-closure",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:maininterface-owner-coverage"
+}

@@ -65,13 +65,9 @@ class BattleWin : public IfaceRegistryEntry {
   void on_iface_selected(int, int);
   // (group, x, y): the image tests only the first and forwards the other two.
   void on_iface_group_clicked(int group, int x_coord, int y_coord);
-  // Slot 13, 0x00422DC0. The catalogue names it on_iface_button_clicked; it
-  // keeps the base's `vslot_13` spelling so that it overrides the slot (the
-  // image's table holds it at 0x34) rather than shadowing it with a new
-  // non-virtual member. BattleWin calls MainInterface's same-named body
-  // DIRECTLY from inside it, which is why MainInterface's own slot 13 cannot
-  // take that name - BattleWin's can, because nothing calls it but the table.
-  void vslot_13(int button_id);
+  // Slot13, 0x00422DC0: release this mode, then call MainInterface's callback
+  // directly through explicit qualification rather than virtual dispatch.
+  void on_iface_button_clicked(int button_id);
 
   // DEFINED IN battlewin.cpp, not empty: its marker claims 27 image bytes and
   // the body was `{ ; }` - the image installs the SubInterface vtable, builds

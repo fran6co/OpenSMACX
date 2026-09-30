@@ -127,7 +127,7 @@ void CouncWin::on_button_clicked(int button_id) {
 
 /*
 // ORIGINAL: 0x004270F0 ?on_iface_button_clicked@CouncWin@@QAEXH@Z 0x004270F0-0x0042710D BYTE_EXACT
-// symbol    ?vslot_13@CouncWin@@UAEXH@Z
+// symbol    ?on_iface_button_clicked@CouncWin@@UAEXH@Z
 // size      29 bytes
 // prototype void (__thiscall ?on_iface_button_clicked@CouncWin@@QAEXH@Z)(CouncWin* this, int)
 // callers   0   call targets   0
@@ -143,7 +143,7 @@ Status: Complete
 //   whole body is one unqualified virtual call once the front is named: the
 //   `Win *front = this` conversion is where the -0xa14 comes from, and
 //   `on_button_clicked(a1)` is the image's `call dword ptr [eax + 0xb0]`.
-void CouncWin::vslot_13(int button_id) {
+void CouncWin::on_iface_button_clicked(int button_id) {
     on_button_clicked(button_id);
 }
 
