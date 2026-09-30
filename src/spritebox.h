@@ -44,7 +44,10 @@ class SpriteBoxList : public StringList {
 // need interpretation; the size assertion alone does not prove the model.
 class SpriteBox : public virtual GraphicWin, public virtual Dialog {
  public:
-  typedef int (__cdecl *DrawCallback)(Sprite *, GraphicWin *, int, int, int);
+  // Original draw_item (0x00610ECA) and BasePop::on_redraw (0x00604C37)
+  // call five cdecl arguments, clean 20 bytes, and discard the result.
+  // Tutorial callbacks likewise have no receiver or result contract.
+  typedef void (__cdecl *DrawCallback)(Sprite *, GraphicWin *, int, int, int);
   typedef int (__cdecl *ClickCallback)(int);
   void set_redraw_callback(DrawCallback callback) { redraw_callback_ = callback; }
   // 0x00611380, row redraw entry retained in leaf_recoveries.cpp.

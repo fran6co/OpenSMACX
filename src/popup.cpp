@@ -1123,11 +1123,11 @@ extern int BaseAtKeyPollFlag;  // 0x009BC070
 
 // ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0048ceb0.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original vehicle draw callback is installed by popv in BasePop draw callback storage3168; real Sprite and GraphicWin pointer formals, GraphicWin Buffer base and source-owned scale globals express its actual owner relationships."}
-// symbol    ?veh_sprite_draw@@YAHPAVSprite@@PAVGraphicWin@@HHH@Z
-int __cdecl veh_sprite_draw(Sprite *, GraphicWin *owner, int vehicle,
+// symbol    ?veh_sprite_draw@@YAXPAVSprite@@PAVGraphicWin@@HHH@Z
+void __cdecl veh_sprite_draw(Sprite *, GraphicWin *owner, int vehicle,
                            int x, int y) {
     const int scale = (SpriteScaleNumerator << 4) / SpriteScaleDenominator - 16;
-    return veh_draw(owner ? static_cast<Buffer *>(owner) : nullptr,
+    veh_draw(owner ? static_cast<Buffer *>(owner) : nullptr,
                     vehicle, x, y, scale, 0, 0);
 }
 

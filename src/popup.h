@@ -303,5 +303,5 @@ void __cdecl popup_wave_callback(BasePopTextBlock *popup, int);
 int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
 int __cdecl popp(const char *caption, const char *label, int flags,
                  const char *picture, int (__cdecl *callback)());
-int __cdecl veh_sprite_draw(Sprite *sprite, GraphicWin *owner, int vehicle,
+void __cdecl veh_sprite_draw(Sprite *sprite, GraphicWin *owner, int vehicle,
                             int x, int y);
