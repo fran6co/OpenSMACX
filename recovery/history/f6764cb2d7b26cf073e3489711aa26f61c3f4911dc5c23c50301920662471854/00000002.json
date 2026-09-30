@@ -1,0 +1,19 @@
+{
+  "event_id": "5be05d16cccf7498644f613d2b6961f7843c6abbeff5e05196b9f0b307a50d7a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.h"
+    ],
+    "evidence": [
+      "Original RadioButton60D1F0,CheckBox60E800,SpriteBox610540 read parent Win iFlags_ at98, testing1000 before adding100000 to initialization flags. Authorize only friendship for RadioButton,CheckBox,SpriteBox or one const typed flags accessor; no storage/layout/callback/ABI or outside-function changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "afc8dea7de8aad32a6e5609243a17bfb650a70f9c3d1730812f5244585c175bd",
+  "request_id": "dialog-controls-parent-window-flags",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:dialog-control-coverage-wave"
+}
