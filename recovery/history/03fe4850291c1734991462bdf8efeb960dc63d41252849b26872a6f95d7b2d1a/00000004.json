@@ -1,0 +1,21 @@
+{
+  "event_id": "c766d72b4d58ee4c9989c73516d49f7474d607726239d1499a9e71e10db0240c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp",
+      "src/designwin.h"
+    ],
+    "evidence": [
+      "Pinned original TutWin::tour7 4BAF20 pushes DesignWin0x71F2B0-owned full RECT addresses: B0C/71FDBC at4BB176 to iface_rect4BC5A0; B2C/71FDDC at4BB0DA to des_rect4BC690; B4C/71FDFC at4BB33C, BAC/71FE5C at4BB30E and BBC/71FE6C at4BB325 to do_des4BA9F0; CBC/71FF6C at4BB1C4 to iface_rect. Each helper consumes four coordinates. No invented FlatButton offset12BC rectangle.",
+      "Authorize only replacing the six independently observed four-dword DesignWin groups B0C,B2C,B4C,BAC,BBC,CBC with actual RECT members at unchanged offsets and size, plus existing DesignWin.cpp consumers of those old fields updated to the respective named coordinates. No other methods, lifecycle, fields or layout changes. TutWin already authorized to use the real members. Preserve historical claims and source discoveries; scoped and final integrated compilation/link and touched protected bodies require fresh verification. No task baseline reset or acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f3fb0e661d9d4917181e3d5be2376766ea60f543fba7b654bcf50296889c7535",
+  "request_id": "tutwin-design-rect-members-20260930",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
