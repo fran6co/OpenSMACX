@@ -1,0 +1,19 @@
+{
+  "event_id": "5fac08325a00ea7420516afbc12f0b64d868b567439cea9644b91cec9311c261",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/reportif.h"
+    ],
+    "evidence": [
+      "Original FameWin init448400 and painter448D90 read existing ReportIfGlobal+1E230 monitor flag and +1E190/+1E19C/+1E1B4 Font pointers. Declarations are private, not public as earlier context incorrectly reported. Grant only friend class FameWin in ReportIf header, preserving layout/vtable/declarations and all other source; no duplicate globals or broader public field exposure. Fresh affected ReportIf historical checks required before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "64591ff3c1ee4aaa391637f7928114aab80fd252eda9a2a74ad00630f50a1f7f",
+  "request_id": "famewin-reportif-owner-access-20260930",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:famewin-owner-coverage-wave"
+}
