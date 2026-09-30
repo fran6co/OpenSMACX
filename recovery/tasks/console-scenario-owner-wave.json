@@ -1,0 +1,85 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b1c19480e277daa7c6ecc5e01081ca1cb9b56527",
+  "editable_files": [
+    "src/console.cpp",
+    "src/console.h",
+    "recovery/tests/test_console_scenario_behavior.py"
+  ],
+  "evidence": [
+    "Fresh native current-source partition confirms thirteen seed-only Console editor methods absent current product implementation: personality4DBD20,strategy4DBFB0,rules4DC230,scenario_rules4DC520,scenario_victory4DC860,difficulty4DD6F0,reload4E0290,eliminate4E05E0,tech4DFAD0,view4DF4F0,terrain4E0B00,natural4E14D0,vehicle4DED00. Existing Console owner-wave subjects do not include these entries; inactive retained disband WIP is already superseded on master and must be preserved untouched.",
+    "Work in a fresh isolated current-master checkout, separate from ReportWin and QuayleWin. Scope is exactly these owner operations and their declarations/tests, not broader Console migration. Determine argument roles, globals, pointers and member types from original instructions and typed producers; no fixed addresses, fabricated globals, raw self-offsets, copied code or manual vtables.",
+    "Root alone publishes native source bindings/claims, resolves outside-owner dependencies, mutates Git and task journals and integrates after review/build/link. No manual ORIGINAL/BYTE_EXACT modifications or seed deletion; discoveries and unfinished source must be preserved. Complete all selected methods with original behavior before prioritizing matching; do not silently skip hard cases or apply behavior fixes."
+  ],
+  "intent": "Recover all thirteen missing Console scenario/editor operations in one compiling genuine-C++ ownership wave, preserving original behavior, source identities, seeds and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5094688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5095344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5095984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5096736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5097568,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5101296,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5112464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5113312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5110480,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5108976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5114624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5117136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5106944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "console-scenario-owner-wave"
+}
