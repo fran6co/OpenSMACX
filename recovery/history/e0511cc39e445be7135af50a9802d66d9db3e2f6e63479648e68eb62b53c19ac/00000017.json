@@ -1,0 +1,24 @@
+{
+  "event_id": "6249699acde68eadca1f6ce3a64dd6ef4e7ee5130efa99dd60ce4c68956ebb78",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Original planet_busting500B60 writes90F7D4 before callingboom(x,y,20); boomuses the dword to index its animation frame tables. Authorize one source-owned provisional BoomAnimationLevel ordinary int at the veh owner shared through veh.h. It is separate from boom lazy-static compiler initguard90F7D8 and not a field of the Flic object.",
+      "Added producer original remains a preserved follow-up obligation; current worker assignment may add the shared cell and its source evidence but must not silently transplant or implement planet_busting outside reviewed complete original control flow. No reset of original baseline or claims, no executable-address aliases."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5245792,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "881456a6ea9e0f9ee28373a7c563f2ca8ce5eaadd3dd35b1bcd932e62839368e",
+  "request_id": "boom-level-producer-storage-dependency",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
