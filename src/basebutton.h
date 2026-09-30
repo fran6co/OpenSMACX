@@ -81,6 +81,7 @@ class BaseButton : public GraphicWin {
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
   void set(int value);
+  int selected_state() const { return static_cast<int>(field_A18_); }
   // The base governor panel clears this auxiliary state when a priority
   // becomes unavailable, then repaints through Win's virtual redraw slot.
   void clear_auxiliary_state_for_disabled_button() {

@@ -376,9 +376,9 @@ int &base_yield_intake(Base &base, int resource, bool second) {
 }
 int base_yield_satellite(int faction, int resource) {
     switch (resource) {
-    case 0: return base_yield_signed_bits(PlayersData[faction].satellites_nutrient);
-    case 1: return base_yield_signed_bits(PlayersData[faction].satellites_mineral);
-    default: return base_yield_signed_bits(PlayersData[faction].satellites_energy);
+    case 0: return base_yield_signed_bits(PlayersData[faction].satellites_[0]);
+    case 1: return base_yield_signed_bits(PlayersData[faction].satellites_[1]);
+    default: return base_yield_signed_bits(PlayersData[faction].satellites_[2]);
     }
 }
 bool base_yield_has_facility(int facility) {
@@ -3414,7 +3414,7 @@ void __cdecl base_minerals() {
         eco_dmg_reduction++;
     }
     BaseCurrent->eco_damage += (BaseCurrent->mineral_intake_2 - planet_eco_factor
-        - range(PlayersData[faction_id].satellites_mineral, 0, BaseCurrent->population_size))
+        - range(PlayersData[faction_id].satellites_[1], 0, BaseCurrent->population_size))
         / eco_dmg_reduction;
     if (is_human(faction_id)) {
         BaseCurrent->eco_damage += ((PlayersData[faction_id].major_atrocities
@@ -3772,9 +3772,9 @@ void __cdecl base_psych() {
 
             BaseCurrent->talent_total = base_yield_add(BaseCurrent->talent_total, project_talents);
             if (base_psych_project_owned(SecretProject.longevity_vaccine, faction)) {
-                if (PlayersData[faction].soc_category_pending.economics == 2)
+                if (PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] == 2)
                     BaseCurrent->drone_total = base_yield_sub(BaseCurrent->drone_total, 1);
-                if (PlayersData[faction].soc_category_pending.economics != 1)
+                if (PlayersData[faction].soc_category_pending.models_[SocialCategory::ECONOMICS] != 1)
                     BaseCurrent->drone_total = base_yield_sub(BaseCurrent->drone_total, 1);
             }
             if (punishment || BaseCurrent->nerve_staple_turns_left != 0) {
@@ -5639,4 +5639,205 @@ void __cdecl do_upgrade(int faction_id, int proto_id_new, int proto_id_old) {
     if (faction_id == ConsoleGlobal.faction_id_) {
         ConsoleGlobal.update_data(0);
     }
+}
+
+// Original score calculation clears all eight weights, then publishes the
+// aggregate after dividing the transcendence bonus among faction populations.
+// RECOVERY_OBJECT: v2 0x009A67DC 0x009A67E0 ?TranscendenceScoreBonus@@3HA 0x005ACBE0
+int TranscendenceScoreBonus;
+// RECOVERY_OBJECT: v2 0x009A67E0 0x009A6800 ?TranscendenceScoreWeights@@3PAHA 0x005ACBE0
+int TranscendenceScoreWeights[8];
+
+static int score_word_add(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
+}
+static int score_word_sub(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
+}
+static int score_word_mul(int left, int right) {
+    return static_cast<int>(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
+}
+
+// ORIGINAL: 0x005ACBE0 ?compute_score@@YAXHPAHPAHH@Z 0x005ACBE0-0x005AD3AD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005acbe0.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover all original faction-score branches, recursive updates and publication in the base/objective domain through genuine Base, PlayerData and Rules fields; original signed population, word wrapping, bonus order and malformed-state paths remain explicit."}
+// symbol    ?compute_score@@YAXHPAH0H@Z
+void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
+    if ((GameState & 8) && !recursive) return;
+    if (!total) total = &PlayersData[faction].unk_109;
+    if (!items) items = PlayersData[faction].score_items_;
+    *total = 0;
+    if (!recursive) PlayersData[faction].unk_107 = 0;
+    for (int item = 0; item < 9; ++item) items[item] = 0;
+
+    for (int base = 0; base < BaseCurrentCount; ++base) {
+        const int owner = Bases[base].faction_id_current;
+        if (owner == faction) {
+            items[0] = score_word_add(items[0], Bases[base].population_size);
+            set_base(base);
+            base_compute(0);
+            for (int other = 1; other < 8; ++other) {
+                // Original tests raw rule flags, not ExpansionEnabled.
+                if (!(Players[faction].rule_flags & 0x80) && !(Players[other].rule_flags & 0x80)) {
+                    if (!PlayersData[faction].sanction_turns && !PlayersData[other].sanction_turns)
+                        items[1] = score_word_add(items[1], BaseCommerceReceipts[other - 1]);
+                    else items[1] = score_word_add(items[1], 0);
+                }
+            }
+        } else if (!(PlayersData[faction].flags & 0x60000)) {
+            const uint32_t treaty = PlayersData[owner].diplo_treaties[faction];
+            if (treaty & 0x2000000) {
+                if (treaty & 1) items[0] = score_word_add(items[0], Bases[base].population_size);
+            } else if ((treaty & 1) && (GameRules & 0x1000)) {
+                items[0] = score_word_add(items[0], Bases[base].population_size / 2);
+            }
+        } else if (!(PlayersData[faction].diplo_treaties[owner] & 1) || !(GameRules & 0x1000)) {
+            items[0] = score_word_add(items[0], Bases[base].population_size / 2);
+        } else items[0] = score_word_add(items[0], Bases[base].population_size);
+    }
+    for (int technology = 0; technology < 89; ++technology)
+        if (has_tech(technology, faction)) items[2] = score_word_add(items[2], 1);
+    items[3] = score_word_mul(PlayersData[faction].theory_of_everything, 10);
+    int objective_points = static_cast<int>(ObjectiveAchievePts);
+    if (objective_points < 1) objective_points = 1;
+    items[6] = score_word_mul(num_objectives(faction, GameRules & 0x1000), objective_points);
+    for (int project = 0; project < 64; ++project) {
+        const int base = base_project(project);
+        if (base >= 0 && Bases[base].faction_id_current == faction)
+            items[4] = score_word_add(items[4], 25);
+    }
+
+    TranscendenceScoreBonus = 0;
+    for (int slot = 0; slot < 8; ++slot) TranscendenceScoreWeights[slot] = 0;
+    const int transcendence_base = SecretProject.ascent_to_transcendence;
+    if (transcendence_base >= 0) {
+        TranscendenceScoreBonus = 300;
+        const int scaled = score_word_mul(score_word_sub(1000, TurnCurrentNum), 2);
+        if (scaled >= 300) TranscendenceScoreBonus = scaled;
+        int own_weight = 0;
+        int aggregate = 0;
+        int leader = -1;
+        for (int candidate = 1; candidate < 8; ++candidate) {
+            if (Bases[transcendence_base].faction_id_current == candidate) {
+                leader = candidate;
+                aggregate = score_word_mul(PlayersData[candidate].pop_total, 2);
+                TranscendenceScoreWeights[candidate] = aggregate;
+                if (candidate == faction) own_weight = aggregate;
+                break;
+            }
+        }
+        for (int other = 1; other < 8; ++other) {
+            // Invalid/no leader leaves index -1, as in the original. Do not
+            // hide that malformed-state access or the possible zero divisor.
+            if (other != leader && (PlayersData[other].diplo_treaties[leader] & 1)) {
+                const int weight = PlayersData[other].pop_total;
+                aggregate = score_word_add(aggregate, weight);
+                TranscendenceScoreWeights[other] = weight;
+                if (other == faction) own_weight = score_word_add(own_weight, weight);
+            }
+        }
+        items[6] = score_word_mul(TranscendenceScoreBonus, own_weight) / aggregate;
+        // Original publishes aggregate only AFTER the signed division.
+        TranscendenceScoreWeights[0] = aggregate;
+    }
+
+    int diplomatic_bonus = score_word_mul(score_word_sub(500, TurnCurrentNum), 2);
+    items[7] = diplomatic_bonus < 0 ? 0 : diplomatic_bonus;
+    if (!(GameRules & 2)) items[7] = 0;
+    if ((GameState & 0x2000) && (GameRules & 2) && items[7]) {
+        int matching_population = 0;
+        int total_population = 0;
+        for (int base = 0; base < BaseCurrentCount; ++base) {
+            const int population = Bases[base].population_size;
+            total_population = score_word_add(total_population, population);
+            const int owner = Bases[base].faction_id_current;
+            if (owner == faction || ((PlayersData[owner].diplo_treaties[faction] & 1)
+                && (PlayersData[owner].diplo_treaties[faction] & 0x2000000)))
+                matching_population = score_word_add(matching_population, population);
+        }
+        if (total_population)
+            items[7] = score_word_mul(PlayersData[faction].score_items_[7], matching_population) / total_population;
+    } else {
+        items[7] = 0;
+        const uint32_t flags = PlayersData[faction].flags;
+        if (flags & 0x20000) {
+            int bonus = score_word_mul(score_word_sub(600, TurnCurrentNum), 2);
+            if (bonus < 200) bonus = 200;
+            items[7] = bonus;
+        } else if (flags & 0x40000) {
+            int bonus = score_word_mul(score_word_sub(600, TurnCurrentNum), 2);
+            if (bonus < 200) bonus = 200;
+            items[7] = bonus;
+        } else if (flags & 0x100000) {
+            int bonus = score_word_mul(score_word_sub(1000, TurnCurrentNum), 2);
+            if (bonus < 300) bonus = 300;
+            items[7] = bonus;
+        } else {
+            for (int other = 1; other < 8; ++other) {
+                if (PlayersData[other].flags & 0x20000) {
+                    if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameRules & 0x1000)) {
+                        int bonus = score_word_sub(600, TurnCurrentNum);
+                        if (bonus < 100) bonus = 100;
+                        items[7] = bonus;
+                    }
+                } else if (PlayersData[other].flags & 0x40000) {
+                    if ((PlayersData[faction].diplo_treaties[other] & 1) && (GameRules & 0x1000)) {
+                        int bonus = score_word_sub(600, TurnCurrentNum);
+                        if (bonus < 100) bonus = 100;
+                        items[7] = bonus;
+                    }
+                }
+            }
+        }
+    }
+    if (!(factions_status_byte(1) & (1u << (faction & 31)))) {
+        items[7] = 0;
+        items[8] = 0;
+    }
+
+    int required = ObjectiveReqVictory;
+    if ((required < 9000 || static_cast<int>(ObjectivesSuddenDeathVictory) < 9000)
+        && !(GameState & 0x80000)) {
+        // Intentionally clears the faction's GLOBAL score cache even when
+        // caller supplied a separate local items array in recursive mode.
+        for (int item = 0; item < 9; ++item)
+            if (item != 6) PlayersData[faction].score_items_[item] = 0;
+    }
+    if (!PlayersData[faction].score_items_[7]) {
+        if (!required) {
+            int best = most_objectives(0, 0);
+            if (best < 1) best = 1;
+            else best = most_objectives(0, 0); // Original calls twice here.
+            if (num_objectives(faction, GameRules & 0x1000) >= best)
+                items[7] = static_cast<int>(VictoryAchieveBonusPts);
+        } else {
+            const int mine = num_objectives(faction, GameRules & 0x1000);
+            required = ObjectiveReqVictory; // Original re-reads after call.
+            if (mine >= required) items[7] = static_cast<int>(VictoryAchieveBonusPts);
+        }
+    }
+    for (int total_item = 0; total_item < 9; ++total_item)
+        *total = score_word_add(*total, items[total_item]);
+    if (MapNativeLifeForms != 1 && !(GameState & 0x10)) {
+        const int difference = score_word_mul(score_word_sub(static_cast<int>(MapNativeLifeForms), 1), *total) / 4;
+        items[5] = difference;
+        *total = score_word_add(*total, difference);
+    }
+    if (GameState & 0x80000) {
+        if (recursive) return;
+        int best = 0;
+        int other_total;
+        for (int other = 1; other < 8; ++other) {
+            int other_items[9];
+            compute_score(other, &other_total, other_items, 1);
+            if (other_total > best) best = other_total;
+        }
+        if (*total >= best) {
+            int bonus = static_cast<int>(VictoryAchieveBonusPts);
+            if (!bonus) bonus = 1000;
+            items[7] = bonus; // Original does NOT add this late bonus to total.
+        }
+    } else if (recursive) return;
+    PlayersData[faction].unk_107 = *total;
+    if ((GameRules & 0x400) && !(GameState & 0x20))
+        PlayersData[faction].unk_107 = score_word_mul(*total, 2);
 }

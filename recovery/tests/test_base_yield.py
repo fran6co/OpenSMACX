@@ -180,8 +180,8 @@ void reset(){
     switch_on_crop=switch_on_facility=0;
 }
 void fast_path(){
-    reset();BaseCurrent->state=0x8000;PlayersData[3].satellites_nutrient=3;
-    PlayersData[3].satellites_mineral=4;PlayersData[3].satellites_energy=5;
+    reset();BaseCurrent->state=0x8000;PlayersData[3].satellites_[0]=3;
+    PlayersData[3].satellites_[1]=4;PlayersData[3].satellites_[2]=5;
     tile_yield[0][0]=2;tile_yield[0][1]=3;tile_yield[0][2]=4;
     base_yield();
     require(farm_calls==1 && resource_calls==4 && best_calls==0 && tech_calls==0);
@@ -197,7 +197,7 @@ void fast_path(){
 void satellites(){
     for(int population:{1,3,7})for(int full:{0,1,2,3,4}){
         reset();BaseCurrent->state=0;BaseCurrent->population_size=population;BaseCurrent->specialist_total=population;
-        PlayersData[3].satellites_nutrient=3;PlayersData[3].satellites_mineral=4;PlayersData[3].satellites_energy=5;
+        PlayersData[3].satellites_[0]=3;PlayersData[3].satellites_[1]=4;PlayersData[3].satellites_[2]=5;
         if(full==1)Bases[0].facilities_built[29/8]|=1<<(29%8);
         if(full>=2){Bases[1].faction_id_current=full==4?5:3;if(full==3)SecretProject.cloudbase_academy=1;else SecretProject.space_elevator=1;}
         base_yield();
@@ -312,8 +312,8 @@ void replacements(){
     }
 }
 void callback_reloads(){
-    reset();BaseCurrent->state=0;PlayersData[3].satellites_nutrient=3;
-    PlayersData[3].satellites_mineral=4;PlayersData[3].satellites_energy=5;
+    reset();BaseCurrent->state=0;PlayersData[3].satellites_[0]=3;
+    PlayersData[3].satellites_[1]=4;PlayersData[3].satellites_[2]=5;
     tile_yield[0][0]=2;tile_yield[0][1]=3;tile_yield[0][2]=4;
     Bases[1]=Bases[0];Bases[1].faction_id_current=4;
     Bases[1].nutrient_intake_2=200;Bases[1].mineral_intake_2=20;Bases[1].energy_intake_2=30;Bases[1].unused_intake_2=40;
@@ -326,7 +326,7 @@ void callback_reloads(){
     // accumulating the first call's published totals. Its faction is now4.
     resource_calls=0;base_yield();require(resource_calls==4);
     require(Bases[1].nutrient_intake_2==2 && Bases[1].mineral_intake_2==3 && Bases[1].energy_intake_2==4 && Bases[1].unused_intake_2==0);
-    reset();BaseCurrent->state=0;PlayersData[3].satellites_nutrient=3;PlayersData[3].satellites_mineral=4;PlayersData[3].satellites_energy=5;
+    reset();BaseCurrent->state=0;PlayersData[3].satellites_[0]=3;PlayersData[3].satellites_[1]=4;PlayersData[3].satellites_[2]=5;
     Bases[1]=Bases[0];Bases[1].faction_id_current=4;Bases[1].population_size=7;Bases[1].nutrient_intake_2=5;
     Bases[0].facilities_built[29/8]|=1<<(29%8); // pre-callback selected base has facility
     switch_on_facility=1;base_yield();

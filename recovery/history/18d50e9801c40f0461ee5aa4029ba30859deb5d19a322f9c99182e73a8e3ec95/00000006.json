@@ -1,0 +1,29 @@
+{
+  "event_id": "4a5d3549dde9a81c8770e1d9624e3963452e38943f0d2d8b67d632e1da9d007b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.h",
+      "src/popmenu.cpp",
+      "src/popmenu.h",
+      "src/prodpicker.h",
+      "src/pulldown.h"
+    ],
+    "evidence": [
+      "The complete six BaseWin dependent bodies require bounded inline current-clip/selected-slot/picker-state accessors, all original existing storage. Original queue uses free popm59D690; original frame plus cold teardown establish one genuine PopMenu local with existing PopupStartCaption and natural member/base destruction. Recover its full owner body, retain seed and all historical claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5887632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "442efecfb94a90ba32a936261f66bc00bea204d43ada8639c307e3a83d4fb7a9",
+  "request_id": "basewin-complete-queue-menu-and-owned-accessors",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:basewin-owner-coverage"
+}

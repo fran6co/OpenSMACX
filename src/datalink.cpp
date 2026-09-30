@@ -44,7 +44,6 @@
 #include "texture.h"
 
 extern int MainInterfaceTileFlag;
-extern int ReportIfTechFocus;
 // RECOVERY_OBJECT: v2 0x00691B60 0x00691B66 ?DatalinkHelpFileText@@3PADA 0x00430770
 char DatalinkHelpFileText[] = "HELPX";
 // RECOVERY_OBJECT: v2 0x00691B68 0x00691B70 ?DatalinkBlurbFileText@@3PADA 0x00430B30
@@ -1040,7 +1039,7 @@ void Datalink::draw_tech() {
     // technology title reaches write_cent_l.
     write_cent_l(StringTemp, &title_rect_, strlen(StringTemp));
     ReportWinGlobal.reset();
-    ReportIfTechFocus = history_[0];
+    ReportWinGlobal.shared_research_focus() = history_[0];
     ReportIfGlobal.field_8_ = 2;
     ReportWinGlobal.draw_labs();
     StringTemp[0] = 0;

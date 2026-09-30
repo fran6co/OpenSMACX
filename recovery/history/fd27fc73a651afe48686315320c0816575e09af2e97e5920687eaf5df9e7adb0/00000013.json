@@ -1,0 +1,31 @@
+{
+  "event_id": "de9f7bd9dd6148dfcb3027b11cb7094527ae3ede901926c835f10526f1844a52",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/datalink.cpp"
+    ],
+    "evidence": [
+      "Independent original instruction review proves report globals are actual ReportWin/ReportIf subobjects and Datalink writes owned focus at ReportWin+FAB8. Authorize removing duplicate storage and original-address aliases while preserving original mappings, all claims, and genuine lifecycle.",
+      "Original social_ai 5B4831..483F enumerates256 combinations, 5B4A5C..4ACA writes four local model words, and anti/prerequisite failures jump directly to the outer increment5B5481. Authorize fixing recovery-induced wrong index, reversed prerequisite axes, OR condition and break-through evaluation, preserving original behavior."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5982096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4393776,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "423dbd6b7f8edab8001651d861cf573d50c616da128e13c28e02f48f1ee665e4",
+  "request_id": "report-owned-storage-and-social-enumeration",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:reportwin-owner-coverage"
+}

@@ -1,0 +1,23 @@
+{
+  "event_id": "5557949783e123ac72e6784d34fdf15bc2d99bbd628891f9472246b941179c16",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Native compilationof genuineaction_sat_attack identifies absent ReportIf::on_redraw4A3FC0. Exact95byte retainedseed is reset plus activecategory dispatch toexistingowned drawmethods; preserve seedclaim and nativebinding/measurement; genuine memberbody inalready authorized ReportIfTU, no addressforwarder."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4865984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "445c9c1fb7dbfe31a5fc3cbe823a9cebd26e829874dbc2282cf6bdd57e02eb26",
+  "request_id": "reportif-redraw-original-callee",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:reportwin-owner-coverage"
+}

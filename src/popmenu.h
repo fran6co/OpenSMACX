@@ -93,4 +93,5 @@ class PopMenu : public Popup {
   PullDown pull_down_;  // 0x537C
 };
 
-// BasePop::init is not recovered yet.
+// Opens one owning PopMenu and returns its selected slot.
+int __cdecl popm(char *section, int x, int y, int (__cdecl *poll)());

@@ -1,0 +1,45 @@
+{
+  "event_id": "617aaa84fe4eb62b7bac9f2f54995bf0472af31c572f84b6655b18bbf669af49",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/base.h",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Independent central source/instruction scout confirms fourteen ReportWin bodies reference four absent ordinary original callees. Authorize central domain-owned action_sat_attack in veh, score calculation in base, diplomacy_check in faction and satellite UI orchestration in existing reportwin TU. Preserve original identities, seeds, claims and unknowns; genuine behavior, no raw-address forwarding, no baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5043328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4850272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5950432,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5482880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8f7983a9767765eac674cd74fcd3d1b64716d9040141817969fb57b7848e5c12",
+  "request_id": "reportwin-linked-domain-dependencies",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:reportwin-owner-coverage"
+}

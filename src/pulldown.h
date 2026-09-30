@@ -63,6 +63,9 @@ class PullDown : public GraphicWin {
   int add_separator(int id);
   int rename_item(int id, char *text);
   int get_selected();
+  // ReportWin::right_menu performs the original signed upper-bound check;
+  // this accessor intentionally does not add a lower-bound check.
+  int item_id(int index) const { return items_[index].id; }
   // get_selected returns a slot, not its action ID. Cancellation must not
   // index before items_: the old status-menu seed confused these two values.
   int get_selected_id() {

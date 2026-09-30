@@ -40,6 +40,8 @@
 #include "font.h"
 #include "infowin.h"
 #include "worldwin.h"
+#include "reportif.h"
+#include "maininterface.h"
 
 #include "wave.h"
 #include <mmsystem.h>
@@ -9463,4 +9465,56 @@ void __cdecl action_oblit(int veh_id, int base_id) {
     if (Rules.tgl_oblit_base_atrocity != 0) {
         atrocity(veh_faction, base_former, 2, 0);
     }
+}
+
+// Orbital combat uses the four source-owned faction satellite counters.
+// ORIGINAL: 0x004CF480 ?action_sat_attack@@YAXHHHH@Z 0x004CF480-0x004CF73E
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004cf480.cpp", "image:0x004CF480-0x004CF73E complete instructions and outcome literals", "source:src/faction.h:PlayerData satellite array", "source:src/reportif.h", "source:src/maininterface.h"], "reason": "Recover orbital attack effects in the vehicle-action domain using real faction diplomacy, grammar, indexed satellite counters and report state. Original CRT randomness, parsing order, unchecked satellite indexing and popup outcomes are retained; existing popup and diplomacy seams remain separate obligations."}
+void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) {
+    if (!(PlayersData[attacker].diplo_treaties[target] & 0x10))
+        double_cross(attacker, target, -1);
+
+    if (attacker == ConsoleGlobal.faction_id_ || target == ConsoleGlobal.faction_id_) {
+        PluralityDefault = 0;
+        GenderDefault = Players[attacker].is_leader_female;
+        parse_says(0, Players[attacker].title_leader, -1, -1);
+        GenderDefault = Players[attacker].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[attacker].name_leader, -1, -1);
+        GenderDefault = Players[attacker].noun_gender;
+        PluralityDefault = Players[attacker].is_noun_plural;
+        parse_says(2, Players[attacker].noun_faction, -1, -1);
+
+        PluralityDefault = 0;
+        GenderDefault = Players[target].is_leader_female;
+        parse_says(3, Players[target].title_leader, -1, -1);
+        GenderDefault = Players[target].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(4, Players[target].name_leader, -1, -1);
+        GenderDefault = Players[target].noun_gender;
+        PluralityDefault = Players[target].is_noun_plural;
+        parse_says(5, Players[target].noun_faction, -1, -1);
+        parse_say(6, reinterpret_cast<int>(Facility[type == 4 ? 41 : 65 + type].name), -1, -1);
+        parse_says(7, Players[target].formal_name_faction, -1, -1);
+    }
+
+    // Original CRT rand, signed idiv remainder, exactly once after parsing.
+    // No random() substitution, counter clamping or invalid-type filtering.
+    if (rand() % 100 < 50) {
+        if (type == 4) set_fac(41, base_id, 0);
+        else --PlayersData[target].satellites_[type];
+        ++PlayersData[attacker].sat_odp_deployed;
+        if (attacker == ConsoleGlobal.faction_id_)
+            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "WEKILLEDIT", 0, "satbat_sm.pcx", 0);
+        else if (target == ConsoleGlobal.faction_id_)
+            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "THEYKILLEDIT", 0, "satbat_sm.pcx", 0);
+    } else {
+        --PlayersData[attacker].satellites_[3];
+        if (attacker == ConsoleGlobal.faction_id_)
+            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "WEMUFFEDIT", 0, "satbat_sm.pcx", 0);
+        else if (target == ConsoleGlobal.faction_id_)
+            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "THEYMUFFEDIT", 0, "satbat_sm.pcx", 0);
+    }
+    if (ReportIfGlobal.field_8_ == 6 && IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5)
+        ReportIfGlobal.on_redraw();
 }

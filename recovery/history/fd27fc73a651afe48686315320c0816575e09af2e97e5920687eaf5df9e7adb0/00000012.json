@@ -1,0 +1,20 @@
+{
+  "event_id": "423dbd6b7f8edab8001651d861cf573d50c616da128e13c28e02f48f1ee665e4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_psych.py",
+      "src/socialwin.cpp"
+    ],
+    "evidence": [
+      "Complete original diplomacy_check indexes the four social category models as dwords. Existing SocialCategory scalar-neighbor pointer walks are undefined C++; authorize a genuine four-word model array with named category indices and mechanical existing source consumers/psych test-damage anchors, preserving four-word layout and original guards. Header and faction/base/report owners already authorized. New diplomacy scratch/start-only flags interpretations preserve extent uncertainty and historical claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d56e7c4386c040e8c2d0e6cdab553e0f54df58d55e50ec7a5933c12453bd46ec",
+  "request_id": "diplomacy-social-array-model",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:reportwin-owner-coverage"
+}

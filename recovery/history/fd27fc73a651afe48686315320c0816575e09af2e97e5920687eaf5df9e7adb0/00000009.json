@@ -1,0 +1,29 @@
+{
+  "event_id": "9451b84e9387f0a4e2d8d0a55803ed0137448cecbde4265ea666f6f2a1a46521",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.cpp",
+      "src/basepop.h",
+      "src/buffer.cpp",
+      "src/buffer.h",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Original satellite UI call4A0666 supplies threecdeclarguments only, callerpops12 with no receiver; dimensions implementation never reads this. Authorize proper staticcompiler-emitted Buffer utility whilepreserving originalidentity and nativeobserved symbolfactpublication. BasePop ownedSprite picture must use genuine memberaccessor, no selfoffsets. Four satelliteindexedwords requiregenuinearray and narrow existingconsumer updates preservingbehavior/layout; outsidecallees remain obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6169728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5557949783e123ac72e6784d34fdf15bc2d99bbd628891f9472246b941179c16",
+  "request_id": "satellite-picture-compiler-abi",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:reportwin-owner-coverage"
+}

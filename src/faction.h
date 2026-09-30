@@ -219,10 +219,10 @@ enum PlayerMood {
 };
 
 struct SocialCategory {
-    uint32_t politics;
-    uint32_t economics;
-    uint32_t values;
-    uint32_t future;
+    enum ModelIndex { POLITICS, ECONOMICS, VALUES, FUTURE };
+    // Original pending/active category walks index four consecutive words.
+    // RECOVERY_MEMBER: v1 SocialCategory models_ 0x0 0x0053A980
+    uint32_t models_[4];
 };
 
 // PINNED BY THE TOTAL, NOT BY THEMSELVES, which is the difference between
@@ -450,10 +450,10 @@ struct PlayerData {
     int unk_49;
     uint32_t nutrient_surplus_total;
     int labs_total;
-    uint32_t satellites_nutrient; // +1 Nutrients per Sky Hydroponics Lab
-    uint32_t satellites_mineral; // +1 Minerals per Nessus Mining Station
-    uint32_t satellites_energy; // +1 Energy per Orbital Power Transmitter
-    uint32_t satellites_odp_total; // Orbital Defense Pod count
+    // Original 4CF64C and 49FBB0 index four consecutive word counters.
+    // Nutrient, mineral, energy and orbital defense pod counts, respectively.
+    // RECOVERY_MEMBER: v1 PlayerData satellites_ 0x808 0x004CF480
+    uint32_t satellites_[4];
     int best_weapon_value;
     int best_psi_offense;
     int best_psi_defense;
@@ -521,15 +521,9 @@ struct PlayerData {
     int unk_107;
     int unk_108;
     int unk_109;
-    int unk_110;
-    char unk_111[4];
-    int unk_112;
-    int unk_113;
-    int unk_114;
-    int unk_115;
-    int unk_116;
-    int unk_117;
-    int unk_118;
+    // Original score calculation clears and walks nine signed word items.
+    // RECOVERY_MEMBER: v1 PlayerData score_items_ 0x20A8 0x005ACBE0
+    int score_items_[9];
 };
 
 // READ OFF THE ARRAY STRIDE, which is the one thing about this struct the
@@ -616,7 +610,7 @@ extern Sprite *FactionBaseSprites[MaxPlayerNum][2][4][3];  // 0x0076E590
 extern uint16_t FactionRankingHistory[MaxPlayerNum * MaxRankingHistoryTurns];  // 0x009A68AC
 extern uint32_t RankingFactionIDUnk1;
 extern uint32_t RankingFactionIDUnk2;
-uint32_t *const FactionRankingsUnk = (uint32_t *)0x00945DD8;
+extern uint32_t FactionRankingsUnk[MaxPlayerNum];  // 0x00945DD8
 extern int DiploFriction;
 extern uint32_t DiploFrictionFactionIDWith;
 extern uint32_t DiploFrictionFactionID;
@@ -971,6 +965,8 @@ void __cdecl net_double_cross(int faction_id, int faction_id_with,
                               int victim,
                               int wait);
 void __cdecl diplomacy_ends(int faction_id, int faction_id_with);
+void __cdecl diplomacy_check(int faction_id, int faction_id_with, int update);
+int __cdecl contiguous(int faction_id, int faction_id_with, int region, int mode);
 
 // Cross-TU helpers the diplomacy bodies reach with the image's `call rel32`
 // and that this tree has not recovered yet - each one is a pending_bodies
@@ -1030,8 +1026,8 @@ inline BOOL __cdecl is_alien_faction(uint32_t faction_id) {
 MEASURED inline uint32_t __cdecl social_upheaval(int faction_id, SocialCategory *category_new) {
     uint32_t change_count = 0;
     for (int i = 0; i < MaxSocialCatNum; i++) {
-        if (*(&category_new->politics + i) !=
-            *(&PlayersData[faction_id].soc_category_active.politics + i)) {
+        if (category_new->models_[i] !=
+            PlayersData[faction_id].soc_category_active.models_[i]) {
             change_count++;
         }
     }

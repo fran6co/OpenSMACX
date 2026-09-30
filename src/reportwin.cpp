@@ -16,6 +16,12 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include <math.h>
+#include "random.h"
+#include "basewin.h"
+#include "infowin.h"
+#include "popup.h"
+#include "temp.h"
 #include "reportwin.h"
 #include "reportif.h"  // ReportIfGlobal - the singleton on_key_click re-reports
 #include "menu.h"
@@ -27,6 +33,66 @@
 #include "vector_teardown.h"
 #include "alpha.h"
 #include "socialwin.h"
+#include "console.h"
+#include "technology.h"
+#include "game.h"
+#include "base.h"
+#include "netdaemon.h"
+#include "pulldown.h"
+#include "faction.h"
+#include "log.h"
+#include "veh.h"
+#include "worldwin.h"
+#include "map.h"
+#include "general.h"
+#include "council.h"
+#include "spying_recovery.h"
+#include "text.h"
+
+// Shared dependencies identified by the original animation calls. The daemon
+// owners already live in leaf_recoveries.cpp; action_sat_attack and the colour
+// table require coordinator-owned publication before a complete link.
+void __cdecl sat_anim_daemon(ReportWin *win);
+void __cdecl sat_expl_daemon(ReportWin *win);
+void __cdecl bl_daemon(ReportIf *report);
+void __cdecl action_sat_attack(int attacker, int target, int type, int base_id);
+// Original init passes these two independently addressed empty captions at
+// 496A80/496B64. Their initial NUL is proven; complete original object extents
+// are not, so these start-only bindings do not claim four-byte storage.
+// RECOVERY_OBJECT: v1 0x008A6244 ?ReportWindowCaptionSmall@@3PADA
+char ReportWindowCaptionSmall[] = "";
+// RECOVERY_OBJECT: v1 0x008A6248 ?ReportWindowCaptionLarge@@3PADA
+char ReportWindowCaptionLarge[] = "";
+void __cdecl sat_attack(int faction_id, int target_id, int type);
+void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
+void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
+void __cdecl draw_radius(int x, int y, int mode, int draw_type);
+void __cdecl sat_edit(int faction_id, int type, int flags);
+int __cdecl break_treaty(int faction_id, int target_faction_id, int treaty);
+int __cdecl diplo_lock(int patience);
+void __cdecl diplo_unlock();
+
+static bool reportwin_input_blocked() {
+    return ConsoleControlTurnActive != 0
+        || (NetDaemonNet.lock_state_[0].dword_[12]
+            & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0
+        || NetDaemonNet.lock_state_[2].dword_[4] != 0
+        || NetDaemonNet.lock_state_[0].dword_[3] != 0;
+}
+
+static bool reportwin_security_filter(int prototype_id, int filter) {
+    if (filter >= 4) return true;
+    const VehPrototype &prototype = VehPrototypes[prototype_id];
+    if (filter < 3) return Chassis[prototype.chassis_id].triad == filter
+        && Weapon[prototype.weapon_id].offense_rating != 0;
+    return Weapon[prototype.weapon_id].offense_rating == 0;
+}
+
+static void reportwin_append_number(char *text, int value) {
+    char number[80];
+    _itoa(value, number, 10);
+    strcat(text, number);
+}
 
 // ORIGINAL: 0x00498B30 ?draw_labs@ReportWin@@QAEXXZ 0x00498B30-0x0049B1DC
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "source:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp"], "reason": "Datalink draw_tech and draw_entry reference this report-page owner. Preserve the original identity and retained incomplete renderer seed; explicitly unfinished body maintains build continuity while the full renderer remains a recovery obligation."}
@@ -34,31 +100,27 @@ void ReportWin::draw_labs() {
     // BODY GOES HERE.
 }
 
-const void *const ReportWinFlatButtonCtor = (const void *)0x00607CF0;
-const void *const ReportWinFlatButtonDtor = (const void *)0x00406880;
-
 // The process-wide report window, 0x00876478 - see reportwin.h. The image's
 // dynamic initializer at 0x00496930 constructs it through the real recovered
-// constructor below, so the storage sits here, ahead of the two list boxes.
+// constructor below. The fixed list/timer receivers used by ReportIf are
+// members of this object, not separate global storage. Complete original
+// allocation bounds remain unproved by this start-only binding.
+// RECOVERY_OBJECT: v1 0x00876478 ?ReportWinGlobal@@3VReportWin@@A
 ReportWin ReportWinGlobal;  // 0x00876478
 
-// Existing interface-slot bindings. These predate the typed passover body;
-// their data ownership remains a separate structural recovery task.
-static int *const IfaceIdToSlot = (int *)0x007AE778;
-static int *const ActiveIfaceId = (int *)0x007D392C;
+// MainInterface owns the interface-slot array and active interface ID.
 
 // ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "source:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
 void ReportWin::on_button_passover(int button_id, int state) {
-    GraphicWin *host = IfaceIdToSlot[*ActiveIfaceId] == 8
+    GraphicWin *host = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8
         ? static_cast<GraphicWin *>(&DatalinkMain)
         : static_cast<GraphicWin *>(this);
     if (ReportIfGlobal.field_8_ != 2 || button_id < 0x378) return;
 
     const int index = button_id - 0x378;
-    // Only seven category controls are owned by this array. The image does
-    // not guard larger IDs, but they cannot name a valid FlatButton here.
-    if (index >= 7) return;
+    // Original 0x0049B26C indexes without an upper-bound check. Preserve that
+    // path rather than silently adding a behavior-changing safety guard.
     report_work_rect_ = flatButtons1_[index].outer_rect();
 
     int first_x = static_cast<int>(field_5950_);
@@ -100,33 +162,19 @@ void ReportWin::on_button_passover(int button_id, int state) {
     host->soft_update();
 }
 
-// The topic panel's two process-wide selection list boxes - see reportwin.h.
-// Nothing in mapped code constructs them (the image leaves them zero until
-// ReportWin's own init fills the panel), and ListBox's constructor here is
-// the empty inline the tree models, so the objects are that zero storage.
-ListBox ReportWinListBox1;  // 0x00890208
-ListBox ReportWinListBox2;  // 0x00890D5C
+// Fixed890208/890D5C receivers are ReportIfGlobal.listBox1_/listBox2_.
 
 // 0x005398E0 ?pop_wait@@YAHXZ - defined in faction.cpp (BYTE_EXACT); no
 // header declares it, and the set_modal popups pass it as their wait
 // callback (the designwin.cpp spelling).
 int __cdecl pop_wait();
 
-// These two pointer cells are read by ReportWin::reset at 0x00496C30 and
-// 0x00496C3E. Other seed units also read them as indirect font/table slots,
-// but the current source has no owning declarations or reliable semantic
-// names. Keep the evidence-backed pointer type and fixed binding local until
-// their shared owner is recovered; they are not assumed to be the unrelated
-// BaseButton defaults or FontDefault.
-static Font **const ReportResetFontSlot1 = (Font **)0x008A40BC;
-static Font **const ReportResetFontSlot2 = (Font **)0x008A40C8;
-
 /*
 Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
-         Spot, a ListBox(1), nine individually-constructed FlatButtons split
+         Spot, a ListBox, nine individually-constructed FlatButtons split
          by two ButtonGroups, a Scroll, three Times, two Buffers and a Flic -
          then install ReportWin's own vftables.
-// ORIGINAL: 0x004AD6B0 ??0ReportWin@@QAE@XZ 0x004AD6B0-0x004AD838;0x006592F0-0x00659419
+// ORIGINAL: 0x004AD6B0 ??0ReportWin@@QAE@XZ 0x004AD6B0-0x004AD838;0x006592F0-0x00659419 BYTE_EXACT
 // TRIED: deriving from ConstructedGraphicWin (graphicwin.h) to move the
 //   base construction ahead of the members. The ORDER IS RIGHT - this image
 //   really does `call 0x5d4cf0` before its first `lea ecx, [esi + N]`, checked
@@ -155,39 +203,44 @@ Purpose: Construct every sub-object in image order - a FlatButton[7] run, a
 // flags     frame;sp_ready;purged_ok
 // calls     0x005D4CF0 0x005D7210 0x005FA860 0x006051D0 0x00607CF0 0x00609DB0 0x006161D0 0x00629D60 0x0062B7C0 0x006456E4 0x006457C2
 */
-// ListBox has no one-argument constructor declared and Flic's own recovery
-// (0x00629D60) is out of this batch's scope, so both are called directly at
-// their image address, the same treatment pending_bodies.cpp gives every
-// not-yet-promoted callee.
 ReportWin::ReportWin() {
-    new (static_cast<GraphicWin *>(this)) GraphicWin();
+    // The base and members construct once, in declaration order. The extra
+    // argument at the original ListBox call is its most-derived ABI flag.
+}
 
-    // flatButtons1_ and spot_ are real members now (see reportwin.h) and
-    // build implicitly, in declaration order, before this body runs.
+// ORIGINAL: 0x004AD3B0 ??1ReportWin@@QAE@XZ 0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ad3b0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// symbol    ??1ReportWin@@UAE@XZ
+ReportWin::~ReportWin() {
+    // Original 4AD3B0 contains only compiler-generated reverse member/base
+    // teardown. In particular, Flic and Time own their close operations.
+}
 
-    typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
-    reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox_, nullptr, 1);
-
-    new (flatButton2_) FlatButton();
-    new (flatButton3_) FlatButton();
-    new (buttonGroup1_) ButtonGroup();
-    new (flatButton4_) FlatButton();
-    new (flatButton5_) FlatButton();
-    new (flatButton6_) FlatButton();
-    new (buttonGroup2_) ButtonGroup();
-    new (flatButton7_) FlatButton();
-    new (flatButton8_) FlatButton();
-    new (flatButton9_) FlatButton();
-    new (scroll_.address()) Scroll();
-    new (time1_) Time();
-    new (time2_) Time();
-    new (time3_) Time();
-    new (buffer1_.address()) Buffer();
-    new (buffer2_) Buffer();
-
-    typedef void(__fastcall *pending_flic_ctor)(void *, void *);
-    reinterpret_cast<pending_flic_ctor>(0x00629D60)(flic_, nullptr);
-
+// ORIGINAL: 0x00496960 ?init@ReportWin@@QAEXXZ 0x00496960-0x00496BA5
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00496960.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::init() {
+    for (int i = 0; i < 16; ++i) selected_bases_[i] = 0;
+    for (int j = 0; j < 4; ++j) selected_prototypes_[j] = 0;
+    rect1_.right = 650;
+    rect1_.bottom = 353;
+    spot_.init(256);
+    const bool large = ReportIfGlobal.field_1E230_ != 0;
+    rect1_.bottom += large ? 200 : 20;
+    rect1_.left = ((large ? WinScreenWidth : 800) - rect1_.right) / 2;
+    rect1_.top = large ? WinScreenHeight - rect1_.bottom - 212
+                      : 388 - rect1_.bottom;
+    report_panel_rect_.left = 23;
+    report_panel_rect_.top = 0;
+    report_panel_rect_.right = rect1_.right + 23;
+    report_panel_rect_.bottom = rect1_.bottom;
+    energy_panel_rect_.left = 26;
+    energy_panel_rect_.top = 3;
+    energy_panel_rect_.right = rect1_.right - 6 + 26;
+    energy_panel_rect_.bottom = rect1_.bottom - 56 + 3;
+    GraphicWin::init(rect1_.left - 23, rect1_.top, rect1_.right + 78,
+        rect1_.bottom, large ? ReportWindowCaptionLarge : ReportWindowCaptionSmall,
+        0x1000000, static_cast<Win *>(&ConsoleGlobal), 0, 0);
+    field_E268_ = ReportIfGlobal.field_1E184_->line_advance();
 }
 
 /*
@@ -206,9 +259,9 @@ void ReportWin::reset() {
         flatButtons1_[button].close();
     }
 
-    Buffer &buffer = buffer1_.as_buffer();
-    buffer.set_font(*ReportResetFontSlot1, *ReportResetFontSlot1,
-                    *ReportResetFontSlot2, nullptr);
+    Buffer &buffer = buffer1_;
+    buffer.set_font(ReportIfGlobal.field_1E184_, ReportIfGlobal.field_1E184_,
+                    ReportIfGlobal.field_1E190_, nullptr);
     buffer.set_text_color(0x99, -1, 1, 1);
     buffer.set_text_color2(0xF2, -1, 1, 1);
     buffer.set_text_color3(0xE1, -1, 1, 1);
@@ -336,7 +389,7 @@ void ReportWin::UNK1(int position, int minimum, int maximum, int page_size) {
     field_C100_ = minimum;
     field_C104_ = maximum;
     field_C108_ = page_size;
-    Scroll &scroll = scroll_.as_scroll();
+    Scroll &scroll = scroll_;
     scroll.set_range(minimum, maximum);
     scroll.paging_ = page_size;
     scroll.set_pos(field_C0FC_);
@@ -485,17 +538,17 @@ void ReportWin::on_selected(int selection_id, int) {
     if (selection_id < 0x400) {
         field_59AC_ = selection_id;
         field_59B0_ = 0;
-        ReportWinListBox1.set_selected_pos(-1, 1);
-        ReportWinListBox2.set_selected_id(selection_id);
+        ReportIfGlobal.listBox1_.set_selected_pos(-1, 1);
+        ReportIfGlobal.listBox2_.set_selected_id(selection_id);
     } else {
         if (selection_id > 0x5F5E0FD) {
-            reinterpret_cast<ListBox *>(listBox_)->set_selected_id(99999999);
+            listBox_.set_selected_id(99999999);
             return;
         }
         field_59AC_ = selection_id - 0x400;
         field_59B0_ = 1;
-        ReportWinListBox1.set_selected_id(selection_id);
-        ReportWinListBox2.set_selected_pos(-1, 1);
+        ReportIfGlobal.listBox1_.set_selected_id(selection_id);
+        ReportIfGlobal.listBox2_.set_selected_pos(-1, 1);
     }
     reset();
     draw_energy();
@@ -580,7 +633,7 @@ int ReportWin::on_key_click(int, int code) {
             report_code = 8;
         }
 
-        if (IfaceIdToSlot[*ActiveIfaceId] == 5) {
+        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
             ReportIfGlobal.report(report_code,
                                   ReportIfGlobal.report_faction_id(), 0);
             return 1;
@@ -636,7 +689,7 @@ int ReportWin::on_key_click(int, int code) {
             break;
         }
 
-        if (IfaceIdToSlot[*ActiveIfaceId] == 5) {
+        if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5) {
             ReportIfGlobal.report(report_code,
                                   ReportIfGlobal.report_faction_id(), 0);
             return 1;
@@ -729,7 +782,7 @@ int ReportWin::on_key_click(int, int code) {
     }
 
     if (field_C0F8_ != 0) {
-        scroll_.as_scroll().set_pos(field_C0FC_);
+        scroll_.set_pos(field_C0FC_);
         redraw();
     }
     return 1;
@@ -777,7 +830,7 @@ void ReportWin::labs_line(int first_id, int second_id, int, int branch_id,
     // interface draws on this window's. Both hosts are GraphicWin-derived,
     // so the Buffer base sits at +0x444 either way.
     Buffer *buffer;
-    if (IfaceIdToSlot[*ActiveIfaceId] != 8) {
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 8) {
         buffer = static_cast<Buffer *>(this);
     } else {
         buffer = static_cast<Buffer *>(&DatalinkMain);
@@ -1011,62 +1064,1440 @@ Purpose: Advance the satellite orbital overlay one tick: clear the orbit
 Status: Coverage transcription - unclaimed body
 */
 void ReportWin::sat_anim() {
-    unsigned char *const self = reinterpret_cast<unsigned char *>(this);
-    int *const index = reinterpret_cast<int *>(self + 0xE29C);
-
-    fill(reinterpret_cast<RECT *>(self + 0xE2B0), 0x41);
-
-    *index = 0;
+    fill(&satellite_rect_, 0x41);
+    field_E29C_ = 0;
     do {
-        int i = *index;
-        reinterpret_cast<float *>(self + 0xF9B8)[i] =
-            reinterpret_cast<float *>(self + 0xF9B8)[i] -
-            reinterpret_cast<float *>(self + 0xFA38)[i] *
-                reinterpret_cast<float *>(self + 0xF938)[i];
-
-        i = *index;
-        reinterpret_cast<float *>(self + 0xF9F8)[i] =
-            reinterpret_cast<float *>(self + 0xF9F8)[i] -
-            reinterpret_cast<float *>(self + 0xFA38)[i] *
-                reinterpret_cast<float *>(self + 0xF978)[i];
-
-        i = *index;
-        reinterpret_cast<float *>(self + 0xF938)[i] =
-            reinterpret_cast<float *>(self + 0xF9B8)[i] * field_EE30_ +
-            reinterpret_cast<float *>(self + 0xF938)[i];
-
-        i = *index;
-        reinterpret_cast<float *>(self + 0xF978)[i] =
-            reinterpret_cast<float *>(self + 0xF9F8)[i] * field_EE30_ +
-            reinterpret_cast<float *>(self + 0xF978)[i];
-
-        *index = *index + 1;
-    } while (*index < 0x10);
-
-    reinterpret_cast<Flic *>(self + 0xEE34)->decode_frame(
-        *reinterpret_cast<int *>(self + 0xF3E0),
-        *reinterpret_cast<int *>(self + 0xF3E4));
-
-    reinterpret_cast<Buffer *>(self + 0xE8A8)->draw(
-        reinterpret_cast<Buffer *>(self + 0x444), 9,
-        *reinterpret_cast<int *>(self + 0xE2A0),
-        *reinterpret_cast<int *>(self + 0xE2A4));
-
-    *index = 0;
+        int i = field_E29C_;
+        satellite_dx_[i] -= satellite_acceleration_[i] * satellite_x_[i];
+        i = field_E29C_;
+        satellite_dy_[i] -= satellite_acceleration_[i] * satellite_y_[i];
+        i = field_E29C_;
+        satellite_x_[i] += satellite_dx_[i] * field_EE30_;
+        i = field_E29C_;
+        satellite_y_[i] += satellite_dy_[i] * field_EE30_;
+        ++field_E29C_;
+    } while (field_E29C_ < 16);
+    flic_.decode_stored_frame();
+    buffer2_.draw(static_cast<Buffer *>(this), 9, field_E2A0_, field_E2A4_);
+    field_E29C_ = 0;
     do {
-        if (reinterpret_cast<int *>(self + 0xFA78)[*index] != 0) {
-            const int marker_y =
-                static_cast<int>(
-                    reinterpret_cast<float *>(self + 0xF978)[*index]) +
-                *reinterpret_cast<int *>(self + 0xE2AC);
-            const int marker_x =
-                static_cast<int>(
-                    reinterpret_cast<float *>(self + 0xF938)[*index]) +
-                *reinterpret_cast<int *>(self + 0xE2A8);
-            fill(marker_x, marker_y, 2, 2, 0xFF);
+        if (satellite_live_[field_E29C_] != 0) {
+            fill(static_cast<int>(satellite_x_[field_E29C_]) + field_E2A8_,
+                 static_cast<int>(satellite_y_[field_E29C_]) + field_E2AC_,
+                 2, 2, 0xFF);
         }
-        *index = *index + 1;
-    } while (*index < 0x10);
+        ++field_E29C_;
+    } while (field_E29C_ < 16);
+    soft_update(&satellite_rect_);
+}
 
-    soft_update(reinterpret_cast<RECT *>(self + 0xE2B0));
+// ORIGINAL: 0x0049FFD0 ?start_attack@ReportWin@@QAEXHHHH@Z 0x0049FFD0-0x004A00F1
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0049ffd0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
+    field_F924_ = attacker;
+    field_F928_ = target;
+    field_F92C_ = type;
+    field_F930_ = base_id;
+    field_F920_ = 0;
+    field_F91C_ = 0;
+    field_F934_ = 0;
+    if (field_F918_ != 0) {
+        const int counter = static_cast<int>(--field_F918_);
+        const int index = counter % 16;
+        if (counter < 16) satellite_live_[index] = 0;
+        sat_anim();
+        explosion_rect_.top = static_cast<int>(satellite_y_[index]) + field_E2AC_ - 23;
+        explosion_rect_.left = static_cast<int>(satellite_x_[index]) + field_E2A8_ - 21;
+        explosion_rect_.right = explosion_rect_.left + 43;
+        explosion_rect_.bottom = explosion_rect_.top + 47;
+        buffer1_.init(43, 47, 0, 0);
+        static_cast<Buffer *>(this)->copy(&buffer1_, explosion_rect_.left,
+            explosion_rect_.top, 0, 0, 43, 47);
+        time3_.init(reinterpret_cast<void (__cdecl *)(int)>(sat_expl_daemon),
+                    reinterpret_cast<int>(&ReportWinGlobal), 50, 5);
+        time3_.start();
+    }
+}
+
+// ORIGINAL: 0x004A0100 ?exp_anim@ReportWin@@QAEXXZ 0x004A0100-0x004A0248
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a0100.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::exp_anim() {
+    Buffer *canvas = static_cast<Buffer *>(this);
+    canvas->set_clip(&satellite_rect_);
+    if (field_F91C_ != 0) {
+        time3_.stop();
+        if (field_F920_ == 0) {
+            field_F920_ = 1;
+            buffer1_.draw(canvas, 9, explosion_rect_.left, explosion_rect_.top);
+            update(&explosion_rect_, 0);
+            action_sat_attack(field_F924_, field_F928_, field_F92C_, field_F930_);
+            canvas->set_clip(const_cast<RECT *>(&canvas->clip_rect()));
+            return;
+        }
+    } else {
+        buffer1_.draw(canvas, 9, explosion_rect_.left, explosion_rect_.top);
+        Sprite &frame = g_XI_BOOM_VEH_SPRITES[48 + field_F934_];
+        frame.draw_multi_table_dest(canvas, frame.transparent_index(),
+            explosion_rect_.left, explosion_rect_.top, &ExplosionColorTables[1][0][0]);
+        if (++field_F934_ >= 16) field_F91C_ = 1;
+        update(&explosion_rect_, 0);
+    }
+    canvas->set_clip(const_cast<RECT *>(&canvas->clip_rect()));
+}
+
+// ORIGINAL: 0x004989F0 ?on_group_clicked@ReportWin@@QAEXHHH@Z 0x004989F0-0x00498B06
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004989f0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::on_group_clicked(int group, int, int state) {
+    time2_.stop();
+    if (group == 4) ReportIfGlobal.field_1E240_ = state;
+    redraw();
+    if (group != 6) return;
+    ReportIfGlobal.reset();
+    switch (ReportIfGlobal.field_8_) {
+        case 2: ReportIfGlobal.draw_labs(); break;
+        case 3: ReportIfGlobal.draw_energy(); break;
+        case 4: ReportIfGlobal.draw_ops(); break;
+        case 5: ReportIfGlobal.draw_projects(); break;
+        case 6: ReportIfGlobal.draw_sat(); break;
+        case 7: ReportIfGlobal.draw_security(); break;
+        case 8: ReportIfGlobal.draw_score(); break;
+        case 0: ReportIfGlobal.draw_intel(); break;
+    }
+    MainInterfaceGlobal.soft_update();
+}
+
+// ORIGINAL: 0x004986D0 ?on_button_clicked@ReportWin@@QAEXH@Z 0x004986D0-0x004989A8
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004986d0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// symbol    ?on_button_clicked@ReportWin@@UAEXH@Z
+void ReportWin::on_button_clicked(int id) {
+    const bool datalink_mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
+    const int page = ReportIfGlobal.field_8_;
+    if (id < 0x378) {
+        if (datalink_mode) return;
+        if (id == 9) {
+            ReportWinGlobal.release_modal();
+            ReportIfGlobal.release_iface_mode();
+            return;
+        }
+        if (id != 1) return;
+        switch (page) {
+            case 0: DatalinkMain.exec(15, ReportIfGlobal.report_selection_); return;
+            case 2: DatalinkMain.exec(14, static_cast<int>(field_FAB8_) == -1 ? 62 : field_FAB8_); return;
+            case 3: DatalinkMain.exec(0, 43); return;
+            case 4: DatalinkMain.exec(10, 29); return;
+            case 5: {
+                int topic = field_59AC_;
+                if (topic < 1024) {
+                    topic += 70;
+                    if (topic < 70) topic = 71;
+                } else {
+                    topic = -Bases[topic - 1024].queue_production_id[0];
+                }
+                DatalinkMain.exec(11, topic);
+                return;
+            }
+            case 6: DatalinkMain.exec(14, Facility[65].preq_tech); return;
+            case 7: DatalinkMain.exec(3, 7); return;
+            case 8: DatalinkMain.exec(1, 4); return;
+        }
+        return;
+    }
+    if (page == 2) {
+        const int old_tech = field_FAB8_;
+        switch (id) {
+            case 0x379: field_FAB8_ = Technology[old_tech].preq_tech_1; break;
+            case 0x37A: field_FAB8_ = Technology[old_tech].preq_tech_2; break;
+            case 0x37B: case 0x37C: case 0x37D: case 0x37E: {
+                int count = 0;
+                for (int i = 0; i < 178; ++i) {
+                    int preq = (i & 1) ? Technology[i >> 1].preq_tech_2
+                                       : Technology[i >> 1].preq_tech_1;
+                    if (preq == old_tech && ++count == id - 0x37A) {
+                        field_FAB8_ = i >> 1;
+                    }
+                }
+                break;
+            }
+        }
+        ReportIfGlobal.listBox1_.set_selected_id(field_FAB8_);
+        if (datalink_mode) DatalinkMain.set_index(field_FAB8_, 0);
+        else redraw();
+        return;
+    }
+    if (page == 6 && id == 0xD3E) {
+        const int target = ReportIfGlobal.buttonGroup3_.field_84_;
+        const int type = static_cast<int>(ReportIfGlobal.buttonGroup4_.field_84_) - 65;
+        if (target > 0 && target < 8 && type >= 0 && type < 5) {
+            sat_attack(ConsoleGlobal.faction_id_, target, type);
+            return;
+        }
+        flatButton9_.hide();
+    }
+}
+
+// ORIGINAL: 0x00497AC0 ?right_menu@ReportWin@@QAEXHHH@Z 0x00497AC0-0x00497E69;0x00659420-0x00659435
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00497ac0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::right_menu(int base_id, int x, int y) {
+    PullDown menu;
+    if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_
+        || reportwin_input_blocked()) return;
+    client_to_screen(&x, &y);
+    menu.init(0);
+    menu.add_item(1, label_get(0x894 / 4));
+    menu.add_item(100, label_get(0x910 / 4));
+    menu.add_separator(99);
+    menu.add_item(2, label_get(0x898 / 4));
+    menu.add_item(3, label_get(0x89C / 4));
+    menu.add_separator(99);
+    menu.add_item(4, label_get(0x8A0 / 4));
+    menu.add_item(5, label_get(0x8A4 / 4));
+    menu.add_item(6, label_get(0x8A8 / 4));
+    menu.add_item(7, label_get(0x8AC / 4));
+    menu.add_item(8, label_get(0xBFC / 4));
+    menu.add_item(9, label_get(0xA54 / 4));
+    menu.show(x, y, pop_expire);
+    if (GameState & 0x800) return;
+    const int selected = menu.get_selected();
+    // The original performs only the signed upper-bound check here.
+    const int action = selected < 64 ? menu.item_id(selected) : -1;
+    TutWinBaseWindow.soft_zoom(base_id);
+    switch (action) {
+        case 1: TutWinBaseWindow.zoom(base_id, 0); break;
+        case 2:
+            ReportWinGlobal.release_modal();
+            ReportIfGlobal.release_iface_mode();
+            TutWinBaseWindow.production(0, 0);
+            return;
+        case 3: TutWinBaseWindow.hurry(); break;
+        case 4: TutWinBaseWindow.gov_on(0x1000000); break;
+        case 5: TutWinBaseWindow.gov_on(0x2000000); break;
+        case 6: TutWinBaseWindow.gov_on(0x4000000); break;
+        case 7: TutWinBaseWindow.gov_on(0x8000000); break;
+        case 8: BaseCurrent->state &= 0x7FFFFFFF; break;
+        case 9: TutWinBaseWindow.governor(0); break;
+        case 100:
+            MapWinTable[0]->set_center(BaseCurrent->x, BaseCurrent->y, 1);
+            ReportWinGlobal.release_modal();
+            ReportIfGlobal.release_iface_mode();
+            break;
+    }
+    redraw();
+}
+
+// ORIGINAL: 0x00497F00 ?on_right_click@ReportWin@@QAEXHH@Z 0x00497F00-0x004980EF
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00497f00.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::on_right_click(int x, int y) {
+    if (reportwin_input_blocked()) return;
+    int spot_id, payload;
+    if (spot_.check(x, y, &spot_id, &payload) < 0) return;
+    if (ReportIfGlobal.field_8_ == 4) {
+        if (spot_id > 1023) {
+            const int first_id = spot_id - 1024;
+            if (first_id < 1024) {
+                if (Bases[first_id].faction_id_current != ConsoleGlobal.faction_id_) return;
+                right_menu(first_id, x, spot_id);
+                return;
+            }
+            const int base_id = spot_id - 2048;
+            if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) return;
+            log_say("Reports right_click garrison", payload, base_id, 0);
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.garrison_click(payload, x, spot_id, 1);
+            return;
+        }
+        log_say("Base report psych right click", 0, 0, 0);
+        TutWinBaseWindow.soft_zoom(spot_id);
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) != 0) return;
+        if (BaseCurrent->specialist_total != 0) --BaseCurrent->specialist_total;
+        base_compute(1);
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    } else if (ReportIfGlobal.field_8_ == 6
+        && (GameState & 0x40) != 0 && (GameState & 0x80) != 0) {
+        sat_edit(ReportIfGlobal.report_faction_id_, payload, spot_id);
+        redraw();
+        return;
+    }
+    redraw();
+}
+
+// ORIGINAL: 0x004A08E0 ?draw_security@ReportWin@@QAEXXZ 0x004A08E0-0x004A1134
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a08e0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::draw_security() {
+    Buffer *canvas = static_cast<Buffer *>(this);
+    const int faction_id = ReportIfGlobal.report_faction_id_;
+    const PlayerData &faction = PlayersData[faction_id];
+    const int filter = ReportIfGlobal.field_1E244_;
+    RECT title = { energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+                   energy_panel_rect_.right - 3, 0 };
+    const int first_y = energy_panel_rect_.top + 9 + field_E268_;
+    title.bottom = first_y;
+    RECT row = { title.left, first_y + 2, title.right, first_y + 43 };
+    canvas->box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
+    canvas->box_sprite(&title, &InterfaceBoxStyles[1]);
+    const int rows = (energy_panel_rect_.bottom - row.top) / 43;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, get_adjective(faction_id));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0xAD8 / 4));
+    strcat(StringTemp, "]");
+    --title.top;
+    --title.bottom;
+    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
+    ++title.top;
+    ++title.bottom;
+    spot_.kill_type(0);
+
+    int last_row = -1;
+    for (int i = 0; i < 128; ++i) {
+        const int id = i < 64 ? i : faction_id * 64 - 64 + i;
+        if ((VehPrototypes[id].flags & 1) != 0
+            && reportwin_security_filter(id, filter)
+            && faction.proto_id_lost[id] + (faction.proto_id_queue[id] != 0)
+                + (faction.proto_id_active[id] != 0) != 0) ++last_row;
+    }
+    if (field_C0F8_ == 0) {
+        if (rows <= last_row) field_E26C_ = 1;
+    } else if (last_row < rows) {
+        scroll_hide(this, &scroll_);
+        field_C0F8_ = 0;
+    }
+    if (field_E270_ != 0) {
+        field_C108_ = rows - 1;
+        field_C0FC_ = 0;
+        field_C100_ = 0;
+        field_C104_ = last_row;
+        scroll_.set_range(0, last_row);
+        scroll_.paging_ = field_C108_;
+        scroll_.set_pos(field_C0FC_);
+        field_E270_ = 0;
+    }
+    if (last_row == -1) return;
+    int ordinal = -1;
+    for (int index = 0; index < 128; ++index) {
+        const int id = index < 64 ? index : faction_id * 64 - 64 + index;
+        const VehPrototype &prototype = VehPrototypes[id];
+        if ((prototype.flags & 1) == 0 || !reportwin_security_filter(id, filter)
+            || (faction.proto_id_queue[id] != 0) + (faction.proto_id_active[id] != 0)
+                + faction.proto_id_lost[id] == 0) continue;
+        ++ordinal;
+        const int first = field_C0FC_;
+        if (ordinal < first || ordinal >= rows + first) continue;
+        if (ordinal != first) { row.top += 43; row.bottom += 43; }
+        const bool selected = (selected_prototypes_[index >> 5] & (1u << (index & 31))) != 0;
+        if (selected) canvas->box_sprite(&row, &InterfaceBoxStyles[2]);
+        canvas->box_sprite(&row, &InterfaceBoxStyles[selected ? 5 : 1]);
+        spot_.add(id, 0, row.left, row.top, row.right - row.left, row.bottom - row.top);
+        rect1_.top = row.top;
+        const int text_y = row.top - field_E268_ / 2 + 21;
+        const int vehicle = veh_fake(id, faction_id);
+        veh_draw(canvas, vehicle, energy_panel_rect_.left, row.top + 2, -6, 8, 0);
+        canvas->set_text_color(0x99, -1, 1, 1);
+        canvas->set_text_color2(0xF2, -1, 1, 1);
+        canvas->set_text_color3(0xF9, -1, 1, 1);
+        canvas->set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E18C_,
+                         ReportIfGlobal.field_1E18C_, 0);
+        rect1_.left = 102;
+        StringTemp[0] = 0;
+        if (prototype.obsolete_factions & (1u << (faction_id & 31))) strcat(StringTemp, "-");
+        strcat(StringTemp, VehPrototypes[id].veh_name);
+        canvas->write_l(StringTemp, rect1_.left, text_y, strlen(StringTemp));
+        rect1_.left = (rect1_.right >> 1) + 40;
+        StringTemp[0] = 0;
+        say_stats(StringTemp, id, 0);
+        canvas->write_l(StringTemp, rect1_.left, text_y, strlen(StringTemp));
+        StringTemp[0] = 0;
+        strcat(StringTemp, "{");
+        reportwin_append_number(StringTemp, faction.proto_id_active[id] > 250 ? 0 : faction.proto_id_active[id]);
+        strcat(StringTemp, " "); strcat(StringTemp, label_get(0x614 / 4)); strcat(StringTemp, ", ");
+        strcat(StringTemp, "}");
+        reportwin_append_number(StringTemp, faction.proto_id_queue[id] > 250 ? 0 : faction.proto_id_queue[id]);
+        strcat(StringTemp, " "); strcat(StringTemp, label_get(0x618 / 4)); strcat(StringTemp, ", ");
+        strcat(StringTemp, "[");
+        reportwin_append_number(StringTemp, faction.proto_id_lost[id]);
+        strcat(StringTemp, " "); strcat(StringTemp, label_get(0x61C / 4)); strcat(StringTemp, "]");
+        canvas->write_right_l(StringTemp, rect1_.right - 2, text_y, strlen(StringTemp));
+        rect1_.top += 43;
+    }
+}
+
+// ORIGINAL: 0x00496E10 ?on_left_click@ReportWin@@QAEXHH@Z 0x00496E10-0x00497A30
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00496e10.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::on_left_click(int x, int y) {
+    if (reportwin_input_blocked()) return;
+    int selected, payload;
+    const int hit = spot_.check(x, y, &selected, &payload);
+    const int page = ReportIfGlobal.field_8_;
+    if (hit == -1) {
+        if (page != 4) return;
+        field_5A08_ = 0;
+        for (int i = 0; i < 512; ++i) {
+            ReportSortEntry &entry = ReportIfGlobal.sort_entries_[i];
+            entry.base_id = entry.sorted_base_id = i;
+            entry.value = entry.sorted_value = 0;
+        }
+        redraw();
+        ReportIfGlobal.draw_ops();
+        MainInterfaceGlobal.soft_update();
+        return;
+    }
+    int blink_base = 0;
+    bool blink = false;
+    if (page == 2) {
+        if (selected != 0x29A) return;
+        const int tech = PlayersData[ReportIfGlobal.report_faction_id_].tech_id_researching;
+        if (tech > -1 && ((GameState & 0x80) != 0 || (GameRules & 0x200) == 0)) {
+            field_FAB8_ = field_59AC_ = tech;
+            reset(); draw_labs(); soft_update();
+            ReportIfGlobal.reset(); ReportIfGlobal.draw_labs();
+            MainInterfaceGlobal.soft_update();
+        }
+        if ((GameRules & 0x200) == 0) ConsoleGlobal.set_tech(ConsoleGlobal.faction_id_);
+        else ConsoleGlobal.set_ai(ConsoleGlobal.faction_id_);
+        reset(); draw_labs(); soft_update();
+        ReportIfGlobal.reset(); ReportIfGlobal.draw_labs();
+        MainInterfaceGlobal.soft_update();
+        return;
+    }
+    if (page == 4) {
+        int last = selected - 1024;
+        if (selected < 1024) {
+            if ((GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0) {
+                if (selected > -1) {
+                    TutWinBaseWindow.soft_zoom(selected);
+                    const int specialist = selected < BaseCurrent->specialist_total
+                        ? BaseCurrent->specialist_total - selected - 1 : -1;
+                    TutWinBaseWindow.pop_click(specialist, 0, 0, 0);
+                    base_compute(1);
+                }
+            } else {
+                TutWinBaseWindow.soft_zoom(selected);
+                log_say("Base report psych click", 0, 0, 0);
+                if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) != 0) return;
+                for (int square = 20; square > 0; --square) {
+                    const uint32_t bit = 1u << (square & 31);
+                    if (BaseCurrent->resource_sqr_radius & bit) {
+                        BaseCurrent->resource_sqr_radius &= ~bit;
+                        break;
+                    }
+                }
+                ++BaseCurrent->specialist_total;
+                base_compute(1);
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            }
+        } else if (last > 1023) {
+            int base_id = selected - 2048;
+            if (base_id < 1024 ||
+                (base_id = selected - 3072, Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_)) {
+                if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_) return;
+                log_say("Reports left_click garrison", base_id, payload, 0);
+                TutWinBaseWindow.soft_zoom(base_id);
+                TutWinBaseWindow.garrison_click(payload, x, y, 0);
+                return;
+            }
+            log_say("Global EDBC base set", 0, 0, 0);
+            if (NetDaemonNet.lock_base(base_id, 0, -1, -1) == 0) {
+                TutWinBaseWindow.soft_zoom(base_id);
+                const uint32_t governor = BaseCurrent->governor;
+                if ((governor & 0x80000000u) == 0 || (governor & 0x8000000u) == 0) {
+                    unsigned category;
+                    if ((governor & 0x1000000u) != 0) category = 0;
+                    else if ((governor & 0x2000000u) != 0) category = 1;
+                    else category = ((~governor & 0x4000000u) | 0x8000000u) >> 26;
+                    BaseCurrent->governor = (governor | 0x80000000u) & 0xF0FFFFFFu;
+                    switch (category) {
+                        case 0: BaseCurrent->governor |= 0x2000000u; break;
+                        case 1: BaseCurrent->governor |= 0x4000000u; break;
+                        case 2: BaseCurrent->governor |= 0x8000000u; break;
+                        case 3: BaseCurrent->governor |= 0x1000000u; break;
+                    }
+                    TutWinBaseWindow.gov_activate();
+                } else BaseCurrent->governor = governor & 0x7FFFFFFFu;
+                draw_radius(Bases[base_id].x, Bases[base_id].y, 2, 2);
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            }
+        } else {
+            if (Bases[last].faction_id_current != ConsoleGlobal.faction_id_) return;
+            const bool shift = (GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0;
+            const bool control = (GetAsyncKeyState(VK_CONTROL) & 0xFF00) != 0;
+            if (!shift && control) selected_bases_[last / 32] ^= 1u << (last & 31);
+            else if (!control) {
+                for (int word = 0; word < 16; ++word) selected_bases_[word] = 0;
+                if (!shift || field_59AC_ == 0) selected_bases_[last / 32] |= 1u << (last & 31);
+                else {
+                    int first = static_cast<int>(field_59AC_) - 1024;
+                    field_59AC_ = first;
+                    if (last < first) { field_59AC_ = last; last = first; first = field_59AC_; }
+                    for (int base_id = first; base_id <= last; ++base_id) {
+                        if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_)
+                            selected_bases_[base_id / 32] |= 1u << (base_id & 31);
+                    }
+                }
+            }
+        }
+        int count = 0;
+        for (int id = 0; id < 512; ++id) if (selected_bases_[id / 32] & (1u << (id & 31))) ++count;
+        field_5A04_ = count == 1;
+        field_59AC_ = selected;
+        reset(); draw_ops(); soft_update();
+        ReportIfGlobal.reset(); ReportIfGlobal.draw_ops();
+        MainInterfaceGlobal.soft_update();
+        const int base_id = selected % 1024;
+        if (field_5A04_ && (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_
+            || (Bases[base_id].visibility & (1u << (ConsoleGlobal.faction_id_ & 31))) != 0)) { blink_base = base_id; blink = true; }
+    } else if (page == 5) {
+        field_59AC_ = selected;
+        reset(); draw_projects(); soft_update();
+        ReportIfGlobal.reset(); ReportIfGlobal.draw_projects();
+        MainInterfaceGlobal.soft_update();
+        const int base_id = selected < 1024 ? base_project(selected) : selected - 1024;
+        if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_
+            && (Bases[base_id].visibility & (1u << (ConsoleGlobal.faction_id_ & 31))) == 0) return;
+        blink_base = base_id;
+        blink = true;
+    } else if (page == 7) {
+        if (ReportIfGlobal.report_faction_id_ != ConsoleGlobal.faction_id_) return;
+        const bool shift = (GetAsyncKeyState(VK_SHIFT) & 0xFF00) != 0;
+        const bool control = (GetAsyncKeyState(VK_CONTROL) & 0xFF00) != 0;
+        const int filter = ReportIfGlobal.field_1E244_;
+        const int clicked_triad = Chassis[VehPrototypes[selected].chassis_id].triad;
+        if (!control) {
+            for (int row = 0; row < 128; ++row) {
+                const int id = row < 64 ? row : ReportIfGlobal.report_faction_id_ * 64 - 64 + row;
+                const bool matches = filter < 3
+                    ? Chassis[VehPrototypes[id].chassis_id].triad == clicked_triad
+                        && Weapon[VehPrototypes[id].weapon_id].offense_rating != 0
+                    : filter == 3 ? Weapon[VehPrototypes[id].weapon_id].offense_rating == 0 : filter == 4;
+                if (matches) selected_prototypes_[row / 32] &= ~(1u << (row & 31));
+            }
+        }
+        if (!shift) {
+            const int row = selected % 64 + (selected > 63 ? 64 : 0);
+            if (control) selected_prototypes_[row / 32] ^= 1u << (row & 31);
+            else selected_prototypes_[row / 32] |= 1u << (row & 31);
+        } else {
+            int first_id = field_59AC_, last_id = selected;
+            if (last_id < first_id) { field_59AC_ = last_id; last_id = first_id; first_id = field_59AC_; }
+            int first = first_id % 64 + (first_id > 63 ? 64 : 0);
+            const int last_row = last_id % 64 + (last_id > 63 ? 64 : 0);
+            for (; first <= last_row; ++first) {
+                const int id = first < 64 ? first : ReportIfGlobal.report_faction_id_ * 64 - 64 + first;
+                const bool matches = filter < 3
+                    ? Chassis[VehPrototypes[id].chassis_id].triad == Chassis[VehPrototypes[last_id].chassis_id].triad
+                        && Weapon[VehPrototypes[id].weapon_id].offense_rating != 0
+                    : filter == 3 ? Weapon[VehPrototypes[id].weapon_id].offense_rating == 0 : filter == 4;
+                if (matches) selected_prototypes_[first / 32] |= 1u << (first & 31);
+            }
+        }
+        field_59AC_ = selected;
+        reset(); draw_security(); soft_update();
+        ReportIfGlobal.reset(); ReportIfGlobal.draw_security();
+        MainInterfaceGlobal.soft_update();
+        return;
+    }
+    if (!blink) return;
+    WorldClimateWorldWin.tile_to_pixel(Bases[blink_base].x, Bases[blink_base].y,
+        &ReportIfGlobal.animation_x_, &ReportIfGlobal.animation_y_);
+    ReportIfGlobal.animation_x_ -= 7;
+    ReportIfGlobal.animation_y_ -= 5;
+    ReportIfGlobal.animation_state_ = -1;
+    ReportIfGlobal.bl_anim();
+    time1_.init(reinterpret_cast<void (__cdecl *)(int)>(bl_daemon),
+        reinterpret_cast<int>(&ReportIfGlobal), 150, 5);
+    time1_.start();
+}
+int __cdecl X_text_open(char *, const char *);
+void __cdecl compute_score(int, int *, int *, int);
+void __cdecl diplomacy_check(int, int, int);
+int __cdecl most_objectives(int *, int *);
+// compute_score/diplomacy_check remain seed-only dependencies requiring owner
+// integration. ClimatePopupTitle is an existing legacy storage seam.
+
+static void report_topic_number(int n) {
+    char number[80];
+    _itoa(n, number, 10);
+    strcat(StringTemp, number);
+}
+static void report_topic_line(Buffer &canvas, RECT &cursor, int x) {
+    canvas.write_l(StringTemp, x, cursor.top, strlen(StringTemp));
+}
+static void report_intel_label(int label) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, label_get(label));
+    strcat(StringTemp, ": ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "]");
+}
+static int report_social_model(const SocialCategory &selection, int category) {
+    switch (category) {
+    case 0: return selection.models_[SocialCategory::POLITICS];
+    case 1: return selection.models_[SocialCategory::ECONOMICS];
+    case 2: return selection.models_[SocialCategory::VALUES];
+    default: return selection.models_[SocialCategory::FUTURE];
+    }
+}
+static void report_append_leader(const Player &player) {
+    GenderDefault = player.is_leader_female;
+    PluralityDefault = 0;
+    strcat(StringTemp, player.title_leader);
+    strcat(StringTemp, " ");
+    GenderDefault = player.is_leader_female;
+    PluralityDefault = 0;
+    strcat(StringTemp, player.name_leader);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0x2D0 / 4));
+    strcat(StringTemp, " ");
+    GenderDefault = player.noun_gender;
+    PluralityDefault = player.is_noun_plural;
+    strcat(StringTemp, player.noun_faction);
+}
+
+// ORIGINAL: 0x004A2210 ?draw_intel@ReportWin@@QAEXXZ 0x004A2210-0x004A345F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a2210.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::draw_intel() {
+    Buffer &canvas = *static_cast<Buffer *>(this);
+    const int viewer = ReportIfGlobal.report_faction_id();
+    const int subject = ReportIfGlobal.report_selection_;
+    RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+                  energy_panel_rect_.right - 3,
+                  energy_panel_rect_.top + static_cast<int>(field_E268_) + 9};
+    RECT body = {title.left, title.bottom + 2, title.right,
+                 energy_panel_rect_.bottom - 3};
+    canvas.box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
+    canvas.box_sprite(&title, &InterfaceBoxStyles[1]);
+    canvas.box_sprite(&body, &InterfaceBoxStyles[1]);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, Players[viewer].formal_name_faction);
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0xAE0 / 4));
+    strcat(StringTemp, "]");
+    --title.top;
+    --title.bottom;
+    canvas.write_cent_l(StringTemp, &title, strlen(StringTemp));
+    rect1_.left = body.left + 4;
+    rect1_.top = body.top + 4;
+    rect1_.right = body.right - body.left - 8;
+    rect1_.bottom = rect1_.right;
+    const bool informed = (GameState & 0x80) || spying(subject) ||
+        (PlayersData[viewer].diplo_treaties[subject] & 1);
+    Sprite &portrait = FactionsArt[subject].council_big;
+    portrait.draw(&canvas, portrait.transparent_index(), rect1_.left, rect1_.top);
+    const int text_x = rect1_.left + 158;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    report_append_leader(Players[subject]);
+    strcat(StringTemp, "]");
+    CharUpperA(StringTemp);
+    report_topic_line(canvas, rect1_, text_x);
+    rect1_.top += field_E268_ * 2;
+    diplomacy_check(viewer, subject, 0);
+    report_intel_label(0xE98 / 4);
+    const unsigned int relation = PlayersData[viewer].diplo_treaties[subject];
+    if (relation & 0x10) strcat(StringTemp, label_get(0x358 / 4));
+    else if (relation & 1) strcat(StringTemp, label_get(0x34C / 4));
+    else if (relation & 2) strcat(StringTemp, label_get(0x350 / 4));
+    else if (relation & 4) strcat(StringTemp, label_get(0x354 / 4));
+    report_topic_line(canvas, rect1_, text_x);
+    rect1_.top += field_E268_;
+    diplomacy_check(viewer, subject, 0);
+    report_intel_label(0xE94 / 4);
+    say_special(StringTemp, StringTable.get(reinterpret_cast<int>(Mood[get_mood(DiploFriction)])), subject);
+    CharUpperA(StringTemp);
+    report_topic_line(canvas, rect1_, text_x);
+    rect1_.top += field_E268_;
+    report_intel_label(0x5A0 / 4);
+    const int fight = PlayersData[subject].ai_fight;
+    strcat(StringTemp, label_get(fight < 0 ? 0x5AC / 4 : fight == 0 ? 0x5A8 / 4 : 0x5A4 / 4));
+    CharUpperA(StringTemp);
+    report_topic_line(canvas, rect1_, text_x);
+    rect1_.top += field_E268_;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, label_get(0x5B0 / 4));
+    CharUpperA(StringTemp);
+    strcat(StringTemp, ":   ]");
+    int priorities = 0;
+    const PlayerData &data = PlayersData[subject];
+    const int interests[4] = {data.ai_growth, data.ai_tech, data.ai_wealth, data.ai_power};
+    for (int i = 0; i < 4; ++i) {
+        if (interests[i]) {
+            if (priorities) strcat(StringTemp, ", ");
+            strcat(StringTemp, label_get(0x824 / 4 + i));
+            ++priorities;
+        }
+    }
+    report_topic_line(canvas, rect1_, text_x);
+    rect1_.top += field_E268_;
+    report_intel_label(0x5C0 / 4);
+    const int category = Players[subject].soc_ideology_category;
+    const int model = Players[subject].soc_ideology_model;
+    if (category >= 0 && model != 0) {
+        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category].type)));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category].name[model])));
+        CharUpperA(StringTemp);
+        report_topic_line(canvas, rect1_, text_x);
+        rect1_.top += field_E268_;
+    }
+    int headquarters = -1;
+    for (int base = 0; base < BaseCurrentCount; ++base) {
+        if (Bases[base].faction_id_current == subject && has_fac(FAC_HEADQUARTERS, base, 0)) {
+            headquarters = base;
+            break;
+        }
+    }
+    report_intel_label(0x5C4 / 4);
+    say_base(StringTemp, headquarters);
+    CharUpperA(StringTemp);
+    report_topic_line(canvas, rect1_, text_x);
+    rect1_.top += field_E268_;
+    report_intel_label(0xE4 / 4);
+    report_topic_number(PlayersData[subject].energy_reserves);
+    if (informed) {
+        report_topic_line(canvas, rect1_, text_x);
+        rect1_.top += field_E268_;
+    }
+    if ((GameState & 0x80) || !(GameRules & 0x200)) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "[");
+        strcat(StringTemp, label_get(0x254 / 4));
+        strcat(StringTemp, ": ]");
+        say_tech(StringTemp, PlayersData[subject].tech_id_researching, 0);
+        if (informed) {
+            report_topic_line(canvas, rect1_, text_x);
+            rect1_.top += field_E268_;
+        }
+    }
+    if (!(Players[subject].rule_flags & RFLAG_ALIEN)) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "[");
+        strcat(StringTemp, label_get(0xF00 / 4));
+        CharUpperA(StringTemp);
+        strcat(StringTemp, ":   ]");
+        report_topic_number(council_votes(subject));
+        report_topic_line(canvas, rect1_, text_x);
+    }
+    rect1_.top += field_E268_ + 20;
+    for (int category_index = 0; category_index < 4; ++category_index) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "[");
+        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category_index].type)));
+        strcat(StringTemp, ":   ]");
+        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(SocialCategories[category_index].name[
+            report_social_model(PlayersData[subject].soc_category_pending, category_index)])));
+        CharUpperA(StringTemp);
+        canvas.write_l(StringTemp, rect1_.left + 20,
+                       rect1_.top + category_index * field_E268_, strlen(StringTemp));
+    }
+    for (int faction = 1; faction < 8; ++faction) {
+        const unsigned int flags = PlayersData[subject].diplo_treaties[faction];
+        if (faction == subject || !(flags & 8) ||
+            !(factions_status_byte(1) & (1 << faction)) ||
+            (!informed && faction != viewer && !(PlayersData[viewer].diplo_treaties[faction] & 1))) continue;
+        StringTemp[0] = 0;
+        if (flags & 0x10) {
+            strcat(StringTemp, label_get(0x358 / 4)); strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x5C8 / 4));
+        } else if (flags & 1) {
+            strcat(StringTemp, get_pact(subject)); strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x43C / 4));
+        } else {
+            if (flags & 2) strcat(StringTemp, label_get(0x350 / 4));
+            else {
+                if (flags & 0x10000) { strcat(StringTemp, label_get(0x5D0 / 4)); strcat(StringTemp, " "); }
+                strcat(StringTemp, label_get(0x354 / 4));
+            }
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x5CC / 4));
+        }
+        strcat(StringTemp, " ");
+        report_append_leader(Players[faction]);
+        report_topic_line(canvas, rect1_, text_x + 125);
+        rect1_.top += field_E268_;
+    }
+}
+
+// Requires coordinator-reviewed PlayerData final-dword migration:
+// int score_items_[9] at +0x20A8, replacing unk_110..unk_118 including the
+// intervening char[4]. Original4A1318 accesses9signedints;4A16C9 bounds9.
+// ORIGINAL: 0x004A1140 ?draw_score@ReportWin@@QAEXXZ 0x004A1140-0x004A2208
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a1140.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::draw_score() {
+    Buffer &canvas = *static_cast<Buffer *>(this);
+    const int faction = ReportIfGlobal.report_faction_id();
+    RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+                  energy_panel_rect_.right - 3,
+                  energy_panel_rect_.top + static_cast<int>(field_E268_) + 9};
+    RECT body = {title.left, title.bottom + 2, title.right, energy_panel_rect_.bottom - 3};
+    canvas.box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
+    canvas.box_sprite(&title, &InterfaceBoxStyles[1]);
+    canvas.box_sprite(&body, &InterfaceBoxStyles[1]);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, Players[faction].formal_name_faction);
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0xADC / 4));
+    strcat(StringTemp, "]");
+    --title.top;
+    --title.bottom;
+    canvas.write_cent_l(StringTemp, &title, strlen(StringTemp));
+    compute_score(faction, 0, 0, 0);
+    if (X_text_open(reinterpret_cast<char *>(*ClimatePopupTitle), "SCORING")) return;
+    rect1_.left = body.left + 4;
+    rect1_.top = body.top + 4;
+    rect1_.right = body.right - body.left - 8;
+    rect1_.bottom = rect1_.right;
+    for (int item = 0; item < 9; ++item) {
+        text_get();
+        if (PlayersData[faction].score_items_[item] == 0 || item == 5) continue;
+        StringTemp[0] = 0;
+        if (item == 6) {
+            const int own = num_objectives(faction, 0);
+            const int total = num_objectives(faction, GameRules & 0x1000);
+            report_topic_number(own);
+            strcat(StringTemp, " ");
+            if (total > own) {
+                strcat(StringTemp, label_get(0xE0C / 4));
+                report_topic_line(canvas, rect1_, rect1_.left);
+                rect1_.top += field_E268_;
+                StringTemp[0] = 0;
+                report_topic_number(total - own);
+                strcat(StringTemp, " ");
+                strcat(StringTemp, label_get(0x1030 / 4));
+                report_topic_line(canvas, rect1_, rect1_.left);
+                rect1_.top += static_cast<int>(field_E268_ * 3) / 2;
+                StringTemp[0] = 0;
+            }
+            strcat(StringTemp, TextBufferGetPtr);
+        } else if (item == 7) {
+            if (GameState & 0x200000) strcat(StringTemp, label_get(0xE70 / 4));
+            else if (GameState & 0x400000) strcat(StringTemp, label_get(0xE88 / 4));
+            else if (PlayersData[faction].flags & 0x100000) strcat(StringTemp, label_get(0x1198 / 4));
+            else if (!(GameState & 0x2000)) strcat(StringTemp, label_get(0xE10 / 4));
+            else strcat(StringTemp, TextBufferGetPtr);
+        } else strcat(StringTemp, TextBufferGetPtr);
+        report_topic_line(canvas, rect1_, rect1_.left);
+        StringTemp[0] = 0;
+        const int value = PlayersData[faction].score_items_[item];
+        strcat(StringTemp, value < 0 ? "- " : "+ ");
+        report_topic_number(abs(value));
+        canvas.write_right_l(StringTemp, rect1_.left + rect1_.right,
+                             rect1_.top, strlen(StringTemp));
+        rect1_.top += field_E268_;
+    }
+    if (PlayersData[faction].score_items_[5]) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(MapNativeLifeForms ? 0x908 / 4 : 0x904 / 4));
+        strcat(StringTemp, " ");
+        strcat(StringTemp, MapNativeLifeForms ? "+25%" : "-25%");
+        report_topic_line(canvas, rect1_, rect1_.left);
+        StringTemp[0] = 0;
+        const int value = PlayersData[faction].score_items_[5];
+        strcat(StringTemp, value < 0 ? "- " : "+ ");
+        report_topic_number(abs(value));
+        canvas.write_right_l(StringTemp, rect1_.left + rect1_.right,
+                             rect1_.top, strlen(StringTemp));
+        rect1_.top += field_E268_;
+    }
+    if ((GameRules & 0x400) && !(GameState & 0x20) && PlayersData[faction].unk_109 > 0) {
+        rect1_.top += field_E268_;
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x1044 / 4));
+        CharUpperA(StringTemp);
+        report_topic_line(canvas, rect1_, rect1_.left);
+        strcpy(StringTemp, "+100%");
+        canvas.write_right_l(StringTemp, rect1_.left + rect1_.right,
+                             rect1_.top, strlen(StringTemp));
+        rect1_.top += field_E268_;
+    }
+    rect1_.top += field_E268_;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0x6C0 / 4));
+    strcat(StringTemp, "}");
+    report_topic_line(canvas, rect1_, rect1_.left);
+    strcpy(StringTemp, "{");
+    if (PlayersData[faction].unk_109 < 0) strcat(StringTemp, "- ");
+    report_topic_number(abs(PlayersData[faction].unk_107));
+    strcat(StringTemp, "}");
+    canvas.write_right_l(StringTemp, rect1_.left + rect1_.right,
+                         rect1_.top, strlen(StringTemp));
+    rect1_.top += field_E268_ * 2;
+    if (GameState & 1) {
+        if (GameState & 0x80000) {
+            StringTemp[0] = 0;
+            if (PlayersData[faction].score_items_[7]) strcat(StringTemp, label_get(0xE10 / 4));
+            else {
+                strcat(StringTemp, label_get(0xE14 / 4));
+                for (int other = 1; other < 8; ++other) {
+                    if (other == faction) continue;
+                    compute_score(other, 0, 0, 0);
+                    if (PlayersData[other].score_items_[7]) {
+                        strcat(StringTemp, " "); strcat(StringTemp, "(");
+                        PluralityDefault = 0;
+                        GenderDefault = Players[other].is_leader_female;
+                        strcat(StringTemp, Players[other].name_leader);
+                        strcat(StringTemp, " "); strcat(StringTemp, label_get(0x101C / 4));
+                        strcat(StringTemp, ")");
+                        break;
+                    }
+                }
+                CharUpperA(StringTemp);
+                strcat(StringTemp, "!");
+                report_topic_line(canvas, rect1_, rect1_.left);
+                rect1_.top += field_E268_ * 2;
+            }
+        } else if (!(GameState & 0x602000) && ObjectiveReqVictory <= 9000) {
+            StringTemp[0] = 0;
+            // Original reuses the faction byte-index local as the outcome.
+            // The unmet nonzero objective target with item 8 nonzero leaves it
+            // intact; preserve that malformed DRAWSTRING selection path.
+            int outcome = faction * sizeof(PlayerData);
+            int most = 0;
+            if (ObjectiveReqVictory == 0) {
+                const int objectives = num_objectives(faction, GameRules & 0x1000);
+                int leader, pacts;
+                most = most_objectives(&leader, &pacts);
+                if (objectives >= (most < 0 ? 0 : most)) {
+                    if (pacts) { strcat(StringTemp, label_get(0x102C / 4)); outcome = 2; }
+                    else { strcat(StringTemp, label_get(0xE10 / 4)); outcome = 1; }
+                } else {
+                    outcome = 0;
+                    strcat(StringTemp, label_get(0xE14 / 4));
+                    if (leader > 0) {
+                        strcat(StringTemp, " "); strcat(StringTemp, "(");
+                        PluralityDefault = 0;
+                        GenderDefault = Players[leader].is_leader_female;
+                        strcat(StringTemp, Players[leader].name_leader);
+                        strcat(StringTemp, " "); strcat(StringTemp, label_get(0x101C / 4));
+                        strcat(StringTemp, ")");
+                    }
+                }
+            } else if (num_objectives(faction, GameRules & 0x1000) >= ObjectiveReqVictory) {
+                strcat(StringTemp, label_get(0xE10 / 4)); outcome = 1;
+            } else if (PlayersData[faction].score_items_[8] == 0) {
+                outcome = 0;
+                strcat(StringTemp, label_get(0xE14 / 4));
+            }
+            CharUpperA(StringTemp);
+            strcat(StringTemp, "!");
+            report_topic_line(canvas, rect1_, rect1_.left);
+            rect1_.top += field_E268_ * 2;
+            for (int other = 1; other < 8; ++other) {
+                if (!(factions_status_byte(1) & (1 << other)) || other == faction) continue;
+                const int target = ObjectiveReqVictory ? ObjectiveReqVictory : most;
+                if (num_objectives(other, GameRules & 0x1000) < target) continue;
+                if (!(factions_status_byte(0) & (1 << other)) && (GameRules & 0x80000)) continue;
+                const char *section = outcome > 1 ? "DRAWSTRING" : outcome ? "WINSTRING2" : "WINSTRING";
+                if (X_text_open(reinterpret_cast<char *>(*ClimatePopupTitle), section)) break;
+                text_get();
+                PluralityDefault = 0; GenderDefault = Players[other].is_leader_female;
+                parse_says(0, Players[other].title_leader, -1, -1);
+                PluralityDefault = 0; GenderDefault = Players[other].is_leader_female;
+                parse_says(1, Players[other].name_leader, -1, -1);
+                GenderDefault = Players[other].noun_gender;
+                PluralityDefault = Players[other].is_noun_plural;
+                parse_says(2, Players[other].noun_faction, -1, -1);
+                StringTemp[0] = 0;
+                report_topic_number(num_objectives(other, 0));
+                const int all = num_objectives(other, GameRules & 0x1000);
+                if (all > num_objectives(other, 0)) {
+                    strcat(StringTemp, "(");
+                    report_topic_number(num_objectives(other, GameRules & 0x1000));
+                    strcat(StringTemp, ")");
+                }
+                parse_says(3, StringTemp, -1, -1);
+                StringTemp[0] = 0;
+                parse_string(TextBufferGetPtr, StringTemp);
+                report_topic_line(canvas, rect1_, rect1_.left);
+                rect1_.top += field_E268_;
+            }
+        }
+    }
+    if (GameState & 0x20) {
+        canvas.set_text_color(0xF9, -1, 1, 1);
+        canvas.set_font(ReportIfGlobal.field_1E1B8_, 0, 0, 0);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x1060 / 4));
+        strcat(StringTemp, "!");
+        canvas.write_cent_l(StringTemp, rect1_.left, energy_panel_rect_.bottom - 50,
+                            rect1_.right, 50, strlen(StringTemp));
+    }
+    text_close();
+}
+static unsigned int report_sat_count(const PlayerData &data, int kind) {
+    switch (kind) {
+    case 0: return data.satellites_[0];
+    case 1: return data.satellites_[1];
+    case 2: return data.satellites_[2];
+    default: return data.satellites_[3];
+    }
+}
+
+// ORIGINAL: 0x0049D540 ?draw_ops@ReportWin@@QAEXXZ 0x0049D540-0x0049EAEB;0x00659435-0x00659447
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::draw_ops() {
+    Buffer &canvas = *static_cast<Buffer *>(this);
+    const int faction = ReportIfGlobal.report_faction_id_;
+    Random rng;
+    rng.reseed(timeGetTime());
+    field_59A0_ = field_59A4_ = 40;
+    const int split = energy_panel_rect_.top + 34 + field_E268_;
+    RECT upper = {energy_panel_rect_.left, energy_panel_rect_.top,
+        energy_panel_rect_.right, split};
+    RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+        energy_panel_rect_.right - 3, energy_panel_rect_.top + field_E268_ + 9};
+    RECT lower = {energy_panel_rect_.left, split + 2,
+        energy_panel_rect_.right, energy_panel_rect_.bottom};
+    RECT icon = {energy_panel_rect_.left + 3, split + 5,
+        energy_panel_rect_.left + 43, split + 45};
+    RECT text = {energy_panel_rect_.left + 45, split + 5,
+        energy_panel_rect_.right - 3, split + 45};
+    canvas.box_sprite(&upper, &InterfaceBoxStyles[0]);
+    canvas.box_sprite(&title, &InterfaceBoxStyles[1]);
+    canvas.box_sprite(&lower, &InterfaceBoxStyles[0]);
+    const int pitch = field_59A4_ + 2;
+    const int rows = (lower.bottom - lower.top - 6) / pitch;
+    flatButton4_.show(0); flatButton5_.show(0); flatButton6_.show(0);
+    const int count = PlayersData[faction].current_num_bases;
+    if (!field_C0F8_) {
+        if (rows <= count) field_E26C_ = 1;
+    } else if (count < rows) {
+        scroll_hide(this, &scroll_);
+        field_C0F8_ = 0;
+    }
+    if (field_E270_) {
+        field_C108_ = rows - 1;
+        field_C0FC_ = field_C100_ = 0;
+        field_C104_ = count - 1;
+        scroll_.set_range(0, count - 1);
+        scroll_.paging_ = field_C108_;
+        scroll_.set_pos(field_C0FC_);
+        field_E270_ = 0;
+    }
+    spot_.kill_type(0);
+    spot_.reset_count();
+    strcpy(StringTemp, "[");
+    strcat(StringTemp, get_adjective(faction));
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0xACC / 4));
+    if (field_5A08_) {
+        strcat(StringTemp, " - ");
+        const int labels[8] = {0xA0, 0xA4, 0xE4, 0xAAC, 0xAB0, 0xAB4, 0xFC, 0xAB8};
+        if (field_5A08_ >= 1 && field_5A08_ <= 8)
+            strcat(StringTemp, label_get(labels[field_5A08_ - 1] / 4));
+    }
+    CharUpperA(StringTemp);
+    strcat(StringTemp, "]");
+    --title.top; --title.bottom;
+    canvas.write_cent_l(StringTemp, &title, strlen(StringTemp));
+    int ordinal = -1;
+    // Original 49DF66/49E0CB assign this only for facilities; 49E0C4 reads
+    // it on the unit path too. Preserve the stale/uninitialized value.
+    int facility_scratch;
+    for (int list_index = 0; list_index < BaseCurrentCount; ++list_index) {
+        const int base_id = ReportIfGlobal.sort_entries_[list_index].base_id;
+        Base &base = Bases[base_id];
+        if (base.faction_id_current != faction) continue;
+        ++ordinal;
+        if (ordinal < static_cast<int>(field_C0FC_) || ordinal >= static_cast<int>(field_C0FC_) + rows) continue;
+        if (ordinal > static_cast<int>(field_C0FC_)) {
+            text.top += pitch; text.bottom += pitch;
+            icon.top += pitch; icon.bottom += pitch;
+        }
+        report_work_rect_.left = icon.left;
+        report_work_rect_.top = text.top;
+        report_work_rect_.right = text.right + 1;
+        report_work_rect_.bottom = text.bottom;
+        spot_.add(base_id + 0x400, 0, &report_work_rect_);
+        spot_.add(base_id + 0xC00, 0, &icon);
+        const bool selected = (selected_bases_[base_id / 32] & (1u << (base_id & 31))) != 0;
+        canvas.box_sprite(&text, &InterfaceBoxStyles[selected ? 2 : 1]);
+        if (selected) canvas.box_sprite(&text, &InterfaceBoxStyles[5]);
+        canvas.box_sprite(&icon, &InterfaceBoxStyles[selected ? 2 : 1]);
+        if (selected) canvas.box_sprite(&icon, &InterfaceBoxStyles[5]);
+        if (base.governor & 0x80000000u) {
+            for (int priority = 0; priority < 4; ++priority) {
+                if (base.governor & (0x1000000u << priority)) {
+                    RECT inner = {icon.left + 1, icon.top + 1, icon.right - 1, icon.bottom - 1};
+                    canvas.box_sprite(&inner, &InterfaceBoxStyles[36 + 3 * priority]);
+                    break;
+                }
+            }
+        }
+        const int text_y = pitch / 2 - static_cast<int>(field_E268_) / 2 + text.top;
+        const int base_width = MapWinCaptionScale < 1 ? 62 : MapWinCaptionScale * 100 / MapWinCaptionDivisor;
+        const int base_height = MapWinCaptionScale < 1 ? 46 : MapWinCaptionScale * 75 / MapWinCaptionDivisor;
+        rect1_.left = (static_cast<int>(field_59A0_) - base_width) / 2 + 1 + icon.left;
+        rect1_.top = (static_cast<int>(field_59A4_) - base_height) / 2 + 1 + icon.top;
+        base_draw(&canvas, base_id, rect1_.left, rect1_.top, -6, 0x40);
+        canvas.set_text_color(0xE1, -1, 1, 1);
+        canvas.set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E184_, ReportIfGlobal.field_1E18C_, 0);
+        set_base(base_id);
+        base_compute(0);
+        StringTemp[0] = 0;
+        say_base(StringTemp, base_id);
+        const int matrix = base_project(FAC_TELEPATHIC_MATRIX);
+        if (BaseCurrent->talent_total < BaseCurrent->drone_total
+            && (matrix < 0 || Bases[matrix].faction_id_current != faction)) {
+            canvas.set_text_color(0xF9, -1, 1, 1);
+        } else if (!BaseCurrent->drone_total && BaseCurrent->population_size > 2
+            && (BaseCurrent->population_size + 1) / 2 <= BaseCurrent->talent_total) {
+            strcat(StringTemp, "(!)");
+            canvas.set_text_color(0xFF, -1, 1, 1);
+        }
+        rect1_.left = text.left + 5;
+        CharUpperA(StringTemp);
+        canvas.write_l(StringTemp, rect1_.left, text.top + 5, strlen(StringTemp));
+        StringTemp[0] = 0;
+        if (is_objective(base_id) && !(GameRules & 0x20000000)) {
+            // The original indexes colour by list position, not sorted base ID.
+            canvas.set_text_color(InfoFactionTextColors[Bases[list_index].faction_id_current], -1, 1, 1);
+            strcat(StringTemp, label_get(0xE08 / 4));
+            CharUpperA(StringTemp);
+        } else if (!(base.governor & 0x80000000u)) {
+            canvas.set_text_color(0xE1, -1, 1, 1);
+            strcat(StringTemp, label_get(0xBFC / 4));
+        } else {
+            for (int status_priority = 0; status_priority < 4; ++status_priority) {
+                if (base.governor & (0x1000000u << status_priority)) {
+                    canvas.set_text_color(mandate_color(status_priority), -1, 1, 1);
+                    strcat(StringTemp, label_get(0x824 / 4 + status_priority));
+                    break;
+                }
+            }
+        }
+        canvas.write_l(StringTemp, rect1_.left + 20, text.bottom - field_E268_ - 1, strlen(StringTemp));
+        rect1_.left += 192;
+        const int mode = buttonGroup1_.field_84_;
+        if (mode == 0x8B3) {
+            const int production = BaseCurrent->queue_production_id[0];
+            if (production < 0) {
+                const int facility = -production;
+                facility_scratch = facility;
+                Sprite &sprite = facility < 70 ? g_FACILITY_ICON_SPRITES[facility]
+                    : g_SECRET_PROJECT_ICON_SPRITES[facility - 70];
+                const int denominator = facility < 70 ? g_FACILITY_ICON_SPRITES[0].height()
+                    : g_SECRET_PROJECT_ICON_SPRITES[0].height();
+                const int color = mandate_color(facility < 70 ? TutWinBaseWindow.prodPicker_.edbc_fac(facility) : 1);
+                sprite.draw_mono(&canvas, sprite.transparent_index(), rect1_.left + 8,
+                    rect1_.top + 4, color, text.bottom - text.top - 2, denominator);
+            } else {
+                veh_draw(&canvas, veh_fake(production, BaseCurrent->faction_id_current),
+                    rect1_.left, rect1_.top + 4, -8, 0x4C, 0);
+            }
+            StringTemp[0] = 0;
+            canvas.set_font(ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E18C_, ReportIfGlobal.field_1E18C_, 0);
+            int item_cost;
+            if (production < 0) {
+                const int facility = -production;
+                item_cost = Facility[facility].cost;
+                facility_scratch = facility;
+                strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+                canvas.set_text_color(mandate_color(TutWinBaseWindow.prodPicker_.edbc_fac(facility)), -1, 1, 1);
+            } else {
+                strcat(StringTemp, VehPrototypes[production].veh_name);
+                BOOL prototype_cost;
+                item_cost = veh_cost(production, BaseIDCurrentSelected, &prototype_cost);
+                canvas.set_text_color(mandate_color(TutWinBaseWindow.prodPicker_.edbc_unit(production)), -1, 1, 1);
+            }
+            rect1_.left += 60;
+            canvas.write_l(StringTemp, rect1_.left, text_y, strlen(StringTemp));
+            canvas.set_text_color(0xF2, -1, 1, 1);
+            strcpy(StringTemp, "(");
+            reportwin_append_number(StringTemp, facility_scratch == 69 ? 0 : BaseCurrent->minerals_accumulated);
+            strcat(StringTemp, "/");
+            const int cost = cost_factor(BaseCurrent->faction_id_current, 1, -1) * item_cost;
+            reportwin_append_number(StringTemp, cost);
+            strcat(StringTemp, ")    ");
+            const int minerals = BaseCurrent->mineral_surplus_final;
+            if (minerals < 1) strcat(StringTemp, label_get(0x10C / 4));
+            else {
+                strcat(StringTemp, label_get(0xC4 / 4)); strcat(StringTemp, ": "); strcat(StringTemp, " ");
+                int turns = 0;
+                if (cost > BaseCurrent->minerals_accumulated) {
+                    const int divisor = minerals < 1 ? 1 : minerals > 99999 ? 99999 : minerals;
+                    turns = (minerals - 1 + cost - BaseCurrent->minerals_accumulated) / divisor;
+                    if (turns < 0) turns = 0; else if (turns > 999999) turns = 999999;
+                }
+                reportwin_append_number(StringTemp, turns);
+            }
+            canvas.write_right_l(StringTemp, text.right - 4, text_y, strlen(StringTemp));
+        } else if (mode == 0x8B4) {
+            const int population = BaseCurrent->population_size;
+            int spacing = population < 2 ? 34 : (text.right - text.left - 226) / (population - 1);
+            if (spacing < 1) spacing = 1; else if (spacing > 34) spacing = 34;
+            rect1_.left = spacing - 32 + text.right;
+            rect1_.top = text.bottom - pitch / 2 - 18;
+            const bool alien = ExpansionEnabled && (Players[faction].rule_flags & RFLAG_ALIEN);
+            for (int specialist = 0; specialist < BaseCurrent->specialist_total; ++specialist) {
+                rect1_.left -= spacing;
+                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                const int index = BaseCurrent->specialist_total - specialist - 1;
+                const int type = index < 16 ? (BaseCurrent->spec[index >> 3] >> ((index & 7) * 4)) & 15 : best_specialist();
+                Sprite &sprite = alien ? g_AL_SPECIALIST_SM_CURSOR_SPRITES[type] : g_SPECIALIST_SM_CURSOR_SPRITES[type];
+                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
+            }
+            for (int drone = 0; drone < BaseCurrent->drone_total; ++drone) {
+                rect1_.left -= spacing;
+                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                const int type = 2 + (drone < BaseCurrent->super_drone_total) + (alien ? 0 : rng.get(0, 2) * 4);
+                Sprite &sprite = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES[type] : g_CITIZEN_SM_CURSOR_SPRITES[type];
+                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
+            }
+            const int workers = population - BaseCurrent->talent_total - BaseCurrent->specialist_total
+                - (BaseCurrent->drone_total > 0 ? BaseCurrent->drone_total : 0);
+            for (int worker = 0; worker < workers; ++worker) {
+                rect1_.left -= spacing;
+                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                const int type = 1 + (alien ? 0 : rng.get(0, 2) * 4);
+                Sprite &sprite = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES[type] : g_CITIZEN_SM_CURSOR_SPRITES[type];
+                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
+            }
+            for (int talent = 0; talent < BaseCurrent->talent_total; ++talent) {
+                rect1_.left -= spacing;
+                spot_.add(list_index, 0, rect1_.left, rect1_.top, spacing, pitch);
+                const int type = alien ? 0 : rng.get(0, 2) * 4;
+                Sprite &sprite = alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES[type] : g_CITIZEN_SM_CURSOR_SPRITES[type];
+                sprite.draw(&canvas, sprite.transparent_index(), rect1_.left, rect1_.top);
+            }
+        } else if (mode == 0x8B5) {
+            int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+            const int slots = stack_check(vehicle, 1, -1, -1, -1);
+            int spacing = slots < 2 ? 40 : (text.right - text.left - 232) / (slots - 1);
+            if (spacing < 1) spacing = 1; else if (spacing > 40) spacing = 40;
+            rect1_.left = spacing - 45 + text.right;
+            rect1_.top = text.top;
+            if (vehicle >= 0) {
+                while (Vehs[vehicle].prev_veh_id_stack >= 0) vehicle = Vehs[vehicle].prev_veh_id_stack;
+                for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
+                    rect1_.left -= spacing;
+                    veh_draw(&canvas, vehicle, rect1_.left, rect1_.top, -8, 8, 0);
+                    spot_.add(base_id + 0x800, vehicle, rect1_.left, rect1_.top, spacing, pitch);
+                }
+            }
+        }
+    }
+}
+static void report_sat_number(int value) {
+    char number[80];
+    _itoa(value, number, 10);
+    strcat(StringTemp, number);
+}
+// ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+void ReportWin::draw_sat() {
+    Buffer &canvas = *static_cast<Buffer *>(this);
+    const int faction = ReportIfGlobal.report_faction_id();
+    RECT title = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+        energy_panel_rect_.right - 3, energy_panel_rect_.top + static_cast<int>(field_E268_) + 9};
+    canvas.box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
+    canvas.box_sprite(&title, &InterfaceBoxStyles[1]);
+    strcpy(StringTemp, "[");
+    strcat(StringTemp, Players[faction].formal_name_faction);
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0xAD4 / 4));
+    strcat(StringTemp, "]");
+    --title.top; --title.bottom;
+    canvas.write_cent_l(StringTemp, &title, strlen(StringTemp));
+    flatButton7_.show(0);
+    flatButton8_.show(0);
+    spot_.reset_count();
+    bool orbital_tech = false;
+    for (int technology_faction = 1; technology_faction < 8; ++technology_faction)
+        if (has_tech(Facility[65].preq_tech, technology_faction)) orbital_tech = true;
+    if (buttonGroup2_.field_84_ == 0xD3C) {
+        flatButton9_.hide();
+        if (!orbital_tech) {
+            canvas.set_font(ReportIfGlobal.field_1E1A0_, 0, 0, 0);
+            canvas.set_text_color(0xE1, -1, 1, 1);
+            strcpy(StringTemp, label_get(0xCC4 / 4));
+            canvas.write_cent_l(StringTemp, rect1_.left, rect1_.top,
+                rect1_.right, rect1_.bottom, strlen(StringTemp));
+            return;
+        }
+        rect1_.top += 50;
+        rect1_.bottom -= 50;
+        const int column_width = (rect1_.bottom - rect1_.top - 2) / 8;
+        const int heading_width = rect1_.right / (ExpansionEnabled ? 5 : 3);
+        const int row_width = (rect1_.right - 4 - heading_width) / (ExpansionEnabled ? 5 : 4);
+        for (int other = 0; other < 8; ++other) {
+            // Genuine original: clears only type 0 on every column iteration.
+            spot_.kill_type(0);
+            rect1_.left = energy_panel_rect_.left + 2;
+            if (other) {
+                StringTemp[0] = 0;
+                GenderDefault = Players[other].noun_gender;
+                PluralityDefault = Players[other].is_noun_plural;
+                strcat(StringTemp, Players[other].noun_faction);
+                canvas.set_text_color(ChatItemIdTable[other], ChatShadowColors[other], 1, 1);
+                report_work_rect_.left = rect1_.left;
+                report_work_rect_.top = rect1_.top;
+                report_work_rect_.right = rect1_.left + heading_width;
+                report_work_rect_.bottom = rect1_.top + column_width;
+                canvas.write_l(StringTemp, &report_work_rect_, strlen(StringTemp));
+            }
+            rect1_.left += heading_width;
+            report_work_rect_.left = rect1_.left;
+            report_work_rect_.top = rect1_.top;
+            report_work_rect_.right = rect1_.left + row_width;
+            report_work_rect_.bottom = rect1_.top + column_width;
+            field_E29C_ = 0;
+            while (static_cast<int>(field_E29C_) < (ExpansionEnabled ? 5 : 4)) {
+                const int kind = field_E29C_;
+                StringTemp[0] = 0;
+                if (!other) {
+                    canvas.set_text_color(0xFF, -1, 1, 1);
+                    strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[kind == 4 ? 41 : 65 + kind].name)));
+                    canvas.wrap_cent(StringTemp, &report_work_rect_);
+                } else {
+                    int elevators = 0;
+                    for (int base = 0; base < BaseCurrentCount; ++base)
+                        if (Bases[base].faction_id_current == other && has_fac(41, base, 0)) ++elevators;
+                    const bool nonzero = kind == 4 ? elevators != 0 : report_sat_count(PlayersData[other], kind) != 0;
+                    const int colors[5] = {0x98, 0xDF, 0x62, 0xF9, 0xFF};
+                    canvas.set_text_color(nonzero ? colors[kind] : 0xF8, -1, 1, 1);
+                    if (kind == 3) {
+                        report_sat_number(PlayersData[other].satellites_[3] - PlayersData[other].sat_odp_deployed);
+                        strcat(StringTemp, "/");
+                    }
+                    report_sat_number(kind == 4 ? elevators : report_sat_count(PlayersData[other], kind));
+                    canvas.write_cent_l(StringTemp, &report_work_rect_, strlen(StringTemp));
+                    spot_.add(kind, other, report_work_rect_.left, report_work_rect_.top,
+                        report_work_rect_.right - report_work_rect_.left,
+                        report_work_rect_.bottom - report_work_rect_.top);
+                }
+                report_work_rect_.left += row_width;
+                report_work_rect_.right += row_width;
+                ++field_E29C_;
+            }
+            rect1_.top += column_width;
+        }
+        return;
+    }
+    field_59A0_ = 576;
+    field_59A4_ = 210;
+    rect1_.left = (energy_panel_rect_.right + energy_panel_rect_.left - 576) / 2;
+    rect1_.top = (energy_panel_rect_.bottom + energy_panel_rect_.top - 210) / 2 + 20;
+    satellite_rect_.left = rect1_.left;
+    satellite_rect_.top = rect1_.top;
+    satellite_rect_.right = rect1_.left + 576;
+    satellite_rect_.bottom = rect1_.top + 210;
+    flic_.init(&canvas, "satellite.flc", 0, 0, 0);
+    field_E2A8_ = (satellite_rect_.right + satellite_rect_.left) / 2;
+    field_E2AC_ = (satellite_rect_.bottom + satellite_rect_.top) / 2;
+    field_E2A0_ = field_E2A8_ - flic_.decoded_width() / 2;
+    field_E2A4_ = field_E2AC_ - flic_.decoded_height() / 2;
+    buffer2_.init(flic_.decoded_width(), flic_.decoded_height(), 0, 0);
+    buffer2_.fill(9);
+    flic_.init(&buffer2_, "satellite.flc", 0, 0, 0);
+    canvas.box_sprite(&satellite_rect_, &InterfaceBoxStyles[4]);
+    satellite_rect_.left += 3; satellite_rect_.top += 3;
+    satellite_rect_.right -= 3; satellite_rect_.bottom -= 3;
+    field_F918_ = 0;
+    // Original includes factions 1..7 (833..4198 dwords, exclusive endpoint).
+    for (int other = 1; other < 8; ++other) {
+        field_E29C_ = 0;
+        while (field_E29C_ < 4) {
+            field_F918_ += report_sat_count(PlayersData[other], field_E29C_);
+            ++field_E29C_;
+        }
+    }
+    field_EE30_ = 0.02f;
+    field_E29C_ = 0;
+    while (field_E29C_ < 16) {
+        const int i = field_E29C_;
+        const int radius_x = static_cast<int>(field_59A4_) / 2 - 10;
+        const int radius_y = radius_x;
+        satellite_acceleration_[i] = static_cast<float>(sqrt(static_cast<double>(radius_x * radius_x * 2)));
+        const float radius = satellite_acceleration_[i];
+        // x87 49FC58..64 multiplies THREE radius factors, unlike seed.
+        satellite_acceleration_[i] = static_cast<float>(sqrt(1.0 / (static_cast<double>(radius) * radius * radius)) * 700.0f);
+        const float angle = static_cast<float>(i) * 0.0625f;
+        const float phase_x = angle * 6.28000020980835f;
+        const float phase_y = static_cast<float>((((i & 1) ? 0.125 : -0.125) + angle) * 6.28000020980835f);
+        const float speed = satellite_acceleration_[i];
+        satellite_x_[i] = static_cast<float>(cos(static_cast<double>(speed) + phase_x) * radius_x);
+        satellite_y_[i] = static_cast<float>(sin(static_cast<double>(speed) + phase_y) * radius_y);
+        satellite_dx_[i] = static_cast<float>(sin(static_cast<double>(speed) + phase_x) * -radius_x * speed);
+        satellite_dy_[i] = static_cast<float>(cos(static_cast<double>(speed) + phase_y) * speed * radius_y);
+        satellite_acceleration_[i] = static_cast<float>(static_cast<double>(speed) * field_EE30_ * speed);
+        satellite_live_[i] = i < static_cast<int>(field_F918_);
+        ++field_E29C_;
+    }
+    sat_anim();
+    time2_.init(reinterpret_cast<void (__cdecl *)(int)>(sat_anim_daemon), reinterpret_cast<int>(this), 4000, 5);
+    time2_.start();
+}
+
+// ORIGINAL: 0x004A0260 ?sat_attack@@YAXHHH@Z 0x004A0260-0x004A080C;0x00659447-0x00659580
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a0260.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover satellite attack selection through a natural Popup lifetime, its owned picture and the genuine four-counter faction array, preserving original signed guards and network/local action ordering."}
+void __cdecl sat_attack(int attacker, int target, int kind) {
+    Popup popup;
+    if (attacker == target || target < 1) return;
+    if (!PlayersData[attacker].satellites_[3]) {
+        if (attacker == ConsoleGlobal.faction_id_)
+            popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+                 "NOKILLERS", 0, "space_sm.pcx", 0);
+        return;
+    }
+    if (static_cast<int>(PlayersData[attacker].sat_odp_deployed)
+        >= static_cast<int>(PlayersData[attacker].satellites_[3])) {
+        if (attacker == ConsoleGlobal.faction_id_)
+            popp(reinterpret_cast<const char *>(*ClimatePopupTitle),
+                 "KILLERSDEPLOYED", 0, "space_sm.pcx", 0);
+        return;
+    }
+    int targets = 0;
+    for (int base = 0; base < BaseCurrentCount; ++base) {
+        if (Bases[base].faction_id_current == target && has_fac_built(41, base)) ++targets;
+    }
+    if (kind == 4) {
+        if (!targets) return;
+    } else {
+        // Original guards only the signed upper bound; no new lower guard.
+        if (kind >= 4 || !PlayersData[target].satellites_[kind]) return;
+    }
+    if (break_treaty(attacker, target, 7)) return;
+    if (diplo_lock(100)) return;
+    if (PlayersData[attacker].satellites_[3]
+        && static_cast<int>(PlayersData[attacker].sat_odp_deployed)
+            < static_cast<int>(PlayersData[attacker].satellites_[3])) {
+        int attack_target = attacker;
+        bool attack = false;
+        if (kind == 4) {
+            if (targets) {
+                popup.start(PopupStartCaption, "WHICHGSP", -1, 0, 0x40, 0);
+                int width, height;
+                if (Buffer::get_pcx_dimensions("satbat_sm.pcx", &width, &height) == 0
+                    && popup.owned_picture().init("satbat_sm.pcx", width, height) == 0)
+                    popup.select_owned_picture();
+                for (int item_base = 0; item_base < BaseCurrentCount; ++item_base) {
+                    if (Bases[item_base].faction_id_current == target && has_fac_built(41, item_base))
+                        popup.dialogs().item(Bases[item_base].name_string, item_base);
+                }
+                attack_target = popup.exec(0, 0);
+                attack = attack_target >= 0;
+            }
+        } else if (kind < 4 && PlayersData[target].satellites_[kind]) {
+            attack = true;
+        }
+        if (attack) {
+            if (IsMultiplayerNet) {
+                message_data(0x2412, 0, attacker, target, kind, attack_target);
+                NetDaemonNet.await_exec(0);
+            } else {
+                ReportWinGlobal.start_attack(attacker, target, kind, attack_target);
+            }
+        }
+    }
+    diplo_unlock();
+    // Popup's genuine destructor closes and tears down all member/base state.
 }

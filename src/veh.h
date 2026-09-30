@@ -852,6 +852,9 @@ inline int8_t __cdecl get_proto_offense_rating(uint32_t proto_id) {
     return Weapon[VehPrototypes[proto_id].weapon_id].offense_rating;
 }
 
+// Orbital attack resolution, original entry 0x004CF480.
+void __cdecl action_sat_attack(int attacker, int target, int type, int base_id);
+
 // INLINE: the image has no get_offense_rating - it open-codes what this names.
 inline int8_t __cdecl get_offense_rating(uint32_t veh_id) {
     return get_proto_offense_rating(Vehs[veh_id].proto_id);

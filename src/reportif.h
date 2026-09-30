@@ -19,6 +19,8 @@
 #include "flatbutton.h"
 #include "listbox.h"
 #include "subinterface.h"
+#include "buttongroup.h"
+#include "spot.h"
 
 struct ReportSortEntry {
   int32_t base_id;
@@ -34,16 +36,18 @@ static_assert(sizeof(ReportSortEntry) == 0x10,
   *
   * The constructor's own disassembly (0x004AD170) and the destructor's
   * (0x004ACDA0) between them place every sub-object below at an exact,
-  * cross-checked offset: the constructor placement-news each one in image
+  * cross-checked offset: the constructor constructs each one in image
   * order, the destructor tears the same run down in reverse, and the two
   * agree on every boundary. The object's own last construction reaches
   * 0x20304 (a Sprite[4] ending there); nothing past it is established, so
   * there is no static_assert on sizeof(ReportIf).
   */
 class ReportIf : public SubInterface {
+  friend class ReportWin;
  public:
   // homed from 004a3d20.cpp
   void reset();
+  void on_redraw();
 
  public:
   void done();
@@ -139,14 +143,9 @@ class ReportIf : public SubInterface {
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C
 
-  // Everything below is placement-new'd EXPLICITLY from the constructor
-  // body (0x004AD170), in image order, and torn down in the mirrored order
-  // by the destructor (0x004ACDA0) - the two cross-check every boundary
-  // here. Raw storage, not the real sub-object type: C++'s implicit member
-  // construction would build these all before the constructor body ever
-  // runs, which cannot reproduce the image's exact call order (SubInterface
-  // itself is the empty-inline base, and nothing here is built through it).
-  // MEASURED: real declared members (FlatButton[7], Sprite[0x15],
+  // Genuine members follow the coupled constructor/destructor ordering.
+  // HISTORICAL MEASUREMENT (prior partial migration, not current model):
+  // real declared members (FlatButton[7], Sprite[0x15],
   // FlatButton[7]) built implicitly instead of placement-new - made this
   // WORSE, 26/132 against this baseline's 34/132, and grew the compiled
   // instruction count (189 -> 195). The base's `object[0] = vtable` store
@@ -161,33 +160,32 @@ class ReportIf : public SubInterface {
   uint8_t gap_5330_[0x54];  // 0x5330
   FlatButton flatButtonsB_[7];  // 0x5384, 7 * sizeof(FlatButton), vector ctor iterator
   uint8_t gap_A298_[0x38];  // 0xA298
-  // The two ListBox members below are constructed with a BOOL argument
-  // (`ListBox(1)` in the disassembly's call at 0x00609DB0) that has no
-  // declared overload yet - that recovery is out of this batch's scope, so
-  // the constructor reaches it at the raw image address, same as any other
-  // not-yet-promoted callee.
-  uint8_t listBox1_[0xB54];  // 0xA2D0, sizeof(ListBox)
-  uint8_t listBox2_[0xB54];  // 0xAE24, sizeof(ListBox)
-  uint8_t buttonGroup1_[0x94];  // 0xB978, sizeof(ButtonGroup)
-  uint8_t flatButton1_[0xB4C];  // 0xBA0C
-  uint8_t flatButton2_[0xB4C];  // 0xC558
-  uint8_t buttonGroup2_[0x94];  // 0xD0A4
-  uint8_t flatButton3_[0xB4C];  // 0xD138
-  uint8_t flatButton4_[0xB4C];  // 0xDC84
-  uint8_t flatButton5_[0xB4C];  // 0xE7D0
-  uint8_t flatButton6_[0xB4C];  // 0xF31C
-  uint8_t flatButton7_[0xB4C];  // 0xFE68
-  uint8_t flatButton8_[0xB4C];  // 0x109B4
-  uint8_t flatButton9_[0xB4C];  // 0x11500
-  uint8_t flatButton10_[0xB4C];  // 0x1204C
-  uint8_t flatButton11_[0xB4C];  // 0x12B98
-  uint8_t buttonGroup3_[0x94];  // 0x136E4
+  // The original extra 1 is the hidden most-derived virtual-base flag,
+  // not a user-visible argument; the real no-argument ListBox ctor owns it.
+  // Singleton885F38+A2D0=890208 and+AE24=890D5C: ReportWin borrows these
+  // genuine owned members through its existing friendship, not global copies.
+  ListBox listBox1_;  // 0xA2D0, sizeof(ListBox)
+  ListBox listBox2_;  // 0xAE24, sizeof(ListBox)
+  ButtonGroup buttonGroup1_;  // 0xB978, sizeof(ButtonGroup)
+  FlatButton flatButton1_;  // 0xBA0C
+  FlatButton flatButton2_;  // 0xC558
+  ButtonGroup buttonGroup2_;  // 0xD0A4
+  FlatButton flatButton3_;  // 0xD138
+  FlatButton flatButton4_;  // 0xDC84
+  FlatButton flatButton5_;  // 0xE7D0
+  FlatButton flatButton6_;  // 0xF31C
+  FlatButton flatButton7_;  // 0xFE68
+  FlatButton flatButton8_;  // 0x109B4
+  FlatButton flatButton9_;  // 0x11500
+  FlatButton flatButton10_;  // 0x1204C
+  FlatButton flatButton11_;  // 0x12B98
+  ButtonGroup buttonGroup3_;  // 0x136E4
   FlatButton flatButtonsC_[7];  // 0x13778, 7 * sizeof(FlatButton), vector ctor iterator
-  uint8_t buttonGroup4_[0x94];  // 0x1868C
+  ButtonGroup buttonGroup4_;  // 0x1868C
   FlatButton flatButtonsD_[5];  // 0x18720, 5 * sizeof(FlatButton), vector ctor iterator
-  uint8_t flatButton12_[0xB4C];  // 0x1BF9C
-  uint8_t flatButton13_[0xB4C];  // 0x1CAE8
-  uint8_t flatButton14_[0xB4C];  // 0x1D634
+  FlatButton flatButton12_;  // 0x1BF9C
+  FlatButton flatButton13_;  // 0x1CAE8
+  FlatButton flatButton14_;  // 0x1D634
   // init fills this run with find_font results; draw_score passes its relevant
   // entries directly to Buffer::set_font. Names stay neutral because their
   // per-panel roles are not established across all renderers.
@@ -221,7 +219,7 @@ class ReportIf : public SubInterface {
   Font *field_1E1B4_;  // 0x1E1B4
   // RECOVERY_MEMBER: v3 ReportIf field_1E1B8_ Font* 0x1E1B8 0x004A3807
   Font *field_1E1B8_;  // 0x1E1B8
-  uint8_t spot_[0xC];  // 0x1E1BC, sizeof(Spot)
+  Spot spot_;  // 0x1E1BC, sizeof(Spot)
   // draw_labs and draw_score both populate/pass this 16-byte rectangle to
   // Buffer::box_sprite. Keep the following bytes opaque; other fields in this
   // workspace have not been interpreted.
@@ -268,18 +266,8 @@ class ReportIf : public SubInterface {
 // is no static_assert on sizeof(ReportIf) because nothing establishes where
 // the object actually ends past that.
 
-// The energy report's third list box is a PROCESS-WIDE object at a fixed
-// address, not a subobject: close_energy closes it alongside the two this
-// object owns. THE OBJECT, at 0x0087BE84 in the image - REAL STORAGE,
-// defined in reportif.cpp. It was
-// `ListBox *const ReportIfEnergyListBox = (ListBox *)0x0087BE84` naming
-// terranx.exe data that is unmapped in a standalone build. The image
-// constructs it inside ReportIf's own init (nothing at the ??__E layer
-// touches 0x0087BE84), and ListBox's constructor here is the empty inline
-// the tree models, so the object is the zero storage the image leaves until
-// then. The `close()` receiver keeps its folded form, the displacement
-// relocated.
-extern ListBox ReportIfEnergyListBox;  // 0x0087BE84
+// The energy renderer also borrows ReportWinGlobal.listBox_: original
+// 87BE84=876478+5A0C. It is constructed/destroyed only by ReportWin.
 
 
 // The process-wide ReportIf. THE OBJECT, at 0x00885F38 in the image - REAL

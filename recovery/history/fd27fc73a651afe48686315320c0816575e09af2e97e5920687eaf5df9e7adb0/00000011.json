@@ -1,0 +1,19 @@
+{
+  "event_id": "d56e7c4386c040e8c2d0e6cdab553e0f54df58d55e50ec7a5933c12453bd46ec",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Frozen native-bound ReportWin wave implements destructor4AD3B0 and exp_anim4A0100; authorize removal only of their obsolete unannotated original-address forwarding definitions during central integration, preserving other pending functions and all historical mappings. Caption bindings retain only proven starts/initial NUL, no inferred four-byte original extent."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5b1613c13f2456d4a6c1517f5a1605be72948f60520664e9a63f437190941285",
+  "request_id": "reportwin-replaced-forwarders",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:reportwin-owner-coverage"
+}

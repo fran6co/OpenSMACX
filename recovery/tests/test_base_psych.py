@@ -237,7 +237,7 @@ void project_controls(){
     reset();SecretProject.human_genome_project=0;SecretProject.clinical_immortality=0;
     base_psych();expect_stage(3,0,2,0);expect_stage(4,3,2,0);
     for(int economy=0;economy<3;++economy){reset();SecretProject.longevity_vaccine=0;
-        PlayersData[3].soc_category_pending.economics=economy;base_psych();expect_stage(4,0,economy==1?2:economy==2?0:1,0);}
+        PlayersData[3].soc_category_pending.models_[SocialCategory::ECONOMICS]=economy;base_psych();expect_stage(4,0,economy==1?2:economy==2?0:1,0);}
     reset();built(23);PlayersData[3].soc_effect_pending.talent=1;base_psych();expect_stage(3,1,2,0);expect_stage(4,0,0,0);
     reset();PlayersData[3].soc_effect_pending.police=-1;SecretProject.self_aware_colony=0;
     base_psych();expect_stage(3,0,1,0);require(veh_calls==0);
@@ -327,7 +327,7 @@ MUTANTS=[
     ("pacifism-signed", "body", "away > 1 ?", "static_cast<uint32_t>(away) > 1 ?"),
     ("pacifism-double", "body", "penalty = base_yield_add(away, away);", "penalty = away;"),
     ("punishment-super-preservation", "body", "BaseCurrent->talent_total = 0;", "BaseCurrent->talent_total = 0; BaseCurrent->super_drone_total = 0;"),
-    ("longevity-economy", "body", "soc_category_pending.economics != 1", "soc_category_pending.economics == 1"),
+    ("longevity-economy", "body", "soc_category_pending.models_[SocialCategory::ECONOMICS] != 1", "soc_category_pending.models_[SocialCategory::ECONOMICS] == 1"),
     ("project-faction", "helpers", "Bases[project_base].faction_id_current == faction", "Bases[project_base].faction_id_current != faction"),
     ("ai-difficulty", "body", "human ? PlayersData[faction].diff_level : 3", "PlayersData[faction].diff_level"),
     ("assimilation-ceiling", "body", "assimilation_turns_left + 9", "assimilation_turns_left + 0"),

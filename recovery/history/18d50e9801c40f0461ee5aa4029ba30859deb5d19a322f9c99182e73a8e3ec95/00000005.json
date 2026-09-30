@@ -1,0 +1,48 @@
+{
+  "event_id": "442efecfb94a90ba32a936261f66bc00bea204d43ada8639c307e3a83d4fb7a9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh destination application link exposes six genuine BaseWin callees referenced by the completed twelve-body wave. Authorize genuine owner bodies using preserved seeds and original instructions, no address forwarders or claim demotion. Report outside-owner dependencies centrally."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4231680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4235728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4237440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4243568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4248144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4310944,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "eb94eb45116e6fdea8b2f7dd55b625f867b669fac8523592129d996cd7c07959",
+  "request_id": "basewin-required-six-callees",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:basewin-owner-coverage"
+}

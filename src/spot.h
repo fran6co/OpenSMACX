@@ -43,6 +43,8 @@ class Spot {
     clear();
   }
   void init(int count);
+  // Report renderers rewind only the append cursor, retaining allocation.
+  void reset_count() { add_count_ = 0; }
   void replace(int position, int type, int left, int top, int length, int width);
   int add(int position, int type, int left, int top, int length, int width);
   int add(int position, int type, RECT *rect);

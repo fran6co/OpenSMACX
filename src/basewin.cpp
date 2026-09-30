@@ -48,12 +48,27 @@
 #include "fx.h"
 #include "game.h"
 #include "random.h"
+#include "log.h"
+#include "popmenu.h"
+#include "infowin.h"
+#include "messagewin.h"
+#include "statuswin.h"
+#include "worldwin.h"
 #include <mmsystem.h>
 #include <cstdint>
 #include <cstring>
 
 // Existing shared text.pcx palette publication, owned by palette.cpp.
 extern int TextColourTable[195];
+extern int PopupWriteCheckState;
+extern Wave g_MENU_DOWN_WAVE;
+extern Wave g_BASEWIN_WAVE;
+void __cdecl action_staple(int base_id);
+void __cdecl ok_callback();
+void __cdecl base_kill(int base_id);
+int __cdecl popm(char *label, int x, int y, int (__cdecl *poll)());
+void __cdecl slide_show(GraphicWin *window, int mode);
+void __cdecl slide_hide(GraphicWin *window, int mode);
 
 namespace {
 
@@ -69,6 +84,1223 @@ int psych_display_sub(int left, int right) {
 }
 
 } // namespace
+
+// Recompute can change the worked-square allocation. Network notification is
+// conditional on that live state changing, not simply on invoking the screen.
+void BaseWin::compute_selected_base() {
+    const int old = Bases[focusedBaseID_].resource_sqr_radius;
+    set_base(static_cast<int>(focusedBaseID_));
+    base_compute(0);
+    if (IsMultiplayerNet && !ConsoleControlTurnActive
+        && old != Bases[focusedBaseID_].resource_sqr_radius) {
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0)
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    }
+}
+
+namespace {
+int specialist_at(const Base &base, int position) {
+    return (base.spec[position >> 3] >> ((position & 7) * 4)) & 15;
+}
+void set_specialist_at(Base &base, int position, int type) {
+    const int shift = (position & 7) * 4;
+    base.spec[position >> 3] = (base.spec[position >> 3] & ~(15u << shift))
+        | (static_cast<unsigned>(type) << shift);
+}
+}
+
+// ORIGINAL: 0x0040A1D0 ?farm_click@BaseWin@@QAEXHHH@Z 0x0040A1D0-0x0040A87F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040a1d0.cpp", "source:src/basewin.h", "image:0x40a1d0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+void BaseWin::farm_click(int x, int y, int) {
+    compute_selected_base();
+    const int faction = BaseCurrent->faction_id_current;
+    if ((faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW))
+        || field_40AFC_) return;
+    int previous = field_40B4C_ == 0 ? farm_get(field_40B44_, field_40B48_) : -1;
+    const int position = farm_get(x, y);
+    if (previous == position) previous = -1;
+    else if (previous == 0) return;
+    if (position < 0 || NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+    log_say("Farm Click", BaseCurrent->name_string, position, 0, 0);
+    BaseCurrent->governor &= ~0x40u;
+    const unsigned bit = 1u << position;
+    bool changed = false;
+    if (field_40B4C_ == 1) {
+        if (!(BaseCurrent->resource_sqr_radius & bit)) {
+            BaseCurrent->resource_sqr_radius |= bit;
+            for (int i = field_40B50_; i < BaseCurrent->specialist_total; ++i) {
+                const int next = i + 1;
+                const int type = next < 16 ? specialist_at(*BaseCurrent, next) : best_specialist();
+                if (next < 17) set_specialist_at(*BaseCurrent, i, type);
+            }
+            if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
+            changed = true;
+        }
+    } else if (previous > 0) {
+        const unsigned old_bit = 1u << previous;
+        if ((BaseCurrent->resource_sqr_radius & old_bit) && !(BaseCurrent->resource_sqr_radius & bit)) {
+            BaseCurrent->resource_sqr_radius &= ~old_bit;
+            BaseCurrent->resource_sqr_radius |= bit;
+            changed = true;
+        }
+    } else if (position == 0) {
+        BaseCurrent->resource_sqr_radius = 0;
+        BaseCurrent->specialist_total = 0;
+        BaseCurrent->specialist_unk_1 = 0;
+        changed = true;
+    } else if (BaseCurrent->resource_sqr_radius & bit) {
+        BaseCurrent->resource_sqr_radius &= ~bit;
+        const int type = best_specialist();
+        if (BaseCurrent->specialist_total < 16)
+            set_specialist_at(*BaseCurrent, BaseCurrent->specialist_total, type);
+        ++BaseCurrent->specialist_total;
+        changed = true;
+    } else if (!FarmStatus[position]) {
+        bool available = BaseCurrent->specialist_total != 0;
+        if (available) --BaseCurrent->specialist_total;
+        else {
+            int fight, growth, tech, wealth, power;
+            if ((static_cast<unsigned char>(LockEnableMask) & (1u << faction))
+                && (BaseCurrent->governor & 0x80000000u)) {
+                growth = (BaseCurrent->governor >> 24) & 1;
+                tech = (BaseCurrent->governor >> 25) & 1;
+                wealth = (BaseCurrent->governor >> 26) & 1;
+                power = (BaseCurrent->governor >> 27) & 1;
+                fight = power ? 1 : growth ? 0 : (!tech && !wealth ? PlayersData[faction].ai_fight : -1);
+            } else {
+                fight = PlayersData[faction].ai_fight;
+                growth = PlayersData[faction].ai_growth;
+                tech = PlayersData[faction].ai_tech;
+                wealth = PlayersData[faction].ai_wealth;
+                power = PlayersData[faction].ai_power;
+            }
+            int worst_score = 999, worst_position = 0;
+            for (int i = 1; i <= 20; ++i) {
+                int tile_x = BaseCurrent->x + RadiusOffsetX[i];
+                if (!(MapIsFlat & 1)) {
+                    if (tile_x < 0) tile_x += MapLongitudeBounds;
+                    else if (tile_x >= MapLongitudeBounds) tile_x -= MapLongitudeBounds;
+                }
+                const int tile_y = BaseCurrent->y + RadiusOffsetY[i];
+                if (tile_x < 0 || tile_x >= MapLongitudeBounds || tile_y < 0 || tile_y >= MapLatitudeBounds
+                    || !(BaseCurrent->resource_sqr_radius & (1u << i))) continue;
+                const int nutrient_divisor = range(BaseCurrent->nutrient_intake_2
+                    - BaseCurrent->population_size * static_cast<int>(Rules.nutrient_req_citizen), 1, 99);
+                int score = resource_yield(0, faction, BaseIDCurrentSelected, tile_x, tile_y)
+                    * (growth + 3) * 4 / nutrient_divisor;
+                const int mineral_divisor = range(BaseCurrent->mineral_intake_2
+                    - static_cast<int>(BaseCurrentForcesMaintCost), 1, 99);
+                score += resource_yield(1, faction, BaseIDCurrentSelected, tile_x, tile_y)
+                    * (fight + 4 + power) * BaseCurrent->population_size / mineral_divisor;
+                score += resource_yield(2, faction, BaseIDCurrentSelected, tile_x, tile_y)
+                    * BaseCurrent->population_size * (wealth + tech + 2)
+                    / range(BaseCurrent->energy_intake_2, 1, 99);
+                if (score < worst_score) { worst_score = score; worst_position = i; }
+            }
+            if (worst_position) {
+                BaseCurrent->resource_sqr_radius &= ~(1u << worst_position);
+                available = true;
+            }
+        }
+        if (available) { BaseCurrent->resource_sqr_radius |= bit; changed = true; }
+    }
+    if (is_visible()) {
+        set_base(focusedBaseID_);
+        base_compute(1);
+        redraw();
+        MainInterfaceGlobal.redraw();
+    }
+    if (changed) log_say("BASE: changed farming locations", BaseIDCurrentSelected, 0, 0);
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+}
+
+// ORIGINAL: 0x0040A880 ?pop_click@BaseWin@@QAEXHHHH@Z 0x0040A880-0x0040B11A;0x006518EA-0x00651A78
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040a880.cpp", "source:src/basewin.h", "image:0x40a880"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+void BaseWin::pop_click(int position, int, int, int) {
+    Popup popup;
+    compute_selected_base();
+    if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
+        && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+    int current = position < 0 ? 999 : position < 16
+        ? specialist_at(*BaseCurrent, position) : best_specialist();
+    if (current < 0) current = 1;
+    popup.start(PopupStartCaption, "CITIZEN", -1, 0, 0x40, 0);
+    strcpy(StringTemp, label_get(0x2C8 / 4));
+    popup.dialogs().item(StringTemp, 999);
+    bool too_small = false;
+    int selected = 999;
+    for (int i = 0; i < 7; ++i) {
+        const RulesCitizen &citizen = Citizen[i];
+        const int faction = BaseCurrent->faction_id_current;
+        if (!has_tech(citizen.preq_tech, faction)
+            || (has_tech(citizen.obsol_tech, faction) && i != current)) continue;
+        if (BaseCurrent->population_size < static_cast<int>(Rules.min_base_size_specialists)
+            && citizen.psych_bonus < 2) { too_small = true; continue; }
+        strcpy(StringTemp, reinterpret_cast<char *>(StringTable.get(reinterpret_cast<int>(citizen.singular_name))));
+        strcat(StringTemp, "|");
+        char text[224] = "";
+        const int bonuses[3] = { citizen.ops_bonus, citizen.psych_bonus, citizen.research_bonus };
+        for (int k = 0; k < 3; ++k) if (bonuses[k]) {
+            if (*text) strcat(text, ", ");
+            strcat(text, "+");
+            char number[80];
+            _itoa(bonuses[k], number, 10);
+            strcat(text, number);
+            strcat(text, " ");
+            strcat(text, reinterpret_cast<char *>(StringTable.get(reinterpret_cast<int>(Energy[k].abbrev))));
+        }
+        strcat(StringTemp, text);
+        popup.dialogs().item(StringTemp, i);
+        if (i == current) selected = i;
+    }
+    if (too_small) {
+        parse_num(0, Rules.min_base_size_specialists);
+        popup.start(PopupStartCaption, "CITIZEN2", -1, 0, 0x80, 0);
+    }
+    popup.set_value(selected);
+    const int result = popup.exec(0, 0);
+    if (result < 0 || result == current
+        || NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+    BaseCurrent->governor &= ~0x40u;
+    if (result == 999) {
+        if (BaseCurrent->specialist_total) --BaseCurrent->specialist_total;
+    } else {
+        int packed_position = position;
+        if (current == 999) {
+            int freed = -1;
+            if (field_40B4C_) {
+                for (int i = 20; i > 0; --i)
+                    if (BaseCurrent->resource_sqr_radius & (1u << i)) { freed = i; break; }
+            } else freed = farm_get(field_40B44_, field_40B48_);
+            if (freed > 0) BaseCurrent->resource_sqr_radius &= ~(1u << freed);
+            packed_position = BaseCurrent->specialist_total++;
+        }
+        if (packed_position < 16) set_specialist_at(*BaseCurrent, packed_position, result);
+    }
+    log_say("BASE: changed citizen professions", BaseIDCurrentSelected, 0, 0);
+    if (is_visible()) {
+        set_base(focusedBaseID_);
+        base_compute(1);
+        redraw();
+        MainInterfaceGlobal.redraw();
+    }
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+}
+
+// ORIGINAL: 0x00409200 ?queue_click@BaseWin@@QAEXHHHH@Z 0x00409200-0x0040A1B9;0x0065158B-0x006518EA
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+void BaseWin::queue_click(int row, int x, int y, int right) {
+    PopMenu menu;
+    const int faction = BaseCurrent->faction_id_current;
+    if (row <= 1) return;
+    const int position = row - 2;
+    if (position == field_40B2C_) return;
+    if (!right) {
+        field_40B2C_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
+        field_40B30_ = 0;
+        draw_queue(1);
+        if (prodPicker_.is_visible() && prodPicker_.queue_change_blocked()) return;
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+            production(position, 1);
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        }
+        return;
+    }
+    if (prodPicker_.is_visible()) return;
+    const bool empty = position > static_cast<int>(BaseCurrent->queue_size);
+    if (!empty) {
+        const int entry = BaseCurrent->queue_production_id[position];
+        if (entry >= 0) parse_says(0, VehPrototypes[entry].veh_name, -1, -1);
+        else parse_say(0, reinterpret_cast<int>(Facility[-entry].name), -1, -1);
+    }
+    MainInterfaceGlobal.client_to_screen(&x, &y);
+    strcpy(StringTemp, empty ? "QUEUE2" : "QUEUE1");
+    int action = popm(StringTemp, x + 2, y, 0) + 1;
+    if (empty && action > 1) ++action;
+    --action;
+    if (static_cast<unsigned>(action) > 4) return;
+    if (action == 0) {
+        field_40B2C_ = min(static_cast<int>(BaseCurrent->queue_size) + 1, position);
+        field_40B30_ = 0;
+        draw_queue(1);
+        if (prodPicker_.is_visible()) return;
+        if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) == 0) {
+            production(position, 1);
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        }
+    } else if (action == 1) {
+        if (!prodPicker_.is_visible()
+            && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+        if (static_cast<int>(BaseCurrent->queue_size) < position) {
+            field_40B2C_ = max(static_cast<int>(field_40B2C_) - 1, 1);
+        } else {
+            for (int i = position; i < 9; ++i)
+                BaseCurrent->queue_production_id[i] = BaseCurrent->queue_production_id[i + 1];
+            --BaseCurrent->queue_size;
+            if (static_cast<int>(BaseCurrent->queue_size) < static_cast<int>(field_40B2C_))
+                field_40B2C_ = max(static_cast<int>(BaseCurrent->queue_size), 1);
+            draw_queue(1);
+        }
+        if (!prodPicker_.is_visible()) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    } else if (action == 2) {
+        if (!prodPicker_.is_visible()
+            && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+        if (X_pop("DELETEQUEUE", 0)) { BaseCurrent->queue_size = 0; draw_queue(1); }
+        if (!prodPicker_.is_visible()) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    } else {
+        if (action == 4 && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+        menu.init();
+        for (int i = 0; i < 8; ++i) menu.dialogs().item(PlayersData[faction].saved_queue_name[i], i);
+        const int picked = menu.exec(x, y, pop_expire);
+        compute_selected_base();
+        // Original cancellation exits directly, even after the load case's
+        // lock. Do not manufacture an unlock absent from that error path.
+        if (picked < 0 || (GameState & 0x800)) return;
+        if (action == 3) {
+            char *name = PlayersData[faction].saved_queue_name[picked];
+            if (X_pop_ask("TEMPNAME", 23, name, 0, 0) != 0) return;
+            if (!X_pop("OVERWRITETEMPLATE", 0)) return;
+            strcpy(name, ParseStrBuffer[0].str);
+            PlayersData[faction].saved_queue_size[picked] = BaseCurrent->queue_size;
+            for (int i = 0; i < 10; ++i) {
+                int entry = BaseCurrent->queue_production_id[i];
+                if (entry >= 0)
+                    entry += static_cast<unsigned char>(VehPrototypes[entry].unk_1) << 16;
+                PlayersData[faction].saved_queue_items[picked][i] = entry;
+            }
+            synch_template(faction);
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            draw_queue(1);
+        } else {
+            for (int old_index = 0; old_index <= static_cast<int>(BaseCurrent->queue_size); ++old_index) {
+                const int entry = BaseCurrent->queue_production_id[old_index];
+                if (entry >= 0) --PlayersData[faction].proto_id_queue[entry];
+            }
+            BaseCurrent->queue_size = PlayersData[faction].saved_queue_size[picked];
+            for (int i = 0; i <= static_cast<int>(BaseCurrent->queue_size); ++i) {
+                const int stored = PlayersData[faction].saved_queue_items[picked][i];
+                int entry = stored;
+                if (stored >= 0) {
+                    entry = stored & 0xFFFF;
+                    const unsigned category = static_cast<unsigned>(stored) >> 16;
+                    if (static_cast<unsigned char>(VehPrototypes[entry].unk_1) != category
+                        || (VehPrototypes[entry].obsolete_factions & (1u << faction))) {
+                        for (int k = 0; k < 64; ++k) {
+                            const int candidate = faction * 64 + k;
+                            const VehPrototype &prototype = VehPrototypes[candidate];
+                            if ((prototype.flags & 1) && !(prototype.obsolete_factions & (1u << faction))
+                                && static_cast<unsigned char>(prototype.unk_1) == category) entry = candidate;
+                        }
+                    }
+                }
+                BaseCurrent->queue_production_id[i] = entry;
+                if (entry >= 0) ++PlayersData[faction].proto_id_queue[entry];
+            }
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            draw_queue(1);
+        }
+    }
+}
+
+// Candidate only. Evidence: original 40C070..40C842, pinned terranx_original.exe;
+// retained src/unrecovered/0040c070.cpp and /tmp/basewin-40c070.json.
+// All popup strings independently read from original .rdata 682904..682AD4.
+// No compiler/measurement performed. Existing deeper callee debt remains.
+// Original bulk-sale counting deliberately tests BaseCurrent->state, not
+// each candidate base's state. The subsequent bulk mutation deliberately
+// does not retest possession or the one-sale-per-turn bit. Preserve both.
+// ORIGINAL: 0x0040C070 ?facilities_click@BaseWin@@QAEHHHHH@Z 0x0040C070-0x0040C842
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040c070.cpp", "source:src/basewin.h", "image:0x40c070"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+int BaseWin::facilities_click(int facility, int, int, int) {
+    const int faction = BaseCurrent->faction_id_current;
+    if (faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW))
+        return 0;
+    parse_says(0, BaseCurrent->name_string, -1, -1);
+    parse_say(1, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+    const int selection = popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "FACMENU", 0,
+        (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
+    if (!selection) return 0;
+    if (selection == 1) {
+        help_topic(facility >= 70 ? 11 : 10, facility);
+        return 0;
+    }
+    if (facility >= 70) {
+        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "NOTPROJECT", 0, "secproj_sm.pcx", 0);
+        return 0;
+    }
+    int offset, mask;
+    if (facility < 65) bitmask(facility, &offset, &mask);
+    if (facility >= 65 || !(Bases[BaseIDCurrentSelected].facilities_built[offset] & (uint8_t)mask)) {
+        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "DONTHAVEFAC", 0,
+            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
+        return 0;
+    }
+    if (ConsoleControlTurnActive && IsMultiplayerNet) {
+        X_pop("DURINGUPKEEP", 0);
+        return 0;
+    }
+    if ((BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) && !(GameState & STATE_OMNISCIENT_VIEW)) {
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "ONERECYCLE", 0,
+            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
+        return 0;
+    }
+    if (facility == 1) {
+        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "HQRECYCLE", 0,
+            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
+        return 0;
+    }
+    if (facility == 26 && (map_tiles()[BaseCurrent->y * MapLongitude + (BaseCurrent->x >> 1)].contour & 0xE0) < 0x60) {
+        popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "PRESSURERECYCLE", 0,
+            (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
+        return 0;
+    }
+    for (int bonus = 0; bonus < Players[faction].faction_bonus_count; ++bonus) {
+        const int kind = Players[faction].faction_bonus_id[bonus];
+        const int granted = Players[faction].faction_bonus_val1[bonus];
+        if ((kind == 2 || (kind == 12 && has_tech(Facility[granted].preq_tech, faction)))
+            && facility == granted) {
+            parse_say(1, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+            popp(reinterpret_cast<const char *>(*ClimatePopupTitle), "FREERECYCLE", 0,
+                (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0);
+            return 0;
+        }
+    }
+    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, selection == 3 ? 2 : 0, -1, -1)) return 0;
+    int proceeds;
+    if (selection == 3) {
+        int payable = 0;
+        int possessed = 0;
+        for (int base = 0; base < BaseCurrentCount; ++base) {
+            if (Bases[base].faction_id_current != faction) continue;
+            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].contour & 0xE0) < 0x60) continue;
+            bitmask(facility, &offset, &mask);
+            if (Bases[base].facilities_built[offset] & (uint8_t)mask) {
+                ++possessed;
+                if (!(BaseCurrent->state & BSTATE_FACILITY_SCRAPPED) || (GameState & STATE_OMNISCIENT_VIEW)) ++payable;
+            }
+        }
+        proceeds = static_cast<int>(static_cast<uint32_t>(Facility[facility].cost) * payable * 5u);
+        parse_num(0, proceeds);
+        parse_num(1, possessed);
+        parse_say(0, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+    } else {
+        proceeds = static_cast<int>(static_cast<uint32_t>(Facility[facility].cost) * 5u);
+        parse_say(0, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+        parse_num(0, proceeds);
+    }
+    StringTemp[0] = 0;
+    strcat(StringTemp, "RECYCLEME");
+    if (selection == 3) strcat(StringTemp, "ALL");
+    else if (facility == 8 && (BaseCurrent->state & BSTATE_ARTIFACT_LINKED)) {
+        proceeds = 0;
+        strcat(StringTemp, "0");
+    }
+    if (!popp(reinterpret_cast<const char *>(*ClimatePopupTitle), StringTemp, 0,
+        (Players[faction].rule_flags & 0x80) ? "alfacblt_sm.pcx" : "facblt_sm.pcx", 0)) {
+        BaseComputedID = -1;
+        base_compute(0);
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        return 0;
+    }
+    if (selection == 3) {
+        for (int base = 0; base < BaseCurrentCount; ++base) {
+            if (Bases[base].faction_id_current != faction) continue;
+            if (facility == 26 && (map_tiles()[Bases[base].y * MapLongitude + (Bases[base].x >> 1)].contour & 0xE0) < 0x60) continue;
+            Bases[base].state |= BSTATE_FACILITY_SCRAPPED;
+            set_fac(facility, base, 0);
+            if (base != BaseIDCurrentSelected) synch_base(base);
+        }
+        PlayersData[faction].energy_reserves = static_cast<int>(static_cast<uint32_t>(PlayersData[faction].energy_reserves) + static_cast<uint32_t>(proceeds));
+        log_say("BASE: global scrapped facility", BaseIDCurrentSelected, 0, 0);
+    } else {
+        BaseCurrent->state |= BSTATE_FACILITY_SCRAPPED;
+        set_fac(facility, BaseIDCurrentSelected, 0);
+        PlayersData[faction].energy_reserves = static_cast<int>(static_cast<uint32_t>(PlayersData[faction].energy_reserves) + static_cast<uint32_t>(proceeds));
+        log_say("BASE: scrapped facility", BaseIDCurrentSelected, 0, 0);
+    }
+    BaseComputedID = -1;
+    base_compute(0);
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    ConsoleInfoWin.set_redraw_phase(0);
+    ConsoleInfoWin.on_redraw();
+    redraw();
+    MainInterfaceGlobal.GraphicWin::redraw();
+    return 0;
+}
+
+// Original 40D250..40E35B, automatic cleanup of Sprite and two Fonts.
+// Integration dependencies: genuine RECTs flash_rect_a_/flash_rect_b_ at
+// BaseWin+40DEC/+40DFC; Buffer::current_clip() exposing rect1_ (not rect2_);
+// TextColourTable is the genuine 195-int text.pcx palette owner at8C6B5C;
+// title indices82/83 and normal indices14/15, not separate globals.
+extern int TextColourTable[195];
+
+// ORIGINAL: 0x0040D250 ?draw_flash@BaseWin@@QAEXH@Z 0x0040D250-0x0040E35B;0x00651AA2-0x00651ACD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040d250.cpp", "source:src/basewin.h", "image:0x40d250"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+void BaseWin::draw_flash(int redraw_mode) {
+    Sprite scratch;
+    Font normal;
+    Font title;
+    const int vehicle_id = field_40B00_;
+    if (vehicle_id < 0) return;
+    Buffer &canvas = static_cast<Buffer &>(MainInterfaceGlobal);
+    RECT panel = queue_help_rect_;
+    RECT saved_clip = canvas.current_clip();
+    canvas.restore_clip();
+    BoxSpriteParams style = InterfaceBoxStyles[3];
+    style.edge3_ = 0;
+    style.corner3_ = 0;
+    canvas.box_sprite(&panel, &style);
+    style.corner0_ = 0;
+    style.edge0_ = 0;
+    style.corner1_ = 0;
+    RECT area;
+    area.left = queue_outer_rect_.left - 5;
+    area.top = queue_outer_rect_.top + 5;
+    area.right = queue_outer_rect_.right - 5;
+    area.bottom = queue_outer_rect_.bottom + 5;
+    canvas.box_sprite(&area, &style);
+    IntersectRect(&area, &flash_rect_a_, &flash_rect_b_);
+    area.left -= 3; area.top -= 3; area.right += 3; area.bottom += 3;
+    scratch.create_blank(6, 6, WinFillColour);
+    style = InterfaceBoxStyles[3];
+    style.corner0_ = &scratch;
+    style.edge2_ = 0;
+    style.corner2_ = 0;
+    canvas.box_sprite(&area, &style);
+    canvas.set_clip(&panel);
+    area.left = panel.left + 3; area.top = panel.top + 3;
+    area.right = panel.right - 3; area.bottom = panel.bottom - 3;
+    canvas.box_sprite(&area, &InterfaceBoxStyles[0]);
+    area.left += 3; area.top += 3; area.right -= 3; area.bottom -= 3;
+    normal.init(DefaultFontFace, WinScreenWidth == 800 ? 10 : 12, 0);
+    title.init(DefaultFontFace, 12, 1);
+    MapWinCaptionDivisor = 100;
+    MapWinCaptionScale = (area.right - area.left) * 3 / 4;
+    const int width = MapWinCaptionScale;
+    const int height = MapWinCaptionScale * 75 / 100;
+    veh_draw(&canvas, vehicle_id, (area.left + area.right) / 2 - width / 2,
+             area.top + 40 - height / 2, 1, 8, 0);
+    MapWinCaptionScale = -1;
+    MapWinCaptionDivisor = -1;
+    area.top += 65;
+    const Veh &vehicle = Vehs[vehicle_id];
+    const int prototype_id = vehicle.proto_id;
+    const VehPrototype &prototype = VehPrototypes[prototype_id];
+    strcpy(StringTemp, prototype.veh_name);
+    CharUpperA(StringTemp);
+    canvas.set_text_color(TextColourTable[82], TextColourTable[83], 1, 1);
+    canvas.set_font(&title, 0, 0, 0);
+    area.top = canvas.wrap_cent(StringTemp, &area) + 2;
+    area.left += 2; area.right -= 2; area.bottom -= 2;
+    area.bottom -= normal.line_advance();
+    canvas.set_font(&normal, 0, 0, 0);
+    canvas.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+    const int x = area.left;
+    const int text_width = area.right - area.left;
+    const int line = normal.line_advance();
+    int y = area.top;
+    char number[16];
+    strcpy(StringTemp, "(");
+    say_stats_3(StringTemp, prototype_id);
+    for (int ability = 0; ability < 29; ++ability) {
+        if (has_abil(prototype_id, 1 << ability)
+            && strlen(StringTable.get(reinterpret_cast<int>(Ability[ability].abbreviation))) != 0) {
+            strcat(StringTemp, ", ");
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Ability[ability].abbreviation)));
+        }
+    }
+    strcat(StringTemp, ")");
+    y = canvas.wrap(StringTemp, x, y, text_width);
+    if ((vehicle.faction_id != 0 && prototype.plan < 8)
+        || (prototype.plan == 11 && morale_veh(vehicle_id, 1, 0) > 1)) {
+        StringTemp[0] = 0;
+        say_morale(vehicle_id, 0);
+        if (vehicle.faction_id != ConsoleGlobal.faction_id_ && !(GameState & 0x80))
+            y = canvas.wrap(StringTemp, x, y, text_width);
+        else
+            y = canvas.wrap_cent(StringTemp, x, y, text_width);
+    }
+    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameState & 0x80)) {
+        strcpy(StringTemp, vehicle.home_base_id < 0 ? label_get(0x308 / 4)
+               : Bases[vehicle.home_base_id].name_string);
+        y = canvas.wrap_cent(StringTemp, x, y, text_width);
+        if (vehicle.faction_id == ConsoleGlobal.faction_id_) {
+            const int remaining = range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999);
+            if (remaining == 0) {
+                strcpy(StringTemp, label_get(0x9E4 / 4));
+                canvas.set_text_color(0xF9, -1, 1, 1);
+            } else {
+                strcpy(StringTemp, label_get(0x1C / 4));
+                strcat(StringTemp, ": ");
+                // The original calls speed again in the positive branch.
+                const int moves = range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999);
+                const int divisor = static_cast<int>(Rules.move_rate_roads);
+                strcat(StringTemp, _itoa(moves / divisor, number, 10));
+                if (moves % divisor) {
+                    strcat(StringTemp, " ");
+                    strcat(StringTemp, _itoa(moves % divisor, number, 10));
+                    strcat(StringTemp, "/");
+                    strcat(StringTemp, _itoa(static_cast<int>(Rules.move_rate_roads), number, 10));
+                }
+            }
+            y = canvas.wrap_cent(StringTemp, x, y, text_width);
+        }
+        const int missile = Chassis[prototype.chassis_id].missile;
+        if (missile) {
+            strcpy(StringTemp, label_get(0x30C / 4));
+            strcat(StringTemp, ": ");
+            const int next_x = canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+            StringTemp[0] = 0;
+            const int remaining = range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999);
+            const int moves = speed(vehicle_id, 0) * (missile + (remaining == 0)
+                                                     - vehicle.terraforming_turns)
+                              - vehicle.moves_expended;
+            strcat(StringTemp, _itoa(moves / static_cast<int>(Rules.move_rate_roads), number, 10));
+            strcat(StringTemp, "/");
+            strcat(StringTemp, _itoa(speed(vehicle_id, 0) * missile / static_cast<int>(Rules.move_rate_roads),
+                                    number, 10));
+            canvas.set_text_color(0xFA, -1, 1, 1);
+            if (vehicle.terraforming_turns != 0 && vehicle.terraforming_turns >= missile / 2)
+                canvas.set_text_color(0xFB, -1, 1, 1);
+            if (missile == 1
+                && range(speed(vehicle_id, 0) - vehicle.moves_expended, 0, 999) <= speed(vehicle_id, 0) / 2)
+                canvas.set_text_color(0xFB, -1, 1, 1);
+            if (action_home(vehicle_id, -1)) canvas.set_text_color(0xF9, -1, 1, 1);
+            canvas.write_l(StringTemp, next_x, y, strlen(StringTemp));
+            y += line;
+        }
+        canvas.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+        if (veh_cargo(vehicle_id)) {
+            strcpy(StringTemp, label_get(0x360 / 4));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, _itoa(veh_cargo(vehicle_id) - stack_veh(vehicle_id, 0), number, 10));
+            strcat(StringTemp, "/");
+            strcat(StringTemp, _itoa(veh_cargo(vehicle_id), number, 10));
+            canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+            y += line;
+        }
+    }
+    if (vehicle.dmg_incurred) {
+        strcpy(StringTemp, label_get(0x628 / 4));
+        strcat(StringTemp, ": ");
+        const int next_x = canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+        canvas.set_text_color(0xFA, -1, 1, 1);
+        const int maximum = prototype.plan == 12 ? 1 : range(prototype.reactor_id, 1, 100) * 10;
+        if (vehicle.dmg_incurred >= maximum / 3) canvas.set_text_color(0xFB, -1, 1, 1);
+        if (vehicle.dmg_incurred >= maximum * 2 / 3) canvas.set_text_color(0xF9, -1, 1, 1);
+        StringTemp[0] = 0;
+        const int remaining = range(maximum - vehicle.dmg_incurred, 0, 9999);
+        strcat(StringTemp, _itoa((maximum - remaining) * 100 / maximum, number, 10));
+        strcat(StringTemp, "%");
+        canvas.write_l(StringTemp, next_x, y, strlen(StringTemp));
+        canvas.set_text_color(MessageWinTextColor, MessageWinTextBackground, 1, 1);
+        y += line;
+    }
+    canvas.set_text_color(TextColourTable[14], TextColourTable[15], 1, 1);
+    if (vehicle.faction_id == ConsoleGlobal.faction_id_ || (GameState & 0x80)
+        || (PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[vehicle.faction_id] & 1)) {
+        StringTemp[0] = 0;
+        say_orders(vehicle_id);
+        y = canvas.wrap_cent(StringTemp, x, y, text_width);
+        if (vehicle.order >= 4 && vehicle.order < 24) {
+            const int turns = action_terraform(vehicle_id, vehicle.order - 4, 0);
+            strcpy(StringTemp, "[");
+            strcat(StringTemp, label_get(0x71C / 4));
+            strcat(StringTemp, ": ");
+            strcat(StringTemp, _itoa(turns + 1, number, 10));
+            strcat(StringTemp, "]");
+            canvas.set_text_color(0xFB, -1, 1, 1);
+            canvas.write_l(StringTemp, x, y, strlen(StringTemp));
+        }
+    }
+    if (redraw_mode) MainInterfaceGlobal.update(&queue_help_rect_, 0);
+    else MainInterfaceGlobal.soft_update(&queue_help_rect_);
+    // Original 40E30D deliberately selects this+444, not the world canvas.
+    Buffer::set_clip(&saved_clip);
+}
+
+// Original 41C7A0..41D4BA, cleanup 6527EF..652A94.
+// Requires PullDown::item_id(int), an unchecked typed slot accessor: the
+// original tests only selected < 64, not selected >= 0. Do not substitute
+// get_selected_id(), which changes that signed error path.
+// Both modal objects are constructed at entry; their complete teardown is RAII.
+// ORIGINAL: 0x0041C7A0 ?base_editor@BaseWin@@QAEXXZ 0x0041C7A0-0x0041D4BA;0x006527EF-0x00652A94
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0041c7a0.cpp", "source:src/basewin.h", "image:0x41c7a0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+void BaseWin::base_editor() {
+    PullDown menu;
+    Popup popup;
+    int x, y;
+    get_mouse_pos(&x, &y);
+    client_to_screen(&x, &y);
+    menu.init(0);
+    menu.add_item(1, label_get(0xD40 / 4));
+    menu.add_item(2, label_get(0xD44 / 4));
+    menu.add_separator(99);
+    menu.add_item(5, label_get(0xD58 / 4));
+    menu.add_item(10, label_get(0xE60 / 4));
+    menu.add_item(6, label_get(0xD5C / 4));
+    menu.add_item(7, label_get(0xD60 / 4));
+    menu.add_separator(99);
+    menu.add_item(8, label_get((BaseCurrent->event & 0x8000 ? 0xE04 : 0xE00) / 4));
+    menu.add_separator(99);
+    menu.add_item(3, label_get(0xD48 / 4));
+    menu.add_item(4, label_get(0xD4C / 4));
+    menu.add_separator(99);
+    menu.add_item(11, label_get(0xF58 / 4));
+    menu.add_item(12, label_get(0xF5C / 4));
+    menu.add_separator(99);
+    menu.add_item(13, label_get(0x103C / 4));
+    menu.add_item(14, label_get(0x1040 / 4));
+    menu.add_item(9, label_get(0xE18 / 4));
+    menu.show(x, y, pop_expire);
+    const int slot = menu.get_selected();
+    const int action = slot < 64 ? menu.item_id(slot) : -1;
+    if (action < 0) return;
+    switch (action) {
+    case 1:
+    case 2:
+        if (action == 1) {
+            if (BaseCurrent->population_size < 99) ++BaseCurrent->population_size;
+        } else if (BaseCurrent->population_size > 1) {
+            --BaseCurrent->population_size;
+        }
+        if (is_visible()) {
+            set_base(focusedBaseID_);
+            base_compute(1);
+            redraw();
+            MainInterfaceGlobal.redraw();
+        }
+        break;
+    case 3: base_editor_fac(); break;
+    case 4: base_editor_proj(); break;
+    case 5: base_editor_copy(0); break;
+    case 10: base_editor_copy(1); break;
+    case 6: {
+        // 41CC00..41CC0F clears exactly nine bytes, not sizeof facilities_built.
+        for (int i = 0; i < 9; ++i) BaseCurrent->facilities_built[i] = 0;
+        redraw();
+        break;
+    }
+    case 7: {
+        for (int pass = 0; pass < 10; ++pass) {
+            for (int facility = 1; facility <= 64; ++facility) {
+                if (facility_avail(facility, BaseCurrent->faction_id_current,
+                                   BaseIDCurrentSelected, 0))
+                    set_fac(facility, BaseIDCurrentSelected, 1);
+            }
+        }
+        redraw();
+        break;
+    }
+    case 8:
+        BaseCurrent->event ^= 0x8000;
+        redraw();
+        break;
+    case 9:
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        if (X_pop("REALLYKILLBASE", 0)) {
+            base_kill(BaseIDCurrentSelected);
+            const int was_visible = TutWinBaseWindow.is_visible();
+            zoom_wait_pending_ = 0;
+            time_.stop();
+            if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
+            do_all_draws();
+            if (was_visible && ConsoleGlobal.cursor_active_
+                && ConsoleGlobal.selected_vehicle_ >= 0) {
+                const Veh &vehicle = Vehs[ConsoleGlobal.selected_vehicle_];
+                if (!ConsoleGlobal.tile_in_view(vehicle.x, vehicle.y, 2))
+                    ConsoleGlobal.center();
+            }
+            draw_map(1);
+        }
+        break;
+    case 11:
+        if (X_pop_ask_number("EDITBASEMINERALS", BaseCurrent->minerals_accumulated, pop_wait))
+            return;
+        BaseCurrent->minerals_accumulated_2 = ParseNumTable[0] < 0 ? 0 : ParseNumTable[0];
+        BaseCurrent->minerals_accumulated = BaseCurrent->minerals_accumulated_2;
+        BaseCurrent->production_id_last = BaseCurrent->queue_production_id[0];
+        redraw();
+        break;
+    case 12:
+        if (X_pop_ask_number("EDITBASENUTRIENT", BaseCurrent->nutrients_accumulated, pop_wait))
+            return;
+        BaseCurrent->nutrients_accumulated = ParseNumTable[0] < 0 ? 0 : ParseNumTable[0];
+        redraw();
+        break;
+    case 13: {
+        popup.start(PopupStartCaption, "CHANGEOWNER", -1, 0, 0x40, 0);
+        for (int item = 1; item < 8; ++item) {
+            GenderDefault = Players[item].noun_gender;
+            PluralityDefault = Players[item].is_noun_plural;
+            popup.dialogs().item(Players[item].noun_faction, item);
+        }
+        popup.set_value(BaseCurrent->faction_id_current);
+        const int faction = popup.exec(0, 0);
+        if (faction > 0) {
+            owner_set(BaseCurrent->x, BaseCurrent->y, faction);
+            BaseCurrent->faction_id_former = static_cast<uint8_t>(faction);
+            BaseCurrent->faction_id_current = static_cast<uint8_t>(faction);
+            BaseCurrent->queue_size = 0;
+            BaseCurrent->production_id_last = 0;
+            BaseCurrent->queue_production_id[0] = 0;
+            reset_territory();
+            base_compute(1);
+            redraw();
+            draw_map(1);
+            ConsoleGlobal.update_data(0);
+        }
+        break;
+    }
+    case 14: {
+        popup.start(PopupStartCaption, "CHANGEFORMER", -1, 0, 0x40, 0);
+        for (int item = 1; item < 8; ++item) {
+            GenderDefault = Players[item].noun_gender;
+            PluralityDefault = Players[item].is_noun_plural;
+            StringTemp[0] = 0;
+            parse_says(0, Players[item].noun_faction, -1, -1);
+            popup.dialogs().item(StringTemp, item);
+        }
+        popup.set_value(BaseCurrent->faction_id_former);
+        const int faction = popup.exec(0, 0);
+        if (faction > 0) {
+            if (BaseCurrent->faction_id_former != faction) {
+                // This write precedes the cancellable prompt and survives cancellation.
+                if (BaseCurrent->assimilation_turns_left == 0)
+                    BaseCurrent->assimilation_turns_left = 20;
+                if (X_pop_ask_number("CHANGECONQUEST", BaseCurrent->assimilation_turns_left, 0))
+                    return;
+                BaseCurrent->assimilation_turns_left = static_cast<uint8_t>(ParseNumTable[0]);
+            } else {
+                BaseCurrent->assimilation_turns_left = 0;
+            }
+            BaseCurrent->faction_id_former = static_cast<uint8_t>(faction);
+            base_compute(1);
+            redraw();
+            draw_map(1);
+            ConsoleGlobal.update_data(0);
+        }
+        break;
+    }
+    }
+}
+
+// ORIGINAL: 0x00408EB0 ?draw_support@BaseWin@@QAEXXZ 0x00408EB0-0x004090BF
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00408eb0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+void BaseWin::draw_support() {
+    RECT saved = Buffer::rect1_;
+    Buffer *canvas = this;
+    canvas->set_clip(&rect1_);
+    fill(&rect1_, 0);
+    const RECT area = rect1_;
+    mapWin_.init(2, 0);
+    mapWin_.field_1DD6C_ = static_cast<int>(mapWin_.field_1DD6C_) >> 1;
+    const int width = mapWin_.pixel_width();
+    const int height = mapWin_.pixel_height();
+    mapWin_.field_1DD70_ = 0x200402;
+    int zoom = 2;
+    int width_step = 900;
+    int height_step = 450;
+    do {
+        const int horizontal = MapWinCaptionScale > 0
+            ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : width_step / 16;
+        if ((MapLongitudeBounds / 2) * horizontal <= width) {
+            const int vertical = MapWinCaptionScale > 0
+                ? MapWinCaptionScale * 50 / MapWinCaptionDivisor : height_step / 16;
+            if ((MapLatitudeBounds / 2) * vertical <= height) break;
+        }
+        --zoom;
+        width_step -= 50;
+        height_step -= 25;
+    } while (width_step > 50);
+    mapWin_.field_1DD98_ = zoom;
+    mapWin_.field_1DD9C_ = BaseCurrent->x;
+    mapWin_.field_1DDA0_ = BaseCurrent->y;
+    mapWin_.redraw();
+    mapWin_.copy(canvas, 0, 0,
+        area.left + (area.right - area.left) / 2 - width / 2,
+        area.top + (area.bottom - area.top) / 2 - height / 2, width, height);
+    soft_update(&rect1_);
+    canvas->set_clip(&saved);
+}
+
+// ORIGINAL: 0x0041A4C0 ?exit@BaseWin@@QAEXXZ 0x0041A4C0-0x0041A609
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a4c0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+void BaseWin::exit() {
+    const int visible = TutWinBaseWindow.is_visible();
+    zoom_wait_pending_ = 0;
+    time_.stop();
+    if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
+    do_all_draws();
+    if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
+    // ECX holds y and is checked against MapLatitudeBounds; EDX holds x.
+    // The seed's misleading local names do not change the typed coordinates.
+    const int horizontal = Vehs[ConsoleGlobal.selected_vehicle_].y;
+    int vertical = Vehs[ConsoleGlobal.selected_vehicle_].x;
+    const int left = ConsoleGlobal.field_1DDA8_;
+    const int top = ConsoleGlobal.field_1DDA4_;
+    int height = MapLongitudeBounds;
+    if (horizontal >= 0 && horizontal < MapLatitudeBounds
+        && vertical >= 0 && vertical < height) {
+        const unsigned char terrain = map_tiles()[MapLongitude * horizontal + (vertical >> 1)].climate;
+        if ((terrain & 0xE0) > 0x60
+            && horizontal - (terrain >> 5) + 3 < left + 2) {
+            ConsoleGlobal.center();
+            return;
+        }
+        height = MapLongitudeBounds;
+    }
+    if (horizontal < left + 2
+        || horizontal >= ConsoleGlobal.field_1DDD0_ + ConsoleGlobal.field_1DDD8_ + left - 2) {
+        ConsoleGlobal.center();
+        return;
+    }
+    if (!(MapIsFlat & 1)) {
+        if (vertical < top + 2) vertical += height;
+        if (vertical >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2)
+            vertical -= height;
+    }
+    if (vertical < top + 2
+        || vertical >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2)
+        ConsoleGlobal.center();
+}
+
+// ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a620.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+void BaseWin::base_killed(int base_id) {
+    if (!is_visible()) return;
+    if (base_id < static_cast<int>(focusedBaseID_)) {
+        --focusedBaseID_;
+        return;
+    }
+    if (base_id != static_cast<int>(focusedBaseID_)) return;
+    // The original selected-base destruction tail repeats exit's view checks.
+    const int visible = TutWinBaseWindow.is_visible();
+    zoom_wait_pending_ = 0;
+    time_.stop();
+    if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
+    do_all_draws();
+    if (!visible || !ConsoleGlobal.cursor_active_ || ConsoleGlobal.selected_vehicle_ < 0) return;
+    const int x = Vehs[ConsoleGlobal.selected_vehicle_].y;
+    int y = Vehs[ConsoleGlobal.selected_vehicle_].x;
+    const int left = ConsoleGlobal.field_1DDA8_;
+    const int top = ConsoleGlobal.field_1DDA4_;
+    const int height = MapLongitudeBounds;
+    if (x >= 0 && x < MapLatitudeBounds && y >= 0 && y < height) {
+        const unsigned char terrain = map_tiles()[MapLongitude * x + (y >> 1)].climate;
+        if ((terrain & 0xE0) > 0x60 && x - (terrain >> 5) + 3 < left + 2) {
+            ConsoleGlobal.center();
+            return;
+        }
+    }
+    if (x < left + 2 || x >= ConsoleGlobal.field_1DDD0_ + ConsoleGlobal.field_1DDD8_ + left - 2) {
+        ConsoleGlobal.center();
+        return;
+    }
+    if (!(MapIsFlat & 1)) {
+        if (y < top + 2) y += height;
+        if (y >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2) y -= height;
+    }
+    if (y < top + 2 || y >= ConsoleGlobal.field_1DDCC_ + ConsoleGlobal.field_1DDD4_ + top - 2)
+        ConsoleGlobal.center();
+}
+
+// ORIGINAL: 0x00419A90 ?governor@BaseWin@@QAEHH@Z 0x00419A90-0x0041A010
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00419a90.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+int BaseWin::governor(int settings_only) {
+    compute_selected_base();
+    if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
+        && !(GameState & STATE_OMNISCIENT_VIEW)) return 1;
+    Base *base = BaseCurrent;
+    const int faction = base->faction_id_current;
+    const uint32_t source_bits[19] = {0x80000000u,0x200000,0x80,0x40,1,
+        0x400000,0x200,0x400,0x800,0x1000,0x2000,0x80000,0x800000,
+        0x100000,0x8000,0x20000,0x10000,0x40000,0x20};
+    PopupWriteCheckState = 0;
+    for (int i = 0; i < 19; ++i)
+        if (base->governor & source_bits[i]) PopupWriteCheckState |= 1 << i;
+    parse_says(0, base->name_string, -1, -1);
+    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return 1;
+    if (x_pop_short("GOVOPTIONS", 0x41, nullptr) < 0) {
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        return 1;
+    }
+    base = BaseCurrent;
+    uint32_t flags = base->governor & 0x0F000000;
+    for (int j = 0; j < 19; ++j)
+        if (PopupWriteCheckState & (1 << j)) flags |= source_bits[j];
+    base->governor = flags;
+    PlayersData[faction].base_governor_adv = flags;
+    if (!settings_only) {
+        if (base->governor & 0x80000000u) {
+            if (base->governor & 1) {
+                base->state &= 0x7FFFFFFFu;
+                base->queue_size = 0;
+                base_reset(BaseIDCurrentSelected, 1);
+                base = BaseCurrent;
+            }
+            if (base->governor & 0x40) {
+                base->resource_sqr_radius = 0;
+                base->specialist_total = 0;
+                base->specialist_unk_1 = 0;
+                base_compute(1);
+                base_doctors();
+                base = BaseCurrent;
+            }
+        }
+        if (!(base->governor & 0x80000000u) || !(base->governor & 1))
+            draw_radius(base->x, base->y, 2, 2);
+    }
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    redraw();
+    MainInterfaceGlobal.redraw();
+    return 0;
+}
+
+// ORIGINAL: 0x0041A2B0 ?rename@BaseWin@@QAEXXZ 0x0041A2B0-0x0041A4B6
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a2b0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+void BaseWin::rename() {
+    compute_selected_base();
+    if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
+        && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+    parse_says(0, BaseCurrent->name_string, -1, -1);
+    if (X_pop_ask("RENAME", 0x18, BaseCurrent->name_string, nullptr, 0)) {
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        return;
+    }
+    strcpy(BaseCurrent->name_string, ParseStrBuffer[0].str);
+    if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_) {
+        const int former = BaseCurrent->faction_id_former;
+        if (former != ConsoleGlobal.faction_id_ && !((1 << former) & LockEnableMask)
+            && !IsMultiplayerNet) {
+            cause_friction(former, ConsoleGlobal.faction_id_, 3);
+            const uint32_t treaty = PlayersData[BaseCurrent->faction_id_former]
+                .diplo_treaties[ConsoleGlobal.faction_id_];
+            if ((treaty & 7) && (treaty & 0x20) && random(0, 2) == 0)
+                set_treaty(BaseCurrent->faction_id_former, ConsoleGlobal.faction_id_, 0x400, 1);
+        }
+    }
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    draw_info(1);
+    draw_radius(BaseCurrent->x, BaseCurrent->y, 3, 2);
+}
+
+// ORIGINAL: 0x0041B4F0 ?staple_the_bastards@BaseWin@@QAEXXZ 0x0041B4F0-0x0041B78D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041b4f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+void BaseWin::staple_the_bastards() {
+    compute_selected_base();
+    if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
+        && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+    const int faction = BaseCurrent->faction_id_current;
+    const bool alien = (Players[faction].rule_flags & 0x80) != 0;
+    parse_says(0, BaseCurrent->name_string, -1, -1);
+    const int police = PlayersData[faction].soc_effect_active.police
+        + has_fac(0x23, BaseIDCurrentSelected, 0) * 2;
+    const char *caption = reinterpret_cast<const char *>(*ClimatePopupTitle);
+    if (police < 0) {
+        popp(caption, "NERVESTAPLEHELLNO", 0, alien ? "Alopdir.pcx" : "talent_sm.pcx", nullptr);
+        return;
+    }
+    if (BaseCurrent->nerve_staple_turns_left) {
+        popp(caption, "NERVESTAPLED", 0, alien ? "ALdrone_sm.pcx" : "drone_sm.pcx", nullptr);
+        return;
+    }
+    if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1)) return;
+    if (!popp(caption, "NERVESTAPLE", 0, alien ? "ALdrone_sm.pcx" : "drone_sm.pcx", nullptr)) {
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        return;
+    }
+    if (IsMultiplayerNet) {
+        message_data(0x2414, 0, BaseIDCurrentSelected, 0, 0, 0);
+        NetDaemonNet.await_exec(1);
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+        return;
+    }
+    action_staple(BaseIDCurrentSelected);
+    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+}
+
+void BaseWin::update_drag_cursor(int spot_type, int spot_pos, int x, int y, int large) {
+    const int previous = field_40B54_;
+    if (field_40B4C_ != 0 && field_40B4C_ != 1) return;
+    if (previous < 0) return;
+    if (field_40B4C_ == spot_type) {
+        if (field_40B4C_ == 0) {
+            if (farm_get(field_40B44_, field_40B48_) >= 0) {
+                const int current = farm_get(x, y);
+                field_40B54_ = (farm_get(field_40B44_, field_40B48_) != current) + 1;
+            }
+        } else {
+            field_40B54_ = (spot_pos != field_40B50_) + 1;
+        }
+    } else field_40B54_ = 2;
+    if (field_40B54_ <= 0 || previous != 0) return;
+    int cursor = 1;
+    if (field_40B4C_ == 1 && field_40B50_ >= 0) {
+        const int specialist = field_40B50_;
+        cursor = (specialist < 16
+            ? (BaseCurrent->spec[specialist >> 3] >> ((specialist & 7) * 4)) & 15
+            : best_specialist()) + 4;
+        if (large && cursor < 4) cursor = 1;
+    }
+    const bool alien = ExpansionEnabled && (Players[BaseCurrent->faction_id_current].rule_flags & 0x80);
+    Sprite *sprite;
+    if (cursor < 4) {
+        Sprite *citizens = large
+            ? (alien ? g_AL_CITIZEN_LG_CURSOR_SPRITES : g_CITIZEN_LG_CURSOR_SPRITES + 4)
+            : (alien ? g_AL_CITIZEN_SM_CURSOR_SPRITES : g_CITIZEN_SM_CURSOR_SPRITES + 4);
+        sprite = citizens + cursor;
+    } else {
+        Sprite *specialists = large
+            ? (alien ? g_AL_SPECIALIST_LG_CURSOR_SPRITES : g_SPECIALIST_LG_CURSOR_SPRITES)
+            : (alien ? g_AL_SPECIALIST_SM_CURSOR_SPRITES : g_SPECIALIST_SM_CURSOR_SPRITES);
+        sprite = specialists + cursor - 4;
+    }
+    set_cursor(sprite, large ? 19 : 7, large ? 24 : 9);
+    MainInterfaceGlobal.set_cursor(sprite, large ? 19 : 7, large ? 24 : 9);
+}
+
+// ORIGINAL: 0x0041B1F0 ?on_mouse_move@BaseWin@@QAEXHH@Z 0x0041B1F0-0x0041B491
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041b1f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// symbol    ?on_mouse_feedback@BaseWin@@UAEXHH@Z
+void BaseWin::on_mouse_feedback(int x, int y) {
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].dword_[3])) return;
+    clear_bubble_text();
+    clear_bubble_text();
+    if (field_40B00_ >= 0) {
+        field_40B00_ = -1;
+        field_40B04_ = 0;
+        compute_selected_base();
+        draw_production(1);
+    }
+    if ((field_40B4C_ != 0 && field_40B4C_ != 1) || field_40B54_ < 0) return;
+    int position, type;
+    if (spot2_.check(x, y, &position, &type) < 0) return;
+    update_drag_cursor(type, position, x, y, 0);
+}
+
+void BaseWin::show_panel_help(int x, int y, int label_offset, Win *window) {
+    char *text = label_get(label_offset / 4);
+    window->client_to_screen(&x, &y);
+    RECT point = {x, y, x, y};
+    window->set_bubble_text(text, &point);
+}
+
+// ORIGINAL: 0x004160F0 ?iface_click@BaseWin@@QAEXHHHH@Z 0x004160F0-0x00416512
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004160f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+void BaseWin::iface_click(int x, int y, int right, int is_double) {
+    TutorialWindow.reset();
+    if (field_40B54_ > 0) {
+        set_cursor(0x7F00);
+        MainInterfaceGlobal.set_cursor(0x7F00);
+    }
+    field_40B54_ = -1;
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = nullptr;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) WinPointerOwner4 = nullptr;
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].dword_[3])) return;
+    int position, type;
+    if (spot1_.check(x, y, &position, &type) < 0) {
+        if (right && in_box(x, y, &population_rect_)) {
+            show_panel_help(x, y, 0xCA4, &MainInterfaceGlobal);
+            return;
+        }
+        if (in_box(x, y, &interface_help_rect_)) {
+            show_panel_help(x, y, 0xC9C, &MainInterfaceGlobal);
+            return;
+        }
+        if (in_box(x, y, &garrison_rect_)) {
+            show_panel_help(x, y, 0xCA0, &MainInterfaceGlobal);
+            return;
+        }
+        if (in_box(x, y, &queue_help_rect_))
+            show_panel_help(x, y, 0xCD0, &MainInterfaceGlobal);
+        if (!in_box(x, y, &population_rect_)) return;
+        type = 1;
+    }
+    if (prodPicker_.is_visible() && type != 8) return;
+    compute_selected_base();
+    const int faction = BaseCurrent->faction_id_current;
+    if (faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW)
+        && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
+        && type != 6) return;
+    if (is_double) return;
+    if (field_40B4C_ == 0 && type == 1) position = -1;
+    // Original416514's eight entries are indexed by type-1; the retained
+    // seed's ordinal switch incorrectly assigned queue and garrison types.
+    switch (type) {
+    case 1: pop_click(position, x, y, right); return;
+    case 5: production(0, 0); break;
+    case 6:
+    case 7: garrison_click(position, x, y, right); return;
+    case 8: queue_click(position, x, y, right); return;
+    }
+}
+
+// ORIGINAL: 0x004165D0 ?click@BaseWin@@QAEXHHHH@Z 0x004165D0-0x00416D83
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004165d0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+void BaseWin::click(int x, int y, int right, int is_double) {
+    TutorialWindow.reset();
+    if (field_40B54_ > 0) {
+        set_cursor(0x7F00);
+        MainInterfaceGlobal.set_cursor(0x7F00);
+    }
+    field_40B54_ = -1;
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = nullptr;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) WinPointerOwner4 = nullptr;
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].dword_[3])) return;
+    if (right) {
+        if (in_box(x, y, &rect1_)) {
+            int label;
+            if (field_40AFC_ == 0) label = 0xC98;
+            else if (field_40AFC_ == 2) label = 0xC20;
+            else if (field_40AFC_ == 1) label = 0xC24;
+            else return;
+            show_panel_help(x, y, label, this);
+            return;
+        }
+        if (in_box(x, y, &commerce_outer_rect_)) {
+            const bool alien = (Players[Bases[focusedBaseID_].faction_id_current].rule_flags & 0x80) != 0;
+            show_panel_help(x, y, alien ? 0x1190 : 0xC74, this);
+            return;
+        }
+        if (in_box(x, y, &facilities_help_rect_)) {
+            show_panel_help(x, y, 0xC78, this);
+            return;
+        }
+        if (in_box(x, y, &nutrient_outer_rect_)) {
+            show_panel_help(x, y, 0xC7C, this);
+            return;
+        }
+        const int order[6] = {0, 2, 1, 3, 4, 5};
+        for (int panel = 0; panel < 6; ++panel) {
+            if (in_box(x, y, &expenses_help_rects_[order[panel]])
+                && (WinScreenWidth == 0x400 || (panel < 3
+                    ? !flatButtons_[17].selected_state() : flatButtons_[17].selected_state()))) {
+                show_panel_help(x, y, 0xC80 + panel * 4, this);
+                return;
+            }
+        }
+    }
+    int position, type;
+    if (spot2_.check(x, y, &position, &type) < 0) return;
+    compute_selected_base();
+    const int faction = BaseCurrent->faction_id_current;
+    if (faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW)
+        && !(PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction] & 1)
+        && type != 6) return;
+    if (is_double) return;
+    if (type == 0) farm_click(x, y, right);
+    else if (type == 2) facilities_click(position, x, y, right);
+}
 
 // Draw one row using the original population-sized spacing. The stage counts
 // are snapshots, but the number of content citizens and specialists is read
@@ -1596,7 +2828,6 @@ void BaseWin::on_left_up(int xCoord, int yCoord) {
 }
 
 // Fixed-slot bindings carried from 0041b110.cpp
-static int *const NetInputLockFlag = (int *)0x0093E8C8;
 
 // ORIGINAL: 0x0041B110 ?on_left_down@BaseWin@@QAEXHH@Z 0x0041B110-0x0041B1D9 FILE BYTE_EXACT
 // LEVER: 2026-09-06, the two moves that took this 57/59 to 59/59. (1) Every
@@ -1637,7 +2868,7 @@ void BaseWin::on_left_down(int xCoord, int yCoord) {
     field_40B50_ = -1;
     field_40B44_ = xCoord;
     field_40B48_ = yCoord;
-    if (is_visible() != 0 && (IsMultiplayerNet == 0 || *NetInputLockFlag == 0)) {
+    if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.lock_state_[0].dword_[3] == 0)) {
         if (WinPointerOwner3 == 0) {
             WinPointerOwner3 = this;
             WinPointerOwner4 = 0;
@@ -1753,7 +2984,7 @@ void BaseWin::on_iface_left_down(int xCoord, int yCoord) {
     field_40B44_ = xCoord;
     field_40B48_ = yCoord;
 
-    if (is_visible() != 0 && (IsMultiplayerNet == 0 || *NetInputLockFlag == 0)) {
+    if (is_visible() != 0 && (IsMultiplayerNet == 0 || NetDaemonNet.lock_state_[0].dword_[3] == 0)) {
         if (WinPointerOwner3 == 0) {
             WinPointerOwner3 = this;
             WinPointerOwner4 = 0;
@@ -1809,10 +3040,107 @@ void BaseWin::vslot_13(int button_id) {
 //           is now an override of Win's slot, so VC6 mangles it virtual and
 //           enters it on the front table, while the image spells the same
 //           body Q and its own table 0x66A4BC holds the raw address.
+// ORIGINAL: 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041d500.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
 void BaseWin::on_button_clicked(int button_id) {
-    typedef void(__fastcall *pending)(BaseWin *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041D500))(
-        this, nullptr, button_id);
+    compute_selected_base();
+    TutorialWindow.reset();
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 3) return;
+    ok_callback();
+    if (button_id == 1009 || button_id == 1010) {
+        int vehicle = veh_at(BaseCurrent->x, BaseCurrent->y);
+        if (vehicle < 0) return;
+        if (button_id == 1009) {
+            // Original41D9FE/41DA15 follows nonnegative links. The retained
+            // seed had reversed this condition, indexing a negative id.
+            while (Vehs[vehicle].next_veh_id_stack >= 0)
+                vehicle = Vehs[vehicle].next_veh_id_stack;
+            veh_promote(vehicle);
+        } else veh_demote(vehicle);
+        redraw();
+        return;
+    }
+    const unsigned selection = static_cast<unsigned>(button_id) + 2u;
+    if (selection > 23) return;
+    // Original's 24-entry table at41DA6C is not the ordinal switch the
+    // retained seed printed. Two close entries and two governor entries
+    // share their bodies; the no-op entries are deliberately unhandled.
+    switch (selection) {
+    case 22:
+        field_40B2C_ = BaseCurrent->queue_size + 1;
+        if (static_cast<int>(field_40B2C_) >= 10) field_40B2C_ = 9;
+        draw_queue(1);
+        if (!prodPicker_.is_visible()) production(field_40B2C_, 0);
+        return;
+    case 0:
+    case 2: {
+        const int visible = TutWinBaseWindow.is_visible();
+        zoom_wait_pending_ = 0;
+        time_.stop();
+        if (TutWinBaseWindow.is_visible()) TutWinBaseWindow.release_iface_mode();
+        do_all_draws();
+        if (visible && ConsoleGlobal.cursor_active_ && ConsoleGlobal.selected_vehicle_ >= 0
+            && !ConsoleGlobal.tile_in_view(Vehs[ConsoleGlobal.selected_vehicle_].x,
+                Vehs[ConsoleGlobal.selected_vehicle_].y, 2)) ConsoleGlobal.center();
+        return;
+    }
+    case 3: rename(); return;
+    case 4: prev(); return;
+    case 5: next(); return;
+    case 14: production(0, 0); return;
+    case 15: hurry(); return;
+    case 10:
+        if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
+            && !(GameState & STATE_OMNISCIENT_VIEW)) return;
+        if (BaseCurrent->governor & 0x80000000u) {
+            BaseCurrent->governor &= 0x7FFFFFFFu;
+            redraw();
+            MainInterfaceGlobal.redraw();
+        } else gov_on(0);
+        return;
+    case 20:
+    case 21:
+        if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
+            || (GameState & STATE_OMNISCIENT_VIEW)) governor(0);
+        return;
+    case 6:
+    case 7:
+    case 8:
+    case 9:
+        if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
+            || (GameState & STATE_OMNISCIENT_VIEW))
+            gov_on(1 << (24 + selection - 6));
+        return;
+    case 11:
+    case 12:
+    case 13: {
+        const int mode = selection == 11 ? 2 : (selection == 12 ? 0 : 1);
+        if (static_cast<int>(field_40AFC_) != mode) {
+            field_40AFC_ = mode;
+            redraw();
+        }
+        return;
+    }
+    case 19: {
+        const bool selected = flatButtons_[17].selected_state() != 0;
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get((selected ? 0xA4C : 0xA50) / 4));
+        CharUpperA(StringTemp);
+        flatButtons_[17].set_name(StringTemp);
+        flatButtons_[17].set(selected ? 0 : 1);
+        draw_expenses(1);
+        return;
+    }
+    case 18:
+        if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
+            || (GameState & STATE_OMNISCIENT_VIEW)) staple_the_bastards();
+        return;
+    case 23:
+        if (BaseCurrent->faction_id_current == ConsoleGlobal.faction_id_
+            || (GameState & STATE_OMNISCIENT_VIEW)) base_editor();
+        return;
+    }
 }
 
 // ORIGINAL: 0x0041E8B0 ?hide@BaseWin@@QAEXXZ 0x0041E8B0-0x0041E8C9 BYTE_EXACT
@@ -2073,10 +3401,41 @@ Purpose: The interface's mode change. Mode selects which of the base screen's
 // flags     frame;sp_ready;purged_ok
 // calls     0x00415B20 0x00415080 0x0041E560 0x0040D250 0x004C3A40
 */
+// ORIGINAL: 0x0041DAD0 ?on_status@BaseWin@@QAEXH@Z 0x0041DAD0-0x0041DC7F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041dad0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// symbol    ?on_status@BaseWin@@UAEXH@Z
 void BaseWin::on_status(int mode) {
-    typedef void(__fastcall *pending)(BaseWin *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041DAD0))(
-        this, nullptr, mode);
+    if (mode) {
+        WorldClimateWorldWin.hide_all();
+        on_redraw();
+        for (int i = 0; i < 22; ++i) {
+            if (i == 16 && (Players[Bases[focusedBaseID_].faction_id_current].rule_flags & 0x80)) {
+                flatButton_.show(4);
+            } else if (i != 21 || (GameState & 0x40)) {
+                flatButtons_[i].show(4);
+            }
+        }
+        MainInterfaceGlobal.update(0);
+        field_40B54_ = -1;
+        if ((GamePreferences & 0x400) && !g_BASEWIN_WAVE.is_playing())
+            g_BASEWIN_WAVE.play();
+        ambience(0xCD);
+        do_all_draws();
+        slide_show(this, 0);
+        Win::show(3);
+        if (GamePreferences & 0x400) g_BASEWIN_WAVE.fade();
+    } else {
+        for (int j = 0; j < 22; ++j) {
+            if (j == 16) flatButton_.hide();
+            flatButtons_[j].hide();
+        }
+        scroll2_.hide();
+        ambience(0xCE);
+        g_MENU_DOWN_WAVE.play();
+        slide_hide(this, 0);
+        Win::hide();
+        do_all_draws();
+    }
 }
 
 /*
@@ -2148,10 +3507,50 @@ Purpose: The interface's mouse-move report. Unrecovered - 1164 bytes of spot
 // flags     frame;sp_ready;purged_ok
 // calls     0x005F7E90 0x005F8500 0x005FAB00 0x005EC7C0 0x004E39D0
 */
+// ORIGINAL: 0x0041DF50 ?on_iface_mouse_move@BaseWin@@QAEXHH@Z 0x0041DF50-0x0041E3DC
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041df50.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// symbol    ?on_iface_mouse_move@BaseWin@@UAEXHH@Z
 void BaseWin::on_iface_mouse_move(int a1, int a2) {
-    typedef void(__fastcall *pending)(BaseWin *, void *, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x0041DF50))(
-        this, nullptr, a1, a2);
+    if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].dword_[3])) return;
+    clear_bubble_text();
+    clear_bubble_text();
+    int position, type;
+    const int found = spot1_.check(a1, a2, &position, &type);
+    if (found == -1 || type != 8) {
+        if (field_40B30_) {
+            field_40B30_ = 0;
+            draw_queue(1);
+        }
+    } else {
+        field_40B30_ = position - 2;
+        draw_queue(1);
+    }
+    if (prodPicker_.is_visible()) return;
+    if (found == -1) {
+        if (field_40B00_ < 0) return;
+        field_40B00_ = -1;
+        field_40B04_ = 0;
+        compute_selected_base();
+        draw_production(1);
+        return;
+    }
+    if (field_40B54_ >= 0) {
+        update_drag_cursor(type, position, a1, a2, 1);
+        return;
+    }
+    if (type == 6 || type == 7) {
+        if (field_40B00_ == position) return;
+        field_40B00_ = position;
+        field_40B04_ = type == 7;
+        compute_selected_base();
+        draw_flash(1);
+        return;
+    }
+    if (field_40B00_ < 0) return;
+    field_40B00_ = -1;
+    field_40B04_ = 0;
+    compute_selected_base();
+    draw_production(1);
 }
 
 /*
@@ -2742,4 +4141,170 @@ void BaseWin::draw_nutrients(int update_mode) {
     if (update_mode == 0) MainInterfaceGlobal.soft_update(&nutrient_outer_rect_);
     else MainInterfaceGlobal.update(&nutrient_outer_rect_, nullptr);
     canvas->set_clip(&saved_clip);
+}
+
+// ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041b790.cpp", "source:src/basewin.h", "image:0x41b790"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
+void BaseWin::base_editor_fac() {
+    Popup popup;
+    int previous = -1;
+    for (;;) {
+        // Original41B7DD publishes the modal kind before parsing the name.
+        PopupModalState = 6;
+        parse_says(0, BaseCurrent->name_string, -1, -1);
+        popup.start(PopupStartCaption, "EDITORFAC", -1, 0, 0x42, 0);
+        popup.set_cancel_text(label_get(0x438 / 4));
+        popup.set_ok_text(label_get(0xFC0 / 4));
+        for (int facility = 1; facility <= 64; ++facility) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+            strcat(StringTemp, "|");
+            if (has_fac(facility, BaseIDCurrentSelected, 0)) {
+                // Unlike the old seed, retain the facility-name prefix on
+                // the already-built branch (original41B859..41B8A6).
+                strcat(StringTemp, label_get(0xD50 / 4));
+            } else {
+                const int available = facility_avail(facility,
+                    BaseCurrent->faction_id_current, BaseIDCurrentSelected, 0);
+                // This clear and rebuild are in both original branches.
+                StringTemp[0] = 0;
+                strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+                strcat(StringTemp, "|");
+                strcat(StringTemp, label_get((available ? 0x3DC : 0x4D8) / 4));
+            }
+            popup.dialogs().item(StringTemp, facility);
+        }
+        if (previous >= 0) popup.set_value(previous);
+        const int selected = popup.exec(0, 0);
+        PopupModalState = 0;
+        if (selected < 0) return;
+        bool built = false;
+        if (selected < 65) {
+            int offset, mask;
+            bitmask(selected, &offset, &mask);
+            built = (Bases[BaseIDCurrentSelected].facilities_built[offset]
+                     & static_cast<unsigned char>(mask)) != 0;
+        }
+        // Query uses the live selected base; mutation uses this window's
+        // focused ID, as the original41B99B/41B9DE separately loads them.
+        set_fac(selected, focusedBaseID_, built ? 0 : 1);
+        previous = selected;
+        redraw(); // primary virtual slot62, not the on_redraw callback
+    }
+}
+
+// ORIGINAL: 0x0041BBC0 ?base_editor_proj@BaseWin@@QAEXXZ 0x0041BBC0-0x0041C231;0x0065255E-0x006526E3
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0041bbc0.cpp", "source:src/basewin.h", "image:0x41bbc0"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
+void BaseWin::base_editor_proj() {
+    Popup popup;
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, "PICKAPROJ", -1, 0, 0x42, 0);
+    // Original41BC22..41BD0E walks Facility[70..133] at48-byte stride and
+    // the64 SecretProject words at4-byte stride, independently of expansion.
+    for (int project_index = 0; project_index < MaxSecretProjectNum; ++project_index) {
+        const int project = project_index;
+        const RulesFacility &facility = Facility[FacilitySPStart + project];
+        StringTemp[0] = 0;
+        strcat(StringTemp, StringTable.get(reinterpret_cast<int>(facility.name)));
+        strcat(StringTemp, "|");
+        const int owner_base = base_project(project);
+        if (owner_base == -2) {
+            strcat(StringTemp, label_get(0xD54 / 4));
+        } else if (owner_base == -1) {
+            strcat(StringTemp, label_get(has_tech(facility.preq_tech,
+                           BaseCurrent->faction_id_current) ? 0x3DC / 4 : 0x4D8 / 4));
+        } else {
+            // Original41BCCD..41BCDD computes Base's0x134 stride, not
+            // the seed's incorrect Player0x59C stride. No new index guard.
+            strcat(StringTemp, Bases[owner_base].name_string);
+        }
+        popup.dialogs().item(StringTemp, 0);
+    }
+    const int project = popup.exec(0, 0);
+    PopupModalState = 0;
+    if (project < 0) return;
+    parse_say(0, reinterpret_cast<int>(Facility[FacilitySPStart + project].name), -1, -1);
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, "PICKAPLACE", -1, 0, 0x42, 0);
+    popup.dialogs().item(label_get(0xD64 / 4), 9999);
+    popup.dialogs().item(label_get(0xD68 / 4), 9998);
+    // Current-faction bases precede other bases, preserving original index IDs.
+    // Re-read BaseCurrent and the live base count after each item call, as
+    // original41BEBA..41BEC2 does; neither is captured as immutable UI state.
+    for (int pass = 0; pass < 2; ++pass) {
+        for (int base = 0; base < BaseCurrentCount; ++base) {
+            const int owner = Bases[base].faction_id_current;
+            const bool same_owner = owner == BaseCurrent->faction_id_current;
+            if ((pass == 0 && !same_owner) || (pass != 0 && same_owner)) continue;
+            StringTemp[0] = 0;
+            strcat(StringTemp, Bases[base].name_string);
+            strcat(StringTemp, "|");
+            PluralityDefault = Players[owner].is_noun_plural;
+            GenderDefault = Players[owner].noun_gender;
+            strcat(StringTemp, Players[owner].noun_faction);
+            popup.dialogs().item(StringTemp, base);
+        }
+    }
+    int owner_base = popup.exec(0, 0);
+    PopupModalState = 0;
+    if (owner_base < 0) return;
+    if (owner_base >= 9000) owner_base -= 10000;
+    // Use the existing typed SecretProject table owner/access convention.
+    // Its current declaration is64 consecutive named int fields; base_project
+    // uses this same indexed run. A future array migration must preserve all
+    // named consumers centrally; this body introduces no independent storage.
+    *(&SecretProject.human_genome_project + project) = owner_base;
+    redraw();
+    // Popup owns complete member/base teardown, including cancellation paths.
+}
+
+// ORIGINAL: 0x0041C240 ?base_editor_copy@BaseWin@@QAEXH@Z 0x0041C240-0x0041C798;0x006526E3-0x006527EF
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0041c240.cpp", "source:src/basewin.h", "image:0x41c240"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
+void BaseWin::base_editor_copy(int copy_to) {
+    Popup popup;
+    parse_says(0, BaseCurrent->name_string, -1, -1);
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, copy_to ? "EDITORBASECOPYTO" : "EDITORBASECOPY",
+                -1, 0, 0x42, 0);
+    if (copy_to) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0xE64 / 4));
+        popup.dialogs().item(StringTemp, 9998);
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0xE68 / 4));
+        popup.dialogs().item(StringTemp, 9999);
+    }
+    // Own-faction bases first, then other-faction bases. Both include the
+    // selected base; the original does not filter it from this menu.
+    for (int group = 0; group < 2; ++group) {
+        for (int base = 0; base < BaseCurrentCount; ++base) {
+            const int faction = Bases[base].faction_id_current;
+            if (group == 0 ? faction != BaseCurrent->faction_id_current
+                           : faction == BaseCurrent->faction_id_current) continue;
+            StringTemp[0] = 0;
+            strcat(StringTemp, Bases[base].name_string);
+            strcat(StringTemp, "|");
+            PluralityDefault = Players[faction].is_noun_plural;
+            GenderDefault = Players[faction].noun_gender;
+            strcat(StringTemp, Players[faction].noun_faction);
+            popup.dialogs().item(StringTemp, base);
+        }
+    }
+    const int selection = popup.exec(0, 0);
+    PopupModalState = 0;
+    if (selection < 0) return;
+    for (int byte = 0; byte < 9; ++byte) {
+        if (!copy_to) {
+            BaseCurrent->facilities_built[byte] = Bases[selection].facilities_built[byte];
+        } else if (selection < 9998) {
+            Bases[selection].facilities_built[byte] = BaseCurrent->facilities_built[byte];
+        } else {
+            for (int base = 0; base < BaseCurrentCount; ++base) {
+                if (base == BaseIDCurrentSelected) continue;
+                if (selection == 9998 && Bases[base].faction_id_current != BaseCurrent->faction_id_current) continue;
+                Bases[base].facilities_built[byte] = BaseCurrent->facilities_built[byte];
+            }
+        }
+    }
+    redraw();
 }

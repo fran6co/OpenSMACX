@@ -188,7 +188,9 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   void check_base(int base_id);                         // 0x0041A7A0
   void check_loc(int x, int y, int radius);              // 0x0041A7E0
   void check_veh(int a1);                               // 0x0041A8B0
-  void on_mouse_move(int xCoord, int yCoord);           // 0x0041B1F0
+  // Primary vtable66A40C+44 selects original41B1F0. Win names this
+  // two-coordinate feedback slot separately from its four-argument router.
+  virtual void on_mouse_feedback(int xCoord, int yCoord);  // 0x0041B1F0
   void staple_the_bastards();                           // 0x0041B4F0
   void base_editor_fac();                               // 0x0041B790
   void base_editor_proj();                              // 0x0041BBC0
@@ -200,6 +202,9 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   // below with the rest of the table: slot 8 0x0041DF50, slot 9 0x0041E3E0.
   void on_redraw();                                     // 0x0041E790
   void init();                                          // 0x0041E8D0
+  void compute_selected_base();
+  void update_drag_cursor(int spot_type, int spot_pos, int x, int y, int large);
+  void show_panel_help(int x, int y, int label_offset, Win *window);
 
   // Two siblings the recovered bodies above reach with a direct `call rel32`
   // - UNK2 calls garrison_click, on_scrolled calls draw_facilities. Both are
@@ -571,10 +576,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40B70_;  // 0x40B70
   uint32_t field_40B74_;  // 0x40B74
   uint32_t field_40B78_;  // 0x40B78
-  uint32_t field_40B7C_;  // 0x40B7C
-  uint32_t field_40B80_;  // 0x40B80
-  uint32_t field_40B84_;  // 0x40B84
-  uint32_t field_40B88_;  // 0x40B88
+  // RECOVERY_MEMBER: v2 BaseWin interface_help_rect_ tagRECT 0x40B7C 0x004160F0
+  RECT interface_help_rect_;  // 0x40B7C, iface_click panel help hit-test
   // RECOVERY_MEMBER: v1 BaseWin rect1_ 0x40B8C 0x00408B20
   RECT rect1_;  // 0x40B8C, IDB `rect1`
   uint32_t field_40B9C_;  // 0x40B9C
@@ -582,10 +585,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   uint32_t field_40BA4_;  // 0x40BA4
   uint32_t field_40BA8_;  // 0x40BA8
   RECT rect2_;  // 0x40BAC, IDB `rect2`
-  uint32_t field_40BBC_;  // 0x40BBC
-  uint32_t field_40BC0_;  // 0x40BC0
-  uint32_t field_40BC4_;  // 0x40BC4
-  uint32_t field_40BC8_;  // 0x40BC8
+  // RECOVERY_MEMBER: v2 BaseWin facilities_help_rect_ tagRECT 0x40BBC 0x004165D0
+  RECT facilities_help_rect_;  // 0x40BBC, click panel help hit-test
   // Three consecutive rectangles used by the commerce title, report and
   // containing panel; the original copies/frames each as a whole RECT.
   // RECOVERY_MEMBER: v1 BaseWin commerce_title_rect_ 0x40BCC 0x00410870
@@ -618,10 +619,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   // The population panel clips, frames, and updates this whole rectangle.
   // RECOVERY_MEMBER: v1 BaseWin population_rect_ 0x40C5C 0x00414B40
   RECT population_rect_;
-  uint32_t field_40C6C_;  // 0x40C6C
-  uint32_t field_40C70_;  // 0x40C70
-  uint32_t field_40C74_;  // 0x40C74
-  uint32_t field_40C78_;  // 0x40C78
+  // RECOVERY_MEMBER: v2 BaseWin queue_help_rect_ tagRECT 0x40C6C 0x004160F0
+  RECT queue_help_rect_;  // 0x40C6C, iface_click panel help hit-test
   // The queue renderer frames these three consecutive regions separately.
   // RECOVERY_MEMBER: v1 BaseWin queue_title_rect_ 0x40C7C 0x00415080
   RECT queue_title_rect_;
@@ -633,30 +632,8 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   // clipping, framing and presenting it.
   // RECOVERY_MEMBER: v1 BaseWin info_title_rect_ 0x40CAC 0x00415B20
   RECT info_title_rect_;
-  uint32_t field_40CBC_;  // 0x40CBC
-  uint32_t field_40CC0_;  // 0x40CC0
-  uint32_t field_40CC4_;  // 0x40CC4
-  uint32_t field_40CC8_;  // 0x40CC8
-  uint32_t field_40CCC_;  // 0x40CCC
-  uint32_t field_40CD0_;  // 0x40CD0
-  uint32_t field_40CD4_;  // 0x40CD4
-  uint32_t field_40CD8_;  // 0x40CD8
-  uint32_t field_40CDC_;  // 0x40CDC
-  uint32_t field_40CE0_;  // 0x40CE0
-  uint32_t field_40CE4_;  // 0x40CE4
-  uint32_t field_40CE8_;  // 0x40CE8
-  uint32_t field_40CEC_;  // 0x40CEC
-  uint32_t field_40CF0_;  // 0x40CF0
-  uint32_t field_40CF4_;  // 0x40CF4
-  uint32_t field_40CF8_;  // 0x40CF8
-  uint32_t field_40CFC_;  // 0x40CFC
-  uint32_t field_40D00_;  // 0x40D00
-  uint32_t field_40D04_;  // 0x40D04
-  uint32_t field_40D08_;  // 0x40D08
-  uint32_t field_40D0C_;  // 0x40D0C
-  uint32_t field_40D10_;  // 0x40D10
-  uint32_t field_40D14_;  // 0x40D14
-  uint32_t field_40D18_;  // 0x40D18
+  // RECOVERY_MEMBER: v4 BaseWin expenses_help_rects_ tagRECT[6] 0x40CBC 0x60 0x004165D0
+  RECT expenses_help_rects_[6];  // 0x40CBC, click uses six whole RECTs
   RECT rect5_;  // 0x40D1C
   RECT rect6_;  // 0x40D2C
   RECT rect7_;  // 0x40D3C
@@ -676,15 +653,9 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   RECT rect9_;  // 0x40DBC
   RECT rect10_;  // 0x40DCC
   RECT rect11_;  // 0x40DDC
-  uint32_t field_40DEC_;  // 0x40DEC
-  uint32_t field_40DF0_;  // 0x40DF0
-  uint32_t field_40DF4_;  // 0x40DF4
-  uint32_t field_40DF8_;  // 0x40DF8
-  uint32_t field_40DFC_;  // 0x40DFC
-
-  uint32_t field_40E00_;  // 0x40E00
-  uint32_t field_40E04_;  // 0x40E04
-  uint32_t field_40E08_;  // 0x40E08
+  // Original draw_flash intersects these two owned rectangles.
+  RECT flash_rect_a_;  // 0x40DEC
+  RECT flash_rect_b_;  // 0x40DFC
   uint32_t field_40E0C_;  // 0x40E0C
   uint32_t field_40E10_;  // 0x40E10
   uint32_t field_40E14_;  // 0x40E14

@@ -64,3 +64,13 @@ Status: Complete
 int PopMenu::init() {
     return BasePop::init(0, 0);
 }
+
+// The original frame embeds PullDown at Popup+0x537C and unwinds the same
+// PopMenu at 0x006612F3: construction and teardown belong to one local object.
+// ORIGINAL: 0x0059D690 ?popm@@YAHPADHHP6AHXZ@Z 0x0059D690-0x0059D971;0x006612E8-0x006613D0
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0059d690.cpp", "source:src/popmenu.h", "image:0x59d690"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+int __cdecl popm(char *section, int x, int y, int (__cdecl *poll)()) {
+    PopMenu menu;
+    menu.start(PopupStartCaption, section, -1, 0, 0, 0);
+    return menu.exec(x, y, poll);
+}

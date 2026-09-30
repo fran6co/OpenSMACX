@@ -1292,20 +1292,20 @@ static SocialEffect *const PlayerSocialEffectBlock = (SocialEffect *)0x0096CC2C;
 
 static int social_category_value(const SocialCategory &category, int index) {
     switch (index) {
-    case 0: return static_cast<int>(category.politics);
-    case 1: return static_cast<int>(category.economics);
-    case 2: return static_cast<int>(category.values);
-    default: return static_cast<int>(category.future);
+    case 0: return static_cast<int>(category.models_[SocialCategory::POLITICS]);
+    case 1: return static_cast<int>(category.models_[SocialCategory::ECONOMICS]);
+    case 2: return static_cast<int>(category.models_[SocialCategory::VALUES]);
+    default: return static_cast<int>(category.models_[SocialCategory::FUTURE]);
     }
 }
 
 static void set_social_category_value(SocialCategory &category, int index,
                                       int value) {
     switch (index) {
-    case 0: category.politics = value; break;
-    case 1: category.economics = value; break;
-    case 2: category.values = value; break;
-    default: category.future = value; break;
+    case 0: category.models_[SocialCategory::POLITICS] = value; break;
+    case 1: category.models_[SocialCategory::ECONOMICS] = value; break;
+    case 2: category.models_[SocialCategory::VALUES] = value; break;
+    default: category.models_[SocialCategory::FUTURE] = value; break;
     }
 }
 

@@ -756,6 +756,8 @@ MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
 // is already recorded BYTE_EXACT as a standalone function): facility_avail
 // (base.cpp) is the caller that needs it folded in place instead of calling
 // out to 0x005AC680.
+void __cdecl compute_score(int faction, int *total, int *items, int recursive);
+
 MEASURED inline BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
     return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt;
 }

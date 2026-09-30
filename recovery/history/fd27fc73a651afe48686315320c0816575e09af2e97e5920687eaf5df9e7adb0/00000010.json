@@ -1,0 +1,20 @@
+{
+  "event_id": "5b1613c13f2456d4a6c1517f5a1605be72948f60520664e9a63f437190941285",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "packages/match-recovery/src/match_recovery/source/writer.py",
+      "packages/match-recovery/tests/source/test_symbol_writer.py"
+    ],
+    "evidence": [
+      "Native emitted-symbol writer refuses Buffer static ABI publication because ordinary FATAL ERROR literal contains substring Rquote. Actual compiler confirms static symbol. Authorize narrow lexical false-positive correction and damage tests retaining real raw-string refusal; no claim or gate weakening."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9451b84e9387f0a4e2d8d0a55803ed0137448cecbde4265ea666f6f2a1a46521",
+  "request_id": "static-symbol-writer-blocker",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:reportwin-owner-coverage"
+}

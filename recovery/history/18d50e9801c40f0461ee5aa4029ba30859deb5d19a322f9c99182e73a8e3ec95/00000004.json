@@ -1,0 +1,19 @@
+{
+  "event_id": "eb94eb45116e6fdea8b2f7dd55b625f867b669fac8523592129d996cd7c07959",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Frozen reviewed BaseWin owner now implements original iface_click4160F0 and click4165D0. Authorize removal of only these two obsolete unannotated executable-address forwarders during coordinator integration; retain all other pending owners and original obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "70f7c0f5f0956e549241883a6f9139275c03555b33f77574d34d6891277032d3",
+  "request_id": "basewin-replaced-forwarders",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:basewin-owner-coverage"
+}

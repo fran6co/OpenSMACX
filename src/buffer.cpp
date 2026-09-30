@@ -1497,11 +1497,12 @@ int Buffer::load_pcx(const char *filename, Palette *palette, int tgl, int height
 
 // Read the dimensions from the mapped PCX header without loading its image
 // data into a Buffer. The file carries the same optional asset watermark as
-// the regular PCX decoder above. BasePop::start calls it through its Buffer
-// owner; the original body never reads its receiver.
+// the regular PCX decoder above. The original three-argument cdecl callers
+// and receiver-free body establish a static utility; the old catalogue
+// spelling is retained separately from the current compiler symbol.
 // ORIGINAL: 0x005E2480 ?get_pcx_dimensions@Buffer@@QAAHPBDPAHPAH@Z 0x005E2480-0x005E2690;0x00662C11-0x00662C26
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005e2480.cpp", "pinned-image:0x00696BF8,0x00696CFC,0x00696D04,0x00696D0C"], "reason": "Home PCX header dimension decoding in Buffer using its Filemap lifecycle and source-owned format literals"}
-// symbol    ?get_pcx_dimensions@Buffer@@QAEHPBDPAH1@Z
+// symbol    ?get_pcx_dimensions@Buffer@@SAHPBDPAH1@Z
 int Buffer::get_pcx_dimensions(const char *filename, int *width, int *height) {
     Filemap map;
     if (filename == nullptr || width == nullptr || height == nullptr) {

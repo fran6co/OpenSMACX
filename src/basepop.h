@@ -487,6 +487,10 @@ class BasePop : public GraphicWin {
   Dialogs &dialogs() {
     return dialogs_;
   }
+  // Satellite target selection initializes the owned picture, then selects
+  // that same member only after Sprite::init succeeds (4A067F..4A0694).
+  Sprite &owned_picture() { return sprite_; }
+  void select_owned_picture() { caller_sprite_ = &sprite_; }
   // Modal editor pickers set their default answer after start configures
   // the popup. This is the value word at original +0xA44.
   void set_value(int value) { value_ = value; }

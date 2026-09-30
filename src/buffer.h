@@ -129,6 +129,7 @@ extern BoxSpriteParams InterfaceBoxStyles[51];
 
 class Buffer {
  public:
+  const RECT &current_clip() const { return rect1_; }
   // The list-box draw callback uses the DIB's live width at Buffer+0x80.
   int pixel_width() const { return dib_.bmiHeader.biWidth; }
   // A top-down DIB stores the visible height as a negative biHeight.
@@ -467,7 +468,7 @@ class Buffer {
   int change_color(int a1, int a2);
   int change_color(RECT *area, int a2, int a3);
   int change_color(int a1, int a2, int a3, int a4, int a5, int a6);
-  int get_pcx_dimensions(const char *filename, int *width, int *height);
+  static int get_pcx_dimensions(const char *filename, int *width, int *height);
   int write_pcx(char *filename);
   int write_bmp(char *filename);
   char *find_line_break_l(char *text, int *break_len, int len);

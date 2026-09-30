@@ -1,0 +1,19 @@
+{
+  "event_id": "e1a132cafafbd2b01c86c9e659c8e4b5ce3b5f0f9216286b97634cff0b3bc177",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_social_ai_enumeration.py"
+    ],
+    "evidence": [
+      "Add host executable controls extracting the corrected source enumeration prefix, independently checking256 encodings and four model writes, with five restored-old-defect damage controls. No copied second recovery implementation or matching waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "de9f7bd9dd6148dfcb3027b11cb7094527ae3ede901926c835f10526f1844a52",
+  "request_id": "social-ai-executable-damage-controls",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:reportwin-owner-coverage"
+}

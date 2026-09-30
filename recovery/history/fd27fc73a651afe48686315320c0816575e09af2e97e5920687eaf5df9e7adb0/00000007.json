@@ -1,0 +1,19 @@
+{
+  "event_id": "445c9c1fb7dbfe31a5fc3cbe823a9cebd26e829874dbc2282cf6bdd57e02eb26",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_yield.py"
+    ],
+    "evidence": [
+      "Original4CF64C..65E and49FBB0..FBDE prove four uint32 indexed satellite counters808..818 in PlayerData. Existing base-yield test fixtures use the four former scalar member names; authorize mechanical fixture updates preserving independent expected yields and all test cases alongside genuine array migration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "617aaa84fe4eb62b7bac9f2f54995bf0472af31c572f84b6655b18bbf669af49",
+  "request_id": "satellite-array-regression-fixture",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:reportwin-owner-coverage"
+}

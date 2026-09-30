@@ -31,6 +31,7 @@
 #include "netdaemon.h"  // NetDaemonNet, message_data - the net_* writers
 #include "log.h"  // log_say, which the net_* writers announce each move with
 #include "console.h"  // ConsoleGlobal, which net_energy refreshes
+#include "socialwin.h"
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
@@ -2027,7 +2028,7 @@ Status: Complete
 void __cdecl see_map_check() {
     for (int faction_id = 1; faction_id < MaxPlayerNum; faction_id++) {
         PlayersData[faction_id].flags &= ~PFLAG_MAP_REVEALED;
-        uint32_t *satellites = &PlayersData[faction_id].satellites_nutrient;
+        uint32_t *satellites = PlayersData[faction_id].satellites_;
         for (int i = 0; i < 4; i++, satellites++) {
             if (*satellites) {
                 PlayersData[faction_id].flags |= PFLAG_MAP_REVEALED;
@@ -2377,7 +2378,7 @@ void __cdecl social_calc(SocialCategory *category, SocialEffect *effect, int fac
     BOOL UNUSED(toggle), BOOL is_quick_calc) {
     ZeroMemory(effect, sizeof(SocialEffect));
     for (int cat = 0; cat < MaxSocialCatNum; cat++) {
-        uint32_t model = *(&category->politics + cat);
+        uint32_t model = category->models_[cat];
         for (int eff = 0; eff < MaxSocialEffectNum; eff++) {
             int effect_val = *(&SocialCategories[cat].model_effect[model].economy + eff);
             if (effect_val < 0) {
@@ -2459,8 +2460,8 @@ Status: Complete
 */
 void __cdecl social_upkeep(int faction_id) {
     for (int i = 0; i < MaxSocialCatNum; i++) {
-        *(&PlayersData[faction_id].soc_category_active.politics + i) =
-            *(&PlayersData[faction_id].soc_category_pending.politics + i);
+        PlayersData[faction_id].soc_category_active.models_[i] =
+            PlayersData[faction_id].soc_category_pending.models_[i];
     }
     SocialCategory *soc_cat_pen = &PlayersData[faction_id].soc_category_pending;
     social_calc(soc_cat_pen, &PlayersData[faction_id].soc_effect_pending, faction_id, false, false);
@@ -2589,9 +2590,9 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             fight_val = 1;
         }
     }
-    // purpose?? loop to set unk_val2 to 256
+    // Four choices for each of four categories: original 5B4831..5B483F.
     uint32_t unk_val2 = 4;
-    for (int i = 3; i >= 0; i--) {
+    for (int i = 3; i > 0; i--) {
         unk_val2 *= 4;
     }
     // future pop growth
@@ -2658,21 +2659,25 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
         SocialCategory soc_cat;
         SocialEffect soc_eff;
         int k = player;
+        bool invalid_combination = false;
         for (int j = 0; j < MaxSocialCatNum; j++) {
             int model = k & 3;
-            *(&soc_cat.politics + player) = model;
+            soc_cat.models_[j] = model;
             if (model) {
-                if (Players[faction_id].soc_anti_ideology_category == j
-                    || Players[faction_id].soc_anti_ideology_model == model
+                if ((Players[faction_id].soc_anti_ideology_category == j
+                    && Players[faction_id].soc_anti_ideology_model == model)
                     // has_tech_call: the image CALLS 0x005B9F20 once here
                     // (0x005B4AA1, see the calls line) instead of open-coding
                     // the preq walk inside this loop.
-                    || !has_tech_call(SocialCategories[model].preq_tech[j], faction_id)) {
+                    || !has_tech_call(SocialCategories[j].preq_tech[model], faction_id)) {
+                    invalid_combination = true;
                     break;
                 }
             }
             k >>= 2;
         }
+        // Original 5B4A90/5B4AAB skip directly to the outer increment.
+        if (invalid_combination) continue;
         do_all_non_input();
         social_calc(&soc_cat, &soc_eff, faction_id, false, false);
         int unk_val6 = 0;
@@ -2684,7 +2689,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
         if (ideology_cat >= 0) {
             int ideology_mod = Players[faction_id].soc_ideology_model;
             if (ideology_mod) {
-                int unk_val7 = *(&soc_cat.politics + ideology_cat);
+                int unk_val7 = soc_cat.models_[ideology_cat];
                 if (!unk_val7 && unk_val7 == ideology_mod) {
                     unk_val6 += PlayersData[faction_id].current_num_bases;
                 } else {
@@ -3044,8 +3049,8 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
     if (soc_cat_bits < 0) {
         if (output) {
             for (int i = 0; i < MaxSocialCatNum; i++) {
-                *(&output->politics + i)
-                    = *(&PlayersData[faction_id].soc_category_pending.politics + i);
+                output->models_[i]
+                    = PlayersData[faction_id].soc_category_pending.models_[i];
             }
         }
     } else {
@@ -3053,8 +3058,8 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             BOOL no_cat_change = true;
             for (int i = 0; i < MaxSocialCatNum; i++) {
                 uint32_t cat_bit = soc_cat_bits & 3;
-                if (cat_bit != *(&PlayersData[faction_id].soc_category_pending.politics + i)) {
-                    *(&PlayersData[faction_id].soc_category_pending.politics + i) = cat_bit;
+                if (cat_bit != PlayersData[faction_id].soc_category_pending.models_[i]) {
+                    PlayersData[faction_id].soc_category_pending.models_[i] = cat_bit;
                     no_cat_change = false;
                 }
                 soc_cat_bits >>= 2;
@@ -3072,7 +3077,7 @@ void __cdecl social_ai(int faction_id, int growth_val, int tech_val, int wealth_
             }
         } else {
             for (int i = 0; i < MaxSocialCatNum; i++) {
-                *(&output->politics + i) = soc_cat_bits & 3;
+                output->models_[i] = soc_cat_bits & 3;
                 soc_cat_bits >>= 2;
             }
         }
@@ -4013,4 +4018,463 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
         }
         SpyingStatusTable[index] |= 0x400;
     }
+}
+
+// Shared diplomacy evaluation state. Neutral names retain independently
+// observed original slots until their meanings can be named conclusively.
+// RECOVERY_OBJECT: v1 0x00945DD8 ?FactionRankingsUnk@@3PAIA
+uint32_t FactionRankingsUnk[MaxPlayerNum];
+// Original faction-indexed reads establish the known eight game slots;
+// complete physical allocation is unresolved, hence a start-only binding.
+// RECOVERY_OBJECT: v1 0x0093F678 ?FactionDiplomacyFlags@@3PAIA
+uint32_t FactionDiplomacyFlags[MaxPlayerNum];
+// Original region walk clears indices1..127, deliberately retaining index0.
+// RECOVERY_OBJECT: v1 0x0093F818 ?DiplomacyRegionMask@@3PAIA
+uint32_t DiplomacyRegionMask[128];
+// RECOVERY_OBJECT: v1 0x0093F7B8 ?DiploScratchF7B8@@3HA
+int DiploScratchF7B8;
+// RECOVERY_OBJECT: v1 0x0093F7C8 ?DiploScratchF7C8@@3HA
+int DiploScratchF7C8;
+// RECOVERY_OBJECT: v1 0x0093F7D4 ?DiploScratchF7D4@@3HA
+int DiploScratchF7D4;
+// RECOVERY_OBJECT: v1 0x0093F7D8 ?DiploScratchF7D8@@3HA
+int DiploScratchF7D8;
+// RECOVERY_OBJECT: v1 0x0093F7E0 ?DiploScratchF7E0@@3HA
+int DiploScratchF7E0;
+// RECOVERY_OBJECT: v1 0x0093F7E4 ?DiploScratchF7E4@@3HA
+int DiploScratchF7E4;
+// RECOVERY_OBJECT: v1 0x0093F7E8 ?DiploScratchF7E8@@3HA
+int DiploScratchF7E8;
+// RECOVERY_OBJECT: v1 0x0093F7F0 ?DiploScratchF7F0@@3HA
+int DiploScratchF7F0;
+// RECOVERY_OBJECT: v1 0x0093F7F8 ?DiploScratchF7F8@@3HA
+int DiploScratchF7F8;
+// RECOVERY_OBJECT: v1 0x0093F7FC ?DiploScratchF7FC@@3HA
+int DiploScratchF7FC;
+// RECOVERY_OBJECT: v1 0x0093F808 ?DiploScratchF808@@3HA
+int DiploScratchF808;
+// RECOVERY_OBJECT: v1 0x0093FA24 ?DiploScratchFA24@@3HA
+int DiploScratchFA24;
+// RECOVERY_OBJECT: v1 0x0093FA2C ?DiploScratchFA2C@@3HA
+int DiploScratchFA2C;
+// RECOVERY_OBJECT: v1 0x0093FA38 ?DiploScratchFA38@@3HA
+int DiploScratchFA38;
+// RECOVERY_OBJECT: v1 0x0093FA3C ?DiploScratchFA3C@@3HA
+int DiploScratchFA3C;
+// RECOVERY_OBJECT: v1 0x0093FA4C ?DiploScratchFA4C@@3HA
+int DiploScratchFA4C;
+// RECOVERY_OBJECT: v1 0x0093FA50 ?DiploScratchFA50@@3HA
+int DiploScratchFA50;
+// RECOVERY_OBJECT: v1 0x0093FA54 ?DiploScratchFA54@@3HA
+int DiploScratchFA54;
+// RECOVERY_OBJECT: v1 0x0093FA58 ?DiploScratchFA58@@3HA
+int DiploScratchFA58;
+// RECOVERY_OBJECT: v1 0x0093FA60 ?DiploScratchFA60@@3HA
+int DiploScratchFA60;
+// RECOVERY_OBJECT: v1 0x0093FA64 ?DiploScratchFA64@@3HA
+int DiploScratchFA64;
+// RECOVERY_OBJECT: v1 0x0093FA68 ?DiploScratchFA68@@3HA
+int DiploScratchFA68;
+// RECOVERY_OBJECT: v1 0x0093FA70 ?DiploScratchFA70@@3HA
+int DiploScratchFA70;
+// RECOVERY_OBJECT: v1 0x0093FA78 ?DiploScratchFA78@@3HA
+int DiploScratchFA78;
+// RECOVERY_OBJECT: v1 0x0093FA80 ?DiploScratchFA80@@3HA
+int DiploScratchFA80;
+// RECOVERY_OBJECT: v1 0x0093FA88 ?DiploScratchFA88@@3HA
+int DiploScratchFA88;
+// RECOVERY_OBJECT: v1 0x0093FA90 ?DiploScratchFA90@@3HA
+int DiploScratchFA90;
+// RECOVERY_OBJECT: v1 0x0093FA98 ?DiploScratchFA98@@3HA
+int DiploScratchFA98;
+// RECOVERY_OBJECT: v1 0x0093FA9C ?DiploScratchFA9C@@3HA
+int DiploScratchFA9C;
+// RECOVERY_OBJECT: v1 0x0093FAA0 ?DiploScratchFAA0@@3HA
+int DiploScratchFAA0;
+
+static int pending_social_model(const SocialCategory &selection, int category) {
+    return static_cast<int>(selection.models_[category]);
+}
+
+static int diplo_clamp(int value, int low, int high) {
+    return value < low ? low : value > high ? high : value;
+}
+static uint32_t diplo_bit(int faction) { return 1u << (faction & 31); }
+// Native i386 word arithmetic; preserve wrapping before signed division.
+static int diplo_add(int a, int b) { return static_cast<int>(static_cast<uint32_t>(a) + static_cast<uint32_t>(b)); }
+static int diplo_sub(int a, int b) { return static_cast<int>(static_cast<uint32_t>(a) - static_cast<uint32_t>(b)); }
+static int diplo_mul(int a, int b) { return static_cast<int>(static_cast<uint32_t>(a) * static_cast<uint32_t>(b)); }
+static Map &diplo_tile(int x, int y) { return map_tiles()[MapLongitude * y + (x >> 1)]; }
+static int diplo_tile_owner(const Map &tile) {
+    return !(tile.bit & 2) || (tile.val2 & 15) > 7 ? -1 : tile.val2 & 15;
+}
+
+// ORIGINAL: 0x0053A980 ?diplomacy_check@@YAXHHH@Z 0x0053A980-0x0053C36E
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0053a980.cpp", "source:src/faction.h", "image:0x0053A980-0x0053C36E complete instructions and independently inspected scratch uses"], "reason": "Recover the complete faction diplomacy evaluation through genuine social-category arrays, faction/base/vehicle records and source-owned shared evaluation state. Original signed divisions, retained region0 state, unchecked malformed indices and final agenda paths remain explicit; new start-only storage bindings retain allocation uncertainty."}
+void __cdecl diplomacy_check(int faction, int other, int update) {
+    DiploFrictionFactionIDWith = faction;
+    DiploFrictionFactionID = other;
+    PopupDialogFactionID = other;
+    DiploScratchFA60 = DiploScratchFAA0 = DiploScratchFA88 = DiploScratchFA98 = 0;
+    DiploScratchFA80 = DiploScratchFA50 = DiploScratchFA58 = DiploScratchFA2C = 0;
+    DiploScratchFA64 = at_climax(faction);
+    DiploScratchFA90 = static_cast<int>(PlayersData[faction].ranking) < static_cast<int>(PlayersData[other].ranking);
+    const int satan = great_satan(faction, 0);
+    if (!satan || static_cast<int>(PlayersData[other].current_num_bases) < 2
+        || ((PlayersData[faction].diplo_treaties[other] & 1)
+            && (static_cast<int>(PlayersData[other].ranking) < 5 || ((GameRules & 0x1000) && TurnCurrentNum > 199))))
+        DiploScratchFA3C = 0;
+    else DiploScratchFA3C = 1;
+    DiploScratchF7F0 = diplo_mul(static_cast<int>(FactionRankingsUnk[faction]), 2)
+        < static_cast<int>(FactionRankingsUnk[FactionRankings[7]]) && PlayersData[other].ranking != 7;
+    if (PlayersData[other].flags & 0x800000) { DiploScratchFA3C = 1; DiploScratchF7F0 = 0; }
+    if (PlayersData[other].flags & 0x400000) { DiploScratchFA3C = 0; DiploScratchF7F0 = 1; }
+    DiploFriction = static_cast<int>(PlayersData[other].diplo_friction[faction]);
+    DiploScratchFA78 = diplo_clamp(diplo_sub(PlayersData[faction].integrity_blemishes,
+        PlayersData[faction].diplo_unk1[other]), 0, 99);
+    int ideology = 0;
+    const int category = Players[other].soc_ideology_category;
+    if (category >= 0 && Players[other].soc_ideology_model
+        && pending_social_model(PlayersData[faction].soc_category_pending, category)
+        && pending_social_model(PlayersData[faction].soc_category_pending, category) != Players[other].soc_ideology_model) {
+        ideology = 1;
+        if (PlayersData[other].diplo_agenda[faction] & 1) ideology = 2;
+    }
+    int faction_history = diplo_add(diplo_add(PlayersData[faction].diplo_unk4[other], 1), TurnCurrentNum / 50);
+    int other_history = diplo_add(diplo_add(PlayersData[other].diplo_unk4[faction], 1), TurnCurrentNum / 50);
+    if (!(PlayersData[faction].diplo_treaties[other] & 0x10)) {
+        faction_history = diplo_add(faction_history, diplo_add(diplo_add(2, PlayersData[faction].diplo_unk3[other]), TurnCurrentNum / 25));
+        other_history = diplo_add(other_history, diplo_add(diplo_add(2, PlayersData[other].diplo_unk3[faction]), TurnCurrentNum / 25));
+    }
+    int fight = PlayersData[other].ai_fight;
+    DiploScratchFA54 = DiploScratchF7E0 = DiploScratchF7FC = DiploScratchF7F8 = 0;
+    if ((PlayersData[other].diplo_treaties[faction] & 0x20) && fight < 0) fight = diplo_sub(0, fight);
+    int maximum_bases[7];
+    for (int i = 0; i < 7; ++i) maximum_bases[i] = 1;
+    const uint8_t alive = factions_status_byte(1);
+    for (int allied_faction = 1; allied_faction < 8; ++allied_faction) {
+        if (alive & diplo_bit(allied_faction)) {
+            if ((PlayersData[faction].diplo_treaties[allied_faction] & 1) && !(PlayersData[allied_faction].diplo_treaties[faction] & 0x2000000)) ++DiploScratchFA54;
+            if (PlayersData[other].diplo_treaties[allied_faction] & 1) {
+                if (static_cast<int>(PlayersData[allied_faction].ranking) > 4 && static_cast<int>(PlayersData[other].ranking) < 5 && allied_faction != faction && !DiploScratchF7F0) ++DiploScratchF7FC;
+                ++DiploScratchF7E0;
+                DiploScratchF7F8 = diplo_add(DiploScratchF7F8, static_cast<int>(FactionRankingsUnk[allied_faction]));
+            }
+        }
+    }
+    if (update) DiploScratchF7E4 = PlayersData[faction].diplo_spoke[other];
+    const int faction_morale = diplo_add(diplo_add(Players[faction].rule_morale, 16), diplo_clamp(PlayersData[faction].soc_effect_pending.morale, -4, 4));
+    const int other_morale = diplo_add(diplo_add(Players[other].rule_morale, 16), diplo_clamp(PlayersData[other].soc_effect_pending.morale, -4, 4));
+    for (int cleared_region = 1; cleared_region < 128; ++cleared_region)
+        DiplomacyRegionMask[cleared_region] = 0;
+    for (int census_region = 1; census_region < 128; ++census_region)
+        for (int census_faction = 1; census_faction < 8; ++census_faction)
+            if (maximum_bases[census_faction - 1] < PlayersData[census_faction].region_total_bases[census_region])
+                maximum_bases[census_faction - 1] = PlayersData[census_faction].region_total_bases[census_region];
+
+    for (int base = 0; base < BaseCurrentCount; ++base) {
+        int byte, mask;
+        bitmask(1, &byte, &mask);
+        if (Bases[base].facilities_built[byte] & mask)
+            DiplomacyRegionMask[diplo_tile(Bases[base].x, Bases[base].y).region] |= diplo_bit(Bases[base].faction_id_current);
+        const int owner = Bases[base].faction_id_current;
+        if (owner == faction && Bases[base].faction_id_former == other) ++DiploScratchFA2C;
+        if ((owner != faction && owner != other) || (PlayersData[faction].diplo_treaties[other] & 1)) continue;
+        const int x = Bases[base].x, y = Bases[base].y;
+        Map &center = diplo_tile(x, y);
+        if (diplo_tile_owner(center) < 0) {
+            for (int radius = 0; radius < 21; ++radius) {
+                int near_x = diplo_add(x, RadiusOffsetX[radius]);
+                if (!(MapIsFlat & 1)) {
+                    if (near_x < 0) near_x = diplo_add(near_x, MapLongitudeBounds);
+                    else if (near_x >= MapLongitudeBounds) near_x = diplo_sub(near_x, MapLongitudeBounds);
+                }
+                const int near_y = diplo_add(y, RadiusOffsetY[radius]);
+                if (near_y < 0 || near_y >= MapLatitudeBounds || near_x < 0 || near_x >= MapLongitudeBounds) continue;
+                Map &neighbor_tile = diplo_tile(near_x, near_y);
+                if (neighbor_tile.region != center.region) continue;
+                if (owner == faction) {
+                    if (diplo_tile_owner(neighbor_tile) == other) { ++DiploScratchFA50; break; }
+                } else if (diplo_tile_owner(neighbor_tile) == faction) {
+                    DiploScratchFA58 = base; // Original uses base index, including zero.
+                    DiploScratchFA98 = diplo_add(DiploScratchFA98, diplo_mul(Bases[base].population_size, 8));
+                    break;
+                }
+            }
+        } else if (owner == faction) {
+            const int vehicle = veh_at(x, y);
+            const int limit = stack_check(vehicle, 14, -1, -1, -1);
+            int threat = 0;
+            for (int radius = 0; radius < 21; ++radius) {
+                int near_x = diplo_add(Bases[base].x, RadiusOffsetX[radius]);
+                if (!(MapIsFlat & 1)) {
+                    if (near_x < 0) near_x = diplo_add(near_x, MapLongitudeBounds);
+                    else if (near_x >= MapLongitudeBounds) near_x = diplo_sub(near_x, MapLongitudeBounds);
+                }
+                const int near_y = diplo_add(Bases[base].y, RadiusOffsetY[radius]);
+                if (near_y < 0 || near_y >= MapLatitudeBounds || near_x < 0 || near_x >= MapLongitudeBounds) continue;
+                const int nearby = stack_fix(veh_at(near_x, near_y));
+                // Original reads the returned vehicle without a negative-id guard.
+                if (Vehs[nearby].faction_id == other) {
+                    const int first = stack_check(nearby, 2, 1, -1, -1);
+                    const int second = stack_check(nearby, 2, 0, -1, -1);
+                    threat = diplo_add(diplo_add(second, threat), first);
+                }
+            }
+            if (limit < threat) { ++DiploScratchFAA0; ++DiploScratchFA88; }
+        }
+    }
+
+    for (int region = 1; region < 128; ++region) {
+        for (int ally = 1; ally < 8; ++ally)
+            if (maximum_bases[ally - 1] - maximum_bases[ally - 1] / 4 <= PlayersData[ally].region_total_bases[region])
+                DiplomacyRegionMask[region] |= diplo_bit(ally);
+        const int faction_bases = PlayersData[faction].region_total_bases[region];
+        const int other_bases = PlayersData[other].region_total_bases[region];
+        const int faction_vehicles = PlayersData[faction].region_total_combat_vehs[region];
+        const int other_vehicles = PlayersData[other].region_total_combat_vehs[region];
+        if ((!faction_vehicles && !faction_bases) || (!other_vehicles && !other_bases)) continue;
+        const int faction_weapon = diplo_add(PlayersData[faction].best_weapon_value, 1);
+        const int other_weapon = diplo_add(PlayersData[other].best_weapon_value, 1);
+        const int faction_force = diplo_mul(diplo_mul(PlayersData[faction].region_force_rating[region], faction_morale) / other_morale, faction_weapon) / other_weapon;
+        const int other_force = diplo_mul(diplo_mul(PlayersData[other].region_force_rating[region], other_morale) / faction_morale, other_weapon) / faction_weapon;
+        const uint32_t regions = DiplomacyRegionMask[region];
+        const bool other_dominates = (regions & diplo_bit(other)) != 0;
+        if (other_dominates) {
+            int resistance = other_vehicles;
+            if (faction_bases)
+                resistance = diplo_add(other_force / diplo_add(diplo_sub(3, PlayersData[other].ai_fight), -((regions & diplo_bit(faction)) != 0)), other_vehicles);
+            if (resistance < faction_force) {
+                resistance = diplo_clamp(resistance, 1, 99999);
+                DiploScratchFA98 = diplo_add(DiploScratchFA98, diplo_mul(diplo_add(faction_force, 1), 32) / resistance);
+                continue;
+            }
+        }
+        DiploScratchFA60 = 1;
+        if (!faction_bases) {
+            if (other_bases)
+                DiploScratchFA88 = diplo_sub(DiploScratchFA88, diplo_sub(faction_force, other_vehicles) / (2 - other_dominates));
+        } else {
+            DiploScratchFA88 = diplo_add(DiploScratchFA88, other_force);
+            if ((regions & diplo_bit(faction)) && faction_vehicles < other_force) {
+                DiploScratchFA88 = diplo_add(DiploScratchFA88, other_force);
+                if (diplo_mul(diplo_add(faction_force, faction_vehicles), 3) / 2 < other_force) ++DiploScratchFAA0;
+            }
+            if (other_bases || (PlayersData[faction].diplo_treaties[other] & 1))
+                DiploScratchFA88 = diplo_sub(DiploScratchFA88, faction_force);
+        }
+    }
+    DiploScratchFA88 = diplo_mul(diplo_add(DiploScratchFA50, 1), DiploScratchFA88);
+    if (DiploScratchFA50 && !(PlayersData[faction].diplo_treaties[other] & 7)) DiploScratchFA60 = 1;
+    if (DiploScratchFA64 && DiploScratchFA90) DiploScratchFA60 = 3 - (DiploScratchFA3C != 0);
+    if (PlayersData[faction].current_num_bases && PlayersData[other].current_num_bases) {
+        if (!(PlayersData[other].diplo_treaties[faction] & 0x20) && !(PlayersData[other].diplo_agenda[faction] & 0x200)) {
+            const int difference = diplo_clamp(diplo_sub(diplo_add(diplo_sub(PlayersData[other].ai_wealth,
+                PlayersData[faction].tech_commerce_bonus), PlayersData[other].tech_commerce_bonus), fight), 0, 99);
+            DiploScratchFA88 = diplo_sub(DiploScratchFA88, diplo_mul(PlayersData[faction].unk_13 / static_cast<int>(PlayersData[faction].current_num_bases), difference));
+            if (PlayersData[other].diplo_treaties[faction] & 0x2000) DiploScratchFA88 /= 2;
+        } else {
+            const int difference = diplo_clamp(diplo_add(diplo_sub(PlayersData[faction].tech_commerce_bonus, PlayersData[other].tech_commerce_bonus), fight), 0, 99);
+            DiploScratchFA88 = diplo_mul(diplo_add(diplo_mul(PlayersData[other].unk_13, difference) / static_cast<int>(PlayersData[other].current_num_bases), DiploScratchFA88), 2);
+        }
+    }
+    if (diplo_mul(PlayersData[other].best_weapon_value, 3) / 2 <= PlayersData[faction].best_weapon_value
+        || diplo_mul(PlayersData[other].best_armor_value, 2) < PlayersData[faction].best_weapon_value)
+        DiploScratchFA98 = diplo_mul(DiploScratchFA98, 2);
+    if (diplo_mul(other_history, 2) <= faction_history) DiploScratchFA98 = diplo_mul(DiploScratchFA98, 2);
+    if (diplo_mul(other_history, 4) <= faction_history && !(PlayersData[other].diplo_treaties[faction] & 0x20) && DiploScratchFA98 < 9) DiploScratchFA98 = 8;
+    if (diplo_mul(faction_history, 2) < other_history) DiploScratchFA98 /= 2;
+    if (diplo_mul(faction_history, 4) < other_history) DiploScratchFA98 /= 2;
+    if (DiploScratchFA98 || (PlayersData[faction].diff_level <= ((PlayersData[other].diplo_treaties[faction] & 0x20) ? 2 : 4) && !(GameRules & 0x40))) DiploScratchFAA0 = 0;
+    DiploScratchFA88 = diplo_mul(diplo_add(TurnCurrentNum / 10, other_history), DiploScratchFA88) / diplo_add(faction_history, TurnCurrentNum / 10);
+    const int grace = IsMultiplayerNet ? 0 : diplo_mul(diplo_sub(5, PlayersData[faction].diff_level), 25);
+    bool reconsider;
+    const int faction_rank = static_cast<int>(PlayersData[faction].ranking);
+    if (TurnCurrentNum < diplo_add(grace, 50) || DiploScratchF7F0 || faction_rank < (DiffLevelCurrent < 3 ? 6 : 5)) reconsider = true;
+    else if (static_cast<int>(PlayersData[other].ranking) < (faction_rank < 6 ? 6 : 5)) {
+        if (!DiploScratchF7FC || !(PlayersData[faction].diplo_treaties[other] & 0x8000000) || faction_rank < 6) reconsider = true;
+        else { DiploScratchFA3C = 1; reconsider = false; }
+    } else { DiploScratchFA3C = 1; reconsider = false; }
+    if (!reconsider || DiploScratchFA3C || (((PlayersData[other].diplo_treaties[faction] & 0x20)
+        || (PlayersData[other].diplo_agenda[faction] & 0x200)) && !DiploScratchFA58
+        && (!DiploScratchFA98 || diplo_mul(PlayersData[other].mil_strength_1, 2) >= PlayersData[faction].mil_strength_1))) {
+        DiploScratchFA98 = 0;
+        DiploScratchFA60 = (DiploScratchFA3C != 0) + 1;
+        const int minimum = diplo_mul(static_cast<int>(PlayersData[other].ranking), 2);
+        if (DiploScratchFA88 < minimum) DiploScratchFA88 = minimum;
+    }
+    const int other_busters = PlayersData[other].planet_busters;
+    if (other_busters && PlayersData[other].major_atrocities) DiploScratchFA98 = 0;
+    if (PlayersData[faction].planet_busters && PlayersData[faction].major_atrocities) {
+        if (!other_busters) DiploScratchFA98 = 32;
+        DiploScratchFA88 = diplo_mul(other_busters, DiploScratchFA88) / PlayersData[faction].planet_busters;
+    }
+    DiploScratchFA80 = DiploScratchFA98;
+    const bool pact = (PlayersData[other].diplo_treaties[faction] & 1) != 0;
+    if (pact || !DiploScratchFA2C) DiploScratchFA80 = 0;
+    const bool intense = (GameRules & 0x40) != 0;
+    int difficulty = intense ? 5 : PlayersData[faction].diff_level;
+    const int reputation = diplo_clamp(PlayersData[faction].integrity_blemishes / 2, 1, 99);
+    DiploScratchFA98 /= diplo_mul(diplo_add(difficulty, 3), diplo_add(reputation, 1)) / 2;
+    DiploScratchFA4C = DiploScratchF7B8 = 0;
+    if (!pact || !(PlayersData[other].diplo_treaties[faction] & 0x2000000)) {
+        for (int ally = 1; ally < 8; ++ally) {
+            if ((factions_status_byte(1) & diplo_bit(ally)) && ally != faction && ally != other
+                && (PlayersData[other].diplo_treaties[ally] & 0x10)
+                && (!(PlayersData[ally].diplo_treaties[faction] & 1) || !(PlayersData[ally].diplo_treaties[faction] & 0x2000000))
+                && ((PlayersData[faction].diplo_treaties[ally] & 1) || ((PlayersData[faction].diplo_treaties[ally] & 2) && fight > 0))) {
+                ++DiploScratchFA4C; DiploScratchF7B8 = ally;
+            }
+        }
+    }
+    DiploFriction = diplo_add(diplo_mul(DiploScratchFA4C, 3), DiploFriction);
+    if (pact) DiploFriction = diplo_sub(DiploFriction, 5);
+    if (PlayersData[other].diplo_treaties[faction] & 0x30) DiploFriction = diplo_add(DiploFriction, 5);
+    uint32_t agenda = PlayersData[other].diplo_agenda[faction];
+    if (agenda & 0x400) DiploFriction = diplo_add(DiploFriction, 3);
+    if (agenda & 0x800) DiploFriction = diplo_add(DiploFriction, 3);
+    if (DiploScratchFA78 > 1) DiploFriction = diplo_add(diplo_sub(DiploFriction, 1), DiploScratchFA78);
+    const int other_commerce = PlayersData[other].tech_commerce_bonus;
+    const int faction_commerce = PlayersData[faction].tech_commerce_bonus;
+    if (faction_commerce < other_commerce) DiploFriction = diplo_add(DiploFriction, diplo_mul(diplo_sub(faction_commerce, other_commerce), 2));
+    if (other_commerce < faction_commerce) DiploFriction = diplo_add(DiploFriction, diplo_sub(faction_commerce, other_commerce));
+    if (ideology) { DiploFriction = diplo_add(DiploFriction, 5); if (DiploFriction < 5) DiploFriction = 5; }
+    if (ideology > 1 && !DiploScratchFA98) DiploFriction = diplo_add(DiploFriction, 5);
+    agenda &= 0x200;
+    if (agenda) DiploScratchFA60 = 1;
+    if (DiploFriction < 5) DiploScratchFA60 = 0;
+    if (DiploFriction > 14) DiploScratchFA60 = 4;
+    const bool demand = (PlayersData[other].diplo_treaties[faction] & 0x40) != 0;
+    if (demand) DiploScratchFA60 = 1;
+    if (!(GameRules & 0x800) && !PlayersData[other].se_alloc_labs) DiploScratchFA60 = 1;
+    if (DiploScratchFA98 || diplo_mul(PlayersData[other].mil_strength_1, 3) < PlayersData[faction].mil_strength_1) DiploScratchFA60 = 0;
+    if (diplo_mul(PlayersData[other].best_weapon_value, 2) <= PlayersData[faction].best_weapon_value) DiploScratchFA60 = 0;
+    difficulty = intense ? 5 : PlayersData[faction].diff_level;
+    // Original53BA0F is SAR six, NOT the seed's logical unsigned shift.
+    int amount = diplo_mul(diplo_mul(diplo_mul(diplo_mul(diplo_add(difficulty, 1), diplo_add(DiploScratchFA78, 2)), diplo_add(DiploFriction, 10)), diplo_add(ideology, 1)), DiploScratchFA88) >> 6;
+    if (demand) amount = diplo_mul(amount, 2);
+    const int energy = PlayersData[faction].energy_reserves;
+    if (diplo_mul(PlayersData[other].energy_reserves, 2) <= energy) {
+        if (energy > 1999) amount = diplo_mul(amount, 3) / 2;
+        if (energy > 3999) amount = diplo_mul(amount, 3) / 2;
+    }
+    if ((DiploScratchFA3C || (((PlayersData[other].diplo_treaties[faction] & 0x20) || agenda)
+        && !DiploScratchFA58 && (!DiploScratchFA98 || PlayersData[faction].mil_strength_1 <= diplo_mul(PlayersData[other].mil_strength_1, 2))))
+        && static_cast<int>(PlayersData[faction].ranking) > 5) {
+        const int minimum = diplo_mul(diplo_add(static_cast<int>(PlayersData[other].ranking), static_cast<int>(PlayersData[faction].ranking)), energy) / 21;
+        if (amount < minimum) amount = minimum;
+    }
+    DiploScratchFA88 = diplo_mul(diplo_add(amount, 24) / 25, 25);
+    if (DiploScratchFA88 == 25) DiploScratchFA88 = 50;
+    if (energy < DiploScratchFA88 && DiploScratchFA88 < diplo_mul(energy, 2)
+        && (demand ? 100 : 50) <= energy && !(PlayersData[faction].diplo_treaties[other] & 0x40020))
+        DiploScratchFA88 = diplo_mul(diplo_add(energy, 24) / 25, 25);
+    if (!(PlayersData[other].diplo_treaties[faction] & 0x60)
+        && (!DiploScratchFA3C || (PlayersData[other].diplo_treaties[faction] & 0x4000000))) {
+        energy_compute(faction, 0);
+        if (diplo_mul(NetIncomeGlobal, 5) < DiploScratchFA88
+            && diplo_mul(diplo_mul(PlayersData[faction].energy_reserves, 2) / 3, static_cast<int>(PlayersData[other].ranking))
+                / static_cast<int>(PlayersData[faction].ranking) <= PlayersData[other].energy_reserves) {
+            DiploScratchFA88 = diplo_mul(diplo_mul(NetIncomeGlobal, 5) / 25, 25);
+            if (DiploScratchFA88 < 50) DiploScratchFA88 = 50;
+        }
+    }
+    uint32_t treaty = PlayersData[other].diplo_treaties[faction];
+    if ((((treaty & 7) && !(treaty & 0x10000)) || DiploScratchFA98) && !DiploScratchFA3C && !(treaty & 0x20)) DiploScratchFAA0 = 0;
+    if (!DiploScratchFA88 && !DiploScratchFAA0 && !(PlayersData[other].diplo_agenda[faction] & 0x200)) DiploScratchFA60 = 0;
+    DiploScratchFA68 = DiploScratchFA60;
+    DiploScratchFA9C = 0;
+    if (update) DiploScratchF7E8 = DiploScratchF7D4 = DiploScratchF7D8 = DiploScratchFA38 = DiploScratchF7C8 = 0;
+    DiploScratchF808 = 0;
+    for (int ally = 1; ally < 8; ++ally) {
+        const uint32_t bit = diplo_bit(ally);
+        uint32_t other_treaty = PlayersData[other].diplo_treaties[ally];
+        if (!(factions_status_byte(1) & bit) || ally == faction || ally == other || !(other_treaty & 8)) continue;
+        if (update && (PlayersData[faction].diplo_treaties[ally] & 0x10) && !(other_treaty & 0x10)
+            && !(PlayersData[faction].diplo_treaties[ally] & 0x10000000)) DiploScratchF7D8 = ally;
+        if (!(other_treaty & 1)) {
+            if (!(other_treaty & 0x10)) {
+                if (update && !(factions_status_byte(0) & bit)) {
+                    if (!(PlayersData[faction].diplo_treaties[ally] & 8)) {
+                        if ((!DiploScratchFA38 || contiguous(faction, ally, 0, 0))
+                            && ((PlayersData[other].diplo_treaties[ally] & 2) || !DiploScratchFA38)) DiploScratchFA38 = ally;
+                    } else if (!(PlayersData[faction].diplo_treaties[ally] & 0x10000000)) DiploScratchF7C8 = ally;
+                }
+            } else {
+                ++DiploScratchF808;
+                const int strength = PlayersData[other].mil_strength_1;
+                const int ally_strength = PlayersData[ally].mil_strength_1;
+                DiploScratchFA9C = diplo_add(DiploScratchFA9C, diplo_mul(diplo_add(strength / 2, ally_strength), 2) / diplo_add(strength, 1));
+                const uint32_t faction_treaty = PlayersData[faction].diplo_treaties[ally];
+                if (!(FactionDiplomacyFlags[other] & 0x40)) {
+                    if (!(faction_treaty & 0x10) && ((faction_treaty & 8) || (PlayersData[faction].diplo_treaties[other] & 1))
+                        && (!(PlayersData[ally].diplo_treaties[faction] & 1) || !(PlayersData[ally].diplo_treaties[faction] & 0x2000000))) DiploScratchF7E8 = ally;
+                    else if (!DiploScratchF7E8 && update && !(faction_treaty & 8) && !(factions_status_byte(0) & bit)) {
+                        if (strength < ally_strength || !wants_to_attack(other, ally, 0) || DiploScratchFA98) DiploScratchF7D4 = ally;
+                    }
+                } else if ((faction_treaty & 0x18) == 8 && strength < ally_strength) DiploScratchF7E8 = ally;
+            }
+        } else {
+            if (PlayersData[faction].mil_strength_1 < PlayersData[ally].mil_strength_1) --DiploScratchFA9C;
+            const int wicked = great_satan(faction, 0);
+            if ((wicked || DiploScratchFA3C) && (PlayersData[ally].diplo_treaties[faction] & 0x10)) {
+                DiploScratchFA98 = diplo_sub(DiploScratchFA98, 3);
+                if (DiploScratchFA98 <= 0) { DiploScratchFA80 = 0; DiploScratchFA68 = DiploScratchFA60 = 2; }
+                else if (DiploScratchFA98 >= 10000) DiploScratchFA98 = 9999;
+            }
+        }
+    }
+    const uint32_t final_agenda = PlayersData[other].diplo_agenda[faction];
+    if (final_agenda & 0x800) --DiploScratchFA9C;
+    if (final_agenda & 0x400) --DiploScratchFA9C;
+    treaty = PlayersData[other].diplo_treaties[faction];
+    const bool surrendered = (treaty & 0x20) != 0;
+    if (surrendered) --DiploScratchFA9C;
+    if (final_agenda & 0x200) --DiploScratchFA9C;
+    DiploScratchFA9C = diplo_add(DiploScratchFA9C, diplo_sub(diplo_sub(-(DiploScratchFA78 - 1) / 3, DiploScratchFA50), fight));
+    if (PlayersData[faction].tech_commerce_bonus < PlayersData[other].tech_commerce_bonus && fight < 1) ++DiploScratchFA9C;
+    if (!(GameRules & 0x800) && !PlayersData[other].se_alloc_labs) --DiploScratchFA9C;
+    if (PlayersData[faction].mil_strength_1 < PlayersData[other].mil_strength_1) --DiploScratchFA9C;
+    if (diplo_mul(PlayersData[faction].best_armor_value, 2) < PlayersData[other].best_weapon_value) --DiploScratchFA9C;
+    if (static_cast<int>((PlayersData[faction].diplo_treaties[other] >> 4) & 1) < DiploScratchFA9C
+        && !DiploScratchFA3C && !(treaty & 0x41) && !DiploScratchFAA0) { DiploScratchFA60 = DiploScratchFA88 = 0; }
+    if (!(treaty & 1) || !(treaty & 0x2000000)) {
+        if ((DiploScratchFA50 || DiploScratchFAA0) && surrendered) DiploScratchFA68 = DiploScratchFA60 = 1;
+    } else DiploScratchFAA0 = DiploScratchFA50 = DiploScratchFA68 = DiploScratchFA60 = 0;
+    const int final_satan = great_satan(faction, 1);
+    if (!final_satan || DiploScratchF7E0 > 1
+        || static_cast<int>(FactionRankingsUnk[faction]) < diplo_add(DiploScratchF7F8, diplo_mul(static_cast<int>(FactionRankingsUnk[other]), 3))
+        || static_cast<int>(PlayersData[other].ranking) > 5 || PlayersData[faction].mil_strength_1 <= PlayersData[other].mil_strength_1) DiploScratchFA24 = 0;
+    else {
+        DiploScratchFA24 = 1;
+        if ((PlayersData[other].diplo_treaties[faction] & 0x10) && !(PlayersData[other].diplo_agenda[faction] & 8)
+            && !(PlayersData[other].diplo_treaties[faction] & 0x40000)) DiploScratchFA60 = 0;
+    }
+    if (update) {
+        scan_prototypes(faction, other);
+        const bool special = (PlayersData[other].flags_ext & 0x20) != 0;
+        treaty = PlayersData[other].diplo_treaties[faction];
+        if ((PlayersData[faction].diff_level < 2 && !special) || DiploScratchFA50 || (treaty & 1)
+            || (PlayersData[other].diplo_agenda[faction] & 8) || ((treaty & 0x10) && DiploScratchFA2C < 2 && !special)
+            || ((!DiploScratchFA64 && !DiploScratchFA60 && !ideology) && (!special || DiploScratchFA98)
+                && ((!DiploScratchFA4C || !(treaty & 0x800000)) || DiploFriction < 12))
+            || (!(treaty & 0x20) && (!special || !DiploScratchFA60) && DiploScratchFA78 < 6
+                && ((!DiploScratchFA60 && ideology < 2) || (PlayersData[faction].mil_strength_1 <= PlayersData[other].mil_strength_1 && !special)))) DiploScratchFA70 = 0;
+        else DiploScratchFA70 = 1;
+    }
+    if ((PlayersData[other].flags & 0x400000) && !(PlayersData[other].diplo_treaties[faction] & 0x20)) DiploScratchFA60 = 0;
+    if (!(PlayersData[other].diplo_agenda[faction] & 8)) {
+        if (DiploScratchFA70) { DiploScratchFA60 = 0; if (DiploFriction > 6) DiploFriction = 6; }
+    } else DiploScratchFA60 = 1;
+    treaty = PlayersData[faction].diplo_treaties[other];
+    if ((treaty & 1) && (!(treaty & 0x20) || DiploScratchF808 > 1)
+        && (!(treaty & 0x200) || DiploScratchF808)
+        && static_cast<int>(PlayersData[other].ranking) < static_cast<int>(PlayersData[faction].ranking)
+        && ((GameRules & 0x1000) || DiploScratchF808)) DiploScratchFA60 = 0;
+    if (PlayersData[other].diplo_agenda[faction] & 0x2000) {
+        DiploScratchFA70 = 0;
+        DiploScratchFA60 = (PlayersData[other].diplo_treaties[faction] & 0x10) >> 4;
+    }
+    if (!DiploScratchFA68 && (DiploScratchFA98 || (treaty & 1)) && DiploFriction > 14) DiploFriction = 14;
+    if ((DiploScratchFA60 || (treaty & 0x10) || (PlayersData[other].diplo_treaties[faction] & 0x20)) && DiploFriction < 6) DiploFriction = 6;
 }

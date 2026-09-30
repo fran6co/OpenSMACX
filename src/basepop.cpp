@@ -3625,7 +3625,7 @@ int BasePop::start(char *text_file, const char *text_label, int value,
         if (_strnicmp(tok + 1, BasePopKeywordSprite, 6) == 0) {
             purge_spaces(tok + 7);
             purge_leading(tok + 7);
-            if (owner_window_->get_pcx_dimensions(tok + 7, &width, &height)
+            if (Buffer::get_pcx_dimensions(tok + 7, &width, &height)
                 == 0) {
                 if (sprite_.init(tok + 7, width, height) == 0) {
                     caller_sprite_ = &sprite_;

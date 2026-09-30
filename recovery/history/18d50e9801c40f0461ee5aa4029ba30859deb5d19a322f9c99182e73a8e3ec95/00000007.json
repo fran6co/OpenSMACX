@@ -1,0 +1,33 @@
+{
+  "event_id": "85c0463e2d99b3756076d510b9270d8351377c3b66f7833137eb645c7212c60d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh complete application link exposes exactly base_editor_fac/proj/copy as the remaining undefined references from recovered base_editor. Recover complete original owner bodies using independent original instructions and retained seed evidence, genuine Popup lifetime, existing storage, no address forwarding or claim weakening."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4306832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4307904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4309568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4a5d3549dde9a81c8770e1d9624e3963452e38943f0d2d8b67d632e1da9d007b",
+  "request_id": "basewin-finish-editor-callee-closure",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:basewin-owner-coverage"
+}

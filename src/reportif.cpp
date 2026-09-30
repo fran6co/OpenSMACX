@@ -20,6 +20,7 @@
 #include "base.h"    // BaseCurrentCount bounds the report's fixed sort workspace
 #include "general.h" // swap for the original reversed-bound normalization
 #include "reportwin.h"  // ReportWinGlobal - the window done() un-modals
+#include "console.h"  // ConsoleGlobal.faction_id_ owns original939284
 #include "worldwin.h"
 #include "menu.h"
 #include "win.h"
@@ -45,12 +46,28 @@ void __cdecl scroll_small();
 void __cdecl scroll_hide(GraphicWin *window, Scroll *scroll);
 void __cdecl scroll_show(GraphicWin *window, Scroll *scroll);
 
+// ORIGINAL: 0x004A3FC0 ?on_redraw@ReportIf@@QAEXXZ 0x004A3FC0-0x004A401F BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a3fc0.cpp", "image:0x004A3FC0-0x004A401F and dispatch table0x004A4020", "source:src/reportif.h"], "reason": "Recover the report-interface redraw operation through its real category member, reset and owned drawing methods. Original direct calls and nine-entry dispatch preserve the default/no-draw category without vtable or executable-address dispatch."}
+void ReportIf::on_redraw() {
+    reset();
+    switch (field_8_) {
+    case 2: draw_labs(); break;
+    case 3: draw_energy(); break;
+    case 4: draw_ops(); break;
+    case 5: draw_projects(); break;
+    case 6: draw_sat(); break;
+    case 7: draw_security(); break;
+    case 8: draw_score(); break;
+    case 0: draw_intel(); break;
+    }
+}
+
 
 
 /*
-Purpose: Install the SubInterface vftable, then placement-new every
+Purpose: Construct the SubInterface base, then every
          sub-object in image order - seven FlatButton runs, three Sprite
-         runs, two ListBox(1)s, four ButtonGroups and fourteen individual
+         runs, two ListBoxes, four ButtonGroups and fourteen individual
          FlatButtons, and a Spot - before installing ReportIf's own vftable.
 // ORIGINAL: 0x004AD170 ??0ReportIf@@QAE@XZ 0x004AD170-0x004AD3AA;0x00658F80-0x00659134
 // TRIED: register allocation - the SEH prologue agrees (7/7) then the
@@ -75,53 +92,13 @@ Purpose: Install the SubInterface vftable, then placement-new every
 // flags     frame;sp_ready;purged_ok
 // calls     0x005FA860 0x00607CF0 0x00609DB0 0x0062B7C0 0x006456E4 0x006457C2
 */
-// ListBox has no one-argument constructor declared - its own recovery
-// (0x00609DB0) is out of this batch's scope - so it is called directly at
-// its image address, the same treatment pending_bodies.cpp gives every
-// not-yet-promoted callee: a `reinterpret_cast` of the address, called
-// immediately, compiles the image's own `call rel32` rather than the
-// `call dword ptr [...]` a stored pointer would give.
 ReportIf::ReportIf() {
-
-
-    typedef void(__fastcall *pending_listbox_ctor)(void *, void *, int);
-    reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox1_, nullptr, 1);
-    reinterpret_cast<pending_listbox_ctor>(0x00609DB0)(listBox2_, nullptr, 1);
-
-    new (buttonGroup1_) ButtonGroup();
-    new (flatButton1_) FlatButton();
-    new (flatButton2_) FlatButton();
-    new (buttonGroup2_) ButtonGroup();
-    new (flatButton3_) FlatButton();
-    new (flatButton4_) FlatButton();
-    new (flatButton5_) FlatButton();
-    new (flatButton6_) FlatButton();
-    new (flatButton7_) FlatButton();
-    new (flatButton8_) FlatButton();
-    new (flatButton9_) FlatButton();
-    new (flatButton10_) FlatButton();
-    new (flatButton11_) FlatButton();
-    new (buttonGroup3_) ButtonGroup();
-
-
-    new (buttonGroup4_) ButtonGroup();
-
-
-    new (flatButton12_) FlatButton();
-    new (flatButton13_) FlatButton();
-    new (flatButton14_) FlatButton();
-    new (spot_) Spot();
+    // Declaration-order construction / reverse-order teardown is automatic.
 }
 
-// The two ListBox sub-objects are torn down through their virtual bases at
-// raw addresses, not through a `ListBox` method: ListBox's own virtual-base
-// layout (a GraphicWin sub-object at +0x48, a Dialog sub-object at +0xA60,
-// per listbox.h) is out of this batch's scope, and the image calls three
-// distinct teardowns per ListBox - one at the GraphicWin-vbase-relative
-// address (0x00609EC0, ListBox's own destructor, called at that adjusted
-// `this`), then Dialog::~Dialog() (0x00608E10) at the Dialog sub-object, then
-// GraphicWin's real destructor (0x005D4DD0) back at the first address.
-typedef void(__fastcall *pending_listbox_vbase_dtor)(void *, void *);
+// ListBox's ordinary member teardown includes its complete-object virtual
+// bases: GraphicWin at +0x48 and Dialog at +0xA60, matching the original
+// adjusted destructor calls (609EC0, 608E10, 5D4DD0).
 
 /*
 Purpose: Tear down every sub-object the constructor built, in exactly the
@@ -144,45 +121,7 @@ Purpose: Tear down every sub-object the constructor built, in exactly the
 // calls     0x005D4DD0 0x005FA870 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0062B7F0 0x006456E4
 */
 ReportIf::~ReportIf() {
-
-    reinterpret_cast<Spot *>(spot_)->~Spot();
-
-    reinterpret_cast<FlatButton *>(flatButton14_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton13_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton12_)->destroy();
-
-
-    reinterpret_cast<ButtonGroup *>(buttonGroup4_)->close();
-
-
-    reinterpret_cast<ButtonGroup *>(buttonGroup3_)->close();
-
-    reinterpret_cast<FlatButton *>(flatButton11_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton10_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton9_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton8_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton7_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton6_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton5_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton4_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton3_)->destroy();
-
-    reinterpret_cast<ButtonGroup *>(buttonGroup2_)->close();
-
-    reinterpret_cast<FlatButton *>(flatButton2_)->destroy();
-    reinterpret_cast<FlatButton *>(flatButton1_)->destroy();
-
-    reinterpret_cast<ButtonGroup *>(buttonGroup1_)->close();
-
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    reinterpret_cast<pending_listbox_vbase_dtor>(0x00609EC0)(self + 0xAE6C, nullptr);
-    reinterpret_cast<pending_listbox_vbase_dtor>(0x00608E10)(self + 0xB884, nullptr);
-    reinterpret_cast<pending_listbox_vbase_dtor>(0x005D4DD0)(self + 0xAE6C, nullptr);
-
-    reinterpret_cast<pending_listbox_vbase_dtor>(0x00609EC0)(self + 0xA318, nullptr);
-    reinterpret_cast<pending_listbox_vbase_dtor>(0x00608E10)(self + 0xAD30, nullptr);
-    reinterpret_cast<pending_listbox_vbase_dtor>(0x005D4DD0)(self + 0xA318, nullptr);
-
+    // Declaration-order construction / reverse-order teardown is automatic.
 }
 
 
@@ -450,14 +389,12 @@ Purpose: Close the energy report's three list boxes.
              lea ecx,[esi+0xAE24] / call ListBox::close
 
          The last two are the same subobjects close_intel closes, in the same
-         order. The FIRST is not a subobject at all - it is a process-wide
-         ListBox at a fixed address, and it goes first.
+         order. The first is ReportWinGlobal's owned listBox_ at +0x5A0C;
+         it is borrowed here and closes first.
 
-         0x0087BE84 is the process-wide ListBox OBJECT (reportif.cpp, named
-         ReportIfEnergyListBox in the header so the address appears once). It
-         needs no row in recovery-binding-classifications.csv: that file
-         classifies original FUNCTION bindings, and ConsoleGlobal - the same
-         shape, a named pointer to a process object - carries none either.
+         Original 0x0087BE84 = ReportWinGlobal 0x00876478 + 0x5A0C.
+         Its construction and teardown belong to ReportWin, not an
+         independent global allocation.
 // ORIGINAL: 0x004A9020 ?close_energy@ReportIf@@QAEXXZ 0x004A9020-0x004A9045 BYTE_EXACT
 // size      37 bytes
 // prototype void (__thiscall ?close_energy@ReportIf@@QAEXXZ)(ReportIf* this)
@@ -469,58 +406,57 @@ Return Value: n/a
 Status: Complete
 */
 void ReportIf::close_energy() {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    ReportIfEnergyListBox.close();
-    reinterpret_cast<ListBox *>(self + 0xA2D0)->close();
-    reinterpret_cast<ListBox *>(self + 0xAE24)->close();
+    ReportWinGlobal.listBox_.close();
+    listBox1_.close();
+    listBox2_.close();
 }
 
-// The constructor placement-news this ListBox and these FlatButtons in the
-// named storage below; the retained close_labs seed closes/hides those same
+// The constructor owns this ListBox and these FlatButtons as members;
+// the retained close_labs seed closes/hides those same
 // objects in this order. Slot 2 is the inherited Win::hide virtual.
 // ORIGINAL: 0x004A8470 ?close_labs@ReportIf@@QAEXXZ 0x004A8470-0x004A849E BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004a8470.cpp", "source:src/reportif.h", "source:src/flatbutton.h", "source:src/listbox.h"], "reason": "Close the ReportIf lab list and hide its two placement-constructed FlatButtons through their typed Win virtual method."}
 void ReportIf::close_labs() {
-    reinterpret_cast<ListBox *>(listBox1_)->close();
-    reinterpret_cast<FlatButton *>(flatButton1_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton2_)->hide();
+    listBox1_.close();
+    flatButton1_.hide();
+    flatButton2_.hide();
 }
 
-// The three FlatButtons are placement-new'd ReportIf subobjects. The seed
+// The three FlatButtons are genuine ReportIf members. The seed
 // calls Win slot 2 on them in this order; keep the original object identities
 // while using the source-owned virtual method instead of a vtable shim.
 // ORIGINAL: 0x004ABE30 ?close_security@ReportIf@@QAEXXZ 0x004ABE30-0x004ABE62 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004abe30.cpp", "source:src/reportif.h", "source:src/flatbutton.h", "source:src/win.h"], "reason": "Hide the three ReportIf security FlatButtons through Win slot 2 in retained-seed order."}
 void ReportIf::close_security() {
-    reinterpret_cast<FlatButton *>(flatButton12_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton14_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton13_)->hide();
+    flatButton12_.hide();
+    flatButton14_.hide();
+    flatButton13_.hide();
 }
 
-// ReportWin owns these three controls in placement storage; close_ops clears
+// ReportWin owns these three controls as members; close_ops clears
 // each ungrouped state word before hiding it. ReportIf's own controls and the
 // final MainInterface pair remain their respective typed owners.
 // ORIGINAL: 0x004A9F90 ?close_ops@ReportIf@@QAEXXZ 0x004A9F90-0x004AA0AF
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a9f90.cpp", "source:src/reportif.h", "source:src/reportwin.h", "source:src/basebutton.h"], "reason": "Close the ReportIf and ReportWin operation controls through their named owners, preserve conditional map cleanup, and clear only ungrouped ReportWin BaseButton state through an encapsulated helper."}
 void ReportIf::close_ops() {
-    reinterpret_cast<ListBox *>(listBox1_)->close();
-    reinterpret_cast<FlatButton *>(flatButton3_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton4_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton5_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton6_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton7_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton8_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton9_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton10_)->hide();
-    reinterpret_cast<FlatButton *>(flatButton11_)->hide();
+    listBox1_.close();
+    flatButton3_.hide();
+    flatButton4_.hide();
+    flatButton5_.hide();
+    flatButton6_.hide();
+    flatButton7_.hide();
+    flatButton8_.hide();
+    flatButton9_.hide();
+    flatButton10_.hide();
+    flatButton11_.hide();
 
-    FlatButton *button = reinterpret_cast<FlatButton *>(ReportWinGlobal.flatButton4_);
+    FlatButton *button = &ReportWinGlobal.flatButton4_;
     button->reset_field_A9C_if_ungrouped();
     button->hide();
-    button = reinterpret_cast<FlatButton *>(ReportWinGlobal.flatButton5_);
+    button = &ReportWinGlobal.flatButton5_;
     button->reset_field_A9C_if_ungrouped();
     button->hide();
-    button = reinterpret_cast<FlatButton *>(ReportWinGlobal.flatButton6_);
+    button = &ReportWinGlobal.flatButton6_;
     button->reset_field_A9C_if_ungrouped();
     button->hide();
 
@@ -533,7 +469,7 @@ void ReportIf::close_ops() {
 
 // Animation storage is the ReportIf sprite run; the destination is the
 // Buffer base of the global WorldClimateWorldWin. Its timeout lives in the
-// ReportWin-owned placement storage constructed as Time by that owner.
+// genuine ReportWin-owned Time member.
 // ORIGINAL: 0x004A4060 ?bl_anim@ReportIf@@QAEXXZ 0x004A4060-0x004A4191
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a4060.cpp", "source:src/reportif.h", "source:src/worldwin.h", "source:src/reportwin.h", "source:src/sprite.h"], "reason": "Advance ReportIf animation with the declared sprite run and coordinate state, drawing to the WorldClimateWorldWin Buffer base and stopping the ReportWin-owned Time at terminal frame 10."}
 void ReportIf::bl_anim() {
@@ -568,7 +504,7 @@ void ReportIf::bl_anim() {
         ++animation_state_;
         return;
     case 10:
-        reinterpret_cast<Time *>(ReportWinGlobal.time1_)->stop();
+        ReportWinGlobal.time1_.stop();
         break;
     }
     ++animation_state_;
@@ -640,23 +576,16 @@ void SubInterface::release_iface_mode() {
 }
 #pragma auto_inline(on)
 
-// The energy report's process-wide list box, 0x0087BE84 in the image - see
-// reportif.h. Nothing constructs it before ReportIf's own init does, and
-// ListBox's constructor here is the empty inline the tree models, so the
-// object is the zero storage the image leaves until then.
-ListBox ReportIfEnergyListBox;  // 0x0087BE84
-
-// ReportIf-owned research focus, carried between page changes. The retained
-// report seed and the draw_energy (004a84a0) / draw_labs (004a7000) seeds
-// read 0x0087BE24 and 0x00885F30 respectively. Neither location falls inside
-// ReportIfEnergyListBox or ReportIfGlobal; these are separate process words.
-// These declarations express ownership, not a claim of linked data placement.
-int ReportIfTechFocusPending;  // 0x0087BE24
-int ReportIfTechFocus;  // 0x00885F30
+// Research state87BE24/885F30 is ReportWinGlobal+59AC/+FAB8.
+// The energy list87BE84 is ReportWinGlobal+5A0C. No duplicate storage.
 
 // The process-wide ReportIf itself, 0x00885F38 - see reportif.h. The
 // image's dynamic initializer at 0x00496900 constructs it through the real
 // recovered constructor above, so the storage sits here.
+// Original constructor 0x004AD170 initializes this singleton; its two list
+// receivers at 0x00890208/0x00890D5C are owned +0xA2D0/+0xAE24 members.
+// This start-only binding does not infer a complete original allocation.
+// RECOVERY_OBJECT: v1 0x00885F38 ?ReportIfGlobal@@3VReportIf@@A
 ReportIf ReportIfGlobal;  // 0x00885F38
 
 /*
@@ -853,41 +782,13 @@ void ReportIf::draw_score() {
     buf->set_clip(MainInterfaceGlobal.buffer_working_rect());
 }
 
-// ---- fixed interface bindings the recovered bodies reach ------------------
-//
-// The pair below is maininterface.cpp's spelling of the same two addresses
-// (restated per file, the designwin.cpp convention): IfaceIdToSlot maps the
-// active interface id to its sub-interface slot, ActiveIfaceId is the id.
-static int *const IfaceIdToSlot = (int *)0x007AE778;
-static int *const ActiveIfaceId = (int *)0x007D392C;
+// MainInterface owns the interface-slot array and active interface ID.
 
-// 0x008846E8 - set to 1 when a topic in the intel list (field_8_ == 7) is
-// clicked. Its neighbour 0x008846E4 gates the report scroll on_status shows.
-// No catalogue name for either.
-static int *const IntelTopicSelectFlag = (int *)0x008846E8;
-
-// 0x00939284 - game.cpp's LocalFaction (base.cpp's do_upgrade note names the
-// address). close_sat keeps the local player's own panel button alive.
-static int *const LocalFaction = (int *)0x00939284;
-
-// The three satellite-panel windows close_sat hides directly, each with its
-// (flag, state) pair - the image clears the state only when the flag is
-// already zero. Addresses carry the evidence; the panel identities are
-// unnamed in every catalogue.
-static Win *const SatPanelWindow1 = (Win *)0x00881A24;
-static int *const SatPanelFlag1 = (int *)0x008824CC;
-static int *const SatPanelState1 = (int *)0x008824C0;
-static Win *const SatPanelWindow2 = (Win *)0x0088038C;
-static int *const SatPanelFlag2 = (int *)0x00880E34;
-static int *const SatPanelState2 = (int *)0x00880E28;
-static Win *const SatPanelWindow3 = (Win *)0x00880ED8;
-static int *const SatPanelFlag3 = (int *)0x00881980;
-static int *const SatPanelState3 = (int *)0x00881974;
-
-// The satellite panel's two animation timers, stopped by close_sat and
-// driven by the same family the leaf daemons tick.
-static Time *const SatPanelTimer1 = (Time *)0x00884738;
-static Time *const SatPanelTimer2 = (Time *)0x00884760;
+// close_sat borrows ReportWinGlobal's buttons9/7/8 and timers2/3.
+// Original881A24/88038C/880ED8 are876478+B5AC/9F14/AA60.
+// Their +AA8/+A9C fields are BaseButton.group_/field_A9C_; the existing
+// typed reset_field_A9C_if_ungrouped preserves the original inline condition.
+// Original884738/884760 are876478+E2C0/E2E8, not timer pointers/globals.
 
 // 0x005398E0 ?pop_wait@@YAHXZ - defined in faction.cpp (BYTE_EXACT); no
 // header declares it, and the set_modal popups pass it as their wait
@@ -900,9 +801,9 @@ int __cdecl pop_wait();
 // ORIGINAL: 0x004AC9A0 ?report_labs@@YAXXZ 0x004AC9A0-0x004AC9EC
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ac9a0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_labs seed identifies this free report command and its original extent. Category 2 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_labs() {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 2;
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(2, ReportIfGlobal.report_faction_id(), 0);
@@ -912,9 +813,9 @@ void __cdecl report_labs() {
 // ORIGINAL: 0x004AC9F0 ?report_energy@@YAXXZ 0x004AC9F0-0x004ACA3C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ac9f0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_energy seed identifies this free report command and its original extent. Category 3 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_energy() {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 3;
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(3, ReportIfGlobal.report_faction_id(), 0);
@@ -924,9 +825,9 @@ void __cdecl report_energy() {
 // ORIGINAL: 0x004ACA40 ?report_ops@@YAXXZ 0x004ACA40-0x004ACA8C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004aca40.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_ops seed identifies this free report command and its original extent. Category 4 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_ops() {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 4;
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(4, ReportIfGlobal.report_faction_id(), 0);
@@ -936,9 +837,9 @@ void __cdecl report_ops() {
 // ORIGINAL: 0x004ACA90 ?report_projects@@YAXXZ 0x004ACA90-0x004ACADC
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004aca90.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_projects seed identifies this free report command and its original extent. Category 5 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_projects() {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 5;
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(5, ReportIfGlobal.report_faction_id(), 0);
@@ -948,9 +849,9 @@ void __cdecl report_projects() {
 // ORIGINAL: 0x004ACAE0 ?report_sat@@YAXXZ 0x004ACAE0-0x004ACB2C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acae0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_sat seed identifies this free report command and its original extent. Category 6 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_sat() {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 6;
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(6, ReportIfGlobal.report_faction_id(), 0);
@@ -960,9 +861,9 @@ void __cdecl report_sat() {
 // ORIGINAL: 0x004ACB30 ?report_security@@YAXXZ 0x004ACB30-0x004ACB7C
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acb30.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_security seed identifies this free report command and its original extent. Category 7 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_security() {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 7;
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(7, ReportIfGlobal.report_faction_id(), 0);
@@ -972,9 +873,9 @@ void __cdecl report_security() {
 // ORIGINAL: 0x004ACB80 ?report_score@@YAXH@Z 0x004ACB80-0x004ACBCC
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acb80.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_score seed identifies this free report command and its original extent. Category 8 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_score(int) {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 8;
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(8, ReportIfGlobal.report_faction_id(), 0);
@@ -984,10 +885,10 @@ void __cdecl report_score(int) {
 // ORIGINAL: 0x004ACBD0 ?report_intel@@YAXH@Z 0x004ACBD0-0x004ACC29
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004acbd0.cpp", "source:src/reportif.cpp", "source:src/reportif.h", "source:src/reportwin.h"], "reason": "The retained report_intel seed identifies this free report command and its original extent. Category 0 selects the existing ReportIf state; the original modal call resolves to ReportWinGlobal set_modal and the direct branch to ReportIf report."}
 void __cdecl report_intel(int selection) {
-    int active_iface = *ActiveIfaceId;
+    int active_iface = ActiveIfaceIdStorage;
     ReportIfGlobal.field_8_ = 0;
     ReportIfGlobal.set_report_selection(selection);
-    if (IfaceIdToSlot[active_iface] != 5) {
+    if (IfaceIdToSlotStorage[active_iface] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
     } else {
         ReportIfGlobal.report(0, ReportIfGlobal.report_faction_id(), selection);
@@ -1030,16 +931,16 @@ void ReportIf::on_iface_left_click(int x_coord, int y_coord) {
     // check() answers the hit index and hands the spot's position and type
     // back through the two argument slots - the push order is &y_coord then
     // &x_coord, so the position lands in the y argument, the type in the x.
-    if (reinterpret_cast<Spot *>(spot_)->check(x_coord, y_coord,
+    if (spot_.check(x_coord, y_coord,
                                                &y_coord, &x_coord) == -1) {
         return;
     }
     field_1E244_ = y_coord;
 
-    *IntelTopicSelectFlag = 1;
+    ReportWinGlobal.select_intel_topic();
     field_8_ = 7;
 
-    if (IfaceIdToSlot[*ActiveIfaceId] != 5) {
+    if (IfaceIdToSlotStorage[ActiveIfaceIdStorage] != 5) {
         ReportWinGlobal.set_modal(0, pop_wait, &MainInterfaceGlobal);
         return;
     }
@@ -1083,7 +984,7 @@ void ReportIf::close_sat() {
     FlatButton *button = flatButtonsC_;
     int faction = 1;
     do {
-        if (faction != *LocalFaction) {
+        if (faction != ConsoleGlobal.faction_id_) {
             button->close();
         }
         ++button;
@@ -1098,26 +999,19 @@ void ReportIf::close_sat() {
         --count;
     } while (count != 0);
 
-    if (*SatPanelFlag1 == 0) {
-        *SatPanelState1 = 0;
-    }
-    SatPanelWindow1->Win::hide();
-    if (*SatPanelFlag2 == 0) {
-        *SatPanelState2 = 0;
-    }
-    SatPanelWindow2->Win::hide();
-    if (*SatPanelFlag3 == 0) {
-        *SatPanelState3 = 0;
-    }
-    SatPanelWindow3->Win::hide();
-    SatPanelTimer1->stop();
-    SatPanelTimer2->stop();
+    ReportWinGlobal.flatButton9_.reset_field_A9C_if_ungrouped();
+    ReportWinGlobal.flatButton9_.Win::hide();
+    ReportWinGlobal.flatButton7_.reset_field_A9C_if_ungrouped();
+    ReportWinGlobal.flatButton7_.Win::hide();
+    ReportWinGlobal.flatButton8_.reset_field_A9C_if_ungrouped();
+    ReportWinGlobal.flatButton8_.Win::hide();
+    ReportWinGlobal.time2_.stop();
+    ReportWinGlobal.time3_.stop();
 }
 
 /*
-Purpose: Unimplemented dependency - the retained report unit is not
-         recovered yet; this body only keeps on_iface_left_click (and
-         ReportWin::on_key_click) linking.
+Purpose: Switch report pages using the existing interface and window owners,
+         preserving the original research-selection transition and redraw.
 // ORIGINAL: 0x004A3950 ?report@ReportIf@@QAEXHHH@Z 0x004A3950-0x004A3CD3 FILE
 // size      899 bytes
 // prototype void (__thiscall ?report@ReportIf@@QAEXHHH@Z)(ReportIf* this, int, int, int)
@@ -1132,16 +1026,16 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
     const int previous_page = report_page_history_[0];
     switch (previous_page) {
     case 2:
-        reinterpret_cast<ListBox *>(listBox1_)->close();
-        reinterpret_cast<FlatButton *>(flatButton1_)->hide();
-        reinterpret_cast<FlatButton *>(flatButton2_)->hide();
+        listBox1_.close();
+        flatButton1_.hide();
+        flatButton2_.hide();
         break;
     case 3:
-        ReportIfEnergyListBox.close();
+        ReportWinGlobal.listBox_.close();
         // Fall through: energy and intel share both embedded lists.
     case 0:
-        reinterpret_cast<ListBox *>(listBox1_)->close();
-        reinterpret_cast<ListBox *>(listBox2_)->close();
+        listBox1_.close();
+        listBox2_.close();
         break;
     case 4:
         close_ops();
@@ -1157,9 +1051,9 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
         close_sat();
         break;
     case 7:
-        reinterpret_cast<FlatButton *>(flatButton12_)->hide();
-        reinterpret_cast<FlatButton *>(flatButton14_)->hide();
-        reinterpret_cast<FlatButton *>(flatButton13_)->hide();
+        flatButton12_.hide();
+        flatButton14_.hide();
+        flatButton13_.hide();
         break;
     }
 
@@ -1180,15 +1074,15 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
     field_8_ = report_id;
     report_faction_id_ = faction_id;
 
-    if (previous_page != 2 && ReportIfTechFocusPending != -1) {
+    if (previous_page != 2 && ReportWinGlobal.shared_report_selection() != -1) {
         int next_focus;
         if (!(GameState & STATE_OMNISCIENT_VIEW)
             && (GameRules & RULES_BLIND_RESEARCH)) {
-            if (ReportIfTechFocus >= 0 && ReportIfTechFocus <= 0x59
-                && has_tech_call(ReportIfTechFocus, faction_id)) {
-                next_focus = ReportIfTechFocus;
+            if (ReportWinGlobal.shared_research_focus() >= 0 && ReportWinGlobal.shared_research_focus() <= 0x59
+                && has_tech_call(ReportWinGlobal.shared_research_focus(), faction_id)) {
+                next_focus = ReportWinGlobal.shared_research_focus();
             } else {
-                next_focus = ReportIfTechFocus;
+                next_focus = ReportWinGlobal.shared_research_focus();
                 for (int tech_id = 0; tech_id < 0x59; ++tech_id) {
                     if (has_tech_call(tech_id, faction_id)) {
                         next_focus = tech_id;
@@ -1199,11 +1093,11 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
         } else {
             next_focus = PlayersData[faction_id].tech_id_researching;
         }
-        ReportIfTechFocus = next_focus;
-        if (ReportIfTechFocus < 0 || ReportIfTechFocus > 0x59) {
-            ReportIfTechFocus = 0;
+        ReportWinGlobal.shared_research_focus() = next_focus;
+        if (ReportWinGlobal.shared_research_focus() < 0 || ReportWinGlobal.shared_research_focus() > 0x59) {
+            ReportWinGlobal.shared_research_focus() = 0;
         }
-        ReportIfTechFocusPending = -1;
+        ReportWinGlobal.shared_report_selection() = -1;
     }
 
     if (faction_id <= 0) {
@@ -1221,7 +1115,7 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
             report_topic_changed_ = 0;
         }
     } else if (ReportWinGlobal.field_C0F8_ != 0) {
-        scroll_hide(&ReportWinGlobal, &ReportWinGlobal.scroll_.as_scroll());
+        scroll_hide(&ReportWinGlobal, &ReportWinGlobal.scroll_);
         ReportWinGlobal.field_E270_ = 0;
         ReportWinGlobal.field_E26C_ = 0;
         ReportWinGlobal.field_C0F8_ = 0;
@@ -1241,7 +1135,7 @@ void ReportIf::report(int report_id, int faction_id, int selection) {
     MainInterfaceGlobal.soft_update();
     ReportWinGlobal.redraw();
     if (ReportWinGlobal.field_E26C_ != 0 && !report_scroll_blocked_) {
-        scroll_show(&ReportWinGlobal, &ReportWinGlobal.scroll_.as_scroll());
+        scroll_show(&ReportWinGlobal, &ReportWinGlobal.scroll_);
         ReportWinGlobal.field_E26C_ = 0;
         ReportWinGlobal.field_C0F8_ = 1;
     }
@@ -1277,7 +1171,7 @@ void ReportIf::draw_labs() {
     scroll_small();
     // The constructor places this ListBox at +0xA2D0. It is still raw
     // storage because its one-argument construction is unresolved.
-    ListBox &list = *reinterpret_cast<ListBox *>(listBox1_);
+    ListBox &list = listBox1_;
     list.close();
     Dialog &dialog = static_cast<Dialog &>(list);
     dialog.init(&draw_workspace_rect_, 0);
@@ -1317,7 +1211,7 @@ void ReportIf::draw_energy() {
     draw_workspace_rect_.right -= 3;
     draw_workspace_rect_.bottom -= 3;
     scroll_small();
-    ListBox &list = *reinterpret_cast<ListBox *>(listBox1_);
+    ListBox &list = listBox1_;
     list.close();
     Dialog &dialog = static_cast<Dialog &>(list);
     dialog.init(&draw_workspace_rect_, 0);

@@ -32,27 +32,43 @@
   * Derives from GraphicWin by ordinary single inheritance - its constructor calls
   * GraphicWin's on an unadjusted `this` - so it is written as the original wrote
   * it and needs no ABI workaround. GraphicWin and ReportWin's current 0xFABC
-  * extent are pinned by their layout assertions. Subobjects whose constructor
-  * order cannot be represented by normal member initialization remain typed
-  * placement storage with accessors.
+  * extent are pinned by their layout assertions. Member declaration order
+  * follows the constructor and reverse destructor calls in the original.
   */
 class ReportWin : public GraphicWin {
+  friend class ReportIf;
  public:
+  // The report interface and Datalink borrow this window's research selection.
+  // Original singleton876478+FAB8=885F30; not independent process storage.
+  int &shared_research_focus() { return field_FAB8_; }
+  // The same +59AC word is used by the energy selection and research transition.
+  // Singleton876478+59AC=87BE24; report() tests its signed -1 sentinel.
+  int &shared_report_selection() { return field_59AC_; }
+  // Original8846E8=876478+E270; report_intel writes the owning window's flag.
+  void select_intel_topic() { field_E270_ = 1; }
   ReportWin();
-  // 0x004AD3B0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Ordinary out-of-line body; C++ owns reverse member/base teardown.
   ~ReportWin();
+  void init();
+  void on_left_click(int x, int y);
+  void right_menu(int x, int y, int base_id);
+  void on_right_click(int x, int y);
+  void on_button_clicked(int id);
+  void on_group_clicked(int group, int id, int state);
+  void draw_ops();
+  void draw_sat();
+  void draw_security();
+  void draw_score();
+  void draw_intel();
+  void start_attack(int attacker, int target, int attack, int defense);
   void on_mouse_move(int a1, int a2);
   void on_mouse_leave(int a1, int a2);
   // 0x0049B220 highlights report-category buttons and redraws their lab
   // connectors on this window or Datalink's canvas.
   void on_button_passover(int button_id, int state);
   // The two animation ticks the daemons in leaf_recoveries.cpp drive. Public,
-  // __thiscall, void(void). sat_anim is homed in reportwin.cpp (2026-09-27,
-  // the sixteen-satellite orbital tick); exp_anim (0x004A0100) is still a
-  // pending_bodies forwarder - its callee action_sat_attack (0x004CF480)
-  // and the 0x007AA370-family sprite table it reads are not recovered yet.
+  // __thiscall, void(void). Both use genuine animation members and the
+  // existing explosion sprite run; action_sat_attack remains a dependency.
   void sat_anim();  // 0x0049FE40  ?sat_anim@ReportWin@@QAEXXZ
   void exp_anim();  // 0x004A0100  ?exp_anim@ReportWin@@QAEXXZ
   // 0x00496BB0 ?reset@ReportWin@@QAEXXZ resets the report controls, working
@@ -102,15 +118,7 @@ class ReportWin : public GraphicWin {
   uint32_t field_A2C_;  // 0xA2C
   uint32_t field_A30_;  // 0xA30
   uint32_t field_A34_;  // 0xA34
-  // The constructor placement-news every sub-object below EXPLICITLY, in the
-  // exact order the disassembly shows - GraphicWin::construct() has to run
-  // BEFORE any of them, and ordinary by-value members with a real
-  // constructor are default-constructed by C++ before the constructor BODY
-  // ever runs, which cannot reproduce that order. Raw storage; every offset
-  // above already lands on a 4-byte boundary from the field sizes alone, so
-  // a plain `uint8_t[]` needs no explicit alignment.
-  // MEASURED: flatButtons1_ and spot_ (the prefix before the irreducible
-  // listBox_) converted to real declared members, built implicitly.
+  // Genuine members are constructed after GraphicWin, in declaration order.
   FlatButton flatButtons1_[7];  // 0xA38
   uint32_t field_594C_;  // 0x594C
   uint32_t field_5950_;  // 0x5950
@@ -129,85 +137,50 @@ class ReportWin : public GraphicWin {
   uint32_t field_59A0_;  // 0x59A0
   uint32_t field_59A4_;  // 0x59A4
   uint32_t field_59A8_;  // 0x59A8
-  uint32_t field_59AC_;  // 0x59AC
+  int field_59AC_;  // 0x59AC; singleton87BE24, signed selection/sentinel
   uint32_t field_59B0_;  // 0x59B0
-  uint32_t field_59B4_;  // 0x59B4
-  uint32_t field_59B8_;  // 0x59B8
-  uint32_t field_59BC_;  // 0x59BC
-  uint32_t field_59C0_;  // 0x59C0
-  uint32_t field_59C4_;  // 0x59C4
-  uint32_t field_59C8_;  // 0x59C8
-  uint32_t field_59CC_;  // 0x59CC
-  uint32_t field_59D0_;  // 0x59D0
-  uint32_t field_59D4_;  // 0x59D4
-  uint32_t field_59D8_;  // 0x59D8
-  uint32_t field_59DC_;  // 0x59DC
-  uint32_t field_59E0_;  // 0x59E0
-  uint32_t field_59E4_;  // 0x59E4
-  uint32_t field_59E8_;  // 0x59E8
-  uint32_t field_59EC_;  // 0x59EC
-  uint32_t field_59F0_;  // 0x59F0
-  uint32_t field_59F4_;  // 0x59F4
-  uint32_t field_59F8_;  // 0x59F8
-  uint32_t field_59FC_;  // 0x59FC
-  uint32_t field_5A00_;  // 0x5A00
+  uint32_t selected_bases_[16];  // 0x59B4, original 512-base selection bitmap
+  uint32_t selected_prototypes_[4];  // 0x59F4, original 128-row selection bitmap
   uint32_t field_5A04_;  // 0x5A04
   uint32_t field_5A08_;  // 0x5A08
-  uint8_t listBox_[0xB54];  // 0x5A0C, sizeof(ListBox)
-  uint8_t flatButton2_[0xB4C];  // 0x6560
-  uint8_t flatButton3_[0xB4C];  // 0x70AC
+  // Original87BE84=ReportWinGlobal876478+5A0C. ReportIf borrows this member.
+  ListBox listBox_;  // 0x5A0C
+  FlatButton flatButton2_;  // 0x6560
+  FlatButton flatButton3_;  // 0x70AC
   RECT report_frame_rect_;  // 0x7BF8, expanded and restored around box_sprite
-  uint8_t buttonGroup1_[0x94];  // 0x7C08, sizeof(ButtonGroup)
-  uint8_t flatButton4_[0xB4C];  // 0x7C9C
-  uint8_t flatButton5_[0xB4C];  // 0x87E8
-  uint8_t flatButton6_[0xB4C];  // 0x9334
-  uint8_t buttonGroup2_[0x94];  // 0x9E80, sizeof(ButtonGroup)
-  uint8_t flatButton7_[0xB4C];  // 0x9F14
-  uint8_t flatButton8_[0xB4C];  // 0xAA60
-  uint8_t flatButton9_[0xB4C];  // 0xB5AC
+  ButtonGroup buttonGroup1_;  // 0x7C08
+  FlatButton flatButton4_;  // 0x7C9C
+  FlatButton flatButton5_;  // 0x87E8
+  FlatButton flatButton6_;  // 0x9334
+  ButtonGroup buttonGroup2_;  // 0x9E80
+  FlatButton flatButton7_;  // 0x9F14
+  FlatButton flatButton8_;  // 0xAA60
+  FlatButton flatButton9_;  // 0xB5AC
   uint32_t field_C0F8_;  // 0xC0F8
   uint32_t field_C0FC_;  // 0xC0FC, selected scroll position
   uint32_t field_C100_;  // 0xC100
   uint32_t field_C104_;  // 0xC104
   uint32_t field_C108_;  // 0xC108
-  struct ScrollStorage {
-    uint32_t words_[0x214C / sizeof(uint32_t)];
-    void *address() { return words_; }
-    Scroll &as_scroll() { return *reinterpret_cast<Scroll *>(words_); }
-  };
-  ScrollStorage scroll_;  // 0xC10C, placement-constructed Scroll
+  Scroll scroll_;  // 0xC10C
   // The original redraw and passover paths share this full rectangle.
   // RECOVERY_MEMBER: v1 ReportWin report_work_rect_ 0xE258 0x0049B220
   RECT report_work_rect_;  // 0xE258
   uint32_t field_E268_;  // 0xE268
   uint32_t field_E26C_;  // 0xE26C
   uint32_t field_E270_;  // 0xE270
-  uint8_t time1_[0x28];  // 0xE274, sizeof(Time)
+  Time time1_;  // 0xE274
   uint32_t field_E29C_;  // 0xE29C
   uint32_t field_E2A0_;  // 0xE2A0
   uint32_t field_E2A4_;  // 0xE2A4
   uint32_t field_E2A8_;  // 0xE2A8
   uint32_t field_E2AC_;  // 0xE2AC
-  uint32_t field_E2B0_;  // 0xE2B0
-  uint32_t field_E2B4_;  // 0xE2B4
-  uint32_t field_E2B8_;  // 0xE2B8
-  uint32_t field_E2BC_;  // 0xE2BC
-  uint8_t time2_[0x28];  // 0xE2C0, sizeof(Time)
-  uint8_t time3_[0x28];  // 0xE2E8, sizeof(Time)
-  uint32_t field_E310_;  // 0xE310
-  uint32_t field_E314_;  // 0xE314
-  uint32_t field_E318_;  // 0xE318
-  uint32_t field_E31C_;  // 0xE31C
-  // The image constructs buffers explicitly after Scroll/Time. Keep aligned
-  // storage, with typed access after that placement construction, so C++ does
-  // not move Buffer's constructor into the implicit member preamble.
-  struct BufferStorage {
-    uint32_t words_[0x588 / sizeof(uint32_t)];
-    void *address() { return words_; }
-    Buffer &as_buffer() { return *reinterpret_cast<Buffer *>(words_); }
-  };
-  BufferStorage buffer1_;  // 0xE320, placement-constructed Buffer
-  uint8_t buffer2_[0x588];  // 0xE8A8, sizeof(Buffer)
+  RECT satellite_rect_;  // 0xE2B0
+  Time time2_;  // 0xE2C0
+  Time time3_;  // 0xE2E8
+  RECT explosion_rect_;  // 0xE310
+  // Declaration order constructs these Buffers after Scroll and Time.
+  Buffer buffer1_;  // 0xE320
+  Buffer buffer2_;  // 0xE8A8
   // 0xEE30 is a float of ReportWin's own, NOT the head of the Flic. The Flic
   // starts four bytes later, and the image says so four separate times:
   //   ?sat_anim@ReportWin@@QAEXXZ multiplies by 0xEE30 as a scalar
@@ -226,7 +199,7 @@ class ReportWin : public GraphicWin {
   // That row is four bytes early, and the receiver of ??0Flic@@QAE@XZ
   // withdraws it - an IDB member row is a name, not a measurement.
   float field_EE30_;  // 0xEE30, x87 dword load -> float
-  uint8_t flic_[0xAE4];  // 0xEE34, declared Flic extent == 0xAE4, so it ends at 0xF918
+  Flic flic_;  // 0xEE34, ends at 0xF918
   // 0xF918, not 0xF914. The first own-access past the Flic is
   // mov eax, dword ptr [esi + 0xf918] at 0x0049FFF4 in
   // ?start_attack@ReportWin@@QAEXHHHH@Z, which then writes 0xF91C..0xF934;
@@ -240,8 +213,13 @@ class ReportWin : public GraphicWin {
   uint32_t field_F92C_;  // 0xF92C
   uint32_t field_F930_;  // 0xF930
   uint32_t field_F934_;  // 0xF934
-  uint8_t field_F938_[0x180];  // 0xF938
-  uint32_t field_FAB8_;  // 0xFAB8
+  float satellite_x_[16];  // 0xF938
+  float satellite_y_[16];  // 0xF978
+  float satellite_dx_[16];  // 0xF9B8
+  float satellite_dy_[16];  // 0xF9F8
+  float satellite_acceleration_[16];  // 0xFA38
+  int satellite_live_[16];  // 0xFA78
+  int field_FAB8_;  // 0xFAB8; singleton885F30, signed research selection
 };
 
 static_assert(sizeof(ReportWin) == 0xFABC,
@@ -257,15 +235,8 @@ static_assert(sizeof(ReportWin) == 0xFABC,
 // below.
 extern ReportWin ReportWinGlobal;  // 0x00876478
 
-// The topic panel's two process-wide selection list boxes, 0x00890208 and
-// 0x00890D5C in the image - adjacent (0xB54 == sizeof(ListBox) apart), REAL
-// STORAGE, defined in reportwin.cpp. on_selected and the recovered-units
-// on_button_clicked are their only callers, always through `mov ecx, imm32`
-// - the addresses are the OBJECTS, not pointers - and no mapped code
-// constructs them (like ReportIfEnergyListBox, the zero storage the image
-// leaves until its own init runs).
-extern ListBox ReportWinListBox1;  // 0x00890208
-extern ListBox ReportWinListBox2;  // 0x00890D5C
+// The fixed890208/890D5C list receivers belong to ReportIfGlobal's
+// listBox1_/listBox2_. ReportWin borrows them; no independent storage/lifetime.
 
 
 // Neither animation tick is recovered; both forward to the original image.
