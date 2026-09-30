@@ -547,11 +547,6 @@ void __cdecl alt_set(int x, int y, uint32_t altitude) {  // 0x00591290
     PENDING_BODY(0x00591290, pending)(x, y, altitude);
 }
 
-int __cdecl popp(LPCSTR a1, LPCSTR a2, int a3, LPCSTR a4, int(__cdecl *a5)()) {  // 0x0048C0A0
-    typedef int(__cdecl *pending)(LPCSTR, LPCSTR, int, LPCSTR, int(__cdecl *a5)());
-    return PENDING_BODY(0x0048C0A0, pending)(a1, a2, a3, a4, a5);
-}
-
 BaseWin::~BaseWin() {  // ??1BaseWin@@QAE@XZ at 0x00420A70
     typedef void(__fastcall *pending)(BaseWin *, void *);
     PENDING_BODY(0x00420A70, pending)(this, nullptr);

@@ -71,9 +71,9 @@ class Popup : public BasePop {
   ~Popup();
   void close();
   void on_adjust_button_width();
-  // 0x00406380, still a pending_bodies forwarder: the three overloads
-  // below call it BY NAME so they emit the image's `call rel32`.
-  void start(char *a1, const char *a2, int a3, char *a4, int a5,
+  // Six-argument start returns the text-load result, retrying the original
+  // file if the alien-script redirect fails.
+  int start(char *a1, const char *a2, int a3, char *a4, int a5,
              GraphicWin *owner);
   void start(char *a1, const char *a2, int a3, char *a4, int a5);
   void start(const char *label);
@@ -294,3 +294,8 @@ class FactionAmbience;
 extern FactionAmbience *FactionMusic;
 
 void __cdecl popup_wave_callback(BasePopTextBlock *popup, int);
+int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
+int __cdecl popp(const char *caption, const char *label, int flags,
+                 const char *picture, int (__cdecl *callback)());
+int __cdecl veh_sprite_draw(Sprite *sprite, GraphicWin *owner, int vehicle,
+                            int x, int y);

@@ -526,22 +526,19 @@ int __cdecl x_pops_no_flags(char *caption, const char *label, int title,
 // The three SLOT-HELD ones stay behind inline accessors reading through
 // a real slot variable, which is the one-instruction double indirection
 // the image's `mov eax, [slot]` has.
-static const char *const XPopModCheckString1Slot = "SCRIPT";
 static const char XPopModCheckString2Text[] = "SCRIPT.txt";
 static const char XPopModCheckFile1Text[] = "alienIscript.txt";
 static const char XPopModCheckMode1Text[] = "rb";
-static const char *const XPopModCheckCaption1Slot = "alienIscript";
 static const char XPopModCheckFile2Text[] = "alienuscript.txt";
 static const char XPopModCheckMode2Text[] = "rb";
-static const char *const XPopModCheckCaption2Slot = "alienuscript";
 inline LPCSTR XPopModCheckString1() {
-    return XPopModCheckString1Slot;
+    return ScriptPopupFile;
 }
 inline LPCSTR XPopModCheckCaption1() {
-    return XPopModCheckCaption1Slot;
+    return PopupStartAltFile1;
 }
 inline LPCSTR XPopModCheckCaption2() {
-    return XPopModCheckCaption2Slot;
+    return PopupStartAltFile2;
 }
 
 /*

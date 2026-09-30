@@ -493,6 +493,9 @@ class BasePop : public GraphicWin {
   // that same member only after Sprite::init succeeds (4A067F..4A0694).
   Sprite &owned_picture() { return sprite_; }
   void select_owned_picture() { caller_sprite_ = &sprite_; }
+  bool picture_enabled() const { return dialogs_.SpriteBox::list_.entry_count_ != 0; }
+  void set_caller_picture(Sprite *picture) { caller_sprite_ = picture; }
+  void set_redraw_callback(SpriteBox::DrawCallback callback) { redraw_callback_ = callback; }
   // Modal editor pickers set their default answer after start configures
   // the popup. This is the value word at original +0xA44.
   void set_value(int value) { value_ = value; }
@@ -593,8 +596,7 @@ class BasePop : public GraphicWin {
   // caller sprite itself instead. `__cdecl`, because the image's `add
   // esp, 0x14` after the indirect call is the caller cleaning five stack
   // slots. The ctor zeroes it.
-  int (__cdecl *redraw_callback_)(int sprite, int owner, int item_id, int right,
-                                  int bottom);  // 0x3168
+  SpriteBox::DrawCallback redraw_callback_;  // 0x3168
   // THE THREE BUTTON FONTS, 0x316c + 4*n, seeded from
   // BasePopDefaultButtonFonts[n] the same way.
   Font *button_font1_;  // 0x316c

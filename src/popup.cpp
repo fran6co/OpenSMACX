@@ -31,6 +31,7 @@
 #include "mapwin.h"     // MainInterfaceGlobal - the iface window at 0x007AE820
 #include "messagewin.h" // InterfaceMessageWin - the desktop window at 0x007F67F8
 #include "base.h"       // BaseIDCurrentSelected - the base the exec result goes to
+#include "veh.h"
 
 // Two of the popup's hide-path helpers are still original bodies (0x0045D970 /
 // 0x0045E540, archive copies the build does not compile). They are __cdecl
@@ -110,8 +111,14 @@ char PopupStartModFile1[32] = "alienIscript.txt"; // 0x006827F4
 char PopupStartModMode1[8] = "rb";                // 0x006827F0
 char PopupStartModFile2[32] = "alienuscript.txt"; // 0x0068280C
 char PopupStartModMode2[8] = "rb";                // 0x00682808
-char *PopupStartAltFile1 = (char *)0x00691BA4;    // 0x00691B20
-char *PopupStartAltFile2 = (char *)0x00691BB4;    // 0x00691B24
+// The image's pointer slots select these NUL-terminated text identifiers.
+// Their allocation extents are unresolved; these arrays own the observed text.
+static char PopupAlienScriptName[] = "alienIscript";
+static char PopupAlienOtherScriptName[] = "alienuscript";
+// RECOVERY_OBJECT: v1 0x00691B20 ?PopupStartAltFile1@@3PADA
+char *PopupStartAltFile1 = PopupAlienScriptName;    // 0x00691B20
+// RECOVERY_OBJECT: v1 0x00691B24 ?PopupStartAltFile2@@3PADA
+char *PopupStartAltFile2 = PopupAlienOtherScriptName;    // 0x00691B24
 
 // The separator between the unit-history entries, the same image .data string
 // buffer.cpp and socialwin.cpp bind as SpaceText - it reads " ". Static, so
@@ -885,6 +892,76 @@ Popup::Popup() {
 // a second time under a name this function would have to guess too.
 extern int BaseAtKeyPollFlag;  // 0x009BC070
 
+// ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0048ceb0.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original vehicle draw callback is installed by popv in BasePop draw callback storage3168; real Sprite and GraphicWin pointer formals, GraphicWin Buffer base and source-owned scale globals express its actual owner relationships."}
+// symbol    ?veh_sprite_draw@@YAHPAVSprite@@PAVGraphicWin@@HHH@Z
+int __cdecl veh_sprite_draw(Sprite *, GraphicWin *owner, int vehicle,
+                           int x, int y) {
+    const int scale = (SpriteScaleNumerator << 4) / SpriteScaleDenominator - 16;
+    return veh_draw(owner ? static_cast<Buffer *>(owner) : nullptr,
+                    vehicle, x, y, scale, 0, 0);
+}
+
+// ORIGINAL: 0x0048C360 ?popv@@YAHPADPBDHH@Z 0x0048C360-0x0048C648;0x00658337-0x00658411
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0048c360.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original vehicle popup owns real Popup and Sprite locals; original48C3D0..48C400 selects caller picture when the SpriteBox list is empty but always passes the local Sprite to its embedded SpriteBox."}
+int __cdecl popv(char *caption, const char *label, int vehicle, int flags) {
+    Popup popup;
+    Sprite sprite;
+    sprite.create_blank(100, 75, WinFillColour);
+    popup.start(caption, label, -1, nullptr, flags, nullptr);
+    popup.set_caller_picture(popup.picture_enabled() ? nullptr : &sprite);
+    popup.set_redraw_callback(veh_sprite_draw);
+    popup.dialogs().SpriteBox::sprite(&sprite, nullptr, vehicle);
+    const int result = popup.exec(0, nullptr);
+    BaseAtKeyPollFlag = popup.input_poll_state();
+    return result;
+}
+
+// ORIGINAL: 0x0048C0A0 ?popp@@YAHPADPBDHPBDP6AHXZ@Z 0x0048C0A0-0x0048C31F;0x006582E0-0x00658337
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0048c0a0.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original popup picture helper belongs to the Popup owner and uses real local Popup/member lifetimes, with integer start status controlling alternate-file retry."}
+// symbol    ?popp@@YAHPBD0H0P6AHXZ@Z
+int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
+                 int (__cdecl *callback)()) {
+    Popup popup;
+    char *alternative = nullptr;
+    if (strcmp(caption, *reinterpret_cast<char *const *>(ClimatePopupTitle)) == 0
+        || strcmp(caption, "SCRIPT.txt") == 0) {
+        if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
+            if (ExpansionEnabled) {
+                FILE *file = fopen("alienIscript.txt", "rb");
+                if (file) {
+                    fclose(file);
+                    alternative = PopupStartAltFile1;
+                }
+            }
+        } else if (ExpansionEnabled && PopupDialogFactionID > 0
+                   && PopupDialogFactionID < 8
+                   && (Players[PopupDialogFactionID].rule_flags & RFLAG_ALIEN)) {
+            FILE *file = fopen("alienuscript.txt", "rb");
+            if (file) {
+                fclose(file);
+                alternative = PopupStartAltFile2;
+            }
+        }
+    }
+    if (!alternative || popup.start(alternative, label, -1, nullptr,
+                                    flags, nullptr) != 0) {
+        popup.start(const_cast<char *>(caption), label, -1, nullptr,
+                    flags, nullptr);
+    }
+    if (picture) {
+        int width, height;
+        if (Buffer::get_pcx_dimensions(picture, &width, &height) == 0
+            && popup.owned_picture().init(const_cast<char *>(picture), width,
+                                          height) == 0) {
+            popup.select_owned_picture();
+        }
+    }
+    const int result = popup.exec(0, callback);
+    BaseAtKeyPollFlag = popup.input_poll_state();
+    return result;
+}
+
 // WITHDRAWN 2026-08-22. This note used to say the runtime walk stops here
 // because "DirectDraw FAILS under wine", that the error path into
 // `report_error` -> `pops` was therefore faithful, and that no further source
@@ -1494,7 +1571,7 @@ int Popup::on_link_clicked(int id, char *link) {
 // faction redirects these text files, hence the RFLAG_ALIEN probe and the two
 // fopen-and-close existence tests. The seven strings and the two substitute
 // pointers are the packed image's data; popup.h names each by its role.
-// symbol    ?start@Popup@@QAEXPADPBDH0HPAVGraphicWin@@@Z
+// symbol    ?start@Popup@@QAEHPADPBDH0HPAVGraphicWin@@@Z
 //   The catalogue spells both `PAD`s out and calls GraphicWin a struct (`PAU`);
 //   VC6 emits the `0` back-reference for the repeated char * and `PAV` for a
 //   class - and this tree's GraphicWin is a class. Same convention as the
@@ -1507,8 +1584,8 @@ int Popup::on_link_clicked(int id, char *link) {
 //   exit over a hoisted `alternative` local, and splitting the two fopen
 //   probes into separate scopes, both still lower without the frame.
 
-void Popup::start(char *text_file, const char *text_label, int value,
-                  char *override_text, int flags, GraphicWin *owner_window) {
+int Popup::start(char *text_file, const char *text_label, int value,
+                 char *override_text, int flags, GraphicWin *owner_window) {
     if (strcmp(text_file, *reinterpret_cast<char *const *>(ClimatePopupTitle)) == 0
         || strcmp(text_file, PopupStartModTag) == 0) {
         if ((Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) != 0) {
@@ -1520,10 +1597,13 @@ void Popup::start(char *text_file, const char *text_label, int value,
                 goto fallback;
             }
             fclose(fp);
-            BasePop::start(*reinterpret_cast<char *const *>(PopupStartAltFile1),
+            const int result = BasePop::start(PopupStartAltFile1,
                            text_label, value, override_text, flags,
                            owner_window);
-            return;
+            if (result != 0) {
+                goto fallback;
+            }
+            return result;
         }
 
         if (ExpansionEnabled == 0) {
@@ -1541,18 +1621,19 @@ void Popup::start(char *text_file, const char *text_label, int value,
                 goto fallback;
             }
             fclose(fp);
-            if (BasePop::start(
-                    *reinterpret_cast<char *const *>(PopupStartAltFile2),
+            const int result = BasePop::start(
+                    PopupStartAltFile2,
                     text_label, value, override_text, flags,
-                    owner_window) != 0) {
+                    owner_window);
+            if (result != 0) {
                 goto fallback;
             }
-            return;
+            return result;
         }
     }
 
 fallback:
-    BasePop::start(text_file, text_label, value, override_text, flags,
+    return BasePop::start(text_file, text_label, value, override_text, flags,
                    owner_window);
 }
 

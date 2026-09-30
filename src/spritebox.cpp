@@ -64,7 +64,7 @@ SpriteBox::SpriteBox() {
     field_58_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
-    field_64_ = 0;
+    redraw_callback_ = 0;
     field_68_ = 0;
     field_6C_ = 0;
     field_70_ = 0;

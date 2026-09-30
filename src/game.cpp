@@ -1731,6 +1731,13 @@ Status: Complete
 // game.h next to each declaration.
 int GameRestartQueued;  // 0x0093A948
 int ExitTurnLoop;       // 0x009B2068
+// Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
+// This owns the observed text and shared pointer cell; original allocation
+// bounds remain unresolved rather than inferred from the current array.
+// RECOVERY_OBJECT: v1 0x00691B7C ?ScriptPopupFileText@@3PADA
+char ScriptPopupFileText[] = "SCRIPT";
+// RECOVERY_OBJECT: v1 0x00691B0C ?ScriptPopupFile@@3PADA
+char *ScriptPopupFile = ScriptPopupFileText;
 int ControlTurnPhase;   // 0x009B2070
 char SaveGameFileName[0x104];  // 0x0093AA0C
 char SaveNameBuffer[0x104];    // 0x009B2078

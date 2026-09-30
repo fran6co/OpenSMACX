@@ -43,6 +43,8 @@ class SpriteBoxList : public StringList {
 // need interpretation; the size assertion alone does not prove the model.
 class SpriteBox : public virtual GraphicWin, public virtual Dialog {
  public:
+  typedef int (__cdecl *DrawCallback)(Sprite *, GraphicWin *, int, int, int);
+  void set_redraw_callback(DrawCallback callback) { redraw_callback_ = callback; }
   // 0x00611380, a pending_bodies forwarder.
   void on_redraw();
 
@@ -153,7 +155,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // PUBLIC: BasePop::calculate_dimensions stores the sprite redraw callback
   // (Dialogs+0x22a4) and its two config slots (0x22a8/0x22c0) straight into
   // these, with no call in between. Access is compile-time only.
-  uint32_t field_64_;  // 0x64
+  DrawCallback redraw_callback_;  // 0x64
   uint32_t field_68_;  // 0x68
  private:
   uint32_t field_6C_;  // 0x6C

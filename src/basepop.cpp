@@ -3816,7 +3816,7 @@ int BasePop::calculate_dimensions() {
       case 9:
         dialog_cfg[0x2b] = field_3160_;                            // 0x22a8
         dialogs_.SpriteBox::double_click_callback_ = sprite_double_click_callback_;
-        dialog_cfg[0x2a] = reinterpret_cast<uint32_t>(redraw_callback_);
+        dialogs_.SpriteBox::set_redraw_callback(redraw_callback_);
         dialog_cfg[0x19] = field_3108_;                            // 0x2260
         dialog_cfg[0x18] = field_3104_;                            // 0x225c
         break;
@@ -4101,8 +4101,7 @@ void BasePop::on_redraw() {
             // in this body uses.
             const int item_id = dialogs_.SpriteBox::pos_to_id(0);
             redraw_callback_(
-                reinterpret_cast<int>(caller_sprite_),
-                reinterpret_cast<int>(owner_window_), item_id, right, bottom);
+                caller_sprite_, owner_window_, item_id, right, bottom);
         } else {
             caller_sprite_->draw(
                 owner_window_ != 0 ? static_cast<Buffer *>(owner_window_)
