@@ -1,0 +1,79 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "a88c367506e8e1f9c07bb7813fbb0bae251f42e7",
+  "editable_files": [
+    "CMakeLists.txt",
+    "recovery/tests/test_quaylewin_behavior.py",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/hypothesis_layouts.h",
+    "src/pending_bodies.cpp",
+    "src/quaylewin.cpp",
+    "src/quaylewin.h"
+  ],
+  "evidence": [
+    "Fresh current native partition identifies nine seed-only owner identities:4951A0,4956D0,4964A0,4964D0,496540,496560,4965C0,496710,496810; retain the two mapped deleting/adjustor obligations. Original construction/destruction, receivers and callers must establish the real hierarchy and member declarations, not raw hypothesis storage.",
+    "Disjoint from active ReportWin rendering task. Only the QuayleWin class block and its owning definitions may change in shared hypothesis/pending/thunk files; preserve every unrelated byte and all retained workspaces. Outside-owner members/globals/callback discoveries require central review before edits. Only native writers bind or bank claims; no manual ORIGINAL/BYTE_EXACT changes, copied machine code or executable-address references."
+  ],
+  "intent": "Recover all nine seed-only QuayleWin operations as genuine compiling C++, establishing the GraphicWin base and embedded control/buffer lifetimes, preserving original identities and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4805024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4806352,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4809888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4809936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4810048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4810080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4810176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4810512,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4810768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4810944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4810992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "quaylewin-owner-coverage-wave"
+}
