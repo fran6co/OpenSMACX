@@ -1,0 +1,19 @@
+{
+  "event_id": "0156dfd97ee6992840706ff85add4d555c28fb34665aba5088a147bae112551a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/scroll.h"
+    ],
+    "evidence": [
+      "Original ProdPicker exec494700 and on_key_click494280 consume embedded Scroll position/paging and set paging/A30 state. Existing position() covers reads; grant only public inline paging()/set_paging(int)/set_field_A30(int) on existing members, preserving types/offsets/vtable and other flags. No duplicate fields, omission of original writes or unrelated Scroll changes. Fresh Scroll historical checks required before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "05b899e85a52c404acf33b7a88173e20dd2cb543ad8c4b24c02d7e2c92dd94ae",
+  "request_id": "prodpicker-scroll-state-access-20260930",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:prodpicker-owner-coverage-wave"
+}

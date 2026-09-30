@@ -1,0 +1,31 @@
+{
+  "event_id": "9232522723acba804656c5ede6235ce3932bc364a2cf43ba60315fbd09d1fb11",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/maininterface.cpp",
+      "src/tutwin.cpp"
+    ],
+    "evidence": [
+      "Fresh pinned original instruction audit proves MainInterface on_iface_button_clicked call45D248 and TutWin tour call4BD390 target AlphaMenu::show403680 (zero arguments), not inherited Win::show(int). Current source uses alpha_menu_.show(0), bypassing original owner behavior and failing after real overload recovery. Grant only those two call-site changes to show(), preserve all other source/claims, and fresh caller/header regression/build checks. Do not add using Win::show or a compatibility wrapper to preserve the wrong dispatch."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4575600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4966112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9d1d4dd6b80735564698b69dff48f5b8d42a7a1eb4142c267e2ee2b17f8a8def",
+  "request_id": "alphamenu-original-show-callers-20260930",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:alphamenu-owner-coverage-wave"
+}
