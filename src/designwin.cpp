@@ -1500,10 +1500,13 @@ void DesignWin::UNK3() {
     *VehDrawComponentTail = 0xFF;
 }
 
-// Fixed-slot bindings carried from 0043e960.cpp. 0x0073396C is the tutor
-// state byte the exec/tutor path sets to 1/2 and clears here; 0x00733970 is
-// the DesignWin *exec stores so timer_function can find the window again.
-static int *const DesignTutorState = (int *)0x0073396C;
+// Original exec and shutdown share the writable tutor-state dword at
+// 0x0073396C, immediately before the separate DesignWindowSelf pointer.
+// The loader initializes this storage to zero. Its broader semantic role
+// and containing allocation are not established; do not infer a bounded
+// original object or a DesignWin member from the candidate's sizeof.
+// RECOVERY_OBJECT: v1 0x0073396C ?DesignTutorState@@3HA
+int DesignTutorState;
 // exec stores its receiver here before starting time_; shutdown clears it.
 // RECOVERY_OBJECT: v2 0x00733970 0x00733974 ?DesignWindowSelf@@3PAVDesignWin@@A 0x0043C170
 DesignWin *DesignWindowSelf;
@@ -1584,7 +1587,7 @@ void __cdecl DesignWin::timer_function(int) {
 
 
 void DesignWin::shut_that_badboy_down() {
-    if (*DesignTutorState != 1) {
+    if (DesignTutorState != 1) {
         vtable_slot<func_design_win_slot002>(this, 0x8)(this);
         do_all_draws();
         Time *modal = &time_;
@@ -1592,7 +1595,7 @@ void DesignWin::shut_that_badboy_down() {
         modal->stop();
         modal->release_modal();
     }
-    *DesignTutorState = 0;
+    DesignTutorState = 0;
 }
 
 // MISMATCH, ruled out (mnemonic_similarity 0.875, 65 vs 61 bytes):
