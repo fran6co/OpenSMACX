@@ -1,0 +1,20 @@
+{
+  "event_id": "8f7983a9767765eac674cd74fcd3d1b64716d9040141817969fb57b7848e5c12",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flic.h",
+      "src/spot.h"
+    ],
+    "evidence": [
+      "Original draw_sat reads Flic decoded dimensions at+59C/+5A0, not header dimensions; original draw_ops resets Spot append cursor at+8 after kill_type(0). Authorize only const decoded-dimension getters on Flic and reset_append_cursor() on Spot assigning the existing add_count_ zero, with source evidence. No class layout, lifecycle or unrelated API changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2274f3f827ba56776ef244c3a411e89156152e7caaf9f0220ef4e30f1d6692e4",
+  "request_id": "reportwin-animation-spot-accessors",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:reportwin-owner-coverage"
+}

@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+void __cdecl action_staple(int base_id);
 
 #include "general.h"  // bitmask, which has_fac_built below inlines
 

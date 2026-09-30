@@ -1683,7 +1683,7 @@ Status: Complete
 */
 void Effect::init(char *fname, long flags) {
     WinMessageHook = EffectInputCallback;
-    EffectOkHookSlot() = EffectOkCallback;
+    EffectOkHookSlot() = ok_callback;
     EffectDoneHookSlot() = EffectDoneCallback;
     if ((static_cast<uint8_t>(flags) & 0x81) == 0) {
         flags |= 4;
@@ -1734,6 +1734,28 @@ Wave g_CPU_WAVES[45];  // 0x0074C5F0, 0x6c stride
 Wave g_SCOOT_WAVE;  // 0x00749C18
 // RECOVERY_OBJECT: v1 0x0074D8F0 ?g_OK_WAVE@@3VWave@@A
 Wave g_OK_WAVE;  // 0x0074D8F0
+
+// The signed pitch cycle is loaded and stored as a dword by ok_callback.
+// This start binding does not infer the extent of neighboring audio storage.
+// RECOVERY_OBJECT: v1 0x0074DAA8 ?EffectOkPitch@@3HA
+int EffectOkPitch;
+
+// ORIGINAL: 0x00445650 ?ok_callback@@YAXXZ 0x00445650-0x0044569D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:bca75cb0:src/recovered/00445650.cpp", "image:original complete function instructions", "source:src/wave.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
+void __cdecl ok_callback() {
+    g_OK_WAVE.Wave::set_pitch(EffectOkPitch);
+    g_OK_WAVE.Wave::play();
+    int pitch = EffectOkPitch;
+    if (pitch >= 0) {
+        pitch -= 300;
+    } else {
+        pitch += 200;
+    }
+    EffectOkPitch = pitch;
+    if (pitch <= -1200 || pitch >= 1200) {
+        EffectOkPitch = 0;
+    }
+}
 // RECOVERY_OBJECT: v1 0x0074D9D0 ?g_PASSOVER_WAVE@@3VWave@@A
 Wave g_PASSOVER_WAVE;  // 0x0074D9D0
 Wave g_MAININTERFACE_WAVE;  // 0x007D38B8

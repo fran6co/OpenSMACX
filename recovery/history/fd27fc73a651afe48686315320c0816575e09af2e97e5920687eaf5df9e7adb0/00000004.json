@@ -1,0 +1,19 @@
+{
+  "event_id": "2274f3f827ba56776ef244c3a411e89156152e7caaf9f0220ef4e30f1d6692e4",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Original draw_score4A1140 reads nine signed dwords at PlayerData+20A8 through20C8, with count9 at4A16C9 and signed tests4A1527/4A162D. Authorize replacing only unk_110 through unk_118 declarations, including misclassified char unk_111[4], with real int score_items_[9] and source-owned layout evidence. Product search found no other named field users. Preserve20CC following offset and all other declarations; any new affected-owner finding requires review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a6df228c298a10829e42557e4f8db0f0c1533fe1d6c4543cf3fa6b0fce555c8a",
+  "request_id": "reportwin-score-item-array",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:reportwin-owner-coverage"
+}

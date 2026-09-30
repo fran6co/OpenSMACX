@@ -1,0 +1,33 @@
+{
+  "event_id": "70f7c0f5f0956e549241883a6f9139275c03555b33f77574d34d6891277032d3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/base.cpp",
+      "src/base.h",
+      "src/wave.cpp",
+      "src/wave.h"
+    ],
+    "evidence": [
+      "BaseWin staple and confirmation now require genuine action_staple4CA7F0 and ok_callback445650 bodies. Coordinator authorizes their domain-owned recovery and original-boundary/native binding, retiring only replaced seeds after protecting historical claims, plus replacing only the old EffectOkCallback literal-address alias with the real callback. Existing deeper dependency seams remain visible and are not runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5023728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4478544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8ce8b9f9a66dc079771bee26cc42c8eedf17e057b72656e03e031737c23381bc",
+  "request_id": "basewin-behavioral-dependency-bodies",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:basewin-owner-coverage"
+}

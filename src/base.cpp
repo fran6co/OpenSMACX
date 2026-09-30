@@ -36,6 +36,55 @@
 #include "maininterface.h"
 #include "mapwin.h"
 #include "spying_recovery.h"
+#include "general.h"
+#include "netmsg.h"
+
+void __cdecl atrocity(int faction_id, int victim, int kind, int unknown);
+
+// The UI, network and AI callers share the same base-domain operation.
+// ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B
+// RECOVERY_BINDING: v1 {"evidence": ["git:bca75cb0:src/recovered/units/004ca7f0.cpp", "image:original complete function instructions", "source:src/base.cpp"], "reason": "Home the original behavioral dependency in its base/audio domain using typed state and existing named callees; retained seed provenance and original spans remain restoration evidence, not runtime acceptance."}
+void __cdecl action_staple(int base_id) {
+    Base &base = Bases[base_id];
+    const int attempts = ++base.nerve_staple_count;
+    const unsigned int faction = base.faction_id_current;
+    bool success = false;
+    if (attempts <= 2) {
+        success = true;
+    } else if (attempts <= 8 && rand() % 2 != 0) {
+        success = true;
+    }
+    if (success) {
+        base.state &= ~BSTATE_DRONE_RIOTS_ACTIVE;
+        base.nerve_staple_turns_left += 10;
+        draw_tile(base.x, base.y, 2);
+        if (base.faction_id_current == ConsoleGlobal.faction_id_) {
+            parse_says(0, base.name_string, -1, -1);
+            // The original retains this faction across draw_tile and does
+            // not add an ExpansionEnabled test to the alien rule check.
+            popp(reinterpret_cast<char *>(*ClimatePopupTitle), "NERVESTAPLEDONE", 0,
+                 (Players[faction].rule_flags & RFLAG_ALIEN)
+                     ? "ALdrone_sm.pcx" : "drone_sm.pcx", 0);
+        } else {
+            parse_says(0, base.name_string, -1, -1);
+            PluralityDefault = 0;
+            GenderDefault = Players[base.faction_id_current].is_leader_female;
+            parse_says(1, Players[base.faction_id_current].title_leader, -1, -1);
+            PluralityDefault = 0;
+            GenderDefault = Players[base.faction_id_current].is_leader_female;
+            parse_says(2, Players[base.faction_id_current].name_leader, -1, -1);
+            NetMsgPopup->pop("NERVESTAPLETHEM", 5000, 0, 0);
+        }
+    } else if (base.faction_id_current == ConsoleGlobal.faction_id_) {
+        parse_says(0, base.name_string, -1, -1);
+        popp(reinterpret_cast<char *>(*ClimatePopupTitle), "NERVESTAPLEFAIL", 0,
+             (Players[faction].rule_flags & RFLAG_ALIEN)
+                 ? "ALdrone_sm.pcx" : "drone_sm.pcx", 0);
+    }
+    // Failed attempts and foreign bases still report the atrocity.
+    atrocity(base.faction_id_current, base.faction_id_former,
+             base.faction_id_former != base.faction_id_current, 1);
+}
 
 // The base-caption renderer retains the font selected from its shared queue.
 // Original storage: 0x0093FC24. No other product owner currently publishes it.
