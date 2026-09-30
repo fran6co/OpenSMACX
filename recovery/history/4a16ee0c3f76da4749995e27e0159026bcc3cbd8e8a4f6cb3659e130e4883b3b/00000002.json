@@ -1,0 +1,19 @@
+{
+  "event_id": "45c32922eb7adc61c57b86b6213314c20214dea38e2236a8cdc675a9db7ca3b7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator serial integration replaces only the4E5250base_kill forwarder with its retained reviewed base.cpp implementation. Existing Interlude owner supplies the referenced free story operation; GameInterludeFlags remains the faction/game owner. Preserve all other forwarders, original identities, seeds and claims and require full compile/link."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "50a73ef6fbcd2f34e957584c8bb5a9c771e79c7fecc158ce31514604a56cd410",
+  "request_id": "root-base-kill-forwarder-retirement",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:base-lifecycle-owner-closure"
+}
