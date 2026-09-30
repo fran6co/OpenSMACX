@@ -1,0 +1,27 @@
+{
+  "event_id": "3b44fa9689d76b2403215953f821936445d1d5842ca956e3c7c41ba654392035",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "MapWin right_menu/click call action_arty4CD090; current source has no implementation and fresh application link reports only missing ?action_arty@@YAXHHH@Z. The retained mapped seed src/recovered/units/004cd090.cpp preserves the full605-byte body and all historical evidence.",
+      "Coordinator user permits explicitly unfinished owning-TU bodies for newly referenced functions. Authorize only declaration, empty BODY GOES HERE body and native unclaimed BODY binding for this dependency; do not count it as recovered behavior, discard the seed, grant claims or substitute raw executable calls. Completing its combat closure is a separate recovery step."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5034128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "59095ee2cb8af504fb175136221f0f2894e5cab0e1fe1ea0bcff8f38c45061f9",
+  "request_id": "mapwin-artillery-link-continuity-20260930",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

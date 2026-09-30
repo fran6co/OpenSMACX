@@ -66,7 +66,8 @@ def actual_source():
     veh = (ROOT / "src/veh.cpp").read_text()
     parts["DIRECTIONS"] = "\n".join(re.findall(r"^int VehMoveDelta[XY]\[9\] = \{[^}]+\};", veh, re.M))
     parts["BODY"] = "\n".join(braced(cpp, signature) for signature in (
-        "int map_dest_signed(", "int map_dest_add(", "int map_dest_sub(", "int map_dest_mul(",
+        "int map_dest_signed(", "int mapwin_dest_add(int left, int right) {",
+        "int mapwin_dest_sub(int left, int right) {", "int mapwin_dest_mul(int left, int right) {",
         "int map_dest_abs(", "int map_dest_half(", "int map_dest_distance(", "bool map_dest_in_view(",
         "void MapWin::direct_dest_line(", "void MapWin::dest_line("))
     assert all(parts.values())
@@ -281,26 +282,26 @@ MUTANTS = [
     ("project-owner", "Bases[project_base].faction_id_current != faction", "Bases[project_base].faction_id_current == faction"),
     ("weapon-zero", "offense_rating == 0", "offense_rating <= 0"),
     ("last-direction", "last_direction = direction;", "last_direction = -1;"),
-    ("live-cost", "MapDestinationCost = map_dest_add(MapDestinationCost, cost);", "MapDestinationCost = cost;"),
+    ("live-cost", "MapDestinationCost = mapwin_dest_add(MapDestinationCost, cost);", "MapDestinationCost = cost;"),
     ("arrival-before-fog", "if (next_x == x2 && next_y == y2)", "if (false)"),
     ("visibility-field", "map_loc(next_x, next_y)->visibility", "map_loc(next_x, next_y)->val2"),
     ("visibility-bit", "static_cast<uint32_t>(faction) & 31", "static_cast<uint32_t>(faction + 1) & 31"),
     ("player-visibility", "(PlayersData[faction].flags & 0x200) == 0", "true"),
     ("editor-visibility", "(GameState & 0x80) == 0", "true"),
     ("rules-visibility", "(GameRules & 0x100) == 0", "true"),
-    ("step-strict-limit", "steps > map_dest_mul(MapLongitudeBounds, 2)", "steps >= map_dest_mul(MapLongitudeBounds, 2)"),
+    ("step-strict-limit", "steps > mapwin_dest_mul(MapLongitudeBounds, 2)", "steps >= mapwin_dest_mul(MapLongitudeBounds, 2)"),
     ("both-endpoints", "map_dest_in_view(*this, current_x, current_y) ||", "map_dest_in_view(*this, current_x, current_y) &&"),
     ("exclusive-bottom", "if (y >= bottom)", "if (y > bottom)"),
     ("exclusive-right", "return x >= left && x < right;", "return x >= left && x <= right;"),
     ("extent-margin", "window.field_1DDD4_,", "0,"),
-    ("wrapped-distance", "dx = map_dest_sub(MapLongitudeBounds, dx);", "dx = dx;"),
+    ("wrapped-distance", "dx = mapwin_dest_sub(MapLongitudeBounds, dx);", "dx = dx;"),
     ("fallback-distance-half", "map_dest_half(map_dest_distance(x1, y1, x2, y2))", "map_dest_distance(x1, y1, x2, y2)"),
     ("source-y-default-color", "color = y1;", "color = triad;"),
     ("forced-color", "color = 0xfb;", "color = 0xfa;"),
     ("cover-conversions", "Win::screen_to_client(&pixel_x2, &pixel_y2);", ""),
     ("pattern-phase", "static_cast<uint32_t>(PlanLineCounter)", "0U"),
-    ("sea-offset", "pixel_x1 = map_dest_add(pixel_x1, 1);", "pixel_x1 = map_dest_sub(pixel_x1, 1);"),
-    ("air-offset", "pixel_y1 = map_dest_sub(pixel_y1, 1);", "pixel_y1 = map_dest_add(pixel_y1, 1);"),
+    ("sea-offset", "pixel_x1 = mapwin_dest_add(pixel_x1, 1);", "pixel_x1 = mapwin_dest_sub(pixel_x1, 1);"),
+    ("air-offset", "pixel_y1 = mapwin_dest_sub(pixel_y1, 1);", "pixel_y1 = mapwin_dest_add(pixel_y1, 1);"),
 ]
 
 
@@ -314,3 +315,111 @@ def test_compiling_route_damage(tmp_path, name, before, after):
         name, "expected an explicit behavioral assertion, not a crash or sanitizer failure",
         result.returncode, result.stderr,
     )
+
+
+def body(signature):
+    source = (ROOT / "src/mapwin.cpp").read_text()
+    start = source.index(signature)
+    return source[start:source.index("\n}", start) + 2]
+
+def execute(tmp_path, harness, candidate, name):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    executable = tmp_path / name
+    subprocess.run([compiler, "-std=c++17", "-x", "c++", "-", "-o", str(executable)],
+                   input=harness.replace("BODY", candidate), text=True,
+                   capture_output=True, check=True)
+    return subprocess.run([str(executable)], capture_output=True).returncode
+
+ROUTES = r'''
+#include <cassert>
+#include <cstdint>
+struct Base {int faction_id_current,x,y;int auto_forward_land_base_id,auto_forward_sea_base_id,auto_forward_air_base_id;};
+struct Veh {int faction_id,proto_id,x,y,order;uint32_t state;unsigned char waypoint_count;short waypoint_x[4],waypoint_y[4];};
+Base Bases[2];Veh Vehs[2];int BaseCurrentCount,VehCurrentCount;
+int MapIsFlat=1,MapLongitudeBounds=100;struct {int faction_id_;}ConsoleGlobal;
+const int ORDER_MOVE_TO=0x18;const uint32_t VSTATE_UNK_2000000=0x2000000;
+int mapwin_dest_add(int a,int b){return a+b;}int mapwin_dest_sub(int a,int b){return a-b;}
+int get_proto_triad(int){return 2;}
+struct Line {int x,y,dx,dy,style;}lines[16];int count,updates;
+struct MapWin {
+ uint32_t field_1DD70_;int field_1DDA8_=0,field_1DDD8_=10,field_1DDD0_=0;
+ int field_1DDA4_=0,field_1DDD4_=10,field_1DDCC_=0;
+ void draw_base_dest(int);
+ void dest_line(int x,int y,int dx,int dy,int,int,int,int,int style,int,int){lines[count++]={x,y,dx,dy,style};}
+ void on_update(){++updates;}
+};
+BODY
+void reset(){count=updates=BaseCurrentCount=0;VehCurrentCount=1;Vehs[0]=Veh{};
+ Vehs[0].order=ORDER_MOVE_TO;Vehs[0].state=0x1000200;
+ for(int i=0;i<4;++i){Vehs[0].waypoint_x[i]=10+i;Vehs[0].waypoint_y[i]=20+i;}}
+int main(){MapWin w;w.field_1DD70_=0xC00000;
+ reset();w.draw_base_dest(1);assert(count==0&&updates==1);
+ reset();Vehs[0].waypoint_count=2;w.draw_base_dest(1);
+ assert(count==3&&updates==1);
+ for(int i=0;i<3;++i){assert(lines[i].style==3);assert(lines[i].x==10+i);assert(lines[i].dx==10+(i+1)%3);}
+ reset();w.field_1DD70_=0x800000;Vehs[0].waypoint_count=2;
+ Vehs[0].state|=VSTATE_UNK_2000000;w.draw_base_dest(1);
+ assert(count==3&&updates==1);for(int i=0;i<3;++i)assert(lines[i].style==2);
+ reset();w.field_1DD70_=0xC00000;Vehs[0].faction_id=1;
+ w.draw_base_dest(1);assert(count==0&&updates==0);
+ reset();w.draw_base_dest(0);assert(count==0&&updates==0);
+}
+'''
+
+LEGEND = r'''
+#include <cassert>
+#include <cstring>
+#include <cstdio>
+struct Font {void init(const char*,int height,int style){assert(height==12&&style==1);}};
+const char*DefaultFontFace="Arial";
+struct {int cursor_history_index_;int cursor_history_x_[32],cursor_history_y_[32];}ConsoleGlobal;
+int MapLongitudeBounds=100,MapLatitudeBounds=100,MapIsFlat=1;
+int VehMoveDeltaX[9]={-1,0,1,2,1,0,-1,-2,0};
+int VehMoveDeltaY[9]={-1,-2,-1,0,1,2,1,0,0};
+const int RadiusBaseX[9]={-1,0,1,2,1,0,-1,-2,0};
+const int RadiusBaseY[9]={-1,-2,-1,0,1,2,1,0,0};
+const int MapDirectionPermutation[9]={9,6,3,2,1,4,7,8,5};char StringTemp[256];
+char*_itoa(int n,char*p,int base){assert(base==10);std::sprintf(p,"%d",n);return p;}
+int calls,xs[8],ys[8],digits[8];
+struct Buffer {
+ void set_text_color(int a,int b,int c,int d){assert(a==255&&b==0&&c==1&&d==1);}
+ void write_cent_l(Font*,const char*s,int x,int y,int width,int height,int n){
+  assert(width==24&&height==18&&n==1);xs[calls]=x;ys[calls]=y;digits[calls++]=s[0]-'0';}
+};
+struct MapWin:Buffer {int field_1DDB8_=18,field_1DDB4_=24;void draw_legend();
+ void tile_to_pixel(int x,int y,int*px,int*py){*px=x;*py=y;}};
+BODY
+int main(){MapWin w;ConsoleGlobal.cursor_history_x_[0]=40;ConsoleGlobal.cursor_history_y_[0]=50;
+ VehMoveDeltaX[0]=7;VehMoveDeltaY[0]=9;w.draw_legend();
+ assert(calls==8&&xs[0]==47&&ys[0]==59&&digits[0]==9);
+ for(int i=1;i<8;++i){assert(xs[i]==40+VehMoveDeltaX[i]);assert(ys[i]==50+VehMoveDeltaY[i]);assert(digits[i]==MapDirectionPermutation[i]);}
+ calls=0;ConsoleGlobal.cursor_history_x_[0]=0;MapIsFlat=0;VehMoveDeltaX[0]=-1;
+ w.draw_legend();assert(calls==8&&xs[0]==99);
+}
+'''
+
+def test_route_precedence_and_zero_waypoint_refresh(tmp_path):
+    # Original467C21..467D8E selects only one route and publishes work even
+    # when the repeated route emits no segment.467DCA refreshes afterward.
+    candidate = body("void MapWin::draw_base_dest(int draw_type) {")
+    assert execute(tmp_path, ROUTES, candidate, "routes") == 0
+    double_route = candidate.replace(
+        "} else {\n                dest_line(vehicle.x",
+        "}\n            if (ordered_route) {\n                dest_line(vehicle.x")
+    assert double_route != candidate
+    assert execute(tmp_path, ROUTES, double_route, "double_route") != 0
+    missing_refresh = candidate.replace("            any = true;",
+                                        "            any = count != 0;")
+    assert missing_refresh != candidate
+    assert execute(tmp_path, ROUTES, missing_refresh, "missing_refresh") != 0
+
+def test_legend_reads_live_delta_owners(tmp_path):
+    # Original469787/4697AF read66EF50/66EF74, not immutable radius tables.
+    candidate = body("void MapWin::draw_legend() {")
+    assert execute(tmp_path, LEGEND, candidate, "legend") == 0
+    damaged = candidate.replace("VehMoveDeltaX[direction]", "RadiusBaseX[direction]")
+    damaged = damaged.replace("VehMoveDeltaY[direction]", "RadiusBaseY[direction]")
+    assert damaged != candidate
+    assert execute(tmp_path, LEGEND, damaged, "wrong_owner") != 0

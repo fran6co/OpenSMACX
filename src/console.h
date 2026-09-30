@@ -109,6 +109,9 @@ class Console : public MapWin {
   friend class MainInterface;
   // TutWin's tutorial tour checks and reopens the owned AlphaMenu.
   friend class TutWin;
+  // MapWin's input handlers operate the existing Console cursor state.
+  friend class MapWin;
+  friend void __cdecl go_timer(int selection_mode);
  public:
   void chat(int faction_id);
   void road_to(int veh_id, int cursor_mode);
@@ -444,6 +447,7 @@ class Console : public MapWin {
   void end_my_turn();
   void menu_detail();
   void show_scen_objectives();
+  void zoom(int zoom_command, int window_index);
   void zoom_to_upkeep_base();
   void clear_group();
   void set_preferences();

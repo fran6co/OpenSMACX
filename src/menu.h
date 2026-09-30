@@ -96,6 +96,10 @@ class Menu : public GraphicWin {
   // AlphaMenu::on_adjust_pulldown_pos is an inherited-owner operation: the
   // original directly reads Menu's active entry index and embedded Spot.
   friend class AlphaMenu;
+  // MapWin::right_menu selects the existing submenu stored on a typed
+  // MenuEntry after id_to_index; this is access to the existing entry, not a
+  // new menu lookup or storage view.
+  friend class MapWin;
 
   MenuProc proc_;
   int count_;

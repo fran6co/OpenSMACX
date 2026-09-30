@@ -1,0 +1,21 @@
+{
+  "event_id": "8aba1cad801263e3271ab7d6f7654001b05dab1b84dbc3eec2f2a8ab05451a0a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_mapwin_routes.py"
+    ],
+    "evidence": [
+      "Coordinator integration authorizes durable actual-body controls for original467970 route precedence and zero-waypoint refresh, and469720 live delta-table reads, each including a deliberate failing damage control. These are bounded host controls, not ABI or game acceptance.",
+      "Retire only nine replaced MapWin pending forwarders and update adjacent stale descriptions; lower resulting debt ceilings in the same verified recovery commit, never raise ceilings or weaken historical claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3b44fa9689d76b2403215953f821936445d1d5842ca956e3c7c41ba654392035",
+  "request_id": "mapwin-integration-controls-and-debt-20260930",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

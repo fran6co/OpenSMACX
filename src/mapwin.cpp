@@ -48,6 +48,13 @@
 #include "strings.h"   // StringTemp is also the shared main-caption scratch buffer.
 #include "temp.h"      // PlanLineCounter controls the patterned-line phase.
 #include "alpha.h"     // Rules movement rate and label_get text lookup.
+#include "spying_recovery.h"  // Faction knowledge gate used for map labels.
+#include "pulldown.h"  // The context menu owns its live item and submenu rows.
+#include "xpops.h"     // right_menu confirms the original whole-stack order.
+#include "popup.h"     // click owns a genuine stack Popup for base routing.
+#include "netmsg.h"    // NetMsgPopup reports invalid inter-base routes.
+#include "netdaemon.h" // click owns the vehicle/base lock interval.
+#include "time.h"      // go_reset clears the prior capture/cursor state.
 #include <cstring>
 #include <stdlib.h>
 
@@ -69,7 +76,27 @@ MapPanelRect MapPanelRects[2];
 // RECOVERY_OBJECT: v2 0x00939EDC 0x00939EE0 ?MapPanelDirtyMask@@3IA 0x0046FA20
 uint32_t MapPanelDirtyMask;
 
+// 0x007D3C28..0x007D3C38 - rectangle published by calculate_dimensions for
+// the primary window: west/north/east/south map-view bounds, also consumed by
+// MapWin::focus's base-window hit test.
+// Original462A9F..462AEB publishes four adjacent dwords;46B330 passes their
+// start to in_box. The loader supplies sixteen zero bytes, and both compiler
+// flag sets emit a standalone tagRECT object. Do not absorb the next dword.
+// RECOVERY_OBJECT: v2 0x007D3C28 0x007D3C38 ?MapWinPrimaryCorner@@3UtagRECT@@A 0x00462980
+RECT MapWinPrimaryCorner;
+
 void __fastcall MapWin_UNK5(MapWin *window, void *, int panel);
+int __cdecl veh_find(int x, int y, int faction_id, int skip_vehicle_id);
+int __cdecl veh_ready(int vehicle_id);
+void __cdecl help_any();
+void __cdecl action_arty(int vehicle_id, int x, int y);
+void __cdecl action_patrol(int vehicle_id, int x, int y);
+
+namespace {
+int mapwin_dest_add(int left, int right);
+int mapwin_dest_sub(int left, int right);
+int mapwin_dest_mul(int left, int right);
+}
 
 // The active map bounds, panel layouts, faction caption records and tutorial
 // base rectangle all have source-owned receivers below.
@@ -486,6 +513,26 @@ void MapWin::editor(int tile_x, int tile_y, int erase) {
     }
 }
 
+// ORIGINAL: 0x0046C020 ?UNK4@MapWin@@QAEXHH@Z 0x0046C020-0x0046C0C9 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0046c020.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::UNK4(int tile_x, int tile_y) {
+    editor(tile_x, tile_y, static_cast<int>(field_1DD8C_ & 2));
+    field_1DD8C_ = 0;
+
+    if (MapEditorPaintId == 0 || MapEditorPaintId == 2 ||
+        MapEditorPaintId == 0x12) {
+        world_climate();
+    }
+
+    for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window != nullptr &&
+            (slot == 0 || window->field_1DD74_ != 0)) {
+            window->draw_map(1);
+        }
+    }
+}
+
 /*
 Purpose: Build a map window - attach its embedded GraphicWin virtual base,
          then its own TextureStore/Buffer/Font/ImageButton members.
@@ -759,6 +806,42 @@ void MapWin::on_sys_close() {
     }
 }
 
+// Original0x0046F8C0 resets the side panels before dispatching one of the four
+// map-window buttons. The fourth button toggles the custom world-scale label.
+// ORIGINAL: 0x0046F8C0 ?on_button_clicked@MapWin@@QAEXH@Z 0x0046F8C0-0x0046F9E6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046f8c0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+// symbol    ?on_button_clicked@MapWin@@UAEXH@Z
+void MapWin::on_button_clicked(int button) {
+    ConsoleInfoWin.reset();
+    ConsoleStatusWin.reset();
+    switch (button) {
+    case 0:
+        if (field_1DD78_ != 0) {
+            field_1DD74_ = 0;
+            close();
+        }
+        break;
+    case 1:
+        ConsoleGlobal.zoom(0x203, static_cast<int>(field_1DD78_));
+        break;
+    case 2:
+        ConsoleGlobal.zoom(0x204, static_cast<int>(field_1DD78_));
+        break;
+    case 3:
+        if (field_1DD78_ != 0) {
+            field_1DD70_ ^= 0x40000000U;
+            StringTemp[0] = '\0';
+            const int label = (field_1DD70_ & 0x40000000U) != 0
+                ? 0x100 : 0x101;
+            strcat(StringTemp, label_get(label));
+            Win::set_caption(StringTemp);
+        }
+        break;
+    default:
+        break;
+    }
+}
+
 
 /*
 Purpose: Report a left click on the map, but only when map input is enabled.
@@ -958,6 +1041,108 @@ Status: Complete
 */
 int MapWin::UNK1() {
     return this == reinterpret_cast<MapWin *>(&ConsoleGlobal) ? 1 : 0;
+}
+
+// Original0x0046B310 tests the requested tile against the visible scroll
+// window, clamps it to the map, and recentres only when it reaches an edge.
+// The primary Console-derived map has an additional base-window hit region.
+// ORIGINAL: 0x0046B310 ?focus@MapWin@@QAEHHH@Z 0x0046B310-0x0046B50C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0046b310.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+int MapWin::focus(int x_coord, int y_coord) {
+    int moved = 0;
+    if (this == static_cast<MapWin *>(&ConsoleGlobal)) {
+        if (in_box(x_coord, y_coord, &MapWinPrimaryCorner) != 0) {
+            return 0;
+        }
+        if (field_1DD78_ == 0) {
+            ConsoleGlobal.field_23BFC_ = 1;
+            ConsoleGlobal.field_23BF8_ = ConsoleGlobal.cursor_active_ == 0;
+        }
+        field_21A44_ = 1;
+        set_center(x_coord, y_coord, 1);
+        field_21A44_ = 0;
+        return 1;
+    }
+
+    const bool flat = (MapIsFlat & 1) != 0;
+    const int left = field_1DDA4_;
+    int right = mapwin_dest_sub(mapwin_dest_add(left,
+        mapwin_dest_mul(field_1DDD4_, 2)), 2);
+    if (!flat) {
+        if (right >= 0) {
+            if (right >= static_cast<int>(MapLongitudeBounds)) {
+                right = mapwin_dest_sub(right, MapLongitudeBounds);
+            }
+        } else {
+            right = mapwin_dest_add(right, MapLongitudeBounds);
+        }
+    }
+    const int top = field_1DDA8_;
+    const int bottom = mapwin_dest_sub(mapwin_dest_add(top,
+        mapwin_dest_mul(field_1DDD8_, 2)), 2);
+    int x = x_coord;
+    int y = y_coord;
+    if (!flat) {
+        const int wrap_threshold = mapwin_dest_mul(field_1DDCC_, 2);
+        if (x <= wrap_threshold &&
+            left >= mapwin_dest_sub(MapLongitudeBounds, wrap_threshold)) {
+            x = mapwin_dest_add(x, MapLongitudeBounds);
+        }
+    }
+
+    const int step = static_cast<int32_t>(field_1DD70_) < 0 ? 4 : 2;
+    if (field_1DDAC_ == 0) {
+        if (flat) {
+            const int maximum = mapwin_dest_sub(
+                mapwin_dest_sub(MapLongitudeBounds, step), 1);
+            if (x < step || maximum < step) {
+                x = step;
+            } else if (x > maximum) {
+                x = maximum;
+            }
+        } else {
+            const int maximum = mapwin_dest_sub(right, step);
+            if (x < step || maximum < step) {
+                x = step;
+            } else if (x > maximum) {
+                x = maximum;
+            }
+        }
+        if (x & 1) --x;
+        if (y_coord & 1) ++x;
+        if (!flat) {
+            if (x <= mapwin_dest_add(left, step) &&
+                x < mapwin_dest_sub(right, step)) {
+                moved = 1;
+            }
+        }
+    }
+
+    if (field_1DDB0_ == 0) {
+        const int maximum = mapwin_dest_sub(
+            mapwin_dest_sub(MapLatitudeBounds, step), 1);
+        if (y < step || maximum < step) {
+            y = step;
+        } else if (y > maximum) {
+            y = maximum;
+        }
+        if (x & 1) --x;
+        if (y & 1) ++x;
+        if (y <= mapwin_dest_add(top, step) ||
+            y >= mapwin_dest_sub(bottom, step)) {
+            moved = 1;
+        }
+    }
+
+    if (moved == 0) {
+        return 0;
+    }
+    if (field_1DD78_ == 0) {
+        ConsoleGlobal.field_23BFC_ = 1;
+        ConsoleGlobal.field_23BF8_ = ConsoleGlobal.cursor_active_ == 0;
+    }
+    set_center(x, y, 1);
+    return moved;
 }
 
 // ORIGINAL: 0x0046B1F0 ?set_center@MapWin@@QAEXHHH@Z 0x0046B1F0-0x0046B303
@@ -1345,25 +1530,29 @@ void MapWin::draw_map(int draw_type) {
 }
 
 namespace {
+int mapwin_dest_add(int left, int right);
+int mapwin_dest_sub(int left, int right);
+int mapwin_dest_mul(int left, int right);
+
 int map_dest_signed(uint32_t value) {
     return value <= 0x7fffffffU ? static_cast<int>(value)
                               : -1 - static_cast<int>(0xffffffffU - value);
 }
 
-int map_dest_add(int left, int right) {
+int mapwin_dest_add(int left, int right) {
     return map_dest_signed(static_cast<uint32_t>(left) + static_cast<uint32_t>(right));
 }
 
-int map_dest_sub(int left, int right) {
+int mapwin_dest_sub(int left, int right) {
     return map_dest_signed(static_cast<uint32_t>(left) - static_cast<uint32_t>(right));
 }
 
-int map_dest_mul(int left, int right) {
+int mapwin_dest_mul(int left, int right) {
     return map_dest_signed(static_cast<uint32_t>(left) * static_cast<uint32_t>(right));
 }
 
 int map_dest_abs(int value) {
-    return value < 0 ? map_dest_sub(0, value) : value;
+    return value < 0 ? mapwin_dest_sub(0, value) : value;
 }
 
 int map_dest_half(int value) {
@@ -1371,11 +1560,11 @@ int map_dest_half(int value) {
 }
 
 int map_dest_distance(int x1, int y1, int x2, int y2) {
-    int dx = map_dest_abs(map_dest_sub(x1, x2));
+    int dx = map_dest_abs(mapwin_dest_sub(x1, x2));
     if ((MapIsFlat & 1) == 0 && dx > map_dest_signed(MapLongitude)) {
-        dx = map_dest_sub(MapLongitudeBounds, dx);
+        dx = mapwin_dest_sub(MapLongitudeBounds, dx);
     }
-    return map_dest_add(dx, map_dest_abs(map_dest_sub(y1, y2)));
+    return mapwin_dest_add(dx, map_dest_abs(mapwin_dest_sub(y1, y2)));
 }
 
 bool map_dest_in_view(const MapWin &window, int x, int y) {
@@ -1383,21 +1572,21 @@ bool map_dest_in_view(const MapWin &window, int x, int y) {
     if (y < top) {
         return false;
     }
-    const int bottom = map_dest_add(map_dest_add(window.field_1DDD8_,
+    const int bottom = mapwin_dest_add(mapwin_dest_add(window.field_1DDD8_,
                                                 window.field_1DDD0_), top);
     if (y >= bottom) {
         return false;
     }
     const int left = window.field_1DDA4_;
-    const int right = map_dest_add(map_dest_add(window.field_1DDD4_,
+    const int right = mapwin_dest_add(mapwin_dest_add(window.field_1DDD4_,
                                                window.field_1DDCC_), left);
     // Normalize a probe, not the endpoints passed to direct_dest_line.
     if ((MapIsFlat & 1) == 0) {
         if (x < left) {
-            x = map_dest_add(x, MapLongitudeBounds);
+            x = mapwin_dest_add(x, MapLongitudeBounds);
         }
         if (x >= right) {
-            x = map_dest_sub(x, MapLongitudeBounds);
+            x = mapwin_dest_sub(x, MapLongitudeBounds);
         }
     }
     return x >= left && x < right;
@@ -1418,10 +1607,10 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
     // Both center offsets are read after BOTH conversions, then reused.
     const int center_x = map_dest_signed(field_1DDBC_);
     const int center_y = map_dest_signed(field_1DDC0_);
-    pixel_x1 = map_dest_add(pixel_x1, center_x);
-    pixel_y1 = map_dest_add(pixel_y1, center_y);
-    pixel_x2 = map_dest_add(pixel_x2, center_x);
-    pixel_y2 = map_dest_add(pixel_y2, center_y);
+    pixel_x1 = mapwin_dest_add(pixel_x1, center_x);
+    pixel_y1 = mapwin_dest_add(pixel_y1, center_y);
+    pixel_x2 = mapwin_dest_add(pixel_x2, center_x);
+    pixel_y2 = mapwin_dest_add(pixel_y2, center_y);
 
     int color;
     switch (triad) {
@@ -1431,17 +1620,17 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
     case 1:
         color = 0xfe;
         if (cover == 0) {
-            pixel_x1 = map_dest_add(pixel_x1, 1);
-            pixel_x2 = map_dest_add(pixel_x2, 1);
-            pixel_y1 = map_dest_add(pixel_y1, 1);
-            pixel_y2 = map_dest_add(pixel_y2, 1);
+            pixel_x1 = mapwin_dest_add(pixel_x1, 1);
+            pixel_x2 = mapwin_dest_add(pixel_x2, 1);
+            pixel_y1 = mapwin_dest_add(pixel_y1, 1);
+            pixel_y2 = mapwin_dest_add(pixel_y2, 1);
         }
         break;
     case 2:
         color = 0xf9;
         if (cover == 0) {
-            pixel_y1 = map_dest_sub(pixel_y1, 1);
-            pixel_y2 = map_dest_sub(pixel_y2, 1);
+            pixel_y1 = mapwin_dest_sub(pixel_y1, 1);
+            pixel_y2 = mapwin_dest_sub(pixel_y2, 1);
         }
         break;
     default:
@@ -1459,7 +1648,7 @@ void MapWin::direct_dest_line(int x1, int y1, int x2, int y2, int triad,
         CoverWindow.Buffer::line(pixel_x1, pixel_y1, pixel_x2, pixel_y2, color);
     } else {
         const int phase = map_dest_signed(
-            static_cast<uint32_t>(map_dest_sub(map_dest_add(pattern_on, pattern_off), 1)) &
+            static_cast<uint32_t>(mapwin_dest_sub(mapwin_dest_add(pattern_on, pattern_off), 1)) &
             static_cast<uint32_t>(PlanLineCounter));
         // This genuine nine-argument dependency is not omitted: its owning
         // Buffer implementation is a separate, explicit recovery obligation.
@@ -1532,15 +1721,15 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                 direction = compass_move(current_x, current_y, x2, y2);
             }
             last_direction = direction;
-            int next_x = map_dest_add(current_x, VehMoveDeltaX[direction]);
+            int next_x = mapwin_dest_add(current_x, VehMoveDeltaX[direction]);
             if ((MapIsFlat & 1) == 0) {
                 if (next_x < 0) {
-                    next_x = map_dest_add(next_x, MapLongitudeBounds);
+                    next_x = mapwin_dest_add(next_x, MapLongitudeBounds);
                 } else if (next_x >= MapLongitudeBounds) {
-                    next_x = map_dest_sub(next_x, MapLongitudeBounds);
+                    next_x = mapwin_dest_sub(next_x, MapLongitudeBounds);
                 }
             }
-            const int next_y = map_dest_add(current_y, VehMoveDeltaY[direction]);
+            const int next_y = mapwin_dest_add(current_y, VehMoveDeltaY[direction]);
 
             if (pass != 0) {
                 if (proto_id >= 0) {
@@ -1549,7 +1738,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                                               current_x, current_y, next_x, next_y,
                                               speed == map_dest_signed(Rules.move_rate_roads));
                     // hex_cost can update shared state: load the cost AFTER it.
-                    MapDestinationCost = map_dest_add(MapDestinationCost, cost);
+                    MapDestinationCost = mapwin_dest_add(MapDestinationCost, cost);
                 }
                 if (map_dest_in_view(*this, current_x, current_y) ||
                     map_dest_in_view(*this, next_x, next_y)) {
@@ -1568,8 +1757,8 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
                 (GameState & 0x80) == 0 && (GameRules & 0x100) == 0) {
                 fallback = true;
             }
-            steps = map_dest_add(steps, 1);
-            if (steps > map_dest_mul(MapLongitudeBounds, 2)) {
+            steps = mapwin_dest_add(steps, 1);
+            if (steps > mapwin_dest_mul(MapLongitudeBounds, 2)) {
                 fallback = true;
             }
             if (fallback) {
@@ -1581,7 +1770,7 @@ void MapWin::dest_line(int x1, int y1, int x2, int y2, int proto_id,
     }
 
     if (fallback) {
-        MapDestinationCost = map_dest_mul(
+        MapDestinationCost = mapwin_dest_mul(
             map_dest_half(map_dest_distance(x1, y1, x2, y2)),
             map_dest_signed(Rules.move_rate_roads));
         direct_dest_line(x1, y1, x2, y2, triad, pattern_on, pattern_off, cover);
@@ -1804,9 +1993,9 @@ namespace {
 int map_radius_wrap_x(int x) {
     if ((MapIsFlat & 1) == 0) {
         if (x < 0) {
-            x = map_dest_add(x, MapLongitudeBounds);
+            x = mapwin_dest_add(x, MapLongitudeBounds);
         } else if (x >= MapLongitudeBounds) {
-            x = map_dest_sub(x, MapLongitudeBounds);
+            x = mapwin_dest_sub(x, MapLongitudeBounds);
         }
     }
     return x;
@@ -1820,8 +2009,8 @@ bool map_radius_valid(int x, int y) {
 int map_radius_half_width(int extent, int row) {
     // This is intentionally NOT a symmetric diamond. Original4693A4..3BB
     // narrows negative rows by their distance, but positive rows by parity.
-    const int inset = row < 0 ? map_dest_sub(0, row) : row & 1;
-    return map_dest_sub(extent, inset);
+    const int inset = row < 0 ? mapwin_dest_sub(0, row) : row & 1;
+    return mapwin_dest_sub(extent, inset);
 }
 }
 
@@ -1835,29 +2024,29 @@ int MapWin::tile_in_view(int x, int y, int margin) {
     if (margin != 0 && map_radius_valid(x, y)) {
         const int climate = map_loc(x, y)->climate;
         if ((climate & 0xe0) > 0x60 &&
-            map_dest_add(map_dest_sub(y, climate >> 5), 3) <
-                map_dest_add(field_1DDA8_, margin)) {
+            mapwin_dest_add(mapwin_dest_sub(y, climate >> 5), 3) <
+                mapwin_dest_add(field_1DDA8_, margin)) {
             return 0;
         }
     }
     const int top = field_1DDA8_;
-    if (y < map_dest_add(top, margin)) {
+    if (y < mapwin_dest_add(top, margin)) {
         return 0;
     }
-    const int bottom = map_dest_add(
-        map_dest_sub(map_dest_add(field_1DDD8_, field_1DDD0_), margin), top);
+    const int bottom = mapwin_dest_add(
+        mapwin_dest_sub(mapwin_dest_add(field_1DDD8_, field_1DDD0_), margin), top);
     if (y >= bottom) {
         return 0;
     }
-    const int left = map_dest_add(field_1DDA4_, margin);
-    const int right = map_dest_add(
-        map_dest_sub(map_dest_add(field_1DDD4_, field_1DDCC_), margin), field_1DDA4_);
+    const int left = mapwin_dest_add(field_1DDA4_, margin);
+    const int right = mapwin_dest_add(
+        mapwin_dest_sub(mapwin_dest_add(field_1DDD4_, field_1DDCC_), margin), field_1DDA4_);
     if ((MapIsFlat & 1) == 0) {
         if (x < left) {
-            x = map_dest_add(x, MapLongitudeBounds);
+            x = mapwin_dest_add(x, MapLongitudeBounds);
         }
         if (x >= right) {
-            x = map_dest_sub(x, MapLongitudeBounds);
+            x = mapwin_dest_sub(x, MapLongitudeBounds);
         }
     }
     return x >= left && x < right;
@@ -1877,38 +2066,169 @@ int __cdecl gen_window_terrain(MapWin *window, int zoom, int faction,
                             x, y, pixel_x, pixel_y);
 }
 
+// ORIGINAL: 0x00466CA0 ?draw_vehicles@MapWin@@QAEXHHHHH@Z 0x00466CA0-0x0046718F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00466ca0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::draw_vehicles(int tile_x, int tile_y, int pixel_x, int pixel_y,
+                           int faction_id) {
+    int draw_state = 2;
+    const uint32_t window_flags = field_1DD70_;
+    if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
+        (GameRules & 0x80) == 0) {
+        return;
+    }
+    if ((window_flags & 0x01000000U) != 0 ||
+        (window_flags & 0x802000C0U) == 0 ||
+        (window_flags & 0x00100000U) != 0) {
+        return;
+    }
+
+    const int half_x = tile_x >> 1;
+    bool draw_base = false;
+    if ((window_flags & 0x80000000U) == 0 ||
+        (window_flags & 0x80U) != 0) {
+        if ((GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+            (PlayersData[faction_id].flags & 0x200U) != 0 ||
+            (map_loc(tile_x, tile_y)->visibility & (1U << faction_id)) != 0) {
+            draw_base = true;
+        }
+    }
+    if (draw_base) {
+        draw_bases(tile_x, tile_y, pixel_x, pixel_y, faction_id);
+    }
+    if ((window_flags & 0x80000000U) != 0) return;
+
+    int target = -1;
+    if (VehDrawSuppressedVehicle != -1 &&
+        Vehs[VehDrawSuppressedVehicle].x == tile_x &&
+        Vehs[VehDrawSuppressedVehicle].y == tile_y) {
+        target = VehDrawSuppressedVehicle;
+        draw_state = 3;
+        goto draw_target;
+    }
+    if (VehDrawSelection689F28 >= 0 &&
+        Vehs[VehDrawSelection689F28].x == tile_x &&
+        Vehs[VehDrawSelection689F28].y == tile_y) {
+        target = VehDrawSelection689F28;
+        if (VehPrototypes[Vehs[target].proto_id].chassis_id == 8) {
+            target = Vehs[target].next_veh_id_stack;
+            if (target < 0) return;
+        }
+        goto draw_target;
+    }
+    if (VehDrawSelection689F2C >= 0 &&
+        Vehs[VehDrawSelection689F2C].x == tile_x &&
+        Vehs[VehDrawSelection689F2C].y == tile_y) {
+        target = VehDrawSelection689F2C;
+        goto draw_target;
+    }
+
+    if ((GameState & STATE_OMNISCIENT_VIEW) == 0 &&
+        (PlayersData[faction_id].flags & 0x200U) == 0 &&
+        (map_loc(tile_x, tile_y)->visibility & (1U << faction_id)) == 0) {
+        return;
+    }
+    draw_state = 3;
+    if (Vehs[ConsoleGlobal.selected_vehicle_].x == tile_x &&
+        Vehs[ConsoleGlobal.selected_vehicle_].y == tile_y &&
+        (LockEnableMask & (1U << Vehs[ConsoleGlobal.selected_vehicle_].faction_id)) != 0 &&
+        veh_selectable(ConsoleGlobal.selected_vehicle_) != 0 &&
+        (Vehs[ConsoleGlobal.selected_vehicle_].state & 0x4200U) == 0) {
+        target = ConsoleGlobal.selected_vehicle_;
+        if (ConsoleGlobal.cursor_active_ != 0 &&
+            ConsoleGlobal.field_23BF8_ != 0 &&
+            ConsoleGlobal.field_23BE4_ != 0 &&
+            Vehs[target].order == 0 && ConsoleGlobal.survey_mode_ == 0 &&
+            (IsMultiplayerNet == 0 || ConsoleControlTurnActive == 0)) {
+            if ((GameMorePreferences & 0x200U) != 0) return;
+            int mouse_x;
+            int mouse_y;
+            static_cast<Win *>(this)->get_mouse_pos(&mouse_x, &mouse_y);
+            int cursor_tile_x;
+            int cursor_tile_y;
+            pixel_to_tile(mouse_x, mouse_y, &cursor_tile_x, &cursor_tile_y);
+            const int delta_x = abs(cursor_tile_x - Vehs[target].x);
+            const int delta_y = abs(cursor_tile_y - Vehs[target].y);
+            const int adjusted_x =
+                (MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < delta_x
+                    ? static_cast<int>(MapLongitudeBounds) - delta_x : delta_x;
+            if (((delta_y + adjusted_x) & ~1) < 3) return;
+            draw_state = 0x403;
+        }
+    } else {
+        target = ConsoleGlobal.selected_vehicle_;
+        if ((window_flags & 0x00020040U) == 0) return;
+        target = veh_at(tile_x, tile_y);
+    }
+
+    if ((window_flags & 0x00200000U) != 0) {
+        target = veh_at(tile_x, tile_y);
+        if (target < 0) return;
+        while (Vehs[target].home_base_id !=
+               static_cast<int16_t>(TutWinBaseWindow.focused_base_id())) {
+            target = Vehs[target].next_veh_id_stack;
+            if (target < 0) return;
+        }
+    }
+    if (target < 0) return;
+
+    if ((GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        const Veh &vehicle = Vehs[target];
+        if (vehicle.faction_id != ConsoleGlobal.faction_id_ ||
+            (vehicle.flags & 0x440U) == 0x440U) {
+            if ((vehicle.visibility & (1U << ConsoleGlobal.faction_id_)) == 0)
+                return;
+        }
+    }
+
+    {
+        const Map &tile = *map_loc(tile_x, tile_y);
+        if ((tile.bit & 1U) != 0 && (tile.val2 & 0x0FU) < 8) {
+            if (ConsoleGlobal.cursor_active_ == 0 ||
+                target != ConsoleGlobal.selected_vehicle_ ||
+                veh_ready(target) == 0 || (Vehs[target].state & 0x4200U) != 0 ||
+                ConsoleGlobal.field_23BE4_ == 0) {
+                return;
+            }
+        }
+    }
+
+draw_target:
+    veh_draw(static_cast<Buffer *>(this), target, pixel_x, pixel_y,
+             field_1DD98_, draw_state, 1);
+}
+
 // Original468F90..469183: distinct from the five-argument tile renderer.
 // ORIGINAL: 0x00468F90 ?draw_vehicles@MapWin@@QAEXHHHH@Z 0x00468F90-0x00469183
 // RECOVERY_BINDING: v1 {"evidence": ["Original468F90..469183; retired seed git:b55fcf8b:src/recovered/units/00468f90.cpp records this identity and exact span; the original vehicle scan caps extension at10, unlike terrain and overlay scans."], "reason": "The four-argument MapWin overload scans a clipped radius and calls the distinct five-argument tile renderer. It preserves the capped upward extension, asymmetric rows and live viewport/center reads."}
 void MapWin::draw_vehicles(int x, int y, int radius, int faction) {
     Buffer *const canvas = static_cast<Buffer *>(this);
-    int span = map_dest_add(map_dest_mul(radius, 2), 2);
+    int span = mapwin_dest_add(mapwin_dest_mul(radius, 2), 2);
     int upper_tile_y = 32000;
     int ignored_x;
     pixel_to_tile(canvas->rect1_.left, canvas->rect1_.top,
                   &ignored_x, &upper_tile_y);
-    while (upper_tile_y < map_dest_sub(y, span) && span < 10) {
-        span = map_dest_add(span, 2);
+    while (upper_tile_y < mapwin_dest_sub(y, span) && span < 10) {
+        span = mapwin_dest_add(span, 2);
     }
-    const int extent = map_dest_add(span, 2);
+    const int extent = mapwin_dest_add(span, 2);
     if (extent < 0) {
         return;
     }
     for (int row = -extent; row <= extent + 1; ++row) {
         int half_width = map_radius_half_width(extent, row);
         if (radius == 0) {
-            half_width = map_dest_add(half_width, 2);
+            half_width = mapwin_dest_add(half_width, 2);
         }
-        const int tile_y = map_dest_add(y, row);
+        const int tile_y = mapwin_dest_add(y, row);
         for (int column = -half_width; column <= half_width; column += 2) {
-            const int tile_x = map_radius_wrap_x(map_dest_add(x, column));
+            const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
             if (map_radius_valid(tile_x, tile_y) &&
                 map_dest_in_view(*this, tile_x, tile_y)) {
                 int pixel_x;
                 int pixel_y;
                 tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
                 draw_vehicles(tile_x, tile_y, pixel_x,
-                              map_dest_sub(pixel_y, field_1DDC0_), faction);
+                              mapwin_dest_sub(pixel_y, field_1DDC0_), faction);
             }
         }
     }
@@ -1928,9 +2248,9 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
         if ((field_1DD70_ & 0x10000000U) == 0) {
             GraphicWin::fill(&clip, 0x41);
         }
-        const int tile_y = map_dest_sub(y, 3);
+        const int tile_y = mapwin_dest_sub(y, 3);
         for (int side = -1; side <= 1; side += 2) {
-            const int tile_x = map_radius_wrap_x(map_dest_add(x, side));
+            const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, side));
             if (map_radius_valid(tile_x, tile_y)) {
                 int pixel_x;
                 int pixel_y;
@@ -1942,7 +2262,7 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
         }
     }
 
-    const int initial_span = map_dest_add(map_dest_mul(radius, 2), 2);
+    const int initial_span = mapwin_dest_add(mapwin_dest_mul(radius, 2), 2);
     int span = initial_span;
     int upper_left_y = 32000;
     int upper_right_y = 32000;
@@ -1950,19 +2270,19 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
     pixel_to_tile(clip.left, clip.top, &ignored_x, &upper_left_y);
     pixel_to_tile(clip.right, clip.top, &ignored_x, &upper_right_y);
     const int upper_y = upper_left_y < upper_right_y ? upper_left_y : upper_right_y;
-    while (upper_y < map_dest_sub(y, span)) {
-        span = map_dest_add(span, 2);
+    while (upper_y < mapwin_dest_sub(y, span)) {
+        span = mapwin_dest_add(span, 2);
     }
-    const int terrain_extent = map_dest_add(span, 2);
+    const int terrain_extent = mapwin_dest_add(span, 2);
     if (skip_terrain == 0) {
         for (int row = -terrain_extent; row <= terrain_extent + 1; ++row) {
             int half_width = map_radius_half_width(terrain_extent, row);
             if (radius == 0) {
-                half_width = map_dest_add(half_width, 2);
+                half_width = mapwin_dest_add(half_width, 2);
             }
-            const int tile_y = map_dest_add(y, row);
+            const int tile_y = mapwin_dest_add(y, row);
             for (int column = -half_width; column <= half_width; column += 2) {
-                const int tile_x = map_radius_wrap_x(map_dest_add(x, column));
+                const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
                 if (map_radius_valid(tile_x, tile_y) &&
                     map_dest_in_view(*this, tile_x, tile_y)) {
                     int pixel_x;
@@ -1979,9 +2299,9 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
     draw_base_names();
     if ((field_1DD70_ & 0x2000) != 0) {
         if (radius == 0) {
-            const int tile_y = map_dest_sub(y, 3);
+            const int tile_y = mapwin_dest_sub(y, 3);
             for (int side = -1; side <= 1; side += 2) {
-                const int tile_x = map_radius_wrap_x(map_dest_add(x, side));
+                const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, side));
                 if (map_radius_valid(tile_x, tile_y)) {
                     gen_overlays(tile_x, tile_y);
                 }
@@ -1990,15 +2310,15 @@ void MapWin::gen_radius(int x, int y, int radius, int faction, int skip_terrain)
         span = initial_span;
         upper_left_y = 32000;
         pixel_to_tile(clip.left, clip.top, &ignored_x, &upper_left_y);
-        while (upper_left_y < map_dest_sub(y, span)) {
-            span = map_dest_add(span, 2);
+        while (upper_left_y < mapwin_dest_sub(y, span)) {
+            span = mapwin_dest_add(span, 2);
         }
-        const int overlay_extent = map_dest_add(span, 2);
+        const int overlay_extent = mapwin_dest_add(span, 2);
         for (int row = -overlay_extent; row <= overlay_extent + 1; ++row) {
             const int half_width = map_radius_half_width(overlay_extent, row);
-            const int tile_y = map_dest_add(y, row);
+            const int tile_y = mapwin_dest_add(y, row);
             for (int column = -half_width; column <= half_width; column += 2) {
-                const int tile_x = map_radius_wrap_x(map_dest_add(x, column));
+                const int tile_x = map_radius_wrap_x(mapwin_dest_add(x, column));
                 if (map_radius_valid(tile_x, tile_y) && tile_in_view(tile_x, tile_y, 0)) {
                     gen_overlays(tile_x, tile_y);
                 }
@@ -2380,31 +2700,6 @@ int MapWinCaptionScale = -1;
 // RECOVERY_OBJECT: v2 0x00691E70 0x00691E74 ?MapWinCaptionDivisor@@3HA 0x005592D0
 int MapWinCaptionDivisor = -1;
 static const unsigned char *const AltStepY = (const unsigned char *)0x00685EE0;
-
-// 0x007D3C28..0x007D3C34 - FOUR CONSECUTIVE INTS the primary window publishes
-// about itself. `calculate_dimensions` writes them only when `this` is
-// ConsoleGlobal, and only here: first the window's centre tile
-// (field_1DD9C_ / field_1DDA0_, i.e. x then y), then the same two again with
-// the tile-step counts folded in -
-//
-//     [0] = (x_centre - tiles_across) + 4
-//     [1] = (y_centre - tiles_down ) + 4
-//     [2] = (tiles_across + x_centre) - 4
-//     [3] = (tiles_down  + y_centre) - 6
-//
-// which reads as the west, north, east and south limits of the region the
-// primary window is currently drawing. They sit immediately below the map
-// window slot table at 0x007D3C3C, and nothing else in the recovered tree
-// reads or writes them, so the "corner limits of the primary window" reading
-// is what the arithmetic says and no more.
-static int *const MapWinPrimaryCorner = (int *)0x007D3C28;
-
-// 0x009393C0 - in the Console state block after the cursor history arrays.
-// on_nc_left_down reads it once and returns without touching the keyboard when
-// it is nonzero, and otherwise polls and writes the modifier-key state, so the
-// nonzero value is "do not refresh the modifier state". Bound here because
-// nothing in the tree names it; the Console side owns the address.
-static int *const KeyStatePollSuppressed = (int *)0x009393C0;
 
 // 0x0066932C / 0x00669330 - the USER32 import-table slots the tree reads as
 // `int (__stdcall *)(int)` and calls with a virtual key:
@@ -4673,6 +4968,1168 @@ void MapWin::gen_tile(int x, int y, int a3, int a4) {
     }
 }
 
+// Original0x00467DE0 draws base labels and map landmarks in the visible map
+// rectangle. Both data collections use their source-owned records and counts.
+// ORIGINAL: 0x00467DE0 ?draw_base_names@MapWin@@QAEXXZ 0x00467DE0-0x004688E0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00467de0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::draw_base_names() {
+    if (MapBaseDisplayOverride == 0 && ControlTurnPhase == 0 &&
+        (GameRules & 0x80U) == 0) {
+        return;
+    }
+
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    RECT saved_clip = canvas->rect1_;
+    canvas->set_clip(&canvas->rect2_);
+    draw_base_dest(0);
+
+    const int faction = ConsoleGlobal.faction_id_;
+    const uint32_t faction_bit = 1U << (faction & 31);
+    const bool omniscient = (GameState & STATE_OMNISCIENT_VIEW) != 0;
+    const bool show_base_names =
+        (field_1DD70_ & 0x800U) != 0 &&
+        (GameMorePreferences & MPREF_MAP_SHOW_BASE_NAMES) != 0;
+
+    if (show_base_names && field_1DD98_ < -10) {
+        canvas->set_clip(&saved_clip);
+        return;
+    }
+    if (show_base_names) {
+        canvas->set_font(&font_a_, 0, 0, 0);
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            const Base &base = Bases[base_id];
+            const int tile_x = base.x;
+            const int tile_y = base.y;
+            if (tile_y < field_1DDA8_ ||
+                tile_y >= field_1DDA8_ + field_1DDD8_ + field_1DDD0_) {
+                continue;
+            }
+
+            int visible_x = tile_x;
+            if ((MapIsFlat & 1) == 0) {
+                if (visible_x < field_1DDA4_) {
+                    visible_x += MapLongitudeBounds;
+                }
+                if (visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
+                    visible_x -= MapLongitudeBounds;
+                }
+            }
+            if (visible_x < field_1DDA4_ ||
+                visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
+                continue;
+            }
+
+            const Map *const tile = map_loc(tile_x, tile_y);
+            if (!omniscient && base.faction_id_current != faction &&
+                (base.visibility & faction_bit) == 0) {
+                continue;
+            }
+
+            int pixel_x;
+            int pixel_y;
+            tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+            char text[256];
+            text[0] = '\0';
+            strcat(text, base.name_string);
+            if ((base.state & 0x10U) != 0 &&
+                base.faction_id_current == faction) {
+                strcat(text, " (*)");
+            }
+            canvas->set_text_color(InfoFactionTextColors[base.faction_id_current],
+                                   InfoFactionShadowColors[base.faction_id_current],
+                                   1, 1);
+            if ((GameState & 0x1000U) != 0 &&
+                (omniscient || (LockEnableMask & faction_bit) == 0)) {
+                const PlayerData &owner_data =
+                    PlayersData[base.faction_id_current];
+                if (base.x == owner_data.x_target &&
+                    base.y == owner_data.y_target) {
+                    canvas->set_text_color(0xFF, 0, 1, 1);
+                }
+            }
+            canvas->write_cent_l(text, pixel_x + field_1DDBC_,
+                                 pixel_y + (field_1DDC8_ * 7) / 2,
+                                 strlen(text));
+
+            const bool show_region_plan = (GameState & 0x1000U) != 0 &&
+                omniscient && field_1DD98_ >= -3;
+            if (show_region_plan) {
+                const int region = tile->region;
+                const int plan = PlayersData[base.faction_id_current]
+                                     .region_base_plan[region];
+                char detail[256];
+                detail[0] = '\0';
+                strcat(detail, "(");
+                strcat(detail, StringTable.get(
+                    reinterpret_cast<int>(PlansShortName[plan])));
+                strcat(detail, ": ");
+                const int production_id = base.queue_production_id[0];
+                const char *production_name = production_id < 0
+                    ? StringTable.get(reinterpret_cast<int>(
+                          Facility[-production_id].name))
+                    : VehPrototypes[production_id].veh_name;
+                strcat(detail, production_name);
+                strcat(detail, ")");
+                canvas->write_cent_l(detail,
+                    pixel_x + field_1DDBC_,
+                    pixel_y + (field_1DDC8_ * 7) / 2 +
+                        font_a_.line_advance(), strlen(detail));
+            } else {
+                const bool production_detail =
+                    (GameMorePreferences & MPREF_MAP_SHOW_PROD_WITH_BASE_NAMES) != 0 ||
+                    (field_1DD70_ & 0x08000000U) != 0;
+                if (!production_detail) {
+                    if (is_objective(base_id) &&
+                        (GameRules & 0x20000000U) == 0) {
+                        LPSTR objective = label_get(898);
+                        if (objective) {
+                            char detail[256];
+                            detail[0] = '\0';
+                            strcat(detail, objective);
+                            CharUpperA(detail);
+                            canvas->write_cent_l(detail,
+                                pixel_x + field_1DDBC_,
+                                pixel_y + (field_1DDC8_ * 7) / 2 +
+                                    font_a_.line_advance(),
+                                strlen(detail));
+                        }
+                    }
+                } else if (base.faction_id_current == faction ||
+                           spying(base.faction_id_current) != 0) {
+                    const int production_id = base.queue_production_id[0];
+                    LPSTR production_name = 0;
+                    if (production_id < 0 &&
+                        -production_id < MaxFacilityNum) {
+                        production_name = StringTable.get(
+                            reinterpret_cast<int>(Facility[-production_id].name));
+                    } else if (production_id >= 0 &&
+                               production_id < MaxVehProtoNum) {
+                        production_name = VehPrototypes[production_id].veh_name;
+                    }
+                    if (production_name) {
+                        char detail[256];
+                        detail[0] = '\0';
+                        const bool objective = is_objective(base_id) != 0;
+                        if (objective && (GameRules & 0x20000000U) == 0) {
+                            LPSTR name = label_get(898);
+                            if (name) {
+                                strcat(detail, name);
+                                strcat(detail, ": ");
+                                CharUpperA(detail);
+                            }
+                        } else if ((base.governor & 0x80000001U) ==
+                                   0x80000001U) {
+                            int descriptor_label = 649;
+                            if ((base.governor & 0x01000000U) != 0)
+                                descriptor_label = 650;
+                            else if ((base.governor & 0x02000000U) != 0)
+                                descriptor_label = 651;
+                            else if ((base.governor & 0x04000000U) != 0)
+                                descriptor_label = 652;
+                            else if ((base.governor & 0x08000000U) != 0)
+                                descriptor_label = 653;
+                            LPSTR descriptor = label_get(descriptor_label);
+                            if (descriptor) {
+                                strcat(detail, descriptor);
+                                strcat(detail, ": ");
+                            }
+                        }
+                        strcat(detail, "(");
+                        strcat(detail, production_name);
+                        strcat(detail, ")");
+                        canvas->write_cent_l(detail,
+                            pixel_x + field_1DDBC_,
+                            pixel_y + (field_1DDC8_ * 7) / 2 +
+                                font_a_.line_advance(),
+                            strlen(detail));
+                    }
+                }
+            }
+        }
+    }
+
+    int landmark_intensity = 1;
+    if (field_1DD98_ > 0) {
+        landmark_intensity = MapWinCaptionScale > 0
+            ? MapWinCaptionScale / MapWinCaptionDivisor
+            : (field_1DD98_ + 16) / 16;
+    }
+    canvas->set_text_color(0xFF, 0, landmark_intensity,
+                           landmark_intensity);
+    canvas->set_font(&font_c_, 0, 0, 0);
+    for (int index = 0; index < MapLandmarkCount; ++index) {
+        Landmark &landmark = MapLandmark[index];
+        if (landmark.y < field_1DDA8_ ||
+            landmark.y >= field_1DDA8_ + field_1DDD8_ + field_1DDD0_) {
+            continue;
+        }
+        int visible_x = landmark.x;
+        if ((MapIsFlat & 1) == 0) {
+            if (visible_x < field_1DDA4_) visible_x += MapLongitudeBounds;
+            if (visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
+                visible_x -= MapLongitudeBounds;
+            }
+        }
+        if (visible_x < field_1DDA4_ ||
+            visible_x >= field_1DDA4_ + field_1DDD4_ + field_1DDCC_) {
+            continue;
+        }
+        const Map *const tile = map_loc(landmark.x, landmark.y);
+        const bool visible = omniscient ||
+            (PlayersData[faction].flags & 0x200U) != 0 ||
+            (tile->visibility & faction_bit) != 0;
+        if (!visible || ((tile->bit & 1U) != 0 &&
+                         (tile->val2 & 0x0FU) <= 7U)) {
+            continue;
+        }
+        int pixel_x;
+        int pixel_y;
+        tile_to_pixel(landmark.x, landmark.y, &pixel_x, &pixel_y);
+        canvas->write_cent_l(landmark.name,
+                             pixel_x + field_1DDBC_,
+                             pixel_y + (field_1DDC8_ * 7) / 2,
+                             strlen(landmark.name));
+    }
+    canvas->set_clip(&saved_clip);
+}
+
+namespace {
+void mapwin_add_context_label(PullDown &menu, int label_byte_offset, int id) {
+    LPSTR text = label_get(label_byte_offset / 4);
+    if (text) menu.add_item(id, text);
+}
+
+void mapwin_add_parenthesized_label(PullDown &menu, int label_byte_offset,
+                                    int id) {
+    LPSTR source = label_get(label_byte_offset / 4);
+    if (!source) return;
+    char text[512];
+    text[0] = '\0';
+    strcat(text, "(");
+    strcat(text, source);
+    strcat(text, ")");
+    menu.add_item(id, text);
+}
+
+void mapwin_add_base_production(PullDown &menu, const Base &base, int id) {
+    const int production = base.queue_production_id[0];
+    LPSTR production_name = 0;
+    if (production < 0 && -production < MaxFacilityNum) {
+        production_name = StringTable.get(
+            reinterpret_cast<int>(Facility[-production].name));
+    } else if (production >= 0 && production < MaxVehProtoNum) {
+        production_name = VehPrototypes[production].veh_name;
+    }
+    if (!production_name) return;
+    char text[512];
+    text[0] = '\0';
+    strcat(text, "(");
+    strcat(text, production_name);
+    strcat(text, ")");
+    menu.add_item(id, text);
+}
+}
+
+// Original0x0046C0D0 builds the quick/context menu from live map owners, then
+// revalidates the selected base, vehicle and cursor before dispatching an
+// action. PullDown and MenuEntry own the modal menu and nested submenus.
+// ORIGINAL: 0x0046C0D0 ?right_menu@MapWin@@QAEXHHHH@Z 0x0046C0D0-0x0046D552;0x00655944-0x00655959 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0046c0d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::right_menu(int tile_x, int tile_y, int screen_x, int screen_y) {
+    client_to_screen(&screen_x, &screen_y);
+    int base_id = base_at(tile_x, tile_y);
+    int vehicle_id = veh_at(tile_x, tile_y);
+    int selected_vehicle = ConsoleGlobal.selected_vehicle_;
+    PullDown menu;
+    menu.init(0);
+
+    if (field_1DD78_ == 1) {
+        mapwin_add_context_label(menu, 0xC04, 0x320);
+        menu.add_separator(0x63);
+        mapwin_add_context_label(menu, 0xC68, 0x323);
+        mapwin_add_context_label(menu, 0xC6C, 0x324);
+        mapwin_add_context_label(menu, 0xC70, 0x325);
+        menu.add_separator(0x63);
+        mapwin_add_context_label(menu, 0x910, 0x321);
+        mapwin_add_context_label(menu, 0x914, 0x322);
+        menu.show(screen_x, screen_y, pop_expire);
+        if ((GameState & 0x800U) != 0) return;
+
+        const int item_id = menu.get_selected_id();
+        if (base_at(tile_x, tile_y) != base_id ||
+            veh_at(tile_x, tile_y) != vehicle_id ||
+            ConsoleGlobal.selected_vehicle_ != selected_vehicle) {
+            return;
+        }
+        if (IsMultiplayerNet != 0) {
+            base_at(tile_x, tile_y);
+            veh_at(tile_x, tile_y);
+            selected_vehicle = ConsoleGlobal.selected_vehicle_;
+        }
+        ConsoleGlobal.get_mouse_pos(&screen_x, &screen_y);
+        client_to_screen(&screen_x, &screen_y);
+        switch (item_id) {
+        case 0x320:
+            WorldClimateWorldWin.set_center(tile_x, tile_y);
+            WorldClimateWorldWin.set_world_map();
+            MainInterfaceGlobal.button_group(1).set(0x3EE, 1);
+            return;
+        case 0x323:
+            if (MapWinTable[0]) MapWinTable[0]->set_center(tile_x, tile_y, 1);
+            return;
+        case 0x324:
+            set_center(tile_x, tile_y, 1);
+            return;
+        case 0x325:
+            if (static_cast<int>(field_1DD98_) >= 0) return;
+            field_1DD98_ += 2;
+            on_redraw();
+            return;
+        case 0x321:
+            if (static_cast<int>(field_1DD98_) <= -0xE) return;
+            field_1DD98_ -= 2;
+            on_redraw();
+            return;
+        case 0x322:
+            if (static_cast<int>(field_1DD98_) == -8) return;
+            field_1DD98_ = static_cast<uint32_t>(-8);
+            on_redraw();
+            return;
+        default:
+            return;
+        }
+    }
+
+    if (ConsoleGlobal.cursor_active_ != 0 && vehicle_id >= 0 &&
+        stack_check(vehicle_id, 1, -1, -1, -1) == 2) {
+        mapwin_add_context_label(menu, 0xB18, 0x6E);
+    }
+    mapwin_add_context_label(menu, 0x8D4, 2);
+    if ((GameState & 0x4000U) != 0 && vehicle_id >= 0) {
+        mapwin_add_context_label(menu, 0xDFC, 0x29A);
+        mapwin_add_context_label(menu, 0x104C, 0x29B);
+    }
+    if (base_id >= 0 && vehicle_id >= 0 &&
+        stack_check(vehicle_id, 0xA, ConsoleGlobal.faction_id_, -1, -1) != 0 &&
+        ConsoleGlobal.edit_lock() == 0) {
+        mapwin_add_context_label(menu,
+            stack_check(vehicle_id, 1, -1, -1, -1) == 1 ? 0x8E0 : 0x8E4,
+            6);
+    }
+    menu.add_separator(0x63);
+
+    if (base_id >= 0) {
+        const Base &base = Bases[base_id];
+        const int faction = ConsoleGlobal.faction_id_;
+        const int owner = base.faction_id_current;
+        if ((GameState & STATE_OMNISCIENT_VIEW) == 0 && owner != faction &&
+            spying(owner) == 0 &&
+            (PlayersData[faction].diplo_treaties[owner] & 1U) == 0) {
+            mapwin_add_context_label(menu, 0x894, 5);
+        }
+        if ((GameState & STATE_OMNISCIENT_VIEW) != 0 ||
+            base.faction_id_current == faction) {
+            mapwin_add_parenthesized_label(menu, 0x898, 0x33);
+            mapwin_add_base_production(menu, base, 0x34);
+            mapwin_add_parenthesized_label(menu, 0x8A0, 0x35);
+            mapwin_add_parenthesized_label(menu, 0x8A4, 0x36);
+            mapwin_add_parenthesized_label(menu, 0x8A8, 0x37);
+            mapwin_add_parenthesized_label(menu, 0x8AC, 0x38);
+            if ((GameMorePreferences & 4U) != 0) {
+                mapwin_add_parenthesized_label(menu, 0x8B0, 0x39);
+            }
+        }
+        menu.add_separator(0x63);
+    }
+
+    if (ConsoleGlobal.cursor_active_ != 0) {
+        mapwin_add_context_label(menu, 0x8B4, 1);
+        const int map_vehicle = ConsoleGlobal.selected_vehicle_;
+        if (map_vehicle >= 0 &&
+            map_vehicle < static_cast<int>(sizeof(Vehs) / sizeof(Vehs[0]))) {
+            const Veh &vehicle = Vehs[map_vehicle];
+            int delta_x = abs(tile_x - vehicle.x);
+            if ((MapIsFlat & 1U) != 0 && delta_x > static_cast<int>(MapLongitude)) {
+                delta_x = static_cast<int>(MapLongitudeBounds) - delta_x;
+            }
+            const int delta_y = abs(tile_y - vehicle.y);
+            if (vehicle.x != tile_x || vehicle.y != tile_y) {
+                if ((GameMorePreferences & 4U) != 0) {
+                    mapwin_add_context_label(menu, 0x8B8, 0x69);
+                }
+                const int prototype = vehicle.proto_id;
+                if (prototype >= 0 && prototype < MaxVehProtoNum) {
+                    const VehPrototype &unit = VehPrototypes[prototype];
+                    if (unit.chassis_id >= 0 &&
+                        unit.chassis_id < MaxChassisNum &&
+                        Chassis[(int)unit.chassis_id].triad == TRIAD_AIR &&
+                        unit.weapon_id < MaxWeaponNum &&
+                        Weapon[unit.weapon_id].offense_rating != 0) {
+                        mapwin_add_context_label(menu, 0x8BC, 0x6A);
+                    }
+                    if (has_abil(prototype, ABL_DROP_POD)) {
+                        mapwin_add_context_label(menu, 0x8C0, 0x67);
+                    }
+                    if (can_arty(prototype, 1)) {
+                        const int distance = (delta_y + delta_x) >> 1;
+                        if (distance <= Rules.artillery_max_rng) {
+                            mapwin_add_context_label(menu, 0x8C8, 0x68);
+                        }
+                    }
+                }
+            }
+            if (((delta_y + delta_x) & ~1) <= 2) {
+                mapwin_add_context_label(menu, 0x8CC, 0x65);
+                if (stack_check(map_vehicle, 1, -1, -1, -1) == 9) {
+                    mapwin_add_context_label(menu, 0x8D0, 0x66);
+                }
+            }
+        }
+        mapwin_add_context_label(menu, 0xE1C, 0xC7);
+        mapwin_add_context_label(menu, 0x1098, 0xC8);
+        menu.add_separator(0x63);
+        if (ConsoleGlobal.edit_lock() != 0) {
+            mapwin_add_context_label(menu, 0x8D8, 4);
+        } else {
+            mapwin_add_context_label(menu, 0x8DC, 3);
+        }
+    } else if (ConsoleGlobal.edit_lock() == 0) {
+        mapwin_add_context_label(menu, 0x8DC, 3);
+    }
+
+    if (base_id < 0 && vehicle_id >= 0 &&
+        stack_check(vehicle_id, 0xA, ConsoleGlobal.faction_id_, -1, -1) != 0 &&
+        ConsoleGlobal.edit_lock() == 0) {
+        mapwin_add_context_label(menu,
+            stack_check(vehicle_id, 1, -1, -1, -1) == 1 ? 0x8E0 : 0x8E4,
+            6);
+    }
+    mapwin_add_context_label(menu, 0x8E8, 8);
+    if ((GameMorePreferences & 4U) != 0) {
+        menu.add_separator(0x63);
+        if (find_landmark(tile_x, tile_y, 1) >= 0) {
+            mapwin_add_context_label(menu, 0x8EC, 9);
+            mapwin_add_context_label(menu, 0x8F0, 0xB);
+        } else {
+            mapwin_add_context_label(menu, 0x8F4, 9);
+        }
+        menu.add_separator(0x63);
+        mapwin_add_context_label(menu, 0x8F8, 7);
+        mapwin_add_context_label(menu, 0x8FC, 0xA);
+    }
+
+    if (ConsoleControlTurnActive != 0) {
+        menu.disable_item(1);
+        menu.disable_item(3);
+        menu.disable_item(4);
+        menu.disable_item(5);
+        menu.disable_item(8);
+        menu.disable_item(9);
+        menu.disable_item(0xB);
+        int disabled_id;
+        for (disabled_id = 0x33; disabled_id <= 0x39; ++disabled_id)
+            menu.disable_item(disabled_id);
+        for (disabled_id = 0x64; disabled_id <= 0x6E; ++disabled_id)
+            menu.disable_item(disabled_id);
+    }
+
+    menu.show(screen_x, screen_y, pop_expire);
+    if ((GameState & 0x800U) != 0) return;
+    const int item_id = menu.get_selected_id();
+    if (base_at(tile_x, tile_y) != base_id ||
+        veh_at(tile_x, tile_y) != vehicle_id ||
+        ConsoleGlobal.selected_vehicle_ != selected_vehicle) {
+        return;
+    }
+    int edi = 0;
+    int esi = 0;
+    if (IsMultiplayerNet != 0) {
+        edi = (ConsoleControlTurnActive == 0 &&
+               NetDaemonNet.lock_state_[2].dword_[4] == 0 &&
+               NetDaemonNet.lock_state_[0].dword_[3] == 0) ? 0 : 1;
+        esi = (1 << ConsoleGlobal.faction_id_) &
+              static_cast<int>(NetDaemonNet.lock_state_[0].dword_[12]);
+        base_id = base_at(tile_x, tile_y);
+        vehicle_id = veh_at(tile_x, tile_y);
+        selected_vehicle = ConsoleGlobal.selected_vehicle_;
+    }
+    ConsoleGlobal.get_mouse_pos(&screen_x, &screen_y);
+    client_to_screen(&screen_x, &screen_y);
+
+    switch (item_id) {
+    case 1: {
+        if (edi || esi) return;
+        int locked_vehicle = selected_vehicle;
+        if (locked_vehicle < 0 ||
+            NetDaemonNet.lock_veh(&locked_vehicle, esi, -1, -1, esi) != 0) return;
+        Vehs[locked_vehicle].order = ORDER_MOVE_TO;
+        Vehs[locked_vehicle].waypoint_x[0] = static_cast<int16_t>(tile_x);
+        Vehs[locked_vehicle].waypoint_y[0] = static_cast<int16_t>(tile_y);
+        Vehs[locked_vehicle].state &= ~0x00010000U;
+        synch_veh(locked_vehicle);
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+    case 2:
+        ConsoleGlobal.set_view(0);
+        ConsoleGlobal.set_cursor(tile_x, tile_y);
+        set_center(tile_x, tile_y, 1);
+        return;
+    case 3:
+        if (edi || esi) return;
+        ConsoleGlobal.set_move(esi);
+        if (selected_vehicle >= 0) return;
+        GameState |= 2U;
+        ConsoleGlobal.field_23BE4_ = static_cast<uint32_t>(esi);
+        return;
+    case 4:
+        if (selected_vehicle >= 0 &&
+            selected_vehicle < static_cast<int>(sizeof(Vehs) / sizeof(Vehs[0]))) {
+            const Veh &vehicle = Vehs[selected_vehicle];
+            ConsoleGlobal.set_center(vehicle.x, vehicle.y, 1);
+        }
+        return;
+    case 5:
+        if (base_id >= 0) TutWinBaseWindow.zoom(base_id, 0);
+        return;
+    case 6:
+        if (vehicle_id >= 0 &&
+            stack_check(vehicle_id, 0xA, ConsoleGlobal.faction_id_, -1, -1) != 0) {
+            ConsoleGlobal.activate(tile_x, tile_y, 0);
+        }
+        return;
+    case 7:
+        ConsoleStatusWin.set_loc(tile_x, tile_y);
+        ConsoleStatusWin.redraw();
+        ConsoleInfoWin.set_state(-1, 0);
+        return;
+    case 8:
+        if (edi || esi) return;
+        if ((GameState & 2U) == 0) {
+            ConsoleGlobal.set_move(1);
+            if (ConsoleGlobal.cursor_active_ != 0 && selected_vehicle >= 0) {
+                if (X_pop("REALLYOVER", nullptr) == 0) return;
+            }
+        }
+        GameState |= 2U;
+        ConsoleGlobal.field_23BE4_ = static_cast<uint32_t>(esi);
+        ConsoleGlobal.field_23BE8_ = static_cast<uint32_t>(esi);
+        return;
+    case 9:
+        if (edi || esi) return;
+        ConsoleGlobal.name_landmark(tile_x, tile_y);
+        return;
+    case 0xA:
+        help_any();
+        return;
+    case 0xB:
+        ConsoleGlobal.erase_landmark(tile_x, tile_y);
+        return;
+    case 0x33:
+    case 0x65: {
+        Menu &main_menu = ConsoleGlobal.alpha_menu_;
+        const int index = main_menu.id_to_index(3);
+        if (index >= 0 && index < 15 && main_menu.entries_[index].pull_down) {
+            main_menu.entries_[index].pull_down->show(screen_x, screen_y, 0);
+        }
+        return;
+    }
+    case 0x34:
+        if (edi || esi) return;
+        if (base_id >= 0) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.hurry();
+        }
+        return;
+    case 0x35:
+    case 0x36:
+    case 0x37:
+    case 0x38:
+        if (edi || esi) return;
+        if (base_id >= 0) {
+            TutWinBaseWindow.soft_zoom(base_id);
+            TutWinBaseWindow.gov_on(0x01000000U << (item_id - 0x35));
+        }
+        return;
+    case 0x39:
+        if (edi || esi) return;
+        if (base_id >= 0) ConsoleGlobal.go_to(base_id, -1, esi);
+        return;
+    case 0x66: {
+        Menu &main_menu = ConsoleGlobal.alpha_menu_;
+        const int index = main_menu.id_to_index(9);
+        if (index >= 0 && index < 15 && main_menu.entries_[index].pull_down) {
+            main_menu.entries_[index].pull_down->show(screen_x, screen_y, 0);
+        }
+        return;
+    }
+    case 0x67:
+        if (edi || esi) return;
+        veh_drop(selected_vehicle, tile_x, tile_y);
+        return;
+    case 0x68:
+        if (edi || esi) return;
+        action_arty(selected_vehicle, tile_x, tile_y);
+        return;
+    case 0x69:
+        if (edi || esi) return;
+        action_patrol(selected_vehicle, tile_x, tile_y);
+        return;
+    case 0x6A:
+        if (edi || esi) return;
+        ConsoleGlobal.set_bombing_run(selected_vehicle, tile_x, tile_y);
+        return;
+    case 0x6E:
+        if (edi || esi) return;
+        ConsoleGlobal.go_home(selected_vehicle);
+        return;
+    case 0xC7:
+        if (edi || esi) return;
+        ConsoleGlobal.destroy(selected_vehicle);
+        return;
+    case 0xC8:
+        if (edi || esi) return;
+        ConsoleGlobal.disband(selected_vehicle);
+        return;
+    case 0x29A:
+        if (edi || esi) return;
+        ConsoleGlobal.editor_edit_veh(vehicle_id);
+        return;
+    case 0x29B:
+        if (edi || esi) return;
+        ConsoleGlobal.editor_kill_veh(vehicle_id);
+        return;
+    default:
+        return;
+    }
+}
+
+// Original0x00469720 labels the eight neighboring tiles around the current
+// console cursor using the original keypad order and this window's map scale.
+// ORIGINAL: 0x00469720 ?draw_legend@MapWin@@QAEXXZ 0x00469720-0x004698C8;0x00655932-0x00655944 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00469720.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::draw_legend() {
+    Font legend_font;
+    legend_font.init(DefaultFontFace,
+                     (static_cast<int>(field_1DDB8_) * 2) / 3, 1);
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    const int cursor = ConsoleGlobal.cursor_history_index_;
+
+    for (int direction = 0; direction < 8; ++direction) {
+        int tile_x = ConsoleGlobal.cursor_history_x_[cursor] +
+                     VehMoveDeltaX[direction];
+        const int tile_y = ConsoleGlobal.cursor_history_y_[cursor] +
+                           VehMoveDeltaY[direction];
+        if ((MapIsFlat & 1) == 0) {
+            if (tile_x < 0) {
+                tile_x += MapLongitudeBounds;
+            } else if (tile_x >= MapLongitudeBounds) {
+                tile_x -= MapLongitudeBounds;
+            }
+        }
+        if (tile_y < 0 || tile_y >= MapLatitudeBounds || tile_x < 0 ||
+            tile_x >= MapLongitudeBounds) {
+            continue;
+        }
+        int pixel_x;
+        int pixel_y;
+        tile_to_pixel(tile_x, tile_y, &pixel_x, &pixel_y);
+        _itoa(MapDirectionPermutation[direction], StringTemp, 10);
+        canvas->set_text_color(0xFF, 0, 1, 1);
+        canvas->write_cent_l(&legend_font, StringTemp, pixel_x, pixel_y,
+                             static_cast<int>(field_1DDB4_),
+                             static_cast<int>(field_1DDB8_),
+                             static_cast<int>(strlen(StringTemp)));
+    }
+}
+
+// Original0x004698D0 draws the seven-by-seven diplomacy key to the right of
+// the map. The row and column indices both omit faction zero, the native-life
+// record, exactly as the original table bounds do.
+// ORIGINAL: 0x004698D0 ?draw_wars@MapWin@@QAEXXZ 0x004698D0-0x00469B32 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004698d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::draw_wars() {
+    Font *const font = &font_b_;
+    const int character_width = font->width("FUNGUS");
+    const int line_advance = font->line_advance();
+    int y = line_advance;
+    Buffer *const canvas = static_cast<Buffer *>(this);
+    canvas->set_font(font, 0, 0, 0);
+    int max_width = character_width;
+
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        StringTemp[0] = '\0';
+        strcat(StringTemp, Players[faction].noun_faction);
+        strcat(StringTemp, ": ");
+        canvas->set_text_color(InfoFactionTextColors[faction], 0, 1, 1);
+        const int width = canvas->write_l(
+            StringTemp, character_width, y, strlen(StringTemp));
+        if (max_width <= width) {
+            max_width = width;
+        }
+        y += line_advance;
+    }
+
+    char letter = '-';
+    y = line_advance;
+    for (int row = 1; row < MaxPlayerNum; ++row) {
+        int x = max_width;
+        for (int column = 1; column < MaxPlayerNum; ++column) {
+            canvas->set_text_color(InfoFactionTextColors[column], 0, 1, 1);
+            const uint32_t flags = PlayersData[row].diplo_treaties[column];
+            if ((flags & 8U) == 0) {
+                letter = '-';
+            } else if ((flags & 0x10U) != 0) {
+                letter = 'W';
+            } else if ((flags & 1U) != 0) {
+                letter = 'P';
+            } else if ((flags & 2U) != 0) {
+                letter = 'T';
+            } else if ((flags & 4U) != 0) {
+                letter = 't';
+            }
+            StringTemp[0] = letter;
+            StringTemp[1] = '\0';
+            canvas->write_l(StringTemp, x, y, strlen(StringTemp));
+            x += character_width;
+        }
+        y += line_advance;
+    }
+}
+
+// Original0x0046D5D0 handles a map click as one Popup lifetime spanning the
+// editor, base-routing, cursor-order and map-selection paths. The local
+// cursor mode is captured before Console::selected clears it; this is also
+// the value consumed by the order dispatch near the end of the original.
+// ORIGINAL: 0x0046D5D0 ?click@MapWin@@QAEXHHH@Z 0x0046D5D0-0x0046EB68;0x00655959-0x00655E92 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0046d5d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::click(int pixel_x, int pixel_y, int button) {
+    Popup popup;
+    if (field_1DD88_ != 0) {
+        field_1DD88_ = 0;
+        return;
+    }
+
+    ConsoleGlobal.alpha_menu_.hide();
+    ConsoleInfoWin.reset();
+    ConsoleStatusWin.reset();
+    TutorialWindow.reset();
+    ConsoleGlobal.survey_mode_ = 0;
+    TutWinBaseWindow.cancel_zoom_wait();
+
+    const int cursor_mode = ConsoleGlobal.field_23D10_;
+    const bool cursor_sprite_1 = cursor_sprite_ == &g_CURSOR_SPRITES[1];
+    const bool cursor_sprite_5 = cursor_sprite_ == &g_CURSOR_SPRITES[5];
+    const bool cursor_sprite_9 = cursor_sprite_ == &g_CURSOR_SPRITES[9];
+    const int editor_tool = field_1DE24_;
+    const int editor_mode = field_1DD84_;
+    go_reset();
+    ConsoleGlobal.selected();
+
+    bool control_down = (GetAsyncKeyState(VK_CONTROL) & 0x8000) != 0;
+    if ((GameState & STATE_SCENARIO_EDITOR) != 0 &&
+        (GetKeyState(VK_SCROLL) & 1) != 0 &&
+        (GetAsyncKeyState(VK_SHIFT) & 0x8000) == 0) {
+        control_down = !control_down;
+    }
+
+    if (ConsoleGlobal.edit_lock() != 0 && cursor_sprite_5) return;
+    if (button == 0 && ConsoleControlTurnActive != 0 &&
+        (cursor_sprite_1 || cursor_sprite_9 || cursor_mode != 0)) {
+        return;
+    }
+
+    int tile_x;
+    int tile_y;
+    if (pixel_to_tile(pixel_x, pixel_y, &tile_x, &tile_y) != 0) return;
+    if (tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds) ||
+        tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds)) {
+        return;
+    }
+
+    if (field_1DD8C_ != 0) {
+        editor(tile_x, tile_y, static_cast<int>(field_1DD8C_ & 2));
+        field_1DD8C_ = 0;
+        if (MapEditorPaintId == 0 || MapEditorPaintId == 2 ||
+            MapEditorPaintId == 0x12) {
+            world_climate();
+        }
+        for (size_t slot = 0; slot < MapWinTableSlots; ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window != nullptr &&
+                (slot == 0 || window->field_1DD74_ != 0)) {
+                window->draw_map(1);
+            }
+        }
+        return;
+    }
+
+    // The selected-base route is available only to the base cursor on the
+    // owning faction. Base and triad records remain their actual source types.
+    if (cursor_sprite_9 && editor_tool >= 0) {
+        const Base &source = Bases[editor_tool];
+        const int local_faction = ConsoleGlobal.faction_id_;
+        if (source.faction_id_current == local_faction) {
+            set_base(editor_tool);
+            if (NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) != 0) {
+                return;
+            }
+
+            const int target_base = base_find(tile_x, tile_y, local_faction,
+                                              -1, -2, -1);
+            if (target_base < 0) {
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                return;
+            }
+            parse_says(0, source.name_string, -1, -1);
+            parse_says(1, Bases[target_base].name_string, -1, -1);
+            popup.start(PopupStartCaption, "DESTTRIAD2", -1, nullptr,
+                        0x40, nullptr);
+            for (int triad = 0; triad < MaxTriadNum; ++triad) {
+                StringTemp[0] = '\0';
+                strcat(StringTemp, StringTable.get(
+                    reinterpret_cast<int>(Triad[triad])));
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "(");
+                const int destination = triad == 0
+                    ? source.auto_forward_land_base_id
+                    : triad == 1 ? source.auto_forward_sea_base_id
+                                 : source.auto_forward_air_base_id;
+                say_base(StringTemp, destination);
+                strcat(StringTemp, ")");
+                popup.dialogs().item(StringTemp, triad);
+            }
+            const int selected_triad = popup.exec(0, nullptr);
+            if (selected_triad >= 0 && selected_triad < MaxTriadNum) {
+                int destination = target_base;
+                bool valid = true;
+                if (target_base == editor_tool) {
+                    destination = -1;
+                } else if (selected_triad == 1) {
+                    valid = port_to_port(target_base, editor_tool) != 0;
+                } else if (selected_triad == 0) {
+                    const Base &target = Bases[target_base];
+                    const int source_offset = (source.x >> 1) +
+                        static_cast<int>(source.y) * static_cast<int>(MapLongitude);
+                    const int target_offset = (target.x >> 1) +
+                        static_cast<int>(target.y) * static_cast<int>(MapLongitude);
+                    valid = map_tile_bytes()[source_offset * 4 + 3] ==
+                            map_tile_bytes()[target_offset * 4 + 3];
+                }
+                if (valid) {
+                    int16_t *route = selected_triad == 0
+                        ? &Bases[editor_tool].auto_forward_land_base_id
+                        : selected_triad == 1
+                            ? &Bases[editor_tool].auto_forward_sea_base_id
+                            : &Bases[editor_tool].auto_forward_air_base_id;
+                    *route = static_cast<int16_t>(destination);
+                } else {
+                    parse_say(2, reinterpret_cast<int>(Triad[selected_triad]),
+                              -1, -1);
+                    NetMsgPopup->pop("DESTNO", 0x1388, 0, nullptr);
+                }
+            }
+            NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            return;
+        }
+    }
+
+    // Cursor sprite 1 applies a fake group-order marker or edits waypoints.
+    // Other cursor sprites go directly to their separate action dispatcher.
+    if (cursor_sprite_1) {
+        int vehicle_id = ConsoleGlobal.selected_vehicle_;
+        if ((ConsoleGlobal.cursor_active_ == 0 || vehicle_id < 0) &&
+            ConsoleGlobal.field_23D1C_ != 0) {
+            ConsoleGlobal.set_cursor(tile_x, tile_y);
+            vehicle_id = veh_fake(0, ConsoleGlobal.faction_id_);
+            Veh &fake_vehicle = Vehs[vehicle_id];
+            fake_vehicle.x = static_cast<int16_t>(tile_x);
+            fake_vehicle.y = static_cast<int16_t>(tile_y);
+            fake_vehicle.order = 0x18;
+            fake_vehicle.waypoint_x[0] = static_cast<int16_t>(tile_x);
+            fake_vehicle.waypoint_y[0] = static_cast<int16_t>(tile_y);
+            fake_vehicle.state = 0;
+            ConsoleGlobal.group(vehicle_id);
+        } else if (vehicle_id >= 0) {
+            int locked_vehicle = vehicle_id;
+            if (NetDaemonNet.lock_veh(&locked_vehicle,
+                    editor_mode != 0 ? 4 : 0, -1, -1, 0) == 0) {
+                vehicle_id = locked_vehicle;
+                Veh &vehicle = Vehs[vehicle_id];
+                if ((vehicle.state & 0x02000000U) != 0) {
+                    const int waypoint = vehicle.waypoint_count;
+                    vehicle.waypoint_x[waypoint] = static_cast<int16_t>(tile_x);
+                    vehicle.waypoint_y[waypoint] = static_cast<int16_t>(tile_y);
+                    vehicle.state |= 0x02000200U;
+                    vehicle.state &= ~0x00010000U;
+                } else {
+                    vehicle.waypoint_x[0] = static_cast<int16_t>(tile_x);
+                    vehicle.waypoint_y[0] = static_cast<int16_t>(tile_y);
+                    vehicle.state &= ~0x02010000U;
+                    vehicle.waypoint_count = 0;
+                    vehicle.patrol_current_point = 0;
+                }
+                if (editor_mode != 0) ConsoleGlobal.group(vehicle_id);
+                synch_veh(vehicle_id);
+                NetDaemonNet.unlock_veh();
+                if (ConsoleGlobal.cursor_active_ == 0) ConsoleGlobal.set_move(1);
+            }
+        }
+        return;
+    }
+
+    if (cursor_mode != 0 && ConsoleGlobal.selected_vehicle_ >= 0 &&
+        cursor_mode >= 2 && cursor_mode <= 11) {
+        switch (cursor_mode) {
+        case 2:
+            ConsoleGlobal.set_road_to(ConsoleGlobal.selected_vehicle_,
+                                      tile_x, tile_y, 0x1B);
+            break;
+        case 3:
+            ConsoleGlobal.set_road_to(ConsoleGlobal.selected_vehicle_,
+                                      tile_x, tile_y, 0x1C);
+            break;
+        case 4:
+            // This is NetDaemon::veh_drop (0x00532140), not the unrelated
+            // free vehicle-list helper at 0x005C0080. Its source declaration
+            // is the source-owned network operation, with its lock protocol.
+            NetDaemonNet.veh_drop(ConsoleGlobal.selected_vehicle_,
+                                  tile_x, tile_y);
+            break;
+        case 8:
+            action_patrol(ConsoleGlobal.selected_vehicle_, tile_x, tile_y);
+            break;
+        case 10:
+            action_arty(ConsoleGlobal.selected_vehicle_, tile_x, tile_y);
+            break;
+        case 11:
+            ConsoleGlobal.set_bombing_run(ConsoleGlobal.selected_vehicle_,
+                                          tile_x, tile_y);
+            break;
+        default:
+            break;
+        }
+        ConsoleGlobal.field_23BE4_ = 0;
+        return;
+    }
+
+    if ((GameState & STATE_SCENARIO_EDITOR) != 0 && control_down &&
+        ConsoleControlTurnActive == 0) {
+        ConsoleGlobal.set_view(1);
+        ConsoleGlobal.set_cursor(tile_x, tile_y);
+        auto_undo();
+        editor(tile_x, tile_y, button);
+        return;
+    }
+
+    if (button == 0) {
+        const bool shift_down = (GetAsyncKeyState(VK_SHIFT) & 0x8000) != 0;
+        if (!shift_down && control_down) {
+            ConsoleStatusWin.set_loc(tile_x, tile_y);
+            ConsoleStatusWin.redraw();
+            ConsoleInfoWin.set_state(-1, 0);
+            return;
+        }
+        if (!shift_down && !control_down) {
+            if ((GameState & STATE_UNK_100) != 0 ||
+                ConsoleControlTurnActive != 0) {
+                ConsoleGlobal.set_view(button);
+                ConsoleGlobal.set_cursor(tile_x, tile_y);
+                const bool primary = this == MapWinTable[0];
+                if (primary) field_21A44_ = 1;
+                set_center(tile_x, tile_y, 1);
+                if (primary) field_21A44_ = 0;
+            } else {
+                right_menu(tile_x, tile_y, pixel_x, pixel_y);
+            }
+            return;
+        }
+        if (((GameState & STATE_UNK_100) != 0 || field_1DD78_ == 1) &&
+            ConsoleControlTurnActive == 0) {
+            right_menu(tile_x, tile_y, pixel_x, pixel_y);
+            return;
+        }
+    }
+
+    if (field_1DD78_ == 0) {
+        const bool skip_cursor_update = ConsoleGlobal.cursor_active_ == 0 &&
+            ConsoleGlobal.selected_vehicle_ == 0 && button == 0 &&
+            ConsoleControlTurnActive == 0 && ConsoleGlobal.edit_lock() == 0;
+        if (!skip_cursor_update) {
+            ConsoleGlobal.set_view(button);
+            ConsoleGlobal.set_cursor(tile_x, tile_y);
+        }
+    }
+    if (button == 0 && static_cast<int32_t>(field_1DD7C_) > 1) return;
+
+    const int base_id = base_at(tile_x, tile_y);
+    const int local_faction = ConsoleGlobal.faction_id_;
+    if (field_1DD78_ != 1 && base_id >= 0 && button == 0 &&
+        ConsoleControlTurnActive == 0) {
+        const Base &base = Bases[base_id];
+        const int owner = base.faction_id_current;
+        const bool omniscient = (GameState & STATE_OMNISCIENT_VIEW) != 0;
+        const bool visible = owner == local_faction ||
+            (base.visibility & (1U << local_faction)) != 0;
+        const bool access = omniscient || owner == local_faction ||
+            spying(owner) != 0 ||
+            (PlayersData[local_faction].diplo_treaties[owner] & 1U) != 0;
+        if ((visible || omniscient) && access) {
+            set_center(tile_x, tile_y, 0);
+            if (field_1DD78_ != 0 && (field_1DD70_ & 0x40000000U) != 0)
+                MapWinTable[0]->set_center(tile_x, tile_y, 0);
+            TutWinBaseWindow.zoom(base_id, 0);
+            return;
+        }
+    }
+
+    const bool primary = this == MapWinTable[0];
+    if (primary) field_21A44_ = 1;
+    set_center(tile_x, tile_y, 1);
+    if (primary) field_21A44_ = 0;
+    const int vehicle_id = veh_at(tile_x, tile_y);
+    if (field_1DD78_ != 1 && vehicle_id >= 0 &&
+        Vehs[vehicle_id].faction_id == local_faction && button == 0 &&
+        ConsoleControlTurnActive == 0 && ConsoleGlobal.edit_lock() == 0) {
+        ConsoleGlobal.activate(tile_x, tile_y, 0);
+    }
+}
+
+// Original0x00467970 paints visible base destinations and the local faction's
+// vehicle waypoint/transport routes over the map. Both record families are
+// owned arrays in base.h and veh.h; no archive-shaped mirror is needed.
+// ORIGINAL: 0x00467970 ?draw_base_dest@MapWin@@QAEXH@Z 0x00467970-0x00467DD9 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00467970.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::draw_base_dest(int draw_type) {
+    bool any = false;
+    bool drew_base_line = false;
+    const int local_faction = ConsoleGlobal.faction_id_;
+    const int visible_bottom = mapwin_dest_add(
+        field_1DDA8_, mapwin_dest_add(field_1DDD8_, field_1DDD0_));
+    const int visible_right = mapwin_dest_add(
+        field_1DDA4_, mapwin_dest_add(field_1DDD4_, field_1DDCC_));
+
+    if ((field_1DD70_ & 0x40000U) != 0) {
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            const Base &base = Bases[base_id];
+            if (base.faction_id_current != local_faction) {
+                continue;
+            }
+            const int destinations[3] = {
+                base.auto_forward_land_base_id,
+                base.auto_forward_sea_base_id,
+                base.auto_forward_air_base_id
+            };
+            for (int direction = 0; direction < 3; ++direction) {
+                const int destination_id = destinations[direction];
+                if (destination_id < 0) {
+                    continue;
+                }
+                const Base &destination = Bases[destination_id];
+                const bool source_row_visible =
+                    base.y >= field_1DDA8_ && base.y < visible_bottom;
+                bool line_visible = false;
+                if (source_row_visible) {
+                    if (destination.y >= field_1DDA8_ &&
+                        destination.y < visible_bottom) {
+                        int destination_x = destination.x;
+                        if ((MapIsFlat & 1) == 0) {
+                            if (destination_x < field_1DDA4_) {
+                                destination_x = mapwin_dest_add(
+                                    destination_x, MapLongitudeBounds);
+                            }
+                            if (destination_x >= visible_right) {
+                                destination_x = mapwin_dest_sub(
+                                    destination_x, MapLongitudeBounds);
+                            }
+                        }
+                        line_visible = destination_x >= field_1DDA4_ &&
+                                       destination_x < visible_right;
+                    }
+                } else {
+                    int source_x = base.x;
+                    if ((MapIsFlat & 1) == 0) {
+                        if (source_x < field_1DDA4_) {
+                            source_x = mapwin_dest_add(source_x,
+                                                    MapLongitudeBounds);
+                        }
+                        if (source_x >= visible_right) {
+                            source_x = mapwin_dest_sub(source_x,
+                                                    MapLongitudeBounds);
+                        }
+                    }
+                    line_visible = source_x >= field_1DDA4_ &&
+                                   source_x < visible_right;
+                }
+                if (!line_visible) {
+                    continue;
+                }
+                const int line_type = direction == 0 || direction == 1 ||
+                                      direction == 2 ? 10 : 0;
+                dest_line(base.x, base.y, destination.x, destination.y,
+                          line_type, local_faction, direction, 0, 3, 5, 0);
+                drew_base_line = true;
+            }
+        }
+    }
+
+    if ((field_1DD70_ & 0xC00000U) != 0) {
+        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            const Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id != local_faction) {
+                continue;
+            }
+            const uint32_t relevant_state = vehicle.state & 0x01000200U;
+            const bool repeated_route = relevant_state == 0x01000200U &&
+                                        (field_1DD70_ & 0x400000U) != 0;
+            const bool ordered_route = vehicle.order == ORDER_MOVE_TO &&
+                                       (field_1DD70_ & 0x800000U) != 0;
+            if (!repeated_route && !ordered_route) {
+                continue;
+            }
+
+            const int prototype = vehicle.proto_id;
+            const int triad = get_proto_triad(prototype);
+            const int cover = relevant_state == 0x01000200U ? 1 : 0;
+            if (repeated_route) {
+                const int count = vehicle.waypoint_count;
+                const int segment_count = count + (count > 1 ? 1 : 0);
+                for (int segment = 0; segment < segment_count; ++segment) {
+                    const int start = segment % (count + 1);
+                    const int finish = (segment + 1) % (count + 1);
+                    dest_line(vehicle.waypoint_x[start],
+                              vehicle.waypoint_y[start],
+                              vehicle.waypoint_x[finish],
+                              vehicle.waypoint_y[finish], prototype,
+                              vehicle.faction_id, triad, cover, 3, 5, 0);
+                }
+            } else {
+                dest_line(vehicle.x, vehicle.y, vehicle.waypoint_x[0],
+                          vehicle.waypoint_y[0], prototype,
+                          vehicle.faction_id, triad, cover, 2, 2, 0);
+                if ((vehicle.state & VSTATE_UNK_2000000) != 0 &&
+                    vehicle.waypoint_count != 0) {
+                    for (int point = 0; point < vehicle.waypoint_count;
+                         ++point) {
+                        dest_line(vehicle.waypoint_x[point],
+                                  vehicle.waypoint_y[point],
+                                  vehicle.waypoint_x[point + 1],
+                                  vehicle.waypoint_y[point + 1], prototype,
+                                  vehicle.faction_id, triad, cover, 2, 2, 0);
+                    }
+                }
+            }
+            any = true;
+        }
+    }
+
+    if (draw_type != 0 && (drew_base_line || any)) {
+        on_update();
+    }
+}
+
 // ORIGINAL: 0x00468CD0 ?compute_clip@MapWin@@QAEHHHHPAURECT@@@Z 0x00468CD0-0x00468F8D FILE
 // symbol    ?compute_clip@MapWin@@QAEHHHHPAUtagRECT@@@Z
 //           The same windows.h `typedef struct tagRECT` mangling every other
@@ -5934,20 +7391,20 @@ void MapWin::calculate_dimensions() {
     if (this == reinterpret_cast<MapWin *>(&ConsoleGlobal)) {
         int32_t a = field_1DDA0_;
         int32_t b = field_1DD9C_;
-        MapWinPrimaryCorner[0] = b;
-        MapWinPrimaryCorner[1] = a;
-        MapWinPrimaryCorner[2] = b;
-        MapWinPrimaryCorner[3] = a;
+        MapWinPrimaryCorner.left = b;
+        MapWinPrimaryCorner.top = a;
+        MapWinPrimaryCorner.right = b;
+        MapWinPrimaryCorner.bottom = a;
         int32_t f73 = field_1DDCC_;
         int32_t f74 = field_1DDD0_;
         int32_t e1 = (b - f73) + 4;
         int32_t e2 = (f73 + b) - 4;
         int32_t e3 = (a - f74) + 4;
         int32_t e4 = (a + f74) - 6;
-        MapWinPrimaryCorner[0] = e1;
-        MapWinPrimaryCorner[2] = e2;
-        MapWinPrimaryCorner[1] = e3;
-        MapWinPrimaryCorner[3] = e4;
+        MapWinPrimaryCorner.left = e1;
+        MapWinPrimaryCorner.right = e2;
+        MapWinPrimaryCorner.top = e3;
+        MapWinPrimaryCorner.bottom = e4;
     }
 
     int32_t halfW = MapLongitudeBounds / 2;
@@ -6291,7 +7748,7 @@ void MapWin::on_right_down(int x_coord, int y_coord) {
     this->field_1DE0C_ = -1;
     this->field_1DD88_ = 0;
 
-    if (*KeyStatePollSuppressed != 0) {
+    if (ConsoleGlobal.field_23D10_ != 0) {
         return;
     }
 
@@ -6343,6 +7800,156 @@ check_flag:
 
 abort:
     get_key_state(0x11);
+}
+
+// ORIGINAL: 0x0046ED30 ?on_left_down@MapWin@@QAEXHH@Z 0x0046ED30-0x0046EFE1 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0046ed30.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void MapWin::on_left_down(int x_coord, int y_coord) {
+    if (MapInputEnabled == 0) return;
+
+    go_reset();
+    field_1DD7C_ = 0;
+    field_1DD80_ = 0;
+    field_1DD8C_ = 0;
+    field_1DE0C_ = -1;
+    field_1DD88_ = 0;
+    field_1DD84_ = 0;
+
+    if (ConsoleControlTurnActive != 0 || field_1DD78_ != 0) return;
+    if (ConsoleGlobal.field_23D10_ != 0) {
+        if (ConsoleGlobal.field_23D10_ != 8) return;
+        field_1DD80_ = 1;
+        if (WinPointerOwner3 == nullptr) {
+            WinPointerOwner4 = nullptr;
+            WinPointerOwner3 = static_cast<Win *>(this);
+        }
+        CoverWindow.fill(9);
+        CoverWindow.show(0);
+        on_mouse_feedback(x_coord, y_coord);
+        return;
+    }
+
+    const bool shift_down =
+        (static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) & 0xFF00) != 0;
+    if (!shift_down &&
+        (static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0) {
+        goto check_undo;
+    }
+    if (!(GetKeyState(VK_SCROLL) & 1)) {
+        goto after_undo;
+    }
+    if ((static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0) {
+        goto after_undo;
+    }
+
+check_undo:
+    if ((GameState & 0x40) != 0) {
+        auto_undo();
+        field_1DD8C_ = 1;
+        field_1DD94_ = -1;
+        field_1DD90_ = -1;
+        if (WinPointerOwner3 == nullptr) {
+            WinPointerOwner4 = nullptr;
+            WinPointerOwner3 = static_cast<Win *>(this);
+        }
+        on_mouse_feedback(x_coord, y_coord);
+        return;
+    }
+
+after_undo:
+    if ((static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0)
+        return;
+    if (ConsoleGlobal.edit_lock() != 0) return;
+
+    int tile_x = 0;
+    int tile_y = 0;
+    if (ConsoleGlobal.cursor_active_ == 0 || (field_1DD70_ & 0x40000U) != 0) {
+        if (pixel_to_tile(x_coord, y_coord, &tile_x, &tile_y) != 0 ||
+            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds) ||
+            tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds)) {
+            return;
+        }
+        if ((field_1DD70_ & 0x40000U) != 0) {
+            field_1DE24_ = base_find(tile_x, tile_y, ConsoleGlobal.faction_id_);
+            if (field_1DE24_ < 0) return;
+        }
+    }
+
+    MapWinSelectedSlot = static_cast<int>(field_1DD78_);
+    if ((static_cast<uint16_t>(GetAsyncKeyState(VK_SHIFT)) & 0xFF00) != 0 &&
+        (GameState & 0x40) == 0) {
+        go_timer(3);
+        return;
+    }
+
+    const int guard = ConsoleGlobal.cursor_active_ != 0 ? -1 : 0;
+    const int timer_parameter = (guard & 0xFFFFFD65) + 0x3E8;
+    GoTimer.start(go_timer, 3, timer_parameter, 5);
+}
+
+// ORIGINAL: 0x0050F170 ?go_timer@@YAXH@Z 0x0050F170-0x0050F3C4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050f170.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void __cdecl go_timer(int selection_mode) {
+    GoTimer.close();
+    if (MapWinSelectedSlot < 0 || TimerHoldFlag != 0) return;
+
+    MapWin *const window = MapWinTable[MapWinSelectedSlot];
+    int mouse_x;
+    int mouse_y;
+    static_cast<Win *>(window)->get_mouse_pos(&mouse_x, &mouse_y);
+
+    const bool control_down =
+        (static_cast<uint16_t>(GetAsyncKeyState(VK_CONTROL)) & 0xFF00) != 0;
+    // The key branch defaults to cursor 1. With Control held and no active
+    // cursor, a clear 0x23D1C selects cursor 9; map-wait mode also forces 9.
+    int mode = control_down && ConsoleGlobal.cursor_active_ == 0 &&
+               ConsoleGlobal.field_23D1C_ == 0 ? 9 : 1;
+
+    int new_vehicle = ConsoleGlobal.selected_vehicle_;
+    const int history = ConsoleGlobal.cursor_history_index_;
+    if ((window->field_1DD70_ & 0x40000U) == 0) {
+        const bool must_reselect =
+            mode == 1 && ConsoleGlobal.cursor_active_ == 0 &&
+            ConsoleGlobal.field_23D1C_ == 0 &&
+            (new_vehicle < 0 ||
+             Vehs[new_vehicle].x != ConsoleGlobal.cursor_history_x_[history] ||
+             Vehs[new_vehicle].y != ConsoleGlobal.cursor_history_y_[history] ||
+             veh_selectable(new_vehicle) == 0 || Vehs[new_vehicle].order != 0 ||
+             (Vehs[new_vehicle].state & 0x4200U) != 0);
+        if (must_reselect) {
+            new_vehicle = veh_find(ConsoleGlobal.cursor_history_x_[history],
+                                   ConsoleGlobal.cursor_history_y_[history],
+                                   ConsoleGlobal.faction_id_, -1);
+            if (new_vehicle < 0 || veh_selectable(new_vehicle) == 0 ||
+                Vehs[new_vehicle].order != 0 ||
+                (Vehs[new_vehicle].state & 0x200U) != 0 ||
+                (Vehs[new_vehicle].state & 0x4000U) == 0) {
+                go_reset();
+                return;
+            }
+        }
+    } else {
+        mode = 9;
+    }
+
+    ConsoleGlobal.selected_vehicle_ = new_vehicle;
+    Sprite *const cursor = &g_CURSOR_SPRITES[mode];
+    if (window->cursor_sprite_ != cursor) {
+        window->set_cursor(cursor, CursorHotspotX[mode], CursorHotspotY[mode]);
+        window->cursor_sprite_ = cursor;
+    }
+
+    if (WinPointerOwner3 == nullptr) {
+        WinPointerOwner4 = nullptr;
+        WinPointerOwner3 = static_cast<Win *>(window);
+    }
+    CoverWindow.fill(9);
+    CoverWindow.show(0);
+    window->field_1DD80_ = 1;
+    window->field_1DD84_ =
+        (ConsoleGlobal.cursor_active_ == 0 && ConsoleGlobal.field_23D1C_ != 0)
+            ? 1U : 0U;
+    window->on_mouse_feedback(mouse_x, mouse_y);
 }
 
 class VCallI { public:

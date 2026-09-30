@@ -33,7 +33,7 @@
         "field_accessors.cpp markers": 32,
         "leaf_recoveries.cpp markers": 178,
         "nullsub_thunks.cpp markers": 52,
-        "PENDING_BODY forwarders": 118,
+        "PENDING_BODY forwarders": 109,
         "artifact files (recovered/)": 640,
         "unrecovered files": 622,
         "hypothesis_layouts.h lines": 2463,

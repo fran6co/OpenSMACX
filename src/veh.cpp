@@ -767,6 +767,19 @@ void __cdecl vehdraw_setup() {
 // scoot_start sets it to one, and visible crawler assembly advances it.
 // RECOVERY_OBJECT: v2 0x008E9F50 0x008E9F54 ?VehDrawAnimationStep@@3HA 0x004C2470
 int VehDrawAnimationStep;
+// Independent original selection scratch words; both start at -1. The
+// selection painter uses these source-owned words, not original addresses.
+// RECOVERY_OBJECT: v1 0x00689F28 ?VehDrawSelection689F28@@3HA
+int VehDrawSelection689F28 = -1;
+// RECOVERY_OBJECT: v1 0x00689F2C ?VehDrawSelection689F2C@@3HA
+int VehDrawSelection689F2C = -1;
+// Explicit unfinished owning-TU dependency for MapWin's artillery command.
+// Retain the complete4CD090 seed; this body establishes link continuity only.
+// ORIGINAL: 0x004CD090 ?action_arty@@YAXHHH@Z 0x004CD090-0x004CD2ED
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004cd090.cpp", "Coordinator-approved unfinished empty body; no behavioral claim."], "reason": "Explicit unfinished owning-TU link-continuity dependency; retained seed behavior is not implemented or accepted."}
+void __cdecl action_arty(int veh_id, int x, int y) {
+    // BODY GOES HERE.
+}
 // Shared infantry/native model placement, original 687AE8..687AF4.
 // This is distinct from the four offsets derived from loaded voxel parts.
 // RECOVERY_OBJECT: v2 0x00687AE8 0x00687AF4 ?VehInfantryOffset@@3UVOX_Vect@@A 0x004C3800

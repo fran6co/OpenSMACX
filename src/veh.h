@@ -71,6 +71,9 @@ extern VOX_Vect VehDrawScootSecondIncrement;
 void __cdecl compute_camera(VOX_Vect *normal, VOX_Matrix *matrix);
 void __cdecl vehdraw_compute_facet_normals();
 extern int VehDrawSuppressedVehicle;
+// Original689F28/2C selection scratch words; semantic roles are provisional.
+extern int VehDrawSelection689F28;
+extern int VehDrawSelection689F2C;
 int __cdecl pick_top_veh(int veh_id);
 int __cdecl veh_draw(Buffer *buffer, int veh_id, int screen_x, int screen_y,
                      int zoom, int flags, int frame);
@@ -723,6 +726,7 @@ int __cdecl veh_at(int x, int y);
 BOOL __cdecl has_abil(int proto_id, int ability_id);
 int __cdecl veh_lift(int veh_id);
 int __cdecl veh_drop(int veh_id, int x, int y);
+void __cdecl action_arty(int veh_id, int x, int y);
 void __cdecl veh_demote(int veh_id);
 void __cdecl veh_promote(int veh_id);
 void __cdecl veh_clear(int veh_id, int proto_id, int faction_id);

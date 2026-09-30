@@ -957,6 +957,129 @@ int Console::focus(int x_coord, int y_coord, int faction_id) {
     return focused;
 }
 
+// Original 0x005150D0 selects the world-map or an eligible secondary map
+// beneath the pointer when passed a negative window index, then adjusts the
+// selected windows' signed zoom offsets and redraws the world view.
+// ORIGINAL: 0x005150D0 ?zoom@Console@@QAEXHH@Z 0x005150D0-0x005153DF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005150d0.cpp", "Pinned original image review controls route precedence, cursor sprite dispatch, signed zoom, actual API imports and original member/data dependencies. Bounded compile and host controls do not establish game acceptance."], "reason": "Recover the genuine MapWin/Console owner operation using typed members, actual shared storage, virtual base APIs and full original branch evidence; keep seed and historical obligations."}
+void Console::zoom(int zoom_command, int window_index) {
+    int selected_window = window_index;
+    if (window_index < 0) {
+        selected_window = 0;
+        bool primary_map_hit = false;
+        int mouse_x;
+        int mouse_y;
+        WorldClimateWorldWin.get_mouse_pos(&mouse_x, &mouse_y);
+        int tile_x = 0;
+        int tile_y = 0;
+        if (in_box(mouse_x, mouse_y, 0, 0,
+                   WorldClimateWorldWin.dib_.bmiHeader.biWidth,
+                   -WorldClimateWorldWin.dib_.bmiHeader.biHeight) != 0 &&
+            WorldClimateWorldWin.pixel_to_tile(mouse_x, mouse_y,
+                                               &tile_x, &tile_y) == 0 &&
+            tile_x >= 0 && tile_x < MapLongitudeBounds &&
+            tile_y >= 0 && tile_y < MapLatitudeBounds) {
+            bool visible = (PlayersData[ConsoleGlobal.faction_id_].flags &
+                            0x200U) != 0;
+            if (!visible) {
+                const uint8_t faction_bit = static_cast<uint8_t>(
+                    1U << (ConsoleGlobal.faction_id_ & 0x1f));
+                visible = (map_loc(tile_x, tile_y)->visibility & faction_bit) != 0;
+                if (!visible) {
+                    visible = (GameState & 0x80U) != 0;
+                }
+            }
+            if (visible) {
+                MapWin *const primary = MapWinTable[0];
+                primary->field_1DD9C_ = tile_x;
+                primary->field_1DDA0_ = tile_y;
+                primary_map_hit = true;
+            }
+        }
+
+        if (!primary_map_hit) {
+            for (int slot = 0; slot < static_cast<int>(MapWinTableSlots);
+                 ++slot) {
+                MapWin *const window = MapWinTable[slot];
+                if (window == nullptr ||
+                    (slot != 0 && window->field_1DD74_ == 0) ||
+                    window->field_1DD98_ >= 0) {
+                    continue;
+                }
+                int window_mouse_x;
+                int window_mouse_y;
+                window->get_mouse_pos(&window_mouse_x, &window_mouse_y);
+                int candidate_x = 0;
+                int candidate_y = 0;
+                if (in_box(window_mouse_x, window_mouse_y, 0, 0,
+                           window->dib_.bmiHeader.biWidth,
+                           -window->dib_.bmiHeader.biHeight) == 0 ||
+                    window->pixel_to_tile(window_mouse_x, window_mouse_y,
+                                          &candidate_x, &candidate_y) != 0 ||
+                    candidate_x < 0 || candidate_x >= MapLongitudeBounds ||
+                    candidate_y < 0 || candidate_y >= MapLatitudeBounds) {
+                    continue;
+                }
+                bool visible = (PlayersData[ConsoleGlobal.faction_id_].flags &
+                                0x200U) != 0;
+                if (!visible) {
+                    const uint8_t faction_bit = static_cast<uint8_t>(
+                        1U << (ConsoleGlobal.faction_id_ & 0x1f));
+                    visible = (map_loc(candidate_x, candidate_y)->visibility &
+                               faction_bit) != 0;
+                    if (!visible) {
+                        visible = (GameState & 0x80U) != 0;
+                    }
+                }
+                if (!visible) {
+                    continue;
+                }
+                window->field_1DD9C_ = candidate_x;
+                window->field_1DDA0_ = candidate_y;
+                selected_window = slot;
+                break;
+            }
+        }
+    }
+
+    for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+        MapWin *const window = MapWinTable[slot];
+        if (window == nullptr ||
+            (slot != 0 && window->field_1DD74_ == 0) ||
+            (selected_window >= 0 && slot != selected_window)) {
+            continue;
+        }
+        switch (zoom_command) {
+        case 0x203:
+            if (window->field_1DD98_ < 0x10) {
+                window->field_1DD98_ += 2;
+            }
+            break;
+        case 0x204:
+            if (window->field_1DD98_ > -0xE) {
+                window->field_1DD98_ -= 2;
+            }
+            break;
+        case 0x205:
+            window->field_1DD98_ = 0;
+            break;
+        case 0x206:
+            window->field_1DD98_ = -6;
+            break;
+        case 0x207:
+            window->field_1DD98_ = 0x10;
+            break;
+        case 0x208:
+            window->field_1DD98_ = -0xE;
+            break;
+        default:
+            break;
+        }
+        window->draw_map(1);
+    }
+    WorldClimateWorldWin.redraw();
+}
+
 
 /*
 Purpose: Drain the keyboard queue, clear the two pointer-owner slots and let

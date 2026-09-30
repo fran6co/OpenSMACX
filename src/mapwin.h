@@ -130,7 +130,7 @@ class MapWin : public virtual GraphicWin {
   void UNK7();
 
  public:
-  // 0x0046F880, a pending_bodies forwarder.
+  // 0x0046F880, source-owned close handler.
   void on_sys_close();
 
  public:
@@ -149,11 +149,11 @@ class MapWin : public virtual GraphicWin {
   };
 
  public:
-  // 0x0046EC10, a pending_bodies forwarder.
+  // 0x0046EC10, source-owned right-button handler.
   void on_right_down(int a, int b);
 
  public:
-  // 0x0046F700, a pending_bodies forwarder.
+  // 0x0046F700, source-owned non-client input handler.
   void on_nc_left_down(int x_coord, int y_coord);
 
  public:
@@ -172,6 +172,8 @@ class MapWin : public virtual GraphicWin {
   void direct_dest_line(int x1, int y1, int x2, int y2,
                         int triad, int pattern_on, int pattern_off, int cover);
   void editor(int tile_x, int tile_y, int erase);
+  // 0x0046C020 applies the selected editor tool, then refreshes map windows.
+  void UNK4(int tile_x, int tile_y);
 
  public:
   // 0x0046EB90 delegates to go_reset, including its reentrant capture cleanup.
@@ -180,15 +182,15 @@ class MapWin : public virtual GraphicWin {
   virtual void on_lose_mouse_capture();
 
  public:
-  // 0x0046ED30, a pending_bodies forwarder.
+  // 0x0046ED30, source-owned capture and timer setup.
   void on_left_down(int a1, int a2);
 
  public:
-  // 0x0046F8C0, a pending_bodies forwarder.
+  // 0x0046F8C0, source-owned map button dispatcher.
   void on_button_clicked(int a1);
 
  public:
-  // 0x0046B310, a pending_bodies forwarder.
+  // 0x0046B310, source-owned visible-region focus.
   int focus(int x_coord, int y_coord);
   // 0x0046B1F0. Console::center and the editor's goto paths recenter the map
   // through the source-owned body in mapwin.cpp.
@@ -198,15 +200,16 @@ class MapWin : public virtual GraphicWin {
                   int faction_id);
 
  public:
-  // 0x0046D5D0, a pending_bodies forwarder. The two click handlers reach it
-  // on a virtual-base-adjusted receiver and used to do so through a pointer.
+  // 0x0046D5D0, source-owned waypoint, editor and action dispatcher.
   void click(int a1, int a2, int a3);
+  // 0x0046C0D0 builds and dispatches the typed map context menu.
+  void right_menu(int tile_x, int tile_y, int screen_x, int screen_y);
 
  public:
   // Win slot13, through generated MapWin/PlanWin/Console vtordisp thunks.
   virtual void on_resize(int width, int height);
   void on_redraw();
-  // 0x00467970, a pending_bodies forwarder. line_timer (time.cpp) calls it
+  // 0x00467970, route painter. line_timer (time.cpp) calls it
   // per live map-window slot with the literal 1.
   void draw_base_dest(int draw_type);
   // 0x0046A550: scroll the cached image and regenerate exposed tile regions.
@@ -256,17 +259,15 @@ class MapWin : public virtual GraphicWin {
   // wars; its bodies live beside their markers in mapwin.cpp.
   void gen_tile(int x, int y, int a3, int a4);
   void gen_map(int a1, int a2);
-  // 0x00466CA0, still an original body (src/recovered/units/00466ca0.cpp):
-  // declared so gen_tile's and gen_map's vehicle scan compile; the pushes at
+  // 0x00466CA0, source-owned vehicle painter. The pushes at
   // 0x00468CA3..AD and 0x0046A023..32 fix this five-argument shape.
   void draw_vehicles(int x, int y, int pixel_x, int pixel_y, int draw_type);
   // 0x004688E0, no seed mapping yet: the name and the void(int, int) shape
   // come from the two call sites that push exactly (x, y) after gen_tile's
   // vehicle draw and inside gen_map's overlay scan.
   void gen_overlays(int x, int y);
-  // 0x00467DE0 / 0x00469720 / 0x004698D0, still original bodies: declared so
-  // gen_map's unconditional base-name pass and its 0x2000/0x20000/0x100000
-  // gated legend and war passes compile.
+  // 0x00467DE0 / 0x00469720 / 0x004698D0: source-owned base-name,
+  // legend and war passes.
   void draw_base_names();
   void draw_legend();
   void draw_wars();
@@ -363,7 +364,9 @@ class MapWin : public virtual GraphicWin {
   uint32_t field_1DD8C_;  // 0x1DD8C
   uint32_t field_1DD90_;  // 0x1DD90
   uint32_t field_1DD94_;  // 0x1DD94
-  uint32_t field_1DD98_;  // 0x1DD98
+  // Signed zoom offset: Console::zoom's original JGE/JLE tests clamp it
+  // around +0x10 and -0xE, and MapWin init publishes values such as -8.
+  int32_t field_1DD98_;  // 0x1DD98
   uint32_t field_1DD9C_;  // 0x1DD9C
   uint32_t field_1DDA0_;  // 0x1DDA0
   // Tile origins and visible extents are signed: tile_to_pixel at0x00462F00
@@ -503,6 +506,7 @@ typedef void *func_map_win_free(void *);
 // startup path is a dependency; this flag's initial image value is zero.
 extern int MapInputEnabled;
 extern int MapMouseFeedbackBusy;
+void __cdecl go_timer(int selection_mode);
 // Produced by MapWin::dest_line and displayed by mouse feedback.
 extern int MapDestinationCost;
 
