@@ -1,0 +1,29 @@
+{
+  "event_id": "64d9ee3673e6560bea6366f01125e6d3ac9b17e7bfb651a73cff6670fcbe7afb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Original4E11B3 and4E1237 load the whole pointer94A30C before terrainbitoperations. Current unclaimed Console editor_randomize/editor_clear_random incorrectly turnfirstmapbyte intoaddress. Correct realMap::bit/bit_visible consumers while consolidating allocation owner; notadeliberatebehaviorfix.",
+      "Original47121D genuinelyreadsfirstmapbyte for terrain_fixup; retain that observedbehavior. Preserveallhistoricalclaims andoriginalidentities; onlytwo unclaimededitorbodyaddressinterpretations corrected."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5116304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5116416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3fcc0a7a478996a65944cb8cb188bf93465e6a164318d691965fe00061566193",
+  "request_id": "map-console-allocation-consumer-correction",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:map-allocation-owner-closure"
+}
