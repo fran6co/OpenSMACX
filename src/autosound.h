@@ -81,6 +81,12 @@ class AutoSound {
   Win *legacy_window_31() const { return val_31_; }
   Win *legacy_window_36() const { return val_36_; }
   Win *legacy_window_37() const { return val_37_; }
+  // BaseButton's retained event paths read these three settings as Win
+  // receivers and dispatch slots 23/7. Keep their storage identifiers
+  // neutral; the callsites establish the pointer type, not a broader role.
+  Win *legacy_window_28() const { return val_28_; }
+  Win *legacy_window_29() const { return val_29_; }
+  Win *legacy_window_30() const { return val_30_; }
 
  protected:
   // PROTECTED, NOT PRIVATE: Win derives from AutoSound and the homed window
@@ -131,9 +137,9 @@ class AutoSound {
   int val_25_;
   int val_26_;
   int val_27_;
-  int val_28_;
-  int val_29_;
-  int val_30_;
+  Win *val_28_;
+  Win *val_29_;
+  Win *val_30_;
   // ListBox double-click notification calls slots 56/55 on this window.
   // RECOVERY_MEMBER: v3 AutoSound val_31_ Win* 0x7C 0x0060C710
   Win *val_31_;
