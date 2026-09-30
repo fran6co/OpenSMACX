@@ -1,0 +1,27 @@
+{
+  "event_id": "03f5efaeffdd73644f1bdc2f5c874e1a29622975cdc4bb3a5460ef87cc672f6d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h"
+    ],
+    "evidence": [
+      "Original MapWin::on_left_down46ED30 calls and installs timer callback go_timer50F170; retained seed src/recovered/units/0050f170.cpp identifies full596-byte extent50F170..50F3C4. No product definition exists. The callback primarily controls existing MapWin windows/cursor selection and Console state through existing GoTimer and typed vehicle records.",
+      "Authorize complete genuine go_timer implementation and declaration in already-editable src/mapwin.cpp/h, and ONLY friend void __cdecl go_timer(int) in src/console.h when required for private existing state. Recover typed MapWin/Console/Win/Sprite accesses and actual callback ABI; no original-address calls, manual vtable dispatch, duplicated object storage or unimplemented declaration. Preserve original seed and historical identity; Root publishes native binding and physically observed symbols.",
+      "Outside current narrow scope all Console/time/vehicle behavior remains protected. This is a coupled dependency for the full MapWin owner batch, not a scope reset; Root reviews and integrates serially with TutWin Console caller hunks kept distinct."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5304688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0f494152ff56233850782bee9c5e040d30f14104d50551eb0e41bbef02894ede",
+  "request_id": "mapwin-go-timer-callback-20260930",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
