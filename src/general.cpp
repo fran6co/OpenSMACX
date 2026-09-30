@@ -69,6 +69,18 @@ uint32_t ScenEditorUndoPosition = 1; // 0x00690D7C
 int GenderDefault;       // 0x009BBFEC
 BOOL PluralityDefault;   // 0x009BBFF0
 
+// Read a script section into the shared substitution buffer. The text
+// reader owns TextBufferGetPtr; parse_string supplies the substitutions.
+// ORIGINAL: 0x0048C060 ?parse_it@@YAXPADPBD@Z 0x0048C060-0x0048C099 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned48C060..48C099 clears StringTemp9B86A0, calls X_text_open5BECA0, then text_get5FD570 and parse_string625880(TextBufferGetPtr9B7D00,StringTemp) on success.", "src/recovered/units/0048c060.cpp retains this same original identity, complete57-byte span and historical BYTE_EXACT claim; Quayle redraw4956D0 passes Holobook filename and BOOKTITLE/BOOKINTRO/BOOKLIST section names."], "reason": "Recover the filename/section wrapper using the real shared text and substitution owners; the existing seed retains its historical matching obligation."}
+void __cdecl parse_it(char *file_name, const char *section) {
+    StringTemp[0] = 0;
+    if (X_text_open(file_name, section) == 0) {
+        text_get();
+        parse_string(TextBufferGetPtr, StringTemp);
+    }
+}
+
 /*
 Purpose: Trim the trailing spaces in-line from the end of the string.
 // ORIGINAL: 0x00600780 ?purge_trailing@@YAXPAD@Z 0x00600780-0x006007AD BYTE_EXACT

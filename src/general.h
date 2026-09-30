@@ -163,6 +163,8 @@ int __cdecl filefind_init(LPCSTR file_check, BOOL is_complete);
 // (game.cpp) feeds it the savegame name before each reload.
 void __cdecl filefind_set_alternative(LPCSTR path);
 int __cdecl parse_string(LPSTR input, LPSTR output);
+int __cdecl X_text_open(char *file_name, const char *section);
+void __cdecl parse_it(char *file_name, const char *section);
 
 MEASURED inline int __cdecl range(int input, int min, int max) {
     if (input < min || max < min) {
