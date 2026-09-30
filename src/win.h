@@ -289,6 +289,13 @@ class Win : public AutoSound {
   // before its epilogue, which a void-returning method never emits.
   int move(int x, int y);
   int is_visible();
+  // The production editor temporarily suppresses mouse/key input on the
+  // desktop's flat buttons while its own modal controls are active. Preserve
+  // the unrelated window-state bits when toggling that existing flag.
+  void set_input_suppressed(int value) {
+    if (value != 0) iSomeFlag_ |= 8U;
+    else iSomeFlag_ &= ~8U;
+  }
   const RECT &outer_rect() const { return outer_rect_; }
   int is_descendant(Win *candidate);
   int is_dialog_focus();

@@ -422,6 +422,9 @@ class Caviar {
   void UNK8(int menu_id);
   void UNK10(float offset_x, float offset_y, float offset_z);
   void set_scene_rotation(float x, float y, float z);
+  // ProdPicker::exec writes this existing one-byte state immediately after
+  // initialization; keep the byte private while exposing that observed store.
+  void set_field_A4(int value) { field_A4_ = static_cast<uint8_t>(value); }
   // 0x00618DA0. The engine's per-object callback: fills the handle's colour
   // table with 0x1800 bytes chosen by field_4_'s bits - the shared monochrome
   // source when bit 3 is on, the caller's table when bit 4 is on, otherwise

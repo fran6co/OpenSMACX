@@ -74,6 +74,9 @@ class Scroll : public ScrollGraphicWin {
   void set_sprite_down(Sprite *sprite1, Sprite *sprite2, Sprite *sprite3);
   uint32_t set_pos(int position);
   int position() const { return position_; }
+  int paging() const { return paging_; }
+  void set_paging(int value) { paging_ = value; }
+  void set_field_A30(int value) { field_A30_ = static_cast<uint32_t>(value); }
   void compute_thumb_rect(RECT *rect);
   uint32_t set_thumb_rect();
 

@@ -25,6 +25,8 @@
 #include "graphicwin.h"
 #include "stringstruct.h"
 
+struct Base;
+
  /*
   * ProdPicker class
   *
@@ -45,7 +47,14 @@ class ProdPicker : public ConstructedGraphicWin {
   int UNK1(int pos);
   void on_mouse_move(int a1, int a2);
   void UNK3(int a1);
+  void show(int visible);
+  void hide();
   void close();
+  void calculate();
+  void on_right_click(int x, int y);
+  int on_key_click(int repeat, int key);
+  static void __cdecl UNK2(int unused, ProdPicker *picker);
+  int exec(Base *base, int faction_id, GraphicWin *owner, int modal);
   void draw_item(int item, int update);
   int edbc_fac(int facility_id);   // 0x00493B70, editor category
   int edbc_unit(int prototype_id); // 0x00493AF0, prototype category
@@ -76,8 +85,8 @@ class ProdPicker : public ConstructedGraphicWin {
   Font font3_;  // 0xAEC
   Font font4_;  // 0xB14
   Time time_;  // 0xB3C
-  uint32_t field_B64_;  // 0xB64
-  uint32_t field_B68_;  // 0xB68
+  int32_t field_B64_;  // selected vehicle-preview rotation, 0xB64
+  int32_t field_B68_;  // nonzero for editor picker mode, 0xB68
   uint32_t field_B6C_;  // 0xB6C
   uint32_t field_B70_;  // 0xB70
   FlatButton flatButtons_[9];  // 0xB74
@@ -88,18 +97,17 @@ class ProdPicker : public ConstructedGraphicWin {
   // Remaining interior fields retain measured offsets and byte extent where
   // no stronger source type is established.
   uint8_t field_A63C_[0x100];  // 0xA63C
-  uint32_t field_A73C_;  // 0xA73C
-  uint32_t field_A740_;  // 0xA740
-  uint32_t field_A744_;  // 0xA744
-  uint8_t field_A748_[0x18];  // 0xA748
-  float field_A760_;  // 0xA760
-  float field_A764_;  // 0xA764
-  float field_A768_;  // 0xA768
+  float field_A73C_;  // first camera angle passed as the three-float vector
+  float field_A740_;  // second camera angle
+  float field_A744_;  // third camera angle
+  // The rotation helper writes a full nine-float matrix at +0xA748; its last
+  // row is subsequently used as the camera direction at +0xA760..+0xA768.
+  VOX_Matrix field_A748_;  // 0xA748
   uint32_t field_A76C_;  // 0xA76C
-  uint32_t field_A770_;  // 0xA770
-  uint32_t field_A774_;  // 0xA774
-  uint32_t field_A778_;  // 0xA778
-  uint32_t field_A77C_;  // 0xA77C
+  Base *field_A770_;  // 0xA770, the Base passed to exec
+  int32_t field_A774_;   // selected production row; -1 means no selection, 0xA774
+  int32_t field_A778_;   // selected production action, 0xA778
+  int32_t field_A77C_;   // first visible row, 0xA77C
   // THE THREE ITEM LISTS, carved 2026-09-01 from what was the thirty-six
   // dwords field_A780_..field_A80C_: three consecutive StringLists (3 * 0x30),
   // proven by prod_picker_unknown_a7_block's own store sequence - vbptr
@@ -115,12 +123,12 @@ class ProdPicker : public ConstructedGraphicWin {
   StringList prod_c_;  // 0xA7E0
   uint32_t field_A810_;  // 0xA810
   uint32_t field_A814_;  // 0xA814
-  uint32_t field_A818_;  // 0xA818
+  int32_t field_A818_;   // available production-entry count, 0xA818
   uint32_t field_A81C_;  // 0xA81C
   uint32_t field_A820_;  // 0xA820
   uint32_t field_A824_;  // 0xA824
   uint32_t field_A828_;  // 0xA828
-  uint32_t field_A82C_;  // 0xA82C
+  int32_t field_A82C_;   // visible-entry capacity, 0xA82C
   uint32_t field_A830_;  // 0xA830
   uint32_t field_A834_;  // 0xA834
   uint32_t field_A838_;  // 0xA838
