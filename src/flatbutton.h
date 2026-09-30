@@ -28,6 +28,7 @@ class Sprite;
 class FlatButton : public BaseButton {
   // MainInterface initializes these owned controls' colors and sprite links.
   friend class MainInterface;
+  friend class DesignWin;
  public:
   FlatButton();
   // DEFINED IN-CLASS so enclosing destructors can expand it, which is what

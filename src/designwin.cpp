@@ -23,9 +23,11 @@
 #include "worldwin.h"
 #include "faction.h"
 #include "game.h"
+#include "mapwin.h"     // the virtual GraphicWin host for the design tutorial
 #include "popup.h"
 #include "basepop.h"
 #include "strings.h"
+#include "text.h"       // the design preset labels are read from its script
 #include "technology.h"
 #include "temp.h"
 #include "general.h"
@@ -55,6 +57,15 @@ extern int ProtoSortCount;
 extern int ProtoSortIds[128];
 void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
                        int weapon, int armor, int abilities, int reactor);
+int __cdecl X_text_open(char *src_file_id, const char *section_id);
+extern int DesignGridButtonIndex;
+
+// Distinct mutable loader-zero name inputs at 0x00733978 and 0x0073397C.
+// Their containing extents and indirect writers remain unresolved.
+// RECOVERY_OBJECT: v1 0x00733978 ?DesignButtonName23@@3PADA
+char DesignButtonName23[1];
+// RECOVERY_OBJECT: v1 0x0073397C ?DesignButtonName24@@3PADA
+char DesignButtonName24[1];
 
 // The automatic-design editor exchanges these fields with consider_designs
 // (0x00581260). setup_veh writes them, enables the override, then reloads
@@ -94,6 +105,295 @@ DesignWin::DesignWin() {
     field_14210_ = 0;
     mineralCostFactor_ = 0;
     prototype_name_[0] = 0;
+}
+
+// ORIGINAL: 0x0043C270 ?init@DesignWin@@QAEXXZ 0x0043C270-0x0043D0B7;0x006546C5-0x006546DA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043c270.cpp", "image:0x0043c270; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+void DesignWin::init() {
+    // The initializer is also the reopen path. Close each prior child/resource
+    // before rebuilding it, then keep the original stack Buffer lifetime even
+    // though the loaded member buffer supplies the actual copy below.
+    Buffer stack_buffer;
+    (void)stack_buffer;
+    close();
+    field_CE4_ = 0;
+    field_4_ = 1;
+    register_iface_mode(1, static_cast<SubInterface *>(this));
+    font1_.init(DefaultFontFace, 10, 0);
+    font1_.unk_1_ = 3;
+    font2_.init(DefaultFontFace, 12, 1);
+    font2_.unk_1_ = 5;
+    font3_.init(DefaultFontFace, 16, 1);
+    font3_.unk_1_ = 4;
+    field_B0C_rect_ = MainInterfaceGlobal.status_hit_rect();
+    field_B0C_rect_.left = MainInterfaceGlobal.main_frame_rect().left + 4;
+    RECT stat_panel = MainInterfaceGlobal.main_frame_rect();
+    field_B1C_ = stat_panel.left;
+    field_B20_ = stat_panel.top;
+    field_B24_ = stat_panel.right;
+    field_B28_ = stat_panel.bottom;
+    field_B28_ = field_B0C_rect_.top;
+    field_B1C_ += 3;
+    field_B20_ += 3;
+    field_B24_ -= 3;
+    field_B28_ -= 3;
+    info_panel_rect_ = MainInterfaceGlobal.lower_frame_rect();
+    info_panel_rect_.left += 4;
+    info_panel_rect_.top += 4;
+    info_panel_rect_.right -= 4;
+    info_panel_rect_.bottom -= 4;
+    frame_rect_ = MainInterfaceGlobal.right_frame_rect();
+    frame_rect_.left += 4;
+    frame_rect_.top += 4;
+    frame_rect_.right -= 4;
+    frame_rect_.bottom -= 4;
+    caption_rect_ = frame_rect_;
+    caption_rect_.left += 3;
+    caption_rect_.top += 3;
+    caption_rect_.right -= 3;
+    caption_rect_.bottom = caption_rect_.top + 21;
+    field_A7C_ = caption_rect_.left;
+    field_A80_ = caption_rect_.top;
+    field_A84_ = caption_rect_.right;
+    field_A88_ = caption_rect_.bottom;
+    field_A80_ = caption_rect_.bottom + 3;
+    int i;
+    int row;
+    int column;
+
+    SetRect(&vehicle_panel_rect_, 0x8C, 9, 0x1C3, 0x140);
+    SetRect(&chassis_panel_rect_, 0x1E, 7, 0x81, 0x5C);
+    SetRect(&weapon_panel_rect_, 0x1E, 0x65, 0x81, 0xBA);
+    SetRect(&armor_panel_rect_, 0x1E, 0xC3, 0x81, 0x118);
+    SetRect(&reactor_panel_rect_, 0x1CE, 7, 0x231, 0x5C);
+    SetRect(&special_one_panel_rect_, 0x1CE, 0x65, 0x231, 0xBA);
+    SetRect(&special_two_panel_rect_, 0x1CE, 0xC3, 0x231, 0x118);
+
+    spot1_.init(0x40);
+    spot2_.init(6);
+    RECT *component_rects[6] = {
+        &chassis_panel_rect_, &weapon_panel_rect_, &armor_panel_rect_,
+        &reactor_panel_rect_, &special_one_panel_rect_, &special_two_panel_rect_
+    };
+    for (i = 0; i < 6; ++i) {
+        spot2_.add(i, i, component_rects[i]->left, component_rects[i]->top,
+                   component_rects[i]->right - component_rects[i]->left,
+                   component_rects[i]->bottom - component_rects[i]->top);
+    }
+
+    // The vehicle preview uses the same light direction as the game renderer.
+    caviar_.init();
+    caviar_.field_A4_ = 0;
+    const float angles[3] = {0.0f, 0.0f, 0.785f};
+    VOX_Matrix rotation;
+    caviar_apply_rotation(angles, &rotation);
+    VOX_Vect camera;
+    for (i = 0; i < 3; ++i) {
+        rotation.values[2][i] = -rotation.values[2][i];
+        camera.values[i] = rotation.values[2][i] * -10000.0f;
+    }
+    caviar_.set_camera_direct(&camera, &rotation);
+    caviar_.set_scaling(0.18f);
+    caviar_.shadow_vector_ = VehLightDirMap;
+    caviar_.light_vector_ = VehLightDirMap;
+
+    const int frame_height = 0x258 - MainInterfaceGlobal.field_D7C_;
+    buffer_.load_pcx("deswin.pcx", 0, 0x0A, 0xEC);
+    Win *parent = static_cast<Win *>(static_cast<GraphicWin *>(&ConsoleGlobal));
+    GraphicWin::init(0, 0, buffer_.pixel_width(), frame_height, 0,
+                     0x01000000, parent, 0, 0);
+
+    const int move_x = (WinScreenWidth - pixel_width() + 0x20) / 2;
+    const int move_y = -pixel_height() - MainInterfaceGlobal.field_D7C_
+        + WinScreenHeight;
+    move(move_x, move_y);
+
+    Buffer *const inherited_buffer = static_cast<Buffer *>(
+        static_cast<GraphicWin *>(this));
+    buffer_.copy(inherited_buffer, 0, 0, inherited_buffer->pixel_width(),
+                 inherited_buffer->pixel_height());
+
+    // Lay out the two-row prototype grid. The original counter is shared
+    // storage, but its observable sequence is a simple row-major 0..13.
+    X_text_open(ScriptPopupFile, "DESIGNAUTO");
+    field_A7C_ = caption_rect_.left;
+    field_A80_ = caption_rect_.top;
+    field_A84_ = caption_rect_.right;
+    field_A88_ = caption_rect_.bottom;
+    field_A80_ = caption_rect_.bottom + 3;
+    const int grid_width = (static_cast<int>(field_A84_) -
+                            static_cast<int>(field_A7C_) + 3) / 2 - 3;
+    DesignGridButtonIndex = 0;
+    int column_x = static_cast<int>(field_A7C_);
+    for (row = 0; row < 2; ++row) {
+        int y = static_cast<int>(field_A80_);
+        for (column = 0; column < 7; ++column) {
+            text_get();
+            CharUpperA(TextBufferGetPtr);
+            const int button = 9 + DesignGridButtonIndex;
+            flatButtons_[button].init(TextBufferGetPtr, button, column_x, y,
+                grid_width, 0x15, static_cast<Win *>(&MainInterfaceGlobal), 0);
+            flatButtons_[button].set_bubble_text(label_get(0xCEC / 4));
+            ++DesignGridButtonIndex;
+            y += 0x17;
+        }
+        column_x += 3 + grid_width;
+    }
+    text_close();
+
+    // These paired-button rectangles are copied after the grid is populated.
+    const RECT &stack_rect = MainInterfaceGlobal.stack_button_rect_;
+    const int frame_shift = MainInterfaceGlobal.main_frame_rect().left
+        - stack_rect.left + 8;
+    field_CBC_rect_.left = stack_rect.left + frame_shift;
+    field_CBC_rect_.top = stack_rect.top;
+    field_CBC_rect_.right = stack_rect.right + frame_shift;
+    field_CBC_rect_.bottom = stack_rect.bottom;
+    const RECT &adjacent_rect = MainInterfaceGlobal.adjacent_panel_right_rect_;
+    field_CCC_ = adjacent_rect.left;
+    field_CD0_ = adjacent_rect.top;
+    field_CD4_ = adjacent_rect.right;
+    field_CD8_ = adjacent_rect.bottom;
+
+    // Five lower-panel rows retain the original unusual coordinate ordering;
+    // drawing and button setup consume the exact same four stored integers.
+    RECT *const rows[5] = {&lower_panel_rect_, &lower_panel_extra_rect_,
+        &field_BAC_rect_, &field_BBC_rect_, &lower_panel_end_rect_};
+    int left = buffer_working_rect()->left + 0x1B;
+    const int right_limit = buffer_working_rect()->right - 0x3B;
+    const int bottom = buffer_working_rect()->bottom - 0x14;
+    const int top = bottom - 0x14;
+    int edge = (right_limit - left + 3) / 5 - 3 + left;
+    for (row = 0; row < 5; ++row) {
+        rows[row]->left = left;
+        rows[row]->top = top;
+        rows[row]->right = edge;
+        rows[row]->bottom = bottom;
+        const int step = edge - left + 3;
+        left += step;
+        edge += step;
+    }
+    const int last_step = edge - left + 3;
+    field_B5C_rect_ = lower_panel_rect_;
+    const int vertical_delta = top - bottom - 6;
+    field_B5C_rect_.top += vertical_delta;
+    field_B5C_rect_.bottom += vertical_delta;
+    field_B6C_rect_ = field_B5C_rect_;
+    field_B6C_rect_.left += last_step;
+    field_B6C_rect_.right += last_step;
+    field_B4C_rect_ = lower_panel_end_rect_;
+    field_B4C_rect_.top += vertical_delta;
+    field_B4C_rect_.bottom += vertical_delta;
+    field_B7C_rect_ = field_B4C_rect_;
+    const int horizontal_delta = left - edge - 3;
+    field_B7C_rect_.left += horizontal_delta;
+    field_B7C_rect_.right += horizontal_delta;
+
+    // Localized labels are loaded in the original order, and each button keeps
+    // its own id, parent, hit rectangle, and bubble label.
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xE58 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[1].init(StringTemp, 1, field_B5C_rect_.left,
+        field_B5C_rect_.top, field_B5C_rect_.right - field_B5C_rect_.left,
+        field_B5C_rect_.bottom - field_B5C_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[1].set_bubble_text(label_get(0xE7C / 4));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1024 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[2].init(StringTemp, 2, field_B6C_rect_.left,
+        field_B6C_rect_.top, field_B6C_rect_.right - field_B6C_rect_.left,
+        field_B6C_rect_.bottom - field_B6C_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[2].set_bubble_text(label_get(0x1028 / 4));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xE74 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[0].init(StringTemp, 0, field_B4C_rect_.left,
+        field_B4C_rect_.top, field_B4C_rect_.right - field_B4C_rect_.left,
+        field_B4C_rect_.bottom - field_B4C_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[0].set_bubble_text(label_get(0xE78 / 4));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x1034 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[3].init(StringTemp, 3, field_B7C_rect_.left,
+        field_B7C_rect_.top, field_B7C_rect_.right - field_B7C_rect_.left,
+        field_B7C_rect_.bottom - field_B7C_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[3].set_bubble_text(label_get(0x1038 / 4));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xBD0 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[6].init(StringTemp, 6, field_BAC_rect_.left,
+        field_BAC_rect_.top, field_BAC_rect_.right - field_BAC_rect_.left,
+        field_BAC_rect_.bottom - field_BAC_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[6].set_bubble_text(label_get(0xC58 / 4));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xBD4 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[7].init(StringTemp, 7, field_BBC_rect_.left,
+        field_BBC_rect_.top, field_BBC_rect_.right - field_BBC_rect_.left,
+        field_BBC_rect_.bottom - field_BBC_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[7].set_bubble_text(label_get(0xC5C / 4));
+
+    const int prototype_id = static_cast<int>(protoID_);
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get((VehPrototypes[prototype_id].flags & 0x80)
+                                 ? 0x864 / 4 : 0x198 / 4));
+    if (Language != 2) CharUpperA(StringTemp);
+    flatButtons_[8].init(StringTemp, 8, lower_panel_end_rect_.left,
+        lower_panel_end_rect_.top,
+        lower_panel_end_rect_.right - lower_panel_end_rect_.left,
+        lower_panel_end_rect_.bottom - lower_panel_end_rect_.top,
+        static_cast<Win *>(this), 0);
+    const int faction_bubble =
+        (VehPrototypes[prototype_id].flags & 0x80) != 0
+            ? 0xC64 : 0xC60;
+    flatButtons_[8].set_bubble_text(label_get(faction_bubble / 4));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0x438 / 4));
+    CharUpperA(StringTemp);
+    flatButtons_[4].init(StringTemp, 4, lower_panel_rect_.left,
+        lower_panel_rect_.top, lower_panel_rect_.right - lower_panel_rect_.left,
+        lower_panel_rect_.bottom - lower_panel_rect_.top, static_cast<Win *>(this), 0);
+    flatButtons_[4].set_bubble_text(label_get(0xC50 / 4));
+    flatButtons_[5].init(StringTemp, 5, lower_panel_extra_rect_.left,
+        lower_panel_extra_rect_.top,
+        lower_panel_extra_rect_.right - lower_panel_extra_rect_.left,
+        lower_panel_extra_rect_.bottom - lower_panel_extra_rect_.top,
+        static_cast<Win *>(this), 0);
+    flatButtons_[5].set_bubble_text(label_get(0xC54 / 4));
+
+    // Two lower navigation controls use the original distinct data groups and
+    // the process-wide MainInterface as their parent.
+    flatButtons_[23].init(DesignButtonName23, 0x17, field_CBC_rect_.left,
+        field_CBC_rect_.top, field_CBC_rect_.right - field_CBC_rect_.left,
+        field_CBC_rect_.bottom - field_CBC_rect_.top,
+        static_cast<Win *>(&MainInterfaceGlobal), 0);
+    flatButtons_[24].init(DesignButtonName24, 0x18, field_CCC_, field_CD0_,
+        field_CD4_ - field_CCC_, field_CD8_ - field_CD0_,
+        static_cast<Win *>(&MainInterfaceGlobal), 0);
+    for (i = 0; i < 25; ++i) {
+        flatButtons_[i].hide();
+        flatButtons_[i].set_text_color(0x41, -1, 1, 1);
+        flatButtons_[i].set_border_styles(&InterfaceBoxStyles[27],
+            &InterfaceBoxStyles[29], &InterfaceBoxStyles[29]);
+        static_cast<Buffer *>(static_cast<GraphicWin *>(&flatButtons_[i]))
+            ->set_font(MainInterfaceGlobal.primary_font(), 0, 0, 0);
+        flatButtons_[i].redraw();
+    }
+    for (i = 0; i < 3; ++i)
+        flatButtons_[23].field_AD4_[i] = &MainInterfaceGlobal.sprites12_[i];
+    flatButtons_[23].redraw();
+    flatButtons_[23].field_A44_ = 100;
+    for (i = 0; i < 3; ++i)
+        flatButtons_[24].field_AD4_[i] = &MainInterfaceGlobal.sprites12_[i + 3];
+    flatButtons_[24].redraw();
+    flatButtons_[24].field_A44_ = 100;
 }
 
 // ORIGINAL: 0x00439700 ?on_right_click@DesignWin@@QAEXHH@Z 0x00439700-0x00439948
@@ -360,7 +660,7 @@ static unsigned char *const PlayerFlagBlocks = (unsigned char *)0x00946F58;
 // 0x005398E0 ?pop_wait@@YAHXZ - defined in faction.cpp (BYTE_EXACT); no
 // header declares it, and the editor popups pass it as their wait callback.
 int __cdecl pop_wait();
-
+int __cdecl tut_check2(int flag);
 // The alpha(x).txt keys and panel sprites the editor popups raise (popp's
 // label argument is an alpha.txt key, not display text; the `alunit_sm.pcx`
 // forms are the alien-faction variants). SpaceText's convention applies:
@@ -1507,9 +1807,133 @@ void DesignWin::UNK3() {
 // original object or a DesignWin member from the candidate's sizeof.
 // RECOVERY_OBJECT: v1 0x0073396C ?DesignTutorState@@3HA
 int DesignTutorState;
+// The initializer's 14-entry grid uses process-wide scratch storage.
+// RECOVERY_OBJECT: v1 0x009B7B10 ?DesignGridButtonIndex@@3HA
+int DesignGridButtonIndex;
 // exec stores its receiver here before starting time_; shutdown clears it.
 // RECOVERY_OBJECT: v2 0x00733970 0x00733974 ?DesignWindowSelf@@3PAVDesignWin@@A 0x0043C170
 DesignWin *DesignWindowSelf;
+
+// ORIGINAL: 0x0043E9A0 ?exec@DesignWin@@QAEHHH@Z 0x0043E9A0-0x0043ECAD;0x00654709-0x0065471E FILE
+// RECOVERY_BINDING: v1 {"evidence": ["seed:src/unrecovered/0043e9a0.cpp", "image:0x0043e9a0; original call/rectangle/lifetime review"], "reason": "Restore the original ownership-group implementation through real tutorial/editor windows, declared members and normal C++ lifecycle; retained seed extents include the associated exception cleanup where present."}
+int DesignWin::exec(int faction_id, int prototype_id) {
+    Buffer execution_buffer;
+    (void)execution_buffer;
+
+    if (DesignTutorState != 2) init();
+
+    const int interactive_run = prototype_id == -2;
+    if (prototype_id < 0) {
+        const int faction_prototype_base = faction_id * MaxVehProtoFactionNum;
+        int fallback_prototype = faction_prototype_base;
+        int most_recent_obsolete = prototype_id;
+        int candidate = faction_prototype_base;
+        int scanned = 0;
+        int result = candidate;
+        while (scanned < MaxVehProtoFactionNum) {
+            const VehPrototype &record = VehPrototypes[candidate];
+            result = candidate;
+            if ((record.flags & PROTO_ACTIVE) == 0) break;
+            const unsigned int obsolete = static_cast<unsigned char>(
+                record.obsolete_factions);
+            if ((obsolete & (1U << (faction_id & 0x1f))) != 0) {
+                most_recent_obsolete = candidate;
+            }
+            ++scanned;
+            ++candidate;
+            result = most_recent_obsolete;
+        }
+        prototype_id = result < 0 ? fallback_prototype : result;
+    }
+
+    int normalized_faction = faction_id;
+    if (normalized_faction < 0) normalized_faction = -normalized_faction;
+    protoID_ = static_cast<uint32_t>(prototype_id);
+    factionID_ = static_cast<uint32_t>(normalized_faction);
+    enemy_capabilities(normalized_faction);
+    mineralCostFactor_ = static_cast<uint32_t>(
+        cost_factor(static_cast<int>(factionID_), 1, -1));
+    protoAbilityID1_ = static_cast<uint32_t>(-1);
+    protoAbilityID2_ = static_cast<uint32_t>(-1);
+    setup_veh(prototype_id, 1);
+    proto_sort_2(static_cast<int>(factionID_));
+
+    const int sort_count = ProtoSortCount;
+    int sorted_index = static_cast<int>(field_CE4_);
+    const int sort_limit = sorted_index + sort_count;
+    if (sorted_index < sort_limit) {
+        do {
+            const int relative_index = sorted_index % sort_count;
+            if (prototype_id == ProtoSortIds[relative_index]) {
+                field_CE4_ = static_cast<uint32_t>(
+                    (relative_index + sort_count - 5) % sort_count);
+                break;
+            }
+            ++sorted_index;
+        } while (sorted_index < sort_limit);
+    }
+
+    field_14210_ = 0;
+    if (!has_tech(Rules.tech_two_spec_abilities,
+                  static_cast<int>(factionID_))) {
+        int selected_abilities = 0;
+        if (static_cast<int32_t>(protoAbilityID1_) >= 0) {
+            ++selected_abilities;
+        }
+        if (static_cast<int32_t>(protoAbilityID2_) >= 0 &&
+            ++selected_abilities > 1) {
+            protoAbilityID2_ = static_cast<uint32_t>(-1);
+        }
+    }
+
+    X_text_open(ScriptPopupFile, "DESIGNLABELS");
+    for (int row = 0; row < 16; ++row) {
+        text_get();
+        preset_names_[row][0] = 0;
+        strcat(preset_names_[row], TextBufferGetPtr);
+    }
+    text_close();
+
+    if (DesignTutorState == 2) {
+        redraw();
+    } else {
+        show(0);
+        time_.start(DesignWin::timer_function, 0, 0x28, 5);
+    }
+    field_CDC_ = 0;
+    DesignWindowSelf = this;
+
+    if (DesignTutorState == 3) {
+        DesignTutorState = 0;
+    } else {
+        if (tut_check2(0x2000) != 0) {
+            TutorialWindow.set_tour_stage(7);
+            int x;
+            int y;
+            TutorialWindow.des_rect(&vehicle_panel_rect_, &x, &y);
+            MapWin *const map = MapWinTable[0];
+            GraphicWin *const owner = map != 0
+                ? static_cast<GraphicWin *>(map) : 0;
+            TutorialWindow.tut_win(owner, "DESWIN", x, y, 0, 1, -1, -1);
+        }
+        if (!interactive_run) {
+            set_modal(0, pop_wait, &MainInterfaceGlobal);
+            if (DesignTutorState == 0) {
+                hide();
+                do_all_draws();
+                DesignWindowSelf = 0;
+                time_.stop();
+                time_.release_modal();
+                DesignTutorState = 0;
+            } else {
+                DesignTutorState = 2;
+            }
+        }
+    }
+
+    return static_cast<int>(field_CDC_);
+}
+
 
 // ORIGINAL: 0x0043C170 ?timer_function@DesignWin@@QAAXH@Z 0x0043C170-0x0043C19B BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["git:3f6ab06bdf3b791aa23454e19f71b4e8b5935caf:src/recovered/0043c170.cpp;Time cdecl callback interface"], "reason": "Receiver-free timer callback reloads the shared active design owner between preview drawing and rectangle update, then draws the tutorial arrow."}
@@ -2396,7 +2820,7 @@ void DesignWin::select_reactor() {
 // registering each spot for on_left_click.
 void DesignWin::draw_stack() {
     Font font;
-    RECT area = *reinterpret_cast<RECT *>(&field_B0C_);
+    RECT area = field_B0C_rect_;
     Buffer *canvas = reinterpret_cast<Buffer *>(InterfaceBuffer);
     canvas->set_clip(reinterpret_cast<RECT *>(InterfaceClipRect));
     canvas->tile(*StackTileBufferSlot, area.left, area.top, area.left, area.top,
@@ -2406,9 +2830,9 @@ void DesignWin::draw_stack() {
     RECT rc = area;
     rc.bottom -= 3;
     rc.right = static_cast<int>(field_CCC_) - 3;
-    int span = rc.right - (static_cast<int>(field_CC4_) + 3) + 2;
+    int span = rc.right - (static_cast<int>(field_CBC_rect_.right) + 3) + 2;
     int spacer = span / 10 - 2;
-    int x_base = static_cast<int>(field_CC4_) + 3;
+    int x_base = static_cast<int>(field_CBC_rect_.right) + 3;
     rc.left = x_base;
     int y_base = rc.top + 3;
     rc.top = y_base;

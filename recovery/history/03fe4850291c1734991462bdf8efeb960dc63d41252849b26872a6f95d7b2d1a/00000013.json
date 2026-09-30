@@ -1,0 +1,21 @@
+{
+  "event_id": "19f8d6d519cc939c952c7afe22cdd48ba51e8a9dcb8bef9c2022ea86c4c5c613",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/test_tutorial_tours.py",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator integration retires only the now-authored TutWin map/show/destructor original-address forwarders, keeps their compatible historical seeds, adds actual-body cancellation/name controls, and lowers the pending-forwarder ceiling. Baseline and protected source identities remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "91ca1cf7c7563faa8a41a0eec932276c47fe5373b4ef739f8c5771eadf0428a7",
+  "request_id": "tutorial-design-integration-verification-files",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

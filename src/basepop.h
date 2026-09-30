@@ -56,6 +56,8 @@ extern BasePopConfigCallback BasePopDefaultField3094;
   * BasePop class
   */
 class BasePop : public GraphicWin {
+  // Tutorial callouts configure this owned popup's callback and dialog state.
+  friend class TutWin;
  public:
   // homed from 00605130.cpp
   void on_left_down(int x, int y);

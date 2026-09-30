@@ -34,6 +34,7 @@ class BaseButton : public GraphicWin {
   friend class ButtonGroup;
   friend class FlatButton;
   friend class Scroll;
+  friend class DesignWin;
 
  public:
   void on_left_down(int x, int y);

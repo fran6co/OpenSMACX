@@ -61,32 +61,40 @@ class TutWin : public Popup {
   // These draw callbacks have no TutWin receiver in the original call ABI;
   // they read tutorial tile state from the process-wide window instead.
   friend void __cdecl tut_terrain_draw(Sprite *, GraphicWin *, int, int, int);
-  // 0x004BDFE0, a pending_bodies forwarder.
-  // The owner arrives as a raw address computed off a vbtable, which is
-  // why it is `void *` here rather than `GraphicWin *`.
-  int tut_win(void *owner, const char *text, int a3, int a4,
+  // The callout is hosted by the primary MapWin's virtual GraphicWin base.
+  int tut_win(GraphicWin *owner, const char *text, int a3, int a4,
               Sprite *sprite, int a6, int a7, int a8);
+  void tour1();
+  void tour5();
+  void tour6();
+  void tour7();
+  void tour();
+  // DesignWin's modal setup advances the tutorial before opening its callout.
+  // Keep the stage in its existing, image-pinned dword at 0x53C0.
+  void set_tour_stage(int stage) { field_53C0_ = static_cast<uint32_t>(stage); }
+  void on_button_clicked(int button_id);
+  static void __cdecl base_draw(Sprite *unused_sprite, GraphicWin *window,
+                                int mode, int pixel_x, int pixel_y);
   void on_move(int x, int y);
   int on_key_click(int key, int code);
   int reset();
   TutWin();
-  // 0x004BE7D0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // 0x004BE7D0. The typed Popup/BasePop hierarchy owns the teardown chain;
+  // the compiler-generated base/member lifetime calls follow this body.
   ~TutWin();
   void UNK1();
   void UNK3(Win *a1);
-  void do_base(RECT *rect, const char *text, int flag);
-  void do_iface(RECT *rect, const char *text, int flag);
-  void do_soc(RECT *rect, const char *text, int flag);
-  void do_des(RECT *rect, const char *text, int flag);
+  int do_base(RECT *rect, const char *text, int flag);
+  int do_iface(RECT *rect, const char *text, int flag);
+  int do_soc(RECT *rect, const char *text, int flag);
+  int do_des(RECT *rect, const char *text, int flag);
   void iface_rect(RECT *rect, int *x, int *y);
   // 0x004BDEA0, homed into tutwin.cpp. draw_cursor (mapwin.cpp) calls it on
   // the singleton below after every window's turn.
   void draw_arrow();
   // 0x004BE650. The map-square tutorial popup: Console::survey2 raises it on
   // the singleton below with the TERRASURVEY2 label once the survey overlay
-  // has flashed. Body still unrecovered - a pending_bodies forwarder.
+  // has flashed.
   // Parameter names from the body's own use: x_coord/y_coord are the tile the
   // tutorial points at (focus and tile_to_pixel eat them), pixel_x is
   // overwritten by tile_to_pixel's output before it reaches tut_win,
@@ -138,6 +146,9 @@ static_assert(sizeof(TutWin) == 0x53D8,
               "TutWin layout must match the original executable");
 
 extern uint32_t TutWinShownFlag;
+extern int TutWinTourPending;
+extern int TutWinFlags9A64BC;
+extern int TutWinClimateGate945830;
 
 
 // THE FIXED WINDOWS THE FOUR rect HELPERS CENTRE ONTO ARE REAL OBJECTS.
@@ -167,6 +178,7 @@ extern uint32_t TutWinShownFlag;
 extern BaseWin TutWinBaseWindow;    // 0x006A7628
 extern SocialWin TutWinSocWindow;   // 0x008A6270
 extern DesignWin TutWinDesWindow;   // 0x0071F2B0
+extern int DesignTutorState;        // 0x0073396C
 
 // 0x008C6E68, the tutorial window itself, in the zero-initialised .data the
 // constructor fills in. A FIXED-ADDRESS BINDING, not an extern object: it

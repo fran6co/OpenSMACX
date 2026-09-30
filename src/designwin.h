@@ -103,6 +103,8 @@ class DesignWin : public GraphicWin, public SubInterface {
   // settled, temporarily applying the automatic-build weapon rule.
   void construct_vehicle();
   DesignWin();
+  int exec(int faction_id, int prototype_id);
+  void init();
   static void __cdecl timer_function(int tick);
   void setup_veh(int proto_id, int automatic);
   void on_right_click(int x, int y);
@@ -254,51 +256,42 @@ class DesignWin : public GraphicWin, public SubInterface {
   RECT special_one_panel_rect_;  // 0xAEC
   // RECOVERY_MEMBER: v2 DesignWin special_two_panel_rect_ tagRECT 0xAFC 0x00435DE0
   RECT special_two_panel_rect_;  // 0xAFC
-  uint32_t field_B0C_;  // 0xB0C
-  uint32_t field_B10_;  // 0xB10
-  uint32_t field_B14_;  // 0xB14
-  uint32_t field_B18_;  // 0xB18
+  // Each four-word group is passed by address as RECT in TutWin::tour7:
+  // 0x71FDBC to iface_rect (0x4BB17D), and draw_stack consumes the same
+  // rectangle as its clipped/tiled panel.
+  RECT field_B0C_rect_;  // 0xB0C
   uint32_t field_B1C_;  // 0xB1C
   uint32_t field_B20_;  // 0xB20
   uint32_t field_B24_;  // 0xB24
   uint32_t field_B28_;  // 0xB28
-  uint32_t field_B2C_;  // 0xB2C
-  uint32_t field_B30_;  // 0xB30
-  uint32_t field_B34_;  // 0xB34
-  uint32_t field_B38_;  // 0xB38
+  // Passed as RECT* to des_rect at 0x4BB0E1 (original address 0x71FDDC).
+  // RECOVERY_MEMBER: v2 DesignWin field_B2C_rect_ tagRECT 0xB2C 0x004BAF20
+  RECT field_B2C_rect_;  // 0xB2C
   uint32_t field_B3C_;  // 0xB3C
   uint32_t field_B40_;  // 0xB40
   uint32_t field_B44_;  // 0xB44
   uint32_t field_B48_;  // 0xB48
-  uint32_t field_B4C_;  // 0xB4C
-  uint32_t field_B50_;  // 0xB50
-  uint32_t field_B54_;  // 0xB54
-  uint32_t field_B58_;  // 0xB58
-  uint32_t field_B5C_;  // 0xB5C
-  uint32_t field_B60_;  // 0xB60
-  uint32_t field_B64_;  // 0xB64
-  uint32_t field_B68_;  // 0xB68
-  uint32_t field_B6C_;  // 0xB6C
-  uint32_t field_B70_;  // 0xB70
-  uint32_t field_B74_;  // 0xB74
-  uint32_t field_B78_;  // 0xB78
-  uint32_t field_B7C_;  // 0xB7C
-  uint32_t field_B80_;  // 0xB80
-  uint32_t field_B84_;  // 0xB84
-  uint32_t field_B88_;  // 0xB88
+  // Passed as RECT* to do_des at 0x4BB343 (original address 0x71FDFC).
+  // RECOVERY_MEMBER: v2 DesignWin field_B4C_rect_ tagRECT 0xB4C 0x004BAF20
+  RECT field_B4C_rect_;  // 0xB4C
+  // init passes each four-word group as a RECT to its button setup;
+  // the groups retain their original object offsets.
+  // RECOVERY_MEMBER: v2 DesignWin field_B5C_rect_ tagRECT 0xB5C 0x0043C270
+  RECT field_B5C_rect_;  // 0xB5C
+  // RECOVERY_MEMBER: v2 DesignWin field_B6C_rect_ tagRECT 0xB6C 0x0043C270
+  RECT field_B6C_rect_;  // 0xB6C
+  // RECOVERY_MEMBER: v2 DesignWin field_B7C_rect_ tagRECT 0xB7C 0x0043C270
+  RECT field_B7C_rect_;  // 0xB7C
   // The lower component-group border is the union of these three panels.
   // RECOVERY_MEMBER: v2 DesignWin lower_panel_rect_ tagRECT 0xB8C 0x004379A0
   RECT lower_panel_rect_;  // 0xB8C
   // RECOVERY_MEMBER: v2 DesignWin lower_panel_extra_rect_ tagRECT 0xB9C 0x004379A0
   RECT lower_panel_extra_rect_;  // 0xB9C
-  uint32_t field_BAC_;  // 0xBAC
-  uint32_t field_BB0_;  // 0xBB0
-  uint32_t field_BB4_;  // 0xBB4
-  uint32_t field_BB8_;  // 0xBB8
-  uint32_t field_BBC_;  // 0xBBC
-  uint32_t field_BC0_;  // 0xBC0
-  uint32_t field_BC4_;  // 0xBC4
-  uint32_t field_BC8_;  // 0xBC8
+  // Passed as RECT* to do_des at 0x4BB315 and 0x4BB32C, respectively.
+  // RECOVERY_MEMBER: v2 DesignWin field_BAC_rect_ tagRECT 0xBAC 0x004BAF20
+  RECT field_BAC_rect_;  // 0xBAC
+  // RECOVERY_MEMBER: v2 DesignWin field_BBC_rect_ tagRECT 0xBBC 0x004BAF20
+  RECT field_BBC_rect_;  // 0xBBC
   // RECOVERY_MEMBER: v2 DesignWin lower_panel_end_rect_ tagRECT 0xBCC 0x004379A0
   RECT lower_panel_end_rect_;  // 0xBCC
   uint32_t field_BDC_;  // 0xBDC
@@ -357,10 +350,10 @@ class DesignWin : public GraphicWin, public SubInterface {
   uint32_t field_CB0_;  // 0xCB0
   uint32_t field_CB4_;  // 0xCB4
   uint32_t field_CB8_;  // 0xCB8
-  uint32_t field_CBC_;  // 0xCBC
-  uint32_t field_CC0_;  // 0xCC0
-  uint32_t field_CC4_;  // 0xCC4
-  uint32_t field_CC8_;  // 0xCC8
+  // The full rectangle at DesignWin+0xCBC is passed to iface_rect at
+  // 0x4BB1CB (original address 0x71FF6C); draw_stack reads its right edge.
+  // RECOVERY_MEMBER: v2 DesignWin field_CBC_rect_ tagRECT 0xCBC 0x004BAF20
+  RECT field_CBC_rect_;  // 0xCBC
   uint32_t field_CCC_;  // 0xCCC
   uint32_t field_CD0_;  // 0xCD0
   uint32_t field_CD4_;  // 0xCD4
@@ -485,8 +478,8 @@ class DesignWin : public GraphicWin, public SubInterface {
   uint32_t field_14264_;  // 0x14264
   uint32_t field_14268_;  // 0x14268
   uint32_t field_1426C_;  // 0x1426C
-  uint8_t field_14270_;  // 0x14270
-  uint8_t field_14271_[0x2CF];  // 0x14271
+  // exec loads sixteen localized preset names into 45-byte rows here.
+  char preset_names_[16][45];  // 0x14270
   Font font1_;  // 0x14540
   Font font2_;  // 0x14568
   Font font3_;  // 0x14590, the IDB's third font; the class grows by 0x14

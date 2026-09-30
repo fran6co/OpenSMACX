@@ -1773,18 +1773,6 @@ static int *const EditorBrushButtonGroupSelection = (int *)0x007CD2D8;
 // it is clear. No tree binding owns it yet.
 static int *const GameSessionActive = (int *)0x009B2074;
 
-// THE TUTORIAL-PENDING FLAG at 0x008CC248, the dword beside tutwin.cpp's
-// TutWinShownFlag (0x008CC244). The turn boundary consumes it: when set it
-// clears and TutWin::tour (0x004BC6E0) launches.
-static int *const TutWinTourPending = (int *)0x008CC248;
-
-// TutWin::tour (0x004BC6E0) is still original and tutwin.h declares no seam
-// for it yet, so end_of_turn reaches it through the pinned member-pointer
-// form - the receiver rides in ECX, which is the whole point of
-// original_seam.h's machinery.
-typedef void (OriginalObject::*func_tut_win_tour)(void);
-static func_tut_win_tour TutWinTour = original_method<func_tut_win_tour>(0x004BC6E0);
-
 // break_treaty (0x0055F770) and action_destroy (0x004CAA50) are still
 // original and have no pending_bodies forwarder yet, so destroy reaches them
 // through local __cdecl seams - plain function pointers, since no receiver is
@@ -4241,9 +4229,9 @@ void Console::end_of_turn() {
             }
 
             wait_loop();
-            if (*TutWinTourPending != 0) {
-                *TutWinTourPending = 0;
-                (ORIGINAL(TutWinGlobal)->*TutWinTour)();
+            if (TutWinTourPending != 0) {
+                TutWinTourPending = 0;
+                TutorialWindow.tour();
             }
             if (ConsoleGlobal.cursor_active_ != 0) break;
         }

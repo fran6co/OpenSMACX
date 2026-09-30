@@ -375,29 +375,6 @@ int __cdecl X_pops(char *caption, const char *label, int a3, char *a4, int a5,
 
 
 
-// ?tut_map@TutWin@@QAEHPBDHHHPAUSprite@@HHH@Z at 0x004BE650. Console::survey2
-// raises the map-square tutorial popup on the fixed TutWin at 0x008C6E68.
-//             body in src/unrecovered/004be650.cpp
-int TutWin::tut_map(const char *text, int x_coord, int y_coord, int pixel_x,
-                    Sprite *sprite, int forwarded_6, int arrow_x,
-                    int arrow_y) {                      // 0x004BE650
-    typedef int(__fastcall *pending)(TutWin *, void *, const char *, int, int,
-                                    int, Sprite *, int, int, int);
-    return PENDING_BODY(0x004BE650, pending)(this, nullptr, text, x_coord,
-                                             y_coord, pixel_x, sprite,
-                                             forwarded_6, arrow_x, arrow_y);
-}
-
-
-int TutWin::tut_win(void *owner, const char *text, int a3, int a4,
-                    Sprite *sprite, int a6, int a7, int a8) {  // 0x004BDFE0
-    typedef int(__fastcall *pending)(TutWin *, void *, void *,
-                                     const char *, int, int, Sprite *, int,
-                                     int, int);
-    return PENDING_BODY(0x004BDFE0, pending)(this, nullptr, owner, text, a3,
-                                             a4, sprite, a6, a7, a8);
-}
-
 void BaseWin::draw_supported(int a1) {                       // 0x0040C850
     typedef void(__fastcall *pending)(BaseWin *, void *, int);
     PENDING_BODY(0x0040C850, pending)(this, nullptr, a1);
@@ -587,11 +564,6 @@ SetupWin::~SetupWin() {  // ??1SetupWin@@QAE@XZ at 0x004AE790
 SocialWin::~SocialWin() {  // ??1SocialWin@@QAE@XZ at 0x004B3C80
     typedef void(__fastcall *pending)(SocialWin *, void *);
     PENDING_BODY(0x004B3C80, pending)(this, nullptr);
-}
-
-TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0
-    typedef void(__fastcall *pending)(TutWin *, void *);
-    PENDING_BODY(0x004BE7D0, pending)(this, nullptr);
 }
 
 MonuWin::~MonuWin() {  // ??1MonuWin@@QAE@XZ at 0x00477B10

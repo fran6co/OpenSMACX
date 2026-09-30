@@ -107,6 +107,8 @@ class Console : public MapWin {
   friend int __cdecl action_airdrop(int, int, int, int);
   // MainInterface's status/button callbacks operate this owned AlphaMenu.
   friend class MainInterface;
+  // TutWin's tutorial tour checks and reopens the owned AlphaMenu.
+  friend class TutWin;
  public:
   void chat(int faction_id);
   void road_to(int veh_id, int cursor_mode);
