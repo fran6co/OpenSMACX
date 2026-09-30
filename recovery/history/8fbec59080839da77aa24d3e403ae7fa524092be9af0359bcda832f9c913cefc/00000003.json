@@ -1,0 +1,20 @@
+{
+  "event_id": "cab40a778a08b59bef60102527b533bcc2eed2e1b5e045236e95d9672477c699",
+  "payload": {
+    "affects": [
+      "entity-96dadf05f6cba9342cacfb7f5c6dcf826d71fd85d8f5dc99c0410ad135f92a17"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-caption-storage-unresolved",
+    "evidence": [
+      "Pinned48D8EC is push872CAC, a direct char address, and only direct whole-image reference. Initial readable bytes are zero-fill and GraphicWin/Win read first byte and copy but do not mutate input. No original PDB or direct CRT producer/writer found. Preserve empty initial caption rather than fabricate Preferences text; do not bind guessed char array extent. Determine indirect producer/storage allocation before resolving this finding."
+    ],
+    "hypothesis": "Original872CAC is an initially empty char input to PrefWin initialization, but allocation extent and indirect writers are unproved; empty startup caption recovery does not establish complete original buffer ownership or runtime equivalence.",
+    "kind": "discovery"
+  },
+  "previous_event": "1ff04eedca50bba6d39b4faeeddeae8dc306300e5c5295b1ae5d84adda052a7e",
+  "request_id": "prefwin-caption-storage-unresolved",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:prefwin-owner-coverage-wave"
+}

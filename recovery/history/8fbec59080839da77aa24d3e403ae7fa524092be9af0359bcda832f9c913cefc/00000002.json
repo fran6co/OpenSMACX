@@ -1,0 +1,20 @@
+{
+  "event_id": "1ff04eedca50bba6d39b4faeeddeae8dc306300e5c5295b1ae5d84adda052a7e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/palette.cpp",
+      "src/palette.h"
+    ],
+    "evidence": [
+      "Coordinator independently authorizes genuine Palette object at9523A0 with compiler-owned construction/destruction, evidenced by original CRT5BEC70/5BEC90 and consumers451A98/49145D. Allow only one new ordinary Palette definition and extern API in palette.cpp/h, no changes to existing behavior/claims; central original object bindings remain coordinator-owned. PrefWin Gamma case copies this palette into g_PALETTE1, consumes mutable gamma preference6846A8 initialized1.0, writes returned Gamma::exec float back, then scales by66D58C100 and persists key686D70 Gamma Correction. Distinct scalar/key source storage belongs in PrefWin owning TU. Caption872CAC remains unresolved and must not become a fabricated Preferences literal. This scope grants editing, not recovery acceptance or restoration waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d651ecd1247a6f2569847c1aae3b1f617d727d297bc8c4c96676180004b1acdb",
+  "request_id": "prefwin-gamma-palette-dependency",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prefwin-owner-coverage-wave"
+}
