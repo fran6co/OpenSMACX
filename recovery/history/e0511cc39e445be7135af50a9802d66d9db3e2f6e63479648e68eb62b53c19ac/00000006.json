@@ -1,0 +1,20 @@
+{
+  "event_id": "fdb88d9ddfc3fecc5a700681d003a09cd0f8ffd2b3b0bd083a6f7ddfdb588530",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/menu.h"
+    ],
+    "evidence": [
+      "Original MapWin::right_menu46C0D0 reads submenu PullDown pointers from the existing ConsoleGlobal.alpha_menu_ MenuEntry table. MenuEntry already models id/text/flags/mnemonic/pull_down and Menu owns15typed entries; entries_ is private, so no untyped executable table is needed.",
+      "Authorize ONLY friend class MapWin in src/menu.h for typed access to existing menu entries; no method/table/layout/lifecycle changes or new storage. Keep original lookup predicates/entry indices; friendship does not prove lookup correctness. All existing Menu behavior, historical source obligations and other worker work remain protected."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "03f5efaeffdd73644f1bdc2f5c874e1a29622975cdc4bb3a5460ef87cc672f6d",
+  "request_id": "mapwin-real-menu-entry-access-20260930",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
