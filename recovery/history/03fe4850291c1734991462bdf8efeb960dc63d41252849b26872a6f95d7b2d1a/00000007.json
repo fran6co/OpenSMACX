@@ -1,0 +1,29 @@
+{
+  "event_id": "7ebdd7c1f25e899848123fccaff62cc737cce4ad6b10c866a1d9c017a76fa799",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h",
+      "src/designwin.cpp",
+      "src/designwin.h",
+      "src/popup.h"
+    ],
+    "evidence": [
+      "Fresh terminal worker3 objects expose three real declaration/dependency blockers: popup.h retains int veh_sprite_draw declaration despite event6 void contract; Tut tour reads existing private Console.alpha_menu_; DesignWin.exec43E9A0 is a genuine original callee with full source seed and no compiled body/declaration. Missing declarations are not permission to add unresolved symbols.",
+      "Authorize popup.h only matching void veh_sprite_draw declaration; console.h only friend class TutWin for actual global alpha_menu_ read/calls; and DesignWin.h/cpp only complete exec(int,int) declaration/body with original Buffer lifetime and real existing member/global calls. Existing authorized RECT conversions remain. Full original spans43E9A0..43ECAD and654709..65471E must remain native-bound by Root after body review. No placeholders, raw vtables/addresses, other owner edits, baseline reset, claim demotion or automatic acceptance. New dependency findings require scope review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4450720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "477f3afcce0be526b8bb1e95ec6d6930bffd6cf19b03901698fb25f6a990eadd",
+  "request_id": "tutwin-real-design-exec-dependency-20260930",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
