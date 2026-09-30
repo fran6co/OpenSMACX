@@ -1,0 +1,27 @@
+{
+  "event_id": "50a73ef6fbcd2f34e957584c8bb5a9c771e79c7fecc158ce31514604a56cd410",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/leaf_recoveries.cpp",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "Complete base_change reads original AI batch latch945F44; current source:src/leaf_recoveries.cpp defines static int-pointer-to-executable and tech_advance5BE530 dereferences it. Replace only this alias with real shared int storage and proper declaration, preserving protected tech_advance claim for fresh remeasure.",
+      "Original time_warp5AEDE0 raises the latch around research; preserve storage identity with independently checked original initialization/width, no duplicated local stand-in or invented behavioral gate. Root source object binding follows physical symbol observation; unknown bounds remain unknown."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6022448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "base-ai-research-latch-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:base-lifecycle-owner-closure"
+}
