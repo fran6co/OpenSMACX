@@ -1,0 +1,26 @@
+{
+  "event_id": "04e922e7685f07e3c2d337bde4b1fddb9654be9f5146bdd03231f7c14c0aca78",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/sprite.cpp"
+    ],
+    "evidence": [
+      "Canonical exact Menu::set_def_font5FAEE0 spans5FAEE0..5FAEEE and5F0520..5F0535 requires genuineMenuFont9B7B94 storage plus EnumThreadWindows adjust_menus; preserve existing exact seed obligation through native binding.",
+      "Popup normal reads three sprite-derived geometry cells779644/75ADE8/759E20; sprite owner may declare real shared cells only with original initialization/type evidence, never fabricate Sprite members. Producer455610 remains outside scope and pending discovery unless separately authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6270688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "popup-font-menu-static-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-font-configuration-owner-closure"
+}
