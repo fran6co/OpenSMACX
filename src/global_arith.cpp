@@ -19,6 +19,85 @@
 #include "stdafx.h"
 #include "global_arith.h"
 
+// PrefWin geometry constants observed in the pinned image. Roles are named
+// only where the PrefWin/GraphicWin initialization call arguments establish
+// them; the remaining four retain address-bearing provisional names.
+// RECOVERY_OBJECT: v2 0x00686B6C 0x00686B70 ?PrefWinGeometryConstant_686B6C@@3HA 0x0048D550
+int32_t PrefWinGeometryConstant_686B6C = 4;
+// RECOVERY_OBJECT: v2 0x00686B70 0x00686B74 ?PrefWinGeometryConstant_686B70@@3HA 0x0048D560
+int32_t PrefWinGeometryConstant_686B70 = 4;
+// RECOVERY_OBJECT: v2 0x00686B74 0x00686B78 ?PrefWinGeometryConstant_686B74@@3HA 0x0048D5B0
+int32_t PrefWinGeometryConstant_686B74 = 3;
+// RECOVERY_OBJECT: v2 0x00686B78 0x00686B7C ?PrefWinGeometryConstant_686B78@@3HA 0x0048D5D0
+int32_t PrefWinGeometryConstant_686B78 = 3;
+// RECOVERY_OBJECT: v2 0x00686B7C 0x00686B80 ?PrefWinDisplayWidth@@3HA 0x0048D570
+int32_t PrefWinDisplayWidth = 700;
+// RECOVERY_OBJECT: v2 0x00686B80 0x00686B84 ?PrefWinDisplayHeight@@3HA 0x0048D590
+int32_t PrefWinDisplayHeight = 390;
+// RECOVERY_OBJECT: v2 0x00686B84 0x00686B88 ?PrefWinButtonWidth@@3HA 0x0048D610
+int32_t PrefWinButtonWidth = 220;
+// RECOVERY_OBJECT: v2 0x00686B88 0x00686B8C ?PrefWinTitleButtonHeight@@3HA 0x0048D840
+int32_t PrefWinTitleButtonHeight = 20;
+// RECOVERY_OBJECT: v2 0x00686B8C 0x00686B90 ?PrefWinToggleWidth@@3HA 0x0048D820
+int32_t PrefWinToggleWidth = 120;
+// RECOVERY_OBJECT: v2 0x00686B90 0x00686B94 ?PrefWinToggleHeight@@3HA 0x0048D840
+int32_t PrefWinToggleHeight = 20;
+
+// These values occupy zero-initialized storage in the image and are filled by
+// the ordered geometry initializer family below.
+// RECOVERY_OBJECT: v2 0x008577D8 0x008577DC ?PrefWinGeometryValue_8577D8@@3HA 0x0048D750
+int32_t PrefWinGeometryValue_8577D8;
+// RECOVERY_OBJECT: v2 0x008577DC 0x008577E0 ?PrefWinGeometryValue_8577DC@@3HA 0x0048D760
+int32_t PrefWinGeometryValue_8577DC;
+// RECOVERY_OBJECT: v2 0x008577E0 0x008577E4 ?PrefWinGeometryValue_8577E0@@3HA 0x0048D790
+int32_t PrefWinGeometryValue_8577E0;
+// RECOVERY_OBJECT: v2 0x008577E4 0x008577E8 ?PrefWinGeometryValue_8577E4@@3HA 0x0048D770
+int32_t PrefWinGeometryValue_8577E4;
+// RECOVERY_OBJECT: v2 0x008577E8 0x008577EC ?PrefWinGeometryValue_8577E8@@3HA 0x0048D560
+int32_t PrefWinGeometryValue_8577E8;
+// RECOVERY_OBJECT: v2 0x008577EC 0x008577F0 ?PrefWinGeometryValue_8577EC@@3HA 0x0048D550
+int32_t PrefWinGeometryValue_8577EC;
+// RECOVERY_OBJECT: v2 0x00857884 0x00857888 ?PrefWinGeometryValue_857884@@3HA 0x0048D5D0
+int32_t PrefWinGeometryValue_857884;
+// RECOVERY_OBJECT: v2 0x00857888 0x0085788C ?PrefWinGeometryValue_857888@@3HA 0x0048D5B0
+int32_t PrefWinGeometryValue_857888;
+// RECOVERY_OBJECT: v2 0x0085788C 0x00857890 ?PrefWinGeometryValue_85788C@@3HA 0x0048D6F0
+int32_t PrefWinGeometryValue_85788C;
+// RECOVERY_OBJECT: v2 0x00857890 0x00857894 ?PrefWinGeometryValue_857890@@3HA 0x0048D710
+int32_t PrefWinGeometryValue_857890;
+// RECOVERY_OBJECT: v2 0x00857894 0x00857898 ?PrefWinGeometryValue_857894@@3HA 0x0048D730
+int32_t PrefWinGeometryValue_857894;
+// RECOVERY_OBJECT: v2 0x00857898 0x0085789C ?PrefWinGeometryValue_857898@@3HA 0x0048D630
+int32_t PrefWinGeometryValue_857898;
+// RECOVERY_OBJECT: v2 0x0085789C 0x008578A0 ?PrefWinGeometryValue_85789C@@3HA 0x0048D610
+int32_t PrefWinGeometryValue_85789C;
+// RECOVERY_OBJECT: v2 0x008578A0 0x008578A4 ?PrefWinGeometryValue_8578A0@@3HA 0x0048D6D0
+int32_t PrefWinGeometryValue_8578A0;
+// RECOVERY_OBJECT: v2 0x008578A4 0x008578A8 ?PrefWinGeometryValue_8578A4@@3HA 0x0048D670
+int32_t PrefWinGeometryValue_8578A4;
+// RECOVERY_OBJECT: v2 0x008578A8 0x008578AC ?PrefWinGeometryValue_8578A8@@3HA 0x0048D650
+int32_t PrefWinGeometryValue_8578A8;
+// RECOVERY_OBJECT: v2 0x008578AC 0x008578B0 ?PrefWinGeometryValue_8578AC@@3HA 0x0048D570
+int32_t PrefWinGeometryValue_8578AC;
+// RECOVERY_OBJECT: v2 0x008578B0 0x008578B4 ?PrefWinGeometryValue_8578B0@@3HA 0x0048D590
+int32_t PrefWinGeometryValue_8578B0;
+// RECOVERY_OBJECT: v2 0x008578B4 0x008578B8 ?PrefWinGeometryValue_8578B4@@3HA 0x0048D7B0
+int32_t PrefWinGeometryValue_8578B4;
+// RECOVERY_OBJECT: v2 0x008578B8 0x008578BC ?PrefWinGeometryValue_8578B8@@3HA 0x0048D820
+int32_t PrefWinGeometryValue_8578B8;
+// RECOVERY_OBJECT: v2 0x008578BC 0x008578C0 ?PrefWinGeometryValue_8578BC@@3HA 0x0048D7D0
+int32_t PrefWinGeometryValue_8578BC;
+// RECOVERY_OBJECT: v2 0x008578C0 0x008578C4 ?PrefWinGeometryValue_8578C0@@3HA 0x0048D5F0
+int32_t PrefWinGeometryValue_8578C0;
+// RECOVERY_OBJECT: v2 0x008578C4 0x008578C8 ?PrefWinGeometryValue_8578C4@@3HA 0x0048D6B0
+int32_t PrefWinGeometryValue_8578C4;
+// RECOVERY_OBJECT: v2 0x008578C8 0x008578CC ?PrefWinGeometryValue_8578C8@@3HA 0x0048D690
+int32_t PrefWinGeometryValue_8578C8;
+// RECOVERY_OBJECT: v2 0x008578CC 0x008578D0 ?PrefWinGeometryValue_8578CC@@3HA 0x0048D7F0
+int32_t PrefWinGeometryValue_8578CC;
+// RECOVERY_OBJECT: v2 0x008578D0 0x008578D4 ?PrefWinGeometryValue_8578D0@@3HA 0x0048D810
+int32_t PrefWinGeometryValue_8578D0;
+
 /*
  * Absolute-operand arithmetic leaves.
  * Was generated by tools/generate_global_arith.py, WHICH NO LONGER EXISTS:
@@ -28,10 +107,10 @@
  * reader not to touch this file in the only way it can now be touched.
  *
  *
- * 26 functions that read fixed globals, compute, store, and return. No
- * register is live on entry and no memory operand is register-relative, so
- * one C statement per original instruction reproduces them exactly - store
- * order included, which matters wherever a load must see an earlier store.
+ * The geometry initializer family contains the 24 historical arithmetic
+ * helpers below plus the two formerly seed-only initializers. Their former
+ * fixed-address operands now resolve to ordinary named objects; the source
+ * bodies and claims remain available for coordinator rebinding/review.
  *
  * SIXTEEN of the 26 bodies RETURN THE FIRST GLOBAL THEY LOAD. That is not a
  * claim about the image's signature - no caller exists to observe a return
@@ -47,10 +126,9 @@
  * detail. IDA 9.4's guess_type for all 26 is `int()`, which is consistent
  * with it and cannot discriminate.
  *
- * The 35 globals below are BOUND rather than inlined. Every one lives in the
- * original image and is unmapped in a standalone test process, so a body that
- * dereferenced its address directly would compile, pass the hybrid gate, and
- * fault the moment a leaf test called it.
+ * Geometry startup is driven by the compiler-generated initializer for
+ * PrefWinGeometryBootstrap at the end of this translation unit. The separate
+ * 0x0044C870 toggle still uses its historical 0x007591C4 pointer alias.
  */
 
 
@@ -106,9 +184,9 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_0048d550_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B6C;
+    int32_t eax = PrefWinGeometryConstant_686B6C;
     eax = eax + 23;
-    *GlobalSlot008577EC = eax;
+    PrefWinGeometryValue_8577EC = eax;
 }
 
 /*
@@ -126,8 +204,8 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_0048d560_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B70;
-    *GlobalSlot008577E8 = eax;
+    int32_t eax = PrefWinGeometryConstant_686B70;
+    PrefWinGeometryValue_8577E8 = eax;
 }
 
 /*
@@ -158,11 +236,11 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d570_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B6C;
+    int32_t eax = PrefWinGeometryConstant_686B6C;
     int32_t ecx = eax + eax;
-    int32_t edx = *GlobalSlot00686B7C;
+    int32_t edx = PrefWinDisplayWidth;
     edx = edx - ecx;
-    *GlobalSlot008578AC = edx;
+    PrefWinGeometryValue_8578AC = edx;
     return eax;
 }
 
@@ -189,11 +267,11 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d590_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B70;
+    int32_t eax = PrefWinGeometryConstant_686B70;
     int32_t ecx = eax + eax;
-    int32_t edx = *GlobalSlot00686B80;
+    int32_t edx = PrefWinDisplayHeight;
     edx = edx - ecx;
-    *GlobalSlot008578B0 = edx;
+    PrefWinGeometryValue_8578B0 = edx;
     return eax;
 }
 
@@ -220,10 +298,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d5b0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008577EC;
-    int32_t ecx = *GlobalSlot00686B74;
+    int32_t eax = PrefWinGeometryValue_8577EC;
+    int32_t ecx = PrefWinGeometryConstant_686B74;
     ecx = ecx + eax;
-    *GlobalSlot00857888 = ecx;
+    PrefWinGeometryValue_857888 = ecx;
     return eax;
 }
 
@@ -250,10 +328,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d5d0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008577E8;
-    int32_t ecx = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryValue_8577E8;
+    int32_t ecx = PrefWinGeometryConstant_686B78;
     ecx = ecx + eax;
-    *GlobalSlot00857884 = ecx;
+    PrefWinGeometryValue_857884 = ecx;
     return eax;
 }
 
@@ -280,11 +358,11 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d5f0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryConstant_686B78;
     int32_t ecx = eax + eax;
-    int32_t edx = *GlobalSlot008578B0;
+    int32_t edx = PrefWinGeometryValue_8578B0;
     edx = edx - ecx;
-    *GlobalSlot008578C0 = edx;
+    PrefWinGeometryValue_8578C0 = edx;
     return eax;
 }
 
@@ -312,12 +390,12 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_0048d610_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B84;
-    int32_t ecx = *GlobalSlot00686B74;
+    int32_t eax = PrefWinButtonWidth;
+    int32_t ecx = PrefWinGeometryConstant_686B74;
     ecx = ecx + eax;
-    eax = *GlobalSlot00857888;
+    eax = PrefWinGeometryValue_857888;
     ecx = ecx + eax;
-    *GlobalSlot0085789C = ecx;
+    PrefWinGeometryValue_85789C = ecx;
 }
 
 /*
@@ -343,11 +421,22 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d630_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008577E8;
-    int32_t ecx = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryValue_8577E8;
+    int32_t ecx = PrefWinGeometryConstant_686B78;
     ecx = ecx + eax;
-    *GlobalSlot00857898 = ecx;
+    PrefWinGeometryValue_857898 = ecx;
     return eax;
+}
+
+// Original ordered initializer at 0x0048D650, between the 0x48D630 and
+// 0x48D670 entries in the pinned CRT initializer array.
+// ORIGINAL: 0x0048D650 sub_48d650 0x0048D650-0x0048D66E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D650, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/global_arith.h"], "reason": "Recover the missing scalar initializer in the ordered PrefWin geometry startup family through genuine source-owned integer storage; retain the compatible historical exact seed and complete original span."}
+// symbol    _sub_48d650
+extern "C" void __cdecl sub_48d650() {
+    PrefWinGeometryValue_8578A8 =
+        PrefWinGeometryValue_8578AC - PrefWinGeometryConstant_686B74 * 3 -
+        PrefWinButtonWidth;
 }
 
 /*
@@ -373,11 +462,11 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d670_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryConstant_686B78;
     int32_t ecx = eax + eax;
-    int32_t edx = *GlobalSlot008578B0;
+    int32_t edx = PrefWinGeometryValue_8578B0;
     edx = edx - ecx;
-    *GlobalSlot008578A4 = edx;
+    PrefWinGeometryValue_8578A4 = edx;
     return eax;
 }
 
@@ -404,10 +493,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d690_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot0085789C;
-    int32_t ecx = *GlobalSlot00686B74;
+    int32_t eax = PrefWinGeometryValue_85789C;
+    int32_t ecx = PrefWinGeometryConstant_686B74;
     ecx = ecx + eax;
-    *GlobalSlot008578C8 = ecx;
+    PrefWinGeometryValue_8578C8 = ecx;
     return eax;
 }
 
@@ -434,10 +523,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d6b0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00857898;
-    int32_t ecx = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryValue_857898;
+    int32_t ecx = PrefWinGeometryConstant_686B78;
     ecx = ecx + eax;
-    *GlobalSlot008578C4 = ecx;
+    PrefWinGeometryValue_8578C4 = ecx;
     return eax;
 }
 
@@ -464,11 +553,11 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d6d0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B74;
+    int32_t eax = PrefWinGeometryConstant_686B74;
     int32_t ecx = eax + eax;
-    int32_t edx = *GlobalSlot008578A8;
+    int32_t edx = PrefWinGeometryValue_8578A8;
     edx = edx - ecx;
-    *GlobalSlot008578A0 = edx;
+    PrefWinGeometryValue_8578A0 = edx;
     return eax;
 }
 
@@ -495,10 +584,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d6f0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00857888;
-    int32_t ecx = *GlobalSlot00686B74;
+    int32_t eax = PrefWinGeometryValue_857888;
+    int32_t ecx = PrefWinGeometryConstant_686B74;
     ecx = ecx + eax;
-    *GlobalSlot0085788C = ecx;
+    PrefWinGeometryValue_85788C = ecx;
     return eax;
 }
 
@@ -525,10 +614,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d710_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00857884;
-    int32_t ecx = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryValue_857884;
+    int32_t ecx = PrefWinGeometryConstant_686B78;
     ecx = ecx + eax;
-    *GlobalSlot00857890 = ecx;
+    PrefWinGeometryValue_857890 = ecx;
     return eax;
 }
 
@@ -555,11 +644,11 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d730_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B74;
+    int32_t eax = PrefWinGeometryConstant_686B74;
     int32_t ecx = eax + eax;
-    int32_t edx = *GlobalSlot00686B84;
+    int32_t edx = PrefWinButtonWidth;
     edx = edx - ecx;
-    *GlobalSlot00857894 = edx;
+    PrefWinGeometryValue_857894 = edx;
     return eax;
 }
 
@@ -578,8 +667,8 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_0048d750_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008578C8;
-    *GlobalSlot008577D8 = eax;
+    int32_t eax = PrefWinGeometryValue_8578C8;
+    PrefWinGeometryValue_8577D8 = eax;
 }
 
 /*
@@ -597,9 +686,9 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_0048d760_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008577E8;
+    int32_t eax = PrefWinGeometryValue_8577E8;
     eax = eax + 283;
-    *GlobalSlot008577DC = eax;
+    PrefWinGeometryValue_8577DC = eax;
 }
 
 /*
@@ -625,11 +714,11 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d770_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B74;
+    int32_t eax = PrefWinGeometryConstant_686B74;
     int32_t ecx = eax + eax;
-    int32_t edx = *GlobalSlot008578A8;
+    int32_t edx = PrefWinGeometryValue_8578A8;
     edx = edx - ecx;
-    *GlobalSlot008577E4 = edx;
+    PrefWinGeometryValue_8577E4 = edx;
     return eax;
 }
 
@@ -648,12 +737,12 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_0048d790_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008578B0;
-    int32_t ecx = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryValue_8578B0;
+    int32_t ecx = PrefWinGeometryConstant_686B78;
     eax = eax - ecx;
-    ecx = *GlobalSlot008577DC;
+    ecx = PrefWinGeometryValue_8577DC;
     eax = eax - ecx;
-    *GlobalSlot008577E0 = eax;
+    PrefWinGeometryValue_8577E0 = eax;
 }
 
 /*
@@ -679,10 +768,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d7b0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008577D8;
-    int32_t ecx = *GlobalSlot00686B74;
+    int32_t eax = PrefWinGeometryValue_8577D8;
+    int32_t ecx = PrefWinGeometryConstant_686B74;
     ecx = ecx + eax;
-    *GlobalSlot008578B4 = ecx;
+    PrefWinGeometryValue_8578B4 = ecx;
     return eax;
 }
 
@@ -709,10 +798,10 @@ Return Value: n/a
 Status: Complete
 */
 int32_t __fastcall global_arith_0048d7d0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008577DC;
-    int32_t ecx = *GlobalSlot00686B78;
+    int32_t eax = PrefWinGeometryValue_8577DC;
+    int32_t ecx = PrefWinGeometryConstant_686B78;
     ecx = ecx + eax;
-    *GlobalSlot008578BC = ecx;
+    PrefWinGeometryValue_8578BC = ecx;
     return eax;
 }
 
@@ -734,12 +823,12 @@ Return Value: n/a
 Status: Complete
 */
 void __fastcall global_arith_0048d7f0_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot00686B8C;
-    int32_t ecx = *GlobalSlot00686B74;
+    int32_t eax = PrefWinToggleWidth;
+    int32_t ecx = PrefWinGeometryConstant_686B74;
     ecx = ecx + eax;
-    eax = *GlobalSlot008578B4;
+    eax = PrefWinGeometryValue_8578B4;
     ecx = ecx + eax;
-    *GlobalSlot008578CC = ecx;
+    PrefWinGeometryValue_8578CC = ecx;
 }
 
 /*
@@ -774,7 +863,57 @@ Status: Complete
 //   way, so no spelling of the statement changes the encoder's choice.
 */
 void __fastcall global_arith_0048d810_redirect(void *, void *) {
-    int32_t eax = *GlobalSlot008578BC;
+    int32_t eax = PrefWinGeometryValue_8578BC;
     eax = eax + -2;
-    *GlobalSlot008578D0 = eax;
+    PrefWinGeometryValue_8578D0 = eax;
 }
+
+// Original final initializer in the pinned geometry family.
+// ORIGINAL: 0x0048D820 sub_48d820 0x0048D820-0x0048D83E FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original CRT table entry selects 0048D820, whose typed arithmetic and output store were independently decoded from the pinned executable.", "recovery/tasks/prefwin-geometry-initializers.json", "src/global_arith.h"], "reason": "Recover the missing scalar initializer in the ordered PrefWin geometry startup family through genuine source-owned integer storage; retain the compatible historical exact seed and complete original span."}
+// symbol    _sub_48d820
+extern "C" void __cdecl sub_48d820() {
+    PrefWinGeometryValue_8578B8 =
+        PrefWinGeometryValue_8577E4 - PrefWinGeometryConstant_686B74 * 3 -
+        PrefWinToggleWidth;
+}
+
+// Let the compiler place this constructor in its ordinary startup initializer
+// section. Its helper-call sequence follows the pinned CRT slot order
+// 0x68257C..0x6825E0; this is one compiler-generated entry, not a claim that
+// the original had the same per-helper initializer shape. 0x0044C870 is an
+// unrelated toggle and is deliberately not part of it.
+namespace {
+struct PrefWinGeometryBootstrap {
+    PrefWinGeometryBootstrap() {
+        global_arith_0048d550_redirect(nullptr, nullptr);
+        global_arith_0048d560_redirect(nullptr, nullptr);
+        global_arith_0048d570_redirect(nullptr, nullptr);
+        global_arith_0048d590_redirect(nullptr, nullptr);
+        global_arith_0048d5b0_redirect(nullptr, nullptr);
+        global_arith_0048d5d0_redirect(nullptr, nullptr);
+        global_arith_0048d5f0_redirect(nullptr, nullptr);
+        global_arith_0048d610_redirect(nullptr, nullptr);
+        global_arith_0048d630_redirect(nullptr, nullptr);
+        sub_48d650();
+        global_arith_0048d670_redirect(nullptr, nullptr);
+        global_arith_0048d690_redirect(nullptr, nullptr);
+        global_arith_0048d6b0_redirect(nullptr, nullptr);
+        global_arith_0048d6d0_redirect(nullptr, nullptr);
+        global_arith_0048d6f0_redirect(nullptr, nullptr);
+        global_arith_0048d710_redirect(nullptr, nullptr);
+        global_arith_0048d730_redirect(nullptr, nullptr);
+        global_arith_0048d750_redirect(nullptr, nullptr);
+        global_arith_0048d760_redirect(nullptr, nullptr);
+        global_arith_0048d770_redirect(nullptr, nullptr);
+        global_arith_0048d790_redirect(nullptr, nullptr);
+        global_arith_0048d7b0_redirect(nullptr, nullptr);
+        global_arith_0048d7d0_redirect(nullptr, nullptr);
+        global_arith_0048d7f0_redirect(nullptr, nullptr);
+        global_arith_0048d810_redirect(nullptr, nullptr);
+        sub_48d820();
+    }
+};
+
+PrefWinGeometryBootstrap prefWinGeometryBootstrap;
+}  // namespace

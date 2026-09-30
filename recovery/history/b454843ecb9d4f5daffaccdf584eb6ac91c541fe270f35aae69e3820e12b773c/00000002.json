@@ -1,0 +1,19 @@
+{
+  "event_id": "7dc468a31330c00dbd85422a97845a48f9cc0b01875d05b771261c30be886539",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_geometry.py"
+    ],
+    "evidence": [
+      "Authorize coordinator host controls compiling actual global_arith.cpp/h with calling-convention-only host substitutions. Verify startup-populated geometry before manual helper calls and damage controls for either missing initializer and ordering; this is scoped behavior evidence, not VC6 exactness or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c88b3d0454cd20062ed7d44049a4e9369abc2ea8d0a99d0b701cbca534204059",
+  "request_id": "geometry-startup-executable-controls",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prefwin-geometry-initializers"
+}
