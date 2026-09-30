@@ -1,0 +1,20 @@
+{
+  "event_id": "8ebbb518383a6dc6016ca984a1f7824072f1ed5b8de7ce4babbfd4f07ed3c088",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "src/console.cpp currently owns a static original-address pointer TutWinTourPending at8CC248 and consumes it in end_of_turn before raw-address member dispatch to TutWin::tour4BC6E0. Actual TutWin owner recovery needs one source-owned signed-int global in tutwin.cpp/h and direct TutorialWindow.tour() call, preserving clear-before-call ordering.",
+      "Authorize only src/console.cpp removal of that pointer/member-pointer helper and replacement of the two pending-flag accesses and one tour call in end_of_turn. No other Console behavior, layout, zoom or declarations may change; MapWin worker independently owns narrow zoom recovery and friend addition. Preserve task baseline, exact claims, original mappings and all unrelated source work; coordinator merges hunks serially."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "tutwin-console-tour-caller-20260930",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
