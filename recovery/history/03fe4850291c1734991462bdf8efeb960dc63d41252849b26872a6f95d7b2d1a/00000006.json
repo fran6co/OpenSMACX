@@ -1,0 +1,21 @@
+{
+  "event_id": "477f3afcce0be526b8bb1e95ec6d6930bffd6cf19b03901698fb25f6a990eadd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/popup.cpp",
+      "src/spritebox.h"
+    ],
+    "evidence": [
+      "Pinned original SpriteBox.draw_item610ECA and BasePop.on_redraw604C37 call stored callback with five cdecl arguments, clean20 stackbytes, and discard EAX. Tutcallback4BDFA0 is free/static void with no receiver and plainRET. Wholeimage direct-call scan found no calls48CEB0: veh_sprite_draw onlyregisteredat48C3F6/48CF3D/48D2A1; all consumers discard its veh_draw return. Keep historical intcatalogue interpretation as provenance, not a forced currentcallbackcontract.",
+      "Authorize only SpriteBox.h DrawCallback result int-to-void and adjacent evidence, plus popup.cpp veh_sprite_draw result int-to-void and invocation of veh_draw with its result discarded. No wrappers, zero returns, layout changes, other callback types or additional popup behavior edits. Original markers/spans/BYTE_EXACT obligations remain intact; only coordinator may rewrite emitted symbol fact after native physical observation. Bothflags must remeasure the touched claimed callback and all affected protected bodies; preserve regressions for reviewed restoration, no demotion or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "528b94f50fee7015689998027f8fd19b4d41697a9005eee47b66affe7ff846cb",
+  "request_id": "tutwin-shared-void-draw-callback-20260930",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
