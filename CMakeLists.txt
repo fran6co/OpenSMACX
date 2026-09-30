@@ -200,6 +200,7 @@ set(OPENSMACX_SOURCES
     src/playerlock.cpp
     src/netdaemon.cpp
     src/console.cpp
+    src/prefwin.cpp
     src/replaywin.cpp
     src/reportif.cpp
     src/alphamenu.cpp

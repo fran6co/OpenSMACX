@@ -1,0 +1,17 @@
+{
+  "event_id": "cf2313e5f2b446bece1a129dc271652023aa5d2c5139d7e2685537fc2b6ec347",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-control-font-owner-unresolved",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/prefwin.cpp now borrows &TutWinBaseWindow.font1_ for all tab/volume/footer Buffer::set_font calls. src/basewin.h declares typed Font member and original40E8C mapping, with408679 constructor and420BC1/BCB destructor evidence; existingBaseWin global6A7628 owns complete ordinary C++ lifetime. No duplicate Font, pointer cell, fabricated constructor, raw storage or executable-address alias introduced. Narrow access authorization7 retained; member alreadypublic so nofriend/API/ABI change was required. Caption extent remains pending."
+    ]
+  },
+  "previous_event": "5d2091b43f1b95fda01f978f52d1bf26187052a5a2a76cec39695c57d1340675",
+  "request_id": "prefwin-control-font-existing-owner-incorporated",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:prefwin-owner-coverage-wave"
+}

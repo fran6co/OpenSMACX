@@ -1,0 +1,20 @@
+{
+  "event_id": "8d35ab8e47f2e452b53863b77b9da328d14d40c36b97147bc1b969f5a80342a9",
+  "payload": {
+    "affects": [
+      "entity-96dadf05f6cba9342cacfb7f5c6dcf826d71fd85d8f5dc99c0410ad135f92a17"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "prefwin-control-font-owner-unresolved",
+    "evidence": [
+      "Pinned48DA05/48DA81 through48DD18 and48F6E4/701/726/74B plus48F8EE/90B/930 push immediate6E84B4 before Buffer::set_font5DAC70. Whole executable-code scan finds53 references to6E84B4..6E84DC, all consumers; no direct producers. Font size28, find_font12 mapsFontTable+36=9401F8. Buffer::set_font keeps primary unchanged if supplied Font is not initialized; initialized Font substitution can change observable behavior. Investigate indexed/embedded producers and actual ownership, do not invent constructor, fixed-address alias or raw storage lifetime."
+    ],
+    "hypothesis": "Original PrefWin button buffers receive direct Font object address 6E84B4, not find_font(12,0) or a pointer cell. It starts zero-filled but complete owner and indirect initialization/lifetime remain unproved; source substitution cannot establish behavioral equivalence. Preserve recovery work and determine the genuine global or embedded Font owner before resolving this dependency.",
+    "kind": "discovery"
+  },
+  "previous_event": "903aaa821136a8314062bd68d82ed01be2c2b6b82e8845c936f6c9946cb85753",
+  "request_id": "prefwin-control-font-owner-unresolved",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:prefwin-owner-coverage-wave"
+}

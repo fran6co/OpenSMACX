@@ -1681,78 +1681,7 @@ struct Point {
 };
 
 /* 0x1B3D0 bytes, 55 member(s), 50 named. From the IDB. 20 function(s) in the image. */
-class PrefWin {
- public:
-  // 0x00491DF0 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~PrefWin();
-
- public:
-  // 0x0048FA00, a pending_bodies forwarder.
-  void display(int page);
-
- public:
-  // The GraphicWin base, at an unadjusted `this`: sizeof(GraphicWin) is
-  // 0xA14 by a VC6 probe against the product headers, and display's and
-  // destroy's bodies pass `this` unadjusted to slide_show's and
-  // slide_hide's GraphicWin* formals - the pattern Popup::show uses.
-  uint8_t graphicWin_[0xA14];  // 0x0
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t prefsFinal_;  // 0xA20
-  uint32_t morePrefsFinal_;  // 0xA24
-  uint32_t warningsFinal_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t prefsBasicPending_;  // 0xA30
-  uint32_t morePrefsBasicPending_;  // 0xA34
-  uint32_t prefsAdvPending_;  // 0xA38
-  uint32_t morePrefsAdvPending_;  // 0xA3C
-  uint32_t prefsAutoPending_;  // 0xA40
-  uint32_t morePrefsAutoPending_;  // 0xA44
-  uint32_t warningsPending_;  // 0xA48
-  uint32_t prefsAVPending_;  // 0xA4C
-  uint32_t morePrefsAVPending_;  // 0xA50
-  uint32_t prefsMapPending_;  // 0xA54
-  uint32_t morePrefsMapPending_;  // 0xA58
-  uint32_t field_A5C_;  // 0xA5C
-  uint8_t bscPrefButton_[0xB4C];  // 0xA60
-  uint8_t advPrefButton_[0xB4C];  // 0x15AC
-  uint8_t warnPrefButton_[0xB4C];  // 0x20F8
-  uint8_t autoPrefButton_[0xB4C];  // 0x2C44
-  uint8_t audioVisPrefButton_[0xB4C];  // 0x3790
-  uint8_t mapPrefButton_[0xB4C];  // 0x42DC
-  uint8_t gammaButton_[0xB4C];  // 0x4E28
-  uint8_t bscPrefCheckBox_[0xB28];  // 0x5974
-  uint8_t advPrefCheckBox_[0xB28];  // 0x649C
-  uint8_t autoPrefCheckBox_[0xB28];  // 0x6FC4
-  uint8_t audioVisPrefCheckBox_[0xB28];  // 0x7AEC
-  uint8_t warnPrefCheckBox_[0xB28];  // 0x8614
-  uint8_t warnContPrefCheckBox_[0xB28];  // 0x913C
-  uint8_t mapPrefCheckBox_[0xB28];  // 0x9C64
-  uint8_t volumeMainScroll_[0x214C];  // 0xA78C
-  uint8_t volumeVoiceScroll_[0x214C];  // 0xC8D8
-  uint8_t volumeSFXScroll_[0x214C];  // 0xEA24
-  uint8_t volumeMusicScroll_[0x214C];  // 0x10B70
-  uint8_t scroll5_[0x214C];  // 0x12CBC
-  uint8_t volumeMainToggle_[0xB4C];  // 0x14E08
-  uint8_t volumeSFXToggle_[0xB4C];  // 0x15954
-  uint8_t volumeVoiceToggle_[0xB4C];  // 0x164A0
-  uint8_t volumemusicToggle_[0xB4C];  // 0x16FEC
-  uint8_t flatButton12_[0xB4C];  // 0x17B38
-  uint8_t restoreDefaultButton_[0xB4C];  // 0x18684
-  uint8_t cancelButton_[0xB4C];  // 0x191D0
-  uint8_t okButton_[0xB4C];  // 0x19D1C
-  uint8_t moreButton_[0xB4C];  // 0x1A868
-  uint32_t ptrFont1_;  // 0x1B3B4
-  uint32_t ptrFont2_;  // 0x1B3B8
-  uint32_t ptrFont3_;  // 0x1B3BC
-  uint32_t ptrFont4_;  // 0x1B3C0
-  uint32_t ptrFont5_;  // 0x1B3C4
-  uint32_t ptrFont6_;  // 0x1B3C8
-  uint32_t ptrFont7_;  // 0x1B3CC
-};
+#include "prefwin.h"
 
 /* 0x37BC bytes, 47 member(s), 9 named. From the IDB. 11 function(s) in the image. */
 class QuayleWin {

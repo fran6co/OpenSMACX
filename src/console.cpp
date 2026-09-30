@@ -1367,6 +1367,7 @@ Time g_CONSOLE_TIMER;
 // 0x7ad2a0; call InfoWin::InfoWin` at 0x004562C0 with an atexit thunk);
 // ConsoleGlobal also has a real constructor; its static zero-initialization
 // supplies the scalar/history storage that constructor leaves untouched.
+// RECOVERY_OBJECT: v2 0x008578D8 0x00872CA8 ?ConsolePrefWin@@3VPrefWin@@A 0x004921E0
 PrefWin ConsolePrefWin;   // 0x008578D8
 // RECOVERY_OBJECT: v1 0x007AD2A0 ?ConsoleInfoWin@@3VInfoWin@@A
 InfoWin ConsoleInfoWin;

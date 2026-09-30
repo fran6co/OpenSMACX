@@ -1,0 +1,19 @@
+{
+  "event_id": "903aaa821136a8314062bd68d82ed01be2c2b6b82e8845c936f6c9946cb85753",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prefwin_behavior.py"
+    ],
+    "evidence": [
+      "Authorize actual-source host controls and damage tests for the complete PrefWin batch: original text-context closure, canonical preferences control parent, initialization/redraw callback order, more-button member, preference bit round-trips and Gamma consumption. These tests are bounded behavioral witnesses, not game or full acceptance proof; preserve the pending unknown caption extent."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b08d39a19d9048405cc3ed39e1bfd06c2eb7f1e13e26675fa6cdb17047bae469",
+  "request_id": "prefwin-control-order-regression-tests",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:prefwin-owner-coverage-wave"
+}

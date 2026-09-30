@@ -1,0 +1,19 @@
+{
+  "event_id": "5d2091b43f1b95fda01f978f52d1bf26187052a5a2a76cec39695c57d1340675",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basewin.h"
+    ],
+    "evidence": [
+      "Resolve original6E84B4 Font owner without duplicating storage: TutWinBaseWindow6A7628 plus BaseWin::font1_40E8C equals6E84B4. Original BaseWin constructor408679 calls Font::Font618EA0 on this member, destructor420BC1/BCB calls Font::~Font618EE0. Grant narrow friend PrefWin access to existing BaseWin font1_ only, no data/base/vtable/layout or other method-body changes. PrefWin uses the actual constructed TutWinBaseWindow member instead of find_font12 substitution; preserve claims and pending caption discovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8d35ab8e47f2e452b53863b77b9da328d14d40c36b97147bc1b969f5a80342a9",
+  "request_id": "prefwin-tutwin-basewin-font-access",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:prefwin-owner-coverage-wave"
+}

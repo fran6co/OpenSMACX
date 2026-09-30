@@ -320,3 +320,4 @@ extern IDirectDrawPalette *DirectDrawPalette;
  * nothing and removes an indirection from every future call site.
  */
 extern Palette g_PALETTE1;
+extern Palette g_PALETTE2;

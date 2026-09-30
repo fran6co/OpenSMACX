@@ -34,6 +34,7 @@ class BaseButton : public GraphicWin {
   friend class ButtonGroup;
   friend class FlatButton;
   friend class Scroll;
+  friend class PrefWin;
   friend class DesignWin;
 
  public:

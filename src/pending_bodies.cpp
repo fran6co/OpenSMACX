@@ -407,11 +407,6 @@ int NetDaemon::order_veh(int veh_id, int payload_10, int payload_1C) {
                                              payload_1C);
 }
 
-void PrefWin::display(int page) {  // 0x0048FA00
-    typedef void(__fastcall *pending)(PrefWin *, void *, int);
-    PENDING_BODY(0x0048FA00, pending)(this, nullptr, page);
-}
-
 // ?draw_status@StatusWin@@QAEXHHHHH@Z at 0x004B6570 - 8885 bytes, still an
 // original body. StatusWin::redraw (src/statuswin.cpp) calls it BY NAME.
 
@@ -570,11 +565,6 @@ MonuWin::~MonuWin() {  // ??1MonuWin@@QAE@XZ at 0x00477B10
 PickTech::~PickTech() {  // ??1PickTech@@QAE@XZ at 0x00488690
     typedef void(__fastcall *pending)(PickTech *, void *);
     PENDING_BODY(0x00488690, pending)(this, nullptr);
-}
-
-PrefWin::~PrefWin() {  // ??1PrefWin@@QAE@XZ at 0x00491DF0
-    typedef void(__fastcall *pending)(PrefWin *, void *);
-    PENDING_BODY(0x00491DF0, pending)(this, nullptr);
 }
 
 QuayleWin::~QuayleWin() {  // ??1QuayleWin@@QAE@XZ at 0x00496710

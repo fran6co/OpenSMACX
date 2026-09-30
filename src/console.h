@@ -109,6 +109,8 @@ class Console : public MapWin {
   friend class MainInterface;
   // TutWin's tutorial tour checks and reopens the owned AlphaMenu.
   friend class TutWin;
+  // PrefWin hides the main menu before opening its own modal window.
+  friend class PrefWin;
   // MapWin's input handlers operate the existing Console cursor state.
   friend class MapWin;
   friend void __cdecl go_timer(int selection_mode);
@@ -601,15 +603,10 @@ class Console : public MapWin {
 
 static_assert(sizeof(Console) == 0x247A8, "Console layout must match terranx.exe");
 
-// All five preference openers drive the one PrefWin the game keeps at a fixed
-// address, opening it to a different page. PrefWin::display is not recovered.
-// THE OBJECT, at 0x008578D8 in the image - REAL STORAGE, defined in
-// console.cpp. It was `PrefWin *const ConsolePrefWin = (PrefWin *)0x008578D8`
-// naming terranx.exe data that is unmapped in a standalone build. PrefWin has
-// no constructor in this tree (an opaque layout), so the object is the zero
-// storage the image leaves until its own init fills it, and every
-// `ConsolePrefWin->PrefWin::display(n)` receiver keeps its folded
-// `mov ecx, imm32` form, the displacement relocated.
+// The preference openers drive the one real PrefWin object at 0x008578D8,
+// opening it to different pages. The owning Console translation unit defines
+// the object; its constructor establishes GraphicWin and embedded-control
+// lifetimes before init() configures the controls.
 extern PrefWin ConsolePrefWin;  // 0x008578D8
 
 

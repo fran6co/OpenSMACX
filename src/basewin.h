@@ -677,6 +677,10 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   uint32_t field_40E74_;  // 0x40E74
   uint32_t field_40E78_;  // 0x40E78
   RECT rect20_;  // 0x40E7C
+  // Borrowed by preference and other window controls: TutWinBaseWindow at
+  // 6A7628 plus this offset gives 6E84B4. The owner's constructor 408679
+  // and destructor 420BC1/BCB establish this Font's ordinary lifetime.
+  // RECOVERY_MEMBER: v2 BaseWin font1_ Font 0x40E8C 0x00408490
   Font font1_;  // 0x40E8C, IDB `font1`, size == sizeof(Font)
   Spot spot1_;  // 0x40EB4, size == sizeof(Spot)
   Spot spot2_;  // 0x40EC0, size == sizeof(Spot)
