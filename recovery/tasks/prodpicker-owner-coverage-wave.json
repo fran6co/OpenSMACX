@@ -1,0 +1,55 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7d0c99938864f4781c79b6de0fab362a98a517be",
+  "editable_files": [
+    "src/prodpicker.cpp",
+    "src/prodpicker.h",
+    "recovery/tests/test_prodpicker_behavior.py"
+  ],
+  "evidence": [
+    "Coordinator-selected disjoint parallel UI wave from current source/native partition and retained seed bodies; existing real owner layouts are hypotheses to check against original accesses, not acceptance.",
+    "Selected original entries: 0x4926c0, 0x492740, 0x492fa0, 0x493ea0, 0x494280, 0x4946d0, 0x494700. Edit only the named owner TU/header and production-body tests; outside-owner dependencies, shared globals or hierarchy changes require central discovery and scope authorization.",
+    "No other active worker owns these files. Preserve seeds, source mappings and historical byte claims; no absolute executable calls, copied code, fabricated behavior or automatic demotion. Build/link and fresh relevant regression checks precede coordinator-reviewed manual integration."
+  ],
+  "intent": "Recover the complete selected ownership batch as genuine compiling C++ with original-backed control flow, named storage and real lifetimes; prioritize behavior coverage while preserving all historical claims and unresolved discoveries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4794048,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4794176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4796320,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4800160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4801152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4802256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4802304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "prodpicker-owner-coverage-wave"
+}

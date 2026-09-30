@@ -1,0 +1,50 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7d0c99938864f4781c79b6de0fab362a98a517be",
+  "editable_files": [
+    "src/alphamenu.cpp",
+    "src/alphamenu.h",
+    "recovery/tests/test_alphamenu_behavior.py"
+  ],
+  "evidence": [
+    "Coordinator-selected disjoint parallel UI wave from current source/native partition and retained seed bodies; existing real owner layouts are hypotheses to check against original accesses, not acceptance.",
+    "Selected original entries: 0x402f40, 0x4032a0, 0x403340, 0x403680, 0x403830, 0x403af0. Edit only the named owner TU/header and production-body tests; outside-owner dependencies, shared globals or hierarchy changes require central discovery and scope authorization.",
+    "No other active worker owns these files. Preserve seeds, source mappings and historical byte claims; no absolute executable calls, copied code, fabricated behavior or automatic demotion. Build/link and fresh relevant regression checks precede coordinator-reviewed manual integration."
+  ],
+  "intent": "Recover the complete selected ownership batch as genuine compiling C++ with original-backed control flow, named storage and real lifetimes; prioritize behavior coverage while preserving all historical claims and unresolved discoveries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4206400,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4207264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4207424,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4208256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4208688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4209392,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "alphamenu-owner-coverage-wave"
+}

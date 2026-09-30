@@ -1,0 +1,45 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "7d0c99938864f4781c79b6de0fab362a98a517be",
+  "editable_files": [
+    "src/famewin.cpp",
+    "src/famewin.h",
+    "recovery/tests/test_famewin_behavior.py"
+  ],
+  "evidence": [
+    "Coordinator-selected disjoint parallel UI wave from current source/native partition and retained seed bodies; existing real owner layouts are hypotheses to check against original accesses, not acceptance.",
+    "Selected original entries: 0x448400, 0x448d90, 0x44a500, 0x44a660, 0x44ac10. Edit only the named owner TU/header and production-body tests; outside-owner dependencies, shared globals or hierarchy changes require central discovery and scope authorization.",
+    "No other active worker owns these files. Preserve seeds, source mappings and historical byte claims; no absolute executable calls, copied code, fabricated behavior or automatic demotion. Build/link and fresh relevant regression checks precede coordinator-reviewed manual integration."
+  ],
+  "intent": "Recover the complete selected ownership batch as genuine compiling C++ with original-backed control flow, named storage and real lifetimes; prioritize behavior coverage while preserving all historical claims and unresolved discoveries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4490240,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4492688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4498688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4499040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4500496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "famewin-owner-coverage-wave"
+}
