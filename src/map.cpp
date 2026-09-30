@@ -29,10 +29,25 @@
 #include "technology.h"
 #include "veh.h"
 #include "log.h"
-#include "lock.h"     // LockMapTable - site_at/set_dirty walk its records
+#include "lock.h"     // map_tile_bytes() - site_at/set_dirty walk its records
 #include "netmsg.h"   // NetMsgPopup - synch_display posts through it
 #include "mapwin.h"
 #include "worldwin.h"
+
+// Loader-zero pointer cells at 94A30C/94A310. map_init allocates both
+// arrays; map_shutdown releases them with the matching CRT free.
+// RECOVERY_OBJECT: v1 0x0094A30C ?MapTiles@@3PAUMap@@A
+Map *MapTiles;
+// RECOVERY_OBJECT: v1 0x0094A310 ?MapAbstractTiles@@3PAEA
+uint8_t *MapAbstractTiles;
+// Resampling retains its previous allocation and dimensions in these
+// original scratch cells (945AD0/945AD4/945AD8).
+// RECOVERY_OBJECT: v1 0x00945AD0 ?MapResamplePreviousTiles@@3PAUMap@@A
+Map *MapResamplePreviousTiles;
+// RECOVERY_OBJECT: v1 0x00945AD4 ?MapResamplePreviousWidth@@3HA
+int MapResamplePreviousWidth;
+// RECOVERY_OBJECT: v1 0x00945AD8 ?MapResamplePreviousHeight@@3HA
+int MapResamplePreviousHeight;
 
 // RECOVERY_OBJECT: v1 0x00949870 ?MapLongitudeBounds@@3HA
 int MapLongitudeBounds;  // 0x00949870
@@ -2255,6 +2270,60 @@ BOOL __cdecl map_read(FILE *map_file) {
     }
     fixup_landmarks();
     return false;
+}
+
+// ORIGINAL: 0x00592B40 sub_592b40 0x00592B40-0x00592D6F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00592b40.cpp: canonical full559byte original span and retained TRIED evidence", "source:src/map.cpp: existing map_init allocation/failure and map read/write lifetime", "source:recovery/tasks/map-allocation-owner-closure.json: coordinator-reviewed producer/reader closure"], "reason": "Original592B40 is the map allocation owners shrink/resample producer: it saves prior allocation/dimensions, obtains new map storage through map_init, copies terrain fields and releases old tiles. Source-owned pointer cells preserve actual allocation and consumer relationships."}
+// symbol    ?map_resample@@YAXHH@Z
+void __cdecl map_resample(int width, int height) {
+    int old_width = MapLongitudeBounds;
+    int old_height = MapLatitudeBounds;
+    MapResamplePreviousWidth = old_width;
+    MapResamplePreviousHeight = old_height;
+    if (width >= old_width || height >= old_height) {
+        return;
+    }
+    Map *old_tiles = map_tiles();
+    MapResamplePreviousTiles = old_tiles;
+    map_tiles() = 0;
+    MapLongitudeBounds = width;
+    MapLatitudeBounds = height;
+    // The original does not release the previous abstract allocation here,
+    // nor test map_init's result. Preserve that lifecycle and failure path.
+    map_init();
+    MapSeaLevelCouncil = 0;
+    MapLandmarkCount = 0;
+    MapSeaLevel = 0;
+    MapRandSeed = random(0, 0x7fff) + 1;
+    Map *new_tiles = map_tiles();
+    for (int i = 0; i < static_cast<int>(MapArea); ++i) {
+        Map *tile = new_tiles + i;
+        tile->climate = ALT_BIT_OCEAN;
+        tile->contour = 20;
+        tile->val2 = 15;
+        tile->region = 0;
+        tile->visibility = 0;
+        tile->bit = 0;
+        tile->val3 = 0;
+        ZeroMemory(&tile->bit2, sizeof(tile->bit2) + sizeof(tile->bit_visible));
+    }
+    for (int y = 0; y < MapLatitudeBounds; ++y) {
+        for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
+            int source_y = MapResamplePreviousHeight * y / MapLatitudeBounds;
+            int source_x = (MapResamplePreviousWidth * x / MapLongitudeBounds) >> 1;
+            Map *destination = new_tiles + MapLongitude * y + (x >> 1);
+            Map *source = old_tiles + (old_width >> 1) * source_y + source_x;
+            destination->contour = source->contour;
+            destination->bit = source->bit;
+            destination->bit2 = source->bit2;
+            destination->val3 = source->val3 & 0xc0;
+        }
+    }
+    if (old_tiles) {
+        free(old_tiles);
+    }
+    // The scratch pointer deliberately remains stale after free, as original.
+    world_climate();
 }
 
 /*
@@ -6152,7 +6221,7 @@ void __cdecl world_rocky() {
         for (int x = y & 1; x < MapLongitudeBounds; x += 2) {
             int half_x = x >> 1;
             unsigned int *rec = reinterpret_cast<unsigned int *>(
-                LockMapTable + (MapLongitude * y + half_x) * 0x2c);
+                map_tile_bytes() + (MapLongitude * y + half_x) * 0x2c);
             // offset 0xc is the tile's bit2: a landmark code already on the
             // tile disqualifies it from being re-rolled.
             unsigned int val3 = *reinterpret_cast<unsigned int *>(reinterpret_cast<char *>(rec) + 0xc);
@@ -6176,7 +6245,7 @@ void __cdecl world_rocky() {
             rocky_set(x, y, minerals);
 
             unsigned char *tile = reinterpret_cast<unsigned char *>(
-                LockMapTable + (MapLongitude * y + half_x) * 0x2c);
+                map_tile_bytes() + (MapLongitude * y + half_x) * 0x2c);
             unsigned int flags = *reinterpret_cast<unsigned int *>(tile + 0xc);
 
             if ((flags & 0x80) != 0 && (*tile & 0xe0) <= 0x5f) {
@@ -6580,7 +6649,7 @@ trailer:
 
 void __cdecl clear_dirty() {
     int i = 0;
-    char *record = *reinterpret_cast<char **>(&LockMapTable);
+    char *record = reinterpret_cast<char *>(map_tiles());
     if (MapLatitudeBounds > 0) {
         int threshold = MapLongitudeBounds;
         do {

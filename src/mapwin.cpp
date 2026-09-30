@@ -22,7 +22,7 @@
 // RECOVERY_GENERATED: v1 vtable 0x0066A57C ? ??_7MapWin@@6BWin@@@ 0x004626E0
 #include "original_seam.h"
 #include "mapwin.h"
-#include "lock.h"      // LockMapTable - terrain_fixup walks its records
+#include "lock.h"      // map_tile_bytes() - terrain_fixup walks its records
 #include "console.h"
 #include "planwin.h"   // PlanWindow is the complete MapWin-derived singleton.
 #include "diplopop.h"  // PlanWin receiver checks popup visibility.
@@ -5364,7 +5364,7 @@ void __cdecl terrain_fixup(MapWin * window) {
                 *(reinterpret_cast<unsigned char *>(window->owned_) + 9 + offset) = 0;
                 unsigned char *record = reinterpret_cast<unsigned char *>(window->owned_) + 9 + offset;
                 offset = offset + 0xc;
-                *record = *record | (*LockMapTable & 0xd0);
+                *record = *record | (*map_tile_bytes() & 0xd0);
                 count2 = count2 + 1;
             } while (count2 < MapArea);
         }

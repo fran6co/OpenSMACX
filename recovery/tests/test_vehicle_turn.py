@@ -50,6 +50,9 @@ def declarations():
                         ("map.h", ("Map",)), ("caviar.h", ("VOX_Vect","VOX_Matrix"))):
         header = uncomment((ROOT / "src" / file).read_text())
         records += [braced(header,header.index("struct " + name + " {")) + ";" for name in names]
+    map_header = (ROOT / "src/map.h").read_text()
+    records.append("extern Map *MapTiles;")
+    records.append(braced(map_header, map_header.index("inline Map *&map_tiles()")))
     return "\n".join(records)
 
 
@@ -100,7 +103,7 @@ Veh Vehs[4];
 VehPrototype VehPrototypes[4];
 RulesWeapon Weapon[4];
 Map terrain[2][64];
-uint8_t *LockMapTable;
+Map *MapTiles;
 uint32_t MapLongitude;
 int VehLiftX,VehLiftY;
 VOX_Vect VehLightDirMap, VehDrawCameraAngles;
@@ -215,7 +218,7 @@ void run(int facing,int direction,int flags,int climate,int chassis,int mode,int
     Weapon[2].mode=uint8_t(mode); Weapon[2].offense_rating=int8_t(offense);
     VehLiftX=(flags&1) ? 4 : 6; VehLiftY=(flags&1) ? 1 : 2; MapLongitude=7;
     const int bank=(epoch++)%2;
-    LockMapTable=reinterpret_cast<uint8_t *>(terrain[bank]);
+    MapTiles=terrain[bank];
     terrain[bank][17].climate=uint8_t(climate);
     for (int q=0; q<4; ++q) corners[q]=corner_sets[corner_case][q];
     // Independent flattening of one-based 7-level corner digits.

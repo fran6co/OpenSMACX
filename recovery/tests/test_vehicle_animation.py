@@ -58,6 +58,9 @@ def declarations():
         header = uncomment((ROOT / "src" / file).read_text())
         for name in names:
             result.append(braced(header, header.index("struct " + name + " {")) + ";")
+    map_header = (ROOT / "src/map.h").read_text()
+    result.append("extern Map *MapTiles;")
+    result.append(braced(map_header, map_header.index("inline Map *&map_tiles()")))
     return "\n".join(result)
 
 
@@ -125,7 +128,7 @@ VOX_Vect unit(VOX_Vect a) {
     for(int i=0;i<3;++i) a.values[i]/=n; return a;
 }
 Veh Vehs[8]; VehPrototype VehPrototypes[8]; RulesWeapon Weapon[8];
-Map maps[2][256]; uint8_t *LockMapTable; uint32_t MapLongitude;
+Map maps[2][256]; Map *MapTiles; uint32_t MapLongitude;
 int VehLiftX,VehLiftY,MapLongitudeBounds,MapIsFlat;
 int VehDrawTurnVehicle,VehDrawAnimationStep,VehDrawScootFacing,VehDrawScootSteps;
 float VehDrawTurnAngle,VehDrawTurnIncrement;
@@ -333,7 +336,7 @@ void reset() {
     VehDrawCameraAngles=VOX_Vect{{90,0,0}}; VehLightDirMap=VOX_Vect{{11,12,13}};
     g_VEHDRAW_CAVIAR.field_13CC_=77;
     MapLongitude=8; MapLongitudeBounds=16; MapIsFlat=0; VehLiftX=0; VehLiftY=4;
-    LockMapTable=reinterpret_cast<uint8_t *>(maps[1]);
+    MapTiles=maps[1];
     VehDrawPositionX=6; VehDrawPositionY=4; VehDrawPositionVehicle=2;
     VehDrawScootNormalStart=VOX_Vect{{10,20,30}}; VehDrawScootNormalMid=VOX_Vect{{100,200,300}};
     VehDrawScootFirstIncrement=VOX_Vect{{1,2,4}}; VehDrawScootSecondIncrement=VOX_Vect{{4,5,6}};

@@ -1084,7 +1084,7 @@ void NetDaemon::game_checksum(int *results) {
     {
         int countA = MapArea;
         if (countA > 0) {
-            char *recBase = (char *)LockMapTable;
+            char *recBase = (char *)map_tile_bytes();
             char *p2 = recBase + 8;
             int idxA = 0;
             do {
@@ -1168,7 +1168,7 @@ void NetDaemon::game_checksum(int *results) {
             {
                 int innerCount = (MapLongitudeBounds >> 1) * div;
                 if (div != 0 && innerCount > 0) {
-                    char *p5 = (char *)(LockMapTable + (*MapRowStride) * recIdx * 0x2c);
+                    char *p5 = (char *)(map_tile_bytes() + (*MapRowStride) * recIdx * 0x2c);
                     char *p6 = p5 + 8;
                     int idxE;
                     for (idxE = 0; idxE < innerCount; ++idxE) {
@@ -1229,7 +1229,7 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt1 = MapArea;
-            char *pL = (char *)LockMapTable;
+            char *pL = (char *)map_tile_bytes();
             int i1;
             for (i1 = 0; i1 < cnt1; ++i1) {
                 cs = checksum(pL, 1, cs);
@@ -1242,7 +1242,7 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt2 = MapArea;
-            char *pL = (char *)LockMapTable + 3;
+            char *pL = (char *)map_tile_bytes() + 3;
             int i2;
             for (i2 = 0; i2 < cnt2; ++i2) {
                 cs = checksum(pL, 1, cs);
@@ -1255,7 +1255,7 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt3 = MapArea;
-            char *pL = (char *)LockMapTable + 8;
+            char *pL = (char *)map_tile_bytes() + 8;
             int i3;
             for (i3 = 0; i3 < cnt3; ++i3) {
                 cs = checksum(pL, 4, cs);
@@ -1268,7 +1268,7 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt4 = MapArea;
-            char *pL = (char *)LockMapTable + 1;
+            char *pL = (char *)map_tile_bytes() + 1;
             int i4;
             for (i4 = 0; i4 < cnt4; ++i4) {
                 cs = checksum(pL, 1, cs);
@@ -1281,7 +1281,7 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt5 = MapArea;
-            char *pL = (char *)LockMapTable + 7;
+            char *pL = (char *)map_tile_bytes() + 7;
             int i5;
             for (i5 = 0; i5 < cnt5; ++i5) {
                 cs = checksum(pL, 1, cs);
@@ -1294,7 +1294,7 @@ void NetDaemon::game_checksum(int *results) {
 
         {
             int cnt6 = MapArea;
-            char *pL = (char *)LockMapTable + 0xc;
+            char *pL = (char *)map_tile_bytes() + 0xc;
             int i6;
             for (i6 = 0; i6 < cnt6; ++i6) {
                 cs = checksum(pL, 1, cs);

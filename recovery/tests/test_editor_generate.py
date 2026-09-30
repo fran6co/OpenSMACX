@@ -55,7 +55,8 @@ def harness(method):
         GLOBAL_DECLARATIONS
         static_assert(sizeof(int) == 4 && sizeof(Map) == 44, "host widths");
         static_assert(offsetof(Map, bit) == 8, "actual tile member");
-        uint8_t *LockMapTable;
+        Map *MapTiles;
+        MAP_ACCESSOR
         void require(bool ok) { if (!ok) std::exit(42); }
         struct MapWin {
             uint32_t field_1DD98_;
@@ -84,7 +85,7 @@ def harness(method):
             require(ConsoleGlobal.field_23BF8_ == 21);
             stage = 1;
             // The body must acquire both the pointer and count AFTER undo.
-            LockMapTable = reinterpret_cast<uint8_t *>(&records[1]);
+            MapTiles = &records[1];
             MapArea = requested_count;
             GameState = undo_state;
         }
@@ -166,7 +167,7 @@ def harness(method):
                     MapWinTable[0] = &first_window;
                     GameState = 0x11223344u;
                     MapArea = 0;
-                    LockMapTable = reinterpret_cast<uint8_t *>(decoy);
+                    MapTiles = decoy;
                     VehCurrentCount = 17; BaseCurrentCount = 18;
                     ConsoleGlobal.cursor_active_ = 19;
                     ConsoleGlobal.selected_vehicle_ = 20;
@@ -190,7 +191,9 @@ def harness(method):
                 }
         }
     '''.replace("MAP_RECORD", record).replace("TERRAIN_CONSTANTS", "\n".join(constants)).replace(
-        "GLOBAL_DECLARATIONS", "\n".join(declarations)).replace("ACTUAL_METHOD", method)
+        "GLOBAL_DECLARATIONS", "\n".join(declarations)).replace(
+        "MAP_ACCESSOR", braced(header, header.index("inline Map *&map_tiles()"))).replace(
+        "ACTUAL_METHOD", method)
 
 
 def run_host(tmp_path, method):
@@ -234,3 +237,108 @@ def test_editor_regression_mutations_are_rejected(tmp_path, before, after, count
     assert method.count(before) == count
     result = run_host(tmp_path, method.replace(before, after))
     assert result.returncode == 42, result.stderr
+
+
+def random_editor_harness(methods):
+    """Exercise actual typed tile access; dependencies are explicit doubles."""
+    header = (ROOT / "src/map.h").read_text()
+    record = braced(header, header.index("struct Map {")) + ";"
+    accessor = braced(header, header.index("inline Map *&map_tiles()"))
+    return r'''
+        #include <cstdint>
+        #include <cstdlib>
+        #include <cstring>
+        MAP_RECORD
+        Map *MapTiles;
+        MAP_ACCESSOR
+        int MapArea;
+        uint32_t MapRandSeed;
+        Map tiles[5], expected[5], decoy[5];
+        int stage, random_calls;
+        struct Console {
+            void editor_randomize();
+            void editor_clear_random();
+            void draw_map(int);
+        };
+        void require(bool ok) { if (!ok) std::exit(42); }
+        void auto_undo() {
+            require(stage++ == 0);
+            MapTiles = &tiles[1];
+        }
+        int random(int lo, int hi) {
+            require(stage == 1 && lo == 0 && hi == 0x7fff);
+            ++random_calls;
+            return 123;
+        }
+        void Console::draw_map(int repaint) {
+            require(stage++ == 1 && repaint == 1);
+            require(std::memcmp(tiles, expected, sizeof(tiles)) == 0);
+            auto bytes = reinterpret_cast<unsigned char *>(decoy);
+            for (unsigned i = 0; i < sizeof(decoy); ++i)
+                require(bytes[i] == 0x55);
+        }
+        ACTUAL_METHODS
+        int main() {
+            for (int count = -1; count <= 3; ++count)
+              for (int mode = 0; mode < 3; ++mode) {
+                auto bytes = reinterpret_cast<unsigned char *>(tiles);
+                for (unsigned i = 0; i < sizeof(tiles); ++i)
+                    bytes[i] = static_cast<unsigned char>(i * 37u);
+                tiles[1].bit = 0xffffffffu; // randomization flags; clear guard excludes it
+                tiles[2].bit = 0x40000400u; // clear guard includes it
+                tiles[3].bit = 0x40000000u; // absent bit: unchanged
+                std::memcpy(expected, tiles, sizeof(tiles));
+                for (int i = 0; i < count; ++i) {
+                    Map &tile = expected[i + 1];
+                    if (mode == 0) tile.bit &= 0xcfeffbffu;
+                    else if (mode == 1 && (tile.bit & 0x400u) &&
+                             !(tile.bit & 0x20000000u)) tile.bit &= 0xdffffbffu;
+                    else continue;
+                    for (int j = 0; j < 7; ++j) tile.bit_visible[j] = tile.bit;
+                }
+                std::memset(decoy, 0x55, sizeof(decoy));
+                MapTiles = decoy;
+                MapArea = count;
+                MapRandSeed = mode == 2 ? 0u : 999u;
+                stage = random_calls = 0;
+                Console console;
+                if (mode == 0) console.editor_randomize();
+                else console.editor_clear_random();
+                require(stage == 2 && random_calls == (mode == 1 ? 0 : 1));
+                require(MapRandSeed == (mode == 1 ? 0u : 124u));
+              }
+        }
+    '''.replace("MAP_RECORD", record).replace("MAP_ACCESSOR", accessor).replace(
+        "ACTUAL_METHODS", methods)
+
+
+def random_editor_methods():
+    source = (ROOT / "src/console.cpp").read_text()
+    return "\n".join(braced(source, source.index("void Console::" + name + "() {"))
+                     for name in ("editor_randomize", "editor_clear_random"))
+
+
+@pytest.mark.parametrize("mutation", [None, "stride", "visible", "guard", "early_pointer"])
+def test_random_editors_use_real_map_members(tmp_path, mutation):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host g++ required")
+    methods = random_editor_methods()
+    changes = {
+        "stride": ("++tile;", "tile += 2;"),
+        "visible": ("*dst = v;", "*dst = 0;"),
+        "guard": ("(v & 0x20000000) == 0", "(v & 0x20000000) != 0"),
+        "early_pointer": ("auto_undo();", "Map *old = map_tiles(); auto_undo(); map_tiles() = old;"),
+    }
+    if mutation:
+        before, after = changes[mutation]
+        assert before in methods
+        methods = methods.replace(before, after)
+    cpp = tmp_path / "random_editors.cpp"
+    executable = tmp_path / "random_editors"
+    cpp.write_text(random_editor_harness(methods))
+    compiled = subprocess.run([compiler, "-std=c++11", "-O1", str(cpp), "-o", str(executable)],
+                              capture_output=True, text=True, timeout=30)
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
+    assert result.returncode == (42 if mutation else 0), result.stderr

@@ -18,7 +18,7 @@
 #include "stdafx.h"
 #include "temp.h"
 #include "veh.h"
-#include "lock.h"  // LockMapTable - the map-record table pointer
+#include "lock.h"  // map_tile_bytes() - the map-record table pointer
 #include "alpha.h"
 #include "base.h"
 #include "faction.h"
@@ -1241,7 +1241,7 @@ static int vehdraw_centre_offset(int numerator, int zoom) {
 }
 
 static bool vehdraw_uses_terrain(int veh_id, int x, int y) {
-    const Map *tiles = reinterpret_cast<const Map *>(LockMapTable);
+    const Map *tiles = map_tiles();
     if ((tiles[y * MapLongitude + (x >> 1)].climate & 0xE0) < 0x60) {
         return false;
     }
@@ -1534,7 +1534,7 @@ int __cdecl vehdraw_turn_start(int veh_id, int direction, int speed, int flags) 
     }
     Vehs[veh_id].facing = (int8_t)direction;
 
-    const Map *tiles = reinterpret_cast<const Map *>(LockMapTable);
+    const Map *tiles = map_tiles();
     VOX_Vect normal;
     bool sloped = (tiles[y * MapLongitude + (x >> 1)].climate & 0xE0) >= 0x60;
     if (sloped) {
@@ -4623,7 +4623,7 @@ void __cdecl spot_tile(int x, int y, int faction_id) {
           && x >= 0 && x < (int)MapLongitudeBounds)) {
         return;
     }
-    Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
+    Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
     if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
         && !(GameState & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
@@ -4674,7 +4674,7 @@ void __cdecl spot_base(int base_id, int faction_id) {
           && x >= 0 && x < (int)MapLongitudeBounds)) {
         return;
     }
-    Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
+    Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
     if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
         && !(GameState & STATE_OMNISCIENT_VIEW)
         && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
@@ -4757,7 +4757,7 @@ void __cdecl spot_stack(int veh_id, int faction_id) {
         int y = Vehs[veh_id].y;
         if (y >= 0 && y < (int)MapLatitudeBounds
             && x >= 0 && x < (int)MapLongitudeBounds) {
-            Map *tile = reinterpret_cast<Map *>(LockMapTable) + ((x >> 1) + y * MapLongitude);
+            Map *tile = map_tiles() + ((x >> 1) + y * MapLongitude);
             if (faction_id == ConsoleGlobal.faction_id_ && !(tile->visibility & (1 << faction_id))
                 && !(GameState & STATE_OMNISCIENT_VIEW)
                 && !(PlayersData[faction_id].flags & PFLAG_MAP_REVEALED)) {
@@ -8550,7 +8550,7 @@ void __cdecl action_go_to(int veh_id) {
 
             if (!(LockEnableMask & (1 << Vehs[veh_id].faction_id))
                 && Chassis[VehPrototypes[Vehs[veh_id].proto_id].chassis_id].cargo != 0) {
-                Map *tile = reinterpret_cast<Map *>(LockMapTable)
+                Map *tile = map_tiles()
                     + ((Vehs[veh_id].x >> 1) + Vehs[veh_id].y * MapLongitude);
                 if (tile->bit & BIT_BASE_IN_TILE) {
                     const int rockiness = tile->val2 & 0xf;
@@ -8609,7 +8609,7 @@ void __cdecl action_road_to(int veh_id) {
     const int goal_y = Vehs[veh_id].waypoint_y[0];
     const int x = Vehs[veh_id].x;
 
-    Map *tile = reinterpret_cast<Map *>(LockMapTable)
+    Map *tile = map_tiles()
         + ((x >> 1) + y * MapLongitude);
     const uint8_t altitude = tile->climate & 0xE0;
     int net_flag;
@@ -8838,7 +8838,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     const int y = Vehs[veh_id].y;
     const int x = Vehs[veh_id].x;
     const uint8_t faction = Vehs[veh_id].faction_id;
-    Map *tile = reinterpret_cast<Map *>(LockMapTable)
+    Map *tile = map_tiles()
         + ((x >> 1) + y * MapLongitude);
     const int not_ocean = (tile->climate & 0xE0) < ALT_BIT_SHORE_LINE;
 
@@ -9076,12 +9076,12 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
     }
 
     if ((tile_flags & BIT_FOREST) == 0
-        || ((reinterpret_cast<Map *>(LockMapTable)
+        || ((map_tiles()
              + ((x >> 1) + y * MapLongitude))
                 ->bit
             & BIT_FOREST)
             != 0
-        || ((reinterpret_cast<Map *>(LockMapTable)
+        || ((map_tiles()
              + ((x >> 1) + y * MapLongitude))
                 ->climate
             & 0xE0)
@@ -9362,7 +9362,7 @@ void __cdecl sub_500380(int faction_id, int x, int y) {
         if ((dy + dx) >> 1 > threshold) {
             continue;
         }
-        Map *tile = reinterpret_cast<Map *>(LockMapTable)
+        Map *tile = map_tiles()
             + ((Vehs[i].x >> 1) + Vehs[i].y * MapLongitude);
         if (tile->bit & BIT_BASE_IN_TILE) {
             if ((tile->val2 & 0xf) < 8) {

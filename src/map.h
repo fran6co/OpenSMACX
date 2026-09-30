@@ -359,13 +359,14 @@ extern char MapFilePath[80];                   // 0x0094A2BC, the working map-pa
 // applying it. Image .data holds 0x00288050. See map.cpp, which defines it
 // beside the evidence.
 extern uint32_t MapTileFlagClearMask;          // 0x006919EC
-// AN LVALUE AT A FIXED ADDRESS, not a pointer to one. The tile array's base
-// lives AT 0x0094A30C and the image reads it with a single absolute
-// `mov ecx, [0x94a30c]`. Spelled `Map **const MapTiles = (Map **)0x0094A30C`
-// it took TWO loads - VC6 keeps storage for the constant, reads that, then
-// dereferences it - and every tile access in the tree paid for the extra one.
-inline Map *&map_tiles() { return *reinterpret_cast<Map **>(0x0094A30C); }
-inline uint8_t *&MapAbstract() { return *reinterpret_cast<uint8_t **>(0x0094A310); }
+extern Map *MapTiles;
+extern uint8_t *MapAbstractTiles;
+inline Map *&map_tiles() { return MapTiles; }
+// Byte-oriented legacy consumers view the same Map allocation; no second
+// pointer cell or pointer-to-pointer alias is maintained.
+inline uint8_t *map_tile_bytes() { return reinterpret_cast<uint8_t *>(MapTiles); }
+inline uint8_t *&MapAbstract() { return MapAbstractTiles; }
+void __cdecl map_resample(int width, int height);
 extern int MapBaseSubmergedCount[8];
 extern int MapBaseIdClosestSubmergedVeh[8];
 extern uint32_t BrushVal1; // TODO: more descriptive variable name

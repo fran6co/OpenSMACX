@@ -20,6 +20,7 @@
 #include "original_seam.h"
 #include "playerlock.h"  // records_ are real PlayerLocks
 #include "squarelock.h"
+#include "map.h"  // shared Map allocation and byte view
 
  /*
   * Lock class
@@ -64,25 +65,11 @@ class Lock {
 static_assert(sizeof(Lock) == 0xEC,
               "Lock layout must match the original executable");
 
-// The map table's COUNT lives at a fixed address holding the int directly;
-// the table ITSELF lives at a fixed address holding a POINTER to it (the
-// image dereferences the address `mov eax, dword ptr [0x94a30c]` to load the
-// table pointer's VALUE before indexing it, it does not use 0x94A30C as the
-// table's own base). Both rebindable for tests.
-//
-// LockMapTable stays a SINGLE star, not `uint8_t **const`: a namespace-scope
-// `T *const` folds to the bare immediate at every use (same as
-// LockMapCount), but VC6 does NOT fold a `T **const` the same way - it
-// materialises it as a real CONST-segment slot and loads it before the
-// dereference, costing a whole extra `mov`. Casting the folded immediate to
-// a pointer-to-pointer AT THE USE SITE keeps the fold and reaches the same
-// address.
-// THE MAP TABLE, as real storage. The COUNT is map.cpp's MapArea (the image
-// holds it at 0x00949884 - one address, one name); the TABLE POINTER lives
-// in the image's 0x0094A30C slot, which the map loader fills and everything
-// else reads. Both were raw bindings reading unmapped memory.
+// Original94A30C is the map owner's allocation pointer, not an independent
+// Lock-owned array. map_tile_bytes() views that same allocation for byte
+// operations; map_init/map_read/map_shutdown own its allocation lifecycle.
+// MapArea at original949884 supplies the shared tile count.
 extern uint32_t MapArea;       // 0x00949884, defined in map.cpp
-extern uint8_t *LockMapTable;  // 0x0094A30C, defined in lock.cpp
 
 // A per-slot enable mask any_locks gates its record scan on, at a fixed
 // address; rebindable for tests.
@@ -105,4 +92,3 @@ int __cdecl current_server();
 // message_data broadcasts a game event; not recovered, so check_global
 // reaches it through a rebindable seam.
 #include "netdaemon.h"  // message_data, the same 0x00592EE0
-

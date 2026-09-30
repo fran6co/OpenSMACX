@@ -48,7 +48,7 @@
 #include "veh.h"  // Vehs - the group table is the Vehs[i].state run
 #include "faction.h"  // Players/PlayersData - the per-faction records editor_energy and set_ai walk
 #include "xpops.h"  // X_pop - editor_on and friends raise the message pops
-#include "lock.h"  // LockMapTable - editor_clear_vehicles rewrites its records
+#include "lock.h"  // map_tile_bytes() - editor_clear_vehicles rewrites its records
 #include "log.h"  // log_say - the chat / message handlers report through it
 #include "netdaemon.h"  // synch_veh - the turn handlers resync vehicles
 
@@ -1838,7 +1838,7 @@ void Console::editor_clear_vehicles() {
     ConsoleGlobal.cursor_active_ = 0;
     ConsoleGlobal.selected_vehicle_ = -1;
     if (MapArea > 0) {
-        unsigned int *rec = reinterpret_cast<unsigned int *>(LockMapTable + 8);
+        unsigned int *rec = reinterpret_cast<unsigned int *>(map_tile_bytes() + 8);
         do {
             rec[0] &= 0xfffffffc;
             unsigned int val = rec[0];
@@ -2468,7 +2468,7 @@ void Console::editor_generate() {
     auto_undo();
 
     int count = MapArea;
-    Map *tile = reinterpret_cast<Map *>(LockMapTable);
+    Map *tile = map_tiles();
 
     VehCurrentCount = 0;
     BaseCurrentCount = 0;
@@ -2585,18 +2585,18 @@ void Console::editor_randomize() {
     int guard = MapArea;
     MapRandSeed = r + 1;
     int i = 0;
-    int *record = reinterpret_cast<int *>((*LockMapTable)) + 2;
+    Map *record = map_tiles();
     if (0 < guard) {
         do {
-            *record &= 0xcfeffbff;
-            int *dest = record + 2;
+            record->bit &= 0xcfeffbff;
+            uint32_t *dest = record->bit_visible;
             int n = 7;
             do {
-                *dest = *record;
+                *dest = record->bit;
                 ++dest;
             } while (--n);
             ++i;
-            record += 0xb;
+            ++record;
         } while (i < MapArea);
     }
     draw_map(1);
@@ -2620,15 +2620,14 @@ void Console::editor_clear_random() {
     }
     MapRandSeed = 0;
     if (MapArea > 0) {
-        int base = (*LockMapTable);
-        char *ptr = (char *)base + 8;
+        Map *tile = map_tiles();
         int i = 0;
         do {
-            uint32_t v = *(uint32_t *)ptr;
+            uint32_t v = tile->bit;
             if ((v & 0x400) != 0 && (v & 0x20000000) == 0) {
                 v &= 0xdffffbff;
-                *(uint32_t *)ptr = v;
-                uint32_t *dst = (uint32_t *)(ptr + 8);
+                tile->bit = v;
+                uint32_t *dst = tile->bit_visible;
                 int count = 7;
                 do {
                     *dst = v;
@@ -2637,7 +2636,7 @@ void Console::editor_clear_random() {
                 } while (count != 0);
             }
             i++;
-            ptr += 0x2c;
+            ++tile;
         } while (i < MapArea);
     }
     draw_map(1);
