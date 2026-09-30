@@ -1,0 +1,19 @@
+{
+  "event_id": "817bcd33ec277142029b46fe83510e7948541035d44f833cd5dfc73c7517823e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/hypothesis_layouts.h"
+    ],
+    "evidence": [
+      "Genuine AAmbience:FactionAmbience declaration supersedes old flat hypothesis_layouts.h stand-in and duplicateclasspreventscompilation. Preserve unrelated hypothesised classes and claims; include genuineowner header at same consumers. Scope onlythis demonstratedaudio blocker, no broadcleanup."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "275021f36bf228bef66dd8b31665d444eae1ee865094bbec49ae5d7ab59f4d28",
+  "request_id": "audio-retire-flat-aa-hypothesis",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:audio-navigation-closure"
+}

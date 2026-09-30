@@ -1,0 +1,25 @@
+{
+  "event_id": "275021f36bf228bef66dd8b31665d444eae1ee865094bbec49ae5d7ab59f4d28",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/field_accessors.cpp"
+    ],
+    "evidence": [
+      "load_music original4457E0 constructs default AAmbience selected by table66B888; event75begin447DB0/79general447DD0/76tech448280 differ from FactionAmbience. Guarded intact rehome of historical exact448280 required; preserve all original identity/spans/claims and any justified structural regression as restoration obligation, never demote."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4489856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "audio-original-aa-tech-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:audio-navigation-closure"
+}
