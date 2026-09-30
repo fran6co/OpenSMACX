@@ -1,0 +1,22 @@
+{
+  "event_id": "5d9ed6a2189a83214d1e355577c840dfadb5e36bad291b9ec551c3782e6cf35b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp",
+      "src/designwin.h",
+      "src/maininterface.h"
+    ],
+    "evidence": [
+      "Pinned DesignWin.init resets/reads/increments dword9B7B10 for button grid indexing. Existing WinMinimizeIcon bounded pointer ends at9B7B10; no scalar definition known. MainInterface coordinates AAC..AC8 are ABOVE GraphicWin base sizeA14 and already belong to declared rectangle members, not missing base storage.",
+      "Authorize provisional source-owned int DesignGridButtonIndex9B7B10 in designwin.cpp (declaration if needed), recording unknown wider ownership/writers and original allocation extent, v1 only after physical symbol observation. Also MainInterface.h ONLY friend class DesignWin for real existing rectangle access in initialization, no fields/layout or other API edits. Never add guessed base padding or extra globals for owned MainInterface rectangles. Existing source claims and all uncertainties retained; no acceptance/reset granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "86acb1b47cae4b6bf02900883b645920bf1c0b5b591470f61294583c8b68a5d8",
+  "request_id": "tutwin-design-init-index-and-main-owner-20260930",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

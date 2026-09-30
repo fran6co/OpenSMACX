@@ -1,0 +1,30 @@
+{
+  "event_id": "0aeb45889751108a9b9d4c7ccf4d7ba0eab967b2d3b2ee4cd0ffaf9fae02122b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/netdaemon.cpp",
+      "src/netdaemon.h",
+      "src/pending_bodies.cpp",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "NetDaemon.veh_drop consumes original action_airdrop4CC360 return at two branches; current void declaration/legacy forwarder incorrectly discard original int result. Seed4CC360 confirms int four-argument return contract and3313bytes of full behavior. Method also adds wait duration to dword93A960, current multiwin source records missing ownership.",
+      "Authorize full genuine free int action_airdrop(int,int,int,int) in veh.cpp/h and matching netdaemon.h declaration. Only coordinator may transition the EXISTING pending_bodies action_airdrop forwarder to return its original int result while complete body is recovered, then retire only that forwarder after full real-body integration; no new forwarder/address bridge is authorized. Worker leaves pending_bodies untouched. Also authorize provisional source-owned int NetDaemonWaitTicks93A960 in netdaemon.cpp, declaration if needed; preserve unknown broader ownership/writers and original extent beside source, v1 original-start only after Rootphysicalsymbol evidence. No guessed runtime writer, body substitution, claim demotion/reset or acceptance grant. Further unowned dependencies need review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5030752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2c5d783cf5efff44fb29900cd1df6dc8748c87e7be452919ae2a7caf72b41b4a",
+  "request_id": "mapwin-airdrop-result-and-wait-state-20260930",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
