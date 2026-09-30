@@ -1,0 +1,19 @@
+{
+  "event_id": "70743de7d7c17963e506fbaf254d9a8358a73665121155052a46e7189cec9168",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportwin_redraw.py"
+    ],
+    "evidence": [
+      "Executable host control extracts actual ReportWin redraw body; verifies original jump-table category behavior and owned clipping/reset sequence with damage controls. Does not establish complete page renderer/runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f1cd300ba41991ce417f65a6f26d8c8680db54b94910780c5e47502600644945",
+  "request_id": "reportwin-redraw-controls-20260930",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:reportwin-owner-coverage"
+}

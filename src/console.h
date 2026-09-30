@@ -104,6 +104,8 @@ extern int CursorHotspotY[12];
   * offset in the class.
   */
 class Console : public MapWin {
+  // MainInterface's status/button callbacks operate this owned AlphaMenu.
+  friend class MainInterface;
  public:
   void chat(int faction_id);
   void road_to(int veh_id, int cursor_mode);

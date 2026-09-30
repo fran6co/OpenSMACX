@@ -40,6 +40,8 @@ static_assert(sizeof(InfoPaneText) == 0x3C0, "InfoWin pane text stride");
 static_assert(sizeof(InfoPaneRows) == 0x30, "InfoWin pane row-value stride");
 
 class InfoWin {
+  // MainInterface status controls borrow this pane's rectangles and timer.
+  friend class MainInterface;
  public:
   // homed from 00459420.cpp. EVIDENCE-FREE as a name - see the marker in
   // infowin.cpp: no caller, no vtable slot, no CSV row, and the body reads

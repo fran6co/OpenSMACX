@@ -1,0 +1,26 @@
+{
+  "event_id": "f1cd300ba41991ce417f65a6f26d8c8680db54b94910780c5e47502600644945",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Original496D00 reset, ownedBuffer444, selection59AC and jump-table496DE4 establish actual ReportWin virtual redraw and category targets. Existing stringstruct.cpp explicit-receiver helper uses wrong categories and fixed executable addresses; rehome intact original identity into proper owner and correct behavior.",
+      "Parallel ReportIf worker edits only reportif.cpp/h; central coordinator owns ReportWin and shared dependency closure. No baseline reset or regression acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4812032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5ad372ac56d495bd0a216457a3cccc2c909abc2c593faef6505039aa050d6619",
+  "request_id": "reportwin-genuine-redraw-owner-20260930",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:reportwin-owner-coverage"
+}

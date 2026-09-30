@@ -1,0 +1,22 @@
+{
+  "event_id": "bad05d1f18ccccd72097b575d4b6bc92ff8017cbb6dd5fa11287e10c060bfd3c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h",
+      "src/infowin.h",
+      "src/statuswin.h"
+    ],
+    "evidence": [
+      "MainInterface original status/button methods use Console owned AlphaMenu at22A2C, InfoWin owned timer30 and pane rectangles10/20, StatusWin tile coordinates15B4/15B8. Grant central coordinator evidence-backed access friendship only, without member layout or behavior changes.",
+      "Parallel Console worker edits only isolated owner checkout; central header addition integrates with its complete owner work serially. No outside worker editing permission is implied."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "maininterface-owner-member-access-20260930",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:maininterface-owner-coverage"
+}

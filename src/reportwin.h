@@ -50,6 +50,8 @@ class ReportWin : public GraphicWin {
   // Ordinary out-of-line body; C++ owns reverse member/base teardown.
   ~ReportWin();
   void init();
+  // Win slot 12: reset and repaint the active ReportIf category.
+  virtual void on_redraw();
   void on_left_click(int x, int y);
   void right_menu(int x, int y, int base_id);
   void on_right_click(int x, int y);

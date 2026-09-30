@@ -35,6 +35,8 @@
   * The layout is not established and nothing pins its sizeof.
 */
 class StatusWin {
+  // MainInterface redraw completion reads the actual selected tile members.
+  friend class MainInterface;
  public:
   // homed from 004b4990.cpp
   void UNK1();

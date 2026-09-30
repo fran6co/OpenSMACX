@@ -1,0 +1,23 @@
+{
+  "event_id": "46d81860d79977f79e743d99d713eabdfefd6a7b00ad104232246016a295b429",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "wait4D04CC directly calls ready510F50. Existing seed00510f50 maps510F50..511471 and original confirms genuine thiscall void. Recover actual owner dependency rather than substitute ready_search or introduce undefined implementation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5312336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "console-ready-dependency-20260930",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-owner-coverage"
+}

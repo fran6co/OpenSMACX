@@ -72,6 +72,39 @@ int __cdecl break_treaty(int faction_id, int target_faction_id, int treaty);
 int __cdecl diplo_lock(int patience);
 void __cdecl diplo_unlock();
 
+// Report page dispatch at 0x00496D35 uses the original table at 0x00496DE4:
+// 0 intel; 1 no drawer; 2 labs; 3 energy; 4 ops; 5 projects; 6 satellites;
+// 7 security; 8 score. The retired explicit-receiver helper shifted these
+// categories and forwarded to original addresses. This is Win's genuine
+// slot-12 override, with the owned Buffer and ReportIf's category state.
+/*
+Purpose: Repaint the report window's selected page inside the topic panel.
+// ORIGINAL: 0x00496D00 ?on_redraw@ReportWin@@QAEXXZ 0x00496D00-0x00496DE4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original496D00..496DE4; retired seed git:117282ee:src/unrecovered/00496d00.cpp records the same identity and spans with its switch fold TRIED note kept below.", "The receiver is reportwin.h's own window: reset() is declared there (0x00496BB0), the +0x444 Buffer (set_clip is buffer.h's own) carries the topic rectangle at +0x5974, and the page selector is 0x00885F40.", "The eight page drawers are the seed's measured call targets 0x00498B30/0x0049BCD0/0x0049D540/0x0049EB10/0x0049F350/0x004A08E0/0x004A1140/0x004A2210, unrecovered members reached at their original addresses until declarations land."], "reason": "Coverage transcription of the report repaint with the page dispatch kept at the measured switch shape."}
+// symbol    ?on_redraw@ReportWin@@UAEXXZ
+// TRIED (seed): a switch on the 9 cases reproduces the disassembly's eight
+//         separate trailing set_clip copies; VC6 does not tail-merge across
+//         switch jump-table targets.
+Status: Coverage transcription - unclaimed body
+*/
+void ReportWin::on_redraw() {
+    reset();
+    field_59AC_ = -1;
+    Buffer &canvas = *this;
+    canvas.set_clip(&energy_panel_rect_);
+    switch (ReportIfGlobal.field_8_) {
+    case 0: draw_intel(); break;
+    case 2: draw_labs(); break;
+    case 3: draw_energy(); break;
+    case 4: draw_ops(); break;
+    case 5: draw_projects(); break;
+    case 6: draw_sat(); break;
+    case 7: draw_security(); break;
+    case 8: draw_score(); break;
+    }
+    canvas.set_clip(buffer_working_rect());
+}
+
 static bool reportwin_input_blocked() {
     return ConsoleControlTurnActive != 0
         || (NetDaemonNet.lock_state_[0].dword_[12]
