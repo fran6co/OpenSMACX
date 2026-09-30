@@ -1,0 +1,34 @@
+{
+  "event_id": "540108a020da5841ad2e06a27f263cfb382b48c6046a7ce3c3bb703da6472f94",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_artillery_action.py",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Complete the actual action_destroy implementation and coupled boom animation dependency rather than retaining its link-continuity placeholder. This expressly supersedes decision14 restriction to an empty action_destroy body, without removing historical obligations or resetting the original task baseline.",
+      "Original4CAB65..4CABCC contradicts the seed assault-territory polarity: local faction skips territory lookup and booms target once; nonlocal-owned territory case produces target,current-tile,target. Seed00504aa0 admits incorrect animation-buffer receiver stand-ins. Recover real locally owned Buffer arrays/Flic/Buffer lifetimes with original call evidence and existing typed map-window registries; no copied machine code, manual vtables, raw image calls or invented zero outputs.",
+      "Worker may implement only veh.cpp/h and approved artillery controls in its isolated checkout. Other MapWin task files remain frozen for this assignment. New dependencies outside these files require central authorization; source binding and Git publication remain coordinator-owned."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5024336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5261984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fab5f40187a79231db2cba31848627b2388e3a4804c75557b091bb0ce015b07e",
+  "request_id": "artillery-destruction-animation-owner-completion",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
