@@ -325,6 +325,22 @@ class Console : public MapWin {
   void editor_scen_param();
 
  public:
+  // Scenario setup dialogs recovered from their retained original seeds.
+  void editor_personality();
+  void editor_strategy();
+  void editor_rules();
+  void editor_scen_rules();
+  void editor_scen_victory();
+  void editor_diff();
+  void editor_reload();
+  void editor_eliminate();
+  void editor_tech();
+  void editor_view();
+  void editor_terrain();
+  void editor_natural(int place);
+  void editor_veh();
+
+ public:
   // homed from 004dd1b0.cpp
   void custom_my_faction();
 

@@ -58,6 +58,10 @@ extern BasePopConfigCallback BasePopDefaultField3094;
 class BasePop : public GraphicWin {
   // Tutorial callouts configure this owned popup's callback and dialog state.
   friend class TutWin;
+  // Console::editor_tech sorts the popup's existing item-id list before exec,
+  // matching the original direct StringList virtual call without adding an
+  // accessor or changing BasePop storage.
+  friend class Console;
  public:
   // homed from 00605130.cpp
   void on_left_down(int x, int y);

@@ -34,6 +34,13 @@
 int __cdecl tech_pick(int faction, int mode, int suggested,
                       const char *section);
 
+// Per-technology faction-ownership bitsets, populated by the rules/game data
+// loaders and changed as scenario-editor ownership is edited.
+// The editor traverses 89 byte cells at 9A6670; this is the array itself,
+// not a pointer containing an address in the old executable.
+// RECOVERY_OBJECT: v2 0x009A6670 0x009A66C9 ?GameTechAchieved@@3PAEA 0x004DFAD0
+uint8_t GameTechAchieved[MaxTechnologyNum];
+
 // The research slot is PlayersData[faction].tech_id_researching, not a
 // separate absolute table. A remote human's title/name are announced once
 // while the network loop waits for their choice. tech_pick and NetMsg::pop

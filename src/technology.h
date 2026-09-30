@@ -162,7 +162,7 @@ static const int MaxMandateNum = 4;
 
 // Real storage in the image (.bss, filled by read_tech()), defined in alpha.cpp.
 extern RulesTechnology Technology[MaxTechnologyNum]; // 0x0094F358
-uint8_t *const GameTechAchieved = (uint8_t *)0x009A6670; // [89]
+extern uint8_t GameTechAchieved[MaxTechnologyNum]; // 0x009A6670
 extern RulesMandate Mandate[MaxMandateNum]; // 0x0094B4A0
 extern int TechValidCount;
 extern int TechCommerceCount;

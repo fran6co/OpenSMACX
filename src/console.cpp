@@ -58,16 +58,37 @@
 #include "technology.h"  // has_tech - editor_tech and the tech orders gate on it
 #include "random.h"  // random - the editor's randomizer and the AI orders
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
+#include "terraforming.h"  // Terraforming rules drive the scenario terrain picker
 #include "planwin.h"
 
 void __cdecl base_kill(int base_id);
+extern int BaseAtKeyPollFlag;
 void __cdecl kill(int veh_id);
+void __cdecl read_faction(int player_id);
 int __cdecl veh_pick(int veh_id, const char *label, int flags);
 int __cdecl eliminate_player(int faction_id, int is_eliminated);
+int __cdecl veh_init(int prototype, int faction, int x, int y);
 
 // Original go_to writes this flag around the PlanWindow selection callback.
 // RECOVERY_OBJECT: v1 0x00688348 ?GoToPreviewActive@@3HA
 int GoToPreviewActive = 1;
+
+// Stateful selections shared between the scenario editor's vehicle and tech
+// dialogs.  Each is a distinct original data cell with an independent
+// lifetime; the initial values and call-site roles are preserved here.
+// RECOVERY_OBJECT: v2 0x00688350 0x00688354 ?ScenarioVehicleFaction@@3HA 0x004DED00
+int ScenarioVehicleFaction = -1;
+// RECOVERY_OBJECT: v2 0x00688354 0x00688358 ?ScenarioVehicleMorale@@3HA 0x004DED00
+int ScenarioVehicleMorale = 2;
+// RECOVERY_OBJECT: v2 0x00688358 0x0068835C ?ScenarioTechFaction@@3HA 0x004DFAD0
+int ScenarioTechFaction = -1;
+// RECOVERY_OBJECT: v2 0x0068835C 0x00688360 ?ScenarioTechSelection@@3HA 0x004DFAD0
+int ScenarioTechSelection = -1;
+// RECOVERY_OBJECT: v2 0x0090DB8C 0x0090DB90 ?ScenarioVehicleMode@@3HA 0x004DED00
+int ScenarioVehicleMode = 0;
+// RECOVERY_OBJECT: v2 0x0090DB90 0x0090DB94 ?ScenarioPreviousPrototype@@3HA 0x004DED00
+int ScenarioPreviousPrototype = 0;
+
 // Original go_to stores source X/Y at 4D6E01/4D6E0D; goto_routine
 // loads the independent dwords at 915680/915650 (4D60C2/4D60A8,
 // 4D6103/4D60FC). Both starts are initially zero-filled storage.
@@ -336,7 +357,6 @@ void __cdecl hall_of_fame(int is_retire);                        // 0x0044AE50 ?
 void __cdecl show_credits();                              // 0x00428DF0 ?show_credits@@YAXXZ
 void __cdecl show_replay();                               // 0x005ADBF0 ?show_replay@@YAXXZ
 int __cdecl tech_advance(int tech_id);                         // 0x005BE530 ?tech_advance@@YAHH@Z
-void __cdecl tech_achieved(int faction_id, int tech_id, int is_stolen, int a4); // 0x005BB000 ?tech_achieved@@YAXHHHH@Z
 void __cdecl social_select(int faction_id);                       // 0x005B5620 ?social_select@@YAXH@Z
 void __cdecl design_new_veh(int faction_id, int proto_id);              // 0x00583CB0 ?design_new_veh@@YAXHH@Z
 void __cdecl draw_tile_fixup(int x, int y, int a3, int a4); // 0x0046AF90 ?draw_tile_fixup@@YAXHHHH@Z
@@ -4462,6 +4482,765 @@ int Console::editor_who(int default_faction, int first_faction) {
     const int selected = popup.exec(0, 0);
     PopupModalState = 0;
     return selected;
+}
+
+// Scenario-editor configuration dialogs recovered from their original
+// routines.  These dialogs stage their check states in Popup's shared
+// check-state word, then copy accepted values back to the selected faction.
+// ORIGINAL: 0x004DBD20 ?editor_personality@Console@@QAEXXZ 0x004DBD20-0x004DBFA8
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dbd20.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_personality() {
+    const int faction = editor_who(ConsoleGlobal.faction_id_, 1);
+    if (faction < 0) {
+        return;
+    }
+    auto_undo();
+
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[faction].title_leader, -1, -1);
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction].name_leader, -1, -1);
+    GenderDefault = Players[faction].noun_gender;
+    PluralityDefault = Players[faction].is_noun_plural;
+    parse_says(2, Players[faction].noun_faction, -1, -1);
+
+    PlayerData &data = PlayersData[faction];
+    unsigned int checks = PopupWriteCheckState;
+    checks = data.ai_growth ? checks | 1u : checks & ~1u;
+    checks = data.ai_tech ? checks | 2u : checks & ~2u;
+    checks = data.ai_wealth ? checks | 4u : checks & ~4u;
+    checks = data.ai_power ? checks | 8u : checks & ~8u;
+    checks = data.ai_fight >= 1 ? checks | 0x10u : checks & ~0x10u;
+    checks = data.ai_fight < 0 ? checks | 0x20u : checks & ~0x20u;
+    checks = (data.flags & 0x00800000u) ? checks | 0x40u : checks & ~0x40u;
+    checks = (data.flags & 0x00400000u) ? checks | 0x80u : checks & ~0x80u;
+    checks = (data.flags & 0x01000000u) ? checks | 0x100u : checks & ~0x100u;
+    checks = (data.flags & 0x02000000u) ? checks | 0x200u : checks & ~0x200u;
+    PopupWriteCheckState = (data.flags_ext & 0x20u) ? checks | 0x400u : checks & ~0x400u;
+
+    if (x_pop_short("AIEDITOR", 0x41, nullptr) < 0) {
+        return;
+    }
+
+    const unsigned int accepted = PopupWriteCheckState;
+    data.flags &= ~0x03C00000u;
+    data.flags_ext &= ~0x20u;
+    data.ai_growth = (accepted & 1u) != 0;
+    data.ai_tech = (accepted & 2u) != 0;
+    data.ai_wealth = (accepted & 4u) != 0;
+    data.ai_power = (accepted & 8u) != 0;
+    if ((accepted & 0x10u) != 0 && (accepted & 0x20u) == 0) {
+        data.ai_fight = 1;
+    } else if ((accepted & 0x10u) == 0 && (accepted & 0x20u) != 0) {
+        data.ai_fight = -1;
+    } else {
+        data.ai_fight = 0;
+    }
+    if (accepted & 0x40u) data.flags |= 0x00800000u;
+    if (accepted & 0x80u) data.flags |= 0x00400000u;
+    if (accepted & 0x100u) data.flags |= 0x01000000u;
+    if (accepted & 0x200u) data.flags |= 0x02000000u;
+    if (accepted & 0x400u) data.flags_ext |= 0x20u;
+}
+
+// ORIGINAL: 0x004DBFB0 ?editor_strategy@Console@@QAEXXZ 0x004DBFB0-0x004DC225
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dbfb0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_strategy() {
+    const int faction = editor_who(ConsoleGlobal.faction_id_, 1);
+    if (faction < 0) {
+        return;
+    }
+    auto_undo();
+
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[faction].title_leader, -1, -1);
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction].name_leader, -1, -1);
+    GenderDefault = Players[faction].noun_gender;
+    PluralityDefault = Players[faction].is_noun_plural;
+    parse_says(2, Players[faction].noun_faction, -1, -1);
+
+    PlayerData &data = PlayersData[faction];
+    const unsigned int flags = data.flags;
+    const unsigned int extended = data.flags_ext;
+    unsigned int checks = PopupWriteCheckState;
+    checks = (flags & 0x04000000u) ? checks | 1u : checks & ~1u;
+    checks = (flags & 0x08000000u) ? checks | 2u : checks & ~2u;
+    checks = (flags & 0x10000000u) ? checks | 4u : checks & ~4u;
+    checks = (flags & 0x80000000u) ? checks | 8u : checks & ~8u;
+    checks = (flags & 0x40000000u) ? checks | 0x10u : checks & ~0x10u;
+    checks = (flags & 0x20000000u) ? checks | 0x20u : checks & ~0x20u;
+    checks = (flags & 0x00200000u) ? checks | 0x40u : checks & ~0x40u;
+    checks = (extended & 1u) ? checks | 0x80u : checks & ~0x80u;
+    checks = (extended & 2u) ? checks | 0x100u : checks & ~0x100u;
+    checks = (extended & 4u) ? checks | 0x200u : checks & ~0x200u;
+    checks = (extended & 8u) ? checks | 0x400u : checks & ~0x400u;
+    checks = (extended & 0x10u) ? checks | 0x800u : checks & ~0x800u;
+    PopupWriteCheckState = (extended & 0x40u) ? checks | 0x1000u : checks & ~0x1000u;
+
+    const int result = x_pop_short("AIEDITOR2", 0x41, nullptr);
+    if (result < 0) {
+        return;
+    }
+    const unsigned int accepted = PopupWriteCheckState;
+    data.flags &= ~0xFC200000u;
+    data.flags_ext &= ~0x5Fu;
+    if (accepted & 1u) data.flags |= 0x04000000u;
+    if (accepted & 2u) data.flags |= 0x08000000u;
+    if (accepted & 4u) data.flags |= 0x10000000u;
+    if (accepted & 8u) data.flags |= 0x80000000u;
+    if (accepted & 0x10u) data.flags |= 0x40000000u;
+    if (accepted & 0x20u) data.flags |= 0x20000000u;
+    if (accepted & 0x40u) data.flags |= 0x00200000u;
+    if (accepted & 0x80u) data.flags_ext |= 1u;
+    if (accepted & 0x100u) data.flags_ext |= 2u;
+    if (accepted & 0x200u) data.flags_ext |= 4u;
+    if (accepted & 0x400u) data.flags_ext |= 8u;
+    if (accepted & 0x800u) data.flags_ext |= 0x10u;
+    if (accepted & 0x1000u) data.flags_ext |= 0x40u;
+}
+
+// ORIGINAL: 0x004DC230 ?editor_rules@Console@@QAEXXZ 0x004DC230-0x004DC515
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dc230.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_rules() {
+    auto_undo();
+    for (;;) {
+        uint32_t rules = GameRules;
+        uint32_t state = GameState & ~0x01800000u;
+        GameState = state;
+        unsigned int checks = (rules >> 11) & 1u;
+        checks |= (rules & 2u) ? 2u : 0u;
+        checks |= (rules & 8u) ? 4u : 0u;
+        checks |= (rules & 4u) ? 8u : 0u;
+        checks |= (rules & 0x1000u) ? 0x10u : 0u;
+        checks |= (rules & 1u) ? 0x20u : 0u;
+        checks |= (rules & 0x10u) ? 0x40u : 0u;
+        checks |= (rules & 0x20u) ? 0x80u : 0u;
+        checks |= (rules & 0x4000u) ? 0x100u : 0u;
+        checks |= (rules & 0x200u) ? 0x200u : 0u;
+        checks |= (rules & 0x40u) ? 0x400u : 0u;
+        checks |= (rules & 0x100u) ? 0u : 0x800u;
+        checks |= (rules & 0x2000u) ? 0x1000u : 0u;
+        checks |= (rules & 0x8000u) ? 0x2000u : 0u;
+        checks |= (rules & 0x80u) ? 0x4000u : 0u;
+        checks |= (rules & 0x400u) ? 0x8000u : 0u;
+        checks |= (state & 0x00800000u) ? 0x10000u : 0u;
+        checks |= (state & 0x01000000u) ? 0x20000u : 0u;
+        PopupWriteCheckState = checks;
+        PopupModalState = 6;
+        const int result = x_pop_short("RULES", 0x41, nullptr);
+        PopupModalState = 0;
+        if (result < 0) {
+            break;
+        }
+
+        rules = GameRules & 0xFFFF0000u;
+        state = GameState & ~0x01800000u;
+        checks = PopupWriteCheckState;
+        if (BaseAtKeyPollFlag == 0) {
+            if (checks & 1u) rules |= 0x800u;
+            if (checks & 2u) rules |= 2u;
+            if (checks & 4u) rules |= 8u;
+            if (checks & 8u) rules |= 4u;
+            if (checks & 0x10u) rules |= 0x1000u;
+            if (checks & 0x20u) rules |= 1u;
+            if (checks & 0x40u) rules |= 0x10u;
+            if (checks & 0x80u) rules |= 0x20u;
+            if (checks & 0x100u) rules |= 0x4000u;
+            if (checks & 0x200u) rules |= 0x200u;
+            if (checks & 0x400u) rules |= 0x40u;
+            if (!(checks & 0x800u)) rules |= 0x100u;
+            if (checks & 0x1000u) rules |= 0x2000u;
+            if (checks & 0x2000u) rules |= 0x8000u;
+            if (checks & 0x4000u) rules |= 0x80u;
+            if (checks & 0x8000u) rules |= 0x400u;
+            if (checks & 0x10000u) state |= 0x00800000u;
+            if (checks & 0x20000u) state |= 0x01000000u;
+            GameRules = rules;
+            GameState = state;
+            AlphaIniPrefs.rules = rules;
+            AlphaIniPrefs.semaphore = state & 0x01800000u;
+            prefs_save(0);
+            return;
+        }
+        GameRules |= default_rules();
+        AlphaIniPrefs.rules = GameRules;
+        AlphaIniPrefs.semaphore = GameState & 0x01800000u;
+    }
+}
+
+// ORIGINAL: 0x004DD6F0 ?editor_diff@Console@@QAEXXZ 0x004DD6F0-0x004DDA4E;0x0065B872-0x0065B97E
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dd6f0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_diff() {
+    Popup popup;
+    auto_undo();
+    popup.start(PopupStartCaption, "EDITORDIFF", -1, nullptr, 0x40);
+    for (int i = 0; i < MaxDiffNum; ++i) {
+        popup.dialogs().item(StringTable.get(reinterpret_cast<int>(Difficulty[i])), i);
+    }
+    popup.set_value(DiffLevelCurrent);
+    const int selected = popup.exec(0, nullptr);
+    if (selected >= 0) {
+        DiffLevelCurrent = selected;
+        for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+            PlayersData[faction].diff_level = selected;
+        }
+    }
+}
+
+// ORIGINAL: 0x004E0290 ?editor_reload@Console@@QAEXXZ 0x004E0290-0x004E05D9;0x0065C0C8-0x0065C1AB
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e0290.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_reload() {
+    Popup popup;
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
+        GenderDefault = Players[faction_entry].noun_gender;
+        PluralityDefault = Players[faction_entry].is_noun_plural;
+        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
+    }
+    const int faction = popup.exec(0, nullptr);
+    PopupModalState = 0;
+    if (faction < 0) {
+        return;
+    }
+    const int answer = X_pop_ask("RELOADFAC", 0x50, Players[faction].filename,
+                                 nullptr, 0);
+    if (answer == 0) {
+        strcpy(Players[faction].filename, ParseStrBuffer[0].str);
+        strcpy(Players[faction].search_key, ParseStrBuffer[0].str);
+        read_faction(faction);
+        compute_faction_modifiers(faction);
+    }
+}
+
+// ORIGINAL: 0x004E05E0 ?editor_eliminate@Console@@QAEXXZ 0x004E05E0-0x004E09A1;0x0065C1AB-0x0065C2AF
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e05e0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_eliminate() {
+    Popup popup;
+    auto_undo();
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    for (int faction_entry = 1; faction_entry < MaxPlayerNum; ++faction_entry) {
+        GenderDefault = Players[faction_entry].noun_gender;
+        PluralityDefault = Players[faction_entry].is_noun_plural;
+        popup.dialogs().item(Players[faction_entry].noun_faction, faction_entry);
+    }
+    const int faction = popup.exec(0, nullptr);
+    PopupModalState = 0;
+    if (faction < 0) {
+        return;
+    }
+
+    const unsigned char faction_bit = static_cast<unsigned char>(1u << faction);
+    uint8_t *status = reinterpret_cast<uint8_t *>(&LockEnableMask);
+    status[0] &= static_cast<uint8_t>(~faction_bit);
+    status[1] &= static_cast<uint8_t>(~faction_bit);
+    for (int base = BaseCurrentCount - 1; base >= 0; --base) {
+        if (Bases[base].faction_id_current == faction) {
+            base_kill(base);
+        }
+    }
+    ::draw_map(1);
+    eliminate_player(faction, -2);
+}
+
+// ORIGINAL: 0x004E0B00 ?editor_terrain@Console@@QAEXXZ 0x004E0B00-0x004E0E9E;0x0065C2AF-0x0065C38C
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e0b00.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_terrain() {
+    Popup popup;
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, "EDITORTERRAIN", -1, nullptr, 0);
+    for (int index = 0; index < MaxTerrainNum; ++index) {
+        if (Terraforming[index].bit == 0) {
+            continue;
+        }
+        char text[256];
+        text[0] = 0;
+        char *land_name = StringTable.get(reinterpret_cast<int>(Terraforming[index].name));
+        char *sea_name = StringTable.get(reinterpret_cast<int>(Terraforming[index].name_sea));
+        strcat(text, land_name);
+        if (strcmp(land_name, sea_name) != 0) {
+            strcat(text, "/");
+            strcat(text, sea_name);
+        }
+        popup.dialogs().item(text, index);
+        if (index == MapEditorPaintId - 6) {
+            popup.set_value(index);
+        }
+    }
+    const int result = popup.exec(0, nullptr);
+    editor_paints(result + 6);
+}
+
+// ORIGINAL: 0x004DC520 ?editor_scen_rules@Console@@QAEXXZ 0x004DC520-0x004DC852;0x0065B55F-0x0065B5CC
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dc520.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_scen_rules() {
+    Popup popup;
+    auto_undo();
+    const uint32_t original_rules = GameRules;
+    const uint32_t original_turn_flags = NetTurnFlags;
+    unsigned int checks = PopupWriteCheckState;
+    const unsigned int low = checks & 0xFFu;
+    const unsigned int high = (checks >> 8) & 0xFFu;
+    unsigned int packed = low;
+    packed = (original_rules & 0x00200000u) ? packed | 0x01u : packed & ~0x01u;
+    packed = (original_rules & 0x00400000u) ? packed | 0x02u : packed & ~0x02u;
+    packed = (original_rules & 0x00800000u) ? packed | 0x04u : packed & ~0x04u;
+    packed = (original_rules & 0x04000000u) ? packed | 0x08u : packed & ~0x08u;
+    packed = (original_rules & 0x02000000u) ? packed | 0x10u : packed & ~0x10u;
+    packed = (original_rules & 0x80000000u) ? packed | 0x20u : packed & ~0x20u;
+    packed = (original_rules & 0x00040000u) ? packed | 0x40u : packed & ~0x40u;
+    packed = (original_rules & 0x00020000u) ? packed | 0x80u : packed & ~0x80u;
+    unsigned int packed_high = high;
+    packed_high = (original_rules & 0x00010000u) ? packed_high | 1u : packed_high & ~1u;
+    packed_high = (original_turn_flags & 1u) ? packed_high | 2u : packed_high & ~2u;
+    packed_high = (original_turn_flags & 2u) ? packed_high | 4u : packed_high & ~4u;
+    packed_high = (original_rules & 0x01000000u) ? packed_high | 8u : packed_high & ~8u;
+    packed_high = (original_rules & 0x00100000u) ? packed_high | 0x10u : packed_high & ~0x10u;
+    packed_high = (original_turn_flags & 4u) ? packed_high | 0x20u : packed_high & ~0x20u;
+    packed_high = (original_turn_flags & 8u) ? packed_high | 0x40u : packed_high & ~0x40u;
+    PopupWriteCheckState = packed | (packed_high << 8);
+
+    if (x_pop_short("SCENRULES", 0x41, nullptr) < 0) {
+        return;
+    }
+
+    const unsigned int accepted = PopupWriteCheckState;
+    GameRules &= 0x7808FFFFu;
+    NetTurnFlags &= 0xFFFFFFF0u;
+    if (accepted & 0x0001u) GameRules |= 0x00200000u;
+    if (accepted & 0x0002u) GameRules |= 0x00400000u;
+    if (accepted & 0x0004u) GameRules |= 0x00800000u;
+    if (accepted & 0x0008u) GameRules |= 0x04000000u;
+    if (accepted & 0x0010u) GameRules |= 0x02000000u;
+    if (accepted & 0x0020u) GameRules |= 0x80000000u;
+    if (accepted & 0x0040u) GameRules |= 0x00040000u;
+    if (accepted & 0x0080u) GameRules |= 0x00020000u;
+    if (accepted & 0x0100u) GameRules |= 0x00010000u;
+    if (accepted & 0x0200u) NetTurnFlags |= 1u;
+    if (accepted & 0x0400u) NetTurnFlags |= 2u;
+    if (accepted & 0x0800u) GameRules |= 0x01000000u;
+    if (accepted & 0x1000u) GameRules |= 0x00100000u;
+    if (accepted & 0x2000u) NetTurnFlags |= 4u;
+    if (accepted & 0x4000u) NetTurnFlags |= 8u;
+}
+
+// ORIGINAL: 0x004DC860 ?editor_scen_victory@Console@@QAEXXZ 0x004DC860-0x004DCCB4;0x0065B5CC-0x0065B6A4
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004dc860.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_scen_victory() {
+    Popup popup;
+    unsigned int checks = PopupWriteCheckState;
+    const uint32_t rules = GameRules;
+    const uint32_t state = GameState;
+    checks = (rules & 0x08000000u) ? checks | 0x001u : checks & ~0x001u;
+    checks = (rules & 0x10000000u) ? checks | 0x002u : checks & ~0x002u;
+    checks = (state & 0x00040000u) ? checks | 0x004u : checks & ~0x004u;
+    checks = (rules & 0x40000000u) ? checks | 0x008u : checks & ~0x008u;
+    checks = (rules & 0x20000000u) ? checks | 0x010u : checks & ~0x010u;
+    checks = (state & 0x02000000u) ? checks | 0x020u : checks & ~0x020u;
+    checks = (state & 0x04000000u) ? checks | 0x040u : checks & ~0x040u;
+    checks = (state & 0x00008000u) ? checks | 0x080u : checks & ~0x080u;
+    checks = (state & 0x80000000u) ? checks | 0x100u : checks & ~0x100u;
+    checks = (state & 0x20000000u) ? checks | 0x200u : checks & ~0x200u;
+    checks = (state & 0x40000000u) ? checks | 0x400u : checks & ~0x400u;
+    checks = (rules & 0x00080000u) ? checks | 0x800u : checks & ~0x800u;
+    PopupWriteCheckState = (state & 0x00080000u) ? checks | 0x1000u : checks & ~0x1000u;
+
+    if (x_pop_short("SCENVICTORY", 0x41, nullptr) < 0) {
+        return;
+    }
+
+    const unsigned int accepted = PopupWriteCheckState;
+    GameRules &= 0x87F7FFFFu;
+    GameState &= 0x19F37FFFu;
+    if (accepted & 0x001u) GameRules |= 0x08000000u;
+    if (accepted & 0x002u) GameRules |= 0x10000000u;
+    if (accepted & 0x004u) GameState |= 0x00040000u;
+    if (accepted & 0x008u) GameRules |= 0x40000000u;
+    if (accepted & 0x010u) GameRules |= 0x20000000u;
+    if (accepted & 0x020u) GameState |= 0x02000000u;
+    if (accepted & 0x040u) GameState |= 0x04000000u;
+    if (accepted & 0x080u) GameState |= 0x00008000u;
+    if (accepted & 0x100u) GameState |= 0x80000000u;
+    if (accepted & 0x200u) GameState |= 0x20000000u;
+    if (accepted & 0x400u) GameState |= 0x40000000u;
+    if (accepted & 0x800u) GameRules |= 0x00080000u;
+    if (accepted & 0x1000u) GameState |= 0x00080000u;
+
+    if (GameState & 0x04000000u) {
+        popup.start(PopupStartCaption, "FACOBJ", -1, nullptr, 0);
+        for (int facility = 1; facility <= 64; ++facility) {
+            popup.dialogs().item(
+                StringTable.get(reinterpret_cast<int>(Facility[facility].name)),
+                facility);
+        }
+        ScnVictFacilityObj = static_cast<uint32_t>(popup.exec(0, nullptr));
+    }
+}
+
+// ORIGINAL: 0x004DF4F0 ?editor_view@Console@@QAEXXZ 0x004DF4F0-0x004DFAD0;0x0065BE73-0x0065BFB1
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004df4f0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_view() {
+    Popup popup;
+    PopupModalState = 6;
+    popup.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+    uint8_t *status = reinterpret_cast<uint8_t *>(&LockEnableMask);
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        if ((status[1] & (1u << faction)) == 0) {
+            continue;
+        }
+        char text[256];
+        text[0] = 0;
+        strcat(text, Players[faction].formal_name_faction);
+        strcat(text, "(");
+        strcat(text, Players[faction].noun_faction);
+        strcat(text, ")");
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        popup.dialogs().item(text, faction);
+        if (faction == ConsoleGlobal.faction_id_) {
+            popup.set_value(faction);
+        }
+    }
+    const char *mode = Language == 1 ? "TOUS" : Language == 2 ? "ALLE" : "ALL";
+    popup.dialogs().item(const_cast<char *>(mode), 0x63);
+    const int selected = popup.exec(0, nullptr);
+    PopupModalState = 0;
+    if (selected < 0) {
+        return;
+    }
+
+    if (selected == 0x63) {
+        PopupModalState = 6;
+        if (X_pop("EDITORCONTROLALL", nullptr) != 0) {
+            status[0] = static_cast<uint8_t>(status[1] & 0xFEu);
+        }
+        GameState |= 0x80u;
+        PopupModalState = 0;
+        ::draw_map(1);
+        desktop_update();
+        return;
+    }
+
+    GameState &= ~0x80u;
+    desktop_update();
+    const unsigned char view_state = static_cast<unsigned char>(GameState);
+    if ((view_state & 0xC0u) == 0xC0u) {
+        MainInterfaceGlobal.flat_button_[2].show(0);
+    } else {
+        MainInterfaceGlobal.flat_button_[2].hide();
+    }
+    if ((status[0] & (1u << selected)) == 0) {
+        GenderDefault = Players[selected].noun_gender;
+        PluralityDefault = Players[selected].is_noun_plural;
+        parse_says(0, Players[selected].noun_faction, -1, -1);
+        PopupModalState = 6;
+        const int answer = X_pop("EDITORCONTROL", nullptr);
+        status[0] = answer != 0 ? static_cast<uint8_t>(1u << selected) : 0;
+        PopupModalState = 0;
+    }
+
+    ConsoleGlobal.faction_id_ = selected;
+    const int slot = ConsoleGlobal.cursor_history_index_;
+    const int x = ConsoleGlobal.cursor_history_x_[slot];
+    const int y = ConsoleGlobal.cursor_history_y_[slot];
+    if (base_find(x, y, selected) >= 0) {
+        ConsoleGlobal.focus(x, y, selected);
+    }
+    ConsoleGlobal.set_view(1);
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x004E14D0 ?editor_natural@Console@@QAEXH@Z 0x004E14D0-0x004E1E99;0x0065C38C-0x0065C564
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e14d0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_natural(int place) {
+    Popup popup;
+    auto_undo();
+    popup.start(PopupStartCaption, place != 0 ? "NATPLACE" : "NATUNPLACE",
+                -1, nullptr, 0x40);
+    for (int natural = 0; natural < MaxNaturalNum; ++natural) {
+        popup.dialogs().item(
+            StringTable.get(reinterpret_cast<int>(Natural[natural].name)), natural);
+    }
+    const int selected = popup.exec(0, nullptr);
+    if (selected < 0) {
+        return;
+    }
+
+    const int cursor = ConsoleGlobal.cursor_history_index_;
+    const int x = ConsoleGlobal.cursor_history_x_[cursor];
+    const int y = ConsoleGlobal.cursor_history_y_[cursor];
+    if (place != 0) {
+        switch (selected) {
+        case 0: world_crater(x, y); break;
+        case 1: world_volcano(x, y, 0); break;
+        case 2: world_monsoon(x, y); break;
+        case 3: world_diamond(x, y); break;
+        case 4: world_sargasso(x, y); break;
+        case 5: world_ruin(x, y); break;
+        case 6: world_dune(x, y); break;
+        case 7: world_fresh(x, y); break;
+        case 8: world_mesa(x, y); break;
+        case 9: world_canyon(x, y); break;
+        case 10: world_geothermal(x, y); break;
+        case 11: world_ridge(x, y); break;
+        case 12: world_borehole(x, y); break;
+        case 13: world_temple(x, y); break;
+        case 14: world_unity(x, y); break;
+        case 15: world_fossil(x, y); break;
+        }
+        world_climate();
+        ::draw_map(1);
+        return;
+    }
+
+    if (selected == LM_FRESH) {
+        const int center_offset = static_cast<int>(MapLongitude) * y + (x >> 1);
+        const Map &center = MapTiles[center_offset];
+        if ((center.bit2 & BIT2_FRESH) != 0 && (center.climate & 0xE0u) < 0x60u) {
+            const uint8_t region = center.region;
+            for (int row = 0; row < static_cast<int>(MapLatitudeBounds); ++row) {
+                for (int column = 0; column < static_cast<int>(MapLongitudeBounds); column += 2) {
+                    Map &tile = MapTiles[static_cast<int>(MapLongitude) * row + (column >> 1)];
+                    if (tile.region != region) {
+                        continue;
+                    }
+                    bit2_set(column, row, BIT2_FRESH, 0);
+                    const int landmark = find_landmark(column, row, 1);
+                    if (landmark >= 0 &&
+                        strcmp(MapLandmark[landmark].name,
+                               StringTable.get(reinterpret_cast<int>(Natural[LM_FRESH].name))) == 0) {
+                        kill_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y);
+                    }
+                }
+            }
+        }
+        world_climate();
+        ::draw_map(1);
+        return;
+    }
+
+    int radius_index;
+    switch (selected) {
+    case 0: radius_index = 3; break;
+    case 1: radius_index = 1; break;
+    case 2: radius_index = 5; break;
+    case 3: radius_index = 2; break;
+    case 4: radius_index = 4; break;
+    case 5: case 6: case 8: case 9: case 10: case 11: radius_index = 2; break;
+    case 12: case 13: case 15: radius_index = 1; break;
+    case 14: radius_index = 2; break;
+    default: radius_index = place; break;
+    }
+    const uint32_t feature_bit = 1u << selected;
+    const int limit = RadiusRange[radius_index];
+    bool has_clearable_feature = false;
+    for (int probe_offset = 0; probe_offset < limit; ++probe_offset) {
+        const int tile_x = xrange(x + RadiusOffsetX[probe_offset]);
+        const int tile_y = y + RadiusOffsetY[probe_offset];
+        if (tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
+            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {
+            continue;
+        }
+        Map &tile = MapTiles[static_cast<int>(MapLongitude) * tile_y + (tile_x >> 1)];
+        if ((tile.bit2 & feature_bit) != 0 && (tile.bit2 & 0xFF000000u) == 0) {
+            has_clearable_feature = true;
+            break;
+        }
+    }
+    if (!has_clearable_feature) return;
+
+    for (int clear_offset = 0; clear_offset < limit; ++clear_offset) {
+        const int tile_x = xrange(x + RadiusOffsetX[clear_offset]);
+        const int tile_y = y + RadiusOffsetY[clear_offset];
+        if (tile_y < 0 || tile_y >= static_cast<int>(MapLatitudeBounds) ||
+            tile_x < 0 || tile_x >= static_cast<int>(MapLongitudeBounds)) {
+            continue;
+        }
+        Map &tile = MapTiles[static_cast<int>(MapLongitude) * tile_y + (tile_x >> 1)];
+        if ((tile.bit2 & feature_bit) == 0) continue;
+
+        bit2_set(tile_x, tile_y, feature_bit, 0);
+        code_set(tile_x, tile_y, 0);
+        if (selected == 4) {
+            bit_set(tile_x, tile_y, 0x20, 0);
+        } else if (selected == 5) {
+            bit_set(tile_x, tile_y, 0x00102020, 0);
+        } else if (selected == 12) {
+            bit_set(tile_x, tile_y, 0x01100000, 0);
+        }
+        const int landmark = find_landmark(tile_x, tile_y, 1);
+        if (landmark >= 0 &&
+            strcmp(MapLandmark[landmark].name,
+                   StringTable.get(reinterpret_cast<int>(Natural[selected].name))) == 0) {
+            kill_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y);
+        }
+    }
+    world_climate();
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x004DFAD0 ?editor_tech@Console@@QAEXXZ 0x004DFAD0-0x004E0118;0x0065C0BE-0x0065C0C8
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004dfad0.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_tech() {
+    Popup popup;
+    auto_undo();
+    int faction = ScenarioTechFaction;
+    if (faction < 0) faction = ConsoleGlobal.faction_id_;
+
+    for (;;) {
+        ScenarioTechFaction = faction;
+        PopupModalState = 6;
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        parse_says(0, Players[faction].noun_faction, -1, -1);
+        popup.start(PopupStartCaption, "EDITORTECH", -1, nullptr, 0x42);
+        popup.set_cancel_text(label_get(270));
+        popup.set_ok_text(label_get(1008));
+
+        for (int tech_id = 0; tech_id < MaxTechnologyNum; ++tech_id) {
+            const RulesTechnology &entry = Technology[tech_id];
+            if (entry.preq_tech_1 < TechNone || entry.preq_tech_2 < TechNone) {
+                continue;
+            }
+            StringTemp[0] = 0;
+            say_tech(StringTemp, tech_id, 0);
+            strcat(StringTemp, "|");
+            const int status = has_tech(tech_id, faction) ? 246 :
+                tech_avail(tech_id, faction) ? 247 : 248;
+            strcat(StringTemp, label_get(status));
+            popup.dialogs().item(StringTemp, tech_id);
+        }
+        popup.item_ids_.sort(0);
+        if (ScenarioTechSelection >= 0) {
+            popup.set_value(ScenarioTechSelection);
+        }
+
+        const int selected = popup.exec(0, nullptr);
+        PopupModalState = 0;
+        if (selected < 0) {
+            see_map_check();
+            return;
+        }
+        if (popup.input_poll_state() == 1) {
+            Popup who;
+            who.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+            for (int player = 1; player < MaxPlayerNum; ++player) {
+                GenderDefault = Players[player].noun_gender;
+                PluralityDefault = Players[player].is_noun_plural;
+                who.dialogs().item(Players[player].noun_faction, player);
+            }
+            if (faction >= 0) who.set_value(faction);
+            PopupModalState = 6;
+            const int chosen = who.exec(0, nullptr);
+            PopupModalState = 0;
+            if (chosen > 0) faction = chosen;
+            continue;
+        }
+
+        if (has_tech(selected, faction)) {
+            int ignored_a = 0;
+            int ignored_b = 0;
+            bitmask(selected, &ignored_a, &ignored_b);
+            GameTechAchieved[selected] = static_cast<uint8_t>(
+                GameTechAchieved[selected] & ~(1u << faction));
+        } else {
+            tech_achieved(faction, selected, 0, 0);
+        }
+        ScenarioTechSelection = selected;
+        PlayersData[faction].tech_ranking = 0;
+        for (int owned_tech = 0; owned_tech < MaxTechnologyNum; ++owned_tech) {
+            if (has_tech(owned_tech, faction)) PlayersData[faction].tech_ranking += 2;
+        }
+        TutWinBaseWindow.redraw();
+    }
+}
+
+// ORIGINAL: 0x004DED00 ?editor_veh@Console@@QAEXXZ 0x004DED00-0x004DF4E5;0x0065BD30-0x0065BE73
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004ded00.cpp records the original entry and full body/unwind spans; retained seed is not accepted source structure.", "Task console-scenario-owner-wave and its native grants authorize the thirteen owner methods, typed persistent editor state, existing Popup item sorting, and genuine technology-bit storage. Original instructions resolve callee argument roles and field ownership; dual configured compiler trials and host controls are diagnostics, not acceptance."], "reason": "Recover the selected scenario-editor operation in its existing typed Console owner, retaining its original spans, seed provenance and historical obligations."}
+void Console::editor_veh() {
+    Popup popup;
+    auto_undo();
+    if (ScenarioVehicleFaction < 0) ScenarioVehicleFaction = ConsoleGlobal.faction_id_;
+
+    for (;;) {
+        popup.start(PopupStartCaption, "EDITORUNIT", -1, nullptr, 0x40, nullptr);
+        for (int proto_idx = 0; proto_idx < MaxVehProtoNum; ++proto_idx) {
+            const VehPrototype &entry = VehPrototypes[proto_idx];
+            if ((entry.flags & 1u) == 0) continue;
+            if (ScenarioVehicleMode == 0 && proto_idx >= 64 &&
+                !veh_avail(proto_idx, ScenarioVehicleFaction, -1)) {
+                continue;
+            }
+            StringTemp[0] = 0;
+            strcat(StringTemp, entry.veh_name);
+            popup.dialogs().item(StringTemp, proto_idx);
+            if (proto_idx == ScenarioPreviousPrototype) popup.set_value(proto_idx);
+        }
+        const int selected_prototype = popup.exec(0, nullptr);
+        PopupModalState = 0;
+        if (selected_prototype < 0) return;
+        ScenarioPreviousPrototype = selected_prototype;
+        const uint32_t action = popup.input_poll_state();
+        if (action == 1) {
+            ScenarioVehicleMode = ScenarioVehicleMode == 0 ? 1 : 0;
+            continue;
+        }
+        if (action == 2) {
+            Popup who;
+            who.start(PopupStartCaption, "EDITORWHO", -1, nullptr, 0x40);
+            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+                GenderDefault = Players[faction].noun_gender;
+                PluralityDefault = Players[faction].is_noun_plural;
+                who.dialogs().item(Players[faction].noun_faction, faction);
+            }
+            who.set_value(ScenarioVehicleFaction);
+            PopupModalState = 6;
+            const int chosen = who.exec(0, nullptr);
+            PopupModalState = 0;
+            if (chosen >= 0) ScenarioVehicleFaction = chosen;
+            continue;
+        }
+        if (action == 3) {
+            popup.init(0, 0);
+            for (int morale = 0; morale < MaxMoraleNum; ++morale) {
+                popup.dialogs().item(StringTable.get(reinterpret_cast<int>(Morale[morale].name)), morale);
+            }
+            const int chosen = popup.exec(0, nullptr);
+            PopupModalState = 0;
+            ScenarioVehicleMorale = chosen;
+            continue;
+        }
+
+        const int cursor = ConsoleGlobal.cursor_history_index_;
+        const int x = ConsoleGlobal.cursor_history_x_[cursor];
+        const int y = ConsoleGlobal.cursor_history_y_[cursor];
+        if (selected_prototype == 0x13) {
+            bit_set(x, y, 0x20, 1);
+            ScenarioVehicleFaction = 0;
+            bit_set(x, y, 0x0028805C, 0);
+            for (int bit = 1; bit <= 7; ++bit) synch_bit(x, y, bit);
+            draw_tile(x, y, 1);
+        }
+        const int vehicle = veh_init(selected_prototype, ScenarioVehicleFaction, x, y);
+        if (vehicle >= 0) {
+            Vehs[vehicle].morale = static_cast<uint8_t>(ScenarioVehicleMorale);
+            const int prototype_id = Vehs[vehicle].proto_id;
+            draw_tile_fixup(x, y, VehPrototypes[prototype_id].flags & 2u, 2);
+            if (Vehs[vehicle].faction_id == ConsoleGlobal.faction_id_) {
+                ConsoleGlobal.selected_vehicle_ = vehicle;
+                if (ConsoleGlobal.cursor_active_) set_move(1);
+            }
+            uint8_t *const alive = reinterpret_cast<uint8_t *>(&LockEnableMask) + 1;
+            *alive |= static_cast<uint8_t>(1u << ScenarioVehicleFaction);
+        }
+        return;
+    }
 }
 
 /*
