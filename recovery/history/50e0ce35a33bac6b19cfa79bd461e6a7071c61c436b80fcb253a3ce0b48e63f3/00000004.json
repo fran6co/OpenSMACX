@@ -1,0 +1,29 @@
+{
+  "event_id": "bdb20c1a7333566b1b4d14c2f8f4d2a1ca3038bf3566340429e517d4f4963272",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flatbutton.cpp",
+      "src/flatbutton.h",
+      "src/graphicwin.h"
+    ],
+    "evidence": [
+      "Original455610..455E41 actualload_interface producer writes newly source-owned palette andsprite-derived geometry used by config_popups/popups_normal; leaving executableforwarder would fail toinitialize newsharedstate. Recover complete producer ratherthanacceptdummyzero/defaultcells.",
+      "Reuse genuine g_PCX_PARSE_TEMP_BUFFER1, window/button/dialogspriteowners andload_box_sprites; originalframe_top_right member9D4 requires typedGraphicWinsetter. Migrate actualFlatButton27-word9B8E44defaults withctor/close consumers; reuseexistingPushButtonDefaults9BC118 andBasePopDefaultBlock31B8 ratherthanduplicates.",
+      "MapWinTable1..7 isgenuine registry; virtualslot67 ison_redraw_nc(RECT*,int) called(NULL,-1), noton_resize. Originalseed misidentifiedNC-sprite receiver asSprite7AD180; independentlyaudit actualwindowhierarchy andpalettepixelreads beforeimplementation. Rootseriallyretirespendingforwarder afternativebindingandfreshlink."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4544016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "443c3b35f8aca7fa7ea0512bc6077daa2ffc125768ba22363448ff028f2fe1e5",
+  "request_id": "popup-font-interface-producer-owner",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:popup-font-configuration-owner-closure"
+}

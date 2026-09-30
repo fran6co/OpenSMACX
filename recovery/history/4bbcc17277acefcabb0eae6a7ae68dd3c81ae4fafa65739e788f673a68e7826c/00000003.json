@@ -1,0 +1,21 @@
+{
+  "event_id": "3fcc0a7a478996a65944cb8cb188bf93465e6a164318d691965fe00061566193",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_editor_generate.py",
+      "recovery/tests/test_vehicle_animation.py",
+      "recovery/tests/test_vehicle_turn.py"
+    ],
+    "evidence": [
+      "Existing actual-source behavioralfixtures initialize obsolete independentLockMapTable. Update fixtures to oneMapTiles allocation andextractproductionmap_tiles accessor; keep assertions/mutationcontrols unchanged and rerun hostsanitizer tests."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9a149e1feab2051795fc7946eb1f01ae557f6068e065dc8c1c2ed07871879062",
+  "request_id": "map-owner-behavior-fixture-migration",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:map-allocation-owner-closure"
+}
