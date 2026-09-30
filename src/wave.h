@@ -232,24 +232,10 @@ typedef void (OriginalObject::*func_sound_set_type)(uint32_t type);
 // Movement sound, owned and initialized with the other Wave objects.
 extern Wave g_SCOOT_WAVE;  // 0x00749C18
 
-// Effect::init registers three callbacks into the Win hook slots before it
-// resolves a filename: the input callback at 0x004457C0 into WinMessageHook
-// (0x009B7A88), the ok callback at 0x00445650 into 0x009B7A98, and the
-// handler at 0x004456A0 into 0x009B7AA0. The ok callback is source-owned;
-// the other two bodies remain bound by address. MACROS, not const variables -
-// measured in caviar.cpp: a const pointer variable's value does not fold at
-// the use site, so a header-defined `const` still compiles
-// `mov eax, dword ptr [var]` where the image folds the immediate.
+// Effect::init installs three source-owned callbacks in Win's process-wide
+// hook storage before resolving a filename. The Win global names are
+// provisional descriptions of the observed consumers.
 typedef void(__cdecl *func_effect_callback)();
-#define EffectInputCallback ((func_effect_callback)0x004457C0)
+void __cdecl input_callback();
 void __cdecl ok_callback();
-#define EffectDoneCallback ((func_effect_callback)0x004456A0)
-// The two hook slots the image writes that win.cpp does not name. Accessors
-// rather than storage: 0x009B7A98 and 0x009B7AA0 are real terranx.exe data,
-// and only the inlined return expression folds the address into the store.
-inline func_effect_callback &EffectOkHookSlot() {
-  return *reinterpret_cast<func_effect_callback *>(0x009B7A98);
-}
-inline func_effect_callback &EffectDoneHookSlot() {
-  return *reinterpret_cast<func_effect_callback *>(0x009B7AA0);
-}
+void __cdecl button_hover_callback();

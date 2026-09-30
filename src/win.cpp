@@ -806,6 +806,19 @@ int WinZOrderFlag;
 void(__cdecl *WinLeftDownHook)(int x, int y);  // 0x009B7A90
 int WinCursorMoved;        // 0x009B7B3C
 void(__cdecl *WinMessageHook)();                            // 0x009B7A88
+// BaseButton::on_left_click (607A20) loads these independent nullary
+// callbacks for button IDs -1/-2. Effect::init (445BB0) installs the OK
+// callback; no original cancel producer has been identified. The cells
+// occupy PE loader-zeroed virtual storage, not file-backed initializer bytes.
+// These start bindings do not infer the bounds of neighboring hook storage.
+// RECOVERY_OBJECT: v1 0x009B7A98 ?WinOkHook@@3P6AXXZA
+void(__cdecl *WinOkHook)();
+// RECOVERY_OBJECT: v1 0x009B7A9C ?WinCancelHook@@3P6AXXZA
+void(__cdecl *WinCancelHook)();
+// Effect::init installs the pass-over sound callback here; FlatButton's
+// original on_mouse_move (608500) invokes it on hover entry, not completion.
+// RECOVERY_OBJECT: v1 0x009B7AA0 ?WinButtonHoverHook@@3P6AXXZA
+void(__cdecl *WinButtonHoverHook)();
 void(__cdecl *WinMouseHook)(HWND window, LPARAM position);  // 0x009B7A94
 void(__cdecl *WinKeyHook)(WPARAM key);                      // 0x009B7A8C
 

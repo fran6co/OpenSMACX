@@ -25,6 +25,7 @@
 #include "sounddevice.h"
 #include "net_class.h"
 #include "basepop.h"
+#include "ambience.h"
 
 // The Windows multimedia clock is a system import, not storage in this build.
 // RECOVERY_IMPORT: v1 __imp__timeGetTime@0 WINMM.dll name:timeGetTime
@@ -1652,7 +1653,7 @@ Purpose: Initialise an Effect wave. Registers the Effect family's three
          mode with neither bit 0 nor bit 7 gains bit 4 - the streamed-and-
          looped combination - and a mode with neither bit 2 nor bit 7 runs the
          wave's own vtable slot 0x8C once Wave::init returns.
-// ORIGINAL: 0x00445BB0 ?init@Effect@@QAEXPADJ@Z 0x00445BB0-0x00445CC6 FILE
+// ORIGINAL: 0x00445BB0 ?init@Effect@@QAEXPADJ@Z 0x00445BB0-0x00445CC6 FILE BYTE_EXACT
 // size      278 bytes
 // prototype void (__thiscall ?init@Effect@@QAEXPADJ@Z)(Effect* this, int8*, long)
 // callers   1   call targets   5
@@ -1682,9 +1683,9 @@ Return Value: n/a
 Status: Complete
 */
 void Effect::init(char *fname, long flags) {
-    WinMessageHook = EffectInputCallback;
-    EffectOkHookSlot() = ok_callback;
-    EffectDoneHookSlot() = EffectDoneCallback;
+    WinMessageHook = input_callback;
+    WinOkHook = ok_callback;
+    WinButtonHoverHook = button_hover_callback;
     if ((static_cast<uint8_t>(flags) & 0x81) == 0) {
         flags |= 4;
     }
@@ -1756,8 +1757,22 @@ void __cdecl ok_callback() {
         EffectOkPitch = 0;
     }
 }
+
+// The window procedure's callback delegates to the active faction ambience.
+// ORIGINAL: 0x004457C0 ?input_callback@@YAXXZ 0x004457C0-0x004457D3 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004457c0.cpp original identity and complete 19-byte span", "image:0x004457C0-0x004457D3 null-test and virtual tail jump at offset 0x13C", "src/ambience.cpp FactionMusic at 0x0074DAA0; src/ambience.h FactionAmbience event slots75-89"], "reason": "Original nullary window-message callback consults the source-owned faction music pointer and tail-dispatches its genuine general event at virtual slot79; the compatible exact seed remains historical evidence, not current source acceptance."}
+void __cdecl input_callback() {
+    if (FactionMusic != 0) FactionMusic->general();
+}
+
 // RECOVERY_OBJECT: v1 0x0074D9D0 ?g_PASSOVER_WAVE@@3VWave@@A
 Wave g_PASSOVER_WAVE;  // 0x0074D9D0
+// The button hover hook plays the already-owned pass-over effect.
+// ORIGINAL: 0x004456A0 ?button_hover_callback@@YAXXZ 0x004456A0-0x004456AA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00445BB0 Effect initializer publishes 0x004456A0 to hook 0x009B7AA0", "image:0x004456A0-0x004456AA complete MOV receiver 0x0074D9D0 and tail JMP 0x004C6920; NOP padding to independently mapped 0x004456B0", "src/recovered/units/00608500.cpp original FlatButton hover callback consumer", "src/wave.cpp g_PASSOVER_WAVE and Wave::play"], "reason": "Provisional behavior-derived name for the nullary button-hover sound callback installed by Effect initialization and consumed by FlatButton hover; its complete entry tail-calls play on the already-owned pass-over Wave, rather than embedding an executable address."}
+void __cdecl button_hover_callback() {
+    g_PASSOVER_WAVE.Wave::play();
+}
 Wave g_MAININTERFACE_WAVE;  // 0x007D38B8
 Wave g_MULTIWIN_WAVE;  // 0x007FFF00
 Wave g_TOP_MENU_WAVE;  // 0x00945780

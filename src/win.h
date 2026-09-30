@@ -1058,6 +1058,9 @@ extern int WinCursorMoved;
 // every message at all, with no arguments. `Effect::init` installs the
 // first; `Win::OnKey`, `OnLButtonDown` and `OnRButtonDown` read them too.
 extern void(__cdecl *WinMessageHook)();
+extern void(__cdecl *WinOkHook)();
+extern void(__cdecl *WinCancelHook)();
+extern void(__cdecl *WinButtonHoverHook)();
 extern void(__cdecl *WinMouseHook)(HWND window, LPARAM position);
 
 // 0x009B7A8C. A third hook, called after WM_KEYDOWN with the virtual key.
