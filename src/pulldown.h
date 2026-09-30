@@ -12,7 +12,13 @@
 
 class Menu;
 typedef int (__cdecl *PullDownPoll)();
+typedef int (__cdecl *PullDownFillCallback)(GraphicWin *, int, RECT *);
+typedef int (__cdecl *PullDownBackfillCallback)(GraphicWin *);
 static_assert(sizeof(PullDownPoll) == 4, "PullDown callback uses the original x86 ABI");
+static_assert(sizeof(PullDownFillCallback) == 4,
+              "PullDown fill callback uses the original x86 ABI");
+static_assert(sizeof(PullDownBackfillCallback) == 4,
+              "PullDown backfill callback uses the original x86 ABI");
 
 struct PullDownItem {
   char *text;
@@ -99,8 +105,8 @@ class PullDown : public GraphicWin {
   Menu *menu_;
   uint8_t dirty_;
   uint8_t dirty_padding_[3];
-  uint32_t field_F38_;
-  uint32_t field_F3C_;
+  PullDownFillCallback field_F38_;
+  PullDownBackfillCallback field_F3C_;
 };
 
 static_assert(sizeof(PullDown) == 0xF40,
@@ -113,8 +119,8 @@ static_assert(sizeof(PullDown) == 0xF40,
 // Defaults the destructor copies into the two trailing fields; the game keeps
 // them at 0x009B7B58/0x009B7B5C. Tests outside the hybrid process rebind
 // them at locally mapped storage.
-extern uint32_t PullDownFieldF38Default;
-extern uint32_t PullDownFieldF3CDefault;
+extern PullDownFillCallback PullDownFieldF38Default;
+extern PullDownBackfillCallback PullDownFieldF3CDefault;
 
 // The font every item string is measured with. Zero until the first PullDown
 // needs it, then resolved once from `FontDefault` and cached - the same lazy

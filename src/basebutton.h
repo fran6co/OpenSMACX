@@ -87,6 +87,9 @@ class BaseButton : public GraphicWin {
   int set_bubble_text(LPCSTR input);
   int set_name(LPCSTR input);
   void set(int value);
+  // AlphaMenu toggles the visual pressed state of its owner button while the
+  // menu is shown/hidden. Keep the legacy word encapsulated in BaseButton.
+  void set_pressed_visual(int value) { field_A9C_ = static_cast<uint32_t>(value); }
   int selected_state() const { return static_cast<int>(field_A18_); }
   // The base governor panel clears this auxiliary state when a priority
   // becomes unavailable, then repaints through Win's virtual redraw slot.

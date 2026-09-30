@@ -585,7 +585,7 @@ void MainInterface::on_iface_button_clicked(int button) {
         if (ConsoleGlobal.alpha_menu_.is_visible()) {
             ConsoleGlobal.alpha_menu_.hide_menus();
             ConsoleGlobal.alpha_menu_.hide();
-        } else ConsoleGlobal.alpha_menu_.show(0);
+        } else ConsoleGlobal.alpha_menu_.show();
         return;
     case 1004:
         if (MultiWindowOpen) MultiWindow.hide();

@@ -434,8 +434,8 @@ int PullDown::get_selected() {
 
 
 
-uint32_t PullDownFieldF38Default;  // 0x009B7B58
-uint32_t PullDownFieldF3CDefault;  // 0x009B7B5C
+PullDownFillCallback PullDownFieldF38Default;  // 0x009B7B58
+PullDownBackfillCallback PullDownFieldF3CDefault;  // 0x009B7B5C
 Font *PullDownDefaultFont;         // 0x009B7B68
 
 // Palette indices shared by the popup policy and PullDown rendering.

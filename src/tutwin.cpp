@@ -913,7 +913,7 @@ void TutWin::tour() {
         if (TutWinClimateGate945830 != 0) WorldClimateWorldWin.show_all();
         do_all_draws();
         if (!ConsoleGlobal.alpha_menu_.is_visible()) {
-            ConsoleGlobal.alpha_menu_.show(0);
+            ConsoleGlobal.alpha_menu_.show();
         }
 
         if (!tut_callout(*this, MainInterfaceGlobal,

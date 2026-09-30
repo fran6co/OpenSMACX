@@ -24,10 +24,8 @@
  /*
   * AlphaMenu class
   *
-  * Eleven methods are catalogued - init, compute, adjust, on_redraw,
-  * on_mouse_move and requested_height among them - and none of the ten
-  * besides requested_height is recovered. The layout is derived, not
-  * guessed: the IDB member table starts a member called `menu` at 0x0
+  * The layout is derived, not guessed: the IDB member table starts a member
+  * called `menu` at 0x0
   * whose size, 2916, is exactly the sizeof(Menu) this tree pins, with
   * `buffer` and `sprite1` following at 0xB64 and 0x10EC - the same
   * evidence route the typing campaign uses everywhere else. Console
@@ -41,18 +39,19 @@ class AlphaMenu : public Menu {
   // Member destruction follows the original 0x0051DC10 reverse-lifetime
   // trace: three Sprites, the leading Sprite, Buffer, then Menu.
   ~AlphaMenu();
-  // The two slots this class overrides in the Win-family surface, at the
-  // positions the image's AlphaMenu vtable carries them: Win::hide's slot 2
-  // and on_redraw at slot 12 (image entry on_redraw@AlphaMenu,
-  // 0x00403340). Both bodies are unrecovered; the stubs keep the slots true.
+  int init(Win *parent);
+  void adjust();
+  // Win slot 2 and slot 12, respectively.
   void hide();
   virtual void on_redraw();
+  void show();
   // The image's slot 17 is the 2-argument on_mouse_move overload
   // (on_mouse_move@AlphaMenu, 0x00403550, unrecovered) - the same
   // slot-true stub.
   void on_mouse_feedback(int x, int y);
   int requested_height();
   void on_adjust_pulldown_pos(int *x, int *y);
+  static int __cdecl fill_func(GraphicWin *target, int mode, RECT *clip);
   static int backfill_func(GraphicWin *target);
   // 0x00460DD0 - the catalogue pins the name ?check@MainMenu@@QAEXH@Z on it,
   // but the object it runs on is THIS one (??0Console builds a Menu-shaped

@@ -111,6 +111,7 @@ void register_iface_mode(int slot, SubInterface *interface_entry);
 // Its nineteen observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066C544 ? ??_7MainInterface@@6B@ 0x0045EF10
 class MainInterface : public GraphicWin, public SubInterface {
+  friend class AlphaMenu;  // AlphaMenu uses the owned menu-window rectangle and state.
   friend class TutWin;  // Tutorial callouts read the owned panel rectangles.
   friend class DesignWin;  // DesignWin init reads existing panel rectangles.
   friend class BaseWin;  // draw_garrison uses the adjacent panel rectangles.
