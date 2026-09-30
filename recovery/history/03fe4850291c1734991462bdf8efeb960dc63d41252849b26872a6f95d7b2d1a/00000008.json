@@ -1,0 +1,32 @@
+{
+  "event_id": "c67de66fefa198de171af40f9a05f0906364fc2ff3232a32c46c8576e4200297",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp",
+      "src/designwin.h"
+    ],
+    "evidence": [
+      "Pinned DesignWin.exec43E9A0 calls original DesignWin.init43C270 when tutor state73396C differs from2; seedinit43C270 has full spans43C270..43D0B7 and6546C5..6546DA but explicitly approximates final button rectangle arithmetic, so complete recovery must use original instructions rather than blindly relocate seed. Existing DesignTutorState rawalias73396C is shared with shutdown43E960; existing DesignWindowSelf733970 is already source-owned and must be reused.",
+      "Authorize complete DesignWin.init() declaration/body only in already editable DesignWin.h/cpp, with genuine Buffer/member/button lifetimes and existing typed members. Also replace only the existing DesignTutorState absolute int-pointer alias with provisional source-owned int loader-zero state and its existing shutdown dereferences with direct access; retain original73396C start/unknown full extent as v1 only after Rootphysicalsymbol observation. Shutdown broader rawvirtual dispatch remains separate debt, no other body edit. Existing source claims/discoveries/seed retained; no hand markers, neworiginalaliases, baseline reset, automatic acceptance or weakened gates. Original init-button field/rectangle expressions must be derived individually and verified; no approximation as completion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4440688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4450656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7ebdd7c1f25e899848123fccaff62cc737cce4ad6b10c866a1d9c017a76fa799",
+  "request_id": "tutwin-real-design-init-state-dependency-20260930",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
