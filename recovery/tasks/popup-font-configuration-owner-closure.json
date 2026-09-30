@@ -1,0 +1,65 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "0dd8a850cd73b4df6371341bb76dbcbae3a59b30",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/font.cpp",
+    "src/font.h",
+    "src/basepop.cpp",
+    "src/basepop.h",
+    "src/win.cpp",
+    "src/win.h",
+    "src/menu.cpp",
+    "src/menu.h",
+    "src/basebutton.h",
+    "src/listbox.h",
+    "src/sprite.h",
+    "src/mapwin.cpp",
+    "src/game.cpp",
+    "src/game.h"
+  ],
+  "evidence": [
+    "Canonical seeds establish588460popups_normal,588800style1,5888E0tutorial,5889C0medium,588A30style4 and588AA0config; nearest-index logic is inline, not a separate identity.",
+    "Original config588D05/588D46/588D88 writes actual shared Interlude normal/third/second font-pointer cells945770/9457F8/9457FC from the existing48-element FontTable; declare genuine cache storage rather than independent dummy defaults.",
+    "Original style producers mutate existing BasePop/Dialog/Win/list/scroll default storage. Repair const declarations and real producer/reader ownership under this bounded file authority; do not duplicate cells or transplant address-bound seed globals.",
+    "Existing mapped setters and find_font retain their identities/claims. Scope excludes pending_bodies; Root serially retires config forwarder after physical native binding and successful whole application build/link. New outside-owner requirements remain discoveries.",
+    "Master0dd8a850 already owns shared ScriptPopupFile and alternate-script cells. Console-end adjacent939E58/5C screen-copy words are independent globals, not invented Console members; include mapwin widthreader in real shared storage migration."
+  ],
+  "intent": "Recover the complete six-function popup configuration family and real borrowed-font caches, including Interlude fonts; preserve historical claims and actual shared defaults/producer-reader relationships.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5801056,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5801984,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5802208,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5802432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5802544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5802656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-font-configuration-owner-closure"
+}
