@@ -24,6 +24,7 @@
 #include "faction.h"
 #include "game.h"
 #include "general.h" // range
+#include "flic.h"
 #include "log.h"
 #include "map.h"
 #include "strings.h"
@@ -44,11 +45,15 @@
 #include "maininterface.h"
 
 #include "wave.h"
+#include "fx.h"
 #include <mmsystem.h>
 #include "designwin.h" // Crawler animation advances while the design window is visible.
 #include "vector.h"  // vector_add operates on actual three-float arrays.
 #include "leaf_recoveries.h"  // The source-owned vector-length operation.
 #include "original_seam.h"  // ORIGINAL / original_method - the two BaseWin repaint seams
+
+int __cdecl popp(const char *title, const char *label, int channel,
+                 const char *picture, int(__cdecl *callback)());
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
@@ -829,10 +834,659 @@ void __cdecl action_arty(int veh_id, int x, int y) {
     }
 }
 // ORIGINAL: 0x004CAA50 ?action_destroy@@YAXHHHH@Z 0x004CAA50-0x004CB302
-// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004caa50.cpp", "Original4CD181 directly calls4CAA50; coordinator authorizes unfinished empty bodies for link continuity, never as recovered behavior."], "reason": "Explicit unfinished owning-TU dependency for the artillery empty-target destruction path; no implemented behavior or acceptance."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004caa50.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Map byte+2 is val2; diplomatic treaty direction and callback rereads independently decoded from the pinned original."], "reason": "Recover the artillery and bombing destruction paths in their real vehicle owner, replacing the explicitly unfinished dependency while preserving its complete original span and all seed evidence."}
 void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
-    // BODY GOES HERE.
+    Veh &vehicle = Vehs[veh_id];
+    const int faction = vehicle.faction_id;
+    veh_skip(veh_id);
+    vehicle.state |= 0x40;
+
+    bool assault = false;
+    bool forest_weapon = false;
+    int effect_y;
+    const bool valid = y >= 0 && y < MapLatitudeBounds &&
+                       x >= 0 && x < MapLongitudeBounds;
+    if (!valid) {
+        x = vehicle.x;
+        effect_y = vehicle.y;
+    } else {
+        effect_y = y;
+        Map *const tile = map_loc(x, y);
+        // Original reads the low nibble of the tile byte at +0x02 (Map::val2).
+        if ((tile->bit & BIT_BASE_IN_TILE) != 0 &&
+            (tile->val2 & 0x0f) < 8) {
+            if (faction != ConsoleGlobal.faction_id_) return;
+            boom(x, y, 0x80);
+            return;
+        }
+
+        const int scatter = rand() & static_cast<int>(0x80000001u);
+        if (scatter != 0) {
+            if (faction != ConsoleGlobal.faction_id_) return;
+            NetMsgPopup->pop("ARTYBOMBFAILED", 0x1388, 0, nullptr);
+            return;
+        }
+
+        assault = true;
+        const int initial_local_faction = ConsoleGlobal.faction_id_;
+        bool in_local_territory = faction == initial_local_faction;
+        if (!in_local_territory) {
+            const int owner = whose_territory(initial_local_faction, x, y,
+                                              nullptr, 0);
+            // whose_territory may run callbacks; the image rereads the live
+            // Console faction for this comparison, but retains the earlier
+            // faction for its following territory lookup.
+            in_local_territory = owner == ConsoleGlobal.faction_id_;
+        }
+        if (in_local_territory) {
+            const int current_local_faction = ConsoleGlobal.faction_id_;
+            if (faction != 0 && faction != current_local_faction) {
+                boom(x, y, 0x80);
+                boom(vehicle.x, vehicle.y, 0x80);
+            }
+            boom(x, y, 0x80);
+        }
+
+        const int target_faction = whose_territory(faction, x, y, nullptr, 0);
+        if (target_faction != faction) {
+            for (int neighbor = 1; neighbor < 25; ++neighbor) {
+                int near_x = vehicle.x + RadiusOffsetX[neighbor];
+                if (!(MapIsFlat & 1)) {
+                    if (near_x < 0) near_x += MapLongitudeBounds;
+                    else if (near_x >= MapLongitudeBounds) near_x -= MapLongitudeBounds;
+                }
+                const int near_y = vehicle.y + RadiusOffsetY[neighbor];
+                if (near_y <= -1 || near_y >= MapLatitudeBounds ||
+                    near_x <= -1 || near_x >= MapLongitudeBounds) continue;
+
+                int dx = abs(near_x - x);
+                if (!(MapIsFlat & 1) && MapLongitude < static_cast<uint32_t>(dx))
+                    dx = MapLongitudeBounds - dx;
+                const int dy = abs(near_y - effect_y);
+                if (((dy + dx) & ~1) >= 5) continue;
+
+                const int other_vehicle = veh_at(near_x, near_y);
+                const int stack = stack_fix(other_vehicle);
+                if (stack >= 0 && stack_check(stack, 0x0f, target_faction, -1, -1)) {
+                    battle_fight(veh_id, neighbor, 1, 1, nullptr);
+                    return;
+                }
+            }
+        }
+    }
+
+    const int prototype_id = vehicle.proto_id;
+    const int chassis_id = VehPrototypes[prototype_id].chassis_id;
+    const RulesChassis &chassis = Chassis[chassis_id];
+    const bool artillery = chassis.triad == TRIAD_AIR && chassis.missile == 0;
+    if (artillery) {
+        const int artillery_scatter = rand() & static_cast<int>(0x80000003u);
+        if (artillery_scatter == 0) {
+            if (faction != ConsoleGlobal.faction_id_) goto finish_destroy;
+            NetMsgPopup->pop("BOMBFAILED", 0x1388, 0, nullptr);
+            goto finish_destroy;
+        }
+    }
+
+    {
+        Map *const tile = map_loc(x, effect_y);
+        uint32_t target_bits;
+        if (bits <= 0) {
+            target_bits = tile->bit;
+        } else {
+            bits &= static_cast<int>(tile->bit);
+            if (bits == 0) goto finish_destroy;
+            bit_set(x, effect_y, bits, 0);
+            target_bits = static_cast<uint32_t>(bits);
+        }
+
+        if (!has_abil(prototype_id, 0x2000)) target_bits &= ~0x20u;
+        int probe = -1;
+        int weapon;
+        for (;;) {
+            weapon = probe < 0 ? 9 : probe;
+            if (Terraforming[weapon].bit & target_bits) break;
+            ++probe;
+            if (probe >= 0x13) {
+                log_say("Arty Failed The Hard Way", bits,
+                        static_cast<int>(target_bits), 0);
+                if (assault) {
+                    if (faction != ConsoleGlobal.faction_id_) goto finish_destroy;
+                    NetMsgPopup->pop("ARTYBOMBFAILED", 0x1388, 0, nullptr);
+                } else {
+                    if (chassis.triad != TRIAD_AIR ||
+                        faction != ConsoleGlobal.faction_id_)
+                        goto finish_destroy;
+                    NetMsgPopup->pop("BOMBFAILED", 0x1388, 0, nullptr);
+                }
+                goto finish_destroy;
+            }
+        }
+
+        const uint32_t weapon_bit = Terraforming[weapon].bit;
+        bits = static_cast<int>(static_cast<uint32_t>(bits) | weapon_bit);
+        bit_set(x, effect_y, static_cast<int>(weapon_bit), 0);
+
+        const uint8_t climate = map_loc(x, effect_y)->climate;
+        const int terrain_name = ((climate & 0xe0) < 0x60) ? 1 : 0;
+        const int terrain_name_id = reinterpret_cast<int>(
+            terrain_name ? Terraforming[weapon].name_sea
+                         : Terraforming[weapon].name);
+        parse_says(2, StringTable.get(terrain_name_id),
+                  -1, -1);
+
+        forest_weapon = weapon == TERRA_FOREST;
+        if (chassis.triad == TRIAD_AIR && faction == ConsoleGlobal.faction_id_)
+            NetMsgPopup->pop("BOMBSUCCEEDED", 0x1388, 0, nullptr);
+
+        synch_bit(x, effect_y, faction);
+        int enemy = faction == 0 ? ConsoleGlobal.faction_id_ : faction;
+        enemy = whose_territory(enemy, x, effect_y, nullptr, 0);
+        synch_bit(x, effect_y, enemy);
+
+        if ((static_cast<uint32_t>(bits) & 0x01c00000u) != 0) {
+            world_climate();
+            draw_map(1);
+        } else if ((static_cast<uint32_t>(bits) & 0x80000000u) == 0 ||
+                   enemy != ConsoleGlobal.faction_id_) {
+            draw_tiles(x, effect_y, 2);
+        } else {
+            draw_radius(x, effect_y, 2, 2);
+        }
+
+        if (faction == 0) {
+            const bool local_knows =
+                (PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) != 0 ||
+                (map_loc(x, effect_y)->visibility &
+                 (1u << (ConsoleGlobal.faction_id_ & 0x1f))) != 0;
+            if (local_knows && enemy == ConsoleGlobal.faction_id_) goto finish_destroy;
+            const int base_id = base_find(x, effect_y, -1, -1, -1,
+                                          ConsoleGlobal.faction_id_);
+            if (base_id < 0 ||
+                Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_)
+                goto finish_destroy;
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            parse_says(1, VehPrototypes[prototype_id].veh_name, -1, -1);
+            ConsoleGlobal.focus(x, effect_y, 0);
+            if (forest_weapon) {
+                if (vehicle.proto_id == BSC_SPORE_LAUNCHER) {
+                    popp(*ClimatePopupTitle, "SPOREFOREST", 0,
+                         "sporlnch_sm.pcx", nullptr);
+                    goto finish_destroy;
+                }
+                NetMsgPopup->pop("ATEFOREST", 0x1388, 0, nullptr);
+            } else if (vehicle.proto_id == BSC_SPORE_LAUNCHER) {
+                popp(*ClimatePopupTitle, "SPORESLAUNCHED", 0,
+                     "sporlnch_sm.pcx", nullptr);
+                goto finish_destroy;
+            } else {
+                NetMsgPopup->pop("ATESTUFF", 0x1388, 0, nullptr);
+            }
+        } else {
+            if (assault && enemy == ConsoleGlobal.faction_id_)
+                NetMsgPopup->pop("BOMBARD SUCCEEDED", 0x1388, 0, nullptr);
+            if (enemy < 0 || enemy == faction ||
+                (PlayersData[faction].diplo_treaties[enemy] & 8u) == 0)
+                goto finish_destroy;
+            if ((PlayersData[enemy].flags & PFLAG_MAP_REVEALED) == 0 &&
+                (map_loc(x, effect_y)->visibility & (1u << (enemy & 0x1f))) == 0)
+                goto finish_destroy;
+            synch_bit(x, effect_y, enemy);
+            add_goal(enemy, 0, 5, vehicle.x, vehicle.y, -1);
+            if (enemy != ConsoleGlobal.faction_id_) goto finish_destroy;
+            const int base_id = base_find(x, effect_y, -1, -1, -1,
+                                          ConsoleGlobal.faction_id_);
+            GenderDefault = Players[faction].noun_gender;
+            PluralityDefault = Players[faction].is_noun_plural;
+            parse_says(0, Players[faction].noun_faction, -1, -1);
+            parse_says(1, Bases[base_id].name_string, -1, -1);
+            parse_says(3, Players[faction].adj_name_faction, -1, -1);
+            NetMsgPopup->pop(assault ? "HAVEDESTROYED1" : "HAVEDESTROYED",
+                             0x1388, 0, nullptr);
+        }
+    }
+
+finish_destroy:
+    order_veh(veh_id, -1, 3);
 }
+
+// The paired arrays are indexed by the prototype weapon byte (+0x25). The
+// original reads both at 0x504DB0..0x504DF7; the first selects a 16-frame
+// indexed-sprite bank and the second selects its explosion colour group.
+// The two observed 26-DWORD extents meet at 0x0066EBA8 and 0x0066EC10.
+// RECOVERY_OBJECT: v2 0x0066EB40 0x0066EBA8 _BoomIndexedSpriteBankByWeapon 0x00504AA0
+static const int BoomIndexedSpriteBankByWeapon[MaxWeaponNum] = {
+    0, 4, 0, 0, 4, 1, 5, 5, 3, 6, 2, 7, 8, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0
+};
+// RECOVERY_OBJECT: v2 0x0066EBA8 0x0066EC10 _BoomColorGroupByWeapon 0x00504AA0
+static const int BoomColorGroupByWeapon[MaxWeaponNum] = {
+    3, 1, 0, 0, 2, 4, 5, 6, 5, 2, 7, 5, 7, 0, 0, 0, 0, 0, 0, 0, 0, 0,
+    0, 0, 0, 0
+};
+
+// Producer 0x00500B60 sets this cell before invoking boom(..., 0x20).
+// It is separate from the compiler-owned local-static guard at 0x90F7D8.
+// RECOVERY_OBJECT: v2 0x0090F7D4 0x0090F7D8 ?BoomAnimationLevel@@3HA 0x00500B60
+int BoomAnimationLevel;
+
+static int boom_zoomed_extent(int zoom, int extent) {
+    const int product = zoom * extent;
+    return (product + (product >> 31 & 0x0f)) >> 4;
+}
+
+// ORIGINAL: 0x00504AA0 ?boom@@YAHHHH@Z 0x00504AA0-0x00505D1B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00504aa0.cpp", "src/veh.h", "src/flic.h", "recovery/tasks/mapwin-owner-coverage-wave.json"], "reason": "Recover per-window explosion and Flic animation with genuine typed static buffers, real MapWin/GraphicWin bases, source-owned weapon tables and original branch/timing/sound behavior; preserve the original seed and its correction evidence."}
+// symbol    ?boom@@YAHHHH@Z
+int __cdecl boom(int x, int y, int flags) {
+    // The two arrays and both working buffers are genuine function-local
+    // statics. Their constructors/destructors and first-use guard are thus
+    // compiler-owned rather than replayed through fixed image addresses.
+    static Buffer original_screen_snapshots[8];
+    static Buffer redrawn_map_snapshots[8];
+    static Flic animation;
+    static Buffer working_buffer;
+
+    int selected_vehicle = VehDrawSelection689F28;
+    int other_selected_vehicle = VehDrawSelection689F2C;
+    int saved_selection = selected_vehicle;
+    int second_selection = other_selected_vehicle;
+    int animation_state = flags & 0x70;
+    int sprite_bank = 0;
+    int palette_row = 0;
+    int frame_span = 0;
+    int animation_height = 0;
+    bool special_chassis = false;
+    bool flic_mode = false;
+    int flic_frame_count = 0;
+    int faction_color_group[28];
+
+    if (animation_state == 0) {
+        const Veh &initial_selected = Vehs[selected_vehicle];
+        const VehPrototype &initial_prototype =
+            VehPrototypes[initial_selected.proto_id];
+        if (initial_prototype.chassis_id == CHSI_MISSILE && (flags & 1) != 0) {
+            g_FX.play(0x52, initial_selected.x, initial_selected.y);
+            return 0;
+        }
+        if ((flags & 1) != 0) {
+            if (VehPrototypes[Vehs[selected_vehicle].proto_id].weapon_id == 15 ||
+                VehPrototypes[Vehs[other_selected_vehicle].proto_id].weapon_id == 15) {
+                special_chassis = true;
+            }
+            if (Vehs[other_selected_vehicle].proto_id == 1) {
+                g_FX.play(1);
+            }
+        }
+        if ((flags & 8) == 0 && !special_chassis) {
+            selected_vehicle = VehDrawSelection689F2C;
+            other_selected_vehicle = VehDrawSelection689F28;
+            saved_selection = selected_vehicle;
+            second_selection = other_selected_vehicle;
+        }
+
+        if ((flags & 2) != 0 && other_selected_vehicle >= 0) {
+            const int selected_proto = Vehs[other_selected_vehicle].proto_id;
+            if (selected_proto == 8 || selected_proto == 9 ||
+                selected_proto == 10 || selected_proto == 14 ||
+                selected_proto == 15 || selected_proto == 19) {
+                flags |= 0x100;
+            }
+        }
+        if ((flags & 1) != 0) {
+            if (special_chassis) {
+                sprite_bank = BoomIndexedSpriteBankByWeapon[12];
+                palette_row = BoomColorGroupByWeapon[12];
+            } else if (saved_selection != -1) {
+                const VehPrototype &prototype =
+                    VehPrototypes[Vehs[other_selected_vehicle].proto_id];
+                sprite_bank = BoomIndexedSpriteBankByWeapon[prototype.weapon_id];
+                palette_row = BoomColorGroupByWeapon[prototype.weapon_id];
+            }
+        }
+    } else {
+        flic_mode = true;
+        if ((flags & 0x20) != 0 &&
+            working_buffer.init(300, 0xf8, 0, nullptr) == 0) {
+            char animation_file[] = "buster.flc";
+            if (animation.init(&working_buffer, animation_file, 0, 0, 0) == 0) {
+                animation_state = 1;
+            }
+        }
+        flic_frame_count = animation.frame_count() / 2;
+        faction_color_group[0] = 0;
+        faction_color_group[1] = 5;
+        faction_color_group[2] = 2;
+        faction_color_group[3] = 10;
+        faction_color_group[4] = 9;
+        faction_color_group[5] = 11;
+        faction_color_group[6] = 0;
+        faction_color_group[7] = 2;
+        faction_color_group[12] = 2;
+        faction_color_group[13] = 2;
+        faction_color_group[14] = 2;
+        faction_color_group[15] = 2;
+        faction_color_group[16] = 3;
+        faction_color_group[17] = 4;
+        faction_color_group[18] = 5;
+        faction_color_group[19] = 5;
+        const int level = BoomAnimationLevel;
+        animation_height = faction_color_group[level + 15];
+        frame_span = faction_color_group[level + 11];
+    }
+
+    RECT saved_rectangles[8];
+    bool active_windows[8];
+    bool any_window = false;
+
+    for (int slot = 0; slot < 8; ++slot) {
+        MapWin *window = MapWinTable[slot];
+        active_windows[slot] = false;
+        if (window == nullptr || (slot != 0 && window->field_1DD74_ == 0)) {
+            continue;
+        }
+        if (y < window->field_1DDA8_ ||
+            y >= window->field_1DDA8_ + window->field_1DDD8_ +
+                     window->field_1DDD0_) {
+            continue;
+        }
+        int adjusted_x = x;
+        if ((MapIsFlat & 1) == 0) {
+            if (adjusted_x < window->field_1DDA4_) {
+                adjusted_x += MapLongitudeBounds;
+            }
+            if (adjusted_x >= window->field_1DDA4_ + window->field_1DDD4_ +
+                                  window->field_1DDCC_) {
+                adjusted_x -= MapLongitudeBounds;
+            }
+        }
+        if (adjusted_x < window->field_1DDA4_ ||
+            adjusted_x >= window->field_1DDA4_ + window->field_1DDD4_ +
+                              window->field_1DDCC_) {
+            continue;
+        }
+
+        int pixel_x;
+        int pixel_y;
+        ConsoleGlobal.tile_to_pixel(x, y, &pixel_x, &pixel_y);
+        pixel_x += static_cast<int>(window->field_1DDB4_) / 2;
+        pixel_y += static_cast<int>(window->field_1DDB8_);
+
+        const int zoom = window->field_1DD98_ + 0x10;
+        if (!flic_mode) {
+            const bool use_xf = (flags & 1) == 0;
+            Sprite *const sizing_sprite = use_xf
+                ? &g_XF_BOOM_VEH_SPRITES[0]
+                : &g_XI_BOOM_VEH_SPRITES[0];
+            const int source_width = sizing_sprite->width();
+            const int source_height = sizing_sprite->height();
+            int scaled_width;
+            int scaled_height;
+            int full_scaled_width;
+            if (MapWinCaptionScale < 1) {
+                scaled_width = boom_zoomed_extent(zoom, source_width / 2);
+                full_scaled_width = boom_zoomed_extent(zoom, source_width);
+                scaled_height = boom_zoomed_extent(zoom, source_height);
+            } else {
+                scaled_width = ((source_width / 2) * MapWinCaptionScale) /
+                               MapWinCaptionDivisor;
+                full_scaled_width = (source_width * MapWinCaptionScale) /
+                                    MapWinCaptionDivisor;
+                scaled_height = (source_height * MapWinCaptionScale) /
+                                MapWinCaptionDivisor;
+            }
+            pixel_x -= scaled_width;
+            pixel_y -= scaled_height;
+            saved_rectangles[slot].left = pixel_x;
+            saved_rectangles[slot].top = pixel_y;
+            saved_rectangles[slot].right = pixel_x + full_scaled_width;
+            saved_rectangles[slot].bottom = pixel_y + scaled_height;
+        } else {
+            const int unscaled_width = (animation_height * 300) / frame_span;
+            const int unscaled_height = (animation_height * 0xf8) / frame_span;
+            const int vertical_offset =
+                (animation_height * 0x3c) / frame_span;
+            int scaled_width;
+            int scaled_height;
+            if (MapWinCaptionScale < 1) {
+                scaled_width = boom_zoomed_extent(zoom, unscaled_width);
+                scaled_height = boom_zoomed_extent(zoom, unscaled_height);
+                pixel_y += boom_zoomed_extent(zoom, vertical_offset);
+            } else {
+                scaled_width = unscaled_width * MapWinCaptionScale /
+                               MapWinCaptionDivisor;
+                scaled_height = unscaled_height * MapWinCaptionScale /
+                                MapWinCaptionDivisor;
+                pixel_y += vertical_offset * MapWinCaptionScale /
+                           MapWinCaptionDivisor;
+            }
+            pixel_x -= scaled_width / 2;
+            pixel_y -= scaled_height;
+            saved_rectangles[slot].left = pixel_x;
+            saved_rectangles[slot].top = pixel_y;
+            saved_rectangles[slot].right = pixel_x + scaled_width;
+            saved_rectangles[slot].bottom = pixel_y + scaled_height;
+        }
+
+        active_windows[slot] = true;
+        any_window = true;
+
+        if (animation_state == 0 && (flags & 1) == 0) {
+            if ((flags & 0x100) == 0) {
+                if (Vehs[second_selection].proto_id == BSC_SPORE_LAUNCHER) {
+                    g_FX.play(0x5a, Vehs[second_selection].x,
+                              Vehs[second_selection].y);
+                } else if (VehPrototypes[Vehs[saved_selection].proto_id]
+                               .chassis_id != CHSI_MISSILE) {
+                    g_FX.play(0x3e, x, y);
+                }
+            } else {
+                g_FX.play(0x3d, x, y);
+            }
+        }
+
+        // The preceding FX dispatch is callback-capable. The image reloads
+        // this slot before resolving its per-window Buffer receiver.
+        window = MapWinTable[slot];
+
+        Buffer *window_buffer =
+            static_cast<Buffer *>(static_cast<GraphicWin *>(window));
+        const RECT &area = saved_rectangles[slot];
+        const int width = area.right - area.left;
+        const int height = area.bottom - area.top;
+        if (animation_state != 0 && (flags & 0x60) == 0) {
+            continue;
+        }
+        if ((flags & 0x40) == 0) {
+            original_screen_snapshots[slot].init(width, height, 0, nullptr);
+            window_buffer->copy(&original_screen_snapshots[slot], area.left,
+                                area.top, 0, 0, width, -height);
+        }
+        if (((flags & 2) == 0 || (flags & 0x20) != 0) &&
+            (flags & 0x40) == 0) {
+            continue;
+        }
+        if ((flags & 2) != 0 && (flags & 0x20) == 0 &&
+            (flags & 0x40) == 0) {
+            VehDrawSuppressedVehicle = (flags & 8) == 0
+                ? VehDrawSelection689F28 : VehDrawSelection689F2C;
+            window->draw_tile(x, y, 0);
+            VehDrawSuppressedVehicle = -1;
+            window = MapWinTable[slot];
+            window_buffer =
+                static_cast<Buffer *>(static_cast<GraphicWin *>(window));
+        }
+        redrawn_map_snapshots[slot].init(width, height, 0, nullptr);
+        window_buffer->copy(&redrawn_map_snapshots[slot], area.left, area.top,
+                            0, 0, width, -height);
+        original_screen_snapshots[slot].copy(window_buffer, 0, 0,
+                                             area.left, area.top, width, -height);
+    }
+
+    if ((flags & 0x60) != 0 || !any_window) return 0;
+    const int play_animation = flags & 1;
+    TimerHoldFlag = 1;
+    if (play_animation != 0) {
+        if (special_chassis) {
+            g_FX.play(0);
+        } else {
+            if (VehPrototypes[Vehs[second_selection].proto_id].weapon_id == 0) {
+                g_FX.play(1);
+            }
+            int sound = -1;
+            const int sound_weapon =
+                VehPrototypes[Vehs[second_selection].proto_id].weapon_id;
+            switch (sound_weapon) {
+            case 1: sound = 4; break;
+            case 2: sound = 0x49; break;
+            case 3: sound = 0x4a; break;
+            case 4: sound = 0x59; break;
+            case 5: sound = 0x4c; break;
+            case 6: sound = 0x4d; break;
+            case 7: sound = 0x4e; break;
+            case 8: sound = 0x4f; break;
+            case 9: sound = 0x50; break;
+            case 10: sound = 0x51; break;
+            case 11: sound = 0x58; break;
+            case 12: sound = 0x55; break;
+            case 13: sound = 0x56; break;
+            case 14: sound = 0x57; break;
+            }
+            if (sound >= 0) {
+                g_FX.play(sound, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+            if (Vehs[saved_selection].proto_id == BSC_SPORE_LAUNCHER) {
+                g_FX.play(0x5a, Vehs[second_selection].x,
+                          Vehs[second_selection].y);
+            }
+        }
+    }
+
+    const unsigned long total_frames = flic_mode
+        ? static_cast<unsigned long>(flic_frame_count)
+        : 16ul;
+    unsigned long last_tick = timeGetTime();
+    for (unsigned long frame = 0; frame < total_frames; ++frame) {
+        const bool skip_multiplayer_frame = IsMultiplayerNet &&
+                                            play_animation != 0 &&
+                                            (frame & 1ul) == 0;
+        if (!skip_multiplayer_frame) {
+            for (int slot = 0; slot < 8; ++slot) {
+                if (!active_windows[slot]) continue;
+                MapWin *window = MapWinTable[slot];
+                Buffer *destination =
+                    static_cast<Buffer *>(static_cast<GraphicWin *>(window));
+                int draw_type = window->field_1DD98_ + 0x10;
+                if (MapWinCaptionScale < 1) {
+                    SpriteScaleNumerator = draw_type;
+                    SpriteScaleDenominator = 0x10;
+                } else {
+                    SpriteScaleNumerator = MapWinCaptionScale;
+                    SpriteScaleDenominator = MapWinCaptionDivisor;
+                }
+
+                if (flic_mode) {
+                    animation.decode_stored_frame();
+                    window = MapWinTable[slot];
+                    destination =
+                        static_cast<Buffer *>(static_cast<GraphicWin *>(window));
+                    draw_type = window->field_1DD98_ + 0x10;
+                    const int faction = Vehs[saved_selection].faction_id;
+                    working_buffer.draw_multi_table_dest(
+                        destination, 0xff, saved_rectangles[slot].left,
+                        saved_rectangles[slot].top,
+                        draw_type * animation_height, frame_span << 4,
+                        ExplosionColorTables[faction_color_group[faction]][0]);
+                } else {
+                    const int bank = (flags & 0x100) != 0 ? 3
+                        : (flags & 0x80) != 0 ? 2
+                        : (VehPrototypes[Vehs[second_selection].proto_id]
+                               .reactor_id > 1
+                               ? 1 : 0);
+                    Sprite &sprite = (flags & 1) != 0
+                        ? g_XI_BOOM_VEH_SPRITES[sprite_bank * 16 + frame]
+                        : g_XF_BOOM_VEH_SPRITES[bank * 16 + frame];
+                    const int table_row = (flags & 1) != 0
+                        ? palette_row : ((flags & 0x100) != 0 ? 6 : 0);
+                    sprite.draw_multi_table_dest(
+                        destination, sprite.transparent_index(),
+                        saved_rectangles[slot].left,
+                        saved_rectangles[slot].top,
+                        ExplosionColorTables[table_row][0]);
+                }
+                window->update(&saved_rectangles[slot], 0);
+                if (IsMultiplayerNet) break;
+            }
+            const SHORT shift = GetAsyncKeyState(VK_SHIFT);
+            const bool fast = (shift & 0xff00) != 0 ||
+                              (((GamePreferences & 8u) != 0) &&
+                               ((flags & 0x12) == 0)) || IsMultiplayerNet;
+            const int delay = fast ? 0
+                : (flags & 0x12) == 0 ? 0x19 : 0x32;
+            unsigned long now;
+            do {
+                now = timeGetTime();
+                do_non_input();
+            } while (static_cast<int>(now - last_tick) < delay);
+            last_tick = now;
+
+            for (int restore_slot = 0; restore_slot < 8; ++restore_slot) {
+                if (!active_windows[restore_slot]) continue;
+                MapWin *const window = MapWinTable[restore_slot];
+                Buffer *const destination =
+                    static_cast<Buffer *>(static_cast<GraphicWin *>(window));
+                const int width = saved_rectangles[restore_slot].right -
+                                  saved_rectangles[restore_slot].left;
+                const int height = saved_rectangles[restore_slot].bottom -
+                                   saved_rectangles[restore_slot].top;
+                const bool use_redrawn_snapshot = flic_mode
+                    ? (play_animation == 0)
+                    : ((flags & 2) != 0 && frame > 7);
+                Buffer &snapshot = use_redrawn_snapshot
+                    ? redrawn_map_snapshots[restore_slot]
+                    : original_screen_snapshots[restore_slot];
+                snapshot.copy(destination, 0, 0,
+                              saved_rectangles[restore_slot].left,
+                              saved_rectangles[restore_slot].top, width, -height);
+                if (IsMultiplayerNet) break;
+            }
+        }
+    }
+
+    if (flags != 0x11) {
+        for (int slot = 0; slot < 8; ++slot) {
+            if (active_windows[slot]) {
+                MapWinTable[slot]->update(&saved_rectangles[slot], 0);
+                if (IsMultiplayerNet) break;
+            }
+        }
+    }
+    if (flic_mode && (flags & 2) != 0) {
+        working_buffer.close();
+        animation.close();
+        working_buffer.set_clip(
+            static_cast<GraphicWin *>(&ConsoleGlobal)->buffer_working_rect());
+    }
+    if (flic_mode && (flags & 1) != 0) {
+        working_buffer.set_clip(saved_rectangles);
+    }
+    if (!flic_mode || (flags & 2) != 0) {
+        for (int slot = 0; slot < 8; ++slot) {
+            original_screen_snapshots[slot].close();
+            redrawn_map_snapshots[slot].close();
+        }
+    }
+    if ((GetAsyncKeyState(VK_SHIFT) & 0xff00) == 0 &&
+        (GamePreferences & 8u) == 0 && !IsMultiplayerNet) {
+        clock_wait(0x32);
+    }
+    TimerHoldFlag = 0;
+    SpriteScaleNumerator = 1;
+    SpriteScaleDenominator = 1;
+    return 1;
+}
+
 // Shared infantry/native model placement, original 687AE8..687AF4.
 // This is distinct from the four offsets derived from loaded voxel parts.
 // RECOVERY_OBJECT: v2 0x00687AE8 0x00687AF4 ?VehInfantryOffset@@3UVOX_Vect@@A 0x004C3800

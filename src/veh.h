@@ -79,6 +79,8 @@ int __cdecl veh_draw(Buffer *buffer, int veh_id, int screen_x, int screen_y,
                      int zoom, int flags, int frame);
 void __cdecl veh_scoot(int veh_id, int tile_x, int tile_y, int direction, int flags);
 extern int FastUnitAnim;
+int __cdecl boom(int x, int y, int flags);
+extern int BoomAnimationLevel;  // producer 0x00500B60, original cell 0x0090F7D4
 
  /*
   * Vehicle/unit related objects, variables and functions.

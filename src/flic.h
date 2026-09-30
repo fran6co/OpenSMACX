@@ -103,6 +103,7 @@ class Flic {
   RECT *update_rect() { return &update_rect_; }
   int decoded_width() const { return static_cast<int>(field_59C_); }
   int decoded_height() const { return static_cast<int>(field_5A0_); }
+  int frame_count() const { return static_cast<int>(header_.frames_); }
 
  private:
   // Only the low byte is ever stored (`mov byte ptr [esi], bl`).
