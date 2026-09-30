@@ -1,0 +1,34 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "21b9208b0f6d1c876b98ee4ca64a86dfa685ae44",
+  "editable_files": [
+    "src/base.cpp",
+    "src/base.h"
+  ],
+  "evidence": [
+    "Faction setup5B0E00 requires absent base_init4E4B80. Coupled base_kill4E5250 currently has only an original-address pending-body forwarder, not recovered behavior; base_change4E5A60 remains explicitly partial in its actual source owner.",
+    "Canonical base initialization/destruction seeds retain original spans and TRIED field/array caveats. Reconstruct real Base/PlayerData/Map ownership from instructions, not scaled scaffold pointers or raw self offsets.",
+    "Disjoint isolated worker edits base.cpp/h only. Root retires replaced base_kill forwarder centrally after review/native binding. Popup and faction workers own separate files and compiler prefixes; no worker mutates shared Git or annotations."
+  ],
+  "intent": "Recover genuine base initialization and destruction, completing the coupled partial ownership-transfer body; preserve original behavior and all mapped/claimed obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5131136,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5132880,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5134944,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "base-lifecycle-owner-closure"
+}
