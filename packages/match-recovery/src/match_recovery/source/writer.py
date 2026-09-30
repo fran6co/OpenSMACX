@@ -64,6 +64,14 @@ from .grammar import (FACT_LINE, LESSON_CONTINUED, LESSON_DEFERRED,
 from .model import DecompilationState, Mode, State
 from .reader import _fact_lines, _lesson_run, read_text
 
+# Consume ordinary literals/comments before looking for a raw-string opener.
+# A substring search also mistakes ordinary text such as "FATAL ERROR" for
+# raw-string syntax. Real raw strings remain unsupported by the fact writer.
+_SYMBOL_SOURCE_TOKENS = re.compile(
+    r'''//[^\n]*|/\*.*?\*/|(?:u8|u|U|L)?R"|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*' ''',
+    re.DOTALL | re.VERBOSE,
+)
+
 # ------------------------------------------------------------------ spelling
 
 
@@ -453,7 +461,8 @@ def write_symbol(raw: bytes, record: DecompilationState, symbol: str) -> bytes:
         raise ValueError("unsupported source line separator")
     if re.search(r"(?:\\|\?\?/)[ \t]*\n", text):
         raise ValueError("symbol rewriting does not support line-spliced source")
-    if 'R"' in text:
+    if any(re.fullmatch(r'(?:u8|u|U|L)?R"', token.group())
+           for token in _SYMBOL_SOURCE_TOKENS.finditer(text)):
         raise ValueError("symbol rewriting does not support raw-string source")
     records = read_text(text, record.path)
     selected = [i for i, row in enumerate(records) if row.line == record.line]

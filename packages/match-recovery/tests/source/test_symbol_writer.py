@@ -88,6 +88,26 @@ def test_unterminated_marker_gets_a_separate_fact_line():
     assert write_symbol(MARKER, records(MARKER)[0], SYMBOL) == MARKER + b"\n// symbol    " + SYMBOL.encode() + b"\n"
 
 
+@pytest.mark.parametrize("source", [
+    b'const char *message = "FATAL ERROR";\n',
+    b'const char *message = "R";\n',
+    b'const char *message = "escaped R\\\"(text)";\n',
+    b'// R"(comment)"\n',
+    b'/* u8R"(comment)" */\n',
+])
+def test_ordinary_literals_and_comments_are_not_raw_string_source(source):
+    raw = source + MARKER + b"\nint f() {}\n"
+    result = write_symbol(raw, records(raw)[0], SYMBOL)
+    assert result == raw.replace(MARKER + b"\n", MARKER + b"\n// symbol    " + SYMBOL.encode() + b"\n")
+
+
+@pytest.mark.parametrize("prefix", [b"R", b"u8R", b"uR", b"UR", b"LR"])
+def test_actual_raw_string_source_still_refuses(prefix):
+    raw = b'const auto message = ' + prefix + b'"tag(raw)tag";\n' + MARKER + b"\nint f() {}\n"
+    with pytest.raises(ValueError, match="raw-string source"):
+        write_symbol(raw, records(raw)[0], SYMBOL)
+
+
 @pytest.mark.parametrize("newline", [b"\n", b"\r\n", b"\r"])
 @pytest.mark.parametrize("tail", [b"", b"int f() {}\n"])
 def test_insert_keeps_binding_adjacent_and_preserves_its_owner(newline, tail):
