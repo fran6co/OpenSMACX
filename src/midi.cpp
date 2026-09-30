@@ -81,6 +81,7 @@ int Midi::play() {
 Purpose: ?set_switch_type@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x100 of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C77D0 ?set_switch_type@Midi@@QAEHK@Z 0x004C77D0-0x004C77F3 BYTE_EXACT
+// symbol    ?set_switch_type@Midi@@UAEHK@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_switch_type@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -102,6 +103,7 @@ int Midi::set_switch_type(unsigned long a1) {
 Purpose: ?add_switch_range@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x108 of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C7800 ?add_switch_range@Midi@@QAEHKK@Z 0x004C7800-0x004C7827 BYTE_EXACT
+// symbol    ?add_switch_range@Midi@@UAEHKK@Z
 // size      39 bytes
 // prototype int (__thiscall ?add_switch_range@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -123,6 +125,7 @@ int Midi::add_switch_range(unsigned long a1, unsigned long a2) {
 Purpose: ?set_nswitch_threads@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x104 of the
          object at +0x3c, answering 0x13 when that object is absent.
 // ORIGINAL: 0x004C7830 ?set_nswitch_threads@Midi@@QAEHK@Z 0x004C7830-0x004C7853 BYTE_EXACT
+// symbol    ?set_nswitch_threads@Midi@@UAEHK@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_nswitch_threads@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -144,6 +147,7 @@ int Midi::set_nswitch_threads(unsigned long a1) {
 Purpose: ?map_patch@Midi@@QAEHPADKK@Z - forward 3 argument(s) to slot 0xdc of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7860 ?map_patch@Midi@@QAEHPADKK@Z 0x004C7860-0x004C788B SEMANTIC
+// symbol    ?map_patch@Midi@@UAEHPADKK@Z
 // size      43 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADKK@Z)(Midi* this, int8*, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -165,6 +169,7 @@ int Midi::map_patch(char *a1, unsigned long a2, unsigned long a3) {
 Purpose: ?map_patch@Midi@@QAEHPADK@Z - forward 2 argument(s) to slot 0xd8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7890 ?map_patch@Midi@@QAEHPADK@Z 0x004C7890-0x004C78B7 SEMANTIC
+// symbol    ?map_patch@Midi@@UAEHPADK@Z
 // size      39 bytes
 // prototype int (__thiscall ?map_patch@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
 // callers   0   call targets   0
@@ -186,6 +191,7 @@ int Midi::map_patch(char *a1, unsigned long a2) {
 Purpose: ?clear_patch@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xe0 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C78E0 ?clear_patch@Midi@@QAEHK@Z 0x004C78E0-0x004C7903 BYTE_EXACT
+// symbol    ?clear_patch@Midi@@UAEHK@Z
 // size      35 bytes
 // prototype int (__thiscall ?clear_patch@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -207,6 +213,7 @@ int Midi::clear_patch(unsigned long a1) {
 Purpose: ?reset@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xc8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7910 ?reset@Midi@@QAEHXZ 0x004C7910-0x004C7925 BYTE_EXACT
+// symbol    ?reset@Midi@@UAEHXZ
 // size      21 bytes
 // prototype int (__thiscall ?reset@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -227,6 +234,7 @@ int Midi::reset() {
 Purpose: ?set_track@Midi@@QAEHPAEK@Z - forward 2 argument(s) to slot 0x84 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7930 ?set_track@Midi@@QAEHPAEK@Z 0x004C7930-0x004C7957 BYTE_EXACT
+// symbol    ?set_track@Midi@@UAEHPAEK@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_track@Midi@@QAEHPAEK@Z)(Midi* this, unsigned int8*, unsigned int)
 // callers   0   call targets   0
@@ -248,6 +256,7 @@ int Midi::set_track(uint8_t *a1, unsigned long a2) {
 Purpose: ?mute_track@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x8c of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7960 ?mute_track@Midi@@QAEHK@Z 0x004C7960-0x004C7983 BYTE_EXACT
+// symbol    ?mute_track@Midi@@UAEHK@Z
 // size      35 bytes
 // prototype int (__thiscall ?mute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -269,6 +278,7 @@ int Midi::mute_track(unsigned long a1) {
 Purpose: ?unmute_track@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xac of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7990 ?unmute_track@Midi@@QAEHK@Z 0x004C7990-0x004C79B3 BYTE_EXACT
+// symbol    ?unmute_track@Midi@@UAEHK@Z
 // size      35 bytes
 // prototype int (__thiscall ?unmute_track@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -290,6 +300,7 @@ int Midi::unmute_track(unsigned long a1) {
 Purpose: ?set_active_tracks@Midi@@QAEHKK@Z - forward 2 argument(s) to slot 0x94 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C79C0 ?set_active_tracks@Midi@@QAEHKK@Z 0x004C79C0-0x004C79E7 SEMANTIC
+// symbol    ?set_active_tracks@Midi@@UAEHKK@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHKK@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -311,6 +322,7 @@ int Midi::set_active_tracks(unsigned long a1, unsigned long a2) {
 Purpose: ?set_active_tracks@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x90 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C79F0 ?set_active_tracks@Midi@@QAEHI@Z 0x004C79F0-0x004C7A13 SEMANTIC
+// symbol    ?set_active_tracks@Midi@@UAEHI@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_active_tracks@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -332,6 +344,7 @@ int Midi::set_active_tracks(unsigned int a1) {
 Purpose: ?play_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x10c of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7A20 ?play_trackset@Midi@@QAEHI@Z 0x004C7A20-0x004C7A43 BYTE_EXACT
+// symbol    ?play_trackset@Midi@@UAEHI@Z
 // size      35 bytes
 // prototype int (__thiscall ?play_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -353,6 +366,7 @@ int Midi::play_trackset(unsigned int a1) {
 Purpose: ?xpose_trackset@Midi@@QAEHIH@Z - forward 2 argument(s) to slot 0x114 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7A50 ?xpose_trackset@Midi@@QAEHIH@Z 0x004C7A50-0x004C7A77 BYTE_EXACT
+// symbol    ?xpose_trackset@Midi@@UAEHIH@Z
 // size      39 bytes
 // prototype int (__thiscall ?xpose_trackset@Midi@@QAEHIH@Z)(Midi* this, unsigned int, int)
 // callers   0   call targets   0
@@ -374,6 +388,7 @@ int Midi::xpose_trackset(unsigned int a1, int a2) {
 Purpose: ?stop_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x110 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7A80 ?stop_trackset@Midi@@QAEHI@Z 0x004C7A80-0x004C7AA3 BYTE_EXACT
+// symbol    ?stop_trackset@Midi@@UAEHI@Z
 // size      35 bytes
 // prototype int (__thiscall ?stop_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -395,6 +410,7 @@ int Midi::stop_trackset(unsigned int a1) {
 Purpose: ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z - forward 1 argument(s) to slot 0x98 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7AD0 ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z 0x004C7AD0-0x004C7AF3 BYTE_EXACT
+// symbol    ?add_active_trackset@Midi@@UAEHPAUTrackSet@@@Z
 // size      35 bytes
 // prototype int (__thiscall ?add_active_trackset@Midi@@QAEHPAUTrackSet@@@Z)(Midi* this, TrackSet*)
 // callers   0   call targets   0
@@ -416,6 +432,7 @@ int Midi::add_active_trackset(TrackSet *a1) {
 Purpose: ?set_active_range_lo@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0xa0 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7B00 ?set_active_range_lo@Midi@@QAEHII@Z 0x004C7B00-0x004C7B27 BYTE_EXACT
+// symbol    ?set_active_range_lo@Midi@@UAEHII@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_active_range_lo@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -437,6 +454,7 @@ int Midi::set_active_range_lo(unsigned int a1, unsigned int a2) {
 Purpose: ?set_active_range_hi@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0xa4 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7B30 ?set_active_range_hi@Midi@@QAEHII@Z 0x004C7B30-0x004C7B57 BYTE_EXACT
+// symbol    ?set_active_range_hi@Midi@@UAEHII@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_active_range_hi@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -458,6 +476,7 @@ int Midi::set_active_range_hi(unsigned int a1, unsigned int a2) {
 Purpose: ?remove_active_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0xa8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7B60 ?remove_active_trackset@Midi@@QAEHI@Z 0x004C7B60-0x004C7B83 BYTE_EXACT
+// symbol    ?remove_active_trackset@Midi@@UAEHI@Z
 // size      35 bytes
 // prototype int (__thiscall ?remove_active_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -479,6 +498,7 @@ int Midi::remove_active_trackset(unsigned int a1) {
 Purpose: ?get_trackset@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x9c of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7B90 ?get_trackset@Midi@@QAEHI@Z 0x004C7B90-0x004C7BB0 BYTE_EXACT
+// symbol    ?get_trackset@Midi@@UAEHI@Z
 // size      32 bytes
 // prototype int (__thiscall ?get_trackset@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -500,6 +520,7 @@ int Midi::get_trackset(unsigned int a1) {
 Purpose: ?get_ntracks@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xc4 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7BB0 ?get_ntracks@Midi@@QAEHXZ 0x004C7BB0-0x004C7BC2 BYTE_EXACT
+// symbol    ?get_ntracks@Midi@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?get_ntracks@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -520,6 +541,7 @@ int Midi::get_ntracks() {
 Purpose: ?load_patch@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x120 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7BD0 ?load_patch@Midi@@QAEHI@Z 0x004C7BD0-0x004C7BF3 BYTE_EXACT
+// symbol    ?load_patch@Midi@@UAEHI@Z
 // size      35 bytes
 // prototype int (__thiscall ?load_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -541,6 +563,7 @@ int Midi::load_patch(unsigned int a1) {
 Purpose: ?unload_patch@Midi@@QAEHI@Z - forward 1 argument(s) to slot 0x124 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7C00 ?unload_patch@Midi@@QAEHI@Z 0x004C7C00-0x004C7C23 BYTE_EXACT
+// symbol    ?unload_patch@Midi@@UAEHI@Z
 // size      35 bytes
 // prototype int (__thiscall ?unload_patch@Midi@@QAEHI@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -562,6 +585,7 @@ int Midi::unload_patch(unsigned int a1) {
 Purpose: ?set_patch@Midi@@QAEHII@Z - forward 2 argument(s) to slot 0x128 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7C30 ?set_patch@Midi@@QAEHII@Z 0x004C7C30-0x004C7C57 BYTE_EXACT
+// symbol    ?set_patch@Midi@@UAEHII@Z
 // size      39 bytes
 // prototype int (__thiscall ?set_patch@Midi@@QAEHII@Z)(Midi* this, unsigned int, unsigned int)
 // callers   0   call targets   0
@@ -583,6 +607,7 @@ int Midi::set_patch(unsigned int a1, unsigned int a2) {
 Purpose: ?set_tempo@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0x88 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7D50 ?set_tempo@Midi@@QAEHK@Z 0x004C7D50-0x004C7D73 BYTE_EXACT
+// symbol    ?set_tempo@Midi@@UAEHK@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_tempo@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -604,6 +629,7 @@ int Midi::set_tempo(unsigned long a1) {
 Purpose: ?get_time@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xd4 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7E80 ?get_time@Midi@@QAEHK@Z 0x004C7E80-0x004C7EA0 BYTE_EXACT
+// symbol    ?get_time@Midi@@UAEHK@Z
 // size      32 bytes
 // prototype int (__thiscall ?get_time@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -625,6 +651,7 @@ int Midi::get_time(unsigned long a1) {
 Purpose: ?get_control_track@Midi@@QAEHXZ - forward 0 argument(s) to slot 0xf4 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7EA0 ?get_control_track@Midi@@QAEHXZ 0x004C7EA0-0x004C7EB2 BYTE_EXACT
+// symbol    ?get_control_track@Midi@@UAEHXZ
 // size      18 bytes
 // prototype int (__thiscall ?get_control_track@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   0
@@ -645,6 +672,7 @@ int Midi::get_control_track() {
 Purpose: ?get_total_track_ticks@Midi@@QAEHK@Z - forward 1 argument(s) to slot 0xf8 of the
          object at +0x3c, answering 0x0 when that object is absent.
 // ORIGINAL: 0x004C7EC0 ?get_total_track_ticks@Midi@@QAEHK@Z 0x004C7EC0-0x004C7EE0 BYTE_EXACT
+// symbol    ?get_total_track_ticks@Midi@@UAEHK@Z
 // size      32 bytes
 // prototype int (__thiscall ?get_total_track_ticks@Midi@@QAEHK@Z)(Midi* this, unsigned int)
 // callers   0   call targets   0
@@ -666,6 +694,7 @@ int Midi::get_total_track_ticks(unsigned long a1) {
 Purpose: ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z - forward 1 argument(s) to slot 0xe4 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7EE0 ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z 0x004C7EE0-0x004C7F03 BYTE_EXACT
+// symbol    ?set_channel_ctrl@Midi@@UAEHPAUChannelCtrl@@@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_channel_ctrl@Midi@@QAEHPAUChannelCtrl@@@Z)(Midi* this, ChannelCtrl*)
 // callers   0   call targets   0
@@ -687,6 +716,7 @@ int Midi::set_channel_ctrl(ChannelCtrl *a1) {
 Purpose: ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z - forward 1 argument(s) to slot 0xe8 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7F10 ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z 0x004C7F10-0x004C7F33 BYTE_EXACT
+// symbol    ?set_program_ctrl@Midi@@UAEHPAUProgramCtrl@@@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_program_ctrl@Midi@@QAEHPAUProgramCtrl@@@Z)(Midi* this, ProgramCtrl*)
 // callers   0   call targets   0
@@ -708,6 +738,7 @@ int Midi::set_program_ctrl(ProgramCtrl *a1) {
 Purpose: ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z - forward 1 argument(s) to slot 0xc0 of the
          object at +0x3c, answering 0x14 when that object is absent.
 // ORIGINAL: 0x004C7F40 ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z 0x004C7F40-0x004C7F63 BYTE_EXACT
+// symbol    ?set_track_ctrl@Midi@@UAEHPAUTrackCtrl@@@Z
 // size      35 bytes
 // prototype int (__thiscall ?set_track_ctrl@Midi@@QAEHPAUTrackCtrl@@@Z)(Midi* this, TrackCtrl*)
 // callers   0   call targets   0
@@ -738,6 +769,7 @@ Purpose: Initialise the MIDI from a filename. The name replaces whatever
          is cleared. The second argument is ignored; the status word is
          memset's own answer (the destination pointer).
 // ORIGINAL: 0x004C7C60 ?init@Midi@@QAEHPADK@Z 0x004C7C60-0x004C7CB5 BYTE_EXACT
+// symbol    ?init@Midi@@UAEHPADK@Z
 // size      85 bytes
 // prototype int (__thiscall ?init@Midi@@QAEHPADK@Z)(Midi* this, int8*, unsigned int)
 // callers   0   call targets   5
@@ -888,6 +920,7 @@ Purpose: Load the MIDI from its remembered filename. With no wrapped
          into the 0x3C field, again with mode 2; the base Sound::load
          then reads the file.
 // ORIGINAL: 0x004C7DD0 ?load@Midi@@QAEHXZ 0x004C7DD0-0x004C7E1B BYTE_EXACT
+// symbol    ?load@Midi@@UAEHXZ
 // size      75 bytes
 // prototype int (__thiscall ?load@Midi@@QAEHXZ)(Midi* this)
 // callers   0   call targets   1
@@ -1000,6 +1033,7 @@ void Midi::set_volume(int volume) {
 }
 
 // ORIGINAL: 0x004C77B0 ?switch_state@Midi@@QAEH_N@Z 0x004C77B0-0x004C77D0 BYTE_EXACT
+// symbol    ?switch_state@Midi@@UAEH_N@Z
 // NO RETURN on the null path, deliberately: the original leaves eax alone.
 int Midi::switch_state(bool on) {
     MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
@@ -1009,6 +1043,7 @@ int Midi::switch_state(bool on) {
 }
 
 // ORIGINAL: 0x004C78C0 ?set_base_path@Midi@@QAEHPBD@Z 0x004C78C0-0x004C78DA BYTE_EXACT
+// symbol    ?set_base_path@Midi@@UAEHPBD@Z
 int Midi::set_base_path(const char *path) {
     MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
     if (delegate != nullptr) {
@@ -1017,6 +1052,7 @@ int Midi::set_base_path(const char *path) {
 }
 
 // ORIGINAL: 0x004C7AB0 ?is_trackset_playing@Midi@@QAE_NI@Z 0x004C7AB0-0x004C7AD0 BYTE_EXACT
+// symbol    ?is_trackset_playing@Midi@@UAE_NI@Z
 bool Midi::is_trackset_playing(unsigned int trackset) {
     MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
     if (delegate != nullptr) {
@@ -1026,6 +1062,7 @@ bool Midi::is_trackset_playing(unsigned int trackset) {
 }
 
 // ORIGINAL: 0x004C8050 ?set_play_type@Midi@@QAEHI@Z 0x004C8050-0x004C8072
+// symbol    ?set_play_type@Midi@@UAEHI@Z
 // TRIED: the guarded forwarder is byte-identical for 11 instructions and then
 //   the image has six `nop`s and `mov eax, ecx` - on the null delegate path the
 //   original returns `this` in eax, not an unset eax, so the artifact's "no
@@ -1040,4 +1077,109 @@ int Midi::set_play_type(unsigned int type) {
     if (delegate != nullptr) {
         return delegate->set_play_type(type);
     }
+}
+
+
+// ORIGINAL: 0x004C75B0 sub_4c75b0 0x004C75B0-0x004C766D;0x004C8450-0x004C8457;0x00659F20-0x00659F32 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c75b0.cpp", "src/midi.h", "src/ambience.h"], "reason": "Original Sound-to-Midi constructor staging and byte54 state identify the genuine Midi owner. Historical seed mapping includes the already shared unwind helper; its overlap remains a restoration limitation, not a newly inferred independent function extent."}
+// symbol    ??0Midi@@QAE@XZ
+// TRIED: SHARED_TAIL - the 0x4c8450/0x659f20 unwind-handler span is COMDAT-folded with another function's handler, so no tier is reachable regardless of body. Left as a plain field-write transcription (no SEH frame modeled) for the next pass.
+Midi::Midi() {
+    memset(&field_54_, 0, 1);
+    volatile uint8_t &mode = field_54_;
+    volatile uint32_t &flags = flags_40_;
+    mode |= 1;
+    flags |= 8;
+}
+
+// Original4C7CC0: replace bit0 throughout the chained Midi objects.
+// ORIGINAL: 0x004C7CC0 sub_4c7cc0 0x004C7CC0-0x004C7CEA FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7cc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?set_mode@Midi@@QAEHH@Z
+int Midi::set_mode(int mode) {
+    field_54_ ^= (field_54_ ^ static_cast<uint8_t>(mode)) & 1;
+    Midi *const child = static_cast<Midi *>(device_);
+    if (child) child->set_mode(mode);
+    return 0;
+}
+
+// ORIGINAL: 0x004C7F70 sub_4c7f70 0x004C7F70-0x004C7F97 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7f70.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?sub_4c7f70@Midi@@UAEHHH@Z
+int Midi::sub_4c7f70(int a1, int a2) {
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate) return delegate->slot044(a1, a2);
+    return 0x14;
+}
+// ORIGINAL: 0x004C7FA0 sub_4c7fa0 0x004C7FA0-0x004C7FC0 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7fa0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?sub_4c7fa0@Midi@@UAE_NI@Z
+bool Midi::sub_4c7fa0(unsigned int a1) {
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate) return delegate->slot045(a1);
+    return false;
+}
+// ORIGINAL: 0x004C7FC0 sub_4c7fc0 0x004C7FC0-0x004C7FE7 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7fc0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?sub_4c7fc0@Midi@@UAEHHH@Z
+int Midi::sub_4c7fc0(int a1, int a2) {
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate) return delegate->slot047(a1, a2);
+    return 0x14;
+}
+// ORIGINAL: 0x004C7FF0 sub_4c7ff0 0x004C7FF0-0x004C8017 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/004c7ff0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?sub_4c7ff0@Midi@@UAEHHH@Z
+int Midi::sub_4c7ff0(int a1, int a2) {
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate) return delegate->slot046(a1, a2);
+    return 0x14;
+}
+// ORIGINAL: 0x004C8020 sub_4c8020 0x004C8020-0x004C8043 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004c8020.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?sub_4c8020@Midi@@UAEHH@Z
+int Midi::sub_4c8020(int a1) {
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate) return delegate->slot060(a1);
+    return 0x14;
+}
+
+/*
+Purpose: Destroy an ambience. Its own stage frees the remembered filename
+         and releases the device through the guarded hook, clearing both
+         fields unconditionally; the compiler-appended ~Sound then repeats
+         the same teardown on the now-cleared fields (its frees no-op) and
+         unlinks from the global sound chain when the chained bit is set -
+         the image carries that Sound stage INLINED, which is why the old
+         transcription duplicated it by hand.
+// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
+// symbol    ??1Midi@@UAE@XZ
+// size      273 bytes
+// prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
+// callers   1   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x0064557F
+// indirect  0x004C76BE 0x004C76FA
+Return Value: n/a
+Status: Complete
+*/
+Midi::~Midi() {
+    // THE OWN STAGE ONLY: free the remembered filename and release the
+    // device through the guarded hook, clearing both unconditionally. The
+    // compiler appends ~Sound, whose stage repeats the same teardown on the
+    // now-cleared fields (so its frees no-op) and unlinks from the global
+    // sound chain when the chained bit sets - the work the image's ~Ambience
+    // carries INLINED. The vtable staging (0x66E538 -> 0x66E3C0 -> 0x66E444)
+    // is the compiler's now; AmbienceSoundView - Sound's own member layout
+    // under another name - is gone with the inheritance that made it
+    // redundant.
+    if (fname_) {
+        operator delete(fname_);
+    }
+    fname_ = nullptr;
+    if (device_ && WaveDeviceReleaseGuard) {
+        (WaveDeviceReleaseSlot())(device_);
+    }
+    device_ = nullptr;
 }

@@ -60,19 +60,9 @@
 // 0x00447B30 and 0x00447B60 independently confirm +0x70/+0x74 and slots
 // 67-70. No layout evidence is being discarded by retiring that placeholder.
 
-/* 0x72 bytes, 9 member(s), 1 named. From the IDB. 3 function(s) in the image. */
-class AAmbience {
- public:
-  uint8_t ambience_[0x58];  // 0x0
-  uint32_t field_58_;  // 0x58
-  uint32_t field_5C_;  // 0x5C
-  uint32_t field_60_;  // 0x60
-  uint32_t field_64_;  // 0x64
-  uint32_t field_68_;  // 0x68
-  uint8_t field_6C_;  // 0x6C
-  uint8_t field_6D_;  // 0x6D
-  uint8_t field_6E_[0x4];  // 0x6E
-};
+// AAmbience is source-owned with genuine FactionAmbience inheritance in
+// ambience.h. Original load_music allocation is0x70; the old0x72 overlay
+// widened the6E padding and did not model its virtual event interface.
 
 /* 0x134 bytes, 71 member(s), 60 named. From Thinker. */
 struct BASE {

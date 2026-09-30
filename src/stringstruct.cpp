@@ -1443,62 +1443,6 @@ class ModeReleaseObj { public: void release(void *); };
 // GamePreferences, re-arm the popup wave owner for the first three effect
 // kinds, then release/restart the effect record. fx.h declares the member;
 // its forwarder retires from pending_bodies.cpp in this change.
-/*
-Purpose: Trigger one sound effect from the process-wide bank.
-// ORIGINAL: 0x00446A00 ?play@FX@@QAEXH@Z 0x00446A00-0x00446A8E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original446A00..446A8E; retired seed git:117282ee:src/unrecovered/00446a00.cpp records the same identity and spans with its shr/test TRIED note kept below.", "0x009A6490 is game.h's GamePreferences and 0x0074DAA0 is popup.h's PopupWaveOwnerSlot; the receiver is fx.h's own FX with effects_ at 0x0 in 0x6C-byte Effect records, and the wave-owner slot 82 plus the effect record's slots 35/7 run through member-fn-pointer unions because the slots' signatures are not declared anywhere.", "The bit-4 release test is the seed's measured ((flags >> 4) & 1) walk, and the wave-owner refresh runs only for effect kinds 0/1/2 exactly as the seed orders them."], "reason": "Recover the sound bank's play trigger on the typed FX receiver; the shr+test release mask stays spelled as the seed measured it."}
-// TRIED (seed): 141/142 bytes match (edit distance 1). Only the bit-4 test
-//         near the end differs: original is `shr ecx,4 / test cl,1`, every
-//         rephrasing tried in the scaffold still lowered to a single fused
-//         `test` against the shifted-away mask.
-Status: Coverage transcription - unclaimed body
-*/
-void FX::play(int effect) {
-    if ((GamePreferences & 0x400) != 0) {
-        if (effect == 1 || effect == 0 || effect == 2) {
-            // The popup wave owner's slot 82 re-arm.
-            void *const wave_owner = *reinterpret_cast<void **>(0x0074DAA0);
-            if (wave_owner != 0) {
-                void **const owner_vtable =
-                    *reinterpret_cast<void ***>(wave_owner);
-                NullSlotShim rearm;
-                rearm.raw = owner_vtable[82];
-                (reinterpret_cast<NullSlotObj *>(wave_owner)->*rearm.fn)();
-            }
-            if (effect == 0) {
-                // The voice lead-in restarts with its stored delay.
-                char *const self = reinterpret_cast<char *>(this);
-                int delay;
-                void **const self_vtable =
-                    *reinterpret_cast<void ***>(this);
-                ReturnSlotShim read_delay;
-                read_delay.raw = self_vtable[23];
-                delay = (reinterpret_cast<ReturnSlotObj *>(this)->*read_delay.fn)();
-                if (delay != 0) {
-                    delay = *reinterpret_cast<int *>(self + 0x58) + 0x64;
-                } else {
-                    delay = 0;
-                }
-                ArgSlotShim restart;
-                restart.raw = self_vtable[38];
-                (reinterpret_cast<ArgSlotObj *>(this)->*restart.fn)(delay);
-            }
-        }
-        const int index = effect * 27;
-        int *const entry = reinterpret_cast<int *>(
-            reinterpret_cast<char *>(effects_) + index * 4);
-        const int flags = entry[0x54 / 4];
-        void **const entry_vtable = *reinterpret_cast<void ***>(entry);
-        NullSlotShim release;
-        release.raw = entry_vtable[35];
-        if (((flags >> 4) & 1) != 0) {
-            (reinterpret_cast<NullSlotObj *>(entry)->*release.fn)();
-        }
-        NullSlotShim stop;
-        stop.raw = entry_vtable[7];
-        (reinterpret_cast<NullSlotObj *>(entry)->*stop.fn)();
-    }
-}
 
 // ---------------------------------------------------------------------------
 // Interlude::on_redraw, 0x0045F5C0. The intermission screen's repaint: copy

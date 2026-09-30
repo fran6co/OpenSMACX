@@ -1,0 +1,34 @@
+{
+  "event_id": "3299543c2763b5811231622de0010ae3d938c7e9032fb491fea6638f5f828ff8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/fx_initialization_harness.cpp",
+      "recovery/tests/popup_wave_callback_harness.cpp",
+      "recovery/tests/test_fx_lifetime.py",
+      "src/field_accessors.h",
+      "src/recovered/00447db0.cpp",
+      "src/recovered/004c7cc0.cpp",
+      "src/recovered/004c7f70.cpp",
+      "src/recovered/004c7fa0.cpp",
+      "src/recovered/004c7fc0.cpp",
+      "src/recovered/004c7ff0.cpp",
+      "src/recovered/units/00447940.cpp",
+      "src/recovered/units/00447af0.cpp",
+      "src/recovered/units/00447dd0.cpp",
+      "src/recovered/units/004c8020.cpp",
+      "src/recovered/units/004c85f0.cpp"
+    ],
+    "evidence": [
+      "Native recorder banks eleven matching product bodies before seed retirement. Retire only these superseded compatible seeds, preserving original identities/spans/claims in their owning TUs. No TRIED/LEVER notes present in those eleven seeds. Failed BA constructor and other unmatched lifecycle seeds remain preserved.",
+      "Remove unused SA accessor declaration after intact historical claim rehome. Adapt existing callback test to typed FactionMusic notification and existing FX fixture to genuine signed engine_effect_index_ name; retain prior behavioral damage controls and independent original offsets."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "22c016d1106dc0c18989a606ddabcc62107d015fce7d528b92e2475c31a5f065",
+  "request_id": "audio-verified-seed-and-fixture-closure",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:audio-navigation-closure"
+}

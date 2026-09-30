@@ -96,6 +96,7 @@
   * straddle that withdrew the old declaration.
   */
 class Wave : public Sound {
+  friend class FX;
  public:
   Wave();
   ~Wave();

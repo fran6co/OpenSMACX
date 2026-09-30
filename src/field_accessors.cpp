@@ -30,65 +30,8 @@ uint32_t __fastcall field_accessor_00406840_redirect(void *, void *) {
     return 0x1U;
 }
 
-/*
-Purpose: Increment the dword field at 0x58.
-         Emitted by tools/generate_field_accessors.py from
 
-             inc dword ptr [ecx + 0x58] / ret
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// ORIGINAL: 0x004476E0 ?tech@SAmbience@@QAEXXZ 0x004476E0-0x004476E4 BYTE_EXACT
-// symbol    ?field_accessor_004476e0_redirect@@YIXPAX0@Z
-// size      4 bytes
-// prototype void (__thiscall ?tech@SAmbience@@QAEXXZ)(SAmbience* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall field_accessor_004476e0_redirect(void *self, void *) {
-    ++*reinterpret_cast<uint32_t *>(
-        static_cast<uint8_t *>(self) + 0x58);
-}
-
-/*
-Purpose: Increment the dword field at 0x58.
-         Emitted by tools/generate_field_accessors.py from
-
-             inc dword ptr [ecx + 0x58] / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// ORIGINAL: 0x00448280 ?tech@AAmbience@@QAEXXZ 0x00448280-0x00448284 BYTE_EXACT
-// symbol    ?field_accessor_00448280_redirect@@YIXPAX0@Z
-// size      4 bytes
-// prototype void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall field_accessor_00448280_redirect(void *self, void *) {
-    ++*reinterpret_cast<uint32_t *>(
-        static_cast<uint8_t *>(self) + 0x58);
-}
 
 /*
 Purpose: Read the dword field at 0x200.

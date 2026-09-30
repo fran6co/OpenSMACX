@@ -31,22 +31,15 @@ unsigned long now;
 // SDK-signature double: real import/operand identity is checked separately.
 extern "C" unsigned long __stdcall timeGetTime() { return now; }
 
-// The old owner seam remains in product code. Its interpretation is NOT
-// certified by this double; only whether the callback requests notification.
+// Typed notification double: this observes dispatch decisions, not the full
+// recovered faction hierarchy or the selected audio-device implementation.
 int owner_calls;
-class OriginalObject {
+class FactionAmbience {
 public:
-    unsigned long *table;
-    void notify() { ++owner_calls; }
+    virtual void general() { ++owner_calls; }
 };
-unsigned long owner_table[79];
-OriginalObject owner;
-void *owner_pointer;
-void *&PopupWaveOwnerSlot() { return owner_pointer; }
-template <class Method> Method original_method(unsigned long) {
-    return &OriginalObject::notify;
-}
-#define ORIGINAL(pointer) static_cast<OriginalObject *>(pointer)
+FactionAmbience owner;
+FactionAmbience *FactionMusic;
 
 // LIVE_CALLBACK
 BasePopConfigCallback BasePopDefaultField3094 = popup_wave_callback;
@@ -59,8 +52,7 @@ void reset() {
     memset(&g_FX, 0, sizeof(g_FX));
     PopupWaveLastIndex = 0;
     owner_calls = 0;
-    owner_pointer = 0;
-    owner.table = owner_table;
+    FactionMusic = 0;
     now = 1;
 }
 
@@ -114,13 +106,17 @@ int main() {
     }
     reset();
     block.field_104_ = 25;
-    owner_pointer = &owner;
+    FactionMusic = &owner;
     BasePopDefaultField3094(&block, 1);
     assert(owner_calls == 1 && g_CPU_WAVES[25].plays == 1);
     reset();
     block.field_104_ = 25;
+    BasePopDefaultField3094(&block, 1);
+    assert(owner_calls == 0 && g_CPU_WAVES[25].plays == 1);
+    reset();
+    block.field_104_ = 25;
     base_state.queue_production_id[0] = -FacilitySPStart - 1;
-    owner_pointer = &owner;
+    FactionMusic = &owner;
     BasePopDefaultField3094(&block, 0);
     assert(block.field_104_ == 37);
     assert(g_CPU_WAVES[37].plays == 1 && owner_calls == 0);

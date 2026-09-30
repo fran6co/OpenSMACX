@@ -21,6 +21,11 @@
 #include "fx.h"
 #include "basepop.h"
 #include "popup.h"
+#include "ambience.h"
+#include "game.h"
+#include "general.h"
+#include "veh.h"
+#include "faction.h"
 
 // The implicit Effect constructor at 0x004482D0 installs the derived table;
 // its Wave tail includes FX::init's virtual pitch target at slot 38.
@@ -320,3 +325,161 @@ FX g_FX;
 // (winedbg-confirmed: walker return 0x00644EEB, table at 0x682568..).
 // Here the same recovered constructors run through this build's own
 // startup, and the matching destructors close them at exit.
+
+/*
+Purpose: Trigger one sound effect from the process-wide bank.
+// ORIGINAL: 0x00446A00 ?play@FX@@QAEXH@Z 0x00446A00-0x00446A8E FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original446A00..446A8E; retired seed git:117282ee:src/unrecovered/00446a00.cpp records the same identity and spans with its shr/test TRIED note kept below.", "0x009A6490 is game.h's GamePreferences and 0x0074DAA0 is popup.h's PopupWaveOwnerSlot; the receiver is fx.h's own FX with effects_ at 0x0 in 0x6C-byte Effect records, and the wave-owner slot 82 plus the effect record's slots 35/7 run through member-fn-pointer unions because the slots' signatures are not declared anywhere.", "The bit-4 release test is the seed's measured ((flags >> 4) & 1) walk, and the wave-owner refresh runs only for effect kinds 0/1/2 exactly as the seed orders them."], "reason": "Recover the sound bank's play trigger on the typed FX receiver; the shr+test release mask stays spelled as the seed measured it."}
+// TRIED (seed): 141/142 bytes match (edit distance 1). Only the bit-4 test
+//         near the end differs: original is `shr ecx,4 / test cl,1`, every
+//         rephrasing tried in the scaffold still lowered to a single fused
+//         `test` against the shifted-away mask.
+Status: Coverage transcription - unclaimed body
+*/
+void FX::play(int effect) {
+    if (!(GamePreferences & 0x400)) return;
+    if (effect == 1 || effect == 0 || effect == 2) {
+        if (FactionMusic) FactionMusic->hostility();
+        if (effect == 0) {
+            const int playing = effects_[0].is_playing();
+            effects_[0].set_pitch(playing ? effects_[0].pitch_ + 100 : 0);
+        }
+    }
+    if ((effects_[effect].flags_54_ >> 4) & 1) effects_[effect].load();
+    effects_[effect].play();
+}
+
+// ORIGINAL: 0x00446960 ?play@FX@@QAEXHHH@Z 0x00446960-0x004469F9 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/00446960.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
+void FX::play(int effect, int, int) {
+    if (!(GamePreferences & 0x400)) return;
+    if (effect == 1 || effect == 0 || effect == 2) {
+        if (FactionMusic) FactionMusic->hostility();
+        effects_[effect].set_volume(60);
+        if (effect == 0) {
+            // Original receiver is effects_[0], not a polymorphic FX.
+            const int playing = effects_[0].is_playing();
+            effects_[0].set_pitch(playing ? effects_[0].pitch_ + 100 : 0);
+        }
+    }
+    if (effects_[effect].flags_54_ & 0x10) effects_[effect].load();
+    effects_[effect].play();
+}
+
+// Every branch retains its original probe effect even when it differs from
+// the effect played. These are real bank elements, not independent globals.
+// ORIGINAL: 0x00446D10 ?ambience_veh@@YAXH@Z 0x00446D10-0x004471EE FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00446d10.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
+void __cdecl ambience_veh(int vehicle) {
+    if (vehicle < 0) return;
+    const int old = LastAmbienceVehicle;
+    // Original quirk: previous VEHICLE id selects an effect directly if<97.
+    if (old >= 0 && old != vehicle && old < 97) g_FX.effect(old).fade();
+    const uint32_t prefs = GamePreferences;
+    LastAmbienceVehicle = vehicle;
+    if (!(prefs & 0x800)) return;
+    if (Vehs[vehicle].order != 0) return;
+    const int prototype = Vehs[vehicle].proto_id;
+    const VehPrototype &unit = VehPrototypes[prototype];
+    if (unit.plan == 8) {
+        if (!(Players[Vehs[vehicle].faction_id].rule_flags & 0x80)) {
+            g_FX.play(0x42); return;
+        }
+        if (g_FX.effect(0x5C).is_playing()) return;
+        g_FX.play(0x5C); return;
+    }
+    const unsigned int chassis = unit.chassis_id;
+    if (chassis == 0) {
+        const unsigned int weapon = unit.weapon_id;
+        if (Weapon[weapon].offense_rating == 0) {
+            if (g_FX.effect(0x42).is_playing()) return;
+            g_FX.play(0x42); return;
+        }
+        if (!(Players[Vehs[vehicle].faction_id].rule_flags & 0x80)) {
+            if (g_FX.effect(0x40).is_playing()) return;
+            g_FX.play(0x40); return;
+        }
+        if (prototype == 0x10 || prototype == 0x11 || prototype == 0x12) {
+            if (g_FX.effect(0x5D).is_playing()) return;
+            g_FX.play(0x5D); return;
+        }
+        if (prototype == 8) {
+            if (!g_FX.effect(0x38).is_playing()) g_FX.play(0x38);
+            return;
+        }
+        if (prototype != 0xF) {
+            if (g_FX.effect(0x5B).is_playing()) return;
+            g_FX.play(0x5B); return;
+        }
+        if (g_FX.effect(0x5E).is_playing()) return;
+        g_FX.play(0x5E); return;
+    }
+    if (chassis == 1) {
+        if (g_FX.effect(0x48).is_playing()) return;
+        g_FX.play(0x48); return;
+    }
+    if (chassis == 2) {
+        if (g_FX.effect(0x31).is_playing()) return;
+        g_FX.play(0x31); return;
+    }
+    if (prototype == 0xE) {
+        if (g_FX.effect(0x5F).is_playing()) return;
+        g_FX.play(0x5F); return;
+    }
+    if (prototype == 9) {
+        if (g_FX.effect(0x60).is_playing()) return;
+        g_FX.play(0x60); return;
+    }
+    if (chassis == 3) {
+        if (g_FX.effect(0x45).is_playing()) return;
+        g_FX.play(0x45); return;
+    }
+    if (chassis == 4) {
+        if (g_FX.effect(0x46).is_playing()) return;
+        g_FX.play(0x46); return;
+    }
+    if (chassis == 5) {
+        if (g_FX.effect(0x47).is_playing()) return;
+        g_FX.play(0x47); return;
+    }
+    if (chassis == 6) {
+        if (g_FX.effect(0x44).is_playing()) return;
+        g_FX.play(0x44); return;
+    }
+    if (chassis == 7) {
+        if (g_FX.effect(0x43).is_playing()) return;
+        g_FX.play(0x43); return;
+    }
+    if (chassis == 8) {
+        if (g_FX.effect(0x4B).is_playing()) return;
+        g_FX.play(0x4B); return;
+    }
+    if (prototype != 8) {
+        if (static_cast<int8_t>(Chassis[chassis].triad) == 1) {
+            if (g_FX.effect(0xC).is_playing()) return;
+            g_FX.play(0xC); return;
+        }
+        if (static_cast<int8_t>(Chassis[chassis].triad) == 2) {
+            if (g_FX.effect(0x12).is_playing()) return;
+            g_FX.play(0x12); return;
+        }
+        if (unit.plan == 0xC) {
+            if (g_FX.effect(0x14).is_playing()) return;
+            g_FX.play(0x14); return;
+        }
+        const int offense = Weapon[unit.weapon_id].offense_rating;
+        if (offense != 0) {
+            if (offense <= Chassis[chassis].speed) {
+                if (g_FX.effect(0x1A).is_playing()) return;
+                g_FX.play(0x1A); return;
+            }
+            if (offense != 0) {
+                if (g_FX.effect(7).is_playing()) return;
+                g_FX.play(7); return;
+            }
+        }
+        if (g_FX.effect(0x2E).is_playing()) return;
+        g_FX.play(0x2E); return;
+    }
+    if (!g_FX.effect(0x38).is_playing()) g_FX.play(0x38);
+}

@@ -288,8 +288,9 @@ typedef int (OriginalObject::*func_popup_wave_query)();
 // this file's users already include. The last-played index has no home yet,
 // so it is real storage homed to popup.cpp; in the image it is the
 // zero-initialised dword at 0x0074DAA4 beside the bank. The owner accessor
-// below remains a fixed-address seam; the clock uses the SDK import.
+// is source-owned by ambience.cpp; the clock uses the SDK import.
 extern int PopupWaveLastIndex;  // 0x0074DAA4
-inline void *&PopupWaveOwnerSlot() { return *reinterpret_cast<void **>(0x0074DAA0); }
+class FactionAmbience;
+extern FactionAmbience *FactionMusic;
 
 void __cdecl popup_wave_callback(BasePopTextBlock *popup, int);

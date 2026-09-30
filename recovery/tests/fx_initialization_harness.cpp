@@ -68,7 +68,7 @@ void observe(const char *op, Sound *sound, const char *name, int value) {
     Sound *receiver = call.family == 1 ? &current_bank->effects_[call.index] :
                       call.family == 2 ? &g_CPU_WAVES[call.index] : globals[call.index];
     assert(sound == receiver);
-    assert(current_bank->field_28EC_ == 0xffffffff);
+    assert(current_bank->engine_effect_index_ == -1);
     assert(BasePopDefaultField3094 == popup_wave_callback);
     // Independent original block contents, not the candidate constant itself.
     BasePopTextBlock block = {"", -1, 127, 50, 0, 0};
@@ -94,7 +94,7 @@ int main() {
         memset(&popup_defaults, 0xab, sizeof(popup_defaults));
         memset(&audio_defaults, 0xab, sizeof(audio_defaults));
         BasePopDefaultField3094 = 0;
-        bank.field_28EC_ = 17;
+        bank.engine_effect_index_ = 17;
         next_call = 0;
         bank.init();
         assert(next_call == sizeof(expected) / sizeof(expected[0]));

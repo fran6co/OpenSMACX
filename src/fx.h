@@ -27,8 +27,10 @@
   */
 class FX {
  public:
-  // 0x00446A00, a pending_bodies forwarder.
+  // The two original sound-bank triggers are implemented in fx.cpp.
   void play(int effect);
+  void play(int effect, int, int);
+  Effect &effect(int index) { return effects_[index]; }
 
  public:
   // 0x00445CD0: control_game (game.cpp) initializes the

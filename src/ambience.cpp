@@ -22,10 +22,301 @@
 #include "sound.h"   // Sound::set_type, reached by cast
 #include "wave.h"
 #include "general.h"  // filefind_get
+#include "faction.h"
+#include "game.h"
+#include "strings.h"
+
+// RECOVERY_OBJECT: v1 0x0074DAA0 ?FactionMusic@@3PAVFactionAmbience@@A
+FactionAmbience *FactionMusic = nullptr;
+// RECOVERY_OBJECT: v1 0x00683BF4 ?LastAmbienceVehicle@@3HA
+int LastAmbienceVehicle = -1;
+
+// ORIGINAL: 0x004457E0 ?load_music@@YAXH@Z 0x004457E0-0x00445BA4;0x00654CF0-0x00654D52 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004457e0.cpp", "src/ambience.h", "src/midi.h", "src/fx.h"], "reason": "Original constructor staging, actual event tables and compiler-call contracts identify the genuine audio owner operation; compatible historical seed spans and claims remain available for restoration, not an acceptance verdict."}
+void __cdecl load_music(int faction_id) {
+    StringTemp[0] = 0;
+    strcat(StringTemp, "fx\\");
+    if (FactionMusic) {
+        delete FactionMusic;
+        FactionMusic = nullptr;
+    }
+    const char *const name = Players[faction_id].search_key;
+    FactionAmbience *music;
+    if (stricmp(name, "gaians") == 0) {
+        strcat(StringTemp, "gset1.amb");
+        music = new GAmbience;
+    } else if (stricmp(name, "hive") == 0) {
+        strcat(StringTemp, "mset1.amb");
+        music = new MAmbience;
+    } else if (stricmp(name, "univ") == 0) {
+        strcat(StringTemp, "uset2.amb");
+        music = new UAmbience;
+    } else if (stricmp(name, "morgan") == 0) {
+        strcat(StringTemp, "mset1.amb");
+        music = new MAmbience;
+    } else if (stricmp(name, "spartans") == 0) {
+        strcat(StringTemp, "sset1.amb");
+        music = new SAmbience;
+    } else if (stricmp(name, "believers") == 0) {
+        strcat(StringTemp, "bset1.amb");
+        music = new BAmbience;
+    } else if (stricmp(name, "peace") == 0) {
+        strcat(StringTemp, "gset1.amb");
+        music = new GAmbience;
+    } else {
+        strcat(StringTemp, "aset1.amb");
+        music = new AAmbience;
+    }
+    const uint32_t preferences = GamePreferences;
+    FactionMusic = music;
+    if ((preferences & 0x800) && music) {
+        music->load(StringTemp);
+        FactionMusic->begin();
+    }
+}
+
+// Original447DD0 individually reads/writes each four-byte sequencer cell.
+// RECOVERY_OBJECT: v1 0x00683C30 _AAmbiencePass
+static int AAmbiencePass = 6;             //683C30
+// RECOVERY_OBJECT: v1 0x00683C34 _AAmbienceRandomRange
+static int AAmbienceRandomRange = 1;      //683C34
+// RECOVERY_OBJECT: v1 0x00683C38 _AAmbiencePhase
+static int AAmbiencePhase = 3;            //683C38
+// RECOVERY_OBJECT: v1 0x00683C3C _AAmbienceCents
+static int AAmbienceCents = -600;         //683C3C
+// RECOVERY_OBJECT: v1 0x00683C40 _AAmbienceCentsStep
+static int AAmbienceCentsStep = 200;      //683C40
+// RECOVERY_OBJECT: v1 0x00683C44 _AAmbienceLevel
+static int AAmbienceLevel = 90;           //683C44
+// RECOVERY_OBJECT: v1 0x00683C48 _AAmbienceTrack0
+static int AAmbienceTrack0 = 18;          //683C48
+// RECOVERY_OBJECT: v1 0x00683C4C _AAmbienceTrack1
+static int AAmbienceTrack1 = 21;          //683C4C
+// RECOVERY_OBJECT: v1 0x00683C50 _AAmbienceTrack2
+static int AAmbienceTrack2 = 24;          //683C50
+// RECOVERY_OBJECT: v1 0x0074DAE8 _AAmbiencePhase3Cents
+static int AAmbiencePhase3Cents = 0;      //74DAE8
+// RECOVERY_OBJECT: v1 0x0074DAF0 _AAmbienceAlternate
+static int AAmbienceAlternate = 0;        //74DAF0
+
+// RECOVERY_OBJECT: v1 0x0074DAD4 _BAmbienceHostility
+static uint8_t BAmbienceHostility = 0;    //74DAD4
+// RECOVERY_OBJECT: v1 0x00683C18 _BAmbienceAmbientPass
+static int BAmbienceAmbientPass = 3;      //683C18
+// RECOVERY_OBJECT: v1 0x0074DAD8 _BAmbienceMusicPass
+static int BAmbienceMusicPass = 0;        //74DAD8
+// RECOVERY_OBJECT: v1 0x0074DADC _BAmbienceTrackPass
+static int BAmbienceTrackPass = 0;        //74DADC
+// RECOVERY_OBJECT: v1 0x00683C1C _BAmbienceAlternate
+static uint8_t BAmbienceAlternate = 1;    //683C1C
+
+// ORIGINAL: 0x00447940 ?general@BAmbience@@QAEXXZ 0x00447940-0x00447AA9 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00447940.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?general@BAmbience@@UAEXXZ
+void BAmbience::general() {
+    field_74_ += 500;
+    if (field_74_ > 500) field_74_ = -1000;
+    const uint8_t hostility = BAmbienceHostility;
+    ++BAmbienceAmbientPass;
+    ++BAmbienceMusicPass;
+    ++BAmbienceTrackPass;
+    if (hostility) {
+        const bool playing = Midi::is_trackset_playing(4);
+        if (playing) return;
+        BAmbienceHostility = playing;
+    }
+    if (field_6D_) {
+        const int track = field_78_++;
+        play_trackset(track);
+        if (field_78_ > 22) field_78_ = 20;
+        if (BAmbienceAmbientPass >= 3) {
+            play_trackset(field_7C_);
+            BAmbienceAmbientPass = 0;
+        }
+        field_7C_ += 2;
+        if (field_7C_ == 21) field_7C_ = 16;
+        if (field_7C_ == 22) field_7C_ = 16;
+    }
+    if (BAmbienceAmbientPass >= 3) {
+        const int track = BAmbienceAlternate ? 24 : 25;
+        xpose_trackset(track, field_74_);
+        if (field_70_ > 1) {
+            xpose_trackset(11, field_74_);
+            play_trackset(11);
+        }
+        play_trackset(track);
+        BAmbienceAlternate = !BAmbienceAlternate;
+    }
+    if (BAmbienceMusicPass >= 5) {
+        xpose_trackset(13, field_74_);
+        play_trackset(13);
+        BAmbienceMusicPass = 0;
+    }
+}
+
+// ORIGINAL: 0x00447AF0 ?hostility@BAmbience@@QAEXXZ 0x00447AF0-0x00447B2D FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00447af0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?hostility@BAmbience@@UAEXXZ
+void BAmbience::hostility() {
+    if (!BAmbienceHostility) {
+        BAmbienceHostility = 1;
+        xpose_trackset(15, field_74_);
+        play_trackset(15);
+        play_trackset(27);
+    }
+}
+
+// ORIGINAL: 0x00447DB0 ?begin@AAmbience@@QAEXXZ 0x00447DB0-0x00447DC6 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/00447db0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?begin@AAmbience@@UAEXXZ
+void AAmbience::begin() {
+    play();
+    play_trackset(3);
+}
+
+// ORIGINAL: 0x00447DD0 ?general@AAmbience@@QAEXXZ 0x00447DD0-0x00448273 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/00447dd0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?general@AAmbience@@UAEXXZ
+void AAmbience::general() {
+    ++AAmbiencePass;
+    if (AAmbiencePhase == 1) {
+        if (AAmbiencePass % 7 != 0) goto finish_phase;
+        xpose_trackset(14, AAmbienceCents);
+        xpose_trackset(15, AAmbienceCents);
+        xpose_trackset(16, AAmbienceCents);
+        xpose_trackset(13, AAmbienceCents);
+        AAmbienceCents += AAmbienceCentsStep;
+        play_trackset(14);
+        play_trackset(2);
+        play_trackset(1);
+        if (AAmbienceCents >= 300 || AAmbienceCents < -900)
+            AAmbienceCentsStep = -AAmbienceCentsStep;
+        if (AAmbiencePass > 10) play_trackset(15);
+        if (AAmbiencePass > 20) play_trackset(16);
+        if (AAmbiencePass > 25) play_trackset(13);
+    }
+    if (AAmbiencePhase == 2) {
+        play_trackset(27);
+        AAmbienceCents += AAmbienceCentsStep;
+        if (AAmbienceCents >= 100 || AAmbienceCents < -600)
+            AAmbienceCentsStep = -AAmbienceCentsStep;
+        AAmbienceLevel += 10;
+        AAmbienceAlternate ^= 1;
+        if (AAmbienceAlternate) play_trackset(AAmbienceTrack1);
+        else play_trackset(AAmbienceTrack0);
+        if (AAmbienceTrack2 != 25) play_trackset(AAmbienceTrack2);
+        if (++AAmbienceTrack0 > 20) AAmbienceTrack0 = 18;
+        if (++AAmbienceTrack1 > 23) AAmbienceTrack1 = 21;
+        if (++AAmbienceTrack2 > 26) AAmbienceTrack2 = 24;
+    }
+    if (AAmbiencePhase == 3) {
+        AAmbiencePhase3Cents += AAmbienceCentsStep;
+        if (AAmbiencePhase3Cents >= 100 || AAmbiencePhase3Cents < -600)
+            AAmbienceCentsStep = -AAmbienceCentsStep;
+        xpose_trackset(8, AAmbiencePhase3Cents);
+        xpose_trackset(3, AAmbiencePhase3Cents);
+        xpose_trackset(8, AAmbiencePhase3Cents);
+        xpose_trackset(6, AAmbiencePhase3Cents);
+        xpose_trackset(5, AAmbiencePhase3Cents);
+        xpose_trackset(2, AAmbiencePhase3Cents);
+        xpose_trackset(4, AAmbiencePhase3Cents);
+        if (AAmbiencePass == 5 || AAmbiencePass == 15) play_trackset(5);
+        if (AAmbienceRandomRange > 5) AAmbienceRandomRange = 1;
+        else ++AAmbienceRandomRange;
+        unsigned int track = timeGetTime() % static_cast<unsigned int>(AAmbienceRandomRange);
+        if (track == 3 || (track == 8 && AAmbiencePhase3Cents >= 0)) ++track;
+        if (!is_trackset_playing(track)) play_trackset(track);
+    }
+finish_phase:
+    if (AAmbiencePass < 40) return;
+    if (AAmbiencePhase == 1) {
+        stop_trackset(13);
+        stop_trackset(15);
+        stop_trackset(16);
+        AAmbiencePhase = 2;
+        sub_4c7f70(14, 0);
+        AAmbiencePass = 0;
+        return;
+    }
+    if (AAmbiencePhase == 2) {
+        stop_trackset(18);
+        stop_trackset(19);
+        stop_trackset(20);
+        stop_trackset(21);
+        stop_trackset(22);
+        stop_trackset(23);
+        stop_trackset(24);
+        stop_trackset(25);
+        stop_trackset(26);
+        stop_trackset(27);
+        sub_4c7f70(14, 1);
+        play_trackset(3);
+        AAmbiencePhase = 3;
+        AAmbiencePass = 0;
+        return;
+    }
+    if (AAmbiencePhase == 3) {
+        stop_trackset(1);
+        stop_trackset(2);
+        stop_trackset(3);
+        stop_trackset(4);
+        stop_trackset(5);
+        stop_trackset(6);
+        stop_trackset(7);
+        stop_trackset(8);
+        AAmbiencePhase = 1;
+    }
+    AAmbiencePass = 0;
+}
+
+// ORIGINAL: 0x004C8530 ?load@Ambience@@QAEHPBD@Z 0x004C8530-0x004C85EF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/unrecovered/004c8530.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?load@Ambience@@UAEHPBD@Z
+int Ambience::load(const char *filename) {
+    char path[256];
+    strcpy(path, filename);
+    const char *const found = filefind_get(path);
+    if (!found) return 10;
+    if (device_) unload();
+    if (!device_) {
+        if (!WaveDeviceReleaseGuard) return 1;
+        const int error = (WaveDeviceCreateSlot())(&device_, found, 5);
+        if (error) return error;
+    }
+    // The mode5 factory produces the same Sound/Midi object chain used by
+    // Midi::set_mode. The low-byte argument is the only part consumed by
+    // every recursive4C7CC0 stage; no speculative engine-overlay fields.
+    static_cast<Midi *>(device_)->set_mode(field_54_ & 1);
+    return Sound::load(found);
+}
+
+// ORIGINAL: 0x004C85F0 ?unload@Ambience@@QAEXXZ 0x004C85F0-0x004C861C FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004c85f0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ?unload@Ambience@@UAEHXZ
+int Ambience::unload() {
+    MidiDelegate *const delegate = static_cast<MidiDelegate *>(device_);
+    if (delegate) delegate->slot005();
+    detach();
+    device_ = nullptr;
+    flags_40_ &= ~1u;
+    return 0;
+}
+
+UAmbience::UAmbience() {}
+// ORIGINAL: 0x004478D0 ??0BAmbience@@QAE@XZ 0x004478D0-0x00447911 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["git:f7bbce35:src/recovered/units/004478d0.cpp", "src/ambience.h", "src/midi.h"], "reason": "Original audio event tables and compiler-call contracts identify this genuine owner operation; compatible historical seeds and matching obligations remain retained, not an acceptance verdict."}
+// symbol    ??0BAmbience@@QAE@XZ
+BAmbience::BAmbience() {
+    field_70_ = 1;
+    field_74_ = 0;
+    field_78_ = 20;
+    field_7C_ = 15;
+}
 
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447220 ?begin@FactionAmbience@@QAEXXZ 0x00447220-0x00447221 BYTE_EXACT
+// symbol    ?begin@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?begin@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -41,6 +332,7 @@ void FactionAmbience::begin() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447230 ?tech@FactionAmbience@@QAEXXZ 0x00447230-0x00447231 BYTE_EXACT
+// symbol    ?tech@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?tech@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -56,6 +348,7 @@ void FactionAmbience::tech() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447240 ?terraform@FactionAmbience@@QAEXXZ 0x00447240-0x00447241 BYTE_EXACT
+// symbol    ?terraform@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?terraform@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -71,6 +364,7 @@ void FactionAmbience::terraform() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447250 ?production@FactionAmbience@@QAEXXZ 0x00447250-0x00447251 BYTE_EXACT
+// symbol    ?production@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?production@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -86,6 +380,7 @@ void FactionAmbience::production() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447260 ?general@FactionAmbience@@QAEXXZ 0x00447260-0x00447261 BYTE_EXACT
+// symbol    ?general@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?general@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -101,6 +396,7 @@ void FactionAmbience::general() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x004472B0 ?new_base@FactionAmbience@@QAEXXZ 0x004472B0-0x004472B1 BYTE_EXACT
+// symbol    ?new_base@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?new_base@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -116,6 +412,7 @@ void FactionAmbience::new_base() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x004472C0 ?popup1@FactionAmbience@@QAEXXZ 0x004472C0-0x004472C1 BYTE_EXACT
+// symbol    ?popup1@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?popup1@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -131,6 +428,7 @@ void FactionAmbience::popup1() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x004472D0 ?eot@FactionAmbience@@QAEXXZ 0x004472D0-0x004472D1 BYTE_EXACT
+// symbol    ?eot@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?eot@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -146,6 +444,7 @@ void FactionAmbience::eot() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x004472E0 ?hostility@FactionAmbience@@QAEXXZ 0x004472E0-0x004472E1 BYTE_EXACT
+// symbol    ?hostility@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?hostility@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -161,6 +460,7 @@ void FactionAmbience::hostility() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x004472F0 ?energy_resources@FactionAmbience@@QAEXXZ 0x004472F0-0x004472F1 BYTE_EXACT
+// symbol    ?energy_resources@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?energy_resources@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -176,6 +476,7 @@ void FactionAmbience::energy_resources() {
 /*
 Purpose: FactionAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447300 ?base_liberated@FactionAmbience@@QAEXXZ 0x00447300-0x00447301 BYTE_EXACT
+// symbol    ?base_liberated@FactionAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?base_liberated@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -191,6 +492,7 @@ void FactionAmbience::base_liberated() {
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447690 ?tech@UAmbience@@QAEXXZ 0x00447690-0x00447691 BYTE_EXACT
+// symbol    ?tech@UAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?tech@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
@@ -206,6 +508,7 @@ void UAmbience::tech() {
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x004476A0 ?popup1@UAmbience@@QAEXXZ 0x004476A0-0x004476A1 BYTE_EXACT
+// symbol    ?popup1@UAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?popup1@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
@@ -221,6 +524,7 @@ void UAmbience::popup1() {
 /*
 Purpose: UAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x004476B0 ?eot@UAmbience@@QAEXXZ 0x004476B0-0x004476B1 BYTE_EXACT
+// symbol    ?eot@UAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?eot@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
@@ -236,6 +540,7 @@ void UAmbience::eot() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447C60 ?tech@GAmbience@@QAEXXZ 0x00447C60-0x00447C61 BYTE_EXACT
+// symbol    ?tech@GAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?tech@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -251,6 +556,7 @@ void GAmbience::tech() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447CA0 ?production@GAmbience@@QAEXXZ 0x00447CA0-0x00447CA1 BYTE_EXACT
+// symbol    ?production@GAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?production@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -266,6 +572,7 @@ void GAmbience::production() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447CB0 ?popup1@GAmbience@@QAEXXZ 0x00447CB0-0x00447CB1 BYTE_EXACT
+// symbol    ?popup1@GAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?popup1@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -281,6 +588,7 @@ void GAmbience::popup1() {
 /*
 Purpose: GAmbience ignores this event; the legacy implementation is a bare return.
 // ORIGINAL: 0x00447CC0 ?eot@GAmbience@@QAEXXZ 0x00447CC0-0x00447CC1 BYTE_EXACT
+// symbol    ?eot@GAmbience@@UAEXXZ
 // size      1 bytes
 // prototype void (__thiscall ?eot@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -311,45 +619,6 @@ void GAmbience::eot() {
 
 
 
-/*
-Purpose: Destroy an ambience. Its own stage frees the remembered filename
-         and releases the device through the guarded hook, clearing both
-         fields unconditionally; the compiler-appended ~Sound then repeats
-         the same teardown on the now-cleared fields (its frees no-op) and
-         unlinks from the global sound chain when the chained bit is set -
-         the image carries that Sound stage INLINED, which is why the old
-         transcription duplicated it by hand.
-// ORIGINAL: 0x004C7670 ??1Ambience@@QAE@XZ 0x004C7670-0x004C7760;0x004C8450-0x004C8457;0x00659F32-0x00659F4C
-// symbol    ??1Ambience@@UAE@XZ
-// size      273 bytes
-// prototype void (__thiscall ??1Ambience@@QAE@XZ)(Ambience* this)
-// callers   1   call targets   1
-// kind      game
-// flags     frame;hidden;sp_ready;purged_ok
-// calls     0x0064557F
-// indirect  0x004C76BE 0x004C76FA
-Return Value: n/a
-Status: Complete
-*/
-Ambience::~Ambience() {
-    // THE OWN STAGE ONLY: free the remembered filename and release the
-    // device through the guarded hook, clearing both unconditionally. The
-    // compiler appends ~Sound, whose stage repeats the same teardown on the
-    // now-cleared fields (so its frees no-op) and unlinks from the global
-    // sound chain when the chained bit sets - the work the image's ~Ambience
-    // carries INLINED. The vtable staging (0x66E538 -> 0x66E3C0 -> 0x66E444)
-    // is the compiler's now; AmbienceSoundView - Sound's own member layout
-    // under another name - is gone with the inheritance that made it
-    // redundant.
-    if (fname_) {
-        operator delete(fname_);
-    }
-    fname_ = nullptr;
-    if (device_ && WaveDeviceReleaseGuard) {
-        (WaveDeviceReleaseSlot())(device_);
-    }
-    device_ = nullptr;
-}
 
 
 /*
@@ -378,7 +647,7 @@ Purpose: Build the ambience. The original constructs in four vtable stages -
 //   Verification note above says the image does NOT do (it genuinely
 //   reloads at 0x004C84FA/0x004C84FC). Reverted; volatile is load-bearing
 //   here, not incidental.
-// symbol    ?construct@Ambience@@QAEXXZ
+// symbol    ??0Ambience@@QAE@XZ
 // size      230 bytes
 // prototype void (__thiscall ??0Ambience@@QAE@XZ)(Ambience* this)
 // callers   7   call targets   2
@@ -414,40 +683,8 @@ Verification note: the base-level constructor at 0x004C75B0 is byte-identical
          must duplicate this shape rather than share a helper with it, or a
          mutation sweep of either loses its signal.
 */
-void Ambience::construct() {
-    // The header holds the base as opaque bytes, so the fields are reached at
-    // their documented offsets.
-    volatile uint32_t *const object =
-        reinterpret_cast<volatile uint32_t *>(this);
-    volatile uint8_t *const bytes = reinterpret_cast<volatile uint8_t *>(this);
-    object[0x04 / 4] = 0x7F;
-    object[0x08 / 4] = 0;
-    // LEVER: real `call memset` in the image (0x004C849A), not a store loop -
-    // same shape as Wave's constructor. Cast away `volatile` only for the
-    // memset argument; the re-loads below still go through `object`/`bytes`.
-    memset(const_cast<uint32_t *>(&object[0x0C / 4]), 0, 0x24);
-    object[0x30 / 4] = 0;
-    object[0x44 / 4] = 0;
-    object[0x48 / 4] = 0;
-    object[0x3C / 4] = 0;
-    object[0x4C / 4] = 0;
-    // memset to zero at 0x004C84BE, then the loaded bit cleared at 0x004C84C8
-    // - a no-op on the zero just stored - then bit 3 set below: net 8, where
-    // Wave nets 4.
-    memset(const_cast<uint32_t *>(&object[0x40 / 4]), 0, 4);
-    object[0x40 / 4] &= ~1u;
-    object[0x38 / 4] = 0x3E8;
-    object[0x50 / 4] = 0;
-    // memset(this + 0x54, 0, 1) at 0x004C84F5: one byte, not Wave's four. The
-    // original leaves 0x55..0x57 alone, so no defensive widening here.
-    memset(const_cast<uint8_t *>(&bytes[0x54]), 0, 1);
-    // Re-read, do NOT fold into the stores above: the original reloads the
-    // flag dword at 0x004C84FA and the flag byte at 0x004C84FC after their own
-    // zeroing, and stores them back at 0x004C8507 and 0x004C850D in that
-    // order.
-    object[0x40 / 4] |= 8;
-    bytes[0x54] |= 1;
-    reinterpret_cast<Sound *>(this)->set_type(5);
+Ambience::Ambience() {
+    set_type(5);
 }
 
 
@@ -455,6 +692,7 @@ void Ambience::construct() {
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 // ORIGINAL: 0x00447270 ?basewin_show@FactionAmbience@@QAEXXZ 0x00447270-0x00447275 BYTE_EXACT
+// symbol    ?basewin_show@FactionAmbience@@UAEXXZ
 // size      5 bytes
 // prototype void (__thiscall ?basewin_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -473,6 +711,7 @@ void FactionAmbience::basewin_show() {
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 // ORIGINAL: 0x00447280 ?basewin_hide@FactionAmbience@@QAEXXZ 0x00447280-0x00447285 BYTE_EXACT
+// symbol    ?basewin_hide@FactionAmbience@@UAEXXZ
 // size      5 bytes
 // prototype void (__thiscall ?basewin_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -491,6 +730,7 @@ void FactionAmbience::basewin_hide() {
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 // ORIGINAL: 0x00447290 ?design_window_show@FactionAmbience@@QAEXXZ 0x00447290-0x00447295 BYTE_EXACT
+// symbol    ?design_window_show@FactionAmbience@@UAEXXZ
 // size      5 bytes
 // prototype void (__thiscall ?design_window_show@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -509,6 +749,7 @@ void FactionAmbience::design_window_show() {
 Purpose: FactionAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 // ORIGINAL: 0x004472A0 ?design_window_hide@FactionAmbience@@QAEXXZ 0x004472A0-0x004472A5 BYTE_EXACT
+// symbol    ?design_window_hide@FactionAmbience@@UAEXXZ
 // size      5 bytes
 // prototype void (__thiscall ?design_window_hide@FactionAmbience@@QAEXXZ)(FactionAmbience* this)
 // callers   0   call targets   0
@@ -534,6 +775,7 @@ Purpose: GAmbience raises the flag byte only when it is CLEAR.
          values 0 and 1 and differ for every other: a byte holding 5 keeps 5,
          where `field_6C_ = 1` would overwrite it.
 // ORIGINAL: 0x00447BE0 ?basewin_show@GAmbience@@QAEXXZ 0x00447BE0-0x00447BEC BYTE_EXACT
+// symbol    ?basewin_show@GAmbience@@UAEXXZ
 // size      12 bytes
 // prototype void (__thiscall ?basewin_show@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -554,6 +796,7 @@ void GAmbience::basewin_show() {
 Purpose: GAmbience records the event in a flag byte and does nothing else;
          the legacy implementation is a single store.
 // ORIGINAL: 0x00447BF0 ?basewin_hide@GAmbience@@QAEXXZ 0x00447BF0-0x00447BF5 BYTE_EXACT
+// symbol    ?basewin_hide@GAmbience@@UAEXXZ
 // size      5 bytes
 // prototype void (__thiscall ?basewin_hide@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -593,7 +836,7 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
          the storage held survives there.
 
 // ORIGINAL: 0x004471F0 ??0FactionAmbience@@QAE@XZ 0x004471F0-0x00447219
-// symbol    ?construct@FactionAmbience@@QAEPAV1@XZ
+// symbol    ??0FactionAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
@@ -611,11 +854,9 @@ Purpose: Run the shared Ambience constructor, publish this variant's vtable,
 Return Value: `this`
 Status: Complete
 */
-FactionAmbience *FactionAmbience::construct() {
-    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
-    // redirect's unused second argument materialises `xor edx, edx`, one
-    // instruction the image does not have.
-    reinterpret_cast<Ambience *>(this)->Ambience::construct();
+FactionAmbience::FactionAmbience() {
+    // The LEVER/construct-method notes above describe the retired spelling;
+    // the compiler now owns base construction, table staging and unwinding.
     field_58_ = 0;
     field_5C_ = 0;
     field_60_ = 0;
@@ -623,14 +864,13 @@ FactionAmbience *FactionAmbience::construct() {
     field_6C_ = 0;
     field_6D_ = 0;
     field_68_ = 0;
-    return this;
 }
 
 
 /*
 Purpose: As 004471F0, with the MAmbience vtable and one more field.
 // ORIGINAL: 0x00447310 ??0MAmbience@@QAE@XZ 0x00447310-0x0044733C
-// symbol    ?construct@MAmbience@@QAEPAV1@XZ
+// symbol    ??0MAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
@@ -648,27 +888,16 @@ Purpose: As 004471F0, with the MAmbience vtable and one more field.
 Return Value: `this`
 Status: Complete
 */
-MAmbience *MAmbience::construct() {
-    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
-    // redirect's unused second argument materialises `xor edx, edx`, one
-    // instruction the image does not have.
-    reinterpret_cast<Ambience *>(this)->Ambience::construct();
-    field_58_ = 0;
-    field_5C_ = 0;
-    field_60_ = 0;
-    field_64_ = 0;
-    field_6C_ = 0;
-    field_6D_ = 0;
-    field_68_ = 0;
+MAmbience::MAmbience() {
+    // Historical construct-method notes above do not describe this real ctor.
     field_70_ = 0;
-    return this;
 }
 
 
 /*
 Purpose: As 004471F0, with the SAmbience vtable and two more fields.
 // ORIGINAL: 0x00447850 ??0SAmbience@@QAE@XZ 0x00447850-0x0044787F
-// symbol    ?construct@SAmbience@@QAEPAV1@XZ
+// symbol    ??0SAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
@@ -686,28 +915,17 @@ Purpose: As 004471F0, with the SAmbience vtable and two more fields.
 Return Value: `this`
 Status: Complete
 */
-SAmbience *SAmbience::construct() {
-    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
-    // redirect's unused second argument materialises `xor edx, edx`, one
-    // instruction the image does not have.
-    reinterpret_cast<Ambience *>(this)->Ambience::construct();
-    field_58_ = 0;
-    field_5C_ = 0;
-    field_60_ = 0;
-    field_64_ = 0;
-    field_6C_ = 0;
-    field_6D_ = 0;
-    field_68_ = 0;
+SAmbience::SAmbience() {
+    // Historical construct-method notes above do not describe this real ctor.
     field_70_ = 0;
     field_74_ = 0;
-    return this;
 }
 
 
 /*
 Purpose: As 004471F0, with the GAmbience vtable and one more field.
 // ORIGINAL: 0x00447B90 ??0GAmbience@@QAE@XZ 0x00447B90-0x00447BBC
-// symbol    ?construct@GAmbience@@QAEPAV1@XZ
+// symbol    ??0GAmbience@@QAE@XZ
 // DEMOTED from BYTE_EXACT by direction (strip-all hand vptr writes): the
 // derived-stage vptr overlay store left with the de-management sweep.
 
@@ -725,20 +943,9 @@ Purpose: As 004471F0, with the GAmbience vtable and one more field.
 Return Value: `this`
 Status: Complete
 */
-GAmbience *GAmbience::construct() {
-    // THE METHOD, not the two-argument redirect: passing `nullptr` for the
-    // redirect's unused second argument materialises `xor edx, edx`, one
-    // instruction the image does not have.
-    reinterpret_cast<Ambience *>(this)->Ambience::construct();
-    field_58_ = 0;
-    field_5C_ = 0;
-    field_60_ = 0;
-    field_64_ = 0;
-    field_6C_ = 0;
-    field_6D_ = 0;
-    field_68_ = 0;
+GAmbience::GAmbience() {
+    // Historical construct-method notes above do not describe this real ctor.
     field_70_ = 0;
-    return this;
 }
 
 // ===== MANAGED GLOBALS - real objects, homed to their domain =====
@@ -783,71 +990,49 @@ Ambience g_AMBIENCE;  // 0x0074DA40
 //   SAmbienceCents       0x0074DAC8  +100 a pass, wraps +400 back to -300
 //   SAmbiencePass0       0x0074DACC  wraps at 1
 //   SAmbiencePass1       0x0074DAD0  wraps at 7
-static uint8_t *const AmbienceClockArmed = (uint8_t *)0x0074C5E8;
-static int *const AmbienceClock = (int *)0x0074D8EC;
-static int *const AmbienceGeneralTick = (int *)0x00683C14;
-static int *const MAmbienceStep = (int *)0x00683BF8;
-static int *const MAmbienceStepBase = (int *)0x00683BFC;
-static int *const MAmbiencePass = (int *)0x0074DAAC;
-static int *const MAmbienceCents = (int *)0x0074DAB0;
-static int *const UAmbienceStep = (int *)0x00683C00;
-static int *const UAmbienceStepBase = (int *)0x00683C04;
-static int *const UAmbienceStepEvery = (int *)0x00683C08;
-static int *const UAmbienceTrackset = (int *)0x00683C0C;
-static int *const UAmbiencePass0 = (int *)0x0074DAB4;
-static int *const UAmbiencePass1 = (int *)0x0074DAB8;
-static int *const UAmbienceCents = (int *)0x0074DABC;
-static int *const UAmbiencePass2 = (int *)0x0074DAC0;
-static int *const UAmbiencePass3 = (int *)0x0074DAC4;
-static int *const SAmbienceCents = (int *)0x0074DAC8;
-static int *const SAmbiencePass0 = (int *)0x0074DACC;
-static int *const SAmbiencePass1 = (int *)0x0074DAD0;
+// RECOVERY_OBJECT: v1 0x0074C5E8 _AmbienceClockArmed
+static uint8_t AmbienceClockArmed = 0; // Original 0x0074C5E8, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074D8EC _AmbienceClock
+static int AmbienceClock = 0; // Original 0x0074D8EC, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x00683C14 _AmbienceGeneralTick
+static int AmbienceGeneralTick = 17; // Original 0x00683C14, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x00683BF8 _MAmbienceStep
+static int MAmbienceStep = 5; // Original 0x00683BF8, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x00683BFC _MAmbienceStepBase
+static int MAmbienceStepBase = 1; // Original 0x00683BFC, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAAC _MAmbiencePass
+static int MAmbiencePass = 0; // Original 0x0074DAAC, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAB0 _MAmbienceCents
+static int MAmbienceCents = 0; // Original 0x0074DAB0, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x00683C00 _UAmbienceStep
+static int UAmbienceStep = 2; // Original 0x00683C00, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x00683C04 _UAmbienceStepBase
+static int UAmbienceStepBase = 3; // Original 0x00683C04, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x00683C08 _UAmbienceStepEvery
+static int UAmbienceStepEvery = 10; // Original 0x00683C08, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x00683C0C _UAmbienceTrackset
+static int UAmbienceTrackset = 5; // Original 0x00683C0C, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAB4 _UAmbiencePass0
+static int UAmbiencePass0 = 0; // Original 0x0074DAB4, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAB8 _UAmbiencePass1
+static int UAmbiencePass1 = 0; // Original 0x0074DAB8, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DABC _UAmbienceCents
+static int UAmbienceCents = 0; // Original 0x0074DABC, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAC0 _UAmbiencePass2
+static int UAmbiencePass2 = 0; // Original 0x0074DAC0, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAC4 _UAmbiencePass3
+static int UAmbiencePass3 = 0; // Original 0x0074DAC4, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAC8 _SAmbienceCents
+static int SAmbienceCents = 0; // Original 0x0074DAC8, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DACC _SAmbiencePass0
+static int SAmbiencePass0 = 0; // Original 0x0074DACC, independently read initial bytes.
+// RECOVERY_OBJECT: v1 0x0074DAD0 _SAmbiencePass1
+static int SAmbiencePass1 = 0; // Original 0x0074DAD0, independently read initial bytes.
 
-void Ambience::vslot_33() {}
-void Ambience::vslot_34() {}
-void Ambience::vslot_35() {}
-void Ambience::vslot_36() {}
-void Ambience::vslot_37() {}
-void Ambience::vslot_38() {}
-void Ambience::vslot_39() {}
-void Ambience::vslot_40() {}
-void Ambience::vslot_41() {}
-void Ambience::vslot_42() {}
-void Ambience::vslot_43() {}
-void Ambience::vslot_44() {}
-void Ambience::vslot_45() {}
-void Ambience::vslot_46() {}
-void Ambience::vslot_47() {}
-void Ambience::vslot_48() {}
-void Ambience::vslot_49() {}
-void Ambience::vslot_50() {}
-void Ambience::vslot_51() {}
-void Ambience::vslot_52() {}
-void Ambience::vslot_53() {}
-void Ambience::vslot_54() {}
-void Ambience::vslot_55() {}
-void Ambience::vslot_56() {}
-void Ambience::vslot_57() {}
-void Ambience::vslot_58() {}
-void Ambience::vslot_59() {}
-void Ambience::vslot_60() {}
-void Ambience::vslot_61() {}
-void Ambience::vslot_62() {}
-void Ambience::vslot_63() {}
-void Ambience::vslot_64() {}
-void Ambience::vslot_65() {}
-void Ambience::vslot_66() {}
-void Ambience::vslot_71() {}
 
-int Ambience::play_trackset(unsigned int) { return 0; }
-int Ambience::stop_trackset(unsigned int) { return 0; }
-int Ambience::xpose_trackset(unsigned int, int) { return 0; }
-bool Ambience::is_trackset_playing(unsigned int) { return false; }
-int Ambience::load_patch(unsigned int) { return 0; }
-int Ambience::unload_patch(unsigned int) { return 0; }
-int Ambience::set_patch(unsigned int, unsigned int) { return 0; }
 
 // ORIGINAL: 0x00447360 ?general@MAmbience@@QAEXXZ 0x00447360-0x0044746A FILE
+// symbol    ?general@MAmbience@@UAEXXZ
 // size      266 bytes
 // prototype void (__thiscall ?general@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
@@ -857,38 +1042,39 @@ int Ambience::set_patch(unsigned int, unsigned int) { return 0; }
 // indirect  0x0044737E 0x0044738B 0x00447399 0x004473E2 0x004473FA 0x00447461
 void MAmbience::general() {
     DWORD (WINAPI *const get_time)() = timeGetTime;
-    if ((*AmbienceClockArmed & 1) == 0) {
-        *AmbienceClockArmed |= 1;
-        *AmbienceClock = get_time();
+    if ((AmbienceClockArmed & 1) == 0) {
+        AmbienceClockArmed |= 1;
+        AmbienceClock = get_time();
     }
     if (!is_trackset_playing(0x64)) {
         unsigned int now = get_time();
-        unsigned int elapsed = now - static_cast<unsigned int>(*AmbienceClock);
-        int pass = *MAmbiencePass + 1;
-        *MAmbiencePass = pass;
+        unsigned int elapsed = now - static_cast<unsigned int>(AmbienceClock);
+        int pass = MAmbiencePass + 1;
+        MAmbiencePass = pass;
         if (elapsed >= 0x1388 && pass >= 5) {
-            *MAmbiencePass = 0;
-            xpose_trackset(*MAmbienceStep, *MAmbienceCents);
-            int step = (*MAmbienceStep)++;
+            MAmbiencePass = 0;
+            xpose_trackset(MAmbienceStep, MAmbienceCents);
+            int step = (MAmbienceStep)++;
             play_trackset(step);
-            if (*MAmbienceStep > 7) {
-                *MAmbienceStep = 5;
+            if (MAmbienceStep > 7) {
+                MAmbienceStep = 5;
             }
-            *MAmbienceCents += 0x96;
-            if (*MAmbienceCents > 0x258) {
-                *MAmbienceCents = -600;
+            MAmbienceCents += 0x96;
+            if (MAmbienceCents > 0x258) {
+                MAmbienceCents = -600;
             }
-            *AmbienceClock = now;
+            AmbienceClock = now;
             field_70_ += 0x64;
             if (field_70_ > 0x1f4) {
                 field_70_ = -700;
             }
-            xpose_trackset(*MAmbienceStepBase, field_70_);
+            xpose_trackset(MAmbienceStepBase, field_70_);
         }
     }
 }
 
 // ORIGINAL: 0x00447570 ?general@UAmbience@@QAEXXZ 0x00447570-0x00447684 FILE
+// symbol    ?general@UAmbience@@UAEXXZ
 // size      276 bytes
 // prototype void (__thiscall ?general@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
@@ -900,36 +1086,68 @@ void UAmbience::general() {
     if (field_6C_ != 0) {
         return;
     }
-    ++*UAmbiencePass3;
-    ++*UAmbiencePass0;
-    ++*UAmbiencePass1;
-    ++*UAmbiencePass2;
-    if (*UAmbiencePass3 == 0xf) {
-        *UAmbienceTrackset = (*UAmbienceTrackset == 4) + 4;
-        play_trackset(*UAmbienceTrackset);
-        *UAmbiencePass3 = 0;
+    ++UAmbiencePass3;
+    ++UAmbiencePass0;
+    ++UAmbiencePass1;
+    ++UAmbiencePass2;
+    if (UAmbiencePass3 == 0xf) {
+        UAmbienceTrackset = (UAmbienceTrackset == 4) + 4;
+        play_trackset(UAmbienceTrackset);
+        UAmbiencePass3 = 0;
     }
-    if (*UAmbiencePass0 == 9) {
+    if (UAmbiencePass0 == 9) {
         play_trackset(0);
-        *UAmbiencePass0 = 0;
+        UAmbiencePass0 = 0;
     }
-    if (*UAmbiencePass1 == 6) {
-        *UAmbienceStep = (*UAmbienceStep != 2) + 1;
-        xpose_trackset(*UAmbienceStep, *UAmbienceCents);
-        *UAmbienceCents += 0x64;
-        if (*UAmbienceStep > 0x258) {
-            *UAmbienceStep = -600;
+    if (UAmbiencePass1 == 6) {
+        UAmbienceStep = (UAmbienceStep != 2) + 1;
+        xpose_trackset(UAmbienceStep, UAmbienceCents);
+        UAmbienceCents += 0x64;
+        if (UAmbienceStep > 0x258) {
+            UAmbienceStep = -600;
         }
-        play_trackset(*UAmbienceStep);
-        *UAmbiencePass1 = 0;
+        play_trackset(UAmbienceStep);
+        UAmbiencePass1 = 0;
     }
-    if (*UAmbiencePass2 == *UAmbienceStepEvery) {
-        play_trackset(*UAmbienceStepBase);
-        *UAmbiencePass2 = 0;
+    if (UAmbiencePass2 == UAmbienceStepEvery) {
+        play_trackset(UAmbienceStepBase);
+        UAmbiencePass2 = 0;
     }
 }
 
+/*
+Purpose: Increment the dword field at 0x58.
+         Emitted by tools/generate_field_accessors.py from
+
+             inc dword ptr [ecx + 0x58] / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+// ORIGINAL: 0x004476E0 ?tech@SAmbience@@QAEXXZ 0x004476E0-0x004476E4 BYTE_EXACT
+// symbol    ?tech@SAmbience@@UAEXXZ
+// size      4 bytes
+// prototype void (__thiscall ?tech@SAmbience@@QAEXXZ)(SAmbience* this)
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+// Original SAmbience table 0x0066BB58 slot76 selects this member increment,
+// not the empty FactionAmbience::tech. The raw-accessor prose above is history.
+void SAmbience::tech() {
+    ++field_58_;
+}
+
 // ORIGINAL: 0x004476F0 ?general@SAmbience@@QAEXXZ 0x004476F0-0x004477A9 FILE
+// symbol    ?general@SAmbience@@UAEXXZ
 // LEVER: the delegate vtable - declaring Sound's 33 + the sequencer's 42 on
 //   Ambience (ambience.h slots 33..74) is what turned the VCall shims into
 //   real `call dword ptr [eax+0xNNN]` dispatches and brought this body from
@@ -950,35 +1168,37 @@ void UAmbience::general() {
 // flags     hidden;sp_ready;purged_ok
 // calls     (none)
 // indirect  0x00447727 0x00447738 0x00447767 0x00447773
+
 void SAmbience::general() {
     // Read once and clamped in the local: the image keeps the clamped value
     // live in ecx across the clamp store AND the xpose_trackset argument that
     // follows it (0x004476FE `mov ecx, 0x11` -> 0x00447703 store ->
     // 0x00447724 `push ecx`), and only reloads the field for play_trackset,
     // after the call has possibly overwritten it.
-    int tick = *AmbienceGeneralTick;
+    int tick = AmbienceGeneralTick;
     if (tick > 0x12) {
         tick = 0x11;
-        *AmbienceGeneralTick = tick;
+        AmbienceGeneralTick = tick;
     }
-    if ((*SAmbiencePass0)++ > 1) {
-        xpose_trackset(tick, *SAmbienceCents);
-        play_trackset(*AmbienceGeneralTick);
-        *SAmbiencePass0 = 0;
+    if ((SAmbiencePass0)++ > 1) {
+        xpose_trackset(tick, SAmbienceCents);
+        play_trackset(AmbienceGeneralTick);
+        SAmbiencePass0 = 0;
     }
-    if ((*SAmbiencePass1)++ > 7) {
-        xpose_trackset(0x10, *SAmbienceCents);
+    if ((SAmbiencePass1)++ > 7) {
+        xpose_trackset(0x10, SAmbienceCents);
         play_trackset(0x10);
-        *SAmbiencePass1 = 0;
+        SAmbiencePass1 = 0;
     }
-    *SAmbienceCents += 0x64;
-    if (*SAmbienceCents > 0x190) {
-        *SAmbienceCents = -300;
+    SAmbienceCents += 0x64;
+    if (SAmbienceCents > 0x190) {
+        SAmbienceCents = -300;
     }
-    ++*AmbienceGeneralTick;
+    ++AmbienceGeneralTick;
 }
 
 // ORIGINAL: 0x004477B0 ?hostility@SAmbience@@QAEXXZ 0x004477B0-0x00447831 FILE BYTE_EXACT
+// symbol    ?hostility@SAmbience@@UAEXXZ
 // LEVER: field signedness. field_70_ and field_74_ are int32_t, not
 //   uint32_t - the image compares each against a positive bound with `jle`
 //   and wraps it downward past zero, and `uint32_t` spelled `jbe` twice for a
@@ -1016,95 +1236,15 @@ void SAmbience::hostility() {
     }
 }
 
-class BeginVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
-  virtual void slot048();
-  virtual void slot049();
-  virtual void slot050();
-  virtual void slot051();
-  virtual void slot052();
-  virtual void slot053();
-  virtual void slot054();
-  virtual void slot055();
-  virtual void slot056();
-  virtual void slot057();
-  virtual void slot058();
-  virtual void slot059();
-  virtual void slot060();
-  virtual void slot061();
-  virtual void slot062();
-  virtual void slot063();
-  virtual void slot064();
-  virtual void slot065();
-  virtual void slot066();
-  virtual void slot067(int);
-};
 
 // THE SLOT-7 DISPATCH. Sound declares play(unsigned long) before play(), and
 // VC6 gives same-name overloads their slots in REVERSE declaration order, so
 // `reinterpret_cast<SlotSeven *>(this)->slot007()` lands one slot low. Sound's table is not this file's to move,
 // so the four begin() variants reach slot 7 through a named holder instead -
 // the class exists only to spell the convention and is never instantiated.
-class SlotSeven { public:
-    virtual void slot000();
-    virtual void slot001();
-    virtual void slot002();
-    virtual void slot003();
-    virtual void slot004();
-    virtual void slot005();
-    virtual void slot006();
-    virtual void slot007();
-};
 
 // ORIGINAL: 0x00447340 ?begin@MAmbience@@QAEXXZ 0x00447340-0x00447356 BYTE_EXACT
+// symbol    ?begin@MAmbience@@UAEXXZ
 // size      22 bytes
 // prototype void (__thiscall ?begin@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
@@ -1122,85 +1262,12 @@ class SlotSeven { public:
 
 void MAmbience::begin() {
     this->play_trackset(1);
-    reinterpret_cast<SlotSeven *>(this)->slot007();
+    play();
 }
 
-class GateVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
-  virtual void slot048();
-  virtual void slot049();
-  virtual void slot050();
-  virtual void slot051();
-  virtual void slot052();
-  virtual void slot053();
-  virtual void slot054();
-  virtual void slot055();
-  virtual void slot056();
-  virtual void slot057();
-  virtual void slot058();
-  virtual void slot059();
-  virtual void slot060();
-  virtual void slot061();
-  virtual void slot062();
-  virtual void slot063();
-  virtual void slot064();
-  virtual void slot065();
-  virtual void slot066();
-  virtual void slot067(int);
-  virtual void slot068();
-  virtual void slot069();
-  virtual bool slot070(int);
-};
 
 // ORIGINAL: 0x00447470 ?tech@MAmbience@@QAEXXZ 0x00447470-0x0044748F BYTE_EXACT
+// symbol    ?tech@MAmbience@@UAEXXZ
 // size      31 bytes
 // prototype void (__thiscall ?tech@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
@@ -1223,6 +1290,7 @@ void MAmbience::tech() {
 }
 
 // ORIGINAL: 0x00447490 ?energy_resources@MAmbience@@QAEXXZ 0x00447490-0x004474AF BYTE_EXACT
+// symbol    ?energy_resources@MAmbience@@UAEXXZ
 // size      31 bytes
 // prototype void (__thiscall ?energy_resources@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
@@ -1245,6 +1313,7 @@ void MAmbience::energy_resources() {
 }
 
 // ORIGINAL: 0x004474B0 ?production@MAmbience@@QAEXXZ 0x004474B0-0x004474DF FILE BYTE_EXACT
+// symbol    ?production@MAmbience@@UAEXXZ
 // size      47 bytes
 // prototype void (__thiscall ?production@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
@@ -1308,85 +1377,14 @@ void MAmbience::energy_resources() {
 void MAmbience::production() {
     Ambience *const self = this;
     if (!self->is_trackset_playing(0x64)) {
-        self->xpose_trackset(4, *reinterpret_cast<int *>(reinterpret_cast<char *>(this) + 0x70));
+        self->xpose_trackset(4, field_70_);
         self->play_trackset(4);
     }
 }
 
-class NewBaseVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
-  virtual void slot048();
-  virtual void slot049();
-  virtual void slot050();
-  virtual void slot051();
-  virtual void slot052();
-  virtual void slot053();
-  virtual void slot054();
-  virtual void slot055();
-  virtual void slot056();
-  virtual void slot057();
-  virtual void slot058();
-  virtual void slot059();
-  virtual void slot060();
-  virtual void slot061();
-  virtual void slot062();
-  virtual void slot063();
-  virtual void slot064();
-  virtual void slot065();
-  virtual void slot066();
-  virtual void slot067(int);
-  virtual void slot068(int);
-};
 
 // ORIGINAL: 0x004474E0 ?new_base@MAmbience@@QAEXXZ 0x004474E0-0x00447507 BYTE_EXACT
+// symbol    ?new_base@MAmbience@@UAEXXZ
 // size      39 bytes
 // prototype void (__thiscall ?new_base@MAmbience@@QAEXXZ)(MAmbience* this)
 // callers   0   call targets   0
@@ -1412,6 +1410,7 @@ void MAmbience::new_base() {
 }
 
 // ORIGINAL: 0x00447510 ?begin@UAmbience@@QAEXXZ 0x00447510-0x00447526 BYTE_EXACT
+// symbol    ?begin@UAmbience@@UAEXXZ
 // size      22 bytes
 // prototype void (__thiscall ?begin@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
@@ -1428,11 +1427,12 @@ void MAmbience::new_base() {
 
 
 void UAmbience::begin() {
-    reinterpret_cast<SlotSeven *>(this)->slot007();
+    play();
     this->play_trackset(0);
 }
 
 // ORIGINAL: 0x00447530 ?basewin_show@UAmbience@@QAEXXZ 0x00447530-0x0044754A FILE BYTE_EXACT
+// symbol    ?basewin_show@UAmbience@@UAEXXZ
 // size      26 bytes
 // prototype void (__thiscall ?basewin_show@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
@@ -1495,87 +1495,15 @@ void UAmbience::begin() {
 
 
 void UAmbience::basewin_show() {
-    char *self = reinterpret_cast<char *>(this);
     if (!field_6C_) {
         this->play_trackset(6);
         field_6C_ = 1;
     }
 }
 
-class HideVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
-  virtual void slot048();
-  virtual void slot049();
-  virtual void slot050();
-  virtual void slot051();
-  virtual void slot052();
-  virtual void slot053();
-  virtual void slot054();
-  virtual void slot055();
-  virtual void slot056();
-  virtual void slot057();
-  virtual void slot058();
-  virtual void slot059();
-  virtual void slot060();
-  virtual void slot061();
-  virtual void slot062();
-  virtual void slot063();
-  virtual void slot064();
-  virtual void slot065();
-  virtual void slot066();
-  virtual void slot067();
-  virtual void slot068(int);
-};
 
 // ORIGINAL: 0x00447550 ?basewin_hide@UAmbience@@QAEXXZ 0x00447550-0x00447563 BYTE_EXACT
+// symbol    ?basewin_hide@UAmbience@@UAEXXZ
 // size      19 bytes
 // prototype void (__thiscall ?basewin_hide@UAmbience@@QAEXXZ)(UAmbience* this)
 // callers   0   call targets   0
@@ -1597,6 +1525,7 @@ void UAmbience::basewin_hide() {
 }
 
 // ORIGINAL: 0x004476C0 ?begin@SAmbience@@QAEXXZ 0x004476C0-0x004476D6 BYTE_EXACT
+// symbol    ?begin@SAmbience@@UAEXXZ
 // size      22 bytes
 // prototype void (__thiscall ?begin@SAmbience@@QAEXXZ)(SAmbience* this)
 // callers   0   call targets   0
@@ -1613,83 +1542,13 @@ void UAmbience::basewin_hide() {
 
 
 void SAmbience::begin() {
-    reinterpret_cast<SlotSeven *>(this)->slot007();
+    play();
     this->play_trackset(0x11);
 }
 
-class ProductionVCall {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual void slot008();
-  virtual void slot009();
-  virtual void slot010();
-  virtual void slot011();
-  virtual void slot012();
-  virtual void slot013();
-  virtual void slot014();
-  virtual void slot015();
-  virtual void slot016();
-  virtual void slot017();
-  virtual void slot018();
-  virtual void slot019();
-  virtual void slot020();
-  virtual void slot021();
-  virtual void slot022();
-  virtual void slot023();
-  virtual void slot024();
-  virtual void slot025();
-  virtual void slot026();
-  virtual void slot027();
-  virtual void slot028();
-  virtual void slot029();
-  virtual void slot030();
-  virtual void slot031();
-  virtual void slot032();
-  virtual void slot033();
-  virtual void slot034();
-  virtual void slot035();
-  virtual void slot036();
-  virtual void slot037();
-  virtual void slot038();
-  virtual void slot039();
-  virtual void slot040();
-  virtual void slot041();
-  virtual void slot042();
-  virtual void slot043();
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
-  virtual void slot048();
-  virtual void slot049();
-  virtual void slot050();
-  virtual void slot051();
-  virtual void slot052();
-  virtual void slot053();
-  virtual void slot054();
-  virtual void slot055();
-  virtual void slot056();
-  virtual void slot057();
-  virtual void slot058();
-  virtual void slot059();
-  virtual void slot060();
-  virtual void slot061();
-  virtual void slot062();
-  virtual void slot063();
-  virtual void slot064();
-  virtual void slot065();
-  virtual void slot066();
-  virtual void slot067(int);
-};
 
 // ORIGINAL: 0x00447840 ?production@SAmbience@@QAEXXZ 0x00447840-0x0044784B BYTE_EXACT
+// symbol    ?production@SAmbience@@UAEXXZ
 // size      11 bytes
 // prototype void (__thiscall ?production@SAmbience@@QAEXXZ)(SAmbience* this)
 // callers   0   call targets   0
@@ -1710,6 +1569,7 @@ void SAmbience::production() {
 }
 
 // ORIGINAL: 0x00447880 ?base_liberated@SAmbience@@QAEXXZ 0x00447880-0x004478C3 FILE BYTE_EXACT
+// symbol    ?base_liberated@SAmbience@@UAEXXZ
 // size      67 bytes
 // prototype void (__thiscall ?base_liberated@SAmbience@@QAEXXZ)(SAmbience* this)
 // callers   0   call targets   0
@@ -1782,6 +1642,7 @@ void SAmbience::base_liberated() {
 }
 
 // ORIGINAL: 0x00447BC0 ?begin@GAmbience@@QAEXXZ 0x00447BC0-0x00447BDD BYTE_EXACT
+// symbol    ?begin@GAmbience@@UAEXXZ
 // size      29 bytes
 // prototype void (__thiscall ?begin@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -1798,7 +1659,7 @@ void SAmbience::base_liberated() {
 
 
 void GAmbience::begin() {
-    reinterpret_cast<SlotSeven *>(this)->slot007();
+    play();
     // Alone among the six begin() overrides, this one also stores its mode.
     field_68_ = 0x18;
     this->play_trackset(0x18);
@@ -1807,9 +1668,11 @@ void GAmbience::begin() {
 // Fixed-slot bindings carried from 00447c00.cpp
 // AmbienceClockArmed's sibling at 0x00683C20: UAmbience's own one-shot
 // gate, compared against 0x18 and never written here.
-static int *const UAmbienceGate = (int *)0x00683C20;
+// RECOVERY_OBJECT: v1 0x00683C20 _UAmbienceGate
+static int UAmbienceGate = 24; // Original 0x00683C20, independently read initial bytes.
 
 // ORIGINAL: 0x00447C00 ?general@GAmbience@@QAEXXZ 0x00447C00-0x00447C58 FILE BYTE_EXACT
+// symbol    ?general@GAmbience@@UAEXXZ
 // size      88 bytes
 // prototype void (__thiscall ?general@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -1872,30 +1735,30 @@ static int *const UAmbienceGate = (int *)0x00683C20;
 
 
 void GAmbience::general() {
-    char *self = reinterpret_cast<char *>(this);
-    int32_t arg68 = *reinterpret_cast<int32_t *>(self + 0x68);
-    int32_t *field70 = reinterpret_cast<int32_t *>(self + 0x70);
+    const uint32_t arg68 = field_68_;
 
-    this->xpose_trackset(arg68, *field70);
+    this->xpose_trackset(arg68, field_70_);
 
-    if (*UAmbienceGate == 0x18) {
-        *field70 += 300;
-        if (*field70 > 600) {
-            *field70 = -600;
+    if (UAmbienceGate == 0x18) {
+        field_70_ += 300;
+        if (field_70_ > 600) {
+            field_70_ = -600;
         }
         return;
     }
-    *field70 += 700;
-    if (*field70 > 1200) {
-        *field70 = -700;
+    field_70_ += 700;
+    if (field_70_ > 1200) {
+        field_70_ = -700;
     }
 }
 
 // Fixed-slot bindings carried from 00447c70.cpp
 // GAmbience's play_trackset argument at 0x00683C24: cycled 7..9.
-static int *const GAmbienceStep = (int *)0x00683C24;
+// RECOVERY_OBJECT: v1 0x00683C24 _GAmbienceStep
+static int GAmbienceStep = 7; // Original 0x00683C24, independently read initial bytes.
 
 // ORIGINAL: 0x00447C70 ?terraform@GAmbience@@QAEXXZ 0x00447C70-0x00447C9A FILE BYTE_EXACT
+// symbol    ?terraform@GAmbience@@UAEXXZ
 // size      42 bytes
 // prototype void (__thiscall ?terraform@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -1958,17 +1821,19 @@ static int *const GAmbienceStep = (int *)0x00683C24;
 
 
 void GAmbience::terraform() {
-    this->play_trackset(*GAmbienceStep);
-    if (++*GAmbienceStep > 9) {
-        *GAmbienceStep = 7;
+    this->play_trackset(GAmbienceStep);
+    if (++GAmbienceStep > 9) {
+        GAmbienceStep = 7;
     }
 }
 
 // Fixed-slot bindings carried from 00447cd0.cpp
 // SAmbience's one-shot flag at 0x00683C28, set to 1 on entry.
-static int *const SAmbienceArmed = (int *)0x00683C28;
+// RECOVERY_OBJECT: v1 0x00683C28 _SAmbienceArmed
+static int SAmbienceArmed = 1; // Original 0x00683C28, independently read initial bytes.
 
 // ORIGINAL: 0x00447CD0 ?new_base@GAmbience@@QAEXXZ 0x00447CD0-0x00447D07 FILE BYTE_EXACT
+// symbol    ?new_base@GAmbience@@UAEXXZ
 // size      55 bytes
 // prototype void (__thiscall ?new_base@GAmbience@@QAEXXZ)(GAmbience* this)
 // callers   0   call targets   0
@@ -2031,7 +1896,7 @@ static int *const SAmbienceArmed = (int *)0x00683C28;
 
 
 void GAmbience::new_base() {
-    *SAmbienceArmed = 1;
+    SAmbienceArmed = 1;
 
     this->stop_trackset(field_68_);
     field_68_ = 0x19;
@@ -2040,17 +1905,20 @@ void GAmbience::new_base() {
 }
 
 // ORIGINAL: 0x00447920 ?begin@BAmbience@@QAEXXZ 0x00447920-0x00447936 BYTE_EXACT
+// symbol    ?begin@BAmbience@@UAEXXZ
 void BAmbience::begin() {
     play_trackset(0x1A);
     play();
 }
 
 // ORIGINAL: 0x00447AB0 ?design_window_show@BAmbience@@QAEXXZ 0x00447AB0-0x00447AB5 BYTE_EXACT
+// symbol    ?design_window_show@BAmbience@@UAEXXZ
 void BAmbience::design_window_show() {
     field_6D_ = 1;
 }
 
 // ORIGINAL: 0x00447AC0 ?design_window_hide@BAmbience@@QAEXXZ 0x00447AC0-0x00447AEB BYTE_EXACT
+// symbol    ?design_window_hide@BAmbience@@UAEXXZ
 void BAmbience::design_window_hide() {
     field_6D_ = 0;
     stop_trackset(0x14);
@@ -2059,6 +1927,7 @@ void BAmbience::design_window_hide() {
 }
 
 // ORIGINAL: 0x00447B30 ?new_base@BAmbience@@QAEXXZ 0x00447B30-0x00447B58 BYTE_EXACT
+// symbol    ?new_base@BAmbience@@UAEXXZ
 void BAmbience::new_base() {
     const int reported = field_74_;
     field_70_ += 1;
@@ -2067,9 +1936,39 @@ void BAmbience::new_base() {
 }
 
 // ORIGINAL: 0x00447B60 ?base_liberated@BAmbience@@QAEXXZ 0x00447B60-0x00447B8B BYTE_EXACT
+// symbol    ?base_liberated@BAmbience@@UAEXXZ
 void BAmbience::base_liberated() {
     stop_trackset(0x1B);
     if (!is_trackset_playing(0x64)) {
         play_trackset(0x64);
     }
+}
+
+/*
+Purpose: Increment the dword field at 0x58.
+         Emitted by tools/generate_field_accessors.py from
+
+             inc dword ptr [ecx + 0x58] / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+// ORIGINAL: 0x00448280 ?tech@AAmbience@@QAEXXZ 0x00448280-0x00448284 BYTE_EXACT
+// symbol    ?tech@AAmbience@@UAEXXZ
+// size      4 bytes
+// prototype void (__thiscall ?tech@AAmbience@@QAEXXZ)(AAmbience* this)
+// callers   0   call targets   0
+// kind      game
+// flags     sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void AAmbience::tech() {
+    ++field_58_;
 }

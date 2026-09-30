@@ -2,9 +2,7 @@
 #include "stdafx.h"
 
 uint32_t __fastcall field_accessor_00406840_redirect(void *, void *);
-void __fastcall field_accessor_004476e0_redirect(void *, void *);
 void __fastcall field_accessor_00447ab0_redirect(void *, void *);
-void __fastcall field_accessor_00448280_redirect(void *, void *);
 uint32_t __fastcall field_accessor_004c75a0_redirect(void *, void *);
 void * __fastcall field_accessor_004c8090_redirect(void *, void *);
 void * __fastcall field_accessor_004c8100_redirect(void *, void *);

@@ -17,111 +17,81 @@
  */
 #pragma once
 
-#include "sound.h"
+#include "midi.h"
 
- /*
-  * Ambience classes
-  *
-  * A family of game-event hooks - a turn beginning, a technology discovered, a
-  * base founded - that the original dispatches through a vtable so each
-  * faction flavour can respond. The variants recovered here respond to none of
- * them: the already modeled faction variants ignore their declared events.
-  *
- * The other variant layouts remain incomplete. Their constructors write
- * variant fields starting at 0x58, which places the shared base's extent
- * there and is what base_storage_ models, including the vtable pointer the
- * original keeps at offset zero - held as opaque bytes so no vtable is
- * generated here that could disagree with it. BAmbience is modeled below
- * from its constructor and event accesses, with its 0x80-byte extent pinned.
-  *
-  * THE FIRST 0x54 OF base_storage_ IS A SOUND. ??0Ambience@@QAE@XZ
-  * (0x004C8460) replays ??0Sound@@QAE@XZ (0x004C6080) instruction for
-  * instruction on an unadjusted `this`: [esi] = 0x0066E444, [esi+4] = 0x7F,
-  * `memset(esi + 0xC, 0, 0x24)`, then Sound's own vftable 0x0066E3C0 at
-  * 0x004C84AC, [esi+0x38] = 0x3E8, and the guarded call through [esi+0x3C].
-  * src/sound.h pins sizeof(Sound) at 0x54, so the four bytes at 0x54 are
-  * Ambience's own and the extent at 0x58 follows. Wave begins with the same
-  * inlined Sound; this is the third Sound-rooted class, not an unrelated one,
-  * and it is why src/ambience.cpp reinterprets `this` as a `Wave *`.
-  */
-class Ambience : public Sound {
+class FactionAmbience;
+extern FactionAmbience *FactionMusic;
+extern int LastAmbienceVehicle;
+void __cdecl load_music(int faction_id);
+void __cdecl ambience_veh(int vehicle_id);
+
+/*
+ * Sound owns the common 0x54-byte device/lifetime prefix. Midi adds its
+ * mode byte and sequencer interface; Ambience changes load/unload behavior
+ * without adding storage. Constructor 0x004C8460 stages Sound, Midi and
+ * Ambience tables on the same receiver, not a second embedded sound object.
+ *
+ * FactionAmbience owns the shared event state at 0x58..0x6D and virtual
+ * events 75..89. Its subclasses provide the faction-specific sequencing.
+ * Original allocation sizes, constructor stores and event accesses establish
+ * the differing subclass tails; no copied table or opaque base storage is used.
+ */
+// Original4C8460 stages Midi66E538 before Ambience66E664; both endat58.
+class Ambience : public Midi {
  public:
-  uint32_t field_54_;  // 0x54, Ambience-owned; the derived variants start at 0x58
-
-  // SLOTS 33..74 - the sequencer-delegate interface the image appends to
-  // Sound's 33. Every Ambience variant's vftable is 75 entries: 0x0066BB58
-  // (SAmbience), 0x0066BE28 (MAmbience), 0x0066BF90 (GAmbience) and
-  // 0x0066C0F8 (FactionAmbience) all agree slot for slot, and all four hold
-  // the SAME functions at 33..74 that MidiDelegate's table holds at 0x84..
-  // 0x128 - ?play_trackset@@QAEHI@Z at 0x10c, ?xpose_trackset@@QAEHIH@Z at
-  // 0x114, ?is_trackset_playing@@QAE_NI@Z at 0x118. Two bases would put a
-  // second vptr at 0x54 and push every variant field along, and the
-  // static_asserts below would fail, so the interface is inherited into the
-  // ONE primary table, not embedded. Slot 33+ is therefore declared here,
-  // on the class whose general()/hostility() dispatch through it.
-  //
-  // The bodies that reach these slots: MAmbience::general (0x00447360),
-  // UAmbience::general (0x00447570), SAmbience::general (0x004476F0) and
-  // SAmbience::hostility (0x004477B0).
-  virtual void vslot_33();
-  virtual void vslot_34();
-  virtual void vslot_35();
-  virtual void vslot_36();
-  virtual void vslot_37();
-  virtual void vslot_38();
-  virtual void vslot_39();
-  virtual void vslot_40();
-  virtual void vslot_41();
-  virtual void vslot_42();
-  virtual void vslot_43();
-  virtual void vslot_44();
-  virtual void vslot_45();
-  virtual void vslot_46();
-  virtual void vslot_47();
-  virtual void vslot_48();
-  virtual void vslot_49();
-  virtual void vslot_50();
-  virtual void vslot_51();
-  virtual void vslot_52();
-  virtual void vslot_53();
-  virtual void vslot_54();
-  virtual void vslot_55();
-  virtual void vslot_56();
-  virtual void vslot_57();
-  virtual void vslot_58();
-  virtual void vslot_59();
-  virtual void vslot_60();
-  virtual void vslot_61();
-  virtual void vslot_62();
-  virtual void vslot_63();
-  virtual void vslot_64();
-  virtual void vslot_65();
-  virtual void vslot_66();
-  virtual int play_trackset(unsigned int trackset);   // slot 67, 0x10c
-  virtual int stop_trackset(unsigned int trackset);   // slot 68, 0x110
-  virtual int xpose_trackset(unsigned int trackset, int semitones);  // 69, 0x114
-  virtual bool is_trackset_playing(unsigned int trackset);  // 70, 0x118
-  virtual void vslot_71();
-  virtual int load_patch(unsigned int patch);         // slot 72, 0x120
-  virtual int unload_patch(unsigned int patch);       // slot 73, 0x124
-  virtual int set_patch(unsigned int patch, unsigned int instrument);  // 74
-
-  // Spelled as a method rather than a real constructor on purpose: the three
-  // derived variants below all carry inline `{ ; }` constructors, and giving
-  // the base a real one would silently change every one of them.
-  void construct();
-  ~Ambience();
-
+  Ambience();
+  ~Ambience() {}
+  int load(const char *filename);
+  int unload();
 };
+static_assert(sizeof(Midi) == 0x58, "Midi adds its single mode byte to Sound");
+static_assert(sizeof(Ambience) == 0x58, "Ambience adds behavior, not storage");
 
 
-// The original B faction ambience extends the common sound/sequencer object
-// with the event counters consumed by its short callbacks.  Its constructor
-// starts these fields immediately after Ambience's 0x58-byte base.
-class BAmbience : public Ambience {
+class FactionAmbience : public Ambience {
  public:
-  // 0x004478D0 remains seed-owned. Do not synthesize an implicit constructor:
-  // Ambience's original construction has state changes beyond Sound's own.
+  FactionAmbience();
+  ~FactionAmbience() {}
+  // Events75..89, original tables66C0F8/66BB58/66BE28/66BF90/66BCC0.
+  virtual void begin();
+  virtual void tech();
+  virtual void terraform();
+  virtual void production();
+  virtual void general();
+  virtual void popup1();
+  virtual void eot();
+  virtual void hostility();
+  virtual void basewin_show();
+  virtual void basewin_hide();
+  virtual void new_base();
+  virtual void energy_resources();
+  virtual void design_window_show();
+  virtual void design_window_hide();
+  virtual void base_liberated();
+ protected:
+  uint32_t field_58_;
+  uint32_t field_5C_;
+  uint32_t field_60_;
+  uint32_t field_64_;
+  uint32_t field_68_;
+  uint8_t field_6C_;
+  uint8_t field_6D_;
+};
+static_assert(sizeof(FactionAmbience) == 0x70,
+              "Faction ambience owns the common event state58..6D");
+
+class AAmbience : public FactionAmbience {
+ public:
+  AAmbience() {}
+  void begin();
+  void general();
+  void tech();
+};
+static_assert(sizeof(AAmbience) == 0x70, "AAmbience has no added storage");
+
+class BAmbience : public FactionAmbience {
+ public:
+  // 0x004478D0 initializes the B-specific counters after FactionAmbience.
   BAmbience();
   void begin();
   // This store was formerly represented by the seed-only byte accessor at
@@ -136,14 +106,6 @@ class BAmbience : public Ambience {
   void hostility();
 
  private:
-  uint32_t field_58_;
-  uint32_t field_5C_;
-  uint32_t field_60_;
-  uint32_t field_64_;
-  uint32_t field_68_;
-  uint8_t field_6C_;
-  uint8_t field_6D_;
-  uint8_t pad_6E_[2];
   int32_t field_70_;
   int32_t field_74_;
   int32_t field_78_;
@@ -154,43 +116,7 @@ static_assert(sizeof(BAmbience) == 0x80,
               "BAmbience layout must match its constructor and event accesses");
 
 
-
-class FactionAmbience : public Ambience {
- public:
-  FactionAmbience() { ; }
-  ~FactionAmbience() { ; }
-  void begin();
-  void tech();
-  void terraform();
-  void production();
-  void general();
-  void new_base();
-  void popup1();
-  void eot();
-  void hostility();
-  void energy_resources();
-  void base_liberated();
-  // The two flag bytes below are what these four toggle - the only
-  // FactionAmbience methods that write anything at all.
-  void basewin_show();
-  void basewin_hide();
-  void design_window_show();
-  void design_window_hide();
-  // RETURNS `this`: the image ends `mov eax, esi; ret`, which a `void`
-  // construct never emits. Callers ignore the result.
-  FactionAmbience *construct();
-
- private:
-  uint32_t field_58_;  // 0x0058
-  uint32_t field_5C_;
-  uint32_t field_60_;
-  uint32_t field_64_;
-  uint32_t field_68_;
-  uint8_t field_6C_;
-  uint8_t field_6D_;
-};
-
-class UAmbience : public Ambience {
+class UAmbience : public FactionAmbience {
  public:
   // homed from 00447550.cpp
   void basewin_hide();
@@ -208,7 +134,7 @@ class UAmbience : public Ambience {
   void general();
 
  public:
-  UAmbience() { ; }
+  UAmbience();
   ~UAmbience() { ; }
   void tech();
   void popup1();
@@ -221,12 +147,6 @@ class UAmbience : public Ambience {
   // Extent only - this class carries no size assertion, and the bound is a floor.
   // 6 member(s) from the IDA database, 0 named; it starts a member at 0x58, which is where src/ ends.
 
-  uint32_t field_58_;  // 0x58
-  uint32_t field_5C_;  // 0x5C
-  uint32_t field_60_;  // 0x60
-  uint32_t field_64_;  // 0x64
-  uint32_t field_68_;  // 0x68
-  uint8_t field_6C_;  // 0x6C
 };
 
 // MAmbience and SAmbience are evidenced the same way FactionAmbience and
@@ -234,7 +154,7 @@ class UAmbience : public Ambience {
 // recovered method, so these fields and nothing beyond them are what the image
 // establishes - the same rule the file header sets out, applied to two more
 // variants rather than relaxed for them.
-class MAmbience : public Ambience {
+class MAmbience : public FactionAmbience {
  public:
   // homed from 004474e0.cpp
   void new_base();
@@ -260,20 +180,10 @@ class MAmbience : public Ambience {
   void general();
 
  public:
-  MAmbience() { ; }
+  MAmbience();
   ~MAmbience() { ; }
-  // Returns `this`; see FactionAmbience.
-  MAmbience *construct();
 
  private:
-  uint32_t field_58_;  // 0x0058
-  uint32_t field_5C_;
-  uint32_t field_60_;
-  uint32_t field_64_;
-  uint32_t field_68_;
-  uint8_t field_6C_;
-  uint8_t field_6D_;
-  uint8_t pad_6E_[2];
   // SIGNED: MAmbience::general compares it against 0x1f4 with `jle`
   // (0x00447444) and wraps it to -700, so uint32_t spells `jbe`. Same
   // evidence as SAmbience::field_70_ below.
@@ -283,8 +193,9 @@ class MAmbience : public Ambience {
 static_assert(sizeof(MAmbience) == 0x74,
               "MAmbience layout must match the original executable");
 
-class SAmbience : public Ambience {
+class SAmbience : public FactionAmbience {
  public:
+  void tech();
   // homed from 00447880.cpp
   void base_liberated();
 
@@ -305,20 +216,10 @@ class SAmbience : public Ambience {
   void general();
 
  public:
-  SAmbience() { ; }
+  SAmbience();
   ~SAmbience() { ; }
-  // Returns `this`; see FactionAmbience.
-  SAmbience *construct();
 
  private:
-  uint32_t field_58_;  // 0x0058
-  uint32_t field_5C_;
-  uint32_t field_60_;
-  uint32_t field_64_;
-  uint32_t field_68_;
-  uint8_t field_6C_;
-  uint8_t field_6D_;
-  uint8_t pad_6E_[2];
   // SIGNED, and not by style: SAmbience::hostility compares both against a
   // positive bound with `jle` (0x004477EA `cmp eax, 0x67`, 0x00447821
   // `cmp eax, 0x12c`) and wraps each downward past zero when it exceeds it,
@@ -330,7 +231,7 @@ class SAmbience : public Ambience {
 static_assert(sizeof(SAmbience) == 0x78,
               "SAmbience layout must match the original executable");
 
-class GAmbience : public Ambience {
+class GAmbience : public FactionAmbience {
  public:
   // homed from 00447cd0.cpp
   void new_base();
@@ -348,10 +249,8 @@ class GAmbience : public Ambience {
   void begin();
 
  public:
-  GAmbience() { ; }
+  GAmbience();
   ~GAmbience() { ; }
-  // Returns `this`; see FactionAmbience.
-  GAmbience *construct();
   void tech();
   void production();
   void popup1();
@@ -360,15 +259,8 @@ class GAmbience : public Ambience {
   void basewin_hide();
 
  private:
-  uint32_t field_58_;  // 0x0058
-  uint32_t field_5C_;
-  uint32_t field_60_;
-  uint32_t field_64_;
-  uint32_t field_68_;
-  uint8_t field_6C_;
-  uint8_t field_6D_;
-  uint8_t pad_6E_[2];
-  uint32_t field_70_;
+  // Original 0x00447C32 uses signed jle; general wraps this counter below zero.
+  int32_t field_70_;
 };
 
 static_assert(sizeof(GAmbience) == 0x74,

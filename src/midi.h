@@ -106,10 +106,10 @@ class MidiDelegate {
   virtual int set_active_range_hi(unsigned int, unsigned int);  // slot 0xa4
   virtual int remove_active_trackset(unsigned int);          // slot 0xa8
   virtual int unmute_track(unsigned long);                   // slot 0xac
-  virtual void slot044();
-  virtual void slot045();
-  virtual void slot046();
-  virtual void slot047();
+  virtual int slot044(int, int);
+  virtual bool slot045(unsigned int);
+  virtual int slot046(int, int);
+  virtual int slot047(int, int);
   virtual int set_track_ctrl(TrackCtrl *);                   // slot 0xc0
   virtual int get_ntracks();                                 // slot 0xc4
   virtual int reset();                                       // slot 0xc8
@@ -122,7 +122,7 @@ class MidiDelegate {
   virtual int set_channel_ctrl(ChannelCtrl *);               // slot 0xe4
   virtual int set_program_ctrl(ProgramCtrl *);               // slot 0xe8
   virtual int set_base_path(const char *path);               // slot 0x0ec
-  virtual void slot060();
+  virtual int slot060(int);
   virtual int get_control_track();                           // slot 0xf4
   virtual int get_total_track_ticks(unsigned long);          // slot 0xf8
   virtual int switch_state(bool on);                        // slot 0x0fc
@@ -141,65 +141,61 @@ class MidiDelegate {
 
 class Midi : public Sound {
  public:
+  Midi();
+  ~Midi();
   int play();
-  int set_switch_type(unsigned long);
-  int add_switch_range(unsigned long, unsigned long);
-  int set_nswitch_threads(unsigned long);
-  int map_patch(char *, unsigned long, unsigned long);
-  int map_patch(char *, unsigned long);
-  int clear_patch(unsigned long);
-  int reset();
-  int set_track(uint8_t *, unsigned long);
-  int mute_track(unsigned long);
-  int unmute_track(unsigned long);
-  int set_active_tracks(unsigned long, unsigned long);
-  int set_active_tracks(unsigned int);
-  int play_trackset(unsigned int);
-  int xpose_trackset(unsigned int, int);
-  int stop_trackset(unsigned int);
-  int add_active_trackset(TrackSet *);
-  int set_active_range_lo(unsigned int, unsigned int);
-  int set_active_range_hi(unsigned int, unsigned int);
-  int remove_active_trackset(unsigned int);
-  int get_trackset(unsigned int);
-  int get_ntracks();
-  int load_patch(unsigned int);
-  int unload_patch(unsigned int);
-  int set_patch(unsigned int, unsigned int);
-  int set_tempo(unsigned long);
-  int get_time(unsigned long);
-  int get_control_track();
-  int get_total_track_ticks(unsigned long);
-  int set_channel_ctrl(ChannelCtrl *);
-  int set_program_ctrl(ProgramCtrl *);
-  int set_track_ctrl(TrackCtrl *);
-
-  // THE NINE remaining Midi methods, homed from src/recovered and
-  // src/unrecovered 2026-09-03: five one-guarded-call forwarders plus
-  // the four lifecycle bodies and init recovered 2026-09-18 on the
-  // Sound base the class now declares. Each reaches 0x4C (fname_) or
-  // the sequencer at 0x3C (Sound::device_), both inherited members now.
   void set_volume(int volume);
-  int switch_state(bool on);
-  int set_base_path(const char *path);
-  bool is_trackset_playing(unsigned int trackset);
-  int set_play_type(unsigned int type);
-
-  // The five lifecycle bodies, midi.cpp. set_fname and init own the
-  // filename copy at 0x4C; the two loads and unload wrap the sequencer
-  // at 0x3C and were unreachable until the Sound base existed. play(),
-  // set_volume(int), load(const char*) and unload() override their
-  // Sound slots and mangle UAE - each body's marker carries both facts.
-  int set_fname(const char *fname);
-  int init(char *fname, unsigned long a2);
-  int load();
-  int load(const char *fname);
   int unload();
-
- private:
-  // 0x54, the first Midi-own byte past the 0x54 Sound sub-object: the
-  // one byte init clears with memset. No recovered body reads it yet,
-  // so the storage model stops here and no extent is asserted.
-  uint8_t field_54_;
+  // Genuine added primary slots33..74, verified against66E538.
+  virtual int set_track(uint8_t *, unsigned long);             // 33
+  virtual int set_tempo(unsigned long);                       // 34
+  virtual int mute_track(unsigned long);                      // 35
+  // VC6 emits each new overload group in reverse declaration order.
+  virtual int set_active_tracks(unsigned long, unsigned long);// 37
+  virtual int set_active_tracks(unsigned int);                // 36
+  virtual int add_active_trackset(TrackSet *);                 // 38
+  virtual int get_trackset(unsigned int);                     // 39
+  virtual int set_active_range_lo(unsigned int, unsigned int);// 40
+  virtual int set_active_range_hi(unsigned int, unsigned int);// 41
+  virtual int remove_active_trackset(unsigned int);           // 42
+  virtual int unmute_track(unsigned long);                    // 43
+  virtual int sub_4c7f70(int, int);                            // 44
+  virtual bool sub_4c7fa0(unsigned int);                       // 45
+  virtual int sub_4c7ff0(int, int);                            // 46
+  virtual int sub_4c7fc0(int, int);                            // 47
+  virtual int set_track_ctrl(TrackCtrl *);                    // 48
+  virtual int get_ntracks();                                  // 49
+  virtual int reset();                                        // 50
+  virtual int init(char *fname, unsigned long flags);          // 51
+  virtual int load();                                         // 52
+  // Keep the overload group here: VC6 would otherwise append load() at
+  // slot33 when the inherited load(filename) override is declared first.
+  int load(const char *fname);                                // inherited4
+  virtual int get_time(unsigned long);                        // 53
+  virtual int map_patch(char *, unsigned long, unsigned long);// 55
+  virtual int map_patch(char *, unsigned long);               // 54
+  virtual int clear_patch(unsigned long);                     // 56
+  virtual int set_channel_ctrl(ChannelCtrl *);                // 57
+  virtual int set_program_ctrl(ProgramCtrl *);                // 58
+  virtual int set_base_path(const char *);                    // 59
+  virtual int sub_4c8020(int);                                // 60
+  virtual int get_control_track();                           // 61
+  virtual int get_total_track_ticks(unsigned long);           // 62
+  virtual int switch_state(bool);                            // 63
+  virtual int set_switch_type(unsigned long);                 // 64
+  virtual int set_nswitch_threads(unsigned long);             // 65
+  virtual int add_switch_range(unsigned long, unsigned long);// 66
+  virtual int play_trackset(unsigned int);                    // 67
+  virtual int stop_trackset(unsigned int);                    // 68
+  virtual int xpose_trackset(unsigned int, int);               // 69
+  virtual bool is_trackset_playing(unsigned int);             // 70
+  virtual int set_play_type(unsigned int);                    // 71
+  virtual int load_patch(unsigned int);                       // 72
+  virtual int unload_patch(unsigned int);                     // 73
+  virtual int set_patch(unsigned int, unsigned int);          // 74
+  int set_fname(const char *fname);
+  int set_mode(int mode);
+  friend class Ambience;
+ protected:
+  uint8_t field_54_; // Original clears exactly one byte, leaving55..57 alone.
 };
-

@@ -66,7 +66,7 @@ def test_bank_has_typed_effect_array_and_compiler_owned_callbacks(family):
         layout = class_layout(obj, "FX")
         assert check_member(requirement, layout)["result"] == "pass"
         assert layout["size"] == 0x28F0
-        assert layout["members"] == {"effects_": 0, "field_28EC_": 0x28EC}
+        assert layout["members"] == {"effects_": 0, "engine_effect_index_": 0x28EC}
         assert layout["member_types"]["effects_"] == {
             "kind": "array", "target": {"kind": "class_value", "class": "Effect"},
             "size": 97 * 108, "element_size": 108, "count": 97}

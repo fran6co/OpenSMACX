@@ -22,6 +22,7 @@
 #include "popup.h"
 #include "wave.h"
 #include "fx.h"
+#include "ambience.h"
 #include "win.h"
 #include "spritebox.h"
 #include "net_class.h"
@@ -736,10 +737,7 @@ void __cdecl popup_wave_callback(BasePopTextBlock *popup, int) {
         }
     }
     if (popup->field_104_ == 0x19) {
-        void *const owner = PopupWaveOwnerSlot();
-        if (owner) {
-            (ORIGINAL(owner)->*original_method<void (OriginalObject::*)() >(*reinterpret_cast<unsigned long *>(*reinterpret_cast<uint8_t **>(owner) + 0x138)))();
-        }
+        if (FactionMusic) FactionMusic->general();
     }
     if (popup->field_104_ == 0x10) {
         g_FX.FX::play(0x38);
