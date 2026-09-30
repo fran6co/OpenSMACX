@@ -1,0 +1,27 @@
+{
+  "event_id": "9e2e0606c3345e58750769a0dcbf33d80a4c183713e702f856f95af7b18ab9a7",
+  "payload": {
+    "affects": [
+      "entity-31b9c33c8f0ae8548a00d4733b1efe9c0fe01f23d4e4c93637c8d47b07ca427d",
+      "entity-35fb1b969e3014f567ef996053f56f99efdfe90ca0f9d65e040874bb5c74b675",
+      "entity-6bcae07d22ba026f4398beb1d1f5b389935c85668752dcadea2e2e99b69568ed",
+      "entity-82761045a40b62d82c60740fa500d22760704f2ecc31e44583b3d76876d10704",
+      "entity-8428f88f92c7e1728ced00edd87bafcefa44a949c2c43875f26f545bf78bb583",
+      "entity-88f6fa2be93084f7685562357faf98301af9bbaead6e3c50a02ad7b5604d7714"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "interlude-owner-lifetime-closure",
+    "evidence": [
+      "source:src/unrecovered/005230e0.cpp defines fake vtable-plus-int InterludeRunResult for a call to4066C0. source:src/stringlist.cpp maps4066C0 to real StringList::~StringList, so that seed interpretation cannot be treated as source behavior.",
+      "source:src/hypothesis_layouts.h Interlude currently uses graphicWin_[0xA14] and buffer_[0x588] opaque storage; source:src/stringstruct.cpp close45F640 uses raw offsets/vtable shim; source:src/pending_bodies.cpp destructor45F740 is an executable-address forwarder. These are coupled structural debts, not proper recovered hierarchy/lifetime.",
+      "Only faction.cpp/h currently editable; this finding preserves outside owner work for an explicit coupled task, not permission to add a no-op or original-address bridge."
+    ],
+    "hypothesis": "Faction elimination requires a real interlude owner/lifetime closure, not the seed fake InterludeRunResult or existing opaque layout and raw teardown. Constructor, exec, destructor, close and coupled StringList/Buffer lifetimes must be recovered together.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "interlude-owner-lifetime-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:faction-lifecycle-owner-closure"
+}
