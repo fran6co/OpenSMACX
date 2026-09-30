@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
+#include "maininterface.h"  // MainInterfaceGlobal and shared interface storage
 #include "spot.h"
 #include "font.h"
 #include "flatbutton.h"
@@ -35,7 +35,11 @@
   * The methods below ignore their arguments and return a constant, which is
   * why they can be replaced ahead of that mapping.
   */
-class CouncWin : public GraphicWin, public IfaceRegistryEntry {
+// RECOVERY_BASE: v1 CouncWin SubInterface 0xA14 0x00428620
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066AA94 ? ??_7CouncWin@@6B@ 0x00428620
+class CouncWin : public GraphicWin, public SubInterface {
  public:
   // The seed at 0x00427150 is catalogued as `int CouncWin::hide()`, but
   // Win already owns virtual `void hide()`. These signatures differ only by
@@ -81,13 +85,17 @@ class CouncWin : public GraphicWin, public IfaceRegistryEntry {
   // Its own table (0x66AA94) holds 0x00404260 - the three-byte `ret 8` every
   // window shares - at slots 1, 2 and 6, and 0x00404250 / 0x00404240 - the
   // two constant-return no-ops - at 14, 17 and 18. Slots 6, 17 and 18 are
-  // IfaceRegistryEntry's own definitions and need nothing here; slots 1, 2
-  // and 14 are PURE up there, so CouncWin has to name them to be concrete.
+  // These are concrete SubInterface slots; CouncWin names its shared-stub
+  // slots here so the actual table has the measured targets.
   // VC6 folds the three bodies to the same bytes the shared COMDATs carry,
   // which is what the image's single address per shape is.
-  void on_iface_scrolled(int, int) {}
-  void on_iface_scrolling(int, int) {}
-  int on_iface_button_pressed(int) { return 0; }
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  void on_iface_left_up(int, int) override;
+  int on_iface_button_pressed(int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
 
   // Slot 0 - 0x00426FA0, 180 bytes. The interface-mode entry point: mode
   // nonzero shows the council pane and mode zero tears it down.

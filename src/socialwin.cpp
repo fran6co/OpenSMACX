@@ -32,6 +32,10 @@
 #include "mapwin.h"   // MainInterfaceGlobal, at 0x007AE820
 #include "tutwin.h"
 
+void __cdecl social_set(uint32_t faction_id);
+extern int BreakthroughTurnsGlobal;
+extern int NetIncomeGlobal;
+
 void __fastcall SocialWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
 void __fastcall SocialWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
 void __fastcall SocialWinCheckButtonCtor(void *self) { reinterpret_cast<CheckButton *>(self)->CheckButton::CheckButton(); }
@@ -151,13 +155,14 @@ void SocialWin::UNK3() {
 // part of the shared SubInterface hierarchy recovery.
 // ORIGINAL: 0x004B2210 ?on_iface_left_click@SocialWin@@QAEHHH@Z 0x004B2210-0x004B221D BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["Original4B2210 loads8C6E68 and calls4BDDE0, then returns with8bytes callee cleanup. Neither coordinate is read. Table66DA50 slot3 identifies the secondary-interface callback; the current incomplete SubInterface contract still needs coordinated repair.", "The catalogued int return forwards incidental EAX from reset; interface slot3 callers do not consume it and the family contract is void(int,int). Preserve the seed identity and original exact obligation while publishing the compiler-observed source symbol."], "reason": "Home the tutorial-dismissal interface handler on SocialWin using the real process-lifetime TutorialWindow and recovered reset service."}
-// symbol    ?on_iface_left_click@SocialWin@@QAEXHH@Z
+// symbol    ?on_iface_left_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_iface_left_click(int, int) {
     TutorialWindow.reset();
 }
 
 // ORIGINAL: 0x004B2220 ?on_iface_right_click@SocialWin@@QAEXHH@Z 0x004B2220-0x004B23FA
 // RECOVERY_BINDING: v1 {"evidence": ["Original4B2220..4B23FA first resets TutorialWindow then tests interface-relative1E84C/1E85C/1E86C/1E83C, which are complete-object rectangles1F260/1F270/1F280/1F250. Labels.strings_ptr offsetsD24/D28/D2C/D1C select labels841/842/843/839; first match wins.", "Original4B2256/59 swaps argument stack contents before passing their reversed slot addresses to MainInterfaceGlobal.client_to_screen; this preserves logical x/y rather than the swapped coordinates in the seed. Every matching path constructs a degenerate screen rectangle and calls set_bubble_text on7AE820; no match only dismisses the tutorial."], "reason": "Recover social-panel tooltip selection with genuine rectangle members, label storage and the main-interface window receiver."}
+// symbol    ?on_iface_right_click@SocialWin@@UAEXHH@Z
 void SocialWin::on_iface_right_click(int x, int y) {
     TutorialWindow.reset();
     int label;
@@ -244,6 +249,7 @@ void SocialWin::close() {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004B2400 ?on_iface_left_down@SocialWin@@QAEXHH@Z 0x004B2400-0x004B2403 BYTE_EXACT
+// symbol    ?on_iface_left_down@SocialWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_down@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
@@ -260,6 +266,7 @@ void SocialWin::on_iface_left_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004B2410 ?on_iface_right_down@SocialWin@@QAEXHH@Z 0x004B2410-0x004B2413 BYTE_EXACT
+// symbol    ?on_iface_right_down@SocialWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_down@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
@@ -276,6 +283,7 @@ void SocialWin::on_iface_right_down(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004B2440 ?on_iface_selected@SocialWin@@QAEXHH@Z 0x004B2440-0x004B2443 BYTE_EXACT
+// symbol    ?on_iface_selected@SocialWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_selected@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
@@ -292,6 +300,7 @@ void SocialWin::on_iface_selected(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004B2450 ?on_iface_left_double_click@SocialWin@@QAEXHH@Z 0x004B2450-0x004B2453 BYTE_EXACT
+// symbol    ?on_iface_left_double_click@SocialWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_left_double_click@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
@@ -308,6 +317,7 @@ void SocialWin::on_iface_left_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004B2460 ?on_iface_right_double_click@SocialWin@@QAEXHH@Z 0x004B2460-0x004B2463 BYTE_EXACT
+// symbol    ?on_iface_right_double_click@SocialWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_right_double_click@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
@@ -324,6 +334,7 @@ void SocialWin::on_iface_right_double_click(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004B2670 ?on_iface_button_toggled@SocialWin@@QAEXHH@Z 0x004B2670-0x004B2673 BYTE_EXACT
+// symbol    ?on_iface_button_toggled@SocialWin@@UAEXHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_button_toggled@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   0
@@ -340,6 +351,7 @@ void SocialWin::on_iface_button_toggled(int, int) {
 /*
 Purpose: Unknown; the legacy implementation ignores its arguments and returns.
 // ORIGINAL: 0x004B2680 ?on_iface_group_clicked@SocialWin@@QAEXHHH@Z 0x004B2680-0x004B2683 BYTE_EXACT
+// symbol    ?on_iface_group_clicked@SocialWin@@UAEXHHH@Z
 // size      3 bytes
 // prototype void (__thiscall ?on_iface_group_clicked@SocialWin@@QAEXHHH@Z)(SocialWin* this, int, int, int)
 // callers   0   call targets   0
@@ -350,6 +362,58 @@ Return Value: n/a
 Status: Complete
 */
 void SocialWin::on_iface_group_clicked(int, int, int) {
+}
+
+// ORIGINAL: 0x004B2470 ?on_iface_button_clicked@SocialWin@@QAEXH@Z 0x004B2470-0x004B264E FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004b2470.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x004B2470 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+// symbol    ?on_iface_button_clicked@SocialWin@@UAEXH@Z
+void SocialWin::on_iface_button_clicked(int button_id) {
+    TutWinGlobal->reset();
+
+    int index;
+    int delta;
+    switch (button_id) {
+    case 0x1D: index = 0; delta = -1; break;
+    case 0x1E: index = 0; delta = 1; break;
+    case 0x1F: index = 2; delta = -1; break;
+    case 0x20: index = 2; delta = 1; break;
+    case 0x21: index = 1; delta = -1; break;
+    case 0x22: index = 1; delta = 1; break;
+    default: return;
+    }
+
+    uint32_t *allocations[3] = {
+        &economyAlloc3_, &psychAlloc3_, &labsAlloc3_
+    };
+    uint32_t &allocation = *allocations[index];
+    const int limit = energy_limit(static_cast<int>(factionID_));
+    allocation = static_cast<uint32_t>(static_cast<int>(allocation) + delta);
+    if (static_cast<int>(allocation) < 0) allocation = 0;
+    if (static_cast<int>(allocation) > limit) {
+        field_2C5C_ = 1;
+        allocation = static_cast<uint32_t>(limit);
+    }
+
+    allocate_energy(index, static_cast<int>(allocation));
+
+    economyAlloc3_ = economyAllocPending_;
+    psychAlloc3_ = psychAllocPending_;
+    labsAlloc3_ = labsAllocPending_;
+
+    PlayerData &player = PlayersData[factionID_];
+    player.se_alloc_psych = static_cast<int>(psychAllocPending_);
+    player.se_alloc_labs = static_cast<int>(labsAllocPending_);
+    social_set(factionID_);
+
+    social_calc(&socCategory_, &socEffect_, factionID_, 0, 0);
+    social_calc(&socCategory_, &player.soc_effect_pending, factionID_, 0, 0);
+    energy_compute(factionID_, 1);
+
+    breakthroughTurns_ = BreakthroughTurnsGlobal;
+    netIncome_ = NetIncomeGlobal;
+    social_calc(&player.soc_category_pending, &player.soc_effect_pending,
+                factionID_, 0, 0);
+    redraw();
 }
 
 
@@ -363,6 +427,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
 // ORIGINAL: 0x004B2420 ?on_iface_mouse_move@SocialWin@@QAEXHH@Z 0x004B2420-0x004B242D BYTE_EXACT
+// symbol    ?on_iface_mouse_move@SocialWin@@UAEXHH@Z
 // size      13 bytes
 // prototype void (__thiscall ?on_iface_mouse_move@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   1
@@ -388,6 +453,7 @@ Purpose: Dismiss the bubble text when the pointer leaves. The whole body is two
          bubble between them - which is why the fixture re-arms it rather than
          asserting a single refresh and calling that agreement.
 // ORIGINAL: 0x004B2430 ?on_iface_mouse_leave@SocialWin@@QAEXHH@Z 0x004B2430-0x004B243D BYTE_EXACT
+// symbol    ?on_iface_mouse_leave@SocialWin@@UAEXHH@Z
 // size      13 bytes
 // prototype void (__thiscall ?on_iface_mouse_leave@SocialWin@@QAEXHH@Z)(SocialWin* this, int, int)
 // callers   0   call targets   1
@@ -2871,4 +2937,32 @@ void SocialWin::init(int faction_id) {
         set_modal(0, pop_wait, &MainInterfaceGlobal);
         release_iface_mode();
     }
+}
+
+// Original interface table 0x0066DA50 slot 1 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@SocialWin@@UAEXHH@Z 0x004B2120
+void SocialWin::on_iface_scrolled(int, int) {}
+// Original interface table 0x0066DA50 slot 2 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@SocialWin@@UAEXHH@Z 0x004B2120
+void SocialWin::on_iface_scrolling(int, int) {}
+// Original interface table 0x0066DA50 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@SocialWin@@UAEXHH@Z 0x004B2120
+void SocialWin::on_iface_left_up(int, int) {}
+
+// Original interface table 0x0066DA50 slot 14 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@SocialWin@@UAEHH@Z 0x004B2120
+int SocialWin::on_iface_button_pressed(int) {
+    return 0;
+}
+
+// Original interface table 0x0066DA50 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@SocialWin@@UAEHPAVGraphicWin@@@Z 0x004B2120
+int SocialWin::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066DA50 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@SocialWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x004B2120
+int SocialWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
 }

@@ -29,19 +29,18 @@
 
 #include "original_seam.h"
 #include "graphicwin.h"
-#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
+#include "maininterface.h"  // MainInterfaceGlobal and shared interface storage
 #include "subinterface.h"
 
  /*
   * BaseWin class
   *
-  * Derives from GraphicWin in the original by ordinary single inheritance -
-  * its constructor calls GraphicWin's on an unadjusted `this` - so unlike the
-  * virtually-derived windows this one is written as the original wrote it and
-  * needs no ABI workaround.
+ * ConstructedGraphicWin is the primary window base at zero; SubInterface is
+ * its real secondary base at +0xA14. Both use ordinary multiple inheritance,
+ * with no registry wrapper or hand-built vtable.
   *
-  * DERIVED 2026-09-06 from IfaceRegistryEntry, and the +0xA14 subobject is
-  * what was asking for it. ??0BaseWin@@QAE@XZ writes the all-pure base table
+ * DERIVED 2026-09-06 directly from SubInterface, as the +0xA14 subobject
+ * requires. ??0BaseWin@@QAE@XZ writes the all-pure base table
   * 0x66A6E4 at +0xA14 (0x004084C1) and then overwrites it with BaseWin's own
   * nineteen-entry interface table 0x66A3B8 - the base-then-derived pair only
   * a polymorphic base produces - exactly as MainInterface, CouncWin,
@@ -73,7 +72,11 @@
 extern const int BaseRadiusOffsetX[21];  // 0x0066A1A0
 extern const int BaseRadiusOffsetY[21];  // 0x0066A1F4
 
-class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
+// RECOVERY_BASE: v1 BaseWin SubInterface 0xA14 0x00408490
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066A3B8 ? ??_7BaseWin@@6B@ 0x00408490
+class BaseWin : public ConstructedGraphicWin, public SubInterface {
  public:
   // homed from 004103b0.cpp
   void draw_garrison(int a1);
@@ -277,11 +280,14 @@ class BaseWin : public ConstructedGraphicWin, public IfaceRegistryEntry {
   // BattleWin's header spells the same situation. Slot 14 is 0x00404250
   // (`xor eax,eax; ret 4`) and slot 16 is 0x00406B20 (`ret 0xc`) - VC6 folds
   // both bodies to the shared COMDATs the other windows' tables carry. Slots
-  // 17 and 18 are IfaceRegistryEntry's own definitions and need nothing here;
+  // 17 and 18 are concrete SubInterface slots and use measured shared stubs;
   // slot 6 is its definition too, but BaseWin overrides it with
   // on_iface_left_up above, which is what its own table holds there.
-  int on_iface_button_pressed(int) { return 0; }         // slot 14 0x00404250
-  void on_iface_group_clicked(int, int, int) {}          // slot 16 0x00406B20
+  int on_iface_button_pressed(int) override; // slot 14 0x00404250
+  void on_iface_group_clicked(int, int, int) override;  // slot 16 0x00406B20
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
   // Slot 15 - 0x0041E530, 33 bytes. A FORWARDING DISPATCH: `mov eax,[ecx -
   // 0xa14] / add ecx,-0xa14 / call [eax+0xb4]` is the FRONT vtable's slot 45
   // with the receiver stepped back to the GraphicWin, and 0x0041B4E0 - the

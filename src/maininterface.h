@@ -52,11 +52,10 @@ extern int ChatShadowColors[8];
  *   puts Spot.
  *
  *   The INNER receiver is the SubInterface subobject at front+0xA14, which
- *   is where subinterface.h puts it for the eight window classes and which
- *   is the type the 12-slot registry at 0x007AE7F0 holds. It OVERLAPS the
- *   two dwords field_A14_ and field_A18_ that stand in the class below:
- *   SubInterface is vptr plus one dword, exactly eight bytes, so declaring
- *   the base instead of the two members would move nothing after them.
+ *   is the placement established by this object's constructor and the
+ *   type the 12-slot registry at 0x007AE7F0 holds. Its vfptr and state word
+ *   occupy the former field_A14_ and field_A18_ stand-ins: the real base
+ *   is eight bytes, so subsequent members retain their front offsets.
  *   redraw_complete proves the overlap from the other side - it compares
  *   `dword ptr [0x7AF238]` against 0xA, and 0x7AF238 is front+0xA18, the
  *   SubInterface dword the interface-mode methods read and write.
@@ -74,8 +73,8 @@ extern int ChatShadowColors[8];
  *   The body reads its own members base-relative, the secondary vftable holds
  *   the override's raw address, and no adjustor thunk is emitted - probed
  *   against cl 12.00.8168 under /O2 /Gy /GR- /GX. MainInterface therefore
- *   derives from IfaceRegistryEntry (below), the family overrides its slots,
- *   and every offset in the class is unchanged: 0xA14 + 8 == 0xA1C, exactly
+ *   derives directly from SubInterface, the real nineteen-slot base declared
+ *   below; every offset in the class is unchanged: 0xA14 + 8 == 0xA1C, exactly
  *   where field_A14_ and field_A18_ used to sit. on_iface_mouse_leave is
  *   BYTE_EXACT homed on it, `iface_redraw_pending_` compiling to
  *   `[esi+0x20CD8]` and `redraw_complete()` to `lea ecx,[esi-0xA14]`.
@@ -85,70 +84,20 @@ extern int ChatShadowColors[8];
  *   0x404250, 0x404240) in every window's table - so this is the pattern for
  *   the other seven windows, not a MainInterface special case.
  *
- * WHAT IS DECLARED HERE AND WHY. IfaceRegistryEntry below carries the nineteen
- * slots, so the registry dispatch - the image's `mov edx,[ecx] / call dword
+ * WHAT IS DECLARED HERE AND WHY. SubInterface below carries the nineteen
+ * pure slots, so registry dispatch - the image's `mov edx,[ecx] / call dword
  * ptr [edx+0x34]` - is a call by name and the VCall shims it stood in for are
  * gone. The slots MainInterface implements are pure, which is what the image's
  * own base table (0x66A6E4, nineteen consecutive __purecall slots) says they
  * are. Direct calls to a virtual callback use explicit C++ qualification;
  * virtuality must not be suppressed to protect a caller's spelling.
  */
-class IfaceRegistryEntry : public SubInterface {
- public:
-  // Slots 1..18 of the interface table. Slot 0 is SubInterface's. The names
-  // are the MainInterface methods the table at 0x66C544 points at, slot for
-  // slot. The bodies that ARE defined here are the shared no-ops every
-  // window's table carries at those slots (0x404260, 0x404250, 0x404240) - a
-  // window that does not implement the event gets exactly these - plus
-  // on_iface_selected and on_iface_left_double_click, whose MainInterface
-  // bodies touch no member and are byte-exact right here.
-  //
-  // The rest are PURE, and that is not a convenience: the image's own base
-  // table (0x66A6E4, the one ten constructors install) is nineteen consecutive
-  // __purecall slots, which is what an abstract interface's vftable is. It
-  // also keeps the linker honest - a window that forgets to implement one of
-  // these does not link, rather than silently inheriting a no-op - and it
-  // keeps VC6's key-function rule from pinning this vtable to a TU that never
-  // defines its key.
-  virtual void on_status(int mode) = 0;          // slot 0  0x45CA40
-  virtual void on_iface_scrolled(int, int) = 0;      // slot 1  0x45CC80
-  virtual void on_iface_scrolling(int, int) = 0;     // slot 2  0x45CC90
-  virtual void on_iface_left_click(int, int) = 0;    // slot 3  0x45CDC0
-  virtual void on_iface_right_click(int, int) = 0;   // slot 4  0x45CE80
-  virtual void on_iface_left_down(int, int) = 0;     // slot 5  0x45CF40
-  // Slot 6 carries a NAME, not a vslot_N placeholder, and BaseWin is why.
-  // Its own table (0x66A3B8) holds ?on_iface_left_up@BaseWin@@QAEXHH@Z at
-  // 0x18 - slot 6 - where every other window's table holds the shared `ret 8`
-  // this definition spells. Slot 5 is on_iface_left_down, so the pair is the
-  // interface's left-button press/release, and the name is the image's own.
-  // Renamed from `vslot_06` 2026-09-06: no derived class had ever overridden
-  // the slot (MainInterface, CouncWin, BattleWin, DesignWin and DiploPop all
-  // leave 0x404260 there), so the rename moves no body and gives BaseWin's
-  // override its real name instead of a second spelling of it.
-  virtual void on_iface_left_up(int, int) {}     // slot 6  0x404260, shared ret 8
-  virtual void on_iface_right_down(int, int) = 0;    // slot 7  0x45CF80
-  virtual void on_iface_mouse_move(int, int) = 0;    // slot 8  0x45D000
-  virtual void on_iface_mouse_leave(int, int) = 0;   // slot 9  0x45D110
-  virtual void on_iface_selected(int, int);      // slot 10 0x45D140
-  virtual void on_iface_left_double_click(int, int);   // slot 11 0x45CD80
-  virtual void on_iface_right_double_click(int, int) = 0;  // 12 0x45CDB0
-  // Slot13 is the real button-click callback. BattleWin's original direct
-  // call is preserved through explicit MainInterface qualification.
-  virtual void on_iface_button_clicked(int button_id) = 0;
-  virtual int on_iface_button_pressed(int button_id) = 0;  // 14 0x45D160
-  virtual void on_iface_button_toggled(int, int) = 0;      // 15 0x45CCA0
-  virtual void on_iface_group_clicked(int, int, int) = 0;  // 16 0x45CCB0
-  // Secondary callbacks are distinct from the primary Win dispatchers.
-  // Original66C588/66C58C contain404250(ret4)/404240(ret16), returning zero.
-  virtual int on_iface_dialog_back_draw(GraphicWin *) { return 0; }
-  virtual int on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) { return 0; }
-};
-
 // The 12 interface-mode slots at 0x007AE7F0, each either null or a live
 // SubInterface subobject; delete_iface_mode (0x0045D2E0) walks the table
 // zeroing the slot that matches its own `this`. The registry, the id-to-slot
 // map at 0x007AE778 and active id at 0x007D392C have source-owned storage
-// in maininterface.cpp. The adjacent interface registry remains transitional.
+// in maininterface.cpp. The registry is a typed run of real SubInterface
+// subobjects; no extra registry-entry wrapper owns or adjusts its callbacks.
 extern int IfaceIdToSlotStorage[30];  // 0x007AE778, before registry at 0x007AE7F0
 extern int ActiveIfaceIdStorage;      // 0x007D392C
 extern SubInterface *InterfaceRegistry[12];
@@ -157,7 +106,11 @@ void register_iface_mode(int slot, SubInterface *interface_entry);
  /*
   * MainInterface class
   */
-class MainInterface : public GraphicWin, public IfaceRegistryEntry {
+// RECOVERY_BASE: v1 MainInterface SubInterface 0xA14 0x0045EF10
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066C544 ? ??_7MainInterface@@6B@ 0x0045EF10
+class MainInterface : public GraphicWin, public SubInterface {
   friend class BaseWin;  // draw_garrison uses the adjacent panel rectangles.
   friend class WorldWin;  // UNK1 copies the owned tutorial rectangle.
   // MessageWin::init copies the pane bounds at +0xD1C..+0xD28 into its
@@ -294,14 +247,14 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   // The first is switched on, the second is kept - a code and a position.
   void on_iface_scrolled(int code, int pos);
   void on_iface_scrolling(int a1, int a2);
+  void on_iface_left_up(int, int) override;
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
-  // on_iface_left_double_click (0x0045CD80) and on_iface_selected
-  // (0x0045D140) are NOT declared here: both bodies touch no member, so they
-  // are byte-exact as IfaceRegistryEntry's own definitions further up this
-  // header, and declaring them here would only move them without changing a
-  // byte. Every other slot MainInterface implements IS declared here, because
-  // an override is what makes the entry's slot link.
+  void on_iface_selected(int, int) override;
+  void on_iface_left_double_click(int, int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
   // 0x0045CA40, secondary slot0: show/hide owned interface controls.
   void on_status(int a1);
   int on_iface_button_pressed(int a1);
@@ -335,9 +288,9 @@ class MainInterface : public GraphicWin, public IfaceRegistryEntry {
   ButtonGroup &button_group(int index) { return button_group_[index]; }
 
  private:
-  // 0xA14 is the IfaceRegistryEntry base - its SubInterface vptr and its one
-  // dword, exactly the eight bytes field_A14_ and field_A18_ used to stand
-  // in for. MEASURED 2026-09-05, and the earlier revert's second reason was
+  // 0xA14 is the real SubInterface base - its vptr and one dword occupy
+  // exactly the eight bytes field_A14_ and field_A18_ used to stand in for.
+  // MEASURED 2026-09-05, and the earlier revert's second reason was
   // WRONG. Probing cl 12.00.8168 (/O2 /Gy /GR- /GX) with a GraphicWin-sized
   // first base and a secondary base carrying the nineteen slots: a derived
   // override of a SECONDARY base's virtual is compiled with the BASE

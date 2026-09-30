@@ -733,3 +733,31 @@ Status: Complete
 // base's all-pure table (0x66A6E4) first and CouncWin's own (0x66AA94) last.
 CouncWin::CouncWin() {
 }
+
+// Original interface table 0x0066AA94 slot 1 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@CouncWin@@UAEXHH@Z 0x00426FA0
+void CouncWin::on_iface_scrolled(int, int) {}
+// Original interface table 0x0066AA94 slot 2 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@CouncWin@@UAEXHH@Z 0x00426FA0
+void CouncWin::on_iface_scrolling(int, int) {}
+// Original interface table 0x0066AA94 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@CouncWin@@UAEXHH@Z 0x00426FA0
+void CouncWin::on_iface_left_up(int, int) {}
+
+// Original interface table 0x0066AA94 slot 14 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@CouncWin@@UAEHH@Z 0x00426FA0
+int CouncWin::on_iface_button_pressed(int) {
+    return 0;
+}
+
+// Original interface table 0x0066AA94 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@CouncWin@@UAEHPAVGraphicWin@@@Z 0x00426FA0
+int CouncWin::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066AA94 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@CouncWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00426FA0
+int CouncWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
+}

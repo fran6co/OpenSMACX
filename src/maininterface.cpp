@@ -824,7 +824,7 @@ int MainInterface::on_iface_button_pressed(int) {
 }
 
 // ORIGINAL: 0x0045CD80 ?on_iface_left_double_click@MainInterface@@QAEXHH@Z 0x0045CD80-0x0045CDB0 BYTE_EXACT
-// symbol    ?on_iface_left_double_click@IfaceRegistryEntry@@UAEXHH@Z
+// symbol    ?on_iface_left_double_click@MainInterface@@UAEXHH@Z
 // Original boundary evidence: the return at 0x0045CDAD ends at 0x0045CDB0;
 // the separate right-double-click entry at 0x0045CDB0 has its own return.
 // The former exclusive end 0x0045CDB1 cut into that next instruction.
@@ -839,7 +839,7 @@ int MainInterface::on_iface_button_pressed(int) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004B8990 0x005FA7E0
-void IfaceRegistryEntry::on_iface_left_double_click(int x, int y) {
+void MainInterface::on_iface_left_double_click(int x, int y) {
     if (in_box(x, y, &MainInterfaceGlobal.status_hit_rect())) {
         ConsoleStatusWin.on_left_double_click(x, y);
     }
@@ -1285,7 +1285,7 @@ bool __cdecl active_interface_slot_occupied() {
 // reach it by its address, `mov ecx, 0x7f67f8` before the call.
 
 // ORIGINAL: 0x0045D140 ?on_iface_selected@MainInterface@@QAEXHH@Z 0x0045D140-0x0045D159 BYTE_EXACT
-// symbol    ?on_iface_selected@IfaceRegistryEntry@@UAEXHH@Z
+// symbol    ?on_iface_selected@MainInterface@@UAEXHH@Z
 // LEVER: 2026-09-05 homed from 0045d140.cpp once InterfaceMessageWin became a
 //   real global (messagewin.h / messagewin.cpp). The body is one line - the
 //   handoff to the desktop's MessageWin - and the receiver never touches its
@@ -1303,7 +1303,7 @@ bool __cdecl active_interface_slot_occupied() {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // calls     0x004718C0
-void IfaceRegistryEntry::on_iface_selected(int code, int mode) {
+void MainInterface::on_iface_selected(int code, int mode) {
     InterfaceMessageWin.on_selected(code, mode);
 }
 
@@ -1386,8 +1386,7 @@ void MainInterface::on_scrolling(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
+        SubInterface *target = InterfaceRegistry[subindex];
         if (target != 0) {
             target->on_iface_scrolling(a1, a2);
         }
@@ -1463,8 +1462,7 @@ void MainInterface::on_left_double_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
+        SubInterface *target = InterfaceRegistry[subindex];
         if (target != 0) {
             target->on_iface_left_double_click(a1, a2);
         }
@@ -1537,8 +1535,7 @@ void MainInterface::on_left_double_click(int a1, int a2) {
 void MainInterface::on_right_double_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
+        SubInterface *target = InterfaceRegistry[interface_index];
         if (target != 0) {
             target->on_iface_right_double_click(a1, a2);
         }
@@ -1611,8 +1608,7 @@ void MainInterface::on_right_double_click(int a1, int a2) {
 void MainInterface::on_left_up(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[group];
+        SubInterface *target = InterfaceRegistry[group];
         if (target) {
             target->on_iface_left_up(a1, a2);
         }
@@ -1687,8 +1683,7 @@ void MainInterface::on_left_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
+        SubInterface *target = InterfaceRegistry[subindex];
         if (target != 0) {
             target->on_iface_left_click(a1, a2);
         }
@@ -1761,8 +1756,7 @@ void MainInterface::on_left_click(int a1, int a2) {
 void MainInterface::on_right_click(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
+        SubInterface *target = InterfaceRegistry[interface_index];
         if (target != 0) {
             target->on_iface_right_click(a1, a2);
         }
@@ -1835,8 +1829,7 @@ void MainInterface::on_right_click(int a1, int a2) {
 void MainInterface::on_left_down(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[group];
+        SubInterface *target = InterfaceRegistry[group];
         if (target) {
             target->on_iface_left_down(a1, a2);
         }
@@ -1909,8 +1902,7 @@ void MainInterface::on_right_down(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
+        SubInterface *target = InterfaceRegistry[subindex];
         if (target != 0) {
             target->on_iface_right_click(a1, a2);
         }
@@ -1987,8 +1979,7 @@ int MainInterface::on_button_pressed(int a1) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index1 = ActiveIfaceIdStorage;
         int index2 = IfaceIdToSlotStorage[index1];
-        IfaceRegistryEntry *obj =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[index2];
+        SubInterface *obj = InterfaceRegistry[index2];
         if (obj != 0) {
             return obj->on_iface_button_pressed(a1);
         }
@@ -2068,8 +2059,7 @@ int MainInterface::on_button_pressed(int a1) {
 void MainInterface::on_button_toggled(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
+        SubInterface *target = InterfaceRegistry[interface_index];
         if (target != 0) {
             target->on_iface_button_toggled(a1, a2);
         }
@@ -2144,8 +2134,7 @@ void MainInterface::on_button_toggled(int a1, int a2) {
 int MainInterface::on_dialog_back_draw(GraphicWin* a1) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index2 = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *obj =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[index2];
+        SubInterface *obj = InterfaceRegistry[index2];
         if (obj != 0) {
             return obj->on_iface_dialog_back_draw(a1);
         }
@@ -2221,8 +2210,7 @@ int MainInterface::on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT
     if (WorldClimateSkipTerrainClear != 1u) {
         int idx1 = ActiveIfaceIdStorage;
         int idx2 = IfaceIdToSlotStorage[idx1];
-        IfaceRegistryEntry *obj =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[idx2];
+        SubInterface *obj = InterfaceRegistry[idx2];
         if (obj != 0) {
             return obj->on_iface_dialog_item_back_draw(a1, a2, a3, a4);
         }
@@ -2250,7 +2238,7 @@ int MainInterface::on_dialog_item_back_draw(GraphicWin* a1, int a2, int a3, RECT
 void MainInterface::on_mouse_move(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int mid = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *obj = reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[mid];
+        SubInterface *obj = InterfaceRegistry[mid];
         if (obj != 0) {
             obj->on_iface_mouse_move(a1, a2);
         }
@@ -2322,8 +2310,7 @@ void MainInterface::on_mouse_move(int a1, int a2) {
 
 void MainInterface::on_group_clicked(int a1, int a2, int a3) {
     if (WorldClimateSkipTerrainClear != 1u) {
-        IfaceRegistryEntry *target = reinterpret_cast<IfaceRegistryEntry **>(
-            InterfaceRegistry)[IfaceIdToSlotStorage[ActiveIfaceIdStorage]];
+        SubInterface *target = InterfaceRegistry[IfaceIdToSlotStorage[ActiveIfaceIdStorage]];
         if (target != 0) {
             target->on_iface_group_clicked(a1, a2, a3);
         }
@@ -2352,8 +2339,7 @@ void MainInterface::on_mouse_leave(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
+        SubInterface *target = InterfaceRegistry[subindex];
         if (target != 0) {
             target->on_iface_mouse_leave(a1, a2);
         }
@@ -2426,8 +2412,7 @@ void MainInterface::on_mouse_leave(int a1, int a2) {
 void MainInterface::on_selected(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int interface_index = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[interface_index];
+        SubInterface *target = InterfaceRegistry[interface_index];
         if (target != 0) {
             target->on_iface_selected(a1, a2);
         }
@@ -2527,8 +2512,7 @@ void MainInterface::set_alert(int a1) {
 void MainInterface::on_scrolled(int a1, int a2) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int group = IfaceIdToSlotStorage[ActiveIfaceIdStorage];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[group];
+        SubInterface *target = InterfaceRegistry[group];
         if (target) {
             target->on_iface_scrolled(a1, a2);
         }
@@ -2605,10 +2589,26 @@ void MainInterface::on_button_clicked(int a1) {
     if (WorldClimateSkipTerrainClear != 1u) {
         int index = ActiveIfaceIdStorage;
         int subindex = IfaceIdToSlotStorage[index];
-        IfaceRegistryEntry *target =
-            reinterpret_cast<IfaceRegistryEntry **>(InterfaceRegistry)[subindex];
+        SubInterface *target = InterfaceRegistry[subindex];
         if (target != 0) {
             target->on_iface_button_clicked(a1);
         }
     }
+}
+
+// Original interface table 0x0066C544 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@MainInterface@@UAEXHH@Z 0x0045CA40
+void MainInterface::on_iface_left_up(int, int) {}
+
+// Original interface table 0x0066C544 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@MainInterface@@UAEHPAVGraphicWin@@@Z 0x0045CA40
+int MainInterface::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066C544 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@MainInterface@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x0045CA40
+int MainInterface::on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                                   RECT *) {
+    return 0;
 }

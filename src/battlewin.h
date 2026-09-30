@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
+#include "maininterface.h"  // MainInterfaceGlobal and shared interface storage
 #include "subinterface.h"
 #include "time.h"
 
@@ -29,29 +29,37 @@
   * only at which constructor ran first and not at whether `this` had been
   * adjusted before it.
   *
-  * DERIVED 2026-09-06 from IfaceRegistryEntry, and the derivation is what the
-  * constructor's second vftable store was asking for: ??0BattleWin writes the
-  * all-pure base table 0x66A6E4 at +0, builds the Time member, then
+  * DERIVED 2026-09-06 from the real SubInterface base, and the derivation is
+  * what the constructor's second vftable store was asking for: ??0BattleWin
+  * writes the all-pure base table 0x66A6E4 at +0, builds the Time member, then
   * overwrites +0 with BattleWin's own nineteen-entry table 0x66AA44 - the
   * base-then-derived pair only a polymorphic base produces. The interface
   * base is 8 bytes here rather than at +0xA14, because BattleWin has no
-  * GraphicWin front: it is the registry entry, and the Time follows it.
+  * GraphicWin front; the Time follows the interface subobject.
   *
   * The layout is not established beyond the static_assert below.
 */
-class BattleWin : public IfaceRegistryEntry {
+// RECOVERY_BASE: v1 BattleWin SubInterface 0x0 0x00422EE0
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066AA44 ? ??_7BattleWin@@6B@ 0x00422EE0
+class BattleWin : public SubInterface {
  public:
   // The interface table, slot for slot against 0x66AA44. Slots 1, 2, 6, 11,
   // 12, 14, 15, 17 and 18 hold the shared no-ops every window carries
   // (0x00404260 / 0x00404250 / 0x00404240); 6, 17 and 18 are
-  // IfaceRegistryEntry's own definitions and need nothing here, the rest are
-  // pure up there and BattleWin has to name them to be concrete.
-  void on_iface_scrolled(int, int) {}
-  void on_iface_scrolling(int, int) {}
-  void on_iface_left_double_click(int, int) {}
-  void on_iface_right_double_click(int, int) {}
-  int on_iface_button_pressed(int) { return 0; }
-  void on_iface_button_toggled(int, int) {}
+  // These shared-stub slots are concrete SubInterface slots; BattleWin names
+  // them here so its actual table has the measured targets.
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  void on_iface_left_up(int, int) override;
+  void on_iface_left_double_click(int, int) override;
+  void on_iface_right_double_click(int, int) override;
+  int on_iface_button_pressed(int) override;
+  void on_iface_button_toggled(int, int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
 
   void on_status(int mode);
   void pulse_timer();

@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
+#include "maininterface.h"  // MainInterfaceGlobal and shared interface storage
 #include "time.h"
 #include "font.h"
 #include "graphicwin.h"
@@ -31,7 +31,11 @@
   * Construction at 0x0043EFF0 and destruction at 0x00440D50 establish the
   * member lifetimes below. In particular, 0xA94 is a faction id, not a Time.
   */
-class DiploPop : public GraphicWin, public IfaceRegistryEntry {
+// RECOVERY_BASE: v1 DiploPop SubInterface 0xA14 0x0043EFF0
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066B424 ? ??_7DiploPop@@6B@ 0x0043EFF0
+class DiploPop : public GraphicWin, public SubInterface {
  public:
   // 0x004406D0. `poll` is the Win32 modal-pump callback Win::set_modal stores.
   int set_modal(int flag, int (__cdecl *poll)(), Win *owner);
@@ -56,6 +60,7 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
   void hide();
   DiploPop();
   ~DiploPop();
+  void draw_hq();
   void portrait_anim();
   void bioscan_anim();
   void on_iface_left_click(int, int);
@@ -72,13 +77,17 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
   // ---- the interface table, slot for slot against 0x66B424 ----------------
   // Slots 1, 2, 6, 14, 17 and 18 hold the shared no-ops every window carries
   // (0x00404260 / 0x00404250 / 0x00404240); 6, 17 and 18 are
-  // IfaceRegistryEntry's own definitions and need nothing here, the rest are
-  // pure up there and DiploPop has to name them to be concrete.
-  void on_iface_scrolled(int, int) {}
-  void on_iface_scrolling(int, int) {}
-  int on_iface_button_pressed(int) { return 0; }
+  // Shared-stub SubInterface slots are named here so DiploPop's actual table
+  // contains the measured targets.
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  void on_iface_left_up(int, int) override;
+  int on_iface_button_pressed(int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
   void on_status(int mode);
-  // Slot13, 0x00440550: original-address forwarding remains unfinished.
+  // Slot13, 0x00440550: typed behavior recovered in diplopop.cpp.
   void on_iface_button_clicked(int button_id);
   // Slot 16, 0x00440620.
   void on_iface_group_clicked(int group, int x_coord, int y_coord);
@@ -110,7 +119,8 @@ class DiploPop : public GraphicWin, public IfaceRegistryEntry {
   uint32_t field_20B4_;  // 0x20B4
   uint32_t field_20B8_;  // 0x20B8
   uint32_t field_20BC_;  // 0x20BC
-  uint32_t field_20C0_;  // 0x20C0
+  // Borrowed faction-HQ portrait used by draw_hq; not owned or destroyed.
+  Sprite *hq_sprite_;  // 0x20C0
   uint32_t field_20C4_;  // 0x20C4
   uint32_t field_20C8_;  // 0x20C8
   uint32_t field_20CC_;  // 0x20CC

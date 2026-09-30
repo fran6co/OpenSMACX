@@ -3022,3 +3022,90 @@ int Datalink::on_key_click(int, int key) {
     release_modal();
     return 1;
 }
+
+// The original status receiver is the SubInterface at Datalink+0xA14.
+// The genuine override and named members express that adjustment; the two
+// string panels are real owned StringBoxes, not independently addressed Win
+// stand-ins. Original4320DB..4320FC hides blurb then concept after clearing
+// the history count, before sliding/hiding the main window and entry list.
+void __cdecl slide_show(GraphicWin *, int);
+void __cdecl slide_hide(GraphicWin *, int);
+
+/*
+Purpose: Show or hide the datalink status layer: the topic drawer, the
+         eighteen per-category flat buttons and the entry list all follow
+         the mode, and hiding it also clears the history-slot count.
+// ORIGINAL: 0x00432060 ?on_status@Datalink@@QAEXH@Z 0x00432060-0x00432152 FILE
+// symbol    ?on_status@Datalink@@UAEXH@Z
+// size      242 bytes
+Status: Coverage transcription of the retained seed
+        (src/unrecovered/00432060.cpp), which is BYTE_EXACT in scaffold
+        form and keeps the banked claim until this body measures fresh.
+        Model note, from the seed's own arithmetic: the image's receiver
+        is the window at Datalink+0xA14 - its 0x2020 is field_2A34_,
+        its 0x2028 the topic_buttons_ array (eighteen buttons, stride
+        == sizeof(FlatButton)), and its 0xEC14 is listBox_. The current
+        owner body names these mapped members and the typed blurb_box_ and
+        concept_box_ children; the seed's raw receiver arithmetic is evidence
+        for the member map, not source syntax to reproduce here.
+*/
+void Datalink::on_status(int visible) {
+    if (visible != 0) {
+        on_redraw();
+        slide_show(this, 2);
+        draw_entry();
+        this->Win::show(3);
+
+        FlatButton *entry = topic_buttons_;
+        for (int i = 0; i < 0x12; ++i) {
+            entry->show(0);
+            ++entry;
+        }
+
+        listBox_.show(0);
+        return;
+    }
+
+    field_2A34_ = 0;
+    blurb_box_.hide();
+    concept_box_.hide();
+
+    slide_hide(this, 2);
+    this->Win::hide();
+
+    listBox_.hide();
+
+    FlatButton *entry = topic_buttons_;
+    for (int i = 0; i < 0x12; ++i) {
+        entry->hide();
+        ++entry;
+    }
+}
+
+// Original interface table 0x0066AF30 slot 1 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@Datalink@@UAEXHH@Z 0x00432060
+void Datalink::on_iface_scrolled(int, int) {}
+// Original interface table 0x0066AF30 slot 2 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@Datalink@@UAEXHH@Z 0x00432060
+void Datalink::on_iface_scrolling(int, int) {}
+// Original interface table 0x0066AF30 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@Datalink@@UAEXHH@Z 0x00432060
+void Datalink::on_iface_left_up(int, int) {}
+
+// Original interface table 0x0066AF30 slot 14 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@Datalink@@UAEHH@Z 0x00432060
+int Datalink::on_iface_button_pressed(int) {
+    return 0;
+}
+
+// Original interface table 0x0066AF30 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@Datalink@@UAEHPAVGraphicWin@@@Z 0x00432060
+int Datalink::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066AF30 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@Datalink@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00432060
+int Datalink::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
+}

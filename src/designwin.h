@@ -16,7 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
-#include "maininterface.h"  // IfaceRegistryEntry - the interface-mode base
+#include "maininterface.h"  // MainInterfaceGlobal and shared interface storage
 #include "time.h"
 #include "spot.h"
 #include "font.h"
@@ -44,7 +44,11 @@
   * methods recovered here touch no field, which is why they could be replaced
   * ahead of the mapping.
   */
-class DesignWin : public GraphicWin, public IfaceRegistryEntry {
+// RECOVERY_BASE: v1 DesignWin SubInterface 0xA14 0x00434480
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066B0F4 ? ??_7DesignWin@@6B@ 0x00434480
+class DesignWin : public GraphicWin, public SubInterface {
  public:
   // homed from 0043e960.cpp
   void shut_that_badboy_down();
@@ -123,10 +127,14 @@ class DesignWin : public GraphicWin, public IfaceRegistryEntry {
   // ---- the interface table, slot for slot against 0x66B0F4 ----------------
   // Slots 1, 2, 6, 17 and 18 hold the shared no-ops every window carries
   // (0x00404260 / 0x00404250 / 0x00404240); 6, 17 and 18 are
-  // IfaceRegistryEntry's own definitions and need nothing here, the rest are
-  // pure up there and DesignWin has to name them to be concrete.
-  void on_iface_scrolled(int, int) {}
-  void on_iface_scrolling(int, int) {}
+  // Shared-stub SubInterface slots are named here so DesignWin's actual table
+  // contains the measured targets.
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  void on_iface_left_up(int, int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
   void on_status(int mode);
   void on_iface_left_click(int, int);
   void on_iface_right_click(int, int);

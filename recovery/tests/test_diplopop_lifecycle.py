@@ -107,7 +107,8 @@ void died(char kind,int id,const void *pointer){
 }
 void service(char kind){services.push_back(kind);if(callback)callback(kind);}
 BASE_DECLARATIONS
-struct IfaceRegistryEntry { void release_iface_mode(); };
+struct SubInterface { void release_iface_mode(); };
+struct Sprite;
 struct Font {int id;Font():id(born('F',this)){}~Font(){died('F',id,this);}};
 struct Time {int id;Time():id(born('T',this)){}~Time(){died('T',id,this);}void stop();};
 struct Flic {int id;Flic():id(born('L',this)){}~Flic(){died('L',id,this);}void close();};
@@ -131,7 +132,7 @@ uint32_t GraphicWin::close(){require(this==static_cast<GraphicWin*>(active));ser
 int Win::is_visible(){require(this==static_cast<Win*>(active));service('V');return visible_result;}
 void Win::hide(){require(this==static_cast<Win*>(active));service('H');}
 void Win::show(int argument){require(this==static_cast<Win*>(active)&&argument==0);service('S');}
-void IfaceRegistryEntry::release_iface_mode(){require(this==static_cast<IfaceRegistryEntry*>(active));service('I');}
+void SubInterface::release_iface_mode(){require(this==static_cast<SubInterface*>(active));service('I');}
 void Time::stop(){require(this==&active->time1_||this==&active->time2_);service(this==&active->time1_?'1':'2');}
 void Flic::close(){require(this==&active->flic1_||this==&active->flic2_);service(this==&active->flic1_?'a':'b');}
 METHODS

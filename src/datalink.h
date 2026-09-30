@@ -29,44 +29,11 @@
 #include "subinterface.h"
 
 /*
- * Datalink's interface subobject is the second base at +0xA14. The constructor
- * installs the Datalink interface table at that address after initializing
- * SubInterface's base table, while GraphicWin remains the primary base.
- * Its 19-slot table is recorded in the pinned image at 0x66AF30; see the slot
- * order below. This replaces the two former dword placeholders without moving
- * any following member.
- *
- * The object layout beyond the established member map remains incomplete.
- */
-class DatalinkIface : public SubInterface {
- public:
-  virtual void on_status(int) = 0;                         // 0
-  virtual void on_iface_scrolled(int, int) {}              // 1, shared ret 8
-  virtual void on_iface_scrolling(int, int) {}              // 2, shared ret 8
-  virtual void on_iface_left_click(int, int) = 0;           // 3
-  virtual void on_iface_right_click(int, int) = 0;          // 4
-  virtual void on_iface_left_down(int, int) = 0;            // 5
-  virtual void on_iface_left_up(int, int) {}                // 6, shared ret 8
-  virtual void on_iface_right_down(int, int) = 0;           // 7
-  virtual void on_iface_mouse_move(int, int) = 0;            // 8
-  virtual void on_iface_mouse_leave(int, int) = 0;           // 9
-  virtual void on_iface_selected(int, int) = 0;              // 10
-  virtual void on_iface_left_double_click(int, int) = 0;     // 11
-  virtual void on_iface_right_double_click(int, int) = 0;    // 12
-  virtual void on_iface_button_clicked(int) = 0;             // 13
-  virtual int on_iface_button_pressed(int) { return 0; }     // 14, shared ret 0
-  virtual void on_iface_button_toggled(int, int) = 0;        // 15
-  virtual void on_iface_group_clicked(int, int, int) = 0;    // 16
-  virtual int vslot_17(GraphicWin *) { return 0; }            // 17, shared ret 0
-  virtual int vslot_18(GraphicWin *, int, int, RECT *) { return 0; } // 18
-};
-
-/*
  * Datalink class
  *
- * The primary GraphicWin is at zero; DatalinkIface is the secondary base at
- * +0xA14, as established by the constructor's vftable stores and the image's
- * Datalink-specific 19-slot table. The table puts 0x432060 in slot 0,
+ * The primary GraphicWin is at zero; the real SubInterface is the secondary
+ * base at +0xA14, as established by the constructor's vftable stores and the
+ * image's Datalink-specific 19-slot table. The table puts 0x432060 in slot 0,
  * 0x432160..0x432210 in their event slots, and shared return stubs in 1, 2,
  * 6, 14, 17 and 18. This typed hierarchy is the C++ representation of that
  * evidence, not a hand-built vtable.
@@ -86,8 +53,11 @@ class DatalinkIface : public SubInterface {
 struct DatalinkID;
 
 // RECOVERY_BASE: v1 Datalink GraphicWin 0x0 0x00428FC0
-// RECOVERY_BASE: v1 Datalink DatalinkIface 0xA14 0x00428FC0
-class Datalink : public GraphicWin, public DatalinkIface {
+// RECOVERY_BASE: v1 Datalink SubInterface 0xA14 0x00428FC0
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066AF30 ? ??_7Datalink@@6B@ 0x00428FC0
+class Datalink : public GraphicWin, public SubInterface {
  public:
   // 0x00429180, a pending_bodies forwarder.
   void exec(unsigned int topic, int index);
@@ -187,6 +157,13 @@ class Datalink : public GraphicWin, public DatalinkIface {
   void set_index(int, int);
   // 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
   int on_dialog_back_draw(GraphicWin *win);
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  void on_iface_left_up(int, int) override;
+  int on_iface_button_pressed(int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
 
   // EVERY TOPIC CHANGE ENDS WITH THE SAME CALL, and the image inlines it at
   // all five sites: the GraphicWin-part virtual at vtable offset 0xF8 of the
@@ -201,9 +178,9 @@ class Datalink : public GraphicWin, public DatalinkIface {
 
 
  private:
-  // DatalinkIface ends at 0xA1C. Everything between that base and the three
+  // SubInterface ends at 0xA1C. Everything between that base and the three
   // fields close() clears is unmapped; the span holds their offsets in place.
-  // DatalinkIface occupies [0xA14, 0xA1C), replacing the former raw dwords.
+  // SubInterface occupies [0xA14, 0xA1C), replacing the former raw dwords.
   uint32_t field_A1C_;  // 0xA1C
   uint32_t field_A20_;  // 0xA20
   uint32_t field_A24_;  // 0xA24

@@ -1730,7 +1730,7 @@ extern "C" void __fastcall sub_447d20(void *self_raw, void *) {
 /*
 Purpose: Repaint the diplomacy pop's backdrop and framed panel.
 // ORIGINAL: 0x004402A0 ?on_redraw@DiploPop@@QAEXXZ 0x004402A0-0x00440379 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original4402A0..440379; retired seed git:117282ee:src/unrecovered/004402a0.cpp records the same identity and spans with its RECT-local TRIED note kept below.", "The opener is maininterface.h's restore_back on mapwin.h's MainInterfaceGlobal (0x007AE820); the frame styles are buffer.h's InterfaceBoxStyles[3] (0x0078D5A0) and [21] (0x0078D870) against the interface Buffer 0x007AEC64; the UnionRect slot 0x00669328 is the runtime import slot console.h documents.", "The four sub-drawers are the seed's measured call targets 0x0043F5F0/0x0043F790/0x0043FA90/0x00440080 in the body's call order (bioscan/portrait/info/hq), unrecovered members reached at their original addresses; the receiver's panel rect at +0x2144 is the seed's measured walk."], "reason": "Coverage transcription of the diplomacy pop repaint with typed interface state and the sub-drawers pending declarations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4402A0..440379; retired seed git:117282ee:src/unrecovered/004402a0.cpp records the same identity and spans with its RECT-local TRIED note kept below.", "The opener is maininterface.h's restore_back on mapwin.h's MainInterfaceGlobal (0x007AE820); the frame styles are buffer.h's InterfaceBoxStyles[3] (0x0078D5A0) and [21] (0x0078D870) against the interface Buffer 0x007AEC64; the UnionRect slot 0x00669328 is the runtime import slot console.h documents.", "The four sub-drawers are the seed's measured call targets 0x0043F5F0/0x0043F790/0x0043FA90/0x00440080 in the body's call order (bioscan/portrait/info/hq); 0x00440080 is now the source-owned DiploPop::draw_hq body, while the first three helper bodies remain outside this task's source ownership. The receiver's panel rect at +0x2144 remains the seed's measured walk."], "reason": "Recover the diplomacy pop repaint through its typed interface state and panel members, including the now-source-owned HQ drawer; the first three helper bodies remain an explicit outside-owner dependency."}
 Status: Coverage transcription - unclaimed body
 */
 namespace {
@@ -1772,7 +1772,7 @@ extern "C" void __fastcall DiploPop_on_redraw(DiploPop *self, void *) {
     reinterpret_cast<PopDraw>(0x0043F5F0)(self, nullptr);  // draw_bioscan
     reinterpret_cast<PopDraw>(0x0043F790)(self, nullptr);  // draw_portrait
     reinterpret_cast<PopDraw>(0x0043FA90)(self, nullptr);  // draw_info
-    reinterpret_cast<PopDraw>(0x00440080)(self, nullptr);  // draw_hq
+    self->draw_hq();
 }
 
 // ---------------------------------------------------------------------------

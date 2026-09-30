@@ -42,12 +42,21 @@ static_assert(sizeof(ReportSortEntry) == 0x10,
   * 0x20304 (a Sprite[4] ending there); nothing past it is established, so
   * there is no static_assert on sizeof(ReportIf).
   */
+// RECOVERY_BASE: v1 ReportIf SubInterface 0x0 0x004AD170
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066D700 ? ??_7ReportIf@@6B@ 0x004AD170
 class ReportIf : public SubInterface {
   friend class ReportWin;
  public:
   // homed from 004a3d20.cpp
   void reset();
   void on_redraw();
+  void init();
+  void on_status(int mode) override;
+  void on_iface_selected(int item, int position) override;
+  void on_iface_button_clicked(int button) override;
+  void on_iface_group_clicked(int group, int index, int item) override;
 
  public:
   void done();
@@ -60,6 +69,9 @@ class ReportIf : public SubInterface {
   void close_security();
   void close_projects();
   void on_iface_right_click(int, int);
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  void on_iface_left_up(int, int) override;
   void on_iface_left_double_click(int, int);
   void on_iface_right_double_click(int, int);
   void on_iface_left_down(int, int);
@@ -67,10 +79,13 @@ class ReportIf : public SubInterface {
   void on_iface_mouse_move(int, int);
   void on_iface_mouse_leave(int, int);
   void on_iface_button_toggled(int, int);
+  int on_iface_button_pressed(int) override;
+  int on_iface_dialog_back_draw(::GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(::GraphicWin *, int, int,
+                                     RECT *) override;
   void merge_sort(int first, int last);
   void close_score();
   // PAUGraphicWin@@HHPAURECT@@, per the catalogued mangled name.
-  int on_iface_dialog_item_back_draw(::GraphicWin *, int, int, RECT *);
   // 0x004A4060  ?bl_anim@ReportIf@@QAEXXZ - public, __thiscall, void(void),
   // unrecovered. The bl_daemon thunk in leaf_recoveries.cpp calls it.
   void bl_anim();
@@ -134,14 +149,9 @@ class ReportIf : public SubInterface {
   RECT field_40_;  // 0x40
   // RECOVERY_MEMBER: v2 ReportIf field_50_ tagRECT 0x50 0x004A3667
   RECT field_50_;  // 0x50
-  uint32_t field_60_;  // 0x60
-  uint32_t field_64_;  // 0x64
-  uint32_t field_68_;  // 0x68
-  uint32_t field_6C_;  // 0x6C
-  uint32_t field_70_;  // 0x70
-  uint32_t field_74_;  // 0x74
-  uint32_t field_78_;  // 0x78
-  uint32_t field_7C_;  // 0x7C
+  // init4A37C7 walks eight adjacent positions; the final slot is then
+  // replaced by the panel bottom minus40 at4A37FB.
+  int report_button_positions_[8];  // 0x60..0x7F
 
   // Genuine members follow the coupled constructor/destructor ordering.
   // HISTORICAL MEASUREMENT (prior partial migration, not current model):
@@ -157,9 +167,12 @@ class ReportIf : public SubInterface {
   // not what the image does. Reverted.
   FlatButton flatButtonsA_[7];  // 0x80, 7 * sizeof(FlatButton), vector ctor iterator
   Sprite spritesA_[0x15];  // 0x4F94, 0x15 * sizeof(Sprite), vector ctor iterator
-  uint8_t gap_5330_[0x54];  // 0x5330
+  // init4A3758 writes seven rows of three borrowed logo sprites.
+  Sprite *faction_button_sprites_[7][3];  // 0x5330..0x5383
   FlatButton flatButtonsB_[7];  // 0x5384, 7 * sizeof(FlatButton), vector ctor iterator
-  uint8_t gap_A298_[0x38];  // 0xA298
+  int report_category_positions_[7];  // 0xA298..0xA2B3, init4A37BD
+  uint8_t gap_A2B4_[0x18];
+  int report_category_center_;  // 0xA2CC, init4A37A3
   // The original extra 1 is the hidden most-derived virtual-base flag,
   // not a user-visible argument; the real no-argument ListBox ctor owns it.
   // Singleton885F38+A2D0=890208 and+AE24=890D5C: ReportWin borrows these

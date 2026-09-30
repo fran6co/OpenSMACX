@@ -38,6 +38,10 @@
   * storage is typed below. The recovered methods use those declarations and do
   * not treat the remaining gaps as known structure.
   */
+// RECOVERY_BASE: v1 SocialWin SubInterface 0xA14 0x004AE9E0
+// Constructor installs this original interface table at the declared base.
+// Its nineteen observed slots do not independently establish its end bound.
+// RECOVERY_GENERATED: v1 vtable 0x0066DA50 ? ??_7SocialWin@@6B@ 0x004AE9E0
 class SocialWin : public GraphicWin, public SubInterface {
  public:
   // homed from 004b1ff0.cpp
@@ -148,6 +152,14 @@ class SocialWin : public GraphicWin, public SubInterface {
   void on_iface_selected(int a1, int a2);
   void on_iface_left_double_click(int a1, int a2);
   void on_iface_right_double_click(int a1, int a2);
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  void on_iface_left_up(int, int) override;
+  int on_iface_button_pressed(int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int,
+                                    RECT *) override;
+  void on_iface_button_clicked(int button_id) override;
   void on_iface_button_toggled(int a1, int a2);
   void on_iface_group_clicked(int a1, int a2, int a3);
 

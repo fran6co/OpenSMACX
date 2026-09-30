@@ -3330,3 +3330,25 @@ void DesignWin::select_special(int which) {
     popup.close();
     popup_scroll->close();
 }
+
+// Original interface table 0x0066B0F4 slot 1 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@DesignWin@@UAEXHH@Z 0x0043D120
+void DesignWin::on_iface_scrolled(int, int) {}
+// Original interface table 0x0066B0F4 slot 2 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@DesignWin@@UAEXHH@Z 0x0043D120
+void DesignWin::on_iface_scrolling(int, int) {}
+// Original interface table 0x0066B0F4 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@DesignWin@@UAEXHH@Z 0x0043D120
+void DesignWin::on_iface_left_up(int, int) {}
+
+// Original interface table 0x0066B0F4 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@DesignWin@@UAEHPAVGraphicWin@@@Z 0x0043D120
+int DesignWin::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066B0F4 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@DesignWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x0043D120
+int DesignWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
+}

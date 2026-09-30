@@ -4302,3 +4302,26 @@ void BaseWin::base_editor_copy(int copy_to) {
     }
     redraw();
 }
+
+// Original interface table 0x0066A3B8 slot 14 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@BaseWin@@UAEHH@Z 0x0041DAD0
+int BaseWin::on_iface_button_pressed(int) {
+    return 0;
+}
+
+// Original interface table 0x0066A3B8 slot 16 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00406B20 0x00406B23 ?on_iface_group_clicked@BaseWin@@UAEXHHH@Z 0x0041DAD0
+void BaseWin::on_iface_group_clicked(int, int, int) {
+}
+
+// Original interface table 0x0066A3B8 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@BaseWin@@UAEHPAVGraphicWin@@@Z 0x0041DAD0
+int BaseWin::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066A3B8 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@BaseWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x0041DAD0
+int BaseWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
+}

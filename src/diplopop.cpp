@@ -18,6 +18,16 @@
 #include "stdafx.h"
 #include "diplopop.h"
 #include "mapwin.h"  // MainInterfaceGlobal - the modal owner at 0x007AE820
+#include "datalink.h"
+#include "worldwin.h"
+#include "base.h"
+#include "alpha.h"
+#include "strings.h"
+#include "sprite.h"
+
+void __cdecl report_intel(int selection);
+void __cdecl slide_show(GraphicWin *window, int mode);
+void __cdecl slide_hide(GraphicWin *window, int mode);
 
 // CRT entry 0x0043EFC0 constructs this object and registers 0x0043EFE0,
 // which destroys the same receiver. The CRT table at 0x00682080 contains
@@ -228,10 +238,33 @@ void DiploPop::on_iface_button_toggled(int, int) {
 // callers   0   call targets   4
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
+// ORIGINAL: 0x00440380 ?on_status@DiploPop@@QAEXH@Z 0x00440380-0x004404B4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440380.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440380 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+// symbol    ?on_status@DiploPop@@UAEXH@Z
 void DiploPop::on_status(int mode) {
-    typedef void(__fastcall *pending)(DiploPop *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00440380))(
-        this, nullptr, mode);
+    GraphicWin *window = static_cast<GraphicWin *>(this);
+    if (mode) {
+        MainInterfaceGlobal.on_redraw();
+        for (int i = 0; i < 3; ++i) flatButtons_[i].show(0);
+        slide_show(window, 2);
+        show(3);
+        time1_.start();
+        time2_.start();
+        MainInterfaceGlobal.flat_button(6).show(0);
+        MainInterfaceGlobal.flat_button(7).show(0);
+        MainInterfaceGlobal.button_group(1).set(-1, 1);
+        flatButtons_[2].set(1);
+        MainInterfaceGlobal.redraw();
+    } else {
+        time1_.stop();
+        time2_.stop();
+        flic2_.rewind();
+        slide_hide(window, 2);
+        for (int i = 0; i < 3; ++i) flatButtons_[i].hide();
+        MainInterfaceGlobal.flat_button(6).hide();
+        MainInterfaceGlobal.flat_button(7).hide();
+        hide();
+    }
 }
 
 // PENDING 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604
@@ -242,10 +275,25 @@ void DiploPop::on_status(int mode) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // indirect  0x00440582
+// ORIGINAL: 0x00440550 ?on_iface_button_clicked@DiploPop@@QAEXH@Z 0x00440550-0x00440604 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00440550.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440550 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+// symbol    ?on_iface_button_clicked@DiploPop@@UAEXH@Z
 void DiploPop::on_iface_button_clicked(int button_id) {
-    typedef void(__fastcall *pending)(DiploPop *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00440550))(
-        this, nullptr, button_id);
+    switch (button_id) {
+    case 0:
+        DatalinkMain.exec(0xF, counterpart_faction_);
+        break;
+    case 1:
+        report_intel(counterpart_faction_);
+        return;
+    case 2:
+        WorldClimateWorldWin.hide();
+        MapWinTable[1]->hide();
+        MainInterfaceGlobal.button_group(1).set(-1, 1);
+        flatButtons_[2].set(1);
+        draw_hq();
+        break;
+    }
 }
 
 // PENDING 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB
@@ -256,10 +304,83 @@ void DiploPop::on_iface_button_clicked(int button_id) {
 // kind      game
 // flags     frame;hidden;sp_ready;purged_ok
 // indirect  0x00440643
+// ORIGINAL: 0x00440620 ?on_iface_group_clicked@DiploPop@@QAEXHHH@Z 0x00440620-0x004406CB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00440620.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440620 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+// symbol    ?on_iface_group_clicked@DiploPop@@UAEXHHH@Z
 void DiploPop::on_iface_group_clicked(int group, int x_coord, int y_coord) {
-    typedef void(__fastcall *pending)(DiploPop *, void *, int, int, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00440620))(
-        this, nullptr, group, x_coord, y_coord);
+    int selection = y_coord;
+    if (selection > 1000) selection -= 1000;
+    selection -= 6;
+
+    if (selection == 0) {
+        WorldClimateWorldWin.show(0);
+        MapWinTable[1]->show(0);
+        group = 0x3EE;
+    } else if (selection == 1) {
+        WorldClimateWorldWin.hide();
+        MapWinTable[1]->hide();
+        group = 0x3EF;
+    } else {
+        on_iface_button_clicked(2);
+        draw_hq();
+        return;
+    }
+
+    MainInterfaceGlobal.button_group(1).set(group, 0);
+    flatButtons_[2].set(0);
+    draw_hq();
+}
+
+// ORIGINAL: 0x00440080 ?draw_hq@DiploPop@@QAEXXZ 0x00440080-0x00440291 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00440080.cpp retained original identity and spans", "recovery/tasks/interface-contract-report-closure.json authorized ownership recovery", "original:0x00440080 complete control/member accesses and concrete interface table"], "reason": "Recover the concrete SubInterface owner operation through genuine window members and source-owned globals. Original table/call evidence identifies the callback receiver; the retained compatible seed supplies its complete original intervals, not an executable-address forwarding implementation."}
+void DiploPop::draw_hq() {
+    Buffer *const canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    RECT area = rect1_;
+
+    if (flatButtons_[2].selected_state() == 0) {
+        canvas->set_clip(&area);
+        MainInterfaceGlobal.restore_back(0);
+        canvas->set_clip(MainInterfaceGlobal.buffer_working_rect());
+        MainInterfaceGlobal.soft_update(&rect1_);
+        return;
+    }
+
+    area.bottom -= 4;
+    canvas->box_sprite(&area, &InterfaceBoxStyles[0]);
+
+    const int left = area.left + 1;
+    const int top = area.top + 1;
+    const int right = area.right - 1;
+    area.bottom -= 1;
+    const int text_top = top + 0x15;
+    area.left = left;
+    area.top = top;
+    area.right = right;
+
+    int base_id = 0;
+    StringTemp[0] = 0;
+    while (base_id < BaseCurrentCount) {
+        if (Bases[base_id].faction_id_current == counterpart_faction_
+            && has_fac_built_call(FAC_HEADQUARTERS, base_id)) break;
+        ++base_id;
+    }
+
+    const char *heading = base_id == BaseCurrentCount
+        ? label_get(0x3A9) : Bases[base_id].name_string;
+    strcat(StringTemp, heading);
+    CharUpperA(StringTemp);
+
+    canvas->set_font(&font3_, 0, 0, 0);
+    canvas->set_text_color(0xA0, -1, 1, 1);
+    if (StringTemp[0]) {
+        canvas->write_cent_l(StringTemp, &area,
+                             static_cast<int>(strlen(StringTemp)));
+    }
+
+    area.top = text_top + 1;
+    const int x = (area.right - hq_sprite_->width() - area.left) / 2 + area.left;
+    hq_sprite_->draw(canvas, hq_sprite_->transparent_index(), x, area.top, 1, 1);
+    MainInterfaceGlobal.soft_update(&rect1_);
 }
 
 
@@ -434,4 +555,32 @@ void __cdecl timer_callback_daemon(int, DiploPop *popup) {
 // symbol    ?timer_callback_daemon2@@YAXHPAVDiploPop@@@Z
 void __cdecl timer_callback_daemon2(int, DiploPop *popup) {
     popup->portrait_anim();
+}
+
+// Original interface table 0x0066B424 slot 1 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolled@DiploPop@@UAEXHH@Z 0x00440380
+void DiploPop::on_iface_scrolled(int, int) {}
+// Original interface table 0x0066B424 slot 2 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_scrolling@DiploPop@@UAEXHH@Z 0x00440380
+void DiploPop::on_iface_scrolling(int, int) {}
+// Original interface table 0x0066B424 slot 6 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404260 0x00404263 ?on_iface_left_up@DiploPop@@UAEXHH@Z 0x00440380
+void DiploPop::on_iface_left_up(int, int) {}
+
+// Original interface table 0x0066B424 slot 14 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_button_pressed@DiploPop@@UAEHH@Z 0x00440380
+int DiploPop::on_iface_button_pressed(int) {
+    return 0;
+}
+
+// Original interface table 0x0066B424 slot 17 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404250 0x00404255 ?on_iface_dialog_back_draw@DiploPop@@UAEHPAVGraphicWin@@@Z 0x00440380
+int DiploPop::on_iface_dialog_back_draw(GraphicWin *) {
+    return 0;
+}
+
+// Original interface table 0x0066B424 slot 18 targets this shared complete body.
+// RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@DiploPop@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00440380
+int DiploPop::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
+    return 0;
 }
