@@ -1,0 +1,23 @@
+{
+  "event_id": "1442b891e03eed98c31269011b34b5515805a53ab132f08ecaf1f80597920e51",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp",
+      "src/game.h",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Original setup5B3340..5B3356 stores spawn x/y to MapWinTable[0] private fields1DD9C/1DDA0. A narrow setup_player three-int friend preserves genuine source member access without an invented behavior-changing setter.",
+      "Original5B2300/5B231F reads DWORD endgame faction selectors9A6508/9A6504;5B22CF/5B254F/5B2579 writes DWORD reason cell9B206C. Authorize genuine centrally owned game storage only after initial-data/writer-reader interpretation; bounds/provisional semantics remain explicit.",
+      "No duplicate byte storage for9A64E9: it belongs to existing LockEnableMask. Original winner indexing must use PlayersData diplo_treaties integer indices, not the seed byte-address expression. Root publishes object mappings from actual physical definitions later."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9e2e0606c3345e58750769a0dcbf33d80a4c183713e702f856f95af7b18ab9a7",
+  "request_id": "faction-endgame-owner-and-map-access",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:faction-lifecycle-owner-closure"
+}
