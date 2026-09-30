@@ -42,6 +42,14 @@ void __cdecl slide_hide(GraphicWin *window, int mode);
 // symbol    _$E19
 DiploPop DiplomacyPopup;
 
+// Original 0x4405B0/0x4405D8 set this distinct state word around the
+// report/datalink calls, then clear it at 0x4405C9/0x4405F5. Its broader
+// meaning is unresolved; do not merge it with the popup's interface state.
+// Its initial zero is loader storage after the bounded popup, not an
+// initializer backed by file bytes. Only the original start is bound.
+// RECOVERY_OBJECT: v1 0x00737CD0 ?DiploCallbackState737CD0@@3HA
+int DiploCallbackState737CD0;
+
 // ORIGINAL: 0x0043EFF0 ??0DiploPop@@QAE@XZ 0x0043EFF0-0x0043F0EA;0x00654880-0x006548F4
 // RECOVERY_BINDING: v1 {"evidence": ["Original43EFF0..43F0EA and unwind654880..6548F4 construct GraphicWin, the secondary interface base, three Fonts, two Times atA98/AC0, Flics atAE8/15CC and three FlatButtons at2158 with strideB4C. All compiler-generated unwind targets belong to those real lifetimes.", "43F0C8/43F0D2 set counterpart factionA94=-1 and field2154=1 only after all members.43F30D publishes the faction argument intoA94. The old field20AC was inside the second Flic, not an additional scalar. Original CRT43EFC0 constructs733990 and registers its destructor wrapper43EFE0."], "reason": "Recover the complete diplomacy-popup construction through real C++ bases and embedded member lifetimes."}
 DiploPop::DiploPop() {
@@ -281,10 +289,14 @@ void DiploPop::on_status(int mode) {
 void DiploPop::on_iface_button_clicked(int button_id) {
     switch (button_id) {
     case 0:
+        DiploCallbackState737CD0 = 1;
         DatalinkMain.exec(0xF, counterpart_faction_);
+        DiploCallbackState737CD0 = 0;
         break;
     case 1:
+        DiploCallbackState737CD0 = 1;
         report_intel(counterpart_faction_);
+        DiploCallbackState737CD0 = 0;
         return;
     case 2:
         WorldClimateWorldWin.hide();

@@ -391,7 +391,8 @@ void SocialWin::on_iface_button_clicked(int button_id) {
     if (static_cast<int>(allocation) < 0) allocation = 0;
     if (static_cast<int>(allocation) > limit) {
         field_2C5C_ = 1;
-        allocation = static_cast<uint32_t>(limit);
+        allocation = static_cast<uint32_t>(
+            energy_limit(static_cast<int>(factionID_)));
     }
 
     allocate_energy(index, static_cast<int>(allocation));
