@@ -1,0 +1,27 @@
+{
+  "event_id": "d443c3af9a7dd1e022468c6d58613a204a4c915dc2a074b244d00dc546390736",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/general.cpp",
+      "src/general.h"
+    ],
+    "evidence": [
+      "Authorize original57-byte parse_it48C060..48C099 helper currently seed-only, as general.cpp owner with general.h declaration. Original calls from Quayle redraw4956D0 take filename then section, not output buffer. Pinned helper must be reviewed before binding; retained seed shows StringTemp cleared, existing X_text_open5BECA0 tested, text_get5FD570 then parse_string625810(TextBufferGetPtr,StringTemp). No fixed addresses or unresolved fake function.",
+      "Preserve seed historical BYTE_EXACT identity/obligation. Scope grant does not grant other general/text changes, demotion, claim stamping, baseline reset or acceptance. Root later publishes native source binding and performs fresh integration checks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4767840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e952a10f07372308d3527f84dd3f75d1df6a8897a2e466f3f962dfedd58c057d",
+  "request_id": "quaylewin-owner-coverage-wave-dependencies-20261001-master",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:quaylewin-owner-coverage-wave"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "e6982237a9bff0ab4a90727d004c61d8d4e7d8b75e2c6b935880434552ed5e9e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.cpp"
+    ],
+    "evidence": [
+      "Authorize Console-owned persistent editor selection storage, not original-address aliases. Pinned4DED00 accesses688350 faction DWORD(initial-1),688354 morale DWORD(initial2 with low-byte read4DF1AD),90DB8C mode DWORD(initial0),90DB90 prior selection DWORD(initial0). Pinned4DFAD0 accesses688358 faction DWORD(initial-1) and68835C technology DWORD(initial-1). Native PE initial storage and instruction operand widths freshly checked. Adjacent placement alone does not prove an aggregate: prefer individually typed named state unless further evidence proves grouping.",
+      "Existing WaveInDeviceGlobal90DB50 extent20 ends90DB70; NetWinLobbyRows begins90DB98. These six independent editor cells are not fields of either neighbor. Keep original lifetimes and writes, no invented reset or behaviorfix; source object bindings remain coordinator-owned and await fresh bound evidence. Language9BC054 and RadiusRange66F8C4 already have product owners and must not receive duplicate storage."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "console-scenario-owner-wave-dependencies-20261001-master",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:console-scenario-owner-wave"
+}
