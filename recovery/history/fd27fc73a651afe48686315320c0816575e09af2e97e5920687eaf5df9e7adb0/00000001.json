@@ -1,0 +1,20 @@
+{
+  "event_id": "41f52b4a3a42258d000bae8146edca44be4bda6fd197885adb8ee01074c74719",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/reportif.cpp",
+      "src/reportif.h"
+    ],
+    "evidence": [
+      "Original ReportWin accesses at8996A0 and89E648 reach selection fields at+84 within existing ReportIfGlobal ButtonGroup subobjects at136E4 and1868C. Authorize coupled conversion of only those raw subobjects and their constructor/destructor uses to genuine ButtonGroups, preserving all owner mappings and historical claims; outside owner discoveries stay explicit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "reportwin-typed-shared-button-groups",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:reportwin-owner-coverage"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "a6df228c298a10829e42557e4f8db0f0c1533fe1d6c4543cf3fa6b0fce555c8a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pulldown.h"
+    ],
+    "evidence": [
+      "Original right_menu497AC0 checks only signed selected index<64 before reading the selected PullDown item id. Existing get_selected_id adds a negative-index guard and changes original behavior. Authorize only an item_id(int) const getter reading existing items_[index].id, with original callsite guard retained; no layout, lifecycle or unrelated API changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "638941e75b8bb8be5a15006663acee425bd2c9647f595fbebfc6bc742a3a6591",
+  "request_id": "reportwin-pulldown-item-accessor",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:reportwin-owner-coverage"
+}

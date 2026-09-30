@@ -1,0 +1,19 @@
+{
+  "event_id": "8ce8b9f9a66dc079771bee26cc42c8eedf17e057b72656e03e031737c23381bc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.h"
+    ],
+    "evidence": [
+      "Original BaseWin click and button dispatch read BaseButton selection state at+0xA18 through genuine FlatButton members. Authorize only a const selected_state() inline getter returning the existing field_A18_ for these callers; no layout, lifecycle or other header behavior changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "59d5150b218a553b1d2d72b7a5d310191b75e3a6d756bf7cf49f56f237a1f9c1",
+  "request_id": "basewin-button-selection-accessor",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:basewin-owner-coverage"
+}

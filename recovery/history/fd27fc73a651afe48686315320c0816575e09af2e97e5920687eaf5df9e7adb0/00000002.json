@@ -1,0 +1,28 @@
+{
+  "event_id": "638941e75b8bb8be5a15006663acee425bd2c9647f595fbebfc6bc742a3a6591",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Two isolated ButtonGroup conversions would construct them before neighboring raw-storage controls, violating the original lifetime order. Authorize coupled ReportIf constructor/destructor and raw member conversions within already-granted ReportIf TU/header to genuine declaration-ordered lifetimes; inspect current caller references, preserve all mappings/claims and report any remaining hierarchy uncertainty. No outside files or behavior changes are granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4903280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4902304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "41f52b4a3a42258d000bae8146edca44be4bda6fd197885adb8ee01074c74719",
+  "request_id": "reportwin-shared-lifetime-order",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:reportwin-owner-coverage"
+}

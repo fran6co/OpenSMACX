@@ -924,7 +924,10 @@ static int PopupSavedLocY = 0x2000;  // 0x006973E0
 // the bottom of the non-modal-close tail - a request/response pair the two
 // calls share across invocations. Zero-initialised .bss in the image at
 // 0x009BC06C.
-static int PopupWriteCheckState;  // 0x009BC06C
+// BaseWin::governor (0x00419A90) shares this checkbox request/response
+// word with the popup owner; it is not translation-unit-private storage.
+// RECOVERY_OBJECT: v1 0x009BC06C ?PopupWriteCheckState@@3HA
+int PopupWriteCheckState;  // 0x009BC06C
 
 // The `a5 & 0x8000` tail's rectangle: BasePop's field_30B4_/_30B8_ are an
 // origin, field_30BC_/_30C0_ a width and height added to that origin to

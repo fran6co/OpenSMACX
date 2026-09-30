@@ -1,0 +1,20 @@
+{
+  "event_id": "59d5150b218a553b1d2d72b7a5d310191b75e3a6d756bf7cf49f56f237a1f9c1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/popup.cpp",
+      "src/popup.h"
+    ],
+    "evidence": [
+      "Original governor419A90 and existing popup routines share dword9BC06C. PopupWriteCheckState is wrongly TU-private; authorize exposing the existing single Popup-owned object and its source binding without duplicate storage or changes to popup behavior. Coordinator performs this central dependency repair, not worker edits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "basewin-shared-popup-state",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:basewin-owner-coverage"
+}

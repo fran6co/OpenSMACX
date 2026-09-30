@@ -123,6 +123,9 @@ static_assert(sizeof(Popup) == 0x537C,
 // The two short start forms share the caption buffer at a fixed address.
 extern char PopupStartCaption[256];
 
+// Shared checkbox state read/written by popup dialogs and BaseWin::governor.
+extern int PopupWriteCheckState;
+
 // START'S MOD-REDIRECTION DATA. Popup::start (0x00406380) compares the text
 // file it was handed against the climate popup's title pointer (game.h's
 // ClimatePopupTitle) and against PopupStartModTag, and on a match - and only
