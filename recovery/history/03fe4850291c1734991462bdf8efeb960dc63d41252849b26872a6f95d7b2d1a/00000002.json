@@ -1,0 +1,22 @@
+{
+  "event_id": "91ac338155ca785f2362031ea0fc7764c86cdda921eb969f29a07f5a74aa0cf5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basewin.h",
+      "src/maininterface.h"
+    ],
+    "evidence": [
+      "Tutorial original tour bodies pass absolute rectangles in 0x6E8194..0x6E8480 from the existing source-owned TutWinBaseWindow at6A7628: these are embedded BaseWin fields, not independent tutorial data. In particular6E81D4=BaseWin.rect2_ at40BAC,6E8204=commerce_report_rect_ at40BDC,6E8254=garrison_rect_ at40C2C; preserve these existing source members.",
+      "MainInterfaceGlobal at7AE820 owns original tutorial accesses7AF24C..7AF548 at offsetsA2C..D28, including existing private rectangle members. Authorize ONLY friend class TutWin in src/maininterface.h for typed access, and only source-evidence-backed consecutive four-dword to named RECT member substitutions in src/basewin.h where complete original rectangle accesses independently establish all16bytes. No member-offset/class-size change, independent duplicate storage, lifecycle or unrelated function-body edit is authorized.",
+      "Existing Interface recovery owns current MainInterface/BaseWin hierarchy edits in a different isolated checkout and Root. Worker retains old baseline; coordinator transfers only bounded friend/member hunks after checking current master declarations, fresh physical layouts and protected body outcomes. No automatic worker fast-forward or source-history rewriting."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8ebbb518383a6dc6016ca984a1f7824072f1ed5b8de7ce4babbfd4f07ed3c088",
+  "request_id": "tutwin-real-panel-member-access-20260930",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
