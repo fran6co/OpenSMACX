@@ -1,0 +1,24 @@
+{
+  "event_id": "b6818f604b092af8b4a304970cc12f7fe69a320ad39e7987c6717cf8f2c8149e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.h",
+      "src/caviar.h",
+      "src/designwin.h",
+      "src/flatbutton.h"
+    ],
+    "evidence": [
+      "Coordinator authorization narrowly permits friend class DesignWin in Caviar/BaseButton/FlatButton to name existing private members; no layout/type/behavior changes in these shared classes.",
+      "Pinned original DesignWin::init43C270..43D0B7 stores byte zero at Caviar+0xA4 after init; final stores hundred at button23/24+0xA44 and borrowed Sprite addresses at FlatButton+0xAD4/AD8/ADC. Source field_AD4_ already Sprite*[3].",
+      "Pinned init43C943..43C9BC and following original RECT copies/calls establish four-coordinate RECT objects DesignWin+B5C/B6C/B7C. Permit exact four-dword substitutions and coordinate consumer changes only, preserving offsets and size. This grants editing, not matching or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5d9ed6a2189a83214d1e355577c840dfadb5e36bad291b9ec551c3782e6cf35b",
+  "request_id": "design-init-existing-member-access-20260930",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
