@@ -1,0 +1,33 @@
+{
+  "event_id": "5963e9608edc40555520c0854bd8ea945b24bdd138ad1661d9e5ce571a803ec9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/wave.cpp",
+      "src/wave.h"
+    ],
+    "evidence": [
+      "Independent original-image review: Effect::init writes callback address 0x004456A0 to hover hook 0x009B7AA0; that complete callback loads the source-owned g_PASSOVER_WAVE receiver 0x0074D9D0 and tail-jumps to Wave::play 0x004C6920. Authorize a genuine nullary callback body, not another address macro; coordinator must establish explicit original extent/name rationale using the native binder before counting it.",
+      "Historical exact input_callback seed 0x004457C0-0x004457D3 loads/null-tests pointer 0x0074DAA0 then invokes virtual slot79. Current source-owned FactionMusic in ambience.cpp and genuine FactionAmbience::general event slot79 establish the typed call. Authorize its real source body in wave.cpp and declaration in wave.h; preserve historical seed/claim and verify actual virtual sequence.",
+      "Hook data 0x009B7A98/0x009B7A9C/0x009B7AA0 starts as three zero words, with no initial PE relocations. Original cancel-cell producer remains unidentified; do not fabricate one. The 0x009B7AA0 role is hover sound, not completion. Retire raw callback-address macros and image-data hook accessors only with source-owned targets/storage and complete producer closure, fresh owner compilation, linker continuity, and scoped restoration evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4478624,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4478912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1c38f9b23c7f3ce5ea7c7323762427ba0004a143bed166536037105e990c088c",
+  "request_id": "dialog-control-owned-audio-callbacks",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:dialog-control-coverage-wave"
+}
