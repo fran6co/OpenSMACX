@@ -1,0 +1,20 @@
+{
+  "event_id": "b3c570b7135419ad9a89fc3c28a36630958bc7a6370763858aff8c37e1b8e6aa",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplopop_lifecycle.py"
+    ],
+    "evidence": [
+      "The existing actual-source DiploPop lifecycle fixture extracts the current inheritance clause but supplies only an obsolete IfaceRegistryEntry service double. The genuine SubInterface base and borrowed Sprite pointer must be declared in that bounded host projection.",
+      "Authorize fixture declaration updates only, preserving all lifetime, behavior and damage assertions; host service doubles are not native layout or runtime acceptance. No C++ source scope, original subjects, claims, baseline or gate policy changes are granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7f7297fb3d86d5c654fd418c068ff20f10788bec1edbb3749ce9f55880b1a8e3",
+  "request_id": "interface-closure-host-lifetime-fixture-v1",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:interface-contract-report-closure"
+}
