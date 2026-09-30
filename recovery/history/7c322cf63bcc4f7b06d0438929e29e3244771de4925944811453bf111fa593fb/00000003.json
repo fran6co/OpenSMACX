@@ -1,0 +1,44 @@
+{
+  "event_id": "e5e0b32adc140897a867ac38be8624ff4af4dfd5939275da2984c750b144f5c8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/game.cpp",
+      "src/game.h",
+      "src/xpops.cpp",
+      "src/xpops.h"
+    ],
+    "evidence": [
+      "Coordinator-reviewed popup integration must close original691B0C shared script storage instead of retaining runtime executable-address dereference. Preserve real source-owned SCRIPT text/cell already independently recovered by frozen faction owner, without importing unrelated endgame cells or unverified faction bodies.",
+      "Consolidate XPops shared-script helpers onto actual ScriptPopupFile and PopupStartAltFile1/2 storage; no duplicated pointer owners or unrelated dialog behavior changes. The faction worker owns its separate isolated checkpoint; root integration is coordinator-only and never resets its task baseline. Protected game/XPops/Popup claims must be freshly remeasured; full build/link required before committing integrated C++."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6027520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6026368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6028224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6028656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "aecd7ddb2ef373c929584cd3a4099b3e6cbb1e1ad20343561535c8812bbcdec8",
+  "request_id": "popup-shared-script-storage-integration",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:popup-vehicle-owner-closure"
+}
