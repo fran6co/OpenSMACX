@@ -1,0 +1,19 @@
+{
+  "event_id": "c3ff45eae7e1d3dded06645e36515156b74174f18b04324866ad07dd5fd6bebe",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/general.cpp"
+    ],
+    "evidence": [
+      "Fresh pinned instruction decoding of original48C060..48C099 confirms call5BECA0(file,section), clearStringTemp9B86A0, guardedcall5FD570, loadTextBufferGetPtr9B7D00, and call625880 parse_string(input,StringTemp). Earlier scope prose625810 was a transcription error, not authority to change callees. Currentgeneral.cpp634 maps parse_string625880..625DDD; use that existing typed definition and preserve observedcallorder."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d443c3af9a7dd1e022468c6d58613a204a4c915dc2a074b244d00dc546390736",
+  "request_id": "quayle-text-helper-callee-correction-20261001-master",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:quaylewin-owner-coverage-wave"
+}
