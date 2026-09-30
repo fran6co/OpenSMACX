@@ -1,0 +1,28 @@
+{
+  "event_id": "cc9322c1c26e4ad9f504049c3d21c90db3e0f3106d6f50e0ea1543cd6180f2e6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinate disband4D2DE0 and goto4D6070 invoke actual Console activate4D2F00 and go_to4D61A0, not50EF50go_reset. Preserve seedmapped extents4D2F00..4D3467 and4D61A0..4D7B3C with65AD6A..65AFD2. Recover genuine navigation/lifetime closure in same editable owner; no baseline reset or weaker claim permission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5058304,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5071264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "46d81860d79977f79e743d99d713eabdfefd6a7b00ad104232246016a295b429",
+  "request_id": "console-navigation-closure-20260930",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-owner-coverage"
+}

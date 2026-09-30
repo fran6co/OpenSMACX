@@ -24,6 +24,8 @@ class Sprite;
   * FlatButton class
   */
 class FlatButton : public BaseButton {
+  // MainInterface initializes these owned controls' colors and sprite links.
+  friend class MainInterface;
  public:
   FlatButton();
   // DEFINED IN-CLASS so enclosing destructors can expand it, which is what
@@ -54,6 +56,12 @@ class FlatButton : public BaseButton {
     val_10_ = reinterpret_cast<int>(normal);
     val_11_ = reinterpret_cast<int>(hover);
     val_12_ = reinterpret_cast<int>(pressed);
+  }
+  // ReportIf uses this real borrowed-sprite run, not AutoSound settings.
+  void set_report_icons(Sprite *normal, Sprite *hover, Sprite *pressed) {
+    field_AD4_[0] = normal;
+    field_AD4_[1] = hover;
+    field_AD4_[2] = pressed;
   }
   void set_border_styles(BoxSpriteParams *normal, BoxSpriteParams *hover,
                          BoxSpriteParams *pressed) {

@@ -91,6 +91,8 @@ class BasePop : public GraphicWin {
  public:
   // homed from 00604410.cpp
   int on_key_down(int key);
+  // Console::go_to reads the original +0x3100 input-poll state after exec.
+  uint32_t input_poll_state() const { return field_3100_; }
 
  public:
   // homed from 00601980.cpp

@@ -47,6 +47,8 @@ struct TexHeap {
   * Sprite class
   */
 class Sprite {
+  // MainInterface's panel initialization adjusts displayed dimensions.
+  friend class MainInterface;
  public:
   // The remaining UNK methods are EVIDENCE-FREE: their empty bodies do not
   // establish original names or parameter meanings. UNK1 returns zero and

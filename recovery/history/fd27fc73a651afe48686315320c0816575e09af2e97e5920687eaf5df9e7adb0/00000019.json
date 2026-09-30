@@ -1,0 +1,19 @@
+{
+  "event_id": "353644f039fd1df838924ae28cc1dc361ae769e82ff13525b9c4212a3a56c717",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/listbox.h"
+    ],
+    "evidence": [
+      "ReportIf4AC140 renderer writes owned ListBox palette field10 before insertion and clears selection14/list2C after. Expose two typed operations retaining original order, rather than sharing MessageWin fixed color0 or raw offsets. Central coordinator header-only ownership closure."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "70743de7d7c17963e506fbaf254d9a8358a73665121155052a46e7189cec9168",
+  "request_id": "reportif-listbox-member-sequence-20260930",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:reportwin-owner-coverage"
+}

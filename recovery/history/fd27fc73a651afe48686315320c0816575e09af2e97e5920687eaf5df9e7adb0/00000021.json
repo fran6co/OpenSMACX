@@ -1,0 +1,19 @@
+{
+  "event_id": "80e0b93b1686c09b08b78694de94417861558944f916fe017197fcdef0d0434a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flatbutton.h"
+    ],
+    "evidence": [
+      "OriginalReportIf4A431B..432F stores borrowedSprite pointers at FlatButtonAD4/AD8/ADC, independentfromScroll genericAutoSoundval10/11/12. Expose actualexistingthreepointermember; never substitute mismatchedscrollsettings."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3bd729117316f0d56795023ba68feb62d7d8b51c26c3b1c5dcd880990363ba49",
+  "request_id": "reportif-borrowed-button-icons-20260930",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:reportwin-owner-coverage"
+}

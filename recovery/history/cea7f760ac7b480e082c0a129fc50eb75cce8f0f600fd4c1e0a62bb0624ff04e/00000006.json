@@ -1,0 +1,19 @@
+{
+  "event_id": "65159bef34f472c8af8d74aebd473f977882759123c76aad0f28a3058f22b25d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "go_to4D784B reads localPopup+3100 after exec; independently derived popupstackbaseebp5488 andreadpositionebp2388. ExistingBasePopfield3100 is inputpollstate, notDC8insideFlatButton. Expose actualmemberthroughread-onlygetter without changingextent or inventingstorage."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c73242c4adfe79a2037f88a1e8b7944cfae3869e5e8410e57694db36ec68c97b",
+  "request_id": "console-popup-poll-access-20260930",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:console-owner-coverage"
+}

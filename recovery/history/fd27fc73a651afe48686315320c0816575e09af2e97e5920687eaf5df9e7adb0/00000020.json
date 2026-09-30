@@ -1,0 +1,23 @@
+{
+  "event_id": "3bd729117316f0d56795023ba68feb62d7d8b51c26c3b1c5dcd880990363ba49",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "ReportIf labs installs original callback4A8440..4A846E (46bytes), fivecdeclargs, returns0 despitecatalogvoid. Original calls tech_category,mandate_color and Buffer set_text_color3; recover in sameownerTU with genuine GraphicWin->Buffer conversion and preserveotherListBoxcallbacks."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4883520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "353644f039fd1df838924ae28cc1dc361ae769e82ff13525b9c4212a3a56c717",
+  "request_id": "reportif-labs-write-closure-20260930",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:reportwin-owner-coverage"
+}

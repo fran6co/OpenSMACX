@@ -1,0 +1,20 @@
+{
+  "event_id": "c73242c4adfe79a2037f88a1e8b7944cfae3869e5e8410e57694db36ec68c97b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/listbox.cpp",
+      "src/listbox.h"
+    ],
+    "evidence": [
+      "Originalgo_to4D7806 stores Console goto_routine cdecl(int) at ownedListBox3C, thencalls callbackwithactualDialog selection. Type actualexistingcallbackmember insteadrawinteger/fakeoffset; preservezero initialization and provide narrow setter. Coordinator owns commonListBox edit, delegatesonlyConsolefiles."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8ac1c94b73be4dbec0ec119f8cfd5a5d12fd4dd2a23dd0cc85d8614634ea8866",
+  "request_id": "console-listbox-selection-callback-20260930",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:console-owner-coverage"
+}

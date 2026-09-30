@@ -113,7 +113,7 @@ uint32_t ListBox::close() {
     field_30_ = 0;
     field_34_ = 0;
     field_38_ = 0;
-    field_3C_ = 0;
+    selection_callback_ = 0;
     double_click_callback_ = 0;
     field_C_ = 0;
     return 0;
@@ -138,7 +138,7 @@ ListBox::ListBox() {
     field_30_ = 0;
     field_34_ = 0;
     field_38_ = 0;
-    field_3C_ = 0;
+    selection_callback_ = 0;
     double_click_callback_ = 0;
     field_B4_ = 1;
     field_C_ = 0;

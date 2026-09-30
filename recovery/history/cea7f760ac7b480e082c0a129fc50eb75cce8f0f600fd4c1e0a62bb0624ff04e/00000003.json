@@ -1,0 +1,23 @@
+{
+  "event_id": "22dcdc055bf3d513591e2d894c8aa6867edf01e654effe0c3014b2cba95f451a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Actual go_to4D61A0 calls Console group4D92D0..4D95E7(791bytes), seed004d92d0. Recover owner helper with navigation rather than leave undefined symbol or original forwarding."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5083856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "cc9322c1c26e4ad9f504049c3d21c90db3e0f3106d6f50e0ea1543cd6180f2e6",
+  "request_id": "console-group-navigation-closure-20260930",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-owner-coverage"
+}

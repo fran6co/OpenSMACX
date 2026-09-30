@@ -1,0 +1,24 @@
+{
+  "event_id": "8ac1c94b73be4dbec0ec119f8cfd5a5d12fd4dd2a23dd0cc85d8614634ea8866",
+  "payload": {
+    "affects": [
+      "entity-2167e57721486346f75f9648864648e3a30813428b2baae0cf5a51839d44496a",
+      "entity-25ffbf886c6782ee9daa0e6e0cabba74d14ba314b125e5a82a83e45f4bba0b40",
+      "entity-aad88b4b8ed782edfee5c73c3e5061698c43c8472585457e8539d73acb710f96",
+      "entity-d689c833bb822f7329a7660065b2c305fb5e25045d98940f027f96e3065a593e"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-audio-real-ambience-dispatch-20260930",
+    "evidence": [
+      "Pinned PE tables66BB58/66BE28/66BF90/66BCC0 slots75..88 independently resolve begin,tech,terraform,production,general,popup1,eot,hostility,basewin_show/hide,new_base,energy_resources,design_window_show/hide. Slot82 is4477B0 SAmbience hostility or4472E0 FactionAmbience hostility.",
+      "Original446960 music pointer74DAA0 slot148 call; load_music4457E0 allocates faction variants and stores same pointer. ExistingAmbience base75slots/FactionAmbience event methods nonvirtual and MA/SA/U subclasses bypass FactionAmbience; their real hierarchy and lifecycle require central correction, not body-local emulation."
+    ],
+    "hypothesis": "FX play overloads invoke dynamically owned faction ambience hostility slot82; current event methods are incorrectly nonvirtual and sibling classes lack the real common FactionAmbience event base. Recover common event hierarchy and owned music pointer before using this dependency; do not create a Win slot82 call or vtable shim.",
+    "kind": "discovery"
+  },
+  "previous_event": "22dcdc055bf3d513591e2d894c8aa6867edf01e654effe0c3014b2cba95f451a",
+  "request_id": "console-audio-real-ambience-dispatch-20260930",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:console-owner-coverage"
+}

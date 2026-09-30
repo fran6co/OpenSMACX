@@ -1,0 +1,22 @@
+{
+  "event_id": "5f73a9f7a9d5dceacbf27a3082586d6cb6a0f6bce8ce02507853bbadce140980",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flatbutton.h",
+      "src/messagewin.cpp",
+      "src/sprite.h"
+    ],
+    "evidence": [
+      "MainInterface original459680 initializes FlatButton owned borrowed spritesAD4/AD8/ADC and colorsABC, and Sprite displayed width18/height1C. Grant central evidence-backed friendship only. Proper message_bounds rectangle replaces scalar D1C..D28 and requires mechanical MessageWin consumer update with unchanged storage.",
+      "Worker remainssolewriterMainInterfacecpp/h; central sharedowner headers and MessageWin mechanical consumer closure only. No full-game or matching acceptance implied."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bad05d1f18ccccd72097b575d4b6bc92ff8017cbb6dd5fa11287e10c060bfd3c",
+  "request_id": "maininterface-controls-owner-access-20260930",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:maininterface-owner-coverage"
+}

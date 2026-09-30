@@ -135,6 +135,18 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
     field_14_ = static_cast<uint32_t>(-1);
     field_2C_ = 0;
   }
+  // ReportIf 0x004AC140 sets the text palette before inserting rows, then
+  // clears selection/row state afterwards. Keep those two effects separate.
+  void set_report_text_color(int color) { field_10_ = color; }
+  void reset_report_selection() {
+    field_14_ = static_cast<uint32_t>(-1);
+    field_2C_ = 0;
+  }
+  // ReportIf's lab color callback does not replace drawing/filling hooks.
+  void set_write_callback(WriteCallback callback) { write_callback_ = callback; }
+  void set_selection_callback(WinNotificationCallback callback) {
+    selection_callback_ = callback;
+  }
   // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_right_down,
   // on_scrolled, on_right_double_click) are entered with `this` on the
   // GraphicWin virtual base and fold the walk back to the ListBox front into
@@ -289,7 +301,9 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   DrawCallback draw_callback_;    // 0x30
   WriteCallback write_callback_;  // 0x34
   FillCallback fill_callback_;    // 0x38
-  uint32_t field_3C_;             // 0x3C
+  // go_to 0x004D7806 publishes its cdecl(int) selection notification here.
+  // RECOVERY_MEMBER: v1 ListBox selection_callback_ 0x3C 0x004D61A0
+  WinNotificationCallback selection_callback_;  // 0x3C
  public:
   // Notification installed by BasePop::calculate_dimensions and invoked
   // with Dialog::get_selected_id() by the list's double-click entry.
