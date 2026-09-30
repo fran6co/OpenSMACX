@@ -1,0 +1,30 @@
+{
+  "event_id": "1c38f9b23c7f3ce5ea7c7323762427ba0004a143bed166536037105e990c088c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/wave.cpp",
+      "src/wave.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Original BaseButton::on_left_click 0x00607A20 loads independent nullary callback cells 0x009B7A98 for id -1 and 0x009B7A9C for id -2, null-tests the loaded target, then invokes it; recover actual Win-owned storage, not an original-image accessor.",
+      "Source wave.h EffectOkHookSlot/EffectDoneHookSlot still dereference executable data 0x009B7A98/0x009B7AA0; Effect::init 0x00445BB0 is the existing producer. Narrow coupled storage migration in win.cpp/h and wave.cpp/h is authorized so the new consumer and existing producer share genuine relocated storage. Callback target recovery or any further function needs separate evidence/authorization; preserve all existing original mappings/claims.",
+      "Coordinator alone publishes object/symbol annotations and performs Git/integration after actual compilation/link and relevant restoration checks. Do not alter unrelated Win or Wave methods, layouts, virtual contracts or historical task baseline; scoped extent/signature unknowns remain visible."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4479920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "020c7c4cd610c143cb1aaeb668b582c2a1d3048be63d0a7f7d7958723fe5fb20",
+  "request_id": "dialog-control-win-action-hook-storage",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:dialog-control-coverage-wave"
+}
