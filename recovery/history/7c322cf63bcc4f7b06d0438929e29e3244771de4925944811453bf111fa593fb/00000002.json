@@ -1,0 +1,23 @@
+{
+  "event_id": "aecd7ddb2ef373c929584cd3a4099b3e6cbb1e1ad20343561535c8812bbcdec8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Six-argument Popup::start ABI correction within already editable popup.cpp/h is necessary to recover authorized popp retry behavior. Preserve historical identity/claim and publish actual compiler-observed symbol through native writer later."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4219776,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9958bbba640d666c7265742a8b1451310a11bc6ab600a1d6a0d217cafd9cb535",
+  "request_id": "popup-start-return-contract-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-vehicle-owner-closure"
+}

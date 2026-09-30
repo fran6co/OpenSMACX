@@ -1,0 +1,23 @@
+{
+  "event_id": "9958bbba640d666c7265742a8b1451310a11bc6ab600a1d6a0d217cafd9cb535",
+  "payload": {
+    "affects": [
+      "entity-04b50521a27989bb295fdaacaa1fcaa2c45102616162659ed64a79112ee21bdc",
+      "entity-444c9690441ceae542d78c06341a54c7f6ac3845291a12023a117da33974fdf5",
+      "entity-67d2a18504823076858e8b2b8db213abfb319a9eff37775cbe0ae777ae193640"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "popup-start-return-and-picture-selection",
+    "evidence": [
+      "Original48C1B4 calls406380 thenTESTEAX48C1B9; failure retries original file. Current popup.cpp/h declare void and cannot preserve this caller behavior.",
+      "Original48C3D0..48C400 disagrees with retained seed conditional pointer and embedded SpriteBox argument. Preserve seed as history, recover from instructions."
+    ],
+    "hypothesis": "Original popp observes six-argument Popup::start integer status; void declaration loses real retry control flow. Original popv selects caller picture only when picture flag is zero and separately always initializes embedded SpriteBox with the actual sprite.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "popup-start-return-and-picture-selection",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:popup-vehicle-owner-closure"
+}
