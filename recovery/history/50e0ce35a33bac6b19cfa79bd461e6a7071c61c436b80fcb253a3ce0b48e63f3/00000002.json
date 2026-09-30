@@ -1,0 +1,23 @@
+{
+  "event_id": "4250e1ae183645d50a37f2622c68b9542ebb32608d0aa61766cf4110b14d3e6b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/scroll.cpp",
+      "src/scroll.h",
+      "src/spritebox.cpp",
+      "src/spritebox.h"
+    ],
+    "evidence": [
+      "Original popups_normal writes69702C/34/38/3C/40 while existing Scroll ctor/close indexes defaults697020[0..10]; replace invalid single-dword owner with independently image-reviewed complete default run and preserve all retained claims.",
+      "Original popup policy writes9B8FC4 consumed by SpriteBox constructor; authorize real shared default cell and typed reader, not an original-executable alias. Scope is owner storage/interface repair, not fabricated behavior or permission to weaken byte obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "04e922e7685f07e3c2d337bde4b1fddb9654be9f5146bdd03231f7c14c0aca78",
+  "request_id": "popup-font-scroll-spritebox-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:popup-font-configuration-owner-closure"
+}
