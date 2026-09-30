@@ -1,0 +1,20 @@
+{
+  "event_id": "f3fb0e661d9d4917181e3d5be2376766ea60f543fba7b654bcf50296889c7535",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "Original TutWin::tut_win4BDFE0 stores callback at3168 and uses inherited BasePop picture/dialog dimensions and flags; existing BasePop declares these real named members and callback APIs, but makes several private. TutWin already derives from Popup, which derives BasePop. Access must use those original members, not duplicate fields or self-offset arithmetic.",
+      "Authorize ONLY friend class TutWin declaration in src/basepop.h for this owner recovery. Preserve class size/offsets, declarations, callback type, lifetimes and all unrelated bodies. Prefer existing setters where their behavior matches original; friendship does not prove callbackABI or authorize synthetic dispatch. Root original4BDFA0 callback audit remains independent seed correction evidence."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "91ac338155ca785f2362031ea0fc7764c86cdda921eb969f29a07f5a74aa0cf5",
+  "request_id": "tutwin-basepop-owned-state-access-20260930",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
