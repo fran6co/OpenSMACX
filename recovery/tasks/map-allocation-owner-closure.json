@@ -1,0 +1,44 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "561a78275b6057097edcc7511c9047a5cf9a9fc6",
+  "editable_files": [
+    "src/map.cpp",
+    "src/map.h"
+  ],
+  "evidence": [
+    "Original loader-zero pointer cells94A30C Map* and94A310 abstract uint8_t* have actual existing allocation/free producers590E90/590ED0/591130 and serializer5910B0; replace executable-address facades with source-owned dynamic allocations, not dummy uninitialized globals.",
+    "Original592B40..592D6F seed-only shrink producer writes active pointer at592B80, transfers prior allocation to945AD0 and records signed prior dimensions945AD4/945AD8. This is part of the allocation owner, not an unrelated individual function.",
+    "Preserve source-owned map_tiles accessor for callers, existing mem_get/free and world_climate dependencies, both-dimensions-smaller condition, observed copy masks and original failure/abstract-map allocation quirks. No outside-owner edits, automatic bug fixes, seed deletion or claim demotion; Root owns native new binding/claim recording and Git."
+  ],
+  "intent": "Recover genuine shared map allocations and complete shrink/resample producer; preserve original failure/lifecycle semantics and historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5836432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5836496,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5837104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5836976,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5843776,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "map-allocation-owner-closure"
+}
