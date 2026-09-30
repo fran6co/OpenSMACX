@@ -1,0 +1,19 @@
+{
+  "event_id": "596743740613e506602a272572f0d322614a7d5f362445e68b632313f2f091ce",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator serial integration retires only the config_popups588AA0 and load_interface455610 pending forwarders after their real producer bodies have native source bindings and fresh physical compiler evidence. Retain all seeds, original spans, claims and unrelated forwarders; compile/link before committing C++."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bdb20c1a7333566b1b4d14c2f8f4d2a1ca3038bf3566340429e517d4f4963272",
+  "request_id": "root-font-forwarder-retirement",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:popup-font-configuration-owner-closure"
+}
