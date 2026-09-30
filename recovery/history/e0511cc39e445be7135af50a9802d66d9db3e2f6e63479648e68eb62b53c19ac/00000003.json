@@ -1,0 +1,21 @@
+{
+  "event_id": "c3734c12e202d60087de803144f6096f86f48eba6bdebfdab35e3b306f371104",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/map.cpp",
+      "src/map.h"
+    ],
+    "evidence": [
+      "MapWin draw_legend469720 reads the separate original direction permutation at66EF98. Existing src/map.h independently documents nine dwords9,6,3,2,1,4,7,8,5 and the following RadiusOffsetX start66EFBC; original indexed call/table evidence must be checked against the pinned image, not inferred from current C++ layout.",
+      "Authorize only external typed const int MapDirectionPermutation[9] declaration/definition in src/map.h/cpp beside the genuine map directional tables. No other map globals, existing functions, pending map-owner work or claims may change. This small recovered keypad-direction value mapping is ordinary source data, not copied machine/vtable code or a raw address alias; proprietary bulk derivatives remain ignored. Root alone publishes physically observed original object binding and verifies content/references/extent."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6b8a55f0a39381dd344434da48666eaf180883830880b82af2d97d91bf53faef",
+  "request_id": "mapwin-direction-permutation-owner-v1",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
