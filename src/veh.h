@@ -731,6 +731,7 @@ int __cdecl veh_lift(int veh_id);
 int __cdecl veh_drop(int veh_id, int x, int y);
 void __cdecl action_arty(int veh_id, int x, int y);
 void __cdecl action_destroy(int veh_id, int bits, int x, int y);
+void __cdecl action_destruct(int veh_id);
 int __cdecl battle_fight(int veh_id, int direction, int mode,
                         int allow_interceptor, int *odds_out);
 void __cdecl veh_demote(int veh_id);

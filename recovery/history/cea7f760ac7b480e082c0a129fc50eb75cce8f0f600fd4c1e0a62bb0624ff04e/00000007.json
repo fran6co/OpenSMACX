@@ -1,0 +1,23 @@
+{
+  "event_id": "7c546eb59967ccd8fdfbd64a71e8e2e1e7e586d00e5c8d738652a4890c55b373",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize real Console disband(int)4D2AC0 replacing the mapped empty dependency; reuse correct typed vehicle/base/network/popup owners and original branches. It calls missing action_destruct4CD2F0, assigned separately to the vehicle owner; preserve callback discoveries and claims, do not create another stub or edit other owners."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5057216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "65159bef34f472c8af8d74aebd473f977882759123c76aad0f28a3058f22b25d",
+  "request_id": "console-owner-coverage-disband-closure-20260930",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:console-owner-coverage"
+}

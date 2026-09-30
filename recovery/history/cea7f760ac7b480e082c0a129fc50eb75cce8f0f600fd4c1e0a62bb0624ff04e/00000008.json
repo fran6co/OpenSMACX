@@ -1,0 +1,19 @@
+{
+  "event_id": "dd5837c94ea7296d6a28682888e67cb382f65effbf658c9658b719a28776068e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_disband.py"
+    ],
+    "evidence": [
+      "Authorize production-body host controls and behavior mutants for the recovered Console disband order, including pinned foreign/network refusal, DISBAND2 selection, custom prototype refund and callback rereads. No new C++ owner scope or baseline change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7c546eb59967ccd8fdfbd64a71e8e2e1e7e586d00e5c8d738652a4890c55b373",
+  "request_id": "console-disband-host-controls-20260930",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:console-owner-coverage"
+}

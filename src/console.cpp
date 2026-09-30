@@ -1573,53 +1573,87 @@ void Console::toggle_dest() {
 }
 
 // ORIGINAL: 0x004D2AC0 ?disband@Console@@QAEXH@Z 0x004D2AC0-0x004D2DDC FILE
+// RECOVERY_BINDING: v1 {"reason":"Recover the disband order through typed Console, vehicle, base, tutorial-window and NetDaemon owners; pinned branches establish editor/network refusal, no-base dialog selection, custom-prototype refunds and queue bookkeeping.","evidence":["image:0x004D2AC0-0x004D2DDC","source:src/veh.cpp:action_destruct","source:src/base.h","source:src/tutwin.h","recovery/tasks/console-owner-coverage.json"]}
 // size      796 bytes
 // prototype void (__thiscall ?disband@Console@@QAEXH@Z)(Console* this, int vehID)
 // callers   5   call targets   14
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x0041A7A0 0x0047A890 0x0048C0A0 0x004CD2F0 0x004E3A50 0x004E4430 0x00531020 0x005310F0 0x00531300 0x00592E10 0x00593250 0x005C0B00 0x00625EC0 0x00645470
-// PRESERVED UNIT - measured MISMATCH.
-//
-// Kept for COVERAGE. This directory IS on the ratchet: every file here
-// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
-// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
-// quarter of the project's total. It is still in no build; the earlier
-// header said "on no ratchet", which stopped being true when the map
-// moved into src/ and was still being written into new files.
-//
-// address        0x004D2AC0
-// measured tier  MISMATCH
-// divergence     0
-//
-// The WHOLE unit as measured, scaffolding included: for the units
-// that are byte-exact yet refuse extraction, the agent tuned the
-// emitted scaffolding and the body alone will not reproduce the
-// verdict. To resume, copy everything below back over
-//   build/byte-match/004d2ac0/unit.cpp
-// and score it with tools/agent_brief.py.
-// GENERATED SKELETON - tools/emit_translation_unit.py
-// subject: ?disband@Console@@QAEXH@Z  at 0x004D2AC0  (796 bytes)
-//
-// A VERIFICATION ARTIFACT, not product source: classes are opaque and
-// globals are bound to fixed addresses, because both are byte-visible
-// and both differ from the style src/ is written in.
-//
-// The VC6 dialect limits and the source-form rules used to live here.
-// They are knowledge, not scaffolding, so they now live in the agent
-// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
-// where they can be edited without regenerating anything and are in
-// context from the first token rather than behind a file read. This
-// emitter computes declarations; it does not carry lessons.
+// Foreign vehicles require the offline scenario-editor flag; multiplayer
+// foreign vehicles are refused even with that flag. No-base dialogs append
+// the DISBAND2 suffix. Custom prototypes bypass the basic-unit weapon filter.
 
 
 void Console::disband(int veh_id) {
-    return;
-    //
-    // Reach fields by offset - the class is deliberately empty:
-    //     char *self = reinterpret_cast<char *>(this);
-    //     int v = *reinterpret_cast<int *>(self + 0x24);
+    if ((Vehs[veh_id].flags & 0x20) && !(GameState & 0x40)) {
+        NetMsgPopup->pop("DISBANDOBJ", 5000, 0, nullptr);
+        return;
+    }
 
+    if (NetDaemonNet.lock_veh(&veh_id, 4, -1, -1, 0)) return;
+
+    Veh &vehicle = Vehs[veh_id];
+    if (vehicle.faction_id != faction_id_ &&
+        (IsMultiplayerNet || !(GameState & 0x80))) {
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+
+    const int x = vehicle.x;
+    const int y = vehicle.y;
+    field_23BE4_ = 0;
+    const int base_id = base_at(x, y);
+    const int display_proto_id = vehicle.proto_id;
+    parse_says(0, VehPrototypes[display_proto_id].veh_name, -1, -1);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "DISBAND");
+    if (base_id < 0) strcat(StringTemp, "2");
+
+    const int console_faction = faction_id_;
+    const bool alien = (Players[console_faction].rule_flags & 0x80) != 0;
+    const int triad = Chassis[VehPrototypes[display_proto_id].chassis_id].triad;
+    const char *picture;
+    if (alien) {
+        picture = triad == 2 ? "alair_sm.pcx"
+            : triad == 1 ? "navun_sm.pcx" : "alunit_sm.pcx";
+    } else {
+        picture = triad == 2 ? "air_sm.pcx"
+            : triad == 1 ? "navun_sm.pcx" : "unit_sm.pcx";
+    }
+
+    const int answer = popp(ScriptPopupFile, StringTemp, 0, picture, nullptr);
+    if (!answer) {
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+
+    if (base_id >= 0) {
+        const int refund_proto_id = Vehs[veh_id].proto_id;
+        if ((refund_proto_id >= 0x40 ||
+             (Weapon[VehPrototypes[refund_proto_id].weapon_id].offense_rating >= 0 &&
+              refund_proto_id != 15)) && answer != 2) {
+            const int faction = Vehs[veh_id].faction_id;
+            const int factor = cost_factor(faction, 1, -1);
+            const int cost = VehPrototypes[Vehs[veh_id].proto_id].cost;
+            const int refund = factor * cost / 2;
+            Bases[base_id].minerals_accumulated += refund;
+            Bases[base_id].minerals_accumulated_2 =
+                Bases[base_id].minerals_accumulated;
+            Bases[base_id].production_id_last = Bases[base_id].queue_production_id[0];
+            synch_base(base_id);
+            TutWinBaseWindow.check_base(base_id);
+        }
+    }
+
+    if (IsMultiplayerNet) {
+        message_veh(0x2407, veh_id, answer, 0);
+        NetDaemonNet.await_exec(1);
+    } else if (answer == 2) {
+        action_destruct(veh_id);
+    } else {
+        kill(veh_id);
+    }
 }
 
 // .rdata strings these bodies pass to X_pop. The image names them by

@@ -8543,6 +8543,66 @@ void __cdecl kill(int veh_id) {
     }
 }
 
+// ORIGINAL: 0x004CD2F0 ?action_destruct@@YAXH@Z 0x004CD2F0-0x004CD4D1 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004cd2f0.cpp", "recovery/tasks/mapwin-owner-coverage-wave.json", "Pinned instructions 4CD365 and 4CD44E identify reactor_id and PLAN_ALIEN_ARTIFACT, correcting seed cost/class labels."], "reason": "Recover vehicle self-destruction through typed reactor and plan fields, nine radius offsets and real stack lifecycle; original rereads the vehicle prototype after weap_val. Preserve seed identity and original extent without granting a byte claim."}
+void __cdecl action_destruct(int veh_id) {
+    const int x = Vehs[veh_id].x;
+    const int y = Vehs[veh_id].y;
+    boom(x, y, 0);
+
+    const int proto_id = Vehs[veh_id].proto_id;
+    const int faction_id = Vehs[veh_id].faction_id;
+    int weapon_value = weap_val(proto_id, faction_id);
+    if (weapon_value < 1) weapon_value = 1;
+    else if (weapon_value > 20) weapon_value = 20;
+    const int damage =
+        static_cast<int>(VehPrototypes[Vehs[veh_id].proto_id].reactor_id) * weapon_value / 2;
+
+    kill(veh_id);
+
+    for (int offset = 0; offset < 9; ++offset) {
+        int tile_x = x + RadiusOffsetX[offset];
+        if ((MapIsFlat & 1) == 0) {
+            if (tile_x < 0) tile_x += MapLongitudeBounds;
+            else if (tile_x >= MapLongitudeBounds) tile_x -= MapLongitudeBounds;
+        }
+        const int tile_y = y + RadiusOffsetY[offset];
+        if (tile_y < 0 || tile_y >= MapLatitudeBounds ||
+            tile_x < 0 || tile_x >= MapLongitudeBounds) {
+            continue;
+        }
+        if (base_at(tile_x, tile_y) >= 0) continue;
+
+        for (int damaged_vehicle_id = veh_at(tile_x, tile_y); damaged_vehicle_id >= 0;
+             damaged_vehicle_id = Vehs[damaged_vehicle_id].next_veh_id_stack) {
+            Vehs[damaged_vehicle_id].dmg_incurred = static_cast<uint8_t>(
+                Vehs[damaged_vehicle_id].dmg_incurred + damage);
+        }
+
+        int vehicle_id = stack_fix(veh_at(tile_x, tile_y));
+        while (vehicle_id >= 0) {
+            const Veh &vehicle = Vehs[vehicle_id];
+            const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+            int threshold;
+            if (prototype.plan == PLAN_ALIEN_ARTIFACT) {
+                threshold = 1;
+            } else {
+                int reactor = prototype.reactor_id;
+                if (reactor < 1) reactor = 1;
+                else if (reactor > 100) reactor = 100;
+                threshold = reactor * 10;
+            }
+            if (vehicle.dmg_incurred >= threshold) {
+                stack_veh(vehicle_id, 1);
+                stack_kill(vehicle_id);
+                vehicle_id = stack_fix(veh_at(tile_x, tile_y));
+                continue;
+            }
+            vehicle_id = vehicle.next_veh_id_stack;
+        }
+    }
+}
+
 /*
 Purpose: Report the vehicle the map cursor is nearest to.
 // ORIGINAL: 0x005C0CB0 ?veh_find@@YAHHHHH@Z 0x005C0CB0-0x005C0DA9

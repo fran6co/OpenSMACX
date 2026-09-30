@@ -1,0 +1,23 @@
+{
+  "event_id": "e3fbee0124117fb3e4db5ce15ee315d951d646c60074e3356d788c06f00c3c71",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize actual vehicle action_destruct4CD2F0 for Console disband closure in veh.cpp/h and existing artillery host tests. Pinned original uses reactor_id not cost for damage, plan ALIEN_ARTIFACT not class for threshold, and nine RadiusOffset entries not36. Reuse real boom, weap_val, base_at, kill and stack helpers; no further missing callee or stand-in is needed. Preserve all original seed evidence and historic obligations. No other worker edits vehicle owner."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5034736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "6249699acde68eadca1f6ce3a64dd6ef4e7ee5130efa99dd60ce4c68956ebb78",
+  "request_id": "mapwin-owner-coverage-wave-disband-closure-20260930",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

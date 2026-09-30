@@ -349,3 +349,161 @@ def test_boom_damage_controls_are_detected(tmp_path, before, after):
     assert compiled.returncode == 0, compiled.stdout + compiled.stderr
     result = subprocess.run([str(executable)], text=True, capture_output=True, timeout=10)
     assert result.returncode != 0
+
+
+
+def destruct_body():
+    source = (ROOT / "src/veh.cpp").read_text()
+    signature = "void __cdecl action_destruct(int veh_id) {"
+    start = source.index(signature)
+    opening = source.index("{", start)
+    depth = 0
+    for end in range(opening, len(source)):
+        if source[end] == "{":
+            depth += 1
+        elif source[end] == "}":
+            depth -= 1
+            if depth == 0:
+                return source[start:end + 1]
+    raise AssertionError("unterminated action_destruct production body")
+
+
+DESTRUCT_HARNESS = r'''
+#include <cassert>
+#include <cstdint>
+#include <string>
+#include <vector>
+#define __cdecl
+struct Veh {
+    int x, y, proto_id, next_veh_id_stack;
+    uint8_t faction_id, dmg_incurred;
+} Vehs[16];
+struct VehPrototype { uint8_t reactor_id, plan, cost; } VehPrototypes[16];
+const int PLAN_ALIEN_ARTIFACT = 12;
+const int RadiusOffsetX[36] = {0,1,2,1,0,-1,-2,-1,0, 2};
+const int RadiusOffsetY[36] = {0,-1,0,1,2,1,0,-1,-2,-2};
+int MapIsFlat, MapLongitudeBounds=8, MapLatitudeBounds=8;
+int heads[8][8], marked_base_x=-99, marked_base_y=-99, weapon_value=10;
+std::vector<std::string> events;
+int stacked, stack_killed, original_killed;
+bool change_prototype_in_weap_val;
+void reset() {
+    events.clear(); stacked=stack_killed=original_killed=0;
+    change_prototype_in_weap_val=false;
+    for (int y=0;y<8;++y) for (int x=0;x<8;++x) heads[y][x]=-1;
+    for (auto &v:Vehs) { v=Veh{}; v.next_veh_id_stack=-1; }
+    for (auto &p:VehPrototypes) p=VehPrototype{};
+    MapIsFlat=0; MapLongitudeBounds=8; MapLatitudeBounds=8;
+    marked_base_x=marked_base_y=-99; weapon_value=10;
+    Vehs[0].x=0; Vehs[0].y=3; Vehs[0].proto_id=0; Vehs[0].faction_id=1;
+    VehPrototypes[0].reactor_id=8;
+    heads[3][0]=0;
+}
+void put(int id,int x,int y,int reactor,int plan=0) {
+    Vehs[id].x=x; Vehs[id].y=y; Vehs[id].proto_id=id;
+    VehPrototypes[id].reactor_id=reactor; VehPrototypes[id].plan=plan;
+    if (heads[y][x] < 0) heads[y][x]=id;
+    else {
+        int tail=heads[y][x];
+        while (Vehs[tail].next_veh_id_stack >= 0) tail=Vehs[tail].next_veh_id_stack;
+        Vehs[tail].next_veh_id_stack=id;
+    }
+}
+int __cdecl boom(int x,int y,int flags) {
+    assert(x==Vehs[0].x&&y==Vehs[0].y&&flags==0);
+    events.push_back("boom"); return 0;
+}
+int __cdecl weap_val(int proto,int faction) {
+    assert(proto==0&&faction==1); events.push_back("weapon");
+    if (change_prototype_in_weap_val) Vehs[0].proto_id=9;
+    return weapon_value;
+}
+void __cdecl kill(int id) {
+    assert(id==0); events.push_back("kill"); ++original_killed;
+    heads[Vehs[id].y][Vehs[id].x]=-1;
+}
+int __cdecl base_at(int x,int y) {
+    events.push_back("base"); return x==marked_base_x&&y==marked_base_y ? 0 : -1;
+}
+int __cdecl veh_at(int x,int y) {
+    assert(x>=0&&x<8&&y>=0&&y<8);
+    events.push_back("at:"+std::to_string(x)+":"+std::to_string(y));
+    return heads[y][x];
+}
+int __cdecl stack_fix(int id) { events.push_back("fix"); return id; }
+int __cdecl stack_veh(int id,int mode) {
+    assert(id>=0&&mode==1); events.push_back("stack"); ++stacked; return id;
+}
+void __cdecl stack_kill(int id) {
+    assert(id>=0); events.push_back("stack_kill"); ++stack_killed;
+    const int x=Vehs[id].x,y=Vehs[id].y,next=Vehs[id].next_veh_id_stack;
+    if (heads[y][x]==id) heads[y][x]=next;
+    else {
+        int previous=heads[y][x];
+        while(previous>=0&&Vehs[previous].next_veh_id_stack!=id)
+            previous=Vehs[previous].next_veh_id_stack;
+        assert(previous>=0); Vehs[previous].next_veh_id_stack=next;
+    }
+    Vehs[id].next_veh_id_stack=-1;
+}
+BODY
+
+int main() {
+    reset();
+    // Wrapped x=-1 maps to 7; exact-threshold and artifact units are removed.
+    put(1,7,4,4);                 // reactor threshold 40
+    put(2,1,2,5); put(3,1,2,100); // both take byte damage through stack links
+    put(4,2,3,1);                 // base tile is excluded before veh_at
+    put(5,2,1,100);               // radius index 9: outside the 9 visited entries
+    put(6,7,2,100,PLAN_ALIEN_ARTIFACT);
+    marked_base_x=2; marked_base_y=3;
+    action_destruct(0);
+    assert(events.size()>=3&&events[0]=="boom"&&events[1]=="weapon"&&events[2]=="kill");
+    assert(original_killed==1);
+    assert(Vehs[2].dmg_incurred==40&&Vehs[3].dmg_incurred==40);
+    assert(Vehs[4].dmg_incurred==0&&Vehs[5].dmg_incurred==0);
+    assert(heads[4][7]<0&&heads[2][7]<0);
+    assert(stacked==2&&stack_killed==2);
+
+    // Weapon lower and upper clamps affect the integer damage before byte add.
+    reset(); weapon_value=0; VehPrototypes[0].reactor_id=10;
+    put(1,1,2,2); action_destruct(0); assert(Vehs[1].dmg_incurred==5);
+    reset(); weapon_value=30; VehPrototypes[0].reactor_id=5;
+    put(1,1,2,6); action_destruct(0); assert(Vehs[1].dmg_incurred==50);
+    // The original reloads proto_id after the weapon callback, before damage.
+    reset(); change_prototype_in_weap_val=true; VehPrototypes[9].reactor_id=6;
+    put(1,1,2,6); action_destruct(0); assert(Vehs[1].dmg_incurred==30);
+}
+'''
+
+
+def execute_destruct(tmp_path, candidate, label):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host g++ compiler unavailable")
+    executable = tmp_path / label
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    "-x", "c++", "-", "-o", str(executable)],
+                   input=DESTRUCT_HARNESS.replace("BODY", candidate),
+                   text=True, capture_output=True, check=True)
+    return subprocess.run([str(executable)], capture_output=True, text=True).returncode
+
+
+def test_destruct_damage_wrap_base_guard_and_stack_cleanup(tmp_path):
+    assert execute_destruct(tmp_path, destruct_body(), "destruct") == 0
+
+
+@pytest.mark.parametrize("before,after", [
+    ("VehPrototypes[Vehs[veh_id].proto_id].reactor_id",
+     "VehPrototypes[proto_id].reactor_id"),
+    ("VehPrototypes[Vehs[veh_id].proto_id].reactor_id) * weapon_value / 2",
+     "VehPrototypes[proto_id].cost) * weapon_value / 2"),
+    ("prototype.plan == PLAN_ALIEN_ARTIFACT", "prototype.plan == 0"),
+    ("offset < 9", "offset < 36"),
+    ("if ((MapIsFlat & 1) == 0)", "if (false)"),
+])
+def test_destruct_damage_controls_reject_behavior_changes(tmp_path, before, after):
+    candidate = destruct_body()
+    assert before in candidate
+    candidate = candidate.replace(before, after, 1)
+    assert execute_destruct(tmp_path, candidate, "destruct-damaged") != 0
