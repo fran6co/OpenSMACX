@@ -1,0 +1,22 @@
+{
+  "event_id": "0f494152ff56233850782bee9c5e040d30f14104d50551eb0e41bbef02894ede",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Original MapWin::draw_vehicles 0x466CA0 reads signed vehicle ids from 0x689F28 and 0x689F2C before checking typed Veh coordinates, prototype and stack links; the complete retained seed records these distinct accesses.",
+      "Retained battle transcripts 0x504AA0 and 0x506AF0 consume the same two vehicle-id globals separately from the existing VehDrawSuppressedVehicle at 0x689F30. Authorize only two signed int declarations and definitions beside existing vehicle draw state in src/veh.h/cpp, provisional address-qualified names VehDrawSelection689F28 and VehDrawSelection689F2C; coordinator supplies original initial-storage and symbol facts after checking original PE and physical compiler evidence.",
+      "All other veh.cpp/h bodies, layout and historical obligations remain protected; no outside-owner behavioral edits or task-baseline reset. This bounded dependency is needed for genuine MapWin vehicle rendering, not permission for raw address aliases or invented semantics."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c3734c12e202d60087de803144f6096f86f48eba6bdebfdab35e3b306f371104",
+  "request_id": "mapwin-vehicle-selection-globals-20260930",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
