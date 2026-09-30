@@ -1,0 +1,21 @@
+{
+  "event_id": "91ca1cf7c7563faa8a41a0eec932276c47fe5373b4ef739f8c5771eadf0428a7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp",
+      "src/designwin.h"
+    ],
+    "evidence": [
+      "Narrow authorization: distinct provisional mutable char DesignButtonName23[1] and DesignButtonName24[1] source homes for initial NUL observed at733978/73397C, passed by address to BaseButton::init43CF76/43CFB1. Do not substitute null pointers or assert original bounded extent. Root verified initialzero733978..733980; sole direct references push names; indirect writers and broader allocation remain unknown and must be documented.",
+      "Root independently verified six Sprite objects MainInterfaceGlobal+22E28, stride2C/count6 via original ctorunwind6556A4..6556B6. Existing MainInterface friendDesignWin authorization suffices for sprites12_[0..5] addresses, not load contents."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b6818f604b092af8b4a304970cc12f7fe69a320ad39e7987c6717cf8f2c8149e",
+  "request_id": "design-init-name-input-storage-20260930",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

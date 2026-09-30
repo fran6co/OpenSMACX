@@ -1,0 +1,19 @@
+{
+  "event_id": "d1380194b5e9d9f1984563f5558c37ff46399ce1dfe54c35f4f900174173e3a1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h"
+    ],
+    "evidence": [
+      "Authorize only friend int __cdecl action_airdrop(int,int,int,int) in Console for existing field_23BF0_; no layout/body changes. Root original full-body decode4CC360..4CD051 independently confirms loads9392A0 at4CD000/4CD029; ConsoleGlobal9156B0+23BF0=9392A0. Do not use mistaken939280 or invent new global."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0aeb45889751108a9b9d4c7ccf4d7ba0eab967b2d3b2ee4cd0ffaf9fae02122b",
+  "request_id": "airdrop-existing-console-wait-field-20260930",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
