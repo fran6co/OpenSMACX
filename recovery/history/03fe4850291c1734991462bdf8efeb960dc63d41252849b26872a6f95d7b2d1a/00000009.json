@@ -1,0 +1,20 @@
+{
+  "event_id": "86acb1b47cae4b6bf02900883b645920bf1c0b5b591470f61294583c8b68a5d8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/tutwin.h"
+    ],
+    "evidence": [
+      "Pinned DesignWin.exec writes7 to8CC228, which is TutorialWindow8C6E68+53C0 existing owned field, not independent global. Current private member access blocks compile.",
+      "Authorize only public inline void set_tour_stage(int) storing the existing field_53C0_ without layout/other behavior changes, and use it in authorized DesignWin.exec. Do not change field type or expose extra data. Fresh compile/layout/touched historical obligations remain required; no new original-function identity is inferred for an inline accessor."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c67de66fefa198de171af40f9a05f0906364fc2ff3232a32c46c8576e4200297",
+  "request_id": "tutwin-stage-write-interface-20260930",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:tutwin-owner-coverage-wave"
+}

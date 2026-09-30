@@ -1,0 +1,27 @@
+{
+  "event_id": "2c5d783cf5efff44fb29900cd1df6dc8748c87e7be452919ae2a7caf72b41b4a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/netdaemon.cpp",
+      "src/netdaemon.h"
+    ],
+    "evidence": [
+      "Pinned click46E1BE..46E1CB sets ECX=NetDaemonNet93CD90 and calls532140 with three arguments; this is original int NetDaemon.veh_drop(int,int,int), not free veh_drop. Full original532140..532563 source seed has1059bytes and includes multiplayer behavior; single-player path alone is not complete.",
+      "Authorize only complete genuine NetDaemon.veh_drop three-int declaration/body in owning netdaemon.h/cpp. Use existing typed lock/network/vehicle state, no raw receiver offsets, original-address calls or fabricated standalone substitution. Existing seed remains, Root binds natively after review. Object checkpoint may declare the true interface before authoring body; final integration requires complete body and compile/link. All other NetDaemon work untouched; no task baseline reset, claims/demotion or acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5448000,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "88200502eda5b676353e9e60b22ce3b0e1c475ac2eda87cbf3dabbb6a156eb72",
+  "request_id": "mapwin-real-netdaemon-veh-drop-20260930",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
