@@ -879,3 +879,7 @@ inline BOOL __cdecl is_proto_missile(uint32_t proto_id) {
 inline BOOL __cdecl is_missile(uint32_t veh_id) {
     return is_proto_missile(Vehs[veh_id].proto_id);
 }
+
+// Explicitly unfinished link-continuity bodies in veh.cpp, not recovered effects.
+void __cdecl spot_all(int veh_id, int toggle);
+int __cdecl goody_box(int veh_id, int type);

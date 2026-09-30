@@ -9518,3 +9518,21 @@ void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) 
     if (ReportIfGlobal.field_8_ == 6 && IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 5)
         ReportIfGlobal.on_redraw();
 }
+
+// Unfinished dependency of the airdrop recovery. Preserve the complete seed
+// in src/unrecovered/005b6260.cpp; no visibility behavior is recovered here.
+// ORIGINAL: 0x005B6260 ?spot_all@@YAXHH@Z 0x005B6260-0x005B8AE2
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005b6260.cpp retained original signature and extent; full seed preserved", "Coordinator user authorizes explicit unfinished empty bodies for new referenced functions, never replacement of recovered behavior"], "reason": "Explicit unfinished owning-TU link-continuity dependency for full action_airdrop authoring; BODY GOES HERE preserves unknown behavior and is not a recovery or matching claim."}
+void __cdecl spot_all(int veh_id, int toggle) {
+    // BODY GOES HERE.
+}
+
+// Unfinished dependency of the airdrop recovery. Preserve the complete seed
+// in src/unrecovered/0057a660.cpp. Zero is only an explicit placeholder result,
+// not evidence for the original encounter behavior.
+// ORIGINAL: 0x0057A660 ?goody_box@@YAHHH@Z 0x0057A660-0x0057CDE6
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0057a660.cpp retained original signature and extent; full seed preserved", "Coordinator user authorizes explicit unfinished empty bodies for new referenced functions, never replacement of recovered behavior"], "reason": "Explicit unfinished owning-TU link-continuity dependency for full action_airdrop authoring; BODY GOES HERE preserves unknown behavior and is not a recovery or matching claim."}
+int __cdecl goody_box(int veh_id, int type) {
+    // BODY GOES HERE.
+    return 0; // PLACEHOLDER: explicit link continuity, encounter result unrecovered.
+}

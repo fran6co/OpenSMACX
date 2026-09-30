@@ -6217,3 +6217,12 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
     if ((GameRules & 0x400) && !(GameState & 0x20))
         PlayersData[faction].unk_107 = score_word_mul(*total, 2);
 }
+
+// Unfinished dependency of the airdrop recovery. The complete original seed
+// remains in src/unrecovered/0050c510.cpp; this body provides link continuity
+// only and must not be counted as recovered capture behavior.
+// ORIGINAL: 0x0050C510 ?capture_base@@YAXHHH@Z 0x0050C510-0x0050DD8F
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0050c510.cpp retained original signature and extent; full seed preserved", "Coordinator user authorizes explicit unfinished empty bodies for new referenced functions, never replacement of recovered behavior"], "reason": "Explicit unfinished owning-TU link-continuity dependency for full action_airdrop authoring; BODY GOES HERE preserves unknown behavior and is not a recovery or matching claim."}
+void __cdecl capture_base(int base_id, int faction_id, int mode) {
+    // BODY GOES HERE.
+}
