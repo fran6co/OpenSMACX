@@ -1,0 +1,26 @@
+{
+  "event_id": "0d176173cdaf5f37e46e4dd6595fee06caa6e7124dfaeacd02ff9bd8f9b28194",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Existing source-owned SpriteBox::on_redraw 0x611380 iterates its genuine sprite list but calls row painter 0x610C50 through a fixed executable function pointer. The current task recovers that painter in SpriteBox; close this actual caller dependency with a direct member call, preserving the full original redraw behavior, identity, seed history and obligations.",
+      "Coordinator alone edits or rehomes this one leaf definition. Other leaf owners are not editable; no seed or body is discarded. Fresh build/link, original call/receiver review and scoped measurement remain required; no byte claim or automatic acceptance is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6361984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b75c7d3bbe4585c9ff2e9cb16e91744e78fb23d3a3c846f41af6ad29ea1f4632",
+  "request_id": "dialog-sprite-owned-row-redraw",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:dialog-control-coverage-wave"
+}

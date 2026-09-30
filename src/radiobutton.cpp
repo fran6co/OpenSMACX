@@ -19,6 +19,7 @@
 #include "original_seam.h"
 #include "radiobutton.h"
 #include "win.h"  // WinCallbackWindow
+#include "temp.h" // HandleMain
 
 // The constructor loads these rebindable pointer cells, not sprite contents.
 // init_class passes their original targets to Sprite::extract.
@@ -296,6 +297,227 @@ void RadioButton::draw_item(int position, int state) {
     }
 }
 
+// 0x0060D380. The dialog list cursor is intentionally advanced in place, as
+// in the original: each entry caches the number of wrapped text lines in its
+// payload while the row/column dimensions are calculated.
+// ORIGINAL: 0x0060D380 ?calculate_dimensions@RadioButton@@QAEHXZ 0x0060D380-0x0060D745 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d380.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d380 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+int RadioButton::calculate_dimensions() {
+    Dialog &dialog = *this;
+    GraphicWin &graphic = *this;
+    Buffer *const buffer = static_cast<Buffer *>(&graphic);
+    if (dialog.item_list_.entry_count_ == 0) {
+        return 7;
+    }
+
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    if (dialog.field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
+        dialog.field_34_ = unchecked_sprite_->width();
+        if (dialog.field_34_ < checked_sprite_->width()) {
+            dialog.field_34_ = checked_sprite_->width();
+        }
+    }
+    if (dialog.field_48_ == -1) {
+        dialog.field_68_ = 0;
+        if (unchecked_sprite_ != 0 && checked_sprite_ != 0) {
+            dialog.field_68_ = unchecked_sprite_->height();
+            if (dialog.field_68_ < checked_sprite_->height()) {
+                dialog.field_68_ = checked_sprite_->height();
+            }
+        }
+    } else {
+        dialog.field_68_ = dialog.field_48_;
+    }
+
+    dialog.field_58_ = dialog.field_50_;
+    if (dialog.field_58_ > dialog.item_list_.entry_count_) {
+        dialog.field_58_ = dialog.item_list_.entry_count_;
+    }
+    if (dialog.field_58_ < dialog.item_list_.entry_count_) {
+        const int columns = dialog.item_list_.entry_count_ / dialog.field_58_ + 1;
+        dialog.field_4C_ = columns;
+        dialog.field_58_ = dialog.item_list_.entry_count_ / columns;
+        if (columns * dialog.field_58_ < dialog.item_list_.entry_count_) {
+            ++dialog.field_58_;
+        }
+    }
+
+    int max_text_width = 0;
+    int max_wrap_width = 100000;
+    if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
+        max_wrap_width = (dialog.field_2C_ / dialog.field_4C_
+                          - dialog.field_40_ * 2) - dialog.field_34_;
+    }
+    for (int i = 0; i < dialog.item_list_.entry_count_; ++i) {
+        if (dialog.item_list_.head_ != 0) {
+            dialog.item_list_.current_ = dialog.item_list_.current_->next;
+            ++dialog.item_list_.current_position_;
+            if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
+                dialog.item_list_.current_position_ = 0;
+            }
+        }
+        StringStructEntry *const entry = dialog.item_list_.current_;
+        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->payload->text;
+        const int width = buffer->text_width(text);
+        if (max_text_width < width) {
+            max_text_width = width;
+        }
+        if (entry != 0 && entry->payload != 0) {
+            entry->payload->field_8_ = width / max_wrap_width + 1;
+        }
+    }
+    dialog.field_64_ = dialog.field_44_ + dialog.field_34_ + max_text_width;
+    const int text_height = buffer->text_height();
+    if (dialog.field_68_ <= text_height) {
+        dialog.field_68_ = buffer->text_height();
+    }
+
+    if ((dialog.field_20_ & 2) == 0 || dialog.field_2C_ == 0) {
+        int width = dialog.field_64_ * dialog.field_4C_ + dialog.field_40_ * 2;
+        const int minimum = dialog.field_2C_ + dialog.field_40_ * 2;
+        if (width < minimum) width = minimum;
+        dialog.field_5C_ = width;
+        dialog.field_64_ = (width - dialog.field_40_ * 2) / dialog.field_4C_
+                           - dialog.field_44_;
+        dialog.field_5C_ -= dialog.field_44_;
+    } else {
+        dialog.field_5C_ = dialog.field_2C_;
+        dialog.field_64_ = (dialog.field_2C_ - dialog.field_40_ * 2)
+                           / dialog.field_4C_ - dialog.field_44_;
+    }
+    dialog.field_54_ = dialog.field_4C_;
+    if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
+        dialog.field_60_ = dialog.field_30_;
+        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+    } else {
+        dialog.field_60_ = (dialog.field_68_ + dialog.field_44_) * dialog.field_58_;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x0060D1F0 ?attach@RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x0060D1F0-0x0060D377 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060d1f0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60d1f0 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?attach@RadioButton@@UAEHPAVGraphicWin@@HHH@Z
+int RadioButton::attach(GraphicWin *parent, int x, int y, int flags) {
+    if (parent == 0) return 3;
+    if (HandleMain == 0) return 7;
+    const int dimensions = calculate_dimensions();
+    if (dimensions != 0) return dimensions;
+    Dialog::field_24_ = x;
+    Dialog::field_28_ = y;
+    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
+    GraphicWin::init(x, y, Dialog::field_5C_, Dialog::field_60_, 0,
+                     flags, parent, 0, 0);
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    return 0;
+}
+
+// ORIGINAL: 0x0060E220 ?on_redraw@RadioButton@@QAEXXZ 0x0060E220-0x0060E2FE FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e220.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e220 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_redraw@RadioButton@@UAEXXZ
+void RadioButton::on_redraw() {
+    WinCallbackWindow = win_parent_;
+    if (win_parent_ == 0) return;
+    const int handled = win_parent_->vslot_10(
+        static_cast<int>(reinterpret_cast<uintptr_t>(
+            static_cast<GraphicWin *>(this))));
+    if (handled == 0) {
+        static_cast<GraphicWin *>(win_parent_)->copy(
+            this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+            static_cast<int>(dib_.bmiHeader.biWidth),
+            -static_cast<int>(dib_.bmiHeader.biHeight));
+    }
+    for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
+        draw_item(position, Dialog::selected_position_ == position ? 1 : 0);
+    }
+    soft_update();
+}
+
+// ORIGINAL: 0x0060DE10 ?on_left_down@RadioButton@@QAEXHH@Z 0x0060DE10-0x0060E01B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060de10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60de10 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void RadioButton::on_left_down(int x, int y) {
+    WinCallbackWindow = win_parent_;
+    Dialog::item_list_.seek_pos(-1);
+    int remaining_y = y;
+    int first = 1;
+    while (remaining_y > 0) {
+        if (!first && Dialog::item_list_.current_position_ ==
+                          Dialog::item_list_.entry_count_ - 1) {
+            return;
+        }
+        first = 0;
+        Dialog::item_list_.next_entry();
+        const int lines = Dialog::item_list_.current_ == 0 ||
+                          Dialog::item_list_.current_->payload == 0
+            ? 0 : static_cast<int>(Dialog::item_list_.current_->payload->field_8_);
+        int item_height = Buffer::text_line_height() * lines;
+        const int minimum = static_cast<int>(Dialog::field_2C_ + Dialog::field_50_);
+        if (minimum > item_height) item_height = minimum;
+        remaining_y -= item_height;
+    }
+    const int position = (x / static_cast<int>(Dialog::field_4C_ + Dialog::field_2C_)) *
+                         static_cast<int>(Dialog::field_40_) +
+                         Dialog::item_list_.current_position_;
+
+    const int previous = Dialog::selected_position_;
+    if (position == previous) {
+        if ((Dialog::field_20_ & 4) != 0 && win_parent_ != 0) {
+            win_parent_->on_button_clicked(-1);
+        }
+        return;
+    }
+
+    draw_item(previous, 0);
+    Dialog::selected_position_ = position;
+    if (double_click_callback_ != 0) double_click_callback_(position);
+    draw_item(position, 1);
+    Dialog::field_F0_ = static_cast<uint32_t>(-1);
+    soft_update();
+    if ((Dialog::field_20_ & 4) != 0 && win_parent_ != 0) {
+        win_parent_->on_button_clicked(-1);
+    }
+}
+
+// ORIGINAL: 0x0060E320 ?on_mouse_move@RadioButton@@QAEXHH@Z 0x0060E320-0x0060E494 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060e320.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e320 complete control/data-access review and src/radiobutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void RadioButton::on_mouse_move(int x, int y) {
+    Dialog::item_list_.seek_pos(-1);
+    int remaining_y = y;
+    int first = 1;
+    while (remaining_y > 0) {
+        if (!first && Dialog::item_list_.current_position_ ==
+                          Dialog::item_list_.entry_count_ - 1) {
+            break;
+        }
+        first = 0;
+        Dialog::item_list_.next_entry();
+        const int lines = Dialog::item_list_.current_ == 0 ||
+                          Dialog::item_list_.current_->payload == 0
+            ? 0 : static_cast<int>(Dialog::item_list_.current_->payload->field_8_);
+        int item_height = Buffer::text_line_height() * lines;
+        const int minimum = static_cast<int>(Dialog::field_2C_ + Dialog::field_50_);
+        if (minimum > item_height) item_height = minimum;
+        remaining_y -= item_height;
+    }
+    const int position = (x / static_cast<int>(Dialog::field_4C_ + Dialog::field_2C_)) *
+                         static_cast<int>(Dialog::field_40_) +
+                         Dialog::item_list_.current_position_;
+    if (position == Dialog::selected_position_ && Dialog::field_F0_ ==
+        static_cast<uint32_t>(-1)) return;
+    if (Dialog::field_F0_ != static_cast<uint32_t>(position)) {
+        Dialog::field_F0_ = static_cast<uint32_t>(position);
+        redraw();
+    }
+}
+
 
 /*
 // ORIGINAL: 0x0060E300 ?on_dialog_focus@RadioButton@@QAEXH@Z 0x0060E300-0x0060E317 BYTE_EXACT
@@ -408,7 +630,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to RadioButton and
          RadioButton::attach overrides a virtual reached through a virtual
          base. There is no C++ here to get right, only a name to record.
 // ORIGINAL: 0x00407090 ?attach@thunk1_RadioButton@@QAEHPAUGraphicWin@@HHH@Z 0x00407090-0x00407098 BYTE_EXACT
-// symbol    ?attach@RadioButton@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// symbol    ?attach@RadioButton@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
 // size      8 bytes
 // kind      game
 Status: Complete

@@ -21,6 +21,8 @@
 #include "basebutton.h"
 #include "worldwin.h"
 #include "dialog.h"
+#include "buttongroup.h"
+#include "wave.h"
 
 // The zero-init .bss slots BaseButton's setup reads its field defaults from
 // (0x009B8E2C/0x009B8E30), rebindable like CheckBoxDefault1/2.
@@ -90,6 +92,8 @@ BaseButton::BaseButton() {
 BaseButton *BaseButton::construct() {
     return new (this) BaseButton();
 }
+
+void __cdecl fn_00607b10(int stage, BaseButton *button);
 
 /*
 Purpose: Close the GraphicWin base, reset BaseButton-owned state from the
@@ -751,6 +755,164 @@ void BaseButton::on_right_click(int a, int b) {
     // offset was raw. bubble_text_ is LPSTR at 0xA80.
     if (bubble_text_ != nullptr) {
         timer_callback(0);
+    }
+}
+
+// 0x006075C0. The two process-wide pointer cells implement Win's existing
+// mouse capture protocol. The button state, timer and notifications remain
+// owned by this BaseButton and its real Win parent.
+// ORIGINAL: 0x006075C0 ?on_left_down@BaseButton@@QAEXHH@Z 0x006075C0-0x0060771C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006075c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6075c0 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void BaseButton::on_left_down(int, int) {
+    if (WinPointerOwner3 == 0) {
+        WinPointerOwner4 = 0;
+        WinPointerOwner3 = this;
+    }
+    Win::clear_bubble_text();
+
+    Win *const parent = win_parent_;
+    if (field_A9C_ == 0) {
+        field_A9C_ = 1;
+        Win *const owner = parent->legacy_window_30();
+        if (owner != 0 && owner->vslot_23() == 0) owner->vslot_07();
+        parent->vslot_43(static_cast<int>(field_A78_));
+        redraw();
+        if (field_A44_ != 0xFFFFFFFFU) {
+            time2_.pulse(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
+                         1, reinterpret_cast<int>(this), field_A44_, 5);
+        }
+        return;
+    }
+
+    field_AA4_ = timeGetTime();
+    WinCallbackWindow = parent;
+    if (field_AAC_ == 0) {
+        Win *const owner = parent->legacy_window_28();
+        if (owner != 0 && owner->vslot_23() == 0) {
+            owner->vslot_07();
+        }
+        const int accepted = parent->vslot_41(static_cast<int>(field_A78_));
+        if (accepted != 0 && field_A44_ != 0xFFFFFFFFU) {
+            time2_.pulse(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
+                         1, reinterpret_cast<int>(this), field_A44_, 5);
+        }
+    }
+    if (field_AB4_ != 0) {
+        reinterpret_cast<void (__cdecl *)(int)>(field_AB4_)(field_A78_);
+    }
+}
+
+// 0x00607720. Complete the capture release before servicing the long-click
+// timer, matching the order of the image's two capture-slot tests.
+// ORIGINAL: 0x00607720 ?on_left_up@BaseButton@@QAEXHH@Z 0x00607720-0x006077E6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607720.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607720 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void BaseButton::on_left_up(int, int) {
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
+    }
+
+    Win *const parent = win_parent_;
+    if (parent == 0) {
+        return;
+    }
+    time2_.stop();
+    const DWORD elapsed = timeGetTime() - field_AA4_;
+    if (elapsed < field_AA0_) {
+        Sleep(field_AA0_ - elapsed);
+    }
+    if (field_A9C_ == 1) {
+        field_A9C_ = 0;
+        Win *const owner = parent->legacy_window_29();
+        if (owner != 0 && owner->vslot_23() == 0) {
+            owner->vslot_07();
+        }
+        parent->vslot_42(static_cast<int>(field_A78_));
+        redraw();
+    }
+}
+
+// 0x00607A20. The group owns the optional radio-style click policy; ordinary
+// parents receive their existing Win callback and per-button callback.
+// ORIGINAL: 0x00607A20 ?on_left_click@BaseButton@@QAEXHH@Z 0x00607A20-0x00607AF3 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00607a20.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607a20 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void BaseButton::on_left_click(int, int) {
+    if (WinPointerOwner3 == this) {
+        WinPointerOwner3 = 0;
+        on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == this) {
+        WinPointerOwner4 = 0;
+    }
+
+    Win *const parent = win_parent_;
+    WinCallbackWindow = parent;
+    if (field_AAC_ == 0) {
+        const int id = static_cast<int>(field_A78_);
+        if (id == -1) {
+            if (WinOkHook != 0) WinOkHook();
+        } else if (id == -2) {
+            if (WinCancelHook != 0) WinCancelHook();
+        }
+        Win *const owner = parent->legacy_window_31();
+        if (owner != 0 && owner->vslot_23() == 0) {
+            owner->vslot_07();
+        }
+        if (group_ == 0 || group_->button_click(id) != 0) {
+            parent->on_button_clicked(id);
+        }
+    }
+    if (field_AB0_ != 0) {
+        reinterpret_cast<void (__cdecl *)(int)>(field_AB0_)(field_A78_);
+    }
+}
+
+// 0x00607850. Buffer::rect2_ is the client rectangle used by the original
+// hit test. The hover owners and sizing flag are Win's own published state.
+// ORIGINAL: 0x00607850 ?on_mouse_move@BaseButton@@QAEXHH@Z 0x00607850-0x006079F3 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00607850.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x607850 complete control/data-access review and src/basebutton.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void BaseButton::on_mouse_move(int x, int y) {
+    RECT area = Buffer::rect2_;
+    area.right -= area.left;
+    area.bottom -= area.top;
+    area.left = 0;
+    area.top = 0;
+
+    Win *active = WinPointerOwner1;
+    if (active == 0) {
+        active = WinPointerOwner2;
+    }
+    if (active != this || WinSizingFlag == 0) {
+        return;
+    }
+
+    const int inside = in_box(x, y, &area);
+    if (inside == 0 && field_A9C_ == 1) {
+        time1_.stop();
+        field_A9C_ = 0;
+        Win *const owner = win_parent_->legacy_window_29();
+        if (owner != 0 && owner->vslot_23() == 0) owner->vslot_07();
+        win_parent_->vslot_42(static_cast<int>(field_A78_));
+        on_update();
+        return;
+    }
+    if (inside != 0) {
+        if (field_A9C_ == 0) {
+            if (field_A44_ != 0xFFFFFFFFU) {
+                time1_.start(reinterpret_cast<void (__cdecl *)(int, int)>(fn_00607b10),
+                              1, reinterpret_cast<int>(this), field_A44_, 5);
+            }
+            field_A9C_ = 1;
+            Win *const owner = win_parent_->legacy_window_30();
+            if (owner != 0 && owner->vslot_23() == 0) owner->vslot_07();
+            win_parent_->vslot_43(static_cast<int>(field_A78_));
+            on_update();
+        } else if (get_lbutton_state() != 0) {
+            Win::on_mouse_move(x, y, 0, 0);
+        }
     }
 }
 

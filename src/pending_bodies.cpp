@@ -261,9 +261,6 @@ void UV2Player::close() {
     PENDING_BODY(0x004BF400, pending)(this, nullptr);
 }
 
-// ?close@SpriteBox@@QAEXXZ at 0x00610280 already has a forwarder below
-// (added when the on_* thunks were promoted); ~SpriteBox reaches it there.
-
 // The game's own `operator new` at 0x0064558A, reached from `Wave::init` and
 // `Wave::load`. See the note in `vector_teardown.h`.
 void *__cdecl WaveOperatorNew(unsigned int size) {
@@ -511,11 +508,6 @@ int SetupWin::do_menu_rightside(char *a1, int a2) {  // 0x004ADB70
     return PENDING_BODY(0x004ADB70, pending)(this, nullptr, a1, a2);
 }
 
-uint32_t SpriteBox::close() {  // 0x00610280
-    typedef void(__fastcall *pending)(SpriteBox *, void *);
-    PENDING_BODY(0x00610280, pending)(this, nullptr);
-    return 0;
-}
 
 // ?edit@EditGroup@@QAEHPADPADH@Z at 0x00611F80 - WAS HERE and is gone: the
 // body is homed into src/editgroup.cpp 2026-09-27. DipEdit::on_button_clicked
@@ -639,32 +631,13 @@ int MapWin::focus(int x_coord, int y_coord) {  // 0x0046B310
     return PENDING_BODY(0x0046B310, pending)(this, nullptr, x_coord, y_coord);
 }
 
-// ?calculate_dimensions@CheckBox@@QAEHXZ at 0x0060ED10 - Dialogs
-// ::calculate_dimensions (0x006132A0) tail-calls it for kind 1. The body is
-// still FILE-only in src/unrecovered/0060ed10.cpp.
-int CheckBox::calculate_dimensions() {  // 0x0060ED10
-    typedef int(__fastcall *pending)(CheckBox *, void *);
-    return PENDING_BODY(0x0060ED10, pending)(this, nullptr);
-}
 
-int CheckBox::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x0060E800
-    typedef int(__fastcall *pending)(CheckBox *, void *, GraphicWin *, int, int, int);
-    return PENDING_BODY(0x0060E800, pending)(this, nullptr, a1, a2, a3, a4);
-}
 
 // CheckBox::on_key_down (0x0060F8B0) and CheckBox::on_mouse_move (0x0060FBB0)
 // WERE HERE and are gone: both bodies are homed into src/leaf_recoveries.cpp
 // 2026-09-27.
 
-void CheckBox::on_left_down(int a1, int a2) {  // 0x0060F700
-    typedef void(__fastcall *pending)(CheckBox *, void *, int, int);
-    PENDING_BODY(0x0060F700, pending)(this, nullptr, a1, a2);
-}
 
-void CheckBox::on_redraw() {  // 0x0060FAB0
-    typedef void(__fastcall *pending)(CheckBox *, void *);
-    PENDING_BODY(0x0060FAB0, pending)(this, nullptr);
-}
 
 int Console::on_key_click(int a1, int a2) {  // 0x005178C0
     typedef int(__fastcall *pending)(Console *, void *, int, int);
@@ -704,28 +677,9 @@ void Dialogs::pass_dialog_focus() {  // 0x00613180
 // (0x00601BF0) still calls it BY NAME with the caller's override text, so the
 // call site keeps the image's `E8`.
 
-// ?calculate_dimensions@EditGroup@@QAEHXZ at 0x00612150 - Dialogs
-// ::calculate_dimensions (0x006132A0) tail-calls it for kind 4. The body is
-// still FILE-only in src/unrecovered/00612150.cpp.
-int EditGroup::calculate_dimensions() {  // 0x00612150
-    typedef int(__fastcall *pending)(EditGroup *, void *);
-    return PENDING_BODY(0x00612150, pending)(this, nullptr);
-}
 
-int EditGroup::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x00611AF0
-    typedef int(__fastcall *pending)(EditGroup *, void *, GraphicWin *, int, int, int);
-    return PENDING_BODY(0x00611AF0, pending)(this, nullptr, a1, a2, a3, a4);
-}
 
-void EditGroup::on_redraw() {  // 0x00612450
-    typedef void(__fastcall *pending)(EditGroup *, void *);
-    PENDING_BODY(0x00612450, pending)(this, nullptr);
-}
 
-void EditGroup::pass_dialog_focus() {  // 0x006126C0
-    typedef void(__fastcall *pending)(EditGroup *, void *);
-    PENDING_BODY(0x006126C0, pending)(this, nullptr);
-}
 
 
 void ListBox::on_key_down(int a1) {  // 0x0060AF90
@@ -833,59 +787,17 @@ void PlanWin::on_redraw() {  // 0x0048AF30
     PENDING_BODY(0x0048AF30, pending)(this, nullptr);
 }
 
-// ?calculate_dimensions@RadioButton@@QAEHXZ at 0x0060D380 - Dialogs
-// ::calculate_dimensions (0x006132A0) tail-calls it for kind 0x10. The body
-// is still FILE-only in src/unrecovered/0060d380.cpp.
-int RadioButton::calculate_dimensions() {  // 0x0060D380
-    typedef int(__fastcall *pending)(RadioButton *, void *);
-    return PENDING_BODY(0x0060D380, pending)(this, nullptr);
-}
 
-int RadioButton::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x0060D1F0
-    typedef int(__fastcall *pending)(RadioButton *, void *, GraphicWin *, int, int, int);
-    return PENDING_BODY(0x0060D1F0, pending)(this, nullptr, a1, a2, a3, a4);
-}
 
 // RadioButton::on_key_down (0x0060E020) WAS HERE and is gone: the body is
 // homed into src/leaf_recoveries.cpp 2026-09-27.
 
-void RadioButton::on_left_down(int a1, int a2) {  // 0x0060DE10
-    typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
-    PENDING_BODY(0x0060DE10, pending)(this, nullptr, a1, a2);
-}
 
-void RadioButton::on_mouse_move(int a1, int a2) {  // 0x0060E320
-    typedef void(__fastcall *pending)(RadioButton *, void *, int, int);
-    PENDING_BODY(0x0060E320, pending)(this, nullptr, a1, a2);
-}
 
-void RadioButton::on_redraw() {  // 0x0060E220
-    typedef void(__fastcall *pending)(RadioButton *, void *);
-    PENDING_BODY(0x0060E220, pending)(this, nullptr);
-}
 
-// ?calculate_dimensions@SpriteBox@@QAEHXZ at 0x00610970 - Dialogs
-// ::calculate_dimensions (0x006132A0) tail-calls it for kind 8. The body is
-// still FILE-only in src/unrecovered/00610970.cpp.
-int SpriteBox::calculate_dimensions() {  // 0x00610970
-    typedef int(__fastcall *pending)(SpriteBox *, void *);
-    return PENDING_BODY(0x00610970, pending)(this, nullptr);
-}
 
-int SpriteBox::attach(GraphicWin * a1, int a2, int a3, int a4) {  // 0x00610540
-    typedef int(__fastcall *pending)(SpriteBox *, void *, GraphicWin *, int, int, int);
-    return PENDING_BODY(0x00610540, pending)(this, nullptr, a1, a2, a3, a4);
-}
 
-int SpriteBox::on_key_down(int a1) {  // 0x00611400
-    typedef int(__fastcall *pending)(SpriteBox *, void *, int);
-    return PENDING_BODY(0x00611400, pending)(this, nullptr, a1);
-}
 
-void SpriteBox::on_left_click(int a1, int a2) {  // 0x00611060
-    typedef void(__fastcall *pending)(SpriteBox *, void *, int, int);
-    PENDING_BODY(0x00611060, pending)(this, nullptr, a1, a2);
-}
 
 // SpriteBox::on_redraw (0x00611380) WAS HERE and is gone: the body is homed
 // into src/leaf_recoveries.cpp 2026-09-27.

@@ -1,0 +1,22 @@
+{
+  "event_id": "10187be1f475e599662334f30839cddd71572916f4f5bbbbee666e3e81fba2bb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/audits.json",
+      "recovery/tests/dialog_close_harness.cpp",
+      "recovery/tests/dialog_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Fresh actual-source regression controls report34passes,4native-lease skips and2fixture compilation failures. Both retained Dialog harnesses omit the GraphicWin forward declaration required by existing Dialog pointer-parameter declarations. Add only that opaque type declaration, preserving every tested body/assertion and all stated limits; rerun controls.",
+      "The verified control-owner replacement removes18 pending executable forwarders. Native compiler-work audit observes122 remaining PENDING_BODY occurrences against stale173 ceiling. Tighten only this ceiling to122 in the same integration commit; all other debt counters and existing whole-project findings stay visible. Coordinator-only fixture/policy maintenance is not game or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0d176173cdaf5f37e46e4dd6595fee06caa6e7124dfaeacd02ff9bd8f9b28194",
+  "request_id": "dialog-control-actual-fixture-and-forwarder-ratchet",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:dialog-control-coverage-wave"
+}

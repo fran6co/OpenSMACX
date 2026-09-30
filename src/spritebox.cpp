@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "spritebox.h"
+#include "temp.h" // HandleMain
 #include "dialog.h"
 #include "vtable_shim.h"
 #include "sounddevice.h"
@@ -374,6 +375,309 @@ void SpriteBox::on_dialog_focus(int a1) {
     // The compiler performs the out-of-subobject adjustment as part of the
     // override's entry; `a1` is dead; `ret 4` still pops it.
     redraw();
+}
+
+// ORIGINAL: 0x00610540 ?attach@SpriteBox@@QAEHPAUGraphicWin@@HHH@Z 0x00610540-0x006108D5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00610540.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610540 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?attach@SpriteBox@@UAEHPAVGraphicWin@@HHH@Z
+int SpriteBox::attach(GraphicWin *parent, int x, int y, int flags) {
+    if (parent == 0) return 3;
+    if (HandleMain == 0) return 7;
+    calculate_dimensions();
+    Dialog::field_24_ = x;
+    Dialog::field_28_ = y;
+    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
+    const int init_result = GraphicWin::init(
+        x, y, Dialog::field_5C_, Dialog::field_60_, 0, flags, parent, 0, 0);
+    if (init_result != 0) return 0;
+
+    spots_.init(static_cast<int>(list_.entry_count_));
+    const int maximum_height = static_cast<int>(field_58_);
+    const int cell_height = static_cast<int>(Dialog::field_68_);
+    int vertical_offset = abs(cell_height - maximum_height);
+    int row_bottom = cell_height + vertical_offset;
+    int left = 0;
+    int horizontal_extent = static_cast<int>(field_54_);
+    int position = 0;
+    for (int column = 0; column < static_cast<int>(Dialog::field_54_); ++column) {
+        for (int row = 0; row < static_cast<int>(Dialog::field_4C_); ++row) {
+            if (position >= static_cast<int>(list_.entry_count_)) break;
+            if (list_.seek_pos(position)) {
+                const int item_id = list_.current_->id;
+                spots_.add(item_id, 0, left, vertical_offset,
+                           horizontal_extent - left, row_bottom - vertical_offset);
+            }
+            ++position;
+            vertical_offset += cell_height;
+            row_bottom += cell_height;
+        }
+        if (position >= static_cast<int>(list_.entry_count_)) break;
+        const int gap = static_cast<int>(Dialog::field_60_ + Dialog::field_40_);
+        left += gap;
+        horizontal_extent += gap;
+        vertical_offset = abs(cell_height - maximum_height) >> 1;
+        row_bottom = maximum_height;
+    }
+
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    return 0;
+}
+
+// ORIGINAL: 0x00610970 ?calculate_dimensions@SpriteBox@@QAEHXZ 0x00610970-0x00610C4A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00610970.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610970 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+int SpriteBox::calculate_dimensions() {
+    Dialog &dialog = *this;
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    if (list_.entry_count_ == 0) return 7;
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    field_5C_ = 0;
+    field_54_ = 0;
+    field_58_ = 0;
+    list_.current_ = list_.head_;
+    dialog.item_list_.current_ = dialog.item_list_.head_;
+    for (int i = 0; i < list_.entry_count_; ++i) {
+        if (i != 0) {
+            list_.current_ = list_.current_->next;
+            ++list_.current_position_;
+            if (list_.current_position_ == list_.entry_count_) list_.current_position_ = 0;
+            if (dialog.item_list_.head_ != 0) {
+                dialog.item_list_.current_ = dialog.item_list_.current_->next;
+                ++dialog.item_list_.current_position_;
+                if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
+                    dialog.item_list_.current_position_ = 0;
+                }
+            }
+        }
+        Sprite *const prototype = list_.current_ == 0 || list_.current_->payload == 0
+            ? 0 : reinterpret_cast<Sprite *>(list_.current_->payload->text);
+        if (prototype != 0) {
+            int width = prototype->width() * static_cast<int>(field_1C_)
+                        / static_cast<int>(field_20_);
+            if (width < static_cast<int>(field_54_)) width = field_54_;
+            field_54_ = width;
+            int height = prototype->height() * static_cast<int>(field_1C_)
+                         / static_cast<int>(field_20_);
+            if (height < static_cast<int>(field_58_)) height = field_58_;
+            field_58_ = height;
+        }
+        char *const label = dialog.item_list_.current_ == 0
+            || dialog.item_list_.current_->payload == 0
+            ? 0 : dialog.item_list_.current_->payload->text;
+        const int text_width = buffer->text_width(label);
+        if (field_5C_ < static_cast<uint32_t>(text_width)) field_5C_ = text_width;
+    }
+
+    dialog.field_60_ = buffer->text_line_height();
+    int row_height = static_cast<int>(field_58_);
+    if (row_height < static_cast<int>(dialog.field_60_)) row_height = dialog.field_60_;
+    dialog.field_68_ = dialog.field_44_ + row_height;
+    dialog.field_64_ = static_cast<int>(field_5C_)
+                       + dialog.field_40_ * 2 + static_cast<int>(field_54_);
+    dialog.field_58_ = dialog.field_50_;
+    if (dialog.field_58_ > list_.entry_count_) dialog.field_58_ = list_.entry_count_;
+    if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
+        dialog.field_60_ = dialog.field_30_;
+        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+    } else {
+        dialog.field_60_ = dialog.field_68_ * dialog.field_58_ + dialog.field_44_;
+    }
+    if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
+        dialog.field_54_ = dialog.field_2C_ / dialog.field_64_;
+        dialog.field_5C_ = dialog.field_2C_;
+    } else {
+        int rows = (dialog.field_58_ - 1 + list_.entry_count_) / dialog.field_58_;
+        dialog.field_54_ = rows;
+        int height = (dialog.field_68_ + dialog.field_44_) * rows - dialog.field_44_;
+        if (height < dialog.field_2C_) height = dialog.field_2C_;
+        dialog.field_5C_ = height;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x00610C50 ?draw_item@SpriteBox@@QAEXH@Z 0x00610C50-0x0061103B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610c50.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610c50 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void SpriteBox::draw_item(int position) {
+    Win *const parent = win_parent_;
+    if (parent == 0) return;
+    const int columns = static_cast<int>(Dialog::field_58_);
+    const int column = position / columns;
+    const int row = position % columns;
+    int x = (static_cast<int>(Dialog::field_64_) +
+             static_cast<int>(Dialog::field_44_)) * column;
+    int y = row * static_cast<int>(Dialog::field_68_) +
+            (static_cast<int>(Dialog::field_44_) >> 1);
+
+    if (position > list_.entry_count_ - 1) return;
+    if (!list_.seek_pos(position)) return;
+    Sprite *const sprite = list_.current_ == 0 || list_.current_->payload == 0
+        ? 0 : reinterpret_cast<Sprite *>(list_.current_->payload->text);
+    if (!Dialog::item_list_.seek_pos(position)) return;
+    const int item_id = list_.current_ == 0 ? 0 : list_.current_->id;
+
+    RECT area;
+    area.left = static_cast<int>(field_54_) + y + 4;
+    area.top = x;
+    area.right = static_cast<int>(Dialog::field_64_) + y;
+    area.bottom = static_cast<int>(Dialog::field_68_) + x;
+
+    GraphicWin *const parent_graphic = static_cast<GraphicWin *>(parent);
+    Buffer *const parent_buffer = static_cast<Buffer *>(parent_graphic);
+    Buffer *const control_buffer = static_cast<Buffer *>(
+        static_cast<GraphicWin *>(this));
+    Buffer *const buffer = control_buffer;
+    control_buffer->copy(parent_buffer, Dialog::field_24_ + y,
+                         Dialog::field_28_ + x, y, x,
+                         Dialog::field_64_, Dialog::field_68_);
+
+    if (sprite != 0) {
+        const int scale_numerator = static_cast<int>(field_1C_);
+        const int scale_denominator = static_cast<int>(field_20_);
+        const int sprite_height = sprite->height() * scale_numerator / scale_denominator;
+        const int sprite_width = sprite->width() * scale_numerator / scale_denominator;
+        int sprite_y = x + (static_cast<int>(Dialog::field_68_) - sprite_height) / 2;
+        int sprite_x = y + (static_cast<int>(field_54_) - sprite_width) / 2;
+        if (redraw_callback_ == 0) {
+            sprite->draw(static_cast<Buffer *>(static_cast<GraphicWin *>(this)),
+                         sprite->transparent_index(), sprite_x, sprite_y,
+                         scale_numerator, scale_denominator);
+        } else {
+            SpriteScaleNumerator = scale_numerator;
+            SpriteScaleDenominator = scale_denominator;
+            redraw_callback_(sprite, static_cast<GraphicWin *>(this), item_id,
+                            sprite_x, sprite_y);
+            buffer->set_text_color(text_color_a_, text_color_b_,
+                                   text_color_c_, text_color_d_);
+            buffer->set_text_color2(text_color_2a_, text_color_2b_,
+                                    text_color_2c_, text_color_2d_);
+            buffer->set_text_color3(text_color_3a_, text_color_3b_,
+                                    text_color_3c_, text_color_3d_);
+            buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+        }
+
+        if (Dialog::selected_position_ == position && field_4_ != 0) {
+            ++sprite_y;
+            static_cast<Buffer *>(static_cast<GraphicWin *>(this))->box(
+                sprite_x, sprite_y, sprite_x + sprite_width - 1,
+                static_cast<int>(Dialog::field_68_) + sprite_y - 3,
+                static_cast<int>(field_8_), static_cast<int>(field_8_));
+        }
+    }
+
+    char *const label = Dialog::item_list_.current_text();
+    if (label != 0) {
+        static_cast<Buffer *>(static_cast<GraphicWin *>(this))->write_l(
+            label, &area, strlen(label));
+    }
+}
+
+// ORIGINAL: 0x00611060 ?on_left_click@SpriteBox@@QAEXHH@Z 0x00611060-0x0061114A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00611060.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611060 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void SpriteBox::on_left_click(int x, int y) {
+    int item_id = 0;
+    if (spots_.check(x, y, &item_id, 0) == -1) return;
+
+    int callback_result = 0;
+    if (field_68_ != 0) callback_result = field_68_(item_id);
+
+    const int previous = Dialog::selected_position_;
+    if (list_.head_ != 0) {
+        list_.current_position_ = 0;
+        list_.current_ = list_.head_;
+        for (int index = 0; index < list_.entry_count_; ++index) {
+            if (list_.current_->id == item_id) break;
+            ++list_.current_position_;
+            list_.current_ = list_.current_->next;
+        }
+    }
+    Dialog::selected_position_ = list_.current_position_;
+    draw_item(previous);
+    draw_item(Dialog::selected_position_);
+    on_update();
+    if (callback_result != 0) {
+        SendMessageA(HandleMain, WM_KEYDOWN, VK_RETURN, 0);
+    }
+}
+
+// ORIGINAL: 0x00611400 ?on_key_down@SpriteBox@@QAEHH@Z 0x00611400-0x00611580 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00611400.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611400 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+int SpriteBox::on_key_down(int key) {
+    const int count = list_.entry_count_;
+    if (count <= 0) return 0;
+    const int old_position = Dialog::selected_position_;
+    int next_position = old_position;
+    switch (key) {
+    case VK_LEFT:
+    case VK_NUMPAD4:
+        if (next_position > 0) --next_position;
+        else return 1;
+        break;
+    case VK_UP:
+    case VK_NUMPAD8:
+        if (next_position + 1 < count) ++next_position;
+        else return 1;
+        break;
+    case VK_RIGHT:
+    case VK_NUMPAD6:
+        if (Dialog::field_58_ > static_cast<uint32_t>(next_position)) return 1;
+        next_position -= static_cast<int>(Dialog::field_58_);
+        break;
+    case VK_DOWN:
+    case VK_NUMPAD2:
+        if (next_position + static_cast<int>(Dialog::field_58_) >= count) return 1;
+        next_position += static_cast<int>(Dialog::field_58_);
+        break;
+    default: return 0;
+    }
+    if (next_position == old_position) return 1;
+    draw_item(old_position);
+    Dialog::selected_position_ = next_position;
+    draw_item(next_position);
+    on_update();
+    return 1;
+}
+
+// ORIGINAL: 0x00610280 ?close@SpriteBox@@QAEXXZ 0x00610280-0x00610416 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00610280.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x610280 complete control/data-access review and src/spritebox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?close@SpriteBox@@QAEXXZ
+void SpriteBox::close() {
+    GraphicWin::close();
+    Dialog::close();
+    field_4_ = 0;
+    field_1C_ = 1;
+    field_20_ = 1;
+    field_54_ = 0;
+    field_58_ = 0;
+    field_5C_ = 0;
+    field_60_ = 0;
+    redraw_callback_ = 0;
+    field_68_ = 0;
+    field_6C_ = 0;
+    field_70_ = 0;
+    field_74_ = 0;
+    field_78_ = 0;
+    field_7C_ = 0;
+    double_click_callback_ = 0;
+    field_84_ = 0;
+    list_.close();
+    spots_.shutdown();
+    field_8_ = SpriteBoxDefaultField8;
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    buffer->set_text_color(DialogDefaults[24], DialogDefaults[27],
+                           DialogDefaults[30], DialogDefaults[33]);
+    buffer->set_text_color2(DialogDefaults[25], DialogDefaults[28],
+                            DialogDefaults[31], DialogDefaults[34]);
+    buffer->set_text_color3(DialogDefaults[26], DialogDefaults[29],
+                            DialogDefaults[32], DialogDefaults[35]);
+    buffer->set_font(DialogDefaultFonts[0], DialogDefaultFonts[1],
+                     DialogDefaultFonts[2], 0);
 }
 
 /*

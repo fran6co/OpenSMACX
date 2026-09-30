@@ -10,6 +10,7 @@ typedef void *LPVOID;
 typedef int BOOL;
 struct RECT { int left, top, right, bottom; };
 struct Font { int tag; };
+class GraphicWin; // Only pointer parameters are present in the retained declaration.
 #define MEASURED
 #define UNUSED(name)
 #define nullptr 0

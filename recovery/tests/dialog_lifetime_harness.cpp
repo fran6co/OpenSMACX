@@ -7,6 +7,7 @@
 typedef unsigned int uint32_t;
 struct RECT { int left, top, right, bottom; };
 struct Font {};
+class GraphicWin; // This bounded lifetime projection never invokes attachment.
 #define MEASURED
 int events[16], count, throw_close, throw_list;
 void *deleting;

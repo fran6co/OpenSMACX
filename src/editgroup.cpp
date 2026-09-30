@@ -20,6 +20,14 @@
 #include "editgroup.h"
 #include "editbox.h"
 #include "general.h"  // mem_get, for the two coverage bodies below
+#include "temp.h" // HandleMain
+
+namespace {
+struct WinNodeListFocusEntry {
+    uint32_t reserved_prefix;
+    Win *window;
+};
+}
 
 // EditGroupDefault - 0x009B8FCC. Read at construction time into field_84_;
 // a rebindable seam so tests can observe/control it, the same idiom
@@ -439,4 +447,214 @@ int EditGroup::set_default(char *default_text, int index) {
     text_buffers_[index][0] = 0;
     strcat(text_buffers_[index], default_text);
     return 0;
+}
+
+// 0x00612150. Measure the caption and current edit contents independently,
+// then retain the dialog's explicit row/column constraints.
+// ORIGINAL: 0x00612150 ?calculate_dimensions@EditGroup@@QAEHXZ 0x00612150-0x0061244A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00612150.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612150 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+int EditGroup::calculate_dimensions() {
+    Dialog &dialog = *this;
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    if (dialog.item_list_.entry_count_ == 0) {
+        return 7;
+    }
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    dialog.field_58_ = dialog.item_list_.entry_count_;
+    if (dialog.field_58_ > dialog.field_50_) {
+        dialog.field_58_ = dialog.field_50_;
+    }
+    dialog.item_list_.current_ = dialog.item_list_.head_;
+    if (dialog.item_list_.entry_count_ > 0) {
+        int step = abs(-1);
+        if (step <= dialog.item_list_.entry_count_) {
+            step = abs(-1);
+            while (step > 0) {
+                --step;
+                dialog.item_list_.current_ = dialog.item_list_.current_->previous;
+            }
+            dialog.item_list_.current_position_ = dialog.item_list_.entry_count_ - 1;
+        }
+    }
+
+    label_width_ = 0;
+    edit_width_ = 0;
+    for (int i = 0; i < dialog.item_list_.entry_count_; ++i) {
+        if (dialog.item_list_.head_ != 0) {
+            dialog.item_list_.current_ = dialog.item_list_.current_->next;
+            ++dialog.item_list_.current_position_;
+            if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
+                dialog.item_list_.current_position_ = 0;
+            }
+        }
+        StringStructEntry *const entry = dialog.item_list_.current_;
+        char *label = entry == 0 || entry->payload == 0 ? 0 : entry->payload->text;
+        const int measured_label = buffer->text_width(label);
+        if (label_width_ < measured_label) label_width_ = measured_label;
+        const int measured_edit = buffer->text_width(text_buffers_[i]);
+        if (edit_width_ < measured_edit) {
+            edit_width_ = measured_edit + dialog.field_40_ * 2;
+        }
+    }
+
+    if (edit_width_ <= 10) edit_width_ = 10;
+    dialog.field_64_ = dialog.field_34_
+        + (dialog.field_44_ + dialog.field_40_) * 2
+        + edit_width_ + label_width_;
+    dialog.field_68_ = buffer->text_line_height() + dialog.field_44_;
+
+    if ((dialog.field_20_ & 2) == 0 || dialog.field_2C_ == 0) {
+        int width = dialog.field_64_ * dialog.field_4C_;
+        if (width < dialog.field_2C_) width = dialog.field_2C_;
+        dialog.field_5C_ = width;
+        dialog.field_64_ = width / dialog.field_4C_;
+        dialog.field_54_ = dialog.field_4C_;
+    } else {
+        dialog.field_5C_ = dialog.field_2C_;
+        dialog.field_54_ = dialog.field_2C_ / dialog.field_64_;
+    }
+    if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
+        dialog.field_60_ = dialog.field_30_;
+        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+    } else {
+        dialog.field_60_ = dialog.field_68_ * dialog.field_58_ + dialog.field_44_;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x00611AF0 ?attach@EditGroup@@QAEHPAUGraphicWin@@HHH@Z 0x00611AF0-0x00611F79;0x00663047-0x0066305C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00611af0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x611af0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?attach@EditGroup@@UAEHPAVGraphicWin@@HHH@Z
+int EditGroup::attach(GraphicWin *parent, int x, int y, int flags) {
+    if (parent == 0) return 3;
+    calculate_dimensions();
+    Dialog::field_24_ = x;
+    Dialog::field_28_ = y;
+    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
+    const int result = GraphicWin::init(x, flags, Dialog::field_5C_,
+                                        Dialog::field_60_, 0, y, parent, 0, 0);
+    if (result != 0) return result;
+
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    int child_y = static_cast<int>(Dialog::field_68_) -
+                  static_cast<int>(Dialog::field_44_);
+    int child_x = static_cast<int>(Dialog::field_44_) >> 1;
+    int index = 0;
+    for (int row = 0; row < static_cast<int>(Dialog::field_54_); ++row) {
+        const int cell_width = static_cast<int>(Dialog::field_64_);
+        const int label_width = static_cast<int>(Dialog::field_34_);
+        const int label_x = cell_width * row + label_width +
+                            static_cast<int>(Dialog::field_44_) * 2 + label_width_;
+        const int label_right = cell_width + label_width + cell_width * row;
+        for (int column = 0; column < static_cast<int>(Dialog::field_58_); ++column) {
+            if (boxes_[index] != 0) {
+                delete boxes_[index];
+                boxes_[index] = 0;
+            }
+            boxes_[index] = new EditBox();
+            if (boxes_[index] == 0) return 4;
+
+            const int box_width = label_x - child_x;
+            const int box_height = label_right - child_y;
+            const int box_result = boxes_[index]->init(
+                child_y, child_x, box_width, box_height, this, 1);
+            if (box_result != 0) return box_result;
+
+            if ((Dialog::field_20_ & 0x100000) != 0) {
+                boxes_[index]->field_B3C_ |= 2;
+            }
+            Buffer *const edit_buffer = static_cast<Buffer *>(boxes_[index]);
+            edit_buffer->set_text_color(text_color_a_, text_color_b_,
+                                        text_color_c_, text_color_d_);
+            edit_buffer->set_text_color2(text_color_2a_, text_color_2b_,
+                                         text_color_2c_, text_color_2d_);
+            edit_buffer->set_text_color3(text_color_3a_, text_color_3b_,
+                                         text_color_3c_, text_color_3d_);
+            edit_buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+            boxes_[index]->field_B14_ = limits_[index];
+            boxes_[index]->set_text(text_buffers_[index]);
+            boxes_[index]->field_B1C_ = Dialog::field_6C_;
+            boxes_[index]->field_B28_ = field_AC_;
+            boxes_[index]->field_B2C_ = field_B0_;
+            boxes_[index]->field_B30_ = field_B4_;
+            boxes_[index]->field_B34_ = Dialog::field_40_;
+            boxes_[index]->field_B40_ = 0;
+            boxes_[index]->field_B44_ = strlen(boxes_[index]->text_);
+            boxes_[index]->redraw();
+            boxes_[index]->show(0);
+
+            child_y += Dialog::field_68_;
+            child_x += Dialog::field_68_;
+            ++index;
+        }
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x00612450 ?on_redraw@EditGroup@@QAEXXZ 0x00612450-0x00612669 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00612450.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x612450 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_redraw@EditGroup@@UAEXXZ
+void EditGroup::on_redraw() {
+    Win *const parent = win_parent_;
+    if (parent == 0) return;
+    WinCallbackWindow = parent;
+    const int handled = parent->vslot_10(
+        static_cast<int>(reinterpret_cast<uintptr_t>(
+            static_cast<GraphicWin *>(this))));
+    if (handled == 0) {
+        static_cast<GraphicWin *>(parent)->copy(
+            this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+            static_cast<int>(dib_.bmiHeader.biWidth),
+            -static_cast<int>(dib_.bmiHeader.biHeight));
+    }
+
+    const int columns = static_cast<int>(Dialog::field_54_);
+    const int rows = static_cast<int>(Dialog::field_58_);
+    int index = 0;
+    for (int column = 0; column < columns; ++column) {
+        for (int row = 0; row < rows && index < item_list_.entry_count_; ++row) {
+            if (item_list_.seek_pos(index)) {
+                RECT label_area;
+                label_area.left = column * static_cast<int>(Dialog::field_64_) +
+                                  static_cast<int>(Dialog::field_40_);
+                label_area.top = row * (static_cast<int>(Dialog::field_68_) +
+                                        static_cast<int>(Dialog::field_44_)) +
+                                 (static_cast<int>(Dialog::field_44_) >> 1);
+                label_area.right = label_area.left + label_width_;
+                label_area.bottom = label_area.top + Dialog::field_68_;
+                char *const label = item_list_.current_text();
+                if (label != 0) {
+                    static_cast<Buffer *>(static_cast<GraphicWin *>(this))->write_l(
+                        label, &label_area, strlen(label));
+                }
+            }
+            if (boxes_[index] != 0) boxes_[index]->on_redraw();
+            ++index;
+        }
+    }
+    soft_update();
+}
+
+// ORIGINAL: 0x006126C0 ?pass_dialog_focus@EditGroup@@QAEXXZ 0x006126C0-0x006126F8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/006126c0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x6126c0 complete control/data-access review and src/editgroup.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?pass_dialog_focus@EditGroup@@UAEXXZ
+void EditGroup::pass_dialog_focus() {
+    if (list_.count_ != 0 && list_.head_ != 0) {
+        Win *const focused =
+            static_cast<WinNodeListFocusEntry *>(list_.current_)->window;
+        if (focused != 0) {
+            focused->pass_dialog_focus();
+            return;
+        }
+    }
+    Win::pass_dialog_focus();
 }

@@ -45,9 +45,12 @@ class SpriteBoxList : public StringList {
 class SpriteBox : public virtual GraphicWin, public virtual Dialog {
  public:
   typedef int (__cdecl *DrawCallback)(Sprite *, GraphicWin *, int, int, int);
+  typedef int (__cdecl *ClickCallback)(int);
   void set_redraw_callback(DrawCallback callback) { redraw_callback_ = callback; }
-  // 0x00611380, a pending_bodies forwarder.
+  // 0x00611380, row redraw entry retained in leaf_recoveries.cpp.
   void on_redraw();
+  // 0x00610C50, genuine row painter used by redraw and input handlers.
+  void draw_item(int position);
 
  public:
   // 0x00611150, recovered in spritebox.cpp.
@@ -77,7 +80,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   void on_right_click(int a, int b);
  public:
   void on_dialog_focus(int a1);
-  uint32_t close();
+  void close();
   // 0x006108E0, still a pending_bodies forwarder: `pops()` (popup.cpp) calls
   // it BY NAME so it emits the image's `call rel32`.
   int sprite(Sprite *a1, char *a2, int a3);
@@ -157,7 +160,7 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   // (Dialogs+0x22a4) and its two config slots (0x22a8/0x22c0) straight into
   // these, with no call in between. Access is compile-time only.
   DrawCallback redraw_callback_;  // 0x64
-  uint32_t field_68_;  // 0x68
+  ClickCallback field_68_;  // original item-click callback at 0x68
  private:
   uint32_t field_6C_;  // 0x6C
   uint32_t field_70_;  // 0x70
@@ -165,7 +168,6 @@ class SpriteBox : public virtual GraphicWin, public virtual Dialog {
   uint32_t field_78_;  // 0x78
   uint32_t field_7C_;  // 0x7C
  public:
-  typedef int (__cdecl *ClickCallback)(int);
   // 0x00611301 loads this slot; caller cleanup follows its one argument,
   // and the returned int decides whether to post the Enter-key message.
   // RECOVERY_MEMBER: v1 SpriteBox double_click_callback_ 0x80 0x006112E0

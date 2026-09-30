@@ -20,6 +20,7 @@
 #include "checkbox.h"
 #include "vtable_shim.h"
 #include "win.h"  // WinCallbackWindow
+#include "temp.h" // HandleMain
 
 // The constructor loads these rebindable pointer cells, not sprite contents.
 // init_class passes their original targets to Sprite::extract.
@@ -311,6 +312,167 @@ void CheckBox::draw_item(int position, int state, int) {
     }
 }
 
+// 0x0060ED10. Preserve the circular list cursor updates, bitmap-derived
+// default cell dimensions, and fixed/automatic geometry branches of the
+// original dialog control.
+// ORIGINAL: 0x0060ED10 ?calculate_dimensions@CheckBox@@QAEHXZ 0x0060ED10-0x0060F02B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060ed10.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60ed10 complete control/data-access review and src/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+int CheckBox::calculate_dimensions() {
+    Dialog &dialog = *this;
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    if (dialog.item_list_.entry_count_ == 0) {
+        return 7;
+    }
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+
+    if (dialog.field_34_ == 0 && unchecked_sprite_ != 0 && checked_sprite_ != 0) {
+        dialog.field_34_ = unchecked_sprite_->width();
+        if (dialog.field_34_ < checked_sprite_->width()) {
+            dialog.field_34_ = checked_sprite_->width();
+        }
+    }
+    if (dialog.field_48_ == -1) {
+        dialog.field_68_ = 0;
+        if (unchecked_sprite_ != 0 && checked_sprite_ != 0) {
+            dialog.field_68_ = unchecked_sprite_->height();
+            if (dialog.field_68_ < checked_sprite_->height()) {
+                dialog.field_68_ = checked_sprite_->height();
+            }
+        }
+    } else {
+        dialog.field_68_ = dialog.field_48_;
+    }
+
+    dialog.field_58_ = dialog.item_list_.entry_count_;
+    int max_text_width = 0;
+    for (int i = 0; i < dialog.item_list_.entry_count_; ++i) {
+        if (dialog.item_list_.head_ != 0) {
+            dialog.item_list_.current_ = dialog.item_list_.current_->next;
+            ++dialog.item_list_.current_position_;
+            if (dialog.item_list_.current_position_ == dialog.item_list_.entry_count_) {
+                dialog.item_list_.current_position_ = 0;
+            }
+        }
+        StringStructEntry *const entry = dialog.item_list_.current_;
+        char *text = entry == 0 || entry->payload == 0 ? 0 : entry->payload->text;
+        const int width = buffer->text_width(text);
+        if (max_text_width < width) {
+            max_text_width = width;
+        }
+    }
+    dialog.field_64_ = dialog.field_44_ + dialog.field_34_ + max_text_width;
+    const int text_height = buffer->text_height();
+    if (dialog.field_68_ <= text_height) {
+        dialog.field_68_ = buffer->text_height();
+    }
+
+    if ((dialog.field_20_ & 2) != 0 && dialog.field_2C_ != 0) {
+        dialog.field_5C_ = dialog.field_2C_;
+        dialog.field_64_ = (dialog.field_2C_ - dialog.field_40_ * 2)
+                           / dialog.field_4C_ - dialog.field_44_;
+    } else {
+        int width = dialog.field_64_ * dialog.field_4C_ + dialog.field_40_ * 2;
+        const int minimum = dialog.field_2C_ + dialog.field_40_ * 2;
+        if (width < minimum) width = minimum;
+        dialog.field_5C_ = width;
+        dialog.field_64_ = (width - dialog.field_40_ * 2) / dialog.field_4C_
+                           - dialog.field_44_;
+        dialog.field_5C_ -= dialog.field_44_;
+    }
+    dialog.field_54_ = dialog.field_4C_;
+    if ((dialog.field_20_ & 1) != 0 && dialog.field_30_ != 0) {
+        dialog.field_60_ = dialog.field_30_;
+        dialog.field_58_ = dialog.field_30_ / dialog.field_68_;
+    } else {
+        dialog.field_60_ = (dialog.field_68_ + dialog.field_44_) * dialog.field_58_;
+    }
+    return 0;
+}
+
+// ORIGINAL: 0x0060E800 ?attach@CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060E800-0x0060E97F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060e800.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60e800 complete control/data-access review and src/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?attach@CheckBox@@UAEHPAVGraphicWin@@HHH@Z
+int CheckBox::attach(GraphicWin *parent, int x, int y, int flags) {
+    if (parent == 0) return 3;
+    if (HandleMain == 0) return 7;
+    calculate_dimensions();
+    Dialog::field_24_ = x;
+    Dialog::field_28_ = y;
+    if ((parent->iFlags_ & 0x1000) == 0) flags |= 0x100000;
+    GraphicWin::init(x, y, Dialog::field_5C_, Dialog::field_60_, 0,
+                     flags, parent, 0, 0);
+    Buffer *const buffer = static_cast<Buffer *>(static_cast<GraphicWin *>(this));
+    buffer->set_text_color(text_color_a_, text_color_b_, text_color_c_, text_color_d_);
+    buffer->set_text_color2(text_color_2a_, text_color_2b_, text_color_2c_, text_color_2d_);
+    buffer->set_text_color3(text_color_3a_, text_color_3b_, text_color_3c_, text_color_3d_);
+    buffer->set_font(Dialog::font1_, Dialog::font2_, Dialog::font3_, 0);
+    return 0;
+}
+
+// ORIGINAL: 0x0060FAB0 ?on_redraw@CheckBox@@QAEXXZ 0x0060FAB0-0x0060FB8D FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0060fab0.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60fab0 complete control/data-access review and src/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+// symbol    ?on_redraw@CheckBox@@UAEXXZ
+void CheckBox::on_redraw() {
+    if (win_parent_ == 0) return;
+    WinCallbackWindow = win_parent_;
+    const int handled = win_parent_->vslot_10(
+        static_cast<int>(reinterpret_cast<uintptr_t>(
+            static_cast<GraphicWin *>(this))));
+    if (handled == 0) {
+        static_cast<GraphicWin *>(win_parent_)->copy(
+            this, Dialog::field_24_, Dialog::field_28_, 0, 0,
+            static_cast<int>(dib_.bmiHeader.biWidth),
+            -static_cast<int>(dib_.bmiHeader.biHeight));
+    }
+    for (int position = 0; position < Dialog::item_list_.entry_count_; ++position) {
+        const int id = Dialog::pos_to_id(position);
+        const int state = get_state_id(id);
+        draw_item(position, state,
+                  Dialog::field_F0_ == static_cast<uint32_t>(position));
+    }
+}
+
+// ORIGINAL: 0x0060F700 ?on_left_down@CheckBox@@QAEXHH@Z 0x0060F700-0x0060F8B0 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060f700.cpp retained original identity, full spans and prior recovery evidence", "recovery/tasks/dialog-control-coverage-wave.json authorized coupled control ownership", "original:0x60f700 complete control/data-access review and src/checkbox.h genuine declaration; cross-owner discoveries preserved in task history"], "reason": "Complete Dialog-control behavior belongs to this genuine control owner, with real inherited members, embedded controls, Win receivers and callback dispatch rather than fixed executable calls. Compatible seed identity and historical evidence remain retained; catalogue decorations and emitted ABI are separate facts."}
+void CheckBox::on_left_down(int x, int y) {
+    WinCallbackWindow = win_parent_;
+    const int columns = Dialog::field_4C_;
+    const int rows = Dialog::field_58_;
+    const int cell_width = Dialog::field_48_ + Dialog::field_28_;
+    const int cell_height = Dialog::field_68_ + Dialog::field_28_;
+    const int position = (x / cell_width) * rows + y / cell_height;
+    const int id = Dialog::pos_to_id(position);
+    Dialog::item_list_.seek_id(id);
+
+    const int previous = static_cast<int>(field_4_);
+    flip_state_id(id);
+    field_4_ = Dialog::id_to_pos(id);
+    if (previous != static_cast<int>(field_4_)) {
+        const int old_id = Dialog::pos_to_id(previous);
+        draw_item(previous, get_state_id(old_id), 0);
+    }
+
+    const int selected = Dialog::selected_position_;
+    if (double_click_callback_ != 0) double_click_callback_(selected);
+    // The original leaves the list cursor on the matching entry after the
+    // callback, since callbacks may mutate the list and the cursor must be
+    // re-found against its current contents.
+    if (Dialog::item_list_.head_ != 0) {
+        Dialog::item_list_.current_ = Dialog::item_list_.head_;
+        Dialog::item_list_.current_position_ = 0;
+        for (int index = 0; index < Dialog::item_list_.entry_count_; ++index) {
+            if (Dialog::item_list_.current_->id == id) break;
+            Dialog::item_list_.current_ = Dialog::item_list_.current_->next;
+            ++Dialog::item_list_.current_position_;
+        }
+    }
+    draw_item(static_cast<int>(field_4_), get_state_id(id), 1);
+    soft_update();
+}
+
 
 // The state word these three share. Every one of them reaches it the same way
 // the original does - `mov eax,[ecx]` then `[eax+8]` - so the Dialog offset
@@ -537,7 +699,7 @@ Purpose: Adjust the receiver from the thunk1 subobject back to CheckBox and
          CheckBox::attach overrides a virtual reached through a virtual
          base. There is no C++ here to get right, only a name to record.
 // ORIGINAL: 0x0060FEE0 ?attach@thunk1_CheckBox@@QAEHPAUGraphicWin@@HHH@Z 0x0060FEE0-0x0060FEE8 BYTE_EXACT
-// symbol    ?attach@CheckBox@@$4PPPPPPPM@A@AEHPAXHHH@Z
+// symbol    ?attach@CheckBox@@$4PPPPPPPM@A@AEHPAVGraphicWin@@HHH@Z
 // size      8 bytes
 // kind      game
 Status: Complete
