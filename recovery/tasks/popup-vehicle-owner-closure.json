@@ -1,0 +1,39 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6a96e7643f83290a71c17923e272c8a390e1733e",
+  "editable_files": [
+    "src/popup.cpp",
+    "src/popup.h",
+    "src/basepop.cpp",
+    "src/basepop.h",
+    "src/spritebox.cpp",
+    "src/spritebox.h",
+    "src/pending_bodies.cpp"
+  ],
+  "evidence": [
+    "Console14 fresh full compilation passes but linkage lacks popv48C360; eliminate_player closure also calls existing popp48C0A0 forwarder, which must be replaced with real C++ rather than preserved as behavior.",
+    "Original48C3D0..48C400 corrects seed: caller_sprite is selected when picture flag is zero, whereas embedded SpriteBox always receives the real local sprite. Callback48CEB0 is an existing historically exact seed, not permission to copy raw address storage or self offsets.",
+    "Audio owner checkpoint6a96e764 is integrated and its worker terminal. Popup edits are now centrally authorized in new isolated checkout; faction dependency worker is disjoint. Preserve all protected BasePop/Popup/SpriteBox claims, mappings and seeds."
+  ],
+  "intent": "Recover genuine popup vehicle/picture helpers with real RAII and typed callbacks; preserve historical exact seed obligations and retire only replaced popp forwarder.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4768608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4771504,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4767904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "popup-vehicle-owner-closure"
+}

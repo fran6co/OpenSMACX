@@ -1,0 +1,29 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "6a96e7643f83290a71c17923e272c8a390e1733e",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h"
+  ],
+  "evidence": [
+    "Console14 fresh full compilation passes but linkage lacks eliminate_player5B3380, whose original body calls setup_player5B0E00; both remain canonical unimplemented seeds.",
+    "The setup seed misinterprets the second argument and contains suspect scaled-pointer indexing. Original three-int signature, instruction evidence and real Player/PlayerData/Base/Veh/Map owners take precedence over scaffold spellings.",
+    "Missing base_init4E4B80 and interlude5230E0 require separately authorized owners; existing pending-body calls remain unfinished behavioral debt and cannot count as recovered. No worker edits outside faction.cpp/h."
+  ],
+  "intent": "Recover real faction elimination and setup lifecycle as typed C++; preserve original behavior and all historical obligations, request scope for outside dependencies.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5976960,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5967360,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "faction-lifecycle-owner-closure"
+}
