@@ -1,0 +1,21 @@
+{
+  "event_id": "528b94f50fee7015689998027f8fd19b4d41697a9005eee47b66affe7ff846cb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/tutwin.cpp",
+      "src/tutwin.h"
+    ],
+    "evidence": [
+      "Pinned original TutWin::tour4BD365 reads dword945830 and tests zero; nonzero calls WorldClimateWorldWin.show_all at4BD36E..73. Whole executable direct-operand scan found no other direct refs or writers. Original address lies in loader-zero virtual data tail with no relocation. No bounded declared object overlaps. Larger ownership, indirect writes and original full extent remain unknown, not proven absent.",
+      "Authorize a provisional source-owned int TutWinClimateGate945830 in tutwin.cpp and declaration only if needed in tutwin.h to implement this exact read, initially loader zero. This is provisional storage homing, not proof of independent original object extent, semantic boolean type, lack of indirect writers or complete ownership. Preserve the uncertainty beside source definition; Root may add only a v1 original-start object binding after fresh physical symbol observation, never v2 inferred from sizeof. Do not substitute a constant, erase the nonzero path, invent a runtime writer, reset baseline or claim acceptance. Revisit ownership when new evidence appears."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c766d72b4d58ee4c9989c73516d49f7474d607726239d1499a9e71e10db0240c",
+  "request_id": "tutwin-provisional-climate-gate-20260930",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:tutwin-owner-coverage-wave"
+}
