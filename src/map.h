@@ -240,6 +240,8 @@ const int RadiusRange[] = { 1, 9, 25, 49, 81, 121, 169, 225, 289 };
 // eight-neighbour erosion steps.
 const int RadiusBaseX[] = {  1, 2, 1, 0, -1, -2, -1,  0, 0 };
 const int RadiusBaseY[] = { -1, 0, 1, 2,  1,  0, -1, -2, 0 };
+// Original 0x0066EF98..0x0066EFBC, nine direction indices.
+extern const int MapDirectionPermutation[9];
 // THE FOUR DIAGONALS, at 0x0066EF28 / 0x0066EF3C - what world_rivers
 // (0x005C38B0) steps along when it walks a channel, paired by index.
 const int RiverStepX[4] = { 1, 1, -1, -1 };

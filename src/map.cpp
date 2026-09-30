@@ -34,6 +34,12 @@
 #include "mapwin.h"
 #include "worldwin.h"
 
+// Nine original direction indices, bounded by the next RadiusOffsetX
+// table at 0x0066EFBC. MapWin's legend and tutorial navigation consume
+// this permutation; it is independent data, not a callable/address alias.
+// RECOVERY_OBJECT: v2 0x0066EF98 0x0066EFBC ?MapDirectionPermutation@@3QBHB 0x0046F8C0
+const int MapDirectionPermutation[9] = { 9, 6, 3, 2, 1, 4, 7, 8, 5 };
+
 // Loader-zero pointer cells at 94A30C/94A310. map_init allocates both
 // arrays; map_shutdown releases them with the matching CRT free.
 // RECOVERY_OBJECT: v1 0x0094A30C ?MapTiles@@3PAUMap@@A
