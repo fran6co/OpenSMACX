@@ -188,6 +188,9 @@ void __cdecl flush_timer();
 // MapWin::on_lose_mouse_capture (0x0046EB90) is a 5-byte tail `jmp` into it.
 void __cdecl go_reset();
 
+// Cooperative elapsed-time wait; redraw and non-input work still run.
+void __cdecl clock_wait(int milliseconds);
+
 MEASURED inline void __cdecl stop_timers() {
     Blink2Timer.close();
     BlinkTimer.close();
