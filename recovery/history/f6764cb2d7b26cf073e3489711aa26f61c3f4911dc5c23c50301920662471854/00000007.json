@@ -1,0 +1,42 @@
+{
+  "event_id": "b75c7d3bbe4585c9ff2e9cb16e91744e78fb23d3a3c846f41af6ad29ea1f4632",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/autosound.cpp",
+      "src/autosound.h"
+    ],
+    "evidence": [
+      "Original BaseButton 0x6075C0, 0x607720, 0x607850 and 0x607A20 distinguish immediate parent window from its borrowed Win receiver fields at +0x70/+0x74/+0x78/+0x7C. Virtual slots23/7 establish val_28/29/30 receiver types; the numbered relationship remains provisional. Use Win* fields and neutral legacy_window_28/29/30 accessors rather than parent_window() or raw offsets.",
+      "Preserve AutoSound ABI and all historical original mappings/claims. Update defaults copies for val_28/29/30 in genuine ctor/close/close2, retain init zero stores, and freshly measure all four mapped bodies under both configured flag sets. Preserve original BaseButton guards and dispatch slots; no broadened behavior fix or default-block reinterpretation is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6470272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6470640,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6471120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6470976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b4923c7decabd535344576dfa351bc790e1d9afadd6060ae5e384daea6eeace0",
+  "request_id": "dialog-basebutton-autosound-receivers",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:dialog-control-coverage-wave"
+}
