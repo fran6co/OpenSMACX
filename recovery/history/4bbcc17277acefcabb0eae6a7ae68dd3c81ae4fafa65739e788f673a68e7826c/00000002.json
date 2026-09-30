@@ -1,0 +1,25 @@
+{
+  "event_id": "9a149e1feab2051795fc7946eb1f01ae557f6068e065dc8c1c2ed07871879062",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.cpp",
+      "src/lock.cpp",
+      "src/lock.h",
+      "src/mapwin.cpp",
+      "src/netdaemon.cpp",
+      "src/veh.cpp"
+    ],
+    "evidence": [
+      "SingleMap*MapTilesallocation owner plusbyteviewofits object storage; migratereadonlyLockMapTable useswithoutindependentpointeror typed-referencealias. Retainalloriginalmappings andhistoricalclaims; existingunrelatedsemanticdefects remain discoveries.",
+      "Nativewholebuild rejectedduplicate94A30C object. Original/C++evidence establishes sharedpointer; consolidation closes actualallocation/lockrelationships. Remeasureaffectedclaims andfullapplicationlink."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a88b06b03cdcebc1a576bf0d55da2314bbf399cb13c743b9ce9eb6ba4f93e74a",
+  "request_id": "map-lock-single-owner-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:map-allocation-owner-closure"
+}
