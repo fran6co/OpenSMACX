@@ -1,0 +1,21 @@
+{
+  "event_id": "1466950fc7c8de2ab3f91a6b05fb03a61c8c85badb2a4b6e62fb998779e4a503",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/technology.cpp",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "Authorize only technology.h fixed-address GameTechAchieved pointer migration to extern uint8_t GameTechAchieved[MaxTechnologyNum], with sole genuine arraydefinition in technology.cpp initialized as originalzero-fill. Pinned originaleditor_tech4DFD18 and4DFD29 read/write BYTE at9A6670+selectedtechnology, while originaltech_achieved5BB000 checks89technologyextent and updates thissamebyte table. CurrentMaxTechnologyNum89 and existinghas_tech/technology readers identify sharedtechnologyowner. Do not changehas_tech semantics, technologybodies/claims, rebindoldaddresses, or implementtech_achievedoutsidegrant. Original helper remains explicitlyunfinished.",
+      "Root owns eventualobjectbinding and allOriginal/claimpublication; preserve allseeds/history andtaskbaseline. Arraymigration removesinvalidstandalonereferencesand requires freshheaderimpact/restoration/reference/data/buildchecks beforemanualintegration. This is neither actualfullgameacceptance nor permissiontoignorematchingregression. Review also confirmseditor_tech recount writesPlayerData.tech_ranking+35C and redrawreceiverTutWinBaseWindow6A7628; donotuseunrelatedtech_achievedfield orConsole receiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "35d5da2f7c04d84ecb1e57a6eb8dc3e13c870715417ef0c934b94d66677edc1c",
+  "request_id": "console-real-technology-bit-storage-20261001-master",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:console-scenario-owner-wave"
+}
