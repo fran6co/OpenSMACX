@@ -110,7 +110,7 @@ void set_specialist_at(Base &base, int position, int type) {
 }
 
 // ORIGINAL: 0x0040A1D0 ?farm_click@BaseWin@@QAEXHHH@Z 0x0040A1D0-0x0040A87F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040a1d0.cpp", "source:src/basewin.h", "image:0x40a1d0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040a1d0.cpp", "source:src/basewin.h", "image:0x40a1d0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::farm_click(int x, int y, int) {
     compute_selected_base();
     const int faction = BaseCurrent->faction_id_current;
@@ -215,7 +215,7 @@ void BaseWin::farm_click(int x, int y, int) {
 }
 
 // ORIGINAL: 0x0040A880 ?pop_click@BaseWin@@QAEXHHHH@Z 0x0040A880-0x0040B11A;0x006518EA-0x00651A78
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040a880.cpp", "source:src/basewin.h", "image:0x40a880"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040a880.cpp", "source:src/basewin.h", "image:0x40a880"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::pop_click(int position, int, int, int) {
     Popup popup;
     compute_selected_base();
@@ -288,7 +288,7 @@ void BaseWin::pop_click(int position, int, int, int) {
 }
 
 // ORIGINAL: 0x00409200 ?queue_click@BaseWin@@QAEXHHHH@Z 0x00409200-0x0040A1B9;0x0065158B-0x006518EA
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/00409200.cpp", "source:src/basewin.h", "image:0x409200"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::queue_click(int row, int x, int y, int right) {
     PopMenu menu;
     const int faction = BaseCurrent->faction_id_current;
@@ -403,14 +403,14 @@ void BaseWin::queue_click(int row, int x, int y, int right) {
 }
 
 // Candidate only. Evidence: original 40C070..40C842, pinned terranx_original.exe;
-// retained src/unrecovered/0040c070.cpp and /tmp/basewin-40c070.json.
+// retained git:a538e0a3:src/unrecovered/0040c070.cpp and /tmp/basewin-40c070.json.
 // All popup strings independently read from original .rdata 682904..682AD4.
 // No compiler/measurement performed. Existing deeper callee debt remains.
 // Original bulk-sale counting deliberately tests BaseCurrent->state, not
 // each candidate base's state. The subsequent bulk mutation deliberately
 // does not retest possession or the one-sale-per-turn bit. Preserve both.
 // ORIGINAL: 0x0040C070 ?facilities_click@BaseWin@@QAEHHHHH@Z 0x0040C070-0x0040C842
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040c070.cpp", "source:src/basewin.h", "image:0x40c070"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040c070.cpp", "source:src/basewin.h", "image:0x40c070"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 int BaseWin::facilities_click(int facility, int, int, int) {
     const int faction = BaseCurrent->faction_id_current;
     if (faction != ConsoleGlobal.faction_id_ && !(GameState & STATE_OMNISCIENT_VIEW))
@@ -537,7 +537,7 @@ int BaseWin::facilities_click(int facility, int, int, int) {
 extern int TextColourTable[195];
 
 // ORIGINAL: 0x0040D250 ?draw_flash@BaseWin@@QAEXH@Z 0x0040D250-0x0040E35B;0x00651AA2-0x00651ACD
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0040d250.cpp", "source:src/basewin.h", "image:0x40d250"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0040d250.cpp", "source:src/basewin.h", "image:0x40d250"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::draw_flash(int redraw_mode) {
     Sprite scratch;
     Font normal;
@@ -727,7 +727,7 @@ void BaseWin::draw_flash(int redraw_mode) {
 // get_selected_id(), which changes that signed error path.
 // Both modal objects are constructed at entry; their complete teardown is RAII.
 // ORIGINAL: 0x0041C7A0 ?base_editor@BaseWin@@QAEXXZ 0x0041C7A0-0x0041D4BA;0x006527EF-0x00652A94
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0041c7a0.cpp", "source:src/basewin.h", "image:0x41c7a0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0041c7a0.cpp", "source:src/basewin.h", "image:0x41c7a0"], "reason": "Recover the complete original operation through genuine owning C++ classes, members and natural lifetimes; preserve retained seed evidence and historical restoration obligations separately from fresh matching."}
 void BaseWin::base_editor() {
     PullDown menu;
     Popup popup;
@@ -888,7 +888,7 @@ void BaseWin::base_editor() {
 }
 
 // ORIGINAL: 0x00408EB0 ?draw_support@BaseWin@@QAEXXZ 0x00408EB0-0x004090BF
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00408eb0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/00408eb0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::draw_support() {
     RECT saved = Buffer::rect1_;
     Buffer *canvas = this;
@@ -927,7 +927,7 @@ void BaseWin::draw_support() {
 }
 
 // ORIGINAL: 0x0041A4C0 ?exit@BaseWin@@QAEXXZ 0x0041A4C0-0x0041A609
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a4c0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a4c0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::exit() {
     const int visible = TutWinBaseWindow.is_visible();
     zoom_wait_pending_ = 0;
@@ -968,7 +968,7 @@ void BaseWin::exit() {
 }
 
 // ORIGINAL: 0x0041A620 ?base_killed@BaseWin@@QAEXH@Z 0x0041A620-0x0041A79D
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a620.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a620.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::base_killed(int base_id) {
     if (!is_visible()) return;
     if (base_id < static_cast<int>(focusedBaseID_)) {
@@ -1008,7 +1008,7 @@ void BaseWin::base_killed(int base_id) {
 }
 
 // ORIGINAL: 0x00419A90 ?governor@BaseWin@@QAEHH@Z 0x00419A90-0x0041A010
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00419a90.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/00419a90.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 int BaseWin::governor(int settings_only) {
     compute_selected_base();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
@@ -1060,7 +1060,7 @@ int BaseWin::governor(int settings_only) {
 }
 
 // ORIGINAL: 0x0041A2B0 ?rename@BaseWin@@QAEXXZ 0x0041A2B0-0x0041A4B6
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041a2b0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041a2b0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::rename() {
     compute_selected_base();
     if (BaseCurrent->faction_id_current != ConsoleGlobal.faction_id_
@@ -1089,7 +1089,7 @@ void BaseWin::rename() {
 }
 
 // ORIGINAL: 0x0041B4F0 ?staple_the_bastards@BaseWin@@QAEXXZ 0x0041B4F0-0x0041B78D
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041b4f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041b4f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::staple_the_bastards() {
     compute_selected_base();
     if (Bases[focusedBaseID_].faction_id_current != ConsoleGlobal.faction_id_
@@ -1164,7 +1164,7 @@ void BaseWin::update_drag_cursor(int spot_type, int spot_pos, int x, int y, int 
 }
 
 // ORIGINAL: 0x0041B1F0 ?on_mouse_move@BaseWin@@QAEXHH@Z 0x0041B1F0-0x0041B491
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041b1f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041b1f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_mouse_feedback@BaseWin@@UAEXHH@Z
 void BaseWin::on_mouse_feedback(int x, int y) {
     if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].dword_[3])) return;
@@ -1190,7 +1190,7 @@ void BaseWin::show_panel_help(int x, int y, int label_offset, Win *window) {
 }
 
 // ORIGINAL: 0x004160F0 ?iface_click@BaseWin@@QAEXHHHH@Z 0x004160F0-0x00416512
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004160f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004160f0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::iface_click(int x, int y, int right, int is_double) {
     TutorialWindow.reset();
     if (field_40B54_ > 0) {
@@ -1243,7 +1243,7 @@ void BaseWin::iface_click(int x, int y, int right, int is_double) {
 }
 
 // ORIGINAL: 0x004165D0 ?click@BaseWin@@QAEXHHHH@Z 0x004165D0-0x00416D83
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004165d0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004165d0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 void BaseWin::click(int x, int y, int right, int is_double) {
     TutorialWindow.reset();
     if (field_40B54_ > 0) {
@@ -3032,7 +3032,7 @@ void BaseWin::vslot_13(int button_id) {
 //        0x0041D500 - which the image's front table 0x66A4BC holds in that
 //        slot - IS the override of it, and VC6 needs its address for the
 //        vtable it emits. 1388 bytes, unrecovered; the artefact at
-//        src/recovered/units/0041d500.cpp is the transcription to home here.
+//        git:a538e0a3:src/recovered/units/0041d500.cpp is the transcription to home here.
 //        This forwarder is the on_status idiom and nothing more.
 // PENDING 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C
 // symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
@@ -3041,7 +3041,7 @@ void BaseWin::vslot_13(int button_id) {
 //           enters it on the front table, while the image spells the same
 //           body Q and its own table 0x66A4BC holds the raw address.
 // ORIGINAL: 0x0041D500 ?on_button_clicked@BaseWin@@QAEXH@Z 0x0041D500-0x0041DA6C
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041d500.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041d500.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_button_clicked@BaseWin@@UAEXH@Z
 void BaseWin::on_button_clicked(int button_id) {
     compute_selected_base();
@@ -3388,7 +3388,7 @@ Purpose: The interface's mode change. Mode selects which of the base screen's
 // PENDING 0x0041DAD0 ?on_status@BaseWin@@QAEXH@Z 0x0041DAD0-0x0041DC7F
 // symbol    ?on_status@BaseWin@@UAEXH@Z
 // PENDING BODY - the receiver is solved (the artefact at
-//   src/recovered/units/0041dad0.cpp reads `mov edi, ecx` and then steps to
+//   git:a538e0a3:src/recovered/units/0041dad0.cpp reads `mov edi, ecx` and then steps to
 //   the front with `lea ebx, [edi - 0xa14]`, which is the entry receiver the
 //   derivation supplies) and the mode switch is transcribable, but its arms
 //   reach draw_pop, draw_queue, update_gov_buttons and a dozen more bodies
@@ -3402,7 +3402,7 @@ Purpose: The interface's mode change. Mode selects which of the base screen's
 // calls     0x00415B20 0x00415080 0x0041E560 0x0040D250 0x004C3A40
 */
 // ORIGINAL: 0x0041DAD0 ?on_status@BaseWin@@QAEXH@Z 0x0041DAD0-0x0041DC7F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041dad0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041dad0.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_status@BaseWin@@UAEXH@Z
 void BaseWin::on_status(int mode) {
     if (mode) {
@@ -3508,7 +3508,7 @@ Purpose: The interface's mouse-move report. Unrecovered - 1164 bytes of spot
 // calls     0x005F7E90 0x005F8500 0x005FAB00 0x005EC7C0 0x004E39D0
 */
 // ORIGINAL: 0x0041DF50 ?on_iface_mouse_move@BaseWin@@QAEXHH@Z 0x0041DF50-0x0041E3DC
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041df50.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041df50.cpp", "source:src/basewin.h", "image:original instruction and dispatch evidence for the BaseWin owner"], "reason": "Recover this original base-window operation through the real BaseWin owner, existing typed members and source-owned shared dependencies; catalogue naming and original intervals remain distinct from current compiler symbols."}
 // symbol    ?on_iface_mouse_move@BaseWin@@UAEXHH@Z
 void BaseWin::on_iface_mouse_move(int a1, int a2) {
     if (!is_visible() || (IsMultiplayerNet && NetDaemonNet.lock_state_[0].dword_[3])) return;
@@ -4144,7 +4144,7 @@ void BaseWin::draw_nutrients(int update_mode) {
 }
 
 // ORIGINAL: 0x0041B790 ?base_editor_fac@BaseWin@@QAEXXZ 0x0041B790-0x0041BBBC;0x0065249C-0x0065255E
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0041b790.cpp", "source:src/basewin.h", "image:0x41b790"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0041b790.cpp", "source:src/basewin.h", "image:0x41b790"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_fac() {
     Popup popup;
     int previous = -1;
@@ -4194,7 +4194,7 @@ void BaseWin::base_editor_fac() {
 }
 
 // ORIGINAL: 0x0041BBC0 ?base_editor_proj@BaseWin@@QAEXXZ 0x0041BBC0-0x0041C231;0x0065255E-0x006526E3
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0041bbc0.cpp", "source:src/basewin.h", "image:0x41bbc0"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0041bbc0.cpp", "source:src/basewin.h", "image:0x41bbc0"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_proj() {
     Popup popup;
     PopupModalState = 6;
@@ -4259,7 +4259,7 @@ void BaseWin::base_editor_proj() {
 }
 
 // ORIGINAL: 0x0041C240 ?base_editor_copy@BaseWin@@QAEXH@Z 0x0041C240-0x0041C798;0x006526E3-0x006527EF
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0041c240.cpp", "source:src/basewin.h", "image:0x41c240"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0041c240.cpp", "source:src/basewin.h", "image:0x41c240"], "reason": "Recover the full base-editor callee in its actual BaseWin owner with one genuine Popup lifetime and original cancellation, menu IDs, typed data mutations and virtual redraw; preserve original seed evidence and outstanding structural/matching obligations."}
 void BaseWin::base_editor_copy(int copy_to) {
     Popup popup;
     parse_says(0, BaseCurrent->name_string, -1, -1);

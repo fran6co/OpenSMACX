@@ -9469,7 +9469,7 @@ void __cdecl action_oblit(int veh_id, int base_id) {
 
 // Orbital combat uses the four source-owned faction satellite counters.
 // ORIGINAL: 0x004CF480 ?action_sat_attack@@YAXHHHH@Z 0x004CF480-0x004CF73E
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004cf480.cpp", "image:0x004CF480-0x004CF73E complete instructions and outcome literals", "source:src/faction.h:PlayerData satellite array", "source:src/reportif.h", "source:src/maininterface.h"], "reason": "Recover orbital attack effects in the vehicle-action domain using real faction diplomacy, grammar, indexed satellite counters and report state. Original CRT randomness, parsing order, unchecked satellite indexing and popup outcomes are retained; existing popup and diplomacy seams remain separate obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004cf480.cpp", "image:0x004CF480-0x004CF73E complete instructions and outcome literals", "source:src/faction.h:PlayerData satellite array", "source:src/reportif.h", "source:src/maininterface.h"], "reason": "Recover orbital attack effects in the vehicle-action domain using real faction diplomacy, grammar, indexed satellite counters and report state. Original CRT randomness, parsing order, unchecked satellite indexing and popup outcomes are retained; existing popup and diplomacy seams remain separate obligations."}
 void __cdecl action_sat_attack(int attacker, int target, int type, int base_id) {
     if (!(PlayersData[attacker].diplo_treaties[target] & 0x10))
         double_cross(attacker, target, -1);

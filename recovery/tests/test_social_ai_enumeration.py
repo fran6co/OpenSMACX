@@ -1,5 +1,5 @@
-"""Executable proposal; original anchors 5B4831..483F, 5B4A5A..4ACD,
-5B4A90/4AAB -> 5B5481. Run after coordinator authorizes host compilation.
+"""Executable controls; original anchors 5B4831..483F, 5B4A5A..4ACD,
+5B4A90/4AAB -> 5B5481.
 Extracts product snippets rather than maintaining a second recovered loop.
 """
 import os
@@ -135,4 +135,3 @@ def test_actual_social_ai_enumeration(tmp_path, damage):
         assert checked.returncode == 0, checked.stderr
     else:
         assert checked.returncode != 0, "damage escaped the executable oracle"
-

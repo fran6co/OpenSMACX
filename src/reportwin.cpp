@@ -111,7 +111,7 @@ ReportWin ReportWinGlobal;  // 0x00876478
 // MainInterface owns the interface-slot array and active interface ID.
 
 // ORIGINAL: 0x0049B220 ?on_button_passover@ReportWin@@QAEXHH@Z 0x0049B220-0x0049B446
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "source:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x0049B220-0x0049B446 and 0x0065C0C2-0x0065C20E", "git:a538e0a3:src/recovered/units/0049b220.cpp retains the recovered seed and original claim", "source:src/reportwin.h", "source:src/reportif.h:ReportIfGlobal.field_8_"], "reason": "Recover the category-button passover drawing through the seven owned FlatButtons, shared work RECT, real host window and existing labs_line. The original seed and historical claim remain restoration obligations; current byte correspondence is measured separately."}
 void ReportWin::on_button_passover(int button_id, int state) {
     GraphicWin *host = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8
         ? static_cast<GraphicWin *>(&DatalinkMain)
@@ -209,7 +209,7 @@ ReportWin::ReportWin() {
 }
 
 // ORIGINAL: 0x004AD3B0 ??1ReportWin@@QAE@XZ 0x004AD3B0-0x004AD6A9;0x00659140-0x006592EE
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004ad3b0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004ad3b0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ??1ReportWin@@UAE@XZ
 ReportWin::~ReportWin() {
     // Original 4AD3B0 contains only compiler-generated reverse member/base
@@ -217,7 +217,7 @@ ReportWin::~ReportWin() {
 }
 
 // ORIGINAL: 0x00496960 ?init@ReportWin@@QAEXXZ 0x00496960-0x00496BA5
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00496960.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/00496960.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::init() {
     for (int i = 0; i < 16; ++i) selected_bases_[i] = 0;
     for (int j = 0; j < 4; ++j) selected_prototypes_[j] = 0;
@@ -1092,7 +1092,7 @@ void ReportWin::sat_anim() {
 }
 
 // ORIGINAL: 0x0049FFD0 ?start_attack@ReportWin@@QAEXHHHH@Z 0x0049FFD0-0x004A00F1
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0049ffd0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/0049ffd0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
     field_F924_ = attacker;
     field_F928_ = target;
@@ -1120,7 +1120,7 @@ void ReportWin::start_attack(int attacker, int target, int type, int base_id) {
 }
 
 // ORIGINAL: 0x004A0100 ?exp_anim@ReportWin@@QAEXXZ 0x004A0100-0x004A0248
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004a0100.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004a0100.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::exp_anim() {
     Buffer *canvas = static_cast<Buffer *>(this);
     canvas->set_clip(&satellite_rect_);
@@ -1146,7 +1146,7 @@ void ReportWin::exp_anim() {
 }
 
 // ORIGINAL: 0x004989F0 ?on_group_clicked@ReportWin@@QAEXHHH@Z 0x004989F0-0x00498B06
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004989f0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004989f0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::on_group_clicked(int group, int, int state) {
     time2_.stop();
     if (group == 4) ReportIfGlobal.field_1E240_ = state;
@@ -1167,7 +1167,7 @@ void ReportWin::on_group_clicked(int group, int, int state) {
 }
 
 // ORIGINAL: 0x004986D0 ?on_button_clicked@ReportWin@@QAEXH@Z 0x004986D0-0x004989A8
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004986d0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/004986d0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 // symbol    ?on_button_clicked@ReportWin@@UAEXH@Z
 void ReportWin::on_button_clicked(int id) {
     const bool datalink_mode = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
@@ -1236,7 +1236,7 @@ void ReportWin::on_button_clicked(int id) {
 }
 
 // ORIGINAL: 0x00497AC0 ?right_menu@ReportWin@@QAEXHHH@Z 0x00497AC0-0x00497E69;0x00659420-0x00659435
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00497ac0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/00497ac0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::right_menu(int base_id, int x, int y) {
     PullDown menu;
     if (Bases[base_id].faction_id_current != ConsoleGlobal.faction_id_
@@ -1285,7 +1285,7 @@ void ReportWin::right_menu(int base_id, int x, int y) {
 }
 
 // ORIGINAL: 0x00497F00 ?on_right_click@ReportWin@@QAEXHH@Z 0x00497F00-0x004980EF
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00497f00.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/recovered/units/00497f00.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::on_right_click(int x, int y) {
     if (reportwin_input_blocked()) return;
     int spot_id, payload;
@@ -1321,7 +1321,7 @@ void ReportWin::on_right_click(int x, int y) {
 }
 
 // ORIGINAL: 0x004A08E0 ?draw_security@ReportWin@@QAEXXZ 0x004A08E0-0x004A1134
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a08e0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a08e0.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_security() {
     Buffer *canvas = static_cast<Buffer *>(this);
     const int faction_id = ReportIfGlobal.report_faction_id_;
@@ -1423,7 +1423,7 @@ void ReportWin::draw_security() {
 }
 
 // ORIGINAL: 0x00496E10 ?on_left_click@ReportWin@@QAEXHH@Z 0x00496E10-0x00497A30
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00496e10.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/00496e10.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::on_left_click(int x, int y) {
     if (reportwin_input_blocked()) return;
     int selected, payload;
@@ -1656,7 +1656,7 @@ static void report_append_leader(const Player &player) {
 }
 
 // ORIGINAL: 0x004A2210 ?draw_intel@ReportWin@@QAEXXZ 0x004A2210-0x004A345F
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a2210.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a2210.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_intel() {
     Buffer &canvas = *static_cast<Buffer *>(this);
     const int viewer = ReportIfGlobal.report_faction_id();
@@ -1826,7 +1826,7 @@ void ReportWin::draw_intel() {
 // int score_items_[9] at +0x20A8, replacing unk_110..unk_118 including the
 // intervening char[4]. Original4A1318 accesses9signedints;4A16C9 bounds9.
 // ORIGINAL: 0x004A1140 ?draw_score@ReportWin@@QAEXXZ 0x004A1140-0x004A2208
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a1140.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a1140.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_score() {
     Buffer &canvas = *static_cast<Buffer *>(this);
     const int faction = ReportIfGlobal.report_faction_id();
@@ -2041,7 +2041,7 @@ static unsigned int report_sat_count(const PlayerData &data, int kind) {
 }
 
 // ORIGINAL: 0x0049D540 ?draw_ops@ReportWin@@QAEXXZ 0x0049D540-0x0049EAEB;0x00659435-0x00659447
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0049d540.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_ops() {
     Buffer &canvas = *static_cast<Buffer *>(this);
     const int faction = ReportIfGlobal.report_faction_id_;
@@ -2291,7 +2291,7 @@ static void report_sat_number(int value) {
     strcat(StringTemp, number);
 }
 // ORIGINAL: 0x0049F350 ?draw_sat@ReportWin@@QAEXXZ 0x0049F350-0x0049FE1E
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/0049f350.cpp", "source:src/reportwin.h", "source:src/reportif.h", "image:original ReportWin instructions, callbacks and lifecycle evidence"], "reason": "Recover this report-window operation in its genuine owner using typed members, natural subobject lifetimes and shared source-owned state; retained catalogue identity and spans remain distinct from current emitted symbols."}
 void ReportWin::draw_sat() {
     Buffer &canvas = *static_cast<Buffer *>(this);
     const int faction = ReportIfGlobal.report_faction_id();
@@ -2438,7 +2438,7 @@ void ReportWin::draw_sat() {
 }
 
 // ORIGINAL: 0x004A0260 ?sat_attack@@YAXHHH@Z 0x004A0260-0x004A080C;0x00659447-0x00659580
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004a0260.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover satellite attack selection through a natural Popup lifetime, its owned picture and the genuine four-counter faction array, preserving original signed guards and network/local action ordering."}
+// RECOVERY_BINDING: v1 {"evidence": ["git:a538e0a3:src/unrecovered/004a0260.cpp", "source:src/faction.h", "image:complete original instructions and independent storage/lifecycle evidence"], "reason": "Recover satellite attack selection through a natural Popup lifetime, its owned picture and the genuine four-counter faction array, preserving original signed guards and network/local action ordering."}
 void __cdecl sat_attack(int attacker, int target, int kind) {
     Popup popup;
     if (attacker == target || target < 1) return;

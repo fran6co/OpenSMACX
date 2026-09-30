@@ -1,0 +1,39 @@
+{
+  "event_id": "6a4347a884474dea5bffba7789c2f274b23ae357aa4eb3f629a524686f5da9ce",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/00496960.cpp",
+      "src/recovered/units/00497ac0.cpp",
+      "src/recovered/units/00497f00.cpp",
+      "src/recovered/units/004986d0.cpp",
+      "src/recovered/units/004989f0.cpp",
+      "src/recovered/units/0049b220.cpp",
+      "src/recovered/units/0049ffd0.cpp",
+      "src/recovered/units/004a0100.cpp",
+      "src/recovered/units/004a3950.cpp",
+      "src/recovered/units/004a3fc0.cpp",
+      "src/recovered/units/004ad3b0.cpp",
+      "src/recovered/units/004cf480.cpp",
+      "src/unrecovered/00496e10.cpp",
+      "src/unrecovered/0049d540.cpp",
+      "src/unrecovered/0049f350.cpp",
+      "src/unrecovered/004a0260.cpp",
+      "src/unrecovered/004a08e0.cpp",
+      "src/unrecovered/004a1140.cpp",
+      "src/unrecovered/004a2210.cpp",
+      "src/unrecovered/0053a980.cpp",
+      "src/unrecovered/005acbe0.cpp"
+    ],
+    "evidence": [
+      "Retire only the independently reviewed complete owner replacements committed at a538e0a3 with identical original spans and no lost historical obligations. Exact seed identities already have independently banked exact product homes; unclaimed seeds are provenance, not executable source. Keep their lessons accessible through explicit Git provenance and retain all partial/unsupported/exact-unrestored seeds."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e1a132cafafbd2b01c86c9e659c8e4b5ce3b5f0f9216286b97634cff0b3bc177",
+  "request_id": "reportwin-owner-coverage-retire-complete-seeds",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:reportwin-owner-coverage"
+}

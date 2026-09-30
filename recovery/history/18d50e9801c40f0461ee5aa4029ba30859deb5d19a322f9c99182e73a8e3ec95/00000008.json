@@ -1,0 +1,40 @@
+{
+  "event_id": "221e65145093b8c9d2213349865fc2516bec913346d1c506315600405472fe70",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/00408eb0.cpp",
+      "src/recovered/units/004160f0.cpp",
+      "src/recovered/units/0041a2b0.cpp",
+      "src/recovered/units/0041a4c0.cpp",
+      "src/recovered/units/0041a620.cpp",
+      "src/recovered/units/0041b1f0.cpp",
+      "src/recovered/units/0041b4f0.cpp",
+      "src/recovered/units/0041b790.cpp",
+      "src/recovered/units/0041d500.cpp",
+      "src/recovered/units/0041dad0.cpp",
+      "src/recovered/units/0041df50.cpp",
+      "src/unrecovered/00409200.cpp",
+      "src/unrecovered/0040a1d0.cpp",
+      "src/unrecovered/0040a880.cpp",
+      "src/unrecovered/0040c070.cpp",
+      "src/unrecovered/0040d250.cpp",
+      "src/unrecovered/004165d0.cpp",
+      "src/unrecovered/00419a90.cpp",
+      "src/unrecovered/0041bbc0.cpp",
+      "src/unrecovered/0041c240.cpp",
+      "src/unrecovered/0041c7a0.cpp",
+      "src/unrecovered/0059d690.cpp"
+    ],
+    "evidence": [
+      "Retire only the independently reviewed complete owner replacements committed at a538e0a3 with identical original spans and no lost historical obligations. Exact seed identities already have independently banked exact product homes; unclaimed seeds are provenance, not executable source. Keep their lessons accessible through explicit Git provenance and retain all partial/unsupported/exact-unrestored seeds."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "85c0463e2d99b3756076d510b9270d8351377c3b66f7833137eb645c7212c60d",
+  "request_id": "basewin-owner-coverage-retire-complete-seeds",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:basewin-owner-coverage"
+}
