@@ -341,6 +341,20 @@ class Console : public MapWin {
  public:
   // homed from 004d2ac0.cpp
   void disband(int veh_id);
+  void disband(int x_coord, int y_coord);
+  void wait(int veh_id);
+  void ready();
+  static void __cdecl goto_routine(int base_id);
+  void arty(int veh_id);
+  void editor_on();
+  void quit_game();
+  void new_game();
+  void name_landmark(int x_coord, int y_coord);
+  void cursor_key(int key, int character, int modifiers);
+  void use_time_bonus();
+  void activate(int x_coord, int y_coord, int mode);
+  void go_to(int base_id, int vehicle_id, int mode);
+  void group(int vehicle_id);
 
   // Unit-order commands homed from the recovered 0x004D04xx/0x004D8xxx seeds.
   void skip(int veh_id);

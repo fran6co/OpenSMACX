@@ -58,6 +58,54 @@
 #include "technology.h"  // has_tech - editor_tech and the tech orders gate on it
 #include "random.h"  // random - the editor's randomizer and the AI orders
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
+#include "planwin.h"
+
+void __cdecl base_kill(int base_id);
+int __cdecl eliminate_player(int faction_id, int is_eliminated);
+
+// Original go_to writes this flag around the PlanWindow selection callback.
+// RECOVERY_OBJECT: v1 0x00688348 ?GoToPreviewActive@@3HA
+int GoToPreviewActive = 1;
+// Original go_to stores source X/Y at 4D6E01/4D6E0D; goto_routine
+// loads the independent dwords at 915680/915650 (4D60C2/4D60A8,
+// 4D6103/4D60FC). Both starts are initially zero-filled storage.
+// RECOVERY_OBJECT: v1 0x00915680 ?GoToSourceX@@3HA
+int GoToSourceX = 0;
+// RECOVERY_OBJECT: v1 0x00915650 ?GoToSourceY@@3HA
+int GoToSourceY = 0;
+
+// ORIGINAL: 0x004D04A0 ?wait@Console@@QAEXH@Z 0x004D04A0-0x004D04E0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d04a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::wait(int veh_id) {
+    field_23D18_ = 0;
+    Vehs[veh_id].state |= 2;
+    ready();
+    field_23BE4_ = 0;
+}
+
+// ORIGINAL: 0x004D2DE0 ?disband@Console@@QAEXHH@Z 0x004D2DE0-0x004D2EF3
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d2de0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::disband(int x_coord, int y_coord) {
+    const int vehicle = veh_at(x_coord, y_coord);
+    if (vehicle >= 0) {
+        disband(vehicle);
+        return;
+    }
+    if ((GameState & 0x40) == 0 || IsMultiplayerNet) return;
+    auto_undo();
+    const int base = base_at(x_coord, y_coord);
+    if (base < 0) return;
+    parse_says(0, Bases[base].name_string, -1, -1);
+    const bool alien = (Players[Bases[base].faction_id_current].rule_flags & 0x80) != 0;
+    if (!popp(ScriptPopupFile,
+              "DISBAND", 0,
+              alien ? "al_col_sm.pcx" : "colfoun_sm.pcx", nullptr)) return;
+    const int faction = Bases[base].faction_id_current;
+    base_kill(base);
+    ::draw_map(1);
+    ConsoleStatusWin.redraw();
+    eliminate_player(faction, 0);
+}
 #include "worldwin.h"  // WorldClimateWorldWin - editor_flat / editor_clear redraw it
 #include "terraforming.h"  // Terraforming - destroy's option list reads its bit/label rows
 #include "buttongroup.h"  // ButtonGroup::set - the editor brush/paint selectors
@@ -160,12 +208,16 @@ void Console::editor_edit_veh(int) {
 // RECOVERY_OBJECT: v2 0x0093A938 0x0093A93C ?ConsoleControlTurnActive@@3HA 0x00530D50
 int ConsoleControlTurnActive;
 
-// The original chat dialog passes 0x00939FE8 as its editable text buffer.
-// X_pop_ask receives 0xFF as its dialog value, not an established bound.
-// Reserve 256 bytes for the editable text here; its original storage extent
-// and containing object are unproven, so bind only the observed start.
+// Chat passes 939FE8 as default text, not editable output (5157CC).
+// BasePop forwards it to EditGroup::set_default, which allocates and copies
+// input at 612108..612134; entered text is ParseStrBuffer[0].str.
+// Only the initial NUL is established: the original allocation extent and
+// containing owner remain unknown. Do not overlap the distinct default
+// text start passed by name_landmark at 5163E6 (939FEC).
 // RECOVERY_OBJECT: v1 0x00939FE8 ?ConsoleChatInput@@3PADA
-char ConsoleChatInput[256];
+char ConsoleChatInput[1] = {0};
+// RECOVERY_OBJECT: v1 0x00939FEC ?LandmarkDefaultName@@3PADA
+char LandmarkDefaultName[1] = {0};
 
 // ORIGINAL: 0x00515770 ?chat@Console@@QAEXH@Z 0x00515770-0x005158F4
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00515770.cpp", "src/netdaemon.h", "src/xpops.h"], "reason": "The chat command belongs to Console, reads network lock state through NetDaemonNet, and uses source-owned text buffers and message services rather than fixed executable addresses; seed matching alone is not structural proof."}
@@ -1663,7 +1715,8 @@ void Console::unload(int veh_id) {
 // 0x0094F25C..0x0094F274 are alpha.h's TimeControl[5].turn/.base/.unit/
 // .event/.extra/.refresh/.accumulated - the six parse_says'd fields plus the
 // seventh stored on accept.
-static int *const TimeControlsSelection = (int *)0x009A64E0;
+// RECOVERY_OBJECT: v1 0x009A64E0 ?TimeControlsSelection@@3HA
+int TimeControlsSelection = 0;
 
 // The turn-assignment guard: game.cpp owns the same storage as its TU-private
 // TurnsAssigned static at 0x0093E8C0. Until that static is exported this
@@ -4665,7 +4718,7 @@ void Console::time_controls() {
     // dialog opens preselected. editor_diplomacy spells the same write the
     // same way.
     *reinterpret_cast<uint32_t *>(reinterpret_cast<uint8_t *>(&popup) + 0xa44) =
-        static_cast<uint32_t>(*TimeControlsSelection);
+        static_cast<uint32_t>(TimeControlsSelection);
     const int result = popup.exec(0, 0);
     if (result < 0) {
         popup.close();
@@ -5063,4 +5116,794 @@ void Console::on_nc_mouse_move(int x_coord, int y_coord) {
                     line_x, 0, 0, 1, 0);
     ConsoleDragLineX = line_x;
     ConsoleDragLineY = line_y;
+}
+
+// ORIGINAL: 0x004D6070 ?goto_routine@Console@@QAAXH@Z 0x004D6070-0x004D6196
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d6070.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+// symbol    ?goto_routine@Console@@SAXH@Z
+void __cdecl Console::goto_routine(int base_id) {
+    PlanWindow.clear_lines();
+    if (base_id < 0 || base_id >= BaseCurrentCount) {
+        PlanWindow.back_redraw();
+        PlanWindow.on_redraw();
+        return;
+    }
+    const int x = Bases[base_id].x;
+    const int y = Bases[base_id].y;
+    if (!GoToPreviewActive) {
+        PlanWindow.monocenter(x, y, 0);
+        PlanWindow.add_line(x, y, x, y,
+                            InfoFactionTextColors[ConsoleGlobal.faction_id_]);
+        PlanWindow.on_redraw();
+        return;
+    }
+    PlanWindow.opticenter(GoToSourceX, GoToSourceY, x, y, 0);
+    if (base_id < BaseCurrentCount)
+        PlanWindow.add_line(GoToSourceX, GoToSourceY, x, y,
+                            InfoFactionTextColors[ConsoleGlobal.faction_id_]);
+    PlanWindow.on_redraw();
+}
+
+// ORIGINAL: 0x004D9170 ?arty@Console@@QAEXH@Z 0x004D9170-0x004D92CD
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9170.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::arty(int vehicle) {
+    if (!can_arty(Vehs[vehicle].proto_id, 1)) return;
+    if (not_my_turn()) {
+        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        return;
+    }
+    if (!veh_ready(vehicle)) {
+        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        return;
+    }
+    Map *const tile = map_loc(Vehs[vehicle].x, Vehs[vehicle].y);
+    if ((tile->climate & 0xe0) < 0x60 &&
+        Chassis[VehPrototypes[Vehs[vehicle].proto_id].chassis_id].triad != 1 &&
+        (!(tile->bit & 1) || (tile->val2 & 15) >= 8)) {
+        NetMsgPopup->pop("SEAARTY", 5000, 0, nullptr);
+        return;
+    }
+    ConsoleGlobal.cursor_on(10, static_cast<int>(Rules.artillery_max_rng));
+    int pixel_x, pixel_y;
+    MapWinTable[0]->get_mouse_pos(&pixel_x, &pixel_y);
+    MapWinTable[0]->on_mouse_feedback(pixel_x, pixel_y);
+}
+
+// ORIGINAL: 0x005166D0 ?cursor_key@Console@@QAEXHHH@Z 0x005166D0-0x005168B7
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005166d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::cursor_key(int, int character, int) {
+    switch (character) {
+    case ' ': {
+        const int i = ConsoleGlobal.cursor_history_index_;
+        const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
+                                 ConsoleGlobal.cursor_history_y_[i]);
+        if (base >= 0 && ((GameState & 0x80) ||
+            Bases[base].faction_id_current == ConsoleGlobal.faction_id_ ||
+            ((Bases[base].visibility & (1u << ConsoleGlobal.faction_id_)) &&
+             spying(Bases[base].faction_id_current)))) {
+            TutWinBaseWindow.zoom(base, 0);
+            return;
+        }
+    }
+    case 'a':
+        if (!NetDaemonNet.lock_state_[2].dword_[4]) {
+            const int i = ConsoleGlobal.cursor_history_index_;
+            activate(ConsoleGlobal.cursor_history_x_[i],
+                     ConsoleGlobal.cursor_history_y_[i], 1);
+            return;
+        }
+        break;
+    case 'b': {
+        const int i = ConsoleGlobal.cursor_history_index_;
+        const int base = base_find(ConsoleGlobal.cursor_history_x_[i],
+            ConsoleGlobal.cursor_history_y_[i], ConsoleGlobal.faction_id_);
+        if (base >= 0) TutWinBaseWindow.zoom(base, 0);
+        break;
+    }
+    case 'g':
+        if (!ConsoleControlTurnActive && !NetDaemonNet.lock_state_[2].dword_[4]) {
+            const int i = ConsoleGlobal.cursor_history_index_;
+            const int base = base_at(ConsoleGlobal.cursor_history_x_[i],
+                                     ConsoleGlobal.cursor_history_y_[i]);
+            if (base >= 0) go_to(base, -1, 0);
+        }
+        break;
+    case 'p': {
+        const unsigned int shown = MapWinTable[0]->field_1DD70_ & 0x400000;
+        for (int i = 0; i < static_cast<int>(MapWinTableSlots); ++i) {
+            MapWin *const window = MapWinTable[i];
+            if (!window || (i && !window->field_1DD74_)) continue;
+            if (!shown) {
+                window->field_1DD70_ |= 0x400000;
+                window->draw_base_dest(1);
+            } else {
+                window->field_1DD70_ &= ~0x400000u;
+                window->draw_map(1);
+            }
+        }
+        break;
+    }
+    }
+}
+
+// ORIGINAL: 0x00517060 ?use_time_bonus@Console@@QAEXXZ 0x00517060-0x00517173
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00517060.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::use_time_bonus() {
+    if (ConsoleControlTurnActive || !TimeControlsSelection || !IsMultiplayerNet) return;
+    const int selection = TimeControlsSelection;
+    const int faction = ConsoleGlobal.faction_id_;
+    if ((NetTurnFlags & 0x10) && NetTurnFaction != faction) {
+        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        return;
+    }
+    if (PlayersData[faction].time_bonus_count <= 0) {
+        parse_num(0, TimeControl[selection].extra);
+        NetMsgPopup->pop("NOTIMEBONUSES", 5000, 0, nullptr);
+        return;
+    }
+    if (GameState & 0x800) {
+        NetMsgPopup->pop("NOBONUSATEND", 5000, 0, nullptr);
+        return;
+    }
+    if ((GameState & 2) &&
+        ((1u << faction_id_) & NetDaemonNet.lock_state_[0].dword_[12])) {
+        NetMsgPopup->pop("NOBONUSDONE", 5000, 0, nullptr);
+        return;
+    }
+    message_data(0x2306, 0, 0, 0, 0, 0);
+}
+
+namespace {
+inline void console_close_network(unsigned int final_channel_mask) {
+    NetDaemonNet.hang_up();
+    LockStateEntry *const state = NetDaemonNet.lock_state_;
+    state[0].dword_[1] = 0;
+    state[0].dword_[2] = 0;
+    state[0].dword_[3] = 0;
+    state[0].dword_[4] = 0;
+    state[0].dword_[13] = 0;
+    state[0].dword_[12] = 0;
+    state[1].dword_[1] = 0;
+    state[1].dword_[0] = 0;
+    state[1].dword_[5] = 0;
+    state[2].dword_[1] = 0;
+    state[1].dword_[14] = 0;
+    state[2].dword_[0] = 0;
+    state[2].dword_[10] = 0;
+    state[2].dword_[9] = 0;
+    state[0].dword_[9] = 0;
+    state[0].dword_[10] = 0;
+    state[0].dword_[11] = 0;
+    state[2].dword_[8] = 0;
+    state[2].dword_[7] = 0;
+    state[2].dword_[3] = 0;
+    state[2].dword_[2] = 0;
+    state[2].dword_[4] = 0;
+    state[0].dword_[5] = 0;
+    state[0].dword_[6] = 0;
+    state[2].dword_[13] = 0;
+    state[2].dword_[12] = 0;
+    state[0].dword_[7] = 0;
+    state[0].dword_[8] = 0;
+    state[2].dword_[11] = final_channel_mask;
+    state[1].dword_[4] = 0;
+    for (int i = 6; i < 14; ++i) state[1].dword_[i] = 0;
+    NetDaemonNet.locks_.clear();
+    NetDaemonNet.AlphaNet::close();
+    IsMultiplayerNet = 0;
+}
+}
+
+// ORIGINAL: 0x00514990 ?quit_game@Console@@QAEXXZ 0x00514990-0x00514B2C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514990.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::quit_game() {
+    const char *prompt = "REALLYQUIT";
+    if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
+        bit_count(LockEnableMask & 255) > 1) prompt = "REALLYWIMPOUT";
+    if (!X_pop(prompt, nullptr)) return;
+    if (IsMultiplayerPBEM) {
+        // The original modifies only the human-faction byte of this word.
+        LockEnableMask &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
+        save_game(0);
+    }
+    if ((GameRules & 0x400) && !IsMultiplayerPBEM) auto_save();
+    if (IsMultiplayerNet) console_close_network(255);
+    ExitTurnLoop = 1;
+    log_say("Quit***********************************", 0, 0, 0);
+}
+
+// ORIGINAL: 0x00514D30 ?new_game@Console@@QAEXXZ 0x00514D30-0x00514EE2
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00514d30.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::new_game() {
+    if (IsMultiplayerNet) return;
+    const char *prompt = "REALLYQUIT";
+    if (IsMultiplayerPBEM && bit_count(LockEnableMask & 255) > 1)
+        prompt = "REALLYWIMPOUT";
+    if (X_pop(prompt, nullptr)) {
+        if (IsMultiplayerPBEM) {
+            LockEnableMask &= ~(static_cast<unsigned char>(1u << ConsoleGlobal.faction_id_));
+            save_game(0);
+        }
+        if ((GameRules & 0x400) && !IsMultiplayerPBEM) auto_save();
+        // Re-read after callbacks; the initial network refusal does not
+        // establish that the network flag stayed clear during the popup.
+        if (IsMultiplayerNet) {
+            console_close_network(255);
+        }
+        ExitTurnLoop = 1;
+        log_say("Quit***********************************", 0, 0, 0);
+    }
+    if (ExitTurnLoop) GameRestartQueued = 1;
+}
+
+// ORIGINAL: 0x005162A0 ?name_landmark@Console@@QAEXHH@Z 0x005162A0-0x0051648F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005162a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::name_landmark(int x, int y) {
+    if (x < 0 || x >= MapLongitudeBounds || y < 0 || y >= MapLatitudeBounds) {
+        const int i = ConsoleGlobal.cursor_history_index_;
+        x = ConsoleGlobal.cursor_history_x_[i];
+        y = ConsoleGlobal.cursor_history_y_[i];
+    }
+    const int landmark = find_landmark(x, y, 1);
+    if (!(GameState & 0x80)) {
+        const int valid = landmark < 0 ? valid_landmark(x, y, ConsoleGlobal.faction_id_)
+            : valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
+                             ConsoleGlobal.faction_id_);
+        if (!valid) {
+            NetMsgPopup->pop("LANDMARKNO", 5000, 0, nullptr);
+            return;
+        }
+    }
+    char *const previous = landmark < 0 ? LandmarkDefaultName : MapLandmark[landmark].name;
+    if (X_pop_ask("LANDMARK", 31, previous, nullptr, 0)) return;
+    char *const name = ParseStrBuffer[0].str;
+    purge_spaces(name);
+    if (!strlen(name)) return;
+    if (landmark < 0) {
+        if (IsMultiplayerNet) {
+            message_landmark(0x2e01, 0, name, x, y, 0, 0);
+            return;
+        }
+        if (new_landmark(x, y, name) < 0) {
+            parse_num(0, 64);
+            NetMsgPopup->pop("LANDMARKTOOMANY", 5000, 0, nullptr);
+        }
+        ::draw_map(1);
+    } else if (!IsMultiplayerNet) {
+        strcpy(MapLandmark[landmark].name, name);
+        ::draw_map(1);
+    } else {
+        message_landmark(0x2e03, 0, name,
+            MapLandmark[landmark].x, MapLandmark[landmark].y, 0, 0);
+    }
+}
+
+extern int IfaceIdToSlotStorage[30];
+extern int ActiveIfaceIdStorage;
+// ORIGINAL: 0x004D9970 ?editor_on@Console@@QAEXXZ 0x004D9970-0x004D9AC5
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d9970.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::editor_on() {
+    const unsigned int flags = GameState;
+    if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
+        !(flags & 0x61) && !(flags & 0x1000)) {
+        NetMsgPopup->pop("EDITORNET", 5000, 0, nullptr);
+        return;
+    }
+    if (!(flags & 0x60) && !X_pop("SCENEDITOR", nullptr)) return;
+    GameState = (GameState ^ 0x40) | 0x20;
+    if (GameRules & 0x400) auto_save();
+    if (GameState & 0x40) {
+        NetMsgPopup->pop("EDITORON", 5000, 0, nullptr);
+        GameState |= 0x80;
+    } else {
+        NetMsgPopup->pop("EDITOROFF", 5000, 0, nullptr);
+        GameState &= ~0x80u;
+    }
+    if ((GameState & 0xc0) == 0xc0 && !IfaceIdToSlotStorage[ActiveIfaceIdStorage])
+        MainInterfaceGlobal.flat_button(2).show(0);
+    else MainInterfaceGlobal.flat_button(2).hide();
+    alpha_menu_.check(selected_vehicle_);
+    MainInterfaceGlobal.button_group(0).set((GameState & 0xc0) == 0xc0 ? 1002 : 1001, 1);
+    set_dirty();
+    ::draw_map(1);
+    WorldClimateWorldWin.GraphicWin::redraw();
+    desktop_update();
+    update_data(0);
+}
+
+void __cdecl ambience_veh(int vehicle);
+// ORIGINAL: 0x00510F50 ?ready@Console@@QAEXXZ 0x00510F50-0x00511471
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00510f50.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::ready() {
+    field_23BF8_ = 0;
+    ::draw_cursor();
+    selected_vehicle_ = ready_search(field_23D18_ ? -1 : selected_vehicle_);
+    field_23D18_ = 0;
+    if (selected_vehicle_ < 0 || !ConsoleGlobal.cursor_active_) return;
+    if (!Vehs[selected_vehicle_].order || Vehs[selected_vehicle_].order > 23) {
+        const int x = Vehs[selected_vehicle_].x;
+        const int y = Vehs[selected_vehicle_].y;
+        field_23BF8_ = 0;
+        if (survey_mode_) {
+            survey_mode_ = 0;
+            MapWinTable[0]->draw_map(1);
+        }
+        MapWinTable[0]->draw_cursor();
+        cursor_next(x, y);
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+        const unsigned int state = Vehs[selected_vehicle_].state;
+        if (!(GamePreferences & 0x80000) ||
+            (!Vehs[selected_vehicle_].order && !(state & 0x200) &&
+             (state & 0x1000200) != 0x1000200)) {
+            focus(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y,
+                  Vehs[selected_vehicle_].faction_id);
+            const int vx = Vehs[selected_vehicle_].x;
+            const int vy = Vehs[selected_vehicle_].y;
+            bool altitude_clipped = false;
+            if (vx >= 0 && vx < MapLongitudeBounds && vy >= 0 && vy < MapLatitudeBounds) {
+                const unsigned int climate = map_loc(vx, vy)->climate;
+                altitude_clipped = (climate & 0xe0) >= 0x61 &&
+                    field_1DDA8_ + 3 > vy - static_cast<int>(climate >> 5) + 3;
+            }
+            bool in_view = false;
+            if (!altitude_clipped && field_1DDA8_ + 3 <= vy &&
+                vy < field_1DDD8_ + field_1DDD0_ - 3 + field_1DDA8_) {
+                int adjusted_x = vx;
+                if (!(MapIsFlat & 1)) {
+                    if (vx < field_1DDA4_ + 3) adjusted_x += MapLongitudeBounds;
+                    if (field_1DDD4_ + field_1DDCC_ - 3 + field_1DDA4_ <= adjusted_x)
+                        adjusted_x -= MapLongitudeBounds;
+                }
+                in_view = field_1DDA4_ + 3 <= adjusted_x &&
+                    adjusted_x < field_1DDD4_ + field_1DDCC_ - 3 + field_1DDA4_;
+            }
+            if (!in_view) MapWinTable[0]->set_center(vx, vy, 1);
+        }
+        alpha_menu_.check(selected_vehicle_);
+        flush_input();
+        Vehs[selected_vehicle_].unk_6 = 0;
+    }
+    const int base = base_at(Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+    const unsigned int state = Vehs[selected_vehicle_].state;
+    if (!Vehs[selected_vehicle_].order && !(state & 0x200) &&
+        (state & 0x1000200) != 0x1000200 && !(state & 0x4000) && base >= 0) {
+        const int triad = Chassis[VehPrototypes[Vehs[selected_vehicle_].proto_id].chassis_id].triad;
+        const int destination = triad == 0 ? Bases[base].auto_forward_land_base_id
+            : triad == 1 ? Bases[base].auto_forward_sea_base_id
+                         : Bases[base].auto_forward_air_base_id;
+        if (destination >= 0 && destination != base) {
+            Vehs[selected_vehicle_].order = 24;
+            Vehs[selected_vehicle_].waypoint_x[0] = Bases[destination].x;
+            Vehs[selected_vehicle_].waypoint_y[0] = Bases[destination].y;
+        }
+    }
+    if (Vehs[selected_vehicle_].faction_id == ConsoleGlobal.faction_id_ &&
+        (Vehs[selected_vehicle_].flags & 0x1000) && !Vehs[selected_vehicle_].order &&
+        !(Vehs[selected_vehicle_].state & 0x200)) {
+        Vehs[selected_vehicle_].flags &= ~0x1000;
+        const int prototype = Vehs[selected_vehicle_].proto_id;
+        const int chassis = VehPrototypes[prototype].chassis_id;
+        const int weapon = VehPrototypes[prototype].weapon_id;
+        const int triad = Chassis[chassis].triad;
+        int sound = -1;
+        if (triad == 0) {
+            sound = chassis == 0 && Weapon[weapon].offense_rating != 0 ? 0x40
+                : Weapon[weapon].offense_rating == 0 ? 0x42 : 0x41;
+        } else if (triad == 1) sound = Weapon[weapon].offense_rating == 0 ? 0x46 : 0x45;
+        else if (triad == 2) sound = !Chassis[chassis].range ? 0x43
+            : Chassis[chassis].range == 1 ? 0x44 : 0x47;
+        if (sound >= 0) g_FX.play(sound, Vehs[selected_vehicle_].x, Vehs[selected_vehicle_].y);
+    }
+    ambience_veh(selected_vehicle_);
+    flush_input();
+}
+
+int __cdecl popv(char *caption, const char *label, int vehicle, int flags);
+// RECOVERY_OBJECT: v1 0x0068834C ?GoToLastSelection@@3HA
+int GoToLastSelection = -1;
+void __cdecl action_gate(int vehicle_id, int base_id);
+
+static int console_destination_distance(int x1, int y1, int x2, int y2) {
+    int dx = abs(x1 - x2);
+    if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude)) dx = MapLongitudeBounds - dx;
+    return (dx + abs(y1 - y2)) >> 1;
+}
+
+// ORIGINAL: 0x004D61A0 ?go_to@Console@@QAEXHHH@Z 0x004D61A0-0x004D7B3C;0x0065AD6A-0x0065AFD2
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004d61a0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::go_to(int subject, int order, int grouped) {
+    Popup popup;
+    const unsigned int saved_flags = MapWinTable[0]->field_1DD70_;
+    int sorting = prefs_get("Base Sort", 0, 0);
+    int source_x, source_y, faction, triad = -1, forward_triad = -1;
+    int centre_x = 0, centre_y = 0, maximum_range = 0;
+    bool cargo = false;
+    int ids[512], scores[512];
+    GoToPreviewActive = 1;
+    if (order == -1) {
+        Base &base = Bases[subject];
+        source_x = base.x; source_y = base.y; faction = base.faction_id_current;
+        set_base(subject);
+        if (NetDaemonNet.lock_base(subject, 0, -1, -1)) return;
+        if (!(saved_flags & 0x40000)) {
+            MapWinTable[0]->field_1DD70_ &= ~0x40u;
+            MapWinTable[0]->field_1DD70_ |= 0x40000;
+            ::draw_map(1);
+        }
+        parse_says(0, base.name_string, -1, -1);
+        popup.start(PopupStartCaption, "DESTTRIAD", -1, nullptr, 0x40, nullptr);
+        for (int i = 0; i < 3; ++i) {
+            const int destination = i == 0 ? base.auto_forward_land_base_id
+                : i == 1 ? base.auto_forward_sea_base_id : base.auto_forward_air_base_id;
+            strcpy(StringTemp, StringTable.get(reinterpret_cast<int>(Triad[i])));
+            strcat(StringTemp, " (");
+            say_base(StringTemp, destination);
+            strcat(StringTemp, ")");
+            popup.dialogs().item(StringTemp, i);
+        }
+        forward_triad = popup.exec(0, nullptr);
+        if (forward_triad < 0) goto finish;
+        triad = forward_triad;
+        parse_say(0, reinterpret_cast<int>(Triad[triad]), -1, -1);
+        parse_says(1, base.name_string, -1, -1);
+    } else if (order == -2) {
+        source_x = ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_];
+        source_y = ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_];
+        faction = ConsoleGlobal.faction_id_;
+        GoToPreviewActive = 0;
+    } else {
+        if (subject < 0) {
+            if (order == -3) return;
+            subject = veh_fake(0, ConsoleGlobal.faction_id_);
+            Vehs[subject].x = static_cast<short>(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
+            Vehs[subject].y = static_cast<short>(ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+            Vehs[subject].state = 0;
+        }
+        if (NetDaemonNet.lock_veh(&subject, 0, -1, -1, 0)) return;
+        Veh &vehicle = Vehs[subject];
+        source_x = vehicle.x; source_y = vehicle.y; faction = vehicle.faction_id;
+        const int proto = vehicle.proto_id;
+        triad = Chassis[VehPrototypes[proto].chassis_id].triad;
+        parse_says(0, VehPrototypes[proto].veh_name, -1, -1);
+        cargo = VehPrototypes[proto].plan == 12
+            || (veh_cargo(subject) && stack_check(subject, 2, 12, -1, -1));
+        if (order == -3) {
+            const int base = base_at(source_x, source_y);
+            if (base < 0) {
+                NetMsgPopup->pop("GATENOBASE", 0x1388, 0, 0);
+                goto finish;
+            }
+            if (!has_fac(0x21, base, 0)) {
+                NetMsgPopup->pop("GATENOGATE", 0x1388, 0, 0);
+                goto finish;
+            }
+            if (Bases[base].state & 0x20000000) {
+                parse_says(0, Bases[base].name_string, -1, -1);
+                NetMsgPopup->pop("GATEUSED", 0x1388, 0, 0);
+                goto finish;
+            }
+        }
+        if (order == 128) {
+            maximum_range = speed(subject, 0);
+            if (Chassis[VehPrototypes[proto].chassis_id].range == 1) maximum_range /= 2;
+            Map *tile = map_loc(source_x, source_y);
+            if ((tile->bit & 1) && (tile->val2 & 15) < 8) {
+                centre_x = source_x; centre_y = source_y;
+            } else {
+                action_home(subject, 0);
+                if (vehicle.order != 24) { NetDaemonNet.unlock_veh(); return; }
+                centre_x = vehicle.waypoint_x[0]; centre_y = vehicle.waypoint_y[0];
+                vehicle.order = 0;
+            }
+        }
+    }
+    PlanWindow.init(label_get(0x868 / 4));
+    GoToSourceX = PlanWindow.field_1DD9C_ = source_x;
+    GoToSourceY = PlanWindow.field_1DDA0_ = source_y;
+    PlanWindow.GraphicWin::show(0);
+    for (;;) {
+        const char *title = "";
+        if (order == -3) title = "GATETO";
+        else if (order == -2) title = "FINDTO";
+        else if (order == -1) title = "DESTTO";
+        else if (order == 24) title = grouped ? "GROUPTO" : "GOTO";
+        else if (order == 27) title = "ROADTO";
+        else if (order == 28) title = "TUBETO";
+        else if (order == 128) title = "BOMBTO";
+        strcpy(StringTemp, title);
+        popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0x42, nullptr);
+        popup.button(label_get(0x70c / 4)); popup.button(label_get(0x710 / 4)); popup.button(label_get(0x714 / 4));
+        popup.set_loc(-10, -10);
+        if (order == -2) popup.button(label_get(0x718 / 4));
+        int count = 0;
+        if (order == -1) {
+            strcpy(StringTemp, "("); strcat(StringTemp, label_get(0x3ec / 4)); strcat(StringTemp, ")");
+            popup.dialogs().item(StringTemp, 9999); count = 1;
+        }
+        for (int i = 0; i < BaseCurrentCount; ++i) {
+            ids[i] = i;
+            if (sorting == 1) scores[i] = Bases[i].population_size;
+            else if (sorting == 2) scores[i] = -console_destination_distance(source_x, source_y, Bases[i].x, Bases[i].y);
+        }
+        for (int pass = 0; pass < BaseCurrentCount; ++pass) for (int j = 0; j < BaseCurrentCount - pass - 1; ++j) {
+            if (sorting ? scores[j] < scores[j + 1] : _stricmp(Bases[ids[j]].name_string, Bases[ids[j + 1]].name_string) > 0) {
+                const int id = ids[j]; ids[j] = ids[j + 1]; ids[j + 1] = id;
+                if (sorting) { const int score = scores[j]; scores[j] = scores[j + 1]; scores[j + 1] = score; }
+            }
+        }
+        for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+            const int id = ids[candidate]; Base &base = Bases[id];
+            if (base.faction_id_current != faction) {
+                if (order == 128 ? !(PlayersData[faction].diplo_treaties[base.faction_id_current] & 0x10)
+                    : order < 0 || !(PlayersData[faction].diplo_treaties[base.faction_id_current] & 1)) continue;
+            } else if (order == 128) continue;
+            if (order == -3) {
+                if (!has_fac(0x21, id, 0)) continue;
+            } else if (triad == 1) {
+                if ((map_loc(source_x, source_y)->climate & 0xe0) >= 0x60) {
+                    if (id >= 0 && !port_to_port(base_at(source_x, source_y), id)) continue;
+                } else if (!base_on_sea(id, map_loc(source_x, source_y)->region)) continue;
+            } else if (triad == 0) {
+                if (map_loc(base.x, base.y)->region != map_loc(source_x, source_y)->region) continue;
+            } else if (triad == 2) {
+                if (order == 128) {
+                    if (console_destination_distance(centre_x, centre_y, base.x, base.y) > maximum_range) continue;
+                } else if (order >= 0) {
+                    Veh &vehicle = Vehs[subject];
+                    const int range = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range;
+                    if (range) {
+                        const int moves = speed(subject, 0);
+                        const int remaining = ::range(moves - vehicle.moves_expended, 0, 999);
+                        if (console_destination_distance(source_x, source_y, base.x, base.y)
+                            > (moves * (range - vehicle.terraforming_turns - 1) + remaining)
+                               / static_cast<int>(Rules.move_rate_roads)) continue;
+                    }
+                }
+            }
+            if (base.faction_id_current != faction && !(base.visibility & (1 << faction)) && !(GameState & 0x80)) continue;
+            strcpy(StringTemp, base.name_string); strcat(StringTemp, "|");
+            if (base.faction_id_current != faction) {
+                strcat(StringTemp, " ("); GenderDefault = Players[base.faction_id_current].noun_gender;
+                PluralityDefault = Players[base.faction_id_current].is_noun_plural;
+                strcat(StringTemp, Players[base.faction_id_current].noun_faction); strcat(StringTemp, ")");
+            }
+            if (cargo && base.faction_id_current == faction) {
+                if (id == SecretProject.universal_translator || (has_fac(8, id, 0) && !(base.state & 0x400))) {
+                    strcat(StringTemp, " (");
+                    strcat(StringTemp, id == SecretProject.universal_translator
+                        ? StringTable.get(reinterpret_cast<int>(Facility[90].name)) : label_get(0x4c4 / 4));
+                    strcat(StringTemp, ")");
+                }
+            }
+            strcat(StringTemp, " ");
+            if (order == -3) strcat(StringTemp, label_get((base.state & 0x20000000 ? 0x848 : 0x844) / 4));
+            else {
+                char number[40]; strcat(StringTemp, label_get(0x3e8 / 4)); strcat(StringTemp, ": ");
+                strcat(StringTemp, _itoa(console_destination_distance(source_x, source_y, base.x, base.y), number, 10));
+                if (sorting == 1) {
+                    strcat(StringTemp, ", "); strcat(StringTemp, label_get(0x90c / 4)); strcat(StringTemp, ": ");
+                    strcat(StringTemp, _itoa(base.population_size, number, 10));
+                }
+            }
+            popup.dialogs().item(StringTemp, id); ++count;
+            int preferred = GoToLastSelection;
+            if (order == -1) preferred = forward_triad == 0 ? Bases[subject].auto_forward_land_base_id
+                : forward_triad == 1 ? Bases[subject].auto_forward_sea_base_id : Bases[subject].auto_forward_air_base_id;
+            else if (order != -2 && preferred < 0) preferred = Vehs[subject].home_base_id;
+            if (id == preferred) popup.set_value(id);
+        }
+        if (!count) {
+            if (order == -3) NetMsgPopup->pop("GATENODEST", 0x1388, 0, 0);
+            PlanWindow.close(); break;
+        }
+        popup.dialogs().set_selection_callback(goto_routine);
+        goto_routine(popup.dialogs().get_selected_id());
+        const int selected = popup.exec(0, nullptr);
+        PlanWindow.close();
+        if (selected < 0) break;
+        GoToLastSelection = selected;
+        if (popup.input_poll_state() > 0 && popup.input_poll_state() <= 3) {
+            sorting = popup.input_poll_state() - 1; prefs_put("Base Sort", sorting, 0); continue;
+        }
+        if (order == -2) {
+            ConsoleGlobal.cursor_next(Bases[selected].x, Bases[selected].y);
+            MapWinTable[0]->set_center(Bases[selected].x, Bases[selected].y, 1);
+            if (popup.input_poll_state() == 4 && Bases[selected].faction_id_current == ConsoleGlobal.faction_id_)
+                TutWinBaseWindow.zoom(selected, 0);
+        } else if (order == -1) {
+            const short destination = static_cast<short>(selected == 9999 ? -1 : selected);
+            if (!forward_triad) Bases[subject].auto_forward_land_base_id = destination;
+            else if (forward_triad == 1) Bases[subject].auto_forward_sea_base_id = destination;
+            else Bases[subject].auto_forward_air_base_id = destination;
+            ::draw_map(1);
+        } else if (order == -3) {
+            if (Bases[selected].x != Vehs[subject].x || Bases[selected].y != Vehs[subject].y) {
+                log_say("Psi Gate teleport", subject, selected, 0);
+                if (!NetDaemonNet.add_lock(0, Bases[selected].x, Bases[selected].y)) {
+                    if (IsMultiplayerNet) { message_veh(0x2410, subject, selected, 0); NetDaemonNet.await_exec(1); }
+                    else action_gate(subject, selected);
+                }
+            }
+        } else {
+            log_say("Setting special veh orders", subject, order, 0);
+            Veh &vehicle = Vehs[subject];
+            if (order == 128) {
+                vehicle.state = (vehicle.state & 0xfcffffff) | 0x200;
+                vehicle.order_auto_type = 10;
+                vehicle.waypoint_x[1] = Bases[selected].x; vehicle.waypoint_y[1] = Bases[selected].y;
+            } else {
+                vehicle.order = static_cast<signed char>(order);
+                vehicle.waypoint_x[0] = Bases[selected].x; vehicle.waypoint_y[0] = Bases[selected].y;
+                if (order == 24) { vehicle.state &= ~0x10000u; if (grouped) group(subject); }
+            }
+            synch_veh(subject); NetDaemonNet.await_synch();
+        }
+        break;
+    }
+finish:
+    if (order == -1) NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+    else if (order != -2) NetDaemonNet.unlock_veh();
+    if (MapWinTable[0]->field_1DD70_ != saved_flags) {
+        MapWinTable[0]->field_1DD70_ = saved_flags; ::draw_map(1);
+    }
+}
+
+// ORIGINAL: 0x004D92D0 ?group@Console@@QAEXH@Z 0x004D92D0-0x004D95E7
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d92d0.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::group(int vehicle_id) {
+    Veh &leader = Vehs[vehicle_id];
+    const int source_x = leader.x, source_y = leader.y;
+    const int faction = leader.faction_id;
+    const int destination_region = map_loc(leader.waypoint_x[0], leader.waypoint_y[0])->region;
+    leader.state |= 0x08000000;
+    for (int i = 0; i < VehCurrentCount; ++i) {
+        Veh &vehicle = Vehs[i];
+        if (i == vehicle_id || vehicle.faction_id != faction) continue;
+        if (field_23D1C_ ? !(vehicle.state & 0x08000000)
+                         : vehicle.x != source_x || vehicle.y != source_y) continue;
+        const int region = map_loc(vehicle.x, vehicle.y)->region;
+        if (region != destination_region) {
+            const int triad = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad;
+            if (triad != 2) {
+                if ((region < 0x40) == (destination_region < 0x40) || triad == 0) continue;
+                if (triad == 1) {
+                    const int destination = base_at(leader.waypoint_x[0], leader.waypoint_y[0]);
+                    const int source = base_at(vehicle.x, vehicle.y);
+                    if (destination >= 0 && source >= 0 && !port_to_port(destination, source)) continue;
+                }
+            }
+        }
+        vehicle.state &= 0xfcffbdff;
+        vehicle.order = leader.order;
+        vehicle.waypoint_count = leader.waypoint_count;
+        vehicle.patrol_current_point = leader.patrol_current_point;
+        for (int waypoint = 0; waypoint < 4; ++waypoint) {
+            vehicle.waypoint_x[waypoint] = leader.waypoint_x[waypoint];
+            vehicle.waypoint_y[waypoint] = leader.waypoint_y[waypoint];
+        }
+        vehicle.state |= (leader.state & 0x02000200) | 0x08000000;
+    }
+    for (int slot = 0; slot < 8; ++slot) {
+        MapWin *window = MapWinTable[slot];
+        if (!window || (slot && !window->field_1DD74_)) continue;
+        window->field_1DD84_ = 1;
+        for (int i = 0; i < VehCurrentCount; ++i) {
+            Veh &vehicle = Vehs[i];
+            if (vehicle.faction_id == ConsoleGlobal.faction_id_ && (vehicle.state & 0x08000000)) {
+                MapWinTable[slot]->dest_line(vehicle.x, vehicle.y, vehicle.waypoint_x[0], vehicle.waypoint_y[0],
+                    vehicle.proto_id, vehicle.faction_id,
+                    Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad, 0, 2, 2, 0);
+            }
+        }
+        on_update(); // Original slot 63 belongs to this Console, not the iterated MapWin.
+        MapWinTable[slot]->field_1DD84_ = 0;
+    }
+    field_23D1C_ = 1;
+    ::draw_map(1);
+}
+
+// ORIGINAL: 0x004D2F00 ?activate@Console@@QAEXHHH@Z 0x004D2F00-0x004D3467
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004d2f00.cpp: original identity and complete spans", "source:src/console.h: Console owner declarations and layout", "source:src/console.cpp: coupled navigation, selection and lifecycle caller relationships"], "reason": "The original Console operation is expressed by the corresponding real Console owner definition, using its recovered members and source-owned callees rather than the retained seed scaffold."}
+void Console::activate(int x, int y, int current_selection) {
+    log_say("Console ACTIVATE", x, y, 0);
+    if (IsMultiplayerNet) {
+        if (NetDaemonNet.lock_state_[2].dword_[2] ||
+            NetDaemonNet.lock_state_[2].dword_[4]) return;
+        const unsigned int faction_bit = 1u << ConsoleGlobal.faction_id_;
+        if (((NetDaemonNet.lock_state_[0].dword_[12] & faction_bit) &&
+             !(NetTurnFlags & 0x10)) || ConsoleControlTurnActive) {
+            int vehicle = veh_at(x, y);
+            if (stack_check(vehicle, 1, -1, -1, -1) != 1)
+                vehicle = veh_pick(vehicle, "PICKUNIT", 1);
+            if (vehicle >= 0) {
+                selected_vehicle_ = vehicle;
+                focus_vehicle_ = vehicle;
+            }
+            const bool ready_now = (NetDaemonNet.lock_state_[0].dword_[12] &
+                (1u << ConsoleGlobal.faction_id_)) && veh_ready(vehicle);
+            NetMsgPopup->pop(ready_now ? "ALREADYDONE" : "FIRSTMOVE", 2000, 0, nullptr);
+            return;
+        }
+    }
+    int vehicle;
+    if (ConsoleGlobal.cursor_active_ && current_selection) {
+        field_23BE4_ = 0;
+        vehicle = selected_vehicle_;
+        if (stack_check(vehicle, 1, ConsoleGlobal.faction_id_, -1, -1) == 1 &&
+            veh_selectable(vehicle)) {
+            field_23BEC_ = 1;
+            return;
+        }
+        vehicle = veh_pick(vehicle, "PICKUNIT", 1);
+        if (vehicle < 0) return;
+    } else {
+        vehicle = veh_at(x, y);
+        if (vehicle < 0 || !stack_check(vehicle, 1, ConsoleGlobal.faction_id_, -1, -1)) {
+            field_23BE4_ = 0;
+            return;
+        }
+        if (stack_check(vehicle, 1, -1, -1, -1) != 1 ||
+            (!veh_selectable(vehicle) && !Vehs[vehicle].order && !(Vehs[vehicle].state & 0x4200))) {
+            vehicle = veh_pick(vehicle, "PICKUNIT", 1);
+            if (vehicle < 0) return;
+        } else {
+            log_say("VEH ORDERS", vehicle, 0, 0);
+            if (Vehs[vehicle].order > 2 && !(GameMorePreferences & 0x40000)) {
+                parse_says(0, VehPrototypes[Vehs[vehicle].proto_id].veh_name, -1, -1);
+                StringTemp[0] = 0;
+                say_orders(vehicle);
+                parse_says(1, StringTemp, -1, -1);
+                StringTemp[0] = 0;
+                strcat(StringTemp, "VEHORDERS");
+                const int order = Vehs[vehicle].order;
+                if (order >= 4 && order < 24) {
+                    parse_num(0, action_terraform(vehicle, order - 4, 0) + 1);
+                    strcat(StringTemp, "1");
+                }
+                const int answer = X_pop(StringTemp, nullptr);
+                if (!answer) return;
+                if (answer == 2) {
+                    GameMorePreferences |= 0x40000;
+                    prefs_save(0);
+                }
+            }
+        }
+    }
+    if (Vehs[vehicle].faction_id != faction_id_) return;
+    log_say("Activate AWAKEN", vehicle, Vehs[vehicle].x, Vehs[vehicle].y);
+    if (veh_jail(vehicle)) {
+        NetMsgPopup->pop("INJAIL", 5000, 0, nullptr);
+        return;
+    }
+    if (IsMultiplayerNet && veh_selectable(vehicle) && !Vehs[vehicle].order &&
+        !(Vehs[vehicle].state & 0x8004200)) {
+        selected_vehicle_ = vehicle;
+        set_move(1);
+        field_23BEC_ = 1;
+        return;
+    }
+    if (NetDaemonNet.lock_veh(&vehicle, 0, -1, -1, 0)) return;
+    log_say("Activate AWAKENING", vehicle, Vehs[vehicle].x, Vehs[vehicle].y);
+    veh_wake(vehicle);
+    if (!veh_selectable(vehicle)) {
+        draw_tile(Vehs[vehicle].x, Vehs[vehicle].y, 1);
+        if (!ConsoleGlobal.cursor_active_ && !(GameState & 2) &&
+            (!IsMultiplayerNet || (!ConsoleControlTurnActive &&
+             !NetDaemonNet.lock_state_[2].dword_[4]))) {
+            if (popv(ScriptPopupFile, "ALREADYMOVED2", vehicle, 0))
+                set_move(0);
+        } else if (IsMultiplayerNet) {
+            NetMsgPopup->pop("ALREADYMOVED", 5000, 0, nullptr);
+        } else {
+            popv(ScriptPopupFile, "ALREADYMOVED", vehicle, 0);
+        }
+    } else field_23BE4_ = 0;
+    selected_vehicle_ = vehicle;
+    synch_veh(vehicle);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+    set_move(1);
+    field_23BEC_ = 1;
 }
