@@ -1,0 +1,78 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "50b5e94c839f0cb2c8728a1ff2732b3454eb1fd4",
+  "editable_files": [
+    "src/interlude.cpp",
+    "src/interlude.h",
+    "src/hypothesis_layouts.h",
+    "src/stringstruct.cpp",
+    "src/delegation_thunks.cpp",
+    "src/delegation_thunks.h",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/pending_bodies.cpp",
+    "CMakeLists.txt"
+  ],
+  "evidence": [
+    "Original45F200/45F740 establish GraphicWin base plus RECT A14, StringList A24 and Buffer A54, totalFDC. Free5230E0 owns only one Interlude; extra seed locals/fake RunResult are misidentified inlined member teardown.",
+    "Original primarytable66C708 callback12=45F5C0,20=45F700,26=45F6F0; current Win names20/26 are vslot_20/vslot_26. Override actual existing contract, never append invented virtual slots. Original45F503/507/522 pushes all three modal arguments.",
+    "Original free routine year difference uses saved turn minus game_year(0); raw seed subtracting current year from itself is wrong. Other raw pointer/field interpretations need original review, not transplantation.",
+    "Faction and base lifecycle workers need free5230E0; its missing implementation is a true new linkage dependency. Game story-mask storage9A64A4 remains centrally owned by faction game.cpp/h worker, not duplicated here. Root coordinates pending_bodies retirement serially and publishes native bindings; worker does not edit original markers."
+  ],
+  "intent": "Recover complete Interlude window hierarchy and lifecycle plus free story operation as genuine C++; preserve existing claims and all original identities, retire only superseded raw wrappers after physical verification.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4583936,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4584160,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4584896,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585024,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585232,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585280,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4585744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5386464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "interlude-lifetime-owner-closure"
+}
