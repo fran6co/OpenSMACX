@@ -1,0 +1,33 @@
+{
+  "event_id": "b4923c7decabd535344576dfa351bc790e1d9afadd6060ae5e384daea6eeace0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/checkbox.cpp",
+      "src/radiobutton.cpp"
+    ],
+    "evidence": [
+      "Fresh actual committed-owner measurements cover all 97 original mappings: 72 masked-byte passes, 23 misses and two unknowns. Radio attach adjustor 0x00407090 and CheckBox attach adjustor 0x0060FEE0 have historical exact obligations but their recorded PAX physical symbols are absent from current owner objects. Include these generated-entry obligations in the same genuine virtual attachment recovery and reconcile only compiler-observed symbols; no hand-coded adjustment bodies or erased mappings.",
+      "Existing protected-body baseline misses at 0x00607420/0x00607450/0x00607480/0x00607210/0x0060EB80/0x0060EC10 are preserved controls, not new claims or exemptions. Compare fresh baseline/current full outcomes under both configured flag sets; unsupported generated code remains unknown. Derived baseline reports are ignored build/recovery/dialog-controls-baseline-06438ede-<owner>.json.",
+      "Independent PeImage recheck qualifies callback initialization evidence: hook cells 0x009B7A98-0x009B7AA4 are within the virtual zero-filled tail of .data, not file-backed zero bytes. Section starts 0x00682000, raw length 155648, virtual end 0x009C21F8; no hook relocations. PE loader zero-fill supports initial null source storage but does not establish file-backed initializer or complete neighboring object bounds. Preserve this distinction when publishing annotations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4223120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6356704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5963e9608edc40555520c0854bd8ea945b24bdd138ad1661d9e5ce571a803ec9",
+  "request_id": "dialog-control-attachment-generated-obligations",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:dialog-control-coverage-wave"
+}
