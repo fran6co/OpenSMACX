@@ -1,0 +1,20 @@
+{
+  "event_id": "881456a6ea9e0f9ee28373a7c563f2ca8ce5eaadd3dd35b1bcd932e62839368e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flic.h"
+    ],
+    "evidence": [
+      "Pinned boom505540 has operand-size16 load66A1 from90F482 = its true localFlic90EA68+header_A14+frames_6; authorize public const frame_count getter over the existing FliHeader::frames_ member, without changing storage/layout or making a new global.",
+      "Existing Flic::decode_stored_frame already names the stored coordinatepair90F014/18; original lifetime remains owned by genuine localstaticFlic. This scope grants only the narrow getter dependency and not changes to unrelated Flic bodies or ABI."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "540108a020da5841ad2e06a27f263cfb382b48c6046a7ce3c3bb703da6472f94",
+  "request_id": "boom-flic-frame-count-access",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
