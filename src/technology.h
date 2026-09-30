@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+extern int AiResearchBatchActive;
 
 // Network-aware research choice, source-owned by technology.cpp.
 int __cdecl tech_selection(int faction);  // 0x005BE380

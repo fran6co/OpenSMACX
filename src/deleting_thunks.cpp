@@ -804,54 +804,9 @@ void *__fastcall scalar_delete_main_interface(void *self, void *,
     return self;
 }
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GInterlude@@UAEPAXI@Z: run the complete destructor, then release
-         the storage through the executable's operator delete only when bit 0
-         of the flags asks.
-// ORIGINAL: 0x0045F710 ??_GInterlude@@UAEPAXI@Z 0x0045F710-0x0045F731 BYTE_EXACT
-// symbol    ?scalar_delete_interlude@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GInterlude@@UAEPAXI@Z)(Interlude* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     0x0045F740 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_interlude(void *self, void *,
-                                         unsigned int arg0) {
-    static_cast<Interlude *>(self)->Interlude::~Interlude();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
+// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
-/*
-Purpose: Step the receiver back to the subobject ??_GInterlude@@UAEPAXI@Z
-         expects, then forward unchanged.
-// ORIGINAL: 0x0045F910 ??_GInterlude@@WEEE@AEPAXI@Z 0x0045F910-0x0045F91B
-// symbol    ?adjust_this_interlude@@YIPAXPAX0I@Z
-// CORRECTED from ??3Interlude@@SAXPAXI@Z
-//   11 bytes, `sub ecx, 0x444; jmp 0x0045F710` into
-//   ??_GInterlude@@UAEPAXI@Z, which executes `ret 4`; no stack access
-//   and the receiver stays in ECX. `WEEE@` re-demangles to
-//   adjustor{1092} and 1092 == 0x444, the constant subtracted
-// size      11 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the forwarded call's
-Status: Complete
-*/
-void *__fastcall adjust_this_interlude(void *self, void *, unsigned int arg0) {
-    uint8_t *const object = static_cast<uint8_t *>(self);
-    return scalar_delete_interlude(object - 0x444, nullptr, arg0);
-}
+// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at

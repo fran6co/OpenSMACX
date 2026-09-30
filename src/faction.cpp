@@ -32,6 +32,46 @@
 #include "log.h"  // log_say, which the net_* writers announce each move with
 #include "console.h"  // ConsoleGlobal, which net_energy refreshes
 #include "socialwin.h"
+#include "mapwin.h"
+#include "alphamovie.h"
+#include "strings.h"
+#include "xpops.h"
+
+void __cdecl mon_killed_faction(int faction, int killed_faction);
+void __cdecl interlude(int id, char *filename, int arg3, int arg4);
+int __cdecl base_init(int faction, int x, int y);
+void __cdecl base_kill(int base);
+void __cdecl kill(int vehicle);
+void __cdecl clear_bunglist(int faction);
+int __cdecl veh_init(int prototype, int faction, int x, int y);
+void __cdecl veh_kill(int vehicle);
+int __cdecl veh_find(int x, int y, int faction, int exclude);
+
+static int lifecycle_wrap_x(int x) {
+    if (!(MapIsFlat & 1)) {
+        if (x < 0) x += MapLongitudeBounds;
+        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+    }
+    return x;
+}
+
+static uint8_t lifecycle_faction_mask(int faction) {
+    return static_cast<uint8_t>(1u << (faction & 31));
+}
+
+static bool lifecycle_is_fresh(int conqueror) {
+    return TurnCurrentNum == 0 || conqueror == -282;
+}
+
+static int lifecycle_distance(int x, int y, int other_x, int other_y) {
+    int dx = abs(x - other_x);
+    if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude)) dx = MapLongitudeBounds - dx;
+    dx = abs(dx);
+    const int dy = abs(y - other_y);
+    const int hi = dx > dy ? dx : dy;
+    const int lo = dx < dy ? dx : dy;
+    return hi - ((((dx + dy) >> 1) - lo + 1) >> 1);
+}
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
@@ -4477,4 +4517,698 @@ void __cdecl diplomacy_check(int faction, int other, int update) {
     }
     if (!DiploScratchFA68 && (DiploScratchFA98 || (treaty & 1)) && DiploFriction > 14) DiploFriction = 14;
     if ((DiploScratchFA60 || (treaty & 0x10) || (PlayersData[other].diplo_treaties[faction] & 0x20)) && DiploFriction < 6) DiploFriction = 6;
+}
+
+static void lifecycle_clear_social(SocialEffect &effect) {
+    SocialEffect zero = {0};
+    effect = zero;
+}
+
+static void lifecycle_add_social(SocialEffect &effect, int index, int value) {
+    // The bonus axis is the original11 signed social-effect words. Use
+    // genuine declared members rather than indexing across scalar neighbors.
+    // Index validation remains the caller/parser's original responsibility.
+    static int SocialEffect::* const fields[11] = {
+        &SocialEffect::economy, &SocialEffect::efficiency, &SocialEffect::support,
+        &SocialEffect::talent, &SocialEffect::morale, &SocialEffect::police,
+        &SocialEffect::growth, &SocialEffect::planet, &SocialEffect::probe,
+        &SocialEffect::industry, &SocialEffect::research
+    };
+    effect.*fields[index] += value;
+}
+
+static void lifecycle_reset_faction(int faction) {
+    PlayerData &p = PlayersData[faction];
+    p.flags = 0;
+    p.base_governor_adv = DiffLevelCurrent ? 0xdfbe41 : 0xc0dfbe41;
+    p.base_name_offset = p.base_sea_name_offset = 0;
+    p.ai_fight = Players[faction].ai_fight;
+    p.ai_growth = Players[faction].ai_growth;
+    p.ai_tech = Players[faction].ai_tech;
+    p.ai_wealth = Players[faction].ai_wealth;
+    p.ai_power = Players[faction].ai_power;
+    p.unk_37 = 0;
+    for (int queue = 0; queue < 8; ++queue) {
+        p.saved_queue_size[queue] = 0;
+        StringTemp[0] = 0;
+        strcat(StringTemp, label_get(0x984 / 4));
+        strcat(StringTemp, " ");
+        char number[80];
+        _itoa(queue + 1, number, 10);
+        strcat(StringTemp, number);
+        strcpy(p.saved_queue_name[queue], StringTemp);
+    }
+    for (int category = 0; category < 4; ++category)
+        p.soc_category_pending.models_[category] = p.soc_category_active.models_[category] = 0;
+    lifecycle_clear_social(p.soc_effect_pending);
+    p.soc_upheaval_cost_paid = 0;
+    for (int other = 0; other < 8; ++other) p.secret_project_intel[other] = 0;
+    p.diff_level = (LockEnableMask & lifecycle_faction_mask(faction)) ? DiffLevelCurrent : 3;
+    p.integrity_blemishes = p.global_reputation = 0;
+    p.traded_maps = p.energy_reserves = p.atrocities = p.major_atrocities = 0;
+    p.planet_ecology = p.sanction_turns = 0;
+    TectonicDetonationCount[faction] = 0;
+    p.council_call_turn = -999;
+    if (GameState & 0x800000) {
+        p.ai_fight = rand() % 3 - 1;
+        p.ai_power = rand() % 2;
+        p.ai_tech = rand() % 2;
+        p.ai_wealth = rand() % 2;
+        p.ai_growth = rand() % 2;
+    }
+    if (GameRules & 0x40) p.ai_fight = 1;
+    p.total_mil_veh = p.current_num_bases = p.mil_strength_1 = p.mil_strength_2 = p.pop_total = p.unk_70 = 0;
+    p.mind_control_total = 0;
+    for (int other2 = 0; other2 < 8; ++other2)
+        p.diplo_mind_control[other2] = p.stolen_data_count[other2] = 0;
+    p.net_random_event = 0;
+    for (int region = 0; region < 128; ++region) {
+        p.region_total_combat_vehs[region] = p.region_total_bases[region] = 0;
+        p.region_total_offensive_vehs[region] = p.region_force_rating[region] = p.unk_77[region] = 0;
+    }
+    for (int council = 0; council < 11; ++council) p.unk_29[council] = p.unk_30[council] = 0;
+    p.corner_market_turn = p.corner_market_active = p.unk_101 = p.unk_102 = p.unk_103 = 0;
+    p.flags_ext = p.unk_105 = p.unk_106 = p.unk_107 = p.unk_108 = p.unk_109 = 0;
+    p.unk_93 = p.unk_94 = p.unk_95 = p.unk_96 = p.unk_97 = p.tech_achieved = 0;
+    p.time_bonus_count = 1;
+}
+
+// ORIGINAL: 0x005B0E00 ?setup_player@@YAHHHH@Z 0x005B0E00-0x005B337C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005b0e00.cpp: canonical original identity, full spans and retained seed provenance", "source:src/faction.h: real faction record ownership and typed relationships", "source:recovery/tasks/faction-lifecycle-owner-closure.json: coordinator authorization and retained task baseline"], "reason": "The original faction setup operation belongs to the Faction owner; real Player/PlayerData records, prototype scoring, owned network state, shared game counters and named base/vehicle dependencies express creation and respawn paths without seed executable addresses."}
+int __cdecl setup_player(int faction, int conqueror, int retry) {
+    Player &definition = Players[faction];
+    PlayerData &p = PlayersData[faction];
+    char number[80];
+    char prototype_name[32];
+    int duplicate = 0;
+    for (int previous = 1; previous < faction; ++previous)
+        if (!strcmp(Players[previous].name_leader, definition.name_leader)) ++duplicate;
+    if (duplicate) {
+        definition.name_leader[21] = 0;
+        strcat(definition.name_leader, "-");
+        _itoa(duplicate + 1, number, 10);
+        strcat(definition.name_leader, number);
+    }
+    duplicate = 0;
+    for (int previous2 = 1; previous2 < faction; ++previous2)
+        if (!strcmp(Players[previous2].noun_faction, definition.noun_faction)) ++duplicate;
+    if (duplicate) {
+        definition.noun_faction[21] = 0;
+        strcat(definition.noun_faction, "-");
+        _itoa(duplicate + 1, number, 10);
+        strcat(definition.noun_faction, number);
+    }
+    duplicate = 0;
+    for (int previous3 = 1; previous3 < faction; ++previous3)
+        if (!strcmp(Players[previous3].formal_name_faction, definition.formal_name_faction)) ++duplicate;
+    if (duplicate) {
+        definition.formal_name_faction[37] = 0;
+        strcat(definition.formal_name_faction, "-");
+        _itoa(duplicate + 1, number, 10);
+        strcat(definition.formal_name_faction, number);
+    }
+    for (int base = BaseCurrentCount - 1; base >= 0; --base)
+        if (Bases[base].faction_id_current == faction) base_kill(base);
+    for (int vehicle = VehCurrentCount - 1; vehicle >= 0; --vehicle)
+        if (vehicle < VehCurrentCount && Vehs[vehicle].faction_id == faction
+            && (Vehs[vehicle].proto_id != 0x13 || faction != 0)) kill(vehicle);
+    p.x_target = p.y_target = p.base_id_atk_target = -1;
+    if (lifecycle_is_fresh(conqueror)) {
+        init_goals(faction);
+        clear_bunglist(faction);
+        lifecycle_reset_faction(faction);
+    }
+    p.energy_reserves += definition.rule_energy
+        + (IsMultiplayerNet ? 100 : Rules.player_start_energy_reserve);
+    p.hurry_cost_total = 0;
+    p.tech_cost = -1;
+    p.last_turn_new_base = TurnCurrentNum;
+    for (int other = 0; other < 8; ++other) {
+        if (lifecycle_is_fresh(conqueror)) {
+            p.diplo_treaties[other] = p.diplo_merc[other] = 0;
+            int limit = ((GameRules & 0x40) ? 5 : DiffLevelCurrent) * 3 + 8;
+            int friction = limit <= 1 ? 1 : rand() % limit;
+            if (friction < 1) friction = 1;
+            if (friction > 16) friction = 16;
+            p.diplo_friction[other] = friction;
+            p.diplo_wrongs[other] = p.diplo_betrayed[other] = p.diplo_unk3[other] = 0;
+            p.diplo_patience[other] = 0;
+            p.diplo_spoke[other] = -1;
+            p.diplo_unk4[other] = p.diplo_unk1[other] = 0;
+        } else treaty_off(faction, other, 0x9000ff48);
+        p.loan_balance[other] = p.loan_payment[other] = p.unk_12[other] = 0;
+    }
+    for (int proto = 0; proto < 512; ++proto) {
+        p.proto_id_active[proto] = p.proto_id_queue[proto] = 0;
+        if (TurnCurrentNum == 0) p.proto_id_lost[proto] = 0;
+    }
+    if (lifecycle_is_fresh(conqueror)) {
+        for (int goal = 0; goal < 12; ++goal) p.tech_pact_shared_goals[goal] = 0;
+        // The original clears22 words and then one byte, leaving the last
+        // three bytes of this92-byte field unchanged.
+        for (int source = 0; source < 89; ++source) p.tech_trade_source[source] = 0;
+        for (int announced = 0; announced < 4; ++announced) p.facility_announced[announced] = 0;
+        p.unk_32 = p.unk_33 = 0;
+        for (int satellite = 0; satellite < 4; ++satellite) p.satellites_[satellite] = 0;
+        p.theory_of_everything = p.tech_ranking = p.sat_odp_deployed = 0;
+        p.tech_id_researching = -1;
+        p.tech_accumulated = p.earned_techs_saved = p.unk_26 = p.unk_102 = 0;
+    }
+    p.unk_28 = p.unk_13 = p.maint_cost_total = p.unk_18 = p.unk_17 = 0;
+    p.tech_commerce_bonus = p.turn_commerce_income = 0;
+    p.tech_fungus_nutrient = p.tech_fungus_mineral = p.tech_fungus_energy = p.tech_fungus_unk = 0;
+    p.best_weapon_value = p.best_armor_value = p.best_land_speed = 0;
+    p.enemy_best_weapon_value = p.enemy_best_armor_value = p.enemy_best_land_speed = 0;
+    p.best_psi_offense = p.best_psi_defense = p.enemy_best_psi_offense = p.enemy_best_psi_defense = 0;
+    if (!faction || !((LockEnableMask >> 8) & lifecycle_faction_mask(faction))) return 0;
+    if (conqueror < -1 && conqueror != -282) {
+        LockEnableMask &= ~(static_cast<uint32_t>(lifecycle_faction_mask(faction)) << 8);
+        return 0;
+    }
+
+    int attempts = 0;
+    int x = 0, y = 0, region = 0, nearest = -1, occupied = 0, isolation = 32;
+    int failed = 0;
+    int area_quality = 0;
+    int spacing_relaxation = 0;
+    Map *tile = 0;
+search:
+    {
+        int margin = (1024 - attempts) * MapLongitudeBounds / 8192;
+        if (margin < 0) margin = 0;
+        if (margin > 9999) margin = 9999;
+        int inset = (MapIsFlat & 1) ? margin * 2 : 0;
+        int width = MapLongitudeBounds - inset;
+        x = ((MapIsFlat & 1) ? margin : 0) + (width <= 1 ? 0 : rand() % width);
+        margin = (1024 - attempts) * MapLatitudeBounds / 8192;
+        if (margin < 0) margin = 0;
+        if (margin > 9999) margin = 9999;
+        int height = MapLatitudeBounds - 2 * margin;
+        y = margin + (height <= 1 ? 0 : rand() % height);
+        if (x & 1) --x;
+        if (y & 1) ++x;
+        isolation = 32;
+        for (int ring = 0; ring < 8; ++ring) {
+            const int begin = ring ? RadiusRange[ring] : 0;
+            for (int offset = begin; offset < RadiusRange[ring + 1]; ++offset) {
+                int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset]);
+                int ry = y + RadiusOffsetY[offset];
+                if (rx >= 0 && rx < MapLongitudeBounds && ry >= 0 && ry < MapLatitudeBounds) {
+                    uint32_t landmark = map_loc(rx, ry)->bit2;
+                    if (landmark && static_cast<int>(landmark & 0xff000000) > 0) {
+                        isolation = ring;
+                        ring = 99;
+                        break;
+                    }
+                }
+            }
+        }
+        area_quality = 0;
+        for (int offset2 = 0; offset2 < 21; ++offset2) {
+            int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset2]);
+            int ry = y + RadiusOffsetY[offset2];
+            if (rx < 0 || rx >= MapLongitudeBounds || ry < 0 || ry >= MapLatitudeBounds) continue;
+            Map &square = *map_loc(rx, ry);
+            const int altitude = square.climate & 0xe0;
+            if (!(definition.rule_flags & 0x100)) {
+                if ((!(square.bit & 0x20) || altitude < 0x40)
+                    && altitude > 0x5f && (square.val3 & 0xc0) < 0x41
+                    && (square.climate & 0x18)) ++area_quality;
+            } else if (!(square.bit & 0x20) || altitude < 0x40)
+                area_quality += (2 - (square.climate >> 5)) * 2 + 1;
+        }
+        if (definition.rule_flags & 0x100) area_quality /= 3;
+        region = map_loc(x, y)->region;
+        occupied = 0;
+        for (int player = 1; player < 8; ++player)
+            if (PlayersData[player].region_total_bases[region]) occupied |= 1 << player;
+        nearest = (!(definition.rule_flags & 0x100) && conqueror != -282)
+            ? base_find(x, y, -1, region, -1, -1) : base_find(x, y);
+        if (nearest < 0) BaseFindDist = 32;
+        if (lifecycle_is_fresh(conqueror)) {
+            for (int vehicle2 = 0; vehicle2 < VehCurrentCount; ++vehicle2) {
+                if (map_loc(Vehs[vehicle2].x, Vehs[vehicle2].y)->region != region) continue;
+                occupied |= 1 << Vehs[vehicle2].faction_id;
+                int distance = lifecycle_distance(x, y, Vehs[vehicle2].x, Vehs[vehicle2].y);
+                if (distance < BaseFindDist) BaseFindDist = distance;
+            }
+        }
+        ++attempts;
+        if (attempts < 1025 || ((LockEnableMask & lifecycle_faction_mask(faction)) && TurnCurrentNum == 0)) {
+            tile = map_loc(x, y);
+            int altitude = tile->climate & 0xe0;
+            bool bad_altitude = (definition.rule_flags & 0x100) ? altitude > 0x40 : altitude < 0x60;
+            if (bad_altitude || ((tile->bit & 0x20) && altitude > 0x3f)
+                || (!(definition.rule_flags & 0x100) && (tile->val3 & 0xc0) > 0x40)) goto search;
+            int separation = lifecycle_is_fresh(conqueror) ? 6 : 12;
+            spacing_relaxation = attempts / 64;
+            if (separation * static_cast<int>(MapAreaSqRoot) / 56 > BaseFindDist
+                || altitude >= 0xa0 || ((tile->bit & 3) && (tile->val2 & 15) <= 7)
+                || y <= 1 || y >= MapLatitudeBounds - 2
+                || 12 - attempts / 80 > area_quality
+                || (16 - spacing_relaxation) * static_cast<int>(MapAreaSqRoot) / 56 > BaseFindDist
+                || (lifecycle_is_fresh(conqueror) && attempts <= 899 && 36 - spacing_relaxation > static_cast<int>(Continents[region].tile_count))) goto search;
+            if (!(definition.rule_flags & 0x100)) {
+                int handicap = (LockEnableMask & lifecycle_faction_mask(faction)) ? (6 - DiffLevelCurrent) * 8 : 8;
+                if (static_cast<int>(Continents[region].open_terrain * (MapOceanCoverage + 1)) / 2
+                    < 24 + handicap - TurnCurrentNum / 16 - attempts / 16) goto search;
+            }
+            int difficulty = (LockEnableMask & lifecycle_faction_mask(faction)) ? DiffLevelCurrent : 3;
+            if ((5 - difficulty) * 48 - TurnCurrentNum / 16 - attempts / 4 > static_cast<int>(Continents[region].tile_count)
+                || (occupied && conqueror != -282
+                    && 64 - spacing_relaxation > static_cast<int>(Continents[region].tile_count) / (bit_count(occupied) + 1))) goto search;
+            int quality = (tile->bit & 0x1000) ? 0 : tile->val2 >> 4;
+            if (!(tile->bit & 0x1000) && !quality) {
+                quality = world_site(x, y, 0);
+                site_set(x, y, quality);
+            }
+            if ((15 - spacing_relaxation > quality && !TurnCurrentNum && !(GameRules & 0x10))
+                || (!(definition.rule_flags & 0x100) && ((1024 - attempts) / 128 > isolation || !isolation))
+                || (TurnCurrentNum && conqueror != -282 && tile->territory >= 1)
+                || (nearest >= 0 && Bases[nearest].faction_id_current == conqueror
+                    && map_loc(Bases[nearest].x, Bases[nearest].y)->region == region)) goto search;
+        } else failed = 1;
+    }
+    if (p.flags & 0x1000) failed = 1;
+    if (!failed || retry != 0) {
+        if (lifecycle_is_fresh(conqueror)) {
+            int best = -1, best_offset = 0;
+            for (int offset3 = 0; offset3 < 21; ++offset3) {
+                int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset3]);
+                int ry = y + RadiusOffsetY[offset3];
+                if (rx < 0 || rx >= MapLongitudeBounds || ry < 0 || ry >= MapLatitudeBounds) continue;
+                Map &candidate = *map_loc(rx, ry);
+                int altitude = candidate.climate & 0xe0;
+                if ((altitude < 0x60) != ((definition.rule_flags >> 8) & 1)
+                    || candidate.region != region || altitude >= 0xa0
+                    || ((candidate.bit & 0x20) && altitude >= 0x40)
+                    || ((candidate.bit & 3) && (candidate.val2 & 15) <= 7)) continue;
+                base_find(rx, ry);
+                // Original5B204E checks distance from the old center, not
+                // from this candidate. Keep that quirk when choosing a site.
+                for (int vehicle3 = 0; vehicle3 < VehCurrentCount; ++vehicle3) {
+                    int distance = lifecycle_distance(x, y, Vehs[vehicle3].x, Vehs[vehicle3].y);
+                    if (distance < BaseFindDist) BaseFindDist = distance;
+                }
+                if (BaseFindDist <= 5) continue;
+                int quality = (candidate.bit & 0x1000) ? 0 : candidate.val2 >> 4;
+                if (!(candidate.bit & 0x1000) && !quality) {
+                    quality = world_site(rx, ry, 0);
+                    site_set(rx, ry, quality);
+                }
+                for (int neighbor = 0; neighbor < 8; ++neighbor) {
+                    int nx = lifecycle_wrap_x(rx + RadiusBaseX[neighbor]);
+                    int ny = ry + RadiusBaseY[neighbor];
+                    if (nx < 0 || nx >= MapLongitudeBounds || ny < 0 || ny >= MapLatitudeBounds) continue;
+                    int altitude2 = map_loc(nx, ny)->climate >> 5;
+                    if (!(definition.rule_flags & 0x100)) {
+                        if (altitude2 < 3) { ++quality; break; }
+                    } else quality += 2 - altitude2;
+                }
+                if (quality > best) { best = quality; best_offset = offset3; }
+            }
+            x = lifecycle_wrap_x(x + RadiusOffsetX[best_offset]);
+            y += RadiusOffsetY[best_offset];
+        }
+        if (retry != 0) failed = 0;
+        if (!failed && (lifecycle_is_fresh(conqueror) || !(GameRules & 1)) && TurnCurrentNum < 101) goto respawn;
+    }
+    if (!retry) {
+        if ((LockEnableMask & lifecycle_faction_mask(faction)) && !IsMultiplayerNet) {
+            EndgameExitReason = 7;
+            LockEnableMask &= ~(static_cast<uint32_t>(lifecycle_faction_mask(faction)) << 8);
+            GameState |= 1;
+            return 0;
+        }
+        p.unk_102 = 0;
+        LockEnableMask &= ~(static_cast<uint32_t>(lifecycle_faction_mask(faction)) << 8);
+        int selected = faction == EndgameFactionSelectorB ? EndgameFactionSelectorA : EndgameFactionSelectorB;
+        int survivors = 0, partners = 0;
+        for (int survivor = 1; survivor < 8; ++survivor) {
+            if (!((LockEnableMask >> 8) & (1 << survivor))) continue;
+            ++survivors;
+            uint32_t treaty = PlayersData[survivor].diplo_treaties[ConsoleGlobal.faction_id_];
+            if (!IsMultiplayerNet && (treaty & 1) && (treaty & 0x2000000)) { --survivors; continue; }
+            if (survivor != selected && (PlayersData[survivor].diplo_treaties[selected] & 1)
+                && (GameRules & 0x1000) && partners < 2) ++partners;
+        }
+        if (faction == ConsoleGlobal.faction_id_) {
+            int successor = conqueror < 0 ? 0 : conqueror;
+            GenderDefault = Players[successor].noun_gender;
+            PluralityDefault = Players[successor].is_noun_plural;
+            parse_says(0, Players[successor].noun_faction, -1, -1);
+            if (IsMultiplayerNet) {
+                NetDaemonNet.hang_up();
+                // These are the original individual lock-state words, not
+                // a clear of the whole surrounding network allocation.
+                NetDaemonNet.lock_state_[0].dword_[1] = 0;
+                NetDaemonNet.lock_state_[0].dword_[2] = 0;
+                NetDaemonNet.lock_state_[0].dword_[3] = 0;
+                NetDaemonNet.lock_state_[0].dword_[4] = 0;
+                NetDaemonNet.lock_state_[0].dword_[13] = 0;
+                NetDaemonNet.lock_state_[0].dword_[12] = 0;
+                NetDaemonNet.lock_state_[1].dword_[1] = 0;
+                NetDaemonNet.lock_state_[1].dword_[0] = 0;
+                NetDaemonNet.lock_state_[1].dword_[5] = 0;
+                NetDaemonNet.lock_state_[2].dword_[1] = 0;
+                NetDaemonNet.lock_state_[1].dword_[14] = 0;
+                NetDaemonNet.lock_state_[2].dword_[0] = 0;
+                NetDaemonNet.lock_state_[2].dword_[10] = 0;
+                NetDaemonNet.lock_state_[2].dword_[9] = 0;
+                NetDaemonNet.lock_state_[0].dword_[9] = 0;
+                NetDaemonNet.lock_state_[0].dword_[10] = 0;
+                NetDaemonNet.lock_state_[0].dword_[11] = 0;
+                NetDaemonNet.lock_state_[2].dword_[8] = 0;
+                NetDaemonNet.lock_state_[2].dword_[7] = 0;
+                NetDaemonNet.lock_state_[2].dword_[3] = 0;
+                NetDaemonNet.lock_state_[2].dword_[2] = 0;
+                NetDaemonNet.lock_state_[2].dword_[4] = 0;
+                NetDaemonNet.lock_state_[0].dword_[5] = 0;
+                NetDaemonNet.lock_state_[0].dword_[6] = 0;
+                NetDaemonNet.lock_state_[2].dword_[13] = 0;
+                NetDaemonNet.lock_state_[2].dword_[12] = 0;
+                NetDaemonNet.lock_state_[0].dword_[7] = 0;
+                NetDaemonNet.lock_state_[0].dword_[8] = 0;
+                NetDaemonNet.lock_state_[2].dword_[11] = 255;
+                NetDaemonNet.lock_state_[1].dword_[4] = 0;
+                for (int lockword = 6; lockword < 14; ++lockword)
+                    NetDaemonNet.lock_state_[1].dword_[lockword] = 0;
+                NetDaemonNet.locks_.clear();
+                NetDaemonNet.close();
+                IsMultiplayerNet = 0;
+                ExitTurnLoop = 1;
+            }
+            X_pop(!conqueror && !Language ? "YOULOSE2" : "YOULOSE", 0);
+            if (faction == ConsoleGlobal.faction_id_) {
+                GameState |= 1;
+                EndgameExitReason = conqueror ? 7 : 15;
+                return 0;
+            }
+        }
+        if (survivors - partners < 2) {
+            if (!partners) {
+                if (selected == ConsoleGlobal.faction_id_) {
+                    popp(ScriptPopupFile, "CONQSING", 0, "conq_sm.pcx", 0);
+                    if (!EndgameExitReason) EndgameExitReason = 4;
+                }
+            } else {
+                popp(ScriptPopupFile, "CONQCOOP", 0, "conq_sm.pcx", 0);
+                if (!EndgameExitReason) EndgameExitReason = 5;
+            }
+            GameState |= 0x2001;
+        }
+        return 0;
+    }
+respawn:
+    p.se_alloc_labs = 5;
+    p.se_alloc_psych = 0;
+    if (lifecycle_is_fresh(conqueror) && DiffLevelCurrent > 1) {
+        if ((p.ai_wealth || p.ai_tech) && rand() % 4 == 0) p.flags_ext |= 8;
+        strcpy(StringTemp, definition.filename);
+        CharUpperA(StringTemp);
+        if (!strcmp(StringTemp, "ANGELS")) p.flags_ext |= 8;
+        if (definition.rule_flags & 0x100) { p.flags_ext |= 4; p.flags |= 0x8000000; }
+        if (definition.rule_flags & 0x80) { p.flags_ext |= 0x10; p.flags |= 0x10000000; }
+        if (!strcmp(StringTemp, "DRONE")) p.flags_ext = (p.flags_ext & ~8u) | 2;
+        if (static_cast<int>(Continents[region].tile_count) < 250 && rand() % 3 == 0) p.flags_ext |= 4;
+        if (p.ai_fight >= 0 && rand() % 4 == 0) p.flags_ext |= 0x10;
+        if (rand() % 6 == 0) p.flags_ext |= 2;
+        if (rand() % 6 == 0) p.flags_ext |= 1;
+        if (rand() % 5 == 0) p.flags_ext |= 0x40;
+        if (((GameRules & 0x40) || DiffLevelCurrent > 3)
+            && -static_cast<int>((GameRules & 0x40) != 0) < p.ai_fight
+            && rand() % 4 == 0) p.flags_ext |= 0x20;
+        if (((GameRules & 0x40) || DiffLevelCurrent > 3)
+            && -static_cast<int>((GameRules & 0x40) != 0) < p.ai_fight
+            && rand() % 4 == 0) {
+            p.flags |= 0x1000000;
+            if (rand() % 2 == 0) p.flags |= 0x2000000;
+        }
+        if (p.ai_power || p.ai_fight > 0) {
+            if (static_cast<int>(Continents[region].tile_count) > 399 && rand() % 4 == 0) p.flags |= 0x4000000;
+            if (rand() % (static_cast<int>(Continents[region].tile_count) > 250 ? 6 : 4) == 0) p.flags |= 0x8000000;
+            if (rand() % 4 == 0) p.flags |= 0x10000000;
+        }
+    }
+    for (int offset4 = 0; offset4 < 21; ++offset4) {
+        int rx = lifecycle_wrap_x(x + RadiusOffsetX[offset4]);
+        int ry = y + RadiusOffsetY[offset4];
+        if (rx >= 0 && rx < MapLongitudeBounds && ry >= 0 && ry < MapLatitudeBounds) {
+            map_loc(rx, ry)->visibility |= lifecycle_faction_mask(faction);
+            synch_bit(rx, ry, faction);
+        }
+    }
+    int scout = 2;
+    if (lifecycle_is_fresh(conqueror)) {
+        for (int bonus = 0; bonus < definition.faction_bonus_count; ++bonus)
+            if (definition.faction_bonus_id[bonus] == 0)
+                tech_achieved(faction, definition.faction_bonus_val1[bonus], 0, 0);
+        if (ExpansionEnabled && (definition.rule_flags & 0x80)) {
+            tech_achieved(faction, 0x4e, 0, 0);
+            tech_achieved(faction, 0x4f, 0, 0);
+        }
+        if (IsMultiplayerNet) {
+            int learned = 0;
+            for (;;) {
+                int research = p.soc_effect_base.research > 0 ? 1 : p.soc_effect_base.research < 0 ? -1 : 0;
+                int morale = p.soc_effect_base.morale > 0 ? 1 : p.soc_effect_base.morale < 0 ? -1 : 0;
+                if (learned >= research - morale + 1) break;
+                int technology = tech_ai(faction);
+                tech_achieved(faction, technology, 0, 0);
+                ++learned;
+            }
+            p.energy_reserves += definition.rule_energy / 2;
+        }
+        consider_designs(faction);
+        for (int local_proto = 0; local_proto < 64; ++local_proto) {
+            VehPrototype &prototype = VehPrototypes[faction * 64 + local_proto];
+            if (prototype.flags & 1) {
+                prototype.flags |= 4;
+                if (prototype.plan == 3) scout = faction * 64 + local_proto;
+            }
+        }
+    }
+    if (lifecycle_is_fresh(conqueror)) {
+        if ((!IsMultiplayerNet && !(GameRules & 0x10)) || (GameRules & 0x80)) {
+            int base = base_init(faction, x, y);
+            strcpy(StringTemp, definition.filename);
+            CharUpperA(StringTemp);
+            if ((!strcmp(StringTemp, "FUNGBOY") || (definition.rule_flags & 0x80)) && conqueror == -282)
+                Bases[base].population_size = 3;
+        } else veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
+        if (!(definition.rule_flags & 0x100)) {
+            int vehicle4 = veh_init(scout, faction, x, y);
+            Vehs[vehicle4].home_base_id = -1;
+            veh_demote(vehicle4);
+        }
+        if (IsMultiplayerNet && !(definition.rule_flags & 0x100)) {
+            int vehicle5 = veh_init(0xb, faction, x, y);
+            Vehs[vehicle5].home_base_id = -1;
+            veh_demote(vehicle5);
+            vehicle5 = veh_init(1, faction, x, y);
+            Vehs[vehicle5].home_base_id = -1;
+            veh_demote(vehicle5);
+        }
+        int coast = is_coast(x, y, 0);
+        if (coast && (DiffLevelCurrent > 1 || IsMultiplayerNet
+            || static_cast<int>(Continents[region].tile_count) < 33)) {
+            // Both naval tests reuse the original coast-direction index.
+            region = map_loc(x, y)->region;
+            if (IsMultiplayerNet
+                && static_cast<int>(Continents[region].tile_count) / (bit_count(occupied) + 1) < 76
+                && (LockEnableMask & lifecycle_faction_mask(faction))) {
+                int vessel = veh_init(0xd, faction, lifecycle_wrap_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
+                Vehs[vessel].morale = 2;
+                veh_demote(vessel);
+                Vehs[vessel].home_base_id = -1;
+            }
+            if (static_cast<int>(Continents[region].tile_count) / (bit_count(occupied) + 1) < 51) {
+                int vessel2 = veh_init(0xd, faction, lifecycle_wrap_x(x + RadiusOffsetX[coast]), y + RadiusOffsetY[coast]);
+                Vehs[vessel2].morale = 2;
+                veh_demote(vessel2);
+                Vehs[vessel2].home_base_id = -1;
+            }
+        }
+    } else {
+        veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
+        int vehicle6 = veh_init((definition.rule_flags & 0x100) ? 4 : 1, faction, x, y);
+        veh_demote(vehicle6);
+    }
+    if (lifecycle_is_fresh(conqueror)) {
+        lifecycle_clear_social(p.soc_effect_base);
+        for (int bonus2 = 0; bonus2 < definition.faction_bonus_count; ++bonus2) {
+            if (definition.faction_bonus_id[bonus2] == 3)
+                lifecycle_add_social(p.soc_effect_base, definition.faction_bonus_val1[bonus2], definition.faction_bonus_val2[bonus2]);
+        }
+        for (int bonus3 = 0; bonus3 < definition.faction_bonus_count; ++bonus3) {
+            if (definition.faction_bonus_id[bonus3] != 1) continue;
+            int vehicle7 = veh_init(definition.faction_bonus_val1[bonus3], faction, x, y);
+            Vehs[vehicle7].home_base_id = -1;
+            veh_demote(vehicle7);
+            if (!definition.faction_bonus_val1[bonus3]) p.flags |= 0x100;
+        }
+        if (ExpansionEnabled && (definition.rule_flags & 0x80)) {
+            int vehicle8 = veh_init(0x10, faction, x, y);
+            Vehs[vehicle8].home_base_id = -1;
+            veh_demote(vehicle8);
+            vehicle8 = veh_init(0, faction, x, y);
+            Vehs[vehicle8].home_base_id = -1;
+            veh_demote(vehicle8);
+        }
+        if (definition.rule_flags & 0x100) {
+            if (!(LockEnableMask & lifecycle_faction_mask(faction))) {
+                int prototype = conqueror;
+                for (int local_proto2 = 0; local_proto2 < 64; ++local_proto2) {
+                    int index = faction * 64 + local_proto2;
+                    if (!(VehPrototypes[index].flags & 1)) { prototype = index; break; }
+                }
+                // If no free design exists, the original retains conqueror
+                // as the index. No recovery-added guard is inserted.
+                make_proto(prototype, 3, 0x11, 0, 0, 1);
+                VehPrototypes[prototype].flags = (VehPrototypes[prototype].flags & 0xff3f) | 4;
+                name_proto(prototype_name, prototype, faction, 3, 0x11, 0, 0, 1);
+                VehPrototypes[prototype].flags &= ~2;
+                prototype_name[31] = 0;
+                strcpy(VehPrototypes[prototype].veh_name, prototype_name);
+            }
+            int vehicle9 = veh_init(0x15, faction, x, y);
+            Vehs[vehicle9].home_base_id = -1;
+            veh_demote(vehicle9);
+            vehicle9 = veh_init(0x16, faction, x, y);
+            Vehs[vehicle9].home_base_id = -1;
+            veh_demote(vehicle9);
+        }
+    }
+    if (TurnCurrentNum && !failed && conqueror != -282) {
+        int defense_value = -1, defense = 2, attack_value = -1, attack = -1;
+        int fast_value = -1, fast = -1;
+        for (int prototype2 = 0; prototype2 < 512; ++prototype2) {
+            VehPrototype &design = VehPrototypes[prototype2];
+            if (!veh_avail(prototype2, faction, -1) || !Weapon[design.weapon_id].offense_rating) continue;
+            int triad = Chassis[design.chassis_id].triad;
+            if ((definition.rule_flags & 0x100) ? triad != 1 : triad != 0) continue;
+            int value = armor_val(prototype2, faction) * 8 - weap_val(prototype2, faction);
+            if (value > defense_value) { defense_value = value; defense = prototype2; }
+            value = Chassis[design.chassis_id].speed + (armor_val(prototype2, faction) + weap_val(prototype2, faction) * 2) * 2;
+            if (value > attack_value) { attack_value = value; attack = prototype2; }
+            value = Chassis[design.chassis_id].speed * 4 - weap_val(prototype2, faction) - armor_val(prototype2, faction);
+            if (value > fast_value && Chassis[design.chassis_id].speed > 1) { fast_value = value; fast = prototype2; }
+        }
+        int colony = veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
+        veh_init(defense, faction, x, y);
+        if (TurnCurrentNum > 20 && fast >= 0) veh_init(fast, faction, x, y);
+        if (TurnCurrentNum > 40 && attack >= 0) veh_init(attack, faction, x, y);
+        if (TurnCurrentNum > 60 && defense >= 0) veh_init(defense, faction, x, y);
+        if (TurnCurrentNum > 80 && attack >= 0) veh_init(attack, faction, x, y);
+        if (TurnCurrentNum > 100) veh_init((definition.rule_flags & 0x100) ? 0x15 : 0, faction, x, y);
+        veh_promote(colony);
+        p.unk_26 = p.tech_ranking * 3 / 4;
+    }
+    if (faction == ConsoleGlobal.faction_id_) {
+        MapWinTable[0]->field_1DD9C_ = x;
+        MapWinTable[0]->field_1DDA0_ = y;
+        for (int history = 0; history < 32; ++history) {
+            ConsoleGlobal.cursor_history_x_[history] = x;
+            ConsoleGlobal.cursor_history_y_[history] = y;
+        }
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x005B3380 ?eliminate_player@@YAHHH@Z 0x005B3380-0x005B38C6
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005b3380.cpp: canonical original identity, full spans and retained seed provenance", "source:src/faction.h: real faction record ownership and typed relationships", "source:recovery/tasks/faction-lifecycle-owner-closure.json: coordinator authorization and retained task baseline"], "reason": "The original faction elimination operation belongs to the Faction owner; typed faction diplomacy, base/vehicle lifecycles and shared endgame/script state preserve actual cross-owner relationships rather than raw executable references."}
+int __cdecl eliminate_player(int faction, int conqueror) {
+    if (!faction) return 0;
+    for (int base = 0; base < BaseCurrentCount; ++base) {
+        if (Bases[base].faction_id_current == faction) return 0;
+    }
+    for (int vehicle = VehCurrentCount - 1; vehicle >= 0; --vehicle) {
+        if (vehicle < VehCurrentCount && Vehs[vehicle].faction_id == faction)
+            veh_kill(vehicle);
+    }
+    PlayersData[faction].current_num_bases = 0;
+    const int restored = setup_player(faction, conqueror, 0);
+    if (!restored) {
+        if (conqueror > 0 && !(GameState & 9))
+            ++PlayersData[conqueror].unk_108;
+        if (faction == ConsoleGlobal.faction_id_) return 1;
+    }
+    int successor = conqueror < 0 ? 0 : conqueror;
+    if (successor > 0) set_treaty(faction, successor, 0x2030, 1);
+    draw_map(1);
+    GenderDefault = Players[faction].noun_gender;
+    PluralityDefault = Players[faction].is_noun_plural;
+    parse_says(0, Players[faction].noun_faction, -1, -1);
+    GenderDefault = Players[successor].noun_gender;
+    PluralityDefault = Players[successor].is_noun_plural;
+    parse_says(1, Players[successor].noun_faction, -1, -1);
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(2, Players[faction].title_leader, -1, -1);
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(3, Players[faction].name_leader, -1, -1);
+    parse_says(4, get_his_her(faction, 0), -1, -1);
+    strcpy(StringTemp, "WIPEOUT");
+    char number[80];
+    if (!successor) _itoa(2, number, 10);
+    else {
+        if (successor == ConsoleGlobal.faction_id_) strcat(StringTemp, "YOU");
+        _itoa(restored != 0, number, 10);
+    }
+    strcat(StringTemp, number);
+    char portrait[80];
+    strcpy(portrait, Players[faction].filename);
+    strcat(portrait, "2.PCX");
+    const bool alien = (Players[faction].rule_flags & 0x80) != 0;
+    popp(ScriptPopupFile, StringTemp, 0,
+         !restored ? portrait : alien ? "al_pod_sm.pcx" : "escpod_sm.pcx", 0);
+    if (!restored) mon_killed_faction(successor, faction);
+    if (!IsMultiplayerNet && (GamePreferences & 0x10000000)
+        && successor == ConsoleGlobal.faction_id_) {
+        if (!restored) {
+            amovie_project(Players[faction].filename);
+            goto eliminated;
+        }
+    } else if (!restored || IsMultiplayerNet) goto eliminated;
+    if (successor == ConsoleGlobal.faction_id_) {
+        const int chance = (PlayersData[successor].diplo_treaties[faction] & 0x1000) ? 2 : 4;
+        if (rand() % chance == 0) {
+            const int first = veh_find(0, 0, faction, -1);
+            if (first >= 0) {
+                int x = 0, y = 0;
+                for (int offset = 0; offset < 9; ++offset) {
+                    x = RadiusOffsetX[offset] + Vehs[first].x;
+                    if (!(MapIsFlat & 1)) {
+                        if (x < 0) x += MapLongitudeBounds;
+                        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+                    }
+                    y = RadiusOffsetY[offset] + Vehs[first].y;
+                    if (y >= 0 && y < MapLatitudeBounds && x >= 0 && x < MapLongitudeBounds)
+                        spot_loc(x, y, successor);
+                }
+                int vehicle = first;
+                while (Vehs[vehicle].prev_veh_id_stack >= 0)
+                    vehicle = Vehs[vehicle].prev_veh_id_stack;
+                bool marked = false;
+                for (; vehicle >= 0; vehicle = Vehs[vehicle].next_veh_id_stack) {
+                    Vehs[vehicle].visibility = 0;
+                    if (VehPrototypes[Vehs[vehicle].proto_id].plan == 8 && !marked) {
+                        marked = true;
+                        Vehs[vehicle].visibility = lifecycle_faction_mask(successor);
+                    }
+                }
+                // The original deliberately retains the last radius coordinates.
+                draw_tiles(x, y, 2);
+                MapWinTable[0]->set_center(x, y, 1);
+                parse_says(6, Players[faction].adj_name_faction, -1, -1);
+                popp(ScriptPopupFile, "TRACKED", 0,
+                     (Players[faction].rule_flags & 0x80) ? "al_pod_sm.pcx" : "escpod_sm.pcx", 0);
+            }
+        }
+    }
+eliminated:
+    if ((Players[faction].rule_flags & 0x80) && (Players[ConsoleGlobal.faction_id_].rule_flags & 0x80)
+        && faction != ConsoleGlobal.faction_id_) interlude(0x2a, 0, 1, 0);
+    return 1;
 }

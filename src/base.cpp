@@ -38,8 +38,13 @@
 #include "spying_recovery.h"
 #include "general.h"
 #include "netmsg.h"
+#include "replaywin.h"
+#include "messagewin.h"
+#include "tutwin.h"
 
 void __cdecl atrocity(int faction_id, int victim, int kind, int unknown);
+void __cdecl kill(int vehicle_id);
+void __cdecl interlude(int id, char *text, int mode, int flag);
 
 // The UI, network and AI callers share the same base-domain operation.
 // ORIGINAL: 0x004CA7F0 ?action_staple@@YAXH@Z 0x004CA7F0-0x004CAA4B
@@ -966,6 +971,308 @@ void __cdecl base_doctors() {
     }
 }
 
+// ORIGINAL: 0x004E4B80 ?base_init@@YAHHHH@Z 0x004E4B80-0x004E5250
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004e4b80.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base creation operation owns initialization of Bases records and faction base counts; source expresses real Base/PlayerData fields, facility bitmaps, technology and named UI/replay dependencies."}
+int __cdecl base_init(int faction_id, int x, int y) {
+    if (BaseCurrentCount >= 512) return -1;
+    Map *tile = map_loc(x, y);
+    const unsigned int region = tile->region;
+    bit_set(x, y, 1, 1);
+    owner_set(x, y, faction_id);
+    synch_bit(x, y, faction_id);
+    const int base_id = BaseCurrentCount++;
+    PlayerData &faction = PlayersData[faction_id];
+    ++faction.current_num_bases;
+    ++faction.region_total_bases[region];
+    replay_base(0, x, y, faction_id);
+    Base &base = Bases[base_id];
+    base.x = static_cast<int16_t>(x);
+    base.y = static_cast<int16_t>(y);
+    base.faction_id_current = base.faction_id_former = static_cast<uint8_t>(faction_id);
+    base.nerve_staple_turns_left = base.assimilation_turns_left = base.unk_1 = 0;
+    base.population_size = SecretProject.planetary_transit_system >= 0
+        && Bases[SecretProject.planetary_transit_system].faction_id_current == faction_id ? 3 : 1;
+    base.visibility = static_cast<uint8_t>(tile->visibility | (1u << faction_id));
+    base.name_string[0] = 0;
+    name_base(faction_id, base.name_string, TRUE, (tile->climate & 0xE0) < 0x60);
+    base.state = base.event = 0;
+    base.governor = faction.base_governor_adv;
+    base.minerals_accumulated = base.nutrients_accumulated = 0;
+    base.nerve_staple_count = 0;
+    base.auto_forward_land_base_id = base.auto_forward_sea_base_id
+        = base.auto_forward_air_base_id = -1;
+    base.queue_size = 0;
+    base_first(base_id);
+    if (TurnCurrentNum == 0) {
+        const int production = has_tech(VehPrototypes[1].preq_tech, faction_id)
+            ? 1 : (faction.diff_level > 1 ? 2 : 0);
+        base.queue_production_id[0] = production;
+        base.minerals_accumulated = cost_factor(faction_id, 1, -1)
+            * VehPrototypes[production].cost / 2;
+    } else {
+        base.minerals_accumulated = faction.soc_effect_active.support < -1
+            ? 0 : Rules.retool_exemption;
+    }
+    base.resource_sqr_radius = 0;
+    base.specialist_total = base.specialist_unk_1 = 0;
+    // The original clears only nine facility bytes, not the entire recycled
+    // Base record. Fields it does not initialize deliberately retain their state.
+    memset(base.facilities_built, 0, 9);
+    base.eco_damage = 0;
+    base.unk_x = base.unk_y = -1;
+    base.random_event_turns = base.nerve_staple_count = base.unk_11 = base.location = 0;
+    if (faction.current_num_bases == 1) {
+        set_fac(1, base_id, TRUE);
+        if (!IsMultiplayerNet) {
+            base.population_size = static_cast<int8_t>(max(1, min(5, (TurnCurrentNum + 49) / 50)));
+            if (TurnCurrentNum > 74) set_fac(3, base_id, TRUE);
+            if (TurnCurrentNum > 99) set_fac(6, base_id, TRUE);
+            if (TurnCurrentNum >= 150) set_fac(7, base_id, TRUE);
+        } else {
+            base.population_size = 3;
+            if (Players[faction_id].rule_talent || faction.soc_effect_base.planet > 0)
+                base.population_size = 4;
+            if (Players[faction_id].rule_drone || Players[faction_id].rule_population)
+                --base.population_size;
+            set_fac(3, base_id, TRUE);
+            if (DiffLevelCurrent > 2) set_fac(6, base_id, TRUE);
+            if (faction.soc_effect_base.economy >= 1) set_fac(7, base_id, TRUE);
+        }
+    }
+    if ((tile->climate & 0xE0) < 0x60) set_fac(26, base_id, TRUE);
+    for (int viewer = 0; viewer < 8; ++viewer)
+        base.faction_pop_size_intel[viewer] = viewer == faction_id
+            || (base.visibility & (1u << viewer)) ? base.population_size : 0;
+    int bonus;
+    for (bonus = 0; bonus < Players[faction_id].faction_bonus_count; ++bonus)
+        if (Players[faction_id].faction_bonus_id[bonus] == 2)
+            set_fac(max(1, min(69, Players[faction_id].faction_bonus_val1[bonus])), base_id, TRUE);
+    for (bonus = 0; bonus < Players[faction_id].faction_bonus_count; ++bonus) {
+        const int facility = Players[faction_id].faction_bonus_val1[bonus];
+        // The prerequisite lookup precedes clamping in the original too.
+        if (Players[faction_id].faction_bonus_id[bonus] == 12
+            && has_tech(Facility[facility].preq_tech, faction_id))
+            set_fac(max(1, min(69, facility)), base_id, TRUE);
+    }
+    for (int facility = 1; facility < 70; ++facility)
+        if (has_tech(Facility[facility].free_tech, faction_id)) set_fac(facility, base_id, TRUE);
+    base.production_id_last = base.queue_production_id[0];
+    base.minerals_accumulated_2 = base.minerals_accumulated;
+    base.mineral_surplus_final = 0;
+    base_mark(base_id);
+    reset_territory();
+    BaseIDCurrentSelected = BaseComputedID = base_id;
+    BaseCurrent = &base;
+    base_support();
+    base_yield();
+    base_nutrient();
+    base_minerals();
+    base_energy();
+    UnkBitfield1 |= 2;
+    return base_id;
+}
+
+static void base_remap_projects(int removed) {
+    int *projects[] = {
+        &SecretProject.human_genome_project,
+        &SecretProject.command_nexus,
+        &SecretProject.weather_paradigm,
+        &SecretProject.merchant_exchange,
+        &SecretProject.empath_guild,
+        &SecretProject.citizens_defense_force,
+        &SecretProject.virtual_world,
+        &SecretProject.planetary_transit_system,
+        &SecretProject.xenoempathy_dome,
+        &SecretProject.neural_amplifier,
+        &SecretProject.maritime_control_center,
+        &SecretProject.planetary_datalinks,
+        &SecretProject.supercollider,
+        &SecretProject.ascetic_virtues,
+        &SecretProject.longevity_vaccine,
+        &SecretProject.hunter_seeker_algorithm,
+        &SecretProject.pholus_mutagen,
+        &SecretProject.cyborg_factory,
+        &SecretProject.theory_of_everything,
+        &SecretProject.dream_twister,
+        &SecretProject.universal_translator,
+        &SecretProject.network_backbone,
+        &SecretProject.nano_factory,
+        &SecretProject.living_refinery,
+        &SecretProject.cloning_vats,
+        &SecretProject.self_aware_colony,
+        &SecretProject.clinical_immortality,
+        &SecretProject.space_elevator,
+        &SecretProject.singularity_inductor,
+        &SecretProject.bulk_matter_transmitter,
+        &SecretProject.telepathic_matrix,
+        &SecretProject.voice_of_planet,
+        &SecretProject.ascent_to_transcendence,
+        &SecretProject.manifold_harmonics,
+        &SecretProject.nethack_terminus,
+        &SecretProject.cloudbase_academy,
+        &SecretProject.planetary_energy_grid,
+        &SecretProject.user_defined_38,
+        &SecretProject.user_defined_39,
+        &SecretProject.user_defined_40,
+        &SecretProject.user_defined_41,
+        &SecretProject.user_defined_42,
+        &SecretProject.user_defined_43,
+        &SecretProject.user_defined_44,
+        &SecretProject.user_defined_45,
+        &SecretProject.user_defined_46,
+        &SecretProject.user_defined_47,
+        &SecretProject.user_defined_48,
+        &SecretProject.user_defined_49,
+        &SecretProject.user_defined_50,
+        &SecretProject.user_defined_51,
+        &SecretProject.user_defined_52,
+        &SecretProject.user_defined_53,
+        &SecretProject.user_defined_54,
+        &SecretProject.user_defined_55,
+        &SecretProject.user_defined_56,
+        &SecretProject.user_defined_57,
+        &SecretProject.user_defined_58,
+        &SecretProject.user_defined_59,
+        &SecretProject.user_defined_60,
+        &SecretProject.user_defined_61,
+        &SecretProject.user_defined_62,
+        &SecretProject.user_defined_63,
+        &SecretProject.user_defined_64,
+    };
+    for (int project = 0; project < 64; ++project) {
+        if (*projects[project] == removed) *projects[project] = -2;
+        else if (*projects[project] > removed) --*projects[project];
+    }
+}
+
+static void base_remap_reference(int16_t &reference, int removed) {
+    if (reference == removed) reference = -1;
+    else if (reference > removed) --reference;
+}
+
+// ORIGINAL: 0x004E5250 ?base_kill@@YAXH@Z 0x004E5250-0x004E5A58
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004e5250.cpp: canonical identity, original spans and retained seed history", "source:src/base.h: real Base storage and lifecycle contracts", "source:recovery/tasks/base-lifecycle-owner-closure.json: bounded coordinator authorization"], "reason": "The original base destruction operation belongs to the Base owner and repairs real faction/project/base/vehicle references and count/selection state rather than forwarding into the original executable."}
+void __cdecl base_kill(int base_id) {
+    Base &base = Bases[base_id];
+    const int x = base.x, y = base.y;
+    const int faction_id = base.faction_id_current;
+    PlayerData &faction = PlayersData[faction_id];
+    if (has_fac(1, base_id, 0) && TurnCurrentNum < faction.corner_market_turn
+        && faction.corner_market_active) {
+        faction.corner_market_turn = faction.corner_market_active = 0;
+        if (faction_id == ConsoleGlobal.faction_id_)
+            popp(ScriptPopupFile, "CORNERFOILED", 0, "econwin_sm.pcx", 0);
+        else {
+            parse_says(0, Players[faction_id].adj_name_faction, -1, -1);
+            popp(ScriptPopupFile, "CORNERTHEMFOILED", 0, "econwin_sm.pcx", 0);
+        }
+    }
+    if (base.population_size < 0) base.population_size = 0;
+    replay_base(2, x, y, faction_id);
+    --faction.current_num_bases;
+    --faction.region_total_bases[map_loc(x, y)->region];
+    int vehicle;
+    for (vehicle = VehCurrentCount - 1; vehicle >= 0; --vehicle) {
+        if (vehicle >= VehCurrentCount || Vehs[vehicle].home_base_id != base_id) continue;
+        if (Vehs[vehicle].faction_id != faction_id) {
+            Vehs[vehicle].home_base_id = -1;
+            continue;
+        }
+        base.faction_id_current = 255;
+        int nearest = -1, distance = 9999;
+        for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+            if (Bases[candidate].faction_id_current != faction_id) continue;
+            const int dx = abs(x_dist(x, Bases[candidate].x));
+            const int dy = abs(y - Bases[candidate].y);
+            const int range = max(dx, dy) - ((((dx + dy) >> 1) - min(dx, dy) + 1) >> 1);
+            if (range <= distance) { nearest = candidate; distance = range; }
+        }
+        if (nearest >= 0) BaseFindDist = distance;
+        base.faction_id_current = static_cast<uint8_t>(faction_id);
+        if (nearest < 0) kill(vehicle);
+        else Vehs[vehicle].home_base_id = static_cast<int16_t>(nearest);
+    }
+    bit_set(x, y, 1, 0);
+    // This overlapping copy is memcpy in the original, not memmove.
+    if (base_id < BaseCurrentCount - 1)
+        memcpy(&Bases[base_id], &Bases[base_id + 1],
+            (BaseCurrentCount - base_id - 1) * sizeof(Base));
+    --BaseCurrentCount;
+    if (BaseComputedID == base_id) BaseComputedID = -1;
+    for (vehicle = 0; vehicle < VehCurrentCount; ++vehicle)
+        if (Vehs[vehicle].home_base_id > base_id) --Vehs[vehicle].home_base_id;
+    int remaining;
+    for (remaining = 0; remaining < BaseCurrentCount; ++remaining) {
+        base_remap_reference(Bases[remaining].auto_forward_land_base_id, base_id);
+        base_remap_reference(Bases[remaining].auto_forward_sea_base_id, base_id);
+        base_remap_reference(Bases[remaining].auto_forward_air_base_id, base_id);
+    }
+    StringList &messages = InterfaceMessageWin.listBox_.item_list_;
+    const int message_id = base_id | 0x40000000;
+    if (messages.head_) {
+        for (int index = 0; index < messages.entry_count_; ++index) {
+            StringStructEntry *entry = messages.current_;
+            if (entry->id == message_id) {
+                entry->next->previous = entry->previous;
+                entry->previous->next = entry->next;
+                if (entry == messages.head_) messages.head_ = entry->next;
+                messages.current_ = entry->next;
+                messages.on_remove(entry->payload);
+                delete entry->payload;
+                entry->payload = 0;
+                delete entry;
+                --messages.entry_count_;
+                --index;
+            } else {
+                if (entry->id > message_id) --entry->id;
+                messages.current_ = entry->next;
+            }
+        }
+        if (!messages.entry_count_) messages.head_ = 0;
+        messages.current_position_ = messages.entry_count_ - 1;
+    }
+    InterfaceMessageWin.listBox_.update_changes();
+    base_remap_projects(base_id);
+    for (int owner = 1; owner < 8; ++owner) {
+        int &target = PlayersData[owner].base_id_atk_target;
+        if (target == base_id) target = -1;
+        else if (target > base_id) --target;
+    }
+    for (int radius = 0; radius < 49; ++radius) {
+        int wx = x + RadiusOffsetX[radius];
+        if (!(MapIsFlat & 1)) {
+            if (wx < 0) wx += MapLongitudeBounds;
+            else if (wx >= MapLongitudeBounds) wx -= MapLongitudeBounds;
+        }
+        const int wy = y + RadiusOffsetY[radius];
+        if (wy < 0 || wy >= MapLatitudeBounds || wx < 0 || wx >= MapLongitudeBounds) continue;
+        site_set(wx, wy, 0);
+        if (radius < 21) {
+            bit_set(wx, wy, 0x1000, 0);
+            if ((map_loc(wx, wy)->val3 & 7) == faction_id) using_set(wx, wy, 0);
+        }
+    }
+    const bool ocean = (map_loc(x, y)->climate & 0xE0) < 0x60;
+    if (ocean) {
+        for (vehicle = 0; vehicle < VehCurrentCount; ++vehicle)
+            if (VehPrototypes[Vehs[vehicle].proto_id].plan == 7
+                && ((x_dist(Vehs[vehicle].x, x) + abs(Vehs[vehicle].y - y)) & ~1) == 0)
+                stack_veh(vehicle, 0);
+    }
+    // Original terrain cleanup begins at the one-past active vehicle slot.
+    // Do not silently repair that stale-slot/error-path read with a new guard.
+    for (vehicle = VehCurrentCount; vehicle >= 0; --vehicle) {
+        if (get_triad(vehicle) == (ocean ? 0 : 1)
+            && ((x_dist(Vehs[vehicle].x, x) + abs(Vehs[vehicle].y - y)) & ~1) == 0
+            && (!ocean || Vehs[vehicle].order != 1 || Vehs[vehicle].waypoint_x[0] < 0))
+            kill(vehicle);
+    }
+    TutWinBaseWindow.base_killed(base_id);
+    for (remaining = 0; remaining < BaseCurrentCount; ++remaining) base_mark(remaining);
+    reset_territory();
+    UnkBitfield1 |= 2;
+}
+
 // These dependencies retain their complete historical seeds under
 // src/unrecovered/004f81a0.cpp and src/recovered/units/004e5a60.cpp. Their
 // owning-TU bodies remain explicitly unfinished while those independent
@@ -986,6 +1293,9 @@ void __cdecl base_change(int base_id, int production_id) {
     const int previous = base.queue_production_id[0];
     base.queue_production_id[0] = production_id;
     if (previous == production_id) return;
+    PlayerData &faction = PlayersData[base.faction_id_current];
+    if (previous >= 0) --faction.proto_id_queue[previous];
+    if (production_id >= 0) ++faction.proto_id_queue[production_id];
 
     // Switching production applies the rule's retool penalty to the stored
     // minerals, while keeping the unpenalized turn total for later accounting.
@@ -1005,6 +1315,72 @@ void __cdecl base_change(int base_id, int production_id) {
     }
     base.minerals_accumulated = base.minerals_accumulated_2 - loss;
     draw_radius(base.x, base.y, 2, 2);
+    const int owner = base.faction_id_current;
+    if (owner == ConsoleGlobal.faction_id_ || AiResearchBatchActive) return;
+    const int next = base.queue_production_id[0];
+    const bool new_unbuilt = next <= -70 && base_project(-next - 70) == -1;
+    bool old_relevant = false;
+    if (previous <= -70 && (new_unbuilt || base_project(-previous - 70) == -1)) {
+        old_relevant = true;
+        const int project_base = base_project(-previous - 70);
+        if (project_base >= 0 && Bases[project_base].faction_id_current == owner)
+            old_relevant = false;
+    }
+    if ((!new_unbuilt && !old_relevant) || ((GameState & 1) && !(GameState & 8))) return;
+    const int facility = abs(next);
+    const int project = facility - 70;
+    int word, mask;
+    bitmask(new_unbuilt ? project : abs(previous) - 70, &word, &mask);
+    int old_count = 0, new_count = 0;
+    int other;
+    for (other = 0; other < BaseCurrentCount; ++other) {
+        if (Bases[other].faction_id_current == base.faction_id_current && other != base_id) {
+            if (Bases[other].queue_production_id[0] == previous) ++old_count;
+            if (Bases[other].queue_production_id[0] == base.queue_production_id[0]) ++new_count;
+        }
+    }
+    if (!new_unbuilt || new_count) return;
+    Player &player = Players[owner];
+    if (old_relevant && (!old_count || base_project(-previous - 70) != -1)) {
+        for (other = 0; other < BaseCurrentCount; ++other)
+            if (Bases[other].faction_id_current == owner
+                && Bases[other].queue_production_id[0] == previous)
+                Bases[other].queue_production_id[0] = base.queue_production_id[0];
+        if (SunspotDuration > 0) return;
+        parse_says(0, player.adj_name_faction, -1, -1);
+        // RulesFacility's existing name field still carries the original
+        // StringTable index with a legacy pointer spelling, as in base_reset.
+        parse_say(1, reinterpret_cast<int>(Facility[abs(previous)].name), -1, -1);
+        GenderDefault = player.noun_gender;
+        PluralityDefault = player.is_noun_plural;
+        parse_says(2, player.noun_faction, -1, -1);
+        parse_say(3, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+        popp(ScriptPopupFile, "CHANGEPROJECT", 0, "secproj_sm.pcx", 0);
+        faction.secret_project_intel[word] |= mask;
+        bitmask(abs(previous) - 70, &word, &mask);
+        faction.secret_project_intel[word] &= ~mask;
+        return;
+    }
+    if (!(faction.secret_project_intel[word] & mask)) {
+        if (SunspotDuration > 0 && project != 31) return;
+        GenderDefault = player.is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, player.title_leader, -1, -1);
+        GenderDefault = player.is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, player.name_leader, -1, -1);
+        GenderDefault = player.noun_gender;
+        PluralityDefault = player.is_noun_plural;
+        parse_says(2, player.noun_faction, -1, -1);
+        parse_say(3, reinterpret_cast<int>(Facility[facility].name), -1, -1);
+        wave_it((PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[owner] & 1) ? 36 : 38);
+        popp(ScriptPopupFile, "BEGINPROJECT", 0, "secproj_sm.pcx", 0);
+        faction.secret_project_intel[word] |= mask;
+    }
+    if (project == 31) {
+        interlude(11, 0, 1, 0);
+        GameInterludeFlags |= 0x400;
+    }
 }
 
 // ORIGINAL: 0x004E5FE0 ?base_reset@@YAXHH@Z 0x004E5FE0-0x004E62FB

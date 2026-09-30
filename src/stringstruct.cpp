@@ -1444,39 +1444,7 @@ class ModeReleaseObj { public: void release(void *); };
 // kinds, then release/restart the effect record. fx.h declares the member;
 // its forwarder retires from pending_bodies.cpp in this change.
 
-// ---------------------------------------------------------------------------
-// Interlude::on_redraw, 0x0045F5C0. The intermission screen's repaint: copy
-// the framed source rectangle into the dialogue surface centred on the
-// window, then draw the caption strings. Interlude's layout is a hypothesis
-// (hypothesis_layouts.h, which fx.h includes) and the member is undeclared,
-// so the receiver travels explicitly; the original is a __thiscall member.
-/*
-Purpose: Repaint the intermission screen's art and caption strings.
-// ORIGINAL: 0x0045F5C0 ?on_redraw@Interlude@@QAEHXZ 0x0045F5C0-0x0045F63E FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original45F5C0..45F63E; retired seed git:117282ee:src/unrecovered/0045f5c0.cpp records the same identity and spans.", "The receivers are the +0xA54 dialogue Buffer whose seven-int copy overload is buffer.h's own 0x005DFF00 blitter and the +0xA24 StringList write_strings draw; the frame numbers are read at +0x4C4/+0x4C8 and +0xAD4/+0xAD8 exactly as the seed measured them."], "reason": "Coverage transcription of the intermission repaint with the receiver spelled explicitly because Interlude has no header declaration yet."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" int __fastcall Interlude_on_redraw(Interlude *self_raw, void *) {
-    char *const self = reinterpret_cast<char *>(self_raw);
-    Buffer *const art = reinterpret_cast<Buffer *>(self + 0xA54);
-    Buffer *const canvas = (self_raw != 0)
-        ? reinterpret_cast<Buffer *>(self + 0x444)
-        : reinterpret_cast<Buffer *>(0);
-    art->copy(canvas, 0, 0,
-              (*reinterpret_cast<int *>(self + 0x4C4)
-               - *reinterpret_cast<int *>(self + 0xAD4)) / 2,
-              (*reinterpret_cast<int *>(self + 0xAD8)
-               - *reinterpret_cast<int *>(self + 0x4C8)) / 2,
-              *reinterpret_cast<int *>(self + 0xAD4),
-              -*reinterpret_cast<int *>(self + 0xAD8));
-    return canvas->write_strings(
-        reinterpret_cast<StringList *>(self + 0xA24),
-        *reinterpret_cast<int *>(self + 0xA14),
-        *reinterpret_cast<int *>(self + 0xA18),
-        *reinterpret_cast<int *>(self + 0xA1C)
-            - *reinterpret_cast<int *>(self + 0xA14),
-        0);
-}
+// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
 // ---------------------------------------------------------------------------
 // sub_5cbae0, 0x005CBAE0. The DirectDraw primary-surface blit wrapper: build
@@ -2185,85 +2153,7 @@ extern "C" int __stdcall PrevWndFunc(int window, int message, int wparam,
                            (LPARAM)lparam);
 }
 
-// ---------------------------------------------------------------------------
-// Interlude::close, 0x0045F640. The intermission screen's teardown: run the
-// GraphicWin close chain, drain the caption StringList's release hooks and
-// every entry payload, then close the dialogue buffer. The member is
-// undeclared (Interlude is a hypothesis layout), so the receiver travels
-// explicitly; the original is a __thiscall member.
-/*
-Purpose: Tear the intermission screen down: close the window, release the
-         caption list entries and close the dialogue buffer.
-// ORIGINAL: 0x0045F640 ?close@Interlude@@QAEXXZ 0x0045F640-0x0045F6E5 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original45F640..45F6E5; retired seed git:117282ee:src/unrecovered/0045f640.cpp records the same identity and spans with its shim TRIED note kept below.", "The GraphicWin close chain is graphicwin.h's own close on the unadjusted receiver (the single-inheritance hypothesis layout), the caption list is the +0xA24 StringList block with head/next/count at +0xA2C/+0xA30/+0xA34, and the dialogue Buffer at +0xA54 closes through buffer.h's own close.", "The list's slot-1 release and each payload's deleting destructor run through member-fn-pointer unions because their classes are unnamed; the adjusted-receiver dispatch is the seed's vtbl+4 walk."], "reason": "Coverage transcription of the intermission teardown with the list drain kept at the seed's shape."}
-Status: Coverage transcription - unclaimed body
-*/
-namespace {
-class PtrSlotObj { public: void slot(void *); };
-union PtrSlotShim {
-    void (PtrSlotObj::*fn)(void *);
-    void *raw;
-};
-}
-
-extern "C" void __fastcall Interlude_close(Interlude *self_raw, void *) {
-    char *const self = reinterpret_cast<char *>(self_raw);
-
-    reinterpret_cast<GraphicWin *>(self_raw)->close();
-
-    if (*reinterpret_cast<int *>(self + 0xA2C) != 0) {
-        int i = 0;
-        if (*reinterpret_cast<int *>(self + 0xA34) > 0) {
-            do {
-                const int head = *reinterpret_cast<int *>(self + 0xA2C);
-                *reinterpret_cast<int *>(self + 0xA30) =
-                    *reinterpret_cast<int *>(head + 0xC);
-                void *const payload = *reinterpret_cast<void **>(head + 8);
-
-                char *const list = self + 0xA24;
-                void *const *list_vtable = *reinterpret_cast<void ***>(list);
-                PtrSlotShim release;
-                release.raw = list_vtable[1];
-                (reinterpret_cast<PtrSlotObj *>(list)->*release.fn)(payload);
-
-                if (payload != 0) {
-                    const int displacement = *reinterpret_cast<int *>(
-                        *reinterpret_cast<char **>(payload) + 4);
-                    void **const payload_vtable =
-                        *reinterpret_cast<void ***>(payload);
-                    ArgSlotShim delete_payload;
-                    delete_payload.raw = payload_vtable[0];
-                    (reinterpret_cast<ArgSlotObj *>(
-                         reinterpret_cast<char *>(payload) + displacement)
-                         ->*delete_payload.fn)(1);
-                }
-
-                *reinterpret_cast<int *>(
-                    *reinterpret_cast<int *>(self + 0xA2C) + 8) = 0;
-                const int head2 = *reinterpret_cast<int *>(self + 0xA2C);
-                if (head2 != 0) {
-                    const int displacement2 = *reinterpret_cast<int *>(
-                        *reinterpret_cast<char **>(head2) + 4);
-                    void **const head_vtable = *reinterpret_cast<void ***>(head2);
-                    ArgSlotShim delete_head;
-                    delete_head.raw = head_vtable[0];
-                    (reinterpret_cast<ArgSlotObj *>(
-                         reinterpret_cast<char *>(head2) + displacement2)
-                         ->*delete_head.fn)(1);
-                }
-
-                *reinterpret_cast<int *>(self + 0xA2C) =
-                    *reinterpret_cast<int *>(self + 0xA30);
-                ++i;
-            } while (i < *reinterpret_cast<int *>(self + 0xA34));
-        }
-        *reinterpret_cast<int *>(self + 0xA2C) = 0;
-        *reinterpret_cast<int *>(self + 0xA38) = 0;
-        *reinterpret_cast<int *>(self + 0xA34) = 0;
-    }
-    *reinterpret_cast<int *>(self + 0xA38) = 0;
-    reinterpret_cast<Buffer *>(self + 0xA54)->close();
-}
+// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
 // ---------------------------------------------------------------------------
 // sat_edit, 0x004A0810. The satellite editor's click handler: with the shift

@@ -133,50 +133,9 @@ void __fastcall credits_on_left_click_redirect(void *self, void *, int a1, int a
 
 
 
-/*
-Purpose: ?on_key_down@Interlude@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN
-         vtable with NO arguments: the original pushes nothing between the
-         vtable load and the call, so the parameters this function declares are
-         discarded and only the `ret` cleans them up.
-// ORIGINAL: 0x0045F6F0 ?on_key_down@Interlude@@QAEXH@Z 0x0045F6F0-0x0045F700 BYTE_EXACT
-// symbol    ?interlude_on_key_down_redirect@@YIHPAX0H@Z
-// size      16 bytes
-// prototype void (__thiscall ?on_key_down@Interlude@@QAEXH@Z)(Interlude* this, int)
-// callers   0   call targets   0
-// kind      game
-// flags     sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0045F6F2
-Return Value: 0x1, a constant
-Status: Complete
-*/
-int __fastcall interlude_on_key_down_redirect(void *self, void *, int a1) {
-    void **const vtable = *reinterpret_cast<void ***>(self);
-    (ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
-    return 0x1;
-}
+// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
-/*
-Purpose: ?on_left_down@Interlude@@QAEXHH@Z - dispatch to slot 0xe8 of this object's OWN
-         vtable with NO arguments: the original pushes nothing between the
-         vtable load and the call, so the parameters this function declares are
-         discarded and only the `ret` cleans them up.
-// ORIGINAL: 0x0045F700 ?on_left_down@Interlude@@QAEXHH@Z 0x0045F700-0x0045F70B BYTE_EXACT
-// symbol    ?interlude_on_left_down_redirect@@YIXPAX0HH@Z
-// size      11 bytes
-// prototype void (__thiscall ?on_left_down@Interlude@@QAEXHH@Z)(Interlude* this, int, int)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x0045F702
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall interlude_on_left_down_redirect(void *self, void *, int a1, int a2) {
-    void **const vtable = *reinterpret_cast<void ***>(self);
-    (void)(ORIGINAL(self)->*original_method<func_delegation_0>(reinterpret_cast<unsigned long>(vtable[0xe8 / sizeof(void *)])))();
-}
+// Interlude members and compiler-generated lifetime code are owned by interlude.cpp.
 
 /*
 Purpose: ?on_button_clicked@NewTechWin@@QAEXH@Z - dispatch to slot 0xe8 of this object's OWN

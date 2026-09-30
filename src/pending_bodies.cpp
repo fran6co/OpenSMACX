@@ -602,11 +602,6 @@ TutWin::~TutWin() {  // ??1TutWin@@QAE@XZ at 0x004BE7D0
     PENDING_BODY(0x004BE7D0, pending)(this, nullptr);
 }
 
-Interlude::~Interlude() {  // ??1Interlude@@QAE@XZ at 0x0045F740
-    typedef void(__fastcall *pending)(Interlude *, void *);
-    PENDING_BODY(0x0045F740, pending)(this, nullptr);
-}
-
 MonuWin::~MonuWin() {  // ??1MonuWin@@QAE@XZ at 0x00477B10
     typedef void(__fastcall *pending)(MonuWin *, void *);
     PENDING_BODY(0x00477B10, pending)(this, nullptr);
@@ -1392,10 +1387,7 @@ int __cdecl save_game(int a1) {
     return PENDING_BODY(0x005A9EB0, pending)(a1);
 }
 
-void __cdecl base_kill(int base_id) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x004E5250, pending)(base_id);
-}
+// base_kill4E5250 is recovered in base.cpp under its original mapping.
 
 int __cdecl end_of_game(int a1) {
     typedef int(__cdecl *pending)(int);

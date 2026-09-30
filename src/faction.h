@@ -1051,3 +1051,6 @@ MEASURED inline LPSTR __cdecl get_noun(int faction_id) {
     PluralityDefault = Players[faction_id].is_noun_plural;
     return Players[faction_id].noun_faction;
 }
+
+int __cdecl setup_player(int faction_id, int conqueror, int retry);
+int __cdecl eliminate_player(int faction_id, int conqueror);

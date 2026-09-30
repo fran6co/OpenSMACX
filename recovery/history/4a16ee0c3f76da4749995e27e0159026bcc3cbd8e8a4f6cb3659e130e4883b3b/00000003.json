@@ -1,0 +1,23 @@
+{
+  "event_id": "28306fb216189dfb8e52c4afad35d727d29b00cb75e9dfb08289e2755b7f568a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "New base_init caller exposes base.h unsigned declaration inconsistent with existing real name_base(int,...) definition and original4E4090 mangled HPADHH. Correct declaration to genuine signed contract; no overload/shim/body replacement. Recheck callee and consumers before compile/link integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5128336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "45c32922eb7adc61c57b86b6213314c20214dea38e2236a8cdc675a9db7ca3b7",
+  "request_id": "root-name-base-signed-contract",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:base-lifecycle-owner-closure"
+}

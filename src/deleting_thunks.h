@@ -152,9 +152,6 @@ void *__fastcall scalar_delete_main_interface(void *self, void *,
                                               unsigned int arg0);
 void *__fastcall adjust_this_main_interface(void *self, void *,
                                             unsigned int arg0);
-void *__fastcall scalar_delete_interlude(void *self, void *,
-                                         unsigned int arg0);
-void *__fastcall adjust_this_interlude(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_monu_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_monu_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_multi_win(void *self, void *,

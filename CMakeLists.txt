@@ -171,6 +171,7 @@ set(OPENSMACX_SOURCES
     src/cursor.cpp
     src/imagebutton.cpp
     src/infowin.cpp
+    src/interlude.cpp
     src/statuswin.cpp
     src/filewin.cpp
     src/wave.cpp

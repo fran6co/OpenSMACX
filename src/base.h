@@ -598,7 +598,7 @@ int __cdecl base_find(int x, int y, int faction_id);
 int __cdecl base_find(int x, int y, int faction_id, int region, int faction_id_2, 
                                 int faction_id_3);
 uint32_t  __cdecl best_specialist();
-void __cdecl name_base(uint32_t faction_id, LPSTR name_out, BOOL is_final, 
+void __cdecl name_base(int faction_id, LPSTR name_out, BOOL is_final,
                                  BOOL is_sea_base);
 void __cdecl base_mark(int base_id);
 int __cdecl cost_factor(int faction_id, int rsc_type, int base_id);
@@ -608,6 +608,8 @@ void __cdecl set_fac(int facility_id, int base_id, BOOL set);
 BOOL __cdecl has_fac_announced(uint32_t faction_id, uint32_t facility_id);
 void __cdecl set_fac_announced(uint32_t faction_id, uint32_t facility_id, BOOL set);
 void __cdecl base_first(int base_id);
+int __cdecl base_init(int faction_id, int x, int y);
+void __cdecl base_kill(int base_id);
 int __cdecl morale_mod(int base_id, int faction_id, int triad);
 int __cdecl worm_mod(int base_id, int faction_id);
 int __cdecl crop_yield(int faction_id, int base_id, int x, int y,

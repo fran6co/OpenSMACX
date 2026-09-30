@@ -1175,34 +1175,7 @@ struct FileFindPath {
 // evidence for the base is in that header.
 #include "imagebutton.h"
 
-/* 0xFDC bytes, 18 member(s), 2 named. From the IDB. 9 function(s) in the image. */
-class Interlude {
- public:
-  // 0x0045F740 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~Interlude();
-
- public:
-  uint8_t graphicWin_[0xA14];  // 0x0
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t field_A1C_;  // 0xA1C
-  uint32_t field_A20_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
-  uint32_t field_A40_;  // 0xA40
-  uint32_t field_A44_;  // 0xA44
-  uint32_t field_A48_;  // 0xA48
-  uint32_t field_A4C_;  // 0xA4C
-  uint32_t field_A50_;  // 0xA50
-  uint8_t buffer_[0x588];  // 0xA54
-};
+#include "interlude.h"
 
 /* 0x14 bytes, 5 member(s), 5 named. From Thinker. */
 struct ListNode {

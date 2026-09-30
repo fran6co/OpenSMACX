@@ -1882,6 +1882,21 @@ Status: Complete
 // game.h next to each declaration.
 int GameRestartQueued;  // 0x0093A948
 int ExitTurnLoop;       // 0x009B2068
+// Original setup_player and its ending branches share these loader-zero
+// scalar cells. Their allocation bounds remain unresolved.
+// RECOVERY_OBJECT: v1 0x009A6504 ?EndgameFactionSelectorA@@3HA
+int EndgameFactionSelectorA;
+// RECOVERY_OBJECT: v1 0x009A6508 ?EndgameFactionSelectorB@@3HA
+int EndgameFactionSelectorB;
+// RECOVERY_OBJECT: v1 0x009B206C ?EndgameExitReason@@3HA
+int EndgameExitReason;
+// Original interlude reads/writes this complete story-mask word.
+// RECOVERY_OBJECT: v1 0x009A64A4 ?GameInterludeFlags@@3IA
+uint32_t GameInterludeFlags;
+// Logical faction0..7 indexing is independently observed; original
+// containing allocation bounds are not asserted.
+// RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAIA
+uint32_t TectonicDetonationCount[8];
 // Original691B0C contains pointer691B7C, whose file-backed text is SCRIPT.
 // This owns the observed text and shared pointer cell; original allocation
 // bounds remain unresolved rather than inferred from the current array.

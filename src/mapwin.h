@@ -110,6 +110,8 @@ extern uint32_t MapPanelDirtyMask;
   * member within this layout, not append storage and move the virtual base.
   */
 class MapWin : public virtual GraphicWin {
+  // setup_player5B334B/5B3356 writes its actual map-coordinate members.
+  friend int __cdecl setup_player(int, int, int);
  public:
   // homed from 00463040.cpp
   int pixel_to_tile(int x_pixel, int y_pixel, int *out_tile_x,

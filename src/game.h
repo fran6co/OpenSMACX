@@ -121,6 +121,7 @@ extern uint32_t GamePreferences;
 extern uint32_t GameMorePreferences;
 extern uint32_t GameWarnings; // used for setting pop notifications
 extern uint32_t GameRules; // bitfield
+extern uint32_t GameInterludeFlags;  // 0x009A64A4
 extern uint32_t GameState; // bitfield
 extern int DiffLevelCurrent;
 extern int TurnCurrentNum;
@@ -133,7 +134,7 @@ extern uint32_t VictoryAchieveBonusPts;
 extern uint32_t MissionYearCurrent;
 extern uint32_t StartingMissionYear;
 extern uint32_t EndingMissionYear;
-uint32_t *const TectonicDetonationCount = (uint32_t *)0x00946138;
+extern uint32_t TectonicDetonationCount[8];  // 0x00946138, logical faction slots
 extern int SunspotDuration;
 extern int IfaceScreenHeight;
 extern int IfaceScreenWidth;
@@ -185,6 +186,9 @@ extern int GameRestartQueued;  // 0x0093A948
 // bound raw, as console.h's ConsoleExitTurnLoop and scenario.cpp's
 // ExitTurnLoopAddress; both now reach this global by name.
 extern int ExitTurnLoop;  // 0x009B2068
+extern int EndgameFactionSelectorA;
+extern int EndgameFactionSelectorB;
+extern int EndgameExitReason;
 
 // Shared cover window hidden by go_reset and shown/painted by the main loop.
 extern GraphicWin CoverWindow;  // 0x00937118
