@@ -1,0 +1,19 @@
+{
+  "event_id": "afc8dea7de8aad32a6e5609243a17bfb650a70f9c3d1730812f5244585c175bd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/dialog.h"
+    ],
+    "evidence": [
+      "Original SpriteBox610970 and EditGroup612150 access Dialog text colors at70..A8 through their genuine virtual Dialog base. Authorize only adding SpriteBox and EditGroup friendship alongside existing CheckBox/RadioButton, or narrowly equivalent typed read accessors; no field/ABI/default/callback changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "dialog-controls-private-color-access",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:dialog-control-coverage-wave"
+}
