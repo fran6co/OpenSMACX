@@ -1,0 +1,28 @@
+{
+  "event_id": "7f7297fb3d86d5c654fd418c068ff20f10788bec1edbb3749ce9f55880b1a8e3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/diplopop.cpp",
+      "src/diplopop.h"
+    ],
+    "evidence": [
+      "Actual configured compilation of the recovered DiploPop callbacks under both settled flag sets fails because they call original DiploPop::draw_hq 0x00440080, which currently exists only as a seed at src/recovered/units/00440080.cpp. The original span 0x00440080-0x00440291 and typed DiploPop source members establish an owning method recovery dependency, not an interchangeable redraw operation.",
+      "Authorize complete genuine draw_hq implementation/declaration in already-editable src/diplopop.cpp/h using real counterpart_faction_, font3_, sprite/rectangle/state members and existing named MainInterface/vehicle/script/string globals. No raw-address body, replacement stand-in or altered error path; preserve the historical seed and original mapping. Unowned globals/members need central proof and further scope before edits outside current owners.",
+      "Coordinator alone publishes source bindings and observed symbols; require both flag-set owner compilation, full application compile/link and scoped original/restoration review before manual integration. This expansion retains the original task baseline and all existing ownership and historical claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4456576,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "interface-diplopop-draw-hq-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:interface-contract-report-closure"
+}
