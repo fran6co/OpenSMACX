@@ -1,0 +1,42 @@
+{
+  "event_id": "03da4b8eec70d53db394bc2f6b75c6915287ffaf819dd63418bb635e8afab720",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/xpops.cpp",
+      "src/xpops.h"
+    ],
+    "evidence": [
+      "Source xpops.cpp independently repeats constant pointer representations for original slots691B0C/691B20/691B24. New real ScriptPopupFile game storage and actual PopupStartAltFile1/2 popup storage must replace these local pointer copies, not create multiple mutable source identities.",
+      "Pinned PE691B0C holds691B7C with initial SCRIPT text. Existing original redirect readers load pointer cells directly; preserve all existing claims and useful original-string provenance while consolidating only their helpers, then remeasure affected XPops claims. No unrelated XPop behavior changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6027520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6026368,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6028224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6028656,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "1442b891e03eed98c31269011b34b5515805a53ab132f08ecaf1f80597920e51",
+  "request_id": "shared-script-slot-xpops-owner-consolidation",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:faction-lifecycle-owner-closure"
+}
