@@ -1,0 +1,27 @@
+{
+  "event_id": "88200502eda5b676353e9e60b22ce3b0e1c475ac2eda87cbf3dabbb6a156eb72",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.cpp",
+      "src/console.h"
+    ],
+    "evidence": [
+      "MapWin.right_menu case29B calls original Console.editor_kill_veh4DE960; current source has neither declaration nor body. Retained seed004de960 remains evidence, not compilable production ownership. Declaration alone would add a new undefined symbol.",
+      "Authorize actual complete Console.editor_kill_veh4DE960 declaration/body only in console.h/cpp with genuine Popup lifetime and existing typed owners; no raw original calls, vtables or copied teardown. Existing MapWin friend/zoom changes remain independently scoped. Root must bind original function natively after review, preserving seed and historical claims; no hand ORIGINAL marker, baseline reset, placeholders for recovered behavior or automatic acceptance granted. New dependencies require further review."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5106016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fdb88d9ddfc3fecc5a700681d003a09cd0f8ffd2b3b0bd083a6f7ddfdb588530",
+  "request_id": "mapwin-editor-kill-veh-dependency-20260930",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:mapwin-owner-coverage-wave"
+}
