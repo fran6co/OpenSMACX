@@ -1,0 +1,21 @@
+{
+  "event_id": "b08d39a19d9048405cc3ed39e1bfd06c2eb7f1e13e26675fa6cdb17047bae469",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_gamma_return.py",
+      "src/gamma.cpp",
+      "src/gamma.h"
+    ],
+    "evidence": [
+      "Pinned Gamma5C8E8F loads originalfloatargument into x87 return register in apply-only branch;5C9318 loads qwordGamma+EE8 after cleanup in modal branch, and PrefWin491484 consumes return via fstp dword6846A8. Correct seed-derived void API to double exec(Palette*,float,int), returning initial_gamma or gamma_ aftercleanup; preserve historical ORIGINAL identity and claims, set actual decorated symbol only through native writer. Grant narrow Gamma source/header changes and an executable host regression control, with no additional behavior/layout edits. Coordinator owns this dependency; worker must not duplicate changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cab40a778a08b59bef60102527b533bcc2eed2e1b5e045236e95d9672477c699",
+  "request_id": "prefwin-gamma-floating-return",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:prefwin-owner-coverage-wave"
+}

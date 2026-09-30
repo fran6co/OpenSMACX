@@ -55,7 +55,9 @@ class Gamma : public GraphicWin {
   void on_button_clicked(int button_id);
   void adjust_pal(double gamma);
   virtual void on_redraw();
-  void exec(Palette *target, float initial_gamma, int apply_only);
+  // 0x005C8E60 returns the initial value in apply-only mode and the final
+  // double-valued dialog gamma otherwise; PrefWin rounds it to float.
+  double exec(Palette *target, float initial_gamma, int apply_only);
   int on_key_click(int a, int b);
 
   // Storage the image proves is here: its own methods reach 0x1920.

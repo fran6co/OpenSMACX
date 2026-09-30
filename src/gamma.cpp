@@ -31,13 +31,18 @@ const float GammaSliderScale = 100.0f;
 
 // ORIGINAL: 0x005C8E60 ?exec@Gamma@@QAEXPAUPalette@@MH@Z 0x005C8E60-0x005C9325
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005c8e60.cpp records the control setup and modal call sequence", "src/gamma.h identifies five consecutive RECTs and the Palette/Scroll/EditBox/PushButton members", "Pinned disassembly 0x005C8F89 and 0x005C9119 shows the accept button uses the RECT at +0xA44, correcting the seed's +0xA34", "At 0x005C8ECC/0x005C8ED1 VC6 overwrites the former argument slots with WinScreenHeight/Width before GraphicWin::init reloads them at 0x005C903B; the call does not pass a Palette pointer as a dimension", "WinScreenWidth/Height and BasePopDefaultOkText/CancelText are existing source-bound globals", "Original format/font bytes at 0x00691E74 read Arial"], "reason": "Run Gamma's palette apply-only or modal editor flow using real controls, owned rectangles and their member APIs rather than raw receiver offsets and vtable arrays."}
-// symbol    ?exec@Gamma@@QAEXPAVPalette@@MH@Z
-void Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
+// symbol    ?exec@Gamma@@QAENPAVPalette@@MH@Z
+// Both original return paths leave a value in ST(0): 0x5C8E8F loads
+// the initial float, and 0x5C9318 loads gamma_'s double after cleanup.
+// PrefWin consumes that result at 0x491484. The seed's void signature
+// discarded it; returning double preserves the modal value until the caller
+// performs its own float store.
+double Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     target_palette_ = target;
     initialGamma_ = initial_gamma;
     if (apply_only != 0) {
         adjust_pal(static_cast<double>(initial_gamma));
-        return;
+        return initial_gamma;
     }
 
     rect1_.left = 0;
@@ -142,6 +147,7 @@ void Gamma::exec(Palette *target, float initial_gamma, int apply_only) {
     do_all_draws();
     adjust_pal(gamma_);
     close();
+    return gamma_;
 }
 
 // ORIGINAL: 0x005C9520 ?adjust_palette@Gamma@@QAEXXZ 0x005C9520-0x005C95E0
