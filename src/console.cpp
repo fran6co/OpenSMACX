@@ -61,6 +61,8 @@
 #include "planwin.h"
 
 void __cdecl base_kill(int base_id);
+void __cdecl kill(int veh_id);
+int __cdecl veh_pick(int veh_id, const char *label, int flags);
 int __cdecl eliminate_player(int faction_id, int is_eliminated);
 
 // Original go_to writes this flag around the PlanWindow selection callback.
@@ -201,6 +203,30 @@ void Console::set_move(int force_update) {
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004dda50.cpp", "source:src/console.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
 void Console::editor_edit_veh(int) {
     // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004DE960 ?editor_kill_veh@Console@@QAEXH@Z 0x004DE960-0x004DECF7;0x0065BC13-0x0065BD30 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original4DE989 constructs local Popup before auto_undo5ABF20 at4DE995. Negative explicit ID reads absolute ConsoleGlobal939288/28C and cursor-history arrays, not receiver-relative fields; canceled lookup/picker returns through real cleanup.", "Pinned original4DE9B7..4DE9D6 pushes parse_says(0,VehPrototypes[Vehs[vehicle].proto_id].veh_name,-1,-1), correcting conflicting seed arguments. Confirmation invokes real kill5C0B00, not veh_kill.", "Pinned relocation-free NUL literals PICKKILL at689068..689071 and DELETEME at689074..68907D. Full code4DE960..4DECF7 and cleanup65BC13..65BD30 remain original obligations; seed004de960 retained."], "reason": "Recover the complete editor vehicle-deletion command with genuine Popup lifetime and typed global Console selection. The original ignores its member receiver; selecting a different Console must not change its global cursor lookup."}
+void Console::editor_kill_veh(int veh_id) {
+    Popup popup;
+    auto_undo();
+
+    int vehicle = veh_id;
+    if (vehicle < 0) {
+        if (ConsoleGlobal.cursor_active_ == 0) {
+            const int cursor = ConsoleGlobal.cursor_history_index_;
+            vehicle = veh_at(ConsoleGlobal.cursor_history_x_[cursor],
+                             ConsoleGlobal.cursor_history_y_[cursor]);
+            if (vehicle < 0) return;
+            vehicle = veh_pick(vehicle, "PICKKILL", 1);
+            if (vehicle < 0) return;
+        } else {
+            vehicle = ConsoleGlobal.selected_vehicle_;
+        }
+    }
+
+    parse_says(0, VehPrototypes[Vehs[vehicle].proto_id].veh_name, -1, -1);
+    if (X_pop("DELETEME", nullptr) != 0) kill(vehicle);
 }
 
 // Shared by the turn loop and network lock guards. The original writers
