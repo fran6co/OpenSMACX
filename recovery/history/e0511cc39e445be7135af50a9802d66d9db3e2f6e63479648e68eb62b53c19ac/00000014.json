@@ -1,0 +1,28 @@
+{
+  "event_id": "fab5f40187a79231db2cba31848627b2388e3a4804c75557b091bb0ce015b07e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_artillery_action.py",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Original4CD090..4CD2ED independently decoded: readiness, wrapped radius, stack/treaty gates, Rules.artillery_max_rng with existing RadiusRange, and NetDaemon lock_state_[1].dword_[3] plus existing lock/maybe_lock/await APIs identify a typed artillery command. Authorize completing its currently unfinished source body while keeping ORIGINAL identity and all seed/history.",
+      "Its no-target offline path calls original4CAA50 action_destroy, which is absent in product source. Authorize a native unclaimed BODY binding and explicitly unfinished empty owning-TU definition for that existing seed if needed to maintain compile/link; never count that dependency as implemented behavior. Full action_destroy recovery remains a separate required follow-up; no raw-address fallback, claim demotion, baseline replacement or external-owner behavior edits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5024336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8aba1cad801263e3271ab7d6f7654001b05dab1b84dbc3eec2f2a8ab05451a0a",
+  "request_id": "mapwin-artillery-real-behavior-closure-20260930",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

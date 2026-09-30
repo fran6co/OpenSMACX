@@ -723,10 +723,14 @@ int __cdecl stack_check(int veh_id, int type, int cond1, int cond2, int cond3);
 BOOL __cdecl veh_avail(int proto_id, int faction_id, int base_id);
 BOOL __cdecl wants_prototype(int proto_id, int faction_id);
 int __cdecl veh_at(int x, int y);
+int __cdecl veh_ready(int veh_id);
 BOOL __cdecl has_abil(int proto_id, int ability_id);
 int __cdecl veh_lift(int veh_id);
 int __cdecl veh_drop(int veh_id, int x, int y);
 void __cdecl action_arty(int veh_id, int x, int y);
+void __cdecl action_destroy(int veh_id, int bits, int x, int y);
+int __cdecl battle_fight(int veh_id, int direction, int mode,
+                        int allow_interceptor, int *odds_out);
 void __cdecl veh_demote(int veh_id);
 void __cdecl veh_promote(int veh_id);
 void __cdecl veh_clear(int veh_id, int proto_id, int faction_id);

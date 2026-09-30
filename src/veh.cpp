@@ -773,11 +773,64 @@ int VehDrawAnimationStep;
 int VehDrawSelection689F28 = -1;
 // RECOVERY_OBJECT: v1 0x00689F2C ?VehDrawSelection689F2C@@3HA
 int VehDrawSelection689F2C = -1;
-// Explicit unfinished owning-TU dependency for MapWin's artillery command.
-// Retain the complete4CD090 seed; this body establishes link continuity only.
+// Artillery command: source-owned vehicle/rules/treaty state and actual
+// network lock protocol. The empty-target destruction dependency below
+// remains explicitly unfinished; build continuity does not prove that path.
 // ORIGINAL: 0x004CD090 ?action_arty@@YAXHHH@Z 0x004CD090-0x004CD2ED
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004cd090.cpp", "Coordinator-approved unfinished empty body; no behavioral claim."], "reason": "Explicit unfinished owning-TU link-continuity dependency; retained seed behavior is not implemented or accepted."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4CD090..4CD2ED: readiness and wrapped-distance gates; stack/treaty protection; Rules.artillery_max_rng indexes existing RadiusRange; mode3 offline versus mode1 network locking and message dispatch.", "Retained src/recovered/units/004cd090.cpp is evidence, not the source owner. Fresh original disassembly confirms imports and call order; no new byte or game-acceptance claim."], "reason": "Recover the artillery command through genuine vehicle, faction, rules and network owners; destruction of an empty target remains an unfinished dependency."}
 void __cdecl action_arty(int veh_id, int x, int y) {
+    if (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
+        veh_ready(veh_id) == 0) {
+        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        return;
+    }
+    const int vehicle_y = Vehs[veh_id].y;
+    int dx = abs(Vehs[veh_id].x - x);
+    if ((MapIsFlat & 1) == 0 && dx > static_cast<int>(MapLongitude)) {
+        dx = static_cast<int>(MapLongitudeBounds) - dx;
+    }
+    if (((abs(vehicle_y - y) + dx) & ~1) > 4) {
+        NetMsgPopup->pop("OUTOFRANGE", 5000, 0, nullptr);
+        return;
+    }
+
+    const int target = stack_fix(veh_at(x, y));
+    if (target < 0) {
+        if (IsMultiplayerNet == 0) {
+            action_destroy(veh_id, 0, x, y);
+        } else if (NetDaemonNet.lock_veh(&veh_id, 4, x, y, 0) == 0) {
+            message_data(0x2413, 0, veh_id, x, y, 0);
+            NetDaemonNet.await_exec(1);
+        }
+        return;
+    }
+    const int faction = Vehs[veh_id].faction_id;
+    const int target_faction = Vehs[target].faction_id;
+    if (target_faction == faction ||
+        (PlayersData[faction].diplo_treaties[target_faction] & 1U) != 0) {
+        return;
+    }
+    const int direction = radius_move(Vehs[veh_id].x, Vehs[veh_id].y,
+                                     x, y, RadiusRange[Rules.artillery_max_rng]);
+    if (direction < 0) return;
+
+    if (IsMultiplayerNet == 0) {
+        NetDaemonNet.lock_state_[1].dword_[3] = 3;
+        battle_fight(veh_id, direction, 1, 1, nullptr);
+        return;
+    }
+    if (NetDaemonNet.maybe_lock(&veh_id, 0, 0, x, y, 4) != 0) return;
+    NetDaemonNet.lock_state_[1].dword_[3] = 1;
+    if (battle_fight(veh_id, direction, 1, 1, nullptr) != 0) {
+        NetDaemonNet.unlock_veh();
+    } else {
+        message_veh(0x2402, veh_id, direction, 0);
+        NetDaemonNet.await_exec(1);
+    }
+}
+// ORIGINAL: 0x004CAA50 ?action_destroy@@YAXHHHH@Z 0x004CAA50-0x004CB302
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004caa50.cpp", "Original4CD181 directly calls4CAA50; coordinator authorizes unfinished empty bodies for link continuity, never as recovered behavior."], "reason": "Explicit unfinished owning-TU dependency for the artillery empty-target destruction path; no implemented behavior or acceptance."}
+void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
     // BODY GOES HERE.
 }
 // Shared infantry/native model placement, original 687AE8..687AF4.
