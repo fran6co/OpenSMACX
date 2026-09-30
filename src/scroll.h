@@ -150,7 +150,7 @@ extern int ScrollNonClientInit;
 // Defaults copied by close(). The static table contains eleven process
 // constants; the dynamic table spans seventeen process-owned slots, including
 // the sprite defaults and one intentionally unused hole.
-extern uint32_t ScrollCloseStaticDefaults;
+extern uint32_t ScrollCloseStaticDefaults[11];
 extern uint32_t ScrollCloseDynamicDefaults[17];
 void __cdecl scroll_normal();
 void __cdecl scroll_small();

@@ -1056,11 +1056,7 @@ void __cdecl load_misc() {
     PENDING_BODY(0x00454D10, pending)();
 }
 
-// ?load_interface@@YAXH@Z at 0x00455610
-void __cdecl load_interface(int mode) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x00455610, pending)(mode);
-}
+// load_interface455610 is recovered in game.cpp, with its original mapping.
 
 
 // ?load_deswin_sprites@@YAXXZ at 0x00455E50 is homed in leaf_recoveries.cpp
@@ -1068,11 +1064,7 @@ void __cdecl load_interface(int mode) {
 
 // ?textcolor_init@@YAXXZ at 0x004BA220 is homed in palette.cpp - no forwarder.
 
-// ?config_popups@@YAXXZ at 0x00588AA0
-void __cdecl config_popups() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x00588AA0, pending)();
-}
+// config_popups588AA0 is recovered in popup.cpp, with its original mapping.
 
 // ?bung_momma@@YAXXZ at 0x004595C0
 void __cdecl bung_momma() {

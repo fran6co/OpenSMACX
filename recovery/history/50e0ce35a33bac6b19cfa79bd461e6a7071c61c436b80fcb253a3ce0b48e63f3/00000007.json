@@ -1,0 +1,19 @@
+{
+  "event_id": "3a78bde10218ea5c79f94e7ff6fd872be5525a189d55875de1dca13f876ae284",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/diplowin.h"
+    ],
+    "evidence": [
+      "Original68A5C4 is already the bounded source-owned DiploKnownTechColor cell in diplowin.cpp. New PopupThemeMenuColor would fork the same runtime palette value. Publish the existing owner declaration in diplowin.h and use it directly in load_interface and popups_normal; preserve existing object mapping, storage, Diplo bodies and claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1c3222550aad63538bcbb798d85278e06d9009e2bf020f9633c5d32b99de10f0",
+  "request_id": "root-shared-diplomacy-palette-owner",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:popup-font-configuration-owner-closure"
+}

@@ -713,6 +713,14 @@ static_assert(sizeof(BasePop) == 0x3230,
 // fonts at 0x009B8DA8; the image stores straight into them.
 extern Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
 extern Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
+extern uint32_t BasePopDefaultBlock31B8[27];
+extern uint32_t BasePopDefaultField21C0[2];
+extern uint32_t BasePopDefaultField3104[3];
+extern uint32_t BasePopDefaultField31A0[4];
+extern uint32_t BasePopDefaultField21B0[4];
+extern uint32_t BasePopDefaultField31B0[2];
+extern uint32_t BasePopDefaultField2148[2];
+extern uint32_t BasePopDefaultField30A4;
 
 
 // Two interleaved default-colour tables. The string table carries four tiers

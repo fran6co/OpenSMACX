@@ -710,6 +710,7 @@ class Win : public AutoSound {
   // ignoring the declared one at [esp+8]. As a static taking the HWND the
   // stack layout is identical and the window handle stops being `this`.
   static int __stdcall adjust_menus(HWND hwnd, void *unused);
+  static void update_menus();
   void do_caption_buttons();
   int maximize();
   void on_mousewheel_down(int delta);
@@ -1010,7 +1011,7 @@ extern char *WinKeyRingCursor;   // 0x00696D5C, initialised to the ring
 // Ten dwords: the table runs from 0x00696D34 to WinKeyRingCursor at
 // 0x00696D5C, and the values are the image's own, read with
 // tools/image_data.py rather than left as an address.
-extern const uint32_t WinStaticDefaults[10];   // 0x00696D34
+extern uint32_t WinStaticDefaults[10];   // 0x00696D34
 // THE DYNAMIC WINDOW DEFAULTS, 0x009B7AF0 - four dwords, of which slot 1 is
 // named: it is THE DEFAULT WINDOW FONT (a Font* - the Win constructor seeds
 // every new window's field_F8_ from it, Win::close resets the same way, and

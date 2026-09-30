@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #pragma once
+// Original9B8E44: the constructor and close read nine three-word groups.
+extern uint32_t FlatButtonDefaultsTable[27];
 #include "basebutton.h"
 
 class Sprite;

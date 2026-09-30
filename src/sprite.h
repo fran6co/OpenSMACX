@@ -76,6 +76,9 @@ class Sprite {
   int height() const { return iHeight_; }
   // Pixel width before the displayed dimensions/scaling are applied (+0x10).
   int source_width() const { return iSpriteWidth_; }
+  int source_height() const { return iSpriteHeight_; }
+  int left_offset() const { return iLeftOffset_; }
+  int top_offset() const { return iTopOffset_; }
   // Zero source pixels remap the destination; other nontransparent pixels
   // retain their source colour. Wider overloads temporarily replace N / D.
   int draw_dest(Buffer *destination, int transparent, int x, int y,
@@ -279,6 +282,39 @@ extern Sprite g_ICON_TILE_SQUARE_SPRITE;
 extern Sprite g_SCROLL_BAR_ARROW_ICON_SPRITES[12];
 extern Sprite g_SCROLL_BAR_SMALL_ARROW_ICON_SPRITES[12];
 extern Sprite g_SCROLL_BAR_FILLER_ICON_SPRITES;
+extern int InterfaceCaptionHeight;
+extern int InterfaceBorderThickness;
+extern int InterfaceBottomBorderThickness;
+extern int InterfaceAltCaptionHeight;
+extern int InterfaceAltBorderThickness;
+extern int InterfaceAltBottomBorderThickness;
+extern int InterfaceThirdCaptionHeight;
+extern int InterfaceThirdBottomBorderThickness;
+extern int InterfaceFourthBorderThickness;
+extern int InterfaceFourthBottomBorderThickness;
+extern int InterfaceDefaultMetric;
+extern int InterfaceTopLeftMetric;
+extern int InterfaceMidRightMetric;
+extern Sprite g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE;
+extern Sprite g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE;
+extern Sprite g_BASEWIN_SPRITES[27];
+extern Sprite g_UNUSED_SPRITE_VAR04;
+extern Sprite g_UNUSED_SPRITE_VAR08;
+extern Sprite g_UNUSED_SPRITE_VAR13;
+extern Sprite g_UNUSED_SPRITE_VAR16;
+extern Sprite g_UNUSED_SPRITE_VAR27;
+extern Sprite g_UNUSED_SPRITE_VAR29;
+extern Sprite g_UNUSED_SPRITE_VAR30;
+extern Sprite g_UNUSED_SPRITE_VAR31;
 extern Sprite g_SCROLL_BAR_SMALL_FILLER_ICON_SPRITE;
 
 // Existing interface assets populated by load_box_sprites; each numbered

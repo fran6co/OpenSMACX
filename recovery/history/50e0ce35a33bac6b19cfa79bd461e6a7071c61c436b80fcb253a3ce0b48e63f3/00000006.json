@@ -1,0 +1,19 @@
+{
+  "event_id": "1c3222550aad63538bcbb798d85278e06d9009e2bf020f9633c5d32b99de10f0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_interface_styles.py"
+    ],
+    "evidence": [
+      "Existing interface-style actual-source fixture assumes Sprite::extract has one overload. Both HEAD baseline and candidate have two overloads, so43 controls fail before exercising loader. Select the explicit integer-rectangle overload used by the actual load_box_sprites body while retaining all observer/mutation assertions."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "596743740613e506602a272572f0d322614a7d5f362445e68b632313f2f091ce",
+  "request_id": "root-interface-fixture-overload",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:popup-font-configuration-owner-closure"
+}

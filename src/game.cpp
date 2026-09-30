@@ -60,6 +60,10 @@
 #include "newtechwin.h"  // Existing technology-popup sprite assets.
 #include "infowin.h"  // Shared faction text/shadow colors.
 #include "maininterface.h"  // Shared chat foreground/shadow colors.
+#include "pushbutton.h"
+#include "flatbutton.h"
+
+extern int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
 
 // The rainfall loader publishes three rows of four colors, one byte after
 // each get_pixel. The coast renderer consumes row 1 forward or backward.
@@ -930,6 +934,153 @@ uint32_t MissionYearCurrent;  // 0x009A64D8
 uint32_t StartingMissionYear;  // 0x0094B4D0
 uint32_t EndingMissionYear;  // 0x0094B4D4
 int SunspotDuration;  // 0x009A6800
+// config_popups copies the live screen dimensions to these independent
+// dwords; both are beyond Console's proven end, not Console members.
+// RECOVERY_OBJECT: v1 0x00939E58 ?IfaceScreenHeight@@3HA
+int IfaceScreenHeight; // 0x00939E58
+// RECOVERY_OBJECT: v1 0x00939E5C ?IfaceScreenWidth@@3HA
+int IfaceScreenWidth;  // 0x00939E5C
+// Original file-backed palette defaults; MessageWin owns the interleaved
+// text/background cells at 0x68A5A4/B0 separately.
+// RECOVERY_OBJECT: v1 0x0068A5A0 ?PopupThemeWindowColor@@3HA
+int PopupThemeWindowColor = 0x62; // 0x0068A5A0
+// RECOVERY_OBJECT: v1 0x0068A5A8 ?PopupThemeButtonColor@@3HA
+int PopupThemeButtonColor = 0xE8; // 0x0068A5A8
+// RECOVERY_OBJECT: v1 0x0068A5AC ?PopupThemeTextShadow@@3HA
+int PopupThemeTextShadow = 0xE9; // 0x0068A5AC
+// RECOVERY_OBJECT: v1 0x0068A5B8 ?PopupThemeSurfaceColor@@3HA
+int PopupThemeSurfaceColor = 0x24; // 0x0068A5B8
+// RECOVERY_OBJECT: v1 0x0068A5BC ?PopupThemeBevelUpper@@3HA
+int PopupThemeBevelUpper = 0x1E; // 0x0068A5BC
+// RECOVERY_OBJECT: v1 0x0068A5C0 ?PopupThemeBevelLower@@3HA
+int PopupThemeBevelLower = 0x56; // 0x0068A5C0
+// RECOVERY_OBJECT: v1 0x0068A5B4 ?PopupThemeColorB4@@3HA
+int PopupThemeColorB4 = 0x94; // 0x0068A5B4, tenth independent palette cell
+
+// Original455610..455E41. The explicit mode argument is unused. All service
+// results are ignored in the original; failed loads still proceed through
+// extraction/publication. The existing asset objects own their allocations.
+// ORIGINAL: 0x00455610 ?load_interface@@YAXH@Z 0x00455610-0x00455E41
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00455610.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?load_interface@@YAXH@Z
+void __cdecl load_interface(int mode) {
+    Buffer &canvas = g_PCX_PARSE_TEMP_BUFFER1;
+    GraphicWinFieldA0CDefault = reinterpret_cast<uint32_t>(&def_caption_draw);
+    canvas.load_pcx("iface.pcx", 0, 10, 0xEC);
+    int *palette_cells[10] = {&PopupThemeWindowColor, &MessageWinTextColor,
+        &PopupThemeButtonColor, &PopupThemeTextShadow, &MessageWinTextBackground,
+        &PopupThemeColorB4, &PopupThemeSurfaceColor, &PopupThemeBevelUpper,
+        &PopupThemeBevelLower, &DiploKnownTechColor};
+    for (int color = 0; color < 10; ++color)
+        *palette_cells[color] = canvas.get_pixel(0x3A3, 2 + color * 11);
+
+    canvas.change_color(0x108, 0x109);
+    Sprite *frames[11] = {&g_IFACE_GENERAL_WINDOWS_TOP_LEFT_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_TOP_RIGHT_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_BOT_LEFT_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_BOT_RIGHT_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_MID_RIGHT_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_NONCAP_LEFT_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_NONCAP_MID_SPRITE,
+        &g_IFACE_GENERAL_WINDOWS_NONCAP_RIGHT_SPRITE};
+    const int rectangles[11][4] = {
+        {0x223,0x26,0x4D,0x42},{0x296,0x26,0x3D,0x42},
+        {0x223,0x90,0x4D,0x29},{0x296,0x90,0x3D,0x29},
+        {0x271,0x26,0x24,0x42},{0x271,0x90,0x24,0x29},
+        {0x223,0x69,0x4D,0x26},{0x296,0x69,0x3D,0x26},
+        {0x223,0xC3,0x23,0x1F},{0x247,0xC3,0x30,0x1F},
+        {0x278,0xC3,0x24,0x1F}};
+    for (int frame = 0; frame < 11; ++frame) {
+        canvas.change_color(0x107, 0x109);
+        canvas.change_color(0x106, 0x109);
+        frames[frame]->extract(&canvas, 0x109, rectangles[frame][0],
+            rectangles[frame][1], rectangles[frame][2], rectangles[frame][3], 0);
+    }
+    NCSprites defaults = {frames[0],frames[1],frames[2],frames[3],frames[4],
+        frames[6],frames[7],frames[5],frames[9],frames[8],frames[10]};
+    GraphicWin::set_def_nc_sprites(&defaults);
+    GraphicWin::load_all_nc_sprites_from_defs();
+
+    // These are borrowed entries into the existing 27-Sprite button sheet.
+    BasePopDefaultBlock31B8[12] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[18]);
+    BasePopDefaultBlock31B8[13] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[21]);
+    BasePopDefaultBlock31B8[14] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[24]);
+    BasePopDefaultBlock31B8[15] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[20]);
+    BasePopDefaultBlock31B8[16] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[23]);
+    BasePopDefaultBlock31B8[17] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[26]);
+    BasePopDefaultBlock31B8[6] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[19]);
+    BasePopDefaultBlock31B8[7] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[22]);
+    BasePopDefaultBlock31B8[8] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[25]);
+    PushButtonDefaults[4] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[18]);
+    PushButtonDefaults[13] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[24]);
+    PushButtonDefaults[2] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[19]);
+    PushButtonDefaults[11] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[25]);
+    PushButtonDefaults[5] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[20]);
+    PushButtonDefaults[14] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[26]);
+    const int push_zero_slots[12] = {6,15,7,16,3,12,0,9,1,10,8,17};
+    for (int slot = 0; slot < 12; ++slot) PushButtonDefaults[push_zero_slots[slot]] = 0;
+    FlatButtonDefaultsTable[12] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[18]);
+    FlatButtonDefaultsTable[13] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[21]);
+    FlatButtonDefaultsTable[14] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[24]);
+    FlatButtonDefaultsTable[6] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[19]);
+    FlatButtonDefaultsTable[17] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[26]);
+    FlatButtonDefaultsTable[8] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[25]);
+    FlatButtonDefaultsTable[15] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[20]);
+
+    InterfaceAltCaptionHeight = g_UNUSED_SPRITE_VAR29.source_height() + g_UNUSED_SPRITE_VAR29.top_offset();
+    InterfaceAltBorderThickness = g_UNUSED_SPRITE_VAR27.source_width() + g_UNUSED_SPRITE_VAR27.left_offset();
+    InterfaceAltBottomBorderThickness = g_UNUSED_SPRITE_VAR30.height() - g_UNUSED_SPRITE_VAR30.top_offset();
+    InterfaceCaptionHeight = g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE.source_height()
+        + g_IFACE_GENERAL_WINDOWS_TOP_MID_SPRITE.top_offset();
+    InterfaceBorderThickness = g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE.source_width()
+        + g_IFACE_GENERAL_WINDOWS_MID_LEFT_SPRITE.left_offset();
+    InterfaceBottomBorderThickness = g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE.height()
+        - g_IFACE_GENERAL_WINDOWS_BOT_MID_SPRITE.top_offset();
+    InterfaceThirdCaptionHeight = g_UNUSED_SPRITE_VAR08.source_height() + g_UNUSED_SPRITE_VAR08.top_offset();
+    InterfaceThirdBottomBorderThickness = g_UNUSED_SPRITE_VAR04.height() - g_UNUSED_SPRITE_VAR04.top_offset();
+    InterfaceFourthBorderThickness = g_UNUSED_SPRITE_VAR16.source_width() + g_UNUSED_SPRITE_VAR16.left_offset();
+    InterfaceFourthBottomBorderThickness = g_UNUSED_SPRITE_VAR13.height() - g_UNUSED_SPRITE_VAR13.top_offset();
+    FlatButtonDefaultsTable[7] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[22]);
+    FlatButtonDefaultsTable[16] = reinterpret_cast<uint32_t>(&g_BASEWIN_SPRITES[23]);
+    const int flat_zero_slots[18] = {18,19,20,21,22,23,9,10,11,0,1,2,3,4,5,24,25,26};
+    for (int zero = 0; zero < 18; ++zero) FlatButtonDefaultsTable[flat_zero_slots[zero]] = 0;
+    InterfaceDefaultMetric = 45;
+    InterfaceTopLeftMetric = 10;
+    InterfaceMidRightMetric = 10;
+    for (int window_id = 1; window_id < 8; ++window_id) {
+        MapWin *window = MapWinTable[window_id];
+        if (window != 0 && window->field_1DD74_ != 0) {
+            GraphicWin *display = static_cast<GraphicWin *>(window);
+            display->set_frame_top_right(&g_UNUSED_SPRITE_VAR31);
+            display->compute_min_size();
+            // Reload the published slot after the call, as the original does.
+            static_cast<GraphicWin *>(MapWinTable[window_id])->on_redraw_nc(0, -1);
+        }
+    }
+    WinStaticDefaults[5] = InterfaceBorderThickness;
+    WinStaticDefaults[1] = InterfaceCaptionHeight;
+    canvas.load_pcx("interface.pcx", 0, 10, 0xEC);
+    for (int row = 0; row < 9; ++row) {
+        for (int part = 0; part < 3; ++part) {
+            canvas.change_color(0x107, 0x109);
+            canvas.change_color(0x106, 0x109);
+            const int x = part == 0 ? 0x40 : part == 1 ? 0x44 : 0x88;
+            g_BASEWIN_SPRITES[row * 3 + part].extract(&canvas, 0x109, x,
+                1 + row * 21, part == 1 ? 0x43 : 3, 20, 0);
+        }
+    }
+    for (int icon = 0; icon < 3; ++icon) {
+        canvas.change_color(0x107, 0x109);
+        canvas.change_color(0x106, 0x109);
+        g_IFACE_CLOSE_X_SPRITES[icon].extract(&canvas, 0x109, 0xE3,
+            1 + icon * 19, 18, 18, 0);
+    }
+    canvas.close();
+    load_box_sprites();
+}
 uint32_t MountPlanetX;  // 0x009A6804
 uint32_t MountPlanetY;  // 0x009A6808
 int DustCloudDuration;  // 0x009A680C

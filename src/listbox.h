@@ -336,6 +336,11 @@ extern int ListBoxGlobalDDC;
 // Raised to 1 around on_right_down's and on_right_double_click's virtual-base
 // dispatch, dropped to 0 after (0x0060AA20, 0x0060C6D0).
 extern int ListBoxClickGuard;                          // 0x009B8EEC
+extern uint32_t ListBoxCloseDynamicDefault;
+extern uint32_t ListBoxDefault24;
+extern uint32_t ListBoxDefault2C;
+extern uint32_t ListBoxDefault10;
+extern uint32_t ListBoxDefault14;
 
 // Fixed most-derived offset from L to the controlling vftable (GraphicWin
 // subobject); the destructor is always entered at L + this adjustment.

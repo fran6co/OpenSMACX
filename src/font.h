@@ -174,6 +174,7 @@ static_assert(sizeof(Font) == 0x28, "Font layout must match the legacy ABI");
 // fold to the same `[disp32 + index*4]` form, the displacement relocated.
 static const size_t FontSizeTableCount = 12;
 extern const int FontSizeTable[FontSizeTableCount];  // 0x0068F220
+extern const int FontStyleTable[4];                  // 0x0068F250
 extern Font FontTable[48];                           // 0x0093FC58, 0x28 stride
 
 /*
@@ -245,6 +246,30 @@ extern Font *FontDefault;
  * `*DefaultFontFace` through an `LPCSTR *` is two.
  */
 extern LPCSTR DefaultFontFace;
+extern LPCSTR DefaultLargeFontFace;
+
+// Borrowed pointers into FontTable, published by config_popups; no Font
+// lifetime belongs to these caches.
+extern Font *PopupMainFont;
+extern Font *PopupMainBoldFont;
+extern Font *PopupMainItalicFont;
+extern Font *PopupSmallFont;
+extern Font *PopupSmallBoldFont;
+extern Font *PopupSmallItalicFont;
+extern Font *PopupMenuFont;
+extern Font *PopupMenuBoldFont;
+extern Font *PopupMenuItalicFont;
+extern Font *PopupMediumFont;
+extern Font *PopupMediumBoldFont;
+extern Font *PopupMediumItalicFont;
+extern Font *InterludeNormalFont;
+extern Font *InterludeSecondFont;
+extern Font *InterludeThirdFont;
+extern Font *PopupLargeFont;
+extern Font *PopupLargeBoldFont;
+extern Font *PopupLargeItalicFont;
+extern Font *PopupMapLabelFont;
+extern Font *PopupDefaultWindowFont;
 
 // 0x007D3948 in the image - the single game-wide font, initialised by
 // WinMain and closed at exit.

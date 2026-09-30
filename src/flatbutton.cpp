@@ -19,14 +19,14 @@
 #include "flatbutton.h"
 
 // The nine-group defaults table read by both the constructor and close():
-// runtime .data that load_interface (0x00455610, unrecovered - its reference
-// sits at 0x455c05) populates alongside the constructor, so it STAYS
-// image-addressed - real storage here would fork the state the image code
-// writes. TRIED: an accessor returning the pointer - identical 28/41: cl
+// runtime defaults that load_interface (0x00455610) publishes into the
+// same genuine source storage read by the constructor and close.
+// TRIED: an accessor returning the pointer - identical 28/41: cl
 // materializes the row base either way (`mov ecx, 0x9b8e50 / mov edx,
 // [ecx - 0xc]`) where the image keeps the index in ecx against the
 // constant (`xor ecx,ecx / mov edx,[ecx + 0x9b8e44]`).
-static int *const FlatButtonDefaultsTable = (int *)0x009B8E44;
+// RECOVERY_OBJECT: v1 0x009B8E44 ?FlatButtonDefaultsTable@@3PAIA
+uint32_t FlatButtonDefaultsTable[27]; // 0x009B8E44, initially zero-filled
 
 
 

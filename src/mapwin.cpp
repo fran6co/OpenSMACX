@@ -2231,10 +2231,8 @@ static int *const MapRowStride = (int *)0x0068FAF0;
 // tests it against 1000 to pick between the two fixed layouts - 550x300
 // below, 704x384 at and above (0x00589760), 200x180 / 250x212 in
 // InfoWin::UNK4 - which is 0.6875 of 800 and of 1024 alike, so the threshold
-// is "is the desktop the wide one". A named binding, not an object, for the
-// same reason as MapRowStride below: the image holds the dword at this fixed
-// address and nothing here maps that storage.
-static int *const IfaceScreenWidth = (int *)0x00939E5C;
+// is "is the desktop the wide one". config_popups now publishes the genuine
+// IfaceScreenWidth storage declared in game.h.
 
 // THE POINT-LIGHT TABLES. Three parallel signed-byte tables, one per tile
 // flag, each indexed by the byte `AltDirectionTable` picks for the tile's
@@ -5621,7 +5619,7 @@ void __cdecl draw_cursor() {
 void MapWin::clear(int index) {
     field_1DD78_ = index;
     field_1DD70_ = 0;
-    field_1DD98_ = (((*IfaceScreenWidth < 1000) - 1) & 6) - 6;
+    field_1DD98_ = (((IfaceScreenWidth < 1000) - 1) & 6) - 6;
     field_1DD74_ = (index == 0);
 
     int halfHeight = MapLatitudeBounds / 2;

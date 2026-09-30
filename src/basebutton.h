@@ -156,14 +156,16 @@ class BaseButton : public GraphicWin {
 static_assert(sizeof(BaseButton) == 0xAB8,
               "BaseButton layout must match the legacy ABI");
 
-uint32_t *const BaseButtonStaticDefaults = (uint32_t *)0x0069704C;
+// Same storage as DialogDefaults[0..4], not a second table.
+extern uint32_t DialogDefaults[37];
+uint32_t *const BaseButtonStaticDefaults = DialogDefaults;
 // 0x009B8E2C's two slots are named below (BaseButtonA94Default /
 // BaseButtonA98Default); the old `uint32_t *const BaseButtonDynamicDefaults`
 // pointer binding that stood here had zero users and is gone.
 
 // Interleaved 3x4 default colour table and the three default font slots the
 // setters publish and init consumes.
-uint32_t *const BaseButtonDefaultTextColors = (uint32_t *)0x00697060;
+uint32_t *const BaseButtonDefaultTextColors = DialogDefaults + 5;
 extern Font *BaseButtonDefaultFonts[3];  // 0x009B8E34..E3C, defined in basebutton.cpp
 
 

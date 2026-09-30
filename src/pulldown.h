@@ -121,6 +121,14 @@ extern uint32_t PullDownFieldF3CDefault;
 // read `PullDown::init` (0x005F8920) and `PullDown::on_redraw` (0x005F98B0)
 // perform.
 extern Font *PullDownDefaultFont;
+extern int PullDownBorderPadding;
+extern int PullDownDefaultTextColor;
+extern int PullDownDefaultTextShadow;
+extern int PullDownDefaultSelectedTextColor;
+extern int PullDownDefaultSelectedTextShadow;
+extern int PullDownDefaultDisabledTextColor;
+extern int PullDownDefaultDisabledTextShadow;
+extern int PullDownDefaultBackground;
 
 
 

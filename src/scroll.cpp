@@ -33,7 +33,12 @@
 // RECOVERY_OBJECT: v1 0x009B8DD4 ?ScrollDefaultThickness@@3HA
 int ScrollDefaultThickness;  // 0x009B8DD4
 int ScrollNonClientInit;  // 0x009B8E24
-uint32_t ScrollCloseStaticDefaults = 2;  // 0x00697020
+// The constructor/close index domain requires eleven words. Their initial
+// bytes are independently read from 0x697020..0x69704C; this does not claim
+// a complete original allocation boundary.
+// RECOVERY_OBJECT: v1 0x00697020 ?ScrollCloseStaticDefaults@@3PAIA
+uint32_t ScrollCloseStaticDefaults[11] = {2, 0xFFFFFFFF, 250, 0xFFFFFFFF,
+    100, 247, 247, 7, 2, 255, 248};
 // RECOVERY_OBJECT: v2 0x009B8DE0 0x009B8E24 ?ScrollCloseDynamicDefaults@@3PAIA 0x006051D0
 uint32_t ScrollCloseDynamicDefaults[17];  // 0x009B8DE0; the sprite slots start at +8
 
@@ -306,7 +311,7 @@ Scroll::Scroll() {
     // GraphicWin; it puts them where the image does.
     uint32_t *const object = reinterpret_cast<uint32_t *>(this);
 
-    uint32_t *const fixed = &ScrollCloseStaticDefaults;
+    uint32_t *const fixed = ScrollCloseStaticDefaults;
     uint32_t *const dynamic = ScrollCloseDynamicDefaults;
 
     object[0xA14 / 4] = dynamic[0];
@@ -421,7 +426,7 @@ Status: Complete; embedded FlatButton close redirects are source-owned
 uint32_t Scroll::close() {
     uint32_t *const object =
         reinterpret_cast<uint32_t *>(this);
-    uint32_t *const fixed = &ScrollCloseStaticDefaults;
+    uint32_t *const fixed = ScrollCloseStaticDefaults;
     uint32_t *const dynamic = ScrollCloseDynamicDefaults;
 
     object[0xA14 / 4] = dynamic[0];

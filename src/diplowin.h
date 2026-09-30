@@ -23,6 +23,10 @@
 #include "stringbox.h"
 #include "editbox.h"
 
+// Shared palette cell published by load_interface and consumed by both
+// diplomacy rendering and popup menu defaults; owned in diplowin.cpp.
+extern int DiploKnownTechColor;
+
  /*
   * DiploWin class
   *

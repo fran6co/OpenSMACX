@@ -53,7 +53,9 @@ void BasePop::set_loc(int x, int y) {
 }
 
 
+// RECOVERY_OBJECT: v1 0x009B8D98 ?BasePopDefaultStringFonts@@3PAPAVFont@@A
 Font *BasePopDefaultStringFonts[4];  // 0x009B8D98
+// RECOVERY_OBJECT: v1 0x009B8DA8 ?BasePopDefaultButtonFonts@@3PAPAVFont@@A
 Font *BasePopDefaultButtonFonts[3];  // 0x009B8DA8
 
 namespace {
@@ -200,11 +202,13 @@ int BasePop::set_def_button_font(Font *font1, Font *font2, Font *font3) {
 // 0x00696F24 (this table is below .data's 0x006A8000 file-backed end, unlike
 // the 0x009B8xxx slots): transparent for slot 0, white for slots 0-1 tier 1+,
 // and palette index 1 for slots 2-3.
+// RECOVERY_OBJECT: v1 0x00696EE4 ?BasePopDefaultStringColors@@3PAY03IA
 uint32_t BasePopDefaultStringColors[4][4] = {
     {0x00000000, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
     {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
     {0x00000001, 0x00000001, 0x00000001, 0x00000001},
     {0x00000001, 0x00000001, 0x00000001, 0x00000001}};  // 0x00696EE4
+// RECOVERY_OBJECT: v1 0x00696F24 ?BasePopDefaultButtonColors@@3PAY02IA
 uint32_t BasePopDefaultButtonColors[4][3] = {
     {0x00000000, 0xFFFFFFFF, 0xFFFFFFFF},
     {0xFFFFFFFF, 0xFFFFFFFF, 0xFFFFFFFF},
@@ -1402,7 +1406,9 @@ BasePop *BasePop::basepop_alloc() {
     return new BasePop();
 }
 
+// RECOVERY_OBJECT: v1 0x009B8D80 ?BasePopDefaultOkText@@3PADA
 char *BasePopDefaultOkText;      // 0x009B8D80
+// RECOVERY_OBJECT: v1 0x009B8D84 ?BasePopDefaultCancelText@@3PADA
 char *BasePopDefaultCancelText;  // 0x009B8D84
 
 // The image reads the popup allocator through the 0x00696ECC slot; the tree
@@ -1853,27 +1859,29 @@ Status: Complete
 // paths: 0x009B8CF8 (BasePopDefaultField3094) and 0x009B8AB8
 // (BasePopDefaultBlock2E64) by FX::init (0x00445CE8 / 0x00445CFA), and
 // 0x009B8DD0 (BasePopDefaultField322C) by Console::init (0x0051D9B5). The
-// rest - BasePopDefaultField30A4, BasePopDefaultLayout, BasePopDefaultBlock31B8
-// - have no immediate reference anywhere in .text below 0x5C1000, so their
-// writer is either a body the tree has not recovered or an indexed store.
-// Until it is found, the ctor here copies ZEROS into those fields where the
-// shipped game copies whatever its init paths left there.
+// remaining defaults have their own producers: popups_normal writes
+// BasePopDefaultField30A4; set_def_external_window writes BasePopDefaultLayout;
+// load_interface writes the sprite entries of BasePopDefaultBlock31B8.
 
 // {100, 100}: the defaults the ctor's tail sends through dialog_width_/A24_
 // into the embedded Dialog's width/height slots. NOT const, because
 // set_def_external_window (0x006050F0) writes both slots at run time - the
 // file-backed image bytes are the load state, which the initialiser keeps.
+// RECOVERY_OBJECT: v1 0x00696EC4 ?BasePopDefaultDialogSize@@3PAIA
 uint32_t BasePopDefaultDialogSize[2] = {100, 100};  // 0x00696EC4
 
 // Copied to +0x21c0/+0x21c4. popups_normal rewrites these to 0 and 4.
-const uint32_t BasePopDefaultField21C0[2] = {10, 4};  // 0x00696ED0
+// RECOVERY_OBJECT: v1 0x00696ED0 ?BasePopDefaultField21C0@@3PAIA
+uint32_t BasePopDefaultField21C0[2] = {10, 4};  // 0x00696ED0
 
 // Copied to +0x3104/+0x3108/+0x310c.
-const uint32_t BasePopDefaultField3104[3] = {1, 1, 255};  // 0x00696ED8
+// RECOVERY_OBJECT: v1 0x00696ED8 ?BasePopDefaultField3104@@3PAIA
+uint32_t BasePopDefaultField3104[3] = {1, 1, 255};  // 0x00696ED8
 
 // Copied to +0x31a0 (its low byte)/+0x31a4/+0x31a8/+0x31ac. popups_normal
 // rewrites the first byte; the shipped byte is 0xf7.
-const uint32_t BasePopDefaultField31A0[4] = {247, 7, 248, 2};  // 0x00696F54
+// RECOVERY_OBJECT: v1 0x00696F54 ?BasePopDefaultField31A0@@3PAIA
+uint32_t BasePopDefaultField31A0[4] = {247, 7, 248, 2};  // 0x00696F54
 
 // The two 0x118-byte default blocks the ctor copies to +0x2e64 and +0x2f7c,
 // into text_block_a_ / text_block_b_. All zero until popups_normal and the
@@ -1890,6 +1898,7 @@ BasePopConfigCallback BasePopDefaultField3094;  // 0x009B8CF8
 
 // The dword immediately below the class-defaults table, file-backed and
 // shipped as -1. See the note beside the extern in basepop.h.
+// RECOVERY_OBJECT: v1 0x00696EC0 ?BasePopDefaultExecResult@@3IB
 const uint32_t BasePopDefaultExecResult = 0xFFFFFFFF;  // 0x00696EC0
 
 // Where the last modal popup's client area started. See basepop.h.
@@ -1924,6 +1933,7 @@ BasePop *BasePopDrawnPopup;   // 0x009B8CF4
 // The defaults for external_window_ (the high-res-scaling opt-out set_width tests)
 // and default_loc_a_/default_loc_b_ (the starting loc_a_/loc_b_; 0x2000 keeps the
 // current value, so zero here means "location 0,0").
+// RECOVERY_OBJECT: v1 0x009B8D04 ?BasePopDefaultLayout@@3PAIA
 uint32_t BasePopDefaultLayout[3];  // 0x009B8D04
 
 // ORIGINAL: 0x006050F0 ?set_def_external_window@BasePop@@QAAXPAUGraphicWin@@HHHH@Z 0x006050F0-0x00605121 FILE BYTE_EXACT
@@ -1953,23 +1963,29 @@ void BasePop::set_def_external_window(GraphicWin *external_window, int loc_x,
 }
 
 // The 27 dwords the ctor transposes into +0x31b8..+0x3223.
+// RECOVERY_OBJECT: v1 0x009B8D10 ?BasePopDefaultBlock31B8@@3PAIA
 uint32_t BasePopDefaultBlock31B8[27];  // 0x009B8D10
 
 // Copied to +0x21b0/+0x21b4/+0x21bc/+0x21b8, in this table's order.
 // popups_normal seeds 0x1a/0x3a/0x32/3 here at run time.
+// RECOVERY_OBJECT: v1 0x009B8D88 ?BasePopDefaultField21B0@@3PAIA
 uint32_t BasePopDefaultField21B0[4];  // 0x009B8D88
 
 // Copied to +0x31b0/+0x31b4.
+// RECOVERY_OBJECT: v1 0x009B8DB4 ?BasePopDefaultField31B0@@3PAIA
 uint32_t BasePopDefaultField31B0[2];  // 0x009B8DB4
 
 // Copied to +0x2148/+0x214c.
+// RECOVERY_OBJECT: v1 0x009B8DBC ?BasePopDefaultField2148@@3PAIA
 uint32_t BasePopDefaultField2148[2];  // 0x009B8DBC
 
 // Copied to +0x30a4. popups_normal seeds 0x1000080 here at run time.
+// RECOVERY_OBJECT: v1 0x009B8DCC ?BasePopDefaultField30A4@@3IA
 uint32_t BasePopDefaultField30A4;  // 0x009B8DCC
 
 // Copied to +0x322c, immediately after the zero store the image overwrites.
 // The image references this slot from 13 sites, all outside this file.
+// RECOVERY_OBJECT: v1 0x009B8DD0 ?BasePopDefaultField322C@@3IA
 uint32_t BasePopDefaultField322C;  // 0x009B8DD0
 
 BasePop::BasePop() {

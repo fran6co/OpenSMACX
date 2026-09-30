@@ -438,6 +438,22 @@ uint32_t PullDownFieldF38Default;  // 0x009B7B58
 uint32_t PullDownFieldF3CDefault;  // 0x009B7B5C
 Font *PullDownDefaultFont;         // 0x009B7B68
 
+// Palette indices shared by the popup policy and PullDown rendering.
+// RECOVERY_OBJECT: v1 0x00696E08 ?PullDownDefaultTextColor@@3HA
+int PullDownDefaultTextColor = 247;        // 0x00696E08
+// RECOVERY_OBJECT: v1 0x00696E0C ?PullDownDefaultTextShadow@@3HA
+int PullDownDefaultTextShadow = 255;       // 0x00696E0C
+// RECOVERY_OBJECT: v1 0x00696E10 ?PullDownDefaultSelectedTextColor@@3HA
+int PullDownDefaultSelectedTextColor = 7;  // 0x00696E10
+// RECOVERY_OBJECT: v1 0x00696E14 ?PullDownDefaultSelectedTextShadow@@3HA
+int PullDownDefaultSelectedTextShadow = 7; // 0x00696E14
+// RECOVERY_OBJECT: v1 0x00696E18 ?PullDownDefaultDisabledTextColor@@3HA
+int PullDownDefaultDisabledTextColor = 248;// 0x00696E18
+// RECOVERY_OBJECT: v1 0x009B7B64 ?PullDownDefaultDisabledTextShadow@@3HA
+int PullDownDefaultDisabledTextShadow;     // 0x009B7B64
+// RECOVERY_OBJECT: v1 0x009B7B60 ?PullDownDefaultBackground@@3HA
+int PullDownDefaultBackground;             // 0x009B7B60
+
 // Shared menu geometry, initialized in the original image's .data.
 // RECOVERY_OBJECT: v2 0x00696E04 0x00696E08 ?PullDownTextPadding@@3HA 0x005F9170
 int PullDownTextPadding = 10;

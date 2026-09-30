@@ -22,6 +22,7 @@
 #include "dialog.h"
 #include "spot.h"
 #include "stringstruct.h"
+extern uint32_t SpriteBoxDefaultField8;
 
 // THE SPRITE LIST, the StringStruct sibling SpriteBox embeds at 0x24. Its
 // own close (0x00611730, spritebox.cpp) stages the sibling pair

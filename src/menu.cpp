@@ -27,6 +27,26 @@
 
 // RECOVERY_OBJECT: v2 0x00696E3C 0x00696E40 ?MenuSelection@@3HA 0x005FB830
 int MenuSelection = -1;
+// RECOVERY_OBJECT: v1 0x009B7B94 ?MenuDefaultFont@@3PAVFont@@A
+Font *MenuDefaultFont; // 0x009B7B94, shared by menu sizing and the setter
+// RECOVERY_OBJECT: v1 0x00696E30 ?MenuDefaultColor1@@3HA
+int MenuDefaultColor1 = 247;         // 0x00696E30, paint/text palette index
+// RECOVERY_OBJECT: v1 0x00696E34 ?MenuDefaultColor2@@3HA
+int MenuDefaultColor2 = 255;         // 0x00696E34, text palette index
+// RECOVERY_OBJECT: v1 0x00696E38 ?MenuDefaultColor3@@3HA
+int MenuDefaultColor3 = 7;           // 0x00696E38, text palette index
+// RECOVERY_OBJECT: v1 0x009B7B8C ?MenuDefaultSelectionColor@@3HA
+int MenuDefaultSelectionColor;       // 0x009B7B8C
+// RECOVERY_OBJECT: v1 0x009B7B90 ?MenuDefaultSelectionTextColor@@3HA
+int MenuDefaultSelectionTextColor;   // 0x009B7B90
+
+// ORIGINAL: 0x005FAEE0 ?set_def_font@Menu@@QAAXPAUFont@@@Z 0x005FAEE0-0x005FAEEE;0x005F0520-0x005F0535 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005faee0.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?set_def_font@Menu@@SAXPAVFont@@@Z
+void Menu::set_def_font(Font *font) {
+    MenuDefaultFont = font;
+    Win::update_menus();
+}
 
 // ORIGINAL: 0x005FB830 ?menu_event@Menu@@QAEHH@Z 0x005FB830-0x005FB8D8
 // RECOVERY_BINDING: v1 {"evidence": ["image:0x005FB830-0x005FB8D8"], "reason": "Recovered original behavior through real source classes and owned members; source remains subject to byte and structural verification."}

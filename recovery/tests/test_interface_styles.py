@@ -65,7 +65,9 @@ def actual_source():
     style, = re.findall(r"^BoxSpriteParams InterfaceBoxStyles\[51\];", source, re.M)
     style_extern, = re.findall(r"^extern BoxSpriteParams InterfaceBoxStyles\[51\];", bh, re.M)
     loader_declaration, = re.findall(r"^void __cdecl load_box_sprites\(\);", headers, re.M)
-    extract, = re.findall(r"  int extract\([^;]+\);", sh)
+    # The loader calls the integer-rectangle overload. The RECT overload is
+    # a separate API; its presence must not prevent this actual-body control.
+    extract, = re.findall(r"  int extract\(Buffer \*buffer, int \w+, int \w+,[^;]+\);", sh)
     methods = []
     for pattern in (r"  int load_pcx\(const char \*[^;]+;", r"  int get_pixel\([^;]+;",
                     r"  int init\(int width, int height, int tgl, ExtDirectDraw \*direct_draw\);",

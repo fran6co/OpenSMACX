@@ -290,6 +290,12 @@ typedef int (OriginalObject::*func_popup_wave_query)();
 // zero-initialised dword at 0x0074DAA4 beside the bank. The owner accessor
 // is source-owned by ambience.cpp; the clock uses the SDK import.
 extern int PopupWaveLastIndex;  // 0x0074DAA4
+void __cdecl config_popups();
+void __cdecl popups_normal();
+void __cdecl popups_small();
+void __cdecl popups_tutorial();
+void __cdecl popups_medium();
+void __cdecl popups_interlude_medium();
 class FactionAmbience;
 extern FactionAmbience *FactionMusic;
 

@@ -96,6 +96,8 @@ class GraphicWin : public Win, public Buffer {
  public:
   // Recompute frame minima only when all four selected corner sprites exist.
   void compute_min_size();
+  // load_interface455C73 changes this one corner before recomputing minima.
+  void set_frame_top_right(Sprite *sprite) { frame_top_right_ = sprite; }
 
  public:
   // Paint frame sprites or the owned-buffer overlay, preserving the clip.

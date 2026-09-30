@@ -25,6 +25,9 @@
 #include "spot.h"
 #include "temp.h"  // HandleMain
 #include "buffer.h"
+// DWORD loaded by the SpriteBox constructor and written by popups_normal.
+// RECOVERY_OBJECT: v1 0x009B8FC4 ?SpriteBoxDefaultField8@@3IA
+uint32_t SpriteBoxDefaultField8; // 0x009B8FC4, initially zero-filled
 
 // The original event posts through the SDK's USER32 import. The framework
 // derives its IAT slot from the pinned image; no executable address is C++.
@@ -74,7 +77,7 @@ SpriteBox::SpriteBox() {
     double_click_callback_ = 0;
     field_84_ = 0;
 
-    field_8_ = *reinterpret_cast<int *>(0x009B8FC4);
+    field_8_ = SpriteBoxDefaultField8;
 
     // The buffer-default calls, spelled as the qualified base calls they are:
     // the receiver the old hand walks computed (GraphicWin vbase through the

@@ -784,7 +784,8 @@ DDInit WinDisplayInit;     // 0x009BE618
 Win *WinFocusStack[4];     // 0x009B7A1C
 char WinKeyRing[10];       // 0x009B7B48
 char *WinKeyRingCursor = WinKeyRing;  // 0x00696D5C
-const uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
+// RECOVERY_OBJECT: v1 0x00696D34 ?WinStaticDefaults@@3PAIA
+uint32_t WinStaticDefaults[10] = {  // 0x00696D34, the image's values
     247, 24, 0xffffffff, 1, 1, 8, 0xffffffff, 7, 2, 1};
 // Semantic defaults record: ctor 5EB485/4A9/4FD/515 and close
 // 5EBA46/5EBA5E/5EBABB/5EBAD2 read four independent fields only.
@@ -5746,6 +5747,13 @@ void Win::on_mousewheel_down(int delta) {
 
 // ===== homed from src/recovered/005f0540.cpp =====
 typedef long (__stdcall *GetWindowLongProc)(void *, int);
+
+// Original5F0520 enumerates this thread's windows through the shared Win
+// callback. Menu's font setter tail-enters this separate policy helper.
+void Win::update_menus() {
+    EnumThreadWindows(GetCurrentThreadId(),
+        reinterpret_cast<WNDENUMPROC>(Win::adjust_menus), 0);
+}
 
 // ORIGINAL: 0x005F0540 ?adjust_menus@Win@@QAGHPAX@Z 0x005F0540-0x005F0579 BYTE_EXACT
 // symbol    ?adjust_menus@Win@@SGHPAUHWND__@@PAX@Z

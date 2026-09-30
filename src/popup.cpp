@@ -32,6 +32,235 @@
 #include "messagewin.h" // InterfaceMessageWin - the desktop window at 0x007F67F8
 #include "base.h"       // BaseIDCurrentSelected - the base the exec result goes to
 #include "veh.h"
+#include "alpha.h"
+#include "game.h"
+#include "font.h"
+#include "menu.h"
+#include "listbox.h"
+#include "scroll.h"
+#include "sprite.h"
+#include "pulldown.h"
+#include "diplowin.h" // DiploKnownTechColor shares the original menu palette cell.
+
+
+extern int TextColourTable[195];
+extern uint32_t EditBoxDefaultB20;
+extern uint32_t EditBoxDefaultB24;
+extern uint32_t EditBoxDefaultB28;
+extern uint32_t EditBoxDefaultB2C;
+
+// ORIGINAL: 0x00588AA0 ?config_popups@@YAXXZ 0x00588AA0-0x00588F8E
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00588aa0.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?config_popups@@YAXXZ
+void __cdecl config_popups() {
+    IfaceScreenWidth = WinScreenWidth;
+    IfaceScreenHeight = WinScreenHeight;
+    StringTemp[0] = 0;
+    strcat(StringTemp, ScriptPopupFile);
+    strcat(StringTemp, ".txt");
+    BasePop::set_def_file(StringTemp);
+    int main_size = prefs_get("MainFontSize", 16, FALSE);
+    int interlude_size = prefs_get("InterludeFontSize", 16, FALSE);
+    FastUnitAnim = prefs_get("FastUnitAnim", 0, FALSE);
+    prefs_put("FastUnitAnim", FastUnitAnim, FALSE);
+    if (!FastUnitAnim && prefs_get("SmoothUnitAnim", 0, FALSE)) FastUnitAnim = -1;
+    prefs_put("SmoothUnitAnim", FastUnitAnim < 0, FALSE);
+    prefs_put("MainFontSize", main_size, FALSE);
+    prefs_put("InterludeFontSize", interlude_size, FALSE);
+    if (WinScreenWidth == 800) { main_size -= 2; interlude_size -= 2; }
+    for (int size = 0; size < 12; ++size) {
+        for (int style = 0; style < 4; ++style) {
+            const int height = FontSizeTable[size];
+            FontTable[size * 4 + style].init(height > 12 ? DefaultLargeFontFace : DefaultFontFace,
+                height, (height > 12 ? 1 : 0) | FontStyleTable[style]);
+        }
+    }
+    // The nearest-size searches are repeated inline in the image. find_font
+    // has the same strict tie rule and 9999 threshold, and returns these
+    // same owned FontTable elements rather than creating another font run.
+    PopupMainFont = find_font(main_size, 0);
+    PopupMainItalicFont = find_font(main_size, 2);
+    PopupMainBoldFont = find_font(main_size, 1);
+    InterludeNormalFont = find_font(interlude_size, 0);
+    InterludeThirdFont = find_font(interlude_size, 2);
+    InterludeSecondFont = find_font(interlude_size, 1);
+    PopupMediumFont = find_font(16, 0);
+    PopupMediumItalicFont = find_font(16, 2);
+    PopupMediumBoldFont = find_font(16, 1);
+    PopupLargeFont = find_font(16, 0);
+    PopupLargeItalicFont = find_font(16, 2);
+    PopupLargeBoldFont = find_font(16, 1);
+    const int menu_size = WinScreenWidth == 800 ? 12 : 16;
+    PopupMenuFont = find_font(menu_size, 0);
+    PopupMenuItalicFont = find_font(menu_size, 2);
+    PopupMenuBoldFont = find_font(menu_size, 1);
+    PopupSmallFont = find_font(12, 0);
+    PopupSmallItalicFont = find_font(12, 2);
+    PopupSmallBoldFont = find_font(12, 1);
+    WinBubbleFont = PopupSmallFont;
+    PopupDefaultWindowFont = find_font(12, 1);
+    PopupMapLabelFont = find_font(10, 1);
+    Menu::set_def_font(PopupMenuFont);
+    PullDownDefaultFont = PopupMenuFont;
+    WinDynamicDefaults.default_font_ = PopupDefaultWindowFont;
+    popups_normal();
+}
+
+// ORIGINAL: 0x00588460 ?popups_normal@@YAXXZ 0x00588460-0x005887F2
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00588460.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?popups_normal@@YAXXZ
+void __cdecl popups_normal() {
+    PopupModalState = 0;
+    BasePopDefaultField30A4 = 0x1000080;
+    BasePopDefaultField21B0[0] = 0x1A;
+    BasePopDefaultField21B0[1] = 0x3A;
+    BasePopDefaultField21B0[2] = 0x32;
+    BasePopDefaultField21B0[3] = 3;
+    BasePop::set_def_string_font(PopupMainFont, PopupMainBoldFont, PopupMainItalicFont, 0);
+    Dialog::set_def_dialog_font(PopupMainFont, PopupMainBoldFont, PopupMainItalicFont);
+    BasePop::set_def_button_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
+    WinStaticDefaults[7] = PopupThemeWindowColor;
+    BasePopDefaultField21C0[0] = 0;
+    BasePopDefaultField21C0[1] = 4;
+    WinStaticDefaults[0] = 0;
+    WinDynamicDefaults.rest_[1] = PopupThemeTextShadow;
+    WinDynamicDefaults.rest_[0] = MessageWinTextColor & 0xFF;
+    WinStaticDefaults[2] = 0;
+    WinStaticDefaults[3] = 1;
+    WinStaticDefaults[4] = 1;
+    BasePopDefaultField31A0[0] = (BasePopDefaultField31A0[0] & 0xFFFFFF00)
+        | static_cast<uint8_t>(PopupThemeSurfaceColor);
+    BasePop::set_def_button_color(0, -1, 1, 1);
+    BasePop::set_def_button_color2(0, -1, 1, 1);
+    BasePop::set_def_button_color3(0, -1, 1, 1);
+    BasePop::set_def_string_color(MessageWinTextColor, -1, 1, 1);
+    BasePop::set_def_string_color2(MessageWinTextColor, -1, 1, 1);
+    BasePop::set_def_string_color3(MessageWinTextColor, -1, 1, 1);
+    BasePop::set_def_string_color_hyper(2, -1, 1, 1);
+    BasePopDefaultField31B0[1] = PopupThemeSurfaceColor;
+    MenuDefaultSelectionColor = PopupThemeSurfaceColor;
+    MenuDefaultSelectionTextColor = MessageWinTextColor;
+    MenuDefaultColor3 = DiploKnownTechColor;
+    WinStaticDefaults[6] = InterfaceBottomBorderThickness;
+    WinStaticDefaults[1] = InterfaceCaptionHeight;
+    BasePopDefaultField3104[2] = 0;
+    BasePopDefaultField31A0[1] = PopupThemeBevelUpper;
+    BasePopDefaultField31A0[2] = PopupThemeBevelLower;
+    BasePopDefaultField31B0[0] = 0;
+    MenuDefaultColor1 = MenuDefaultColor2 = 0;
+    WinStaticDefaults[5] = InterfaceBorderThickness;
+    DialogDefaults[3] = 2;
+    DialogDefaults[1] = PopupThemeBevelUpper;
+    DialogDefaults[2] = PopupThemeBevelLower;
+    BaseButton::set_def_text_color(0, -1, 1, 1);
+    DialogDefaults[0] = PopupThemeSurfaceColor;
+    BaseButtonA94Default = 0;
+    BaseButton::set_def_font(0, 0, 0);
+    BaseButtonA98Default = PopupThemeButtonColor;
+    PullDownDefaultBackground = TextColourTable[40];
+    PullDownDefaultTextColor = TextColourTable[38];
+    PullDownDefaultDisabledTextShadow = TextColourTable[42];
+    PullDownDefaultSelectedTextColor = TextColourTable[46];
+    PullDownDefaultTextShadow = TextColourTable[44];
+    PullDownDefaultSelectedTextShadow = TextColourTable[48];
+    PullDownDefaultDisabledTextColor = TextColourTable[48];
+    PullDownBorderPadding = 1;
+    PullDownDefaultFont = PopupMenuFont;
+    DialogDefaults[23] = 0;
+    dialog_set_def_dialog_text_color(0xE0, -1, 1, 1, 0);
+    DialogFieldACDefault = PopupThemeBevelUpper;
+    DialogFieldB0Default = PopupThemeBevelLower;
+    ListBoxDefault24 = PopupThemeBevelUpper;
+    ListBoxCloseDynamicDefault = PopupThemeBevelLower;
+    DialogFieldB4Default = 1;
+    DialogFieldB8Default = static_cast<uint32_t>(-1);
+    ListBoxDefault14 = PopupThemeSurfaceColor;
+    ListBoxDefault10 = 0x41;
+    EditBoxDefaultB24 = PopupThemeSurfaceColor;
+    EditBoxDefaultB20 = 0;
+    ScrollCloseStaticDefaults[8] = 0;
+    ScrollCloseStaticDefaults[3] = static_cast<uint32_t>(-1);
+    ScrollCloseStaticDefaults[7] = 0x41;
+    ScrollCloseStaticDefaults[5] = 0x41;
+    ScrollCloseStaticDefaults[6] = 0x41;
+    ScrollCloseDynamicDefaults[5] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[0]);
+    ScrollCloseDynamicDefaults[6] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[1]);
+    ScrollCloseDynamicDefaults[7] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[2]);
+    ScrollCloseDynamicDefaults[11] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[3]);
+    ScrollCloseDynamicDefaults[12] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[4]);
+    ScrollCloseDynamicDefaults[13] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[5]);
+    ScrollCloseDynamicDefaults[2] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[6]);
+    ScrollCloseDynamicDefaults[3] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[7]);
+    ScrollCloseDynamicDefaults[4] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[8]);
+    ScrollCloseDynamicDefaults[8] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[9]);
+    ScrollCloseDynamicDefaults[9] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[10]);
+    ScrollCloseDynamicDefaults[10] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_ARROW_ICON_SPRITES[11]);
+    ScrollCloseDynamicDefaults[15] = reinterpret_cast<uint32_t>(&g_SCROLL_BAR_FILLER_ICON_SPRITES);
+    ScrollDefaultThickness = 20;
+    SpriteBoxDefaultField8 = PopupThemeWindowColor;
+    EditBoxDefaultB28 = PopupThemeWindowColor;
+    EditBoxDefaultB2C = PopupThemeTextShadow;
+}
+
+// ORIGINAL: 0x00588800 sub_588800 0x00588800-0x005888DE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00588800.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?popups_small@@YAXXZ
+void __cdecl popups_small() {
+    PopupModalState = 1;
+    BasePop::set_def_string_font(PopupSmallFont, PopupSmallBoldFont, PopupSmallItalicFont, 0);
+    Dialog::set_def_dialog_font(PopupSmallFont, PopupSmallBoldFont, PopupSmallItalicFont);
+    BasePop::set_def_button_font(PopupSmallFont, PopupSmallBoldFont, PopupSmallItalicFont);
+    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 3;
+    BasePopDefaultField3104[2] = 0;
+    BasePop::set_def_string_color(MessageWinTextColor, -1, 1, 1);
+    BasePop::set_def_string_color2(MessageWinTextColor, -1, 1, 1);
+    BasePop::set_def_string_color3(MessageWinTextColor, -1, 1, 1);
+    DialogDefaults[3] = 1;
+    BaseButton::set_def_font(PopupSmallFont, 0, 0);
+    BaseButton::set_def_text_color(0, -1, 1, 1);
+    DialogDefaults[0] = PopupThemeSurfaceColor;
+}
+
+// ORIGINAL: 0x005888E0 ?popups_tutorial@@YAXXZ 0x005888E0-0x005889BE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005888e0.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?popups_tutorial@@YAXXZ
+void __cdecl popups_tutorial() {
+    PopupModalState = 2;
+    BasePop::set_def_string_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont, 0);
+    Dialog::set_def_dialog_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont);
+    BasePop::set_def_button_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
+    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 3;
+    BasePopDefaultField3104[2] = 0;
+    BasePop::set_def_string_color(MessageWinTextColor, -1, 1, 1);
+    BasePop::set_def_string_color2(MessageWinTextColor, -1, 1, 1);
+    BasePop::set_def_string_color3(MessageWinTextColor, -1, 1, 1);
+    DialogDefaults[3] = 1;
+    BaseButton::set_def_font(PopupSmallFont, 0, 0);
+    BaseButton::set_def_text_color(0, -1, 1, 1);
+    DialogDefaults[0] = PopupThemeSurfaceColor;
+}
+
+// ORIGINAL: 0x005889C0 ?popups_medium@@YAXXZ 0x005889C0-0x00588A2A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005889c0.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?popups_medium@@YAXXZ
+void __cdecl popups_medium() {
+    PopupModalState = 3;
+    BasePop::set_def_string_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont, 0);
+    Dialog::set_def_dialog_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
+    BasePop::set_def_button_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
+    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 2;
+}
+
+// ORIGINAL: 0x00588A30 sub_588a30 0x00588A30-0x00588A9A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00588a30.cpp: retained original spans and seed history", "source:recovery/tasks/popup-font-configuration-owner-closure.json: coordinator-authorized ownership scope", "manual: independent frozen C++ review of original callback, font style order, palette, geometry and sprite assignments", "compiler:build/recovery/popup-font-physical-emission.json;build/recovery/interface-producer-physical.json: actual emitted symbols in both historical flag sets"], "reason": "Original-backed real font/default producer and consumer closure through source-owned storage and C++ classes; preserves seed extents and historical matching obligations without granting a new claim."}
+// symbol    ?popups_interlude_medium@@YAXXZ
+void __cdecl popups_interlude_medium() {
+    PopupModalState = 4;
+    BasePop::set_def_string_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont, 0);
+    Dialog::set_def_dialog_font(InterludeNormalFont, InterludeSecondFont, InterludeThirdFont);
+    BasePop::set_def_button_font(PopupMediumFont, PopupMediumBoldFont, PopupMediumItalicFont);
+    BasePopDefaultField21C0[0] = BasePopDefaultField21C0[1] = 2;
+}
 
 // Two of the popup's hide-path helpers are still original bodies (0x0045D970 /
 // 0x0045E540, archive copies the build does not compile). They are __cdecl

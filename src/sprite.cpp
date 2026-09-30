@@ -19,6 +19,39 @@
 #include "original_seam.h"
 #include "sprite.h"
 #include "buffer.h"
+// Independent DWORD geometry outputs from load_interface (0x455610).
+// At 455Bxx the original sums frame sprite bounds for the caption/border
+// and subtracts bottom sprite bounds. popups_normal copies these into the
+// corresponding Win defaults. Their initial image storage is zero; the
+// recovered producer supplies measured frame geometry, not fallback values.
+// RECOVERY_OBJECT: v1 0x0075ADE8 ?InterfaceCaptionHeight@@3HA
+int InterfaceCaptionHeight;         // 0x0075ADE8
+// RECOVERY_OBJECT: v1 0x00759E20 ?InterfaceBorderThickness@@3HA
+int InterfaceBorderThickness;       // 0x00759E20
+// RECOVERY_OBJECT: v1 0x00779644 ?InterfaceBottomBorderThickness@@3HA
+int InterfaceBottomBorderThickness; // 0x00779644
+// Other independent DWORD outputs published by 455B1F..455C55. These
+// formulas are frame measurements; no containing allocation is asserted.
+// RECOVERY_OBJECT: v1 0x0079A5E4 ?InterfaceAltCaptionHeight@@3HA
+int InterfaceAltCaptionHeight;          // 0x0079A5E4
+// RECOVERY_OBJECT: v1 0x007ACD2C ?InterfaceAltBorderThickness@@3HA
+int InterfaceAltBorderThickness;        // 0x007ACD2C
+// RECOVERY_OBJECT: v1 0x0076DC90 ?InterfaceAltBottomBorderThickness@@3HA
+int InterfaceAltBottomBorderThickness;  // 0x0076DC90
+// RECOVERY_OBJECT: v1 0x00791D60 ?InterfaceThirdCaptionHeight@@3HA
+int InterfaceThirdCaptionHeight;        // 0x00791D60
+// RECOVERY_OBJECT: v1 0x007ACF04 ?InterfaceThirdBottomBorderThickness@@3HA
+int InterfaceThirdBottomBorderThickness;// 0x007ACF04
+// RECOVERY_OBJECT: v1 0x0077970C ?InterfaceFourthBorderThickness@@3HA
+int InterfaceFourthBorderThickness;     // 0x0077970C
+// RECOVERY_OBJECT: v1 0x007ACE78 ?InterfaceFourthBottomBorderThickness@@3HA
+int InterfaceFourthBottomBorderThickness;// 0x007ACE78
+// RECOVERY_OBJECT: v1 0x0076DC8C ?InterfaceDefaultMetric@@3HA
+int InterfaceDefaultMetric;             // 0x0076DC8C
+// RECOVERY_OBJECT: v1 0x0078DD7C ?InterfaceTopLeftMetric@@3HA
+int InterfaceTopLeftMetric;             // 0x0078DD7C
+// RECOVERY_OBJECT: v1 0x0078A30C ?InterfaceMidRightMetric@@3HA
+int InterfaceMidRightMetric;            // 0x0078A30C
 
 #include <new>
 #include "general.h"   // mem_get, for the placeholder pixel

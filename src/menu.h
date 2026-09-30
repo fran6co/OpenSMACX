@@ -70,6 +70,7 @@ class Menu : public GraphicWin {
   // ordinary method drops the SEH frame a real derived GraphicWin
   // constructor picks up under /GX (FlatButton's/PullDown's own notes).
   Menu *construct();
+  static void set_def_font(Font *font);
   // 0x005FAD00 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -130,7 +131,16 @@ static_assert(sizeof(Menu) == 0xB64, "Menu layout must match the legacy ABI");
 
 
 // The menu's own font, falling back to the process default when unset.
-inline Font *&MenuFont() { return *reinterpret_cast<Font **>(0x009B7B94); }
+extern Font *MenuDefaultFont;
+inline Font *&MenuFont() { return MenuDefaultFont; }
+
+// Independent defaults written by the popup policy. These declarations
+// do not assert an otherwise unwitnessed containing array.
+extern int MenuDefaultColor1;
+extern int MenuDefaultColor2;
+extern int MenuDefaultColor3;
+extern int MenuDefaultSelectionColor;
+extern int MenuDefaultSelectionTextColor;
 
 // mouse_move is declared on the class because the recovered on_mouse_move is
 // an 18-byte tail-forward to it, but its 333-byte body is not recovered, so
