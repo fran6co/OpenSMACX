@@ -1,0 +1,19 @@
+{
+  "event_id": "b410b768e4e6fe57916013e995f0f861feea26131ef9d4edf21571cce67de7f8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_reportwin_redraw.py"
+    ],
+    "evidence": [
+      "Authorize production-backed host controls in existingtest_reportwin_redraw.py for original-backed ReportWin labs/projects/energy branch behavior. These controls supplement fresh VC6/buildchecks, not fullgameacceptance. Original destroyed-project storedowner-2 scales134+4 to97CDDC, which sourcePlayerData mapping96C9E0 plus7*20CC plus1E68 resolvesgoals[70].base_id lowbyte(goals offset19FC,Goalsize10). Subsequentpalette/factionindexmayOOB; no invalidBases[-2] C++ or inventedguard authorized. Preservependingbranch andoriginaldiscovery; explicit userbehaviorpermissionrequested separately."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "80e0b93b1686c09b08b78694de94417861558944f916fe017197fcdef0d0434a",
+  "request_id": "reportwin-owner-coverage-typed-review-support-20261001-master",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:reportwin-owner-coverage"
+}

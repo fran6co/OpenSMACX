@@ -1,0 +1,19 @@
+{
+  "event_id": "35d5da2f7c04d84ecb1e57a6eb8dc3e13c870715417ef0c934b94d66677edc1c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "Authorize only friend class Console in BasePop declaration for originaleditor_tech4DFAD0 item-text StringList atPopup+2150 sort(0). basepop.h already declares actualprivateitem_ids_ StringList and similarly friendTutWin; StringList::sort is alreadypublic. Do not change layout, addvirtuals, exposeallfields, alterexistingBasePop methods or omit alphabeticalsort. WorkerConsole may use directtypedpopup.item_ids_.sort(0); this accessor authorization is not ownership of BasePop implementation or its historicalclaims. Freshheader-impactchecks remainrequired beforemanualintegration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e6982237a9bff0ab4a90727d004c61d8d4e7d8b75e2c6b935880434552ed5e9e",
+  "request_id": "console-popup-item-sort-access-20261001-master",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:console-scenario-owner-wave"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "f04fcf96cb4f085a1c3578c93a697c05d914ab6599eb53249ed26c27630c8267",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/listbox.h"
+    ],
+    "evidence": [
+      "Authorize ONLY friendclassQuayleWin in ListBox declaration so original+8 selectionflag may be typed access field_8_=1. Existingreset_report_selection setsfield14=-1,field2C=0; set_report_text_color setsfield10=0x9B; DialogfieldB4 isalreadypublic and needsnoedit. Do not editDialog, changeListBoxlayout/virtualslots/existingbodies, or omit originalwrites/order. Compilerheaderimpact/restorationchecksremainrequired; this is not ownership of ListBox recovery or permissiontodiscardclaims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c3ff45eae7e1d3dded06645e36515156b74174f18b04324866ad07dd5fd6bebe",
+  "request_id": "quaylewin-owner-coverage-wave-typed-review-support-20261001-master",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:quaylewin-owner-coverage-wave"
+}
