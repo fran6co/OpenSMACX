@@ -1,0 +1,19 @@
+{
+  "event_id": "05b899e85a52c404acf33b7a88173e20dd2cb543ad8c4b24c02d7e2c92dd94ae",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/caviar.h"
+    ],
+    "evidence": [
+      "Original494700 clears embedded Caviar state byte+A4 immediately after init. Current Caviar init sets it1, render later writes it again but intervening observation is not disproven. Grant only narrow public inline set_field_A4(int) storing existing member, with original-consumer rationale and no invented semantic claim, layout/vtable change or unrelated edit. Fresh Caviar historical checks required before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "01ad10e35902d30b1bab723b98ebb5aec5f95aefbbf7aa45d2a9aa3ad5249428",
+  "request_id": "prodpicker-caviar-setup-state-20260930",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:prodpicker-owner-coverage-wave"
+}

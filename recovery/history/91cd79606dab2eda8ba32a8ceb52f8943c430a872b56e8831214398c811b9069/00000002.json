@@ -1,0 +1,20 @@
+{
+  "event_id": "64591ff3c1ee4aaa391637f7928114aab80fd252eda9a2a74ad00630f50a1f7f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alpha.cpp",
+      "src/alpha.h"
+    ],
+    "evidence": [
+      "FameWin original448D90 reads difficulty text pointers at96C85C indexed by HallOfFameRecord.field_20, then validates through Strings.get. Existing alpha.cpp static LPSTR Difficulty[MaxDiffNum] is the same parser-owned table, populated by read_rules text_item_string (actual owned Strings.put pointers). Grant only removal of table static linkage plus matching extern declaration, or equally narrow owner accessor if evidence demands it; no duplicate table, raw old addresses or unrelated alpha changes. Preserve parser behavior and fresh alpha historical obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9bfb6c98a6556fa92459a8c9ca63efbb40c2a75cf4e23ba7f5463027676a0fba",
+  "request_id": "famewin-shared-difficulty-table-20260930",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:famewin-owner-coverage-wave"
+}
