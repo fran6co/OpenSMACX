@@ -1,0 +1,20 @@
+{
+  "event_id": "cf3424758a394a376ce444388b2b5276627ea837de78cad0247649bfcc0aeced",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h"
+    ],
+    "evidence": [
+      "Original MapWin focus/left-down/button handlers access the source-owned ConsoleGlobal word at original0x009392AC, already declared as Console::field_23BFC_ at offset0x23BFC. It is private; duplicating storage or using raw fixed-address aliases would be structurally wrong.",
+      "Authorize only adding friend class MapWin in src/console.h so these genuine owner methods use the existing typed shared member. No Console bodies, ownership, storage extent, behavior, symbols or historical obligations may change; preserve the original task baseline and all source work."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "mapwin-console-existing-member-access-v1",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

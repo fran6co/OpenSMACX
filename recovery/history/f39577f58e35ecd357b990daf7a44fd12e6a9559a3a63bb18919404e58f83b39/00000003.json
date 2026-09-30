@@ -1,0 +1,26 @@
+{
+  "event_id": "25b976e2cc6dfc1b874aaacf197eeae0912ea6e88c2a8c893f8b16c3461c55a1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Current canonical DiploPop repaint original4402A0 in src/stringstruct.cpp still calls recovereddraw_hq440080 through a fixed original executable address. Its mapped original instructions/call sequence and genuine DiploPop declaration establish the same whole-object direct receiver.",
+      "Coordinator-only scope: replace precisely the HQ rawcall with self->draw_hq(), reconcile adjacent load-bearing rationale, and verify caller/compiler references after integration. Other rawdrawer calls and unrelated Stringstruct owners remain protected and are not authorized for editing. Preserve original markers/claims, all unresolved discoveries and the existing task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4457120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b3c570b7135419ad9a89fc3c28a36630958bc7a6370763858aff8c37e1b8e6aa",
+  "request_id": "interface-closure-hq-actual-caller-v1",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:interface-contract-report-closure"
+}
