@@ -1,0 +1,20 @@
+{
+  "event_id": "01ad10e35902d30b1bab723b98ebb5aec5f95aefbbf7aa45d2a9aa3ad5249428",
+  "payload": {
+    "affects": [
+      "entity-1112944abbd4e4d027f161cbb04ff73d999d631160ce23af133d61330782a2cd"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "playerdata-prototype-counter-ownership-20260930",
+    "evidence": [
+      "PlayersData base96C9E0 plus858=96D238 proto_id_active, plus1058=96DA38 total_mil_veh. src/veh.cpp8403 indexes uint8 pointer with faction*2099, while adjacent uint32 alive-counter uses2099 correctly as20CC/4. src/base.cpp1506 defines another same-symbol raw alias with20CC byte indexing. ProdPicker uses canonical members; no permission to edit veh/base is granted by this finding. Preserve historical veh_kill mapping and banked obligations."
+    ],
+    "hypothesis": "Base/vehicle raw FactionProtoSeenCount aliases duplicate PlayerData.proto_id_active. veh_kill applies a dword-scaled2099 index to a byte pointer rather than the PlayerData20CC byte stride; verify original instructions and replace with real member access centrally.",
+    "kind": "discovery"
+  },
+  "previous_event": "7571a37a8ec0b6bac9c293886eb981dfbacb787eedbc5d9aa327b8bf714dc44e",
+  "request_id": "playerdata-prototype-counter-ownership-20260930",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:prodpicker-owner-coverage-wave"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "3e1eddee452e71bd31cf67f8fe8e77a6d03015648b40ed82372282b0bfd6d076",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.h"
+    ],
+    "evidence": [
+      "Coordinator delivers only the exact BaseButton::set_pressed_visual inline API hunk authored by the AlphaMenu owner. ProdPicker consumes it read-only for original TutWinBaseWindow.flatButtons_[20] A9C state; it does not author shared-header changes. Original task baseline is unchanged. Cross-owner dependency and manual integration checks remain obligations; no automatic acceptance or baseline reset follows."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "prodpicker-basebutton-dependency-delivery-20260930",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prodpicker-owner-coverage-wave"
+}

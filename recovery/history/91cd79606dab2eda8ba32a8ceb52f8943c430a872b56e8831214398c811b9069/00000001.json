@@ -1,0 +1,20 @@
+{
+  "event_id": "9bfb6c98a6556fa92459a8c9ca63efbb40c2a75cf4e23ba7f5463027676a0fba",
+  "payload": {
+    "affects": [
+      "entity-4c0e999903b48959f69017c54527d536c22be0c75fb6a9ed533b20d8e0bdba4b"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "famewin-zero-title-cells-20260930",
+    "evidence": [
+      "Original448400 passes the two addresses as GraphicWin title char pointers. Native pinned PE classifies them zero-fill rather than file backing. Current source/seed search found only these two argument uses; absence of visible writes is not proof of immutable extent. No old-address alias or fabricated bounded object mapping is authorized; retain this finding while implementing initial NUL titles."
+    ],
+    "hypothesis": "Distinct zero-filled BSS title cells at75919C and7591A0 may be represented initially by distinct ordinary zero-initialized source char storage, but writable extent, indirect writers and pointer-identity consumers remain unproven.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "famewin-zero-title-cells-20260930",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:famewin-owner-coverage-wave"
+}

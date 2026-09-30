@@ -1,0 +1,20 @@
+{
+  "event_id": "9d1d4dd6b80735564698b69dff48f5b8d42a7a1eb4142c267e2ee2b17f8a8def",
+  "payload": {
+    "affects": [
+      "entity-17972fc8b7ba189d51825e84d58d3f4936082394c40df97d6efd1a61d42a356f"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "maininterface-visibility-member-owner-20260930",
+    "evidence": [
+      "MainInterfaceGlobal originalbase7AE820 +216E4 =7CFF04, +216E8 =7CFF08. src/maininterface.h declares both members; MultiWin show479970 and hide assign separate bound MultiWindowVisibilityState at7CFF04..7CFF08. AlphaMenu hide403830 uses7CFF08. Do not erase historical object obligations or label this ownership conflict accepted."
+    ],
+    "hypothesis": "Standalone MultiWindowVisibilityState aliases storage actually owned by MainInterfaceGlobal.field_216E4_; adjacent AlphaMenu hide state belongs to field_216E8_. Reconcile consumers and source binding centrally without preserving a duplicate global.",
+    "kind": "discovery"
+  },
+  "previous_event": "9d85c876307611b4537e3e349701e6a1d40356417daf1b0a4e6a332a25fba0a8",
+  "request_id": "maininterface-visibility-member-owner-20260930",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alphamenu-owner-coverage-wave"
+}

@@ -1,0 +1,19 @@
+{
+  "event_id": "7571a37a8ec0b6bac9c293886eb981dfbacb787eedbc5d9aa327b8bf714dc44e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.h"
+    ],
+    "evidence": [
+      "Original494700 iterates all22 TutWinBaseWindow.flatButtons_ at strideB4C and sets/clears inherited Win state word+9C bit8 around modal polling. Existing Win::on_mouse_move5F6320 and key event handlers consume bit8 as suppression. Grant only a public inline set_input_suppressed(int) storing that bit and preserving other flags; no layout/vtable change, no unrelated Win edits. Fresh Win historical regression checks required before coordinator integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3e1eddee452e71bd31cf67f8fe8e77a6d03015648b40ed82372282b0bfd6d076",
+  "request_id": "prodpicker-win-input-suppression-api-20260930",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:prodpicker-owner-coverage-wave"
+}

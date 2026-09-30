@@ -1,0 +1,22 @@
+{
+  "event_id": "9d85c876307611b4537e3e349701e6a1d40356417daf1b0a4e6a332a25fba0a8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.h",
+      "src/maininterface.h",
+      "src/pulldown.cpp",
+      "src/pulldown.h"
+    ],
+    "evidence": [
+      "Authorize narrow typed integration dependencies: AlphaMenu friendship for existing MainInterface geometry and field216E8, a public BaseButton pressed-visual setter shared by AlphaMenu and ProdPicker, and separate typed PullDown fill/backfill callback defaults at9B7B58/5C (fill takes GraphicWin*,int,RECT*; backfill takesGraphicWin*). No new raw address storage, hierarchy flattening or unrelated behavior; preserve all existing mappings/claims and measure affected owner functions. Only this worker owns these headers; coordinator delivers any shared dependency to consumers without resetting their baselines."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "alphamenu-typed-shared-ui-dependencies-20260930",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphamenu-owner-coverage-wave"
+}
