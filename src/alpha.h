@@ -708,6 +708,9 @@ static const int MaxCompassNum = 8;
 static const int MaxResourceNum = 4;
 static const int MaxEnergyNum = 3;
 static const int MaxDiffNum = 6;
+// Parsed difficulty labels consumed by the FameWin score-detail painter.
+// alpha.cpp remains their sole owner and parser-population site.
+extern LPSTR Difficulty[MaxDiffNum];
 
 extern LPCSTR AlphaxFileID;
 extern LPCSTR ScriptTxtID;

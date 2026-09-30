@@ -64,7 +64,7 @@ LPCSTR ScriptTxtID = "SCRIPT";
 // `const` + static: nothing outside this file names them, so internal
 // linkage folds the address into every subscript.
 static LPSTR Compass[MaxCompassNum];      // 0x00945D48
-static LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
+LPSTR Difficulty[MaxDiffNum];      // 0x0096C85C
 // ===== THE RULES OBJECTS - real storage, homed to the parser =====
 // Each address is zero-initialised data in the shipped image (image_data.py:
 // all sixteen sit in .data past the bytes the file carries, ZERO at run

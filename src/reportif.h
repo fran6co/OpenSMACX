@@ -48,6 +48,7 @@ static_assert(sizeof(ReportSortEntry) == 0x10,
 // RECOVERY_GENERATED: v1 vtable 0x0066D700 ? ??_7ReportIf@@6B@ 0x004AD170
 class ReportIf : public SubInterface {
   friend class ReportWin;
+  friend class FameWin;
  public:
   // homed from 004a3d20.cpp
   void reset();
