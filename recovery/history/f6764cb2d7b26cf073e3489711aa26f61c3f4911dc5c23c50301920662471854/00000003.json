@@ -1,0 +1,19 @@
+{
+  "event_id": "020c7c4cd610c143cb1aaeb668b582c2a1d3048be63d0a7f7d7958723fe5fb20",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/win.h"
+    ],
+    "evidence": [
+      "EditGroup611AF0 also tests parent Win byte99 bit10, the same iFlags_ mask1000 governing initialization flag100000. Extend the narrow authorized parent-flags access to EditGroup only; prefer the same const typed accessor, or add its friendship. No field/layout/ABI/default/callback changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "5be05d16cccf7498644f613d2b6961f7843c6abbeff5e05196b9f0b307a50d7a",
+  "request_id": "editgroup-parent-window-flags",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:dialog-control-coverage-wave"
+}
