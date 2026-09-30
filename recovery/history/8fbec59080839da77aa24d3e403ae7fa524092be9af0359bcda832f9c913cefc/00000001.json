@@ -1,0 +1,20 @@
+{
+  "event_id": "d651ecd1247a6f2569847c1aae3b1f617d727d297bc8c4c96676180004b1acdb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basebutton.h"
+    ],
+    "evidence": [
+      "PrefWin original volume-state and on_button_clicked bodies directly write embedded FlatButton own state at member+A18, without BaseButton::set notification/redraw side effects. Authorize narrow friend class PrefWin access to the existing field in BaseButton, not a new virtual/layout or synthetic notification API.",
+      "Only coordinator grants this scope; native decision appended independently to each checkout without copying journals or changing its original baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "prefwin-direct-control-state-access",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:prefwin-owner-coverage-wave"
+}
