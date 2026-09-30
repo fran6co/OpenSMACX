@@ -1,0 +1,26 @@
+{
+  "event_id": "e952a10f07372308d3527f84dd3f75d1df6a8897a2e466f3f962dfedd58c057d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/reportif.h"
+    ],
+    "evidence": [
+      "Original Quayle init4951A0/painter4956D0 read existing ReportIfGlobal885F38 Font pointers at+1E184/+1E1AC/+1E1B0 and monitor field+1E230; authorize only friend class QuayleWin in reportif.h, with no field, layout, vtable or owner implementation changes. Use existing Font::line_advance and typed borrowed resources, not duplicate globals. Fresh affected historical checks required before integration.",
+      "Adjacent original launcher496670 owns the QuayleWin process receiver872CB0 and invokes its modal lifecycle after computing get_rating; authorize its genuine definition in quaylewin.cpp/h and the original-backed typed owner global/member selection, preserving seed evidence. Determine original argument role and selection writes from pinned instructions; no outside Console edits are granted. Any further outside-owner dependency stays pending for coordinator."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4810352,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "quayle-owner-theme-launcher-20261001",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:quaylewin-owner-coverage-wave"
+}
