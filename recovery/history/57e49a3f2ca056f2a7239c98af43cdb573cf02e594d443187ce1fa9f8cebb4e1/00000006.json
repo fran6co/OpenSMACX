@@ -1,0 +1,31 @@
+{
+  "event_id": "89dfa8ef4be22eaf5517e1d86d6017cf702e9c46a8be9acbd399d72b13a1af0c",
+  "payload": {
+    "affects": [
+      "entity-083bca597c7f9e2d471e421702388146571d520443664ae91bbd3577b0d3fdc9",
+      "entity-1120aa429b4232688706d352d27483baafe6c69aab17ab64541d22bc43def551",
+      "entity-1cdbaa0fbb82ca2665f7b725c241ddb244ec34ec2cc50d12a356516e00e02f01",
+      "entity-32ceaf52eb88cb1c2e21c73a13da121b78b55c6ae3570bb9124122b0bf39241e",
+      "entity-43f14ea3ff5b4306e59d3d25f9cc23ce82acf35b0342d58930613e6f1e8b1af8",
+      "entity-6426f9487e9773c6cf70bebe914c20e3e9934bd001d5f2d4c99e0c3b558b45f6",
+      "entity-b0c23a8762a128652ed41ece87a6953479a128c3c15413bf0d09a9b64ab81aa9",
+      "entity-cec9d21285be69d6a8a3c4c9ea8d51609dec4ca89540dda280ae6b6a8d745a06",
+      "entity-ddb9cd51fdc9110e336f9ef1e56303d52b45e0fd227c074fd24dad59074e940c",
+      "entity-e0ff9755a8cdea3b9554984c4ece0146af637b8c5dded310a97287eca4e98cb3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "common-nineteen-interface-contract-closure",
+    "evidence": [
+      "Original66A6E4 has19purecall entries; current maininterface constructor45EF10 andtable66C544 confirm the sharedsecondary callback order.",
+      "FreshphysicalMainInterfaceCOFF table has19entries; slots13,17,18 now point to actualbuttoncallback and sharedzeroreturn methods. Independentoriginal/source review identifies ReportIfslot18 returning1, notblanketzero.",
+      "Coordinator minimalMainInterface fix preserves all39currentclaims, but doesnot implement alloutside-owner callbacks or qualify fullstructure/runtime acceptance."
+    ],
+    "hypothesis": "SubInterface currently exposes only slot0 while original66A6E4 defines nineteen pure callbacks. MainInterface now has correct19-slot table including realbuttonclick and distinct zero-valueddialogcallbacks, but other registeredowners (ReportIf,SocialWin,DiploWin,DatalinkIface) require commonbase contract and genuine concrete defaults/overrides. Registry dispatch must then use actual SubInterface pointers without reinterpretation as a siblingadapter. Preserve all existing method/constructor discoveries, originalspans and claims; do not bank fake empty overrides to fill the contract.",
+    "kind": "discovery"
+  },
+  "previous_event": "40bec7dbaea554e67d2ecd31460d697fc21dca78fdb699ac2ed875b586fd4be8",
+  "request_id": "common-nineteen-interface-contract-closure",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:maininterface-owner-coverage"
+}
