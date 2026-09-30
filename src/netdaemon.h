@@ -208,6 +208,9 @@ class NetDaemon : public AlphaNet {
   // report whether the lock landed. Declared for the veh.cpp action family,
   // which calls it directly at 0x004CB399 / 0x004CB9FD.
   int order_veh(int veh_id, int payload_10, int payload_1C);
+  // 0x00532140 is the daemon's network-aware vehicle drop, distinct from
+  // the free veh_drop helper in veh.cpp.
+  int veh_drop(int veh_id, int x_coord, int y_coord);
   // 0x00532570, still the image's own bytes (forwarded in pending_bodies.cpp).
   // enemy_veh reaches it after its own await_synch, asking the daemon to run
   // the vehicle's order; mode 1 is the only value any caller passes.
@@ -259,9 +262,9 @@ void __cdecl wait_task();     // 0x0051F200
 void __cdecl check_spock();   // 0x0051F1B0, defined in netdaemon.cpp
 void __cdecl do_all_draws();  // also declared in temp.h, which this header
                               // deliberately does not pull in
-// 0x004CC360 and 0x005947C0, both forwarders: the veh.cpp action family is
-// still archived, and the daemon's own veh_drop / order_veh dispatch into it.
-void __cdecl action_airdrop(int faction_id, int x, int y, int mode);
+// Airdrop is recovered in veh.cpp. order_veh remains an unfinished forwarder;
+// the daemon's network methods dispatch through these typed contracts.
+int __cdecl action_airdrop(int veh_id, int x, int y, int mode);
 int __cdecl order_veh(int veh_id, int x, int y);
 
 

@@ -104,6 +104,7 @@ extern int CursorHotspotY[12];
   * offset in the class.
   */
 class Console : public MapWin {
+  friend int __cdecl action_airdrop(int, int, int, int);
   // MainInterface's status/button callbacks operate this owned AlphaMenu.
   friend class MainInterface;
  public:

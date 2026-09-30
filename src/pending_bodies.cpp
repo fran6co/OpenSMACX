@@ -1438,12 +1438,6 @@ void __cdecl wait_loop() {
 // homed into src/netdaemon.cpp, whose wait loops call it, and a forwarder
 // beside a compiled claim is the one thing address_index refuses.
 
-void __cdecl action_airdrop(int faction_id, int x, int y, int mode) {
-    // ?action_airdrop@@YAHHHHH@Z at 0x004CC360, still in veh.cpp's region
-    typedef void(__cdecl *pending)(int, int, int, int);
-    PENDING_BODY(0x004CC360, pending)(faction_id, x, y, mode);
-}
-
 int __cdecl order_veh(int veh_id, int x, int y) {
     // ?order_veh@@YAHHHH@Z at 0x005947C0
     typedef int(__cdecl *pending)(int, int, int);

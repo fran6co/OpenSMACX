@@ -1,0 +1,22 @@
+{
+  "event_id": "59095ee2cb8af504fb175136221f0f2894e5cab0e1fe1ea0bcff8f38c45061f9",
+  "payload": {
+    "affects": [
+      "entity-1112944abbd4e4d027f161cbb04ff73d999d631160ce23af133d61330782a2cd",
+      "entity-202ecf4ac4d17aba5b34b8b87b970b6978cbdd543e9b8e851fab6c9c29f568b3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "airdrop-shared-selection-cell-20260930",
+    "evidence": [
+      "Pinned4CCEF5 writes vehicle ID to9A64DC,4CCF18 reloads after capture_base; existing veh_kill consumes and compares its slot identity against the93E908 selection pointer.",
+      "src/veh.cpp existing VehSelectionFollowLimit and VehSelectionFollow aliases retain this structural debt. Genuine direct-cell ownership, indirect writers and relocation-safe pointer selection must be recovered together. This pending discovery is not resolved by coverage/manual integration."
+    ],
+    "hypothesis": "Airdrop and vehicle deletion share original mutable vehicle-ID storage9A64DC. The existing VehSelectionFollowLimit fixed-address alias and the indirect VehSelectionFollow pointer-cell93E908 still need a coordinated source-owned storage/reference migration; do not silently replace only the direct reads or preserve the wrong original-address model for a byte score.",
+    "kind": "discovery"
+  },
+  "previous_event": "d1380194b5e9d9f1984563f5558c37ff46399ce1dfe54c35f4f900174173e3a1",
+  "request_id": "airdrop-shared-selection-cell-20260930",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:mapwin-owner-coverage-wave"
+}

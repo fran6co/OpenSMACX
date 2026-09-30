@@ -1996,6 +1996,287 @@ int __cdecl drop_range(int faction_id) {
     return (MapLongitudeBounds <= MapLatitudeBounds) ? MapLatitudeBounds : MapLongitudeBounds;
 }
 
+// Typed dependencies: capture_base/spot_all/goody_box have explicitly
+// unfinished bodies in their owners. Other helpers have product definitions;
+// their remaining recovery/reference obligations are not waived by this caller.
+extern int __cdecl break_treaty(int faction_id, int other_faction_id, int treaty);
+extern int __cdecl act_of_aggression(int faction_id, int target_faction_id);
+extern void __cdecl capture_base(int faction_id, int base_owner, int mode);
+extern void __cdecl spot_all(int veh_id, int mode);
+extern int __cdecl goody_box(int veh_id, int goody_id);
+extern void __cdecl clock_wait(int milliseconds);
+extern void __cdecl unspot_stack(int veh_id);
+extern int *const VehSelectionFollowLimit;
+
+// Airdrop a vehicle, including range, interception, landing-site, diplomatic
+// and post-landing processing.  The four modes are the caller's network/local
+// context flags; mode 1 is the network execution path, mode 3 the local path.
+// ORIGINAL: 0x004CC360 ?action_airdrop@@YAHHHHH@Z 0x004CC360-0x004CD051 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004cc360.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 004CC360..004CD051, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover complete typed airdrop admission/interception, landing selection, stack movement, capture and post-drop updates. Preserve unsigned damage storage with integer thresholds and directional treaty evidence; referenced unfinished dependencies remain explicit, not game acceptance."}
+int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
+    NetDaemonNet.lock_state_[1].dword_[3] = mode;
+
+    Veh &vehicle = Vehs[veh_id];
+    const int faction = vehicle.faction_id;
+    const int old_x = vehicle.x;
+    const int old_y = vehicle.y;
+    const int distance_x = abs(old_x - x);
+    const int wrapped_x = (MapIsFlat & 1) ? distance_x
+        : (distance_x > MapLongitude ? MapLongitudeBounds - distance_x : distance_x);
+    const int distance = wrapped_x + abs(old_y - y);
+    const int radius = drop_range(faction);
+    if (radius < (distance >> 1)) {
+        if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
+            parse_num(0, Rules.max_airdrop_sans_orb_insert);
+            if (Players[faction].rule_flags & 0x80) {
+                NetMsgPopup->pop("DROPRANGE", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                return 0;
+            }
+            NetMsgPopup->pop("DROPRANGE", 0xFFFFEC78, 0, "airdp_sm.pcx");
+        }
+        return 0;
+    }
+
+    Map *target = map_loc(x, y);
+    if ((target->climate & 0xE0) < 0x60) {
+        if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
+            if (Players[faction].rule_flags & 0x80) {
+                NetMsgPopup->pop("DROPSEA", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                return 0;
+            }
+            NetMsgPopup->pop("DROPSEA", 0xFFFFEC78, 0, "airdp_sm.pcx");
+        }
+        return 0;
+    }
+
+    const int owner = target->val2 & 0x0F;
+    if ((target->bit & 2) && owner < 8 && owner != faction &&
+        (PlayersData[faction].diplo_treaties[owner] & 1U) == 0) {
+        if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
+            if (Players[faction].rule_flags & 0x80) {
+                NetMsgPopup->pop("DROPUNIT", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                return 0;
+            }
+            NetMsgPopup->pop("DROPUNIT", 0xFFFFEC78, 0, "airdp_sm.pcx");
+        }
+        return 0;
+    }
+
+    if (Weapon[VehPrototypes[vehicle.proto_id].weapon_id].offense_rating == 0 &&
+        zoc_move(x, y, faction) != 0) {
+        if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
+            if (Players[faction].rule_flags & 0x80) {
+                NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                return 0;
+            }
+            NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "airdp_sm.pcx");
+        }
+        return 0;
+    }
+
+    // A hostile, non-treaty faction's unit already on the destination prevents
+    // a non-combat unit from being dropped into that stack.
+    if ((target->bit & 1) != 0 && owner < 8 && owner != faction &&
+        (PlayersData[faction].diplo_treaties[owner] & 1U) == 0 &&
+        Weapon[VehPrototypes[vehicle.proto_id].weapon_id].offense_rating == 0) {
+        if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
+            if (Players[faction].rule_flags & 0x80) {
+                NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                return 0;
+            }
+            NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "airdp_sm.pcx");
+        }
+        return 0;
+    }
+    if ((target->bit & 1) != 0 && owner < 8 && owner != faction &&
+        (PlayersData[faction].diplo_treaties[owner] & 1U) == 0 &&
+        (mode & 1) != 0 && faction == ConsoleGlobal.faction_id_ &&
+        break_treaty(faction, owner, 7) != 0) {
+        return 0;
+    }
+
+    // The drop checks the radius tiles for foreign air defenses that would
+    // intercept the aircraft.
+    for (int offset_index = 0; offset_index < 100; offset_index += 4) {
+        const int radius_index = offset_index / 4;
+        int near_x = x + RadiusOffsetX[radius_index];
+        if (!(MapIsFlat & 1)) {
+            if (near_x < 0) near_x += MapLongitudeBounds;
+            else if (near_x >= MapLongitudeBounds) near_x -= MapLongitudeBounds;
+        }
+        const int near_y = y + RadiusOffsetY[radius_index];
+        if (near_x < 0 || near_x >= MapLongitudeBounds || near_y < 0 || near_y >= MapLatitudeBounds)
+            continue;
+        Map *adjacent = map_loc(near_x, near_y);
+        const int near_owner = adjacent->val2 & 0x0F;
+        if ((adjacent->bit & 1) == 0 || near_owner == 0 || near_owner >= 8 || near_owner == faction ||
+            (PlayersData[faction].diplo_treaties[near_owner] & 0x10U) == 0)
+            continue;
+        const int base_id = base_at(near_x, near_y);
+        if (base_id < 0) continue;
+        int facility_offset, facility_mask;
+        bitmask(0x1D, &facility_offset, &facility_mask);
+        const bool airbase = (Bases[base_id].facilities_built[facility_offset] & facility_mask) != 0;
+        const int cloudbase = SecretProject.cloudbase_academy;
+        const bool has_cloudbase = cloudbase >= 0 && Bases[cloudbase].faction_id_current == near_owner;
+        if (!airbase && !has_cloudbase) {
+            const int nearby_vehicle = veh_at(near_x, near_y);
+            if (stack_check(nearby_vehicle, 2, 4, -1, -1) == 0) continue;
+        }
+        if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            if (Players[faction].rule_flags & 0x80) {
+                NetMsgPopup->pop("AIRDEFENSES", 0xFFFFEC78, 0, "alair_sm.pcx");
+                return 0;
+            }
+            NetMsgPopup->pop("AIRDEFENSES", 0xFFFFEC78, 0, "air_sm.pcx");
+        }
+        return 0;
+    }
+
+    if ((mode & 2) == 0) return 1;
+
+    const int goody = goody_at(x, y);
+    bool local_seen = faction == ConsoleGlobal.faction_id_;
+    if (!local_seen) {
+        const bool visible_owner = (target->bit & 3) != 0 && owner < 8;
+        local_seen = (visible_owner && owner == ConsoleGlobal.faction_id_) ||
+                     ((GameState & 0x80) != 0);
+        if (!local_seen) {
+            for (int neighbor = 0; neighbor < 8; ++neighbor) {
+                int near_x = x + RadiusBaseX[neighbor];
+                if (!(MapIsFlat & 1)) {
+                    if (near_x < 0) near_x += MapLongitudeBounds;
+                    else if (near_x >= MapLongitudeBounds) near_x -= MapLongitudeBounds;
+                }
+                const int near_y = y + RadiusBaseY[neighbor];
+                if (near_x >= 0 && near_x < MapLongitudeBounds && near_y >= 0 &&
+                    near_y < MapLatitudeBounds) {
+                    const Map *adjacent = map_loc(near_x, near_y);
+                    const int near_owner = adjacent->val2 & 0x0F;
+                    if ((adjacent->bit & 3) != 0 && near_owner == ConsoleGlobal.faction_id_) {
+                        local_seen = true;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    bool allied_local = local_seen && faction == ConsoleGlobal.faction_id_;
+    if (local_seen && faction != ConsoleGlobal.faction_id_) {
+        const uint32_t treaty = PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
+        allied_local = (treaty & 1U) != 0 ? (GamePreferences & 0x8000U) != 0
+                                          : (GamePreferences & 4U) != 0;
+    }
+
+    int best_score = 999999;
+    int landing_slot = -1;
+    for (int neighbor = 0; neighbor < 8; ++neighbor) {
+        int near_x = x + RadiusBaseX[neighbor];
+        if (!(MapIsFlat & 1)) {
+            if (near_x < 0) near_x += MapLongitudeBounds;
+            else if (near_x >= MapLongitudeBounds) near_x -= MapLongitudeBounds;
+        }
+        const int near_y = y + RadiusBaseY[neighbor];
+        if (near_x < 0 || near_x >= MapLongitudeBounds || near_y < 0 || near_y >= MapLatitudeBounds)
+            continue;
+        const int random = rand();
+        int score = random % 10 + ((neighbor > 5 || neighbor < 1) ? 0x19 : 0x32);
+        if (neighbor == 1 || neighbor == 5) score -= 10;
+        const Map *adjacent = map_loc(near_x, near_y);
+        if ((adjacent->bit & 3) != 0) {
+            const int near_owner = adjacent->val2 & 0x0F;
+            if (near_owner < 8) {
+                score += 100;
+                if (near_owner != faction) {
+                    score += 1000;
+                    if ((PlayersData[faction].diplo_treaties[near_owner] & 1U) == 0)
+                        score += 10000;
+                }
+            }
+        }
+        if (score < best_score) { best_score = score; landing_slot = neighbor; }
+    }
+    if (landing_slot < 0) return 0;
+
+    if (local_seen && faction != ConsoleGlobal.faction_id_) {
+        const int base_id = base_find(x, y, -1, -1, -1, 1);
+        parse_says(0, Bases[base_id].name_string, -1, -1);
+        GenderDefault = Players[faction].noun_gender;
+        PluralityDefault = Players[faction].is_noun_plural;
+        parse_says(1, Players[faction].noun_faction, -1, -1);
+        const bool ai = (Players[faction].rule_flags & 0x80) != 0;
+        const char *picture = ai ? "al_drop_sm.pcx" : "airdp_sm.pcx";
+        const char *message = drop_range(faction) <= Rules.max_airdrop_sans_orb_insert
+            ? "MADEAIRDROP" : "MADEORBITAL";
+        popp(*ClimatePopupTitle, message, 0, picture, nullptr);
+    }
+
+    vehicle.state |= 0x20;
+    if (Weapon[VehPrototypes[vehicle.proto_id].weapon_id].offense_rating == 0) veh_skip(veh_id);
+    const int from_x = vehicle.x;
+    const int from_y = vehicle.y;
+    const int destination_x_unwrapped = x + RadiusBaseX[landing_slot];
+    int destination_x = destination_x_unwrapped;
+    if (!(MapIsFlat & 1)) {
+        if (destination_x < 0) destination_x += MapLongitudeBounds;
+        else if (destination_x >= MapLongitudeBounds) destination_x -= MapLongitudeBounds;
+    }
+    const int destination_y = y + RadiusBaseY[landing_slot];
+    stack_veh(veh_id, 1);
+    draw_tile(from_x, from_y, 2);
+    if (local_seen && allied_local)
+        veh_scoot(veh_id, destination_x, destination_y, landing_slot ^ 4, 0);
+    unspot_stack(veh_id);
+
+    // Walk from this vehicle to the first member through prev links, then
+    // traverse the complete stack in next-link order and skip every other unit.
+    int stack_top = veh_id;
+    while (Vehs[stack_top].prev_veh_id_stack >= 0)
+        stack_top = Vehs[stack_top].prev_veh_id_stack;
+    for (int member = stack_top; member >= 0; member = Vehs[member].next_veh_id_stack) {
+        if (member != veh_id) veh_skip(member);
+    }
+
+    if (veh_id == ConsoleGlobal.selected_vehicle_ && ConsoleGlobal.cursor_active_ != 0)
+        ConsoleGlobal.cursor_next(x, y);
+    stack_put(veh_id, x, y);
+
+    const int base_here = base_at(x, y);
+    if (base_here < 0) {
+        vehicle.dmg_incurred = static_cast<uint8_t>(vehicle.dmg_incurred +
+            VehPrototypes[vehicle.proto_id].reactor_id * 2);
+        const int reactor = VehPrototypes[vehicle.proto_id].reactor_id;
+        const int target_damage = VehPrototypes[vehicle.proto_id].plan == 0x0C
+            ? 1 : (reactor == 0 ? 1 : (reactor > 100 ? 100 : reactor)) * 10;
+        for (;;) {
+            const int difference = static_cast<int>(target_damage) - vehicle.dmg_incurred;
+            if (difference >= 0 && (difference > 9999 || target_damage != vehicle.dmg_incurred))
+                break;
+            --vehicle.dmg_incurred;
+        }
+    } else if (faction != Bases[base_here].faction_id_current &&
+               (PlayersData[faction].diplo_treaties[Bases[base_here].faction_id_current] & 1U) == 0) {
+        const int previous_owner = Bases[base_here].faction_id_current;
+        if ((LockEnableMask & (1U << faction)) == 0) veh_skip(veh_id);
+        *VehSelectionFollowLimit = veh_id;
+        vehicle.dmg_incurred = 0;
+        act_of_aggression(faction, previous_owner);
+        capture_base(base_here, faction, 0);
+        veh_id = *VehSelectionFollowLimit;
+    }
+    spot_all(veh_id, 1);
+    ConsoleGlobal.update_data(0);
+    if (goody != 0) goody_box(veh_id, goody);
+    if (faction != ConsoleGlobal.faction_id_ && (GameState & 0x80) == 0 &&
+        local_seen && ConsoleGlobal.field_23BF0_ == 0 &&
+        (GetAsyncKeyState(VK_SHIFT) >> 8) == 0 && IsMultiplayerNet == 0) {
+        clock_wait(allied_local ? 200 : 50);
+    }
+    return 1;
+}
+
 /*
 Purpose: Check whether the specified prototype is a planet buster.
 // ORIGINAL: 0x005004F0 ?planet_buster2@@YAHH@Z 0x005004F0-0x00500518 BYTE_EXACT

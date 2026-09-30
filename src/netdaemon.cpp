@@ -40,6 +40,12 @@
 // MultiWin::draw_time (0x00478BE0) declines to draw the turn clock unless it
 // is zero - so it counts the network exchanges currently in flight.
 int NetBusyCount;  // 0x0093F664
+// Original 0x0093A960 accumulates the wait durations returned by the daemon's
+// map-order callbacks. Other writers/extent are not yet assigned to an owner.
+// The pinned loader initializes this observed dword to zero; its containing
+// allocation and complete indirect writer set remain unknown.
+// RECOVERY_OBJECT: v1 0x0093A960 ?NetDaemonWaitTicks@@3HA
+int NetDaemonWaitTicks;
 
 // send_game synchs replay records only when the recorder has bytes to send;
 // the counter and buffer are owned together by replaywin.cpp.
@@ -3410,4 +3416,127 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
   }
   lock_state_[2].dword_[10] = 0;
   return lock_veh(veh_id, payload_1C | 4, payload_20, payload_18, extra);
+}
+
+// Original0x00532140 performs the network half of a vehicle drop. The
+// lock-state words are the existing typed entries documented above; the
+// non-network action is a separate real owner in veh.cpp.
+// ORIGINAL: 0x00532140 ?veh_drop@NetDaemon@@QAEHHHH@Z 0x00532140-0x00532563 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00532140.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 00532140..00532563, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Recover the true network receiver, lock/ack state, global action-mode reentrancy and local execution result; preserve early return versus release paths and leave ExitTurnLoop read-only."}
+int NetDaemon::veh_drop(int veh_id, int x, int y) {
+    if (IsMultiplayerNet == 0) {
+        return action_airdrop(veh_id, x, y, 3);
+    }
+
+    if (lock_state_[2].dword_[2] != 0) {
+        if (lock_state_[2].dword_[8] != 0) return 0;
+        ++lock_state_[2].dword_[10];
+        if (static_cast<int>(lock_state_[2].dword_[10]) < 2) return 0;
+        NetMsgPopup->pop("MOVEPENDING", 0, 2, nullptr);
+        return 0;
+    }
+
+    lock_state_[2].dword_[10] = 0;
+    if (lock_veh(&veh_id, 4, x, y, 4) != 0) return 0;
+
+    const int base_id = base_at(x, y);
+    bool rejected = false;
+    if (base_id >= 0) {
+        const uint8_t vehicle_faction = Vehs[veh_id].faction_id;
+        const uint8_t base_faction = Bases[base_id].faction_id_current;
+        rejected = vehicle_faction == base_faction ||
+            (PlayersData[vehicle_faction].diplo_treaties[base_faction] & 1U) != 0;
+        if (!rejected) {
+            const Map &tile = *map_loc(x, y);
+            rejected = (tile.bit & 2U) != 0 && (tile.val2 & 0x0FU) < 8;
+        }
+        if (!rejected) rejected = add_global() == 0;
+
+        if (!rejected) {
+            if (lock_state_[2].dword_[8] != 0) {
+                Vehs[veh_id].order = 0;
+                Vehs[veh_id].state &= 0xFCFFBDFFU;
+                synch_veh(veh_id);
+                if (IsMultiplayerNet != 0) {
+                    int *acknowledged = reinterpret_cast<int *>(&lock_state_[2].dword_[5]);
+                    *acknowledged = 1;
+                    log_say("Awaiting acknowledgement of SYNCH",
+                            ConsoleGlobal.faction_id_, 0, 0);
+                    const int waited = wait("AWAITEXEC", acknowledged, 1,
+                                            2000);
+                    NetDaemonWaitTicks += waited;
+                    if (*acknowledged == 0) {
+                        log_say("Received SYNCH acknowledgement",
+                                ConsoleGlobal.faction_id_, 0, 0);
+                    }
+                    *acknowledged = 0;
+                }
+            }
+            goto release_vehicle;
+        }
+    }
+
+    if (action_airdrop(veh_id, x, y, 1) != 0) {
+        const int current_speed = speed(veh_id, 0);
+        const int previous_speed = Vehs[veh_id].moves_expended;
+        const int difference = current_speed - previous_speed;
+        if (difference >= 0 &&
+            (difference > 999 || current_speed != previous_speed)) {
+            message_data(0x2403, 0, veh_id, x, y, 0);
+            if (IsMultiplayerNet != 0) {
+                log_say("Client waiting for acknowledgement",
+                        ConsoleGlobal.faction_id_, 0, 0);
+                ++NetBusyCount;
+                const int saved_action_mode = NetDaemonNet.lock_state_[1].dword_[3];
+                const DWORD start_time = timeGetTime();
+                bool showed_wait_popup = false;
+                if (lock_state_[2].dword_[3] == 1) {
+                    do {
+                        if (ExitTurnLoop != 0) break;
+                        if (!showed_wait_popup &&
+                            timeGetTime() - start_time > 2000) {
+                            showed_wait_popup = true;
+                            NetMsgPopup->pop("AWAITEXEC", 0, 2, nullptr);
+                        }
+                        wait_task();
+                        receive();
+                        locks_.check_global();
+                        check_spock();
+                    } while (lock_state_[2].dword_[3] == 1);
+                    if (showed_wait_popup) NetMsgPopup->close();
+                }
+                --NetBusyCount;
+                NetDaemonNet.lock_state_[1].dword_[3] = saved_action_mode;
+                log_say("Client received acknowledgement",
+                        ConsoleGlobal.faction_id_, 0, 0);
+                if (IsMultiplayerNet != 0) {
+                    log_say("Client releasing lock",
+                            ConsoleGlobal.faction_id_, 0, 0);
+                    message_data(0x2212, 0, 0, 0, 0, 0);
+                    lock_state_[2].dword_[3] = 0;
+                    lock_state_[2].dword_[2] = 0;
+                    lock_state_[2].dword_[10] = 0;
+                    lock_state_[2].dword_[9] = 0;
+                }
+                lock_state_[2].dword_[2] = 0;
+                lock_state_[2].dword_[8] = 0;
+                lock_state_[2].dword_[3] = 0;
+                return 1;
+            }
+            return 1;
+        }
+    }
+
+release_vehicle:
+    if (IsMultiplayerNet != 0) {
+        log_say("Client releasing lock", ConsoleGlobal.faction_id_, 0, 0);
+        message_data(0x2212, 0, 0, 0, 0, 0);
+        lock_state_[2].dword_[3] = 0;
+        lock_state_[2].dword_[2] = 0;
+        lock_state_[2].dword_[10] = 0;
+        lock_state_[2].dword_[9] = 0;
+    }
+    lock_state_[1].dword_[4] = 0;
+    lock_state_[2].dword_[8] = 0;
+    return 0;
 }

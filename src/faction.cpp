@@ -5212,3 +5212,18 @@ eliminated:
         && faction != ConsoleGlobal.faction_id_) interlude(0x2a, 0, 1, 0);
     return 1;
 }
+
+// Aggression tests the target faction's treaty with the acting faction, not
+// the reverse entry. double_cross remains an unfinished dependency; this
+// caller preserves its original call and the unconditional treaty update.
+// ORIGINAL: 0x0050C2E0 ?act_of_aggression@@YAHHH@Z 0x0050C2E0-0x0050C332 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050c2e0.cpp retained signature/extents and complete seed; no historical claim copied", "Coordinator full pinned original instruction decode 0050C2E0..0050C332, typed source owner fields and corrected original call/branch evidence", "recovery/tests/test_airdrop_network.py actual-body directional treaty and network reentrancy controls; not linked/runtime/game acceptance"], "reason": "Test target-faction treaty entry for acting faction, conditionally invoke double_cross then unconditionally treaty_on. Existing double_cross remains unfinished; original-direction lookup and service order retained."}
+int __cdecl act_of_aggression(int faction_id, int target_faction_id) {
+    int result = 0;
+    if ((PlayersData[target_faction_id].diplo_treaties[faction_id] & 7U) != 0) {
+        double_cross(faction_id, target_faction_id, -1);
+        result = 1;
+    }
+    treaty_on(faction_id, target_faction_id, 0x8010);
+    return result;
+}

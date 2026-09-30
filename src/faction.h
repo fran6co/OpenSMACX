@@ -877,6 +877,7 @@ void __cdecl set_agenda(int faction_id, int faction_id_with, int agenda,
 // `set_agenda` would collide with that definition, which is why the writers
 // are spelled on/off here.
 void __cdecl treaty_on(int faction_id, int faction_id_with, int treaty);
+int __cdecl act_of_aggression(int faction_id, int target_faction_id);
 void __cdecl treaty_off(int faction_id, int faction_id_with, int treaty);
 void __cdecl agenda_on(int faction_id, int faction_id_with, int agenda);
 void __cdecl agenda_off(int faction_id, int faction_id_with, int agenda);
