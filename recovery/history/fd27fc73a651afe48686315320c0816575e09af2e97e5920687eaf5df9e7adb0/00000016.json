@@ -1,0 +1,79 @@
+{
+  "event_id": "5ad372ac56d495bd0a216457a3cccc2c909abc2c593faef6505039aa050d6619",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Recover the twelve complete remaining ReportIf callback/initialization/rendering bodies using its now-genuine member lifecycle and retained original seeds. Existing partial behavior must remain until the complete replacement is reviewed. SubInterface common callback contract and original mode/table producers are an explicit outside-owner dependency; preserve and report this discovery, do not fake a vtable or edit shared interface/other owners without central authorization.",
+      "Delegate edits only src/reportif.cpp/h during this parallel wave. Coordinator owns any ReportWin/stringstruct redraw-dispatch repair and shared dependency integration; worker does not mutate those files, seeds, annotations, task baselines or Git."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4863072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4866512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4874320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4875056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4877680,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4878336,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4883616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4886608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4890800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4893040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4896256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4899136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "6a4347a884474dea5bffba7789c2f274b23ae357aa4eb3f629a524686f5da9ce",
+  "request_id": "reportif-full-callback-and-renderer-coverage",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:reportwin-owner-coverage"
+}
