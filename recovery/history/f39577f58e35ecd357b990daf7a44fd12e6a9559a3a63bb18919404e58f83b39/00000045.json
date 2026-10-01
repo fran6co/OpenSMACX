@@ -1,0 +1,25 @@
+{
+  "event_id": "0edaab26d7a37269e426d3cf15341b1e5b823e1f13bba10465d201ed4b6e9aa8",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_battlewin_clear.py"
+    ],
+    "evidence": [
+      "Original422C50..422CB5 passes BattleWin+30/+40/+50/+60 as RECT receivers to Buffer::box_sprite style78D528, then MainInterface.redraw_complete and GraphicWin.soft_update. Recover seed historical exact body in real BattleWin owner with four owned RECTs replacing unused scalar fields, genuine MainInterfaceGlobal Buffer base, no address seams. Preserve all seed claims; remeasure touched owner obligations, actual-source callback/order/layout controls and fresh build/link before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4336720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "965b4826a9a9f0fed1f4f861df554774296ac59d0ea2af62fa6ec41181eb2dfc",
+  "request_id": "battle-clear-owned-rectangles-20261001",
+  "schema_version": 1,
+  "sequence": 45,
+  "stream": "task:interface-contract-report-closure"
+}
