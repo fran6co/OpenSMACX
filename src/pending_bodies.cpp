@@ -254,13 +254,6 @@ void __fastcall sub_4c86d0(void *self) {
 // the one the forwarder defined.
 
 
-// ?close@UV2Player@@QAEXXZ at 0x004BF400 - reached by ~UV2Player. See the
-// note in uv2player.h.
-void UV2Player::close() {
-    typedef void(__fastcall *pending)(UV2Player *, void *);
-    PENDING_BODY(0x004BF400, pending)(this, nullptr);
-}
-
 // The game's own `operator new` at 0x0064558A, reached from `Wave::init` and
 // `Wave::load`. See the note in `vector_teardown.h`.
 void *__cdecl WaveOperatorNew(unsigned int size) {

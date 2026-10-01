@@ -1,0 +1,20 @@
+{
+  "event_id": "116334d899a993e7f5dac6238a0c19eae150c7df1b32fa44a3a77d877842e6dd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_uv2player_directdraw.py",
+      "recovery/tests/uv2player_directdraw_harness.cpp"
+    ],
+    "evidence": [
+      "Typed DirectDraw close/play migration requires additional actual-source behavioral controls alongside the preserved input/timed-writer tests. Native close4BF400 and play4BF4B0 use SDK IDirectDraw2 and IDirectDrawSurface2; preserve partial-initialization paths and every historical source obligation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "uv2-typed-directdraw-controls-20261001",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:uv2player-complete-owner-recovery"
+}

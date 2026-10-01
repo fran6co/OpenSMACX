@@ -18,6 +18,10 @@
 #include "stdafx.h"
 #include "uv2player.h"
 #include <mmsystem.h>
+#include "alpha.h"
+#include "palette.h"
+#include "temp.h"
+#include "win.h"
 
 /*
 Purpose: Construct the Buffer subobject, then clear one field.
@@ -42,7 +46,7 @@ Status: Complete
 */
 UV2Player::UV2Player() {
     // buffer_ has completed construction before the native ready pointer clears.
-    field_10C_ = 0;
+    direct_draw2_ = 0;
 }
 
 // The movie input loop and timed writer share these original four-byte slots.
@@ -177,4 +181,128 @@ Status: Complete
 */
 UV2Player::~UV2Player() {
     close();
+}
+
+// ORIGINAL: 0x004BF400 ?close@UV2Player@@QAEXXZ 0x004BF400-0x004BF4A2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned4BF400..4BF4A2 releases primary Surface2 and Draw2 only; it does not release back buffer or clipper. Clears active8CC254 before COM calls, then applies DirectDraw preference and 800x600/1024x768 restoration.", "Play4BF4B0 creates DirectDraw then queries IID_IDirectDraw2=b3a6f3e0-2b43-11cf-a2de-00aa00b93356 at66FC38; surfaces query IID_IDirectDrawSurface2=57805885-6eec-11cf-9441-a82303c10e27 at66FC28. Pinned SDK DDRAW.H establishes method ABI.", "recovery/tasks/uv2player-complete-owner-recovery.json; retain exact constructor/destructor/timed-writer obligations and source-owned original play mapping. No full structure or runtime acceptance is asserted."], "reason": "Recover movie display teardown with genuine SDK interfaces, source-owned active player, shared preferences/display helpers and native live pointer reloads."}
+void UV2Player::close() {
+    UV2PlayerActive = nullptr;
+    if (direct_draw2_ != nullptr) {
+        direct_draw2_->RestoreDisplayMode();
+        primary_surface_->Release();
+        primary_surface_ = nullptr;
+        direct_draw2_->Release();
+        direct_draw2_ = nullptr;
+
+        if (prefs_get("DirectDraw", 1, 0) != 0) {
+            if (WinScreenWidth >= 0x400) {
+                Win::set_display_mode(0x400, 0x300, 8, 0);
+            } else {
+                Win::set_display_mode(0x320, 0x258, 8, 0);
+            }
+        }
+    }
+    direct_draw_ = nullptr;
+    back_buffer_surface_ = nullptr;
+    field_11C_ = 0;
+    field_120_ = 0;
+    field_124_ = 0;
+}
+
+/*
+Purpose: Bring up the movie player's DirectDraw chain: clear and flip the
+         screen buffer, create the DirectDraw object, take the cooperative
+         level on the main window, try the display mode at four bit depths,
+         create the primary flipping surface with its back buffer and
+         clipper, and clear both surfaces through two Blt calls.
+
+// ORIGINAL: 0x004BF4B0 ?play@UV2Player@@QAEHHH@Z 0x004BF4B0-0x004BF6D1 FILE
+// size      545 bytes
+// prototype int (__thiscall ?play@UV2Player@@QAEHHH@Z)(UV2Player* this, int, int)
+// callers   1   call targets   5
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x004BF400 0x005D44FC 0x005DFB50 0x005EFD20 0x006465F0
+// notes     Seed provenance (TRIED): the 21-slot COM vtable dispatch
+//           (QueryInterface/Release/SetCooperativeLevel/SetDisplayMode
+//           retry chain/CreateSurface/GetAttachedSurface/CreateClipper/Blt)
+//           and the DDSURFACEDESC/DDBLTFX field offsets are a faithful
+//           transcription off the raw disassembly; the prologue's this-spill
+//           placement differs (MISMATCH #4 push vs mov). Not measured exact.
+Return Value: 0 after surface clearing; 1 for early/attached-surface failure;
+              18 for failed display modes or clipper creation.
+Status: Coverage transcription - unclaimed body, seed
+        src/unrecovered/004bf4b0.cpp retained.
+*/
+int UV2Player::play(int width, int height) {
+    // Native ESI points to the member slot (+0x10C), not a cached interface.
+    // Reload across mode retries and surface callbacks: COM calls may rebind it.
+    if (direct_draw2_ != nullptr) {
+        return 1;
+    }
+
+    ScreenBuffer.fill(0);
+    Win::flip(nullptr);
+
+    if (DirectDrawCreate(nullptr, &direct_draw_, nullptr) != DD_OK) {
+        return 1;
+    }
+    if (direct_draw_->SetCooperativeLevel(HandleMain,
+            DDSCL_FULLSCREEN | DDSCL_EXCLUSIVE) != DD_OK) {
+        return 1;
+    }
+
+    // The native code does not branch on QueryInterface's result, or on the
+    // Release result. Keep that partial-initialization path unchanged.
+    direct_draw_->QueryInterface(IID_IDirectDraw2,
+        reinterpret_cast<void **>(&direct_draw2_));
+    direct_draw_->Release();
+
+    if (direct_draw2_->SetDisplayMode(width, height, 0x10, 0, 0) != DD_OK &&
+        direct_draw2_->SetDisplayMode(width, height, 0x18, 0, 0) != DD_OK &&
+        direct_draw2_->SetDisplayMode(width, height, 0x20, 0, 0) != DD_OK &&
+        direct_draw2_->SetDisplayMode(width, height, 8, 0, 0) != DD_OK) {
+        close();
+        return 0x12;
+    }
+
+    DDSURFACEDESC description;
+    memset(&description, 0, 0x6C);
+    description.dwSize = 0x6C;
+    description.dwFlags = DDSD_CAPS | DDSD_BACKBUFFERCOUNT;
+    description.dwBackBufferCount = 1;
+    description.ddsCaps.dwCaps =
+        DDSCAPS_COMPLEX | DDSCAPS_FLIP | DDSCAPS_PRIMARYSURFACE;
+
+    // These are output slots in the native frame. Do not initialize them or
+    // add a CreateSurface failure check absent from the original path.
+    LPDIRECTDRAWSURFACE primary_surface;
+    direct_draw2_->CreateSurface(&description, &primary_surface, nullptr);
+
+    DDSCAPS attached_caps;
+    attached_caps.dwCaps = DDSCAPS_BACKBUFFER;
+    LPDIRECTDRAWSURFACE back_buffer_surface;
+    if (primary_surface->GetAttachedSurface(&attached_caps,
+                                             &back_buffer_surface) != DD_OK) {
+        close();
+        return 1;
+    }
+
+    primary_surface->QueryInterface(IID_IDirectDrawSurface2,
+        reinterpret_cast<void **>(&primary_surface_));
+    back_buffer_surface->QueryInterface(IID_IDirectDrawSurface2,
+        reinterpret_cast<void **>(&back_buffer_surface_));
+
+    if (direct_draw2_->CreateClipper(0, &clipper_, nullptr) != DD_OK) {
+        return 0x12;
+    }
+
+    DDBLTFX effects;
+    effects.dwSize = 0x64;
+    effects.dwFillColor = 0;
+    back_buffer_surface_->Blt(nullptr, nullptr, nullptr,
+                              DDBLT_WAIT | DDBLT_COLORFILL, &effects);
+    primary_surface_->Blt(nullptr, nullptr, nullptr,
+                          DDBLT_WAIT | DDBLT_COLORFILL, &effects);
+    return 0;
 }

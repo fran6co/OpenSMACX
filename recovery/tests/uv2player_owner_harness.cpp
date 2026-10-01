@@ -18,7 +18,7 @@ struct Buffer {
     int write_raw_l(LPSTR,int,int,int);
 };
 struct UV2Player {
-    uint32_t field_10C_;
+    void *direct_draw2_;
     Buffer buffer_;
     uint32_t write_delay_;
     UV2Player();
@@ -59,7 +59,7 @@ int main(int argc,char **argv) {
     char text[]="abc";
     if(strcmp(argv[1],"constructor")==0) {
         UV2Player initialized;
-        assert(initialized.field_10C_==0&&initialized.buffer_.count==0&&
+        assert(initialized.direct_draw2_==0&&initialized.buffer_.count==0&&
                initialized.buffer_.field_8_==0);
     } else if(strcmp(argv[1],"keys")==0) {
         peek_result=1;get_result=1;

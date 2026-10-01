@@ -25,11 +25,9 @@ class UV2Player {
  public:
   UV2Player();
   ~UV2Player();
-  // 0x004BF400, a pending_bodies forwarder. ~UV2Player calls it; buffer_
-  // being a real member gives the compiler its own automatic unwind
-  // protection around that call, matching the image's SEH-wrapped close()
-  // before the Buffer subobject's destructor runs.
+  // Release the native display interfaces before automatic Buffer destruction.
   void close();
+  int play(int width, int height);
   // ?exec@UV2Player@@QAEHPADHHH@Z at 0x004BEA50, still an original body
   // (src/unrecovered/004bea50.cpp); the definition in pending_bodies.cpp
   // forwards to it. amovie_project plays the .wve opening through it.
@@ -106,11 +104,11 @@ class UV2Player {
   uint32_t field_FC_;  // 0xFC
   uint32_t field_100_;  // 0x100
   uint32_t field_104_;  // 0x104
-  uint32_t field_108_;  // 0x108
-  uint32_t field_10C_;  // 0x10C
-  uint32_t field_110_;  // 0x110
-  uint32_t field_114_;  // 0x114
-  uint32_t field_118_;  // 0x118
+  IDirectDraw *direct_draw_;  // 0x108
+  IDirectDraw2 *direct_draw2_;  // 0x10C
+  IDirectDrawSurface2 *primary_surface_;  // 0x110
+  IDirectDrawSurface2 *back_buffer_surface_;  // 0x114
+  IDirectDrawClipper *clipper_;  // 0x118
   uint32_t field_11C_;  // 0x11C
   uint32_t field_120_;  // 0x120
   uint32_t field_124_;  // 0x124
