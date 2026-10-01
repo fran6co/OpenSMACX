@@ -6387,7 +6387,858 @@ int __cdecl base_connect(int priority) {
 }
 
 // ORIGINAL: 0x004ECBF0 ?base_terraform@@YAXH@Z 0x004ECBF0-0x004EEF61
-// RECOVERY_BINDING: v1 {"evidence": ["Preserved src/unrecovered/004ecbf0.cpp native signature/extent; user authorizes mapped unfinished empty bodies for newly referenced unrecovered callees; BODY GOES HERE remains mandatory."], "reason": "Explicit unfinished owning-TU dependency for recovered time_warp; empty body maintains build continuity, not planner behavior or coverage. Full seed and in-flight base-owner recovery preserved."}
-void __cdecl base_terraform(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004ecbf0.cpp retained full native span", "Pinned 4ECBF0..4EEF61 instruction review establishes BaseIDCurrentSelected forced-improvement timer and pre-filter improvement-presence latches", "recovery/tests/test_base_terraform_behavior.py actual-source behavioral controls"], "reason": "Base-domain terraforming planner uses genuine Base, Map, Path and faction owners for tile scoring, improvement goals, forced actions and relocation. Historical seed and original extent remain preserved; source translation is not a byte-exact or runtime claim."}
+void __cdecl base_terraform(int force_improve) {
+    Base &base = *BaseCurrent;
+    const int faction = base.faction_id_current;
+    const uint32_t faction_bit = 1u << (faction & 0x1F);
+    // The native tests only the low byte of the mask at both use sites.
+    const bool human = (static_cast<uint8_t>(LockEnableMask) &
+                        static_cast<uint8_t>(faction_bit)) != 0;
+
+    int growth_priority = 0;
+    int wealth_priority = 0;
+    int power_priority = 0;
+    if (!human) {
+        growth_priority = PlayersData[faction].ai_growth;
+        wealth_priority = PlayersData[faction].ai_wealth;
+        power_priority = PlayersData[faction].ai_power;
+    } else {
+        // The project has not named these Base::governor control bits; keep
+        // the original masks and precedence instead of assigning semantics.
+        const uint32_t governor = base.governor;
+        if ((governor & 0x01000000u) == 0) {
+            if ((governor & 0x02000000u) == 0) {
+                if ((governor & 0x04000000u) == 0) {
+                    if ((governor & 0x08000000u) != 0) power_priority = 1;
+                } else {
+                    wealth_priority = 1;
+                }
+            } else {
+                growth_priority = 1;
+            }
+        }
+    }
+
+    int energy_need = (((wealth_priority - power_priority + 4 + growth_priority) *
+                        static_cast<int>(base.population_size) + 3) / 5) -
+                      base.energy_intake_1 + BaseSquareEnergy;
+    if (energy_need < 0) energy_need = 0;
+    else if (energy_need > 99) energy_need = 99;
+
+    int mineral_need = (power_priority * 2 - base.mineral_intake_1) + 1 +
+                       static_cast<int>(base.population_size);
+    if (mineral_need < 0) mineral_need = 0;
+    else if (mineral_need > 99) mineral_need = 99;
+
+    if (energy_need == 0 || energy_need + 1 <= mineral_need)
+        base.state &= ~BSTATE_UNK_1000;
+    else
+        base.state |= BSTATE_UNK_1000;
+    if (mineral_need == 0 || mineral_need + 1 <= energy_need)
+        base.state &= ~BSTATE_UNK_2000;
+    else
+        base.state |= BSTATE_UNK_2000;
+
+    int need_gap = (3 - (energy_need < 3 ? energy_need : 2) -
+                    (mineral_need < 3 ? mineral_need : 2));
+    if (need_gap < 0) need_gap = 0;
+    else if (need_gap > 3) need_gap = 3;
+    int nutrient_need_state = 0;
+    if (base.nutrient_surplus < need_gap) {
+        nutrient_need_state = base.nutrient_surplus < 0 ? 2 : 1;
+        base.state |= BSTATE_UNK_4000;
+    } else {
+        base.state &= ~BSTATE_UNK_4000;
+    }
+
+    int sensor_count = 0;
+    int good_unworked_count = 0;
+    int worked_bonus_count = 0;
+    int worked_square_count = 0;
+    int radius_index;
+    for (radius_index = 0; radius_index < 21; ++radius_index) {
+        int x = base.x + RadiusOffsetX[radius_index];
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = base.y + RadiusOffsetY[radius_index];
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+            x >= MapLongitudeBounds)
+            continue;
+
+        const Map &tile = *map_loc(x, y);
+        if ((tile.climate & 0xE0) < ALT_BIT_SHORE_LINE ||
+            whose_territory(faction, x, y, NULL, FALSE) != faction)
+            continue;
+
+        if (is_sensor(x, y) != 0) ++sensor_count;
+        const uint32_t tile_flags = tile.bit;
+        const bool workable_terrain = (tile_flags & BIT_FOREST) == 0 &&
+            ((tile_flags & BIT_FUNGUS) == 0 ||
+             (tile.climate & 0xE0) < ALT_BIT_OCEAN_SHELF);
+        const uint32_t worked_bit = 1u << (radius_index & 0x1F);
+        if (workable_terrain && (base.resource_sqr_radius & worked_bit) == 0) {
+            const int rainfall = (tile.climate & 0x18) >> 3;
+            const int worked_modifier = (tile_flags >> 15) & 1;
+            if (rainfall + worked_modifier > 1) {
+                bool contested_by_neighbor = false;
+                for (int other_id = 0; other_id < BaseCurrentCount; ++other_id) {
+                    if (Bases[other_id].faction_id_current != faction) continue;
+                    int dx = abs(x - Bases[other_id].x);
+                    if ((MapIsFlat & 1) == 0 && dx > MapLongitude)
+                        dx = MapLongitudeBounds - dx;
+                    const int dy = abs(y - Bases[other_id].y);
+                    if (vector_dist(dx, dy) < 3) {
+                        const int other_radius = radius_move(
+                            Bases[other_id].x, Bases[other_id].y, x, y, 0x15);
+                        if (other_radius >= 0 && other_radius < 32 &&
+                            (Bases[other_id].resource_sqr_radius &
+                             (1u << other_radius)) != 0) {
+                            contested_by_neighbor = true;
+                            break;
+                        }
+                    }
+                }
+                if (!contested_by_neighbor) {
+                    ++good_unworked_count;
+                    if ((tile.val3 & 0xC0) != 0 || bonus_at(x, y, 0) != 0)
+                        ++worked_bonus_count;
+                }
+            }
+        } else if ((base.resource_sqr_radius & worked_bit) != 0 &&
+                   (tile_flags & BIT_FARM) == 0 &&
+                   ((tile.val3 & 0xC0) < 0x80) &&
+                   ((tile_flags & BIT_FUNGUS) == 0 ||
+                    (tile.climate & 0xE0) < ALT_BIT_OCEAN_SHELF)) {
+            if ((tile.climate & 0x18) < 0x10 ||
+                has_tech(Rules.tech_three_nutrients_sqr, faction) != 0 ||
+                bonus_at(x, y, 0) == 1)
+                ++worked_square_count;
+        }
+    }
+
+    // Expansion looks first for a larger connected land region. The saved
+    // water-site objective is deliberately separate from the later former
+    // action scoring and preserves the original early-exit behavior.
+    int ocean_tile_count = 0;
+    int expansion_region = -1;
+    uint32_t expansion_region_size = 0;
+    int expansion_score = 0;
+    int expansion_x = -1;
+    int expansion_y = -1;
+    bool expansion_candidate_is_shelf = false;
+    for (radius_index = 0; radius_index < 21; ++radius_index) {
+        int x = base.x + RadiusOffsetX[radius_index];
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = base.y + RadiusOffsetY[radius_index];
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+            x >= MapLongitudeBounds)
+            continue;
+        const Map &tile = *map_loc(x, y);
+        const uint8_t altitude = tile.climate & 0xE0;
+        if (altitude >= ALT_BIT_SHORE_LINE) continue;
+        ++ocean_tile_count;
+        if (radius_index == 0 || altitude != ALT_BIT_OCEAN_SHELF) continue;
+        const bool region_can_compete = expansion_region < 0 ||
+            tile.region == expansion_region ||
+            Continents[tile.region].tile_count > expansion_region_size;
+        if (!region_can_compete) continue;
+        if (can_terraform(faction, x, y, TRUE, BaseIDCurrentSelected) == 0)
+            return;
+        expansion_region = tile.region;
+        expansion_region_size = Continents[tile.region].tile_count;
+        int score = 21 - radius_index;
+        if (bonus_at(x, y, 0) != 0) score += 21;
+        if (score > expansion_score) {
+            expansion_score = score;
+            expansion_x = x;
+            expansion_y = y;
+            expansion_candidate_is_shelf = true;
+        }
+    }
+    if (expansion_candidate_is_shelf && expansion_x >= 0 &&
+        map_loc(expansion_x, expansion_y)->region == map_loc(base.x, base.y)->region)
+        add_goal(faction, AI_GOAL_TERRAFORM_WATER, 2, expansion_x, expansion_y,
+                 BaseIDCurrentSelected);
+
+    base.unk_x = -1;
+    base.unk_y = -1;
+
+    int edge_square_count = 0;
+    int radius_rainfall = 0;
+    int radius_temperature = 0;
+    int special_land_square_count = 0;
+    int worked_special_land_count = 0;
+    int worked_special_square_count = 0;
+    int map_improvement_count = 0;
+    bool thermal_borehole_present = false;
+    bool condenser_present = false;
+    int nearest_open_square_count = 0;
+    const int fungus_tech_total = PlayersData[faction].tech_fungus_nutrient +
+                                  PlayersData[faction].tech_fungus_mineral +
+                                  PlayersData[faction].tech_fungus_energy;
+    for (radius_index = 0; radius_index < 21; ++radius_index) {
+        int x = base.x + RadiusOffsetX[radius_index];
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = base.y + RadiusOffsetY[radius_index];
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+            x >= MapLongitudeBounds) {
+            ++edge_square_count;
+            continue;
+        }
+
+        const Map &tile = *map_loc(x, y);
+        const uint8_t climate = tile.climate;
+        const uint8_t altitude = climate & 0xE0;
+        const uint32_t flags = tile.bit;
+        const int rainfall = (climate >> 3) & 3;
+        const int rocky = (tile.val3 >> 6) & 3;
+        if (altitude < ALT_BIT_SHORE_LINE &&
+            !(force_improve != 0 && (Players[faction].rule_flags & RFLAG_AQUATIC)))
+            continue;
+
+        if ((flags & (BIT_CONDENSER | BIT_ECH_MIRROR | BIT_THERMAL_BORE)) != 0)
+            ++map_improvement_count;
+        const bool elevated_fungus = (flags & BIT_FUNGUS) != 0 &&
+                                     altitude >= ALT_BIT_OCEAN_SHELF;
+        const int altitude_level = (altitude >> 5) - 2;
+        const int normalized_altitude = altitude_level < 0 ? 0 : altitude_level;
+        if (radius_index != 0 &&
+            (normalized_altitude + rainfall + rocky > 3 ||
+             (flags & BIT_FOREST) != 0 ||
+             (elevated_fungus && fungus_tech_total > 3))) {
+            ++nearest_open_square_count;
+            if ((base.resource_sqr_radius & (1u << (radius_index & 0x1F))) != 0)
+                ++worked_special_land_count;
+
+            const bool fungus_in_high_altitude = elevated_fungus;
+            if (!fungus_in_high_altitude) {
+                const bool forest = (flags & BIT_FOREST) != 0;
+                const bool farm_or_rocky_mine = (flags & BIT_FARM) != 0 ||
+                    (rocky > 1 && (flags & BIT_MINE) != 0);
+                const bool terrain_kind_allowed = rocky > 1 ||
+                    (flags & BIT_SOLAR_TIDAL) != 0 ||
+                    ((flags & BIT_MINE) != 0 && (flags & BIT_FARM) != 0);
+                if (forest || (farm_or_rocky_mine && terrain_kind_allowed)) {
+                    ++special_land_square_count;
+                    if ((base.resource_sqr_radius &
+                         (1u << (radius_index & 0x1F))) != 0)
+                        ++worked_special_square_count;
+                }
+            } else if (fungus_tech_total >= 4) {
+                ++special_land_square_count;
+                if ((base.resource_sqr_radius &
+                     (1u << (radius_index & 0x1F))) != 0)
+                    ++worked_special_square_count;
+            } else if (has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech,
+                                faction) == 0) {
+                --nearest_open_square_count;
+            }
+        }
+        radius_rainfall += rainfall;
+        radius_temperature += climate & 7;
+    }
+    const int radius_score_count = edge_square_count + radius_rainfall;
+    const int high_edge_square_count = (radius_score_count > 14 ? 1 : 0) +
+                                       (radius_score_count > 25 ? 1 : 0);
+
+    // The native population adjustment uses the same low-byte human test as
+    // the priority branch above.  It is applied after the complete 21-square
+    // aggregate, before any individual candidate is scored.
+    if (human && base.population_size > 3) --nearest_open_square_count;
+
+    int best_action_score = 0;
+    int best_action_radius = -1;
+    int best_action = 0;
+    int best_condenser_score = -1;
+    int best_condenser_x = -1;
+    int best_condenser_y = -1;
+    int best_landing_score = -1;
+    int best_landing_x = -1;
+    int best_landing_y = -1;
+    int best_thermal_score = -1;
+    int best_thermal_x = -1;
+    int best_thermal_y = -1;
+    int high_elevation_candidate_count = 0;
+    const int base_region = map_loc(base.x, base.y)->region;
+    for (radius_index = 0; radius_index < 21; ++radius_index) {
+        int x = base.x + RadiusOffsetX[radius_index];
+        if ((MapIsFlat & 1) == 0) {
+            if (x < 0) x += MapLongitudeBounds;
+            else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+        }
+        const int y = base.y + RadiusOffsetY[radius_index];
+        if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+            x >= MapLongitudeBounds)
+            continue;
+
+        const Map &tile = *map_loc(x, y);
+        const uint8_t entry_climate = tile.climate;
+        const uint8_t entry_altitude = entry_climate & 0xE0;
+        const uint32_t entry_flags = tile.bit;
+        if ((entry_flags & BIT_MONOLITH) != 0) continue;
+        // Native latches existing boreholes/condensers before excluding the
+        // center square or applying the remaining candidate gates.
+        if ((entry_flags & BIT_THERMAL_BORE) != 0) thermal_borehole_present = true;
+        if ((entry_flags & BIT_CONDENSER) != 0) condenser_present = true;
+        if (radius_index == 0) continue;
+        if (entry_altitude < ALT_BIT_SHORE_LINE &&
+            !(force_improve != 0 &&
+              (Players[faction].rule_flags & RFLAG_AQUATIC) != 0))
+            continue;
+        if ((entry_flags & BIT_FUNGUS) != 0 &&
+            entry_altitude >= ALT_BIT_OCEAN_SHELF &&
+            !has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, faction))
+            continue;
+        if (tile.region != base_region) continue;
+
+        const int zoc_owner = zoc_move(x, y, faction);
+        if (zoc_owner >= 0) {
+            if (zoc_owner == 1) continue;
+            const int treaty_index = zoc_owner - 1;
+            if (treaty_index >= 0 && treaty_index < MaxPlayerNum &&
+                (PlayersData[faction].diplo_treaties[treaty_index] & 0x0C30) != 0)
+                continue;
+            const unsigned int occupant = tile.val2 & 0x0F;
+            if ((tile.bit & 0x3u) != 0 && occupant <= 7) continue;
+        }
+        const int territory = whose_territory(faction, x, y, NULL, FALSE);
+        if (territory >= 0 && territory != faction) continue;
+
+        // These are the post-territory values the native scorer reloads after
+        // the zoc/territory callbacks, before crop and bonus calculations.
+        const uint8_t altitude_climate = tile.climate;
+        const uint8_t altitude = altitude_climate & 0xE0;
+        const uint32_t flags = tile.bit;
+        const int altitude_level_raw = (altitude >> 5) - 2;
+        const int altitude_level = altitude_level_raw < 0 ? 0 : altitude_level_raw;
+        const int crop = crop_yield(faction, -1, x, y, TRUE);
+        const int rocky = (tile.val3 >> 6) & 3;
+        const int bonus = bonus_at(x, y, 0);
+        const uint8_t climate = tile.climate;
+        const int rainfall = (climate & 0x18) >> 3;
+        const bool farm = (flags & BIT_FARM) != 0;
+        bool forest = (flags & BIT_FOREST) != 0;
+        const bool solar_or_bore = (flags & (BIT_SOLAR_TIDAL |
+            BIT_THERMAL_BORE)) != 0;
+        const bool mine_or_bore = (flags & (BIT_MINE | BIT_THERMAL_BORE)) != 0;
+        bool special_improvement = (flags & (BIT_CONDENSER |
+            BIT_ECH_MIRROR | BIT_THERMAL_BORE)) != 0;
+        bool high_fungus = (flags & BIT_FUNGUS) != 0 &&
+                           altitude >= ALT_BIT_OCEAN_SHELF;
+        bool worked = (base.resource_sqr_radius &
+            (1u << (radius_index & 0x1F))) != 0;
+        const int sensor = is_sensor(x, y);
+        const uint32_t post_sensor_flags = tile.bit;
+        const uint8_t post_sensor_climate = tile.climate;
+        forest = (post_sensor_flags & BIT_FOREST) != 0;
+        special_improvement = (post_sensor_flags & (BIT_CONDENSER |
+            BIT_ECH_MIRROR | BIT_THERMAL_BORE)) != 0;
+        high_fungus = (post_sensor_flags & BIT_FUNGUS) != 0 &&
+            (post_sensor_climate & 0xE0) >= ALT_BIT_OCEAN_SHELF;
+        if (forest) {
+            int forest_score = (sensor == 0 ? 1 : -1) + altitude_level +
+                rocky + rainfall;
+            if (has_tech(Rules.tech_three_nutrients_sqr, faction) != 0)
+                ++forest_score;
+            int facility_byte = 0;
+            int facility_mask = 0;
+            bitmask(0x0D, &facility_byte, &facility_mask);
+            if ((Bases[BaseIDCurrentSelected].facilities_built[facility_byte] &
+                 static_cast<uint8_t>(facility_mask)) != 0)
+                --forest_score;
+            bitmask(0x0E, &facility_byte, &facility_mask);
+            if ((Bases[BaseIDCurrentSelected].facilities_built[facility_byte] &
+                 static_cast<uint8_t>(facility_mask)) != 0)
+                --forest_score;
+            if (forest_score > 4) forest = false;
+        }
+        int fungus_score_factor = high_fungus ? 4 : 0;
+        if (fungus_score_factor != 0) {
+            const int fungus_yield_rank = (sensor == 0 ? 1 : 0) +
+                altitude_level + rocky + rainfall;
+            if (fungus_yield_rank < fungus_tech_total) continue;
+            if (fungus_yield_rank == fungus_tech_total)
+                fungus_score_factor = 1;
+        }
+        if (!worked && worked_special_square_count == worked_special_land_count &&
+            worked_bonus_count == 0 && !forest && fungus_score_factor == 0 &&
+            rainfall != 0 && rocky < 2)
+            worked = true;
+
+        // Native suppresses landing-site ranking after the second square
+        // above altitude level four. The counter is cumulative across the
+        // same eligible-square walk, not merely the current radius ring.
+        if ((altitude >> 5) > 4 && ++high_elevation_candidate_count > 1)
+            best_landing_score = -99999;
+
+        // Native first adjusts the forest discriminator from local yield,
+        // technology, and the selected base's facility bits. The sensor-array
+        // candidate is then ranked before farm/solar.
+        const uint32_t terrain_action_mask = flags & 0x01E00050u;
+        const bool fungus_technology = has_tech(
+            Rules.tech_improve_fungus_sqr, faction) != 0;
+        const bool human_sensor_policy =
+            (static_cast<uint8_t>(LockEnableMask) &
+             static_cast<uint8_t>(faction_bit)) != 0 &&
+            (GameMorePreferences & 0x20u) == 0;
+        const bool sensor_site_allowed = sensor_count == 0 && sensor == 0 &&
+            bonus == 0 && (terrain_action_mask == 0 ||
+                           base.population_size > 7) &&
+            !human_sensor_policy &&
+            (worked_bonus_count == 0 ||
+             base.population_size - 1 <= worked_square_count ||
+             base.population_size > 1) &&
+            (fungus_score_factor == 0 || fungus_technology) &&
+            (rocky > 1 || forest || rainfall == 0 ||
+             (fungus_score_factor != 0 && fungus_technology));
+        if (sensor_site_allowed) {
+            int score = (static_cast<int>(base.population_size) + 2 +
+                PlayersData[faction].ai_fight * 2) *
+                ((forest || fungus_score_factor != 0 || rainfall == 0) ? 8 : 4);
+            bool shallow_neighbor = false;
+            for (int sensor_direction = 0; sensor_direction < 8;
+                 ++sensor_direction) {
+                int neighbor_x = x + RadiusBaseX[sensor_direction];
+                if ((MapIsFlat & 1) == 0) {
+                    if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
+                    else if (neighbor_x >= MapLongitudeBounds)
+                        neighbor_x -= MapLongitudeBounds;
+                }
+                const int neighbor_y = y + RadiusBaseY[sensor_direction];
+                if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds ||
+                    neighbor_x < 0 || neighbor_x >= MapLongitudeBounds)
+                    continue;
+                if ((map_loc(neighbor_x, neighbor_y)->climate & 0xE0) <
+                    ALT_BIT_SHORE_LINE) {
+                    shallow_neighbor = true;
+                    break;
+                }
+            }
+            if (!shallow_neighbor) score *= 2;
+            if (score > best_action_score) {
+                best_action_score = score;
+                best_action_radius = radius_index;
+                best_action = 9;
+            }
+        }
+
+        // Native farm/solar ranking. The two actions share their crop-yield
+        // and worked-square score; the native tie-break prefers farm only
+        // when the food/energy state allows it and no solar/borehole exists.
+        if ((energy_need != 0 || (base.state & 0x8000) != 0) && !forest &&
+            !special_improvement &&
+            (sensor == 0 || (2 - (worked ? 1 : 0)) < sensor_count) &&
+            (!mine_or_bore || (mineral_need == 0 && altitude_level > 1))) {
+            const int reduced_need = energy_need < 2 || altitude_level < 2 ? 0 : 1;
+            if ((static_cast<int>(farm) + 1 - reduced_need) <= crop &&
+                altitude_level != 0) {
+                int score = altitude_level * 3;
+                if (bonus == 2 || rocky == 1) score += 2;
+                if (bonus == 1) score += 2;
+                else if (bonus == 3) score += farm ? -1 : 1;
+                if (farm) ++score;
+                if (rocky == 2) score -= 3;
+                int scaled_need = energy_need * 2;
+                if (scaled_need < 1) scaled_need = 1;
+                else if (scaled_need > 99) scaled_need = 99;
+                score *= scaled_need;
+                if (worked) score *= 2;
+                if (fungus_score_factor != 0)
+                    score += base.eco_damage * fungus_score_factor * 2;
+
+                if ((worked || energy_need > 1) && !farm &&
+                    (bonus == 3 || energy_need == 0 || nutrient_need_state != 0) &&
+                    rocky < 2) {
+                    if (nutrient_need_state != 0) score *= 2;
+                    if (score > best_action_score) {
+                        best_action_score = score;
+                        best_action_radius = radius_index;
+                        best_action = 0;
+                    }
+                } else if (!solar_or_bore && score > best_action_score) {
+                    best_action_score = score;
+                    best_action_radius = radius_index;
+                    best_action = 3;
+                }
+            }
+        } else {
+            int score = 0;
+            if (rocky == 0) score = crop + 1;
+            else if (rocky == 1) score = 3 - crop;
+            else if (rocky == 2) score = 6;
+            if (bonus == 1) score += 4;
+            else if (bonus == 2) score *= 2;
+            else if (bonus == 3) score += 2;
+            if (farm) ++score;
+            if ((flags & BIT_ROAD) != 0) ++score;
+            if (forest) --score;
+            score *= mineral_need;
+            score *= worked ? 6 : 3;
+            if (fungus_score_factor != 0)
+                score += base.eco_damage * fungus_score_factor * 2;
+
+            if (!mine_or_bore && !special_improvement) {
+                if (score > best_action_score) {
+                    best_action_score = score;
+                    best_action_radius = radius_index;
+                    best_action = 2;
+                }
+            } else if ((flags & BIT_ROAD) == 0 && (mine_or_bore ||
+                       (flags & BIT_THERMAL_BORE) != 0)) {
+                const bool suppress_mine_action =
+                    (static_cast<uint8_t>(LockEnableMask) &
+                     static_cast<uint8_t>(faction_bit)) != 0 &&
+                    (GameMorePreferences & 0x00400000u) != 0;
+                if (!suppress_mine_action && score > best_action_score) {
+                    best_action_score = score;
+                    best_action_radius = radius_index;
+                    best_action = 5;
+                }
+            } else if ((flags & BIT_ROAD) != 0 && mine_or_bore &&
+                       !special_improvement && !farm && rocky < 2 &&
+                       (((climate & 0x18) != 0) || bonus == 1) &&
+                       score > best_action_score) {
+                best_action_score = score;
+                best_action_radius = radius_index;
+                best_action = 0;
+            }
+        }
+        if (fungus_score_factor != 0) {
+            const int fungus_score =
+                base.eco_damage * fungus_score_factor * 2;
+            if (fungus_score > best_action_score) {
+                best_action_score = fungus_score;
+                best_action_radius = radius_index;
+                best_action = 10;
+            }
+        }
+
+        if (!condenser_present) {
+            int site_score = 21 - radius_index;
+            if ((flags & 0x01E00050u) == 0) site_score += 8;
+            if (!farm) site_score += 2;
+            const int rainfall_delta = 2 - rainfall;
+            site_score += (rainfall_delta * rainfall_delta + rocky * 2) * 2;
+            if (MapCloudCover == 0 && rainfall < 2) site_score *= 2;
+            if (site_score > best_condenser_score) {
+                best_condenser_score = site_score;
+                best_condenser_x = x;
+                best_condenser_y = y;
+            }
+        }
+
+        {
+            int site_score = RadiusOffsetX[radius_index] *
+                RadiusOffsetX[radius_index] * 2;
+            const int altitude_code = altitude >> 5;
+            if (altitude_code == 3) {
+                if (rocky == 1) site_score += 3;
+                if (bonus == 1) site_score += 6;
+            } else {
+                if (bonus != 1) site_score -= crop * 3;
+                if (rocky == 1) site_score -= 4;
+            }
+            int supported_ocean_count = ocean_tile_count;
+            for (int ring = 1; ring <= altitude_code && ring < 9; ++ring) {
+                bool found_lower_neighbor = false;
+                const int first = RadiusRange[ring - 1];
+                const int last = RadiusRange[ring];
+                const int altitude_limit = altitude_code - ring + 1;
+                for (int neighbor_index = first; neighbor_index < last;
+                     ++neighbor_index) {
+                    int neighbor_x = x + RadiusOffsetX[neighbor_index];
+                    if ((MapIsFlat & 1) == 0) {
+                        if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
+                        else if (neighbor_x >= MapLongitudeBounds)
+                            neighbor_x -= MapLongitudeBounds;
+                    }
+                    const int neighbor_y = y + RadiusOffsetY[neighbor_index];
+                    if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds ||
+                        neighbor_x < 0 || neighbor_x >= MapLongitudeBounds)
+                        continue;
+                    const Map &neighbor = *map_loc(neighbor_x, neighbor_y);
+                    if ((neighbor.climate >> 5) >= altitude_limit) continue;
+                    found_lower_neighbor = true;
+                    int dx = abs(neighbor_x - x);
+                    if ((MapIsFlat & 1) == 0 && dx > MapLongitude)
+                        dx = MapLongitudeBounds - dx;
+                    const int dy = abs(neighbor_y - y);
+                    const int distance = vector_dist(dx, dy);
+                    if (distance < 3) {
+                        ++site_score;
+                        if (distance < 2 &&
+                            (neighbor.climate & 0xE0) == ALT_BIT_OCEAN_SHELF)
+                            --supported_ocean_count;
+                    }
+                }
+                if (!found_lower_neighbor) break;
+            }
+            if ((high_edge_square_count == 0 &&
+                 best_landing_score > -99999 &&
+                 (best_landing_score > -9999 || bonus == 1)) &&
+                (ocean_tile_count == 0 || supported_ocean_count > 0)) {
+                if (mine_or_bore) site_score -= 4;
+                if (solar_or_bore) site_score += 2;
+                if (bonus == 1) site_score += 8;
+                if (radius_index < 8) site_score /= 2;
+                if (site_score > best_landing_score) {
+                    best_landing_score = site_score;
+                    best_landing_x = x;
+                    best_landing_y = y;
+                }
+            }
+
+        }
+
+        if (!thermal_borehole_present) {
+            int thermal_score = (rocky == 2 ? 0x0C : 0) -
+                radius_index + 21 + ((rocky == 2 || rainfall == 0) ? 12 : 0);
+            if ((flags & 0x01E00050u) != 0) thermal_score -= 8;
+            for (int thermal_direction = 0; thermal_direction < 8;
+                 ++thermal_direction) {
+                int neighbor_x = x + RadiusBaseX[thermal_direction];
+                if ((MapIsFlat & 1) == 0) {
+                    if (neighbor_x < 0) neighbor_x += MapLongitudeBounds;
+                    else if (neighbor_x >= MapLongitudeBounds)
+                        neighbor_x -= MapLongitudeBounds;
+                }
+                const int neighbor_y = y + RadiusBaseY[thermal_direction];
+                if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds ||
+                    neighbor_x < 0 || neighbor_x >= MapLongitudeBounds)
+                    continue;
+                const Map &neighbor = *map_loc(neighbor_x, neighbor_y);
+                const uint8_t neighbor_altitude = neighbor.climate & 0xE0;
+                if (neighbor_altitude >= ALT_BIT_SHORE_LINE &&
+                    (((neighbor_altitude >> 5) < (altitude >> 5)) ||
+                     (neighbor.bit & BIT_THERMAL_BORE) != 0)) {
+                    thermal_score = -1;
+                    break;
+                }
+            }
+            if (thermal_score > best_thermal_score) {
+                best_thermal_score = thermal_score;
+                best_thermal_x = x;
+                best_thermal_y = y;
+            }
+        }
+        (void)rainfall;
+    }
+
+    // Commit the action candidate through the native goal/connection path
+    // before the special-improvement and relocation phases below.
+    int connection_priority = has_tech(Terraforming[TERRA_MAGTUBE].preq_tech,
+                                       faction)
+        ? 2 : 1;
+    const bool allow_connection_goal =
+        (static_cast<uint8_t>(LockEnableMask) &
+         static_cast<uint8_t>(faction_bit)) == 0 ||
+        (GameMorePreferences & 0x00400000u) == 0;
+    if (best_action_radius < 1) {
+        if (allow_connection_goal) base_connect(2);
+    } else {
+        int selected_x = base.x + RadiusOffsetX[best_action_radius];
+        if ((MapIsFlat & 1) == 0) {
+            if (selected_x < 0) selected_x += MapLongitudeBounds;
+            else if (selected_x >= MapLongitudeBounds)
+                selected_x -= MapLongitudeBounds;
+        }
+        const int selected_y = base.y + RadiusOffsetY[best_action_radius];
+        if (best_action == 9) {
+            add_goal(faction, AI_GOAL_SENSOR_ARRAY, 2, selected_x, selected_y,
+                     BaseIDCurrentSelected);
+        } else if (best_action == 5 ||
+                   can_terraform(faction, selected_x, selected_y, TRUE,
+                                 BaseIDCurrentSelected) != 0) {
+            add_goal(faction, AI_GOAL_TERRAFORM_LAND, 2, selected_x, selected_y,
+                     BaseIDCurrentSelected);
+        } else {
+            connection_priority = 2;
+        }
+        if (allow_connection_goal) base_connect(connection_priority);
+
+        if (force_improve != 0) {
+            Map *selected_tile = map_loc(selected_x, selected_y);
+            selected_tile->bit &= ~BIT_FUNGUS;
+            int improvement = can_terraform(faction, selected_x, selected_y,
+                TRUE, BaseIDCurrentSelected);
+            if (ExpansionEnabled &&
+                (Players[faction].rule_flags & RFLAG_AQUATIC) != 0) {
+                uint32_t choice = (timeGetTime() +
+                    static_cast<uint32_t>(BaseIDCurrentSelected) +
+                    static_cast<uint32_t>(selected_y) +
+                    static_cast<uint32_t>(selected_x)) & 3u;
+                if (choice != 0) ++choice;
+                improvement = static_cast<int>(choice + 4u);
+            }
+            switch (improvement) {
+            case 4:
+                selected_tile->bit |= BIT_FARM | BIT_ROAD;
+                if ((selected_tile->climate & 7) == 0 &&
+                    (selected_tile->climate & 0xE0) < 0x61)
+                    selected_tile->bit |= BIT_MINE;
+                else
+                    selected_tile->bit |= BIT_SOLAR_TIDAL;
+                break;
+            case 6:
+                selected_tile->bit |= BIT_MINE | BIT_ROAD;
+                if ((selected_tile->val3 & 0xC0) < 0x80)
+                    selected_tile->bit |= BIT_FARM;
+                break;
+            case 7:
+                selected_tile->bit |= BIT_SOLAR_TIDAL | BIT_ROAD;
+                break;
+            case 8:
+                selected_tile->bit |= BIT_FOREST;
+                break;
+            }
+        }
+    }
+
+    const bool too_few_special_land_squares =
+        special_land_square_count < static_cast<int>(base.population_size) + 1 &&
+        special_land_square_count < nearest_open_square_count;
+    bool thermal_site_allowed = false;
+    if (!thermal_borehole_present && best_thermal_score > 0 &&
+        base.eco_damage == 0) {
+        const Map &candidate = *map_loc(best_thermal_x, best_thermal_y);
+        const int rainfall_bits = candidate.climate & 0x18;
+        const int rocky_bits = candidate.val3 & 0xC0;
+        int terrain_pattern_count = rainfall_bits == 0 ? 1 : 0;
+        if (rocky_bits == 0x80) ++terrain_pattern_count;
+        if (rocky_bits == 0 && rainfall_bits < 0x10)
+            ++terrain_pattern_count;
+        if (terrain_pattern_count != 0) {
+            if (base.population_size < 8 && energy_need < 2) {
+                if (has_tech(Ability[1].preq_tech, faction) != 0 ||
+                    TurnCurrentNum >= 0xC9)
+                    thermal_site_allowed = true;
+            } else {
+                thermal_site_allowed = true;
+            }
+        }
+    }
+    const bool thermal_goal_allowed = thermal_site_allowed &&
+        terrain_avail(TERRA_THERMAL_BORE, FALSE, faction) != 0 &&
+        ((static_cast<uint8_t>(LockEnableMask) &
+          static_cast<uint8_t>(faction_bit)) == 0 ||
+         (faction == ConsoleGlobal.faction_id_ &&
+          (GamePreferences & 0x02000000u) != 0));
+
+    bool condenser_site_allowed = false;
+    if (!condenser_present && best_condenser_score > 0 &&
+        base.eco_damage == 0) {
+        if (high_edge_square_count == 0) {
+            condenser_site_allowed = true;
+        } else if (high_edge_square_count < 2 && map_improvement_count == 0) {
+            if (nutrient_need_state != 0) {
+                condenser_site_allowed = true;
+            } else {
+                const Map &candidate = *map_loc(best_condenser_x,
+                                                best_condenser_y);
+                const int rainfall_bits = candidate.climate & 0x18;
+                const int rocky_bits = candidate.val3 & 0xC0;
+                int terrain_pattern_count = rainfall_bits == 0 ? 1 : 0;
+                if (rocky_bits == 0x80) ++terrain_pattern_count;
+                if (rocky_bits == 0 && rainfall_bits < 0x10)
+                    ++terrain_pattern_count;
+                if (terrain_pattern_count != 0 &&
+                    (has_tech(Ability[1].preq_tech, faction) != 0 ||
+                     TurnCurrentNum > 200))
+                    condenser_site_allowed = true;
+            }
+        }
+    }
+    const bool condenser_goal_allowed = condenser_site_allowed &&
+        terrain_avail(TERRA_CONDENSER, FALSE, faction) != 0 &&
+        ((static_cast<uint8_t>(LockEnableMask) &
+          static_cast<uint8_t>(faction_bit)) == 0 ||
+         (faction == ConsoleGlobal.faction_id_ &&
+          (GamePreferences & 0x02000000u) != 0));
+
+    // The native tail chooses at most one objective in this family: thermal
+    // bore first, condenser as its fallback, and the landing-site candidate
+    // only if neither alt-site objective survives its gates. A shortage of
+    // special squares bypasses the alt-site branch and rejects landing too.
+    if (!too_few_special_land_squares) {
+        if (thermal_goal_allowed) {
+            add_goal(faction, AI_GOAL_THERMAL_BOREHOLE, 1, best_thermal_x,
+                     best_thermal_y, BaseIDCurrentSelected);
+        } else if (condenser_goal_allowed) {
+            add_goal(faction, AI_GOAL_CONDENSER, 1, best_condenser_x,
+                     best_condenser_y, BaseIDCurrentSelected);
+        } else {
+            const bool landing_site_rejected =
+                (high_edge_square_count != 0 && energy_need < 3) ||
+                best_landing_score < 1 ||
+                (human && faction != ConsoleGlobal.faction_id_ &&
+                 (GameMorePreferences & 0x00020000u) == 0) ||
+                terrain_avail(16, FALSE, faction) == 0;
+            if (!landing_site_rejected)
+                add_goal(faction, AI_GOAL_LANDING_SITE, 1, best_landing_x,
+                         best_landing_y, BaseIDCurrentSelected);
+        }
+    }
+
+    // Native's final base-relative relocation hint is the square eight map
+    // columns west of the base. It is retained only when that square is
+    // in-bounds, lies on land below the polar cap, and the local edge/rainfall
+    // aggregate crossed at least one of the original thresholds.
+    int relocation_x = base.x - 8;
+    if ((MapIsFlat & 1) == 0) {
+        if (relocation_x < 0) relocation_x += MapLongitudeBounds;
+        else if (relocation_x >= MapLongitudeBounds)
+            relocation_x -= MapLongitudeBounds;
+    }
+    const int relocation_y = base.y;
+    if (relocation_y < 0 || relocation_y >= MapLatitudeBounds ||
+        relocation_x < 0 || relocation_x >= MapLongitudeBounds ||
+        high_edge_square_count == 0 ||
+        (map_loc(relocation_x, relocation_y)->climate & 0xE0) <
+            ALT_BIT_SHORE_LINE ||
+        (map_loc(relocation_x, relocation_y)->climate & 0xE0) > 0xBF) {
+        base.unk_x = -1;
+        base.unk_y = -1;
+    } else {
+        base.unk_x = static_cast<int16_t>(relocation_x);
+        base.unk_y = static_cast<int16_t>(relocation_y);
+    }
+
+    (void)best_action_score;
+    (void)nutrient_need_state;
+    (void)sensor_count;
+    (void)good_unworked_count;
+    (void)worked_bonus_count;
+    (void)worked_square_count;
+    (void)ocean_tile_count;
+    (void)map_improvement_count;
+    (void)special_land_square_count;
+    (void)worked_special_land_count;
+    (void)worked_special_square_count;
+    (void)nearest_open_square_count;
+    (void)radius_temperature;
+    (void)high_edge_square_count;
+    (void)best_condenser_score;
+    (void)best_condenser_x;
+    (void)best_condenser_y;
+    (void)best_landing_score;
+    (void)best_landing_x;
+    (void)best_landing_y;
+    (void)best_thermal_score;
+    (void)best_thermal_x;
+    (void)best_thermal_y;
+    (void)thermal_borehole_present;
+
+    // The native suffix after this hint begins an east-side scan only when
+    // local_60 != 2. Its following `setge; dec; and 0x19; add 0x19; jne`
+    // computes 25 or 50 on either outcome and branches directly to the epilogue,
+    // so that scan has no reachable effects in the pinned executable.
 }
