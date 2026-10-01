@@ -1,0 +1,20 @@
+{
+  "event_id": "e4d8a7a2820513e331e60f51e1e78ffdc4a4638db71a1716a6e1d81ed00d2062",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_state.py",
+      "recovery/tests/test_sync_storage.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes exact static-duration wire0 opaque byte owners4/4/3 and legacy filename256 in existing game owner, including native setup_game first-byte filename reset; no padding/semantic allocation inference or per-transfer clearing. Authorizes VehSelectionFollowLimit real signed scalar at9A64DC and coupled airdrop/veh_kill references/address identity, with original obligations and all other aliases retained. Existing game/veh files are within prior serializer owner expansion; tests cover source binding/extents/reset/selection identity. Save/load game_data and full synch remain pending; no acceptance or task baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "41fd1d9d38a752724ac919107810cae7486add2932d2317e238d17795122cd08",
+  "request_id": "synch-retained-wire-owners",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
