@@ -24,6 +24,17 @@
 #include "console.h"   // ConsoleGlobal, the object at 0x009156B0
 #include "mapwin.h"    // MainInterfaceGlobal, the object at 0x007AE820
 
+// ORIGINAL: 0x00422C50 ?clear@BattleWin@@QAEXXZ 0x00422C50-0x00422CB5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x422C50-0x422CB5;src/recovered/units/00422c50.cpp:historical exact seed;src/battlewin.h:four contiguous native RECT arguments at30/40/50/60"], "reason": "Recover the original four-rectangle clear operation through the genuine BattleWin rectangle members and shared MainInterfaceGlobal canvas; preserve source and seed obligations."}
+void BattleWin::clear() {
+    MainInterfaceGlobal.box_sprite(&battle_rects_[0], &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&battle_rects_[1], &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&battle_rects_[2], &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.box_sprite(&battle_rects_[3], &InterfaceBoxStyles[0]);
+    MainInterfaceGlobal.redraw_complete();
+    MainInterfaceGlobal.soft_update();
+}
+
 // Two of on_status's callees are still original bodies the tree has not homed
 // (0x0045D440 / 0x0045D970). councwin.cpp defines both as forwarders with
 // external linkage; this TU reaches the same addresses through those.
