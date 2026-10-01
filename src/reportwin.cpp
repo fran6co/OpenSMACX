@@ -71,6 +71,9 @@ void __cdecl sat_edit(int faction_id, int type, int flags);
 int __cdecl break_treaty(int faction_id, int target_faction_id, int treaty);
 int __cdecl diplo_lock(int patience);
 void __cdecl diplo_unlock();
+// Original 0x00590910 is the real source-owned facility text formatter;
+// its void-pointer parameter is part of the emitted PAX symbol.
+void __cdecl say_facility(void *text, int facility_id, int with_cost);
 
 // Report page dispatch at 0x00496D35 uses the original table at 0x00496DE4:
 // 0 intel; 1 no drawer; 2 labs; 3 energy; 4 ops; 5 projects; 6 satellites;
@@ -500,7 +503,8 @@ Purpose: Draw the energy page's five-panel frame and calculate the faction's
 // kind      game
 // flags     frame;sp_ready;purged_ok
 // calls     0x00445130 0x0048C060 0x004E3A00 0x004F6510 0x0050BA00 0x00590910 0x005DACB0 0x005DACE0 0x005DAD10 0x005DCEA0 0x005DD130 0x005DD300 0x005DDF60 0x005DE1D0 0x005E2DD3 0x00609470 0x00609C60 0x00609C90 0x00609CC0 0x00609CF0 0x00609F20 0x00609FA0 0x0060A670 0x0060C920 0x006169A0 0x00625E30 0x00625EC0 0x006453E0 0x00645470 0x0064FC88
-Status: Partial typed recovery; the retained seed remains restoration evidence.
+Facility mode scans owned bases for one selected facility; base mode scans
+facilities 0..64 in one selected base. Those indices are not faction IDs.
 */
 void ReportWin::draw_energy() {
     Buffer *canvas = static_cast<Buffer *>(this);
@@ -536,9 +540,326 @@ void ReportWin::draw_energy() {
     rect1_.top = second_break + 8;
     rect1_.right = -15;
 
-    // The retained 6065-byte body supplies the remaining title, accounting
-    // rows, commerce breakdown and interactive selections. Keep its evidence
-    // while the report's shared text and row owners are recovered.
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, Players[viewer].adj_name_faction);
+    CharUpperA(StringTemp);
+    GenderDefault = Players[viewer].noun_gender;
+    PluralityDefault = Players[viewer].is_noun_plural;
+    strcat(StringTemp, " ");
+    strcat(StringTemp, label_get(0xA98 / 4));
+    strcat(StringTemp, "]");
+    canvas->write_cent_l(StringTemp, &title, strlen(StringTemp));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, label_get(0xB9C / 4));
+    strcat(StringTemp, "]");
+    canvas->write_cent_l(StringTemp, &reserves, strlen(StringTemp));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0xE4 / 4));
+    strcat(StringTemp, ": ");
+    canvas->write_l(StringTemp, reserves.left + 8, reserves.top + line_height + 5,
+                    strlen(StringTemp));
+    strcat(StringTemp, "}");
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    reportwin_append_number(StringTemp, PlayersData[viewer].energy_reserves);
+    strcat(StringTemp, "}");
+    canvas->write_right_l(StringTemp, reserves.left + 8,
+                          reserves.top + line_height + 5,
+                          reserves.right - reserves.left - 16,
+                          strlen(StringTemp));
+
+    const int value_x = rect1_.left;
+    // The original passes -15 as the right-text width, not the remaining
+    // panel width (0x0049BCD0 stores it in ReportWin+0xA1C).
+    const int value_width = static_cast<int>(rect1_.right);
+    const int value_pitch = line_height;
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0x5F4 / 4));
+    strcat(StringTemp, ": ");
+    canvas->write_l(StringTemp, value_x, rect1_.top, strlen(StringTemp));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    reportwin_append_number(StringTemp, EnergyEconomyTotal);
+    strcat(StringTemp, "}");
+    canvas->write_right_l(StringTemp, value_x, rect1_.top, value_width,
+                          strlen(StringTemp));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0x5F8 / 4));
+    strcat(StringTemp, ": ");
+    canvas->write_l(StringTemp, value_x, rect1_.top + value_pitch,
+                    strlen(StringTemp));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{-");
+    reportwin_append_number(StringTemp, EnergyMaintenanceTotal);
+    strcat(StringTemp, "}");
+    canvas->write_right_l(StringTemp, value_x, rect1_.top + value_pitch * 2,
+                          value_width, strlen(StringTemp));
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    strcat(StringTemp, label_get(0x5FC / 4));
+    strcat(StringTemp, ": ");
+    canvas->write_l(StringTemp, value_x, rect1_.top + value_pitch * 3,
+                    strlen(StringTemp));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    if (EnergyCommerceDelta > 0) strcat(StringTemp, "+");
+    reportwin_append_number(StringTemp, EnergyCommerceDelta);
+    strcat(StringTemp, "}");
+    canvas->write_right_l(StringTemp, value_x, rect1_.top + value_pitch * 3,
+                          value_width, strlen(StringTemp));
+
+    int relationship_y = rect1_.top + value_pitch * 4;
+    int have_relationship_heading = 0;
+    if ((Players[viewer].rule_flags & 0x4000) != 0) {
+        have_relationship_heading = 1;
+        relationship_y += line_height;
+        const int interest = Players[viewer].rule_interest;
+        parse_num(0, interest);
+        char section[32];
+        strcpy(section, "FACT");
+        if (interest < 0) {
+            strcat(section, "PEN");
+        } else {
+            strcat(section, "BON");
+            if (interest == 0) strcat(section, "2");
+        }
+        parse_it(ScriptPopupFile, section);
+        canvas->wrap_flying(StringTemp, rect1_.left, relationship_y,
+                            rect1_.right);
+        canvas->wrap_flying_flush();
+        relationship_y += line_height * 2;
+    }
+
+    // The native table iterates the other seven factions, using the live
+    // participant mask and PlayerData's typed bilateral treaty/loan arrays.
+    // It keeps the original asymmetric balance/payment choices for outgoing
+    // versus incoming loans.
+    const unsigned char live_factions = static_cast<unsigned char>(LockEnableMask >> 8);
+    for (int other = 1; other < MaxPlayerNum; ++other) {
+        if (other == viewer) continue;
+        if (((live_factions >> (other & 31)) & 1) == 0
+            || ((live_factions >> (viewer & 31)) & 1) == 0) continue;
+
+        const int outgoing_balance = PlayersData[viewer].loan_balance[other];
+        const int incoming_balance = PlayersData[other].loan_balance[viewer];
+        const int incoming_sanction = PlayersData[other].sanction_turns;
+        if (outgoing_balance == 0 && incoming_balance == 0) continue;
+
+        const bool loan_payment =
+            (PlayersData[viewer].diplo_treaties[other] & 0x10) != 0;
+        if (!have_relationship_heading) {
+            have_relationship_heading = 1;
+            relationship_y += 10;
+        }
+        relationship_y += line_height * 2;
+
+        char relationship_prefix[256];
+        relationship_prefix[0] = 0;
+        if (!loan_payment) {
+            if ((outgoing_balance != 0 && incoming_sanction != 0)
+                || (incoming_balance != 0
+                    && PlayersData[viewer].energy_reserves != 0)) {
+                strcat(relationship_prefix, "*");
+                strcat(relationship_prefix, label_get(0x708 / 4));
+                strcat(relationship_prefix, " ");
+            }
+        } else {
+            strcat(relationship_prefix, "2");
+            strcat(relationship_prefix, label_get(0x604 / 4));
+            strcat(relationship_prefix, " ");
+        }
+
+        parse_says(3, relationship_prefix, -1, -1);
+        GenderDefault = Players[other].noun_gender;
+        PluralityDefault = 0;
+        parse_says(0, Players[other].title_leader, -1, -1);
+        GenderDefault = Players[other].noun_gender;
+        PluralityDefault = 0;
+        parse_says(1, Players[other].name_leader, -1, -1);
+        GenderDefault = Players[other].noun_gender;
+        PluralityDefault = Players[other].is_noun_plural;
+        parse_says(2, Players[other].noun_faction, -1, -1);
+
+        const int principal = outgoing_balance != 0
+            ? outgoing_balance : incoming_balance;
+        parse_num(1, principal);
+        const int payment = outgoing_balance != 0
+            ? PlayersData[viewer].loan_payment[other]
+            : PlayersData[other].loan_payment[viewer];
+        parse_num(0, payment);
+        parse_it(ScriptPopupFile, loan_payment ? "LOANPAYMENT" : "LOANINCOME");
+        canvas->wrap_flying(StringTemp, rect1_.left, relationship_y,
+                            rect1_.right);
+        canvas->wrap_flying_flush();
+    }
+
+    relationship_y += line_height * 2;
+    StringTemp[0] = 0;
+    strcat(StringTemp, label_get(0xEFC / 4));
+    strcat(StringTemp, ": ");
+    canvas->write_l(StringTemp, value_x, relationship_y, strlen(StringTemp));
+    StringTemp[0] = 0;
+    strcat(StringTemp, "{");
+    reportwin_append_number(StringTemp, NetIncomeGlobal);
+    strcat(StringTemp, "}");
+    canvas->write_right_l(StringTemp, value_x, relationship_y, value_width,
+                          strlen(StringTemp));
+
+    if (field_59AC_ == -1) {
+        field_59B0_ = 0;
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            if (Bases[base_id].faction_id_current == viewer) {
+                field_59B0_ = 1;
+                field_59AC_ = base_id;
+                break;
+            }
+        }
+    }
+    if (field_59AC_ == -1) return;
+
+    rect1_.left = middle + 8;
+    rect1_.top = second_break + 8;
+    rect1_.right = energy_panel_rect_.right - 3 - (middle + 2) - 12;
+    rect1_.bottom = energy_panel_rect_.bottom - 6;
+    listBox_.close();
+    Dialog &dialog = static_cast<Dialog &>(listBox_);
+    RECT list_rect = {middle + 4, second_break + 5,
+                      energy_panel_rect_.right - 6,
+                      energy_panel_rect_.bottom - 6};
+    dialog.init(&list_rect, 0);
+    dialog.field_48_ = line_height + 3;
+    dialog.set_dialog_font(ReportIfGlobal.field_1E184_,
+                           ReportIfGlobal.field_1E184_,
+                           ReportIfGlobal.field_1E184_);
+    dialog.set_dialog_text_color(0x99, -1, 1, 1);
+    dialog.set_dialog_text_color2(0x99, -1, 1, 1);
+    dialog.set_dialog_text_color3(0x99, -1, 1, 1);
+    listBox_.set_report_text_color(0xF2);
+
+    StringTemp[0] = 0;
+    if (field_59B0_ == 0) {
+        const int facility = field_59AC_;
+        strcat(StringTemp, "[");
+        say_facility(StringTemp, facility, 0);
+        CharUpperA(StringTemp);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, label_get(0x160 / 4));
+        strcat(StringTemp, "]");
+        RECT heading = {middle + 2, second_break + 2,
+                        energy_panel_rect_.right - 6, second_break + 2};
+        canvas->write_cent_l(StringTemp, &heading, strlen(StringTemp));
+
+        int maintenance_total = 0;
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            if (facility >= 0x41
+                || Bases[base_id].faction_id_current != viewer) continue;
+            int byte_offset;
+            int bit;
+            bitmask(facility, &byte_offset, &bit);
+            if ((Bases[base_id].facilities_built[byte_offset] & bit) == 0)
+                continue;
+
+            StringTemp[0] = 0;
+            say_base(StringTemp, base_id);
+            strcat(StringTemp, "|");
+            const int maintenance = fac_maint(facility, viewer);
+            const int project_base = SecretProject.planetary_energy_grid;
+            const bool halved = project_base >= 0
+                && Bases[project_base].faction_id_current == viewer;
+            maintenance_total += maintenance;
+            strcat(StringTemp, "{");
+            reportwin_append_number(StringTemp,
+                halved ? maintenance / 2 : maintenance);
+            if (halved && (maintenance & 1) != 0) strcat(StringTemp, ".5");
+            strcat(StringTemp, "}");
+            listBox_.item(StringTemp, base_id + 0x400);
+        }
+        listBox_.item(" | ", 0x05F5E0FE);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "{");
+        strcat(StringTemp, label_get(0xA9C / 4));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, "|");
+        const int project_base = SecretProject.planetary_energy_grid;
+        const bool halved = project_base >= 0
+            && Bases[project_base].faction_id_current == viewer;
+        if (halved) {
+            reportwin_append_number(StringTemp, maintenance_total / 2);
+            if ((maintenance_total & 1) != 0) strcat(StringTemp, ".5");
+        } else {
+            reportwin_append_number(StringTemp, maintenance_total);
+        }
+        strcat(StringTemp, "}");
+        listBox_.item(StringTemp, 99999999);
+    } else {
+        const int base_id = field_59AC_;
+        strcat(StringTemp, "[");
+        say_base(StringTemp, base_id);
+        CharUpperA(StringTemp);
+        strcat(StringTemp, " ");
+        strcat(StringTemp, label_get(0xA98 / 4));
+        strcat(StringTemp, "]");
+        RECT heading = {middle + 2, second_break + 2,
+                        energy_panel_rect_.right - 6, second_break + 2};
+        canvas->write_cent_l(StringTemp, &heading, strlen(StringTemp));
+
+        int maintenance_total = 0;
+        for (int facility = 0; facility < 0x41; ++facility) {
+            if (Bases[base_id].faction_id_current != viewer) continue;
+            int byte_offset;
+            int bit;
+            bitmask(facility, &byte_offset, &bit);
+            if ((Bases[base_id].facilities_built[byte_offset] & bit) == 0)
+                continue;
+
+            StringTemp[0] = 0;
+            say_facility(StringTemp, facility, 0);
+            strcat(StringTemp, "|");
+            const int maintenance = fac_maint(facility, viewer);
+            const int project_base = SecretProject.planetary_energy_grid;
+            const bool halved = project_base >= 0
+                && Bases[project_base].faction_id_current == viewer;
+            maintenance_total += maintenance;
+            strcat(StringTemp, "{");
+            reportwin_append_number(StringTemp,
+                halved ? maintenance / 2 : maintenance);
+            if (halved && (maintenance & 1) != 0) strcat(StringTemp, ".5");
+            strcat(StringTemp, "}");
+            listBox_.item(StringTemp, facility);
+        }
+        listBox_.item(" | ", 0x05F5E0FE);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "{");
+        strcat(StringTemp, label_get(0xA9C / 4));
+        strcat(StringTemp, ": ");
+        strcat(StringTemp, "|");
+        const int project_base = SecretProject.planetary_energy_grid;
+        const bool halved = project_base >= 0
+            && Bases[project_base].faction_id_current == viewer;
+        if (halved) {
+            reportwin_append_number(StringTemp, maintenance_total / 2);
+            if ((maintenance_total & 1) != 0) strcat(StringTemp, ".5");
+        } else {
+            reportwin_append_number(StringTemp, maintenance_total);
+        }
+        strcat(StringTemp, "}");
+        listBox_.item(StringTemp, 99999999);
+    }
+
+    listBox_.reset_report_selection();
+    dialog.field_B4_ = 0;
+    listBox_.attach(this, dialog.field_24_, dialog.field_28_, 0x81020);
+    listBox_.set_selected_id(99999999);
+    static_cast<GraphicWin &>(listBox_).show(0);
 }
 
 /*
