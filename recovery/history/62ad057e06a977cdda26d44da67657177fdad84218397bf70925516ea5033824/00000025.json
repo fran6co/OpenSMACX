@@ -1,0 +1,18 @@
+{
+  "event_id": "c3f3ef185853e372f93b9e28be9a81364a5f01bcd01834710ef8913183c77674",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "tutorial-unity-sprite-bounds-approved-20261001",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Reject the reachable no-base 32..36-sprite-index hypothesis, not the recorded user permission. Independent native review and coordinator objdump of the pinned executable establish: 513596 JE5135E6 is the matching-goody branch into tut_check2000/exploration; 5135B7 JNE5136B7 bypasses the base scan when its hint was shown; 5136AE JL5135C4 repeats the base scan, while exhaustion falls through5136B4 to5136B7 enemy-vehicle hints. There is no base-scan-exhaustion edge into5135E6. The earlier hypothesis mistook physically interleaved blocks for execution flow.",
+      "Preserve revision24 and user bounds-check approval as historical decisions. Correct the unintegrated give_hints proposal and its false no-base fixture: no-base paths must not call tut_check2000, set its flag, draw EXPLORATION or suppress later enemy-vehicle/territory hints. The source placeholder and retained seed remain unchanged until complete native-reviewed behavior is integrated. A defensive bounds check on the real matching-pod display path may remain within the approved permission; it is not evidence for an invented native error path or current recovery acceptance."
+    ]
+  },
+  "previous_event": "2fff92b20aacacfe5814721a2ca10096fba276c4e20404d508e13abcb41f3de5",
+  "request_id": "tutorial-unity-no-base-path-native-correction-20261001",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:console-scenario-owner-wave"
+}
