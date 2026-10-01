@@ -1,0 +1,40 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "67737af4ec60e07616410997c73690f534e153bb",
+  "editable_files": [
+    "src/veh.cpp",
+    "src/veh.h",
+    "recovery/tests/test_vehicle_special_actions.py"
+  ],
+  "evidence": [
+    "Current native inventory proves action_give4CEDE0, action_tectonic4CE210, action_fungal4CE790 and shoot_it4CDAF0 are seed-only; no existing task subject claims these identities. The native 4CE210/4CE790 call inventories share shoot_it4CDAF0, defining a coupled action cohort rather than unrelated address adjacency.",
+    "Console give_veh4D26A0 requires action_give4CEDE0. Active Console worker is restricted to Console source/header/tests, and active ReportWin worker to renderer source/header/tests plus centrally applied Datalink accessor. Neither edits veh.cpp/h. Existing retained source and task permissions stay preserved; this explicit coordinator assignment owns only these four bodies and required declarations, not the older path/technology task work.",
+    "Use typed Vehicle/VehPrototype/Base/Player/Map storage and existing source-owned callees. Validate receiver, argument roles, widths, map and ownership changes from pinned instructions, not seed offset names. No fixed addresses, raw self offsets, manual tables, behavior fixes, copied machine code or invented globals. Preserve seeds, all historical claims and unfinished discoveries. Root alone binds originals, repairs outside-owner dependencies, mutates Git and integrates after fresh build/link and relevant regression checks. Worker may not alter pending_bodies, shared headers, task journals, source claims or baselines."
+  ],
+  "intent": "Recover genuine vehicle ownership-transfer, tectonic/fungal attack actions and their shared shoot_it helper; unblock Console give_veh without fixed-address calls.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5036784,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5038608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5040016,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5041632,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "vehicle-special-actions-coverage"
+}
