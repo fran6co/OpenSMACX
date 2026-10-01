@@ -1,0 +1,35 @@
+{
+  "event_id": "ba10d18f5a61dcc18dff663730a99ed44bcbb25573986a43025ea89d79383b84",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_settlement_behavior.py",
+      "src/diplopop.cpp",
+      "src/diplopop.h",
+      "src/faction.cpp",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Fresh pinned wants_to_speak53DCE0 calls DiploPop::start43F2B0 followed by introduce53D360; both have compatible retained seeds but no product definition. Close their genuine source-owner bodies instead of executable-address calls or substituting teardown.",
+      "Preserve immutable Console baseline and all existing claims/discoveries. Authorization is editing scope, not acceptance; require native compile/link, scoped restoration and independent source review before coordinator integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5493600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4453040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8e65e7bcf006c23ca0f4e8454ffd8309fbc2c9a8531cd11b03f7c45888dc7eba",
+  "request_id": "console-contact-introduction-closure-20261001",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:console-scenario-owner-wave"
+}
