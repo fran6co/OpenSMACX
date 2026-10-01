@@ -3937,6 +3937,176 @@ char *__cdecl get_pacts(int faction_id, int other_id) {
     return StringTable.get((int)labels[code]);
 }
 
+// ORIGINAL: 0x005B0420 ?balance@@YAXXZ 0x005B0420-0x005B0A2C
+// RECOVERY_BINDING: v1 {"evidence": ["Retained game-setup-owner-wave full body and seed005B0420; independent pinned-span review by report_draw_labs_review; actual-source test_setup_balance_behavior controls. Native faction rule bit0x100 is aquatic; no historical match claim copied."], "reason": "Recover the complete starting-position balance operation with genuine vehicle, faction, continent and map owners, retaining native neighbor scoring, defender gating and the mutable resource-placement bound."}
+void __cdecl balance() {
+    int vehicles_by_direction[7];
+    for (int direction = 1; direction <= 7; ++direction) {
+        const int index = direction - 1;
+        int vehicle_id = veh_find(0, 0, direction, -1);
+        vehicles_by_direction[index] = vehicle_id;
+        if (vehicle_id >= 0) {
+            const int x = Vehs[vehicle_id].x;
+            const int y = Vehs[vehicle_id].y;
+            const Map *tile = map_loc(x, y);
+            if (tile->region >= 0x40) {
+                vehicles_by_direction[index] = veh_find(x, y, direction, vehicle_id);
+            }
+        }
+    }
+
+    int direction_scores[7];
+    int best_score = 0;
+    for (int direction_index = 0; direction_index < 7; ++direction_index) {
+        const int direction = direction_index + 1;
+        const int vehicle_id = vehicles_by_direction[direction_index];
+        if (vehicle_id < 0) continue;
+
+        const int x = Vehs[vehicle_id].x;
+        const int y = Vehs[vehicle_id].y;
+        const int region = map_loc(x, y)->region;
+        int nearest_score = 9999;
+        for (int other_direction = 1; other_direction <= 7; ++other_direction) {
+            if (other_direction == direction) continue;
+            const int other_id = vehicles_by_direction[other_direction - 1];
+            if (other_id < 0) continue;
+            const int other_x = Vehs[other_id].x;
+            const int other_y = Vehs[other_id].y;
+            if (region != map_loc(other_x, other_y)->region) continue;
+
+            int dx = abs(x - other_x);
+            if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude)) {
+                dx = MapLongitudeBounds - dx;
+            }
+            const int dy = abs(y - other_y);
+            dx = abs(dx);
+            const int high = dx > dy ? dx : dy;
+            const int low = dx > dy ? dy : dx;
+            const int diagonal = (((dx + dy) >> 1) - low + 1) >> 1;
+            const int score = ((high - diagonal) * 25 * 128) /
+                              static_cast<int>(MapArea);
+            if (score < nearest_score) nearest_score = score;
+        }
+
+        if (nearest_score < 1000) {
+            nearest_score = nearest_score / 5 - 3;
+        } else {
+            int terrain_score = (static_cast<int>(Continents[region].open_terrain) + 31) / 32;
+            if (terrain_score < 1) terrain_score = 1;
+            else if (terrain_score > 8) terrain_score = 8;
+            nearest_score = terrain_score;
+        }
+
+        int adjacent_bonus = 0;
+        for (int offset = 0; offset < 0x54; offset += 4) {
+            int neighbor_x = x + RadiusOffsetX[offset / 4];
+            const int width = MapLongitudeBounds;
+            if (!(MapIsFlat & 1)) {
+                if (neighbor_x < 0) neighbor_x += width;
+                else if (neighbor_x >= width) neighbor_x -= width;
+            }
+            const int neighbor_y = y + RadiusOffsetY[offset / 4];
+            if (neighbor_y < 0 || neighbor_y >= MapLatitudeBounds ||
+                neighbor_x < 0 || neighbor_x >= width) continue;
+
+            const Map *neighbor = map_loc(neighbor_x, neighbor_y);
+            const int rainfall_code = (neighbor->climate >> 3) & 3;
+            int altitude = neighbor->climate >> 5;
+            const int owner = neighbor->val3 >> 6;
+            if (rainfall_code < 1) continue;
+            altitude -= 2;
+            const bool elevated_or_river = altitude > 0 || (neighbor->bit & BIT_RIVER) != 0;
+            if (elevated_or_river && owner < 2) {
+                if (owner == 1) {
+                    ++adjacent_bonus;
+                } else if ((altitude >= 0 && altitude > 1) || rainfall_code > 1) {
+                    ++adjacent_bonus;
+                }
+            }
+            if (owner == 1 && altitude >= 0 && altitude > owner) {
+                ++adjacent_bonus;
+            }
+        }
+
+        int terrain_component = (static_cast<int>(Continents[region].open_terrain) + 63) / 64;
+        if (terrain_component < 0) terrain_component = 0;
+        else if (terrain_component > 3) terrain_component = 3;
+        const int total = nearest_score + adjacent_bonus + terrain_component;
+        direction_scores[direction_index] = total;
+        if (total > best_score) best_score = total;
+    }
+
+    for (int faction_index = 0; faction_index < 7; ++faction_index) {
+        const int faction_id = faction_index + 1;
+        const int vehicle_id = vehicles_by_direction[faction_index];
+        if (vehicle_id < 0) continue;
+
+        const int x = Vehs[vehicle_id].x;
+        const int y = Vehs[vehicle_id].y;
+        const int seed = rand() % 16;
+        int deficit = best_score - direction_scores[faction_index];
+        int placed_count = 0;
+        const Player &player = Players[faction_id];
+        for (int bonus_index = 0; bonus_index < player.faction_bonus_count; ++bonus_index) {
+            if (player.faction_bonus_id[bonus_index] == 1) {
+                const int prototype_id = player.faction_bonus_val1[bonus_index];
+                deficit -= VehPrototypes[prototype_id].plan == 8 ? 3 : 1;
+            }
+        }
+
+        int difficulty = DiffLevelCurrent;
+        if (difficulty > 1) {
+            bool defend = deficit >= 3;
+            if (!defend) {
+                const int human_bit = (1 << faction_id) & (LockEnableMask & 0xFFu);
+                defend = difficulty >= (human_bit ? 4 : 5);
+            }
+            if (defend) {
+                deficit -= 3;
+                if ((player.rule_flags & RFLAG_AQUATIC) == 0) {
+                    const int defender_id = veh_init(0, faction_id, x, y);
+                    difficulty = DiffLevelCurrent;
+                    Vehs[defender_id].next_veh_id_stack = -1;
+                }
+            }
+        }
+        if (difficulty < 2) deficit = (deficit + 1) / 2;
+
+        if (deficit > 0) {
+            int angle = seed * 7;
+            for (int place_index = 0; place_index < deficit; ++place_index) {
+                angle += 7;
+                const int offset_index = angle % 16;
+                const int width = MapLongitudeBounds;
+                int candidate_x = x + RadiusOffsetX[9 + offset_index];
+                if (!(MapIsFlat & 1)) {
+                    if (candidate_x < 0) candidate_x += width;
+                    else if (candidate_x >= width) candidate_x -= width;
+                }
+                const int candidate_y = y + RadiusOffsetY[9 + offset_index];
+                if (candidate_y < 0 || candidate_y >= MapLatitudeBounds ||
+                    candidate_x < 0 || candidate_x >= width) continue;
+
+                if (goody_at(candidate_x, candidate_y) != 0) {
+                    const Map *candidate = map_loc(candidate_x, candidate_y);
+                    if ((candidate->bit & 0x0C000000u) == 0) {
+                        --direction_scores[faction_index];
+                    }
+                }
+
+                if (placed_count < 2 && deficit - place_index > 2 &&
+                    ((place_index ^ placed_count) & 1) == 0) {
+                    bit_set(candidate_x, candidate_y, 0x04000000, 1);
+                    --deficit;
+                    ++placed_count;
+                } else {
+                    bit_set(candidate_x, candidate_y, 0x08000000, 1);
+                }
+            }
+        }
+    }
+}
+
 // ORIGINAL: 0x005247B0 ?generators@@YAHHPAH@Z 0x005247B0-0x00524862
 // The generator threshold at 0x00949864 is Rules.size_base_subspace_gen,
 // one of RulesBasic's last three fields, not a separate global in a gap.

@@ -1,0 +1,19 @@
+{
+  "event_id": "c150a422de52e71c194cb787992d59988e4113b7729f3e9194da3a735b56b4d1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Native balance5B0420 calls already fully recovered veh_find5C0CB0; src/veh.cpp owns implementation but public veh.h omitted its declaration. Coordinator adds exact existing API only; immutable task baseline and all claims preserved."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c869da3b4a413e73ad4e7a042606ad13d3a5e1f33671cf300d4cdc794c20beeb",
+  "request_id": "balance-real-vehicle-query-declaration-20261001",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:interface-contract-report-closure"
+}

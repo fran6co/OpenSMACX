@@ -30,6 +30,7 @@ void __cdecl action_fungal(int vehicle_id, int x, int y);
 int __cdecl shoot_it(int attacker_faction, int defender_faction,
                      int x, int y, int fungal_attack);
 int __cdecl veh_init(int prototype, int faction, int x, int y);
+int __cdecl veh_find(int x, int y, int faction, int exclude);
 
 struct VOX_Vect;
 struct VOX_Matrix;
