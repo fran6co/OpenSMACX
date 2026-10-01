@@ -175,8 +175,8 @@ int EditBox::text_fits() {
 // 615630. No invented bounds clamp: preserve the original selection cases.
 // ORIGINAL: 0x00615630 ?on_key_click@EditBox@@QAEHHH@Z 0x00615630-0x00615839
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00615630.cpp", "Pinned original EditBox table66A038 and direct call/branch evidence"], "reason": "EditBox owns this table override or its direct text helper: pinned primary table66A038 slots12,17,20,21,25,26,51,64 and original direct-call receivers establish ownership. Use existing Win slot signatures without changing their order; text_position returns the EAX index consumed by callers despite the catalogue void label."}
-// symbol    ?vslot_25@EditBox@@UAEHHH@Z
-int EditBox::vslot_25(int character, int) {
+// symbol    ?on_key_event@EditBox@@UAEHHH@Z
+int EditBox::on_key_event(int character, int) {
     if (character >= 0 && character < 0x20) return 0;
     if (strlen(text_) == field_B14_ && field_B40_ == field_B44_) {
         MessageBeep(0);

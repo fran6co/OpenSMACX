@@ -1,6 +1,10 @@
 // Actual recovered handlers with deterministic drawing, timer and OS doubles.
 #include <assert.h>
 #include <string.h>
+#if defined(_MSC_VER) && _MSC_VER <= 1200
+#define override
+#endif
+class Font;
 typedef unsigned int uint32_t;
 struct RECT { int left, top, right, bottom; };
 int redraws, releases, beeps, starts, stops, shift, widths, fills, lines, colors;
@@ -86,27 +90,27 @@ void selection(EditBox &edit, const char *text, int position) {
 int main() {
     EditBox edit;
     reset(edit, "abcd", 2, 2);
-    assert(edit.vslot_25(1, 0) == 0 && redraws == 0);
-    assert(edit.vslot_25('X', 0) == 1);
+    assert(edit.on_key_event(1, 0) == 0 && redraws == 0);
+    assert(edit.on_key_event('X', 0) == 1);
     selection(edit, "abXcd", 3);
     assert(redraws == 1 && widths == 1);
 
     reset(edit, "abcd", 1, 3);
     edit.dib_.bmiHeader.biWidth = 0;
-    edit.vslot_25('X', 0);
+    edit.on_key_event('X', 0);
     selection(edit, "aXd", 2);
     assert(widths == 0); // Nonempty selection must skip text_fits entirely.
     reset(edit, "abcd", 3, 1);
-    edit.vslot_25('Y', 0);
+    edit.on_key_event('Y', 0);
     selection(edit, "aYd", 2);
     assert(widths == 0);
     reset(edit, "abcd", 2, 2);
     edit.dib_.bmiHeader.biWidth = 16;
-    edit.vslot_25('X', 0);
+    edit.on_key_event('X', 0);
     assert(edit.field_B18_ == 2 && widths == 3);
     reset(edit, "abcd", 4, 4);
     edit.field_B14_ = 4;
-    edit.vslot_25('X', 0);
+    edit.on_key_event('X', 0);
     selection(edit, "abcd", 4); assert(beeps == 1 && !redraws);
 
     reset(edit, "abcd", 0, 0);

@@ -379,7 +379,7 @@ void QuayleWin::on_redraw() {
 
 void QuayleWin::vslot_19(int x, int y) { on_left_click(x, y); }
 
-int QuayleWin::vslot_25(int repeat, int key) {
+int QuayleWin::on_key_event(int repeat, int key) {
   return on_key_click(repeat, key);
 }
 

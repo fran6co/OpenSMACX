@@ -1,0 +1,20 @@
+{
+  "event_id": "4e716dcb520b384e4996d7da7bed1cf90abb3b69dccf3ef89f69b09828586503",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/editbox_input_harness.cpp",
+      "recovery/tests/test_selectpartwin_navigation.py"
+    ],
+    "evidence": [
+      "Same-slot25 method rename requires actual-source host and native behavior fixtures to call the new on_key_event spelling; retain assertions unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3c13aa3dc017fb2928c1468550c00e27c21d0b708400e5a1ed2919ae37ea6a79",
+  "request_id": "key-event-controls-20261001",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:interface-contract-report-closure"
+}

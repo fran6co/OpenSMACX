@@ -56,7 +56,7 @@ class CouncWin : public GraphicWin, public SubInterface {
   int make_resolution(int option);
   void set_vote(int faction_id, int vote);
   void on_left_click(int x, int y);
-  int on_key_click(int key, int flags);
+  int on_key_event(int key, int flags) override;
   void draw_info();
   void init(int proposal, int faction_id);
   void on_mouse_leave(int a1, int a2);

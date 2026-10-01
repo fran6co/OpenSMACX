@@ -604,7 +604,8 @@ class Win : public AutoSound {
   // `push 0; push 0` back at 21 byte-exact sites.
   virtual int vslot_23() { return 0; }  // 0x00404260
   virtual void vslot_24(int = 0, int = 0) {}  // 0x00404260
-  virtual int vslot_25(int = 0, int = 0) { return 0; }  // 0x00406A80
+  // Existing slot 25: keyboard input dispatched by key_click_event.
+  virtual int on_key_event(int = 0, int = 0) { return 0; }  // 0x00406A80
   virtual int vslot_26(int = 0) { return 0; }  // 0x00404250
   virtual int vslot_27(int = 0) { return 0; }  // 0x00404250
   // Slot 28: Win dispatches left double-clicks here (0x005EE570).

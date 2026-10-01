@@ -30,7 +30,7 @@ class PrefWin : public GraphicWin {
   void init();
   void display(int page);
   void destroy();
-  int on_key_click(int repeat, int key) override;
+  int on_key_event(int repeat, int key) override;
   void on_group_clicked(int group, int previous, int selected);
   void hide_option_buttons();
   void update_pref_buttons();

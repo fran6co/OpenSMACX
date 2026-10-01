@@ -26,7 +26,7 @@ def test_selectpartwin_keyboard_and_feedback(tmp_path: Path) -> None:
     methods = "\n".join(
         _body(source, prefix)
         for prefix in (
-            "int SelectPartWin::vslot_25(int, int key)",
+            "int SelectPartWin::on_key_event(int, int key)",
             "void SelectPartWin::on_redraw()",
             "void SelectPartWin::on_mouse_feedback(int x, int y)",
             "void SelectPartWin::vslot_21(int x, int y)",
@@ -69,7 +69,7 @@ struct SelectPartWin {
     void on_update() { ++updates; }
     void release_modal() { ++releases; }
     void on_lose_mouse_capture() { ++capture_losses; }
-    int vslot_25(int, int);
+    int on_key_event(int, int);
     void on_redraw();
     void on_mouse_feedback(int, int);
     void vslot_21(int, int);
@@ -82,14 +82,14 @@ SelectPartWin *WinPointerOwner4 = nullptr;
 int main() {
     SelectPartWin win;
     // The first argument is not the key; only the second selects Escape.
-    assert(win.vslot_25(27, 0) == 1);
+    assert(win.on_key_event(27, 0) == 1);
     assert(win.releases == 0 && win.field_2B80_ == 2);
-    assert(win.vslot_25(0, 39) == 1);  // right
+    assert(win.on_key_event(0, 39) == 1);  // right
     assert(win.field_2B80_ == 3);
     assert(win.draw_count == 2 && win.drawn[0] == 2 && win.selected[0] == 0);
     assert(win.drawn[1] == 3 && win.selected[1] == 1);
     assert(win.updates == 2);
-    assert(win.vslot_25(0, 34) == 1);  // page down, Scroll clamps 0+3 to 2
+    assert(win.on_key_event(0, 34) == 1);  // page down, Scroll clamps 0+3 to 2
     assert(win.scroll_.position_ == 2 && win.field_2B60_ == 8);
     assert(win.redraws == 1);
     win.vslot_49(999, 1);  // scrolling delegates to scrolled, second arg is row
@@ -103,33 +103,33 @@ int main() {
     assert(win.field_2B80_ == -1 && win.field_4648_ == 0);
     assert(WinPointerOwner3 == nullptr && WinPointerOwner4 == nullptr);
     assert(win.capture_losses == 1 && win.releases == 1);
-    assert(win.vslot_25(0, 27) == 1);  // Escape
+    assert(win.on_key_event(0, 27) == 1);  // Escape
     assert(win.field_2B80_ == -1 && win.releases == 2);
     assert(win.updates == 5);
-    assert(win.vslot_25(0, 26) == 1);  // default, not modal release
+    assert(win.on_key_event(0, 26) == 1);  // default, not modal release
     assert(win.releases == 2);
     assert(win.updates == 6);
-    assert(win.vslot_25(0, 13) == 1);  // Enter
+    assert(win.on_key_event(0, 13) == 1);  // Enter
     assert(win.releases == 3);
     assert(win.updates == 7);
 
     SelectPartWin fits;
     fits.field_2B74_ = fits.field_2B64_;
     fits.field_2B80_ = 0;
-    assert(fits.vslot_25(0, 33) == 1);  // page up returns directly
-    assert(fits.vslot_25(0, 34) == 1);  // page down returns directly
-    assert(fits.vslot_25(0, 38) == 1);  // up at first row returns directly
+    assert(fits.on_key_event(0, 33) == 1);  // page up returns directly
+    assert(fits.on_key_event(0, 34) == 1);  // page down returns directly
+    assert(fits.on_key_event(0, 38) == 1);  // up at first row returns directly
     fits.field_2B80_ = 7;
-    assert(fits.vslot_25(0, 40) == 1);  // down at end returns directly
+    assert(fits.on_key_event(0, 40) == 1);  // down at end returns directly
     assert(fits.updates == 0 && fits.redraws == 0 && fits.draw_count == 0);
 
     SelectPartWin advance;
     advance.field_2B80_ = 4;
-    assert(advance.vslot_25(0, 40) == 1);  // down advances selection
+    assert(advance.on_key_event(0, 40) == 1);  // down advances selection
     assert(advance.field_2B80_ == 8 && advance.field_2B60_ == 4);
     assert(advance.scroll_.position_ == 1 && advance.redraws == 1);
     advance.field_2B80_ = 19;
-    assert(advance.vslot_25(0, 40) == 1);  // down near end scrolls only
+    assert(advance.on_key_event(0, 40) == 1);  // down near end scrolls only
     assert(advance.field_2B80_ == 19 && advance.field_2B60_ == 8);
     assert(advance.scroll_.position_ == 2 && advance.redraws == 2);
 }

@@ -28,6 +28,7 @@
 #include "game.h"        // IsMultiplayerNet and string_upper_slot
 #include "general.h"     // GenderDefault and PluralityDefault
 #include "infowin.h"     // InfoFactionShadowColors
+#include "council.h"
 
 // Source-owned process Council object. The original init receiver establishes
 // its identity, not a complete global bound or runtime-initializer proof.
@@ -765,4 +766,47 @@ int CouncWin::on_iface_dialog_back_draw(GraphicWin *) {
 // RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@CouncWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00426FA0
 int CouncWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
     return 0;
+}
+
+// The native front-table slot 25 selects the Council keyboard handler.
+// Keep it an override of Win's existing event, not an extra virtual slot.
+// ORIGINAL: 0x00425BA0 ?on_key_click@CouncWin@@QAEHHH@Z 0x00425BA0-0x00425D8D
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00425ba0.cpp", "src/win.h", "recovery/tests/test_key_event_hierarchy.py"], "reason": "Recover the complete Council keyboard operation through its existing Win slot25 override, genuine buttons/fonts and Council state. Pinned fronttable66AAE8 slot25 targets425BA0; nonvirtual declaration made the earlier source unreachable by keyboard dispatch. Preserve native vote completion, modal release and redraw/proposal effects."}
+// symbol    ?on_key_event@CouncWin@@UAEHHH@Z
+int CouncWin::on_key_event(int, int key) {
+    if (key != 0x1b && key != 0x0d) return 1;
+
+    const int local_faction = ConsoleGlobal.faction_id_;
+    const uint8_t human_factions = static_cast<uint8_t>(LockEnableMask);
+    const bool can_close =
+        (human_factions & (1u << (local_faction & 0x1f))) == 0 ||
+        ((GameMorePreferences & 0x40) != 0 &&
+         (GameMorePreferences & 0x1000) != 0 && !IsMultiplayerPBEM) ||
+        field_A24_ != 0 ||
+        (IsMultiplayerPBEM && CouncilPbemGate != 0 &&
+         leader_label_kind_[local_faction] != 0);
+    if (!can_close) {
+        for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+            const uint8_t current_humans = static_cast<uint8_t>(LockEnableMask);
+            if (leader_label_kind_[faction] == 0 &&
+                (current_humans & (1u << (faction & 0x1f))) == 0) {
+                leader_label_kind_[faction] = static_cast<uint32_t>(council_get_vote(
+                    faction, static_cast<int>(field_A1C_), static_cast<int>(field_A20_)));
+            }
+        }
+        return 1;
+    }
+    release_modal();
+    TurnRedrawPending = 0;
+    CouncilDialogActive = 0;
+    for (int button = 0; button < 6; ++button) buttons_[button].hide();
+    font1_.close();
+    font2_.close();
+    font3_.close();
+    font4_.close();
+    font5_.close();
+    do_all_draws();
+    if (!IsMultiplayerNet && field_A24_ == 1)
+        council_action(static_cast<int>(field_A1C_), static_cast<int>(field_A20_));
+    return 1;
 }

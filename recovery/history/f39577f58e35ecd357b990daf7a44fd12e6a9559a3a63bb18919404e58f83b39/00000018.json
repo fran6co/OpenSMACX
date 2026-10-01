@@ -1,0 +1,19 @@
+{
+  "event_id": "97079b1e1af9856fae629a154e5962b34b728a2170efefd5aa995c927d05abbc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_editbox_recovery.py"
+    ],
+    "evidence": [
+      "Update slot25 compiler symbol assertion to actual on_key_event override and restore extracted declaration fixture compatibility (VC6 override macro and Font forward declaration). No behavioral assertion removals."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "4e716dcb520b384e4996d7da7bed1cf90abb3b69dccf3ef89f69b09828586503",
+  "request_id": "key-event-native-fixture-20261001",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:interface-contract-report-closure"
+}

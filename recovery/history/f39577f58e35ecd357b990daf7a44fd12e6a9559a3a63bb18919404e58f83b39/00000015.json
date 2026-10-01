@@ -1,0 +1,28 @@
+{
+  "event_id": "747c4ceddfa8077de6d9456daa74d9904524337bd1dbf4f0f89e9022a838927e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_key_event_hierarchy.py",
+      "src/diplowin.cpp",
+      "src/editbox.cpp",
+      "src/editbox.h",
+      "src/quaylewin.cpp",
+      "src/quaylewin.h",
+      "src/selectpartwin.cpp",
+      "src/selectpartwin.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Independent native review finds CouncWin425BA0 body unreachable through its inherited Win virtual slot25 because current declaration is nonvirtual. Name existing two-int/int slot on_key_event without adding or reordering slots; rename existing concrete slot25 overrides/call sites, and integrate genuine CouncWin key body as override. AlphaSave void on_key_click prevents using that spelling for the base. Original mappings/claims stay intact; emitted symbol facts must use native writer after compiler observation. Full build/link, native body/table evidence, host virtual-dispatch control and protected claim comparisons required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "861650c7b1c0a2644139872b27a21e4d3f99f8782b820253c0551283f9edfbf5",
+  "request_id": "council-real-key-event-hierarchy-20261001",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:interface-contract-report-closure"
+}

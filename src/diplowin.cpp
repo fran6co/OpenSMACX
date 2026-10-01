@@ -381,7 +381,7 @@ int DiploWin::on_key_click(int repeat, int key) {
         release_modal();
         return 1;
     }
-    editBox_.vslot_25(repeat, key);
+    editBox_.on_key_event(repeat, key);
     return 1;
 }
 

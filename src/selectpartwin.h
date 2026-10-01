@@ -27,7 +27,7 @@ class SelectPartWin : public GraphicWin {
   virtual void on_redraw();
   virtual void on_mouse_feedback(int x, int y);
   virtual void vslot_21(int x, int y);
-  virtual int vslot_25(int unused, int key);
+  int on_key_event(int unused, int key) override;
   virtual void vslot_48(int unused, int row);
   virtual void vslot_49(int unused, int row);
 

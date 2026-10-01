@@ -252,7 +252,7 @@ Purpose: Answer the design-parts list's keyboard navigation: the arrow keys
 
 // ORIGINAL: 0x00433A10 ?on_key_click@SelectPartWin@@QAEHHH@Z 0x00433A10-0x00433CD0 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["The original SelectPartWin vtable at 0x0066B2B8 selects 0x00433A10 at inherited slot 25.", "The pinned key table dispatches Enter, Escape, navigation keys and their numpad equivalents; original seed at git:08336bcc:src/unrecovered/00433a10.cpp."], "reason": "The real SelectPartWin override in slot 25 owns keyboard navigation of its Scroll and selection members."}
-// symbol   ?vslot_25@SelectPartWin@@UAEHHH@Z
+// symbol   ?on_key_event@SelectPartWin@@UAEHHH@Z
 // size      704 bytes
 // prototype int (__thiscall ?on_key_click@SelectPartWin@@QAEHHH@Z)(SelectPartWin* this, int, int)
 // callers   0   call targets   2
@@ -266,7 +266,7 @@ Status: Coverage transcription - unclaimed body; historical seed at
         its two-level jump-table index; the numpad keys share their arrow
         blocks exactly as the image's table cells do.
 */
-int SelectPartWin::vslot_25(int, int key) {
+int SelectPartWin::on_key_event(int, int key) {
     const int first_cached = field_2B60_;
     const int highlight = field_2B80_;
 

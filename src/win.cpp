@@ -7896,7 +7896,7 @@ int Win::key_down_event(int key) {
         Win *focus = reinterpret_cast<Win *>(ebx);
 
         if (focus->scroll_vert_ != 0) {
-            if (focus->scroll_vert_->vslot_25(0, key) != 0) {
+            if (focus->scroll_vert_->on_key_event(0, key) != 0) {
                 return 1;
             }
             if ((short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -7905,7 +7905,7 @@ int Win::key_down_event(int key) {
             }
         }
         if (focus->scroll_horz_ != 0) {
-            if (focus->scroll_horz_->vslot_25(0, key) != 0) {
+            if (focus->scroll_horz_->on_key_event(0, key) != 0) {
                 return 1;
             }
             if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -7922,7 +7922,7 @@ int Win::key_down_event(int key) {
     }
 
     if (this->scroll_vert_ != 0) {
-        if (this->scroll_vert_->vslot_25(0, key) != 0) {
+        if (this->scroll_vert_->on_key_event(0, key) != 0) {
             return 1;
         }
         if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -7931,7 +7931,7 @@ int Win::key_down_event(int key) {
         }
     }
     if (this->scroll_horz_ != 0) {
-        if (this->scroll_horz_->vslot_25(0, key) != 0) {
+        if (this->scroll_horz_->on_key_event(0, key) != 0) {
             return 1;
         }
         if (!clicked && (short)MapVirtualKeyA(key & 0xfff8ffff, 2) == 0) {
@@ -9317,7 +9317,7 @@ int Win::key_click_event(int key, int flags) {
         result = callback(key, flags);
     }
     void *vtbl2 = *(void **)self;
-    int r2 = this->vslot_25(key, flags);
+    int r2 = this->on_key_event(key, flags);
     Win *child = reinterpret_cast<Win *>(val_14_);
     if (child != 0) {
         void *cvtbl = *(void **)child;

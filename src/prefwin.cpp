@@ -509,7 +509,8 @@ void PrefWin::destroy() {
 
 // ORIGINAL: 0x0048FCD0 ?on_key_click@PrefWin@@QAEHHH@Z 0x0048FCD0-0x0048FD98 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0048fcd0.cpp", "recovery/tasks/prefwin-owner-coverage-wave.json", "Original control parent 8578D8; ctor/destructor member order, 800-pixel branch, checkbox text-context and callback order independently reviewed."], "reason": "Recover the complete PrefWin ownership group through a genuine GraphicWin base and compiler-owned embedded control lifetimes; preserve seed identity, original spans and unresolved discoveries without granting byte claims."}
-int PrefWin::on_key_click(int repeat, int key) {
+// symbol    ?on_key_event@PrefWin@@UAEHHH@Z
+int PrefWin::on_key_event(int repeat, int key) {
   (void)repeat;
   if (key == VK_RETURN) {
     field_A5C_ = 1;
