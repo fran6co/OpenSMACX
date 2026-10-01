@@ -1,0 +1,20 @@
+{
+  "event_id": "23dfda8bd3b5ac65c6a8bb32051d58c9d51941c1cc5cf4a2e67ac3c8cfd0c809",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.cpp",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Root-only central dependency closure for Console new_base4CF7C0: native4CFD66/4CFE77 index writable6846D8 table. Eight pinned initial pointers equal FactionsArt78E978 + faction*65C + diplomacy member4D0, independent of the constructor/member layout evidence455F10. Preserve mutable pointer indirection in an eight-entry source-owned table, not direct-member substitution or original-address storage. Native4CFCBA writes8 to signedDWORD93FAC8; diplomacy_ends53E484 clears it. Initial four bytes zero. Define neutral source-owned DiplomacyEndState, separate from DiplomacyActive93FAB4 and PopupWaitActive93FAC4. No inferred extra fields or producer completion, behavior change or acceptance. Root transfers exact verified definitions centrally; worker may not edit other faction code. Preserve all task baselines, source work, seeds and claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "712b89354cec5c69ab89feb27a3b2dff2cd23227e3e8fc5e6b1012642141f4a5",
+  "request_id": "console-diplomacy-storage-20261001-master",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:console-scenario-owner-wave"
+}

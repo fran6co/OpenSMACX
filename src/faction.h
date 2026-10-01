@@ -600,6 +600,7 @@ extern PlayerData PlayersData[MaxPlayerNum];                    // 0x0096C9E0
 extern uint32_t FactionRankings[MaxPlayerNum];                  // 0x009A64EC
 extern uint32_t LockEnableMask;  // 0x009A64E8 - declared in lock.h too; byte 0 = is_human bytes, byte 1 = is_alive
 extern FactionArt FactionsArt[MaxPlayerNum];  // 0x0078E978
+extern Sprite *FactionDiplomacyPortraits[MaxPlayerNum];
 // Mutable borrowed pointers, populated by load_bases. The original's other
 // producer load_sprites455EB0 and content loader load_faction_art453710
 // remain unrecovered; storage/lifetime alone do not supply loaded artwork.
@@ -670,6 +671,7 @@ int __cdecl pop_expire();    // 0x00539920, turn-expiry wait callback
 
 // introduce enters diplomacy; diplomacy_ends clears this shared state.
 extern int DiplomacyActive;
+extern int DiplomacyEndState;
 
 // THE SQUARE THE DIPLOMACY SCREEN CENTRES ON, both -1 in the shipped image
 // (meaning "none") and both reset to -1 when the screen comes down.

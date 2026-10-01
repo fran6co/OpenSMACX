@@ -142,6 +142,18 @@ FactionArt::~FactionArt() {}
 // RECOVERY_OBJECT: v2 0x0078E978 0x00791C58 ?FactionsArt@@3PAUFactionArt@@A 0x00455F10
 FactionArt FactionsArt[MaxPlayerNum];
 
+// new_base4CFD66/4CFE77 reads a writable eight-entry portrait pointer table.
+// Its initial targets are the diplomacy Sprites at FactionArt+4D0 with
+// the independently established65C object stride. Keep the pointer slots:
+// initial targets alone do not justify erasing this mutable indirection.
+// RECOVERY_OBJECT: v2 0x006846D8 0x006846F8 ?FactionDiplomacyPortraits@@3PAPAVSprite@@A 0x004CF7C0
+Sprite *FactionDiplomacyPortraits[MaxPlayerNum] = {
+    &FactionsArt[0].diplomacy, &FactionsArt[1].diplomacy,
+    &FactionsArt[2].diplomacy, &FactionsArt[3].diplomacy,
+    &FactionsArt[4].diplomacy, &FactionsArt[5].diplomacy,
+    &FactionsArt[6].diplomacy, &FactionsArt[7].diplomacy
+};
+
 // Both original producers453A20/455EB0 fill192 four-byte pointers to the
 // first24 members of those eight objects, independently bounding
 //76E590..76E890. Initial pointer storage is zero.
@@ -166,6 +178,12 @@ int BestProtoToMention;  // 0x0093FA40
 // their lifecycle. The original four-byte storage is zero-initialized.
 // RECOVERY_OBJECT: v2 0x0093FAB4 0x0093FAB8 ?DiplomacyActive@@3HA 0x0053E470
 int DiplomacyActive;
+
+// new_base4CFCBA publishes8 before diplomacy_ends;53E484 clears this
+// independent DWORD. Both its initial storage and the cleared value are0.
+// Its broader protocol meaning and remaining producers still need recovery.
+// RECOVERY_OBJECT: v2 0x0093FAC8 0x0093FACC ?DiplomacyEndState@@3HA 0x004CF7C0
+int DiplomacyEndState;
 // The faction whose voice the next popup speaks in. Popup::start (0x00406380)
 // and popp(0x0048C0A0) are the only readers: each bounds it to 1..7 and, when
 // Players[it].rule_flags has RFLAG_ALIEN, reads the dialogue out of
