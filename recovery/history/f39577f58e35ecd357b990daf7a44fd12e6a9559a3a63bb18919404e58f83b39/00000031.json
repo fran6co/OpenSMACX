@@ -1,0 +1,27 @@
+{
+  "event_id": "2f5bf5b0351c6aeb08c1562d975a8d5dc74ef8d197f7d00c5febda5511307fe7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_newtechwin_exec_behavior.py",
+      "src/newtechwin.cpp",
+      "src/newtechwin.h"
+    ],
+    "evidence": [
+      "Unrecovered NewTechWin::exec483F90..48480F is the typed two-intpopup entrycalleefor fulltech_achieved; existingNewTechWin realGraphicWin subclass/header nowdeclarespropermethod. Coordinator permits genuinefullbodyUI/lifetime/field recovery, preservingall existingnewtech claims and seeds; worker CPP+tests only, Rootheaders andnativebinding/publication."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4734864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ac252ac95953932cdd764d01cda6edd3c186a03da5324e29bc4ec06bd77a4edf",
+  "request_id": "real-technology-popup-body-20261001",
+  "schema_version": 1,
+  "sequence": 31,
+  "stream": "task:interface-contract-report-closure"
+}
