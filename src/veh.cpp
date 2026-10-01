@@ -28,6 +28,7 @@
 #include "log.h"
 #include "map.h"
 #include "strings.h"
+#include "palette.h"  // Reactor-zero naming observes the existing palette slot.
 #include "technology.h"
 #include "terraforming.h"
 #include "deletionlist.h"  // VehDeletionList - the multiplayer deletion queue
@@ -75,14 +76,53 @@ static const uint32_t PrototypeAbilitySimilarityMask = 0x0048841Au;
 // RECOVERY_OBJECT: v2 0x0068F0F0 0x0068F0F4 ?FirstProposedPrototype@@3HA 0x00580860
 int FirstProposedPrototype = -1;
 
+// Compose a readable prototype name from the already-loaded design rules.
+// Rule-string fields retain pointer-bit values validated by the loaded rules.
+static const char *prototype_rule_name(LPSTR string_id) {
+    return StringTable.get(static_cast<int>(
+        reinterpret_cast<intptr_t>(string_id)));
+}
+
+static const char *prototype_reactor_name(int reactor_id) {
+    if (reactor_id == 0) {
+        return StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(
+            g_PALETTE2.animation_colours(4))));
+    }
+    return prototype_rule_name(Reactor[reactor_id - 1].name_short);
+}
+
+static void add_prototype_name_suffix(char *name, const char *suffix,
+                                     bool &suffix_exhausted) {
+    char *last_suffix = 0;
+    for (char *found = strstr(name, suffix);
+         found != 0;
+         found = strstr(found + 1, suffix)) {
+        last_suffix = found;
+    }
+    if (last_suffix == 0
+        || strlen(last_suffix) > strlen(suffix) + 1) {
+        ::strcat(name, " ");
+        ::strcat(name, suffix);
+        ::strcat(name, "2");
+        return;
+    }
+    const size_t name_length = strlen(name);
+    const char final_character = name[name_length - 1];
+    if (final_character < '2' || final_character > '8') {
+        suffix_exhausted = true;
+    } else {
+        name[name_length - 1] = final_character + 1;
+    }
+}
+
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057e040.cpp", "image:0x0057E040-0x0057EF95"], "reason": "The recovered DesignWin setup path requires the original prototype naming entry. Retain its full seed and explicit unfinished owner body for link continuity pending recovery of the name-generation behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057e040.cpp", "image:0x0057E040-0x0057EF95", "image:0x0057EE10-0x0057EE30"], "reason": "Prototype naming composes loaded ability, chassis, weapon, armor and reactor rules, with faction-local duplicate-name selection. The reactor-zero path borrows Palette animation storage. The original primary-collision restart reads before the prototype array; preserve the seed and explicit unfinished sentinel until that behavior is resolved."}
 void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                         int chassis_id, int weapon_id, int armor_id,
                         int ability_flags, int reactor_id) {
-    (void)prototype_id;
-    (void)faction_id;
-    (void)reactor_id;
+    // BODY GOES HERE.
+    // Duplicate-name restart at 0x0057EE10 reads before VehPrototypes on
+    // the differing-name route. Its portable behavior remains unresolved.
     output[0] = '\0';
     for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
         if ((static_cast<uint32_t>(ability_flags) & (1u << ability_id)) == 0) {
@@ -108,10 +148,325 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         ::strcat(output, " ");
         break;
     }
-    // This is the verified ability-abbreviation prefix; the
-    // source's gendered chassis, combat/plan and duplicate-name branches
-    // still need their complete typed translation.
-    // BODY GOES HERE.
+
+    char alternate_name[257];
+    alternate_name[0] = '\0';
+    ::strcpy(alternate_name + 1, output);
+    const RulesChassis &chassis = Chassis[chassis_id];
+    const RulesWeapon &weapon = Weapon[weapon_id];
+    const RulesArmor &armor = Armor[armor_id];
+    int name_form_quality = 0;
+    int chassis_is_not_basic = 0;
+    if (weapon.mode < 3) {
+        int name_combat_rating;
+        int name_rating_limit;
+        if (weapon.offense_rating < armor.defense_rating) {
+            name_combat_rating = 6;
+        } else {
+            name_combat_rating = 3;
+            name_rating_limit = armor.defense_rating;
+        }
+        if (weapon.offense_rating < armor.defense_rating) {
+            name_rating_limit = weapon.offense_rating;
+        }
+        if (chassis.triad == TRIAD_SEA) {
+            ++name_combat_rating;
+        }
+        if (chassis.triad == TRIAD_AIR) {
+            name_combat_rating += name_combat_rating / 2;
+        }
+        name_form_quality = name_combat_rating < name_rating_limit;
+        chassis_is_not_basic = chassis.triad != TRIAD_SEA;
+        const char *large_offense_form = StringTable.get(
+            static_cast<int>(reinterpret_cast<intptr_t>(chassis.offsv_lrg_name)));
+        bool has_paired_large_forms = false;
+        if (strlen(large_offense_form) != 0) {
+            const char *large_defense_form = StringTable.get(
+                static_cast<int>(reinterpret_cast<intptr_t>(chassis.defsv_lrg_name)));
+            has_paired_large_forms = strlen(large_defense_form) != 0;
+        }
+        if (!has_paired_large_forms) name_form_quality = 0;
+    }
+
+    const int weapon_rating = weapon.offense_rating;
+    bool has_gendered_name_branch = false;
+    int gendered_form = (reactor_id - 1 ^ faction_id) & 1;
+    const VehPrototype &named_prototype = VehPrototypes[prototype_id];
+    if (named_prototype.unk_1 == 10
+        && (LockEnableMask & (1u << (faction_id & 0x1f))) == 0
+        && chassis.speed > 1) {
+        has_gendered_name_branch = true;
+    } else if (weapon_rating <= chassis.speed
+               && armor.defense_rating <= chassis.speed
+               && weapon_rating >= 0
+               && chassis.triad == TRIAD_LAND) {
+        has_gendered_name_branch = true;
+    }
+
+    bool has_unique_chassis_form = false;
+    if (has_gendered_name_branch && weapon.mode < 3) {
+        if (!has_abil(prototype_id, ABL_POLICE_2X)) {
+            int chassis_form_label = weapon_rating < 2 ? 0x248 : 0x2d8;
+            const char *chassis_form = label_get(chassis_form_label / 4);
+            ::strcat(output, chassis_form);
+            ::strcat(alternate_name + 1, chassis_form);
+        } else {
+            size_t primary_length = strlen(output);
+            if (primary_length != 0) output[primary_length - 1] = '\0';
+            size_t alternate_length = strlen(alternate_name + 1);
+            if (alternate_length != 0) {
+                const size_t shortened_length = strlen(output);
+                alternate_name[shortened_length] = '\0';
+            }
+        }
+        has_unique_chassis_form = true;
+        gendered_form = chassis.speed > 1;
+    }
+
+    int lower_reactor_design = 0;
+    if (!has_unique_chassis_form) {
+        for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; ++walk) {
+            const int candidate_id = walk < MaxVehProtoFactionNum
+                ? walk : faction_id * MaxVehProtoFactionNum + (walk & 0x3f);
+            const VehPrototype &candidate = VehPrototypes[candidate_id];
+            if ((candidate.flags & PROTO_ACTIVE) != 0
+                && candidate.plan == named_prototype.plan
+                && candidate.chassis_id == chassis_id) {
+                if (candidate.reactor_id >= named_prototype.reactor_id) {
+                    lower_reactor_design = 0;
+                    break;
+                }
+                lower_reactor_design = 1;
+            }
+        }
+    }
+
+    const char *weapon_short_name = prototype_rule_name(weapon.name_short);
+    const char *alternate_form = "";
+    bool handled_name_case = false;
+    if (weapon_rating < armor.defense_rating
+        && weapon.mode < 3
+        && weapon_rating >= 0
+        && (static_cast<uint32_t>(ability_flags) & ABL_ARTILLERY) == 0) {
+        if (!has_unique_chassis_form) {
+            gendered_form ^= static_cast<uint8_t>(armor.defense_rating) & 1;
+            const char *component_name = lower_reactor_design == 0
+                ? prototype_rule_name(armor.name_short)
+                : prototype_reactor_name(reactor_id);
+            ::strcat(output, component_name);
+            ::strcat(alternate_name + 1, component_name);
+        }
+        ::strcat(output, " ");
+        ::strcat(alternate_name + 1, " ");
+        ::strcat(output, prototype_rule_name(chassis.defsv_1_name));
+
+        if (!has_unique_chassis_form || (prototype_id & 1) == 0) {
+            alternate_form = prototype_rule_name(
+                name_form_quality == 0 || chassis_is_not_basic != 0
+                    ? chassis.defsv_2_name : chassis.defsv_lrg_name);
+        } else {
+            alternate_form = prototype_rule_name(
+                name_form_quality == 0 || chassis_is_not_basic == 0
+                    ? chassis.defsv_1_name : chassis.defsv_lrg_name);
+        }
+        handled_name_case = true;
+    } else {
+        const bool air_superiority_name_case =
+            chassis.triad == TRIAD_AIR
+            && (static_cast<uint32_t>(ability_flags) & ABL_AIR_SUPERIORITY) != 0
+            && weapon.mode < 3 && weapon_rating >= 0;
+        if (air_superiority_name_case) {
+            if (!has_unique_chassis_form) {
+                const char *component_name = lower_reactor_design != 0
+                    ? prototype_reactor_name(reactor_id) : weapon_short_name;
+                ::strcat(output, component_name);
+                ::strcat(alternate_name + 1, component_name);
+            }
+            ::strcat(output, " ");
+            ::strcat(alternate_name + 1, " ");
+            ::strcat(output, prototype_rule_name(chassis.defsv_1_name));
+            if (has_unique_chassis_form && (prototype_id & 1) != 0) {
+                alternate_form = prototype_rule_name(
+                    name_form_quality != 0 && chassis_is_not_basic != 0
+                        ? chassis.defsv_lrg_name : chassis.defsv_1_name);
+            } else {
+                alternate_form = prototype_rule_name(
+                    name_form_quality != 0 && chassis_is_not_basic == 0
+                        ? chassis.defsv_lrg_name : chassis.defsv_2_name);
+            }
+            handled_name_case = true;
+        } else {
+            if (chassis.missile != 0) {
+                if (weapon_rating > 'b') {
+                    const char *reactor_name = prototype_reactor_name(reactor_id);
+                    ::strcat(output, reactor_name);
+                    ::strcat(alternate_name + 1, reactor_name);
+                    ::strcat(output, " ");
+                    ::strcat(alternate_name + 1, " ");
+                    ::strcat(output, weapon_short_name);
+                    ::strcat(alternate_name + 1, weapon_short_name);
+                    alternate_form = "";
+                    handled_name_case = true;
+                } else if (weapon_id == 0x18 || weapon_id == 0x19) {
+                    const char *reactor_name = prototype_reactor_name(reactor_id);
+                    ::strcat(output, weapon_short_name);
+                    ::strcat(alternate_name + 1, weapon_short_name);
+                    ::strcat(output, " ");
+                    ::strcat(alternate_name + 1, " ");
+                    ::strcat(output, reactor_name);
+                    ::strcat(alternate_name + 1, reactor_name);
+                    ::strcat(output, " ");
+                    ::strcat(alternate_name + 1, " ");
+                    alternate_form = prototype_rule_name(chassis.offsv_1_name);
+                    ::strcat(output, alternate_form);
+                    ::strcat(alternate_name + 1, alternate_form);
+                    alternate_form = "";
+                    handled_name_case = true;
+                }
+            }
+        }
+
+        if (!handled_name_case) {
+            if (weapon.mode > 2 && chassis_id != 0) {
+                if (reactor_id > 1) {
+                    const char *reactor_name = prototype_reactor_name(reactor_id);
+                    ::strcat(output, reactor_name);
+                    ::strcat(alternate_name + 1, reactor_name);
+                    ::strcat(output, " ");
+                    ::strcat(alternate_name + 1, " ");
+                }
+                const bool special_vehicle_mode =
+                    weapon.mode == 7 && chassis_id == 3;
+                const bool special_air_mode =
+                    weapon.mode == 9 && chassis.triad == TRIAD_LAND
+                    && strchr(output, ' ') != 0;
+                if (!special_vehicle_mode && !special_air_mode) {
+                    if ((weapon.mode == 8 || weapon.mode == 9)
+                        && chassis_id == 3) {
+                        alternate_form = label_get(0x28c / 4);
+                        ::strcat(output, alternate_form);
+                        ::strcat(alternate_name + 1, alternate_form);
+                    } else {
+                        ::strcat(output,
+                                 prototype_rule_name(chassis.offsv_lrg_name));
+                        alternate_form =
+                            prototype_rule_name(chassis.offsv_2_name);
+                        ::strcat(alternate_name + 1, alternate_form);
+                    }
+                    ::strcat(output, " ");
+                    ::strcat(alternate_name + 1, " ");
+                }
+            }
+
+            if (!has_unique_chassis_form) {
+                gendered_form ^= static_cast<uint8_t>(weapon_rating) & 1;
+                ::strcat(output, weapon_short_name);
+                ::strcat(alternate_name + 1, weapon_short_name);
+            }
+
+            if (weapon.mode > 2) {
+                handled_name_case = true;
+                alternate_form = "";
+            } else if ((static_cast<uint32_t>(ability_flags) & ABL_ARTILLERY) == 0) {
+                if ((static_cast<uint32_t>(ability_flags) & ABL_AMPHIBIOUS) == 0
+                    || chassis.speed != 1
+                    || weapon_rating <= armor.defense_rating) {
+                    ::strcat(output, " ");
+                    if (lower_reactor_design == 0) {
+                        alternate_form = prototype_rule_name(
+                            name_form_quality == 0 || chassis_is_not_basic == 0
+                                ? chassis.offsv_1_name : chassis.offsv_lrg_name);
+                        ::strcat(output, alternate_form);
+                    } else {
+                        ::strcat(output, prototype_reactor_name(reactor_id));
+                    }
+                    ::strcat(alternate_name + 1, " ");
+                    alternate_form = lower_reactor_design != 0
+                        ? prototype_reactor_name(reactor_id)
+                        : prototype_rule_name(
+                            name_form_quality == 0 || chassis_is_not_basic != 0
+                                ? chassis.offsv_2_name : chassis.offsv_lrg_name);
+                    handled_name_case = true;
+                } else {
+                    ::strcat(output, " ");
+                    alternate_form = label_get(0x998 / 4);
+                    ::strcat(output, alternate_form);
+                    ::strcat(alternate_name + 1, " ");
+                    alternate_form = label_get(0x99c / 4);
+                    handled_name_case = true;
+                }
+            } else {
+                ::strcat(output, " ");
+                alternate_form = label_get(0x87c / 4);
+                ::strcat(output, alternate_form);
+                ::strcat(alternate_name + 1, " ");
+                alternate_form = label_get(0x880 / 4);
+                handled_name_case = true;
+            }
+        }
+
+        if (!handled_name_case) {
+            if (!has_unique_chassis_form) {
+                const char *component_name = lower_reactor_design == 0
+                    ? weapon_short_name : prototype_reactor_name(reactor_id);
+                ::strcat(output, component_name);
+                ::strcat(alternate_name + 1, component_name);
+            }
+            ::strcat(output, " ");
+            ::strcat(alternate_name + 1, " ");
+            ::strcat(output, prototype_rule_name(chassis.defsv_1_name));
+            if (!has_unique_chassis_form || (prototype_id & 1) == 0) {
+                alternate_form = prototype_rule_name(
+                    name_form_quality == 0 || chassis_is_not_basic != 0
+                        ? chassis.defsv_2_name : chassis.defsv_lrg_name);
+            } else {
+                alternate_form = prototype_rule_name(
+                    name_form_quality == 0 || chassis_is_not_basic == 0
+                        ? chassis.defsv_1_name : chassis.defsv_lrg_name);
+            }
+        }
+    }
+
+    ::strcat(alternate_name + 1, alternate_form);
+
+    const int primary_alternate_difference =
+        std::strcmp(output, alternate_name + 1);
+    bool suffix_exhausted = false;
+    const char *duplicate_suffix = label_get(0xe5c / 4);
+    for (int candidate_id = 0; candidate_id < MaxVehProtoNum;
+         ++candidate_id) {
+        const VehPrototype &candidate = VehPrototypes[candidate_id];
+        const int candidate_faction = candidate_id / MaxVehProtoFactionNum;
+        const bool candidate_is_other_design =
+            candidate.chassis_id != chassis_id
+            || candidate.weapon_id != weapon_id
+            || candidate.armor_id != armor_id
+            || candidate.reactor_id != reactor_id
+            || candidate.ability_flags != static_cast<uint32_t>(ability_flags);
+        if (candidate_id == prototype_id
+            || (candidate_faction != 0 && candidate_faction != faction_id)
+            || !candidate_is_other_design) {
+            continue;
+        }
+
+        if (!suffix_exhausted
+            && std::strcmp(output, candidate.veh_name) == 0) {
+            if (primary_alternate_difference != 0) gendered_form = 1;
+            add_prototype_name_suffix(output, duplicate_suffix,
+                                      suffix_exhausted);
+        }
+        if (primary_alternate_difference != 0
+            && std::strcmp(alternate_name + 1, candidate.veh_name) == 0) {
+            gendered_form = 0;
+            add_prototype_name_suffix(alternate_name + 1, duplicate_suffix,
+                                      suffix_exhausted);
+            candidate_id = -1;
+        }
+    }
+
+    if (gendered_form != 0) {
+        ::strcpy(output, alternate_name + 1);
+    }
 }
 
 int VehCurrentCount;  // 0x009A64C8

@@ -20,13 +20,14 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_partial_dependencies_remain_unfinished_in_native_source_reader():
     from match_recovery.source import read_file
 
-    partial = {0x57E040, 0x57F4B0}
+    partial = {0x57F4B0}
     records = {r.address: r for r in read_file(ROOT / "src/veh.cpp")}
     assert partial <= records.keys()
     assert all(records[address].state.name == "PLACEHOLDER" for address in partial)
     assert records[0x4CDAF0].state.name == "IMPLEMENTED"
     assert records[0x57F1D0].state.name == "IMPLEMENTED"
     assert records[0x580860].state.name == "IMPLEMENTED"
+    assert records[0x57E040].state.name == "IMPLEMENTED"
 
 def retire_harness(function):
     return r"""
@@ -658,9 +659,21 @@ def test_live_name_proto_composes_rule_strings(tmp_path):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("host g++ required")
-    source_body = actual_function("name_proto")
     veh_header = (ROOT / "src/veh.h").read_text()
-    triad = braced(veh_header, veh_header.index("enum VehTriad {")) + ";"
+    types = "\n".join(
+        braced(veh_header, veh_header.index(marker)) + ";"
+        for marker in (
+            "struct RulesAbility {", "struct RulesChassis {",
+            "struct RulesWeapon {", "struct RulesArmor {",
+            "struct RulesReactor {", "struct VehPrototype {",
+        )
+    )
+    source_body = actual_function("name_proto")
+    source = (ROOT / "src/veh.cpp").read_text()
+    name_helpers = source[
+        source.index("static const char *prototype_rule_name"):
+        source.index("void __cdecl name_proto")
+    ]
     harness = r"""
 #include <cstdint>
 #include <cstdlib>
@@ -668,58 +681,200 @@ def test_live_name_proto_composes_rule_strings(tmp_path):
 #include <cstdio>
 #define __cdecl
 const int MaxAbilityNum=29;
-SOURCE_TRIAD
-struct RulesAbility { char *abbreviation; } Ability[29];
-struct RulesChassis { char *offsv_1_name; uint8_t triad, speed; } Chassis[19];
-struct RulesWeapon { char *name_short; int8_t offense_rating; } Weapon[26];
-struct RulesArmor { char *name_short; int8_t defense_rating; } Armor[14];
-struct RulesReactor { char *name_short; } Reactor[4];
-int string_reads;
+const int TRIAD_LAND=0, TRIAD_SEA=1, TRIAD_AIR=2;
+const int MaxVehProtoFactionNum=64;
+const int MaxVehProtoNum=512;
+typedef char *LPSTR; typedef int BOOL;
+const int ABL_POLICE_2X=0x400000, ABL_TRAINED=0x4000;
+const int ABL_ARTILLERY=0x8000;
+const int ABL_AIR_SUPERIORITY=0x20, ABL_AMPHIBIOUS=0x8;
+const uint16_t PROTO_ACTIVE=1;
+SOURCE_TYPES
+RulesAbility Ability[29]; RulesChassis Chassis[19];
+RulesWeapon Weapon[26]; RulesArmor Armor[14]; RulesReactor Reactor[4];
+VehPrototype VehPrototypes[512];
+uint32_t LockEnableMask;
+int has_abil(int prototype, int ability) {
+    return (VehPrototypes[prototype].ability_flags & static_cast<uint32_t>(ability)) != 0;
+}
+const char *label_get(int slot) {
+    if(slot==0x87c/4) return "Artillery1";
+    if(slot==0x880/4) return "Artillery2";
+    if(slot==0x998/4) return "Marine1";
+    if(slot==0x99c/4) return "Marine2";
+    return "Unit";
+}
+int palette_string_value=9, palette_slot_requested=-1;
+struct PaletteStub { const void *animation_colours(int slot) const {
+    palette_slot_requested=slot;
+    return reinterpret_cast<const void *>(static_cast<intptr_t>(palette_string_value));
+} } g_PALETTE2;
 struct StringTableStub { const char *get(int index) {
-    ++string_reads;
     switch(index) {
       case 1: return "Cloak"; case 2: return "Deep Radar";
       case 3: return "Scout"; case 4: return "Impact"; case 5: return "Fission";
-      case 6: return "Amphibious"; case 7: return "Carrier";
+      case 6: return "Air"; case 7: return "Trained"; case 8: return "Amph";
+      case 9: return "Palette Reactor A";
+      case 10: return "Palette Reactor B";
+      case 11: return "Rover";
+      case 12: return "Shield";
+      case 13: return "Guard1";
+      case 14: return "Guard2";
       default: return "";
     }
 } } StringTable;
+NAME_HELPERS
 LIVE_BODY
 int main() {
+    if(std::strcmp(prototype_reactor_name(0),"Palette Reactor A")!=0
+        || palette_slot_requested!=4) {
+      std::fprintf(stderr,"reactor zero did not read palette animation slot 4\n"); return 47;
+    }
+    palette_string_value=10;
+    if(std::strcmp(prototype_reactor_name(0),"Palette Reactor B")!=0
+        || palette_slot_requested!=4) {
+      std::fprintf(stderr,"reactor zero did not observe the live palette pointer\n"); return 48;
+    }
+    palette_string_value=9;
+    VehPrototypes[0].reactor_id=1;
+    Weapon[0].mode=0; Weapon[0].offense_rating=1;
+    Armor[0].defense_rating=2;
+    char palette_name[256];
+    name_proto(palette_name,0,1,0,0,0,0,0);
+    if(palette_slot_requested!=4) {
+      std::fprintf(stderr,"name_proto did not use the reactor-zero palette path\n"); return 52;
+    }
+    palette_string_value=10;
+    name_proto(palette_name,0,1,0,0,0,0,0);
+    if(palette_slot_requested!=4) {
+      std::fprintf(stderr,"name_proto cached the reactor-zero palette pointer\n"); return 53;
+    }
     Ability[0].abbreviation=reinterpret_cast<char *>(1);
     Ability[3].abbreviation=reinterpret_cast<char *>(2);
     Chassis[0].offsv_1_name=reinterpret_cast<char *>(3);
     Weapon[0].name_short=reinterpret_cast<char *>(4);
     Armor[0].name_short=reinterpret_cast<char *>(4);
     Reactor[0].name_short=reinterpret_cast<char *>(5);
+    Chassis[0].triad=TRIAD_SEA;
     char name[256];
     name_proto(name, 0, 1, 0, 0, 0, (1<<0)|(1<<3), 0);
-    if (std::strcmp(name,"Cloak ") != 0) {
+    if (std::strncmp(name,"Cloak ",6) != 0) {
       std::fprintf(stderr,"unexpected name: %s\n",name); return 42;
     }
     Ability[5].abbreviation=reinterpret_cast<char *>(6);
-    Ability[15].abbreviation=reinterpret_cast<char *>(7);
-    for (int triad=TRIAD_LAND; triad<=TRIAD_AIR; ++triad) {
-        Chassis[0].triad=triad;
-        string_reads=0;
-        name_proto(name, 0, 1, 0, 0, 0, 1<<5, 0);
-        if (std::strcmp(name,triad==TRIAD_AIR?"":"Amphibious ")) return 43;
-        if (string_reads!=(triad==TRIAD_AIR?1:2)) return 44;
-        for (int speed=1; speed<=2; ++speed) {
-            Chassis[0].speed=speed;
-            Weapon[0].offense_rating=2;
-            Armor[0].defense_rating=1;
-            name_proto(name, 0, 1, 0, 0, 0, 1<<3, 0);
-            if (std::strcmp(name,speed==1?"":"Deep Radar ")) return 45;
-            name_proto(name, 0, 1, 0, 0, 0, (1<<3)|(1<<15), 0);
-            if (std::strcmp(name,"Deep Radar ")) return 46;
-        }
+    Chassis[1].triad=TRIAD_AIR;
+    name_proto(name,0,1,1,0,0,1<<5,1);
+    if(std::strncmp(name,"Air",3) == 0) { std::fprintf(stderr,"air-triad air-superiority abbreviation was not omitted\n"); return 43; }
+    if(std::strstr(name,"Impact")==nullptr) {
+      std::fprintf(stderr,"air-superiority distinct name path was not taken: %s\n",name); return 54;
     }
-    string_reads=0;
-    name_proto(name, 0, 1, 0, 0, 0, 1<<15, 0);
-    if (name[0] || string_reads!=1) return 47;
+
+    Ability[15].abbreviation=reinterpret_cast<char *>(7);
+    name_proto(name,0,1,0,0,0,1<<15,1);
+    if(std::strstr(name,"Trained") != nullptr) { std::fprintf(stderr,"trained abbreviation was not omitted\n"); return 44; }
+
+    Ability[3].abbreviation=reinterpret_cast<char *>(8);
+    Chassis[0].triad=TRIAD_LAND;
+    Chassis[0].speed=1;
+    Weapon[0].offense_rating=2; Armor[0].defense_rating=2;
+    name_proto(name,0,1,0,0,0,1<<3,1);
+    if(std::strncmp(name,"Amph ",5) == 0) { std::fprintf(stderr,"balanced land amphibious abbreviation was not omitted\n"); return 45; }
+    Weapon[0].offense_rating=1;
+    name_proto(name,0,1,0,0,0,1<<3,1);
+    if(std::strncmp(name,"Amph ",5) != 0) { std::fprintf(stderr,"unexpected amphibious prefix: %s\n",name); return 46; }
+    Chassis[0].speed=0;
+    name_proto(name,0,1,0,0,0,1<<3,1);
+    if(std::strncmp(name,"Amph ",5)!=0) {
+      std::fprintf(stderr,"speed-zero ability abbreviation was omitted: %s\n",name); return 55;
+    }
+
+    Chassis[3].triad=TRIAD_LAND;
+    Weapon[2].name_short=reinterpret_cast<char *>(4);
+    Weapon[2].mode=9; Weapon[2].offense_rating=2;
+    name_proto(name,0,1,3,2,0,1,1);
+    if(std::strncmp(name,"Cloak Impact",12)!=0) {
+      std::fprintf(stderr,"mode-nine land prefix skip mismatch: %s\n",name); return 56;
+    }
+
+    Chassis[2].triad=TRIAD_LAND; Chassis[2].speed=2;
+    Weapon[0].offense_rating=1; Armor[0].defense_rating=1;
+    VehPrototypes[0].ability_flags=ABL_POLICE_2X;
+    name_proto(name,0,1,2,0,0,1,1);
+    if(std::strncmp(name,"Cloa",4) != 0) { std::fprintf(stderr,"Police 2X prefix trim mismatch: %s\n",name); return 49; }
+
+    VehPrototypes[0].ability_flags=0;
+    Chassis[0].triad=TRIAD_LAND; Chassis[0].speed=0;
+    Weapon[0].offense_rating=2; Weapon[0].mode=0;
+    Armor[0].defense_rating=2;
+    char duplicate_name[64]="Impact Scout";
+    bool suffix_exhausted=false;
+    add_prototype_name_suffix(duplicate_name,"Unit",suffix_exhausted);
+    if(std::strcmp(duplicate_name,"Impact Scout Unit2") != 0) return 50;
+    add_prototype_name_suffix(duplicate_name,"Unit",suffix_exhausted);
+    if(std::strcmp(duplicate_name,"Impact Scout Unit3") != 0) return 51;
+
+    // 57EA8C tests the artillery bit, not the distinct trained bit. The
+    // alternate label is appended once on each special suffix route.
+    Chassis[0].offsv_2_name=reinterpret_cast<char *>(11);
+    name_proto(name,0,0,0,0,0,ABL_TRAINED,1);
+    if(std::strcmp(name,"Impact Scout")) return 57;
+    name_proto(name,0,0,0,0,0,ABL_ARTILLERY,1);
+    if(std::strcmp(name,"Impact Artillery1")) return 58;
+    name_proto(name,0,1,0,0,0,ABL_ARTILLERY,1);
+    if(std::strcmp(name,"Impact Artillery2")) return 59;
+
+    // 57EAEA tests speed==1 independently of triad. No abbreviation is
+    // emitted for this stronger weapon's amphibious flag at speed one.
+    Chassis[0].speed=1; Chassis[0].triad=TRIAD_SEA;
+    Weapon[0].offense_rating=3;
+    name_proto(name,0,0,0,0,0,ABL_AMPHIBIOUS,1);
+    if(std::strcmp(name,"Impact Marine2")) return 60;
+
+    // The missile terminals append their alternate weapon/chassis once;
+    // mode>=3 exits without adding a defensive chassis suffix.
+    Chassis[0].missile=1;
+    Weapon[24].name_short=reinterpret_cast<char *>(4);
+    Weapon[24].offense_rating=98; Weapon[24].mode=3;
+    name_proto(name,0,1,0,24,0,0,1);
+    if(std::strcmp(name,"Impact Fission Scout")) return 61;
+    Weapon[24].offense_rating=99;
+    name_proto(name,0,1,0,24,0,0,1);
+    if(std::strcmp(name,"Fission Impact")) return 62;
+
+    // 57E4F4 uses Armor.name_short, not Weapon.name_short. Reactor
+    // selection scans the live named prototype's reactor, not the argument.
+    Chassis[0].missile=0; Chassis[0].speed=0;
+    Chassis[0].triad=TRIAD_LAND;
+    Chassis[0].defsv_1_name=reinterpret_cast<char *>(13);
+    Chassis[0].defsv_2_name=reinterpret_cast<char *>(14);
+    Armor[0].name_short=reinterpret_cast<char *>(12);
+    Armor[0].defense_rating=4;
+    Weapon[0].offense_rating=2;
+    VehPrototypes[0].reactor_id=2;
+    VehPrototypes[64].flags=PROTO_ACTIVE;
+    VehPrototypes[64].reactor_id=1;
+    name_proto(name,0,1,0,0,0,0,1);
+    if(std::strcmp(name,"Fission Guard2")) return 63;
+    VehPrototypes[64].reactor_id=2;
+    name_proto(name,0,1,0,0,0,0,1);
+    if(std::strcmp(name,"Shield Guard2")) return 64;
+
+    // 57E5F5 skips the component for a unique chassis form. 57E6C5
+    // chooses the alternate form using prototype parity, not faction parity.
+    VehPrototypes[64].flags=0;
+    Chassis[1].triad=TRIAD_AIR; Chassis[1].speed=2;
+    Chassis[1].defsv_1_name=reinterpret_cast<char *>(13);
+    Chassis[1].defsv_2_name=reinterpret_cast<char *>(14);
+    Armor[0].defense_rating=1;
+    VehPrototypes[0].unk_1=10;
+    name_proto(name,0,1,1,0,0,ABL_AIR_SUPERIORITY,1);
+    if(std::strcmp(name,"Unit Guard2")) return 65;
+    VehPrototypes[1].unk_1=10;
+    name_proto(name,1,1,1,0,0,ABL_AIR_SUPERIORITY,1);
+    if(std::strcmp(name,"Unit Guard1")) return 66;
 }
-""".replace("SOURCE_TRIAD", triad).replace("LIVE_BODY", source_body)
+""".replace("SOURCE_TYPES", types).replace("NAME_HELPERS", name_helpers).replace(
+        "LIVE_BODY", source_body)
     cpp = tmp_path / "vehicle_name_proto.cpp"
     executable = tmp_path / "vehicle_name_proto"
     cpp.write_text(harness)
