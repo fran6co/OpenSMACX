@@ -108,7 +108,7 @@ static uint32_t FactionRankingsUnk[8];
 static int InfoFactionTextColors[8], InfoFactionShadowColors[8];
 static int ChatItemIdTable[8], ChatShadowColors[8];
 static int ObjectiveReqVictory, ObjectivesSuddenDeathVictory, ObjectiveAchievePts;
-static int TurnCurrentNum, RankingFactionIDUnk1, EndgameFactionSelectorB;
+static int TurnCurrentNum, RankingFactionIDUnk1;
 static int MapWinCaptionScale, MapWinCaptionDivisor, Language;
 static int EnergyEconomyTotal, NetIncomeGlobal, BreakthroughTurnsGlobal;
 static int MapEditorPaintId, MapEditorBrushId, MapLongitudeBounds, MapLatitudeBounds;
@@ -228,7 +228,7 @@ static void reset_fixture(InfoWin &win, int kind) {
     ObjectivesSuddenDeathVictory = 9000;
     ObjectiveAchievePts = 0;
     TurnCurrentNum = 0;
-    RankingFactionIDUnk1 = 0; EndgameFactionSelectorB = 6;
+    RankingFactionIDUnk1 = 0;
     EnergyEconomyTotal = 40; NetIncomeGlobal = 70; BreakthroughTurnsGlobal = 2;
     Language = 1;
     GameState = 0x80; GameRules = 0;
@@ -566,7 +566,8 @@ static void test_kind_six_typed_winners_and_region_range() {
     RankingFactionIDUnk1 = 2;
     reset_fixture(win, 6);
     RankingFactionIDUnk1 = 2;
-    EndgameFactionSelectorB = 6;
+    FactionRankings[6] = 3;
+    FactionRankings[7] = 6;
     win.setup_text();
     assert(win.row_count_[1] == 6);
     assert(strstr(win.row_text_[1][5], "Leader6") != 0);

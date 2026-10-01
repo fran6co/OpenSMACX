@@ -1977,12 +1977,11 @@ Status: Complete
 // game.h next to each declaration.
 int GameRestartQueued;  // 0x0093A948
 int ExitTurnLoop;       // 0x009B2068
-// Original setup_player and its ending branches share these loader-zero
-// scalar cells. Their allocation bounds remain unresolved.
-// RECOVERY_OBJECT: v1 0x009A6504 ?EndgameFactionSelectorA@@3HA
-int EndgameFactionSelectorA;
-// RECOVERY_OBJECT: v1 0x009A6508 ?EndgameFactionSelectorB@@3HA
-int EndgameFactionSelectorB;
+// Earlier recovery interpreted 0x009A6504/0x009A6508 as independent
+// EndgameFactionSelectorA/B scalars. They are FactionRankings[6]/[7],
+// owned in alpha.cpp: rankings writes all eight slots, and setup_player
+// reads these slots at 0x005B231F/0x005B2300. Keep the historical
+// interpretation here; separate globals would sever producer/consumer state.
 // RECOVERY_OBJECT: v1 0x009B206C ?EndgameExitReason@@3HA
 int EndgameExitReason;
 // Original interlude reads/writes this complete story-mask word.

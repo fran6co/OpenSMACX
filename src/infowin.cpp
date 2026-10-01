@@ -533,7 +533,7 @@ void InfoWin::setup_text() {
 
             if (RankingFactionIDUnk1 > 0) {
                 infowin_write_faction_row(text, row_text_[pane][5], 0x428 / 4,
-                                          static_cast<int>(EndgameFactionSelectorB));
+                                          static_cast<int>(FactionRankings[7]));
                 displayed_rows = 6;
             }
             break;

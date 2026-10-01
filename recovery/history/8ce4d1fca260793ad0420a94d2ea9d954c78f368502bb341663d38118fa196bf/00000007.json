@@ -1,0 +1,32 @@
+{
+  "event_id": "051ce160e9f86c95aa8af38ea0a08db6be7d2f1cd00b429437540cbc42b36724",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/infowin_setup_text_harness.cpp",
+      "recovery/tests/test_infowin_setup_text.py",
+      "src/infowin.cpp"
+    ],
+    "evidence": [
+      "Authorize coupled ranking storage repair discovered by wire0: EndgameFactionSelectorA/B are interpretations of FactionRankings[6]/[7], not independent native allocations. Native setup_player5B2300/5B231F reads9A6508/6504. Include InfoWin456300 final faction row consumer and actual-source host fixture; preserve old object interpretation/address obligations in source rationale and task history, no byte demotion/baseline reset or scope on unrelated gameplay."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5967360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4547328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d3d3a1f16f88a652daa7f898ab9ed6eae47d1553f59b9eb04fdf85fba0f4e5e8",
+  "request_id": "netdaemon-ranking-view-scope",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

@@ -5419,7 +5419,9 @@ search:
         }
         p.unk_102 = 0;
         LockEnableMask &= ~(static_cast<uint32_t>(lifecycle_faction_mask(faction)) << 8);
-        int selected = faction == EndgameFactionSelectorB ? EndgameFactionSelectorA : EndgameFactionSelectorB;
+        int selected = faction == static_cast<int>(FactionRankings[7])
+            ? static_cast<int>(FactionRankings[6])
+            : static_cast<int>(FactionRankings[7]);
         int survivors = 0, partners = 0;
         for (int survivor = 1; survivor < 8; ++survivor) {
             if (!((LockEnableMask >> 8) & (1 << survivor))) continue;

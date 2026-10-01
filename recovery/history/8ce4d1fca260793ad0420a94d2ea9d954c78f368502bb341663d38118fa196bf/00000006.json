@@ -1,0 +1,20 @@
+{
+  "event_id": "d3d3a1f16f88a652daa7f898ab9ed6eae47d1553f59b9eb04fdf85fba0f4e5e8",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netdaemon-game-wire-gap-producers",
+    "evidence": [
+      "Wire[9A6490,9A6828):9A64A0 appears only as exclusive bound of131 records at30 stride beginning9A4BB0;9A64A8 has no known consumer and setup reset skips it.9A66C9 is a save-name C-string prefix:setup_game clears first byte;save_game copies and yearmotizes it, but259-byte capacity not established. FactionRankings has writes/reads of all8entries, selectors overlapindices6/7 and sole current selector read is faction.cpp5422. SecretProject conflicts require producer/consumer review. Do not zero-fill gaps or discard historical identities."
+    ],
+    "hypothesis": "Follow-up opcode0 ownership evidence distinguishes native scan-bound padding, save-name storage, and duplicate ranking selectors; preserve unresolved extents and structural migrations rather than emitting guessed filler.",
+    "kind": "discovery"
+  },
+  "previous_event": "1419778e5f2ec028a528abe4e2468dba96dde59a18206551244beed0c835ce16",
+  "request_id": "netdaemon-game-wire-gap-producers",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

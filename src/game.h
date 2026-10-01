@@ -239,8 +239,6 @@ extern int GameRestartQueued;  // 0x0093A948
 // bound raw, as console.h's ConsoleExitTurnLoop and scenario.cpp's
 // ExitTurnLoopAddress; both now reach this global by name.
 extern int ExitTurnLoop;  // 0x009B2068
-extern int EndgameFactionSelectorA;
-extern int EndgameFactionSelectorB;
 extern int EndgameExitReason;
 extern int ClimateRiseStep;
 extern int ClimateRiseLimit;

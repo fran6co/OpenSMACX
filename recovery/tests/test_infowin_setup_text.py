@@ -173,6 +173,8 @@ def test_active_pane_reload_native_control() -> None:
         ("unk_78[4 + sample]", "unk_78[sample]", "region sample window"),
         ("FactionRankingsUnk[faction_index]) *",
          "FactionRankingsUnk[faction_index - 1]) *", "rank-seven bar score"),
+        ("static_cast<int>(FactionRankings[7]));",
+         "static_cast<int>(FactionRankings[6]));", "shared ranking owner slot"),
         ("case 0: value = static_cast<int>(PlayersData[candidate].tech_ranking); break;",
          "case 0: value = PlayersData[candidate].unk_78[5]; break;", "typed technology field"),
     ],
