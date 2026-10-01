@@ -1,0 +1,24 @@
+{
+  "event_id": "6c330b27a17f3bd983db243dc8a06404d06025b3060975b88fc9236933e858e8",
+  "payload": {
+    "affects": [
+      "entity-126f3dea8787aed5eeb92c1748d6886ddf7e25673c89ac1e0f42064c7d3d3d32",
+      "entity-3d2ed9906a5d731cbf3ad8f2aa6a302a146a224324e08704fe21b89b56c93255",
+      "entity-49fa08b5cfb3c6bdea6d08e768f0e3c2afd39db62d39739b1559fe212a08bdf3"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-settlement-diplomacy-callee-20261001-master",
+    "evidence": [
+      "Pinned native new_base4CFCC4 calls wants_to_speak53DCE0; retained004cf7c0 seed incorrectly spells it diplomacy_ends. Cancellation4CFD82 and final4CFE90 actually call diplomacy_ends53E470.",
+      "src/unrecovered/0053dce0.cpp preserves wants_to_speak span53DCE0..53E46C plus SEH span65E622..65E75A and lifecycle findings. src/recovered/units/0053e470.cpp retains historical exact diplomacy_ends. Neither has a genuine product definition in current source.",
+      "Preserve corrected Console settlement work and dependencies. Gift/retirement can integrate independently under manual coordinator review; discovery stays pending and prohibits automatic task acceptance. Central owner closure must preserve original identities, historical claims, proper diplomacy lifecycle and build/link continuity, without callee substitution or executable-address forwarders."
+    ],
+    "hypothesis": "Settlement territory consent needs the real wants_to_speak diplomacy entry and diplomacy_ends cleanup, not the retained seed substitution. Recover outside-owner dependencies centrally before declaring settlement behavior closed.",
+    "kind": "discovery"
+  },
+  "previous_event": "23dfda8bd3b5ac65c6a8bb32051d58c9d51941c1cc5cf4a2e67ac3c8cfd0c809",
+  "request_id": "console-settlement-diplomacy-callee-20261001-master",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:console-scenario-owner-wave"
+}

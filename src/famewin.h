@@ -13,6 +13,7 @@
 // RECOVERY_BASE: v1 FameWin GraphicWin 0x0 0x0044B200
 class FameWin : public GraphicWin {
  public:
+  friend void __cdecl hall_of_fame(int add_current_player);
   FameWin();
   ~FameWin();
 

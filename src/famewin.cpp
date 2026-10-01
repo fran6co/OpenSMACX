@@ -1,5 +1,6 @@
 #include "stdafx.h"
 #include "famewin.h"
+#include "console.h"
 #include "halloffame.h"
 #include "alpha.h"
 #include "faction.h"
@@ -19,6 +20,43 @@
 // separate source-owned empty buffers rather than aliasing executable data.
 static char FameWinStandardCaption[4];
 static char FameWinWideCaption[4];
+
+// ORIGINAL: 0x0044AF70 ?clear_hall_of_fame@@YAXXZ 0x0044AF70-0x0044AF8D
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned native44AE50 reads/writes hallfame.jhh with rb/wb and mode759194;35records of8C bytes begin9A3840;44AF70 clears only their present bytes.", "Native44AEE6 owned ButtonGroup receiver753468 is FameWin74DAF8+5970;44AF04 virtual slot57 is Win::set_modal with callbackpop_wait5398E0.", "Root-only Console retirement dependency closure authorized in task history; retain src/recovered/units/0044ae50.cpp and src/recovered/0044af70.cpp seed interpretations."], "reason": "Recover real FameWin entry and record-presence cleanup through existing typed HallOfFame records and owned button group, standard CRT I/O and inherited virtual modal API. Retain historical exact seed obligations and original spans; current binding grants no match or acceptance claim."}
+void __cdecl clear_hall_of_fame() {
+  for (int record = 0; record < HallOfFameRecordCount; ++record) {
+    HallOfFameRecords[record].present = 0;
+  }
+}
+
+// ORIGINAL: 0x0044AE50 ?hall_of_fame@@YAXH@Z 0x0044AE50-0x0044AF6D
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned native44AE50 reads/writes hallfame.jhh with rb/wb and mode759194;35records of8C bytes begin9A3840;44AF70 clears only their present bytes.", "Native44AEE6 owned ButtonGroup receiver753468 is FameWin74DAF8+5970;44AF04 virtual slot57 is Win::set_modal with callbackpop_wait5398E0.", "Root-only Console retirement dependency closure authorized in task history; retain src/recovered/units/0044ae50.cpp and src/recovered/0044af70.cpp seed interpretations."], "reason": "Recover real FameWin entry and record-presence cleanup through existing typed HallOfFame records and owned button group, standard CRT I/O and inherited virtual modal API. Retain historical exact seed obligations and original spans; current binding grants no match or acceptance claim."}
+void __cdecl hall_of_fame(int add_current_player) {
+  FILE *file = fopen("hallfame.jhh", "rb");
+  if (file == 0) {
+    clear_hall_of_fame();
+  } else {
+    HallOfFameIOMode = 0;
+    if (fread(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file) == 0) {
+      clear_hall_of_fame();
+    }
+    fclose(file);
+  }
+
+  if (g_FAMEWIN.init() != 0) return;
+  if (add_current_player != 0) g_FAMEWIN.try_to_add_me();
+  g_FAMEWIN.buttonGroup_.set(ConsoleGlobal.faction_id_, 1);
+  g_FAMEWIN.set_modal(0, pop_wait, 0);
+
+  file = fopen("hallfame.jhh", "wb");
+  if (file != 0) {
+    HallOfFameIOMode = 1;
+    if (fwrite(HallOfFameRecords, sizeof(HallOfFameRecords), 1, file) == 0) {
+      clear_hall_of_fame();
+    }
+    fclose(file);
+  }
+}
 
 // hall_of_fame's receiver at 0x0074DAF8 and the original g_FAMEWIN
 // initializer/finalizer at 0x004483D0/0x004483F0 identify this as a

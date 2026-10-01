@@ -509,3 +509,170 @@ int main() {
                     str(unit), "-o", str(executable)], check=True,
                    capture_output=True, text=True)
     subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
+
+def test_give_vehicle_scopes_owner_receiver_and_dispatch(tmp_path):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    harness = r'''
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <vector>
+#define __cdecl
+std::vector<std::string> events; const int DTREATY_COMMLINK=8,DTREATY_VENDETTA=0x10;
+const int TRIAD_LAND=0,TRIAD_SEA=1,TRIAD_AIR=2; const uint32_t RFLAG_ALIEN=0x80;
+const uint32_t BIT_BASE_IN_TILE=1,BIT_AIRBASE=0x40000; int GenderDefault=0,PluralityDefault=0;
+char *ScriptPopupFile=const_cast<char*>("SCRIPT"); int IsMultiplayerNet=0;
+int Territory=4,PopupAnswer=1,GiveCalls=0,GiveRecipient=-1,MessageCalls=0;
+extern int *ReceiverFactionSlot; int ReceiverAfterTerritory=-1,ReceiverAfterFirstParse=-1;
+int PrototypeAfterFirstParse=-1,ReceiverAfterSecondParse=-1,PrototypeAfterSecondParse=-1;
+struct Veh { int16_t x=4,y=6,proto_id=0; uint32_t state=0; uint16_t flags=0,unk=0;
+  uint8_t faction_id=2; int8_t order=0; } Vehs[8];
+struct VehPrototype { char veh_name[32]="Scout"; uint32_t ability_flags=0; uint8_t chassis_id=0,weapon_id=0;
+  uint8_t armor_id=0,reactor_id=0,carry_capacity=0,cost=0,plan=0; int8_t unk=0; } VehPrototypes[8];
+struct RulesChassis { int triad=0; } Chassis[8];
+struct RulesWeapon { int8_t offense_rating=-1; } Weapon[8];
+struct Player { int rule_flags=0,noun_gender=0,is_noun_plural=0; char noun_faction[24]="Faction"; } Players[8];
+struct PlayerData { uint32_t diplo_treaties[8]{}; } PlayersData[8];
+struct Map { uint32_t bit=1; uint8_t val2=3; } Tile;
+Map *map_loc(int x,int y) { assert(x==4&&y==6); return &Tile; }
+struct Popup { void pop(const char *label,int timeout,int flags,const char *text) {
+  assert(timeout==5000&&flags==0&&!text); events.push_back(std::string("msg:")+label); }
+} PopupObj; Popup *NetMsgPopup=&PopupObj;
+struct Network { int locked=0,unlocked=0;
+  int lock_veh(int *id,int mode,int x,int y,int flags) { assert(*id==0&&mode==4&&x==-1&&y==-1&&flags==0); events.push_back("lock"); return locked; }
+  void unlock_veh() { ++unlocked; events.push_back("unlock"); }
+  void await_exec(int value) { assert(value==1); events.push_back("await"); }
+} NetDaemonNet;
+int whose_territory(int faction,int x,int y,int *base,int *unused) {
+  assert(faction==2&&x==4&&y==6&&!base&&!unused);
+  if (ReceiverAfterTerritory>=0) *ReceiverFactionSlot=ReceiverAfterTerritory;
+  return Territory;
+}
+void parse_says(int slot,const char *text,int x,int y) {
+  assert(x==-1&&y==-1); events.push_back(std::string("parse:")+std::to_string(slot)+":"+text);
+  if (slot==0&&ReceiverAfterFirstParse>=0) *ReceiverFactionSlot=ReceiverAfterFirstParse;
+  if (slot==0&&PrototypeAfterFirstParse>=0) Vehs[0].proto_id=PrototypeAfterFirstParse;
+  if (slot==1&&ReceiverAfterSecondParse>=0) *ReceiverFactionSlot=ReceiverAfterSecondParse;
+  if (slot==1&&PrototypeAfterSecondParse>=0) Vehs[0].proto_id=PrototypeAfterSecondParse;
+}
+int __cdecl popp(const char *file,const char *label,int flags,const char *picture,void *callback) {
+  assert(!std::strcmp(file,"SCRIPT")&&flags==0&&!callback);
+  events.push_back(std::string("pop:")+label+":"+picture); return PopupAnswer;
+}
+void action_give(int id,int recipient) { assert(id==0); ++GiveCalls; GiveRecipient=recipient; events.push_back("give"); }
+void message_veh(int op,int id,int recipient,int tail) {
+  assert(op==0x2416&&id==0&&recipient==4&&tail==0); ++MessageCalls; events.push_back("message"); }
+struct Console { int faction_id_; void give_veh(int); } ConsoleGlobal{2},Receiver{3};
+int *ReceiverFactionSlot=&Receiver.faction_id_;
+'''
+    harness += body_for("void Console::give_veh(int vehicle_id)")
+    harness += r'''
+int main() {
+  PlayersData[3].diplo_treaties[4]=DTREATY_COMMLINK;
+  Receiver.give_veh(0);
+  assert(GiveCalls==1&&GiveRecipient==4&&NetDaemonNet.unlocked==0);
+  assert((events==std::vector<std::string>{"lock","parse:0:Faction","parse:1:Scout",
+    "pop:CANGIVE2:native_sm.pcx","give"}));
+  events.clear(); GiveCalls=0; Territory=2; PlayersData[3].diplo_treaties[2]=DTREATY_COMMLINK;
+  PopupAnswer=2; Receiver.give_veh(0);
+  assert(GiveCalls==1&&GiveRecipient==0);
+  events.clear(); GiveCalls=0; Territory=4; IsMultiplayerNet=1; PopupAnswer=1;
+  Receiver.give_veh(0);
+  assert(MessageCalls==1&&GiveCalls==0&&events.back()=="await");
+  events.clear(); IsMultiplayerNet=0; Territory=4; Weapon[0].offense_rating=1;
+  PlayersData[3].diplo_treaties[4]=0; Receiver.give_veh(0);
+  assert(GiveCalls==0&&NetDaemonNet.unlocked==1&&events.back()=="msg:CANTGIVE");
+  events.clear(); Weapon[0].offense_rating=-1; Chassis[0].triad=TRIAD_AIR;
+  Territory=4; PlayersData[3].diplo_treaties[4]=DTREATY_COMMLINK; Tile.bit=0;
+  Receiver.give_veh(0);
+  assert(GiveCalls==0&&NetDaemonNet.unlocked==2&&events.back()=="msg:CANTGIVEAIR");
+  events.clear(); NetDaemonNet.unlocked=0; IsMultiplayerNet=0; Territory=4;
+  Tile.bit=BIT_BASE_IN_TILE; Weapon[0].offense_rating=1; Vehs[0].proto_id=0;
+  Receiver.faction_id_=3; ReceiverAfterTerritory=5;
+  PlayersData[5].diplo_treaties[4]=DTREATY_COMMLINK;
+  std::strcpy(VehPrototypes[5].veh_name,"ChangedScout");
+  VehPrototypes[6].chassis_id=6; Chassis[6].triad=TRIAD_LAND;
+  Players[7].rule_flags=RFLAG_ALIEN;
+  PrototypeAfterFirstParse=5; ReceiverAfterSecondParse=7; PrototypeAfterSecondParse=6;
+  GiveCalls=0; Receiver.give_veh(0);
+  assert(events[1]=="parse:0:Faction" && events[2]=="parse:1:ChangedScout");
+  assert(events[3]=="pop:CANGIVE:alunit_sm.pcx" && GiveCalls==1&&GiveRecipient==4);
+}
+'''
+    unit = tmp_path / "console_give_vehicle.cpp"
+    unit.write_text(harness)
+    executable = tmp_path / "console_give_vehicle"
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
+
+def test_retire_game_handles_prompt_pbem_and_network_restart(tmp_path):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    harness = r'''
+#include <cassert>
+#include <cstdint>
+#include <string>
+#include <vector>
+#define __cdecl
+std::vector<std::string> events;
+const int RULES_IRONMAN=0x400,STATE_IS_SCENARIO=0x10;
+int GameRules=0,GameState=0,IsMultiplayerNet=0,IsMultiplayerPBEM=0;
+uint32_t LockEnableMask=1; int ExitTurnLoop=0,GameRestartQueued=0,PromptResult=1;
+int SavedFaction=0,QuayleFaction=-1,SaveCalls=0,AutoSaveCalls=0,KillAutoSaveCalls=0;
+int ReportCalls=0,HallCalls=0,ReplayCalls=0;
+int bit_count(unsigned int bits) { int count=0; while(bits) { count+=bits&1; bits>>=1; } return count; }
+void auto_save() { ++AutoSaveCalls; events.push_back("auto_save"); }
+void kill_auto_save() { ++KillAutoSaveCalls; events.push_back("kill_auto_save"); }
+int save_game(int slot) { assert(slot==0); ++SaveCalls; events.push_back("save"); return 0; }
+int X_pop(const char *label,const char *text) { assert(!text); events.push_back(std::string("prompt:")+label); return PromptResult; }
+void report_score(int value) { assert(value==1); ++ReportCalls; events.push_back("score"); }
+void quayle(int faction) { QuayleFaction=faction; events.push_back("quayle"); }
+void hall_of_fame(int retire) { assert(retire==1); ++HallCalls; events.push_back("hall"); }
+void show_replay() { ++ReplayCalls; events.push_back("replay"); }
+void log_say(const char *message,int a,int b,int c) {
+  assert(std::string(message)=="Retire**"&&a==0&&b==0&&c==0); events.push_back("log"); }
+struct AlphaNet { void close() { events.push_back("close"); } };
+struct Lock { void clear() { events.push_back("clear_locks"); } };
+struct LockStateEntry { uint32_t dword_[15]{}; };
+struct NetDaemon:AlphaNet { Lock locks_; LockStateEntry lock_state_[24]{};
+  void hang_up() { events.push_back("hang_up"); } } NetDaemonNet;
+struct Console { int faction_id_=3; void retire_game(); } ConsoleGlobal;
+'''
+    harness += body_for("inline void console_close_network(unsigned int final_channel_mask)")
+    harness += body_for("void Console::retire_game()")
+    harness += r'''
+static void reset() { events.clear(); GameRules=GameState=0; IsMultiplayerNet=IsMultiplayerPBEM=0;
+  LockEnableMask=1; ExitTurnLoop=GameRestartQueued=0; PromptResult=1; SaveCalls=AutoSaveCalls=0;
+  KillAutoSaveCalls=ReportCalls=HallCalls=ReplayCalls=0; QuayleFaction=-1; }
+int main() {
+  reset(); GameRules=RULES_IRONMAN; PromptResult=0; ConsoleGlobal.retire_game();
+  assert((events==std::vector<std::string>{"auto_save","prompt:REALLYRETIRE2"}));
+  assert(GameRestartQueued==0&&KillAutoSaveCalls==0);
+  reset(); GameRules=RULES_IRONMAN; IsMultiplayerPBEM=1; LockEnableMask=0xD;
+  ConsoleGlobal.retire_game();
+  assert((events==std::vector<std::string>{"auto_save","prompt:REALLYWIMPOUT","save",
+    "kill_auto_save","score","quayle","hall","replay","log"}));
+  assert(SaveCalls==1&&LockEnableMask==5&&QuayleFaction==3&&ExitTurnLoop==1&&GameRestartQueued==1);
+  reset(); IsMultiplayerNet=1; GameState=STATE_IS_SCENARIO; LockEnableMask=1;
+  ConsoleGlobal.retire_game();
+  assert((events==std::vector<std::string>{"prompt:REALLYRETIRE","hang_up","clear_locks",
+    "close","score","log"}));
+  assert(!IsMultiplayerNet&&ExitTurnLoop==1&&GameRestartQueued==0&&HallCalls==0&&ReplayCalls==0);
+  assert(NetDaemonNet.lock_state_[2].dword_[11]==0xFF);
+}
+'''
+    unit = tmp_path / "console_retire_game.cpp"
+    unit.write_text(harness)
+    executable = tmp_path / "console_retire_game"
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)

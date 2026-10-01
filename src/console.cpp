@@ -7344,3 +7344,147 @@ void Console::activate(int x, int y, int current_selection) {
     set_move(1);
     field_23BEC_ = 1;
 }
+
+// ORIGINAL: 0x004D26A0 ?give_veh@Console@@QAEXH@Z 0x004D26A0-0x004D2ABC
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 004D26A0; retained seed src/recovered/units/004d26a0.cpp", "Native4D270F observes receiver faction after whose_territory;4D2889/296C reload vehicle prototype after the first parser;4D298F..4D2A28 reload receiver flags and current chassis after the second parser. Retain local action_give versus message2416 and original unlock/cancel paths.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
+void Console::give_veh(int vehicle_id) { // 0x004D26A0
+    if (NetDaemonNet.lock_veh(&vehicle_id, 4, -1, -1, 0) != 0) {
+        return;
+    }
+
+    const Veh &vehicle = Vehs[vehicle_id];
+    if (vehicle.faction_id != ConsoleGlobal.faction_id_) {
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+
+    const int x = vehicle.x;
+    const int y = vehicle.y;
+    int recipient_faction = whose_territory(ConsoleGlobal.faction_id_, x, y,
+                                             nullptr, nullptr);
+    const int receiver_faction = faction_id_;
+    const int prototype_id = vehicle.proto_id;
+    const VehPrototype &prototype = VehPrototypes[prototype_id];
+    const RulesChassis &chassis = Chassis[prototype.chassis_id];
+    const int8_t weapon_rating = Weapon[prototype.weapon_id].offense_rating;
+
+    if (recipient_faction == receiver_faction || recipient_faction < 0 ||
+        (PlayersData[receiver_faction].diplo_treaties[recipient_faction] &
+         DTREATY_COMMLINK) == 0 ||
+        (PlayersData[receiver_faction].diplo_treaties[recipient_faction] &
+         DTREATY_VENDETTA) != 0) {
+        if (prototype_id > 0x3F || (weapon_rating >= 0 && prototype_id != 0xF)) {
+            NetDaemonNet.unlock_veh();
+            NetMsgPopup->pop("CANTGIVE", 5000, 0, nullptr);
+            return;
+        }
+        recipient_faction = 0;
+    }
+
+    const uint8_t unit_class = chassis.triad;
+    if (unit_class == TRIAD_AIR) {
+        const Map *const tile = map_loc(x, y);
+        const bool blocked = (tile->bit & BIT_BASE_IN_TILE) == 0 ||
+                             (tile->val2 & 0x0F) > 7;
+        if (blocked && (tile->bit & BIT_AIRBASE) == 0) {
+            NetDaemonNet.unlock_veh();
+            NetMsgPopup->pop("CANTGIVEAIR", 5000, 0, nullptr);
+            return;
+        }
+    }
+
+    const bool prototype_unit =
+        prototype_id < 0x40 && (weapon_rating < 0 || prototype_id == 0xF);
+    GenderDefault = Players[recipient_faction].noun_gender;
+    PluralityDefault = Players[recipient_faction].is_noun_plural;
+    parse_says(0, Players[recipient_faction].noun_faction, -1, -1);
+    parse_says(1, VehPrototypes[vehicle.proto_id].veh_name, -1, -1);
+
+    if (prototype_unit && recipient_faction != 0) {
+        const int answer = popp(ScriptPopupFile, "CANGIVE2", 0,
+                                "native_sm.pcx", nullptr);
+        if (answer == 0) {
+            NetDaemonNet.unlock_veh();
+            return;
+        }
+        if (answer == 2) {
+            recipient_faction = 0;
+        }
+    } else {
+        const char *label;
+        const char *picture;
+        if (prototype_unit) {
+            label = "CANGIVE1";
+            picture = "native_sm.pcx";
+        } else {
+            label = "CANGIVE";
+            const int current_receiver_faction = faction_id_;
+            const bool alien =
+                (Players[current_receiver_faction].rule_flags & RFLAG_ALIEN) != 0;
+            const int current_prototype_id = vehicle.proto_id;
+            const uint8_t current_unit_class = Chassis[
+                VehPrototypes[current_prototype_id].chassis_id].triad;
+            if (alien) {
+                picture = current_unit_class == TRIAD_AIR ? "alair_sm.pcx" :
+                          current_unit_class == TRIAD_SEA ? "navun_sm.pcx" : "alunit_sm.pcx";
+            } else {
+                picture = current_unit_class == TRIAD_AIR ? "air_sm.pcx" :
+                          current_unit_class == TRIAD_SEA ? "navun_sm.pcx" : "unit_sm.pcx";
+            }
+        }
+        if (popp(ScriptPopupFile, label, 0, picture, nullptr) == 0) {
+            NetDaemonNet.unlock_veh();
+            return;
+        }
+    }
+
+    if (!IsMultiplayerNet) {
+        action_give(vehicle_id, recipient_faction);
+        return;
+    }
+    message_veh(0x2416, vehicle_id, recipient_faction, 0);
+    NetDaemonNet.await_exec(1);
+}
+
+// ORIGINAL: 0x00514B30 ?retire_game@Console@@QAEXXZ 0x00514B30-0x00514D2B
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00514B30; retained seed src/recovered/units/00514b30.cpp", "Native514B55..64 passes the low-byte greater-than-one boolean into bit_count. Native514D10 writes closed-network==0 to93A948 GameRestartQueued,514D16 sets9B2068 ExitTurnLoop. Existing typed close-network helper reproduces lock clear/transport close; scenario, PBEM, ironman and replay branches remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope decisions preserve the original baseline"], "reason": "Recover the complete Console command in its genuine owner, retaining original spans and seed evidence. Typed state and lifecycle/network APIs replace seed address arithmetic; this source binding is not byte, reference, structure or runtime acceptance."}
+void Console::retire_game() { // 0x00514B30
+    if (GameRules & RULES_IRONMAN) {
+        auto_save();
+    }
+
+    const bool multiple_players =
+        (IsMultiplayerNet || IsMultiplayerPBEM) &&
+        bit_count(static_cast<uint8_t>(LockEnableMask) > 1) != 0;
+    const char *const prompt = multiple_players ? "REALLYWIMPOUT" :
+        (GameRules & RULES_IRONMAN) ? "REALLYRETIRE2" : "REALLYRETIRE";
+    if (!X_pop(prompt, nullptr)) {
+        return;
+    }
+
+    if (IsMultiplayerPBEM) {
+        LockEnableMask &= ~static_cast<uint8_t>(1u << ConsoleGlobal.faction_id_);
+        save_game(0);
+    }
+
+    bool closed_network = false;
+    if (IsMultiplayerNet) {
+        console_close_network(0xFF);
+        closed_network = true;
+    }
+
+    if (GameRules & RULES_IRONMAN) {
+        kill_auto_save();
+    }
+    report_score(1);
+    if ((GameState & STATE_IS_SCENARIO) == 0) {
+        quayle(ConsoleGlobal.faction_id_);
+        hall_of_fame(1);
+    }
+    if (!closed_network) {
+        show_replay();
+    }
+    GameRestartQueued = !closed_network;
+    ExitTurnLoop = 1;
+    log_say("Retire**", 0, 0, 0);
+}

@@ -1,0 +1,22 @@
+{
+  "event_id": "dee62a4dff71abe1c10f1c01ec2355ff6f26245c9f62a1fae1b4afc66078e6b2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_hall_of_fame_entry.py",
+      "src/famewin.cpp",
+      "src/famewin.h",
+      "src/halloffame.h"
+    ],
+    "evidence": [
+      "Root-only central closure of actual freshlink undefined hall_of_fame44AE50 fromretire_game514CF0. Recover true FameWin entry andclear-record helper44AF70 inowningFameWin TU using existing35typed8Crecords, HallOfFameIOMode, buttonGroup+5970 and Win virtualset_modal slot57; pinnednative44AEAD helpercalland44AF04virtualcall. Preserve exact retainedseedclaims and originalspans, no runtime addresses or placeholderreplacement. Worker Consolemaynot editthisowner; Rootrequiresfreshbuildlink, protectedFame/Consolechecks andnativebodycontrols before manualintegration; pendingotherdiplomacyfindingstayspending."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "6c330b27a17f3bd983db243dc8a06404d06025b3060975b88fc9236933e858e8",
+  "request_id": "console-retire-fame-owner-20261001",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:console-scenario-owner-wave"
+}

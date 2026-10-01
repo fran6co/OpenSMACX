@@ -31,6 +31,9 @@ extern HallOfFameRecord HallOfFameRecords[HallOfFameRecordCount];
 // Set before each hall-of-fame read or write (original 0x00759194).
 extern int HallOfFameIOMode;
 
+void __cdecl clear_hall_of_fame();
+void __cdecl hall_of_fame(int add_current_player);
+
 static_assert(sizeof(HallOfFameRecord) == 0x8C,
               "Hall-of-fame record must match the original file stride");
 static_assert(offsetof(HallOfFameRecord, leader_title) == 0x22,
