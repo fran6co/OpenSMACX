@@ -61,6 +61,7 @@ class DiploPop : public GraphicWin, public SubInterface {
   DiploPop();
   ~DiploPop();
   void draw_hq();
+  void draw_info();
   void portrait_anim();
   void bioscan_anim();
   void on_iface_left_click(int, int);

@@ -24,6 +24,9 @@
 #include "alpha.h"
 #include "strings.h"
 #include "sprite.h"
+#include "game.h"
+#include "console.h"
+#include "spying_recovery.h"
 
 void __cdecl report_intel(int selection);
 void __cdecl slide_show(GraphicWin *window, int mode);
@@ -595,4 +598,126 @@ int DiploPop::on_iface_dialog_back_draw(GraphicWin *) {
 // RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@DiploPop@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x00440380
 int DiploPop::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
     return 0;
+}
+
+// ORIGINAL: 0x0043FA90 ?draw_info@DiploPop@@QAEXXZ 0x0043FA90-0x0044007F
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned43FA90..44007F; screenwidth800 portrait branch; Buffer wrap field at receiver454; MainInterface Buffer receiver7AEC64; font2/3 and faction portrait typed layouts. Ranking reads96C9E4 PlayerData+4, not misleading94C9E4 Mood. Repeated spying calls and live local-faction loads preserved; host controls verify drawing phases/treaty priority/call ordering."], "reason": "Recover complete two-panel diplomacy display as a genuine nonvirtual DiploPop member, using actual Buffer bases, embedded fonts/portrait assets and source-owned faction state rather than raw self offsets."}
+void DiploPop::draw_info() {
+    Buffer *const canvas = static_cast<Buffer *>(&MainInterfaceGlobal);
+    const RECT source = rect1_;
+    int left_edge = source.left;
+    const int top_edge = source.top;
+    const int bottom_edge = source.bottom;
+    int right_edge = ((source.right - left_edge) + 3) / 2 - 3 + left_edge;
+
+    static_cast<Buffer *>(this)->set_wrap_width(15);
+    for (int panel = 0; panel < 2; ++panel) {
+        RECT frame = {left_edge, top_edge, right_edge, bottom_edge};
+        canvas->box_sprite(&frame, &InterfaceBoxStyles[0]);
+
+        int left = left_edge + 3;
+        int right = right_edge - 3;
+        int top = top_edge + 3;
+        int bottom = bottom_edge - 3;
+        const int faction = panel == 0 ? counterpart_faction_
+                                       : ConsoleGlobal.faction_id_;
+        Sprite *const portrait = &FactionsArt[faction].diplomacy_logo;
+
+        if (WinScreenWidth == 800) {
+            const int portrait_y = ((bottom - portrait->height()) - top) / 2 + top;
+            const int portrait_x = ((right - portrait->width()) - left) / 2 + left;
+            portrait->draw_mono(canvas, portrait->transparent_index(),
+                                portrait_x, portrait_y, 0x41, 1, 1);
+        } else {
+            portrait->draw(canvas, portrait->transparent_index(), left,
+                           font3_.line_advance() + top + 3, 1, 1);
+        }
+
+        canvas->set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+        canvas->set_font(&font3_, nullptr, nullptr, nullptr);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, Players[faction].name_leader);
+        CharUpperA(StringTemp);
+
+        RECT name_area = {left, top + 2, right,
+                          font3_.line_advance() + top};
+        int text_y = canvas->wrap_cent(StringTemp, &name_area);
+        if (WinScreenWidth != 800) {
+            left += 2 + portrait->width();
+        }
+
+        canvas->set_text_color(0xA0, -1, 1, 1);
+        right -= 3;
+        top += 3;
+        bottom -= 3;
+        const int text_x = left + 3;
+        canvas->set_font(&font2_, nullptr, nullptr, nullptr);
+        text_y += 3;
+
+        if (panel == 0) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0xE98 / 4));
+            strcat(StringTemp, ": ");
+
+            const uint32_t relation =
+                PlayersData[ConsoleGlobal.faction_id_].diplo_treaties[faction];
+            int relation_label;
+            if ((relation & DTREATY_PACT) != 0) {
+                relation_label = 0xA14 / 4;
+            } else if ((relation & DTREATY_TREATY) != 0) {
+                relation_label = 0xA10 / 4;
+            } else if ((relation & DTREATY_TRUCE) != 0) {
+                relation_label = 0xA0C / 4;
+            } else if ((relation & DTREATY_VENDETTA) != 0) {
+                relation_label = 0xA1C / 4;
+            } else {
+                relation_label = 0x64 / 4;
+            }
+            strcat(StringTemp, label_get(relation_label));
+            CharUpperA(StringTemp);
+            text_y = canvas->wrap(StringTemp, text_x, text_y, right - text_x);
+        }
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0xE9C / 4));
+        strcat(StringTemp, ": ");
+        const int espionage = spying(faction);
+        strcat(StringTemp, label_get(espionage == 0 ? 0xEA0 / 4 : 0x614 / 4));
+        text_y = canvas->wrap(StringTemp, text_x, text_y, right - text_x);
+
+        if (faction == ConsoleGlobal.faction_id_ || spying(faction) != 0) {
+            StringTemp[0] = '\0';
+            strcat(StringTemp, label_get(0x90 / 4));
+            strcat(StringTemp, ": ");
+            char amount[80];
+            _itoa(PlayersData[faction].energy_reserves -
+                      static_cast<int>(PlayersData[faction].hurry_cost_total),
+                  amount, 10);
+            strcat(StringTemp, amount);
+            text_y = canvas->write_l(StringTemp, text_x, text_y,
+                                     static_cast<int>(strlen(StringTemp)));
+            text_y += font2_.line_advance();
+        }
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x37C / 4));
+        strcat(StringTemp, ": ");
+        const int next_y = canvas->write_l(StringTemp, text_x, text_y,
+                                           static_cast<int>(strlen(StringTemp)));
+
+        StringTemp[0] = '\0';
+        int might_index = 7 - static_cast<int>(PlayersData[faction].ranking);
+        if (might_index < 0) might_index = 0;
+        else if (might_index > 6) might_index = 6;
+        char *const might = StringTable.get(static_cast<int>(
+            reinterpret_cast<intptr_t>(Might[might_index].adj_start)));
+        say_special(StringTemp, might, faction);
+        CharUpperA(StringTemp);
+        canvas->write_l(StringTemp, next_y, text_y,
+                        static_cast<int>(strlen(StringTemp)));
+
+        const int step = (right_edge - left_edge) + 3;
+        left_edge += step;
+        right_edge += step;
+    }
 }

@@ -5428,3 +5428,60 @@ void __cdecl diplomacy_ends(int faction_id, int faction_id_with) {
     DiploFocusY = -1;
     DiploFocusX = -1;
 }
+
+// ORIGINAL: 0x005399A0 ?diplomacy_caption@@YAXHH@Z 0x005399A0-0x00539B6B
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned5399A0..539B6B; existing inactive diplomacy-presentation task evidence retained; counterpart Player noun fields and PlayerData20CC treaty strides independently decoded; literal68D594 is the bounded separator. Host source-body controls cover mood thresholds, bidirectional pact/surrender and post-parse visibility."], "reason": "Recover complete diplomacy caption in its faction owner with genuine treaty/noun/mood/scratch data and the actual visible-popup draw operation. Preserve native friction clamp, label predicate, parse defaults and redraw ordering."}
+void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
+    uint32_t incoming_treaty =
+        PlayersData[faction_id].diplo_treaties[faction_id_with];
+    int mood = 0;
+    if ((incoming_treaty & DTREATY_VENDETTA) != 0 &&
+        DiploFriction < 15) {
+        DiploFriction = 15;
+        mood = 5;
+    } else if (DiploFriction <= 0) {
+        mood = 0;
+    } else if (DiploFriction <= 2) {
+        mood = 1;
+    } else if (DiploFriction <= 4) {
+        mood = 2;
+    } else if (DiploFriction <= 8) {
+        mood = 3;
+    } else if (DiploFriction <= 12) {
+        mood = 4;
+    } else if (DiploFriction <= 15) {
+        mood = 5;
+    } else if (DiploFriction <= 17) {
+        mood = 6;
+    } else {
+        mood = (DiploFriction > 19 ? 1 : 0) + 7;
+    }
+
+    char caption[256] = {0};
+    const Player &counterpart = Players[faction_id_with];
+    GenderDefault = counterpart.noun_gender;
+    PluralityDefault = counterpart.is_noun_plural;
+    strcat(caption, counterpart.noun_faction);
+    strcat(caption, " - ");
+
+    const uint32_t reverse_treaty =
+        PlayersData[faction_id_with].diplo_treaties[faction_id];
+    const bool use_special_label =
+        (mood == 0 && DiploScratchFA98 != 0 &&
+         (incoming_treaty & DTREATY_PACT) == 0) ||
+        ((reverse_treaty & (DTREATY_PACT | DTREATY_HAVE_SURRENDERED)) ==
+         (DTREATY_PACT | DTREATY_HAVE_SURRENDERED));
+    if (use_special_label) {
+        strcat(caption, label_get(0x1E8));
+    } else {
+        char *mood_label = StringTable.get(
+            static_cast<int>(reinterpret_cast<intptr_t>(Mood[mood])));
+        say_fac_special(caption, mood_label, faction_id_with);
+    }
+
+    parse_says(7, caption, -1, -1);
+    if (DiplomacyPopup.is_visible() != 0) {
+        DiplomacyPopup.draw_info();
+        DiplomacyPopup.soft_update(&DiplomacyPopup.rect1_);
+    }
+}
