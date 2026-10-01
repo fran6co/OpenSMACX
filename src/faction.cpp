@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+
 #include "temp.h"
 #include "faction.h"
 #include "alpha.h"
@@ -51,6 +52,15 @@ void __cdecl clear_bunglist(int faction);
 int __cdecl veh_init(int prototype, int faction, int x, int y);
 void __cdecl veh_kill(int vehicle);
 int __cdecl veh_find(int x, int y, int faction, int exclude);
+
+// The full vote-purchase owner still needs its custom modal negotiation branch
+// (0x53F9E3..0x53FB81). Keep the retained seed; this body exists only for link
+// continuity and is explicitly not recovered behavior.
+// ORIGINAL: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z 0x0053EB50-0x00540193;0x0065E75A-0x0065EB33
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0053eb50.cpp", "image:terranx_original.exe:0x53F9E3-0x53FB81", "task:interface-contract-report-closure:scope-expansion-7"], "reason": "Explicitly unfinished owning-TU body for Council link continuity. Retained seed omits the original custom modal path; no coverage or behavior claim."}
+void __cdecl buy_council_vote(int, int, int, int) {
+    // BODY GOES HERE.
+}
 
 static int lifecycle_wrap_x(int x) {
     if (!(MapIsFlat & 1)) {

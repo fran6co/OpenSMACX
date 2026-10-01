@@ -114,6 +114,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   friend class AlphaMenu;  // AlphaMenu uses the owned menu-window rectangle and state.
   friend class TutWin;  // Tutorial callouts read the owned panel rectangles.
   friend class DesignWin;  // DesignWin init reads existing panel rectangles.
+  friend class CouncWin;  // Council init reads the existing panel height metric.
   friend class BaseWin;  // draw_garrison uses the adjacent panel rectangles.
   friend class WorldWin;  // UNK1 copies the owned tutorial rectangle.
   // MessageWin::init copies the pane bounds at +0xD1C..+0xD28 into its

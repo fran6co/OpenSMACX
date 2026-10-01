@@ -111,6 +111,7 @@ class Console : public MapWin {
   friend class TutWin;
   // PrefWin hides the main menu before opening its own modal window.
   friend class PrefWin;
+  friend class CouncWin;  // Council init temporarily hides the owned AlphaMenu.
   // Council initialization hides/reopens this Console's owned AlphaMenu.
   friend class CouncWin;
   // MapWin's input handlers operate the existing Console cursor state.
@@ -126,6 +127,7 @@ class Console : public MapWin {
   void designate(int veh_id);
   void new_base(int vehicle_id);
   void terraform(int vehicle_id, int requested_terraform);
+  void veh_key(int key, int character, int command);
   void sentry(int veh_id, int mode);
   void oblit(int veh_id);
   void assemble();

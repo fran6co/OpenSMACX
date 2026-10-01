@@ -9124,3 +9124,130 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     log_say("Finished issuing orders", vehicle_id, terraform_id + 4, 0);
     field_23BE4_ = 0;
 }
+
+// ORIGINAL: 0x005171D0 ?veh_key@Console@@QAEXHHH@Z 0x005171D0-0x0051778A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005171d0.cpp", "image:terranx_original.exe:0x005171D0", "Pinned key selector tables5177E4/517844 and accelerator targets517898; native selection reloads between dispatch stages preserve callback effects."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+void Console::veh_key(int key, int character, int command) {
+    if (IsMultiplayerNet != 0 && character != 'a') {
+        if (ConsoleControlTurnActive != 0) return;
+        if (NetDaemonNet.lock_state_[2].dword_[4] != 0) return;
+        if ((NetDaemonNet.lock_state_[0].dword_[12] &
+             (1 << ConsoleGlobal.faction_id_)) != 0) return;
+    }
+
+    int vehicle_id = selected_vehicle_;
+    switch (key) {
+    case 'B': terraform(vehicle_id, 14); break;
+    case 'E': terraform(vehicle_id, 13); break;
+    case 'F': terraform(vehicle_id, 4); break;
+    case 'G': go_home(vehicle_id); break;
+    case 'H': hold(vehicle_id, 10); break;
+    case 'I': go_to(vehicle_id, -3, 0); break;
+    case 'L': automate(vehicle_id, 11); break;
+    case 'P': {
+        const uint32_t destination_flag = MapWinTable[0]->field_1DD70_ & 0x400000u;
+        for (int slot = 0; slot < static_cast<int>(MapWinTableSlots); ++slot) {
+            MapWin *const window = MapWinTable[slot];
+            if (window != 0 && (slot == 0 || window->field_1DD74_ != 0)) {
+                if (destination_flag == 0) {
+                    window->field_1DD70_ |= 0x400000u;
+                    window->draw_base_dest(1);
+                } else {
+                    window->field_1DD70_ &= 0xffbfffffu;
+                    window->draw_map(1);
+                }
+            }
+        }
+        break;
+    }
+    case 'U': unload(vehicle_id); break;
+    case 'a':
+        if (NetDaemonNet.lock_state_[2].dword_[4] == 0) {
+            activate(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
+        }
+        break;
+    case 'f':
+        if (can_arty(Vehs[vehicle_id].proto_id, 1) == 0) {
+            terraform(vehicle_id, 0);
+        } else {
+            arty(vehicle_id);
+        }
+        break;
+    case 'g': go_to(vehicle_id, 0x18, 0); break;
+    case 'h': hold(vehicle_id, 0); break;
+    case 'i': use_ability(vehicle_id); break;
+    case 'l': sentry(vehicle_id, 0); break;
+    case 'n': terraform(vehicle_id, 12); break;
+    case 'o':
+        if (VehPrototypes[Vehs[vehicle_id].proto_id].plan != 10) {
+            terraform(vehicle_id, 9);
+        } else {
+            convoy(vehicle_id);
+        }
+        break;
+    case 'p': set_patrol(vehicle_id); break;
+    case 'q': terraform(vehicle_id, 15); break;
+    case 'r': terraform(vehicle_id, 5); break;
+    case 'b': {
+        const VehPrototype &prototype = VehPrototypes[Vehs[vehicle_id].proto_id];
+        const RulesChassis &chassis = Chassis[prototype.chassis_id];
+        const RulesWeapon &weapon = Weapon[prototype.weapon_id];
+        if (chassis.triad == TRIAD_AIR && prototype.plan != 8 &&
+            weapon.offense_rating != 0) {
+            automate(vehicle_id, 10);
+        } else if (weapon.offense_rating == 0 || chassis.triad == TRIAD_AIR) {
+            if (prototype.plan == 9) terraform(vehicle_id, 14);
+            else new_base(vehicle_id);
+        } else {
+            oblit(vehicle_id);
+        }
+        break;
+    }
+    }
+
+    // The image reloads the selected-id member after this first key switch;
+    // several called Console operations can change it.
+    vehicle_id = selected_vehicle_;
+    switch (character) {
+    case 0x20: skip(vehicle_id); break;
+    case 0x2e: terraform(vehicle_id, 8); break;
+    case 0x2f: explore(vehicle_id); break;
+    case '[': terraform(vehicle_id, 17); break;
+    case ']': terraform(vehicle_id, 16); break;
+    case '_': terraform(vehicle_id, 18); break;
+    case 'd': destroy(vehicle_id); break;
+    case 'k': terraform(vehicle_id, 7); break;
+    case 'm': terraform(vehicle_id, 2); break;
+    case 's': terraform(vehicle_id, 3); break;
+    }
+
+    // The accelerator tree also reloads the member rather than preserving
+    // the earlier switch's value.
+    vehicle_id = selected_vehicle_;
+    if (command == 0x30046) { automate(vehicle_id, 6); return; }
+    if (command < 0x30047) {
+        if (command == 0x20052) { road_to(vehicle_id, 0x1b); return; }
+        if (command == 0x20044) { designate(vehicle_id); return; }
+        if (command == 0x20046) { terraform(vehicle_id, 11); return; }
+        if (command == 0x20048) { go_home(vehicle_id); return; }
+        if (command == 0x20054) { road_to(vehicle_id, 0x1c); return; }
+        if (command == 0x20055) { upgrade(vehicle_id); return; }
+        if (command == 0x30041) {
+            const VehPrototype &prototype = VehPrototypes[Vehs[vehicle_id].proto_id];
+            const RulesChassis &chassis = Chassis[prototype.chassis_id];
+            const RulesWeapon &weapon = Weapon[prototype.weapon_id];
+            automate(vehicle_id, chassis.triad == TRIAD_AIR &&
+                     weapon.offense_rating != 0 ? 12 : 3);
+            return;
+        }
+    } else {
+        switch (command) {
+        case 0x3004d: automate(vehicle_id, 5); return;
+        case 0x3004f: automate(vehicle_id, 7); return;
+        case 0x30052: automate(vehicle_id, 1); return;
+        case 0x30053: automate(vehicle_id, 4); return;
+        case 0x30054: automate(vehicle_id, 2); return;
+        case 0x30055: give_veh(vehicle_id); return;
+        }
+    }
+}

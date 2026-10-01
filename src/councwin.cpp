@@ -29,6 +29,13 @@
 #include "general.h"     // GenderDefault and PluralityDefault
 #include "infowin.h"     // InfoFactionShadowColors
 #include "council.h"
+#include "technology.h"
+#include "time.h"
+#include "netdaemon.h"
+#include "multiwin.h"
+#include "popup.h"
+#include "dialogs.h"
+#include "xpops.h"
 
 // Source-owned process Council object. The original init receiver establishes
 // its identity, not a complete global bound or runtime-initializer proof.
@@ -37,6 +44,880 @@ CouncWin CouncilWindow;
 #include "strings.h"     // StringTemp
 #include "console.h"     // ConsoleGlobal's local faction id
 #include "netmsg.h"      // NetMsgPopup
+
+// ORIGINAL: 0x00425050 ?on_left_click@CouncWin@@QAEXHH@Z 0x00425050-0x00425B92;0x00652EC7-0x006530F4 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+void CouncWin::on_left_click(int x, int y) {
+    Popup popup;
+    int clicked_faction = 0;
+    int selection = 0;
+    if (spot_.check(x, y, &clicked_faction, &selection) < 0) {
+        popup.close();
+        return;
+    }
+
+    const int local_faction = ConsoleGlobal.faction_id_;
+    const int proposal = static_cast<int>(field_A1C_);
+    if (clicked_faction == local_faction || field_A24_ != 0) {
+        draw_leader(clicked_faction);
+        popup.close();
+        return;
+    }
+
+    const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+    const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+    const uint8_t clicked_bit = static_cast<uint8_t>(1u << clicked_faction);
+    if ((clicked_bit & humans) != 0) {
+        draw_leader(clicked_faction);
+        popup.close();
+        return;
+    }
+    if ((clicked_bit & alive) == 0) {
+        // Native rejoins its shared post-selection path with Spot::check's
+        // second output as the selected proposal option.
+        goto vote_selection_ready;
+    }
+
+    if ((PlayersData[clicked_faction].diplo_treaties[local_faction] & 0x30) != 0) {
+        GenderDefault = Players[clicked_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+        GenderDefault = Players[clicked_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+        X_pop("BUYNOTALK", pop_wait);
+        popup.close();
+        return;
+    }
+
+    if (PlayersData[clicked_faction].unk_29[proposal] != 0 &&
+        PlayersData[clicked_faction].unk_30[proposal] == local_faction) {
+        popup.close();
+        return;
+    }
+
+    if (clicked_faction != 0) {
+        selection = -1 - X_pop("WHICHVOTE", pop_wait);
+        if (selection == 0) {
+            draw_leader(clicked_faction);
+            popup.close();
+            return;
+        }
+    } else {
+        popup.start(PopupStartCaption, "COUNCILVOTEGOV", -1, nullptr,
+                    0x200000, nullptr);
+        Dialogs &options = popup.dialogs();
+        int current_selection = 0;
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            const uint8_t current_humans = static_cast<uint8_t>(LockEnableMask);
+            if ((current_humans & (1u << faction)) == 0 || !eligible(faction)) {
+                continue;
+            }
+            StringTemp[0] = '\0';
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            strcat(StringTemp, Players[faction].title_leader);
+            strcat(StringTemp, " ");
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            strcat(StringTemp, Players[faction].name_leader);
+            options.item(StringTemp, faction);
+            if (faction == ConsoleGlobal.faction_id_) {
+                current_selection = faction;
+            }
+        }
+        (void)current_selection;
+        selection = popup.exec(0, pop_wait);
+        if (selection == 0x270f) {
+            draw_leader(clicked_faction);
+            popup.close();
+            return;
+        }
+    }
+
+vote_selection_ready:
+    if (!IsMultiplayerNet) {
+        if ((alive & clicked_bit) == 0) {
+            GenderDefault = Players[clicked_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+            GenderDefault = Players[clicked_faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+            GenderDefault = Players[clicked_faction].noun_gender;
+            PluralityDefault = Players[clicked_faction].is_noun_plural;
+            parse_says(2, Players[clicked_faction].noun_faction, -1, -1);
+            NetMsgPopup->pop("ELIMINATED", 0x1388, 0, nullptr);
+            popup.close();
+            return;
+        }
+        // Native reloads the current faction after the vote-selection prompt
+        // before entering the purchase path (0x4255AE).
+        buy_council_vote(ConsoleGlobal.faction_id_, clicked_faction, proposal,
+                         selection);
+        redraw();
+        draw_leader(clicked_faction);
+        popup.close();
+        return;
+    }
+
+    field_A40_ = 0;
+    const uint8_t current_status = static_cast<uint8_t>(LockEnableMask);
+    const uint8_t current_alive = static_cast<uint8_t>(LockEnableMask >> 8);
+    if ((field_A44_ & current_alive & current_status) != current_status) {
+        NetMsgPopup->pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
+        field_A40_ = 1;
+        draw_leader(clicked_faction);
+        popup.close();
+        return;
+    }
+
+    const uint8_t live_clicked = static_cast<uint8_t>(1u << clicked_faction);
+    if ((live_clicked & current_status) != 0) {
+        CommlinkPending = 1;
+        CommlinkFaction = clicked_faction;
+        // The modal/parser path may have changed the local faction. The image
+        // reloads it at 0x4253D7 for this network message.
+        message_data(0x1501, clicked_faction, clicked_faction,
+                     ConsoleGlobal.faction_id_, 0, 0);
+        GenderDefault = Players[clicked_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+        GenderDefault = Players[clicked_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+        parse_num(0, clicked_faction);
+        NetMsgPopup->pop("DIPLOCOMM", 0x1388, 0, nullptr);
+        field_A40_ = 1;
+        draw_leader(clicked_faction);
+        popup.close();
+        return;
+    }
+    if ((live_clicked & current_alive) == 0) {
+        GenderDefault = Players[clicked_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+        GenderDefault = Players[clicked_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+        GenderDefault = Players[clicked_faction].noun_gender;
+        PluralityDefault = Players[clicked_faction].is_noun_plural;
+        parse_says(2, Players[clicked_faction].noun_faction, -1, -1);
+        NetMsgPopup->pop("ELIMINATED", 0x1388, 0, nullptr);
+        field_A40_ = 1;
+        popup.close();
+        return;
+    }
+
+    if (NetDaemonNet.open_channel(ConsoleGlobal.faction_id_, clicked_faction) == 0) {
+        // These are distinct native reloads: open_channel at 0x4255AE,
+        // purchase at 0x4256EC, and diplomacy_ends at 0x4256FA. Each call can
+        // run callbacks, so the value is intentionally not shared.
+        buy_council_vote(ConsoleGlobal.faction_id_, clicked_faction, proposal,
+                         selection);
+        diplomacy_ends(ConsoleGlobal.faction_id_, clicked_faction);
+        redraw();
+        field_A40_ = 1;
+        draw_leader(clicked_faction);
+        popup.close();
+        return;
+    }
+
+    GenderDefault = Players[clicked_faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[clicked_faction].title_leader, -1, -1);
+    GenderDefault = Players[clicked_faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[clicked_faction].name_leader, -1, -1);
+    NetMsgPopup->pop("NOCHANNEL", 0x1388, 0, nullptr);
+    field_A40_ = 1;
+    popup.close();
+}
+
+// ORIGINAL: 0x00424720 ?set_vote@CouncWin@@QAEXHH@Z 0x00424720-0x0042486C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00424720.cpp", "image:terranx_original.exe:0x00424720", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+void CouncWin::set_vote(int faction_id, int vote) {
+    if (field_A24_ != 0) {
+        return;
+    }
+
+    leader_label_kind_[faction_id] = static_cast<uint32_t>(vote);
+
+    const uint32_t faction_status = LockEnableMask;
+    const uint32_t human_mask = faction_status & 0xff;
+    bool calculate_computer_votes = true;
+    for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+        if ((human_mask & (1u << faction)) != 0 &&
+            leader_label_kind_[faction] != 0) {
+            calculate_computer_votes = false;
+        }
+    }
+
+    if (calculate_computer_votes) {
+        int rounds = 3;
+        do {
+            uint32_t live_status = LockEnableMask;
+            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+                const uint32_t bit = 1u << faction;
+                if (((live_status >> 8) & bit) != 0 &&
+                    (live_status & bit) == 0) {
+                    leader_label_kind_[faction] = static_cast<uint32_t>(
+                        council_get_vote(faction, static_cast<int>(field_A1C_),
+                                         static_cast<int>(field_A20_)));
+                    live_status = LockEnableMask;
+                }
+            }
+            --rounds;
+        } while (rounds != 0);
+    }
+
+    static_cast<GraphicWin *>(this)->redraw();
+    if (IsMultiplayerNet == 0) {
+        make_resolution(1);
+    } else if (NetDaemonNet.lock_state_[0].dword_[1] != 0 &&
+               make_resolution(0) != 0) {
+        message_data(0x2603, 0, 0, 0, 0, 0);
+    }
+
+    if (IsMultiplayerPBEM != 0 && faction_id == ConsoleGlobal.faction_id_) {
+        for (int button = 0; button < 6; ++button) {
+            buttons_[button].hide();
+        }
+        buttons_[5].show(0);
+    }
+}
+
+// ORIGINAL: 0x00426470 ?draw_info@CouncWin@@QAEXXZ 0x00426470-0x00426A95 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00426470.cpp", "image:terranx_original.exe:0x00426470", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+void CouncWin::draw_info() {
+    Buffer &buffer = MainInterfaceGlobal;
+    const int proposal = static_cast<int>(field_A1C_);
+    const int target_faction = static_cast<int>(field_A20_);
+    int category = 0;
+    const int passes = proposal == 0 ? 2 : 1;
+    RECT outer;
+    for (int pass = 0; pass < passes; ++pass) {
+    buffer.set_clip(MainInterfaceGlobal.buffer_working_rect());
+
+    outer.left = static_cast<LONG>(field_BB4_);
+    outer.top = static_cast<LONG>(field_BB8_);
+    outer.right = static_cast<LONG>(field_BBC_);
+    outer.bottom = static_cast<LONG>(field_BC0_);
+    RECT inner = {outer.left, outer.top, outer.right, outer.bottom};
+    RECT heading = inner;
+    heading.bottom = heading.top + 0x14;
+    buffer.box_sprite(&heading, &InterfaceBoxStyles[15]);
+    buffer.set_font(&font2_, 0, 0, 0);
+    buffer.set_text_color(0xa0, -1, 1, 1);
+    if (proposal == 1) {
+        buffer.set_text_color(ChatItemIdTable[target_faction], -1, 1, 1);
+    }
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x7c8 / 4));
+    string_upper_slot()(StringTemp);
+    if (StringTemp[0] != '\0') {
+        buffer.write_cent_l(StringTemp, &heading, static_cast<int>(strlen(StringTemp)));
+    }
+
+    inner.top = heading.bottom + 2;
+    buffer.box_sprite(&inner, &InterfaceBoxStyles[0]);
+    inner.left += 3;
+    inner.right -= 3;
+    inner.top += 3;
+    inner.bottom -= 3;
+    StringTemp[0] = '\0';
+    strcat(StringTemp, StringTable.get(static_cast<int>(reinterpret_cast<intptr_t>(Proposal[proposal].name))));
+    string_upper_slot()(StringTemp);
+    int wrapped_height = buffer.wrap_height(StringTemp, inner.right - inner.left);
+    buffer.wrap_cent(StringTemp, &inner);
+    inner.top += wrapped_height;
+    inner.bottom += wrapped_height;
+
+    if (proposal != 0) {
+        StringTemp[0] = '\0';
+        if (proposal == 1) {
+            strcat(StringTemp, label_get(0xe10 / 4));
+            strcat(StringTemp, ": ");
+            GenderDefault = Players[target_faction].is_leader_female;
+            PluralityDefault = 0;
+            strcat(StringTemp, Players[target_faction].name_leader);
+        } else {
+            strcat(StringTemp, StringTable.get(
+                static_cast<int>(reinterpret_cast<intptr_t>(Proposal[proposal].description))));
+        }
+        buffer.wrap_cent(StringTemp, &inner);
+    }
+
+    RECT totals = {outer.left + 2, outer.top, outer.right - 2, outer.bottom};
+    const int totals_height = font2_.line_advance();
+    totals.top = totals.bottom - totals_height;
+
+    if (proposal != 0) {
+        int votes_for = 0;
+        int votes_against = 0;
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0) {
+                const int vote = static_cast<int>(leader_label_kind_[faction]);
+                const int weight = proposal < 2 ? leader_tech_[faction] : 1;
+                if (vote == -1) votes_for += weight;
+                if (vote == -2) votes_against += weight;
+            }
+        }
+
+        buffer.set_text_color(0xfa, -1, 1, 1);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x7bc / 4));
+        strcat(StringTemp, ": ");
+        say_num(votes_for);
+        if (StringTemp[0] != '\0') {
+            buffer.write_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
+        }
+
+        buffer.set_text_color(0xf9, -1, 1, 1);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x7c0 / 4));
+        strcat(StringTemp, ": ");
+        say_num(votes_against);
+        if (StringTemp[0] != '\0') {
+            buffer.write_right_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
+        }
+    } else {
+        if (category < 0x14) {
+            for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                if (eligible(faction) == 0) {
+                    continue;
+                }
+                GenderDefault = Players[faction].is_leader_female;
+                PluralityDefault = 0;
+                StringTemp[0] = '\0';
+                strcat(StringTemp, Players[faction].name_leader);
+                strcat(StringTemp, ": ");
+                int total_votes = 0;
+                for (int voter = 1; voter < MaxPlayerNum; ++voter) {
+                    if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0 &&
+                        static_cast<int>(leader_label_kind_[voter]) == faction) {
+                        total_votes += leader_tech_[voter];
+                    }
+                }
+                say_num(total_votes);
+                buffer.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+                if (category > 2) {
+                    break;
+                }
+                if (category < 2) {
+                    if (category == 0) {
+                        buffer.write_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
+                    } else {
+                        buffer.write_right_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
+                    }
+                } else {
+                    if (WinScreenWidth < 0x400) {
+                        break;
+                    }
+                    buffer.write_cent_l(StringTemp, &totals, static_cast<int>(strlen(StringTemp)));
+                }
+                ++category;
+            }
+        }
+    }
+
+    if (proposal == 0 && pass == 0) {
+        category = 0x14;
+    }
+    }
+
+    static_cast<GraphicWin &>(MainInterfaceGlobal).soft_update(&outer);
+}
+
+// ORIGINAL: 0x00424410 ?make_resolution@CouncWin@@QAEHH@Z 0x00424410-0x0042471F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00424410.cpp", "image:terranx_original.exe:0x00424410", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+int CouncWin::make_resolution(int resolve) {
+    int vote_total = 0;
+    int votes_for = 0;
+    int votes_other = 0;
+    int governor_objection = 0;
+    int option_votes[MaxPlayerNum] = {0};
+    const uint8_t live_factions = static_cast<uint8_t>(LockEnableMask >> 8);
+    const int proposal = static_cast<int>(field_A1C_);
+
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        if ((Players[faction].rule_flags & RFLAG_ALIEN) != 0) {
+            continue;
+        }
+        const int vote = static_cast<int>(leader_label_kind_[faction]);
+        if (vote == 0) {
+            return 0;
+        }
+        if (vote >= -2 && (live_factions & (1u << (faction & 0x1f))) != 0) {
+            const int weight = proposal < 2 ? leader_tech_[faction] : 1;
+            vote_total += weight;
+            if (vote == -1) {
+                votes_for += weight;
+            } else {
+                votes_other += weight;
+                if (vote > 0) {
+                    option_votes[vote] += weight;
+                }
+                if (faction == GovernorFaction && proposal > 1) {
+                    governor_objection = 1;
+                }
+            }
+        }
+    }
+
+    if (resolve != 0) {
+        if (proposal == 0) {
+            int greatest = 0;
+            for (int offset = 0; offset < MaxPlayerNum; ++offset) {
+                unsigned int candidate =
+                    (static_cast<unsigned int>(TurnCurrentNum + offset) & 0x80000007u);
+                if (static_cast<int>(candidate) < 0) {
+                    candidate = ((candidate - 1u) | 0xfffffff8u) + 1u;
+                }
+                if (candidate != 0) {
+                    const int count = option_votes[candidate];
+                    if (greatest <= count) {
+                        if (greatest == count &&
+                            static_cast<int>(candidate) != GovernorFaction) {
+                            if (GovernorFaction != static_cast<int>(field_A20_)) {
+                                field_A20_ = 0;
+                            }
+                        } else {
+                            field_A20_ = candidate;
+                            greatest = count;
+                        }
+                    }
+                }
+            }
+            field_A24_ = field_A20_ != 0 ? 1u : static_cast<uint32_t>(-1);
+        } else if (votes_other < votes_for &&
+                   (proposal != 1 ||
+                    (vote_total * 3 + ((vote_total * 3 >> 31) & 3)) / 4 <= votes_for)) {
+            field_A24_ = governor_objection != 0 ? static_cast<uint32_t>(-2) : 1u;
+        } else {
+            field_A24_ = static_cast<uint32_t>(-1);
+        }
+
+        CouncilPbemGate = 0;
+        if (IsMultiplayerPBEM) {
+            const uint8_t human_factions = static_cast<uint8_t>(LockEnableMask);
+            for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                if ((human_factions & (1u << (faction & 0x1f))) != 0 &&
+                    faction != ConsoleGlobal.faction_id_) {
+                    CouncilNotifyFormSlots[faction - 1] = proposal;
+                    CouncilNotifyPluralSlots[faction - 1] = static_cast<int>(field_A24_);
+                }
+            }
+        }
+
+        redraw();
+        CouncilLastResolutionTurn[proposal] = TurnCurrentNum;
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            PlayersData[faction].unk_29[proposal] = 0;
+            PlayersData[faction].unk_30[proposal] = 0;
+        }
+        for (int button = 0; button < 6; ++button) {
+            buttons_[button].hide();
+            buttons_[5].show(0);
+        }
+
+        if (field_A24_ == 1) {
+            if (proposal == 0) {
+                GovernorFaction = static_cast<int>(field_A20_);
+                redraw();
+            }
+            if (IsMultiplayerNet) {
+                council_action(proposal, static_cast<int>(field_A20_));
+            }
+        }
+    }
+    return 1;
+}
+
+static void set_council_rect(RECT &rect, int left, int top, int right,
+                             int bottom) {
+    rect.left = left;
+    rect.top = top;
+    rect.right = right;
+    rect.bottom = bottom;
+}
+
+// ORIGINAL: 0x00427230 ?init@CouncWin@@QAEXHH@Z 0x00427230-0x00428347;0x006530F4-0x00653109 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00427230.cpp", "image:terranx_original.exe:0x00427230", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+void CouncWin::init(int proposal, int faction_id) {
+    Buffer local_buffer;
+    for (int i = 0; i < 6; ++i) {
+        buttons_[i].close();
+    }
+    font1_.close();
+    font2_.close();
+    font3_.close();
+    font4_.close();
+    font5_.close();
+    spot_.init(8);
+    SubInterface::field_4_ = 7;
+
+    field_BC8_ = 7;
+    field_BCC_ = 0x2ee;
+    field_BD0_ = 0x1b;
+    field_BC4_ = 0x1e;
+    set_council_rect(leader_rects_[2], 0x1e, 0x35, 0x80, 0x14f);
+    set_council_rect(leader_rects_[3], 0x82, 0x2d, 0xe4, 0x147);
+    set_council_rect(leader_rects_[4], 0xe6, 0x25, 0x148, 0x13f);
+    set_council_rect(leader_rects_[5], 0x14a, 0x1d, 0x1c2, 0x160);
+    set_council_rect(leader_rects_[6], 0x1c4, 0x25, 0x226, 0x13f);
+    set_council_rect(leader_rects_[7], 0x228, 0x2d, 0x28a, 0x147);
+    set_council_rect(leader_rects_[8], 0x28c, 0x35, 0x2ee, 0x14f);
+    set_council_rect(leader_rects_[9], 0x20, 0x1d, 0x82, 0x137);
+    set_council_rect(leader_rects_[10], 0x87, 0x1d, 0xe9, 0x137);
+    set_council_rect(leader_rects_[11], 0xee, 0x1d, 0x150, 0x137);
+    set_council_rect(leader_rects_[12], 0x155, 0x1d, 0x1b7, 0x137);
+    set_council_rect(leader_rects_[13], 0x1bc, 0x1d, 0x21e, 0x137);
+    set_council_rect(leader_rects_[14], 0x223, 0x1d, 0x285, 0x137);
+    set_council_rect(leader_rects_[15], 0x28a, 0x1d, 0x2ec, 0x137);
+
+    field_BA4_ = 0xf5;
+    field_BA8_ = 0x163;
+    field_BAC_ = 0x21a;
+    field_BB0_ = 0x17a;
+    RECT panel = MainInterfaceGlobal.info_frame_rect();
+    panel.left += 4;
+    panel.top += 4;
+    panel.right -= 4;
+    panel.bottom -= 4;
+    field_BB4_ = static_cast<uint32_t>(panel.left);
+    field_BB8_ = static_cast<uint32_t>(panel.top);
+    field_BBC_ = static_cast<uint32_t>(panel.right);
+    field_BC0_ = static_cast<uint32_t>(panel.bottom);
+
+    const int inner_bottom = panel.bottom - 3;
+    int inner_left = panel.left + 7;
+    const int inner_top = panel.bottom - 0x17;
+    int inner_right = panel.right - 7;
+    const int first_right = ((inner_right - inner_left + 3) / 3) - 3 + inner_left;
+    set_council_rect(leader_rects_[16], inner_left, inner_top, first_right, inner_bottom);
+    const int gap1 = (first_right - inner_left) + 3;
+    inner_left += gap1;
+    inner_right = first_right + gap1;
+    set_council_rect(leader_rects_[17], inner_left, inner_top, inner_right, inner_bottom);
+    const int gap2 = (inner_right - inner_left) + 3;
+    inner_left += gap2;
+    inner_right += gap2;
+    set_council_rect(leader_rects_[18], inner_left, inner_top, inner_right, inner_bottom);
+    set_council_rect(leader_rects_[19], panel.left + 3, panel.bottom - 0x17,
+                     panel.right - 3, panel.bottom - 3);
+
+    font1_.init(DefaultLargeFontFace, 0x14, 1);
+    font2_.init(DefaultLargeFontFace, 0xe, 1);
+    font3_.init(DefaultLargeFontFace, 0xe, 1);
+    font4_.init(DefaultLargeFontFace, 0xc, 1);
+    font3_.unk_1_ = 5;
+    font5_.init(DefaultLargeFontFace, 0xc, 1);
+    local_buffer.set_font(&font1_, &font2_, &font3_, &font4_);
+
+    field_A1C_ = static_cast<uint32_t>(proposal);
+    field_A20_ = static_cast<uint32_t>(faction_id);
+    field_A28_ = static_cast<uint32_t>(GovernorFaction);
+    field_A44_ = IsMultiplayerPBEM ? 0xffu :
+        ~static_cast<uint32_t>(static_cast<uint8_t>(LockEnableMask));
+    CouncilDialogActive = 1;
+    field_A38_ = static_cast<uint32_t>(timeGetTime());
+    field_A40_ = 1;
+    field_A3C_ = static_cast<uint32_t>(bit_count(
+        static_cast<int>(static_cast<uint8_t>(LockEnableMask))) * 60000);
+
+    if (!IsMultiplayerPBEM || CouncilPbemGate == 0) {
+        field_A24_ = 0;
+        for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+            leader_tech_[faction] = council_votes(faction);
+        }
+        for (int round = 0; round < 3; ++round) {
+            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+                const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+                const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+                const uint8_t bit = static_cast<uint8_t>(1u << faction);
+                if ((humans & bit) == 0 ||
+                    (faction != ConsoleGlobal.faction_id_ &&
+                     !IsMultiplayerNet && !IsMultiplayerPBEM)) {
+                    leader_label_kind_[faction] = static_cast<uint32_t>(
+                        council_get_vote(faction, proposal, faction_id));
+                } else {
+                    leader_label_kind_[faction] = 0;
+                }
+                if ((alive & bit) == 0) {
+                    leader_label_kind_[faction] = static_cast<uint32_t>(-5);
+                }
+            }
+        }
+        if (IsMultiplayerPBEM) {
+            CouncilPbemGate = ConsoleGlobal.faction_id_;
+        }
+    }
+
+    for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+        FactionArt &art = FactionsArt[faction];
+        leader_backing_[faction][0] = &art.council_logo[0];
+        leader_backing_[faction][1] = &art.council_logo[1];
+        leader_portraits_[faction][0] = &art.council_small;
+        leader_portraits_[faction][1] = &art.council_big;
+    }
+
+    const int remaining_height = WinScreenHeight - MainInterfaceGlobal.field_D7C_;
+    int window_height = 0x18b;
+    if (remaining_height < window_height) {
+        window_height = remaining_height;
+    }
+    const int window_y = remaining_height - window_height;
+    static_cast<GraphicWin *>(this)->init((WinScreenWidth - 0x30c) / 2,
+        window_y, 0x32c, window_height, nullptr, 0x1000000,
+        static_cast<Win *>(&ConsoleGlobal), nullptr, nullptr);
+    static_cast<GraphicWin *>(this)->fill(9);
+
+    RECT &button1 = leader_rects_[16];
+    RECT &button2 = leader_rects_[17];
+    RECT &button3 = leader_rects_[18];
+    RECT &button4 = leader_rects_[19];
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x7bc / 4));
+    CharUpperA(StringTemp);
+    buttons_[1].init(StringTemp, 1, button1.left, button1.top,
+                     button1.right - button1.left, button1.bottom - button1.top,
+                     static_cast<Win *>(&MainInterfaceGlobal), 0);
+    if (proposal == 0) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x7ec / 4));
+        CharUpperA(StringTemp);
+        buttons_[4].init(StringTemp, 4, button4.left, button4.top,
+                         button4.right - button4.left, button4.bottom - button4.top,
+                         static_cast<Win *>(&MainInterfaceGlobal), 0);
+    } else {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(GovernorFaction == ConsoleGlobal.faction_id_
+                                         ? 0x7d0 / 4 : 0x7c0 / 4));
+        CharUpperA(StringTemp);
+        buttons_[2].init(StringTemp, 2, button2.left, button2.top,
+                         button2.right - button2.left, button2.bottom - button2.top,
+                         static_cast<Win *>(&MainInterfaceGlobal), 0);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, label_get(0x7c4 / 4));
+        CharUpperA(StringTemp);
+        buttons_[3].init(StringTemp, 3, button3.left, button3.top,
+                         button3.right - button3.left, button3.bottom - button3.top,
+                         static_cast<Win *>(&MainInterfaceGlobal), 0);
+    }
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x194 / 4));
+    CharUpperA(StringTemp);
+    buttons_[5].init(StringTemp, 5, button4.left, button4.top,
+                     button4.right - button4.left, button4.bottom - button4.top,
+                     static_cast<Win *>(&MainInterfaceGlobal), 0);
+
+    buttons_[5].hide();
+    for (int button = 0; button < 6; ++button) {
+        buttons_[button].hide();
+        static_cast<Buffer &>(buttons_[button]).set_font(&font1_, nullptr, nullptr, nullptr);
+        buttons_[button].redraw();
+    }
+    if (IsMultiplayerNet) {
+        message_data(0x2602, 0, faction_id, 0, 0, 0);
+    }
+
+    const bool hide_multi = MultiWindow.is_visible() != 0;
+    if (hide_multi) {
+        MultiWindow.hide();
+    }
+    const bool hide_alpha = ConsoleGlobal.alpha_menu_.is_visible() != 0;
+    if (hide_alpha) {
+        ConsoleGlobal.alpha_menu_.hide();
+    }
+    show(0);
+
+    if (!IsMultiplayerNet && field_A1C_ == 0 &&
+        eligible(ConsoleGlobal.faction_id_) == 0) {
+        const int local_faction = ConsoleGlobal.faction_id_;
+        if (PlayersData[local_faction].diff_level != 0) {
+        // Native 0x427DDB..0x427E74 totals live, non-alien voter weights by
+        // their selected faction. 0x427E9B..0x427F4A considers only live,
+        // eligible candidates whose own tally lies in the native top-two
+        // comparisons before calling diplomacy_check(local, candidate, 0).
+        int support_by_faction[MaxPlayerNum] = {0};
+        const uint8_t alive_factions = static_cast<uint8_t>(LockEnableMask >> 8);
+        for (int tally_candidate = 1; tally_candidate < MaxPlayerNum; ++tally_candidate) {
+            if ((Players[tally_candidate].rule_flags & RFLAG_ALIEN) != 0) {
+                continue;
+            }
+            for (int voter = 1; voter < MaxPlayerNum; ++voter) {
+                if ((Players[voter].rule_flags & RFLAG_ALIEN) == 0 &&
+                    (alive_factions & (1u << voter)) != 0 &&
+                    static_cast<int>(leader_label_kind_[voter]) == tally_candidate) {
+                    support_by_faction[tally_candidate] += leader_tech_[voter];
+                }
+            }
+        }
+
+        for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+            if ((Players[candidate].rule_flags & RFLAG_ALIEN) != 0 ||
+                (alive_factions & (1u << candidate)) == 0 ||
+                eligible(candidate) == 0) {
+                continue;
+            }
+
+            int greatest_other_support = 0;
+            for (int other = 1; other < MaxPlayerNum; ++other) {
+                if (other != candidate &&
+                    (Players[other].rule_flags & RFLAG_ALIEN) == 0 &&
+                    greatest_other_support <= support_by_faction[other]) {
+                    greatest_other_support = support_by_faction[other];
+                }
+            }
+
+            const int candidate_support = support_by_faction[candidate];
+            const int local_weight = leader_tech_[local_faction];
+            if (local_weight + candidate_support <= greatest_other_support ||
+                local_weight + greatest_other_support <= candidate_support) {
+                continue;
+            }
+
+            diplomacy_check(local_faction, candidate, 0);
+
+            if (DiploFriction >= 15 || DiploScratchFA60 != 0 ||
+                (PlayersData[1].diplo_treaties[local_faction] & 0x40c31u) != 0) {
+                continue;
+            }
+
+            // At native +0xE3C the image reads one DWORD beginning at the
+            // int16_t proto_id_lost[0xF2] cell: proto_id_lost starts at +0xC58
+            // after the two preceding 0x200-byte prototype arrays, and
+            // 0xF2 * sizeof(int16_t) reaches +0xE3C. Preserve both halves of
+            // that exact read with typed adjacent elements; the member's
+            // semantic role in this negotiation gate remains uncertain.
+            const uint32_t packed_lost_prototypes =
+                static_cast<uint32_t>(static_cast<uint16_t>(
+                    PlayersData[candidate].proto_id_lost[0xf2])) |
+                (static_cast<uint32_t>(static_cast<uint16_t>(
+                    PlayersData[candidate].proto_id_lost[0xf3])) << 16);
+            const int32_t packed_lost_value = packed_lost_prototypes <= 0x7fffffffu
+                ? static_cast<int32_t>(packed_lost_prototypes)
+                : -1 - static_cast<int32_t>(~packed_lost_prototypes);
+            const uint32_t candidate_flag_bits = PlayersData[candidate].flags;
+            const int32_t candidate_flags = candidate_flag_bits <= 0x7fffffffu
+                ? static_cast<int32_t>(candidate_flag_bits)
+                : -1 - static_cast<int32_t>(~candidate_flag_bits);
+            const uint32_t three_flag_bits =
+                static_cast<uint32_t>(candidate_flags) * 3u;
+            const int32_t three_flags = three_flag_bits <= 0x7fffffffu
+                ? static_cast<int32_t>(three_flag_bits)
+                : -1 - static_cast<int32_t>(~three_flag_bits);
+            const int32_t flag_quarter = three_flags / 4;
+            const uint32_t current_lost_limit_bits =
+                static_cast<uint32_t>(TurnCurrentNum) +
+                static_cast<uint32_t>(packed_lost_value) * 5u;
+            const int32_t current_lost_limit =
+                current_lost_limit_bits <= 0x7fffffffu
+                    ? static_cast<int32_t>(current_lost_limit_bits)
+                    : -1 - static_cast<int32_t>(~current_lost_limit_bits);
+            const int32_t lower_limit =
+                flag_quarter < current_lost_limit
+                    ? flag_quarter : current_lost_limit;
+            const int32_t threshold = (lower_limit / 25) * 25;
+
+            // Native 0x427F87..0x427FCF clamps the signed 3/4 flag score
+            // against TurnCurrentNum + five times the packed lost-prototype
+            // DWORD, then rounds that result down to a multiple of 25. A
+            // nonzero threshold not exceeding the candidate's signed flags
+            // takes the credit-request route; otherwise it considers tech.
+            if (threshold != 0 && candidate_flags >= threshold) {
+                parse_num(0, threshold);
+                diplomacy_caption(local_faction, candidate);
+
+                Player &local_player = Players[local_faction];
+                GenderDefault = local_player.is_leader_female;
+                PluralityDefault = 0;
+                parse_says(0, local_player.title_leader, -1, -1);
+                GenderDefault = local_player.is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, local_player.name_leader, -1, -1);
+                Player &candidate_player = Players[candidate];
+                GenderDefault = candidate_player.is_leader_female;
+                PluralityDefault = 0;
+                parse_says(2, candidate_player.title_leader, -1, -1);
+                GenderDefault = candidate_player.is_leader_female;
+                PluralityDefault = 0;
+                parse_says(3, candidate_player.name_leader, -1, -1);
+
+                clock_wait(500);
+                const int accepted = x_pops_short(
+                    "VOTEFORME", 0, FactionDiplomacyPortraits[candidate], nullptr);
+                if (accepted != 0) {
+                    PlayersData[candidate].energy_reserves -= threshold;
+                    PlayersData[local_faction].energy_reserves += threshold;
+                    set_vote(local_faction, candidate);
+                }
+                continue;
+            }
+
+            // Native 0x427FD3..0x428151 asks the live technology-analysis
+            // producer, builds both parsed technology names, and only grants
+            // the scratch IDs still present after the modal callback.
+            tech_analysis(local_faction, candidate);
+            if (DiploScratchF800 < 0 || DiploScratchF80C < 0) {
+                continue;
+            }
+
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchF800, 0);
+            parse_says(4, StringTemp, -1, -1);
+            StringTemp[0] = '\0';
+            say_tech(StringTemp, DiploScratchF80C, 0);
+            parse_says(5, StringTemp, -1, -1);
+            diplomacy_caption(local_faction, candidate);
+
+            Player &candidate_player = Players[candidate];
+            GenderDefault = candidate_player.is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, candidate_player.title_leader, -1, -1);
+            GenderDefault = candidate_player.is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, candidate_player.name_leader, -1, -1);
+            GenderDefault = candidate_player.is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, candidate_player.title_leader, -1, -1);
+            GenderDefault = candidate_player.is_leader_female;
+            PluralityDefault = 0;
+            parse_says(3, candidate_player.name_leader, -1, -1);
+
+            clock_wait(500);
+            const int accepted = x_pops_short(
+                "VOTEFORMETECH", 0, FactionDiplomacyPortraits[candidate], nullptr);
+            if (accepted != 0) {
+                tech_achieved(local_faction, DiploScratchF800, candidate, 0);
+                tech_achieved(local_faction, DiploScratchF80C, candidate, 0);
+                set_vote(local_faction, candidate);
+            }
+        }
+    }
+    }
+
+    set_modal(0, pop_wait, &MainInterfaceGlobal);
+    // The original 0x4282F8 call gives up this CouncWin's active interface
+    // mode after the modal proposal loop and before restoring hidden windows.
+    SubInterface::release_iface_mode();
+    if (hide_alpha) {
+        ConsoleGlobal.alpha_menu_.show();
+    }
+    if (hide_multi) {
+        MultiWindow.show();
+    }
+}
+
+// ORIGINAL: 0x00427150 ?hide@CouncWin@@QAEHXZ 0x00427150-0x00427155 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00427150.cpp", "image:terranx_original.exe:0x00427150", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Original427150 is the Win visibility-query tail jump, not a hide override. Name this ordinary derived visibility query without changing base hide semantics."}
+// symbol    ?council_visible@CouncWin@@QAEHXZ
+int CouncWin::council_visible() {
+    return Win::is_visible();
+}
+
 
 // The CouncWin methods below used to be measured only in isolated seed
 // scaffolds. These bodies keep their receiver as the declared CouncWin and
@@ -114,21 +995,250 @@ void __cdecl slide_hide(GraphicWin *window, int mode);   // 0x0045D970
 // `call dword ptr [edx + 4]` and `[edx + 8]`.
 
 // Slot 12 of the front vtable (0x66AAE8) - the catalogue's
-// ?on_redraw@CouncWin@@QAEXXZ, 0x00426AA0, unrecovered. on_status reaches it
+// ?on_redraw@CouncWin@@QAEXXZ, 0x00426AA0. on_status reaches it
 // with `mov edx,[ecx-0xa14] / call [edx+0x30]`, a live dispatch through the
 // front's own table, so the entry has to be CouncWin's.
+// ORIGINAL: 0x00426AA0 ?on_redraw@CouncWin@@QAEXXZ 0x00426AA0-0x00426EA1 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00426aa0.cpp", "image:terranx_original.exe:0x00426AA0", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// symbol    ?on_redraw@CouncWin@@UAEXXZ
 void CouncWin::on_redraw() {
-    typedef void(__fastcall *pending)(CouncWin *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00426AA0))(
-        this, nullptr);
+    Buffer &buffer = static_cast<Buffer &>(*this);
+    MainInterfaceGlobal.restore_clip();
+    buffer.restore_clip();
+    MainInterfaceGlobal.restore_back(1);
+
+    RECT rect = MainInterfaceGlobal.info_frame_rect();
+    rect.left += 4;
+    rect.top += 4;
+    rect.right -= 4;
+    rect.bottom -= 4;
+    buffer.box_sprite(&rect, &InterfaceBoxStyles[3]);
+
+    rect.left = 0x17;
+    rect.top = 0;
+    rect.right = static_cast<int>(dib_.bmiHeader.biWidth) - 0x37;
+    rect.bottom = 1 - static_cast<int>(dib_.bmiHeader.biHeight);
+    buffer.box_sprite(&rect, &InterfaceBoxStyles[9]);
+    rect.left += 4;
+    rect.top += 4;
+    rect.right -= 4;
+    rect.bottom -= 4;
+    buffer.box_sprite(&rect, &InterfaceBoxStyles[3]);
+
+    draw_info();
+    for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+        draw_leader(faction);
+    }
+
+    const int result_state = static_cast<int>(field_A24_);
+    if (result_state == 0) {
+        return;
+    }
+
+    RECT message_rect = {
+        static_cast<LONG>(field_BA4_), static_cast<LONG>(field_BA8_),
+        static_cast<LONG>(field_BAC_), static_cast<LONG>(field_BB0_)
+    };
+    buffer.box_sprite(&message_rect, &InterfaceBoxStyles[0]);
+    message_rect.right -= 3;
+    message_rect.left += 3;
+    message_rect.top += 4;
+    message_rect.bottom -= 2;
+    StringTemp[0] = '\0';
+
+    const int proposal = static_cast<int>(field_A1C_);
+    if (result_state == -2) {
+        buffer.set_text_color(0xf9, -1, 1, 1);
+        strcat(StringTemp, label_get(0x7e4 / 4));
+    } else if (result_state == -1) {
+        buffer.set_text_color(0xf9, -1, 1, 1);
+        if (proposal != 0) {
+            strcat(StringTemp, label_get(0x7e0 / 4));
+            if (proposal == 1) {
+                strcat(StringTemp, " ");
+                strcat(StringTemp, "(");
+                strcat(StringTemp, label_get(0xe6c / 4));
+                strcat(StringTemp, ")");
+            }
+        } else {
+            strcat(StringTemp, label_get(0x804 / 4));
+        }
+    } else if (result_state == 1) {
+        const int faction = static_cast<int>(field_A20_);
+        Player &player = Players[faction];
+        if (proposal == 0) {
+            buffer.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+            GenderDefault = player.is_leader_female;
+            PluralityDefault = 0;
+            strcat(StringTemp, player.name_leader);
+            strcat(StringTemp, " ");
+            const int label_index = GovernorFaction == static_cast<int>(field_A28_)
+                ? 0x200 : 0x1fd;
+            strcat(StringTemp, label_get(label_index));
+        } else if (proposal == 1) {
+            strcat(StringTemp, label_get(0xe10 / 4));
+            strcat(StringTemp, ": ");
+            GenderDefault = player.is_leader_female;
+            PluralityDefault = 0;
+            strcat(StringTemp, player.name_leader);
+            strcat(StringTemp, " ");
+            buffer.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+        } else {
+            buffer.set_text_color(0xfa, -1, 1, 1);
+            strcat(StringTemp, label_get(0x7dc / 4));
+        }
+    }
+
+    buffer.set_font(&font6_, 0, 0, 0);
+    string_upper_slot()(StringTemp);
+    buffer.wrap_cent(StringTemp, &message_rect);
 }
 
 // Slot 44 of the front vtable - the catalogue's
-// ?on_button_clicked@CouncWin@@QAEXH@Z, 0x00424870, 1983 bytes, unrecovered.
+// ?on_button_clicked@CouncWin@@QAEXH@Z, 0x00424870, 1983 bytes.
+// ORIGINAL: 0x00424870 ?on_button_clicked@CouncWin@@QAEXH@Z 0x00424870-0x0042502F;0x00652D40-0x00652EC7 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00424870.cpp", "image:terranx_original.exe:0x00424870", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
+// symbol    ?on_button_clicked@CouncWin@@UAEXH@Z
 void CouncWin::on_button_clicked(int button_id) {
-    typedef void(__fastcall *pending)(CouncWin *, void *, int);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00424870))(
-        this, nullptr, button_id);
+    Popup popup;
+    bool popup_closed = false;
+
+    switch (button_id) {
+    case 1:
+    case 2:
+    case 3:
+        if (field_A24_ == 0) {
+            if (!IsMultiplayerNet) {
+                set_vote(ConsoleGlobal.faction_id_, -button_id);
+            } else {
+                const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+                const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+                if (((field_A44_ & alive) & humans) == humans) {
+                    message_data(0x2601, 0, ConsoleGlobal.faction_id_, -button_id, 0, 0);
+                } else {
+                    NetMsgPopup->pop("VOTING", 0x1388, 1, nullptr);
+                }
+            }
+        }
+        break;
+
+    case 4:
+        if (field_A24_ == 0) {
+            const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+            const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+            if (!IsMultiplayerNet || (((field_A44_ & alive) & humans) == humans)) {
+                popup.start(PopupStartCaption, "GOVVOTE", -1, nullptr, 0x200040, nullptr);
+
+                int picture_width = 0;
+                int picture_height = 0;
+                if (Buffer::get_pcx_dimensions("council_sm.pcx", &picture_width,
+                                               &picture_height) == 0 &&
+                    popup.owned_picture().init(
+                        const_cast<char *>("council_sm.pcx"), picture_width,
+                        picture_height) == 0) {
+                    popup.select_owned_picture();
+                }
+
+                Dialogs &options = popup.dialogs();
+                options.item(label_get(0x7c4 / 4), 0);
+                for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+                    if ((Players[faction].rule_flags & RFLAG_ALIEN) == 0 &&
+                        (static_cast<uint8_t>(LockEnableMask >> 8) &
+                         (1u << (faction & 0x1f))) != 0 && eligible(faction) != 0) {
+                        StringTemp[0] = '\0';
+                        strcat(StringTemp, Players[faction].name_leader);
+                        options.item(StringTemp, faction);
+                    }
+                }
+
+                int result = popup.exec(0, pop_wait);
+                if (result >= 0) {
+                    if (result == 0) result = -3;
+                    if (!IsMultiplayerNet) {
+                        set_vote(ConsoleGlobal.faction_id_, result);
+                    } else {
+                        message_data(0x2601, 0, ConsoleGlobal.faction_id_, result, 0, 0);
+                    }
+                }
+            } else {
+                NetMsgPopup->pop("VOTING", 0x1388, 1, nullptr);
+            }
+        }
+        break;
+
+    case 5:
+        on_key_event(0, 0x0d);
+        break;
+
+    case -2: {
+        bool close_council = field_A24_ != 0;
+        bool check_local_vote = false;
+        if (!close_council) {
+            if ((static_cast<uint8_t>(GameMorePreferences) & 0x40) != 0 &&
+                !IsMultiplayerNet) {
+                if (!IsMultiplayerPBEM) {
+                    close_council = true;
+                } else {
+                    check_local_vote = true;
+                }
+            } else if (IsMultiplayerPBEM) {
+                check_local_vote = true;
+            }
+            if (check_local_vote && leader_label_kind_[ConsoleGlobal.faction_id_] != 0) {
+                close_council = true;
+            }
+        }
+
+        if (!close_council) {
+            const uint8_t human_factions = static_cast<uint8_t>(LockEnableMask);
+            bool human_vote_exists = false;
+            for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+                if ((human_factions & (1u << (faction & 0x1f))) != 0 &&
+                    leader_label_kind_[faction] != 0) {
+                    human_vote_exists = true;
+                    break;
+                }
+            }
+            if (human_vote_exists) {
+                popup.close();
+                popup_closed = true;
+            } else {
+                for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+                    const uint8_t current_humans = static_cast<uint8_t>(LockEnableMask);
+                    if (leader_label_kind_[faction] == 0 &&
+                        (current_humans & (1u << (faction & 0x1f))) == 0) {
+                        leader_label_kind_[faction] = static_cast<uint32_t>(council_get_vote(
+                            faction, static_cast<int>(field_A1C_), static_cast<int>(field_A20_)));
+                    }
+                }
+            }
+        } else {
+            release_modal();
+            TurnRedrawPending = 0;
+            CouncilDialogActive = 0;
+            for (int button = 0; button < 6; ++button) {
+                buttons_[button].hide();
+            }
+            font1_.close();
+            font2_.close();
+            font3_.close();
+            font4_.close();
+            font5_.close();
+            do_all_draws();
+            if (!IsMultiplayerNet && field_A24_ == 1) {
+                council_action(static_cast<int>(field_A1C_), static_cast<int>(field_A20_));
+            }
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    if (!popup_closed) {
+        popup.close();
+    }
 }
 
 /*

@@ -5,7 +5,311 @@ import subprocess
 
 import pytest
 
+VEH_KEY_HARNESS = r'''#include <cstdlib>
+#include <cstdint>
+#include <iostream>
+#include <string>
+#include <vector>
 
+struct Call { std::string name; int a, b, c; };
+static std::vector<Call> calls;
+static std::string mutate_name;
+static int mutate_to;
+static int can_arty_result = 1;
+static int can_arty_calls;
+static void record(const char *name, int a = -999, int b = -999, int c = -999) {
+    calls.push_back(Call{name, a, b, c});
+}
+static void check(bool condition, const char *message) {
+    if (!condition) { std::cerr << "FAIL: " << message << "\n"; std::exit(1); }
+}
+static bool same(const Call &left, const Call &right) {
+    return left.name == right.name && left.a == right.a &&
+           left.b == right.b && left.c == right.c;
+}
+static void expect(std::initializer_list<Call> expected, const char *message) {
+    check(calls.size() == expected.size(), message);
+    size_t i = 0;
+    for (const Call &call : expected) check(same(calls[i++], call), message);
+}
+static void clear_calls() { calls.clear(); can_arty_calls = 0; }
+
+struct Veh { int x, y, proto_id; };
+struct VehPrototype { int chassis_id, weapon_id, plan; };
+struct RulesChassis { int triad; };
+struct RulesWeapon { int offense_rating; };
+static Veh Vehs[128];
+static VehPrototype VehPrototypes[128];
+static RulesChassis Chassis[32];
+static RulesWeapon Weapon[32];
+enum { TRIAD_AIR = 2 };
+static int can_arty(int proto, int sea) {
+    record("can_arty", proto, sea);
+    ++can_arty_calls;
+    return can_arty_result;
+}
+
+struct MapWin {
+    unsigned int field_1DD70_ = 0;
+    int field_1DD74_ = 0;
+    int id = 0;
+    void draw_base_dest(int type) { record("draw_base_dest", id, type); }
+    void draw_map(int type) { record("draw_map", id, type); }
+};
+static MapWin *MapWinTable[8];
+static const size_t MapWinTableSlots = 8;
+
+struct NetState { unsigned int dword_[15] = {}; };
+struct NetDaemonDouble { NetState lock_state_[3]; };
+static NetDaemonDouble NetDaemonNet;
+static int IsMultiplayerNet;
+static int ConsoleControlTurnActive;
+struct ConsoleGlobalDouble { int faction_id_ = 0; };
+static ConsoleGlobalDouble ConsoleGlobal;
+
+class Console {
+public:
+    int selected_vehicle_ = 41;
+    void veh_key(int key, int character, int command);
+    void activate(int x, int y, int mode);
+    void automate(int id, int order);
+    void convoy(int id);
+    void designate(int id);
+    void destroy(int id);
+    void explore(int id);
+    void go_home(int id);
+    void go_to(int subject, int order, int grouped);
+    void hold(int id, int mode);
+    void new_base(int id);
+    void oblit(int id);
+    void road_to(int id, int cursor_mode);
+    void sentry(int id, int mode);
+    void set_patrol(int id);
+    void skip(int id);
+    void terraform(int id, int order);
+    void unload(int id);
+    int upgrade(int id);
+    void use_ability(int id);
+    void give_veh(int id);
+    void arty(int id);
+};
+
+static void maybe_mutate(Console *self, const char *name) {
+    if (mutate_name == name) self->selected_vehicle_ = mutate_to;
+}
+void Console::activate(int x, int y, int mode) { record("activate", x, y, mode); }
+void Console::automate(int id, int order) { record("automate", id, order); maybe_mutate(this, "automate"); }
+void Console::convoy(int id) { record("convoy", id); maybe_mutate(this, "convoy"); }
+void Console::designate(int id) { record("designate", id); maybe_mutate(this, "designate"); }
+void Console::destroy(int id) { record("destroy", id); maybe_mutate(this, "destroy"); }
+void Console::explore(int id) { record("explore", id); maybe_mutate(this, "explore"); }
+void Console::go_home(int id) { record("go_home", id); maybe_mutate(this, "go_home"); }
+void Console::go_to(int subject, int order, int grouped) { record("go_to", subject, order, grouped); maybe_mutate(this, "go_to"); }
+void Console::hold(int id, int mode) { record("hold", id, mode); maybe_mutate(this, "hold"); }
+void Console::new_base(int id) { record("new_base", id); maybe_mutate(this, "new_base"); }
+void Console::oblit(int id) { record("oblit", id); maybe_mutate(this, "oblit"); }
+void Console::road_to(int id, int cursor_mode) { record("road_to", id, cursor_mode); maybe_mutate(this, "road_to"); }
+void Console::sentry(int id, int mode) { record("sentry", id, mode); maybe_mutate(this, "sentry"); }
+void Console::set_patrol(int id) { record("set_patrol", id); maybe_mutate(this, "set_patrol"); }
+void Console::skip(int id) { record("skip", id); maybe_mutate(this, "skip"); }
+void Console::terraform(int id, int order) { record("terraform", id, order); maybe_mutate(this, "terraform"); }
+void Console::unload(int id) { record("unload", id); maybe_mutate(this, "unload"); }
+int Console::upgrade(int id) { record("upgrade", id); maybe_mutate(this, "upgrade"); return 0; }
+void Console::use_ability(int id) { record("use_ability", id); maybe_mutate(this, "use_ability"); }
+void Console::give_veh(int id) { record("give_veh", id); maybe_mutate(this, "give_veh"); }
+void Console::arty(int id) { record("arty", id); maybe_mutate(this, "arty"); }
+
+static void reset(Console &console) {
+    clear_calls();
+    mutate_name.clear();
+    IsMultiplayerNet = 0;
+    ConsoleControlTurnActive = 0;
+    NetDaemonNet = NetDaemonDouble{};
+    console.selected_vehicle_ = 41;
+    Vehs[41] = Veh{17, 23, 4};
+    Vehs[42] = Veh{18, 24, 5};
+    Vehs[43] = Veh{19, 25, 6};
+    VehPrototypes[4] = VehPrototype{1, 2, 0};
+    VehPrototypes[5] = VehPrototype{1, 2, 0};
+    VehPrototypes[6] = VehPrototype{1, 2, 0};
+    Chassis[1] = RulesChassis{0};
+    Weapon[2] = RulesWeapon{1};
+    can_arty_result = 1;
+    for (int i = 0; i < 8; ++i) MapWinTable[i] = nullptr;
+}
+
+static void test_first_key_stage() {
+    Console c;
+    struct Case { int key; const char *name; int a, b; };
+    const Case cases[] = {
+        {'B', "terraform", 41, 14}, {'E', "terraform", 41, 13},
+        {'F', "terraform", 41, 4}, {'G', "go_home", 41, -999},
+        {'H', "hold", 41, 10}, {'I', "go_to", 41, -3},
+        {'L', "automate", 41, 11}, {'U', "unload", 41, -999},
+        {'g', "go_to", 41, 24}, {'h', "hold", 41, 0},
+        {'i', "use_ability", 41, -999}, {'l', "sentry", 41, 0},
+        {'n', "terraform", 41, 12}, {'p', "set_patrol", 41, -999},
+        {'q', "terraform", 41, 15}, {'r', "terraform", 41, 5}
+    };
+    for (const Case &item : cases) {
+        reset(c); c.veh_key(item.key, 0x7f, 0);
+        check(!calls.empty() && calls[0].name == item.name &&
+              calls[0].a == item.a && calls[0].b == item.b,
+              "ordinary first-key case/arguments");
+    }
+
+    reset(c); can_arty_result = 0; c.veh_key('f', 0x7f, 0);
+    expect({Call{"can_arty", 4, 1, -999}, Call{"terraform", 41, 0, -999}}, "f non-artillery path");
+    reset(c); can_arty_result = 1; c.veh_key('f', 0x7f, 0);
+    expect({Call{"can_arty", 4, 1, -999}, Call{"arty", 41, -999, -999}}, "f artillery path");
+
+    reset(c); c.veh_key('a', 'a', 0);
+    expect({Call{"activate", 17, 23, 1}}, "a activation coordinates/mode");
+
+    reset(c); VehPrototypes[4].plan = 10; c.veh_key('o', 0x7f, 0);
+    expect({Call{"convoy", 41, -999, -999}}, "o convoy branch");
+    reset(c); VehPrototypes[4].plan = 9; c.veh_key('o', 0x7f, 0);
+    expect({Call{"terraform", 41, 9, -999}}, "o terraform branch");
+
+    reset(c); Chassis[1].triad = TRIAD_AIR; VehPrototypes[4].plan = 1; c.veh_key('b', 0x7f, 0);
+    expect({Call{"automate", 41, 10, -999}}, "b air auto branch");
+    reset(c); VehPrototypes[4].plan = 9; Weapon[2].offense_rating = 0; c.veh_key('b', 0x7f, 0);
+    expect({Call{"terraform", 41, 14, -999}}, "b terraform branch");
+    reset(c); Weapon[2].offense_rating = 1; c.veh_key('b', 0x7f, 0);
+    expect({Call{"oblit", 41, -999, -999}}, "b oblit branch");
+
+    reset(c);
+    MapWin primary, active, inactive, active2;
+    primary.id = 0; active.id = 1; inactive.id = 2; active2.id = 4;
+    active.field_1DD74_ = 1; inactive.field_1DD74_ = 0; active2.field_1DD74_ = 1;
+    MapWinTable[0] = &primary; MapWinTable[1] = &active;
+    MapWinTable[2] = &inactive; MapWinTable[4] = &active2;
+    c.veh_key('P', 0x7f, 0);
+    expect({Call{"draw_base_dest", 0, 1, -999}, Call{"draw_base_dest", 1, 1, -999},
+            Call{"draw_base_dest", 4, 1, -999}}, "P enable redraws only live views");
+    check((primary.field_1DD70_ & 0x400000u) != 0 &&
+          (active.field_1DD70_ & 0x400000u) != 0 &&
+          (inactive.field_1DD70_ & 0x400000u) == 0, "P enable flags");
+    clear_calls(); c.veh_key('P', 0x7f, 0);
+    expect({Call{"draw_map", 0, 1, -999}, Call{"draw_map", 1, 1, -999},
+            Call{"draw_map", 4, 1, -999}}, "P disable redraws only live views");
+}
+
+static void test_character_stage() {
+    Console c;
+    struct Case { int character; const char *name; int b; };
+    const Case cases[] = {
+        {0x20, "skip", -999}, {0x2e, "terraform", 8}, {0x2f, "explore", -999},
+        {'[', "terraform", 17}, {']', "terraform", 16}, {'_', "terraform", 18},
+        {'d', "destroy", -999}, {'k', "terraform", 7}, {'m', "terraform", 2},
+        {'s', "terraform", 3}
+    };
+    for (const Case &item : cases) {
+        reset(c); c.veh_key('?', item.character, 0);
+        check(calls.size() == 1 && calls[0].name == item.name && calls[0].a == 41 &&
+              (item.b == -999 || calls[0].b == item.b), "character-stage case");
+    }
+    reset(c); c.veh_key('?', 0x7f, 0);
+    check(calls.empty(), "unsupported first-key and character no-op");
+    reset(c); c.veh_key('?', 0x2d, 0);
+    check(calls.empty(), "unsupported character no-op");
+}
+
+static void test_accelerator_stage() {
+    Console c;
+    struct Case { int command; const char *name; int b; };
+    const Case cases[] = {
+        {0x30046, "automate", 6}, {0x20052, "road_to", 0x1b},
+        {0x20044, "designate", -999}, {0x20046, "terraform", 11},
+        {0x20048, "go_home", -999}, {0x20054, "road_to", 0x1c},
+        {0x20055, "upgrade", -999}, {0x3004d, "automate", 5},
+        {0x3004f, "automate", 7}, {0x30052, "automate", 1},
+        {0x30053, "automate", 4}, {0x30054, "automate", 2},
+        {0x30055, "give_veh", -999}
+    };
+    for (const Case &item : cases) {
+        reset(c); c.veh_key('?', 0x7f, item.command);
+        check(calls.size() == 1 && calls[0].name == item.name && calls[0].a == 41 &&
+              (item.b == -999 || calls[0].b == item.b), "accelerator case/arguments");
+    }
+    reset(c); Chassis[1].triad = TRIAD_AIR; c.veh_key('?', 0x7f, 0x30041);
+    expect({Call{"automate", 41, 12, -999}}, "special accelerator air weapon");
+    reset(c); c.veh_key('?', 0x7f, 0x30041);
+    expect({Call{"automate", 41, 3, -999}}, "special accelerator ordinary unit");
+    for (int command : {0x3004e, 0x30050, 0x30051, 0x30047, 0x2ffff}) {
+        reset(c); c.veh_key('?', 0x7f, command);
+        check(calls.empty(), "accelerator no-op hole");
+    }
+}
+
+static void test_gates_and_argument_roles() {
+    Console c;
+    reset(c); IsMultiplayerNet = 1; ConsoleControlTurnActive = 1;
+    c.veh_key('B', '.', 0x30046); check(calls.empty(), "control-turn gate");
+    reset(c); IsMultiplayerNet = 1; NetDaemonNet.lock_state_[2].dword_[4] = 1;
+    c.veh_key('B', '.', 0x30046); check(calls.empty(), "lock-state gate");
+    reset(c); IsMultiplayerNet = 1; NetDaemonNet.lock_state_[0].dword_[12] = 1u << 3;
+    ConsoleGlobal.faction_id_ = 3; c.veh_key('B', '.', 0x30046);
+    check(calls.empty(), "faction wait-mask gate");
+    ConsoleGlobal.faction_id_ = 0;
+
+    reset(c); IsMultiplayerNet = 1; ConsoleControlTurnActive = 1;
+    c.veh_key('?', 'a', 0x30046);
+    expect({Call{"automate", 41, 6, -999}}, "character a bypasses multiplayer gate");
+    reset(c); IsMultiplayerNet = 1; NetDaemonNet.lock_state_[2].dword_[4] = 1;
+    c.veh_key('a', 'a', 0);
+    check(calls.empty(), "a activation retains its separate lock-state guard");
+
+    reset(c); c.veh_key('B', '.', 0x30046);
+    expect({Call{"terraform", 41, 14, -999}, Call{"terraform", 41, 8, -999},
+            Call{"automate", 41, 6, -999}}, "key/character/command argument roles");
+}
+
+static void test_live_selection_reload() {
+    Console c;
+    reset(c); mutate_name = "terraform"; mutate_to = 42;
+    c.veh_key('B', '.', 0x30046);
+    expect({Call{"terraform", 41, 14, -999}, Call{"terraform", 42, 8, -999},
+            Call{"automate", 42, 6, -999}}, "selection reload after first stage");
+    reset(c); mutate_name = "terraform"; mutate_to = 42;
+    // Change again after the character stage to prove the accelerator reload.
+    c.veh_key('?', '.', 0x30046);
+    expect({Call{"terraform", 41, 8, -999}, Call{"automate", 42, 6, -999}},
+           "selection reload after character stage");
+}
+
+int main() {
+    ConsoleGlobal.faction_id_ = 0;
+    test_first_key_stage();
+    test_character_stage();
+    test_accelerator_stage();
+    test_gates_and_argument_roles();
+    test_live_selection_reload();
+    std::cout << "veh_key fixture passed\n";
+}
+'''
+
+
+@pytest.mark.parametrize("damage", [None, "order", "argument_role"])
+def test_veh_key_dispatches_and_preserves_live_selection(tmp_path, damage):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    body = body_for("void Console::veh_key(")
+    if damage == "order":
+        assert "terraform(vehicle_id, 14)" in body
+        body = body.replace("terraform(vehicle_id, 14)", "terraform(vehicle_id, 13)", 1)
+    elif damage == "argument_role":
+        assert "character != 'a'" in body
+        body = body.replace("character != 'a'", "key != 'a'", 1)
+    unit = tmp_path / "veh_key.cpp"
+    unit.write_text(VEH_KEY_HARNESS + "\n" + body)
+    executable = tmp_path / "veh_key"
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    result = subprocess.run([str(executable)], capture_output=True, text=True)
+    assert (result.returncode == 0) == (damage is None), result.stdout + result.stderr
 ROOT = Path(__file__).resolve().parents[2]
 
 

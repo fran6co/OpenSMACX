@@ -32,8 +32,8 @@
   * is exact; CouncWin's own extent is not established and nothing pins its
   * sizeof.
   *
-  * The methods below ignore their arguments and return a constant, which is
-  * why they can be replaced ahead of that mapping.
+  * Voting, proposal rendering and modal interactions use the genuine window
+  * owner. Byte matching and complete lifetime verification remain separate.
   */
 // RECOVERY_BASE: v1 CouncWin SubInterface 0xA14 0x00428620
 // Constructor installs this original interface table at the declared base.
@@ -41,19 +41,17 @@
 // RECOVERY_GENERATED: v1 vtable 0x0066AA94 ? ??_7CouncWin@@6B@ 0x00428620
 class CouncWin : public GraphicWin, public SubInterface {
  public:
-  // The seed at 0x00427150 is catalogued as `int CouncWin::hide()`, but
-  // Win already owns virtual `void hide()`. These signatures differ only by
-  // return type, so the alleged derived method cannot be expressed in C++;
-  // retain that seed pending evidence for its identity/alias.
-  // 0x00425DB0  ?draw_leader@CouncWin@@QAEXH@Z - public, __thiscall,
-  // void(int), unrecovered. Declared so draw_all_leaders and on_mouse_leave,
-  // which each reach it with a direct `call rel32`, can name it.
+  // 0x00427150 is catalogued as hide, but its tail jump queries visibility;
+  // council_visible preserves that binding without changing Win::hide.
+  // draw_all_leaders and on_mouse_leave reach draw_leader directly.
   void draw_leader(int factionID);
   void show(int visible);
   void close();
   void arrived(int faction_id);
   void draw_all_leaders();
   int make_resolution(int option);
+  // Original427150 is a visibility-query tail jump, not Win::hide.
+  int council_visible();
   void set_vote(int faction_id, int vote);
   void on_left_click(int x, int y);
   int on_key_event(int key, int flags) override;
