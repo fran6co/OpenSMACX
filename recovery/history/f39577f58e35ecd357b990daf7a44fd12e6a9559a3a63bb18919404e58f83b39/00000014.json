@@ -1,0 +1,35 @@
+{
+  "event_id": "861650c7b1c0a2644139872b27a21e4d3f99f8782b820253c0551283f9edfbf5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_setup_dependencies_behavior.py"
+    ],
+    "evidence": [
+      "Recover complete setup reset callees in game.cpp using genuine typed source-owned state, not raw executable pointers or count-only placeholders. Independently inspect full native spans49/70/44 bytes and all referenced storage widths/owners; preserve any structural discoveries and exact seed476B30. Root coordinates public headers, native bindings, claims and compiler checks. Original task baseline and setup_game WIP stay unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4680496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4461136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5366672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a383511f61d31bb83033612aaaad540ff479340433e253f22b0cfbf2f61e3c41",
+  "request_id": "setup-owned-reset-callees-20261001",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:interface-contract-report-closure"
+}
