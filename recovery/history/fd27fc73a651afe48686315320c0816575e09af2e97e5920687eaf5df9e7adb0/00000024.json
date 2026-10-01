@@ -1,0 +1,20 @@
+{
+  "event_id": "d44f734af503fafe1e12b4075c8ff7eb0162c0068319482aa9a97e26ff3cd0fa",
+  "payload": {
+    "affects": [
+      "entity-c010175a5c015b12fdf05619fb29e6fd2a9823d7f669213a051cadfaf4e36323"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "rules-label-indices-not-text-pointers-20261001",
+    "evidence": [
+      "src/base.h:RulesFacility.name LPSTR; src/technology.h:RulesTechnology.name LPSTR; original49EF/53F642..53F6B5 load record name words and call Strings.get/parse_say; src/general.cpp399 parse_say(input) calls StringTable.get(input). Renderer retains transitional reinterpret_cast<int>(Facility.name). Affected shared headers and global producers/callers require separately reviewed scope and native evidence."
+    ],
+    "hypothesis": "RulesFacility.name and RulesTechnology.name are currently LPSTR, but projects rendering and buy_council_vote pass their words as integer StringTable indices. Evidence suggests genuine label-index fields rather than text pointers; investigate read_rules producers and all callers for a coordinated typed migration. Do not change shared record types or other owners under this renderer scope, discard findings, weaken claims, or infer that current pointer casts prove correct structure.",
+    "kind": "discovery"
+  },
+  "previous_event": "4c079a2fe9dd7a0fc24162bcd41947bdc467340e68d4c6baa15697b495c2c736",
+  "request_id": "rules-label-indices-not-text-pointers-20261001",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:reportwin-owner-coverage"
+}
