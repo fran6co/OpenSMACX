@@ -359,3 +359,7 @@ MEASURED inline void __cdecl help_veh(int id) {
 MEASURED inline void __cdecl help_topic(unsigned int topic, int index) {
     DatalinkMain.exec(topic, index);
 }
+
+class Popup;
+// Original 0x0044C7F0: collect the ordinary help-text callback into a Popup.
+void __cdecl help_tech_info(Popup *popup, int technology, int faction);

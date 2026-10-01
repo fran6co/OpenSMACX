@@ -1,0 +1,32 @@
+{
+  "event_id": "c6bdaa196d1537bd1c51203abbfb6bca98d2ee6c93b97ea4286394b6d1f08105",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_technology_help_popup_behavior.py",
+      "src/datalink.cpp",
+      "src/datalink.h"
+    ],
+    "evidence": [
+      "Pinned callback44C7D0 loads Popup receiver from7591B0 and calls BasePop::string601980. Wrapper44C7F0 stores its actual Popup pointer in that shared word then synchronously invokes existing4arg help_tech_info44B9E0 with genuine callback and lastarg-1. Recover source-owned typed Popup pointer and both ordinary cdecl functions in Datalink help owner, never address aliases. Root owns declarations, bindings, tests, compiler and integration; technology worker may call exact3arg overload after published interface. Preserve seed-only historical BYTE_EXACT claims and original spans; no new claim unless native recorder measures exact; task baseline unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4507600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4507632,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "71741949818484885a03567687b1957a4a5935ef4194882703fc884173e291cf",
+  "request_id": "typed-technology-help-popup-dependencies-20261001",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:interface-contract-report-closure"
+}

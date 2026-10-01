@@ -3109,3 +3109,27 @@ int Datalink::on_iface_dialog_back_draw(GraphicWin *) {
 int Datalink::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
     return 0;
 }
+
+// Original wrapper 0x44C805 publishes its Popup receiver before invoking
+// the synchronous help-text builder; callback 0x44C7D6 reads that same slot.
+// Keep the original single shared receiver, including its reentrant overwrite
+// behavior, rather than introducing a stack or an executable-address alias.
+// RECOVERY_OBJECT: v2 0x007591B0 0x007591B4 ?TechnologyHelpPopup@@3PAVPopup@@A 0x0044C7F0
+Popup *TechnologyHelpPopup;
+
+void __cdecl help_tech_info(void (__cdecl *emit)(char *), int technology,
+                            int faction, int link_mode);
+
+// ORIGINAL: 0x0044C7D0 ?help_info_pop@@YAXPAD@Z 0x0044C7D0-0x0044C7E4 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned44C7D0..44C7E4 loads7591B0 and calls601980; src/recovered/0044c7d0.cpp preserves the historical exact candidate and original identity."], "reason": "Plain cdecl text callback loads the shared typed Popup receiver and invokes its inherited BasePop::string method. No runtime executable address, manual vtable or invented null guard."}
+void __cdecl help_info_pop(char *text) {
+    TechnologyHelpPopup->string(text);
+}
+
+// ORIGINAL: 0x0044C7F0 ?help_tech_info@@YAXPAUPopup@@HH@Z 0x0044C7F0-0x0044C814 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned44C7F0..44C814 stores Popup pointer7591B0 and calls44B9E0 with callback44C7D0 and lastarg-1; original exact seed retained in src/recovered/units/0044c7f0.cpp."], "reason": "Popup-specific overload publishes the actual receiver to shared callback storage before synchronously invoking the existing four-argument technology text builder, with the original negative link selector."}
+// symbol    ?help_tech_info@@YAXPAVPopup@@HH@Z
+void __cdecl help_tech_info(Popup *popup, int technology, int faction) {
+    TechnologyHelpPopup = popup;
+    help_tech_info(help_info_pop, technology, faction, -1);
+}
