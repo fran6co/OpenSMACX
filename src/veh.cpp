@@ -57,6 +57,11 @@ int __cdecl popp(const char *title, const char *label, int channel,
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
+// consider_designs resets this scalar to -1; propose_proto records the
+// first selected prototype only while the scalar remains negative.
+// RECOVERY_OBJECT: v2 0x0068F0F0 0x0068F0F4 ?FirstProposedPrototype@@3HA 0x00580860
+int FirstProposedPrototype = -1;
+
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057e040.cpp", "image:0x0057E040-0x0057EF95"], "reason": "The recovered DesignWin setup path requires the original prototype naming entry. Retain its full seed and explicit unfinished owner body for link continuity pending recovery of the name-generation behavior."}
 void __cdecl name_proto(char *, int, int, int, int, int, int, int) {
