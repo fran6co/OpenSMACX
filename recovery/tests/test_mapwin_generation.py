@@ -641,9 +641,7 @@ void observe_clamp(char kind) {
 }
 unsigned char LandMoistureTable_storage[256][2];
 const unsigned char (*const LandMoistureTable)[2] = LandMoistureTable_storage;
-int MapFocusX_storage, MapFocusY_storage;
-int *const MapFocusX = &MapFocusX_storage;
-int *const MapFocusY = &MapFocusY_storage;
+int MapFocusX = -99, MapFocusY = -99;
 // ACTUAL LANDMARK OWNERS
 // ORIGINAL LANDMARK ORACLE
 int OceanDetailShade[80];
@@ -874,7 +872,7 @@ void treset() {
     ConsoleGlobal.cursor_history_x_[0] = -99;
     ConsoleGlobal.cursor_history_y_[0] = -99;
     RandomValue = 0;
-    MapFocusX_storage = 0; MapFocusY_storage = 0;
+    MapFocusX = 0; MapFocusY = 0;
     memset(LandMoistureTable_storage, 0, sizeof(LandMoistureTable_storage));
     for (int i = 0; i < 12; ++i) {
         LandCornerUVs[i].x = 10 + i * 2;
@@ -1089,8 +1087,8 @@ int main() {
     for (int axis = 0; axis < 2; ++axis) {
         treset();
         GamePreferences = 0x200;
-        MapFocusX_storage = axis == 0 ? 1 : 4;
-        MapFocusY_storage = axis == 0 ? 4 : 1;
+        MapFocusX = axis == 0 ? 1 : 4;
+        MapFocusY = axis == 0 ? 4 : 1;
         gen_terrain_poly(&buffer, &window, 5, 1, 0, 1, 4, 4, 100, 100);
         check(lines.size() == 2);
         // From western focus, eastern diagonals are outside: edges1->2,

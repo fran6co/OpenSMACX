@@ -2780,12 +2780,13 @@ static const unsigned char LandMoistureTable[256][2] = {
     {8, 3}, {8, 3}, {11, 2}, {13, 2}, {8, 3}, {8, 3}, {13, 3}, {14, 0},
 };
 
-// 0x00685478 / 0x0068547C are the tile the
-// sensor-distance test measures from. The retained Console::new_base seed
-// at 0x004CF7C0 publishes this position before redraw and resets both to
-// -99 afterward; that producer still needs recovery.
-static int *const MapFocusX = (int *)0x00685478;
-static int *const MapFocusY = (int *)0x0068547C;
+// Sensor-distance origin shared with Console::new_base: 4CFF65/4CFF6B
+// publish X/Y before redraw, and 4CFF9E/4CFFA4 reset each signed DWORD
+// to -99. The original initial storage also contains -99 for each.
+// RECOVERY_OBJECT: v2 0x00685478 0x0068547C ?MapFocusX@@3HA 0x004CF7C0
+int MapFocusX = -99;
+// RECOVERY_OBJECT: v2 0x0068547C 0x00685480 ?MapFocusY@@3HA 0x004CF7C0
+int MapFocusY = -99;
 
 // Original 46479D..464B62 reads signed receiver/rotation pairs. Only a
 // texture of -1 suppresses drawing: Crater row 31 uses texture 2 with
@@ -4344,7 +4345,7 @@ LAB_00465605:;
     // THE SENSOR SWEEP: the distance class between the map focus tile and
     // this tile (and each corner) decides whether the tile outline joins
     // the sweep display (Buffer::line at 0x465A3B).
-    focus_y = *MapFocusY;
+    focus_y = MapFocusY;
     if (MapWinCaptionScale < 1) {
         SpriteScaleDenominator = 0x10;
         SpriteScaleNumerator = a3 + 0x10;
@@ -4363,7 +4364,7 @@ LAB_00465605:;
             (PlayersData[a4].diplo_treaties[uVar12] & 8) == 0) {
             uVar12 = 0;
         }
-        iVar5 = abs(a7 - *MapFocusX);
+        iVar5 = abs(a7 - MapFocusX);
         if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar5) {
             iVar5 = MapLongitudeBounds - iVar5;
         }
@@ -4375,7 +4376,7 @@ LAB_00465605:;
         if ((iVar5 - (((iVar19 + iVar6 >> 1) - iVar7) + 1 >> 1) < 3) +
                 uVar12 ==
             0) {
-            iVar5 = abs(a7 - *MapFocusX);
+            iVar5 = abs(a7 - MapFocusX);
             if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar5) {
                 iVar5 = MapLongitudeBounds - iVar5;
             }
@@ -4415,8 +4416,8 @@ LAB_00465605:;
                     (PlayersData[a4].diplo_treaties[uVar17] & 8) == 0) {
                     uVar17 = 0;
                 }
-                focus_y = *MapFocusY;
-                iVar19 = abs(iVar5 - *MapFocusX);
+                focus_y = MapFocusY;
+                iVar19 = abs(iVar5 - MapFocusX);
                 if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar19) {
                     iVar19 = MapLongitudeBounds - iVar19;
                 }
@@ -4429,7 +4430,7 @@ LAB_00465605:;
                                 (((iVar6 + iVar7 >> 1) - iVar13) +
                                  1 >> 1) < 3) +
                                uVar17) == 0) {
-                    iVar5 = abs(iVar5 - *MapFocusX);
+                    iVar5 = abs(iVar5 - MapFocusX);
                     if ((MapIsFlat & 1) == 0 && (int)MapLongitude < iVar5) {
                         iVar5 = MapLongitudeBounds - iVar5;
                     }

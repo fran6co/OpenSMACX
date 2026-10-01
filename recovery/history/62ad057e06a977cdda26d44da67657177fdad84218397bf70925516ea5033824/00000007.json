@@ -1,0 +1,19 @@
+{
+  "event_id": "712b89354cec5c69ab89feb27a3b2dff2cd23227e3e8fc5e6b1012642141f4a5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_mapwin_generation.py"
+    ],
+    "evidence": [
+      "Root-only existing actual terrain host fixture must expose MapFocusX/Y as ordinary signed globals rather than pointer shims after central native storage replacement. No expectation weakening or unrelated fixture repair; other existing stale field extraction failures remain visible."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "efe172bd5dfdb0262e542f85eb403a992baa34195fa524cb61f4326811eaf7c6",
+  "request_id": "console-map-focus-host-control-20261001",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:console-scenario-owner-wave"
+}

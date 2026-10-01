@@ -1,0 +1,20 @@
+{
+  "event_id": "efe172bd5dfdb0262e542f85eb403a992baa34195fa524cb61f4326811eaf7c6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/mapwin.cpp",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Root-only central storage repair: Console::new_base4CF7C0 writes independent DWORDs685478/68547C at4CFF65/6B and resets each to -99 at4CFF9E/A4; pinned initial bytes are9DFFFFFF each. Existing MapWin sensor-distance consumer uses private original-address pointers. Replace those two pointers by signed source globals with separate bounded bindings and header declarations, preserving all reader ordering, historical function mappings, claims, seeds and task baselines. Transfer exactly this central dependency to the worker; no other MapWin body/header edits authorized, no behavior change or acceptance implied."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d517f996d479f1d985f11b27bf9cb0c9c30de09b06cb0f7093eb5570c20b4a68",
+  "request_id": "console-map-focus-storage-20261001-master",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:console-scenario-owner-wave"
+}

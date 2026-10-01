@@ -29,6 +29,8 @@
 // not a pointer back into the original executable's UI descriptor table.
 extern int MapEditorPaintId;
 extern int MapEditorBrushId;
+extern int MapFocusX;
+extern int MapFocusY;
 uint32_t map_editor_paint_mask(int tool_id);
 uint32_t map_editor_erase_mask(int tool_id);
 
