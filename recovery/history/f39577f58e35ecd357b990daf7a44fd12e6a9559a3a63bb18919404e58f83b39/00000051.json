@@ -1,0 +1,44 @@
+{
+  "event_id": "9d6d8c041e8160836f81a3815e49247d09e2227ba8ed22cbb5dc109fd552837d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/interface_registry_wave_harness.cpp",
+      "recovery/tests/test_interface_registry_wave.py",
+      "src/multiwin.cpp",
+      "src/reportif.cpp",
+      "src/subinterface.h"
+    ],
+    "evidence": [
+      "Recover three SubInterface registry/mode-stack lifecycle methods and MultiWin owned-sprite geometry initialization. Replace reportif set/release executable-address seams and remove their unused OriginalObject-pointer declarations. Preserve genuine nineteen-slot virtual contract, source-owned registry/stack/global storage, live callback-sensitive mode reloads, repeated downward stack removal and all seed/historical claims. Use native source bindings without granting new byte claims; original task baseline remains unchanged. Coordinator independently checks original instructions, actual-source controls, protected claims and compile/link before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4575968,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4576016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4576128,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4692224,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9bc16bbde0267863a695d17b3e08b926abaea3df0b0059659676555c2a981924",
+  "request_id": "interface-registry-multiwin-small-20261001",
+  "schema_version": 1,
+  "sequence": 51,
+  "stream": "task:interface-contract-report-closure"
+}
