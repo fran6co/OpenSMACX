@@ -106,3 +106,63 @@ def test_founding_action_uses_owned_dependencies_and_faction_count():
     assert "mon_colony_founded(owner, Bases[base_id].name_string)" in implementation
     for retired_address in ("0x004E4B80", "0x00476B70", "FactionRelationSlot"):
         assert retired_address not in implementation
+
+
+def test_founding_focus_reloads_vehicle_owner_after_callbacks(tmp_path):
+    compiler = shutil.which("c++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    implementation = body("src/leaf_recoveries.cpp", "int __cdecl action_build(int veh_id, char *base_name) {")
+    harness = r'''
+#include <cassert>
+#include <cstring>
+#define __cdecl
+struct Veh { int x,y; unsigned char faction_id; unsigned flags,visibility,state; short home_base_id; } Vehs[1];
+struct PlayerData { int current_num_bases; unsigned diplo_treaties[8]; int last_turn_new_base; } PlayersData[8];
+struct Base { unsigned governor; char name_string[32]; int faction_id_current; unsigned visibility; } Bases[1];
+int focus_calls, captured_owner, new_owner, skip_calls, TurnCurrentNum, GameState;
+enum { STATE_OMNISCIENT_VIEW=0x80 };
+struct Console {
+    int faction_id_;
+    void focus(int x,int y,int owner) {
+        assert(x==6 && y==8); ++focus_calls; captured_owner=owner;
+    }
+} ConsoleGlobal;
+int BuildLogCaption[1], BuildLogTurnCaption[1];
+void log_say(char*,int,int,int) { Vehs[0].faction_id=new_owner; }
+int rocky_at(int,int) { return 0; }
+void rocky_set(int,int,int) {}
+int whose_territory(int,int,int,int,int) { return -1; }
+int is_human(int) { return 0; }
+void treaty_on(int,int,int) {}
+void double_cross(int,int,int) {}
+int base_init(int owner,int x,int y) {
+    assert(owner==1 && x==6 && y==8); return -1;
+}
+void make_base_unique(int) {}
+void veh_kill(int) {}
+void draw_map(int) {}
+void del_site(int,int,int,int,int) {}
+void mon_colony_founded(int,char*) {}
+void veh_skip(int) { ++skip_calls; }
+__BODY__
+int main() {
+    ConsoleGlobal.faction_id_=3;
+    Vehs[0].x=6; Vehs[0].y=8; Vehs[0].faction_id=1;
+    new_owner=3;
+    assert(action_build(0,0)==-1);
+    assert(focus_calls==1 && captured_owner==1 && skip_calls==1);
+    // The original's second test reloads the vehicle faction, but still
+    // supplies the owner captured at entry to focus and base_init.
+    Vehs[0].faction_id=1; Vehs[0].flags=0x440; focus_calls=0;
+    assert(action_build(0,0)==-1 && focus_calls==0);
+    Vehs[0].faction_id=1; Vehs[0].flags=0; new_owner=2;
+    assert(action_build(0,0)==-1 && focus_calls==0);
+}
+'''
+    source = tmp_path / "founding.cpp"
+    executable = tmp_path / "founding"
+    source.write_text(harness.replace("__BODY__", implementation))
+    subprocess.run([compiler, "-std=c++17", str(source), "-o", str(executable)],
+                   check=True, capture_output=True, text=True, timeout=30)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True, timeout=10)
