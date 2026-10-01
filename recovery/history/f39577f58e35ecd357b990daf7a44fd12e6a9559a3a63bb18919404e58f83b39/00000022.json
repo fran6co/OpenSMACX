@@ -1,0 +1,27 @@
+{
+  "event_id": "25d9877901c8ca5e3dc5f296ef761ee725a8d3647a984259bdff38ed15e140c5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplopop_draw_info_behavior.py",
+      "src/diplopop.cpp",
+      "src/diplopop.h"
+    ],
+    "evidence": [
+      "Caption native53B53 calls real visible DiploPop draw_info43FA90..44007F before soft_update of rect1_. Recover that actual member body alongside caption, not substitute unrelated repaint. Worker only CPP/hostfixtures; Root owns header. Preserve original runtime dependencies and seed history; all paths/lifetimes required, no guessed offsets or executable forwarding."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4455056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "135ff130f98260c3c615ef5afdca383be7dc88d69e6cf1a9b2017a26a912811f",
+  "request_id": "caption-popup-draw-info-20261001",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:interface-contract-report-closure"
+}

@@ -1,0 +1,27 @@
+{
+  "event_id": "f07949b782cbcf763f0c58fccc4b60e060e68536afb636ff18a87bc25fbf9545",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_caption_behavior.py",
+      "src/faction.cpp",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Recover missing diplomacy_caption5399A0..539B6B dependency of retained complete Council window and vote purchase through genuine player/diplomacy popup owners. Historical diplomacy-presentation task remains preserved and inactive; no concurrent resumption authorized. Scope consolidation preserves its discoveries and original obligations, not a replacement baseline. Worker only faction.cpp and actual-source new fixture, buy body frozen; coordinator headers, bindings, Wine/Git. No raw fixed object addresses, guessed receiver layout or unapproved safety behavior changes. Request expansion if DiploPop/UI ownership cannot be proved."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5478816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "8b1aeb4ebe5a057aafb13d956b98376dae1e8429a6482af6f9c26fca7d103694",
+  "request_id": "council-caption-dependency-20261001",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:interface-contract-report-closure"
+}

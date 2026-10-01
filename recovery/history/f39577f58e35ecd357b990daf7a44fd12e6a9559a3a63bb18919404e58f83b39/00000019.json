@@ -1,0 +1,33 @@
+{
+  "event_id": "8b1aeb4ebe5a057aafb13d956b98376dae1e8429a6482af6f9c26fca7d103694",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_setup_balance_behavior.py",
+      "recovery/tests/test_time_warp_behavior.py",
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Recover both complete setup callees from pinned native spans: balance5B0420..5B0A2C and time_warp5AEDE0..5B0412. Existing setup/reset-helper work and original immutable task baseline stay intact. Worker only CPP and host tests; coordinator owns headers, native bindings, resources/Git. Missing outside-owner dependencies are preserved findings; no executable-address forwarding, silent omission or behavior fixes authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5964832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5959136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "97079b1e1af9856fae629a154e5962b34b728a2170efefd5aa995c927d05abbc",
+  "request_id": "setup-balance-time-warp-20261001",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:interface-contract-report-closure"
+}

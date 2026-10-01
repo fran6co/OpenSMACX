@@ -1,0 +1,26 @@
+{
+  "event_id": "135ff130f98260c3c615ef5afdca383be7dc88d69e6cf1a9b2017a26a912811f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_wants_prop_behavior.py",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Replace the explicit wants_prop placeholder with complete genuine scoring behavior52AEB0..52BE32 required by council vote purchase/council_get_vote. Separate manual source worker owns only leaf_recoveries.cpp and its host fixture; faction.cpp worker disjoint and frozen buy body preserved. No headers/Git/Wine/annotation mutations by workers; Root integrates and keeps original marker, baseline and all claims. Request typed ownership/scope expansion on evidenced outsideowner needs; do not silently omit proposal cases or invent gameplay fixes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5418672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f07949b782cbcf763f0c58fccc4b60e060e68536afb636ff18a87bc25fbf9545",
+  "request_id": "council-wants-prop-dependency-20261001",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:interface-contract-report-closure"
+}

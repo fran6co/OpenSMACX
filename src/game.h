@@ -118,6 +118,49 @@ enum GameDifficultyLevel {
 // extra load. WinMain's `mov dword ptr [0x9a6488], 1` is a direct store.
 extern BOOL ExpansionEnabled;
 extern uint32_t GamePreferences;
+// The monument reset visits eight faction rows, preserving every byte other
+// than the first word of 21 records and the last record's terminal word.
+// Only this reset footprint is established; opaque bytes are not invented
+// member semantics or proof of the wider monument window layout.
+struct MonumentResetSlot {
+    int first_word_;
+    uint8_t opaque_[0x34];
+};
+struct MonumentResetLastSlot {
+    int first_word_;
+    uint8_t opaque_before_terminal_[0x24];
+    int terminal_word_;
+    uint8_t opaque_after_terminal_[8];
+};
+struct MonumentResetRow {
+    MonumentResetSlot first_twenty_[20];
+    MonumentResetLastSlot last_;
+    uint8_t opaque_row_tail_[0x60];
+};
+static_assert(sizeof(MonumentResetSlot) == 0x38, "monument record stride");
+static_assert(sizeof(MonumentResetLastSlot) == 0x34, "last reset footprint");
+static_assert(sizeof(MonumentResetRow) == 0x4F4, "monument faction-row stride");
+extern MonumentResetRow MonumentResetRows[8];
+
+// Four independently cleared words precede each offer cell's unknown payload.
+struct OfferResetCell {
+    int word_0_;
+    int word_1_;
+    int word_2_;
+    int word_3_;
+    uint8_t opaque_[0x80];
+};
+static_assert(sizeof(OfferResetCell) == 0x90, "offer cell stride");
+extern OfferResetCell OfferResetCells[8][8];
+extern int TamperState93A9AC;
+extern int TamperState93A9B0;
+extern int TamperState93A9B4;
+extern int TamperDialogFaction[8];
+extern int TamperDialogValue[8];
+void __cdecl clear_monuments();
+void __cdecl clear_all_offers();
+void __cdecl clear_tamper();
+
 extern uint32_t GameMorePreferences;
 extern uint32_t GameWarnings; // used for setting pop notifications
 extern uint32_t GameRules; // bitfield

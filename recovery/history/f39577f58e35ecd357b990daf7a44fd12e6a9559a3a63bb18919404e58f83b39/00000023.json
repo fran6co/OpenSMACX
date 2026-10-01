@@ -1,0 +1,19 @@
+{
+  "event_id": "2b6b7fb002806e754d268187ac74444b94f2d82df3d07f2af3789bd897ef69ea",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_setup_dependencies_behavior.py"
+    ],
+    "evidence": [
+      "Integrate reviewed typed reset helpers; fixture must extract actual game.h layouts for monument row/slot assertions rather than test-only duplicate definitions. Offer tracking double independently validates writes; actual product offer extent remains separately checked."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "25d9877901c8ca5e3dc5f296ef761ee725a8d3647a984259bdff38ed15e140c5",
+  "request_id": "setup-helper-public-layout-controls-20261001",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:interface-contract-report-closure"
+}

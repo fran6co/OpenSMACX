@@ -920,6 +920,71 @@ void __cdecl colortables_init() {
     file.close();
 }
 
+// Original 476B30 advances eight rows from94CA18 by4F4 bytes. The
+// terminal word is at +488 inside the final record, not after the array.
+// RECOVERY_OBJECT: v2 0x0094CA18 0x0094F1B8 ?MonumentResetRows@@3PAUMonumentResetRow@@A 0x00476B30
+MonumentResetRow MonumentResetRows[MaxPlayerNum];
+
+// Original441250 clears four words in each of64 cells, preserving the
+// payload and the flat/transposed write order. Cell stride is90 bytes.
+// RECOVERY_OBJECT: v2 0x007388D8 0x0073ACD8 ?OfferResetCells@@3PAY07UOfferResetCell@@A 0x00441250
+OfferResetCell OfferResetCells[MaxPlayerNum][MaxPlayerNum];
+
+// Original51E390 clears these independent words and two faction arrays.
+// Consumer5275B0 displays the faction and repeated-event value. The three
+// scalar meanings remain unknown; they are not fabricated gameplay names.
+// RECOVERY_OBJECT: v2 0x0093A9AC 0x0093A9B0 ?TamperState93A9AC@@3HA 0x0051E390
+int TamperState93A9AC;
+// RECOVERY_OBJECT: v2 0x0093A9B0 0x0093A9B4 ?TamperState93A9B0@@3HA 0x0051E390
+int TamperState93A9B0;
+// RECOVERY_OBJECT: v2 0x0093A9B4 0x0093A9B8 ?TamperState93A9B4@@3HA 0x0051E390
+int TamperState93A9B4;
+// RECOVERY_OBJECT: v2 0x0093A9B8 0x0093A9D8 ?TamperDialogFaction@@3PAHA 0x0051E390
+int TamperDialogFaction[MaxPlayerNum];
+// RECOVERY_OBJECT: v2 0x0093A9D8 0x0093A9F8 ?TamperDialogValue@@3PAHA 0x0051E390
+int TamperDialogValue[MaxPlayerNum];
+
+// ORIGINAL: 0x00476B30 ?clear_monuments@@YAXXZ 0x00476B30-0x00476B61
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 visits21 first words at38 stride and terminal+488 in8 rows at4F4 stride; independent review caught and corrected a four-byte row-layout error. Actual game.h layouts and source-extracted helper fixture assert footprints and preserved bytes."], "reason": "Recover the complete faction monument reset through real bounded row/record storage; only reset-observed fields are interpreted, other bytes remain opaque. Preserve historical exact seed and restoration obligations without transferring its fixed-address spelling."}
+void __cdecl clear_monuments() {
+    for (int faction = 0; faction < MaxPlayerNum; ++faction) {
+        MonumentResetRow &row = MonumentResetRows[faction];
+        for (int slot = 0; slot < 20; ++slot)
+            row.first_twenty_[slot].first_word_ = 0;
+        row.last_.first_word_ = 0;
+        row.last_.terminal_word_ = -1;
+    }
+}
+
+// ORIGINAL: 0x00441250 ?clear_all_offers@@YAXXZ 0x00441250-0x00441296
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned441250 writes four words at offsets0/4/8/12 in90-byte cells over8x8 faction pairs. Source-extracted tracked assignments exercise exact interleaved flat/transposed order."], "reason": "Recover complete offer reset using genuine64-cell storage and typed fields while preserving flat/transposed write ordering and untouched payload. No wider offer semantics are invented."}
+void __cdecl clear_all_offers() {
+    for (int row = 0; row < MaxPlayerNum; ++row) {
+        for (int column = 0; column < MaxPlayerNum; ++column) {
+            OfferResetCell &flat = OfferResetCells[row][column];
+            OfferResetCell &transposed = OfferResetCells[column][row];
+            flat.word_0_ = 0;
+            flat.word_1_ = 0;
+            transposed.word_0_ = 0;
+            transposed.word_1_ = 0;
+            flat.word_2_ = 0;
+            flat.word_3_ = 0;
+            transposed.word_2_ = 0;
+            transposed.word_3_ = 0;
+        }
+    }
+}
+
+// ORIGINAL: 0x0051E390 ?clear_tamper@@YAXXZ 0x0051E390-0x0051E3BC
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned51E390 resets value93A9D8 then faction93A9B8 arrays and scalar93A9AC/B0/B4. Consumer5275B0 uses typed faction/value pairs for tamper dialogs; source-extracted fixture checks full arrays and scalars."], "reason": "Recover complete tamper reset with two independent faction arrays and three independent state words. Keep scalar semantics neutral until their actual consumers are recovered."}
+void __cdecl clear_tamper() {
+    memset(TamperDialogValue, 0, sizeof TamperDialogValue);
+    memset(TamperDialogFaction, 0, sizeof TamperDialogFaction);
+    TamperState93A9AC = 0;
+    TamperState93A9B0 = 0;
+    TamperState93A9B4 = 0;
+}
+
 uint32_t GameMorePreferences;  // 0x009A6494
 uint32_t GameWarnings;  // 0x009A6498
 uint32_t GameRules;  // 0x009A649C
