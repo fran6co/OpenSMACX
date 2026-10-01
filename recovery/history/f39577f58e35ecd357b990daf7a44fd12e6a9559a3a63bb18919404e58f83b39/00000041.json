@@ -1,0 +1,20 @@
+{
+  "event_id": "9516dfcf242da58f41328d05cd0345f891401d44c7692cb01d5a96c6a030b096",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/00583cb0.cpp"
+    ],
+    "evidence": [
+      "Native recover record583CB0 in src/designwin.cpp freshly measures and banks BYTE_EXACT in the genuine TutWinDesWindow wrapper; all28 protectedDesignWin bodies pass. The23byte original identity/extent and existing seed obligation are now homed without ABI or marker edits.",
+      "Remove only the superseded standalone seed src/recovered/00583cb0.cpp after source-owned historical provenance is rewritten through the native binding writer to git:5da70027:src/recovered/00583cb0.cpp. Seed has no independent lessons/body discoveries beyond the same exec receiver/call; Git preserves its complete source. Rerun original-identity claims continuity and final compile/link/protected checks; this does not authorize removing other retained seeds/worktrees or granting technology byte exactness."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b603fcdc89d1b83cf4661e5e8a30201fb0e8edfb523442be2ca9f2e69084a3c7",
+  "request_id": "design-wrapper-seed-retirement-20261001",
+  "schema_version": 1,
+  "sequence": 41,
+  "stream": "task:interface-contract-report-closure"
+}
