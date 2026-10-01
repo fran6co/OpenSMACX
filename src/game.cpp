@@ -4990,6 +4990,45 @@ void __cdecl time_warp() {
 
 void __cdecl monument(int from_load);
 
+// ORIGINAL: 0x00476B70 ?mon_colony_founded@@YAXHPAD@Z 0x00476B70-0x00476C84 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00476B70-0x00476C84", "source:src/recovered/units/00476b70.cpp", "Original faction stride4F4, record0 flag/first-owner words and name copy to4AC determine existing type ownership; preserve24byte strncpy behavior."], "reason": "Recover first colony founding in the shared genuine FactionMonuments owner, including first-achiever selection, the bounded faction-owned base-name field and live local notification."}
+void __cdecl mon_colony_founded(int faction_id, char *base_name) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+        return;
+    MonumentFaction &faction = FactionMonuments[faction_id];
+    MonumentRecord &record = faction.records_[0];
+    if (record.achieved_ != 0)
+        return;
+
+    record.word_14_ = 0;
+    int peer;
+    for (peer = 0; peer < MaxPlayerNum; ++peer) {
+        if (peer != faction_id && FactionMonuments[peer].records_[0].achieved_ != 0)
+            ++record.word_14_;
+    }
+    int first_faction = faction_id;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        for (peer = 0; peer < MaxPlayerNum; ++peer) {
+            const MonumentRecord &other = FactionMonuments[peer].records_[0];
+            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
+                first_faction = peer;
+        }
+    } else {
+        record.word_14_ = 1;
+    }
+    record.owner_faction_ = first_faction;
+    record.achieved_ = 1;
+    record.year_ = year;
+    // Native strncpy copies exactly 24 bytes; a full-length name is not
+    // forcibly terminated here. The field remains owned by this faction.
+    strncpy(faction.founding_base_name_, base_name, sizeof(faction.founding_base_name_));
+    faction.latest_type_ = 0;
+    if (faction_id == ConsoleGlobal.faction_id_)
+        monument(1);
+}
+
 // ORIGINAL: 0x00476DA0 ?mon_secrets_of_tech@@YAXH@Z 0x00476DA0-0x00476EDD
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00476da0.cpp preserved original identity/extent; pinned instructions and independent family review establish317byte body and fields; actual-source milestone/reset controls verify shared ownership and native branches"], "reason": "Record first/repeated technology secrets in genuine shared monument record2, retain first-achiever peer interpretation and notify the live local faction."}
 void __cdecl mon_secrets_of_tech(int faction_id) {
