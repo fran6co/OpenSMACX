@@ -32,9 +32,22 @@
 #include "mapwin.h"  // MainInterfaceGlobal, the owner passed to GraphicWin::init
 #include "console.h"  // flush_input
 #include "temp.h"  // do_all_non_input
+#include "text.h"
 #include "wave_device.h"  // WaveDeviceGlobal
 #include <mmsystem.h>
 #include <digitalv.h>
+
+// ORIGINAL: 0x00403BA0 ?amovie_project@@YAXH@Z 0x00403BA0-0x00403BDF BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Native403BA3..3BD4 opens MOVLIST/PROJECTS, consumes one row plus positive project_id rows, then dispatches text_item to the real char* movie overload403BE0; initial literals682754/682748 verified in pinned image.", "src/recovered/units/00403ba0.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
+void __cdecl amovie_project(int project_id) {
+    if (text_open("MOVLIST", "PROJECTS") != 0) return;
+    text_get();
+    while (project_id > 0) {
+        text_get();
+        --project_id;
+    }
+    amovie_project(text_item());
+}
 
 // The original play/stop bodies write one pointer-sized slot at 0x009B8190;
 // the same slot is consumed by the video-window handlers. The dword write in

@@ -1,0 +1,21 @@
+{
+  "event_id": "d74df15552d51cb74bd41366a133498faaf5ab80daa35f659045eb6355407136",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_movie_project_entry.py",
+      "src/alphamovie.cpp",
+      "src/alphamovie.h"
+    ],
+    "evidence": [
+      "Root-only dependency closure for native Console.show_movies515F70. The exact missing overload403BA0 opens MOVLIST/PROJECTS, consumes one row plus positive project_id rows, reads text_item and invokes existing char* amovie_project403BE0. All text callees are source-owned. Recover the real wrapper, not a stub or substitution. Preserve seed src/recovered/units/00403ba0.cpp exact obligation, original identity and immutable task baseline; focused controls and fresh build/link/protected measurements required before coordinator integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8a6a160aea71ba9d470c0ddfb782c25a7841189766e1496461b73e39d7e06944",
+  "request_id": "console-movie-wrapper-20261001",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:console-scenario-owner-wave"
+}

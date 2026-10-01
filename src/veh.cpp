@@ -11520,19 +11520,20 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
 }
 
 // ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0057F1D0; retained seed src/recovered/units/0057f1d0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned57F1D0..57F4B0: category snapshot after proto_bung_put;57F28D current-count guard;57F2B3/2C7 live full mask;57F3BA post-stack prototype reload;57F410 predefined branch bypasses active-bit clearing.", "Native57F434..47F inclusive queue walk, first-slot -69 and nonfirst shift/decrement; descending kill path preserves compacted storage. Existing typed owners in veh/base/faction/net headers.", "recovery/tasks/vehicle-special-actions-coverage.json central reviewed recovery; retained src/recovered/units/0057f1d0.cpp and immutable baseline."], "reason": "Recover complete prototype retirement with native descending-compaction traversal, live visibility mask, base/stack fallback, current prototype mineral refund and inclusive queue cleanup. Preserve source identity, full seed and original spans; this is not matching or runtime acceptance."}
 void __cdecl retire_proto(int prototype_id, int faction_id) {
     proto_bung_put(faction_id, prototype_id);
     VehPrototype &retired = VehPrototypes[prototype_id];
     const uint8_t faction_bit = static_cast<uint8_t>(1u << (faction_id & 0x1f));
+    const uint8_t retired_category = static_cast<uint8_t>(retired.unk_1);
     int replacement = -1;
-    int replacement_score = 0;
+    int replacement_score = -1;
 
     for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
         const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
         const VehPrototype &candidate = VehPrototypes[candidate_id];
         if (candidate_id == prototype_id
-            || candidate.unk_1 != retired.unk_1
+            || static_cast<uint8_t>(candidate.unk_1) != retired_category
             || (candidate.flags & PROTO_ACTIVE) == 0) {
             continue;
         }
@@ -11543,26 +11544,81 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
         }
     }
 
-    if (replacement >= 0) {
-        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
-            Veh &vehicle = Vehs[vehicle_id];
-            if (vehicle.proto_id != prototype_id || vehicle.faction_id != faction_id) {
-                continue;
-            }
-            vehicle.proto_id = static_cast<int16_t>(replacement);
-            if (PlayersData[faction_id].proto_id_active[prototype_id] != 0) {
-                --PlayersData[faction_id].proto_id_active[prototype_id];
-            }
-            ++PlayersData[faction_id].proto_id_active[replacement];
+    for (int vehicle_id = VehCurrentCount - 1; vehicle_id >= 0; --vehicle_id) {
+        if (vehicle_id >= VehCurrentCount) continue;
+        Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.proto_id != prototype_id) continue;
+
+        const uint8_t enabled_factions = static_cast<uint8_t>(LockEnableMask);
+        // The original locked-faction path kills this prototype's live units
+        // before the visibility, map-tile, or base-stack tests.
+        if ((enabled_factions & faction_bit) != 0) {
+            kill(vehicle_id);
+            continue;
         }
+
+        bool may_migrate_to_replacement = replacement >= 0;
+        if (may_migrate_to_replacement
+            && (vehicle.visibility & enabled_factions) != 0) {
+            const Map *tile = map_loc(vehicle.x, vehicle.y);
+            const int tile_owner = tile->val2 & 0x0f;
+            may_migrate_to_replacement = (tile->bit & BIT_BASE_IN_TILE) != 0
+                && tile_owner > 0 && tile_owner < 8;
+        }
+        if (vehicle.faction_id != faction_id) {
+            may_migrate_to_replacement = false;
+        }
+
+        if (may_migrate_to_replacement) {
+            vehicle.proto_id = static_cast<int16_t>(replacement);
+            --PlayersData[faction_id].proto_id_active[prototype_id];
+            ++PlayersData[faction_id].proto_id_active[replacement];
+            continue;
+        }
+
+        const int base_id = base_at(vehicle.x, vehicle.y);
+        if (base_id >= 0
+            && stack_check(vehicle_id, 1, -1, -1, -1) == 1) {
+            vehicle.proto_id = 2;
+            --PlayersData[faction_id].proto_id_active[prototype_id];
+            ++PlayersData[faction_id].proto_id_active[2];
+            continue;
+        }
+
+        if (base_id >= 0) {
+            Base &base = Bases[base_id];
+            const int mineral_refund =
+                static_cast<int>(VehPrototypes[Vehs[vehicle_id].proto_id].cost) / 2;
+            base.minerals_accumulated += mineral_refund;
+            base.minerals_accumulated_2 = base.minerals_accumulated;
+            base.production_id_last = base.queue_production_id[0];
+        }
+        kill(vehicle_id);
     }
 
-    // The native no-replacement path consults base_at and
-    // stack_check before deciding whether affected units can be retained or
-    // must be removed; do not collapse that path into an invented fallback.
-    retired.obsolete_factions |= faction_bit;
-    retired.flags &= static_cast<uint16_t>(~PROTO_ACTIVE);
-    // BODY GOES HERE.
+    if (prototype_id >= MaxVehProtoFactionNum) {
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            Base &base = Bases[base_id];
+            for (int queue_index = 0;
+                 queue_index <= static_cast<int>(base.queue_size);
+                 ++queue_index) {
+                if (base.queue_production_id[queue_index] != prototype_id) {
+                    continue;
+                }
+                if (queue_index == 0) {
+                    base.queue_production_id[0] = -69;
+                    continue;
+                }
+                for (int shift = queue_index;
+                     shift < static_cast<int>(base.queue_size); ++shift) {
+                    base.queue_production_id[shift] =
+                        base.queue_production_id[shift + 1];
+                }
+                --base.queue_size;
+            }
+        }
+        retired.flags &= static_cast<uint16_t>(~PROTO_ACTIVE);
+    }
 }
 
 // ORIGINAL: 0x0057F4B0 ?prune_protos@@YAXHHH@Z 0x0057F4B0-0x00580859

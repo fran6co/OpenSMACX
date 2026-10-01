@@ -144,6 +144,7 @@ class Console : public MapWin {
  public:
   // homed from 00517180.cpp
   void show_version();
+  void show_movies();
 
  public:
   // homed from 00515010.cpp

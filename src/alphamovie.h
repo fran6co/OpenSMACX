@@ -127,3 +127,5 @@ class AlphaMovie : public GraphicWin {
   MCIVideo mciVideo_;  // 0xA14
 };
 
+void __cdecl amovie_project(char *movie);
+void __cdecl amovie_project(int project_id);

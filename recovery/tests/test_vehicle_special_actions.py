@@ -20,11 +20,209 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_partial_dependencies_remain_unfinished_in_native_source_reader():
     from match_recovery.source import read_file
 
-    partial = {0x57E040, 0x580860, 0x57F1D0, 0x57F4B0}
+    partial = {0x57E040, 0x580860, 0x57F4B0}
     records = {r.address: r for r in read_file(ROOT / "src/veh.cpp")}
     assert partial <= records.keys()
     assert all(records[address].state.name == "PLACEHOLDER" for address in partial)
     assert records[0x4CDAF0].state.name == "IMPLEMENTED"
+    assert records[0x57F1D0].state.name == "IMPLEMENTED"
+
+def retire_harness(function):
+    return r"""
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#define __cdecl
+const int MaxVehProtoFactionNum=64, MaxVehProtoNum=512;
+const uint16_t PROTO_ACTIVE=1;
+const uint32_t BIT_BASE_IN_TILE=1;
+struct VehPrototype { int8_t unk_1; uint8_t obsolete_factions; uint16_t flags; uint8_t cost; };
+VehPrototype VehPrototypes[MaxVehProtoNum];
+struct Veh { int16_t x,y; int16_t proto_id; uint8_t faction_id; uint8_t visibility; };
+Veh Vehs[16]; int VehCurrentCount;
+struct Map { uint8_t val2; uint32_t bit; } TestMap;
+Map *map_loc(int,int) { return &TestMap; }
+uint32_t LockEnableMask;
+struct PlayerData { uint8_t proto_id_active[MaxVehProtoNum]; };
+PlayerData PlayersData[8];
+struct Base {
+    int minerals_accumulated, minerals_accumulated_2, production_id_last;
+    uint32_t queue_size; int queue_production_id[10];
+} Bases[4];
+int BaseCurrentCount;
+int base_result, stack_result, killed_count, base_at_calls, stack_check_calls;
+int rewritten_proto, shrink_count_after_stack, lock_mask_after_stack;
+bool rewrite_proto_after_stack;
+void proto_bung_put(int,int) {}
+int base_at(int,int) { ++base_at_calls; return base_result; }
+int stack_check(int vehicle_id,int,int,int,int) {
+    ++stack_check_calls;
+    if (rewrite_proto_after_stack) Vehs[vehicle_id].proto_id=rewritten_proto;
+    if (shrink_count_after_stack >= 0) {
+        VehCurrentCount=shrink_count_after_stack;
+        shrink_count_after_stack=-1;
+    }
+    if (lock_mask_after_stack >= 0) {
+        LockEnableMask=lock_mask_after_stack;
+        lock_mask_after_stack=-1;
+    }
+    return stack_result;
+}
+void kill(int vehicle_id) {
+    for (int i=vehicle_id; i<VehCurrentCount-1; ++i) Vehs[i]=Vehs[i+1];
+    if (vehicle_id >= 0 && vehicle_id < VehCurrentCount) --VehCurrentCount;
+    ++killed_count;
+}
+void check(bool ok,int n) {
+    if (!ok) { std::fprintf(stderr,"retire host check %d failed\n",n); std::exit(42); }
+}
+
+LIVE_RETIRE_BODY
+
+void reset() {
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(Vehs,0,sizeof(Vehs));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    std::memset(Bases,0,sizeof(Bases));
+    std::memset(&TestMap,0,sizeof(TestMap));
+    VehCurrentCount=BaseCurrentCount=0; base_result=-1;
+    stack_result=killed_count=base_at_calls=stack_check_calls=0;
+    rewritten_proto=0; shrink_count_after_stack=lock_mask_after_stack=-1;
+    rewrite_proto_after_stack=false;
+    LockEnableMask=0;
+}
+int main() {
+    reset();
+    VehCurrentCount=1; BaseCurrentCount=1; base_result=0; stack_result=1;
+    VehPrototypes[70].unk_1=4; VehPrototypes[70].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2; Vehs[0].visibility=4;
+    PlayersData[2].proto_id_active[70]=1;
+    Bases[0].queue_size=2;
+    Bases[0].queue_production_id[0]=11;
+    Bases[0].queue_production_id[1]=70;
+    Bases[0].queue_production_id[2]=22;
+    retire_proto(70,2);
+    check(Vehs[0].proto_id==2,1);
+    check(PlayersData[2].proto_id_active[70]==0
+          && PlayersData[2].proto_id_active[2]==1,2);
+    check(Bases[0].queue_size==1 && Bases[0].queue_production_id[1]==22,3);
+    check((VehPrototypes[70].flags & PROTO_ACTIVE)==0
+          && (VehPrototypes[70].obsolete_factions & 4)==0,4);
+    check(killed_count==0,5);
+
+    reset();
+    VehCurrentCount=1; BaseCurrentCount=1; base_result=0;
+    VehPrototypes[70].flags=PROTO_ACTIVE; VehPrototypes[70].cost=9;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2; Vehs[0].visibility=4;
+    Bases[0].minerals_accumulated=10; Bases[0].minerals_accumulated_2=3;
+    Bases[0].queue_production_id[0]=33;
+    retire_proto(70,2);
+    check(killed_count==1,6);
+    check(Bases[0].minerals_accumulated==14
+          && Bases[0].minerals_accumulated_2==14,7);
+    check(Bases[0].production_id_last==33,8);
+
+    reset();
+    VehCurrentCount=1;
+    VehPrototypes[70].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2; Vehs[0].visibility=0;
+    retire_proto(70,2);
+    check(killed_count==1 && Vehs[0].proto_id==70,9);
+
+    reset();
+    VehCurrentCount=1; VehPrototypes[70].unk_1=5;
+    VehPrototypes[130].unk_1=5; VehPrototypes[130].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2; Vehs[0].visibility=2;
+    Vehs[0].x=4; Vehs[0].y=6; TestMap.val2=1; TestMap.bit=1;
+    LockEnableMask=2;
+    PlayersData[2].proto_id_active[70]=1;
+    retire_proto(70,2);
+    check(Vehs[0].proto_id==130,10);
+    check(PlayersData[2].proto_id_active[70]==0
+          && PlayersData[2].proto_id_active[130]==1,11);
+
+    reset();
+    VehCurrentCount=1; BaseCurrentCount=1; base_result=0; stack_result=1;
+    VehPrototypes[70].unk_1=5; VehPrototypes[130].unk_1=5;
+    VehPrototypes[130].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2; Vehs[0].visibility=2;
+    TestMap.val2=1; TestMap.bit=0; LockEnableMask=2;
+    PlayersData[2].proto_id_active[70]=1;
+    retire_proto(70,2);
+    check(Vehs[0].proto_id==2 && Vehs[0].proto_id!=130,14);
+    check(base_at_calls==1 && stack_check_calls==1,15);
+
+    reset();
+    VehCurrentCount=1; BaseCurrentCount=1; base_result=0;
+    VehPrototypes[70].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2; Vehs[0].visibility=4;
+    LockEnableMask=4;
+    Bases[0].minerals_accumulated=10;
+    retire_proto(70,2);
+    check(killed_count==1 && Bases[0].minerals_accumulated==10,12);
+
+    reset();
+    VehCurrentCount=2;
+    VehPrototypes[70].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=Vehs[1].proto_id=70;
+    Vehs[0].faction_id=Vehs[1].faction_id=2;
+    retire_proto(70,2);
+    check(killed_count==2 && VehCurrentCount==0,13);
+
+    reset();
+    VehCurrentCount=1; BaseCurrentCount=1; base_result=0; stack_result=1;
+    VehPrototypes[70].unk_1=5; VehPrototypes[130].unk_1=5;
+    VehPrototypes[130].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2; Vehs[0].visibility=2;
+    TestMap.val2=1; TestMap.bit=0; LockEnableMask=2;
+    retire_proto(70,2);
+    check(Vehs[0].proto_id==2 && base_at_calls==1,16);
+
+    reset();
+    VehCurrentCount=1; BaseCurrentCount=1; base_result=0; stack_result=0;
+    VehPrototypes[70].flags=PROTO_ACTIVE; VehPrototypes[70].cost=8;
+    VehPrototypes[71].cost=15;
+    Vehs[0].proto_id=70; Vehs[0].faction_id=2;
+    rewrite_proto_after_stack=true; rewritten_proto=71;
+    retire_proto(70,2);
+    check(Bases[0].minerals_accumulated==7,17);
+
+    reset();
+    VehCurrentCount=2; BaseCurrentCount=1; base_result=0; stack_result=0;
+    VehPrototypes[70].flags=PROTO_ACTIVE;
+    Vehs[0].proto_id=Vehs[1].proto_id=70;
+    Vehs[0].faction_id=Vehs[1].faction_id=2;
+    lock_mask_after_stack=4;
+    retire_proto(70,2);
+    check(stack_check_calls==1 && killed_count==2,19);
+
+    reset();
+    VehCurrentCount=3; BaseCurrentCount=1; base_result=0; stack_result=0;
+    VehPrototypes[70].flags=PROTO_ACTIVE;
+    for (int i=0; i<3; ++i) {
+        Vehs[i].proto_id=70; Vehs[i].faction_id=2;
+    }
+    shrink_count_after_stack=1;
+    retire_proto(70,2);
+    check(stack_check_calls==2 && VehCurrentCount==0,18);
+}
+""".replace("LIVE_RETIRE_BODY", function)
+
+def test_live_retire_proto_replacement_fallback_and_queue_paths(tmp_path):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host g++ required")
+    cpp = tmp_path / "retire_proto.cpp"
+    executable = tmp_path / "retire_proto"
+    cpp.write_text(retire_harness(actual_function("retire_proto")))
+    result = subprocess.run(
+        [compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
+         "-fno-sanitize-recover=undefined", str(cpp), "-o", str(executable)],
+        capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
 
 
 def braced(source, start):

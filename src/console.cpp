@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "alphamovie.h"
 
 // Console constructor-installed Win branch: capture4, resize13, mouse17, update63.
 // Table start is observed in the original constructor; full extent remains unknown.
@@ -7487,4 +7488,31 @@ void Console::retire_game() { // 0x00514B30
     GameRestartQueued = !closed_network;
     ExitTurnLoop = 1;
     log_say("Retire**", 0, 0, 0);
+}
+
+// ORIGINAL: 0x00515F70 ?show_movies@Console@@QAEXXZ 0x00515F70-0x00516291;0x0065D3F3-0x0065D4D0
+// RECOVERY_BINDING: v1 {"evidence": ["Native515FA5..516035 rebuilds64 FacilitySPStart rows through StringTable and owned Dialogs, sorts the virtual-base StringList and dispatches403BA0 until exec returns negative; Popup lifetime is compiler-managed.", "src/recovered/units/00515f70.cpp", "Root-only console-movie-wrapper-20261001 central dependency closure; immutable task baseline preserved."], "reason": "Recover complete source-owned movie selection and project-index wrapper with proper Popup lifetime, typed facilities, actual text parsing and existing movie playback. Retain exact seed identities and all original spans; no match or acceptance claim is granted by this binding."}
+void Console::show_movies() { // 0x00515F70
+    Popup popup;
+    for (;;) {
+        popup.start(PopupStartCaption, "SHOWMOVIES", -1, nullptr, 0x42,
+                    nullptr);
+
+        for (int project_id = 0; project_id < MaxSecretProjectNum;
+             ++project_id) {
+            StringTemp[0] = 0;
+            const int facility_id = FacilitySPStart + project_id;
+            strcat(StringTemp, StringTable.get(
+                static_cast<int>(
+                    reinterpret_cast<intptr_t>(Facility[facility_id].name))));
+            popup.dialogs().item(StringTemp, project_id);
+        }
+        popup.item_ids_.sort(0);
+
+        const int selected_project = popup.exec(0, nullptr);
+        if (selected_project < 0) {
+            return;
+        }
+        amovie_project(selected_project);
+    }
 }

@@ -511,6 +511,79 @@ int main() {
     subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
 
+def test_show_movies_rebuilds_sorted_facility_list_until_cancel(tmp_path):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    harness = r'''
+#include <cassert>
+#include <cstdint>
+#include <cstdio>
+#include <cstring>
+#include <string>
+#include <vector>
+#define __cdecl
+const int MaxSecretProjectNum=64,FacilitySPStart=70;
+char PopupStartCaption[]="POPUPCAP",StringTemp[1032];
+struct RulesFacility { char *name; } Facility[134];
+char Names[134][32];
+struct Strings { int gets=0; const char *get(int key) {
+  ++gets;
+  for(int i=0;i<134;++i)
+    if(key==static_cast<int>(reinterpret_cast<intptr_t>(Facility[i].name)))
+      return Facility[i].name;
+  assert(false); return "";
+} } StringTable;
+std::vector<std::string> Events; std::vector<int> MovieCalls;
+struct Item { std::string text; int id; };
+struct Dialogs { std::vector<Item> items;
+  int item(char *text,int id) { items.push_back(Item{text,id}); return 1; }
+};
+struct StringList { int sorts=0; void sort(int key) { assert(key==0); ++sorts; Events.push_back("sort"); } };
+int ExecCalls=0,StartCalls=0,DestroyCalls=0;
+struct Popup {
+  Dialogs dialogs_; StringList item_ids_;
+  void start(char *caption,const char *label,int value,char *text,int flags,void *parent) {
+    assert(std::strcmp(caption,"POPUPCAP")==0 && std::strcmp(label,"SHOWMOVIES")==0);
+    assert(value==-1&&text==nullptr&&flags==0x42&&parent==nullptr);
+    ++StartCalls; dialogs_.items.clear(); Events.push_back("start");
+  }
+  Dialogs &dialogs() { return dialogs_; }
+  int exec(int flags,void *callback) {
+    assert(flags==0&&callback==nullptr&&dialogs_.items.size()==64);
+    assert(item_ids_.sorts==StartCalls);
+    ++ExecCalls; Events.push_back("exec");
+    return ExecCalls==1 ? 3 : -1;
+  }
+  ~Popup() { ++DestroyCalls; Events.push_back("destroy"); }
+};
+void __cdecl amovie_project(int project_id) { MovieCalls.push_back(project_id); Events.push_back("movie"); }
+struct Console { void show_movies(); };
+'''
+    harness += body_for("void Console::show_movies()")
+    harness += r'''
+int main() {
+  for(int project=0;project<64;++project) {
+    const int facility=FacilitySPStart+project;
+    std::snprintf(Names[facility],sizeof(Names[facility]),"Project-%02d",project);
+    Facility[facility].name=Names[facility];
+  }
+  Console console; console.show_movies();
+  assert(StartCalls==2&&ExecCalls==2&&DestroyCalls==1);
+  assert(StringTable.gets==128&&MovieCalls==std::vector<int>{3});
+  assert(Events.size()>=8&&Events[0]=="start"&&Events[1]=="sort"&&
+         Events[2]=="exec"&&Events[3]=="movie"&&Events[4]=="start"&&
+         Events[5]=="sort"&&Events[6]=="exec"&&Events.back()=="destroy");
+}
+'''
+    unit = tmp_path / "console_show_movies.cpp"
+    unit.write_text(harness)
+    executable = tmp_path / "console_show_movies"
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)],
+                   check=True, capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
 def test_give_vehicle_scopes_owner_receiver_and_dispatch(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
