@@ -1,0 +1,20 @@
+{
+  "event_id": "053061fe99b4eb16992cdc4a871cbe7f44cbdb78b89046cb8f4ba5439105f7c0",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netdaemon-protocol-owner-gap",
+    "evidence": [
+      "Pinned native spans 00532E00..00534129,00532570..005328BA,00531780..00532135; actual src/pending_bodies.cpp forwards to absent native implementations, and synch wrappers/action callers already exist. Coordinator authorizes coherent full-body reconstruction with separate source controls and unchanged task baseline."
+    ],
+    "hypothesis": "Derived player callbacks expose unfinished synchronization and vehicle-action owner paths. Recover the complete source bodies, replace only their pending forwarders, preserve seed mappings and every original obligation; do not mistake the partial process_message dispatcher for behavioral coverage.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "netdaemon-protocol-owner-gap",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

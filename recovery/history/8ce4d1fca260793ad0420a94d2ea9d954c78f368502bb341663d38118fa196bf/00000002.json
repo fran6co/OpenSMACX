@@ -1,0 +1,21 @@
+{
+  "event_id": "c33a3c2b22ce53baf16fdb509af154626624048988d790b08388af9d56653eb1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/netdaemon_protocol_harness.cpp",
+      "recovery/tests/test_netdaemon_protocol.py",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator scope grant for discovery netdaemon-protocol-owner-gap: full synch/action/order_veh recovery and removal of only their pending definitions. Existing NetDaemon group already carries their original subjects. Actual source-owned packet/game/vehicle fields must replace addresses; request additional coupled-owner files before editing them. Preserve all baseline mappings, claims and unresolved paths; no automatic acceptance or behavioral-regression waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "053061fe99b4eb16992cdc4a871cbe7f44cbdb78b89046cb8f4ba5439105f7c0",
+  "request_id": "netdaemon-protocol-owner-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
