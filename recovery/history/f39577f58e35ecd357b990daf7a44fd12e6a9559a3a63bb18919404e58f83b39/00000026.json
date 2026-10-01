@@ -1,0 +1,33 @@
+{
+  "event_id": "d233b600e3d7fe261cef91a2e3e630219af2e90c6b9fd7636d1c2d7f449c6d76",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_base_connect_behavior.py",
+      "recovery/tests/test_base_terraform_behavior.py",
+      "src/base.cpp",
+      "src/base.h"
+    ],
+    "evidence": [
+      "Native time_warp callsbase_terraform4ECBF0; nativebase_terraform callsbase_connect4EC3F0 twice. Existing product andretainedbase-closure have no implementations. Coordinator grants genuine selected-base helperrecovery, typedowners and exactcallee semantics only, preserve immutableb60ef baseline/allseeds/claims. Worker onlybase.cpp+tests; Root ownsheaders andpublication."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5161968,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5164016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c150a422de52e71c194cb787992d59988e4113b7729f3e9194da3a735b56b4d1",
+  "request_id": "setup-real-base-connection-terraform-20261001",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:interface-contract-report-closure"
+}

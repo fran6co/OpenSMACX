@@ -1,0 +1,28 @@
+{
+  "event_id": "abb83e85afb65c21ea9e829fc8f86f1fff01f173b055f7532e0106e6e662ce97",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_tech_achieved_behavior.py",
+      "src/faction.h",
+      "src/pending_bodies.cpp",
+      "src/technology.cpp"
+    ],
+    "evidence": [
+      "Fullretainedbuy_council_vote depends on native tech_achieved5BB000..5BCB55+EH662710..662A1E. Native/currentDialogs class hierarchy nowexpresses former virtual-base seedblocker. Coordinator permits technology-owner genuinebody, typedUIlifetimes/state/callbackorder, fourroles(faction,technology,otherfaction,freebie). Existingfunctionforwarder removal/interface naming Rootonly aftercompletebodyreview; noflagchange/claimdemotion/baseline reset. Worker onlytechnology.cpp+newtest; overlappingexistingtechnology task retained, nooutsideworktreeedits."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d233b600e3d7fe261cef91a2e3e630219af2e90c6b9fd7636d1c2d7f449c6d76",
+  "request_id": "council-real-technology-achievement-20261001",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:interface-contract-report-closure"
+}
