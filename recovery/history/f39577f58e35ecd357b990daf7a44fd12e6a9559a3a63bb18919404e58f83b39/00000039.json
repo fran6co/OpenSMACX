@@ -1,0 +1,26 @@
+{
+  "event_id": "fb26a9ebc7b054e367364ea4f070d795a1ac07dc8d44ad1074c165d56a28e52b",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp"
+    ],
+    "evidence": [
+      "Fresh full technology application build exposes exactly one missing callee: design_new_veh583CB0. Seed src/recovered/00583cb0.cpp retains exact23byte span583CB0..583CC7 and one DesignWin::exec43E9A0 call; existing designwin.cpp owns genuine TutWinDesWindow object71F2B0 and real exec. The reviewed draft incorrectly counted this seed as a product definition; do not add another fixed-address forwarder.",
+      "Recover the wrapper in the actual design owner using TutWinDesWindow.exec with two original integer arguments; native bind/match and protect existing DesignWin/technology/leaf claims and fresh compile/link. Preserve seed until its exact obligation is demonstrably homed, all original identities and unchanged task baseline. This closes production linkage, not DesignWin runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5782704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0553c5cf5d7d8df9acbd43942951bf5c20ffe975f9a9352bc463c0d34a604939",
+  "request_id": "technology-design-wrapper-link-closure-20261001",
+  "schema_version": 1,
+  "sequence": 39,
+  "stream": "task:interface-contract-report-closure"
+}
