@@ -1,0 +1,19 @@
+{
+  "event_id": "2ab7305c6e086fff0a0128eb8e924c3217193a1f12233d32dc3e3fa5c55c4711",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_editor_edit_veh_host.py"
+    ],
+    "evidence": [
+      "Complete existing authorized Console::editor_edit_veh identity without changing baseline. Pinned4DDA50..4DE95B proves lexical Popup lifetime, its embedded Scroll/BasePop/Dialogs cleanup and original vehicle edit modes; no explicit duplicate close or member-destruction aliases. Veh+0xE is faction_id (year_end_lurking is +0xF), unsigned weapon-byte comparisons drive mode2, and native draw_tile pushes type,y,x for declared draw_tile(x,y,type). Authorize actual-product-body host controls with cancellations, defaults, live callbacks, owned state, argument order and teardown counters. Preserve all retained seeds and historical claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "700e525d28dd01469d7dd4c678273bb46e11c89b94a56dffc2beac9ace590873",
+  "request_id": "console-editor-edit-veh-behavior-controls-20261001",
+  "schema_version": 1,
+  "sequence": 21,
+  "stream": "task:console-scenario-owner-wave"
+}
