@@ -1,0 +1,35 @@
+{
+  "event_id": "1c791bbc63c639e9a529e41374eb1757ee67ee589dfbea447ff7b3d7fc4272ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp"
+    ],
+    "evidence": [
+      "propose_proto580860 requires the existing name_proto57E040 placeholder and seed-only retire_proto57F1D0/prune_protos57F4B0 lifecycle; all are vehicle prototype ownership and no competing task subjects were found. Native580F07 loads sixth argument from ebp+1C and stores a DWORD at93FC44, beside source-owned DesignConsider fields. Root alone may define/bind DesignConsiderReactor centrally in designwin.cpp and transfer that exact definition; worker remains limited to veh.cpp/h and behavior tests. Preserve original baselines, claims and seed evidence. No behavior-change permission or acceptance assertion."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5763536,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5764272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5759040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c4f251bf92c38081a30e868b6b9f341ec47851159b9cafeaa9f296f4efa76af5",
+  "request_id": "vehicle-prototype-lifecycle-and-reactor-20261001-master",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:vehicle-special-actions-coverage"
+}

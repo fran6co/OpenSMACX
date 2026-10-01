@@ -78,6 +78,10 @@ int DesignConsiderPrototype;
 int DesignConsiderWeapon;
 // RECOVERY_OBJECT: v2 0x0093FC40 0x0093FC44 ?DesignConsiderChassis@@3HA 0x0043E490
 int DesignConsiderChassis;
+// propose_proto exchanges its sixth (reactor) argument with the editor at
+// 0x580F07; both original writes use this independent four-byte scalar.
+// RECOVERY_OBJECT: v2 0x0093FC44 0x0093FC48 ?DesignConsiderReactor@@3HA 0x00580860
+int DesignConsiderReactor;
 // RECOVERY_OBJECT: v2 0x0093FC50 0x0093FC54 ?DesignConsiderArmor@@3HA 0x0043E490
 int DesignConsiderArmor;
 // RECOVERY_OBJECT: v2 0x0093FC54 0x0093FC58 ?DesignConsiderOverride@@3HA 0x0043E490
