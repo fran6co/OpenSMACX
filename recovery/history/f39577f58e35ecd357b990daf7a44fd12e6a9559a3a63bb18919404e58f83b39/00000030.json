@@ -1,0 +1,19 @@
+{
+  "event_id": "ac252ac95953932cdd764d01cda6edd3c186a03da5324e29bc4ec06bd77a4edf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/newtechwin.h"
+    ],
+    "evidence": [
+      "Retained originalNewTechWin::exec483F90 native thiscall void(inttechnology,intotherfaction), confirmed genuine currentNewTechWin hierarchy. Rootaddsonlypublicmethod declaration; body remainsunrecovered separatecallee notcoverage. No virtualslot change."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a351b284495c654df5b6142433fd1abd5798e1f625ce36c958aa058bd9037aaf",
+  "request_id": "technology-real-popup-exec-interface-20261001",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:interface-contract-report-closure"
+}

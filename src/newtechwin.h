@@ -40,6 +40,7 @@ extern Sprite g_NEWTECHWIN_SPRITES[6];
 class NewTechWin : public GraphicWin {
  public:
   NewTechWin() { ; }
+  void exec(int technology_id, int other_faction_id);
   // 0x00484810 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
