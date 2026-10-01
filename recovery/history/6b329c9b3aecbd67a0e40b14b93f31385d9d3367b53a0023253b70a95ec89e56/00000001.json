@@ -1,0 +1,23 @@
+{
+  "event_id": "c4f251bf92c38081a30e868b6b9f341ec47851159b9cafeaa9f296f4efa76af5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "action_give4CEDE0 remaps custom units through propose_proto580860. Current source has no implementation or competing task subject for this identity. Prototype record storage already belongs to VehPrototypes in veh.cpp/h. Extend the existing vehicle action cohort to recover the genuine prototype constructor in those same authorized files; validate all caller arguments and preserve seeds/claims. Shared DesignWin/editor/faction storage access needs Root-coordinated evidence/authorization, not raw addresses or additional worker ownership. No baseline reset or behavior permission."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5769312,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "vehicle-actions-prototype-closure-20261001-master",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:vehicle-special-actions-coverage"
+}
