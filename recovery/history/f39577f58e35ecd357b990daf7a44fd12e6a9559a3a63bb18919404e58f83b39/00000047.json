@@ -1,0 +1,19 @@
+{
+  "event_id": "e0dfec7a4fdfc52557d9bdaf363aad8565835396cb7904651ebaa7c4b606fdfd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/setupwin.cpp"
+    ],
+    "evidence": [
+      "Correct the rev46 draft coordinate interpretation, preserving that history: native4AE349 saves incoming y in EDI before Spot::check writes its stack output home, and4AE368 pushes EDI to on_mouse_feedback. Product source must forward original y, not mutated output y. Root independently inspected instructions; actual-source damage control rejects the draft behavior. The authorized five-function scope, baseline and all claims remain unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "e0fcd4de55520b6dacb795ec9e55218f3f78568264d5656f56b176955d6f5747",
+  "request_id": "ui-five-native-coordinate-correction-20261001",
+  "schema_version": 1,
+  "sequence": 47,
+  "stream": "task:interface-contract-report-closure"
+}

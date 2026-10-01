@@ -75,6 +75,16 @@ uint32_t GraphicWinFieldA0CDefault;  // 0x009B33C0
 // RECOVERY_OBJECT: v1 0x009B3394 ?GraphicWinInitDefaults@@3UGraphicWinFrameDefaults@@A
 GraphicWinFrameDefaults GraphicWinInitDefaults;
 
+// ORIGINAL: 0x005D5500 ?load_pcx@GraphicWin@@QAEHPADPAUPalette@@HH@Z 0x005D5500-0x005D5536 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005d5500.cpp", "image:terranx_original.exe:0x005D5500", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
+// symbol    ?load_pcx@GraphicWin@@QAEHPADPAVPalette@@HH@Z
+int GraphicWin::load_pcx(char *path, Palette *palette, int flags, int transparency) {
+    if ((iFlags_ & 0x800000) != 0) {
+        return 1;
+    }
+    return Buffer::load_pcx(path, palette, flags, transparency);
+}
+
 // Process-lifetime borrowed colour-map pointer, originally a zero-filled DWORD
 // at 0x009B3390. The pinned image has only the two fill loads: no direct writer
 // or address escape was found. That is not proof against computed indirect

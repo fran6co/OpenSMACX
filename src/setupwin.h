@@ -44,6 +44,7 @@ class SetupWin : public GraphicWin {
   // direct `call rel32`, can name it.
   int do_menu_rightside(char* a1, int a2);
   int on_mouse_move(int x, int y);
+  void on_left_click(int x, int y);
   int draw_item(int position, int selected);
   SetupWin() { ; }
   // 0x004AE790 is not recovered: a

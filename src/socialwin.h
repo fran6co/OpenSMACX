@@ -134,6 +134,9 @@ class SocialWin : public GraphicWin, public SubInterface {
 
  public:
   void hide();
+  void exit();
+  int on_key_click(int flags, int key);
+  void on_button_clicked(int button_id);
   void show(int visible);
   int on_left_click(int x, int y);
   void on_right_click(int x, int y);

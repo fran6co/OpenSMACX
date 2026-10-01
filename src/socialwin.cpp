@@ -33,10 +33,92 @@
 #include "tutwin.h"
 #include "console.h"
 #include "netdaemon.h"
+#include "popup.h"
 
 void __cdecl social_set(uint32_t faction_id);
 extern int BreakthroughTurnsGlobal;
 extern int NetIncomeGlobal;
+
+// ORIGINAL: 0x004AEF10 ?exit@SocialWin@@QAEXXZ 0x004AEF10-0x004AF10C
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004aef10.cpp", "image:terranx_original.exe:0x004AEF10", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
+void SocialWin::exit() {
+    const uint32_t gross_upheaval = social_upheaval(factionID_, &socCategory_);
+    int upheaval = static_cast<int>(
+        gross_upheaval - PlayersData[factionID_].soc_upheaval_cost_paid);
+
+    if ((GameState & STATE_SCENARIO_EDITOR) == 0
+        || (GameState & STATE_OMNISCIENT_VIEW) == 0) {
+        if (upheaval > 0) {
+            parse_num(0, upheaval);
+            parse_num(1, PlayersData[factionID_].energy_reserves);
+            if (upheaval > PlayersData[factionID_].energy_reserves) {
+                popp(ScriptPopupFile, "UPHEAVALTOOMUCH", 0, "genwarning_sm.pcx",
+                     pop_wait);
+                return;
+            }
+            if ((Players[factionID_].rule_flags & RFLAG_ALIEN) != 0) {
+                if (popp(ScriptPopupFile, "UPHEAVAL", 0, "Alopdir.pcx", pop_wait) == 0) {
+                    return;
+                }
+            } else {
+                if (popp(ScriptPopupFile, "UPHEAVAL", 0, "talent_sm.pcx", pop_wait) == 0) {
+                    return;
+                }
+            }
+        }
+    } else {
+        upheaval = 0;
+    }
+
+    if (upheaval >= PlayersData[factionID_].energy_reserves) {
+        upheaval = PlayersData[factionID_].energy_reserves;
+    }
+    PlayersData[factionID_].soc_upheaval_cost_paid += upheaval;
+    for (int i = 0; i < 4; ++i) {
+        PlayersData[factionID_].soc_category_pending.models_[i] = socCategory_.models_[i];
+    }
+    synch_alloc(factionID_);
+    synch_soc(factionID_);
+    net_energy(factionID_, -upheaval, 0, 0, 0);
+    social_calc(&PlayersData[factionID_].soc_category_pending,
+                &PlayersData[factionID_].soc_effect_pending, factionID_, 0, 0);
+    release_modal();
+}
+
+// ORIGINAL: 0x004B1E80 ?on_key_click@SocialWin@@QAEHHH@Z 0x004B1E80-0x004B1EB5 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/004b1e80.cpp", "image:terranx_original.exe:0x004B1E80", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
+int SocialWin::on_key_click(int, int key) {
+    TutorialWindow.reset();
+    switch (key) {
+        case 27:
+            reset();
+            // Native Escape handling resets, then shares the Enter exit path.
+        case 13:
+            exit();
+            break;
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x004B1E00 ?on_button_clicked@SocialWin@@QAEXH@Z 0x004B1E00-0x004B1E49
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/004b1e00.cpp", "image:terranx_original.exe:0x004B1E00", "Original instructions establish owner, bounded body and callback/state order; SocialWin reloads faction after social_upheaval and every later stateful call. GraphicWin dispatches through the real Buffer base.", "recovery/tasks/interface-contract-report-closure.json; bounded UI-five scope preserves original baseline"], "reason": "Recover the original in its genuine UI owner using actual members, globals and base/virtual calls. Retain seed evidence and historical obligations; this binding does not grant a current matching or runtime claim."}
+// symbol    ?on_button_clicked@SocialWin@@UAEXH@Z
+void SocialWin::on_button_clicked(int button_id) {
+    TutorialWindow.reset();
+    switch (button_id) {
+        case -2:
+        case 16:
+            reset();
+            // Native reset-and-exit entries share the following exit path.
+        case -1:
+        case 28:
+            exit();
+            break;
+        case 27:
+            reset();
+            break;
+    }
+}
 
 void __fastcall SocialWinFlatButtonCtor(void *self) { reinterpret_cast<FlatButton *>(self)->FlatButton::FlatButton(); }
 void __fastcall SocialWinFlatButtonDtor(void *self) { reinterpret_cast<FlatButton *>(self)->~FlatButton(); }
