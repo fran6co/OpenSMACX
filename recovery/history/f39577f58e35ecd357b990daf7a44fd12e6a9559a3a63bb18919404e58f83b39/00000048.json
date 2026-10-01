@@ -1,0 +1,44 @@
+{
+  "event_id": "13808cea4e5a18375adbc3894abcf37050f068794a1b56309bc3caa3c7330665",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/pulldown_owner_wave_harness.cpp",
+      "recovery/tests/test_pulldown_owner_wave.py",
+      "src/font.h",
+      "src/pulldown.cpp",
+      "src/pulldown.h"
+    ],
+    "evidence": [
+      "Recover the four-method PullDown ownership/dependency group together. Move existing mapped mouse_move out of stringstruct.cpp, preserving original identity/spans/claims and legacy seed provenance; replace raw self offsets and executable-address call with genuine members and pulldown_update. Native5F9F60..5FA6AB establishes item flags, old/new redraw asymmetry, callback modes and live padding reloads. Font+0x14 internal_leading is required for mnemonic underlining; expose a read-only accessor without changing layout. Preserve source/seed historical obligations and original task baseline. Coordinator reviews actual native branches, binds seed-only owners through installed writer, checks actual-source damage controls, compile/link and protected claims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6261104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6268592,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6264208,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6266720,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e0dfec7a4fdfc52557d9bdaf363aad8565835396cb7904651ebaa7c4b606fdfd",
+  "request_id": "pulldown-four-owner-closure-20261001",
+  "schema_version": 1,
+  "sequence": 48,
+  "stream": "task:interface-contract-report-closure"
+}
