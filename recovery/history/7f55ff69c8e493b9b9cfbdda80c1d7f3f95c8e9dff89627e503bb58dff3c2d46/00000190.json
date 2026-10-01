@@ -1,0 +1,31 @@
+{
+  "event_id": "2d09a8206c8bfadb206989564c60b2fb055c465b478d22e87c7353a09169cf42",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_colony_foundation_owner.py"
+    ],
+    "evidence": [
+      "Native mon_colony_founded476B70..476C84 is still seed-only and action_build calls its original address. Existing FactionMonuments in game.cpp/h owns the record0 and factionstride4F4. Recover genuine function there, expose original24-byte founding-name field atMonumentFaction+4AC without changing size, and use typed directcall in action_build.",
+      "Resolve original105C/96DA3C read in action_build through existingPlayerData.current_num_bases, following console task discoveryowned-player-base-count-slot-20261001. base_init4E4B80 nowalreadyimplemented inbase.cpp/header, so eliminate only thatobsoletecall seam too. Preserve logs/otherhistoricalobligations, no hiddenbehaviorguard or assumedfullgameacceptance. Actual-source controls and freshcompile/link/scopedchecks required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4680560,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5019360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "82c7663b7fad4e951e9831317b7ba8b9d5ab1e731b8a26629dca40a3f99c3299",
+  "request_id": "typed-colony-monument-and-founding-owner-20261001",
+  "schema_version": 1,
+  "sequence": 190,
+  "stream": "task:vector-value-semantics"
+}
