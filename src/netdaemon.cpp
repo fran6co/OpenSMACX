@@ -1889,6 +1889,56 @@ int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
     return 1;
 }
 
+// ORIGINAL: 0x00531150 ?automated_lock@NetDaemon@@QAEHPAHH@Z 0x00531150-0x005312F6
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00531150.cpp; image:0x00531150-0x005312F6", "Native5311A8 owns this+1BB4 in existing lock_state_[2].dword_[4]; warning5311EF uses initial time while polling531230 uses moving retry time."], "reason": "Recover automated vehicle locking through the genuine NetDaemon owner: native calls identify vehicle-ID pointer forwarding, separate initial-warning and retry timers, message pumping and balanced busy/state lifetimes."}
+int NetDaemon::automated_lock(int *veh_id, int target) {
+    if (IsMultiplayerNet == 0) return 0;
+
+    log_say("Getting auto lock", *veh_id,
+            static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
+    ++NetBusyCount;
+    DWORD (WINAPI *const ticks)() = timeGetTime;
+    const DWORD initial_time = ticks();
+    DWORD retry_time = initial_time;
+    // This is the daemon's existing state entry at this+0x1BB4, not
+    // separate storage or an executable-address flag.
+    lock_state_[2].dword_[4] = 1;
+    bool awaiting_orders = false;
+    if (ExitTurnLoop == 0) {
+        do {
+            if (lock_veh(veh_id, target, -1, -1, 0) == 0) break;
+            // The warning uses the initial time; retry pacing uses its own
+            // moving timestamp. Resetting both prevents the native warning.
+            if (!awaiting_orders && ticks() - initial_time > 500U) {
+                awaiting_orders = true;
+                NetMsgPopup->pop("AWAITORDERS", 0, 2, 0);
+            } else {
+                log_say("(Auto lock delay)", *veh_id, 0, 0);
+                while (ticks() - retry_time < 250U && ExitTurnLoop == 0) {
+                    wait_task();
+                    unsigned long first;
+                    unsigned long second;
+                    const int message = NetDaemonNet.Net::get(&first, &second);
+                    if (message != 0) {
+                        process_message(reinterpret_cast<char *>(message),
+                                        second, static_cast<int>(first));
+                    }
+                    locks_.check_global();
+                    check_spock();
+                }
+                retry_time = ticks();
+            }
+            check_spock();
+        } while (ExitTurnLoop == 0);
+        if (awaiting_orders) NetMsgPopup->close();
+    }
+    log_say("Got auto lock", *veh_id,
+            static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
+    lock_state_[2].dword_[4] = 0;
+    --NetBusyCount;
+    return ExitTurnLoop;
+}
+
 // ORIGINAL: 0x0052DF30 ?init@NetDaemon@@QAEHH@Z 0x0052DF30-0x0052E041
 // TRIED: `if (setup(option)==0) return 0; return 1;` and its `!=`/local-var/ if-else variants all boolean-normalize (neg/sbb or xor/setcc) at #51 where the original keeps two distinct epilogues (fall-through returns the call's own eax, the taken branch explicitly sets eax=1). Landing the closest form.
 // size      273 bytes

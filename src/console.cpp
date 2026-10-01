@@ -34,6 +34,7 @@
 #include "mapwin.h"
 #include "maininterface.h"
 #include "statuswin.h"
+#include "reportwin.h"  // veh_turn observes the real report window's visibility
 #include "temp.h"
 #include "fx.h"
 #include "hypothesis_layouts.h"
@@ -7929,4 +7930,196 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     NetDaemonNet.unlock_veh();
     popup.close();
     return 1;
+}
+
+// ORIGINAL: 0x00513B90 ?veh_turn@Console@@QAEHXZ 0x00513B90-0x00513FB9
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00513b90.cpp; image:0x00513B90-0x00513FB9", "Native513EA3 identifies pointer-preserving NetDaemon::automated_lock; native513F85 clears selected ID only before turn-loop entry."], "reason": "Recover selected-vehicle turn scheduling through real Console state, NetDaemon locking and UI owners. Native branches distinguish cursor activity, readiness and ordered actions, retaining selection after an entered turn loop and clearing it on early refusal; no raw receiver accesses or executable callbacks."}
+int Console::veh_turn() { // 0x00513B90
+    int result = 0;
+    int flag10 = 0;
+    int n = 0;
+    field_23BE4_ = 1;
+
+    if ((GamePreferences & 0x20u) != 0 &&
+        Vehs[selected_vehicle_].order == 0) {
+        give_hints();
+    }
+
+    const int first_ready = veh_ready(selected_vehicle_);
+    for (;;) {
+        if (!veh_selectable(selected_vehicle_) ||
+            veh_ready(selected_vehicle_) != first_ready ||
+            (first_ready == 0 && Vehs[selected_vehicle_].order != 0)) {
+            if (ConsoleGlobal.cursor_active_ != 0) {
+                goto finish_turn;
+            }
+        }
+
+        if (field_23BE4_ == 0 && field_23BF0_ != 2) {
+            goto finish_turn;
+        }
+        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
+            end_of_game(0) != 0 ||
+            (IsMultiplayerNet != 0 && (GameState & 0x800u) != 0)) {
+            goto finish_turn;
+        }
+
+        flag10 = 1;
+        if (field_23BF0_ == 2) {
+            field_23BF0_ = 0;
+            field_23BE4_ = Vehs[selected_vehicle_].order == 0x18;
+        }
+
+        // Native reads 0x0093E8E0 here: NetDaemon + 0x1B50, the already
+        // typed lock_state_[0].dword_[9]. Its wider semantic role is unknown.
+        if (NetDaemonNet.lock_state_[0].dword_[9] != 0) {
+            if (ConsoleGlobal.cursor_active_ == 0) {
+                goto wait_for_vehicle;
+            }
+            ambience(0x1E);
+            cursor_active_ = 0;
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            if (survey_mode_ != 0) {
+                survey_mode_ = 0;
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            alpha_menu_.check(selected_vehicle_);
+            continue;
+        }
+        goto update_vehicle;
+
+    wait_for_vehicle:
+        result = 1;
+        wait_loop();
+        continue;
+
+    update_vehicle:
+        if (field_23D24_ != 0) {
+            const Veh &vehicle = Vehs[selected_vehicle_];
+            const bool skip_auto_order_check =
+                (vehicle.state & 0x200u) != 0 ||
+                (vehicle.state & 0x01000200u) == 0x01000200u ||
+                (vehicle.state & 0x4000u) != 0;
+            if (!skip_auto_order_check && vehicle.order == 0) {
+                field_23D24_ = 0;
+                goto selected_vehicle_unavailable;
+            }
+        }
+
+        if (ConsoleGlobal.cursor_active_ == 0) {
+            goto wait_and_tour;
+        }
+        if (veh_ready(selected_vehicle_) == 0) {
+            goto check_auto_order;
+        }
+        if (TutWinBaseWindow.is_visible() != 0 ||
+            ReportWinGlobal.is_visible() != 0) {
+            goto wait_and_tour;
+        }
+
+        {
+            const Veh &vehicle = Vehs[selected_vehicle_];
+            if ((vehicle.state & 0x4200u) != 0) {
+                goto acquire_auto_lock;
+            }
+            const uint8_t order = vehicle.order;
+            if (order == 0) {
+                n = 0;
+            } else {
+                ++n;
+                if (n <= (order == 0x18 ? 100 : 20)) {
+                    goto issue_auto_action;
+                }
+                if (order == 0x18) {
+                    Vehs[selected_vehicle_].order = 0;
+                } else {
+                    veh_skip(selected_vehicle_);
+                }
+                if (IsMultiplayerNet != 0) {
+                    synch_veh(selected_vehicle_);
+                    NetDaemonNet.await_synch();
+                    NetDaemonNet.unlock_veh();
+                }
+                continue;
+            }
+
+        issue_auto_action:
+            if (NetDaemonNet.action(selected_vehicle_, 0) != 0) {
+                continue;
+            }
+            Vehs[selected_vehicle_].state |= 0x04000000u;
+            goto wait_and_tour;
+        }
+
+    acquire_auto_lock:
+        // Native target 0x00531150 is NetDaemon::automated_lock(int *, int);
+        // its product declaration/body remains an outside-owner dependency.
+        if (NetDaemonNet.automated_lock(&selected_vehicle_, 4) != 0) {
+            goto finish_turn;
+        }
+        ++NetBusyCount;
+        ++n;
+        if (n <= 20) {
+            goto check_enemy_vehicle;
+        }
+        veh_skip(selected_vehicle_);
+        if (IsMultiplayerNet != 0) {
+            synch_veh(selected_vehicle_);
+            NetDaemonNet.await_synch();
+            NetDaemonNet.unlock_veh();
+        }
+        --NetBusyCount;
+        continue;
+
+    check_enemy_vehicle:
+        if (enemy_veh(selected_vehicle_) != 0) {
+            if (IsMultiplayerNet != 0) {
+                NetDaemonNet.unlock_veh();
+                selected_vehicle_ = -1;
+            }
+            --NetBusyCount;
+            goto finish_turn;
+        }
+        --NetBusyCount;
+        continue;
+
+    check_auto_order:
+        if (Vehs[selected_vehicle_].order != 0 ||
+            (Vehs[selected_vehicle_].state & 0x4200u) != 0) {
+            goto selected_vehicle_unavailable;
+        }
+
+        goto wait_and_tour;
+
+    selected_vehicle_unavailable:
+        selected_vehicle_ = -1;
+        goto finish_turn;
+
+    wait_and_tour:
+        result = 1;
+        wait_loop();
+        if (TutWinTourPending != 0) {
+            TutWinTourPending = 0;
+            TutorialWindow.tour();
+        }
+        continue;
+    }
+
+finish_turn:
+    field_23BE4_ = 0;
+    if (flag10 == 0) {
+        selected_vehicle_ = -1;
+    }
+    return result;
+}
+
+// ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00511bb0.cpp; native caller 0x00513BD5"], "reason": "The original vehicle-turn entry invokes Console hint handling. Keep an explicitly unfinished body in its owning class for build continuity while the full hint recovery remains pending; do not claim recovered behavior."}
+void Console::give_hints() {
+    // BODY GOES HERE.
 }

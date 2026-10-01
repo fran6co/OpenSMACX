@@ -383,6 +383,8 @@ class Console : public MapWin {
   void retire_game();
   void give_veh(int vehicle_id);
   int upgrade(int vehicle_id);
+  int veh_turn();
+  void give_hints();
   void new_game();
   void name_landmark(int x_coord, int y_coord);
   void cursor_key(int key, int character, int modifiers);

@@ -115,6 +115,99 @@ int main() {
     subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
 
+def test_veh_turn_keeps_native_wait_and_automated_lock_paths(tmp_path):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    harness = r'''
+#include <cassert>
+#include <algorithm>
+#include <cstdint>
+#include <string>
+#include <vector>
+std::vector<std::string> events;
+struct Veh { uint32_t state=0; uint8_t order=0; } Vehs[8];
+struct Console { int selected_vehicle_=0,cursor_active_=0,field_23BE4_=0,field_23BE8_=0;
+  int field_23BF0_=0,field_23BF8_=0,field_23BFC_=0,survey_mode_=0,field_23D24_=0;
+  struct AlphaMenu { void check(int id) { events.push_back("menu:"+std::to_string(id)); } } alpha_menu_;
+  void give_hints() { events.push_back("hints"); }
+  int veh_turn(); };
+Console ConsoleGlobal;
+uint32_t GamePreferences=0,GameState=0;
+int ExitTurnLoop=0,IsMultiplayerNet=0,NetBusyCount=0,TutWinTourPending=0;
+int Ready=1,Selectable=1,EndGame=0,WaitCalls=0,ActionResult=0,AutomatedLockResult=0;
+int AutomatedLockCalls=0,EnemyCalls=0;
+int veh_ready(int) { return Ready; }
+int veh_selectable(int) { return Selectable; }
+int end_of_game(int value) { assert(value==0); return EndGame; }
+int enemy_veh(int id) { ++EnemyCalls; Vehs[id].state=0; ConsoleGlobal.cursor_active_=0; return 0; }
+void wait_loop() { ++WaitCalls; events.push_back("wait"); ConsoleGlobal.field_23BE8_=0; }
+void ambience(int) { events.push_back("ambience"); }
+void draw_cursor() { events.push_back("cursor"); }
+void veh_skip(int) { events.push_back("skip"); }
+void synch_veh(int) { events.push_back("sync"); }
+struct MapWin { void draw_map(int) { events.push_back("map"); }
+  void main_caption() { events.push_back("caption"); } } MapObject;
+MapWin *MapWinTable[8]={&MapObject};
+struct InfoWin { void change(int value) { assert(value==0); events.push_back("info"); } } ConsoleInfoWin;
+struct StatusWin { void redraw() { events.push_back("status"); } } ConsoleStatusWin;
+struct Window { int visible=0; int is_visible() { return visible; } };
+Window TutWinBaseWindow,ReportWinGlobal;
+struct TutWin { void tour() { events.push_back("tour"); } } TutorialWindow;
+struct LockState { uint32_t dword_[15]{}; };
+struct NetDaemon { LockState lock_state_[24];
+  int action(int,int) { events.push_back("action"); return ActionResult; }
+  int automated_lock(int *id,int mode) { (void)id; assert(mode==4); ++AutomatedLockCalls;
+    events.push_back("auto-lock"); return AutomatedLockResult; }
+  void await_synch() { events.push_back("await"); }
+  void unlock_veh() { events.push_back("unlock"); }
+} NetDaemonNet;
+int Console::veh_turn() { return 0; }
+'''
+    harness = harness.replace("int Console::veh_turn() { return 0; }",
+                              body_for("int Console::veh_turn()"))
+    harness += r'''
+int main() {
+  Console &c=ConsoleGlobal;
+  events.clear(); c.selected_vehicle_=3; c.field_23BE4_=1; c.field_23BE8_=1;
+  c.cursor_active_=0; Vehs[3].order=4; Vehs[3].state=0;
+  Ready=1; Selectable=1; WaitCalls=0;
+  assert(c.veh_turn()==1 && WaitCalls==1 && c.selected_vehicle_==3);
+  assert(std::find(events.begin(),events.end(),"wait")!=events.end());
+
+  events.clear(); c.selected_vehicle_=3; c.field_23BE4_=1; c.field_23BE8_=1;
+  c.cursor_active_=1; Vehs[3].order=4; Ready=0; WaitCalls=0;
+  assert(c.veh_turn()==0 && c.selected_vehicle_==-1 && WaitCalls==0);
+  events.clear(); c.selected_vehicle_=3; c.field_23BE4_=1; c.field_23BE8_=1;
+  c.cursor_active_=1; Vehs[3].order=0; Ready=0; WaitCalls=0;
+  assert(c.veh_turn()==1 && c.selected_vehicle_==3 && WaitCalls==1);
+
+  events.clear(); c.selected_vehicle_=4; c.field_23BE4_=1; c.field_23BE8_=1;
+  c.field_23BF0_=0; c.cursor_active_=1; c.field_23D24_=0;
+  Vehs[4].order=4; Vehs[4].state=0; Ready=1; Selectable=1;
+  WaitCalls=0; ActionResult=0; ConsoleGlobal.field_23BE8_=1;
+  assert(c.veh_turn()==1 && c.selected_vehicle_==4 && WaitCalls==1);
+  assert((Vehs[4].state&0x04000000u)!=0);
+  assert(std::find(events.begin(),events.end(),"action")!=events.end());
+
+  events.clear(); c.selected_vehicle_=5; c.field_23BE4_=1; c.field_23BE8_=1;
+  c.cursor_active_=1; c.field_23D24_=0; Vehs[5].order=3;
+  Vehs[5].state=0x4000; AutomatedLockResult=0; AutomatedLockCalls=EnemyCalls=0;
+  NetBusyCount=0; WaitCalls=0;
+  assert(c.veh_turn()==1 && c.selected_vehicle_==5);
+  assert(AutomatedLockCalls==1 && EnemyCalls==1 && NetBusyCount==0);
+}
+'''
+    unit = tmp_path / "console_veh_turn.cpp"
+    unit.write_text(harness)
+    executable = tmp_path / "console_veh_turn"
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
+
+
 def test_upgrade_entry_guards_preserve_native_lock_and_slot_order(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:

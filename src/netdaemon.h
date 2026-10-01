@@ -151,6 +151,7 @@ class NetDaemon : public AlphaNet {
   // is what unlocks the eleven Console bodies that lock a unit over the net.
   int lock_veh(int *veh_id, int target, int payload_1C, int payload_20,
                int payload_18);
+  int automated_lock(int *veh_id, int target);
 
  public:
   // 0x005328C0, homed from 005328c0.cpp. faction_id names the event's owner;
@@ -251,6 +252,7 @@ class NetDaemon : public AlphaNet {
 // receiver keeps its folded `mov ecx, imm32` form, the displacement
 // relocated, and `->` becomes `.`.
 extern NetDaemon NetDaemonNet;  // 0x0093CD90
+extern int NetBusyCount;  // 0x0093F664, network exchanges currently in flight
 extern int CommlinkPending;     // 0x007492CC
 extern int CommlinkFaction;     // 0x0073B790
 

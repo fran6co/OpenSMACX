@@ -1,0 +1,27 @@
+{
+  "event_id": "f4bc96017834cdf4f2dae253662e239b43709b7d6e6e62d790b6120f1a786c60",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_netdaemon_automated_lock.py",
+      "src/netdaemon.cpp",
+      "src/netdaemon.h"
+    ],
+    "evidence": [
+      "Coordinator-owned dependency closure for Console::veh_turn native513EA3 call531150. Recover NetDaemon::automated_lock(int*,int) from pinned531150..5312F6 through existing locks_, lock_state_[2].dword_[4] at1BB4, SDK timeGetTime and source-owned transport/message routines. Scope permits only this method/declaration, neutral existing NetBusyCount export and focused controls; preserve task baselines, claims, retained work and complete seeds. Root alone edits shared owners/journals/Git; worker continues Console bodies without modifying NetDaemon. Build/link and relevant protected claims required before integration; no acceptance or byte claim implied."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5443920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5f939a31d654cb33d65e10f3bac8a83e1a6405c0d112a4b43ff1adb928ed952f",
+  "request_id": "console-veh-turn-automated-lock-20261001",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:console-scenario-owner-wave"
+}
