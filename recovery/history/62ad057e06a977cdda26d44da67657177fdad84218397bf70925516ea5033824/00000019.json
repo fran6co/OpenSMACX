@@ -1,0 +1,21 @@
+{
+  "event_id": "f4d2c753f6e88b418d4622ccc08a70f42055b57204255fb54c55495ae9a00809",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_human_turn_behavior.py",
+      "src/mapwin.h"
+    ],
+    "evidence": [
+      "Native human_turn514050 directly writes existing source-owned MapBaseDisplayOverride93A940. Authorize only declaring this existing int in its owning mapwin.h, not new storage or map-window behavior. human_turn and Console cpp/header are already assigned; preserve baseline and historical claims.",
+      "Native74B504 receiver is g_FX.effects_[57]: bank749CF8 plus57 times6C; FX::init names cpu-turn-complete and Wave virtual operations establish is_playing/load/reverb/play. Use existing typed Effect accessor, no fixed-address alias. Add actual-source host controls for complete turn orchestration and callback-sensitive reloads."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "c637e469a64ba9e5dca28101f59618adca3d9d639098dd54f90383ea04773fe0",
+  "request_id": "human-turn-owned-map-display-header-20261001",
+  "schema_version": 1,
+  "sequence": 19,
+  "stream": "task:console-scenario-owner-wave"
+}
