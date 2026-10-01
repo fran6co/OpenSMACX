@@ -8186,8 +8186,8 @@ void Console::use_ability(int vehicle_id) {
         if (!fungal_missile && radius_index >= 0) {
             radius_count = 1;
             if (radius_index > 3) {
-                radius_count = radius_index > 6 ? RadiusRange[3]
-                                                : RadiusRange[radius_index - 3];
+                radius_count = radius_index > 6 ? RadiusRange[2]
+                                                : RadiusRange[radius_index - 4];
             }
         }
         for (int offset = 0; offset < radius_count; ++offset) {

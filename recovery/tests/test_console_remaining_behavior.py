@@ -137,8 +137,8 @@ const int RadiusRange[9]={1,9,25,49,81,121,169,225,289};
 int RadiusOffsetX[289]={0}; int RadiusOffsetY[289]={0};
 int MapLongitudeBounds=16,MapLatitudeBounds=16,MapIsFlat=1;
 struct PlayerData { uint32_t diplo_treaties[8]{}; } PlayersData[8];
-int TerritoryFaction=-1;
-int whose_territory(int,int,int,int*,int) { return TerritoryFaction; }
+int TerritoryFaction=-1, MissileTerritoryCalls=0;
+int whose_territory(int,int,int,int*,int) { ++MissileTerritoryCalls; return TerritoryFaction; }
 int IsNotMyTurn=0; int not_my_turn() { return IsNotMyTurn; }
 int Ready=1; int veh_ready(int id) { assert(id==0); return Ready; }
 int ForcedBitCount=-1;
@@ -228,10 +228,18 @@ int main() {
  VehPrototypes[0].ability_flags=0x10; Vehs[0].moves_expended=0; MoveOnSelect=0;
  ForcedBitCount=-1;
 
- events.clear(); IsNotMyTurn=0; VehPrototypes[0].plan=PLAN_TECTONIC_MISSILE;
+ events.clear(); MissileTerritoryCalls=0; IsNotMyTurn=0; VehPrototypes[0].plan=PLAN_TECTONIC_MISSILE;
  Tile.bit=0; Tile.climate=0x60; Tile.val2=0;
  c.use_ability(0);
  assert(events[1]=="lock" && events[2]=="tectonic");
+ assert(MissileTerritoryCalls==1);
+ // Native 66F8B8[level] aliases RadiusRange[level-4] at 66F8C8.
+ int climates[]={0x80,0xA0,0xC0,0xE0}; int counts[]={9,25,25,25};
+ for(int i=0;i<4;++i) {
+   events.clear(); MissileTerritoryCalls=0; Tile.climate=climates[i];
+   c.use_ability(0); assert(MissileTerritoryCalls==counts[i]);
+ }
+ Tile.climate=0x60;
 
  events.clear(); VehPrototypes[0].plan=PLAN_FUNGAL_MISSILE;
  c.use_ability(0);
