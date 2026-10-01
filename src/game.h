@@ -211,6 +211,8 @@ extern BOOL IsMultiplayerPBEM;
 // `test byte ptr [0x9a681c], 0x10` in not_my_turn.
 extern uint32_t NetTurnFlags;
 extern int NetTurnFaction;
+extern int NextTurnReady;
+extern int NetUpkeepPhase;
 extern int EcologyEventAccumulator;
 
 

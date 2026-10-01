@@ -62,8 +62,22 @@ extern NetWinLobbyRow NetWinLobbyRows[8]; // 0x0090DB98
 struct NetWinSessionBlock {
   uint32_t mode_;
   uint8_t state_[0x164];
+
+  // The native missing-player tail addresses lobby row 8, which begins
+  // inside this live session object. These views do not create a ninth row.
+  void write_row8_prefix(uint8_t value);
+  char *row8_leader_name();
+  char *row8_noun_faction();
 };
 static_assert(sizeof(NetWinSessionBlock) == 0x168, "session block extent");
+static_assert(offsetof(NetWinLobbyRow, prefix_) < sizeof(NetWinSessionBlock),
+              "row-eight prefix is inside session storage");
+static_assert(offsetof(NetWinLobbyRow, leader_name_) +
+                  sizeof(((NetWinLobbyRow *)0)->leader_name_) <= sizeof(NetWinSessionBlock),
+              "row-eight leader text is inside session storage");
+static_assert(offsetof(NetWinLobbyRow, noun_faction_) +
+                  sizeof(((NetWinLobbyRow *)0)->noun_faction_) <= sizeof(NetWinSessionBlock),
+              "row-eight faction text is inside session storage");
 extern NetWinSessionBlock NetWinSessionData; // 0x0090E778, after the rows
 struct NetWinSessionOptionsState {
   uint8_t status_;          // +0
@@ -87,6 +101,12 @@ static_assert(sizeof(NetWinSessionOptionsState) == 0x18,
 static_assert(offsetof(NetWinSessionOptionsState, rule_bits_a_) == 0xC,
               "first session rule word");
 extern NetWinSessionOptionsState NetWinSessionOptions; // 0x0090E8E0
+
+// Setup synchronization shared with NetDaemon's added-player callback.
+void __cdecl send_all_player_packets(int target);
+void __cdecl send_session_packet(int slot, int target);
+void __cdecl send_session2_packet(int slot, int target);
+void __cdecl send_faction_data(int slot);
 
  /*
   * MessageFactionData

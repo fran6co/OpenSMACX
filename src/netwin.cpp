@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "netwin.h"
+#include <cstring>
 
 #include "alpha.h"     // read_faction
 #include "buffer.h"    // the local Buffer load_pcx / get_pixel run on
@@ -52,6 +53,21 @@ NetWinLobbyRow NetWinLobbyRows[8];
 NetWinSessionBlock NetWinSessionData;
 // RECOVERY_OBJECT: v2 0x0090E8E0 0x0090E8F8 ?NetWinSessionOptions@@3UNetWinSessionOptionsState@@A 0x0047B450
 NetWinSessionOptionsState NetWinSessionOptions;
+
+void NetWinSessionBlock::write_row8_prefix(uint8_t value) {
+    unsigned char *bytes = reinterpret_cast<unsigned char *>(this);
+    std::memcpy(bytes + offsetof(NetWinLobbyRow, prefix_), &value, sizeof(value));
+}
+
+char *NetWinSessionBlock::row8_leader_name() {
+    unsigned char *bytes = reinterpret_cast<unsigned char *>(this);
+    return reinterpret_cast<char *>(bytes + offsetof(NetWinLobbyRow, leader_name_));
+}
+
+char *NetWinSessionBlock::row8_noun_faction() {
+    unsigned char *bytes = reinterpret_cast<unsigned char *>(this);
+    return reinterpret_cast<char *>(bytes + offsetof(NetWinLobbyRow, noun_faction_));
+}
 
 // The two player-id slots. Nothing in .text writes either; see netwin.h.
 int NetWinPlayerId;       // 0x0093D4F0

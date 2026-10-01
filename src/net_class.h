@@ -507,6 +507,8 @@ class Net {
   // 0x760 and 0x764 are the two words check_polling compares to decide
   // whether the whole player table is stale or only a slice of it - close()
   // zeroes both. AlphaNet owns the following player count and record array.
+ protected:
+  // NetDaemon's player callbacks compare this inherited host ID directly.
   uint32_t field_760_;       // 0x760
   // Read by NetDaemon::send_message (netdaemon.cpp) as the substitution for
   // an out-of-range target, so it is reachable from the derived class rather
@@ -522,6 +524,8 @@ static_assert(sizeof(Net) == 0x768, "Net ends before AlphaNet's player count");
 // Published by Net construction; the window and network pumps read the
 // same source-owned pointer. Its original binding is beside the definition.
 extern Net *ActiveNet;
+// The old host ID is published before drop_player installs its successor.
+extern uint32_t NetHostChangeSlot;
 // QueryInterface requests IID_IDirectPlay2A; the SDK aliases that interface
 // to IDirectPlay2. All source reads and writes share this one pointer object.
 extern IDirectPlay2 *NetDirectPlay;

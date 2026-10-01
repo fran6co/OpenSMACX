@@ -791,7 +791,8 @@ static unsigned int *const NetDropAbortFlag = (unsigned int *)0x009B2068;
 
 // 0x009BE5FC, four dwords below ActiveNet: the outgoing field_764_ the host
 // change publishes before the new host's id overwrites it.
-static unsigned int *const NetHostChangeSlot = (unsigned int *)0x009BE5FC;
+// RECOVERY_OBJECT: v2 0x009BE5FC 0x009BE600 ?NetHostChangeSlot@@3IA 0x00632350
+uint32_t NetHostChangeSlot;
 
 /*
 Purpose: Cut one player out of the session by id, or everyone when the caller
@@ -920,7 +921,7 @@ int Net::drop_player(unsigned long key, int reason) {
     }
 
     if (key == field_764_) {
-        *NetHostChangeSlot = field_764_;
+        NetHostChangeSlot = field_764_;
         field_764_ = players_[0].field_0_;
         on_host_changed();
     }

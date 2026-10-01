@@ -1171,6 +1171,15 @@ BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
 BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
 uint32_t NetTurnFlags;  // 0x009A681C
 int NetTurnFaction;  // 0x009A6820
+
+// Shared turn handoff flag: next_player_turn and player deletion write it;
+// net_not_my_turn reads it. The observed four bytes start loader-zeroed.
+// RECOVERY_OBJECT: v2 0x0093A950 0x0093A954 ?NextTurnReady@@3HA 0x0052DBF0
+int NextTurnReady;
+// net_upkeep resets/increments this phase and net_upkeep_phase consumes it.
+// Its producer is still unfinished; this storage does not recover that body.
+// RECOVERY_OBJECT: v2 0x0093A93C 0x0093A940 ?NetUpkeepPhase@@3HA 0x005290A0
+int NetUpkeepPhase;
 // base_ecology increments this signed accumulator, scales it in its event
 // threshold, then clears it when the threshold is met. setup_game also clears
 // it. The adjacent NetTurnFaction is a separate object, not an array element.
@@ -3098,7 +3107,6 @@ int __cdecl sub_52db70() {
 
 // The const-pointer spelling reproduces the original's
 // encoding including the address; `extern T *g` does not.
-static int *const NextTurnReady = (int *)0x0093A950;
 static int *const TurnsAssigned = (int *)0x0093E8C0;
 static int *const LockAliveMask = (int *)0x009A64E9;
 int __cdecl next_player_turn() {
@@ -3121,7 +3129,7 @@ int __cdecl next_player_turn() {
             i = i + 1;
         } while (i < 8);
     }
-    *NextTurnReady = 1;
+    NextTurnReady = 1;
     return 1;
 }
 

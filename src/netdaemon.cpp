@@ -32,6 +32,11 @@
 #include "map.h"           // the map bounds, PlayersData and Bases it sums
 #include "technology.h"    // GameTechAchieved
 #include "game.h"          // IsMultiplayerNet: the application's shared flag
+#include "console.h"
+#include "fx.h"
+#include "temp.h"
+#include "alpha.h"
+#include "general.h"
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
 // The next dword after IsMultiplayerNet. Every sender in this file
@@ -101,19 +106,269 @@ int NetDaemon::lock_base(int base_id, int target, int payload_1C, int payload_20
 // per-row walk multiplies it by the row index to reach a tile record.
 static int *const MapRowStride = (int *)0x0068FAF0;
 
-// Product slots for the real derived callbacks. Retained nonexact seeds
-// remain the implementation inputs; empty bodies provide link continuity
-// only and must not be accepted as recovered behavior.
+// Derived player lifecycle callbacks. Retained seeds supply historical hints;
+// the original missing-player tail and its unresolved index domain are kept.
 // ORIGINAL: 0x0052E160 ?on_player_added@NetDaemon@@UAEXPADK@Z 0x0052E160-0x0052E364
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0052e160.cpp; original NetDaemon table 0x0066EF0C selects this callback, unlike the inherited Net no-op."], "reason": "Establish the missing product callback slot for the compiler-owned derived virtual table. This is an explicitly unfinished body; retain the nonexact seed as implementation evidence."}
-void NetDaemon::on_player_added(char *, unsigned long) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required"], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and seed; no exact, runtime or full acceptance claim is implied."}
+void NetDaemon::on_player_added(char *name, unsigned long id) {
+    const bool same_host = (field_760_ == field_764_);
+    lock_state_[0].dword_[1] = same_host ? 1 : 0;
+
+    if (player_count_ < 7 && lock_state_[0].dword_[5] < 2) {
+        const int slot = ++player_count_;
+        AlphaNetProcessSlot &player = process_slots_[slot];
+        player.pid_ = static_cast<uint32_t>(id);
+        strcpy(player.name_, get_player_name(id));
+
+        NetWinLobbyRow &row = NetWinLobbyRows[slot];
+        row.field_2_ = NetWinSessionOptions.difficulty_;
+        row.prefix_ = static_cast<uint8_t>(slot);
+        player.identity_ = static_cast<int8_t>(slot);
+
+        if (slot > 1) {
+            bool duplicate_host = false;
+            for (int prior = 1; prior < slot; ++prior) {
+                if (process_slots_[prior].pid_ == field_760_) {
+                    duplicate_host = true;
+                }
+            }
+            if (duplicate_host) {
+                parse_says(0, name, -1, -1);
+                NetMsgPopup->pop("ADDED", 3000, 0, nullptr);
+            }
+        }
+
+        if (lock_state_[0].dword_[1] != 0) {
+            row.owner_ = 0;
+            row.prefix_ = 0xFF;
+            row.ready_or_occupied_ = 0;
+            row.field_2_ = 0;
+            row.faction_or_color_ = -1;
+            row.field_4_ = 2;
+
+            row.faction_or_color_ = -1;
+            row.prefix_ = static_cast<uint8_t>(slot);
+            row.field_2_ = NetWinSessionOptions.difficulty_;
+            row.ready_or_occupied_ = 0;
+
+            send_all_player_packets(-1);
+            send_session_packet(slot, -1);
+            send_session2_packet(slot, -1);
+            send_faction_data(slot);
+        }
+
+        if (NetWinDialog.is_visible()) {
+            NetWinDialog.on_redraw();
+        }
+    } else if (same_host) {
+        uint16_t packet[16];
+        packet[0] = 0x1F01;
+        Net::send(packet, 0x20, id, 1);
+    }
 }
 
 // ORIGINAL: 0x0052E370 ?on_player_deleted@NetDaemon@@UAEXPADK@Z 0x0052E370-0x0052E8FD
-// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0052e370.cpp; original NetDaemon table 0x0066EF0C selects this callback, unlike the inherited Net no-op."], "reason": "Establish the missing product callback slot for the compiler-owned derived virtual table. This is an explicitly unfinished body; retain the nonexact seed as implementation evidence."}
-void NetDaemon::on_player_deleted(char *, unsigned long) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned52E160..52E364 and52E370..52E8FD; retained recovered seeds are hints, not mandatory C++.", "The not-found delete tail still runs and decrements count. Slot8 identity/status bytes belong to the real ledger; lobby prefix/name writes are byte views wholly inside the existing168-byte session object. Keep both session object lifetimes and their original bindings.", "PlayerLock::active return controls notification; process identity offsets are not doubled. Two label_get calls remain independent, and prefix writes depend on live phase below2.", "Source-owned NextTurnReady, NetUpkeepPhase and NetHostChangeSlot replace private address aliases. Upkeep producer remains unfinished; ledger-derived lock index domain remains unproven.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; actual-source host damage controls and native compilation required"], "reason": "Recover the complete derived network player lifecycle callback through actual AlphaNet records, PlayerLock behavior, NetWin storage and shared turn state. Preserve its original identity and seed; no exact, runtime or full acceptance claim is implied."}
+void NetDaemon::on_player_deleted(char *, unsigned long id) {
+    parse_says(0, const_cast<char *>("ED"), -1, -1);
+
+    const bool server_left = (NetHostChangeSlot == static_cast<uint32_t>(id));
+    if (server_left) {
+        lock_state_[2].dword_[11] = 1;
+    }
+
+    int slot = 1;
+    while (slot <= player_count_ && process_slots_[slot].pid_ != id) {
+        ++slot;
+    }
+    const bool found = slot <= player_count_;
+
+    if (found) {
+        uint32_t &ready_players = lock_state_[0].dword_[9];
+        if (ready_players != 0) {
+            ready_players &= ~(1u << (slot & 31));
+            if (ready_players == 0) {
+                g_FX.play(0x15);
+            }
+        }
+
+        AlphaNetProcessSlot &player = process_slots_[slot];
+        parse_says(0, player.name_, -1, -1);
+        const int player_id = player.identity_;
+
+        if (lock_state_[0].dword_[5] == 2) {
+            uint8_t humans = static_cast<uint8_t>(LockEnableMask & 0xFF);
+            humans = static_cast<uint8_t>(humans &
+                ~static_cast<uint8_t>(1u << (player_id & 31)));
+            LockEnableMask = (LockEnableMask & 0xFFFFFF00u) | humans;
+        }
+        lock_state_[2].dword_[4] &= ~(1u << (player_id & 31));
+
+        const bool turn_handoff = (NetTurnFlags & 0x10) != 0;
+        if (turn_handoff && lock_state_[0].dword_[1] != 0 &&
+            NetTurnFaction == player_id) {
+            const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+            const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+            bool informed = false;
+            for (int next = player_id + 1; next < 8; ++next) {
+                const uint8_t bit = static_cast<uint8_t>(1u << (next & 31));
+                if ((alive & bit) != 0 && (humans & bit) != 0) {
+                    message_data(0x4309, 0, next, 0, 0, 0);
+                    informed = true;
+                    break;
+                }
+            }
+            if (!informed) {
+                NextTurnReady = 1;
+            }
+        }
+    }
+
+    // The original deliberately shares this tail with the not-found path.
+    // With seven players a miss yields slot 8: the next identity byte is the
+    // low byte of AlphaNetLedger::session_flags_ at +0x1470, not an array
+    // member. This typed branch preserves that exact byte without OOB access.
+    const int player_id = slot < 8
+        ? static_cast<int>(process_slots_[slot].identity_)
+        : static_cast<int>(static_cast<int8_t>(
+              static_cast<uint8_t>(ledger_.session_flags_ & 0xFF)));
+
+    // Native uses this signed identity as an index without checking its
+    // range. The missing-player ledger byte has no proven valid domain.
+    locks_.records_[player_id].clear();
+    uint32_t &faction_lock_mask = lock_state_[1].dword_[5];
+    const uint32_t player_lock_mask =
+        lock_state_[1].dword_[6 + player_id];
+    faction_lock_mask &= ~player_lock_mask;
+    if (static_cast<int>(locks_.field_E0_) == player_id) {
+        locks_.field_E0_ = 0;
+        locks_.field_E4_ = 0;
+    }
+
+    const uint8_t turn_bit = static_cast<uint8_t>(NetTurnFlags & 0x10);
+    const bool skip_lock_notify =
+        (turn_bit != 0 && ConsoleControlTurnActive == 0 &&
+         NetTurnFaction == ConsoleGlobal.faction_id_) ||
+        (turn_bit == 0 && lock_state_[0].dword_[1] != 0);
+
+    if (!skip_lock_notify && lock_state_[0].dword_[5] == 2) {
+        const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+        const uint8_t humans = static_cast<uint8_t>(LockEnableMask);
+        for (int faction = 1; faction < 8; ++faction) {
+            const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
+            PlayerLock &candidate = locks_.records_[faction];
+            if ((alive & bit) == 0 || (humans & bit) == 0 ||
+                faction == player_id || candidate.active() == 0 ||
+                (candidate.active_ & 1) != 0) {
+                continue;
+            }
+
+            candidate.active_ = static_cast<uint8_t>(
+                candidate.active_ | static_cast<uint8_t>(1u << (slot & 31)));
+            if ((candidate.active_ & humans) == humans) {
+                log_say("SPECIAL Sending EXEC DONE to", faction, 0, 0);
+                message_data(0x1206, faction, 0, 0, 0, 0);
+                candidate.active_ = static_cast<uint8_t>(candidate.active_ | 1);
+            }
+        }
+    }
+
+    log_say(ParseStrBuffer[0].str, "Dropped *************************",
+            static_cast<int>(id), slot, 0);
+
+    if (slot < 8) {
+        AlphaNetProcessSlot &removed_player = process_slots_[slot];
+        removed_player.identity_ = -1;
+        removed_player.field_25_ = 0;
+        removed_player.field_26_ = 0;
+        removed_player.field_27_ = -1;
+        removed_player.status_bytes_[0] = 2;
+    } else {
+        // Native row 8 begins at the ledger's session_flags_ byte (+0x1470)
+        // and its following byte at max_players_ (+0x1474).
+        ledger_.session_flags_ = 0xFF0000FFu;
+        ledger_.max_players_ = (ledger_.max_players_ & 0xFFFFFF00u) | 2u;
+    }
+
+    if (slot == 8) {
+        if (lock_state_[0].dword_[5] < 2) {
+            NetWinSessionData.write_row8_prefix(0xFF);
+        }
+        strcpy(NetWinSessionData.row8_leader_name(), label_get(0xFE4 / 4));
+        // Separate native Strings::get calls reload the owner and index.
+        strcpy(NetWinSessionData.row8_noun_faction(), label_get(0xFE4 / 4));
+    } else {
+        NetWinLobbyRow &removed_row = NetWinLobbyRows[slot];
+        if (lock_state_[0].dword_[5] < 2) {
+            removed_row.prefix_ = 0xFF;
+        }
+        strcpy(removed_row.leader_name_, label_get(0xFE4 / 4));
+        strcpy(removed_row.noun_faction_, label_get(0xFE4 / 4));
+    }
+
+    const int last_slot = player_count_ - 1;
+    for (int moving = slot; moving <= last_slot; ++moving) {
+        process_slots_[moving] = process_slots_[moving + 1];
+        NetWinLobbyRows[moving] = NetWinLobbyRows[moving + 1];
+        NetWinLobbyRows[moving].prefix_ = static_cast<uint8_t>(moving);
+    }
+
+    --player_count_;
+    lock_state_[0].dword_[1] = (field_760_ == field_764_) ? 1 : 0;
+
+    const uint8_t post_turn_bit = static_cast<uint8_t>(NetTurnFlags & 0x10);
+    const bool skip_after_delete =
+        (post_turn_bit == 0 || ConsoleControlTurnActive != 0 ||
+         NetTurnFaction != ConsoleGlobal.faction_id_) &&
+        ((post_turn_bit != 0 && ConsoleControlTurnActive == 0) ||
+         lock_state_[0].dword_[1] == 0);
+
+    if (skip_after_delete && lock_state_[0].dword_[5] == 2) {
+        if (post_turn_bit == 0 &&
+            (lock_state_[0].dword_[12] &
+             (1u << (ConsoleGlobal.faction_id_ & 31))) != 0) {
+            message_data(0x8301, 0, 0, 0, 0, 0);
+        }
+        // The original reloads this global after the 0x8301 callback.
+        if (ConsoleControlTurnActive != 0) {
+            message_data(0x2303, 0, NetUpkeepPhase,
+                         TurnCurrentNum, 0, 0);
+        }
+    }
+
+    const char *popup_text;
+    if (server_left) {
+        popup_text = NetWinDialog.is_visible() != 0
+            ? "SERVERLOSTINSETUP" : "SERVERLOST";
+    } else {
+        popup_text = "DROPPED";
+    }
+    NetMsgPopup->pop(popup_text, 3000, 2, nullptr);
+
+    if (server_left) {
+        if (NetWinDialog.is_visible() != 0) {
+            NetWinDialog.on_button_clicked(-2);
+        }
+        lock_state_[2].dword_[3] = 0;
+        lock_state_[2].dword_[5] = 0;
+        lock_state_[2].dword_[1] = 0;
+        lock_state_[1].dword_[2] = 2;
+        NetPlayerDropped = 1;
+        locks_.field_E8_ = 1;
+    }
+
+    NetWinDialog.on_redraw();
+
+    int server_slot = 0;
+    while (server_slot < 8 &&
+           process_slots_[server_slot].pid_ != field_764_) {
+        ++server_slot;
+    }
+    const char *server_name = server_slot < 8
+        ? process_slots_[server_slot].name_
+        : reinterpret_cast<const char *>(&ledger_);
+    log_say(server_name, "is now the Server.", 0, 0, 0);
+    lock_state_[0].dword_[3] = 0;
 }
 
 /*
