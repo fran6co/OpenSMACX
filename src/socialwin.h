@@ -25,6 +25,9 @@
 #include "checkbutton.h"
 #include "faction.h"
 
+// Open the genuine social window, synchronize choices, then apply them offline.
+void __cdecl social_select(int faction_id);
+
  /*
   * SocialWin class
   *

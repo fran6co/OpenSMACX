@@ -31,6 +31,8 @@
 #include "spying_recovery.h"
 #include "mapwin.h"   // MainInterfaceGlobal, at 0x007AE820
 #include "tutwin.h"
+#include "console.h"
+#include "netdaemon.h"
 
 void __cdecl social_set(uint32_t faction_id);
 extern int BreakthroughTurnsGlobal;
@@ -2966,4 +2968,26 @@ int SocialWin::on_iface_dialog_back_draw(GraphicWin *) {
 // RECOVERY_SHARED: v1 0x00404240 0x00404245 ?on_iface_dialog_item_back_draw@SocialWin@@UAEHPAVGraphicWin@@HHPAUtagRECT@@@Z 0x004B2120
 int SocialWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
     return 0;
+}
+
+// ORIGINAL: 0x005B5620 ?social_select@@YAXH@Z 0x005B5620-0x005B5688
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005b5620.cpp retained original identity/extent; pinned instructions5B5620..5B5688 establish flags, typed receivers and ordered calls; recovery/tests/test_social_select_behavior.py actual-source controls"], "reason": "SocialWin owner opens the real shared window, synchronizes choices and applies them offline, preserving native entry-state guards and editor selection."}
+void __cdecl social_select(int faction_id) {
+    const uint8_t state = static_cast<uint8_t>(GameState);
+    if ((state & (STATE_SCENARIO_EDITOR | STATE_OMNISCIENT_VIEW)) == 0 &&
+        (NetTurnFlags & 8u) != 0)
+        return;
+
+    int selected_faction = faction_id;
+    if ((state & STATE_OMNISCIENT_VIEW) != 0) {
+        selected_faction = ConsoleGlobal.editor_who(faction_id, 1);
+        if (selected_faction < 0)
+            return;
+    }
+
+    TutWinSocWindow.init(selected_faction);
+    TutWinSocWindow.close();
+    synch_soc(selected_faction);
+    if (IsMultiplayerNet == 0)
+        social_set(static_cast<uint32_t>(selected_faction));
 }
