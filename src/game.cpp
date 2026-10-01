@@ -1084,12 +1084,21 @@ void __cdecl load_interface(int mode) {
 uint32_t MountPlanetX;  // 0x009A6804
 uint32_t MountPlanetY;  // 0x009A6808
 int DustCloudDuration;  // 0x009A680C
+// save_daemon writes 12 before serialization; setup_game clears this word.
+// Its precise save-format meaning is not established by that write alone.
+// RECOVERY_OBJECT: v2 0x009A6810 0x009A6814 ?SaveDaemonStateWord@@3HA 0x005A94F0
+int SaveDaemonStateWord;
 // Original4838E3 reads this DWORD network-game flag; initial image storage is0.
 // RECOVERY_OBJECT: v2 0x0093F660 0x0093F664 ?IsMultiplayerNet@@3HA 0x004838E0
 BOOL IsMultiplayerNet;  // DirectPlay - Serial, Modem, Internet (TCP/IP)
 BOOL IsMultiplayerPBEM;  // 0x0093A95C // HotSeat / PBEM
 uint32_t NetTurnFlags;  // 0x009A681C
 int NetTurnFaction;  // 0x009A6820
+// base_ecology increments this signed accumulator, scales it in its event
+// threshold, then clears it when the threshold is met. setup_game also clears
+// it. The adjacent NetTurnFaction is a separate object, not an array element.
+// RECOVERY_OBJECT: v2 0x009A6824 0x009A6828 ?EcologyEventAccumulator@@3HA 0x004F67F0
+int EcologyEventAccumulator;
 
 /*
 Purpose: Wrap an x coordinate the way reset_territory() wraps it.
