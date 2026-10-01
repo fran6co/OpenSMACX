@@ -1825,6 +1825,56 @@ int main() {
     VehPrototypes[1].unk_1=10;
     name_proto(name,1,1,1,0,0,ABL_AIR_SUPERIORITY,1);
     if(std::strcmp(name,"Unit Guard1")) return 66;
+    char embedded_suffix[64]="Impact Unit2 Heavy";
+    add_prototype_name_suffix(embedded_suffix,"Unit",suffix_exhausted);
+    if(std::strcmp(embedded_suffix,"Impact Unit2 Heavy Unit2") != 0) return 57;
+    char exhausted_suffix[64]="Impact UnitX";
+    suffix_exhausted=false;
+    add_prototype_name_suffix(exhausted_suffix,"Unit",suffix_exhausted);
+    if(!suffix_exhausted || std::strcmp(exhausted_suffix,"Impact UnitX") != 0) return 58;
+    char last_available_digit[64]="Impact Unit8";
+    suffix_exhausted=false;
+    add_prototype_name_suffix(last_available_digit,"Unit",suffix_exhausted);
+    if(suffix_exhausted || std::strcmp(last_available_digit,"Impact Unit9") != 0) return 59;
+    add_prototype_name_suffix(last_available_digit,"Unit",suffix_exhausted);
+    if(!suffix_exhausted || std::strcmp(last_available_digit,"Impact Unit9") != 0) return 60;
+
+    // Equal primary/alternate forms use the safe native restart: derive the
+    // actual generated name first, then place an earlier peer at its suffix.
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    Chassis[0].triad=TRIAD_LAND; Chassis[0].speed=0;
+    Chassis[0].offsv_1_name=reinterpret_cast<char *>(3);
+    Chassis[0].offsv_2_name=reinterpret_cast<char *>(3);
+    Chassis[0].defsv_1_name=reinterpret_cast<char *>(3);
+    Chassis[0].defsv_2_name=reinterpret_cast<char *>(3);
+    Weapon[0].name_short=reinterpret_cast<char *>(4);
+    Weapon[0].mode=0; Weapon[0].offense_rating=2;
+    Armor[0].defense_rating=2;
+    VehPrototypes[0].chassis_id=0; VehPrototypes[0].weapon_id=0;
+    VehPrototypes[0].armor_id=0; VehPrototypes[0].reactor_id=1;
+    VehPrototypes[0].plan=3;
+    char generated_name[256];
+    name_proto(generated_name,0,0,0,0,0,0,1);
+    char earlier_peer_name[64];
+    std::strcpy(earlier_peer_name,generated_name);
+    suffix_exhausted=false;
+    add_prototype_name_suffix(earlier_peer_name,"Unit",suffix_exhausted);
+    std::strcpy(VehPrototypes[1].veh_name,earlier_peer_name);
+    VehPrototypes[1].chassis_id=1; VehPrototypes[1].plan=3;
+    std::strcpy(VehPrototypes[2].veh_name,generated_name);
+    VehPrototypes[2].chassis_id=1; VehPrototypes[2].plan=3;
+    char expected_restart_name[64];
+    std::strcpy(expected_restart_name,generated_name);
+    add_prototype_name_suffix(expected_restart_name,"Unit",suffix_exhausted);
+    add_prototype_name_suffix(expected_restart_name,"Unit",suffix_exhausted);
+    char restarted_name[256];
+    name_proto(restarted_name,0,0,0,0,0,0,1);
+    if(std::strcmp(restarted_name,expected_restart_name) != 0) {
+      std::fprintf(stderr,"equal-form primary restart mismatch: %s != %s\n",
+                   restarted_name,expected_restart_name);
+      return 61;
+    }
+
 }
 """.replace("SOURCE_TYPES", types).replace("NAME_HELPERS", name_helpers).replace(
         "LIVE_BODY", source_body)

@@ -116,7 +116,7 @@ static void add_prototype_name_suffix(char *name, const char *suffix,
 }
 
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057e040.cpp", "image:0x0057E040-0x0057EF95", "image:0x0057EE10-0x0057EE30"], "reason": "Prototype naming composes loaded ability, chassis, weapon, armor and reactor rules, with faction-local duplicate-name selection. The reactor-zero path borrows Palette animation storage. The original primary-collision restart reads before the prototype array; preserve the seed and explicit unfinished sentinel until that behavior is resolved."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057e040.cpp;image:0x0057E040-0x0057EF95", "EDI normalizes equality:0x0057EC53-0x0057EC61;primary restart and branch:0x0057EE10-0x0057EE35", "Owned accidental storage:Ability base0x009AB538,stride0x1C,abbreviation+8 =>0x009AB834 = VehPrototypes base0x009AB868-0x34;source:src/veh.h RulesAbility;source:src/alpha.cpp ability loader"], "reason": "Prototype naming composes loaded ability, chassis, weapon, armor and reactor rules, with faction-local duplicate-name selection. The reactor-zero path borrows Palette animation storage. Equal primary/alternate forms restart the candidate scan safely after primary collisions. For differing forms, the native primary-collision restart compares alternate text with bytes beginning at Ability[27].abbreviation storage, not its resolved string; its read boundary remains unresolved. Preserve the complete seed, original spans and unfinished sentinel rather than silently replacing that behavior."}
 void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                         int chassis_id, int weapon_id, int armor_id,
                         int ability_flags, int reactor_id) {
@@ -453,6 +453,9 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
             if (primary_alternate_difference != 0) gendered_form = 1;
             add_prototype_name_suffix(output, duplicate_suffix,
                                       suffix_exhausted);
+            // Native EDI is one for equal forms; that path skips the
+            // alternate comparison and restarts at candidate zero.
+            if (primary_alternate_difference == 0) candidate_id = -1;
         }
         if (primary_alternate_difference != 0
             && std::strcmp(alternate_name + 1, candidate.veh_name) == 0) {
