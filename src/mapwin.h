@@ -531,6 +531,8 @@ extern MapWinSlots MapWinTable;
 // StatusWin clears this signed vehicle ID to -1 when no route destination
 // remains. MapWin::set_center uses it to redraw a selected destination.
 extern int DestinationVehicleId;
+// human_turn enables the existing map-owned base-display override on entry.
+extern int MapBaseDisplayOverride;  // 0x0093A940, defined in mapwin.cpp
 // One most-derived off-screen window, not an alias into the old executable.
 extern MapWin FarmMapWindow;
 static const size_t MapWinTableSlots = 8;        // (0x007D3C5C - 0x007D3C3C) / 4

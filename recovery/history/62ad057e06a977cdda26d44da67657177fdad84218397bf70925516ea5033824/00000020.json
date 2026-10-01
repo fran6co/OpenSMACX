@@ -1,0 +1,21 @@
+{
+  "event_id": "700e525d28dd01469d7dd4c678273bb46e11c89b94a56dffc2beac9ace590873",
+  "payload": {
+    "affects": [
+      "entity-ea4a61bb107e72d06c9428077ecc907f0d62ca7750dcdb2985b7202742f5c87a"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "owned-player-base-count-slot-20261001",
+    "evidence": [
+      "PlayerData proto_id_active starts858 with512bytes, proto_id_queue adds512bytes, proto_id_lost adds512shorts, giving total_mil_veh1058 and followingcurrent_num_bases105C; pinned structstride20CC matches factionindexing.",
+      "Source leaf_recoveries.cpp FactionRelationSlot96DA3C and action_build use factionstride20CC to read that same scalar; no newstorage or semantics authorized here. Discovery remains pending for appropriate source-owner cleanup."
+    ],
+    "hypothesis": "Original per-faction105C/96DA3C is existing PlayerData.current_num_bases, not unowned relation storage; action_build retains a redundant executable-address alias that can be repaired by its owner.",
+    "kind": "discovery"
+  },
+  "previous_event": "f4d2c753f6e88b418d4622ccc08a70f42055b57204255fb54c55495ae9a00809",
+  "request_id": "owned-player-base-count-slot-20261001",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:console-scenario-owner-wave"
+}

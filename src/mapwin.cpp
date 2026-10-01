@@ -233,7 +233,8 @@ int DestinationVehicleId = -1;
 
 // 0x0093A940 gates base-overlay visibility alongside ControlTurnPhase.
 // Pinned PE section evidence places exactly this four-byte read in the
-// zero-fill tail of .data, initialized to 0; its producer remains unknown.
+// zero-fill tail of .data, initialized to 0. Console::human_turn (0x514085)
+// enables it before selecting vehicles for the player-turn loop.
 // RECOVERY_OBJECT: v2 0x0093A940 0x0093A944 ?MapBaseDisplayOverride@@3HA 0x00467190
 int MapBaseDisplayOverride;
 

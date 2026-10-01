@@ -293,6 +293,7 @@ class Console : public MapWin {
   // editor_lock2 calls it; the pending_bodies forwarder goes when it homes.
   void set_view(int force_update);
   void set_move(int force_update);  // 0x00511520
+  void human_turn();  // 0x00514050, player-turn orchestration
   void editor_edit_veh(int veh_id);  // 0x004DDA50
   void editor_kill_veh(int veh_id);  // 0x004DE960
   void erase_landmark(int x_coord, int y_coord);  // 0x00516490

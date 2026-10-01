@@ -9125,6 +9125,247 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     field_23BE4_ = 0;
 }
 
+// ORIGINAL: 0x00514050 ?human_turn@Console@@QAEXXZ 0x00514050-0x005147DA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["image:terranx_original.exe:0x00514050-0x005147DA", "source:src/unrecovered/00514050.cpp", "FX bank749CF8 plus57 times6C identifies74B504 as existing Effect57; original dispatch uses Wave virtual operations.", "Native5140DC/5143B4/51467E/514694 establish cursor polarity, selection reload and branch-specific flag/audio order."], "reason": "Recover player-turn orchestration in its genuine Console owner, preserving callback-driven selection/faction reloads, cursor guards, turn flags and real UI/audio lifetimes."}
+void Console::human_turn() {
+    unsigned int flush_cache = 0;
+    int previous_vehicle_count = -1;
+
+    WorldClimateWorldWin.viewport_outline_enabled_ = 0;
+    WorldClimateWorldWin.set_world_map();
+    GameState &= ~static_cast<uint32_t>(STATE_UNK_400);
+    MapBaseDisplayOverride = 1;
+    field_23D1C_ = 0;
+
+    for (int vehicle = 0; vehicle < VehCurrentCount; ++vehicle) {
+        Vehs[vehicle].state &= ~static_cast<uint32_t>(VSTATE_UNK_8000000);
+    }
+
+    if (ControlTurnPhase == 0) {
+        selected_vehicle_ = -1;
+        set_move(0);
+    } else if (ConsoleGlobal.cursor_active_ != 0) {
+        set_move(1);
+    } else {
+        ambience(0x1E);
+        cursor_active_ = 0;
+        field_23BF8_ = 1;
+        field_23BFC_ = 1;
+        if (survey_mode_ != 0) {
+            survey_mode_ = 0;
+            MapWinTable[0]->draw_map(1);
+        }
+        ::draw_cursor();
+        ConsoleInfoWin.change(0);
+        ConsoleStatusWin.redraw();
+        MapWinTable[0]->main_caption();
+        alpha_menu_.check(selected_vehicle_);
+    }
+
+    alpha_menu_.check(selected_vehicle_);
+    ConsoleStatusWin.reset();
+    ConsoleInfoWin.reset();
+    field_23BE8_ = 1;
+    field_23D24_ = 0;
+
+    if (ControlTurnPhase != 0) {
+        const int selected = selected_vehicle_;
+        bool refresh = selected < 0 || veh_ready(selected) == 0;
+        if (!refresh) {
+            // Native reloads selected_vehicle_ after veh_ready returns.
+            const int current_selected = selected_vehicle_;
+            refresh = (Vehs[current_selected].state & 0x4200u) != 0 ||
+                      Vehs[current_selected].order != 0;
+        }
+        if (refresh && ConsoleGlobal.cursor_active_ != 0) {
+            ambience(0x1E);
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            cursor_active_ = 0;
+            if (survey_mode_ != 0) {
+                survey_mode_ = 0;
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            alpha_menu_.check(selected_vehicle_);
+        }
+    }
+
+    if (IsMultiplayerNet != 0) {
+        g_FX.play(0x21);
+    }
+    ControlTurnPhase = 0;
+
+    for (;;) {
+        if ((GameState & 0x2000u) != 0 && (GameState & 1u) == 0 &&
+            (GameRules & RULES_VICTORY_CONQUEST) != 0) {
+            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[ConsoleGlobal.faction_id_].title_leader, -1, -1);
+            GenderDefault = Players[ConsoleGlobal.faction_id_].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[ConsoleGlobal.faction_id_].name_leader, -1, -1);
+            GenderDefault = Players[ConsoleGlobal.faction_id_].noun_gender;
+            PluralityDefault = Players[ConsoleGlobal.faction_id_].is_noun_plural;
+            parse_says(2, Players[ConsoleGlobal.faction_id_].noun_faction, -1, -1);
+            X_pop("CONQUERPLANET", nullptr);
+            GameState |= 1u;
+        }
+
+        bool keep_selection = false;
+        const int selected = selected_vehicle_;
+        const bool cursor_active = ConsoleGlobal.cursor_active_ != 0;
+        if (!cursor_active) {
+            if (selected >= 0 && VehCurrentCount == previous_vehicle_count) {
+                keep_selection = field_23BEC_ == 0
+                    ? veh_ready(selected) != 0
+                    : veh_selectable(selected) != 0;
+            }
+        } else if (selected >= 0 &&
+                   VehCurrentCount == previous_vehicle_count &&
+                   (field_23BEC_ == 0 ? veh_ready(selected) != 0
+                                      : veh_selectable(selected) != 0)) {
+            keep_selection = true;
+            if (field_23BF4_ == 0) {
+                // The helper can run callbacks; native reloads the selection
+                // after the eligibility callback and before reading its tile.
+                const int selected_for_cursor = selected_vehicle_;
+                const int x = Vehs[selected_for_cursor].x;
+                const int y = Vehs[selected_for_cursor].y;
+                field_23BF8_ = 0;
+                if (survey_mode_ != 0) {
+                    survey_mode_ = 0;
+                    MapWinTable[0]->draw_map(1);
+                }
+                MapWinTable[0]->draw_cursor();
+                cursor_next(x, y);
+                // cursor_next may dispatch callbacks that change the live
+                // selection; native reloads selected_vehicle_ afterward.
+                const int current_selected = selected_vehicle_;
+                if (field_23BF0_ == 0 || Vehs[current_selected].order != 0x18) {
+                    const int focus_x = Vehs[current_selected].x;
+                    const int focus_y = Vehs[current_selected].y;
+                    const int focus_faction = Vehs[current_selected].faction_id;
+                    focus(focus_x, focus_y, focus_faction);
+                    ConsoleInfoWin.change(0);
+                    ConsoleStatusWin.redraw();
+                    MapWinTable[0]->main_caption();
+                    alpha_menu_.check(selected_vehicle_);
+                }
+            }
+        }
+        if (!keep_selection) {
+            ready();
+        }
+
+        previous_vehicle_count = VehCurrentCount;
+        field_23BF4_ = 0;
+        field_23BF0_ = 0;
+        field_23BEC_ = 0;
+
+        if (selected_vehicle_ < 0) {
+            GameState |= 2u;
+            if (TutWinBaseWindow.is_visible() || ReportWinGlobal.is_visible()) {
+                GameState |= 4u;
+            }
+            field_23BE8_ = 1;
+            const int lock_result = edit_lock();
+            if (lock_result == 0) {
+                const bool manual_stop =
+                    (GamePreferences & PREF_BSC_PAUSE_END_TURN) == 0 &&
+                    IsMultiplayerNet == 0 && IsMultiplayerPBEM == 0 &&
+                    flush_cache != 0 && (GameState & 4u) == 0;
+                if (manual_stop) {
+                    field_23BE8_ = 0;
+                } else if ((GamePreferences & PREF_BSC_PAUSE_END_TURN) == 0 ||
+                           IsMultiplayerNet != 0) {
+                    parse_num(0, static_cast<int>(game_year(TurnCurrentNum)));
+                    NetMsgPopup->pop(flush_cache != 0 ? "ENDOFTURN" : "ENDOFTURN1",
+                                     0x1388, 0, nullptr);
+                }
+            }
+            if (field_23BE8_ == 0) {
+                goto finish_turn;
+            }
+
+            ambience(0x1E);
+            cursor_active_ = 0;
+            field_23BF8_ = 1;
+            field_23BFC_ = 1;
+            if (survey_mode_ != 0) {
+                survey_mode_ = 0;
+                MapWinTable[0]->draw_map(1);
+            }
+            ::draw_cursor();
+            ConsoleInfoWin.change(0);
+            ConsoleStatusWin.redraw();
+            MapWinTable[0]->main_caption();
+            alpha_menu_.check(selected_vehicle_);
+            focus(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
+                  ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_],
+                  faction_id_);
+        }
+
+        turn_hints();
+        GameState &= ~4u;
+
+        if (selected_vehicle_ >= 0) {
+            GameState &= ~2u;
+            flush_cache |= static_cast<unsigned int>(veh_turn());
+        } else {
+            // 0x0074B504 is g_FX.effects_[57] (g_FX + 57 * 0x6C).
+            // Native reaches it only on the negative-selection wait branch,
+            // after turn_hints and the nonnegative-selection dispatch. Keep
+            // these calls virtual on the typed Effect/Wave receiver.
+            Effect &cpu_turn_complete = g_FX.effect(57);
+            if (!cpu_turn_complete.is_playing()) {
+                cpu_turn_complete.load();
+                cpu_turn_complete.set_reverb_mix(0.0f);
+                cpu_turn_complete.play();
+            }
+            ambience(0xCB);
+            field_23BE4_ = 1;
+            const int saved_vehicle_count = VehCurrentCount;
+            while (ConsoleGlobal.cursor_active_ == 0 && field_23BE4_ != 0 &&
+                   field_23BE8_ != 0 && ExitTurnLoop == 0 &&
+                   end_of_game(0) == 0 &&
+                   saved_vehicle_count == VehCurrentCount &&
+                   (IsMultiplayerNet == 0 || (GameState & 0x800u) == 0)) {
+                wait_loop();
+                if (TutWinTourPending != 0) {
+                    TutWinTourPending = 0;
+                    TutorialWindow.tour();
+                }
+            }
+            field_23BE4_ = 0;
+        }
+
+        if (ExitTurnLoop != 0) {
+            return;
+        }
+        if ((GameState & 4u) != 0) {
+            flush_cache = 0;
+        }
+        if (field_23BF8_ != 0) {
+            ::draw_cursor();
+        }
+        if (field_23BE8_ == 0 || ExitTurnLoop != 0 ||
+            (IsMultiplayerNet != 0 && (GameState & 0x800u) != 0) ||
+            end_of_game(0) != 0) {
+            goto finish_turn;
+        }
+    }
+
+finish_turn:
+    ambience(0x1E);
+    flush_input();
+    field_23BE8_ = 0;
+    go_reset();
+}
+
 // ORIGINAL: 0x005171D0 ?veh_key@Console@@QAEXHHH@Z 0x005171D0-0x0051778A FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005171d0.cpp", "image:terranx_original.exe:0x005171D0", "Pinned key selector tables5177E4/517844 and accelerator targets517898; native selection reloads between dispatch stages preserve callback effects."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
 void Console::veh_key(int key, int character, int command) {
