@@ -1,0 +1,51 @@
+{
+  "event_id": "bd3893bb835bafe04ec268db6a3dcb628c1be54d41f0fa87ed2d026d4815f932",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_monument_records_behavior.py",
+      "recovery/tests/test_setup_dependencies_behavior.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Independent founding476B70 and secrets476DA0 native consumers establish natural record base94CA08,21records at38stride, latest-type atrow+498, factionstride4F4 and8rows. Previous reset-only bound94CA18 started atrecord0+10 and extended16bytes past natural eight-row storage; preserve its exact mutation footprint in the shared container and retain old interpretation in Git history.",
+      "Migrate clear_monuments to21active words atrecord+10 andlatest-type498 with byte-for-byte untouched-region controls. Remove the five overlapping raw FactionMonu aliases and convert existing unify/trans/killed consumers to the same source-owned records. Native free-slot base94CD60 is record15+10 active word, not its year. Original identities, spans, lessons and claims remain unchanged; field meanings that vary by record type remain provisional rather than invented.",
+      "Recover mon_secrets_of_tech476DA0..476EDD with real faction flags/year/Console/monument calls and shared record2. Root owns schema, bindings and native checks; workers may review read-only. No source-copy/decompilation lineage overrides pinned instructions. Keep task baseline unchanged; require build/link, protected claim checks and focused reset/family behavior controls before manual integration. No automatic acceptance or runtime proof is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4680496,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4681120,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4684096,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4684240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4684384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a11ede76939d0c404a93c9fb1ff5bd3b30050447d246f630b8b57e1db55b01dd",
+  "request_id": "shared-monument-record-owner-20261001",
+  "schema_version": 1,
+  "sequence": 35,
+  "stream": "task:interface-contract-report-closure"
+}
