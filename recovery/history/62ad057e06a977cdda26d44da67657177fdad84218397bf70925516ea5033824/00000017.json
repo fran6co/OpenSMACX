@@ -1,0 +1,21 @@
+{
+  "event_id": "0e46c4d515716b1598e7d493ff2bcda41aed624dbdc316c130637d791cfd5b9c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flic.h",
+      "src/maininterface.h"
+    ],
+    "evidence": [
+      "DiploPop43F313 assigns7D161C: MainInterfaceGlobal7AE820 plus22DFC is its existing embedded sprite11_, corroborated by original destructor45EC5A and docs/recovery/subobject-sites.csv. Expose a typed borrowed-member accessor, not new global storage.",
+      "DiploPop43F46B writes Flic field0 byte9 and43F52B reads flic2 header offset10 as unsigned timer interval. Name/access these existing bytes without changing Flic/Header extents or unrelated ownership. Preserve native source/claim obligations; remeasure affected headers/TUs."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "ba10d18f5a61dcc18dff663730a99ed44bcbb25573986a43025ea89d79383b84",
+  "request_id": "console-contact-animation-members-20261001",
+  "schema_version": 1,
+  "sequence": 17,
+  "stream": "task:console-scenario-owner-wave"
+}
