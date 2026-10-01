@@ -1,0 +1,19 @@
+{
+  "event_id": "a383511f61d31bb83033612aaaad540ff479340433e253f22b0cfbf2f61e3c41",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_tech_analysis_behavior.py"
+    ],
+    "evidence": [
+      "Recover the entire authorized tech_analysis53E800..53EB42 producer in faction.cpp using typed Player/PlayerData/Base/Facility and existing project API, full native dispatch and ranked result cells. Actual native project stride is30, not retained seed0C; native loop is64projects beginning Facility[70].preq_tech at9A589C, not256orincorrectarray. Preserve retained seed, all obligations and task baseline; native measurement/full build and actual-source controls required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "a405e334f4c2b6ae9c5adf0fee06a90539b3f73af43af7f90346fcfb38adf78a",
+  "request_id": "tech-analysis-owner-fixture-20261001",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:interface-contract-report-closure"
+}

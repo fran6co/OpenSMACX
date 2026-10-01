@@ -1067,5 +1067,10 @@ int __cdecl setup_player(int faction_id, int conqueror, int retry);
 int __cdecl eliminate_player(int faction_id, int conqueror);
 void __cdecl buy_council_vote(int, int, int, int);
 // Shared ranked technology IDs written by tech_analysis and read/reset by
-// diplomacy and Council vote purchases. Producer recovery remains unfinished.
+// diplomacy and Council vote purchases.
 extern int DiploScratchFAA8, DiploScratchFA18, DiploScratchFA1C, DiploScratchFA28;
+extern int DiploScratchF7C0, DiploScratchF7EC, DiploScratchF7F4;
+extern int DiploScratchF800, DiploScratchF80C, DiploScratchF814;
+extern int DiploScratchFA20, DiploScratchFA44, DiploScratchFA6C, DiploScratchFA84, DiploScratchFAA4;
+extern int DiploScratchFA60;
+void __cdecl tech_analysis(int faction_id, int faction_id_with);

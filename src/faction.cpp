@@ -4178,6 +4178,140 @@ int DiploScratchFA18;
 int DiploScratchFA1C;
 // RECOVERY_OBJECT: v2 0x0093FA28 0x0093FA2C ?DiploScratchFA28@@3HA 0x0053E800
 int DiploScratchFA28;
+// RECOVERY_OBJECT: v2 0x0093F7C0 0x0093F7C4 ?DiploScratchF7C0@@3HA 0x0053E800
+int DiploScratchF7C0;
+// RECOVERY_OBJECT: v2 0x0093F7EC 0x0093F7F0 ?DiploScratchF7EC@@3HA 0x0053E800
+int DiploScratchF7EC;
+// RECOVERY_OBJECT: v2 0x0093F7F4 0x0093F7F8 ?DiploScratchF7F4@@3HA 0x0053E800
+int DiploScratchF7F4;
+// RECOVERY_OBJECT: v2 0x0093F800 0x0093F804 ?DiploScratchF800@@3HA 0x0053E800
+int DiploScratchF800;
+// RECOVERY_OBJECT: v2 0x0093F80C 0x0093F810 ?DiploScratchF80C@@3HA 0x0053E800
+int DiploScratchF80C;
+// RECOVERY_OBJECT: v2 0x0093F814 0x0093F818 ?DiploScratchF814@@3HA 0x0053E800
+int DiploScratchF814;
+// RECOVERY_OBJECT: v2 0x0093FA20 0x0093FA24 ?DiploScratchFA20@@3HA 0x0053E800
+int DiploScratchFA20;
+// RECOVERY_OBJECT: v2 0x0093FA44 0x0093FA48 ?DiploScratchFA44@@3HA 0x0053E800
+int DiploScratchFA44;
+// RECOVERY_OBJECT: v2 0x0093FA6C 0x0093FA70 ?DiploScratchFA6C@@3HA 0x0053E800
+int DiploScratchFA6C;
+// RECOVERY_OBJECT: v2 0x0093FA84 0x0093FA88 ?DiploScratchFA84@@3HA 0x0053E800
+int DiploScratchFA84;
+// RECOVERY_OBJECT: v2 0x0093FAA4 0x0093FAA8 ?DiploScratchFAA4@@3HA 0x0053E800
+int DiploScratchFAA4;
+
+// Rank four technology offers and two incoming requests. Project-linked
+// requests keep their native discount and suppress the secondary project bid.
+// ORIGINAL: 0x0053E800 ?tech_analysis@@YAXHH@Z 0x0053E800-0x0053EB42
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0053e800.cpp", "src/base.h", "recovery/tests/test_tech_analysis_behavior.py"], "reason": "Complete technology trade ranking producer in the faction owner using genuine Player, PlayerData, Base and Facility storage, shared ranked result cells and existing project lookup. Native64project loop uses Facility stride30 and first prerequisite Facility70, correcting retained scaffold0C stride."}
+void __cdecl tech_analysis(int faction_id, int faction_id_with) {
+    DiploScratchF7F4 = -1;
+    DiploScratchFA28 = -1;
+    DiploScratchFA1C = -1;
+    DiploScratchFA18 = -1;
+    DiploScratchFAA8 = -1;
+    DiploScratchF80C = -1;
+    DiploScratchF800 = -1;
+    DiploScratchF7EC = 0;
+    DiploScratchFA44 = 0;
+    DiploScratchFAA4 = 0;
+    DiploScratchF814 = 0;
+    DiploScratchF7C0 = 0;
+    DiploScratchFA20 = 0;
+    DiploScratchFA84 = -1;
+    DiploScratchFA6C = -1;
+
+    if ((GameRules & 0x2000000) == 0) {
+        for (int i = 0; i < 0x59; i++) {
+            if (!has_tech(i, faction_id_with)) {
+                if (has_tech(i, faction_id)) {
+                    int v = tech_val(i, faction_id_with, 0);
+                    int oldA20 = DiploScratchFA20;
+                    int oldA814 = DiploScratchF814;
+                    if (v < DiploScratchF814) {
+                        if (v < DiploScratchFA44) {
+                            if (v < DiploScratchFA20) {
+                                if (DiploScratchF7C0 <= v) {
+                                    DiploScratchF7C0 = v;
+                                    DiploScratchFA28 = i;
+                                }
+                            } else {
+                                DiploScratchF7C0 = DiploScratchFA20;
+                                DiploScratchFA28 = DiploScratchFA1C;
+                                DiploScratchFA1C = i;
+                                DiploScratchFA20 = v;
+                            }
+                        } else {
+                            DiploScratchFA20 = DiploScratchFA44;
+                            DiploScratchF7C0 = oldA20;
+                            DiploScratchFA28 = DiploScratchFA1C;
+                            DiploScratchFA1C = DiploScratchFA18;
+                            DiploScratchFA18 = i;
+                            DiploScratchFA44 = v;
+                        }
+                    } else {
+                        DiploScratchFA28 = DiploScratchFA1C;
+                        DiploScratchFA1C = DiploScratchFA18;
+                        DiploScratchFA18 = DiploScratchFAA8;
+                        DiploScratchF7C0 = DiploScratchFA20;
+                        DiploScratchF814 = v;
+                        DiploScratchFA20 = DiploScratchFA44;
+                        DiploScratchFA44 = oldA814;
+                        DiploScratchFAA8 = i;
+                    }
+                }
+            } else if (!has_tech(i, faction_id)) {
+                int matched = -1;
+                if (PlayersData[faction_id].diff_level > 2 ||
+                    strcmp(Players[faction_id_with].search_key, "UNIV") == 0) {
+                    for (int project = 0; project < MaxSecretProjectNum; ++project) {
+                        if (base_project(project) != SP_Unbuilt ||
+                            Facility[70 + project].preq_tech != i) continue;
+                        const int rank = -2 - project;
+                        const int base_count = BaseCurrentCount;
+                        for (int base = 0; base < base_count; ++base) {
+                            if (Bases[base].faction_id_current == faction_id_with &&
+                                Bases[base].queue_production_id[0] == rank - 0x44) {
+                                DiploScratchF7F4 = project;
+                                matched = project;
+                            }
+                        }
+                        if (((PlayersData[faction_id].diff_level > 4 &&
+                              (!IsMultiplayerNet || faction_id != static_cast<int>(RankingFactionIDUnk2))) ||
+                             (IsMultiplayerNet && faction_id == static_cast<int>(RankingFactionIDUnk1))) &&
+                            DiploScratchF7F4 == -1) {
+                            DiploScratchF7F4 = rank;
+                            matched = rank;
+                        }
+                    }
+                }
+                int v = tech_val(i, faction_id, 0);
+                if (matched != -1) {
+                    // Native INC wraps before the signed, toward-zero divide.
+                    v = static_cast<int>(static_cast<uint32_t>(v) + 1u) / 2;
+                }
+                if (v < DiploScratchFAA4) {
+                    if (DiploScratchF7EC <= v) {
+                        DiploScratchF7EC = v;
+                        DiploScratchF80C = i;
+                        DiploScratchFA84 = matched;
+                    }
+                } else {
+                    DiploScratchF7EC = DiploScratchFAA4;
+                    DiploScratchFA84 = DiploScratchFA6C;
+                    DiploScratchF80C = DiploScratchF800;
+                    DiploScratchF800 = i;
+                    DiploScratchFA6C = matched;
+                    DiploScratchFAA4 = v;
+                }
+            }
+        }
+        if (DiploScratchFA84 != -1) {
+            DiploScratchF80C = -1;
+        }
+    }
+}
 
 static int pending_social_model(const SocialCategory &selection, int category) {
     return static_cast<int>(selection.models_[category]);
