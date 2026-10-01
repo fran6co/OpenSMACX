@@ -4203,6 +4203,80 @@ void __cdecl do_all_chars() {
     do_net();
 }
 
+// ORIGINAL: 0x005FCF90 ?do_char@@YAXXZ 0x005FCF90-0x005FCFDD BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fcf90.cpp", "image:terranx_original.exe:0x005FCF90"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
+// symbol    ?do_char@@YAHXZ
+int __cdecl do_char() {
+    do_video();
+    check_net();
+    MSG msg;
+    if (!PeekMessageA(&msg, 0, WM_CHAR, WM_CHAR, PM_REMOVE)) {
+        return 0;
+    }
+    TranslateMessage(&msg);
+    DispatchMessageA(&msg);
+    return 1;
+}
+
+// ORIGINAL: 0x005FD050 ?do_mouse@@YAXXZ 0x005FD050-0x005FD09D BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fd050.cpp", "image:terranx_original.exe:0x005FD050"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
+// symbol    ?do_mouse@@YAHXZ
+int __cdecl do_mouse() {
+    do_video();
+    check_net();
+    MSG msg;
+    // The original range ends at WM_MBUTTONDBLCLK, not newer SDK messages.
+    if (!PeekMessageA(&msg, 0, WM_MOUSEMOVE, WM_MBUTTONDBLCLK, PM_REMOVE)) {
+        return 0;
+    }
+    TranslateMessage(&msg);
+    DispatchMessageA(&msg);
+    return 1;
+}
+
+// ORIGINAL: 0x005FD0A0 ?do_all_mouse@@YAXXZ 0x005FD0A0-0x005FD115 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fd0a0.cpp", "image:terranx_original.exe:0x005FD0A0"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
+void __cdecl do_all_mouse() {
+    MSG msg;
+    MsgStatus = 8;
+    int has_message;
+    do {
+        do_video();
+        check_net();
+        has_message = PeekMessageA(&msg, 0, WM_MOUSEMOVE, WM_MBUTTONDBLCLK, PM_REMOVE);
+        if (has_message) {
+            TranslateMessage(&msg);
+            DispatchMessageA(&msg);
+            MsgStatus = 8;
+        }
+    } while (has_message);
+    MsgStatus = 0;
+    do_net();
+}
+
+// ORIGINAL: 0x005FD1C0 ?flush_keyboard@@YAXXZ 0x005FD1C0-0x005FD21A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/005fd1c0.cpp", "image:terranx_original.exe:0x005FD1C0"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
+void __cdecl flush_keyboard() {
+    MSG msg;
+    // Retain the original upper bound; WM_KEYLAST varies with SDK version.
+    while (PeekMessageA(&msg, 0, WM_KEYFIRST, 0x108, PM_REMOVE)) {
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+}
+
+// ORIGINAL: 0x005FD220 ?flush_mouse@@YAXXZ 0x005FD220-0x005FD27A BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/005fd220.cpp", "image:terranx_original.exe:0x005FD220"], "reason": "Win input-pump owner uses SDK message dispatch and real pointer-owner storage; original control flow and seed establish this entry and extent."}
+void __cdecl flush_mouse() {
+    MSG msg;
+    while (PeekMessageA(&msg, 0, WM_MOUSEMOVE, WM_MBUTTONDBLCLK, PM_REMOVE)) {
+    }
+    WinPointerOwner1 = nullptr;
+    WinPointerOwner2 = nullptr;
+    check_net();
+}
+
 /*
 Purpose: The window class's WM_NCHITTEST handler. It pulls the Win out of
          GWL_USERDATA and asks it, falling back to DefWindowProcA when the

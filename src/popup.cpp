@@ -33,6 +33,17 @@
 #include "base.h"       // BaseIDCurrentSelected - the base the exec result goes to
 #include "veh.h"
 #include "alpha.h"
+#include "xpops.h"
+
+// ORIGINAL: 0x0048C320 ?popt@@YAHPADPBDHPADH@Z 0x0048C320-0x0048C353 FILE BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/0048c320.cpp", "image:terranx_original.exe:0x0048C320"], "reason": "Recover tutorial popup configuration around the existing X_pop builder, restoring normal configuration after capturing the int result. Original call order establishes ownership and corrects a stale pointer-return declaration."}
+// symbol    ?popt@@YAHPADPBDH0H@Z
+int __cdecl popt(char *caption, const char *label, int value, char *text, int flags) {
+    popups_tutorial();
+    const int result = X_pop(caption, label, value, text, flags, nullptr);
+    popups_normal();
+    return result;
+}
 #include "game.h"
 #include "font.h"
 #include "menu.h"

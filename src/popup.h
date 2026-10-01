@@ -294,6 +294,7 @@ void __cdecl config_popups();
 void __cdecl popups_normal();
 void __cdecl popups_small();
 void __cdecl popups_tutorial();
+int __cdecl popt(char *caption, const char *label, int value, char *text, int flags);
 void __cdecl popups_medium();
 void __cdecl popups_interlude_medium();
 class FactionAmbience;

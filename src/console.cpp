@@ -64,6 +64,8 @@
 #include "planwin.h"
 
 void __cdecl base_kill(int base_id);
+int __cdecl action_build(int vehicle_id, char *base_name);
+int __cdecl wants_to_speak(int faction_id, int other_faction_id);
 extern int BaseAtKeyPollFlag;
 
 // Shared tutorial popup caption: the original pointer cell selects the
@@ -856,7 +858,6 @@ void __cdecl message_landmark(int landmark_id, int a2, char *text, int a4, int a
 void __cdecl monument(int base_id);                            // 0x00476A50 ?monument@@YAXH@Z
 void __cdecl quayle(int base_id);                              // 0x00496670 ?quayle@@YAXH@Z
 void __cdecl report_score(int faction_id);                        // 0x004ACB80 ?report_score@@YAXH@Z
-char *__cdecl popt(char *caption, const char *label, int a3, char *a4, int a5); // 0x0048C320 ?popt@@YAHPADPBDHPADH@Z
 char *__cdecl get_phrase(int phrase_id, int faction_id);                 // 0x0058F810 ?get_phrase@@YAPADHH@Z
 char *__cdecl get_noun_phrase(int phrase_id, int faction_id);            // 0x0058F8B0 ?get_noun_phrase@@YAPADHH@Z
 
@@ -8293,4 +8294,833 @@ void Console::use_ability(int vehicle_id) {
     if (selected_ability == 0x10u) {
         ConsoleGlobal.cursor_on(4, drop_range(entry_faction));
     }
+}
+
+// ORIGINAL: 0x004CF7C0 ?new_base@Console@@QAEXH@Z 0x004CF7C0-0x004D0442 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004cf7c0.cpp", "image:terranx_original.exe:0x004CF7C0"], "reason": "Recover settlement creation through the actual Console receiver, typed vehicle/map/base/faction owners and genuine diplomacy contact. Native invalid-tile guards precede base_at, and ready_search uses this while update_data uses ConsoleGlobal."}
+void Console::new_base(int vehicle_id) { // 0x004CF7C0
+    // The native entry checks the selected prototype and target tile before
+    // opening any diplomacy or naming UI. Keep these guards in native order.
+    const Veh &vehicle = Vehs[vehicle_id];
+    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+    if (prototype.plan != PLAN_COLONIZATION) {
+        NetMsgPopup->pop("NEEDCOLONISTS", 5000, 0, nullptr);
+        return;
+    }
+
+    const int x = vehicle.x;
+    const int y = vehicle.y;
+    const int faction_id = vehicle.faction_id;
+    const uint32_t altitude = climate_at(x, y) & 0xE0;
+    const bool sea_chassis =
+        Chassis[prototype.chassis_id].triad == TRIAD_SEA;
+    if ((altitude < 0x60) != sea_chassis) {
+        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, nullptr);
+        return;
+    }
+
+    const Map *const tile = map_loc(x, y);
+    if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
+        NetMsgPopup->pop("FUNGUSDANGUS", 5000, 0, nullptr);
+        return;
+    }
+    if ((tile->bit & BIT_MONOLITH) != 0) {
+        NetMsgPopup->pop("NOTONMONOLITH", 5000, 0, nullptr);
+        return;
+    }
+    const int existing_base = base_at(x, y);
+    if ((tile->val3 & 0xC0) > 0x40 && altitude >= 0x60 &&
+        existing_base < 0) {
+        NetMsgPopup->pop("NOTONROCKY", 5000, 0, nullptr);
+        return;
+    }
+    if (not_my_turn()) {
+        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        return;
+    }
+    if (!veh_ready(vehicle_id)) {
+        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        return;
+    }
+
+    if (existing_base < 0) {
+        bool adjacent_base = false;
+        for (int direction = 0; direction < 8; ++direction) {
+            int adjacent_x = x + RadiusBaseX[direction];
+            const int adjacent_y = y + RadiusBaseY[direction];
+            if ((MapIsFlat & 1) == 0) {
+                if (adjacent_x < 0) {
+                    adjacent_x += MapLongitudeBounds;
+                } else if (adjacent_x >= MapLongitudeBounds) {
+                    adjacent_x -= MapLongitudeBounds;
+                }
+            }
+            if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
+                adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
+                continue;
+            }
+            const Map *const adjacent = map_loc(adjacent_x, adjacent_y);
+            if ((adjacent->bit & BIT_BASE_IN_TILE) != 0 &&
+                (adjacent->val2 & 0x0F) < MaxPlayerNum) {
+                adjacent_base = true;
+                break;
+            }
+        }
+        if (adjacent_base) {
+            NetMsgPopup->pop("BASETOONEAR", 5000, 0, nullptr);
+            return;
+        }
+    }
+
+    if (existing_base < 0) {
+    const int other_faction =
+        whose_territory(faction_id, x, y, nullptr, nullptr);
+    uint32_t relation = other_faction >= 0
+                            ? PlayersData[faction_id]
+                                  .diplo_treaties[other_faction]
+                            : 0;
+    const int32_t base_count = static_cast<int32_t>(
+        PlayersData[faction_id].current_num_bases);
+    if (base_count != 0 &&
+        other_faction >= 0 && other_faction != faction_id &&
+        (relation & DTREATY_VENDETTA) == 0) {
+        if (!IsMultiplayerNet) {
+            DiplomacyEndState = 8;
+            wants_to_speak(faction_id, other_faction);
+        }
+        GenderDefault = Players[faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[faction_id].title_leader, -1, -1);
+        parse_says(1, get_pact_hood(faction_id, other_faction), -1, -1);
+        GenderDefault = Players[other_faction].noun_gender;
+        PluralityDefault = Players[other_faction].is_noun_plural;
+        parse_says(2, Players[other_faction].noun_faction, -1, -1);
+        parse_says(3, Players[other_faction].adj_name_faction, -1, -1);
+        GenderDefault = Players[other_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(5, Players[other_faction].title_leader, -1, -1);
+        GenderDefault = Players[other_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(6, Players[other_faction].name_leader, -1, -1);
+
+        relation = other_faction >= 0
+                       ? PlayersData[faction_id].diplo_treaties[other_faction]
+                       : 0;
+        if ((relation & DTREATY_PACT) != 0) {
+            NetMsgPopup->pop((climate_at(x, y) & 0xE0) >= 0x60
+                                 ? "TERRPACT" : "TERRPACT2",
+                             5000, 0, nullptr);
+            return;
+        }
+        if ((relation & DTREATY_TREATY) == 0) {
+            if (!IsMultiplayerNet) {
+                parse_says(0, Players[other_faction].adj_name_faction, -1, -1);
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[faction_id].title_leader, -1, -1);
+                parse_says(2, Players[faction_id].name_leader, -1, -1);
+                parse_says(3, Players[faction_id].adj_faction, -1, -1);
+                const char *const land_prompt =
+                    (climate_at(x, y) & 0xE0) >= 0x60
+                        ? "THISLANDISMYLAND" : "THISLANDISMYLAND2";
+                Sprite *const portrait = FactionDiplomacyPortraits[other_faction];
+                if (x_pops_minimal(land_prompt, portrait, nullptr) == 0) {
+                    diplomacy_ends(faction_id, other_faction);
+                    return;
+                }
+
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                StringTemp[0] = 0;
+                parse_says(0, Players[faction_id].title_leader, -1, -1);
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(1, Players[faction_id].name_leader, -1, -1);
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(2, Players[faction_id].adj_faction, -1, -1);
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(3, Players[faction_id].adj_insult_faction, -1, -1);
+                parse_says(4, get_phrase(other_faction, 0x0D), -1, -1);
+                parse_says(5, get_noun_phrase(faction_id, 10), -1, -1);
+                strcat(StringTemp, "BULLY");
+                char random_text[16];
+                std::sprintf(random_text, "%u", random(0, 7));
+                strcat(StringTemp, random_text);
+                x_pops_minimal(StringTemp,
+                               FactionDiplomacyPortraits[other_faction], nullptr);
+                diplomacy_ends(faction_id, other_faction);
+            } else {
+                if (X_pop((climate_at(x, y) & 0xE0) >= 0x60
+                              ? "TERRTRUCE" : "TERRTRUCE2",
+                          nullptr) == 0) {
+                    return;
+                }
+            }
+        } else if (X_pop((climate_at(x, y) & 0xE0) >= 0x60
+                             ? "TERRTREATY" : "TERRTREATY2",
+                         nullptr) == 0) {
+            return;
+        }
+    }
+
+    int drones = 0;
+    int talents = 0;
+    psych_check(faction_id, &drones, &talents);
+    const int32_t post_psych_base_count = static_cast<int32_t>(
+        PlayersData[faction_id].current_num_bases);
+    if (post_psych_base_count != 0 && post_psych_base_count % drones == 0) {
+        parse_num(0, drones);
+        const int32_t prompt_base_count = static_cast<int32_t>(
+            PlayersData[faction_id].current_num_bases);
+        const char *const prompt = prompt_base_count == drones
+                                       ? "BUREAUCRACY"
+                                       : "BUREAUCRACY2";
+        if (popp(*ClimatePopupTitle, prompt, 0x40, "bureau_sm.pcx", nullptr) < 0) {
+            return;
+        }
+    }
+    }
+
+    char base_name[256];
+    base_name[0] = 0;
+    name_base(faction_id, base_name, 0, altitude < 0x60);
+    if (existing_base < 0) {
+        MapFocusX = x;
+        MapFocusY = y;
+        if ((GamePreferences & 0x200) != 0) {
+            draw_map(1);
+        }
+        const int answer =
+            X_pop_ask("NEWBASE", 0x17, base_name, nullptr, 0);
+        MapFocusY = -99;
+        MapFocusX = -99;
+        if (answer != 0) {
+            if ((GamePreferences & 0x200) == 0) {
+                return;
+            }
+            draw_map(1);
+            return;
+        }
+        std::strcpy(base_name, ParseStrBuffer[0].str);
+    }
+
+    ambience(0xD1);
+    if (not_my_turn()) {
+        NetMsgPopup->pop("NEEDCOLONISTS", 5000, 0, nullptr);
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+
+    int locked_vehicle_id = vehicle_id;
+    if (NetDaemonNet.lock_veh(&locked_vehicle_id, 4, -1, -1, 0) != 0) {
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+
+    const Veh &locked_vehicle = Vehs[locked_vehicle_id];
+    const VehPrototype &locked_prototype =
+        VehPrototypes[locked_vehicle.proto_id];
+    if (locked_prototype.plan != PLAN_COLONIZATION) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop("NEEDCOLONISTS", 5000, 0, nullptr);
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+
+    const uint32_t locked_altitude = climate_at(x, y) & 0xE0;
+    const bool locked_sea_chassis =
+        Chassis[locked_prototype.chassis_id].triad == TRIAD_SEA;
+    if ((locked_altitude < 0x60) != locked_sea_chassis) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, nullptr);
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+    const Map *const locked_tile = map_loc(x, y);
+    if ((locked_tile->bit & BIT_FUNGUS) != 0 && locked_altitude >= 0x40) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop("FUNGUSDANGUS", 5000, 0, nullptr);
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+    if ((locked_tile->bit & BIT_MONOLITH) != 0) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop("NOTONMONOLITH", 5000, 0, nullptr);
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+    if (!veh_ready(locked_vehicle_id)) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+
+    const int locked_base = base_at(x, y);
+    if (locked_base >= 0) {
+        ++Bases[locked_base].population_size;
+        synch_base(locked_base);
+        if (IsMultiplayerNet) {
+            message_veh(0x2407, locked_vehicle_id, 0, 0);
+        } else {
+            kill(locked_vehicle_id);
+        }
+        TutWinBaseWindow.check_base(locked_base);
+        NetDaemonNet.await_exec(1);
+        return;
+    }
+
+    bool locked_adjacent_base = false;
+    for (int direction = 0; direction < 8; ++direction) {
+        int adjacent_x = x + RadiusBaseX[direction];
+        const int adjacent_y = y + RadiusBaseY[direction];
+        if ((MapIsFlat & 1) == 0) {
+            if (adjacent_x < 0) {
+                adjacent_x += MapLongitudeBounds;
+            } else if (adjacent_x >= MapLongitudeBounds) {
+                adjacent_x -= MapLongitudeBounds;
+            }
+        }
+        if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
+            adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
+            continue;
+        }
+        const Map *const adjacent = map_loc(adjacent_x, adjacent_y);
+        if ((adjacent->bit & BIT_BASE_IN_TILE) != 0 &&
+            (adjacent->val2 & 0x0F) < MaxPlayerNum) {
+            locked_adjacent_base = true;
+            break;
+        }
+    }
+    if (locked_adjacent_base) {
+        NetDaemonNet.unlock_veh();
+        NetMsgPopup->pop("BASETOONEAR", 5000, 0, nullptr);
+        if ((GamePreferences & 0x200) == 0) {
+            return;
+        }
+        draw_map(1);
+        return;
+    }
+
+    int new_base_id;
+    if (!IsMultiplayerNet) {
+        log_say("Manually building base", 0, 0, 0);
+        new_base_id = action_build(locked_vehicle_id, base_name);
+        if (new_base_id < 0) {
+            return;
+        }
+    } else {
+        log_say("Sending BUILD BASE message", base_name, locked_vehicle_id,
+                faction_id, 0);
+        message_base(0x2408, locked_vehicle_id, base_name, 0);
+        NetDaemonNet.await_exec(1);
+        new_base_id = base_at(x, y);
+    }
+
+    if (ready_search(-1) < 0) {
+        GameState |= 4;
+    }
+    parse_says(0, Bases[new_base_id].name_string, -1, -1);
+    parse_num(0, MissionYearCurrent);
+
+    if (!IsMultiplayerNet) {
+        const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
+        const uint32_t founded_altitude = climate_at(x, y) & 0xE0;
+        const char *const picture = alien
+                                        ? (founded_altitude >= 0x60
+                                               ? "al_col_sm.pcx"
+                                               : "seabas_sm.pcx")
+                                        : (founded_altitude >= 0x60
+                                               ? "colfoun_sm.pcx"
+                                               : "seabas_sm.pcx");
+        popp(*ClimatePopupTitle, "BASEFOUNDED", 0, picture, nullptr);
+    } else {
+        NetMsgPopup->pop("BASEFOUNDED", 5000, 0, nullptr);
+    }
+    if (!IsMultiplayerNet) {
+        TutWinBaseWindow.zoom(new_base_id, 1);
+    }
+    ConsoleGlobal.update_data(1);
+}
+
+// ORIGINAL: 0x004D3470 ?terraform@Console@@QAEXHH@Z 0x004D3470-0x004D5277;0x0065A559-0x0065AB02 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004d3470.cpp", "image:terranx_original.exe:0x004D3470", "image:terranx_original.exe:0x004D4973,0x004D4CA6"], "reason": "Recover terraforming through the Console receiver, Map bit storage, typed order descriptors and real vehicle/network lock lifecycle. Native lock failure refunds without unlocking; conflict names distinguish sea and land. Popup owns teardown, not handwritten vtable cleanup."}
+void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
+    Popup popup;
+
+    // The native entry tests the current vehicle prototype's plan before
+    // reading its map tile.  0x004D34C6 compares VehPrototype::plan to 9.
+    const int entry_proto_id = Vehs[vehicle_id].proto_id;
+    if (VehPrototypes[entry_proto_id].plan != 9) {
+        NetMsgPopup->pop("NEEDTERRAFORMERS", 5000, 0, nullptr);
+        return;
+    }
+
+    // Original 0x004D3521..0x004D3585 snapshots the selected vehicle's
+    // coordinates, classifies altitude from climate & 0xE0, and permits AIR
+    // chassis on either terrain.  The even/odd map-column convention is the
+    // same one used by map_loc throughout the typed map owner.
+    const int x = Vehs[vehicle_id].x;
+    const int y = Vehs[vehicle_id].y;
+    Map *const tile = map_loc(x, y);
+    const int altitude = tile->climate & 0xE0;
+    const int is_sea = altitude < 0x60;
+    const int chassis_id = VehPrototypes[entry_proto_id].chassis_id;
+    const int triad = Chassis[chassis_id].triad;
+    if (triad != TRIAD_AIR && is_sea != (triad == TRIAD_SEA)) {
+        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, nullptr);
+        return;
+    }
+
+    // Preserve the native order substitution rules: an existing road can
+    // become a magtube; a farm request can remove fungus or select soil
+    // enrichment.  The prereq comparison is >= -1, exactly as the native
+    // signed DWORD comparison at 0x004D35EA / 0x004D361F.
+    int terraform_id = requested_terraform;
+    if (terraform_id == TERRA_ROAD) {
+        if ((tile->bit & BIT_ROAD) != 0 &&
+            (is_sea ? Terraforming[TERRA_MAGTUBE].preq_tech_sea
+                    : Terraforming[TERRA_MAGTUBE].preq_tech) >= -1) {
+            terraform_id = TERRA_MAGTUBE;
+        }
+    } else if (terraform_id == TERRA_FARM) {
+        if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
+            terraform_id = TERRA_REMOVE_FUNGUS;
+        } else if ((tile->bit & BIT_FARM) != 0 && altitude >= 0x60 &&
+                   (is_sea ? Terraforming[TERRA_SOIL_ENR].preq_tech_sea
+                           : Terraforming[TERRA_SOIL_ENR].preq_tech) >= -1) {
+            terraform_id = TERRA_SOIL_ENR;
+        }
+    }
+
+    // Native auto-selection only rewrites the ordinary road/farm requests;
+    // explicit Soil Enricher remains a separate order and is validated below.
+
+    // 0x004D3632 passes the selected Order label directly to parse_says;
+    // it is not a StringTable key. The native table starts at Order[4].
+    char *order_label = is_sea ? Order[terraform_id + 4].order_sea
+                               : Order[terraform_id + 4].order;
+    parse_says(6, order_label, -1, -1);
+
+    // The first availability check is based on each terrain row's typed
+    // prerequisite; < -1 means no availability in that environment.
+    const int selected_prerequisite = is_sea
+        ? Terraforming[terraform_id].preq_tech_sea
+        : Terraforming[terraform_id].preq_tech;
+    if (selected_prerequisite < -1) {
+        const int other_prerequisite = is_sea
+            ? Terraforming[terraform_id].preq_tech
+            : Terraforming[terraform_id].preq_tech_sea;
+        const char *message = other_prerequisite < -1 ? "NOTATALL"
+            : is_sea ? "NOTATSEA" : "NOTONLAND";
+        NetMsgPopup->pop(message, 5000, 0, nullptr);
+        return;
+    }
+
+    if (terraform_id == TERRA_SOIL_ENR && (tile->bit & BIT_FARM) == 0) {
+        return;
+    }
+    if (terraform_id == TERRA_MAGTUBE && (tile->bit & BIT_ROAD) == 0) {
+        return;
+    }
+
+    const uint32_t terrain_bit = Terraforming[terraform_id].bit;
+    if (terrain_bit != 0 && (tile->bit & terrain_bit) == terrain_bit) {
+        char *current_improvement = is_sea
+            ? Terraforming[terraform_id].name_sea
+            : Terraforming[terraform_id].name;
+        parse_says(0, current_improvement, -1, -1);
+        NetMsgPopup->pop("ALREADYBUILT", 5000, 0, nullptr);
+        return;
+    }
+    if ((tile->bit & BIT_MONOLITH) != 0 && terrain_bit != 0 &&
+        terraform_id != TERRA_ROAD && terraform_id != TERRA_MAGTUBE &&
+        terraform_id != TERRA_PLANT_FUNGUS) {
+        NetMsgPopup->pop("NOTONMONOLITH", 5000, 0, nullptr);
+        return;
+    }
+
+    if (is_sea && altitude < 0x40 &&
+        terraform_id != TERRA_RAISE_LAND &&
+        terraform_id != TERRA_LOWER_LAND) {
+        if ((Players[faction_id_].rule_flags & RFLAG_AQUATIC) == 0) {
+            NetMsgPopup->pop("LOWTIDAL", 5000, 0, nullptr);
+            return;
+        }
+        if (!has_tech(0x3E, faction_id_)) {
+            NetMsgPopup->pop("NEEDADVECOENG", 5000, 0, nullptr);
+            return;
+        }
+    }
+
+    // 0x004D3B3B identifies volcano squares in Map::bit2. The native warning
+    // differs by one literal suffix when the improvement itself is not in
+    // the volatile group.
+    const uint32_t volcano_state = tile->bit2;
+    if ((volcano_state & 0x80000002u) == 2u) {
+        const uint32_t volatile_bits = Terraforming[terraform_id].bit;
+        if ((volatile_bits & 0x208000u) != 0 ||
+            (volcano_state & 0xFF000000u) == 0) {
+            StringTemp[0] = 0;
+            strcat(StringTemp, "NOTONVOLCANO");
+            if ((volatile_bits & 0x208000u) == 0) {
+                strcat(StringTemp, "1");
+            }
+            NetMsgPopup->pop(StringTemp, 5000, 0, nullptr);
+            return;
+        }
+    }
+
+    if (!is_sea && (tile->contour & 0xC0) > 0x40 &&
+        (terrain_bit & 0x208000u) != 0) {
+        NetMsgPopup->pop("NOTINROCKY", 5000, 0, nullptr);
+        return;
+    }
+
+    // Existing fungus requires the corresponding rules tech. TechDisabled is
+    // the native sentinel selecting the generic label; otherwise say_tech
+    // materializes the configured technology name into StringTemp first.
+    if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
+        const int fungus_tech = Rules.tech_improve_fungus_sqr;
+        if ((terrain_bit & 4u) != 0 && !has_tech(fungus_tech, faction_id_)) {
+            const char *message = "NOTINFUNGUS";
+            if (fungus_tech >= 0) {
+                StringTemp[0] = 0;
+                say_tech(StringTemp, fungus_tech, 0);
+                parse_says(0, StringTemp, -1, -1);
+                message = "NOTYETFUNGUS";
+            }
+            NetMsgPopup->pop(message, 5000, 0, nullptr);
+            return;
+        }
+    } else if ((tile->bit & BIT_FUNGUS) != 0) {
+        const int road_tech = Rules.tech_build_roads_fungus;
+        if (!has_tech(road_tech, faction_id_)) {
+            const char *message = "NOTINFUNGUS";
+            if (road_tech >= 0) {
+                StringTemp[0] = 0;
+                say_tech(StringTemp, road_tech, 0);
+                parse_says(0, StringTemp, -1, -1);
+                message = "NOTYETFUNGUS";
+            }
+            NetMsgPopup->pop(message, 5000, 0, nullptr);
+            return;
+        }
+    }
+
+    // Native terrain_avail checks the selected prerequisite against the
+    // faction's known technologies, with the Weather Paradigm and terraforming
+    // abilities handled by that existing owner.  The earlier numeric check
+    // above only distinguishes an unavailable terrain type/environment.
+    if (!terrain_avail(terraform_id, is_sea, faction_id_)) {
+        if (terraform_id == TERRA_REMOVE_FUNGUS &&
+            has_abil(Vehs[vehicle_id].proto_id, 0x2000)) {
+            // Native former ability bypass at 0x004D37E7..0x004D380D.
+        } else {
+            const int prerequisite = is_sea
+                ? Terraforming[terraform_id].preq_tech_sea
+                : Terraforming[terraform_id].preq_tech;
+            if (prerequisite >= TechNone) {
+                StringTemp[0] = 0;
+                say_tech(StringTemp, prerequisite, 0);
+                parse_says(0, StringTemp, -1, -1);
+            }
+            const char *message = terraform_id == TERRA_MAGTUBE ? "HASROAD"
+                : terraform_id == TERRA_SOIL_ENR ? "HASFARM" : "NOTUNTILTECH";
+            NetMsgPopup->pop(message, 5000, 0, nullptr);
+            return;
+        }
+    }
+
+    if (terraform_id == TERRA_RAISE_LAND ||
+        terraform_id == TERRA_LOWER_LAND) {
+        if ((GameRules & 0x00800000u) != 0) {
+            NetMsgPopup->pop("NOTINSCENARIO", 5000, 0, nullptr);
+            return;
+        }
+        if (terraform_id == TERRA_RAISE_LAND) {
+            if (altitude >= 0x60) {
+                if (altitude >= 0xC0) {
+                    NetMsgPopup->pop("TOOHIGH", 5000, 0, nullptr);
+                    return;
+                }
+            } else if (altitude >= 0x40) {
+                NetMsgPopup->pop("SEATOOHIGH", 5000, 0, nullptr);
+                return;
+            }
+        } else if (altitude == 0) {
+            NetMsgPopup->pop("SEATOOLOW", 5000, 0, nullptr);
+            return;
+        } else if (altitude == 0x60) {
+            NetMsgPopup->pop("TOOLOW", 5000, 0, nullptr);
+            return;
+        }
+    }
+
+    switch (terraform_id) {
+    case TERRA_SOLAR_TIDAL:
+        if (energy_yield(faction_id_, -1, x, y, 1) == 0) {
+            NetMsgPopup->pop("LOWSOLAR", 5000, 0, nullptr);
+            return;
+        }
+        break;
+
+    case TERRA_THERMAL_BORE: {
+        const int own_altitude_level = tile->climate >> 5;
+        for (int borehole_direction = 0; borehole_direction < 8;
+             ++borehole_direction) {
+            int adjacent_x = x + RadiusBaseX[borehole_direction];
+            if ((MapIsFlat & 1) == 0) {
+                if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
+                else if (adjacent_x >= MapLongitudeBounds) {
+                    adjacent_x -= MapLongitudeBounds;
+                }
+            }
+            const int adjacent_y = y + RadiusBaseY[borehole_direction];
+            if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
+                adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
+                continue;
+            }
+            const Map *const adjacent_tile = map_loc(adjacent_x, adjacent_y);
+            if ((adjacent_tile->climate & 0xE0) <= 0x5F) {
+                continue;
+            }
+            if ((adjacent_tile->bit & BIT_THERMAL_BORE) != 0) {
+                X_pop("TWOBOREHOLES", nullptr);
+                return;
+            }
+            for (int nearby_vehicle = veh_at(adjacent_x, adjacent_y);
+                 nearby_vehicle >= 0;
+                 nearby_vehicle = Vehs[nearby_vehicle].next_veh_id_stack) {
+                if (Vehs[nearby_vehicle].faction_id == faction_id_ &&
+                    Vehs[nearby_vehicle].order == 0x12) {
+                    X_pop("TWOBOREHOLES", nullptr);
+                    return;
+                }
+            }
+            if ((adjacent_tile->climate >> 5) < own_altitude_level) {
+                X_pop("NOBOREHOLE", nullptr);
+                return;
+            }
+        }
+        break;
+    }
+
+    case TERRA_AQUIFER: {
+        int aquifer_direction;
+        for (aquifer_direction = 0; aquifer_direction < 8;
+             ++aquifer_direction) {
+            int adjacent_x = x + RadiusBaseX[aquifer_direction];
+            if ((MapIsFlat & 1) == 0) {
+                if (adjacent_x < 0) adjacent_x += MapLongitudeBounds;
+                else if (adjacent_x >= MapLongitudeBounds) {
+                    adjacent_x -= MapLongitudeBounds;
+                }
+            }
+            const int adjacent_y = y + RadiusBaseY[aquifer_direction];
+            if (adjacent_y < 0 || adjacent_y >= MapLatitudeBounds ||
+                adjacent_x < 0 || adjacent_x >= MapLongitudeBounds) {
+                continue;
+            }
+            const Map *const adjacent_tile = map_loc(adjacent_x, adjacent_y);
+            if ((adjacent_tile->climate & 0xE0) > 0x5F &&
+                (adjacent_tile->bit & BIT_RIVER) != 0) {
+                break;
+            }
+        }
+        if (aquifer_direction == 8) {
+            NetMsgPopup->pop("NOAQUIFER", 5000, 0, nullptr);
+            return;
+        }
+        break;
+    }
+
+    case TERRA_LEVEL_TERRAIN:
+        if ((tile->contour & 0xC0) == 0) {
+            X_pop("TOOFLAT", nullptr);
+            return;
+        }
+        break;
+
+    case TERRA_RAISE_LAND:
+    case TERRA_LOWER_LAND: {
+        log_say("Want to terraform", faction_id_, 0, 0);
+        int payment_amount = 0;
+        if (stack_check(vehicle_id, 9, terraform_id + 4, -1, -1) == 0) {
+            const int cost = terraform_cost(x, y, faction_id_);
+            if (cost != 0) {
+                payment_amount = cost;
+                parse_num(0, cost);
+                parse_num(1, PlayersData[faction_id_].energy_reserves);
+                StringTemp[0] = 0;
+                strcat(StringTemp, "TERRACOST");
+                popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0,
+                            nullptr);
+
+                if (PlayersData[faction_id_].energy_reserves >= payment_amount) {
+                    popup.start(PopupStartCaption,
+                                terraform_id == TERRA_LOWER_LAND ? "DOWN" : "UP",
+                                -1, nullptr, 0x80, nullptr);
+                    log_say("Offering option to pay", 0, 0, 0);
+                }
+                if (popup.exec(0, nullptr) == 0) {
+                    log_say("Didn't or couldn't pay; returning", 0, 0, 0);
+                    return;
+                }
+                log_say("Took option to pay", 0, 0, 0);
+                PlayersData[faction_id_].energy_reserves -= payment_amount;
+                synch_energy(faction_id_);
+                update_data(0);
+            }
+        }
+
+        int steps = 1;
+        if (terraform_id == TERRA_RAISE_LAND) {
+            const int level = (tile->climate >> 5) + 1;
+            if (level >= 4 && level < 7) {
+                steps = RadiusRange[level - 4];
+            } else if (level >= 7) {
+                steps = RadiusRange[2];
+            }
+        } else {
+            const int level = (tile->climate >> 5) - 1;
+            if (level >= 0 && level <= 3) {
+                steps = RadiusRange[3 - level];
+            }
+        }
+
+        int terraform_offset;
+        for (terraform_offset = 0; terraform_offset < steps;
+             ++terraform_offset) {
+            int affected_x = x + RadiusOffsetX[terraform_offset];
+            if ((MapIsFlat & 1) == 0) {
+                if (affected_x < 0) {
+                    affected_x += MapLongitudeBounds;
+                } else if (affected_x >= MapLongitudeBounds) {
+                    affected_x -= MapLongitudeBounds;
+                }
+            }
+            const int affected_y = y + RadiusOffsetY[terraform_offset];
+            if (affected_y < 0 || affected_y >= MapLatitudeBounds ||
+                affected_x < 0 || affected_x >= MapLongitudeBounds) {
+                continue;
+            }
+
+            const int target_faction = whose_territory(
+                faction_id_, affected_x, affected_y, nullptr, nullptr);
+            if (target_faction < 0 || target_faction == faction_id_ ||
+                (PlayersData[faction_id_].diplo_treaties[target_faction] &
+                 7) == 0) {
+                continue;
+            }
+
+            if (NetDaemonNet.lock_veh(&vehicle_id, 2, -1, -1, 0) != 0) {
+                if (payment_amount != 0) {
+                    PlayersData[faction_id_].energy_reserves += payment_amount;
+                    synch_energy(faction_id_);
+                    update_data(0);
+                }
+                return;
+            }
+            if (break_treaty(faction_id_, target_faction, 7) != 0) {
+                if (payment_amount != 0) {
+                    PlayersData[faction_id_].energy_reserves += payment_amount;
+                    synch_energy(faction_id_);
+                    update_data(0);
+                }
+                NetDaemonNet.unlock_veh();
+                return;
+            }
+            if (IsMultiplayerNet != 0) {
+                message_data(0x2440, 0, faction_id_, target_faction, -1, 0);
+                NetDaemonNet.await_exec(1);
+            } else {
+                double_cross(faction_id_, target_faction, -1);
+            }
+        }
+
+        if (tut_check(0x800) != 0) {
+            popt(TutorialPopupCaption, "TERRAFORM", -1, nullptr, 0);
+        }
+        break;
+    }
+
+    default:
+        break;
+    }
+
+    // The common post-dispatch pass reloads the original map tile before
+    // checking the selected order against incompatible terrain descriptors.
+    Map *const final_tile = map_loc(x, y);
+    if (terraform_id != TERRA_REMOVE_FUNGUS &&
+        terraform_id != TERRA_RAISE_LAND &&
+        terraform_id != TERRA_LOWER_LAND) {
+        const int final_altitude = final_tile->climate & 0xE0;
+        if (final_altitude > 0x3F) {
+            const uint32_t conflict =
+                Terraforming[terraform_id].bit_incompatible & final_tile->bit;
+            if (conflict != 0) {
+                int conflict_index;
+                for (conflict_index = 0; conflict_index < 20;
+                     ++conflict_index) {
+                    if ((Terraforming[conflict_index].bit & conflict) != 0) {
+                        char *conflicting_name = final_altitude < 0x60
+                            ? Terraforming[conflict_index].name_sea
+                            : Terraforming[conflict_index].name;
+                        parse_says(0, conflicting_name, -1, -1);
+                        if (X_pop("MIMIMI", nullptr) == 0) return;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    if (NetDaemonNet.lock_state_[2].dword_[3] != 0) {
+        log_say("I think I've already got my lock", 0, 0, 0);
+    }
+    if (NetDaemonNet.lock_state_[2].dword_[3] == 0) {
+        if (NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) != 0) return;
+    }
+
+    Vehs[vehicle_id].order = static_cast<uint8_t>(terraform_id + 4);
+    synch_veh(vehicle_id);
+    log_say("Issuing Vehicle Orders", vehicle_id, terraform_id + 4, 0);
+    if (IsMultiplayerNet == 0) {
+        NetDaemonNet.unlock_veh();
+    } else {
+        const int current_speed = speed(vehicle_id, 0);
+        const int movement_remaining =
+            current_speed - Vehs[vehicle_id].moves_expended;
+        if (movement_remaining > 0) {
+            NetDaemonNet.action(vehicle_id, 1);
+        } else {
+            NetDaemonNet.unlock_veh();
+        }
+    }
+    log_say("Finished issuing orders", vehicle_id, terraform_id + 4, 0);
+    field_23BE4_ = 0;
 }

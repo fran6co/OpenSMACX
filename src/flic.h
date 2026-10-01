@@ -39,7 +39,10 @@ struct FliHeader {
     uint16_t frames_;           // +0x06  frames in the animation ring
     uint16_t width_;            // +0x08
     uint16_t height_;           // +0x0A
-    uint8_t reserved1_[0x44];   // +0x0C
+    uint8_t reserved1_[4];      // +0x0C
+    // RECOVERY_MEMBER: v1 FliHeader field_10_ 0x10 0x0043F2B0
+    uint32_t field_10_;         // +0x10, DiploPop::start's timer interval
+    uint8_t reserved1_tail_[0x3C]; // +0x14
     uint32_t first_frame_;      // +0x50  file offset of the first frame chunk
     uint32_t second_frame_;     // +0x54  file offset of the loop point
     uint8_t reserved2_[0x28];   // +0x58
@@ -104,6 +107,8 @@ class Flic {
   int decoded_width() const { return static_cast<int>(field_59C_); }
   int decoded_height() const { return static_cast<int>(field_5A0_); }
   int frame_count() const { return static_cast<int>(header_.frames_); }
+  void set_animation_flags(uint8_t flags) { field_0_ = flags; }
+  uint32_t header_interval() const { return header_.field_10_; }
 
  private:
   // Only the low byte is ever stored (`mov byte ptr [esi], bl`).

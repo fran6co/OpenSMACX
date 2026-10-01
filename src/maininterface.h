@@ -413,6 +413,7 @@ class MainInterface : public GraphicWin, public SubInterface {
   Flic flic2_;
 
  public:
+  Sprite *diplomacy_frame_sprite() { return &sprite11_; }
   // PUBLIC 2026-09-06: BattleWin::on_iface_left_down (0x00422E30) reaches this
   // Spot directly - `mov ecx, 0x7d3854`, which is front+0x25034, spot_'s own
   // address - and an accessor would cost that body a call the image does not

@@ -17,6 +17,7 @@
  */
 #include "stdafx.h"
 #include "diplopop.h"
+#include "basepop.h"
 #include "mapwin.h"  // MainInterfaceGlobal - the modal owner at 0x007AE820
 #include "datalink.h"
 #include "worldwin.h"
@@ -31,6 +32,70 @@
 void __cdecl report_intel(int selection);
 void __cdecl slide_show(GraphicWin *window, int mode);
 void __cdecl slide_hide(GraphicWin *window, int mode);
+
+// ORIGINAL: 0x0043F2B0 ?start@DiploPop@@QAEXH@Z 0x0043F2B0-0x0043F5B5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0043f2b0.cpp", "image:terranx_original.exe:0x0043F2B0", "source:docs/recovery/subobject-sites.csv:MainInterface22DFC"], "reason": "Recover the genuine diplomacy popup startup using embedded Flic/Time members, borrowed faction Sprite objects and MainInterface sprite11. Native same-faction fast path, FLIC failure/fallback and stored-frame update remain distinct."}
+void DiploPop::start(int faction_id) {
+    Buffer *canvas = static_cast<Buffer *>(this);
+    BasePop::set_def_external_window(this, 0, 0, canvas->pixel_width(), canvas->pixel_height());
+    const bool alternate_size = WinScreenWidth != 800;
+    diplomacy_check(ConsoleGlobal.faction_id_, faction_id, 0);
+    if (counterpart_faction_ != faction_id) {
+        counterpart_faction_ = faction_id;
+        frame_sprite_ = MainInterfaceGlobal.diplomacy_frame_sprite();
+        landscape_sprite_ = &FactionsArt[faction_id].diplomacy_landscape;
+        portrait_sprite_ = &FactionsArt[faction_id].diplomacy;
+        hq_sprite_ = &FactionsArt[faction_id].diplomacy_logo;
+        set_iface_mode();
+
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "dip_");
+        if (ExpansionEnabled && (Players[faction_id].rule_flags & RFLAG_ALIEN)) {
+            strcat(StringTemp, "a_");
+        } else {
+            strcat(StringTemp, Players[faction_id].is_leader_female ? "f_" : "m_");
+        }
+        int mood = static_cast<int32_t>(static_cast<uint32_t>(DiploFriction) * 3) / 20;
+        if (mood < 0) mood = 0;
+        else if (mood > 2) mood = 2;
+        char number[80];
+        _itoa(mood, number, 10);
+        strcat(StringTemp, number);
+        strcat(StringTemp, ".flc");
+        Buffer *destination = static_cast<Buffer *>(&MainInterfaceGlobal);
+        if (flic2_.init(destination, StringTemp,
+                        alternate_size ? 26 : 22, alternate_size ? 90 : 80, 1)) {
+            return;
+        }
+        flic2_.set_animation_flags(9);
+        const int x = static_cast<int32_t>(field_20E4_ + 1);
+        const int difference = static_cast<int32_t>(field_20F0_ - field_20E8_);
+        const int y = static_cast<int32_t>(field_20E8_ + difference / 4 + 1);
+        StringTemp[0] = '\0';
+        strcat(StringTemp, Players[faction_id].filename);
+        strcat(StringTemp, ".flc");
+        if (flic1_.init(destination, StringTemp, x, y, 0)) {
+            if (flic1_.init(destination, const_cast<char *>("faction.flc"), x, y, 0)) {
+                return;
+            }
+        }
+        time2_.init(reinterpret_cast<void(__cdecl *)(int, int)>(timer_callback_daemon2),
+                    0, reinterpret_cast<int>(this), 2000, 5);
+        uint32_t interval = flic2_.header_interval();
+        if (interval > 5) {
+            if (interval == 0) interval = 100;
+            time1_.init(reinterpret_cast<void(__cdecl *)(int, int)>(timer_callback_daemon),
+                        0, reinterpret_cast<int>(this), interval, 5);
+        }
+    } else {
+        set_iface_mode();
+    }
+    field_20B0_ = 0;
+    time1_.start();
+    time2_.start();
+    flic1_.decode_stored_frame();
+    MainInterfaceGlobal.soft_update(flic1_.update_rect());
+}
 
 // CRT entry 0x0043EFC0 constructs this object and registers 0x0043EFE0,
 // which destroys the same receiver. The CRT table at 0x00682080 contains

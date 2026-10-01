@@ -47,6 +47,7 @@ class DiploPop : public GraphicWin, public SubInterface {
  public:
   // homed from 0043f5c0.cpp
   void stop();
+  void start(int faction_id);
 
  public:
   // homed from 0043f140.cpp
@@ -117,9 +118,9 @@ class DiploPop : public GraphicWin, public SubInterface {
   // RECOVERY_MEMBER: v2 DiploPop flic2_ Flic 0x15CC 0x0043EFF0
   Flic flic2_;
   uint32_t field_20B0_;  // 0x20B0
-  uint32_t field_20B4_;  // 0x20B4
-  uint32_t field_20B8_;  // 0x20B8
-  uint32_t field_20BC_;  // 0x20BC
+  Sprite *landscape_sprite_;  // 0x20B4, borrowed faction artwork
+  Sprite *frame_sprite_;      // 0x20B8, borrowed MainInterface member
+  Sprite *portrait_sprite_;   // 0x20BC, borrowed faction artwork
   // Borrowed faction-HQ portrait used by draw_hq; not owned or destroyed.
   Sprite *hq_sprite_;  // 0x20C0
   uint32_t field_20C4_;  // 0x20C4

@@ -1075,4 +1075,6 @@ extern int DiploScratchFA20, DiploScratchFA44, DiploScratchFA6C, DiploScratchFA8
 extern int DiploScratchFA60;
 void __cdecl tech_analysis(int faction_id, int faction_id_with);
 void __cdecl diplomacy_caption(int faction_id, int faction_id_with);
+int __cdecl wants_to_speak(int faction_id, int other_faction_id);
+void __cdecl introduce(int faction_id, int other_faction_id);
 void __cdecl enemy_strategy(int faction_id);

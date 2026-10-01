@@ -114,6 +114,207 @@ int main() {
                    capture_output=True, text=True)
     subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
+
+TERRAFORM_HARNESS = r'''
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <vector>
+
+using std::string;
+using std::vector;
+vector<string> events;
+enum { TERRA_FARM=0, TERRA_SOIL_ENR=1, TERRA_MINE=2,
+       TERRA_SOLAR_TIDAL=3, TERRA_FOREST=4, TERRA_ROAD=5,
+       TERRA_MAGTUBE=6, TERRA_BUNKER=7, TERRA_AIRBASE=8,
+       TERRA_SENSOR=9, TERRA_REMOVE_FUNGUS=10, TERRA_PLANT_FUNGUS=11,
+       TERRA_CONDENSER=12, TERRA_ECH_MIRROR=13, TERRA_THERMAL_BORE=14,
+       TERRA_AQUIFER=15, TERRA_RAISE_LAND=16, TERRA_LOWER_LAND=17,
+       TERRA_LEVEL_TERRAIN=18, TERRA_MONOLITH=19 };
+enum { TRIAD_LAND=0, TRIAD_SEA=1, TRIAD_AIR=2,
+       RFLAG_AQUATIC=0x200, BIT_ROAD=4, BIT_FUNGUS=0x20, BIT_FARM=0x8000,
+       BIT_MONOLITH=0x2000, BIT_RIVER=0x80, BIT_THERMAL_BORE=0x1000000,
+       TechNone=-1, MapLongitudeBounds=8, MapLatitudeBounds=8 };
+struct Veh { int proto_id=0,x=2,y=2,faction_id=0,moves_expended=0;
+  int next_veh_id_stack=-1; uint8_t order=0; } Vehs[8];
+struct VehPrototype { int plan=9,chassis_id=0; } VehPrototypes[8];
+struct ChassisRecord { int triad=TRIAD_LAND; } Chassis[8];
+struct Map { uint8_t climate=0,contour=0; uint32_t bit=0,bit2=0; } Tiles[64];
+Map *map_loc(int x,int y) { assert(x>=0&&x<8&&y>=0&&y<8); return &Tiles[y*8+x]; }
+struct TerraformRecord { char *name=nullptr,*name_sea=nullptr;
+  int preq_tech=-1,preq_tech_sea=-1; uint32_t bit=0,bit_incompatible=0; }
+  Terraforming[20];
+struct OrderRecord { char *order=nullptr,*order_sea=nullptr; } Order[24];
+struct Player { int rule_flags=0; } Players[8];
+struct PlayerData { int energy_reserves=100;
+  uint32_t diplo_treaties[8]{}; } PlayersData[8];
+struct RulesRecord { int tech_improve_fungus_sqr=-1,tech_build_roads_fungus=-1; } Rules;
+char StringTemp[2048], PopupStartCaption[]="caption", TutorialPopupCaption[]="tutorial";
+int faction_id_=0, GameRules=0, IsMultiplayerNet=0, MapIsFlat=1;
+int bore_seen=0, do_tech=1, avail_result=1, energy_result=1, cost_result=0;
+int stack_result=0, target_faction=-1, break_result=0, speed_result=3;
+int lock_mode0_result=0, lock_mode2_result=0, clear_lock_in_log=0;
+int lock0_calls=0, lock2_calls=0, unlock_calls=0, action_calls=0;
+int synch_vehicle_calls=0, synch_energy_calls=0, update_data_calls=0;
+int popup_exec_result=1, xpop_result=1, parse_says_mode0_seen=0;
+string parsed_mode0, popup_label;
+char sea_name[]="SEA NAME", land_name[]="LAND NAME";
+const int RadiusRange[9]={1,9,25,49,81,121,169,225,289};
+int RadiusBaseX[8]={1,1,0,-1,-1,-1,0,1}, RadiusBaseY[8]={0,1,1,1,0,-1,-1,-1};
+int RadiusOffsetX[289]{}, RadiusOffsetY[289]{};
+struct NetPopup { void pop(const char *s,int timeout,int flags,const char *arg) {
+  assert(timeout==5000&&flags==0&&arg==nullptr); events.push_back(string("msg:")+s);
+} } popup_message;
+NetPopup *NetMsgPopup=&popup_message;
+struct Popup { void start(char *,const char *,int,char *,int,void *) { events.push_back("popup-start"); }
+  int exec(int,void *) { events.push_back("popup-exec"); return popup_exec_result; } };
+struct LockEntry { uint32_t dword_[4]{}; };
+struct NetDaemon { LockEntry lock_state_[4];
+  int lock_veh(int *,int mode,int,int,int) { events.push_back("lock:"+std::to_string(mode));
+    if(mode==0) { ++lock0_calls; return lock_mode0_result; }
+    ++lock2_calls; return lock_mode2_result;
+  }
+  void unlock_veh() { ++unlock_calls; events.push_back("unlock"); }
+  void action(int,int) { ++action_calls; events.push_back("action"); }
+  void await_exec(int) { events.push_back("await"); }
+} NetDaemonNet;
+class Console { public:
+  int faction_id_=0,field_23BE4_=0;
+  void terraform(int,int);
+  void update_data(int);
+};
+int terrain_avail(int,int,int) { return avail_result; }
+int has_tech(int,int) { return do_tech; }
+int has_abil(int,int) { return 0; }
+int energy_yield(int,int,int,int,int) { return energy_result; }
+int speed(int,int) { return speed_result; }
+int stack_check(int vehicle,int mode,int order,int faction,int spare) {
+  assert(vehicle==0 && mode==9 && (order==TERRA_RAISE_LAND+4 || order==TERRA_LOWER_LAND+4));
+  assert(faction==-1 && spare==-1); return stack_result;
+}
+int terraform_cost(int x,int y,int faction) {
+  assert(x==Vehs[0].x && y==Vehs[0].y && faction==0);
+  events.push_back("cost"); return cost_result;
+}
+int parse_says(int mode,char *text,int,int) { if(mode==0) { ++parse_says_mode0_seen; parsed_mode0=text; }
+  events.push_back("parse:"+std::to_string(mode)); return 0; }
+void parse_num(int,int) {}
+void say_tech(char *out,int,int) { std::strcpy(out,"TECH"); }
+int X_pop(const char *label,void *) { popup_label=label; events.push_back(string("xpop:")+label); return xpop_result; }
+int veh_at(int,int) { return -1; }
+int whose_territory(int,int,int,int *,int *) { return target_faction; }
+int break_treaty(int,int,int) { events.push_back("break"); return break_result; }
+void message_data(int,int,int,int,int,int) { events.push_back("message-data"); }
+void double_cross(int,int,int) { events.push_back("double-cross"); }
+int tut_check(int) { return 0; }
+int popt(char *,const char *,int,char *,int) { return 0; }
+void synch_veh(int) { ++synch_vehicle_calls; events.push_back("synch-veh"); }
+void synch_energy(int) { ++synch_energy_calls; events.push_back("synch-energy"); }
+void Console::update_data(int) { ++update_data_calls; events.push_back("update-data"); }
+void log_say(const char *s,int,int,int) { events.push_back(string("log:")+s);
+  if(clear_lock_in_log && std::strcmp(s,"I think I've already got my lock")==0)
+    NetDaemonNet.lock_state_[2].dword_[3]=0;
+}
+'''
+
+
+def test_actual_terraform_source_control_paths(tmp_path):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    unit_text = TERRAFORM_HARNESS + body_for("void Console::terraform(int vehicle_id") + r'''
+static void reset_state() {
+  events.clear();
+  for(auto &v:Vehs) v=Veh{};
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  for(auto &c:Chassis) c=ChassisRecord{};
+  for(auto &t:Tiles) t=Map{};
+  for(auto &r:Terraforming) r=TerraformRecord{};
+  for(auto &o:Order) o=OrderRecord{};
+  for(auto &p:Players) p=Player{};
+  for(auto &p:PlayersData) p=PlayerData{};
+  faction_id_=0; GameRules=0; IsMultiplayerNet=0; MapIsFlat=1;
+  avail_result=1; do_tech=1; energy_result=1; cost_result=0; stack_result=0;
+  target_faction=-1; break_result=0; speed_result=3;
+  lock_mode0_result=lock_mode2_result=0; clear_lock_in_log=0;
+  lock0_calls=lock2_calls=unlock_calls=action_calls=0;
+  synch_vehicle_calls=synch_energy_calls=update_data_calls=0;
+  popup_exec_result=1; xpop_result=1; parse_says_mode0_seen=0;
+  parsed_mode0.clear(); popup_label.clear(); StringTemp[0]=0;
+  NetDaemonNet.lock_state_[2].dword_[3]=0;
+  Vehs[0].proto_id=0; Vehs[0].x=2; Vehs[0].y=2; Vehs[0].faction_id=0;
+  VehPrototypes[0].plan=9; VehPrototypes[0].chassis_id=0;
+  Chassis[0].triad=TRIAD_LAND; Tiles[2*8+2].climate=0x60;
+  Order[TERRA_ROAD+4].order=(char*)"ROAD"; Order[TERRA_ROAD+4].order_sea=(char*)"SEA ROAD";
+  Order[TERRA_MINE+4].order=(char*)"MINE"; Order[TERRA_MINE+4].order_sea=(char*)"SEA MINE";
+  Order[TERRA_THERMAL_BORE+4].order=(char*)"BORE"; Order[TERRA_THERMAL_BORE+4].order_sea=(char*)"SEA BORE";
+}
+int main() {
+  Console c;
+  // Ordinary order: acquisition precedes write/sync and single-player unlock.
+  reset_state(); c.terraform(0,TERRA_ROAD);
+  assert(Vehs[0].order==TERRA_ROAD+4 && lock0_calls==1 && unlock_calls==1);
+  assert(synch_vehicle_calls==1 && events[events.size()-2]=="unlock");
+
+  // The existing lock callback clears state: native's second independent test
+  // then reacquires before issuing the order.
+  reset_state(); NetDaemonNet.lock_state_[2].dword_[3]=1; clear_lock_in_log=1;
+  c.terraform(0,TERRA_ROAD);
+  assert(lock0_calls==1 && Vehs[0].order==TERRA_ROAD+4);
+
+  // Failed common acquisition issues no order and does not unlock a lock it
+  // never obtained.
+  reset_state(); lock_mode0_result=1; c.terraform(0,TERRA_ROAD);
+  assert(Vehs[0].order==0 && lock0_calls==1 && unlock_calls==0 && synch_vehicle_calls==0);
+
+  // Raise-land paid path: failed mode-2 acquisition refunds but does not unlock.
+  reset_state(); Tiles[2*8+2].climate=0x60; cost_result=7;
+  target_faction=1; PlayersData[0].diplo_treaties[1]=7; lock_mode2_result=1;
+  const int energy_before=PlayersData[0].energy_reserves;
+  c.terraform(0,TERRA_RAISE_LAND);
+  assert(lock2_calls==1 && PlayersData[0].energy_reserves==energy_before);
+  assert(synch_energy_calls==2 && update_data_calls==2 && unlock_calls==0);
+
+  // After successful acquisition, a failed treaty break refunds and unlocks.
+  reset_state(); Tiles[2*8+2].climate=0x60; cost_result=7;
+  target_faction=1; PlayersData[0].diplo_treaties[1]=7; break_result=1;
+  c.terraform(0,TERRA_RAISE_LAND);
+  assert(lock2_calls==1 && unlock_calls==1 && synch_energy_calls==2 && update_data_calls==2);
+
+  // A stack already holding this order skips payment, not the treaty pass.
+  reset_state(); stack_result=1; cost_result=7; target_faction=1;
+  PlayersData[0].diplo_treaties[1]=7; c.terraform(0,TERRA_RAISE_LAND);
+  assert(lock2_calls>0 && synch_energy_calls==0 && update_data_calls==0);
+  for(const auto &event:events) assert(event!="cost" && event!="popup-exec");
+
+  // Payment popup starts a fresh label rather than appending stale scratch text.
+  reset_state(); cost_result=7; std::strcpy(StringTemp,"STALE");
+  c.terraform(0,TERRA_RAISE_LAND); assert(std::strcmp(StringTemp,"TERRACOST")==0);
+
+  // Sea conflict uses name_sea (native row offset +4 for altitude < 0x60).
+  reset_state(); Tiles[2*8+2].climate=0x40; Chassis[0].triad=TRIAD_SEA;
+  Terraforming[TERRA_MINE].bit=0x10; Terraforming[TERRA_MINE].bit_incompatible=BIT_FARM;
+  Terraforming[TERRA_FARM].bit=BIT_FARM;
+  Terraforming[TERRA_FARM].name=land_name; Terraforming[TERRA_FARM].name_sea=sea_name;
+  Tiles[2*8+2].bit=BIT_FARM; c.terraform(0,TERRA_MINE);
+  assert(parse_says_mode0_seen==1 && parsed_mode0=="SEA NAME" && unlock_calls==1);
+
+  // The neighboring bore marker lives in Map::bit, not Map::bit2.
+  reset_state(); Tiles[2*8+2].climate=0x60;
+  Tiles[2*8+3].climate=0x60; Tiles[2*8+3].bit=BIT_THERMAL_BORE;
+  Tiles[2*8+3].bit2=0; c.terraform(0,TERRA_THERMAL_BORE);
+  assert(popup_label=="TWOBOREHOLES" && lock0_calls==0 && synch_vehicle_calls==0);
+}
+'''
+    unit = tmp_path / "console_terraform_actual.cpp"
+    executable = tmp_path / "console_terraform_actual"
+    unit.write_text(unit_text)
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
 def test_use_ability_uses_ability_selector_then_faction_drop_range(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:

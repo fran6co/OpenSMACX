@@ -904,6 +904,12 @@ extern Win *WinPointerOwner2;  // 0x009B7AD0
 extern Win *WinPointerOwner3;  // 0x009B7ABC
 extern Win *WinPointerOwner4;  // 0x009B7AC0
 
+int __cdecl do_char();
+int __cdecl do_mouse();
+void __cdecl do_all_mouse();
+void __cdecl flush_keyboard();
+void __cdecl flush_mouse();
+
 // 0x009B7AE0. The focus window: `Win::get_key_window` returns it, and
 // `Win::OnKey`, `OnChar` and `OnSysKey` are the rest of its readers.
 // `Win::get_mouse_window` falls back to walking its tree when no pointer

@@ -37,8 +37,12 @@
 #include "strings.h"
 #include "xpops.h"
 #include "diplopop.h"
+#include "infowin.h"
+#include "reportif.h"
+#include "random.h"
 
 void __cdecl mon_killed_faction(int faction, int killed_faction);
+char *__cdecl get_him_her(int faction_id, int sentence_form);
 void __cdecl interlude(int id, char *filename, int arg3, int arg4);
 int __cdecl base_init(int faction, int x, int y);
 void __cdecl base_kill(int base);
@@ -5483,5 +5487,229 @@ void __cdecl diplomacy_caption(int faction_id, int faction_id_with) {
     if (DiplomacyPopup.is_visible() != 0) {
         DiplomacyPopup.draw_info();
         DiplomacyPopup.soft_update(&DiplomacyPopup.rect1_);
+    }
+}
+
+static void contact_dialog_arguments(int other_faction_id) {
+    GenderDefault = Players[other_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[other_faction_id].title_leader, -1, -1);
+    GenderDefault = Players[other_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[other_faction_id].name_leader, -1, -1);
+    GenderDefault = Players[other_faction_id].noun_gender;
+    PluralityDefault = Players[other_faction_id].is_noun_plural;
+    parse_says(2, Players[other_faction_id].noun_faction, -1, -1);
+    parse_num(0, random(0, 10) + 1);
+    parse_says(3, get_him_her(other_faction_id, 0), -1, -1);
+}
+
+// ORIGINAL: 0x0053DCE0 ?wants_to_speak@@YAHHH@Z 0x0053DCE0-0x0053E46C;0x0065E622-0x0065E75A FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0053dce0.cpp", "image:terranx_original.exe:0x0053DCE0"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
+int __cdecl wants_to_speak(int faction_id, int other_faction_id) {
+    Popup popup;
+    PopupDialogFactionID = other_faction_id;
+    if ((Players[faction_id].rule_flags ^ Players[other_faction_id].rule_flags)
+        & RFLAG_ALIEN) {
+        if (Players[faction_id].rule_flags & RFLAG_ALIEN) {
+            if (!has_tech(0x4E, other_faction_id) && !has_tech(4, faction_id)) {
+                DiplomacyContactResult = 0;
+                return 0;
+            }
+        } else if (!has_tech(0x4E, faction_id) && !has_tech(4, other_faction_id)) {
+            DiplomacyContactResult = 0;
+            return 0;
+        }
+    }
+    if (DiplomacyEndState) {
+        return DiplomacyContactResult;
+    }
+
+    bool urgent = false;
+    if (DiplomacyContactResult) {
+        DiplomacyEndState = 1;
+        if (DiplomacyContactResult >= 8) {
+            diplomacy_check(faction_id, other_faction_id, 0);
+            diplomacy_caption(faction_id, other_faction_id);
+            contact_dialog_arguments(other_faction_id);
+            x_pops_minimal("URGENTCOMM", FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        }
+    } else {
+        ConsoleInfoWin.set_state(2, 1);
+        if (!DiplomacyEndState) {
+            for (;;) {
+                if (PlayersData[other_faction_id].planet_busters &&
+                    !(PlayersData[other_faction_id].diplo_treaties[faction_id] & 0x4000)) {
+                    urgent = true;
+                }
+                diplomacy_check(faction_id, other_faction_id, 0);
+                if (DiploFocusY >= 0 && DiploFocusY < MapLatitudeBounds &&
+                    DiploFocusX >= 0 && DiploFocusX < MapLongitudeBounds) {
+                    if (!ConsoleGlobal.focus(DiploFocusX, DiploFocusY, faction_id)) {
+                        draw_tiles(DiploFocusX, DiploFocusY, 2);
+                    }
+                }
+                diplomacy_caption(faction_id, other_faction_id);
+                contact_dialog_arguments(other_faction_id);
+                if (urgent) {
+                    x_pops_minimal("URGENTCOMM", FactionDiplomacyPortraits[other_faction_id], pop_wait);
+                    break;
+                }
+                popup.start(PopupStartCaption, "COMM", -1, nullptr, 0, nullptr);
+                Sprite *portrait = FactionDiplomacyPortraits[other_faction_id];
+                popup.set_caller_picture(popup.picture_enabled() ? nullptr : portrait);
+                popup.dialogs().sprite(portrait, nullptr, 0);
+                const int selected = popup.exec(0, pop_wait);
+                if (selected > 1) {
+                    report_intel(other_faction_id);
+                    if (!DiplomacyEndState) {
+                        continue;
+                    }
+                } else {
+                    DiplomacyEndState = 1;
+                    DiplomacyContactResult = selected == 0;
+                }
+                break;
+            }
+        }
+    }
+    if (DiplomacyContactResult) {
+        DiplomacyPopup.start(other_faction_id);
+        introduce(faction_id, other_faction_id);
+    }
+    return DiplomacyContactResult;
+}
+
+// ORIGINAL: 0x0053D360 ?introduce@@YAXHH@Z 0x0053D360-0x0053DCB9;0x0065E53A-0x0065E622 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0053d360.cpp", "image:terranx_original.exe:0x0053D360"], "reason": "Recover the genuine faction contact/introduction owner using Popup lifetime, typed Player/PlayerData, real diplomacy state and portrait storage; native guards and callee order correct retained seed contradictions."}
+void __cdecl introduce(int faction_id, int other_faction_id) {
+    Popup popup;
+    PopupDialogFactionID = other_faction_id;
+    DiplomacyActive = 1;
+    diplomacy_caption(faction_id, other_faction_id);
+
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
+    GenderDefault = Players[other_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(2, Players[other_faction_id].title_leader, -1, -1);
+    GenderDefault = Players[other_faction_id].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(3, Players[other_faction_id].name_leader, -1, -1);
+    GenderDefault = Players[other_faction_id].noun_gender;
+    PluralityDefault = Players[other_faction_id].is_noun_plural;
+    parse_says(4, Players[other_faction_id].noun_faction, -1, -1);
+    parse_says(8, Players[other_faction_id].adj_name_faction, -1, -1);
+    parse_says(9, Players[faction_id].adj_leader, -1, -1);
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "INTRO");
+    const int treaty = PlayersData[faction_id].diplo_treaties[other_faction_id];
+    unsigned int choice;
+    if ((treaty & 0x08000000) &&
+        !((IsMultiplayerNet || IsMultiplayerPBEM) &&
+          (FactionDiplomacyFlags[other_faction_id] & 2))) {
+        if (!(treaty & 0x20)) {
+            choice = random(0, 4);
+            const bool favorable =
+                (PlayersData[faction_id].diplo_treaties[other_faction_id] & 1) ||
+                !DiploScratchFA60;
+            switch (choice) {
+            case 0:
+                parse_says(5, get_noun_phrase(faction_id, favorable ? 9 : 10), -1, -1);
+                break;
+            case 1:
+                parse_says(9, favorable ? Players[faction_id].adj_leader :
+                           Players[faction_id].adj_insult_leader, -1, -1);
+                break;
+            case 2:
+                parse_says(5, favorable ? Players[faction_id].adj_faction :
+                           Players[faction_id].adj_insult_faction, -1, -1);
+                break;
+            case 3:
+                parse_says(9, favorable ? Players[faction_id].adj_leader :
+                           Players[faction_id].adj_insult_leader, -1, -1);
+                parse_says(5, favorable ? Players[faction_id].adj_faction :
+                           Players[faction_id].adj_insult_faction, -1, -1);
+                break;
+            }
+        } else {
+            strcat(StringTemp, "MAD");
+            choice = random(0, 5);
+            switch (choice) {
+            case 0:
+                parse_says(5, get_phrase(faction_id, 3), -1, -1);
+                // Original case 0 shares case 2's noun argument.
+            case 2:
+                parse_says(6, get_noun_phrase(faction_id, 8), -1, -1);
+                break;
+            case 1:
+                parse_says(5, Players[faction_id].adj_insult_faction, -1, -1);
+                parse_says(6, get_phrase(faction_id, 3), -1, -1);
+                break;
+            case 4:
+                parse_says(5, Players[faction_id].adj_insult_leader, -1, -1);
+                GenderDefault = Players[faction_id].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(6, Players[faction_id].insult_leader, -1, -1);
+                // Original case 4 shares case 3's phrase argument.
+            case 3:
+                parse_says(8, get_phrase(faction_id, 6), -1, -1);
+                break;
+            }
+        }
+    } else {
+        strcat(StringTemp, "NEW");
+        choice = random(0, 6);
+        parse_says(6, get_phrase(other_faction_id, 1), -1, -1);
+        if (choice == 2) {
+            PluralityDefault = Players[faction_id].is_noun_plural;
+            GenderDefault = Players[faction_id].noun_gender;
+            parse_says(5, Players[faction_id].noun_faction, -1, -1);
+        } else if (choice == 3) {
+            char description[32];
+            description[0] = '\0';
+            int rank = 7 - static_cast<int>(PlayersData[faction_id].ranking);
+            if (rank < 0) rank = 0;
+            else if (rank > 6) rank = 6;
+            char *word = StringTable.get(static_cast<int>(
+                reinterpret_cast<intptr_t>(Might[rank].adj)));
+            if (!Language) {
+                const char first = word[0];
+                const bool vowel = first == 'A' || first == 'E' || first == 'I' ||
+                                   first == 'O' || first == 'U';
+                strcat(description, label_get(vowel ? 0x454 / 4 : 0x450 / 4));
+                strcat(description, " ");
+            }
+            strcat(description, word);
+            parse_says(5, description, -1, -1);
+        }
+    }
+    char number[32];
+    _itoa(choice, number, 10);
+    strcat(StringTemp, number);
+    x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+    if (PlayersData[other_faction_id].planet_busters) {
+        x_pops_short("PLANETBUSTER0", 0x100000,
+                     FactionDiplomacyPortraits[other_faction_id], pop_wait);
+    }
+    if (PlayersData[faction_id].planet_busters &&
+        !(PlayersData[faction_id].diplo_treaties[other_faction_id] & 0x4000)) {
+        StringTemp[0] = '\0';
+        strcat(StringTemp, "PLANETBUSTER");
+        _itoa((PlayersData[other_faction_id].planet_busters != 0) + 1, number, 10);
+        strcat(StringTemp, number);
+        x_pops_short(StringTemp, 0x100000, FactionDiplomacyPortraits[other_faction_id], pop_wait);
+        if (IsMultiplayerNet) {
+            log_say(DiploLabelSendingSETTREATY, faction_id, other_faction_id, 0x4000);
+            message_data(0x2443, 0, faction_id, other_faction_id, 0x4000, 1);
+            NetDaemonNet.await_diplo(0x443);
+        } else {
+            set_treaty(faction_id, other_faction_id, 0x4000, 1);
+        }
     }
 }

@@ -124,6 +124,8 @@ class Console : public MapWin {
   void next_cursor();
   // homed from 004d7cf0.cpp
   void designate(int veh_id);
+  void new_base(int vehicle_id);
+  void terraform(int vehicle_id, int requested_terraform);
   void sentry(int veh_id, int mode);
   void oblit(int veh_id);
   void assemble();
