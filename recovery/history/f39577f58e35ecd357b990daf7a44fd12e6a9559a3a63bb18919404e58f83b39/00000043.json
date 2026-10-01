@@ -1,0 +1,48 @@
+{
+  "event_id": "0d4a11e6fd3b7ea1cdac4d4d304a1c5ca2d9548a52cb0dc03cdb60a0e9795041",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_win_input_pumps.py",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Current native source snapshot confirms five seed-only application input helpers next to the genuine Win message pump: do_char5FCF90,do_mouse5FD050,do_all_mouse5FD0A0,flush_keyboard5FD1C0,flush_mouse5FD220. USER32 message filters, shared MsgStatus and do_video/check_net/do_net identify the real existing owner; SDK and runtime libraries are not recovery subjects.",
+      "Coordinator authorizes a disjoint isolated worker to implement exactly these helpers and actual-source controls. No neighboring pump, API/dependency/flag changes, metadata/claims/seeds/Git edits or behavior fixes. Root alone binds original identities, prepares/compiles, reviews and integrates. Immutable task baseline and pending discoveries remain; do_video dependency is unfinished, so no game or automatic acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6279056,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6279248,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6279328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6279616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6279712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "39491051e34424a9273482f150f9e8432af2341ee78168b9a31c1c8b35346ed0",
+  "request_id": "win-input-pump-coverage-20261001",
+  "schema_version": 1,
+  "sequence": 43,
+  "stream": "task:interface-contract-report-closure"
+}

@@ -1,0 +1,28 @@
+{
+  "event_id": "8e65e7bcf006c23ca0f4e8454ffd8309fbc2c9a8531cd11b03f7c45888dc7eba",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_settlement_behavior.py",
+      "src/faction.cpp",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Close the existing pending console-settlement-diplomacy-callee-20261001-master discovery centrally: native new_base4CFCC4 requires wants_to_speak53DCE0..53E46C with65E622..65E75A EH, not diplomacy_ends substitution. Teardown53E470 and shared result/state/portrait/focus owners are already real source.",
+      "Scope permits this contact-entry body, its neutral declaration and focused actual-source controls, using real Popup/DiplomacyPopup/Console/NetDaemon/player/rule owners. Preserve complete source/seed identities, claims, original task baseline and unresolved outside discoveries; no fixed executable-address calls or guessed globals. Coordinator-reviewed recovery requires fresh compile/link and protected checks; incomplete dependencies stay explicit and unaccepted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5496032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f4bc96017834cdf4f2dae253662e239b43709b7d6e6e62d790b6120f1a786c60",
+  "request_id": "console-settlement-contact-owner-20261001",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:console-scenario-owner-wave"
+}
