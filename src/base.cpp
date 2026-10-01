@@ -42,6 +42,8 @@
 #include "replaywin.h"
 #include "messagewin.h"
 #include "tutwin.h"
+#include "path.h"
+#include "terraforming.h"
 
 void __cdecl atrocity(int faction_id, int victim, int kind, int unknown);
 void __cdecl kill(int vehicle_id);
@@ -6221,6 +6223,167 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0050c510.cpp retained original signature and extent; full seed preserved", "Coordinator user authorizes explicit unfinished empty bodies for new referenced functions, never replacement of recovered behavior"], "reason": "Explicit unfinished owning-TU link-continuity dependency for full action_airdrop authoring; BODY GOES HERE preserves unknown behavior and is not a recovery or matching claim."}
 void __cdecl capture_base(int base_id, int faction_id, int mode) {
     // BODY GOES HERE.
+}
+
+// ORIGINAL: 0x004EC3F0 ?base_connect@@YAHH@Z 0x004EC3F0-0x004ECB84
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004ec3f0.cpp original signature and complete span; independent pinned instruction review corrected magtube exception and destination population comparison; actual-source route and sensor controls."], "reason": "Base-domain connection planner follows same-region base paths and sensor fallback using existing typed Base, Map and Path owners."}
+int __cdecl base_connect(int priority) {
+    const int source_x = BaseCurrent->x;
+    const int source_y = BaseCurrent->y;
+    const int faction = BaseCurrent->faction_id_current;
+    const Map *source_tile = map_loc(source_x, source_y);
+    if ((source_tile->climate & 0xE0) < ALT_BIT_SHORE_LINE) return 0;
+
+    int best_distance = 9999;
+    int best_x = -1;
+    int best_y = -1;
+    bool found_connection = false;
+
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        if (base_id == BaseIDCurrentSelected) continue;
+        const Base &destination = Bases[base_id];
+        const int destination_x = destination.x;
+        const int destination_y = destination.y;
+        if (map_loc(destination_x, destination_y)->region != source_tile->region)
+            continue;
+
+        int delta_x = abs(source_x - destination_x);
+        if (!(MapIsFlat & 1) && static_cast<int>(MapLongitude) < delta_x)
+            delta_x = MapLongitudeBounds - delta_x;
+        const int delta_y = abs(source_y - destination_y);
+        int distance = (delta_x + delta_y) >> 1;
+
+        if (destination.faction_id_current == faction) {
+            if (distance > 8 && !has_fac_built(FAC_HEADQUARTERS, base_id)) {
+                bool outranked = false;
+                for (int other_base_id = 0; other_base_id < BaseCurrentCount;
+                     ++other_base_id) {
+                    const Base &other = Bases[other_base_id];
+                    if (other.faction_id_current != faction ||
+                        map_loc(other.x, other.y)->region != source_tile->region)
+                        continue;
+                    if (destination.population_size < other.population_size) {
+                        outranked = true;
+                        break;
+                    }
+                    if (has_fac_built(FAC_HEADQUARTERS, other_base_id)) {
+                        outranked = true;
+                        break;
+                    }
+                }
+                if (outranked) continue;
+            }
+        } else {
+            if (distance > 5 ||
+                (PlayersData[faction].diplo_treaties[destination.faction_id_current]
+                    & DTREATY_PACT) == 0)
+                continue;
+            distance += MapLongitudeBounds;
+        }
+
+        if (distance >= best_distance) continue;
+
+        int path_x = source_x;
+        int path_y = source_y;
+        const int path_guard = has_tech(Rules.tech_build_roads_fungus, faction) ? 0 : 4;
+        int direction = Paths.find(path_x, path_y, destination_x, destination_y,
+                                   0, -1, path_guard, -1);
+        int path_length = 0;
+        while (direction >= 0) {
+            path_x += RadiusBaseX[direction];
+            if (!(MapIsFlat & 1)) {
+                if (path_x < 0) path_x += MapLongitudeBounds;
+                else if (path_x >= MapLongitudeBounds) path_x -= MapLongitudeBounds;
+            }
+            path_y += RadiusBaseY[direction];
+            if (path_y < 0 || path_y >= MapLatitudeBounds || path_x < 0 ||
+                path_x >= MapLongitudeBounds)
+                break;
+            if (path_x == destination_x && path_y == destination_y) {
+                found_connection = true;
+                break;
+            }
+
+            const Map *tile = map_loc(path_x, path_y);
+            const unsigned int tile_owner = tile->val2 & 0x0F;
+            const bool base_ok = (tile->bit & BIT_ROAD) == 0 ||
+                ((tile->bit & BIT_MAGTUBE) != 0 &&
+                 has_tech(Terraforming[TERRA_MAGTUBE].preq_tech, faction));
+            const bool occupant_ok = (tile->bit & BIT_VEH_IN_TILE) == 0 ||
+                tile_owner > 7 || tile_owner == static_cast<unsigned int>(faction) ||
+                (PlayersData[faction].diplo_treaties[tile_owner] & DTREATY_PACT) != 0;
+            const bool fungus_ok = (tile->bit & BIT_FUNGUS) == 0 ||
+                (tile->climate & 0xE0) < ALT_BIT_OCEAN_SHELF ||
+                has_tech(Rules.tech_build_roads_fungus, faction) ||
+                has_tech(Terraforming[TERRA_REMOVE_FUNGUS].preq_tech, faction);
+            const int territory = whose_territory(faction, path_x, path_y, NULL, FALSE);
+            const bool territory_ok = territory < 0 || territory == faction ||
+                (PlayersData[faction].diplo_treaties[territory] & DTREATY_PACT) != 0;
+
+            if ((tile->bit & BIT_BASE_IN_TILE) == 0 || tile_owner > 7) {
+                if (fungus_ok && occupant_ok && territory_ok && base_ok &&
+                    zoc_sea(path_x, path_y, faction) <= 0) {
+                    best_distance = distance;
+                    best_x = path_x;
+                    best_y = path_y;
+                    break;
+                }
+            }
+
+            ++path_length;
+            if (path_length >= MapLongitudeBounds) break;
+            const int live_guard = has_tech(Rules.tech_build_roads_fungus, faction) ? 0 : 4;
+            direction = Paths.find(path_x, path_y, destination_x, destination_y,
+                                   0, -1, live_guard, -1);
+        }
+    }
+
+    int destination_x = source_x;
+    int destination_y = source_y;
+    if (best_y < 0 || best_y >= MapLatitudeBounds || best_x < 0 ||
+        best_x >= MapLongitudeBounds) {
+        if ((LockEnableMask & (1u << (faction & 0x1F))) != 0 &&
+            (GameMorePreferences & MPREF_AUTO_FORMER_BUILD_SENSORS) == 0)
+            return 0;
+        if (Paths.sensors(faction, &destination_x, &destination_y) != 0) return 0;
+    } else {
+        if (found_connection &&
+            ((LockEnableMask & (1u << (faction & 0x1F))) == 0 ||
+             (GameMorePreferences & MPREF_AUTO_FORMER_BUILD_SENSORS) != 0)) {
+            int sensor_x;
+            int sensor_y;
+            if (Paths.sensors(faction, &sensor_x, &sensor_y) == 0) {
+                int sensor_dx = abs(source_x - sensor_x);
+                if (!(MapIsFlat & 1) && static_cast<int>(MapLongitude) < sensor_dx)
+                    sensor_dx = MapLongitudeBounds - sensor_dx;
+                const int sensor_dy = abs(source_y - sensor_y);
+                const int sensor_max = sensor_dx > sensor_dy ? sensor_dx : sensor_dy;
+                const int sensor_min = sensor_dx < sensor_dy ? sensor_dx : sensor_dy;
+                const int sensor_distance = sensor_max -
+                    (((sensor_dx + sensor_dy) / 2 - sensor_min + 1) / 2);
+
+                int best_dx = abs(source_x - best_x);
+                if (!(MapIsFlat & 1) && static_cast<int>(MapLongitude) < best_dx)
+                    best_dx = MapLongitudeBounds - best_dx;
+                const int best_dy = abs(source_y - best_y);
+                const int best_max = best_dx > best_dy ? best_dx : best_dy;
+                const int best_min = best_dx < best_dy ? best_dx : best_dy;
+                const int best_approx_distance = best_max -
+                    (((best_dx + best_dy) / 2 - best_min + 1) / 2);
+                if (sensor_distance < best_approx_distance) {
+                    add_goal(faction, AI_GOAL_TERRAFORM_LAND, priority, sensor_x, sensor_y,
+                             BaseIDCurrentSelected);
+                    return 1;
+                }
+            }
+        }
+        destination_x = best_x;
+        destination_y = best_y;
+    }
+
+    add_goal(faction, AI_GOAL_TERRAFORM_LAND, priority, destination_x, destination_y,
+             BaseIDCurrentSelected);
+    return 1;
 }
 
 // ORIGINAL: 0x004ECBF0 ?base_terraform@@YAXH@Z 0x004ECBF0-0x004EEF61
