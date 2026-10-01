@@ -1681,65 +1681,8 @@ struct Point {
 };
 
 /* 0x1B3D0 bytes, 55 member(s), 50 named. From the IDB. 20 function(s) in the image. */
+#include "quaylewin.h"
 #include "prefwin.h"
-
-/* 0x37BC bytes, 47 member(s), 9 named. From the IDB. 11 function(s) in the image. */
-class QuayleWin {
- public:
-  // 0x00496710 is not recovered: a pending_bodies forwarder, because
-  // an empty inline stub emits nothing and the deleting destructor
-  // needs a `call rel32`.
-  ~QuayleWin();
-
- public:
-  uint8_t graphicWin_[0xA14];  // 0x0
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
-  uint32_t displayWidth_;  // 0xA1C
-  uint32_t displayHeight_;  // 0xA20
-  uint32_t field_A24_;  // 0xA24
-  uint32_t field_A28_;  // 0xA28
-  uint32_t field_A2C_;  // 0xA2C
-  uint32_t field_A30_;  // 0xA30
-  uint32_t field_A34_;  // 0xA34
-  uint32_t field_A38_;  // 0xA38
-  uint32_t field_A3C_;  // 0xA3C
-  uint32_t field_A40_;  // 0xA40
-  uint32_t field_A44_;  // 0xA44
-  uint32_t field_A48_;  // 0xA48
-  uint32_t field_A4C_;  // 0xA4C
-  uint32_t field_A50_;  // 0xA50
-  uint32_t field_A54_;  // 0xA54
-  uint32_t field_A58_;  // 0xA58
-  uint32_t field_A5C_;  // 0xA5C
-  uint32_t field_A60_;  // 0xA60
-  uint32_t field_A64_;  // 0xA64
-  uint32_t field_A68_;  // 0xA68
-  uint32_t field_A6C_;  // 0xA6C
-  uint32_t field_A70_;  // 0xA70
-  uint32_t field_A74_;  // 0xA74
-  uint32_t field_A78_;  // 0xA78
-  uint32_t field_A7C_;  // 0xA7C
-  uint32_t field_A80_;  // 0xA80
-  uint32_t field_A84_;  // 0xA84
-  uint32_t field_A88_;  // 0xA88
-  uint32_t field_A8C_;  // 0xA8C
-  uint32_t field_A90_;  // 0xA90
-  uint32_t field_A94_;  // 0xA94
-  uint32_t field_A98_;  // 0xA98
-  uint32_t field_A9C_;  // 0xA9C
-  uint32_t field_AA0_;  // 0xAA0
-  uint32_t field_AA4_;  // 0xAA4
-  uint32_t field_AA8_;  // 0xAA8
-  uint8_t flatButton1_[0xB4C];  // 0xAAC
-  uint8_t flatButton2_[0xB4C];  // 0x15F8
-  uint32_t field_2144_;  // 0x2144
-  uint32_t field_2148_;  // 0x2148
-  uint8_t spot_[0xC];  // 0x214C
-  uint8_t listBox_[0xB54];  // 0x2158
-  uint8_t buffer1_[0x588];  // 0x2CAC
-  uint8_t buffer2_[0x588];  // 0x3234
-};
 
 /* 0x1EF54 bytes, 91 member(s), 34 named. From Thinker. */
 struct RenderWindow {

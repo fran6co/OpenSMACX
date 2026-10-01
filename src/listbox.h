@@ -114,6 +114,7 @@
 //   layout, NOT because the image says it is the override - and the price is
 //   the two forwarders below.
 class ListBox : public virtual GraphicWin, public virtual Dialog {
+  friend class QuayleWin;
  public:
   // AlphaSave's show/hide tests the Win state of this embedded list, reached
   // through ListBox's GraphicWin virtual base in the original image.

@@ -49,6 +49,7 @@ static_assert(sizeof(ReportSortEntry) == 0x10,
 class ReportIf : public SubInterface {
   friend class ReportWin;
   friend class FameWin;
+  friend class QuayleWin;
  public:
   // homed from 004a3d20.cpp
   void reset();

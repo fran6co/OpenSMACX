@@ -567,11 +567,6 @@ PickTech::~PickTech() {  // ??1PickTech@@QAE@XZ at 0x00488690
     PENDING_BODY(0x00488690, pending)(this, nullptr);
 }
 
-QuayleWin::~QuayleWin() {  // ??1QuayleWin@@QAE@XZ at 0x00496710
-    typedef void(__fastcall *pending)(QuayleWin *, void *);
-    PENDING_BODY(0x00496710, pending)(this, nullptr);
-}
-
 VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
     typedef void(__fastcall *pending)(VoiceRx *, void *);
     PENDING_BODY(0x004C8A50, pending)(this, nullptr);
