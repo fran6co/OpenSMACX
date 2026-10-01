@@ -77,6 +77,11 @@ extern int PopupWriteCheckState;
 // The adjacent action selector distinguishes grouping versus removal.
 // RECOVERY_OBJECT: v2 0x009BC070 0x009BC074 ?ConsoleGroupAction@@3HA 0x004D95F0
 int ConsoleGroupAction;
+// Existing free-function owners used by the commands below.
+void __cdecl action_oblit(int vehicle_id, int base_id);
+int __cdecl tut_check(int marker);
+int __cdecl diplo_lock(int code);
+void __cdecl diplo_unlock();
 void __cdecl kill(int veh_id);
 void __cdecl read_faction(int player_id);
 int __cdecl veh_pick(int veh_id, const char *label, int flags);
@@ -146,6 +151,7 @@ void Console::disband(int x_coord, int y_coord) {
 #include "worldwin.h"  // WorldClimateWorldWin - editor_flat / editor_clear redraw it
 #include "terraforming.h"  // Terraforming - destroy's option list reads its bit/label rows
 #include "buttongroup.h"  // ButtonGroup::set - the editor brush/paint selectors
+#include <cstdlib>
 #include <cstring>
 
 void __cdecl draw_cursor();                               // 0x0046AE00
@@ -239,6 +245,472 @@ void Console::set_move(int force_update) {
 void Console::editor_edit_veh(int) {
     // BODY GOES HERE.
 }
+
+// ORIGINAL: 0x004D2220 ?sentry@Console@@QAEXHH@Z 0x004D2220-0x004D24BB
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D2220; retained seed src/recovered/units/004d2220.cpp", "Native4D245B parameter store is Veh+1C waypoint_y[0], not waypoint_x[2]. Typed Chassis triad, stack links, receiver faction, network locking and mapped tile state preserve original landing/load paths.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::sentry(int vehicle_id, int parameter) { // 0x004D2220
+    const Veh &vehicle = Vehs[vehicle_id];
+    const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+    const uint8_t triad = Chassis[prototype.chassis_id].triad;
+    Map *const tile = map_loc(vehicle.x, vehicle.y);
+    const int tile_owner = tile->val2 & 0x0F;
+
+    if (triad == TRIAD_AIR &&
+        !(((tile->bit & BIT_BASE_IN_TILE) != 0 && tile_owner < MaxPlayerNum) ||
+          (tile->bit & BIT_AIRBASE) != 0 ||
+          stack_check(vehicle_id, 6, 0x80, -1, -1) != 0)) {
+        return;
+    }
+
+    const bool empty_air_destination =
+        triad == TRIAD_LAND &&
+        (((tile->bit & BIT_BASE_IN_TILE) == 0 || tile_owner >= MaxPlayerNum) &&
+         (tile->bit & BIT_AIRBASE) == 0);
+    if (empty_air_destination) {
+        int leader_id = vehicle_id;
+        while (Vehs[leader_id].prev_veh_id_stack >= 0) {
+            leader_id = Vehs[leader_id].prev_veh_id_stack;
+        }
+
+        for (int stack_id = leader_id; stack_id >= 0;
+             stack_id = Vehs[stack_id].next_veh_id_stack) {
+            const Veh &stack_vehicle = Vehs[stack_id];
+            const VehPrototype &stack_prototype =
+                VehPrototypes[stack_vehicle.proto_id];
+            if (Chassis[stack_prototype.chassis_id].triad != TRIAD_AIR ||
+                stack_prototype.plan != 7) {
+                continue;
+            }
+
+            const bool alien = (Players[faction_id_].rule_flags & RFLAG_ALIEN) != 0;
+            const char *const picture = alien ? "alair_sm.pcx" : "air_sm.pcx";
+            if (!popp(ScriptPopupFile, "AIRLOAD", 0, picture, nullptr)) {
+                return;
+            }
+            break;
+        }
+    }
+
+    if (NetDaemonNet.lock_veh(&vehicle_id, 0, -1, -1, 0) != 0) {
+        return;
+    }
+    sleep(vehicle_id);
+    if (parameter != 0) {
+        Vehs[vehicle_id].waypoint_y[0] = static_cast<int16_t>(parameter);
+    }
+    synch_veh(vehicle_id);
+    NetDaemonNet.await_synch();
+    NetDaemonNet.unlock_veh();
+    field_23BE4_ = 0;
+    draw_tile(Vehs[vehicle_id].x, Vehs[vehicle_id].y, 1);
+}
+
+// ORIGINAL: 0x004D5D30 ?oblit@Console@@QAEXH@Z 0x004D5D30-0x004D5F64
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D5D30; retained seed src/recovered/units/004d5d30.cpp", "Native4D5D44 captures vehicle faction/coordinates; post-lock lookup rechecks ownership. Original post-lock disappearance/mismatch returns without unlocking; cancellation unlocks; network and local obliteration paths remain distinct.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::oblit(int vehicle_id) { // 0x004D5D30
+    const Veh &vehicle = Vehs[vehicle_id];
+    const int faction_id = vehicle.faction_id;
+    const int x = vehicle.x;
+    const int y = vehicle.y;
+
+    if (not_my_turn()) {
+        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        return;
+    }
+    if (!veh_ready(vehicle_id)) {
+        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        return;
+    }
+
+    int base_id = base_at(x, y);
+    if (base_id < 0) {
+        NetMsgPopup->pop("OBLITNOBASE", 5000, 0, nullptr);
+        return;
+    }
+    if (Bases[base_id].faction_id_current != faction_id) {
+        NetMsgPopup->pop("OBLITNOTYOURS", 5000, 0, nullptr);
+        return;
+    }
+    if (is_objective(base_id)) {
+        NetMsgPopup->pop("OBLITNOTOBJECTIVE", 5000, 0, nullptr);
+        return;
+    }
+
+    if (NetDaemonNet.lock_veh(&vehicle_id, 4, -1, -1, 0) != 0) {
+        return;
+    }
+
+    // Recheck ownership after the network lock, as the original does before
+    // exposing the destructive confirmation dialog.
+    base_id = base_at(x, y);
+    if (base_id < 0 || Bases[base_id].faction_id_current != faction_id) {
+        return;
+    }
+
+    parse_says(0, Bases[base_id].name_string, -1, -1);
+    const bool alien = (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0;
+    const char *const picture = alien ? "al_col_sm.pcx" : "colfoun_sm.pcx";
+    const char *message = "OBLIT";
+    if (Rules.tgl_oblit_base_atrocity == 0) {
+        message = "OBLITOK";
+    }
+
+    if (!popp(ScriptPopupFile, message, 0, picture, nullptr)) {
+        NetDaemonNet.unlock_veh();
+        return;
+    }
+    if (NetDaemonNet.add_global() == 0) {
+        if (IsMultiplayerNet != 0) {
+            message_veh(0x2409, vehicle_id, base_id, 0);
+            NetDaemonNet.await_exec(1);
+            return;
+        }
+        action_oblit(vehicle_id, base_id);
+    }
+}
+
+// ORIGINAL: 0x004D95F0 ?assemble@Console@@QAEXXZ 0x004D95F0-0x004D9970
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004D95F0; retained seed src/recovered/units/004d95f0.cpp", "Native4D9775..4D97D0 filters Chassis[prototype.chassis_id].triad, not chassis ID. Existing PopupWriteCheckState owns9BC06C; receiver faction filters vehicles while global cursor history supplies destinations.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::assemble() { // 0x004D95F0
+    const int stored_filters = prefs_get("Vehicle Groups", 7, 0);
+    for (int filter = 0; filter < 12; ++filter) {
+        const uint32_t bit = 1u << filter;
+        if ((stored_filters & static_cast<int>(bit)) != 0) {
+            PopupWriteCheckState |= static_cast<int>(bit);
+        } else {
+            PopupWriteCheckState &= ~static_cast<int>(bit);
+        }
+    }
+
+    if (x_pop_short("ASSEMBLEGROUP", 0x41, nullptr) < 0) {
+        return;
+    }
+
+    clear_group();
+    uint32_t active_filters = 0;
+    for (int selected_filter = 0; selected_filter < 12; ++selected_filter) {
+        const uint32_t bit = 1u << selected_filter;
+        if ((static_cast<uint32_t>(PopupWriteCheckState) & bit) != 0) {
+            active_filters |= bit;
+        }
+    }
+
+    field_23D1C_ = 1;
+    int best_vehicle = -1;
+    for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.faction_id != faction_id_) {
+            continue;
+        }
+
+        if ((active_filters & 1) != 0) {
+            int delta_x = std::abs(static_cast<int>(vehicle.x) -
+                                   ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
+            if ((MapIsFlat & 1) == 0 && delta_x > static_cast<int>(MapLongitude)) {
+                delta_x = static_cast<int>(MapLongitudeBounds) - delta_x;
+            }
+            const int delta_y = std::abs(static_cast<int>(vehicle.y) -
+                                         ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+            if (((delta_x + delta_y) & ~1) > 4) {
+                continue;
+            }
+        }
+
+        const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
+        const int triad = Chassis[prototype.chassis_id].triad;
+        const int plan = prototype.plan;
+        if ((active_filters & 2) != 0 &&
+            (vehicle.order == 1 || vehicle.order == 2)) {
+            continue;
+        }
+        if ((active_filters & 4) != 0 &&
+            (((vehicle.state & 0x01000200u) == 0x01000200u) ||
+             (vehicle.state & 0x4200u) != 0)) {
+            continue;
+        }
+        if (((active_filters & 8) != 0 && triad == TRIAD_LAND) ||
+            ((active_filters & 0x10) != 0 && triad == TRIAD_SEA) ||
+            ((active_filters & 0x20) != 0 && triad == TRIAD_AIR)) {
+            continue;
+        }
+        if ((active_filters & 0x40) != 0 &&
+            (plan == 0 || plan == 1 || plan == 5 || plan == 6)) {
+            continue;
+        }
+        if ((active_filters & 0x80) != 0 && (plan == 2 || plan == 4)) {
+            continue;
+        }
+        if (((active_filters & 0x100) != 0 && plan == 9) ||
+            ((active_filters & 0x200) != 0 && plan == 0xB) ||
+            ((active_filters & 0x400) != 0 &&
+             (plan == 8 || plan == 0xA || plan == 7 || plan == 0xC))) {
+            continue;
+        }
+
+        vehicle.state |= 0x08000000u;
+        best_vehicle = vehicle_id;
+    }
+
+    if (ConsoleGroupAction == 1 && best_vehicle >= 0) {
+        Veh &vehicle = Vehs[best_vehicle];
+        vehicle.order = 0x18;
+        vehicle.waypoint_x[0] = static_cast<int16_t>(
+            ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_]);
+        vehicle.waypoint_y[0] = static_cast<int16_t>(
+            ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_]);
+        vehicle.state &= 0xFCFFBDFFu;
+        group(best_vehicle);
+    }
+
+    if (ConsoleGroupAction == 2) {
+        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id == faction_id_ &&
+                (vehicle.state & 0x08000000u) != 0) {
+                vehicle.order = 0;
+                vehicle.state &= 0xFCFFBDFFu;
+            }
+        }
+    }
+
+    ::draw_map(1);
+    prefs_put("Vehicle Groups", static_cast<int>(active_filters), 0);
+}
+
+// ORIGINAL: 0x004E2000 ?corner_the_market@Console@@QAEXXZ 0x004E2000-0x004E2235
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 004E2000; retained seed src/recovered/units/004e2000.cpp", "Native4E20BB..20DA formats amount/deadline before already-cornered and affordability checks. Native4E219F reloads current turn/rules after lock; message and final formatting read source-owned faction state after callbacks.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::corner_the_market() { // 0x004E2000
+    if ((GameRules & 4) == 0) {
+        return;
+    }
+
+    const int faction_id = ConsoleGlobal.faction_id_;
+    if (!has_tech(Rules.tech_economic_victory, faction_id)) {
+        return;
+    }
+
+    bool has_headquarters = false;
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        if (Bases[base_id].faction_id_current == faction_id &&
+            has_fac_built(FAC_HEADQUARTERS, base_id)) {
+            has_headquarters = true;
+            break;
+        }
+    }
+    if (!has_headquarters) {
+        NetMsgPopup->pop("CORNERNOHQ", 5000, 0, nullptr);
+        return;
+    }
+
+    PlayerData &faction = PlayersData[faction_id];
+    const int amount = corner_market(faction_id);
+    const int proposed_turn = TurnCurrentNum + Rules.turns_corner_gbl_energy_mrkt;
+    parse_num(0, amount);
+    parse_num(1, static_cast<int>(game_year(proposed_turn)));
+
+    if (faction.corner_market_turn > TurnCurrentNum) {
+        parse_num(0, static_cast<int>(game_year(faction.corner_market_turn)));
+        NetMsgPopup->pop("CORNERALREADY", 5000, 0, nullptr);
+        return;
+    }
+
+    if (faction.energy_reserves < amount) {
+        parse_num(1, faction.energy_reserves);
+        NetMsgPopup->pop("CORNERNOTYET", 5000, 0, nullptr);
+        return;
+    }
+
+    if (!popp(ScriptPopupFile, "CORNERMARKET", 0, "econwin_sm.pcx", nullptr)) {
+        return;
+    }
+    if (diplo_lock(0x32) != 0) {
+        return;
+    }
+
+    faction.corner_market_turn =
+        TurnCurrentNum + Rules.turns_corner_gbl_energy_mrkt;
+    faction.corner_market_active = amount;
+    faction.energy_reserves -= amount;
+    synch_leader(faction_id);
+    message_data(0x244F, 0, faction_id, faction.corner_market_turn, amount, 0);
+    diplo_unlock();
+    ConsoleGlobal.update_data(0);
+
+    parse_num(0, static_cast<int>(game_year(faction.corner_market_turn)));
+    parse_num(1, faction.corner_market_active);
+    popp(ScriptPopupFile, "CORNERING", 0, "econwin_sm.pcx", nullptr);
+}
+
+// ORIGINAL: 0x00511800 ?turn_hints@Console@@QAEXXZ 0x00511800-0x00511BA8
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00511800; retained seed src/recovered/units/00511800.cpp", "Existing TutWin guard at8CC210 is member+53A8; stage8CC228 is+53C0. Typed global Console history, PlayerData prototype/base/population fields and diplomacy arrays replace seed address arithmetic. Caption pointer691B14 targets TUTOR691B8C.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::turn_hints() { // 0x00511800
+    if ((GamePreferences & PREF_BSC_TUTORIAL_MSGS) == 0 ||
+        IsMultiplayerNet != 0 || TutWinGlobal->tutorial_blocked()) {
+        return;
+    }
+
+    const int faction_id = ConsoleGlobal.faction_id_;
+    int turn = TurnCurrentNum;
+    const int history = ConsoleGlobal.cursor_history_index_;
+    const int history_x = ConsoleGlobal.cursor_history_x_[history];
+    const int history_y = ConsoleGlobal.cursor_history_y_[history];
+
+    if (turn == 1 && tut_check(1) != 0) {
+        const int base_id = base_find(history_x, history_y, faction_id);
+        if (base_id >= 0) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            if (selected_vehicle_ >= 0) {
+                parse_says(1,
+                           VehPrototypes[Vehs[selected_vehicle_].proto_id].veh_name,
+                           -1, -1);
+                TutWinGlobal->set_tour_stage(0);
+                TutWinGlobal->tut_map("LANDFALL", history_x, history_y, -1,
+                                      nullptr, 0x100, -1, -1);
+            }
+        }
+        turn = TurnCurrentNum;
+    }
+
+    bool second_base_tutorial_shown = false;
+    PlayerData &faction = PlayersData[faction_id];
+    if (turn >= 0x14 && faction.current_num_bases == 1 &&
+        faction.pop_total >= 2 && faction.proto_id_active[0] == 0 &&
+        faction.proto_id_queue[0] == 0 && tut_check(0x100000) != 0) {
+        const int base_id = base_find(history_x, history_y, faction_id);
+        if (base_id >= 0) {
+            const int x = Bases[base_id].x;
+            const int y = Bases[base_id].y;
+            focus(x, y, faction_id);
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            TutWinGlobal->tut_map("SECONDBASE", x, y, -2 - base_id,
+                                  nullptr, 0, -1, -1);
+            faction.last_turn_new_base = TurnCurrentNum;
+            second_base_tutorial_shown = true;
+        }
+    }
+
+    if (!second_base_tutorial_shown) {
+        const int turns_since_new_base = turn - faction.last_turn_new_base;
+        if (turns_since_new_base >= 0x18 && faction.proto_id_active[0] == 0) {
+            const int base_count = static_cast<int>(faction.current_num_bases);
+            if (base_count > 1 && base_count <= 5) {
+                const int base_id = base_find(history_x, history_y, faction_id);
+                if (base_id >= 0) {
+                    const int x = Bases[base_id].x;
+                    const int y = Bases[base_id].y;
+                    TutWinGlobal->tut_map("BUILDMORE", x, y, -2 - base_id,
+                                          nullptr, 0, -1, -1);
+                    faction.last_turn_new_base = TurnCurrentNum;
+                }
+            }
+        }
+    }
+
+    for (int other_faction = 1; other_faction < MaxPlayerNum;
+         ++other_faction) {
+        if (other_faction == faction_id) {
+            continue;
+        }
+        const uint32_t treaties = faction.diplo_treaties[other_faction];
+        if ((treaties & DTREATY_COMMLINK) == 0 ||
+            (treaties & DTREATY_VENDETTA) == 0) {
+            continue;
+        }
+        if (tut_check(0x80) == 0) {
+            return;
+        }
+
+        GenderDefault = Players[other_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[other_faction].title_leader, -1, -1);
+        GenderDefault = Players[other_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[other_faction].name_leader, -1, -1);
+        GenderDefault = Players[other_faction].noun_gender;
+        PluralityDefault = Players[other_faction].is_noun_plural;
+        parse_says(2, Players[other_faction].noun_faction, -1, -1);
+        x_pop_caption_label(TutorialPopupCaption, "VENDETTA", nullptr);
+        return;
+    }
+}
+
+// ORIGINAL: 0x00516DA0 ?governor_directives@Console@@QAEXXZ 0x00516DA0-0x00517033
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original entry 00516DA0; retained seed src/recovered/units/00516da0.cpp", "Native516DC7/516E0E/516E97 uses ConsoleGlobal faction for eligibility/base scanning. Native516EBB..516FC9 repeatedly writes BaseCurrent->governor, not each visited base. Advanced settings use receiver faction at+23BD4; preserve this original behavior rather than silently fixing it.", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions retain the original task baseline"], "reason": "Recover the complete Console command into its genuine owner using typed state and existing lifecycle/network APIs. Preserve original spans and retained seed evidence; this binding is not a byte, reference or runtime acceptance claim."}
+void Console::governor_directives() { // 0x00516DA0
+    if (ConsoleControlTurnActive != 0 || field_23BE8_ == 0 ||
+        !is_human(ConsoleGlobal.faction_id_)) {
+        return;
+    }
+
+    const int directive = x_pop_short("GOVERNORCONTROL", 0x40, 0);
+    if (directive < 0 || BaseCurrentCount <= 0) {
+        return;
+    }
+
+    int first_owned_base = -1;
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        if (Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
+            first_owned_base = base_id;
+            break;
+        }
+    }
+    if (first_owned_base < 0) {
+        return;
+    }
+
+    if (directive == 5) {
+        set_base(first_owned_base);
+        if (TutWinBaseWindow.governor(1) != 0) {
+            return;
+        }
+    }
+    if (diplo_lock(0x32) != 0) {
+        return;
+    }
+
+    StringTemp[0] = 0;
+    for (int owned_base_id = 0; owned_base_id < BaseCurrentCount; ++owned_base_id) {
+        if (Bases[owned_base_id].faction_id_current != ConsoleGlobal.faction_id_) {
+            continue;
+        }
+
+        // The image mutates BaseCurrent, the selected-base pointer, while
+        // walking the owner's base records. It does not retarget that pointer
+        // to each matching record inside this loop.
+        Base &base = *BaseCurrent;
+
+        int label_offset;
+        switch (directive) {
+        case 0:
+            base.governor &= 0x7FFFFFFFu;
+            base.governor &= 0xF0FFFFFFu;
+            label_offset = 0xAF8 / 4;
+            break;
+        case 1:
+        case 2:
+        case 3:
+        case 4:
+            base.governor |= 0x80000000u;
+            base.governor &= 0xF0FFFFFFu;
+            base.governor |= static_cast<uint32_t>(1u << (23 + directive));
+            label_offset = (0x824 + (directive - 1) * 4) / 4;
+            break;
+        case 5:
+            base.governor = static_cast<uint32_t>(
+                PlayersData[faction_id_].base_governor_adv);
+            label_offset = 0xAFC / 4;
+            break;
+        default:
+            continue;
+        }
+        strcat(StringTemp, label_get(label_offset));
+    }
+
+    parse_says(0, StringTemp, -1, -1);
+    NetMsgPopup->pop("GOVERNORCONTROLDONE", 5000, 0, nullptr);
+    diplo_unlock();
+}
+
 
 // ORIGINAL: 0x004DE960 ?editor_kill_veh@Console@@QAEXH@Z 0x004DE960-0x004DECF7;0x0065BC13-0x0065BD30 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original4DE989 constructs local Popup before auto_undo5ABF20 at4DE995. Negative explicit ID reads absolute ConsoleGlobal939288/28C and cursor-history arrays, not receiver-relative fields; canceled lookup/picker returns through real cleanup.", "Pinned original4DE9B7..4DE9D6 pushes parse_says(0,VehPrototypes[Vehs[vehicle].proto_id].veh_name,-1,-1), correcting conflicting seed arguments. Confirmation invokes real kill5C0B00, not veh_kill.", "Pinned relocation-free NUL literals PICKKILL at689068..689071 and DELETEME at689074..68907D. Full code4DE960..4DECF7 and cleanup65BC13..65BD30 remain original obligations; seed004de960 retained."], "reason": "Recover the complete editor vehicle-deletion command with genuine Popup lifetime and typed global Console selection. The original ignores its member receiver; selecting a different Console must not change its global cursor lookup."}

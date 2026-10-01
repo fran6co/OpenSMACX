@@ -122,6 +122,12 @@ class Console : public MapWin {
   void next_cursor();
   // homed from 004d7cf0.cpp
   void designate(int veh_id);
+  void sentry(int veh_id, int mode);
+  void oblit(int veh_id);
+  void assemble();
+  void corner_the_market();
+  void turn_hints();
+  void governor_directives();
 
  public:
   // homed from 004d8f40.cpp
