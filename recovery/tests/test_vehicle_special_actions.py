@@ -20,13 +20,14 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_partial_dependencies_remain_unfinished_in_native_source_reader():
     from match_recovery.source import read_file
 
-    partial = {0x57F4B0, 0x57E040}
+    partial = {0x57E040}
     records = {r.address: r for r in read_file(ROOT / "src/veh.cpp")}
     assert partial <= records.keys()
     assert all(records[address].state.name == "PLACEHOLDER" for address in partial)
     assert records[0x4CDAF0].state.name == "IMPLEMENTED"
     assert records[0x57F1D0].state.name == "IMPLEMENTED"
     assert records[0x580860].state.name == "IMPLEMENTED"
+    assert records[0x57F4B0].state.name == "IMPLEMENTED"
 
 def retire_harness(function):
     return r"""
@@ -486,6 +487,959 @@ int main() {
 }
 """.replace("LIVE_BODY", function)
 
+
+def prune_harness(function):
+    return r"""
+#include <cstdint>
+#include <cstdlib>
+#include <cstring>
+#include <cstdio>
+#define __cdecl
+const int MaxVehProtoFactionNum=64;
+const int MaxVehProtoNum=512;
+const int MaxAbilityNum=29;
+const int PROTO_ACTIVE=1, PROTO_TYPED_COMPLETE=4;
+const int TRIAD_LAND=0, TRUE=1, FALSE=0;
+const int MPREF_BSC_AUTO_PRUNE_OBS_VEH=0x100000;
+const int RFLAG_ALIEN=0x80;
+typedef char *LPSTR;
+struct VehPrototype {
+    char veh_name[32]; uint32_t ability_flags;
+    uint8_t chassis_id, weapon_id, armor_id, reactor_id;
+    uint8_t carry_capacity, cost, plan; int8_t unk_1;
+    uint8_t obsolete_factions; int8_t combat_factions, icon_offset, padding;
+    uint16_t flags; int16_t preq_tech;
+};
+VehPrototype VehPrototypes[512];
+struct RulesWeapon { int offense_rating; int mode; } Weapon[26];
+struct RulesArmor { int defense_rating; int mode; } Armor[14];
+struct RulesChassis { int triad, speed, range; } Chassis[19];
+struct RulesAbility { LPSTR name, description, abbreviation; } Ability[29];
+struct StringTableStub { const char *get(int) { return ""; } } StringTable;
+const char *prototype_rule_name(LPSTR text) { return text; }
+char StringTemp[1032];
+int say_stats_2(char *,int) { return 0; }
+int parsed_report_count=0;
+char parsed_reports[16][1032];
+int manual_flag_target=-1;
+bool manual_flag_on_parse=false;
+bool manual_flag_on_prompt=false;
+bool multiplayer_on_prompt=false;
+bool manual_flag_on_sync=false;
+bool enable_lock_on_sync=false;
+int parse_says(int slot,const char *text,int,int) {
+    std::strncpy(parsed_reports[slot],text,sizeof(parsed_reports[slot])-1);
+    ++parsed_report_count;
+    if (manual_flag_on_parse && manual_flag_target >= 0)
+        VehPrototypes[manual_flag_target].flags |= 0x0200;
+    return 0;
+}
+const char *ScriptPopupFile="SCRIPT";
+int popup_calls=0;
+const char *popup_caption, *popup_label, *popup_picture;
+int popp(const char *caption,const char *label,int,const char *picture,
+         int (__cdecl *)()) {
+    ++popup_calls; popup_caption=caption; popup_label=label;
+    popup_picture=picture; return 0;
+}
+int production_upgrade_choice=0, production_upgrade_prompts=0;
+extern int IsMultiplayerNet;
+int X_pop(const char *label,int (__cdecl *)()) {
+    if (std::strcmp(label,"ASKPRODUPGRADE")==0) ++production_upgrade_prompts;
+    if (manual_flag_on_prompt && manual_flag_target >= 0)
+        VehPrototypes[manual_flag_target].flags |= 0x0200;
+    if (multiplayer_on_prompt) IsMultiplayerNet=1;
+    return production_upgrade_choice;
+}
+struct Player { uint32_t rule_flags; } Players[8];
+struct ConsoleStub { int faction_id_; } ConsoleGlobal={2};
+uint32_t *queue_size_after_lock_target=0;
+uint32_t queue_size_after_lock_value=0;
+struct NetDaemonStub {
+    int locks, unlocks, lock_result;
+    int lock_base(int,int,int,int) {
+        ++locks;
+        if (queue_size_after_lock_target != 0) {
+            *queue_size_after_lock_target=queue_size_after_lock_value;
+        }
+        return lock_result;
+    }
+    void unlock_base(int) { ++unlocks; }
+} NetDaemonNet;
+struct Base {
+    uint8_t faction_id_current;
+    uint32_t queue_size;
+    int queue_production_id[10];
+} Bases[8];
+int BaseCurrentCount=0;
+struct PlayerData {
+    int enemy_best_armor_value, enemy_best_weapon_value;
+    uint8_t proto_id_active[512], proto_id_queue[512];
+} PlayersData[8];
+struct RulesStub {
+    int psi_combat_ratio_atk[3]={1,1,1};
+    int psi_combat_ratio_def[3]={1,1,1};
+} Rules;
+int ExpansionEnabled=1;
+int psi_factor_calls=0;
+int psi_factor(int value,int,int,int) { ++psi_factor_calls; return value; }
+int IsMultiplayerNet=0;
+uint32_t GameMorePreferences=0;
+uint32_t LockEnableMask;
+int has_tech_result=1, has_tech_calls=0;
+int has_tech(int,int) { ++has_tech_calls; return has_tech_result; }
+int bit_count(int bits) {
+    int count=0;
+    for (; bits; bits &= bits-1) ++count;
+    return count;
+}
+int synchronized_prototypes[16], synchronized_count;
+void synch_obs(int prototype) {
+    synchronized_prototypes[synchronized_count++]=prototype;
+    if (manual_flag_on_sync && manual_flag_target >= 0)
+        VehPrototypes[manual_flag_target].flags |= 0x0200;
+    if (enable_lock_on_sync) LockEnableMask=4;
+}
+void check(bool ok,int n) {
+    if (!ok) { std::fprintf(stderr,"prune host check %d failed\n",n); std::exit(42); }
+}
+void setup_prune_queue_case(int multiplayer) {
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    LockEnableMask=4;
+    IsMultiplayerNet=multiplayer;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=129;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5;
+    VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5;
+    VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2;
+    VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=2;
+    Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=3;
+    Armor[6].defense_rating=2;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+}
+
+LIVE_PRUNE_HELPERS
+LIVE_PRUNE_BODY
+
+void reset() {
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    VehPrototypes[64].chassis_id=2;
+    std::memset(Weapon,0,sizeof(Weapon));
+    std::memset(Armor,0,sizeof(Armor));
+    std::memset(Chassis,0,sizeof(Chassis));
+    std::memset(Ability,0,sizeof(Ability));
+    std::memset(Players,0,sizeof(Players));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    std::memset(Bases,0,sizeof(Bases));
+    BaseCurrentCount=0;
+    synchronized_count=0;
+    LockEnableMask=0;
+    IsMultiplayerNet=0;
+    GameMorePreferences=0;
+    ExpansionEnabled=1;
+    psi_factor_calls=0;
+    NetDaemonNet.locks=NetDaemonNet.unlocks=0;
+    NetDaemonNet.lock_result=0;
+    queue_size_after_lock_target=0;
+    queue_size_after_lock_value=0;
+    has_tech_result=1;
+    has_tech_calls=0;
+    popup_calls=parsed_report_count=0;
+    std::memset(parsed_reports,0,sizeof(parsed_reports));
+    production_upgrade_choice=production_upgrade_prompts=0;
+    manual_flag_target=-1;
+    manual_flag_on_parse=manual_flag_on_prompt=multiplayer_on_prompt=false;
+    manual_flag_on_sync=false;
+    enable_lock_on_sync=false;
+    popup_caption=popup_label=popup_picture=nullptr;
+}
+int main() {
+    reset();
+    VehPrototypes[64].flags=PROTO_TYPED_COMPLETE;
+    VehPrototypes[0].flags=PROTO_ACTIVE;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    prune_protos(2,64,0);
+    check((VehPrototypes[128].flags & (PROTO_TYPED_COMPLETE|0x100))
+          == (PROTO_TYPED_COMPLETE|0x100),1);
+
+    reset();
+    VehPrototypes[64].flags=PROTO_TYPED_COMPLETE;
+    VehPrototypes[0].flags=PROTO_ACTIVE;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[128].obsolete_factions=4;
+    VehPrototypes[129].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    prune_protos(2,64,0);
+    check((VehPrototypes[128].flags & (PROTO_TYPED_COMPLETE|0x100))
+          == (PROTO_TYPED_COMPLETE|0x100),2);
+
+    reset();
+    VehPrototypes[64].flags=PROTO_TYPED_COMPLETE;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    prune_protos(2,64,0);
+    check((VehPrototypes[128].flags & PROTO_TYPED_COMPLETE)==0,3);
+
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=4;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=VehPrototypes[129].reactor_id=2;
+    VehPrototypes[128].carry_capacity=VehPrototypes[129].carry_capacity=1;
+    VehPrototypes[128].ability_flags=VehPrototypes[129].ability_flags=0x408418;
+    Chassis[2].triad=1;
+    prune_protos(2,64,1);
+    check((VehPrototypes[129].obsolete_factions & 4)!=0,4);
+    check(synchronized_count==1 && synchronized_prototypes[0]==129,5);
+
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=4;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[128].carry_capacity=VehPrototypes[129].carry_capacity=1;
+    VehPrototypes[128].ability_flags=VehPrototypes[129].ability_flags=0x408418;
+    Chassis[2].triad=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)!=0,6);
+    check(synchronized_count==0,7);
+
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=4;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=VehPrototypes[129].reactor_id=2;
+    VehPrototypes[128].carry_capacity=1; VehPrototypes[129].carry_capacity=0;
+    VehPrototypes[128].ability_flags=VehPrototypes[129].ability_flags=0x408418;
+    Chassis[2].triad=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)!=0,8);
+
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=3; VehPrototypes[129].plan=4;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=4;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=VehPrototypes[129].reactor_id=2;
+    VehPrototypes[128].carry_capacity=VehPrototypes[129].carry_capacity=1;
+    VehPrototypes[128].ability_flags=VehPrototypes[129].ability_flags=0x408418;
+    Chassis[2].triad=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,9);
+    check(synchronized_count==0,10);
+
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    VehPrototypes[5].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[5].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[5].unk_1=4;
+    VehPrototypes[128].chassis_id=VehPrototypes[5].chassis_id=2;
+    VehPrototypes[128].weapon_id=6; VehPrototypes[5].weapon_id=5;
+    VehPrototypes[128].armor_id=6; VehPrototypes[5].armor_id=5;
+    VehPrototypes[128].reactor_id=VehPrototypes[5].reactor_id=2;
+    VehPrototypes[128].carry_capacity=VehPrototypes[5].carry_capacity=1;
+    VehPrototypes[128].ability_flags=0x409418;
+    VehPrototypes[5].ability_flags=0x408418;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Weapon[5].mode=Weapon[6].mode=1;
+    Armor[5].defense_rating=2; Armor[6].defense_rating=3;
+    Chassis[2].triad=1;
+    prune_protos(2,64,1);
+    check((VehPrototypes[5].obsolete_factions & 4)!=0,11);
+    check(synchronized_count==1 && synchronized_prototypes[0]==5,12);
+
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    VehPrototypes[5].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[5].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[5].unk_1=4;
+    VehPrototypes[128].chassis_id=VehPrototypes[5].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[5].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[5].armor_id=6;
+    VehPrototypes[128].reactor_id=VehPrototypes[5].reactor_id=2;
+    VehPrototypes[128].carry_capacity=VehPrototypes[5].carry_capacity=1;
+    VehPrototypes[128].ability_flags=0x408418;
+    VehPrototypes[5].ability_flags=0x418;
+    Chassis[2].triad=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[5].obsolete_factions & 4)==0,13);
+
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=4;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[128].carry_capacity=VehPrototypes[129].carry_capacity=1;
+    VehPrototypes[128].ability_flags=VehPrototypes[129].ability_flags=0x408418;
+    Chassis[2].triad=1; LockEnableMask=4;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,14);
+
+    reset();
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    LockEnableMask=4;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=1;
+    Bases[0].queue_production_id[0]=129;
+    Bases[0].queue_production_id[1]=128;
+    Bases[1].faction_id_current=3;
+    Bases[1].queue_size=0;
+    Bases[1].queue_production_id[0]=129;
+    BaseCurrentCount=2;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5; VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[128].ability_flags=VehPrototypes[129].ability_flags=0;
+    Weapon[5].offense_rating=2; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=3; Armor[6].defense_rating=2;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    prune_protos(2,64,1);
+    check((VehPrototypes[129].obsolete_factions & 4)!=0,15);
+    check(synchronized_count==1 && synchronized_prototypes[0]==129,16);
+    check(Bases[0].queue_production_id[0]==128,17);
+    check(Bases[0].queue_production_id[1]==128,18);
+    check(Bases[1].queue_production_id[0]==129,20);
+
+    reset();
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    LockEnableMask=4;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5; VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[128].ability_flags=1; VehPrototypes[129].ability_flags=0;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Armor[5].defense_rating=2; Armor[6].defense_rating=3;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    PlayersData[2].proto_id_active[129]=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,19);
+
+    reset();
+    IsMultiplayerNet=1;
+    LockEnableMask=4;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=129;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5; VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=2; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=3; Armor[6].defense_rating=2;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    Players[2].rule_flags=RFLAG_ALIEN;
+    prune_protos(2,64,1);
+    check(Bases[0].queue_production_id[0]==128,21);
+    check(NetDaemonNet.locks==1 && NetDaemonNet.unlocks==1,22);
+    check(popup_calls==1 && std::strcmp(popup_caption,"SCRIPT")==0
+          && std::strcmp(popup_label,"PRODUPGRADE")==0
+          && std::strcmp(popup_picture,"alunit_sm.pcx")==0,23);
+    check(parsed_report_count==2,24);
+
+    // The native network path skips this base when locking fails; it neither
+    // mutates its production queue nor unlocks a lock it never acquired.
+    reset();
+    IsMultiplayerNet=1;
+    LockEnableMask=4;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=129;
+    NetDaemonNet.lock_result=1;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5; VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=2; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=3; Armor[6].defense_rating=2;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    prune_protos(2,64,1);
+    check(Bases[0].queue_production_id[0]==129,25);
+    check(NetDaemonNet.locks==1 && NetDaemonNet.unlocks==0,26);
+    check(popup_calls==0,27);
+
+    // The local prompt first publishes both design reports. A choice greater
+    // than one still permits queue substitution but avoids the manual-obsolete
+    // flag transition, matching the native X_pop branch.
+    reset();
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    LockEnableMask=4;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=129;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5; VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=2; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=3; Armor[6].defense_rating=2;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    production_upgrade_choice=2;
+    std::strcpy(VehPrototypes[129].veh_name,"Obsolete");
+    std::strcpy(VehPrototypes[128].veh_name,"Replacement");
+    VehPrototypes[129].ability_flags=1;
+    Ability[0].abbreviation=const_cast<char *>("ABL");
+    prune_protos(2,64,0);
+    check(production_upgrade_prompts==1 && parsed_report_count==2,28);
+    check(std::strcmp(parsed_reports[0],"Obsolete ( ABL)")==0,40);
+    check(std::strcmp(parsed_reports[1],"Replacement ()")==0,41);
+    check(Bases[0].queue_production_id[0]==128,29);
+    check((VehPrototypes[129].flags & 0x0208)==0,30);
+
+    // The local report/prompt is selected by the faction-base walk, not by
+    // finding this prototype in a queue; a nonmatching queue remains intact.
+    reset();
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    LockEnableMask=4;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=130;
+    BaseCurrentCount=2;
+    Bases[1].faction_id_current=2;
+    Bases[1].queue_size=0;
+    Bases[1].queue_production_id[0]=129;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5; VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=2; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=3; Armor[6].defense_rating=2;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    production_upgrade_choice=2;
+    prune_protos(2,64,0);
+    check(production_upgrade_prompts==1 && parsed_report_count==2,31);
+    check(Bases[0].queue_production_id[0]==130,32);
+
+    reset();
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    LockEnableMask=4;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=129;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=5; VehPrototypes[129].armor_id=6;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[129].flags|=0x0008;
+    Weapon[5].offense_rating=2; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=3; Armor[6].defense_rating=2;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    production_upgrade_choice=1;
+    prune_protos(2,64,0);
+    check(production_upgrade_prompts==1,33);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,34);
+    check((VehPrototypes[129].flags & 0x0208)==0x0208,35);
+    check(Bases[0].queue_production_id[0]==129,36);
+
+    reset();
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=1; VehPrototypes[129].unk_1=2;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=Weapon[6].offense_rating=0;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,37);
+
+    reset();
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    LockEnableMask=4;
+    ExpansionEnabled=0;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=1; VehPrototypes[129].unk_1=2;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=10; VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[10].offense_rating=5; Weapon[5].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].speed=Chassis[2].range=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)!=0,38);
+
+    // Native dominance compares chassis triad and range, not chassis IDs.
+    // The late replacement pass rejects this higher-reactor target, leaving
+    // the earlier cross-prototype comparison to obsolete the lower-reactor peer.
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=2;
+    VehPrototypes[128].chassis_id=2; VehPrototypes[129].chassis_id=3;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=1; VehPrototypes[129].reactor_id=2;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[3].triad=1;
+    Chassis[2].range=Chassis[3].range=1;
+    Chassis[2].speed=Chassis[3].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[128].obsolete_factions & 4)!=0,39);
+
+    // The native first dominance pass takes its lower-reactor early mark
+    // after triad equality and before the later range check.
+    reset();
+    VehPrototypes[10].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    VehPrototypes[10].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[10].unk_1=VehPrototypes[129].unk_1=2;
+    VehPrototypes[10].chassis_id=2; VehPrototypes[129].chassis_id=3;
+    VehPrototypes[10].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[10].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[10].reactor_id=1; VehPrototypes[129].reactor_id=2;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[3].triad=1;
+    Chassis[2].range=1; Chassis[3].range=2;
+    Chassis[2].speed=Chassis[3].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[10].obsolete_factions & 4)!=0,42);
+
+    // Native 57FA95 marks a lower-reactor peer before carry, ratings, and
+    // ability dominance.
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=2;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=5; VehPrototypes[129].weapon_id=6;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=0; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[128].carry_capacity=0;
+    VehPrototypes[129].carry_capacity=1;
+    VehPrototypes[128].ability_flags=2;
+    Weapon[5].offense_rating=9; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[128].obsolete_factions & 4)!=0,43);
+
+    // Native 57FA95 excludes typed-complete peers when the target is not
+    // typed-complete (the local_30 path has not enabled that comparison).
+    reset();
+    VehPrototypes[128].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].unk_1=VehPrototypes[129].unk_1=2;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].carry_capacity=0;
+    VehPrototypes[129].carry_capacity=1;
+    Chassis[2].triad=Chassis[2].range=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[128].obsolete_factions & 4)==0,44);
+
+    // Native automatic pruning is directional: a replacement with lower raw
+    // offense cannot retire the stronger target.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=6; VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[128].carry_capacity=1;
+    Weapon[5].offense_rating=2; Weapon[6].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,45);
+
+    // Ability differences may bypass live/queued protections when the
+    // replacement has a reactor advantage; allowed-bit differences remain
+    // subject to the native mask.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[128].ability_flags=0;
+    VehPrototypes[129].ability_flags=2;
+    Weapon[5].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    PlayersData[2].proto_id_active[129]=1;
+    PlayersData[2].proto_id_queue[129]=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)!=0,46);
+
+    // When the target is the function prototype ID, native sets flag 0x8
+    // and synchronizes it without setting its ordinary obsolete bit.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,129,1);
+    check((VehPrototypes[129].flags & 0x0008)!=0
+          && (VehPrototypes[129].obsolete_factions & 4)==0,47);
+    check(synchronized_count==1 && synchronized_prototypes[0]==129,48);
+
+    // A predefined target is marked first; its prerequisite is tested only
+    // after that native mark, not as an inner-loop candidate gate.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    has_tech_result=0;
+    VehPrototypes[128].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    VehPrototypes[5].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[5].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[5].chassis_id=2;
+    VehPrototypes[128].weapon_id=6; VehPrototypes[5].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[5].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[5].reactor_id=1;
+    VehPrototypes[128].carry_capacity=VehPrototypes[5].carry_capacity=1;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[5].obsolete_factions & 4)!=0,49);
+
+    // With options enabled, a non-MP/nonlocal base path still locks. Queue
+    // size is reread after the lock callback, so newly-live slot 1 is changed.
+    reset();
+    ConsoleGlobal.faction_id_=3;
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    BaseCurrentCount=2;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=130;
+    Bases[0].queue_production_id[1]=129;
+    Bases[1].faction_id_current=2;
+    Bases[1].queue_size=0;
+    Bases[1].queue_production_id[0]=129;
+    queue_size_after_lock_target=&Bases[0].queue_size;
+    queue_size_after_lock_value=1;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=6; VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,1);
+    check(Bases[0].queue_production_id[1]==128,50);
+    check(NetDaemonNet.locks==2 && NetDaemonNet.unlocks==0,51);
+    ConsoleGlobal.faction_id_=2;
+
+    // A predefined outer replacement is rejected by its own prerequisite
+    // check, while inner predefined targets are checked only after marking.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    has_tech_result=0;
+    VehPrototypes[5].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[5].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[5].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[5].weapon_id=6; VehPrototypes[129].weapon_id=5;
+    VehPrototypes[5].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[5].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[5].carry_capacity=1;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0
+          && has_tech_calls!=0,52);
+
+    // A disallowed ability delta fails before any activity/queue exception.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    VehPrototypes[129].ability_flags=4;
+    Weapon[5].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,53);
+
+    // The local prompt and every base side effect require a target ID found
+    // by the global owned-base queue scan.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    BaseCurrentCount=1;
+    Bases[0].faction_id_current=2;
+    Bases[0].queue_size=0;
+    Bases[0].queue_production_id[0]=130;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=6; VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=2; VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=1; Weapon[6].offense_rating=2;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check(production_upgrade_prompts==0
+          && Bases[0].queue_production_id[0]==130,54);
+
+    // Exact part duplicates crossing the predefined/faction boundary are
+    // skipped by the native late walk.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    VehPrototypes[5].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[5].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[5].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[5].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[5].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[5].reactor_id=VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)==0,55);
+
+    // The same exact design pair within faction-owned slots is not rejected
+    // by that predefined-boundary exception.
+    reset();
+    LockEnableMask=4;
+    GameMorePreferences=MPREF_BSC_AUTO_PRUNE_OBS_VEH;
+    VehPrototypes[128].flags=PROTO_ACTIVE;
+    VehPrototypes[129].flags=PROTO_ACTIVE;
+    VehPrototypes[128].plan=VehPrototypes[129].plan=3;
+    VehPrototypes[128].chassis_id=VehPrototypes[129].chassis_id=2;
+    VehPrototypes[128].weapon_id=VehPrototypes[129].weapon_id=5;
+    VehPrototypes[128].armor_id=VehPrototypes[129].armor_id=5;
+    VehPrototypes[128].reactor_id=VehPrototypes[129].reactor_id=1;
+    Weapon[5].offense_rating=1;
+    Armor[5].defense_rating=1;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[129].obsolete_factions & 4)!=0,56);
+
+    // The native first predefined comparison has a target prerequisite gate,
+    // not a per-candidate has_tech call.
+    reset();
+    has_tech_result=0;
+    VehPrototypes[5].flags=PROTO_ACTIVE;
+    VehPrototypes[5].preq_tech=99;
+    VehPrototypes[128].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    VehPrototypes[5].plan=VehPrototypes[128].plan=3;
+    VehPrototypes[5].chassis_id=VehPrototypes[128].chassis_id=2;
+    VehPrototypes[5].reactor_id=1; VehPrototypes[128].reactor_id=2;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(2,64,0);
+    check((VehPrototypes[5].obsolete_factions & 4)!=0
+          && has_tech_calls==0,57);
+
+    // Faction zero aliases the faction bank with predefined IDs. Native first
+    // pass prerequisite checking applies to the full target ID, and the target
+    // itself is skipped as a predefined candidate.
+    reset();
+    VehPrototypes[1].flags=PROTO_ACTIVE;
+    VehPrototypes[1].preq_tech=99;
+    VehPrototypes[1].plan=3;
+    VehPrototypes[1].chassis_id=2;
+    Chassis[2].triad=Chassis[2].range=Chassis[2].speed=1;
+    prune_protos(0,64,0);
+    check((VehPrototypes[1].obsolete_factions & 1)==0
+          && has_tech_calls==1,58);
+
+    reset();
+    has_tech_result=0;
+    VehPrototypes[1].flags=PROTO_ACTIVE;
+    VehPrototypes[1].preq_tech=99;
+    prune_protos(0,64,0);
+    check((VehPrototypes[1].obsolete_factions & 1)==0
+          && has_tech_calls==1,59);
+
+    // Reports are parsed before the local path reloads a manual flag set by
+    // the parser callback, so that flag suppresses X_pop and retains the item.
+    reset();
+    setup_prune_queue_case(0);
+    manual_flag_target=129;
+    manual_flag_on_parse=true;
+    prune_protos(2,64,1);
+    check(parsed_report_count==2 && production_upgrade_prompts==0,60);
+    check((VehPrototypes[129].flags & 0x0208)==0x0208
+          && (VehPrototypes[129].obsolete_factions & 4)==0,61);
+    check(Bases[0].queue_production_id[0]==129,62);
+
+    // A >1 prompt result jumps straight to queue handling even if X_pop sets
+    // the manual flag; if it also flips multiplayer on, native still unlocks
+    // and uses the live multiplayer value for the final popup.
+    reset();
+    setup_prune_queue_case(0);
+    manual_flag_target=129;
+    manual_flag_on_prompt=true;
+    multiplayer_on_prompt=true;
+    production_upgrade_choice=2;
+    prune_protos(2,64,1);
+    check(parsed_report_count==4 && production_upgrade_prompts==1,63);
+    check(Bases[0].queue_production_id[0]==128
+          && (VehPrototypes[129].obsolete_factions & 4)!=0,64);
+    check(NetDaemonNet.locks==0 && NetDaemonNet.unlocks==1
+          && popup_calls==1,65);
+
+    // In the native multiplayer branch a sync callback may set flag 0x200,
+    // but this path does not parse reports early or enter manual retention.
+    reset();
+    setup_prune_queue_case(1);
+    manual_flag_target=129;
+    manual_flag_on_sync=true;
+    prune_protos(2,64,1);
+    check((VehPrototypes[129].flags & 0x0200)!=0
+          && (VehPrototypes[129].obsolete_factions & 4)!=0,66);
+    check(Bases[0].queue_production_id[0]==128
+          && production_upgrade_prompts==0,67);
+    check(parsed_report_count==2 && NetDaemonNet.locks==1
+          && NetDaemonNet.unlocks==1 && popup_calls==1,68);
+
+    // 57FEC2..57FED0 accepts matching non-positive armor IDs without
+    // entering either normalization/psi call, even for unequal reactors.
+    reset();
+    setup_prune_queue_case(1);
+    VehPrototypes[129].armor_id=5;
+    Armor[5].defense_rating=-1;
+    prune_protos(2,64,0);
+    check(psi_factor_calls==0,69);
+    check(Bases[0].queue_production_id[0]==128
+          && (VehPrototypes[129].obsolete_factions & 4)!=0,70);
+
+    // The predefined target's saved typed-peer permission is true even
+    // without flag 4. A lower-reactor typed peer is therefore retired.
+    reset();
+    VehPrototypes[1].flags=PROTO_ACTIVE;
+    VehPrototypes[2].flags=PROTO_ACTIVE|PROTO_TYPED_COMPLETE;
+    VehPrototypes[1].reactor_id=2;
+    VehPrototypes[2].reactor_id=1;
+    Weapon[0].offense_rating=-1; // Exclude the first predefined walk.
+    prune_protos(0,64,0);
+    check((VehPrototypes[2].obsolete_factions & 1)!=0,71);
+
+    // The unlocked mode's native epilogue cannot fall through to automatic
+    // pruning when a sync callback enables locks and multiplayer is live.
+    reset();
+    setup_prune_queue_case(1);
+    LockEnableMask=0;
+    enable_lock_on_sync=true;
+    VehPrototypes[128].reactor_id=1;
+    VehPrototypes[129].reactor_id=2;
+    prune_protos(2,64,1);
+    check(synchronized_count>0 && LockEnableMask==4,72);
+    check(Bases[0].queue_production_id[0]==129
+          && NetDaemonNet.locks==0 && parsed_report_count==0,73);
+}
+""".replace(
+        "LIVE_PRUNE_HELPERS",
+        actual_function("prototype_armor_strength")
+        + "\n"
+        + actual_function("parse_prototype_report"),
+    ).replace("LIVE_PRUNE_BODY", function)
+
+def test_live_prune_protos_typed_completion_marking(tmp_path):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host g++ required")
+    cpp = tmp_path / "prune_protos.cpp"
+    executable = tmp_path / "prune_protos"
+    cpp.write_text(prune_harness(actual_function("prune_protos")))
+    result = subprocess.run(
+        [compiler, "-std=c++11", "-O1", "-fsanitize=undefined",
+         "-fno-sanitize-recover=undefined", str(cpp), "-o", str(executable)],
+        capture_output=True, text=True, timeout=30)
+    assert result.returncode == 0, result.stderr
+    result = subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
+    assert result.returncode == 0, result.stderr
 
 def test_live_shoot_it_orbital_and_flechette_paths(tmp_path):
     compiler = shutil.which("g++")

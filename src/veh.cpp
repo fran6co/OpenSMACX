@@ -12008,10 +12008,42 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
     }
 }
 
+static int prototype_armor_strength(const VehPrototype &design,
+                                    int faction_id) {
+    const int armor_id = design.armor_id;
+    if (!ExpansionEnabled && armor_id > 9) return 1;
+    if (Armor[armor_id].defense_rating < 0) {
+        const int ratio = static_cast<int>(
+            PlayersData[faction_id].enemy_best_weapon_value)
+            * static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND])
+            / static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND]);
+        return psi_factor(ratio, faction_id, FALSE, FALSE);
+    }
+    return static_cast<int>(Armor[armor_id].defense_rating);
+}
+
+static void parse_prototype_report(int parse_id, int design_id) {
+    StringTemp[0] = '\0';
+    ::strcat(StringTemp, VehPrototypes[design_id].veh_name);
+    ::strcat(StringTemp, " ");
+    ::strcat(StringTemp, "(");
+    say_stats_2(StringTemp, design_id);
+    if (VehPrototypes[design_id].ability_flags != 0) {
+        ::strcat(StringTemp, " ");
+        for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
+            if ((VehPrototypes[design_id].ability_flags
+                 & (1u << ability_id)) == 0) continue;
+            ::strcat(StringTemp, prototype_rule_name(
+                Ability[ability_id].abbreviation));
+        }
+    }
+    ::strcat(StringTemp, ")");
+    parse_says(parse_id, StringTemp, -1, -1);
+}
+
 // ORIGINAL: 0x0057F4B0 ?prune_protos@@YAXHHH@Z 0x0057F4B0-0x00580859
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0057F4B0; retained seed src/unrecovered/0057f4b0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057f4b0.cpp; image:0x0057F4B0-0x00580859", "Completion propagation:0x0057F4BF-0x0057F693", "LockEnableMask separates retirement modes, unlocked epilogue returns:0x0057F699-0x0057F6AD;0x0057FCF3-0x0057FCFA", "Lower-reactor early marks:0x0057F7C8-0x0057F7DB;0x0057FA95-0x0057FAA0", "Locked replacement/target banks and non-positive armor bypass:0x0057FD13-0x005802A9;0x0057FEC2-0x0057FFC6", "Queue presence and callback-sensitive prompt/rewrite/unlock/report:0x005802AA-0x00580852"], "reason": "Recover typed completion and both mutually exclusive prototype-retirement modes in the genuine vehicle-design owner. Loaded weapon/armor/chassis rules, faction design banks and active/queued counts determine obsolescence; owned Base queues and NetDaemon locking supply production migration, with native local prompt and multiplayer report ordering. Preserve the complete seed and original spans as evidence; this structural interpretation is not a measured matching claim."}
 void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
-    (void)options;
     const int faction_base = faction_id * MaxVehProtoFactionNum;
     const bool can_mark_typed_completions = prototype_id < MaxVehProtoFactionNum
         || (VehPrototypes[prototype_id].flags & PROTO_TYPED_COMPLETE) != 0;
@@ -12076,8 +12108,381 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
         }
       }
     }
-    // The second native cross-prototype pass applies faction
-    // flags, rules-specific ratings, reactor/carry constraints and retirement
-    // decisions beyond the dominated-component marking above.
-    // BODY GOES HERE.
+
+    // Native 57F69C..57FCF9 processes each faction target in two ordered
+    // walks: typed targets compare against the predefined bank first, then
+    // every eligible target compares against its faction peers. The first
+    // walk has a lower-reactor early mark; the peer walk likewise marks a
+    // lower-reactor peer before later chassis, carry, rating and ability
+    // checks. The cross-prototype region is skipped while this faction is
+    // locked; its automatic-prune tail has a separate native entry path.
+    const uint8_t faction_bit = static_cast<uint8_t>(1u << (faction_id & 0x1f));
+    if ((LockEnableMask & faction_bit) == 0) {
+    // The first native obsolescence walk compares faction designs with the
+    // predefined bank too. Preserve its prerequisite and unsupported-weapon
+    // exclusions before applying the exact-equivalence subcase.
+    for (int target_slot = 0; target_slot < MaxVehProtoFactionNum; ++target_slot) {
+        const int target_id = faction_base + target_slot;
+        const VehPrototype &target = VehPrototypes[target_id];
+        if ((target.flags & PROTO_ACTIVE) == 0
+            || (target.obsolete_factions & faction_bit) != 0) {
+            continue;
+        }
+        if (target_id < MaxVehProtoFactionNum
+            && !has_tech(target.preq_tech, faction_id)) {
+            continue;
+        }
+        // Native 57F81A sends an untyped faction target directly to the
+        // faction-prototype pass. Predefined targets pass directly; faction
+        // targets require the typed-complete flag.
+        const bool compare_typed_peers = target_id < MaxVehProtoFactionNum
+            || (target.flags & PROTO_TYPED_COMPLETE) != 0;
+        if (compare_typed_peers) {
+        for (int candidate_id = 0; candidate_id < MaxVehProtoFactionNum;
+             ++candidate_id) {
+            VehPrototype &candidate = VehPrototypes[candidate_id];
+            if (candidate_id == target_id || candidate_id == 15
+                || (candidate.flags & PROTO_ACTIVE) == 0
+                || Weapon[candidate.weapon_id].offense_rating < 0
+                || candidate.plan != target.plan
+                || candidate.unk_1 != target.unk_1
+                || Chassis[candidate.chassis_id].triad
+                    != Chassis[target.chassis_id].triad) {
+                continue;
+            }
+            // Native 57F7C8..57F9D2 marks a lower-reactor, non-psi
+            // predefined design immediately after the triad check. This
+            // dominance branch intentionally precedes range, carry, rating,
+            // and ability comparisons.
+            if (candidate.reactor_id < target.reactor_id) {
+                candidate.obsolete_factions |= faction_bit;
+                if (options != 0) synch_obs(candidate_id);
+                continue;
+            }
+            if (Chassis[candidate.chassis_id].range
+                    != Chassis[target.chassis_id].range
+                || Chassis[candidate.chassis_id].speed
+                    > Chassis[target.chassis_id].speed
+                || candidate.carry_capacity > target.carry_capacity
+                || bit_count(static_cast<int>(candidate.ability_flags
+                                               & target.ability_flags))
+                    < bit_count(static_cast<int>(candidate.ability_flags))
+                || ((candidate.ability_flags ^ target.ability_flags)
+                    & 0x00408418u) != 0) {
+                continue;
+            }
+            const int candidate_offense =
+                Weapon[candidate.weapon_id].offense_rating;
+            const int target_offense = Weapon[target.weapon_id].offense_rating;
+            const bool equivalent_weapon = candidate_offense > 0
+                ? candidate_offense <= target_offense
+                : candidate.weapon_id == target.weapon_id;
+            const int candidate_defense =
+                Armor[candidate.armor_id].defense_rating;
+            const bool equivalent_armor = candidate_defense > 0
+                ? 2 * prototype_armor_strength(candidate, faction_id)
+                    <= 2 * prototype_armor_strength(target, faction_id)
+                : candidate.armor_id == target.armor_id;
+            if (!equivalent_weapon || !equivalent_armor) continue;
+            candidate.obsolete_factions |= faction_bit;
+            if (options != 0) synch_obs(candidate_id);
+        }
+        }
+
+        // Native peer comparisons follow the predefined scan for this same
+        // target, before the outer target index advances.
+        for (int peer_slot = 0; peer_slot < MaxVehProtoFactionNum; ++peer_slot) {
+            if (peer_slot == target_slot) continue;
+            VehPrototype &peer = VehPrototypes[faction_base + peer_slot];
+            if ((peer.flags & PROTO_ACTIVE) == 0
+                || peer.plan != target.plan
+                || peer.unk_1 != target.unk_1
+                || Chassis[peer.chassis_id].triad
+                    != Chassis[target.chassis_id].triad
+                || (!compare_typed_peers
+                    && (peer.flags & PROTO_TYPED_COMPLETE) != 0)) {
+                continue;
+            }
+            if (peer.reactor_id < target.reactor_id) {
+                peer.obsolete_factions |= faction_bit;
+                if (options != 0) synch_obs(faction_base + peer_slot);
+                continue;
+            }
+            if (Chassis[peer.chassis_id].range
+                    != Chassis[target.chassis_id].range
+                || Chassis[peer.chassis_id].speed
+                    > Chassis[target.chassis_id].speed
+                || peer.carry_capacity > target.carry_capacity) {
+                continue;
+            }
+            if (((peer.flags & PROTO_TYPED_COMPLETE) != 0
+                 && bit_count(static_cast<int>(peer.ability_flags
+                                              & target.ability_flags))
+                    < bit_count(static_cast<int>(peer.ability_flags)))
+                || ((peer.ability_flags ^ target.ability_flags)
+                    & 0x00408418u) != 0) {
+                continue;
+            }
+            const int peer_offense = Weapon[peer.weapon_id].offense_rating;
+            const int target_offense = Weapon[target.weapon_id].offense_rating;
+            const bool equivalent_weapon = peer_offense > 0
+                ? peer_offense <= target_offense
+                : peer.weapon_id == target.weapon_id;
+            const int peer_defense = Armor[peer.armor_id].defense_rating;
+            const bool equivalent_armor = peer_defense > 0
+                ? 2 * prototype_armor_strength(peer, faction_id)
+                    <= 2 * prototype_armor_strength(target, faction_id)
+                : peer.armor_id == target.armor_id;
+            if (!equivalent_weapon || !equivalent_armor) continue;
+            peer.obsolete_factions |= faction_bit;
+            if (options != 0) synch_obs(faction_base + peer_slot);
+        }
+    }
+        // This mode returns at 57FCF3 even if a synchronization callback
+        // changes LockEnableMask; it cannot enter the automatic mode.
+        return;
+    }
+
+    // Native 57FD13..5802A9 is reachable from the locked-faction branch and
+    // additionally requires multiplayer or the single-player preference.
+    // The outer design is the possible replacement; the inner design is the
+    // design that receives the faction's obsolete bit.
+    if ((LockEnableMask & faction_bit) != 0
+        && (IsMultiplayerNet != 0
+            || (GameMorePreferences & MPREF_BSC_AUTO_PRUNE_OBS_VEH) != 0)) {
+        for (int replacement_walk = 0;
+             replacement_walk < 2 * MaxVehProtoFactionNum;
+             ++replacement_walk) {
+            const int replacement_id = replacement_walk < MaxVehProtoFactionNum
+                ? replacement_walk
+                : faction_base + (replacement_walk & 0x3f);
+            const VehPrototype &replacement = VehPrototypes[replacement_id];
+            if (replacement_id < MaxVehProtoFactionNum
+                && !has_tech(replacement.preq_tech, faction_id)) {
+                continue;
+            }
+            if ((replacement.flags & PROTO_ACTIVE) == 0
+                || (replacement.obsolete_factions & faction_bit) != 0) {
+                continue;
+            }
+
+            for (int target_walk = 0;
+                 target_walk < 2 * MaxVehProtoFactionNum;
+                 ++target_walk) {
+                const int target_id = target_walk < MaxVehProtoFactionNum
+                    ? target_walk : faction_base + (target_walk & 0x3f);
+                if (target_walk == replacement_walk) continue;
+                VehPrototype &target = VehPrototypes[target_id];
+                if ((target.flags & PROTO_ACTIVE) == 0
+                    || (target.obsolete_factions & faction_bit) != 0
+                    || (target.flags & 0x0200) != 0
+                    || (target_id < MaxVehProtoFactionNum
+                        && (target_id == 15
+                            || Weapon[target.weapon_id].offense_rating < 0))) {
+                    continue;
+                }
+                // Native 57FE2C..FE51 allows predefined replacements and
+                // typed-complete faction replacements through directly. An
+                // untyped faction replacement is limited to untyped faction
+                // targets; it does not compare against predefined targets.
+                if (replacement_id >= MaxVehProtoFactionNum
+                    && (replacement.flags & PROTO_TYPED_COMPLETE) == 0
+                    && (target_id < MaxVehProtoFactionNum
+                        || (target.flags & PROTO_TYPED_COMPLETE) != 0)) {
+                    continue;
+                }
+
+                if (replacement.plan != target.plan
+                    || Chassis[target.chassis_id].range
+                        != Chassis[VehPrototypes[prototype_id].chassis_id].range
+                    || Chassis[replacement.chassis_id].triad
+                        != Chassis[target.chassis_id].triad
+                    || Chassis[target.chassis_id].speed
+                        > Chassis[replacement.chassis_id].speed
+                    || target.carry_capacity > replacement.carry_capacity
+                    || ((target.flags & 0x0008) != 0
+                        && target.reactor_id >= replacement.reactor_id)) {
+                    continue;
+                }
+
+                if (target.plan != 3) {
+                    if ((Weapon[replacement.weapon_id].offense_rating > 1)
+                            != (Weapon[target.weapon_id].offense_rating > 1)
+                        || (Armor[replacement.armor_id].defense_rating > 1)
+                            != (Armor[target.armor_id].defense_rating > 1)) {
+                        continue;
+                    }
+                }
+                if ((Weapon[target.weapon_id].offense_rating <= 0
+                     && replacement.weapon_id != target.weapon_id)
+                    || (Weapon[target.weapon_id].offense_rating > 0
+                        && Weapon[target.weapon_id].offense_rating
+                            > Weapon[replacement.weapon_id].offense_rating)
+                    || (Armor[target.armor_id].defense_rating <= 0
+                        && replacement.armor_id != target.armor_id)) {
+                    continue;
+                }
+                if ((Armor[target.armor_id].defense_rating > 0
+                     && 2 * prototype_armor_strength(target, faction_id)
+                        > 2 * prototype_armor_strength(replacement, faction_id))
+                    || target.reactor_id > replacement.reactor_id) {
+                    continue;
+                }
+
+                const uint32_t ability_difference =
+                    replacement.ability_flags ^ target.ability_flags;
+                if ((ability_difference & 0xfffbd5fcu) != 0) continue;
+                if (ability_difference != 0) {
+                    const bool replacement_covers_target =
+                        (replacement.ability_flags & target.ability_flags)
+                            == target.ability_flags;
+                    if (target.reactor_id >= replacement.reactor_id
+                        && !replacement_covers_target) {
+                        if (replacement_id < MaxVehProtoFactionNum
+                            || PlayersData[faction_id]
+                                .proto_id_active[target_id] != 0
+                            || PlayersData[faction_id]
+                                .proto_id_queue[target_id] != 0) {
+                            continue;
+                        }
+                    }
+                }
+                if ((target.flags & 0x0008) != 0
+                    && (replacement.unk_1 != target.unk_1
+                        || (replacement.ability_flags & target.ability_flags)
+                            != target.ability_flags)) {
+                    continue;
+                }
+
+                // Without a reactor advantage, a more expensive replacement
+                // cannot retire a predefined or flag-8 target.
+                if (target.cost < replacement.cost
+                    && target.reactor_id >= replacement.reactor_id
+                    && (target_id < MaxVehProtoFactionNum
+                        || (target.flags & 0x0008) != 0)) {
+                    continue;
+                }
+
+                if ((target_id < MaxVehProtoFactionNum
+                     || replacement_id < MaxVehProtoFactionNum)
+                    && target.chassis_id == replacement.chassis_id
+                    && target.weapon_id == replacement.weapon_id
+                    && target.armor_id == replacement.armor_id
+                    && target.reactor_id == replacement.reactor_id) {
+                    continue;
+                }
+
+                if (target_id == prototype_id) {
+                    target.flags |= 0x0008;
+                    if (options != 0) synch_obs(target_id);
+                    continue;
+                }
+                target.obsolete_factions |= faction_bit;
+                if (options != 0) synch_obs(target_id);
+                if (target_id < MaxVehProtoFactionNum
+                    && !has_tech(target.preq_tech, faction_id)) {
+                    continue;
+                }
+
+                // The native affected-base walk rewrites every queued
+                // reference to the now-obsolete design to its replacement.
+                bool retained_obsolete_target = false;
+                bool upgrade_choice_latch = false;
+                bool processed_any_owned_base = false;
+                bool has_queued_obsolete_prototype = false;
+                for (int queued_base_id = 0;
+                     queued_base_id < BaseCurrentCount; ++queued_base_id) {
+                    const Base &base = Bases[queued_base_id];
+                    if (base.faction_id_current != faction_id) continue;
+                    const int queue_size =
+                        static_cast<int32_t>(base.queue_size);
+                    if (queue_size < 0) continue;
+                    for (int queue_slot = 0; queue_slot <= queue_size;
+                         ++queue_slot) {
+                        if (base.queue_production_id[queue_slot] == target_id) {
+                            has_queued_obsolete_prototype = true;
+                            break;
+                        }
+                    }
+                    if (has_queued_obsolete_prototype) break;
+                }
+                if (!has_queued_obsolete_prototype) continue;
+                for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+                    Base &base = Bases[base_id];
+                    if (base.faction_id_current != faction_id) continue;
+
+                    int production_upgrade_choice = 0;
+                    bool parse_local_reports = IsMultiplayerNet == 0
+                        && faction_id == ConsoleGlobal.faction_id_
+                        && !processed_any_owned_base;
+                    if (!parse_local_reports && options != 0) {
+                        if (NetDaemonNet.lock_base(base_id, 0, -1, -1) != 0) {
+                            continue;
+                        }
+                        // Native rechecks live multiplayer/local/processed
+                        // state after locking before choosing the parse path.
+                        parse_local_reports = IsMultiplayerNet == 0
+                            && faction_id == ConsoleGlobal.faction_id_
+                            && !processed_any_owned_base;
+                    }
+                    if (parse_local_reports) {
+                        // The first local single-player base publishes both
+                        // reports before consulting the live manual flag.
+                        parse_prototype_report(0, target_id);
+                        parse_prototype_report(1, replacement_id);
+                        if ((target.flags & 0x0200) == 0
+                            && !upgrade_choice_latch) {
+                            production_upgrade_choice =
+                                X_pop("ASKPRODUPGRADE", 0);
+                            if (production_upgrade_choice > 1) {
+                                upgrade_choice_latch = true;
+                            }
+                        }
+                    }
+                    // Reload after report/prompt callbacks; manual retention
+                    // belongs only to this local parse path.
+                    if (parse_local_reports
+                        && production_upgrade_choice <= 1
+                        && ((target.flags & 0x0200) != 0
+                            || production_upgrade_choice == 1)) {
+                        target.obsolete_factions &=
+                            static_cast<uint8_t>(~faction_bit);
+                        if ((target.flags & 0x0008) != 0) {
+                            target.flags |= 0x0200;
+                        }
+                        target.flags |= 0x0008;
+                        retained_obsolete_target = true;
+                        break;
+                    }
+
+                    processed_any_owned_base = true;
+                    const int queue_size =
+                        static_cast<int32_t>(base.queue_size);
+                    if (queue_size >= 0) {
+                        for (int queue_slot = 0; queue_slot <= queue_size;
+                             ++queue_slot) {
+                            if (base.queue_production_id[queue_slot] == target_id) {
+                                base.queue_production_id[queue_slot] = replacement_id;
+                            }
+                        }
+                    }
+                    if (IsMultiplayerNet != 0 && options != 0) {
+                        NetDaemonNet.unlock_base(base_id);
+                    }
+                }
+
+                if (retained_obsolete_target) continue;
+                if (IsMultiplayerNet != 0 && processed_any_owned_base
+                    && faction_id == ConsoleGlobal.faction_id_) {
+                    parse_prototype_report(0, target_id);
+                    parse_prototype_report(1, replacement_id);
+                    const char *picture =
+                        (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0
+                            ? "alunit_sm.pcx" : "unit_sm.pcx";
+                    popp(ScriptPopupFile, "PRODUPGRADE", 0, picture, 0);
+                }
+            }
+        }
+    }
+
 }
