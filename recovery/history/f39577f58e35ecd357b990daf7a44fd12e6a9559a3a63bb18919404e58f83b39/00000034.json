@@ -1,0 +1,28 @@
+{
+  "event_id": "a11ede76939d0c404a93c9fb1ff5bd3b30050447d246f630b8b57e1db55b01dd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_social_select_behavior.py",
+      "src/socialwin.cpp",
+      "src/socialwin.h"
+    ],
+    "evidence": [
+      "Pinned5B5620..5B5688 social-selection entry uses GameState lowbyte flagsC0/80, NetTurnFlags bytebit8, ConsoleGlobal.editor_who and real TutWinSocWindow8A6270; then synch_soc and offline-only social_set. Existing typed declarations and full seed preserved.",
+      "Separate owner dependency of retained tech_achieved; central recovery in SocialWin owner, not fabricated technology-local class or fixed executable addresses. Preserve original task baseline and all historical identities/claims. Require native application build/link, relevant protected checks and actual-source branch/order controls before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5985824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c6bdaa196d1537bd1c51203abbfb6bca98d2ee6c93b97ea4286394b6d1f08105",
+  "request_id": "typed-social-select-dependency-20261001",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:interface-contract-report-closure"
+}
