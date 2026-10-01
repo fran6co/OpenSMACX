@@ -3783,3 +3783,9 @@ int DesignWin::on_iface_dialog_back_draw(GraphicWin *) {
 int DesignWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
     return 0;
 }
+
+// ORIGINAL: 0x00583CB0 ?design_new_veh@@YAXHH@Z 0x00583CB0-0x00583CC7 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Retired exact seed git:5da70027:src/recovered/00583cb0.cpp preserves the23byte original wrapper and direct43E9A0 exec call; designwin.cpp owns the actual71F2B0 singleton and corresponding exec identity."], "reason": "Dispatch the two original design arguments through the genuine source-owned TutWinDesWindow singleton and its DesignWin::exec method, not an original-address receiver."}
+void __cdecl design_new_veh(int faction_id, int prototype_id) {
+    TutWinDesWindow.exec(faction_id, prototype_id);
+}

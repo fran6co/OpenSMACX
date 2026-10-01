@@ -13,7 +13,10 @@
 #include "console.h"
 #include "base.h"  // GovernorFaction is the same Council-owned identity.
 
-int SpyingBaseIndex;  // 0x009A6524
+// Native spying and technology-sharing gates load this independent dword,
+// then consult Bases[index].faction_id_current; it is not a base pointer.
+// RECOVERY_OBJECT: v2 0x009A6524 0x009A6528 ?SpyingBaseIndex@@3HA 0x0055BC00
+int SpyingBaseIndex;
 
 /*
 Purpose: Determine whether the current faction has intelligence visibility of

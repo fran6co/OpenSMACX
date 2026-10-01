@@ -30,9 +30,41 @@
 #include "console.h"
 #include "netdaemon.h"
 #include "netmsg.h"
+#include "xpops.h"
+#include "worldwin.h"
+#include "popup.h"
+#include "newtechwin.h"
+#include "designwin.h"
+#include "fx.h"
+#include "interlude.h"
+#include "spritebox.h"
+#include "log.h"
 
 int __cdecl tech_pick(int faction, int mode, int suggested,
                       const char *section);
+extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
+void __cdecl design_new_veh(int faction_id, int proto_id);
+void __cdecl help_tech_info(Popup *popup, int tech_id, int faction_id);
+void __cdecl social_select(int faction_id);
+void __cdecl set_dirty();
+extern char *TutorialPopupCaption;
+extern int FirstProposedPrototype;
+extern int SpyingBaseIndex;
+
+// The native propagation paths exclude technology88 and disabled rule
+// entries. Ownership is checked separately and reloaded after callbacks.
+static bool technology_shareable(int tech_id) {
+    if (tech_id < 0 || tech_id >= 0x58)
+        return false;
+    const RulesTechnology &technology = Technology[tech_id];
+    return technology.preq_tech_1 >= -1 &&
+           (technology.preq_tech_2 >= -1 || technology.preq_tech_1 == -1);
+}
+
+// Native tech_achieved5BB496 and tech_advance5BE673 read this shared
+// dword; the adjacent945F44 AI batch latch and945F48 phase are distinct.
+// RECOVERY_OBJECT: v2 0x00945F40 0x00945F44 ?TechAchievedGate@@3HA 0x005BB000
+int TechAchievedGate = 0;
 
 // Per-technology faction-ownership bitsets, populated by the rules/game data
 // loaders and changed as scenario-editor ownership is edited.
@@ -1164,4 +1196,511 @@ int __cdecl tech_rate(int faction_id) {
         cost += cost / 2; // Slower Rate of Research Discoveries
     }
     return range(cost, 1, 99999999);
+}
+
+// The four integer roles are faction, technology, other faction and freebie.
+// Native phase ordering includes ordinary ownership, map/prototype transfers,
+// scoped popup lifetimes, facilities/abilities, social notices and interludes.
+// ORIGINAL: 0x005BB000 ?tech_achieved@@YAXHHHH@Z 0x005BB000-0x005BCB55;0x00662710-0x00662A1E
+// RECOVERY_BINDING: v1 {"evidence": ["Retired draft git:8b777a51:src/unrecovered/005bb000.cpp retains original identity and primary/EH spans; pinned native branches establish the actual argument roles, reactor upgrades, per-model repeated tutorial, recipient visibility/intel and both recursive technology propagation paths.", "recovery/tests/test_tech_achieved_behavior.py exercises actual owner source and rejects inverted reactor/view/treaty predicates, truncated tutorial traversal, swapped recursion arguments and wrong intel ownership. Task38/40 authorize shared945F40 gate and spy-base scalar without changing the original baseline."], "reason": "Recover the full technology acquisition lifecycle in its real owner using source-owned player/map/base/prototype storage and real scoped Popup, SpriteBox, DesignWin and NewTech interactions; retain all independent callee and historical seed obligations."}
+void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
+                           int give_freebie) {
+    Popup popup;
+
+    if (tech_id < 0) {
+        return;
+    }
+
+    log_say("Gaining a TECH", Players[faction_id].name_leader, tech_id,
+            faction_id, faction_id_with);
+
+    const uint32_t faction_mask = 1u << (faction_id & 31);
+    if ((LockEnableMask & faction_mask) != 0) {
+        ambience(0xC9);
+    }
+
+    // The large pseudo-technology path shares current map/site knowledge,
+    // rather than recording an ordinary research discovery.
+    if (tech_id >= 0x270F) {
+        PlayersData[faction_id].traded_maps |= 1u << faction_id_with;
+        PlayersData[faction_id_with].traded_maps |=
+            PlayersData[faction_id].traded_maps;
+
+        for (uint32_t tile_id = 0; tile_id < MapArea; ++tile_id) {
+            Map &tile = map_tiles()[tile_id];
+            if ((tile.visibility & (1u << faction_id_with)) == 0) continue;
+            tile.visibility |= static_cast<uint8_t>(faction_mask);
+            if (faction_id != 0 && faction_id_with != 0) {
+                const uint32_t from =
+                    tile.bit_visible[faction_id_with - 1] & tile.bit;
+                tile.bit_visible[faction_id - 1] |= from;
+            }
+        }
+
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            Base &base = Bases[base_id];
+            if ((base.visibility & (1u << faction_id_with)) != 0 ||
+                base.faction_id_current == faction_id_with) {
+                spot_base(base_id, faction_id);
+            }
+        }
+
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            draw_map(1);
+            UnkBitfield1 |= 4;
+            WorldClimateWorldWin.GraphicWin::redraw();
+        }
+        return;
+    }
+
+    if (tech_id >= 0x59 && tech_id < 0x61) {
+        treaty_on(faction_id, tech_id - 0x59, 8);
+        return;
+    }
+
+    if (tech_id >= 0x61) {
+        const int prototype_index = tech_id - 0x61;
+        const VehPrototype &prototype = VehPrototypes[prototype_index];
+        const int proposed = propose_proto(
+            faction_id, prototype.chassis_id, prototype.weapon_id,
+            prototype.armor_id, static_cast<int>(prototype.ability_flags),
+            prototype.reactor_id, -2,
+            const_cast<char *>(prototype.veh_name));
+        if (proposed >= 0) {
+            if (IsMultiplayerNet != 0 &&
+                (LockEnableMask & faction_mask) != 0) {
+                VehPrototypes[proposed].obsolete_factions |= 1;
+            } else {
+                prune_protos(faction_id, proposed, 0);
+                upgrade_any_prototypes(faction_id);
+            }
+        }
+        return;
+    }
+
+    PlayerData &player = PlayersData[faction_id];
+    if (player.tech_id_researching == tech_id) {
+        player.tech_id_researching = -1;
+    }
+
+    const bool was_new = GameTechAchieved[tech_id] == 0;
+    GameTechAchieved[tech_id] |= static_cast<uint8_t>(faction_mask);
+    ++player.tech_achieved;
+    if (TurnCurrentNum != 0 && TechAchievedGate == 0) {
+        ++player.tech_ranking;
+        if (player.unk_26 != 0) --player.unk_26;
+        ++player.tech_ranking;
+        if (player.unk_26 != 0) --player.unk_26;
+        if (tech_id == 0x58) ++player.theory_of_everything;
+    }
+
+    // Reactor unlocks are checked against the three non-initial reactor
+    // levels (native starts at Reactor[1].preq_tech and advances by one
+    // 0x0C-byte RulesReactor record). Each matching tier offers eligible
+    // active prototypes to the genuine proposal/pruning path.
+    int reactor_unlock_level = 0;
+    int reactor_level = 2;
+    for (int reactor_id = 1; reactor_id < MaxReactorNum;
+         ++reactor_id, ++reactor_level) {
+        if (Reactor[reactor_id].preq_tech != tech_id) continue;
+        const int first_proto = faction_id * MaxVehProtoFactionNum;
+        for (int proto_id = first_proto;
+             proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
+            const VehPrototype &prototype = VehPrototypes[proto_id];
+            if ((prototype.flags & PROTO_ACTIVE) == 0 ||
+                (prototype.obsolete_factions & faction_mask) != 0 ||
+                prototype.reactor_id >= reactor_level) {
+                continue;
+            }
+            // The dialog's native tier is the reactor level whose eligible
+            // prototype reached the proposal call, not a count of matching
+            // prerequisite records.
+            reactor_unlock_level = reactor_level;
+            const int16_t flags_word = static_cast<int16_t>(prototype.flags);
+            const int proposal_class =
+                ~(static_cast<int>(flags_word) >> 2) | 0xFFFFFFFE;
+            const int proposed = propose_proto(
+                faction_id, prototype.chassis_id, prototype.weapon_id,
+                prototype.armor_id, static_cast<int>(prototype.ability_flags),
+                reactor_level, proposal_class, nullptr);
+            if (proposed < 0) continue;
+            if (IsMultiplayerNet != 0 &&
+                (LockEnableMask & faction_mask) != 0) {
+                VehPrototypes[proposed].obsolete_factions |= 1;
+            } else {
+                prune_protos(faction_id, proposed, 0);
+                upgrade_any_prototypes(faction_id);
+            }
+        }
+    }
+    if (reactor_unlock_level != 0 && faction_id == ConsoleGlobal.faction_id_ &&
+        IsMultiplayerNet == 0) {
+        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+            Reactor[reactor_unlock_level - 1].name)), -1, -1);
+        X_pop("REACTORUPGRADE", 0);
+    }
+
+    FirstProposedPrototype = -1;
+    if (IsMultiplayerNet == 0) {
+        if ((LockEnableMask & faction_mask) != 0 &&
+            (GamePreferences & PREF_BSC_AUTO_DESIGN_VEH) != 0) {
+            const int first_proto = faction_id * MaxVehProtoFactionNum;
+            for (int proto_id = first_proto;
+                 proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
+                VehPrototypes[proto_id].flags &= 0x3F;
+            }
+            consider_designs(static_cast<uint32_t>(faction_id));
+            if (faction_id == ConsoleGlobal.faction_id_) {
+                for (int proto_id = 0; proto_id < MaxVehProtoFactionNum;
+                     ++proto_id) {
+                    const VehPrototype &prototype = VehPrototypes[proto_id];
+                    if ((prototype.flags & PROTO_ACTIVE) != 0 &&
+                        prototype.preq_tech == tech_id &&
+                        FirstProposedPrototype < 0) {
+                        FirstProposedPrototype = proto_id;
+                    }
+                }
+            }
+        }
+    } else {
+        player.flags |= 2;
+    }
+
+    // The presentation payload is prepared for both human and AI recipients.
+    // These offsets are the typed Player fields: the native record's name
+    // starts at 0x946A84, while its noun/gender/plural fields are in the same
+    // 0x59C-byte Player record.
+    StringTemp[0] = 0;
+    say_tech(StringTemp, tech_id, FALSE);
+    parse_says(0, StringTemp, -1, -1);
+
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(1, Players[faction_id].noun_faction + 4, -1, -1);
+
+    if (faction_id_with > 0) {
+        GenderDefault = Players[faction_id_with].noun_gender;
+        PluralityDefault = Players[faction_id_with].is_noun_plural;
+        parse_says(2, Players[faction_id_with].noun_faction + 4, -1, -1);
+    } else if (faction_id_with == -1) {
+        parse_say(2, static_cast<int>(reinterpret_cast<intptr_t>(
+            Facility[FacilitySPStart + FAC_PLANETARY_DATALINKS].name)), -1, -1);
+    } else if (faction_id_with < -1) {
+        // Native reads the string-table token at Labels.strings_ptr + 0x35C
+        // and resolves it through StringTable::get before parsing.
+        parse_says(2, label_get(0x35C / sizeof(int)), -1, -1);
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        popup.init(0, 0);
+        popup.set_width(0x1F4);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "TECH");
+        char tech_id_text[12];
+        _itoa(tech_id, tech_id_text, 10);
+        strcat(StringTemp, tech_id_text);
+        popup.start(const_cast<char *>("BLURBSX"), StringTemp, -1,
+                    nullptr, 0x80, nullptr);
+        popup.string(const_cast<char *>("^"));
+        popup.string(const_cast<char *>("^------"));
+        popup.string(const_cast<char *>("^"));
+    }
+
+    StringTemp[0] = 0;
+    strcat(StringTemp, faction_id == ConsoleGlobal.faction_id_ ? "WE" : "THEY");
+    strcat(StringTemp, faction_id_with != 0 ? "ACQUIRE" : "DEVELOP");
+    if (give_freebie != 0) {
+        StringTemp[0] = 0;
+        strcat(StringTemp, "WEGETSHARETECH");
+    }
+
+    {
+        SpriteBox sprite_box;
+        sprite_box.sprite(nullptr,
+                          reinterpret_cast<char *>(
+                              &g_TECH_ICON_SPRITES[tech_id]),
+                          0);
+    }
+    popup.start(PopupStartCaption, StringTemp, -1, nullptr, 0);
+
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        help_tech_info(&popup, tech_id, faction_id);
+    }
+
+    g_FX.play(0x33);
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        if (IsMultiplayerNet != 0 &&
+            (DiplomacyActive != 0 || CommlinkPending != 0 ||
+             TurnRedrawPending != 0)) {
+            parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+                Technology[tech_id].name)), -1, -1);
+            NetMsgPopup->pop("TECHOBTAINED", 0x1388, 0, nullptr);
+        } else {
+            NewTechWindow.exec(tech_id, faction_id_with);
+        }
+    } else if (IsMultiplayerNet == 0) {
+        popup.exec(0, nullptr);
+    }
+
+    // Faction-granted free facilities become available as soon as their own
+    // prerequisite technology is discovered. Native walks the live bonus
+    // count, then awards the facility to each base currently owned by this
+    // faction before processing the free-ability and project notices.
+    give_freebie = 0;
+    int bonus;
+    for (bonus = 0; bonus < Players[faction_id].faction_bonus_count;
+         ++bonus) {
+        if (Players[faction_id].faction_bonus_id[bonus] != RULE_FREEFAC) {
+            continue;
+        }
+        const int facility_id = Players[faction_id].faction_bonus_val1[bonus];
+        if (Facility[facility_id].preq_tech != tech_id) continue;
+        give_freebie = 1;
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            if (Bases[base_id].faction_id_current == faction_id) {
+                set_fac(facility_id, base_id, TRUE);
+            }
+        }
+        if (faction_id == ConsoleGlobal.faction_id_) {
+            parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+                Technology[tech_id].name)), -1, -1);
+            parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+                Facility[facility_id].name)), -1, -1);
+            NetMsgPopup->pop("FREEFACTECH", -5000, 0, nullptr);
+        }
+    }
+    if (give_freebie != 0) {
+        NetDaemonNet.synch(0x14, 0, 0, 0, nullptr, 1, 0x2101);
+    }
+
+    for (bonus = 0; bonus < Players[faction_id].faction_bonus_count;
+         ++bonus) {
+        if (Players[faction_id].faction_bonus_id[bonus] != RULE_FREEABIL) {
+            continue;
+        }
+        const int ability_id = Players[faction_id].faction_bonus_val1[bonus];
+        if (Ability[ability_id].preq_tech != tech_id ||
+            faction_id != ConsoleGlobal.faction_id_) {
+            continue;
+        }
+        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+            Technology[tech_id].name)), -1, -1);
+        parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+            Ability[ability_id].name)), -1, -1);
+        NetMsgPopup->pop("FREEABILTECH", -5000, 0, nullptr);
+    }
+
+    if ((Technology[tech_id].flags & TFLAG_SECRETS) != 0) {
+        mon_secrets_of_tech(faction_id);
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_ &&
+        FirstProposedPrototype >= 0 && IsMultiplayerNet == 0) {
+        int design_choice = 0;
+        int proto_id;
+        for (proto_id = 0; proto_id < MaxVehProtoFactionNum;
+             ++proto_id) {
+            const VehPrototype &prototype = VehPrototypes[proto_id];
+            if ((prototype.flags & PROTO_ACTIVE) == 0 ||
+                prototype.preq_tech != tech_id ||
+                Weapon[prototype.armor_id].offense_rating < 0 ||
+                // The native compares the prerequisite-field pointer with
+                // 0x009ABBA6, which is VehPrototypes[15].preq_tech.
+                proto_id == 15) {
+                continue;
+            }
+            if (design_choice == 0) {
+                design_choice = X_pop("ASKSEEDESIGN", nullptr) == 0 ? -1 : 1;
+            } else if (design_choice > 0) {
+                design_new_veh(-faction_id, proto_id);
+            }
+        }
+
+        const int first_proto = faction_id * MaxVehProtoFactionNum;
+        for (proto_id = first_proto;
+             proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
+            VehPrototype &prototype = VehPrototypes[proto_id];
+            if ((prototype.flags & 0x80) != 0) {
+                if ((static_cast<uint8_t>(prototype.flags) & faction_mask) == 0) {
+                    if (design_choice == 0) {
+                        design_choice =
+                            X_pop("ASKSEEDESIGN", nullptr) == 0 ? -1 : 1;
+                    }
+                    if (design_choice > 0) {
+                        design_new_veh(-faction_id, proto_id);
+                    }
+                }
+                prototype.flags &= static_cast<uint16_t>(~0x80);
+            }
+        }
+
+        {
+            DesignWin design_window;
+            design_window.shut_that_badboy_down();
+        }
+
+        for (proto_id = first_proto;
+             proto_id < first_proto + MaxVehProtoFactionNum; ++proto_id) {
+            const VehPrototype &prototype = VehPrototypes[proto_id];
+            if ((static_cast<uint8_t>(prototype.flags) & faction_mask) == 0 &&
+                (prototype.flags & 0x100) != 0 &&
+                (IsMultiplayerNet == 0 ||
+                 (LockEnableMask & faction_mask) == 0)) {
+                upgrade_prototypes(faction_id, proto_id);
+            }
+        }
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_ &&
+        PlayersData[faction_id].diff_level > 1 && IsMultiplayerNet == 0) {
+        for (int category = 0; category < MaxSocialCatNum; ++category) {
+            for (int social_model = 0; social_model < 4; ++social_model) {
+                if (SocialCategories[category].preq_tech[social_model] != tech_id ||
+                    society_avail(category, social_model, faction_id) == 0)
+                    continue;
+                int selection;
+                do {
+                    parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+                        Technology[tech_id].name)), -1, -1);
+                    parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+                        SocialCategories[category].name[social_model])), -1,
+                        -1);
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, "SOCIETY");
+                    selection = x_pop_caption_label(
+                        TutorialPopupCaption, StringTemp, nullptr);
+                    if (selection != 0) social_select(faction_id);
+                } while (selection == 2);
+            }
+        }
+    }
+
+    if ((Technology[tech_id].flags & TFLAG_REVEALS_MAP) != 0 &&
+        (PlayersData[faction_id].flags & 0x200) == 0) {
+        Map *tile = map_tiles();
+        for (uint32_t tile_id = 0; tile_id < MapArea; ++tile_id, ++tile) {
+            tile->visibility |= static_cast<uint8_t>(faction_mask);
+            if (faction_id != 0) {
+                tile->bit_visible[faction_id - 1] = tile->bit;
+            }
+        }
+
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            Bases[base_id].visibility |= static_cast<uint8_t>(faction_mask);
+            Bases[base_id].faction_pop_size_intel[faction_id] =
+                Bases[base_id].population_size;
+        }
+        PlayersData[faction_id].flags |= 0x200;
+
+        if (TurnCurrentNum != 0 &&
+            faction_id == ConsoleGlobal.faction_id_) {
+            parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+                Technology[tech_id].name)), -1, -1);
+            popp(ScriptPopupFile, "SEEMAP2", 0, "native_sm.pcx", nullptr);
+            draw_map(1);
+            set_dirty();
+            WorldClimateWorldWin.GraphicWin::redraw();
+        }
+    }
+
+    // Recompute the recipient's technology-derived production and commerce
+    // after the direct free-facility/free-ability notifications above.
+    tech_effects(faction_id);
+
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        if (tech_id == Facility[9].preq_tech) {
+            interlude(1, nullptr, 1, 0);
+        }
+        if (tech_id == 0x2F) {
+            interlude(2, nullptr, 1, 0);
+        }
+
+        if (SecretProject.voice_of_planet != -1 && faction_id > 0 &&
+            Technology[34].preq_tech_1 >= -1 &&
+            (Technology[34].preq_tech_2 >= -1 ||
+             Technology[34].preq_tech_1 == -1) &&
+            (GameTechAchieved[34] & faction_mask) != 0 &&
+            Technology[57].preq_tech_1 >= -1 &&
+            (Technology[57].preq_tech_2 >= -1 ||
+             Technology[57].preq_tech_1 == -1) &&
+            (GameTechAchieved[57] & faction_mask) != 0) {
+            interlude(0xF, nullptr, 1, 0);
+            interlude(0x10, nullptr, 0, 0);
+        }
+
+        if (tech_id == 4 && (Players[faction_id].rule_flags & 0x80) != 0) {
+            for (int other = 1; other < MaxPlayerNum; ++other) {
+                if (other != faction_id &&
+                    (Players[other].rule_flags & 0x80) == 0 &&
+                    (PlayersData[faction_id].diplo_treaties[other] & 8) != 0) {
+                    interlude(0x24, nullptr, 1, 0);
+                }
+            }
+        }
+    }
+
+    const int chained_base = SecretProject.planetary_datalinks;
+    if (chained_base >= 0) {
+        const int chained_faction = Bases[chained_base].faction_id_current;
+        if (chained_faction > 0 && faction_id > 0 && technology_shareable(tech_id) &&
+            (GameTechAchieved[tech_id] & faction_mask) != 0 &&
+            (GameTechAchieved[tech_id] & (1u << chained_faction)) == 0) {
+            int known_factions = 0;
+            for (int other = 1; other < MaxPlayerNum; ++other) {
+                if (technology_shareable(tech_id) &&
+                    (GameTechAchieved[tech_id] & (1u << other)) != 0)
+                    ++known_factions;
+            }
+            if (known_factions >= 3)
+                tech_achieved(chained_faction, tech_id, -1, 0);
+        }
+    }
+
+    if (faction_id > 0 && technology_shareable(tech_id) &&
+        (GameTechAchieved[tech_id] & faction_mask) != 0) {
+        for (int receiver = 1; receiver < MaxPlayerNum; ++receiver) {
+            if (Players[receiver].rule_sharetech <= 0 ||
+                (technology_shareable(tech_id) &&
+                 (GameTechAchieved[tech_id] & (1u << receiver)) != 0))
+                continue;
+            int known_factions = 0;
+            for (int donor = 1; donor < MaxPlayerNum; ++donor) {
+                if (!technology_shareable(tech_id) ||
+                    (GameTechAchieved[tech_id] & (1u << donor)) == 0)
+                    continue;
+                if (ExpansionEnabled == 0 ||
+                    (Players[receiver].rule_flags & RFLAG_TECHSHARE) == 0 ||
+                    (PlayersData[receiver].diplo_treaties[donor] &
+                     (DTREATY_HAVE_INFILTRATOR | DTREATY_PACT)) != 0 ||
+                    (SpyingBaseIndex >= 0 &&
+                     Bases[SpyingBaseIndex].faction_id_current == receiver) ||
+                    (receiver == GovernorFaction &&
+                     (Players[donor].rule_flags & RFLAG_ALIEN) == 0))
+                    ++known_factions;
+            }
+            if (known_factions >= Players[receiver].rule_sharetech)
+                tech_achieved(receiver, tech_id, -2, 1);
+        }
+    }
+
+    if (TurnCurrentNum != 0 && was_new &&
+        (Technology[tech_id].flags & TFLAG_SECRETS) != 0) {
+        player.flags |= 0x40;
+        parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+            Technology[tech_id].name)), -1, -1);
+        parse_says(1, Players[faction_id].adj_name_faction + 4, -1, -1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "THESECRET");
+        char recipient_text[12];
+        _itoa(faction_id != ConsoleGlobal.faction_id_ ? 1 : 0,
+              recipient_text, 10);
+        strcat(StringTemp, recipient_text);
+        X_pop(StringTemp, nullptr);
+        log_say("Learning a SECRET",
+                reinterpret_cast<const char *>(
+                    &PlayersData[0].traded_maps),
+                faction_id, tech_id, GameTechAchieved[tech_id]);
+    }
+
+    desktop_update();
 }

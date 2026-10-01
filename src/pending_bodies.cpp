@@ -1256,18 +1256,11 @@ void NetMsg::pop(const char *label, int duration, int channel,
 }
 
 // The cross-TU callees faction.h declares for the net_* / diplomacy bodies.
-// All six are FILE-only archive bodies carrying no claim, so none of these
+// The remaining callees are FILE-only archive bodies carrying no claim, so none of these
 // forwarders can landmine.
 void __cdecl trade_maps(int faction_id, int faction_id_with) {
     typedef void(__cdecl *pending)(int, int);
     PENDING_BODY(0x00543A20, pending)(faction_id, faction_id_with);
-}
-
-void __cdecl tech_achieved(int faction_id, int faction_id_with, int tech_id,
-                           int give_freebie) {
-    typedef void(__cdecl *pending)(int, int, int, int);
-    PENDING_BODY(0x005BB000, pending)(faction_id, faction_id_with, tech_id,
-                                      give_freebie);
 }
 
 int __cdecl do_withdrawal(int faction_id, int faction_id_with) {

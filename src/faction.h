@@ -980,11 +980,10 @@ void __cdecl diplomacy_ends(int faction_id, int faction_id_with);
 void __cdecl diplomacy_check(int faction_id, int faction_id_with, int update);
 int __cdecl contiguous(int faction_id, int faction_id_with, int region, int mode);
 
-// Cross-TU helpers the diplomacy bodies reach with the image's `call rel32`
-// and that this tree has not recovered yet - each one is a pending_bodies
-// forwarder.
+// Cross-TU trade/diplomacy helpers. technology.cpp owns tech_achieved;
+// the remaining unfinished helpers retain their pending_bodies definitions.
 void __cdecl trade_maps(int faction_id, int faction_id_with);
-void __cdecl tech_achieved(int faction_id, int faction_id_with, int tech_id,
+void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                            int give_freebie);
 int __cdecl do_withdrawal(int faction_id, int faction_id_with);
 void __cdecl give_a_base(int faction_id, int faction_id_with);
