@@ -1714,15 +1714,12 @@ int BaseSquareEnergy;  // 0x0090E914
  * wants_prop, num_objectives and the council windows. energy_yield grants it a
  * point of energy on a base square.
  *
- * NOTE: src/spying.cpp already binds this same address as
- * `SpyingObserverFaction` - the Governor is the faction that may view any other
- * faction's bases, so the two names describe one datum. They are deliberately
- * NOT unified here: spying.cpp belongs to OPENSMACX_LEAF_SRC_CLOSURE,
- * which does not link base.cpp, so neither file can host the other's
- * definition without moving a translation unit between suites. Two pointer
- * variables onto one address are correct at run time; the hazard is that a test
- * rebinding one does not rebind the other.
+ * spying.cpp's former SpyingObserverFaction view named this same datum:
+ * the Governor may view other non-alien factions' bases. Both Council writes
+ * and visibility checks must use this one source object, not independent
+ * integers justified by the retired separate-suite build.
  */
+// RECOVERY_OBJECT: v2 0x009A6614 0x009A6618 ?GovernorFaction@@3HA 0x00424410
 int GovernorFaction;  // 0x009A6614
 // Former independent scalar views CommerceDoubleTarget (009A6624) and
 // CommerceDoubleProgress (009A6628) actually denote CouncilResolutionCount[3]

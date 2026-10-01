@@ -11,9 +11,9 @@
 #include "spying_recovery.h"
 #include "faction.h"  // Players, RFLAG_ALIEN
 #include "console.h"
+#include "base.h"  // GovernorFaction is the same Council-owned identity.
 
 int SpyingBaseIndex;  // 0x009A6524
-int SpyingObserverFaction;  // 0x009A6614
 
 /*
 Purpose: Determine whether the current faction has intelligence visibility of
@@ -41,7 +41,7 @@ int __cdecl spying(int subject) {
                ? (SpyingBaseFactionBytes[static_cast<size_t>(SpyingBaseIndex)
                                          * SpyingBaseStride] == faction)
                : 0) != 0
-           || (faction == SpyingObserverFaction
+           || (faction == GovernorFaction
                && (Players[static_cast<size_t>(subject)].rule_flags &
                    RFLAG_ALIEN) == 0);
 }

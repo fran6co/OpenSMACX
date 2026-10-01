@@ -76,7 +76,7 @@ def harness(bodies):
         const size_t SpyingStatusStride = 8, SpyingBaseStride = 5;
         uint32_t SpyingStatusTable[64];
         unsigned char SpyingBaseFactionBytes[15];
-        int SpyingBaseIndex, SpyingObserverFaction;
+        int SpyingBaseIndex, GovernorFaction;
         enum { RFLAG_ALIEN = 16 };
         struct Player { uint32_t rule_flags; } Players[8];
         int hover, hover_alt, limit, followed_value;
@@ -117,7 +117,7 @@ def harness(bodies):
                 std::memset(SpyingBaseFactionBytes, 0xff, sizeof(SpyingBaseFactionBytes));
                 std::memset(Players, 0, sizeof(Players));
                 SpyingBaseIndex = -1;
-                SpyingObserverFaction = -1;
+                GovernorFaction = -1;
                 require(spying(subject) == 0);
                 SpyingStatusTable[subject + faction * 8] = 0x1000;
                 require(spying(subject) == 1);
@@ -129,7 +129,7 @@ def harness(bodies):
                 SpyingBaseFactionBytes[10] = static_cast<unsigned char>((faction + 1) % 8);
                 require(spying(subject) == 0);
                 SpyingBaseIndex = -1;
-                SpyingObserverFaction = faction;
+                GovernorFaction = faction;
                 require(spying(subject) == 1);
                 Players[subject].rule_flags = RFLAG_ALIEN;
                 require(spying(subject) == 0);

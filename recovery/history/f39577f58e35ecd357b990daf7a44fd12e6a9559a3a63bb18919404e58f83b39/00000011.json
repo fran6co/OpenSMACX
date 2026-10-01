@@ -1,0 +1,27 @@
+{
+  "event_id": "77c458f40806ea367901d9b207ac4ed43fc5c5f77b886265d41ffbe813b04043",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_state.py",
+      "src/spying.cpp",
+      "src/spying_recovery.h"
+    ],
+    "evidence": [
+      "Native make_resolution writes GovernorFaction at009A6614; spying55BC00 reads the same cell to grant non-alien base visibility. Existing base.cpp explicitly documents SpyingObserverFaction as the same governor datum, but defines two independent int objects. Source def/comment reflect a retired separate-suite pointer-alias assumption, invalid in the real application. Authorize canonical GovernorFaction global and spying consumer/header/actual fixture migration only; no unrelated diplomacy, raw table, hierarchy or behavior change. Preserve all ORIGINAL spans, historical byte claims and immutable baseline; remeasure spying and full build/link before commit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5618688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "efa28e879e275bbb2824a5bd93c26971355b954b86e66941f3997ceaf8f1e5c7",
+  "request_id": "council-governor-spying-shared-owner-20261001",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:interface-contract-report-closure"
+}
