@@ -1,0 +1,21 @@
+{
+  "event_id": "8a6a160aea71ba9d470c0ddfb782c25a7841189766e1496461b73e39d7e06944",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_diplomacy_end.py",
+      "src/faction.cpp",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Root-only closure of preserved settlement discovery: native53E470..53E4BC clears four independent dwords, calls the source-owned DiplomacyPopup.stop, synch_diplo and NetDaemonNet.close_channel in that order, then resets Y and X to -1. Existing DiplomacyActive93FAB4 and DiplomacyEndState93FAC8 remain; give the other two dwords neutral state/result names without inferring absent producers. Wants_to_speak53DCE0 writes contact result93FACC and returns it, and bounds focus X68D43C/Y68D440 against map bounds. Pinned initial four-byte values are zero for both states and -1 for both coordinates. Replace unused fixed-pointer focus declarations with extern owned ints; preserve source, seeds, historical exact obligation and immutable baseline. This completes only the teardown callee, not wants_to_speak or settlement acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "dee62a4dff71abe1c10f1c01ec2355ff6f26245c9f62a1fae1b4afc66078e6b2",
+  "request_id": "console-real-diplomacy-end-20261001",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:console-scenario-owner-wave"
+}

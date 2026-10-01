@@ -36,6 +36,7 @@
 #include "alphamovie.h"
 #include "strings.h"
 #include "xpops.h"
+#include "diplopop.h"
 
 void __cdecl mon_killed_faction(int faction, int killed_faction);
 void __cdecl interlude(int id, char *filename, int arg3, int arg4);
@@ -184,6 +185,23 @@ int DiplomacyActive;
 // Its broader protocol meaning and remaining producers still need recovery.
 // RECOVERY_OBJECT: v2 0x0093FAC8 0x0093FACC ?DiplomacyEndState@@3HA 0x004CF7C0
 int DiplomacyEndState;
+// Independent zero-initialized state cleared by diplomacy_ends at 53E47F.
+// Its producer protocol is not yet recovered; do not alias DiplomacyActive.
+// RECOVERY_OBJECT: v2 0x0093FAB8 0x0093FABC ?DiplomacyAuxiliaryState@@3HA 0x0053E470
+int DiplomacyAuxiliaryState;
+
+// wants_to_speak writes and returns the contact response in this
+// shared dword; diplomacy_ends clears it before stopping the popup.
+// The original initial value is zero; callback updates must remain visible.
+// RECOVERY_OBJECT: v2 0x0093FACC 0x0093FAD0 ?DiplomacyContactResult@@3HA 0x0053E470
+int DiplomacyContactResult;
+
+// wants_to_speak bounds these coordinates before focusing ConsoleGlobal.
+// Teardown resets Y and then X after closing the network channel.
+// RECOVERY_OBJECT: v2 0x0068D43C 0x0068D440 ?DiploFocusX@@3HA 0x0053E470
+int DiploFocusX = -1;
+// RECOVERY_OBJECT: v2 0x0068D440 0x0068D444 ?DiploFocusY@@3HA 0x0053E470
+int DiploFocusY = -1;
 // The faction whose voice the next popup speaks in. Popup::start (0x00406380)
 // and popp(0x0048C0A0) are the only readers: each bounds it to 1..7 and, when
 // Players[it].rule_flags has RFLAG_ALIEN, reads the dialogue out of
@@ -5244,4 +5262,18 @@ int __cdecl act_of_aggression(int faction_id, int target_faction_id) {
     }
     treaty_on(faction_id, target_faction_id, 0x8010);
     return result;
+}
+
+// ORIGINAL: 0x0053E470 ?diplomacy_ends@@YAXHH@Z 0x0053E470-0x0053E4BC BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned native53E470..53E4BC: four state clears, DiploPop.stop receiver733990, synch_diplo arguments, NetDaemon.close_channel receiver93CD90, then Y/X reset.", "src/diplopop.cpp DiplomacyPopup; src/netdaemon.cpp NetDaemonNet; native53DCE0 contact-result and bounded focus uses. Initial states zero, X/Y -1.", "Root-only console-real-diplomacy-end-20261001 scope decision; preserved src/recovered/units/0053e470.cpp and unresolved settlement contact discovery."], "reason": "Recover complete diplomacy teardown in its genuine faction owner with independent owned state and coordinate storage, real popup lifecycle and network APIs. Retain the exact seed obligation and all original spans; this binding grants no match or acceptance claim."}
+void __cdecl diplomacy_ends(int faction_id, int faction_id_with) {
+    DiplomacyActive = 0;
+    DiplomacyAuxiliaryState = 0;
+    DiplomacyEndState = 0;
+    DiplomacyContactResult = 0;
+    DiplomacyPopup.stop();
+    synch_diplo(faction_id, faction_id_with);
+    NetDaemonNet.close_channel();
+    DiploFocusY = -1;
+    DiploFocusX = -1;
 }

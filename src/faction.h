@@ -672,14 +672,16 @@ int __cdecl pop_expire();    // 0x00539920, turn-expiry wait callback
 // introduce enters diplomacy; diplomacy_ends clears this shared state.
 extern int DiplomacyActive;
 extern int DiplomacyEndState;
+extern int DiplomacyAuxiliaryState;
+extern int DiplomacyContactResult;
 
 // THE SQUARE THE DIPLOMACY SCREEN CENTRES ON, both -1 in the shipped image
 // (meaning "none") and both reset to -1 when the screen comes down.
 // wants_to_speak bounds X against MapLongitudeBounds and Y against
 // MapLatitudeBounds before handing them to Console::focus, which is what
 // says which is which.
-int *const DiploFocusX = (int *)0x0068D43C;
-int *const DiploFocusY = (int *)0x0068D440;
+extern int DiploFocusX;
+extern int DiploFocusY;
 
 // THE DIPLOMACY STRINGS, read out of the shipped image with
 // tools/image_data.py. Every one is a .rdata literal the diplomacy
