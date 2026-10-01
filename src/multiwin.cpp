@@ -14,9 +14,27 @@
 #include "spying_recovery.h"
 #include "maininterface.h"
 #include "general.h"
+#include "statuswin.h"  // Shared source-owned layout initialization flags.
 
 static_assert(offsetof(PlayerData, time_bonus_count) == 0x2054,
               "MultiWin time-bonus source offset");
+
+// ORIGINAL: 0x00479900 ?UNK2@MultiWin@@QAEXXZ 0x00479900-0x00479964 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/00479900.cpp", "image:terranx_original.exe:0x00479900", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+void MultiWin::UNK2() {
+    const int row_height = sprite5_.height();
+    const int footer_height = sprite7_.height();
+    const int header_height = sprite3_.height();
+    int total = row_height * 7 + header_height + footer_height;
+    if (IsMultiplayerNet != 0) {
+        total += sprite4_.height() + footer_height + 0x0E;
+    }
+    field_A38_ = 0;
+    field_A3C_ = 0;
+    field_A40_ = 0x8A;
+    field_A44_ = static_cast<unsigned int>(total);
+    StatusFlags |= 0x40;
+}
 
 // ORIGINAL: 0x00478630 ?draw_player@MultiWin@@QAEXHHPAURECT@@@Z 0x00478630-0x00478BDB
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00478630.cpp", "src/multiwin.h", "src/faction.h", "src/maininterface.h"], "reason": "The original row painter uses MultiWin's owned Spot, sprite array and first font, typed faction names and treaties, and shared chat colors. Network turn-state suffixes remain pending their global owners."}

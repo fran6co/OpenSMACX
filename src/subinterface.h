@@ -8,7 +8,6 @@
  * (at your option) any later version.
  */
 #pragma once
-#include "original_seam.h"
 
 class GraphicWin;
 
@@ -50,7 +49,3 @@ class SubInterface {
 static_assert(sizeof(SubInterface) == 0x8,
               "legacy interface subobject must remain eight bytes");
 #endif
-
-typedef void (OriginalObject::*func_sub_interface_iface_mode)();
-extern func_sub_interface_iface_mode SubInterfaceSetIfaceMode;
-extern func_sub_interface_iface_mode SubInterfaceReleaseIfaceMode;

@@ -1134,36 +1134,79 @@ void ReportIf::done() {
 // and done's 22-byte BYTE_EXACT match is a `call rel32` there.
 
 
-/*
- * SubInterface's two called methods, hosted here for the reason spelled out in
- * subinterface.h: that class has no translation unit of its own, and this is
- * the file that already sees the header and already calls one of them.
- */
-func_sub_interface_iface_mode SubInterfaceSetIfaceMode =
-    original_method<func_sub_interface_iface_mode>(0x0045D310);
-func_sub_interface_iface_mode SubInterfaceReleaseIfaceMode =
-    original_method<func_sub_interface_iface_mode>(0x0045D380);
-
-/*
-Purpose: Make this interface the active one. The body at 0x0045D310 is NOT
-         recovered; this is a seam to the original image, not a recovery, and
-         deliberately carries no `Original Offset:` line so the catalogue does
-         not mistake it for one.
-Status: Forwarded to the original image
-*/
-void SubInterface::set_iface_mode() {
-    (ORIGINAL(this)->*SubInterfaceSetIfaceMode)();
+// SubInterface lifecycle methods share this TU with their ReportIf callers.
+// Keep out-of-line calls: ReportIf::done retains its historical call boundary.
+// ORIGINAL: 0x0045D2E0 ?delete_iface_mode@SubInterface@@QAEXXZ 0x0045D2E0-0x0045D303 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/0045d2e0.cpp", "image:terranx_original.exe:0x0045D2E0", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+void SubInterface::delete_iface_mode() {
+    for (int index = 0; index < 12; ++index) {
+        if (InterfaceRegistry[index] == this) {
+            InterfaceRegistry[index] = 0;
+            return;
+        }
+    }
 }
 
-/*
-Purpose: Give up the active interface mode. The body at 0x0045D380 is NOT
-         recovered; this is a seam to the original image, not a recovery, and
-         deliberately carries no `Original Offset:` line so the catalogue does
-         not mistake it for one.
-Status: Forwarded to the original image
-*/
+// ORIGINAL: 0x0045D310 ?set_iface_mode@SubInterface@@QAEXXZ 0x0045D310-0x0045D37D
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0045d310.cpp", "image:terranx_original.exe:0x0045D310", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
+void SubInterface::set_iface_mode() {
+    int depth = ActiveIfaceIdStorage;
+    int mode = static_cast<int>(field_4_);
+    const int current = IfaceIdToSlotStorage[depth];
+    if (current != mode && (mode != 10 || current == 0)) {
+        SubInterface *previous = InterfaceRegistry[current];
+        ++depth;
+        ActiveIfaceIdStorage = depth;
+        mode = static_cast<int>(field_4_);
+        IfaceIdToSlotStorage[depth] = mode;
+        if (previous != 0) {
+            previous->on_status(0);
+        }
+        MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
+        // Both callbacks may change the receiver's mode or registry entry.
+        mode = static_cast<int>(field_4_);
+        SubInterface *next = InterfaceRegistry[mode];
+        if (next != 0) {
+            next->on_status(1);
+        }
+    }
+}
+
+// ORIGINAL: 0x0045D380 ?release_iface_mode@SubInterface@@QAEXXZ 0x0045D380-0x0045D43F
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0045d380.cpp", "image:terranx_original.exe:0x0045D380", "source:src/maininterface.h:InterfaceRegistry and mode-stack storage; source:src/multiwin.h:owned Sprite offsets; native callback-sensitive mode reload and downward repeated removal", "recovery/tasks/interface-contract-report-closure.json; owner expansion interface-registry-multiwin-small-20261001"], "reason": "Recover the original in its genuine C++ owner using source-owned interface registry and mode stack, real virtual callbacks, or owned MultiWin sprite geometry. Preserve historical seed obligations; this binding grants no current byte or runtime claim."}
 void SubInterface::release_iface_mode() {
-    (ORIGINAL(this)->*SubInterfaceReleaseIfaceMode)();
+    int depth = ActiveIfaceIdStorage;
+    if (depth != 0) {
+        const int mode = static_cast<int>(field_4_);
+        if (IfaceIdToSlotStorage[depth] == mode) {
+            --depth;
+            ActiveIfaceIdStorage = depth;
+            const int next_mode = IfaceIdToSlotStorage[depth];
+            if (mode != next_mode) {
+                SubInterface *previous = InterfaceRegistry[mode];
+                if (previous != 0) {
+                    previous->on_status(0);
+                }
+            }
+            MainInterfaceGlobal.set_clip(MainInterfaceGlobal.buffer_working_rect());
+            SubInterface *next = InterfaceRegistry[next_mode];
+            if (next != 0) {
+                next->on_status(1);
+            }
+        } else {
+            // Remove every buried occurrence, scanning downward after each
+            // shift. The original does not stop after the first match.
+            for (int index = depth - 1; index >= 1; --index) {
+                if (IfaceIdToSlotStorage[index] == mode) {
+                    for (int move = index; move < depth; ++move) {
+                        IfaceIdToSlotStorage[move] = IfaceIdToSlotStorage[move + 1];
+                    }
+                    --depth;
+                    ActiveIfaceIdStorage = depth;
+                }
+            }
+        }
+    }
 }
 #pragma auto_inline(on)
 
