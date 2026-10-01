@@ -32,7 +32,7 @@ HARNESS = r"""
 enum { MaxPlayerNum=8 };
 
 BODY_MONUMENT_LAYOUT
-MonumentResetRow MonumentResetRows[MaxPlayerNum];
+MonumentFaction FactionMonuments[MaxPlayerNum];
 namespace ProductOfferLayout {
 BODY_OFFER_LAYOUT
 }
@@ -67,28 +67,24 @@ static void check_offer_word(const TrackedInt &word, int expected_id) {
 }
 
 int main() {
-  std::memset(MonumentResetRows, 0xA5, sizeof MonumentResetRows);
+  std::memset(FactionMonuments, 0xA5, sizeof FactionMonuments);
   clear_monuments();
   for (int faction=0; faction<8; ++faction) {
-    for (int slot=0; slot<20; ++slot) {
-      assert(MonumentResetRows[faction].first_twenty_[slot].first_word_ == 0);
-      for (int byte=0; byte<0x34; ++byte)
-        assert(MonumentResetRows[faction].first_twenty_[slot].opaque_[byte] == 0xA5);
+    const unsigned char *bytes =
+      reinterpret_cast<const unsigned char *>(&FactionMonuments[faction]);
+    for (int offset=0; offset<0x4F4; ++offset) {
+      bool cleared=false;
+      for (int slot=0; slot<21; ++slot)
+        if (offset>=slot*0x38+0x10 && offset<slot*0x38+0x14) cleared=true;
+      if (cleared) assert(bytes[offset]==0);
+      else if (offset>=0x498 && offset<0x49C) assert(bytes[offset]==0xFF);
+      else assert(bytes[offset]==0xA5);
     }
-    assert(MonumentResetRows[faction].last_.first_word_ == 0);
-    assert(MonumentResetRows[faction].last_.terminal_word_ == -1);
-    assert(reinterpret_cast<char *>(&MonumentResetRows[faction].last_.terminal_word_) -
-           reinterpret_cast<char *>(&MonumentResetRows[faction]) == 0x488);
+    assert(reinterpret_cast<const char *>(&FactionMonuments[faction].latest_type_) -
+           reinterpret_cast<const char *>(&FactionMonuments[faction]) == 0x498);
     if (faction != 0)
-      assert(reinterpret_cast<char *>(&MonumentResetRows[faction].last_.terminal_word_) -
-             reinterpret_cast<char *>(&MonumentResetRows[faction-1].last_.terminal_word_) ==
-             0x4F4);
-    for (int byte=0; byte<0x24; ++byte)
-      assert(MonumentResetRows[faction].last_.opaque_before_terminal_[byte] == 0xA5);
-    for (int byte=0; byte<8; ++byte)
-      assert(MonumentResetRows[faction].last_.opaque_after_terminal_[byte] == 0xA5);
-    for (int byte=0; byte<0x60; ++byte)
-      assert(MonumentResetRows[faction].opaque_row_tail_[byte] == 0xA5);
+      assert(reinterpret_cast<const char *>(&FactionMonuments[faction]) -
+             reinterpret_cast<const char *>(&FactionMonuments[faction-1]) == 0x4F4);
   }
 
   std::memset(OfferResetCells, 0x6B, sizeof OfferResetCells);
@@ -148,8 +144,8 @@ def test_setup_reset_helpers_actual_typed_storage_and_order(tmp_path):
         pytest.skip("host C++ compiler unavailable")
     harness = HARNESS
     header = (ROOT / "src/game.h").read_text()
-    monument = header[header.index("struct MonumentResetSlot {") :
-                      header.index("extern MonumentResetRow MonumentResetRows")]
+    monument = header[header.index("struct MonumentRecord {") :
+                      header.index("extern MonumentFaction FactionMonuments")]
     offer = header[header.index("struct OfferResetCell {") :
                    header.index("extern OfferResetCell OfferResetCells")]
     harness = harness.replace("BODY_MONUMENT_LAYOUT", monument)

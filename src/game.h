@@ -118,29 +118,29 @@ enum GameDifficultyLevel {
 // extra load. WinMain's `mov dword ptr [0x9a6488], 1` is a direct store.
 extern BOOL ExpansionEnabled;
 extern uint32_t GamePreferences;
-// The monument reset visits eight faction rows, preserving every byte other
-// than the first word of 21 records and the last record's terminal word.
-// Only this reset footprint is established; opaque bytes are not invented
-// member semantics or proof of the wider monument window layout.
-struct MonumentResetSlot {
-    int first_word_;
-    uint8_t opaque_[0x34];
+// Founding476B70 establishes record0 at94CA08; secrets476DA0 uses record2
+// at94CA78. Reset476B30 clears each achieved word (+10), not each year.
+// Word meanings depend on the monument type: +4/+8 are repeat years for
+// secrets, +8 is the counterpart faction for victory/defeat records, and
+// +14 is a first-achiever flag in secrets. Keep those names provisional.
+struct MonumentRecord {
+    int year_;
+    int word_4_;
+    int word_8_;
+    int owner_faction_;
+    int achieved_;
+    int word_14_;
+    uint8_t opaque_[0x20];
 };
-struct MonumentResetLastSlot {
-    int first_word_;
-    uint8_t opaque_before_terminal_[0x24];
-    int terminal_word_;
-    uint8_t opaque_after_terminal_[8];
+struct MonumentFaction {
+    MonumentRecord records_[21];
+    int latest_type_;
+    uint8_t opaque_tail_[0x58];
 };
-struct MonumentResetRow {
-    MonumentResetSlot first_twenty_[20];
-    MonumentResetLastSlot last_;
-    uint8_t opaque_row_tail_[0x60];
-};
-static_assert(sizeof(MonumentResetSlot) == 0x38, "monument record stride");
-static_assert(sizeof(MonumentResetLastSlot) == 0x34, "last reset footprint");
-static_assert(sizeof(MonumentResetRow) == 0x4F4, "monument faction-row stride");
-extern MonumentResetRow MonumentResetRows[8];
+static_assert(sizeof(MonumentRecord) == 0x38, "monument record stride");
+static_assert(sizeof(MonumentFaction) == 0x4F4, "monument faction stride");
+extern MonumentFaction FactionMonuments[8];
+void __cdecl mon_secrets_of_tech(int faction_id);
 
 // Four independently cleared words precede each offer cell's unknown payload.
 struct OfferResetCell {

@@ -924,10 +924,11 @@ void __cdecl colortables_init() {
     file.close();
 }
 
-// Original 476B30 advances eight rows from94CA18 by4F4 bytes. The
-// terminal word is at +488 inside the final record, not after the array.
-// RECOVERY_OBJECT: v2 0x0094CA18 0x0094F1B8 ?MonumentResetRows@@3PAUMonumentResetRow@@A 0x00476B30
-MonumentResetRow MonumentResetRows[MaxPlayerNum];
+// Eight faction blocks begin at94CA08, with21records at38 stride and
+// latest-type at+498. Founding/secrets/victory consumers establish the
+// natural container; reset's previous94CA18 view began inside record0.
+// RECOVERY_OBJECT: v2 0x0094CA08 0x0094F1A8 ?FactionMonuments@@3PAUMonumentFaction@@A 0x00476DA0
+MonumentFaction FactionMonuments[MaxPlayerNum];
 
 // Original441250 clears four words in each of64 cells, preserving the
 // payload and the flat/transposed write order. Cell stride is90 bytes.
@@ -949,14 +950,13 @@ int TamperDialogFaction[MaxPlayerNum];
 int TamperDialogValue[MaxPlayerNum];
 
 // ORIGINAL: 0x00476B30 ?clear_monuments@@YAXXZ 0x00476B30-0x00476B61
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 visits21 first words at38 stride and terminal+488 in8 rows at4F4 stride; independent review caught and corrected a four-byte row-layout error. Actual game.h layouts and source-extracted helper fixture assert footprints and preserved bytes."], "reason": "Recover the complete faction monument reset through real bounded row/record storage; only reset-observed fields are interpreted, other bytes remain opaque. Preserve historical exact seed and restoration obligations without transferring its fixed-address spelling."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 starts its writes at94CA18 with38stride in8faction rows4F4apart; founding476B70 and secrets476DA0 establish containing-record base94CA08", "recovery/tests/test_setup_dependencies_behavior.py checks everybyte against the exact original22word mutation footprint"], "reason": "Reset the shared natural monument container: clear21achieved words atrecord+10 andlatest_type atrow+498, preserving all other bytes. Historical reset-only shifted interpretation remains in Git/task history; original seed and restoration obligations are intact."}
 void __cdecl clear_monuments() {
     for (int faction = 0; faction < MaxPlayerNum; ++faction) {
-        MonumentResetRow &row = MonumentResetRows[faction];
-        for (int slot = 0; slot < 20; ++slot)
-            row.first_twenty_[slot].first_word_ = 0;
-        row.last_.first_word_ = 0;
-        row.last_.terminal_word_ = -1;
+        MonumentFaction &row = FactionMonuments[faction];
+        for (int slot = 0; slot < 21; ++slot)
+            row.records_[slot].achieved_ = 0;
+        row.latest_type_ = -1;
     }
 }
 
@@ -4986,4 +4986,51 @@ void __cdecl time_warp() {
         }
     }
     TurnCurrentNum = scenario_turn;
+}
+
+void __cdecl monument(int from_load);
+
+// ORIGINAL: 0x00476DA0 ?mon_secrets_of_tech@@YAXH@Z 0x00476DA0-0x00476EDD
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00476da0.cpp preserved original identity/extent; pinned instructions and independent family review establish317byte body and fields; actual-source milestone/reset controls verify shared ownership and native branches"], "reason": "Record first/repeated technology secrets in genuine shared monument record2, retain first-achiever peer interpretation and notify the live local faction."}
+void __cdecl mon_secrets_of_tech(int faction_id) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+        return;
+
+    MonumentRecord &record = FactionMonuments[faction_id].records_[2];
+    if (record.achieved_ != 0) {
+        if (record.word_8_ == -1)
+            record.word_8_ = year;
+        else if (record.word_4_ == -1)
+            record.word_4_ = year;
+    } else {
+        record.word_14_ = 0;
+        int peer;
+        for (peer = 0; peer < MaxPlayerNum; ++peer) {
+            if (peer != faction_id &&
+                FactionMonuments[peer].records_[2].achieved_ != 0)
+                ++record.word_14_;
+        }
+
+        int first_faction = faction_id;
+        if (record.word_14_ != 0) {
+            record.word_14_ = 0;
+            for (peer = 0; peer < MaxPlayerNum; ++peer) {
+                const MonumentRecord &other = FactionMonuments[peer].records_[2];
+                if (peer != faction_id && other.achieved_ != 0 &&
+                    other.word_14_ != 0)
+                    first_faction = peer;
+            }
+        } else {
+            record.word_14_ = 1;
+        }
+        record.owner_faction_ = first_faction;
+        record.year_ = year;
+        record.achieved_ = 1;
+        record.word_8_ = -1;
+        record.word_4_ = -1;
+    }
+    FactionMonuments[faction_id].latest_type_ = 2;
+    if (faction_id == ConsoleGlobal.faction_id_)
+        monument(1);
 }

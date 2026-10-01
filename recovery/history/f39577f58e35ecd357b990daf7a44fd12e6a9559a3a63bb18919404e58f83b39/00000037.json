@@ -1,0 +1,21 @@
+{
+  "event_id": "e2023fe53a9fb22043fa60bf81fca66934c2a4df66da4e1150e34e21d226691b",
+  "payload": {
+    "affects": [
+      "entity-1b0c56073054914994e2c89139f9d877b0de50d49d63010b28ca21fdedb320e2"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "monument-ui-shared-storage-seam-20261001",
+    "evidence": [
+      "src/stringstruct.cpp:2230-2281 retains FactionMonumentFlags at946F58, FactionMonumentRecords at94CA18, raw MonuWin storage7F9F58 and direct original init472230 call. These overlap the newly source-owned Players and FactionMonuments owners but are not connected to them.",
+      "Current authorized scope35/36 establishes the natural shared record storage and typed producer behavior, not MonuWin ownership or its unrecovered initializer. Preserve this outside-owner seam pending separate scope and native review; no runtime or full-family acceptance follows from compile/link."
+    ],
+    "hypothesis": "The monument UI entry point still reads original-address record/flag aliases and invokes a fixed-address MonuWin initializer; typed milestone producers cannot establish a working monument UI until that owner and its lifecycle/callback seams are recovered.",
+    "kind": "discovery"
+  },
+  "previous_event": "74abcb52d9c6abfec5a47f3d83f71cd4ab765009870193fb2a85cb486e18ead9",
+  "request_id": "monument-ui-shared-storage-seam-20261001",
+  "schema_version": 1,
+  "sequence": 37,
+  "stream": "task:interface-contract-report-closure"
+}
