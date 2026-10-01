@@ -1,0 +1,20 @@
+{
+  "event_id": "701d374ccaf550bbc083689057693d98af6333afa4605d617b852d87e9948d76",
+  "payload": {
+    "affects": [
+      "entity-d844a03b38420bcf81e996cff2f039037bfad156441b2e3d1e94947fe642e2f9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "console-editor-native-owner-correction-20261001",
+    "evidence": [
+      "Correct the mode2 interpretation recorded in revision21, without rewriting history or resetting the baseline. Pinned instructions4DE070 load prototype+0x24 chassis_id, and table94A37A is RulesChassis+0x4A range with stride0x90; the unsigned comparison is chassis range, not weapon offense. Entry4DDA93 reads absolute ConsoleGlobal cursor/selection/history storage. Actual-source host controls deliberately distinguish the incoming receiver and Weapon from these owners, and cover live prototype reloads. Preserve original mappings, historical claims and retained seeds; this corrects evidence, not acceptance."
+    ],
+    "hypothesis": "Vehicle editor selection belongs to ConsoleGlobal; the mode2 extended field belongs to unsigned chassis range, not weapon offense.",
+    "kind": "discovery"
+  },
+  "previous_event": "2ab7305c6e086fff0a0128eb8e924c3217193a1f12233d32dc3e3fa5c55c4711",
+  "request_id": "console-editor-native-owner-correction-20261001",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:console-scenario-owner-wave"
+}

@@ -1,0 +1,17 @@
+{
+  "event_id": "be7ca9c35acfd26ad3d5d5903802df0c67295e008a1de04b8823a81e7d493c41",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "console-editor-native-owner-correction-20261001",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/console.cpp editor_edit_veh uses ConsoleGlobal selection/history and Chassis.range; actual-product host controls reject wrong receiver, wrong rules owner and signed range."
+    ]
+  },
+  "previous_event": "701d374ccaf550bbc083689057693d98af6333afa4605d617b852d87e9948d76",
+  "request_id": "console-editor-native-owner-correction-incorporated-20261001",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:console-scenario-owner-wave"
+}

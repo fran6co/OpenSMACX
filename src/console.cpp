@@ -62,6 +62,8 @@
 #include "alpha.h"  // AlphaIniPrefs - the toggles mirror the prefs into it
 #include "terraforming.h"  // Terraforming rules drive the scenario terrain picker
 #include "planwin.h"
+#include <cstdlib>
+#include <cstring>
 
 void __cdecl base_kill(int base_id);
 int __cdecl action_build(int vehicle_id, char *base_name);
@@ -244,10 +246,212 @@ void Console::set_move(int force_update) {
     focus(tile_x, tile_y, faction_id_);
 }
 
+namespace {
+
+void append_decimal(char *output, int value) {
+    char digits[16];
+    _itoa(value, digits, 10);
+    ::strcat(output, digits);
+}
+
+void update_then_redraw_vehicle_editor_tile(const Veh &vehicle) {
+    ConsoleGlobal.update_data(0);
+    draw_tile(vehicle.x, vehicle.y, 1);
+}
+
+}
+
 // ORIGINAL: 0x004DDA50 ?editor_edit_veh@Console@@QAEXH@Z 0x004DDA50-0x004DE95B;0x0065B97E-0x0065BC13
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004dda50.cpp", "source:src/console.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
-void Console::editor_edit_veh(int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned4DDA50..4DE95B and65B97E..65BC13; retained src/unrecovered/004dda50.cpp", "Popup=-53DC; Scroll=-21AC and embedded Dialogs/Spot/Sprite/buttons/Heap account for native teardown. Ordinary Popup destructor replaces the entire cleanup, without an extra explicit close.", "Veh+E is faction_id. Mode2 loads prototype+24 chassis_id and Chassis+4A unsigned range, not weapon offense. Initial selection/history comes from ConsoleGlobal absolute storage, not the incoming receiver. Morale and faction menus retain current-value defaults; native tile call pushes type,y,x and reads coordinates after update callbacks.", "recovery/tasks/console-scenario-owner-wave.json; recovery/tests/test_console_editor_edit_veh_host.py actual-source behavior and lifecycle controls"], "reason": "Recover vehicle-editor modes in the genuine Console owner using typed vehicle, prototype, faction and base storage and a lexical Popup. Preserve original identity, seed and historical obligations; this is not current byte or runtime acceptance."}
+void Console::editor_edit_veh(int vehicle_id) {
+    Popup popup;
+    auto_undo();
+
+    if (vehicle_id < 0) {
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            vehicle_id = ConsoleGlobal.selected_vehicle_;
+        } else {
+            const int history = ConsoleGlobal.cursor_history_index_;
+            const int x = ConsoleGlobal.cursor_history_x_[history];
+            const int y = ConsoleGlobal.cursor_history_y_[history];
+            const int found = veh_at(x, y);
+            if (found < 0) {
+                return;
+            }
+            vehicle_id = veh_pick(found, "PICKEDIT", 1);
+            if (vehicle_id < 0) {
+                return;
+            }
+        }
+    }
+
+    Veh &vehicle = Vehs[vehicle_id];
+    const VehPrototype &initial_prototype = VehPrototypes[vehicle.proto_id];
+
+    int checks = PopupWriteCheckState;
+    const uint16_t original_flags = vehicle.flags;
+    checks = (checks & ~0x01) | ((original_flags & VFLAG_IS_OBJECTIVE) ? 0x01 : 0);
+    checks = (checks & ~0x02) | ((original_flags & 0x0080) ? 0x02 : 0);
+    checks = (checks & ~0x04) | ((original_flags & 0x0100) ? 0x04 : 0);
+    checks = (checks & ~0x08) | ((original_flags & 0x0200) ? 0x08 : 0);
+    checks = (checks & ~0x10) | ((original_flags & VFLAG_LURKER) ? 0x10 : 0);
+    checks = (checks & ~0x20) | ((original_flags & VFLAG_INVISIBLE) ? 0x20 : 0);
+    checks = (checks & ~0x40) | ((vehicle.state & VSTATE_MONOLITH_UPGRADED) ? 0x40 : 0);
+    PopupWriteCheckState = checks;
+
+    StringTemp[0] = '\0';
+    ::strcat(StringTemp, initial_prototype.veh_name);
+    ::strcat(StringTemp, " ");
+    ::strcat(StringTemp, "(");
+    append_decimal(StringTemp, vehicle_id);
+    ::strcat(StringTemp, ")");
+    if (x_pop_short("EDITVEH", 0x41, nullptr) < 0) {
+        return;
+    }
+
+    vehicle.flags &= static_cast<uint16_t>(0xF81F);
+    vehicle.state &= ~VSTATE_MONOLITH_UPGRADED;
+    checks = PopupWriteCheckState;
+    if (checks & 0x01) vehicle.flags |= VFLAG_IS_OBJECTIVE;
+    if (checks & 0x02) vehicle.flags |= 0x0080;
+    if (checks & 0x04) vehicle.flags |= 0x0100;
+    if (checks & 0x08) vehicle.flags |= 0x0200;
+    if (checks & 0x10) vehicle.flags |= VFLAG_LURKER;
+    if (checks & 0x20) vehicle.flags |= VFLAG_INVISIBLE;
+    if (checks & 0x40) vehicle.state |= VSTATE_MONOLITH_UPGRADED;
+    if (vehicle.flags & VFLAG_INVISIBLE) {
+        // 4DDD47..5E pushes -1, y, x for owner_set(x, y, faction).
+        owner_set(vehicle.x, vehicle.y, -1);
+    }
+    update_then_redraw_vehicle_editor_tile(vehicle);
+
+    if (BaseAtKeyPollFlag == 1) {
+        popup.start(PopupStartCaption, "EDITMORALE", -1, nullptr, 0x40, nullptr);
+        for (int morale_id = 0; morale_id < MaxMoraleNum; ++morale_id) {
+            const char *name = Morale[morale_id].name;
+            const VehPrototype &listed_prototype = VehPrototypes[vehicle.proto_id];
+            if (vehicle.proto_id < 0x40 &&
+                (Weapon[listed_prototype.weapon_id].offense_rating < 0 || vehicle.proto_id == 0x0F)) {
+                name = Morale[morale_id].name_lifecycle;
+            }
+            popup.dialogs_.item(StringTable.get(
+                static_cast<int>(reinterpret_cast<uintptr_t>(name))), morale_id);
+            if (morale_veh(vehicle_id, 1, 0) == morale_id) {
+                popup.set_value(morale_id);
+            }
+        }
+
+        const int effective_morale = morale_veh(vehicle_id, 1, 0);
+        const uint8_t old_morale = vehicle.morale;
+        const int selected = popup.exec(0, nullptr);
+        if (selected < 0) {
+            return;
+        }
+
+        int morale = selected - (effective_morale - old_morale);
+        if (morale < 0) morale = 0;
+        if (morale > 6) morale = 6;
+        vehicle.morale = static_cast<uint8_t>(morale);
+
+        if (vehicle.faction_id == 0) {
+            if (selected != 0) {
+                for (;;) {
+                    const int alien_morale = static_cast<int>(morale_alien(vehicle_id, 0));
+                    const unsigned int rank = (vehicle.flags >> 3) & 3;
+                    if (alien_morale <= selected || rank == 0) break;
+                    vehicle.flags = static_cast<uint16_t>(
+                        (rank * 8 - 8) | (vehicle.flags & 0xFFE7));
+                }
+            }
+            if (selected < 7) {
+                for (;;) {
+                    const int alien_morale = static_cast<int>(morale_alien(vehicle_id, 0));
+                    const unsigned int rank = (vehicle.flags >> 3) & 3;
+                    if (selected <= alien_morale || rank >= 3) break;
+                    vehicle.flags = static_cast<uint16_t>(
+                        (rank * 8 + 8) | (vehicle.flags & 0xFFE7));
+                }
+            }
+        }
+        update_then_redraw_vehicle_editor_tile(vehicle);
+        return;
+    }
+
+    if (BaseAtKeyPollFlag == 2) {
+        StringTemp[0] = '\0';
+        append_decimal(StringTemp, static_cast<uint8_t>(vehicle.order));
+        parse_says(0, StringTemp, -1, -1);
+        StringTemp[0] = '\0';
+        append_decimal(StringTemp, vehicle.moves_expended);
+        parse_says(1, StringTemp, -1, -1);
+        StringTemp[0] = '\0';
+        append_decimal(StringTemp, vehicle.dmg_incurred);
+        parse_says(2, StringTemp, -1, -1);
+
+        const uint8_t input_fields_range =
+            Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range;
+        if (input_fields_range > 1) {
+            StringTemp[0] = '\0';
+            append_decimal(StringTemp, vehicle.terraforming_turns);
+            parse_says(3, StringTemp, -1, -1);
+        }
+        const uint8_t dialog_range =
+            Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range;
+        const char *dialog = dialog_range <= 1 ? "EDITVEH2" : "EDITVEH2A";
+        popup.start(PopupStartCaption, dialog, -1, nullptr, 0x44, nullptr);
+        if (popup.exec(0, nullptr) < 0) {
+            return;
+        }
+        vehicle.order = static_cast<int8_t>(::atoi(ParseStrBuffer[0].str));
+        vehicle.moves_expended = static_cast<uint8_t>(::atoi(ParseStrBuffer[1].str));
+        vehicle.dmg_incurred = static_cast<uint8_t>(::atoi(ParseStrBuffer[2].str));
+        if (Chassis[VehPrototypes[vehicle.proto_id].chassis_id].range > 1) {
+            vehicle.terraforming_turns = static_cast<uint8_t>(::atoi(ParseStrBuffer[3].str));
+        }
+        update_then_redraw_vehicle_editor_tile(vehicle);
+        return;
+    }
+
+    if (BaseAtKeyPollFlag == 3) {
+        popup.start(PopupStartCaption, "EDITVEHWHO", -1, nullptr, 0x42, nullptr);
+        for (int faction_id = 0; faction_id < MaxPlayerNum; ++faction_id) {
+            PluralityDefault = Players[faction_id].is_noun_plural;
+            StringTemp[0] = '\0';
+            ::strcat(StringTemp, Players[faction_id].noun_faction);
+            GenderDefault = Players[faction_id].noun_gender;
+            popup.dialogs_.item(StringTemp, faction_id);
+        }
+        popup.set_value(vehicle.faction_id);
+        const int faction = popup.exec(0, nullptr);
+        if (faction < 0) {
+            return;
+        }
+        vehicle.faction_id = static_cast<uint8_t>(faction);
+        draw_tile(vehicle.x, vehicle.y, 1);
+        ConsoleGlobal.update_data(0);
+        return;
+    }
+
+    if (BaseAtKeyPollFlag == 4) {
+        popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42, nullptr);
+        StringTemp[0] = '\0';
+        ::strcat(StringTemp, label_get(25));
+        popup.dialogs_.item(StringTemp, 9999);
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            if (Bases[base_id].faction_id_current == vehicle.faction_id) {
+                popup.dialogs_.item(Bases[base_id].name_string, base_id);
+            }
+        }
+        popup.set_value(vehicle.home_base_id < 0 ? 9999 : vehicle.home_base_id);
+        int selected_base = popup.exec(0, nullptr);
+        if (selected_base < 0) {
+            return;
+        }
+        if (selected_base == 9999) selected_base = -1;
+        vehicle.home_base_id = static_cast<int16_t>(selected_base);
+        draw_tile(vehicle.x, vehicle.y, 1);
+        ConsoleGlobal.update_data(0);
+    }
 }
 
 // ORIGINAL: 0x004D2220 ?sentry@Console@@QAEXHH@Z 0x004D2220-0x004D24BB
