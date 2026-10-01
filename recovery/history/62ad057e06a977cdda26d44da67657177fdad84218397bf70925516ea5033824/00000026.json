@@ -1,0 +1,28 @@
+{
+  "event_id": "d5fd7b37d4b555c0dc48eff328c781ed6c1eb900065a62067d733fae9b91444e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/console_give_hints_harness.cpp",
+      "recovery/tests/test_console_give_hints_host.py",
+      "src/console.cpp",
+      "src/tutwin.h"
+    ],
+    "evidence": [
+      "Recover the complete8KB Console tutorial-hint method in its genuine owner, retaining the mapped original placeholder identity, all seeds and historical obligations. Add only public tutorial checker/flag declarations to tutwin.h, without changing any class storage or dispatch contract. Source-owned tutorial stage is TutorialWindow+53C0 via set_tour_stage, NOT separate DesignTutorState73396C; native initial2000state gate encloses early cards ANDcolonist scan, while clearstate goes straight51222C. Original map scans, player/prototype/rules storage, source-owned sprite tables and real hints/lifecycle APIs replace old address arithmetic. Independent native review corrected enemy-territory site filtering and disproved the false no-base exploration edge; native exhaustion proceeds enemyvehicle then territoryhints. All33 distinct original caption literals verified bounded against pinned original data. User-approved Unity sprite defensive bounds check may apply on real matching-pod path; do not claim a nonexistent original32..36 failure path. Coordinator requires actual-source controls, native compile, preserved claims and fresh application build/link; matching/structure/runtime game acceptance remains unproven."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5315504,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "c3f3ef185853e372f93b9e28be9a81364a5f01bcd01834710ef8913183c77674",
+  "request_id": "console-give-hints-complete-owner-20261001",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:console-scenario-owner-wave"
+}
