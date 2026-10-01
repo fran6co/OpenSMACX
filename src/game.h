@@ -431,5 +431,7 @@ char *__cdecl get_noun_phrase(int faction_id, int phrase_id);   // 0x0058F8B0
 void __cdecl say_special(char *output, char *text, int faction_id);  // 0x0058F610
 void __cdecl say_fac_special(char *output, char *text, int faction_id);  // 0x0058F700
 void __cdecl balance();  // 0x005B0420
+void __cdecl setup_game(int reload);
+void __cdecl time_warp();
 // current_server is declared in lock.h, the TU whose three call sites reach
 // it; the definition is here.

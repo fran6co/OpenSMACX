@@ -62,6 +62,10 @@
 #include "maininterface.h"  // Shared chat foreground/shadow colors.
 #include "pushbutton.h"
 #include "flatbutton.h"
+#include "council.h"
+#include "replaywin.h"
+#include "technology.h"
+#include "path.h"
 
 extern int __cdecl def_caption_draw(GraphicWin *, char *, Buffer *);
 
@@ -4224,4 +4228,762 @@ char *__cdecl get_pact_hood(int faction_id, int other_id) {
     }
     LPSTR *labels = (LPSTR *)Labels.strings_ptr;
     return StringTable.get((int)labels[code]);
+}
+
+extern void __cdecl clear_hotseat_chat();
+extern int __cdecl tech_advance(int faction_id);
+extern uint32_t TerraformAnnouncedMask[2];
+extern int TutorialFlags;
+extern int TutorialFlags2;
+
+// ORIGINAL: 0x005B3920 ?setup_game@@YAXH@Z 0x005B3920-0x005B4201
+// RECOVERY_BINDING: v1 {"evidence": ["Retained setup owner full native seed and independent full-body review; corrected shared social-effect seen state and pre-callback player labels; actual-source setup controls; no historical byte claim copied."], "reason": "Recover complete game setup using actual source-owned reset storage, player construction and diplomacy initialization; preserve native callback order and final time-warp versus balance branch."}
+void __cdecl setup_game(int reload) {
+    // This initializer deliberately retains the native order: profile state,
+    // transient game state, player construction, then optional diplomacy.
+    GameTechAchieved[MaxTechnologyNum - 1] = 0;
+
+    // The image passes zero-filled 0x945E78/0x945E7C strings to these keys.
+    // Pinned-image initial bytes are NUL, and no other absolute references to
+    // either cell exist; the existing prefs_put overload consumes the values.
+    prefs_put("Latest Save", "");
+    prefs_put("Latest Scenario", "");
+    if (DiffLevelCurrent == 0 && reload == 0 &&
+        prefs_get("DontResetBeginnerPrefs", 0, 0) == 0) {
+        prefs_load(1);
+        GameRules |= 0x20;
+        prefs_put("DontResetBeginnerPrefs", 0, 0);
+    }
+    if (IsMultiplayerNet) GameRules &= ~0x20u;
+    prefs_use();
+
+    ObjectiveAchievePts = 0;
+    ObjectiveReqVictory = 9999;
+    ObjectivesSuddenDeathVictory = 9999;
+    VictoryAchieveBonusPts = 0;
+    StartingMissionYear = Rules.normal_starting_year;
+    EndingMissionYear = DiffLevelCurrent < 3
+        ? Rules.normal_end_year_low_three_diff
+        : Rules.normal_end_year_high_three_diff;
+
+    clear_monuments();
+    wipe_undo();
+    ReplayEventBytes = 0;
+    GameState &= 0x01800000u;
+    GameInterludeFlags = 0;
+    TutorialFlags = 0;
+    TutorialFlags2 = 0;
+    TerraformAnnouncedMask[0] = 0;
+    TerraformAnnouncedMask[1] = 0;
+    TutWinFlags9A64BC = 0;
+    BaseCurrentCount = 0;
+    GameSetupResetWord = 0;
+    TurnCurrentNum = 0;
+    LockEnableMask = (LockEnableMask & ~0x0000FF00u) | 0x0000FF00u;
+    ClimateRiseStep = 0;
+    ClimateRiseLimit = 0;
+    ClimateRiseAccum = 0;
+    ClimateSeaLevelDelta = 0;
+    clear_all_offers();
+    clear_hotseat_chat();
+    clear_council_notify();
+    clear_tamper();
+    TurnControlDurationMilliseconds = 0;
+    GovernorFaction = -1;
+    for (int proposal = 0; proposal < MaxProposalNum; ++proposal) {
+        CouncilResolutionCount[proposal] = 0;
+        CouncilLastResolutionTurn[proposal] = -9999;
+    }
+
+    if (!IsMultiplayerNet && reload != 0 && GameRestartQueued == 0)
+        GameState |= 0xE0;
+
+    // The reset words and pending-diplomacy matrix have independent source owners.
+    for (int technology = 0; technology < MaxTechnologyNum; ++technology)
+        GameTechAchieved[technology] = 0;
+    memset(&SecretProject, 0xFF, sizeof SecretProject);
+    memset(ReplayEvents, 0, sizeof ReplayEvents);
+    memset(FactionRankingHistory, 0, sizeof FactionRankingHistory);
+    SunspotDuration = 0;
+    MountPlanetX = 0;
+    MountPlanetY = 0;
+    DustCloudDuration = 0;
+    SaveDaemonStateWord = 0;
+    ScnVictFacilityObj = 0;
+    GlobalEnergyEventState = 0;
+    NetTurnFlags = 0;
+    NetTurnFaction = 0;
+    EcologyEventAccumulator = 0;
+
+    if ((GameState & 0x01000000u) != 0) {
+        int placed = 1;
+        int seen_social_effects[12] = {0};
+        for (int social_faction = 1; social_faction < MaxPlayerNum; ++social_faction) {
+            int rejected = 0;
+            int category;
+            int model;
+            do {
+                category = rand() % 3;
+                model = rand() % 3 + 1;
+                const int effect_index = category * 3 + model;
+                if (seen_social_effects[effect_index] == 0) break;
+                ++rejected;
+                if (rejected >= placed + 1) break;
+            } while (true);
+            ++placed;
+            if (rejected <= placed) {
+                Players[social_faction].soc_ideology_category = category;
+                Players[social_faction].soc_ideology_model = model;
+                seen_social_effects[category * 3 + model] = 1;
+                const SocialEffect &effects =
+                    SocialCategories[category].model_effect[model];
+                for (int effect = 0; effect < 11; ++effect) {
+                    int value = 0;
+                    switch (effect) {
+                    case 0: value = effects.economy; break;
+                    case 1: value = effects.efficiency; break;
+                    case 2: value = effects.support; break;
+                    case 3: value = effects.talent; break;
+                    case 4: value = effects.morale; break;
+                    case 5: value = effects.police; break;
+                    case 6: value = effects.growth; break;
+                    case 7: value = effects.planet; break;
+                    case 8: value = effects.probe; break;
+                    case 9: value = effects.industry; break;
+                    case 10: value = effects.research; break;
+                    }
+                    if (value > 0) {
+                        Players[social_faction].soc_ideology_effect = effect;
+                        break;
+                    }
+                }
+            }
+        }
+    }
+
+    int setup_results[MaxPlayerNum] = {0};
+    for (int human_setup_faction = 0; human_setup_faction < MaxPlayerNum; ++human_setup_faction) {
+        if ((LockEnableMask & (1u << human_setup_faction)) != 0) {
+            setup_player(human_setup_faction, -1 - reload, 0);
+            setup_results[human_setup_faction] = 0;
+        }
+    }
+    memset(TectonicDetonationCount, 0, sizeof TectonicDetonationCount);
+    for (int computer_setup_faction = 0; computer_setup_faction < MaxPlayerNum; ++computer_setup_faction) {
+        if ((LockEnableMask & (1u << computer_setup_faction)) == 0) {
+            setup_player(computer_setup_faction, -1 - reload, 0);
+            setup_results[computer_setup_faction] = 0;
+        }
+    }
+
+    // This is the row-major 8x8 pending-diplomacy flag matrix. Its native
+    // reset follows both setup_player passes and precedes the label copies.
+    memset(PendingDiplomacyFlags, 0, sizeof PendingDiplomacyFlags);
+
+    // The original publishes the default human's labels before the optional
+    // new-game diplomacy/time-warp branch, whose callbacks observe them.
+    strcpy(Players[0].formal_name_faction, label_get(245));
+    strcpy(Players[0].noun_faction, label_get(245));
+    strcpy(Players[0].adj_name_faction, label_get(244));
+
+    if (reload == 0) {
+        // The native random-pair bookkeeping visits factions 1..7. A marked
+        // faction first gets paired with a distinct random faction; an
+        // optional Player::rule_flags bit then asks for a second pair.
+        for (int pair_faction = 1; pair_faction < MaxPlayerNum; ++pair_faction) {
+            if (setup_results[pair_faction] == 0) {
+                int tries = 0;
+                int other;
+                do {
+                    do {
+                        other = rand() % 7 + 1;
+                        ++tries;
+                    } while (other == pair_faction);
+                } while ((setup_results[other] != 0 &&
+                          (tries < 200 ||
+                           (tries < 400 &&
+                            (Players[other].rule_flags & 0x1000) == 0))) ||
+                         ((LockEnableMask & (1u << pair_faction)) != 0 &&
+                          (LockEnableMask & (1u << other)) != 0 && tries < 100));
+                ++setup_results[pair_faction];
+                ++setup_results[other];
+            }
+        }
+
+        for (int extra_pair_faction = 1; extra_pair_faction < MaxPlayerNum; ++extra_pair_faction) {
+            if (setup_results[extra_pair_faction] < 2 &&
+                (Players[extra_pair_faction].rule_flags & 0x1000) != 0) {
+                int tries = 0;
+                int other;
+                do {
+                    do {
+                        other = rand() % 7 + 1;
+                    } while (other == extra_pair_faction);
+                } while ((LockEnableMask & (1u << extra_pair_faction)) != 0 &&
+                         (LockEnableMask & (1u << other)) != 0 &&
+                         (++tries, tries < 200));
+                ++setup_results[extra_pair_faction];
+                ++setup_results[other];
+            }
+        }
+
+        if (!IsMultiplayerNet || (GameRules & 0x40u) != 0) {
+            if ((GameState & 0x00800000u) == 0) {
+                static const char *const pairs[][2] = {
+                    {"PEACE", "SPARTANS"}, {"GAIANS", "MORGAN"},
+                    {"HIVE", "BELIEVE"}, {"UNIV", "BELIEVE"},
+                    {"FUNGBOY", "BELIEVE"}, {"PEACE", "PIRATES"},
+                    {"DRONE", "PIRATES"}, {"DRONE", "MORGAN"},
+                    {"DRONE", "HIVE"}, {"ANGELS", "HIVE"},
+                    {"ANGELS", "CYBORG"}
+                };
+                for (int first = 1; first < MaxPlayerNum; ++first) {
+                    for (int second = 1; second < MaxPlayerNum; ++second) {
+                        if (first != second) {
+                            char first_key[24] = {0};
+                            char second_key[24] = {0};
+                            strcat(first_key, Players[first].search_key);
+                            strcat(second_key, Players[second].search_key);
+                            CharUpperA(first_key);
+                            CharUpperA(second_key);
+
+                            bool matched = false;
+                            for (int pair = 0; pair < 11; ++pair) {
+                                if (!strcmp(first_key, pairs[pair][0]) &&
+                                    !strcmp(second_key, pairs[pair][1])) {
+                                    matched = true;
+                                    break;
+                                }
+                            }
+                            if (matched || (Players[first].rule_flags & RFLAG_ALIEN) != 0 ||
+                                (Players[second].rule_flags & RFLAG_ALIEN) != 0)
+                                agenda_on(second, first, 0x200);
+
+                            if ((Players[first].rule_flags & RFLAG_ALIEN) != 0 &&
+                                (Players[second].rule_flags & RFLAG_ALIEN) != 0) {
+                                set_treaty(second, first, 0xC80C0C38, 1);
+                                set_agenda(second, first, 0x2C2D, 1);
+                            }
+                        }
+                    }
+                }
+            } else {
+                unsigned int rules_snapshot = GameRules;
+                for (int network_faction = 1; network_faction < MaxPlayerNum; ++network_faction) {
+                    if ((LockEnableMask & (1u << network_faction)) != 0) {
+                        int required = ((rules_snapshot >> 6) & 1u) +
+                            (PlayersData[network_faction].diff_level > 2 ? 1 : 0);
+                        int assigned = 0;
+                        while (assigned < required) {
+                            int tries = 0;
+                            int other;
+                            for (;;) {
+                                other = rand() % 7 + 1;
+                                ++tries;
+                                if (tries > 99) break;
+                                if ((PlayersData[other].diplo_agenda[network_faction] & 0x200) == 0) {
+                                    const unsigned int other_bit = 1u << other;
+                                    const bool alive = (LockEnableMask & (other_bit << 8)) != 0;
+                                    const bool human = (LockEnableMask & other_bit) != 0;
+                                    if (alive && !human) break;
+                                }
+                            }
+                            if (tries < 100) agenda_on(other, network_faction, 0x200);
+                            ++assigned;
+                            rules_snapshot = GameRules;
+                            required = ((rules_snapshot >> 6) & 1u) +
+                                (PlayersData[network_faction].diff_level > 2 ? 1 : 0);
+                        }
+                    }
+                }
+            }
+        }
+
+        if ((GameRules & 0x80u) != 0) {
+            time_warp();
+            return;
+        }
+        balance();
+    }
+
+}
+
+static int time_warp_find_prototype(int faction_id, int plan) {
+    const uint8_t faction_bit = static_cast<uint8_t>(1u << faction_id);
+    for (int scan_index = 0; scan_index < 128; ++scan_index) {
+        const int prototype_id = scan_index < 64
+            ? scan_index : faction_id * 64 + scan_index - 64;
+        const VehPrototype &prototype = VehPrototypes[prototype_id];
+        if ((prototype.flags & 1) == 0 ||
+            (prototype.obsolete_factions & faction_bit) != 0) continue;
+        if (prototype_id < 64 && !has_tech(prototype.preq_tech, faction_id)) continue;
+        if (prototype.plan == plan) return prototype_id;
+    }
+    return -1;
+}
+// ORIGINAL: 0x005AEDE0 ?time_warp@@YAXXZ 0x005AEDE0-0x005B0412
+// RECOVERY_BINDING: v1 {"evidence": ["Independent pinned full-span review by report_draw_labs_review; retained game-setup-owner-wave full body and actual-source controls for three profiles, land/aquatic sites, path modes and native relocation."], "reason": "Recover complete accelerated-start setup with typed faction, base, prototype, map and Path owners; preserve callback-sensitive region rereads and native facility/path order. External unfinished callees remain explicit."}
+void __cdecl time_warp() {
+    const int variation = rand() % 3;
+    int scenario_turn;
+    int initial_research;
+    int research_adjustment;
+    int expansion_count;
+    int initial_population;
+    if (variation == 0) {
+        scenario_turn = 30;
+        initial_research = 6;
+        research_adjustment = 2;
+        expansion_count = 3;
+        initial_population = 5;
+    } else if (variation == 1) {
+        scenario_turn = 60;
+        initial_research = 12;
+        research_adjustment = 3;
+        expansion_count = 4;
+        initial_population = 6;
+    } else {
+        scenario_turn = 80;
+        initial_research = 16;
+        research_adjustment = 4;
+        expansion_count = 5;
+        initial_population = 6;
+    }
+
+    for (int faction_id = 1; faction_id < MaxPlayerNum; ++faction_id) {
+        const uint32_t alive_faction = 1u << (faction_id + 8);
+        if ((LockEnableMask & alive_faction) == 0) continue;
+        const int starting_base_id = base_find(0, 0, faction_id);
+        if (starting_base_id < 0) continue;
+
+        Base &starting_base = Bases[starting_base_id];
+        Player &player = Players[faction_id];
+        PlayerData &player_data = PlayersData[faction_id];
+        starting_base.population_size = static_cast<int8_t>(initial_population);
+        if (player.rule_talent != 0) ++starting_base.population_size;
+        if (player.rule_drone != 0 || player.rule_population != 0)
+            --starting_base.population_size;
+        starting_base.nutrients_accumulated =
+            static_cast<int>(starting_base.population_size) * 10 / 2;
+
+        const int starting_region = map_loc(starting_base.x, starting_base.y)->region;
+        const int wealth_sign = player_data.ai_wealth < 1
+            ? (player_data.ai_wealth >= 0 ? 0 : -1) : 1;
+        const int power_sign = player_data.ai_power < 1
+            ? (player_data.ai_power >= 0 ? 0 : -1) : 1;
+        const int research_advances =
+            (wealth_sign - power_sign) * research_adjustment + initial_research;
+
+        AiResearchBatchActive = 1;
+        for (int advance = 0; advance < research_advances; ++advance) {
+            player_data.tech_id_researching = tech_ai(faction_id);
+            tech_advance(faction_id);
+        }
+        player_data.tech_accumulated = static_cast<int>(player_data.tech_achieved << 1);
+        AiResearchBatchActive = 0;
+        player_data.tech_id_researching = -1;
+        consider_designs(static_cast<uint32_t>(faction_id));
+
+        set_fac(FAC_RECYCLING_TANKS, starting_base_id, 1);
+        set_fac(FAC_RECREATION_COMMONS, starting_base_id, 1);
+        if (player_data.ai_wealth != 0)
+            set_fac(FAC_ENERGY_BANK, starting_base_id, 1);
+        if (player_data.ai_power != 0)
+            set_fac(FAC_COMMAND_CENTER, starting_base_id, 1);
+        if (player_data.ai_growth != 0)
+            set_fac(FAC_NETWORK_NODE, starting_base_id, 1);
+
+        if (player_data.ai_fight != 0) {
+            int initial_foil;
+            if (ExpansionEnabled == 0 || (player.rule_flags & RFLAG_AQUATIC) == 0) {
+                initial_foil = BSC_UNITY_ROVER;
+            } else {
+                initial_foil = has_tech(VehPrototypes[BSC_UNITY_FOIL].preq_tech,
+                                        faction_id)
+                    ? BSC_TRANSPORT_FOIL : BSC_UNITY_FOIL;
+            }
+            veh_init(initial_foil, faction_id, starting_base.x, starting_base.y);
+            // Native pushes (facility, 1, starting-base-id) in this branch,
+            // unlike the ordinary facility stores immediately above.
+            set_fac(FAC_PERIMETER_DEFENSE, 1, starting_base_id);
+        }
+
+        // Starting unit selection first searches predefined designs, then
+        // the faction's 64-design bank. The scan is ordered, and technology
+        // is checked only for the predefined range.
+        const int plan_six_prototype = time_warp_find_prototype(faction_id, 6);
+        const BOOL has_foil_technology =
+            has_tech(VehPrototypes[BSC_UNITY_FOIL].preq_tech, faction_id);
+        int opening_prototype = time_warp_find_prototype(faction_id, 2);
+        if (opening_prototype < 0)
+            opening_prototype = time_warp_find_prototype(faction_id, 1);
+        if (opening_prototype < 0) opening_prototype = 2;
+        VehPrototypes[opening_prototype].flags |= 4;
+        int opening_vehicle = veh_init(opening_prototype, faction_id,
+                                       starting_base.x, starting_base.y);
+        Vehs[opening_vehicle].waypoint_count = 2;
+        ++Vehs[opening_vehicle].morale;
+        opening_vehicle = veh_init(opening_prototype, faction_id,
+                                   starting_base.x, starting_base.y);
+        Vehs[opening_vehicle].waypoint_count = 2;
+        const int third_prototype =
+            ExpansionEnabled == 0 || (player.rule_flags & RFLAG_AQUATIC) == 0 ? 1 : 4;
+        veh_init(third_prototype, faction_id, starting_base.x, starting_base.y);
+
+        const int plan_one_prototype = time_warp_find_prototype(faction_id, 1);
+        if (plan_one_prototype >= 0) {
+            VehPrototypes[plan_one_prototype].flags |= 4;
+            const int vehicle = veh_init(plan_one_prototype, faction_id,
+                                         starting_base.x, starting_base.y);
+            ++Vehs[vehicle].morale;
+            if (plan_one_prototype == BSC_MIND_WORMS) Vehs[vehicle].morale = 2;
+        }
+
+        const int plan_zero_prototype = time_warp_find_prototype(faction_id, 0);
+        if (plan_zero_prototype >= 0) {
+            VehPrototypes[plan_zero_prototype].flags |= 4;
+            if (player_data.net_random_event < 1 && player_data.ai_power == 0) {
+                // The native branch deliberately skips this plan-0 vehicle,
+                // then repeats its plan-1 scan and may add that design instead.
+                const int fallback = time_warp_find_prototype(faction_id, 1);
+                if (fallback >= 0) {
+                    VehPrototypes[fallback].flags |= 4;
+                    const int vehicle = veh_init(fallback, faction_id,
+                                                 starting_base.x, starting_base.y);
+                    if (fallback == BSC_MIND_WORMS) Vehs[vehicle].morale = 2;
+                }
+            } else {
+                int vehicle = veh_init(plan_zero_prototype, faction_id,
+                                       starting_base.x, starting_base.y);
+                ++Vehs[vehicle].morale;
+                if (player_data.net_random_event > 0)
+                    veh_init(plan_zero_prototype, faction_id,
+                             starting_base.x, starting_base.y);
+            }
+        }
+
+        int starting_project;
+        int current_project_base;
+        do {
+            starting_project = rand() % 8;
+            switch (starting_project) {
+            case 0: current_project_base = SecretProject.human_genome_project; break;
+            case 1: current_project_base = SecretProject.command_nexus; break;
+            case 2: current_project_base = SecretProject.weather_paradigm; break;
+            case 3: current_project_base = SecretProject.merchant_exchange; break;
+            case 5: current_project_base = SecretProject.citizens_defense_force; break;
+            case 6: current_project_base = SecretProject.virtual_world; break;
+            default: current_project_base = SecretProject.planetary_transit_system; break;
+            }
+        } while (current_project_base != SP_Unbuilt || starting_project == 4 ||
+                 (starting_project == 5 && strcmp(player.filename, "HIVE") == 0));
+        switch (starting_project) {
+        case 0: SecretProject.human_genome_project = starting_base_id; break;
+        case 1: SecretProject.command_nexus = starting_base_id; break;
+        case 2: SecretProject.weather_paradigm = starting_base_id; break;
+        case 3: SecretProject.merchant_exchange = starting_base_id; break;
+        case 5: SecretProject.citizens_defense_force = starting_base_id; break;
+        case 6: SecretProject.virtual_world = starting_base_id; break;
+        default: SecretProject.planetary_transit_system = starting_base_id; break;
+        }
+
+        // The native expansion pass considers expansion_count - 1 rounds.
+        // A round chooses the best free site around any faction base, then
+        // establishes one new settlement and its opening garrison.
+        bool placed_coastal_group = false;
+        for (int expansion_round = 0; expansion_round < expansion_count - 1;
+             ++expansion_round) {
+            int best_score = 0;
+            int best_x = 0;
+            int best_y = 0;
+            int best_base_id = -1;
+            int scan_base_id = 0;
+            int last_base_x = 0;
+            int last_base_y = 0;
+            if (BaseCurrentCount > 0) {
+                for (; scan_base_id < BaseCurrentCount; ++scan_base_id) {
+                    Base &search_base = Bases[scan_base_id];
+                    if (search_base.faction_id_current != faction_id) continue;
+                    const int center_x = search_base.x;
+                    const int center_y = search_base.y;
+                    last_base_x = center_x;
+                    last_base_y = center_y;
+                    const int center_region = map_loc(center_x, center_y)->region;
+                    for (int offset_index = 25; offset_index < 289; ++offset_index) {
+                        const int offset_distance = (offset_index - 25) * 4;
+                        const int offset_x = RadiusOffsetX[offset_index];
+                        const int offset_y = RadiusOffsetY[offset_index];
+                        int candidate_x = center_x + offset_x;
+                        if (!(MapIsFlat & 1)) {
+                            if (candidate_x < 0) candidate_x += MapLongitudeBounds;
+                            else if (candidate_x >= MapLongitudeBounds)
+                                candidate_x -= MapLongitudeBounds;
+                        }
+                        const int candidate_y = center_y + offset_y;
+                        if (candidate_x < 0 || candidate_x >= MapLongitudeBounds ||
+                            candidate_y < 0 || candidate_y >= MapLatitudeBounds) continue;
+
+                        Map *candidate = map_loc(candidate_x, candidate_y);
+                        const int altitude = candidate->climate & 0xE0;
+                        const uint8_t candidate_region = candidate->region;
+                        const bool aquatic = (player.rule_flags & RFLAG_AQUATIC) != 0;
+                        if (((candidate->bit & 0x20u) != 0 && altitude >= 0x40) ||
+                            (aquatic ? altitude >= 0x60 : altitude < 0x60)) continue;
+
+                        const uint8_t owner_state = candidate->val3;
+                        if ((owner_state & 0xC0) >= 0x41 && !aquatic) continue;
+                        int site_bonus = 0;
+                        if ((owner_state & 7) == 0 && (candidate->bit & 0x1000u) == 0) {
+                            site_bonus = candidate->climate >> 4;
+                            if (site_bonus == 0) {
+                                site_bonus = world_site(candidate_x, candidate_y,
+                                                        aquatic ? TRUE : FALSE);
+                                site_set(candidate_x, candidate_y, site_bonus);
+                            }
+                        }
+
+                        int score = (static_cast<int>(search_base.population_size) + site_bonus) * 32;
+                        if (center_region != candidate_region)
+                            score /= 2;
+                        if (offset_distance > 0xDF && offset_distance < 0x240)
+                            score = (score * 3) / 2;
+                        if (offset_distance > 799)
+                            score -= (score + (score >> 31 & 3)) >> 2;
+                        if (offset_distance < 0x60) score /= 2;
+
+                        const int nearest_base_id = base_find(candidate_x, candidate_y);
+                        if (nearest_base_id != scan_base_id) {
+                            const Base &nearest_base = Bases[nearest_base_id];
+                            int dx = abs(candidate_x - nearest_base.x);
+                            if (!(MapIsFlat & 1) && dx > static_cast<int>(MapLongitude))
+                                dx = MapLongitudeBounds - dx;
+                            const int dy = abs(candidate_y - nearest_base.y);
+                            if (((dx + dy) & ~1) < 8) continue;
+                        }
+                        const Base &nearest_base = Bases[nearest_base_id];
+                        if (nearest_base.faction_id_current != faction_id) {
+                            if (map_loc(candidate_x, candidate_y)->region == candidate_region) continue;
+                            score /= 2;
+                        }
+                        if (score > best_score) {
+                            best_score = score;
+                            best_x = candidate_x;
+                            best_y = candidate_y;
+                            best_base_id = scan_base_id;
+                        }
+                    }
+                }
+            }
+
+            if (best_score <= 0) {
+                if (BaseCurrentCount > 0) {
+                    int smallest_base_id = -1;
+                    int smallest_population = 999;
+                    for (int candidate_base_id = 0;
+                         candidate_base_id < BaseCurrentCount; ++candidate_base_id) {
+                        const Base &candidate_base = Bases[candidate_base_id];
+                        if (candidate_base.faction_id_current == faction_id &&
+                            candidate_base.population_size < smallest_population) {
+                            smallest_population = candidate_base.population_size;
+                            smallest_base_id = candidate_base_id;
+                        }
+                    }
+                    if (smallest_base_id >= 0) {
+                        Base &smallest_base = Bases[smallest_base_id];
+                        if (smallest_base.population_size < 6)
+                            smallest_base.population_size += 2;
+                        set_fac(FAC_RECREATION_COMMONS, smallest_base_id, 1);
+                        set_fac(FAC_RECYCLING_TANKS, smallest_base_id, 1);
+                        set_fac(FAC_COMMAND_CENTER, smallest_base_id, 1);
+                        int garrison = time_warp_find_prototype(faction_id, 1);
+                        if (garrison >= 0) {
+                            VehPrototypes[garrison].flags |= 4;
+                            int new_vehicle = veh_init(garrison, faction_id,
+                                                       smallest_base.x, smallest_base.y);
+                            if (garrison == BSC_MIND_WORMS) Vehs[new_vehicle].morale = 2;
+                        }
+                        if (ExpansionEnabled == 0 ||
+                            (player.rule_flags & RFLAG_AQUATIC) == 0)
+                            veh_init(0, faction_id, smallest_base.x, smallest_base.y);
+                        else
+                            veh_init(21, faction_id, last_base_x, last_base_y);
+                        veh_init(7, faction_id, smallest_base.x, smallest_base.y);
+                    }
+                }
+                continue;
+            }
+
+            const int new_base_id = base_init(faction_id, best_x, best_y);
+            Base &new_base = Bases[new_base_id];
+            new_base.population_size = static_cast<int8_t>(expansion_count - expansion_round);
+            if (new_base.population_size > 2) set_fac(FAC_RECREATION_COMMONS, new_base_id, 1);
+            if (new_base.population_size > 3) set_fac(FAC_RECYCLING_TANKS, new_base_id, 1);
+            new_base.nutrients_accumulated = static_cast<int>(new_base.population_size) * 10 / 2;
+
+            int new_vehicle = veh_init(opening_prototype, faction_id, best_x, best_y);
+            if (opening_prototype == BSC_MIND_WORMS) Vehs[new_vehicle].morale = 2;
+            Vehs[new_vehicle].waypoint_count = 2;
+            if (new_base.population_size > 2) {
+                new_vehicle = veh_init(opening_prototype, faction_id, best_x, best_y);
+                if (opening_prototype == BSC_MIND_WORMS) Vehs[new_vehicle].morale = 2;
+                Vehs[new_vehicle].waypoint_count = 2;
+            }
+            if (player_data.ai_fight != 0 || new_base.population_size > 3) {
+                const int defender_prototype =
+                    (player.rule_flags & RFLAG_AQUATIC) != 0 ? 4 : 1;
+                veh_init(defender_prototype, faction_id, best_x, best_y);
+            }
+
+            const Map *new_base_tile = map_loc(best_x, best_y);
+            if (new_base_tile->region != starting_region && !placed_coastal_group &&
+                is_coast(Bases[best_base_id].x, Bases[best_base_id].y, FALSE)) {
+                for (int coast_index = 0; coast_index < 8; ++coast_index) {
+                    int coast_x = best_x + VehMoveDeltaX[coast_index];
+                    if (!(MapIsFlat & 1)) {
+                        if (coast_x < 0) coast_x += MapLongitudeBounds;
+                        else if (coast_x >= MapLongitudeBounds) coast_x -= MapLongitudeBounds;
+                    }
+                    const int coast_y = best_y + VehMoveDeltaY[coast_index];
+                    if (coast_x < 0 || coast_x >= MapLongitudeBounds || coast_y < 0 ||
+                        coast_y >= MapLatitudeBounds) continue;
+                    if ((map_loc(coast_x, coast_y)->climate & 0xE0) >= 0x60) continue;
+                    if (plan_six_prototype >= 0) {
+                        VehPrototypes[plan_six_prototype].flags |= 4;
+                        const int native_vehicle = veh_init(plan_six_prototype, faction_id,
+                                                             coast_x, coast_y);
+                        ++Vehs[native_vehicle].morale;
+                    }
+                    veh_init(has_foil_technology ? BSC_TRANSPORT_FOIL : BSC_UNITY_FOIL,
+                             faction_id, coast_x, coast_y);
+                    const int sleeping_vehicle = veh_init(BSC_UNITY_ROVER, faction_id,
+                                                          coast_x, coast_y);
+                    sleep(sleeping_vehicle);
+                    placed_coastal_group = true;
+                    break;
+                }
+            }
+        }
+
+        AiResearchBatchActive = 1;
+        reset_territory();
+        enemy_strategy(faction_id);
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            Base &base = Bases[base_id];
+            if (base.faction_id_current != faction_id) continue;
+            for (int synch_radius_index = 0; synch_radius_index < 81; ++synch_radius_index) {
+                int radius_x = base.x + RadiusOffsetX[synch_radius_index];
+                if (!(MapIsFlat & 1)) {
+                    if (radius_x < 0) radius_x += MapLongitudeBounds;
+                    else if (radius_x >= MapLongitudeBounds)
+                        radius_x -= MapLongitudeBounds;
+                }
+                const int radius_y = base.y + RadiusOffsetY[synch_radius_index];
+                if (radius_x < 0 || radius_x >= MapLongitudeBounds || radius_y < 0 ||
+                    radius_y >= MapLatitudeBounds) continue;
+                Map *tile = map_loc(radius_x, radius_y);
+                tile->visibility |= static_cast<uint8_t>(1u << faction_id);
+                if (synch_radius_index < 21 && goody_at(radius_x, radius_y) != 0)
+                    tile->bit |= 0x00100400u;
+            }
+            set_base(base_id);
+            base_compute(1);
+            const int terraform_passes =
+                (static_cast<int>(base.population_size) * 2) / 3 + player_data.ai_fight;
+            for (int pass = 0; pass < terraform_passes; ++pass) {
+                base_terraform(1);
+                base_compute(1);
+            }
+            base.resource_sqr_radius = 0;
+
+            for (int radius_index = 0; radius_index < 81; ++radius_index) {
+                int radius_x = base.x + RadiusOffsetX[radius_index];
+                if (!(MapIsFlat & 1)) {
+                    if (radius_x < 0) radius_x += MapLongitudeBounds;
+                    else if (radius_x >= MapLongitudeBounds)
+                        radius_x -= MapLongitudeBounds;
+                }
+                const int radius_y = base.y + RadiusOffsetY[radius_index];
+                if (radius_x >= 0 && radius_x < MapLongitudeBounds && radius_y >= 0 &&
+                    radius_y < MapLatitudeBounds)
+                    synch_bit(radius_x, radius_y, faction_id);
+            }
+            const int base_region = map_loc(base.x, base.y)->region;
+            for (int other_base_id = 0; other_base_id < BaseCurrentCount; ++other_base_id) {
+                if (other_base_id == base_id ||
+                    Bases[other_base_id].faction_id_current != faction_id) continue;
+                Base &other_base = Bases[other_base_id];
+                if (map_loc(other_base.x, other_base.y)->region != base_region) continue;
+                const int has_tech_for_path =
+                    has_tech(Rules.tech_build_roads_fungus, faction_id);
+                const int path_mode = has_tech_for_path ? 0 : 4;
+                int path_step = Paths.find(other_base.x, other_base.y, base.x, base.y,
+                                           0, -1, path_mode, -1);
+                int path_x = other_base.x;
+                int path_y = other_base.y;
+                int path_length = 0;
+                while (path_step >= 0) {
+                    path_x += VehMoveDeltaX[path_step];
+                    if (!(MapIsFlat & 1)) {
+                        if (path_x < 0) path_x += MapLongitudeBounds;
+                        else if (path_x >= MapLongitudeBounds)
+                            path_x -= MapLongitudeBounds;
+                    }
+                    path_y += VehMoveDeltaY[path_step];
+                    if (path_x == base.x && path_y == base.y) break;
+                    Map *path_tile = map_loc(path_x, path_y);
+                    if ((path_tile->bit & 1u) == 0 || (path_tile->val2 & 0x0F) > 7) {
+                        if ((path_tile->bit & 4u) == 0) {
+                            path_tile->bit |= 4u;
+                            synch_bit(path_x, path_y, faction_id);
+                        }
+                    }
+                    ++path_length;
+                    if (path_length > 50) break;
+                    const int can_road_fungus =
+                        has_tech(Rules.tech_build_roads_fungus, faction_id);
+                    path_step = Paths.find(path_x, path_y, base.x, base.y,
+                                           0, -1, can_road_fungus ? 0 : 4, -1);
+                }
+            }
+            base_reset(base_id, 0);
+        }
+        AiResearchBatchActive = 0;
+
+        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id != faction_id ||
+                VehPrototypes[vehicle.proto_id].plan != 9) continue;
+            const int native_triad = Chassis[VehPrototypes[vehicle.proto_id].chassis_id].triad;
+            const bool aquatic = (player.rule_flags & RFLAG_AQUATIC) != 0;
+            if ((!aquatic && native_triad != TRIAD_LAND) ||
+                (aquatic && native_triad != TRIAD_SEA)) continue;
+            int best_quality = 0;
+            for (int move_index = 0; move_index < 8; ++move_index) {
+                int destination_x = vehicle.x + VehMoveDeltaX[move_index];
+                if (!(MapIsFlat & 1)) {
+                    if (destination_x < 0) destination_x += MapLongitudeBounds;
+                    else if (destination_x >= MapLongitudeBounds)
+                        destination_x -= MapLongitudeBounds;
+                }
+                const int destination_y = vehicle.y + VehMoveDeltaY[move_index];
+                if (destination_x < 0 || destination_x >= MapLongitudeBounds ||
+                    destination_y < 0 || destination_y >= MapLatitudeBounds) continue;
+                const Map *destination = map_loc(destination_x, destination_y);
+                const int altitude = destination->climate & 0xE0;
+                if ((!aquatic && altitude < 0x60) || (aquatic && altitude >= 0x60)) continue;
+                int quality = 1;
+                const uint8_t owner_state = destination->val3 & 0xC0;
+                if (owner_state < 0x80) quality = 2;
+                if ((destination->bit & 4u) != 0) quality += 2;
+                if (owner_state == 0x40 && (destination->climate & 0x18) != 0 &&
+                    (destination->climate >> 5) > 2)
+                    quality += 2;
+                if (quality > best_quality) {
+                    best_quality = quality;
+                    veh_drop(veh_lift(vehicle_id), destination_x, destination_y);
+                }
+            }
+        }
+    }
+    TurnCurrentNum = scenario_turn;
 }

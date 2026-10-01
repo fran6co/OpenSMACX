@@ -756,6 +756,7 @@ MEASURED inline int __cdecl breed_mod(int base_id, int faction_id) {
 void __cdecl compute_score(int faction, int *total, int *items, int recursive);
 // Unfinished implementation in base.cpp; retained original seed owns behavior.
 void __cdecl capture_base(int base_id, int faction_id, int mode);
+void __cdecl base_terraform(int force);
 
 MEASURED inline BOOL __cdecl ascending(int UNUSED(faction_id) faction_id) {
     return base_project(SP_VOICE_OF_PLANET) != SP_Unbuilt;

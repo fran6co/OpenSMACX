@@ -6222,3 +6222,9 @@ void __cdecl compute_score(int faction, int *total, int *items, int recursive) {
 void __cdecl capture_base(int base_id, int faction_id, int mode) {
     // BODY GOES HERE.
 }
+
+// ORIGINAL: 0x004ECBF0 ?base_terraform@@YAXH@Z 0x004ECBF0-0x004EEF61
+// RECOVERY_BINDING: v1 {"evidence": ["Preserved src/unrecovered/004ecbf0.cpp native signature/extent; user authorizes mapped unfinished empty bodies for newly referenced unrecovered callees; BODY GOES HERE remains mandatory."], "reason": "Explicit unfinished owning-TU dependency for recovered time_warp; empty body maintains build continuity, not planner behavior or coverage. Full seed and in-flight base-owner recovery preserved."}
+void __cdecl base_terraform(int) {
+    // BODY GOES HERE.
+}

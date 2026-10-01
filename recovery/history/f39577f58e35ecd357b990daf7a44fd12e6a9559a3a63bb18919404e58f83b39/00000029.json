@@ -1,0 +1,20 @@
+{
+  "event_id": "a351b284495c654df5b6142433fd1abd5798e1f625ce36c958aa058bd9037aaf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "src/faction_strategy.cpp"
+    ],
+    "evidence": [
+      "Explicitunfinishedenemy_strategy cannot reside insidefaction.cpp because legacy act_of_aggression FILE measurement interpretsanysentinel inwholeTU asplaceholder. Separate actualfaction-strategy ownershipTU keepsunchangedhistoricalbody/claims measurable, withoutchanginglibraryparser/gates/flags. This is ownershipgroup notassertedhistoricalTU partition."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f2fd17536411941aa4c8e9a953a8924aad419964a4214472e84956b4979bc4ed",
+  "request_id": "strategy-owner-translation-unit-20261001",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:interface-contract-report-closure"
+}

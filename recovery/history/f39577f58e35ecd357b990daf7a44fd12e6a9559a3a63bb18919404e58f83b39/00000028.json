@@ -1,0 +1,43 @@
+{
+  "event_id": "f2fd17536411941aa4c8e9a953a8924aad419964a4214472e84956b4979bc4ed",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_setup_game_behavior.py",
+      "recovery/tests/test_setup_time_warp_behavior.py",
+      "src/base.cpp",
+      "src/base.h",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/game.cpp",
+      "src/game.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Retained full setup_game andtime_warp callers independently native reviewed, matching originaltail andno omittedcallerphase. Coordinator homesrealbodies and removesonlysetup_game nativeforwarder. User permits newreferencedunimplementedfunctions explicitmappedunfinished empty owningTU bodies forbuildcontinuity; base_terraform alreadyworkerassigned, enemy_strategy newunrecoveredcallee neither previouslyrecoveredbehavior nornewcoverageclaim. Preserve originalseed/baseline/allclaims."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5978400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5959136,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5640320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "abb83e85afb65c21ea9e829fc8f86f1fff01f173b055f7532e0106e6e662ce97",
+  "request_id": "setup-timewarp-compiled-owner-continuity-20261001",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:interface-contract-report-closure"
+}

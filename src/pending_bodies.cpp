@@ -900,12 +900,6 @@ void __fastcall datalink_init(Datalink *self) {
 // ?game_reload@@YAHHH@Z at 0x0058F450 WAS HERE. Homed into game.cpp
 // 2026-08-29, beside desktop_close / close_opening / game_close.
 
-// ?setup_game@@YAXH@Z at 0x005B3920
-void __cdecl setup_game(int reload) {
-    typedef void(__cdecl *pending)(int);
-    PENDING_BODY(0x005B3920, pending)(reload);
-}
-
 // ?top_menu@@YAHH@Z at 0x0058E360
 int __cdecl top_menu(int mode) {
     typedef int(__cdecl *pending)(int);
