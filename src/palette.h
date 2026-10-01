@@ -43,6 +43,11 @@ class Palette {
   // Cache validation and tint construction read the original contiguous
   // 256-entry palette without granting callers permission to change it.
   const PALETTEENTRY *entries() const { return entries_; }
+  // Borrow the live saved colours; Palette retains allocation/lifetime ownership.
+  // name_proto's zero-reactor path reads g_PALETTE2's final slot: native
+  // 0x57E4C1 addresses 0x9527F0, which is this member at object offset 0x450.
+  // It is not an independent reactor-string global or a constant null value.
+  const void *animation_colours(int slot) const { return internal_[slot].colours; }
 
  public:
   // homed from 005fe2f0.cpp

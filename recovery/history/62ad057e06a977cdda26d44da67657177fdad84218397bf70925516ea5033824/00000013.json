@@ -1,0 +1,19 @@
+{
+  "event_id": "5f939a31d654cb33d65e10f3bac8a83e1a6405c0d112a4b43ff1adb928ed952f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.h"
+    ],
+    "evidence": [
+      "Root-only declaration evidence for upgrade4D11F5..121B: native96D238 equals existing PlayersData96C9E0 plus858, indexed with20CC faction stride. Current PlayerData.proto_id_active[512] already occupies858, unlike the stale fixed-pointer comments in base.cpp/veh.cpp. Annotate native member correspondence and compile-time assert this actual offset; no new storage, layout change, fixed pointer, alternate tally API or behavior substitution. Console worker consumes the existing member only. Preserve original tasks, baselines, seeds and claims; fresh application build/link validates the offset under actual compiler, relevant protected matches remain obligations."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d74df15552d51cb74bd41366a133498faaf5ab80daa35f659045eb6355407136",
+  "request_id": "console-upgrade-prototype-counter-20261001",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:console-scenario-owner-wave"
+}

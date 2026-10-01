@@ -470,6 +470,9 @@ struct PlayerData {
     int unk_67;
     int unk_68;
     char unk_69[4];
+    // upgrade 0x4D11F5..0x4D121B reads/writes this byte run at
+    // PlayersData + 0x858 (original 0x96D238), with faction stride 0x20CC.
+    // RECOVERY_MEMBER: v1 PlayerData proto_id_active 0x858 0x004D06C0
     uint8_t proto_id_active[512];
     uint8_t proto_id_queue[512];
     int16_t proto_id_lost[512];
@@ -550,6 +553,8 @@ struct PlayerData {
 // scaffolding may use.
 static_assert(sizeof(PlayerData) == 0x20CC,
               "PlayerData layout must match the original executable");
+static_assert(offsetof(PlayerData, proto_id_active) == 0x858,
+              "Prototype active counts must occupy the native faction member");
 
 struct FactionArt {
     FactionArt();

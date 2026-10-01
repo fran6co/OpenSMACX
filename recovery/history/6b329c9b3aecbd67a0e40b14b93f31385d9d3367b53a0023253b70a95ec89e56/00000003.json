@@ -1,0 +1,20 @@
+{
+  "event_id": "4d53e8fa86ebec46c995e41049ca4d234a873ac3dc4d3449cb1e813cc0560560",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_palette_animation_view.py",
+      "src/palette.h"
+    ],
+    "evidence": [
+      "Root-only shared-owner closure: pinned name_proto57E4C1/4D5 and repeated sites read9527F0+12*reactor_id. Existing independently bounded g_PALETTE2 owns9523A0..9527F4, and its actual Palette.internal_[4].colours member is at450, hence9527F0. Valid reactors1..4 read Reactor[reactor_id-1].name_short; zero must observe the live palette pointer, not an overlapping invented reactor global, constant-null fallback, out-of-bounds C++ array access or behavior fix. Add a read-only typed animation-buffer view without changing fields/lifetime/layout. Preserve task baselines, historical obligations and all pending source/discoveries; workers may consume the view in authorized veh bodies, but Root alone changes Palette/header, journals and Git. Fresh build/link and protected Palette measurements required before manual checkpoint."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1c791bbc63c639e9a529e41374eb1757ee67ee589dfbea447ff7b3d7fc4272ef",
+  "request_id": "prototype-palette-reactor-zero-20261001",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:vehicle-special-actions-coverage"
+}
