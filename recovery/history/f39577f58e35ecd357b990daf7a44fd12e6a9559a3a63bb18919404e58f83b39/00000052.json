@@ -1,0 +1,52 @@
+{
+  "event_id": "0aabf5e3a5a934cda028921ea8cb45b4f15173a917ca0b2619213233103fb91a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/diplowin_owner_harness.cpp",
+      "recovery/tests/test_diplowin_owner.py",
+      "src/diplowin.cpp",
+      "src/diplowin.h",
+      "src/palette.h",
+      "src/subinterface.h",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Complete the real DiploWin secondary SubInterface hierarchy, callback signatures, redraw/status/item painter and native constructor, not a vtable-only declaration migration. Constructor444FC0 installs the secondary interface at+A14, with member tail unchanged+A1C. Preserve existing original identities and every historical byte obligation; compiler-generated adjustors and all relevant callers require review.",
+      "Palette textcolor_init proves TextColourTable[195] owner8C6B5C..8C6E68; painter color starts are indices80/81 and backward eight-byte stride. Reuse the existing owner and InterfaceBoxStyles[51], never mint address aliases. Localized title direct-read cells7492D4/D8 initially NUL have unknown producer/full extent; preserve distinct mutable source-owned paths and document that uncertainty, do not substitute unconditional literals or imply runtime equivalence. No acceptance or byte claim is granted by scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4470464,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4471920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4472384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4472400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4476864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9d6d8c041e8160836f81a3815e49247d09e2227ba8ed22cbb5dc109fd552837d",
+  "request_id": "diplo-full-secondary-interface-owner-20261001",
+  "schema_version": 1,
+  "sequence": 52,
+  "stream": "task:interface-contract-report-closure"
+}

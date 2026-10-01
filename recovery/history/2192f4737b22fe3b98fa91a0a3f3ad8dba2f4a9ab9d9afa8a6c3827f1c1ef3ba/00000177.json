@@ -1,0 +1,33 @@
+{
+  "event_id": "9b8ad1484d40f00fda9c33b6c204491fa82487762e3ffb20864951601c04f516",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/infowin_setup_text_harness.cpp",
+      "recovery/tests/test_infowin_setup_text.py",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/font.h",
+      "src/infowin.cpp",
+      "src/infowin.h",
+      "src/temp.cpp",
+      "src/temp.h"
+    ],
+    "evidence": [
+      "Complete the native setup_text owner, including exact ranking-chart CFG and typed faction data accesses, not the retained approximate/stubbed switch. Native state input is InfoWin+B0, not seed9C8. Both pane groups have twelve rows and rectangle slot is pane_rects_[slot]. Native Font+0C line-height read permits a narrow same-layout accessor; use existing Buffer/GraphicWin graphics and rankings(int) owner. Map underlying faction fields from native producers/consumers before naming/retyping; source scope expansion grants no unmeasured claims or acceptance. Preserve original immutable baseline and historical obligations. Coordinator alone imports reviewed source and performs measurements/build/link."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4547328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "00ba2b901a1f7d3d742a7aa409da988db8937bc3d8c7a22553fdca4346c2228c",
+  "request_id": "infowin-full-setup-owner-20261001",
+  "schema_version": 1,
+  "sequence": 177,
+  "stream": "task:infowin-ownership"
+}
