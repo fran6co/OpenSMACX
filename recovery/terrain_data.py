@@ -18,10 +18,19 @@ _LANDMARK_TABLES = {
     'terrain_garland_crater.inc': '_GarlandCraterTable',
 }
 
+_ALTITUDE_TABLES = {
+    'terrain_altitude_default.inc': '?AltNaturalDefault@@3PAIA',
+    'terrain_altitude_contour.inc': '?AltContour@@3PAIA',
+    'terrain_altitude_natural.inc': '?AltNatural@@3PAIA',
+}
+
 
 def _terrain_initializer(root: Path, original: Path, output: Path, *,
                          output_name: str, unit: str, symbol: str,
-                         size: int, signed_pairs: bool = False) -> None:
+                         size: int, signed_pairs: bool = False,
+                         unsigned_words: bool = False) -> None:
+    if unsigned_words and (signed_pairs or size % 4):
+        raise ValueError('altitude initializer requires complete unsigned words')
     root = root.resolve()
     original = original.resolve(strict=True)
     output = output.absolute()
@@ -48,7 +57,11 @@ def _terrain_initializer(root: Path, original: Path, output: Path, *,
         raise ValueError('terrain remap cannot use executable storage')
     if image.read_initial(binding.span) != values or image.absolute_sites(binding.span):
         raise ValueError('terrain remap requires file-backed non-relocated byte data')
-    if signed_pairs:
+    if unsigned_words:
+        words = [int.from_bytes(values[i:i + 4], 'little')
+                 for i in range(0, len(values), 4)]
+        rows = [', '.join(f'{word}u' for word in words) + ',']
+    elif signed_pairs:
         signed = [value if value < 128 else value - 256 for value in values]
         rows = ['{%d, %d},' % (signed[i], signed[i + 1])
                 for i in range(0, len(signed), 2)]
@@ -87,3 +100,14 @@ def terrain_initializers(root: Path, original: Path, directory: Path) -> None:
     terrain_coast_initializer(root, original, directory / 'terrain_coast_remap.inc')
     for filename in _LANDMARK_TABLES:
         terrain_landmark_initializer(root, original, directory / filename)
+    for filename in _ALTITUDE_TABLES:
+        terrain_altitude_initializer(root, original, directory / filename)
+
+
+def terrain_altitude_initializer(root: Path, original: Path, output: Path) -> None:
+    symbol = _ALTITUDE_TABLES.get(output.name)
+    if symbol is None:
+        raise ValueError('unknown terrain altitude initializer')
+    _terrain_initializer(root, original, output, output_name=output.name,
+                         unit='src/map.cpp', symbol=symbol, size=44,
+                         unsigned_words=True)

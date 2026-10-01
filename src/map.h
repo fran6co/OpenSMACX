@@ -378,18 +378,18 @@ extern uint32_t WorldBuildVal1; // TODO: more descriptive variable name
 extern Continent Continents[MaxContinentNum];  // 0x009AA730
 extern RulesNatural Natural[MaxNaturalNum];    // 0x0094ADE0
 extern uint32_t MapLongitude; // halve of MapLongitudeBounds
-uint32_t *const AltNatural = (uint32_t *)0x0068FB4C; // Default: { 0, 15, 32, 45, 60,  75,  80, 100, 100, 100, 100 };
+extern uint32_t AltNatural[11];
 // The table AltNatural is RESET from, immediately above it in .data and the
 // same 11 ints: world_build's first statement copies all eleven over
 // AltNatural (`mov ecx, 0xb; rep movsd` from 0x0068FAF4 to 0x0068FB4C) before
 // any altitude band is computed. Shipped values { 0, 20, 40, 60, 80, 100,
 // 120, 140, 160, 180, 200 } - the nominal contour of each altitude band.
-uint32_t *const AltNaturalDefault = (uint32_t *)0x0068FAF4;
+extern uint32_t AltNaturalDefault[11];
 // The one reader is world_rivers, lowering a tile a river is carving through:
 // it indexes this by the tile's altitude band (`climate >> 5`) to pick the
 // contour to drop the tile to, then clamps that to one below the tile it came
 // from (0x005C3F4C).
-uint32_t *const AltContour = (uint32_t *)0x0068FB20;
+extern uint32_t AltContour[11];
 
 // `int` throughout, matching both the definition in src/map.cpp and the
 // catalogue's ?whose_territory@@YAHHHHPAHH@Z. The header said `uint32_t`,

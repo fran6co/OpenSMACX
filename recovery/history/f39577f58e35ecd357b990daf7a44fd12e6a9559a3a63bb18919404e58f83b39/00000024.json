@@ -1,0 +1,23 @@
+{
+  "event_id": "c869da3b4a413e73ad4e7a042606ad13d3a5e1f33671cf300d4cdc794c20beeb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "recovery/terrain_data.py",
+      "recovery/tests/test_terrain_data.py",
+      "src/map.cpp",
+      "src/map.h"
+    ],
+    "evidence": [
+      "Council wants_prop native68FB58 reads AltNatural[3]; existing header binds all11-word terrain arrays to fixed executable addresses, not source-owned working storage. Authorize coordinator real AltNatural/AltNaturalDefault/AltContour definitions, independent bounded object mappings and pinned ignored configure-time initializers through existing terrain-data hook. Reuse existing APIs, no ad hoc CLI or runtime binary loader. Native world_build/world_rivers producer/consumer evidence, both original data and fresh compiler extents required; preserve all affected function claims and task baselines. Inactive historical map scopes retained, not concurrently authorized to edit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "2b6b7fb002806e754d268187ac74444b94f2d82df3d07f2af3789bd897ef69ea",
+  "request_id": "terrain-altitude-storage-for-council-20261001",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:interface-contract-report-closure"
+}

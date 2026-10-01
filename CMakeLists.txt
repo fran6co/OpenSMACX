@@ -325,6 +325,7 @@ endif()
 set_property(DIRECTORY APPEND PROPERTY CMAKE_CONFIGURE_DEPENDS
     "${OPENSMACX_ORIGINAL_IMAGE}" "${CMAKE_CURRENT_SOURCE_DIR}/src/IMAGE_PIN"
     "${CMAKE_CURRENT_SOURCE_DIR}/src/game.cpp" "${CMAKE_CURRENT_SOURCE_DIR}/src/mapwin.cpp"
+    "${CMAKE_CURRENT_SOURCE_DIR}/src/map.cpp"
     "${CMAKE_CURRENT_SOURCE_DIR}/recovery/terrain_data.py")
 target_include_directories(OpenSMACX PRIVATE "${OPENSMACX_TERRAIN_DIRECTORY}")
 

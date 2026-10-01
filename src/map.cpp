@@ -34,6 +34,27 @@
 #include "mapwin.h"
 #include "worldwin.h"
 
+// world_build copies eleven words from AltNaturalDefault to AltNatural.
+// world_rivers selects AltContour by the native altitude band. The three
+// adjacent original tables are separate real arrays, not pointers into an
+// old executable. Preserve the initial values in pinned ignored includes;
+// recovered callers read and mutate these source-owned objects only.
+// RECOVERY_OBJECT: v2 0x0068FAF4 0x0068FB20 ?AltNaturalDefault@@3PAIA 0x005C86E0
+uint32_t AltNaturalDefault[11] = {
+#include "terrain_altitude_default.inc"
+};
+// RECOVERY_OBJECT: v2 0x0068FB20 0x0068FB4C ?AltContour@@3PAIA 0x005C38B0
+uint32_t AltContour[11] = {
+#include "terrain_altitude_contour.inc"
+};
+// RECOVERY_OBJECT: v2 0x0068FB4C 0x0068FB78 ?AltNatural@@3PAIA 0x005C86E0
+uint32_t AltNatural[11] = {
+#include "terrain_altitude_natural.inc"
+};
+static_assert(sizeof(AltNaturalDefault) == 44, "default altitude table extent");
+static_assert(sizeof(AltContour) == 44, "river contour table extent");
+static_assert(sizeof(AltNatural) == 44, "mutable altitude table extent");
+
 // Nine original direction indices, bounded by the next RadiusOffsetX
 // table at 0x0066EFBC. MapWin's legend and tutorial navigation consume
 // this permutation; it is independent data, not a callable/address alias.

@@ -294,7 +294,7 @@ def test_landmark_input_and_destination_refusals(tmp_path, hook, damage):
 
 
 def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook):
-    payload = PAYLOAD + PAIR_PAYLOAD * 3
+    payload = PAYLOAD + PAIR_PAYLOAD * 3 + bytes(44 * 3)
     root, original, output = project(tmp_path, data_image(payload))
     rows = ['struct LandmarkTextureChoice { signed char texture, rotation; };']
     for index, (_, symbol) in enumerate(LANDMARKS):
@@ -303,10 +303,92 @@ def test_configured_terrain_generation_requires_every_bound_table(tmp_path, hook
         rows.append('static const LandmarkTextureChoice ' + symbol.lstrip('_') + '[49] = {};')
     source = root / 'src/mapwin.cpp'
     source.write_text('\n'.join(rows) + '\n')
+    altitude_rows = []
+    for index, symbol in enumerate(hook._ALTITUDE_TABLES.values()):
+        start = 0x401000 + 53 + 3 * 98 + index * 44
+        altitude_rows.append(f'// RECOVERY_OBJECT: v2 0x{start:08X} '
+                             f'0x{start + 44:08X} {symbol} 0x00401000')
+    (root / 'src/map.cpp').write_text('\n'.join(altitude_rows) + '\n')
     hook.terrain_initializers(root, original, output.parent)
     assert {path.name for path in output.parent.iterdir()} == {
-        'terrain_coast_remap.inc', *(filename for filename, _ in LANDMARKS)}
+        'terrain_coast_remap.inc', *(filename for filename, _ in LANDMARKS),
+        *hook._ALTITUDE_TABLES}
     source.write_text(source.read_text().replace('_GarlandCraterTable', '_OtherTable'))
-    # CMake must refuse even with all four earlier cache files still present.
+    # CMake must refuse even with all seven earlier cache files still present.
     with pytest.raises(ValueError):
         hook.terrain_initializers(root, original, output.parent)
+
+
+@pytest.mark.parametrize('filename', [
+    'terrain_altitude_default.inc', 'terrain_altitude_contour.inc',
+    'terrain_altitude_natural.inc'])
+def test_altitude_words_are_exact_unsigned_little_endian(tmp_path, hook, filename):
+    words = [0, 1, 255, 256, 65535, 65536, 0x01020304,
+             0x7fffffff, 0x80000000, 0xfffffffe, 0xffffffff]
+    raw = data_image(struct.pack('<11I', *words))
+    root, original, output = project(
+        tmp_path, raw, size=44, unit='map.cpp',
+        symbol=hook._ALTITUDE_TABLES[filename])
+    output = output.with_name(filename)
+    hook.terrain_altitude_initializer(root, original, output)
+    actual = list(map(int, re.findall(r'(\d+)u', output.read_text())))
+    assert actual == words
+    before = output.stat().st_mtime_ns
+    hook.terrain_altitude_initializer(root, original, output)
+    assert output.stat().st_mtime_ns == before
+
+
+@pytest.mark.parametrize('damage', ['pin', 'extent', 'relocation', 'unknown_name'])
+def test_altitude_refusals_preserve_previous_cache(tmp_path, hook, damage):
+    raw = data_image(bytes(44), absolute=4) if damage == 'relocation' else data_image(bytes(44))
+    root, original, output = project(
+        tmp_path, raw, size=43 if damage == 'extent' else 44,
+        unit='map.cpp', symbol='?AltNatural@@3PAIA')
+    output = output.with_name('terrain_altitude_natural.inc')
+    if damage == 'pin':
+        (root / 'src/IMAGE_PIN').write_text('sha256 ' + '0' * 64 + '\n')
+    elif damage == 'unknown_name':
+        output = output.with_name('unreviewed_altitude.inc')
+    output.parent.mkdir(parents=True)
+    output.write_text('previous cache\n')
+    with pytest.raises(ValueError):
+        hook.terrain_altitude_initializer(root, original, output)
+    assert output.read_text() == 'previous cache\n'
+
+
+def test_actual_product_altitude_arrays_use_generated_initializers(tmp_path):
+    import shutil
+    compiler = shutil.which('g++')
+    if compiler is None:
+        pytest.skip('host C++ compiler required')
+    source = (ROOT / 'src/map.cpp').read_text()
+    definitions = []
+    for name, filename in [('AltNaturalDefault', 'terrain_altitude_default.inc'),
+                           ('AltContour', 'terrain_altitude_contour.inc'),
+                           ('AltNatural', 'terrain_altitude_natural.inc')]:
+        definition, = re.findall(r'uint32_t ' + name + r'\[11\] = \{.*?\};', source, re.S)
+        definitions.append(definition)
+        values = list(range(11))
+        (tmp_path / filename).write_text(','.join(f'{value}u' for value in values))
+    harness = '#include <cassert>\ntypedef unsigned int uint32_t;\n' + '\n'.join(definitions)
+    harness += '''
+int main() {
+    static_assert(sizeof(AltNatural) == 44, "real bounded array");
+    static_assert(sizeof(AltNaturalDefault) == 44, "real default array");
+    static_assert(sizeof(AltContour) == 44, "real contour array");
+    for (int i=0; i<11; ++i) {
+        assert(AltNatural[i] == static_cast<unsigned>(i));
+        assert(AltNaturalDefault[i] == static_cast<unsigned>(i));
+        assert(AltContour[i] == static_cast<unsigned>(i));
+    }
+    AltNatural[3] = 999;
+    assert(AltNaturalDefault[3] == 3 && AltContour[3] == 3);
+}
+'''
+    cpp = tmp_path / 'arrays.cpp'
+    cpp.write_text(harness)
+    exe = tmp_path / 'arrays'
+    built = subprocess.run([compiler, '-std=c++11', str(cpp), '-o', str(exe)],
+                           capture_output=True, text=True)
+    assert built.returncode == 0, built.stderr
+    assert subprocess.run([str(exe)]).returncode == 0
