@@ -56,6 +56,7 @@ void __cdecl sat_anim_daemon(ReportWin *win);
 void __cdecl sat_expl_daemon(ReportWin *win);
 void __cdecl bl_daemon(ReportIf *report);
 void __cdecl action_sat_attack(int attacker, int target, int type, int base_id);
+extern Sprite g_TECH_ICON_SPRITES[89];
 // Original init passes these two independently addressed empty captions at
 // 496A80/496B64. Their initial NUL is proven; complete original object extents
 // are not, so these start-only bindings do not claim four-byte storage.
@@ -130,10 +131,682 @@ static void reportwin_append_number(char *text, int value) {
     strcat(text, number);
 }
 
+// The tree's four upper-tier buttons are fed by at most four matching
+// prerequisite slots. The image's loop notices a fifth match and stops
+// (0x4996CA..0x49970B), then clamps the displayed count to four
+// (0x499AE2..0x499AF3). Keep that native stop condition without writing the
+// fifth result past the four-button local destination.
+static int reportwin_collect_lab_children(int technology, int *children) {
+    int count = 0;
+    // 0x4996CA exits when the number of matches is greater than four. The
+    // fifth match is a stop signal only; only four child IDs have storage.
+    for (int slot = 0; slot < MaxTechnologyNum * 2 && count <= 4; ++slot) {
+        const int candidate = slot / 2;
+        const int prerequisite = (slot & 1)
+            ? Technology[candidate].preq_tech_2
+            : Technology[candidate].preq_tech_1;
+        if (prerequisite == technology) {
+            if (count < 4) children[count] = candidate;
+            ++count;
+        }
+    }
+    return count;
+}
+
+// 0x004997A1..7CB, 0x004998D7..9995, 0x004999A0..A9A, and the
+// repeated child-button setup 0x00499B80..C0F all use BaseButton::init with
+// the same font, earned-tech emphasis and three border-style records.
+static void reportwin_init_lab_button(Buffer &canvas, FlatButton &button,
+                                     int technology,
+                                     int button_id, int x, int y,
+                                     int width, int height, Win *parent,
+                                     int faction) {
+    StringTemp[0] = 0;
+    say_tech(StringTemp, technology, 0);
+    button.init(StringTemp, button_id, x, y, width, height, parent, 0);
+    button.set_font(&TutWinBaseWindow.font1_, 0, 0, 0);
+    button.redraw();
+    if (has_tech(technology, faction)) {
+        button.set_text_color(0xFF, -1, 1, 1);
+    }
+    button.set_border_styles(&InterfaceBoxStyles[27], &InterfaceBoxStyles[28],
+                             &InterfaceBoxStyles[29]);
+    button.redraw();
+    RECT frame = {x - 3, y - 3, x + width + 3, y + height + 3};
+    canvas.box_sprite(&frame, &InterfaceBoxStyles[3]);
+}
+
+// 0x499FE3..0x49A389 performs a measure pass, then a centered draw pass, for
+// the selected technology's two status lines. Their string pieces are the
+// native bracket literals, `say_tech`, the category label at StringTable
+// offset 0x209+category, and the prerequisite-depth number.
+static void reportwin_draw_lab_status_rows(Buffer &canvas, int technology,
+                                           int faction, int x,
+                                           int vertical_sum,
+                                           uint32_t &frame_width,
+                                           int &cursor_y,
+                                           int &measured_height,
+                                           bool draw_pass,
+                                           bool child_panel,
+                                           Font *first_row_font,
+                                           Font *second_row_font) {
+        StringTemp[0] = 0;
+        canvas.set_font(first_row_font, first_row_font, first_row_font, 0);
+        canvas.set_text_color(has_tech(technology, faction) ? 0xFF : 0xE1,
+                              -1, 1, 1);
+        strcat(StringTemp, "[");
+        say_tech(StringTemp, technology, 0);
+        strcat(StringTemp, "]");
+        CharUpperA(StringTemp);
+        if (draw_pass && child_panel) {
+            const int center_y = (vertical_sum - measured_height) / 2;
+            cursor_y = center_y;
+            const int current_frame_width = static_cast<int>(frame_width);
+            RECT outer = {x - 6, center_y - 9, x + current_frame_width,
+                          measured_height + center_y + 6};
+            canvas.box_sprite(&outer, &InterfaceBoxStyles[3]);
+            RECT inner = {outer.left + 3, outer.top + 3,
+                          outer.right - 3, outer.bottom - 3};
+            canvas.box_sprite(&inner, &InterfaceBoxStyles[0]);
+        }
+        if (!draw_pass) {
+            measured_height += canvas.wrap_height(StringTemp,
+                static_cast<int>(frame_width) - 6);
+        } else {
+            cursor_y = canvas.wrap_cent(StringTemp, x, cursor_y,
+                static_cast<int>(frame_width) - 6);
+        }
+
+        StringTemp[0] = 0;
+        canvas.set_font(second_row_font, second_row_font, second_row_font, 0);
+        strcat(StringTemp, "[");
+        const int category = tech_category(technology);
+        strcat(StringTemp, label_get(0x209 + category));
+        strcat(StringTemp, " ");
+        reportwin_append_number(StringTemp, tech_recurse(technology, 0));
+        strcat(StringTemp, "]");
+        canvas.set_text_color(mandate_color(category), -1, 1, 1);
+        if (!draw_pass) {
+            measured_height += canvas.wrap_height(StringTemp,
+                static_cast<int>(frame_width) - 6);
+        } else {
+            cursor_y = canvas.wrap_cent(StringTemp, x, cursor_y,
+                static_cast<int>(frame_width) - 6);
+            if (child_panel) {
+                Sprite &icon = g_TECH_ICON_SPRITES[technology];
+                icon.draw_mono(&canvas, icon.transparent_index(),
+                    x + (static_cast<int>(frame_width) - 0x34) / 2,
+                    cursor_y + 3, mandate_color(category), 0x32,
+                    icon.width());
+            }
+            cursor_y += 0x3A;
+        }
+        if (!draw_pass) measured_height += 0x3A;
+}
+
+static void reportwin_append_lab_entry(bool datalink, int &entry_count,
+                                       const char *section, LPSTR name,
+                                       bool name_in_string_table,
+                                       int category, int index) {
+    if (entry_count == 0) {
+        strcat(StringTemp, section);
+        strcat(StringTemp, ": ");
+    } else {
+        strcat(StringTemp, ", ");
+    }
+    LPSTR resolved_name = name_in_string_table
+        ? StringTable.get(reinterpret_cast<int>(name)) : name;
+    if (datalink && category != 0) {
+        char id[32];
+        DatalinkMain.construct_id(id, category, index);
+        help_create_link(StringTemp, resolved_name, id);
+    } else {
+        strcat(StringTemp, resolved_name);
+    }
+    ++entry_count;
+}
+
+static void reportwin_finish_lab_section(Buffer &canvas, bool draw_pass,
+                                         int x, int &y, uint32_t *frame_width,
+                                         int &measured_height) {
+    if (StringTemp[0] == 0) return;
+    if (draw_pass) {
+        y = canvas.wrap(StringTemp, x, y,
+            static_cast<int>(*frame_width) - 6);
+    } else {
+        measured_height += canvas.wrap_height(StringTemp,
+            static_cast<int>(*frame_width) - 6);
+    }
+    StringTemp[0] = 0;
+}
+
+// 0x49A5F2..0x49A654 formats RulesChassis bytes +0x48/+0x4A.
+static void reportwin_append_chassis_lab_detail(int speed, int range) {
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "(");
+    if (speed < 0) {
+        strcat(StringTemp, label_get(0x310 / 4));
+    } else if (range >= 3) {
+        strcat(StringTemp, label_get(0x200 / 4));
+    } else {
+        reportwin_append_number(StringTemp, speed);
+        strcat(StringTemp, label_get(0x200 / 4));
+    }
+    strcat(StringTemp, ")");
+}
+
+// 0x49A7C3..0x49A866 formats RulesWeapon signed +8 and mode byte +0xA.
+static void reportwin_append_weapon_lab_detail(int offense, int mode) {
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "(");
+    if (offense < 0) {
+        strcat(StringTemp, label_get(0x310 / 4));
+    } else if (mode >= 3) {
+        strcat(StringTemp, label_get(0x200 / 4));
+    } else {
+        reportwin_append_number(StringTemp, offense);
+        strcat(StringTemp, label_get(0x200 / 4));
+    }
+    strcat(StringTemp, ")");
+}
+
+// 0x49A9D7..0x49AA66 formats RulesArmor signed defense byte +8.
+static void reportwin_append_armor_lab_detail(int defense) {
+    strcat(StringTemp, " ");
+    strcat(StringTemp, "(");
+    if (defense < 0) {
+        strcat(StringTemp, label_get(0x310 / 4));
+    } else {
+        reportwin_append_number(StringTemp, defense);
+    }
+    strcat(StringTemp, ")");
+}
+
+// Native section scans and their inclusive/exclusive bounds are visible at
+// 0x49A389..0x49B162. They are intentionally not replaced by Max* counts:
+// several original ranges stop before the end of their source arrays.
+static void reportwin_draw_lab_unlock_sections(Buffer &canvas, int technology,
+                                               bool datalink, bool draw_pass,
+                                               int x, int &y,
+                                               uint32_t *frame_width,
+                                               int &measured_height) {
+    int entries = 0;
+    StringTemp[0] = 0;
+    for (int i_reactor = 0; i_reactor < 4; ++i_reactor) {
+        if (Reactor[i_reactor].preq_tech != technology) continue;
+        reportwin_append_lab_entry(datalink, entries, label_get(0x234 / 4),
+                                   Reactor[i_reactor].name, true,
+                                   5, i_reactor + 1);
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+
+    entries = 0;
+    for (int i_chassis = 0; i_chassis < 9; ++i_chassis) {
+        if (Chassis[i_chassis].preq_tech != technology) continue;
+        reportwin_append_lab_entry(datalink, entries, label_get(0x120 / 4),
+                                   Chassis[i_chassis].offsv_1_name, true,
+                                   4, i_chassis);
+        reportwin_append_chassis_lab_detail(static_cast<signed char>(Chassis[i_chassis].speed),
+                                            Chassis[i_chassis].range);
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+
+    entries = 0;
+    for (int i_weapon = 0; i_weapon < 26; ++i_weapon) {
+        if (Weapon[i_weapon].preq_tech != technology) continue;
+        reportwin_append_lab_entry(datalink, entries, label_get(0x124 / 4),
+                                   Weapon[i_weapon].name, true,
+                                   6, i_weapon);
+        reportwin_append_weapon_lab_detail(Weapon[i_weapon].offense_rating,
+                                           Weapon[i_weapon].mode);
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+
+    entries = 0;
+    for (int i_armor = 0; i_armor < 14; ++i_armor) {
+        if (Armor[i_armor].preq_tech != technology) continue;
+        reportwin_append_lab_entry(datalink, entries, label_get(0x128 / 4),
+                                   Armor[i_armor].name, true,
+                                   7, i_armor);
+        reportwin_append_armor_lab_detail(Armor[i_armor].defense_rating);
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+
+    entries = 0;
+    for (int i_ability = 0; i_ability < 29; ++i_ability) {
+        if (Ability[i_ability].preq_tech != technology) continue;
+        reportwin_append_lab_entry(datalink, entries, label_get(0x12C / 4),
+                                   Ability[i_ability].name, true,
+                                   8, i_ability);
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+
+    // 0x49AC42..0x49AD90 scans the 29 built-in vehicle prototypes after
+    // abilities. The native loop initializes EBX to zero at 0x49AC42 and
+    // increments it unconditionally at 0x49AD2B, so Datalink item IDs use
+    // the prototype table index even when earlier records do not match.
+    entries = 0;
+    for (int i_prototype = 0; i_prototype < 29; ++i_prototype) {
+        VehPrototype &prototype = VehPrototypes[i_prototype];
+        if ((prototype.flags & 1) == 0
+            || prototype.preq_tech != technology) continue;
+        reportwin_append_lab_entry(datalink, entries,
+                                   label_get(0x318 / 4),
+                                   prototype.veh_name, false,
+                                   3, i_prototype);
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+
+    entries = 0;
+    for (int i_facility = 1; i_facility < 134; ++i_facility) {
+        if (Facility[i_facility].preq_tech != technology
+            && Facility[i_facility].free_tech != technology) continue;
+        const int category = i_facility >= 70 ? 0xB : 0xA;
+        reportwin_append_lab_entry(datalink, entries, label_get(0x110 / 4),
+                                   Facility[i_facility].name, true,
+                                   category, i_facility);
+        if (Facility[i_facility].free_tech == technology) {
+            strcat(StringTemp, " ");
+            strcat(StringTemp, label_get(0x4DC / 4));
+            strcat(StringTemp, ")");
+        }
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+
+    entries = 0;
+    for (int i_citizen = 0; i_citizen < 7; ++i_citizen) {
+        if (Citizen[i_citizen].preq_tech != technology) continue;
+        reportwin_append_lab_entry(datalink, entries, label_get(0x4CC / 4),
+                                   Citizen[i_citizen].singular_name, true,
+                                   0, i_citizen);
+    }
+    reportwin_finish_lab_section(canvas, draw_pass, x, y, frame_width, measured_height);
+}
+
+// The three-per-category records are existing InterfaceBoxStyles entries:
+// native jump tables at 0x499199 and 0x499224 select 38+3*category and
+// 36+3*category respectively.
+static BoxSpriteParams *reportwin_lab_category_style(int category,
+                                                      int first_style) {
+    if (category < 0 || category > 3) return 0;
+    return &InterfaceBoxStyles[first_style + category * 3];
+}
+
 // ORIGINAL: 0x00498B30 ?draw_labs@ReportWin@@QAEXXZ 0x00498B30-0x0049B1DC
-// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "source:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp"], "reason": "Datalink draw_tech and draw_entry reference this report-page owner. Preserve the original identity and retained incomplete renderer seed; explicitly unfinished body maintains build continuity while the full renderer remains a recovery obligation."}
+// RECOVERY_BINDING: v1 {"evidence": ["image:0x00498B30-0x0049B1DC", "source:src/unrecovered/00498b30.cpp", "source:src/recovered/units/00430b30.cpp"], "reason": "The ReportWin laboratory page is shared by the ordinary report and Datalink entry renderer. Recover its real Buffer hosts, FlatButton members, technology Sprite array and ReportIf fonts; original chart geometry, status rows and unlock-list scans identify these owners. Retain the historical seed for further matching and runtime verification."}
 void ReportWin::draw_labs() {
-    // BODY GOES HERE.
+    const int faction = ReportIfGlobal.report_faction_id_;
+    const bool datalink = IfaceIdToSlotStorage[ActiveIfaceIdStorage] == 8;
+    Buffer &canvas = datalink
+        ? *static_cast<Buffer *>(&DatalinkMain)
+        : *static_cast<Buffer *>(this);
+    if (datalink) canvas.set_text_color(0xFE, -1, 1, 1);
+    // Native 0x498B90 reads the four Datalink entry-clip edges. The ordinary
+    // report instead reads rect1_ as left/top/width/height at 0x498C5A.
+    RECT host_area;
+    if (datalink) {
+        host_area = DatalinkMain.entry_clip_rect();
+    } else {
+        host_area.left = rect1_.left;
+        host_area.top = rect1_.top;
+        host_area.right = rect1_.left + rect1_.right;
+        host_area.bottom = rect1_.top + rect1_.bottom;
+    }
+    const int left = host_area.left + 3;
+    const int top = host_area.top + 3;
+    const int right = host_area.right - 3;
+    const int bottom = host_area.bottom - 3;
+    const int width = right - left;
+    const int height = bottom - top;
+    // These are the button-cell dimensions published before chart setup;
+    // they differ when the ordinary renderer is embedded by Datalink.
+    field_59A0_ = datalink ? 0x96 : 0xBE;
+    field_59A4_ = 0x28;
+    field_59A8_ = datalink ? 0xAA : 0xBE;
+    // Chart anchors are prepared before its controls and connector graph.
+    // Native 0x498B90..C55 uses the Datalink entry clip; 0x498C5A..D1A
+    // uses ReportIf's established wide-screen state and ReportWin::rect1_.
+    const bool wide_layout = !datalink
+        && ReportIfGlobal.field_1E230_ != 0;
+    if (datalink) {
+        field_A2C_ = top + 0x1E;
+        field_A28_ = host_area.left + 3
+            + ((host_area.right - host_area.left - 0xB0) / 2);
+        field_A30_ = field_A28_ + 0xAA;
+        field_A34_ = field_A2C_ + 0xF0;
+    } else {
+        field_A2C_ = host_area.top + 0x63
+            + (wide_layout ? 0x62 : 0);
+        field_A28_ = host_area.left
+            + ((host_area.right - host_area.left - 0xBE) / 2);
+        field_A30_ = field_A28_ + 0xBE;
+        field_A34_ = field_A2C_ + 0xAE;
+    }
+    // Native 0x498CC3 snapshots the wide-layout flag and publishes these
+    // anchor members before calling energy_compute at 0x498D20. That call is
+    // allowed to update global accounting, but cannot retroactively change
+    // this frame's already-selected chart layout.
+    if (!datalink) {
+        energy_compute(faction, 0);
+    }
+    // Native 0x498D26 samples the current player's research income only after
+    // energy_compute has run. Keep this read here: that call updates the live
+    // accounting used by the research header below.
+    const int current_tech_rate = datalink ? 0 : tech_rate(faction);
+    const bool hide_research = !datalink && (GameState & 0x80) == 0
+        && (GameRules & RULES_BLIND_RESEARCH) != 0;
+    int research_header_end_x = host_area.left + 0x49;
+    int research = -1;
+    if (!datalink) {
+        RECT research_header = {rect1_.left, rect1_.top,
+            rect1_.left + rect1_.right, rect1_.top + 0x46};
+        canvas.set_text_color(0xE1, -1, 1, 1);
+        StringTemp[0] = 0;
+        strcat(StringTemp, "[");
+        canvas.box_sprite(&research_header, &InterfaceBoxStyles[3]);
+
+        // Native 0x498DA0..0x498DF7 suppresses current-tech detail only for
+        // blind research when the game-state reveal bit is clear.
+        if (hide_research) {
+            RECT icon_frame = {host_area.left + 3, host_area.top + 3,
+                host_area.right - 3, 0x2F};
+            canvas.box_sprite(&icon_frame, &InterfaceBoxStyles[1]);
+            strcat(StringTemp, label_get(0xAC4 / 4));
+        } else {
+            research = PlayersData[faction].tech_id_researching;
+            if (research >= 0) {
+                const int research_color = mandate_color(tech_category(research));
+                Sprite &research_icon = g_TECH_ICON_SPRITES[research];
+                research_icon.draw_mono(&canvas,
+                    research_icon.transparent_index(), host_area.left + 3,
+                    host_area.top + 3, research_color, 0x40,
+                    research_icon.width());
+            }
+
+            // Original 0x498E61 draws style 1 over the inset icon area. Its
+            // bottom edge is the literal 0x2f local retained by the image.
+            RECT icon_frame = {host_area.left + 3, host_area.top + 3,
+                host_area.right - 3, 0x2F};
+            canvas.box_sprite(&icon_frame, &InterfaceBoxStyles[1]);
+
+            // 0x498E71..0x498EF1 emits the research label first; write_l's
+            // returned pen x is then reused by the adjacent tech name.
+            strcat(StringTemp, label_get(0x254 / 4));
+            strcat(StringTemp, "  ");
+            strcat(StringTemp, "]");
+            const int text_x = host_area.left + 0x49;
+            const int text_y = host_area.top + 8;
+            research_header_end_x = canvas.write_l(StringTemp, text_x,
+                text_y, strlen(StringTemp));
+            StringTemp[0] = 0;
+            strcat(StringTemp, "[");
+            if (research >= 0) {
+                say_tech(StringTemp, research, 0);
+                strcat(StringTemp, "]");
+                CharUpperA(StringTemp);
+                if (research == MaxTechnologyNum - 1) {
+                    StringTemp[strlen(StringTemp) - 1] = 0;
+                    strcat(StringTemp, " ");
+                    reportwin_append_number(StringTemp,
+                        PlayersData[faction].tech_accumulated + 1);
+                } else {
+                    canvas.write_l(StringTemp, research_header_end_x,
+                        text_y, strlen(StringTemp));
+                }
+            }
+        }
+    }
+    // Native 0x49907C..0x4990AA rebuilds this ordinary-report hit region
+    // after the header text/technology icon phase and before chart setup.
+    if (!datalink) {
+        spot_.kill_type(0);
+        spot_.add(0, 0x29A, left, top, width, height);
+        if (hide_research) {
+            strcat(StringTemp, "DISCOV");
+            canvas.write_cent_l(StringTemp, research_header_end_x,
+                host_area.top + 8,
+                host_area.right - 3 - (host_area.left + 0x46),
+                strlen(StringTemp));
+        } else {
+            strcat(StringTemp, "]");
+            canvas.write_l(StringTemp, research_header_end_x,
+                host_area.top + 8, strlen(StringTemp));
+        }
+
+        const int chart_technology = PlayersData[faction].tech_id_researching;
+        if (chart_technology >= 0 && chart_technology < MaxTechnologyNum) {
+            RECT category_bar = {left, 0x31, right, host_area.top + 0x43};
+            const int original_left = category_bar.left;
+            const int original_right = category_bar.right;
+            int category = tech_category(
+                PlayersData[faction].tech_id_researching);
+            BoxSpriteParams *style = reportwin_lab_category_style(category, 38);
+            if (style != 0) canvas.box_sprite(&category_bar, style);
+
+            int fill_right = original_left
+                + ((original_right - original_left)
+                    * PlayersData[faction].tech_accumulated)
+                    / current_tech_rate;
+            if (fill_right < original_left || original_right < original_left)
+                fill_right = original_left;
+            else if (fill_right > original_right)
+                fill_right = original_right;
+            category_bar.right = fill_right;
+            canvas.set_clip(&category_bar);
+            category = tech_category(PlayersData[faction].tech_id_researching);
+            style = reportwin_lab_category_style(category, 36);
+            if (style != 0) canvas.box_sprite(&category_bar, style);
+            canvas.set_clip(buffer_working_rect());
+
+            const int next_fill_right = fill_right
+                + (((original_right - original_left) * EnergyLabsTotal / 100)
+                    / current_tech_rate);
+            const int bounded_next_fill_right = next_fill_right < fill_right
+                || original_right < fill_right ? fill_right
+                : next_fill_right > original_right ? original_right
+                : next_fill_right;
+            RECT next_turn = {fill_right, category_bar.top,
+                bounded_next_fill_right, category_bar.bottom};
+            canvas.set_clip(&next_turn);
+
+            next_turn.left -= 7;
+            next_turn.top -= 7;
+            next_turn.right += 7;
+            next_turn.bottom += 7;
+            category = tech_category(PlayersData[faction].tech_id_researching);
+            style = reportwin_lab_category_style(category, 36);
+            if (style != 0) canvas.box_sprite(&next_turn, style);
+
+            next_turn.left += 7;
+            next_turn.top += 7;
+            next_turn.right -= 7;
+            next_turn.bottom -= 7;
+            canvas.set_clip(buffer_working_rect());
+            RECT inner_clip = {next_turn.left + 1, next_turn.top + 1,
+                next_turn.right - 1, next_turn.bottom - 1};
+            canvas.set_clip(&inner_clip);
+            RECT outer_edge = {inner_clip.left - 7, inner_clip.top - 7,
+                inner_clip.right + 7, inner_clip.bottom + 7};
+            category = tech_category(PlayersData[faction].tech_id_researching);
+            style = reportwin_lab_category_style(category, 38);
+            if (style != 0) canvas.box_sprite(&outer_edge, style);
+            canvas.set_clip(buffer_working_rect());
+        }
+    }
+    // Native 0x499433..0x499521 emits the discovery and estimated-next-
+    // discovery captions after the category fill. Its x starts at the
+    // header-text column (0x49 from the host left); the y is the same native
+    // host-top + field_E268_ + 0x0b cursor established at 0x499172..189.
+    if (!datalink) {
+        const int progress_x = host_area.left + 0x49;
+        const int progress_y = host_area.top + field_E268_ + 0x0B;
+        canvas.set_text_color(0xE1, -1, 1, 1);
+        parse_num(0, BreakthroughTurnsGlobal);
+        parse_it(ScriptPopupFile, "DISCOV");
+        const int next_caption_x = canvas.write_l(StringTemp, progress_x,
+            progress_y, static_cast<int>(strlen(StringTemp))) + 4;
+
+        int remaining = current_tech_rate
+            - PlayersData[faction].tech_accumulated;
+        if (remaining < 0) remaining = 0;
+        else if (remaining > 0x5F5E0FF) remaining = 0x5F5E0FF;
+        int turns_to_discovery = 0x270F;
+        if (EnergyLabsTotal != 0) {
+            turns_to_discovery = (remaining * 100 + EnergyLabsTotal - 1)
+                / EnergyLabsTotal;
+        }
+        parse_num(0, static_cast<int>(game_year(
+            TurnCurrentNum + turns_to_discovery)));
+        parse_it(ScriptPopupFile, "NEXTDISCOV");
+        canvas.write_l(StringTemp, next_caption_x, progress_y,
+            static_cast<int>(strlen(StringTemp)));
+    }
+    // Native 0x499524..0x499660 sizes the chart from the report frame and
+    // lays out its three horizontal tiers around the selected-tech column.
+    const int chart_left = datalink ? left : host_area.left;
+    const int chart_width = datalink ? width : rect1_.right;
+    const int chart_y = field_E268_
+        + (datalink ? host_area.top + 3 + 0x14 : host_area.top + 0x46) + 0x0F;
+    const int chart_height = static_cast<int>(energy_panel_rect_.bottom)
+        - chart_y - 0x1E;
+    int tier_height = chart_height;
+    if (!datalink && WinScreenWidth != 0x320) tier_height -= 0xC8;
+    rect1_.right = chart_width;
+    rect1_.bottom = chart_height;
+    field_594C_ = chart_left + 5;
+    field_5950_ = chart_left + 5
+        + (chart_width - static_cast<int>(field_59A0_)) / 2 - 5;
+    field_5954_ = chart_left + 5 + chart_width
+        - static_cast<int>(field_59A0_) - 10;
+    field_5950_ = field_A28_;
+    field_5958_ = chart_y
+        + (tier_height - static_cast<int>(field_59A4_)) / 2;
+    field_595C_ = field_5958_ - static_cast<int>(field_59A4_) - 0x10;
+    field_5960_ = field_5958_ + static_cast<int>(field_59A4_) + 0x10;
+    const int tier_pitch = static_cast<int>(field_59A4_) + 0x10;
+    field_5964_ = field_5958_ - tier_pitch - tier_pitch / 2;
+    field_5968_ = field_5958_ - tier_pitch / 2;
+    field_596C_ = field_5958_ + tier_pitch - tier_pitch / 2;
+    field_5970_ = field_5958_ + tier_pitch * 2 - tier_pitch / 2;
+
+    // The native two-prerequisite route creates the left/right prerequisite
+    // controls (0x499867..0x499A99); the one-prerequisite route creates the
+    // center control (0x499722..0x499866). The common one/four-child routes
+    // use the four owned FlatButtons at indices 3..6 (0x499AE2..0x499C7E).
+    int status_child_count = 0;
+    if (field_FAB8_ >= 0 && field_FAB8_ < MaxTechnologyNum) {
+        const int prerequisite1 = Technology[field_FAB8_].preq_tech_1;
+        const int prerequisite2 = Technology[field_FAB8_].preq_tech_2;
+        Win *const parent = datalink ? static_cast<Win *>(&DatalinkMain)
+                                     : static_cast<Win *>(this);
+        if (prerequisite1 >= 0 && prerequisite2 >= 0) {
+            labs_line(field_A28_, field_5958_, field_594C_, field_5968_,
+                      field_59A0_, field_59A4_, 0);
+            reportwin_init_lab_button(canvas, flatButtons1_[1], prerequisite1,
+                0x379, field_594C_, field_5968_, field_59A0_, field_59A4_,
+                parent, faction);
+            labs_line(field_A28_, field_5958_, field_594C_, field_596C_,
+                      field_59A0_, field_59A4_, 0);
+            reportwin_init_lab_button(canvas, flatButtons1_[2], prerequisite2,
+                0x37A, field_594C_, field_596C_, field_59A0_, field_59A4_,
+                parent, faction);
+        } else if (prerequisite1 >= 0) {
+            labs_line(field_A28_, field_5958_, field_594C_, field_5958_,
+                      field_59A0_, field_59A4_, 0);
+            reportwin_init_lab_button(canvas, flatButtons1_[1], prerequisite1,
+                0x379, field_594C_, field_5958_, field_59A0_, field_59A4_,
+                parent, faction);
+        }
+
+        int children[4] = {-1, -1, -1, -1};
+        int child_count = reportwin_collect_lab_children(field_FAB8_, children);
+        status_child_count = child_count;
+        if (child_count > 4) child_count = 4;
+        if (child_count == 1 || child_count == 2
+            || child_count == 3 || child_count == 4) {
+            int x = field_5954_;
+            int y = child_count == 4 ? field_5964_
+                : child_count == 3 ? field_595C_
+                : child_count == 2 ? field_5968_ : field_5958_;
+            for (int child = 0; child < child_count; ++child) {
+                labs_line(x, y, field_5950_, field_5958_,
+                          field_59A0_, field_59A4_, 0);
+                reportwin_init_lab_button(canvas, flatButtons1_[child + 3],
+                    children[child], 0x37B + child, x, y,
+                    field_59A0_, field_59A4_, parent, faction);
+                if (child_count == 4) {
+                    if (child == 0) y = field_5968_;
+                    else if (child == 1) y = field_596C_;
+                    else if (child == 2) y = field_5970_;
+                } else if (child_count == 2) {
+                    if (child == 0) y = field_596C_;
+                } else if (child_count == 3) {
+                    y = child == 0 ? field_5958_
+                        : child == 1 ? field_5960_ : y;
+                }
+            }
+        }
+    }
+
+    int measured_height = 0;
+    int status_y = 0;
+    const int section_x = left + (datalink ? 3 : 0);
+    field_A24_ = 0;
+    for (int pass = 0; pass < 2; ++pass) {
+        const bool draw_pass = pass != 0;
+        reportwin_draw_lab_status_rows(canvas, field_FAB8_, faction,
+            field_A28_ + 3, field_A34_ + field_A2C_,
+            field_59A8_, status_y, measured_height, draw_pass,
+            status_child_count == 3,
+            ReportIfGlobal.field_1E19C_, ReportIfGlobal.field_1E190_);
+
+        if (field_FAB8_ != -1) {
+            // The native host configuration runs in each outer pass. HOST
+            // chooses the font and colors; PASS chooses measure versus draw.
+            if (datalink) {
+                canvas.set_wrap_width(10);
+                canvas.set_font(DatalinkMain.entry_text_font(), 0, 0,
+                                DatalinkMain.entry_link_font());
+                canvas.set_text_color(0x99, -1, 1, 1);
+                canvas.set_text_color_hyper(0x96, -1, 1, 1);
+            } else {
+                canvas.set_text_color(0xE1, -1, 1, 1);
+                canvas.set_text_color2(0xE1, -1, 1, 1);
+            }
+            int section_y = status_y;
+            reportwin_draw_lab_unlock_sections(canvas, field_FAB8_, datalink,
+                draw_pass, section_x, section_y, &field_59A8_, measured_height);
+        }
+        if (!draw_pass) field_A24_ = measured_height;
+    }
+
+    // The six native list controls have completed their status rows. The
+    // host's wrap width is cleared before mouse feedback at 0x49B186.
+    canvas.set_wrap_width(0);
+
+    // 0x49B178..0x49B1B5 refreshes mouse feedback on the six technology
+    // controls after their geometry has settled. The original uses the
+    // inherited Win::get_mouse_pos and virtual on_mouse_feedback methods
+    // (slot 17); these are real FlatButton subobjects, not an address table.
+    int mouse_x = 0;
+    int mouse_y = 0;
+    for (int button = 1; button < 7; ++button) {
+        flatButtons1_[button].get_mouse_pos(&mouse_x, &mouse_y);
+        flatButtons1_[button].on_mouse_feedback(mouse_x, mouse_y);
+    }
+
+    // The native host clears Buffer::field_10_ at GraphicWin+0x454, refreshes
+    // the six buttons above, then restores the host's working clip at
+    // 0x49B1BA..1D5. This typed host path supplies that real Buffer subobject.
+    canvas.set_clip(datalink ? DatalinkMain.buffer_working_rect()
+                            : buffer_working_rect());
+    // 0x49B1C3..1CF publishes the final chart cursor in the owned RECT.
+    rect1_.left = mouse_x;
+    rect1_.top = mouse_y;
+    // Native 0x498D25..0x499523 is covered above: the icon uses the sprite's
+    // native width as its draw_mono denominator, the final technology formats
+    // accumulated research instead of a normal technology name, and the four
+    // category-bar boxes retain their native style dispatch and clip sequence.
 }
 
 // The process-wide report window, 0x00876478 - see reportwin.h. The image's

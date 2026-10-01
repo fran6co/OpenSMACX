@@ -120,7 +120,6 @@ static void add_prototype_name_suffix(char *name, const char *suffix,
 void __cdecl name_proto(char *output, int prototype_id, int faction_id,
                         int chassis_id, int weapon_id, int armor_id,
                         int ability_flags, int reactor_id) {
-    // BODY GOES HERE.
     // Duplicate-name restart at 0x0057EE10 reads before VehPrototypes on
     // the differing-name route. Its portable behavior remains unresolved.
     output[0] = '\0';
@@ -467,6 +466,7 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
     if (gendered_form != 0) {
         ::strcpy(output, alternate_name + 1);
     }
+    // BODY GOES HERE.
 }
 
 int VehCurrentCount;  // 0x009A64C8

@@ -158,6 +158,9 @@ class Datalink : public GraphicWin, public SubInterface {
   // The shared labs renderer reads 0x714244..0x714250: the singleton
   // at 0x703EA0 plus this existing rectangle's offset, 0x103A4.
   const RECT &entry_clip_rect() const { return entry_clip_rect_; }
+  // Laboratory-entry rendering borrows these owned fonts at 0x49A313.
+  Font *entry_text_font() { return &auxiliary_font11_; }
+  Font *entry_link_font() { return &auxiliary_font10_; }
   // 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
   int on_dialog_back_draw(GraphicWin *win);
   void on_iface_scrolled(int, int) override;
