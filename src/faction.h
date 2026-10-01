@@ -603,6 +603,7 @@ extern RulesMight Might[MaxMightNum];                           // 0x0094C558
 extern RulesBonusName BonusName[MaxBonusNameNum];               // 0x009461A8
 extern Player Players[MaxPlayerNum];   // Players[0] is AI native life faction (0x00946A50)
 extern PlayerData PlayersData[MaxPlayerNum];                    // 0x0096C9E0
+extern uint32_t PendingDiplomacyFlags[MaxPlayerNum][MaxPlayerNum];
 extern uint32_t FactionRankings[MaxPlayerNum];                  // 0x009A64EC
 extern uint32_t LockEnableMask;  // 0x009A64E8 - declared in lock.h too; byte 0 = is_human bytes, byte 1 = is_alive
 extern FactionArt FactionsArt[MaxPlayerNum];  // 0x0078E978

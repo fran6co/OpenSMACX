@@ -926,6 +926,14 @@ uint32_t GameRules;  // 0x009A649C
 uint32_t GameState;  // 0x009A64C0
 int DiffLevelCurrent;  // 0x009A64C4
 int TurnCurrentNum;  // 0x009A64D4
+// setup_game clears this independent DWORD after BaseCurrentCount. No
+// additional semantic use is established; it is not part of the base count.
+// RECOVERY_OBJECT: v2 0x009A64D0 0x009A64D4 ?GameSetupResetWord@@3HA 0x005B3920
+int GameSetupResetWord;
+// set_time_controls publishes its selected seconds multiplied by 1000.
+// net_control_turn copies the duration to the distinct live wait accumulator.
+// RECOVERY_OBJECT: v2 0x009A64E4 0x009A64E8 ?TurnControlDurationMilliseconds@@3HA 0x00523C60
+int TurnControlDurationMilliseconds;
 int ObjectiveReqVictory;  // 0x0094B4C0
 uint32_t ObjectivesSuddenDeathVictory;  // 0x0094B4C4
 uint32_t ObjectiveAchievePts;  // 0x0094B4C8

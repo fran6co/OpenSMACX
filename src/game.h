@@ -125,6 +125,8 @@ extern uint32_t GameInterludeFlags;  // 0x009A64A4
 extern uint32_t GameState; // bitfield
 extern int DiffLevelCurrent;
 extern int TurnCurrentNum;
+extern int GameSetupResetWord;
+extern int TurnControlDurationMilliseconds;
 // `int`: great_beelzebub compares it with `<= 1000` and the image's
 // branch is `jle`, the signed test.
 extern int ObjectiveReqVictory;
