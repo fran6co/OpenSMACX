@@ -1,0 +1,20 @@
+{
+  "event_id": "41fd1d9d38a752724ac919107810cae7486add2932d2317e238d17795122cd08",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netdaemon-wire-save-name-native-extent",
+    "evidence": [
+      "Pinned game_data5A6BA3..5A6BB9:ECX40,EDI9A66C9,rep movsd writes[9A66C9,9A67C9); next dwordstore5A6BC1 targets9A67CC. Preceding89-byte legacy transfer ends9A66C9. setup_game5B3935 clears only firstbyte. save_game5AA03B/5AA498 uses nativeNUL-copy6454D1, without safetycapacity proof. Whole398-byte save/load range9A6490..9A6828 includes gaps. Native64A0 literaluses44C401/49AF15 are exclusive scanbounds, notwordreads; absenceofliteral64A8 references doesnotruleoutcomputedaccess. Do not widenfilename, synthesizezero padding ordiscard3-byte[67C9,67CC) tail."
+    ],
+    "hypothesis": "Native legacy migration establishes a256-byte save-name field rather than259-byte anonymous storage; preserve its3-byte serialized tail and the two other unknown serialized words as unresolved ownership obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "051ce160e9f86c95aa8af38ea0a08db6be7d2f1cd00b429437540cbc42b36724",
+  "request_id": "netdaemon-wire-save-name-native-extent",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
