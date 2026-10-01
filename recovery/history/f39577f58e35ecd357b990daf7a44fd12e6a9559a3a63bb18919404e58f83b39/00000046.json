@@ -1,0 +1,50 @@
+{
+  "event_id": "e0fcd4de55520b6dacb795ec9e55218f3f78568264d5656f56b176955d6f5747",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_ui_owner_wave.py",
+      "recovery/tests/ui_owner_wave_harness.cpp",
+      "src/graphicwin.cpp",
+      "src/graphicwin.h",
+      "src/setupwin.cpp",
+      "src/setupwin.h"
+    ],
+    "evidence": [
+      "Recover five retained UI identities in genuine GraphicWin, SetupWin and SocialWin owners. Preserve seeds and all historical obligations, original task baseline and discoveries. GraphicWin uses its actual Buffer base; SetupWin dispatches real Win callbacks with Spot-mutated y; SocialWin preserves live faction reloads across callbacks, cancellation and native switch fallthrough. Root owns source binding and independent review, compile/link and scoped regression checks. PullDown is excluded from this bounded step pending its genuine pulldown_update dependency closure; not excluded from the recovery objective."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6116608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4907840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4910864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4922880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4923008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0edaab26d7a37269e426d3cf15341b1e5b823e1f13bba10465d201ed4b6e9aa8",
+  "request_id": "ui-owner-five-20261001",
+  "schema_version": 1,
+  "sequence": 46,
+  "stream": "task:interface-contract-report-closure"
+}
