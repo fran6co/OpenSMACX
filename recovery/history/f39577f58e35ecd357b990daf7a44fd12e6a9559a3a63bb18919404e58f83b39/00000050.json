@@ -1,0 +1,19 @@
+{
+  "event_id": "9bc16bbde0267863a695d17b3e08b926abaea3df0b0059659676555c2a981924",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/council_vote_purchase_harness.cpp"
+    ],
+    "evidence": [
+      "Complete the already authorized buy_council_vote owning-TU placeholder, including the missing custom modal path53F9E3..53FB81. Preserve original mappings/spans, historical obligations and retained seed; no task baseline reset. Typed Popup lifetime, source-owned literal dialogue labels, Player/PlayerData roles, per-call technology-turn rereads, peer-then-OTHER vote queries and network payload order are reviewed against pinned instructions. Authorize sibling host dependency projection for existing actual-source test path, with source-extracted body and deliberate corruption controls. Pointer-valued technology names remain LPSTR; parse_say uses the native32-bit integer boundary, not ordinal storage. Build/link and scoped regressions remain prerequisites."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "93183c0a0adfc09ae6e8db7fc68b69b3e4d3aa46bf2b9729f65c2a0bae83323e",
+  "request_id": "council-purchase-actual-source-controls-20261001",
+  "schema_version": 1,
+  "sequence": 50,
+  "stream": "task:interface-contract-report-closure"
+}
