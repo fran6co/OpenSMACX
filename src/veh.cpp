@@ -34,6 +34,7 @@
 #include "tutwin.h"  // TutWinBaseWindow - every removal's check_base/check_loc
 #include "mapwin.h"  // draw_tile - the free single-tile redraw the removals end on
 #include "netmsg.h"  // NetMsgPopup - the promote family reports through it
+#include "xpops.h"  // X_pop - transferred-unit single-player notifications.
 #include "netdaemon.h"  // NetDaemonNet, synch_veh / order_veh - the action family's net half
 #include "path.h"  // Paths - the move cost table the go-to verbs consult
 #include "console.h"  // ConsoleGlobal - action_gate re-focuses the Console
@@ -57,6 +58,18 @@ int __cdecl popp(const char *title, const char *label, int channel,
 
 extern uint32_t LockEnableMask;  // 0x009A64E8, defined in lock.cpp
 
+extern int DesignConsiderPrototype;
+extern uint32_t DesignConsiderAbilities;
+extern int DesignConsiderWeapon;
+extern int DesignConsiderChassis;
+extern int DesignConsiderReactor;
+extern int DesignConsiderArmor;
+extern int DesignConsiderOverride;
+
+// Native580B51/580BF7 test immediate ability masks, not executable globals.
+static const uint32_t PrototypeAbilityCompatibilityMask = 0x0044AE1Bu;
+static const uint32_t PrototypeAbilitySimilarityMask = 0x0048841Au;
+
 // consider_designs resets this scalar to -1; propose_proto records the
 // first selected prototype only while the scalar remains negative.
 // RECOVERY_OBJECT: v2 0x0068F0F0 0x0068F0F4 ?FirstProposedPrototype@@3HA 0x00580860
@@ -64,8 +77,37 @@ int FirstProposedPrototype = -1;
 
 // ORIGINAL: 0x0057E040 ?name_proto@@YAXPADHHHHHHH@Z 0x0057E040-0x0057EF95
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0057e040.cpp", "image:0x0057E040-0x0057EF95"], "reason": "The recovered DesignWin setup path requires the original prototype naming entry. Retain its full seed and explicit unfinished owner body for link continuity pending recovery of the name-generation behavior."}
-void __cdecl name_proto(char *, int, int, int, int, int, int, int) {
-    // BODY GOES HERE.
+void __cdecl name_proto(char *output, int prototype_id, int faction_id,
+                        int chassis_id, int weapon_id, int armor_id,
+                        int ability_flags, int reactor_id) {
+    (void)prototype_id;
+    (void)faction_id;
+    (void)reactor_id;
+    output[0] = '\0';
+    for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
+        if ((static_cast<uint32_t>(ability_flags) & (1u << ability_id)) == 0) {
+            continue;
+        }
+        const RulesChassis &chassis = Chassis[chassis_id];
+        if (ability_id == 5 && chassis.triad == TRIAD_SEA) continue;
+        if (ability_id == 15) continue;
+        if (ability_id == 3 && chassis.triad == TRIAD_LAND
+            && Weapon[weapon_id].offense_rating
+                >= Armor[armor_id].defense_rating
+            && (ability_flags & 0x8000) == 0) {
+            continue;
+        }
+        const char *abbreviation = StringTable.get(
+            static_cast<int>(reinterpret_cast<intptr_t>(
+                Ability[ability_id].abbreviation)));
+        if (abbreviation == nullptr || abbreviation[0] == '\0') continue;
+        ::strcat(output, abbreviation);
+        ::strcat(output, " ");
+        break;
+    }
+    // BODY GOES HERE. This is the verified ability-abbreviation prefix; the
+    // source's gendered chassis, combat/plan and duplicate-name branches
+    // still need their complete typed translation.
 }
 
 int VehCurrentCount;  // 0x009A64C8
@@ -10601,4 +10643,861 @@ void __cdecl spot_all(int veh_id, int toggle) {
 int __cdecl goody_box(int veh_id, int type) {
     // BODY GOES HERE.
     return 0; // PLACEHOLDER: explicit link continuity, encounter result unrecovered.
+}
+
+
+// Coupled transfer/terrain actions and their still-unfinished prototype dependencies.
+// Partial dependencies retain explicit BODY GOES HERE sentinels and seed obligations.
+// ORIGINAL: 0x004CEDE0 ?action_give@@YAXHH@Z 0x004CEDE0-0x004CF379
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CEDE0; retained seed src/recovered/units/004cede0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
+void __cdecl action_give(int vehicle_id, int faction_id) {
+    const int x = Vehs[vehicle_id].x;
+    const int y = Vehs[vehicle_id].y;
+    const int original_owner = Vehs[vehicle_id].faction_id;
+
+    if (vehicle_id >= 0) {
+        int stack_head = vehicle_id;
+        while (Vehs[stack_head].prev_veh_id_stack >= 0) {
+            stack_head = Vehs[stack_head].prev_veh_id_stack;
+        }
+
+        for (int current = stack_head; current >= 0;
+             current = Vehs[current].next_veh_id_stack) {
+            const bool is_root = current == vehicle_id;
+            const bool is_cargo = Vehs[current].order == ORDER_SENTRY_BOARD
+                && Vehs[current].waypoint_x[0] == vehicle_id;
+            if (!is_root && !is_cargo) continue;
+
+            const int source_proto_id = Vehs[current].proto_id;
+            int receiving_proto_id = source_proto_id;
+            if (source_proto_id >= MaxVehProtoFactionNum) {
+                const VehPrototype &source = VehPrototypes[source_proto_id];
+                const int faction_proto_base = faction_id * MaxVehProtoFactionNum;
+                receiving_proto_id = -1;
+
+                // The recipient's block is a 64-record slice of the global
+                // prototype table. The source walk tests the obsolescence
+                // bit before comparing the complete component tuple.
+                for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+                    const int candidate_id = faction_proto_base + slot;
+                    const VehPrototype &candidate = VehPrototypes[candidate_id];
+                    if ((candidate.obsolete_factions & 1) != 0
+                        && candidate.ability_flags == source.ability_flags
+                        && candidate.chassis_id == source.chassis_id
+                        && candidate.weapon_id == source.weapon_id
+                        && candidate.armor_id == source.armor_id
+                        && candidate.reactor_id == source.reactor_id) {
+                        receiving_proto_id = candidate_id;
+                        break;
+                    }
+                }
+
+                if (receiving_proto_id < 0) {
+                    receiving_proto_id = propose_proto(
+                        faction_id, source.chassis_id, source.weapon_id,
+                        source.armor_id, static_cast<int>(source.ability_flags),
+                        source.reactor_id, source.unk_1, nullptr);
+                }
+
+                // Preserve the original ordered fallback probes. The first
+                // and last compare bytes at the start of ability_flags (not
+                // a reconstructed tuple), while the middle probe checks the
+                // low byte of flags together with the plan.
+                if (receiving_proto_id < 0) {
+                    for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+                        const int candidate_id = faction_proto_base + slot;
+                        const VehPrototype &candidate = VehPrototypes[candidate_id];
+                        if ((candidate.obsolete_factions & 1) != 0
+                            && static_cast<uint8_t>(candidate.ability_flags) == source.chassis_id
+                            && ((candidate.ability_flags >> 8) & 0xff) == source.weapon_id) {
+                            receiving_proto_id = candidate_id;
+                            break;
+                        }
+                    }
+                }
+                if (receiving_proto_id < 0) {
+                    for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+                        const int candidate_id = faction_proto_base + slot;
+                        const VehPrototype &candidate = VehPrototypes[candidate_id];
+                        if ((candidate.flags & 1) != 0
+                            && candidate.plan == source.plan) {
+                            receiving_proto_id = candidate_id;
+                            break;
+                        }
+                    }
+                }
+                if (receiving_proto_id < 0) {
+                    for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+                        const int candidate_id = faction_proto_base + slot;
+                        const VehPrototype &candidate = VehPrototypes[candidate_id];
+                        if ((candidate.obsolete_factions & 1) != 0
+                            && static_cast<uint8_t>(candidate.ability_flags) == source.chassis_id) {
+                            receiving_proto_id = candidate_id;
+                            break;
+                        }
+                    }
+                }
+                if (receiving_proto_id < 0) {
+                    receiving_proto_id = Chassis[source.chassis_id].triad == TRIAD_SEA
+                        ? BSC_TRANSPORT_FOIL : BSC_SCOUT_PATROL;
+                }
+            }
+
+            Vehs[current].faction_id = static_cast<uint8_t>(faction_id);
+            Vehs[current].proto_id = static_cast<int16_t>(receiving_proto_id);
+            Vehs[current].order = ORDER_NONE;
+            Vehs[current].state &= 0xfcffbdffu;
+            const int home_base = base_find(x, y, faction_id);
+            Vehs[current].home_base_id = static_cast<int16_t>(home_base);
+        }
+
+        // Map's +8 flag word and +2 owner nibble are Map members, not a
+        // second unmodelled tile table. This preserves the original test.
+        const Map *tile = map_loc(x, y);
+        if ((tile->bit & 1) == 0 || (tile->val2 & 0x0f) > 7) {
+            owner_set(x, y, faction_id);
+        }
+    }
+
+    draw_radius(x, y, 3, 2);
+    if (faction_id == ConsoleGlobal.faction_id_) {
+        parse_says(0, VehPrototypes[Vehs[vehicle_id].proto_id].veh_name,
+                   -1, -1);
+        GenderDefault = Players[original_owner].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[original_owner].title_leader, -1, -1);
+        GenderDefault = Players[original_owner].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(2, Players[original_owner].name_leader, -1, -1);
+        GenderDefault = Players[original_owner].noun_gender;
+        PluralityDefault = Players[original_owner].is_noun_plural;
+        parse_says(3, Players[original_owner].noun_faction, -1, -1);
+        ConsoleGlobal.focus(x, y, original_owner);
+        const int base_id = base_find(x, y);
+        if (base_id >= 0) {
+            parse_says(4, Bases[base_id].name_string, -1, -1);
+            if (Language != 0
+                || (LockEnableMask
+                    & (1u << (original_owner & 0x1f))) != 0) {
+                // The seed tests Language (0x009BC054), not the network
+                // mode; this key is the pinned NUL string at 0x006882AC.
+                NetMsgPopup->pop("GOTUNIT", 5000, 0, nullptr);
+                return;
+            }
+            const Map *tile = map_loc(x, y);
+            // The original indexes the recipient's +0x197C byte run by the
+            // tile's region (+3); PlayerData::unk_83 is the existing owner
+            // of that per-region state. The other condition is prototype plan.
+            if (PlayersData[faction_id].unk_83[tile->region] != 2
+                && VehPrototypes[Vehs[vehicle_id].proto_id].plan != 2) {
+                X_pop("NITOFFEND", nullptr);
+            } else {
+                X_pop("NITDEFEND", nullptr);
+            }
+            return;
+        }
+    } else if (original_owner == ConsoleGlobal.faction_id_) {
+        GenderDefault = Players[faction_id].noun_gender;
+        PluralityDefault = Players[faction_id].is_noun_plural;
+        parse_says(3, Players[faction_id].noun_faction, -1, -1);
+        NetMsgPopup->pop(faction_id != 0 ? "GAVEUNIT" : "GAVEWILD",
+                         5000, 0, nullptr);
+    }
+}
+
+// ORIGINAL: 0x004CE210 ?action_tectonic@@YAXHHH@Z 0x004CE210-0x004CE6A1
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE210; retained seed src/recovered/units/004ce210.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
+void __cdecl action_tectonic(int vehicle_id, int x, int y) {
+    int attacker = Vehs[vehicle_id].faction_id;
+    const int prototype_id = Vehs[vehicle_id].proto_id;
+    const int reactor = VehPrototypes[prototype_id].reactor_id;
+    const int affected_tile_count = RadiusRange[reactor];
+    const int base_id = base_find(x, y);
+    bool focused_on_event = false;
+    int shot_result = 0;
+    int hit_faction[MaxPlayerNum] = {0};
+
+    g_FX.play(0x53, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
+
+    if (attacker != ConsoleGlobal.faction_id_ && base_id >= 0) {
+        const Map *tile = map_loc(x, y);
+        const uint32_t faction_flags = PlayersData[ConsoleGlobal.faction_id_].flags;
+        const bool known_location = (tile->visibility
+            & (1u << (ConsoleGlobal.faction_id_ & 0x1f))) != 0;
+        if (((faction_flags & PFLAG_MAP_REVEALED) != 0 || known_location)
+            && Bases[base_id].faction_id_current == ConsoleGlobal.faction_id_) {
+            ConsoleGlobal.focus(x, y, attacker);
+            focused_on_event = true;
+        }
+    }
+
+    // The kill compacts the vehicle table before the announcement parser runs.
+    // Keep the original pre-kill attacker for combat, but preserve that order.
+    attacker = Vehs[vehicle_id].faction_id;
+    kill(vehicle_id);
+
+    if (attacker != ConsoleGlobal.faction_id_ && base_id >= 0) {
+        GenderDefault = Players[attacker].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[attacker].title_leader, -1, -1);
+        GenderDefault = Players[attacker].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[attacker].name_leader, -1, -1);
+        GenderDefault = Players[attacker].noun_gender;
+        PluralityDefault = Players[attacker].is_noun_plural;
+        parse_says(2, Players[attacker].noun_faction, -1, -1);
+        parse_says(3, Bases[base_id].name_string, -1, -1);
+        popp(*ClimatePopupTitle, "TECTONICMISSILE", 0,
+             "tectonic_sm.pcx", nullptr);
+    }
+
+    // The increasing radius index is observable: later defender checks and
+    // random calls follow this exact order in the original.
+    for (int neighbor_index = 0; neighbor_index < affected_tile_count; ++neighbor_index) {
+        const int near_x_unwrapped = x + RadiusOffsetX[neighbor_index];
+        const int near_x = xrange(near_x_unwrapped);
+        const int near_y = y + RadiusOffsetY[neighbor_index];
+        if (!on_map(near_x, near_y)
+            || (MapIsFlat && (near_x_unwrapped < 0
+                              || near_x_unwrapped >= MapLongitudeBounds))) {
+            continue;
+        }
+        const int nearby_vehicle = stack_fix(veh_at(near_x, near_y));
+        if (nearby_vehicle < 0) continue;
+        const int defender = Vehs[nearby_vehicle].faction_id;
+        if (attacker == defender
+            || (PlayersData[attacker].diplo_treaties[defender]
+                & DTREATY_PACT) != 0
+            || hit_faction[defender]) {
+            continue;
+        }
+        shot_result = shoot_it(attacker, defender, x, y, 0);
+        if (shot_result != 0) break;
+        hit_faction[defender] = 1;
+    }
+
+    const int territory = whose_territory(attacker, x, y, nullptr, 0);
+    if (territory >= 0 && territory != attacker
+        && !hit_faction[territory]) {
+        shot_result = shoot_it(attacker, territory, x, y, 0);
+    }
+
+    if (shot_result == 0) {
+        for (int raise_index = 0; raise_index < reactor; ++raise_index) world_raise_alt(x, y);
+        world_climate();
+        draw_map(1);
+        if (focused_on_event) {
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            GenderDefault = Players[Vehs[vehicle_id].faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[Vehs[vehicle_id].faction_id].title_leader, -1, -1);
+            GenderDefault = Players[Vehs[vehicle_id].faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(2, Players[Vehs[vehicle_id].faction_id].name_leader, -1, -1);
+            GenderDefault = Players[Vehs[vehicle_id].faction_id].noun_gender;
+            PluralityDefault = Players[Vehs[vehicle_id].faction_id].is_noun_plural;
+            parse_says(3, Players[Vehs[vehicle_id].faction_id].noun_faction, -1, -1);
+            popp(*ClimatePopupTitle, "TECMOFIED", 0,
+                 "tectonic_sm.pcx", nullptr);
+        }
+        ++TectonicDetonationCount[Vehs[vehicle_id].faction_id];
+        UnkBitfield1 |= 4;
+    }
+}
+
+// ORIGINAL: 0x004CE790 ?action_fungal@@YAXHHH@Z 0x004CE790-0x004CEDDB
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CE790; retained seed src/unrecovered/004ce790.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Typed transfer or terrain action preserves native parser, kill, interception and post-call vehicle-slot read order; retained seed remains evidence, not executable backing."}
+void __cdecl action_fungal(int vehicle_id, int x, int y) {
+    const int attacker = Vehs[vehicle_id].faction_id;
+    const int nearby_tile_count = RadiusRange[1];
+    const int local_base = base_find(x, y);
+    int shot_by_faction[MaxPlayerNum] = {0};
+    int shot_result = 0;
+    bool focused_on_spread = false;
+
+    g_FX.play(0x54, Vehs[vehicle_id].x, Vehs[vehicle_id].y);
+
+    kill(vehicle_id);
+
+    if (attacker != ConsoleGlobal.faction_id_ && local_base >= 0) {
+        GenderDefault = Players[attacker].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(0, Players[attacker].title_leader, -1, -1);
+        GenderDefault = Players[attacker].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[attacker].name_leader, -1, -1);
+        GenderDefault = Players[attacker].noun_gender;
+        PluralityDefault = Players[attacker].is_noun_plural;
+        parse_says(2, Players[attacker].noun_faction, -1, -1);
+        parse_says(3, Bases[local_base].name_string, -1, -1);
+        popp(*ClimatePopupTitle, "FUNGALMISSILE", 0,
+             "fungpayld_sm.pcx", nullptr);
+    }
+    for (int neighbor_index = 0; neighbor_index < nearby_tile_count; ++neighbor_index) {
+        const int raw_x = x + RadiusOffsetX[neighbor_index];
+        const int near_x = xrange(raw_x);
+        const int near_y = y + RadiusOffsetY[neighbor_index];
+        if (!on_map(near_x, near_y)
+            || (MapIsFlat && (raw_x < 0 || raw_x >= MapLongitudeBounds))) {
+            continue;
+        }
+        const int nearby_vehicle = stack_fix(veh_at(near_x, near_y));
+        if (nearby_vehicle < 0) continue;
+        const int defender = Vehs[nearby_vehicle].faction_id;
+        if (attacker == defender
+            || (PlayersData[attacker].diplo_treaties[defender]
+                & DTREATY_PACT) != 0
+            || shot_by_faction[defender]) {
+            continue;
+        }
+        shot_result = shoot_it(attacker, defender, x, y, 1);
+        if (shot_result != 0) break;
+        shot_by_faction[defender] = 1;
+    }
+
+    const int territory = whose_territory(attacker, x, y, nullptr, 0);
+    if (territory >= 0 && territory != attacker
+        && !shot_by_faction[territory]) {
+        shot_result = shoot_it(attacker, territory, x, y, 1);
+    }
+    if (shot_result != 0) return;
+
+    const int spread_bound = VehPrototypes[Vehs[vehicle_id].proto_id].reactor_id * 2;
+    for (int spread_index = 0; spread_index < spread_bound; ++spread_index) {
+        const int direction = spread_index == 0 ? 0 : 1 + (rand() & 7);
+        const int raw_x = x + RadiusOffsetX[direction];
+        const int spread_x = xrange(raw_x);
+        const int spread_y = y + RadiusOffsetY[direction];
+        if (!on_map(spread_x, spread_y)
+            || (MapIsFlat && (raw_x < 0 || raw_x >= MapLongitudeBounds))) {
+            continue;
+        }
+
+        // The seed initializes a vacant/invalid tile only when the low random
+        // bit is set; its signed-mask sequence reduces to this bit test for
+        // the CRT's nonnegative rand() result.
+        if ((rand() & 1) != 0
+            && (((map_loc(spread_x, spread_y)->bit & 3) == 0)
+                || ((map_loc(spread_x, spread_y)->val2 & 0x0f) > 7))) {
+            veh_init(BSC_MIND_WORMS, 0, spread_x, spread_y);
+        }
+        Map *tile = map_loc(spread_x, spread_y);
+        if ((tile->bit & BIT_FUNGUS) != 0
+            && (tile->climate & 0xe0) >= ALT_BIT_OCEAN_SHELF) {
+            continue;
+        }
+
+        const int focus_faction = Vehs[vehicle_id].faction_id;
+        if (focus_faction != ConsoleGlobal.faction_id_
+            && ((PlayersData[ConsoleGlobal.faction_id_].flags
+                    & PFLAG_MAP_REVEALED) != 0
+                || (tile->visibility
+                    & (1u << (ConsoleGlobal.faction_id_ & 0x1f))) != 0)
+            && local_base >= 0
+            && Bases[local_base].faction_id_current == ConsoleGlobal.faction_id_) {
+            ConsoleGlobal.focus(spread_x, spread_y, focus_faction);
+            focused_on_spread = true;
+        }
+
+        bit_set(spread_x, spread_y, BIT_FUNGUS, true);
+        bit_set(spread_x, spread_y,
+                BIT_ROAD | BIT_MAGTUBE | BIT_MINE | BIT_SOLAR_TIDAL
+                | BIT_FARM | BIT_SOIL_ENRICHER | BIT_FOREST, false);
+        bit_set(spread_x, spread_y, MapTileFlagClearMask, false);
+        if ((tile->climate & 0xe0) < ALT_BIT_OCEAN_SHELF) {
+            world_alt_set(spread_x, spread_y, 2, false);
+        }
+        if ((PlayersData[ConsoleGlobal.faction_id_].flags & PFLAG_MAP_REVEALED) != 0
+            || (tile->visibility
+                & (1u << (ConsoleGlobal.faction_id_ & 0x1f))) != 0
+            || (GameState & 0x80) != 0) {
+            synch_bit(spread_x, spread_y, ConsoleGlobal.faction_id_);
+            draw_tile(spread_x, spread_y, 2);
+        }
+    }
+
+    const Map *origin = map_loc(x, y);
+    if ((origin->climate & 0xe0) > 0x5f) {
+        veh_init(BSC_FUNGAL_TOWER, 0, x, y);
+    }
+    UnkBitfield1 |= 4;
+    if (focused_on_spread && local_base >= 0) {
+        parse_says(0, Bases[local_base].name_string, -1, -1);
+        GenderDefault = Players[Vehs[vehicle_id].faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[Vehs[vehicle_id].faction_id].title_leader, -1, -1);
+        GenderDefault = Players[Vehs[vehicle_id].faction_id].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(2, Players[Vehs[vehicle_id].faction_id].name_leader, -1, -1);
+        GenderDefault = Players[Vehs[vehicle_id].faction_id].noun_gender;
+        PluralityDefault = Players[Vehs[vehicle_id].faction_id].is_noun_plural;
+        parse_says(3, Players[Vehs[vehicle_id].faction_id].noun_faction, -1, -1);
+        popp(*ClimatePopupTitle, "FUNGMOTIZED", 0,
+             "fungpayld_sm.pcx", nullptr);
+    }
+}
+
+// ORIGINAL: 0x004CDAF0 ?shoot_it@@YAHHHHHH@Z 0x004CDAF0-0x004CE206
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CDAF0; retained seed src/unrecovered/004cdaf0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+int __cdecl shoot_it(int attacker, int defender, int x, int y,
+                     int fungal_attack) {
+    PlayerData &defending_faction = PlayersData[defender];
+    int defense_pods = static_cast<int>(defending_faction.satellites_[3]);
+    int attempts_spent = static_cast<int>(defending_faction.sat_odp_deployed);
+    int result = 0;
+    (void)fungal_attack;
+
+    bool has_flechette_defense = false;
+    for (int base_scan_index = 0; base_scan_index < RadiusRange[2]; ++base_scan_index) {
+        const int neighbor_x = xrange(x + RadiusOffsetX[base_scan_index]);
+        const int neighbor_y = y + RadiusOffsetY[base_scan_index];
+        if (!on_map(neighbor_x, neighbor_y)) continue;
+        const int neighbor_base = base_at(neighbor_x, neighbor_y);
+        if (neighbor_base < 0
+            || Bases[neighbor_base].faction_id_current == attacker) {
+            continue;
+        }
+        if (has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, neighbor_base)) {
+            has_flechette_defense = true;
+            break;
+        }
+    }
+    if (defense_pods == 0 && !has_flechette_defense) return 0;
+
+    int unspent_attempts = defense_pods - attempts_spent;
+    if (unspent_attempts < 0) unspent_attempts = 0;
+    for (int attempt = 0; attempt < unspent_attempts; ++attempt) {
+        ++attempts_spent;
+        defending_faction.sat_odp_deployed =
+            static_cast<uint32_t>(attempts_spent);
+        if (rand() % 100 > 49) {
+            result = 1;
+            break;
+        }
+    }
+
+    // If the orbital pods did not intercept, each neighboring enemy base
+    // with a Flechette system gets its own independent 50-percent roll.
+    if (result == 0 && has_flechette_defense) {
+        for (int flechette_scan_index = 0; flechette_scan_index < RadiusRange[2]; ++flechette_scan_index) {
+            const int neighbor_x = xrange(x + RadiusOffsetX[flechette_scan_index]);
+            const int neighbor_y = y + RadiusOffsetY[flechette_scan_index];
+            if (!on_map(neighbor_x, neighbor_y)) continue;
+            const int neighbor_base = base_at(neighbor_x, neighbor_y);
+            if (neighbor_base < 0
+                || Bases[neighbor_base].faction_id_current == attacker
+                || !has_fac_built(FAC_FLECHETTE_DEFENSE_SYS, neighbor_base)) {
+                continue;
+            }
+            if (rand() % 100 < 50) {
+                return 1;
+            }
+        }
+    }
+
+    if (defense_pods > 0) {
+        --defense_pods;
+        defending_faction.satellites_[3] =
+            static_cast<uint32_t>(defense_pods);
+        if (defense_pods - attempts_spent < 0) {
+            attempts_spent = defense_pods;
+            defending_faction.sat_odp_deployed =
+                static_cast<uint32_t>(attempts_spent);
+        }
+    }
+    // BODY GOES HERE. The native post-interception phrase/territory branches
+    // still need translation; preserve the recovered defense rolls and
+    // inventory/counter updates without substituting a generic message.
+    return result;
+}
+
+// ORIGINAL: 0x00580860 ?propose_proto@@YAHHHHHHHHPAD@Z 0x00580860-0x00581168
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 00580860; retained seed src/unrecovered/00580860.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
+                          int armor_id, int ability_flags, int reactor_id,
+                          int design_category, char *requested_name) {
+    const uint8_t faction_bit = static_cast<uint8_t>(1u << (faction_id & 0x1f));
+    int offense_factor;
+    int defense_factor;
+    int best_prototype = -1;
+    int best_score = 0;
+
+    if (DesignConsiderOverride == 0) {
+        if (is_bunged(faction_id, chassis_id, weapon_id, armor_id,
+                      ability_flags, reactor_id)) {
+            return -1;
+        }
+    } else if (DesignConsiderPrototype >= 0
+               && DesignConsiderPrototype != design_category) {
+        return -1;
+    }
+
+    if (Chassis[chassis_id].speed == 1
+        && Armor[armor_id].defense_rating == 1
+        && Weapon[weapon_id].offense_rating == 1
+        && DesignConsiderOverride == 0) {
+        return 2;
+    }
+
+    if (!ExpansionEnabled && weapon_id >= 12 && weapon_id <= 14) {
+        offense_factor = 1;
+    } else if (Weapon[weapon_id].offense_rating < 0) {
+        const int ratio = static_cast<int>(PlayersData[faction_id].enemy_best_armor_value)
+            * static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND])
+            / static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND]);
+        offense_factor = psi_factor(ratio, faction_id, TRUE, FALSE);
+    } else {
+        offense_factor = Weapon[weapon_id].offense_rating;
+    }
+
+    if (!ExpansionEnabled && armor_id > 9) {
+        defense_factor = 1;
+    } else {
+        if (Armor[armor_id].defense_rating < 0) {
+            const int ratio = static_cast<int>(PlayersData[faction_id].enemy_best_weapon_value)
+                * static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND])
+                / static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND]);
+            defense_factor = psi_factor(ratio, faction_id, FALSE, FALSE);
+        } else {
+            defense_factor = Armor[armor_id].defense_rating;
+        }
+    }
+
+    for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; ++walk) {
+        const int slot = (walk < MaxVehProtoFactionNum)
+            ? walk : faction_id * MaxVehProtoFactionNum + (walk & 0x3f);
+        VehPrototype &candidate = VehPrototypes[slot];
+        int contribution = 0;
+        bool has_contribution = false;
+        const bool available_local_slot = slot >= MaxVehProtoFactionNum
+            && (candidate.flags & PROTO_ACTIVE) != 0
+            && (candidate.obsolete_factions & faction_bit) != 0
+            && PlayersData[faction_id].proto_id_active[slot] == 0
+            && PlayersData[faction_id].proto_id_queue[slot] == 0;
+
+        if (available_local_slot) {
+            if (slot > 0x3f && (candidate.flags & PROTO_ACTIVE) == 0) {
+                contribution = 0x800;
+                has_contribution = true;
+            } else if (slot > 0x3f
+                       || has_tech(candidate.preq_tech, faction_id)) {
+                if (candidate.chassis_id == chassis_id
+                    && candidate.weapon_id == weapon_id
+                    && candidate.armor_id == armor_id
+                    && candidate.ability_flags == static_cast<uint32_t>(ability_flags)
+                    && candidate.reactor_id == reactor_id
+                    && DesignConsiderOverride == 0
+                    && (LockEnableMask & faction_bit) != 0) {
+                    return -1;
+                }
+
+                if (candidate.chassis_id == chassis_id
+                    && candidate.weapon_id == weapon_id
+                    && candidate.armor_id == armor_id
+                    && candidate.reactor_id == reactor_id
+                    && ((candidate.ability_flags ^ static_cast<uint32_t>(ability_flags))
+                        & PrototypeAbilityCompatibilityMask) == 0
+                    && ((candidate.ability_flags & static_cast<uint32_t>(ability_flags))
+                        == candidate.ability_flags
+                        || (LockEnableMask & faction_bit) == 0)) {
+                    if (design_category == -2) {
+                        candidate.flags |= PROTO_TYPED_COMPLETE;
+                    }
+                    if (DesignConsiderOverride != 0
+                        && DesignConsiderOverride < 3) {
+                        DesignConsiderAbilities = static_cast<uint32_t>(ability_flags);
+                        DesignConsiderWeapon = weapon_id;
+                        DesignConsiderArmor = armor_id;
+                        DesignConsiderChassis = chassis_id;
+                        DesignConsiderReactor = reactor_id;
+                        DesignConsiderOverride = 2;
+                    }
+                    candidate.obsolete_factions &= static_cast<uint8_t>(~faction_bit);
+                    return slot;
+                }
+
+                uint32_t comparison_bit = static_cast<uint32_t>(candidate.chassis_id);
+                if (slot > 0x3f) {
+                    comparison_bit = faction_bit;
+                    if ((candidate.obsolete_factions & faction_bit) != 0
+                        && PlayersData[faction_id].proto_id_active[slot] == 0) {
+                        contribution = 0x400;
+                        has_contribution = true;
+                    }
+
+                    if (!has_contribution
+                        && candidate.chassis_id == chassis_id
+                        && candidate.reactor_id == reactor_id
+                        && ((candidate.ability_flags
+                             ^ static_cast<uint32_t>(ability_flags))
+                            & PrototypeAbilitySimilarityMask) == 0) {
+                        const int other_weapon = candidate.weapon_id;
+                        int other_offense;
+                        if (!ExpansionEnabled && other_weapon >= 12
+                            && other_weapon <= 14) {
+                            other_offense = 1;
+                        } else if (Weapon[other_weapon].offense_rating < 0) {
+                            const int ratio = static_cast<int>(
+                                PlayersData[faction_id].enemy_best_armor_value)
+                                * static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND])
+                                / static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND]);
+                            other_offense = psi_factor(ratio, faction_id, TRUE, FALSE);
+                        } else {
+                            other_offense = Weapon[other_weapon].offense_rating;
+                        }
+
+                        const int other_armor = candidate.armor_id;
+                        int other_defense;
+                        if (!ExpansionEnabled && other_armor > 9) {
+                            other_defense = 1;
+                        } else if (Armor[other_armor].defense_rating < 0) {
+                            const int ratio = static_cast<int>(
+                                PlayersData[faction_id].enemy_best_weapon_value)
+                                * static_cast<int>(Rules.psi_combat_ratio_def[TRIAD_LAND])
+                                / static_cast<int>(Rules.psi_combat_ratio_atk[TRIAD_LAND]);
+                            other_defense = psi_factor(ratio, faction_id, FALSE, FALSE);
+                        } else {
+                            other_defense = Armor[other_armor].defense_rating;
+                        }
+
+                        const int highest = (other_offense > other_defense)
+                            ? other_offense : other_defense;
+                        const int highest_plus = (other_offense == other_defense)
+                            ? highest + 1 : highest;
+                        if (faction_id < highest) {
+                            int offense_distance = faction_id - other_offense;
+                            if (offense_distance < 0) offense_distance = -offense_distance;
+                            if (offense_distance < 2 && defense_factor < highest_plus) {
+                                int defense_distance = defense_factor - other_defense;
+                                if (defense_distance < 0) defense_distance = -defense_distance;
+                                if (defense_distance < 2
+                                    && (comparison_bit & LockEnableMask) == 0
+                                    && std::strcmp(Players[faction_id].filename, "UNIV") != 0) {
+                                    return slot;
+                                }
+                            }
+                        }
+                    }
+                }
+
+                if (!has_contribution
+                    && (candidate.unk_1 == design_category
+                        || (PlayersData[faction_id].proto_id_active[slot] == 0
+                            && PlayersData[faction_id].proto_id_queue[slot] == 0))) {
+                    const unsigned int active =
+                        PlayersData[faction_id].proto_id_active[slot];
+                    unsigned int base_score = active == 0 ? 0x240 : 0x40;
+                    if ((candidate.obsolete_factions & comparison_bit) != 0) {
+                        base_score |= 0x100;
+                    }
+                    const unsigned int queued =
+                        PlayersData[faction_id].proto_id_queue[slot];
+                    if (queued == 0) base_score |= 0x80;
+                    unsigned int penalty = candidate.cost * active + queued;
+                    if (penalty > 0x3f) penalty = 0x3f;
+                    contribution = static_cast<int>(base_score - penalty);
+                    has_contribution = true;
+                }
+            }
+        } else {
+            contribution = candidate.unk_1 == design_category ? 0x2000 : 0x1000;
+            has_contribution = true;
+        }
+
+        if (has_contribution && best_score < contribution) {
+            best_score = contribution;
+            best_prototype = slot;
+        }
+    }
+
+    if (best_prototype < 0) return -1;
+
+    if (DesignConsiderOverride != 0) {
+        if (DesignConsiderOverride < 3) {
+            DesignConsiderWeapon = weapon_id;
+            DesignConsiderArmor = armor_id;
+            DesignConsiderChassis = chassis_id;
+            DesignConsiderAbilities = static_cast<uint32_t>(ability_flags);
+            DesignConsiderReactor = reactor_id;
+            DesignConsiderPrototype = design_category;
+            DesignConsiderOverride = 3;
+        }
+        return -1;
+    }
+
+    VehPrototype &selected = VehPrototypes[best_prototype];
+    const bool was_active = (selected.flags & PROTO_ACTIVE) != 0;
+    if (was_active && !IsMultiplayerNet) {
+        retire_proto(best_prototype, faction_id);
+    }
+    make_proto(best_prototype, chassis_id, weapon_id, armor_id,
+               ability_flags, reactor_id);
+    if (design_category == -2 || DiffLevelCurrent < 2) {
+        selected.flags |= PROTO_TYPED_COMPLETE;
+    }
+    if (was_active) selected.flags |= 0x40;
+    selected.flags |= 0x80;
+    if (design_category >= 0) {
+        selected.unk_1 = static_cast<int8_t>(design_category);
+        if (design_category == 10) selected.plan = 3;
+    }
+
+    if (requested_name == nullptr) {
+        char generated_name[256];
+        name_proto(generated_name, best_prototype, faction_id, chassis_id,
+                   weapon_id, armor_id, ability_flags, reactor_id);
+        ::strncpy(selected.veh_name, generated_name, sizeof(selected.veh_name));
+        selected.veh_name[sizeof(selected.veh_name) - 1] = '\0';
+        selected.flags &= static_cast<uint16_t>(~PROTO_CUSTOM_NAME_SET);
+    } else {
+        std::strcpy(selected.veh_name, requested_name);
+        for (int other = 0; other < MaxVehProtoNum; ++other) {
+            const int other_faction = other / MaxVehProtoFactionNum;
+            if (other != best_prototype
+                && (other_faction == 0 || other_faction == faction_id)
+                && std::strcmp(selected.veh_name, VehPrototypes[other].veh_name) == 0) {
+                ::strcat(selected.veh_name, "*");
+                other = -1;
+            }
+        }
+    }
+
+    prune_protos(faction_id, best_prototype, 0);
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        Base &base = Bases[base_id];
+        if (base.faction_id_current != faction_id || base.queue_size >= 10) continue;
+        for (uint32_t queue_slot = 0; queue_slot < base.queue_size; ++queue_slot) {
+            const int queued = base.queue_production_id[queue_slot];
+            if (queued < 0 || queued >= MaxVehProtoNum) continue;
+            const VehPrototype &queued_prototype = VehPrototypes[queued];
+            if ((queued_prototype.obsolete_factions & faction_bit) != 0
+                && queued_prototype.unk_1 == selected.unk_1) {
+                base.queue_production_id[queue_slot] = best_prototype;
+            }
+        }
+    }
+
+    if (FirstProposedPrototype < 0) FirstProposedPrototype = best_prototype;
+    // BODY GOES HERE. The native queue rewrite and several proposal-state
+    // branches still need exact translation; the typed scorer/allocation
+    // above preserves the recovered behavior completed so far.
+    return best_prototype;
+}
+
+// ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0057F1D0; retained seed src/recovered/units/0057f1d0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+void __cdecl retire_proto(int prototype_id, int faction_id) {
+    proto_bung_put(faction_id, prototype_id);
+    VehPrototype &retired = VehPrototypes[prototype_id];
+    const uint8_t faction_bit = static_cast<uint8_t>(1u << (faction_id & 0x1f));
+    int replacement = -1;
+    int replacement_score = 0;
+
+    for (int slot = 0; slot < MaxVehProtoFactionNum; ++slot) {
+        const int candidate_id = faction_id * MaxVehProtoFactionNum + slot;
+        const VehPrototype &candidate = VehPrototypes[candidate_id];
+        if (candidate_id == prototype_id
+            || candidate.unk_1 != retired.unk_1
+            || (candidate.flags & PROTO_ACTIVE) == 0) {
+            continue;
+        }
+        const int score = (candidate.obsolete_factions & faction_bit) == 0 ? 2 : 1;
+        if (score > replacement_score) {
+            replacement = candidate_id;
+            replacement_score = score;
+        }
+    }
+
+    if (replacement >= 0) {
+        for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+            Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.proto_id != prototype_id || vehicle.faction_id != faction_id) {
+                continue;
+            }
+            vehicle.proto_id = static_cast<int16_t>(replacement);
+            if (PlayersData[faction_id].proto_id_active[prototype_id] != 0) {
+                --PlayersData[faction_id].proto_id_active[prototype_id];
+            }
+            ++PlayersData[faction_id].proto_id_active[replacement];
+        }
+    }
+
+    // BODY GOES HERE. The native no-replacement path consults base_at and
+    // stack_check before deciding whether affected units can be retained or
+    // must be removed; do not collapse that path into an invented fallback.
+    retired.obsolete_factions |= faction_bit;
+    retired.flags &= static_cast<uint16_t>(~PROTO_ACTIVE);
+}
+
+// ORIGINAL: 0x0057F4B0 ?prune_protos@@YAXHHH@Z 0x0057F4B0-0x00580859
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 0057F4B0; retained seed src/unrecovered/0057f4b0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
+    (void)options;
+    const int faction_base = faction_id * MaxVehProtoFactionNum;
+    const bool can_mark_typed_completions = prototype_id < MaxVehProtoFactionNum
+        || (VehPrototypes[prototype_id].flags & PROTO_TYPED_COMPLETE) != 0;
+    if (can_mark_typed_completions) {
+      for (int local_slot = 0; local_slot < MaxVehProtoFactionNum; ++local_slot) {
+        VehPrototype &prototype = VehPrototypes[faction_base + local_slot];
+        if ((prototype.flags & PROTO_ACTIVE) == 0
+            || (prototype.flags & PROTO_TYPED_COMPLETE) != 0) {
+            continue;
+        }
+
+        bool has_better_weapon = false;
+        bool has_better_armor = false;
+        bool has_better_chassis = false;
+        for (int walk = 0; walk < 2 * MaxVehProtoFactionNum; ++walk) {
+            const int candidate_id = (walk < MaxVehProtoFactionNum)
+                ? walk : faction_base + (walk & 0x3f);
+            const VehPrototype &candidate = VehPrototypes[candidate_id];
+            if ((candidate.flags & PROTO_ACTIVE) == 0) continue;
+            if (candidate_id < MaxVehProtoFactionNum) {
+                if (!has_tech(candidate.preq_tech, faction_id)) continue;
+            } else if ((candidate.flags & PROTO_TYPED_COMPLETE) == 0) {
+                continue;
+            }
+
+            if (candidate.weapon_id == prototype.weapon_id) {
+                has_better_weapon = true;
+            }
+            if (candidate.armor_id == prototype.armor_id) {
+                has_better_armor = true;
+            }
+            if (candidate.chassis_id == prototype.chassis_id) {
+                has_better_chassis = true;
+            }
+
+            const int candidate_weapon_rating =
+                Weapon[candidate.weapon_id].offense_rating;
+            const int proposed_weapon_rating =
+                Weapon[prototype.weapon_id].offense_rating;
+            if (proposed_weapon_rating > 0
+                && candidate_weapon_rating >= proposed_weapon_rating) {
+                has_better_weapon = true;
+            }
+            const int candidate_armor_rating =
+                Armor[candidate.armor_id].defense_rating;
+            const int proposed_armor_rating =
+                Armor[prototype.armor_id].defense_rating;
+            if (proposed_armor_rating > 0
+                && candidate_armor_rating >= proposed_armor_rating) {
+                has_better_armor = true;
+            }
+            if (Chassis[candidate.chassis_id].triad
+                    == Chassis[prototype.chassis_id].triad
+                && Chassis[candidate.chassis_id].speed
+                    >= Chassis[prototype.chassis_id].speed) {
+                has_better_chassis = true;
+            }
+        }
+
+        if (has_better_weapon && has_better_armor && has_better_chassis) {
+            prototype.flags |= static_cast<uint16_t>(PROTO_TYPED_COMPLETE | 0x100);
+        }
+      }
+    }
+    // BODY GOES HERE. The second native cross-prototype pass applies faction
+    // flags, rules-specific ratings, reactor/carry constraints and retirement
+    // decisions beyond the dominated-component marking above.
 }

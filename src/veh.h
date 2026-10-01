@@ -19,6 +19,17 @@
 // Prototype naming is mapped but unfinished; retained seed owns the behavior lead.
 void __cdecl name_proto(char *name, int prototype, int faction, int chassis,
                        int weapon, int armor, int abilities, int reactor);
+int __cdecl propose_proto(int faction_id, int chassis, int weapon, int armor,
+                          int abilities, int reactor, int design_category,
+                          char *name);
+void __cdecl retire_proto(int prototype_id, int faction_id);
+void __cdecl prune_protos(int faction_id, int prototype_id, int options);
+void __cdecl action_give(int vehicle_id, int faction_id);
+void __cdecl action_tectonic(int vehicle_id, int x, int y);
+void __cdecl action_fungal(int vehicle_id, int x, int y);
+int __cdecl shoot_it(int attacker_faction, int defender_faction,
+                     int x, int y, int fungal_attack);
+int __cdecl veh_init(int prototype, int faction, int x, int y);
 
 struct VOX_Vect;
 struct VOX_Matrix;
