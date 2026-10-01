@@ -50,6 +50,10 @@ class PullDown : public GraphicWin {
 
  public:
   void hide();
+  void UNK1();
+  void on_mouse_move(int x, int y);
+  void mouse_move(int x, int y);
+  void pulldown_update(int old_selected, int new_selected);
   int UNK2(int a);
   int UNK3(int a, int b, int c);
   int UNK5();
@@ -128,6 +132,7 @@ extern PullDownBackfillCallback PullDownFieldF3CDefault;
 // perform.
 extern Font *PullDownDefaultFont;
 extern int PullDownBorderPadding;
+extern int PullDownTextPadding;
 extern int PullDownDefaultTextColor;
 extern int PullDownDefaultTextShadow;
 extern int PullDownDefaultSelectedTextColor;

@@ -2464,65 +2464,6 @@ extern "C" void __fastcall PullDown_on_left_up(PullDown *self, void *, int x,
 }
 
 // ---------------------------------------------------------------------------
-// PullDown::mouse_move, 0x005F9590. Hovering the open menu tracks the row:
-// recompute the row under the cursor and publish it through the shared
-// pulldown_update helper so the drawn highlight follows. The member is
-// undeclared in pulldown.h, so the receiver travels explicitly; the original
-// is a __thiscall member.
-/*
-Purpose: Track the highlighted menu row while the mouse moves over it.
-// ORIGINAL: 0x005F9590 ?mouse_move@PullDown@@QAEXHH@Z 0x005F9590-0x005F9631 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5F9590..5F9631; retired seed git:117282ee:src/unrecovered/005f9590.cpp records the same identity and spans.", "The row maths is the same pulldown.h model as on_left_up (items_/item_count_/selected_, PullDownDefaultFont's line advance, PullDownBorderPadding), and the single callee is the menu's own highlight publisher 0x005F9F60, unrecovered, so it stays at its original address."], "reason": "Coverage transcription of the hover tracking beside its two sibling handlers."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall PullDown_mouse_move(PullDown *self, void *, int x,
-                                               int y) {
-    char *const base = reinterpret_cast<char *>(self);
-    int *const selected = reinterpret_cast<int *>(base + 0xF28);
-    const int old_selected = *selected;
-    const int row = (y - PullDownBorderPadding)
-                    / reinterpret_cast<Font *>(PullDownDefaultFont)->line_advance();
-    *selected = row;
-
-    const int count = *reinterpret_cast<const int *>(base + 0xF20);
-    int found;
-    if (row < 0) {
-        found = count;
-    } else {
-        int used = -1;
-        found = 0;
-        if (count > 0) {
-            unsigned char *item =
-                reinterpret_cast<unsigned char *>(base + 0xA24);
-            do {
-                if ((*item & 1) != 0) {
-                    used = used + 1;
-                }
-                if (used == *selected) {
-                    break;
-                }
-                found = found + 1;
-                item = item + 0x14;
-            } while (found < count);
-        }
-    }
-
-    if (found == count) {
-        *selected = -1;
-    } else {
-        *selected = found;
-        if ((reinterpret_cast<unsigned char *>(base + 0xA24) + found * 0x14)[0]
-            & 4) {
-            *selected = -1;
-        }
-    }
-
-    typedef void (__fastcall *PulldownUpdateFn)(PullDown *, void *, int, int);
-    reinterpret_cast<PulldownUpdateFn>(0x005F9F60)(self, nullptr, old_selected,
-                                                   *selected);
-}
-
-// ---------------------------------------------------------------------------
 // FlatButton::on_mouse_leave, 0x00608660. Leaving a flat button releases its
 // pressed look and bubble: skip when this button is the tracked hover pair,
 // otherwise stop the hold timer, clear the bubble, notify the buddy control

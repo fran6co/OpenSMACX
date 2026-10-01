@@ -90,6 +90,8 @@ class Font {
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
   bool is_initialized() const { return font_obj_ != NULL; }
   int pixel_height() const { return height_; }
+  // PullDown mnemonic underline reads the native Font+0x14 metric.
+  int internal_leading() const { return internal_leading_; }
   // PullDown::show (0x005F91A3) uses the natural line height unless
   // an explicit inter-line adjustment has been supplied.
   int line_advance() const {

@@ -1,0 +1,19 @@
+{
+  "event_id": "93183c0a0adfc09ae6e8db7fc68b69b3e4d3aa46bf2b9729f65c2a0bae83323e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "Pinned5FA285 and5FA5E2 snapshot GraphicWin+0x980, the Buffer+0x53C color_val_1_ foreground after rendering and before mnemonic metric calls. Expose a read-only Buffer foreground accessor without changing layout. Native text rendering reloads the item text after set_text_color, whereas mnemonic/right-text operands retain earlier snapshots; metric order is letter width, height, then prefix width, with Font leading and foreground captured before these calls. Keep the original task baseline, original mappings, seeds and all claims; this dependency expansion is not acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "13808cea4e5a18375adbc3894abcf37050f068794a1b56309bc3caa3c7330665",
+  "request_id": "pulldown-native-text-foreground-20261001",
+  "schema_version": 1,
+  "sequence": 49,
+  "stream": "task:interface-contract-report-closure"
+}

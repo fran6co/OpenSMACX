@@ -225,6 +225,8 @@ class Buffer {
   const RECT &clip_rect() const { return rect2_; }
   int set_font(Font *font1, Font *font2, Font *font3, Font *font4);
   void set_text_color(int color1, int color2, int color3, int color4);
+  // PullDown's mnemonic underline snapshots Buffer+0x53C before measuring.
+  int foreground_color() const { return static_cast<int>(color_val_1_); }
   void set_text_color2(int color1, int color2, int color3, int color4);
   void set_text_color3(int color1, int color2, int color3, int color4);
   void set_text_color_hyper(int color1, int color2, int color3, int color4);
