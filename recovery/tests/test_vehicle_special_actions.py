@@ -658,6 +658,8 @@ def test_live_name_proto_composes_rule_strings(tmp_path):
     if compiler is None:
         pytest.skip("host g++ required")
     source_body = actual_function("name_proto")
+    veh_header = (ROOT / "src/veh.h").read_text()
+    triad = braced(veh_header, veh_header.index("enum VehTriad {")) + ";"
     harness = r"""
 #include <cstdint>
 #include <cstdlib>
@@ -665,16 +667,19 @@ def test_live_name_proto_composes_rule_strings(tmp_path):
 #include <cstdio>
 #define __cdecl
 const int MaxAbilityNum=29;
-const int TRIAD_LAND=0, TRIAD_SEA=2;
+SOURCE_TRIAD
 struct RulesAbility { char *abbreviation; } Ability[29];
-struct RulesChassis { char *offsv_1_name; uint8_t triad; } Chassis[19];
+struct RulesChassis { char *offsv_1_name; uint8_t triad, speed; } Chassis[19];
 struct RulesWeapon { char *name_short; int8_t offense_rating; } Weapon[26];
 struct RulesArmor { char *name_short; int8_t defense_rating; } Armor[14];
 struct RulesReactor { char *name_short; } Reactor[4];
+int string_reads;
 struct StringTableStub { const char *get(int index) {
+    ++string_reads;
     switch(index) {
       case 1: return "Cloak"; case 2: return "Deep Radar";
       case 3: return "Scout"; case 4: return "Impact"; case 5: return "Fission";
+      case 6: return "Amphibious"; case 7: return "Carrier";
       default: return "";
     }
 } } StringTable;
@@ -691,8 +696,29 @@ int main() {
     if (std::strcmp(name,"Cloak ") != 0) {
       std::fprintf(stderr,"unexpected name: %s\n",name); return 42;
     }
+    Ability[5].abbreviation=reinterpret_cast<char *>(6);
+    Ability[15].abbreviation=reinterpret_cast<char *>(7);
+    for (int triad=TRIAD_LAND; triad<=TRIAD_AIR; ++triad) {
+        Chassis[0].triad=triad;
+        string_reads=0;
+        name_proto(name, 0, 1, 0, 0, 0, 1<<5, 0);
+        if (std::strcmp(name,triad==TRIAD_AIR?"":"Amphibious ")) return 43;
+        if (string_reads!=(triad==TRIAD_AIR?1:2)) return 44;
+        for (int speed=1; speed<=2; ++speed) {
+            Chassis[0].speed=speed;
+            Weapon[0].offense_rating=2;
+            Armor[0].defense_rating=1;
+            name_proto(name, 0, 1, 0, 0, 0, 1<<3, 0);
+            if (std::strcmp(name,speed==1?"":"Deep Radar ")) return 45;
+            name_proto(name, 0, 1, 0, 0, 0, (1<<3)|(1<<15), 0);
+            if (std::strcmp(name,"Deep Radar ")) return 46;
+        }
+    }
+    string_reads=0;
+    name_proto(name, 0, 1, 0, 0, 0, 1<<15, 0);
+    if (name[0] || string_reads!=1) return 47;
 }
-""".replace("LIVE_BODY", source_body)
+""".replace("SOURCE_TRIAD", triad).replace("LIVE_BODY", source_body)
     cpp = tmp_path / "vehicle_name_proto.cpp"
     executable = tmp_path / "vehicle_name_proto"
     cpp.write_text(harness)

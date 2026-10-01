@@ -88,19 +88,22 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         if ((static_cast<uint32_t>(ability_flags) & (1u << ability_id)) == 0) {
             continue;
         }
+        const char *abbreviation = StringTable.get(
+            static_cast<int>(reinterpret_cast<intptr_t>(
+                Ability[ability_id].abbreviation)));
+        if (::strlen(abbreviation) == 0) continue;
         const RulesChassis &chassis = Chassis[chassis_id];
-        if (ability_id == 5 && chassis.triad == TRIAD_SEA) continue;
+        if (ability_id == 5 && chassis.triad == TRIAD_AIR) continue;
         if (ability_id == 15) continue;
-        if (ability_id == 3 && chassis.triad == TRIAD_LAND
+        if (ability_id == 3 && chassis.speed == 1
             && Weapon[weapon_id].offense_rating
                 >= Armor[armor_id].defense_rating
             && (ability_flags & 0x8000) == 0) {
             continue;
         }
-        const char *abbreviation = StringTable.get(
+        abbreviation = StringTable.get(
             static_cast<int>(reinterpret_cast<intptr_t>(
                 Ability[ability_id].abbreviation)));
-        if (abbreviation == nullptr || abbreviation[0] == '\0') continue;
         ::strcat(output, abbreviation);
         ::strcat(output, " ");
         break;
