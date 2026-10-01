@@ -1,0 +1,28 @@
+{
+  "event_id": "c637e469a64ba9e5dca28101f59618adca3d9d639098dd54f90383ea04773fe0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_settlement_behavior.py",
+      "src/popup.cpp",
+      "src/popup.h"
+    ],
+    "evidence": [
+      "Fresh full compile/link reaches one missing symbol: terraform calls popt48C320..48C353, but Console has a stale char* declaration and no product definition. Native returns int; wrapper selects popups_tutorial, calls existing six-argument X_pop5BF480, then popups_normal, preserving result.",
+      "Recover this complete small wrapper beside existing popup configuration/popp owners, correct Console declaration to the owning header and preserve exact seed/history. Require fresh link and existing source obligations; no empty body, address forwarding or weaker claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4768544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0e46c4d515716b1598e7d493ff2bcda41aed624dbdc316c130637d791cfd5b9c",
+  "request_id": "console-tutorial-popup-closure-20261001",
+  "schema_version": 1,
+  "sequence": 18,
+  "stream": "task:console-scenario-owner-wave"
+}
