@@ -28,30 +28,23 @@ extern Sprite g_NEWTECHWIN_SPRITES[6];
  /*
   * NewTechWin class
   *
-  * Derives from GraphicWin by ordinary single inheritance - its constructor calls
-  * GraphicWin's on an unadjusted `this` - so it is written as the original wrote
-  * it and needs no ABI workaround. GraphicWin is pinned here, so the base region
-  * is exact; NewTechWin's own extent is not established and nothing pins its
-  * sizeof.
-  *
-  * The methods below ignore their arguments and return a constant, which is
-  * why they can be replaced ahead of that mapping.
+  * The original constructor calls GraphicWin on the unadjusted receiver,
+  * then constructs three FlatButtons, a ButtonGroup, four StringBoxes and
+  * the final StringBox. Ordinary C++ inheritance and members own that lifetime;
+  * the singleton and construction/destruction evidence live in newtechwin.cpp.
   */
 class NewTechWin : public GraphicWin {
  public:
-  NewTechWin() { ; }
+  NewTechWin();
   void exec(int technology_id, int other_faction_id);
-  // 0x00484810 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Real member/base destruction is emitted from the out-of-line body.
   ~NewTechWin();
   virtual int on_link_clicked(int id, char *link);
   void on_left_click(int a1, int a2);
   int on_key_click(int a, int b);
 
-  // Storage the image proves is here: its own methods reach 0x107C4.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 74 member(s) from the IDA database, 4 named; it starts a member at 0xA14, which is where src/ ends.
+  // Original exec uses these rectangle words and technology/faction IDs.
+  // Lifecycle accesses establish the embedded arrays and final object end.
 
   uint32_t field_A14_;  // 0xA14
   uint32_t field_A18_;  // 0xA18
@@ -132,5 +125,5 @@ class NewTechWin : public GraphicWin {
 static_assert(sizeof(NewTechWin) == 0x107C4,
               "NewTechWin layout must match the original executable");
 
-// Original technology-popup singleton; storage/lifecycle recovery is pending.
+// Original technology-popup singleton, owned by newtechwin.cpp.
 extern NewTechWin NewTechWindow;

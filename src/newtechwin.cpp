@@ -18,15 +18,61 @@
 #include "stdafx.h"
 #include "newtechwin.h"
 #include "game.h"
+#include "alpha.h"
+#include "console.h"
+#include "datalink.h"
+#include "faction.h"
+#include "font.h"
+#include "lock.h"
+#include "maininterface.h"
+#include "strings.h"
+#include "stringstruct.h"
+#include "technology.h"
+#include "temp.h"
+#include "wave.h"
+#include "wave_device.h"
+#include <cstring>
 
-// Pending technology hyperlink selected by4838E0; original exec483F90
-// consumes it after releasing its modal loop and resets it to-1. That exec
-// body is still a seed: this binding does not establish working popup flow.
+extern char *DatalinkBlurbFile;  // 0x00691B04, owned by datalink.cpp
+
+// Pending technology hyperlink selected by4838E0; exec483F90 consumes it
+// after releasing its modal loop and resets it to-1.
 // RECOVERY_OBJECT: v2 0x00686960 0x00686964 _PendingTechnologyLink 0x004838E0
 static int PendingTechnologyLink = -1;
+// Native callback reads the index written immediately before help dispatch.
+// Initial storage is -1; this is independent of the adjacent pending link.
+// RECOVERY_OBJECT: v2 0x00686964 0x00686968 _CurrentTechnologyBoxIndex 0x00483920
+static int CurrentTechnologyBoxIndex = -1;
+
+// Native initializer483850 and technology caller5BBA1D use receiver811E40.
+// The final embedded StringBox at+DC24 ends+107C4; lifetime is ordinary C++.
+// Initial storage binding does not establish complete CRT registration order.
+// RECOVERY_OBJECT: v2 0x00811E40 0x00822604 ?NewTechWindow@@3VNewTechWin@@A 0x004849D0
+NewTechWin NewTechWindow;
+
+// ORIGINAL: 0x00483920 ?info@NewTechWin@@QAAXPAD@Z 0x00483920-0x00483950 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Original callback reads686964 and addresses811E40+2DA4+index*2BA0; exec484434 publishes the index before help dispatch"], "reason": "Genuine cdecl callback appends text to the current embedded technology box in the source-owned NewTech singleton."}
+// symbol    ?newtech_info@@YAXPAD@Z
+static void __cdecl newtech_info(char *text) {
+    NewTechWindow.stringBoxes_[CurrentTechnologyBoxIndex].add_special(text);
+}
+
+void __cdecl help_tech_info(void (__cdecl *append)(char *), int technology,
+                            int faction, int box_index);
+
+// ORIGINAL: 0x004849D0 ??0NewTechWin@@QAE@XZ 0x004849D0-0x00484A78;0x006575D0-0x00657626 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004849d0.cpp retained primary and unwind spans; pinned instructions construct3FlatButtons and4StringBoxes before final StringBox"], "reason": "Ordinary GraphicWin inheritance and embedded FlatButton/ButtonGroup/StringBox members reproduce the original construction graph without duplicate placement construction."}
+NewTechWin::NewTechWin() {
+}
+
+// ORIGINAL: 0x00484810 ??1NewTechWin@@QAE@XZ 0x00484810-0x004849CD;0x00657510-0x006575C9
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00484810.cpp preserved lifecycle and unwind spans; real embedded arrays own destruction"], "reason": "Ordinary C++ reverse member/base destruction replaces the original-address pending forwarder; compiler owns unwind support."}
+// symbol    ??1NewTechWin@@UAE@XZ
+NewTechWin::~NewTechWin() {
+}
 
 // ORIGINAL: 0x004838E0 ?on_link_clicked@NewTechWin@@QAEHHPAD@Z 0x004838E0-0x0048391F BYTE_EXACT
-// RECOVERY_BINDING: v1 {"evidence": ["Original table66CE5C selects4838E0 in slot88. Full body checks IsMultiplayerNet93F660 and nonnull text; atoi645DA7 result is stored686960 before virtual release_modal58; returns0 only for admitted links, otherwise1.", "PendingTechnologyLink is the source owner of initial-1 DWORD686960. Consumer/reset48479F/4847CE in unrecovered NewTechWin::exec483F90 remain explicit restoration work; this isolated handler is not a working popup or game acceptance."], "reason": "Recover original GraphicWin link-hook overrides through the genuine slot88 hierarchy, preserving seed identity and historical obligations."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original table66CE5C selects4838E0 in slot88. Full body checks IsMultiplayerNet93F660 and nonnull text; atoi645DA7 result is stored686960 before virtual release_modal58; returns0 only for admitted links, otherwise1.", "PendingTechnologyLink owns initial-1 DWORD686960. Native exec48479F/4847CE consumes/resets it; the full source-owned exec now models that flow while the original seed and historical restoration obligation remain preserved."], "reason": "Recover original GraphicWin link-hook overrides through the genuine slot88 hierarchy, preserving seed identity and historical obligations."}
 // symbol    ?on_link_clicked@NewTechWin@@UAEHHPAD@Z
 int NewTechWin::on_link_clicked(int, char *link) {
     if (IsMultiplayerNet == 0 && link != 0) {
@@ -67,6 +113,275 @@ Status: Complete
 */
 int NewTechWin::on_key_click(int, int) {
     return 1;
+}
+
+// ORIGINAL: 0x00483F90 ?exec@NewTechWin@@QAEXHH@Z 0x00483F90-0x0048480F
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00483f90.cpp retained full original extent; independent pinned geometry review and actual-source controls in recovery/tests/test_newtechwin_exec_behavior.py"], "reason": "Technology popup uses real embedded controls, callback receiver, shared data owners, audio and modal hyperlink dispatch."}
+void NewTechWin::exec(int technology_id, int other_faction_id) {
+    field_B28_ = static_cast<uint32_t>(other_faction_id);
+    field_B24_ = static_cast<uint32_t>(technology_id);
+    field_A14_ = 0;
+    field_A18_ = 0;
+    field_A1C_ = 0x226;
+    field_A20_ = 0x258;
+
+    int left = static_cast<int>(field_A14_) + 0xc;
+    int top = static_cast<int>(field_A18_) + 0xc;
+    int right = static_cast<int>(field_A1C_) - 0xc;
+    int bottom = static_cast<int>(field_A20_) - 0xc;
+    int inset_right = right - 3;
+    bottom -= 3;
+    const int row_top = top + 3;
+    const int base_bottom = bottom;
+    field_AF4_ = static_cast<uint32_t>(left + 3);
+    field_AF8_ = static_cast<uint32_t>(bottom - 0x14);
+    field_AFC_ = static_cast<uint32_t>(inset_right);
+    field_B00_ = static_cast<uint32_t>(base_bottom);
+    int row_bottom = base_bottom - 0x14 - 7;
+
+    field_A24_ = static_cast<uint32_t>(left);
+    field_A28_ = static_cast<uint32_t>(top);
+    field_A2C_ = static_cast<uint32_t>(right);
+    field_A30_ = static_cast<uint32_t>(row_bottom);
+    field_A34_ = static_cast<uint32_t>(row_top);
+    field_A38_ = static_cast<uint32_t>(top + 3);
+    field_A3C_ = static_cast<uint32_t>(right - 3);
+    field_A40_ = static_cast<uint32_t>(row_bottom - 3);
+
+    int y = static_cast<int>(field_A38_) + 0x17;
+    field_A40_ = static_cast<uint32_t>(y);
+    field_A44_ = static_cast<uint32_t>(row_top);
+    field_A48_ = static_cast<uint32_t>(field_A38_);
+    field_A4C_ = static_cast<uint32_t>(field_A3C_);
+    field_A50_ = static_cast<uint32_t>(row_bottom - 3);
+    y = static_cast<int>(field_A40_) + 3;
+    field_A48_ = static_cast<uint32_t>(y);
+    y += 0xd9;
+    field_A50_ = static_cast<uint32_t>(y);
+    field_A94_ = static_cast<uint32_t>(row_top);
+    y += 3;
+    field_A98_ = static_cast<uint32_t>(y);
+    field_A9C_ = static_cast<uint32_t>(field_A3C_);
+    field_AA0_ = static_cast<uint32_t>(field_A40_);
+    y = static_cast<int>(field_A98_) + 0x14;
+    field_A54_ = static_cast<uint32_t>(row_top);
+    field_AA0_ = static_cast<uint32_t>(y);
+    y += 3;
+    field_A58_ = static_cast<uint32_t>(y);
+    field_A5C_ = static_cast<uint32_t>(field_A3C_);
+    field_A60_ = static_cast<uint32_t>(field_A40_);
+    y = static_cast<int>(field_A58_) + 0x4c;
+    field_A60_ = static_cast<uint32_t>(y);
+    y += 3;
+    field_AB4_ = static_cast<uint32_t>(row_top);
+    field_AB8_ = static_cast<uint32_t>(y);
+    field_ABC_ = static_cast<uint32_t>(field_A3C_);
+    field_AC0_ = static_cast<uint32_t>(field_A40_);
+    y = static_cast<int>(field_AB8_) + 0x14;
+    field_A74_ = static_cast<uint32_t>(row_top);
+    field_AC0_ = static_cast<uint32_t>(y);
+    y += 3;
+    field_A78_ = static_cast<uint32_t>(y);
+    field_A7C_ = static_cast<uint32_t>(field_A3C_);
+    field_A80_ = static_cast<uint32_t>(field_A40_);
+    y = static_cast<int>(field_A78_) + 0x4c;
+    field_A80_ = static_cast<uint32_t>(y);
+    y += 3;
+    field_AD4_ = static_cast<uint32_t>(row_top);
+    field_AD8_ = static_cast<uint32_t>(y);
+    field_ADC_ = static_cast<uint32_t>(field_A3C_);
+    field_AE0_ = static_cast<uint32_t>(row_bottom - 3);
+    field_AE0_ = static_cast<uint32_t>(static_cast<int>(field_A30_) - 3);
+
+    field_AA4_ = field_A94_;
+    field_AA8_ = field_A98_;
+    field_AAC_ = field_A9C_;
+    field_AB0_ = field_AA0_;
+    int width = static_cast<int>(field_A9C_) - static_cast<int>(field_A94_);
+    width += 3;
+    width >>= 1;
+    width = width + static_cast<int>(field_A94_) - 3;
+    field_A9C_ = static_cast<uint32_t>(width);
+    technology_id = width;
+    field_AA4_ = static_cast<uint32_t>(width + 3);
+
+    field_A64_ = field_A54_;
+    field_A68_ = field_A58_;
+    field_A6C_ = field_A5C_;
+    field_A70_ = field_A60_;
+    field_A64_ = static_cast<uint32_t>(width + 3);
+    field_A5C_ = static_cast<uint32_t>(width);
+    field_AC4_ = field_AB4_;
+    field_AC8_ = field_AB8_;
+    field_ACC_ = field_ABC_;
+    field_AD0_ = field_AC0_;
+    field_ABC_ = static_cast<uint32_t>(width);
+    field_AC4_ = static_cast<uint32_t>(width + 3);
+
+    field_A84_ = field_A74_;
+    field_A88_ = field_A78_;
+    field_A8C_ = field_A7C_;
+    field_A7C_ = static_cast<uint32_t>(technology_id);
+    field_A90_ = field_A80_;
+
+    field_B14_ = static_cast<uint32_t>(static_cast<int>(field_A2C_) - 6 - 0x1c);
+    field_B18_ = static_cast<uint32_t>(static_cast<int>(field_A30_) - 6 - 0x22);
+    field_B1C_ = static_cast<uint32_t>(static_cast<int>(field_A2C_) - 6);
+    field_B20_ = static_cast<uint32_t>(static_cast<int>(field_A30_) - 6);
+    field_B04_ = static_cast<uint32_t>(static_cast<int>(field_B14_) - 0x1f);
+    field_B08_ = field_B18_;
+    field_B0C_ = static_cast<uint32_t>(static_cast<int>(field_B1C_) - 0x1f);
+    field_B10_ = field_B20_;
+    field_AE4_ = field_AD4_;
+    field_AE8_ = field_AD8_;
+    field_AEC_ = field_ADC_;
+    field_AF0_ = field_AE0_;
+    field_AEC_ = static_cast<uint32_t>(static_cast<int>(field_B04_) - 4);
+
+    RECT bounds;
+    bounds.left = static_cast<LONG>(field_A14_);
+    bounds.top = static_cast<LONG>(field_A18_);
+    bounds.right = static_cast<LONG>(field_A1C_);
+    bounds.bottom = static_cast<LONG>(field_A20_);
+    init(&bounds, 0, 0x05000000, 0, 0, 0);
+    fill(9);
+    field_16C_ = 0x1a;
+    center();
+
+    RECT local_rects[4];
+    local_rects[0].left = static_cast<LONG>(field_AA4_);
+    local_rects[0].top = static_cast<LONG>(field_AA8_);
+    local_rects[0].right = static_cast<LONG>(field_AAC_);
+    local_rects[0].bottom = static_cast<LONG>(field_AB0_);
+    local_rects[1].left = static_cast<LONG>(field_A64_);
+    local_rects[1].top = static_cast<LONG>(field_A68_);
+    local_rects[1].right = static_cast<LONG>(field_A6C_);
+    local_rects[1].bottom = static_cast<LONG>(field_A70_);
+    local_rects[2].left = static_cast<LONG>(field_AD4_);
+    local_rects[2].top = static_cast<LONG>(field_AD8_);
+    local_rects[2].right = static_cast<LONG>(field_ADC_);
+    local_rects[2].bottom = static_cast<LONG>(field_AE0_);
+    local_rects[3].left = static_cast<LONG>(field_A84_);
+    local_rects[3].top = static_cast<LONG>(field_A88_);
+    local_rects[3].right = static_cast<LONG>(field_A8C_);
+    local_rects[3].bottom = static_cast<LONG>(field_A90_);
+
+    for (int box_index = 0; box_index < 4; ++box_index) {
+        StringBox &box = stringBoxes_[box_index];
+        RECT &rect = local_rects[box_index];
+        rect.left += 4;
+        rect.top += 4;
+        rect.right -= 4;
+        rect.bottom -= 4;
+        box.init(rect.left, rect.top, rect.right - rect.left,
+                 rect.bottom - rect.top, this, 0, -1);
+
+        const int multiplayer_style = IsMultiplayerNet != 0 ? 2 : 3;
+        Buffer *const buffer = static_cast<Buffer *>(&box);
+        buffer->set_font(find_font(0xe, 0), find_font(0xe, 1),
+                         find_font(0xe, 2),
+                         find_font(0xe, multiplayer_style));
+        buffer->set_text_color(0xe1, -1, 1, 1);
+
+        CurrentTechnologyBoxIndex = box_index;
+        help_tech_info(newtech_info, static_cast<int>(field_B24_),
+                       ConsoleGlobal.faction_id_, box_index);
+        box.show(0);
+    }
+
+    const int left2 = static_cast<int>(field_AE8_) + 3;
+    const int top2 = static_cast<int>(field_AE4_) + 3;
+    const int height2 = static_cast<int>(field_AF0_) - 3 - left2;
+    const int width2 = static_cast<int>(field_AEC_) - 3 - top2;
+    stringBox2_.init(top2, left2, width2, height2, this, 0, -1);
+    Buffer *const description_buffer = static_cast<Buffer *>(&stringBox2_);
+    description_buffer->set_font(find_font(0xc, 0), find_font(0xc, 1),
+                                 find_font(0xc, 2), 0);
+    description_buffer->set_text_color(0x98, -1, 1, 1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "TECH");
+    char technology_number[24];
+    _itoa(static_cast<int>(field_B24_), technology_number, 10);
+    strcat(StringTemp, technology_number);
+    stringBox2_.strings().load(DatalinkBlurbFile, StringTemp, 1, 0);
+    stringBox2_.add_fixup();
+    stringBox2_.show(0);
+
+    const int button_width = static_cast<int>(field_B00_) -
+                             static_cast<int>(field_AF8_);
+    const int button_height = static_cast<int>(field_AFC_) -
+                              static_cast<int>(field_AF4_);
+    const int button_x = static_cast<int>(field_AF4_);
+    const int button_y = static_cast<int>(field_AF8_);
+    char *const button_label = label_get(0x194 / 4);
+    flatButtons_[0].init(button_label, -1, button_x, button_y,
+                         button_height, button_width, this, 0);
+    flatButtons_[0].set_border_styles(&InterfaceBoxStyles[27],
+                                      &InterfaceBoxStyles[28],
+                                      &InterfaceBoxStyles[29]);
+    static_cast<Buffer *>(&flatButtons_[0])->set_font(
+        MainInterfaceGlobal.primary_font(), 0, 0, 0);
+    flatButtons_[0].redraw();
+    flatButtons_[0].redraw();
+
+    buttonGroup_.init(0, 0);
+    flatButtons_[1].init(0, 1, static_cast<int>(field_B04_),
+        static_cast<int>(field_B08_),
+        static_cast<int>(field_B0C_) - static_cast<int>(field_B04_),
+        static_cast<int>(field_B10_) - static_cast<int>(field_B08_), this, 0);
+    flatButtons_[1].set_report_icons(&g_NEWTECHWIN_SPRITES[0],
+        &g_NEWTECHWIN_SPRITES[1], &g_NEWTECHWIN_SPRITES[2]);
+    flatButtons_[1].redraw();
+    flatButtons_[2].init(0, 2, static_cast<int>(field_B14_),
+        static_cast<int>(field_B18_),
+        static_cast<int>(field_B1C_) - static_cast<int>(field_B14_),
+        static_cast<int>(field_B20_) - static_cast<int>(field_B18_), this, 0);
+    flatButtons_[2].set_report_icons(&g_NEWTECHWIN_SPRITES[3],
+        &g_NEWTECHWIN_SPRITES[4], &g_NEWTECHWIN_SPRITES[5]);
+    flatButtons_[2].redraw();
+    buttonGroup_.add(&flatButtons_[1]);
+    buttonGroup_.add(&flatButtons_[2]);
+    buttonGroup_.set(1, 1);
+
+    show(0);
+    do_all_draws();
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "voices\\tech");
+    char voice_number[24];
+    _itoa(static_cast<int>(field_B24_), voice_number, 10);
+    strcat(StringTemp, voice_number);
+    strcat(StringTemp, ".mp3");
+    if ((GameMorePreferences & MPREF_AV_VOICEOVER_TECH_FAC) != 0) {
+        const int faction = ConsoleGlobal.faction_id_;
+        if ((static_cast<uint8_t>(LockEnableMask) &
+             static_cast<uint8_t>(1u << (faction & 0x1F))) != 0) {
+            g_WAVE_GENERAL.unload();
+            g_WAVE_GENERAL.load(StringTemp);
+            g_WAVE_GENERAL.set_volume(WaveDeviceGlobal.get_group_volume(0));
+            g_WAVE_GENERAL.play();
+        }
+    }
+
+    do {
+        set_modal(1, 0, 0);
+        hide();
+        do_all_draws();
+        if (PendingTechnologyLink == -1) break;
+        uint32_t id_storage = 0;
+        int entry_id = 0;
+        DatalinkMain.parse_id(PendingTechnologyLink,
+            reinterpret_cast<DatalinkID *>(&id_storage), &entry_id);
+        DatalinkMain.exec(id_storage, entry_id);
+        PendingTechnologyLink = -1;
+    } while (true);
+
+    if ((GameMorePreferences & MPREF_AV_VOICEOVER_TECH_FAC) != 0 &&
+        (GameMorePreferences & MPREF_AV_VOICEOVER_STOP_CLOSE_POPUP) != 0) {
+        g_WAVE_GENERAL.fade(0x7d0);
+    }
+    close();
+    do_all_draws();
 }
 
 // Original initializer 0x483880 constructs six Sprites at stride 0x2C;
