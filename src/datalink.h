@@ -155,6 +155,9 @@ class Datalink : public GraphicWin, public SubInterface {
   void on_iface_group_clicked(int, int, int);
   void construct_id(char *out, int index, int suffix);
   void set_index(int, int);
+  // The shared labs renderer reads 0x714244..0x714250: the singleton
+  // at 0x703EA0 plus this existing rectangle's offset, 0x103A4.
+  const RECT &entry_clip_rect() const { return entry_clip_rect_; }
   // 0x0042A100 ?on_dialog_back_draw@Datalink@@QAEHPAUGraphicWin@@@Z
   int on_dialog_back_draw(GraphicWin *win);
   void on_iface_scrolled(int, int) override;
@@ -250,6 +253,7 @@ class Datalink : public GraphicWin, public SubInterface {
   uint32_t field_10398_;  // 0x10398
   uint32_t field_1039C_;  // 0x1039C
   uint32_t field_103A0_;  // 0x103A0
+  // RECOVERY_MEMBER: v2 Datalink entry_clip_rect_ tagRECT 0x103A4 0x00498B30
   RECT entry_clip_rect_;  // 0x103A4
   RECT entry_update_rect_;  // 0x103B4
   RECT entry_frame_rect_;  // 0x103C4

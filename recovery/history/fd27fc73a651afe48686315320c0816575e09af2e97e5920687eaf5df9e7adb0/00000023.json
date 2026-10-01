@@ -1,0 +1,19 @@
+{
+  "event_id": "4c079a2fe9dd7a0fc24162bcd41947bdc467340e68d4c6baa15697b495c2c736",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/datalink.h"
+    ],
+    "evidence": [
+      "Pinned 00498B90..00498C19 reads 00714244..00714250; subtract actual singleton 00703EA0 to obtain 0x103A4..0x103B0, already Datalink::entry_clip_rect_. Authorize only a const typed rectangle accessor and member evidence, not Datalink layout/lifecycle changes. Root applies this central dependency; worker remains in existing renderer scope."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "b410b768e4e6fe57916013e995f0f861feea26131ef9d4edf21571cce67de7f8",
+  "request_id": "reportwin-entry-clip-access-20261001-master",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:reportwin-owner-coverage"
+}
