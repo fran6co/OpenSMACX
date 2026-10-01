@@ -11249,7 +11249,7 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
 }
 
 // ORIGINAL: 0x00580860 ?propose_proto@@YAHHHHHHHHPAD@Z 0x00580860-0x00581168
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 00580860; retained seed src/unrecovered/00580860.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned580860..581168:580B89 excludes predefined allocation;580B92 obsolete scoring follows compatible return;580CF5 reuses proposed offense stack value, not faction ID.", "Pinned580F98 inactive-slot flag40;5810B5/5810FA skip negative production IDs;58112D reloads inclusive queue bound; existing VehPrototype, PlayerData and Base owners.", "recovery/tasks/vehicle-special-actions-coverage.json immutable baseline and coordinator-reviewed source; retained src/unrecovered/00580860.cpp"], "reason": "Recover complete typed prototype proposal with compatibility-first selection, faction-only allocation, native similarity scoring, override staging, live prototype flags, naming and inclusive signed queue rewrites. Preserve original identity and retained seeds; naming/pruning callees remain separately unfinished and no matching or runtime acceptance is claimed."}
 int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                           int armor_id, int ability_flags, int reactor_id,
                           int design_category, char *requested_name) {
@@ -11306,18 +11306,35 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
         VehPrototype &candidate = VehPrototypes[slot];
         int contribution = 0;
         bool has_contribution = false;
-        const bool available_local_slot = slot >= MaxVehProtoFactionNum
-            && (candidate.flags & PROTO_ACTIVE) != 0
-            && (candidate.obsolete_factions & faction_bit) != 0
-            && PlayersData[faction_id].proto_id_active[slot] == 0
-            && PlayersData[faction_id].proto_id_queue[slot] == 0;
+        if (slot >= MaxVehProtoFactionNum) {
+            const bool is_active = (candidate.flags & PROTO_ACTIVE) != 0;
+            const bool obsolete_to_faction =
+                (candidate.obsolete_factions & faction_bit) != 0;
+            const unsigned int active =
+                PlayersData[faction_id].proto_id_active[slot];
+            const unsigned int queued =
+                PlayersData[faction_id].proto_id_queue[slot];
 
-        if (available_local_slot) {
-            if (slot > 0x3f && (candidate.flags & PROTO_ACTIVE) == 0) {
+            // Native 580A11..580A71 gives obsolete, unused faction designs
+            // their category score before the generic scoring path: 0x2000
+            // for the same category, 0x1000 otherwise. This requires both
+            // active and queued counts to be zero.
+            if (is_active && obsolete_to_faction && active == 0 && queued == 0) {
+                contribution = (design_category == candidate.unk_1)
+                    ? 0x2000 : 0x1000;
+                has_contribution = true;
+            } else if (!is_active) {
                 contribution = 0x800;
                 has_contribution = true;
-            } else if (slot > 0x3f
-                       || has_tech(candidate.preq_tech, faction_id)) {
+            }
+        } else {
+            if ((candidate.flags & PROTO_ACTIVE) == 0
+                || !has_tech(candidate.preq_tech, faction_id)) {
+                continue;
+            }
+        }
+
+        if (!has_contribution) {
                 if (candidate.chassis_id == chassis_id
                     && candidate.weapon_id == weapon_id
                     && candidate.armor_id == armor_id
@@ -11353,15 +11370,18 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                     return slot;
                 }
 
-                uint32_t comparison_bit = static_cast<uint32_t>(candidate.chassis_id);
+                // Predefined designs may be reused above, but cannot be
+                // chosen as allocation slots (580B89..580B8C).
+                if (slot < MaxVehProtoFactionNum) continue;
+                uint32_t comparison_bit = faction_bit;
                 if (slot > 0x3f) {
-                    comparison_bit = faction_bit;
+                    // Compatibility has precedence over the obsolete score:
+                    // queued obsolete designs can still be reused as-is.
                     if ((candidate.obsolete_factions & faction_bit) != 0
                         && PlayersData[faction_id].proto_id_active[slot] == 0) {
                         contribution = 0x400;
                         has_contribution = true;
                     }
-
                     if (!has_contribution
                         && candidate.chassis_id == chassis_id
                         && candidate.reactor_id == reactor_id
@@ -11401,8 +11421,8 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                             ? other_offense : other_defense;
                         const int highest_plus = (other_offense == other_defense)
                             ? highest + 1 : highest;
-                        if (faction_id < highest) {
-                            int offense_distance = faction_id - other_offense;
+                        if (offense_factor < highest) {
+                            int offense_distance = offense_factor - other_offense;
                             if (offense_distance < 0) offense_distance = -offense_distance;
                             if (offense_distance < 2 && defense_factor < highest_plus) {
                                 int defense_distance = defense_factor - other_defense;
@@ -11435,10 +11455,6 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
                     contribution = static_cast<int>(base_score - penalty);
                     has_contribution = true;
                 }
-            }
-        } else {
-            contribution = candidate.unk_1 == design_category ? 0x2000 : 0x1000;
-            has_contribution = true;
         }
 
         if (has_contribution && best_score < contribution) {
@@ -11472,7 +11488,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
     if (design_category == -2 || DiffLevelCurrent < 2) {
         selected.flags |= PROTO_TYPED_COMPLETE;
     }
-    if (was_active) selected.flags |= 0x40;
+    if (!was_active) selected.flags |= 0x40;
     selected.flags |= 0x80;
     if (design_category >= 0) {
         selected.unk_1 = static_cast<int8_t>(design_category);
@@ -11502,10 +11518,27 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
     prune_protos(faction_id, best_prototype, 0);
     for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
         Base &base = Bases[base_id];
-        if (base.faction_id_current != faction_id || base.queue_size >= 10) continue;
-        for (uint32_t queue_slot = 0; queue_slot < base.queue_size; ++queue_slot) {
+        if (base.faction_id_current != faction_id) continue;
+        const int last_queue_slot = static_cast<int>(base.queue_size);
+        if (last_queue_slot < 0) continue;
+
+        // The native loop first walks through the inclusive queue range and
+        // stops at the first obsolete design in this category. It then makes
+        // a second pass over that same inclusive range and rewrites every
+        // matching entry (rather than only the one found by the first scan).
+        for (int probe_slot = 0; probe_slot <= last_queue_slot; ++probe_slot) {
+            const int queued = base.queue_production_id[probe_slot];
+            if (queued < 0) continue;
+            const VehPrototype &queued_prototype = VehPrototypes[queued];
+            if ((queued_prototype.obsolete_factions & faction_bit) != 0
+                && queued_prototype.unk_1 == selected.unk_1) {
+                break;
+            }
+        }
+        for (int queue_slot = 0;
+             queue_slot <= static_cast<int>(base.queue_size); ++queue_slot) {
             const int queued = base.queue_production_id[queue_slot];
-            if (queued < 0 || queued >= MaxVehProtoNum) continue;
+            if (queued < 0) continue;
             const VehPrototype &queued_prototype = VehPrototypes[queued];
             if ((queued_prototype.obsolete_factions & faction_bit) != 0
                 && queued_prototype.unk_1 == selected.unk_1) {
@@ -11515,11 +11548,7 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
     }
 
     if (FirstProposedPrototype < 0) FirstProposedPrototype = best_prototype;
-    // The native queue rewrite and several proposal-state
-    // branches still need exact translation; the typed scorer/allocation
-    // above preserves the recovered behavior completed so far.
     return best_prototype;
-    // BODY GOES HERE.
 }
 
 // ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0

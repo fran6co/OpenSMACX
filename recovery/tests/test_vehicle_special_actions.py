@@ -20,12 +20,13 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_partial_dependencies_remain_unfinished_in_native_source_reader():
     from match_recovery.source import read_file
 
-    partial = {0x57E040, 0x580860, 0x57F4B0}
+    partial = {0x57E040, 0x57F4B0}
     records = {r.address: r for r in read_file(ROOT / "src/veh.cpp")}
     assert partial <= records.keys()
     assert all(records[address].state.name == "PLACEHOLDER" for address in partial)
     assert records[0x4CDAF0].state.name == "IMPLEMENTED"
     assert records[0x57F1D0].state.name == "IMPLEMENTED"
+    assert records[0x580860].state.name == "IMPLEMENTED"
 
 def retire_harness(function):
     return r"""
@@ -780,7 +781,7 @@ int psi_factor(int value,int,BOOL,BOOL) { return value; }
 void make_proto(int,int,int,int,int,int) {}
 void retire_proto(int,int) {}
 void prune_protos(int,int,int) {}
-void name_proto(char *,int,int,int,int,int,int,int) {}
+void name_proto(char *out,int,int,int,int,int,int,int) { std::strcpy(out,"Generated"); }
 LIVE_BODY
 int main() {
     Chassis[0].speed=1; Armor[0].defense_rating=1; Weapon[0].offense_rating=1;
@@ -796,6 +797,135 @@ int main() {
        || DesignConsiderAbilities!=0) {
       std::fprintf(stderr,"proposal design staging mismatch\n"); return 43;
     }
+
+    // The next inactive faction-local slot outranks ordinary predefined
+    // candidates. Queue rewriting covers the active slot through queue_size
+    // inclusively and replaces every obsolete prototype in the category.
+    DesignConsiderOverride=0; DesignConsiderPrototype=-1;
+    Chassis[1].speed=2; Armor[1].defense_rating=2; Weapon[1].offense_rating=2;
+    BaseCurrentCount=1; Bases[0].faction_id_current=1; Bases[0].queue_size=3;
+    Bases[0].queue_production_id[0]=70;
+    Bases[0].queue_production_id[1]=-69;
+    Bases[0].queue_production_id[2]=71;
+    Bases[0].queue_production_id[3]=72;
+    for(int slot=70;slot<=72;++slot) {
+      VehPrototypes[slot].flags=PROTO_ACTIVE;
+      VehPrototypes[slot].obsolete_factions=2;
+      VehPrototypes[slot].unk_1=4;
+      PlayersData[1].proto_id_queue[slot]=1;
+    }
+    const int allocated=propose_proto(1,1,1,1,0,1,4,nullptr);
+    if(allocated!=64 || Bases[0].queue_production_id[0]!=64
+       || Bases[0].queue_production_id[1]!=-69
+       || Bases[0].queue_production_id[2]!=64
+       || Bases[0].queue_production_id[3]!=64
+       || (VehPrototypes[64].flags & 0x40)==0) {
+      std::fprintf(stderr,"prototype allocation/queue rewrite mismatch: %d\n",allocated);
+      return 44;
+    }
+
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    BaseCurrentCount=0; FirstProposedPrototype=-1;
+    std::strcpy(VehPrototypes[2].veh_name,"Scout");
+    char requested_name[]="Scout";
+    const int named=propose_proto(1,1,1,1,0,1,4,requested_name);
+    if(named!=64 || std::strcmp(VehPrototypes[64].veh_name,"Scout*")!=0) {
+      std::fprintf(stderr,"duplicate custom-name suffix mismatch: %d %s\n",
+                   named,VehPrototypes[64].veh_name);
+      return 47;
+    }
+
+    // The native obsolete slot with no live or queued units gets a category
+    // score (same-category 0x2000, other-category 0x1000). With a queued
+    // reference instead, the separate obsolete/zero-active branch scores
+    // 0x400, independent of category.
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    BaseCurrentCount=0; FirstProposedPrototype=-1;
+    for(int slot=0;slot<128;++slot) {
+      VehPrototypes[slot].flags=PROTO_ACTIVE;
+      PlayersData[1].proto_id_active[slot]=1;
+      PlayersData[1].proto_id_queue[slot]=1;
+    }
+    VehPrototypes[64].obsolete_factions=2;
+    VehPrototypes[64].unk_1=7;
+    PlayersData[1].proto_id_active[64]=0;
+    const int obsolete_queued=propose_proto(1,1,1,1,0,1,4,nullptr);
+    if(obsolete_queued!=64) {
+      std::fprintf(stderr,"obsolete queued-slot score mismatch: %d\n",obsolete_queued);
+      return 45;
+    }
+
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    for(int slot=0;slot<128;++slot) {
+      VehPrototypes[slot].flags=PROTO_ACTIVE;
+      PlayersData[1].proto_id_active[slot]=1;
+      PlayersData[1].proto_id_queue[slot]=1;
+    }
+    VehPrototypes[64].obsolete_factions=2;
+    VehPrototypes[64].unk_1=7;
+    PlayersData[1].proto_id_active[64]=0;
+    PlayersData[1].proto_id_queue[64]=0;
+    VehPrototypes[65].obsolete_factions=2;
+    VehPrototypes[65].unk_1=4;
+    PlayersData[1].proto_id_active[65]=0;
+    PlayersData[1].proto_id_queue[65]=0;
+    const int category_score=propose_proto(1,1,1,1,0,1,4,nullptr);
+    if(category_score!=65) {
+      std::fprintf(stderr,"obsolete category-score ordering mismatch: %d\n",category_score);
+      return 46;
+    }
+    if((VehPrototypes[65].flags & 0x40)!=0) {
+      std::fprintf(stderr,"active reused prototype incorrectly gained flag 0x40\n"); return 49;
+    }
+
+    // The similarity fast path compares the proposed offense factor, not the
+    // faction id that shares the original stack slot before rating setup.
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    DesignConsiderOverride=0; DesignConsiderPrototype=-1;
+    Chassis[1].speed=2; Weapon[1].offense_rating=2; Armor[1].defense_rating=2;
+    Weapon[2].offense_rating=3; Armor[2].defense_rating=1;
+    VehPrototypes[64].flags=PROTO_ACTIVE;
+    VehPrototypes[64].chassis_id=1; VehPrototypes[64].weapon_id=2;
+    VehPrototypes[64].armor_id=2; VehPrototypes[64].reactor_id=1;
+    PlayersData[1].proto_id_active[64]=1;
+    PlayersData[1].proto_id_queue[64]=1;
+    const int similar=propose_proto(1,1,1,1,0,1,4,nullptr);
+    if(similar!=64) {
+      std::fprintf(stderr,"proposal similarity-factor comparison mismatch: %d\n",similar);
+      return 48;
+    }
+
+    // Queued obsolete designs still take compatible reuse before the 0x400
+    // allocation score. Reuse clears obsolescence without make/name/prune.
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    VehPrototypes[64].flags=PROTO_ACTIVE;
+    VehPrototypes[64].obsolete_factions=2;
+    VehPrototypes[64].chassis_id=1; VehPrototypes[64].weapon_id=1;
+    VehPrototypes[64].armor_id=1; VehPrototypes[64].reactor_id=1;
+    PlayersData[1].proto_id_queue[64]=1;
+    const int compatible=propose_proto(1,1,1,1,0,1,4,nullptr);
+    if(compatible!=64 || VehPrototypes[64].flags!=PROTO_ACTIVE
+       || VehPrototypes[64].obsolete_factions!=0) return 50;
+
+    // All faction slots are occupied by other categories. Active predefined
+    // designs cannot become allocation candidates even with a matching
+    // category and no active/queued instances.
+    std::memset(VehPrototypes,0,sizeof(VehPrototypes));
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    for(int slot=0;slot<128;++slot) {
+      VehPrototypes[slot].flags=PROTO_ACTIVE;
+      VehPrototypes[slot].unk_1=slot<64?4:7;
+      if(slot>=64) {
+        PlayersData[1].proto_id_active[slot]=1;
+        PlayersData[1].proto_id_queue[slot]=1;
+      }
+    }
+    const int unavailable=propose_proto(1,1,1,1,0,1,4,nullptr);
+    if(unavailable!=-1) return 51;
 }
 """.replace("SOURCE_TYPES", types).replace("LIVE_BODY", function)
     cpp = tmp_path / "vehicle_propose_proto.cpp"
