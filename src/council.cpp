@@ -19,6 +19,10 @@
 #include "temp.h"
 #include "council.h"
 #include "base.h"
+#include "alpha.h"
+#include "console.h"
+#include "game.h"
+#include "map.h"
 
 // council_action increments a proposal's resolution count and records the
 // current turn before dispatching its effect. setup_game's native paired
@@ -150,3 +154,178 @@ BOOL __cdecl eligible(int faction_id) {
 // unmapped in a standalone build; see council.h. Zero at load there, as here:
 // alpha.cpp's PROPOSALS text load fills it before anything reads it.
 RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
+
+// The dialog parser's negative gender/plurality arguments consume these
+// defaults. Keep the leader and faction forms in the same order the native
+// council announcement prepares them.
+static void council_parse_leader(int faction_id) {
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(0, Players[faction_id].title_leader, -1, -1);
+
+    GenderDefault = Players[faction_id].is_leader_female;
+    PluralityDefault = FALSE;
+    parse_says(1, Players[faction_id].name_leader, -1, -1);
+
+    GenderDefault = Players[faction_id].noun_gender;
+    PluralityDefault = Players[faction_id].is_noun_plural;
+    parse_says(2, Players[faction_id].noun_faction, -1, -1);
+}
+
+/*
+Purpose: Apply a selected council proposal to faction and world state.
+The native dispatch's subtraction is only a dense jump-table bound check; the
+proposal values themselves match CouncilProposals.
+*/
+// ORIGINAL: 0x0052BF60 ?council_action@@YAXHH@Z 0x0052BF60-0x0052C650
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0052bf60.cpp", "src/council.h", "src/game.cpp", "recovery/tests/test_council_action_behavior.py"], "reason": "Recovered complete proposal dispatch in its Council owner with genuine shared resolution arrays, Player and PlayerData members, Console lifetime references and shared climate state; preserves callback-sensitive faction reloads. Existing seed retains original extent/provenance."}
+void __cdecl council_action(int proposal, int faction_id) {
+    // Preserve the native proposal index before dispatch. Unsupported proposal
+    // values still update their in-range resolution records, then fall through.
+    CouncilResolutionCount[proposal]++;
+    CouncilLastResolutionTurn[proposal] = TurnCurrentNum;
+
+    switch (proposal) {
+    case PROP_UNITE_SUPREME_LEADER: {
+        GameState |= STATE_VICTORY_DIPLOMATIC;
+        int local_faction = ConsoleGlobal.faction_id_;
+        if (faction_id == local_faction) {
+            if (!IsMultiplayerNet) {
+                bool candidate_found = false;
+                for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+                    if (candidate == faction_id || !is_alive(candidate)
+                        || !(GameRules & RULES_VICTORY_CONQUEST)) {
+                        continue;
+                    }
+
+                    const uint32_t candidate_to_target =
+                        PlayersData[candidate].diplo_treaties[faction_id];
+                    const uint32_t target_to_candidate =
+                        PlayersData[faction_id].diplo_treaties[candidate];
+                    const uint32_t candidate_agenda =
+                        static_cast<uint32_t>(PlayersData[candidate].diplo_agenda[faction_id]);
+                    if (!(candidate_to_target & 0x000C0000u)
+                        && !(target_to_candidate & 0x00080000u)
+                        && !(candidate_agenda & (0x00000800u | DAGENDA_FIGHT_TO_DEATH))) {
+                        continue;
+                    }
+
+                    candidate_found = true;
+                    council_parse_leader(candidate);
+                    popp(ScriptPopupFile, "DEFIES", 0, "dipvic_sm.pcx", 0);
+                    treaty_on(candidate, faction_id, DTREATY_VENDETTA);
+                    agenda_on(candidate, faction_id, 0x2008);
+                }
+
+                if (candidate_found) {
+                    for (int other = 1; other < MaxPlayerNum; ++other) {
+                        if (other == faction_id || !is_alive(other)
+                            || (PlayersData[other].diplo_agenda[faction_id]
+                                & DAGENDA_FIGHT_TO_DEATH)) {
+                            continue;
+                        }
+                        treaty_on(other, faction_id, 0x43);
+                        treaty_off(other, faction_id, 0xC20);
+                        agenda_off(other, faction_id, 0xC00);
+                        set_treaty(other, faction_id, DTREATY_HAVE_SURRENDERED, TRUE);
+                    }
+                    return;
+                }
+            }
+
+            EndgameExitReason = 6;
+            PlayersData[faction_id].flags |= PFLAG_UNK_20000;
+            GameState |= STATE_UNK_1;
+            return;
+        }
+
+        council_parse_leader(faction_id);
+        const bool cooperative_pact =
+            (GameRules & RULES_VICTORY_COOPERATIVE)
+            && (PlayersData[local_faction].diplo_treaties[faction_id] & DTREATY_PACT);
+        if (!cooperative_pact) {
+            if (IsMultiplayerNet
+                || !popp(ScriptPopupFile, "ACCEDE", 0, "dipvic_sm.pcx", 0)) {
+                EndgameExitReason = 11;
+                GameState |= STATE_UNK_1;
+                PlayersData[faction_id].flags |= PFLAG_UNK_20000;
+                return;
+            }
+        } else if (IsMultiplayerNet
+                   || !popp(ScriptPopupFile, "ACCEDECOOP", 0, "dipvic_sm.pcx", 0)) {
+            EndgameExitReason = 10;
+            GameState |= STATE_UNK_1;
+            PlayersData[faction_id].flags |= PFLAG_UNK_20000;
+            return;
+        }
+
+        popp(ScriptPopupFile, "DEFY", 0, "council_sm.pcx", 0);
+        local_faction = ConsoleGlobal.faction_id_;
+        for (int other = 1; other < MaxPlayerNum; ++other) {
+            if (other == local_faction || !is_alive(other)) {
+                continue;
+            }
+            const uint32_t relation = PlayersData[other].diplo_treaties[local_faction];
+            if ((relation & DTREATY_PACT) && (relation & DTREATY_HAVE_SURRENDERED)) {
+                continue;
+            }
+
+            treaty_on(other, local_faction, 0x50);
+            if (other != faction_id) {
+                treaty_on(other, faction_id, DTREATY_PACT);
+                agenda_on(other, faction_id, DAGENDA_DIPLO_PERMANENT);
+            }
+            set_agenda(other, ConsoleGlobal.faction_id_, DAGENDA_FIGHT_TO_DEATH, TRUE);
+            local_faction = ConsoleGlobal.faction_id_;
+        }
+        return;
+    }
+
+    case PROP_SALVAGE_UNITY_CORE: {
+        for (int player = 1; player < MaxPlayerNum; ++player) {
+            if (!(Players[player].rule_flags & RFLAG_ALIEN)) {
+                PlayersData[player].energy_reserves += 500;
+            }
+        }
+        ConsoleGlobal.update_data(0);
+        return;
+    }
+
+    case PROP_LAUNCH_SOLAR_SHADE:
+    case PROP_INCREASE_SOLAR_SHADE:
+        MapSeaLevelCouncil -= 3;
+        ClimateSeaLevelDelta -= static_cast<int>(WorldBuilder.sea_level_rises);
+        ClimateRiseStep = ClimateSeaLevelDelta;
+        if (ClimateRiseStep < 0) {
+            ClimateRiseStep = -ClimateRiseStep;
+        }
+        ClimateRiseLimit = 20;
+        ClimateRiseAccum = 0;
+        parse_num(0, 20);
+        parse_num(1, (static_cast<int>(WorldBuilder.sea_level_rises) * 1000) / 15);
+        if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
+            popp(ScriptPopupFile, "WILLFALLALIEN", 0, "seafal_sm.pcx", 0);
+        } else {
+            popp(ScriptPopupFile, "WILLFALL", 0, "seafal_sm.pcx", 0);
+        }
+        return;
+
+    case PROP_MELT_POLAR_CAPS:
+        MapSeaLevelCouncil += 3;
+        ClimateSeaLevelDelta += static_cast<int>(WorldBuilder.sea_level_rises);
+        ClimateRiseStep = ClimateSeaLevelDelta;
+        if (ClimateRiseStep < 0) {
+            ClimateRiseStep = -ClimateRiseStep;
+        }
+        ClimateRiseLimit = 20;
+        ClimateRiseAccum = 0;
+        parse_num(0, 20);
+        parse_num(1, (static_cast<int>(WorldBuilder.sea_level_rises) * 1000) / 15);
+        if (Players[ConsoleGlobal.faction_id_].rule_flags & RFLAG_ALIEN) {
+            popp(ScriptPopupFile, "WILLRISEALIEN", 0, "searis_sm.pcx", 0);
+        } else {
+            popp(ScriptPopupFile, "WILLRISE", 0, "searis_sm.pcx", 0);
+        }
+        return;
+    }
+}
