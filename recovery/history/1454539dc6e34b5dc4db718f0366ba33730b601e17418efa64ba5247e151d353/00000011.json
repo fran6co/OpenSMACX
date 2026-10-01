@@ -1,0 +1,28 @@
+{
+  "event_id": "a9d8e31411646ca60a3fb56572ce9747d398343b86f82900a5949c99f0d77695",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/core_short_owner_harness.cpp",
+      "recovery/tests/test_core_short_owner.py",
+      "src/technology.cpp",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "Recover tech_secret as the technology owner announcement using the loaded Technology.name pointer, Player.adj_name_faction, live ConsoleGlobal faction and source-owned THESECRET literal. Native5BADC0..5BAE54 establishes parser/caption and integer suffix order; no fixed-address literal dependency. Preserve all seeds and historical claims; fixture shares the coordinator-owned message-pump checkpoint without granting outside source ownership. Coordinator reviews bounded instructions, actual-source damage controls, protected claims and fresh compile/link. No task baseline reset or automatic/game acceptance is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6008256,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a4098444fbd9dd573bf9689c323bd1ec7749b2850484f660d00a8091dd9622a0",
+  "request_id": "core-pump-secret-owner-20261001",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:tech-tree-convergence-recovery"
+}

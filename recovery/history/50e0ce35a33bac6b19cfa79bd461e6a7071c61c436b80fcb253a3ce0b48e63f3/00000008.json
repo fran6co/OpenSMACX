@@ -1,0 +1,39 @@
+{
+  "event_id": "a7428a3cf1bd46cfe31e87de16fe04fe9a49c220e35be9156fded60a861efd45",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/core_short_owner_harness.cpp",
+      "recovery/tests/test_core_short_owner.py",
+      "src/pending_bodies.cpp",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Recover the real Win message-pump group wait_task/do_task/do_all_tasks, using SDK MSG and USER32 dispatch, existing MsgStatus and ActiveNet owners. Remove the wait_task pending executable-address seam only after its replacement is verified. Fresh native5FC74A..757 and5FC83A..847 establish both first polls are WM_PAINT..WM_PAINT, not the seed-derived proposed wait_task0..WM_PAINT range. Preserve native helper order, 402 handling/null-network result, low/high queue priority and callback-visible status writes. No new invented global or mapping duplication. Coordinator reviews bounded instructions, actual-source damage controls, protected claims and fresh compile/link. No task baseline reset or automatic/game acceptance is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6276864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6277104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6277360,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "3a78bde10218ea5c79f94e7ff6fd872be5525a189d55875de1dca13f876ae284",
+  "request_id": "core-pump-secret-owner-20261001",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:popup-font-configuration-owner-closure"
+}
