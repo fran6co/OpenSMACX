@@ -13,10 +13,9 @@
 #include "console.h"
 #include "base.h"  // GovernorFaction is the same Council-owned identity.
 
-// Native spying and technology-sharing gates load this independent dword,
-// then consult Bases[index].faction_id_current; it is not a base pointer.
-// RECOVERY_OBJECT: v2 0x009A6524 0x009A6528 ?SpyingBaseIndex@@3HA 0x0055BC00
-int SpyingBaseIndex;
+// Historical SpyingBaseIndex interpreted 0x009A6524 as an independent
+// scalar. It is SecretProject.empath_guild (+0x10 in the table at
+// 0x009A6514); project construction/removal and setup_game own its writes.
 
 /*
 Purpose: Determine whether the current faction has intelligence visibility of
@@ -36,13 +35,10 @@ Status: Complete
 */
 int __cdecl spying(int subject) {
     const int faction = ConsoleGlobal.faction_id_;
-    return (SpyingStatusTable[static_cast<size_t>(subject)
-                              + static_cast<size_t>(faction)
-                                    * SpyingStatusStride]
+    return (PlayersData[faction].diplo_treaties[subject]
             & 0x1000U) != 0
-           || (SpyingBaseIndex >= 0
-               ? (SpyingBaseFactionBytes[static_cast<size_t>(SpyingBaseIndex)
-                                         * SpyingBaseStride] == faction)
+           || (SecretProject.empath_guild >= 0
+               ? (Bases[SecretProject.empath_guild].faction_id_current == faction)
                : 0) != 0
            || (faction == GovernorFaction
                && (Players[static_cast<size_t>(subject)].rule_flags &

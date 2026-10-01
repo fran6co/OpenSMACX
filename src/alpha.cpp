@@ -131,6 +131,10 @@ RulesTerraforming Terraforming[MaxTerrainNum];      // 0x00691878
 RulesFacility Facility[MaxFacilityNum];             // 0x009A4B68
 RulesCitizen Citizen[MaxCitizenNum];                // 0x00946020
 Base Bases[MaxBaseNum];                             // 0x0097D040
+// Native base_project indexes 64 dwords at 0x009A6514; setup_game
+// resets all 64 to -1. The spying/social/energy selectors inside this
+// range are views of named project fields, never separate allocations.
+// RECOVERY_OBJECT: v2 0x009A6514 0x009A6614 ?SecretProject@@3UBaseSecretProject@@A 0x005002E0
 BaseSecretProject SecretProject;                    // 0x009A6514
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and

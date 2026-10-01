@@ -73,10 +73,10 @@ def harness(bodies):
         static_assert(sizeof(int32_t) == 4 && sizeof(uint32_t) == 4, "host widths");
         void require(bool condition) { if (!condition) std::exit(42); }
         int IsMultiplayerNet, NetTurnFlags, NetTurnFaction;
-        const size_t SpyingStatusStride = 8, SpyingBaseStride = 5;
-        uint32_t SpyingStatusTable[64];
-        unsigned char SpyingBaseFactionBytes[15];
-        int SpyingBaseIndex, GovernorFaction;
+        struct PlayerData { uint32_t diplo_treaties[8]; } PlayersData[8];
+        struct Base { unsigned char faction_id_current; } Bases[3];
+        struct ProjectLocations { int empath_guild; } SecretProject;
+        int GovernorFaction;
         enum { RFLAG_ALIEN = 16 };
         struct Player { uint32_t rule_flags; } Players[8];
         int hover, hover_alt, limit, followed_value;
@@ -113,22 +113,22 @@ def harness(bodies):
             for (int faction = 0; faction != 8; ++faction)
               for (int subject = 0; subject != 8; ++subject) {
                 ConsoleGlobal.faction_id_ = faction;
-                std::memset(SpyingStatusTable, 0, sizeof(SpyingStatusTable));
-                std::memset(SpyingBaseFactionBytes, 0xff, sizeof(SpyingBaseFactionBytes));
+                std::memset(PlayersData, 0, sizeof(PlayersData));
+                std::memset(Bases, 0xff, sizeof(Bases));
                 std::memset(Players, 0, sizeof(Players));
-                SpyingBaseIndex = -1;
+                SecretProject.empath_guild = -1;
                 GovernorFaction = -1;
                 require(spying(subject) == 0);
-                SpyingStatusTable[subject + faction * 8] = 0x1000;
+                PlayersData[faction].diplo_treaties[subject] = 0x1000;
                 require(spying(subject) == 1);
-                SpyingStatusTable[subject + faction * 8] = 0x800;
+                PlayersData[faction].diplo_treaties[subject] = 0x800;
                 require(spying(subject) == 0);
-                SpyingBaseIndex = 2;
-                SpyingBaseFactionBytes[10] = static_cast<unsigned char>(faction);
+                SecretProject.empath_guild = 2;
+                Bases[2].faction_id_current = static_cast<unsigned char>(faction);
                 require(spying(subject) == 1);
-                SpyingBaseFactionBytes[10] = static_cast<unsigned char>((faction + 1) % 8);
+                Bases[2].faction_id_current = static_cast<unsigned char>((faction + 1) % 8);
                 require(spying(subject) == 0);
-                SpyingBaseIndex = -1;
+                SecretProject.empath_guild = -1;
                 GovernorFaction = faction;
                 require(spying(subject) == 1);
                 Players[subject].rule_flags = RFLAG_ALIEN;

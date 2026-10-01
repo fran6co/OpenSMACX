@@ -470,6 +470,7 @@ struct BaseSecretProject {
     int command_nexus;
     int weather_paradigm;
     int merchant_exchange;
+    // RECOVERY_MEMBER: v1 BaseSecretProject empath_guild 0x10 0x0055BC00
     int empath_guild;
     int citizens_defense_force;
     int virtual_world;
@@ -487,10 +488,13 @@ struct BaseSecretProject {
     int theory_of_everything;
     int dream_twister;
     int universal_translator;
+    // RECOVERY_MEMBER: v1 BaseSecretProject network_backbone 0x54 0x004AF310
     int network_backbone;
     int nano_factory;
     int living_refinery;
+    // RECOVERY_MEMBER: v1 BaseSecretProject cloning_vats 0x60 0x004AF310
     int cloning_vats;
+    // RECOVERY_MEMBER: v1 BaseSecretProject self_aware_colony 0x64 0x00445130
     int self_aware_colony;
     int clinical_immortality;
     // RECOVERY_MEMBER: v1 BaseSecretProject space_elevator 0x6C 0x004E80B0

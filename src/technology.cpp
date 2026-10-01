@@ -49,7 +49,6 @@ void __cdecl social_select(int faction_id);
 void __cdecl set_dirty();
 extern char *TutorialPopupCaption;
 extern int FirstProposedPrototype;
-extern int SpyingBaseIndex;
 
 // ORIGINAL: 0x005BADC0 ?tech_secret@@YAXHH@Z 0x005BADC0-0x005BAE54 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005badc0.cpp", "image:terranx_original.exe:0x005BADC0", "Pinned5BADDE parser0 then5BADFF parser1; literal6916F0 THESECRET, loaded Technology+4 name pointer and Player+304 adjective; live ConsoleGlobal local faction read follows caption append.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Technology announcement uses loader-owned Technology.name and Player faction adjective; preserves parser order and native local/remote caption suffix."}
@@ -1685,8 +1684,8 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                     (Players[receiver].rule_flags & RFLAG_TECHSHARE) == 0 ||
                     (PlayersData[receiver].diplo_treaties[donor] &
                      (DTREATY_HAVE_INFILTRATOR | DTREATY_PACT)) != 0 ||
-                    (SpyingBaseIndex >= 0 &&
-                     Bases[SpyingBaseIndex].faction_id_current == receiver) ||
+                    (SecretProject.empath_guild >= 0 &&
+                     Bases[SecretProject.empath_guild].faction_id_current == receiver) ||
                     (receiver == GovernorFaction &&
                      (Players[donor].rule_flags & RFLAG_ALIEN) == 0))
                     ++known_factions;

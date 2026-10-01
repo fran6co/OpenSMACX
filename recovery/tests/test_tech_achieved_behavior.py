@@ -207,6 +207,7 @@ def run_host(tmp_path, body):
         struct TestSecretProject {
           int voice_of_planet = -1;
           int planetary_datalinks = -1;
+          int empath_guild = -1;
         } SecretProject;
         RulesTechnology Technology[89];
         struct RulesAbility { const char *name = nullptr; int16_t preq_tech = -1; };
@@ -229,7 +230,7 @@ def run_host(tmp_path, body):
         constexpr int PREF_BSC_AUTO_DESIGN_VEH = 0x4000;
         uint8_t GameTechAchieved[89] = {};
         int IsMultiplayerNet = 0;
-        int ExpansionEnabled = 1, SpyingBaseIndex = -1, GovernorFaction = -1;
+        int ExpansionEnabled = 1, GovernorFaction = -1;
         int DiplomacyActive = 0, CommlinkPending = 0, TurnRedrawPending = 0;
         int UnkBitfield1 = 0;
         WorldWin WorldClimateWorldWin;
@@ -852,7 +853,7 @@ def run_host(tmp_path, body):
           tech_achieved(3, 29, 0, 0);
           if ((GameTechAchieved[29] & (1u << 2)) == 0) return 48;
           PlayersData[2].diplo_treaties[1] = 0;
-          SpyingBaseIndex = 0;
+          SecretProject.empath_guild = 0;
           GameTechAchieved[30] = (1u << 1) | (1u << 4);
           tech_achieved(3, 30, 0, 0);
           if ((GameTechAchieved[30] & (1u << 2)) == 0) return 49;

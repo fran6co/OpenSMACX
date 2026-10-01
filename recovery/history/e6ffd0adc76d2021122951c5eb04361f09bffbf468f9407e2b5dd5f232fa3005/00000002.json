@@ -1,0 +1,19 @@
+{
+  "event_id": "fa6908a02b6bad16c83f5f2af798a54b1790aab4f794c27fad3fe8b9729efa2e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/secretproject-ownership-harness.cpp"
+    ],
+    "evidence": [
+      "Authorize strict actual-source host controls for canonical SecretProject consumers, native complete reset and existing base removal remapper; fixture structs are host dependency projections, not original ABI or game acceptance proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "774a4864ef046ff53716e9ef0dbfe3a10d2859d372f4f8895ae3d2544dbffcd2",
+  "request_id": "secretproject-owner-host-harness-scope",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:secretproject-shared-owner-recovery"
+}

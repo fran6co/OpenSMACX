@@ -1,0 +1,53 @@
+{
+  "event_id": "774a4864ef046ff53716e9ef0dbfe3a10d2859d372f4f8895ae3d2544dbffcd2",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Authorize current named-selector consumers only:tech_achieved,SocialWin draw_social/immune/draw_social_effects,energy_compute,MultiWin redraw andcouncil_avail52C670. CanonicalSecretProject fields replace same-address scalar/pointer aliases; typedBases/PlayersData replace rawbase-faction/treaty views within those blocks. Existingbyteclaims remain restoration obligations, no demotion/reset/newbehaviorpolicy."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6008832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4911888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4477232,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4919200,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4919424,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4690736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5424752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "secretproject-coupled-consumer-scope",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:secretproject-shared-owner-recovery"
+}

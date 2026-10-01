@@ -669,9 +669,9 @@ void SocialWin::bubble_me_elmo2(char *text, int x, int y) {
  * SocialEffectRowEnd SocialEffectRow + 3 - the walk's own end sentinel.
  * SocBaseIdProbe / SocBaseIdCompare - 0x009A6568 / 0x009A6574. Both are an int
  *                    base id read the same way: `>= 0`, then
- *                    SpyingBaseFactionBytes[id * SpyingBaseStride] compared to
+ *                    Bases[id].faction_id_current compared to
  *                    the faction, i.e. "does this base belong to us". immune()
- *                    probes one and compares the other; no catalogue name.
+ *                    uses network_backbone and cloning_vats project locations.
  * SocialAllocTable   0x0096CD04 - per-faction, stride 2099 like the other
  *                    faction social arrays in SocialWin::exit; allocate_energy
  *                    reads the allocation it scales by 10 for display.
@@ -680,8 +680,8 @@ static int *const StringUpperSlot = (int *)0x0066931C;
 static int *const SocialEffectTable = (int *)0x0094B024;
 static int *const SocialEffectRow = (int *)0x0094B2CC;
 static int *const SocialEffectRowEnd = (int *)0x0094B2D8;
-static int *const SocBaseIdProbe = (int *)0x009A6568;
-static int *const SocBaseIdCompare = (int *)0x009A6574;
+// Historical SocBaseIdProbe/Compare at 0x009A6568/0x009A6574 are
+// SecretProject.network_backbone/cloning_vats, not independent selectors.
 
 // ORIGINAL: 0x004AF310 ?draw_social@SocialWin@@QAEXH@Z 0x004AF310-0x004AF8BC FILE
 // TRIED: transcribed directly from the disassembly (Ghidra's own decompilation agreed on the control flow and formulas once its confusing overlapping-stack-slot local numbering was resolved against the raw ebp-relative offsets) - the header/derived RECT pair, the per-row avail==0 header-only path, the count-then- draw two-pass loop over the fixed 11-entry table at 0x94b2cc (index 3 excluded), and the `this!=0 ? obj : 0` guard before each Sprite::draw. Draw receivers are the big/small Sprite sub-objects themselves (`bigIcon->draw(buffer, ...)`), not the Buffer - an early draft called the wrong receiver and was fixed before landing. MISMATCH #0 (`push`/`sub` prologue) on a 1452-byte function with a deeply nested sign-magnitude classification loop - not chased to byte-exactness, this is a structural transcription.
@@ -754,8 +754,8 @@ void SocialWin::draw_social(int a1) {
         while (p != SocialEffectRowEnd) {
             if (p != SocialEffectRow + 3) {
                 bool skip = false;
-                if (*SocBaseIdCompare >= 0 &&
-                    (unsigned int)SpyingBaseFactionBytes[*SocBaseIdCompare * 0x134] == (unsigned int)faction) {
+                if (SecretProject.cloning_vats >= 0 &&
+                    (unsigned int)Bases[SecretProject.cloning_vats].faction_id_current == (unsigned int)faction) {
                     if (a1 == 2) {
                         if (row == 1) {
                             if (SocialEffectTable[a1 * 0x35 + idx + row * 0xb] < 0) {
@@ -769,8 +769,8 @@ void SocialWin::draw_social(int a1) {
                     }
                 }
                 if (!skip) {
-                    if (!((*SocBaseIdProbe < 0) ||
-                          ((unsigned int)SpyingBaseFactionBytes[*SocBaseIdProbe * 0x134] != (unsigned int)faction) ||
+                    if (!((SecretProject.network_backbone < 0) ||
+                          ((unsigned int)Bases[SecretProject.network_backbone].faction_id_current != (unsigned int)faction) ||
                           (a1 != 3) ||
                           ((row != 1) || (*p >= 0)))) {
                         skip = true;
@@ -801,8 +801,8 @@ void SocialWin::draw_social(int a1) {
             while (p2 != SocialEffectRowEnd) {
                 if (p2 != SocialEffectRow + 3) {
                     bool skip = false;
-                    if (*SocBaseIdCompare >= 0 &&
-                        (unsigned int)SpyingBaseFactionBytes[*SocBaseIdCompare * 0x134] == (unsigned int)faction) {
+                    if (SecretProject.cloning_vats >= 0 &&
+                        (unsigned int)Bases[SecretProject.cloning_vats].faction_id_current == (unsigned int)faction) {
                         if (a1 == 2) {
                             if (row == 1) {
                                 if (SocialEffectTable[a1 * 0x35 + idx2 + row * 0xb] < 0) {
@@ -816,8 +816,8 @@ void SocialWin::draw_social(int a1) {
                         }
                     }
                     if (!skip) {
-                        if (!((*SocBaseIdProbe < 0) ||
-                              ((unsigned int)SpyingBaseFactionBytes[*SocBaseIdProbe * 0x134] != (unsigned int)faction) ||
+                        if (!((SecretProject.network_backbone < 0) ||
+                              ((unsigned int)Bases[SecretProject.network_backbone].faction_id_current != (unsigned int)faction) ||
                               (a1 != 3) ||
                               ((row != 1) || (*p2 >= 0)))) {
                             skip = true;
@@ -1354,10 +1354,9 @@ int EnergyFacilityCounts[70];
 int EnergyCommerceDelta;
 // RECOVERY_OBJECT: v2 0x00749C0C 0x00749C10 ?NetIncomeGlobal@@3HA 0x00445130
 int NetIncomeGlobal;
-// The original halves maintenance for bases belonging to this indexed
-// selected base. The owner/writer of the selector is not yet established.
-// RECOVERY_OBJECT: v2 0x009A6578 0x009A657C ?EnergyDiscountBaseIndex@@3HA 0x00445130
-int EnergyDiscountBaseIndex = -1;
+// Historical EnergyDiscountBaseIndex at 0x009A6578 is the source-owned
+// SecretProject.self_aware_colony field (+0x64), written with the other
+// project locations. A separate initialized scalar severed that lifetime.
 
 // ORIGINAL: 0x00445130 ?energy_compute@@YAXHH@Z 0x00445130-0x00445433
 // RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00445130.cpp", "src/base.h", "src/faction.h", "src/hypothesis_layouts.h"], "reason": "Recover the shared energy accounting pass through Base and PlayerData fields, owning its report totals and per-base/facility tables instead of calling a fixed executable address."}
@@ -1386,9 +1385,9 @@ void __cdecl energy_compute(int faction_id, int recompute_bases) {
                 maintenance += fac_maint(facility, faction_id);
             }
         }
-        if (EnergyDiscountBaseIndex >= 0 &&
-            EnergyDiscountBaseIndex < BaseCurrentCount &&
-            Bases[EnergyDiscountBaseIndex].faction_id_current == faction_id) {
+        if (SecretProject.self_aware_colony >= 0 &&
+            SecretProject.self_aware_colony < BaseCurrentCount &&
+            Bases[SecretProject.self_aware_colony].faction_id_current == faction_id) {
             // The image carries the odd half-maintenance remainder across
             // bases; keep its order rather than rounding each base alone.
             if (discount_carry) ++maintenance;
@@ -1654,10 +1653,9 @@ void SocialWin::on_status(int mode) {
 */
 int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
     int faction_owns_base = 0;
-    int base_id = *SocBaseIdCompare;
+    int base_id = SecretProject.cloning_vats;
     if (base_id >= 0) {
-        unsigned char base_faction_id = *reinterpret_cast<unsigned char *>(
-            reinterpret_cast<int *>(SpyingBaseFactionBytes) + base_id * 77);
+        unsigned char base_faction_id = Bases[base_id].faction_id_current;
         faction_owns_base = (static_cast<int>(base_faction_id) == factionID_);
     }
     if (faction_owns_base) {
@@ -1670,10 +1668,9 @@ int SocialWin::immune(int soc_category, int soc_model, int effect_id) {
     }
 
     faction_owns_base = 0;
-    base_id = *SocBaseIdProbe;
+    base_id = SecretProject.network_backbone;
     if (base_id >= 0) {
-        unsigned char base_faction_id = *reinterpret_cast<unsigned char *>(
-            reinterpret_cast<int *>(SpyingBaseFactionBytes) + base_id * 77);
+        unsigned char base_faction_id = Bases[base_id].faction_id_current;
         faction_owns_base = (static_cast<int>(base_faction_id) == factionID_);
     }
     if (faction_owns_base) {
@@ -2188,8 +2185,8 @@ void SocialWin::draw_mouseover() {
                 v = PlayerPowerBlock[i + self_faction * 2099];
             } else {
                 bool skip = false;
-                if (*SocBaseIdCompare >= 0 &&
-                    SpyingBaseFactionBytes[*SocBaseIdCompare * 0x134] ==
+                if (SecretProject.cloning_vats >= 0 &&
+                    Bases[SecretProject.cloning_vats].faction_id_current ==
                         static_cast<unsigned int>(self_faction)) {
                     if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
                         if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
@@ -2197,8 +2194,8 @@ void SocialWin::draw_mouseover() {
                         }
                     }
                 }
-                if (!skip && *SocBaseIdProbe >= 0 &&
-                    SpyingBaseFactionBytes[*SocBaseIdProbe * 0x134] ==
+                if (!skip && SecretProject.network_backbone >= 0 &&
+                    Bases[SecretProject.network_backbone].faction_id_current ==
                         static_cast<unsigned int>(self_faction) &&
                     cat_idx == 3 && row_idx == 1 &&
                     SocialEffectRow[i] < 0) {
@@ -2229,8 +2226,8 @@ void SocialWin::draw_mouseover() {
                 if (i == 3) {
                     continue;
                 }
-                if (*SocBaseIdCompare >= 0 &&
-                    SpyingBaseFactionBytes[*SocBaseIdCompare * 0x134] ==
+                if (SecretProject.cloning_vats >= 0 &&
+                    Bases[SecretProject.cloning_vats].faction_id_current ==
                         static_cast<unsigned int>(self_faction)) {
                     if ((cat_idx == 2 && row_idx == 1) || (cat_idx == 3 && row_idx == 3)) {
                         if (SocialEffectTable[row_idx * 0xb + (i + cat_idx * 0x35)] < 0) {
@@ -2238,8 +2235,8 @@ void SocialWin::draw_mouseover() {
                         }
                     }
                 }
-                if (*SocBaseIdProbe >= 0 &&
-                    SpyingBaseFactionBytes[*SocBaseIdProbe * 0x134] ==
+                if (SecretProject.network_backbone >= 0 &&
+                    Bases[SecretProject.network_backbone].faction_id_current ==
                         static_cast<unsigned int>(self_faction) &&
                     cat_idx == 3 && row_idx == 1 &&
                     SocialEffectRow[i] < 0) {
