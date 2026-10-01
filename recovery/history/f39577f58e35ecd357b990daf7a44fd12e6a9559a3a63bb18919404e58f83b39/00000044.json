@@ -1,0 +1,62 @@
+{
+  "event_id": "965b4826a9a9f0fed1f4f861df554774296ac59d0ea2af62fa6ec41181eb2dfc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_councwin_owner_behavior.py",
+      "src/console.h"
+    ],
+    "evidence": [
+      "Current native inventory leaves eight CouncWin identities seed-only. Retained councwin-remaining-owner-wave has unbound genuine voting/resolution/rendering/startup source, unlike current fixed-address redraw/button forwarders. Authorize coordinator selective completion in existing CouncWin cpp/header and fresh actual-source tests, retaining current source/header/interface changes, task baseline, all seeds/claims and discoveries. Root alone binds/records/integrates; no callback hierarchy or behavior workaround.",
+      "Native427150 is a five-byte jump to Win::is_visible5F7E90, not an int hide override; recover a genuine visibility query with explicit original symbol interpretation. Console/MainInterface header access is restricted to existing AlphaMenu and panel metric used by native council init. Existing native key-event owner must not be duplicated under retained stale on_key_click name."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4342800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4343584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4343920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4345936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4351088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4352672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4354384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4354608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0d4a11e6fd3b7ea1cdac4d4d304a1c5ca2d9548a52cb0dc03cdb60a0e9795041",
+  "request_id": "council-window-full-owner-closure-20261001",
+  "schema_version": 1,
+  "sequence": 44,
+  "stream": "task:interface-contract-report-closure"
+}
