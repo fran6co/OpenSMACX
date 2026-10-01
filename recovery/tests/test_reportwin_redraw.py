@@ -9,6 +9,326 @@ import subprocess
 import pytest
 
 
+def projects_body():
+    root = Path(__file__).resolve().parents[2]
+    source = (root / "src/reportwin.cpp").read_text()
+    start = source.index("void ReportWin::draw_projects() {")
+    return source[start:source.index("\n}\n", start) + 3]
+
+
+def projects_harness(body):
+    # Extended fixture palettes safely observe native invalid indices;
+    # they do not establish that the production arrays permit those reads.
+    return r'''#include <cstddef>
+#include <cstdio>
+#include <cstring>
+#include <cassert>
+typedef short int16_t;
+typedef unsigned char uint8_t;
+#define STATIC_ASSERT(name,condition) typedef char static_assert_##name[(condition)?1:-1]
+struct RECT { int left, top, right, bottom; };
+struct BoxSpriteParams {} styles[8];
+BoxSpriteParams *InterfaceBoxStyles = styles;
+char StringTemp[1024];
+int GenderDefault, PluralityDefault;
+int palette_reads[16], palette_read_count;
+int last_palette, palette_color_calls;
+int say_base_ids[16], say_base_count;
+int spot_ids[32], spot_count;
+int spot_types[32];
+int spot_kill_calls, spot_reset_calls;
+int kills_at_first_box, resets_at_first_box;
+int sprite_draws;
+int sprite_x, sprite_y;
+RECT box_rects[64], centered_rect;
+int box_count;
+int box_style_ids[64];
+int *observed_rect1_left, *observed_rect1_top, *observed_rect1_right, *observed_rect1_bottom;
+int *observed_spot_count;
+int *observed_selection;
+int mutate_selection_on_spot_add, mutated_selection_value;
+int card_box_left, card_box_top, card_box_right, card_box_bottom;
+int card_rect1_left, card_rect1_top, card_rect1_right, card_rect1_bottom;
+int spots_at_first_card_box;
+int write_y[64];
+char writes[64][512];
+int write_count;
+char *CharUpperA(char *s) {
+    for (char *p=s; *p; ++p) if (*p>='a' && *p<='z') *p-=32;
+    return s;
+}
+struct Buffer {
+    void box_sprite(RECT *r, BoxSpriteParams *style) {
+        if (box_count==0) {
+            kills_at_first_box=spot_kill_calls;
+            resets_at_first_box=spot_reset_calls;
+        }
+        if (box_count==2 && observed_rect1_left) {
+            card_box_left=r->left; card_box_top=r->top;
+            card_box_right=r->right; card_box_bottom=r->bottom;
+            card_rect1_left=*observed_rect1_left; card_rect1_top=*observed_rect1_top;
+            card_rect1_right=*observed_rect1_right; card_rect1_bottom=*observed_rect1_bottom;
+            spots_at_first_card_box=*observed_spot_count;
+        }
+        box_rects[box_count]=*r;
+        box_style_ids[box_count]=static_cast<int>(style-styles);
+        ++box_count;
+    }
+    void write_cent_l(const char *s, RECT *r, int) {
+        centered_rect=*r; std::strcpy(writes[write_count++],s);
+    }
+    void write_l(const char *s, int, int y, int) {
+        write_y[write_count]=y; std::strcpy(writes[write_count++],s);
+    }
+    void set_text_color(int color, int, int, int) {
+        last_palette=color; ++palette_color_calls;
+    }
+    void set_text_color3(int color, int, int, int) {
+        last_palette=color; ++palette_color_calls;
+    }
+};
+struct Sprite {
+    int transparent_index() { return 0; }
+    int height() { return 20; }
+    void draw_mono(Buffer *, int, int x, int y, int, int, int) {
+        ++sprite_draws; sprite_x=x; sprite_y=y;
+    }
+} g_SECRET_PROJECT_ICON_SPRITES[64];
+struct Player { const char *adj_name_faction, *noun_faction; int noun_gender, is_noun_plural; };
+Player players_storage[256];
+Player *Players=players_storage;
+struct Goal { int16_t type, priority; int x, y, base_id; };
+STATIC_ASSERT(goal_size,sizeof(Goal)==0x10);
+struct PlayerDataFixture { char prefix[0x19FC]; Goal goals[75]; char tail[0x220]; };
+STATIC_ASSERT(goals_offset,offsetof(PlayerDataFixture,goals)==0x19FC);
+STATIC_ASSERT(destroyed_field_offset,
+              offsetof(PlayerDataFixture,goals)+70*sizeof(Goal)+offsetof(Goal,base_id)==0x1E68);
+STATIC_ASSERT(player_data_stride,sizeof(PlayerDataFixture)==0x20CC);
+PlayerDataFixture PlayersData[8];
+struct Base { unsigned char faction_id_current; int queue_production_id[10]; const char *name_string; };
+Base bases_storage[514];
+Base *Bases=bases_storage+2;
+int BaseCurrentCount=3;
+struct FacilityRecord { int name; } Facility[134];
+int MaxSecretProjectNum=64, FacilitySPStart=70;
+const int SP_Unbuilt=-1, SP_Destroyed=-2;
+int owners[64];
+int base_project(int project) { return owners[project]; }
+int mandate_color(int) { return 0x77; }
+int spying(int) { return 0; }
+void say_base(char *out, int id) {
+    say_base_ids[say_base_count++]=id;
+    if (id<0) std::strcat(out,"NONE");
+    else std::strcat(out,Bases[id].name_string);
+}
+const char *label_get(int id) {
+    if (id==0xAD0/4) return "Projects";
+    if (id==0x6BC/4) return "Building";
+    return "?";
+}
+const char *facility_names[134];
+struct StringTableType { const char *get(int id) { return facility_names[id]; } } StringTable;
+int chat_colors[256];
+int *ChatItemIdTable=chat_colors;
+struct ReportIfFixture { int report_faction_id_; } ReportIfGlobal={0};
+struct Spot {
+    void kill_type(int type) {
+        ++spot_kill_calls;
+        for(int i=0;i<spot_count;) {
+            if(spot_types[i]!=type) { ++i; continue; }
+            for(int j=i;j<spot_count-1;++j) {
+                spot_ids[j]=spot_ids[j+1]; spot_types[j]=spot_types[j+1];
+            }
+            --spot_count;
+        }
+    }
+    void reset_count() { ++spot_reset_calls; spot_count=0; }
+    void add(int id,int type,RECT *) {
+        spot_ids[spot_count]=id; spot_types[spot_count++]=type;
+        if (mutate_selection_on_spot_add && observed_selection)
+            *observed_selection=mutated_selection_value;
+    }
+    int &count_for_test() { return spot_count; }
+} ;
+struct Scroll {
+    int minimum, maximum, paging_, position;
+    void set_range(int lo,int hi) { minimum=lo; maximum=hi; }
+    void set_pos(int p) { position=p; }
+};
+void scroll_hide(void *,Scroll *) {}
+struct ReportWin : Buffer {
+    RECT energy_panel_rect_, rect1_, report_work_rect_;
+    int field_E268_,field_59A0_,field_59A4_,field_59AC_;
+    int field_C0F8_,field_E26C_,field_E270_;
+    int field_C0FC_,field_C100_,field_C104_,field_C108_;
+    Scroll scroll_; Spot spot_;
+    ReportWin():field_E268_(12),field_59A0_(0),field_59A4_(0),field_59AC_(-1),
+        field_C0F8_(0),field_E26C_(0),field_E270_(0),field_C0FC_(0),
+        field_C100_(0),field_C104_(0),field_C108_(0) {
+        energy_panel_rect_.left=0; energy_panel_rect_.top=0;
+        energy_panel_rect_.right=400; energy_panel_rect_.bottom=300;
+        rect1_.right=0x1234; rect1_.bottom=0x5678;
+    }
+    void draw_projects();
+};
+void reset_fixture() {
+    std::memset(PlayersData,0,sizeof(PlayersData));
+    std::memset(bases_storage,0,sizeof(bases_storage));
+    std::memset(owners,0xFF,sizeof(owners));
+    std::memset(writes,0,sizeof(writes)); write_count=0; box_count=0;
+    say_base_count=spot_count=sprite_draws=palette_color_calls=0;
+    palette_read_count=0; last_palette=0; spot_count=0;
+    spot_kill_calls=spot_reset_calls=0;
+    kills_at_first_box=resets_at_first_box=-1;
+    observed_rect1_left=observed_rect1_top=observed_rect1_right=observed_rect1_bottom=0;
+    observed_spot_count=0;
+    observed_selection=0;
+    mutate_selection_on_spot_add=0; mutated_selection_value=-1;
+    spots_at_first_card_box=-1;
+    std::memset(write_y,0,sizeof(write_y));
+    for(int i=0;i<256;++i) {
+        players_storage[i].adj_name_faction="Alpha";
+        players_storage[i].noun_faction="Faction";
+        players_storage[i].noun_gender=0; players_storage[i].is_noun_plural=0;
+        chat_colors[i]=0x100+i;
+    }
+    players_storage[0].adj_name_faction="Alpha";
+    players_storage[1].adj_name_faction="Beta";
+    players_storage[1].noun_faction="Faction Beta";
+    players_storage[2].noun_faction="Faction Gamma";
+    facility_names[70]="Project zero";
+    facility_names[71]="Project one";
+    for(int i=0;i<64;++i) {
+        facility_names[70+i]="Project";
+        Facility[70+i].name=70+i;
+    }
+    Bases[0].faction_id_current=0; Bases[0].name_string="Alpha Base";
+    Bases[1].faction_id_current=1; Bases[1].name_string="Beta Base";
+    Bases[2].faction_id_current=1; Bases[2].name_string="Gamma Base";
+    BaseCurrentCount=3;
+    ReportIfGlobal.report_faction_id_=0;
+}
+void observe(ReportWin &w) {
+    observed_rect1_left=&w.rect1_.left; observed_rect1_top=&w.rect1_.top;
+    observed_rect1_right=&w.rect1_.right; observed_rect1_bottom=&w.rect1_.bottom;
+    observed_spot_count=&w.spot_.count_for_test();
+    observed_selection=&w.field_59AC_;
+}
+''' + body + r'''
+int main() {
+    // The true panel is 400px wide; native card width is (400-6)/2-1 = 196.
+    reset_fixture(); ReportWin dimensions; observe(dimensions); dimensions.draw_projects();
+    assert(dimensions.field_59A0_==196 && dimensions.field_59A4_==54);
+    assert(write_count>0 && std::strcmp(writes[0],"[ALPHA Projects]")==0);
+    assert(box_count==2 && box_rects[1].left==3 && box_rects[1].top==3
+        && box_rects[1].right==397 && box_rects[1].bottom==297);
+    assert(centered_rect.top==2 && centered_rect.bottom==20);
+    assert(spot_count==0 && sprite_draws==0);
+
+    // Queue filtering: own faction first (base+0x400), other faction second.
+    reset_fixture(); Bases[0].queue_production_id[0]=-70;
+    Bases[1].queue_production_id[0]=-70;
+    ReportWin queued; observe(queued); queued.draw_projects();
+    assert(spot_count==2 && spot_ids[0]==0x400 && spot_ids[1]==0x401);
+    assert(sprite_draws==2);
+
+    // Native count includes every current base whose queue word is <= -70,
+    // even if that queue value is outside the rendered 70..133 project IDs.
+    reset_fixture();
+    Bases[0].queue_production_id[0]=-200;
+    Bases[1].queue_production_id[0]=-201;
+    Bases[2].queue_production_id[0]=-202;
+    ReportWin count_only; count_only.field_E270_=1; count_only.draw_projects();
+    assert(count_only.field_C104_==1 && count_only.field_C108_==4);
+    assert(count_only.scroll_.maximum==1 && spot_count==0);
+
+    // Completed project at a live base uses the project ID as its spot ID.
+    reset_fixture(); owners[0]=2;
+    ReportWin completed; observe(completed);
+    completed.field_59AC_=-1;
+    mutate_selection_on_spot_add=1; mutated_selection_value=0;
+    completed.draw_projects();
+    assert(spot_count==1 && spot_ids[0]==0);
+    assert(sprite_draws==1 && say_base_count==1 && say_base_ids[0]==2);
+    assert(last_palette==chat_colors[1]);
+    assert(box_rects[2].left==3 && box_rects[2].right==199
+        && box_rects[2].top==23 && box_rects[2].bottom==77);
+    assert(card_box_left==3 && card_box_top==23 && card_box_right==199
+        && card_box_bottom==77 && spots_at_first_card_box==1);
+    assert(box_style_ids[2]==2 && box_style_ids[3]==5);
+    assert(card_rect1_left==3 && card_rect1_top==23);
+    assert(card_rect1_right==0x1234 && card_rect1_bottom==0x5678);
+    assert(completed.rect1_.left==3 && completed.rect1_.top==52);
+    assert(completed.rect1_.right==0x1234 && completed.rect1_.bottom==0x5678);
+    assert(sprite_x==5 && sprite_y==24);
+    assert(write_y[1]==28 && write_y[2]==40 && write_y[3]==52);
+
+    // Native calls kill_type(0), then inlines add_count_=0 before first draw.
+    // Thus old spot entries of every kind are discarded by the cursor reset.
+    reset_fixture(); owners[0]=2;
+    spot_ids[0]=91; spot_types[0]=1;
+    spot_ids[1]=92; spot_types[1]=0; spot_count=2;
+    ReportWin spots; observe(spots); spots.draw_projects();
+    assert(spot_kill_calls==1 && spot_reset_calls==1);
+    assert(kills_at_first_box==1 && resets_at_first_box==1);
+    assert(spot_count==1 && spot_ids[0]==0 && spot_types[0]==0);
+
+    // Destroyed owner remains -2, formats through say_base's NONE branch,
+    // and gets the low byte of the historically aliased Goal::base_id.
+    reset_fixture(); owners[0]=SP_Destroyed;
+    PlayersData[7].goals[70].base_id=0x12345602;
+    ReportWin destroyed; observe(destroyed); destroyed.draw_projects();
+    assert(spot_count==1 && spot_ids[0]==0);
+    assert(say_base_count==1 && say_base_ids[0]==SP_Destroyed);
+    assert(sprite_draws==1 && last_palette==chat_colors[2]);
+    bool found_none=false, found_gamma=false;
+    for(int i=0;i<write_count;++i) {
+        if(std::strstr(writes[i],"NONE")) found_none=true;
+        if(std::strstr(writes[i],"Faction Gamma")) found_gamma=true;
+    }
+    assert(found_none && found_gamma);
+
+    // Keep the native invalid palette consequence observable without host UB:
+    // fixture backing is extended, but production's index is not normalized.
+    reset_fixture(); owners[0]=SP_Destroyed;
+    PlayersData[7].goals[70].base_id=0x123456A5;
+    players_storage[0xA5].noun_faction="SENTINEL faction 0xA5";
+    chat_colors[0xA5]=0x7A5;
+    ReportWin invalid_palette; observe(invalid_palette); invalid_palette.draw_projects();
+    assert(spot_count==1 && spot_ids[0]==0 && say_base_ids[0]==SP_Destroyed);
+    assert(last_palette==0x7A5);
+    bool found_sentinel=false;
+    for(int i=0;i<write_count;++i)
+        if(std::strstr(writes[i],"SENTINEL faction 0xA5")) found_sentinel=true;
+    assert(found_sentinel);
+    return 0;
+}
+'''
+
+
+@pytest.mark.parametrize("damage", [None, "width", "destroyed_owner", "spot_cursor"])
+def test_product_projects_page(tmp_path, damage):
+    compiler = shutil.which("g++")
+    if compiler is None:
+        pytest.skip("host C++ compiler unavailable")
+    body = projects_body()
+    mutations = {
+        "width": ("field_59A0_ = panel_width / 2 - 1;", "field_59A0_ = (panel_width - 6) / 2 - 1;"),
+        "destroyed_owner": ("static_cast<uint8_t>(PlayersData[7].goals[70].base_id)", "7"),
+        "spot_cursor": ("spot_.reset_count();", ""),
+    }
+    if damage is not None:
+        before, after = mutations[damage]
+        assert body.count(before) == 1
+        body = body.replace(before, after)
+    source = tmp_path / "projects.cpp"
+    executable = tmp_path / "projects"
+    source.write_text(projects_harness(body))
+    compiled = subprocess.run([compiler, "-std=c++98", "-Wall", "-Wextra", str(source), "-o", str(executable)], capture_output=True, text=True, timeout=30)
+    assert compiled.returncode == 0, compiled.stderr
+    result = subprocess.run([str(executable)], capture_output=True, text=True, timeout=10)
+    assert (result.returncode == 0) == (damage is None)
+
 def product_body():
     root = Path(__file__).resolve().parents[2]
     source = (root / "src/reportwin.cpp").read_text()

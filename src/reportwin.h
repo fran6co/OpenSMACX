@@ -95,7 +95,7 @@ class ReportWin : public GraphicWin {
   // void(void), unrecovered: the energy panel redraw. on_selected refreshes
   // it after every topic selection.
   void draw_energy();
-  // 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ - unfinished placeholder;
+  // 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ - projects-page renderer;
   // on_scrolled/on_scrolling select this page renderer at page 5.
   void draw_projects();
   // 0x0049B450 ?labs_line@ReportWin@@QAEXHHHHHHH@Z - public, __thiscall,

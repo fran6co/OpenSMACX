@@ -1159,10 +1159,203 @@ Status: Complete
 */
 
 // ORIGINAL: 0x0049EB10 ?draw_projects@ReportWin@@QAEXXZ 0x0049EB10-0x0049F343
-// RECOVERY_BINDING: v1 {"reason":"Keep the unresolved projects-page dependency linkable in ReportWin while retaining its original span and trial history for later recovery.","evidence":["src/unrecovered/0049eb10.cpp records the original 0x0049EB10-0x0049F343 draw_projects body and its TRIED reconstruction note.","The recovered on_scrolled/on_scrolling callbacks call ReportWin::draw_projects for page 5; the original 2099-byte renderer remains unrecovered."]}
+// RECOVERY_BINDING: v1 {"reason":"Recover the projects page through owned ReportWin rectangles, spots and scroll state, preserving queued/completed rendering and the destroyed-owner byte alias through its real PlayerData member.","evidence":["image:terranx_original.exe:0x0049EB10-0x0049F343", "src/unrecovered/0049eb10.cpp:retained seed and trial history", "Original97CDDC=PlayersData96C9E0+7*20CC+goals19FC+70*10+base_idC; the native unsigned-byte read determines the destroyed-project faction without dereferencing Bases[-2]."]}
 // TRIED: full transcription (call-argument order verified against raw disasm for add/box_sprite/draw_mono/write_l/write_cent_l/ set_text_color/Strings::get, all matched Ghidra) reaches MISMATCH #3 'mov' vs 'push' - a prologue-level register/stack allocation divergence, not a logic error; not chased further given function size (2099 bytes, nested loops with gotos).
 void ReportWin::draw_projects() {
-    // BODY GOES HERE.
+    Buffer &canvas = *static_cast<Buffer *>(this);
+    const int viewer = ReportIfGlobal.report_faction_id_;
+    RECT frame = {energy_panel_rect_.left + 3, energy_panel_rect_.top + 3,
+                  energy_panel_rect_.right - 3, energy_panel_rect_.bottom - 3};
+    const int pitch = static_cast<int>(field_E268_) + 9;
+    const int row_pitch = 54;
+    const int content_top = energy_panel_rect_.top + pitch;
+    const int rows = (energy_panel_rect_.bottom - content_top - 5) / row_pitch;
+    const int panel_width = frame.right - frame.left;
+    // Native width is (panel.right - panel.left - 6) / 2 - 1. `frame`
+    // already has the three-pixel inset on each side, so do not inset again.
+    field_59A0_ = panel_width / 2 - 1;
+    field_59A4_ = row_pitch;
+    spot_.kill_type(0);
+    // The original follows kill_type with an inlined add_count_ = 0 store
+    // at ReportWin+0x599C before any drawing or scroll recursion.
+    spot_.reset_count();
+    canvas.box_sprite(&energy_panel_rect_, &InterfaceBoxStyles[0]);
+    canvas.box_sprite(&frame, &InterfaceBoxStyles[1]);
+    StringTemp[0] = 0;
+    strcat(StringTemp, "[");
+    strcat(StringTemp, Players[viewer].adj_name_faction);
+    CharUpperA(StringTemp);
+    strcat(StringTemp, " ");
+    // The original obtains this title through Strings::get using the entry
+    // at StringTable + 0xAD0, rather than through a numeric label key.
+    strcat(StringTemp, label_get(0xAD0 / 4));
+    strcat(StringTemp, "]");
+    RECT heading = {frame.left, frame.top - 1, frame.right, content_top - 1};
+    canvas.write_cent_l(StringTemp, &heading, strlen(StringTemp));
+
+    // The image lays the entries out in three passes: projects currently in
+    // production by the viewed faction, production by other factions, and
+    // projects already present in the completed-project owner table.
+    int entry_count = -1;
+    for (int project = 0; project < MaxSecretProjectNum; ++project) {
+        if (base_project(project) != SP_Unbuilt)
+            ++entry_count;
+    }
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id)
+        if (Bases[base_id].queue_production_id[0] <= -FacilitySPStart)
+            ++entry_count;
+    if (!field_C0F8_) {
+        if (entry_count >= rows * 2) field_E26C_ = 1;
+    } else if (entry_count < rows * 2) {
+        scroll_hide(this, &scroll_);
+        field_C0F8_ = 0;
+    }
+    if (field_E270_) {
+        field_C108_ = rows - 1;
+        field_C0FC_ = field_C100_ = 0;
+        field_C104_ = entry_count / 2;
+        scroll_.set_range(0, field_C104_);
+        scroll_.paging_ = field_C108_;
+        scroll_.set_pos(field_C0FC_);
+        field_E270_ = 0;
+        draw_projects();
+    }
+    int logical_row = 0;
+    for (int mode = 0; mode < 3; ++mode) {
+        for (int project = 0; project < MaxSecretProjectNum; ++project) {
+            const int facility = FacilitySPStart + project;
+            const int owner_base = base_project(project);
+            if (mode < 2 && owner_base != SP_Unbuilt) continue;
+            if (mode == 2 && owner_base == SP_Unbuilt) continue;
+
+            int base_id = owner_base;
+            int faction = -1;
+            if (mode < 2) {
+                for (int candidate = 0; candidate < BaseCurrentCount; ++candidate) {
+                    const Base &base = Bases[candidate];
+                    const bool same_faction = base.faction_id_current == viewer;
+                    if ((mode == 0) != same_faction) continue;
+                    if (base.queue_production_id[0] != -facility) continue;
+                    base_id = candidate;
+                    faction = base.faction_id_current;
+
+                    const int ordinal = logical_row++;
+                    const int visible_row = ordinal / 2
+                        - static_cast<int>(field_C0FC_);
+                    if (visible_row < 0 || visible_row >= rows) continue;
+                    const int column = ordinal & 1;
+                    const int card_left = frame.left
+                        + column * (static_cast<int>(field_59A0_) + 2);
+                    const int card_top = content_top + visible_row * (row_pitch + 2) + 2;
+                    RECT item = {card_left, card_top,
+                                 card_left + static_cast<int>(field_59A0_),
+                                 card_top + row_pitch};
+                    rect1_.left = item.left;
+                    rect1_.top = item.top;
+                    report_work_rect_ = item;
+                    const int selection = base_id + 0x400;
+                    spot_.add(selection, 0, &report_work_rect_);
+                    const bool selected = field_59AC_ == selection;
+                    canvas.box_sprite(&report_work_rect_, &InterfaceBoxStyles[selected ? 2 : 1]);
+                    if (selected) canvas.box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+
+                    Sprite &project_icon = g_SECRET_PROJECT_ICON_SPRITES[project];
+                    project_icon.draw_mono(&canvas, project_icon.transparent_index(),
+                        rect1_.left + 2, rect1_.top + 1, mandate_color(1),
+                        row_pitch - 2, g_SECRET_PROJECT_ICON_SPRITES[0].height());
+                    StringTemp[0] = 0;
+                    strcat(StringTemp, StringTable.get(
+                        reinterpret_cast<int>(Facility[facility].name)));
+                    canvas.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+                    canvas.set_text_color3(ChatItemIdTable[faction], -1, 1, 1);
+                    rect1_.top = item.top + 5;
+                    canvas.write_l(StringTemp, rect1_.left + 46, rect1_.top,
+                                   strlen(StringTemp));
+                    rect1_.top += field_E268_;
+                    StringTemp[0] = 0;
+                    if (mode == 1) strcat(StringTemp, "[");
+                    if (mode == 0 || spying(faction)) {
+                        say_base(StringTemp, base_id);
+                    } else {
+                        GenderDefault = Players[faction].noun_gender;
+                        PluralityDefault = Players[faction].is_noun_plural;
+                        strcat(StringTemp, Players[faction].noun_faction);
+                    }
+                    if (mode == 1) strcat(StringTemp, "]");
+                    canvas.write_l(StringTemp, rect1_.left + 46, rect1_.top,
+                        strlen(StringTemp));
+                    rect1_.top += field_E268_;
+                    StringTemp[0] = 0;
+                    if (mode == 1) strcat(StringTemp, "[");
+                    strcat(StringTemp, label_get(0x6BC / 4));
+                    if (mode == 1) strcat(StringTemp, "]");
+                    canvas.set_text_color(0xF9, -1, 1, 1);
+                    canvas.set_text_color3(0xF9, -1, 1, 1);
+                    canvas.write_l(StringTemp, rect1_.left + 46, rect1_.top,
+                        strlen(StringTemp));
+                }
+            } else {
+                if (base_id == SP_Destroyed) {
+                    // The original byte load at 0x0097CDDC aliases
+                    // PlayersData[7].goals[70].base_id. Preserve its low-byte
+                    // faction value and the subsequent native table indexing.
+                    faction = static_cast<uint8_t>(PlayersData[7].goals[70].base_id);
+                } else {
+                    faction = Bases[base_id].faction_id_current;
+                }
+            }
+            if (mode < 2) continue;
+
+            const int ordinal = logical_row++;
+            const int scroll_row = ordinal / 2
+                - static_cast<int>(field_C0FC_);
+            if (scroll_row < 0 || scroll_row >= rows) continue;
+            const int card_left = frame.left
+                + (ordinal & 1) * (static_cast<int>(field_59A0_) + 2);
+            const int card_top = content_top + scroll_row * (row_pitch + 2) + 2;
+            RECT item = {card_left, card_top,
+                         card_left + static_cast<int>(field_59A0_),
+                         card_top + row_pitch};
+            rect1_.left = item.left;
+            rect1_.top = item.top;
+            report_work_rect_ = item;
+            const int selection = mode == 2 ? project : base_id + 0x400;
+            spot_.add(selection, 0, &report_work_rect_);
+            const bool selected = field_59AC_ == selection;
+            canvas.box_sprite(&report_work_rect_, &InterfaceBoxStyles[selected ? 2 : 1]);
+            if (selected) canvas.box_sprite(&report_work_rect_, &InterfaceBoxStyles[5]);
+
+            g_SECRET_PROJECT_ICON_SPRITES[project].draw_mono(
+                &canvas, g_SECRET_PROJECT_ICON_SPRITES[project].transparent_index(),
+                rect1_.left + 2, rect1_.top + 1, mandate_color(1),
+                row_pitch - 2, g_SECRET_PROJECT_ICON_SPRITES[0].height());
+            StringTemp[0] = 0;
+            strcat(StringTemp, "[");
+            strcat(StringTemp, StringTable.get(reinterpret_cast<int>(Facility[facility].name)));
+            strcat(StringTemp, "]");
+            canvas.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+            canvas.set_text_color3(ChatItemIdTable[faction], -1, 1, 1);
+            rect1_.top = item.top + 5;
+            canvas.write_l(StringTemp, rect1_.left + 46, rect1_.top,
+                           strlen(StringTemp));
+            rect1_.top += field_E268_;
+            StringTemp[0] = 0;
+            strcat(StringTemp, "[");
+            say_base(StringTemp, base_id);
+            strcat(StringTemp, "]");
+            canvas.write_l(StringTemp, rect1_.left + 46, rect1_.top, strlen(StringTemp));
+            rect1_.top += field_E268_;
+            StringTemp[0] = 0;
+            strcat(StringTemp, "[");
+            GenderDefault = Players[faction].noun_gender;
+            PluralityDefault = Players[faction].is_noun_plural;
+            strcat(StringTemp, Players[faction].noun_faction);
+            strcat(StringTemp, "]");
+            canvas.set_text_color(ChatItemIdTable[faction], -1, 1, 1);
+            canvas.set_text_color3(ChatItemIdTable[faction], -1, 1, 1);
+            canvas.write_l(StringTemp, rect1_.left + 46, rect1_.top, strlen(StringTemp));
+        }
+    }
 }
 
 /*
