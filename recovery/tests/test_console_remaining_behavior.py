@@ -114,6 +114,165 @@ int main() {
                    capture_output=True, text=True)
     subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
+def test_use_ability_uses_ability_selector_then_faction_drop_range(tmp_path):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    harness = r'''
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <vector>
+std::vector<std::string> events;
+enum { PLAN_TECTONIC_MISSILE=13, PLAN_FUNGAL_MISSILE=14,
+       BIT_BASE_IN_TILE=1, BIT_AIRBASE=0x40000, MaxPlayerNum=8, MaxAbilityNum=29 };
+struct Veh { int16_t x=0,y=0,proto_id=0; uint8_t faction_id=1,moves_expended=0; uint32_t state=0; } Vehs[4];
+struct VehPrototype { uint32_t ability_flags=0; uint8_t chassis_id=0,plan=0; } VehPrototypes[4];
+struct RulesChassis { int missile=1; } Chassis[4];
+struct RulesAbility { char *name=nullptr; } Ability[MaxAbilityNum];
+struct Map { uint8_t climate=0,val2=0; uint32_t bit=0; } Tile;
+Map *map_loc(int x,int y) { assert(x==0 && y==0); return &Tile; }
+const int RadiusRange[9]={1,9,25,49,81,121,169,225,289};
+int RadiusOffsetX[289]={0}; int RadiusOffsetY[289]={0};
+int MapLongitudeBounds=16,MapLatitudeBounds=16,MapIsFlat=1;
+struct PlayerData { uint32_t diplo_treaties[8]{}; } PlayersData[8];
+int TerritoryFaction=-1;
+int whose_territory(int,int,int,int*,int) { return TerritoryFaction; }
+int IsNotMyTurn=0; int not_my_turn() { return IsNotMyTurn; }
+int Ready=1; int veh_ready(int id) { assert(id==0); return Ready; }
+int ForcedBitCount=-1;
+int bit_count(int bits) { if(ForcedBitCount>=0) return ForcedBitCount;
+ unsigned n=0; for(unsigned v=(unsigned)bits;v;v&=v-1)++n; return (int)n; }
+int has_abil(int proto,int bit) { return (VehPrototypes[proto].ability_flags & (uint32_t)bit)!=0; }
+int drop_range(int faction) { events.push_back("range:"+std::to_string(faction)); return 7; }
+struct NetMsg { void pop(const char *s,int timeout,int flags,const char *extra) {
+ assert(timeout==5000 && flags==0 && extra==nullptr); events.push_back(std::string("msg:")+s); } } PopupObject;
+NetMsg *NetMsgPopup=&PopupObject;
+int X_pop(const char *s,int (*callback)()){assert(!callback);events.push_back(std::string("xpop:")+s);return 0;}
+struct NetDaemon { int lock_veh(int*,int,int,int,int){events.push_back("lock");return 0;}
+ void unlock_veh(){events.push_back("unlock");} void await_exec(int){events.push_back("await");} } NetDaemonNet;
+int IsMultiplayerNet=0; int break_treaty(int,int,int){events.push_back("break");return 0;}
+void double_cross(int,int,int){events.push_back("double-cross");}
+void message_data(int,int,int,int,int,int){events.push_back("message-data");}
+void message_veh(int,int,int,int){}
+void action_tectonic(int id,int x,int y){assert(id==0&&x==0&&y==0);events.push_back("tectonic");}
+void action_fungal(int id,int x,int y){assert(id==0&&x==0&&y==0);events.push_back("fungal");}
+int StringCalls=0;
+struct Strings { char *get(int) { ++StringCalls; return (char*)"ability"; } } StringTable;
+int SelectedResult=16;
+struct Dialogs { void item(char *text,int value) { assert(std::strcmp(text,"ability")==0); events.push_back("item:"+std::to_string(value)); } };
+int CloseCalls=0;
+int MoveOnSelect=0;
+struct Popup { Dialogs d; Popup(){events.push_back("ctor");} ~Popup(){close();} void close(){++CloseCalls;}
+ void init(int a,int b){assert(a==0x40&&b==0);events.push_back("init");}
+ Dialogs &dialogs(){return d;} int exec(int a,void *cb){assert(a==0&&!cb);events.push_back("exec");
+ if(MoveOnSelect) { Vehs[0].moves_expended=1; } return SelectedResult;} };
+class Console { public: void use_ability(int); void cursor_on(int shape,int range){assert(shape==4&&range==7);events.push_back("cursor");} };
+Console ConsoleGlobal;
+'''
+    harness += body_for("void Console::use_ability(int vehicle_id)")
+    harness += r'''
+int main() {
+ Console c;
+ Vehs[0].x=0; Vehs[0].y=0; Vehs[0].faction_id=3; Vehs[0].proto_id=0;
+ VehPrototypes[0].ability_flags=0x10; VehPrototypes[0].plan=9; Chassis[0].missile=1;
+ Tile.bit=BIT_BASE_IN_TILE; Tile.val2=0; SelectedResult=16; Vehs[0].state=0;
+ int closes_before=CloseCalls;
+ c.use_ability(0);
+ assert(events.size()==3 && events[0]=="ctor" && events[1]=="range:3" && events[2]=="cursor");
+ assert(CloseCalls==closes_before+1);
+
+ events.clear(); VehPrototypes[0].ability_flags=0x12;
+ Ability[1].name=(char*)"probe"; SelectedResult=16; StringCalls=0;
+ c.use_ability(0);
+ assert(StringCalls==0 && events.size()==3 && events.back()=="cursor");
+
+ // Forced bit_count is only a harness diagnostic for otherwise-unreachable
+ // chooser code: native masks the entry ability set to bit 0x10 first.
+ ForcedBitCount=2; events.clear(); SelectedResult=18; c.use_ability(0);
+ assert(StringCalls==2 && events[1]=="init" && events[2]=="item:2" &&
+        events[3]=="item:16" && events[4]=="exec");
+ assert(events.size()==5 && events[4]=="exec");
+
+ events.clear(); SelectedResult=0x110; c.use_ability(0);
+ assert(events[4]=="exec" && events.back()=="exec");
+ ForcedBitCount=-1;
+
+ events.clear(); VehPrototypes[0].ability_flags=0; VehPrototypes[0].plan=9;
+ c.use_ability(0);
+ assert(events[1]=="msg:NOABILITY");
+
+ events.clear(); IsNotMyTurn=1; c.use_ability(0);
+ assert(events[1]=="msg:SIMULNO");
+
+ events.clear(); IsNotMyTurn=0; VehPrototypes[0].plan=9; VehPrototypes[0].ability_flags=0x10;
+ Tile.bit=0; SelectedResult=16; c.use_ability(0);
+ assert(events[1]=="xpop:DROPBASE");
+
+ events.clear(); Tile.bit=BIT_BASE_IN_TILE; Tile.val2=8; c.use_ability(0);
+ assert(events[1]=="xpop:DROPBASE");
+
+ events.clear(); Tile.bit=BIT_AIRBASE; c.use_ability(0);
+ assert(events.back()=="cursor");
+
+ events.clear(); Tile.bit=BIT_BASE_IN_TILE; Tile.val2=0; Vehs[0].state=0x20;
+ c.use_ability(0);
+ assert(events[1]=="xpop:DROPALREADY");
+
+ events.clear(); VehPrototypes[0].ability_flags=0x12; SelectedResult=16;
+ Vehs[0].state=0; Vehs[0].moves_expended=0; MoveOnSelect=1; Ready=1;
+ ForcedBitCount=2;
+ c.use_ability(0);
+ assert(events[4]=="exec" && events[5]=="xpop:DROPMOVED");
+ VehPrototypes[0].ability_flags=0x10; Vehs[0].moves_expended=0; MoveOnSelect=0;
+ ForcedBitCount=-1;
+
+ events.clear(); IsNotMyTurn=0; VehPrototypes[0].plan=PLAN_TECTONIC_MISSILE;
+ Tile.bit=0; Tile.climate=0x60; Tile.val2=0;
+ c.use_ability(0);
+ assert(events[1]=="lock" && events[2]=="tectonic");
+
+ events.clear(); VehPrototypes[0].plan=PLAN_FUNGAL_MISSILE;
+ c.use_ability(0);
+ assert(events[1]=="lock" && events[2]=="fungal");
+
+ events.clear(); TerritoryFaction=5; IsMultiplayerNet=1;
+ for (int i=1;i<9;++i) RadiusOffsetX[i]=30;
+ PlayersData[3].diplo_treaties[5]=7; PlayersData[5].diplo_treaties[3]=0;
+ VehPrototypes[0].plan=PLAN_TECTONIC_MISSILE; Tile.bit=0; Tile.climate=0x60;
+ c.use_ability(0);
+ assert(events[1]=="lock" && events[2]=="break" && events[3]=="message-data" &&
+        events[4]=="await" && events[5]=="lock" && events[6]=="await");
+
+ events.clear(); TerritoryFaction=5; IsMultiplayerNet=0;
+ for (int i=0;i<9;++i) RadiusOffsetX[i]=30;
+ RadiusOffsetX[8]=0; RadiusOffsetY[8]=0;
+ VehPrototypes[0].plan=PLAN_FUNGAL_MISSILE; Tile.climate=0x20;
+ c.use_ability(0);
+ assert(events[1]=="lock" && events[2]=="break" && events[3]=="double-cross" &&
+        events[4]=="lock" && events[5]=="fungal");
+ TerritoryFaction=-1; IsMultiplayerNet=0;
+
+ events.clear(); Tile.bit=0; c.use_ability(0);
+ assert(events[1]=="lock" && events[2]=="fungal");
+
+ events.clear(); Tile.bit=BIT_BASE_IN_TILE; Tile.val2=0; c.use_ability(0);
+ assert(events[1]=="msg:MISSILEBASE");
+
+ events.clear(); Tile.bit=0; Tile.climate=0x20;
+ VehPrototypes[0].plan=PLAN_TECTONIC_MISSILE; c.use_ability(0);
+ assert(events[1]=="msg:TECTONICOCEAN");
+}
+'''
+    unit = tmp_path / "console_use_ability.cpp"
+    executable = tmp_path / "console_use_ability"
+    unit.write_text(harness)
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
 
 def test_veh_turn_keeps_native_wait_and_automated_lock_paths(tmp_path):
     compiler = shutil.which("g++")

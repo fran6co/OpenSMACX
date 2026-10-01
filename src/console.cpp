@@ -8123,3 +8123,174 @@ finish_turn:
 void Console::give_hints() {
     // BODY GOES HERE.
 }
+
+// ORIGINAL: 0x004D7F60 ?use_ability@Console@@QAEXH@Z 0x004D7F60-0x004D8A62;0x0065AFD2-0x0065B275
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/004d7f60.cpp;source:src/console.h;image:0x004D7F60-0x004D8A62;image:0x0065AFD2-0x0065B275", "Popup constructor before entity reads:0x004D7F85-0x004D7FC4;native inline destruction:0x004D89BE-0x004D8A4A", "Chassis.missile and captured mask:0x004D8043-0x004D8072;missile base/altitude/radius:0x004D8160-0x004D8271;radius source:src/map.h", "Treaty row/arguments and locks:0x004D82D4-0x004D85CC;masked popcount and full selector result:0x004D8653-0x004D875A;drop state at Veh+4 and late moves:0x004D875A-0x004D89BE"], "reason": "Recover the Console ability order handler with automatic Popup lifetime, source-owned vehicle/design/map rules, faction treaties and NetDaemon locking. Preserve the captured terraform-bit mask, native missile/base/altitude gates, typed radius tables, live locked vehicle plan and drop-state/movement checks. The selector branch retains the original masked-popcount guard; no bug fix widens its natural reachability. Retain the full seed and compiler cleanup spans; this source interpretation is not a measured matching or runtime claim."}
+void Console::use_ability(int vehicle_id) {
+    Popup popup;
+    const int entry_x = Vehs[vehicle_id].x;
+    const int entry_y = Vehs[vehicle_id].y;
+    const int entry_faction = Vehs[vehicle_id].faction_id;
+
+    // The pinned entry checks turn ownership before looking at ability or
+    // tile state.  The message and timing are shared with the other Console
+    // order handlers.
+    if (not_my_turn() != 0) {
+        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        return;
+    }
+
+    const int entry_proto_id = Vehs[vehicle_id].proto_id;
+    const VehPrototype &entry_prototype = VehPrototypes[entry_proto_id];
+    const uint32_t entry_ability_mask = entry_prototype.ability_flags & 0x10u;
+    const bool has_terraform_ability = entry_ability_mask != 0;
+    const bool missile_former =
+        Chassis[entry_prototype.chassis_id].missile != 0 &&
+        (entry_prototype.plan == PLAN_TECTONIC_MISSILE ||
+         entry_prototype.plan == PLAN_FUNGAL_MISSILE);
+
+    if (!has_terraform_ability && !missile_former) {
+        NetMsgPopup->pop("NOABILITY", 5000, 0, nullptr);
+        return;
+    }
+    if (has_terraform_ability && !missile_former &&
+        (Vehs[vehicle_id].moves_expended != 0 ||
+         veh_ready(vehicle_id) == 0)) {
+        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        return;
+    }
+
+    // Former missile orders take a separate base/territory/treaty path before
+    // the general ability selector.  Its remaining native effect dispatches
+    // the missile order and network synchronization; do not route it through
+    // the ordinary airdrop cursor behavior.
+    if (missile_former) {
+        const Map *const tile = map_loc(entry_x, entry_y);
+        const int base_owner = tile->val2 & 0x0F;
+        if ((tile->bit & BIT_BASE_IN_TILE) != 0 && base_owner < 8) {
+            NetMsgPopup->pop("MISSILEBASE", 5000, 0, nullptr);
+            return;
+        }
+        if (entry_prototype.plan == PLAN_TECTONIC_MISSILE &&
+            (tile->climate & 0xE0) < 0x60) {
+            NetMsgPopup->pop("TECTONICOCEAN", 5000, 0, nullptr);
+            return;
+        }
+        // The original radius count uses the game's RadiusRange progression;
+        // native 0x66F8B8/0x66F8C8 operands are interior positions in that
+        // typed source table, not independent arrays.
+        const bool fungal_missile =
+            entry_prototype.plan == PLAN_FUNGAL_MISSILE;
+        const int radius_index = (tile->climate >> 5) + 1;
+        int radius_count = 9;
+        if (!fungal_missile && radius_index >= 0) {
+            radius_count = 1;
+            if (radius_index > 3) {
+                radius_count = radius_index > 6 ? RadiusRange[3]
+                                                : RadiusRange[radius_index - 3];
+            }
+        }
+        for (int offset = 0; offset < radius_count; ++offset) {
+            int target_x = entry_x + RadiusOffsetX[offset];
+            if ((MapIsFlat & 1) == 0) {
+                if (target_x < 0) target_x += MapLongitudeBounds;
+                else if (target_x >= MapLongitudeBounds) target_x -= MapLongitudeBounds;
+            }
+            const int target_y = entry_y + RadiusOffsetY[offset];
+            if (target_y < 0 || target_y >= MapLatitudeBounds ||
+                target_x < 0 || target_x >= MapLongitudeBounds) {
+                continue;
+            }
+            const int target_faction = whose_territory(
+                entry_faction, target_x, target_y, nullptr, 0);
+            if (target_faction < 0 || target_faction == entry_faction ||
+                (PlayersData[entry_faction].diplo_treaties[target_faction] & 7u) == 0) {
+                continue;
+            }
+
+            if (NetDaemonNet.lock_veh(&vehicle_id, 2, -1, -1, 0) != 0) {
+                return;
+            }
+            if (break_treaty(entry_faction, target_faction, 7) != 0) {
+                NetDaemonNet.unlock_veh();
+                return;
+            }
+            if (IsMultiplayerNet != 0) {
+                message_data(0x2440, 0, entry_faction, target_faction, -1, 0);
+                NetDaemonNet.await_exec(1);
+            } else {
+                double_cross(entry_faction, target_faction, -1);
+            }
+        }
+
+        if (NetDaemonNet.lock_veh(&vehicle_id, 2, -1, -1, 0) != 0) {
+            return;
+        }
+        // The lock may replace/compact the vehicle record. Native reloads the
+        // prototype and plan after the lock but retains the entry coordinates.
+        const int locked_proto_id = Vehs[vehicle_id].proto_id;
+        const int locked_plan = VehPrototypes[locked_proto_id].plan;
+        if (locked_plan == PLAN_TECTONIC_MISSILE) {
+            if (IsMultiplayerNet != 0) {
+                message_veh(0x2417, vehicle_id, entry_x, entry_y);
+                NetDaemonNet.await_exec(1);
+            } else {
+                action_tectonic(vehicle_id, entry_x, entry_y);
+            }
+            return;
+        }
+        if (locked_plan == PLAN_FUNGAL_MISSILE) {
+            if (IsMultiplayerNet != 0) {
+                message_veh(0x2418, vehicle_id, entry_x, entry_y);
+                NetDaemonNet.await_exec(1);
+            } else {
+                action_fungal(vehicle_id, entry_x, entry_y);
+            }
+            return;
+        }
+        return;
+    }
+
+    uint32_t selected_ability = entry_ability_mask;
+    if (bit_count(static_cast<int>(selected_ability)) > 1) {
+        popup.init(0x40, 0);
+        for (int ability_id = 0; ability_id < MaxAbilityNum; ++ability_id) {
+            const uint32_t ability_bit = 1u << ability_id;
+            const int current_proto_id = Vehs[vehicle_id].proto_id;
+            if (has_abil(current_proto_id, static_cast<int>(ability_bit)) == 0) {
+                continue;
+            }
+            const int name_address = static_cast<int>(
+                reinterpret_cast<intptr_t>(Ability[ability_id].name));
+            popup.dialogs().item(StringTable.get(name_address),
+                                 static_cast<int>(ability_bit));
+        }
+        const int result = popup.exec(0, nullptr);
+        if (result < 0) {
+            return;
+        }
+        selected_ability = static_cast<uint32_t>(result);
+    }
+
+    if ((selected_ability & 0x10u) != 0) {
+        const Map *const tile = map_loc(entry_x, entry_y);
+        const int base_owner = tile->val2 & 0x0F;
+        if (((tile->bit & BIT_BASE_IN_TILE) == 0 || base_owner >= 8) &&
+            (tile->bit & BIT_AIRBASE) == 0) {
+            X_pop("DROPBASE", nullptr);
+            return;
+        }
+        if ((Vehs[vehicle_id].state & 0x20u) != 0) {
+            X_pop("DROPALREADY", nullptr);
+            return;
+        }
+        if (Vehs[vehicle_id].moves_expended != 0) {
+            X_pop("DROPMOVED", nullptr);
+            return;
+        }
+    }
+
+    if (selected_ability == 0x10u) {
+        ConsoleGlobal.cursor_on(4, drop_range(entry_faction));
+    }
+}
