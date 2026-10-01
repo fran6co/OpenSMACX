@@ -1,0 +1,22 @@
+{
+  "event_id": "2fff92b20aacacfe5814721a2ca10096fba276c4e20404d508e13abcb41f3de5",
+  "payload": {
+    "affects": [
+      "entity-26e0364f9cfaa0eea4bd3c0109bdeac9aeaafe45f231f17990adec85438ad555"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "tutorial-unity-sprite-bounds-approved-20261001",
+    "evidence": [
+      "User explicitly answered: Approve bounds check; skip invalid card, to the six-sprite table/no-nearby-base path question.",
+      "Pinned5135BD..5136A2 RadiusBase scan leaves byte-offset local at0x20 on no match; shared51361A..513628 sprite index becomes32..36. NativeSprite constructors44F1D0 anddestructors44F1F0 each handle six objects; source Sprite sizeof0x2C and g_TER1_UNITY_POD_SPRITES binding77AFF8..77B100 confirms extent. No neighboring ownedSprite at77B578..77B654 is evidenced.",
+      "Preserved /tmp/give-hints-tail.cpp and original retained seed are investigation inputs; discovery stays pending until actual source incorporates the approved guard and behavior tests."
+    ],
+    "hypothesis": "User-approved deliberate bug fix: skip the invalid tutorial card instead of constructing an out-of-bounds Unity-pod Sprite pointer. Retain the original identity and document non-byte-exact behavior; all other paths remain recovery obligations.",
+    "kind": "discovery"
+  },
+  "previous_event": "be7ca9c35acfd26ad3d5d5903802df0c67295e008a1de04b8823a81e7d493c41",
+  "request_id": "tutorial-unity-sprite-bounds-approved-20261001",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:console-scenario-owner-wave"
+}
