@@ -34,14 +34,606 @@
 #include "alpha.h"
 #include "pulldown.h"
 #include "maininterface.h"
+#include "mapwin.h"
+#include "terraforming.h"
+#include "socialwin.h"
+#include "technology.h"
 #include <cstring>
 
 void __cdecl help_any();
 
+static void infowin_append_label(char *out, int index) {
+    strcat(out, label_get(index));
+}
+
+static void infowin_append_number(char *out, int value) {
+    char number[32];
+    _itoa(value, number, 10);
+    strcat(out, number);
+}
+
+static void infowin_write_faction_row(char *text, char *destination,
+                                      int label, int selected) {
+    text[0] = 0;
+    infowin_append_label(text, label);
+    strcat(text, ": {");
+    GenderDefault = Players[selected].is_leader_female;
+    PluralityDefault = 0;
+    strcat(text, Players[selected].title_leader);
+    strcat(text, " ");
+    GenderDefault = Players[selected].is_leader_female;
+    PluralityDefault = 0;
+    strcat(text, Players[selected].name_leader);
+    strcat(text, "}");
+    strcpy(destination, text);
+}
+
+static int infowin_best_stat_faction(int current_faction, uint8_t alive,
+                                     int field) {
+    int best_value = 0;
+    int best_faction = current_faction;
+    for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+        if ((alive & (1u << candidate)) == 0) continue;
+        int value;
+        switch (field) {
+        case 0: value = static_cast<int>(PlayersData[candidate].tech_ranking); break;
+        case 1: value = PlayersData[candidate].mil_strength_1; break;
+        case 2: value = PlayersData[candidate].pop_total; break;
+        default: value = PlayersData[candidate].energy_reserves; break;
+        }
+        // Native signed compare accepts equality, so later factions win ties.
+        if (best_value <= value) {
+            best_value = value;
+            best_faction = candidate;
+        }
+    }
+    return best_faction;
+}
+
 // ORIGINAL: 0x00456300 ?setup_text@InfoWin@@QAEXXZ 0x00456300-0x0045838D
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00456300.cpp", "source:src/infowin.h"], "reason": "InfoWin::timer_change now calls this original 8333-byte panel-content builder. Its existing seed is incomplete; an explicitly unfinished owning-TU definition preserves link continuity without claiming that panel content has been recovered."}
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00456300.cpp; pinned body00456300..0045838D", "Native eight-way jump table004583A8; pane-state normalization is signed remainder modulo8. Font+0C is natural line height, separately from adjusted row pitch.", "Native ranking scores use indices1..7; history reads signed16 samples with incrementing turn stride/divisor. Best-stat ties select later living factions, region sums use indices5..66.", "Rules string fields are real heap pointers produced by text_item_string/Strings::put; Strings::get retains a historical32-bit integer address ABI. Explicit call-boundary conversions do not make these fields ordinal indices.", "recovery/tasks/infowin-ownership.json; complete-owner scope expansion retained; actual-source host damage controls and fresh native compilation required"], "reason": "Recover the complete information-pane text and chart builder through genuine InfoWin rows, Font metrics, faction/rules storage and Buffer graphics. Preserve the existing original identity, seed and historical obligations; this binding is not a matching, runtime or acceptance claim."}
 void InfoWin::setup_text() {
-    // BODY GOES HERE.
+    const int faction = ConsoleGlobal.faction_id_;
+    const int font_metric = font_.unk_1_;
+    const int natural_line_height = font_.line_height(); // authorized narrow Font accessor
+    const int natural_height = font_.pixel_height();
+    const int row_pitch = font_metric < 0
+        ? natural_line_height : natural_height + font_metric;
+
+    // Native 0x00456333..0x0045635B leaves this local uninitialized for
+    // states 5, 7 and values outside [3,8]. Preserve that defect unless a
+    // behavior correction is explicitly approved; caller restrictions are
+    // not yet established. A positive caption scale bypasses its use.
+    int mode;
+    switch (static_cast<int>(field_B0_)) {
+    case 3:
+    case 4: mode = -12; break;
+    case 6: mode = -9; break;
+    case 8: mode = -6; break;
+    }
+
+    for (int clear_pane = 0; clear_pane != 2; ++clear_pane) {
+        row_count_[clear_pane] = 0;
+        for (int row = 0; row != 12; ++row) {
+            row_text_[clear_pane][row][0] = 0;
+            row_x_[clear_pane][row] = pane_rects_[clear_pane].left + 5;
+            row_y_[clear_pane][row] = pane_rects_[clear_pane].top + 5 + row * row_pitch;
+            row_color_[clear_pane][row] = 0;
+            row_reveal_color_[clear_pane][row] = 0;
+        }
+    }
+
+    const int scale = MapWinCaptionScale;
+    const int divisor = MapWinCaptionDivisor;
+    int line_height;
+    int line_height_100;
+    if (scale > 0) {
+        line_height = scale * 75 / divisor;
+        line_height_100 = scale * 100 / divisor;
+    } else {
+        const int h = (mode * 3 + 0x30) * 0x19;
+        line_height = h / 16;
+        const int h100 = (mode + 0x10) * 100;
+        line_height_100 = h100 / 16;
+    }
+    // The common tail retains the second pane's final initialization
+    // coordinates, not the Font height. Its conditional store is to X.
+    const int shifted_row_x = line_height_100 + pane_rects_[1].left + 5 + 2;
+    const int final_initial_row_y = pane_rects_[1].top + 5 + 12 * row_pitch;
+
+    // The native tail rereads the selected pane after calls: a callback
+    // selecting the second pane while the first is drawn must include it.
+    for (int pane = active_pane_; pane <= active_pane_; ++pane) {
+        RECT frame = pane_rects_[pane];
+        MainInterfaceGlobal.box_sprite(&frame, &InterfaceBoxStyles[18]);
+        RECT clip = frame;
+        clip.left += 3;
+        clip.top += 3;
+        clip.right -= 3;
+        clip.bottom -= 3;
+
+        char text[256];
+        int content_line_height = line_height;
+        int displayed_rows = 0;
+        Buffer &canvas = MainInterfaceGlobal;
+
+        const int kind = pane_states_[pane] % 8;
+        switch (kind) {
+        case 0: {
+            text[0] = 0;
+            content_line_height = 0;
+            infowin_append_label(text, 0);
+            strcat(text, ": ");
+            strcat(text, label_get(0x63));
+            say_year(text);
+            strcat(text, "{");
+            strcpy(row_text_[pane][0], text);
+
+            energy_compute(faction, 0);
+            const int current_tech = PlayersData[faction].tech_id_researching;
+            if (current_tech >= 0 &&
+                ((GameState & 0x80u) != 0 || (GameRules & 0x200u) == 0)) {
+                text[0] = 0;
+                infowin_append_label(text, 0x6a);
+                strcat(text, ": ");
+                strcat(text, label_get(0x15));
+                strcat(text, StringTable.get(
+                    reinterpret_cast<int>(Technology[current_tech].name)));
+                strcat(text, "}");
+                strcpy(row_text_[pane][1], text);
+                displayed_rows = 2;
+            } else {
+                displayed_rows = 1;
+            }
+
+            text[0] = 0;
+            strcat(text, StringTable.get(reinterpret_cast<int>(Energy[0].abbrev)));
+            strcat(text, ": ");
+            strcat(text, "{");
+            infowin_append_number(text,
+                (10 - PlayersData[faction].se_alloc_labs
+                     - PlayersData[faction].se_alloc_psych) * 10);
+            strcat(text, "%");
+            strcat(text, "  (");
+            if (NetIncomeGlobal >= 0) strcat(text, "+");
+            infowin_append_number(text, NetIncomeGlobal);
+            strcat(text, " ");
+            infowin_append_label(text, 0x30);
+            strcat(text, ")}");
+            strcpy(row_text_[pane][2], text);
+
+            text[0] = 0;
+            strcat(text, StringTable.get(reinterpret_cast<int>(Energy[1].abbrev)));
+            strcat(text, ": ");
+            strcat(text, "{");
+            infowin_append_number(text, PlayersData[faction].se_alloc_psych * 10);
+            strcat(text, "%}");
+            strcpy(row_text_[pane][3], text);
+            text[0] = 0;
+            strcat(text, StringTable.get(reinterpret_cast<int>(Energy[2].abbrev)));
+            strcat(text, ": {");
+            infowin_append_number(text, PlayersData[faction].se_alloc_labs * 10);
+            strcat(text, "%");
+            if (BreakthroughTurnsGlobal < 9000) {
+                strcat(text, "  (");
+                infowin_append_number(text, BreakthroughTurnsGlobal);
+                strcat(text, " ");
+                infowin_append_label(text, 0x31);
+                strcat(text, ")");
+            }
+            strcat(text, "}");
+            strcpy(row_text_[pane][4], text);
+            displayed_rows = 5;
+            break;
+        }
+        case 1: {
+            content_line_height = 0;
+            energy_compute(faction, 0);
+            text[0] = 0;
+            infowin_append_label(text, 300);
+            strcat(text, ": ");
+            strcat(text, "{");
+            infowin_append_number(text,
+                PlayersData[faction].tech_commerce_bonus + 1);
+            strcat(text, "}");
+            strcpy(row_text_[pane][0], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0x12d);
+            strcat(text, ": ");
+            infowin_append_number(text,
+                PlayersData[faction].turn_commerce_income);
+            strcat(text, label_get(0x130));
+            strcat(text, "}");
+            strcpy(row_text_[pane][1], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0x12e);
+            strcat(text, ": ");
+            infowin_append_number(text, EnergyEconomyTotal);
+            strcat(text, label_get(0x130));
+            strcat(text, "}");
+            strcpy(row_text_[pane][2], text);
+
+            int total_row = 3;
+            if (Language == 0) {
+                text[0] = 0;
+                strcat(text, "Total Costs: ");
+                infowin_append_number(text, NetIncomeGlobal - EnergyEconomyTotal);
+                strcat(text, label_get(0x130));
+                strcat(text, "}");
+                strcpy(row_text_[pane][3], text);
+                total_row = 4;
+            }
+            text[0] = 0;
+            infowin_append_label(text, 0x3bf);
+            strcat(text, ": ");
+            infowin_append_number(text, NetIncomeGlobal);
+            strcat(text, label_get(0x130));
+            strcat(text, "}");
+            strcpy(row_text_[pane][total_row], text);
+            displayed_rows = total_row + 1;
+            break;
+        }
+        case 2: {
+            content_line_height = 0;
+            const int other = static_cast<int>(DiploFrictionFactionID);
+            text[0] = 0;
+            GenderDefault = Players[other].noun_gender;
+            PluralityDefault = Players[other].is_noun_plural;
+            strcat(text, Players[other].formal_name_faction);
+            strcpy(row_text_[pane][0], text);
+
+            text[0] = 0;
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            strcat(text, Players[faction].title_leader);
+            strcat(text, " ");
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            strcat(text, Players[faction].name_leader);
+            strcpy(row_text_[pane][1], text);
+
+            text[0] = 0;
+            const int mood = static_cast<int>(get_mood(DiploFriction));
+            say_special(text,
+                        StringTable.get(reinterpret_cast<int>(Mood[mood])), other);
+            strcpy(row_text_[pane][2], text);
+
+            text[0] = 0;
+            const uint32_t treaty = PlayersData[faction].diplo_treaties[other];
+            int treaty_label = -1;
+            if (treaty & 1) treaty_label = 0xd3;
+            else if (treaty & 2) treaty_label = 0xd4;
+            else if (treaty & 4) treaty_label = 0xd5;
+            else if (treaty & 0x10) treaty_label = 0xd6;
+            if (treaty_label >= 0) infowin_append_label(text, treaty_label);
+            strcpy(row_text_[pane][3], text);
+            displayed_rows = 4;
+            break;
+        }
+        case 3: {
+            content_line_height = 0;
+            text[0] = 0;
+            GenderDefault = Players[faction].noun_gender;
+            PluralityDefault = Players[faction].is_noun_plural;
+            strcat(text, Players[faction].formal_name_faction);
+            strcpy(row_text_[pane][0], text);
+
+            text[0] = 0;
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            strcat(text, Players[faction].title_leader);
+            strcat(text, " ");
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            strcat(text, Players[faction].name_leader);
+            strcpy(row_text_[pane][1], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0xde);
+            strcat(text, ": ");
+            {
+                int rank = PlayersData[faction].integrity_blemishes;
+                if (rank < 0) rank = 0;
+                else if (rank > 7) rank = 7;
+                say_special(text,
+                            StringTable.get(reinterpret_cast<int>(Repute[rank])),
+                            faction);
+            }
+            strcat(text, "}");
+            strcpy(row_text_[pane][2], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0xdf);
+            strcat(text, ": ");
+            {
+                int gap = PlayersData[faction].ranking;
+                if (gap < 1) gap = 1;
+                else if (gap > 7) gap = 7;
+                say_special(text,
+                            StringTable.get(reinterpret_cast<int>(Might[7 - gap].adj)),
+                            faction);
+            }
+            strcat(text, "}");
+            strcpy(row_text_[pane][3], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0x3c0);
+            strcat(text, ": ");
+            infowin_append_number(text, council_votes(faction));
+            strcat(text, "}");
+            strcpy(row_text_[pane][4], text);
+            displayed_rows = 5;
+            break;
+        }
+        case 4: {
+            content_line_height = 0;
+            canvas.set_clip(&clip);
+            text[0] = 0;
+            if ((ObjectiveReqVictory < 9000 || ObjectivesSuddenDeathVictory < 9000) &&
+                ObjectiveAchievePts == 0) {
+                infowin_append_label(text, 899);
+                CharUpperA(text);
+            } else {
+                infowin_append_label(text, 0x1b8);
+            }
+            strcpy(row_text_[pane][0], text);
+
+            rankings(0);
+
+            int maximum = 1;
+            for (int rank_index = 1; rank_index < MaxPlayerNum; ++rank_index) {
+                const int score = static_cast<int>(FactionRankingsUnk[rank_index]);
+                if (score > maximum) maximum = score;
+            }
+            const int plot_height = clip.bottom - clip.top - natural_line_height - 4;
+            int y_divisor = 1;
+            int scaled_plot_height = plot_height;
+            while (scaled_plot_height < maximum) {
+                scaled_plot_height *= 2;
+                ++y_divisor;
+            }
+
+            int turn_step = 1;
+            while (TurnCurrentNum / turn_step > clip.right - clip.left) ++turn_step;
+            for (int faction_index = 1; faction_index < MaxPlayerNum; ++faction_index) {
+                int turn = 1;
+                int x = clip.left;
+                int previous_y = clip.bottom - 1;
+                bool have_previous = false;
+                while (turn <= TurnCurrentNum) {
+                    const int history_index = turn * MaxPlayerNum + faction_index;
+                    const int score = static_cast<int16_t>(FactionRankingHistory[history_index]);
+                    const int y = clip.bottom - 1 - score / y_divisor;
+                    if (turn > 1 && have_previous) {
+                        const int color =
+                            strstr(Players[faction_index].search_key, "SPARTANS") != 0
+                            ? InfoFactionTextColors[faction_index]
+                            : InfoFactionShadowColors[faction_index];
+                        canvas.line(x - 1, previous_y, x, y, color);
+                    }
+                    previous_y = y;
+                    have_previous = true;
+                    turn += turn_step;
+                    ++x;
+                }
+            }
+
+            // Native sets its row-count local to 8 and iterates FactionRankings[7]
+            // down through [0], storing names at rows 1..8. Row 8 is consequently
+            // stored but not included by the final count pass.
+            for (int rank_row = 0; rank_row < MaxPlayerNum; ++rank_row) {
+                const int faction_index = static_cast<int>(
+                    FactionRankings[MaxPlayerNum - 1 - rank_row]);
+                GenderDefault = Players[faction_index].noun_gender;
+                PluralityDefault = Players[faction_index].is_noun_plural;
+                strcpy(text, Players[faction_index].noun_faction);
+                const int maximum_text_width = clip.right - 2 * clip.left - 2;
+                int length = static_cast<int>(strlen(text));
+                while (length > 0 && canvas.text_width(text) > maximum_text_width) {
+                    --length;
+                    text[length] = 0;
+                }
+                strcpy(row_text_[pane][rank_row + 1], text);
+            }
+            displayed_rows = 8;
+            canvas.set_clip(const_cast<RECT *>(&canvas.clip_rect()));
+            break;
+        }
+
+        // ---- case 5: native 0x4578EB..0x457B6C ----
+        case 5: {
+            content_line_height = 0;
+            canvas.set_clip(&clip);
+            text[0] = 0;
+            if ((ObjectiveReqVictory < 9000 || ObjectivesSuddenDeathVictory < 9000) &&
+                ObjectiveAchievePts == 0) {
+                infowin_append_label(text, 899);
+                CharUpperA(text);
+            } else {
+                infowin_append_label(text, 0x1b8);
+            }
+            strcpy(row_text_[pane][0], text);
+            // Match native's source call/order and score floor.
+            rankings(0);
+            int maximum = 1;
+            for (int rank_index = 1; rank_index < MaxPlayerNum; ++rank_index) {
+                const int score = static_cast<int>(FactionRankingsUnk[rank_index]);
+                if (score > maximum) maximum = score;
+            }
+
+            const int plot_width = clip.right - clip.left - natural_line_height - 4;
+            const int bar_width = plot_width / 7;
+            const int left = clip.left +
+                ((clip.right - clip.left) - bar_width * 7) / 2;
+            const int plot_height = clip.bottom - clip.top - natural_line_height - 4;
+            const int bottom = clip.bottom - 2;
+            for (int faction_index = 1; faction_index < MaxPlayerNum; ++faction_index) {
+                int bar_height = static_cast<int>(FactionRankingsUnk[faction_index]) *
+                                 plot_height / maximum;
+                if (bar_height < 1) bar_height = 1;
+                RECT bar;
+                bar.left = left + (faction_index - 1) * bar_width;
+                bar.right = left + faction_index * bar_width;
+                bar.bottom = bottom;
+                bar.top = bottom - bar_height;
+                canvas.box(&bar, InfoFactionShadowColors[faction_index],
+                           InfoFactionShadowColors[faction_index]);
+                RECT inner = bar;
+                ++inner.left;
+                ++inner.top;
+                --inner.right;
+                --inner.bottom;
+                canvas.fill(&inner, InfoFactionTextColors[faction_index]);
+
+                GenderDefault = Players[faction_index].noun_gender;
+                PluralityDefault = Players[faction_index].is_noun_plural;
+                strcpy(text, Players[faction_index].noun_faction);
+                canvas.set_font(&font_, 0, 0, 0);
+                canvas.set_text_color(ChatItemIdTable[faction_index],
+                                      ChatShadowColors[faction_index], 1, 1);
+                canvas.write_cent_l(text, &bar, static_cast<int>(strlen(text)));
+            }
+            canvas.set_clip(const_cast<RECT *>(&canvas.clip_rect()));
+            // Native sets its shared row-count local to 1 at 0x45797E. The common
+            // 0x4582BC tail publishes that count and consumes row 0 (the heading).
+            displayed_rows = 1;
+            break;
+        }
+
+        case 6: {
+            content_line_height = 0;
+            const int live_faction = ConsoleGlobal.faction_id_;
+            const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+            infowin_write_faction_row(text, row_text_[pane][0], 0x41c / 4,
+                infowin_best_stat_faction(live_faction, alive, 0));
+            infowin_write_faction_row(text, row_text_[pane][1], 0x420 / 4,
+                infowin_best_stat_faction(live_faction, alive, 1));
+            infowin_write_faction_row(text, row_text_[pane][2], 0x424 / 4,
+                infowin_best_stat_faction(live_faction, alive, 2));
+            infowin_write_faction_row(text, row_text_[pane][3], 0x4f0 / 4,
+                infowin_best_stat_faction(live_faction, alive, 3));
+
+            int best_sum = 0;
+            int best_sum_faction = live_faction;
+            for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+                if ((alive & (1u << candidate)) == 0) continue;
+                int sum = 0;
+                for (int sample = 1; sample < 63; ++sample)
+                    sum += PlayersData[candidate].unk_78[4 + sample];
+                if (best_sum <= sum) {
+                    best_sum = sum;
+                    best_sum_faction = candidate;
+                }
+            }
+            infowin_write_faction_row(text, row_text_[pane][4], 0x97c / 4,
+                                      best_sum_faction);
+            displayed_rows = 5;
+
+            if (RankingFactionIDUnk1 > 0) {
+                infowin_write_faction_row(text, row_text_[pane][5], 0x428 / 4,
+                                          static_cast<int>(EndgameFactionSelectorB));
+                displayed_rows = 6;
+            }
+            break;
+        }
+
+        case 7: {
+            content_line_height = 0;
+
+            text[0] = 0;
+            infowin_append_label(text, 0x1ab);
+            strcpy(row_text_[pane][0], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0x1aa);
+            strcat(text, "{");
+            strcat(text, MapFilePath);
+            strcat(text, "}");
+            strcpy(row_text_[pane][1], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0x1a9);
+            strcat(text, ": {");
+            const char *paint_name;
+            switch (MapEditorPaintId) {
+            case 0: paint_name = label_get(0xEBC / 4); break;
+            case 1: paint_name = label_get(0xEC0 / 4); break;
+            case 2: paint_name = label_get(0xEC4 / 4); break;
+            case 3: paint_name = label_get(0xEC8 / 4); break;
+            case 4: paint_name = label_get(0xECC / 4); break;
+            case 5: paint_name = label_get(0xED0 / 4); break;
+            case 26:
+                paint_name = StringTable.get(
+                    reinterpret_cast<int>(Natural[2].name_short));
+                break;
+            case 27:
+                paint_name = StringTable.get(
+                    reinterpret_cast<int>(Natural[6].name_short));
+                break;
+            case 28:
+                paint_name = StringTable.get(
+                    reinterpret_cast<int>(Natural[3].name_short));
+                break;
+            case 29:
+                paint_name = StringTable.get(
+                    reinterpret_cast<int>(Natural[10].name_short));
+                break;
+            default:
+                paint_name = StringTable.get(reinterpret_cast<int>(
+                    Terraforming[MapEditorPaintId - 6].name));
+                break;
+            }
+            strcat(text, paint_name);
+            strcat(text, "}");
+            strcpy(row_text_[pane][2], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0x684 / 4);
+            strcat(text, ": ");
+            if (MapEditorBrushId == 1) {
+                infowin_append_label(text, 0x688 / 4);
+            } else {
+                infowin_append_number(text,
+                    MapEditorBrushId == 0 ? 0 : MapEditorBrushId - 1);
+            }
+            strcpy(row_text_[pane][3], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0xD7C / 4);
+            strcat(text, ": ");
+            infowin_append_number(text, MapLongitudeBounds / 2);
+            strcat(text, "x");
+            infowin_append_number(text, MapLatitudeBounds);
+            strcat(text, " ");
+            infowin_append_label(text,
+                ((MapIsFlat & 1) != 0 ? 0xD80 : 0xD84) / 4);
+            strcpy(row_text_[pane][4], text);
+
+            text[0] = 0;
+            infowin_append_label(text, 0x84 / 4);
+            strcat(text, ": {");
+            infowin_append_label(text, 0x14 + static_cast<int>(MapCloudCover));
+            strcat(text, "}");
+            strcpy(row_text_[pane][5], text);
+
+            displayed_rows = 6;
+            break;
+        }
+
+        }
+
+        row_count_[pane] = displayed_rows;
+        text_lengths_[pane] = 0;
+        for (int row = 0; row < displayed_rows; ++row) {
+            if (content_line_height != 0 &&
+                row_y_[pane][row] < content_line_height + final_initial_row_y + 2) {
+                row_x_[pane][row] = shifted_row_x;
+            }
+            text_lengths_[pane] += static_cast<int>(strlen(row_text_[pane][row]));
+        }
+    }
 }
 
 // The four animation counters have not yet been given source-owned storage.

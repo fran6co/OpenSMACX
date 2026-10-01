@@ -90,6 +90,9 @@ class Font {
   LPSTR find_line_break_l(LPSTR input, int *break_len, size_t len);
   bool is_initialized() const { return font_obj_ != NULL; }
   int pixel_height() const { return height_; }
+  // InfoWin's panel builder (0x00456300) uses Font+0x0C independently
+  // of the adjusted row pitch returned by line_advance().
+  int line_height() const { return line_height_; }
   // PullDown mnemonic underline reads the native Font+0x14 metric.
   int internal_leading() const { return internal_leading_; }
   // PullDown::show (0x005F91A3) uses the natural line height unless
