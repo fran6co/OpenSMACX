@@ -388,18 +388,6 @@ void NetDaemon::synch(int16_t opcode, int a, int b, int c, char *text, int d, in
     PENDING_BODY(0x00532E00, pending)(this, nullptr, opcode, a, b, c, text, d, flags);
 }
 
-// ?order_veh@NetDaemon@@QAEHHHH@Z at 0x00531780 - the client-side half of a
-// move, still archived (2485 bytes, src/unrecovered/00531780.cpp). Not claimed,
-// so this forwarder is honest: it is the only definition and it faults loudly
-// if the body is ever reached before that archive is homed. The veh.cpp action
-// family (action_go_to, action_road_to) calls it directly, which is what
-// forced the declaration onto the class.
-int NetDaemon::order_veh(int veh_id, int payload_10, int payload_1C) {
-    typedef int(__fastcall *pending)(NetDaemon *, void *, int, int, int);
-    return PENDING_BODY(0x00531780, pending)(this, nullptr, veh_id, payload_10,
-                                             payload_1C);
-}
-
 // ?draw_status@StatusWin@@QAEXHHHHH@Z at 0x004B6570 - 8885 bytes, still an
 // original body. StatusWin::redraw (src/statuswin.cpp) calls it BY NAME.
 
@@ -1372,16 +1360,6 @@ int __cdecl enemy_move(int veh_id) {
     typedef int(__cdecl *pending)(int);
     return PENDING_BODY(0x0056B5B0, pending)(veh_id);
 }
-
-// ?action@NetDaemon@@QAEHHH@Z at 0x00532570 - the daemon's side of running a
-// vehicle's order, reached by enemy_veh (general.cpp) once it has awaited the
-// synch. Still the image's own bytes, so this is the forwarder and not a homed
-// body.
-int NetDaemon::action(int veh_id, int mode) {
-    typedef int(__fastcall *pending)(NetDaemon *, void *, int, int);
-    return PENDING_BODY(0x00532570, pending)(this, nullptr, veh_id, mode);
-}
-
 
 // ?upgrade_prototype@@YAHHHHH@Z at 0x004EFE80 - the single-prototype upgrade
 // worker, still unrecovered. Its only homed caller is base.cpp's

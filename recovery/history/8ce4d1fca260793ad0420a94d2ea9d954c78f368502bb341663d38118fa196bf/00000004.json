@@ -1,0 +1,30 @@
+{
+  "event_id": "3e6755dcc63d213f432d37c83026e2aa91d3323afd3c8fabccc0e79d700ae4d6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/alpha.cpp",
+      "src/alpha.h",
+      "src/base.cpp",
+      "src/base.h",
+      "src/faction.cpp",
+      "src/faction.h",
+      "src/map.cpp",
+      "src/map.h",
+      "src/terraforming.cpp",
+      "src/terraforming.h",
+      "src/veh.cpp",
+      "src/veh.h"
+    ],
+    "evidence": [
+      "Coordinator grants only source-owned synchronization field/serializer helpers required by discovery netdaemon-synch-wire-storage, in the listed existing data owners and already editable game/NetDaemon files. Preserve real classes/objects, constructor/lifetime boundaries, native wire field widths/order and per-chunk callback-time reads; no guessed padding, fake contiguous state object, original-address dereference, new behavior policy or scope-baseline reset. Helper callers must have complete implementations and build/link continuity before integration. Other gameplay recovery edits remain outside this grant; unidentified storage stays a pending obligation."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "51a8739aaab403669a2909335f92d9018b97bd482e96278ae51a1c7c8bc60519",
+  "request_id": "netdaemon-synch-owner-wire-scope",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "51a8739aaab403669a2909335f92d9018b97bd482e96278ae51a1c7c8bc60519",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netdaemon-synch-wire-storage",
+    "evidence": [
+      "Pinned jump table53420C+60 targets533746 (PlayerData+46C size224), +64 targets533762 (FactionRankingsUnk size20). Native533C39..533C44 pushes memcpy size,packet payload,destination; seed reversed incoming direction. Opcode0 range9A6490..9A6828 and opcode2 range949870..94A30C cross separately owned objects, so field-level source gather/scatter is necessary."
+    ],
+    "hypothesis": "Full synchronization crosses separately owned game/map state and stages/compacts rules. Source serializers must preserve owner lifetimes, exact wire fields, pointer-cell behavior and callback-time reads. Correct native opcode24/25 ownership and incoming memcpy direction; do not import the seed wholesale or silently omit hard cases.",
+    "kind": "discovery"
+  },
+  "previous_event": "c33a3c2b22ce53baf16fdb509af154626624048988d790b08388af9d56653eb1",
+  "request_id": "netdaemon-synch-wire-storage",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

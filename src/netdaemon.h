@@ -186,7 +186,8 @@ class NetDaemon : public AlphaNet {
   void synch(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags);
 
  public:
-  // 0x00534400, a pending_bodies forwarder.
+  // 0x00534400: partial source dispatcher; higher protocol bands remain
+  // unfinished. Source presence is not full protocol-behavior coverage.
   void process_message(char *message, unsigned long a, int b);
 
  public:
@@ -212,7 +213,7 @@ class NetDaemon : public AlphaNet {
   // 0x00532140 is the daemon's network-aware vehicle drop, distinct from
   // the free veh_drop helper in veh.cpp.
   int veh_drop(int veh_id, int x_coord, int y_coord);
-  // 0x00532570, still the image's own bytes (forwarded in pending_bodies.cpp).
+  // 0x00532570: source-owned multiplayer action and acknowledgement loop.
   // enemy_veh reaches it after its own await_synch, asking the daemon to run
   // the vehicle's order; mode 1 is the only value any caller passes.
   int action(int veh_id, int mode);

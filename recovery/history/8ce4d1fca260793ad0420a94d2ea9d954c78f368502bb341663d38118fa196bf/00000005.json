@@ -1,0 +1,20 @@
+{
+  "event_id": "1419778e5f2ec028a528abe4e2468dba96dde59a18206551244beed0c835ce16",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netdaemon-game-wire-owner-conflicts",
+    "evidence": [
+      "Native wire0[9A6490,9A6828). FactionRankings starts9A64EC, eight dwords, overlapping EndgameFactionSelectorA/B at9A6504/08. BaseSecretProject starts9A6514; SpyingBaseIndex9A6524 and EnergyDiscountBaseIndex9A6578 plus social selector aliases fall inside its declared fields. Source getters/writers need coupled review. Unmapped intervals[9A64A0,9A64A4),[9A64A8,9A64AC),[9A66C9,9A67CC) and VehSelectionFollowLimit alias9A64DC remain unresolved, not zero-filled or excluded."
+    ],
+    "hypothesis": "Opcode0 requires reconciling current conflicting owner interpretations: FactionRankings overlaps two endgame selectors, and BaseSecretProject overlaps separate spying/energy/social cells. Determine real fields/views from producer-consumer evidence before serializing; preserve each old interpretation as a reviewed historical obligation rather than quietly using independent globals.",
+    "kind": "discovery"
+  },
+  "previous_event": "3e6755dcc63d213f432d37c83026e2aa91d3323afd3c8fabccc0e79d700ae4d6",
+  "request_id": "netdaemon-game-wire-owner-conflicts",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
