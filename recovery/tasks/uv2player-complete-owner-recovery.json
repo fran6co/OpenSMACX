@@ -1,0 +1,78 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "ceb03059d49e24872744e29072d5bf20b74db649",
+  "editable_files": [
+    "src/uv2player.cpp",
+    "src/uv2player.h",
+    "src/buffer.h",
+    "src/leaf_recoveries.cpp",
+    "src/leaf_recoveries.h",
+    "src/pending_bodies.cpp",
+    "src/alphamovie.cpp",
+    "src/alphamovie.h",
+    "recovery/tests/test_uv2player_owner.py",
+    "recovery/tests/uv2player_owner_harness.cpp"
+  ],
+  "evidence": [
+    "Current master has two genuine UV2Player bodies, a raw-offset constructor and COM play adapter in leaf_recoveries, executable-address close/exec forwarders, and seed-only timed writer, on_key and UNK3. Inspect every native span and callback contract before choosing types; constructor and destructor BYTE_EXACT obligations remain protected.",
+    "Buffer is a real member at UV2Player+8DC, delay is full unsigned dword at E64, exact size E68 is pinned by amovie_project frame. Native Buffer::write_raw_l invokes Buffer+8 as a four-argument cdecl text output hook. Introduce a same-size typed callback API and source-owned active player/quit slots, preserving native delay reloads after clock calls.",
+    "Use real SDK COM interfaces, GUID values and descriptors, not ComVCall slot arrays or executable GUID addresses. Infer original interface version from IID bytes and native ABI, preserving failure behavior and lifecycle rather than adding cleanup or guards silently.",
+    "Root alone publishes source bindings, measures, mutates Git or task decisions and integrates after actual-source controls, relevant claims and application build/link. No current matching, full preservation, runtime or game acceptance is granted. Scope expansion is required for any newly discovered outside-owner dependency."
+  ],
+  "intent": "Recover the complete UV2Player movie owner as genuine typed C++, replacing executable forwarders and raw-offset leaf adapters while preserving seed discoveries and all historical claims.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4211664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4975152,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4975184,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4976064,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4976224,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4976384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4977536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4977552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4977664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4977840,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "uv2player-complete-owner-recovery"
+}
