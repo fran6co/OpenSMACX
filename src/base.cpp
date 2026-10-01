@@ -18,6 +18,7 @@
 #include "stdafx.h"
 #include "temp.h"
 #include "base.h"
+#include "council.h"
 #include "alpha.h"
 #include "faction.h"
 #include "game.h"
@@ -487,7 +488,8 @@ void __cdecl base_energy() {
         if (partner_base < 0) continue;
         int commerce_base = (Bases[partner_base].energy_intake_1 + 7 +
                              base.energy_intake_1) / 8;
-        if (CommerceDoubleProgress < CommerceDoubleTarget) commerce_base *= 2;
+        if (CouncilResolutionCount[PROP_REPEAL_GLOBAL_TRADE_PACT] <
+            CouncilResolutionCount[PROP_GLOBAL_TRADE_PACT]) commerce_base *= 2;
         const int divisor = TechCommerceCount + 1;
         if (divisor <= 0) continue;
         int partner_receipt = ((PlayersData[partner].tech_commerce_bonus + 1) *
@@ -1722,14 +1724,11 @@ int BaseSquareEnergy;  // 0x0090E914
  * rebinding one does not rebind the other.
  */
 int GovernorFaction;  // 0x009A6614
-// base_energy tests progress < target before doubling the exchange base.
-// call_council (0x0052C880) compares the same words when enabling its
-// proposals; make_a_proposal (0x0054F420) tests them independently. Neither
-// original use proves the counters' broader political names or producers.
-// RECOVERY_OBJECT: v2 0x009A6624 0x009A6628 ?CommerceDoubleTarget@@3HA 0x004EB560
-int CommerceDoubleTarget;
-// RECOVERY_OBJECT: v2 0x009A6628 0x009A662C ?CommerceDoubleProgress@@3HA 0x004EB560
-int CommerceDoubleProgress;
+// Former independent scalar views CommerceDoubleTarget (009A6624) and
+// CommerceDoubleProgress (009A6628) actually denote CouncilResolutionCount[3]
+// and [4]. council_action increments those proposal counters and setup_game
+// resets the whole array. base_energy doubles commerce while enacted trade
+// pacts outnumber repeals; separate scalar storage would lose that relationship.
 
 /*
  * A two-turn state advanced by random_events (0x0051F2F4 steps it 1 -> 2 -> 0

@@ -51,5 +51,15 @@ static const int MaxProposalNum = 11;
 extern RulesProposal Proposal[MaxProposalNum];  // 0x009A6828, 0xc stride
 
 int __cdecl council_votes(int faction_id);
+int __cdecl council_get_vote(int faction_id, int proposal, int target_faction);
 void __cdecl call_council(int faction_id);
 BOOL __cdecl eligible(int faction_id);
+void __cdecl council_action(int proposal, int faction_id);
+extern int CouncilResolutionCount[MaxProposalNum];
+extern int CouncilLastResolutionTurn[MaxProposalNum];
+extern int CouncilPbemGate;
+extern int CouncilDialogActive;
+extern int CouncilNotifyFormSlots[8];
+extern int CouncilNotifyPluralSlots[8];
+void __cdecl clear_council_notify();
+void __cdecl clear_council_notify(int faction_id);

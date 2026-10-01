@@ -1,0 +1,28 @@
+{
+  "event_id": "342d2ccf3f5a8debc0a1b6dbc831f157212d92a2f9af57d6e48cf7d053494aa0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_council_vote_purchase.py",
+      "src/faction.cpp",
+      "src/faction.h"
+    ],
+    "evidence": [
+      "CouncWin.on_left_click425050 requires genuine buy_council_vote53EB50..540193 plus65E75A..65EB33, currentlyseed-only. Declare theoriginalvoidcdeclfourintinterfaceinfaction.h, retainfullseed. Root owns any unfinishedmappedemptyowningfaction.cpp dependencyforbuildcontinuity untilfullownerbodyrecovery; itdoesnotcountascoverageorreplaceanyrecoveredbehavior. Councilwindowworkerremainsrestrictedtocouncwin.cpp/test; nooutsideowneredits.",
+      "Root will assignfullvote-purchaseownerrecoveryaftercurrentCouncilactionreview/collection. Missinginterfaceisnotpermissiontocopy6KBbodyintoCouncWin, usefixedaddressforwarderorclaimacceptedgamebehavior. Existingfactiontaskbaselines/claims/retainedworkpreserved; no automatic scopeconflict waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5499728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f0af1b3c0484eef01974873a136e32dbccf13500645596705c57b337b5799163",
+  "request_id": "council-vote-purchase-interface-20261001",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:interface-contract-report-closure"
+}

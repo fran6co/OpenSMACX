@@ -20,6 +20,28 @@
 #include "council.h"
 #include "base.h"
 
+// council_action increments a proposal's resolution count and records the
+// current turn before dispatching its effect. setup_game's native paired
+// reset loop (005B3A7A..3A90) independently establishes eleven signed entries
+// in each table; its owning implementation remains unfinished.
+// RECOVERY_OBJECT: v2 0x009A6618 0x009A6644 ?CouncilResolutionCount@@3PAHA 0x005B3920
+int CouncilResolutionCount[MaxProposalNum];
+// RECOVERY_OBJECT: v2 0x009A6644 0x009A6670 ?CouncilLastResolutionTurn@@3PAHA 0x005B3920
+int CouncilLastResolutionTurn[MaxProposalNum];
+
+// make_resolution publishes per-faction notifications; both overloads of
+// clear_council_notify clear these same eight signed cells per table.
+// RECOVERY_OBJECT: v2 0x00703DE8 0x00703DEC ?CouncilPbemGate@@3HA 0x0052C670
+// PBEM resolution stores the calling faction ID here, not a boolean.
+int CouncilPbemGate;
+// init raises this modal-council flag; key/button teardown clears it.
+// RECOVERY_OBJECT: v2 0x00703DE4 0x00703DE8 ?CouncilDialogActive@@3HA 0x00427230
+int CouncilDialogActive;
+// RECOVERY_OBJECT: v2 0x00703DEC 0x00703E0C ?CouncilNotifyFormSlots@@3PAHA 0x004243F0
+int CouncilNotifyFormSlots[8];
+// RECOVERY_OBJECT: v2 0x00703E0C 0x00703E2C ?CouncilNotifyPluralSlots@@3PAHA 0x004243F0
+int CouncilNotifyPluralSlots[8];
+
 // The council dialog remains an explicit dependency of MultiWin's button
 // callback. Its full historical body is retained in the seed, not discarded.
 // ORIGINAL: 0x0052C880 ?call_council@@YAXH@Z 0x0052C880-0x0052DA98;0x0065DB70-0x0065DF45

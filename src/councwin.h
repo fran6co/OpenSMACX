@@ -53,6 +53,12 @@ class CouncWin : public GraphicWin, public SubInterface {
   void close();
   void arrived(int faction_id);
   void draw_all_leaders();
+  int make_resolution(int option);
+  void set_vote(int faction_id, int vote);
+  void on_left_click(int x, int y);
+  int on_key_click(int key, int flags);
+  void draw_info();
+  void init(int proposal, int faction_id);
   void on_mouse_leave(int a1, int a2);
   void on_mouse_move(int x, int y);
   // 0x00428620, defined out of line at the foot of councwin.cpp: the image

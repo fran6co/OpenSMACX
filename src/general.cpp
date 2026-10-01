@@ -16,6 +16,7 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "council.h"
 #include <math.h> // sin(double), lowered to the CRT's _sin
 #include <ddraw.h>  // IDirectDraw::Release in the DirectDraw teardown stage
 // _disable / _enable for sub_5d4240, the VGA DAC loader - real VC6 intrinsics
@@ -3462,11 +3463,6 @@ extern "C" void __cdecl sub_5d29e1(int *src, int *dst) {
 //    prologue), it had enough register pressure to do so. That is a
 //    hard case - the tool reports a similarity ratio so you can tell a
 //    near miss from a wrong body.
-
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const CouncilNotifyFormSlots = (int *)0x00703DEC;
-static int *const CouncilNotifyPluralSlots = (int *)0x00703E0C;
 
 void __cdecl clear_council_notify() {
     memset(CouncilNotifyPluralSlots, 0, 8 * sizeof(int));

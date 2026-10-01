@@ -1,0 +1,38 @@
+{
+  "event_id": "f0af1b3c0484eef01974873a136e32dbccf13500645596705c57b337b5799163",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_council_notification_storage.py",
+      "src/general.cpp",
+      "src/general.h"
+    ],
+    "evidence": [
+      "CouncWin.make_resolution424410 writes notificationarrays703DEC/703E0C andPBEMgate703DE8; existinggeneral.cppclear_council_notify4243D0/4243F0 clears8integersperarray whilecan_call_council52C670 inleaf_recoveries.cpp readsPBEMgate. Root alone substitutesgenuinecouncil.cpp-owned scalar/arraystorage andpubliccouncil.hdeclarations; modifiesonlythese boundedconsumers/includes. Scopeinleaf_recoveries.cppalreadyexists; no unrelatedleafmigration.",
+      "PreservebothhistoricalBYTE_EXACTclaims andiginalclearnotifyidentities/spans. Freshmeasurementsrequired samestep, neverdemoteorrevertrealstateownershipautomatically. Retainseedhistory and sourceviews. Native8DWORDmemset/mov observations plusindexedfactionwrites establish logicaleightnotificationcells; noPBEMlifetimeorfull-gameacceptanceisclaimed."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4342736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4342768,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5424752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d8089b919ca8eff03eea6aaf05721787c5f837acdc2bcc582ab57d56a9f79af7",
+  "request_id": "council-notifications-owned-storage-20261001",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:interface-contract-report-closure"
+}

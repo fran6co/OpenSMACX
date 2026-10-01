@@ -1,0 +1,25 @@
+{
+  "event_id": "b32eaaea896283a42f56bf46778372f258bf599a1389da92b24acd0b9df2d2a1",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_setup_game_behavior.py"
+    ],
+    "evidence": [
+      "Authorize fullsetup_game5B3920..5B4201 implementationinexistingownergame.cpp, then retireonlyitsoldemptydefinitioninpending_bodies.cpp preservingnativebinding/seed/claims. Originalinterface-taskbaselineunchanged. Resetonlyfullnativebehaviornotadditionalad_hocinithelper. Rootwillprepareisolatedgameworkeraftersharedstoragestepcommitted; no initializeracceptanceisclaimedbeforefullrecovery."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5978400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b4e6c97c498faba915316127b6b9512e69ec0600a41585fb9c516762139d9a79",
+  "request_id": "council-setup-game-reset-owner-20261001",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:interface-contract-report-closure"
+}

@@ -2786,39 +2786,37 @@ void __cdecl load_vehicles() {
 // flags     hidden;sp_ready;purged_ok
 // calls     0x0046B190 0x0048C0A0 0x005C5A30
 
-// The const-pointer spelling reproduces the original's
-// encoding including the address; `extern T *g` does not.
-static int *const SeaRisingSpritePath = (int *)0x0068B594;
-static int *const SeaRisingSpriteLabel = (int *)0x0068B5A4;
-static int *const SeaFallingSpritePath = (int *)0x0068B5B0;
-static int *const SeaFallingSpriteLabel = (int *)0x0068B5C0;
-static int *const ClimateRiseStep = (int *)0x009A67CC;
-static int *const ClimateRiseLimit = (int *)0x009A67D0;
-static int *const ClimateRiseAccum = (int *)0x009A67D4;
-static int *const ClimateSeaLevelDelta = (int *)0x009A67D8;
+// Council shade/melt resolutions write these cells; the turn-phase consumer
+// advances the accumulated sea-level change against the same signed counters.
+// RECOVERY_OBJECT: v2 0x009A67CC 0x009A67D0 ?ClimateRiseStep@@3HA 0x00524210
+int ClimateRiseStep;
+// RECOVERY_OBJECT: v2 0x009A67D0 0x009A67D4 ?ClimateRiseLimit@@3HA 0x00524210
+int ClimateRiseLimit;
+// RECOVERY_OBJECT: v2 0x009A67D4 0x009A67D8 ?ClimateRiseAccum@@3HA 0x00524210
+int ClimateRiseAccum;
+// RECOVERY_OBJECT: v2 0x009A67D8 0x009A67DC ?ClimateSeaLevelDelta@@3HA 0x00524210
+int ClimateSeaLevelDelta;
 
 void __cdecl climactic_changes() {
     int sign;
 
-    if (*ClimateSeaLevelDelta != 0) {
-        *ClimateRiseAccum += *ClimateRiseStep;
-        if (*ClimateRiseLimit <= *ClimateRiseAccum) {
-            *ClimateRiseAccum -= *ClimateRiseLimit;
-            if (*ClimateSeaLevelDelta > 0) {
+    if (ClimateSeaLevelDelta != 0) {
+        ClimateRiseAccum += ClimateRiseStep;
+        if (ClimateRiseLimit <= ClimateRiseAccum) {
+            ClimateRiseAccum -= ClimateRiseLimit;
+            if (ClimateSeaLevelDelta > 0) {
                 sign = 1;
             } else {
-                sign = (*ClimateSeaLevelDelta >= 0) - 1;
+                sign = (ClimateSeaLevelDelta >= 0) - 1;
             }
-            *ClimateSeaLevelDelta -= sign;
+            ClimateSeaLevelDelta -= sign;
             MapSeaLevel += sign;
             world_climate();
             draw_map(1);
             if (sign > 0) {
-                popp((char *)*ClimatePopupTitle, (const char *)SeaRisingSpriteLabel, 0,
-                     (const char *)SeaRisingSpritePath, 0);
+                popp(ScriptPopupFile, "SEARISING", 0, "searis_sm.pcx", 0);
             } else {
-                popp((char *)*ClimatePopupTitle, (const char *)SeaFallingSpriteLabel, 0,
-                     (const char *)SeaFallingSpritePath, 0);
+                popp(ScriptPopupFile, "SEAFALLING", 0, "seafal_sm.pcx", 0);
             }
         }
     }

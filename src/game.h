@@ -189,6 +189,10 @@ extern int ExitTurnLoop;  // 0x009B2068
 extern int EndgameFactionSelectorA;
 extern int EndgameFactionSelectorB;
 extern int EndgameExitReason;
+extern int ClimateRiseStep;
+extern int ClimateRiseLimit;
+extern int ClimateRiseAccum;
+extern int ClimateSeaLevelDelta;
 
 // Shared cover window hidden by go_reset and shown/painted by the main loop.
 extern GraphicWin CoverWindow;  // 0x00937118

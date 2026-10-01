@@ -327,6 +327,7 @@ struct Player {
     int rule_psi;
     int rule_sharetech;
     int rule_commerce;
+    // RECOVERY_MEMBER: v1 Player rule_flags 0x508 0x0052BF60
     int rule_flags;
     int faction_bonus_count;
     int faction_bonus_id[8];
@@ -1064,3 +1065,4 @@ MEASURED inline LPSTR __cdecl get_noun(int faction_id) {
 
 int __cdecl setup_player(int faction_id, int conqueror, int retry);
 int __cdecl eliminate_player(int faction_id, int conqueror);
+void __cdecl buy_council_vote(int, int, int, int);

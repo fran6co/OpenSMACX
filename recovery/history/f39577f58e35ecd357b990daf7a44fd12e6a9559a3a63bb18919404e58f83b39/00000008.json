@@ -1,0 +1,20 @@
+{
+  "event_id": "b4e6c97c498faba915316127b6b9512e69ec0600a41585fb9c516762139d9a79",
+  "payload": {
+    "affects": [
+      "entity-5a67190ddd6e8ee1cdbdade8a450af2b2c7def28b153691e61adf40fe43cad04"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "council-climate-per-game-reset-20261001",
+    "evidence": [
+      "Pinnednative005B3A7A..3A90 clears9A6618 indexedpairedwith9A6644=-9999, step4/end9A6670: elevenentries. 005B3A97..3AAB zeros9A67CC/D0/D4/D8. Originalsetup_game5B3920..5B4201 currentlymappedemptyinsrc/pending_bodies.cpp; fullseed retained src/unrecovered/005b3920.cpp. No change tohistoricalclaimorautomaticacceptancepolicy; keepthisbehaviorgap pendinguntilcompleteownerrecovery."
+    ],
+    "hypothesis": "The recovered Council effects and climate consumer require native per-game state reset, not just global static initialization. setup_game remains an explicit empty pending body; its full recovery must reset both eleven-proposal arrays (count0,lastturn-9999) and allfour climate counters on everygame initialization.",
+    "kind": "discovery"
+  },
+  "previous_event": "342d2ccf3f5a8debc0a1b6dbc831f157212d92a2f9af57d6e48cf7d053494aa0",
+  "request_id": "council-climate-per-game-reset-20261001",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:interface-contract-report-closure"
+}

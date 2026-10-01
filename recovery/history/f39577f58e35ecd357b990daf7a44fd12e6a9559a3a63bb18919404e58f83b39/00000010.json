@@ -1,0 +1,24 @@
+{
+  "event_id": "efa28e879e275bbb2824a5bd93c26971355b954b86e66941f3997ceaf8f1e5c7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Freshobjectverificationdetectedoverlap:base.cpp CommerceDoubleTarget9A6624 andCommerceDoubleProgress9A6628 areexactCouncilResolutionCount[3] and[4] (base9A6618 +12/+16). Nativecouncil_actionincrementsrawproposalindexincluding3/4; setup_game resetscanonicalelevenentries. Useoneactualarray, removeincorrectindependent scalarstorage/externs/objectbindings andreadtyped PROP_GLOBAL_TRADE_PACT/PROP_REPEAL_GLOBAL_TRADE_PACT indicesinbase_energy; preservehistoricalscalarinterpretationfacts in explanatorysourcecomment andarraymapping. Rooteditsonlythisbase_energyread/twodefs/base.holddecls pluscouncilinclude; existingbasefilesalreadyauthorized.",
+      "Thisdoesnotresolvebase_energyremainingpartialtailorauthorizepreviouslydeferredalienuninitializedsubtotalbehaviorfix. PreservefunctionORIGINALmapping, seed, allclaims and currentbehavior. Matching/referencechecks/fullbuildrequired; outsideinitializerandfullruntime proofremainunknown."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5158240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b32eaaea896283a42f56bf46778372f258bf599a1389da92b24acd0b9df2d2a1",
+  "request_id": "council-commerce-counter-subviews-20261001",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:interface-contract-report-closure"
+}

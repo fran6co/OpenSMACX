@@ -1,0 +1,28 @@
+{
+  "event_id": "d8089b919ca8eff03eea6aaf05721787c5f837acdc2bcc582ab57d56a9f79af7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_council_climate_storage.py",
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Native council_action52BF60 shade/melt paths share9A67CC/D0/D4/D8 with climactic_changes524210. Currentgame.cpp aliases these as fixedintpointers. Root alone replaces aliaseswithrealintscalarstorageanddeclarations, rewiresonlyclimactic_changes plusdecodedSEARISING/SEAFALLING popup literals and ScriptPopupFile691B0C. Preserveunclaimedoriginal524210identity/fullspanandseeds; no bytebank/demotion/behaviorfix.",
+      "9502E0 is WorldBuilder.sea_level_rises: typedRulesWorldbuilderbase9502A8+38, existingloaderalpha.cpp561. Notnewglobal. CouncWinworkingbuffer7AEC64 is existingMainInterfaceGlobal secondaryBufferbase+444, withrect2_+30 andpublicGraphicWin.buffer_working_rect; no inventedobjectorlayout required. Sourceowners and lifetimes take precedence over address aliases."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5390864,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "97d0d4d4cd7b0114791d2e53d728847a56af527d838b1798c01aacd6676f8e05",
+  "request_id": "council-climate-owned-storage-20261001",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:interface-contract-report-closure"
+}
