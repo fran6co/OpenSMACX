@@ -63,6 +63,20 @@
 
 void __cdecl base_kill(int base_id);
 extern int BaseAtKeyPollFlag;
+
+// Shared tutorial popup caption: the original pointer cell selects the
+// six-byte TUTOR string, not the adjacent WIZARD caption.
+// RECOVERY_OBJECT: v2 0x00691B8C 0x00691B92 ?TutorialPopupCaptionText@@3PADA 0x00511800
+char TutorialPopupCaptionText[6] = "TUTOR";
+// RECOVERY_OBJECT: v2 0x00691B14 0x00691B18 ?TutorialPopupCaption@@3PADA 0x00511800
+char *TutorialPopupCaption = TutorialPopupCaptionText;
+
+// assemble uses Popup's shared checkbox result word for Vehicle Groups;
+// do not duplicate the source-owned storage in popup.cpp.
+extern int PopupWriteCheckState;
+// The adjacent action selector distinguishes grouping versus removal.
+// RECOVERY_OBJECT: v2 0x009BC070 0x009BC074 ?ConsoleGroupAction@@3HA 0x004D95F0
+int ConsoleGroupAction;
 void __cdecl kill(int veh_id);
 void __cdecl read_faction(int player_id);
 int __cdecl veh_pick(int veh_id, const char *label, int flags);

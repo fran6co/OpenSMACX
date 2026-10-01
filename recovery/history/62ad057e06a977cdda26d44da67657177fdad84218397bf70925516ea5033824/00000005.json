@@ -1,0 +1,19 @@
+{
+  "event_id": "d517f996d479f1d985f11b27bf9cb0c9c30de09b06cb0f7093eb5570c20b4a68",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/tutwin.h"
+    ],
+    "evidence": [
+      "Native turn_hints511800 tests8CC210, existing TutWinGlobal8C6E68+53A8 private field. Root alone adds a const nonzero read accessor without changing layout or lifecycle and transfers it centrally. Console-owned caption691B14 points to691B8C TUTOR (not691B94 WIZARD); bounded pointer/backing definitions and9BC06C/070 group DWORD state belong in already authorized console.cpp. Preserve all seeds, claims, task baselines and worker source. No behavior-change permission or acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "3d91105d1c6ae7a610ef2dfd3ee261816c4e52847eabd3f9fb6809fe165f11e9",
+  "request_id": "console-tutorial-read-api-20261001-master",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:console-scenario-owner-wave"
+}

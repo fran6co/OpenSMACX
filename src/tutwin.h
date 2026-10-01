@@ -72,6 +72,8 @@ class TutWin : public Popup {
   // DesignWin's modal setup advances the tutorial before opening its callout.
   // Keep the stage in its existing, image-pinned dword at 0x53C0.
   void set_tour_stage(int stage) { field_53C0_ = static_cast<uint32_t>(stage); }
+  // Console::turn_hints tests the existing tutorial guard before any callout.
+  bool tutorial_blocked() const { return field_53A8_ != 0; }
   void on_button_clicked(int button_id);
   static void __cdecl base_draw(Sprite *unused_sprite, GraphicWin *window,
                                 int mode, int pixel_x, int pixel_y);
