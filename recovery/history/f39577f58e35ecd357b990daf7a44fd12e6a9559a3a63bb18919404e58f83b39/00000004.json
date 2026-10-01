@@ -1,0 +1,70 @@
+{
+  "event_id": "97d0d4d4cd7b0114791d2e53d728847a56af527d838b1798c01aacd6676f8e05",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_council_action_behavior.py",
+      "recovery/tests/test_councwin_remaining_behavior.py",
+      "src/council.cpp",
+      "src/council.h"
+    ],
+    "evidence": [
+      "Recover the eight substantive remaining CouncWin methods424410,424720,424870,425050,425BA0,426470,426AA0,427230 as a single typed class owner batch. Root original interface-task baseline b60ef628 and all decisions stay intact. Exclude427150 hide thunk/signature conflict until separately proved. Current genuine CouncWin hierarchy/widgets/layout established on master; do not reintroduce earlier scaffold receiver/vtables or raw offsets. Preserve original spans, claims, seeds and provisional structural evidence.",
+      "Central scope adds the required separate council_action52BF60 implementation and owning council.cpp/h, with disjoint source workers: CouncWin worker edits only councwin.cpp/test_councwin_remaining_behavior.py; council worker only council.cpp/test_council_action_behavior.py. Root alone edits headers and original/symbol bindings, publishes decisions, compiles, links and mutates Git. Dependencies must be traced and recovered, not executable-address forwarding. No behavior fixes, silent omissions or recovered-code substitution with placeholders.",
+      "Retained interface-report-closure changes are preserved untouched; its CouncWin delta is the prior shared-interface callbacks already integrated in current master, not these eight missing methods. Historical infowin-ownership/vector-value-semantics/control-sprite-defaults/frontend-presentation scopes also name426AA0; preserve their restoration obligations. No worker is authorized to resume those historical overlapping scopes concurrently. This is coordinator-reviewed source work, not autonomous-driver conflict clearance, reset baseline or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4342800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4343584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4343920,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4345936,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4348832,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4351088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4352672,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4354608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5422944,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "25b976e2cc6dfc1b874aaacf197eeae0912ea6e88c2a8c893f8b16c3461c55a1",
+  "request_id": "councwin-eight-and-council-action-20261001",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:interface-contract-report-closure"
+}
