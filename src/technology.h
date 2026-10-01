@@ -21,6 +21,7 @@ extern int TechAchievedGate;
 
 // Network-aware research choice, source-owned by technology.cpp.
 int __cdecl tech_selection(int faction);  // 0x005BE380
+void __cdecl tech_secret(int tech_id, int faction_id);
 
  /*
   * Technology related objects, variables and functions.

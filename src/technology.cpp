@@ -51,6 +51,19 @@ extern char *TutorialPopupCaption;
 extern int FirstProposedPrototype;
 extern int SpyingBaseIndex;
 
+// ORIGINAL: 0x005BADC0 ?tech_secret@@YAXHH@Z 0x005BADC0-0x005BAE54 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005badc0.cpp", "image:terranx_original.exe:0x005BADC0", "Pinned5BADDE parser0 then5BADFF parser1; literal6916F0 THESECRET, loaded Technology+4 name pointer and Player+304 adjective; live ConsoleGlobal local faction read follows caption append.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Technology announcement uses loader-owned Technology.name and Player faction adjective; preserves parser order and native local/remote caption suffix."}
+void __cdecl tech_secret(int tech_id, int faction_id) {
+    // RulesTechnology::name is the loader-owned string address, not an
+    // ordinal. parse_say retains the original 32-bit integer-pointer ABI.
+    parse_say(0, reinterpret_cast<intptr_t>(Technology[tech_id].name), -1, -1);
+    parse_says(1, Players[faction_id].adj_name_faction, -1, -1);
+    StringTemp[0] = '\0';
+    strcat(StringTemp, "THESECRET");
+    say_num(faction_id != ConsoleGlobal.faction_id_);
+    X_pop(StringTemp, 0);
+}
+
 // The native propagation paths exclude technology88 and disabled rule
 // entries. Ownership is checked separately and reloaded after callbacks.
 static bool technology_shareable(int tech_id) {

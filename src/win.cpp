@@ -4171,6 +4171,126 @@ void __stdcall sub_5f86a0(int window) {
     }
 }
 
+// Native task pumps drain paint messages first, then poll ordinary messages
+// before the WM_USER-and-higher range. The network's 0x402 notification is
+// consumed by its actual owner instead of being sent to a window procedure.
+// ORIGINAL: 0x005FC7F0 ?do_task@@YAHXZ 0x005FC7F0-0x005FC8E8
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc7f0.cpp", "image:terranx_original.exe:0x005FC7F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+int __cdecl do_task() {
+    MSG message;
+    MsgStatus = 0;
+    do_video();
+    do_net();
+    check_net();
+    MsgStatus = 1;
+    for (;;) {
+        do_video();
+        check_net();
+        do_net();
+        if (!PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
+            break;
+        }
+        TranslateMessage(&message);
+        DispatchMessageA(&message);
+        MsgStatus = 1;
+    }
+    MsgStatus = 0;
+    if (!PeekMessageA(&message, 0, 0, WM_USER, PM_REMOVE)) {
+        if (!PeekMessageA(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
+            return 0;
+        }
+        if (message.message == 0x402) {
+            if (ActiveNet != 0) {
+                ActiveNet->handle_sys_msg();
+            }
+            return 1;
+        }
+    }
+    TranslateMessage(&message);
+    DispatchMessageA(&message);
+    return 1;
+}
+
+// ORIGINAL: 0x005FC700 ?wait_task@@YAXXZ 0x005FC700-0x005FC7E4
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc700.cpp", "image:terranx_original.exe:0x005FC700", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+void __cdecl wait_task() {
+    MSG message;
+    MsgStatus = 0;
+    do_video();
+    do_net();
+    check_net();
+    MsgStatus = 1;
+    for (;;) {
+        do_video();
+        check_net();
+        do_net();
+        if (!PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
+            break;
+        }
+        TranslateMessage(&message);
+        DispatchMessageA(&message);
+        MsgStatus = 1;
+    }
+    MsgStatus = 0;
+    if (!PeekMessageA(&message, 0, 0, WM_USER, PM_REMOVE)) {
+        if (!PeekMessageA(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
+            return;
+        }
+        if (message.message == 0x402) {
+            if (ActiveNet != 0) {
+                ActiveNet->handle_sys_msg();
+            }
+            return;
+        }
+    }
+    TranslateMessage(&message);
+    DispatchMessageA(&message);
+}
+
+// ORIGINAL: 0x005FC8F0 ?do_all_tasks@@YAXXZ 0x005FC8F0-0x005FC9DE
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/005fc8f0.cpp", "image:terranx_original.exe:0x005FC8F0", "Pinned5FC74A..757 and5FC83A..847 both poll0xF..0xF. Only high-range402 messages route ActiveNet.handle_sys_msg; null network consumes them. do_all_tasks continues until empty and calls do_net after final MsgStatus=0.", "Coordinator-owned core-pump-secret-owner-20261001 scope; preserved original seeds and historical obligations, no matching/runtime claim from binding"], "reason": "Recover the native message pump using SDK MSG/USER32, existing MsgStatus and ActiveNet storage. Preserve paint-first and low/high queue priority, helper order and dedicated network notification dispatch."}
+void __cdecl do_all_tasks() {
+    MSG message;
+    for (;;) {
+        for (;;) {
+            MsgStatus = 0;
+            do_video();
+            do_net();
+            check_net();
+            for (;;) {
+                MsgStatus = 1;
+                do_video();
+                check_net();
+                do_net();
+                if (!PeekMessageA(&message, 0, WM_PAINT, WM_PAINT, PM_REMOVE)) {
+                    break;
+                }
+                TranslateMessage(&message);
+                DispatchMessageA(&message);
+            }
+            MsgStatus = 0;
+            if (!PeekMessageA(&message, 0, 0, WM_USER, PM_REMOVE)) {
+                break;
+            }
+            TranslateMessage(&message);
+            DispatchMessageA(&message);
+        }
+        if (!PeekMessageA(&message, 0, WM_USER, 0xFFFF, PM_REMOVE)) {
+            MsgStatus = 0;
+            do_net();
+            return;
+        }
+        if (message.message == 0x402) {
+            if (ActiveNet != 0) {
+                ActiveNet->handle_sys_msg();
+            }
+        } else {
+            TranslateMessage(&message);
+            DispatchMessageA(&message);
+        }
+    }
+}
+
 /*
 Purpose: Drain every pending WM_CHAR, pumping video and net between polls.
          HOMED from src/recovered/005fcfe0.cpp on 2026-08-25. Its three

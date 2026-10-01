@@ -905,6 +905,9 @@ extern Win *WinPointerOwner3;  // 0x009B7ABC
 extern Win *WinPointerOwner4;  // 0x009B7AC0
 
 int __cdecl do_char();
+int __cdecl do_task();
+void __cdecl wait_task();
+void __cdecl do_all_tasks();
 int __cdecl do_mouse();
 void __cdecl do_all_mouse();
 void __cdecl flush_keyboard();
