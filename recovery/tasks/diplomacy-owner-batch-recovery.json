@@ -1,0 +1,57 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b3b063baa3c39aa924939368323af80cff7e70de",
+  "editable_files": [
+    "src/faction.cpp",
+    "src/faction.h",
+    "src/pending_bodies.cpp",
+    "recovery/tests/test_diplomacy_owner.py",
+    "recovery/tests/diplomacy-owner-harness.cpp",
+    "recovery/tests/test_diplomacy_lifecycle.py",
+    "recovery/tests/diplomacy-lifecycle-harness.cpp"
+  ],
+  "evidence": [
+    "Pinned original bodies543A20,548F80,54CF40,50BCC0,53C650 and dependency50BA50/53C370; native member/global/lifetime evidence must drive source. Shared workflow cells93FAB0/93FAD8 need one source-owned definition, with seed-only producers/consumers retained as explicit remaining obligations. No byte claim granted or baseline reset; no whole-game acceptance implied."
+  ],
+  "intent": "Recover complete diplomacy ownership batch: map exchange, withdrawal, base gifting, betrayal and pact termination, plus real intervention and pact-withdraw dependencies. Use genuine game records and Popup lifetimes; preserve all seeds, mappings, historical claims and newly discovered structural obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5519904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5541760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5558080,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5291200,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5490256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5290576,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5489520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "diplomacy-owner-batch-recovery"
+}
