@@ -1,0 +1,20 @@
+{
+  "event_id": "39491051e34424a9273482f150f9e8432af2341ee78168b9a31c1c8b35346ed0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/unrecovered/005bb000.cpp"
+    ],
+    "evidence": [
+      "The legacy seed contains exactly one mapped tech_achieved identity, two original spans, no historical BYTE_EXACT or semantic claim and no independent LEVER/TRIED records. The full typed owner now preserves those spans and native control phases; discarded seed assumptions are contradicted by pinned instructions and actual-source fixtures, not silently retained as source correctness.",
+      "After source-owned provenance points to git:8b777a51:src/unrecovered/005bb000.cpp through the native binding renderer/publication guard, retire only this duplicated uncompiled scaffold. Git retains its complete manual/Ghidra draft and mappings; immutable task baseline remains b60ef628. Keep all other worker WIP and discoveries. This is coordinator-reviewed rough source coverage, not byte-exact, strict reference/lifetime, runtime, native autonomous or full-game acceptance; final build/link, original claim continuity and relevant regressions must still pass before the C++ checkpoint."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "9516dfcf242da58f41328d05cd0345f891401d44c7692cb01d5a96c6a030b096",
+  "request_id": "technology-achieved-unclaimed-seed-retirement-20261001",
+  "schema_version": 1,
+  "sequence": 42,
+  "stream": "task:interface-contract-report-closure"
+}
