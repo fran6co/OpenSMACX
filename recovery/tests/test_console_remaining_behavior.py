@@ -115,6 +115,439 @@ int main() {
     subprocess.run([str(executable)], check=True, capture_output=True, text=True)
 
 
+def test_upgrade_entry_guards_preserve_native_lock_and_slot_order(tmp_path):
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    harness = r'''
+#include <algorithm>
+#include <cassert>
+#include <cstdint>
+#include <cstring>
+#include <string>
+#include <vector>
+#define __cdecl
+const int MaxVehProtoNum=512,MaxVehProtoFactionNum=64;
+const int MaxAbilityNum=29;
+const int TRIAD_AIR=2, TRIAD_SEA=1, RFLAG_ALIEN=0x80;
+const int PROTO_TYPED_COMPLETE=4;
+struct Veh { int faction_id=0, moves_expended=0, proto_id=0; uint8_t morale=0; int x=4,y=6; } Vehs[8];
+struct VehPrototype { char veh_name[32]{}; uint32_t ability_flags=0;
+  uint8_t chassis_id=0,weapon_id=0,armor_id=0,reactor_id=0;
+  uint8_t carry_capacity=0,cost=0,plan=0; int8_t unk_1=0; uint8_t obsolete_factions=0;
+  int8_t combat_factions=0,icon_offset=0,padding=0; uint16_t flags=0; int16_t preq_tech=0;
+} VehPrototypes[MaxVehProtoNum];
+struct ChassisEntry { uint8_t triad=0; } Chassis[8];
+struct Player { int rule_flags=0; } Players[8];
+struct PlayerData { int energy_reserves=100000, ranking=0, ai_power=0, ai_wealth=0;
+  int current_num_bases=0; uint8_t proto_id_active[512]{}; } PlayersData[8];
+struct RulesAbility { char *name=nullptr; char *abbreviation=nullptr; } Ability[MaxAbilityNum];
+struct WeaponEntry { char pad[8]{}; int8_t offense_rating=0; } Weapon[8];
+struct ArmorEntry { char pad[8]{}; int8_t defense_rating=0; } Armor[8];
+int AbilityChecks=0, UpgradeCostCalls=0;
+int ParseNumMutationSlot=-1, ParseNumMutationEnergy=-1;
+int ExpectedFaction=0;
+int ExpectedOldProto=0, ExpectedPriceProto=0;
+int has_abil(int proto,int ability) { ++AbilityChecks; return (VehPrototypes[proto].ability_flags & static_cast<uint32_t>(ability)) != 0; }
+int upgrade_cost(int faction,int old_proto,int new_proto) {
+    const int expected=UpgradeCostCalls==0?ExpectedOldProto:ExpectedPriceProto;
+  assert(faction==ExpectedFaction && old_proto==expected); ++UpgradeCostCalls; return new_proto+10;
+}
+struct Strings { char *get(int value) {
+  if(value==1) return const_cast<char *>("ABBR");
+  if(value==2) return const_cast<char *>("LONGNAME");
+  return const_cast<char *>("ABILITY");
+} } StringTable;
+std::vector<std::string> events;
+void parse_num(int slot,int value) {
+  events.push_back("parse-num:"+std::to_string(slot)+":"+std::to_string(value));
+  if(slot==ParseNumMutationSlot) { PlayersData[ExpectedFaction].energy_reserves=ParseNumMutationEnergy; ParseNumMutationSlot=-1; }
+}
+int PcxResult=1, PcxCalls=0, SpriteInitResult=0, MutateAfterPcxTo=-1;
+std::string FirstPcxFile, SpriteInitFile;
+int SpriteInitWidth=0, SpriteInitHeight=0;
+struct Buffer { static int get_pcx_dimensions(const char *file,int *width,int *height) {
+  ++PcxCalls; FirstPcxFile=file; *width=64; *height=32;
+  if(MutateAfterPcxTo>=0) { Vehs[2].proto_id=MutateAfterPcxTo; MutateAfterPcxTo=-1; }
+  return PcxResult;
+} };
+struct Sprite { int init(char *file,int width,int height) {
+  SpriteInitFile=file; SpriteInitWidth=width; SpriteInitHeight=height;
+  events.push_back(std::string("sprite-init:")+file);
+  return SpriteInitResult;
+} };
+char StringTemp[1032], PopupStartCaption[256]="CAPTION";
+char ScriptPopupFile[]="SCRIPT";
+int ParseVehicle=-1, ParsePrototype=-1;
+int ParseMutationMode=-1;
+int ConfirmationResult=1, BudgetPopupCalls=0, ConfirmationCalls=0;
+int MutateOnConfirmVehicle=-1, MutateOnConfirmPrototype=-1;
+std::string LastPoppLabel,LastPoppPicture;
+int parse_says(int mode,const char *text,int gender,int plural) {
+  assert((mode==0 || mode==1) && gender==-1 && plural==-1);
+  events.push_back(std::string("parse:")+text);
+  if(ParseVehicle>=0 && mode==ParseMutationMode)
+    Vehs[ParseVehicle].proto_id=ParsePrototype;
+  return 0;
+}
+int pop_wait() { return 0; }
+int popp(const char *caption,const char *label,int flags,const char *picture,int(*callback)()) {
+  assert(std::strcmp(caption,"SCRIPT")==0 && flags==0);
+  LastPoppLabel=label; LastPoppPicture=picture;
+  events.push_back(std::string("popp:")+label+":"+picture+":"+(callback?"wait":"plain"));
+  if(callback) { ++BudgetPopupCalls; return 0; }
+  if(MutateOnConfirmVehicle>=0)
+    Vehs[MutateOnConfirmVehicle].proto_id=MutateOnConfirmPrototype;
+  ++ConfirmationCalls; return ConfirmationResult;
+}
+void synch_energy(int id) { events.push_back("synch-energy:"+std::to_string(id)); }
+void synch_proto(int id) { events.push_back("synch-proto:"+std::to_string(id)); }
+void synch_veh(int id) { events.push_back("synch-veh:"+std::to_string(id)); }
+void draw_tile(int x,int y,int mode) { events.push_back("draw:"+std::to_string(x)+":"+std::to_string(y)+":"+std::to_string(mode)); }
+void veh_skip(int id) { events.push_back("skip:"+std::to_string(id)); }
+void say_stats_2(char *text,int proto) { std::strcat(text," "); std::strcat(text,std::to_string(proto).c_str()); }
+char *label_get(int offset) { assert(offset==88); return const_cast<char *>("ENERGY"); }
+int _itoa(int value,char *buffer,int radix) { assert(radix==10); std::sprintf(buffer,"%d",value); return value; }
+struct Dialogs { int item(char *text,int id) {
+  events.push_back(std::string("item:")+std::to_string(id)+":"+text); return 0;
+} };
+uint32_t LockEnableMask=0;
+int IsMultiplayerNet=0;
+int DiffLevelCurrent=1;
+uint32_t RankingFactionIDUnk1=0,RankingFactionIDUnk2=1;
+int LockResult=0, RewriteId=-1, Unlocks=0, ExecResult=-1, ExecCalls=0;
+int UnlockMutationProto=-1, UnlockMutationChassis=-1, UnlockMutationFlags=-1;
+int UnlockMutationPlayerFlags=-1;
+struct Popup { Popup(){events.push_back("popup-ctor");}
+  void close(){events.push_back("popup-close");}
+  int exec(int flags,int (*callback)()) { assert(flags==0 && !callback);
+    ++ExecCalls; events.push_back("exec"); return ExecResult; }
+  void start(char *caption,const char *label,int,char *,int flags) {
+    assert(std::strcmp(caption,"CAPTION")==0 && std::strcmp(label,"WHICHUPGRADE")==0 && flags==0x40);
+    events.push_back("start");
+  }
+  Dialogs &dialogs(){return dialog;}
+  Sprite &owned_picture(){return picture;}
+  void select_owned_picture(){events.push_back("picture-selected");}
+  Dialogs dialog;
+  Sprite picture;
+  ~Popup(){close();} };
+struct Msg { void pop(const char *label,int timeout,int flags,const char *target) {
+  assert(timeout==5000 && flags==0 && target==nullptr);
+  events.push_back(std::string("message:")+label);
+} } msg;
+Msg *NetMsgPopup=&msg;
+struct NetDaemon { int lock_veh(int *id,int mode,int a,int b,int c) {
+  assert(mode==0 && a==-1 && b==-1 && c==0); events.push_back("lock");
+  if(RewriteId>=0) *id=RewriteId;
+  return LockResult;
+} void unlock_veh(){++Unlocks;events.push_back("unlock");
+  if(UnlockMutationProto>=0) {
+    VehPrototypes[UnlockMutationProto].chassis_id=static_cast<uint8_t>(UnlockMutationChassis);
+    VehPrototypes[UnlockMutationProto].flags=static_cast<uint16_t>(UnlockMutationFlags);
+    Players[ExpectedFaction].rule_flags=UnlockMutationPlayerFlags;
+    UnlockMutationProto=-1;
+  }
+}
+  void await_synch(){events.push_back("await-synch");} } NetDaemonNet;
+class Console { public: int upgrade(int); };
+'''
+    harness += body_for("int Console::upgrade(int veh_id)") + r'''
+int main() {
+  Console c;
+  events.clear(); assert(c.upgrade(-1)==0);
+  assert((events==std::vector<std::string>{"popup-ctor","popup-close","popup-close"}));
+  events.clear(); Vehs[2].faction_id=0; Vehs[2].moves_expended=1;
+  LockEnableMask=1U<<0; IsMultiplayerNet=0; Unlocks=0; LockResult=0; RewriteId=-1;
+  assert(c.upgrade(2)==0);
+  assert((events==std::vector<std::string>{"popup-ctor","message:UNITMOVED2","popup-close","popup-close"}));
+  assert(Unlocks==0);
+  events.clear(); Vehs[2].moves_expended=0; LockEnableMask=1U<<0; LockResult=1;
+  assert(c.upgrade(2)==0);
+  assert((events==std::vector<std::string>{"popup-ctor","lock","popup-close","popup-close"}));
+  assert(Unlocks==0);
+  events.clear(); Vehs[2].moves_expended=0; Vehs[3].moves_expended=1;
+  RewriteId=3; LockResult=0; IsMultiplayerNet=1; LockEnableMask=1U<<0;
+  assert(c.upgrade(2)==0);
+  assert((events==std::vector<std::string>{"popup-ctor","lock","message:UNITMOVED","unlock","popup-close","popup-close"}));
+  assert(Unlocks==1);
+  events.clear(); RewriteId=-1; LockResult=0; Unlocks=0; LockEnableMask=1U<<0;
+  for(auto &p:VehPrototypes) p.flags=0;
+  assert(c.upgrade(2)==0);
+  assert((events==std::vector<std::string>{"popup-ctor","lock","parse: ( 0)","start","message:NOUPGRADE",
+    "unlock","popup-close","popup-close"}));
+  assert(Unlocks==1);
+
+  // The native pre-scan bypass suppresses every candidate for predefined
+  // designs with negative current offense, and for predefined design 15.
+  events.clear(); UpgradeCostCalls=0; Vehs[2].proto_id=0;
+  VehPrototypes[7].flags=1; VehPrototypes[7].chassis_id=0;
+  Weapon[0].offense_rating=-1;
+  assert(c.upgrade(2)==0 && UpgradeCostCalls==0);
+  assert((events==std::vector<std::string>{"popup-ctor","lock","parse: ( 0)","start",
+    "message:NOUPGRADE","unlock","popup-close","popup-close"}));
+  events.clear(); Vehs[2].proto_id=15; Weapon[0].offense_rating=0;
+  VehPrototypes[15].chassis_id=0; VehPrototypes[15].weapon_id=0;
+  assert(c.upgrade(2)==0 && UpgradeCostCalls==0);
+  assert((events==std::vector<std::string>{"popup-ctor","lock","parse: ( 15)","start",
+    "message:NOUPGRADE","unlock","popup-close","popup-close"}));
+
+  events.clear(); RewriteId=-1; Vehs[2].proto_id=0; Vehs[2].faction_id=0;
+  Vehs[2].moves_expended=0; LockEnableMask=1U<<0; UpgradeCostCalls=AbilityChecks=0;
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  VehPrototypes[0].flags=1; VehPrototypes[0].chassis_id=1;
+  VehPrototypes[0].weapon_id=1; VehPrototypes[0].armor_id=1;
+  VehPrototypes[1].flags=1; VehPrototypes[1].chassis_id=1; // eligible
+  VehPrototypes[1].weapon_id=3; // weaker than the current weapon
+  VehPrototypes[2].flags=1; VehPrototypes[2].chassis_id=2; // wrong chassis
+  VehPrototypes[3].flags=1; VehPrototypes[3].chassis_id=1;
+  VehPrototypes[3].obsolete_factions=1U<<0;
+  VehPrototypes[4].flags=1; VehPrototypes[4].chassis_id=1;
+  VehPrototypes[4].plan=4; // differing plan is enforced when either is >3
+  VehPrototypes[5].flags=1; VehPrototypes[5].chassis_id=2;
+  VehPrototypes[5].weapon_id=2; VehPrototypes[5].armor_id=3; // wrong chassis
+  VehPrototypes[6].flags=1; VehPrototypes[6].chassis_id=1;
+  VehPrototypes[6].weapon_id=2; VehPrototypes[6].armor_id=3; // higher offense and armor
+  Weapon[1].offense_rating=4; Weapon[2].offense_rating=5; Weapon[3].offense_rating=3;
+  Armor[1].defense_rating=2; Armor[2].defense_rating=3; Armor[3].defense_rating=4;
+  std::strcpy(VehPrototypes[0].veh_name,"OLD");
+  std::strcpy(VehPrototypes[6].veh_name,"NEW");
+  VehPrototypes[0].plan=0;
+  PlayersData[0].proto_id_active[0]=1;
+  PlayersData[0].proto_id_active[6]=0;
+  assert(c.upgrade(2)==1);
+  assert(AbilityChecks>=8 && UpgradeCostCalls==2);
+  assert(Vehs[2].proto_id==6 && PlayersData[0].energy_reserves==99840 &&
+         PlayersData[0].proto_id_active[0]==0 && PlayersData[0].proto_id_active[6]==1);
+  assert(ConfirmationCalls==1 && LastPoppLabel=="THISUPGRADE2" &&
+         LastPoppPicture=="unit_sm.pcx");
+  assert(std::find(events.begin(),events.end(),"popp:THISUPGRADE2:unit_sm.pcx:plain") <
+         std::find(events.begin(),events.end(),"synch-energy:0"));
+  assert((VehPrototypes[6].flags&PROTO_TYPED_COMPLETE)!=0 &&
+         std::find(events.begin(),events.end(),"synch-proto:6")!=events.end());
+  assert(std::find(events.begin(),events.end(),"await-synch") <
+         std::find(events.begin(),events.end(),"synch-proto:6") &&
+         std::find(events.begin(),events.end(),"synch-proto:6") <
+         std::find(events.begin(),events.end(),"unlock"));
+  assert(std::find(events.begin(),events.end(),"synch-veh:2") <
+         std::find(events.begin(),events.end(),"await-synch"));
+  events.clear(); ExecCalls=0; ExecResult=-1; Vehs[2].proto_id=0;
+  VehPrototypes[2].flags=1; VehPrototypes[2].chassis_id=1;
+  VehPrototypes[2].weapon_id=1; VehPrototypes[2].armor_id=1;
+  VehPrototypes[2].plan=1; // native allows differing plans when both are <= 3
+  assert(c.upgrade(2)==0);
+  assert(ExecCalls==1 && (events==std::vector<std::string>{"popup-ctor","lock",
+    "parse:OLD ( 0)","start","item:2: ( 2)|ENERGY: 120*",
+    "item:6:NEW ( 6)|ENERGY: 160","exec","unlock","popup-close","popup-close"}));
+  events.clear(); VehPrototypes[2].flags=0; ConfirmationResult=0;
+  PlayersData[0].energy_reserves=100000; Vehs[2].proto_id=0;
+  assert(c.upgrade(2)==0);
+  assert(Vehs[2].proto_id==0 && PlayersData[0].energy_reserves==100000 &&
+         ConfirmationCalls==2);
+  events.clear(); ConfirmationResult=1; PlayersData[0].energy_reserves=0;
+  Players[0].rule_flags=RFLAG_ALIEN; Vehs[2].proto_id=0; BudgetPopupCalls=0;
+  VehPrototypes[6].flags=1; Chassis[1].triad=TRIAD_AIR;
+  assert(c.upgrade(2)==0);
+  assert(Vehs[2].proto_id==0 && PlayersData[0].energy_reserves==0 &&
+         BudgetPopupCalls==1 && LastPoppLabel=="COSTTHISUPGRADE2" &&
+         LastPoppPicture=="alair_sm.pcx");
+  assert(std::find(events.begin(),events.end(),"unlock") <
+         std::find(events.begin(),events.end(),"popp:COSTTHISUPGRADE2:alair_sm.pcx:wait"));
+  Players[0].rule_flags=0; PlayersData[0].energy_reserves=100000;
+  events.clear(); ExecCalls=0; Vehs[2].proto_id=0;
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  VehPrototypes[0].flags=1; VehPrototypes[0].chassis_id=1;
+  VehPrototypes[0].weapon_id=1; VehPrototypes[0].armor_id=1;
+  VehPrototypes[2].flags=1; VehPrototypes[2].chassis_id=2;
+  VehPrototypes[2].weapon_id=1; VehPrototypes[2].armor_id=1;
+  VehPrototypes[3].chassis_id=1; VehPrototypes[3].weapon_id=1; VehPrototypes[3].armor_id=1;
+  VehPrototypes[6].flags=1; VehPrototypes[6].chassis_id=1;
+  VehPrototypes[6].weapon_id=2; VehPrototypes[6].armor_id=3;
+  std::strcpy(VehPrototypes[0].veh_name,"OLD");
+  std::strcpy(VehPrototypes[6].veh_name,"NEW");
+  Weapon[1].offense_rating=4; Weapon[2].offense_rating=5;
+  Armor[1].defense_rating=2; Armor[3].defense_rating=4;
+  ExpectedOldProto=0; ExpectedPriceProto=3; ParseVehicle=2; ParsePrototype=3; ParseMutationMode=1; UpgradeCostCalls=0;
+  PlayersData[0].proto_id_active[0]=1;
+  PlayersData[0].proto_id_active[2]=1;
+  PlayersData[0].proto_id_active[6]=0;
+  PlayersData[0].energy_reserves=100000;
+  PlayersData[0].proto_id_active[3]=1;
+  MutateOnConfirmVehicle=2; MutateOnConfirmPrototype=3;
+  assert(c.upgrade(2)==1);
+  assert(UpgradeCostCalls==2 && Vehs[2].proto_id==6 &&
+         PlayersData[0].proto_id_active[2]==1 && PlayersData[0].proto_id_active[3]==0 &&
+         PlayersData[0].proto_id_active[6]==1);
+  ParseVehicle=-1; ParseMutationMode=-1; ExpectedOldProto=0; ExpectedPriceProto=0; MutateOnConfirmVehicle=-1;
+  Vehs[2].proto_id=0;
+  events.clear(); UpgradeCostCalls=AbilityChecks=0;
+  for(auto &p:VehPrototypes) p.flags=0;
+  VehPrototypes[0].chassis_id=1; VehPrototypes[0].weapon_id=1; VehPrototypes[0].armor_id=1;
+  VehPrototypes[6].chassis_id=1; VehPrototypes[6].weapon_id=1; VehPrototypes[6].armor_id=2;
+  Weapon[1].offense_rating=4;
+  Armor[1].defense_rating=2; Armor[2].defense_rating=1;
+  VehPrototypes[6].flags=5; // AI cannot downgrade armor
+  LockEnableMask=0;
+  assert(c.upgrade(2)==0);
+  assert((events==std::vector<std::string>{"popup-ctor","popup-close","popup-close"}));
+  assert(UpgradeCostCalls==0);
+
+  events.clear(); VehPrototypes[6].armor_id=1; VehPrototypes[6].plan=1;
+  assert(c.upgrade(2)==0 && UpgradeCostCalls==0);
+  assert((events==std::vector<std::string>{"popup-ctor","popup-close","popup-close"}));
+
+  events.clear(); UpgradeCostCalls=0; Vehs[2].proto_id=0;
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  VehPrototypes[0].flags=1; VehPrototypes[0].chassis_id=1;
+  VehPrototypes[0].weapon_id=1; VehPrototypes[0].armor_id=1;
+  VehPrototypes[6].flags=5; VehPrototypes[6].chassis_id=1;
+  VehPrototypes[6].weapon_id=1; VehPrototypes[6].armor_id=1;
+  VehPrototypes[6].plan=0;
+  Chassis[1].triad=TRIAD_AIR;
+  PlayersData[0].energy_reserves=100000; PlayersData[1].energy_reserves=50000;
+  PlayersData[0].ranking=0; PlayersData[0].ai_power=0; PlayersData[0].ai_wealth=0;
+  PlayersData[0].current_num_bases=0;
+  PlayersData[0].proto_id_active[0]=1; PlayersData[0].proto_id_active[6]=0;
+  assert(c.upgrade(2)==1);
+  assert(UpgradeCostCalls==1 && Vehs[2].proto_id==6 &&
+         PlayersData[0].energy_reserves==99840 &&
+         PlayersData[0].proto_id_active[0]==0 && PlayersData[0].proto_id_active[6]==1);
+  assert((events==std::vector<std::string>{"popup-ctor","popup-close","popup-close"}));
+
+  events.clear(); UpgradeCostCalls=0; Vehs[2].proto_id=0;
+  VehPrototypes[0].plan=2; VehPrototypes[6].plan=2;
+  PlayersData[0].energy_reserves=150; PlayersData[1].energy_reserves=0;
+  PlayersData[0].proto_id_active[0]=1; PlayersData[0].proto_id_active[6]=0;
+  assert(c.upgrade(2)==0);
+  assert(UpgradeCostCalls==1 && Vehs[2].proto_id==0 &&
+         PlayersData[0].energy_reserves==150 &&
+         PlayersData[0].proto_id_active[0]==1 && PlayersData[0].proto_id_active[6]==0);
+  assert((events==std::vector<std::string>{"popup-ctor","popup-close","popup-close"}));
+
+  events.clear(); UpgradeCostCalls=0; Vehs[2].proto_id=0;
+  PlayersData[0].ranking=7; PlayersData[0].energy_reserves=150;
+  PlayersData[0].proto_id_active[0]=1; PlayersData[0].proto_id_active[6]=0;
+  assert(c.upgrade(2)==1);
+  assert(UpgradeCostCalls==1 && Vehs[2].proto_id==6 &&
+         PlayersData[0].energy_reserves==6 &&
+         PlayersData[0].proto_id_active[0]==0 && PlayersData[0].proto_id_active[6]==1);
+
+  events.clear(); UpgradeCostCalls=0; Vehs[2].proto_id=0;
+  PlayersData[0].energy_reserves=260; PlayersData[1].energy_reserves=0;
+  PlayersData[0].current_num_bases=1;
+  PlayersData[0].proto_id_active[0]=1; PlayersData[0].proto_id_active[6]=0;
+  assert(c.upgrade(2)==0);
+  assert(UpgradeCostCalls==1 && Vehs[2].proto_id==0 &&
+         PlayersData[0].energy_reserves==260 &&
+         PlayersData[0].proto_id_active[0]==1 && PlayersData[0].proto_id_active[6]==0);
+
+  // A negative current weapon rating on a custom prototype (ID >= 64) does
+  // not trigger the predefined-prototype bypass. A faction-local candidate
+  // with a less-negative offense remains eligible under the native compare.
+  events.clear(); UpgradeCostCalls=0; Vehs[2].proto_id=64; Vehs[2].faction_id=1;
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  VehPrototypes[64].chassis_id=1; VehPrototypes[64].weapon_id=3;
+  VehPrototypes[64].armor_id=1; VehPrototypes[64].plan=0;
+  VehPrototypes[70].flags=1; VehPrototypes[70].chassis_id=1;
+  VehPrototypes[70].weapon_id=2; VehPrototypes[70].armor_id=1;
+  VehPrototypes[70].plan=0; std::strcpy(VehPrototypes[70].veh_name,"NEGATIVE");
+  Weapon[3].offense_rating=-2; Weapon[2].offense_rating=-1;
+  Armor[1].defense_rating=2; Chassis[1].triad=TRIAD_AIR;
+  ExpectedFaction=1; ExpectedOldProto=64; ExpectedPriceProto=64;
+  PlayersData[1].energy_reserves=100000;
+  PlayersData[1].proto_id_active[64]=1; PlayersData[1].proto_id_active[70]=0;
+  ConfirmationResult=1; LockEnableMask=1U<<1;
+  assert(c.upgrade(2)==1 && UpgradeCostCalls==2 && Vehs[2].proto_id==70);
+  assert(std::find(events.begin(),events.end(),"item:70:NEGATIVE ( 70)|ENERGY: 800*") != events.end());
+  assert(std::find(events.begin(),events.end(),"skip:2")!=events.end());
+
+  // Native caption text uses Ability.abbreviation (+8), then probes the
+  // current prototype's artwork and reloads the prototype after that call
+  // before initializing the popup's owned Sprite.
+  events.clear(); LockEnableMask=1U<<0; Vehs[2].faction_id=0; Vehs[2].proto_id=0;
+  Players[0].rule_flags=RFLAG_ALIEN;
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  VehPrototypes[0].chassis_id=1; VehPrototypes[0].ability_flags=1U|(1U<<28);
+  std::strcpy(VehPrototypes[0].veh_name,"CAPTIONUNIT");
+  VehPrototypes[3].chassis_id=2;
+  Chassis[1].triad=TRIAD_AIR; Chassis[2].triad=TRIAD_SEA;
+  Ability[0].name=reinterpret_cast<char *>(2);
+  Ability[0].abbreviation=reinterpret_cast<char *>(1);
+  Ability[28].name=reinterpret_cast<char *>(2);
+  Ability[28].abbreviation=reinterpret_cast<char *>(1);
+  PcxResult=0; PcxCalls=0; SpriteInitResult=0; MutateAfterPcxTo=3;
+  assert(c.upgrade(2)==0 && PcxCalls==1);
+  assert(FirstPcxFile=="alair_sm.pcx" && SpriteInitFile=="navun_sm.pcx" &&
+         SpriteInitWidth==64 && SpriteInitHeight==32);
+  assert(std::find(events.begin(),events.end(),"parse:CAPTIONUNIT ( 0 ABBRABBR)") != events.end());
+  assert(std::find(events.begin(),events.end(),"sprite-init:navun_sm.pcx") <
+         std::find(events.begin(),events.end(),"picture-selected"));
+
+  events.clear(); Vehs[2].proto_id=0; PcxResult=1; PcxCalls=0;
+  SpriteInitFile.clear(); SpriteInitResult=0;
+  assert(c.upgrade(2)==0 && PcxCalls==1 && SpriteInitFile.empty());
+  assert(std::find(events.begin(),events.end(),"picture-selected")==events.end());
+  events.clear(); Vehs[2].proto_id=0; PcxResult=0; PcxCalls=0;
+  SpriteInitResult=1;
+  assert(c.upgrade(2)==0 && PcxCalls==1 && SpriteInitFile=="alair_sm.pcx");
+  assert(std::find(events.begin(),events.end(),"picture-selected")==events.end());
+
+  // Alien SEA confirmation selects the shared naval picture, always skips
+  // the upgraded vehicle, and publishes faction energy separately from the
+  // vehicle synchronization.
+  events.clear(); Vehs[2].proto_id=0; Vehs[2].faction_id=0;
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  VehPrototypes[0].flags=1; VehPrototypes[0].chassis_id=1;
+  VehPrototypes[0].weapon_id=1; VehPrototypes[0].armor_id=1;
+  VehPrototypes[6].flags=1; VehPrototypes[6].chassis_id=1;
+  VehPrototypes[6].weapon_id=2; VehPrototypes[6].armor_id=3;
+  std::strcpy(VehPrototypes[6].veh_name,"SEAUPGRADE");
+  Weapon[1].offense_rating=4; Weapon[2].offense_rating=5;
+  Armor[1].defense_rating=2; Armor[3].defense_rating=4;
+  Chassis[1].triad=TRIAD_SEA; Players[0].rule_flags=RFLAG_ALIEN;
+  PlayersData[0].energy_reserves=100000; LockEnableMask=1U<<0;
+  ExpectedFaction=0; ExpectedOldProto=0; ExpectedPriceProto=0; UpgradeCostCalls=0;
+  ExecResult=6; ConfirmationResult=1; VehPrototypes[6].flags=1;
+  assert(c.upgrade(2)==1 && LastPoppPicture=="navun_sm.pcx");
+  assert(std::find(events.begin(),events.end(),"skip:2")!=events.end());
+  assert(std::find(events.begin(),events.end(),"synch-energy:0")!=events.end());
+  assert(std::find(events.begin(),events.end(),"synch-veh:2")!=events.end());
+
+  // Number parsing precedes the live reserve comparison. The failure path
+  // unlocks before it reloads player/prototype presentation fields.
+  events.clear(); Vehs[2].proto_id=0; Vehs[2].faction_id=0;
+  for(auto &p:VehPrototypes) p=VehPrototype{};
+  VehPrototypes[0].flags=1; VehPrototypes[0].chassis_id=1;
+  VehPrototypes[0].weapon_id=1; VehPrototypes[0].armor_id=1;
+  VehPrototypes[6].flags=1; VehPrototypes[6].chassis_id=1;
+  VehPrototypes[6].weapon_id=2; VehPrototypes[6].armor_id=3;
+  Weapon[1].offense_rating=4; Weapon[2].offense_rating=5;
+  Armor[1].defense_rating=2; Armor[3].defense_rating=4;
+  Chassis[2].triad=TRIAD_SEA; Players[0].rule_flags=0;
+  PlayersData[0].energy_reserves=1000; LockEnableMask=1U<<0;
+  ExpectedFaction=0; ExpectedOldProto=0; ExpectedPriceProto=0;
+  UpgradeCostCalls=0;
+  ExecResult=6; UnlockMutationProto=6; UnlockMutationChassis=2;
+  UnlockMutationFlags=4; UnlockMutationPlayerFlags=RFLAG_ALIEN;
+  ParseNumMutationSlot=1; ParseNumMutationEnergy=0;
+  assert(c.upgrade(2)==0 && LastPoppLabel=="COSTTHISUPGRADE" &&
+         LastPoppPicture=="navun_sm.pcx" && PlayersData[0].energy_reserves==0);
+  const auto parsed_reserves=std::find(events.begin(),events.end(),"parse-num:1:1000");
+  const auto unlocked=std::find(events.begin(),events.end(),"unlock");
+  const auto cost_popup=std::find(events.begin(),events.end(),
+                                  "popp:COSTTHISUPGRADE:navun_sm.pcx:wait");
+  assert(parsed_reserves<unlocked && unlocked<cost_popup);
+}
+'''
+    unit = tmp_path / "console_upgrade_entry.cpp"
+    unit.write_text(harness)
+    executable = tmp_path / "console_upgrade_entry"
+    subprocess.run([compiler, "-std=c++17", "-Wall", "-Wextra", "-Werror",
+                    str(unit), "-o", str(executable)], check=True,
+                   capture_output=True, text=True)
+    subprocess.run([str(executable)], check=True, capture_output=True, text=True)
+
+
 def test_assemble_filters_faction_and_applies_selected_action(tmp_path):
     compiler = shutil.which("g++")
     if not compiler:
