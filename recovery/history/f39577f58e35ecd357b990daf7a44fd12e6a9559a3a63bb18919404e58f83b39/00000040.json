@@ -1,0 +1,27 @@
+{
+  "event_id": "b603fcdc89d1b83cf4661e5e8a30201fb0e8edfb523442be2ca9f2e69084a3c7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/faction.h",
+      "src/spying.cpp"
+    ],
+    "evidence": [
+      "NativeBC391 treaty indexing is receiver*833+donor DWORDs into PlayersData; BC3A6 reads the existing SpyingBaseIndex9A6524 object and BC3CC existing GovernorFaction9A6614. Add a bounded source binding to the already-real SpyingBaseIndex definition, not new storage or spying table aliases. No other spying code/header edits or claim changes authorized; native initial-storage/protected measurements required.",
+      "Correct only the misleading tech_achieved parameter names in faction.h to (faction,technology,otherfaction,freebie), matching pinned call pushes and actual definition. Preserve all four int ABI types, original symbols, task baseline and immutable claims. Reviewed body must implement nativeBC133..C426 propagation, per-model tutorial repetition and reactor/pseudo visibility polarity; actual-source controls must contradict the rejected draft, never bless source-only approximations as runtime/full-game proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5618688,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fb26a9ebc7b054e367364ea4f070d795a1ac07dc8d44ad1074c165d56a28e52b",
+  "request_id": "technology-sharing-declaration-storage-20261001",
+  "schema_version": 1,
+  "sequence": 40,
+  "stream": "task:interface-contract-report-closure"
+}
