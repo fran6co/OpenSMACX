@@ -1,0 +1,47 @@
+{
+  "event_id": "74abcb52d9c6abfec5a47f3d83f71cd4ab765009870193fb2a85cb486e18ead9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_monument_records_behavior.py",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Independent pinned review confirms built-trigger record slots3/8/9/10/11 and active/count/owner/year offsets10/14/C/0; all five write row latest94CEA0. Existing MonRecord overlay uses fixed+3F0, correct only atprototypebase94CAB0 and wrong fornaval/air/life/space; do not preserve these source defects for matching.",
+      "Migrate all five triggers to the same genuine FactionMonuments owner, remove overlapping fixed aliases and broad fake MonRecord windows. Preserve exact first-only notification gates and last-marked-peer selection, store active thenowner thenyear thenlatest. Retain all original identities/spans/lessons, task baseline and source WIP; no new match claim or acceptance waiver. Add actual-source controls for each family member and native-check protected claims/build before manual checkpoint."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4681440,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4682816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4683072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4683328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4683584,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bd3893bb835bafe04ec268db6a3dcb628c1be54d41f0fa87ed2d026d4815f932",
+  "request_id": "monument-built-trigger-storage-repair-20261001",
+  "schema_version": 1,
+  "sequence": 36,
+  "stream": "task:interface-contract-report-closure"
+}
