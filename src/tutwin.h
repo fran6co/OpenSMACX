@@ -150,6 +150,11 @@ static_assert(sizeof(TutWin) == 0x53D8,
 extern uint32_t TutWinShownFlag;
 extern int TutWinTourPending;
 extern int TutWinFlags9A64BC;
+// Independent persisted tutorial/checker channels at 9A64AC and 9A64B0.
+extern int TutorialFlags;
+extern int TutorialFlags2;
+int __cdecl tut_check(int flag);
+int __cdecl tut_check2(int flag);
 extern int TutWinClimateGate945830;
 
 

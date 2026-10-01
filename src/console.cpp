@@ -8323,10 +8323,756 @@ finish_turn:
     return result;
 }
 
+static int give_hints_wrap_x(int x) {
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) x += MapLongitudeBounds;
+        else if (x >= MapLongitudeBounds) x -= MapLongitudeBounds;
+    }
+    return x;
+}
+static bool give_hints_in_map(int x, int y) {
+    return x >= 0 && x < static_cast<int>(MapLongitudeBounds) &&
+           y >= 0 && y < static_cast<int>(MapLatitudeBounds);
+}
+static void give_hints_parse_faction_identity(int faction) {
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(1, Players[faction].title_leader, -1, -1);
+    GenderDefault = Players[faction].is_leader_female;
+    PluralityDefault = 0;
+    parse_says(2, Players[faction].name_leader, -1, -1);
+    GenderDefault = Players[faction].noun_gender;
+    PluralityDefault = Players[faction].is_noun_plural;
+    parse_says(3, Players[faction].noun_faction, -1, -1);
+}
+static void give_hints_map(const char *text, int x, int y, int vehicle,
+                           Sprite *sprite, int flag, int arrow_x, int arrow_y) {
+    TutorialWindow.tut_map(text, x, y, vehicle, sprite, flag, arrow_x, arrow_y);
+}
+
 // ORIGINAL: 0x00511BB0 ?give_hints@Console@@QAEXXZ 0x00511BB0-0x00513B85
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00511bb0.cpp; native caller 0x00513BD5"], "reason": "The original vehicle-turn entry invokes Console hint handling. Keep an explicitly unfinished body in its owning class for build continuity while the full hint recovery remains pending; do not claim recovered behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned511BB0..513B85; retained src/unrecovered/00511bb0.cpp; original vehicle-turn caller513BD5", "Initial state2000 branch511C37 encloses early cards and colonist scan; clearstate enters51222C. Tutorial stage511E71 is TutorialWindow+53C0 via set_tour_stage, not separate DesignTutorState73396C. Colonist tail uses ConsoleGlobal faction and always returns; scan ownership uses faction snapshot across whose_territory.", "Native51318A..197 evaluates unowned or own-faction candidate sites, skips hostile-owned ones. Enemy-base scan exhaustion5136AE..B7 continues enemyvehicle/territory hints, never explorationchecker. Matchingpod513596 enters5135E6; valid six-sprite index uses captured triad and bounded coordinates. Defensive bounds check follows checker under explicit user permission.", "Shared terra epilogue5134E1..F5 calls tut_map then GameState|400; farm writes before its call. All33 distinct original caption literals independently read bounded from pinned data. Actual Sprite sizeof2C and existing banks govern indices; no fixed executable data/function aliases.", "recovery/tasks/console-scenario-owner-wave.json; complete-owner expansion and corrected native-flow history retained; actual-source host controls required"], "reason": "Recover the complete Console tutorial-hint owner using typed vehicle/design/rules/map/faction storage, real tutorial windows and source-owned sprite banks. Preserve original identity, seed and historical obligations; no matching or runtime acceptance is implied."}
 void Console::give_hints() {
-    // BODY GOES HERE.
+// 0x511BBE tests the selected vehicle's state before any other work.
+    const int entry_vehicle = selected_vehicle_;
+    if ((Vehs[entry_vehicle].state & 0x4200u) != 0 || IsMultiplayerNet != 0 ||
+        TutWinBaseWindow.is_visible() != 0 ||
+        TutWinSocWindow.is_visible() != 0) {
+        return;
+    }
+
+    // The image reloads the selected vehicle after the visibility calls, then
+    // keeps these signed coordinates through the early cards and site scan.
+    const int cursor_x = Vehs[selected_vehicle_].x;
+    const int cursor_y = Vehs[selected_vehicle_].y;
+    int proto_id;
+    if ((Vehs[selected_vehicle_].state & 0x2000u) != 0) {
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
+            Vehs[selected_vehicle_].home_base_id >= 0 &&
+            tut_check(8) != 0 && TurnCurrentNum < 0x19) {
+            StringTemp[0] = '\0';
+            say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
+            parse_says(0, StringTemp, -1, -1);
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+            TutorialWindow.tut_map("NEWUNIT", cursor_x, cursor_y,
+                                   selected_vehicle_, 0, 0, -1, -1);
+            return;
+        }
+
+        // LAB_00511D12 is reached both when the first card is ineligible and
+        // when tut_check(8)/the turn gate rejects it. The checker side effect
+        // therefore remains even when the turn is already 25 or later.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (VehPrototypes[proto_id].plan <= PLAN_RECONNAISANCE &&
+            tut_check(0x10) != 0 && TurnCurrentNum >= 0x28) {
+            TutorialWindow.tut_map("NEWUNITS", cursor_x, cursor_y,
+                                   selected_vehicle_, 0, 0, -1, -1);
+            return;
+        }
+
+        // LAB_00511D74, including the native active-count == 1 condition and
+        // its sea-triad exclusion (triad value 1). The message and caption
+        // inputs are rebuilt from the then-current selection after the checker.
+        proto_id = Vehs[selected_vehicle_].proto_id;
+        if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING &&
+            PlayersData[faction_id_].proto_id_active[proto_id] == 1 &&
+            tut_check(0x10000) != 0) {
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            const int chassis_id = VehPrototypes[proto_id].chassis_id;
+            if (Chassis[chassis_id].triad != TRIAD_SEA) {
+                StringTemp[0] = '\0';
+                say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
+                parse_says(0, StringTemp, -1, -1);
+                proto_id = Vehs[selected_vehicle_].proto_id;
+                parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+                TutorialWindow.set_tour_stage(2);
+                TutorialWindow.tut_map("NEWTERRAFORMER", cursor_x, cursor_y,
+                                       selected_vehicle_, 0, 0x100,
+                                       -1, -1);
+                GameState |= 0x400;
+                return;
+            }
+        }
+    // LAB_00511E99: the one-time colonization map scan is restricted to the
+    // native plan-8/land/ability/flag combination. The source's 240 iterations
+    // index the existing 289-entry RadiusOffset tables beginning at element 49.
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    const int chassis_id = VehPrototypes[proto_id].chassis_id;
+    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
+        Chassis[chassis_id].triad == TRIAD_LAND &&
+        (TutWinFlags9A64BC & 0x1000000u) == 0) {
+        int best_site = 0;
+        int best_x = -1;
+        int best_y = -1;
+        ConsoleGlobal.focus(cursor_x, cursor_y, ConsoleGlobal.faction_id_);
+        for (int radius = 0; radius < 240; ++radius) {
+            int candidate_x = cursor_x + RadiusOffsetX[49 + radius];
+            if ((MapIsFlat & 1) == 0) {
+                if (candidate_x < 0) {
+                    candidate_x += MapLongitudeBounds;
+                } else if (candidate_x >= MapLongitudeBounds) {
+                    candidate_x -= MapLongitudeBounds;
+                }
+            }
+            const int candidate_y = cursor_y + RadiusOffsetY[49 + radius];
+            if (candidate_y < 0 || candidate_y >= MapLatitudeBounds ||
+                candidate_x < 0 || candidate_x >= MapLongitudeBounds) {
+                continue;
+            }
+
+            // The native body assumes the primary map window exists; this is
+            // deliberately not replaced by a new null-window recovery path.
+            Map &candidate = *map_loc(candidate_x, candidate_y);
+            if ((candidate.climate & 0xE0u) > 0x60u) {
+                const int altitude = candidate.climate >> 5;
+                if (candidate_y - altitude + 3 <
+                    MapWinTable[0]->field_1DDA8_ + 2) {
+                    continue;
+                }
+            }
+            MapWin *map_window = MapWinTable[0];
+            if (candidate_y < map_window->field_1DDA8_ + 2 ||
+                candidate_y >= map_window->field_1DDA8_ +
+                    map_window->field_1DDD0_ + map_window->field_1DDD8_ - 2) {
+                continue;
+            }
+
+            int viewport_x = candidate_x;
+            if ((MapIsFlat & 1) == 0) {
+                map_window = MapWinTable[0];
+                if (viewport_x < map_window->field_1DDA4_ + 2) {
+                    viewport_x += MapLongitudeBounds;
+                }
+                if (viewport_x >= map_window->field_1DDA4_ +
+                        map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
+                    viewport_x -= MapLongitudeBounds;
+                }
+            }
+            map_window = MapWinTable[0];
+            if (viewport_x < map_window->field_1DDA4_ + 2 ||
+                viewport_x >= map_window->field_1DDA4_ +
+                    map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
+                continue;
+            }
+            // Native reloads both region bytes each iteration, after the
+            // visibility/viewport checks; don't cache the cursor tile field.
+            if (candidate.region != map_loc(cursor_x, cursor_y)->region) {
+                continue;
+            }
+            const int candidate_faction = faction_id_;
+            if (whose_territory(candidate_faction, candidate_x, candidate_y,
+                                0, 0) != candidate_faction) {
+                continue;
+            }
+            const uint32_t faction_bit = 1u << (candidate_faction & 31);
+            if ((PlayersData[candidate_faction].flags & 0x200u) == 0 &&
+                (candidate.visibility & faction_bit) == 0) {
+                continue;
+            }
+            if ((candidate.bit & 0x20u) != 0 &&
+                (candidate.climate & 0xE0u) >= 0x40u) {
+                continue;
+            }
+            if ((candidate.val3 & 0xC0u) > 0x40u) {
+                continue;
+            }
+
+            int site;
+            if ((candidate.bit & 0x1000u) != 0) {
+                site = 0;
+            } else if ((candidate.val2 >> 4) != 0) {
+                site = candidate.val2 >> 4;
+            } else {
+                site = world_site(candidate_x, candidate_y, 0);
+                site_set(candidate_x, candidate_y, site);
+            }
+            if (site >= best_site) {
+                best_site = site;
+                best_x = candidate_x;
+                best_y = candidate_y;
+            }
+        }
+
+        StringTemp[0] = '\0';
+        say_base(StringTemp, Vehs[selected_vehicle_].home_base_id);
+        parse_says(0, StringTemp, -1, -1);
+        if ((Players[ConsoleGlobal.faction_id_].rule_flags & 0x100u) == 0) {
+            TutorialWindow.tut_map("NEWCOLONIST", cursor_x, cursor_y,
+                                   selected_vehicle_, 0, 0x1000000,
+                                   best_x, best_y);
+        }
+        return;
+    }
+    }
+
+
+// 0x51222C first checks the tutorial window's persistent stop flag, then
+// snapshots whether the selected prototype is a sea-triad unit into local_14.
+if (TutorialWindow.tutorial_blocked()) {
+    return;
+}
+proto_id = Vehs[selected_vehicle_].proto_id;
+bool selected_is_sea =
+    Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA;
+
+if (Vehs[selected_vehicle_].dmg_incurred != 0 && tut_check(0x200000) != 0) {
+    TutorialWindow.tut_map("DAMAGED", cursor_x, cursor_y, selected_vehicle_,
+                           0, 0, -1, -1);
+    return;
+}
+
+// LAB_005122A9: these checks apply only to land chassis. The terrain altitude
+// test is the cursor tile's `(climate & 0xE0) >= 0x60` condition.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+    (map_loc(cursor_x, cursor_y)->climate & 0xE0u) >= 0x60u) {
+    for (int offset = 0; offset < 0x20; offset += 4) {
+            int x = cursor_x + RadiusBaseX[offset / 4];
+            if ((MapIsFlat & 1) == 0) {
+                if (x < 0) {
+                    x += MapLongitudeBounds;
+                } else if (x >= MapLongitudeBounds) {
+                    x -= MapLongitudeBounds;
+                }
+            }
+            const int y = cursor_y + RadiusBaseY[offset / 4];
+            if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+                x >= MapLongitudeBounds) {
+                continue;
+            }
+            const int nearby = veh_at(x, y);
+            if (nearby < 0 || Vehs[nearby].faction_id != 0 ||
+                VehPrototypes[Vehs[nearby].proto_id].plan != PLAN_COLONIZATION) {
+                continue;
+            }
+            if (tut_check(0x4000000) != 0) {
+                TutorialWindow.tut_map("MINDWORMS", x, y, nearby, 0,
+                                       0, -1, -1);
+                return;
+            }
+    }
+
+// LAB_005124E9 fast-unit card: the current chassis must be land triad, speed
+// exactly 2, the weapon must have nonzero offense, and the tutorial bit must
+// be newly accepted. Name/stat parsing uses fresh selection reads after calls.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+    Chassis[VehPrototypes[proto_id].chassis_id].speed == 2 &&
+    Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0 &&
+    tut_check(0x2000000) != 0) {
+    StringTemp[0] = '\0';
+    say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+    parse_says(1, StringTemp, -1, -1);
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+    TutorialWindow.tut_map("FASTUNIT", cursor_x, cursor_y, selected_vehicle_,
+                           0, 0, -1, -1);
+    return;
+}
+
+// LAB_00512503 artillery card. The signed int8 offense comparison deliberately
+// remains > 1; the native JLE treats a byte such as psi's -1 as signed here.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+    Chassis[VehPrototypes[proto_id].chassis_id].speed == 1 &&
+    Weapon[VehPrototypes[proto_id].weapon_id].offense_rating > 1 &&
+    can_arty(proto_id, 1) == 0 && tut_check(0x40000000) != 0) {
+    StringTemp[0] = '\0';
+    say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+    parse_says(1, StringTemp, -1, -1);
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+    TutorialWindow.tut_map("ARTYUNIT", cursor_x, cursor_y, selected_vehicle_,
+                           0, 0, -1, -1);
+    return;
+}
+
+// LAB_00512602 big-artillery card is the complementary can_arty==true case.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+    can_arty(proto_id, 1) != 0 && tut_check(0x80000000u) != 0) {
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    parse_says(0, VehPrototypes[proto_id].veh_name, -1, -1);
+    TutorialWindow.tut_map("BIGUNIT", cursor_x, cursor_y, selected_vehicle_,
+                           0, 0, -1, -1);
+    return;
+}
+
+// LAB_005126BD/LAB_00512739: the native shown flags are distinct from
+// TutWinFlags9A64BC. Already-shown bits are ORed again, then flow continues.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_SEA) {
+    if ((TutorialFlags & 0x20) == 0) {
+        TutorialWindow.tut_map("NEWSHIP", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        TutorialFlags |= 0x20;
+        return;
+    }
+    TutorialFlags |= 0x20;
+}
+// Native reloads the selection/prototype/chassis after the sea-card path;
+// keep this independent so callback-visible changes affect the air branch.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_AIR) {
+    if ((TutorialFlags & 0x40) == 0) {
+        TutorialWindow.tut_map("NEWAIR", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        TutorialFlags |= 0x40;
+        return;
+    }
+    TutorialFlags |= 0x40;
+}
+
+// LAB_005127B5 base-defense card. The population/force/prototype thresholds
+// select the shared defense path; the weak-base suffix is checked only after
+// stats/name parsing, with a fresh current prototype.
+const int cursor_base = base_at(cursor_x, cursor_y);
+if (cursor_base >= 0 &&
+    Bases[cursor_base].faction_id_current == faction_id_) {
+    const int current_proto = Vehs[selected_vehicle_].proto_id;
+    const Base &base = Bases[cursor_base];
+    if (base.population_size > 2 ||
+        PlayersData[faction_id_].total_mil_veh > 3 ||
+        PlayersData[faction_id_].proto_id_active[current_proto] > 1) {
+        if (enemy_move(~selected_vehicle_) != 0 &&
+            (TutWinFlags9A64BC & 0x800000u) == 0) {
+            StringTemp[0] = '\0';
+            say_stats_3(StringTemp, Vehs[selected_vehicle_].proto_id);
+            parse_says(2, StringTemp, -1, -1);
+            parse_says(0, base.name_string, -1, -1);
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            parse_says(1, VehPrototypes[proto_id].veh_name, -1, -1);
+
+            proto_id = Vehs[selected_vehicle_].proto_id;
+            const VehPrototype &prototype = VehPrototypes[proto_id];
+            const bool weak_defensive_design =
+                prototype.plan == PLAN_DEFENSIVE &&
+                Weapon[prototype.weapon_id].offense_rating == 1 &&
+                Armor[prototype.armor_id].defense_rating > 1;
+            TutorialWindow.tut_map(weak_defensive_design ? "DEFENDIT2" : "DEFENDIT",
+                                   cursor_x, cursor_y, selected_vehicle_, 0,
+                                   0x800000, -1, -1);
+            return;
+        }
+    }
+}
+
+// LAB_00512959 empty-base scan. The image checks the current weapon before
+// iterating, visits BaseCurrentCount with 0x134-byte records, and calls
+// tut_check2 before the independent every-20-turn fallback.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (TurnCurrentNum >= 0x14 &&
+    (TutWinFlags9A64BC & 0x4000000u) == 0 &&
+    Weapon[VehPrototypes[proto_id].weapon_id].offense_rating != 0) {
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        const Base &base = Bases[base_id];
+        if (base.faction_id_current != faction_id_ ||
+            veh_at(base.x, base.y) >= 0 || base.population_size == 1) {
+            continue;
+        }
+
+        MapWin *map_window = MapWinTable[0];
+        if (base.y >= 0 && base.y < MapLatitudeBounds && base.x >= 0 &&
+            base.x < MapLongitudeBounds) {
+            const uint8_t climate = map_loc(base.x, base.y)->climate;
+            if ((climate & 0xE0u) > 0x60u) {
+                const int altitude = climate >> 5;
+                if (base.y - altitude + 3 < map_window->field_1DDA8_ + 2) {
+                    continue;
+                }
+            }
+        }
+        if (base.y < map_window->field_1DDA8_ + 2 ||
+            base.y >= map_window->field_1DDA8_ + map_window->field_1DDD0_ +
+                map_window->field_1DDD8_ - 2) {
+            continue;
+        }
+
+        int viewport_x = base.x;
+        if ((MapIsFlat & 1) == 0) {
+            if (viewport_x < map_window->field_1DDA4_ + 2) {
+                viewport_x += MapLongitudeBounds;
+            }
+            if (viewport_x >= map_window->field_1DDA4_ +
+                    map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
+                viewport_x -= MapLongitudeBounds;
+            }
+        }
+        if (viewport_x < map_window->field_1DDA4_ + 2 ||
+            viewport_x >= map_window->field_1DDA4_ +
+                map_window->field_1DDCC_ + map_window->field_1DDD4_ - 2) {
+            continue;
+        }
+        if (tut_check2(0x100) != 0 || TurnCurrentNum % 20 == 0) {
+            parse_says(0, base.name_string, -1, -1);
+            TutorialWindow.tut_map("EMPTYBASE", base.x, base.y, -1, 0,
+                                   0x4000000, -1, -1);
+            return;
+        }
+    }
+}
+}
+
+// LAB_00512B90 cursor-tile owner filter. The native signed JGE after masking
+// a nibble is equivalent here because the value is in [0,15].
+const Map &cursor_tile = *map_loc(cursor_x, cursor_y);
+if ((cursor_tile.bit & 1u) != 0 && (cursor_tile.val2 & 0x0Fu) < 8) {
+    return;
+}
+
+// 0x512BCE artifact card; tut_check's bit is recorded before map display.
+proto_id = Vehs[selected_vehicle_].proto_id;
+if (VehPrototypes[proto_id].plan == PLAN_ALIEN_ARTIFACT &&
+    tut_check(0x1000000) != 0) {
+    TutorialWindow.tut_map("ARTIFACT", cursor_x, cursor_y, selected_vehicle_,
+                           0, 0, -1, -1);
+    return;
+}
+
+// The native calls tut_check2 before examining the prototype ID, so its flag
+// side effect remains when the current design is not one of the three Ogre IDs.
+if (tut_check2(0x20000) != 0) {
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (proto_id == 0x10 || proto_id == 0x11 || proto_id == 0x12) {
+        TutorialWindow.tut_map("GETOGRE", cursor_x, cursor_y, selected_vehicle_,
+                               0, 0, -1, -1);
+        return;
+    }
+}
+
+// LAB_00512C82 nearby native-unit hints. Each candidate uses RadiusBase's
+// first eight entries; a successful checker draws and returns, otherwise the
+// loop continues and falls through to 0x512D4E.
+for (int offset = 0; offset < 0x20; offset += 4) {
+    int x = cursor_x + RadiusBaseX[offset / 4];
+    if ((MapIsFlat & 1) == 0) {
+        if (x < 0) {
+            x += MapLongitudeBounds;
+        } else if (x >= MapLongitudeBounds) {
+            x -= MapLongitudeBounds;
+        }
+    }
+    const int y = cursor_y + RadiusBaseY[offset / 4];
+    if (y < 0 || y >= MapLatitudeBounds || x < 0 ||
+        x >= MapLongitudeBounds) {
+        continue;
+    }
+    const int nearby = veh_at(x, y);
+    if (nearby < 0 || Vehs[nearby].faction_id != 0) {
+        continue;
+    }
+    const int nearby_proto = Vehs[nearby].proto_id;
+    if (nearby_proto == 0x0F) {
+        if (tut_check2(0x80000) != 0) {
+            TutorialWindow.tut_map("SPORELAUNCHER", x, y, nearby, 0,
+                                   0, -1, -1);
+            return;
+        }
+    } else if (nearby_proto == 0x0E && tut_check2(0x40000) != 0) {
+        TutorialWindow.tut_map("SEALURK", x, y, nearby, 0, 0, -1, -1);
+        return;
+    }
+}
+
+
+{
+// 0x512D4E resource scan: RadiusBase order, coordinate wrapping, tile
+    // exclusions, goody suppression, bonus lookup, checker, second bonus_at
+    // read, then sprite selection. Tut-map returns immediately in each case.
+    for (int radius = 0; radius < 8; ++radius) {
+        const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[radius]);
+        const int y = cursor_y + RadiusBaseY[radius];
+        if (!give_hints_in_map(x, y)) continue;
+        Map &tile = *map_loc(x, y);
+        if ((tile.bit & 3u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
+        if ((tile.bit & 0x81E02850u) != 0) continue;
+        if (goody_at(x, y) != 0) continue;
+        int bonus = bonus_at(x, y, 0);
+        if (bonus == 1 && tut_check(0x20000)) {
+            bonus = bonus_at(x, y, 0);
+            const int sprite_index = 2 * static_cast<int>(selected_is_sea) +
+                                     4 * (bonus - 1);
+            give_hints_map("BONUSNUTRIENT", x, y, -1,
+                 &g_TER1_SEA_LAND_RESOURCE_SPRITES[sprite_index], 0, -1, -1);
+            return;
+        }
+        if (bonus == 2 && tut_check(0x40000)) {
+            bonus = bonus_at(x, y, 0);
+            const int sprite_index = 2 * static_cast<int>(selected_is_sea) +
+                                     4 * (bonus - 1);
+            give_hints_map("BONUSMINERALS", x, y, -1,
+                 &g_TER1_SEA_LAND_RESOURCE_SPRITES[sprite_index], 0, -1, -1);
+            return;
+        }
+        if (bonus == 3 && tut_check(0x80000)) {
+            bonus = bonus_at(x, y, 0);
+            const int sprite_index = 2 * static_cast<int>(selected_is_sea) +
+                                     4 * (bonus - 1);
+            give_hints_map("BONUSENERGY", x, y, -1,
+                 &g_TER1_SEA_LAND_RESOURCE_SPRITES[sprite_index], 0, -1, -1);
+            return;
+        }
+    }
+
+    // The selected cursor tile's fungus-water/land cards follow the neighbor
+    // scan. Native tests bit 0x20, then the altitude band, with distinct masks.
+    Map &cursor_tile = *map_loc(cursor_x, cursor_y);
+    if ((cursor_tile.bit & 0x20u) != 0) {
+        const uint8_t altitude_band = cursor_tile.climate & 0xE0u;
+        if (altitude_band >= 0x40u && altitude_band < 0x60u &&
+            tut_check(0x8000)) {
+            give_hints_map("FUNGUSSEA", cursor_x, cursor_y, -1, 0, 0, -1, -1);
+            return;
+        }
+        if (altitude_band >= 0x60u && tut_check(0x100)) {
+            give_hints_map("FUNGUSAMUNGUS", cursor_x, cursor_y, -1, 0, 0, -1, -1);
+            return;
+        }
+    }
+
+    // 0x513022: tutorial-state gate; colonization-site advice. The current
+    // tile's site is initialized/read before the neighbor scan, and each
+    // candidate updates its site through the real world_site/site_set owners.
+    if ((GameState & 0x400u) != 0) return;
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (VehPrototypes[proto_id].plan == PLAN_COLONIZATION &&
+        (TutWinFlags9A64BC & 0x10000u) == 0) {
+        Map &here = *map_loc(cursor_x, cursor_y);
+        int site = (here.bit & 0x1000u) ? 0 : (here.val2 >> 4);
+        if (site == 0) {
+            site = world_site(cursor_x, cursor_y, 0);
+            site_set(cursor_x, cursor_y, site);
+        }
+        if (site < 4) {
+            const int region = map_loc(cursor_x, cursor_y)->region;
+            if (site < PlayersData[faction_id_].unk_82[region]) return;
+        }
+        bool better_site_in_unowned_region = false;
+        for (int i = 0; i < 21; ++i) {
+            const int x = give_hints_wrap_x(cursor_x + RadiusOffsetX[i]);
+            const int y = cursor_y + RadiusOffsetY[i];
+            if (!give_hints_in_map(x, y)) continue;
+            const int owner = whose_territory(faction_id_, x, y, 0, 0);
+            if (owner >= 0 && owner != faction_id_) continue;
+            Map &candidate = *map_loc(x, y);
+            int candidate_site;
+            if ((candidate.bit & 0x1000u) != 0) {
+                candidate_site = 0;
+            } else {
+                candidate_site = candidate.val2 >> 4;
+                if (candidate_site == 0) {
+                    candidate_site = world_site(x, y, 0);
+                    site_set(x, y, candidate_site);
+                }
+            }
+            if (candidate_site > site) {
+                better_site_in_unowned_region = true;
+                break;
+            }
+        }
+        if (better_site_in_unowned_region) return;
+        give_hints_map("BUILDHERE", cursor_x, cursor_y, selected_vehicle_, 0,
+             0x10000, -1, -1);
+        return;
+    }
+
+    // 0x51323A terraforming chain, only for plan 9 when the entry-captured
+    // local_14 is false. BaseFindDist and BaseCurrent are written/read by the
+    // actual base_find owner, not synthesized from a radius test.
+    proto_id = Vehs[selected_vehicle_].proto_id;
+    if (VehPrototypes[proto_id].plan == PLAN_TERRAFORMING && !selected_is_sea) {
+        const int base_id = base_find(cursor_x, cursor_y, faction_id_);
+        if (base_id < 0) return;
+        if (BaseFindDist <= 2) {
+            if (at_goal(faction_id_, 0x29, cursor_x, cursor_y) != 0 &&
+                (TutWinFlags9A64BC & 0x200000u) == 0) {
+                parse_says(0, BaseCurrent->name_string, -1, -1);
+                if ((map_loc(cursor_x, cursor_y)->bit & 0x40u) != 0) {
+                    give_hints_map("TERRARAISE", cursor_x, cursor_y, -1, 0,
+                         0x200000, -1, -1);
+                }
+                GameState |= 0x400u;
+                return;
+            }
+
+            const int improve = can_terraform(faction_id_, cursor_x, cursor_y,
+                                              0, base_id);
+            if (improve == 4 &&
+                (TutWinFlags9A64BC & 0x100000u) == 0 &&
+                (map_loc(cursor_x, cursor_y)->bit & 0x800000u) == 0) {
+                GameState |= 0x400u;
+                parse_says(0, Bases[base_id].name_string, -1, -1);
+                give_hints_map("TERRAFARM", cursor_x, cursor_y, -1,
+                     &g_TER1_FARM_SPRITES[3], 0x100000, -1, -1);
+                return;
+            }
+            if (improve == 6 &&
+                (TutWinFlags9A64BC & 0x40000u) == 0) {
+                give_hints_map("TERRAMINE", cursor_x, cursor_y, -1,
+                     &g_TER1_MINE_SPRITE, 0x40000, -1, -1);
+                GameState |= 0x400u;
+                return;
+            }
+            if (improve == 7 &&
+                (TutWinFlags9A64BC & 0x20000u) == 0) {
+                give_hints_map("TERRASOLAR", cursor_x, cursor_y, -1,
+                     &g_TER1_SOLAR_COLLECTOR_SPRITE, 0x20000, -1, -1);
+                GameState |= 0x400u;
+                return;
+            }
+            if (improve == 8 &&
+                (TutWinFlags9A64BC & 0x400000u) == 0) {
+                give_hints_map("TERRAFOREST", cursor_x, cursor_y, -1, 0,
+                     0x400000, -1, -1);
+                GameState |= 0x400u;
+                return;
+            }
+
+            if ((at_goal(faction_id_, 0x79, cursor_x, cursor_y) != 0 ||
+                 good_sensor(ConsoleGlobal.faction_id_, cursor_x, cursor_y) != 0) &&
+                (TutWinFlags9A64BC & 0x2000000u) == 0) {
+                give_hints_map("TERRASENSOR", cursor_x, cursor_y, -1, 0,
+                     0x2000000, -1, -1);
+                GameState |= 0x400u;
+                return;
+            }
+            const uint32_t tile_flags = map_loc(cursor_x, cursor_y)->bit;
+            if ((tile_flags & 4u) == 0 &&
+                (TutWinFlags9A64BC & 0x80000u) == 0 &&
+                ((tile_flags & 0x10u) != 0 ||
+                 at_goal(faction_id_, 9, cursor_x, cursor_y) != 0)) {
+                give_hints_map("TERRAROAD", cursor_x, cursor_y, -1, 0,
+                     0x80000, -1, -1);
+                GameState |= 0x400u;
+                return;
+            }
+        }
+    }
+
+    // The exploration/goody scan checks the 8-tile RadiusBase sequence for a
+    // pod on matching sea/land terrain. A matching pod branches directly to
+    // the shared 0x5135E6 card tail.
+    bool matching_pod = false;
+    int pod_x = cursor_x;
+    int pod_y = cursor_y;
+    if ((TutorialFlags & 0x2000) == 0) {
+        for (int i = 0; i < 8; ++i) {
+            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
+            const int y = cursor_y + RadiusBaseY[i];
+            if (!give_hints_in_map(x, y) || goody_at(x, y) == 0) continue;
+            const bool shallow_or_land = (map_loc(x, y)->climate & 0xE0u) < 0x60u;
+            if (shallow_or_land == selected_is_sea) {
+                matching_pod = true;
+                pod_x = x;
+                pod_y = y;
+                break;
+            }
+        }
+    }
+
+    // A matching goody is the only route to LAB_005135E6 / EXPLORATION.
+    // Preserve the native checker-before-index/draw order; the approved bound
+    // check retains its side effect if a future source-owned bank is shorter.
+    if (matching_pod) {
+        if (!tut_check(0x2000)) return;
+        const int remainder = (5 * pod_y + 7 * pod_x) % 3;
+        const int sprite_index = static_cast<int>(selected_is_sea) + remainder * 2;
+        if (sprite_index >= 0 &&
+            sprite_index < static_cast<int>(sizeof(g_TER1_UNITY_POD_SPRITES) /
+                                           sizeof(g_TER1_UNITY_POD_SPRITES[0]))) {
+            give_hints_map("EXPLORATION", pod_x, pod_y, -1,
+                 &g_TER1_UNITY_POD_SPRITES[sprite_index], 0, -1, -1);
+        }
+        return;
+    }
+
+    // 0x5135AD enemy-base scan. Its exhaustion proceeds to 0x5136B7, not to
+    // the exploration checker. A previously set base flag bypasses this scan
+    // but still proceeds to the same enemy-vehicle scan.
+    if ((TutorialFlags & 0x8000000) == 0) {
+        for (int i = 0; i < 8; ++i) {
+            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
+            const int y = cursor_y + RadiusBaseY[i];
+            if (!give_hints_in_map(x, y)) continue;
+            const int base_id = base_at(x, y);
+            if (base_id < 0) continue;
+            const int base_faction = Bases[base_id].faction_id_current;
+            if (base_faction == faction_id_) continue;
+            if (!tut_check(0x8000000)) return;
+            parse_says(0, Bases[base_id].name_string, -1, -1);
+            give_hints_parse_faction_identity(base_faction);
+            give_hints_map("ENEMYBASE", x, y, -1, 0, 0, -1, -1);
+            return;
+        }
+    }
+
+    // Native 0x5136B7 enemy-vehicle scan follows either an exhausted base
+    // scan or the pre-set base-hint bit. Its own independent flag controls it.
+    if ((TutorialFlags & 0x10000000) == 0) {
+        for (int i = 0; i < 8; ++i) {
+            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
+            const int y = cursor_y + RadiusBaseY[i];
+            if (!give_hints_in_map(x, y)) continue;
+            Map &tile = *map_loc(x, y);
+            if ((tile.bit & 1u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
+            const int vehicle = veh_at(x, y);
+            if (vehicle < 0) continue;
+            const int other_faction = Vehs[vehicle].faction_id;
+            if (other_faction == faction_id_ || other_faction == 0) continue;
+            if (!tut_check(0x10000000)) return;
+            give_hints_parse_faction_identity(other_faction);
+            give_hints_map("ENEMYVEH", x, y, vehicle, 0, 0, -1, -1);
+            return;
+        }
+    }
+
+    // 0x5138B3 territory edge scan. It compares each candidate owner against
+    // the cursor tile owner, then emits only the
+    // first edge faction meeting the two comparisons.
+    if ((TutorialFlags & 0x20000000) == 0) {
+        for (int i = 0; i < 8; ++i) {
+            const int x = give_hints_wrap_x(cursor_x + RadiusBaseX[i]);
+            const int y = cursor_y + RadiusBaseY[i];
+            if (!give_hints_in_map(x, y)) continue;
+            const Map &tile = *map_loc(x, y);
+            if ((tile.bit & 3u) != 0 && (tile.val2 & 0x0Fu) < 8) continue;
+            const int candidate_owner = whose_territory(faction_id_, x, y,
+                                                        0, 0);
+            if (candidate_owner < 0 || candidate_owner == faction_id_) continue;
+            const int again_cursor_owner = whose_territory(
+                faction_id_, cursor_x, cursor_y, 0, 0);
+            if (again_cursor_owner == candidate_owner) continue;
+            if (!tut_check(0x20000000)) return;
+            give_hints_parse_faction_identity(candidate_owner);
+            give_hints_map("ENEMYTERR", x, y, -1, 0, 0, -1, -1);
+            return;
+        }
+    }
+}
+
+
 }
 
 // ORIGINAL: 0x004D7F60 ?use_ability@Console@@QAEXH@Z 0x004D7F60-0x004D8A62;0x0065AFD2-0x0065B275
