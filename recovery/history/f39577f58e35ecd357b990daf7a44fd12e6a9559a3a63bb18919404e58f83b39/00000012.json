@@ -1,0 +1,36 @@
+{
+  "event_id": "a405e334f4c2b6ae9c5adf0fee06a90539b3f73af43af7f90346fcfb38adf78a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/console.h"
+    ],
+    "evidence": [
+      "Council428350 native/retained complete seed passes singleton6FEC80 to CouncWin.init427230;6FF6D4 is the existing leader_label_kind_[8] member at+A54, not independent globals. Authorize real CouncilWindow storage/extern in councwin.cpp/h and source member binding; retain unknown global extent/lifetime until measured, no fabricated end bound. Existing constructor/destructor mappings and claims preserved. CouncWin.init needs Console-owned AlphaMenu at+22A2C; add narrow class friendship consistent existing MainInterface/TutWin/PrefWin ownership access, no new fields/virtual slots.",
+      "Native tech_analysis53E800 initializes and ranks tech IDs at93FAA8/FA18/FA1C/FA28, shared with buy_council_vote and retained diplomacy seeds. Authorize real named int cells in faction.cpp/h and full future producer recovery (not fixed-image aliases). Existing scalar slots remain independent unless contrary structure evidence appears; recover producer all branches before claiming live behavior. Full source build/link, historical claims and relevant data/byte checks required. Immutable original task baseline and all unfinished discoveries retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4358992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4359712,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5498880,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "77c458f40806ea367901d9b207ac4ed43fc5c5f77b886265d41ffbe813b04043",
+  "request_id": "council-window-and-research-output-owners-20261001",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:interface-contract-report-closure"
+}

@@ -28,6 +28,11 @@
 #include "game.h"        // IsMultiplayerNet and string_upper_slot
 #include "general.h"     // GenderDefault and PluralityDefault
 #include "infowin.h"     // InfoFactionShadowColors
+
+// Source-owned process Council object. The original init receiver establishes
+// its identity, not a complete global bound or runtime-initializer proof.
+// RECOVERY_OBJECT: v1 0x006FEC80 ?CouncilWindow@@3VCouncWin@@A
+CouncWin CouncilWindow;
 #include "strings.h"     // StringTemp
 #include "console.h"     // ConsoleGlobal's local faction id
 #include "netmsg.h"      // NetMsgPopup

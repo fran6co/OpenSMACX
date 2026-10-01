@@ -1066,3 +1066,6 @@ MEASURED inline LPSTR __cdecl get_noun(int faction_id) {
 int __cdecl setup_player(int faction_id, int conqueror, int retry);
 int __cdecl eliminate_player(int faction_id, int conqueror);
 void __cdecl buy_council_vote(int, int, int, int);
+// Shared ranked technology IDs written by tech_analysis and read/reset by
+// diplomacy and Council vote purchases. Producer recovery remains unfinished.
+extern int DiploScratchFAA8, DiploScratchFA18, DiploScratchFA1C, DiploScratchFA28;

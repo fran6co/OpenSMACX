@@ -150,6 +150,7 @@ class CouncWin : public GraphicWin, public SubInterface {
   uint32_t field_A40_;  // 0xA40
   uint32_t field_A44_;  // 0xA44
   Spot spot_;  // 0xA48
+  // RECOVERY_MEMBER: v1 CouncWin leader_label_kind_ 0xA54 0x00427230
   uint32_t leader_label_kind_[8];  // 0xA54, values select panel badge/text cases
   int leader_tech_[8];             // 0xA74, technology ids for war badges
   uint32_t field_A94_;  // 0xA94
@@ -190,6 +191,10 @@ class CouncWin : public GraphicWin, public SubInterface {
   // individual buttons, so the remodel rewires no caller.
   FlatButton buttons_[6];  // 0xD94
 };
+
+// council(00428350) passes the process-wide object at006FEC80 to init;
+// its +A54 member is the faction-indexed006FF6D4 table seen by vote buyers.
+extern CouncWin CouncilWindow;
 
 
 // ?draw_leader@CouncWin@@QAEXH@Z at 0x00425DB0 - public, __thiscall,

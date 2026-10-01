@@ -4167,6 +4167,17 @@ int DiploScratchFA98;
 int DiploScratchFA9C;
 // RECOVERY_OBJECT: v1 0x0093FAA0 ?DiploScratchFAA0@@3HA
 int DiploScratchFAA0;
+// Native tech_analysis initializes all four IDs to -1 before ranking offers.
+// Separate source-owned cells preserve the original sparse shared storage;
+// these declarations do not replace the still-seeded producer implementation.
+// RECOVERY_OBJECT: v2 0x0093FAA8 0x0093FAAC ?DiploScratchFAA8@@3HA 0x0053E800
+int DiploScratchFAA8;
+// RECOVERY_OBJECT: v2 0x0093FA18 0x0093FA1C ?DiploScratchFA18@@3HA 0x0053E800
+int DiploScratchFA18;
+// RECOVERY_OBJECT: v2 0x0093FA1C 0x0093FA20 ?DiploScratchFA1C@@3HA 0x0053E800
+int DiploScratchFA1C;
+// RECOVERY_OBJECT: v2 0x0093FA28 0x0093FA2C ?DiploScratchFA28@@3HA 0x0053E800
+int DiploScratchFA28;
 
 static int pending_social_model(const SocialCategory &selection, int category) {
     return static_cast<int>(selection.models_[category]);

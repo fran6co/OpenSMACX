@@ -111,6 +111,8 @@ class Console : public MapWin {
   friend class TutWin;
   // PrefWin hides the main menu before opening its own modal window.
   friend class PrefWin;
+  // Council initialization hides/reopens this Console's owned AlphaMenu.
+  friend class CouncWin;
   // MapWin's input handlers operate the existing Console cursor state.
   friend class MapWin;
   friend void __cdecl go_timer(int selection_mode);
