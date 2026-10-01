@@ -16,6 +16,8 @@
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
 #include "stdafx.h"
+#include "worldwin.h"
+#include "general.h"
 
 #include "temp.h"
 #include "faction.h"
@@ -45,7 +47,9 @@
 #include "infowin.h"
 #include "reportif.h"
 #include "random.h"
+#include "replaywin.h"
 
+void __cdecl draw_tile_fixup(int x, int y, int wider_radius, int redraw_flags);
 void __cdecl mon_killed_faction(int faction, int killed_faction);
 char *__cdecl get_him_her(int faction_id, int sentence_form);
 void __cdecl interlude(int id, char *filename, int arg3, int arg4);
@@ -6100,4 +6104,640 @@ void __cdecl introduce(int faction_id, int other_faction_id) {
             set_treaty(faction_id, other_faction_id, 0x4000, 1);
         }
     }
+}
+
+
+// Shared map-transfer outcome. Native543A3B clears and543AF0 sets;
+// proposal producers545E5B/545E72/54F62D and reader557AEE remain seed
+// obligations, not proof of completed diplomacy workflow coverage.
+// RECOVERY_OBJECT: v2 0x0093FAD8 0x0093FADC ?DiplomacyMapTransferChanged@@3HA 0x00543A20
+int DiplomacyMapTransferChanged;
+// Shared modal proposal result/mode, not a private default for base gifting.
+// proposal_menu54DCF0 clears/stores it; native gift path reads mode3.
+// RECOVERY_OBJECT: v2 0x0093FAB0 0x0093FAB4 ?DiplomacyProposalMode@@3HA 0x0054DCF0
+int DiplomacyProposalMode;
+// ORIGINAL: 0x00543A20 ?trade_maps@@YAXHH@Z 0x00543A20-0x00543BC0
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00543a20.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+void __cdecl trade_maps(int faction_id, int other_faction_id) {
+    DiplomacyMapTransferChanged = 0;
+
+    int &trade_a = PlayersData[faction_id].traded_maps;
+    int &trade_b = PlayersData[other_faction_id].traded_maps;
+    const uint32_t combined = static_cast<uint32_t>(trade_a) |
+        (1u << (other_faction_id & 31)) | trade_b;
+    trade_a = static_cast<int>(combined);
+    trade_b = static_cast<int>(static_cast<uint32_t>(trade_b) |
+        (1u << (faction_id & 31)) | combined);
+
+    const uint8_t mask_a = static_cast<uint8_t>(1u << (faction_id & 31));
+    const uint8_t mask_b = static_cast<uint8_t>(1u << (other_faction_id & 31));
+    for (int tile_id = 0; tile_id < static_cast<int>(MapArea); ++tile_id) {
+        Map &tile = MapTiles[tile_id];
+        const uint8_t visible_to = static_cast<uint8_t>(tile.visibility);
+        if ((visible_to & mask_a) == 0) {
+            if ((visible_to & mask_b) != 0) {
+                DiplomacyMapTransferChanged = 1;
+                tile.visibility = visible_to | mask_a;
+                if (faction_id != 0 && other_faction_id != 0) {
+                    tile.bit_visible[faction_id - 1] |=
+                        tile.bit_visible[other_faction_id - 1] & tile.bit;
+                }
+            }
+        } else {
+            tile.visibility = visible_to | mask_b;
+            if (faction_id != 0 && other_faction_id != 0) {
+                tile.bit_visible[other_faction_id - 1] |=
+                    tile.bit_visible[faction_id - 1] & tile.bit;
+            }
+        }
+    }
+
+    for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+        const Base &base = Bases[base_id];
+        int revealed_to = other_faction_id;
+        if ((base.visibility & mask_a) != 0 ||
+            base.faction_id_current == faction_id) {
+            spot_base(base_id, revealed_to);
+        } else if ((base.visibility & mask_b) != 0 ||
+                   base.faction_id_current == other_faction_id) {
+            revealed_to = faction_id;
+            spot_base(base_id, revealed_to);
+        }
+    }
+
+    if (faction_id == ConsoleGlobal.faction_id_ ||
+        other_faction_id == ConsoleGlobal.faction_id_) {
+        UnkBitfield1 |= 4;
+        WorldClimateWorldWin.GraphicWin::redraw();
+        draw_map(1);
+    }
+}
+
+// ORIGINAL: 0x00548F80 ?do_withdrawal@@YAHHH@Z 0x00548F80-0x00549264
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00548f80.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+int __cdecl do_withdrawal(int faction_id, int other_faction_id) {
+    int result = 0;
+    if (VehCurrentCount <= 0) return 0;
+
+    for (int veh_id = 0; veh_id < VehCurrentCount; ++veh_id) {
+        Veh &veh = Vehs[veh_id];
+        if (veh.faction_id != other_faction_id) continue;
+        const int proto_id = veh.proto_id;
+        if (VehPrototypes[proto_id].armor_id == 0x0B) continue;
+
+        const int x = veh.x;
+        const int y = veh.y;
+        Map &tile = MapTiles[MapLongitude * y + (x >> 1)];
+        if ((tile.climate & 0xE0) < ALT_BIT_SHORE_LINE) continue;
+        if (tile.territory != faction_id) continue;
+
+        if (Chassis[VehPrototypes[proto_id].chassis_id].triad == TRIAD_LAND &&
+            veh_cargo(veh_id) != 0) {
+            for (int neighbor = 0; neighbor < 8; ++neighbor) {
+                int dest_x = RadiusBaseX[neighbor] + x;
+                if ((MapIsFlat & 1) == 0) {
+                    if (dest_x < 0) dest_x += MapLongitudeBounds;
+                    else if (dest_x >= MapLongitudeBounds)
+                        dest_x -= MapLongitudeBounds;
+                }
+                const int dest_y = RadiusBaseY[neighbor] + y;
+                if (dest_y < 0 || dest_y >= MapLatitudeBounds || dest_x < 0 ||
+                    dest_x >= MapLongitudeBounds) continue;
+
+                Map &dest = MapTiles[MapLongitude * dest_y + (dest_x >> 1)];
+                int allowed = 0;
+                if ((dest.climate & 0xE0) < ALT_BIT_SHORE_LINE) {
+                    const int occupant = stack_fix(veh_at(dest_x, dest_y));
+                    if (stack_check(occupant, 8, other_faction_id, -1, -1) > 0)
+                        allowed = 1;
+                } else if (dest.territory == other_faction_id) {
+                    allowed = 1;
+                }
+                if (!allowed) continue;
+
+                const unsigned flags = dest.val2 & 0x0F;
+                if ((dest.bit & 3) != 0 && flags < 8 &&
+                    static_cast<int>(flags) != other_faction_id) continue;
+
+                const int lifted_neighbor_vehicle = veh_lift(veh_id);
+                veh_drop(lifted_neighbor_vehicle, dest_x, dest_y);
+                veh.visibility = 0;
+                veh.order = ORDER_NONE;
+                veh.state &= 0xFCFFBDFF;
+                draw_tiles(x, y, 2);
+                ++result;
+            }
+        }
+
+        const int base_id = base_find(x, y, other_faction_id);
+        if (base_id >= 0) {
+            const int dest_x = Bases[base_id].x;
+            const int dest_y = Bases[base_id].y;
+            const int lifted_base_vehicle = veh_lift(veh_id);
+            veh_drop(lifted_base_vehicle, dest_x, dest_y);
+            veh.visibility = 0;
+            veh.order = ORDER_NONE;
+            veh.state &= 0xFCFFBDFF;
+            const int ability = has_abil(veh.proto_id, 2);
+            draw_tile_fixup(x, y, ability, 2);
+            ++result;
+        }
+    }
+
+    if (result != 0) {
+        set_agenda(other_faction_id, faction_id, 2, 1);
+        set_treaty(other_faction_id, faction_id, 0x100000, 1);
+    }
+    return result;
+}
+
+// ORIGINAL: 0x0054CF40 ?give_a_base@@YAXHH@Z 0x0054CF40-0x0054D410
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0054cf40.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+void __cdecl give_a_base(int base_id, int new_owner) {
+    Base &base = Bases[base_id];
+    const int x = base.x;
+    const int y = base.y;
+    const unsigned old_owner = base.faction_id_current;
+
+    for (int offset = 0; offset < 0x54; offset += 4) {
+        int dest_x = x + RadiusOffsetX[offset / 4];
+        if ((MapIsFlat & 1) == 0) {
+            if (dest_x < 0) dest_x += MapLongitudeBounds;
+            else if (dest_x >= MapLongitudeBounds)
+                dest_x -= MapLongitudeBounds;
+        }
+        const int dest_y = y + RadiusOffsetY[offset / 4];
+        if (dest_y >= 0 && dest_y < MapLatitudeBounds && dest_x >= 0 &&
+            dest_x < MapLongitudeBounds) {
+            Map &tile = MapTiles[MapLongitude * dest_y + (dest_x >> 1)];
+            tile.visibility |= static_cast<uint8_t>(1u << new_owner);
+            synch_bit(dest_x, dest_y, new_owner);
+        }
+    }
+
+    for (int veh_id = VehCurrentCount - 1; veh_id >= 0; --veh_id) {
+        Veh &veh = Vehs[veh_id];
+        if (veh.faction_id != old_owner) continue;
+        const int veh_x = veh.x;
+        const int veh_y = veh.y;
+        int dx = abs(veh_x - x);
+        if ((MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < dx)
+            dx = MapLongitudeBounds - dx;
+        const int dy = abs(veh_y - y);
+        const int adx = abs(dx);
+        const int ady = abs(dy);
+        const int hi = adx > ady ? adx : ady;
+        const int lo = adx < ady ? adx : ady;
+        const int cheby = (((adx + ady) >> 1) - lo + 1) >> 1;
+        const int remaining = hi - cheby;
+        const uint8_t terrain = MapTiles[MapLongitude * veh_y + (veh_x >> 1)].climate;
+        const unsigned near_base = ((terrain & 0xE0) >= ALT_BIT_SHORE_LINE) ? 1u : 0u;
+        if (remaining > static_cast<int>(near_base)) continue;
+
+        const int prototype_id = veh.proto_id;
+        const int armor = VehPrototypes[prototype_id].armor_id;
+        bool find_other_base = true;
+        if ((armor == 2 || armor == 3) && remaining == 0) {
+            find_other_base = false;
+        } else {
+            const int chassis = VehPrototypes[prototype_id].chassis_id;
+            if (Chassis[chassis].triad == 1 &&
+                (remaining == 0 || (terrain & 0xE0) >= ALT_BIT_SHORE_LINE)) {
+                find_other_base = false;
+            }
+        }
+
+        bool transferred = false;
+        if (find_other_base) {
+            base.faction_id_current = static_cast<uint8_t>(new_owner);
+            const int found_base = base_find(x, y, static_cast<int>(old_owner));
+            base.faction_id_current = static_cast<uint8_t>(old_owner);
+            if (found_base >= 0) {
+                const int found_x = Bases[found_base].x;
+                const int found_y = Bases[found_base].y;
+                int dx2 = abs(found_x - x);
+                if ((MapIsFlat & 1) == 0 &&
+                    static_cast<int>(MapLongitude) < dx2) {
+                    dx2 = MapLongitudeBounds - dx2;
+                }
+                const int dy2 = abs(found_y - y);
+                if (dx2 + dy2 >= 2) {
+                    stack_put(stack_veh(veh_id, 1), found_x, found_y);
+                    veh.order = ORDER_NONE;
+                    if (veh.home_base_id == base_id)
+                        veh.home_base_id = static_cast<int16_t>(found_base);
+                    transferred = true;
+                }
+            }
+        }
+
+        if (!transferred) {
+            --PlayersData[old_owner].proto_id_active[prototype_id];
+            veh.faction_id = static_cast<uint8_t>(new_owner);
+            ++PlayersData[new_owner].proto_id_active[prototype_id];
+            veh.home_base_id = static_cast<int16_t>(base_id);
+            if (veh.order != ORDER_HOLD) veh.order = ORDER_NONE;
+            veh.waypoint_y[1] = static_cast<int16_t>(veh.waypoint_y[1] & ~0xFF);
+            owner_set(veh_x, veh_y, new_owner);
+        }
+    }
+
+    base.faction_id_current = static_cast<uint8_t>(new_owner);
+    base.minerals_accumulated_2 = 0;
+    base.minerals_accumulated = 0;
+    const int queue_size = static_cast<int32_t>(base.queue_size);
+    if (queue_size >= 0) {
+        for (int index = 0; index <= queue_size; ++index) {
+            if (base.queue_production_id[index] >= 0) {
+                --PlayersData[old_owner].proto_id_queue[
+                    base.queue_production_id[index]];
+            }
+        }
+    }
+    base.queue_size = 0;
+    base.production_id_last = -69;
+    base.queue_production_id[0] = -69;
+
+    replay_base(1, x, y, new_owner);
+    const int proposal_mode = DiplomacyProposalMode;
+    base.state &= 0xFFDEF7B1;
+    base.nerve_staple_turns_left = 0;
+    if (proposal_mode == 3) {
+        if (base.faction_id_former == new_owner) {
+            base.assimilation_turns_left = 0;
+        } else {
+            base.faction_id_former = static_cast<uint8_t>(old_owner);
+            base.assimilation_turns_left = 0x32;
+        }
+    } else {
+        if (base.faction_id_former == new_owner)
+            base.assimilation_turns_left = 0;
+        base.faction_id_former = static_cast<uint8_t>(new_owner);
+    }
+
+    spot_base(base_id, static_cast<int>(old_owner));
+    reset_territory();
+    for (int cleanup_vehicle = VehCurrentCount - 1; cleanup_vehicle >= 0; --cleanup_vehicle) {
+        if (cleanup_vehicle < VehCurrentCount &&
+            Vehs[cleanup_vehicle].faction_id == old_owner &&
+            Vehs[cleanup_vehicle].home_base_id == base_id) {
+            kill(cleanup_vehicle);
+        }
+    }
+    owner_set(x, y, new_owner);
+    draw_tile_fixup(x, y, 1, 2);
+    set_base(base_id);
+    base_compute(1);
+}
+
+// ORIGINAL: 0x0050BCC0 ?double_cross@@YAXHHH@Z 0x0050BCC0-0x0050C2D7
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0050bcc0.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
+    if (IsMultiplayerNet) {
+        if (partner_id == ConsoleGlobal.faction_id_ && victim_id > 0) {
+            PluralityDefault = 0;
+            GenderDefault = Players[victim_id].is_leader_female;
+            parse_says(0, Players[victim_id].title_leader, -1, -1);
+            GenderDefault = Players[victim_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[victim_id].name_leader, -1, -1);
+            GenderDefault = Players[victim_id].noun_gender;
+            PluralityDefault = Players[victim_id].is_noun_plural;
+            parse_says(2, Players[victim_id].noun_faction, -1, -1);
+
+            PluralityDefault = 0;
+            GenderDefault = Players[faction_id].is_leader_female;
+            parse_says(3, Players[faction_id].title_leader, -1, -1);
+            GenderDefault = Players[faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(4, Players[faction_id].name_leader, -1, -1);
+            GenderDefault = Players[faction_id].noun_gender;
+            PluralityDefault = Players[faction_id].is_noun_plural;
+            parse_says(5, Players[faction_id].noun_faction, -1, -1);
+            NetMsgPopup->pop("INCITED", 0x1388, 0, nullptr);
+        } else if (partner_id == ConsoleGlobal.faction_id_ &&
+                   (LockEnableMask & (1u << (faction_id & 31))) != 0) {
+            GenderDefault = Players[faction_id].is_leader_female;
+            parse_says(0, Players[faction_id].title_leader, -1, -1);
+            GenderDefault = Players[faction_id].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[faction_id].name_leader, -1, -1);
+            GenderDefault = Players[faction_id].noun_gender;
+            PluralityDefault = Players[faction_id].is_noun_plural;
+            parse_says(2, Players[faction_id].noun_faction, -1, -1);
+            NetMsgPopup->pop("VENDETTAWARNING", 0x1388, 0, nullptr);
+        }
+    }
+
+    // Index A is row=partner, column=actor; B is row=actor, column=partner.
+    PlayersData[partner_id].loan_balance[faction_id] = 0;
+    const uint32_t treaty_flags =
+        PlayersData[faction_id].diplo_treaties[partner_id];
+    int treaty_active = 0;
+    if ((treaty_flags & 0x40000) != 0) {
+        treaty_active = 1;
+    } else if (PlayersData[partner_id].major_atrocities != 0) {
+        treaty_active = 1;
+    }
+
+    int friction_flag = 0;
+    if (victim_id >= 0) {
+        const uint32_t victim_treaty =
+            PlayersData[faction_id].diplo_treaties[victim_id];
+        if ((victim_treaty & 1) != 0) {
+            if ((treaty_flags & 1) == 0) friction_flag = 1;
+        } else if ((victim_treaty & 2) != 0) {
+            if ((treaty_flags & 2) == 0) friction_flag = 1;
+        } else if ((victim_treaty & 4) != 0) {
+            if ((treaty_flags & 4) == 0) friction_flag = 1;
+        }
+        ++PlayersData[faction_id].diplo_unk1[victim_id];
+    }
+
+    if ((treaty_flags & 1) != 0) {
+        if ((PlayersData[faction_id].diplo_agenda[partner_id] & 0x20) == 0) {
+            int &reputation = PlayersData[faction_id].global_reputation;
+            reputation = reputation > 0 ? reputation - 1 : 0;
+            if (PlayersData[faction_id].diff_level != 0 &&
+                treaty_active == 0 && friction_flag == 0) {
+                ++PlayersData[faction_id].integrity_blemishes;
+                ++PlayersData[partner_id].diplo_betrayed[faction_id];
+            }
+            if (victim_id >= 0) {
+                if (treaty_active == 0)
+                    ++PlayersData[faction_id].integrity_blemishes;
+                ++PlayersData[faction_id].diplo_wrongs[partner_id];
+                ++PlayersData[partner_id].diplo_betrayed[faction_id];
+            } else {
+                cause_friction(victim_id, faction_id, -4);
+            }
+            if ((LockEnableMask & (1u << (faction_id & 31))) != 0) {
+                const uint32_t actor_partner_agenda =
+                    PlayersData[partner_id].diplo_agenda[faction_id];
+                if ((actor_partner_agenda & 0x400) != 0)
+                    set_agenda(partner_id, faction_id, 0x800, 1);
+                if ((PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) != 0)
+                    set_agenda(partner_id, faction_id, 0x400, 1);
+            }
+        }
+        pact_ends(faction_id, partner_id);
+        treaty_on(faction_id, partner_id, 0x10);
+        return;
+    }
+
+    if ((PlayersData[faction_id].diplo_agenda[partner_id] & 0x20) == 0) {
+        if ((treaty_flags & 6) != 0) {
+            if ((treaty_flags & 0x10000) == 0) {
+                int &reputation = PlayersData[faction_id].global_reputation;
+                reputation = reputation > 0 ? reputation - 1 : 0;
+                if (great_satan(faction_id, 0) == 0 &&
+                    PlayersData[faction_id].ranking >= 6 &&
+                    PlayersData[partner_id].ranking <= 4 && victim_id < 0 &&
+                    treaty_active == 0) {
+                    ++PlayersData[faction_id].integrity_blemishes;
+                    ++PlayersData[partner_id].diplo_betrayed[faction_id];
+                }
+            }
+            if (PlayersData[faction_id].diff_level != 0 &&
+                treaty_active == 0 && friction_flag == 0) {
+                ++PlayersData[faction_id].integrity_blemishes;
+                ++PlayersData[partner_id].diplo_betrayed[faction_id];
+            }
+            if (victim_id < 0)
+                ++PlayersData[faction_id].diplo_wrongs[partner_id];
+
+            if ((LockEnableMask & (1u << (faction_id & 31))) != 0) {
+                const uint32_t actor_partner_agenda =
+                    PlayersData[partner_id].diplo_agenda[faction_id];
+                if ((actor_partner_agenda & 0x400) != 0)
+                    set_agenda(partner_id, faction_id, 0x800, 1);
+                if ((PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) != 0)
+                    set_agenda(partner_id, faction_id, 0x400, 1);
+                set_treaty(partner_id, faction_id, 0x20, 1);
+            }
+            if (victim_id >= 0) cause_friction(victim_id, faction_id, -2);
+        } else if (victim_id >= 0) {
+            if ((LockEnableMask & (1u << (faction_id & 31))) != 0) {
+                const uint32_t actor_partner_agenda =
+                    PlayersData[partner_id].diplo_agenda[faction_id];
+                if ((actor_partner_agenda & 0x400) != 0)
+                    set_agenda(partner_id, faction_id, 0x800, 1);
+                if ((PlayersData[partner_id].diplo_treaties[faction_id] & 0x20) != 0)
+                    set_agenda(partner_id, faction_id, 0x400, 1);
+                set_treaty(partner_id, faction_id, 0x20, 1);
+            }
+            cause_friction(victim_id, faction_id, -2);
+        }
+    }
+
+    treaty_on(faction_id, partner_id, 0x10);
+    if ((PlayersData[faction_id].diplo_agenda[partner_id] & 0x20) == 0) {
+        const bool actor_human =
+            (LockEnableMask & (1u << (faction_id & 31))) != 0;
+        const bool partner_human =
+            (LockEnableMask & (1u << (partner_id & 31))) != 0;
+        if (actor_human != partner_human) {
+            set_treaty(faction_id, partner_id, 0x40, 1);
+            PlayersData[faction_id].diplo_spoke[partner_id] = TurnCurrentNum;
+        }
+        intervention(partner_id, faction_id);
+    }
+}
+
+// ORIGINAL: 0x0053C650 ?pact_ends@@YAXHH@Z 0x0053C650-0x0053CAE6;0x0065E470-0x0065E53A
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0053c650.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+void __cdecl pact_ends(int faction_id, int partner_id) {
+    Popup popup;
+    PopupDialogFactionID = partner_id;
+    treaty_off(faction_id, partner_id, 1);
+    const int withdraw_actor = pact_withdraw(faction_id, partner_id);
+    const int withdraw_partner = pact_withdraw(partner_id, faction_id);
+    draw_map(1);
+
+    const int human = ConsoleGlobal.faction_id_;
+    int use_withdraw = 0;
+    if (faction_id == human) {
+        const Player &other = Players[partner_id];
+        GenderDefault = other.noun_gender;
+        PluralityDefault = other.is_noun_plural;
+        parse_says(0, other.noun_faction, -1, -1);
+        parse_says(1, other.adj_name_faction, -1, -1);
+        use_withdraw = withdraw_actor;
+    } else if (partner_id == human) {
+        const Player &other = Players[faction_id];
+        GenderDefault = other.noun_gender;
+        PluralityDefault = other.is_noun_plural;
+        parse_says(0, other.noun_faction, -1, -1);
+        parse_says(1, other.adj_name_faction, -1, -1);
+        use_withdraw = withdraw_partner;
+    } else {
+        if (spying(faction_id) == 0 && spying(partner_id) == 0 &&
+            (static_cast<uint8_t>(GameState) & 0x80) == 0 &&
+            (PlayersData[human].diplo_treaties[faction_id] & 1) == 0 &&
+            (PlayersData[human].diplo_treaties[partner_id] & 1) == 0) {
+            return;
+        }
+        const Player &first = Players[faction_id];
+        GenderDefault = first.noun_gender;
+        PluralityDefault = first.is_noun_plural;
+        parse_says(0, first.noun_faction, -1, -1);
+        const Player &second = Players[partner_id];
+        GenderDefault = second.noun_gender;
+        PluralityDefault = second.is_noun_plural;
+        parse_says(1, second.noun_faction, -1, -1);
+        parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
+        X_pop("ENDPACT3", 0);
+        return;
+    }
+
+    parse_num(0, use_withdraw);
+    parse_says(2, get_pact_hood(faction_id, partner_id), -1, -1);
+    const uint32_t net_mask = IsMultiplayerNet ? 0xFFFFFFFFu : 0;
+    const uint32_t first_flag = (net_mask & 0xFFF00000u) + 0x00100000u;
+    popup.start(PopupStartCaption, "ENDPACT1", -1, nullptr,
+                static_cast<int>(first_flag), nullptr);
+    if (use_withdraw != 0) {
+        const uint32_t second_flag = (IsMultiplayerNet ? 0u : 0x100000u) | 0x80u;
+        popup.start(PopupStartCaption, "ENDPACT2", -1, nullptr,
+                    static_cast<int>(second_flag), nullptr);
+    }
+    popup.exec(0, nullptr);
+}
+
+// ORIGINAL: 0x0050BA50 ?intervention@@YAXHH@Z 0x0050BA50-0x0050BCB6
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050ba50.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+void __cdecl intervention(int target_faction, int actor_faction) {
+    for (int candidate = 1; candidate < MaxPlayerNum; ++candidate) {
+        if (candidate == target_faction || candidate == actor_faction) continue;
+
+        // LockEnableMask byte +1 (native 0x009A64E9) is the faction-alive mask.
+        const uint8_t alive = static_cast<uint8_t>(LockEnableMask >> 8);
+        if ((alive & (1u << candidate)) == 0) continue;
+        if ((PlayersData[candidate].diplo_treaties[target_faction] & 1u) == 0) continue;
+        if ((PlayersData[candidate].diplo_treaties[actor_faction] & 0x11u) != 0) continue;
+
+        GenderDefault = Players[candidate].noun_gender;
+        PluralityDefault = Players[candidate].is_noun_plural;
+        parse_says(0, Players[candidate].noun_faction, -1, -1);
+
+        GenderDefault = Players[target_faction].noun_gender;
+        PluralityDefault = Players[target_faction].is_noun_plural;
+        parse_says(1, Players[target_faction].noun_faction, -1, -1);
+
+        GenderDefault = Players[candidate].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(2, Players[candidate].title_leader, -1, -1);
+
+        GenderDefault = 0;
+        PluralityDefault = FALSE;
+        parse_says(3, Players[candidate].name_leader, -1, -1);
+
+        GenderDefault = Players[actor_faction].is_leader_female;
+        PluralityDefault = FALSE;
+        parse_says(4, Players[actor_faction].title_leader, -1, -1);
+
+        GenderDefault = 0;
+        PluralityDefault = FALSE;
+        parse_says(5, Players[actor_faction].name_leader, -1, -1);
+
+        GenderDefault = Players[actor_faction].noun_gender;
+        PluralityDefault = Players[actor_faction].is_noun_plural;
+        parse_says(6, Players[actor_faction].noun_faction, -1, -1);
+
+        const uint32_t human_mask = LockEnableMask & 0xFFu;
+        if ((human_mask & (1u << target_faction)) != 0 ||
+            (human_mask & (1u << actor_faction)) != 0) {
+            if ((human_mask & (1u << actor_faction)) != 0) {
+                PlayersData[actor_faction].diplo_spoke[candidate] = TurnCurrentNum;
+            }
+            treaty_on(candidate, actor_faction, 0x80000018);
+            set_treaty(candidate, actor_faction, 0x40, TRUE);
+        }
+
+        if (ConsoleGlobal.faction_id_ == actor_faction) {
+            X_pop("AIDSTHEM", 0);
+        } else if (ConsoleGlobal.faction_id_ == target_faction) {
+            X_pop("AIDSUS", 0);
+        }
+    }
+}
+
+// ORIGINAL: 0x0053C370 ?pact_withdraw@@YAHHH@Z 0x0053C370-0x0053C649
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0053c370.cpp retains original identity/spans and contradictory scaffold history.", "Pinned full-span review and genuine Player/PlayerData/Base/Veh/Map declarations own the field interpretation; Popup uses the real C++ lifecycle.", "Related intervention50BA50/pact_withdraw53C370 bodies own the coupled helper behavior. Shared proposal cell93FAB0 and map outcome93FAD8 have native producer/consumer evidence; seed-only workflow producers remain explicit obligations."], "reason": "Recover this original diplomacy identity in its genuine faction owner, preserving typed game records, shared-state lifetimes and every seed obligation. This binding is not a byte or runtime claim."}
+int __cdecl pact_withdraw(int faction_id, int faction_id_with) {
+    int lifted_count = 0;
+    for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+        Veh &vehicle = Vehs[vehicle_id];
+        if (vehicle.faction_id != faction_id) continue;
+
+        const int base_at_vehicle = base_find(vehicle.x, vehicle.y);
+        if (base_at_vehicle < 0) continue;
+
+        if (Bases[base_at_vehicle].faction_id_current != faction_id_with &&
+            whose_territory(faction_id, vehicle.x, vehicle.y, 0, 0) != faction_id_with) {
+            continue;
+        }
+
+        int best_base = -1;
+        int best_distance = 9999;
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            Base &base = Bases[base_id];
+            if (base.faction_id_current != faction_id) continue;
+
+            const int chassis_id_for_coast = VehPrototypes[vehicle.proto_id].chassis_id;
+            if (Chassis[chassis_id_for_coast].triad == TRIAD_SEA) {
+                // Preserve the original's coordinate-as-index bug exactly:
+                // native uses base.x as a Bases[] index and base.y as the
+                // is_coast boolean, rather than using base_id / TRUE.
+                const Base &coastal_probe = Bases[base.x];
+                if (!is_coast(coastal_probe.x, coastal_probe.y, base.y)) continue;
+            }
+
+            const int chassis_id_for_sea_region =
+                VehPrototypes[vehicle.proto_id].chassis_id;
+            if (Chassis[chassis_id_for_sea_region].triad == TRIAD_SEA) {
+                const Map *tile = map_loc(vehicle.x, vehicle.y);
+                if ((tile->climate & 0xE0) < 0x60 &&
+                    !base_on_sea(base_id, tile->region)) {
+                    continue;
+                }
+            }
+
+            int dx = abs(base.x - vehicle.x);
+            if ((MapIsFlat & 1) == 0 && static_cast<int>(MapLongitude) < dx) {
+                dx = static_cast<int>(MapLongitudeBounds) - dx;
+            }
+            dx = abs(dx);
+            const int dy = abs(base.y - vehicle.y);
+            const int maximum = (dx > dy) ? dx : dy;
+            const int minimum = (dx < dy) ? dx : dy;
+            const int distance = maximum - (((dx + dy) / 2 - minimum + 1) / 2);
+            if (distance < best_distance) {
+                best_distance = distance;
+                best_base = base_id;
+            }
+        }
+
+        if (best_base < 0) continue;
+
+        const int destination_x = Bases[best_base].x;
+        const int destination_y = Bases[best_base].y;
+        const int lifted_vehicle = veh_lift(vehicle_id);
+        veh_drop(lifted_vehicle, destination_x, destination_y);
+        vehicle.order = 0;
+        vehicle.state &= 0xFCFFBDFFu;
+
+        const int chassis_id_after_move = VehPrototypes[vehicle.proto_id].chassis_id;
+        // Native receiver points at Veh.y (+2); its byte +0x23 is the
+        // terraforming counter (+0x25), not the adjacent morale byte.
+        if (Chassis[chassis_id_after_move].triad == TRIAD_AIR)
+            vehicle.terraforming_turns = 0;
+
+        ++lifted_count;
+        if (ConsoleGlobal.cursor_active_ != 0 &&
+            vehicle_id == ConsoleGlobal.selected_vehicle_) {
+            ConsoleGlobal.set_move(1);
+        }
+    }
+    return lifted_count;
 }

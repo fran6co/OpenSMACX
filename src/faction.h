@@ -1078,3 +1078,9 @@ void __cdecl diplomacy_caption(int faction_id, int faction_id_with);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
 void __cdecl introduce(int faction_id, int other_faction_id);
 void __cdecl enemy_strategy(int faction_id);
+
+// Native shared diplomacy workflow cells; semantic names remain provisional.
+extern int DiplomacyMapTransferChanged;
+extern int DiplomacyProposalMode;
+void __cdecl intervention(int target_faction, int attacker_faction);
+int __cdecl pact_withdraw(int faction_id, int partner_id);
