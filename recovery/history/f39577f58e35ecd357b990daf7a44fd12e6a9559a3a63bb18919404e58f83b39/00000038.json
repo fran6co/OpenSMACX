@@ -1,0 +1,27 @@
+{
+  "event_id": "0553c5cf5d7d8df9acbd43942951bf5c20ffe975f9a9352bc463c0d34a604939",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_tech_achieved_behavior.py",
+      "src/technology.h"
+    ],
+    "evidence": [
+      "Pinned tech_achieved5BB496 reads945F40 and tech_advance5BE673 independently reads it before945F44AiResearchBatchActive;945F48 is the separate phase. Existing leaf internal pointer alias cannot satisfy retained draft externalint; recover one zero-filled source-owned DWORD at945F40..44 in technology.cpp and migrate protected tech_advance to that same object. Preserve its original BYTE_EXACT obligation and measure fresh before integration.",
+      "Finish the preserved full tech_achieved body from council-action-owner-wave, using already recovered real Popup/NewTech/help/social/monument dependencies and removing only the superseded pending forwarder. Import only authorized actual-source body/fixture/declarations, not other worker changes or journals. Keep all seeds/discoveries, original multi-span identity, task baseline, and unrelated pending definitions. Native bind the unclaimed product definition, require fresh compile/link, protected claims, original evidence review and source controls; neither body presence nor manual checkpoint proves full game/autonomous acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6022448,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e2023fe53a9fb22043fa60bf81fca66934c2a4df66da4e1150e34e21d226691b",
+  "request_id": "technology-achieved-shared-gate-20261001",
+  "schema_version": 1,
+  "sequence": 38,
+  "stream": "task:interface-contract-report-closure"
+}
