@@ -20,10 +20,11 @@ ROOT = Path(__file__).resolve().parents[2]
 def test_partial_dependencies_remain_unfinished_in_native_source_reader():
     from match_recovery.source import read_file
 
-    partial = {0x57E040, 0x4CDAF0, 0x580860, 0x57F1D0, 0x57F4B0}
+    partial = {0x57E040, 0x580860, 0x57F1D0, 0x57F4B0}
     records = {r.address: r for r in read_file(ROOT / "src/veh.cpp")}
     assert partial <= records.keys()
     assert all(records[address].state.name == "PLACEHOLDER" for address in partial)
+    assert records[0x4CDAF0].state.name == "IMPLEMENTED"
 
 
 def braced(source, start):
@@ -59,10 +60,9 @@ def harness(function):
 #define __cdecl
 int scripted_random[8];
 int scripted_count, scripted_index;
-int test_rand() {
-    if (scripted_index >= scripted_count) std::exit(91);
-    return scripted_random[scripted_index++];
-}
+bool mutate_inventory_on_first_base, mutate_deployed_on_first_random;
+int base_at_call_count;
+int test_rand();
 #define rand test_rand
 const int MaxPlayerNum = 8;
 const int FAC_FLECHETTE_DEFENSE_SYS = 39;
@@ -75,16 +75,73 @@ bool on_map(int x, int y) {
 }
 struct PlayerData { uint32_t satellites_[4]; uint32_t sat_odp_deployed; };
 PlayerData PlayersData[MaxPlayerNum];
-struct Base { int x, y; uint8_t faction_id_current; uint8_t facilities_built[12]; };
+int test_rand() {
+    if (scripted_index >= scripted_count) std::exit(91);
+    const int value = scripted_random[scripted_index++];
+    if (mutate_deployed_on_first_random && scripted_index == 1) {
+        PlayersData[2].sat_odp_deployed = 6;
+    }
+    return value;
+}
+struct Base { int x, y; uint8_t faction_id_current; uint8_t facilities_built[12]; char name_string[25]; };
 Base Bases[4];
 int BaseCount;
 int base_at(int x, int y) {
+    ++base_at_call_count;
+    if (mutate_inventory_on_first_base && base_at_call_count == 1) {
+        PlayersData[2].satellites_[3] = 2;
+        PlayersData[2].sat_odp_deployed = 0;
+    }
     for (int i = 0; i < BaseCount; ++i)
         if (Bases[i].x == x && Bases[i].y == y) return i;
     return -1;
 }
 bool has_fac_built(int facility, int base_id) {
     return (Bases[base_id].facilities_built[facility / 8] & (1u << (facility & 7))) != 0;
+}
+int base_find(int, int) { return 0; }
+int base_find(int, int, int) { return 0; }
+struct Player {
+    int noun_gender, is_noun_plural; char noun_faction[24];
+    char adj_name_faction[128];
+} Players[8];
+int GenderDefault, PluralityDefault;
+int ConsoleFaction=2, IsMultiplayerNet, LockEnableMask;
+struct Console { int faction_id_; } ConsoleGlobal;
+char PopupTitle[]="EVENT"; char *PopupTitlePointer=PopupTitle;
+char **ClimatePopupTitle=&PopupTitlePointer;
+int parse_count, parse_num_count, popup_count, popup_result;
+int parse_slots[16], parsed_numbers[8]; const char *parse_text[16], *popup_label;
+bool mutate_inventory_callbacks, zero_inventory_on_sacrifice;
+int base_name_parse_count, observed_pods_before_summary, observed_attempts_before_summary;
+int parse_says(int slot,const char *text,int,int) {
+    parse_slots[parse_count]=slot; parse_text[parse_count++]=text;
+    if (mutate_inventory_callbacks && slot==0 && text==Bases[0].name_string) {
+        ++base_name_parse_count;
+        if (base_name_parse_count==2) {
+            observed_pods_before_summary=PlayersData[2].satellites_[3];
+            observed_attempts_before_summary=PlayersData[2].sat_odp_deployed;
+            PlayersData[2].satellites_[3]=7;
+            PlayersData[2].sat_odp_deployed=3;
+        }
+    }
+    return 0;
+}
+int parse_num(int slot,int value) {
+    parsed_numbers[parse_num_count++]=value; return slot;
+}
+int popp(const char *,const char *label,int,const char *,int(__cdecl *)()) {
+    ++popup_count; popup_label=label;
+    if (mutate_inventory_callbacks && std::strcmp(label,"TECTONICSAC")==0) {
+        PlayersData[2].satellites_[3]=2;
+        PlayersData[2].sat_odp_deployed=5;
+    }
+    if (zero_inventory_on_sacrifice
+        && std::strcmp(label,"TECTONICSAC")==0) {
+        PlayersData[2].satellites_[3]=0;
+        PlayersData[2].sat_odp_deployed=0;
+    }
+    return popup_result;
 }
 int rand();
 int check_number;
@@ -98,10 +155,19 @@ LIVE_BODY
 void reset() {
     std::memset(PlayersData, 0, sizeof(PlayersData));
     std::memset(Bases, 0, sizeof(Bases));
+    std::memset(Players, 0, sizeof(Players));
     std::memset(RadiusOffsetX, 0, sizeof(RadiusOffsetX));
     std::memset(RadiusOffsetY, 0, sizeof(RadiusOffsetY));
     RadiusOffsetX[0] = 1;
     BaseCount = scripted_count = scripted_index = 0;
+    mutate_inventory_on_first_base=mutate_deployed_on_first_random=false;
+    base_at_call_count=0;
+    ConsoleGlobal.faction_id_=ConsoleFaction; IsMultiplayerNet=0;
+    LockEnableMask=1u<<ConsoleFaction; popup_result=0;
+    parse_count=parse_num_count=popup_count=0; popup_label=nullptr;
+    mutate_inventory_callbacks=zero_inventory_on_sacrifice=false;
+    base_name_parse_count=0;
+    observed_pods_before_summary=observed_attempts_before_summary=-1;
 }
 void push_random(int value) { scripted_random[scripted_count++] = value; }
 int main() {
@@ -110,13 +176,25 @@ int main() {
     check(shoot_it(1, 2, 5, 5, 0) == 0);
     check(scripted_index == 0);
 
-    // A successful orbital interception spends one attempt and one pod.
+    // A successful orbital interception spends one attempt; the native
+    // completion branch leaves the pod count untouched.
     reset();
     PlayersData[2].satellites_[3] = 2;
     push_random(75);
     check(shoot_it(1, 2, 5, 5, 0) == 1);
     check(PlayersData[2].sat_odp_deployed == 1);
-    check(PlayersData[2].satellites_[3] == 1);
+    check(PlayersData[2].satellites_[3] == 2);
+    check(std::strcmp(popup_label,"TWESHOTIT")==0 && parsed_numbers[0]==2);
+    check(parse_num_count==2 && parsed_numbers[1]==1 && popup_count==1);
+
+    // The first orbital inventory reads happen after the full worked-square
+    // scan, and each attempt increments the live counter after RNG callbacks.
+    reset();
+    mutate_inventory_on_first_base=true;
+    mutate_deployed_on_first_random=true;
+    push_random(20); push_random(75);
+    check(shoot_it(1,2,5,5,0)==1);
+    check(base_at_call_count==25 && PlayersData[2].sat_odp_deployed==7);
 
     // A Flechette system can intercept without orbital inventory; a failed
     // facility roll consumes neither the faction counter nor a pod.
@@ -130,6 +208,13 @@ int main() {
     check(scripted_index == 1);
     check(PlayersData[2].satellites_[3] == 0);
     check(PlayersData[2].sat_odp_deployed == 0);
+    check(std::strcmp(popup_label,"WEFAILEDFLECHETTE")==0);
+
+    // Even without an initial Flechette facility, an unsuccessful orbital
+    // roll performs the full second neighboring-base scan.
+    reset(); PlayersData[2].satellites_[3]=1; push_random(20);
+    check(shoot_it(1,2,5,5,0)==1);
+    check(base_at_call_count==50);
 
     reset();
     BaseCount = 1;
@@ -139,15 +224,66 @@ int main() {
     push_random(49);
     check(shoot_it(1, 2, 5, 5, 1) == 1);
     check(scripted_index == 1);
+    check(std::strcmp(popup_label,"FWESHOTIT2")==0);
+    check(base_at_call_count==2); // reuse the hit base; no third lookup
 
     // A non-intercepting orbital roll still spends the pod; attempts are
     // clamped to the remaining inventory as it reaches zero.
     reset();
     PlayersData[2].satellites_[3] = 1;
     push_random(20);
-    check(shoot_it(1, 2, 5, 5, 0) == 0);
+    check(shoot_it(1, 2, 5, 5, 0) == 1);
     check(PlayersData[2].satellites_[3] == 0);
     check(PlayersData[2].sat_odp_deployed == 0);
+    check(std::strcmp(popup_label,"TWESHOTIT")==0);
+    check(popup_count==2 && parse_num_count==3 && parsed_numbers[2]==0);
+
+    // Dismissing the typed sacrifice prompt takes the native early-return
+    // path before decrementing the defender's satellite count.
+    reset();
+    PlayersData[2].satellites_[3]=1; popup_result=1;
+    push_random(20);
+    check(shoot_it(1,2,5,5,0)==0);
+    check(PlayersData[2].satellites_[3]==1);
+    check(PlayersData[2].sat_odp_deployed==1);
+    check(popup_count==1 && std::strcmp(popup_label,"TECTONICSAC")==0);
+
+    // Both the post-popup decrement/clamp and post-base-parser count read
+    // observe callback mutations to the live faction records.
+    reset();
+    PlayersData[2].satellites_[3]=1; push_random(20);
+    mutate_inventory_callbacks=true;
+    check(shoot_it(1,2,5,5,0)==1);
+    check(observed_pods_before_summary==1 && observed_attempts_before_summary==1);
+    check(parsed_numbers[1]==7 && PlayersData[2].satellites_[3]==7);
+
+    // The native failed-interception path decrements the live inventory
+    // unconditionally after the popup, even if its callback zeroed it.
+    reset(); PlayersData[2].satellites_[3]=1; push_random(20);
+    zero_inventory_on_sacrifice=true;
+    check(shoot_it(1,2,5,5,0)==1);
+    check(PlayersData[2].satellites_[3]==0xffffffffu);
+    check(PlayersData[2].sat_odp_deployed==0xffffffffu);
+
+    // The native THEYMUSTSAC parser uses the noun field, while the later
+    // combat-result sentence uses the distinct adj_name_faction field.
+    reset();
+    std::strcpy(Players[1].noun_faction,"noun-field");
+    std::strcpy(Players[1].adj_name_faction,"adjective-field");
+    IsMultiplayerNet=1; LockEnableMask=0;
+    PlayersData[1].satellites_[3]=1; push_random(20);
+    check(shoot_it(2,1,5,5,0)==1);
+    check(parse_text[0]==Players[1].noun_faction);
+    check(parse_text[2]==Players[1].adj_name_faction);
+
+    // The fungal variant selects its own sacrifice phrase before the shared
+    // completion phrase, while retaining the same typed counter updates.
+    reset();
+    PlayersData[2].satellites_[3]=1;
+    push_random(20);
+    check(shoot_it(1,2,5,5,1)==1);
+    check(PlayersData[2].satellites_[3]==0);
+    check(popup_count==2 && std::strcmp(popup_label,"FWESHOTIT")==0);
 }
 """.replace("LIVE_BODY", function)
 

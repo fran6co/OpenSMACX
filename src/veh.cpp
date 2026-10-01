@@ -11039,12 +11039,12 @@ void __cdecl action_fungal(int vehicle_id, int x, int y) {
 }
 
 // ORIGINAL: 0x004CDAF0 ?shoot_it@@YAHHHHHH@Z 0x004CDAF0-0x004CE206
-// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CDAF0; retained seed src/unrecovered/004cdaf0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CE326/4CE7F0 kill precedes announcement; fungal EBX retains initial combat faction while later slot reads observe compacted storage;580B51/580BF7 are mask immediates, not globals."], "reason": "Explicitly unfinished typed dependency preserves discovered behavior and the BODY GOES HERE sentinel; retain the complete seed and all original spans pending full recovery. This is link continuity and partial source work, not complete behavior."}
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned entry 004CDAF0; retained seed src/unrecovered/004cdaf0.cpp", "recovery/tasks/vehicle-special-actions-coverage.json; native scope expansion preserves task baseline", "Native4CDBD4/4CDC08 load inventory after the first base scan;4CDC14 increments live deployed count;4CDC4B/51 snapshots bounded remaining attempts.", "Native4CDFF8..4CE018 unconditionally decrements live inventory after sacrifice callbacks and clamps deployed count;4CE059/063 reads reported inventory after parsing the base.", "Players noun_faction+2E4, noun_gender+2FC, is_noun_plural+300 and adj_name_faction+304 distinguish outcome and sacrifice text."], "reason": "Complete typed orbital-pod and Flechette interception, sacrifice, cancellation and reporting paths. Original binding began as an explicitly unfinished dependency; preserve its original spans and complete retained seed. Source implementation does not establish byte, reference, structure or runtime acceptance."}
 int __cdecl shoot_it(int attacker, int defender, int x, int y,
                      int fungal_attack) {
     PlayerData &defending_faction = PlayersData[defender];
-    int defense_pods = static_cast<int>(defending_faction.satellites_[3]);
-    int attempts_spent = static_cast<int>(defending_faction.sat_odp_deployed);
+    int defense_pods;
+    int attempts_spent;
     int result = 0;
     (void)fungal_attack;
 
@@ -11063,23 +11063,33 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
             break;
         }
     }
+    defense_pods = static_cast<int>(defending_faction.satellites_[3]);
+    attempts_spent = static_cast<int>(defending_faction.sat_odp_deployed);
     if (defense_pods == 0 && !has_flechette_defense) return 0;
 
     int unspent_attempts = defense_pods - attempts_spent;
     if (unspent_attempts < 0) unspent_attempts = 0;
     for (int attempt = 0; attempt < unspent_attempts; ++attempt) {
-        ++attempts_spent;
-        defending_faction.sat_odp_deployed =
-            static_cast<uint32_t>(attempts_spent);
+        ++defending_faction.sat_odp_deployed;
         if (rand() % 100 > 49) {
             result = 1;
             break;
         }
     }
+    const int post_roll_pods =
+        static_cast<int>(defending_faction.satellites_[3]);
+    const int post_roll_attempts =
+        static_cast<int>(defending_faction.sat_odp_deployed);
+    int remaining_attempts = post_roll_pods - post_roll_attempts;
+    if (remaining_attempts < 0) {
+        remaining_attempts = 0;
+    } else if (remaining_attempts > 9999) {
+        remaining_attempts = 9999;
+    }
 
     // If the orbital pods did not intercept, each neighboring enemy base
     // with a Flechette system gets its own independent 50-percent roll.
-    if (result == 0 && has_flechette_defense) {
+    if (result == 0) {
         for (int flechette_scan_index = 0; flechette_scan_index < RadiusRange[2]; ++flechette_scan_index) {
             const int neighbor_x = xrange(x + RadiusOffsetX[flechette_scan_index]);
             const int neighbor_y = y + RadiusOffsetY[flechette_scan_index];
@@ -11091,26 +11101,148 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 continue;
             }
             if (rand() % 100 < 50) {
+                parse_says(0, Bases[neighbor_base].name_string, -1, -1);
+                if (fungal_attack == 0) {
+                    if (defender == ConsoleGlobal.faction_id_) {
+                        parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                        popp(*ClimatePopupTitle, "TWESHOTIT2", 0,
+                             "space_sm.pcx", nullptr);
+                    } else {
+                        if (attacker != ConsoleGlobal.faction_id_) return 1;
+                        const int base_faction = Bases[neighbor_base].faction_id_current;
+                        parse_says(1, Players[base_faction].adj_name_faction, -1, -1);
+                        popp(*ClimatePopupTitle, "TTHEYSHOTIT2", 0,
+                             "space_sm.pcx", nullptr);
+                    }
+                } else if (defender == ConsoleGlobal.faction_id_) {
+                    parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                    popp(*ClimatePopupTitle, "FWESHOTIT2", 0,
+                         "space_sm.pcx", nullptr);
+                } else {
+                    if (attacker != ConsoleGlobal.faction_id_) return 1;
+                    const int base_faction = Bases[neighbor_base].faction_id_current;
+                    parse_says(1, Players[base_faction].adj_name_faction, -1, -1);
+                    popp(*ClimatePopupTitle, "FTHEYSHOTIT2", 0,
+                         "space_sm.pcx", nullptr);
+                }
                 return 1;
             }
         }
     }
 
-    if (defense_pods > 0) {
-        --defense_pods;
-        defending_faction.satellites_[3] =
-            static_cast<uint32_t>(defense_pods);
-        if (defense_pods - attempts_spent < 0) {
-            attempts_spent = defense_pods;
-            defending_faction.sat_odp_deployed =
-                static_cast<uint32_t>(attempts_spent);
+    // With no orbital pod left, a failed Flechette roll has its own distinct
+    // failure report and returns without consuming satellite inventory.
+    if (result == 0
+        && static_cast<int>(defending_faction.satellites_[3]) == 0) {
+        if (has_flechette_defense) {
+            if (defender == ConsoleGlobal.faction_id_) {
+                parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                popp(*ClimatePopupTitle, "WEFAILEDFLECHETTE", 0,
+                     "space_sm.pcx", nullptr);
+            } else {
+                if (attacker != ConsoleGlobal.faction_id_) return 0;
+                parse_says(1, Players[defender].adj_name_faction, -1, -1);
+                popp(*ClimatePopupTitle, "THEYFAILEDFLECHETTE", 0,
+                     "space_sm.pcx", nullptr);
+            }
+        }
+        return 0;
+    }
+
+    // A successful orbital roll reaches the ordinary completion report
+    // directly. Failed rolls continue through the native sacrifice prompts.
+    bool failed_prompt_dismissed = false;
+    if (result == 0) {
+        if (IsMultiplayerNet == 0
+            && (LockEnableMask & (1u << (defender & 0x1f))) != 0) {
+            if (defender == ConsoleGlobal.faction_id_) {
+                parse_num(0, static_cast<int>(defending_faction.satellites_[3]));
+                const int base_id = base_find(x, y);
+                parse_says(0, Bases[base_id].name_string, -1, -1);
+                parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                const int dismissed = popp(*ClimatePopupTitle,
+                    fungal_attack == 0 ? "TECTONICSAC" : "FUNGALSAC",
+                    0, "space_sm.pcx", nullptr);
+                failed_prompt_dismissed = dismissed != 0;
+            } else if (attacker == ConsoleGlobal.faction_id_) {
+                GenderDefault = Players[defender].noun_gender;
+                PluralityDefault = Players[defender].is_noun_plural;
+                parse_says(0, Players[defender].noun_faction, -1, -1);
+                popp(*ClimatePopupTitle, "THEYMUSTSAC", 0,
+                     "space_sm.pcx", nullptr);
+            }
+        } else if (defender == ConsoleGlobal.faction_id_) {
+            popp(*ClimatePopupTitle,
+                 fungal_attack == 0 ? "TWEMUSTSAC" : "FWEMUSTSAC",
+                 0, "space_sm.pcx", nullptr);
+        } else if (attacker == ConsoleGlobal.faction_id_) {
+            GenderDefault = Players[defender].noun_gender;
+            PluralityDefault = Players[defender].is_noun_plural;
+            parse_says(0, Players[defender].noun_faction, -1, -1);
+            popp(*ClimatePopupTitle, "THEYMUSTSAC", 0,
+                 "space_sm.pcx", nullptr);
         }
     }
-    // The native post-interception phrase/territory branches
-    // still need translation; preserve the recovered defense rolls and
-    // inventory/counter updates without substituting a generic message.
-    return result;
-    // BODY GOES HERE.
+
+    if (failed_prompt_dismissed) {
+        if (has_flechette_defense) {
+            if (defender == ConsoleGlobal.faction_id_) {
+                parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+                popp(*ClimatePopupTitle, "WEFAILEDFLECHETTE", 0,
+                     "space_sm.pcx", nullptr);
+            } else {
+                if (attacker != ConsoleGlobal.faction_id_) return 0;
+                parse_says(1, Players[defender].adj_name_faction, -1, -1);
+                popp(*ClimatePopupTitle, "THEYFAILEDFLECHETTE", 0,
+                     "space_sm.pcx", nullptr);
+            }
+        }
+        return 0;
+    }
+
+    if (result == 0) {
+        int current_pods = static_cast<int>(defending_faction.satellites_[3]);
+        --current_pods;
+        defending_faction.satellites_[3] =
+            static_cast<uint32_t>(current_pods);
+        const int current_attempts =
+            static_cast<int>(defending_faction.sat_odp_deployed);
+        if (current_pods - current_attempts < 0) {
+            attempts_spent = current_pods;
+            defending_faction.sat_odp_deployed =
+                static_cast<uint32_t>(current_pods);
+        }
+    }
+
+    int event_base = base_find(x, y, defender);
+    if (event_base < 0) event_base = base_find(x, y);
+    parse_says(0, Bases[event_base].name_string, -1, -1);
+    const int reported_pods =
+        static_cast<int>(defending_faction.satellites_[3]);
+    parse_num(0, reported_pods);
+    parse_num(1, remaining_attempts);
+    if (fungal_attack == 0) {
+        if (defender == ConsoleGlobal.faction_id_) {
+            parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+            popp(*ClimatePopupTitle, "TWESHOTIT", 0,
+                 "space_sm.pcx", nullptr);
+        } else {
+            if (attacker != ConsoleGlobal.faction_id_) return 1;
+            parse_says(1, Players[defender].adj_name_faction, -1, -1);
+            popp(*ClimatePopupTitle, "TTHEYSHOTIT", 0,
+                 "space_sm.pcx", nullptr);
+        }
+    } else if (defender == ConsoleGlobal.faction_id_) {
+        parse_says(1, Players[attacker].adj_name_faction, -1, -1);
+        popp(*ClimatePopupTitle, "FWESHOTIT", 0,
+             "space_sm.pcx", nullptr);
+    } else {
+        if (attacker != ConsoleGlobal.faction_id_) return 1;
+        parse_says(1, Players[defender].adj_name_faction, -1, -1);
+        popp(*ClimatePopupTitle, "FTHEYSHOTIT", 0,
+             "space_sm.pcx", nullptr);
+    }
+    return 1;
 }
 
 // ORIGINAL: 0x00580860 ?propose_proto@@YAHHHHHHHHPAD@Z 0x00580860-0x00581168
