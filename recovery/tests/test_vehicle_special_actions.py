@@ -17,6 +17,15 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_partial_dependencies_remain_unfinished_in_native_source_reader():
+    from match_recovery.source import read_file
+
+    partial = {0x57E040, 0x4CDAF0, 0x580860, 0x57F1D0, 0x57F4B0}
+    records = {r.address: r for r in read_file(ROOT / "src/veh.cpp")}
+    assert partial <= records.keys()
+    assert all(records[address].state.name == "PLACEHOLDER" for address in partial)
+
+
 def braced(source, start):
     brace = source.index("{", start)
     depth = 0

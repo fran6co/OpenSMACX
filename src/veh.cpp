@@ -105,9 +105,10 @@ void __cdecl name_proto(char *output, int prototype_id, int faction_id,
         ::strcat(output, " ");
         break;
     }
-    // BODY GOES HERE. This is the verified ability-abbreviation prefix; the
+    // This is the verified ability-abbreviation prefix; the
     // source's gendered chassis, combat/plan and duplicate-name branches
     // still need their complete typed translation.
+    // BODY GOES HERE.
 }
 
 int VehCurrentCount;  // 0x009A64C8
@@ -11105,10 +11106,11 @@ int __cdecl shoot_it(int attacker, int defender, int x, int y,
                 static_cast<uint32_t>(attempts_spent);
         }
     }
-    // BODY GOES HERE. The native post-interception phrase/territory branches
+    // The native post-interception phrase/territory branches
     // still need translation; preserve the recovered defense rolls and
     // inventory/counter updates without substituting a generic message.
     return result;
+    // BODY GOES HERE.
 }
 
 // ORIGINAL: 0x00580860 ?propose_proto@@YAHHHHHHHHPAD@Z 0x00580860-0x00581168
@@ -11378,10 +11380,11 @@ int __cdecl propose_proto(int faction_id, int chassis_id, int weapon_id,
     }
 
     if (FirstProposedPrototype < 0) FirstProposedPrototype = best_prototype;
-    // BODY GOES HERE. The native queue rewrite and several proposal-state
+    // The native queue rewrite and several proposal-state
     // branches still need exact translation; the typed scorer/allocation
     // above preserves the recovered behavior completed so far.
     return best_prototype;
+    // BODY GOES HERE.
 }
 
 // ORIGINAL: 0x0057F1D0 ?retire_proto@@YAXHH@Z 0x0057F1D0-0x0057F4B0
@@ -11422,11 +11425,12 @@ void __cdecl retire_proto(int prototype_id, int faction_id) {
         }
     }
 
-    // BODY GOES HERE. The native no-replacement path consults base_at and
+    // The native no-replacement path consults base_at and
     // stack_check before deciding whether affected units can be retained or
     // must be removed; do not collapse that path into an invented fallback.
     retired.obsolete_factions |= faction_bit;
     retired.flags &= static_cast<uint16_t>(~PROTO_ACTIVE);
+    // BODY GOES HERE.
 }
 
 // ORIGINAL: 0x0057F4B0 ?prune_protos@@YAXHHH@Z 0x0057F4B0-0x00580859
@@ -11497,7 +11501,8 @@ void __cdecl prune_protos(int faction_id, int prototype_id, int options) {
         }
       }
     }
-    // BODY GOES HERE. The second native cross-prototype pass applies faction
+    // The second native cross-prototype pass applies faction
     // flags, rules-specific ratings, reactor/carry constraints and retirement
     // decisions beyond the dominated-component marking above.
+    // BODY GOES HERE.
 }
