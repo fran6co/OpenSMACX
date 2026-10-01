@@ -22,6 +22,10 @@
 #include "alpha.h"
 #include "base.h"
 #include "council.h"
+#include "councwin.h"
+#include "popup.h"
+#include "dialogs.h"
+#include "text.h"
 #include "game.h"
 #include "map.h"
 #include "probe.h"
@@ -52,14 +56,386 @@ void __cdecl clear_bunglist(int faction);
 int __cdecl veh_init(int prototype, int faction, int x, int y);
 void __cdecl veh_kill(int vehicle);
 int __cdecl veh_find(int x, int y, int faction, int exclude);
+int __cdecl wants_prop(int faction, int proposal, int option);
+static int diplo_add(int a, int b);
+static int diplo_sub(int a, int b);
+static int diplo_mul(int a, int b);
+extern int DiploScratchFA98;  // Diplomacy producer storage defined below.
 
-// The full vote-purchase owner still needs its custom modal negotiation branch
-// (0x53F9E3..0x53FB81). Keep the retained seed; this body exists only for link
-// continuity and is explicitly not recovered behavior.
 // ORIGINAL: 0x0053EB50 ?buy_council_vote@@YAXHHHH@Z 0x0053EB50-0x00540193;0x0065E75A-0x0065EB33
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/0053eb50.cpp", "image:terranx_original.exe:0x53F9E3-0x53FB81", "task:interface-contract-report-closure:scope-expansion-7"], "reason": "Explicitly unfinished owning-TU body for Council link continuity. Retained seed omits the original custom modal path; no coverage or behavior claim."}
-void __cdecl buy_council_vote(int, int, int, int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned53EB50..540193 and65E75A..65EB33; source:src/unrecovered/0053eb50.cpp", "Native EDI=OTHER and EBX=FACTION; peer vote query precedes OTHER query; technology valuation rereads turn after every call; promised gift and treaty state reload after modal/parser callbacks. Popup teardown is ordinary lexical destruction, without duplicate close.", "RulesTechnology.name is the heap string address returned by Strings::put, not an ordinal; parse_say takes that address through its native32-bit integer ABI. Dialogue labels verified against bounded original strings and owned as C++ literals.", "recovery/tasks/interface-contract-report-closure.json; recovery/tests/test_council_vote_purchase.py actual-source corruption controls"], "reason": "Recover complete council vote purchasing in its genuine faction owner, including the custom modal negotiation missing from the retained seed. Use lexical Popup and source-owned labels, actual player/council/network storage and calls; preserve original spans, retained seed and all historical obligations. This is not matching or game acceptance."}
+void __cdecl buy_council_vote(int faction, int other, int proposal, int choice) {
+    Popup popup;
+
+    PopupDialogFactionID = other;
+    diplomacy_check(faction, other, 0);
+    diplomacy_caption(faction, other);
+    tech_analysis(faction, other);
+
+    if (ExpansionEnabled) {
+        if (is_alien_faction(faction) || is_alien_faction(other)) {
+            return;
+        }
+    }
+
+    uint32_t &treaty = PlayersData[other].diplo_treaties[faction];
+    if (treaty & 0x40030) {
+        if (TurnRedrawPending != 0) {
+            PluralityDefault = 0;
+            GenderDefault = Players[other].is_leader_female;
+            parse_says(0, Players[other].name_leader, -1, -1);
+            GenderDefault = Players[other].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[other].title_leader, -1, -1);
+            X_pop("BUYNOTALK", pop_wait);
+        }
+        return;
+    }
+
+    int votes = wants_prop(other, proposal, choice < 1 ? faction : choice);
+    if (proposal != 1 && DiploScratchFA98 != 0) votes = diplo_add(votes, 1);
+    if (choice == -2) votes = diplo_sub(0, votes);
+    int margin = votes;
+    if (proposal == 0) {
+        for (int player = 1; player < MaxPlayerNum; ++player) {
+            if (player != choice && eligible(player) != 0) {
+                const int candidate = diplo_sub(votes, wants_prop(other, 0, player));
+                if (candidate <= margin) {
+                    // Native reevaluates the winning/tied candidate instead
+                    // of reusing the comparison call's result.
+                    margin = diplo_sub(votes, wants_prop(other, 0, player));
+                }
+            }
+        }
+    }
+
+    int &recorded_vote = PlayersData[other].unk_29[proposal];
+    int &gift_faction = PlayersData[other].unk_30[proposal];
+    if (recorded_vote != 0 &&
+        (PlayersData[other].diplo_treaties[gift_faction] & 0x30) == 0) {
+        PluralityDefault = 0;
+        GenderDefault = Players[gift_faction].is_leader_female;
+        parse_says(0, Players[gift_faction].name_leader, -1, -1);
+        GenderDefault = Players[gift_faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[gift_faction].title_leader, -1, -1);
+        x_pops_short("BUYPROMISED", 0x100000,
+                     FactionDiplomacyPortraits[other], pop_wait);
+        return;
+    }
+
+    if (PlayersData[other].soc_effect_base.economy > 0 && proposal > 1 &&
+        (treaty & 0x20) == 0 && margin < -2) {
+        margin = -2;
+    }
+
+    if (TurnRedrawPending != 0 &&
+        choice == static_cast<int>(CouncilWindow.leader_label_kind_[other])) {
+        PluralityDefault = 0;
+        GenderDefault = Players[faction].is_leader_female;
+        parse_says(0, Players[faction].name_leader, -1, -1);
+        GenderDefault = Players[faction].is_leader_female;
+        PluralityDefault = 0;
+        parse_says(1, Players[faction].title_leader, -1, -1);
+        X_pop("BUYALREADY", pop_wait);
+        if (IsMultiplayerNet != 0 &&
+            (PlayersData[faction].diplo_treaties[other] & 2) != 0 &&
+            (treaty & 0x20) == 0) {
+            recorded_vote = choice;
+            gift_faction = proposal == 0 ? choice : faction;
+            synch_leader(other);
+        }
+        return;
+    }
+
+    const bool fixed_vote = (treaty & 1) != 0 &&
+                            (treaty & 0x2000000) != 0;
+    int count = 0;
+    if (fixed_vote) {
+        votes = 0;
+        if (proposal == 0) {
+            for (int player = 1; player < MaxPlayerNum; ++player) {
+                if (player != other) {
+                    const int player_votes = council_votes(player);
+                    const int other_votes = council_votes(other);
+                    if (player_votes > other_votes) ++count;
+                }
+            }
+        }
+    } else {
+        if (proposal == 0 && choice == other) {
+            if (margin < 0) {
+                x_pops_short("BUYNO", 0x100000,
+                             FactionDiplomacyPortraits[other], pop_wait);
+            }
+            return;
+        }
+
+        if (margin < -3) {
+            x_pops_short("BUYNO", 0x100000,
+                         FactionDiplomacyPortraits[other], pop_wait);
+            return;
+        }
+
+        if (margin == -3) {
+            if (proposal != 0) {
+                choice = -3;
+                votes = 3;
+            } else {
+                votes = 4;
+                for (int player = 1; player < MaxPlayerNum; ++player) {
+                    if (player != other) {
+                        const int player_votes = council_votes(player);
+                        const int other_votes = council_votes(other);
+                        if (player_votes > other_votes) ++count;
+                    }
+                }
+            }
+        } else if (margin == -2) {
+            votes = 3;
+            if (proposal == 0) {
+                for (int player = 1; player < MaxPlayerNum; ++player) {
+                    if (player != other) {
+                        const int player_votes = council_votes(player);
+                        const int other_votes = council_votes(other);
+                        if (player_votes > other_votes) ++count;
+                    }
+                }
+            }
+        } else {
+            votes = margin == -1 ? 2 : 1;
+            if (proposal == 0) {
+                for (int player = 1; player < MaxPlayerNum; ++player) {
+                    if (player != other) {
+                        const int player_votes = council_votes(player);
+                        const int other_votes = council_votes(other);
+                        if (player_votes > other_votes) ++count;
+                    }
+                }
+            }
+        }
+    }
+
+    int spend_self = diplo_sub(PlayersData[faction].unk_13,
+                               static_cast<int>(PlayersData[faction].maint_cost_total));
+    const int minimum_self = static_cast<int>(PlayersData[faction].current_num_bases);
+    if (spend_self < minimum_self) {
+        spend_self = minimum_self;
+    }
+    const int minimum_other = static_cast<int>(PlayersData[other].current_num_bases);
+    int spend_other = diplo_sub(PlayersData[other].unk_13,
+                                static_cast<int>(PlayersData[other].maint_cost_total));
+    if (spend_other < minimum_other) spend_other = minimum_other;
+
+    votes = diplo_add(PlayersData[faction].energy_reserves / 5,
+            diplo_mul(diplo_mul(diplo_add(spend_other, spend_self), votes), 2));
+    if (DiploScratchFA98 != 0) votes /= 2;
+    if (minimum_other <= DiploScratchFA98) votes /= 2;
+    if (other == GovernorFaction) votes = diplo_mul(votes, 2);
+    if (TurnRedrawPending == 0) {
+        const int three_votes = diplo_mul(votes, 3);
+        votes = diplo_add(three_votes, ((three_votes >> 31) & 3)) >> 2;
+    }
+    if (proposal == 0 && count == 0 &&
+        static_cast<int>(CouncilWindow.leader_label_kind_[other]) == other)
+        votes = diplo_mul(votes, 2);
+
+    if (DiploScratchFAA8 >= 0) {
+            const int three_votes = diplo_mul(votes, 3);
+            const int need = diplo_add(three_votes, ((three_votes >> 31) & 3)) >> 2;
+            int have = tech_val(DiploScratchFAA8, other, 1);
+            int turn_rounded = diplo_add(TurnCurrentNum, 7);
+            int scale = diplo_add(turn_rounded, ((turn_rounded >> 31) & 7)) >> 3;
+            have = diplo_mul(have, scale);
+            if (have < need && DiploScratchFA18 >= 0) {
+                int value = tech_val(DiploScratchFA18, other, 1);
+                turn_rounded = diplo_add(TurnCurrentNum, 7);
+                scale = diplo_add(turn_rounded, ((turn_rounded >> 31) & 7)) >> 3;
+                have = diplo_add(have, diplo_mul(value, scale));
+            } else {
+                DiploScratchFA28 = -1;
+                DiploScratchFA1C = -1;
+                DiploScratchFA18 = -1;
+            }
+            if (have < need && DiploScratchFA1C >= 0) {
+                int value = tech_val(DiploScratchFA1C, other, 1);
+                turn_rounded = diplo_add(TurnCurrentNum, 7);
+                scale = diplo_add(turn_rounded, ((turn_rounded >> 31) & 7)) >> 3;
+                have = diplo_add(have, diplo_mul(value, scale));
+            } else {
+                DiploScratchFA28 = -1;
+                DiploScratchFA1C = -1;
+            }
+            if (have < need && DiploScratchFA28 >= 0) {
+                int value = tech_val(DiploScratchFA28, other, 1);
+                turn_rounded = diplo_add(TurnCurrentNum, 7);
+                scale = diplo_add(turn_rounded, ((turn_rounded >> 31) & 7)) >> 3;
+                have = diplo_add(have, diplo_mul(value, scale));
+            } else {
+                DiploScratchFA28 = -1;
+            }
+            if (have < need) {
+                DiploScratchFA28 = DiploScratchFA1C =
+                    DiploScratchFA18 = DiploScratchFAA8 = -1;
+            }
+    }
+
+    StringTemp[0] = 0;
+        strcat(StringTemp, "BUYVOTE");
+        if (votes == 0) {
+            char digits[32];
+            _itoa(0, digits, 10);
+            strcat(StringTemp, digits);
+            PluralityDefault = 0;
+            GenderDefault = Players[faction].is_leader_female;
+            parse_says(0, Players[faction].name_leader, -1, -1);
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[faction].title_leader, -1, -1);
+            x_pops_short(StringTemp, 0x100000,
+                         FactionDiplomacyPortraits[other], pop_wait);
+            goto commit_vote;
+        } else {
+            const char *headline = 0;
+            if (proposal == 0) headline = "GOV";
+            else if (choice == -3) headline = "ABSTAIN";
+            else if (choice == -2) headline = "NAY";
+            else if (choice == -1) headline = "YEA";
+            if (headline != 0) {
+                strcat(StringTemp, headline);
+            } else {
+                PluralityDefault = 0;
+                GenderDefault = Players[faction].is_leader_female;
+                parse_says(2, Players[faction].name_leader, -1, -1);
+                GenderDefault = Players[faction].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(3, Players[faction].title_leader, -1, -1);
+                PluralityDefault = 0;
+                GenderDefault = Players[choice].is_leader_female;
+                parse_says(6, Players[choice].name_leader, -1, -1);
+                GenderDefault = Players[choice].is_leader_female;
+                PluralityDefault = 0;
+                parse_says(8, Players[choice].title_leader, -1, -1);
+                parse_num(0, choice);
+                if (DiploScratchFAA8 >= 0) {
+                    parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
+                        Technology[DiploScratchFAA8].name)), -1, -1);
+                    if (DiploScratchFA18 < 0) {
+                    strcat(StringTemp, "1");
+                    } else {
+                        parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
+                            Technology[DiploScratchFA18].name)), -1, -1);
+                        if (DiploScratchFA1C < 0) {
+                            strcat(StringTemp, "2");
+                        } else {
+                            parse_say(4, static_cast<int>(reinterpret_cast<intptr_t>(
+                                Technology[DiploScratchFA1C].name)), -1, -1);
+                            if (DiploScratchFA28 >= 0) {
+                                parse_say(5, static_cast<int>(reinterpret_cast<intptr_t>(
+                                    Technology[DiploScratchFA28].name)), -1, -1);
+                                strcat(StringTemp, "4");
+                            } else {
+                                strcat(StringTemp, "3");
+                            }
+                        }
+                    }
+                }
+            }
+            if (proposal == 0 && choice > 0 && choice != faction) {
+                strcat(StringTemp, "A");
+            }
+            popup.start(PopupStartCaption, StringTemp, -1, nullptr,
+                        0x100000, nullptr);
+            popup.set_caller_picture(popup.picture_enabled()
+                ? nullptr : FactionDiplomacyPortraits[other]);
+            popup.dialogs().sprite(
+                FactionDiplomacyPortraits[other], nullptr, 0);
+            if (X_text_open(ScriptPopupFile, "BUYVOTEMENU") != 0) {
+                return;
+            }
+
+            text_get();
+            parse_string(TextBufferGetPtr, StringTemp);
+            popup.dialogs().item(StringTemp, 0);
+
+            text_get();
+            parse_string(TextBufferGetPtr, StringTemp);
+            if (PlayersData[faction].energy_reserves >= votes)
+                popup.dialogs().item(StringTemp, 1);
+
+            text_get();
+            parse_string(TextBufferGetPtr, StringTemp);
+            if (DiploScratchFAA8 >= 0 && DiploScratchFA18 < 0)
+                popup.dialogs().item(StringTemp, 2);
+
+            text_get();
+            parse_string(TextBufferGetPtr, StringTemp);
+            if (DiploScratchFAA8 >= 0 && DiploScratchFA18 >= 0 &&
+                DiploScratchFA1C < 0)
+                popup.dialogs().item(StringTemp, 3);
+
+            text_get();
+            parse_string(TextBufferGetPtr, StringTemp);
+            if (DiploScratchFAA8 >= 0 && DiploScratchFA18 >= 0 &&
+                DiploScratchFA1C >= 0 && DiploScratchFA28 < 0)
+                popup.dialogs().item(StringTemp, 4);
+
+            text_get();
+            parse_string(TextBufferGetPtr, StringTemp);
+            if (DiploScratchFAA8 >= 0 && DiploScratchFA18 >= 0 &&
+                DiploScratchFA1C >= 0 && DiploScratchFA28 >= 0)
+                popup.dialogs().item(StringTemp, 5);
+
+            const int menu_result = popup.exec(0, pop_wait);
+            if (menu_result <= 0) {
+                return;
+            }
+
+            if (menu_result == 1) {
+                const int delta = diplo_sub(0, votes);
+                if (IsMultiplayerNet == 0) {
+                    if (faction != 0)
+                        PlayersData[faction].energy_reserves = diplo_add(
+                            PlayersData[faction].energy_reserves, delta);
+                    if (other != 0)
+                        PlayersData[other].energy_reserves = diplo_add(
+                            PlayersData[other].energy_reserves, votes);
+                    ConsoleGlobal.update_data(1);
+                } else {
+                    log_say("Sending ENERGY", faction, other, delta);
+                    message_data(0x2447, 0, faction, delta, other, votes);
+                    NetDaemonNet.await_diplo(0x447);
+                }
+            } else {
+                for (int selected = 1; selected < menu_result && selected <= 4;
+                     ++selected) {
+                    const int tech_id = selected == 1 ? DiploScratchFAA8
+                        : selected == 2 ? DiploScratchFA18
+                        : selected == 3 ? DiploScratchFA1C : DiploScratchFA28;
+                    if (IsMultiplayerNet == 0) {
+                        tech_achieved(other, tech_id, faction, 0);
+                    } else {
+                        log_say("Sending TECH", other, tech_id, faction);
+                        message_data(0x244b, 0, other, tech_id, faction, 0);
+                        NetDaemonNet.await_diplo(0x44b);
+                    }
+                }
+            }
+            DiploScratchFA28 = DiploScratchFA1C =
+                DiploScratchFA18 = DiploScratchFAA8 = -1;
+        }
+        goto commit_vote;
+
+commit_vote:
+    recorded_vote = choice;
+    gift_faction = proposal == 0 ? choice : faction;
+    if (IsMultiplayerNet != 0) {
+        synch_leader(other);
+        if (TurnRedrawPending != 0)
+            message_data(0x2601, 0, other, choice, 0, 0);
+    } else if (TurnRedrawPending != 0) {
+        CouncilWindow.set_vote(other, choice);
+    }
 }
 
 static int lifecycle_wrap_x(int x) {
