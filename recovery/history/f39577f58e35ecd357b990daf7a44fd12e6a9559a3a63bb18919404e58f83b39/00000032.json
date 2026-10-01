@@ -1,0 +1,41 @@
+{
+  "event_id": "71741949818484885a03567687b1957a4a5935ef4194882703fc884173e291cf",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_newtechwin_exec_behavior.py",
+      "src/newtechwin.cpp",
+      "src/newtechwin.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Pinned original init483850 and teardown483870 use NewTechWin receiver811E40; technology caller5BBA1D uses same receiver. Typed stringBoxes_ offset2DA4 gives callback array814BE4; four2BA0 members end81FA64, followed by stringBox2_, whole107C4 object ends822604. Recover genuine singleton/lifecycle, not separate array or fixed pointer.",
+      "Initial686964 DWORD is -1, independent of adjacent PendingTechnologyLink. Native484434 stores loop index before synchronous help callback483920 reads it. Authorize source-owned static CurrentTechnologyBoxIndex=-1 and genuine cdecl info(char*) through NewTechWindow.stringBoxes_[index].",
+      "Independent pinned objdump initial storage:686984 TECH NUL,68698C voices\\tech NUL,686998 .mp3 NUL. Authorize ordinary exact C++ literals; no runtime address or invented text. Extents are evidence, not matching claims.",
+      "Worker only newtechwin.cpp and focused fixture; Root owns headers, annotations, compiler, singleton binding and deletion of pending destructor forwarder only after full genuine lifecycle body is collected. Preserve original seeds, EH spans, immutable task baseline and every historical claim. Require native application build/link, relevant restoration and actual-source callback controls before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4733216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4737488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4737040,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "2f5bf5b0351c6aeb08c1562d975a8d5dc74ef8d197f7d00c5febda5511307fe7",
+  "request_id": "newtech-real-singleton-callback-lifecycle-20261001",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:interface-contract-report-closure"
+}

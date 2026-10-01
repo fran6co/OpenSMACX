@@ -131,3 +131,6 @@ class NewTechWin : public GraphicWin {
 
 static_assert(sizeof(NewTechWin) == 0x107C4,
               "NewTechWin layout must match the original executable");
+
+// Original technology-popup singleton; storage/lifecycle recovery is pending.
+extern NewTechWin NewTechWindow;
