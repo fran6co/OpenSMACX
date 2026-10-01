@@ -18,17 +18,12 @@
 #pragma once
 #include "buffer.h"
 
- /*
-  * UV2Player class
-  *
-  * Eight methods are catalogued - exec, on_key and four UNKs among them - and
-  * only UNK4 is recovered, so NOTHING here pins the layout. There are
-  * deliberately no fields, for the same reason as AlphaMenu: UNK4 reads none,
-  * and invented storage would be a guess the rest of the tree would inherit.
-  */
+// Movie player. Its Buffer member and timed-text delay are pinned by native
+// producers/consumers; the exact object extent is witnessed below. Remaining
+// unnamed storage is not a recovered semantic model.
 class UV2Player {
  public:
-  UV2Player() { ; }
+  UV2Player();
   ~UV2Player();
   // 0x004BF400, a pending_bodies forwarder. ~UV2Player calls it; buffer_
   // being a real member gives the compiler its own automatic unwind
@@ -40,10 +35,10 @@ class UV2Player {
   // forwards to it. amovie_project plays the .wve opening through it.
   int exec(char *movie_file, int width, int height, int flags);
   int UNK4();
+  static int __cdecl on_key();
+  int write_timed(LPSTR text, int x, int y, int length);
 
-  // Storage the image proves is here: its own methods reach 0xE68.
-  // Extent only - this class carries no size assertion, and the bound is a floor.
-  // 568 member(s) from the IDA database, 1 named; it starts a member at 0x0, which is where src/ ends.
+  // Unclassified prefix storage retained without inventing field meanings.
 
   uint32_t field_0_;  // 0x0
   uint32_t field_4_;  // 0x4
@@ -613,7 +608,7 @@ class UV2Player {
   uint32_t field_8D4_;  // 0x8D4
   uint32_t field_8D8_;  // 0x8D8
   Buffer buffer_;  // 0x8DC
-  uint8_t field_E64_[0x4];  // 0xE64
+  uint32_t write_delay_;  // 0xE64, unsigned elapsed-millisecond threshold
 };
 
 // EXACT, not a floor, and the two ends coincide. `?amovie_project@@YAXPAD@Z`
@@ -628,3 +623,7 @@ class UV2Player {
 static_assert(sizeof(UV2Player) == 0xE68,
               "UV2Player layout must match the original executable");
 
+extern UV2Player *UV2PlayerActive;
+extern int UV2PlayerQuitRequested;
+extern "C" int __cdecl uv2_player_writer_redirect(LPSTR text, int x, int y,
+                                                  int length);

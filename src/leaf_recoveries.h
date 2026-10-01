@@ -35,7 +35,6 @@ int __stdcall leaf_00532a50_redirect(int, int *, int *, int);
 int __cdecl leaf_00592db0_redirect(int, int, int, int, int, int);
 void __fastcall leaf_005cbbc0_redirect(void *, void *);
 int __fastcall leaf_004041c0_redirect(void *, void *);
-void *__fastcall leaf_004bea30_redirect(void *, void *);
 void __cdecl leaf_0063d420_redirect(void *, uint32_t);
 char *const DialogsItemText6900C4 = (char *)0x006900C4;
 int __fastcall leaf_0059d230_redirect(void *, void *);

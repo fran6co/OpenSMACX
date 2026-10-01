@@ -25,6 +25,9 @@
 class Palette;
 class StringList;
 
+// Buffer::write_raw_l dispatches this optional four-argument cdecl hook.
+typedef int (__cdecl *BufferWriteRawCallback)(LPSTR, int, int, int);
+
 // A polygon vertex, named by the image rather than invented: every one of the
 // 35 mangled names that mentions it spells `PAUVert@@`, and `U` is MSVC's tag
 // for a struct. It has to be `struct` for that reason and not as a style
@@ -356,6 +359,9 @@ class Buffer {
   void hline(int x1, int x2, int y, int color);
   void vline(int x, int y1, int y2, int color);
   int write_raw_l(LPSTR text, int x_coord, int y_coord, int len);
+  void set_write_raw_callback(BufferWriteRawCallback callback) {
+    field_8_ = callback;
+  }
   int write_multi_font_raw_l(LPSTR text, int x_coord, int y_coord, int len);
   int text_height();
   int text_line_height();
@@ -706,7 +712,7 @@ class Buffer {
   // reads it. `void *` until a reader proves which base pointer the image
   // stores; it was `uint32_t`, which needed a cast at the one store.
   void *poOwner_;
-  uint32_t field_8_;  // 0x0008
+  BufferWriteRawCallback field_8_;  // 0x0008
   uint32_t field_C_;
   uint32_t field_10_;
   uint32_t field_14_;
