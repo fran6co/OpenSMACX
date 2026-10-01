@@ -1,0 +1,17 @@
+{
+  "event_id": "03d534a71fb140aac0f1d3f724bb7f35b47d30e007788fd6ddc6fc1c51a10019",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "rules-label-indices-not-text-pointers-20261001",
+    "disposition": "rejected",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "Native read_tech585F4C calls text_item_string5FD6D0 then585F51 stores its returned string address atTechnology.name+4; read_rules587B93/587B98 stores same return atFacility.name+0. src/alpha.cpp loader assignments agree. src/strings.cpp137 put returns Heap.get address; byte-exact Strings.get6169A0/src/strings.cpp161 range-checks argument as address, not ordinal. parse_say int ABI carries32-bit address token. Existing LPSTR types supported; ordinal migration rejected, casts do not establish a label ID. All discovery evidence retained; no source types changed."
+    ]
+  },
+  "previous_event": "d44f734af503fafe1e12b4075c8ff7eb0162c0068319482aa9a97e26ff3cd0fa",
+  "request_id": "rules-name-pointer-producer-review-20261001",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:reportwin-owner-coverage"
+}
