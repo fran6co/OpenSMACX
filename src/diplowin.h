@@ -22,6 +22,7 @@
 #include "graphicwin.h"
 #include "stringbox.h"
 #include "editbox.h"
+#include "subinterface.h"
 
 // Shared palette cell published by load_interface and consumed by both
 // diplomacy rendering and popup menu defaults; owned in diplowin.cpp.
@@ -30,16 +31,12 @@ extern int DiploKnownTechColor;
  /*
   * DiploWin class
   *
-  * Derives from GraphicWin in the original by ordinary single inheritance -
-  * its constructor calls GraphicWin's on an unadjusted `this` - so unlike the
-  * virtually-derived windows this one is written as the original wrote it and
-  * needs no ABI workaround.
-  *
-  * The complete layout is not established. The constructor's own fields begin
-  * at 0xA14, immediately after the base; known controls are modelled at their
-  * observed offsets while the intervening fields remain provisional.
+  * The native constructor at 0x444FC0 constructs GraphicWin at offset zero
+  * and SubInterface at +0xA14. Its nineteen-slot secondary table is 0x66B5E0.
+  * C++ owns the adjusted interface dispatch and both base lifetimes. Known
+  * controls retain their observed offsets; unnamed scalar fields are provisional.
   */
-class DiploWin : public GraphicWin {
+class DiploWin : public GraphicWin, public SubInterface {
  public:
   // homed from 00442510.cpp
   void on_left_click(int a1, int a2);
@@ -65,7 +62,15 @@ class DiploWin : public GraphicWin {
  public:
   void hide();
   void show(int visible);
-  DiploWin() { ; }
+  DiploWin();
+  void on_redraw() override;
+  void on_status(int mode) override;
+  void on_iface_scrolled(int, int) override;
+  void on_iface_scrolling(int, int) override;
+  int on_iface_button_pressed(int) override;
+  void on_iface_group_clicked(int, int, int) override;
+  int on_iface_dialog_back_draw(GraphicWin *) override;
+  int on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) override;
   // 0x00444DB0 is not recovered: a
   // pending_bodies forwarder, because an empty inline stub emits
   // nothing and the deleting destructor needs a `call rel32`.
@@ -91,8 +96,7 @@ class DiploWin : public GraphicWin {
  private:
   // UNK2 zeroes the two dwords at 0xA24 and 0xA28, just past the
   // GraphicWin base; everything between is unmapped.
-  uint32_t field_A14_;  // 0xA14
-  uint32_t field_A18_;  // 0xA18
+  // SubInterface occupies 0xA14..0xA1B; these are not two scalar members.
   int offer_count_[2];  // 0xA1C: one count for each party
   int32_t field_A24_;
   int32_t field_A28_;
@@ -389,36 +393,15 @@ class DiploWin : public GraphicWin {
   uint32_t field_F20_;  // 0xF20
   uint32_t field_F24_;  // 0xF24
   uint32_t field_F28_;  // 0xF28
-  uint32_t field_F2C_;  // 0xF2C
-  uint32_t field_F30_;  // 0xF30
-  uint32_t field_F34_;  // 0xF34
-  uint32_t field_F38_;  // 0xF38
-  uint32_t field_F3C_;  // 0xF3C
-  uint32_t field_F40_;  // 0xF40
-  uint32_t field_F44_;  // 0xF44
-  uint32_t field_F48_;  // 0xF48
-  uint32_t field_F4C_;  // 0xF4C
-  uint32_t field_F50_;  // 0xF50
-  uint32_t field_F54_;  // 0xF54
-  uint32_t field_F58_;  // 0xF58
+  RECT rect_F2C_;  // 0xF2C
+  RECT rect_F3C_;  // 0xF3C
+  RECT rect_F4C_;  // 0xF4C
   RECT portrait_rect_[2];  // 0xF5C, 0xF6C
   RECT leader_rect_[2];  // 0xF7C, 0xF8C
-  uint32_t field_F9C_;  // 0xF9C
-  uint32_t field_FA0_;  // 0xFA0
-  uint32_t field_FA4_;  // 0xFA4
-  uint32_t field_FA8_;  // 0xFA8
-  uint32_t field_FAC_;  // 0xFAC
-  uint32_t field_FB0_;  // 0xFB0
-  uint32_t field_FB4_;  // 0xFB4
-  uint32_t field_FB8_;  // 0xFB8
-  uint32_t field_FBC_;  // 0xFBC
-  uint32_t field_FC0_;  // 0xFC0
-  uint32_t field_FC4_;  // 0xFC4
-  uint32_t field_FC8_;  // 0xFC8
-  uint32_t field_FCC_;  // 0xFCC
-  uint32_t field_FD0_;  // 0xFD0
-  uint32_t field_FD4_;  // 0xFD4
-  uint32_t field_FD8_;  // 0xFD8
+  RECT rect_F9C_;  // 0xF9C
+  RECT rect_FAC_;  // 0xFAC
+  RECT rect_FBC_;  // 0xFBC
+  RECT rect_FCC_;  // 0xFCC
   uint32_t field_FDC_;  // 0xFDC
   uint32_t field_FE0_;  // 0xFE0
   uint32_t field_FE4_;  // 0xFE4
@@ -427,18 +410,9 @@ class DiploWin : public GraphicWin {
   uint32_t field_FF0_;  // 0xFF0
   uint32_t field_FF4_;  // 0xFF4
   uint32_t field_FF8_;  // 0xFF8
-  uint32_t field_FFC_;  // 0xFFC
-  uint32_t field_1000_;  // 0x1000
-  uint32_t field_1004_;  // 0x1004
-  uint32_t field_1008_;  // 0x1008
-  uint32_t field_100C_;  // 0x100C
-  uint32_t field_1010_;  // 0x1010
-  uint32_t field_1014_;  // 0x1014
-  uint32_t field_1018_;  // 0x1018
-  uint32_t field_101C_;  // 0x101C
-  uint32_t field_1020_;  // 0x1020
-  uint32_t field_1024_;  // 0x1024
-  uint32_t field_1028_;  // 0x1028
+  RECT rect_FFC_;  // 0xFFC
+  RECT rect_100C_;  // 0x100C
+  RECT rect_101C_;  // 0x101C
   uint32_t field_102C_;  // 0x102C
   uint32_t field_1030_;  // 0x1030
   uint32_t field_1034_;  // 0x1034

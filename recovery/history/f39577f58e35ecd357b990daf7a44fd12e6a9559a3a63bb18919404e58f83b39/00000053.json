@@ -1,0 +1,31 @@
+{
+  "event_id": "612eba2702e36d8488b7f78bed9a78e86e33f2993c535050f5cc373756507149",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/diplowin.cpp",
+      "src/diplowin.h"
+    ],
+    "evidence": [
+      "The genuine secondary SubInterface base now establishes compiler-owned receiver adjustment at+A14. Replace show/hide raw receiver casts with real inherited visibility/mode operations, preserving original identities and historical byte obligations and requiring fresh native remeasurement and application build/link."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4471856,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4471888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0aabf5e3a5a934cda028921ea8cb45b4f15173a917ca0b2619213233103fb91a",
+  "request_id": "diplo-real-base-mode-access-20261001",
+  "schema_version": 1,
+  "sequence": 53,
+  "stream": "task:interface-contract-report-closure"
+}
