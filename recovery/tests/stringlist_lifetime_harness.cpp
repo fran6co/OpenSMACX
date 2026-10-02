@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <new>
 typedef unsigned int uint32_t;
+typedef char *LPSTR; // SDK mutable string pointer used by the live declaration.
 #define MEASURED
 #define nullptr 0 // Same VC6 compatibility spelling as the product build.
 struct Heap {};

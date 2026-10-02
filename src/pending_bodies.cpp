@@ -865,13 +865,7 @@ int UV2Player::exec(char *movie_file, int width, int height, int flags) {
 
 // ?join_session@Net@@QAEHPAUSessionStruct@@PADPAD@Z at 0x0062E540 -
 // unrecovered; check_for_lobby hands the lobby's session to it.
-int Net::join_session(struct SessionStruct *session, char *player_name,
-                      char *address) {
-    typedef int(__fastcall *pending)(Net *, void *, SessionStruct *, char *,
-                                     char *);
-    return PENDING_BODY(0x0062E540, pending)(this, nullptr, session,
-                                             player_name, address);
-}
+
 
 // ?send@Net@@QAEHPAXHKH@Z at 0x00630080 - 2232 bytes of DirectPlay send with
 // per-peer RTT bookkeeping, still archived (00630080.cpp, FILE-only: no claim
@@ -1197,17 +1191,9 @@ int __cdecl order_veh(int veh_id, int x, int y) {
 // 2026-09-27. Their receiver is the queue at Net+0x10C, and Net::sub_630980 /
 // Net::sub_6309c0 still reach them by name.
 
-int ServiceStruct::add(int slot) {
-    // ?add@ServiceStruct@@QAEHH@Z at 0x00401760, archived beside
-    // stringstruct.cpp's class. Net's enumeration callback appends through it.
-    typedef int(__fastcall *pending)(ServiceStruct *, void *, int);
-    return PENDING_BODY(0x00401760, pending)(this, nullptr, slot);
-}
 
-int AlphaNet::setup(int option) {  // ?setup@AlphaNet@@QAEHH@Z at 0x004E31E0
-    typedef int(__fastcall *pending)(AlphaNet *, void *, int);
-    return PENDING_BODY(0x004E31E0, pending)(this, nullptr, option);
-}
+
+
 
 
 

@@ -5,6 +5,7 @@
 #include <stdlib.h>
 #include <string.h>
 typedef unsigned int uint32_t;
+typedef char *LPSTR; // SDK mutable string pointer used by the live declaration.
 #define MEASURED
 
 int allocations, fail_at, frees, heap_calls;

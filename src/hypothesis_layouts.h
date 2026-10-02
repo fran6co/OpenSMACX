@@ -1551,22 +1551,7 @@ struct ResValue {
 // tag declaration, and the image spells every pointer to it with U -
 // ?join_service@Net@@QAEHPAUServiceStruct@@@Z. A `class` key emits PAV and
 // the symbol stops resolving (measured 2026-09-27, the wave-5 sweep).
-struct ServiceStruct {
- public:
-  // 0x00401760, a pending_bodies forwarder (archived in 00401760.cpp). The
-  // service-provider list append; Net's enumeration callback reaches it.
-  int add(int slot);
-
-  uint32_t field_0_;  // 0x0
-  uint32_t field_4_;  // 0x4
-  uint32_t field_8_;  // 0x8
-  uint32_t field_C_;  // 0xC
-  uint32_t field_10_;  // 0x10
-  uint32_t field_14_;  // 0x14
-  uint32_t field_18_;  // 0x18
-  uint32_t field_1C_;  // 0x1C
-  uint32_t field_20_;  // 0x20
-};
+struct ServiceStruct;
 
 /* 0xC bytes, 3 member(s), 3 named. From Thinker. */
 struct SpotList {

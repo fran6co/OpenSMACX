@@ -95,7 +95,21 @@ def test_scalar_deleting_entries_inherit_owner_aware_deallocation(objects, unit,
     for obj in objects[unit]:
         targets = references(obj, f"??_G{owner}@@UAEPAXI@Z")
         publication = targets.index("??1StringAllocationBase@@UAE@XZ")
-        assert targets[publication + 1:] == [
+        deallocation = targets[publication + 1:]
+        if owner == "NetAllocationNode" and any(
+                name.startswith("??3NetAllocationNode@@") for name in deallocation):
+            # The real context-specific node operators share the source-owned
+            # constructor-failure cleanup contract. Follow actual emitted calls
+            # instead of requiring its former inherited inline spelling.
+            operator, = (name for name in deallocation
+                         if name.startswith("??3NetAllocationNode@@"))
+            assert deallocation == [operator]
+            operator_targets = references(obj, operator)
+            cleanup, = (name for name in operator_targets
+                        if "cleanup_failed_net_construction" in name)
+            assert operator_targets == [cleanup]
+            deallocation = references(obj, cleanup)
+        assert deallocation == [
             "?StringAllocationHeap@@3PAVHeap@@A", "_free",
             "?StringAllocationHeap@@3PAVHeap@@A"]
         assert "??3@YAXPAX@Z" not in targets
@@ -109,10 +123,10 @@ def test_scalar_deleting_entries_inherit_owner_aware_deallocation(objects, unit,
 
 def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "stringlist_hooks_harness.cpp", [
-        ("// LIVE_INSERT", "src/stringstruct.cpp", 0x6086F0),
-        ("// LIVE_REMOVE", "src/stringstruct.cpp", 0x608770)], declarations=[
-        ("// LIVE_TEXT_RELEASE", "src/stringstruct.cpp", "namespace {\n// The cleanup path",
-         "// The original primary table uses these shared defaults."),
+        ("// LIVE_INSERT", "src/stringlist.cpp", 0x6086F0),
+        ("// LIVE_REMOVE", "src/stringlist.cpp", 0x608770)], declarations=[
+        ("// LIVE_TEXT_RELEASE", "src/stringlist.cpp", "namespace {\ninline void release_text",
+         "// ORIGINAL: 0x006086F0"),
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
@@ -124,23 +138,23 @@ def test_live_hooks_preserve_null_failure_and_heap_ownership(tmp_path, monkeypat
 def test_actual_node_lifetime_uses_complete_allocations_and_heap_ownership(tmp_path, monkeypatch):
     run_recovered_harness(tmp_path, monkeypatch, "stringlist_lifetime_harness.cpp", [
         ("// LIVE_CLEAR", "src/stringstruct.cpp", 0x402970),
-        ("// LIVE_REMOVE", "src/stringstruct.cpp", 0x608770)], declarations=[
+        ("// LIVE_REMOVE", "src/stringlist.cpp", 0x608770)], declarations=[
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
-         "namespace {\n// The cleanup path"),
+         "// The original primary table uses these shared defaults."),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
         ("// LIVE_LIST", "src/stringstruct.h", "class StringList :", "static_assert(sizeof(StringList)"),
         ("// LIVE_CLEANUP_HELPER", "src/stringstruct.cpp", "namespace {\n// Share the original entry walk",
-         "// Derived cleanup must run before the base destructor"),
-        ("// LIVE_TEXT_RELEASE", "src/stringstruct.cpp", "namespace {\n// The cleanup path",
-         "// The original primary table uses these shared defaults."),
+         "/*\nPurpose: Return the current string-list item ID."),
+        ("// LIVE_TEXT_RELEASE", "src/stringlist.cpp", "namespace {\ninline void release_text",
+         "// ORIGINAL: 0x006086F0"),
         ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
          "// StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable"),
-        ("// LIVE_DERIVED_DESTRUCTOR", "src/stringstruct.cpp", "StringList::~StringList() {",
-         "/*\nPurpose: Return the current string-list item ID.")])
+        ("// LIVE_DERIVED_DESTRUCTOR", "src/stringlist.cpp", "StringList::~StringList() {",
+         None)])
 
 
 def test_actual_construction_preserves_allocator_and_partial_failure_contracts(tmp_path, monkeypatch):
@@ -150,12 +164,12 @@ def test_actual_construction_preserves_allocator_and_partial_failure_contracts(t
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_OWNER_PUBLICATION", "src/stringstruct.cpp", "StringAllocationBase::~StringAllocationBase() {",
-         "namespace {\n// The cleanup path"),
+         "// The original primary table uses these shared defaults."),
         ("// LIVE_PAYLOAD", "src/stringstruct.h", "class StringStructPayload :", "static_assert(sizeof(StringStructPayload)"),
         ("// LIVE_ENTRY", "src/stringstruct.h", "struct StringStructEntry :", "static_assert(sizeof(StringStructEntry)"),
         ("// LIVE_LIST_BASE", "src/stringstruct.h", "class StringStruct :", "static_assert(sizeof(StringStruct)"),
         ("// LIVE_CLEANUP_HELPER", "src/stringstruct.cpp", "namespace {\n// Share the original entry walk",
-         "// Derived cleanup must run before the base destructor"),
+         "/*\nPurpose: Return the current string-list item ID."),
         ("// LIVE_BASE_DESTRUCTOR", "src/stringstruct.cpp", "StringStruct::~StringStruct() {",
          "// StringStructDerivedVtable / StringStructDerivedVirtualBaseVtable"),
         ("// LIVE_NODE_ALLOCATION", "src/stringstruct.cpp", "namespace {\n// 0x00401100 selects",

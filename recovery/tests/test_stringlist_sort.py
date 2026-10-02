@@ -8,7 +8,7 @@ ROOT = Path(__file__).resolve().parents[2]
 
 
 def _sort_body() -> str:
-    source = (ROOT / "src/stringstruct.cpp").read_text()
+    source = (ROOT / "src/stringlist.cpp").read_text()
     start = source.index("void StringList::sort(int) {")
     opening = source.index("{", start)
     depth = 0

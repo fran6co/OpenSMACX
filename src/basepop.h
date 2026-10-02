@@ -56,6 +56,7 @@ extern BasePopConfigCallback BasePopDefaultField3094;
   * BasePop class
   */
 class BasePop : public GraphicWin {
+  friend class AlphaNet;
   // Tutorial callouts configure this owned popup's callback and dialog state.
   friend class TutWin;
   // Console::editor_tech sorts the popup's existing item-id list before exec,

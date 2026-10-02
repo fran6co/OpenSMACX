@@ -128,13 +128,49 @@ class JackalVoiceRx : public virtual StringAllocationBase {
 // Net construction (0x0062D788..0x0062D7FD) installs its vbptr at +4;
 // vbtable 0x00669424 locates its allocation base at relative +0x24.
 // Its list fields, virtual surface and two-stage teardown remain unfinished.
-class NetUnk72C : public virtual StringAllocationBase {
+class NetTextPayload : public virtual StringAllocationBase {
  public:
-  virtual void unk_slot0();  // 0x005D4C50, unrecovered
-  virtual void unk_slot1();  // 0x005D4CC0, unrecovered
+  char *text;              // observed +04; removal hook owns string release
+  uint32_t field_8_;       // observed +08; insertion hook clears this word
+  // No field_C_, unseen tail or asserted complete extent is invented.
+  // Virtual-base conversion/delete uses the object's actual vbtable.
+};
+struct NetTextListEntry : public virtual StringAllocationBase {
+  int id;                       // observed link-prefix +04
+  NetTextPayload *payload;       // +08, actual hook/deletion role
+  NetTextListEntry *next;         // +0C
+  NetTextListEntry *previous;     // +10
+  // Complete allocation extent/nominal factory remain an explicit obligation.
+};
+class NetTextListBase : public virtual StringAllocationBase {
+ public:
+  typedef NetTextListEntry Entry;
+  typedef NetTextPayload Payload;
+  virtual int on_insert(Payload *payload);
+  virtual void on_remove(Payload *payload);
+  NetTextListBase();
+  virtual ~NetTextListBase();
+  void remove_all();
+  int seek_pos(int position);
+  int current_id();
+  Payload *current_entry();
+  Payload *next_entry();
 
- private:
-  uint8_t field_8_[0x1C];  // 0x8..0x23, opaque
+  Entry *head_;                  // +08
+  Entry *current_;               // +0C
+  int entry_count_;              // +10
+  int current_position_;         // +14
+  Heap *allocator_;              // +18
+};
+class AlphaNetStringStruct;
+class NetUnk72C : public NetTextListBase {
+ public:
+  NetUnk72C();
+  virtual ~NetUnk72C();
+  virtual int on_insert(Payload *payload);  // 5D4C50
+  virtual void on_remove(Payload *payload); // 5D4CC0
+  const char *source_text_;                 // +1C, borrowed hook input
+  uint32_t field_20_;                       // +20, role not established
 };
 
 // Provisional name for the distinct allocation-owning node at Net+0x700.
@@ -146,31 +182,41 @@ class NetUnk72C : public virtual StringAllocationBase {
 // path at 0x00401ED3 requests 0x60 bytes and installs the same vbtable.
 // Thus the base at Net+0x758 belongs to this object, not to Net as another
 // sequential member. This is not a second JackalVoiceRx: that class's
-// vbptr is at +4 and its virtual base is at +0x1C. Remaining node fields
-// and the list's complete cleanup still need recovery.
+// vbptr is at +4 and its virtual base is at +0x1C. The current node has
+// named session fields and a genuine nested-list destructor; unseen nested
+// payload factory/nominal identity and complete lifetime proof remain open.
 class NetAllocationNode : public virtual StringAllocationBase {
+  friend class Net;
  public:
-  // Session enumeration (0x00630C30) transfers DPSESSIONDESC2 fields into
-  // the ledger. Its insertion hook 0x005D4890 copies them into this 0x60
-  // payload, allocated by 0x00401D80 with the same vbtable as Net's member.
+  NetAllocationNode();
+  virtual ~NetAllocationNode();
   // RECOVERY_MEMBER: v1 NetAllocationNode session_name_ 0x4 0x005D4890
-  char *session_name_;
+  char *session_name_;           // +04, caller hook owns string cleanup
   // RECOVERY_MEMBER: v1 NetAllocationNode password_ 0x8 0x005D4890
-  char *password_;
+  char *password_;               // +08, caller hook owns string cleanup
   // RECOVERY_MEMBER: v1 NetAllocationNode instance_guid_ 0xC 0x005D4890
-  GUID instance_guid_;
+  GUID instance_guid_;           // +0C
   // RECOVERY_MEMBER: v1 NetAllocationNode session_flags_ 0x1C 0x005D4890
-  uint32_t session_flags_;
+  uint32_t session_flags_;        // +1C
   // RECOVERY_MEMBER: v1 NetAllocationNode max_players_ 0x20 0x005D4890
-  uint32_t max_players_;
+  uint32_t max_players_;          // +20
   // RECOVERY_MEMBER: v1 NetAllocationNode current_players_ 0x24 0x005D4890
-  uint32_t current_players_;
-  // Copied from ledger+0x34; its meaning is not established by enumeration.
+  uint32_t current_players_;      // +24
   // RECOVERY_MEMBER: v1 NetAllocationNode field_28_ 0x28 0x005D4890
-  uint32_t field_28_;
+  uint32_t field_28_;             // +28
+
+  // Constructor-throw cleanup must match native 402320. A global placement
+  // new(void*) has a no-op matching delete and cannot supply this behavior.
+  // The two contexts preserve primary receiver vs explicit Heap identities.
+  static void *operator new(size_t size, Heap *owner) throw();
+  static void *operator new(size_t size, AlphaNetStringStruct *list) throw();
+  static void operator delete(void *memory, Heap *owner);
+  static void operator delete(void *memory, AlphaNetStringStruct *list);
+  static void operator delete(void *memory);
+
  private:
   // RECOVERY_MEMBER: v2 NetAllocationNode entries_ NetUnk72C 0x2C 0x0062D6A0
-  NetUnk72C entries_;  // 0x2C
+  NetUnk72C entries_;             // +2C, natural member destruction
 };
 
 static_assert(sizeof(NetAllocationNode) == 0x60,
@@ -201,16 +247,63 @@ class NetPlayer {
   char name_and_tail_[0x43];
 };
 
-struct ServiceList;
+class ServiceProviderList;
+struct ServiceStruct : public virtual StringAllocationBase {
+    char *name_;                 // +4
+    GUID provider_guid_;         // +8
 
-// Existing unresolved list-cleanup bridge, shared by the Net and AlphaNet
-// owning destructors until the list's actual virtual/payload types are recovered.
-class RemoveAllShim {
+    static void *operator new(size_t size, Heap *owner) throw();
+    static void *operator new(size_t size, ServiceProviderList *list) throw();
+    static void operator delete(void *memory, Heap *owner);
+    static void operator delete(void *memory, ServiceProviderList *list);
+    static void operator delete(void *memory);
+};
+struct ServiceListEntry : public virtual StringAllocationBase {
+    int id_;                     // +4
+    ServiceStruct *payload_;     // +8
+    ServiceListEntry *next_;      // +C
+    ServiceListEntry *previous_;  // +10; vbase14, extent1C
+
+    static void *operator new(size_t size, Heap *owner) throw();
+    static void *operator new(size_t size, ServiceProviderList *list) throw();
+    static void operator delete(void *memory, Heap *owner);
+    static void operator delete(void *memory, ServiceProviderList *list);
+    static void operator delete(void *memory);
+};
+class ServiceProviderList : public virtual StringAllocationBase {
  public:
-  void remove_all();  // 0x00402970; not accepted recovery
+    typedef ServiceListEntry Entry;
+    typedef ServiceStruct Payload;
+    virtual int on_insert(ServiceStruct *);
+    virtual void on_remove(ServiceStruct *);
+    ServiceProviderList();
+    virtual ~ServiceProviderList();
+    int add(int id);
+    void remove_all();
+    int seek_pos(int position);
+    ServiceStruct *next_entry();
+    ServiceListEntry *head_;      // +8
+    ServiceListEntry *current_;   // +C
+    int entry_count_;            // +10
+    int current_position_;       // +14
+    Heap *allocator_;            // +18; vbase1C, extent24
+};
+struct ServiceList : public ServiceProviderList {
+    virtual int on_insert(ServiceStruct *);
+    virtual void on_remove(ServiceStruct *);
+    virtual ~ServiceList();
+    const char *name_;           // +1C, borrowed enumeration input
+    const GUID *provider_guid_;  // +20, borrowed enumeration input
 };
 
+// The former unresolved list-cleanup bridge is retired: genuine provider,
+// ledger and nested-list destructors own their natural cleanup stages.
+// Historical bridge evidence remains in retained source history.
+
+
+class AlphaNetLedger;
 class Net {
+  friend class AlphaNet;
   // Original MultiDebug paint 0x005C9920 displays these session/player fields.
   friend class MultiDebug;
  public:
@@ -224,14 +317,11 @@ class Net {
   // RECOVERY_GENERATED: v1 vtable 0x0066EB04 0x0066EB1C ??_7Net@@6B@ 0x0062D6A0
   virtual void on_net_event_0(int, int);
   virtual void on_player_added(char *name, unsigned long id);
-  // The image carries a SECOND, non-virtual member of the same name at
-  // 0x0062E420: ?on_player_added@Net@@QAEHPADI@Z returns int and spells the
-  // id `unsigned int` (PADI - `I`, not the table slot's `K`). VC6 mangles
-  // `unsigned int` and `unsigned long` as distinct types, so this overload
-  // coexists with the virtual slot above instead of replacing it; the
-  // published six-slot table at 0x0066EB04 keeps its ret-8 default, and the
-  // 278-byte body below is the real function the setup dialog drives.
-  int on_player_added(char *name, unsigned int id);
+  // 0x0062E420 is the non-virtual session enumeration operation. The former
+  // on_player_added(char *, unsigned int) interpretation is superseded:
+  // its actual arguments are the session ledger and optional password.
+  // The distinct inherited virtual slot above and six-slot table remain.
+  int enumerate_sessions(AlphaNetLedger *ledger, const char *password);
   virtual void on_player_deleted(char *name, unsigned long id);
   virtual void on_player_name_changed(char *name, unsigned long id);
   virtual void on_session_lost();
@@ -283,7 +373,7 @@ class Net {
   // description (two players on the modem/serial services) and files the
   // live session's name, password, GUID, flags and ceiling in the
   // allocation node, answering its address.
-  int create_session(char *name, int max_players, char *password);
+  NetAllocationNode *create_session(char *name, int max_players, char *password);
   // 0x00631B30. Closes the joined lobby session to further joins by the
   // GetSessionDesc/SetSessionDesc round trip; enable_join is its mirror.
   void close_game();
@@ -341,10 +431,10 @@ class Net {
   int init(_GUID *guid, int option_a, int option_b);
 
  public:
-  // 0x0062E540, a pending_bodies forwarder. SessionStruct is opaque to this
-  // tree - only the pointer travels through here, and check_for_lobby passes
-  // zero for it.
-  int join_session(struct SessionStruct *session, char *player_name,
+  // 0x0062E540 is an explicitly unfinished typed owning-TU placeholder.
+  // Its former fixed-executable forwarder is retired; the complete unclaimed
+  // seed remains retained. check_for_lobby passes a null session pointer.
+  int join_session(NetAllocationNode *session, char *player_name,
                    char *address);
 
  public:
@@ -471,3 +561,7 @@ uint32_t *const NetKeepAliveBusy = (uint32_t *)0x009BE610;
 // Shared receive/queue-copy storage. Original Receive advertises the 0x2000
 // capacity initialized by Net::init, not the old four-byte scalar declaration.
 extern unsigned char NetGetScratch[0x2000];  // 0x009BC4BC
+
+// Shared node allocation contracts; original handoff semantics are retained.
+void *allocate_net_node(size_t size, Heap *owner);
+void cleanup_failed_net_construction(void *memory);

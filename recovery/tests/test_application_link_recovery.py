@@ -425,7 +425,7 @@ def test_alphanet_lookup_reset_and_member_lifetimes(tmp_path, monkeypatch):
         ("// LIVE_IDENTITY_INDEX", "src/alphanet.cpp", 0x4E26B0)], declarations=[
         ("// LIVE_PLAYER_RECORD", "src/alphanet.h", "struct AlphaNetProcessSlot {", "static_assert(sizeof(AlphaNetProcessSlot)"),
         ("// LIVE_ALPHANET_DECLARATION", "src/alphanet.h", "class AlphaNet : public Net {", "static_assert(sizeof(AlphaNet)"),
-        ("// LIVE_ALPHANET_CLOSE", "src/alphanet.cpp", "void AlphaNet::close() {", "\n\n\n/*\n// ORIGINAL: 0x00401CE0")])
+        ("// LIVE_ALPHANET_CLOSE", "src/alphanet.cpp", "void AlphaNet::close() {", "// ALPHANET_CLOSE_END")])
 
 
 def test_session_ledger_payload_fields_and_virtual_hooks(compiled):
@@ -461,10 +461,13 @@ def test_session_ledger_hooks_copy_and_release_by_allocator_ownership(tmp_path, 
         ("// LIVE_ALLOCATION_BASE", "src/stringstruct.h", "class StringAllocationBase {",
          "// REAL VIRTUAL INHERITANCE, like StringStructPayload"),
         ("// LIVE_PAYLOAD", "src/net_class.h", "class NetAllocationNode :", "static_assert(sizeof(NetAllocationNode)"),
-        ("// LIVE_LEDGER_BASE", "src/alphanet.h", "struct AlphaNetLedgerEntry;", "static_assert(sizeof(AlphaNetStringStruct)"),
+        ("// LIVE_LEDGER_BASE", "src/alphanet.h", "class AlphaNetStringStruct;\nstruct AlphaNetLedgerEntry :", "static_assert(sizeof(AlphaNetStringStruct)"),
         ("// LIVE_DERIVED_DECLARATION", "src/alphanet.h", "class AlphaNetLedger :", "static_assert(sizeof(AlphaNetLedger)"),
         ("// LIVE_LEDGER_CONSTRUCTOR", "src/alphanet.cpp", "AlphaNetStringStruct::AlphaNetStringStruct() {",
-         "// The base table's defaults are shared leaves")])
+         "// The base table's defaults are shared leaves"),
+        ("// LIVE_NODE_CLEANUP", "src/net_class.cpp", "void cleanup_failed_net_construction(void *memory) {", None),
+        ("// LIVE_NODE_DELETE", "src/net_class.cpp", "void NetAllocationNode::operator delete(void *memory) {",
+         "void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {")])
 
 
 def test_menu_candidates_use_typed_source_definitions(compiled):
@@ -614,8 +617,9 @@ def run_recovered_harness(tmp_path, monkeypatch, harness_name, handlers, declara
     harness = Path(__file__).with_name(harness_name).read_text()
     for anchor, unit, start, end in declarations:
         text = (ROOT / unit).read_text()
-        assert text.count(start) == text.count(end) == harness.count(anchor) == 1
-        first, last = text.index(start), text.index(end)
+        assert text.count(start) == harness.count(anchor) == 1
+        assert end is None or text.count(end) == 1
+        first, last = text.index(start), len(text) if end is None else text.index(end)
         assert first < last
         harness = harness.replace(anchor, text[first:last])
     for anchor, unit, address in handlers:

@@ -448,3 +448,6 @@ void __cdecl time_warp();
 
 // Observed synchronization window; complete historical allocation unknown.
 extern uint8_t GameWireOpaque_94B4D8[0x80];
+
+// Existing application GUID storage, shared with AlphaNet setup.
+extern const GUID LobbyAppGuid;

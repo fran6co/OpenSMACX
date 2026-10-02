@@ -15,10 +15,59 @@
  * You should have received a copy of the GNU General Public License
  * along with OpenSMACX. If not, see <http://www.gnu.org/licenses/>.
  */
+// ORIGINAL: 0x00401660 ??0ServiceStruct@@QAE@H@Z 0x00401660-0x004016B8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Original provider base tables6693D4/6693D0 and five cleared receiver fields; legacy ServiceStruct catalogue name is not payload ownership."}
+// symbol    ??0ServiceProviderList@@QAE@XZ
+// ORIGINAL: 0x004016C0 ?close@ServiceStruct@@QAEXXZ 0x004016C0-0x00401759 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004016c0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver virtual-base adjustment -1C, provider-base tables and list walk; no saved-owner publication tail."}
+// symbol    ??1ServiceProviderList@@UAE@XZ
+// ORIGINAL: 0x00401760 ?add@ServiceStruct@@QAEHH@Z 0x00401760-0x00401B73 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00401760.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Original allocates entry1C/payload20 and invokes provider hook."}
+// symbol    ?add@ServiceProviderList@@QAEHH@Z
+// ORIGINAL: 0x00402350 sub_402350 0x00402350-0x0040239B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, calls4023A0, publishes owner, tests deletion bit1 and conditionally frees complete receiver."}
+// symbol    ??_GNetUnk72C@@UAEPAXI@Z
+// ORIGINAL: 0x004023A0 sub_4023a0 0x004023A0-0x004024F8;0x00650580-0x00650595 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004023a0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24, stages nested-derived66941C/669418, runs removal walk then base6693F4/6693F0; primary plus650580 EH span."}
+// symbol    ??1NetUnk72C@@UAE@XZ
+// ORIGINAL: 0x00402A60 ServiceStruct::dt 0x00402A60-0x00402AC6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402a60.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages provider-base tables, clear402970, zero cursor, owner publication then bit1/free."}
+// symbol    ??_GServiceProviderList@@UAEPAXI@Z
+// ORIGINAL: 0x00402AD0 sub_402ad0 0x00402AD0-0x00402B36 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402ad0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages nested-base6693F4/6693F0, clear402970, owner publication then bit1/free."}
+// symbol    ??_GNetTextListBase@@UAEPAXI@Z
+// ORIGINAL: 0x00402CC0 sub_402cc0 0x00402CC0-0x00402D0B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402cc0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-58 then calls402DD0; node owner publication then bit1/free. This anchors402DD0 to outer NetAllocationNode, not nested NetUnk72C."}
+// symbol    ??_GNetAllocationNode@@UAEPAXI@Z
+// ORIGINAL: 0x00402D80 sub_402d80 0x00402D80-0x00402DC2 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402d80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Provider add401760 installs payload table6693E4, whose scalar slot points402D80; receiver-18 and saved-owner publication/free. Not unseen NetTextPayload nominal proof."}
+// symbol    ??_GServiceStruct@@UAEPAXI@Z
+// ORIGINAL: 0x004E3660 sub_4e3660 0x004E3660-0x004E370C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e3660.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Complete receiver stages66EAFC/66EAF8, walk then allocation-owner publication, no delete flag/free. Already genuine Voice-associated class behavior."}
+// symbol    ??_DJackalVoiceRx@@QAEXXZ
+// ORIGINAL: 0x004E3730 sub_4e3730 0x004E3730-0x004E3888;0x0065C880-0x0065C895 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e3730.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24 stages provider-derived66EB20/66EB1C, walk then provider base; retained65C880 EH span."}
+// symbol    ??1ServiceList@@UAE@XZ
+// ORIGINAL: 0x004E3890 sub_4e3890 0x004E3890-0x004E38DB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e3890.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-24 calls4E3730 then saved-owner publication and bit1/free."}
+// symbol    ??_GServiceList@@UAEPAXI@Z
+// ORIGINAL: 0x004E3900 sub_4e3900 0x004E3900-0x004E39CF FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e3900.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C stagesVoiceRx tables, walk, allocation-owner publication and bit1/free. Not a new handwritten body."}
+// symbol    ??_GJackalVoiceRx@@UAEPAXI@Z
+// ORIGINAL: 0x005D4860 sub_5d4860 0x005D4860-0x005D4887 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005d4860.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Provider table slot1 frees/nulls name +4 only when allocator+18 null; retained exact seed."}
+// symbol    ?on_remove@ServiceList@@UAEXPAUServiceStruct@@@Z
+// ORIGINAL: 0x005D4CC0 sub_5d4cc0 0x005D4CC0-0x005D4CE7 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005d4cc0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Nested list slot1 cleanup at observed payload+4; original factory/complete extent unknown, retain exact seed."}
+// symbol    ?on_remove@NetUnk72C@@UAEXPAVNetTextPayload@@@Z
+// ORIGINAL: 0x00630C30 sub_630c30 0x00630C30-0x00630C7C FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00630c30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "SDK session descriptor fields populate ledger borrowed fields and call401D80; synchronous borrow target."}
+// symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
 #include "stdafx.h"
 #include <mmsystem.h>
 #include <cstring>
 #include "net_class.h"
+#include "alphanet.h"
 #include "original_seam.h"
 #include "popup.h"    // pop_caption / pop_caption_value_title, drop_player's asks
 #include "stringstruct.h"
@@ -55,6 +104,75 @@ NetFifo::~NetFifo() {
     DeleteCriticalSection(&lock_);
 }
 
+AlphaNetLedger *SessionEnumTarget;
+BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2, LPDWORD, DWORD, LPVOID);
+namespace {
+// Source-only typed algorithms shared by genuine list owners. They own no
+// executable identity. Each instantiated body/reference requires measurement;
+// sharing source does not prove the original compiler folded any particular pair.
+template<class List> inline void clear_owned_list(List *list) {
+    if (list->head_ != 0) {
+        for (int removed = 0; removed < list->entry_count_; ++removed) {
+            list->current_ = list->head_->next_;
+            typename List::Payload *payload = list->head_->payload_;
+            list->on_remove(payload);
+            delete payload;
+            // These are intentionally RE-READS after callback and destruction.
+            list->head_->payload_ = 0;
+            delete list->head_;
+            list->head_ = list->current_;
+        }
+        list->head_ = 0;
+        list->current_position_ = 0;
+        list->entry_count_ = 0;
+    }
+}
+
+template<class List, class Node> inline Node *allocate_owned_node(List *list, Node *) {
+    Heap *const explicit_owner = list->allocator_;
+    if (explicit_owner != 0) return new(explicit_owner) Node;
+    return new(list) Node;
+}
+
+template<class List> inline int seek_owned_list(List *list, int position) {
+    AbsFnT abs_fn = &abs;
+    if (position > list->entry_count_ - 1) return 0;
+    list->current_ = list->head_;
+    if (position < 0) {
+        if (abs_fn(position) > list->entry_count_) return 0;
+        int remaining = abs_fn(position);
+        while (remaining > 0) {
+            --remaining;
+            list->current_ = list->current_->previous_;
+        }
+        list->current_position_ = list->entry_count_ + position;
+    } else {
+        int remaining = position;
+        while (remaining > 0) {
+            --remaining;
+            list->current_ = list->current_->next_;
+        }
+        list->current_position_ = position;
+    }
+    return 1;
+}
+
+template<class List> inline typename List::Payload *next_owned_list(List *list) {
+    if (list->head_ == 0) return 0;
+    typename List::Entry *next = list->current_->next_;
+    int position = list->current_position_;
+    list->current_ = next;
+    const int count = list->entry_count_;
+    ++position;
+    list->current_position_ = position;
+    if (position == count) list->current_position_ = 0;
+    return list->current_->payload_;
+}
+
+}
+
+
+
 /*
 Purpose: Build a Net - its embedded VoiceTx, three NetFifo message queues,
          and the JackalVoiceRx-shaped container at +0xB0.
@@ -87,7 +205,7 @@ Net *ActiveNet;
 // 0x009BE5F0, the dword just below it: poll_services parks the ServiceStruct
 // the enumeration callback fills there for the length of the call, and the
 // callback reads it back out - a hand-off, not a second list.
-void *ServiceEnumTarget;  // 0x009BE5F0
+ServiceList *ServiceEnumTarget;  // 0x009BE5F0
 
 // The service-provider GUID the enumeration keeps: DirectPlayEnumerateA hands
 // each provider's GUID to sub_630bf0, which compares these 16 bytes against it
@@ -101,8 +219,8 @@ static const GUID KeptServiceProviderGuid = {
 // The other embedded list's virtual surface remains unfinished.
 int JackalVoiceRx::on_insert(void *) { return 0; }
 void JackalVoiceRx::on_remove(void *) { }
-void NetUnk72C::unk_slot0() { }
-void NetUnk72C::unk_slot1() { }
+
+
 
 // The base table's first four entries share ret 8 at 0x00404260; its last
 // two share ret at 0x00404280. These are intentional base defaults, not
@@ -129,12 +247,11 @@ void Net::on_host_changed() { }
 // parks its list argument in for the length of the EnumSessions scan. The
 // callback reads it back out; nothing else in the image writes the slot.
 // The `T *const` spelling folds to the bare immediate the image stores.
-static unsigned int *const NetEnumListGuard = (unsigned int *)0x009BE4E8;
+
 
 // The StringStruct selection-sort pass, defined in stringstruct.cpp (extern
 // "C" __fastcall); no header declares it, so this file restates the link
 // shape the same way designwin.cpp restates slide_show.
-extern "C" void __fastcall sub_5d49d0(StringStruct *self);
 
 /*
 Purpose: Run one lobby enumeration for the setup dialog's player-added path:
@@ -152,7 +269,7 @@ Purpose: Run one lobby enumeration for the setup dialog's player-added path:
          the first argument as the StringStruct whose fields sit at
          +0x08/+0x0C/+0x10/+0x14.
 // ORIGINAL: 0x0062E420 ?on_player_added@Net@@QAEHPADI@Z 0x0062E420-0x0062E536 FILE
-// symbol    ?on_player_added@Net@@QAEHPADI@Z
+// symbol    ?enumerate_sessions@Net@@QAEHPAVAlphaNetLedger@@PBD@Z
 // size      278 bytes
 // prototype int (__thiscall ?on_player_added@Net@@QAEHPADI@Z)(Net* this, char*, unsigned int)
 // callers   4   call targets   3
@@ -167,67 +284,24 @@ Return Value: 7 with no DirectPlay session, 0x10 with no list, 1 when the
          enumeration reported a failure, else 0
 Status: Coverage transcription - unclaimed body
 */
-int Net::on_player_added(char *list, unsigned int name) {
-    if (NetDirectPlay == 0) {
-        return 7;
-    }
-    if (list == 0) {
-        return 0x10;
-    }
-
-    unsigned char desc[0x50];
-    memset(desc, 0, 0x50);
-    *reinterpret_cast<unsigned int *>(desc) = 0x50;
-
-    // The session GUID the session was opened with goes into the scan's
-    // guidSession - four dwords copied out of the saved pointer.
-    const unsigned int *guid =
-        reinterpret_cast<const unsigned int *>(guid_6E8_);
-    *reinterpret_cast<unsigned int *>(desc + 0x18) = guid[0];
-    *reinterpret_cast<unsigned int *>(desc + 0x1C) = guid[1];
-    *reinterpret_cast<unsigned int *>(desc + 0x20) = guid[2];
-    *reinterpret_cast<unsigned int *>(desc + 0x24) = guid[3];
-
-    // The name text travels as a plain pointer field: an empty (or null)
-    // string is stored as no name at all.
-    const char *name_text = 0;
-    if (name != 0 && *reinterpret_cast<const char *>(name) != 0) {
-        name_text = reinterpret_cast<const char *>(name);
-    }
-    *reinterpret_cast<const char **>(desc + 0x34) = name_text;
-
-    // The enumeration callback (0x00630C30, still its own preserved seed)
-    // fills the caller's list through the guard dword.
-    *NetEnumListGuard = static_cast<unsigned int>(reinterpret_cast<unsigned long>(list));
-    LPDPENUMSESSIONSCALLBACK2 callback = reinterpret_cast<LPDPENUMSESSIONSCALLBACK2>(
-        static_cast<unsigned long>(0x00630C30));
-    int result = NetDirectPlay->EnumSessions(
-        reinterpret_cast<LPDPSESSIONDESC2>(desc), 0, callback, 0, 1);
-    *NetEnumListGuard = 0;
-
-    // The received list is sorted (sub_5d49d0, the one-pass selection sort)
-    // and its cursor is parked on the last entry.
-    sub_5d49d0(reinterpret_cast<StringStruct *>(list));
-    if (result != 0) {
-        return 1;
-    }
-
-    StringStruct *received = reinterpret_cast<StringStruct *>(list);
-    if (received->entry_count_ - 1 >= -1) {
-        int limit = received->entry_count_;
-        received->current_ = received->head_;
-        int n = abs(-1);
-        if (n <= limit) {
-            n = abs(-1);
-            if (n > 0) {
-                do {
-                    n--;
-                    received->current_ = received->current_->previous;
-                } while (n != 0);
-            }
-            received->current_position_ = received->entry_count_ - 1;
-        }
-    }
+int Net::enumerate_sessions(AlphaNetLedger *ledger, const char *password) {
+    if (NetDirectPlay == 0) return 7;
+    if (ledger == 0) return 0x10;
+    DPSESSIONDESC2 descriptor;
+    memset(&descriptor, 0, sizeof(descriptor));
+    descriptor.dwSize = sizeof(descriptor);
+    descriptor.guidApplication = *guid_6E8_;
+    descriptor.lpszPasswordA = password != 0 && *password != 0
+        ? const_cast<char *>(password) : 0;
+    SessionEnumTarget = ledger;
+    const HRESULT result = NetDirectPlay->EnumSessions(
+        &descriptor, 0, enumerate_session_callback, 0, 1);
+    SessionEnumTarget = 0;
+    ledger->sort_sessions();
+    if (result != 0) return 1;
+    // Native inline seek(-1) does not change the cursor index of an empty
+    // list: head is published into current before the abs/count failure.
+    ledger->seek_pos(-1);
     return 0;
 }
 
@@ -251,6 +325,7 @@ Net::Net() {
 Purpose: Tear down a Net - its embedded container, three NetFifo message
          queues, and its VoiceTx.
 // ORIGINAL: 0x004E34D0 ??1Net@@QAE@XZ 0x004E34D0-0x004E365C;0x004E3710-0x004E372B;0x0065C810-0x0065C876
+// symbol    ??1Net@@QAE@XZ
 // size      525 bytes
 // prototype void (__thiscall ??1Net@@QAE@XZ)(Net* this)
 // callers   0   call targets   6
@@ -353,31 +428,11 @@ void Net::close() {
 
 // Retained unresolved entry points, now reached by the owning classes rather
 // than NetDaemon manually destroying its bases. No new target is inferred.
-void RemoveAllShim::remove_all() {
-    typedef void(__fastcall *pending)(RemoveAllShim *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00402970))(this, nullptr);
-}
-class Sub401be0Shim {
- public:
-    void run();
-};
-void Sub401be0Shim::run() {
-    typedef void(__fastcall *pending)(Sub401be0Shim *, void *);
-    reinterpret_cast<pending>(static_cast<unsigned long>(0x00401BE0))(this, nullptr);
-}
 
-Net::~Net() {
-    close();
-    // The allocation node/list's internal teardown is still unfinished.
-    // Preserve its existing operations while recovering member ownership;
-    // queues, receiver and VoiceTx remain compiler-owned destruction.
-    char *const self = reinterpret_cast<char *>(this);
-    reinterpret_cast<RemoveAllShim *>(self + 0x72c)->remove_all();
-    *reinterpret_cast<int32_t *>(self + 0x740) = 0;
-    reinterpret_cast<Sub401be0Shim *>(self + 0x748)->run();
-    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x754);
-    StringAllocationHeap = *reinterpret_cast<Heap **>(self + 0x75c);
-}
+
+
+
+Net::~Net() { close(); }
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns 1.
@@ -735,7 +790,7 @@ int Net::drop_player(unsigned long key, int reason) {
     on_player_deleted(name, key);
 
     // The voice receiver loses this player's entry: walk from its cursor,
-    // unlink, hand the departing payload to the first hook, delete it through
+    // unlink, hand the departing payload to the removal hook, delete it through
     // Sound's own deleting destructor, and free the node through its virtual
     // base - the vbase-adjusted call the image makes.
     if (jackal_voice_rx_.head_ != 0) {
@@ -754,7 +809,7 @@ int Net::drop_player(unsigned long key, int reason) {
             }
             jackal_voice_rx_.cursor_ = entry->next_;
             Sound *payload = entry->payload_;
-            jackal_voice_rx_.on_insert(payload);
+            jackal_voice_rx_.on_remove(payload);
             if (payload != 0) {
                 delete payload;
             }
@@ -1970,7 +2025,7 @@ int Net::start_voice(long key) {
 }
 
 // ORIGINAL: 0x00630BF0 sub_630bf0 0x00630BF0-0x00630C29 BYTE_EXACT
-// symbol    ?sub_630bf0@@YGHPBXHHHH@Z
+// symbol    ?enumerate_provider_callback@@YGHPAU_GUID@@PADKKPAX@Z
 // size      58 bytes
 // prototype int (__stdcall sub_630bf0)(const void*, int, int, int, int)
 // callers   1   call targets   1
@@ -1982,19 +2037,19 @@ int Net::start_voice(long key) {
 // the wire. Only the provider whose GUID matches KeptServiceProviderGuid is
 // kept, and its description pointer and id land in the ServiceStruct the
 // caller parked in ServiceEnumTarget.
-int __stdcall sub_630bf0(const void *guid, int name, int unused_a, int unused_b,
-                         int unused_c) {
-  if (memcmp(guid, &KeptServiceProviderGuid, 0x10) != 0) {
-    ServiceStruct *service =
-        reinterpret_cast<ServiceStruct *>(ServiceEnumTarget);
-    service->field_1C_ = static_cast<uint32_t>(name);
-    service->field_20_ = reinterpret_cast<uint32_t>(guid);
-    service->add(0);
-  }
-  return 1;
+BOOL __stdcall enumerate_provider_callback(LPGUID provider, LPSTR name,
+                                            DWORD, DWORD, LPVOID) {
+    if (memcmp(provider, &KeptServiceProviderGuid, sizeof(GUID)) != 0) {
+        ServiceList *const list = ServiceEnumTarget;
+        list->name_ = name;
+        list->provider_guid_ = provider;
+        list->add(0);
+    }
+    return TRUE;
 }
 
 // ORIGINAL: 0x0062E250 ?poll_services@Net@@QAEHPAUServiceList@@@Z 0x0062E250-0x0062E299 BYTE_EXACT
+// symbol    ?poll_services@Net@@QAEHPAUServiceList@@@Z
 // size      74 bytes
 // prototype int (__thiscall ?poll_services@Net@@QAEHPAUServiceList@@@Z)(Net* this, ServiceList*)
 // callers   1   call targets   1
@@ -2006,18 +2061,12 @@ int __stdcall sub_630bf0(const void *guid, int name, int unused_a, int unused_b,
 // stdcall the import table carries; the nullary extern the scaffold invented
 // could not even be called.
 int Net::poll_services(ServiceList *list) {
-  if (list == 0) {
-    return 0x10;
-  }
-  if (guid_6E8_ == 0) {
-    return 7;
-  }
-  ServiceEnumTarget = list;
-  typedef int(__stdcall *enum_fn)(void *, void *);
-  int result = reinterpret_cast<enum_fn>(DirectPlayEnumerateA)(
-      reinterpret_cast<void *>(&sub_630bf0), 0);
-  ServiceEnumTarget = 0;
-  return result != 0;
+    if (list == 0) return 0x10;
+    if (guid_6E8_ == 0) return 7;
+    ServiceEnumTarget = list;
+    const HRESULT result = DirectPlayEnumerateA(enumerate_provider_callback, 0);
+    ServiceEnumTarget = 0;
+    return result != 0;
 }
 
 // 0x009BE4C0 - the DPCAPS the service join reads the provider's latency out
@@ -2073,7 +2122,7 @@ int Net::join_service(ServiceStruct *service) {
     // once into the session's own 0x6EC slot, once as the create/QI/compare
     // operand. Four dword copies, not a block move, is what the image does.
     const unsigned int *provider =
-        reinterpret_cast<const unsigned int *>(&service->field_8_);
+        reinterpret_cast<const unsigned int *>(&service->provider_guid_);
     unsigned int *kept = reinterpret_cast<unsigned int *>(field_6EC_);
     kept[0] = provider[0];
     kept[1] = provider[1];
@@ -2177,7 +2226,7 @@ Purpose: Host a named session: close any live one, size it to two players
 Return Value: the allocation node's address, or 0 when any stage failed
 Status: Coverage transcription - unclaimed body
 */
-int Net::create_session(char *name, int max_players, char *password) {
+NetAllocationNode *Net::create_session(char *name, int max_players, char *password) {
     if (NetDirectPlay == 0 || name == 0 || max_players < 2) {
         return 0;
     }
@@ -2265,7 +2314,7 @@ int Net::create_session(char *name, int max_players, char *password) {
     allocation_node_.current_players_ = 0;
     free(live);
     voice_flags_D8_ |= 0x10000;
-    return reinterpret_cast<int>(&allocation_node_);
+    return &allocation_node_;
 }
 
 // ORIGINAL: 0x00630A40 sub_630a40 0x00630A40-0x00630A7D BYTE_EXACT
@@ -2567,4 +2616,432 @@ void Net::handle_sys_msg() {
             break;
         }
     }
+}
+
+
+/*
+Purpose: The sprite-heap node's constructor-side list hook the 0x1c nodes
+         run at +0x2c: initialises the node's list block. Its body has no
+         product home yet (retained in src/recovered/units/00401b80.cpp),
+         so the two allocation paths above link through here.
+// ORIGINAL: 0x00401B80 sub_401b80 0x00401B80-0x00401BD8 FILE
+// symbol    ??0NetTextListBase@@QAE@XZ
+// size      88 bytes
+Status: Continuity placeholder - real body pending, artifact retained.
+*/
+NetTextListBase::NetTextListBase() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
+}
+
+
+/*
+// ORIGINAL: 0x00401BE0 sub_401be0 0x00401BE0-0x00401C79
+// symbol    ??1NetTextListBase@@UAE@XZ
+// size      153 bytes
+// prototype
+// callers   3   call targets   0
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     (none)
+// indirect  0x00401C22 0x00401C34 0x00401C50
+Status: Complete
+*/
+// The receiver arrives in ECX pointing 0x1c into the real object - a
+// virtual-base subobject - so the body first recovers the object's own
+// start (`self`). It then writes two vtable pointers: its own, and a
+// second one reached through a displacement read out of a small table at
+// self+4 (a vbtable: entry [1] holds the byte offset from self+4 to the
+// virtual base's vtable slot, because that offset is only known once the
+// most-derived class is). The same "read a vtable, take its [1] entry as
+// a THIS-adjustment rather than a function, add it to the pointer, then
+// call through the adjusted object's own vtable[0]" shape recurs for
+// every node torn down in the loop below - that is the scalar deleting
+// destructor called through a pointer typed as a virtual base, which is
+// why the adjustment has to be data instead of a compile-time constant.
+//
+// MISMATCH, 52/64 (0.984 similar), best over every flag set this tree
+// tries. The one surviving divergence is the SECOND per-node teardown
+// call (deleting the list node itself, `node` below): the image computes
+// the adjusted `this` with `lea ecx,[edx+eax]` and then re-derives the
+// target vtable via `[edx+eax]` addressing instead of reading `[ecx]`,
+// where the FIRST teardown call (on `sub_obj`, same shape) compiles
+// byte-exact with `add`+`[ecx]`. TRIED: a named `int *vtbl`/`int
+// disp` pair, a fused single expression, and routing the call through
+// `vtable_method` all reproduce the identical `add`+`[ecx]` form as the
+// first call - the allocator's choice between the two forms tracks
+// register pressure at the call site, not source spelling, and no
+// spelling tried moves it. Everything else - both vtable-pointer writes,
+// the loop's trip count re-read each iteration, the first per-node call,
+// and the trailing field clears - is byte-exact.
+class SubBase401be0 { public:
+    virtual void slot0(int);   // vtable[0]: scalar-deleting-destructor style
+    virtual void slot1(int);   // vtable[4]: notifies `self` a node is going
+};
+
+NetTextListBase::~NetTextListBase() {
+    remove_all();
+    current_position_ = 0; // also when empty; current_ is NOT cleared
+}
+
+
+NetAllocationNode::NetAllocationNode() {
+    // No scalar field stores exist in either inline original construction.
+    // Its own allocation base captures the pending Heap BEFORE entries_'s
+    // independent virtual base consumes the now-cleared handoff.
+}
+
+
+NetUnk72C::~NetUnk72C() {
+    remove_all();
+    current_position_ = 0;
+    // Natural base destruction supplies the distinct second list stage.
+}
+
+
+/*
+Purpose: Copy one text record's string into fresh storage chosen by the
+         record's own allocator (the CRT heap when none is installed) and
+         hand the copy plus the four metadata words to the caller's array.
+// ORIGINAL: 0x005D47D0 sub_5d47d0 0x005D47D0-0x005D4851 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original 5D47D0-5D4851 and its retained seed/history preserve identity and extent.", "Provider callback 630BF0 borrows name and provider GUID through ServiceList +1C/+20 before add; receiver +18 selects Heap versus mem_get. Payload owns copied name +4 and GUID +8. These are ServiceList/ServiceStruct roles, not the sibling nested-text owner.", "Native v3 emits the genuine virtual ServiceList insertion symbol; source nominal names remain evidence-backed interpretations, not new byte claims."], "reason": "Recover provider-list insertion as ServiceList::on_insert on the real enumerated provider payload."}
+// Historical superseded binding interpretation: {"evidence": ["Original5D47D0..5D4851; retired seed git:b18d3ac8:src/unrecovered/005d47d0.cpp records the same identity and spans.", "The receiver is the +0x18 Heap pointer, +0x1C string and +0x20 metadata record the sibling 0x005D4C50 installs into; mem_get is general.cpp's and Heap::get is heap.h's own, both already linked by this TU's list machinery."], "reason": "Coverage transcription of the record copy-out with the thiscall receiver spelled as an explicit first argument; no in-tree class owns the record yet, so its slots stay documented offsets."}
+// symbol    ?on_insert@ServiceList@@UAEHPAUServiceStruct@@@Z
+Status: Coverage transcription - unclaimed body
+*/
+int ServiceList::on_insert(ServiceStruct *payload) {
+    const char *text = name_;
+    if (text != 0) {
+        char *copy;
+        if (allocator_ == 0) copy = static_cast<char *>(mem_get(strlen(text) + 1));
+        else {
+            const size_t length = strlen(text) + 1;
+            copy = static_cast<char *>(allocator_->get(length));
+        }
+        payload->name_ = copy;
+        if (copy == 0) return 4;
+        *copy = 0;
+        // Native re-reads the borrowed input after allocation and the output
+        // pointer after publication; neither can be cached across the helper.
+        strcat(payload->name_, name_);
+    }
+    // Four scalar words copied in the native hook; GUID value assignment may
+    // lower as a block copy and therefore needs native reference measurement.
+    payload->provider_guid_ = *provider_guid_;
+    return 0;
+}
+
+
+/*
+Purpose: Copy one text record's string into fresh storage chosen by the
+         record's own allocator and park the copy in the caller's output
+         block; the metadata half is left to the caller.
+// ORIGINAL: 0x005D4C50 sub_5d4c50 0x005D4C50-0x005D4CBC FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original 5D4C50-5D4CBC and its retained seed/history preserve identity and extent.", "The nested list receiver uses Heap +18 and borrowed text +1C to copy text into payload +4 through mem_get or Heap::get. Genuine NetUnk72C and NetTextPayload declarations replace the old raw receiver facade.", "The unseen factory, original nominal payload identity and complete allocation extent remain unresolved; observed prefix and delete protocol do not identify them."], "reason": "Recover NetUnk72C::on_insert for its dedicated observed-prefix NetTextPayload role."}
+// Historical superseded binding interpretation: {"evidence": ["Original5D4C50..5D4CBC; retired seed git:b18d3ac8:src/unrecovered/005d4c50.cpp records the same identity and spans.", "Same +0x18/+0x1C receiver record as sub_5d47d0 above, with mem_get and Heap::get resolving exactly as there; the seed's function-pointer CRT spellings are ordinary strlen/strcat calls here."], "reason": "Coverage transcription of the record copy-out's string half with the receiver as an explicit first argument."}
+// symbol    ?on_insert@NetUnk72C@@UAEHPAVNetTextPayload@@@Z
+Status: Coverage transcription - unclaimed body
+*/
+int NetUnk72C::on_insert(Payload *payload) {
+    payload->field_8_ = 0;
+    if (source_text_ != 0) {
+        char *copy;
+        if (allocator_ == 0) {
+            copy = static_cast<char *>(mem_get(strlen(source_text_) + 1));
+        } else {
+            size_t const length = strlen(source_text_) + 1;
+            // Native 5D4C73 reloads allocator_ AFTER the strlen call.
+            copy = static_cast<char *>(allocator_->get(length));
+        }
+        payload->text = copy;
+        if (copy == 0) {
+            return 4;
+        }
+        *copy = 0;
+        strcat(payload->text, source_text_);
+    }
+    // Null source does NOT clear payload->text; no unseen payload tail is named.
+    return 0;
+}
+
+// Transport-owner behavior is unfinished; seed62E540 remains retained.
+int Net::join_session(NetAllocationNode *, char *, char *) {
+    // BODY GOES HERE.
+    return 0;
+}
+
+void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {
+    return allocate_net_node(size, owner);
+}
+void *NetAllocationNode::operator new(size_t size, AlphaNetStringStruct *list) throw() {
+    // Native receiver-context overload is the fallback ONLY, selected after
+    // the caller has found allocator_==0. Do not re-read allocator_ here.
+    return allocate_net_node(size, list->allocation_owner_);
+}
+void NetAllocationNode::operator delete(void *memory, Heap *) {
+    cleanup_failed_net_construction(memory);
+}
+void NetAllocationNode::operator delete(void *memory, AlphaNetStringStruct *) {
+    cleanup_failed_net_construction(memory);
+}
+void NetAllocationNode::operator delete(void *memory) {
+    cleanup_failed_net_construction(memory);
+}
+
+void *ServiceStruct::operator new(size_t size, Heap *owner) throw() {
+    return allocate_net_node(size, owner);
+}
+void *ServiceStruct::operator new(size_t size, ServiceProviderList *list) throw() {
+    // Caller has already selected this FALLBACK context when explicit
+    // allocator is null. Native reloads only the inherited allocation owner.
+    return allocate_net_node(size, list->allocation_owner_);
+}
+void ServiceStruct::operator delete(void *memory, Heap *) { cleanup_failed_net_construction(memory); }
+void ServiceStruct::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
+void ServiceStruct::operator delete(void *memory) { cleanup_failed_net_construction(memory); }
+
+void *ServiceListEntry::operator new(size_t size, Heap *owner) throw() {
+    return allocate_net_node(size, owner);
+}
+void *ServiceListEntry::operator new(size_t size, ServiceProviderList *list) throw() {
+    // Caller has already selected this FALLBACK context when explicit
+    // allocator is null. Native reloads only the inherited allocation owner.
+    return allocate_net_node(size, list->allocation_owner_);
+}
+void ServiceListEntry::operator delete(void *memory, Heap *) { cleanup_failed_net_construction(memory); }
+void ServiceListEntry::operator delete(void *memory, ServiceProviderList *) { cleanup_failed_net_construction(memory); }
+void ServiceListEntry::operator delete(void *memory) { cleanup_failed_net_construction(memory); }
+
+ServiceProviderList::ServiceProviderList() {
+    head_ = 0;
+    current_ = 0;
+    entry_count_ = 0;
+    current_position_ = 0;
+    allocator_ = 0;
+}
+
+int ServiceProviderList::on_insert(ServiceStruct *) { return 0; }
+
+void ServiceProviderList::on_remove(ServiceStruct *) { }
+
+void ServiceProviderList::remove_all() { clear_owned_list(this); }
+
+int ServiceProviderList::seek_pos(int position) { return seek_owned_list(this, position); }
+
+ServiceStruct *ServiceProviderList::next_entry() { return next_owned_list(this); }
+
+int ServiceProviderList::add(int id) {
+    if (entry_count_ == 0) {
+        head_ = allocate_owned_node(this, static_cast<ServiceListEntry *>(0));
+        if (head_ == 0) return 4;
+        head_->id_ = id;
+        head_->next_ = head_;
+        head_->previous_ = head_;
+        head_->payload_ = allocate_owned_node(this, static_cast<ServiceStruct *>(0));
+        if (head_->payload_ == 0) return 4;
+        on_insert(head_->payload_);
+        current_ = head_;
+    } else {
+        head_->previous_->next_ = allocate_owned_node(this, static_cast<ServiceListEntry *>(0));
+        if (head_->previous_->next_ == 0) return 4;
+        head_->previous_->next_->previous_ = head_->previous_;
+        head_->previous_->next_->next_ = head_;
+        head_->previous_ = head_->previous_->next_;
+        current_ = head_->previous_;
+        current_->id_ = id;
+        current_->payload_ = allocate_owned_node(this, static_cast<ServiceStruct *>(0));
+        if (current_->payload_ == 0) return 4;
+        on_insert(current_->payload_);
+    }
+    current_position_ = entry_count_;
+    ++entry_count_;
+    return 0;
+}
+
+ServiceProviderList::~ServiceProviderList() {
+    remove_all();
+    current_position_ = 0;
+}
+
+void ServiceList::on_remove(ServiceStruct *payload) {
+    if (allocator_ == 0 && payload->name_ != 0) {
+        free(payload->name_);
+        payload->name_ = 0;
+    }
+}
+
+ServiceList::~ServiceList() {
+    remove_all();
+    current_position_ = 0;
+}
+
+BOOL __stdcall enumerate_session_callback(LPCDPSESSIONDESC2 descriptor,
+                                          LPDWORD, DWORD, LPVOID) {
+    if (descriptor == 0) return FALSE;
+    // Native captures these descriptor inputs before publishing any into the
+    // borrowed ledger, then calls insertion and ignores its status entirely.
+    const char *password = descriptor->lpszPasswordA;
+    const DWORD flags = descriptor->dwFlags;
+    const char *name = descriptor->lpszSessionNameA;
+    const DWORD current = descriptor->dwCurrentPlayers;
+    const DWORD maximum = descriptor->dwMaxPlayers;
+    AlphaNetLedger *ledger = SessionEnumTarget;
+    ledger->session_name_ = name;
+    ledger->instance_guid_ = &descriptor->guidInstance;
+    ledger->session_flags_ = flags;
+    ledger->max_players_ = maximum;
+    ledger->current_players_ = current;
+    ledger->password_ = password;
+    ledger->add(0);
+    return TRUE;
+}
+
+/*
+Purpose: The 0x60 sprite-heap node's constructor-side list hook, taking the
+         caller's flag. No product home yet (retained in
+         src/recovered/units/00402d10.cpp).
+// ORIGINAL: 0x00402D10 sub_402d10 0x00402D10-0x00402D7C FILE
+// symbol    ??0NetUnk72C@@QAE@XZ
+// size      108 bytes
+Status: Continuity placeholder - real body pending, artifact retained.
+*/
+NetUnk72C::NetUnk72C() {
+    // Source text and field_20_ remain uninitialized, as in 402D10.
+}
+
+int NetTextListBase::on_insert(Payload *) { return 0; }
+
+void NetTextListBase::on_remove(Payload *) { }
+
+void NetTextListBase::remove_all() {
+    if (head_ != 0) {
+        int index = 0;
+        if (entry_count_ > 0) {
+            do {
+                current_ = head_->next;
+                Payload *const payload = head_->payload;
+                on_remove(payload);
+                delete payload;
+                // Reload head after the callback and payload destructor.
+                head_->payload = 0;
+                delete head_;
+                head_ = current_;
+                ++index;
+            } while (index < entry_count_); // native re-reads the count
+        }
+        head_ = 0;
+        current_position_ = 0;
+        entry_count_ = 0;
+    }
+}
+
+void NetUnk72C::on_remove(Payload *payload) {
+    if (allocator_ == 0) {
+        if (payload->text != 0) {
+            free(payload->text);
+            payload->text = 0;
+        }
+    }
+}
+
+int NetTextListBase::seek_pos(int position) {
+    typedef int (__cdecl *AbsFunction)(int);
+    AbsFunction abs_function = &abs;
+    if (position > entry_count_ - 1) return 0;
+    current_ = head_;
+    if (position < 0) {
+        if (abs_function(position) > entry_count_) return 0;
+        int steps = abs_function(position);
+        if (steps > 0) {
+            do {
+                --steps;
+                current_ = current_->previous;
+            } while (steps != 0);
+        }
+        current_position_ = position + entry_count_;
+    } else {
+        int steps = position;
+        if (steps > 0) {
+            do {
+                --steps;
+                current_ = current_->next;
+            } while (steps != 0);
+        }
+        current_position_ = position;
+    }
+    return 1;
+}
+
+int NetTextListBase::current_id() {
+    return head_ != 0 ? current_->id : 0;
+}
+
+NetTextListBase::Payload *NetTextListBase::current_entry() {
+    return head_ != 0 ? current_->payload : 0;
+}
+
+NetTextListBase::Payload *NetTextListBase::next_entry() {
+    if (head_ == 0) return 0;
+    Entry *const next = current_->next;
+    int position = current_position_;
+    current_ = next;
+    int const count = entry_count_;
+    ++position;
+    current_position_ = position;
+    if (position == count) current_position_ = 0;
+    return current_->payload;
+}
+
+/*
+Purpose: The this-8 teardown one StringStruct-shaped container owner runs:
+         restore the outer vtable stages, run the list's remove_all, walk
+         the remaining entries releasing each payload through the node's
+         own slot-1 notify and slot-0 deleting dispatch, then hand the
+         saved heap head back to 0x009B3374.
+
+// ORIGINAL: 0x00402DD0 sub_402dd0 0x00402DD0-0x00402ED2;0x006505A0-0x006505B5 FILE
+// TRIED: this is the "StringStruct-shaped member destructor" wall this project already documents (see 0x00421100's ProdPicker dtor and 0x004E3300's ClassX::sub_4e3300, both same idiom): a this-adjusted (`this-8`) inline teardown of an embedded container - vtable-patch, walk entries calling two indirect "scalar deleting destructor" style virtual calls per entry (slot001(payload) on the node's own patched vtable, then slot000(1) through a this-adjustor delta read from each item's own vtable+4) - followed by restoring the outer object's vtable. The BODY-mode scaffold's auto-generated `VCall` shim is nullary and can't carry the arguments these calls need, so this is landed FILE-mode with `VCall` edited to `slot000(int)`/`slot001(void*)`. Not expected exact: the compiler-synthesized SEH try-frame (fs:[0] chain, `push -1; push handler`) that protects partial teardown is not reproduced by a call-by-call translation over raw pointers with no real local object for the compiler to protect (mnemonic_similarity 0.81, 204 vs 258 primary-span bytes).
+// size      279 bytes
+// prototype
+// callers   4   call targets   1
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     0x00402970
+// symbol   ??1NetAllocationNode@@UAE@XZ
+Status: Coverage transcription - unclaimed body; the remove_all step now
+        goes through the tree's own StringStruct::remove_all (the image's
+        0x00402970), and the SEH-frame divergence the seed documents
+        stands.
+*/
+NetAllocationNode::~NetAllocationNode() {
+    // Genuine empty user body: entries_, then own virtual allocation base,
+    // destroy naturally. Session strings are handled by the ledger hook,
+    // not this destructor; adding frees here would duplicate ownership.
+}
+
+void *allocate_net_node(size_t size, Heap *owner) {
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory == 0) {
+            MessageBoxA(0, "out of heap space in new function", "Aborting", MB_OK);
+            exit(3);
+        }
+    } else {
+        memory = mem_get(size);
+        if (memory == 0) return 0;
+    }
+    StringAllocationHeap = owner;
+    return memory;
+}
+
+void cleanup_failed_net_construction(void *memory) {
+    if (memory != 0) {
+        if (StringAllocationHeap == 0) free(memory);
+        StringAllocationHeap = 0;
+    }
+    // Native 402320 leaves the handoff untouched when memory is null.
 }

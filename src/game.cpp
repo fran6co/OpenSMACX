@@ -2040,7 +2040,7 @@ MultiWin MultiWindow;  // 0x007FD648
 
 // 0x00689218 - the DirectPlay application GUID the lobby check registers the
 // session under, bytes read off the image. The trailing words spell "DEST".
-static const GUID LobbyAppGuid = {0x02D1B480, 0xD680, 0x11D0,
+const GUID LobbyAppGuid = {0x02D1B480, 0xD680, 0x11D0,
                                   {0x82, 0x1E, 0x44, 0x45, 0x53, 0x54, 0x00, 0x00}};
 
 /*

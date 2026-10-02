@@ -50,13 +50,31 @@
 // StringAllocationBase to +0x38 (whole AlphaNet owner capture at +0x1488).
 // Insertion 0x00401D80 calls slot 0 with the newly allocated NetAllocationNode;
 // remove_all 0x00402970 calls slot 1 before virtual payload/node destruction.
-struct AlphaNetLedgerEntry;
+class AlphaNetStringStruct;
+struct AlphaNetLedgerEntry : public virtual StringAllocationBase {
+  int id_;
+  NetAllocationNode *payload_;
+  AlphaNetLedgerEntry *next_;
+  AlphaNetLedgerEntry *previous_;
+  static void *operator new(size_t size, Heap *owner) throw();
+  static void *operator new(size_t size, AlphaNetStringStruct *list) throw();
+  static void operator delete(void *memory, Heap *owner);
+  static void operator delete(void *memory, AlphaNetStringStruct *list);
+  static void operator delete(void *memory);
+};
 class AlphaNetStringStruct : public virtual StringAllocationBase {
  public:
   // RECOVERY_GENERATED: v1 vtable 0x00669408 0x00669410 ??_7AlphaNetStringStruct@@6B0@@ 0x004E2490
   virtual int on_insert(NetAllocationNode *payload);
   virtual void on_remove(NetAllocationNode *payload);
 
+  typedef AlphaNetLedgerEntry Entry;
+  typedef NetAllocationNode Payload;
+  int add(int id);
+  void sort_sessions();
+  void remove_all();
+  int seek_pos(int position);
+  NetAllocationNode *next_entry();
   AlphaNetLedgerEntry *head_;     // +0x08 - the five the constructor zeroes
   AlphaNetLedgerEntry *current_;  // +0x0C
   int entry_count_;              // +0x10
@@ -144,10 +162,14 @@ class AlphaNet : public Net {
   int who_2_pid(int identity);
   int who_2_idx(int identity);
   void close();
-  // 0x004E31E0, a pending_bodies forwarder (archived in 004e31e0.cpp). It
+  // 0x004E31E0, implemented in alphanet.cpp; original seed remains. It
   // brings the transport up; NetDaemon::init (netdaemon.cpp) is the one
   // caller, and it tests the answer to decide whether the daemon came up.
   int setup(int option);
+  int pick_service(int *allow_pbem);
+  int do_join_or_create();
+  int create();
+  int join();
 
  public:
   // RECOVERY_MEMBER: v1 AlphaNet player_count_ 0x768 0x004E2490

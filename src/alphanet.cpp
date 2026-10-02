@@ -7,6 +7,39 @@
  * the Free Software Foundation, either version 3 of the License, or
  * (at your option) any later version.
  */
+// ORIGINAL: 0x00401C80 SessionStruct::SessionStruct 0x00401C80-0x00401CD8 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00401c80.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session base tables669408/669404 and five cleared circular-list fields."}
+// symbol    ??0AlphaNetStringStruct@@QAE@XZ
+// ORIGINAL: 0x00402B40 SessionStruct::dt 0x00402B40-0x00402BA6 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00402b40.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-1C, stages session-base669408/669404, clear402970, owner publication then bit1/free."}
+// symbol    ??_GAlphaNetStringStruct@@UAEPAXI@Z
+// ORIGINAL: 0x004E2400 sub_4e2400 0x004E2400-0x004E2444 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e2400.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Writes selected bytes at90E8E0..EB, leaving unwritten bytes intact."}
+// symbol    ?reset_net_session_options@@YAXXZ
+// ORIGINAL: 0x004E2460 sub_4e2460 0x004E2460-0x004E248F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e2460.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Eight rows, stride17C at90DB98; selected byte/DWORD stores only."}
+// symbol    ?reset_net_lobby_rows@@YAXXZ
+// ORIGINAL: 0x004E29E0 ?do_join_or_create@AlphaNet@@QAEHXZ 0x004E29E0-0x004E2A2F FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e29e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Existing real xpops4args wrapper drives whole create/join operation."}
+// symbol    ?do_join_or_create@AlphaNet@@QAEHXZ
+// ORIGINAL: 0x004E2A30 ?create@AlphaNet@@QAEHXZ 0x004E2A30-0x004E2E4B;0x0065C664-0x0065C771 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e2a30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Create flow with typed node/session fields; preserve complete seed EH spans."}
+// symbol    ?create@AlphaNet@@QAEHXZ
+// ORIGINAL: 0x004E2E50 ?join@AlphaNet@@QAEHXZ 0x004E2E50-0x004E31D6;0x0065C771-0x0065C7EC FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e2e50.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Session enumeration/cursor/selection flow; negative popup branch bypasses seek in original and reviewed correction."}
+// symbol    ?join@AlphaNet@@QAEHXZ
+// ORIGINAL: 0x004E31E0 ?setup@AlphaNet@@QAEHH@Z 0x004E31E0-0x004E32BA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e31e0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Existing actual LobbyAppGuid689218 and provider selection/setup state."}
+// symbol    ?setup@AlphaNet@@QAEHH@Z
+// ORIGINAL: 0x004E3300 sub_4e3300 0x004E3300-0x004E334B FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e3300.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-38 then calls4E3350; publishes ledger owner and conditionally frees complete object on bit1."}
+// symbol    ??_GAlphaNetLedger@@UAEPAXI@Z
+// ORIGINAL: 0x004E3350 sub_4e3350 0x004E3350-0x004E34A8;0x0065C7F0-0x0065C805 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/004e3350.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Receiver-38 stages session-derived tables, walk then session-base cleanup; retained65C7F0 EH span."}
+// symbol    ??1AlphaNetLedger@@UAE@XZ
+// ORIGINAL: 0x004E34B0 sub_4e34b0 0x004E34B0-0x004E34CB FILE
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004e34b0.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "Complete receiver+38 calls4E3350 then publishes virtual allocation owner; no delete flag/free."}
+// symbol    ??_DAlphaNetLedger@@QAEXXZ
 #include "stdafx.h"
 #include "original_seam.h"
 #include "alphanet.h"
@@ -16,6 +49,93 @@
 #include "stringstruct.h"  // StringAllocationBase, the ledger's virtual base
 #include "heap.h"
 #include "general.h"  // mem_get, the fallback when the ledger has no Heap
+
+
+#include "stdafx.h"
+#include "alphanet.h"
+#include "netdaemon.h"
+#include "netwin.h"
+#include "popup.h"
+#include "xpops.h"
+#include "main.h"
+#include "alpha.h"
+#include "temp.h"
+#include "text.h"
+#include "console.h"
+#include "game.h"
+#include "general.h"
+#include <new>
+#include "net_class.h"
+#include "heap.h"
+#include <cstdlib>
+#include <cstring>
+int __stdcall compare_session_guid(const GUID *, const GUID *);
+namespace {
+// Source-only typed algorithms shared by genuine list owners. They own no
+// executable identity. Each instantiated body/reference requires measurement;
+// sharing source does not prove the original compiler folded any particular pair.
+template<class List> inline void clear_owned_list(List *list) {
+    if (list->head_ != 0) {
+        for (int removed = 0; removed < list->entry_count_; ++removed) {
+            list->current_ = list->head_->next_;
+            typename List::Payload *payload = list->head_->payload_;
+            list->on_remove(payload);
+            delete payload;
+            // These are intentionally RE-READS after callback and destruction.
+            list->head_->payload_ = 0;
+            delete list->head_;
+            list->head_ = list->current_;
+        }
+        list->head_ = 0;
+        list->current_position_ = 0;
+        list->entry_count_ = 0;
+    }
+}
+
+template<class List, class Node> inline Node *allocate_owned_node(List *list, Node *) {
+    Heap *const explicit_owner = list->allocator_;
+    if (explicit_owner != 0) return new(explicit_owner) Node;
+    return new(list) Node;
+}
+
+template<class List> inline int seek_owned_list(List *list, int position) {
+    AbsFnT abs_fn = &abs;
+    if (position > list->entry_count_ - 1) return 0;
+    list->current_ = list->head_;
+    if (position < 0) {
+        if (abs_fn(position) > list->entry_count_) return 0;
+        int remaining = abs_fn(position);
+        while (remaining > 0) {
+            --remaining;
+            list->current_ = list->current_->previous_;
+        }
+        list->current_position_ = list->entry_count_ + position;
+    } else {
+        int remaining = position;
+        while (remaining > 0) {
+            --remaining;
+            list->current_ = list->current_->next_;
+        }
+        list->current_position_ = position;
+    }
+    return 1;
+}
+
+template<class List> inline typename List::Payload *next_owned_list(List *list) {
+    if (list->head_ == 0) return 0;
+    typename List::Entry *next = list->current_->next_;
+    int position = list->current_position_;
+    list->current_ = next;
+    const int count = list->entry_count_;
+    ++position;
+    list->current_position_ = position;
+    if (position == count) list->current_position_ = 0;
+    return list->current_->payload_;
+}
+
+}
+
+
 
 /*
 Purpose: Convert a multiplayer process ID to its one-based player index.
@@ -193,6 +313,7 @@ void AlphaNetStringStruct::on_remove(NetAllocationNode *) { }
 
 // ORIGINAL: 0x005D4890 ?on_insert@AlphaNetLedger@@UAEHPAVNetAllocationNode@@@Z 0x005D4890-0x005D498D
 // RECOVERY_BINDING: v1 {"evidence": ["Original table 0x66EAE8 slot 0 points here. Insertion 0x401D80 allocates a 0x60 NetAllocationNode, constructs its nested list and invokes this hook; enumeration 0x630C30 supplies DPSESSIONDESC2 fields. Seed extent is retained; this binding makes no matching claim."], "reason": "Recover the session-ledger insertion virtual from its retained seed using the existing allocation-owning payload class."}
+// symbol    ?on_insert@AlphaNetLedger@@UAEHPAVNetAllocationNode@@@Z
 int AlphaNetLedger::on_insert(NetAllocationNode *payload) {
     if (session_name_ == 0) {
         payload->session_name_ = 0;
@@ -201,14 +322,15 @@ int AlphaNetLedger::on_insert(NetAllocationNode *payload) {
         if (allocator_ == 0) {
             copy = static_cast<char *>(mem_get(strlen(session_name_) + 1));
         } else {
-            copy = static_cast<char *>(allocator_->get(strlen(session_name_) + 1));
+            const size_t length = strlen(session_name_) + 1;
+            copy = static_cast<char *>(allocator_->get(length));
         }
         payload->session_name_ = copy;
         if (copy == 0) {
             return 4;
         }
         *copy = 0;
-        strcat(copy, session_name_);
+        strcat(payload->session_name_, session_name_);
     }
     if (password_ == 0) {
         payload->password_ = 0;
@@ -217,14 +339,15 @@ int AlphaNetLedger::on_insert(NetAllocationNode *payload) {
         if (allocator_ == 0) {
             copy = static_cast<char *>(mem_get(strlen(password_) + 1));
         } else {
-            copy = static_cast<char *>(allocator_->get(strlen(password_) + 1));
+            const size_t length = strlen(password_) + 1;
+            copy = static_cast<char *>(allocator_->get(length));
         }
         payload->password_ = copy;
         if (copy == 0) {
             return 4;
         }
         *copy = 0;
-        strcat(copy, password_);
+        strcat(payload->password_, password_);
     }
     payload->instance_guid_ = *instance_guid_;
     payload->session_flags_ = session_flags_;
@@ -250,18 +373,12 @@ void AlphaNetLedger::on_remove(NetAllocationNode *payload) {
 }
 
 // Original AlphaNet teardown clears the list in both derived and base stages,
-// then lets the virtual allocation base publish its saved owner. The existing
-// bridge to 0x00402970 remains until the nested payload-list destruction is
-// recovered. Typed payload fields and hooks alone do not prove its lifetime.
-AlphaNetLedger::~AlphaNetLedger() {
-    reinterpret_cast<RemoveAllShim *>(this)->remove_all();
-    current_position_ = 0;
-}
+// then lets the virtual allocation base publish its saved owner. The former
+// cleanup bridge is retired in favor of genuine list/member destruction.
+// Typed payload fields and hooks still do not prove unseen factory lifetimes.
 
-AlphaNetStringStruct::~AlphaNetStringStruct() {
-    reinterpret_cast<RemoveAllShim *>(this)->remove_all();
-    current_position_ = 0;
-}
+
+
 
 void AlphaNet::close() {
     // Eight process-ID slots at 0x78C, one per player, stride 0x19C.
@@ -273,10 +390,66 @@ void AlphaNet::close() {
     // close runs against the same object.
     Net::close();
 }
+// ALPHANET_CLOSE_END
+
+
+
+
+
+
+/*
+Purpose: Build and link one selection node for the container this owns:
+         the same two-stage allocate (0x1c node, 0x60 payload) with the
+         process-heap fallback and the fatal box, both virtual-base table
+         installs, the 0x401b80/0x402d10 list hooks, and the finished node
+         handed to this's slot 0.
+
+// ORIGINAL: 0x00401D80 sub_401d80 0x00401D80-0x0040230F;0x006504E0-0x00650571 FILE
+// TRIED: reproducing the /GX SEH prologue (push -1/funclet/fs:[0] chain) by hand - the earlier lever (a real local object with a destructor makes the compiler emit its own matching frame) needs the ACTUAL class whose ctor/dtor this uses, which is not recoverable from this file alone; landed the full two-branch allocate-and-link body (both the 0x1c-node and 0x60-node paths, both empty/non-empty container cases) as plain control flow instead, diverging from instruction #5 (no SEH frame set up) but matching the field offsets and call order throughout.
+// size      1568 bytes
+// prototype
+// callers   1   call targets   6
+// kind      game
+// flags     frame;sp_ready;purged_ok
+// calls     0x00401B80 0x00402320 0x00402D10 0x005D4510 0x005D4680 0x00644DFF
+// symbol   ?add@AlphaNetStringStruct@@QAEHH@Z
+// indirect  0x00401E0D 0x00401E49 0x00401F2F 0x00401F6E 0x00402017 0x0040207B 0x004020B7 0x004021DC 0x00402232 0x004022EE
+Status: Coverage transcription - unclaimed body; the two list hooks link
+        through the continuity placeholders above, and the seed's
+        instruction-#5 SEH-frame divergence stands.
+*/
+int AlphaNetStringStruct::add(int id) {
+    if (entry_count_ == 0) {
+        head_ = allocate_owned_node(this, static_cast<AlphaNetLedgerEntry *>(0));
+        if (head_ == 0) return 4;
+        head_->id_ = id;
+        head_->next_ = head_;
+        head_->previous_ = head_;
+        head_->payload_ = allocate_owned_node(this, static_cast<NetAllocationNode *>(0));
+        if (head_->payload_ == 0) return 4;
+        on_insert(head_->payload_);
+        current_ = head_;
+    } else {
+        head_->previous_->next_ = allocate_owned_node(this, static_cast<AlphaNetLedgerEntry *>(0));
+        if (head_->previous_->next_ == 0) return 4;
+        head_->previous_->next_->previous_ = head_->previous_;
+        head_->previous_->next_->next_ = head_;
+        head_->previous_ = head_->previous_->next_;
+        current_ = head_->previous_;
+        current_->id_ = id;
+        current_->payload_ = allocate_owned_node(this, static_cast<NetAllocationNode *>(0));
+        if (current_->payload_ == 0) return 4;
+        on_insert(current_->payload_);
+    }
+    current_position_ = entry_count_;
+    ++entry_count_;
+    return 0;
+}
 
 
 /*
 // ORIGINAL: 0x00401CE0 SessionStruct::close 0x00401CE0-0x00401D79
+// symbol    ??1AlphaNetStringStruct@@UAE@XZ
 // size      153 bytes
 // prototype 
 // callers   1   call targets   0
@@ -286,76 +459,301 @@ void AlphaNet::close() {
 // indirect  0x00401D22 0x00401D34 0x00401D50
 Status: Complete
 */
-extern "C" __declspec(naked) int __cdecl fn_00401ce0() {
-    __asm {
-        push ebp
-        mov ebp, esp
-        push ecx
-        push ebx
-        push esi
-        lea esi, [ecx - 0x1c]
-        xor ebx, ebx
-        mov dword ptr [esi], 0x669408
-        mov eax, dword ptr [ecx - 0x18]
-        mov edx, dword ptr [eax + 4]
-        mov dword ptr [edx + ecx - 0x18], 0x669404
-        mov eax, dword ptr [esi + 8]
-        cmp eax, ebx
-        je done
-        mov eax, dword ptr [esi + 0x10]
-        mov dword ptr [ebp - 4], ebx
-        cmp eax, ebx
-        jle after_loop
-        push edi
-    loop_top:
-        mov eax, dword ptr [esi + 8]
-        mov edx, dword ptr [esi]
-        mov ecx, dword ptr [eax + 0xc]
-        mov dword ptr [esi + 0xc], ecx
-        mov edi, dword ptr [eax + 8]
-        push edi
-        mov ecx, esi
-        call dword ptr [edx + 4]
-        cmp edi, ebx
-        je skip_release1
-        mov eax, dword ptr [edi]
-        push 1
-        mov ecx, dword ptr [eax + 4]
-        add ecx, edi
-        mov edx, dword ptr [ecx]
-        call dword ptr [edx]
-    skip_release1:
-        mov eax, dword ptr [esi + 8]
-        mov dword ptr [eax + 8], ebx
-        mov eax, dword ptr [esi + 8]
-        cmp eax, ebx
-        je skip_release2
-        mov ecx, dword ptr [eax]
-        push 1
-        mov edx, dword ptr [ecx + 4]
-        lea ecx, [edx + eax]
-        mov eax, dword ptr [edx + eax]
-        call dword ptr [eax]
-    skip_release2:
-        mov ecx, dword ptr [esi + 0xc]
-        mov eax, dword ptr [ebp - 4]
-        mov dword ptr [esi + 8], ecx
-        mov ecx, dword ptr [esi + 0x10]
-        inc eax
-        cmp eax, ecx
-        mov dword ptr [ebp - 4], eax
-        jl loop_top
-        pop edi
-    after_loop:
-        mov dword ptr [esi + 8], ebx
-        mov dword ptr [esi + 0x14], ebx
-        mov dword ptr [esi + 0x10], ebx
-    done:
-        mov dword ptr [esi + 0x14], ebx
-        pop esi
-        pop ebx
-        mov esp, ebp
-        pop ebp
-        ret
+AlphaNetStringStruct::~AlphaNetStringStruct() {
+    remove_all();
+    current_position_ = 0;
+}
+
+
+/*
+Purpose: Sort one pass of the string list: walk the ring from the current
+         position, select the smallest record under the three-way record
+         comparator, and swap the winning entry's payload text and metadata
+         into the walk position.
+// ORIGINAL: 0x005D49D0 sub_5d49d0 0x005D49D0-0x005D4BA7 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original 5D49D0-5D4BA7 and retained seed/history preserve the same identity and spans.", "The Alpha join call chain 4E2E50 uses session ledger enumeration 62E420 and comparator 5D4BB0 on payload GUID at +0xC. Circular receiver fields +8/+C/+10/+14 and entry next/previous +0xC/+0x10 establish a list protocol, not StringStruct nominal identity.", "Original winning-entry exchange swaps entry id +4 and payload pointer +8, not text/metadata inside a payload. Reviewed source uses AlphaNetLedgerEntry and NetAllocationNode::instance_guid_; count is reread each scan iteration."], "reason": "Recover the session-ledger GUID selection pass on AlphaNetStringStruct, keeping entry ID and payload ownership paired."}
+// Historical superseded binding interpretation: {"evidence": ["Original5D49D0..5D4BA7; retired seed git:b18d3ac8:src/unrecovered/005d49d0.cpp records the same identity and spans.", "The receiver fields at +8/+C/+10/+14 are StringStruct's own head_/current_/entry_count_/current_position_ and the body calls StringStruct::seek_pos, so the receiver is typed as the list itself; the comparator is sub_5d4bb0 above, and the node walks use StringStructEntry's next(+0xC)/previous(+0x10) exactly as StringStruct::add installs them.", "The swapped payload words at +4/+8 are the payload's text pointer and first metadata word; the walk re-reads entry_count_ every iteration exactly as the seed measured."], "reason": "Coverage transcription of the list's selection pass on the typed StringStruct receiver; the payload internals stay documented offsets."}
+// symbol    ?sort_sessions@AlphaNetStringStruct@@QAEXXZ
+Status: Coverage transcription - unclaimed body
+*/
+void AlphaNetStringStruct::sort_sessions() {
+    int total = entry_count_;
+    int limit = total - 1;
+    int walk_index = 0;
+    if (limit <= 0) return;
+    do {
+        // Native inlines this same signed circular seek, including its abs
+        // behavior; the callback-free scan starts only from valid list state.
+        seek_owned_list(this, walk_index);
+        const GUID *best = head_ == 0 ? 0 : &current_->payload_->instance_guid_;
+        int best_index = walk_index;
+        int scan_index = walk_index + 1;
+        const int next_walk = scan_index;
+        if (scan_index < total) {
+            do {
+                if (head_ != 0) {
+                    current_ = current_->next_;
+                    ++current_position_;
+                    if (current_position_ == total) current_position_ = 0;
+                }
+                const GUID *candidate = 0;
+                if (current_ != 0) {
+                    // If count/head/current disagree, native may pass null+C
+                    // to the comparator. This named-member expression retains
+                    // that invalid-domain UB; it does not clamp or repair it.
+                    NetAllocationNode *payload = head_ == 0 ? 0 : current_->payload_;
+                    candidate = &payload->instance_guid_;
+                }
+                if (compare_session_guid(candidate, best) < 0) {
+                    best = head_ == 0 ? 0 : &current_->payload_->instance_guid_;
+                    best_index = current_position_;
+                }
+                total = entry_count_;
+                ++scan_index;
+            } while (scan_index < total);
+            if (best_index != walk_index && best_index <= total - 1) {
+                if (seek_owned_list(this, best_index) != 0) {
+                    AlphaNetLedgerEntry *winner = current_;
+                    if (seek_pos(walk_index) != 0) {
+                        AlphaNetLedgerEntry *walked = current_;
+                        const int saved_id = winner->id_;
+                        NetAllocationNode *saved_payload = winner->payload_;
+                        winner->id_ = walked->id_;
+                        winner->payload_ = walked->payload_;
+                        walked->id_ = saved_id;
+                        walked->payload_ = saved_payload;
+                    }
+                }
+            }
+        }
+        total = entry_count_;
+        limit = total - 1;
+        walk_index = next_walk;
+    } while (walk_index < limit);
+}
+
+
+/*
+Purpose: Order three-way comparison of two fixed-shape name records: an
+         unsigned word, two unsigned shorts and eight bytes, each field
+         compared lexicographically.
+// ORIGINAL: 0x005D4BB0 sub_5d4bb0 0x005D4BB0-0x005D4C41 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original 5D4BB0-5D4C41 retains its two stack arguments, no calls, and unsigned comparisons: Data1 +0, Data2 +4, Data3 +6, then Data4 eight bytes at +8.", "Call chain 5D49D0 compares pointers to enumerated session instance GUID at payload +0xC; SDK session callback 630C30 and ledger insertion 5D4890 establish the GUID role. Field shape alone was insufficient to establish nominal identity.", "Native v3 objects independently emit compare_session_guid with stdcall GUID pointer arguments; this observes source emission, not original matching or complete owner acceptance."], "reason": "Recover the unsigned lexicographic GUID comparator used by the Alpha session-ledger selection pass."}
+// Historical superseded binding interpretation: {"evidence": ["Original5D4BB0..5D4C41; retired seed git:b18d3ac8:src/unrecovered/005d4bb0.cpp records the same identity and spans.", "The body reads only its two stack arguments and makes no calls; the field walks (word at +0, shorts at +4/+6, eight bytes at +8) are transcribed exactly as the seed measured them, with no record type invented for them."], "reason": "Coverage transcription of the unnamed record comparator as a stdcall free function; no names exist for the record fields, so the reads stay spelled by offset."}
+// symbol    ?compare_session_guid@@YGHPBU_GUID@@0@Z
+Return Value: -1, 0 or 1 as the first record orders before, equal to or after the second
+Status: Coverage transcription - unclaimed body
+*/
+int __stdcall compare_session_guid(const GUID *left, const GUID *right) {
+    if (left->Data1 < right->Data1) return -1;
+    if (left->Data1 != right->Data1) return 1;
+    if (left->Data2 < right->Data2) return -1;
+    if (left->Data2 != right->Data2) return 1;
+    if (left->Data3 < right->Data3) return -1;
+    if (left->Data3 != right->Data3) return 1;
+    for (int byte = 0; byte < 8; ++byte) {
+        if (left->Data4[byte] < right->Data4[byte]) return -1;
+        if (left->Data4[byte] != right->Data4[byte]) return 1;
     }
+    return 0;
+}
+
+void *AlphaNetLedgerEntry::operator new(size_t size, Heap *owner) throw() {
+    return allocate_net_node(size, owner);
+}
+void *AlphaNetLedgerEntry::operator new(size_t size, AlphaNetStringStruct *list) throw() {
+    return allocate_net_node(size, list->allocation_owner_);
+}
+void AlphaNetLedgerEntry::operator delete(void *memory, Heap *) {
+    cleanup_failed_net_construction(memory);
+}
+void AlphaNetLedgerEntry::operator delete(void *memory, AlphaNetStringStruct *) {
+    cleanup_failed_net_construction(memory);
+}
+void AlphaNetLedgerEntry::operator delete(void *memory) {
+    cleanup_failed_net_construction(memory);
+}
+
+void reset_net_session_options() {
+    NetWinSessionOptions.status_ = 0xFF;
+    NetWinSessionOptions.player_count_ = 4;
+    NetWinSessionOptions.difficulty_ = 1;
+    NetWinSessionOptions.option_4_ = 0;
+    NetWinSessionOptions.option_5_ = 0;
+    NetWinSessionOptions.planet_size_ = 1;
+    NetWinSessionOptions.ocean_coverage_ = 1;
+    NetWinSessionOptions.erosion_ = 1;
+    NetWinSessionOptions.native_life_ = 1;
+    NetWinSessionOptions.cloud_cover_ = 1;
+    NetWinSessionOptions.reserved_B_ = 0xFF;
+}
+
+void reset_net_lobby_rows() {
+    for (int row = 0; row < 8; ++row) {
+        NetWinLobbyRows[row].owner_ = 0;
+        NetWinLobbyRows[row].prefix_ = 0xFF;
+        NetWinLobbyRows[row].ready_or_occupied_ = 0;
+        NetWinLobbyRows[row].field_2_ = 0;
+        NetWinLobbyRows[row].faction_or_color_ = -1;
+        NetWinLobbyRows[row].field_4_ = 2;
+    }
+}
+
+void AlphaNetStringStruct::remove_all() { clear_owned_list(this); }
+
+int AlphaNetStringStruct::seek_pos(int position) { return seek_owned_list(this, position); }
+
+NetAllocationNode *AlphaNetStringStruct::next_entry() { return next_owned_list(this); }
+
+AlphaNetLedger::~AlphaNetLedger() {
+    remove_all();
+    current_position_ = 0;
+}
+
+int AlphaNet::pick_service(int *allow_pbem) {
+    ServiceList providers;
+    if (allow_pbem != 0) *allow_pbem = 0;
+    if (buffer_6E0_ == 0) return 7;
+    BasePop *popup = PopupAllocHook();
+    if (popup == 0) return 4;
+    int result;
+    if (poll_services(&providers) != 0 ||
+        popup->start("jackal", "SELECTSERVICE", -1, 0, 0x42, 0) != 0) {
+        result = 1;
+    } else {
+        providers.seek_pos(-1);
+        for (int row = 0; row < providers.entry_count_; ++row) {
+            providers.next_entry();
+            char *name;
+            if (providers.current_ == 0) name = 0;
+            else {
+                ServiceStruct *payload = providers.head_ == 0 ? 0 : providers.current_->payload_;
+                // Original inconsistent-list path dereferences null+4 here.
+                name = payload->name_;
+            }
+            popup->dialogs_.Dialogs::item(name, row);
+        }
+        if (allow_pbem != 0) popup->dialogs_.Dialogs::item(label_get(0x1128 / 4), 9999);
+        const int selected = popup->exec(0, 0);
+        if (selected == -1) result = 1;
+        else if (selected == 9999) {
+            result = 0;
+            if (allow_pbem != 0) *allow_pbem = 1;
+        } else {
+            providers.seek_pos(selected);
+            ServiceStruct *payload = providers.head_ == 0 ? 0 : providers.current_->payload_;
+            result = join_service(payload);
+        }
+    }
+    delete popup;
+    return result;
+}
+
+int AlphaNet::do_join_or_create() {
+    const int selected = x_pop_caption_flags("jackal", "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
+    if (selected < 0) return 1;
+    if (selected == 1) {
+        if (join() == 0) return 1;
+    } else {
+        if (create() == 0) return 1;
+    }
+    return 0;
+}
+
+int AlphaNet::create() {
+    Popup popup;
+    prefs_get("Net Session", "---", 0);
+    strcpy(ParseStrBuffer[0].str, TextBufferGetPtr);
+    prefs_get("Net Name", "---", 0);
+    strcpy(ParseStrBuffer[1].str, TextBufferGetPtr);
+    int selected = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE", 0x1F, 0x44, 0);
+    while (selected != -1) {
+        if (ParseStrBuffer[0].str[0] == 0) x_pop_caption_label("jackal", "NETCONNECT_NEED_SESSION", 0);
+        else if (ParseStrBuffer[1].str[0] == 0) x_pop_caption_label("jackal", "NETCONNECT_NEED_PLAYER", 0);
+        else break;
+        selected = x_pop_caption_value_flags("jackal", "NETCONNECT_CREATE", 0x1F, 0x44, 0);
+    }
+    if (selected == -1) return 0;
+    prefs_put("Net Session", ParseStrBuffer[0].str);
+    prefs_put("Net Name", ParseStrBuffer[1].str);
+    // Proposed correction of the existing pointer-return declaration preserves the actual native answer,
+    // rather than truncating a host pointer through the current catalogue int.
+    NetAllocationNode *session = NetDaemonNet.create_session(ParseStrBuffer[0].str, 7, 0);
+    if (session == 0) return 0;
+    if (NetDaemonNet.join_session(session, ParseStrBuffer[1].str, 0) == 0) return 0;
+    return NetDaemonNet.field_760_;
+}
+
+int AlphaNet::join() {
+    Popup popup;
+    prefs_get("Net Name", "---", 0);
+    strcpy(ParseStrBuffer[0].str, TextBufferGetPtr);
+    if (x_pop_caption_value_flags("jackal", "NETCONNECT_JOIN", 0x1F, 0x44, 0) == -1) return 0;
+    prefs_put("Net Name", ParseStrBuffer[0].str);
+    int selected;
+    do {
+        for (;;) {
+            ledger_.remove_all();
+            ledger_.current_position_ = 0;
+            ledger_.allocator_ = 0;
+            NetDaemonNet.enumerate_sessions(&ledger_, 0);
+            if (ledger_.entry_count_ != 0) break;
+            x_pop_caption_label("jackal", "NETCONNECT_SESSION_NOT_FOUND", 0);
+            if (ConsoleGroupAction != 1) return 0;
+        }
+        popup.start("jackal", "NETCONNECT_SESSIONS", -1, 0, 0x42);
+        ledger_.seek_pos(-1);
+        for (int row = 0; row < ledger_.entry_count_; ++row) {
+            ledger_.next_entry();
+            char *name;
+            if (ledger_.current_ == 0) name = 0;
+            else {
+                NetAllocationNode *payload = ledger_.head_ == 0 ? 0 : ledger_.current_->payload_;
+                name = payload->session_name_;
+            }
+            popup.dialogs_.Dialogs::item(name, row);
+        }
+        selected = popup.exec(0, 0);
+        if (selected < 0) break;
+    } while (popup.input_poll_state() == 1);
+    // Original 4E3006 branches negative cancellation directly to 4E311C.
+    // Seek only in the nonnegative join arm; cancellation must not alter the
+    // cursor before removal hooks, or evaluate abs(INT_MIN).
+    int result;
+    if (selected >= 0) {
+        ledger_.seek_pos(selected);
+        NetAllocationNode *session = ledger_.head_ == 0 ? 0 : ledger_.current_->payload_;
+        result = NetDaemonNet.join_session(session, ParseStrBuffer[0].str, 0);
+    } else result = 0;
+    ledger_.remove_all();
+    ledger_.current_position_ = 0;
+    return result;
+}
+
+int AlphaNet::setup(int option) {
+    for (int slot = 0; slot < 8; ++slot) process_slots_[slot].pid_ = 0;
+    player_count_ = 0;
+    Net::close();
+    IsMultiplayerPBEM = 0;
+    if (option == 0) {
+        // Original 4E3225 passes game-owned storage 689218, not the
+        // value-equal but independent NetLobbyAppGuid at 697548.
+        Net::init(const_cast<GUID *>(&LobbyAppGuid), 3, 9);
+        const int picked = pick_service(&IsMultiplayerPBEM);
+        if (picked != 0) return picked;
+        if (IsMultiplayerPBEM != 0) {
+            Net::close();
+            return 0;
+        }
+        const int selected = x_pop_caption_flags("jackal", "NETCONNECT_JOIN_OR_CREATE", 0x50, 0);
+        if (selected < 0) return 1;
+        if (selected == 1) {
+            if (join() == 0) return 1;
+        } else {
+            if (create() == 0) return 1;
+        }
+    } else voice_flags_D8_ |= 1;
+    voice_hotkey_48_ = 0xDC;
+    voice_hotkey_4c_ = 0x100DC;
+    return 0;
 }
