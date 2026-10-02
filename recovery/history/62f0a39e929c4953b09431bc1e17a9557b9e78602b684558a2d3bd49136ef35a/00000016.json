@@ -1,0 +1,20 @@
+{
+  "event_id": "7436540c4cbe796cae5962c35b2e6fd342403f850758ef4216e8e320de3bd479",
+  "payload": {
+    "affects": [
+      "entity-a1b0d53a95370a134355cee707be6d9666f27353fc204749813313f0c5e71492"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "alphasave-init-single-callback-slot-20261003",
+    "evidence": [
+      "Root full-function pinned disassembly AlphaSave407410:4077B0 writes drawcallback4072D0 to AlphaSave+32B0 (embedded ListBox+30),4077BA/7C0 resets rowstate32AC/3294, no stores to callback32B4/32B8. Current src/listbox.h set_callbacks writes allthree slots+30/+34/+38, so v6 usage silently clears unrelated hooks and is rejected. Original40780C pushes7CFEB4 for EditBox and407728 for list font;407893 and4078C3 push7CFE8C for both buttons. Existing primary_font owns7CFE8C, secondary owned font2 follows at7CFEB4. Proposed narrowaccessor changes no layout; original scopes/baseline/claims unchanged, pending native build verification."
+    ],
+    "hypothesis": "AlphaSave::init replaces only the ListBox draw callback and preserves write/fill callbacks. Use a narrow set_draw_callback accessor to the existing member, not set_callbacks(draw,0,0); preserve nonnull write/fill hooks in actual-source controls. Correct supplemental font-address evidence: buttons borrow primary_font, not secondary_font.",
+    "kind": "discovery"
+  },
+  "previous_event": "1cd286bd4a8f5fd073243b8e2b07db8b3988b5b7f33459313bea6d55bc7bc2df",
+  "request_id": "alphasave-init-single-callback-slot-20261003",
+  "schema_version": 1,
+  "sequence": 16,
+  "stream": "task:game-save-load-owner-coverage"
+}

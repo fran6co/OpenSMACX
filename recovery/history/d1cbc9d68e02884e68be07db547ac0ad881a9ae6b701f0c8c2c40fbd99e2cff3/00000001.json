@@ -1,0 +1,20 @@
+{
+  "event_id": "168e3639797496f1df4e35c3089e587bf1c0925b5fa43de9820519e81f995dea",
+  "payload": {
+    "affects": [
+      "entity-92b91e2d3dcb6e6f84b52530d438cd676c1d86205c069d9a9f69290553013f07"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "statuswin-init-caviar-vector-owner-offsets-20261003",
+    "evidence": [
+      "Pinned original01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf4B9FC0..4BA11E: ESI is StatusWin; Caviar subobject+30. Tail4BA0DB LEAECX,[ESI+9C],4BA0ED ADDESI,90;4BA0FD/FF store0 to[EDI]/[ESI],4BA10B/10E store0 to+4,4BA111/115 store3F800000 to+8. Subtract subobject30: shadow_vector_ at Caviar6C and light_vector_60, already source-mapped public VOX_Vect fields in src/caviar.h. Root independently decoded pinned full function. Seed self-offsets agree; worker initially mixed owner-relative and containing-class offsets. Preserve historical source claims/seeds/task baseline and verify fullinit+native layout before integration."
+    ],
+    "hypothesis": "StatusWin::init tail initializes existing public Caviar light_vector_ and shadow_vector_ to (0,0,1), not private Caviar+90/94/9C/A0 scalar fields. Use typed existing VOX_Vect members; no new header API, storage or scope expansion is required for these writes.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "statuswin-init-caviar-vector-owner-offsets-20261003",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:statuswin-remaining-owner-coverage"
+}
