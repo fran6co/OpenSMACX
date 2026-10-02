@@ -1,0 +1,19 @@
+{
+  "event_id": "28c1d1183ba358a2b6cbb798cc3099ff10be491d5f965db642cfcaf6acfc8970",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/temp.cpp"
+    ],
+    "evidence": [
+      "Existing BufferStrHeight is the genuine source-owned running text-width accumulator at 9B3A9C; admitted Buffer consumers already use it. Permit only a start-only native object annotation and explanatory role comment adjacent to its existing definition, preserving name, type, initialization and all code. Fresh strict diagnostics require compiling this declared owner; no original extent, new recovery coverage, data-layout or lifetime claim is granted."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "67c78fa534dc5166d8c0d3ce1a47517fd679729fd4eb881602d88632e998b4b8",
+  "request_id": "buffer-existing-line-width-object-binding",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:buffer-complete-remainder-recovery"
+}
