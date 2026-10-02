@@ -2330,9 +2330,8 @@ Return Value: n/a
 void __cdecl close_opening() {
     Win *console_window = &ConsoleGlobal;
     GraphicWin *opening = opening_window();
-    // The shared default is still declared as a word by the BasePop owner;
-    // its value is a Win pointer, after the ordinary C++ base conversion.
-    BasePopDefaultField322C = reinterpret_cast<uint32_t>(console_window);
+    // Publish the ordinary C++ conversion to the fallback parent window.
+    BasePopDefaultField322C = console_window;
     if (opening != 0) {
         delete opening;
         opening_window() = 0;
@@ -2489,7 +2488,7 @@ int __cdecl system_init() {
 
     MainInterfaceGlobal.init(0);
     battlewin_init(static_cast<BattleWin *>(sub_interface_global()));
-    console_init(&ConsoleGlobal, 0);
+    ConsoleGlobal.init(0);
 
     // The language performs the Console-to-Win virtual-base conversion.
     Win *console_window = &ConsoleGlobal;

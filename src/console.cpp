@@ -32,6 +32,7 @@
 #include "base.h"
 #include "general.h"
 #include "popup.h"  // editor_diplomacy's modal faction picker
+#include "basepop.h"
 #include "infowin.h"
 #include "map.h"
 #include "path.h"  // Paths - map reset rebuilds the editor's path tables
@@ -2096,6 +2097,11 @@ InfoWin ConsoleInfoWin;
 // history members. The following stores instead use the method receiver.
 // RECOVERY_OBJECT: v1 0x009156B0 ?ConsoleGlobal@@3VConsole@@A
 Console ConsoleGlobal;
+
+// Shared four-field rectangle written by original Console51D760/51D890.
+// Start binding only: no complete original allocation/lifetime claim.
+// RECOVERY_OBJECT: v1 0x00939EE8 ?ConsoleMenuBounds@@3UtagRECT@@A
+RECT ConsoleMenuBounds;
 
 // The original order at 0x004D7BE0 checks the rover's plan, chassis and
 // current terrain before placing a road cursor.
@@ -11019,4 +11025,65 @@ void Console::editor_kill_vehicles() {
     const int index = ConsoleGlobal.cursor_history_index_;
     stack_kill(veh_at(ConsoleGlobal.cursor_history_x_[index],
                       ConsoleGlobal.cursor_history_y_[index]));
+}
+
+// Initialize the Console windows/menu and publish the fallback popup parent.
+// ORIGINAL: 0x0051D890 ?init@Console@@QAEXH@Z 0x0051D890-0x0051D9CF
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d890.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
+// symbol    ?init@Console@@QAEXH@Z
+void Console::init(int) {
+    close();
+
+    focus_vehicle_ = -1;
+    field_23BEC_ = 0;
+
+    if ((StatusFlags & 1u) == 0) {
+        field_23BCC_ = WinScreenWidth;
+        IfaceScreenWidth = WinScreenWidth;
+        field_23BD0_ = WinScreenHeight - MainInterfaceGlobal.panel_height();
+        IfaceScreenHeight = field_23BD0_;
+
+        ConsoleMenuBounds.left = 0;
+        ConsoleMenuBounds.top = 0;
+        ConsoleMenuBounds.right = IfaceScreenWidth;
+        ConsoleMenuBounds.bottom = IfaceScreenHeight;
+        StatusFlags |= 1u;
+    }
+
+    char *const menu_caption = label_get(0x70);
+    GraphicWin *const console_window = static_cast<GraphicWin *>(this);
+    console_window->GraphicWin::init(
+        &ConsoleMenuBounds, menu_caption, 0x02400000, 0,
+        &alpha_menu_, 0);
+
+    graphic_win_.init(0, 0, console_window->pixel_width(),
+                      console_window->pixel_height(), 0, 0x01000022,
+                      static_cast<Win *>(this), 0, 0);
+    Win::set_def_focus(static_cast<Win *>(this));
+
+    (void)alpha_menu_.menu_init();
+    alpha_menu_.set_menu_proc(&Console::menu_daemon);
+    load_cursors();
+
+    BasePopDefaultField322C = static_cast<Win *>(this);
+}
+
+// Publish current screen geometry independently of init's once-only gate.
+// ORIGINAL: 0x0051D760 sub_51d760 0x0051D760-0x0051D7B5
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051d760.cpp"], "reason": "Complete genuine Console initialization/shared geometry from original receiver/member/global dataflow; native seed establishes catalogue identity and span. Source uses actual GraphicWin virtual base, AlphaMenu, shared RECT and typed fallback Win pointer. Original seed/claims retained; binding grants no matching or acceptance."}
+// symbol    ?set_screen_geometry@Console@@QAEXXZ
+void Console::set_screen_geometry() {
+    const int width = WinScreenWidth;
+    field_23BCC_ = width;
+    IfaceScreenWidth = width;
+
+    const int height = WinScreenHeight - MainInterfaceGlobal.panel_height();
+    field_23BD0_ = height;
+    IfaceScreenHeight = height;
+
+    ConsoleMenuBounds.left = 0;
+    ConsoleMenuBounds.top = 0;
+    ConsoleMenuBounds.right = IfaceScreenWidth;
+    ConsoleMenuBounds.bottom = height;
+    StatusFlags |= 1u;
 }

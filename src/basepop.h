@@ -768,7 +768,7 @@ extern char *BasePopDefaultCancelText;  // 0x009B8D84
 // virtual base here on the way out of the opening, which is why the slot
 // holds a window pointer at run time despite the popup-defaults name it
 // carried before that call was recovered.
-extern uint32_t BasePopDefaultField322C;  // 0x009B8DD0
+extern Win *BasePopDefaultField322C;  // 0x009B8DD0
 
 // The shipped value of the dword immediately below the class-defaults table
 // (0x00696EC4): -1. BasePop::exec (0x00602600) reads it as its answer when

@@ -747,11 +747,7 @@ void __fastcall battlewin_init(BattleWin *self) {
     PENDING_BODY(0x004219E0, pending)(self);
 }
 
-// ?init@Console@@QAEXH@Z at 0x0051D890
-void __fastcall console_init(Console *self, int mode) {
-    typedef void(__fastcall *pending)(Console *, int);
-    PENDING_BODY(0x0051D890, pending)(self, mode);
-}
+
 
 // ?init@MultiDebug@@QAEHPAUNet@@PAUWin@@PAE@Z at 0x005C9860 is homed as a
 // real member in multidebug.cpp - no forwarder, and no game.h shape either.

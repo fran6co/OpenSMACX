@@ -453,6 +453,8 @@ class Console : public MapWin {
   void menu_update();
   static void __cdecl menu_daemon(int selection);
   void menu_proc(int selection);
+  void init(int mode);
+  void set_screen_geometry();
   void reset_turn_view();
   void editor_kill_vehicles();
   void editor_redo();

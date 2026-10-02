@@ -16,7 +16,7 @@ from match_recovery.source import read_file
 
 
 ROOT = Path(__file__).resolve().parents[2]
-PUBLICATION = "BasePopDefaultField322C = reinterpret_cast<uint32_t>(console_window);"
+PUBLICATION = "BasePopDefaultField322C = console_window;"
 
 
 def live_body():
@@ -53,7 +53,7 @@ HARNESS = r"""
     Win *expected_win = 0;
     Buffer *expected_buffer = 0;
     void *expected_allocation = 0;
-    std::uintptr_t BasePopDefaultField322C = 0, expected_parent = 0;
+    Win *BasePopDefaultField322C = 0, *expected_parent = 0;
     bool tracking = false;
     int phase = 0, releases = 0, accesses = 0, derived_destructions = 0;
     int graphic_destructions = 0, buffer_destructions = 0, win_destructions = 0;
@@ -109,13 +109,13 @@ HARNESS = r"""
 
     int main() {
         Win *adjusted = &ConsoleGlobal;
-        expected_parent = reinterpret_cast<std::uintptr_t>(adjusted);
-        check(expected_parent != reinterpret_cast<std::uintptr_t>(&ConsoleGlobal));
+        expected_parent = adjusted;
+        check(expected_parent != reinterpret_cast<Win *>(&ConsoleGlobal));
         // A raw complete-object address must not accidentally satisfy this
         // fixture; virtual inheritance causes a real, nonzero adjustment.
         check(static_cast<GraphicWin *>(&ConsoleGlobal) != 0);
 
-        BasePopDefaultField322C = 17;
+        BasePopDefaultField322C = 0;
         close_opening();
         check(BasePopDefaultField322C == expected_parent && slot == 0);
         check(accesses == 1 && releases == 0 && phase == 0);
@@ -127,7 +127,7 @@ HARNESS = r"""
         expected_buffer = allocation;
         expected_allocation = allocation;
         accesses = 0;
-        BasePopDefaultField322C = 19;
+        BasePopDefaultField322C = 0;
         tracking = true;
         close_opening();
         check(slot == 0 && phase == 5 && releases == 1 && accesses == 2);
@@ -139,7 +139,7 @@ HARNESS = r"""
         // Repeated close is null-safe and republishes the parent, without
         // trying to destroy or free the allocation a second time.
         accesses = 0;
-        BasePopDefaultField322C = 23;
+        BasePopDefaultField322C = 0;
         close_opening();
         check(slot == 0 && accesses == 1 && releases == 1 && phase == 5);
         check(derived_destructions == 1 && graphic_destructions == 1);
@@ -154,11 +154,8 @@ def run_host(tmp_path, body):
     compiler = shutil.which("g++")
     if compiler is None:
         pytest.skip("host g++ required")
-    # Explicit host-only width bridge: do not typedef uint32_t to a wider
-    # type, truncate the pointer, or change product globals/source.
-    old = "reinterpret_cast<uint32_t>(console_window)"
-    assert body.count(old) == 1
-    body = body.replace(old, "reinterpret_cast<std::uintptr_t>(console_window)")
+    # The production global is a genuine Win pointer; use the actual body
+    # without host-width adaptations or pointer truncation.
     source = tmp_path / "close_opening.cpp"
     executable = tmp_path / "close_opening"
     source.write_text(HARNESS.replace("// LIVE_BODY", body))

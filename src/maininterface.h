@@ -130,6 +130,8 @@ class MainInterface : public GraphicWin, public SubInterface {
   const RECT &info_frame_rect() const { return info_panel_frame_; }
   const RECT &right_frame_rect() const { return right_frame_rect_; }
   const RECT &lower_frame_rect() const { return lower_frame_rect_; }
+  // Console screen geometry reads the original panel height at +0xD7C.
+  int panel_height() const { return static_cast<int>(field_D7C_); }
   // homed from 00459680.cpp
   int init(int a1);
 

@@ -1986,8 +1986,8 @@ uint32_t BasePopDefaultField30A4;  // 0x009B8DCC
 
 // Copied to +0x322c, immediately after the zero store the image overwrites.
 // The image references this slot from 13 sites, all outside this file.
-// RECOVERY_OBJECT: v1 0x009B8DD0 ?BasePopDefaultField322C@@3IA
-uint32_t BasePopDefaultField322C;  // 0x009B8DD0
+// RECOVERY_OBJECT: v1 0x009B8DD0 ?BasePopDefaultField322C@@3PAVWin@@A
+Win *BasePopDefaultField322C;  // 0x009B8DD0
 
 BasePop::BasePop() {
 
@@ -2125,7 +2125,7 @@ BasePop::BasePop() {
     field_31B0_ = BasePopDefaultField31B0[0];
     field_31B4_ = BasePopDefaultField31B0[1];
     field_322C_ = 0;
-    field_322C_ = reinterpret_cast<Win *>(BasePopDefaultField322C);
+    field_322C_ = BasePopDefaultField322C;
     external_window_ = (Win *)BasePopDefaultLayout[0];
     default_loc_a_ = BasePopDefaultLayout[1];
     default_loc_b_ = BasePopDefaultLayout[2];
@@ -2342,7 +2342,7 @@ void BasePop::close() {
     *(int *)(self + 0x31b4) = BasePopDefaultField31B0[1];
     *(int *)(self + 0x214c) = BasePopDefaultField2148[1];
     *(int *)(self + 0x2148) = BasePopDefaultField2148[0];
-    *(int *)(self + 0x322c) = BasePopDefaultField322C;
+    field_322C_ = BasePopDefaultField322C;
     *(unsigned char *)(self + 0x31a0) = (uint8_t)BasePopDefaultField31A0[0];
 
     *(int *)(self + 0xa14) = BasePopDefaultLayout[0];

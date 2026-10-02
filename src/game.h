@@ -344,7 +344,6 @@ extern int OceanDetailShade[80];
 void __cdecl config_popups();                      // ?config_popups@@YAXXZ
 void __cdecl bung_momma();                         // ?bung_momma@@YAXXZ
 void __fastcall battlewin_init(BattleWin *self);
-void __fastcall console_init(Console *self, int mode);
 void __fastcall messagewin_init(MessageWin *self);
 void __fastcall datalink_init(Datalink *self);
 
