@@ -1,0 +1,163 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "bd447ef6c968284037c334e6ebfadc80135bb185",
+  "editable_files": [
+    "CMakeLists.txt",
+    "src/voice.cpp",
+    "src/voice.h",
+    "src/net_class.cpp",
+    "src/net_class.h",
+    "src/hypothesis_layouts.h",
+    "src/delegation_thunks.cpp",
+    "src/delegation_thunks.h",
+    "src/pending_bodies.cpp",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "recovery/tests/test_sound_lifetime.py",
+    "recovery/tests/sound_lifetime_harness.cpp",
+    "src/recovered/units/004c8960.cpp",
+    "src/recovered/units/004c8a50.cpp",
+    "src/unrecovered/004c8b40.cpp",
+    "src/recovered/units/004c8bd0.cpp",
+    "src/recovered/units/004c8db0.cpp",
+    "src/unrecovered/004c8f70.cpp"
+  ],
+  "evidence": [
+    "Pinned application constructors4C8960/4C8CC0 and destructors4C8A50/4C8DB0 stage real Sound lifetimes; original tables66E82C/66E8C4 and independent Net embedding establish Rx54/Tx58. Fresh private VC6 under both historical flags emits those extents, base0 and Tx flag54. Emission/layout is not original matching, link selection or runtime proof.",
+    "Actual631A60 reads borrowed record18/20 and returns the same record. Independently inspected soundx.dll kind7 slot34 allocates SDK MMIOINFO48 through mmioGetInfo; slot35 enforces pointer identity before closing/freeing. Correct API to _MMIOINFO* without changing invalid-record behavior or recovering system DLL code.",
+    "Rx kind6 device virtual-delete slot2 invokes its real destructor and frees for flag1, as pushed by4C8A84. Preserve callback field/guard reloads, Rx failed-init attach and Tx error16 device retention. Natural Sound cleanup must happen exactly once.",
+    "Private complete application build/link passes with the new owner and actual typed consumer. Masked restoration, strict references/layout, derived caller fallout, claim continuity and relevant regressions remain checkpoint obligations. Missing633720 cleanup jump and60-byte receiver-wrapper factory stay discoveries, not claimed behavior.",
+    "Only coordinator-reviewed manual integration is authorized after fresh compile/link and scoped evidence; no native automatic/game acceptance, baseline replacement, demotion, new byte grants or gate weakening. Existing duplicate source import binding keeps strict whole-project evidence unknown."
+  ],
+  "intent": "Recover the complete Sound-derived Voice Rx/Tx owners and the actual borrowed-MMIOINFO consumer as genuine C++; preserve every original identity, historical claim, seed lesson and shared/cold obligation. Rehome raw redirects and replace unfinished lifetimes, do not count existing mappings or external DLL code as new recovery.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 5015904,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016528,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016656,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016688,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016736,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5016768,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017008,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017248,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017408,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017456,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017648,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5017680,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5018544,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5018608,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6494816,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4221744,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5015888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 5018592,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "voice-complete-owner-recovery"
+}
