@@ -1,0 +1,32 @@
+{
+  "event_id": "f6553189a9d375942e659748e982c12ac3f5ee6416b03fa41fb265d5f499ad78",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/filewin_populate_directory_host_control.cpp",
+      "recovery/tests/test_filewin_populate_directory_behavior.py",
+      "src/buffer.h"
+    ],
+    "evidence": [
+      "Pinned FileWin614360..614694 tests its ListBox inherited Buffer dib_bits at +54, attaches through real Dialog stored coordinates using shared init prefix9B8FD0 or80060 when absent, otherwise update_changes; preserve operation failure1 and success markup_enabled reset/hide/count. Admit narrow const Buffer has_dib_bits getter and complete actual-body controls. FileWin6141C0 selected filename setter is required by true void AlphaSave load wrapper; use actual file_name/directory storage, verify original null/length/path split including drive-letter behavior before integration, no incidental EAX, fixed addresses or callback casts. Coupled VOID drawing API closure remains previously admitted revision4. Preserve failed FindFirst metadata consumption and unconditional FindClose per user decision, all seeds/claims and original task baseline. Native compile/layout, protected diagnostics, scoped checks and fresh application compile/link required; no exactness, lifetime or game acceptance implied."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6374240,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6373824,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "fe3a4fe39749f70ce97ebebad01e3092919a7b9eba872cfba4ab536a49689370",
+  "request_id": "filewin-directory-and-selected-name-closure-20261003",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:game-save-load-owner-coverage"
+}
