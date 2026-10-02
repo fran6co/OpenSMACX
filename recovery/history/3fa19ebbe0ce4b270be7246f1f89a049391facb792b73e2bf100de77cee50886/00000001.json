@@ -1,0 +1,19 @@
+{
+  "event_id": "55183da3b1787b772d204b0a4a4390142d13d98f77004a7a1dad9f914f09d603",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Worker fresh source review finds existing fixed-executable forwards for four admitted ListBox subjects on_left_down60AA60, on_key_down60AF90, on_redraw60C350 and on_mouse_move60CBC0 in src/pending_bodies.cpp. Admit removal/rehome of only those definitions when genuine owning methods integrate. Preserve all existing original identities, seeds and historical byte claims; no unrelated pending body changes or new matching claims are authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "listbox-owning-forwarder-replacement",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:listbox-remaining-owner-coverage"
+}
