@@ -1,0 +1,30 @@
+{
+  "event_id": "10debb19390555e957cbf24b1beb7e0c7b79238aa0362270197f78dc63ed4c16",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_filewin_extension_behavior.py",
+      "src/alphasave.cpp",
+      "src/alphasave.h",
+      "src/filewin.cpp",
+      "src/filewin.h",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Coordinator independently inspected native614140-6141BC: extension count atFileWin+514 and four five-byte slots at518, full precedes null, selected slot cleared before unsigned strlen>4 refusal, success increments count. Native load_map receiver equals its actual AlphaSave.file_win_ subobject at+A14. Admit genuine FileWin::add_def_ext migration from type-erased leaf redirect and narrow AlphaSave facade delegating to that method, not duplicate algorithm or offset casts. Preserve native mappings through package writer, seeds, historical claims and task baseline. GCC/Clang private actual-body controls pass; native/build verification still required. Shared leaf edits serialize centrally with diplomacy batch; this does not resolve network snapshot discovery or grant acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6373696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4bcbb75ab45ec9832748c4da8be347a992213ddebf1eef4633ec65db1f072d79",
+  "request_id": "save-load-filewin-extension-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:game-save-load-owner-coverage"
+}
