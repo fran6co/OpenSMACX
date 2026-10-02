@@ -470,11 +470,6 @@ DesignWin::~DesignWin() {  // ??1DesignWin@@QAE@XZ at 0x0043ECB0
 
 
 
-NetWin::~NetWin() {  // ??1NetWin@@QAE@XZ at 0x004834E0
-    typedef void(__fastcall *pending)(NetWin *, void *);
-    PENDING_BODY(0x004834E0, pending)(this, nullptr);
-}
-
 SetupWin::~SetupWin() {  // ??1SetupWin@@QAE@XZ at 0x004AE790
     typedef void(__fastcall *pending)(SetupWin *, void *);
     PENDING_BODY(0x004AE790, pending)(this, nullptr);

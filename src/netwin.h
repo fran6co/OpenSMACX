@@ -137,7 +137,9 @@ struct NetWinFactionRecord {
   uint32_t owner_;           // +4
   uint8_t color_;            // +8
   uint8_t active_;           // +9
-  uint8_t data_before_noun_[0x58]; // +0xA..+0x61
+  char filename_[0x18]; // +0xA..+0x21, text section/file id
+  char leader_name_[0x18]; // +0x22..+0x39, copied by setup_faction_data
+  char formal_faction_name_[0x28]; // +0x3A..+0x61, copied by setup_faction_data
   char noun_faction_[0x18]; // +0x62..+0x79, copied from Player::noun_faction
   uint8_t data_after_noun_[0x116]; // +0x7A..+0x18F
 };
@@ -147,6 +149,12 @@ static_assert(offsetof(NetWinFactionRecord, owner_) == 4,
               "faction owner offset");
 static_assert(offsetof(NetWinFactionRecord, color_) == 8,
               "faction colour offset");
+static_assert(offsetof(NetWinFactionRecord, filename_) == 0xA,
+              "faction filename offset");
+static_assert(offsetof(NetWinFactionRecord, leader_name_) == 0x22,
+              "faction leader name offset");
+static_assert(offsetof(NetWinFactionRecord, formal_faction_name_) == 0x3A,
+              "faction formal name offset");
 static_assert(offsetof(NetWinFactionRecord, noun_faction_) == 0x62,
               "faction noun offset");
 static_assert(sizeof(((NetWinFactionRecord *)0)->noun_faction_) == 0x18,
@@ -173,9 +181,8 @@ struct PlayerData;
 class NetWin : public ConstructedGraphicWin {
  public:
   NetWin();
-  // 0x004834E0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // 0x004834E0 explicit cleanup recovered; nested member/base teardown is
+  // compiler-owned and no whole-object extent is asserted.
   ~NetWin();
   void UNK5();
   void UNK1();
@@ -219,6 +226,9 @@ class NetWin : public ConstructedGraphicWin {
   // table from the 0x59C-stride template records, and resets the trailing
   // eighth/ninth slot words.
   void config_players();
+  // 0x00482D90. Completes the chosen multiplayer roster into faction/player
+  // state and the existing AlphaNet process-slot records.
+  void prepare_game();
   // 0x00481AD0. Repaints the dialog: the panel sprites, the centred session
   // title, and the five content groups - draw_custom_rules, draw_player_names,
   // draw_diffs, draw_factions, draw_session_info - then soft_update.

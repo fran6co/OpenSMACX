@@ -25,13 +25,18 @@
 #include "dialogs.h"   // Dialogs - the pick_* option lists
 #include "faction.h"   // Player - the record read_faction fills
 #include "game.h"      // ExitTurnLoop, the modal callbacks' stop flag
+#include "general.h"   // checksum_password, parse_says and shared helpers
 #include "netdaemon.h" // NetDaemonNet, message_chat - the pump and the chat send
 #include "original_seam.h"  // vtable_slot - the unmodelled virtual slots
 #include "popmenu.h"   // PopMenu - the pickers' popup and its exec
+#include "popup.h"     // Popup - the password modal and typed teardown
 #include "pulldown.h"  // PullDown - the pickers' second pane
+#include "random.h"    // Random - deterministic lobby faction selection
 #include "strings.h"   // StringTemp, the pcx path the records name
 #include "text.h"      // text_open / text_get / text_item / text_close
+#include "temp.h"      // ParseStrBuffer output of the password dialogs
 #include "xpops.h"     // x_pop_caption_label for lobby validation prompts
+#include <stdlib.h>      // _itoa
 
 // These application entry points are source-owned in pending_bodies.cpp and
 // are also used by Console. Their implementations remain preserved forwarders.
@@ -72,6 +77,14 @@ char *NetWinSessionBlock::row8_noun_faction() {
 // The two player-id slots. Nothing in .text writes either; see netwin.h.
 int NetWinPlayerId;       // 0x0093D4F0
 int NetWinOtherPlayerId;  // 0x0093D4F4
+
+// Native pick_pass passes these distinct zero-filled input bytes as X_pop_ask
+// initial text. Only one-byte start bindings are claimed; capacity and any
+// runtime writers remain unknown.
+// RECOVERY_OBJECT: v1 0x00811E30 ?NetWinPasswordPromptInitialText@@3DA
+char NetWinPasswordPromptInitialText;
+// RECOVERY_OBJECT: v1 0x00811E34 ?NetWinPasswordVerifyInitialText@@3DA
+char NetWinPasswordVerifyInitialText;
 
 // The faction text sections setup_faction_data reads, at their image
 // addresses. They are `char *const` at namespace scope so VC6 folds each one
@@ -450,6 +463,30 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body (the preserved seed keeps its
         own FILE BYTE_EXACT claim until this converges)
 */
+// Native 0x004834E0: explicit resource and control shutdown precedes normal
+// compiler-owned teardown of the typed members and ConstructedGraphicWin.
+// ORIGINAL: 0x004834E0 ??1NetWin@@QAE@XZ 0x004834E0-0x004837B4;0x00656650-0x0065673F
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/004834e0.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover true destructor with typed automatic member and base teardown, retaining observed explicit frees, state resets and close calls. Native baseline/candidate controls and complete isolated application compile/link passed; no matching or game acceptance claim."}
+// symbol    ??1NetWin@@UAE@XZ
+NetWin::~NetWin() {
+    if (faction_records_ != nullptr) {
+        free(faction_records_);
+        faction_records_ = nullptr;
+    }
+    if (faction_records_copy_ != nullptr) {
+        free(faction_records_copy_);
+        faction_records_copy_ = nullptr;
+    }
+    field_761C_ = -1;
+    field_7620_ = -1;
+
+    spot_.shutdown();
+    stringBox_.close();
+    editBox_.close();
+    checkBox_.close();
+    flatButton1_.close();
+}
+
 void NetWin::close() {
     if (faction_records_ != 0) {
         free(faction_records_);
@@ -586,6 +623,161 @@ void NetWin::config_players() {
         record += 0x17C;
         template_record += 0x59C;
     } while (record < NetWinFactionTable + 0x17A + 7 * 0x17C);
+}
+
+// Private recovered body for the native 0x00482D90 roster finalizer.
+// ORIGINAL: 0x00482D90 ?prepare_game@NetWin@@QAEXXZ 0x00482D90-0x0048318E;0x006574FE-0x00657510
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00482d90.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover complete lobby game preparation through real faction records, AlphaNet process-slot ownership, player data and Random lifecycle. Native low-five-bit shifts, signed difficulty and copied status extent preserved; seed and historical obligations retained."}
+void NetWin::prepare_game() {
+    Random random;
+    random.reseed(1000);
+
+    NetWinFactionRecord *const faction_records =
+        static_cast<NetWinFactionRecord *>(faction_records_);
+    const int faction_count = faction_records[0].record_count_;
+    unsigned int used_mask = 0;
+
+    for (int unused_faction = 0; unused_faction < faction_count;
+         ++unused_faction) {
+        if (faction_records[unused_faction].active_ == 0) {
+            used_mask |=
+                1u << (static_cast<unsigned int>(unused_faction) & 31u);
+        }
+    }
+    for (int used_seat = 1; used_seat < 8; ++used_seat) {
+        const int existing_faction =
+            NetWinLobbyRows[used_seat].faction_or_color_;
+        if (existing_faction != -1) {
+            used_mask |=
+                1u << (static_cast<unsigned int>(existing_faction) & 31u);
+        }
+    }
+
+    int needed = 0;
+    for (int needed_faction = 0; needed_faction < faction_count;
+         ++needed_faction) {
+        if (faction_records[needed_faction].active_ != 0 &&
+            (used_mask &
+             (1u << (static_cast<unsigned int>(needed_faction) & 31u))) == 0) {
+            ++needed;
+        }
+    }
+
+    unsigned int hidden_mask = 0;
+    int remaining = needed;
+    for (int assign_seat = 1; assign_seat < 8; ++assign_seat) {
+        int8_t &assigned_faction =
+            NetWinLobbyRows[assign_seat].faction_or_color_;
+        if (assigned_faction == -1) {
+            hidden_mask |= 1u << assign_seat;
+            unsigned int picked;
+            if (remaining == 0) {
+                picked = random.get(0, faction_count);
+            } else {
+                do {
+                    picked = random.get(0, faction_count);
+                } while ((used_mask & (1u << (picked & 31u))) != 0);
+                --remaining;
+            }
+            assigned_faction = static_cast<int8_t>(picked);
+            used_mask |= 1u << (picked & 31u);
+        }
+    }
+
+    const int mode = NetWinSessionData.mode_;
+    if (mode == 0 || mode == 1) {
+        for (int player_slot_index = 0; player_slot_index < 8;
+             ++player_slot_index) {
+            AlphaNetProcessSlot &slot =
+                NetDaemonNet.process_slots_[player_slot_index];
+            const NetWinLobbyRow &row = NetWinLobbyRows[player_slot_index];
+            slot.identity_ = static_cast<int8_t>(row.prefix_);
+            slot.field_25_ = row.ready_or_occupied_;
+            slot.field_26_ = row.field_2_;
+            slot.field_27_ = row.faction_or_color_;
+            memcpy(slot.status_bytes_,
+                   reinterpret_cast<const uint8_t *>(&row) + 4, 0x172);
+            slot.identity_ = static_cast<int8_t>(player_slot_index);
+        }
+    } else {
+        for (int faction_slot_index = 0; faction_slot_index < 8;
+             ++faction_slot_index) {
+            int chosen_faction =
+                NetWinLobbyRows[faction_slot_index].faction_or_color_;
+            if (chosen_faction == -1) {
+                chosen_faction = 0;
+            }
+            AlphaNetProcessSlot &slot =
+                NetDaemonNet.process_slots_[faction_slot_index];
+            const NetWinLobbyRow &row = NetWinLobbyRows[faction_slot_index];
+            slot.identity_ = static_cast<int8_t>(row.prefix_);
+            slot.field_25_ = row.ready_or_occupied_;
+            slot.field_26_ = row.field_2_;
+            slot.field_27_ = row.faction_or_color_;
+            memcpy(slot.status_bytes_,
+                   reinterpret_cast<const uint8_t *>(&row) + 4, 0x172);
+            slot.identity_ = static_cast<int8_t>(chosen_faction);
+        }
+    }
+
+    if (mode == 0 || mode == 1) {
+        for (int duplicate_seat = 2; duplicate_seat < 8; ++duplicate_seat) {
+            char *const leader_name =
+                NetWinLobbyRows[duplicate_seat].leader_name_;
+            int duplicate_count = 0;
+            for (int earlier_seat = 1; earlier_seat < duplicate_seat;
+                 ++earlier_seat) {
+                if (strcmp(leader_name,
+                           NetWinLobbyRows[earlier_seat].leader_name_) == 0) {
+                    ++duplicate_count;
+                }
+            }
+            if (duplicate_count != 0) {
+                char suffix[80];
+                _itoa(duplicate_count, suffix, 10);
+                strcat(leader_name, suffix);
+            }
+        }
+
+        for (int filename_seat = 1; filename_seat < 8; ++filename_seat) {
+            const int filename_faction =
+                NetWinLobbyRows[filename_seat].faction_or_color_;
+            const char *const faction_file =
+                faction_records[filename_faction].filename_;
+            strcpy(Players[filename_seat].filename, faction_file);
+            strcpy(Players[filename_seat].search_key, faction_file);
+            read_faction(filename_seat);
+            compute_faction_modifiers(filename_seat);
+        }
+
+        for (int player_seat = 1; player_seat < 8; ++player_seat) {
+            AlphaNetProcessSlot &slot_record =
+                NetDaemonNet.process_slots_[player_seat];
+            const int player_faction = slot_record.identity_;
+            const NetWinLobbyRow &row = NetWinLobbyRows[player_seat];
+            PlayersData[player_faction].diff_level =
+                static_cast<int8_t>(slot_record.field_26_);
+            if ((hidden_mask & (1u << player_seat)) == 0) {
+                strcpy(Players[player_faction].name_leader, row.leader_name_);
+                strcpy(Players[player_faction].formal_name_faction,
+                       row.formal_faction_name_);
+                strcpy(Players[player_faction].noun_faction, row.noun_faction_);
+                strcpy(Players[player_faction].adj_faction,
+                       row.adjective_faction_);
+                strcpy(Players[player_faction].title_leader, row.leader_title_);
+                strcpy(Players[player_faction].adj_leader, row.adjective_leader_);
+                Players[player_faction].is_leader_female = row.tail_[0];
+            }
+        }
+    } else if (NetWinPlayerId != NetWinOtherPlayerId) {
+        for (int art_faction = 1; art_faction < 8; ++art_faction) {
+            strcpy(Players[art_faction].filename,
+                   faction_records[art_faction].filename_);
+            load_faction_art(art_faction);
+        }
+    }
+
+    load_flags();
 }
 
 /*
@@ -2406,16 +2598,103 @@ void NetWin::UNK4() {
     reinterpret_cast<GraphicWin *>(self + 0x1C)->~GraphicWin();
 }
 
-// 0x0047C970 is still archived in src/unrecovered/0047c970.cpp - a
-// SEH-framed password dialog, the largest single body on NetWin's board.
-// The declaration in netwin.h is what unblocks its callers, of which
-// process_message's 0xF06 case is one; until the body comes across this
-// forwards into the original the same way pending_bodies.cpp does, and
-// faults loudly rather than pretending to have succeeded.
+// Native 0x0047C970 password flow. Popup and its owned members use ordinary
+// automatic lifetime; the native explicit close calls in the archived seed
+// are not duplicated over the recovered destructor chain.
+// ORIGINAL: 0x0047C970 ?pick_pass@NetWin@@QAEHH@Z 0x0047C970-0x0047CF32;0x006569C4-0x00656AED
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0047c970.cpp", "recovery/tasks/netwin-owner-coverage.json"], "reason": "Recover full password dialog using genuine Popup lifecycle, input override text and shared parse output, faction validation and native sixteen-byte-header/full-row wire layout. Only otherwise unspecified outgoing packet bytes are zero-initialized under user approval. No exactness or game acceptance claim."}
 int NetWin::pick_pass(int payload) {
-    typedef int(__fastcall *pending)(NetWin *, void *, int);
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x0047C970))(
-        this, nullptr, payload);
+    Popup popup;
+    const bool faction_mode = NetWinSessionData.mode_ == 2 ||
+                              NetWinSessionData.mode_ == 3;
+    const int slot = NetDaemonNet.pid_2_idx(NetWinPlayerId);
+
+    if (!faction_mode && payload != 0) {
+        return 1;
+    }
+
+    NetWinLobbyRow &row = NetWinLobbyRows[slot];
+    const int faction = row.faction_or_color_;
+    if (faction == -1) {
+        row.owner_ = 0;
+        return 1;
+    }
+
+    NetWinFactionRecord *records = nullptr;
+    uint32_t expected_hash = 0;
+    uint32_t stored_hash = 0;
+    if (faction_mode) {
+        records = static_cast<NetWinFactionRecord *>(faction_records_);
+        expected_hash = records[faction].owner_;
+        stored_hash = row.owner_;
+    }
+
+    if (faction_mode &&
+        (expected_hash == 0 || expected_hash == stored_hash)) {
+        if (payload == 0) {
+            x_pop_caption_label(ScriptPopupFile, "PASSWORDOK", nullptr);
+        }
+        return 1;
+    }
+
+    uint32_t entered_hash = 0;
+    for (;;) {
+        entered_hash = 0;
+        const char *prompt;
+        if (faction_mode) {
+            parse_says(0, records[faction].noun_faction_, -1, -1);
+            prompt = "ENTERPASSWORDFACTION";
+        } else {
+            prompt = "ENTERPASSWORDNEW";
+        }
+
+        if (X_pop_ask(prompt, 0x50, &NetWinPasswordPromptInitialText,
+                      nullptr, 0x800040) == -1) {
+            return 0;
+        }
+        if (ParseStrBuffer[0].str[0] != 0) {
+            entered_hash = checksum_password(ParseStrBuffer[0].str);
+        }
+        if (faction_mode) {
+            if (expected_hash != entered_hash) {
+                X_pop("BADPASSWORD", nullptr);
+                return 0;
+            }
+            row.owner_ = entered_hash;
+            return 1;
+        }
+
+        if (ParseStrBuffer[0].str[0] == 0) {
+            break;
+        }
+
+        X_pop_ask("VERIFYPASSWORD", 0x50,
+                  &NetWinPasswordVerifyInitialText, nullptr, 0x800000);
+        const uint32_t verify_hash = ParseStrBuffer[0].str[0] == 0
+            ? 0 : checksum_password(ParseStrBuffer[0].str);
+        if (entered_hash == verify_hash) {
+            break;
+        }
+        X_pop("DIFFERENTPASSWORDS", nullptr);
+    }
+
+    row.owner_ = entered_hash;
+    if (slot >= 1) {
+        struct PasswordPacket {
+            uint32_t opcode_;
+            uint32_t slot_;
+            uint32_t reserved_8_;
+            uint32_t reserved_C_;
+            NetWinLobbyRow row_;
+        } packet;
+        memset(&packet, 0, sizeof(packet));
+        packet.opcode_ = 0x2F04;
+        packet.slot_ = static_cast<uint32_t>(slot);
+        packet.reserved_8_ = 0;
+        memcpy(&packet.row_, &row, 0x17C);
+        NetDaemonNet.Net::send(&packet, sizeof(packet), NetWinOtherPlayerId, 1);
+    }
+    return 1;
 }
 
 /*
