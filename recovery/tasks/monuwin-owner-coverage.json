@@ -1,0 +1,77 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5446fd18d06343c70e757bf55315be236a256e04",
+  "editable_files": [
+    "CMakeLists.txt",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/hypothesis_layouts.h",
+    "src/monuwin.cpp",
+    "src/monuwin.h",
+    "src/pending_bodies.cpp"
+  ],
+  "evidence": [
+    "Pinned originals472230,4736E0,476760,476780,476850,4769B0,476A00,477B10,477C80 and supporting cold spans; native constructor477C9F builds actualGraphicWin base and realFlatButton/Spot/Buffer/Sprite arrays. Existing opaque hypothesis_layouts MonuWin and pending destructor are not genuine recovered ownership. New owning TU/header are authorized integration candidates, not accepted code; current immutable master baseline retained, useful retained seeds remain, full structure/runtime acceptance unproven."
+  ],
+  "intent": "Recover all nine MonuWin originals as one real GraphicWin-derived C++ ownership group with actual controls, buffers, sprites, rectangles and lexical lifecycle; replace opaque source stand-ins and destructor forwarding only after full compile/link and relevant claim checks. Preserve exact seeds, original identities, all findings and historical obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4661808,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4667104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4679520,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4679552,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4679760,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4680112,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4680192,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4684560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4684928,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4685264,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4685312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "monuwin-owner-coverage"
+}
