@@ -1,0 +1,22 @@
+{
+  "event_id": "8c1e7b6be38edade166d4b5b7ed7db7dff445b65e27ca57c6ee95289d89af0fe",
+  "payload": {
+    "affects": [
+      "entity-b60e515481664873d2e75e15d9613300caf913faeaab76bb50efff7abf4ba837"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "basewin-production-dispatch-return-and-vehicle-correction",
+    "evidence": [
+      "Fresh PeImage(pin01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf) code-read of418DDC..418DEC yields4181FD,417C12,417C1C,417C67. Retool result0 performs optional unlock, queue-visibility restoration and complete lexical teardown/return, never ordinary logging/mutation;1 sets proposed reserve;2 prepends slot1;3 appends;unsigned result>3 continues417C95. Earlier draft indexed these arms offbyone and invented an exemption arm; preserve scratch but reject those oracles. Main action table418DC0..418DDC independently yields417DB3,417E2A,417ECB,417875,417914,417875,41791F.",
+      "Fresh pin-verified disassembly417CB8..417DB3: queue_slot!=0 jumps417D9B, skipping queue0/wave/radius/vehicle work. Slot0 writes chosen production then livequeue0<=-70 calls real wave_it(0x24)4455F0, calls draw_radius(livecoords,2,2), reloads BaseCurrent and queue0 before stack predicate. Vehs stride34 operand952832 is signed proto_id+0A, secondary9AB892 is VehPrototypes.plan+2A; use genuine prototype plan10/12, not invented Bases[vehicle.unk_1].unk_y. Live faction reload per vehicle remains required.417DA8 JE41850C means invisible success, visible directpicker reentry417751; earlier draft reversed it.",
+      "Native417F7A action3/5 a1==0 resets base, optionally unlocks, redraws both windows, restores prototype visibility then417FF5 lexical teardown;4181F8 jumps finalcleanup418D8D. No picker.calculate or loop on this path. Add_queue action4/6 calls only when a1!=0 per417917/417922. Independent reader failed-lock allegation contradicted current candidate lock-before-decrement order and must not become an accepted fact. No source implementation/claim/baseline change or full acceptance is established; original seed and discoveries remain preserved."
+    ],
+    "hypothesis": "The combined production draft has incorrect popup result dispatch, picker-loop polarity and vehicle ownership; fix these from pinned native tables before adding the full body.",
+    "kind": "discovery"
+  },
+  "previous_event": "f4d9c611190fb32ce248607d2cf088e7dacf1f66c19cde9be495cfcf478a2230",
+  "request_id": "basewin-production-dispatch-return-and-vehicle-correction",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:basewin-owner-coverage"
+}

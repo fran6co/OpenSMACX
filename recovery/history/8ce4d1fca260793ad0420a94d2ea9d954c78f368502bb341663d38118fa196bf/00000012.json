@@ -1,0 +1,20 @@
+{
+  "event_id": "0ea0038870c5744cf74133b5e6f7e827a61ba8c3c6cef65c1b3ffdd499829f36",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netdaemon-low-opcode-size-table-index-correction",
+    "evidence": [
+      "Fresh native PeImage with original digest01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf; struct.unpack42I of code-backed53412C..5341D4 and independent disassembly at each target.09/0C->53334C retain initial ESI8,0D/23->5330C0 set14hex;03/1A..1F->533349 load a2.22->533166 loadReplayEventBytes9469F8.24->532E8F sets98hex;25/26->532EB2 sets4;27->533178 sets104hex;28->533171 zero;29->533182 sets1000hex. Tail size proposals24zero/251000/27a2 and09/0Ca2 were erroneous, not independent native evidence. Correct scratch body and host oracles before integration; original typed owners/staging/unknown storage obligations remain preserved, no body implementation or acceptance granted."
+    ],
+    "hypothesis": "Recover the low-opcode size selector from all 42 pinned DWORD destinations; recent manual indexing proposals shifted entries and must not alter the typed wire owners.",
+    "kind": "discovery"
+  },
+  "previous_event": "493df49a1729e1971b983d912e371f61240e0e9a2eea2caf91731b108bcecf29",
+  "request_id": "netdaemon-low-opcode-size-table-index-correction",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

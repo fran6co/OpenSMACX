@@ -1,0 +1,20 @@
+{
+  "event_id": "493df49a1729e1971b983d912e371f61240e0e9a2eea2caf91731b108bcecf29",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "netdaemon-rules-native-base-and-routing-correction",
+    "evidence": [
+      "Independent pinned PE read of14-entry table5342EC:80->533CAB,81/82/84->533F66,83->533CF0,85->533D2E,86->533D60,87->533DAB,88->533DCD,89->533E07,8A->533E3B,8B->533E70,8C->533EAE,8D->533EE7. Facility8B span9A4B68..9A6488 is1920 bytes=134*30hex, not84 rows. Technology80 truebase94F358 makesEAX94F36C+14: preserve name/id/padding, copyflags0 andgrowth/tech/wealth/power/prerequisites14..28. Reactor87 base9527F8 makes952800+8 the named preq_tech word, not partialnamepointer. Ability8A base9AB538 andEAX9AB548+10 targetcost_factorC/unk1+10/flags14/preq18. Citizen8C starts533EAE withbase946020,EAX94602C+C andFIVEDWORDwrites at8..18; do not reuse Ability word-write block533E3B. All original identities, staging-storage unknowns and pending discoveries retained. Independent raw-address/width oracle and actual source layout checks required before integration; passing tests based on the erroneous helper mappings are not evidence."
+    ],
+    "hypothesis": "Full synchronization recovery must derive each rule-table compaction from its actual pinned switch-table destination and source-bound table base. Early scratch helpers conflate pointer-register offsets with object member offsets and cannot be imported or used as behavioral oracles.",
+    "kind": "discovery"
+  },
+  "previous_event": "53856f132e6a4d1d56e97f83072f6c287e5258d16ffa537c06c09c8e53836ec3",
+  "request_id": "netdaemon-rules-native-base-and-routing-correction",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
