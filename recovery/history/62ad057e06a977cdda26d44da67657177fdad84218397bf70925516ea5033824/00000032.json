@@ -1,0 +1,19 @@
+{
+  "event_id": "cda93035d148ca882340ec019fe72b9dd709474c43b8df9948035bf495454fb0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/veh.h"
+    ],
+    "evidence": [
+      "VC6 proposal identifies missing public declaration for already implemented/mapped exact stack_kill5B9510 in veh.cpp. Admit only void __cdecl stack_kill(int vehicle_id) in its natural veh.h owner header, consumed by newly admitted Console editor_kill_vehicles4E09B0. No implementation rewrite, placeholder, symbol change, seed removal or baseline reset; fresh whole application compile/link and relevant native controls must verify header effect."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "0d1e210753245569be3f4da9321c231dc8f022d81d48f5e862be34d09b6fbf2b",
+  "request_id": "console-stack-kill-declaration-20261002",
+  "schema_version": 1,
+  "sequence": 32,
+  "stream": "task:console-scenario-owner-wave"
+}
