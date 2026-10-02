@@ -1,0 +1,21 @@
+{
+  "event_id": "33f0c80c29a08ebac949911a987eeddcab4061984c880f8d5879249730548153",
+  "payload": {
+    "affects": [
+      "entity-1ad1e7edba941cd7f22466437b464f17aa5adfeddef76df4014b8517fdda76c1",
+      "entity-2ebf679decaded758940f06432358382a95d2bf993127190d712287c3db59141"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "buffer-generated-array-guard-correspondence",
+    "evidence": [
+      "Fresh native full application compile/link passed for the private proposal. Physical native COFF array components split vector construction and atexit registration; current destructor component is unguarded whereas pinned original cleanup uses shared 9B37CC bit1. Compiler existence is not original lifecycle or retained-selection proof. Preserve the original seeds and source mappings; no claim demotion, fabricated symbol equivalence or shared-span deletion."
+    ],
+    "hypothesis": "The natural BufferSpecialText array has the required ownership and initialization order, but its current generated constructor/destructor components do not establish correspondence to the original combined initializer and shared guarded cleanup. Preserve both seed identities and historical claims pending restoration; do not bank a generated-body match.",
+    "kind": "discovery"
+  },
+  "previous_event": "ddbf7e758c9175abb52eed9985617946592bb5eb5d69300b79baa626c6b4b05a",
+  "request_id": "buffer-generated-array-guard-correspondence",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:buffer-complete-remainder-recovery"
+}

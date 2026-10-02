@@ -1,0 +1,21 @@
+{
+  "event_id": "67c78fa534dc5166d8c0d3ce1a47517fd679729fd4eb881602d88632e998b4b8",
+  "payload": {
+    "affects": [
+      "entity-59339d8c147f9a28c5a1ffb44076522c503c172226e5a2c0fa8bb9655d13b030",
+      "entity-7dc184a83329ba00d6b03452170b8f6e741c87bd77b60f463b8e2e1bf6ee4036"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "buffer-private-gouraud-object-verification",
+    "evidence": [
+      "Pinned original polygon accesses and both fresh native flagsets establish seventeen TU-static emitted scratch definitions. Installed object_targets requires ordinary external storage class2 and refuses these class3 objects. Ten other new external object definitions resolve; start-only annotations do not establish original extent, initial bytes, lifetime or retained linker selection. No broad global resolver change or private-to-external linkage rewrite is authorized by this discovery."
+    ],
+    "hypothesis": "The seventeen source-owned Gouraud scratch origins are established as private shared state, but native static-object target resolution remains unsupported. Preserve source start bindings and explicit unknown reference/layout/lifetime obligations rather than treating annotation insertion as proof.",
+    "kind": "discovery"
+  },
+  "previous_event": "33f0c80c29a08ebac949911a987eeddcab4061984c880f8d5879249730548153",
+  "request_id": "buffer-private-gouraud-object-verification",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:buffer-complete-remainder-recovery"
+}
