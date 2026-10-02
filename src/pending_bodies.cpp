@@ -530,10 +530,7 @@ MonuWin::~MonuWin() {  // ??1MonuWin@@QAE@XZ at 0x00477B10
     PENDING_BODY(0x00477B10, pending)(this, nullptr);
 }
 
-PickTech::~PickTech() {  // ??1PickTech@@QAE@XZ at 0x00488690
-    typedef void(__fastcall *pending)(PickTech *, void *);
-    PENDING_BODY(0x00488690, pending)(this, nullptr);
-}
+
 
 VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
     typedef void(__fastcall *pending)(VoiceRx *, void *);

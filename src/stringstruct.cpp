@@ -1518,45 +1518,6 @@ extern "C" int __fastcall sub_5cbae0(int *wrapper, int fill) {
     return 0;
 }
 
-// ---------------------------------------------------------------------------
-// PickTech::UNK1, 0x00484B80. The tech-picker's caption flow: pick the title
-// or body font set by the page flag, measure the wrapped caption, and walk
-// the window's caption pen down one wrapped line when it still fits.
-// PickTech's layout is a hypothesis and the member is undeclared, so the
-// receiver travels explicitly; the original is a __thiscall member.
-/*
-Purpose: Flow the tech-picker's caption: select the page's font set, measure
-         the wrapped text and advance the caption pen when it fits.
-// ORIGINAL: 0x00484B80 ?UNK1@PickTech@@QAEXPAD@Z 0x00484B80-0x00484C5D FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original484B80..484C5D; retired seed git:117282ee:src/unrecovered/00484b80.cpp records the same identity and spans.", "The receivers are the +0x444 owned Buffer (its set_font and wrap_height/wrap_cent members are buffer.h's own) and the Font triples at +0xBBC/+0xBE4/+0xC0C and +0xC34; the Font line-advance selection is font.h's own line_advance.", "The page flag lives at +0xA54 and the caption rectangle at +0xA40..+0xA50, exactly as the seed walks them."], "reason": "Coverage transcription of the tech-picker caption flow with the receiver spelled explicitly because PickTech has no header declaration yet."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall PickTech_UNK1(PickTech *self_raw, void *, char *text) {
-    char *const self = reinterpret_cast<char *>(self_raw);
-    Buffer *const canvas = reinterpret_cast<Buffer *>(self + 0x444);
-    int height;
-    if (*reinterpret_cast<int *>(self + 0xA54) == 0) {
-        Font *const title = reinterpret_cast<Font *>(self + 0xC34);
-        canvas->set_font(title, title, title, 0);
-        height = title->line_advance();
-        *reinterpret_cast<int *>(self + 0xA54) = 1;
-    } else {
-        Font *const body = reinterpret_cast<Font *>(self + 0xBBC);
-        canvas->set_font(body,
-                         reinterpret_cast<Font *>(self + 0xBE4),
-                         reinterpret_cast<Font *>(self + 0xC0C), 0);
-        height = body->line_advance();
-    }
-    if (*reinterpret_cast<int *>(self + 0xA44) - height
-        >= *reinterpret_cast<int *>(self + 0xA50)) {
-        const int wrapped = canvas->wrap_height(
-            text, *reinterpret_cast<int *>(self + 0xA48) - 2);
-        const int pen = *reinterpret_cast<int *>(self + 0xA44) - wrapped;
-        *reinterpret_cast<int *>(self + 0xA44) = pen;
-        canvas->wrap_cent(text, *reinterpret_cast<int *>(self + 0xA40) + 1, pen,
-                          *reinterpret_cast<int *>(self + 0xA48) - 2);
-    }
-}
 
 // ---------------------------------------------------------------------------
 // MultiWin::UNK1, 0x00479270. The multiplayer scoreboard's spot label: clip

@@ -1,0 +1,19 @@
+{
+  "event_id": "b62566a34e1deb0aadcd2a96828cd4251816404899d42a6e5a1820109f45ae8c",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/picktech_host_fixture.inc"
+    ],
+    "evidence": [
+      "Durable actual-source controls consume the complete current product class and14definitions on every run; the fixture holds only external API/component doubles and inputs/assertions, not copied recovered bodies. Independent native review fixes are witnessed by7individual damages under GCC andClang ASAN/UBSAN. Host controls do not prove native ABI, actual external component behavior, linked preservation or game acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "dae222bc764484602d39528b984db635d880e10ddb2863f27031eddf60dce580",
+  "request_id": "picktech-independent-host-fixture",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:picktech-owner-coverage"
+}

@@ -1,0 +1,27 @@
+{
+  "event_id": "dae222bc764484602d39528b984db635d880e10ddb2863f27031eddf60dce580",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/004860b0.cpp",
+      "src/recovered/units/00486110.cpp",
+      "src/unrecovered/00484ac0.cpp",
+      "src/unrecovered/00484c60.cpp",
+      "src/unrecovered/00485fc0.cpp",
+      "src/unrecovered/00486170.cpp",
+      "src/unrecovered/004863f0.cpp",
+      "src/unrecovered/00486510.cpp",
+      "src/unrecovered/00488690.cpp"
+    ],
+    "evidence": [
+      "The independently reviewed full genuine PickTech draft compiles with actual VC6 APIs and physical nondeleting callbackslots17/19/22/25 agree with native66CFCC. Exactclose484B60 passes both flags; exactleft4860B0/right486110/scalar488660 are freshly restored with the settled Oy- trial. Authorize retirement only after transferring original identities and all seed lessons/claims into the owning TU and verifying build/link, claim continuity and relevant regressions. Retain the immutable original task baseline; this is not linked preservation, full game or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "picktech-consumed-seed-retirement",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:picktech-owner-coverage"
+}

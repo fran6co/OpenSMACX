@@ -344,6 +344,8 @@ class BasePop : public GraphicWin {
   // 0x00603800, homed from 00603800.cpp beside its marker. Lays the popup's
   // text out and hands the result to Dialogs::calculate_dimensions twice.
   int calculate_dimensions();
+  // Native487DFD reads Popup+0xA48: its script-owned caption text.
+  const char *caption_text() const { return owned_text_; }
   void write_check(long value);
   int exec();
   int exec(int (__cdecl *callback)());

@@ -185,6 +185,7 @@ set(OPENSMACX_SOURCES
     src/gamma.cpp
     src/messagewin.cpp
     src/newtechwin.cpp
+    src/picktech.cpp
     src/pickwin.cpp
     src/prodpicker.cpp
     src/reportwin.cpp
