@@ -1,0 +1,19 @@
+{
+  "event_id": "b090a42bb85657d448cca05a6033eaca4dc6b03e12e320dada3cf8f22ae85b90",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_net_session_receive_host.py"
+    ],
+    "evidence": [
+      "User explicitly approved rejecting an extra player when all16 NetPlayer slots are occupied, instead of original632CC0 writes past array storage. Add a documented capacity rejection before player/name/host-count mutation, using a supported failure code derived from caller/API evidence; this intentionally changes that invalid-input path and cannot be an original-behavior or byte-exact claim. Recover ordinary join/receive/player/VoiceRx paths and actual ownership; preserve original seed evidence, source mappings, all historical claims and original task baseline. Add actual-source host controls for receive/session/player/lifetime, plus native layout/compile and fresh application build/link before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "70e32e778cf74b310c964add6fbaf1c0e06d3a714e78f361103e47c5891f778d",
+  "request_id": "net-player-capacity-user-decision-20261002",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:alphanet-complete-owner-recovery"
+}
