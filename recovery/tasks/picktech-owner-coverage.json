@@ -1,0 +1,87 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "b5f92b663bf4a995e681aa374b1f27a08baeb371",
+  "editable_files": [
+    "CMakeLists.txt",
+    "recovery/tests/test_picktech_behavior.py",
+    "src/basepop.h",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/hypothesis_layouts.h",
+    "src/leaf_recoveries.cpp",
+    "src/leaf_recoveries.h",
+    "src/pending_bodies.cpp",
+    "src/picktech.cpp",
+    "src/picktech.h",
+    "src/stringstruct.cpp"
+  ],
+  "evidence": [
+    "Pinned constructor484AC0 and destructor488690 establish GraphicWin base and four real Font members atBBC/BE4/C0C/C34, totalC5C. Native primarytable66CFCC callbacks17/19/22/25 establish mouse/left/right/key. Independent full-owner review and fresh native compiler verification are required before any source integration; host controls are not game acceptance."
+  ],
+  "intent": "Recover the complete PickTech owner as genuine GraphicWin inheritance with four Font members, real modal selection and automatic Popup/StringList lifetimes; rehome duplicate caption and exact close ownership without losing claims or seed discoveries.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4737728,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4737888,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4738144,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4743104,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4743344,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4743440,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4743536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4744176,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4744464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4752992,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4753040,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4753216,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "picktech-owner-coverage"
+}
