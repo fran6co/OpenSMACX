@@ -1,0 +1,22 @@
+{
+  "event_id": "df0824c5a55591830f1584fb93ea810a9fa6e690b5a598301ddc8b39b8d653d5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/basewin-hurry-harness.cpp",
+      "recovery/tests/basewin-production-harness.cpp",
+      "recovery/tests/test_basewin_hurry.py",
+      "recovery/tests/test_basewin_production.py"
+    ],
+    "evidence": [
+      "Coordinator authorizes full production/hurry owner bodies and required typed private helpers, shared source-owned energy mirror in already editable base.cpp/base.h, genuine ProdPicker accessor in already editableprodpicker.h, and actual-source controls for pricing/read timing/dialog/queue/energy paths. Existing original bindings/spans/cleanup obligations stay intact, task baseline unchanged. No raw address/vtable/asm substitution, unknown-path deletion, byte demotion, malformed-input policy change or full-game acceptance. Other gameplay work remains outside this specific grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "06e398d31c4014cbaa74f742b3fffb494606aa00cd44ad00faa5d35bd1d10f86",
+  "request_id": "basewin-production-hurry-controls",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:basewin-owner-coverage"
+}

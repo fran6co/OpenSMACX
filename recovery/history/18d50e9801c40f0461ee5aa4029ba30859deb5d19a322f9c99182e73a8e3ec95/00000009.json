@@ -1,0 +1,20 @@
+{
+  "event_id": "06e398d31c4014cbaa74f742b3fffb494606aa00cd44ad00faa5d35bd1d10f86",
+  "payload": {
+    "affects": [
+      "entity-868f3037c25381e4c70bc8d6b1f026afceae90dd92a6f1721a98899dbd52f2c9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "basewin-production-hurry-owner-flow",
+    "evidence": [
+      "Native418F75->418F7A reloads BaseCurrent after veh_cost;418F9D->418FA4 reloads after cost_factor.418FC5 squares remaining minerals before signed magic divide20, making vehicle price2*remaining+remaining^2/20.418FDC facility gate uses saved negative initial production, not a fresh ID; Base+9C store remains a semantic naming obligation, not reason to drop behavior. Production417040 full span includes repeated picker/dialog branches absent from short seed. Producer526E70 and allocator5267B0 shared93A958 state must be source-owned and remain explicit seed-only closure obligations until recovered."
+    ],
+    "hypothesis": "Complete production/hurry recovery requires the real shared energy mirror93A958 used by production_phase/allocate_energy, lexical Popup/GraphicWin lifetimes and actual ProdPicker action state. Retained short seeds and preliminary drafts omit control flow and conflate field/read timing: pricing follows live BaseCurrent across cost callbacks, while payment keeps entry faction; source owners and full native branches must govern the implementation rather than skeleton similarity.",
+    "kind": "discovery"
+  },
+  "previous_event": "221e65145093b8c9d2213349865fc2516bec913346d1c506315600405472fe70",
+  "request_id": "basewin-production-hurry-owner-flow",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:basewin-owner-coverage"
+}

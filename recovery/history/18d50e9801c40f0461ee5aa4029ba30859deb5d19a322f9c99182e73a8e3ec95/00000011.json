@@ -1,0 +1,20 @@
+{
+  "event_id": "36741da9e5ae68d2517b79c671fed98be1ec2ca48d125df8e8b2c77c478bc81e",
+  "payload": {
+    "affects": [
+      "entity-868f3037c25381e4c70bc8d6b1f026afceae90dd92a6f1721a98899dbd52f2c9"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "basewin-hurry-payment-dialog-native-correction",
+    "evidence": [
+      "Pinned4196CF retains EDI energy price as full payment while419713..419735 stores ebp-24 gross mineral target into BaseWin40B38 and Base9C/40. Partial payment4196A4..4196C1 changes that mineral target, not the accounting distinction.419175..419187 HURRYDRONE requires state2 and current production>=0 OR <=-65; preliminary draft inverted this.4190E5 tests fresh production sign but4190EC/4190F9 index saved initial production/negative-production for displayed names.41928D..4192BD reads/parses the second script item even when funds omit its insertion. Post-compute418E63 reads the window focused base anew, as existing compute_selected_base does. Preserve these findings and historical identities; corrected proposal and controls require independent review and build/link before integration."
+    ],
+    "hypothesis": "Full hurry recovery must separate mineral completion target from the energy payment and preserve native warning branches and callback-sensitive reads; the scratch proposal is not ready for product integration.",
+    "kind": "discovery"
+  },
+  "previous_event": "df0824c5a55591830f1584fb93ea810a9fa6e690b5a598301ddc8b39b8d653d5",
+  "request_id": "basewin-hurry-payment-dialog-native-correction",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:basewin-owner-coverage"
+}
