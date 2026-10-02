@@ -38,6 +38,7 @@ class AlphaSave : public GraphicWin {
   void on_selected(int selection_id);
   void save();
   void load();
+  int add_default_extension(char *extension);
 
  private:
   FileWin file_win_;             // 0x0A14

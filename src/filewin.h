@@ -63,6 +63,7 @@ class FileWin {
   void UNK4();
   // 0x00613900, a pending_bodies forwarder. ~FileWin calls it first.
   void close();
+  int add_def_ext(char *extension);
   // 0x00614E30, recovered in filewin.cpp. __CDECL MEMBER - the image's name
   // ends in `QAA`, a member taking no receiver (jackal_close calls it with
   // no ecx set up), and this is the spelling that emits it.

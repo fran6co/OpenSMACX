@@ -27,6 +27,39 @@
 // RECOVERY_OBJECT: v2 0x009B90AC 0x009B90B0 ?ActiveFileWin@@3PAVFileWin@@A 0x00613D50
 FileWin *ActiveFileWin = 0;
 
+/*
+Purpose: Append one default extension to FileWin's four-slot extension
+         table at 0x518: five bytes per slot, the count at 0x514.
+
+// ORIGINAL: 0x00614140 ?add_def_ext@FileWin@@QAEHPAD@Z 0x00614140-0x006141BC
+// symbol   ?add_def_ext@FileWin@@QAEHPAD@Z
+// size      124 bytes
+// prototype int (__thiscall ?add_def_ext@FileWin@@QAEHPAD@Z)(FileWin* this, int8*)
+// callers   3   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x006453E0 0x00645470
+Return Value: 0 on success, 1 when the table is full, 0x10 for a null
+              extension, 3 when it is longer than four characters
+Status: Complete
+*/
+int FileWin::add_def_ext(char *extension) {
+    if (extension_count_ == 4) {
+        return 1;
+    }
+    if (extension == 0) {
+        return 0x10;
+    }
+    char *const slot = extension_filters_[extension_count_];
+    slot[0] = '\0';
+    if (strlen(extension) > 4) {
+        return 3;
+    }
+    strcat(slot, extension);
+    ++extension_count_;
+    return 0;
+}
+
 // The modal Win's focus-list nodes carry a window pointer at +4 and a next
 // pointer at +0xC. WinNodeList owns the sequence and cursor; this view only
 // describes a node encountered by the file-dialog callback.

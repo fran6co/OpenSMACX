@@ -254,3 +254,7 @@ void AlphaSave::load() {
     NetDaemonNet.voice_hotkey_48_ = 0xDC;
     NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
 }
+
+int AlphaSave::add_default_extension(char *extension) {
+    return file_win_.add_def_ext(extension);
+}
