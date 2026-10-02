@@ -2485,7 +2485,7 @@ int NetWin::exec() {
 
     struct ExecLobbyPacket {
         NetWinLobbyPacketHeader header_;
-        uint8_t payload_[0xA64];
+        NetWinLobbyRow rows_[7];
     } lobby_message;
     static_assert(sizeof(ExecLobbyPacket) == 0xA74, "exec lobby message size");
     // The only sent branch overwrites the full payload; deterministic zeroing
@@ -2497,15 +2497,14 @@ int NetWin::exec() {
     lobby_message.header_.field_2_ = 0;
     lobby_message.header_.slot_ = -1;
     lobby_message.header_.field_8_ = 0;
-    NetWinLobbyRow local_rows[7];
     for (int row_index = 0; row_index < 7; ++row_index) {
-        local_rows[row_index].initialize_empty_slot();
+        lobby_message.rows_[row_index].initialize_empty_slot();
     }
     // 0x483820 is the scoped NetWinLobbyRow reset identity (re-homed from the
     // old, incorrect NetWin::UNK5 owner); do not mutate process-global rows.
     if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
         lobby_message.header_.flags_ |= 0x40;
-        memcpy(lobby_message.payload_, &NetWinLobbyRows[1], 0xA64);
+        memcpy(lobby_message.rows_, &NetWinLobbyRows[1], 0xA64);
         NetDaemonNet.send(&lobby_message, 0xA74, 0, 1);
     }
 

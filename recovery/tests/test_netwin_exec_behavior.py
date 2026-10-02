@@ -86,8 +86,13 @@ def test_netwin_exec_and_row_actual_bodies(compiler_name: str) -> None:
         generated_path = Path(directory) / "actual_bodies.cpp"
         executable = Path(directory) / "actual_bodies"
         generated_path.write_text(generated, encoding="utf-8")
+        host_double_warning = (
+            "-Wno-class-memaccess" if compiler_name == "g++"
+            else "-Wno-nontrivial-memcall"
+        )
         built = subprocess.run(
             [compiler, "-std=c++11", "-Wall", "-Wextra", "-Werror",
+             host_double_warning,
              str(generated_path), "-o", str(executable)],
             capture_output=True,
             text=True,
