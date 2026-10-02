@@ -1,0 +1,20 @@
+{
+  "event_id": "1cd286bd4a8f5fd073243b8e2b07db8b3988b5b7f33459313bea6d55bc7bc2df",
+  "payload": {
+    "affects": [
+      "entity-a1b0d53a95370a134355cee707be6d9666f27353fc204749813313f0c5e71492"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "alphasave-init-visible-flags-pinned-correction-20261003",
+    "evidence": [
+      "Pinned terranx_original.exe SHA01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf:4075CA loads visibility from[ebp-20];4075D0 NEG EDX;4075D2 SBB EDX,EDX;4075FC AND EDX,FFF7FFE0;407608 ADD EDX,80020;407614 stores FileWinConstruct first DWORD[ebp-6C]. Nonzero visibility yields FFF7FFE0+80020 modulo32bits=0, not privatev5 FFF00000. Preserved recovered seed00407410.cpp corroborates arithmetic. Root independently read pinned standard popup6846B0..6846D8 ten DWORDs7921E8,779478,7AC1C0,7AB400,7793F0,7871D0,7ACFB0,75B058,77AA70,7; actual COFF binding still required. Five privatev5 hosttests pass but do not establish native ABI, linked preservation or acceptance."
+    ],
+    "hypothesis": "Correct complete AlphaSave initialization flag arithmetic before integrating the proposed modal/map-loading batch: visible layout.field_00_ is zero, hidden is 0x80020. Existing host expectation copied the wrong candidate constant; regenerate an immutable corrected proposal and actual-source controls, preserving original seeds, claims, scope and baseline.",
+    "kind": "discovery"
+  },
+  "previous_event": "67894f8c8ab2ca883ea176c4b327075397383d200e1df8603bf920f8c3581767",
+  "request_id": "alphasave-init-visible-flags-pinned-correction-20261003",
+  "schema_version": 1,
+  "sequence": 15,
+  "stream": "task:game-save-load-owner-coverage"
+}
