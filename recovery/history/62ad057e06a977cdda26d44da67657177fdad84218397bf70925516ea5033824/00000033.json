@@ -1,0 +1,19 @@
+{
+  "event_id": "58518fd9344aa83c978f9688ecd10fad8b210adebf8fa94c9016eb761cc24603",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/maininterface.h"
+    ],
+    "evidence": [
+      "Native CodeView proves MainInterfaceGlobal7AE820 plus button_group_1E878 equals7CD098, selected field+84 equals7CD11C and field_1EAC8_ equals7CD2E8. These are existing source-owned members, not new globals. Admit only narrow const uint32_t button_group_gate() accessor of existing private field_1EAC8_ for the complete original Console keyboard prefix; existing button_group(int) already exposes actual group. No layout, virtuality, storage, lifetime or behavior change and no MainInterface body edits. Original task baseline, seeds and claims remain. Header-impact native compile/layout and application build/link required before reviewed integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cda93035d148ca882340ec019fe72b9dd709474c43b8df9948035bf495454fb0",
+  "request_id": "console-keyboard-typed-maininterface-gate-20261002",
+  "schema_version": 1,
+  "sequence": 33,
+  "stream": "task:console-scenario-owner-wave"
+}
