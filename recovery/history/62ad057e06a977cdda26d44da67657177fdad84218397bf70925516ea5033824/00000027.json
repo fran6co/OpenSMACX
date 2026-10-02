@@ -1,0 +1,27 @@
+{
+  "event_id": "7e4f0838baf721f5bbcbc39086f1c45de9d8253608f21491f3dfe93deb56d4f9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/infowin.h",
+      "src/pending_bodies.cpp",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Recover the admitted Console end-turn and capture handlers with genuine source state. Admit InfoWin access to the existing pending-timer member only, replacing the fixed-address faction wait latch with a shared typed owner in Console and updating net_not_my_turn529E70 to use that same owner. pending_bodies permits only removal/rehome of admitted Console forwards when full owning implementations compile/link. Original scalar read/write sites prove faction-bit mask role; BSS allocation initialization and bounded extent remain unverified, so no exact data-layout claim is authorized. Preserve all historical function identities, seeds, claims, unrelated aliases and journals. Complete batch requires fresh native compilation, actual-source controls, claim continuity and application build/link before reviewed integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5414512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "d5fd7b37d4b555c0dc48eff328c781ed6c1eb900065a62067d733fae9b91444e",
+  "request_id": "console-turn-wait-source-owners-20261002",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:console-scenario-owner-wave"
+}
