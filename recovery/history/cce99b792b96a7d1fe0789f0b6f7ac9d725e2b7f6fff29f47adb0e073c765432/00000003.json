@@ -1,0 +1,20 @@
+{
+  "event_id": "9b520b0fe2a3d727a3d51e9468fabc8839e2609e1d33849c7b1fa41ef338df20",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/stringlist_hooks_harness.cpp",
+      "recovery/tests/stringlist_lifetime_harness.cpp"
+    ],
+    "evidence": [
+      "Native fixture compilation of the admitted Alpha proposal exposes preexisting stale StringList fixture dependencies: actual current StringList declaration names LPSTR while hook/lifetime harness doubles omit that SDK typedef. Admit only equivalent char-pointer typedefs and actual-source extraction repair; preserve all behavior/assertions and original task baseline. Fresh failure evidence /tmp/alphanet-owner-v3-native-runtime-tests.log. No historical annotation refusal or matching obligation is waived."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "34883afe67c30d3c688f5d9d95a98b79d84d5692102859e2527a304e7d2ec173",
+  "request_id": "alpha-stringlist-runtime-harness-types",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:alphanet-complete-owner-recovery"
+}
