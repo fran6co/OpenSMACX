@@ -1,0 +1,54 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "2ab6754c36c6cc8dd8ffa019988006eeb171a6ba",
+  "editable_files": [
+    "src/win.cpp",
+    "src/win.h",
+    "recovery/tests/test_win_input_pump_completion.py"
+  ],
+  "evidence": [
+    "Fresh native partition lists seven seed-only application helper identities in this family. Pinned original instructions confirm keyboard100..108, mouse-move200 only, mouse200..209 with same-window201/202 and204/205 pairing, sound401 only and MsgStatus9B7B9C clear. These SDK-import clients are application bodies, not USER32/system implementations or generated thunks.",
+    "Use actual SDK MSG and USER32 functions, existing do_video/check_net/do_net and MsgStatus owners. Preserve dispatch-time message reloads, per-iteration callbacks, failed-queue returns and no-status-write behavior except original do_all_sounds. No fixed IAT slots, raw arrays, copied code, guessed aggregates, placeholders, seed removal, claim demotion or unrelated Win/temp bodies. Coordinator alone mutates source/Git/tasks/compiler; relevant baseline/current native diagnostics, source controls and full application build/link precede reviewed manual integration. Full-game acceptance remains unproven."
+  ],
+  "intent": "Complete seven missing genuine core Win input and sound message helpers as one verified batch, preserving native queue ranges, callback-visible ordering and all seed/exact obligations.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 6278384,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6278464,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6278560,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6278640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6279872,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6279952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 6280032,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "win-input-pump-completion"
+}
