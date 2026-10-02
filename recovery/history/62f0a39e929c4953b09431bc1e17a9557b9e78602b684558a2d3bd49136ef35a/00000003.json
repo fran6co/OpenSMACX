@@ -1,0 +1,40 @@
+{
+  "event_id": "a44c67183fc544f3917972222df4f544efd408fb2bc84a5c5868caf96b7c0d44",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/alphasave_init_host_control.cpp",
+      "recovery/tests/filewin_init_host_control.cpp",
+      "recovery/tests/test_alphasave_init_behavior.py",
+      "recovery/tests/test_filewin_init_behavior.py",
+      "src/listbox.h",
+      "src/maininterface.h"
+    ],
+    "evidence": [
+      "Coordinator admits genuine AlphaSave407410 and embedded FileWin6139B0 initialization required by native save/load wrappers, not constructor substitutes. Native caller supplies0x48 parameter with four RECT groups; callee copies only seventeen DWORDs, so no full0x48 snapshot write or invented extent is permitted. Narrow MainInterface font2 getter and ListBox draw-only setter preserve existing ownership. Native60BCA4..60BCE2 ignores draw-callback return; callback4072D0 may acquire matching int return with fresh compiler-observed symbol fact and measurement, no function-pointer casts or claim demotion. StandardPopupBoxStyle6846B0 composes existing nine independently bound Sprite/Buffer owners and color7, not an alias to mutable InterfaceBoxStyles. Unknown snapshot/title/scalar extents remain explicit discoveries; no raw addresses, complete allocation/lifetime or runtime claims. Current source baseline immutable, claims and original seeds retained. Existing network-snapshot discovery remains pending; all shared integration serialized centrally."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4224016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6371760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4223696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "10debb19390555e957cbf24b1beb7e0c7b79238aa0362270197f78dc63ed4c16",
+  "request_id": "save-load-dialog-initialization-closure",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:game-save-load-owner-coverage"
+}
