@@ -1,0 +1,24 @@
+{
+  "event_id": "e4ea784210e41c1cf56664152e5b10a9f1c05a7bb45a3993b4f2f1dcb63e11bd",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "src/recovered/00488780.cpp",
+      "src/unrecovered/00489ba0.cpp"
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4753280,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e79f36bc30e820e74d89899445e75d267126c19260bdd94bc7086e43f3abe610",
+  "request_id": "pickwin-admit-static-double-click-callback",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:pickwin-owner-coverage"
+}

@@ -1,0 +1,21 @@
+{
+  "event_id": "e79f36bc30e820e74d89899445e75d267126c19260bdd94bc7086e43f3abe610",
+  "payload": {
+    "affects": [
+      "entity-e48c678ceede10edbb934552c648dffbf6d80ab424f4e029bb74eabd38574541"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "pickwin-static-double-click-callback",
+    "evidence": [
+      "src/recovered/00488780.cpp",
+      "src/unrecovered/00489ba0.cpp"
+    ],
+    "hypothesis": "Native callback488780 receives faction id and dispatches PickWinGlobal.on_button_clicked on true static object822718; admit free callback with owner batch, preserving historical exact seed obligation.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "pickwin-static-double-click-callback",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:pickwin-owner-coverage"
+}
