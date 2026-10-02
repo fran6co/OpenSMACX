@@ -1,0 +1,67 @@
+{
+  "event_id": "f57cbff81ea81adb6bcd704bd3d3a2bddcc0686dc441f415d48a8a86f299b718",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/netwin_exec_host_control.cpp",
+      "recovery/tests/netwin_exec_host_types.h",
+      "recovery/tests/netwin_pick_map_host_control.cpp",
+      "recovery/tests/netwin_pick_map_host_types.h",
+      "recovery/tests/test_netwin_exec_behavior.py",
+      "recovery/tests/test_netwin_pick_map_behavior.py",
+      "src/editbox.h",
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Native47D501/47D79D and58E79B/58E7AD write shared945D78 around load_map/load_game; game_data5A7951 reads it under IO-read mode. Admit genuine neutral game.cpp/h storage, no broader allocation or lifetime claim.",
+      "Native482490..482D84 calls402EE0 with483820 to initialize seven STACK-LOCAL 17C-byte lobby rows. Correct wrong NetWin::UNK5 receiver interpretation while retaining canonical identity and spans; never write GraphicWin base bytes.",
+      "Native482A16 stores4832D0 as a receiver-free Buffer callback and modal setup passes483240 as cdecl callback. Preserve original identities and measure new physical emitted symbols.",
+      "Typed50-RECT setup storage and Buffer banner rectangle require coupled NetWin redraw/faction consumers;80A6F0 reads/stores support label-count scalar,80A6F4 has only one zero DWORD store and remains neutral start-only storage.",
+      "User prioritizes complete compiling coverage; isolated actual-header/native controls, fresh application build/link and coordinator review remain required. All original task baselines, historical claims and unresolved findings are retained; no automatic acceptance or gate waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4732960,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4731456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4731600,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4725456,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4718288,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4712752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4720896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "netwin-execution-row-and-shared-load-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netwin-owner-coverage"
+}
