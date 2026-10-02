@@ -50,6 +50,10 @@ class Sprite {
   // MainInterface's panel initialization adjusts displayed dimensions.
   friend class MainInterface;
  public:
+  // Original5E4ADA is a genuine seven-argument zero-return entry.
+  // Buffer5D8740 supplies its actual Buffer destination and six scalars;
+  // the scalar meanings and descriptive method name remain interpretations.
+  // Superseded header interpretation (history only):
   // The remaining UNK methods are EVIDENCE-FREE: their empty bodies do not
   // establish original names or parameter meanings. UNK1 returns zero and
   // pops seven arguments; identical bytes alone do not establish ownership.
@@ -58,7 +62,7 @@ class Sprite {
   // Buffer destination, so that specific call contract is recoverable.
   // UNK3 and UNK4 have EMPTY bodies, so their two ints are unused and
   // nothing in the body can name them either.
-  int UNK1(int a, int b, int c, int d, int e, int f, int g);
+  int draw_noop(Buffer *destination, int b, int c, int d, int e, int f, int g);
   // Original 5E4AEA returns zero; Buffer 5D8650 supplies the destination.
   // Descriptive provisional name, not a recovered original source spelling.
   int draw_noop(Buffer *destination, int transparent, int x, int y, int table);

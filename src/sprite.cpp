@@ -1548,6 +1548,7 @@ int Sprite::draw(Buffer *buffer, int a, int b, int c, int x, int y) {
 Purpose: Legacy stub; the original body returns 0 without reading its
          arguments.
 // ORIGINAL: 0x005E4ADA ?UNK1@Sprite@@QAEHHHHHHHH@Z 0x005E4ADA-0x005E4ADF BYTE_EXACT
+// symbol    ?draw_noop@Sprite@@QAEHPAVBuffer@@HHHHHH@Z
 // size      5 bytes
 // prototype int (__thiscall ?UNK1@Sprite@@QAEHHHHHHHH@Z)(Sprite* this, int, int, int, int, int, int, int)
 // callers   1   call targets   0
@@ -1556,7 +1557,7 @@ Purpose: Legacy stub; the original body returns 0 without reading its
 // calls     (none)
 Status: Complete
 */
-int Sprite::UNK1(int, int, int, int, int, int, int) {
+int Sprite::draw_noop(Buffer *, int, int, int, int, int, int) {
     return 0;
 }
 

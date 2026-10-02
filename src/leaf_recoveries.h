@@ -14,7 +14,6 @@ void __cdecl leaf_00628180_redirect(const float *, const float *, float *);
 void __cdecl leaf_006281b0_redirect(const float *, float, float *);
 int __cdecl leaf_00559210_redirect(int, int);
 uint32_t __fastcall leaf_005e3650_redirect(void *, void *);
-void __fastcall leaf_005e3660_redirect(void *, void *, int);
 void *__fastcall leaf_004c8070_redirect(void *, void *);
 void __fastcall leaf_006347c0_redirect(void *, void *, const float *);
 void __fastcall leaf_006348f0_redirect(void *, void *, const float *);

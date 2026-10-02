@@ -27,6 +27,7 @@ class StringList;
 
 // Buffer::write_raw_l dispatches this optional four-argument cdecl hook.
 typedef int (__cdecl *BufferWriteRawCallback)(LPSTR, int, int, int);
+typedef void (__cdecl *BufferWriteStringsCallback)(int, int);
 
 // A polygon vertex, named by the image rather than invented: every one of the
 // 35 mangled names that mentions it spells `PAUVert@@`, and `U` is MSVC's tag
@@ -132,6 +133,50 @@ extern BoxSpriteParams InterfaceBoxStyles[51];
 
 class Buffer {
  public:
+// Descriptive utility names express observed roles where original symbol
+// evidence has not established a source spelling.
+int draw_unk2(Buffer *, int, int, int, int, int, int);
+int draw(Buffer *, int, int, int, int, int, unsigned char *);
+int draw_dest_unk2(Buffer *, int, int, int, int, int, unsigned char *);
+// Names provisional; no direct original symbol names recovered for utilities.
+static int __stdcall probe_image_file(const char *, Palette *, int, int);
+static int __stdcall probe_pcx(const char *, Palette *, int, int);
+int copy_scaled(Buffer *, RECT *, RECT *);
+int copy_scaled_to_window(Win *, RECT *, RECT *);
+void set_dc_text_color(unsigned int);
+// Private helper; no added original mapping. Color index must be in0..255
+// when init_flags_&4 selects DIB RGB conversion, as in native unguarded path.
+COLORREF text_color_to_gdi(uint32_t) const;
+void select_text_slot(int);
+int draw_pie(RECT *, int, int, int, int, int, int);
+int gouraud(Vert *, int *, int, int, unsigned char);
+
+
+// New descriptive names below are role names, not original mangled evidence.
+// 005DB400
+int write_vertical(Font *font, char *text, RECT *area);
+// The shorter vertical-text overload owns original 005DB450.
+int write_vertical(char *text, RECT *area);
+// 005DE2E0
+int wrap_cent_flying(char *text, int x, int y, int width);
+// Required rehome prerequisite 005DE320, currently a free fastcall scaffold.
+int wrap_cent_flying(char *text);
+// 005DE4D0
+int wrap_cent_flying_flush();
+// 005E3690
+int write_multi_font_raw(char *text, int x, int y);
+// 005E3730. This MUST NOT replace the existing four-argument write_cent_l:
+// native 005DD250 interprets its fourth argument as maximum text length,
+// whereas this wrapper uses rectangle width and computes the full length.
+int write_cent(char *text, int x, int y, int width);
+// 005E3770; forwards a borrowed pointer returned by find_line_break_l.
+char *find_line_break(char *text, int width);
+
+
+void draw_dest_unk1(Buffer *, int, int, unsigned char *);
+void draw_dest_unk1(Buffer *, int, int, int, int, unsigned char *);
+
+ public:
   const RECT &current_clip() const { return rect1_; }
   // The list-box draw callback uses the DIB's live width at Buffer+0x80.
   int pixel_width() const { return dib_.bmiHeader.biWidth; }
@@ -148,7 +193,7 @@ class Buffer {
   // Blit this buffer into a window's client area. Called by the homed
   // Win painters; its own definition is still an artifact. Arity from
   // the call site.
-  void copy_to_window(Win *target, int src_x, int src_y, int x, int y,
+  int copy_to_window(Win *target, int src_x, int src_y, int x, int y,
                       int w, int h);
   // homed from 005d8290.cpp
   // -1 means "the fill colour": the body substitutes WinFillColour.
@@ -713,7 +758,7 @@ class Buffer {
   // stores; it was `uint32_t`, which needed a cast at the one store.
   void *poOwner_;
   BufferWriteRawCallback field_8_;  // 0x0008
-  uint32_t field_C_;
+  BufferWriteStringsCallback field_C_;
   uint32_t field_10_;
   uint32_t field_14_;
   uint32_t field_18_;
@@ -1019,3 +1064,9 @@ void __cdecl buffer_close_class_redirect();
 // the original ends `mov eax, edi` at 0x005DCE18, handing back the advanced
 // pen position, which is why the scalar writers return the incoming x when
 // they emit nothing.
+
+extern char BufferFlyingText[];
+extern int BufferFlyingX,BufferFlyingY,BufferFlyingWidth;
+extern const char BufferJoinSpace[],BufferMeasureSpace[],BufferWriteSpace[],BufferCenteredSpace[];
+char *__cdecl get_special(char *, int *);
+char *__cdecl get_special_link(char *, int *);

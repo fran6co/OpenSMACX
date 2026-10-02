@@ -76,6 +76,9 @@ typedef int (__cdecl *WinKeyHookFn)(int key);
 
 class Win : public AutoSound {
  public:
+  const RECT &cached_outer_rect() const { return cached_outer_rect_; }
+
+ public:
   // FileWin's button callback restores the modal window's focus-list cursor
   // when the filename editor had focus. The list remains owned by Win.
   friend class FileWin;
@@ -454,10 +457,7 @@ class Win : public AutoSound {
   uint32_t field_138_;
   RECT outer_rect_;
   RECT client_rect_;
-  uint32_t field_15C_;
-  uint32_t field_160_;
-  uint32_t field_164_;
-  uint32_t field_168_;
+  RECT cached_outer_rect_;
   uint32_t field_16C_;
   uint32_t field_170_;
   uint32_t field_174_;

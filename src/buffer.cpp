@@ -32,11 +32,105 @@
 // Patterned line rendering is still unfinished. This owning-TU body keeps
 // the non-cover route-preview branch linkable without an executable-address
 // call. The existing five-argument solid-line renderer remains unchanged.
+static void buffer_pattern_pixel(unsigned char *pixel, int first, int second,
+                                  int on, int off, int &phase) {
+    if (phase < 0) {
+        if (first != -1) *pixel = static_cast<unsigned char>(first);
+        if (++phase == 0) phase = off;
+    } else {
+        if (second != -1) *pixel = static_cast<unsigned char>(second);
+        if (--phase == 0) phase = -on;
+    }
+}
+
 // ORIGINAL: 0x005E09D0 ?line@Buffer@@QAEXHHHHHHHHH@Z 0x005E09D0-0x005E10BA
-// RECOVERY_BINDING: v1 {"evidence": ["Original4672C0 calls5E09D0; src/unrecovered/005e09d0.cpp retains its original span and seed.", "The original void catalogue and ignored-result call sites support the declaration; BODY GOES HERE does not implement pattern rendering."], "reason": "The non-cover direct route renderer references this nine-argument patterned Buffer line, distinct from the recovered five-argument solid overload. Its owning-TU placeholder is explicitly unfinished and only preserves linking."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4672C0 calls5E09D0 with nine stack arguments; the original ends with ret24 and belongs to Buffer.", "Original5E09D0 uses half-open clipping, inclusive endpoints and strict-positive DDA steps, preserving clipped-entry pattern phase and original failed-acquisition/modulo error paths."], "reason": "Recover the nine-argument patterned Buffer line as a genuine member, distinct from the five-argument solid overload."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original4672C0 calls5E09D0; src/unrecovered/005e09d0.cpp retains its original span and seed.", "The original void catalogue and ignored-result call sites support the declaration; BODY GOES HERE does not implement pattern rendering."], "reason": "The non-cover direct route renderer references this nine-argument patterned Buffer line, distinct from the recovered five-argument solid overload. Its owning-TU placeholder is explicitly unfinished and only preserves linking."}
 void Buffer::line(int x1, int y1, int x2, int y2, int first_color,
                   int second_color, int pattern_on, int pattern_off, int phase) {
-    // BODY GOES HERE.
+    if (dib_bits_ == 0 && surface_ == 0) return;
+    if (x1 == x2) {
+        vline(x1, y1, y2, first_color, second_color,
+              pattern_on, pattern_off, phase);
+        return;
+    }
+    if (y1 == y2) {
+        hline(x1, x2, y1, first_color, second_color,
+              pattern_on, pattern_off, phase);
+        return;
+    }
+    if (x2 < x1) {
+        int saved = x1; x1 = x2; x2 = saved;
+        saved = y1; y1 = y2; y2 = saved;
+        saved = first_color; first_color = second_color; second_color = saved;
+        saved = pattern_on; pattern_on = pattern_off; pattern_off = saved;
+        phase = pattern_on - phase + pattern_off;
+    }
+    if (get_data() == 0) return; // Native does not release failed acquisition.
+    const RECT clip = rect1_;
+    // Original performs modulo before trivial reject, even for both -1
+    // colors. Sum zero and overflowing arithmetic retain their native invalid
+    // input obligations; do not add an early color guard or modulo clamp.
+    phase %= pattern_on + pattern_off;
+    if (phase < pattern_on) phase -= pattern_on;
+    else phase = pattern_on - phase + pattern_off;
+    int dx = x2 - x1;
+    int dy = y2 - y1;
+    bool ascending = y1 < y2;
+    bool rejected = x1 > clip.right || x2 < clip.left;
+    if (ascending) rejected = rejected || y1 > clip.bottom || y2 < clip.top;
+    else rejected = rejected || y1 < clip.top || y2 > clip.bottom;
+    if (!rejected) {
+        if (dy < 0) dy = -dy;
+        bool x_major = dx >= dy;
+        int straight = x_major ? 2 * dy : 2 * dx;
+        int diagonal = x_major ? 2 * (dy - dx) : 2 * (dx - dy);
+        int error = x_major ? 2 * dy - dx : 2 * dx - dy;
+        int y_step = ascending ? 1 : -1;
+        // Skip the leading clipped points without advancing the pattern.
+        while (x1 < clip.left || (ascending ? y1 < clip.top : y1 >= clip.bottom)) {
+            if (error > 0) {
+                error += diagonal;
+                ++x1;
+                y1 += y_step;
+            } else {
+                error += straight;
+                if (x_major) ++x1;
+                else y1 += y_step;
+            }
+        }
+        if (x1 < clip.right && (ascending ? y1 < clip.bottom : y1 >= clip.top)) {
+            unsigned char *pixel = static_cast<unsigned char *>(locked_bits_)
+                + static_cast<int>(stride_) * y1 + x1;
+            buffer_pattern_pixel(pixel, first_color, second_color,
+                                  pattern_on, pattern_off, phase);
+            if (x_major) {
+                if (x2 >= clip.right) x2 = clip.right - 1;
+            } else if (ascending) {
+                if (y2 >= clip.bottom) y2 = clip.bottom - 1;
+            } else if (y2 < clip.top) {
+                y2 = clip.top;
+            }
+            while (x_major ? x1 < x2 : (ascending ? y1 < y2 : y1 > y2)) {
+                if (error > 0) {
+                    error += diagonal;
+                    ++x1;
+                    y1 += y_step;
+                    if (x_major) {
+                        if (ascending ? y1 >= clip.bottom : y1 < clip.top) break;
+                    } else if (x1 >= clip.right) break;
+                    pixel += 1 + y_step * static_cast<int>(stride_);
+                } else {
+                    error += straight;
+                    if (x_major) { ++x1; ++pixel; }
+                    else { y1 += y_step; pixel += y_step * static_cast<int>(stride_); }
+                }
+                buffer_pattern_pixel(pixel, first_color, second_color,
+                                      pattern_on, pattern_off, phase);
+            }
+        }
+    }
+    free_data(1);
 }
 
 // THE ORIGINAL'S MIN, which evaluates both arguments twice. `write_cent_l`
@@ -4194,6 +4288,11 @@ int Buffer::box_sprite(RECT *rect, BoxSpriteParams *params) {
     }
 }
 
+#include "buffer_special_text.h"
+// Native CRT slots68266C/682670 establish record-array then Sprite order.
+// RECOVERY_OBJECT: v1 0x009B37E0 ?BufferSpecialTexts@@3PAUBufferSpecialText@@A
+BufferSpecialText BufferSpecialTexts[10];
+
 // Original initializer 0x005D71D0 constructs this Sprite at 0x009B3A50
 // through 0x005E37E0 and registers its cleanup; 0x005D71F0 closes it through
 // 0x005E3820. The blit setup/reset family borrows its pixel pointer rather
@@ -4588,6 +4687,11 @@ int Buffer::write_right_l(Font * a1, char * a2, int a3, int a4, int a5, int a6) 
     return result;
 }
 
+// Current flying-text storage: genuine shared text array and signed X/Y/width
+// objects.9B3A98 is available WIDTH;9B3A9C is the independently owned running
+// text-width accumulator BufferStrHeight. Array capacity is explicitly
+// provisional; see its definition. The old fixed-alias interpretation below
+// is preserved only as superseded history, not current binding evidence.
 // THE FLYING-TEXT BLOCK, and the two space constants its writer joins lines
 // with. Named bindings, not objects: the image holds them at these fixed
 // data addresses and nothing in this build maps them, so the binding form
@@ -4605,10 +4709,6 @@ int Buffer::write_right_l(Font * a1, char * a2, int a3, int a4, int a5, int a6) 
 //               first is what `wrap_height_flying` measures as the
 //               more-text-follows indicator, the second is what `wrap_flying`
 //               measures for the same purpose on its own path
-static int *const FlyingTextBuf = (int *)0x009B33CC;
-static int *const FlyingTextX = (int *)0x009B3A90;
-static int *const FlyingTextY = (int *)0x009B3A94;
-static int *const FlyingTextHeight = (int *)0x009B3A98;
 // 0x00682820 - the one-space .rdata string, the same constant
 // socialwin.cpp's SpaceText binding names.
 // THE THREE WRITER FONT SLOTS (font1_/font2_/font3_) ARE SAVED AND RESTORED
@@ -4628,9 +4728,6 @@ static int *const BufferWriteStatus = (int *)0x009B39D8;
 // `find_line_break_l` strncmp's the first six bytes of a '$' segment
 // against it to recognise a link.
 static const char *const MarkupLinkToken = (const char *)0x00696C90;
-static int *const SpaceText = (int *)0x00682820;
-static int *const SpaceTextPrompt = (int *)0x00696CD8;
-static int *const SpaceTextTail = (int *)0x00696CDC;
 
 // ORIGINAL: 0x005DD250 ?write_cent_l@Buffer@@QAEHPADHHH@Z 0x005DD250-0x005DD2F3 FILE
 // working copy - scaffold materialised by --work
@@ -4936,7 +5033,7 @@ int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
 
     int y = a4;
     if (a2 != 0) {
-        *reinterpret_cast<int *>(0x9b3a9c) = 0;
+        BufferStrHeight = 0;
         field_18_ = 0;
         char *str = a2;
         char *brk;
@@ -4946,7 +5043,7 @@ int Buffer::wrap_cent(Font *a1, char *a2, int a3, int a4, int a5, int a6) {
             if (str == 0) {
                 brk = 0;
             } else {
-                *reinterpret_cast<int *>(0x9b3a9c) = 0;
+                BufferStrHeight = 0;
                 unsigned int len = strlen(str);
                 brk = reinterpret_cast<char *>(find_line_break_l(str, &wrapWidth, len));
                 if (brk == 0) {
@@ -5031,15 +5128,15 @@ int Buffer::wrap_height_flying_flush() {
         Font *font = font1_;
         int height = (font->unk_1_ >= 0) ? font->height_ + font->unk_1_
                                           : font->line_height_;
-        *FlyingTextY += height;
+        BufferFlyingY += height;
         field_18_++;
     }
-    *FlyingTextHeight = 0;
+    BufferFlyingWidth = 0;
     write_font_slot_ = 0;
     font_slot_ = 0;
     field_514_ = 0;
     markup_pending_ = 0;
-    return *FlyingTextY;
+    return BufferFlyingY;
 }
 
 // ORIGINAL: 0x005DDDE0 ?wrap_height_flying@Buffer@@QAEHPAD@Z 0x005DDDE0-0x005DDEEA
@@ -5053,7 +5150,7 @@ int Buffer::wrap_height_flying_flush() {
 
 
 int Buffer::wrap_height_flying(char * a1) {
-    if (*FlyingTextHeight == 0) {
+    if (BufferFlyingWidth == 0) {
         return 0;
     }
     if (a1 != 0) {
@@ -5063,7 +5160,7 @@ int Buffer::wrap_height_flying(char * a1) {
         char *text = a1;
         if (*text != '\0') {
             do {
-                int remaining = *FlyingTextHeight - BufferStrHeight;
+                int remaining = BufferFlyingWidth - BufferStrHeight;
                 text = (char *)find_line_break_l(text, &remaining, strlen(text));
                 if (text == 0) {
                     break;
@@ -5080,9 +5177,9 @@ int Buffer::wrap_height_flying(char * a1) {
                     lineAdvance = fnt->height_ + fnt->unk_1_;
                 }
                 BufferStrHeight = 0;
-                *FlyingTextY = *FlyingTextY + lineAdvance;
+                BufferFlyingY = BufferFlyingY + lineAdvance;
                 if (field_14_ != 0) {
-                    *FlyingTextHeight = *FlyingTextHeight - field_14_;
+                    BufferFlyingWidth = BufferFlyingWidth - field_14_;
                     field_14_ = 0;
                 }
             } while (true);
@@ -5094,7 +5191,7 @@ int Buffer::wrap_height_flying(char * a1) {
             }
         }
     }
-    return *FlyingTextY;
+    return BufferFlyingY;
 }
 
 // ORIGINAL: 0x005DE1D0 ?wrap_flying_flush@Buffer@@QAEHXZ 0x005DE1D0-0x005DE2DE
@@ -5108,7 +5205,7 @@ int Buffer::wrap_height_flying(char * a1) {
 
 
 int Buffer::wrap_flying_flush() {
-    const char *const text = (const char *)FlyingTextBuf;
+    const char *const text = (const char *)BufferFlyingText;
     if (text[0] != '\0') {
         unsigned int len1 = strlen(text);
         if (font1_ != 0 && font1_->font_obj_ != 0) {
@@ -5124,7 +5221,7 @@ int Buffer::wrap_flying_flush() {
                     finalLen = strlen(text);
                 }
                 if (finalLen != 0) {
-                    write_multi_font_raw_l(const_cast<char *>(text), *FlyingTextX, *FlyingTextY, finalLen);
+                    write_multi_font_raw_l(const_cast<char *>(text), BufferFlyingX, BufferFlyingY, finalLen);
                 }
             }
         }
@@ -5133,16 +5230,16 @@ int Buffer::wrap_flying_flush() {
         }
         Font *fnt = font1_;
         int lineAdvance = (fnt->unk_1_ < 0) ? fnt->line_height_ : fnt->height_ + fnt->unk_1_;
-        *FlyingTextY = *FlyingTextY + lineAdvance;
+        BufferFlyingY = BufferFlyingY + lineAdvance;
         field_18_ = field_18_ + 1;
     }
-    *FlyingTextBuf = 0;
-    *FlyingTextHeight = 0;
+    *BufferFlyingText = 0;
+    BufferFlyingWidth = 0;
     write_font_slot_ = 0;
     font_slot_ = 0;
     field_514_ = 0;
     markup_pending_ = 0;
-    return *FlyingTextY;
+    return BufferFlyingY;
 }
 
 // ORIGINAL: 0x005DDFB0 ?wrap_flying@Buffer@@QAEHPAD@Z 0x005DDFB0-0x005DE1C8 FILE
@@ -5157,30 +5254,30 @@ int Buffer::wrap_flying_flush() {
 
 int Buffer::wrap_flying(char * a1) {
     
-    if (*FlyingTextHeight == 0) {
+    if (BufferFlyingWidth == 0) {
         return 0;
     }
     if (a1 == 0) {
-        return *FlyingTextY;
+        return BufferFlyingY;
     }
     if (*a1 == 0) {
-        return *FlyingTextY;
+        return BufferFlyingY;
     }
 
     char *cur = a1;
-    char *buf = (char *)FlyingTextBuf;
+    char *buf = (char *)BufferFlyingText;
     for (;;) {
         if (buf[0] != 0) {
-            strcat(buf, (const char *)SpaceText);
-            unsigned int len = strlen((const char *)SpaceTextTail);
-            int w = this->text_width((char *)SpaceTextTail, len);
+            strcat(buf, (const char *)BufferJoinSpace);
+            unsigned int len = strlen((const char *)BufferWriteSpace);
+            int w = this->text_width((char *)BufferWriteSpace, len);
             BufferStrHeight += w;
         }
 
         char *brk = cur;
-        if (BufferStrHeight < *FlyingTextHeight) {
+        if (BufferStrHeight < BufferFlyingWidth) {
             unsigned int len2 = strlen(cur);
-            int avail = *FlyingTextHeight - BufferStrHeight;
+            int avail = BufferFlyingWidth - BufferStrHeight;
             brk = (char *)this->find_line_break_l(cur, &avail, len2);
         }
         if (brk == 0) {
@@ -5191,8 +5288,8 @@ int Buffer::wrap_flying(char * a1) {
         memcpy(buf + buflen, cur, brk - cur);
         buf[buflen + (brk - cur)] = 0;
 
-        int saved_94 = *FlyingTextY;
-        int saved_90 = *FlyingTextX;
+        int saved_94 = BufferFlyingY;
+        int saved_90 = BufferFlyingX;
         unsigned int flen = strlen(buf);
 
         if ((int)font1_ != 0 && *(int *)(reinterpret_cast<int>(font1_) + 8) != 0) {
@@ -5225,18 +5322,18 @@ int Buffer::wrap_flying(char * a1) {
         } else {
             add = rec->height_ + rec->unk_1_;
         }
-        *FlyingTextY += add;
+        BufferFlyingY += add;
 
         cur = brk;
         if (field_14_ != 0) {
-            *FlyingTextHeight -= field_14_;
-            *FlyingTextX += field_14_;
+            BufferFlyingWidth -= field_14_;
+            BufferFlyingX += field_14_;
             field_14_ = 0;
         }
     }
 
     strcat(buf, cur);
-    return *FlyingTextY;
+    return BufferFlyingY;
 }
 
 // ORIGINAL: 0x005DB580 ?write_l@Buffer@@QAEHPAVFont@@PADHHH@Z 0x005DB580-0x005DB65F FILE BYTE_EXACT
@@ -5853,9 +5950,9 @@ int Buffer::wrap_height_flying(char *a1, int a2) {
     field_18_ = 0;
     field_14_ = value;
     markup_pending_ = 0;
-    *FlyingTextY = 0;
+    BufferFlyingY = 0;
     BufferStrHeight = 0;
-    *FlyingTextHeight = a2;
+    BufferFlyingWidth = a2;
     return wrap_height_flying(text);
 }
 
@@ -5953,12 +6050,12 @@ int Buffer::wrap_flying(char *a1, int a2, int a3, int a4) {
     uint32_t saved = field_10_;
     field_18_ = 0;
     field_14_ = saved;
-    *FlyingTextX = a2;
+    BufferFlyingX = a2;
     BufferStrHeight = 0;
-    *FlyingTextY = a3;
-    *FlyingTextHeight = a4;
+    BufferFlyingY = a3;
+    BufferFlyingWidth = a4;
     markup_pending_ = 0;
-    *reinterpret_cast<uint8_t *>(FlyingTextBuf) = 0;
+    *reinterpret_cast<uint8_t *>(BufferFlyingText) = 0;
     return wrap_flying(a1);
 }
 
@@ -7253,7 +7350,7 @@ int Buffer::copy(Buffer *destination, int src_x, int src_y, int src_w,
 // The per-entry callback `write_strings_height` consults with each id and
 // payload pair before measuring it. The pointer lives in the buffer word the
 // header still names `field_C_`.
-typedef void(__cdecl *WriteStringsCallback)(int, int);
+
 
 // ORIGINAL: 0x005DAD70 ?write_strings_height@Buffer@@QAEHPAUStringList@@HH@Z 0x005DAD70-0x005DB03E
 // symbol    ?write_strings_height@Buffer@@QAEHPAVStringList@@HH@Z
@@ -7289,7 +7386,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
 
     if (field_C_ != 0) {
         const int id = strings->head_ != 0 ? strings->current_->id : 0;
-        reinterpret_cast<WriteStringsCallback>(field_C_)(id, payload);
+        field_C_(id, payload);
     }
 
     int total_height = 0;
@@ -7301,8 +7398,8 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
         field_18_ = 0;
         field_14_ = field_10_;
         markup_pending_ = 0;
-        *FlyingTextHeight = width;
-        *FlyingTextY = 0;
+        BufferFlyingWidth = width;
+        BufferFlyingY = 0;
         BufferStrHeight = 0;
         wrap_height_flying(nullptr);
     } else if (payload == 2) {
@@ -7329,8 +7426,8 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
         field_14_ = field_10_;
         markup_pending_ = 0;
         BufferStrHeight = 0;
-        *FlyingTextHeight = width;
-        *FlyingTextY = 0;
+        BufferFlyingWidth = width;
+        BufferFlyingY = 0;
         wrap_height_flying(nullptr);
     } else {
         const int id = strings->head_ != 0 ? strings->current_->id : 0;
@@ -7339,8 +7436,8 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
         field_14_ = field_10_;
         markup_pending_ = 0;
         BufferStrHeight = 0;
-        *FlyingTextHeight = width;
-        *FlyingTextY = 0;
+        BufferFlyingWidth = width;
+        BufferFlyingY = 0;
         wrap_height_flying(text);
     }
 
@@ -7357,7 +7454,7 @@ int Buffer::write_strings_height(StringList *strings, int width, int flags) {
             if (field_C_ != 0) {
                 const int id =
                     strings->head_ != 0 ? strings->current_->id : 0;
-                reinterpret_cast<WriteStringsCallback>(field_C_)(id,
+                field_C_(id,
                                                                  line_payload);
             }
 
@@ -8079,4 +8176,1800 @@ void Buffer::vline(int x, int y1, int y2, int first_color, int second_color,
     }
 
     free_data(1);
+}
+
+// Provisional capacity: independent native capacity evidence is absent.
+// The1024-byte proposal uses the next independent global boundary,
+// with explicit coordinator/user approval for build continuity only.
+// This is NOT an exact original extent claim. Preserve native
+// unbounded strcat/memcpy and their original overflow obligations.
+// RECOVERY_OBJECT: v1 0x009B33CC ?BufferFlyingText@@3PADA
+char BufferFlyingText[1024];
+
+
+
+#include "texture.h"
+#include "vert.h"
+#include <float.h>
+extern char BufferFlyingText[];
+// RECOVERY_OBJECT: v1 0x009B3A90 ?BufferFlyingX@@3HA
+int BufferFlyingX;
+// RECOVERY_OBJECT: v1 0x009B3A94 ?BufferFlyingY@@3HA
+int BufferFlyingY;
+// RECOVERY_OBJECT: v1 0x009B3A98 ?BufferFlyingWidth@@3HA
+int BufferFlyingWidth;
+// RECOVERY_OBJECT: v1 0x00682820 ?BufferJoinSpace@@3QBDB
+extern const char BufferJoinSpace[] = " ";
+// RECOVERY_OBJECT: v1 0x00696CD8 ?BufferMeasureSpace@@3QBDB
+extern const char BufferMeasureSpace[] = " ";
+// RECOVERY_OBJECT: v1 0x00696CDC ?BufferWriteSpace@@3QBDB
+extern const char BufferWriteSpace[] = " ";
+// RECOVERY_OBJECT: v1 0x00696CE0 ?BufferCenteredSpace@@3QBDB
+extern const char BufferCenteredSpace[] = " ";
+
+
+#include "stdafx.h"
+#include "buffer.h"
+#include "sprite.h"
+#include "filemap.h"
+#include "palette.h"
+
+// ORIGINAL: 0x005D8740 sub_5d8740 0x005D8740-0x005D8838 FILE
+// symbol    ?draw_unk2@Buffer@@QAEHPAV1@HHHHHH@Z
+// TRIED: register-copy-before-store for the two lock-count decrements (`int c=X-1; store; if(c>0)`) matches Ghidra's shape but VC6 collapses the redundant `mov eax,ecx` copy the original keeps for the NULL-surface arm; best reached is 97.5% mnemonic similarity, diverging only in that micro reg-alloc order (#41 mov vs cmp). __fastcall(self, unused-edx, 7 stack ints) instead of the given __stdcall(a1..a7): `mov esi, ecx` with no matching stack slot is a receiver, not a stack arg.
+// Sprite5E4ADA receives the genuine destination Buffer pointer and six integers.
+int Buffer::draw_unk2(Buffer *destination, int transparent, int x, int y,
+                      int numerator, int denominator, int table) {
+    setup_buff_sprite(transparent);
+    int result = g_BUFFER_SPRITE.draw_noop(destination, transparent, x, y,
+                                          numerator, denominator, table);
+    release_buff_sprite();
+    return result;
+}
+
+// ORIGINAL: 0x005D8EE0 ?draw_dest_source@Buffer@@QAEHPAVBuffer@@HHHHHPAE@Z 0x005D8EE0-0x005D8FD8 FILE
+// symbol    ?draw_dest_source@Buffer@@QAEHPAV1@HHHHHPAE@Z
+// TRIED: same shape as 0x005D8740/0x005D8930/0x005D8B20 - see 0x005D8740's note for what the stdcall-Unlock and opaque-field access forms rule out.
+// TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
+int Buffer::draw_dest_source(Buffer *destination, int transparent, int x, int y,
+                             int numerator, int denominator,
+                             unsigned char *table) {
+    setup_buff_sprite(transparent);
+    int result = g_BUFFER_SPRITE.draw_dest_source(destination, transparent, x, y,
+                                                  numerator, denominator, table);
+    release_buff_sprite();
+    return result;
+}
+
+// ORIGINAL: 0x005D90D0 sub_5d90d0 0x005D90D0-0x005D91C8 FILE
+// symbol    ?draw@Buffer@@QAEHPAV1@HHHHHPAE@Z
+// TRIED: same shape as 0x005D8740 (no mangled name either) - __fastcall (self, unused-edx, 7 stack ints) instead of the given __stdcall (a1..a7): `mov esi, ecx` with no matching stack slot is a receiver. See 0x005D8740's note for the stdcall-Unlock function-pointer form.
+// TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
+int Buffer::draw(Buffer *destination, int transparent, int x, int y,
+                  int numerator, int denominator, unsigned char *table) {
+    setup_buff_sprite(transparent);
+    int result = g_BUFFER_SPRITE.draw(destination, transparent, x, y,
+                                      numerator, denominator, table);
+    release_buff_sprite();
+    return result;
+}
+
+// ORIGINAL: 0x005D92C0 sub_5d92c0 0x005D92C0-0x005D93B8 FILE
+// symbol    ?draw_dest_unk2@Buffer@@QAEHPAV1@HHHHHPAE@Z
+// TRIED: same shape as 0x005D8740/0x005D90D0 - see 0x005D8740's note for the stdcall-Unlock form and the __fastcall(self, unused-edx, 7 stack ints) signature override.
+// TRIED: nothing new past that - 94.9%+ mnemonic similarity, first gap at #41 (mov vs cmp) in the NULL-surface lock-count arm, same spot as every sibling in this family.
+int Buffer::draw_dest_unk2(Buffer *destination, int transparent, int x, int y,
+                           int numerator, int denominator,
+                           unsigned char *table) {
+    setup_buff_sprite(transparent);
+    int result = g_BUFFER_SPRITE.draw_dest_unk2(destination, transparent, x, y,
+                                               numerator, denominator, table);
+    release_buff_sprite();
+    return result;
+}
+
+// ORIGINAL: 0x005D7A30 sub_5d7a30 0x005D7A30-0x005D7ADA;0x00662B80-0x00662B92 FILE
+// symbol    ?probe_image_file@Buffer@@SGHPBDPAVPalette@@HH@Z
+// TRIED: plain local `Filemap fm;` with early returns (no SEH prologue at all, 90 vs 170 B). Wrapping in try{}catch(...){throw;} recovers most of the /GX frame shape (179 vs 170 B) but still diverges at #1 push/mov - same wall as 0x004C4BF0's WorldWin ctor.
+// Provisional name, original receiver unused. Ret10 and the actual first
+// argument filename prove four stack arguments; remaining args are unused.
+int __stdcall Buffer::probe_image_file(const char *filename, Palette *, int, int) {
+    Filemap file;
+    if (filename == 0) return 3;
+    if (file.open_read(filename, FALSE) == 0) return 6;
+    return 8;
+}
+
+// ORIGINAL: 0x005D7F20 sub_5d7f20 0x005D7F20-0x005D7FFB;0x00662BD1-0x00662BFC FILE
+// symbol    ?probe_pcx@Buffer@@SGHPBDPAVPalette@@HH@Z
+// TRIED: reproducing the SEH frame/unwind funclets (~Buffer only runs on the EXCEPTION path in the original; the normal path calls close()+~Spot() explicitly instead) - landed with the local `Buffer buf` left trivially destructible (no ~Buffer call at all on scope exit) and the explicit close()/spot_.~Spot() calls matching the normal path only.
+// This utility only loads a temporary Buffer and returns its status. Original
+// normal teardown is inlined close + Spot destruction; real local owns both.
+int __stdcall Buffer::probe_pcx(const char *filename, Palette *palette,
+                                int color_base, int color_count) {
+    Buffer temporary;
+    return temporary.load_pcx(filename, palette, color_base, color_count);
+}
+
+
+#include "stdafx.h"
+#include "buffer.h"
+#include "win.h"
+#include "palette.h"
+#include "temp.h"
+
+// Original696BF4 stores the initial palette-selection policy value1.
+// RECOVERY_OBJECT: v1 0x00696BF4 ?BufferPreferActivePalette@@3HA
+int BufferPreferActivePalette = 1;
+
+// ORIGINAL: 0x005D98F0 sub_5d98f0 0x005D98F0-0x005D9BD7 FILE
+// symbol    ?copy_scaled@Buffer@@QAEHPAV1@PAUtagRECT@@1@Z
+// TRIED: plain extern "C" __stdcall(a1,a2,a3) per IDA's guess - landed as Buffer::sub_5d98f0(Buffer *srcBuf, RECT *srcRect, RECT *destRect) __thiscall instead: `this`(edi) drives the same HDC-acquire/refcount pattern as srcBuf, and only srcRect/ destRect are null-checked (srcBuf is checked separately, non-fatally). slot001 is plain VCall (no push, this in ecx); slot017/026 are COM-style (this explicitly pushed as arg 0) despite reusing the same ecx register - frame differs from #3 on, not pursued further given the size of this function.
+int Buffer::copy_scaled(Buffer *source, RECT *source_rect, RECT *destination_rect) {
+    if (source_rect == 0 || destination_rect == 0) return 3;
+    const int destination_height = destination_rect->bottom - destination_rect->top;
+    const int destination_width = destination_rect->right - destination_rect->left;
+    const int destination_top = destination_rect->top;
+    const int destination_left = destination_rect->left;
+    const int source_height = source_rect->bottom - source_rect->top;
+    const int source_width = source_rect->right - source_rect->left;
+    const int source_top = source_rect->top;
+    const int source_left = source_rect->left;
+    if (source == 0) return 8;
+    HDC source_dc = source->get_hdc();
+    // These native failure arms deliberately retain the failed acquisition's
+    // count; adding a balancing release would change original behavior.
+    if (source_dc == 0) return 8;
+    HDC destination_dc = get_hdc();
+    if (destination_dc == 0) {
+        source->release_hdc(1);
+        return 8;
+    }
+    sync_to_palette(PaletteActive);
+    source->sync_to_palette(PaletteActive);
+    // Native005D9B91 pushes the receiver DC as source;005D9BA2 pushes
+    // the source object's DC as destination. Preserve this native reversal.
+    StretchBlt(source_dc, destination_left, destination_top,
+               destination_width, destination_height, destination_dc,
+               source_left, source_top, source_width, source_height, SRCCOPY);
+    source->release_hdc(1);
+    release_hdc(1);
+    return 8;
+}
+
+// ORIGINAL: 0x005D9BE0 ?copy_to_window@Buffer@@QAEHPAVWin@@HHHHHH@Z 0x005D9BE0-0x005D9FAF FILE
+// TRIED: Ghidra-faithful translation (Win::get_hdc/release_hdc made static to match win.h; IntersectRect/BitBlt/ValidateRect/ SetDIBColorTable called through __stdcall function-pointer typedefs read from the IAT-slot globals; slot017/slot026 retyped for the observer dispatch). Compiles and matches through instr #57 (of ~230); diverges at #58 (inc vs mov, likely a refcount decrement's codegen). Landed at MISMATCH.
+int Buffer::copy_to_window(Win *target, int source_x, int source_y,
+                           int destination_x, int destination_y,
+                           int width, int height) {
+    if (surface_ != 0) return 0x12;
+    if (dib_bits_ == 0) return 7;
+    if (target == 0) return 0x10;
+    HDC screen_dc = Win::get_hdc();
+    if (screen_dc == 0) return 7;
+    HDC source_dc = get_hdc();
+    if (source_dc == 0) {
+        Win::release_hdc();
+        return 7;
+    }
+    if (source_x + width > dib_.bmiHeader.biWidth)
+        width = dib_.bmiHeader.biWidth - source_x;
+    if (source_y + height > -dib_.bmiHeader.biHeight)
+        height = -(dib_.bmiHeader.biHeight + source_y);
+    RECT destination = {destination_x, destination_y,
+                        destination_x + width, destination_y + height};
+    if (!IntersectRect(&destination, &destination, &target->cached_outer_rect())) {
+        Win::release_hdc();
+        release_hdc(1);
+        return 0;
+    }
+    source_x += destination.left - destination_x;
+    source_y += destination.top - destination_y;
+    width = destination.right - destination.left;
+    height = destination.bottom - destination.top;
+    if (BufferPreferActivePalette == 0 && palette_ != 0)
+        sync_to_palette(palette_);
+    else
+        sync_to_palette(PaletteActive);
+    target->sync_palette();
+    PaletteActive->set();
+    int screen_x = 0, screen_y = 0;
+    target->client_to_screen(&screen_x, &screen_y);
+    destination.left += screen_x;
+    destination.right += screen_x;
+    destination.top += screen_y;
+    destination.bottom += screen_y;
+    BitBlt(screen_dc, destination.left, destination.top, width, height,
+           source_dc, source_x, source_y, SRCCOPY);
+    ValidateRect(HandleMain, &destination);
+    Win::release_hdc();
+    release_hdc(1);
+    return 0;
+}
+
+// ORIGINAL: 0x005D9FB0 sub_5d9fb0 0x005D9FB0-0x005DA328 FILE
+// symbol    ?copy_scaled_to_window@Buffer@@QAEHPAVWin@@PAUtagRECT@@1@Z
+// TRIED: MISMATCH #4 (mov vs push, prologue register scheduling) - `this` confirmed as Buffer* (field offsets 0x50/0x54/0x58/ 0x60/0x64/0x68/0x4a4/0x30 all match src/buffer.h exactly). The device-context acquire/release here is byte-identical to the already-recovered Buffer::get_hdc()/release_hdc(1), and the palette-refresh block matches Buffer::sync_to_palette() (src/buffer.cpp) field-for-field, so the body calls those methods directly instead of re-inlining their logic.
+// The original computes but does not consume the source clip intersection.
+// Keep that call and the later live reads of the caller's source RECT.
+int Buffer::copy_scaled_to_window(Win *target, RECT *destination_rect,
+                                  RECT *source_rect) {
+    if (surface_ != 0) return 0x12;
+    if (dib_bits_ == 0) return 7;
+    if (target == 0 || destination_rect == 0 || source_rect == 0) return 0x10;
+    HDC source_dc = get_hdc();
+    if (source_dc == 0) return 7;
+    HDC screen_dc = Win::get_hdc();
+    if (screen_dc == 0) {
+        release_hdc(1);
+        return 7;
+    }
+    RECT source_intersection = *source_rect;
+    IntersectRect(&source_intersection, &source_intersection, &rect2_);
+    RECT destination;
+    if (!IntersectRect(&destination, destination_rect, &target->cached_outer_rect())) {
+        release_hdc(1);
+        Win::release_hdc();
+        return 0;
+    }
+    sync_to_palette(PaletteActive);
+    target->sync_palette();
+    PaletteActive->set();
+    int screen_x = 0, screen_y = 0;
+    target->client_to_screen(&screen_x, &screen_y);
+    destination.left += screen_x;
+    destination.right += screen_x;
+    destination.top += screen_y;
+    destination.bottom += screen_y;
+    StretchBlt(screen_dc, destination.left, destination.top,
+               destination.right - destination.left,
+               destination.bottom - destination.top, source_dc,
+               source_rect->left, source_rect->top,
+               source_rect->right - source_rect->left,
+               source_rect->bottom - source_rect->top, SRCCOPY);
+    ValidateRect(HandleMain, &destination);
+    // Normal arm differs from the empty-intersection arm: screen release first.
+    Win::release_hdc();
+    release_hdc(1);
+    return 0;
+}
+
+// ORIGINAL: 0x005DAB90 sub_5dab90 0x005DAB90-0x005DAC65 FILE
+// symbol    ?set_dc_text_color@Buffer@@QAEXI@Z
+// TRIED: this is a real __thiscall Buffer member (ecx=this pervasively); slot001 (self+4) is a genuine virtual thiscall dispatch via the scaffold's VCall class, but slots at offset 0x44/0x68 on the secondary object (surface_) push that object as an explicit stack arg while ecx holds the vtable pointer - not a real thiscall, so those two use raw `int**`/function-pointer casts instead of VCall. locked_bits_/0x58/0x60/0x64/0x68/0x50C offsets match Buffer's known layout from the wrap_cent brief.
+// TRIED: tracking a single `iVar3` local mirroring ghidra's variable (should instead re-read *piVar1 fresh at the "iVar3 != 0" gate, since the original reloads memory there); several statement-order and branch-order permutations for the piVar2==0 vs *piVar1==0 arms, none reached better than ~0.81 mnemonic similarity.
+void Buffer::set_dc_text_color(unsigned int color) {
+    if (get_hdc() != 0) {
+        if (color != field_50C_) {
+            SetTextColor(hdc2_, (color & 0xffff) | 0x10ff0000);
+            field_50C_ = color;
+        }
+        release_hdc(1);
+    }
+}
+
+
+// Original seed comment lines below are preserved verbatim as historical lessons;
+// scaffold types/fixed addresses are replaced by actual Buffer/Font members.
+// New descriptive member names lack original mangled-name evidence.
+// Shared storage declarations are real objects. The original flying-text
+// capacity remains unverified; its source array is explicitly provisional.
+#include "buffer.h"
+#include "font.h"
+#include "temp.h"
+#include <string.h>
+
+#ifdef _MSC_VER
+#pragma function(strlen)
+#endif
+
+extern char BufferFlyingText[];
+extern int BufferFlyingX;
+extern int BufferFlyingY;
+extern int BufferFlyingWidth;
+
+// ORIGINAL: 0x005DB400 sub_5db400 0x005DB400-0x005DB44F FILE
+// symbol    ?write_vertical@Buffer@@QAEHPAVFont@@PADPAUtagRECT@@@Z
+// size      79 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DB450
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DB400
+// measured tier  MNEMONIC_ONLY
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005db400/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5db400  at 0x005DB400  (79 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// ---- callees, declared and never defined (a definition would be inlined) ----
+// Redeclared: the scaffold's guess used `int8` and `CHAR`, neither of which
+// this unit's typedefs define (C2065 on both), and both stack arguments are
+// forwarded verbatim from this function's own `int` parameters - no
+// `add esp` follows the call, so the callee (declared __stdcall) cleans its
+// own two dwords, matching what is forwarded here.
+// `ecx+0x52c` is read with no stack access at entry, so the receiver is a
+// real `this`: this is a `__thiscall` member. `ret 0xc` cleans exactly
+// three explicit stack arguments.
+
+int Buffer::write_vertical(Font *font, char *text, RECT *area) {
+    Font *saved_font1 = font1_;
+    Font *saved_font2 = font2_;
+    Font *saved_font3 = font3_;
+    if (font != 0 && font->is_initialized()) {
+        font1_ = font;
+        font2_ = 0;
+        font3_ = 0;
+    }
+    int result = write_vertical(text, area);
+    font1_ = saved_font1;
+    font2_ = saved_font2;
+    font3_ = saved_font3;
+    return result;
+}
+
+// ORIGINAL: 0x005DC2D0 ?get_special@@YAHPADPAH@Z 0x005DC2D0-0x005DC30C FILE
+// symbol    ?get_special@@YAPADPADPAH@Z
+// size      60 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DC2D0
+// measured tier  MISMATCH
+// divergence     5
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005dc2d0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?get_special@@YAHPADPAH@Z  at 0x005DC2D0  (60 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// Mangled `PADPAH` decodes plainly to (char*, int*); the scaffold's opaque
+// `struct int8` forward-decl is IDA's guess, not the mangled ground truth.
+//
+// NEAR MISS, not byte-exact. Ruled out, all confirmed by direct
+// recompilation across all four measured flag sets:
+//   - Loop shape: `do { c = *p; if (special) break; ++p; } while (--n);`
+//     (fused decrement-and-test) reproduces the ORIGINAL's single
+//     dec/jne-tail loop with no rotation. The moment `--n` is written as
+//     its own statement before a separate `while (n != 0)`, the backend
+//     rotates the loop and duplicates the character reload plus an extra
+//     `jmp` - a 059-vs-052-byte, one-`jmp` difference that persists
+//     through `break`, `goto label`, and a plain nested `if`, so it is
+//     the fused-decrement spelling that matters, not the exit mechanism.
+//   - Return-value merge: the original does a REDUNDANT round trip -
+//     `mov [ebp+8], eax` after the loop, then a SHARED `mov eax,[ebp+8]`
+//     at the join with the early (`n==0`) exit, which already had the
+//     right value in eax and needed no reload. Every source form that
+//     reproduces this (reassigning the scan pointer back into `a1`,
+//     into a fresh `result` local, single vs. two `return` statements)
+//     brings back the loop rotation above - the two byte-costs appear
+//     ONLY together, never the round trip alone, across all four flag
+//     sets. Whatever produces the plain non-rotated loop keeps the
+//     pointer in eax across the join with no stack traffic (52-57 bytes,
+//     8 short of the original's 60).
+//   - Register choice tracks the same pair: the clean 52-byte shape picks
+//     esi to hold `a2`; the original spends ebx. Never isolated the
+//     source shape that flips it independent of the above.
+// Best reached: MISMATCH, 59/60 bytes, one edit (an inserted `jmp` from
+// the rotation), mnemonic similarity 0.833.
+
+char *__cdecl get_special(char *text, int *remaining) {
+    int count = *remaining;
+    if (count != 0) {
+        char *cursor = text;
+        do {
+            char c = *cursor;
+            if (c == '{' || c == '}' || c == '[' || c == ']' || c == '$') {
+                break;
+            }
+            ++cursor;
+        } while (--count);
+        *remaining = count;
+        text = cursor;
+    }
+    return text;
+}
+
+// ORIGINAL: 0x005DC310 ?get_special_link@@YAHPADPAH@Z 0x005DC310-0x005DC351 FILE
+// symbol    ?get_special_link@@YAPADPADPAH@Z
+// size      65 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     frame;hidden;sp_ready;purged_ok
+// calls     (none)
+// PRESERVED UNIT - measured MISMATCH.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DC310
+// measured tier  MISMATCH
+// divergence     2
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005dc310/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: ?get_special_link@@YAHPADPAH@Z  at 0x005DC310  (65 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// `struct int8;` above is the scaffolding's own placeholder type (no
+// `int8` typedef is in scope in this unit, so `int8*` could not have
+// compiled) - the catalogue's `int8` means plain `char` (see the note
+// other units in this pass carry), so the parameter is spelled `char *`
+// directly instead of redeclaring the missing typedef.
+//
+// RULED OUT, not reached: the original keeps a1's stack home ([ebp+8])
+// live as a second copy of the cursor - `mov [ebp+8], eax` on the
+// loop-exhausted/found path, `mov eax, [ebp+8]` at the single shared
+// return - and dedicates a callee-saved `ebx` to `a2` for the whole
+// body (`push ebx` in the prologue, matching the note above), while
+// comparing through `cl`. None of the four measured flag sets
+// reproduce both the register dedication AND a non-rotated
+// `dec edx; jne` tail at once from any spelling tried here: forcing the
+// stack round-trip (splitting the cursor into its own local reassigned
+// back to `a1` at the end) gets the round-trip under /O1 but also
+// rotates the loop (peels the first read, adds a `jmp` back into the
+// middle) - not present in the original - which scores WORSE
+// (mnemonic_similarity 0.8438 vs 0.8814 below). This is the better of
+// the two: same loop shape as the original, just without the spill.
+
+char *__cdecl get_special_link(char *text, int *remaining) {
+    int count = *remaining;
+    if (count != 0) {
+        do {
+            char c = *text;
+            if (c == '{' || c == '}' || c == '[' || c == ']' ||
+                c == '$' || c == '=') {
+                break;
+            }
+            ++text;
+        } while (--count);
+        *remaining = count;
+    }
+    return text;
+}
+
+// ORIGINAL: 0x005DE2E0 sub_5de2e0 0x005DE2E0-0x005DE31A FILE
+// symbol    ?wrap_cent_flying@Buffer@@QAEHPADHHH@Z
+// size      58 bytes
+// prototype 
+// callers   0   call targets   1
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DE320
+// PRESERVED UNIT - measured MNEMONIC_ONLY.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005DE2E0
+// measured tier  MNEMONIC_ONLY
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005de2e0/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5de2e0  at 0x005DE2E0  (58 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// ---- callees, declared and never defined (a definition would be inlined) ----
+// The scaffold's guess (`LPCSTR lpString`) names an undeclared type and does
+// not compile (C2065). `sub_5de320` is reached with a plain stack int (the
+// pushed value is `eax` loaded straight from a stack dword, never treated as
+// a pointer), so it is redeclared here with that arity/type instead.
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+// `mov dword ptr [ecx + 0x18], eax` with no stack access for the receiver:
+// ecx is `this`, so this is a __thiscall member, not the free __stdcall the
+// scaffold guessed. The comparison is over the object's code rather than a
+// symbol lookup, so the class is free to be introduced here.
+// NEAR MISS, not byte-exact: MNEMONIC_ONLY, 57 of 58 bytes. Every mnemonic
+// and the `ret 0x10` pop count already match, in order; the residual is pure
+// register allocation, not a wrong operation. The original stores a2, a3 AND
+// a4 all through EDX (`mov dword ptr [addr], edx`, 6 bytes each), reloading
+// it fresh before each store, and keeps a1 in EAX alone for the trailing
+// `push`/call - ECX is dead the instant the `this`-store finishes.
+//
+// This body's compile instead treats the position of each store, not its
+// identity: whichever real store sits SECOND in program order gets hoisted
+// to a load at the very top of the function into EDX; whichever sits FIRST
+// gets ECX (recycling the just-freed `this` register); whichever sits THIRD
+// gets EAX, which folds to the short `A3 moffs32` form (5 bytes) instead of
+// the general 6-byte ModRM the original has there - the whole 58-vs-57 gap.
+// Confirmed positional, not value-linked: swapping which of a2/a3/a4 occupy
+// which of the three statement slots (7 source permutations tried,
+// including grouping the two zero-stores first, pre-loading `a1` into a
+// named local ahead of everything else, and giving `this`'s field a real
+// class member instead of a pointer cast) always reproduces the identical
+// ECX/EDX/EAX-short pattern, just relabelled - so the extra ECX use is a
+// property of the STATEMENT SHAPE (three pass-through stores plus a
+// terminal call), not of which source spelling names which value. Ruled
+// out rather than found: this reads as the same class of backend scheduling
+// artifact called out for `lea`/`push` ordering elsewhere, extended to
+// register selection, and is left for whoever can compare against a build
+// that pins VC6's register allocator directly.
+
+int Buffer::wrap_cent_flying(char *text, int x, int y, int width) {
+    field_18_ = 0;
+    BufferFlyingX = x;
+    BufferStrHeight = 0;
+    BufferFlyingText[0] = 0;
+    BufferFlyingY = y;
+    BufferFlyingWidth = width;
+    return wrap_cent_flying(text);
+}
+
+// ORIGINAL: 0x005DE4D0 sub_5de4d0 0x005DE4D0-0x005DE580 FILE
+// symbol    ?wrap_cent_flying_flush@Buffer@@QAEHXZ
+// working copy - scaffold materialised by --work
+// size      176 bytes
+// prototype 
+// callers   0   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD020 0x006453E0
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5de4d0  at 0x005DE4D0  (176 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+// ---- callees, declared and never defined (a definition would be inlined) ----
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+
+int Buffer::wrap_cent_flying_flush() {
+    if (BufferFlyingText[0] != 0) {
+        int x = BufferFlyingX;
+        int y = BufferFlyingY;
+        int width = BufferFlyingWidth;
+        int length = static_cast<int>(strlen(BufferFlyingText));
+        write_cent_l(BufferFlyingText, x, y, width, length);
+        ++field_18_;
+    }
+    BufferFlyingText[0] = 0;
+    BufferFlyingWidth = 0;
+    write_font_slot_ = 0;
+    font_slot_ = 0;
+    field_514_ = 0;
+    markup_pending_ = 0;
+    if (font1_ == 0) {
+        font1_ = FontDefault;
+    }
+    Font *font = font1_;
+    if (font->unk_1_ < 0) {
+        return BufferFlyingY + font->line_height_;
+    }
+    return font->height_ + font->unk_1_ + BufferFlyingY;
+}
+
+// ORIGINAL: 0x005E3690 sub_5e3690 0x005E3690-0x005E372A FILE
+// symbol    ?write_multi_font_raw@Buffer@@QAEHPADHH@Z
+// TRIED: naked strlen() got inlined to repne scasb (0.36 mnemonic sim); an untyped `_strlen` nullary alias + StrlenFn cast keeps the CALL and lifted similarity to 0.88. Buffer_5e3690 : public Buffer gives a real __thiscall receiver since explicit __thiscall is C4234.
+// working copy - scaffold materialised by --work
+// size      154 bytes
+// prototype int (__stdcall sub_5E3690)(LPCSTR lpString, int x, int y)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DCAE0 0x006453E0
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5e3690  at 0x005E3690  (154 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// The VC6 dialect limits and the source-form rules used to live here.
+// They are knowledge, not scaffolding, so they now live in the agent
+// system prompt (mizuchi.yaml, plugins.claude-runner.systemPrompt),
+// where they can be edited without regenerating anything and are in
+// context from the first token rather than behind a file read. This
+// emitter computes declarations; it does not carry lessons.
+// `char`, NOT `signed char`. They are distinct MSVC types and mangle
+// differently - D against C - and the catalogue's `int8` means the first:
+// counted over every catalogued mangled name, `PAD` appears 508 times and
+// `PAC` once. Spelling it `signed char` made 150 derived prototypes emit a
+// symbol no target object holds. `int8_t` keeps its C meaning below; neither
+// catalogue ever uses it.
+// ---- callees, declared and never defined (a definition would be inlined) ----
+// `strlen` above is the fast intrinsic MSVC recognises by name and inlines
+// under /O2; the original calls out to it. Reach the real symbol through an
+// untyped nullary alias and a function-pointer cast.
+
+int Buffer::write_multi_font_raw(char *text, int x, int y) {
+    if (text == 0) {
+        return x;
+    }
+    int length = static_cast<int>(strlen(text));
+    if (font1_ != 0 && font1_->is_initialized()) {
+        int check_length = static_cast<int>(strlen(text));
+        int candidate_length = length;
+        if (check_length < length) {
+            candidate_length = static_cast<int>(strlen(text));
+        }
+        if (candidate_length >= 0) {
+            check_length = static_cast<int>(strlen(text));
+            if (check_length < length) {
+                length = static_cast<int>(strlen(text));
+            }
+            if (length != 0) {
+                return write_multi_font_raw_l(text, x, y, length);
+            }
+        }
+        return x;
+    }
+    return 3;
+}
+
+// ORIGINAL: 0x005E3730 sub_5e3730 0x005E3730-0x005E376B BYTE_EXACT
+// symbol    ?write_cent@Buffer@@QAEHPADHHH@Z
+// size      59 bytes
+// prototype int (__stdcall sub_5E3730)(LPCSTR lpString, int, int y, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DD020 0x006453E0
+// 0x005E3730  sub_5e3730  ->  _sub_5e3730
+//
+// A byte-exact Mizuchi match that no file in the tree owns yet. NOT in
+// OPENSMACX_SOURCES and not compiled: it is the emitter's verification style,
+// and rewriting it in the tree's own style is a later phase. See README.md
+// beside this file. Re-verified in bulk by byte_match_fanout.py --collect.
+
+int Buffer::write_cent(char *text, int x, int y, int width) {
+    if (text == 0) {
+        return x;
+    }
+    int length = static_cast<int>(strlen(text));
+    return write_cent_l(text, x, y, width, length);
+}
+
+// ORIGINAL: 0x005E3770 sub_5e3770 0x005E3770-0x005E37A9 FILE BYTE_EXACT
+// symbol    ?find_line_break@Buffer@@QAEPADPADH@Z
+// size      57 bytes
+// prototype int (__stdcall sub_5E3770)(LPCSTR lpString, int)
+// callers   1   call targets   2
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     0x005DC410 0x006453E0
+// PRESERVED UNIT - measured BYTE_EXACT.
+//
+// Kept for COVERAGE. This directory IS on the ratchet: every file here
+// carries an ORIGINAL marker, `decomp_status.py` compiles and measures
+// it, and 336 of the 1,108 now carry a BYTE_EXACT claim - better than a
+// quarter of the project's total. It is still in no build; the earlier
+// header said "on no ratchet", which stopped being true when the map
+// moved into src/ and was still being written into new files.
+//
+// address        0x005E3770
+// measured tier  BYTE_EXACT
+//
+// The WHOLE unit as measured, scaffolding included: for the units
+// that are byte-exact yet refuse extraction, the agent tuned the
+// emitted scaffolding and the body alone will not reproduce the
+// verdict. To resume, copy everything below back over
+//   build/byte-match/005e3770/unit.cpp
+// and score it with tools/agent_brief.py.
+// GENERATED SKELETON - tools/emit_translation_unit.py
+// subject: sub_5e3770  at 0x005E3770  (57 bytes)
+//
+// A VERIFICATION ARTIFACT, not product source: classes are opaque and
+// globals are bound to fixed addresses, because both are byte-visible
+// and both differ from the style src/ is written in.
+//
+// VC6 DIALECT - this must compile under cl 12.00.8168, which is the
+// only compiler this project builds with. Avoid: auto, nullptr, constexpr,
+// static_assert, enum class, range-for, lambdas, long long, <cstdint>,
+// and declaring `int i` twice in one function (VC6 leaks for-scope).
+// static_cast/reinterpret_cast are fine and are the right spelling.
+//
+// SOURCE-FORM RULES, each one learned by a fan-out agent that lost
+// attempts to it. They are here rather than in a prompt so the next
+// agent does not rediscover them:
+//
+//  * A ternary is not an if. `x ? a : b` lowers to `jne` with the arms
+//    swapped; `if (x) {...}` gives `je`.
+//  * VC6 NEVER hoists a same-polarity guard's body out of line. To get
+//    two special cases branching FAR away, write them negated and
+//    NESTED - `if (a != X) { if (a != Y) { return D; } ...; }` - not as
+//    sequential guard clauses, which inline each body instead.
+//  * VC6 rejects `__thiscall` on a free function pointer (C4234). For
+//    an indirect virtual call use the generated VCall shim below; for a
+//    thiscall function POINTER, take a member-function pointer of a
+//    dummy class instead of spelling the convention.
+//  * Loop form is visible: while / do-while / for lower differently,
+//    and so does counting up versus down.
+//  * If the original dedicates a callee-saved register to a constant
+//    across the whole body (an extra `push ebx`/`push edi` in the
+//    prologue), it had enough register pressure to do so. That is a
+//    hard case - the tool reports a similarity ratio so you can tell a
+//    near miss from a wrong body.
+// ---- callees, declared and never defined (a definition would be inlined) ----
+// ---- fixed globals this body references ----
+// The const-pointer spelling reproduces the original's
+// encoding including the address; `extern T *g` does not.
+
+char *Buffer::find_line_break(char *text, int width) {
+    if (text == 0) {
+        return 0;
+    }
+    BufferStrHeight = 0;
+    int length = static_cast<int>(strlen(text));
+    return find_line_break_l(text, &width, length);
+}
+
+
+
+
+#include "stdafx.h"
+#include "buffer.h"
+#include "font.h"
+#include "buffer_special_text.h"
+#include <stdlib.h>
+#include <string.h>
+
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], ecx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], ecx / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+// ORIGINAL: 0x005E35D0 sub_5e35d0 0x005E35D0-0x005E35EF BYTE_EXACT
+// symbol    ??0BufferSpecialText@@QAE@XZ
+// size      31 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: the value described above
+Status: Complete
+*/
+BufferSpecialText::BufferSpecialText() {
+    bounds[0].left = 0; bounds[0].top = 0;
+    bounds[0].right = 0; bounds[0].bottom = 0;
+    bounds[1].left = 0; bounds[1].top = 0;
+    bounds[1].right = 0; bounds[1].bottom = 0;
+    field_20_ = 0;
+}
+/*
+Purpose: Set 9 field(s) to constants.
+         Emitted by tools/generate_field_accessors.py from
+
+             xor eax, eax / mov dword ptr [ecx], eax / mov dword ptr [ecx + 4], eax / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 0xc], eax / mov dword ptr [ecx + 0x10], eax / mov dword ptr [ecx + 0x14], eax / mov dword ptr [ecx + 0x18], eax / mov dword ptr [ecx + 0x1c], eax / mov dword ptr [ecx + 0x20], eax / ret
+
+         The name is the ADDRESS, not an invention, and `self` is a void
+         pointer because this body needs `this` to be nothing more than a
+         pointer and an offset - the class it belongs to is not established.
+         The adapter declares 0 stack dword(s) so it
+         cleans 0 bytes, taken from the body's own `ret` -
+         the only statement of this function's arity that exists, since it has
+         no mangled name. Declaring fewer would leave them on the caller's
+         stack.
+// ORIGINAL: 0x005E35F0 sub_5e35f0 0x005E35F0-0x005E360D BYTE_EXACT
+// symbol    ??1BufferSpecialText@@QAE@XZ
+// size      29 bytes
+// prototype 
+// callers   0   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+BufferSpecialText::~BufferSpecialText() {
+    bounds[0].left = 0; bounds[0].top = 0;
+    bounds[0].right = 0; bounds[0].bottom = 0;
+    bounds[1].left = 0; bounds[1].top = 0;
+    bounds[1].right = 0; bounds[1].bottom = 0;
+    field_20_ = 0;
+}
+
+// This new source helper is ordinary code, not a new original identity. It
+// expresses the exact GDI color conversion duplicated by original5DBD00.
+COLORREF Buffer::text_color_to_gdi(uint32_t color) const {
+    if ((init_flags_ & 4) == 0) return (color & 0xffff) | 0x10ff0000;
+    const RGBQUAD &entry = dib_.bmiColors[color];
+    return RGB(entry.rgbRed, entry.rgbGreen, entry.rgbBlue);
+}
+
+// ORIGINAL: 0x005DBD00 ?write_raw_l@Buffer@@QAEHPADHHH@Z 0x005DBD00-0x005DC2C3 FILE
+// TRIED: near-verbatim transcription of the (clean, no-SEH) Ghidra decompilation via `int *p = (int*)this;` field indexing (cross-checked against raw asm offsets: 0x50/0x58/0x60/0x520 /0x52c/0x53c/0x54c/0x55c/0x56c all confirmed). The five `call dword ptr [0x6690xx]` sites are real Win32 GDI calls (SetBkMode/SelectObject/SetTextColor/TextOutA/GetStockObject, identified via Ghidra's WinAPI signatures) dispatched through the catalogued IAT-slot globals via a typedef'd function pointer, matching the original's indirect-call-through-memory shape. The two `(**(code**)(*piVar1+N))(piVar1,arg)` heap callbacks are cast as `__stdcall(int,int)` rather than routed through the VCall thiscall shim, since the disassembly pushes the receiver as an explicit stack arg instead of leaving it in ecx. The Font::width() receiver index (uStack_10 vs uStack_8 vs a third stack slot) is not fully disambiguated across all five call sites - used uStack_10 uniformly as the closest guess. Reaches MISMATCH #0 ('sub' vs 'push'): the original has no EBP frame (esp-relative addressing throughout), which a plain C++ local-variable body does not reproduce.
+// Native complete closure; the seed discarded atoi's result. Original ordinary
+// and shadow colors/offsets use the selected color bank; preserve that indexing.
+int Buffer::write_raw_l(char *text, int x, int y, int length) {
+    if (field_8_ != 0) {
+        int result = field_8_(text, x, y, length);
+        if (result != 0) return result;
+    }
+    if (length == 0) return x;
+    if (get_hdc() == 0) return x;
+    SetBkMode(hdc2_, TRANSPARENT);
+
+    // Genuine member addresses, not cross-member pointer arithmetic. These
+    // locals retain live member reads across service callbacks. Producer
+    // domains0..3 remain required; no new invalid-slot guard/clamp is invented.
+    Font **fonts[4] = {&font1_, &font2_, &font3_, &font4_};
+    uint32_t *colors[4] = {&color_val_1_, &color_2_val_1_,
+                            &color_3_val_1_, &color_hyper_val_1_};
+    uint32_t *shadow_colors[4] = {&color_val_2_, &color_2_val_2_,
+                                   &color_3_val_2_, &color_hyper_val_2_};
+    uint32_t *shadow_x[4] = {&color_val_3_, &color_2_val_3_,
+                              &color_3_val_3_, &color_hyper_val_3_};
+    uint32_t *shadow_y[4] = {&color_val_4_, &color_2_val_4_,
+                              &color_3_val_4_, &color_hyper_val_4_};
+    unsigned int font_slot = 0;
+    unsigned int color_slot = 0;
+    int bounds_height = 0;
+    if (markup_enabled_ == 0) {
+        y += font1_->height_;
+    } else {
+        unsigned int requested = write_font_slot_;
+        if (*fonts[requested] != 0) font_slot = requested;
+        if (*colors[requested] != static_cast<uint32_t>(-1)) color_slot = requested;
+        if (font1_ != 0 && font1_->height_ > 0) bounds_height = font1_->height_;
+        if (font2_ != 0 && font2_->height_ > bounds_height) bounds_height = font2_->height_;
+        if (font3_ != 0 && font3_->height_ > bounds_height) bounds_height = font3_->height_;
+        y += bounds_height;
+    }
+    SelectObject(hdc2_, (*fonts[font_slot])->font_obj_);
+    // Native005DBE61 reloads EDI from the selected color slot. Both shadow
+    // banks and the non-special foreground use that slot, not always bank0.
+    if (*shadow_colors[color_slot] != static_cast<uint32_t>(-1)) {
+        SetTextColor(hdc2_, text_color_to_gdi(*shadow_colors[color_slot]));
+        TextOutA(hdc2_, static_cast<int>(*shadow_x[color_slot]) + x,
+                   static_cast<int>(*shadow_y[color_slot]) + y, text, length);
+    }
+    if (field_524_ == 0) {
+        SetTextColor(hdc2_, text_color_to_gdi(*colors[color_slot]));
+        TextOutA(hdc2_, x, y, text, length);
+        SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
+        release_hdc(1);
+        return (*fonts[font_slot])->width(text, length) + x;
+    }
+
+    int remaining = length;
+    int second_bounds = 0;
+    char *cursor = text;
+    for (;;) {
+        int special = static_cast<int>(field_528_);
+        if (special >= 0) {
+            field_528_ = static_cast<uint32_t>(-1);
+            second_bounds = 1;
+        } else {
+            char *delimiter = strchr(cursor, '~');
+            int segment_length = delimiter != 0
+                ? static_cast<int>(delimiter - cursor) : remaining;
+            SetTextColor(hdc2_, text_color_to_gdi(*colors[color_slot]));
+            TextOutA(hdc2_, x, y, cursor, segment_length);
+            if (delimiter == 0) {
+                SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
+                release_hdc(1);
+                return (*fonts[font_slot])->width(text, length) + x;
+            }
+            special = atoi(delimiter + 1);
+            x += (*fonts[font_slot])->width(cursor, segment_length);
+            cursor += segment_length + 2;
+            remaining -= segment_length + 2;
+        }
+        char *delimiter = strchr(cursor, '~');
+        int segment_length;
+        if (delimiter != 0) {
+            segment_length = static_cast<int>(delimiter - cursor);
+        } else {
+            segment_length = remaining;
+            field_528_ = special;
+        }
+        SetTextColor(hdc2_, (BufferSpecialTexts[special].color_ & 0xffff) | 0x10ff0000);
+        TextOutA(hdc2_, x, y, cursor, segment_length);
+        int advanced = (*fonts[font_slot])->width(cursor, segment_length) + x;
+        cursor += segment_length + 1;
+        RECT &bounds = BufferSpecialTexts[special].bounds[second_bounds];
+        bounds.left = x;
+        bounds.top = y;
+        bounds.right = advanced;
+        bounds.bottom = bounds_height + y;
+        remaining -= segment_length + 1;
+        x = advanced;
+        if (static_cast<int>(field_528_) >= 0) {
+            SelectObject(hdc2_, GetStockObject(SYSTEM_FONT));
+            release_hdc(1);
+            return (*fonts[font_slot])->width(text, length) + advanced;
+        }
+    }
+}
+
+
+#include "stdafx.h"
+#include "buffer.h"
+#include "stringstruct.h"
+#include "font.h"
+#include "temp.h"
+
+extern char BufferFlyingText[];
+extern int BufferFlyingX, BufferFlyingY, BufferFlyingWidth;
+
+// Lifecycle-independent Buffer text-slot selection; the historical claim
+// below remains a restoration obligation.
+/*
+Purpose: Store an argument into three fields, clamping anything outside 0..3
+         to zero, and clear a fourth.
+
+             mov eax,[esp+4] / test eax,eax / jl zero / cmp eax,3 / jle keep
+       zero: xor eax,eax
+       keep: mov [ecx+0x510],eax / mov [ecx+0x518],eax / mov [ecx+0x514],eax
+             mov dword [ecx+0x51c],0 / ret 4
+
+         Both bounds are SIGNED (`jl`, `jle`) and the upper one is inclusive:
+         3 is kept, 4 is not. Two mutants of the LOWER bound survive the
+         sweep and are equivalent rather than untested: at 0 the clamp target
+         and the value coincide, so `< 0`, `< 1` and `<= 0` all store 0. The
+         clamp VALUE is a different matter and is covered - changing it to 1
+         fails the fixture. The three destinations are 0x510, 0x518 and
+         0x514 - written in that order, which is not ascending, and a
+         transcription that tidied it would still be correct only because the
+         value stored is the same for all three.
+
+// ORIGINAL: 0x005E3660 sub_5e3660 0x005E3660-0x005E368E BYTE_EXACT
+// symbol    ?select_text_slot@Buffer@@QAEXH@Z
+// size      46 bytes
+// prototype 
+// callers   1   call targets   0
+// kind      game
+// flags     hidden;sp_ready;purged_ok
+// calls     (none)
+Return Value: n/a
+Status: Complete
+*/
+void Buffer::select_text_slot(int requested) {
+    const int value = requested < 0 || requested > 3 ? 0 : requested;
+    write_font_slot_ = value;
+    font_slot_ = value;
+    field_514_ = value;
+    markup_pending_ = 0;
+}
+
+// ORIGINAL: 0x005DB040 ?write_strings@Buffer@@QAEHPAUStringList@@HHHH@Z 0x005DB040-0x005DB3F6 FILE
+// symbol    ?write_strings@Buffer@@QAEHPAVStringList@@HHHH@Z
+// TRIED: the scaffold's `extern "C" sub_5eXXXX()` externs implied the wrong conventions for their callers here (nullary cdecl); the disasm's ecx=receiver setup before each call site shows they are thiscall members (sub_5e3630/current_entry family on StringStruct with ecx=a1, sub_5e3650 on Font, sub_5e3660/ 3690/3730/3770 on Buffer with ecx=this) - redeclared as such, since relocations are masked and only the caller-side marshalling bytes are scored. Confirmed against the already- recovered src/recovered/005e3730.cpp and src/recovered/units/005e3770.cpp (both thiscall(Buffer*,...)), and against src/leaf_recoveries.cpp's sub_5e3630/3650/3660 bodies for their real (nullary/one-int) arities. Reaches MISMATCH, 265/318 mnemonics shared (0.836), 956 vs 950 bytes, first divergence at #1 (prologue register order).
+// The final word is flags, not a clipping height: bit1 retains list position.
+// Pixel clipping reads this Buffer's signed native DIB height independently.
+int Buffer::write_strings(StringList *strings, int left, int top, int width,
+                          int flags) {
+    if (strings == 0) return top;
+    if ((flags & 2) == 0 && strings->entry_count_ - 1 >= 0) {
+        strings->current_position_ = 0;
+        strings->current_ = strings->head_;
+    }
+    int kind = strings->head_ != 0 ? strings->current_entry()->field_8_ : 0;
+    if (field_C_ != 0) {
+        int id = strings->head_ != 0 ? strings->current_->id : 0;
+        field_C_(id, kind);
+    }
+    int extent = top;
+    char *first_text = 0;
+    if (kind == 3) {
+        if (font1_ == 0) font1_ = FontDefault;
+        extent += font1_->line_advance();
+    } else {
+        first_text = strings->head_ != 0
+            ? strings->current_entry()->text : 0;
+        if (kind == 2 && first_text != 0) {
+            BufferStrHeight = 0;
+            field_18_ = 0;
+            char *cursor = first_text;
+            do {
+                char *next = find_line_break(cursor, width);
+                if (next != 0) {
+                    write_cent_l(cursor, left, extent, width,
+                                 static_cast<int>(next - cursor));
+                } else {
+                    write_cent(cursor, left, extent, width);
+                }
+                ++field_18_;
+                extent += text_line_height();
+                cursor = next;
+            } while (cursor != 0);
+        }
+    }
+    // Original stores branch3's count before width, the other branches do
+    // width before count. No intervening callback observes that distinction.
+    if (kind == 3) {
+        field_18_ = 0;
+        field_14_ = field_10_;
+    } else {
+        field_14_ = field_10_;
+        field_18_ = 0;
+    }
+    BufferFlyingX = left;
+    BufferFlyingY = extent;
+    BufferFlyingWidth = width;
+    BufferStrHeight = 0;
+    markup_pending_ = 0;
+    BufferFlyingText[0] = 0;
+    wrap_flying(kind == 3 || kind == 2 ? 0 : first_text);
+
+    while (strings->current_position_ < strings->entry_count_ - 1) {
+        if (extent > -dib_.bmiHeader.biHeight) break;
+        strings->next_entry();
+        if (strings->current_ != 0) strings->current_entry();
+        int entry_kind = strings->head_ != 0
+            ? strings->current_entry()->field_8_ : 0;
+        bool plain = strings->head_ == 0;
+        if (!plain) plain = strings->current_entry()->field_8_ == 0;
+        if (plain) {
+            if (field_C_ != 0) {
+                // The native evaluates current_id then RELOADS field_C_;
+                // unlike its two earlier callbacks, it does not capture the
+                // procedure before this service call.
+                int id = strings->current_id();
+                field_C_(id, entry_kind);
+            }
+            wrap_flying(strings->current_text());
+        } else {
+            if (BufferFlyingText[0] != 0) {
+                write_multi_font_raw(BufferFlyingText, BufferFlyingX, BufferFlyingY);
+                int advance = text_line_height();
+                BufferFlyingY += advance;
+                ++field_18_;
+            }
+            BufferFlyingText[0] = 0;
+            BufferFlyingWidth = 0;
+            select_text_slot(0);
+            int saved_y = BufferFlyingY;
+            if (field_C_ != 0) {
+                int id = strings->head_ != 0 ? strings->current_->id : 0;
+                field_C_(id, entry_kind);
+            }
+            if (saved_y >= extent) extent = saved_y;
+            if (entry_kind == 3) {
+                if (font1_ == 0) font1_ = FontDefault;
+                extent += font1_->line_advance();
+                wrap_flying(0, left, extent, width);
+            } else if (entry_kind == 2) {
+                extent = wrap_cent(strings->current_text(), left, extent, width);
+                wrap_flying(0, left, extent, width);
+            } else {
+                wrap_flying(strings->current_text(), left, extent, width);
+            }
+        }
+    }
+    int flushed = wrap_flying_flush();
+    if (flushed >= extent) extent = flushed;
+    return extent;
+}
+
+
+#include "stdafx.h"
+#include "buffer.h"
+#include "palette.h"
+#include <math.h>
+
+// ORIGINAL: 0x005DEFE0 sub_5defe0 0x005DEFE0-0x005DF56B FILE
+// symbol    ?draw_pie@Buffer@@QAEHPAUtagRECT@@HHHHHH@Z
+// TRIED: MISMATCH #4 (push vs mov, prologue). `this` is a Buffer* (this->get_hdc()/release_hdc-equivalent at fields 0x58/0x60/ 0x64/0x68 via slot17/26, matching every other Buffer HDC-lock site this batch touched); the *second*, separate pixel-lock at fields 0x50/0x58/0x6c via slot32 (offset 0x80) matches the 0x005E07A0-shaped Lock/Unlock pattern, not the HDC one - transcribed as its own inline block rather than reusing release_hdc, since it unlocks through a different slot and counter field. a4/a5 are read via `fild`/`fidiv` (integer loads), not native floats - Ghidra's own `float param_4` typing is wrong; the raw asm is authoritative there. Ghidra's local_XX names also do not track 1:1 with this function's real ebp offsets (verified by hand for the dx/dy/cx/cy/angle block: local_1c looked like "cx" per the disassembly, not "dx" as Ghidra's own text order implied), so the geometry section is transcribed from the raw asm, not the decompiled text.
+// All seven explicit arguments are native integers. Color indices require
+//0..255, total must be nonzero, and geometry/arithmetic must fit native signed
+//32-bit operations. CRT/x87 intermediate-status preservation remains unknown.
+int Buffer::draw_pie(RECT *area, int first_color, int second_color,
+                     int amount, int total, int thickness, int unused) {
+    if (area == 0) return 16;
+    int width = area->right - area->left;
+    int height = area->bottom - area->top;
+    int center_y = height / 2 + area->top;
+    int center_x = width / 2 + area->left;
+    if (amount == 0) first_color = second_color;
+    else if (amount == total) second_color = first_color;
+
+    float width_float = static_cast<float>(width);
+    float half_width = width_float * 0.5f;
+    float half_height = static_cast<float>(height) * 0.5f;
+    // Native66D8BC is6.28f, NOT an exact two-pi value.
+    double angle = static_cast<double>(amount) * 6.28f / total;
+    float sine_width = static_cast<float>(sin(angle) * width_float);
+    double cosine_width = cos(angle) * width_float;
+    int wedge_x = static_cast<int>(center_x + sine_width);
+    int wedge_y = static_cast<int>(center_y - cosine_width);
+    float ratio = static_cast<float>(cosine_width / sine_width);
+
+    RECT remap;
+    remap.left = 0;
+    remap.right = 0;
+    // Original does NOT initialize top/bottom outside the middle-half arm.
+    // Keep that original error path visible pending coordinator decision;
+    // do not mistake the old seed's four zero stores for native behavior.
+    if (amount * 4 >= total && amount * 4 <= total * 3) {
+        remap = *area;
+        if (amount * 2 == total) {
+            remap.right = center_x;
+        } else {
+            double height_squared = static_cast<double>(half_height) * half_height;
+            double numerator = height_squared * half_width * half_width;
+            double denominator = static_cast<double>(ratio) * ratio
+                * half_width * half_width + height_squared;
+            double radius = sqrt(numerator / denominator) + 0.5;
+            if (amount * 2 > total) radius = -radius;
+            remap.right = static_cast<int>(radius) + center_x;
+        }
+    }
+    remap.top += thickness;
+    remap.bottom += thickness;
+    // get_hdc itself performs the one native locked-pixels query. The seed
+    // prequery followed by get_hdc would incorrectly call the virtual twice.
+    HDC dc = get_hdc();
+    SetArcDirection(dc, AD_CLOCKWISE);
+    const PALETTEENTRY &first = PaletteActive->entries()[first_color];
+    HBRUSH first_brush = CreateSolidBrush(RGB(first.peRed, first.peGreen, first.peBlue));
+    const PALETTEENTRY &second = PaletteActive->entries()[second_color];
+    HBRUSH second_brush = CreateSolidBrush(RGB(second.peRed, second.peGreen, second.peBlue));
+    HGDIOBJ old_brush = SelectObject(dc, first_brush);
+    HGDIOBJ null_pen = GetStockObject(NULL_PEN);
+    HGDIOBJ old_pen = SelectObject(dc, null_pen);
+    area->bottom += thickness;
+    area->top += thickness;
+    SelectObject(dc, amount * 4 < total ? second_brush : first_brush);
+    Pie(dc, area->left, area->top, area->right, area->bottom,
+        area->right, area->top, area->right, area->top);
+    area->bottom -= thickness;
+    area->top -= thickness;
+    RECT strip;
+    SetRect(&strip, area->left, center_y, width + area->left, center_y + thickness);
+    fill(&strip, amount * 4 < total ? second_color : first_color);
+
+    if (dib_bits_ != 0 || surface_ != 0) {
+        // The original intersects against Buffer's clip RECT20, NOT the
+        // caller's ellipse bounds as the retained seed guessed.
+        if (IntersectRect(&remap, &rect1_, &remap)
+            && remap.left < dib_.bmiHeader.biWidth
+            && remap.top < -dib_.bmiHeader.biHeight) {
+            if (get_data() != 0) {
+                unsigned char *pixel = static_cast<unsigned char *>(locked_bits_)
+                    + static_cast<int>(stride_) * remap.top + remap.left;
+                if (pixel != 0) {
+                    int columns = remap.right - remap.left;
+                    int rows = remap.bottom - remap.top;
+                    int remainder = static_cast<int>(stride_) - columns;
+                    do {
+                        int count = columns;
+                        do {
+                            if (*pixel == static_cast<unsigned char>(first_color))
+                                *pixel = static_cast<unsigned char>(second_color);
+                            ++pixel;
+                        } while (--count != 0);
+                        pixel += remainder;
+                    } while (--rows != 0);
+                    free_data(1);
+                }
+            }
+        }
+    }
+    SelectObject(dc, GetStockObject(BLACK_PEN));
+    if (amount == total || amount == 0) {
+        Ellipse(dc, area->left, area->top, area->right, area->bottom);
+    } else {
+        SelectObject(dc, second_brush);
+        Pie(dc, area->left, area->top, area->right, area->bottom,
+            center_x, area->top, wedge_x, wedge_y);
+        SelectObject(dc, first_brush);
+        Pie(dc, area->left, area->top, area->right, area->bottom,
+            wedge_x, wedge_y, center_x, area->top);
+    }
+    SelectObject(dc, old_brush);
+    SelectObject(dc, old_pen);
+    DeleteObject(first_brush);
+    DeleteObject(second_brush);
+    release_hdc(1);
+    return 0;
+}
+
+
+#include "stdafx.h"
+#include "buffer.h"
+#include "vert.h"
+#include "texture.h"
+#include "general.h"
+#include <float.h>
+
+// Individually native-proven shared scratch; no inferred aggregate across
+// unrelated neighboring objects. Numeric row positions avoid making invalid
+// pointers during clipping of rows above an acquired allocation.
+union BufferGouraudRow { int coordinate; uintptr_t address; };
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B37D0 _BufferGouraudLight
+static int BufferGouraudLight;              //9B37D0..D4
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B37D4 _BufferGouraudPitch
+static int BufferGouraudPitch;              //9B37D4..D8
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B39C0 _BufferGouraudCount
+static int BufferGouraudCount;              //9B39C0..C4
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B39C4 _BufferGouraudBottomVertex
+static int BufferGouraudBottomVertex;       //9B39C4..C8
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B39E0 _BufferGouraudLeft
+static int BufferGouraudLeft;               //9B39E0..E4
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B39F0 _BufferGouraudClipLeft
+static int BufferGouraudClipLeft;           //9B39F0..F4
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B39F4 _BufferGouraudClipTop
+static BufferGouraudRow BufferGouraudClipTop;//9B39F4..F8
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A00 _BufferGouraudPixels
+static unsigned char *BufferGouraudPixels;  //9B3A00..04
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A04 _BufferGouraudRight
+static int BufferGouraudRight;              //9B3A04..08
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A0C _BufferGouraudVertices
+static Vert *BufferGouraudVertices;         //9B3A0C..10
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A18 _BufferGouraudLights
+static int *BufferGouraudLights;            //9B3A18..1C
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A20 _BufferGouraudMode
+static int BufferGouraudMode;               //9B3A20..24
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A24 _BufferGouraudY
+static BufferGouraudRow BufferGouraudY;      //9B3A24..28
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A3C _BufferGouraudAlpha
+static unsigned char BufferGouraudAlpha;    //9B3A3C..3D
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A3E _BufferGouraudStep
+static unsigned short BufferGouraudStep;   //9B3A3E..40
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A44 _BufferGouraudClipRight
+static int BufferGouraudClipRight;          //9B3A44..48
+// TU-private origin; native static-object reference verification remains unknown.
+// RECOVERY_OBJECT: v1 0x009B3A48 _BufferGouraudClipBottom
+static BufferGouraudRow BufferGouraudClipBottom;//9B3A48..4C
+
+static int buffer_gouraud_fixed(int v) {
+    return static_cast<int>(static_cast<unsigned int>(v) << 16);
+}
+static int buffer_gouraud_difference(int a, int b) {
+    return static_cast<int>(static_cast<unsigned int>(a) - static_cast<unsigned int>(b));
+}
+static void buffer_gouraud_reset_fpu() {
+    // VC6 _fpreset defaults toPC53; native FNINIT defaults toPC64.
+    _fpreset();
+    _control87(_MCW_EM | _PC_64 | _RC_NEAR | _IC_PROJECTIVE,
+               _MCW_EM | _MCW_PC | _MCW_RC | _MCW_IC);
+}
+static unsigned short buffer_gouraud_light_step(int delta, int width) {
+    int64_t step = static_cast<int64_t>(delta) * 256 / width;
+    if (step < -32768 || step > 32767) return 0x8000;
+    return static_cast<unsigned short>(step);
+}
+
+// ORIGINAL: 0x005DEA20 sub_5dea20 0x005DEA20-0x005DEB1C FILE
+// symbol    ?setup_buffer_gouraud_edge@@YAHPAUEdgeScan@@H@Z
+// TRIED: `int *a1, int a2` signature (IDA's int,int guess with the pointer made explicit - the disassembly never touches [ecx]), do/while over a hoisted `idx` local mirroring the ASM's search-then-fill-record shape. Reproduces the whole body but diverges at MISMATCH #2 (original never sets up an ebp frame, addressing args purely off esp; every C form tried here gets a `push`-heavy prologue instead of the original's early `mov ebx,[esp+0xc]`).
+int __cdecl setup_buffer_gouraud_edge(EdgeScan *edge, int vertex) {
+    if (vertex == BufferGouraudBottomVertex) return 0;
+    const int direction = edge->f0;
+    int next;
+    do {
+        next = vertex + direction;
+        if (next > BufferGouraudCount - 1) next = 0;
+        else if (next < 0) next = BufferGouraudCount - 1;
+        edge->counter = BufferGouraudVertices[next].y - BufferGouraudVertices[vertex].y;
+        if (edge->counter != 0) {
+            if (edge->counter < 0) return 0;
+            edge->id = next;
+            edge->accumC = BufferGouraudVertices[vertex].x;
+            int delta = BufferGouraudVertices[next].x - BufferGouraudVertices[vertex].x;
+            if (delta < 0) {
+                delta = -delta;
+                edge->fracAccum = 1 - edge->counter;
+                edge->extraDeltaC = -1;
+                edge->deltaC = -(delta / edge->counter);
+            } else {
+                edge->extraDeltaC = 1;
+                edge->deltaC = delta / edge->counter;
+                edge->fracAccum = 0;
+            }
+            edge->fracSub = edge->counter;
+            edge->fracDelta = delta % edge->counter;
+            edge->accumD = buffer_gouraud_fixed(BufferGouraudLights[vertex]);
+            edge->deltaD = fixed_div(buffer_gouraud_difference(
+                buffer_gouraud_fixed(BufferGouraudLights[next]), edge->accumD),
+                buffer_gouraud_fixed(edge->counter));
+            return 1;
+        }
+        vertex = next;
+    } while (vertex != BufferGouraudBottomVertex);
+    return 0;
+}
+
+// ORIGINAL: 0x005DEB20 sub_5deb20 0x005DEB20-0x005DEF8F FILE
+// symbol    ?gouraud@Buffer@@QAEHPAUVert@@PAHHHE@Z
+// Original method receiver is Buffer, and five explicit stack args are vertex
+// pointer, light pointer, vertex count, mode DWORD, alpha BYTE. Mode/alpha are
+// published/read scratch even though this native raster arm ignores them.
+// Extrema must establish both indices (-32765<Y<32767 somewhere), arithmetic
+// and fixed division must fit, and row addresses retain signed native order.
+// Out-of-domain uninitialized/stale indices are NOT replaced with vertex0.
+int Buffer::gouraud(Vert *vertices, int *lights, int count, int mode,
+                     unsigned char alpha) {
+    if (vertices == 0) return 16; // Native does not validate lights.
+    BufferGouraudPixels = get_data() != 0
+        ? static_cast<unsigned char *>(locked_bits_) : 0;
+    if (BufferGouraudPixels != 0) {
+        buffer_gouraud_reset_fpu();
+        BufferGouraudVertices = vertices;
+        BufferGouraudLights = lights;
+        BufferGouraudMode = mode;
+        BufferGouraudPitch = static_cast<int>(stride_);
+        BufferGouraudCount = count;
+        BufferGouraudAlpha = alpha;
+        BufferGouraudClipRight = rect1_.right;
+        BufferGouraudClipLeft = rect1_.left;
+        BufferGouraudClipBottom.coordinate = rect1_.bottom;
+        BufferGouraudClipTop.coordinate = rect1_.top;
+        int min_y = 32767, max_y = -32765;
+        int min_x = 32767, max_x = -32765;
+        int minimum_vertex;
+        int index;
+        for (index = 0; index < count; ++index) {
+            if (vertices[index].y < min_y) {
+                min_y = vertices[index].y;
+                minimum_vertex = index;
+            }
+            if (vertices[index].y > max_y) {
+                max_y = vertices[index].y;
+                BufferGouraudBottomVertex = index;
+            }
+            if (vertices[index].x < min_x) min_x = vertices[index].x;
+            if (vertices[index].x > max_x) max_x = vertices[index].x;
+        }
+        if (count > 0 && min_y < max_y) {
+            uintptr_t pixels = reinterpret_cast<uintptr_t>(BufferGouraudPixels);
+            BufferGouraudY.address = pixels + static_cast<int64_t>(min_y) * BufferGouraudPitch;
+            BufferGouraudClipBottom.address = pixels
+                + static_cast<int64_t>(BufferGouraudClipBottom.coordinate) * BufferGouraudPitch;
+            BufferGouraudClipTop.address = pixels
+                + static_cast<int64_t>(BufferGouraudClipTop.coordinate) * BufferGouraudPitch;
+            EdgeScan backward, forward;
+            backward.f0 = -1;
+            if (setup_buffer_gouraud_edge(&backward, minimum_vertex)) {
+                forward.f0 = 1;
+                if (setup_buffer_gouraud_edge(&forward, minimum_vertex)) {
+                    // Original preservesPC64 and changes only rounding mode.
+                    _control87(_RC_CHOP, _MCW_RC);
+                    int pending_width = buffer_gouraud_fixed(
+                        buffer_gouraud_difference(forward.accumC, backward.accumC));
+                    int pending_delta = 0;
+                    if (pending_width > 0)
+                        pending_delta = buffer_gouraud_difference(forward.accumD, backward.accumD);
+                    if (static_cast<intptr_t>(BufferGouraudY.address)
+                        < static_cast<intptr_t>(BufferGouraudClipBottom.address)) {
+                        bool done = false;
+                        do {
+                            BufferGouraudRight = forward.accumC;
+                            BufferGouraudLeft = backward.accumC;
+                            BufferGouraudLight = backward.accumD;
+                            if (--backward.counter == 0) {
+                                if (!setup_buffer_gouraud_edge(&backward, backward.id)) done = true;
+                            } else {
+                                backward.accumD = static_cast<int>(
+                                    static_cast<unsigned int>(backward.accumD) + backward.deltaD);
+                                backward.accumC += backward.deltaC;
+                                backward.fracAccum += backward.fracDelta;
+                                if (backward.fracAccum > 0) {
+                                    backward.accumC += backward.extraDeltaC;
+                                    backward.fracAccum -= backward.fracSub;
+                                }
+                            }
+                            if (!done) {
+                                if (--forward.counter == 0) {
+                                    if (!setup_buffer_gouraud_edge(&forward, forward.id)) done = true;
+                                } else {
+                                    forward.accumD = static_cast<int>(
+                                        static_cast<unsigned int>(forward.accumD) + forward.deltaD);
+                                    forward.accumC += forward.deltaC;
+                                    forward.fracAccum += forward.fracDelta;
+                                    if (forward.fracAccum > 0) {
+                                        forward.accumC += forward.extraDeltaC;
+                                        forward.fracAccum -= forward.fracSub;
+                                    }
+                                }
+                            }
+                            if (pending_width > 0)
+                                BufferGouraudStep = buffer_gouraud_light_step(pending_delta, pending_width);
+                            pending_width = buffer_gouraud_fixed(
+                                buffer_gouraud_difference(forward.accumC, backward.accumC));
+                            if (pending_width > 0)
+                                pending_delta = buffer_gouraud_difference(forward.accumD, backward.accumD);
+                            if (static_cast<intptr_t>(BufferGouraudY.address)
+                                >= static_cast<intptr_t>(BufferGouraudClipBottom.address)) break;
+                            if (static_cast<intptr_t>(BufferGouraudY.address)
+                                    >= static_cast<intptr_t>(BufferGouraudClipTop.address)
+                                && BufferGouraudRight > BufferGouraudClipLeft
+                                && BufferGouraudLeft < BufferGouraudClipRight
+                                && BufferGouraudRight - BufferGouraudLeft > 0) {
+                                int right = BufferGouraudRight;
+                                if (right >= BufferGouraudClipRight) right = BufferGouraudClipRight;
+                                if (BufferGouraudLeft < BufferGouraudClipLeft) {
+                                    int skip = BufferGouraudClipLeft - BufferGouraudLeft;
+                                    // Native loads WORD with zero extension, not
+                                    // the seed's signed-short interpretation.
+                                    uint64_t product = static_cast<uint64_t>(BufferGouraudStep) * skip;
+                                    BufferGouraudLight = static_cast<int>(
+                                        static_cast<unsigned int>(BufferGouraudLight)
+                                        + static_cast<unsigned int>(product >> 8));
+                                    BufferGouraudLeft = BufferGouraudClipLeft;
+                                }
+                                int remaining = right - BufferGouraudLeft;
+                                unsigned char *pixel = reinterpret_cast<unsigned char *>(
+                                    BufferGouraudY.address + BufferGouraudLeft);
+                                unsigned short value = static_cast<unsigned short>(
+                                    static_cast<unsigned int>(BufferGouraudLight) >> 8);
+                                const unsigned short step = BufferGouraudStep;
+                                do {
+                                    *pixel++ = static_cast<unsigned char>(value >> 8);
+                                    value = static_cast<unsigned short>(value + step);
+                                } while (--remaining >= 0);
+                            }
+                            if (done) break;
+                            BufferGouraudY.address += BufferGouraudPitch;
+                        } while (true);
+                    }
+                }
+            }
+        }
+    }
+    // Failed acquisition is released here (unlike patterned line); then FPU
+    // is reset, not restored, even on failed/empty acquired draw paths.
+    free_data(1);
+    buffer_gouraud_reset_fpu();
+    return 0;
+}
+
+
+// These wrappers belong to Buffer and use its shared Sprite. Existing original
+// identities and historical evidence are retained beside their real members.
+#include "stdafx.h"
+#include "buffer.h"
+#include "sprite.h"
+
+// Existing original5D8C20..5D8D00: ECX is the actual Buffer receiver; +54
+// is dib_bits_, +58 DirectDraw surface, +6C surface lock count, +80/+84
+// DIB dimensions and +4A8 stride. The apparent "state block" is the real
+// g_BUFFER_SPRITE object, NOT a second object adjacent to it.
+// Native5D8CF0 draws BEFORE5D8CF5 clears its pcBits_. The former free
+// scaffold cleared before the call and also lost the fourth stack argument
+// through a wrong fastcall EDX argument spelling. Catalogue remains void;
+// no source caller presently provides a result-use contract to change it.
+/*
+Purpose: Publish the unit draw state and draw one unit sprite through the
+         shared surface sprite, releasing the actor when its countdown ends.
+// ORIGINAL: 0x005D8C20 sub_5d8c20 0x005D8C20-0x005D8D00 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original5D8C20 fields50/54/58/6C/80/84/4A8 are Buffer locked/DIB pixels, DirectDraw surface, lock count, DIB dimensions and stride.", "Original9B3A54..78 are members of g_BUFFER_SPRITE; surface slot80 is DirectDraw Unlock, not an actor stop hook.", "Original5D8CF0 forwards four stack arguments to genuine Sprite5E66A2;5D8CF5 clears the borrowed pixels AFTER that call."], "reason": "Rehome the four-argument shared-Sprite wrapper to the real Buffer receiver, correcting the former actor/fixed-alias interpretation."}
+// symbol    ?draw_dest_unk1@Buffer@@QAEXPAV1@HHPAE@Z
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8C20..5D8D00; retired seed git:117282ee:src/unrecovered/005d8c20.cpp records the same identity and spans with its register-order TRIED note kept below.", "The shared surface sprite is buffer.cpp's g_BUFFER_SPRITE (0x009B3A50) and the published draw-state block is its 0x9B3A54..0x9B3A78 neighbour, with the transparency byte 0x00696D14; the actor countdown fields are the seed's 0x50/0x58/0x6C walks.", "The slot-0x80 dispatch is the actor's own stop hook (stdcall through vtbl+0x80), exactly as the seed calls it."], "reason": "Coverage transcription of the four-argument unit draw wrapper with the state publish and countdown walks kept at the measured order."}
+Status: Coverage transcription - unclaimed body
+*/
+void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
+                            unsigned char *table) {
+    setup_buff_sprite(-1);
+    g_BUFFER_SPRITE.draw_dest_unk1(destination, x, y, table);
+    release_buff_sprite();
+}
+
+// Existing original5D8D00..5D8DEA: same physical owner/order, six stack
+// arguments forwarded to genuine already-recovered Sprite5E73CC.
+/*
+Purpose: Publish the unit draw state and draw one unit sprite with the
+         extended arguments, releasing the actor when its countdown ends.
+// ORIGINAL: 0x005D8D00 sub_5d8d00 0x005D8D00-0x005D8DEA FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original5D8D00 has the same real Buffer and shared Sprite member closure as5D8C20, not a distinct actor/state object.", "Original5D8DDA forwards six stack arguments to genuine Sprite5E73CC;5D8DDF clears the borrowed pixels AFTER that call."], "reason": "Rehome the six-argument shared-Sprite wrapper to the real Buffer receiver and genuine descriptor lifetime."}
+// symbol    ?draw_dest_unk1@Buffer@@QAEXPAV1@HHHHPAE@Z
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5D8D00..5D8DEA; retired seed git:117282ee:src/unrecovered/005d8d00.cpp records the same identity and spans with its shared TRIED note kept below.", "Same published block and actor fields as sub_5d8c20 above; the trailing two arguments ride straight through to sprite.h's six-argument draw_dest_unk1 exactly as the seed forwards them."], "reason": "Coverage transcription of the six-argument unit draw wrapper beside its four-argument twin."}
+Status: Coverage transcription - unclaimed body
+*/
+void Buffer::draw_dest_unk1(Buffer *destination, int x, int y,
+                            int numerator, int denominator,
+                            unsigned char *table) {
+    setup_buff_sprite(-1);
+    g_BUFFER_SPRITE.draw_dest_unk1(destination, x, y,
+                                  numerator, denominator, table);
+    release_buff_sprite();
+}
+
+
+/*
+Purpose: Write a vertical column of single-character centred lines: each
+         character of the text becomes its own centred line, advancing by the
+         font's line advance, which is first shrunk until the whole column
+         fits the rectangle's height.
+// ORIGINAL: 0x005DB450 sub_5db450 0x005DB450-0x005DB571 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original5DB469 saves receiver RECT20, the real Buffer rect1_ clip; the prior free scaffold saved RECT30 instead.", "Original5DB450 calls Buffer set_clip and centered length writer per character; Font metrics/default source are genuine owned members, with original clip restore and null-area behavior retained."], "reason": "Rehome the vertical text writer to its actual Buffer receiver and natural existing text/Font APIs."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5DB450..5DB571; retired seed git:b18d3ac8:src/unrecovered/005db450.cpp records the same identity and spans with its receiver-analysis TRIED note kept below.", "The receiver is a Buffer (rect1_ at +0x30, font1_ at +0x52C); the two public members used are set_clip and the five-int write_cent_l, and the default font comes from font.h's FontDefault at 0x009BB484. rect1_ and font1_ are spelled as documented offsets because this free function is not a member or friend of Buffer.", "The line-advance arithmetic (line_height_ when the font's unk_1_ is negative, height_ + unk_1_ otherwise, then shrunk against the font's own height_) is Font's private layout at +0xC/+0x10 with unk_1_ at +0, exactly as the seed measured."], "reason": "Coverage transcription of the vertical caption writer with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
+// symbol    ?write_vertical@Buffer@@QAEHPADPAUtagRECT@@@Z
+// TRIED: the fallback stack-only signature has the wrong arity - the real function reads ecx as a Buffer receiver (rect1_ at 0x20, font1_ at 0x52c, both matching Buffer's already-catalogued layout), then a text pointer and a RECT pointer on the stack. It draws each character of the text into a one-byte local buffer and calls write_cent_l once per character, advancing y by the font's line height each time - a vertical column of single-character lines, not a normal horizontal string write. Landed as a free stdcall function taking the receiver explicitly, rather than a Buffer member, because a new top-level type declared here to carry the method would truncate the region this file's own extractor reads at that type's own closing brace, before the real definition.
+Status: Coverage transcription - unclaimed body
+*/
+int Buffer::write_vertical(char *text, RECT *area) {
+    if (area == 0) return 0;
+    // Native5DB469 explicitly saves Buffer+20 rect1_, contradicting current
+    // stringstruct free scaffold's +30/rect2_ saved rectangle.
+    RECT saved = rect1_;
+    set_clip(area);
+    int length = static_cast<int>(strlen(text));
+    if (font1_ == 0) font1_ = FontDefault;
+    int advance = font1_->line_advance();
+    int room = area->bottom - area->top;
+    int total = advance * length;
+    for (;;) {
+        if (font1_ == 0) font1_ = FontDefault;
+        if (advance <= font1_->height_ || total <= room) break;
+        --advance;
+        total -= length;
+    }
+    int y = area->top;
+    int x = area->left;
+    int width = area->right - area->left;
+    char one_character[2];
+    one_character[1] = 0;
+    while (*text != 0) {
+        one_character[0] = *text++;
+        int count = static_cast<int>(strlen(one_character));
+        write_cent_l(one_character, x, y, width, count);
+        y += advance;
+    }
+    set_clip(&saved);
+    return y;
+}
+
+
+/*
+Purpose: Wrap and centre text inside the flying-text block: measure the
+         running line against the available width, emit each completed line
+         centred, advance the pen by one line height, and keep the trailing
+         partial line in the accumulator.
+// ORIGINAL: 0x005DE320 sub_5de320 0x005DE320-0x005DE4C5 FILE
+// RECOVERY_BINDING: v1 {"evidence": ["Original5DE320 reads9B3A90 X,9B3A94 Y,9B3A98 available width and9B3A9C running text-width accumulator; the latter already has the genuine BufferStrHeight owner.", "Original5DE372/5DE4B0 append into shared text9B33CC; record capacity is unproved and the separately documented1024-byte source proposal retains unbounded native writes.", "Original join and measured-space references682820/696CE0 use distinct source objects; width reads, procedure arguments and cursor updates preserve their native ordering."], "reason": "Rehome the centered flying-text wrapper to its actual Buffer receiver and shared source-owned accumulator."}
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original5DE320..5DE4C5; retired seed git:b18d3ac8:src/unrecovered/005de320.cpp records the same identity and spans with its receiver TRIED note kept below.", "The flying-text state is buffer.cpp's own named binding block: FlyingTextBuf 0x009B33CC, FlyingTextY 0x009B3A94, FlyingTextHeight 0x009B3A98, with temp.h's BufferStrHeight (0x009B3A9C) as the running width accumulator; the bindings are redeclared here with the same names and addresses because they are TU-private there.", "The two one-space strings are 0x00682820 (socialwin.cpp's SpaceText) and 0x00696CE0, both measured as single-space .rdata in the pinned image beside the 0x00696CD8/CDC pair buffer.cpp's census already records."], "reason": "Coverage transcription of the flying-text wrapper with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
+// symbol    ?wrap_cent_flying@Buffer@@QAEHPAD@Z
+// TRIED: MISMATCH #2 push/sub - the disassembly reads no stack args and takes the receiver in ecx (no [ecx+N] though; it is only used to call Buffer methods), so this is modelled as a Buffer __thiscall member instead of the placeholder's free __stdcall function; stack-frame shape still differs after that.
+Status: Coverage transcription - unclaimed body
+*/
+// 0x00682820, socialwin.cpp's SpaceText: the one-space join string.
+// 0x00696CE0, measured " " in the pinned image; the census in buffer.cpp
+// records its one-space neighbours 0x00696CD8/0x00696CDC. socialwin.cpp's
+// SpaceText names the other space string this family joins with.
+int Buffer::wrap_cent_flying(char *text) {
+    if (BufferFlyingWidth == 0) return 0;
+    if (text == 0 || *text == 0) return BufferFlyingY;
+    for (;;) {
+        if (BufferFlyingText[0] != 0) {
+            strcat(BufferFlyingText, BufferJoinSpace);
+            int length = static_cast<int>(strlen(BufferCenteredSpace));
+            int measured = text_width(const_cast<char *>(BufferCenteredSpace), length);
+            BufferStrHeight += measured;
+        }
+        char *next = text;
+        if (BufferStrHeight < BufferFlyingWidth) {
+            // Native strlen occurs before BOTH live width reads. A service
+            // callback may alter the accumulator/available width meanwhile.
+            int length = static_cast<int>(strlen(text));
+            int available = BufferFlyingWidth - BufferStrHeight;
+            next = find_line_break_l(text, &available, length);
+        }
+        if (next == 0) break;
+        int prefix = static_cast<int>(strlen(BufferFlyingText));
+        int count = static_cast<int>(next - text);
+        memcpy(BufferFlyingText + prefix, text, count);
+        BufferFlyingText[prefix + count] = 0;
+        // Coordinates are captured before the following strlen callback.
+        int width = BufferFlyingWidth;
+        int y = BufferFlyingY;
+        int x = BufferFlyingX;
+        int length = static_cast<int>(strlen(BufferFlyingText));
+        write_cent_l(BufferFlyingText, x, y, width, length);
+        BufferFlyingText[0] = 0;
+        BufferStrHeight = 0;
+        ++field_18_;
+        if (font1_ == 0) font1_ = FontDefault;
+        int advance = font1_->line_advance();
+        BufferFlyingY += advance;
+        text = next;
+    }
+    strcat(BufferFlyingText, text);
+    return BufferFlyingY;
 }

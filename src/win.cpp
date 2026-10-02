@@ -162,10 +162,10 @@ Win::Win() {
     scroll_vert_ = 0;
     scroll_horz_ = 0;
     field_F4_ = 0;
-    field_15C_ = 0;
-    field_160_ = 0;
-    field_164_ = 0;
-    field_168_ = 0;
+    cached_outer_rect_.left = 0;
+    cached_outer_rect_.top = 0;
+    cached_outer_rect_.right = 0;
+    cached_outer_rect_.bottom = 0;
     // UNROLLED, not a loop: the image is a straight run of `mov [esi+X],
     // eax`, 0x13C through 0x158 by 4, with no loop counter at all. A `for`
     // here gives the compiler an index variable that outlives its loop -
@@ -8311,10 +8311,10 @@ int Win::init(int x, int y, int width, int height, char * caption,
         }
     }
 
-    this->field_15C_ = this->outer_rect_.left;
-    this->field_160_ = this->outer_rect_.top;
-    this->field_164_ = this->outer_rect_.right;
-    this->field_168_ = this->outer_rect_.bottom;
+    this->cached_outer_rect_.left = this->outer_rect_.left;
+    this->cached_outer_rect_.top = this->outer_rect_.top;
+    this->cached_outer_rect_.right = this->outer_rect_.right;
+    this->cached_outer_rect_.bottom = this->outer_rect_.bottom;
 
     void **nameSlot = reinterpret_cast<void **>(&field_E0_);
     if (*nameSlot) {

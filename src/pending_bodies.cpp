@@ -634,19 +634,9 @@ void AlphaMenu::check(int veh_id) {  // 0x00460DD0
 // pending_bodies forwarder. The body is 950 bytes and still FILE-only in
 // src/unrecovered/005db040.cpp; BasePop::on_redraw (0x00604AB0) calls it BY
 // NAME, so a pointer binding there would cost that body the `E8` it needs.
-int Buffer::write_strings(StringList *strings, int left, int top, int width,
-                          int height) {
-    typedef int(__fastcall *pending)(Buffer *, void *, StringList *, int, int,
-                                     int, int);
-    return PENDING_BODY(0x005DB040, pending)(this, nullptr, strings, left, top,
-                                             width, height);
-}
 
-int Buffer::write_raw_l(LPSTR text, int x_coord, int y_coord, int len) {
-    typedef int(__fastcall *pending)(Buffer *, void *, LPSTR, int, int, int);
-    return PENDING_BODY(0x005DBD00, pending)(this, nullptr, text, x_coord,
-                                             y_coord, len);
-}
+
+
 
 // jackal_close's remaining not-yet-recovered callees (src/general.cpp).
 // Two former entries here were PROMOTED and their forwarders retired:
@@ -692,16 +682,7 @@ void __cdecl basepop_close_class() {
 // so this stand-in exists for the link; the body in src/unrecovered/005d8ee0.cpp
 // is still the only transcription of it. HANDOFF: whoever homes 0x005D8EE0
 // deletes this forwarder with it.
-int Buffer::draw_dest_source(Buffer *source, int colour, int x, int y, int flag,
-                             int mode, unsigned char *bits) {
-    // __fastcall with a dead second argument is the __thiscall spelling this
-    // file uses throughout: the receiver lands in ECX and the seven real
-    // arguments on the stack, exactly where the image's call site puts them.
-    typedef int(__fastcall *pending)(Buffer *, void *, Buffer *, int, int, int,
-                                     int, int, unsigned char *);
-    return PENDING_BODY(0x005D8EE0, pending)(this, nullptr, source, colour, x,
-                                             y, flag, mode, bits);
-}
+
 
 // ---------------------------------------------------------------------------
 // PROMOTED OUT OF temp.h, where they were function POINTERS. A pointer
@@ -1043,10 +1024,7 @@ Status: Complete
 // ---- Forwarders for bodies the Win homing revealed as callable but not yet
 // ---- recovered. Each address is the catalogue's, not a guess.
 
-void Buffer::copy_to_window(Win *target, int sx, int sy, int x, int y, int w, int h) {
-    typedef void(__fastcall *pending)(Buffer *, void *, Win *, int, int, int, int, int, int);
-    PENDING_BODY(0x005D9BE0, pending)(this, nullptr, target, sx, sy, x, y, w, h);
-}
+
 
 // ?send_packet_type@Net@@QAEHPAXHKHH@Z at 0x0062F8A0 - still unrecovered
 // (a 2015-byte sender). Net::start_voice and Net::stop_voice, promoted into

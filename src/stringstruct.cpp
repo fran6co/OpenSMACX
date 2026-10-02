@@ -846,151 +846,9 @@ extern "C" void __fastcall sub_4c81c0(char *self, char *directory) {
     }
 }
 
-/*
-Purpose: Write a vertical column of single-character centred lines: each
-         character of the text becomes its own centred line, advancing by the
-         font's line advance, which is first shrunk until the whole column
-         fits the rectangle's height.
-// ORIGINAL: 0x005DB450 sub_5db450 0x005DB450-0x005DB571 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5DB450..5DB571; retired seed git:b18d3ac8:src/unrecovered/005db450.cpp records the same identity and spans with its receiver-analysis TRIED note kept below.", "The receiver is a Buffer (rect1_ at +0x30, font1_ at +0x52C); the two public members used are set_clip and the five-int write_cent_l, and the default font comes from font.h's FontDefault at 0x009BB484. rect1_ and font1_ are spelled as documented offsets because this free function is not a member or friend of Buffer.", "The line-advance arithmetic (line_height_ when the font's unk_1_ is negative, height_ + unk_1_ otherwise, then shrunk against the font's own height_) is Font's private layout at +0xC/+0x10 with unk_1_ at +0, exactly as the seed measured."], "reason": "Coverage transcription of the vertical caption writer with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
-// symbol    _sub_5db450@12
-// TRIED: the fallback stack-only signature has the wrong arity - the real function reads ecx as a Buffer receiver (rect1_ at 0x20, font1_ at 0x52c, both matching Buffer's already-catalogued layout), then a text pointer and a RECT pointer on the stack. It draws each character of the text into a one-byte local buffer and calls write_cent_l once per character, advancing y by the font's line height each time - a vertical column of single-character lines, not a normal horizontal string write. Landed as a free stdcall function taking the receiver explicitly, rather than a Buffer member, because a new top-level type declared here to carry the method would truncate the region this file's own extractor reads at that type's own closing brace, before the real definition.
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" int __stdcall sub_5db450(Buffer *self, char *text, RECT *rect) {
-    if (rect == 0) {
-        return 0;
-    }
-    RECT saved = *reinterpret_cast<RECT *>(
-        reinterpret_cast<char *>(self) + 0x30);
-    self->set_clip(rect);
-    const size_t len = strlen(text);
 
-    Font **font_slot = reinterpret_cast<Font **>(
-        reinterpret_cast<char *>(self) + 0x52C);
-    if (*font_slot == 0) {
-        *font_slot = FontDefault;
-    }
-    // Font's private advance block: unk_1_ at +0, line_height_ at +0xC,
-    // height_ at +0x10. line_advance() spells the selection; the shrink
-    // loop still compares against height_ itself.
-    int line_height = (*font_slot)->line_advance();
-    const int *font_words = reinterpret_cast<const int *>(*font_slot);
-    int total = line_height * static_cast<int>(len);
-    for (;;) {
-        if (*font_slot == 0) {
-            *font_slot = FontDefault;
-        }
-        font_words = reinterpret_cast<const int *>(*font_slot);
-        if (line_height <= font_words[4] || total <= rect->bottom - rect->top) {
-            break;
-        }
-        line_height = line_height - 1;
-        total = total - static_cast<int>(len);
-    }
 
-    int y = rect->top;
-    const int x = rect->left;
-    const int width = rect->right - rect->left;
-    char ch = *text;
-    while (ch != 0) {
-        ch = *text;
-        text = text + 1;
-        char onechar[2];
-        onechar[0] = ch;
-        onechar[1] = 0;
-        const size_t one_len = strlen(onechar);
-        self->write_cent_l(onechar, x, y, width, static_cast<int>(one_len));
-        y = y + line_height;
-        ch = *text;
-    }
 
-    self->set_clip(&saved);
-    return y;
-}
-
-/*
-Purpose: Wrap and centre text inside the flying-text block: measure the
-         running line against the available width, emit each completed line
-         centred, advance the pen by one line height, and keep the trailing
-         partial line in the accumulator.
-// ORIGINAL: 0x005DE320 sub_5de320 0x005DE320-0x005DE4C5 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5DE320..5DE4C5; retired seed git:b18d3ac8:src/unrecovered/005de320.cpp records the same identity and spans with its receiver TRIED note kept below.", "The flying-text state is buffer.cpp's own named binding block: FlyingTextBuf 0x009B33CC, FlyingTextY 0x009B3A94, FlyingTextHeight 0x009B3A98, with temp.h's BufferStrHeight (0x009B3A9C) as the running width accumulator; the bindings are redeclared here with the same names and addresses because they are TU-private there.", "The two one-space strings are 0x00682820 (socialwin.cpp's SpaceText) and 0x00696CE0, both measured as single-space .rdata in the pinned image beside the 0x00696CD8/CDC pair buffer.cpp's census already records."], "reason": "Coverage transcription of the flying-text wrapper with an explicit Buffer receiver; the original is thiscall, so the free spelling notes the callee-pop divergence."}
-// symbol    @sub_5de320@8
-// TRIED: MISMATCH #2 push/sub - the disassembly reads no stack args and takes the receiver in ecx (no [ecx+N] though; it is only used to call Buffer methods), so this is modelled as a Buffer __thiscall member instead of the placeholder's free __stdcall function; stack-frame shape still differs after that.
-Status: Coverage transcription - unclaimed body
-*/
-static int *const FlyingTextBuf = (int *)0x009B33CC;
-static int *const FlyingTextX = (int *)0x009B3A90;
-static int *const FlyingTextY = (int *)0x009B3A94;
-static int *const FlyingTextHeight = (int *)0x009B3A98;
-// 0x00682820, socialwin.cpp's SpaceText: the one-space join string.
-static int *const SpaceText = (int *)0x00682820;
-// 0x00696CE0, measured " " in the pinned image; the census in buffer.cpp
-// records its one-space neighbours 0x00696CD8/0x00696CDC. socialwin.cpp's
-// SpaceText names the other space string this family joins with.
-static int *const WrapFlyingSpace = (int *)0x00696CE0;
-extern "C" int __fastcall sub_5de320(Buffer *self, const char *a1) {
-    if (*FlyingTextHeight == 0) {
-        return 0;
-    }
-    if (a1 == 0) {
-        return *FlyingTextY;
-    }
-    if (*a1 == 0) {
-        return *FlyingTextY;
-    }
-
-    const char *text = a1;
-    while (true) {
-        if (*reinterpret_cast<char *>(FlyingTextBuf) != 0) {
-            strcat(reinterpret_cast<char *>(FlyingTextBuf),
-                   reinterpret_cast<char *>(SpaceText));
-            const unsigned int space_len =
-                strlen(reinterpret_cast<char *>(WrapFlyingSpace));
-            const int space_width = self->text_width(
-                reinterpret_cast<char *>(WrapFlyingSpace),
-                static_cast<int>(space_len));
-            BufferStrHeight = BufferStrHeight + space_width;
-        }
-        const char *next = text;
-        if (BufferStrHeight < *FlyingTextHeight) {
-            const unsigned int len = strlen(text);
-            int room = *FlyingTextHeight - BufferStrHeight;
-            next = self->find_line_break_l(const_cast<char *>(text), &room,
-                                           static_cast<int>(len));
-        }
-        if (next == 0) {
-            break;
-        }
-        const unsigned int prefix_len =
-            strlen(reinterpret_cast<char *>(FlyingTextBuf));
-        memcpy(reinterpret_cast<char *>(FlyingTextBuf) + prefix_len, text,
-               static_cast<unsigned int>(next - text));
-        (reinterpret_cast<char *>(FlyingTextBuf) + prefix_len)[next - text] = 0;
-
-        const int w = *FlyingTextHeight;
-        const int h = *FlyingTextY;
-        const int v = *FlyingTextX;
-        const unsigned int total_len =
-            strlen(reinterpret_cast<char *>(FlyingTextBuf));
-        self->write_cent_l(reinterpret_cast<char *>(FlyingTextBuf), v, h, w,
-                           static_cast<int>(total_len));
-
-        *reinterpret_cast<char *>(FlyingTextBuf) = 0;
-        BufferStrHeight = 0;
-
-        // Buffer's protected line counter, field_18_ at +0x18.
-        *reinterpret_cast<int *>(reinterpret_cast<char *>(self) + 0x18) =
-            *reinterpret_cast<int *>(reinterpret_cast<char *>(self) + 0x18) + 1;
-        *FlyingTextY = *FlyingTextY + self->text_line_height();
-
-        text = next;
-    }
-
-    strcat(reinterpret_cast<char *>(FlyingTextBuf), const_cast<char *>(text));
-    return *FlyingTextY;
-}
 
 
 
@@ -1373,8 +1231,6 @@ static int *const LocalFactionSlot = (int *)0x00939284;
 // shared scratch the sibling alpha.cpp prefs paths fill.
 
 // The unit draw-state transparency byte the image keeps beside the wrappers.
-static const unsigned char *const DrawDestTransparencySlot =
-    (const unsigned char *)0x00696D14;
 }
 
 // The shared surface Sprite buffer.cpp constructs at 0x009B3A50 (its own
@@ -1386,16 +1242,6 @@ extern Sprite g_TECH_ICON_SPRITES[89];  // 0x00759E28, sprite.cpp's definition
 namespace {
 // The published unit draw-state block: the words the surface sprite's
 // draw_dest_unk1 readers consume, 0x009B3A54..0x009B3A78.
-static int *const DrawDestStateSlot = (int *)0x009B3A54;
-static unsigned char *const DrawDestStateFlag = (unsigned char *)0x009B3A58;
-static int *const DrawDestStateX = (int *)0x009B3A5C;
-static int *const DrawDestStateY = (int *)0x009B3A60;
-static int *const DrawDestStateX2 = (int *)0x009B3A64;
-static int *const DrawDestStateY2 = (int *)0x009B3A68;
-static int *const DrawDestStateZero1 = (int *)0x009B3A6C;
-static int *const DrawDestStateZero2 = (int *)0x009B3A70;
-static int *const DrawDestStateZero3 = (int *)0x009B3A74;
-static int *const DrawDestStateZero4 = (int *)0x009B3A78;
 
 // VC6 rejects a free __thiscall function pointer (C4234), so every indirect
 // virtual dispatch below goes through a member-fn-pointer union: the union's
@@ -1511,7 +1357,9 @@ extern "C" int __fastcall sub_5cbae0(int *wrapper, int fill) {
 Purpose: Draw one multiplayer window spot and centre its difficulty caret
          row over it.
 // ORIGINAL: 0x00479270 ?UNK1@MultiWin@@QAEXPAURECT@@@Z 0x00479270-0x0047932C FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original479270..47932C; retired seed git:117282ee:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
+// RECOVERY_BINDING: v1 {"evidence": ["Original4792CF pushes682820 into strcat645470 at4792E0; pinned bytes at682820 are one space followed by NUL, identical to the Buffer/SocialWin shared join object.", "This narrow reference migration leaves the existing explicit MultiWin receiver, Spot/difficulty walk and caret/text procedure ordering unchanged; it does not establish full MultiWin hierarchy or runtime acceptance."], "reason": "Replace this existing MultiWin scaffold shared-string alias with the same genuine source-owned join-space object."}
+// symbol    @MultiWin_UNK1@12
+// SUPERSEDED_BINDING_HISTORY: v1 {"evidence": ["Original479270..47932C; retired seed git:117282ee:src/unrecovered/00479270.cpp records the same identity and spans.", "The receiver's Spot subobject at +0x28AC (spot.h's own add/3,2 overload) and the +0x444 Buffer (write_cent_l is buffer.h's own) carry the walk; the difficulty table is the 0x833-dword PlayerData stride faction.h pins, read at the +0x2054 record offset through the local-faction slot 0x00939284.", "The caret row is built into strings.h's StringTemp (0x009B86A0) from the one-space and caret .rdata strings exactly as the seed strcat-walks them."], "reason": "Coverage transcription of the multiplayer spot label with the receiver spelled explicitly because MultiWin has no header declaration yet."}
 Status: Coverage transcription - unclaimed body
 */
 extern "C" void __fastcall MultiWin_UNK1(MultiWin *self_raw, void *, RECT *rect) {
@@ -1528,7 +1376,7 @@ extern "C" void __fastcall MultiWin_UNK1(MultiWin *self_raw, void *, RECT *rect)
         int carets = (difficulty > 3) ? 3 : difficulty;
         if (carets != 0) {
             StringTemp[0] = 0;
-            strcat(StringTemp, reinterpret_cast<const char *>(SpaceText));
+            strcat(StringTemp, BufferJoinSpace);
             for (; carets != 0; --carets) {
                 strcat(StringTemp, CaretSeparator);
             }
@@ -1919,120 +1767,13 @@ int DeletionList::add_deletion(int veh_id) {
 // then draw through the sprite's table-driven draw_dest_unk1. The receiver
 // is an unnamed actor object (fields at 0x50/0x54/0x58/0x6C/0x80/0x84/0x4A8)
 // and the original is a __thiscall member.
-/*
-Purpose: Publish the unit draw state and draw one unit sprite through the
-         shared surface sprite, releasing the actor when its countdown ends.
-// ORIGINAL: 0x005D8C20 sub_5d8c20 0x005D8C20-0x005D8D00 FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5D8C20..5D8D00; retired seed git:117282ee:src/unrecovered/005d8c20.cpp records the same identity and spans with its register-order TRIED note kept below.", "The shared surface sprite is buffer.cpp's g_BUFFER_SPRITE (0x009B3A50) and the published draw-state block is its 0x9B3A54..0x9B3A78 neighbour, with the transparency byte 0x00696D14; the actor countdown fields are the seed's 0x50/0x58/0x6C walks.", "The slot-0x80 dispatch is the actor's own stop hook (stdcall through vtbl+0x80), exactly as the seed calls it."], "reason": "Coverage transcription of the four-argument unit draw wrapper with the state publish and countdown walks kept at the measured order."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall sub_5d8c20(char *self, Buffer *canvas, int a2,
-                                      int a3, unsigned char *table) {
-    if (*reinterpret_cast<int *>(self + 0x58) == 0) {
-        const int delay = *reinterpret_cast<int *>(self + 0x54);
-        const unsigned char transparency = *DrawDestTransparencySlot;
-        *reinterpret_cast<int *>(self + 0x50) = delay;
-        if (delay != 0) {
-            *reinterpret_cast<int *>(self + 0x6C)
-                = *reinterpret_cast<int *>(self + 0x6C) + 1;
-        }
-        *DrawDestStateSlot = delay;
-        *DrawDestStateX = *reinterpret_cast<int *>(self + 0x4A8);
-        *DrawDestStateY = *reinterpret_cast<int *>(self + 0x80);
-        *DrawDestStateX2 = -*reinterpret_cast<int *>(self + 0x84);
-        *DrawDestStateY2 = *reinterpret_cast<int *>(self + 0x80);
-        *DrawDestStateZero1 = -*reinterpret_cast<int *>(self + 0x84);
-        *DrawDestStateZero2 = 0;
-        *DrawDestStateZero3 = 0;
-        *DrawDestStateFlag = transparency;
-        *DrawDestStateZero4 = 0;
 
-        void *const actor = *reinterpret_cast<void **>(self + 0x58);
-        if (actor == 0) {
-            if (--*reinterpret_cast<int *>(self + 0x6C) > 0) {
-                *DrawDestStateSlot = 0;
-                g_BUFFER_SPRITE.draw_dest_unk1(canvas, a2, a3, table);
-                return;
-            }
-        } else {
-            const int remaining = *reinterpret_cast<int *>(self + 0x6C) - 1;
-            *reinterpret_cast<int *>(self + 0x6C) = remaining;
-            if (*reinterpret_cast<int *>(self + 0x50) == 0 || remaining > 0) {
-                *DrawDestStateSlot = 0;
-                g_BUFFER_SPRITE.draw_dest_unk1(canvas, a2, a3, table);
-                return;
-            }
-            typedef int (__stdcall *StopFn)(void *, int);
-            StopFn stop = *reinterpret_cast<StopFn *>(
-                reinterpret_cast<char *>(*reinterpret_cast<void **>(actor)) + 0x80);
-            stop(actor, *reinterpret_cast<int *>(self + 0x50));
-        }
-        *reinterpret_cast<int *>(self + 0x50) = 0;
-        *reinterpret_cast<int *>(self + 0x6C) = 0;
-    }
-    *DrawDestStateSlot = 0;
-    g_BUFFER_SPRITE.draw_dest_unk1(canvas, a2, a3, table);
-}
 
 // ---------------------------------------------------------------------------
 // sub_5d8d00, 0x005D8D00. The same wrapper's six-argument form: the
 // identical state publish and actor countdown, then the table-driven
 // draw_dest_unk1 with the two extra drawing arguments.
-/*
-Purpose: Publish the unit draw state and draw one unit sprite with the
-         extended arguments, releasing the actor when its countdown ends.
-// ORIGINAL: 0x005D8D00 sub_5d8d00 0x005D8D00-0x005D8DEA FILE
-// RECOVERY_BINDING: v1 {"evidence": ["Original5D8D00..5D8DEA; retired seed git:117282ee:src/unrecovered/005d8d00.cpp records the same identity and spans with its shared TRIED note kept below.", "Same published block and actor fields as sub_5d8c20 above; the trailing two arguments ride straight through to sprite.h's six-argument draw_dest_unk1 exactly as the seed forwards them."], "reason": "Coverage transcription of the six-argument unit draw wrapper beside its four-argument twin."}
-Status: Coverage transcription - unclaimed body
-*/
-extern "C" void __fastcall sub_5d8d00(char *self, Buffer *canvas, int a2,
-                                      int a3, int a4, int a5,
-                                      unsigned char *table) {
-    if (*reinterpret_cast<int *>(self + 0x58) == 0) {
-        const int delay = *reinterpret_cast<int *>(self + 0x54);
-        const unsigned char transparency = *DrawDestTransparencySlot;
-        *reinterpret_cast<int *>(self + 0x50) = delay;
-        if (delay != 0) {
-            *reinterpret_cast<int *>(self + 0x6C)
-                = *reinterpret_cast<int *>(self + 0x6C) + 1;
-        }
-        *DrawDestStateSlot = delay;
-        *DrawDestStateX = *reinterpret_cast<int *>(self + 0x4A8);
-        *DrawDestStateY = *reinterpret_cast<int *>(self + 0x80);
-        *DrawDestStateX2 = -*reinterpret_cast<int *>(self + 0x84);
-        *DrawDestStateY2 = *reinterpret_cast<int *>(self + 0x80);
-        *DrawDestStateZero1 = -*reinterpret_cast<int *>(self + 0x84);
-        *DrawDestStateZero2 = 0;
-        *DrawDestStateZero3 = 0;
-        *DrawDestStateFlag = transparency;
-        *DrawDestStateZero4 = 0;
 
-        void *const actor = *reinterpret_cast<void **>(self + 0x58);
-        if (actor == 0) {
-            if (--*reinterpret_cast<int *>(self + 0x6C) > 0) {
-                *DrawDestStateSlot = 0;
-                g_BUFFER_SPRITE.draw_dest_unk1(canvas, a2, a3, a4, a5, table);
-                return;
-            }
-        } else {
-            const int remaining = *reinterpret_cast<int *>(self + 0x6C) - 1;
-            *reinterpret_cast<int *>(self + 0x6C) = remaining;
-            if (*reinterpret_cast<int *>(self + 0x50) == 0 || remaining > 0) {
-                *DrawDestStateSlot = 0;
-                g_BUFFER_SPRITE.draw_dest_unk1(canvas, a2, a3, a4, a5, table);
-                return;
-            }
-            typedef int (__stdcall *StopFn)(void *, int);
-            StopFn stop = *reinterpret_cast<StopFn *>(
-                reinterpret_cast<char *>(*reinterpret_cast<void **>(actor)) + 0x80);
-            stop(actor, *reinterpret_cast<int *>(self + 0x50));
-        }
-        *reinterpret_cast<int *>(self + 0x50) = 0;
-        *reinterpret_cast<int *>(self + 0x6C) = 0;
-    }
-    *DrawDestStateSlot = 0;
-    g_BUFFER_SPRITE.draw_dest_unk1(canvas, a2, a3, a4, a5, table);
-}
 #include "win.h"       // Win::window_proc, the default path of PrevWndFunc
 #include "console.h"   // ConsoleGlobal - net_not_my_turn hands the view back
 #include "netdaemon.h" // NetDaemonNet - the turn wait pumps its net_tasks

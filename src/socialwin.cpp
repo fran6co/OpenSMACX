@@ -1,3 +1,4 @@
+extern const char BufferJoinSpace[];
 /*
  * OpenSMACX - an open source clone of Sid Meier's Alpha Centauri.
  * Copyright (C) 2013-2021 Brendan Casey
@@ -865,7 +866,6 @@ void SocialWin::draw_social(int a1) {
 }
 
 // Fixed-slot bindings carried from 004b0d50.cpp
-static int *const SpaceText = (int *)0x00682820;
 static int *const PercentText = (int *)0x00682EA0;
 static int *const InterfaceBuffer = (int *)0x007AEC64;
 static int *const InterfaceClipRect = (int *)0x007AEC94;
@@ -1001,7 +1001,7 @@ void SocialWin::draw_psych_alloc() {
     StringTemp[0] = 0;
     const int allocation = PlayersData[factionID_].se_alloc_psych;
     strcat(StringTemp, label_get(318));
-    strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+    strcat(StringTemp, BufferJoinSpace);
 
     char numbuf[80];
     reinterpret_cast<ItoaFn>(_itoa)(allocation * 10, numbuf, 10);
@@ -1068,7 +1068,7 @@ void SocialWin::draw_economy_alloc() {
     const int remaining = 10 - player.se_alloc_psych - player.se_alloc_labs;
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(366));
-    strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+    strcat(StringTemp, BufferJoinSpace);
     char number[80];
     reinterpret_cast<ItoaFn>(_itoa)(remaining * 10, number, 10);
     strcat(StringTemp, number);
@@ -1118,7 +1118,7 @@ void SocialWin::draw_labs_alloc() {
     const int allocation = PlayersData[factionID_].se_alloc_labs;
     StringTemp[0] = '\0';
     strcat(StringTemp, label_get(60));
-    strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+    strcat(StringTemp, BufferJoinSpace);
     char number[80];
     reinterpret_cast<ItoaFn>(_itoa)(allocation * 10, number, 10);
     strcat(StringTemp, number);
@@ -2402,7 +2402,7 @@ void SocialWin::draw_info() {
     strcat(StringTemp, ColonSpaceText);
     reinterpret_cast<ItoaFn>(_itoa)(BreakthroughTurnsGlobal, number, 10);
     strcat(StringTemp, number);
-    strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+    strcat(StringTemp, BufferJoinSpace);
     strcat(StringTemp, label_get(49));
     buf->write_l(StringTemp, text_left, row_y, strlen(StringTemp));
 
@@ -2502,7 +2502,7 @@ scaled:
         strcat(StringTemp, UpheavalPlusText);
         reinterpret_cast<ItoaFn>(_itoa)(-upheaval, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(230));
         buf->set_text_color(0xa0, -1, 1, 1);
     } else if (upheaval >= 1) {
@@ -2512,7 +2512,7 @@ scaled:
         strcat(StringTemp, ColonSpaceText);
         reinterpret_cast<ItoaFn>(_itoa)(upheaval, number, 10);
         strcat(StringTemp, number);
-        strcat(StringTemp, reinterpret_cast<char *>(SpaceText));
+        strcat(StringTemp, BufferJoinSpace);
         strcat(StringTemp, label_get(230));
     }
     if (upheaval != 0) {

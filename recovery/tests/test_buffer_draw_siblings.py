@@ -38,6 +38,8 @@ def actual_source():
     for name in METHODS:
         signatures = list(re.finditer(
             r"\bint\s+Buffer::" + name + r"\s*\([^)]*\)", source))
+        signatures = [match for match in signatures
+                      if match.group(0).count(",") == 4]
         if name == "draw":
             signatures = [match for match in signatures
                           if "unsigned char *" in match.group(0)]
@@ -47,7 +49,11 @@ def actual_source():
 
     assert "draw_noop(source" in methods["draw_unk2"]
     assert "reinterpret_cast<int>(source)" not in methods["draw_unk2"]
-    noop = braced(sprite_source, "int Sprite::draw_noop(")
+    noop_signatures = [match.group(0) for match in re.finditer(
+        r"\bint\s+Sprite::draw_noop\s*\([^)]*\)", sprite_source)
+                       if match.group(0).count(",") == 4]
+    assert len(noop_signatures) == 1, "missing five-parameter Sprite noop"
+    noop = braced(sprite_source, noop_signatures[0])
     assert "return 0;" in noop
     methods["sprite_noop_actual"] = noop.replace(
         "Sprite::draw_noop(", "SpriteNoop::draw_noop(")

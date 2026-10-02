@@ -309,82 +309,9 @@ uint32_t __fastcall field_accessor_005e2470_redirect(void *, void *, int stack0,
     return 0x8U;
 }
 
-/*
-Purpose: Set 9 field(s) to constants.
-         Emitted by tools/generate_field_accessors.py from
 
-             mov eax, ecx / xor ecx, ecx / mov dword ptr [eax], ecx / mov dword ptr [eax + 4], ecx / mov dword ptr [eax + 8], ecx / mov dword ptr [eax + 0xc], ecx / mov dword ptr [eax + 0x10], ecx / mov dword ptr [eax + 0x14], ecx / mov dword ptr [eax + 0x18], ecx / mov dword ptr [eax + 0x1c], ecx / mov dword ptr [eax + 0x20], ecx / ret
 
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// ORIGINAL: 0x005E35D0 sub_5e35d0 0x005E35D0-0x005E35EF BYTE_EXACT
-// symbol    ?field_accessor_005e35d0_redirect@@YIPAXPAX0@Z
-// size      31 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: the value described above
-Status: Complete
-*/
-void * __fastcall field_accessor_005e35d0_redirect(void *self, void *) {
-    uint8_t *const bytes = static_cast<uint8_t *>(self);
-    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0x0U;
-    return self;
-}
 
-/*
-Purpose: Set 9 field(s) to constants.
-         Emitted by tools/generate_field_accessors.py from
-
-             xor eax, eax / mov dword ptr [ecx], eax / mov dword ptr [ecx + 4], eax / mov dword ptr [ecx + 8], eax / mov dword ptr [ecx + 0xc], eax / mov dword ptr [ecx + 0x10], eax / mov dword ptr [ecx + 0x14], eax / mov dword ptr [ecx + 0x18], eax / mov dword ptr [ecx + 0x1c], eax / mov dword ptr [ecx + 0x20], eax / ret
-
-         The name is the ADDRESS, not an invention, and `self` is a void
-         pointer because this body needs `this` to be nothing more than a
-         pointer and an offset - the class it belongs to is not established.
-         The adapter declares 0 stack dword(s) so it
-         cleans 0 bytes, taken from the body's own `ret` -
-         the only statement of this function's arity that exists, since it has
-         no mangled name. Declaring fewer would leave them on the caller's
-         stack.
-// ORIGINAL: 0x005E35F0 sub_5e35f0 0x005E35F0-0x005E360D BYTE_EXACT
-// symbol    ?field_accessor_005e35f0_redirect@@YIXPAX0@Z
-// size      29 bytes
-// prototype 
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-Return Value: n/a
-Status: Complete
-*/
-void __fastcall field_accessor_005e35f0_redirect(void *self, void *) {
-    uint8_t *const bytes = static_cast<uint8_t *>(self);
-    *reinterpret_cast<uint32_t *>(bytes + 0x0) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x4) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x8) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0xc) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x10) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x14) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x18) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x1c) = 0x0U;
-    *reinterpret_cast<uint32_t *>(bytes + 0x20) = 0x0U;
-}
 
 /*
 Purpose: Read the dword field at 0x0, masked to 0x1.
