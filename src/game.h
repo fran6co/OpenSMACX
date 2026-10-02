@@ -150,6 +150,9 @@ void __cdecl mon_secrets_of_tech(int faction_id);
 void __cdecl mon_colony_founded(int faction_id, char *base_name);
 void __cdecl mon_facility_built(int faction_id, char *base_name);
 void __cdecl mon_conquer_base(int faction_id, char *base_name);
+void __cdecl mon_tech_discovered(int faction_id, int tech_id);
+void __cdecl mon_secret_project(int faction_id, int project_id);
+void __cdecl mon_built_preserve(int faction_id);
 
 // Four independently cleared words precede each offer cell's unknown payload.
 struct OfferResetCell {

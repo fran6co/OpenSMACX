@@ -1,0 +1,40 @@
+{
+  "event_id": "16b53dff3b75991863d0e5c73257f18538247645ed8ee2b37ae29444e52825d3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_monument_payload_records.py",
+      "src/game.cpp",
+      "src/game.h",
+      "src/recovered/units/00476c90.cpp",
+      "src/recovered/units/00477100.cpp",
+      "src/unrecovered/00477840.cpp"
+    ],
+    "evidence": [
+      "Complete pinned native producer bodies476C90..476D93,477100..477207,477840..47793E write genuine FactionMonuments records1,5,12 and optional technology/project payload word8. Recover typed producers and tests preserving year-before-guard, alien target policy, eight-peer first-achiever selection, duplicate guard, live-local notification, all original identities/lessons and historical claims. Retire consumed seeds only after actual complete source and compile/link verification; no automatic acceptance or baseline reset."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4680848,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4681984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4683840,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "5fc44d943d896c809ad10b6682e0c7e5fc4a27d171b0d058443ee32a0d2d760d",
+  "request_id": "complete-unclaimed-monument-producer-family",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:monuwin-owner-coverage"
+}

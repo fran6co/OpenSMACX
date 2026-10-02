@@ -5051,6 +5051,117 @@ void __cdecl mon_colony_founded(int faction_id, char *base_name) {
         monument(1);
 }
 
+// ORIGINAL: 0x00476C90 ?mon_tech_discovered@@YAXHH@Z 0x00476C90-0x00476D93
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00476C90 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00476c90.cpp; record1 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
+void __cdecl mon_tech_discovered(int faction_id, int tech_id) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+        return;
+    MonumentFaction &faction = FactionMonuments[faction_id];
+    MonumentRecord &record = faction.records_[1];
+    if (record.achieved_ != 0)
+        return;
+
+    record.word_14_ = 0;
+    int peer;
+    for (peer = 0; peer < MaxPlayerNum; ++peer) {
+        if (peer != faction_id && FactionMonuments[peer].records_[1].achieved_ != 0)
+            ++record.word_14_;
+    }
+    int first_faction = faction_id;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        for (peer = 0; peer < MaxPlayerNum; ++peer) {
+            const MonumentRecord &other = FactionMonuments[peer].records_[1];
+            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
+                first_faction = peer;
+        }
+    } else {
+        record.word_14_ = 1;
+    }
+    record.achieved_ = 1;
+    record.year_ = year;
+    record.owner_faction_ = first_faction;
+    record.word_8_ = tech_id;
+    faction.latest_type_ = 1;
+    if (faction_id == ConsoleGlobal.faction_id_)
+        monument(1);
+}
+
+// ORIGINAL: 0x00477100 ?mon_secret_project@@YAXHH@Z 0x00477100-0x00477207
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477100 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/recovered/units/00477100.cpp; record5 at factionstride4F4, year0, payload8, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
+void __cdecl mon_secret_project(int faction_id, int project_id) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+        return;
+    MonumentFaction &faction = FactionMonuments[faction_id];
+    MonumentRecord &record = faction.records_[5];
+    if (record.achieved_ != 0)
+        return;
+
+    record.word_14_ = 0;
+    int peer;
+    for (peer = 0; peer < MaxPlayerNum; ++peer) {
+        if (peer != faction_id && FactionMonuments[peer].records_[5].achieved_ != 0)
+            ++record.word_14_;
+    }
+    int first_faction = faction_id;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        for (peer = 0; peer < MaxPlayerNum; ++peer) {
+            const MonumentRecord &other = FactionMonuments[peer].records_[5];
+            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
+                first_faction = peer;
+        }
+    } else {
+        record.word_14_ = 1;
+    }
+    record.achieved_ = 1;
+    record.year_ = year;
+    record.owner_faction_ = first_faction;
+    record.word_8_ = project_id;
+    faction.latest_type_ = 5;
+    if (faction_id == ConsoleGlobal.faction_id_)
+        monument(1);
+}
+
+// ORIGINAL: 0x00477840 ?mon_built_preserve@@YAXH@Z 0x00477840-0x0047793E
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original00477840 and seed git:91b86557299ab66a61f1184540338d569e780e7e:src/unrecovered/00477840.cpp; record12 at factionstride4F4, year0, firstownerC, achieved10, firstflag14 and latesttype498 are independently established by native stores.", "The original calls game_year before alien/duplicate guards and includes all eight peer records regardless of peer flags; later qualifying first-achiever ties win."], "reason": "Recover the complete native milestone producer against genuine shared monument records, with typed peer selection and live local notification rather than executable-address table views."}
+// TRIED: single `if(!(flag)&&active==0)` short-circuit form vs hoisting `winner`/`count=0` before the scan loop - both land the same MISMATCH #3 (original reserves the stack slot for `year` with `push ecx` ahead of the ebx/esi pushes; every C form tried here has the compiler push ebx/esi first instead).
+void __cdecl mon_built_preserve(int faction_id) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+        return;
+    MonumentFaction &faction = FactionMonuments[faction_id];
+    MonumentRecord &record = faction.records_[12];
+    if (record.achieved_ != 0)
+        return;
+
+    record.word_14_ = 0;
+    int peer;
+    for (peer = 0; peer < MaxPlayerNum; ++peer) {
+        if (peer != faction_id && FactionMonuments[peer].records_[12].achieved_ != 0)
+            ++record.word_14_;
+    }
+    int first_faction = faction_id;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        for (peer = 0; peer < MaxPlayerNum; ++peer) {
+            const MonumentRecord &other = FactionMonuments[peer].records_[12];
+            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
+                first_faction = peer;
+        }
+    } else {
+        record.word_14_ = 1;
+    }
+    record.achieved_ = 1;
+    record.owner_faction_ = first_faction;
+    record.year_ = year;
+    faction.latest_type_ = 12;
+    if (faction_id == ConsoleGlobal.faction_id_)
+        monument(1);
+}
+
 // ORIGINAL: 0x00476FE0 ?mon_facility_built@@YAXHPAD@Z 0x00476FE0-0x004770F2
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00476FE0 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00476fe0.cpp; faction stride4F4, record4, name field4C4 and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
 void __cdecl mon_facility_built(int faction_id, char *base_name) {
