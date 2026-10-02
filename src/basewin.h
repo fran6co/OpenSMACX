@@ -206,6 +206,7 @@ class BaseWin : public ConstructedGraphicWin, public SubInterface {
   void on_redraw();                                     // 0x0041E790
   void init();                                          // 0x0041E8D0
   void compute_selected_base();
+  int displayed_production_id() const { return displayed_production_id_; }
   void update_drag_cursor(int spot_type, int spot_pos, int x, int y, int large);
   void show_panel_help(int x, int y, int label_offset, Win *window);
 

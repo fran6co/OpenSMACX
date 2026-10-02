@@ -1,0 +1,20 @@
+{
+  "event_id": "52ef6e1381d18f6baacc20289b809f5aa92d8a0859fad4a8bfedc0243da98ee1",
+  "payload": {
+    "affects": [
+      "entity-b60e515481664873d2e75e15d9613300caf913faeaab76bb50efff7abf4ba837"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "basewin-production-workshop-link-dependency",
+    "evidence": [
+      "Native directcall417EEA->583E30; retained00583e30 spans583E30..584B4B and65FFD0..660239, int cdecl2int. No current product definition found. Existing designwin-owner-coverage explicitly admits that original identity and owningTU/header placeholder; pending behavior/closure remains visible. Native compiler-only overlay succeeded withproduction target; no link/runtime/matching acceptance. Root also corrected VC6 std::strcat spelling, signed parse_num subtraction, full80byte strictness scratch and displayed-ID snapshot before second pair base_making callback; actual-helper GCC/Clang ASAN/UBSAN controls13pass combined with NetDaemon protocol-shell controls."
+    ],
+    "hypothesis": "The now VC6-compiling production body requires a genuine mapped design_workshop dependency in its existing DesignWin owner before application linking; a declared unfinished body preserves build continuity but not workshop behavior.",
+    "kind": "discovery"
+  },
+  "previous_event": "8c1e7b6be38edade166d4b5b7ed7db7dff445b65e27ca57c6ee95289d89af0fe",
+  "request_id": "basewin-production-workshop-link-dependency",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:basewin-owner-coverage"
+}

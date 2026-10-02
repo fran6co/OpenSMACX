@@ -1,0 +1,23 @@
+{
+  "event_id": "ee55b4b676c9828f4a6632e3892fc69d33e6cbc89cf232473f26628c0eef1304",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Native production417EEA directly calls583E30 int cdecl design_workshop(int,int); existing preserved seed00583e30 maps583E30..584B4B plus65FFD0..660239 and is not compiled. Coordinator authorizes owning designwin.cpp/designwin.h declaration plus explicit unfinished BODY GOES HERE link-continuity body, native guarded source binding retaining full identity/spans/seed and return ABI. It does not implement workshop behavior, replace recovered behavior, grant a byte claim or reset this existing owner baseline. Recover real workshop subsequently under this owner; do not substitute DesignWin.exec or fixed executable call."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5783088,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "design-workshop-production-link-dependency",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:designwin-owner-coverage"
+}

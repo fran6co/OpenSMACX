@@ -26,6 +26,9 @@
 #include "graphicwin.h"
 #include "subinterface.h"
 
+// Original 0x00583E30; owning body is explicitly unfinished in designwin.cpp.
+int __cdecl design_workshop(int faction_id, int mode);
+
  /*
   * DesignWin class
   *

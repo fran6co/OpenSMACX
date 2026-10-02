@@ -51,6 +51,8 @@
 #include "log.h"
 #include "popmenu.h"
 #include "infowin.h"
+#include "interlude.h"
+#include "strings.h"
 #include "messagewin.h"
 #include "statuswin.h"
 #include "worldwin.h"
@@ -1494,11 +1496,498 @@ char *expand_hurry_dialog_item() {
 }
 } // namespace
 
-// Production selection remains an explicit link-only placeholder.
+static int production_signed_bits(uint32_t bits) {
+    return bits <= 0x7FFFFFFFu ? static_cast<int>(bits)
+        : -1 - static_cast<int>(0xFFFFFFFFu - bits);
+}
+static int production_add(int left, int right) {
+    return production_signed_bits(static_cast<uint32_t>(left)
+                                  + static_cast<uint32_t>(right));
+}
+static int production_sub(int left, int right) {
+    return production_signed_bits(static_cast<uint32_t>(left)
+                                  - static_cast<uint32_t>(right));
+}
+static int production_mul(int left, int right) {
+    return production_signed_bits(static_cast<uint32_t>(left)
+                                  * static_cast<uint32_t>(right));
+}
+
+static void set_production_parse_name(int slot, int production_id) {
+    if (production_id >= 0) {
+        parse_says(slot, VehPrototypes[production_id].veh_name, -1, -1);
+    } else {
+        parse_say(slot,
+                  reinterpret_cast<int>(Facility[-production_id].name),
+                  -1, -1);
+    }
+}
+
+// Selected production IDs are signed picker results. This is the image's
+// exact 0x417944 mapping; keep 9999 out of this transform because it branches
+// to 0x417EDD first.
+static int normalize_production_selection(int selected_id) {
+    return selected_id >= 0x200 ? 0x200 - selected_id : selected_id;
+}
+
+// Called at native 0x417930 for the ordinary action (field_A778_ == 0,
+// whose decremented switch index is 0xFFFFFFFF and fails the unsigned table
+// range check). `normalized_id` is the already-normalized 0x417944 result;
+// callers retain the separate 0x417EDD action-9999 path.
+static bool apply_retool_cost_prompt(BaseWin &window, Popup &popup,
+                                     int normalized_id, int faction_snapshot,
+                                     int &queue_slot, int a1) {
+    if (a1 != 0 || normalized_id != BaseCurrent->queue_production_id[0]) {
+        BaseCurrent->state |= 0x80000000u;  // Base+0x30, native 0x417961
+        if (BaseCurrent->governor & 0x40000000u)
+            BaseCurrent->governor &= 0x3FFFFFFFu; // native AND at 0x41797D
+    }
+    if (a1 != 0) return false;  // native 0x417985 -> 0x417C95
+
+    // 0x417992..0x4179C6: reserve must be nonzero and selected/current
+    // retool categories must differ. Equality copies the saved reserve to
+    // minerals_accumulated at native 0x417C8C instead of opening a popup.
+    if (BaseCurrent->minerals_accumulated_2 == 0) return false;
+    const int first_base_id = BaseIDCurrentSelected;
+    const int selected_category = base_making(normalized_id, first_base_id);
+    const int current_displayed_id = window.displayed_production_id();
+    const int second_base_id = BaseIDCurrentSelected;
+    const int displayed_category = base_making(current_displayed_id, second_base_id);
+    if (selected_category == displayed_category) {
+        BaseCurrent->minerals_accumulated =
+            BaseCurrent->minerals_accumulated_2;
+        return false;
+    }
+
+    if (PlayersData[faction_snapshot].diff_level <= 1
+        || Rules.retool_pct_pen_prod_chg == 0
+        || BaseCurrent->minerals_accumulated_2
+               <= static_cast<int>(Rules.retool_exemption)
+        || window.displayed_production_id() == -0x45) {
+        BaseCurrent->minerals_accumulated =
+            BaseCurrent->minerals_accumulated_2;
+        return false;
+    }
+
+    // Native 0x417A23..0x417A4C requires the live current-production and
+    // displayed-production retool categories to agree; unlike the earlier
+    // equality case, failure skips the prompt without copying reserve.
+    // Native 0x417A14 saves this displayed ID before the first callback.
+    const int second_displayed_id = window.displayed_production_id();
+    const int current_queue_id = BaseCurrent->queue_production_id[0];
+    const int queue_base_id = BaseIDCurrentSelected;
+    const int current_category = base_making(current_queue_id, queue_base_id);
+    const int displayed_base_id = BaseIDCurrentSelected;
+    const int second_displayed_category =
+        base_making(second_displayed_id, displayed_base_id);
+    if (current_category != second_displayed_category) {
+        return false;
+    }
+
+    set_production_parse_name(0, BaseCurrent->queue_production_id[0]);
+    set_production_parse_name(1, normalized_id);
+
+    const int exemption = static_cast<int>(Rules.retool_exemption);
+    const int percent = static_cast<int>(Rules.retool_pct_pen_prod_chg);
+    const int reserve = BaseCurrent->minerals_accumulated_2;
+    const int proposed_reserve = production_add(
+        exemption, production_mul(production_sub(reserve, exemption),
+                                  production_sub(100, percent)) / 100);
+
+    parse_num(0, percent);
+    parse_num(1, static_cast<int>(Rules.retool_exemption));
+    parse_num(2, production_sub(BaseCurrent->minerals_accumulated, proposed_reserve));
+
+    // Image literals at 0x682BC0 and 0x682BD0 were read from the pinned PE:
+    // "RETOOLPENALTY" and "A". The byte strings are source literals here,
+    // not fixed-address executable calls.
+    StringTemp[0] = 0;
+    strcat(StringTemp, "RETOOLPENALTY");
+    char strictness_text[0x50];
+    _itoa(static_cast<int>(Rules.retool_strictness), strictness_text, 10);
+    strcat(StringTemp, strictness_text);
+    if (Rules.retool_exemption != 0) strcat(StringTemp, "A");
+
+    popup.start(PopupStartCaption, StringTemp, -1, 0, 0, 0);
+    if (BaseCurrent->queue_size == 0)
+        popup.dialogs().item(label_get(0xB0C / 4), 2);
+    popup.dialogs().item(label_get(0xB10 / 4), 3);
+    const int result = popup.exec();
+
+    // Native table 0x418DDC has only result 0..3; unsigned-above falls to
+    // 0x417C95 without applying a mutation.
+    // Native table index 0 goes to 0x4181FD: unlock/visibility restoration
+    // and method teardown, without logging or applying the ordinary tail.
+    if (result == 0) {
+        return true;
+    } else if (result == 1) {
+        BaseCurrent->minerals_accumulated = proposed_reserve;
+    } else if (result == 2) {
+        int slot;
+        for (slot = 8; slot >= 1; --slot)
+            BaseCurrent->queue_production_id[slot + 1] =
+                BaseCurrent->queue_production_id[slot];
+        uint32_t count = BaseCurrent->queue_size + 1;
+        if (static_cast<int32_t>(count) < 0) count = 0;
+        else if (count > 9) count = 9;
+        BaseCurrent->queue_size = count;
+        queue_slot = 1;
+        BaseCurrent->queue_production_id[1] = normalized_id;
+    } else if (result == 3) {
+        uint32_t count = BaseCurrent->queue_size;
+        if (static_cast<int32_t>(count) < 9) {
+            ++count;
+            BaseCurrent->queue_size = count;
+        }
+        queue_slot = static_cast<int32_t>(count);
+        BaseCurrent->queue_production_id[queue_slot] = normalized_id;
+    }
+    return false;
+}
+
+// Caller edge before this fragment: selected value 9999 branches to 0x417EDD;
+// otherwise normalize_production_selection() supplies the ID used below.
+// Native edge following all result arms: 0x417C95 logs the currently chosen
+// slot and current queue item. If the chosen slot is zero, 0x417CC0 writes the
+// selected ID to queue_production_id[0] (the production-ID-last value is not
+// this native field). This source-level continuation completes those edges:
+static bool finish_ordinary_selection(BaseWin &window, Popup &popup,
+                                      int selected_id,
+                                      int faction_snapshot,
+                                      int &queue_slot, int a1) {
+    const int normalized_id = normalize_production_selection(selected_id);
+    if (apply_retool_cost_prompt(window, popup, normalized_id,
+                                 faction_snapshot, queue_slot, a1))
+        return true;
+
+    log_say("BASE: changed production", BaseIDCurrentSelected, queue_slot,
+            BaseCurrent->queue_production_id[queue_slot]);
+    if (queue_slot != 0) return false; // native 0x417CB8 -> 0x417D9B
+    BaseCurrent->queue_production_id[0] = normalized_id;
+
+    // The native UI reaction is based on the newly written live queue[0].
+    // The callback can change BaseCurrent, so both drawing and subsequent
+    // selection are intentionally sequenced around the live reloads.
+    int live_queue_id = BaseCurrent->queue_production_id[0];
+    if (live_queue_id <= -0x46) wave_it(0x24); // native 0x417CD1/4455F0
+    draw_radius(BaseCurrent->x, BaseCurrent->y, 2, 2); // native 0x417CF3
+    live_queue_id = BaseCurrent->queue_production_id[0];
+
+    // Native 0x417D01 gate reads queue[0] again after draw_radius. The
+    // secondary plan byte is VehPrototype+0x2A, not Base+0x0A.
+    const bool update_stack = live_queue_id <= -0x46
+        || (live_queue_id > 0x40
+            && (VehPrototypes[live_queue_id].flags & 4u) == 0);
+    if (update_stack) {
+        int vehicle_id = veh_at(BaseCurrent->x, BaseCurrent->y);
+        while (vehicle_id >= 0) {
+            Veh &vehicle = Vehs[vehicle_id];
+            if (vehicle.faction_id == BaseCurrent->faction_id_current) {
+                const int proto_id = vehicle.proto_id; // native Veh+0x0A
+                const uint8_t plan = VehPrototypes[proto_id].plan;
+                if (plan == 12 || plan == 10) {
+                    vehicle.year_end_lurking = 0;
+                    vehicle.state &= ~VSTATE_UNK_200;
+                    if (IsMultiplayerNet) synch_veh(vehicle_id);
+                }
+            }
+            vehicle_id = vehicle.next_veh_id_stack;
+        }
+    }
+
+    // Native caller tests ProdPicker::is_visible() only after this complete
+    // tail: nonzero loops directly to 0x417751, zero takes 0x41850C success.
+    // Keep that callback-sensitive test in the owning method.
+    return false;
+}
+
+// Native success label 0x41850C..0x41870B. `old_queue_id` is the queue item
+// copied at entry for the selected row, and faction_snapshot is the entry
+// Base faction used by both native visibility walks. All Base/faction/count
+// reads below are reloaded after the picker and any Popup callbacks.
+static void finish_production_success(BaseWin &window, int a1, int a2,
+                                      int old_queue_id,
+                                      int faction_snapshot) {
+    if (a2 == 0)
+        NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+
+    Base *live_base = BaseCurrent;
+    const int last_queue_slot = static_cast<int>(live_base->queue_size);
+    for (int slot = 0; slot <= last_queue_slot; ++slot) {
+        const int id = live_base->queue_production_id[slot];
+        if (id >= 0) {
+            uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
+            queued = static_cast<uint8_t>(queued + 1);
+        }
+    }
+
+    live_base = BaseCurrent;
+    const int new_queue_id = live_base->queue_production_id[0];
+    if (IsMultiplayerNet && a1 == 0 && new_queue_id != old_queue_id) {
+        const int live_faction = live_base->faction_id_current;
+    int new_id_count = 0;
+    int old_id_count = 0;
+    const int focused_faction = Bases[window.focused_base_id()].faction_id_current;
+    if (focused_faction == live_faction) {
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            if (base_id == BaseIDCurrentSelected) continue;
+            const int queued_id = Bases[base_id].queue_production_id[0];
+            if (queued_id == new_queue_id) ++new_id_count;
+            if (queued_id == old_queue_id) ++old_id_count;
+        }
+    }
+
+        // 0x4185A4..F9 compares the focused Base faction against the live
+        // BaseCurrent faction once; only if equal does it count queue leaders
+        // across all Bases except BaseIDCurrentSelected. The native loop does
+        // not read each candidate's faction byte. The exact signed predicates
+        // and payload shapes below follow 0x418604..0x418662.
+        const bool old_is_facility = old_queue_id <= -0x46;
+        const bool new_is_facility = new_queue_id <= -0x46;
+        if (old_is_facility && new_is_facility) {
+            if (old_id_count != 0 && new_id_count == 0) {
+                message_data(0x4D00, 0, -0x46 - new_queue_id, 0, 0, 0);
+            } else if (old_id_count == 0 && new_id_count != 0) {
+                message_data(0x4D00, 0, -0x46 - old_queue_id, 1, 0, 0);
+            } else if (old_id_count == 0 && new_id_count == 0) {
+                message_data(0x4D00, 0, -0x46 - new_queue_id, 2,
+                             -0x46 - old_queue_id, new_id_count);
+            }
+        } else if (old_is_facility && old_id_count == 0) {
+            message_data(0x4D00, 0, -0x46 - old_queue_id, 1, 0, 0);
+        } else if (new_is_facility && new_id_count == 0) {
+            message_data(0x4D00, 0, -0x46 - new_queue_id, 0, 0, 0);
+        }
+    }
+
+    base_compute(1);
+    window.redraw(); // native virtual slot +0xF8 on this BaseWin
+    MainInterfaceGlobal.GraphicWin::redraw();
+
+    draw_radius(BaseCurrent->x, BaseCurrent->y, 1, 2);
+    live_base = BaseCurrent; // native reload after draw_radius callback
+    const int x = live_base->x;
+    const int y = live_base->y;
+    const int cursor_history_index = ConsoleGlobal.cursor_history_index_;
+    if (ConsoleGlobal.cursor_history_x_[cursor_history_index] == x
+        && ConsoleGlobal.cursor_history_y_[cursor_history_index] == y)
+        ConsoleGlobal.update_data(0);
+
+    if (a1 == 0 && BaseCurrent->queue_production_id[0] == -0x65) {
+        interlude(10, 0, 1, 0);
+        GameState |= 0x800u;
+    }
+}
+
+// Production selection uses the real picker, queue, retool dialog and UI owners.
 // ORIGINAL: 0x00417040 ?production@BaseWin@@QAEXHH@Z 0x00417040-0x00418DBD;0x00651BB0-0x0065221C
-// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00417040.cpp", "source:src/basewin.h"], "reason": "Map the declared dependency to its seed identity in the owning product TU. Empty link-only placeholder; original behavior is not implemented."}
-void BaseWin::production(int, int) {
-    // BODY GOES HERE.
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00417040.cpp", "image:0x00417040-0x00418DBD and companion cleanup0x00651BB0-0x0065221C", "image:0x00418DC0 seven action targets and0x00418DDC four retool targets", "source:src/basewin.h;src/prodpicker.h;src/base.h;src/veh.h"], "reason": "Recover production selection through genuine Popup/GraphicWin lifetimes, embedded ProdPicker action state, typed production queues and vehicle prototypes. Preserve callback-time live state, cancellation, visibility accounting and signed arithmetic. The workshop action reaches an explicitly unfinished owning design_workshop dependency, so this implementation is not complete gameplay or matching acceptance."}
+void BaseWin::production(int a1, int a2) {
+    Popup popup;
+    Popup popup_design;
+    Popup popup_secondary;
+    Popup popup_tertiary;
+    GraphicWin picker_preview;
+    (void)popup_design;
+    (void)popup_secondary;
+    (void)popup_tertiary;
+
+    compute_selected_base();
+    const int entry_base_id = focused_base_id();
+    if (Bases[entry_base_id].faction_id_current != ConsoleGlobal.faction_id_
+        && (GameState & 0x80u) == 0)
+        return;
+
+    Base *entry_base = BaseCurrent;
+    const int faction_snapshot = entry_base->faction_id_current;
+    const int old_queue_id = entry_base->queue_production_id[a1];
+    const uint32_t entry_queue_size = entry_base->queue_size;
+    int entry_queue[10];
+    std::memcpy(entry_queue, entry_base->queue_production_id,
+                sizeof(entry_queue));
+    displayed_production_id_ = entry_base->production_id_last;
+    if (a1 == 0) entry_base->state &= ~0x00800000u;
+
+    if (a2 == 0
+        && NetDaemonNet.lock_base(BaseIDCurrentSelected, 0, -1, -1) != 0)
+        return;
+
+    // Native 0x4175F4 subtracts queued-prototype visibility exactly once
+    // before the picker loop; loop backs at 0x41763D do not repeat it.
+    int last_queue_slot = static_cast<int32_t>(BaseCurrent->queue_size);
+    for (int slot = 0; slot <= last_queue_slot; ++slot) {
+        const int id = BaseCurrent->queue_production_id[slot];
+        if (id >= 0) {
+            uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
+            queued = static_cast<uint8_t>(queued - 1);
+        }
+    }
+
+    bool run_picker_setup = true;
+    for (;;) {
+        if (run_picker_setup) { // native label 0x41763D
+            compute_selected_base();
+            const int preview_width = pixel_width() - 0x2E;
+            const int preview_height = pixel_height();
+            picker_preview.init(0x17, 0, preview_width, preview_height, 0,
+                                0x01000020, this, 0, 0);
+            buffer1_.copy(&picker_preview, 0x17, 0, 0, 0,
+                          preview_width, preview_height);
+            picker_preview.tile(&sprite6_, 0, 0, 3, 3,
+                                preview_width - 6, preview_height - 6);
+        }
+        run_picker_setup = false;
+
+        int selected_id = prodPicker_.exec(BaseCurrent,
+            BaseCurrent->faction_id_current, &picker_preview, field_40B2C_);
+
+        // Native special cancel with a nonzero a1 restores the entry queue,
+        // then resets the Base before entering the ordinary post-picker path.
+        if (a1 != 0 && selected_id == -9999) {
+            Base *live_base = BaseCurrent;
+            std::memcpy(live_base->queue_production_id, entry_queue,
+                        sizeof(entry_queue));
+            live_base->queue_size = entry_queue_size;
+            draw_production(0); // native 0x4177B7 after queue snapshot restore
+        }
+
+        // 0x4177BC refreshes the selected Base after picker callbacks, then
+        // plays the selection sound. All subsequent decisions use the live
+        // selected Base except the specifically snapshotted queue/faction IDs.
+        compute_selected_base();
+        g_FX.play(0x0F);
+
+        if (selected_id <= -9999 || (GameState & 0x800u) != 0) {
+            field_40B2C_ = 0;
+            draw_queue(1);
+            if (a2 == 0)
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            Base *live_base = BaseCurrent;
+            last_queue_slot = static_cast<int32_t>(live_base->queue_size);
+            for (int slot = 0; slot <= last_queue_slot; ++slot) {
+                const int id = live_base->queue_production_id[slot];
+                if (id >= 0) {
+                    uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
+                    queued = static_cast<uint8_t>(queued + 1);
+                }
+            }
+            return; // native 0x418B20 then lexical owner teardown
+        }
+
+        const int action = prodPicker_.selected_action() - 1;
+        if (action == 0) { // native 0x417DB3: help/design selected row
+            if (selected_id < 0) {
+                const int facility_id = -selected_id;
+                help_topic(facility_id < 0x46 ? 10u : 11u, facility_id);
+            } else if (selected_id == 9999) {
+                run_picker_setup = true;
+                continue; // native 0x417DE6 -> full setup 0x41763D
+            } else if (selected_id < 0x200) {
+                TutWinDesWindow.exec(BaseCurrent->faction_id_current,
+                                     selected_id);
+            } else {
+                const int facility_id = selected_id - 0x200;
+                help_topic(facility_id < 0x46 ? 10u : 11u, facility_id);
+            }
+            run_picker_setup = true;
+            continue; // native 0x41763D
+        }
+
+        if (action == 1 || action == 2) {
+            TutWinDesWindow.exec(BaseCurrent->faction_id_current,
+                                 action == 1
+                                     ? (selected_id < 0 ? -1 : selected_id)
+                                     : -1);
+            compute_selected_base();
+            prodPicker_.calculate();
+            run_picker_setup = true;
+            continue; // native 0x417F6A -> 0x41763D
+        }
+
+        if (action == 3 || action == 5) {
+            if (a1 == 0) {
+                base_reset(BaseIDCurrentSelected, 0);
+                if (a2 == 0)
+                    NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+                redraw();
+                MainInterfaceGlobal.GraphicWin::redraw();
+                Base *live_base = BaseCurrent;
+                last_queue_slot = static_cast<int32_t>(live_base->queue_size);
+                for (int slot = 0; slot <= last_queue_slot; ++slot) {
+                    const int id = live_base->queue_production_id[slot];
+                    if (id >= 0) {
+                        uint8_t &queued = PlayersData[faction_snapshot].proto_id_queue[id];
+                        queued = static_cast<uint8_t>(queued + 1);
+                    }
+                }
+                // 0x417FF5 begins the preview/UI teardown and 0x4181F8
+                // transfers to the function's common epilogue. This branch
+                // returns; it does not re-enter the picker/design path.
+                return;
+            }
+
+            const int selected_slot = static_cast<int>(field_40B2C_);
+            if (selected_slot > static_cast<int>(BaseCurrent->queue_size)) {
+                --field_40B2C_;
+                if (static_cast<int32_t>(field_40B2C_) <= 1)
+                    field_40B2C_ = 1;
+                draw_queue(1);
+            } else {
+                for (int slot = selected_slot; slot < 9; ++slot)
+                    BaseCurrent->queue_production_id[slot] =
+                        BaseCurrent->queue_production_id[slot + 1];
+                --BaseCurrent->queue_size;
+                if (static_cast<int32_t>(field_40B2C_)
+                    > static_cast<int32_t>(BaseCurrent->queue_size)) {
+                    field_40B2C_ = BaseCurrent->queue_size;
+                    if (static_cast<int32_t>(field_40B2C_) <= 1)
+                        field_40B2C_ = 1;
+                }
+                draw_queue(1);
+                draw_queue(1);
+            }
+        } else if (action == 4 && a1 != 0) {
+            add_queue(selected_id, 1);
+        } else if (action == 6 && a1 != 0) {
+            add_queue(selected_id, 0);
+        }
+
+        if (selected_id == 9999) {
+            design_workshop(BaseCurrent->faction_id_current, 1);
+            compute_selected_base();
+            prodPicker_.calculate();
+            run_picker_setup = true;
+            continue; // native 0x417EDD..0x417F75
+        }
+
+        int queue_slot = a1;
+        const bool cancelled_retool = finish_ordinary_selection(
+            *this, popup, selected_id, faction_snapshot, queue_slot, a1);
+        if (cancelled_retool) {
+            if (a2 == 0)
+                NetDaemonNet.unlock_base(BaseIDCurrentSelected);
+            Base *live_base = BaseCurrent;
+            last_queue_slot = static_cast<int32_t>(live_base->queue_size);
+            for (int slot = 0; slot <= last_queue_slot; ++slot) {
+                const int id = live_base->queue_production_id[slot];
+                if (id >= 0) {
+                    uint8_t &queued =
+                        PlayersData[faction_snapshot].proto_id_queue[id];
+                    queued = static_cast<uint8_t>(queued + 1);
+                }
+            }
+            return; // native 0x4181FD result-table entry 0
+        }
+        if (prodPicker_.is_visible()) {
+            run_picker_setup = false;
+            continue; // native 0x417DAE -> picker body 0x417751
+        }
+
+        field_40B2C_ = 0; // native 0x41866C, immediately before base_compute
+        finish_production_success(*this, a1, a2, old_queue_id,
+                                  faction_snapshot);
+        return;
+    }
 }
 
 // ORIGINAL: 0x00418DF0 ?hurry@BaseWin@@QAEXXZ 0x00418DF0-0x00419A8E;0x0065221C-0x0065249C

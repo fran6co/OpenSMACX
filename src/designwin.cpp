@@ -3789,3 +3789,12 @@ int DesignWin::on_iface_dialog_item_back_draw(GraphicWin *, int, int, RECT *) {
 void __cdecl design_new_veh(int faction_id, int prototype_id) {
     TutWinDesWindow.exec(faction_id, prototype_id);
 }
+
+// Link continuity for the production picker's workshop action. The preserved
+// seed remains the recovery input; this body does not implement that behavior.
+// ORIGINAL: 0x00583E30 ?design_workshop@@YAHHH@Z 0x00583E30-0x00584B4B;0x0065FFD0-0x00660239
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00583e30.cpp original full spans and int cdecl two-int ABI; direct production call0x00417EEA; recovery/tasks/designwin-owner-coverage.json scoped dependency authorization."], "reason": "Bind the production workshop dependency to its genuine existing DesignWin owner and preserved seed identity. This explicitly unfinished return-zero link-continuity body is not recovered workshop behavior or a matching claim."}
+int __cdecl design_workshop(int, int) {
+    // BODY GOES HERE.
+    return 0; // PLACEHOLDER
+}

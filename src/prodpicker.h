@@ -42,6 +42,8 @@ class ProdPicker : public ConstructedGraphicWin {
  public:
   ProdPicker();
   int queue_change_blocked() const { return static_cast<int>(field_B68_); }
+  // Production dispatch reads this action after the modal picker returns.
+  int selected_action() const { return field_A778_; }
   // The destructor closes picker behavior before its typed members tear down.
   ~ProdPicker();
   int UNK1(int pos);
