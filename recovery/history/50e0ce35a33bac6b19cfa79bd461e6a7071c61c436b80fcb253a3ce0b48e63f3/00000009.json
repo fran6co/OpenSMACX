@@ -1,0 +1,58 @@
+{
+  "event_id": "bda1e90d706c08db331fd5dfe3116c414e38f3efe3205a324f3f159baaaaebfb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Eight missing Menu originals form one coupled owner family5FAEF0/5FB5A0/5FB9C0/5FBC20/5FBDB0/5FBF00/5FC290/5FC5A0. Current src/menu.cpp/h already within this task file scope. Pinned native and retained alpha-menu/popup-font seed artifacts are inputs; existing raw-self/vcall scaffolds and stubbed redraw cannot be imported as recovered implementations. Admit complete typed ownership behavior with actual MenuEntry, PullDown, Spot, Font, Buffer and Win APIs, allbranch/dependency findings preserved. Keep immutable popup configuration task baseline and all historical claims; no automatic acceptance, unreviewed outside-owner edits or placeholder substitution authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6270704,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6272416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6273472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6274080,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6274480,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6274816,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6275728,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6276512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a7428a3cf1bd46cfe31e87de16fe04fe9a49c220e35be9156fded60a861efd45",
+  "request_id": "complete-menu-owner-batch",
+  "schema_version": 1,
+  "sequence": 9,
+  "stream": "task:popup-font-configuration-owner-closure"
+}
