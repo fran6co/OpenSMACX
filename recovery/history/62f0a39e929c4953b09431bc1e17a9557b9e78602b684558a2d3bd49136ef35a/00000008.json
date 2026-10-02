@@ -1,0 +1,25 @@
+{
+  "event_id": "9e11d8845c679554f215cecec8ea9700bda041a11c684b99c1d68cdd23582b4e",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Pinned check_tamper51E110 scans50 records at18 stride in93A060..93A510 and shares registry cursor93A9F8 with existing read_tamper51E000 in leaf_recoveries.cpp. Admit that real consumer and source file for one shared typed owner migration, not a duplicate game.cpp table or raw executable alias. Existing anonymous TamperValueBuffer[4B0] and TamperValueSlot definitions must migrate/retype as the same source-owned storage with TamperRecord[50] and a signed cursor supported by native operations; read_tamper must use the shared owner via genuine registry SDK byte views. Preserve its original mapping, every seed/claim, error/query behavior and task baseline. Verify record offsets/cursor signedness and loader-start evidence; start-only data bindings do not assert original complete allocation/lifetime. Native controls must include affected leaf TU and all protected diagnostics, actual-source read/check tests and fresh full application build/link before manual integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5365760,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "bec8b60a0667f701fc35796460e6cf646ef9f36ad40f1527518347e9bb07b8b6",
+  "request_id": "tamper-shared-registry-owner-20261003",
+  "schema_version": 1,
+  "sequence": 8,
+  "stream": "task:game-save-load-owner-coverage"
+}
