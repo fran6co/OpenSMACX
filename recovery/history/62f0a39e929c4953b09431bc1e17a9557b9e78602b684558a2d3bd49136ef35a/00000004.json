@@ -1,0 +1,28 @@
+{
+  "event_id": "537cb499af4190f477e2ad1342314f07c4b9f187995ba07a6bad562f44a585ef",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/designwin.cpp",
+      "src/filewin_construct.h",
+      "src/messagewin.cpp",
+      "src/messagewin.h"
+    ],
+    "evidence": [
+      "Native ListBox60BCDF drawing slot30 ignores EAX; slots34/38 write/fill consume it. Correct draw-only API to void, retain genuine BYTE_EXACT void filebox_draw and current AlphaSave callback; synchronize MessageWin471870 and workshop adapter without casts or vtable patches. FileWin6139B0 copies only44-byte typed prefix from48-byte caller and reads genuine FileWinSprite0.width();9B90B0 is loader-zero empty title, only bounded first-byte read proven. Native symbol/layout/continuity and application build/link required; all original baselines, claims and discoveries retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4659312,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "a44c67183fc544f3917972222df4f544efd408fb2bc84a5c5868caf96b7c0d44",
+  "request_id": "filewin-typed-prefix-and-void-draw-slot",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:game-save-load-owner-coverage"
+}

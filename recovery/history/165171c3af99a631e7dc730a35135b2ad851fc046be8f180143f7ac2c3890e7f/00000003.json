@@ -1,0 +1,35 @@
+{
+  "event_id": "846ffcee4ac9776b4cc96f3b5111ee085bc1f29c2dd653cc454591d23765dc4a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/stringbox.h"
+    ],
+    "evidence": [
+      "Full482490 execution and50-RECT same-offset span require coupled player/difficulty/custom-rule painters and narrow existing StringBox member setter. Native callback/table and493820 row-owner corrections remain subject to physical symbols and preserved identities. No matching or game acceptance is granted; original baseline unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4719472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4718976,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4716896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ed0cad1e841d3e4e3733b193ac3495dd0dfa78fee0e62183ed3f8fdcc980046f",
+  "request_id": "netwin-coupled-rect-consumers-and-stringbox-api",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:netwin-owner-coverage"
+}

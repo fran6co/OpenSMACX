@@ -1,0 +1,19 @@
+{
+  "event_id": "fe3a4fe39749f70ce97ebebad01e3092919a7b9eba872cfba4ab536a49689370",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/temp.h"
+    ],
+    "evidence": [
+      "Full load_daemon5A9760 requires int-return typed public API, source-owned mode/status cells945D6C/945D74/945D7C, current caller closure and preserved historical identity. Const path qualification must follow actual mutation evidence, not archived guessed spelling; record actual emitted symbol separately. Retain existing sub_5a6510 C linkage and seed BYTE_EXACT obligation, original direction tables, complete daemon tail and all WIP; no weaker claim or acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "537cb499af4190f477e2ad1342314f07c4b9f187995ba07a6bad562f44a585ef",
+  "request_id": "save-load-daemon-public-prototype-closure",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:game-save-load-owner-coverage"
+}
