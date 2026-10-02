@@ -1,0 +1,53 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "860b5fd31ee4b13f2fdb72156316f63a0fc635ef",
+  "editable_files": [
+    "src/netwin.cpp",
+    "src/netwin.h",
+    "src/pending_bodies.cpp",
+    "recovery/tests/test_netwin_owner_behavior.py",
+    "recovery/tests/netwin_owner_host_control.cpp"
+  ],
+  "evidence": [
+    "src/netwin.cpp",
+    "src/netwin.h",
+    "src/alphanet.h",
+    "src/popup.cpp",
+    "src/unrecovered/0047c970.cpp",
+    "src/unrecovered/0047d300.cpp",
+    "src/unrecovered/00482490.cpp",
+    "src/recovered/units/00482d90.cpp",
+    "src/recovered/units/004834e0.cpp"
+  ],
+  "intent": "Recover complete NetWin password, map choice, execution, game preparation and true destructor ownership batch as genuine C++ with real existing members, AlphaNet process slots and lobby wire records. Preserve all seeds, original identities and historical claims. User-approved zero initialization covers only otherwise unspecified outgoing packet bytes, not observed fields. Correct receiver and lifecycle discoveries centrally before integration. Native compiler diagnostics, actual-body controls and full application compile/link are required; no automatic or game acceptance implied.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4704624,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4707072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4727952,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4730256,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4732128,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "netwin-owner-coverage"
+}
