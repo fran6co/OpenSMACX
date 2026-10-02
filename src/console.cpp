@@ -10441,3 +10441,133 @@ void Console::veh_key(int key, int character, int command) {
         }
     }
 }
+
+// Faction-bit turn waiting state shared with net_not_my_turn. Original
+// scalar accesses prove the role, not an exact allocation extent.
+// RECOVERY_OBJECT: v1 0x0093E8EC ?ConsoleFactionsWaitingMask@@3HA
+int ConsoleFactionsWaitingMask;
+
+// ORIGINAL: 0x0050FE70 ?on_nc_left_up@Console@@QAEXHH@Z 0x0050FE70-0x0051010A
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0050fe70.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover splitter release into the genuine Console owner using source Win capture owners, real Win inheritance, embedded Sprite geometry and named splitter members. Preserve signed sentinel ordering and the original update operations; no fixed executable calls or self-offset access."}
+void Console::on_nc_left_up(int x, int y) {
+    Win *const window = static_cast<Win *>(this);
+    if (WinPointerOwner3 == window) {
+        WinPointerOwner3 = nullptr;
+        window->on_lose_mouse_capture();
+    }
+    if (WinPointerOwner4 == window) {
+        WinPointerOwner4 = nullptr;
+    }
+
+    const uint32_t dragging = 0xFFFFFFFFu;
+    if (field_23D80_ == dragging || field_23D84_ == dragging) {
+        uint32_t *const target = field_23D80_ == dragging
+            ? &field_23D80_ : &field_23D84_;
+        const int half = sprite_a_.width() / 2;
+        int position = x - border_thickness_;
+        if (position < half) position = half;
+        const int limit = client_rect_.right - client_rect_.left -
+                          border_thickness_ * 2 - half;
+        if (position > limit) position = limit;
+        *target = static_cast<uint32_t>(position);
+        update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
+        update(ConsoleDragLineX, 0, 1,
+               -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+    } else if (field_23D88_ == dragging || field_23D8C_ == dragging) {
+        uint32_t *const target = field_23D88_ == dragging
+            ? &field_23D88_ : &field_23D8C_;
+        const int bottom_border = bottom_border_thickness_ >= 0
+            ? bottom_border_thickness_ : border_thickness_;
+        const int track_offset = client_rect_.top - client_rect_.bottom -
+            outer_rect_.top + outer_rect_.bottom + bottom_border;
+        const int half = sprite_b_.height() / 2;
+        int position = track_offset + y;
+        if (position < half) position = half;
+        const int limit = client_rect_.bottom - client_rect_.top -
+                          caption_height_ - bottom_border - half;
+        if (position > limit) position = limit;
+        *target = static_cast<uint32_t>(position);
+        update(0, ConsoleDragLineY, dib_.bmiHeader.biWidth, 1, nullptr);
+        update(ConsoleDragLineX, 0, 1,
+               -static_cast<int>(dib_.bmiHeader.biHeight), nullptr);
+    }
+
+    if (static_cast<int32_t>(field_23D88_) >
+        static_cast<int32_t>(field_23D8C_)) {
+        const uint32_t value = field_23D88_;
+        field_23D88_ = field_23D8C_;
+        field_23D8C_ = value;
+    }
+    if (static_cast<int32_t>(field_23D80_) >
+        static_cast<int32_t>(field_23D84_)) {
+        const uint32_t value = field_23D80_;
+        field_23D80_ = field_23D84_;
+        field_23D84_ = value;
+    }
+}
+
+
+// ORIGINAL: 0x005169F0 ?end_my_turn@Console@@QAEXXZ 0x005169F0-0x00516C4D
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005169f0.cpp: retained complete original identity/spans and seed evidence", "recovery/tasks/console-scenario-owner-wave.json; native scope expansions through sequence27", "Source owner interpretation preserves mapped original accesses, lifetime calls and branch roles; source-bound members and globals replace the seed offsets/address aliases. Historical seeds and claims remain independent restoration obligations."], "reason": "Recover end-turn into the genuine Console owner using existing pane/timer/lifecycle members, shared faction waiting state and the independently read original popup captions. Preserve remote-turn and ready-vehicle decisions, including separate timer clear rather than InfoWin::reset. No matching or game-acceptance claim."}
+void Console::end_my_turn() {
+    TutWinBaseWindow.cancel_zoom_wait();
+    ConsoleInfoWin.clear_pending_timer();
+    TutWinGlobal->reset();
+    ConsoleStatusWin.reset();
+    g_FX.play(0xF);
+
+    if (ConsoleControlTurnActive != 0) return;
+    if (edit_lock() != 0) {
+        NetMsgPopup->pop("PROTECTED", 0x1388, 0, nullptr);
+        return;
+    }
+
+    const uint8_t game_flags = static_cast<uint8_t>(GameState);
+    if (IsMultiplayerNet != 0) {
+        if ((NetTurnFlags & 0x10) != 0 &&
+            NetTurnFaction != ConsoleGlobal.faction_id_) {
+            const int faction = NetTurnFaction;
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(0, Players[faction].title_leader, -1, -1);
+            GenderDefault = Players[faction].is_leader_female;
+            PluralityDefault = 0;
+            parse_says(1, Players[faction].name_leader, -1, -1);
+            GenderDefault = Players[faction].noun_gender;
+            PluralityDefault = Players[faction].is_noun_plural;
+            parse_says(2, Players[faction].noun_faction, -1, -1);
+            const int process_id = NetDaemonNet.who_2_pid(faction);
+            parse_says(3, NetDaemonNet.get_player_name(process_id), -1, -1);
+            NetMsgPopup->pop("SIMULWHOSE", 0x1388, 0, nullptr);
+            return;
+        }
+        if ((game_flags & 2) != 0 && (NetTurnFlags & 0x10) == 0) {
+            const int faction_bit = 1 << ConsoleGlobal.faction_id_;
+            if ((ConsoleFactionsWaitingMask & faction_bit) != 0 &&
+                ConsoleFactionsWaitingMask != 0xFF) {
+                NetMsgPopup->pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
+                message_data(0x2302, 0, TurnCurrentNum, 0, 0, 0);
+                return;
+            }
+        }
+    }
+
+    if (field_23BE8_ == 0) return;
+    if ((game_flags & 2) == 0) {
+        set_move(1);
+        if (ConsoleGlobal.cursor_active_ != 0) {
+            if (selected_vehicle_ >= 0 &&
+                (veh_ready(selected_vehicle_) != 0 ||
+                 ConsoleGlobal.ready_search(selected_vehicle_) >= 0) &&
+                X_pop("REALLYOVER", nullptr) == 0) {
+                return;
+            }
+        }
+    }
+
+    GameState |= 2u;
+    const int current_selection = selected_vehicle_;
+    field_23BE4_ = 0;
+    field_23BE8_ = 0;
+    focus_vehicle_ = current_selection;
+}

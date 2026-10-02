@@ -1630,7 +1630,6 @@ namespace {
 static int *const TurnHandoverFlag = (int *)0x00939294;
 static int *const TurnHandoverFlag2 = (int *)0x00939298;
 // The faction-waiting latch and game.cpp's NextTurnReady/TurnsAssigned.
-static int *const FactionsWaitedLatch = (int *)0x0093E8EC;
 static const int *const TurnsAssigned = (const int *)0x0093E8C0;
 }
 
@@ -1641,7 +1640,7 @@ void __cdecl net_not_my_turn() {
     *TurnHandoverFlag2 = 1;
     ConsoleGlobal.set_view(0);
     MultiWindow.draw(0);
-    *FactionsWaitedLatch = *FactionsWaitedLatch | (1 << *LocalFactionSlot);
+    ConsoleFactionsWaitingMask |= (1 << *LocalFactionSlot);
     while (ExitTurnLoop == 0 && NextTurnReady == 0
            && NetTurnFaction != *LocalFactionSlot) {
         *TurnHandoverFlag = 1;

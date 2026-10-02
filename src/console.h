@@ -425,7 +425,7 @@ class Console : public MapWin {
   void on_nc_mouse_move(int a1, int a2);
 
  public:
-  // 0x0050FE70, a pending_bodies forwarder.
+  // 0x0050FE70: commit the dragged splitter and release Win capture.
   void on_nc_left_up(int a1, int a2);
 
  public:
@@ -484,9 +484,7 @@ class Console : public MapWin {
   // could only live in an artifact.
   void close();
   // 0x005169F0. The turn handoff auto_play_callback (0x0050E890, console.cpp)
-  // makes once its tick counter reaches 100. The archive body still measures
-  // MISMATCH (88 of 180), so this reaches the image through a
-  // pending_bodies.cpp forwarder rather than a claimed body.
+  // makes once its tick counter reaches 100; owned by console.cpp.
   void end_my_turn();
   void menu_detail();
   void show_scen_objectives();
@@ -761,3 +759,5 @@ extern int TimeControlsSelection;
 // original embeds at +0x22A2C. MainMenu::check (0x00460DD0, 4782 bytes) is
 // unrecovered and MainMenu has no header in src/, so this is a seam rather
 // than a declared type.
+
+extern int ConsoleFactionsWaitingMask;

@@ -73,6 +73,9 @@ class InfoWin {
   void on_redraw();
   const RECT &bounds() const { return bounds_; }
   void set_redraw_phase(int phase) { redraw_phase_ = phase; }
+  // Console end-turn clears only the pending timer at InfoWin +0xA8;
+  // reset() additionally advances the pane through timer_proc(1).
+  void clear_pending_timer() { field_A8_ = 0; }
   void reset();
   void change(int a1);
   void UNK3(int menu_id, int item_id);

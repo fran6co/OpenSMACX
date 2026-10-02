@@ -518,19 +518,7 @@ int Console::on_key_click(int a1, int a2) {  // 0x005178C0
 // (0x00510110) WERE HERE and are gone: both bodies are homed into
 // src/console.cpp 2026-09-27.
 
-void Console::on_nc_left_up(int a1, int a2) {  // 0x0050FE70
-    typedef void(__fastcall *pending)(Console *, void *, int, int);
-    PENDING_BODY(0x0050FE70, pending)(this, nullptr, a1, a2);
-}
-
-// ?end_my_turn@Console@@QAEXXZ at 0x005169F0 - the turn handoff
-// auto_play_callback (console.cpp) makes once AutoPlayCounter reaches 100.
-// Its archived transcription still measures MISMATCH 88 of 180, so this is
-// the forwarder and not a homed body.
-void Console::end_my_turn() {
-    typedef void(__fastcall *pending)(Console *, void *);
-    PENDING_BODY(0x005169F0, pending)(this, nullptr);
-}
+// Console capture release and turn handoff are owned by console.cpp.
 
 int Dialogs::on_scroll_create() {  // 0x00613220
     typedef int(__fastcall *pending)(Dialogs *, void *);

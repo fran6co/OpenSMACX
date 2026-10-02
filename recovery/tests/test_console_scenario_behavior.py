@@ -15,6 +15,119 @@ import pytest
 ROOT = Path(__file__).resolve().parents[2]
 
 
+def test_actual_console_capture_release_and_end_turn(tmp_path):
+    """Own-source branch controls, not a native-layout or game proof."""
+    compiler = shutil.which("g++")
+    if not compiler:
+        pytest.skip("host C++ compiler unavailable")
+    source = (ROOT / "src/console.cpp").read_text()
+    handlers = "\n".join(_body(source, signature) for signature in (
+        "void Console::on_nc_left_up", "void Console::end_my_turn"))
+    harness = r'''
+#include <cassert>
+#include <cstdint>
+#include <vector>
+struct Rect { int left, top, right, bottom; };
+struct Update { int x,y,w,h; };
+std::vector<Update> updates;
+std::vector<int> events, genders, pluralities;
+struct Win { virtual void on_lose_mouse_capture() { events.push_back(9); } };
+struct GraphicWin : Win {
+  void update(int x,int y,int w,int h,GraphicWin*) { updates.push_back(Update{x,y,w,h}); }
+};
+struct MapWin : GraphicWin {};
+struct Sprite { int w=20,h=20; int width() const { return w; } int height() const { return h; } };
+struct Console : MapWin {
+  void on_nc_left_up(int,int); void end_my_turn();
+  void set_move(int n) { assert(n==1); events.push_back(5); }
+  int edit_lock() { return locked; }
+  int ready_search(int) { return next_ready; }
+  int locked=0, next_ready=-1, faction_id_=1, cursor_active_=0;
+  uint32_t field_23D80_=100,field_23D84_=200,field_23D88_=300,field_23D8C_=400;
+  Rect client_rect_{0,10,500,410},outer_rect_{0,0,500,420};
+  int border_thickness_=4,bottom_border_thickness_=2,caption_height_=20;
+  struct { struct { int biWidth=640,biHeight=-480; } bmiHeader; } dib_;
+  Sprite sprite_a_,sprite_b_;
+  uint32_t field_23BE4_=7,field_23BE8_=1;
+  int selected_vehicle_=12,focus_vehicle_=-1;
+} ConsoleGlobal;
+Win *WinPointerOwner3=0,*WinPointerOwner4=0;
+uint32_t ConsoleDragLineX=20,ConsoleDragLineY=30,GameState=2,NetTurnFlags=0;
+int ConsoleControlTurnActive=0,IsMultiplayerNet=0,NetTurnFaction=2,TurnCurrentNum=30;
+int GenderDefault=0,PluralityDefault=0,ConsoleFactionsWaitingMask=0;
+struct InfoWin { int field_A8_=9,redraw_phase=7;
+  void clear_pending_timer() { field_A8_=0; events.push_back(1); }
+} ConsoleInfoWin;
+struct BaseWin { void cancel_zoom_wait() { events.push_back(0); } } TutWinBaseWindow;
+struct TutWin { void reset() { events.push_back(2); } } tutorial;
+TutWin *TutWinGlobal=&tutorial;
+struct StatusWin { void reset() { events.push_back(3); } } ConsoleStatusWin;
+struct FX { void play(int id) { assert(id==15); events.push_back(4); } } g_FX;
+struct Player { int is_leader_female=2,noun_gender=3,is_noun_plural=1;
+  char title_leader[16]="title",name_leader[16]="name",noun_faction[16]="faction";
+} Players[8];
+struct NetDaemon { int who_2_pid(int n) { assert(n==2); return 11; }
+  char *get_player_name(int n) { assert(n==11); return Players[2].name_leader; }
+} NetDaemonNet;
+const char *popup_caption=0;
+struct NetMsg { void pop(const char *s,int n,int m,const char*) {
+  assert(n==5000 && m==0); popup_caption=s;
+} } popup;
+NetMsg *NetMsgPopup=&popup;
+int parse_says(int,char*,int,int) { genders.push_back(GenderDefault); pluralities.push_back(PluralityDefault); return 0; }
+int message_calls=0;
+int message_data(int code,int,int turn,int,int,int) { assert(code==0x2302 && turn==30); ++message_calls; return 0; }
+int ready=0,pop_result=1,pop_calls=0;
+int veh_ready(int) { return ready; }
+int X_pop(const char *caption,int(*)()) { assert(caption[0]=='R'); ++pop_calls; return pop_result; }
+''' + handlers + r'''
+int main() {
+  Console window;
+  WinPointerOwner3=&window; WinPointerOwner4=&window;
+  window.field_23D88_=0xFFFFFFFFu;
+  window.on_nc_left_up(70,50);
+  assert(!WinPointerOwner3 && !WinPointerOwner4 && events.size()==1 && events[0]==9);
+  assert(window.field_23D88_==72 && window.field_23D8C_==400);
+  assert(updates.size()==2 && updates[0].x==0 && updates[0].y==30 && updates[0].w==640 && updates[0].h==1);
+  assert(updates[1].x==20 && updates[1].y==0 && updates[1].w==1 && updates[1].h==480);
+  window.field_23D88_=window.field_23D8C_=0xFFFFFFFFu;
+  window.on_nc_left_up(70,50);
+  assert(window.field_23D88_==0xFFFFFFFFu && window.field_23D8C_==72);
+  window.field_23D80_=0xFFFFFFFFu; window.field_23D84_=100;
+  window.field_23D88_=window.field_23D8C_=0xFFFFFFFFu;
+  window.on_nc_left_up(70,50);
+  assert(window.field_23D80_==66 && window.field_23D84_==100);
+  assert(window.field_23D88_==0xFFFFFFFFu && window.field_23D8C_==0xFFFFFFFFu);
+  events.clear(); window.end_my_turn();
+  assert(events==std::vector<int>({0,1,2,3,4}));
+  assert(ConsoleInfoWin.field_A8_==0 && ConsoleInfoWin.redraw_phase==7);
+  assert(window.field_23BE4_==0 && window.field_23BE8_==0 && window.focus_vehicle_==12);
+  GameState=0; ConsoleGlobal.cursor_active_=1; window.field_23BE8_=1;
+  ready=1; pop_result=0; window.end_my_turn();
+  assert(pop_calls==1 && window.field_23BE8_==1);
+  ready=0; ConsoleGlobal.next_ready=13; window.end_my_turn();
+  assert(pop_calls==2 && window.field_23BE8_==1);
+  ConsoleGlobal.next_ready=-1; window.end_my_turn();
+  assert(pop_calls==2 && window.field_23BE8_==0 && (GameState&2));
+  window.field_23BE8_=1; window.locked=1; popup_caption=0; window.end_my_turn();
+  assert(popup_caption && popup_caption[0]=='P' && window.field_23BE8_==1);
+  window.locked=0; IsMultiplayerNet=1; NetTurnFlags=0x10;
+  genders.clear(); pluralities.clear(); window.end_my_turn();
+  assert(popup_caption[0]=='S' && window.field_23BE8_==1);
+  assert(genders==std::vector<int>({2,2,3,3}) && pluralities==std::vector<int>({0,0,1,1}));
+  NetTurnFlags=0; ConsoleFactionsWaitingMask=2; GameState=2;
+  window.end_my_turn(); assert(popup_caption[0]=='A' && message_calls==1 && window.field_23BE8_==1);
+  ConsoleFactionsWaitingMask=255; window.end_my_turn();
+  assert(window.field_23BE8_==0 && message_calls==1);
+}
+'''
+    fixture = tmp_path / "console_capture_turn.cpp"
+    fixture.write_text(harness)
+    executable = tmp_path / "console_capture_turn"
+    subprocess.run([compiler, "-std=c++11", str(fixture), "-o", str(executable)], check=True)
+    subprocess.run([str(executable)], check=True)
+
+
 def _body(source: str, signature: str) -> str:
     start = source.index(signature)
     opening = source.index("{", start)
