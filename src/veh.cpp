@@ -3135,7 +3135,6 @@ extern void __cdecl spot_all(int veh_id, int mode);
 extern int __cdecl goody_box(int veh_id, int goody_id);
 extern void __cdecl clock_wait(int milliseconds);
 extern void __cdecl unspot_stack(int veh_id);
-extern int *const VehSelectionFollowLimit;
 
 // Airdrop a vehicle, including range, interception, landing-site, diplomatic
 // and post-landing processing.  The four modes are the caller's network/local
@@ -3389,11 +3388,11 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
                (PlayersData[faction].diplo_treaties[Bases[base_here].faction_id_current] & 1U) == 0) {
         const int previous_owner = Bases[base_here].faction_id_current;
         if ((LockEnableMask & (1U << faction)) == 0) veh_skip(veh_id);
-        *VehSelectionFollowLimit = veh_id;
+        VehSelectionFollowLimit = veh_id;
         vehicle.dmg_incurred = 0;
         act_of_aggression(faction, previous_owner);
         capture_base(base_here, faction, 0);
-        veh_id = *VehSelectionFollowLimit;
+        veh_id = VehSelectionFollowLimit;
     }
     spot_all(veh_id, 1);
     ConsoleGlobal.update_data(0);
@@ -8744,8 +8743,10 @@ int **const VehSelectionFollow = (int **)0x0093E908;
 
 // 0x009A64DC. Another vehicle-id slot, and one with its own extra rule: it is
 // also decremented when it EQUALS the deleted id, which the three above do not
-// do. Only veh_kill touches it in the tree.
-int *const VehSelectionFollowLimit = (int *)0x009A64DC;
+// do. action_airdrop stores/reloads it across capture_base; veh_kill updates
+// the same signed slot, and synch transports its four-byte representation.
+// RECOVERY_OBJECT: v2 0x009A64DC 0x009A64E0 ?VehSelectionFollowLimit@@3HA 0x005C08C0
+int VehSelectionFollowLimit;
 
 // 0x00691DC0, the log_say title. The image logs every vehicle removal with the
 // vehicle id, its owner and its prototype as the three substitutions.
@@ -8862,12 +8863,12 @@ void __cdecl veh_kill(int veh_id) {
     } else if (veh_id < *StatusHoverVehIdAlt) {
         --*StatusHoverVehIdAlt;
     }
-    if (*VehSelectionFollowLimit != 0 && veh_id <= *VehSelectionFollowLimit) {
-        --*VehSelectionFollowLimit;
+    if (VehSelectionFollowLimit != 0 && veh_id <= VehSelectionFollowLimit) {
+        --VehSelectionFollowLimit;
     }
     if (IsMultiplayerNet != 0) {
         int *slot = *VehSelectionFollow;
-        if (slot != 0 && slot != &ConsoleGlobal.selected_vehicle_ && slot != VehSelectionFollowLimit &&
+        if (slot != 0 && slot != &ConsoleGlobal.selected_vehicle_ && slot != &VehSelectionFollowLimit &&
             slot != &ConsoleGlobal.focus_vehicle_) {
             if (veh_id <= *slot) {
                 --*slot;

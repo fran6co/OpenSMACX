@@ -905,4 +905,6 @@ inline BOOL __cdecl is_missile(uint32_t veh_id) {
 
 // Explicitly unfinished link-continuity bodies in veh.cpp, not recovered effects.
 void __cdecl spot_all(int veh_id, int toggle);
+// Shared signed selection slot, retained across airdrop capture and compaction.
+extern int VehSelectionFollowLimit;
 int __cdecl goody_box(int veh_id, int type);

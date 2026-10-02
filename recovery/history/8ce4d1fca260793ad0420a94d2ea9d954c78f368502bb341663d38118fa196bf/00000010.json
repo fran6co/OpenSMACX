@@ -1,0 +1,33 @@
+{
+  "event_id": "53856f132e6a4d1d56e97f83072f6c287e5258d16ffa537c06c09c8e53836ec3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Coordinator pins the already explicitly granted storage migration to native setup_game5B3920 filename prefix reset, action_airdrop4CC360 shared capture callback slot, and veh_kill5C08C0 scalar compaction/address identity. Preserve original baseline and all mappings/claims; no whole behavior acceptance, save/load closure or matching waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5978400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5030752,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6031552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e4d8a7a2820513e331e60f51e1e78ffdc4a4638db71a1716a6e1d81ed00d2062",
+  "request_id": "sync-storage-coupled-consumers",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

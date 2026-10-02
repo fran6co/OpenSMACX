@@ -79,9 +79,9 @@ def harness(bodies):
         int GovernorFaction;
         enum { RFLAG_ALIEN = 16 };
         struct Player { uint32_t rule_flags; } Players[8];
-        int hover, hover_alt, limit, followed_value;
+        int hover, hover_alt, followed_value;
         int *StatusHoverVehId = &hover, *StatusHoverVehIdAlt = &hover_alt;
-        int *VehSelectionFollowLimit = &limit;
+        int VehSelectionFollowLimit;
         int *followed;
         int **VehSelectionFollow = &followed;
 
@@ -145,15 +145,15 @@ def harness(bodies):
                     ConsoleGlobal.cursor_active_ = 0x12345678;
                     ConsoleGlobal.field_23BE4_ = 0x87654321;
                     ConsoleGlobal.field_23BE8_ = 0x76543210;
-                    hover = 2; hover_alt = 3; limit = 4; followed_value = 5;
+                    hover = 2; hover_alt = 3; VehSelectionFollowLimit = 4; followed_value = 5;
                     followed = mode == 0 ? nullptr : mode == 1 ? &ConsoleGlobal.selected_vehicle_
                         : mode == 2 ? &ConsoleGlobal.focus_vehicle_
-                        : mode == 3 ? &limit : &followed_value;
+                        : mode == 3 ? &VehSelectionFollowLimit : &followed_value;
                     IsMultiplayerNet = net;
                     update_selection(2);
                     require(ConsoleGlobal.selected_vehicle_ == adjusted(selected, 2));
                     require(ConsoleGlobal.focus_vehicle_ == adjusted(focus, 2));
-                    require(hover == -1 && hover_alt == 2 && limit == 3);
+                    require(hover == -1 && hover_alt == 2 && VehSelectionFollowLimit == 3);
                     require(followed_value == (net && mode == 4 ? 4 : 5));
                     require(ConsoleGlobal.cursor_active_ == 0x12345678);
                     require(ConsoleGlobal.field_23BE4_ == 0x87654321);
@@ -210,7 +210,7 @@ def test_actual_consumers_share_console_members_and_preserve_pointer_identity(tm
     (1, "& 0x1000U", "& 0x0800U", 1),
     (2, "slot != &ConsoleGlobal.selected_vehicle_", "true", 1),
     (2, "slot != &ConsoleGlobal.focus_vehicle_", "true", 1),
-    (2, "slot != VehSelectionFollowLimit", "true", 1),
+    (2, "slot != &VehSelectionFollowLimit", "true", 1),
     (2, "ConsoleGlobal.selected_vehicle_ = -1;", "ConsoleGlobal.selected_vehicle_ = 0;", 1),
     (2, "ConsoleGlobal.focus_vehicle_ = -1;", "ConsoleGlobal.focus_vehicle_ = 0;", 1),
 ])

@@ -169,6 +169,11 @@ extern uint32_t GameMorePreferences;
 extern uint32_t GameWarnings; // used for setting pop notifications
 extern uint32_t GameRules; // bitfield
 extern uint32_t GameInterludeFlags;  // 0x009A64A4
+// Exact retained wire intervals; opaque names assert no gameplay semantics.
+extern uint8_t GameWireOpaque_9A64A0[4];
+extern uint8_t GameWireOpaque_9A64A8[4];
+extern char LegacyGameSaveName[256];
+extern uint8_t GameWireOpaque_9A67C9[3];
 extern uint32_t GameState; // bitfield
 extern int DiffLevelCurrent;
 extern int TurnCurrentNum;

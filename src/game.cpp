@@ -1987,6 +1987,20 @@ int EndgameExitReason;
 // Original interlude reads/writes this complete story-mask word.
 // RECOVERY_OBJECT: v1 0x009A64A4 ?GameInterludeFlags@@3IA
 uint32_t GameInterludeFlags;
+// Wire0 and game_data transfer these exact independent byte intervals.
+// No direct semantic use or original allocation boundary is proved; they are
+// retained state, never padding or zero-producing packet filler. Keep the
+// filename tail separate from the exactly bounded legacy 256-byte copy.
+// RECOVERY_OBJECT: v2 0x009A64A0 0x009A64A4 ?GameWireOpaque_9A64A0@@3PAEA 0x00532E00
+uint8_t GameWireOpaque_9A64A0[4];
+// RECOVERY_OBJECT: v2 0x009A64A8 0x009A64AC ?GameWireOpaque_9A64A8@@3PAEA 0x00532E00
+uint8_t GameWireOpaque_9A64A8[4];
+// Native game_data5A6BA3..5A6BB9 copies exactly256 bytes; setup_game
+// clears only byte0. NUL-scanning consumers do not prove loaded termination.
+// RECOVERY_OBJECT: v2 0x009A66C9 0x009A67C9 ?LegacyGameSaveName@@3PADA 0x005A6AC0
+char LegacyGameSaveName[256];
+// RECOVERY_OBJECT: v2 0x009A67C9 0x009A67CC ?GameWireOpaque_9A67C9@@3PAEA 0x00532E00
+uint8_t GameWireOpaque_9A67C9[3];
 // Logical faction0..7 indexing is independently observed; original
 // containing allocation bounds are not asserted.
 // RECOVERY_OBJECT: v1 0x00946138 ?TectonicDetonationCount@@3PAIA
@@ -4249,6 +4263,7 @@ void __cdecl setup_game(int reload) {
     // This initializer deliberately retains the native order: profile state,
     // transient game state, player construction, then optional diplomacy.
     GameTechAchieved[MaxTechnologyNum - 1] = 0;
+    LegacyGameSaveName[0] = 0;
 
     // The image passes zero-filled 0x945E78/0x945E7C strings to these keys.
     // Pinned-image initial bytes are NUL, and no other absolute references to
