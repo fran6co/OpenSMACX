@@ -1,0 +1,23 @@
+{
+  "event_id": "ba4bf615a6db9767d2c987d5d256342d7b7ef078bc633a653d8c84147ec2ba54",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Independent source review identifies an existing Net::drop_player 0x00632350 callback-slot defect in its embedded JackalVoiceRx owner. Retained original transcription at git 7471dc95^:src/unrecovered/00632350.cpp dispatches VCallList slot001 on Net+0xB0 before deleting the payload and allocation node. Current genuine JackalVoiceRx declares slot0 on_insert and slot1 on_remove, but current source calls on_insert. Admit only correction to the real removal hook, preservation of the original identity and all historical claims, and fresh native call-slot/runtime checks; no behavior hardening or matching waiver. Alpha source already edits the containing Net owner and this finding must not be discarded as unrelated."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6497104,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9b520b0fe2a3d727a3d51e9468fabc8839e2609e1d33849c7b1fa41ef338df20",
+  "request_id": "alpha-voice-removal-hook",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:alphanet-complete-owner-recovery"
+}

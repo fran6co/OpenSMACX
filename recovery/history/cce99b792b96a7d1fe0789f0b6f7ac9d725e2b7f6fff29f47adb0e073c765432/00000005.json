@@ -1,0 +1,20 @@
+{
+  "event_id": "4327f174a48dfd713549593865af510c6976c8facfb7a0c855e38f54d6165db4",
+  "payload": {
+    "affects": [
+      "entity-28e94ba6dd71930bfdcf388987e6a597ab1fbf0c49b4593ce003949499f84ec8"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "alpha-service-picker-shared-tail",
+    "evidence": [
+      "Retained src/unrecovered/004e26e0.cpp and src/unrecovered/00630d70.cpp record the same shared tail. Private native binding report build/recovery/alpha-native-bindings-v2/binding-report.json refuses 004E26E0. Independent final Alpha review confirms preserved source flow but no complete shared mapping proof."
+    ],
+    "hypothesis": "The genuine AlphaNet::pick_service C++ body preserves the observed provider-dialog flow, but complete original contribution ownership is unresolved: the retained seed has body4E26E0..4E29DF, shared4E38E0..4E38FB also carried by630D70, and EH65C630..65C664. Native binding correctly refuses this overlap. Keep the existing seed and all spans intact; source body remains unbound and earns no mapping, restoration or byte claim credit until shared contribution evidence is established. Manual semantic integration is not a resolution of this discovery.",
+    "kind": "discovery"
+  },
+  "previous_event": "ba4bf615a6db9767d2c987d5d256342d7b7ef078bc633a653d8c84147ec2ba54",
+  "request_id": "alpha-service-picker-shared-tail",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:alphanet-complete-owner-recovery"
+}
