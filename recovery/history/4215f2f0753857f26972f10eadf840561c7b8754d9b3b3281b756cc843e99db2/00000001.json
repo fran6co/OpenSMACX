@@ -1,0 +1,33 @@
+{
+  "event_id": "f82e4a5b509be0874c2593c332c0e3635934f92bc1bd3ed43b91f24b331e52bc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_colony_foundation_owner.py",
+      "recovery/tests/test_monument_named_records.py",
+      "src/game.cpp",
+      "src/game.h"
+    ],
+    "evidence": [
+      "Pinned mon_facility_built476FE0..4770F2 writes record4 and name94CECC, mon_conquer_base477320..477434 writes record7 and name94CEE4. Relative to genuine FactionMonuments94CA08 these are existing faction-owned24byte fields4C4 and4DC, directly following founding name4AC. Recover both producer bodies and typed declarations under the MonuWin dependency closure, preserve source layout4F4, native peer/alien/strncpy behavior, original identities and all historical claims. No baseline reset, behavior repair or acceptance grant."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4681696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4682528,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "canonical-monument-name-dependency-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:monuwin-owner-coverage"
+}

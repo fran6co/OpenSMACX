@@ -138,13 +138,18 @@ struct MonumentFaction {
     uint8_t opaque_tail_prefix_[0x10];
     // RECOVERY_MEMBER: v1 MonumentFaction founding_base_name_ 0x4AC 0x00476B70
     char founding_base_name_[24];
-    uint8_t opaque_tail_suffix_[0x30];
+    // RECOVERY_MEMBER: v1 MonumentFaction facility_base_name_ 0x4C4 0x00476FE0
+    char facility_base_name_[24];
+    // RECOVERY_MEMBER: v1 MonumentFaction conquered_base_name_ 0x4DC 0x00477320
+    char conquered_base_name_[24];
 };
 static_assert(sizeof(MonumentRecord) == 0x38, "monument record stride");
 static_assert(sizeof(MonumentFaction) == 0x4F4, "monument faction stride");
 extern MonumentFaction FactionMonuments[8];
 void __cdecl mon_secrets_of_tech(int faction_id);
 void __cdecl mon_colony_founded(int faction_id, char *base_name);
+void __cdecl mon_facility_built(int faction_id, char *base_name);
+void __cdecl mon_conquer_base(int faction_id, char *base_name);
 
 // Four independently cleared words precede each offer cell's unknown payload.
 struct OfferResetCell {

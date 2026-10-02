@@ -81,12 +81,12 @@ int main() {
     assert(FactionMonuments[3].records_[0].word_14_==0);
     reset(); ConsoleGlobal.faction_id_=1; change_local=3;
     char long_name[]="123456789012345678901234EXTRA";
-    FactionMonuments[3].opaque_tail_suffix_[0]=0x5A;
+    FactionMonuments[3].facility_base_name_[0]=0x5A;
     mon_colony_founded(3,long_name);
     assert(popup_calls==1);
     assert(memcmp(FactionMonuments[3].founding_base_name_,long_name,24)==0);
     assert(FactionMonuments[3].founding_base_name_[23]=='4');
-    assert(FactionMonuments[3].opaque_tail_suffix_[0]==0x5A);
+    assert(FactionMonuments[3].facility_base_name_[0]==0x5A);
     reset(); ConsoleGlobal.faction_id_=1; mon_colony_founded(3,name);
     assert(popup_calls==0);
 }

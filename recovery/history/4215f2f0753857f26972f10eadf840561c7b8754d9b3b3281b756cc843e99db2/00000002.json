@@ -1,0 +1,20 @@
+{
+  "event_id": "5fc44d943d896c809ad10b6682e0c7e5fc4a27d171b0d058443ee32a0d2d760d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/units/00476fe0.cpp",
+      "src/recovered/units/00477320.cpp"
+    ],
+    "evidence": [
+      "Both complete retained units now have genuine typed product implementations with identical original names/spans, no byte claims or codified lessons are dropped, nine actual-source tests and full application build/link pass, all24 game-owner historical byte claims pass. Retire only these two consumed scaffolds, preserve original source seeds through Git provenance, and leave all incomplete MonuWin/PickTech/Video work intact."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f82e4a5b509be0874c2593c332c0e3635934f92bc1bd3ed43b91f24b331e52bc",
+  "request_id": "retire-consumed-monument-name-seeds",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:monuwin-owner-coverage"
+}

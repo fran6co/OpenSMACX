@@ -5051,6 +5051,82 @@ void __cdecl mon_colony_founded(int faction_id, char *base_name) {
         monument(1);
 }
 
+// ORIGINAL: 0x00476FE0 ?mon_facility_built@@YAXHPAD@Z 0x00476FE0-0x004770F2
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00476FE0 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00476fe0.cpp; faction stride4F4, record4, name field4C4 and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
+void __cdecl mon_facility_built(int faction_id, char *base_name) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    MonumentFaction &faction = FactionMonuments[faction_id];
+    MonumentRecord &record = faction.records_[4];
+    if (record.achieved_ != 0 || (Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+        return;
+
+    record.word_14_ = 0;
+    int peer;
+    for (peer = 0; peer < MaxPlayerNum; ++peer) {
+        if (peer != faction_id && FactionMonuments[peer].records_[4].achieved_ != 0)
+            ++record.word_14_;
+    }
+    int first_faction = faction_id;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        for (peer = 0; peer < MaxPlayerNum; ++peer) {
+            const MonumentRecord &other = FactionMonuments[peer].records_[4];
+            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
+                first_faction = peer;
+        }
+    } else {
+        record.word_14_ = 1;
+    }
+    record.owner_faction_ = first_faction;
+    record.achieved_ = 1;
+    record.year_ = year;
+    // Native copies exactly 24 bytes, including strncpy's zero padding but
+    // without forcing a terminator for a full-length name.
+    strncpy(faction.facility_base_name_, base_name, sizeof(faction.facility_base_name_));
+    const bool local = faction_id == ConsoleGlobal.faction_id_;
+    faction.latest_type_ = 4;
+    if (local)
+        monument(1);
+}
+
+// ORIGINAL: 0x00477320 ?mon_conquer_base@@YAXHPAD@Z 0x00477320-0x00477434
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned original 00477320 and seed git:fc8112d1ca80fbe743dd051511ad7e0af8454e94:src/recovered/units/00477320.cpp; faction stride4F4, record7, name field4DC and24byte strncpy are established by the complete native body.", "Native first-achiever selection includes all eight peer factions; alien target and duplicate events return without updates. Local notification reads the live ConsoleGlobal owner after game_year and name copying."], "reason": "Recover the native milestone and its bounded base-name storage in the genuine shared FactionMonuments owner, not a duplicate raw table view."}
+void __cdecl mon_conquer_base(int faction_id, char *base_name) {
+    const int year = static_cast<int>(game_year(TurnCurrentNum));
+    if ((Players[faction_id].rule_flags & RFLAG_ALIEN) != 0)
+        return;
+    MonumentFaction &faction = FactionMonuments[faction_id];
+    MonumentRecord &record = faction.records_[7];
+    if (record.achieved_ != 0)
+        return;
+
+    record.word_14_ = 0;
+    int peer;
+    for (peer = 0; peer < MaxPlayerNum; ++peer) {
+        if (peer != faction_id && FactionMonuments[peer].records_[7].achieved_ != 0)
+            ++record.word_14_;
+    }
+    int first_faction = faction_id;
+    if (record.word_14_ != 0) {
+        record.word_14_ = 0;
+        for (peer = 0; peer < MaxPlayerNum; ++peer) {
+            const MonumentRecord &other = FactionMonuments[peer].records_[7];
+            if (peer != faction_id && other.achieved_ != 0 && other.word_14_ != 0)
+                first_faction = peer;
+        }
+    } else {
+        record.word_14_ = 1;
+    }
+    record.owner_faction_ = first_faction;
+    record.achieved_ = 1;
+    record.year_ = year;
+    strncpy(faction.conquered_base_name_, base_name, sizeof(faction.conquered_base_name_));
+    const bool local = faction_id == ConsoleGlobal.faction_id_;
+    faction.latest_type_ = 7;
+    if (local)
+        monument(1);
+}
+
 // Opcode0x24 transfers this persistent window at 0x0094B4D8.
 // No semantic fields or complete original allocation extent are asserted.
 // RECOVERY_OBJECT: v1 0x0094B4D8 ?GameWireOpaque_94B4D8@@3PAEA
