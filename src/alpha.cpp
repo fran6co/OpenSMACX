@@ -2365,3 +2365,290 @@ Status: Complete
 // BODY IN alpha.h, as plain `inline` (no ORIGINAL marker of its own - "Original
 // Offset: n/a"): say_base (base.cpp) needs it folded to `StringTable.get(...)`
 // the way the image does.
+
+
+// Protocol compaction stays with the real rule-table field owners.
+namespace NetDaemonSyncRules {
+
+template <class T>
+static bool copy_rule_object_chunk(T &owner, size_t owner_extent,
+                                   size_t offset, unsigned char *chunk,
+                                   size_t count, bool packet_to_owner) {
+    if (owner_extent > sizeof owner || offset > owner_extent ||
+        count > owner_extent - offset) return false;
+    if (count == 0) return true;
+    unsigned char *owner_bytes = reinterpret_cast<unsigned char *>(&owner);
+    if (packet_to_owner) memcpy(owner_bytes + offset, chunk, count);
+    else memcpy(chunk, owner_bytes + offset, count);
+    return true;
+}
+
+// Outgoing raw-table routes and incoming staging writes. The call site must
+// pass the persistent receive-stage object owned by NetDaemon.
+bool copy_rule_wire_chunk(int opcode, size_t offset, unsigned char *chunk,
+                          size_t count, bool packet_to_owner,
+                          unsigned char *shared_staging) {
+    size_t extent = 0;
+    switch (opcode) {
+    case 0x80: extent = MaxTechnologyNum * sizeof Technology[0]; break;
+    case 0x81: extent = 0x13C; break;
+    case 0x82: extent = sizeof WorldBuilder; break;
+    case 0x83: extent = MaxTerrainNum * sizeof Terraforming[0]; break;
+    case 0x84: extent = MaxResourceInfoNum * sizeof ResourceInfo[0]; break;
+    case 0x85: extent = MaxTimeControlNum * sizeof TimeControl[0]; break;
+    case 0x86: extent = 9 * sizeof Chassis[0]; break;
+    case 0x87: extent = MaxReactorNum * sizeof Reactor[0]; break;
+    case 0x88: extent = MaxWeaponNum * sizeof Weapon[0]; break;
+    case 0x89: extent = MaxArmorNum * sizeof Armor[0]; break;
+    case 0x8A: extent = MaxAbilityNum * sizeof Ability[0]; break;
+    case 0x8B: extent = MaxFacilityNum * sizeof Facility[0]; break;
+    case 0x8C: extent = MaxCitizenNum * sizeof Citizen[0]; break;
+    case 0x8D: extent = MaxSocialCatNum * sizeof SocialCategories[0]; break;
+    default: return false;
+    }
+    if (offset > extent || count > extent - offset) return false;
+    if (!packet_to_owner) {
+        if (opcode == 0x81) {
+            bool copied = false;
+            if (offset < 4) {
+                const size_t n = (offset + count < 4) ? count : 4 - offset;
+                memcpy(chunk, reinterpret_cast<unsigned char *>(&TechValidCount) + offset, n);
+                copied = n == count;
+            }
+            if (offset < 8 && offset + count > 4) {
+                const size_t first = offset > 4 ? offset : 4;
+                const size_t last = offset + count < 8 ? offset + count : 8;
+                memcpy(chunk + first - offset,
+                       reinterpret_cast<unsigned char *>(&TechCommerceCount) + first - 4,
+                       last - first);
+                copied = true;
+            }
+            if (offset < 0x13C && offset + count > 8) {
+                const size_t first = offset > 8 ? offset : 8;
+                const size_t last = offset + count;
+                memcpy(chunk + first - offset,
+                       reinterpret_cast<unsigned char *>(&Rules) + first - 8,
+                       last - first);
+                copied = true;
+            }
+            return count == 0 || copied;
+        }
+        switch (opcode) {
+        case 0x80: return copy_rule_object_chunk(Technology, extent, offset, chunk, count, false);
+        case 0x82: return copy_rule_object_chunk(WorldBuilder, extent, offset, chunk, count, false);
+        case 0x83: return copy_rule_object_chunk(Terraforming, extent, offset, chunk, count, false);
+        case 0x84: return copy_rule_object_chunk(ResourceInfo, extent, offset, chunk, count, false);
+        case 0x85: return copy_rule_object_chunk(TimeControl, extent, offset, chunk, count, false);
+        case 0x86: return copy_rule_object_chunk(Chassis, extent, offset, chunk, count, false);
+        case 0x87: return copy_rule_object_chunk(Reactor, extent, offset, chunk, count, false);
+        case 0x88: return copy_rule_object_chunk(Weapon, extent, offset, chunk, count, false);
+        case 0x89: return copy_rule_object_chunk(Armor, extent, offset, chunk, count, false);
+        case 0x8A: return copy_rule_object_chunk(Ability, extent, offset, chunk, count, false);
+        case 0x8B: return copy_rule_object_chunk(Facility, extent, offset, chunk, count, false);
+        case 0x8C: return copy_rule_object_chunk(Citizen, extent, offset, chunk, count, false);
+        case 0x8D: return copy_rule_object_chunk(SocialCategories, extent, offset, chunk, count, false);
+        default: return false;
+        }
+    }
+    if (!shared_staging) return false;
+    memcpy(shared_staging + offset, chunk, count);
+    return true;
+}
+
+// In alpha.cpp, against the real RulesTimeControl / TimeControl declarations.
+// Native 0x533D2E..0x533D5B copies each 0x20-byte staged row, then restores the
+// destination first dword. That skipped prefix is the live `name` pointer;
+// all seven following ints are copied in wire order.
+void compact_time_controls(const unsigned char *staging) {
+    for (int i = 0; i < MaxTimeControlNum; ++i) {
+        const unsigned char *src = staging + i * 0x20;
+        RulesTimeControl &dst = TimeControl[i];
+        // Keep dst.name exactly as it was before compaction.
+        memcpy(&dst.turn, src + 0x04, sizeof dst.turn);
+        memcpy(&dst.base, src + 0x08, sizeof dst.base);
+        memcpy(&dst.unit, src + 0x0C, sizeof dst.unit);
+        memcpy(&dst.event, src + 0x10, sizeof dst.event);
+        memcpy(&dst.extra, src + 0x14, sizeof dst.extra);
+        memcpy(&dst.refresh, src + 0x18, sizeof dst.refresh);
+        memcpy(&dst.accumulated, src + 0x1C, sizeof dst.accumulated);
+    }
+}
+
+// In alpha.cpp, against the real RulesFacility / Facility declarations.
+// Native 0x533E70..0x533EA7 compacts all 134 declared Facility rows. For each row
+// it saves and restores the first two dwords (name/effect pointers), while
+// replacing the remaining ten dwords from the staged 0x30-byte row.
+void compact_facility_table(const unsigned char *staging) {
+    for (int i = 0; i < MaxFacilityNum; ++i) {
+        const unsigned char *src = staging + i * 0x30;
+        RulesFacility &dst = Facility[i];
+        memcpy(&dst.pad, src + 0x08, sizeof dst.pad);
+        memcpy(&dst.cost, src + 0x0C, sizeof dst.cost);
+        memcpy(&dst.maint, src + 0x10, sizeof dst.maint);
+        memcpy(&dst.preq_tech, src + 0x14, sizeof dst.preq_tech);
+        memcpy(&dst.free_tech, src + 0x18, sizeof dst.free_tech);
+        memcpy(&dst.sp_ai_fight, src + 0x1C, sizeof dst.sp_ai_fight);
+        memcpy(&dst.sp_ai_growth, src + 0x20, sizeof dst.sp_ai_growth);
+        memcpy(&dst.sp_ai_tech, src + 0x24, sizeof dst.sp_ai_tech);
+        memcpy(&dst.sp_ai_wealth, src + 0x28, sizeof dst.sp_ai_wealth);
+        memcpy(&dst.sp_ai_power, src + 0x2C, sizeof dst.sp_ai_power);
+    }
+}
+
+// In alpha.cpp, beside the genuine SocialCategories object. Native
+// 0x533EE7..0x533F65 processes four 0xD4-byte rows. `base1` begins at staging
+// +4; native copies its first dword to destination +4 (`preq_tech[0]`), then
+// copies four 0x2C-byte SocialEffect records from base1+0x20 (staging+0x24) to
+// destination +0x24. Destination `type`, preq_tech[1..3], and all `name`
+// pointers are preserved. This is intentionally not a whole-record copy.
+void compact_social_categories(const unsigned char *staging) {
+    for (int i = 0; i < MaxSocialCatNum; ++i) {
+        const unsigned char *src = staging + i * 0xD4 + 0x04;
+        RulesSocialCategory &dst = SocialCategories[i];
+        memcpy(&dst.preq_tech[0], src, sizeof dst.preq_tech[0]);
+        memcpy(&dst.model_effect, src + 0x20, sizeof dst.model_effect);
+    }
+}
+
+// Opcode 0x80 (128): native loop 0x533CAB..0x533CEB, 89 rows of 0x2C.
+// Native writes flags and the six dwords at offsets +0x14..+0x28. It preserves
+// the local name, id, and padding. Keep each source offset explicit.
+void compact_technology_fields(const unsigned char *staging) {
+    for (int i = 0; i < MaxTechnologyNum; ++i) {
+        const unsigned char *src = staging + i * 0x2C;
+        RulesTechnology &dst = Technology[i];
+        memcpy(&dst.flags, src + 0x00, sizeof dst.flags);
+        memcpy(&dst.growth_value, src + 0x14, sizeof dst.growth_value);
+        memcpy(&dst.tech_value, src + 0x18, sizeof dst.tech_value);
+        memcpy(&dst.wealth_value, src + 0x1C, sizeof dst.wealth_value);
+        memcpy(&dst.power_value, src + 0x20, sizeof dst.power_value);
+        memcpy(&dst.preq_tech_1, src + 0x24, sizeof dst.preq_tech_1);
+        memcpy(&dst.preq_tech_2, src + 0x28, sizeof dst.preq_tech_2);
+    }
+}
+
+// Opcode 0x83 (131): native loop 0x533CF0..0x533D29, 20 rows of 0x20.
+// Native leaves the two names and trailing `shortcuts` alone. It updates
+// preq_tech through rate at offsets +8..+0x18 from matching staging offsets.
+void compact_terraforming_fields(const unsigned char *staging) {
+    for (int i = 0; i < MaxTerrainNum; ++i) {
+        const unsigned char *src = staging + i * 0x20;
+        RulesTerraforming &dst = Terraforming[i];
+        memcpy(&dst.preq_tech, src + 0x08, sizeof dst.preq_tech);
+        memcpy(&dst.preq_tech_sea, src + 0x0C, sizeof dst.preq_tech_sea);
+        memcpy(&dst.bit, src + 0x10, sizeof dst.bit);
+        memcpy(&dst.bit_incompatible, src + 0x14, sizeof dst.bit_incompatible);
+        memcpy(&dst.rate, src + 0x18, sizeof dst.rate);
+    }
+}
+
+// Opcode 0x87 (135): four 0x0C-byte RulesReactor records. The native loop's
+// destination begins at 0x00952800, exactly Reactor base + 8, and copies the
+// staged 16-bit word at row +8. This is the named `preq_tech` member; names
+// and `power` are not written.
+void compact_reactor_prerequisites(const unsigned char *staging) {
+    for (int i = 0; i < MaxReactorNum; ++i) {
+        const unsigned char *src = staging + i * 0x0C;
+        memcpy(&Reactor[i].preq_tech, src + 0x08,
+               sizeof Reactor[i].preq_tech);
+    }
+}
+
+// Opcode 0x86 (134): nine RulesChassis records. Native copies the six
+// consecutive chassis bytes [speed,triad,range,cargo,cost,missile] from the
+// row's same offsets, and the trailing preq_tech word at +0x8E. All names,
+// gender/plural values, and sprite-offset bytes are left in place.
+void compact_chassis_fields(const unsigned char *staging) {
+    for (int i = 0; i < MaxChassisNum; ++i) {
+        const unsigned char *src = staging + i * 0x90;
+        RulesChassis &dst = Chassis[i];
+        memcpy(&dst.speed, src + 0x48, 6);
+        memcpy(&dst.preq_tech, src + 0x8E, sizeof dst.preq_tech);
+    }
+}
+
+// Opcode 0x88 (136): 26 RulesWeapon records. The native loop copies the
+// six-byte non-name tail at +8..+D and preserves the two name pointers plus
+// trailing padding word.
+void compact_weapon_fields(const unsigned char *staging) {
+    for (int i = 0; i < MaxWeaponNum; ++i) {
+        const unsigned char *src = staging + i * 0x10;
+        RulesWeapon &dst = Weapon[i];
+        memcpy(&dst.offense_rating, src + 0x08, sizeof dst.offense_rating);
+        memcpy(&dst.icon, src + 0x09, sizeof dst.icon);
+        memcpy(&dst.mode, src + 0x0A, sizeof dst.mode);
+        memcpy(&dst.cost, src + 0x0B, sizeof dst.cost);
+        memcpy(&dst.preq_tech, src + 0x0C, sizeof dst.preq_tech);
+    }
+}
+
+// Opcode 0x89 (137): 14 RulesArmor records. Native writes defense/mode/cost
+// and preq_tech; padding1 (+0xB), both name pointers, and padding2 remain.
+void compact_armor_fields(const unsigned char *staging) {
+    for (int i = 0; i < MaxArmorNum; ++i) {
+        const unsigned char *src = staging + i * 0x10;
+        RulesArmor &dst = Armor[i];
+        memcpy(&dst.defense_rating, src + 0x08, sizeof dst.defense_rating);
+        memcpy(&dst.mode, src + 0x09, sizeof dst.mode);
+        memcpy(&dst.cost, src + 0x0A, sizeof dst.cost);
+        memcpy(&dst.preq_tech, src + 0x0C, sizeof dst.preq_tech);
+    }
+}
+
+// Opcode 0x8A (138): 29 RulesAbility records. Native writes cost_factor and
+// unk_1 from staging +0x0C/+0x10, flags from +0x14, then a 16-bit prerequisite
+// from +0x18. The three name pointers and trailing padding remain.
+void compact_ability_fields(const unsigned char *staging) {
+    for (int i = 0; i < MaxAbilityNum; ++i) {
+        const unsigned char *src = staging + i * 0x1C;
+        RulesAbility &dst = Ability[i];
+        memcpy(&dst.cost_factor, src + 0x0C, sizeof dst.cost_factor);
+        memcpy(&dst.unk_1, src + 0x10, sizeof dst.unk_1);
+        memcpy(&dst.flags, src + 0x14, sizeof dst.flags);
+        memcpy(&dst.preq_tech, src + 0x18, sizeof dst.preq_tech);
+    }
+}
+
+// Opcode 0x8C (140): ten RulesCitizen rows. Native copies five dwords at
+// matching record offsets +8..+0x18; the two leading name pointers survive.
+void compact_citizen_fields(const unsigned char *staging) {
+    for (int i = 0; i < MaxCitizenNum; ++i) {
+        const unsigned char *src = staging + i * 0x1C;
+        RulesCitizen &dst = Citizen[i];
+        memcpy(&dst.preq_tech, src + 0x08, 5 * sizeof(int));
+    }
+}
+
+// Native incoming rule bytes remain in the receiver's shared staging storage
+// until the final packet. This router borrows that storage; it does not define
+// or initialize a replacement allocation. Add this dispatcher beside the
+// owner declarations in the NetDaemon TU, with the owner-specific direct-copy
+// arms moved into their actual TUs as needed.
+bool commit_staged_rules(int opcode, const unsigned char *staging) {
+    if (!staging) return false;
+    switch (opcode) {
+    case 0x80: compact_technology_fields(staging); return true;
+    case 0x81:
+        // The native direct destination is the two technology counters and
+        // then the separate Alpha Rules object; these are not one C++ object.
+        memcpy(&TechValidCount, staging, sizeof TechValidCount);
+        memcpy(&TechCommerceCount, staging + 4, sizeof TechCommerceCount);
+        memcpy(&Rules, staging + 8, sizeof Rules);
+        return true;
+    case 0x82: memcpy(&WorldBuilder, staging, sizeof WorldBuilder); return true;
+    case 0x83: compact_terraforming_fields(staging); return true;
+    case 0x84: memcpy(ResourceInfo, staging, sizeof ResourceInfo); return true;
+    case 0x85: compact_time_controls(staging); return true;
+    case 0x86: compact_chassis_fields(staging); return true;
+    case 0x87: compact_reactor_prerequisites(staging); return true;
+    case 0x88: compact_weapon_fields(staging); return true;
+    case 0x89: compact_armor_fields(staging); return true;
+    case 0x8A: compact_ability_fields(staging); return true;
+    case 0x8B: compact_facility_table(staging); return true;
+    case 0x8C: compact_citizen_fields(staging); return true;
+    case 0x8D: compact_social_categories(staging); return true;
+    default: return false;
+    }
+}
+
+} // namespace NetDaemonSyncRules

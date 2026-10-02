@@ -444,3 +444,6 @@ void __cdecl setup_game(int reload);
 void __cdecl time_warp();
 // current_server is declared in lock.h, the TU whose three call sites reach
 // it; the definition is here.
+
+// Observed synchronization window; complete historical allocation unknown.
+extern uint8_t GameWireOpaque_94B4D8[0x80];

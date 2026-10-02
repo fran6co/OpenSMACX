@@ -1,0 +1,20 @@
+{
+  "event_id": "e6ffd058026bce7a691fc0b4ec7efe10291dacff0023b5ed3ec8122a51ed5217",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sync-netmsg-real-owner-dependency",
+    "evidence": [
+      "src/netmsg.h NetMsgPopup fixed805338; pinned synch UIcalls47A890/47A7D0, constructor47ACF0 and actual source class fields; source pipeline control/build do not prove runtime/global lifetime. Path93AC88 send_files producer52ED40 separately remains pending."
+    ],
+    "hypothesis": "Synchronization UI still reaches existing NetMsgPopup fixed-executable pointer805338 and unfinished pop/lifetime dependencies. This is not a real standalone singleton or runtime recovery acceptance. Recover the two genuine NetMsg object lifetimes and pop/timer closure centrally; retain this completed protocol body and its historical identity without masking the dependency or replacing behavior with placeholders.",
+    "kind": "discovery"
+  },
+  "previous_event": "6e7522a99ad685d23987fe50501857d98c4abef0a3c579af33fbc38ef714ba42",
+  "request_id": "sync-netmsg-real-owner-dependency",
+  "schema_version": 1,
+  "sequence": 22,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

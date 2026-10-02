@@ -1,0 +1,83 @@
+{
+  "event_id": "b2f800a60b96c5f54d3e79dce17442dbdacb271dc8d4e9ec58b6032d36c45dc3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/netdaemon_synch_core_harness.cpp",
+      "recovery/tests/netdaemon_synch_opcode0_harness.cpp",
+      "recovery/tests/netdaemon_synch_owner_copy_harness.cpp",
+      "recovery/tests/netdaemon_synch_rules_harness.cpp",
+      "recovery/tests/test_netdaemon_synch_host.py",
+      "src/base.cpp",
+      "src/console.cpp",
+      "src/popup.cpp",
+      "src/win.cpp"
+    ],
+    "evidence": [
+      "Pinned synch5339D9..533A05 and533BAC..533BD8 reads shared9BC070 after X_pop; mapped ConsoleGroupAction is duplicated by BaseAtKeyPollFlag. Unify canonical source storage and producers/consumers, preserve original markers, historical lessons and claims. Admit actual-source sync controls; no baseline reset or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4767904,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5095984,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6454112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6454320,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6453520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4768608,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6452896,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6459184,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6453696,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5126736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5102160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "91a7aa8a5edd5c24a7de3fa4caa3165a4a69362c1d9c6e8b08f2aea28b83893d",
+  "request_id": "sync-real-popup-result-and-source-controls",
+  "schema_version": 1,
+  "sequence": 20,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

@@ -66,7 +66,7 @@ static_assert(sizeof(VehPrototype)==0x34,"fixture prototype size");
 enum { VFLAG_IS_OBJECTIVE=0x20,VFLAG_LURKER=0x40,VFLAG_INVISIBLE=0x400,VSTATE_MONOLITH_UPGRADED=0x100 };
 static const int MaxMoraleNum=7,MaxPlayerNum=8;
 Veh Vehs[20]; VehPrototype VehPrototypes[20]; RulesWeapon Weapon[20]; RulesChassis Chassis[20]; RulesMorale Morale[7]; Player Players[8]; Base Bases[16];
-int BaseCurrentCount,BaseAtKeyPollFlag,PopupWriteCheckState,GenderDefault,PluralityDefault;
+int BaseCurrentCount,ConsoleGroupAction,PopupWriteCheckState,GenderDefault,PluralityDefault;
 Char256 ParseStrBuffer[10]; char StringTemp[1032];
 char PopupStartCaption[256];
 struct Strings { char *get(int) { static char value[]="STR"; return value; } } StringTable;
@@ -133,7 +133,7 @@ void reset(){
     for(int i=0;i<20;i++){ Vehs[i].proto_id=0; Vehs[i].faction_id=1; Vehs[i].x=5; Vehs[i].y=7; VehPrototypes[i].veh_name[0]='V'; VehPrototypes[i].veh_name[1]=0; }
     for(int i=0;i<7;i++){Morale[i].name=Morale[i].name_lifecycle=(LPSTR)"M";}
     for(int i=0;i<8;i++){Players[i].noun_faction[0]='F';Players[i].noun_faction[1]=0;}
-    Vehs[0].home_base_id=-1; BaseCurrentCount=0; BaseAtKeyPollFlag=0; PopupWriteCheckState=0;
+    Vehs[0].home_base_id=-1; BaseCurrentCount=0; ConsoleGroupAction=0; PopupWriteCheckState=0;
     GenderDefault=PluralityDefault=0; xpop_result=exec_result=0; vehicle_at_result=0; pick_result=0;
     owner_x=owner_y=owner_faction=777; selected_popup_value=-999; morale_value=alien_value=0;
     parse_mutate_proto=exec_mutate_proto=-1; mutate_veh=0; last_popup_label=""; effects.clear();
@@ -149,14 +149,14 @@ void test_returns(){
     reset();Console c;c.editor_edit_veh(-1);lifecycle(); // no vehicle at cursor
     reset();vehicle_at_result=1;pick_result=-1;Console c2;c2.editor_edit_veh(-1);lifecycle();
     reset();xpop_result=-1;Console c3;c3.editor_edit_veh(0);lifecycle();
-    for(int mode=1;mode<=4;++mode){reset();xpop_result=0;BaseAtKeyPollFlag=mode;exec_result=-1;Console c;c.editor_edit_veh(0);lifecycle();}
+    for(int mode=1;mode<=4;++mode){reset();xpop_result=0;ConsoleGroupAction=mode;exec_result=-1;Console c;c.editor_edit_veh(0);lifecycle();}
     reset();xpop_result=0;Console c4;c4.editor_edit_veh(0);lifecycle();
-    for(int mode=1;mode<=4;++mode){reset();xpop_result=0;BaseAtKeyPollFlag=mode;exec_result=mode==1?3:mode==3?2:mode==4?9999:0;Console c;c.editor_edit_veh(0);lifecycle();}
+    for(int mode=1;mode<=4;++mode){reset();xpop_result=0;ConsoleGroupAction=mode;exec_result=mode==1?3:mode==3?2:mode==4?9999:0;Console c;c.editor_edit_veh(0);lifecycle();}
 }
 void test_mode2_live_range(){
     // Native prototype+0x24 selects Chassis; Chassis+0x4A is unsigned range.
     // Deliberately disagree with Weapon to catch the wrong table owner.
-    reset();xpop_result=0;BaseAtKeyPollFlag=2;Chassis[0].range=255;Weapon[0].offense_rating=0;
+    reset();xpop_result=0;ConsoleGroupAction=2;Chassis[0].range=255;Weapon[0].offense_rating=0;
     exec_result=0;Console c;c.editor_edit_veh(0);
     CHECK(std::strcmp(last_popup_label,"EDITVEH2A")==0);
     CHECK(parse_three_calls==1);
@@ -164,18 +164,18 @@ void test_mode2_live_range(){
 
     // parse_says(3) can change the active prototype; the dialog choice must
     // reread the currently selected prototype after the parser call.
-    reset();xpop_result=0;BaseAtKeyPollFlag=2;Chassis[0].range=2;Chassis[1].range=0;VehPrototypes[1].chassis_id=1;
+    reset();xpop_result=0;ConsoleGroupAction=2;Chassis[0].range=2;Chassis[1].range=0;VehPrototypes[1].chassis_id=1;
     parse_mutate_proto=1;Console c2;c2.editor_edit_veh(0);
     CHECK(std::strcmp(last_popup_label,"EDITVEH2")==0);lifecycle();
 
     // Popup event processing can change it again; the final write gate must
     // reload after exec rather than use the pre-popup cached range.
-    reset();xpop_result=0;BaseAtKeyPollFlag=2;Chassis[0].range=0;Chassis[1].range=2;VehPrototypes[1].chassis_id=1;
+    reset();xpop_result=0;ConsoleGroupAction=2;Chassis[0].range=0;Chassis[1].range=2;VehPrototypes[1].chassis_id=1;
     exec_mutate_proto=1;Console c3;c3.editor_edit_veh(0);
     CHECK(Vehs[0].terraforming_turns==5);lifecycle();
 }
 void test_global_cursor_owner(){
-    reset();BaseAtKeyPollFlag=3;exec_result=5;
+    reset();ConsoleGroupAction=3;exec_result=5;
     ConsoleGlobal.cursor_active_=1;ConsoleGlobal.selected_vehicle_=3;
     Console c;c.cursor_active_=1;c.selected_vehicle_=1;c.editor_edit_veh(-1);
     CHECK(Vehs[3].faction_id==5 && Vehs[1].faction_id==1);lifecycle();
@@ -185,11 +185,11 @@ void test_global_cursor_owner(){
     c2.editor_edit_veh(-1);CHECK(vehicle_at_x==11 && vehicle_at_y==13);lifecycle();
 }
 void test_defaults_and_order(){
-    reset();xpop_result=0;BaseAtKeyPollFlag=1;morale_value=2;exec_result=4;Console c;c.editor_edit_veh(0);
+    reset();xpop_result=0;ConsoleGroupAction=1;morale_value=2;exec_result=4;Console c;c.editor_edit_veh(0);
     CHECK(selected_popup_value==2);CHECK(Vehs[0].morale==2);lifecycle();
-    reset();xpop_result=0;BaseAtKeyPollFlag=3;Vehs[0].faction_id=4;exec_result=5;Console c2;c2.editor_edit_veh(0);
+    reset();xpop_result=0;ConsoleGroupAction=3;Vehs[0].faction_id=4;exec_result=5;Console c2;c2.editor_edit_veh(0);
     CHECK(selected_popup_value==4 && Vehs[0].faction_id==5);lifecycle();
-    reset();xpop_result=0;BaseAtKeyPollFlag=4;Vehs[0].faction_id=3;Vehs[0].home_base_id=6;exec_result=9999;Console c3;c3.editor_edit_veh(0);
+    reset();xpop_result=0;ConsoleGroupAction=4;Vehs[0].faction_id=3;Vehs[0].home_base_id=6;exec_result=9999;Console c3;c3.editor_edit_veh(0);
     CHECK(selected_popup_value==6 && Vehs[0].home_base_id==-1);lifecycle();
 }
 void test_flags_and_owner(){
@@ -202,10 +202,10 @@ void test_draw_tile_native_argument_order_and_liveness(){
     reset();xpop_result=0;update_mutates_tile=1;updated_x=12;updated_y=14;
     Console c;c.editor_edit_veh(0);
     CHECK(tile_draws.size()==1 && tile_draws[0][0]==12 && tile_draws[0][1]==14 && tile_draws[0][2]==1);
-    reset();xpop_result=0;BaseAtKeyPollFlag=3;exec_result=5;
+    reset();xpop_result=0;ConsoleGroupAction=3;exec_result=5;
     Console c2;c2.editor_edit_veh(0);
     CHECK(tile_draws.size()==2 && tile_draws[0][0]==5 && tile_draws[0][1]==7 && tile_draws[0][2]==1 && tile_draws[1][0]==5 && tile_draws[1][1]==7 && tile_draws[1][2]==1);
-    reset();xpop_result=0;BaseAtKeyPollFlag=4;exec_result=9999;
+    reset();xpop_result=0;ConsoleGroupAction=4;exec_result=9999;
     Console c3;c3.editor_edit_veh(0);
     CHECK(tile_draws.size()==2 && tile_draws[0][0]==5 && tile_draws[0][1]==7 && tile_draws[0][2]==1 && tile_draws[1][0]==5 && tile_draws[1][1]==7 && tile_draws[1][2]==1);
 }

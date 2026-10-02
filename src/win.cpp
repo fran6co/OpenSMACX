@@ -3593,7 +3593,7 @@ Status: Complete
 */
 // The tree's name for 0x009BC070 (base.cpp), the retry budget this body
 // decrements; base.h does not declare it, popup.cpp takes the same extern.
-extern int BaseAtKeyPollFlag;
+extern int ConsoleGroupAction;
 int __cdecl cd_check() {
     int version;
     char root_path[256];      // 0x00628F4A: "A:\", then the dsetup.dll path
@@ -3638,7 +3638,7 @@ int __cdecl cd_check() {
         // 0x009BC070 (base.cpp's BaseAtKeyPollFlag); rescan while it is 1.
         // Reuses `response` - the image reloads it into the same register
         // the pop answer sat in, and never stores the decrement back.
-        response = BaseAtKeyPollFlag;
+        response = ConsoleGroupAction;
         if (--response == 0) {
             continue;
         }

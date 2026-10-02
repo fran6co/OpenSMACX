@@ -1130,7 +1130,7 @@ Popup::Popup() {
 // its own comment there says the purpose is "inferred only from this one
 // call site", so it is reused here by the same storage rather than declared
 // a second time under a name this function would have to guess too.
-extern int BaseAtKeyPollFlag;  // 0x009BC070
+extern int ConsoleGroupAction;  // 0x009BC070
 
 // ORIGINAL: 0x0048CEB0 ?veh_sprite_draw@@YAHPAUSprite@@PAUGraphicWin@@HHH@Z 0x0048CEB0-0x0048CEF2 BYTE_EXACT
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/recovered/units/0048ceb0.cpp: canonical original identity, complete spans and retained historical obligations", "source:src/basepop.h: real owned Dialogs, Sprite and draw callback contract", "source:src/popup.h: Popup lifetime and start interface"], "reason": "The original vehicle draw callback is installed by popv in BasePop draw callback storage3168; real Sprite and GraphicWin pointer formals, GraphicWin Buffer base and source-owned scale globals express its actual owner relationships."}
@@ -1153,7 +1153,7 @@ int __cdecl popv(char *caption, const char *label, int vehicle, int flags) {
     popup.set_redraw_callback(veh_sprite_draw);
     popup.dialogs().SpriteBox::sprite(&sprite, nullptr, vehicle);
     const int result = popup.exec(0, nullptr);
-    BaseAtKeyPollFlag = popup.input_poll_state();
+    ConsoleGroupAction = popup.input_poll_state();
     return result;
 }
 
@@ -1198,7 +1198,7 @@ int __cdecl popp(LPCSTR caption, LPCSTR label, int flags, LPCSTR picture,
         }
     }
     const int result = popup.exec(0, callback);
-    BaseAtKeyPollFlag = popup.input_poll_state();
+    ConsoleGroupAction = popup.input_poll_state();
     return result;
 }
 
@@ -1345,7 +1345,7 @@ int __cdecl pops(char *caption, char *label, int value, char *override_text,
     }
 
     PopupWriteCheckState = pop->read_check();
-    BaseAtKeyPollFlag = pop->field_3100_;
+    ConsoleGroupAction = pop->field_3100_;
     if ((flags & 0x300) == 0) {
         pop->close();
     }
@@ -1551,7 +1551,7 @@ int __cdecl pop_ask(char *text_file, char *text_label, int value,
     if (pop->external_window_ == 0) {
         do_all_draws();
     }
-    BaseAtKeyPollFlag = pop->field_3100_;
+    ConsoleGroupAction = pop->field_3100_;
     pop->close();
     return execResult;
 }
@@ -1640,7 +1640,7 @@ int __cdecl pop_ask_number(char *label, int initial, int (__cdecl *callback)()) 
     if (pop->external_window_ == 0) {
         do_all_draws();
     }
-    BaseAtKeyPollFlag = pop->field_3100_;
+    ConsoleGroupAction = pop->field_3100_;
     ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
     pop->close();
     return execResult;
@@ -1675,7 +1675,7 @@ int __cdecl pop_ask_number(char *caption, char *label, int initial,
     if (pop->external_window_ == 0) {
         do_all_draws();
     }
-    BaseAtKeyPollFlag = pop->field_3100_;
+    ConsoleGroupAction = pop->field_3100_;
     ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
     pop->close();
     return execResult;
@@ -1720,7 +1720,7 @@ int __cdecl pop_ask_number(char *label, int (__cdecl *callback)()) {
     if (pop->external_window_ == 0) {
         do_all_draws();
     }
-    BaseAtKeyPollFlag = pop->field_3100_;
+    ConsoleGroupAction = pop->field_3100_;
     ParseNumTable[0] = atoi(ParseStrBuffer[0].str);
     pop->close();
     return execResult;

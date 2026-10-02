@@ -1876,7 +1876,7 @@ executable does not name either.
 // while it is busy skips straight to returning -1.
 int BaseAtErrorGuard;  // 0x0090EA38
 int BaseAtDebugPopupFlag;  // 0x0093A94C
-int BaseAtKeyPollFlag;  // 0x009BC070
+// Shared popup/action result lives in console.cpp as ConsoleGroupAction.
 
 int __cdecl base_at(int x, int y) {
     if (!on_map(x, y) || !(bit_at(x, y) & BIT_BASE_IN_TILE)) {
@@ -1905,7 +1905,7 @@ int __cdecl base_at(int x, int y) {
         X_pop("BASEBIT", NULL);
     }
     BaseAtErrorGuard = 0;
-    if (!BaseAtKeyPollFlag) {
+    if (!ConsoleGroupAction) {
         GetAsyncKeyState(VK_CONTROL);
     }
     rebuild_base_bits();

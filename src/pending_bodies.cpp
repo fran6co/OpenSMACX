@@ -383,10 +383,7 @@ void BaseWin::garrison_click(int vehID, int a2, int right, int is_double) {     
 
 
 
-void NetDaemon::synch(int16_t opcode, int a, int b, int c, char *text, int d, int16_t flags) {  // 0x00532E00
-    typedef void(__fastcall *pending)(NetDaemon *, void *, int16_t, int, int, int, char *, int, int16_t);
-    PENDING_BODY(0x00532E00, pending)(this, nullptr, opcode, a, b, c, text, d, flags);
-}
+
 
 // ?draw_status@StatusWin@@QAEXHHHHH@Z at 0x004B6570 - 8885 bytes, still an
 // original body. StatusWin::redraw (src/statuswin.cpp) calls it BY NAME.

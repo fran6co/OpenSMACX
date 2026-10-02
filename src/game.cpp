@@ -5051,6 +5051,11 @@ void __cdecl mon_colony_founded(int faction_id, char *base_name) {
         monument(1);
 }
 
+// Opcode0x24 transfers this persistent window at 0x0094B4D8.
+// No semantic fields or complete original allocation extent are asserted.
+// RECOVERY_OBJECT: v1 0x0094B4D8 ?GameWireOpaque_94B4D8@@3PAEA
+uint8_t GameWireOpaque_94B4D8[0x80];
+
 // ORIGINAL: 0x00476DA0 ?mon_secrets_of_tech@@YAXH@Z 0x00476DA0-0x00476EDD
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00476da0.cpp preserved original identity/extent; pinned instructions and independent family review establish317byte body and fields; actual-source milestone/reset controls verify shared ownership and native branches"], "reason": "Record first/repeated technology secrets in genuine shared monument record2, retain first-achiever peer interpretation and notify the live local faction."}
 void __cdecl mon_secrets_of_tech(int faction_id) {

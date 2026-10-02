@@ -37,6 +37,11 @@
 #include "fx.h"
 #include "temp.h"
 #include "alpha.h"
+#include "council.h"
+#include "terraforming.h"
+#include "path.h"
+#include "tutwin.h"
+#include "xpops.h"
 #include "general.h"
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
@@ -4162,4 +4167,985 @@ global_failed:
     lock_state_[2].dword_[8] = 0;
     NetMsgPopup->pop("GLOBALFAILED", 5000, 0, nullptr);
     return 0;
+}
+
+// Observed network path window at 0x0093AC88, shared with send_files.
+// Complete allocation extent and producer migration remain unproved.
+// RECOVERY_OBJECT: v1 0x0093AC88 ?NetDaemonFileTransferPath@@3PADA
+char NetDaemonFileTransferPath[0x104];
+
+namespace NetDaemonSyncWire {
+
+template <class T>
+static size_t copy_member_bytes(size_t chunk_offset, uint8_t *chunk,
+                                size_t chunk_size, size_t wire_offset,
+                                T &member, bool packet_to_owner) {
+    const size_t chunk_end = chunk_offset + chunk_size;
+    const size_t member_end = wire_offset + sizeof member;
+    const size_t first = chunk_offset > wire_offset
+        ? chunk_offset : wire_offset;
+    const size_t last = chunk_end < member_end ? chunk_end : member_end;
+    if (first >= last) return 0;
+
+    unsigned char *member_bytes =
+        reinterpret_cast<unsigned char *>(&member);
+    const size_t member_delta = first - wire_offset;
+    const size_t chunk_delta = first - chunk_offset;
+    const size_t bytes = last - first;
+    if (packet_to_owner) {
+        memcpy(member_bytes + member_delta, chunk + chunk_delta, bytes);
+    } else {
+        memcpy(chunk + chunk_delta, member_bytes + member_delta, bytes);
+    }
+    return bytes;
+}
+
+static bool wire0_range_is_owned(size_t first, size_t count) {
+    struct Span { size_t first; size_t size; };
+    const Span spans[] = {
+        {0x000, sizeof GamePreferences}, {0x004, sizeof GameMorePreferences},
+        {0x008, sizeof GameWarnings}, {0x00C, sizeof GameRules},
+        {0x010, sizeof GameWireOpaque_9A64A0},
+        {0x014, sizeof GameInterludeFlags},
+        {0x018, sizeof GameWireOpaque_9A64A8},
+        {0x01C, sizeof TutorialFlags}, {0x020, sizeof TutorialFlags2},
+        {0x024, sizeof TerraformAnnouncedMask},
+        {0x02C, sizeof TutWinFlags9A64BC}, {0x030, sizeof GameState},
+        {0x034, sizeof DiffLevelCurrent}, {0x038, sizeof VehCurrentCount},
+        {0x03C, sizeof BaseCurrentCount}, {0x040, sizeof GameSetupResetWord},
+        {0x044, sizeof TurnCurrentNum}, {0x048, sizeof MissionYearCurrent},
+        {0x04C, sizeof VehSelectionFollowLimit},
+        {0x050, sizeof TimeControlsSelection},
+        {0x054, sizeof TurnControlDurationMilliseconds},
+        {0x058, sizeof LockEnableMask}, {0x05C, sizeof FactionRankings},
+        {0x07C, sizeof RankingFactionIDUnk1},
+        {0x080, sizeof RankingFactionIDUnk2}, {0x084, sizeof SecretProject},
+        {0x184, sizeof GovernorFaction},
+        {0x188, sizeof CouncilResolutionCount},
+        {0x1B4, sizeof CouncilLastResolutionTurn},
+        {0x1E0, sizeof GameTechAchieved},
+        {0x239, sizeof LegacyGameSaveName},
+        {0x339, sizeof GameWireOpaque_9A67C9},
+        {0x33C, sizeof ClimateRiseStep}, {0x340, sizeof ClimateRiseLimit},
+        {0x344, sizeof ClimateRiseAccum},
+        {0x348, sizeof ClimateSeaLevelDelta},
+        {0x34C, sizeof TranscendenceScoreBonus},
+        {0x350, sizeof TranscendenceScoreWeights},
+        {0x370, sizeof SunspotDuration}, {0x374, sizeof MountPlanetX},
+        {0x378, sizeof MountPlanetY}, {0x37C, sizeof DustCloudDuration},
+        {0x380, sizeof SaveDaemonStateWord},
+        {0x384, sizeof ScnVictFacilityObj},
+        {0x388, sizeof GlobalEnergyEventState},
+        {0x38C, sizeof NetTurnFlags}, {0x390, sizeof NetTurnFaction},
+        {0x394, sizeof EcologyEventAccumulator}
+    };
+    const size_t end = first + count;
+    size_t covered = first;
+    size_t i;
+    for (i = 0; i < sizeof spans / sizeof spans[0] && covered < end; ++i) {
+        const size_t span_end = spans[i].first + spans[i].size;
+        if (spans[i].first <= covered && span_end > covered)
+            covered = span_end < end ? span_end : end;
+    }
+    return covered == end;
+}
+
+// Implement in netdaemon.cpp after the listed owner declarations are exposed.
+// chunk_offset/count must be bounded to [0,0x398) by the packet layer.
+bool opcode0_copy_chunk(size_t chunk_offset, uint8_t *chunk, size_t count,
+                        bool packet_to_owner) {
+    if (chunk_offset > 0x398 || count > 0x398 - chunk_offset) return false;
+    if (!wire0_range_is_owned(chunk_offset, count)) return false;
+    size_t copied = 0;
+#define COPY0(offset, object) \
+    copied += copy_member_bytes(chunk_offset, chunk, count, offset, object, \
+                                packet_to_owner)
+
+    // game.cpp/game.h objects. The four-byte and three-byte opaque objects
+    // below are retained independent arrays, not padding or a packed block.
+    COPY0(0x000, GamePreferences);
+    COPY0(0x004, GameMorePreferences);
+    COPY0(0x008, GameWarnings);
+    COPY0(0x00C, GameRules);
+    COPY0(0x010, GameWireOpaque_9A64A0);
+    COPY0(0x014, GameInterludeFlags);
+    COPY0(0x018, GameWireOpaque_9A64A8);
+    COPY0(0x01C, TutorialFlags);
+    COPY0(0x020, TutorialFlags2);
+
+    // veh.cpp/terraforming.h owns this two-word announced mask.
+    COPY0(0x024, TerraformAnnouncedMask);
+    COPY0(0x02C, TutWinFlags9A64BC);
+
+    COPY0(0x030, GameState);
+    COPY0(0x034, DiffLevelCurrent);
+    COPY0(0x038, VehCurrentCount);
+    COPY0(0x03C, BaseCurrentCount);
+    COPY0(0x040, GameSetupResetWord);
+    COPY0(0x044, TurnCurrentNum);
+    COPY0(0x048, MissionYearCurrent);
+    COPY0(0x04C, VehSelectionFollowLimit);
+    COPY0(0x050, TimeControlsSelection);
+    COPY0(0x054, TurnControlDurationMilliseconds);
+    COPY0(0x058, LockEnableMask);
+
+    // Canonical current owners: eight FactionRankings entries, followed by
+    // the two other ranking words, then SecretProject exactly once.
+    COPY0(0x05C, FactionRankings);
+    COPY0(0x07C, RankingFactionIDUnk1);
+    COPY0(0x080, RankingFactionIDUnk2);
+    COPY0(0x084, SecretProject);
+
+    COPY0(0x184, GovernorFaction);
+    COPY0(0x188, CouncilResolutionCount);
+    COPY0(0x1B4, CouncilLastResolutionTurn);
+    COPY0(0x1E0, GameTechAchieved);
+    COPY0(0x239, LegacyGameSaveName);
+    COPY0(0x339, GameWireOpaque_9A67C9);
+
+    COPY0(0x33C, ClimateRiseStep);
+    COPY0(0x340, ClimateRiseLimit);
+    COPY0(0x344, ClimateRiseAccum);
+    COPY0(0x348, ClimateSeaLevelDelta);
+    COPY0(0x34C, TranscendenceScoreBonus);
+    COPY0(0x350, TranscendenceScoreWeights);
+    COPY0(0x370, SunspotDuration);
+    COPY0(0x374, MountPlanetX);
+    COPY0(0x378, MountPlanetY);
+    COPY0(0x37C, DustCloudDuration);
+    COPY0(0x380, SaveDaemonStateWord);
+    COPY0(0x384, ScnVictFacilityObj);
+    COPY0(0x388, GlobalEnergyEventState);
+    COPY0(0x38C, NetTurnFlags);
+    COPY0(0x390, NetTurnFaction);
+    COPY0(0x394, EcologyEventAccumulator);
+
+#undef COPY0
+    // A valid native request is fully covered by the independently owned
+    // fields below. Refuse any uncovered byte rather than sending allocator
+    // residue or claiming a partial incoming scatter succeeded.
+    return copied == count;
+}
+
+} // namespace NetDaemonSyncWire
+
+namespace NetDaemonSyncWire {
+
+static size_t overlap_copy(size_t request_offset, unsigned char *packet,
+                           size_t request_size, size_t owner_offset,
+                           unsigned char *owner_bytes, size_t owner_size,
+                           bool packet_to_owner) {
+    const size_t first = request_offset > owner_offset
+        ? request_offset : owner_offset;
+    const size_t request_end = request_offset + request_size;
+    const size_t owner_end = owner_offset + owner_size;
+    const size_t last = request_end < owner_end ? request_end : owner_end;
+    if (first >= last) return 0;
+    const size_t length = last - first;
+    if (packet_to_owner)
+        memcpy(owner_bytes + first - owner_offset,
+               packet + first - request_offset, length);
+    else
+        memcpy(packet + first - request_offset,
+               owner_bytes + first - owner_offset, length);
+    return length;
+}
+
+template <class T>
+static size_t member_copy(size_t request_offset, unsigned char *packet,
+                          size_t request_size, size_t owner_offset,
+                          T &owner, bool packet_to_owner) {
+    return overlap_copy(request_offset, packet, request_size, owner_offset,
+        reinterpret_cast<unsigned char *>(&owner), sizeof owner,
+        packet_to_owner);
+}
+
+template <class T>
+static size_t bounded_array_copy(size_t request_offset,
+                                 unsigned char *packet,
+                                 size_t request_size, T &owner,
+                                 size_t extent, bool packet_to_owner) {
+    if (extent > sizeof owner) return 0;
+    return overlap_copy(request_offset, packet, request_size, 0,
+        reinterpret_cast<unsigned char *>(&owner), extent, packet_to_owner);
+}
+
+// The saved diplomacy words are one native 0x48-byte local tuple. Pair IDs
+// are captured by NetDaemon::synch before callbacks and retained through the
+// epilogue; they must not be reconstructed from a later callback-modified
+// packet header.
+void gather_saved_diplomacy(int faction_a, int faction_b, uint32_t wire[18]);
+void scatter_saved_diplomacy(int faction_a, int faction_b,
+                             const uint32_t wire[18]);
+bool opcode0_copy_chunk(size_t offset, unsigned char *packet, size_t count,
+                        bool packet_to_owner);
+template <class T>
+static uint32_t native_word(const T &value) {
+    typedef char NativeWordMustBeFourBytes[
+        sizeof(T) == sizeof(uint32_t) ? 1 : -1];
+    (void)sizeof(NativeWordMustBeFourBytes);
+    uint32_t bits;
+    memcpy(&bits, &value, sizeof bits);
+    return bits;
+}
+
+static uint32_t sign_extended_char(char value) {
+    const uint32_t byte = static_cast<unsigned char>(value);
+    return (byte & 0x80u) ? (byte | 0xFFFFFF00u) : byte;
+}
+
+void gather_saved_diplomacy(int faction_a, int faction_b, uint32_t wire[18]) {
+    const PlayerData &a = PlayersData[faction_a];
+    const PlayerData &b = PlayersData[faction_b];
+    wire[0] = sign_extended_char(a.diplo_patience[faction_b]);
+    wire[1] = sign_extended_char(b.diplo_patience[faction_a]);
+    wire[2] = native_word(a.diplo_friction[faction_b]);
+    wire[3] = native_word(b.diplo_friction[faction_a]);
+    wire[4] = native_word(a.global_reputation);
+    wire[5] = native_word(b.global_reputation);
+    wire[6] = native_word(a.diplo_unk1[faction_b]);
+    wire[7] = native_word(b.diplo_unk1[faction_a]);
+    wire[8] = native_word(a.diplo_wrongs[faction_b]);
+    wire[9] = native_word(b.diplo_wrongs[faction_a]);
+    wire[10] = native_word(a.diplo_spoke[faction_b]);
+    wire[11] = native_word(b.diplo_spoke[faction_a]);
+    wire[12] = a.diplo_treaties[faction_b];
+    wire[13] = b.diplo_treaties[faction_a];
+    wire[14] = native_word(a.diplo_agenda[faction_b]);
+    wire[15] = native_word(b.diplo_agenda[faction_a]);
+    wire[16] = native_word(a.diplo_merc[faction_b]);
+    wire[17] = native_word(b.diplo_merc[faction_a]);
+}
+
+template <class T>
+static void scatter_word(T &field, uint32_t bits) {
+    typedef char NativeWordMustBeFourBytes[
+        sizeof(T) == sizeof(uint32_t) ? 1 : -1];
+    (void)sizeof(NativeWordMustBeFourBytes);
+    memcpy(&field, &bits, sizeof bits);
+}
+
+void scatter_saved_diplomacy(int faction_a, int faction_b,
+                             const uint32_t wire[18]) {
+    PlayerData &a = PlayersData[faction_a];
+    PlayerData &b = PlayersData[faction_b];
+    memcpy(&a.diplo_patience[faction_b], &wire[0], 1);
+    memcpy(&b.diplo_patience[faction_a], &wire[1], 1);
+    scatter_word(a.diplo_friction[faction_b], wire[2]);
+    scatter_word(b.diplo_friction[faction_a], wire[3]);
+    scatter_word(a.global_reputation, wire[4]);
+    scatter_word(b.global_reputation, wire[5]);
+    scatter_word(a.diplo_unk1[faction_b], wire[6]);
+    scatter_word(b.diplo_unk1[faction_a], wire[7]);
+    scatter_word(a.diplo_wrongs[faction_b], wire[8]);
+    scatter_word(b.diplo_wrongs[faction_a], wire[9]);
+    scatter_word(a.diplo_spoke[faction_b], wire[10]);
+    scatter_word(b.diplo_spoke[faction_a], wire[11]);
+    memcpy(&a.diplo_treaties[faction_b], &wire[12], sizeof wire[12]);
+    memcpy(&b.diplo_treaties[faction_a], &wire[13], sizeof wire[13]);
+    scatter_word(a.diplo_agenda[faction_b], wire[14]);
+    scatter_word(b.diplo_agenda[faction_a], wire[15]);
+    scatter_word(a.diplo_merc[faction_b], wire[16]);
+    scatter_word(b.diplo_merc[faction_a], wire[17]);
+}
+
+
+bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
+                        size_t payload_size, size_t offset,
+                        unsigned char *packet, size_t count,
+                        bool packet_to_owner, uint32_t diplomacy_wire[18],
+                        Map *captured_map_tiles,
+                        size_t captured_map_tile_capacity,
+                        size_t captured_map_tile_first) {
+    (void)a4;
+    if (offset > payload_size || count > payload_size - offset) return false;
+    if (count == 0) return true;
+    size_t copied = 0;
+#define COPY_AT(wire, object) \
+    copied += member_copy(offset, packet, count, wire, object, packet_to_owner)
+#define COPY_BYTES(wire, pointer, bytes) \
+    copied += overlap_copy(offset, packet, count, wire, \
+        reinterpret_cast<unsigned char *>(pointer), bytes, packet_to_owner)
+
+    switch (opcode) {
+    case 0x00: // decimal 0: one interval serialized from separately owned Game globals
+        return opcode0_copy_chunk(offset, packet, count, packet_to_owner);
+    case 0x01: { // decimal 1: only the first LockEnableMask byte
+        uint32_t &mask = LockEnableMask;
+        COPY_BYTES(0, &mask, 1);
+        break;
+    }
+    case 0x02: case 0x1002: { // decimal 2 / 4098: Map metadata, pointer cell excluded
+        COPY_AT(0x000, MapLongitudeBounds);
+        COPY_AT(0x004, MapLatitudeBounds);
+        COPY_AT(0x008, MapRandSeed);
+        COPY_AT(0x00C, MapSeaLevel);
+        COPY_AT(0x010, MapSeaLevelCouncil);
+        COPY_AT(0x014, MapArea);
+        COPY_AT(0x018, MapAreaSqRoot);
+        COPY_AT(0x01C, MapIsFlat);
+        COPY_AT(0x020, MapLandmarkCount);
+        COPY_AT(0x024, MapLandmark);
+        COPY_AT(0xA24, MapAbstractLongBounds);
+        COPY_AT(0xA28, MapAbstractLatBounds);
+        COPY_AT(0xA2C, MapAbstractArea);
+        COPY_AT(0xA30, MapSizePlanet);
+        COPY_AT(0xA34, MapOceanCoverage);
+        COPY_AT(0xA38, MapLandCoverage);
+        COPY_AT(0xA3C, MapErosiveForces);
+        COPY_AT(0xA40, MapPlanetaryOrbit);
+        COPY_AT(0xA44, MapCloudCover);
+        COPY_AT(0xA48, MapNativeLifeForms);
+        COPY_AT(0xA4C, MapFilePath);
+        break;
+    }
+    case 0x04: { // decimal 4: MapTiles objects, never the pointer cell
+        if (payload_size % sizeof(Map) != 0 || !captured_map_tiles ||
+            payload_size / sizeof(Map) > captured_map_tile_capacity)
+            return false;
+        const size_t tile_count = payload_size / sizeof(Map);
+        for (size_t i = 0; i < tile_count; ++i)
+            copied += member_copy(offset, packet, count,
+                i * sizeof(Map), captured_map_tiles[i], packet_to_owner);
+        break;
+    }
+    case 0x05: // decimal 5
+        copied += bounded_array_copy(offset, packet, count, Continents,
+            128 * sizeof Continents[0], packet_to_owner);
+        break;
+    case 0x06: // decimal 6: one complete PlayerData record
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        COPY_AT(0, PlayersData[a2]);
+        break;
+    case 0x07: // decimal 7: one complete Player record
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        COPY_AT(0, Players[a2]);
+        break;
+    case 0x08: { // decimal 8: five named AI preference dwords
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        PlayerData &p = PlayersData[a2];
+        COPY_AT(0x00, p.ai_fight); COPY_AT(0x04, p.ai_growth);
+        COPY_AT(0x08, p.ai_tech); COPY_AT(0x0C, p.ai_wealth);
+        COPY_AT(0x10, p.ai_power);
+        break;
+    }
+    case 0x09: { // decimal 9
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        PlayerData &p = PlayersData[a2];
+        COPY_AT(0, p.tech_accumulated); COPY_AT(4, p.tech_id_researching);
+        break;
+    }
+    case 0x0A: case 0x10: { // decimal 10 is research id; decimal 16 is proto obsolete byte
+        if (opcode == 0x0A) {
+            if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+            COPY_AT(0, PlayersData[a2].tech_id_researching);
+        } else {
+            if (a2 < 0 || a2 >= MaxVehProtoNum) return false;
+            COPY_BYTES(0, &VehPrototypes[a2].obsolete_factions, 1);
+        }
+        break;
+    }
+    case 0x0B: { // decimal 11
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        COPY_AT(0, PlayersData[a2].energy_reserves);
+        break;
+    }
+    case 0x0C: { // decimal 12
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        PlayerData &p = PlayersData[a2];
+        COPY_AT(0, p.se_alloc_psych); COPY_AT(4, p.se_alloc_labs);
+        break;
+    }
+    case 0x0D: { // decimal 13: pending category plus first active-category dword
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        PlayerData &p = PlayersData[a2];
+        COPY_AT(0, p.soc_category_pending);
+        COPY_BYTES(0x10, &p.soc_category_active, sizeof(uint32_t));
+        break;
+    }
+    case 0x0E: case 0x0F: { // decimal 14/15: prototype record/range
+        if (a2 < 0 || a2 >= MaxVehProtoNum) return false;
+        if (opcode == 0x0E) COPY_AT(0, VehPrototypes[a2]);
+        else {
+            if (a3 < 0 || a3 > MaxVehProtoNum - a2) return false;
+            COPY_BYTES(0, &VehPrototypes[a2],
+                       static_cast<size_t>(a3) * sizeof VehPrototypes[0]);
+        }
+        break;
+    }
+    case 0x11: { // decimal 17: first 0x30 bytes of one live Veh object
+        if (a2 < 0 || a2 >= 2049) return false;
+        COPY_BYTES(0, &Vehs[a2], 0x30);
+        break;
+    }
+    case 0x12: // decimal 18: captured payload size is bounded by the true static array
+        copied += bounded_array_copy(offset, packet, count, Vehs,
+            payload_size, packet_to_owner);
+        break;
+    case 0x13: // decimal 19
+        if (a2 < 0 || a2 >= MaxBaseNum) return false;
+        COPY_AT(0, Bases[a2]);
+        break;
+    case 0x14: // decimal 20
+        copied += bounded_array_copy(offset, packet, count, Bases,
+            payload_size, packet_to_owner);
+        break;
+    case 0x15: // decimal 21
+        COPY_AT(0, ControlTurnPhase);
+        break;
+    case 0x16: // decimal 22: caller supplies the saved local 18-dword tuple
+        if (!diplomacy_wire) return false;
+        copied += overlap_copy(offset, packet, count, 0,
+            reinterpret_cast<unsigned char *>(diplomacy_wire),
+            18 * sizeof diplomacy_wire[0], packet_to_owner);
+        break;
+    case 0x17: // decimal 23: native selects the first dword of PlayerData
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        COPY_BYTES(0, &PlayersData[a2], sizeof(uint32_t));
+        break;
+    case 0x18: { // decimal 24: four separately bounded PlayerData members/slices
+        if (a2 < 0 || a2 >= MaxPlayerNum) return false;
+        PlayerData &p = PlayersData[a2];
+        COPY_BYTES(0x000,
+            reinterpret_cast<unsigned char *>(&p.saved_queue_name) + 20, 172);
+        COPY_AT(0x0AC, p.saved_queue_size);
+        COPY_AT(0x0CC, p.saved_queue_items);
+        COPY_BYTES(0x20C, &p.unk_38[0], 6 * sizeof p.unk_38[0]);
+        break;
+    }
+    case 0x19: // decimal 25
+        copied += bounded_array_copy(offset, packet, count, FactionRankingsUnk,
+            sizeof FactionRankingsUnk, packet_to_owner);
+        break;
+    case 0x20: // decimal 32: history window is Turns * eight 16-bit ranks
+        if (payload_size > sizeof FactionRankingHistory) return false;
+        copied += bounded_array_copy(offset, packet, count,
+            FactionRankingHistory, payload_size, packet_to_owner);
+        break;
+    case 0x21: // decimal 33
+        COPY_AT(0, ReplayEventBytes);
+        break;
+    case 0x22: // decimal 34: live event-byte prefix
+        if (ReplayEventBytes < 0 ||
+            static_cast<size_t>(ReplayEventBytes) > sizeof ReplayEvents ||
+            payload_size != static_cast<size_t>(ReplayEventBytes)) return false;
+        copied += bounded_array_copy(offset, packet, count, ReplayEvents,
+            payload_size, packet_to_owner);
+        break;
+    case 0x23: { // decimal 35: the native 0x14-byte Base tail
+        if (a2 < 0 || a2 >= MaxBaseNum) return false;
+        Base &b = Bases[a2];
+        COPY_AT(0x00, b.resource_sqr_radius);
+        COPY_AT(0x04, b.specialist_total);
+        COPY_AT(0x08, b.specialist_unk_1);
+        COPY_AT(0x0C, b.spec);
+        break;
+    }
+    case 0x24: { // decimal 36: six named game words + observed opaque wire tail
+        COPY_AT(0x00, ObjectiveReqVictory);
+        COPY_AT(0x04, ObjectivesSuddenDeathVictory);
+        COPY_AT(0x08, ObjectiveAchievePts);
+        COPY_AT(0x0C, VictoryAchieveBonusPts);
+        COPY_AT(0x10, StartingMissionYear);
+        COPY_AT(0x14, EndingMissionYear);
+        COPY_BYTES(0x18, GameWireOpaque_94B4D8,
+                   sizeof GameWireOpaque_94B4D8);
+        break;
+    }
+    case 0x25: // decimal 37
+        COPY_AT(0, VehCurrentCount);
+        break;
+    case 0x26: // decimal 38
+        COPY_AT(0, BaseCurrentCount);
+        break;
+    case 0x27: // decimal 39: actual NetDaemon::send_files path owner, shared across methods
+        copied += bounded_array_copy(offset, packet, count,
+            NetDaemonFileTransferPath, sizeof NetDaemonFileTransferPath,
+            packet_to_owner);
+        break;
+    case 0x28: // decimal 40
+        return true;
+    case 0x29: // decimal 41: actual Veh ProtoBung owner
+        return veh_bung_copy_chunk(offset, packet, count, packet_to_owner);
+    case 0x30: { // decimal 48: row rectangle in the typed MapTiles array
+        if (payload_size % sizeof(Map) != 0 || !captured_map_tiles ||
+            captured_map_tile_first > captured_map_tile_capacity ||
+            payload_size / sizeof(Map) >
+                captured_map_tile_capacity - captured_map_tile_first)
+            return false;
+        const size_t tile_count = payload_size / sizeof(Map);
+        for (size_t i = 0; i < tile_count; ++i)
+            copied += member_copy(offset, packet, count,
+                i * sizeof(Map), captured_map_tiles[captured_map_tile_first + i],
+                packet_to_owner);
+        break;
+    }
+    default:
+        return false;
+    }
+#undef COPY_AT
+#undef COPY_BYTES
+    return copied == count;
+}
+
+} // namespace NetDaemonSyncWire
+
+
+namespace NetDaemonSyncWire {
+    uint32_t current_faction();
+    struct MapRouteCapture {
+        Map *tiles;
+        size_t capacity;
+        size_t first;
+    };
+    // Gather/scatter exactly [offset, offset+length) in the opcode's native
+    // wire view. For rules receive, scatter writes the source-owned shared
+    // native staging block; commit_rules is invoked only on the last chunk.
+    // For opcode 0 each implementation must refuse still-unowned bytes rather
+    // than inventing gap data. All calls resolve live fields at call time.
+    bool copy_out(int16_t opcode, int a2, int a3, int a4,
+                  size_t payload_size, size_t offset, void *packet_bytes,
+                  size_t length,
+                  const MapRouteCapture &map_capture,
+                  uint32_t diplomacy_wire[18]);
+    bool copy_in(int16_t opcode, int a2, int a3, int a4,
+                 size_t payload_size, size_t offset,
+                 const void *packet_bytes, size_t length,
+                 const MapRouteCapture &map_capture,
+                 uint32_t diplomacy_wire[18]);
+    bool compare_and_notify(int16_t opcode, int a2, int a3, int a4,
+                            const void *packet_bytes, size_t length,
+                            int log_arg_lo, int log_arg_hi);
+    void commit_rules(int16_t opcode);
+    void gather_saved_diplomacy(int faction_a, int faction_b,
+                                uint32_t wire[18]);
+    void scatter_saved_diplomacy(int faction_a, int faction_b,
+                                 const uint32_t wire[18]);
+}
+
+// Persistent incoming-only staging shared by every native rule transfer.
+// The observed required window is 0x1920; the image's complete allocation
+// extent remains unknown. This object is not cleared between calls.
+// RECOVERY_OBJECT: v1 0x0093AD8C _NetDaemonRulesSyncStaging
+static unsigned char NetDaemonRulesSyncStaging[0x1920];
+
+static int native_map_sync_rows(int latitude, int a2) {
+    // x86's add-sign-mask/sar sequence is signed division toward zero here.
+    const int q = latitude / 16;
+    return a2 == 0xF ? latitude - q * 15 : q;
+}
+
+static NetDaemonSyncWire::MapRouteCapture capture_map_route(
+    int16_t opcode, int a2, int map_rows) {
+    NetDaemonSyncWire::MapRouteCapture captured;
+    captured.tiles = MapTiles;
+    // MapArea is the actual MapTiles element extent; payload_size was
+    // calculated once at method entry and is not a substitute after callbacks.
+    captured.capacity = static_cast<size_t>(MapArea);
+    captured.first = 0;
+    if (opcode == 0x30) {
+        captured.first = static_cast<size_t>(map_rows * a2) * MapLongitude;
+    }
+    return captured;
+}
+
+// Uses the actual NetDaemon declaration from netdaemon.h: lock_state_ and
+// this->send_message remain receiver-relative, unlike the singleton notify
+// gate below.
+static void synch_notify_or_queue() {
+    const bool rules_notify = (GameRules & 0x10u) != 0;
+    const bool scripted_turn = ConsoleControlTurnActive != 0;
+    if (rules_notify && !scripted_turn) {
+        if (NetTurnFaction != ConsoleGlobal.faction_id_) {
+            message_data(0x2308, 0, 0, 0, 0, 0);
+        } else {
+            SpockNotifyPending = 1;
+        }
+    } else if (NetDaemonNet.lock_state_[0].dword_[1] != 0) {
+        SpockNotifyPending = 1;
+    } else {
+        message_data(0x2308, 0, 0, 0, 0, 0);
+    }
+}
+
+// Native USER32 import directory independently identifies slot0x00669330.
+// RECOVERY_IMPORT: v1 __imp__GetAsyncKeyState@4 USER32.dll name:GetAsyncKeyState
+static void synch_debug_popup() {
+    if (BaseAtDebugPopupFlag) {
+        X_pop("VEHSYNCH", 0);
+        // The popup may change the shared action result; read it afterwards.
+        if (!ConsoleGroupAction) GetAsyncKeyState(VK_CONTROL);
+    }
+}
+
+bool NetDaemonSyncWire::compare_and_notify(int16_t opcode, int a2, int a3,
+    int a4, const void *packet_payload, size_t payload_size,
+    int log_arg_lo, int log_arg_hi) {
+    (void)a3; (void)a4;
+    const unsigned char *old_bytes =
+        static_cast<const unsigned char *>(packet_payload);
+    if (opcode == 0x11 && payload_size == 0x30) { // decimal 17
+        int16_t old_x, old_y;
+        memcpy(&old_x, old_bytes, sizeof old_x);
+        memcpy(&old_y, old_bytes + 2, sizeof old_y);
+        const Veh &current = Vehs[a2];
+        if (old_x == current.x && old_y == current.y) return false;
+        parse_num(0, old_x); parse_num(1, old_y);
+        parse_num(2, current.x); parse_num(3, current.y);
+        parse_num(4, current.faction_id);
+        parse_num(5, current.proto_id);
+        parse_num(6, a2);
+        parse_says(0, VehPrototypes[current.proto_id].veh_name, -1, -1);
+        log_say("Synch changed vehicle", ParseStrBuffer[0].str,
+                a2, log_arg_lo, log_arg_hi);
+        synch_debug_popup();
+        synch_notify_or_queue();
+        return true;
+    }
+    if (opcode == 0x13 && payload_size == 0x134) { // decimal 19
+        int16_t old_x, old_y;
+        memcpy(&old_x, old_bytes, sizeof old_x);
+        memcpy(&old_y, old_bytes + 2, sizeof old_y);
+        const Base &current = Bases[a2];
+        if (old_x == current.x && old_y == current.y) return false;
+        parse_num(0, old_x); parse_num(1, old_y);
+        parse_num(2, current.x); parse_num(3, current.y);
+        parse_num(4, a2);
+        parse_says(0, reinterpret_cast<const char *>(old_bytes + 0x13), -1, -1);
+        parse_says(1, current.name_string, -1, -1);
+        log_say("Synch changed base", ParseStrBuffer[0].str,
+                a2, log_arg_lo, log_arg_hi);
+        synch_debug_popup();
+        synch_notify_or_queue();
+        return true;
+    }
+    return false;
+}
+
+namespace NetDaemonSyncWire {
+bool copy_nonrule_chunk(int16_t opcode, int a2, int a3, int a4,
+                        size_t payload_size, size_t offset,
+                        unsigned char *packet, size_t count,
+                        bool packet_to_owner, uint32_t diplomacy_wire[18],
+                        Map *captured_map_tiles,
+                        size_t captured_map_tile_capacity,
+                        size_t captured_map_tile_first);
+}
+static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3);
+
+uint32_t NetDaemonSyncWire::current_faction() {
+    return static_cast<uint32_t>(ConsoleGlobal.faction_id_);
+}
+
+bool NetDaemonSyncWire::copy_out(int16_t opcode, int a2, int a3, int a4,
+    size_t payload_size, size_t offset, void *packet_bytes, size_t length,
+    const MapRouteCapture &map_capture, uint32_t diplomacy_wire[18]) {
+    unsigned char *bytes = static_cast<unsigned char *>(packet_bytes);
+    if (opcode >= 0x80 && opcode <= 0x8D)
+        return NetDaemonSyncRules::copy_rule_wire_chunk(opcode, offset,
+            bytes, length, false, NetDaemonRulesSyncStaging);
+    return copy_nonrule_chunk(opcode, a2, a3, a4,
+        payload_size,
+        offset, bytes, length, false, diplomacy_wire, map_capture.tiles,
+        map_capture.capacity, map_capture.first);
+}
+
+bool NetDaemonSyncWire::copy_in(int16_t opcode, int a2, int a3, int a4,
+    size_t payload_size, size_t offset, const void *packet_bytes,
+    size_t length,
+    const MapRouteCapture &map_capture, uint32_t diplomacy_wire[18]) {
+    unsigned char *bytes = const_cast<unsigned char *>(
+        static_cast<const unsigned char *>(packet_bytes));
+    if (opcode >= 0x80 && opcode <= 0x8D)
+        return NetDaemonSyncRules::copy_rule_wire_chunk(opcode, offset,
+            bytes, length, true, NetDaemonRulesSyncStaging);
+    return copy_nonrule_chunk(opcode, a2, a3, a4,
+        payload_size,
+        offset, bytes, length, true, diplomacy_wire, map_capture.tiles,
+        map_capture.capacity, map_capture.first);
+}
+
+void NetDaemonSyncWire::commit_rules(int16_t opcode) {
+    NetDaemonSyncRules::commit_staged_rules(opcode,
+                                            NetDaemonRulesSyncStaging);
+}
+
+static int netdaemon_sync_payload_size(int16_t opcode, int a2, int a3) {
+    switch (opcode) {
+    case 0x00: return 0x398;                         // decimal 0
+    case 0x01: case 0x10: return 1;                 // decimal 1, 16
+    case 0x02: case 0x1002: return 0xA9C;           // decimal 2, 4098
+    case 0x04: return MapArea * 44;                  // decimal 4
+    case 0x05: return 0xE00;                        // decimal 5
+    case 0x06: return 0x20CC;                       // decimal 6
+    case 0x07: return 0x59C;                        // decimal 7
+    case 0x08: case 0x0D: case 0x23: return 0x14;   // decimal 8, 13, 35
+    case 0x09: case 0x0C: return 8;                 // decimal 9, 12
+    case 0x0A: case 0x0B: case 0x17:
+    case 0x25: case 0x26: return 4;                 // decimal 10,11,23,37,38
+    case 0x0E: return 0x34;                         // decimal 14; VehPrototype[a2]
+    case 0x0F: return a3 * 52;                      // decimal 15
+    case 0x11: return 0x30;                         // decimal 17
+    case 0x12: return VehCurrentCount == 0 ? -1 : VehCurrentCount * 52; // 18
+    case 0x13: return 0x134;                        // decimal 19
+    case 0x14: return BaseCurrentCount == 0 ? -1 : BaseCurrentCount * 308; // 20
+    case 0x15: return 4;                            // decimal 21
+    case 0x16: return 0x48;                         // decimal 22
+    case 0x18: return 0x224;                        // decimal 24
+    case 0x19: return 0x20;                         // decimal 25
+    case 0x20: return TurnCurrentNum << 4;           // decimal 32
+    case 0x21: return 4;                            // decimal 33
+    case 0x22: return ReplayEventBytes;              // decimal 34
+    case 0x24: return 0x98;                         // decimal 36
+    case 0x27: return 0x104;                        // decimal 39
+    case 0x28: return 0;                            // decimal 40
+    case 0x29: return 0x1000;                       // decimal 41
+    case 0x30: {
+        const int latitude = MapLatitudeBounds;
+        const int rows = native_map_sync_rows(latitude, a2);
+        return (MapLongitudeBounds >> 1) * rows * sizeof(Map);
+    }
+    case 0x80: return 0xF4C;  // decimal 128
+    case 0x81: return 0x13C;  // decimal 129
+    case 0x82: return 0x7C;   // decimal 130
+    case 0x83: return 0x280;  // decimal 131
+    case 0x84: return 0x90;   // decimal 132
+    case 0x85: return 0xC0;   // decimal 133
+    case 0x86: return 0x510;  // decimal 134
+    case 0x87: return 0x30;   // decimal 135
+    case 0x88: return 0x1A0;  // decimal 136
+    case 0x89: return 0xE0;   // decimal 137
+    case 0x8A: return 0x32C;  // decimal 138
+    case 0x8B: return 0x1920; // decimal 139
+    case 0x8C: return 0x118;  // decimal 140
+    case 0x8D: return 0x350;  // decimal 141
+    default: return a2;
+    }
+}
+
+static void netdaemon_sync_send_chunk(NetDaemon &self, int16_t opcode,
+    int a2, int a3, int a4, int16_t flags, int payload_size,
+    int total_chunks, int remainder,
+    int chunk_index, const NetDaemonSyncWire::MapRouteCapture &map_capture,
+    uint32_t diplomacy_wire[18]) {
+    const int payload_length = (chunk_index == total_chunks - 1 && remainder)
+        ? remainder : 0x800;
+    int source_offset = chunk_index * 0x800;
+    if (chunk_index == total_chunks - 1 && remainder) {
+        source_offset = total_chunks == 1 ? 0 : (total_chunks - 1) * 0x800;
+    }
+    char *packet = static_cast<char *>(mem_get(
+        static_cast<size_t>(payload_length + 0x24)));
+    uint8_t *bytes = reinterpret_cast<uint8_t *>(packet);
+    // Native writes only these header fields. +8..+0xB remain allocator
+    // contents; do not zero-fill them.
+    const uint32_t faction = NetDaemonSyncWire::current_faction();
+    const uint32_t sequence = self.lock_state_[0].dword_[0];
+    const int32_t wire_a2 = a2, wire_a3 = a3, wire_a4 = a4;
+    memcpy(bytes + 0x00, &flags, sizeof flags);
+    memcpy(bytes + 0x04, &faction, sizeof faction);
+    memcpy(bytes + 0x0C, &sequence, sizeof sequence);
+    memcpy(bytes + 0x10, &opcode, sizeof opcode);
+    const int16_t wire_index = static_cast<int16_t>(chunk_index);
+    memcpy(bytes + 0x12, &wire_index, sizeof wire_index);
+    memcpy(bytes + 0x14, &wire_a2, sizeof wire_a2);
+    memcpy(bytes + 0x18, &wire_a3, sizeof wire_a3);
+    memcpy(bytes + 0x1C, &wire_a4, sizeof wire_a4);
+    if (!NetDaemonSyncWire::copy_out(opcode, a2, a3, a4,
+            static_cast<size_t>(payload_size),
+            static_cast<size_t>(source_offset), bytes + 0x24,
+            static_cast<size_t>(payload_length), map_capture,
+            diplomacy_wire)) {
+        free(packet);
+        return;
+    }
+    self.send_message(packet, static_cast<unsigned long>(payload_length + 0x24), 0);
+    free(packet);
+}
+
+// ORIGINAL: 0x00532E00 ?synch@NetDaemon@@QAEXFHHHPADHF@Z 0x00532E00-0x00534129
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned532E00..534129; retained src/unrecovered/00532e00.cpp; independent jump-table and chunk/callback review.", "Opcode0 exact398-byte partition uses existing source objects and bounded fields; rule80..8D receive stages persist and compact into Alpha-owned fields only on the final chunk.", "Map destinations and diplomacy pair captured before callbacks; outgoing owners reread per chunk; changed base/vehicle notification suppresses scatter; sender mask is lock_state_[2].dword_[6].", "Path93AC88 send_files producer52ED40 remains pending. Stage93AD8C and game tail94B4D8 have observed window bounds only, not complete allocation extents.", "recovery/tasks/netdaemon-player-lifecycle-recovery.json; retained historical claims and prototype-history owner migration."], "reason": "Recover the complete synchronization protocol through genuine NetDaemon state and source-owned game, vehicle, faction, map and rule data. Wire serializers describe explicit member intervals, not an invented contiguous game object. Retain seed provenance and original identity; no matching or runtime acceptance is implied."}
+// TRIED: full transcription of both jump-table dispatches (size switch, address switch, tail array-compaction switch) and the chunk loop; MISMATCH #0 in the prologue (frame-size/local-order only), not in the dispatch logic - coverage is close to 100% of the original's ~4900 bytes, byte-exactness not chased further.
+void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
+                      int outgoing, int16_t flags) {
+    if (!IsMultiplayerNet) return;
+
+    // Native synchronization progress is owned by lock_state_[0]'s existing
+    // dword slots 7/8. The popup and state transition order follows the native
+    // first dispatch; these calls are before target capture/chunk callbacks.
+    if (!outgoing) {
+        uint32_t &game_phase = lock_state_[0].dword_[7];
+        uint32_t &rules_phase = lock_state_[0].dword_[8];
+        if (opcode == 0x00 && static_cast<int32_t>(game_phase) >= 0) {
+            NetMsgPopup->pop("SYNCHINGGAME", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); game_phase = 1;
+        } else if (opcode == 0x04 && game_phase == 1) {
+            NetMsgPopup->pop("SYNCHINGWORLD", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); game_phase = 2;
+        } else if (opcode == 0x05 && game_phase == 2) {
+            NetMsgPopup->pop("SYNCHINGREGIONS", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); game_phase = 3;
+        } else if (opcode == 0x06 && game_phase == 3) {
+            NetMsgPopup->pop("SYNCHINGPLAYERS", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); game_phase = 4;
+        } else if (opcode == 0x12 && game_phase == 4) {
+            NetMsgPopup->pop("SYNCHINGUNITS", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); game_phase = 5;
+        } else if (opcode == 0x19 && game_phase == 5) {
+            NetMsgPopup->pop("SYNCHINGPRESTIGE", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); game_phase = 6;
+        } else if (opcode == 0x21 && game_phase == 6) {
+            NetMsgPopup->pop("SYNCHINGREPLAY", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); game_phase = 7;
+        } else if (opcode == 0x15) {
+            NetMsgPopup->close(); do_all_draws(); game_phase = 8;
+        }
+        if (opcode == 0x80 && static_cast<int32_t>(rules_phase) >= 0) {
+            NetMsgPopup->pop("RULESYNCHTECH", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); rules_phase = 1;
+        } else if (opcode == 0x83 && rules_phase == 1) {
+            NetMsgPopup->pop("RULESYNCHTERR", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); rules_phase = 2;
+        } else if (opcode == 0x86 && rules_phase == 2) {
+            NetMsgPopup->pop("RULESYNCHVEH", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); rules_phase = 3;
+        } else if (opcode == 0x8B && rules_phase == 3) {
+            NetMsgPopup->pop("RULESYNCHFAC", outgoing, 1,
+                             reinterpret_cast<const char *>(outgoing));
+            do_all_draws(); rules_phase = 4;
+        } else if (opcode == 0x8D) {
+            NetMsgPopup->close(); do_all_draws(); rules_phase = 5;
+        }
+    }
+
+    int log_arg_lo = 0, log_arg_hi = 0;
+    if (opcode == 0x11) { // decimal 17
+        const Veh &veh = Vehs[a2];
+        log_arg_lo = veh.x;
+        log_arg_hi = veh.y;
+        log_say(outgoing ? "Sent SYNCH VEH" : "Received SYNCH VEH",
+                a2, log_arg_lo, log_arg_hi);
+    } else if (opcode == 0x13) { // decimal 19
+        log_arg_lo = Bases[a2].x;
+        log_arg_hi = Bases[a2].y;
+        log_say(outgoing ? "Sending SYNCH_BASE" : "Received SYNCH_BASE",
+                Bases[a2].name_string, a2, 0, 0);
+    }
+
+    // These locals preserve the native pair identities and dword tuple across
+    // callbacks. On receive the tuple is filled from the one 0x48-byte packet;
+    // the PlayerData pair is not changed until the post-loop epilogue.
+    const int saved_diplomacy_a = a2;
+    const int saved_diplomacy_b = a3;
+    uint32_t diplomacy_wire[18];
+    if (opcode == 0x16 && outgoing)
+        NetDaemonSyncWire::gather_saved_diplomacy(
+            saved_diplomacy_a, saved_diplomacy_b, diplomacy_wire);
+
+    const int size = netdaemon_sync_payload_size(opcode, a2, a3);
+    // Native early exits for empty live vehicle/base tables.
+    if (size < 0) return;
+
+    // Match signed x86 div/mod-by-0x800 rounding. Native ordinary inputs are
+    // nonnegative; for negative values the arithmetic-shift path is retained.
+    const int quotient = size / 0x800;
+    const int remainder = size % 0x800;
+    const int total_chunks = quotient + (remainder != 0 ? 1 : 0);
+    const int map_rows = opcode == 0x30
+        ? native_map_sync_rows(MapLatitudeBounds, a2) : 0;
+    if (total_chunks <= 0) {
+        // Native jumps directly to the epilogue; no callback or packet.
+    } else if (outgoing) {
+        for (int i = 0; i < total_chunks; ++i) {
+            // Native resolves source pointers inside each loop iteration, so
+            // send_message mutations can affect the next chunk's live owner.
+            const NetDaemonSyncWire::MapRouteCapture map_capture =
+                capture_map_route(opcode, a2, map_rows);
+            netdaemon_sync_send_chunk(*this, opcode, a2, a3, a4, flags, size,
+                                      total_chunks, remainder, i, map_capture,
+                                      diplomacy_wire);
+        }
+    } else {
+        // Native receives one packet/chunk per call. It reads the signed short
+        // index, calls the display callback, then reloads packet fields/payload.
+        int16_t incoming_index;
+        memcpy(&incoming_index, packet + 0x12, sizeof incoming_index);
+        const int last_index = total_chunks - 1;
+        const bool initial_is_last = incoming_index == last_index;
+        const int current_length = (initial_is_last && remainder)
+            ? remainder : 0x800;
+        const size_t current_offset = initial_is_last && remainder
+            ? (total_chunks == 1 ? 0 :
+               static_cast<size_t>(total_chunks - 1) * 0x800)
+            : static_cast<size_t>(incoming_index) * 0x800;
+        // Native computes the destination address before synch_display; keep
+        // pointer/capacity selection stable across that callback for this
+        // received packet, while reading the selected object's current bytes
+        // only when the later compare/scatter instruction does so.
+        const NetDaemonSyncWire::MapRouteCapture map_capture =
+            capture_map_route(opcode, a2, map_rows);
+        uint32_t sender;
+        memcpy(&sender, packet + 0x04, sizeof sender);
+        if (initial_is_last)
+            lock_state_[2].dword_[6] &=
+                ~(static_cast<uint32_t>(1) << (sender & 31));
+        synch_display(opcode, static_cast<int>(incoming_index) + 1,
+                      total_chunks, a2);
+
+        // Native resolves the destination/length before synch_display, then
+        // reloads payload from the original packet argument after the callback.
+        // The final-chunk postprocessing below independently reloads +0x12.
+        bool suppress_copy = false;
+        if (current_length == size &&
+            (opcode == 0x11 || opcode == 0x13)) { // decimal 17 or 19
+            suppress_copy = NetDaemonSyncWire::compare_and_notify(
+                opcode, a2, a3, a4, packet + 0x24,
+                static_cast<size_t>(current_length), log_arg_lo,
+                log_arg_hi);
+        }
+        if (!suppress_copy && !NetDaemonSyncWire::copy_in(
+                opcode, a2, a3, a4, static_cast<size_t>(size),
+                current_offset, packet + 0x24,
+                static_cast<size_t>(current_length), map_capture,
+                diplomacy_wire)) return;
+
+        memcpy(&incoming_index, packet + 0x12, sizeof incoming_index);
+        if (incoming_index == last_index) {
+            if (opcode == 0x12) // decimal 18
+                rebuild_vehicle_bits();
+            else if (opcode == 0x14) // decimal 20
+                rebuild_base_bits();
+            else if (opcode >= 0x80 && opcode <= 0x8D)
+                NetDaemonSyncWire::commit_rules(opcode);
+        }
+    }
+
+    // Native epilogue is keyed by the original signed opcode and runs after
+    // send loop / received chunk processing.
+    if (opcode == 0) {
+        prefs_use();
+    } else if (opcode == 0x02 && lock_state_[0].dword_[1] == 0) { // decimal 2
+        map_shutdown();
+        map_init();
+        Paths.init();
+    } else if (opcode == 0x13) { // decimal 19
+        TutWinBaseWindow.check_base(a2);
+    } else if (opcode == 0x11) { // decimal 17
+        TutWinBaseWindow.check_veh(a2);
+    } else if (opcode == 0x16) { // decimal 22
+        NetDaemonSyncWire::scatter_saved_diplomacy(
+            saved_diplomacy_a, saved_diplomacy_b, diplomacy_wire);
+    } else if (opcode == 0x0D) { // decimal 13
+        social_set(static_cast<uint32_t>(a2));
+    }
 }

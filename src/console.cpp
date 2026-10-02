@@ -68,7 +68,7 @@
 void __cdecl base_kill(int base_id);
 int __cdecl action_build(int vehicle_id, char *base_name);
 int __cdecl wants_to_speak(int faction_id, int other_faction_id);
-extern int BaseAtKeyPollFlag;
+extern int ConsoleGroupAction;
 
 // Shared tutorial popup caption: the original pointer cell selects the
 // six-byte TUTOR string, not the adjacent WIZARD caption.
@@ -325,7 +325,7 @@ void Console::editor_edit_veh(int vehicle_id) {
     }
     update_then_redraw_vehicle_editor_tile(vehicle);
 
-    if (BaseAtKeyPollFlag == 1) {
+    if (ConsoleGroupAction == 1) {
         popup.start(PopupStartCaption, "EDITMORALE", -1, nullptr, 0x40, nullptr);
         for (int morale_id = 0; morale_id < MaxMoraleNum; ++morale_id) {
             const char *name = Morale[morale_id].name;
@@ -377,7 +377,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         return;
     }
 
-    if (BaseAtKeyPollFlag == 2) {
+    if (ConsoleGroupAction == 2) {
         StringTemp[0] = '\0';
         append_decimal(StringTemp, static_cast<uint8_t>(vehicle.order));
         parse_says(0, StringTemp, -1, -1);
@@ -412,7 +412,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         return;
     }
 
-    if (BaseAtKeyPollFlag == 3) {
+    if (ConsoleGroupAction == 3) {
         popup.start(PopupStartCaption, "EDITVEHWHO", -1, nullptr, 0x42, nullptr);
         for (int faction_id = 0; faction_id < MaxPlayerNum; ++faction_id) {
             PluralityDefault = Players[faction_id].is_noun_plural;
@@ -432,7 +432,7 @@ void Console::editor_edit_veh(int vehicle_id) {
         return;
     }
 
-    if (BaseAtKeyPollFlag == 4) {
+    if (ConsoleGroupAction == 4) {
         popup.start(PopupStartCaption, "EDITVEHHOME", -1, nullptr, 0x42, nullptr);
         StringTemp[0] = '\0';
         ::strcat(StringTemp, label_get(25));
@@ -5334,7 +5334,7 @@ void Console::editor_rules() {
         rules = GameRules & 0xFFFF0000u;
         state = GameState & ~0x01800000u;
         checks = PopupWriteCheckState;
-        if (BaseAtKeyPollFlag == 0) {
+        if (ConsoleGroupAction == 0) {
             if (checks & 1u) rules |= 0x800u;
             if (checks & 2u) rules |= 2u;
             if (checks & 4u) rules |= 8u;

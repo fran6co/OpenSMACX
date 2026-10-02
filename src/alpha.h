@@ -815,3 +815,11 @@ MEASURED inline void __cdecl clear_faction(Player *player) {
 __forceinline LPSTR __cdecl label_get(int label_offset) {
     return StringTable.get((int)*((LPSTR *)Labels.strings_ptr + label_offset));
 }
+
+
+namespace NetDaemonSyncRules {
+bool copy_rule_wire_chunk(int opcode, size_t offset, unsigned char *chunk,
+                          size_t count, bool packet_to_owner,
+                          unsigned char *shared_staging);
+bool commit_staged_rules(int opcode, const unsigned char *staging);
+}
