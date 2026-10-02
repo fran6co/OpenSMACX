@@ -1,0 +1,21 @@
+{
+  "event_id": "fc4b73b10d3a282a4c4d14ee23202d1f5f33988175b1c6c7059f039d1710c7d7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/monuwin_host_fixture.inc",
+      "recovery/tests/test_monuwin_trigger_behavior.py"
+    ],
+    "evidence": [
+      "Full actual MonuWin owner build/link passes; portable fixture extracts live owner declaration and nine bodies and exercises independent-review regression contracts with GCC/Clang sanitizer and damage controls.",
+      "Trigger476A50 controls extract actual mapped source to verify selected-faction first15 records, unchanged gates and modal/close/draw ordering; no native ABI, linked preservation or game acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "f3afa6022ad963bd4eb3561a642e714970b704e03a4a0319f5449e070eed7d17",
+  "request_id": "monuwin-portable-owner-trigger-controls-2026-10-02",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:monuwin-owner-coverage"
+}

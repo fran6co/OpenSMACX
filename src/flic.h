@@ -86,6 +86,9 @@ class Flic {
   int UNK2();
   int UNK3(int frame);
   int rewind();
+  // Native4723EF configures the decoder's palette-index shift at +0x5A4;
+  // decode_byte_run/decode_delta_flc add it to decoded pixel indices.
+  void set_palette_offset(int offset) { field_5A4_ = offset; }
   void decode_byte_run();
   void decode_delta_flc();
   void decode_byte_run_trans();

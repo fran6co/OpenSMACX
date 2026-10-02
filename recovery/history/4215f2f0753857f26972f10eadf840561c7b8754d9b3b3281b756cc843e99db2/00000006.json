@@ -1,0 +1,19 @@
+{
+  "event_id": "f3afa6022ad963bd4eb3561a642e714970b704e03a4a0319f5449e070eed7d17",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/flic.h"
+    ],
+    "evidence": [
+      "Native4723EF sets the real Flic field5A4 to10 before decoding. Existing decoder bodies in flic.cpp independently establish that this field shifts palette indices, not animation flags. Authorize a narrow inline set_palette_offset(int) interface with unchanged storage/lifetime; full reviewed MonuWin owner requires this direct owned member operation. Immutable task baseline and historical obligations retained; native compiled preservation and application build/link remain required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "cc3ee395d5bc2aec984115598acb4fcf058b965a4e77cdb8e673975b20ae047a",
+  "request_id": "monuwin-flic-palette-shift-interface",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:monuwin-owner-coverage"
+}

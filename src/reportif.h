@@ -47,6 +47,8 @@ static_assert(sizeof(ReportSortEntry) == 0x10,
 // Its nineteen observed slots do not independently establish its end bound.
 // RECOVERY_GENERATED: v1 vtable 0x0066D700 ? ??_7ReportIf@@6B@ 0x004AD170
 class ReportIf : public SubInterface {
+  // Native MonuWin reads the owned font/fullscreen configuration.
+  friend class MonuWin;
   friend class ReportWin;
   friend class FameWin;
   friend class QuayleWin;

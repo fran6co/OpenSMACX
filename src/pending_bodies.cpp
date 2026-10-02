@@ -525,10 +525,7 @@ SocialWin::~SocialWin() {  // ??1SocialWin@@QAE@XZ at 0x004B3C80
     PENDING_BODY(0x004B3C80, pending)(this, nullptr);
 }
 
-MonuWin::~MonuWin() {  // ??1MonuWin@@QAE@XZ at 0x00477B10
-    typedef void(__fastcall *pending)(MonuWin *, void *);
-    PENDING_BODY(0x00477B10, pending)(this, nullptr);
-}
+
 
 
 
