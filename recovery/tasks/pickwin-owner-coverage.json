@@ -1,0 +1,92 @@
+{
+  "author": "framework-coordinator",
+  "base_revision": "5a12ad653b9a7be2a3525ffaa010045bb8aef933",
+  "editable_files": [
+    "recovery/tests/pickwin_owner_host_control.cpp",
+    "recovery/tests/test_pickwin_owner_behavior.py",
+    "src/alpha.h",
+    "src/deleting_thunks.cpp",
+    "src/deleting_thunks.h",
+    "src/listbox.h",
+    "src/pending_bodies.cpp",
+    "src/pickwin.cpp",
+    "src/pickwin.h"
+  ],
+  "evidence": [
+    "src/unrecovered/004887a0.cpp",
+    "src/recovered/units/00489660.cpp",
+    "src/unrecovered/00489ba0.cpp",
+    "src/alpha.cpp"
+  ],
+  "intent": "Complete genuine PickWin owner behavior and compiler-owned lifecycle, typed ListBox interface and evidence-backed global bindings; preserve all historical claims and seeds. Correct proven read_faction(int) declaration; no game acceptance claim.",
+  "schema_version": 1,
+  "subjects": [
+    {
+      "address": 4753312,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4757088,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4758272,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4758288,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4758304,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4758432,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4761536,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4761616,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4761664,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4761824,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4762640,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4763072,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    },
+    {
+      "address": 4763120,
+      "address_space": "pe:va",
+      "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+    }
+  ],
+  "target": "opensmacx",
+  "task_id": "pickwin-owner-coverage"
+}
