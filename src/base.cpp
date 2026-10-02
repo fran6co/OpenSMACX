@@ -81,7 +81,7 @@ void __cdecl action_staple(int base_id) {
             PluralityDefault = 0;
             GenderDefault = Players[base.faction_id_current].is_leader_female;
             parse_says(2, Players[base.faction_id_current].name_leader, -1, -1);
-            NetMsgPopup->pop("NERVESTAPLETHEM", 5000, 0, 0);
+            NetMsgPrimary.pop("NERVESTAPLETHEM", 5000, 0, 0);
         }
     } else if (base.faction_id_current == ConsoleGlobal.faction_id_) {
         parse_says(0, base.name_string, -1, -1);

@@ -127,7 +127,7 @@ struct ParseStrType { char str[16]; };
 NetWinLobbyRow NetWinLobbyRows[8];
 NetWinDialogType NetWinDialog;
 Popup popup_storage;
-Popup *NetMsgPopup = &popup_storage;
+Popup &NetMsgPrimary = popup_storage;
 FX g_FX;
 ConsoleType ConsoleGlobal;
 ParseStrType ParseStrBuffer[1];

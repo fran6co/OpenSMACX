@@ -65,7 +65,7 @@ void (*CostMutation)();
 struct MessagePopup {
   void pop(const char *text, int, int, const char *) { LastNetPopupText = text; }
 } MessagePopupObject;
-MessagePopup *NetMsgPopup = &MessagePopupObject;
+MessagePopup &NetMsgPrimary = MessagePopupObject;
 struct Network {
   int lock_result, lock_calls, unlock_calls;
   int lock_veh(int *, int, int, int, int) { ++lock_calls; return lock_result; }

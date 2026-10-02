@@ -27,7 +27,7 @@ extern char256 ParseStrBuffer[10];
 class Path { public: void init(); };
 class BaseWin { public: void check_base(int); void check_veh(int); };
 class NetMsg { public: void pop(const char *, int, int, const char *); void close(); };
-extern NetMsg *const NetMsgPopup;
+extern NetMsg &NetMsgPrimary;
 class NetDaemon {
 public:
     struct LockWords { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
@@ -63,7 +63,7 @@ static Map MapFixtureMutated[256];
 Path Paths;
 BaseWin TutWinBaseWindow;
 static NetMsg NetMsgFixture;
-NetMsg *const NetMsgPopup = &NetMsgFixture;
+NetMsg &NetMsgPrimary = NetMsgFixture;
 static uint32_t faction_id = 5;
 static bool fail_copy = false;
 static int display_count = 0;

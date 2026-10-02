@@ -43,7 +43,7 @@
 CouncWin CouncilWindow;
 #include "strings.h"     // StringTemp
 #include "console.h"     // ConsoleGlobal's local faction id
-#include "netmsg.h"      // NetMsgPopup
+#include "netmsg.h"      // NetMsgPrimary
 
 // ORIGINAL: 0x00425050 ?on_left_click@CouncWin@@QAEXHH@Z 0x00425050-0x00425B92;0x00652EC7-0x006530F4 FILE
 // RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00425050.cpp", "image:terranx_original.exe:0x00425050", "Council interface/window declarations identify embedded fonts/buttons, voting arrays and existing MainInterface/Console owners; original instructions determine call and state order."], "reason": "Recover the original in its genuine UI owner using typed members, real globals and declared operations. Retain seed spans and evidence; no current matching or runtime claim."}
@@ -147,7 +147,7 @@ vote_selection_ready:
             GenderDefault = Players[clicked_faction].noun_gender;
             PluralityDefault = Players[clicked_faction].is_noun_plural;
             parse_says(2, Players[clicked_faction].noun_faction, -1, -1);
-            NetMsgPopup->pop("ELIMINATED", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("ELIMINATED", 0x1388, 0, nullptr);
             popup.close();
             return;
         }
@@ -165,7 +165,7 @@ vote_selection_ready:
     const uint8_t current_status = static_cast<uint8_t>(LockEnableMask);
     const uint8_t current_alive = static_cast<uint8_t>(LockEnableMask >> 8);
     if ((field_A44_ & current_alive & current_status) != current_status) {
-        NetMsgPopup->pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
+        NetMsgPrimary.pop("COUNCILVOTEGOV", 0x1388, 1, nullptr);
         field_A40_ = 1;
         draw_leader(clicked_faction);
         popup.close();
@@ -187,7 +187,7 @@ vote_selection_ready:
         PluralityDefault = 0;
         parse_says(1, Players[clicked_faction].name_leader, -1, -1);
         parse_num(0, clicked_faction);
-        NetMsgPopup->pop("DIPLOCOMM", 0x1388, 0, nullptr);
+        NetMsgPrimary.pop("DIPLOCOMM", 0x1388, 0, nullptr);
         field_A40_ = 1;
         draw_leader(clicked_faction);
         popup.close();
@@ -203,7 +203,7 @@ vote_selection_ready:
         GenderDefault = Players[clicked_faction].noun_gender;
         PluralityDefault = Players[clicked_faction].is_noun_plural;
         parse_says(2, Players[clicked_faction].noun_faction, -1, -1);
-        NetMsgPopup->pop("ELIMINATED", 0x1388, 0, nullptr);
+        NetMsgPrimary.pop("ELIMINATED", 0x1388, 0, nullptr);
         field_A40_ = 1;
         popup.close();
         return;
@@ -229,7 +229,7 @@ vote_selection_ready:
     GenderDefault = Players[clicked_faction].is_leader_female;
     PluralityDefault = 0;
     parse_says(1, Players[clicked_faction].name_leader, -1, -1);
-    NetMsgPopup->pop("NOCHANNEL", 0x1388, 0, nullptr);
+    NetMsgPrimary.pop("NOCHANNEL", 0x1388, 0, nullptr);
     field_A40_ = 1;
     popup.close();
 }
@@ -924,7 +924,7 @@ int CouncWin::council_visible() {
 // express the embedded windows, fonts, Spot, and local faction by owner.
 
 // ORIGINAL: 0x004271C0 ?arrived@CouncWin@@QAEXH@Z 0x004271C0-0x0042722D
-// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::field_A44_; src/temp.h TurnRedrawPending; src/faction.h LockEnableMask; src/graphicwin.h GraphicWin::redraw; src/netmsg.h NetMsgPopup; image data at 0x00683228 identifies the label VOTINGOPEN"], "reason": "Track faction arrival on the CouncWin receiver, redraw through GraphicWin, and signal the voting-open label when all active humans have arrived."}
+// RECOVERY_BINDING: v1 {"evidence": ["src/councwin.h CouncWin::field_A44_; src/temp.h TurnRedrawPending; src/faction.h LockEnableMask; src/graphicwin.h GraphicWin::redraw; src/netmsg.h NetMsgPrimary; image data at 0x00683228 identifies the label VOTINGOPEN"], "reason": "Track faction arrival on the CouncWin receiver, redraw through GraphicWin, and signal the voting-open label when all active humans have arrived."}
 void CouncWin::arrived(int faction_id) {
     field_A44_ |= (1 << faction_id);
     if (TurnRedrawPending != 0) {
@@ -933,7 +933,7 @@ void CouncWin::arrived(int faction_id) {
         const uint8_t humans = static_cast<uint8_t>(status);
         const uint8_t alive = static_cast<uint8_t>(status >> 8);
         if (((alive & humans) & field_A44_) == humans) {
-            NetMsgPopup->pop("VOTINGOPEN", 1000, 1, 0);
+            NetMsgPrimary.pop("VOTINGOPEN", 1000, 1, 0);
         }
     }
 }
@@ -1117,7 +1117,7 @@ void CouncWin::on_button_clicked(int button_id) {
                 if (((field_A44_ & alive) & humans) == humans) {
                     message_data(0x2601, 0, ConsoleGlobal.faction_id_, -button_id, 0, 0);
                 } else {
-                    NetMsgPopup->pop("VOTING", 0x1388, 1, nullptr);
+                    NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
                 }
             }
         }
@@ -1162,7 +1162,7 @@ void CouncWin::on_button_clicked(int button_id) {
                     }
                 }
             } else {
-                NetMsgPopup->pop("VOTING", 0x1388, 1, nullptr);
+                NetMsgPrimary.pop("VOTING", 0x1388, 1, nullptr);
             }
         }
         break;

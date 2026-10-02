@@ -137,7 +137,7 @@ def test_actual_owner_host_controls(mode: str) -> None:
         ("earlyreject", "difference == 0))\n            goto release_lock_only;",
          "difference == 0))\n            goto release_lock;",
          "native short reject tail must not synchronize vehicle"),
-        ("globalfailed", 'NetMsgPopup->pop("GLOBALFAILED",', 'NetMsgPopup->pop("XFAILED",',
+        ("globalfailed", 'NetMsgPrimary.pop("GLOBALFAILED",', 'NetMsgPrimary.pop("XFAILED",',
          "native GLOBALFAILED edge has its own popup tail"),
     ],
 )

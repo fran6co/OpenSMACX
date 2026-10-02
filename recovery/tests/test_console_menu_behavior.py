@@ -144,7 +144,7 @@ TutWin *TutWinGlobal;
 MainInterface MainInterfaceGlobal;
 MapWin WorldClimateWorldWin;
 Console ConsoleGlobal;
-NetMsg *NetMsgPopup;
+NetMsg NetMsgPrimary;
 struct AlphaPref { uint32_t preferences, more_preferences; } AlphaIniPrefs;
 int __cdecl pop_wait(){Trace.push_back("pop_wait");return 0;}
 int bit_count(unsigned int n){int c=0;while(n){c+=n&1;n>>=1;}return c;}
@@ -183,7 +183,7 @@ void stack_kill(int vehicle){assert(vehicle==17);Trace.push_back("stack_kill");}
     tests = r"""
 MapWin map;
 TutWin tutorial;
-NetMsg message;
+NetMsg &message = NetMsgPrimary;
 void reset_state(){
     ConsoleGlobal=Console();
     map=MapWin(); NetDaemonNet=NetDaemon();
@@ -194,7 +194,7 @@ void reset_state(){
     LockEnableMask=0; PopupWriteCheckState=0; StatusFlags=0;
     map.cursor_resource_id_=0x7F00;
     for(int i=0;i!=8;++i) MapWinTable[i]=0;
-    MapWinTable[0]=&map; TutWinGlobal=&tutorial; NetMsgPopup=&message;
+    MapWinTable[0]=&map; TutWinGlobal=&tutorial;
     ConsoleGlobal.selected_vehicle_=3;
     Trace.clear();
 }
@@ -315,4 +315,3 @@ int main() {
 }
 """
     compile_run(program.replace("// SOURCE_BODY", method))
-

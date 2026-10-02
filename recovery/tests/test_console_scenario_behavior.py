@@ -73,7 +73,7 @@ const char *popup_caption=0;
 struct NetMsg { void pop(const char *s,int n,int m,const char*) {
   assert(n==5000 && m==0); popup_caption=s;
 } } popup;
-NetMsg *NetMsgPopup=&popup;
+NetMsg &NetMsgPrimary = popup;
 int parse_says(int,char*,int,int) { genders.push_back(GenderDefault); pluralities.push_back(PluralityDefault); return 0; }
 int message_calls=0;
 int message_data(int code,int,int turn,int,int,int) { assert(code==0x2302 && turn==30); ++message_calls; return 0; }

@@ -108,10 +108,10 @@ int __cdecl tech_selection(int faction) {
                 GenderDefault = Players[faction].is_leader_female;
                 PluralityDefault = 0;
                 parse_says(1, Players[faction].name_leader, -1, -1);
-                NetMsgPopup->pop("PICKINGTECH", 0, 0, 0);
+                NetMsgPrimary.pop("PICKINGTECH", 0, 0, 0);
             }
         }
-        NetMsgPopup->close();
+        NetMsgPrimary.close();
         return selected;
     }
 
@@ -1444,7 +1444,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
              TurnRedrawPending != 0)) {
             parse_say(0, static_cast<int>(reinterpret_cast<intptr_t>(
                 Technology[tech_id].name)), -1, -1);
-            NetMsgPopup->pop("TECHOBTAINED", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("TECHOBTAINED", 0x1388, 0, nullptr);
         } else {
             NewTechWindow.exec(tech_id, faction_id_with);
         }
@@ -1476,7 +1476,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
                 Technology[tech_id].name)), -1, -1);
             parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
                 Facility[facility_id].name)), -1, -1);
-            NetMsgPopup->pop("FREEFACTECH", -5000, 0, nullptr);
+            NetMsgPrimary.pop("FREEFACTECH", -5000, 0, nullptr);
         }
     }
     if (give_freebie != 0) {
@@ -1497,7 +1497,7 @@ void __cdecl tech_achieved(int faction_id, int tech_id, int faction_id_with,
             Technology[tech_id].name)), -1, -1);
         parse_say(1, static_cast<int>(reinterpret_cast<intptr_t>(
             Ability[ability_id].name)), -1, -1);
-        NetMsgPopup->pop("FREEABILTECH", -5000, 0, nullptr);
+        NetMsgPrimary.pop("FREEABILTECH", -5000, 0, nullptr);
     }
 
     if ((Technology[tech_id].flags & TFLAG_SECRETS) != 0) {

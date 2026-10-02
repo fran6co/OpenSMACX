@@ -360,7 +360,7 @@ char *label_get(int offset) {
 struct Popup { void pop(const char *label,int timeout,int flags,const char *text) {
   assert(std::strcmp(label,"GOVERNORCONTROLDONE")==0 && timeout==5000 && flags==0 && !text);
   events.push_back("popup"); } } PopupObject;
-Popup *NetMsgPopup=&PopupObject;
+Popup &NetMsgPrimary = PopupObject;
 void set_base(int id);
 struct BaseWin { int governor(int value) { assert(value==1); ++GovernorCalls; events.push_back("governor"); return 0; } } TutWinBaseWindow;
 int __cdecl diplo_lock(int);
@@ -470,7 +470,7 @@ int RadiusOffsetX[289]{}, RadiusOffsetY[289]{};
 struct NetPopup { void pop(const char *s,int timeout,int flags,const char *arg) {
   assert(timeout==5000&&flags==0&&arg==nullptr); events.push_back(string("msg:")+s);
 } } popup_message;
-NetPopup *NetMsgPopup=&popup_message;
+NetPopup &NetMsgPrimary = popup_message;
 struct Popup { void start(char *,const char *,int,char *,int,void *) { events.push_back("popup-start"); }
   int exec(int,void *) { events.push_back("popup-exec"); return popup_exec_result; } };
 struct LockEntry { uint32_t leading_words_[4]; union Payload { uint32_t flags; int *vehicle_selection_follow; } payload_; uint32_t trailing_words_[10]; };
@@ -653,7 +653,7 @@ int has_abil(int proto,int bit) { return (VehPrototypes[proto].ability_flags & (
 int drop_range(int faction) { events.push_back("range:"+std::to_string(faction)); return 7; }
 struct NetMsg { void pop(const char *s,int timeout,int flags,const char *extra) {
  assert(timeout==5000 && flags==0 && extra==nullptr); events.push_back(std::string("msg:")+s); } } PopupObject;
-NetMsg *NetMsgPopup=&PopupObject;
+NetMsg &NetMsgPrimary = PopupObject;
 int X_pop(const char *s,int (*callback)()){assert(!callback);events.push_back(std::string("xpop:")+s);return 0;}
 struct NetDaemon { int lock_veh(int*,int,int,int,int){events.push_back("lock");return 0;}
  void unlock_veh(){events.push_back("unlock");} void await_exec(int){events.push_back("await");} } NetDaemonNet;
@@ -1001,7 +1001,7 @@ struct Msg { void pop(const char *label,int timeout,int flags,const char *target
   assert(timeout==5000 && flags==0 && target==nullptr);
   events.push_back(std::string("message:")+label);
 } } msg;
-Msg *NetMsgPopup=&msg;
+Msg &NetMsgPrimary = msg;
 struct NetDaemon { int lock_veh(int *id,int mode,int a,int b,int c) {
   assert(mode==0 && a==-1 && b==-1 && c==0); events.push_back("lock");
   if(RewriteId>=0) *id=RewriteId;
@@ -1590,7 +1590,7 @@ struct Base { int faction_id_current=0; } Bases[2];
 struct PlayerData { int corner_market_turn=0,corner_market_active=0,energy_reserves=100; } PlayersData[8];
 struct NetMsg { void pop(const char *label,int timeout,int flags,const char *text) {
   assert(timeout==5000&&flags==0&&!text); events.push_back(std::string("msg:")+label); }
-} PopupObj; NetMsg *NetMsgPopup=&PopupObj;
+} PopupObj; NetMsg &NetMsgPrimary = PopupObj;
 int has_tech(int tech,int faction) { assert(tech==9&&faction==2); return 1; }
 int has_fac_built(int facility,int base) { assert(facility==FAC_HEADQUARTERS); return base==0; }
 int corner_market(int faction) { assert(faction==2); events.push_back("amount"); return Amount; }
@@ -1664,7 +1664,7 @@ struct Player { uint32_t rule_flags=0; } Players[8];
 struct RulesData { int tgl_oblit_base_atrocity=1; } Rules;
 struct NetMsg { void pop(const char *label,int timeout,int flags,const char *text) {
   assert(timeout==5000&&flags==0&&!text); events.push_back(std::string("msg:")+label); }
-} PopupObj; NetMsg *NetMsgPopup=&PopupObj;
+} PopupObj; NetMsg &NetMsgPrimary = PopupObj;
 int not_my_turn() { return TurnDenied; } int veh_ready(int id) { assert(id==0); return Ready; }
 int base_at(int x,int y) { assert(x==4&&y==6); return BaseId; }
 int is_objective(int id) { assert(id==0); return Objective; }
@@ -1812,7 +1812,7 @@ struct Map { uint32_t bit=1; uint8_t val2=3; } Tile;
 Map *map_loc(int x,int y) { assert(x==4&&y==6); return &Tile; }
 struct Popup { void pop(const char *label,int timeout,int flags,const char *text) {
   assert(timeout==5000&&flags==0&&!text); events.push_back(std::string("msg:")+label); }
-} PopupObj; Popup *NetMsgPopup=&PopupObj;
+} PopupObj; Popup &NetMsgPrimary = PopupObj;
 struct Network { int locked=0,unlocked=0;
   int lock_veh(int *id,int mode,int x,int y,int flags) { assert(*id==0&&mode==4&&x==-1&&y==-1&&flags==0); events.push_back("lock"); return locked; }
   void unlock_veh() { ++unlocked; events.push_back("unlock"); }

@@ -25,7 +25,7 @@
 #include "playerlock.h"
 
 #include "stringstruct.h"  // StringAllocationHeap - the 0x009B3374 hand-off
-#include "netmsg.h"        // NetMsgPopup, which the lock/wait bodies pop through
+#include "netmsg.h"        // NetMsgPrimary, which the lock/wait bodies pop through
 #include "base.h"
 #include "basepop.h"       // NetMsg's base, which process_message reaches
 #include "netwin.h"        // NetWinDialog - the setup dialog process_message dispatches into
@@ -144,7 +144,7 @@ void NetDaemon::on_player_added(char *name, unsigned long id) {
             }
             if (duplicate_host) {
                 parse_says(0, name, -1, -1);
-                NetMsgPopup->pop("ADDED", 3000, 0, nullptr);
+                NetMsgPrimary.pop("ADDED", 3000, 0, nullptr);
             }
         }
 
@@ -353,7 +353,7 @@ void NetDaemon::on_player_deleted(char *, unsigned long id) {
     } else {
         popup_text = "DROPPED";
     }
-    NetMsgPopup->pop(popup_text, 3000, 2, nullptr);
+    NetMsgPrimary.pop(popup_text, 3000, 2, nullptr);
 
     if (server_left) {
         if (NetWinDialog.is_visible() != 0) {
@@ -972,7 +972,7 @@ L0cc:
         message_data(0x4b00, 0, 0, 0, 0, 0);
     }
 L145:
-    NetMsgPopup->close();
+    NetMsgPrimary.close();
 }
 
 
@@ -2138,7 +2138,7 @@ int NetDaemon::lock_veh(int *veh_id, int target, int payload_1C,
     }
     if ((NetDaemonNet.lock_state_[0].trailing_words_[7] & (1 << ConsoleGlobal.faction_id_)) != 0 &&
         (NetTurnFlags & 0x10) == 0) {
-        NetMsgPopup->pop("ALREADYDONE", 0, 2, 0);
+        NetMsgPrimary.pop("ALREADYDONE", 0, 2, 0);
         return 1;
     }
 
@@ -2176,7 +2176,7 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
             // moving timestamp. Resetting both prevents the native warning.
             if (!awaiting_orders && ticks() - initial_time > 500U) {
                 awaiting_orders = true;
-                NetMsgPopup->pop("AWAITORDERS", 0, 2, 0);
+                NetMsgPrimary.pop("AWAITORDERS", 0, 2, 0);
             } else {
                 log_say("(Auto lock delay)", *veh_id, 0, 0);
                 while (ticks() - retry_time < 250U && ExitTurnLoop == 0) {
@@ -2195,7 +2195,7 @@ int NetDaemon::automated_lock(int *veh_id, int target) {
             }
             check_spock();
         } while (ExitTurnLoop == 0);
-        if (awaiting_orders) NetMsgPopup->close();
+        if (awaiting_orders) NetMsgPrimary.close();
     }
     log_say("Got auto lock", *veh_id,
             static_cast<int>(static_cast<int8_t>(Vehs[*veh_id].order)), 0);
@@ -2293,7 +2293,7 @@ int NetDaemon::wait(char * message, int * state, int value, int timeout) {
             unsigned long now = timeGetTimeFn();
             if ((int)(now - startTime) > timeout) {
                 triggeredTimeout = true;
-                NetMsgPopup->pop(message, 0, 2, 0);
+                NetMsgPrimary.pop(message, 0, 2, 0);
             }
         }
         wait_task();
@@ -2306,7 +2306,7 @@ int NetDaemon::wait(char * message, int * state, int value, int timeout) {
         check_spock();
     }
     if (triggeredTimeout) {
-        NetMsgPopup->close();
+        NetMsgPrimary.close();
     }
     --NetBusyCount;
     NetDaemonNet.lock_state_[1].leading_words_[3] = saved;
@@ -2357,7 +2357,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
         int elapsed = static_cast<int>(timeGetTime_()) - payload_14;
         if (elapsed > 0x640) {
           sentAwait = true;
-          NetMsgPopup->pop(reinterpret_cast<const char *>("AWAITCHANNEL"), 0, 2, 0);
+          NetMsgPrimary.pop(reinterpret_cast<const char *>("AWAITCHANNEL"), 0, 2, 0);
         }
       }
       wait_task();
@@ -2375,7 +2375,7 @@ int NetDaemon::open_channel(int payload_10, int payload_14) {
       }
     }
     if (sentAwait) {
-      NetMsgPopup->close();
+      NetMsgPrimary.close();
     }
   }
 
@@ -2413,7 +2413,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
         if (*(int *)(lock_state_[2].trailing_words_[3]) != 0) {
             return 1;
         }
-        ((NetMsg *)NetMsgPopup)->pop((const char *)"MOVEPENDING", 0, 2, (const char *)0);
+        NetMsgPrimary.pop((const char *)"MOVEPENDING", 0, 2, (const char *)0);
         return 1;
     }
 
@@ -2437,7 +2437,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                 unsigned long now = timeGetTime();
                 if (now - t0 > 0x640) {
                     waited = 1;
-                    ((NetMsg *)NetMsgPopup)->pop((const char *)"AWAITLOCK", 0, 2, (const char *)0);
+                    NetMsgPrimary.pop((const char *)"AWAITLOCK", 0, 2, (const char *)0);
                 }
             }
             wait_task();
@@ -2449,7 +2449,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
             check_spock();
         } while (*(int *)(lock_state_[1].leading_words_[2]) == 0);
         if (waited) {
-            ((NetMsg *)NetMsgPopup)->close();
+            NetMsgPrimary.close();
         }
     }
 
@@ -2473,7 +2473,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                         unsigned long now2 = timeGetTime();
                         if (now2 - (unsigned long)target > 0x320) {
                             waited2 = 1;
-                            ((NetMsg *)NetMsgPopup)->pop((const char *)"AWAITGLOBALLOCK", 0, 2, (const char *)0);
+                            NetMsgPrimary.pop((const char *)"AWAITGLOBALLOCK", 0, 2, (const char *)0);
                         }
                     }
                     wait_task();
@@ -2485,7 +2485,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
                     check_spock();
                 } while (*(int *)(locks_.field_E8_) == 0);
                 if (waited2) {
-                    ((NetMsg *)NetMsgPopup)->close();
+                    NetMsgPrimary.close();
                 }
             }
             NetDaemonNet.lock_state_[1].leading_words_[3] = scratch;
@@ -2501,7 +2501,7 @@ int NetDaemon::lock(int target, int x, int y, int payload_18, int payload_1C, in
         *(int *)(lock_state_[2].trailing_words_[4]) = *(int *)(lock_state_[2].trailing_words_[4]) + 1;
         if (*(int *)(lock_state_[2].trailing_words_[4]) > 0 || *(int *)(lock_state_[1].leading_words_[2]) > 2) {
             const char *msg = (*(int *)(lock_state_[1].leading_words_[2]) == 2) ? (const char *)"NOLOCK" : (const char *)"NOLOCKGLOBAL";
-            ((NetMsg *)NetMsgPopup)->pop(msg, 5000, 2, (const char *)0);
+            NetMsgPrimary.pop(msg, 5000, 2, (const char *)0);
             *(int *)(lock_state_[2].trailing_words_[4]) = 0;
         }
     }
@@ -2540,7 +2540,7 @@ int NetDaemon::add_lock(int target, int x, int y) {
     y = timeGetTimeFn();
 
     bool popped = false;
-    NetMsg *netMsg = NetMsgPopup;
+    NetMsg *netMsg = &NetMsgPrimary;
     Lock &lock = locks_;
 
     if (lock_state_[1].leading_words_[2] == 0) {
@@ -2612,7 +2612,7 @@ int NetDaemon::add_global() {
                 unsigned long now = get_time();
                 if (now - start_time1 > 0x640) {
                     warned1 = true;
-                    NetMsgPopup->pop(reinterpret_cast<const char *>("AWAITGLOBALLOCK"), 0, 2, 0);
+                    NetMsgPrimary.pop(reinterpret_cast<const char *>("AWAITGLOBALLOCK"), 0, 2, 0);
                 }
             }
             wait_task();
@@ -2625,7 +2625,7 @@ int NetDaemon::add_global() {
             check_spock();
         } while (lock_state_[1].leading_words_[2] == 0);
         if (warned1) {
-            NetMsgPopup->close();
+            NetMsgPrimary.close();
         }
     }
     NetDaemonNet.lock_state_[1].leading_words_[3] = saved_e904;
@@ -2641,7 +2641,7 @@ int NetDaemon::add_global() {
                     unsigned long now = get_time();
                     if (now - start_time2 > 800) {
                         warned2 = true;
-                        NetMsgPopup->pop(reinterpret_cast<const char *>("AWAITGLOBALLOCK"), 0, 2, 0);
+                        NetMsgPrimary.pop(reinterpret_cast<const char *>("AWAITGLOBALLOCK"), 0, 2, 0);
                     }
                 }
                 wait_task();
@@ -2654,7 +2654,7 @@ int NetDaemon::add_global() {
                 check_spock();
             } while (locks_.field_E8_ == 0);
             if (warned2) {
-                NetMsgPopup->close();
+                NetMsgPrimary.close();
             }
         }
         NetDaemonNet.lock_state_[1].leading_words_[3] = saved_e904;
@@ -2676,7 +2676,7 @@ int NetDaemon::add_global() {
             if (lock_state_[1].leading_words_[2] != 2) {
                 msg = reinterpret_cast<const char *>("NOLOCKGLOBAL");
             }
-            NetMsgPopup->pop(msg, 5000, 2, 0);
+            NetMsgPrimary.pop(msg, 5000, 2, 0);
             lock_state_[2].trailing_words_[4] = 0;
         }
     }
@@ -2751,7 +2751,7 @@ void NetDaemon::unlock_base(int base_id) {
                     if (logged_wait == 0) {
                         if (timeGetTime() - baseline > 0x7d0) {
                             logged_wait = 1;
-                            NetMsgPopup->pop(
+                            NetMsgPrimary.pop(
                                 reinterpret_cast<char *>("AWAITEXEC"), 0, 2, 0);
                         }
                     }
@@ -2765,7 +2765,7 @@ void NetDaemon::unlock_base(int base_id) {
                     check_spock();
                 } while (lock_state_[2].trailing_words_[0] == 1);
                 if (logged_wait) {
-                    NetMsgPopup->close();
+                    NetMsgPrimary.close();
                 }
             }
 
@@ -2852,7 +2852,7 @@ void NetDaemon::await_exec(int opcode) {
             if (logged_wait == 0) {
                 if (timeGetTime() - baseline > 0x7d0) {
                     logged_wait = 1;
-                    NetMsgPopup->pop(
+                    NetMsgPrimary.pop(
                         reinterpret_cast<char *>("AWAITEXEC"), 0, 2, 0);
                 }
             }
@@ -2866,7 +2866,7 @@ void NetDaemon::await_exec(int opcode) {
             check_spock();
         } while (lock_state_[2].leading_words_[3] == 1);
         if (logged_wait) {
-            NetMsgPopup->close();
+            NetMsgPrimary.close();
         }
     }
 
@@ -2954,7 +2954,7 @@ void NetDaemon::await_synch() {
                         timeGetTime();
                     if (now - start_time > 0x7d0) {
                         warned = synching;
-                        NetMsgPopup->pop(
+                        NetMsgPrimary.pop(
                             reinterpret_cast<const char *>("AWAITEXEC"), 0, 2, 0);
                     }
                 }
@@ -2969,7 +2969,7 @@ void NetDaemon::await_synch() {
                 check_spock();
             } while (*state == synching);
             if (warned) {
-                NetMsgPopup->close();
+                NetMsgPrimary.close();
             }
         }
 
@@ -3043,7 +3043,7 @@ void NetDaemon::await_diplo(int opcode) {
                     unsigned int now = timeGetTime();
                     if (now - start_time > 0x7d0) {
                         timed_out = 1;
-                        NetMsgPopup->pop(
+                        NetMsgPrimary.pop(
                             reinterpret_cast<const char *>("AWAITDIPLO"), 0, 2, 0);
                     }
                 }
@@ -3058,7 +3058,7 @@ void NetDaemon::await_diplo(int opcode) {
                 check_spock();
             } while (lock_state_[2].leading_words_[1] == opcode);
             if (timed_out) {
-                NetMsgPopup->close();
+                NetMsgPrimary.close();
             }
         }
         (NetBusyCount)--;
@@ -4264,7 +4264,7 @@ int NetDaemon::maybe_lock(int *veh_id, int flag, int payload_1C, int payload_20,
       ++lock_state_[2].trailing_words_[5];
       // The image compares the count SIGNED here (`jle`), not unsigned.
       if (1 < static_cast<int>(lock_state_[2].trailing_words_[5])) {
-        NetMsgPopup->pop("MOVEPENDING", 0, 2, 0);
+        NetMsgPrimary.pop("MOVEPENDING", 0, 2, 0);
       }
     }
     return 1;
@@ -4287,7 +4287,7 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
         if (lock_state_[2].trailing_words_[3] != 0) return 0;
         ++lock_state_[2].trailing_words_[5];
         if (static_cast<int>(lock_state_[2].trailing_words_[5]) < 2) return 0;
-        NetMsgPopup->pop("MOVEPENDING", 0, 2, nullptr);
+        NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
         return 0;
     }
 
@@ -4351,14 +4351,14 @@ int NetDaemon::veh_drop(int veh_id, int x, int y) {
                         if (!showed_wait_popup &&
                             timeGetTime() - start_time > 2000) {
                             showed_wait_popup = true;
-                            NetMsgPopup->pop("AWAITEXEC", 0, 2, nullptr);
+                            NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
                         }
                         wait_task();
                         receive();
                         locks_.check_global();
                         check_spock();
                     } while (lock_state_[2].leading_words_[3] == 1);
-                    if (showed_wait_popup) NetMsgPopup->close();
+                    if (showed_wait_popup) NetMsgPrimary.close();
                 }
                 --NetBusyCount;
                 NetDaemonNet.lock_state_[1].leading_words_[3] = saved_action_mode;
@@ -4457,7 +4457,7 @@ int NetDaemon::action(int veh_id, int mode) {
                     if (ExitTurnLoop != 0) break;
                     if (!showed_wait_popup && get_time() - start_time > 2000) {
                         showed_wait_popup = true;
-                        NetMsgPopup->pop("AWAITEXEC", 0, 2, nullptr);
+                        NetMsgPrimary.pop("AWAITEXEC", 0, 2, nullptr);
                     }
                     wait_task();
                     unsigned long first, second;
@@ -4468,7 +4468,7 @@ int NetDaemon::action(int veh_id, int mode) {
                     locks_.check_global();
                     check_spock();
                 } while (lock_state_[2].leading_words_[3] == 1);
-                if (showed_wait_popup) NetMsgPopup->close();
+                if (showed_wait_popup) NetMsgPrimary.close();
             }
             --NetBusyCount;
             NetDaemonNet.lock_state_[1].leading_words_[3] = saved_action_mode;
@@ -4507,7 +4507,7 @@ int NetDaemon::order_veh(int veh_id, int direction, int mode) {
             if (lock_state_[2].trailing_words_[3] != 0) return 0;
             ++lock_state_[2].trailing_words_[5];
             if (static_cast<int>(lock_state_[2].trailing_words_[5]) < 2) return 0;
-            NetMsgPopup->pop("MOVEPENDING", 0, 2, nullptr);
+            NetMsgPrimary.pop("MOVEPENDING", 0, 2, nullptr);
             return 0;
         }
         lock_state_[2].trailing_words_[5] = 0;
@@ -4709,7 +4709,7 @@ global_failed:
     }
     lock_state_[1].payload_.vehicle_selection_follow = 0;
     lock_state_[2].trailing_words_[3] = 0;
-    NetMsgPopup->pop("GLOBALFAILED", 5000, 0, nullptr);
+    NetMsgPrimary.pop("GLOBALFAILED", 5000, 0, nullptr);
     return 0;
 }
 
@@ -5521,54 +5521,54 @@ void NetDaemon::synch(int16_t opcode, int a2, int a3, int a4, char *packet,
         uint32_t &game_phase = lock_state_[0].trailing_words_[2];
         uint32_t &rules_phase = lock_state_[0].trailing_words_[3];
         if (opcode == 0x00 && static_cast<int32_t>(game_phase) >= 0) {
-            NetMsgPopup->pop("SYNCHINGGAME", outgoing, 1,
+            NetMsgPrimary.pop("SYNCHINGGAME", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); game_phase = 1;
         } else if (opcode == 0x04 && game_phase == 1) {
-            NetMsgPopup->pop("SYNCHINGWORLD", outgoing, 1,
+            NetMsgPrimary.pop("SYNCHINGWORLD", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); game_phase = 2;
         } else if (opcode == 0x05 && game_phase == 2) {
-            NetMsgPopup->pop("SYNCHINGREGIONS", outgoing, 1,
+            NetMsgPrimary.pop("SYNCHINGREGIONS", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); game_phase = 3;
         } else if (opcode == 0x06 && game_phase == 3) {
-            NetMsgPopup->pop("SYNCHINGPLAYERS", outgoing, 1,
+            NetMsgPrimary.pop("SYNCHINGPLAYERS", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); game_phase = 4;
         } else if (opcode == 0x12 && game_phase == 4) {
-            NetMsgPopup->pop("SYNCHINGUNITS", outgoing, 1,
+            NetMsgPrimary.pop("SYNCHINGUNITS", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); game_phase = 5;
         } else if (opcode == 0x19 && game_phase == 5) {
-            NetMsgPopup->pop("SYNCHINGPRESTIGE", outgoing, 1,
+            NetMsgPrimary.pop("SYNCHINGPRESTIGE", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); game_phase = 6;
         } else if (opcode == 0x21 && game_phase == 6) {
-            NetMsgPopup->pop("SYNCHINGREPLAY", outgoing, 1,
+            NetMsgPrimary.pop("SYNCHINGREPLAY", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); game_phase = 7;
         } else if (opcode == 0x15) {
-            NetMsgPopup->close(); do_all_draws(); game_phase = 8;
+            NetMsgPrimary.close(); do_all_draws(); game_phase = 8;
         }
         if (opcode == 0x80 && static_cast<int32_t>(rules_phase) >= 0) {
-            NetMsgPopup->pop("RULESYNCHTECH", outgoing, 1,
+            NetMsgPrimary.pop("RULESYNCHTECH", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); rules_phase = 1;
         } else if (opcode == 0x83 && rules_phase == 1) {
-            NetMsgPopup->pop("RULESYNCHTERR", outgoing, 1,
+            NetMsgPrimary.pop("RULESYNCHTERR", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); rules_phase = 2;
         } else if (opcode == 0x86 && rules_phase == 2) {
-            NetMsgPopup->pop("RULESYNCHVEH", outgoing, 1,
+            NetMsgPrimary.pop("RULESYNCHVEH", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); rules_phase = 3;
         } else if (opcode == 0x8B && rules_phase == 3) {
-            NetMsgPopup->pop("RULESYNCHFAC", outgoing, 1,
+            NetMsgPrimary.pop("RULESYNCHFAC", outgoing, 1,
                              reinterpret_cast<const char *>(outgoing));
             do_all_draws(); rules_phase = 4;
         } else if (opcode == 0x8D) {
-            NetMsgPopup->close(); do_all_draws(); rules_phase = 5;
+            NetMsgPrimary.close(); do_all_draws(); rules_phase = 5;
         }
     }
 

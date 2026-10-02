@@ -1489,7 +1489,7 @@ const char *last_popup;
 struct NetMsg { int pop(const char *label, int, int, const char *) {
     ++popup_count; last_popup=label; return 0;
 } };
-NetMsg Message; NetMsg *NetMsgPopup = &Message;
+NetMsg Message; NetMsg &NetMsgPrimary = Message;
 const char *last_xpop; int xpop_count;
 int X_pop(const char *label, int (__cdecl *)()) {
     ++xpop_count; last_xpop=label; return 0;

@@ -49,7 +49,7 @@ struct NetDaemon {
 }NetDaemonNet;
 struct Message {void pop(const char*key,int t,int zero,const char*p){
  assert(t==5000&&zero==0&&!p);notify=!std::strcmp(key,"UNITMOVED")?1:2;
-}}message;Message*NetMsgPopup=&message;
+}}message;Message &NetMsgPrimary = message;
 int veh_ready(int){return ready;}
 int veh_at(int,int){return target;}
 int stack_fix(int n){return n;}

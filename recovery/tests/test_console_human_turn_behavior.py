@@ -62,7 +62,7 @@ int parse_says(int slot,const char *value,int,int){(void)slot;(void)value;parsed
 int parse_num(int,int){record("parse-num");return 0;}
 int X_pop(const char *,void *){record("popup");return 1;}
 struct Popup { void pop(const char *,int,int,void *){record("net-pop");} } PopupObject;
-Popup *NetMsgPopup=&PopupObject;
+Popup &NetMsgPrimary = PopupObject;
 int end_calls=0; int end_after=999;
 int end_of_game(int){++end_calls;return end_calls>=end_after;}
 int wait_calls=0; bool toggle_cursor_on_wait=false;

@@ -472,10 +472,7 @@ DiploWin::~DiploWin() {  // ??1DiploWin@@QAE@XZ at 0x00444DB0
 // loop and releasing each pull-down through `delete` (the image's slot-0
 // deleting-destructor dispatch). Console::close already called it by name.
 
-NetMsg::~NetMsg() {  // ??1NetMsg@@QAE@XZ at 0x0047ADA0
-    typedef void(__fastcall *pending)(NetMsg *, void *);
-    PENDING_BODY(0x0047ADA0, pending)(this, nullptr);
-}
+
 
 NetWin::~NetWin() {  // ??1NetWin@@QAE@XZ at 0x004834E0
     typedef void(__fastcall *pending)(NetWin *, void *);
@@ -1096,23 +1093,7 @@ int __cdecl veh_pick(int a1, const char *label, int a3) {
 // ?world_build@@YAXXZ at 0x005C86E0 - HOMED into src/map.cpp 2026-09-05 (see
 // the marker there), so this file no longer carries it.
 
-// Two callees the diplomacy bodies homed into src/faction.cpp reach with the
-// image's `call rel32`:
-//   ?pop@NetMsg@@QAEXPBDHHPBD@Z   0x0047A890
-//       (src/recovered/units/0047a890.cpp - measured NO_COMPILE there) - the
-//       only one of the two still forwarded here.
-//   ?get_he_she@@YAPADHH@Z        0x0058FCE0 - WAS HERE and is gone: the body
-//       is homed into src/stringstruct.cpp 2026-09-27.
-// The seed under the remaining forwarder is FILE-only, so it is the only
-// definition in the build and carries no claim an extra definition could
-// landmine.
-void NetMsg::pop(const char *label, int duration, int channel,
-                 const char *target) {
-    typedef void(__fastcall *pending)(NetMsg *, void *, const char *, int, int,
-                                      const char *);
-    PENDING_BODY(0x0047A890, pending)(this, nullptr, label, duration, channel,
-                                      target);
-}
+
 
 
 

@@ -30,7 +30,7 @@
 #include "veh.h"
 #include "log.h"
 #include "lock.h"     // map_tile_bytes() - site_at/set_dirty walk its records
-#include "netmsg.h"   // NetMsgPopup - synch_display posts through it
+#include "netmsg.h"   // NetMsgPrimary - synch_display posts through it
 #include "mapwin.h"
 #include "worldwin.h"
 
@@ -6424,39 +6424,39 @@ void __cdecl synch_display(int stage, int arg1, int arg2, int arg3) {
     case 0:
         parse_num(0, arg1);
         parse_num(1, arg2);
-        NetMsgPopup->pop("SYNCHINGGAME2", 0, 1, 0);
+        NetMsgPrimary.pop("SYNCHINGGAME2", 0, 1, 0);
         do_all_draws();
         return;
     case 6:
         parse_num(0, arg1);
         parse_num(1, arg2);
         parse_num(2, arg3);
-        NetMsgPopup->pop("SYNCHINGPLAYERS2", 0, 1, 0);
+        NetMsgPrimary.pop("SYNCHINGPLAYERS2", 0, 1, 0);
         do_all_draws();
         return;
     case 4:
         parse_num(0, arg1);
         parse_num(1, arg2);
-        NetMsgPopup->pop("SYNCHINGWORLD2", 0, 1, 0);
+        NetMsgPrimary.pop("SYNCHINGWORLD2", 0, 1, 0);
         do_all_draws();
         return;
     case 0x30:
         parse_num(0, arg1);
         parse_num(1, arg2);
         parse_num(2, arg3);
-        NetMsgPopup->pop("SYNCHINGWORLD3", 0, 1, 0);
+        NetMsgPrimary.pop("SYNCHINGWORLD3", 0, 1, 0);
         do_all_draws();
         return;
     case 0x12:
         parse_num(0, arg1);
         parse_num(1, arg2);
-        NetMsgPopup->pop("SYNCHINGVEHICLES2", 0, 1, 0);
+        NetMsgPrimary.pop("SYNCHINGVEHICLES2", 0, 1, 0);
         do_all_draws();
         return;
     case 0x14:
         parse_num(0, arg1);
         parse_num(1, arg2);
-        NetMsgPopup->pop("SYNCHINGBASES2", 0, 1, 0);
+        NetMsgPrimary.pop("SYNCHINGBASES2", 0, 1, 0);
         do_all_draws();
         break;
     }

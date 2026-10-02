@@ -34,7 +34,7 @@
 #include "deletionlist.h"  // VehDeletionList - the multiplayer deletion queue
 #include "tutwin.h"  // TutWinBaseWindow - every removal's check_base/check_loc
 #include "mapwin.h"  // draw_tile - the free single-tile redraw the removals end on
-#include "netmsg.h"  // NetMsgPopup - the promote family reports through it
+#include "netmsg.h"  // NetMsgPrimary - the promote family reports through it
 #include "xpops.h"  // X_pop - transferred-unit single-player notifications.
 #include "netdaemon.h"  // NetDaemonNet, synch_veh / order_veh - the action family's net half
 #include "path.h"  // Paths - the move cost table the go-to verbs consult
@@ -1195,7 +1195,7 @@ int VehDrawSelection689F2C = -1;
 void __cdecl action_arty(int veh_id, int x, int y) {
     if (Vehs[veh_id].faction_id == ConsoleGlobal.faction_id_ &&
         veh_ready(veh_id) == 0) {
-        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
     const int vehicle_y = Vehs[veh_id].y;
@@ -1204,7 +1204,7 @@ void __cdecl action_arty(int veh_id, int x, int y) {
         dx = static_cast<int>(MapLongitudeBounds) - dx;
     }
     if (((abs(vehicle_y - y) + dx) & ~1) > 4) {
-        NetMsgPopup->pop("OUTOFRANGE", 5000, 0, nullptr);
+        NetMsgPrimary.pop("OUTOFRANGE", 5000, 0, nullptr);
         return;
     }
 
@@ -1272,7 +1272,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
         const int scatter = rand() & static_cast<int>(0x80000001u);
         if (scatter != 0) {
             if (faction != ConsoleGlobal.faction_id_) return;
-            NetMsgPopup->pop("ARTYBOMBFAILED", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("ARTYBOMBFAILED", 0x1388, 0, nullptr);
             return;
         }
 
@@ -1332,7 +1332,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
         const int artillery_scatter = rand() & static_cast<int>(0x80000003u);
         if (artillery_scatter == 0) {
             if (faction != ConsoleGlobal.faction_id_) goto finish_destroy;
-            NetMsgPopup->pop("BOMBFAILED", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("BOMBFAILED", 0x1388, 0, nullptr);
             goto finish_destroy;
         }
     }
@@ -1361,12 +1361,12 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
                         static_cast<int>(target_bits), 0);
                 if (assault) {
                     if (faction != ConsoleGlobal.faction_id_) goto finish_destroy;
-                    NetMsgPopup->pop("ARTYBOMBFAILED", 0x1388, 0, nullptr);
+                    NetMsgPrimary.pop("ARTYBOMBFAILED", 0x1388, 0, nullptr);
                 } else {
                     if (chassis.triad != TRIAD_AIR ||
                         faction != ConsoleGlobal.faction_id_)
                         goto finish_destroy;
-                    NetMsgPopup->pop("BOMBFAILED", 0x1388, 0, nullptr);
+                    NetMsgPrimary.pop("BOMBFAILED", 0x1388, 0, nullptr);
                 }
                 goto finish_destroy;
             }
@@ -1386,7 +1386,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
 
         forest_weapon = weapon == TERRA_FOREST;
         if (chassis.triad == TRIAD_AIR && faction == ConsoleGlobal.faction_id_)
-            NetMsgPopup->pop("BOMBSUCCEEDED", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("BOMBSUCCEEDED", 0x1388, 0, nullptr);
 
         synch_bit(x, effect_y, faction);
         int enemy = faction == 0 ? ConsoleGlobal.faction_id_ : faction;
@@ -1423,17 +1423,17 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
                          "sporlnch_sm.pcx", nullptr);
                     goto finish_destroy;
                 }
-                NetMsgPopup->pop("ATEFOREST", 0x1388, 0, nullptr);
+                NetMsgPrimary.pop("ATEFOREST", 0x1388, 0, nullptr);
             } else if (vehicle.proto_id == BSC_SPORE_LAUNCHER) {
                 popp(*ClimatePopupTitle, "SPORESLAUNCHED", 0,
                      "sporlnch_sm.pcx", nullptr);
                 goto finish_destroy;
             } else {
-                NetMsgPopup->pop("ATESTUFF", 0x1388, 0, nullptr);
+                NetMsgPrimary.pop("ATESTUFF", 0x1388, 0, nullptr);
             }
         } else {
             if (assault && enemy == ConsoleGlobal.faction_id_)
-                NetMsgPopup->pop("BOMBARD SUCCEEDED", 0x1388, 0, nullptr);
+                NetMsgPrimary.pop("BOMBARD SUCCEEDED", 0x1388, 0, nullptr);
             if (enemy < 0 || enemy == faction ||
                 (PlayersData[faction].diplo_treaties[enemy] & 8u) == 0)
                 goto finish_destroy;
@@ -1450,7 +1450,7 @@ void __cdecl action_destroy(int veh_id, int bits, int x, int y) {
             parse_says(0, Players[faction].noun_faction, -1, -1);
             parse_says(1, Bases[base_id].name_string, -1, -1);
             parse_says(3, Players[faction].adj_name_faction, -1, -1);
-            NetMsgPopup->pop(assault ? "HAVEDESTROYED1" : "HAVEDESTROYED",
+            NetMsgPrimary.pop(assault ? "HAVEDESTROYED1" : "HAVEDESTROYED",
                              0x1388, 0, nullptr);
         }
     }
@@ -3157,10 +3157,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
             parse_num(0, Rules.max_airdrop_sans_orb_insert);
             if (Players[faction].rule_flags & 0x80) {
-                NetMsgPopup->pop("DROPRANGE", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop("DROPRANGE", 0xFFFFEC78, 0, "al_drop_sm.pcx");
                 return 0;
             }
-            NetMsgPopup->pop("DROPRANGE", 0xFFFFEC78, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop("DROPRANGE", 0xFFFFEC78, 0, "airdp_sm.pcx");
         }
         return 0;
     }
@@ -3169,10 +3169,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
     if ((target->climate & 0xE0) < 0x60) {
         if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
             if (Players[faction].rule_flags & 0x80) {
-                NetMsgPopup->pop("DROPSEA", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop("DROPSEA", 0xFFFFEC78, 0, "al_drop_sm.pcx");
                 return 0;
             }
-            NetMsgPopup->pop("DROPSEA", 0xFFFFEC78, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop("DROPSEA", 0xFFFFEC78, 0, "airdp_sm.pcx");
         }
         return 0;
     }
@@ -3182,10 +3182,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         (PlayersData[faction].diplo_treaties[owner] & 1U) == 0) {
         if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
             if (Players[faction].rule_flags & 0x80) {
-                NetMsgPopup->pop("DROPUNIT", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop("DROPUNIT", 0xFFFFEC78, 0, "al_drop_sm.pcx");
                 return 0;
             }
-            NetMsgPopup->pop("DROPUNIT", 0xFFFFEC78, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop("DROPUNIT", 0xFFFFEC78, 0, "airdp_sm.pcx");
         }
         return 0;
     }
@@ -3194,10 +3194,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         zoc_move(x, y, faction) != 0) {
         if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
             if (Players[faction].rule_flags & 0x80) {
-                NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop("NONCOMDROP", 0xFFFFEC78, 0, "al_drop_sm.pcx");
                 return 0;
             }
-            NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop("NONCOMDROP", 0xFFFFEC78, 0, "airdp_sm.pcx");
         }
         return 0;
     }
@@ -3209,10 +3209,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         Weapon[VehPrototypes[vehicle.proto_id].weapon_id].offense_rating == 0) {
         if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
             if (Players[faction].rule_flags & 0x80) {
-                NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "al_drop_sm.pcx");
+                NetMsgPrimary.pop("NONCOMDROP", 0xFFFFEC78, 0, "al_drop_sm.pcx");
                 return 0;
             }
-            NetMsgPopup->pop("NONCOMDROP", 0xFFFFEC78, 0, "airdp_sm.pcx");
+            NetMsgPrimary.pop("NONCOMDROP", 0xFFFFEC78, 0, "airdp_sm.pcx");
         }
         return 0;
     }
@@ -3254,10 +3254,10 @@ int __cdecl action_airdrop(int veh_id, int x, int y, int mode) {
         if ((mode & 1) != 0 && faction == ConsoleGlobal.faction_id_) {
             parse_says(0, Bases[base_id].name_string, -1, -1);
             if (Players[faction].rule_flags & 0x80) {
-                NetMsgPopup->pop("AIRDEFENSES", 0xFFFFEC78, 0, "alair_sm.pcx");
+                NetMsgPrimary.pop("AIRDEFENSES", 0xFFFFEC78, 0, "alair_sm.pcx");
                 return 0;
             }
-            NetMsgPopup->pop("AIRDEFENSES", 0xFFFFEC78, 0, "air_sm.pcx");
+            NetMsgPrimary.pop("AIRDEFENSES", 0xFFFFEC78, 0, "air_sm.pcx");
         }
         return 0;
     }
@@ -9210,7 +9210,7 @@ bool veh_bung_copy_chunk(size_t offset, unsigned char *packet, size_t count,
 }
 
 // The battle-resolution messages. Each is the (label, icon) pair a
-// NetMsgPopup->pop takes: the label is the phrase id key, the icon the small
+// NetMsgPrimary.pop takes: the label is the phrase id key, the icon the small
 // portrait drawn beside the line.
 char *const VehLabelMORALE = (char *)0x0068A0A8;      // "MORALE"
 char *const VehIconBATWON_SM_PCX = (char *)0x0068A098;   // "batwon_sm.pcx"
@@ -9336,14 +9336,14 @@ void __cdecl promote(int veh_id) {
     if (proto_id < 0x40) {
         if (Weapon[VehPrototypes[proto_id].weapon_id].offense_rating < 0) {
             parse_say(0, (int)Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
-            NetMsgPopup->pop(VehLabelMORALE2, 0xffffec78, 0,
+            NetMsgPrimary.pop(VehLabelMORALE2, 0xffffec78, 0,
                              VehIconBATWON2_SM_PCX);
             return;
         }
     }
 
     parse_say(0, (int)Morale[morale_veh(veh_id, 1, 0)].name, -1, -1);
-    NetMsgPopup->pop(VehLabelMORALE, 0xffffec78, 0, VehIconBATWON_SM_PCX);
+    NetMsgPrimary.pop(VehLabelMORALE, 0xffffec78, 0, VehIconBATWON_SM_PCX);
 }
 
 /*
@@ -9591,12 +9591,12 @@ Purpose: Pop a battle message with its portrait.
 //           The image's catalogue name is an uninformative `sub_`; this tree
 //           names what the body does. Renames update this fact, not the bytes.
 // HOMED from src/recovered/0050b9c0.cpp, 2026-09-04. Its `g_00805338` is
-// netmsg.h's NetMsgPopup; 5000 is the message lifetime in ticks.
+// netmsg.h's NetMsgPrimary; 5000 is the message lifetime in ticks.
 Return Value: n/a
 Status: BYTE_EXACT.
 */
 void __cdecl veh_battle_msg(char *label, char *icon) {
-    NetMsgPopup->pop(label, 5000, 0, icon);
+    NetMsgPrimary.pop(label, 5000, 0, icon);
 }
 
 // The eight per-direction map deltas battle_fight adds to a vehicle's x and y
@@ -9629,13 +9629,13 @@ Purpose: Report the feature at a site, multiplayer only.
 // HOMED from src/recovered/004cd060.cpp, 2026-09-04 - its archive-only
 // BYTE_EXACT claim re-earned in the TU that owns the rest of the action
 // family. The scaffold's `g_0093f660` is IsMultiplayerNet and
-// `g_00805338` is netmsg.h's NetMsgPopup.
+// `g_00805338` is netmsg.h's NetMsgPrimary.
 Return Value: n/a
 Status: BYTE_EXACT.
 */
 void __cdecl action_feature() {
     if (IsMultiplayerNet) {
-        NetMsgPopup->pop(VehLabelFEATURE, 0x1388, 0, 0);
+        NetMsgPrimary.pop(VehLabelFEATURE, 0x1388, 0, 0);
     }
 }
 
@@ -10167,9 +10167,9 @@ void __cdecl action_road_to(int veh_id) {
             say_loc(StringTemp, goal_x, goal_y, 0, 2, 0);
             parse_says(0, StringTemp, -1, -1);
             if (order == ORDER_ROAD_TO) {
-                NetMsgPopup->pop(VehLabelROAD, 5000, 0, 0);
+                NetMsgPrimary.pop(VehLabelROAD, 5000, 0, 0);
             } else {
-                NetMsgPopup->pop(VehLabelTUBE, 5000, 0, 0);
+                NetMsgPrimary.pop(VehLabelTUBE, 5000, 0, 0);
             }
             return;
         }
@@ -10547,7 +10547,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
         if (action == TERRA_THERMAL_BORE && faction == ConsoleGlobal.faction_id_
             && base_idx >= 0 && Bases[base_idx].faction_id_current == faction) {
             parse_says(0, Bases[base_idx].name_string, -1, -1);
-            NetMsgPopup->pop(VehLabelBOREHOLEMINE, 5000, 0, 0);
+            NetMsgPrimary.pop(VehLabelBOREHOLEMINE, 5000, 0, 0);
         }
     }
 
@@ -10582,7 +10582,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
                 && Rules.minerals_harvesting_forest != 0) {
                 parse_says(0, Bases[near_base].name_string, -1, -1);
                 parse_num(0, Rules.minerals_harvesting_forest);
-                NetMsgPopup->pop(VehLabelHARVESTFOREST, 5000, 0, 0);
+                NetMsgPrimary.pop(VehLabelHARVESTFOREST, 5000, 0, 0);
             }
             TutWinBaseWindow.check_base(near_base);
         }
@@ -10607,7 +10607,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             parse_says(1, Players[faction].adj_name_faction, -1, -1);
             const char *msg = faction == ConsoleGlobal.faction_id_ ? VehLabelTERRAMINE
                                                       : VehLabelTERRAYOURS;
-            NetMsgPopup->pop(msg, 5000, 0, 0);
+            NetMsgPrimary.pop(msg, 5000, 0, 0);
         }
         if (MapBaseIdClosestSubmergedVeh[ConsoleGlobal.faction_id_] >= 0) {
             const int drown_base = MapBaseIdClosestSubmergedVeh[faction];
@@ -10615,7 +10615,7 @@ int __cdecl action_terraform(int veh_id, int action, int do_it) {
             parse_says(1, Players[faction].adj_name_faction, -1, -1);
             const char *msg = faction == ConsoleGlobal.faction_id_ ? VehLabelDROWNMINE
                                                       : VehLabelDROWNYOURS;
-            NetMsgPopup->pop(msg, 5000, 0, 0);
+            NetMsgPrimary.pop(msg, 5000, 0, 0);
         }
     }
 
@@ -11149,7 +11149,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
                     & (1u << (original_owner & 0x1f))) != 0) {
                 // The seed tests Language (0x009BC054), not the network
                 // mode; this key is the pinned NUL string at 0x006882AC.
-                NetMsgPopup->pop("GOTUNIT", 5000, 0, nullptr);
+                NetMsgPrimary.pop("GOTUNIT", 5000, 0, nullptr);
                 return;
             }
             const Map *tile = map_loc(x, y);
@@ -11168,7 +11168,7 @@ void __cdecl action_give(int vehicle_id, int faction_id) {
         GenderDefault = Players[faction_id].noun_gender;
         PluralityDefault = Players[faction_id].is_noun_plural;
         parse_says(3, Players[faction_id].noun_faction, -1, -1);
-        NetMsgPopup->pop(faction_id != 0 ? "GAVEUNIT" : "GAVEWILD",
+        NetMsgPrimary.pop(faction_id != 0 ? "GAVEUNIT" : "GAVEWILD",
                          5000, 0, nullptr);
     }
 }

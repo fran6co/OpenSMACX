@@ -143,7 +143,7 @@ def run_host(tmp_path, body):
             netmsg_target = target;
           }
         } netmsg;
-        NetMsg *NetMsgPopup = &netmsg;
+        NetMsg &NetMsgPrimary = netmsg;
         int synch_calls = 0, synch_opcode = -1, synch_d = -1, synch_flags = -1;
         struct NetDaemon {
           void synch(int16_t opcode, int, int, int, char *, int d,

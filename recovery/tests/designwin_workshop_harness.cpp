@@ -46,7 +46,7 @@ static int popp(const char *, const char *, int, const char *, int (*)()) {
 struct FX { void play(int) {} } g_FX;
 struct NetDaemon { int lock(int,int,int,int,int,int) { return lock_result; } void unlock() { ++unlock_calls; } } NetDaemonNet;
 struct Msg { void pop(const char *label, int, int, int) { if (!strcmp(label,"DESIGNNO")) ++netmsg_designno; } } netmsg;
-Msg *NetMsgPopup=&netmsg;
+Msg &NetMsgPrimary = netmsg;
 struct DesignWin { int exec(int faction,int proto) { ++tut_calls; tut_last_faction=faction; tut_last_proto=proto; return 17; } } TutWinDesWindow;
 class Dialog { public: unsigned int field_34_,field_48_,field_50_; };
 struct GraphicWin {};

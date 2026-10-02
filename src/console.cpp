@@ -58,7 +58,7 @@
 #include "log.h"  // log_say - the chat / message handlers report through it
 #include "netdaemon.h"  // synch_veh - the turn handlers resync vehicles
 
-#include "netmsg.h"  // NetMsgPopup - the editor's ALREADYDONE/PROTECT* pops
+#include "netmsg.h"  // NetMsgPrimary - the editor's ALREADYDONE/PROTECT* pops
 #include "tutwin.h"  // TutWinGlobal - survey2 raises the map tutorial on it
 #include "spying_recovery.h"  // spying - the espionage order
 #include "technology.h"  // has_tech - editor_tech and the tech orders gate on it
@@ -526,25 +526,25 @@ void Console::oblit(int vehicle_id) { // 0x004D5D30
     const int y = vehicle.y;
 
     if (not_my_turn()) {
-        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     if (!veh_ready(vehicle_id)) {
-        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
 
     int base_id = base_at(x, y);
     if (base_id < 0) {
-        NetMsgPopup->pop("OBLITNOBASE", 5000, 0, nullptr);
+        NetMsgPrimary.pop("OBLITNOBASE", 5000, 0, nullptr);
         return;
     }
     if (Bases[base_id].faction_id_current != faction_id) {
-        NetMsgPopup->pop("OBLITNOTYOURS", 5000, 0, nullptr);
+        NetMsgPrimary.pop("OBLITNOTYOURS", 5000, 0, nullptr);
         return;
     }
     if (is_objective(base_id)) {
-        NetMsgPopup->pop("OBLITNOTOBJECTIVE", 5000, 0, nullptr);
+        NetMsgPrimary.pop("OBLITNOTOBJECTIVE", 5000, 0, nullptr);
         return;
     }
 
@@ -710,7 +710,7 @@ void Console::corner_the_market() { // 0x004E2000
         }
     }
     if (!has_headquarters) {
-        NetMsgPopup->pop("CORNERNOHQ", 5000, 0, nullptr);
+        NetMsgPrimary.pop("CORNERNOHQ", 5000, 0, nullptr);
         return;
     }
 
@@ -722,13 +722,13 @@ void Console::corner_the_market() { // 0x004E2000
 
     if (faction.corner_market_turn > TurnCurrentNum) {
         parse_num(0, static_cast<int>(game_year(faction.corner_market_turn)));
-        NetMsgPopup->pop("CORNERALREADY", 5000, 0, nullptr);
+        NetMsgPrimary.pop("CORNERALREADY", 5000, 0, nullptr);
         return;
     }
 
     if (faction.energy_reserves < amount) {
         parse_num(1, faction.energy_reserves);
-        NetMsgPopup->pop("CORNERNOTYET", 5000, 0, nullptr);
+        NetMsgPrimary.pop("CORNERNOTYET", 5000, 0, nullptr);
         return;
     }
 
@@ -919,7 +919,7 @@ void Console::governor_directives() { // 0x00516DA0
     }
 
     parse_says(0, StringTemp, -1, -1);
-    NetMsgPopup->pop("GOVERNORCONTROLDONE", 5000, 0, nullptr);
+    NetMsgPrimary.pop("GOVERNORCONTROLDONE", 5000, 0, nullptr);
     diplo_unlock();
 }
 
@@ -974,7 +974,7 @@ void Console::chat(int target_faction) {
     if (ConsoleControlTurnActive &&
         (state[1].leading_words_[1] & local_bit) == 0 &&
         state[0].trailing_words_[4] == 0) {
-        NetMsgPopup->pop("FINISHUPKEEP", 1000, 0, 0);
+        NetMsgPrimary.pop("FINISHUPKEEP", 1000, 0, 0);
         return;
     }
 
@@ -2105,16 +2105,16 @@ void Console::road_to(int veh_id, int cursor_mode) {
     const Veh &vehicle = Vehs[veh_id];
     const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
     if (prototype.plan != 9) {
-        NetMsgPopup->pop("NEEDTERRAFORMERS", 5000, 0, 0);
+        NetMsgPrimary.pop("NEEDTERRAFORMERS", 5000, 0, 0);
         return;
     }
     if (Chassis[prototype.chassis_id].triad != TRIAD_LAND) {
-        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, 0);
+        NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, 0);
         return;
     }
     const Map &tile = map_tiles()[vehicle.y * MapLongitude + (vehicle.x >> 1)];
     if ((tile.climate & ~0x1F) < 0x60) {
-        NetMsgPopup->pop("NOTINOCEAN", 5000, 0, 0);
+        NetMsgPrimary.pop("NOTINOCEAN", 5000, 0, 0);
         return;
     }
     if (cursor_mode != 0x1C ||
@@ -2239,7 +2239,7 @@ void Console::convoy(int veh_id) {
     }
     if (vehicle.home_base_id >= 0) {
         if (can_convoy(vehicle.x, vehicle.y) == 0) {
-            NetMsgPopup->pop("CANTCONVOY", 5000, 0, 0);
+            NetMsgPrimary.pop("CANTCONVOY", 5000, 0, 0);
             NetDaemonNet.unlock_veh();
             return;
         }
@@ -2303,7 +2303,7 @@ void Console::toggle_dest() {
 
 void Console::disband(int veh_id) {
     if ((Vehs[veh_id].flags & 0x20) && !(GameState & 0x40)) {
-        NetMsgPopup->pop("DISBANDOBJ", 5000, 0, nullptr);
+        NetMsgPrimary.pop("DISBANDOBJ", 5000, 0, nullptr);
         return;
     }
 
@@ -2426,7 +2426,7 @@ static const char *const StrEditorEnergy = (const char *)0x006890E0;  // "EDITOR
 static const char *const StrBrush = (const char *)0x00689140;         // "BRUSH"
 static const char *const StrTechRandom = (const char *)0x0068A8C8;    // "TECHRANDOM"
 
-// .rdata labels the order handlers raise through NetMsgPopup, read out of the
+// .rdata labels the order handlers raise through NetMsgPrimary, read out of the
 // image. SIMULNO and UNITMOVED each exist twice - the image pushes two
 // distinct .rdata copies of the same text from different guards, so each
 // address keeps its own binding.
@@ -2480,7 +2480,7 @@ void Console::set_road_to(int veh_id, int x_coord, int y_coord, int order) {
     const int target_index = MapLongitude * y_coord + (x_coord >> 1);
     const int origin_index = MapLongitude * vehicle.y + (vehicle.x >> 1);
     if ((map_tiles()[target_index].climate & ~0x1F) < 0x60) {
-        NetMsgPopup->pop(StrNotHere, 5000, 0, 0);
+        NetMsgPrimary.pop(StrNotHere, 5000, 0, 0);
         return;
     }
     if (map_tiles()[target_index].region != map_tiles()[origin_index].region) {
@@ -2599,11 +2599,11 @@ void Console::unload(int veh_id) {
 
     NetDaemonNet.unlock_veh();
     if (flags == 0) {
-        NetMsgPopup->pop("UNLOADNO", 0x1388, 0, nullptr);
+        NetMsgPrimary.pop("UNLOADNO", 0x1388, 0, nullptr);
         return;
     }
     if ((flags & 2) == 0) {
-        NetMsgPopup->pop("UNLOADNEXT", 0x1388, 0, nullptr);
+        NetMsgPrimary.pop("UNLOADNEXT", 0x1388, 0, nullptr);
         return;
     }
     field_23BE4_ = 0;
@@ -2915,12 +2915,12 @@ void Console::erase_landmark(int x_coord, int y_coord) {
 
     const int landmark_id = find_landmark(x_coord, y_coord, 1);
     if (landmark_id < 0) {
-        NetMsgPopup->pop("LANDMARKNONE", 5000, 0, nullptr);
+        NetMsgPrimary.pop("LANDMARKNONE", 5000, 0, nullptr);
         return;
     }
     if ((GameState & 0x80) == 0 &&
         valid_landmark(x_coord, y_coord, ConsoleGlobal.faction_id_) == 0) {
-        NetMsgPopup->pop("LANDMARKNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
         return;
     }
 
@@ -3898,12 +3898,12 @@ void Console::editor_lock2() {
     const uint32_t lock_mask = 0x8000000;
     if (flags & lock_mask) {
         GameState = flags & ~lock_mask;
-        NetMsgPopup->pop(StrProtectOff, 5000, 0, 0);
+        NetMsgPrimary.pop(StrProtectOff, 5000, 0, 0);
         MainInterfaceGlobal.draw_edit_pane();
         return;
     }
     GameState = flags | lock_mask;
-    NetMsgPopup->pop(StrProtectOn, 5000, 0, 0);
+    NetMsgPrimary.pop(StrProtectOn, 5000, 0, 0);
     if (ConsoleGlobal.cursor_active_ != 0) {
         set_view(1);
     }
@@ -4727,7 +4727,7 @@ void Console::explore(int veh_id) {
 // &Vehs[a1].proto_id, 0x0095282C is &Vehs[a1].state, 0x009AB868 is
 // veh.h's VehPrototypes (whose +0x25 byte is VehPrototype::weapon_id) and
 // 0x0094AE68 is Weapon[0].offense_rating. The daemon is NetDaemonNet, the
-// popup is netmsg.h's NetMsgPopup, and the two labels read DESIGNATED /
+// popup is netmsg.h's NetMsgPrimary, and the two labels read DESIGNATED /
 // UNDESIGNATED out of the image.
 
 
@@ -4744,10 +4744,10 @@ void Console::designate(int veh_id) {
             int16_t proto = Vehs[veh_id].proto_id;
             parse_says(0, VehPrototypes[proto].veh_name, -1, -1);
             if ((Vehs[veh_id].state & 0x80) != 0) {
-                NetMsgPopup->pop(StrDesignated, 5000, 0, 0);
+                NetMsgPrimary.pop(StrDesignated, 5000, 0, 0);
                 return;
             }
-            NetMsgPopup->pop(StrUndesignated, 5000, 0, 0);
+            NetMsgPrimary.pop(StrUndesignated, 5000, 0, 0);
         }
     }
 }
@@ -5960,7 +5960,7 @@ void Console::set_bombing_run(int veh_id, int x_coord, int y_coord) {
         (PlayersData[Vehs[veh_id].faction_id]
              .diplo_treaties[Bases[base_id].faction_id_current] &
          DTREATY_VENDETTA) == 0) {
-        NetMsgPopup->pop(StrNoBomb, 5000, 0, 0);
+        NetMsgPrimary.pop(StrNoBomb, 5000, 0, 0);
         return;
     }
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, 0) != 0) {
@@ -6115,23 +6115,23 @@ void Console::destroy(int veh_id) {
     Scroll scroll;
 
     if (not_my_turn()) {
-        NetMsgPopup->pop(StrSimulNo, 5000, 0, 0);
+        NetMsgPrimary.pop(StrSimulNo, 5000, 0, 0);
         return;
     }
     if (veh_ready(veh_id) == 0) {
-        NetMsgPopup->pop(StrUnitMoved, 5000, 0, 0);
+        NetMsgPrimary.pop(StrUnitMoved, 5000, 0, 0);
         return;
     }
     if (NetDaemonNet.lock_veh(&veh_id, 0, -1, -1, -1) != 0) {
         return;
     }
     if (not_my_turn()) {
-        NetMsgPopup->pop(StrSimulNo2, 5000, 0, 0);
+        NetMsgPrimary.pop(StrSimulNo2, 5000, 0, 0);
         NetDaemonNet.unlock_veh();
         return;
     }
     if (veh_ready(veh_id) == 0) {
-        NetMsgPopup->pop(StrUnitMoved2, 5000, 0, 0);
+        NetMsgPrimary.pop(StrUnitMoved2, 5000, 0, 0);
         NetDaemonNet.unlock_veh();
         return;
     }
@@ -6147,21 +6147,21 @@ void Console::destroy(int veh_id) {
 
     if ((Weapon[weapon_id].offense_rating == 0) &&
         (Weapon[weapon_id].mode != WPN_MODE_TERRAFORMER)) {
-        NetMsgPopup->pop(StrOnlyCombat, 5000, 0, 0);
+        NetMsgPrimary.pop(StrOnlyCombat, 5000, 0, 0);
         NetDaemonNet.unlock_veh();
         return;
     }
     if (((tile->bit & 1) != 0) && ((tile->val2 & 0xF) < 8) &&
         ((tile->val2 & 0xF) >= 0)) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop(StrNotBase, 5000, 0, 0);
+        NetMsgPrimary.pop(StrNotBase, 5000, 0, 0);
         return;
     }
 
     const int triad = Chassis[VehPrototypes[proto_id].chassis_id].triad;
     if ((triad != 2) && (static_cast<int>(not_ocean) != (triad == 1))) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop(StrNotInTriad, 5000, 0, 0);
+        NetMsgPrimary.pop(StrNotInTriad, 5000, 0, 0);
         return;
     }
 
@@ -6190,7 +6190,7 @@ void Console::destroy(int veh_id) {
 
     if (item_count == 0) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop(StrNotHere, 5000, 0, 0);
+        NetMsgPrimary.pop(StrNotHere, 5000, 0, 0);
         return;
     }
 
@@ -6355,7 +6355,7 @@ void Console::time_controls() {
     }
 
     if (console_turns_assigned() == 0) {
-        NetMsgPopup->pop(StrHostTime, 5000, 0, 0);
+        NetMsgPrimary.pop(StrHostTime, 5000, 0, 0);
         popup.close();
         return;
     }
@@ -6796,18 +6796,18 @@ void __cdecl Console::goto_routine(int base_id) {
 void Console::arty(int vehicle) {
     if (!can_arty(Vehs[vehicle].proto_id, 1)) return;
     if (not_my_turn()) {
-        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     if (!veh_ready(vehicle)) {
-        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
     Map *const tile = map_loc(Vehs[vehicle].x, Vehs[vehicle].y);
     if ((tile->climate & 0xe0) < 0x60 &&
         Chassis[VehPrototypes[Vehs[vehicle].proto_id].chassis_id].triad != 1 &&
         (!(tile->bit & 1) || (tile->val2 & 15) >= 8)) {
-        NetMsgPopup->pop("SEAARTY", 5000, 0, nullptr);
+        NetMsgPrimary.pop("SEAARTY", 5000, 0, nullptr);
         return;
     }
     ConsoleGlobal.cursor_on(10, static_cast<int>(Rules.artillery_max_rng));
@@ -6880,21 +6880,21 @@ void Console::use_time_bonus() {
     const int selection = TimeControlsSelection;
     const int faction = ConsoleGlobal.faction_id_;
     if ((NetTurnFlags & 0x10) && NetTurnFaction != faction) {
-        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     if (PlayersData[faction].time_bonus_count <= 0) {
         parse_num(0, TimeControl[selection].extra);
-        NetMsgPopup->pop("NOTIMEBONUSES", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTIMEBONUSES", 5000, 0, nullptr);
         return;
     }
     if (GameState & 0x800) {
-        NetMsgPopup->pop("NOBONUSATEND", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOBONUSATEND", 5000, 0, nullptr);
         return;
     }
     if ((GameState & 2) &&
         ((1u << faction_id_) & NetDaemonNet.lock_state_[0].trailing_words_[7])) {
-        NetMsgPopup->pop("NOBONUSDONE", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOBONUSDONE", 5000, 0, nullptr);
         return;
     }
     message_data(0x2306, 0, 0, 0, 0, 0);
@@ -6997,7 +6997,7 @@ void Console::name_landmark(int x, int y) {
             : valid_landmark(MapLandmark[landmark].x, MapLandmark[landmark].y,
                              ConsoleGlobal.faction_id_);
         if (!valid) {
-            NetMsgPopup->pop("LANDMARKNO", 5000, 0, nullptr);
+            NetMsgPrimary.pop("LANDMARKNO", 5000, 0, nullptr);
             return;
         }
     }
@@ -7013,7 +7013,7 @@ void Console::name_landmark(int x, int y) {
         }
         if (new_landmark(x, y, name) < 0) {
             parse_num(0, 64);
-            NetMsgPopup->pop("LANDMARKTOOMANY", 5000, 0, nullptr);
+            NetMsgPrimary.pop("LANDMARKTOOMANY", 5000, 0, nullptr);
         }
         ::draw_map(1);
     } else if (!IsMultiplayerNet) {
@@ -7033,17 +7033,17 @@ void Console::editor_on() {
     const unsigned int flags = GameState;
     if ((IsMultiplayerNet || IsMultiplayerPBEM) &&
         !(flags & 0x61) && !(flags & 0x1000)) {
-        NetMsgPopup->pop("EDITORNET", 5000, 0, nullptr);
+        NetMsgPrimary.pop("EDITORNET", 5000, 0, nullptr);
         return;
     }
     if (!(flags & 0x60) && !X_pop("SCENEDITOR", nullptr)) return;
     GameState = (GameState ^ 0x40) | 0x20;
     if (GameRules & 0x400) auto_save();
     if (GameState & 0x40) {
-        NetMsgPopup->pop("EDITORON", 5000, 0, nullptr);
+        NetMsgPrimary.pop("EDITORON", 5000, 0, nullptr);
         GameState |= 0x80;
     } else {
-        NetMsgPopup->pop("EDITOROFF", 5000, 0, nullptr);
+        NetMsgPrimary.pop("EDITOROFF", 5000, 0, nullptr);
         GameState &= ~0x80u;
     }
     if ((GameState & 0xc0) == 0xc0 && !IfaceIdToSlotStorage[ActiveIfaceIdStorage])
@@ -7219,16 +7219,16 @@ void Console::go_to(int subject, int order, int grouped) {
         if (order == -3) {
             const int base = base_at(source_x, source_y);
             if (base < 0) {
-                NetMsgPopup->pop("GATENOBASE", 0x1388, 0, 0);
+                NetMsgPrimary.pop("GATENOBASE", 0x1388, 0, 0);
                 goto finish;
             }
             if (!has_fac(0x21, base, 0)) {
-                NetMsgPopup->pop("GATENOGATE", 0x1388, 0, 0);
+                NetMsgPrimary.pop("GATENOGATE", 0x1388, 0, 0);
                 goto finish;
             }
             if (Bases[base].state & 0x20000000) {
                 parse_says(0, Bases[base].name_string, -1, -1);
-                NetMsgPopup->pop("GATEUSED", 0x1388, 0, 0);
+                NetMsgPrimary.pop("GATEUSED", 0x1388, 0, 0);
                 goto finish;
             }
         }
@@ -7342,7 +7342,7 @@ void Console::go_to(int subject, int order, int grouped) {
             if (id == preferred) popup.set_value(id);
         }
         if (!count) {
-            if (order == -3) NetMsgPopup->pop("GATENODEST", 0x1388, 0, 0);
+            if (order == -3) NetMsgPrimary.pop("GATENODEST", 0x1388, 0, 0);
             PlanWindow.close(); break;
         }
         popup.dialogs().set_selection_callback(goto_routine);
@@ -7470,7 +7470,7 @@ void Console::activate(int x, int y, int current_selection) {
             }
             const bool ready_now = (NetDaemonNet.lock_state_[0].trailing_words_[7] &
                 (1u << ConsoleGlobal.faction_id_)) && veh_ready(vehicle);
-            NetMsgPopup->pop(ready_now ? "ALREADYDONE" : "FIRSTMOVE", 2000, 0, nullptr);
+            NetMsgPrimary.pop(ready_now ? "ALREADYDONE" : "FIRSTMOVE", 2000, 0, nullptr);
             return;
         }
     }
@@ -7521,7 +7521,7 @@ void Console::activate(int x, int y, int current_selection) {
     if (Vehs[vehicle].faction_id != faction_id_) return;
     log_say("Activate AWAKEN", vehicle, Vehs[vehicle].x, Vehs[vehicle].y);
     if (veh_jail(vehicle)) {
-        NetMsgPopup->pop("INJAIL", 5000, 0, nullptr);
+        NetMsgPrimary.pop("INJAIL", 5000, 0, nullptr);
         return;
     }
     if (IsMultiplayerNet && veh_selectable(vehicle) && !Vehs[vehicle].order &&
@@ -7542,7 +7542,7 @@ void Console::activate(int x, int y, int current_selection) {
             if (popv(ScriptPopupFile, "ALREADYMOVED2", vehicle, 0))
                 set_move(0);
         } else if (IsMultiplayerNet) {
-            NetMsgPopup->pop("ALREADYMOVED", 5000, 0, nullptr);
+            NetMsgPrimary.pop("ALREADYMOVED", 5000, 0, nullptr);
         } else {
             popv(ScriptPopupFile, "ALREADYMOVED", vehicle, 0);
         }
@@ -7585,7 +7585,7 @@ void Console::give_veh(int vehicle_id) { // 0x004D26A0
          DTREATY_VENDETTA) != 0) {
         if (prototype_id > 0x3F || (weapon_rating >= 0 && prototype_id != 0xF)) {
             NetDaemonNet.unlock_veh();
-            NetMsgPopup->pop("CANTGIVE", 5000, 0, nullptr);
+            NetMsgPrimary.pop("CANTGIVE", 5000, 0, nullptr);
             return;
         }
         recipient_faction = 0;
@@ -7598,7 +7598,7 @@ void Console::give_veh(int vehicle_id) { // 0x004D26A0
                              (tile->val2 & 0x0F) > 7;
         if (blocked && (tile->bit & BIT_AIRBASE) == 0) {
             NetDaemonNet.unlock_veh();
-            NetMsgPopup->pop("CANTGIVEAIR", 5000, 0, nullptr);
+            NetMsgPrimary.pop("CANTGIVEAIR", 5000, 0, nullptr);
             return;
         }
     }
@@ -7744,7 +7744,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     const uint8_t human_factions = static_cast<uint8_t>(LockEnableMask);
     const bool human_faction = (human_factions & faction_bit) != 0;
     if (Vehs[veh_id].moves_expended != 0 && human_faction) {
-        NetMsgPopup->pop(IsMultiplayerNet ? "UNITMOVED" : "UNITMOVED2",
+        NetMsgPrimary.pop(IsMultiplayerNet ? "UNITMOVED" : "UNITMOVED2",
                          5000, 0, nullptr);
         popup.close();
         return 0;
@@ -7760,7 +7760,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
         // lock_veh may rewrite the ID. The original pre-lock faction stays
         // in use, while this moved-state check addresses the returned slot.
         if (Vehs[veh_id].moves_expended != 0) {
-            NetMsgPopup->pop(IsMultiplayerNet ? "UNITMOVED" : "UNITMOVED2",
+            NetMsgPrimary.pop(IsMultiplayerNet ? "UNITMOVED" : "UNITMOVED2",
                              5000, 0, nullptr);
             NetDaemonNet.unlock_veh();
             popup.close();
@@ -7989,7 +7989,7 @@ int Console::upgrade(int veh_id) { // 0x004D06C0
     // The native no-candidate branch notifies before releasing the lock.
     if ((static_cast<uint8_t>(LockEnableMask) & faction_bit) != 0 &&
         candidate_count == 0) {
-        NetMsgPopup->pop("NOUPGRADE", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOUPGRADE", 5000, 0, nullptr);
         NetDaemonNet.unlock_veh();
         popup.close();
         return 0;
@@ -9090,7 +9090,7 @@ void Console::use_ability(int vehicle_id) {
     // tile state.  The message and timing are shared with the other Console
     // order handlers.
     if (not_my_turn() != 0) {
-        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
 
@@ -9104,13 +9104,13 @@ void Console::use_ability(int vehicle_id) {
          entry_prototype.plan == PLAN_FUNGAL_MISSILE);
 
     if (!has_terraform_ability && !missile_former) {
-        NetMsgPopup->pop("NOABILITY", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOABILITY", 5000, 0, nullptr);
         return;
     }
     if (has_terraform_ability && !missile_former &&
         (Vehs[vehicle_id].moves_expended != 0 ||
          veh_ready(vehicle_id) == 0)) {
-        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
 
@@ -9122,12 +9122,12 @@ void Console::use_ability(int vehicle_id) {
         const Map *const tile = map_loc(entry_x, entry_y);
         const int base_owner = tile->val2 & 0x0F;
         if ((tile->bit & BIT_BASE_IN_TILE) != 0 && base_owner < 8) {
-            NetMsgPopup->pop("MISSILEBASE", 5000, 0, nullptr);
+            NetMsgPrimary.pop("MISSILEBASE", 5000, 0, nullptr);
             return;
         }
         if (entry_prototype.plan == PLAN_TECTONIC_MISSILE &&
             (tile->climate & 0xE0) < 0x60) {
-            NetMsgPopup->pop("TECTONICOCEAN", 5000, 0, nullptr);
+            NetMsgPrimary.pop("TECTONICOCEAN", 5000, 0, nullptr);
             return;
         }
         // The original radius count uses the game's RadiusRange progression;
@@ -9257,7 +9257,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     const Veh &vehicle = Vehs[vehicle_id];
     const VehPrototype &prototype = VehPrototypes[vehicle.proto_id];
     if (prototype.plan != PLAN_COLONIZATION) {
-        NetMsgPopup->pop("NEEDCOLONISTS", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
         return;
     }
 
@@ -9268,31 +9268,31 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     const bool sea_chassis =
         Chassis[prototype.chassis_id].triad == TRIAD_SEA;
     if ((altitude < 0x60) != sea_chassis) {
-        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, nullptr);
         return;
     }
 
     const Map *const tile = map_loc(x, y);
     if ((tile->bit & BIT_FUNGUS) != 0 && altitude >= 0x40) {
-        NetMsgPopup->pop("FUNGUSDANGUS", 5000, 0, nullptr);
+        NetMsgPrimary.pop("FUNGUSDANGUS", 5000, 0, nullptr);
         return;
     }
     if ((tile->bit & BIT_MONOLITH) != 0) {
-        NetMsgPopup->pop("NOTONMONOLITH", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
         return;
     }
     const int existing_base = base_at(x, y);
     if ((tile->val3 & 0xC0) > 0x40 && altitude >= 0x60 &&
         existing_base < 0) {
-        NetMsgPopup->pop("NOTONROCKY", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTONROCKY", 5000, 0, nullptr);
         return;
     }
     if (not_my_turn()) {
-        NetMsgPopup->pop("SIMULNO", 5000, 0, nullptr);
+        NetMsgPrimary.pop("SIMULNO", 5000, 0, nullptr);
         return;
     }
     if (!veh_ready(vehicle_id)) {
-        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         return;
     }
 
@@ -9320,7 +9320,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
             }
         }
         if (adjacent_base) {
-            NetMsgPopup->pop("BASETOONEAR", 5000, 0, nullptr);
+            NetMsgPrimary.pop("BASETOONEAR", 5000, 0, nullptr);
             return;
         }
     }
@@ -9360,7 +9360,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
                        ? PlayersData[faction_id].diplo_treaties[other_faction]
                        : 0;
         if ((relation & DTREATY_PACT) != 0) {
-            NetMsgPopup->pop((climate_at(x, y) & 0xE0) >= 0x60
+            NetMsgPrimary.pop((climate_at(x, y) & 0xE0) >= 0x60
                                  ? "TERRPACT" : "TERRPACT2",
                              5000, 0, nullptr);
             return;
@@ -9461,7 +9461,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
 
     ambience(0xD1);
     if (not_my_turn()) {
-        NetMsgPopup->pop("NEEDCOLONISTS", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
         if ((GamePreferences & 0x200) == 0) {
             return;
         }
@@ -9483,7 +9483,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         VehPrototypes[locked_vehicle.proto_id];
     if (locked_prototype.plan != PLAN_COLONIZATION) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop("NEEDCOLONISTS", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NEEDCOLONISTS", 5000, 0, nullptr);
         if ((GamePreferences & 0x200) == 0) {
             return;
         }
@@ -9496,7 +9496,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
         Chassis[locked_prototype.chassis_id].triad == TRIAD_SEA;
     if ((locked_altitude < 0x60) != locked_sea_chassis) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, nullptr);
         if ((GamePreferences & 0x200) == 0) {
             return;
         }
@@ -9506,7 +9506,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     const Map *const locked_tile = map_loc(x, y);
     if ((locked_tile->bit & BIT_FUNGUS) != 0 && locked_altitude >= 0x40) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop("FUNGUSDANGUS", 5000, 0, nullptr);
+        NetMsgPrimary.pop("FUNGUSDANGUS", 5000, 0, nullptr);
         if ((GamePreferences & 0x200) == 0) {
             return;
         }
@@ -9515,7 +9515,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     }
     if ((locked_tile->bit & BIT_MONOLITH) != 0) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop("NOTONMONOLITH", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
         if ((GamePreferences & 0x200) == 0) {
             return;
         }
@@ -9524,7 +9524,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     }
     if (!veh_ready(locked_vehicle_id)) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop("UNITMOVED", 5000, 0, nullptr);
+        NetMsgPrimary.pop("UNITMOVED", 5000, 0, nullptr);
         if ((GamePreferences & 0x200) == 0) {
             return;
         }
@@ -9570,7 +9570,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
     }
     if (locked_adjacent_base) {
         NetDaemonNet.unlock_veh();
-        NetMsgPopup->pop("BASETOONEAR", 5000, 0, nullptr);
+        NetMsgPrimary.pop("BASETOONEAR", 5000, 0, nullptr);
         if ((GamePreferences & 0x200) == 0) {
             return;
         }
@@ -9611,7 +9611,7 @@ void Console::new_base(int vehicle_id) { // 0x004CF7C0
                                                : "seabas_sm.pcx");
         popp(*ClimatePopupTitle, "BASEFOUNDED", 0, picture, nullptr);
     } else {
-        NetMsgPopup->pop("BASEFOUNDED", 5000, 0, nullptr);
+        NetMsgPrimary.pop("BASEFOUNDED", 5000, 0, nullptr);
     }
     if (!IsMultiplayerNet) {
         TutWinBaseWindow.zoom(new_base_id, 1);
@@ -9628,7 +9628,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     // reading its map tile.  0x004D34C6 compares VehPrototype::plan to 9.
     const int entry_proto_id = Vehs[vehicle_id].proto_id;
     if (VehPrototypes[entry_proto_id].plan != 9) {
-        NetMsgPopup->pop("NEEDTERRAFORMERS", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NEEDTERRAFORMERS", 5000, 0, nullptr);
         return;
     }
 
@@ -9644,7 +9644,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     const int chassis_id = VehPrototypes[entry_proto_id].chassis_id;
     const int triad = Chassis[chassis_id].triad;
     if (triad != TRIAD_AIR && is_sea != (triad == TRIAD_SEA)) {
-        NetMsgPopup->pop("NOTINTRIAD", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTINTRIAD", 5000, 0, nullptr);
         return;
     }
 
@@ -9689,7 +9689,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
             : Terraforming[terraform_id].preq_tech_sea;
         const char *message = other_prerequisite < -1 ? "NOTATALL"
             : is_sea ? "NOTATSEA" : "NOTONLAND";
-        NetMsgPopup->pop(message, 5000, 0, nullptr);
+        NetMsgPrimary.pop(message, 5000, 0, nullptr);
         return;
     }
 
@@ -9706,13 +9706,13 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
             ? Terraforming[terraform_id].name_sea
             : Terraforming[terraform_id].name;
         parse_says(0, current_improvement, -1, -1);
-        NetMsgPopup->pop("ALREADYBUILT", 5000, 0, nullptr);
+        NetMsgPrimary.pop("ALREADYBUILT", 5000, 0, nullptr);
         return;
     }
     if ((tile->bit & BIT_MONOLITH) != 0 && terrain_bit != 0 &&
         terraform_id != TERRA_ROAD && terraform_id != TERRA_MAGTUBE &&
         terraform_id != TERRA_PLANT_FUNGUS) {
-        NetMsgPopup->pop("NOTONMONOLITH", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTONMONOLITH", 5000, 0, nullptr);
         return;
     }
 
@@ -9720,11 +9720,11 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
         terraform_id != TERRA_RAISE_LAND &&
         terraform_id != TERRA_LOWER_LAND) {
         if ((Players[faction_id_].rule_flags & RFLAG_AQUATIC) == 0) {
-            NetMsgPopup->pop("LOWTIDAL", 5000, 0, nullptr);
+            NetMsgPrimary.pop("LOWTIDAL", 5000, 0, nullptr);
             return;
         }
         if (!has_tech(0x3E, faction_id_)) {
-            NetMsgPopup->pop("NEEDADVECOENG", 5000, 0, nullptr);
+            NetMsgPrimary.pop("NEEDADVECOENG", 5000, 0, nullptr);
             return;
         }
     }
@@ -9742,14 +9742,14 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
             if ((volatile_bits & 0x208000u) == 0) {
                 strcat(StringTemp, "1");
             }
-            NetMsgPopup->pop(StringTemp, 5000, 0, nullptr);
+            NetMsgPrimary.pop(StringTemp, 5000, 0, nullptr);
             return;
         }
     }
 
     if (!is_sea && (tile->contour & 0xC0) > 0x40 &&
         (terrain_bit & 0x208000u) != 0) {
-        NetMsgPopup->pop("NOTINROCKY", 5000, 0, nullptr);
+        NetMsgPrimary.pop("NOTINROCKY", 5000, 0, nullptr);
         return;
     }
 
@@ -9766,7 +9766,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
                 parse_says(0, StringTemp, -1, -1);
                 message = "NOTYETFUNGUS";
             }
-            NetMsgPopup->pop(message, 5000, 0, nullptr);
+            NetMsgPrimary.pop(message, 5000, 0, nullptr);
             return;
         }
     } else if ((tile->bit & BIT_FUNGUS) != 0) {
@@ -9779,7 +9779,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
                 parse_says(0, StringTemp, -1, -1);
                 message = "NOTYETFUNGUS";
             }
-            NetMsgPopup->pop(message, 5000, 0, nullptr);
+            NetMsgPrimary.pop(message, 5000, 0, nullptr);
             return;
         }
     }
@@ -9803,7 +9803,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
             }
             const char *message = terraform_id == TERRA_MAGTUBE ? "HASROAD"
                 : terraform_id == TERRA_SOIL_ENR ? "HASFARM" : "NOTUNTILTECH";
-            NetMsgPopup->pop(message, 5000, 0, nullptr);
+            NetMsgPrimary.pop(message, 5000, 0, nullptr);
             return;
         }
     }
@@ -9811,24 +9811,24 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     if (terraform_id == TERRA_RAISE_LAND ||
         terraform_id == TERRA_LOWER_LAND) {
         if ((GameRules & 0x00800000u) != 0) {
-            NetMsgPopup->pop("NOTINSCENARIO", 5000, 0, nullptr);
+            NetMsgPrimary.pop("NOTINSCENARIO", 5000, 0, nullptr);
             return;
         }
         if (terraform_id == TERRA_RAISE_LAND) {
             if (altitude >= 0x60) {
                 if (altitude >= 0xC0) {
-                    NetMsgPopup->pop("TOOHIGH", 5000, 0, nullptr);
+                    NetMsgPrimary.pop("TOOHIGH", 5000, 0, nullptr);
                     return;
                 }
             } else if (altitude >= 0x40) {
-                NetMsgPopup->pop("SEATOOHIGH", 5000, 0, nullptr);
+                NetMsgPrimary.pop("SEATOOHIGH", 5000, 0, nullptr);
                 return;
             }
         } else if (altitude == 0) {
-            NetMsgPopup->pop("SEATOOLOW", 5000, 0, nullptr);
+            NetMsgPrimary.pop("SEATOOLOW", 5000, 0, nullptr);
             return;
         } else if (altitude == 0x60) {
-            NetMsgPopup->pop("TOOLOW", 5000, 0, nullptr);
+            NetMsgPrimary.pop("TOOLOW", 5000, 0, nullptr);
             return;
         }
     }
@@ -9836,7 +9836,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
     switch (terraform_id) {
     case TERRA_SOLAR_TIDAL:
         if (energy_yield(faction_id_, -1, x, y, 1) == 0) {
-            NetMsgPopup->pop("LOWSOLAR", 5000, 0, nullptr);
+            NetMsgPrimary.pop("LOWSOLAR", 5000, 0, nullptr);
             return;
         }
         break;
@@ -9905,7 +9905,7 @@ void Console::terraform(int vehicle_id, int requested_terraform) { // 0x004D3470
             }
         }
         if (aquifer_direction == 8) {
-            NetMsgPopup->pop("NOAQUIFER", 5000, 0, nullptr);
+            NetMsgPrimary.pop("NOAQUIFER", 5000, 0, nullptr);
             return;
         }
         break;
@@ -10236,7 +10236,7 @@ void Console::human_turn() {
                 } else if ((GamePreferences & PREF_BSC_PAUSE_END_TURN) == 0 ||
                            IsMultiplayerNet != 0) {
                     parse_num(0, static_cast<int>(game_year(TurnCurrentNum)));
-                    NetMsgPopup->pop(flush_cache != 0 ? "ENDOFTURN" : "ENDOFTURN1",
+                    NetMsgPrimary.pop(flush_cache != 0 ? "ENDOFTURN" : "ENDOFTURN1",
                                      0x1388, 0, nullptr);
                 }
             }
@@ -10522,7 +10522,7 @@ void Console::end_my_turn() {
 
     if (ConsoleControlTurnActive != 0) return;
     if (edit_lock() != 0) {
-        NetMsgPopup->pop("PROTECTED", 0x1388, 0, nullptr);
+        NetMsgPrimary.pop("PROTECTED", 0x1388, 0, nullptr);
         return;
     }
 
@@ -10542,14 +10542,14 @@ void Console::end_my_turn() {
             parse_says(2, Players[faction].noun_faction, -1, -1);
             const int process_id = NetDaemonNet.who_2_pid(faction);
             parse_says(3, NetDaemonNet.get_player_name(process_id), -1, -1);
-            NetMsgPopup->pop("SIMULWHOSE", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("SIMULWHOSE", 0x1388, 0, nullptr);
             return;
         }
         if ((game_flags & 2) != 0 && (NetTurnFlags & 0x10) == 0) {
             const int faction_bit = 1 << ConsoleGlobal.faction_id_;
             if ((ConsoleFactionsWaitingMask & faction_bit) != 0 &&
                 ConsoleFactionsWaitingMask != 0xFF) {
-                NetMsgPopup->pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
+                NetMsgPrimary.pop("ATTEMPTTOCANCEL", 0x1388, 0, nullptr);
                 message_data(0x2302, 0, TurnCurrentNum, 0, 0, 0);
                 return;
             }
@@ -10704,7 +10704,7 @@ void Console::menu_proc(int command) {
             switch (command) {
             case 0x200:
                 if (edit_lock() == 0) set_move(0);
-                else NetMsgPopup->pop("PROTECTED", 5000, 0, nullptr);
+                else NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
                 break;
             case 0x201:
                 if (ConsoleGlobal.cursor_active_ != 0) reset_turn_view();
@@ -10812,7 +10812,7 @@ void Console::menu_proc(int command) {
                 if (edit_lock() == 0)
                     activate(ConsoleGlobal.cursor_history_x_[ConsoleGlobal.cursor_history_index_],
                              ConsoleGlobal.cursor_history_y_[ConsoleGlobal.cursor_history_index_], 1);
-                else NetMsgPopup->pop("PROTECTED", 5000, 0, nullptr);
+                else NetMsgPrimary.pop("PROTECTED", 5000, 0, nullptr);
                 break;
             case 0x314: automate(selected_vehicle_, 0); break;
             case 0x315: hold(selected_vehicle_, 0); break;

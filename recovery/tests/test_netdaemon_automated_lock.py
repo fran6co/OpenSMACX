@@ -63,7 +63,7 @@ struct Popup {
     }
     void close() { ++CloseCalls; Events.push_back(8); }
 } PopupObject;
-Popup *NetMsgPopup = &PopupObject;
+Popup &NetMsgPrimary = PopupObject;
 struct Net {
     int get(unsigned long *first, unsigned long *second) {
         ++GetCalls;

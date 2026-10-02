@@ -74,7 +74,7 @@ static int IsMultiplayerNet, NetBusyCount, NetDaemonWaitTicks, ExitTurnLoop;
 static uint32_t LockEnableMask;
 static int MapLongitudeBounds, MapLatitudeBounds, MapLongitude, MapIsFlat;
 static Console ConsoleGlobal;
-static NetMsg *NetMsgPopup;
+static NetMsg NetMsgPrimary;
 static NetDaemon NetDaemonNet;
 
 static NetDaemon *active_receiver;
@@ -206,8 +206,8 @@ static void reset_fixture(NetDaemon *receiver = 0) {
     callback_change_net_after_synch = 0;
     callback_change_exit_after_non_input = 0; message_data_last_opcode = 0;
     logs.clear(); log_arg1.clear(); log_arg2.clear();
-    static NetMsg popup;
-    popup.popups.clear(); popup.closes = 0; NetMsgPopup = &popup;
+    NetMsg &popup = NetMsgPrimary;
+    popup.popups.clear(); popup.closes = 0;
     Vehs[1].prev_veh_id_stack = -1;
     Vehs[2].prev_veh_id_stack = -1;
 }
@@ -253,7 +253,7 @@ static void test_action_callback_reload_and_singleton_timing() {
     assert(action_packets == 1 && process_calls == 1 && check_spock_calls == 1);
     assert(NetBusyCount == 0 && NetDaemonNet.lock_state_[1].leading_words_[3] == 0x12345678u);
     assert(subject.lock_state_[1].leading_words_[3] == 0xabcdef01u);
-    assert(NetMsgPopup->closes == 1);
+    assert(NetMsgPrimary.closes == 1);
     bool logged_reloaded_order = false;
     for (size_t i = 0; i < logs.size(); ++i)
         if (logs[i] == "Net.Action Sending ACTION message to server" && log_arg2[i] == 0x15)
@@ -269,9 +269,9 @@ static void test_order_offline_repeat_lock_and_speed_edges() {
 
     reset_fixture(&subject); subject.lock_state_[2].trailing_words_[5] = 0; subject.lock_state_[2].leading_words_[2] = 1;
     assert(subject.order_veh(7, 0, 0) == 0 && subject.lock_state_[2].trailing_words_[5] == 1);
-    assert(NetMsgPopup->popups.empty());
+    assert(NetMsgPrimary.popups.empty());
     assert(subject.order_veh(7, 0, 0) == 0 && subject.lock_state_[2].trailing_words_[5] == 2);
-    assert(NetMsgPopup->popups.size() == 1 && NetMsgPopup->popups[0] == "MOVEPENDING");
+    assert(NetMsgPrimary.popups.size() == 1 && NetMsgPrimary.popups[0] == "MOVEPENDING");
     reset_fixture(&subject); subject.lock_state_[2].trailing_words_[5] = 0; subject.lock_state_[2].leading_words_[2] = 1;
     subject.lock_state_[2].trailing_words_[3] = 1;
     assert(subject.order_veh(7, 0, 0) == 0 && subject.lock_state_[2].trailing_words_[5] == 0);
@@ -337,7 +337,7 @@ static void test_globalfailed_wait_and_popup() {
     assert(synch_veh_calls == 1 && wait_calls == 1 && NetDaemonWaitTicks == 19);
     assert(Vehs[7].order == 0 && Vehs[7].state == 0x80000U);
     assert(cancel_packets == 1 && subject.lock_state_[2].trailing_words_[3] == 0);
-    assert(NetMsgPopup->popups.size() == 1 && NetMsgPopup->popups[0] == "GLOBALFAILED");
+    assert(NetMsgPrimary.popups.size() == 1 && NetMsgPrimary.popups[0] == "GLOBALFAILED");
 }
 
 static void test_mode_zero_wait_mutates_network_gate() {
@@ -365,7 +365,7 @@ static void test_sync_callback_mutates_network_gate() {
     assert(subject.order_veh(7, 0, 0) == 0);
     assert(synch_veh_calls == 1 && wait_calls == 0 && NetDaemonWaitTicks == 0);
     assert(cancel_packets == 0 && subject.lock_state_[2].trailing_words_[3] == 0);
-    assert(NetMsgPopup->popups.size() == 1 && NetMsgPopup->popups[0] == "GLOBALFAILED");
+    assert(NetMsgPrimary.popups.size() == 1 && NetMsgPrimary.popups[0] == "GLOBALFAILED");
 }
 
 static void test_early_rejection_does_not_sync_vehicle() {

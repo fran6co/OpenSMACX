@@ -17,7 +17,6 @@
  */
 #pragma once
 
-#include "original_seam.h"
 #include "popup.h"
 #include "time.h"
 
@@ -26,10 +25,12 @@
   *
   * Derives from Popup on an unadjusted `this`. Popup is modelled here as
   * BasePop followed by its Scroll, which comes to 0x537C, and NetMsg's own
-  * fields begin at 0x5384 - eight bytes further on, which is unmapped. The
-  * Time it closes sits at 0x538C.
+  * coordinate fields begin at 0x537C, followed by active state at 0x5384
+  * and callback token at 0x5388. The owned Time sits at 0x538C.
   *
-  * Nothing pins this class's sizeof.
+  * Current native CodeView observes sizeof(NetMsg)==0x53B4. Original
+  * constructor/teardown and accessed fields prove identity/lifecycle, not
+  * the complete original allocation extent or cross-TU startup ordering.
   */
   // PUBLIC: access specifiers change nothing about layout, and this
   // tree's bodies reach base methods the image reaches with a direct
@@ -39,25 +40,21 @@
 class NetMsg : public Popup {
  public:
   NetMsg(int a1, int a2, int a3);
-  // A `construct` method, not a constructor - see the note in `mapwin.h`. The
-  // real body is 0x0047ACF0 and takes three ints; `??__Eg_NETMSG1` and
-  // `??__Eg_NETMSG2` reach it, and a pointer-to-member seam cost both the
-  // image's `E8`. Forwarded in `pending_bodies.cpp`.
-  // 0x0047ADA0 is not recovered: a
-  // pending_bodies forwarder, because an empty inline stub emits
-  // nothing and the deleting destructor needs a `call rel32`.
+  // Actual C++ member/base teardown, implemented in netmsg.cpp.
   ~NetMsg();
   void close();
+  bool is_active() const;
   void on_button_clicked(int button_id);
-  // 0x0047A890  ?pop@NetMsg@@QAEXPBDHHPBD@Z - still unrecovered
-  // (src/recovered/units/0047a890.cpp, forwarded in pending_bodies.cpp).
+  // 0x0047A890: real receiver-owned popup implementation in netmsg.cpp.
   // Declared so the diplomacy bodies can name it: every one of them reaches
   // it with `mov ecx, <singleton>; call rel32`, so the receiver has to be a
   // real NetMsg and the call a real member call.
   void pop(const char *label, int duration, int channel,
            const char *target);
+  void pop(const char *label, const char *target);
 
  private:
+  static void __cdecl timer_daemon(int token);
   uint32_t field_537C_;  // 0x537C, seeded from the constructor's a1
   uint32_t field_5380_;  // 0x5380, seeded from the constructor's a2
   int32_t field_5384_;   // 0x5384, seeded 0
@@ -67,11 +64,7 @@ class NetMsg : public Popup {
   Time timer_;
 };
 
-// Popup::hide is not recovered yet.
-
-// THE SINGLETON every NetMsg::pop call site in the image names. Defined here,
-// not in a .cpp, so the receiver folds to the immediate at each call site the
-// way the image's `mov ecx, 0x805338` does - the address is a relocation on
-// both sides, so the fold costs nothing. Read off 0055c730 and 0053e4c0, which
-// both reach pop through it; timer_daemon (0x0047A800) closes the same address.
-NetMsg *const NetMsgPopup = (NetMsg *)0x00805338;
+// Genuine source-owned objects; constructor order and reverse teardown
+// follow the original dynamic initializer/atexit evidence.
+extern NetMsg NetMsgPrimary;
+extern NetMsg NetMsgSecondary;

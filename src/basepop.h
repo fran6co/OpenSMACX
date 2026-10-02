@@ -341,6 +341,8 @@ class BasePop : public GraphicWin {
   // member list cannot produce is the image's opening `call ?close`.
   MEASURED ~BasePop() { close(); }
   void set_loc(int x, int y);
+  // NetMsg preserves the original local-popup auto-hide value at +0x30AC.
+  void set_auto_hide_value(uint32_t value) { field_30AC_ = value; }
   void set_width(int width);
   // 0x00603800, homed from 00603800.cpp beside its marker. Lays the popup's
   // text out and hands the result to Dialogs::calculate_dimensions twice.

@@ -78,7 +78,7 @@ struct Popup {
     void pop(const char *,int,int,void *) {++shown;}
     void close() {--shown;}
 } popup;
-Popup *NetMsgPopup=&popup;
+Popup &NetMsgPrimary = popup;
 int IsMultiplayerNet,NetBusyCount,ExitTurnLoop,NetDaemonWaitTicks;
 int action_result,action_calls,lock_result,found_base,speed_result,action_mode;
 bool network_stays;

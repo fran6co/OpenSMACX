@@ -52,7 +52,7 @@
 #include "pulldown.h"  // The context menu owns its live item and submenu rows.
 #include "xpops.h"     // right_menu confirms the original whole-stack order.
 #include "popup.h"     // click owns a genuine stack Popup for base routing.
-#include "netmsg.h"    // NetMsgPopup reports invalid inter-base routes.
+#include "netmsg.h"    // NetMsgPrimary reports invalid inter-base routes.
 #include "netdaemon.h" // click owns the vehicle/base lock interval.
 #include "time.h"      // go_reset clears the prior capture/cursor state.
 #include <cstring>
@@ -5831,7 +5831,7 @@ void MapWin::click(int pixel_x, int pixel_y, int button) {
                 } else {
                     parse_say(2, reinterpret_cast<int>(Triad[selected_triad]),
                               -1, -1);
-                    NetMsgPopup->pop("DESTNO", 0x1388, 0, nullptr);
+                    NetMsgPrimary.pop("DESTNO", 0x1388, 0, nullptr);
                 }
             }
             NetDaemonNet.unlock_base(BaseIDCurrentSelected);

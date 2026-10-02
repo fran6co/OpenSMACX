@@ -34,7 +34,7 @@
 #include "technology.h"
 #include "veh.h"
 #include "spying_recovery.h"  // SpyingStatusTable, SpyingStatusStride
-#include "netmsg.h"  // NetMsgPopup, which the diplomacy bodies pop through
+#include "netmsg.h"  // NetMsgPrimary, which the diplomacy bodies pop through
 #include "netdaemon.h"  // NetDaemonNet, message_data - the net_* writers
 #include "log.h"  // log_say, which the net_* writers announce each move with
 #include "console.h"  // ConsoleGlobal, which net_energy refreshes
@@ -3868,7 +3868,7 @@ void __cdecl pact_attacks(int faction_id, int faction_id_with) {
     PluralityDefault = Players[faction_id_with].is_noun_plural;
     parse_says(4, Players[faction_id_with].noun_faction, -1, -1);
 
-    NetMsgPopup->pop(DiploLabelPACTATTACKS, 5000, 0, 0);
+    NetMsgPrimary.pop(DiploLabelPACTATTACKS, 5000, 0, 0);
 }
 
 /*
@@ -4374,7 +4374,7 @@ void __cdecl pact_truce(int faction_id, int faction_id_with) {
     PluralityDefault = Players[faction_id_with].is_noun_plural;
     parse_says(6, Players[faction_id_with].noun_faction, -1, -1);
 
-    NetMsgPopup->pop(DiploLabelPACTTRUCE, 5000, 0, 0);
+    NetMsgPrimary.pop(DiploLabelPACTTRUCE, 5000, 0, 0);
 }
 
 /*
@@ -4425,7 +4425,7 @@ void __cdecl pact_unpact(int faction_id, int faction_id_with) {
     PluralityDefault = Players[faction_id_with].is_noun_plural;
     parse_says(8, Players[faction_id_with].noun_faction, -1, -1);
 
-    NetMsgPopup->pop(DiploLabelPACTUNPACT, 5000, 0, 0);
+    NetMsgPrimary.pop(DiploLabelPACTUNPACT, 5000, 0, 0);
 }
 
 /*
@@ -4474,7 +4474,7 @@ void __cdecl enemies_team_up(int faction_id, int faction_id_with,
                 PluralityDefault = Players[faction_id].is_noun_plural;
                 GenderDefault = Players[faction_id].noun_gender;
                 parse_says(0, Players[faction_id].noun_faction, -1, -1);
-                NetMsgPopup->pop(DiploLabelTEAM, 5000, 0, 0);
+                NetMsgPrimary.pop(DiploLabelTEAM, 5000, 0, 0);
             }
             DiploSpokeTable[turncoat_faction * SpyingStatusStride + faction_id_with] = TurnCurrentNum;
             DiploSpokeTable[turncoat_faction * SpyingStatusStride + faction_id] = TurnCurrentNum;
@@ -6414,7 +6414,7 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
             GenderDefault = Players[faction_id].noun_gender;
             PluralityDefault = Players[faction_id].is_noun_plural;
             parse_says(5, Players[faction_id].noun_faction, -1, -1);
-            NetMsgPopup->pop("INCITED", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("INCITED", 0x1388, 0, nullptr);
         } else if (partner_id == ConsoleGlobal.faction_id_ &&
                    (LockEnableMask & (1u << (faction_id & 31))) != 0) {
             GenderDefault = Players[faction_id].is_leader_female;
@@ -6425,7 +6425,7 @@ void __cdecl double_cross(int faction_id, int partner_id, int victim_id) {
             GenderDefault = Players[faction_id].noun_gender;
             PluralityDefault = Players[faction_id].is_noun_plural;
             parse_says(2, Players[faction_id].noun_faction, -1, -1);
-            NetMsgPopup->pop("VENDETTAWARNING", 0x1388, 0, nullptr);
+            NetMsgPrimary.pop("VENDETTAWARNING", 0x1388, 0, nullptr);
         }
     }
 
