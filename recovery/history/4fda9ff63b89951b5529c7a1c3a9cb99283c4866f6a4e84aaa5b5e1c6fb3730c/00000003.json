@@ -1,0 +1,18 @@
+{
+  "event_id": "b7020c0647541326ead2690e0e7ef434862e186cf55238e05c3ea29926f03a96",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "pickwin-static-double-click-callback",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/pickwin.cpp",
+      "src/recovered/00488780.cpp"
+    ]
+  },
+  "previous_event": "e4ea784210e41c1cf56664152e5b10a9f1c05a7bb45a3993b4f2f1dcb63e11bd",
+  "request_id": "pickwin-incorporate-static-double-click-callback",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:pickwin-owner-coverage"
+}

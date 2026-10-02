@@ -148,6 +148,12 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   void set_selection_callback(WinNotificationCallback callback) {
     selection_callback_ = callback;
   }
+  // PickWin list setup resets these existing state fields.
+  void initialize_picker_state() {
+    field_2C_ = 0;
+    field_14_ = static_cast<uint32_t>(-1);
+    iFlags_ = 0x40;
+  }
   // THE ENTERED-RECEIVER WALK. The image's Q-spelled handlers (on_right_down,
   // on_scrolled, on_right_double_click) are entered with `this` on the
   // GraphicWin virtual base and fold the walk back to the ListBox front into

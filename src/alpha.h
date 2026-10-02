@@ -736,7 +736,7 @@ int __cdecl weap_name(LPSTR name);
 int __cdecl arm_name(LPSTR name);
 BOOL __cdecl read_basic_rules();
 BOOL __cdecl read_tech();
-void __cdecl read_faction(uint32_t player_id);
+void __cdecl read_faction(int player_id);
 void __cdecl read_faction(Player *player, int toggle);
 BOOL __cdecl read_factions();
 void __cdecl noun_item(int *gender, int *plurality);
