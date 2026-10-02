@@ -1,0 +1,19 @@
+{
+  "event_id": "34883afe67c30d3c688f5d9d95a98b79d84d5692102859e2527a304e7d2ec173",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_stringlist_sort.py"
+    ],
+    "evidence": [
+      "Admit only the stale fixture extraction path correction to the existing real StringList::sort owner src/stringlist.cpp, preserving all assertions, controls and implementation. Actual root source ownership predates Alpha changes. This does not waive native historical-grammar refusal or change task baseline."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1fd30ddc7355e645e3ab0e03ce76a6cff8eed6d3ab76a1deb75c3e8ca9ebb66d",
+  "request_id": "alpha-sort-fixture-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:alphanet-complete-owner-recovery"
+}
