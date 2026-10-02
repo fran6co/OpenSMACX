@@ -1,0 +1,23 @@
+{
+  "event_id": "40df84951338931b4507e8ba4b7ff1e42acb0db0043d5ebdb1474900b111d945",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Complete workshop583E30 dependency includes real preview callback583CD0..583E2A, retained src/recovered/units/00583cd0.cpp. Pinned native583FA2 writes workshop faction93FC48 consumed583DB5/583DC1; callback and workshop share signed zoom68F0F4 whose independently read initial DWORD isFAFFFFFF(-6), not draft60. Real MapWinCaptionScale/Divisor, SpriteScaleNumerator/Denominator, veh_fake and veh_draw already source-owned. Admit genuine callback and two evidence-backed scalar owners in existing designwin.cpp/h scope, preserving immutable baseline, seed identity and all claims; no original-allocation, matching, runtime or acceptance proof granted. BasePop input_poll_state already exposes native3100 action; no new accessor scope required."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5782736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ee55b4b676c9828f4a6632e3892fc69d33e6cbc89cf232473f26628c0eef1304",
+  "request_id": "workshop-preview-callback-owner",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:designwin-owner-coverage"
+}
