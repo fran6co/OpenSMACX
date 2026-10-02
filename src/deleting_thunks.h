@@ -192,8 +192,6 @@ void *__fastcall adjust_this_social_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_tut_win(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_tut_win(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_ambience(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_voice_rx(void *self, void *, unsigned int arg0);
-void *__fastcall scalar_delete_voice_tx(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_dip_edit(void *self, void *, unsigned int arg0);
 void *__fastcall adjust_this_dip_edit(void *self, void *, unsigned int arg0);
 void *__fastcall scalar_delete_alpha_menu(void *self, void *,

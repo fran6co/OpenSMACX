@@ -58,14 +58,6 @@ void __fastcall new_tech_win_on_button_clicked_redirect(void *self, void *, int 
 void __fastcall prod_picker_on_scrolling_redirect(void *self, void *, int a1, int a2);
 int __fastcall wave_in_device_set_codec_redirect(void *self, void *, uint32_t a1);
 int __fastcall wave_in_device_set_vxw_key_redirect(void *self, void *, int a1);
-int __fastcall voice_rx_start_redirect(void *self, void *);
-int __fastcall voice_rx_stop_redirect(void *self, void *);
-int __fastcall voice_rx_unload_redirect(void *self, void *);
-int __fastcall voice_rx_add_buffer_redirect(void *self, void *, int a1);
-int __fastcall voice_rx_get_buffer_size_redirect(void *self, void *);
-int __fastcall voice_tx_get_nbuffers_redirect(void *self, void *);
-int __fastcall voice_tx_get_next_buffer_redirect(void *self, void *);
-int __fastcall voice_tx_return_buffer_redirect(void *self, void *, int a1);
 void __fastcall replay_win_on_left_click_redirect(void *self, void *, int a1, int a2);
 void __fastcall replay_win_on_right_click_redirect(void *self, void *, int a1, int a2);
 void __fastcall replay_win_on_button_clicked_redirect(void *self, void *, int a1);

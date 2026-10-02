@@ -501,19 +501,6 @@ SocialWin::~SocialWin() {  // ??1SocialWin@@QAE@XZ at 0x004B3C80
 
 
 
-VoiceRx::~VoiceRx() {  // ??1VoiceRx@@QAE@XZ at 0x004C8A50
-    typedef void(__fastcall *pending)(VoiceRx *, void *);
-    PENDING_BODY(0x004C8A50, pending)(this, nullptr);
-}
-
-// NO VoiceTx::~VoiceTx forwarder. VoiceTx is now `VoiceTx : public Sound`
-// (net_class.h), so the compiler-generated ??1VoiceTx calls the real,
-// claimed ~Sound once - the retired 0x004C8DB0 forwarder faulted where the
-// image's destructor (which inlines the whole three-stage Sound descent)
-// actually tears down. 0x004C8DB0 itself stays unrecovered.
-
-
-
 
 
 // CheckBox::on_key_down (0x0060F8B0) and CheckBox::on_mouse_move (0x0060FBB0)

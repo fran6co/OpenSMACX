@@ -1336,55 +1336,9 @@ void *__fastcall scalar_delete_ambience(void *self, void *,
 
 
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GVoiceRx@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004C93B0 ??_GVoiceRx@@UAEPAXI@Z 0x004C93B0-0x004C93D1 BYTE_EXACT
-// symbol    ?scalar_delete_voice_rx@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GVoiceRx@@UAEPAXI@Z)(VoiceRx* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C8A50 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_voice_rx(void *self, void *,
-                                        unsigned int arg0) {
-    static_cast<VoiceRx *>(self)->VoiceRx::~VoiceRx();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
 
-/*
-Purpose: The compiler-generated scalar deleting destructor at
-         ??_GVoiceTx@@UAEPAXI@Z: run the complete destructor, then release the
-         storage through the executable's operator delete only when bit 0 of
-         the flags asks.
-// ORIGINAL: 0x004C93F0 ??_GVoiceTx@@UAEPAXI@Z 0x004C93F0-0x004C9411 BYTE_EXACT
-// symbol    ?scalar_delete_voice_tx@@YIPAXPAX0I@Z
-// size      33 bytes
-// prototype void* (__thiscall ??_GVoiceTx@@UAEPAXI@Z)(VoiceTx* this, unsigned int)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C8DB0 0x0064557F
-Return Value: the object pointer
-Status: Complete
-*/
-void *__fastcall scalar_delete_voice_tx(void *self, void *,
-                                        unsigned int arg0) {
-    static_cast<VoiceTx *>(self)->VoiceTx::~VoiceTx();
-    if (arg0 & 1) {
-        operator delete(self);
-    }
-    return self;
-}
+
+
 
 /*
 Purpose: The compiler-generated scalar deleting destructor at

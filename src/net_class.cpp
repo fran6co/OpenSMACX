@@ -55,176 +55,6 @@ NetFifo::~NetFifo() {
     DeleteCriticalSection(&lock_);
 }
 
-// The wrapped device's own interface, as far as VoiceTx's dispatches reach.
-// The tree has no modelled class for this device yet (wave.cpp reaches the
-// same object through vtable_slot seams); the one-slot shim exists because a
-// FUNCTION-POINTER dispatch in return position compiles a tail-jump where
-// the image calls and epilogues - a member virtual call does not. Slot 8 is
-// the stop entry ([vtbl + 0x20]); the fillers ahead of it only count offsets.
-class VoiceDeviceStop {
- public:
-  virtual void slot000();
-  virtual void slot001();
-  virtual void slot002();
-  virtual void slot003();
-  virtual void slot004();
-  virtual void slot005();
-  virtual void slot006();
-  virtual void slot007();
-  virtual int stop();  // slot 8 ([vtbl + 0x20])
-};
-
-/*
-Purpose: Begin voice capture: disable the wave device, start the wave-in
-         device, arm the Sound-level device through its own vtable slot 0x90,
-         and only then light the started bit at 0x54.
-// ORIGINAL: 0x004C8EB0 ?start@VoiceTx@@QAEHXZ 0x004C8EB0-0x004C8EF4 BYTE_EXACT
-// symbol    ?start@VoiceTx@@UAEHXZ
-// size      68 bytes
-// prototype int (__thiscall ?start@VoiceTx@@QAEHXZ)(VoiceTx* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C51D0 0x004C5B60
-// indirect  0x004C8EDE
-// LEVER: PROMOTED out of src/recovered/004c8eb0.cpp, which reached the
-//        fields as `reinterpret_cast<char *>(this) + 0x54/0x3c` and the
-//        device dispatch through a 37-slot local shim. The named-member
-//        spelling reproduces the same bytes: flags_54_ is the dword at 0x54
-//        (bit 0, and the image TESTS it as a byte and ORs bit 0 as a byte
-//        inside a dword store), device_ is Sound's at 0x3C, and the armed
-//        dispatch is slot 36 of the device's live vtable - 0x90, the slot
-//        this class's own start occupies in VoiceTx's table 0x0066E8C4.
-Return Value: 0, or the first failing stage's answer
-*/
-int VoiceTx::start() {
-    if ((flags_54_ & 1) == 0) {
-        int result = WaveDeviceGlobal.disable();
-        if (result != 0) {
-            return result;
-        }
-        result = WaveInDeviceGlobal->start_record();
-        if (result != 0) {
-            return result;
-        }
-        if (device_ != nullptr) {
-            typedef int(__fastcall *device_voice_start_fn)(void *);
-            result = vtable_slot<device_voice_start_fn>(device_, 0x90)(device_);
-            if (result != 0) {
-                return result;
-            }
-        }
-        flags_54_ |= 1;
-    }
-    return 0;
-}
-
-/*
-Purpose: Stop voice capture in the reverse order of start, and tear the
-         started bit down first.
-// ORIGINAL: 0x004C8F00 ?stop@VoiceTx@@QAEHXZ 0x004C8F00-0x004C8F3C BYTE_EXACT
-// symbol    ?stop@VoiceTx@@UAEHXZ
-// size      60 bytes
-// prototype int (__thiscall ?stop@VoiceTx@@QAEHXZ)(VoiceTx* this)
-// callers   0   call targets   2
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     0x004C51C0 0x004C5B70
-// indirect  0x004C8F33
-// LEVER: PROMOTED out of src/recovered/004c8f00.cpp the same way as start
-//        above. The started-bit clear is a full DWORD and-cycle
-//        (`and ecx, 0xfffffffe`) while start's set is a byte `or al, 1`
-//        inside a dword read-modify-write - both fall out of the one
-//        `flags_54_` dword with plain `&=` / `|=`.
-Return Value: 0, or the failing stage's answer
-*/
-int VoiceTx::stop() {
-    if ((flags_54_ & 1) != 0) {
-        int result = WaveInDeviceGlobal->end_record();
-        if (result != 0) {
-            return result;
-        }
-        flags_54_ &= ~1u;
-        WaveDeviceGlobal.enable();
-        if (device_ != nullptr) {
-            return reinterpret_cast<VoiceDeviceStop *>(device_)->stop();
-        }
-    }
-    return 0;
-}
-
-/*
-Purpose: Drop the Sound-level device (vtable slot 0x38) and forget it, so a
-         later init re-wraps; the answer is discarded - release always
-         answers 0.
-// ORIGINAL: 0x004C8EA0 ?release@VoiceTx@@QAEXXZ 0x004C8EA0-0x004C8EAF BYTE_EXACT
-// symbol    ?release@VoiceTx@@UAEHXZ
-// size      15 bytes
-// prototype int (__thiscall ?release@VoiceTx@@QAEXXZ)(VoiceTx* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x004C8EA9
-// LEVER: the catalogue spells this `QAEXXZ` (void) - withdrawn here. Both
-//        epilogues are `xor eax, eax; ret`, the shape that CORRECTED unload's
-//        catalogue name to int. The dispatch differs from Sound::release only
-//        in the default: the base returns 0x14 when no device is wrapped,
-//        this returns 0. The ?voice_tx_release_redirect@@YIHPAX0@Z spelling
-//        that held these bytes first was retired with the delegation_thunks
-//        block when this member superseded it.
-Return Value: 0, always
-*/
-int VoiceTx::release() {
-    if (device_ != nullptr) {
-        typedef int(__fastcall *device_release_fn)(void *);
-        vtable_slot<device_release_fn>(device_, 0x38)(device_);
-    }
-    return 0;
-}
-
-/*
-Purpose: Detach from the Sound-level device, stopping voice first, and hand
-         the device to the release hook while the guard dword says the hook
-         is live - the same hook and guard ~Sound consults.
-// ORIGINAL: 0x004C8F40 ?unload@VoiceTx@@QAEHXZ 0x004C8F40-0x004C8F70 BYTE_EXACT
-// symbol    ?unload@VoiceTx@@UAEHXZ
-// size      48 bytes
-// prototype int (__thiscall ?unload@VoiceTx@@QAEHXZ)(VoiceTx* this)
-// callers   0   call targets   0
-// kind      game
-// flags     hidden;sp_ready;purged_ok
-// calls     (none)
-// indirect  0x004C8F45 0x004C8F4C 0x004C8F5C
-// LEVER: PROMOTED out of src/recovered/004c8f40.cpp. The first two
-//        dispatches are VIRTUAL SELF-CALLS of slots 8 and 14 - spelled
-//        `stop(); release();`, which is why the class model matters here:
-//        the shim spelling could not see that they are this class's own
-//        stop and release.
-Return Value: 0, always
-*/
-int VoiceTx::unload() {
-    stop();
-    release();
-    if (WaveDeviceReleaseGuard != 0) {
-        (WaveDeviceReleaseSlot())(device_);
-    }
-    device_ = nullptr;
-    return 0;
-}
-
-// THE UNRECOVERED VIRTUAL SET. These four bodies keep VoiceTx's vftable
-// slots (0x0066E8C4, 33/34/35/37) true without reproducing them: init
-// (0x004C8F70, 151 bytes) sits verbatim in src/unrecovered/, and the other
-// three are wrapped-device delegations, two of them still NOT_MATCHING
-// redirect spellings in delegation_thunks.cpp. Semantic debt until named,
-// placeholders, not claims.
-int VoiceTx::init(unsigned long, void *, unsigned long) { return 0; }
-int VoiceTx::get_next_buffer() { return 0; }
-int VoiceTx::return_buffer(struct _MMIOINFO *) { return 0; }
-int VoiceTx::get_nbuffers() { return 0; }
-
-
 /*
 Purpose: Build a Net - its embedded VoiceTx, three NetFifo message queues,
          and the JackalVoiceRx-shaped container at +0xB0.
@@ -265,34 +95,7 @@ void *ServiceEnumTarget;  // 0x009BE5F0
 static const GUID KeptServiceProviderGuid = {
     0xD8D29744, 0x208A, 0x11D0, {0xA0, 0x00, 0x9D, 0xBC, 0xB6, 0x67, 0x29, 0x24}};
 
-/*
-Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
-         1000ms default fade, the "Voice Tx" name on the CRT heap, and
-         type 7 published through the device slot.
-// ORIGINAL: 0x004C8CC0 ??0VoiceTx@@QAE@XZ 0x004C8CC0-0x004C8DAF;0x004C8450-0x004C8457;0x00659FBE-0x00659FD8
-// symbol    ??0VoiceTx@@QAE@XZ
-// size      239 bytes
-// prototype void (__thiscall ??0VoiceTx@@QAE@XZ)(VoiceTx* this)
-// callers   1   call targets   4
-// kind      game
-// flags     frame;sp_ready;purged_ok
-// calls     0x004C61E0 0x00645460 0x0064558A 0x006465F0
-// PROMOTED from src/recovered/units/004c8cc0.cpp. With VoiceTx : public Sound
-// the three vtable stages (0x66E444 -> 0x66E3C0 -> 0x66E8C4) are the
-// compiler's own base-construction sequence. Sound owns the inherited
-// initialization and default fade setup; VoiceTx clears its own flags at
-// original 0x004C8D49..0x004C8D5D before allocating the display name.
-Return Value: n/a
-Status: Complete
-*/
-VoiceTx::VoiceTx() {
-    // The real Sound constructor initializes the inherited device/chain
-    // state; do not read an uninitialized device or repeat base construction.
-    memset(&flags_54_, 0, sizeof(flags_54_));
-    fname_ = ::operator new(0xA);
-    strcpy(reinterpret_cast<char *>(fname_), "Voice Tx");
-    Sound::set_type(7);
-}
+
 
 // The receiver's no-op insertion/removal hooks have one pointer argument.
 // The other embedded list's virtual surface remains unfinished.
@@ -1166,21 +969,18 @@ void Net::process_voice() {
             voice_tx_.stop();
             return;
         }
-        // The capture buffer: a dword at 0x18 says where the packet starts and
-        // one at 0x20 says where capture has written to.
-        uint32_t *packet =
-            reinterpret_cast<uint32_t *>(voice_tx_.get_next_buffer());
+        _MMIOINFO *packet = voice_tx_.get_next_buffer();
         if (packet != 0) {
             if (field_54_ != 0) {
-                sub_62f390(reinterpret_cast<void *>(packet[6]),
-                           static_cast<int>(packet[8] - packet[6]),
+                sub_62f390(packet->pchBuffer,
+                           static_cast<int>(packet->pchEndRead - packet->pchBuffer),
                            voice_key_D4_, 0x100, 0);
             } else {
-                send_packet_type(reinterpret_cast<void *>(packet[6]),
-                                 static_cast<int>(packet[8] - packet[6]),
+                send_packet_type(packet->pchBuffer,
+                                 static_cast<int>(packet->pchEndRead - packet->pchBuffer),
                                  voice_key_D4_, 0x100, 0);
             }
-            voice_tx_.return_buffer(reinterpret_cast<_MMIOINFO *>(packet));
+            voice_tx_.return_buffer(packet);
         }
     }
 }

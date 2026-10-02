@@ -105,10 +105,10 @@ def run_constructor(tmp_path, monkeypatch):
         ("// LIVE_PREV", "src/sound.cpp", 0x448320),
         ("// LIVE_TYPE", "src/sound.cpp", 0x448330),
         ("// LIVE_SET_TYPE", "src/sound.cpp", 0x4C61E0),
-        ("// LIVE_VOICE_CONSTRUCTOR", "src/net_class.cpp", 0x4C8CC0)], declarations=[
+        ("// LIVE_VOICE_CONSTRUCTOR", "src/voice.cpp", 0x4C8CC0)], declarations=[
         ("// LIVE_FADE_DECLARATION", "src/sound.h", "class SoundFadeState {", "// RECOVERY_MEMBER: v1 SoundFadeState volume_"),
         ("// LIVE_SOUND_DECLARATION", "src/sound.h", "class Sound : public SoundFadeState {", "// Two independent sources agree on 0x54"),
-        ("// LIVE_VOICE_DECLARATION", "src/net_class.h", "class VoiceTx : public Sound {", "static_assert(sizeof(VoiceTx)"),
+        ("// LIVE_VOICE_DECLARATION", "src/voice.h", "class VoiceTx : public Sound {", "// The actual 32-bit product"),
         ("// LIVE_ROOT_FADE", "src/sound.cpp", "int SoundFadeState::set_fade(", "// Construct the Sound-owned fields")])
 
 
@@ -123,7 +123,7 @@ def test_actual_constructor_sets_owned_state_and_leaves_uninitialized_delay_unto
     ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(999);"),
     ("src/sound.cpp", "Sound::set_fade(1000);", "Sound::set_fade(1000); delay_ = 0;"),
     ("src/sound.cpp", "device_ = 0;", "device_ = reinterpret_cast<void *>(1);"),
-    ("src/net_class.cpp", "memset(&flags_54_, 0, sizeof(flags_54_));", "/* missing own-state clear */"),
+    ("src/voice.cpp", "memset(&flags_54_, 0, sizeof(flags_54_));", "/* missing own-state clear */"),
 ])
 def test_actual_constructor_contract_rejects_damaged_initialization(tmp_path, monkeypatch, unit, before, after):
     original_read = Path.read_text

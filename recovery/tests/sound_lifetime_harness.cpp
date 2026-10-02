@@ -15,6 +15,7 @@ template<class T> T original_slot(void *) { assert(false); return T(); }
 #define private public
 // LIVE_FADE_DECLARATION
 // LIVE_SOUND_DECLARATION
+struct _MMIOINFO;
 // LIVE_VOICE_DECLARATION
 #undef private
 #undef protected
@@ -57,11 +58,12 @@ int Sound::is_playing() { assert(false); return 0; }
 int Sound::get_time() { assert(false); return 0; }
 int Sound::attach() { assert(false); return 0; }
 int Sound::detach() { assert(false); return 0; }
+VoiceTx::~VoiceTx() { assert(device_ == 0 && fname_ == 0); }
 int VoiceTx::unload() { assert(false); return 0; }
 int VoiceTx::stop() { assert(false); return 0; }
 int VoiceTx::release() { assert(false); return 0; }
 int VoiceTx::init(unsigned long, void *, unsigned long) { assert(false); return 0; }
-int VoiceTx::get_next_buffer() { assert(false); return 0; }
+_MMIOINFO *VoiceTx::get_next_buffer() { assert(false); return 0; }
 int VoiceTx::return_buffer(struct _MMIOINFO *) { assert(false); return 0; }
 int VoiceTx::start() { assert(false); return 0; }
 int VoiceTx::get_nbuffers() { assert(false); return 0; }

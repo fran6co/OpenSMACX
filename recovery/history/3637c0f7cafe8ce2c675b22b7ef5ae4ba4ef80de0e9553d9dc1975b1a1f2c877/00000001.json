@@ -1,0 +1,28 @@
+{
+  "event_id": "eda618554496d6f51e782f641daf5a133516e3c5a475a21f68a4d3ae90e744fb",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Fresh paired native builds and independent physical review show Net construction outlines the same VoiceTx member stage and its throwing cleanup, while normal Net destruction must invoke the recovered VoiceTx destructor instead of skipping it for Sound. Admit those two existing original identities to the coupled reviewed migration; preserve original task baseline and every claim. This is intentional lifetime restoration, not automatic acceptance or a linked preservation waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6477472,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5125328,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "voice-natural-net-lifetimes",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:voice-complete-owner-recovery"
+}
