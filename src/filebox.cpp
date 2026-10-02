@@ -58,9 +58,9 @@ void FileBox::reset() {
 Purpose: Show the common save dialog over FileBox's own editable buffers.
 // ORIGINAL: 0x00634C30 ?save@FileBox@@QAEXXZ 0x00634C30-0x00634CEE FILE
 // RECOVERY_BINDING: v1 {"reason":"The dialog fields are FileBox's inline filename, title, filter, extension and initial-directory buffers, not an independent leaf redirect.","evidence":["Original 0x00634C30-0x00634CEE calls strcat and GetSaveFileNameA using offsets +0, +0x104, +0x30c, +0x414 and +0x418.","The prior compiling redirect and its observations are preserved at git:06248782:src/leaf_recoveries.cpp."]}
-// symbol    ?save@FileBox@@QAEXXZ
+// symbol    ?save@FileBox@@QAEPADXZ
 */
-void FileBox::save() {
+char *FileBox::save() {
     char *const file = file_;
     char *const title = def_name_;
     if (*title != 0) {
@@ -74,21 +74,22 @@ void FileBox::save() {
     ofn.lpstrFilter = filter_;
     ofn.lpstrCustomFilter = 0;
     ofn.nMaxCustFilter = 0;
-    ofn.nFilterIndex = 0;
     ofn.lpstrFile = file;
     ofn.nMaxFile = 0x104;
     ofn.lpstrFileTitle = title;
     ofn.nMaxFileTitle = 0x104;
     ofn.lpstrInitialDir = initial_dir_[0] ? initial_dir_ : 0;
-    ofn.lpstrTitle = def_ext_[0] ? def_ext_ : 0;
-    ofn.Flags = 0;
-    ofn.nFileOffset = 0xE;
+    ofn.lpstrTitle = 0;
+    ofn.Flags = 0xE;
+    ofn.nFileOffset = 0;
     ofn.nFileExtension = 0;
-    ofn.lpstrDefExt = 0;
+    ofn.lpstrDefExt = def_ext_[0] ? def_ext_ : 0;
     ofn.lCustData = 0;
     ofn.lpfnHook = 0;
     ofn.lpTemplateName = 0;
-    GetSaveFileNameA(&ofn);
+    // Native634CE1..E6 returns the buffer only on common-dialog success.
+    // The original leaves nFilterIndex unwritten; do not initialize it here.
+    return GetSaveFileNameA(&ofn) != 0 ? file : 0;
 }
 
 /*

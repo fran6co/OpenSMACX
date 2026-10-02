@@ -23,7 +23,7 @@ class FileBox {
   int set_def_ext(const char *extension);
   int set_def_name(const char *name);
   int set_initial_dir(const char *directory);
-  void save();
+  char *save();
   void load();
   int add_filter(char *pattern, char *label);
 

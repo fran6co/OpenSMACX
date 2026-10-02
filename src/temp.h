@@ -63,9 +63,9 @@ typedef uint32_t func15(LPCSTR);
 // "saves\\auto\\Alpha Centauri Autosave 1", and scenario.cpp passes
 // State.save_path to the load side.
 uint32_t __cdecl save_daemon(LPCSTR save_path);
-typedef uint32_t func16(LPCSTR, BOOL);
-// 0x005A9760, a pending_bodies forwarder.
-uint32_t __cdecl load_daemon(LPCSTR save_path, BOOL a2);
+typedef int func16(LPCSTR, int);
+// 0x005A9760, recovered in game.cpp.
+int __cdecl load_daemon(LPCSTR save_path, int linearize_contours);
 typedef void func19(uint32_t);
 typedef int func20(LPCSTR, int, int, LPCSTR, Sprite *);
 // 0x0048C650, a pending_bodies forwarder.

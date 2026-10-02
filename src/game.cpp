@@ -33,6 +33,8 @@
 #include "faction.h"
 #include "fx.h"  // g_FX
 #include "general.h"
+#include "filebox.h"
+#include "lock.h"
 #include "map.h"
 #include "main.h"  // CommandLineText
 #include "mapwin.h" // draw_tile, mapwin_system_shutdown
@@ -948,6 +950,12 @@ int TamperState93A9B4;
 int TamperDialogFaction[MaxPlayerNum];
 // RECOVERY_OBJECT: v2 0x0093A9D8 0x0093A9F8 ?TamperDialogValue@@3PAHA 0x0051E390
 int TamperDialogValue[MaxPlayerNum];
+// The registry blob is exactly fifty six-DWORD entries; the adjacent cursor
+// is consumed as a signed value by native IDIV before it is advanced.
+// RECOVERY_OBJECT: v1 0x0093A060 ?TamperRegistryRecords@@3PAUTamperRecord@@A
+TamperRecord TamperRegistryRecords[50];
+// RECOVERY_OBJECT: v1 0x0093A9F8 ?TamperRegistryCursor@@3HA
+int TamperRegistryCursor;
 
 // ORIGINAL: 0x00476B30 ?clear_monuments@@YAXXZ 0x00476B30-0x00476B61
 // RECOVERY_BINDING: v1 {"evidence": ["Pinned476B30 starts its writes at94CA18 with38stride in8faction rows4F4apart; founding476B70 and secrets476DA0 establish containing-record base94CA08", "recovery/tests/test_setup_dependencies_behavior.py checks everybyte against the exact original22word mutation footprint"], "reason": "Reset the shared natural monument container: clear21achieved words atrecord+10 andlatest_type atrow+498, preserving all other bytes. Historical reset-only shifted interpretation remains in Git/task history; original seed and restoration obligations are intact."}
@@ -5290,3 +5298,549 @@ void __cdecl mon_secrets_of_tech(int faction_id) {
 // game_data5A7951 reads it under read mode. Broader storage remains unknown.
 // RECOVERY_OBJECT: v1 0x00945D78 ?GameDataLoadRequest@@3HA
 int GameDataLoadRequest;
+
+
+// Save/load orchestration shares the transaction words below.
+
+// Native transaction words: map_data writes the operation mode at 0x5A9295
+// and toggles encrypted mode in game_data callers; consumers read these words
+// at the same fixed image locations. 0x945D6C / 0x945D74 are distinct fields.
+// RECOVERY_OBJECT: v1 0x00945D6C ?GameDataWriteMode@@3HA
+int GameDataWriteMode;       // native storage start 0x00945D6C
+// RECOVERY_OBJECT: v1 0x00945D74 ?GameDataEncryptedMode@@3HA
+int GameDataEncryptedMode;   // native storage start 0x00945D74
+// RECOVERY_OBJECT: v1 0x00945D7C ?GameDataLoadStatusWord@@3HA
+int GameDataLoadStatusWord;  // native storage start 0x00945D7C
+
+extern int __cdecl game_data(FILE *file, int load_request);
+
+int __cdecl encrypt_read(void *buffer, unsigned int size, unsigned int count, FILE *file);
+
+int __cdecl encrypt_write(void *buffer, unsigned int size, unsigned int count, FILE *file);
+
+static const char MapHeaderText[] = "TERRANMAP";
+
+static const char SaveHeaderText[] = "TERRAN";
+
+static const char OpenFileMode[] = "rb";
+
+static const char SaveFileMode[] = "wb";
+
+static const char GameSaveReadMode[] = "rb";
+
+static const char GameSaveHeaderText[] = "TERRAN";
+
+static const char PathDot[] = ".";
+
+static const char MapSaveHeaderText[] = "TERRANMAP";
+
+static const char MapFileFilterPattern[] = "*.";
+
+static const char EmptyMapName[] = "?";
+
+static const char LatestMapPreference[] = "Latest Map";
+
+// The original 0x691B34 pointer cell refers to the separate text at
+// 0x691BEC; keep the pointer and its four-byte NUL-terminated pointee distinct.
+// RECOVERY_OBJECT: v1 0x00691BEC ?SaveGameFileExtensionText@@3PADA
+char SaveGameFileExtensionText[4] = "SAV";
+// RECOVERY_OBJECT: v1 0x00691B34 ?SaveGameFileExtension@@3PBDB
+LPCSTR SaveGameFileExtension = SaveGameFileExtensionText;
+// Native5A9B6C/5ABBD1 load this distinct SC pointer, not the MP map
+// extension. The three-byte view claims no neighboring allocation extent.
+// RECOVERY_OBJECT: v1 0x00691BF0 ?ScenarioFileExtensionText@@3PADA
+char ScenarioFileExtensionText[3] = "SC";
+// RECOVERY_OBJECT: v1 0x00691B3C ?ScenarioFileExtension@@3PBDB
+LPCSTR ScenarioFileExtension = ScenarioFileExtensionText;
+// RECOVERY_OBJECT: v1 0x00690D9C ?GameSaveMultiplayerMarker@@3PADA
+char GameSaveMultiplayerMarker[] = "multi";  // native string starts at 0x00690D9C
+
+// These six literals are separate writable source objects because the image
+// uses distinct storage starts for the read/write key, value names, and dialog
+// label. The registry class strings are one-byte zero-filled views only; no
+// larger capacity or independent writer is inferred here.
+static char TamperReadApplicationKey[] =
+    "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri";
+static char TamperWriteApplicationKey[] =
+    "SOFTWARE\\Microsoft\\DirectPlay\\Applications\\Sid Meier's Alpha Centauri";
+static char TamperReadValueMVM[] = "MVM";
+static char TamperReadValueMVB[] = "MVB";
+static char TamperWriteValueMVM[] = "MVM";
+static char TamperWriteValueMVB[] = "MVB";
+static char TamperDialogLabel[] = "HOTNOTAMPER";
+// RECOVERY_OBJECT: v1 0x0093A9FC _TamperReadClass
+static char TamperReadClass[1];
+// RECOVERY_OBJECT: v1 0x0093AA00 _TamperWriteClass
+static char TamperWriteClass[1];
+
+// ORIGINAL: 0x0051E110 ?check_tamper@@YAXXZ 0x0051E110-0x0051E38B
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0051e110.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the full PBEM tamper check using shared typed registry records and cursor, faction state, direct registry APIs and the original unguarded corrupt-cursor/error behavior."}
+// symbol    ?check_tamper@@YAXXZ
+void __cdecl check_tamper() {
+    if (IsMultiplayerPBEM == 0 || TamperState93A9AC == 0) {
+        return;
+    }
+
+    HKEY key;
+    DWORD value_type;
+    DWORD byte_count;
+    if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, TamperReadApplicationKey, 0,
+                        TamperReadClass, 0, 0xF003F, 0, &key, 0) == ERROR_SUCCESS) {
+        byte_count = 4;
+        RegQueryValueExA(key, TamperReadValueMVM, 0, &value_type,
+                         reinterpret_cast<LPBYTE>(&TamperRegistryCursor),
+                         &byte_count);
+        byte_count = 0x4B0;
+        RegQueryValueExA(key, TamperReadValueMVB, 0, &value_type,
+                         reinterpret_cast<LPBYTE>(TamperRegistryRecords),
+                         &byte_count);
+        RegCloseKey(key);
+    }
+
+    int matching_index = -1;
+    for (int index = 0; index < 50; ++index) {
+        TamperRecord &record = TamperRegistryRecords[index];
+        if (record.field_0_ == TamperState93A9AC &&
+            record.field_4_ == TamperState93A9B0 &&
+            record.field_8_ == TurnCurrentNum &&
+            record.field_C_ == ConsoleGlobal.faction_id_ &&
+            record.field_14_ == TamperState93A9B4) {
+            matching_index = index;
+            break;
+        }
+    }
+
+    if (matching_index >= 0) {
+        TamperRecord &record = TamperRegistryRecords[matching_index];
+        ++record.count_;
+        const int current_faction = ConsoleGlobal.faction_id_;
+        const uint8_t human_mask = factions_status_byte(0);
+        const uint8_t alive_mask = factions_status_byte(1);
+        for (int faction = 1; faction < MaxPlayerNum; ++faction) {
+            if (faction != current_faction) {
+                const uint8_t bit = static_cast<uint8_t>(1u << (faction & 31));
+                if ((human_mask & bit) != 0 && (alive_mask & bit) != 0) {
+                    TamperDialogFaction[faction] = current_faction;
+                    TamperDialogValue[faction] = record.count_;
+                }
+            }
+        }
+
+        if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, TamperWriteApplicationKey, 0,
+                            TamperWriteClass, 0, 0xF003F, 0, &key, 0) == ERROR_SUCCESS) {
+            RegSetValueExA(key, TamperWriteValueMVM, 0, REG_BINARY,
+                           reinterpret_cast<const BYTE *>(&TamperRegistryCursor), 4);
+            RegSetValueExA(key, TamperWriteValueMVB, 0, REG_BINARY,
+                           reinterpret_cast<const BYTE *>(TamperRegistryRecords), 0x4B0);
+            RegCloseKey(key);
+        }
+        X_pop(TamperDialogLabel, 0);
+        return;
+    }
+
+    // Native code uses the registry cursor directly as an index before
+    // reducing it modulo 50. Keep that corrupt/out-of-range behavior intact.
+    const int cursor = TamperRegistryCursor;
+    TamperRecord &record = TamperRegistryRecords[cursor];
+    record.field_0_ = TamperState93A9AC;
+    record.field_4_ = TamperState93A9B0;
+    record.field_8_ = TurnCurrentNum;
+    record.field_C_ = ConsoleGlobal.faction_id_;
+    record.count_ = 0;
+    record.field_14_ = TamperState93A9B4;
+    const uint32_t advanced_bits = static_cast<uint32_t>(cursor) + 1u;
+    const int advanced_cursor = advanced_bits <= 0x7FFFFFFFu
+        ? static_cast<int>(advanced_bits)
+        : -1 - static_cast<int>(0xFFFFFFFFu - advanced_bits);
+    TamperRegistryCursor = advanced_cursor % 50;
+
+    if (RegCreateKeyExA(HKEY_LOCAL_MACHINE, TamperWriteApplicationKey, 0,
+                        TamperWriteClass, 0, 0xF003F, 0, &key, 0) == ERROR_SUCCESS) {
+        RegSetValueExA(key, TamperWriteValueMVM, 0, REG_BINARY,
+                       reinterpret_cast<const BYTE *>(&TamperRegistryCursor), 4);
+        RegSetValueExA(key, TamperWriteValueMVB, 0, REG_BINARY,
+                       reinterpret_cast<const BYTE *>(TamperRegistryRecords), 0x4B0);
+        RegCloseKey(key);
+    }
+}
+
+
+struct MapDataTransferHeader {
+    char opaque_before_format_[0x380];
+    int format_version_;
+    char opaque_after_format_[0x14];
+};
+
+// ORIGINAL: 0x005A6510 sub_5a6510 0x005A6510-0x005A6594 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a6510.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover direction-sign lookup through the genuine nine-entry movement tables and historical C linkage. Preserve the exact seed obligation; new matching claims require native recording."}
+// symbol    _sub_5a6510
+extern "C" int __cdecl sub_5a6510(int x, int y) {
+    int sign_x;
+    if (x > 0) {
+        sign_x = 1;
+    } else {
+        sign_x = (x >= 0) - 1;
+    }
+
+    int sign_y;
+    if (y > 0) {
+        sign_y = 1;
+    } else {
+        sign_y = (y >= 0) - 1;
+    }
+
+    for (int index = 0; index < 9; ++index) {
+        const int delta_x = VehMoveDeltaX[index];
+        int sign_delta_x;
+        if (delta_x > 0) {
+            sign_delta_x = 1;
+        } else {
+            sign_delta_x = (delta_x >= 0) - 1;
+        }
+        if (sign_x == sign_delta_x) {
+            const int delta_y = VehMoveDeltaY[index];
+            int sign_delta_y;
+            if (delta_y > 0) {
+                sign_delta_y = 1;
+            } else {
+                sign_delta_y = (delta_y >= 0) - 1;
+            }
+            if (sign_y == sign_delta_y) {
+                return index;
+            }
+        }
+    }
+    return -1;
+}
+
+// ORIGINAL: 0x005A6890 ?game_io@@YAHHPAUFILE@@@Z 0x005A6890-0x005A6AC0
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a6890.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the six ordered MapWin member transfers through standard buffered or encrypted I/O and shared transaction state, not raw self offsets."}
+// symbol    ?game_io@@YAHPAVMapWin@@PAU_iobuf@@@Z
+// TRIED: divergence at #4 (push edi/esi vs test) is register allocation for a1 not hoisting into a callee-saved reg; a hoisted `base` local and inline `(char*)a1+off` casts compile identically.
+int __cdecl game_io(MapWin *record, FILE *file) {
+    void *fields[6] = {
+        &record->field_1DD78_, &record->field_1DD74_, &record->field_1DD70_,
+        &record->field_1DD98_, &record->field_1DD9C_, &record->field_1DDA0_
+    };
+    for (int index = 0; index != 6; ++index) {
+        int result;
+        if (GameDataEncryptedMode != 0) {
+            result = GameDataWriteMode != 0
+                ? encrypt_write(fields[index], 4, 1, file)
+                : encrypt_read(fields[index], 4, 1, file);
+        } else {
+            result = GameDataWriteMode != 0
+                ? static_cast<int>(fwrite(fields[index], 4, 1, file))
+                : static_cast<int>(fread(fields[index], 4, 1, file));
+        }
+        if (result == 0) return 1;
+    }
+    return 0;
+}
+
+static int map_data_plain_block(FILE *file, void *buffer, unsigned int size) {
+    if (GameDataWriteMode == 0) return fread(buffer, size, 1, file);
+    return fwrite(buffer, size, 1, file);
+}
+
+static int map_data_block(FILE *file, void *buffer, unsigned int size) {
+    if (GameDataEncryptedMode == 0) {
+        return map_data_plain_block(file, buffer, size);
+    }
+    if (GameDataWriteMode == 0) {
+        return encrypt_read(buffer, size, 1, file);
+    }
+    return encrypt_write(buffer, size, 1, file);
+}
+
+// ORIGINAL: 0x005A9280 ?map_data@@YAHPAUFILE@@HH@Z 0x005A9280-0x005A94ED
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9280.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover complete map-data transfer including archive-header blocks, legacy version-dependent block length, failure ordering and real map_read/map_write owners."}
+// symbol    ?map_data@@YAHPAU_iobuf@@HH@Z
+// TRIED: inline duplication of each read/write block - factored into rw_plain/rw_block helpers instead; DAT_00945d74 is written once (=0) and never again, so the encrypt branch is dead at runtime but still emitted (matches source, not a live check removed); diverges at instr #5
+int __cdecl map_data(FILE *file, int write_mode, int transfer_map_header) {
+    MapDataTransferHeader header;
+    char large_block[0x10660];
+    char medium_block[0x2CE0];
+    char small_block[0x20];
+
+    GameDataWriteMode = write_mode;
+    GameDataEncryptedMode = 0;
+    if (transfer_map_header != 0) {
+        if (map_data_plain_block(file, &header, sizeof(header)) == 0) return 1;
+        if (map_data_block(file, &write_mode, sizeof(write_mode)) == 0) return 1;
+
+        const unsigned int large_size = header.format_version_ < 3
+            ? 0xE5E0 : 0x10660;
+        if (map_data_block(file, large_block, large_size) == 0) return 1;
+        if (map_data_block(file, medium_block, sizeof(medium_block)) == 0) return 1;
+        if (map_data_block(file, small_block, sizeof(small_block)) == 0) return 1;
+    }
+
+    const int result = GameDataWriteMode == 0 ? map_read(file) : map_write(file);
+    return result != 0;
+}
+
+// ORIGINAL: 0x005A9C10 ?load_map_daemon@@YAHPAD@Z 0x005A9C10-0x005A9DAD
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9c10.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover extension/header/version validation, map windows and map tiles, contour copy direction and Paths lifecycle through existing genuine owners."}
+// symbol    ?load_map_daemon@@YAHPAD@Z
+// TRIED: extension check, env_open, header_check against the TERRAN/ TERRANMAP string depending on the extension, then (fread reuses the `a1` parameter's own stack slot as scratch, matching the disassembly) a MapWin close sweep, map_data, and the counter table reset/copy. Landed at 0.80 similarity; diverges at #3 on register vs stack scheduling for the extension check.
+int __cdecl load_map_daemon(char *path) {
+    int is_saved_game = 0;
+    char *dot = strchr(path, '.');
+    // Native691B34 points to SAV. Saved games include the additional
+    // extraction blocks; ordinary scenario archives use TERRANMAP.
+    if (dot != 0 && _stricmp(dot + 1, SaveGameFileExtension) == 0) {
+        is_saved_game = 1;
+    }
+
+    FILE *file = env_open(path, OpenFileMode);
+    if (file == 0) return 1;
+
+    int result = 2;
+    char header[256];
+    header_check(header, file);
+    const char *expected_header = is_saved_game ? SaveHeaderText : MapHeaderText;
+    if (strcmp(header, expected_header) == 0) {
+        result = 3;
+        int version = 0;
+        if (fread(&version, sizeof(version), 1, file) != 0) {
+            const int required_version = is_saved_game ? 0x56 : 5;
+            if (version >= required_version) {
+                for (size_t slot = 1; slot < MapWinTableSlots; ++slot) {
+                    MapWin *const window = MapWinTable[slot];
+                    if (window != nullptr && window->field_1DD74_ != 0) {
+                        window->field_1DD74_ = 0;
+                        window->close();
+                    }
+                }
+                ConsoleGlobal.field_23BE4_ = 0;
+                result = 4;
+                if (map_data(file, 0, is_saved_game) == 0) {
+                    ConsoleGlobal.cursor_active_ = 0;
+                    ConsoleGlobal.selected_vehicle_ = -1;
+                    BaseCurrentCount = 0;
+                    VehCurrentCount = 0;
+                    // Native5A9D58/5A9D73 use signed JLE/JL tests on the
+                    // loaded area word, even though its shared owner is unsigned.
+                    for (int map_tile_index = 0;
+                         map_tile_index < static_cast<int>(MapArea);
+                         ++map_tile_index) {
+                        MapTiles[map_tile_index].visibility = 0;
+                        MapTiles[map_tile_index].bit &= ~3U;
+                    }
+                    BaseComputedID = -1;
+                    for (int contour_index = 0; contour_index < 11; ++contour_index) {
+                        AltNatural[contour_index] = AltContour[contour_index];
+                    }
+                    result = 0;
+                    Paths.init();
+                }
+            }
+        }
+    }
+
+    fclose(file);
+    return result;
+}
+
+// ORIGINAL: 0x005A9B20 ?save_map_daemon@@YAHPAD@Z 0x005A9B20-0x005A9C05
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9b20.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save header/version/data flow and preserve the original unconditional fclose and failed-file removal error behavior."}
+// symbol    ?save_map_daemon@@YAHPAD@Z
+int __cdecl save_map_daemon(char *path) {
+    char filename[256];
+    filename[0] = 0;
+    strcat(filename, path);
+    if (strchr(filename, '.') == 0) {
+        strcat(filename, PathDot);
+        strcat(filename, ScenarioFileExtension);
+    }
+
+    FILE *file = env_open(filename, SaveFileMode);
+    int result = 1;
+    if (file != 0) {
+        result = 2;
+        header_write(MapSaveHeaderText, file);
+        int version = 5;
+        if (fwrite(&version, sizeof(version), 1, file) != 0) {
+            result = 3;
+            if (map_data(file, 1, 0) == 0) result = 0;
+        }
+    }
+
+    fclose(file);
+    if (result != 0) remove(filename);
+    return result;
+}
+
+// ORIGINAL: 0x005A9760 ?load_daemon@@YAHPADH@Z 0x005A9760-0x005A9B19
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a9760.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover the complete load orchestration through actual windows, paths, player/base/vehicle state and PBEM/tamper lifecycle. The called game_data serializer remains explicitly unfinished; this is not working-game acceptance."}
+// symbol    ?load_daemon@@YAHPBDH@Z
+// TRIED: no Ghidra decompilation was provided for this address; transcribed straight from the disassembly. The two `// indirect` sites are vtable slots 1 (takes an int) and 2 (nullary) on the static object at g_007b0cb8, dispatched through VCall as the brief's shim pattern.
+// TRIED: nothing further tried; MISMATCH #0 (push vs sub - a prologue/ stack-layout difference from the local array sizing), similarity 0.73 over 953 bytes. The "copy loop" at 0x5A9A02 is a broadcast of the value at a fixed index into all 0x20 slots of two parallel int arrays (g_009392c0, g_00939340), not a running index as first guessed.
+int __cdecl load_daemon(LPCSTR path, int linearize_contours) {
+    FILE *file = env_open(path, GameSaveReadMode);
+    if (file == 0) return 1;
+
+    char header[0x110];
+    header_check(header, file);
+    if (strcmp(header, GameSaveHeaderText) != 0) {
+        fclose(file);
+        return 2;
+    }
+
+    int version = 0;
+    if (fread(&version, sizeof(version), 1, file) == 0 || version < 0x56) {
+        fclose(file);
+        return 3;
+    }
+
+    for (size_t close_slot = 2; close_slot < MapWinTableSlots; ++close_slot) {
+        MapWin *const window = MapWinTable[close_slot];
+        if (window != 0 && window->field_1DD74_ != 0) {
+            window->field_1DD74_ = 0;
+            window->close();
+        }
+    }
+    ConsoleGlobal.field_23BE4_ = 0;
+    ConsoleGlobal.field_23BE8_ = 0;
+
+    if (game_data(file, 0) != 0) {
+        const int result = GameDataLoadStatusWord == 0 ? 4 : 5;
+        fclose(file);
+        return result;
+    }
+
+    if ((GameRules & RULES_IRONMAN) != 0) {
+        int seed = 0;
+        if (fread(&seed, sizeof(seed), 1, file) != 0) my_srand(seed);
+    }
+
+    if (IsMultiplayerNet == 0) {
+        for (size_t offline_slot = 2; offline_slot < MapWinTableSlots; ++offline_slot) {
+            MapWin *const window = MapWinTable[offline_slot];
+            if (window != 0) window->field_1DD74_ = 0;
+        }
+    }
+
+    Paths.init();
+    if (linearize_contours != 0) world_linearize_contours();
+    for (int contour_slot = 0; contour_slot < 11; ++contour_slot) AltNatural[contour_slot] = AltContour[contour_slot];
+
+    for (int tech_faction = 1; tech_faction < MaxPlayerNum; ++tech_faction) {
+        PlayerData &data = PlayersData[tech_faction];
+        data.flags &= ~static_cast<uint32_t>(PFLAG_UNK_20000);
+        for (int satellite_index = 0; satellite_index < 4; ++satellite_index) {
+            if (data.satellites_[satellite_index] != 0) data.flags |= PFLAG_UNK_20000;
+        }
+        for (int technology_id = 0; technology_id < MaxTechnologyNum; ++technology_id) {
+            if ((Technology[technology_id].flags & 8U) != 0 &&
+                has_tech(technology_id, tech_faction) != 0) {
+                data.flags |= PFLAG_UNK_20000;
+            }
+        }
+    }
+
+    for (int alive_faction = 1; alive_faction < MaxPlayerNum; ++alive_faction) {
+        bool has_presence = false;
+        for (int base_id = 0; base_id < BaseCurrentCount; ++base_id) {
+            if (Bases[base_id].faction_id_current == alive_faction) {
+                has_presence = true;
+                break;
+            }
+        }
+        if (!has_presence) {
+            for (int vehicle_id = 0; vehicle_id < VehCurrentCount; ++vehicle_id) {
+                const Veh &vehicle = Vehs[vehicle_id];
+                if (vehicle.faction_id == alive_faction &&
+                    VehPrototypes[vehicle.proto_id].plan == PLAN_COLONIZATION) {
+                    has_presence = true;
+                    break;
+                }
+            }
+        }
+        const uint32_t faction_bit = 1U << (8 + alive_faction);
+        if (has_presence) LockEnableMask |= faction_bit;
+        else LockEnableMask &= ~faction_bit;
+    }
+
+    if ((GameRules & RULES_IRONMAN) != 0) remove(path);
+
+    const int cursor_history = ConsoleGlobal.cursor_history_index_;
+    const int cursor_x = ConsoleGlobal.cursor_history_x_[cursor_history];
+    const int cursor_y = ConsoleGlobal.cursor_history_y_[cursor_history];
+    for (int history_slot = 0; history_slot < 32; ++history_slot) {
+        ConsoleGlobal.cursor_history_x_[history_slot] = cursor_x;
+        ConsoleGlobal.cursor_history_y_[history_slot] = cursor_y;
+    }
+
+    rebuild_vehicle_bits();
+    rebuild_base_bits();
+
+    if (strstr(path, GameSaveMultiplayerMarker) != 0 && IsMultiplayerNet == 0) {
+        ConsoleGlobal.cursor_active_ = 0;
+        GameState |= 0x10C0;
+        const unsigned char state_low_byte = static_cast<unsigned char>(GameState);
+        if ((state_low_byte & 0x80) != 0 && (state_low_byte & 0x40) != 0) {
+            MainInterfaceGlobal.flat_button_[2].show(0);
+        } else {
+            MainInterfaceGlobal.flat_button_[2].hide();
+        }
+    }
+
+    ControlTurnPhase = ConsoleGlobal.faction_id_;
+    if (IsMultiplayerNet == 0) {
+        if ((NetTurnFlags & 0x20) == 0 && bit_count(LockEnableMask & 0xFFu) <= 1) {
+            IsMultiplayerPBEM = 0;
+        } else {
+            IsMultiplayerPBEM = 1;
+            check_tamper();
+        }
+    } else {
+        IsMultiplayerPBEM = 0;
+    }
+    UnkBitfield1 |= 4;
+    fclose(file);
+    return 0;
+}
+
+// ORIGINAL: 0x005ABB90 ?save_map@@YAXXZ 0x005ABB90-0x005ABD0C;0x0066221F-0x00662234
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005abb90.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Recover map-save dialog, selection, preference and save orchestration through lexical FileBox lifetime. Preserve both original spans including compiler cleanup; retain the seed."}
+// symbol    ?save_map@@YAXXZ
+void __cdecl save_map() {
+    FileBox box;
+    box.set_def_name(MapFilePath);
+    box.set_def_ext(ScenarioFileExtension);
+
+    char filter[256];
+    filter[0] = 0;
+    strcat(filter, MapFileFilterPattern);
+    strcat(filter, ScenarioFileExtension);
+    box.add_filter(filter, label_get(0x678 / 4));
+
+    char *const selection = box.save();
+    do_all_draws();
+    if (selection == 0) return;
+
+    char name[256];
+    strcpy(name, selection);
+    if (strcmp(name, EmptyMapName) == 0) {
+        strcpy(name, StringTemp);
+    }
+    char preference_value[256];
+    strcpy(preference_value, name);
+    char *dot = strchr(preference_value, '.');
+    if (dot != 0) *dot = 0;
+
+    strncpy(MapFilePath, preference_value, 0x4B);
+    prefs_put(LatestMapPreference, preference_value);
+    save_map_daemon(name);
+}
+
+// ORIGINAL: 0x005A6AC0 ?game_data@@YAHPAUFILE@@H@Z 0x005A6AC0-0x005A9279
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005a6ac0.cpp", "recovery/tasks/game-save-load-owner-coverage.json"], "reason": "Explicitly unfinished link-continuity body for the serializer called by recovered loaders. BODY GOES HERE remains; this body grants no recovery or runtime coverage and all original seed obligations remain."}
+// symbol    ?game_data@@YAHPAU_iobuf@@H@Z
+// DEFERRED: confirmed tractable shape, not yet landed - 1983 lines of Ghidra decompilation and 196 conditionals is more than this pass could hand-verify, but the structure is now characterised: Overwhelmingly mechanical: 220 of 256 call sites are __fwrite(60)/__fread(60)/?encrypt_write@@(50)/?encrypt_read@@(50); the other 36 are ?mem_get@@(4)/_memcpy(4)/_free(4)/_abs(4)/ _strcpy(3)/_strlen(2)/?game_io@@(2)/?add@StringStruct@@(2)/ ?map_write@@/?map_read@@/?clear_scenario@@/?clear_monuments@@/ ?clear_bunglist@@/?bit_count@@ (1 each). This is a save/load serializer, field after field. a2 selects the direction: the FIRST call is FUN_0064603f(local_378) when a2!=0 (write: pack current globals into a 0x31C-byte header buffer before writing it) vs FUN_00646178(local_378,0x31C,1,a1) when a2==0 (read: fread that many bytes off `a1` first). Confirmed against the raw disasm's branch on a2 at function entry. The named blockers are ONE gate, not many: `if (local_74 < 0xb)` (local_74 is the version field inside that same 0x31C legacy header) guards roughly 10 raw copy-loops migrating the OLD struct layout into the CURRENT globals (`?9a6490` region) - this is the whole "legacy-struct migration block" and it is READ-ONLY-PATH dead code on any save from version >= 0xb, i.e. every save this binary itself produces. It is real work to transcribe (found 0x2C/0x40/0x16-element copy loops in the first 120 Ghidra lines alone) but it is bounded and separable from the ~220 I/O calls. Frame is 0x374 bytes (from the brief) - count locals against it before landing; a batch of seven diverged only at the prologue over this exact mistake.
+int __cdecl game_data(FILE *, int) {
+    // BODY GOES HERE.
+    return 0;
+}

@@ -169,6 +169,16 @@ extern int TamperState93A9B0;
 extern int TamperState93A9B4;
 extern int TamperDialogFaction[8];
 extern int TamperDialogValue[8];
+struct TamperRecord {
+    int field_0_;
+    int field_4_;
+    int field_8_;
+    int field_C_;
+    int count_;
+    int field_14_;
+};
+extern TamperRecord TamperRegistryRecords[50];
+extern int TamperRegistryCursor;
 void __cdecl clear_monuments();
 void __cdecl clear_all_offers();
 void __cdecl clear_tamper();
@@ -452,4 +462,13 @@ extern uint8_t GameWireOpaque_94B4D8[0x80];
 extern const GUID LobbyAppGuid;
 
 // Shared native945D78 load-request selector, owned in game.cpp.
-extern int GameDataLoadRequest;
+extern "C" int __cdecl sub_5a6510(int x, int y);
+extern int GameDataLoadRequest;  // 0x00945D78, distinct selector
+// Save/load transaction words are shared with game_data and the daemons.
+extern int GameDataWriteMode;       // 0x00945D6C
+extern int GameDataEncryptedMode;   // 0x00945D74
+extern int GameDataLoadStatusWord;  // 0x00945D7C
+extern char SaveGameFileExtensionText[4];  // pointee starts at 0x00691BEC
+extern const char *SaveGameFileExtension;  // pointer cell at 0x00691B34
+extern char ScenarioFileExtensionText[3];  // three-byte SC view at 0x00691BF0
+extern const char *ScenarioFileExtension;  // distinct pointer cell at 0x00691B3C

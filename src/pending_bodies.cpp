@@ -441,10 +441,7 @@ uint32_t __cdecl save_daemon(LPCSTR save_path) {  // 0x005A94F0
     return PENDING_BODY(0x005A94F0, pending)(save_path);
 }
 
-uint32_t __cdecl load_daemon(LPCSTR a1, BOOL a2) {  // 0x005A9760
-    typedef uint32_t(__cdecl *pending)(LPCSTR, BOOL);
-    return PENDING_BODY(0x005A9760, pending)(a1, a2);
-}
+
 
 int __cdecl popb(LPCSTR a1, int a2, int a3, LPCSTR a4, Sprite * a5) {  // 0x0048C650
     typedef int(__cdecl *pending)(LPCSTR, int, int, LPCSTR, Sprite *);
@@ -1038,14 +1035,6 @@ int __cdecl load_game(int a1, int a2) {
 int __cdecl load_map() {
     typedef int(__cdecl *pending)();
     return PENDING_BODY(0x005AB600, pending)();
-}
-
-// ?save_map@@YAXXZ at 0x005ABB90, still archived
-// (src/recovered/units/005abb90.cpp). Console::editor_save calls it; the
-// declaration is beside load_map in console.cpp's handoff block.
-void __cdecl save_map() {
-    typedef void(__cdecl *pending)();
-    PENDING_BODY(0x005ABB90, pending)();
 }
 
 

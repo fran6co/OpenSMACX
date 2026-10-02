@@ -1,0 +1,20 @@
+{
+  "event_id": "e0be0a3a17037ed20215df5299788c635cfb170092210f67091f4ed8ca6f4403",
+  "payload": {
+    "affects": [
+      "entity-219cd0e2899423dd0c9bdcd0718b1406f9eccf7f28df77221b51278212dbc055"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "game-data-serializer-owner-seams-20261003",
+    "evidence": [
+      "Pinned5A6AC0..5A9279 transfers0xCE0 at93E978; save_daemon5A95B8 copies eight19C process records there. Constructor538A48..64 initializes24lock entries at3C strides. Separate NetPlayerDropped begins93F65C. Pinned51E3C0/51E480/51E530 clear two8-int tables by faction;5275B0 displays them. A separate398-byte stream block spans multiple owners; installed VC6 FREAD.C/fread.obj support stage-byte reading and scattering the exact short-read prefix with full-block success normalization, but delayed visibility to concurrent observers remains unresolved. No layout extent, union intent, serializer coverage or behavior-change approval is granted."
+    ],
+    "hypothesis": "Completing game_data requires resolving the ownership of the 0x93E978..0x93F658 multiplayer snapshot and two separate eight-int deferred-message tables at 0x93A96C/0x93A98C. The snapshot starts at NetDaemonNet+0x1BE8 inside current lock_state[3]+8 and extends0x7FC beyond the current20CC floor. An enlarged overlapping owner is plausible but intentional union versus original overrun remains unproved. Do not synthesize a disjoint global or raw out-of-object copy.",
+    "kind": "discovery"
+  },
+  "previous_event": "64f7c48976caacc666e7c88958873d8b649d0482eab2913dc8ea23d418d98138",
+  "request_id": "game-data-serializer-owner-seams-20261003",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:game-save-load-owner-coverage"
+}

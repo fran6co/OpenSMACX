@@ -1,0 +1,28 @@
+{
+  "event_id": "bb885d6daa46d3bfc8acc8714c6ae2d736d5636bae1bb0c0d3081945411580e5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/filebox_save_host_control.cpp",
+      "recovery/tests/test_filebox_save_behavior.py",
+      "src/filebox.cpp",
+      "src/filebox.h"
+    ],
+    "evidence": [
+      "Pinned save_map5ABC40 returns FileBox::save EAX, tests null at5ABC4C and copies that returned pointer; callee634CE1..E6 returns file buffer on GetSaveFileNameA success and zero on cancellation, not void. Correct real callee return/API and only current owning save_map caller, retain all historical identities/claims and add actual-source cancellation controls. Native OPENFILENAME stack writes also place flags0xE at+24 and extension pointer at+2C; current source incorrectly assigns these to neighboring fields. Native5ABC16 label offset678 is label index414 rather than literal index1656. This is concrete dependency closure, not a scope or matching waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6507568,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e0be0a3a17037ed20215df5299788c635cfb170092210f67091f4ed8ca6f4403",
+  "request_id": "save-map-filebox-return-closure-20261003",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:game-save-load-owner-coverage"
+}
