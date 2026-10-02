@@ -1,0 +1,27 @@
+{
+  "event_id": "1577a97e19543cbac65b01265f68462042fb1ee66dbcc36ef2106b907d9836e3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_console_menu_behavior.py",
+      "src/netdaemon.cpp",
+      "src/netdaemon.h"
+    ],
+    "evidence": [
+      "Pinned 51DD00 receiver-relative offsets, lock-list clear at +14A0 and qualified AlphaNet close establish NetDaemon::reset, called by admitted Console menu dispatcher51BC70. Admit typed reset declaration/body and actual-source menu/reset host controls, preserving exact historical seed and all task baselines/claims. No free synthetic receiver wrapper, fixed executable calls, marker editing or fabricated exactness. Shared no-map interruption DWORD93A944 is accessed by menu/key router and timer loop: source-owned provisional scalar role may be recovered in Console with start-only binding, but allocation extent/lifetime and exact data layout remain unproven. Require fresh native compile/layout, protected-claim diagnostics, build/link, source controls and coordinator review before source integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5364992,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "7e4f0838baf721f5bbcbc39086f1c45de9d8253608f21491f3dfe93deb56d4f9",
+  "request_id": "console-menu-netdaemon-reset-20261002",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:console-scenario-owner-wave"
+}
