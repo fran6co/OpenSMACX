@@ -201,6 +201,7 @@ int __cdecl pops(char *caption, char *label, int a3, char *a4, int a5,
                  Sprite *sprite, int a7, int a8, int (__cdecl *callback)());
 
 int __cdecl pop_label_cb(char *label, int (__cdecl *callback)());
+void __cdecl pop_close();
 int __cdecl pop_caption(char *caption, char *label,
                                   int (__cdecl *callback)());
 int __cdecl pop_value_title(char *label, int value, int title,

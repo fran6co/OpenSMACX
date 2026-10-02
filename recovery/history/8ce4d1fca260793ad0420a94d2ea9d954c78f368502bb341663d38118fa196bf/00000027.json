@@ -1,0 +1,22 @@
+{
+  "event_id": "3d4be6fa2357546c40660cc908fe186f4ee2c24bbccefa91720abe871fb618f7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/recovered/006272f0.cpp",
+      "src/recovered/units/0062ee20.cpp",
+      "src/unrecovered/0052ed40.cpp",
+      "src/unrecovered/0062eea0.cpp"
+    ],
+    "evidence": [
+      "The four original identities now have genuine source-owned compiling implementations in netdaemon.cpp/net_class.cpp/popup.cpp. Fresh full application build/link passed;105 touched historical byte obligations reproduce, including the transplanted popup-close claim;44 focused actual-source controls pass. Retire only these consumed duplicate seeds, after native-writer mapping transfer, preserving all original identity/span/claim obligations and historical lessons. Original seed code remains in Git at b0d788d3e0ebc4d5b4c20acb834cd37455e53c67. Other unfinished seeds/worktrees must remain. This is coordinator-reviewed rough source recovery, not full protocol, strict reference, runtime, whole-game or automatic acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d16ee75cae6fde867406c915ce6530bdd458d44460a635529f733396d43887c7",
+  "request_id": "file-transfer-consumed-seed-retirement",
+  "schema_version": 1,
+  "sequence": 27,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

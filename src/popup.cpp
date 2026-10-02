@@ -2022,3 +2022,10 @@ int Popup::on_exec() {
         return 1;
     }
 }
+
+// ORIGINAL: 0x006272F0 ?pop_close@@YAXXZ 0x006272F0-0x00627306 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned6272F0..627306; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/recovered/006272f0.cpp historical byte obligation.", "PopupInstanceSlotA/B are the existing init_class-owned singleton pointer cells9BC074/78; BasePop derives through GraphicWin from the nonvirtual Win base."], "reason": "Close both source-owned singleton popups through the genuine BasePop receiver; retain the original sequential reload across the first close callback."}
+void __cdecl pop_close() {
+    static_cast<BasePop *>(PopupInstanceSlotA)->close();
+    static_cast<BasePop *>(PopupInstanceSlotB)->close();
+}

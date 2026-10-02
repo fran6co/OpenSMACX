@@ -43,6 +43,10 @@
 #include "tutwin.h"
 #include "xpops.h"
 #include "general.h"
+#include "filemap.h"
+#include "zlib.h"
+#include <direct.h>
+#include <new>
 #include "replaywin.h"     // ReplayEventBytes: replay recorder's byte length
 
 // The next dword after IsMultiplayerNet. Every sender in this file
@@ -3493,19 +3497,600 @@ fail:
     return 0;
 }
 
-// Fixed-slot bindings carried from 00534400.cpp
+// File-transfer protocol state and storage, shared by the sender and receiver.
 
-class Filemap { public:
-    LPVOID map_view_addr_;
-    HANDLE file_;
-    HANDLE file_map_;
-    uint32_t file_size_;
-    Filemap();
-    int create(char *, unsigned long, int);
-    uint32_t get_size();
-    void close();
-    ~Filemap();
+extern char NetDaemonFileTransferPath[0x104];
+
+extern int __cdecl sub_634280(unsigned char *, unsigned long *, unsigned char *, unsigned int);
+
+struct NetDaemonFileIndexRecord {
+    uint16_t opcode;          // +0
+    uint16_t reserved_2;      // +2
+    int32_t source_player;    // +4
+    uint32_t ready_flags;     // +8
+    uint32_t chunk_count;     // +0xC
+    uint8_t file_index;       // +0x10
+    uint8_t checksum;         // +0x11
+    uint16_t reserved_12;     // +0x12
+    uint32_t file_size;       // +0x14
+    char filename[0x104];     // +0x18
 };
+static_assert(sizeof(NetDaemonFileIndexRecord) == 0x11C,
+              "native file-list message stride");
+static_assert(offsetof(NetDaemonFileIndexRecord, source_player) == 0x04,
+              "native file-list sender offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, ready_flags) == 0x08,
+              "native file-list ready-mask offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, chunk_count) == 0x0C,
+              "native file-list chunk-count offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, file_index) == 0x10,
+              "native file-list file-index offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, checksum) == 0x11,
+              "native file-list checksum offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, file_size) == 0x14,
+              "native file-list file-size offset");
+static_assert(offsetof(NetDaemonFileIndexRecord, filename) == 0x18,
+              "native file-list filename offset");
+
+struct NetDaemonFileChunkPacket {
+    uint16_t opcode;          // +0
+    uint16_t reserved_2;      // +2
+    uint32_t compressed_size; // +4
+    int32_t file_index;       // +8 (native sendBuf + 4, in uint16_t units)
+    uint32_t chunk_index;     // +0xC
+    uint8_t reserved_10[0x10];// +0x10
+    uint8_t payload[0x800];   // +0x20
+};
+static_assert(sizeof(NetDaemonFileChunkPacket) == 0x820,
+              "native file transfer packet extent");
+
+static NetDaemonFileIndexRecord *netdaemon_allocate_file_index_records() {
+    void *const storage = mem_get(0x11C00);
+    if (storage == 0) return 0;
+    NetDaemonFileIndexRecord *const records =
+        static_cast<NetDaemonFileIndexRecord *>(storage);
+    for (size_t index = 0; index < 256; ++index) {
+        ::new (records + index) NetDaemonFileIndexRecord;
+    }
+    return records;
+}
+
+static_assert(sizeof(void *) == sizeof(uint32_t),
+              "the native transfer pointer word is 32-bit");
+
+static NetDaemonFileIndexRecord *netdaemon_file_index_records() {
+    void *storage = 0;
+    memcpy(&storage, &NetDaemonNet.lock_state_[3].dword_[0], sizeof storage);
+    return static_cast<NetDaemonFileIndexRecord *>(storage);
+}
+
+static void netdaemon_set_file_index_records(
+    NetDaemonFileIndexRecord *records) {
+    void *storage = records;
+    memcpy(&NetDaemonNet.lock_state_[3].dword_[0], &storage, sizeof storage);
+}
+// RECOVERY_OBJECT: v1 0x0093F79C ?NetDaemonFileTransferMode@@3HA
+int NetDaemonFileTransferMode;
+// RECOVERY_OBJECT: v1 0x0093F7A0 ?NetDaemonFileTransferAckMask@@3IA
+uint32_t NetDaemonFileTransferAckMask;
+// RECOVERY_OBJECT: v1 0x0093F7A4 ?NetDaemonFileTransferCurrentFile@@3HA
+int NetDaemonFileTransferCurrentFile;
+// RECOVERY_OBJECT: v1 0x0093F7A8 ?NetDaemonFileTransferChunkCount@@3HA
+int NetDaemonFileTransferChunkCount;
+// RECOVERY_OBJECT: v1 0x0093F7AC ?NetDaemonFileTransferProgress@@3HA
+int NetDaemonFileTransferProgress;
+// RECOVERY_OBJECT: v1 0x0093F7B0 ?NetDaemonFileTransferReceiveBuffer@@3PAEA
+unsigned char *NetDaemonFileTransferReceiveBuffer;
+
+// Declare this guard between Popup and Filemap in process_message. On an
+// armed return, reverse lexical destruction does Filemap exactly once, then
+// this guard closes Popup, then Popup's ordinary destructor runs. This
+// reproduces the native explicit cleanup order without ending an automatic
+// object's lifetime twice.
+class NetDaemonTransferModalCloseGuard {
+ public:
+    explicit NetDaemonTransferModalCloseGuard(Popup &popup)
+        : popup_(&popup), armed_(false) {}
+    ~NetDaemonTransferModalCloseGuard() {
+        if (armed_) popup_->close();
+    }
+    void arm() { armed_ = true; }
+ private:
+    Popup *popup_;
+    bool armed_;
+};
+
+static uint16_t netdaemon_transfer_read_u16(const unsigned char *bytes) {
+    uint16_t value;
+    memcpy(&value, bytes, sizeof value);
+    return value;
+}
+
+static uint32_t netdaemon_transfer_read_u32(const unsigned char *bytes) {
+    uint32_t value;
+    memcpy(&value, bytes, sizeof value);
+    return value;
+}
+
+static int32_t netdaemon_transfer_read_i32(const unsigned char *bytes) {
+    int32_t value;
+    memcpy(&value, bytes, sizeof value);
+    return value;
+}
+
+static void netdaemon_transfer_write_u16(unsigned char *bytes,
+                                         uint16_t value) {
+    memcpy(bytes, &value, sizeof value);
+}
+
+static void netdaemon_transfer_write_u32(unsigned char *bytes,
+                                         uint32_t value) {
+    memcpy(bytes, &value, sizeof value);
+}
+
+static void netdaemon_transfer_write_i32(unsigned char *bytes,
+                                         int32_t value) {
+    memcpy(bytes, &value, sizeof value);
+}
+
+static bool netdaemon_transfer_modal_cleanup(
+    NetDaemonTransferModalCloseGuard &guard) {
+    guard.arm();
+    return true;
+}
+
+bool NetDaemon::process_file_transfer_message(char *message,
+                                             unsigned long message_size,
+                                             int sender_id,
+                                             NetDaemonTransferModalCloseGuard &guard,
+                                             Filemap &filemap) {
+    unsigned char *const bytes = reinterpret_cast<unsigned char *>(message);
+    const uint16_t type = netdaemon_transfer_read_u16(bytes);
+    const bool local_is_host = lock_state_[0].dword_[1] != 0;
+    NetDaemonFileIndexRecord *records = netdaemon_file_index_records();
+
+    if (type == 0xF09) { // decimal 3849: native shared-default route
+        if ((bytes[1] & 0xA0U) != 0) {
+            if (fixup_message(message) == 0) {
+                const uint16_t forwarded = static_cast<uint16_t>(
+                    (type & 0x1FFFU) | 0x4000U);
+                netdaemon_transfer_write_u16(bytes, forwarded);
+                ++lock_state_[0].dword_[0];
+                netdaemon_transfer_write_u32(bytes + 0x0C,
+                                             lock_state_[0].dword_[0]);
+                send_message(message, static_cast<int>(message_size), 0);
+            }
+        }
+        return true;
+    }
+
+    if (type == 0xF0D) { // decimal 3853: faction-data owner
+        NetWinDialog.setup_faction_data(
+            reinterpret_cast<MessageFactionData *>(message));
+        return true;
+    }
+
+    if (type == 0xF0E) { // decimal 3854: visible-dialog pass callback
+        if (NetWinDialog.is_visible()) NetWinDialog.pick_pass(1);
+        return true;
+    }
+
+    if (type == 0xF05) { // decimal 3845: transfer path from host to client
+        if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
+        NetDaemonFileTransferMode = 1;
+        NetDaemonFileTransferCurrentFile = -1;
+        NetDaemonFileTransferProgress = 0;
+        if (records == 0) {
+            records = netdaemon_allocate_file_index_records();
+            netdaemon_set_file_index_records(records);
+        }
+        NetDaemonFileTransferPath[0] = '\0';
+        strcat(NetDaemonFileTransferPath,
+               reinterpret_cast<const char *>(bytes + 0x18));
+        return true;
+    }
+
+    if (type == 0xF06) { // decimal 3846: host file-list record
+        if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
+        if (checksum_file(reinterpret_cast<char *>(bytes + 0x18)) ==
+            bytes[0x11]) {
+            return true;
+        }
+
+        ++NetDaemonFileTransferProgress;
+        const unsigned int file_index = bytes[0x10];
+        NetDaemonFileTransferCurrentFile = static_cast<int>(file_index);
+        NetDaemonFileTransferChunkCount =
+            netdaemon_transfer_read_u32(bytes + 0x0C);
+
+        const int local_index = NetDaemonNet.pid_2_idx(
+            NetDaemonNet.field_760_);
+        netdaemon_transfer_write_u16(bytes, 0xF08);
+        netdaemon_transfer_write_i32(bytes + 4, local_index);
+        send_message(message, 0x14, sender_id);
+
+        // The list is created by F05. Native does not guard file_index against
+        // 256 records; keep that original domain rather than silently clamp.
+        records = netdaemon_file_index_records();
+        NetDaemonFileIndexRecord &record = records[file_index];
+        record.filename[0] = '\0';
+        strcat(record.filename, reinterpret_cast<const char *>(bytes + 0x18));
+        record.file_size = netdaemon_transfer_read_u32(bytes + 0x14);
+        record.chunk_count = netdaemon_transfer_read_u32(bytes + 0x0C);
+
+        filemap.create(record.filename, record.file_size, 1);
+        filemap.close();
+        return true;
+    }
+
+    if (type == 0xF07) { // decimal 3847: mode completion/advance
+        if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
+        if (NetDaemonFileTransferCurrentFile < 0) {
+            netdaemon_transfer_write_u16(bytes, 0xF0C);
+            records = netdaemon_file_index_records();
+            if (records != 0) {
+                free(records);
+                netdaemon_set_file_index_records(0);
+            }
+        } else {
+            netdaemon_transfer_write_u16(bytes, 0xF0A);
+        }
+        netdaemon_transfer_write_i32(bytes + 4, NetDaemonNet.pid_2_idx(
+            NetDaemonNet.field_760_));
+        send_message(message, 0x20, sender_id);
+        // Native reloads this dword after send_message; preserve callback
+        // mutation rather than caching its value across the outgoing call.
+        NetDaemonFileTransferMode = netdaemon_transfer_read_i32(bytes + 8);
+        return true;
+    }
+
+    if (type == 0xF08) { // decimal 3848: peer ready for one file
+        if (!local_is_host) return netdaemon_transfer_modal_cleanup(guard);
+        const unsigned int file_index = bytes[0x10];
+        const unsigned int slot = netdaemon_transfer_read_u32(bytes + 4);
+        records = netdaemon_file_index_records();
+        records[file_index].ready_flags |= 1U << (slot & 31U);
+        return true;
+    }
+
+    if (type == 0xF0A || type == 0xF0C) { // decimal 3850 / 3852
+        const uint32_t slot = netdaemon_transfer_read_u32(bytes + 4);
+        process_slots_[slot].status_bytes_[0] =
+            static_cast<uint8_t>(type == 0xF0A ? 1 : 2);
+        return true;
+    }
+
+    if (type == 0xF0B) { // decimal 3851: compressed file data
+        if (local_is_host) return netdaemon_transfer_modal_cleanup(guard);
+        records = netdaemon_file_index_records();
+        if (records == 0) return true;
+
+        const uint32_t file_index = netdaemon_transfer_read_u32(bytes + 8);
+        const uint32_t chunk_index = netdaemon_transfer_read_u32(bytes + 0x0C);
+        if (chunk_index == 0) {
+            if (NetDaemonFileTransferReceiveBuffer != 0) {
+                free(NetDaemonFileTransferReceiveBuffer);
+                NetDaemonFileTransferReceiveBuffer = 0;
+            }
+            const uint32_t declared_size = records[file_index].file_size;
+            NetDaemonFileTransferReceiveBuffer =
+                static_cast<unsigned char *>(mem_get(static_cast<int>(declared_size)));
+            const uint32_t compressed_size =
+                netdaemon_transfer_read_u32(bytes + 4);
+            NetDaemonFileTransferChunkCount =
+                static_cast<int>((compressed_size + 0x800U) >> 11);
+            records[file_index].chunk_count =
+                static_cast<uint32_t>(NetDaemonFileTransferChunkCount);
+
+            parse_says(0, records[file_index].filename, -1, -1);
+            parse_num(0, --NetDaemonFileTransferProgress);
+            PopupModalState = 6;
+            pop_close();
+            x_pop_caption_flags("SCRIPT", "MPSENDFILE", 0x214200, 0);
+            PopupModalState = 0;
+        }
+
+        // Preserve native packet size arithmetic (message bytes minus header)
+        // and the original unchecked chunk offset/capacity behavior.
+        memcpy(NetDaemonFileTransferReceiveBuffer + (chunk_index << 11),
+               bytes + 0x20, static_cast<size_t>(message_size - 0x20));
+
+        if (records[file_index].chunk_count == chunk_index + 1) {
+            uLongf decompressed_size = records[file_index].file_size;
+            const uLong compressed_size = netdaemon_transfer_read_u32(bytes + 4);
+            unsigned char *const mapped = static_cast<unsigned char *>(
+                filemap.create(records[file_index].filename,
+                               decompressed_size, 1));
+            // Native 0x00634330 is the zlib 1.0.2 one-shot uncompress API:
+            // dest, in/out destLen, source, sourceLen. The project already
+            // links that genuine vendor component; do not recover a duplicate.
+            uncompress(mapped, &decompressed_size,
+                       NetDaemonFileTransferReceiveBuffer,
+                       compressed_size);
+            filemap.close();
+            if (NetDaemonFileTransferReceiveBuffer != 0) {
+                free(NetDaemonFileTransferReceiveBuffer);
+                NetDaemonFileTransferReceiveBuffer = 0;
+            }
+        }
+
+        if (static_cast<int>(file_index) == NetDaemonFileTransferCurrentFile &&
+            records[file_index].chunk_count == chunk_index + 1) {
+            netdaemon_transfer_write_u16(bytes, 0xF0C);
+            netdaemon_transfer_write_i32(bytes + 4, NetDaemonNet.pid_2_idx(
+                NetDaemonNet.field_760_));
+            send_message(message, 0x20, sender_id);
+            records = netdaemon_file_index_records();
+            if (records != 0) {
+                free(records);
+                netdaemon_set_file_index_records(0);
+            }
+            pop_close();
+        }
+        return true;
+    }
+
+    if (type == 0xF0F) { // decimal 3855: host handshake acknowledgement
+        if (!local_is_host) return netdaemon_transfer_modal_cleanup(guard);
+        const uint32_t slot = netdaemon_transfer_read_u32(bytes + 4);
+        NetDaemonFileTransferAckMask |= 1U << (slot & 31U);
+        return true;
+    }
+    return false;
+}
+// ORIGINAL: 0x0052ED40 ?send_files@NetDaemon@@QAEHXZ 0x0052ED40-0x0052F517;0x0065E0B0-0x0065E0C2
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned52ED40..52F517 and cold65E0B0..65E0C2; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/unrecovered/0052ed40.cpp.", "Coupled F05..F0F receiver recovery and Net group methods are reviewed together under netdaemon-player-lifecycle-recovery; native protocol anomalies remain explicit."], "reason": "Recover the complete file-transfer producer on the genuine daemon, player, group and file-map owners; packet intervals retain the native protocol rather than fixed executable aliases."}
+// TRIED: automatic `Filemap fm;` local (real ctor/dtor, matching the draw_facilities Font precedent) for the compiler-generated SEH frame; retyped the scaffold's `_mkdir`/`sub_634280` externs (declared nullary) to the params the call sites need; IAT slots identified by matching Ghidra's WinAPI names to arg count/order: 0x669110 GetModuleFileNameA, 0x6690e4 GetCurrentDirectoryA, 0x669114 SetCurrentDirectoryA, 0x6690e0 FindFirstFileA, 0x669118 FindNextFileA, 0x66911c FindClose, 0x669130 GetFileSize, 0x669330 GetAsyncKeyState. Ghidra's local_50/uStack_4c/local_48 naming for the FILD operand looked offset from the real ebp deltas (same SEH-prolog quirk seen on other functions this batch); traced the real bytes instead and the fild reduces to plain (double)GetFileSize()*ratio. Not chased to byte-exact given size (2025 bytes, largest in batch).
+int NetDaemon::send_files() {
+    Filemap filemap;
+    uint32_t send_mask = 0;
+    int group_handle = 0;
+    const int local_index = NetDaemonNet.pid_2_idx(
+        NetDaemonNet.field_760_);
+
+    NetDaemonNet.lock_state_[2].dword_[14] = 0;
+    netdaemon_set_file_index_records(netdaemon_allocate_file_index_records());
+
+    char executable_path[0x104];
+    GetModuleFileNameA(0, executable_path, sizeof executable_path);
+    char *last_separator = strrchr(executable_path, '\\');
+    if (last_separator != 0) last_separator[1] = '\0';
+
+    if (lock_state_[0].dword_[1] != 0 && NetDaemonNet.player_count_ > 0) {
+        for (int slot = 1; slot <= NetDaemonNet.player_count_; ++slot) {
+            if (local_index != slot) send_mask |= 1U << (slot & 31);
+            NetDaemonNet.process_slots_[slot].status_bytes_[0] =
+                static_cast<uint8_t>(local_index == slot ? 0 : 2);
+        }
+    }
+
+    if (lock_state_[0].dword_[1] == 0) {
+        while (NetDaemonFileTransferMode != 1) {
+            unsigned long sender, channel;
+            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(reinterpret_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+        }
+
+        unsigned char announce[0x20]; // native sends 0x20 bytes
+        const uint16_t announce_type = 0xF0F;
+        memcpy(announce, &announce_type, sizeof announce_type);
+        memcpy(announce + 2, &local_index, sizeof local_index);
+        NetDaemonNet.Net::send(announce, 0x20,
+            static_cast<unsigned long>(field_764_), 1);
+
+        SaveNameBuffer[0] = '\0';
+        strcat(SaveNameBuffer, executable_path);
+        strcat(SaveNameBuffer, NetDaemonFileTransferPath);
+        filefind_set_alternative(SaveNameBuffer);
+    } else {
+        char path_copy[0x104];
+        path_copy[0] = '\0';
+        strcat(path_copy, SaveNameBuffer);
+        char *relative_path = path_copy;
+        if (path_copy[1] == ':') {
+            relative_path = path_copy + strlen(executable_path);
+        }
+
+        NetDaemonFileTransferPath[0] = '\0';
+        strcat(NetDaemonFileTransferPath, relative_path);
+        uint8_t path_message[0x11C];
+        const uint16_t path_type = 0xF05;
+        memcpy(path_message, &path_type, sizeof path_type);
+        path_message[2] = '\0';
+        strcat(reinterpret_cast<char *>(path_message + 2),
+               NetDaemonFileTransferPath);
+        send_message(reinterpret_cast<char *>(path_message), 0x11C, 0);
+        NetDaemonFileTransferAckMask = 0;
+        if (send_mask != 0) {
+            do {
+                unsigned long sender, channel;
+                const int packet = NetDaemonNet.Net::get(&sender, &channel);
+                if (packet != 0)
+                    process_message(reinterpret_cast<char *>(packet), channel,
+                                    static_cast<int>(sender));
+            } while (NetDaemonFileTransferAckMask != send_mask);
+        }
+    }
+
+    char previous_directory[0x104];
+    GetCurrentDirectoryA(sizeof previous_directory, previous_directory);
+    const BOOL changed_directory = SetCurrentDirectoryA(SaveNameBuffer);
+    if (changed_directory == 0 && lock_state_[0].dword_[1] == 0) {
+        if (_mkdir(SaveNameBuffer) == 0) SetCurrentDirectoryA(SaveNameBuffer);
+    }
+
+    int file_count = 0;
+    if (lock_state_[0].dword_[1] == 0) {
+        for (;;) {
+            if (NetDaemonFileTransferMode == 3 ||
+                lock_state_[2].dword_[14] != 0) goto cleanup;
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
+            do_draw();
+            unsigned long sender, channel;
+            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(reinterpret_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+        }
+        lock_state_[2].dword_[14] = 1;
+        pop_close();
+    } else {
+        WIN32_FIND_DATAA found_file;
+        HANDLE find_handle = FindFirstFileA("*.*", &found_file);
+        if (find_handle != 0) {
+            NetDaemonFileIndexRecord *records = netdaemon_file_index_records();
+            do {
+                if ((found_file.dwFileAttributes & FILE_ATTRIBUTE_DIRECTORY) == 0) {
+                    NetDaemonFileIndexRecord &record = records[file_count];
+                    record.opcode = 0xF06;
+                    record.source_player = local_index;
+                    record.ready_flags = 0;
+                    record.chunk_count = (found_file.nFileSizeLow + 0x800) >> 11;
+                    record.file_index = static_cast<uint8_t>(file_count);
+                    record.file_size = found_file.nFileSizeLow;
+                    record.checksum = checksum_file(found_file.cFileName);
+                    record.filename[0] = '\0';
+                    strcat(record.filename, found_file.cFileName);
+                    send_message(reinterpret_cast<char *>(&record), 0x11C, 0);
+                    ++file_count;
+                }
+            } while (FindNextFileA(find_handle, &found_file) != 0);
+        }
+
+        uint16_t list_done[0x10];
+        list_done[0] = 0xF07;
+        const int list_done_state = 2;
+        memcpy(reinterpret_cast<unsigned char *>(list_done) + 2,
+               &list_done_state, sizeof list_done_state);
+        send_message(reinterpret_cast<char *>(list_done), 0x20, 0);
+        FindClose(find_handle);
+
+        for (;;) {
+            do_draw();
+            unsigned long sender, channel;
+            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(reinterpret_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+            if (NetDaemonNet.player_count_ < 1) break;
+            bool all_present = true;
+            for (int slot = 1; slot <= NetDaemonNet.player_count_; ++slot) {
+                if (NetDaemonNet.process_slots_[slot].status_bytes_[0] == 0) {
+                    all_present = false;
+                    break;
+                }
+            }
+            if (all_present) break;
+        }
+
+        NetDaemonFileIndexRecord *records = netdaemon_file_index_records();
+        int ready_count = 0;
+        for (int i = 0; i < file_count; ++i)
+            if (records[i].ready_flags != 0) ++ready_count;
+
+        NetDaemonFileChunkPacket *send_buffer = ::new (mem_get(0x820))
+            NetDaemonFileChunkPacket;
+        send_buffer->opcode = 0xF0B;
+        for (int file_index = 0; file_index < file_count; ++file_index) {
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) {
+                lock_state_[2].dword_[14] = 1;
+                goto cleanup;
+            }
+            NetDaemonFileIndexRecord &record = records[file_index];
+            if (record.ready_flags == 0) continue;
+
+            parse_says(0, record.filename, -1, -1);
+            --ready_count;
+            parse_num(0, ready_count);
+            PopupModalState = 6;
+            pop_close();
+            x_pop_caption_flags(const_cast<char *>("SCRIPT"), "MPSENDFILE",
+                                0x214200, 0);
+            PopupModalState = 0;
+            send_buffer->file_index = file_index;
+
+            if (group_handle != 0) NetDaemonNet.delete_group(group_handle);
+            group_handle = NetDaemonNet.create_group(const_cast<char *>("temp"));
+            for (int slot = 1; slot < 8; ++slot) {
+                if ((record.ready_flags & (1U << (slot & 31))) != 0)
+                    NetDaemonNet.add_to_group(group_handle,
+                        NetDaemonNet.process_slots_[slot].pid_);
+            }
+
+            if (filemap.open_read(record.filename, TRUE) != 0) {
+                const DWORD original_size = GetFileSize(filemap.get_handle(), 0);
+                const float compressed_capacity_ratio = 1.01f;
+                unsigned long compressed_capacity = static_cast<unsigned long>(
+                    static_cast<double>(original_size) *
+                    static_cast<double>(compressed_capacity_ratio));
+                void *compressed = mem_get(static_cast<int>(compressed_capacity));
+                const DWORD input_size = GetFileSize(filemap.get_handle(), 0);
+                sub_634280(static_cast<unsigned char *>(compressed),
+                    reinterpret_cast<unsigned long *>(&compressed_capacity),
+                    static_cast<unsigned char *>(filemap.get_view()), input_size);
+                send_buffer->compressed_size = compressed_capacity;
+
+                const unsigned char *source =
+                    static_cast<const unsigned char *>(compressed);
+                int remaining = static_cast<int>(compressed_capacity);
+                int chunk_index = 0;
+                while (remaining > 0x7FF) {
+                    do_draw();
+                    memcpy(send_buffer->payload, source, 0x800);
+                    remaining -= 0x800;
+                    source += 0x800;
+                    send_buffer->chunk_index = chunk_index++;
+                    NetDaemonNet.send_group(send_buffer, 0x820, group_handle, 1);
+                }
+                send_buffer->chunk_index = chunk_index;
+                if (remaining > 0) {
+                    memcpy(send_buffer->payload, source,
+                           static_cast<size_t>(remaining));
+                    NetDaemonNet.send_group(send_buffer, remaining + 0x20,
+                                            group_handle, 1);
+                }
+                filemap.close();
+                if (compressed != 0) free(compressed);
+            }
+        }
+        free(send_buffer);
+
+        for (;;) {
+            if ((GetAsyncKeyState(VK_ESCAPE) & 0x8000) != 0) break;
+            unsigned long sender, channel;
+            const int packet = NetDaemonNet.Net::get(&sender, &channel);
+            if (packet != 0)
+                process_message(reinterpret_cast<char *>(packet), channel,
+                                static_cast<int>(sender));
+            do_draw();
+            if (NetDaemonNet.player_count_ < 1) break;
+            int slot = 1;
+            while (slot <= NetDaemonNet.player_count_ &&
+                   NetDaemonNet.process_slots_[slot].status_bytes_[0] > 1)
+                ++slot;
+            if (slot > NetDaemonNet.player_count_) break;
+        }
+        uint16_t transfer_done[0x10];
+        transfer_done[0] = 0xF07;
+        const int transfer_done_state = 3;
+        memcpy(reinterpret_cast<unsigned char *>(transfer_done) + 2,
+               &transfer_done_state, sizeof transfer_done_state);
+        send_message(reinterpret_cast<char *>(transfer_done), 0x20, 0);
+    }
+
+cleanup:
+    pop_close();
+    do_all_draws();
+    SetCurrentDirectoryA(previous_directory);
+    void *list_storage = netdaemon_file_index_records();
+    if (list_storage != 0) free(list_storage);
+    const int result = static_cast<int>(NetDaemonNet.lock_state_[2].dword_[14]);
+    netdaemon_set_file_index_records(0);
+    NetDaemonFileTransferMode = 0;
+    return result;
+}
 
 // ORIGINAL: 0x00534400 ?process_message@NetDaemon@@QAEXPADKH@Z 0x00534400-0x005388B9;0x0065E0C2-0x0065E442 FILE
 // TRIED: no Ghidra hypothesis was available for this one (raw asm only). The real dispatcher spans ~67 distinct message-type case bodies across several chained range checks up to type 0x1300+; only the first band (0xF05-0xF0F, 11 cases) and the shared default "fixup_message + send_message" forwarding path (the target of the large majority of jump-table slots) were read from the disassembly and modelled. Everything above type 0x1101 is unimplemented.
@@ -3518,8 +4103,9 @@ class Filemap { public:
 // calls     0x004048A0 0x00404900 0x00406380 0x004064D0 0x00406880 0x00424410 0x00424720 0x004271C0 0x00428350 0x004412F0 0x004413F0 0x00441490 0x004426F0 0x00442740 0x004429C0 0x00444D90 0x00446A00 0x0045C0B0 0x0046B190 0x00479330 0x0047A890 0x0047C970 0x00481AD0 0x00481DA0 0x00481FD0 0x00483420 0x0048C0A0 0x004ACBD0 0x004C96E0 0x004C9B00 0x004CA7F0 0x004CAA50 0x004CC360 0x004CD2F0 0x004CD4E0 0x004CE210 0x004CE790 0x004CEDE0 0x004CF380 0x004CF480 0x004CF740 0x004E25E0 0x004E2610 0x004E2660 0x004E26B0 0x004EFB50 0x00506A60 0x0050BA30 0x0050BCC0 0x00523C60 0x00532940 0x00532E00 0x00534330 0x00534400 0x00538FB0 0x00538FE0 0x0053C650 0x00543A20 0x00548F80 0x0054CF40 0x0055B760 0x0055B820 0x0055B870 0x0055BA80 0x0055BB30 0x0055BBA0 0x0055BC00 0x0057F1D0 0x0058FB00 0x0058FC50 0x0058FFA0 0x00590170 0x005901D0 0x00590240 0x005902C0 0x00590300 0x00590470 0x00592550 0x00592600 0x005926F0 0x00592EE0 0x005947C0 0x005B9C40 0x005BB000 0x005BF310 0x005BF420 0x005C0B00 0x005C89A0 0x005C89B0 0x005D4510 0x005D45B0 0x005D4DD0 0x005D5A70 0x005E3820 0x005EE280 0x005F7E90 0x005FA870 0x00600F00 0x00602600 0x00605370 0x00607040 0x00607DA0 0x00608E10 0x00609EC0 0x0060D1B0 0x0060E740 0x00610120 0x006108E0 0x00611A20 0x00612960 0x006169A0 0x00625810 0x00625E30 0x00625E50 0x00625EC0 0x00626250 0x006262F0 0x006263F0 0x006272F0 0x00628380 0x006283E0 0x00628650 0x006287C0 0x00630080 0x00630A00 0x00631A20 0x00634330 0x00644EF2 0x00645460 0x00645470 0x00645550 0x00645930 0x0064FC88
 // indirect  0x00534EC9 0x00534ED0 0x005374DF 0x00537F83 0x00538561 0x00538573 0x00538595 0x00538611 0x00538623 0x00538645 0x005386E0 0x005386F4 0x00538715 0x00538791 0x005387A5 0x005387C6
 
-void NetDaemon::process_message(char * message, unsigned long sender, int channel) {
+void NetDaemon::process_message(char *message, unsigned long message_size, int sender_id) {
     Popup popup;
+    NetDaemonTransferModalCloseGuard guard(popup);
     Filemap filemap;
     // process_message reaches three daemon fields by offset - 0x1B30 is
     // lock_state_[0].dword_[1], named below; 0x1B74 is lock_state_[1].dword_[3]
@@ -3532,72 +4118,30 @@ void NetDaemon::process_message(char * message, unsigned long sender, int channe
 
     // Special-cased "file transfer" message-type band (0x1500-0x15FF).
     bool skip500 = ((type & 0xf00) != 0x500) || (type == 0x1501);
-    if (!skip500 && CommlinkPending != 0 && CommlinkFaction == (int)sender) {
+    if (!skip500 && CommlinkPending != 0 && CommlinkFaction == sender_id) {
         skip500 = true;
     }
     if (!skip500) {
         if (type == 0x1505) {
-            filemap.~Filemap();
-            popup.close();
+            netdaemon_transfer_modal_cleanup(guard);
             return;
         }
-        message_data(0x1505, (int)sender, 0, 0, 0, 0);
+        message_data(0x1505, sender_id, 0, 0, 0, 0);
     }
 
     type = *reinterpret_cast<unsigned short *>(message);
 
-    // First dispatch band: message types 0xF05-0xF0F. Bodies below are a
-    // faithful-shape but incomplete reading of what is a much larger
-    // (roughly 67-case) dispatcher spanning the rest of the type space;
-    // see the TRIED note on the file header.
-    if (type <= 0x1101) {
-        if (type == 0x1101) {
-            // TODO: 0x53624a - not reconstructed (schedule/ready-state update).
+    // File-transfer opcodes are handled by the complete source-owned routes below.
+    if (type >= 0xF05 && type <= 0xF0F) {
+        if (process_file_transfer_message(message, message_size, sender_id,
+                                          guard, filemap)) {
             return;
         }
-        unsigned int idx = (unsigned int)(type - 0xf05);
-        if (idx <= 0xa) {
-            switch (idx) {
-                case 0:
-                    // The raw message IS the faction-data record; the cast is
-                    // the image's own, which hands the same pointer along
-                    // unchanged.
-                    NetWinDialog.setup_faction_data(
-                        reinterpret_cast<MessageFactionData *>(message));
-                    return;
-                case 1:
-                    if (NetWinDialog.is_visible()) {
-                        NetWinDialog.pick_pass(1);
-                    }
-                    return;
-                case 2:
-                case 3:
-                case 4:
-                case 7:
-                case 8:
-                case 9:
-                case 10: {
-                    // Modal-dialog guard: when no popup is currently active
-                    // (self+0x1b30 == 0), reject and unwind the locals this
-                    // function opened; otherwise the original shows a
-                    // reason-specific popup this pass does not reconstruct.
-                    if (lock_state_[0].dword_[1] == 0) {
-                        filemap.~Filemap();
-                        popup.close();
-                        return;
-                    }
-                    return;
-                }
-                case 5:
-                case 6: {
-                    int field4 = *reinterpret_cast<int *>(message + 4);
-                    // The original's *103 followed by *4 is the record
-                    // stride, not an array of unrelated status dwords.
-                    process_slots_[field4].status_bytes_[0] = (idx == 5) ? 1 : 2;
-                    return;
-                }
-            }
-        }
+    }
+
+    if (type == 0x1101) {
+        // TODO: 0x53624a - not reconstructed (schedule/ready-state update).
+        return;
     }
 
     // Default path, reached by the overwhelming majority of message types
@@ -3611,7 +4155,7 @@ void NetDaemon::process_message(char * message, unsigned long sender, int channe
             uint32_t *seq = &lock_state_[0].dword_[0];
             *seq = *seq + 1;
             *reinterpret_cast<int *>(message + 0xc) = *seq;
-            send_message(message, sender, 0);
+            send_message(message, message_size, 0);
         }
     }
 

@@ -372,6 +372,8 @@ class Net {
   // 0x0062EDB0 and 0x0062EDD0, homed into net_class.cpp: the DirectPlay
   // group calls. add_to_group's two ids travel in this order; the catalogue
   // does not say which is the group and which the member.
+  int create_group(char *group_name);
+  int send_group(void *data, int size, long group_id, int flags);
   void delete_group(int group);
   int add_to_group(long group, unsigned long member);
   // 0x0062E250, homed into net_class.cpp. ServiceList is opaque here - only
@@ -529,6 +531,9 @@ extern uint32_t NetHostChangeSlot;
 // QueryInterface requests IID_IDirectPlay2A; the SDK aliases that interface
 // to IDirectPlay2. All source reads and writes share this one pointer object.
 extern IDirectPlay2 *NetDirectPlay;
+// Shared callback selection storage at original 9BC4B8 and 9BE4BC.
+extern unsigned int NetPlayerWriteIndex;
+extern NetPlayer *NetPlayerTable;
 
 // THE TWO RE-ENTRANCY GUARDS beside them, each set to 1 while its own pass is
 // inside the code that must not be re-entered and cleared on the way out.

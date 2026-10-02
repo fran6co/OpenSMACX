@@ -1,0 +1,26 @@
+{
+  "event_id": "d16ee75cae6fde867406c915ce6530bdd458d44460a635529f733396d43887c7",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/general.h",
+      "src/popup.h"
+    ],
+    "evidence": [
+      "Actual native transfer compile exposed missing declaration for already-owned checksum_file and missing source implementation for pop_close6272F0. Authorize native writer rehoming of the retained historical exact pop_close seed to popup.cpp using source-owned PopupInstanceSlotA/B and genuine nonvirtual Win->BasePop downcasts, preserving the original claim and remeasuring before integration. Shared callee API belongs in general.h; no checksum behavior or other popup bodies may be replaced."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6451952,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "0dc212255167dcc385fb27cd76d9e81b6caba9c718b9ff5efad4a3ba85440f38",
+  "request_id": "file-transfer-popup-close-dependency",
+  "schema_version": 1,
+  "sequence": 26,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

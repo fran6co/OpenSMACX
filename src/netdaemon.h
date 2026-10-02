@@ -87,6 +87,9 @@ struct LockStateEntry {
 };
 static_assert(sizeof(LockStateEntry) == 0x3C, "lock state stride");
 
+class NetDaemonTransferModalCloseGuard;
+class Filemap;
+
 // Original daemon construction first constructs AlphaNet at this+0.
 // RECOVERY_BASE: v1 NetDaemon AlphaNet 0x0 0x005389F0
 class NetDaemon : public AlphaNet {
@@ -188,7 +191,12 @@ class NetDaemon : public AlphaNet {
  public:
   // 0x00534400: partial source dispatcher; higher protocol bands remain
   // unfinished. Source presence is not full protocol-behavior coverage.
-  void process_message(char *message, unsigned long a, int b);
+  void process_message(char *message, unsigned long message_size, int sender_id);
+  int send_files();
+  bool process_file_transfer_message(char *message, unsigned long message_size,
+                                     int sender_id,
+                                     NetDaemonTransferModalCloseGuard &guard,
+                                     Filemap &filemap);
 
  public:
   // 0x005315C0, a pending_bodies forwarder. The net_* treaty/agenda writers

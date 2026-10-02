@@ -1,0 +1,18 @@
+{
+  "event_id": "f43790bb447eff5315ce36ff86513b2a5b9fbc251766c057f7fa7700c226513d",
+  "payload": {
+    "author": "framework-coordinator",
+    "discovery_id": "send-group-approved-complete-peer-state",
+    "disposition": "incorporated",
+    "kind": "discovery_resolved",
+    "source_evidence": [
+      "src/net_class.cpp Net::send_group initializes pending/retry state for all callback-selected peers and services their independent acknowledgements and retry DPID targets; this preserves the user-approved deliberate behavior change, not original undefined stack reads.",
+      "Actual-source group controls include two-peer ACK and delayed individual retry scenarios plus omitted-peer/misrouted-retry damage controls; both VC6 flag sets compile the real SDK interface and the full application links.105 touched historical obligations still reproduce; full-game/runtime and strict automatic acceptance remain unproved."
+    ]
+  },
+  "previous_event": "3d4be6fa2357546c40660cc908fe186f4ee2c24bbccefa91720abe871fb618f7",
+  "request_id": "send-group-peer-state-incorporated",
+  "schema_version": 1,
+  "sequence": 28,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

@@ -1,0 +1,20 @@
+{
+  "event_id": "0dc212255167dcc385fb27cd76d9e81b6caba9c718b9ff5efad4a3ba85440f38",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "CMakeLists.txt",
+      "src/vendor/zlib-1.0.2/uncompr.c"
+    ],
+    "evidence": [
+      "The recovered F0B receiver calls native634330, independently identified as zlib1.0.2 uncompress. Existing vendor target omits its upstream uncompr.c member, so use the exact source from the existing SHA256-pinned archive517f7df278536bf9b91bb14104fcb4b13ce7b3c791d174195fec1618621b24e6 under the existing vendor license/provenance. This is dependency integration, not a new application recovery, matching claim or permission to erase the older mis-prototyped unclaimed wrapper identity."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "7760b18928762648373fea9b9e96020601760e07f5636276db859bc30fd3c040",
+  "request_id": "file-transfer-zlib-dependency-closure",
+  "schema_version": 1,
+  "sequence": 25,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

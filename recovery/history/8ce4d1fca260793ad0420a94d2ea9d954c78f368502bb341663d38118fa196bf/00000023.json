@@ -1,0 +1,46 @@
+{
+  "event_id": "23f6221b7f2d071d44930d4cdc682e93a2b70306006a3d0061f204c69af6d354",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/net-group-host-harness.cpp",
+      "recovery/tests/netdaemon-send-files-harness.cpp",
+      "recovery/tests/netdaemon-transfer-modal-harness.cpp",
+      "recovery/tests/test_netdaemon_group_host.py",
+      "recovery/tests/test_netdaemon_send_files_host.py",
+      "recovery/tests/test_netdaemon_transfer_modal.py",
+      "src/leaf_recoveries.cpp"
+    ],
+    "evidence": [
+      "Coordinator authorizes complete send_files producer, F05..F0F receiver band and genuine Net group dependency closure as one compiling owner batch. Preserve unrelated process_message branches, packet initialized domains and every original seed/claim. Use SDK IDirectPlay2 methods rather than synthetic slots; typed callback/shared player-table/index cells replace fixed executable addresses. RAII cleanup must destroy each automatic object once; source-owned transfer globals remain independent observed cells. Existing source bodies may be rehomed via native writer; no placeholder substitution or native acceptance claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6483264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6483616,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6483488,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6491264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "e6ffd058026bce7a691fc0b4ec7efe10291dacff0023b5ed3ec8122a51ed5217",
+  "request_id": "file-transfer-group-owner-closure",
+  "schema_version": 1,
+  "sequence": 23,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}

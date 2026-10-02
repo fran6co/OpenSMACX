@@ -106,6 +106,7 @@ add_library(zlib STATIC
     src/vendor/zlib-1.0.2/inftrees.c
     src/vendor/zlib-1.0.2/infutil.c
     src/vendor/zlib-1.0.2/trees.c
+    src/vendor/zlib-1.0.2/uncompr.c
     src/vendor/zlib-1.0.2/zutil.c
 )
 target_include_directories(zlib PUBLIC "${CMAKE_CURRENT_SOURCE_DIR}/src/vendor/zlib-1.0.2")

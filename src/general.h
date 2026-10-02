@@ -17,6 +17,9 @@
  */
 #pragma once
 
+// Source-owned file checksum used by the network transfer protocol (538FE0).
+unsigned char __cdecl checksum_file(char *file_path);
+
 class Font;     // forward declaration
 class Palette;  // forward declaration
 

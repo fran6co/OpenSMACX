@@ -28,6 +28,8 @@
 #include "wave_device.h"
 #include "sounddevice.h"
 #include "general.h"  // mem_get, for the lobby's address and session buffers
+#include "strings.h"
+#include "game.h"
 
 // The lobby probe's DirectPlay types and import. The image really does import
 // DirectPlayLobbyCreateA from DPLAYX.DLL, so the link input belongs beside the
@@ -1183,6 +1185,259 @@ void Net::process_voice() {
     }
 }
 
+// ORIGINAL: 0x0062EE20 sub_62ee20 0x0062EE20-0x0062EE71
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned62EE20..62EE71; flags bit2 and field8 on sixteen 58-byte NetPlayer records; shared object9BE4BC.", "git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/recovered/units/0062ee20.cpp"], "reason": "Recover the SDK group enumeration callback against the same source-owned NetPlayerTable used by player enumeration; mark genuine matching NetPlayer records."}
+// symbol    ?net_group_player_callback@@YGHKKPBUDPNAME@@KPAX@Z
+static int __stdcall net_group_player_callback(unsigned long player_id,
+                                               unsigned long,
+                                               const DPNAME *, unsigned long,
+                                               void *) {
+    NetPlayer *const players = NetPlayerTable;
+    if (players == 0) return 0;
+    for (int index = 0; index < 16; ++index) {
+        if (players[index].field_0_ == player_id) {
+            if ((players[index].flags_14_ & 2) != 0) {
+                players[index].field_8_ = 1;
+            }
+            return 1;
+        }
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x0062ED40 ?create_group@Net@@QAEHPAD@Z 0x0062ED40-0x0062EDA2
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned62ED40..62EDA2; git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/leaf_recoveries.cpp supplies the former facade mapping and unchanged SDK call contract."], "reason": "Rehome the DirectPlay group constructor from its raw receiver facade to the genuine Net method and SDK IDirectPlay2 interface."}
+int Net::create_group(char *group_name) {
+    IDirectPlay2 *const direct_play = NetDirectPlay;
+    if (direct_play == 0) return 0;
+    DPNAME name;
+    DPID group = 0;
+    memset(&name, 0, sizeof(name));
+    name.dwSize = sizeof(name);
+    name.lpszShortNameA = group_name;
+    const HRESULT result = direct_play->CreateGroup(&group, &name, 0, 0, 0);
+    return result == 0 ? static_cast<int>(group) : 0;
+}
+
+// Group callback evidence: NetPlayer.field_8_ is the acknowledgement flag
+// at +8; field_C_ is the per-peer retry tick at +0xC. Existing exact 0x58
+// stride/16-slot extent is independently established by Net and player APIs.
+// ORIGINAL: 0x0062EEA0 ?send_group@Net@@QAEHPAXHJH@Z 0x0062EEA0-0x0062F38C
+// RECOVERY_BINDING: v1 {"evidence": ["Pinned62EEA0..62F38C; retained git:b0d788d3e0ebc4d5b4c20acb834cd37455e53c67:src/unrecovered/0062eea0.cpp; genuine NetPlayer/FIFO/DirectPlay owners.", "Native62F038..62F080 initializes only the first peer, then62F14A..62F199 reads all sixteen stack entries. User approved complete active-peer acknowledgement/retry initialization, deliberately differing from original indeterminate-stack paths."], "reason": "Recover group queueing, transmission, acknowledgements, retry and timeout handling using genuine Net state and the SDK; initialize every active peer retry state as an explicitly approved behavior repair."}
+int Net::send_group(void *data, int size, long group_id, int flags) {
+    int index;
+    HANDLE wait_handles[2];
+    wait_handles[0] = events_8_[0];
+    wait_handles[1] = events_8_[1];
+
+    if (NetDirectPlay == 0) return 0;
+    if (size < 0) return 0;
+    if (field_6E4_ < static_cast<uint32_t>(size)) return 0;
+
+    check_polling();
+
+    if ((voice_flags_D8_ & 1U) != 0 || (flags & 4) != 0) {
+        if (group_id == static_cast<long>(field_760_)) {
+            queue_10c_.add(data, static_cast<unsigned long>(size),
+                           field_760_, 0, static_cast<unsigned long>(-1));
+            return static_cast<int>(field_E4_);
+        }
+        if (group_id == 0) {
+            queue_10c_.add(data, static_cast<unsigned long>(size),
+                           field_760_, 0, static_cast<unsigned long>(-1));
+            if (field_6DC_ < 2) return static_cast<int>(field_E4_);
+        }
+    }
+
+    const int allocation_size = size + 0x0C;
+    unsigned char *const packet =
+        static_cast<unsigned char *>(mem_get(allocation_size));
+    if (packet == 0) return 0;
+
+    const unsigned int reliable = static_cast<unsigned int>(flags) & 1U;
+    uint32_t packet_sequence;
+    if (reliable == 0) {
+        packet_sequence = 0;
+    } else {
+        field_E4_ += 1;
+        packet_sequence = field_E4_;
+    }
+    memcpy(packet + 4, &packet_sequence, sizeof packet_sequence);
+    if (data != 0) memcpy(packet + 8, data, static_cast<size_t>(size));
+
+    if (reliable == 0 || (voice_flags_D8_ & 0x10000000U) != 0) {
+        const uint16_t packet_type = 1;
+        memcpy(packet, &packet_type, sizeof packet_type);
+        const HRESULT sent = NetDirectPlay->Send(
+            field_760_, static_cast<DPID>(group_id), reliable, packet,
+            static_cast<DWORD>(allocation_size));
+        free(packet);
+        return sent == 0 ? static_cast<int>(field_E4_) : 0;
+    }
+
+    // Unconfirmed reliable send. The callback marks only group members whose
+    // NetPlayer flags include bit 1. NetPlayerTable is shared callback context
+    // and remains published exactly as native; it is not a local scratch copy.
+    const uint16_t packet_type = 4;
+    memcpy(packet, &packet_type, sizeof packet_type);
+    for (index = 0; index < 16; ++index) {
+        players_[index].field_8_ = 0;
+    }
+    NetPlayerTable = players_;
+    if (NetDirectPlay == 0) {
+        free(packet);
+        return 0;
+    }
+    NetDirectPlay->EnumGroupPlayers(static_cast<DPID>(group_id), 0,
+        net_group_player_callback, 0, 0);
+
+    const unsigned long no_deadline = 0xFFFFFFFFUL;
+    unsigned long wait_timeout = no_deadline;
+    int first_pending = -1;
+    for (index = 0; index < 16; ++index) {
+        if (players_[index].field_8_ != 0) {
+            first_pending = index;
+            break;
+        }
+    }
+    if (first_pending < 0) {
+        free(packet);
+        return static_cast<int>(field_E4_);
+    }
+
+    int pending[16];
+    unsigned long retry_delay[16];
+    unsigned long base_time[16];
+    for (index = 0; index < 16; ++index) {
+        pending[index] = 0;
+        retry_delay[index] = 0;
+        base_time[index] = 0;
+    }
+    // Deliberate, user-approved repair: the original initializes only the
+    // first peer, then reads all sixteen stack entries. Service every selected
+    // peer with deterministic acknowledgement/retry state instead.
+    for (int peer = 0; peer < 16; ++peer) {
+        if (players_[peer].field_8_ != 0) {
+            pending[peer] = 1;
+            retry_delay[peer] = players_[peer].field_C_;
+            if (retry_delay[peer] != no_deadline &&
+                (wait_timeout == no_deadline || retry_delay[peer] < wait_timeout)) {
+                wait_timeout = retry_delay[peer];
+            }
+        }
+    }
+
+    for (;;) {
+        if (NetDirectPlay == 0) {
+            free(packet);
+            return 0;
+        }
+
+        const unsigned long initial_tick = timeGetTime();
+        for (index = 0; index < 16; ++index) {
+            base_time[index] = initial_tick;
+        }
+
+        const HRESULT resent = NetDirectPlay->Send(
+            field_760_, static_cast<DPID>(group_id), 0, packet,
+            static_cast<DWORD>(allocation_size));
+        if (resent != 0) {
+            free(packet);
+            return 0;
+        }
+
+        const unsigned long interval_start = timeGetTime();
+        unsigned long elapsed = timeGetTime() - interval_start;
+        int any_pending = 0;
+        while (elapsed < 20000UL) {
+            ResetEvent(wait_handles[1]);
+            ResetEvent(wait_handles[0]);
+            const DWORD waited = WaitForMultipleObjects(
+                2, wait_handles, FALSE, wait_timeout);
+            if (waited == WAIT_OBJECT_0 + 1) handle_sys_msg();
+
+            const unsigned long now = timeGetTime();
+            any_pending = 0;
+            for (index = 0; index < 16; ++index) {
+                if (pending[index] == 0) continue;
+                NetPlayer &player = players_[index];
+                if (player.field_0_ == 0) {
+                    pending[index] = 0;
+                } else if (player.field_8_ == 0) {
+                    const unsigned long tick = timeGetTime();
+                    pending[index] = 0;
+                    player.field_C_ = (tick + 0x14UL +
+                        (player.field_C_ - base_time[index])) >> 1;
+                } else {
+                    if (retry_delay[index] < now - base_time[index]) {
+                        retry_delay[index] = (retry_delay[index] * 3UL) >> 1;
+                        if (NetDirectPlay == 0) {
+                            free(packet);
+                            return 0;
+                        }
+                        const unsigned long resend_id = player.field_0_;
+                        base_time[index] = timeGetTime();
+                        const HRESULT retried = NetDirectPlay->Send(
+                            field_760_, static_cast<DPID>(resend_id), 0, packet,
+                            static_cast<DWORD>(allocation_size));
+                        if (retried != 0) {
+                            MessageBoxA(0, "Oh no!! Send failed!",
+                                        "Message from the Net Underworld", 0);
+                            free(packet);
+                            return 0;
+                        }
+                    }
+                    any_pending = 1;
+                }
+            }
+            if (any_pending == 0) {
+                free(packet);
+                return static_cast<int>(field_E4_);
+            }
+            elapsed = timeGetTime() - interval_start;
+        }
+
+        // Timeout notification uses the application's canonical shared
+        // StringTemp, with the original nested id lookup and append ordering.
+        StringTemp[0] = 0;
+        int first_name = 1;
+        for (index = 0; index < 16; ++index) {
+            if (players_[index].field_8_ != 0) {
+                int found_index = -1;
+                for (int search = 0; search < 16; ++search) {
+                    if (players_[search].field_0_ == players_[index].field_0_) {
+                        found_index = search;
+                        break;
+                    }
+                }
+                // The native not-found path does not skip this name.  It
+                // falls back to the first player's name at Net+0x169.
+                char *name = found_index < 0
+                    ? players_[0].name_and_tail_
+                    : players_[found_index].name_and_tail_;
+                strcat(StringTemp, name);
+                if (!first_name) {
+                    strcat(StringTemp, ", ");
+                    strcat(StringTemp, " ");
+                }
+                first_name = 0;
+            }
+        }
+        strcat(StringTemp, ".");
+        parse_says(0, StringTemp, -1, -1);
+        const int answer = pop_caption(const_cast<char *>("jackal"),
+                               const_cast<char *>("NET_SENDTIMEDOUT"), 0);
+        if (answer == 0) continue;
+        if (answer == 1) {
+            close();
+        } else if (answer == 2) {
+            ExitTurnLoop = 1;
+        }
+        free(packet);
+        return 0;
+    }
+}
+
 /*
 Purpose: Poll the embedded NetFifo for a message, when net play is enabled
          and a destination is given.
@@ -1214,13 +1469,18 @@ int Net::get(unsigned long *a, unsigned long *b) {
 // enum_players appends one 0x58-byte NetPlayer record per DirectPlay player
 // callback through this pair; init neither reads nor writes either slot in its
 // recovered body, so they stay independent bindings, not Net member aliases.
-static unsigned int *const NetPlayerWriteIndex = (unsigned int *)0x009BC4B8;
-static unsigned char **const NetPlayerTable = (unsigned char **)0x009BE4BC;
+// Source-owned callback selection cells, not pointers into the old image.
+// 630C80 loads/reloads both around GetPlayerData; its increment is a DWORD
+// at 9BC4B8, immediately before the independently owned NetGetScratch bank.
+// RECOVERY_OBJECT: v2 0x009BC4B8 0x009BC4BC ?NetPlayerWriteIndex@@3IA 0x00630C80
+unsigned int NetPlayerWriteIndex;
+// RECOVERY_OBJECT: v2 0x009BE4BC 0x009BE4C0 ?NetPlayerTable@@3PAVNetPlayer@@A 0x00630C80
+NetPlayer *NetPlayerTable;
 
 /*
-Purpose: Append one player to the table the receive loop serves from: record
-         the DirectPlay id, ask the interface which flags this player carries
-         (slot +0x50, four stack arguments), merge in the connection's voice
+Purpose: Append one player to the callback-selected table: record the original
+         DirectPlay id, read one byte of remote player data through the SDK
+         GetPlayerData method (slot +0x50), merge in the connection's voice
          bit, copy the DPNAME long text, and publish the id as the polling
          target when the player is local.
 // ORIGINAL: 0x00630C80 ?enum_players@Net@@QAEHKKPBUDPNAME@@KPAX@Z 0x00630C80-0x00630D6B FILE
@@ -1237,43 +1497,36 @@ Status: Coverage transcription - unclaimed body
 */
 int Net::enum_players(unsigned long player_id, unsigned long, const DPNAME *name,
                       unsigned long, void *) {
-    int index = static_cast<int>(*NetPlayerWriteIndex);
-    NetPlayer *slot =
-        reinterpret_cast<NetPlayer *>(*NetPlayerTable) + index;
+    const unsigned long original_id = player_id;
+    NetPlayerTable[NetPlayerWriteIndex].field_0_ = original_id;
 
-    slot->field_0_ = player_id;
+    // Native630C8B..CB6 supplies DPGET_REMOTE (zero) as the fifth stack
+    // argument including the interface receiver. The one-byte data is written
+    // into the player_id argument; the separate DWORD initialized to one is
+    // buffer capacity, not the returned flags. Retain the original id for the
+    // later polling publication, and reload callback-selected storage.
+    DWORD data_size = 1;
+    NetDirectPlay->GetPlayerData(original_id, &player_id, &data_size, 0);
 
-    // Slot +0x50 of the live interface: a four-argument read that reports
-    // this player's flags through the last argument. The receiver is the
-    // interface object as an explicit first stack argument (__stdcall), so
-    // the dispatch is spelled through its plain function type.
-    unsigned int player_flags = 1;
-    void *interface_object = NetDirectPlay;
-    typedef int (__stdcall *player_data_fn)(void *, unsigned long, void *,
-                                            unsigned int *);
-    player_data_fn read_player_data = *reinterpret_cast<player_data_fn *>(
-        reinterpret_cast<unsigned char *>(*reinterpret_cast<void **>(
-            interface_object)) + 0x50);
-    read_player_data(interface_object, player_id, &player_id, &player_flags);
-
-    slot->flags_14_ = static_cast<uint8_t>(player_flags);
+    NetPlayerTable[NetPlayerWriteIndex].flags_14_ = static_cast<uint8_t>(player_id);
 
     if (ActiveNet != 0 && (ActiveNet->voice_flags_D8_ & 2) != 0) {
-        slot->flags_14_ = static_cast<uint8_t>(slot->flags_14_ | 2);
+        NetPlayerTable[NetPlayerWriteIndex].flags_14_ = static_cast<uint8_t>(
+            NetPlayerTable[NetPlayerWriteIndex].flags_14_ | 2);
     }
 
-    slot->name_and_tail_[0] = 0;
+    NetPlayerTable[NetPlayerWriteIndex].name_and_tail_[0] = 0;
     // The image's build is ANSI: the byte string the callback hands in sits
     // in the DPNAME's A-side union slot, and the record's name text is
     // appended straight from it.
-    strcat(slot->name_and_tail_,
-           reinterpret_cast<const char *>(name->lpszLongName));
+    strcat(NetPlayerTable[NetPlayerWriteIndex].name_and_tail_,
+           name->lpszLongNameA);
 
-    if ((player_flags & 1) != 0 && ActiveNet != 0) {
-        ActiveNet->field_764_ = player_id;
+    if ((player_id & 1) != 0 && ActiveNet != 0) {
+        ActiveNet->field_764_ = original_id;
     }
 
-    *NetPlayerWriteIndex = *NetPlayerWriteIndex + 1;
+    ++NetPlayerWriteIndex;
     return 1;
 }
 

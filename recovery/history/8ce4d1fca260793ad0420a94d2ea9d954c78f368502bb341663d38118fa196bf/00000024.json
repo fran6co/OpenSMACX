@@ -1,0 +1,22 @@
+{
+  "event_id": "7760b18928762648373fea9b9e96020601760e07f5636276db859bc30fd3c040",
+  "payload": {
+    "affects": [
+      "entity-be15c8828fd69c42b4bf20ed12c4b3e238893e5dc52049b56559bdd4fbb9b940"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "send-group-approved-complete-peer-state",
+    "evidence": [
+      "Pinned 62F038..62F080 initializes only the first selected peer, while 62F14A..62F199 reads all sixteen pending/retry entries.",
+      "User explicitly approved complete peer-state initialization in response to the behavior decision; approval covers deterministic all-active-peer acknowledgement/retry initialization, not unrelated packet or error-path behavior changes.",
+      "Implementation and multi-peer ACK/retry controls remain pending; this decision does not grant matching claims or acceptance."
+    ],
+    "hypothesis": "Initialize reliable group-send acknowledgement and retry state for every active peer as a deliberately non-byte-identical bug fix; native initializes only the first peer then reads all sixteen stack entries.",
+    "kind": "discovery"
+  },
+  "previous_event": "23f6221b7f2d071d44930d4cdc682e93a2b70306006a3d0061f204c69af6d354",
+  "request_id": "send-group-approved-complete-peer-state",
+  "schema_version": 1,
+  "sequence": 24,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
