@@ -1,0 +1,19 @@
+{
+  "event_id": "d47e7169007982d3e1e1f092575e7e4b10782e6bc06365ed8b139f47dca7fba9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "Independent pinned47ABEC writes computed network/nonnegative-duration boolean to localPopup+30AC, not only a transient icon-gating local. Actual BasePop field_30AC_ owns this cell; source Popup exec/hide consumers use it. Admit only narrow inline void set_auto_hide_value(uint32_t value) storing existing field_30AC_, consumed by complete NetMsg pop after Popup::start and before icon/exec. No new storage, class layout, virtual method, lifecycle or unrelated BasePop implementation edits. Preserve all source/seed claims and immutable task baseline; actual-body controls must verify all four network/duration states at exec and native header/layout/build-link impact before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "netmsg-modal-auto-hide-member-write-20261002",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:netmsg-complete-owner-recovery"
+}
