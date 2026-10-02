@@ -1,0 +1,26 @@
+{
+  "event_id": "bec8b60a0667f701fc35796460e6cf646ef9f36ad40f1527518347e9bb07b8b6",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/game_check_tamper_host_control.cpp",
+      "recovery/tests/test_game_check_tamper_behavior.py"
+    ],
+    "evidence": [
+      "Fresh isolated seven-body application compilation passes but linking fails solely on missing check_tamper. Pinned load_daemon5A9AF2 calls51E110; retained recovered/units/0051e110.cpp provides unclaimed635-byte seed, not a product definition. Admit complete typed tamper routine in existing game.cpp/h owner using genuine Windows registry SDK calls, already mapped TamperState/TamperDialog arrays, LockEnableMask and Console receiver; verify registry record shape/storage and new start-only objects from native evidence before defining them, not seed aliases or guessed capacity. Preserve original registry error/boundary behavior unless user separately authorizes a fix; no asm, hardcoded executable references or placeholder replacing recovered behavior. Keep every seed, claim and original task baseline. Native compilation, actual-body controls, all protected diagnostics and full fresh compile/link required before reviewed integration; no exactness, linked preservation or game acceptance implied."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5366032,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f6553189a9d375942e659748e982c12ac3f5ee6416b03fa41fb265d5f499ad78",
+  "request_id": "save-load-tamper-link-closure-20261003",
+  "schema_version": 1,
+  "sequence": 7,
+  "stream": "task:game-save-load-owner-coverage"
+}
