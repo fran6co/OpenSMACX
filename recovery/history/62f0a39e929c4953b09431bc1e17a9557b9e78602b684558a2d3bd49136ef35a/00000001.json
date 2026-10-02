@@ -1,0 +1,24 @@
+{
+  "event_id": "4bcbb75ab45ec9832748c4da8be347a992213ddebf1eef4633ec65db1f072d79",
+  "payload": {
+    "affects": [
+      "entity-c609262d1b37f8c6a12d1c962bc67dd34f6ea0aee6f8dbcfa524e3205312e636"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "save-network-snapshot-owner",
+    "evidence": [
+      "src/unrecovered/005a94f0.cpp",
+      "src/unrecovered/005a6ac0.cpp",
+      "src/netdaemon.h",
+      "src/netdaemon.cpp",
+      "src/alphanet.h"
+    ],
+    "hypothesis": "The native save-time player snapshot requires unresolved NetDaemon storage ownership: source 0x93D4FC is the eight AlphaNetProcessSlot array at NetDaemonNet+0x76C (extent0xCE0), whereas destination0x93E978 is NetDaemonNet+0x1BE8, overlapping declared lock_state_[3]+8 and extending to+0x28C8, 0x7FC beyond current modeled+0x20CC. Constructor writes only leading dwords of24 state entries and fields ofchannels0-2. Wider lifecycle, allocation and consumers must distinguish a wrong reconstructed extent, intentional overlapping scratch storage, independent allocation or original overrun; do not invent a separate global, union or memcpy across modeled members without that evidence. Snapshot count at0x93F798 is independently adjacent to diplomacy storage, not part of PendingDiplomacyFlags.",
+    "kind": "discovery"
+  },
+  "previous_event": null,
+  "request_id": "save-network-snapshot-owner",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:game-save-load-owner-coverage"
+}
