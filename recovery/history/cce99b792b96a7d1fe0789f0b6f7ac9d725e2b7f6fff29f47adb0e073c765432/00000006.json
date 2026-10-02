@@ -1,0 +1,51 @@
+{
+  "event_id": "70e32e778cf74b310c964add6fbaf1c0e06d3a714e78f361103e47c5891f778d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/voice.cpp",
+      "src/voice.h"
+    ],
+    "evidence": [
+      "Complete the genuine Net join/receive owner path: original62E540 starts callback632740 with a Net+4 view; reconcile6327E0 typed Receive/Send SDK calls, recover632CC0 player insertion and633180 actual circular VoiceRx ownership, and declare/implement proven VoiceRx slot37 at4C9390. Admit Net::init62E010 for a real embedded NetThreadInfo with unchanged proven field offsets; existing task already owns close62D8E0 and create_session62EAA0. Original62EBB9/62EBC1 stores version field44 to descriptor+40 dwUser1, not current dwUser2: correct that supported discrepancy. Proper void __cdecl thread callback and real members replace pointer casts/raw offsets; no fixed address calls, manual dispatch arrays or fabricated storage. Overflow beyond16players requires pending explicit user behavior decision, not implicit guard or fabricated17thslot. Preserve source/seed identities, all claims and original baseline. Compiler/layout controls, scoped historical diagnostics, actual-source controls and fresh application build/link required for manual integration; full preservation/game acceptance remains unfinished."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6498112,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6498272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6499520,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6500736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5018512,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6479888,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "4327f174a48dfd713549593865af510c6976c8facfb7a0c855e38f54d6165db4",
+  "request_id": "net-session-receive-owner-dependencies-20261002",
+  "schema_version": 1,
+  "sequence": 6,
+  "stream": "task:alphanet-complete-owner-recovery"
+}
