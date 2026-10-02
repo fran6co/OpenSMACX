@@ -12235,3 +12235,105 @@ void __cdecl dispatch_mouse_wheel(int unused, int keys, int delta, int x, int y)
         window->send_wheel_delta(keys, delta, x, y, WinMouseDirect);
     }
 }
+
+// ORIGINAL: 0x005FCCF0 sub_5fccf0 0x005FCCF0-0x005FCD3D
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005fccf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// symbol    ?pump_key_message@@YAHXZ
+int __cdecl pump_key_message() {
+    MSG message;
+    do_video();
+    check_net();
+    if (!PeekMessageA(&message, nullptr, WM_KEYDOWN, WM_SYSDEADCHAR, PM_REMOVE))
+        return 0;
+    TranslateMessage(&message);
+    DispatchMessageA(&message);
+    return 1;
+}
+
+// ORIGINAL: 0x005FCD40 sub_5fcd40 0x005FCD40-0x005FCD97
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005fcd40.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// symbol    ?pump_all_key_messages@@YAXXZ
+void __cdecl pump_all_key_messages() {
+    MSG message;
+    for (;;) {
+        do_video();
+        check_net();
+        if (!PeekMessageA(&message, nullptr, WM_KEYDOWN, WM_SYSDEADCHAR, PM_REMOVE))
+            break;
+        TranslateMessage(&message);
+        DispatchMessageA(&message);
+    }
+    do_net();
+}
+
+// ORIGINAL: 0x005FCDA0 sub_5fcda0 0x005FCDA0-0x005FCDE5
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005fcda0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// symbol    ?pump_mouse_move_message@@YAHXZ
+int __cdecl pump_mouse_move_message() {
+    MSG message;
+    if (!PeekMessageA(&message, nullptr, WM_MOUSEMOVE, WM_MOUSEMOVE, PM_REMOVE))
+        return 0;
+    TranslateMessage(&message);
+    DispatchMessageA(&message);
+    return 1;
+}
+
+// ORIGINAL: 0x005FCDF0 sub_5fcdf0 0x005FCDF0-0x005FCEC0 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/005fcdf0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// symbol    ?pump_mouse_button_message@@YAHXZ
+int __cdecl pump_mouse_button_message() {
+    MSG message;
+    do_video();
+    check_net();
+    if (!PeekMessageA(&message, nullptr, WM_MOUSEMOVE, WM_MBUTTONDBLCLK, PM_REMOVE))
+        return 0;
+    TranslateMessage(&message);
+    DispatchMessageA(&message);
+    if (message.message == WM_LBUTTONDOWN) {
+        if (PeekMessageA(&message, message.hwnd, WM_LBUTTONUP, WM_LBUTTONUP, PM_REMOVE)) {
+            TranslateMessage(&message);
+            DispatchMessageA(&message);
+            return 1;
+        }
+    }
+    if (message.message == WM_RBUTTONDOWN) {
+        if (PeekMessageA(&message, message.hwnd, WM_RBUTTONUP, WM_RBUTTONUP, PM_REMOVE)) {
+            TranslateMessage(&message);
+            DispatchMessageA(&message);
+        }
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x005FD2C0 sub_5fd2c0 0x005FD2C0-0x005FD308 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005fd2c0.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// symbol    ?pump_sound_message@@YAHXZ
+int __cdecl pump_sound_message() {
+    MSG message;
+    if (!PeekMessageA(&message, nullptr, WM_USER + 1, WM_USER + 1, PM_REMOVE))
+        return 0;
+    TranslateMessage(&message);
+    DispatchMessageA(&message);
+    check_net();
+    return 1;
+}
+
+// ORIGINAL: 0x005FD310 sub_5fd310 0x005FD310-0x005FD35D
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/005fd310.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// symbol    ?pump_all_sound_messages@@YAXXZ
+void __cdecl pump_all_sound_messages() {
+    MSG message;
+    while (PeekMessageA(&message, nullptr, WM_USER + 1, WM_USER + 1, PM_REMOVE)) {
+        TranslateMessage(&message);
+        DispatchMessageA(&message);
+        check_net();
+    }
+}
+
+// Historical catalogue name: this entry only clears the message status.
+// ORIGINAL: 0x005FD360 ?do_all_sounds@@YAXXZ 0x005FD360-0x005FD36B BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/005fd360.cpp"], "reason": "Recover the complete core message helper using SDK MSG/USER32, original queue ranges and callback ordering; preserve catalogue identity and historical seed obligation."}
+// symbol    ?do_all_sounds@@YAXXZ
+void __cdecl do_all_sounds() {
+    MsgStatus = 0;
+}

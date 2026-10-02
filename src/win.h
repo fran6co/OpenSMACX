@@ -1258,3 +1258,11 @@ int __cdecl cd_check();
 // array base read from address zero - while two other bodies using the same
 // name happened to fold anyway, which is what made it look like a per-body
 // register-allocation quirk rather than the type. Callers cast at use.
+
+int __cdecl pump_key_message();
+void __cdecl pump_all_key_messages();
+int __cdecl pump_mouse_move_message();
+int __cdecl pump_mouse_button_message();
+int __cdecl pump_sound_message();
+void __cdecl pump_all_sound_messages();
+void __cdecl do_all_sounds();
