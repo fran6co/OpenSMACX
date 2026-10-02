@@ -1,0 +1,19 @@
+{
+  "event_id": "1fd30ddc7355e645e3ab0e03ce76a6cff8eed6d3ab76a1deb75c3e8ca9ebb66d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/basepop.h"
+    ],
+    "evidence": [
+      "Original AlphaNet UI calls operate directly on BasePop-owned Dialogs; the actual owning declaration is basepop.h, not popup.h. Admit only narrow AlphaNet friendship or an evidence-backed existing accessor, preserving the member, lifecycle, original bindings and task baseline. Current Voice scalar layout annotation is corrected, but this task historical baseline contains its earlier invalid grammar: historical obligation checks still refuse and are not reported green."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "alpha-owned-dialogs",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:alphanet-complete-owner-recovery"
+}

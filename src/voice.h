@@ -104,7 +104,7 @@ class VoiceTx : public Sound {
   virtual int get_nbuffers();                           // 37
 
  private:
-  // RECOVERY_MEMBER: v3 VoiceTx flags_54_ uint32_t 0x54 0x4c8cc0
+  // RECOVERY_MEMBER: v1 VoiceTx flags_54_ 0x54 0x4c8cc0
   uint32_t flags_54_;
 };
 
