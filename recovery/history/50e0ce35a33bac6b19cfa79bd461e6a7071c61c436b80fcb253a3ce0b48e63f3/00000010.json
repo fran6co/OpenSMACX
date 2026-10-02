@@ -1,0 +1,21 @@
+{
+  "event_id": "ab68bdd8a595f110352c8498f8084b8605c7030da1028e599bd4c8a374dd5697",
+  "payload": {
+    "affects": [
+      "entity-3070948185058521b2262f0ac22aaf6ec11a8470ae41564f0c2061929adbd274"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "menu-real-virtual-owner-closure-20261002",
+    "evidence": [
+      "Pinned Menu constructor5FAC94 selects6700B0; root independently read five DWORDs at6700B0+90*4:5FADD0,5FC6A0,5FB9C0,5FC5A0,5FC6C0. AlphaMenu66ED88+90*4 gives402F40,403610,4031A0,4032A0,403620. Existing menu.h vslot92/93 no-ops currently suppress compute/adjust, and nonvirtual methods do not override these slots. src/stringstruct.cpp Menu_init is a raw receiver facade requiring typed member rehoming, not a new original identity.",
+      "Shared zero-initialized word9B7B6C is written by Menu5FBD68,5FC0C3,5FC1ED and PullDown5F96FA,5F977F; semantic input-origin role remains provisional, no direct absolute load found. Mouse cache words9B7B80/84 are read/written by Menu5FBDB0. Native compiler overlay compiled all eight drafted Menu methods against actual headers; GCC/Clang C++03 ASan/UBSan fixture controls pass, neither proves dispatch or linked acceptance."
+    ],
+    "hypothesis": "Recover Menu as a genuine virtual owner: replace no-op slots90 through93 with init(Win*),requested_height(),compute(),adjust(), append on_adjust_pulldown_pos at94, and preserve AlphaMenu overrides and actual caller dispatch. Canonicalize the shared input-state producer with PullDown; do not privately duplicate it.",
+    "kind": "discovery"
+  },
+  "previous_event": "bda1e90d706c08db331fd5dfe3116c414e38f3efe3205a324f3f159baaaaebfb",
+  "request_id": "menu-real-virtual-owner-closure-20261002",
+  "schema_version": 1,
+  "sequence": 10,
+  "stream": "task:popup-font-configuration-owner-closure"
+}

@@ -1,0 +1,71 @@
+{
+  "event_id": "8e8180c189673e5a008c131feb143037bc6a2a9fc6430bbcc5058a22e6e0ab45",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/menu_owner_harness.cpp",
+      "recovery/tests/test_menu_owner.py",
+      "src/alphamenu.cpp",
+      "src/alphamenu.h",
+      "src/pulldown.cpp",
+      "src/pulldown.h",
+      "src/stringstruct.cpp"
+    ],
+    "evidence": [
+      "Admit the coupled genuine virtual Menu/AlphaMenu producer-consumer closure proved by pinned tables6700B0/66ED88. Recover Menu::init from existing stringstruct facade without deleting its original identity or baseline; wire five named virtual slots and all existing callers. Canonical shared input state preserves PullDown keyboard producers, provisional semantic name and zero initialization. Historical claims remain restoration obligations; no automatic regression acceptance, baseline reset or demotion is authorized."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6270416,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6276768,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6276800,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4206400,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4208144,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4207008,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4207264,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4208160,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6264384,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ab68bdd8a595f110352c8498f8084b8605c7030da1028e599bd4c8a374dd5697",
+  "request_id": "menu-virtual-and-shared-input-closure-20261002",
+  "schema_version": 1,
+  "sequence": 11,
+  "stream": "task:popup-font-configuration-owner-closure"
+}
