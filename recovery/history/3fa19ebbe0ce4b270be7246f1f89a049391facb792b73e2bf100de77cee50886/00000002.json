@@ -1,0 +1,19 @@
+{
+  "event_id": "381646d08cbb4b992218c01146c49d9cf5ae6501c513f9874a58e3b2fed69432",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_listbox_remaining_behavior.py"
+    ],
+    "evidence": [
+      "Admit durable literal-extracted actual-source host C++ controls for all five remaining ListBox handlers: click modifier selection and callback order, keyboard table/typeahead, hover draw ordering, row/column surface blits, and redraw paths. Private native compiler trials preserve ListBox0xB54 GraphicWin0xA14 Dialog0xF4; 24 historical masked-byte diagnostics match a fresh unchanged-source baseline. Preserve original task baseline, all exact seeds/claims and all unrelated pending_bodies forwards. Host service doubles and masked diagnostics are not linked preservation or game acceptance. Full application build/link and guarded native bindings still required before coordinator integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "55183da3b1787b772d204b0a4a4390142d13d98f77004a7a1dad9f914f09d603",
+  "request_id": "listbox-actual-handler-controls-20261002",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:listbox-remaining-owner-coverage"
+}

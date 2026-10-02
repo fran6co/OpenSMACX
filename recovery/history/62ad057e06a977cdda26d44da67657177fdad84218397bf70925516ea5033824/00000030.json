@@ -1,0 +1,19 @@
+{
+  "event_id": "b6fc012f1cb171d37d099038ee2f31ac2141bd280d31688620ccacb3846df0d0",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/time.h"
+    ],
+    "evidence": [
+      "Correct and supersede sequence29 timer observation/API permission: actual time.h declarations and constructor/stop behavior place Time::id_event_ at +4, while count_ is +0x18. ConsoleTimer939E88+4 (939E8C) therefore tests the live timer ID, not count. Authorize only narrow const has_active_timer accessor of id_event_ for stop/start choice; do not add/use has_count or change timer layout/lifecycle. Retain sequence29 as historical mistaken interpretation, not a current fact. Pinned PeImage.read_initial confirms minimum six keyboard bytes939FE0..FE5 are initially zero; the provisional six-byte storage permission retains no original allocation extent/capacity/lifetime/exact-data claim. Preserve all original baselines, seeds, claims and every unrelated source edit."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "8d29b4d921ef335157bef1715a981dda99d219d4f4e26615728c52c75632b7d5",
+  "request_id": "console-key-timer-offset-correction-20261002",
+  "schema_version": 1,
+  "sequence": 30,
+  "stream": "task:console-scenario-owner-wave"
+}

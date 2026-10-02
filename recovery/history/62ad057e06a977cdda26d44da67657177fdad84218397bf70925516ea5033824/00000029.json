@@ -1,0 +1,19 @@
+{
+  "event_id": "8d29b4d921ef335157bef1715a981dda99d219d4f4e26615728c52c75632b7d5",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "src/time.h"
+    ],
+    "evidence": [
+      "Pinned on_key_click5178C0 reads count at ConsoleTimer939E88+4 to choose stop/start; admit narrow const has_count accessor of existing Time count_ only, inline with no layout/lifecycle change. Six individual byte stores to939FE0..FE5 require genuine source storage; authorize provisional Console-owned char ConsoleKeySequenceBytes[6] with start-only original binding and no assumed terminator or allocation/capacity/lifetime/exact-data claim. Minimum six accessed bytes and pinned initial bytes, not adjacency, are evidence. Preserve original timer callback ordering, byte seeds/claims, scopes and baselines; no global address alias, timer-id substitute, representative key-router body or behavior-change permission. Full complete handler and real native compile/build/link, actual-source controls and reviewed bindings required before integration."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "1577a97e19543cbac65b01265f68462042fb1ee66dbcc36ef2106b907d9836e3",
+  "request_id": "console-key-sequence-timer-owner-20261002",
+  "schema_version": 1,
+  "sequence": 29,
+  "stream": "task:console-scenario-owner-wave"
+}
