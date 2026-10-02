@@ -17,6 +17,12 @@
  */
 #include "stdafx.h"
 #include "alphamenu.h"
+#include "alpha.h"
+#include "strings.h"
+#include "text.h"
+#include "terraforming.h"
+#include "veh.h"
+
 #include "console.h"
 #include "game.h"
 #include "maininterface.h"
@@ -359,4 +365,282 @@ void AlphaMenu::on_mouse_move(int x, int y) {
         redraw();
         on_update();
     }
+}
+
+// Console initializes its embedded AlphaMenu through this catalogue entry.
+// Population uses the existing rules and StringTable owners; x86 pool keys
+// remain the existing pointer-to-int Strings API, not portable pointer proof.
+// ORIGINAL: 0x0045FB20 ?menu_init@MainMenu@@QAEHXZ 0x0045FB20-0x00460DD0
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/0045fb20.cpp", "image:0x51D922,0x51D996-0x51D99D:Console alpha_menu_ receiver"], "reason": "Pinned Console init receiver+22A2C identifies existing AlphaMenu; catalogue MainMenu identity retained separately from native AlphaMenu symbol. Complete ordered menu population uses source rules and StringTable owners; no byte claim."}
+// symbol    ?menu_init@AlphaMenu@@QAEHXZ
+int AlphaMenu::menu_init() {
+    Menu *const menu = this;
+    read_rules(0);
+    if (text_open("MENU", "GAME") != 0) return 1;
+    menu->add_menu(0, text_get(), 0);
+    menu->add_menu_item(0, 0x51, text_get());
+    menu->add_menu_item(0, 0x52, text_get());
+    menu->add_separator(0, 0);
+    menu->add_menu_item(0, 0x53, text_get());
+    menu->add_menu_item(0, 0x54, text_get());
+    menu->add_menu_item(0, 0x55, text_get());
+    menu->add_menu_item(0, 0x56, text_get());
+    menu->add_menu_item(0, 0x57, text_get());
+    menu->add_menu_item(0, 0x58, text_get());
+    menu->add_separator(0, 0);
+    menu->add_menu_item(0, 0x59, text_get());
+    menu->add_menu_item(0, 0x5a, text_get());
+    menu->add_separator(0, 0);
+    menu->add_menu_item(0, 0x5b, text_get());
+    menu->add_menu_item(0, 0x5c, text_get());
+    menu->add_menu_item(0, 0x5d, text_get());
+    if (text_open("MENU", "HQ") != 0) return 1;
+    menu->add_menu(1, text_get(), 0);
+    menu->add_menu_item(1, 0x105, text_get());
+    menu->add_menu_item(1, 0x106, text_get());
+    menu->add_menu_item(1, 0x107, text_get());
+    menu->add_separator(1, 0);
+    menu->add_menu_item(1, 0x103, text_get());
+    menu->add_separator(1, 0);
+    menu->add_menu_item(1, 0x108, text_get());
+    menu->add_menu_item(1, 0x109, text_get());
+    menu->add_menu_item(1, 0x10a, text_get());
+    menu->add_separator(1, 0);
+    menu->add_menu_item(1, 0x10b, text_get());
+    menu->add_menu_item(1, 0x10c, text_get());
+    menu->add_menu_item(1, 0x10d, text_get());
+    menu->add_menu_item(1, 0x10e, text_get());
+    menu->add_separator(1, 0);
+    menu->add_menu_item(1, 0x10f, text_get());
+    menu->add_menu_item(1, 0x110, text_get());
+    menu->add_menu_item(1, 0x111, text_get());
+    menu->add_menu_item(1, 0x113, text_get());
+    menu->add_separator(1, 9);
+    menu->add_menu_item(1, 0x114, text_get());
+    menu->add_menu_item(1, 0x115, text_get());
+    if (text_open("MENU", "NETWORK") != 0) return 1;
+    menu->add_menu(8, text_get(), 0);
+    menu->add_menu_item(8, 0x800, text_get());
+    menu->add_menu_item(8, 0x801, text_get());
+    menu->add_menu_item(8, 0x802, text_get());
+    menu->add_menu_item(8, 0x803, text_get());
+    menu->add_menu_item(8, 0x804, text_get());
+    menu->add_separator(8, 0);
+    menu->add_menu_item(8, 0x805, text_get());
+    menu->add_separator(8, 0);
+    menu->add_menu_item(8, 0x806, text_get());
+    menu->add_menu_item(8, 0x807, text_get());
+    menu->add_menu_item(8, 0x808, text_get());
+    if (text_open("MENU", "MAP") != 0) return 1;
+    menu->add_menu(2, text_get(), 0);
+    menu->add_menu_item(2, 0x200, text_get());
+    menu->add_menu_item(2, 0x201, text_get());
+    menu->add_separator(2, 0);
+    menu->add_menu_item(2, 0x203, text_get());
+    menu->add_menu_item(2, 0x204, text_get());
+    menu->add_menu_item(2, 0x205, text_get());
+    menu->add_menu_item(2, 0x206, text_get());
+    menu->add_menu_item(2, 0x207, text_get());
+    menu->add_menu_item(2, 0x208, text_get());
+    menu->add_separator(2, 0);
+    menu->add_menu_item(2, 0x209, text_get());
+    menu->add_menu_item(2, 0x20a, text_get());
+    menu->add_menu_item(2, 0x20b, text_get());
+    menu->add_menu_item(2, 0x20c, text_get());
+    menu->add_menu_item(2, 0x215, text_get());
+    menu->add_separator(2, 0);
+    menu->add_menu_item(2, 0x20f, text_get());
+    menu->add_menu_item(2, 0x210, text_get());
+    menu->add_menu_item(2, 0x211, text_get());
+    menu->add_menu_item(2, 0x212, text_get());
+    menu->add_menu_item(2, 0x213, text_get());
+    menu->add_separator(2, 0);
+    menu->add_menu_item(2, 0x216, text_get());
+    menu->add_menu_item(2, 0x217, text_get());
+    menu->add_menu_item(2, 0x214, text_get());
+    if (text_open("MENU", "ACTION") != 0) return 1;
+    menu->add_menu(3, text_get(), 0);
+    menu->add_menu_item(3, 0x300, text_get());
+    menu->add_menu_item(3, 0x301, text_get());
+    menu->add_menu_item(3, 0x302, text_get());
+    menu->add_separator(3, 2);
+    menu->add_menu_item(3, 0x305, text_get());
+    menu->add_menu_item(3, 0x309, text_get());
+    menu->add_menu_item(3, 0x30a, text_get());
+    menu->add_menu_item(3, 0x310, text_get());
+    menu->add_menu_item(3, 0x308, text_get());
+    menu->add_menu_item(3, 0x311, text_get());
+    menu->add_menu_item(3, 0x312, text_get());
+    menu->add_separator(3, 0);
+    menu->add_menu_item(3, 0x314, text_get());
+    menu->add_menu_item(3, 0x31b, text_get());
+    menu->add_menu_item(3, 0x324, text_get());
+    menu->add_menu_item(3, 0x306, text_get());
+    menu->add_menu_item(3, 0x304, text_get());
+    menu->add_separator(3, 0);
+    menu->add_menu_item(3, 0x318, text_get());
+    menu->add_menu_item(3, 0x319, text_get());
+    menu->add_menu_item(3, 0x31a, text_get());
+    menu->add_menu_item(3, 0x317, text_get());
+    menu->add_menu_item(3, 0x316, text_get());
+    menu->add_separator(3, 0);
+    menu->add_menu_item(3, 0x313, text_get());
+    menu->add_menu_item(3, 0x31c, text_get());
+    menu->add_menu_item(3, 0x31d, text_get());
+    menu->add_menu_item(3, 0x31e, text_get());
+    menu->add_menu_item(3, 0x31f, text_get());
+    menu->add_menu_item(3, 0x320, text_get());
+    menu->add_separator(3, 0);
+    menu->add_menu_item(3, 0x321, text_get());
+    menu->add_menu_item(3, 0x307, text_get());
+    menu->add_menu_item(3, 0x322, text_get());
+    menu->add_menu_item(3, 0x315, text_get());
+    menu->add_menu_item(3, 0x323, text_get());
+    if (text_open("MENU", "TERRAFORM") != 0) return 1;
+    menu->add_menu(9, text_get(), 0);
+    {
+        for (int i = 0; i != 19; ++i) {
+            StringTemp[0] = 0;
+            strcat(StringTemp,
+                   StringTable.get(reinterpret_cast<int>(Order[i + 4].order)));
+            strcat(StringTemp, "|");
+            strcat(StringTemp, StringTable.get((int)Terraforming[i].shortcuts));
+            menu->add_menu_item(9, 0x900 + i, StringTemp);
+            if (i == 4 || i == 11 || i == 14) {
+                menu->add_separator(9, i == 14);
+            }
+        }
+    }
+    menu->add_separator(9, 5);
+    menu->add_menu_item(9, 0x9f8, text_get());
+    menu->add_menu_item(9, 0x9f9, text_get());
+    menu->add_separator(9, 6);
+    menu->add_menu_item(9, 0x9f0, text_get());
+    menu->add_menu_item(9, 0x9f1, text_get());
+    menu->add_separator(9, 7);
+    menu->add_menu_item(9, 0x9f3, text_get());
+    menu->add_menu_item(9, 0x9f4, text_get());
+    menu->add_menu_item(9, 0x9f5, text_get());
+    menu->add_menu_item(9, 0x9f6, text_get());
+    menu->add_menu_item(9, 0x9f7, text_get());
+    menu->add_menu_item(9, 0x9f2, text_get());
+    /* pop edi; pop ebx (loop epilogue registers) */
+    if (text_open("MENU", "SCENARIO") != 0) return 1;
+    menu->add_menu(6, text_get(), 0);
+    menu->add_menu_item(6, 0x600, text_get());
+    menu->add_menu_item(6, 0x601, text_get());
+    menu->add_separator(6, 0);
+    menu->add_menu_item(6, 0x602, text_get());
+    menu->add_menu_item(6, 0x603, text_get());
+    menu->add_menu_item(6, 0x604, text_get());
+    menu->add_menu_item(6, 0x605, text_get());
+    menu->add_separator(6, 0);
+    menu->add_menu_item(6, 0x606, text_get());
+    menu->add_menu_item(6, 0x607, text_get());
+    menu->add_menu_item(6, 0x608, text_get());
+    menu->add_menu_item(6, 0x609, text_get());
+    menu->add_separator(6, 0);
+    menu->add_menu_item(6, 0x60a, text_get());
+    menu->add_menu_item(6, 0x60b, text_get());
+    menu->add_menu_item(6, 0x60c, text_get());
+    menu->add_menu_item(6, 0x60d, text_get());
+    menu->add_menu_item(6, 0x60e, text_get());
+    menu->add_separator(6, 0);
+    menu->add_menu_item(6, 0x60f, text_get());
+    menu->add_menu_item(6, 0x610, text_get());
+    menu->add_menu_item(6, 0x611, text_get());
+    menu->add_menu_item(6, 0x612, text_get());
+    menu->add_menu_item(6, 0x613, text_get());
+    menu->add_separator(6, 0);
+    menu->add_menu_item(6, 0x614, text_get());
+    menu->add_menu_item(6, 0x615, text_get());
+    menu->add_menu_item(6, 0x616, text_get());
+    menu->add_menu_item(6, 0x617, text_get());
+    menu->add_separator(6, 0);
+    menu->add_menu_item(6, 0x618, text_get());
+    menu->add_menu_item(6, 0x619, text_get());
+    menu->add_menu_item(6, 0x61a, text_get());
+    menu->add_menu_item(6, 0x61b, text_get());
+    if (text_open("MENU", "EDITOR") != 0) return 1;
+    menu->add_menu(0xa, text_get(), 0);
+    menu->add_menu_item(0xa, 0xa00, text_get());
+    menu->add_menu_item(0xa, 0xa01, text_get());
+    menu->add_separator(0xa, 0);
+    menu->add_menu_item(0xa, 0xa10, text_get());
+    menu->add_menu_item(0xa, 0xa11, text_get());
+    menu->add_menu_item(0xa, 0xa12, text_get());
+    menu->add_menu_item(0xa, 0xa13, text_get());
+    menu->add_menu_item(0xa, 0xa14, text_get());
+    menu->add_menu_item(0xa, 0xa15, text_get());
+    menu->add_menu_item(0xa, 0xa16, text_get());
+    menu->add_separator(0xa, 0);
+    menu->add_menu_item(0xa, 0xa17, text_get());
+    menu->add_menu_item(0xa, 0xa18, text_get());
+    menu->add_menu_item(0xa, 0xa19, text_get());
+    menu->add_separator(0xa, 0);
+    menu->add_menu_item(0xa, 0xa20, text_get());
+    menu->add_menu_item(0xa, 0xa21, text_get());
+    menu->add_menu_item(0xa, 0xa22, text_get());
+    menu->add_menu_item(0xa, 0xa24, text_get());
+    menu->add_separator(0xa, 0);
+    menu->add_menu_item(0xa, 0xa48, text_get());
+    menu->add_menu_item(0xa, 0xa30, text_get());
+    menu->add_menu_item(0xa, 0xa31, text_get());
+    menu->add_menu_item(0xa, 0xa32, text_get());
+    menu->add_separator(0xa, 0);
+    menu->add_menu_item(0xa, 0xa36, text_get());
+    menu->add_menu_item(0xa, 0xa37, text_get());
+    menu->add_menu_item(0xa, 0xa40, text_get());
+    menu->add_menu_item(0xa, 0xa41, text_get());
+    menu->add_separator(0xa, 0);
+    menu->add_menu_item(0xa, 0xa50, text_get());
+    menu->add_menu_item(0xa, 0xa51, text_get());
+    menu->add_menu_item(0xa, 0xa52, text_get());
+    menu->add_menu_item(0xa, 0xa53, text_get());
+    menu->add_separator(0xa, 0);
+    menu->add_menu_item(0xa, 0xa54, text_get());
+    if (text_open("MENU", "HELP") != 0) return 1;
+    menu->add_menu(7, text_get(), 1);
+    menu->add_menu_item(7, 0x701, text_get());
+    menu->add_menu_item(7, 0x702, text_get());
+    menu->add_menu_item(7, 0x703, text_get());
+    menu->add_separator(7, 0);
+    menu->add_menu_item(7, 0x704, text_get());
+    menu->add_menu_item(7, 0x70b, text_get());
+    menu->add_menu_item(7, 0x70c, text_get());
+    menu->add_separator(7, 0);
+    menu->add_menu_item(7, 0x70d, text_get());
+    menu->add_menu_item(7, 0x70e, text_get());
+    menu->add_separator(7, 0);
+    menu->add_menu_item(7, 0x70a, text_get());
+    menu->add_menu_item(7, 0x705, text_get());
+    menu->add_menu_item(7, 0x706, text_get());
+    menu->add_menu_item(7, 0x707, text_get());
+    menu->add_menu_item(7, 0x708, text_get());
+    menu->add_menu_item(7, 0x709, text_get());
+    menu->add_separator(7, 0);
+    menu->add_menu_item(7, 0x720, text_get());
+    menu->add_menu_item(7, 0x721, text_get());
+    menu->add_menu_item(7, 0x722, text_get());
+    menu->add_menu_item(7, 0x723, text_get());
+    menu->add_menu_item(7, 0x724, text_get());
+    menu->add_menu_item(7, 0x725, text_get());
+    menu->add_separator(7, 0);
+    menu->add_menu_item(7, 0x750, text_get());
+    menu->add_menu_item(7, 0x751, text_get());
+    menu->hide_menu_item(1, 0x106);
+    menu->hide_menu_item(1, 0x107);
+    menu->hide_menu_item(3, 0x301);
+    menu->hide_menu_item(3, 0x309);
+    menu->hide_menu_item(3, 0x30a);
+    menu->hide_menu_item(3, 0x310);
+    menu->hide_menu_item(3, 0x306);
+    menu->hide_menu_item(3, 0x304);
+    menu->disable_menu_item(3, 0x305);
+    if ((GameRules & RULES_IRONMAN) != 0) {
+        menu->hide_menu_item(0, 0x5a);
+    }
+    check(-1);
+    adjust();
+    return 0;
 }

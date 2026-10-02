@@ -61,6 +61,7 @@ class AlphaMenu : public Menu {
   // menu_update drive it every turn. Body still unrecovered - a
   // pending_bodies forwarder.
   void check(int veh_id);
+  int menu_init(); // original catalogue MainMenu::menu_init, Console-owned receiver
 
   Buffer buffer_;      // 0xB64, IDB `buffer`, size == sizeof(Buffer)
 
