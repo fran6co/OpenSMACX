@@ -1,0 +1,21 @@
+{
+  "event_id": "72dece213997a3788829f001f6114b43184f8adbac3f20f6da40f848657338b9",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/diplowin_destructor_host_control.cpp",
+      "recovery/tests/test_diplowin_destructor_behavior.py",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Coordinator admits only removal of the444DB0 pending forwarder and actual-body destructor host controls. Pinned normal444DB0-444FB2 and EH654920-6549F0 establish automatic member/base cleanup, not a new unregister. Fresh private both-recipe native compilation preserves54 diagnostics and layout; full private application compile/link passes. Original task baseline, seeds, claims and other pending functions stay unchanged."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": null,
+  "request_id": "diplowin-genuine-destructor-forwarder-closure",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:diplowin-owner-coverage"
+}
