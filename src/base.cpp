@@ -301,6 +301,11 @@ int BaseIDCurrentSelected = -1;  // 0x00689370
 // sound callback load it before accessing the selected Base's members.
 // RECOVERY_OBJECT: v2 0x0090EA30 0x0090EA34 ?BaseCurrent@@3PAUBase@@A 0x004E39D0
 Base *BaseCurrent;
+// production_phase publishes the current faction's reserves here (526FB7);
+// allocate_energy reads the retained value (526821), and hurry deducts from it.
+// The name is provisional; producer/allocator bodies remain retained seeds.
+// RECOVERY_OBJECT: v2 0x0093A958 0x0093A95C ?CurrentFactionEnergyReserves@@3HA 0x00526E70
+int CurrentFactionEnergyReserves;
 // base_compute publishes the selected id before running the resource passes.
 // Window refreshes invalidate this cache without changing the selected base.
 // RECOVERY_OBJECT: v2 0x00689374 0x00689378 ?BaseComputedID@@3HA 0x004EC3B0

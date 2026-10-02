@@ -558,6 +558,7 @@ extern int BaseIDCurrentSelected;
 extern int BaseCurrentCount;
 extern int BaseFindDist;
 extern Base *BaseCurrent;
+extern int CurrentFactionEnergyReserves;
 extern int BaseComputedID;
 extern uint32_t ScnVictFacilityObj;
 extern uint32_t BaseUpkeepStage;

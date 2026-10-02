@@ -1,0 +1,20 @@
+{
+  "event_id": "f4d9c611190fb32ce248607d2cf088e7dacf1f66c19cde9be495cfcf478a2230",
+  "payload": {
+    "affects": [
+      "entity-b60e515481664873d2e75e15d9613300caf913faeaab76bb50efff7abf4ba837"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "basewin-production-guard-target-correction",
+    "evidence": [
+      "Pinned417151 CMP focusedBase.faction/Console.faction;417153 JE41736E and417160 JNE41736E on GameState80 enter the live production continuation.41736E loads BaseCurrent,417381 copies its production queue,417390 writes BaseWin40B34 and4173D9 reaches lock_base. Foreign noneditor falls through417166 GraphicWin/Popup destruction and exits, not normal production. Independent root review rejects the scratch equality-or-editor-return guard and peer conclusion; preserve outline but correct before integration. Actual body, loop continuations and caller/context evidence still required."
+    ],
+    "hypothesis": "The production outline inverted its entry permission by misidentifying the successful branch as an exit; full target blocks must govern recovery, not isolated conditional mnemonics.",
+    "kind": "discovery"
+  },
+  "previous_event": "36741da9e5ae68d2517b79c671fed98be1ec2ca48d125df8e8b2c77c478bc81e",
+  "request_id": "basewin-production-guard-target-correction",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:basewin-owner-coverage"
+}
