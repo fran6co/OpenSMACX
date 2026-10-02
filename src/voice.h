@@ -51,6 +51,7 @@ class VoiceRxDeviceInterface : public SoundDeviceInterface {
   virtual int start() = 0;                                  // 34
   virtual int add_buffer(_MMIOINFO *) = 0;                   // 35
   virtual int get_buffer_size() = 0;                        // 36
+  virtual int get_nbuffers() = 0;                           // 37
 };
 
 class VoiceTxDeviceInterface : public SoundDeviceInterface {
@@ -81,6 +82,7 @@ class VoiceRx : public Sound {
   virtual int start();                                  // 34
   virtual int add_buffer(_MMIOINFO *);                   // 35
   virtual int get_buffer_size();                        // 36
+  virtual int get_nbuffers();                           // 37
 };
 
 // RECOVERY_BASE: v1 VoiceTx Sound 0x0 0x4c8cc0

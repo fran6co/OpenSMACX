@@ -22,6 +22,155 @@
 #include "spritebox.h"
 #include "net_class.h"
 #include "mapwin.h"
+// Private pure branches shared with host controls; every helper has internal
+// linkage in each translation unit that includes this implementation fragment.
+static bool listbox_hit_single_row(int *remaining, int text_span,
+                                   int line_height) {
+    *remaining -= text_span * line_height;
+    return *remaining < 0;
+}
+
+typedef int (*ListBoxHitSpanAt)(void *context, int position);
+
+static int listbox_y_span_hit(int y_offset, int top, int count,
+                              int line_height, void *context,
+                              ListBoxHitSpanAt span_at) {
+    if (count <= 0 || y_offset < 0) return -1;
+    int remaining = y_offset;
+    for (int position = top; position < count; ++position) {
+        if (listbox_hit_single_row(&remaining, span_at(context, position),
+                                  line_height)) {
+            return position;
+        }
+    }
+    return -1;
+}
+
+static int listbox_grid_hit_position(int x_offset, int y_offset, int top,
+                                    int count, int rows, int column_width,
+                                    int row_height) {
+    // Keep x86 signed division behavior, including negative x offsets. The
+    // seed divides these exact offsets without a bounds clamp.
+    const int column = x_offset / column_width;
+    const int row = y_offset / row_height;
+    const int position = top + column * rows + row;
+    return position < count ? position : -1;
+}
+
+static int listbox_hit_position_for_mode(int layout_mode, int x, int y,
+        int top, int count, int x_origin, int y_origin, int rows,
+        int column_width, int row_height, int line_height, void *context,
+        ListBoxHitSpanAt span_at) {
+    const int y_offset = y - y_origin;
+    if (count <= 0 || y_offset < 0) return -1;
+    if (layout_mode == 1) {
+        return listbox_y_span_hit(y_offset, top, count, line_height,
+                                  context, span_at);
+    }
+    return listbox_grid_hit_position(x - x_origin, y_offset, top, count, rows,
+                                     column_width, row_height);
+}
+
+// Returns 1 for a navigation move, 0 for a handled arrow at its boundary or
+// in a one-column layout, and -1 for the type-ahead arm.
+static int listbox_navigation_target(int arm, int layout_mode, int rows,
+                                     int count, int position, int *target) {
+    if (arm == 0) {
+        if (layout_mode == 1) return 0;
+        position -= rows;
+        if (position < 0) return 0;
+    } else if (arm == 1) {
+        if (position == 0) return 0;
+        --position;
+    } else if (arm == 2) {
+        if (layout_mode == 1) return 0;
+        position += rows;
+        if (position >= count) return 0;
+    } else if (arm == 3) {
+        if (position + 1 >= count) return 0;
+        ++position;
+    } else {
+        return -1;
+    }
+    *target = position;
+    return 1;
+}
+
+static bool listbox_clear_old_selection(bool control_down) {
+    return !control_down;
+}
+
+// -1 preserves the existing flag, 0 clears it, and 1 sets it.
+static int listbox_click_selection_action(int index, int item_count,
+        int position, int low, int high, bool wraps_to_last,
+        bool shift_down, bool control_down, bool was_selected) {
+    if (shift_down) {
+        if ((index >= low && index <= high)
+                || (wraps_to_last && index == item_count - 1)) return 1;
+        return control_down ? -1 : 0;
+    }
+    if (index != position) return control_down ? -1 : 0;
+    return control_down && was_selected ? 0 : 1;
+}
+
+static int listbox_typeahead_lower_input(unsigned char input) {
+    const signed char signed_input = static_cast<signed char>(input);
+    return tolower(static_cast<int>(signed_input));
+}
+
+static bool listbox_typeahead_matches(char item, unsigned char input) {
+    if (static_cast<unsigned char>(item) == input) return true;
+    const signed char signed_item = static_cast<signed char>(item);
+    return static_cast<int>(signed_item) == listbox_typeahead_lower_input(input);
+}
+
+static int listbox_frame_edge_count(uint32_t stored_count) {
+    return static_cast<int>(stored_count);
+}
+
+static int listbox_visible_draw_count(int columns, int rows, int first,
+                                     int item_count) {
+    if (columns <= 0 || rows <= 0 || first >= item_count) return 0;
+    const int slots = columns * rows;
+    const int available = item_count - first;
+    return slots < available ? slots : available;
+}
+
+struct ListBoxScrollCopy {
+    int source_x;
+    int source_y;
+    int destination_x;
+    int destination_y;
+    int width;
+    int height;
+};
+
+static ListBoxScrollCopy listbox_scroll_copy(int direction, int width_metric,
+        int inset, int columns, int rows, int row_height) {
+    ListBoxScrollCopy copy;
+    const bool vertical = direction == 0 || direction == 2;
+    const int row_count = rows - (vertical ? 1 : 0);
+    const int height_adjustment = columns - (vertical ? 1 : 2);
+    const int total = (width_metric - inset) +
+                      height_adjustment * width_metric;
+    copy.width = total - inset;
+    copy.height = row_count * row_height;
+    copy.source_x = inset;
+    copy.source_y = 0;
+    copy.destination_x = inset;
+    copy.destination_y = 0;
+    if (direction == 0) {
+        copy.source_y = row_height;
+    } else if (direction == 1) {
+        copy.source_x = width_metric + inset;
+    } else if (direction == 2) {
+        copy.destination_y = row_height;
+    } else {
+        copy.destination_x = width_metric + inset;
+    }
+    return copy;
+}
+
 
 /*
 Purpose: Unknown; the legacy implementation is a constant return that returns.
@@ -1094,4 +1243,267 @@ int ListBox::update_changes() {
     }
 
     return 0;
+}
+
+// Seed provenance: 0x0060AA60/0x0060CBC0 calculate an entry hit from the
+// Dialog row/column metrics, while 0x0060AF90 walks the same StringList for
+// keyboard typeahead. Dialogs::on_left_down/on_mouse_move/on_key_down route
+// kind 2 to these ListBox handlers; the retained seed spells the entered
+// GraphicWin/virtual-Dialog displacements as raw offsets. This helper uses
+// the declared virtual bases and payload members instead.
+struct ListBoxHitSpanContext {
+    StringList *items;
+};
+
+static int listbox_hit_span_at(void *context, int position) {
+    ListBoxHitSpanContext *const span_context =
+        static_cast<ListBoxHitSpanContext *>(context);
+    span_context->items->seek_pos(position);
+    StringStructPayload *payload = span_context->items->current_entry();
+    return payload == 0 ? 0 : static_cast<int>(payload->field_C_);
+}
+
+static int listbox_hit_position(ListBox *list, int x, int y, int top) {
+    Dialog &dialog = *list;
+    StringList &items = dialog.item_list_;
+    ListBoxHitSpanContext context = { &items };
+    return listbox_hit_position_for_mode(
+        static_cast<int>(dialog.field_54_), x, y, top, items.entry_count_,
+        static_cast<int>(dialog.field_40_),
+        static_cast<int>(dialog.field_38_),
+        static_cast<int>(dialog.field_58_),
+        static_cast<int>(dialog.field_64_ + dialog.field_44_),
+        static_cast<int>(dialog.field_68_ + dialog.field_44_),
+        static_cast<int>(dialog.field_68_ + dialog.field_44_), &context,
+        listbox_hit_span_at);
+}
+
+// The pinned byte map at 0x0060B4EC is indexed by VK - 0x25: bytes 0..3 map
+// to arrows and every remaining byte in the 0x25..0x68 range maps to 4.
+// Out-of-range values branch directly to the same type-ahead arm.
+static int listbox_key_dispatch_arm(int key) {
+    if (key < 0x25 || key > 0x68) return 4;
+    const int table_index = key - 0x25;
+    return table_index < 4 ? table_index : 4;
+}
+
+// Instruction/caller provenance retained in
+// src/recovered/units/0060aa60.cpp (span 0x0060AA60..0x0060AF84): publish the
+// parent as the callback receiver, hit-test the clicked row, update selected
+// entry callbacks and redraw. In multi-select mode payload field_8_ records
+// selected entries; Control keeps existing row flags. Shift selects the
+// previous-to-click interval, with the original -1 anchor wrapping through
+// the tail before row zero; without Shift, only the clicked row changes,
+// and Control toggles that row off if it was already selected.
+// ORIGINAL: 0x0060AA60 ?on_left_down@ListBox@@QAEXHH@Z 0x0060AA60-0x0060AF84
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060aa60.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?on_left_down@ListBox@@UAEXHH@Z
+void ListBox::on_left_down(int x, int y) {
+    GraphicWin *window = this;
+    WinCallbackWindow = window->parent_window();
+    const int position = listbox_hit_position(
+        this, x, y, static_cast<int>(field_18_));
+    if (position < 0) {
+        return;
+    }
+
+    const int previous = Dialog::selected_position_;
+    if (field_4_ != 0 && position != previous) {
+        const bool control = (GetKeyState(VK_CONTROL) & 0x8000) != 0;
+        const bool shift = (GetKeyState(VK_SHIFT) & 0x8000) != 0;
+        const bool wrapped_initial_shift = shift && previous < 0;
+        const int anchor = previous < 0 ? position : previous;
+        const int low = (anchor < position) ? anchor : position;
+        const int high = (anchor > position) ? anchor : position;
+        const int interval_low = wrapped_initial_shift ? 0 : low;
+        if (listbox_clear_old_selection(control)) {
+            for (int index = 0; index < Dialog::item_list_.entry_count_; ++index) {
+                if (!Dialog::item_list_.seek_pos(index)) continue;
+                StringStructPayload *payload =
+                    Dialog::item_list_.current_entry();
+                if (payload != 0) payload->field_8_ = 0;
+            }
+        }
+        for (int index = 0; index < Dialog::item_list_.entry_count_; ++index) {
+            if (!Dialog::item_list_.seek_pos(index)) continue;
+            StringStructPayload *payload = Dialog::item_list_.current_entry();
+            if (payload == 0) continue;
+            const int action = listbox_click_selection_action(
+                index, Dialog::item_list_.entry_count_, position, interval_low,
+                high, wrapped_initial_shift, shift, control,
+                payload->field_8_ != 0);
+            if (action >= 0) payload->field_8_ = action;
+        }
+    }
+    set_selected_pos(position, 1);
+    if ((Dialog::field_20_ & 4) != 0 && window->parent_window() != 0) {
+        window->parent_window()->on_button_clicked(-1);
+    }
+}
+
+// The retained 0x0060CBC0 seed derives a hovered list position from the same
+// row metrics as the click handler, then updates Dialog::field_F0_ and redraws
+// the changed hover state. The source-owned position helper keeps the cursor
+// and row payload access on StringList's declared API.
+// ORIGINAL: 0x0060CBC0 ?on_mouse_move@ListBox@@QAEXHH@Z 0x0060CBC0-0x0060CE0B
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060cbc0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?on_mouse_move@ListBox@@UAEXHH@Z
+void ListBox::on_mouse_move(int x, int y) {
+    const int position = listbox_hit_position(
+        this, x, y, static_cast<int>(field_18_));
+    if (position < 0) {
+        return;
+    }
+    const int previous_hover = static_cast<int>(Dialog::field_F0_);
+    if (position == Dialog::selected_position_) {
+        if (previous_hover == -1) return;
+        Dialog::field_F0_ = static_cast<uint32_t>(-1);
+        ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
+        draw_item(previous_hover);
+        static_cast<GraphicWin *>(this)->soft_update();
+        return;
+    }
+    if (previous_hover == position) return;
+    Dialog::field_F0_ = static_cast<uint32_t>(position);
+    if (previous_hover != -1) {
+        ListBoxDrawOffset = previous_hover - static_cast<int>(field_18_);
+        draw_item(previous_hover);
+    }
+    ListBoxDrawOffset = position - static_cast<int>(field_18_);
+    draw_item(position);
+    static_cast<GraphicWin *>(this)->soft_update();
+}
+
+// 0x0060AF90's table at 0x60B4EC maps VK_LEFT/UP/RIGHT/DOWN to four
+// layout-sensitive arms and all remaining keys to MapVirtualKey typeahead.
+// Dialogs::on_key_down routes kind 2 here.
+// ORIGINAL: 0x0060AF90 ?on_key_down@ListBox@@QAEXH@Z 0x0060AF90-0x0060B4D5
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060af90.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+void ListBox::on_key_down(int key) {
+    WinCallbackWindow = static_cast<GraphicWin *>(this)->parent_window();
+    StringList &items = Dialog::item_list_;
+    const int count = items.entry_count_;
+    int position = Dialog::selected_position_;
+    if (position == -1) {
+        position = 0;
+        Dialog::selected_position_ = 0;
+    }
+    int next_position = position;
+    const int arm = listbox_key_dispatch_arm(key);
+    const int navigation = listbox_navigation_target(
+        arm, static_cast<int>(Dialog::field_54_),
+        static_cast<int>(Dialog::field_58_), count, position,
+        &next_position);
+    if (navigation > 0) {
+        set_selected_pos(next_position, 1);
+        return;
+    }
+    if (navigation == 0) return;
+    if (count <= 0) {
+        return;
+    }
+
+    const UINT character = MapVirtualKeyA(
+        static_cast<UINT>(key) & 0xFFF8FFFFu, 2);
+    if (character == 0) {
+        return;
+    }
+    const unsigned char first = static_cast<unsigned char>(character);
+    for (int offset = 1; offset <= count; ++offset) {
+        const int candidate = (position + offset) % count;
+        if (!items.seek_pos(candidate)) {
+            continue;
+        }
+        StringStructPayload *payload = items.current_entry();
+        if (payload == 0 || payload->text == 0 || payload->text[0] == 0) {
+            continue;
+        }
+        if (listbox_typeahead_matches(payload->text[0], first)) {
+            set_selected_pos(candidate, 1);
+            return;
+        }
+    }
+}
+
+// Seed identity 0x0060C1E0, retained span 0x0060C1E0..0x0060C33F, has no
+// direct callers in the image and calls only Buffer::set_clip/Buffer::copy.
+// Directions 0..3 shift the list surface one row or column while preserving
+// the surrounding working rectangle; the next redraw repaints exposed rows.
+// ORIGINAL: 0x0060C1E0 ?UNK1@ListBox@@QAEXH@Z 0x0060C1E0-0x0060C33F
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c1e0.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+void ListBox::UNK1(int direction) {
+    if (direction < 0 || direction > 3) {
+        return;
+    }
+    GraphicWin *window = this;
+    Buffer *buffer = window;
+    buffer->restore_clip();
+    const ListBoxScrollCopy copy = listbox_scroll_copy(
+        direction, static_cast<int>(Dialog::field_64_),
+        static_cast<int>(Dialog::field_40_),
+        static_cast<int>(Dialog::field_54_),
+        static_cast<int>(Dialog::field_58_),
+        static_cast<int>(Dialog::field_68_));
+    buffer->copy(buffer, copy.source_x, copy.source_y,
+                 copy.destination_x, copy.destination_y,
+                 copy.width, copy.height);
+}
+
+// The Dialog virtual entry at 0x0060C350 first rejects an empty StringList,
+// then clips, honors optional list/parent paint callbacks, copies or fills the
+// backing surface, draws nested border edges, and paints visible entries.
+// ORIGINAL: 0x0060C350 ?on_redraw@ListBox@@QAEXXZ 0x0060C350-0x0060C5C4
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/0060c350.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?on_redraw@ListBox@@UAEXXZ
+void ListBox::on_redraw() {
+    if (Dialog::item_list_.head_ == 0) return;
+    GraphicWin *window = this;
+    Win *parent = window->parent_window();
+    WinCallbackWindow = parent;
+    Buffer *buffer = window;
+    buffer->restore_clip();
+
+    bool handled = false;
+    if (fill_callback_ != 0 && fill_callback_(window, 0, 0, 0) != 0) {
+        handled = true;
+    }
+    if (!handled && parent != 0 &&
+        parent->vslot_10(static_cast<int>(reinterpret_cast<uintptr_t>(window)))
+            != 0) {
+        handled = true;
+    }
+    if (!handled) {
+        if ((iFlags_ & 0x80000u) != 0 && parent != 0) {
+            GraphicWin *parent_graphic = static_cast<GraphicWin *>(parent);
+            parent_graphic->copy(buffer,
+                static_cast<int>(Dialog::field_24_),
+                static_cast<int>(Dialog::field_28_), 0, 0,
+                window->pixel_width(), -window->pixel_height());
+        } else {
+            window->fill(static_cast<int>(Dialog::field_24_));
+        }
+    }
+
+    RECT border = *window->buffer_working_rect();
+    const int border_count = listbox_frame_edge_count(Dialog::field_6C_);
+    for (int edge = 0; edge < border_count; ++edge) {
+        buffer->box(&border, static_cast<int>(Dialog::field_64_),
+                    static_cast<int>(Dialog::field_68_));
+        ++border.left;
+        ++border.top;
+        --border.right;
+        --border.bottom;
+    }
+
+    const int count = Dialog::item_list_.entry_count_;
+    const int first = static_cast<int>(field_18_);
+    const int visible_count = listbox_visible_draw_count(
+        static_cast<int>(Dialog::field_54_),
+        static_cast<int>(Dialog::field_58_), first, count);
+    ListBoxDrawOffset = 0;
+    for (int offset = 0; offset < visible_count; ++offset) {
+        ListBoxDrawOffset = offset;
+        draw_item(first + offset);
+    }
+    ListBoxDrawOffset = visible_count;
 }

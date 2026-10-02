@@ -193,6 +193,18 @@ int VoiceRx::get_buffer_size() {
     return 0;
 }
 
+// It forwards the device's slot 37 result verbatim, or zero when no device
+// exists; this is the operation Net's receive worker uses as its level.
+// ORIGINAL: 0x004C9390 sub_4c9390 0x004C9390-0x004C93A2 BYTE_EXACT
+// RECOVERY_BINDING: v1 {"evidence": ["src/recovered/004c9390.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?get_nbuffers@VoiceRx@@UAEHXZ
+int VoiceRx::get_nbuffers() {
+    if (device_ != 0) {
+        return static_cast<VoiceRxDeviceInterface *>(device_)->get_nbuffers();
+    }
+    return 0;
+}
+
 /*
 Purpose: Build a VoiceTx: full volume, centred pan, cleared regions, a
          1000ms default fade, the "Voice Tx" name on the CRT heap, and

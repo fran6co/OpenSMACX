@@ -29,6 +29,16 @@ struct IDirectPlay2;
 
 #include "voice.h"
 
+// Original 0x00633180 allocates 0x60 bytes, constructs VoiceRx at +0, then
+// publishes primary table 0x670F48 and virtual-base table 0x670FE0. The latter
+// gives StringAllocationBase at +0x58. This models the observed wrapper as a
+// genuine derived object so construction and destruction own those stages.
+class VoiceRxAllocation : public VoiceRx,
+                          public virtual StringAllocationBase {
+};
+static_assert(sizeof(VoiceRxAllocation) == 0x60,
+              "voice receiver allocation extent from 633180");
+
  /*
   * Net class
   *
@@ -52,12 +62,10 @@ struct IDirectPlay2;
 // A circular-list entry, not its separately allocated voice payload.
 // Insertion 0x00633180 requests 0x1C bytes and installs vbtable 0x006693C8:
 // StringAllocationBase is at +0x14, with ID/payload/next/previous before it.
-// VoiceRx construction 0x004C8960 stages the Sound base before its own table;
-// this pointer is a Sound base view, not a claim about the complete allocated
-// 0x60 payload wrapper or its still-unrecovered factory.
+// VoiceRx construction 0x004C8960 stages the Sound base before its own table.
 struct VoiceReceiverEntry : public virtual StringAllocationBase {
   int id_;                       // 0x04
-  Sound *payload_;               // 0x08
+  VoiceRxAllocation *payload_;   // 0x08
   VoiceReceiverEntry *next_;     // 0x0C
   VoiceReceiverEntry *previous_; // 0x10
 
@@ -73,19 +81,23 @@ struct VoiceReceiverEntry : public virtual StringAllocationBase {
   }
 };
 
+struct NetThreadInfo;
+
 // Net's receiver list at +0xB0. Original constructor 0x0062D6CE..0x0062D733
 // places the vbptr at +4, virtual StringAllocationBase at +0x1C, and clears
 // all five list-state fields. Complete extent is 0x24, not the old 0x18 hint.
 // The hooks at 0x0066EAFC dispatch to shared leaves 0x00404250 (zero, ret 4)
 // and 0x00404270 (ret 4). Insertion 0x00633180 passes the newly constructed
-// payload to the first hook; cleanup 0x00538EC0 passes it to the second.
-// Pointer parameter types follow those callers, not the unrelated AlphaMovie
-// catalogue labels sharing the same leaf bytes. Payload's precise static type
-// remains unresolved here.
+// VoiceRxAllocation payload to the first hook; cleanup 0x00538EC0 passes it
+// to the second. Pointer parameter types follow those callers, not the
+// unrelated AlphaMovie catalogue labels sharing the same leaf bytes.
 class JackalVoiceRx : public virtual StringAllocationBase {
   // Net::drop_player unlinkes one entry here directly - the image inlines the
   // walk inside the Net member - so the receiver's fields are Net-visible.
   friend class Net;
+  // NetThreadInfo::internal_receive retains the original ring cursor updates
+  // while dispatching voice packets; keep the ring fields private to owners.
+  friend struct NetThreadInfo;
  public:
   // Body assignments preserve the original table-then-state initialization
   // order under VC6; member initializers put these stores before its vfptr.
@@ -106,6 +118,7 @@ class JackalVoiceRx : public virtual StringAllocationBase {
   virtual int on_insert(void *payload);
   virtual void on_remove(void *payload);
   void clear();
+  int add_player(int player_id); // original sub_633180
 
  private:
   // 0x00538EC0 advances through entry+0xC, stores the cursor, and clears
@@ -118,8 +131,8 @@ class JackalVoiceRx : public virtual StringAllocationBase {
   int count_;                   // 0x10
   // RECOVERY_MEMBER: v1 JackalVoiceRx cursor_index_ 0x14 0x0062D6A0
   int cursor_index_;            // 0x14, insertion stores the previous count
-  // 0x00633180 tries this explicit Heap before the virtual base's saved
-  // allocation owner when allocating the 0x1C entry and 0x60 payload.
+  // 0x00633180 prefers this explicit Heap for the first 0x1C entry and for
+  // every 0x60 payload; append entries instead use the inherited saved owner.
   // RECOVERY_MEMBER: v3 JackalVoiceRx entries_heap_ Heap* 0x18 0x0062D6A0
   Heap *entries_heap_;          // 0x18
 };
@@ -247,6 +260,29 @@ class NetPlayer {
   char name_and_tail_[0x43];
 };
 
+class Net;
+// Embedded at Net+4; offsets match the worker argument and accesses in
+// 0x00632740/0x006327E0. The primary Net vfptr occupies Net+0.
+struct NetThreadInfo {
+  // RECOVERY_MEMBER: v1 NetThreadInfo thread_id_ 0x0 0x0062D8E0
+  DWORD thread_id_;                    // +00 == Net+04
+  // RECOVERY_MEMBER: v4 NetThreadInfo events_ HANDLE[5] 0x4 0x14 0x0062D8E0
+  HANDLE events_[5];                   // +04..+14 == Net+08..+18
+  // RECOVERY_MEMBER: v3 NetThreadInfo direct_play_ IDirectPlay2* 0x18 0x0062D8E0
+  IDirectPlay2 *direct_play_;          // +18 == Net+1C
+  // RECOVERY_MEMBER: v3 NetThreadInfo owner_ Net* 0x1C 0x0062D8E0
+  Net *owner_;                         // +1C == Net+20
+  // RECOVERY_MEMBER: v1 NetThreadInfo buffer_ 0x20 0x0062D8E0
+  void *buffer_;                       // +20 == Net+24
+  // RECOVERY_MEMBER: v1 NetThreadInfo lock_initialized_ 0x24 0x0062D8E0
+  DWORD lock_initialized_;             // +24 == Net+28
+  // RECOVERY_MEMBER: v2 NetThreadInfo receive_lock_ CRITICAL_SECTION 0x28 0x0062D8E0
+  CRITICAL_SECTION receive_lock_;      // +28..+3F == Net+2C..+43
+  int internal_receive();              // original 6327E0 receiver is Net+4
+};
+static_assert(sizeof(NetThreadInfo) == 0x40,
+              "Net thread-info view extent from original accesses");
+
 class ServiceProviderList;
 struct ServiceStruct : public virtual StringAllocationBase {
     char *name_;                 // +4
@@ -304,6 +340,7 @@ struct ServiceList : public ServiceProviderList {
 class AlphaNetLedger;
 class Net {
   friend class AlphaNet;
+  friend struct NetThreadInfo;
   // Original MultiDebug paint 0x005C9920 displays these session/player fields.
   friend class MultiDebug;
  public:
@@ -360,9 +397,9 @@ class Net {
   // stale player - by key, or 0xFFFFFFFF for everyone - and reads a zero
   // answer as "cut", which is when it refreshes the player's stamp.
   int drop_player(unsigned long key, int reason);
-  // 0x00632CC0, still unrecovered (234 bytes, archived). Both of
-  // handle_sys_msg's call sites pass the Net receiver with three stack
-  // arguments - the join-list refresh entries and the re-read player name.
+  // 0x00632CC0. Adds the player record, announces it, then creates and
+  // initializes its VoiceRx receiver. Full-table recovery deliberately
+  // rejects the extra player instead of reproducing the native Net overrun.
   int sub_632cc0(char *text, int id, unsigned char flag);
   // 0x0062E2A0. Joins one enumerated service provider: copies its GUID into
   // the 0x6EC session slot, launches the Zone's "mplaynow.exe" for the
@@ -414,7 +451,8 @@ class Net {
                    unsigned long, void *);
 
  public:
-  // 0x0062E010, a pending_bodies forwarder.
+  // 0x0062E010. Releases the DirectPlay/thread state and drains the three
+  // embedded queues after resetting session/player state.
   void close();
 
  public:
@@ -427,15 +465,16 @@ class Net {
   void check_polling();
 
  public:
-  // 0x0062D8E0, a pending_bodies forwarder. check_for_lobby opens with it.
+  // 0x0062D8E0. check_for_lobby opens with it; it refreshes the thread-info
+  // view, DirectPlay buffer and events after closing any prior session.
   int init(_GUID *guid, int option_a, int option_b);
 
  public:
-  // 0x0062E540 is an explicitly unfinished typed owning-TU placeholder.
-  // Its former fixed-executable forwarder is retired; the complete unclaimed
-  // seed remains retained. check_for_lobby passes a null session pointer.
+  // 0x0062E540. Joins the supplied session (or the already-open lobby
+  // session), creates the local DirectPlay player, records the live session,
+  // and waits for its first player event. check_for_lobby passes null.
   int join_session(NetAllocationNode *session, char *player_name,
-                   char *address);
+                   char *password);
 
  public:
   // 0x0062D9E0, recovered into net_class.cpp. control_game (game.cpp) calls
@@ -455,16 +494,8 @@ class Net {
  private:
   // init() fills the next six: the thread that owns the session, five events
   // it creates, and the DirectPlay interface copied out of 0x009BE600.
-  uint32_t thread_id_4_;  // 0x4, GetCurrentThreadId
-  HANDLE events_8_[5];  // 0x8, 0xC, 0x10, 0x14, 0x18 - CreateEventA(NULL...)
-  // Original init copies the shared interface into this per-session cache.
-  // RECOVERY_MEMBER: v3 Net direct_play_1c_ IDirectPlay2* 0x1C 0x0062D8E0
-  IDirectPlay2 *direct_play_1c_;  // 0x1C
-  Net *self_20_;  // 0x20, this object's own address: a session is open when
-                  // it is non-null, which is what close() tests
-  void *buffer_24_;  // 0x24, the 0x2000-byte DirectPlay buffer
-  uint32_t field_28_;  // 0x28, set to 1 once the lock below exists
-  CRITICAL_SECTION lock_2C_;  // 0x2C, guards the fifo queue heads
+  // RECOVERY_MEMBER: v2 Net thread_info_ NetThreadInfo 0x4 0x0062D8E0
+  NetThreadInfo thread_info_;  // 0x4..0x43
   uint32_t field_44_;  // 0x44
  public:
   // Win::on_key compares these modifier-encoded hotkeys, then starts the

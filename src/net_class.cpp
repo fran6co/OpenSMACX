@@ -64,7 +64,9 @@
 // RECOVERY_BINDING: v1 {"evidence": ["src/recovered/units/00630c30.cpp: retained original spans and historical seed interpretation", "Pinned original receiver/table/call sequence reviewed in the Alpha ownership binding decision.", "Current C++ class/lifetime source owns the separately observed emitted symbol; this binding is unclaimed and preserves the independent historical exact seed."], "reason": "SDK session descriptor fields populate ledger borrowed fields and call401D80; synchronous borrow target."}
 // symbol    ?enumerate_session_callback@@YGHPBUDPSESSIONDESC2@@PAKKPAX@Z
 #include "stdafx.h"
+#include <process.h>
 #include <mmsystem.h>
+#include <new>
 #include <cstring>
 #include "net_class.h"
 #include "alphanet.h"
@@ -79,6 +81,9 @@
 #include "general.h"  // mem_get, for the lobby's address and session buffers
 #include "strings.h"
 #include "game.h"
+#include "font.h"
+
+extern "C" void __fastcall sub_62d5f0(void *self, void *unused);
 
 // The lobby probe's DirectPlay types and import. The image really does import
 // DirectPlayLobbyCreateA from DPLAYX.DLL, so the link input belongs beside the
@@ -220,6 +225,75 @@ static const GUID KeptServiceProviderGuid = {
 int JackalVoiceRx::on_insert(void *) { return 0; }
 void JackalVoiceRx::on_remove(void *) { }
 
+namespace {
+void *allocate_voice_record(size_t size, Heap *owner) {
+    void *memory;
+    if (owner != 0) {
+        memory = owner->get(size);
+        if (memory == 0) {
+            MessageBoxA(NULL, "out of heap space in new function", "Aborting", MB_OK);
+            exit(3);
+        }
+    } else {
+        memory = mem_get(size);
+        if (memory != 0) StringAllocationHeap = 0;
+    }
+    if (memory != 0) StringAllocationHeap = owner;
+    return memory;
+}
+}
+
+// Original 633180's two allocations each publish the chosen owner for the
+// real StringAllocationBase constructor to capture. Its allocation-failure
+// branch keeps the native partial list mutation; do not roll it back.
+// ORIGINAL: 0x00633180 sub_633180 0x00633180-0x006336C2;0x006637B0-0x0066386E
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00633180.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?add_player@JackalVoiceRx@@QAEHH@Z
+int JackalVoiceRx::add_player(int player_id) {
+    const bool first = count_ == 0;
+    Heap *const inherited_owner = allocation_owner_;
+    Heap *const node_owner = first && entries_heap_ != 0
+                                 ? entries_heap_ : inherited_owner;
+    VoiceReceiverEntry *node = static_cast<VoiceReceiverEntry *>(
+        allocate_voice_record(sizeof(VoiceReceiverEntry), node_owner));
+    if (node == 0) return 4;
+    ::new(node) VoiceReceiverEntry;
+
+    if (first) {
+        head_ = node;
+    } else {
+        VoiceReceiverEntry *tail = head_->previous_;
+        tail->next_ = node;
+        node->previous_ = tail;
+        node->next_ = head_;
+        head_->previous_ = node;
+        cursor_ = node;
+    }
+    node->id_ = player_id;
+    if (first) {
+        node->next_ = node;
+        node->previous_ = node;
+    }
+
+    // The payload independently reloads entries_heap_ on both list branches.
+    // In particular, append-node allocation uses inherited_owner above while
+    // this VoiceRx still prefers entries_heap_ when it is present.
+    Heap *const payload_owner = entries_heap_ != 0
+                                    ? entries_heap_ : inherited_owner;
+    VoiceRxAllocation *voice = static_cast<VoiceRxAllocation *>(
+        allocate_voice_record(sizeof(VoiceRxAllocation), payload_owner));
+    if (voice != 0) ::new(voice) VoiceRxAllocation;
+    node->payload_ = voice;
+    if (node->payload_ == 0) return 4;
+    on_insert(voice);
+    if (first) cursor_ = head_;
+    cursor_index_ = count_;
+    ++count_;
+    return 0;
+}
+
+static void __cdecl net_receive_thread(void *argument);
+
 
 
 // The base table's first four entries share ret 8 at 0x00404260; its last
@@ -319,6 +393,14 @@ Net::Net() {
     voice_hotkey_4c_ = 0;
     voice_target_50_ = 0;
     field_54_ = 0;
+    thread_info_.owner_ = 0;
+    thread_info_.buffer_ = 0;
+    thread_info_.direct_play_ = 0;
+    thread_info_.thread_id_ = 0;
+    for (int event = 0; event != 5; ++event) {
+        thread_info_.events_[event] = 0;
+    }
+    thread_info_.lock_initialized_ = 0;
 }
 
 /*
@@ -371,27 +453,10 @@ Purpose: Close the network: stop the voice transmitter, reset the timers
 // symbol    ?close@Net@@QAEXXZ
 // size      736 bytes
 // kind      game
-// NOT A FULL TRANSCRIPTION, and the old "Status: Complete" was wrong: this is
-// the first 0x2C0-byte head of the body - the voice teardown, the five timer
-// and slot resets, and the whole DirectPlay guard - and stops before the
-// image's critical-section delete, its five CloseHandle calls, the three
-// frees, the player-slot clear, the three NetFifo::close calls and the
-// 0x6EC memset that follow it. Two defects in what was here are fixed:
-// the transmitter dispatch is slot 5 ([vtbl+0x14]), which is VoiceTx::unload
-// (stop AND release AND device detach), not stop; and the fourth helper slot
-// is 0x0066912C, not 0x006692C - a missing digit that read a pointer out of
-// the middle of nowhere.
-// BLOCKED ON LAYOUT, not spelling. The image's remaining 400 bytes reach the
-// receiver at Net+0xB0 as an object whose FIRST DWORD is a vftable it calls
-// through ([this+0xB0] -> call [vtbl+4]), which contradicts the modelled
-// JackalVoiceRx (a virtual StringAllocationBase whose first dword is the
-// VBTABLE, 0x670DCC). Until that object's real shape is known, that walk - and
-// with it the tail of this body - cannot be written without punning this.
-// The DirectPlay helper slots are unnamed: 0x66914C is CloseHandle (same slot
-// Filemap::create calls for its handles), 0x669170 is DeleteCriticalSection
-// (it is called on lock_2C_ under the field_28_ guard that init's
-// InitializeCriticalSection sets), and 0x66917C/0x669174/0x669178/0x66912C
-// are only identifiable by address.
+// The typed body covers both native halves: DirectPlay/worker rendezvous and
+// lock teardown, then handle/string/buffer release, slot and receiver reset,
+// all queue closes, and the remaining session/voice state clears. Thread
+// fields are source-owned by the evidence-backed NetThreadInfo view.
 Return Value: n/a
 */
 void Net::close() {
@@ -404,26 +469,64 @@ void Net::close() {
     field_6DC_ = 0;
 
     if (NetDirectPlay != 0) {
-        // The DirectPlay release sequence through the original's IAT.
-        // Unreached until a session opens.
-        typedef void(__cdecl *VisitFn)(void *);
-        VisitFn visit = *reinterpret_cast<VisitFn *>(0x0066917C);
-        visit(&lock_2C_);
-        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669178))(
-            events_8_[3]);
-        typedef void (OriginalObject::*iface_fn)();
-        (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 0x10))();
-        (ORIGINAL(NetDirectPlay)->*vtable_method<iface_fn>(NetDirectPlay, 8))();
+        EnterCriticalSection(&thread_info_.receive_lock_);
+        SetEvent(thread_info_.events_[3]);
+        NetDirectPlay->Close();
+        NetDirectPlay->Release();
         NetDirectPlay = 0;
-        direct_play_1c_ = 0;
-        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(&lock_2C_);
-        (*reinterpret_cast<void(__cdecl **)(int)>(0x0066912C))(0);
-        visit(&lock_2C_);
-        (*reinterpret_cast<void(__cdecl **)(void *)>(0x00669174))(&lock_2C_);
-        self_20_ = 0;
-        buffer_24_ = 0;
-        thread_id_4_ = 0;
+        thread_info_.direct_play_ = 0;
+        LeaveCriticalSection(&thread_info_.receive_lock_);
+        Sleep(0);
+        EnterCriticalSection(&thread_info_.receive_lock_);
+        LeaveCriticalSection(&thread_info_.receive_lock_);
+        thread_info_.owner_ = 0;
+        thread_info_.buffer_ = 0;
+        thread_info_.thread_id_ = 0;
     }
+
+    if (thread_info_.lock_initialized_ != 0) {
+        thread_info_.lock_initialized_ = 0;
+        DeleteCriticalSection(&thread_info_.receive_lock_);
+    }
+    for (int event = 0; event != 5; ++event) {
+        if (thread_info_.events_[event] != 0) {
+            CloseHandle(thread_info_.events_[event]);
+            thread_info_.events_[event] = 0;
+        }
+    }
+    if (allocation_node_.session_name_ != 0) {
+        free(allocation_node_.session_name_);
+        allocation_node_.session_name_ = 0;
+    }
+    if (allocation_node_.password_ != 0) {
+        free(allocation_node_.password_);
+        allocation_node_.password_ = 0;
+    }
+    if (buffer_6E0_ != 0) {
+        free(buffer_6E0_);
+        buffer_6E0_ = 0;
+    }
+    field_6E4_ = 0;
+    field_6FC_ = 0xC8;
+    voice_flags_D8_ = 0;
+    for (int player = 0; player != 16; ++player) {
+        players_[player].field_0_ = 0;
+        players_[player].field_4_ = 0;
+        players_[player].field_8_ = 0;
+        players_[player].flags_14_ = 0;
+    }
+    if (jackal_voice_rx_.head_ != 0) {
+        jackal_voice_rx_.clear();
+    }
+    queue_e8_.close();
+    queue_10c_.close();
+    queue_130_.close();
+    memset(field_6EC_, 0, sizeof(field_6EC_));
+    field_E4_ = 1;
+    voice_hotkey_48_ = 0;
+    voice_hotkey_4c_ = 0;
+    voice_target_50_ = 0;
+    field_54_ = 0;
 }
 
 // Retained unresolved entry points, now reached by the owning classes rather
@@ -1082,8 +1185,8 @@ int Net::create_group(char *group_name) {
 int Net::send_group(void *data, int size, long group_id, int flags) {
     int index;
     HANDLE wait_handles[2];
-    wait_handles[0] = events_8_[0];
-    wait_handles[1] = events_8_[1];
+    wait_handles[0] = thread_info_.events_[0];
+    wait_handles[1] = thread_info_.events_[1];
 
     if (NetDirectPlay == 0) return 0;
     if (size < 0) return 0;
@@ -1434,17 +1537,17 @@ int Net::init(_GUID *guid, int option_a, int option_b) {
         word += 0x58 / sizeof(*word);
         --count;
     } while (count != 0);
-    self_20_ = this;
-    buffer_24_ = buffer_6E0_;
-    direct_play_1c_ = NetDirectPlay;
-    thread_id_4_ = GetCurrentThreadId();
-    events_8_[0] = CreateEventA(0, 0, 0, 0);
-    events_8_[1] = CreateEventA(0, 0, 0, 0);
-    events_8_[2] = CreateEventA(0, 0, 0, 0);
-    events_8_[3] = CreateEventA(0, 0, 0, 0);
-    events_8_[4] = CreateEventA(0, 0, 0, 0);
-    InitializeCriticalSection(&lock_2C_);
-    field_28_ = 1;
+    thread_info_.owner_ = this;
+    thread_info_.buffer_ = buffer_6E0_;
+    thread_info_.direct_play_ = NetDirectPlay;
+    thread_info_.thread_id_ = GetCurrentThreadId();
+    thread_info_.events_[0] = CreateEventA(0, 0, 0, 0);
+    thread_info_.events_[1] = CreateEventA(0, 0, 0, 0);
+    thread_info_.events_[2] = CreateEventA(0, 0, 0, 0);
+    thread_info_.events_[3] = CreateEventA(0, 0, 0, 0);
+    thread_info_.events_[4] = CreateEventA(0, 0, 0, 0);
+    InitializeCriticalSection(&thread_info_.receive_lock_);
+    thread_info_.lock_initialized_ = 1;
     return 0;
 }
 
@@ -1697,7 +1800,7 @@ have_lobby:
                     if (direct_play->QueryInterface(IID_IDirectPlay2A,
                                                     reinterpret_cast<void **>(&NetDirectPlay))
                         == 0) {
-                        direct_play_1c_ = NetDirectPlay;
+                        thread_info_.direct_play_ = NetDirectPlay;
                         direct_play->Release();
                         direct_play = 0;
                         if (status == 1) {
@@ -2154,7 +2257,7 @@ int Net::join_service(ServiceStruct *service) {
     result = static_cast<IDirectPlay2 *>(direct_play)->QueryInterface(
         IID_IDirectPlay2A,
         reinterpret_cast<void **>(&NetDirectPlay));
-    direct_play_1c_ = NetDirectPlay;
+    thread_info_.direct_play_ = NetDirectPlay;
     if (result != 0) {
         static_cast<IDirectPlay2 *>(direct_play)->Release();
         sub_631ba0(result);
@@ -2208,7 +2311,7 @@ static const GUID NetSerialServiceGuid = {
 Purpose: Host a named session: close any live one, size it to two players
          when the joined provider was the modem or the serial service, open
          the DPSESSIONDESC2 (MIGRATEHOST, the session GUID from init as the
-         application GUID, the option word at 0x44 riding dwUser2), then
+         application GUID, the option word at 0x44 riding dwUser1), then
          re-read the live description through GetSessionDesc and file its
          name, password, instance GUID, flags and player ceiling in the
          allocation node at 0x700 - the same record the enumeration callback
@@ -2267,7 +2370,7 @@ NetAllocationNode *Net::create_session(char *name, int max_players, char *passwo
     desc.lpszSessionNameA = name;
     desc.lpszPasswordA =
         password != 0 && *password != 0 ? password : 0;
-    desc.dwUser2 = field_44_;
+    desc.dwUser1 = field_44_;
 
     if (NetDirectPlay->Open(&desc, DPOPEN_CREATE) != 0) {
         return 0;
@@ -2488,14 +2591,242 @@ void Net::enable_join() {
 static unsigned char *const NetPlayerNameRecord =
     (unsigned char *)0x009BE4EC;
 
-// 0x00632CC0, unrecovered (234 bytes). Both handle_sys_msg call sites pass
-// this receiver - the image sets ecx to Net - and answer through the three
-// stack arguments the catalogued `ret 0xc` cleans up. In-file forwarder, the
-// same shape drop_player's carried.
+// Original player insertion is bound by the coordinator's native writer.
+// ORIGINAL: 0x00632CC0 sub_632cc0 0x00632CC0-0x00632DAA
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00632cc0.cpp"], "reason": "Typed sixteen-slot player insertion replaces executable-address forwarder; user-approved full-table rejection intentionally differs on invalid input. Seed and historical obligations retained, no exactness claim."}
 int Net::sub_632cc0(char *text, int id, unsigned char flag) {
-    typedef int(__fastcall *pending)(Net *, void *, char *, int, unsigned char);
-    return reinterpret_cast<pending>(static_cast<unsigned long>(0x00632CC0))(
-        this, nullptr, text, id, flag);
+    int index = 0;
+    while (index < 16 && players_[index].field_0_ != 0) {
+        if (players_[index].field_0_ == static_cast<uint32_t>(id)) {
+            return static_cast<int>(players_[index].field_0_);
+        }
+        ++index;
+    }
+
+    // The image continues beyond the sixteen-slot array and aliases later
+    // Net state. The coordinator-approved recovery rejects that extra player
+    // instead; 4 is the existing allocation/capacity failure result used by
+    // the adjacent receiver-list insertion API.
+    if (index == 16) {
+        return 4;
+    }
+    NetPlayer &player = players_[index];
+    player.field_0_ = static_cast<uint32_t>(id);
+    player.flags_14_ = flag;
+    player.name_and_tail_[0] = 0;
+    strcat(player.name_and_tail_, text);
+    if ((flag & 1) != 0) field_764_ = static_cast<uint32_t>(id);
+
+    ++field_6DC_;
+    if (field_760_ == field_764_) sub_62d5f0(this, 0);
+    on_player_added(player.name_and_tail_, player.field_0_);
+    jackal_voice_rx_.add_player(id);
+
+    VoiceRxAllocation *voice = 0;
+    if (jackal_voice_rx_.head_ != 0) {
+        voice = jackal_voice_rx_.cursor_->payload_;
+    }
+    return voice->init(0x1000, 0, 0);
+}
+
+namespace {
+struct NetPacketEnvelope {
+    WORD type_flags_;
+    WORD field_2_;
+    DWORD sequence_4_;
+};
+static_assert(sizeof(NetPacketEnvelope) == 8, "DirectPlay packet header extent");
+static_assert(sizeof(MMIOINFO) == 0x48, "voice packet MMIOINFO extent");
+}
+
+// ORIGINAL: 0x006327E0 ?internal_receive@Net@@QAAHPAUNetThreadInfo@@@Z 0x006327E0-0x00632CB3
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/006327e0.cpp"], "reason": "Rehome original explicit record-argument receive routine as typed NetThreadInfo method; receiver ABI intentionally refactored, not an exact ABI claim."}
+// symbol    ?internal_receive@NetThreadInfo@@QAEHXZ
+int NetThreadInfo::internal_receive() {
+    Net *const net = owner_;
+    if (NetDirectPlay == 0) return 0;
+
+    DWORD from = 0;
+    DWORD to = net->field_760_;
+    DWORD size = net->field_6E4_;
+    const HRESULT receive_result = direct_play_->Receive(
+        &from, &to, 3, buffer_, &size);
+    if (receive_result != DP_OK) return 0;
+
+    unsigned char *const bytes = static_cast<unsigned char *>(buffer_);
+    if (from == 0 || (bytes[0] & 0x80) != 0) {
+        net->queue_130_.add(bytes, size, from, 0,
+                            static_cast<unsigned long>(-1));
+        PostThreadMessageA(thread_id_, 0x402, 0, 0);
+        SetEvent(events_[1]);
+        return 1;
+    }
+
+    size -= 0x0C;
+    NetPacketEnvelope *const packet =
+        reinterpret_cast<NetPacketEnvelope *>(bytes);
+    const WORD message_type = packet->type_flags_ & 0xFFFB;
+
+    if (message_type == 0x20) {
+        for (int player_index = 0; player_index != 16; ++player_index) {
+            if (net->players_[player_index].field_0_ == from) {
+                net->players_[player_index].stamp_10_ = timeGetTime();
+                break;
+            }
+        }
+    } else if (message_type == 1) {
+        if (net->queue_10c_.count_ < 0xC8) {
+            net->queue_10c_.add(bytes + 8, size, from, 0,
+                                static_cast<unsigned long>(-1));
+            SetEvent(events_[4]);
+        }
+    } else if (message_type == 0x10) {
+        net->queue_130_.add(bytes, size + 0x0C, from, 0,
+                            static_cast<unsigned long>(-1));
+        PostThreadMessageA(thread_id_, 0x402, 0, 0);
+        SetEvent(events_[1]);
+    } else if (message_type == 0x100) {
+        MMIOINFO voice_packet;
+        memset(&voice_packet, 0, sizeof(voice_packet));
+        voice_packet.cchBuffer = static_cast<LONG>(size);
+        voice_packet.pchBuffer = reinterpret_cast<HPSTR>(bytes + 8);
+        voice_packet.pchNext = reinterpret_cast<HPSTR>(bytes + 8);
+        voice_packet.pchEndRead =
+            reinterpret_cast<HPSTR>(bytes + 8 + size);
+
+        JackalVoiceRx &receivers = net->jackal_voice_rx_;
+        if (receivers.head_ != 0) {
+            const int count = receivers.count_;
+            receivers.cursor_index_ = 0;
+            receivers.cursor_ = receivers.head_;
+            if (count > 0) {
+                int found = 0;
+                for (int voice_index = 0; voice_index < count; ++voice_index) {
+                    if (receivers.cursor_->id_ == static_cast<int>(from)) {
+                        found = 1;
+                        break;
+                    }
+                    ++receivers.cursor_index_;
+                    receivers.cursor_ = receivers.cursor_->next_;
+                }
+                if (found) {
+                    VoiceRxAllocation *const voice =
+                        receivers.cursor_->payload_;
+                    const int level = voice->get_nbuffers();
+                    if ((static_cast<int>(net->field_6DC_) - 1) * level < 0xC8) {
+                        voice->add_buffer(&voice_packet);
+                    }
+                    const int sound_version = get_sound_version();
+                    const int min_level = (sound_version & 1) != 0 ? 5 : 0x10;
+                    if (level >= min_level && voice->is_playing() == 0) {
+                        voice->start();
+                    }
+                }
+            }
+        }
+    } else if (message_type == 0x200) {
+        const DWORD sequence = packet->sequence_4_;
+        int sequence_player_index = 0;
+        while (sequence_player_index < 16
+               && net->players_[sequence_player_index].field_0_ != from)
+            ++sequence_player_index;
+        int accept = 1;
+        if (sequence_player_index != 16) {
+            if (sequence >= net->players_[sequence_player_index].field_4_)
+                accept = 0;
+            else net->players_[sequence_player_index].field_4_ = sequence;
+        }
+        if (accept) {
+            net->voice_flags_D8_ &= 0xBFFFFFFF;
+            JackalVoiceRx &receivers = net->jackal_voice_rx_;
+            if (receivers.head_ != 0) {
+                const int count = receivers.count_;
+                receivers.cursor_index_ = 0;
+                receivers.cursor_ = receivers.head_;
+                if (count > 0) {
+                    for (int entry = 0; entry < count; ++entry) {
+                        if (receivers.cursor_->id_ == static_cast<int>(from)) {
+                            receivers.cursor_->payload_->stop();
+                            break;
+                        }
+                        ++receivers.cursor_index_;
+                        receivers.cursor_ = receivers.cursor_->next_;
+                    }
+                }
+            }
+        }
+    }
+
+    const WORD type_flags = packet->type_flags_;
+    const WORD selection = type_flags & 6;
+    if (selection == 2) {
+        if (packet->sequence_4_ == net->field_E4_) {
+        for (int clear_index = 0; clear_index != 16; ++clear_index) {
+            if (net->players_[clear_index].field_0_ == from) {
+                net->players_[clear_index].field_8_ = 0;
+                    break;
+                }
+            }
+            int any_pending = 0;
+            for (int pending_index = 0; pending_index != 16; ++pending_index) {
+                if (net->players_[pending_index].field_0_ != 0
+                    && net->players_[pending_index].field_8_ != 0) {
+                    any_pending = 1;
+                    break;
+                }
+            }
+            if (!any_pending) SetEvent(events_[0]);
+        }
+    } else if (selection == 4) {
+        if ((type_flags & 0xFFF0) == 0) {
+            const DWORD sequence = packet->sequence_4_;
+            int ack_player_index = 0;
+            while (ack_player_index < 16
+                   && net->players_[ack_player_index].field_0_ != from)
+                ++ack_player_index;
+            int accept = 1;
+            if (ack_player_index != 16) {
+                if (sequence >= net->players_[ack_player_index].field_4_)
+                    accept = 0;
+                else net->players_[ack_player_index].field_4_ = sequence;
+            }
+            if (accept) {
+                net->queue_10c_.add(bytes + 8, size, from, 0, timeGetTime());
+                SetEvent(events_[4]);
+            }
+        }
+        packet->type_flags_ = (type_flags & 0xFFFB) | 2;
+        direct_play_->Send(net->field_760_, to, 0, bytes, 0x0C);
+    }
+    return 1;
+}
+
+// ORIGINAL: 0x00632740 sub_632740 0x00632740-0x006327D2
+// RECOVERY_BINDING: v1 {"evidence": ["src/unrecovered/00632740.cpp"], "reason": "Rehome seed catalogue identity and original extents into compiled owning class; native-emitted symbol is separate and no new byte claim granted."}
+// symbol    ?net_receive_thread@@YAXPAX@Z
+static void __cdecl net_receive_thread(void *argument) {
+    NetThreadInfo *const thread_info =
+        static_cast<NetThreadInfo *>(argument);
+    HANDLE events[2];
+    events[0] = thread_info->events_[2];
+    events[1] = thread_info->events_[3];
+    DWORD wait_result = WaitForMultipleObjects(2, events, FALSE, INFINITE);
+    if (wait_result == WAIT_OBJECT_0) {
+        for (;;) {
+            EnterCriticalSection(&thread_info->receive_lock_);
+            if (thread_info->direct_play_ == 0) {
+                LeaveCriticalSection(&thread_info->receive_lock_);
+                break;
+            }
+            while (thread_info->internal_receive() != 0) {
+            }
+            LeaveCriticalSection(&thread_info->receive_lock_);
+            wait_result =
+                WaitForMultipleObjects(2, events, FALSE, INFINITE);
+            if (wait_result != WAIT_OBJECT_0) break;
+        }
+    }
+    _endthread();
 }
 
 /*
@@ -2767,10 +3098,167 @@ int NetUnk72C::on_insert(Payload *payload) {
     return 0;
 }
 
-// Transport-owner behavior is unfinished; seed62E540 remains retained.
-int Net::join_session(NetAllocationNode *, char *, char *) {
-    // BODY GOES HERE.
-    return 0;
+int Net::join_session(NetAllocationNode *session, char *player_name,
+                      char *password) {
+    // Both Font subobjects are constructed in the native prologue and remain
+    // alive across the version warning paths (including their cleanup label).
+    Font older_version_font;
+    Font older_version_shadow;
+
+    if (NetDirectPlay == 0 || player_name == 0) {
+        return 0;
+    }
+
+    if (session != 0) {
+        if (allocation_node_.session_name_ != 0
+            && session != &allocation_node_) {
+            free(allocation_node_.session_name_);
+            allocation_node_.session_name_ = 0;
+        }
+        if (allocation_node_.password_ != 0) {
+            free(allocation_node_.password_);
+            allocation_node_.password_ = 0;
+        }
+
+        DPSESSIONDESC2 requested;
+        memset(&requested, 0, sizeof(requested));
+        requested.dwSize = sizeof(requested);
+        requested.guidInstance = session->instance_guid_;
+        requested.guidApplication = *guid_6E8_;
+        requested.lpszPasswordA =
+            password != 0 && password[0] != 0 ? password : 0;
+
+        const HRESULT opened = NetDirectPlay->Open(&requested, DPOPEN_JOIN);
+        if (opened == DP_OK) {
+            memset(&NetServiceCaps, 0, sizeof(NetServiceCaps));
+            NetServiceCaps.dwSize = sizeof(NetServiceCaps);
+            if (NetDirectPlay->GetCaps(&NetServiceCaps, 1) != DP_OK) {
+                return 0;
+            }
+        } else if (opened != DPERR_ALREADYINITIALIZED) {
+            return 0;
+        }
+    }
+
+    DWORD descriptor_size = 0;
+    NetDirectPlay->GetSessionDesc(0, &descriptor_size);
+    DPSESSIONDESC2 *descriptor = static_cast<DPSESSIONDESC2 *>(
+        mem_get(static_cast<int>(descriptor_size)));
+    // Native control reaches the common return without freeing this block on
+    // either allocation/read failure or a version mismatch. Keep that
+    // lifetime defect visible; successful version comparison frees it below.
+    if (descriptor == 0
+        || NetDirectPlay->GetSessionDesc(descriptor, &descriptor_size) != DP_OK) {
+        return 0;
+    }
+
+    const int local_version = static_cast<int>(field_44_);
+    const int remote_version = static_cast<int>(descriptor->dwUser1);
+    if (local_version != remote_version) {
+        parse_num(0, local_version);
+        parse_num(1, remote_version);
+        if (local_version < remote_version) {
+            older_version_font.init("Times New Roman", 0xE, 0);
+            older_version_shadow.init("Times New Roman", 0xE, 2);
+            pop_caption("jackal.txt", "CLIENTOLDERVERSION", 0);
+        } else {
+            older_version_font.init("Times New Roman", 0xE, 0);
+            older_version_shadow.init("Times New Roman", 0xE, 2);
+            pop_caption("jackal.txt", "CLIENTNEWERVERSION", 0);
+        }
+        NetDirectPlay->Close();
+        return 0;
+    }
+    free(descriptor);
+
+    DPNAME player_descriptor;
+    memset(&player_descriptor, 0, sizeof(player_descriptor));
+    player_descriptor.dwSize = sizeof(player_descriptor);
+    player_descriptor.lpszLongNameA = player_name;
+
+    DWORD player_data = (voice_flags_D8_ >> 0x10) & 1;
+    if ((voice_flags_D8_ & 2) != 0) {
+        player_data |= 2;
+    }
+
+    // process.h declares exactly void (__cdecl *)(void *); NetThreadInfo is
+    // the evidenced Net+4 record passed to the worker.
+    _beginthread(&net_receive_thread, 0, &thread_info_);
+
+    DPID player_id = 0;
+    if (NetDirectPlay->CreatePlayer(
+            &player_id, &player_descriptor, thread_info_.events_[2],
+            &player_data, 1, 0)
+        != DP_OK) {
+        return 0;
+    }
+
+    const DWORD host_flag = voice_flags_D8_ & 0x10000;
+    if (host_flag != 0) {
+        field_764_ = player_id;
+        DWORD live_size = 0;
+        NetDirectPlay->GetSessionDesc(0, &live_size);
+        DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
+            mem_get(static_cast<int>(live_size)));
+        NetDirectPlay->GetSessionDesc(live, &live_size);
+        live->dwFlags |= DPSESSION_JOINDISABLED;
+        NetDirectPlay->SetSessionDesc(live, 0);
+        if (live != 0) {
+            free(live);
+        }
+    }
+
+    if (player_id == field_764_) {
+        sub_632cc0(player_name, player_id,
+                   static_cast<unsigned char>(player_data & 0xFF));
+    }
+
+    DWORD live_size = 0;
+    NetDirectPlay->GetSessionDesc(0, &live_size);
+    DPSESSIONDESC2 *live = static_cast<DPSESSIONDESC2 *>(
+        mem_get(static_cast<int>(live_size)));
+    if (live == 0) {
+        return 0;
+    }
+    if (NetDirectPlay->GetSessionDesc(live, &live_size) != DP_OK) {
+        free(live);
+        return 0;
+    }
+
+    if (live->lpszSessionNameA == 0) {
+        // The image calls mem_get(1) and discards its result on this branch.
+        mem_get(1);
+        allocation_node_.session_name_ = 0;
+    } else {
+        const size_t length = strlen(live->lpszSessionNameA) + 1;
+        allocation_node_.session_name_ =
+            static_cast<char *>(mem_get(static_cast<int>(length)));
+        *allocation_node_.session_name_ = 0;
+        strcat(allocation_node_.session_name_, live->lpszSessionNameA);
+    }
+    if (password != 0 && password[0] != 0) {
+        const size_t length = strlen(password) + 1;
+        allocation_node_.password_ =
+            static_cast<char *>(mem_get(static_cast<int>(length)));
+        *allocation_node_.password_ = 0;
+        strcat(allocation_node_.password_, password);
+    }
+    allocation_node_.instance_guid_ = live->guidInstance;
+    allocation_node_.session_flags_ = live->dwFlags;
+    allocation_node_.max_players_ = live->dwMaxPlayers;
+    free(live);
+
+    const DWORD start_time = timeGetTime();
+    if (field_6DC_ == 0) {
+        while (timeGetTime() - start_time < 10000 && field_6DC_ == 0) {
+            do_task();
+        }
+        if (field_6DC_ == 0) {
+            close();
+            return 0;
+        }
+    }
+    return static_cast<int>(player_id);
 }
 
 void *NetAllocationNode::operator new(size_t size, Heap *owner) throw() {

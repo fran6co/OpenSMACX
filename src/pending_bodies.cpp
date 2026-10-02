@@ -540,25 +540,9 @@ void Dialogs::pass_dialog_focus() {  // 0x00613180
 
 
 
-void ListBox::on_key_down(int a1) {  // 0x0060AF90
-    typedef void(__fastcall *pending)(ListBox *, void *, int);
-    PENDING_BODY(0x0060AF90, pending)(this, nullptr, a1);
-}
 
-void ListBox::on_left_down(int a1, int a2) {  // 0x0060AA60
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060AA60, pending)(this, nullptr, a1, a2);
-}
 
-void ListBox::on_mouse_move(int a1, int a2) {  // 0x0060CBC0
-    typedef void(__fastcall *pending)(ListBox *, void *, int, int);
-    PENDING_BODY(0x0060CBC0, pending)(this, nullptr, a1, a2);
-}
 
-void ListBox::on_redraw() {  // 0x0060C350
-    typedef void(__fastcall *pending)(ListBox *, void *);
-    PENDING_BODY(0x0060C350, pending)(this, nullptr);
-}
 
 // ListBox::on_right_double_click, on_right_down and on_scrolled WERE HERE,
 // forwarding to 0x0060C6D0, 0x0060AA20 and 0x0060C6A0. Homed into listbox.cpp

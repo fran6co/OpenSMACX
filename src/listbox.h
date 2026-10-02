@@ -219,6 +219,10 @@ class ListBox : public virtual GraphicWin, public virtual Dialog {
   // 0x0060C7D0 ?UNK2@ListBox@@QAEHPAD@Z (336 bytes), source-owned in
   // leaf_recoveries.cpp. Its retired seed is retrievable from Git history.
   int UNK2(char *text);
+  // 0x0060C1E0, the four-way row-surface scroll/copy operation retained in
+  // the seed-only unit. Its direction is 0..3 as dispatched by the list
+  // layout code.
+  void UNK1(int direction);
  public:
   // 0x0060C920, still a pending_bodies forwarder.
   int item(char *text, int index);
