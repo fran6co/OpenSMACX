@@ -1,0 +1,21 @@
+{
+  "event_id": "9b1ef95aa471677f32a76b1a70124e3b7a9c81fecacd061fc69cf07cc332d585",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_filewin_default_name_behavior.py",
+      "recovery/tests/test_load_map_behavior.py",
+      "recovery/tests/test_standard_popup_style_behavior.py"
+    ],
+    "evidence": [
+      "Pinned AlphaSave40755B consumes the static ten-DWORD popup style6846B0: eight targets are already owned standard-popup Sprite objects, ninth the existing middle Buffer, final mask7. Existing task owns game.cpp/buffer.h/AlphaSave::init/FileWin::set_def_name/load_map and their callers. Admit durable actual-source controls for the three-body owner batch and style initializer, preserving original overflow boundary pending user decision, original task baseline, all seeds, mappings and claims. No acceptance or storage-size waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "bb885d6daa46d3bfc8acc8714c6ae2d736d5636bae1bb0c0d3081945411580e5",
+  "request_id": "alphasave-load-map-durable-controls-20261003",
+  "schema_version": 1,
+  "sequence": 12,
+  "stream": "task:game-save-load-owner-coverage"
+}

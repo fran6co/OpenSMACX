@@ -1,0 +1,22 @@
+{
+  "event_id": "b3d554e3273b1d39eef1be38e80c8c5325da26a6c03b8f87ebfa0aa4e71de04f",
+  "payload": {
+    "affects": [
+      "entity-032501df70a974c27f16175989ced4f6aed3ed3495f7b538d146d1e70671926f",
+      "entity-42ffc0694201512a82636fd1b678b461fcdbf2ac2230d579ab5fcd21de44f3d3",
+      "entity-447be7cbbc16b4a8ed9e4145be33df02d58c79b263e5c4f494891dcab5a5d7a7"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "load-map-actual-pointer-contract-20261003",
+    "evidence": [
+      "Canonical pinned full-function disassembly:5AB76A CALL407A80;5AB76F MOV ESI,EAX;5AB776 TEST ESI,ESI and null branch;407BBF CALL613F60 followed by DWORD hotkey stores and register pops preserving EAX;613F60 has early modal-null return0 and61410F..614132 mode638==12C return0, otherwise LEA EAX,[ESI+208]. Producer6146A0 strcat path/name into208 and30C buffers. Existing source scalar208 and void declarations need joint closure; original seeds and every claim stay intact. Native v3 exposed missing single-slot ListBox accessor; v4 repaired accessor but game.cpp lacked netwin include and original-contract review rejects its selected-filename draft; retain both failed trial reports."
+    ],
+    "hypothesis": "Catalogued void return types are wrong: load_map consumes AlphaSave::load EAX, forwarded from FileWin::load. Null indicates cancellation; success returns selected full path at FileWin+208. Reading file_name_410 and checking its first character instead loses cancellation and directory semantics. Preserve draft and fix real APIs and ownership, do not fake a buffer or keep the incorrect caller.",
+    "kind": "discovery"
+  },
+  "previous_event": "9b1ef95aa471677f32a76b1a70124e3b7a9c81fecacd061fc69cf07cc332d585",
+  "request_id": "load-map-actual-pointer-contract-20261003",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:game-save-load-owner-coverage"
+}

@@ -125,19 +125,21 @@ void FileWin::on_button_clicked(int button_id) {
 // The retired seed's VC6 frame diverged at instruction zero: the original
 // reserves 0x144 bytes without EBP, whereas the standalone spelling used
 // an EBP frame for WIN32_FIND_DATA. Both image bodies also leave EAX as 0
-// or this+0x208 despite their void-decorated symbols; return intent is open.
+// or this+0x208 despite their void-decorated catalogue symbols. load_map
+// consumes that result through AlphaSave::load (5AB76A..5AB778).
 void FileWin::save() {
     run_file_dialog(true);
 }
 
 // ORIGINAL: 0x00613F60 ?load@FileWin@@QAEXXZ 0x00613F60-0x00614133
-void FileWin::load() {
-    run_file_dialog(false);
+// symbol    ?load@FileWin@@QAEPADXZ
+char *FileWin::load() {
+    return run_file_dialog(false);
 }
 
-void FileWin::run_file_dialog(bool saving) {
+char *FileWin::run_file_dialog(bool saving) {
     if (modal_window_ == 0) {
-        return;
+        return 0;
     }
 
     field_638_ = saving ? 0x64 : 0xC8;
@@ -196,6 +198,9 @@ void FileWin::run_file_dialog(bool saving) {
         }
     }
     SetCurrentDirectoryA(current_directory_);
+    // Native61410F..614132 tests the post-modal action after restoring CWD.
+    // Cancellation does not clear a pre-existing filename or selected path.
+    return field_638_ == 0x12C ? 0 : selected_path_;
 }
 
 // ORIGINAL: 0x00614360 ?UNK3@FileWin@@QAEHPAD@Z 0x00614360-0x00614694
@@ -446,8 +451,8 @@ Status: Complete
 FileWin::FileWin() {
     // The declared members construct once, in declaration order. ListBox's
     // most-derived flag is a compiler ABI argument, not a second construction.
-    field_208_ = 0;
-    field_30C_ = 0;
+    selected_path_[0] = 0;
+    selected_basename_[0] = 0;
     file_name_[0] = 0;
     extension_count_ = 0;
     directory_[0] = 0;
@@ -510,8 +515,8 @@ void FileWin::close() {
     flat_button1_.close();
     edit_box_.close();
     list_box_.close();
-    field_208_ = 0;
-    field_30C_ = 0;
+    selected_path_[0] = 0;
+    selected_basename_[0] = 0;
     file_name_[0] = 0;
     extension_count_ = 0;
     directory_[0] = 0;
@@ -596,8 +601,8 @@ Return Value: n/a
 Status: Complete
 */
 void FileWin::UNK1() {
-    field_208_ = 0;
-    field_30C_ = 0;
+    selected_path_[0] = 0;
+    selected_basename_[0] = 0;
     file_name_[0] = 0;
     directory_[0] = 0;
     extension_count_ = 0;

@@ -221,9 +221,10 @@ void AlphaSave::save() {
 }
 
 // ORIGINAL: 0x00407A80 ?load@AlphaSave@@QAEXXZ 0x00407A80-0x00407BDE
+// symbol    ?load@AlphaSave@@QAEPADXZ
 // The retired standalone spelling could not reproduce VC6's two-register
 // frame, but its call order and owner identities are retained here.
-void AlphaSave::load() {
+char *AlphaSave::load() {
     RECT caption = *buffer_working_rect();
     if (ConsoleGlobal.is_visible()) {
         caption.left += 0x17;
@@ -250,9 +251,12 @@ void AlphaSave::load() {
     ActiveAlphaSave = this;
     NetDaemonNet.voice_hotkey_48_ = 0;
     NetDaemonNet.voice_hotkey_4c_ = 0;
-    file_win_.load();
+    char *const selected = file_win_.load();
     NetDaemonNet.voice_hotkey_48_ = 0xDC;
     NetDaemonNet.voice_hotkey_4c_ = 0x100DC;
+    // Original407BBF..407BDD forwards EAX unchanged through these stores;
+    // load_map tests that pointer, including null with nonempty defaults.
+    return selected;
 }
 
 int AlphaSave::add_default_extension(char *extension) {

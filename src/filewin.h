@@ -50,7 +50,7 @@ class FileWin {
   void on_button_clicked(int button_id);
   int populate_directory(char *directory);
   void save();
-  void load();
+  char *load();
   FileWin();
   ~FileWin();
   void UNK6();
@@ -82,10 +82,12 @@ class FileWin {
   char previous_directory_[260];  // GetCurrentDirectoryA output
   // RECOVERY_MEMBER: v1 FileWin current_directory_ 0x104 0x00613D50
   char current_directory_[260];
-  uint8_t field_208_;
-  uint8_t unmapped_209_[0x30C - 0x209];
-  uint8_t field_30C_;
-  uint8_t unmapped_30D_[0x410 - 0x30D];
+  // UNK4 composes the directory-qualified result and basename separately;
+  // load returns the first buffer, not the editable default at +0x410.
+  // RECOVERY_MEMBER: v1 FileWin selected_path_ 0x208 0x006146A0
+  char selected_path_[260];
+  // RECOVERY_MEMBER: v1 FileWin selected_basename_ 0x30C 0x006146A0
+  char selected_basename_[260];
   // RECOVERY_MEMBER: v1 FileWin file_name_ 0x410 0x00613D50
   char file_name_[260];
   // RECOVERY_MEMBER: v1 FileWin extension_count_ 0x514 0x00614360
@@ -109,7 +111,7 @@ class FileWin {
   // RECOVERY_MEMBER: v1 FileWin directory_list_handle_ 0x33C0 0x00614360
   HWND directory_list_handle_;
 
-  void run_file_dialog(bool saving);
+  char *run_file_dialog(bool saving);
 };
 
 static_assert(sizeof(FileWin) == 0x33C4,

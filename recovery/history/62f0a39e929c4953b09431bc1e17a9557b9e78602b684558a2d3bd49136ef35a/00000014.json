@@ -1,0 +1,35 @@
+{
+  "event_id": "67894f8c8ab2ca883ea176c4b327075397383d200e1df8603bf920f8c3581767",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_filewin_load_contract_behavior.py"
+    ],
+    "evidence": [
+      "Admit the confirmed actual pointer-return contract closure from load-map-actual-pointer-contract-20261003: AlphaSave load, FileWin load and producer UNK4, genuine selected-path/selected-name inline buffers in already-owned FileWin, and durable source-extracted modal cancel/nonempty default/full-directory and callback controls. Preserve historical catalog symbols, all BYTE_EXACT identities and layout, real SDK error behavior, pending260-boundary decision, original baseline and every failed/private draft. No raw self-offset access, fixed original code calls, invented independent storage, automatic acceptance or gate waiver."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4225664,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6373216,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 6375072,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b3d554e3273b1d39eef1be38e80c8c5325da26a6c03b8f87ebfa0aa4e71de04f",
+  "request_id": "load-map-callee-closure-20261003",
+  "schema_version": 1,
+  "sequence": 14,
+  "stream": "task:game-save-load-owner-coverage"
+}

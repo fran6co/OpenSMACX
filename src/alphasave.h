@@ -37,7 +37,7 @@ class AlphaSave : public GraphicWin {
   void hide_save_window();
   void on_selected(int selection_id);
   void save();
-  void load();
+  char *load();
   int add_default_extension(char *extension);
 
  private:
