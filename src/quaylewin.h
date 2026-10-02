@@ -20,7 +20,7 @@ class QuayleWin : public GraphicWin {
   void on_left_click(int x, int y);
   void on_selected(int selection, int unused);
   void on_button_clicked(int button_id) override;
-  virtual void vslot_19(int x, int y) override;
+  virtual void on_left_click_event(int x, int y) override;
   int on_key_click(int repeat, int key) override;
   virtual void vslot_53(int selection, int unused) override;
 

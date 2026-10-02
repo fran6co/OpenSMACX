@@ -378,7 +378,7 @@ void QuayleWin::on_redraw() {
   StringAllocationHeap = saved_string_owner;
 }
 
-void QuayleWin::vslot_19(int x, int y) { on_left_click(x, y); }
+void QuayleWin::on_left_click_event(int x, int y) { on_left_click(x, y); }
 
 void QuayleWin::vslot_53(int selection, int unused) {
   on_selected(selection, unused);

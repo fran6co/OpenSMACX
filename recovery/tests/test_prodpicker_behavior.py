@@ -217,7 +217,7 @@ struct PullDown {
 struct ProdPicker {
     int field_A774_ = 0, field_B68_ = 0;
     StringList prod_a_;
-    void vslot_19(int, int) { }
+    void on_left_click_event(int, int) { }
     void client_to_screen(int *, int *) { }
     void on_button_clicked(int) { events.push_back(4); }
     void calculate() { events.push_back(5); }

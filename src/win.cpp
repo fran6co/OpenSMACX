@@ -6515,7 +6515,7 @@ void Win::on_l_button_up(int x, int y, unsigned int keys, int dbl) {
                 if (cb != 0) {
                     cb(x, y);
                 }
-                this->vslot_19(x, y);
+                this->on_left_click_event(x, y);
                 Win *child = reinterpret_cast<Win *>(flags_);
                 if (child != 0 && child->vslot_23() == 0) {
                     child->vslot_07();
@@ -12102,7 +12102,7 @@ void Win::dispatch_19(int a, int b, int alternate) {
         if (hook != 0) {
             hook(a, b);
         }
-        vslot_19(a, b);
+        on_left_click_event(a, b);
         Win *child = reinterpret_cast<Win *>(flags_);
         if (child != 0) {
             if (child->vslot_23() == 0) {

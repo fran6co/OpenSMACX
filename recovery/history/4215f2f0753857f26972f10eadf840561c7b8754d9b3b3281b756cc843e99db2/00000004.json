@@ -1,0 +1,27 @@
+{
+  "event_id": "54e5a2478d5f248fb5cb64de2fb8c7d4724bf4f782ac42496d0853891505f853",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_prodpicker_behavior.py",
+      "recovery/tests/test_win_left_click_interface.py",
+      "src/basewin.cpp",
+      "src/prodpicker.cpp",
+      "src/quaylewin.cpp",
+      "src/quaylewin.h",
+      "src/win.cpp",
+      "src/win.h"
+    ],
+    "evidence": [
+      "Pinned MonuWin primary table66C880 slot19 targets476780; genuine inherited Win slot19 currently namedvslot_19, so draftnonvirtualon_left_click fails real dispatch despite compiling. Name the existing slot on_left_click_event, preserving exact slot/signature and unrelated on_left_click methods; update existing dispatch callers and Quayle override without inventing extra wrappers or changing vtable width.",
+      "Coordinator authorizes shared-interface spelling migration prerequisite, actual compiler/body and physical-table verification required before recovery integration. No historical identities, claims, task baselines or matching obligations may be discarded; this change alone increases no implementation coverage."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "16b53dff3b75991863d0e5c73257f18538247645ed8ee2b37ae29444e52825d3",
+  "request_id": "monuwin-real-left-click-interface",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:monuwin-owner-coverage"
+}

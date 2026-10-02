@@ -580,7 +580,10 @@ class Win : public AutoSound {
   // The router ignores the callback's EAX result.
   virtual void on_mouse_move(int x, int y, unsigned int keys, int from_parent);  // slot 16  0x005F6320
   virtual void on_mouse_leave(int = 0, int = 0) {}  // 0x00404260
-  virtual void vslot_19(int = 0, int = 0) {}  // 0x00404260
+  // Slot 19 is the completed left-click callback: on_l_button_up dispatches
+  // it after release, and MonuWin's original table66C880 points it at476780.
+  // Keep this two-argument callback distinct from the slot20 press callback.
+  virtual void on_left_click_event(int = 0, int = 0) {}  // 0x00404260
   virtual void on_left_down(int = 0, int = 0) {}  // slot 20
   virtual void on_left_up(int = 0, int = 0) {}  // slot 21
   virtual void vslot_22(int = 0, int = 0) {}  // 0x00404260

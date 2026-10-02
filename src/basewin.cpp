@@ -3473,8 +3473,8 @@ void BaseWin::on_left_up(int xCoord, int yCoord) {
         } else {
             // Front vtable slot 19 (0x4C), which in BaseWin's own front table
             // (0x66A40C) holds on_left_click (0x0041AF70). Win declares the
-            // slot `vslot_19`, so the dispatch spells by name.
-            vslot_19(xCoord, yCoord);
+            // slot `on_left_click_event`, so the dispatch spells by name.
+            on_left_click_event(xCoord, yCoord);
         }
     }
 
@@ -3898,7 +3898,7 @@ void __cdecl load_inverts() {
 //        three of its shims. `this` now IS the entry, so the three raw
 //        offsets are members (field_40B4C_/40B50_/40B54_, `Buffer::rect2_`
 //        for `self - 0x5a0`), the two cross-object casts are the plain
-//        `vslot_19(...)` / `on_lose_mouse_capture()` the front already spelled, and the
+//        `on_left_click_event(...)` / `on_lose_mouse_capture()` the front already spelled, and the
 //        `self + 0xa14` receiver of the old `VCall2::slot004` compare is a
 //        single `static_cast<BaseWin *>(this)` - the adjustment the receiver
 //        already carries, which is what 0x41DE26's one `add esi,0xfffff5ec`
@@ -3912,7 +3912,7 @@ void __cdecl load_inverts() {
 // LEVER: 2026-09-06, the derivation deleted the last of this body's puns.
 //        `this` IS the entry, so field_40B4C_/40B50_/40B54_ and
 //        `Buffer::rect2_` name the four raw offsets, the two cross-object
-//        casts are the front's own `vslot_19(...)` / `on_lose_mouse_capture()`, entry slot
+//        casts are the front's own `on_left_click_event(...)` / `on_lose_mouse_capture()`, entry slot
 //        3 spells `on_iface_left_click(...)`, and the capture-slot compare is
 //        one `static_cast<BaseWin *>(this)`. 91/97 before and after - the
 //        remaining six are the drop-rect copy's schedule, see the TRIED note.
@@ -4010,7 +4010,7 @@ void BaseWin::on_iface_left_up(int xCoord, int yCoord) {
                 field_40B50_ = -1;
             } else {
                 // Front vtable slot 19 (0x4C) - the front's on_left_click.
-                vslot_19(xCoord, yCoord);
+                on_left_click_event(xCoord, yCoord);
             }
         } else {
             // This table's own slot 3, dispatched with the entry untouched -
