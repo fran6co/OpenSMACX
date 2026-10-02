@@ -1,0 +1,28 @@
+{
+  "event_id": "ed0cad1e841d3e4e3733b193ac3495dd0dfa78fee0e62183ed3f8fdcc980046f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Pinned image bytes independently confirm six faction-section/path C strings686908,686918,686924,686930,686940,686948. Newly recovered pick_map must not dereference old executable pointers; replace shared source aliases with genuine initialized char arrays and preserve their consumers/original identities. Fresh affected native controls and application build/link required; no claim or baseline changes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4726736,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 4726176,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "f57cbff81ea81adb6bcd704bd3d3a2bddcc0686dc441f415d48a8a86f299b718",
+  "request_id": "netwin-shared-faction-literals",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netwin-owner-coverage"
+}
