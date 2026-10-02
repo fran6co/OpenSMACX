@@ -1,0 +1,25 @@
+{
+  "event_id": "579b587a833a5eb2dad84afa727dc2774a2c6c798bd219c21b7281d7f5a4f3d3",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_alphamenu_menu_init.py"
+    ],
+    "evidence": [
+      "Pinned Console init51D890 receiver+22A2C and existing AlphaMenu check/adjust virtual dispatch identify45FB20 as AlphaMenu::menu_init despite historical MainMenu catalogue name. Admit complete original menu population through existing Menu, Order, Terraforming, StringTable, GameRules owners; no invented MainMenu class, absolute executable calls or seed removal. Preserve original4784-byte span, original task baseline and all claims/discoveries. Actual-source host controls and fresh native compile/layout plus application build/link precede coordinator-reviewed integration; string pool pointer-to-int remains existing x86 API limitation, not portable pointer-width proof."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4586272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "9232522723acba804656c5ede6235ce3932bc364a2cf43ba60315fbd09d1fb11",
+  "request_id": "alphamenu-menu-init-owner-admission-20261002",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:alphamenu-owner-coverage-wave"
+}
