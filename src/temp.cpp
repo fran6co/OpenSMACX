@@ -56,6 +56,10 @@ void __cdecl do_all_tasks(Win *window) {
 // AN OBJECT, NOT A POINTER TO A FIXED ADDRESS: the pointer form costs a
 // load at every use where the image addresses the storage directly, and
 // the address is terranx.exe's data, unmapped in a standalone build.
+// Historical name: Buffer's flying-text code uses this as its running width
+// accumulator. The original storage start is known; this annotation does not
+// establish an independently bounded extent, initialization or lifetime.
+// RECOVERY_OBJECT: v1 0x009B3A9C ?BufferStrHeight@@3HA
 int BufferStrHeight;  // 0x009B3A9C
 // RECOVERY_OBJECT: v1 0x009B7B28 ?HandleMain@@3PAUHWND__@@A
 HWND HandleMain;  // 0x009B7B28
