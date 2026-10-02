@@ -1,0 +1,32 @@
+{
+  "event_id": "3083b51ff71efd7cc7c5af2d0657932ebb0dc90d7be07bb5c59660b91422c07f",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_close_opening.py",
+      "recovery/tests/test_console_init_behavior.py",
+      "src/basepop.cpp",
+      "src/basepop.h",
+      "src/game.cpp",
+      "src/game.h",
+      "src/maininterface.h",
+      "src/pending_bodies.cpp"
+    ],
+    "evidence": [
+      "Complete Console init51D890 already selected in seq4; admit coupled full geometry helper51D760-51D7B5 and start-only shared RECT939EE8 whose writes prove four32-bit RECT fields. Only narrow MainInterface panel_height accessor reads existingD7C. Native init51D9C6/close_opening589B20 publish Console converted Win virtual-base pointer to9B8DD0; BasePop field322C is already Win* and exec consumes it as fallback parent. Admit changing shared BasePopDefaultField322C uint32 word to genuine Win* with actual emitted object symbol, existing close/init consumers and close_opening producer, eliminating casts/raw322C store only. No unrelated BasePop body changes, new layout/storage/lifetime assumptions, other globals, scope reset or claim weakening. game.cpp only typed console_init caller replacement and default-window publication; game.h/pending only obsolete init declaration/forwarder removal. Preserve seed/historical obligations; native both-flag protection/layout, actual-body control mutants and full application compile/link required; root exclusively edits/publishes."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 5363552,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "58518fd9344aa83c978f9688ecd10fad8b210adebf8fa94c9016eb761cc24603",
+  "request_id": "console-init-geometry-typed-default-window",
+  "schema_version": 1,
+  "sequence": 34,
+  "stream": "task:console-scenario-owner-wave"
+}
