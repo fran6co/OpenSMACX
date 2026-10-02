@@ -1,0 +1,33 @@
+{
+  "event_id": "11539f9bc301fe39560120e57988f614b2df648d8030b0363b869011105544bc",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/designwin_workshop_harness.cpp",
+      "recovery/tests/netdaemon_owner_harness.cpp",
+      "recovery/tests/netdaemon_protocol_harness.cpp",
+      "recovery/tests/netdaemon_synch_core_harness.cpp",
+      "recovery/tests/test_airdrop_network.py",
+      "recovery/tests/test_artillery_action.py",
+      "recovery/tests/test_console_disband.py",
+      "recovery/tests/test_console_human_turn_behavior.py",
+      "recovery/tests/test_console_menu_behavior.py",
+      "recovery/tests/test_console_remaining_behavior.py",
+      "recovery/tests/test_console_scenario_behavior.py",
+      "recovery/tests/test_netdaemon_automated_lock.py",
+      "recovery/tests/test_netdaemon_protocol.py",
+      "recovery/tests/test_tech_achieved_behavior.py",
+      "recovery/tests/test_vehicle_special_actions.py"
+    ],
+    "evidence": [
+      "Authorize only fixture and mutation-anchor migration from the retired NetMsgPopup pointer alias to genuine NetMsgPrimary object/service doubles. Preserve all existing expected behaviors, mutants and production test coverage; no assertions weakened. Real global fixtures replace uninitialized pointer assignments, other service doubles retain the same captured instance. NetMsg owner private application build passes; native800protected diagnostics unchanged with six existing stale-thunk unknowns. Original task baseline and all seeds/claims retained."
+    ],
+    "kind": "scope_expanded",
+    "subjects": []
+  },
+  "previous_event": "d47e7169007982d3e1e1f092575e7e4b10782e6bc06365ed8b139f47dca7fba9",
+  "request_id": "netmsg-genuine-global-fixtures",
+  "schema_version": 1,
+  "sequence": 2,
+  "stream": "task:netmsg-complete-owner-recovery"
+}
