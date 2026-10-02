@@ -61,6 +61,7 @@ class StringBox : public GraphicWin {
   StringBox();
   ~StringBox();
   void add(char *text, int index, int flag);
+  void set_visible_rows(uint32_t rows) { visible_rows_ = rows; }
 
  private:
   // Draw-mode flag: 0 and on_redraw paints the whole list with one bulk

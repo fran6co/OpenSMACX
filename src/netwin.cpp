@@ -448,11 +448,11 @@ Status: Coverage transcription - unclaimed body (the preserved seed keeps its
 void NetWin::UNK3() {
     unsigned char *const self = reinterpret_cast<unsigned char *>(this);
     Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCE4),
+    buffer->box_sprite(&setup_rects_[45],
                        &InterfaceBoxStyles[3]);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCD4),
+    buffer->box_sprite(&setup_rects_[44],
                        &InterfaceBoxStyles[0]);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCC4),
+    buffer->box_sprite(&setup_rects_[43],
                        &InterfaceBoxStyles[0]);
 }
 
@@ -823,7 +823,7 @@ void NetWin::on_redraw() {
     // The banner rectangle: painted as 0xA14 holds it, then inset by three
     // on every side and painted again - the inset copy is the one the title
     // is centred in.
-    RECT banner = *reinterpret_cast<RECT *>(&field_A14_);
+    RECT banner = setup_rects_[0];
     buffer->box_sprite(&banner, &InterfaceBoxStyles[1]);
     banner.left += 3;
     banner.top += 3;
@@ -844,11 +844,11 @@ void NetWin::on_redraw() {
     }
 
     draw_custom_rules();
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCE4),
+    buffer->box_sprite(&setup_rects_[45],
                        &InterfaceBoxStyles[1]);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCD4),
+    buffer->box_sprite(&setup_rects_[44],
                        &InterfaceBoxStyles[0]);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xCC4),
+    buffer->box_sprite(&setup_rects_[43],
                        &InterfaceBoxStyles[0]);
     draw_player_names();
     draw_diffs();
@@ -894,8 +894,16 @@ static void *const NetWinRectSlot = (void *)0x00669328;
 static char **const NetWinSessionName = (char **)0x0093D494;
 
 // 0x0080A6F0 - the planet-size name count beside the fixed dialog (the
-// names themselves ride the 0x80-stride block at 0x6614).
-static int *const NetWinPlanetSizeCount = (int *)0x0080A6F0;
+// names occupy world_size_labels_: 32 rows at native 0x80-byte stride.
+// Original starts below are distinct objects; stores/accesses establish only
+// those starts, not original allocations, complete lifetimes or exact data layout.
+// RECOVERY_OBJECT: v1 0x0080A6F0 ?NetWinPlanetSizeLabelCount@@3HA
+int NetWinPlanetSizeLabelCount;
+// RECOVERY_OBJECT: v1 0x0080A6F4 ?NetWinExecAdjacentState@@3HA
+int NetWinExecAdjacentState;
+// RECOVERY_OBJECT: v1 0x00811E38 ?NetWinWindowTitleInitialText@@3DA
+char NetWinWindowTitleInitialText;
+
 
 // 0x009B39D8 - the x coordinate wrap() finished the wrapped rules line at,
 // which the combo-arrow chip of that line is placed beside.
@@ -927,9 +935,9 @@ void NetWin::draw_session_info() {
     Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
     StringStruct list;
 
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xA44),
+    buffer->box_sprite(&setup_rects_[3],
                        &InterfaceBoxStyles[1]);
-    RECT *title_rect = reinterpret_cast<RECT *>(self + 0xA34);
+    RECT *title_rect = &setup_rects_[2];
     buffer->box_sprite(title_rect, &InterfaceBoxStyles[2]);
 
     StringTemp[0] = 0;
@@ -946,7 +954,7 @@ void NetWin::draw_session_info() {
     }
     buffer->set_clip(reinterpret_cast<RECT *>(self + 0x474));
 
-    RECT *panel = reinterpret_cast<RECT *>(self + 0xA24);
+    RECT *panel = &setup_rects_[1];
     buffer->box_sprite(panel, &InterfaceBoxStyles[0]);
     RECT field;
     field.left = panel->left + 4;
@@ -1227,7 +1235,7 @@ void NetWin::draw_session_info() {
     }
 
     buffer->set_clip(reinterpret_cast<RECT *>(self + 0x474));
-    soft_update(reinterpret_cast<RECT *>(self + 0xA44));
+    soft_update(&setup_rects_[3]);
 }
 
 /*
@@ -1257,9 +1265,9 @@ void NetWin::draw_player_names() {
     int pid_idx = NetDaemonNet.pid_2_idx(NetWinPlayerId);
     unsigned char *const self = reinterpret_cast<unsigned char *>(this);
     Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xA64),
+    buffer->box_sprite(&setup_rects_[5],
                        &InterfaceBoxStyles[1]);
-    RECT *title_rect = reinterpret_cast<RECT *>(self + 0xA54);
+    RECT *title_rect = &setup_rects_[4];
     buffer->box_sprite(title_rect, &InterfaceBoxStyles[2]);
 
     StringTemp[0] = 0;
@@ -1277,7 +1285,7 @@ void NetWin::draw_player_names() {
     unsigned char *record = reinterpret_cast<unsigned char *>(
         NetWinFactionTable + 0x2F1);
     NetWinSlotRecord *slot_record = NetWinSlotRecords + 1;
-    RECT *rects = reinterpret_cast<RECT *>(self + 0xA74);
+    RECT *rects = &setup_rects_[6];
     for (int row = 0; slot_record < NetWinSlotRecords + 8;
          ++row, record += 0x17C, slot_record += 1) {
         if (*NetWinEighthSlotWord == 3 && faction_records_ != 0
@@ -1437,9 +1445,9 @@ void NetWin::draw_custom_rules() {
     spot_.kill_type(1);
     unsigned char *const self = reinterpret_cast<unsigned char *>(this);
     Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xD04),
+    buffer->box_sprite(&setup_rects_[47],
                        &InterfaceBoxStyles[1]);
-    RECT *title_rect = reinterpret_cast<RECT *>(self + 0xCF4);
+    RECT *title_rect = &setup_rects_[46];
     buffer->box_sprite(title_rect, &InterfaceBoxStyles[0]);
 
     StringTemp[0] = 0;
@@ -1454,15 +1462,15 @@ void NetWin::draw_custom_rules() {
                              strlen(StringTemp));
     }
 
-    RECT *rules_rect = reinterpret_cast<RECT *>(self + 0xD14);
+    RECT *rules_rect = &setup_rects_[48];
     buffer->box_sprite(rules_rect, &InterfaceBoxStyles[0]);
-    buffer->box_sprite(reinterpret_cast<RECT *>(self + 0xD24),
+    buffer->box_sprite(&setup_rects_[49],
                        &InterfaceBoxStyles[0]);
 
     // The four layout words double as the row rectangle: left/top advance per
     // row while right/bottom stay put, and write_l reads them as a RECT.
     int left = rules_rect->left - 0x14;
-    int top = *reinterpret_cast<int *>(self + 0xD18);
+    int top = setup_rects_[48].top;
     buffer->set_font(find_font(0xC, 1), 0, 0, 0);
     int right = (rules_rect->right - rules_rect->left) + left - 6;
     int bottom = top + 0x12;
@@ -1604,7 +1612,7 @@ void NetWin::draw_diffs() {
     spot_.kill_type(4);
     unsigned char *const self = reinterpret_cast<unsigned char *>(this);
     Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
-    RECT *rect = reinterpret_cast<RECT *>(self + 0xB54);
+    RECT *rect = &setup_rects_[20];
     unsigned char *record =
         reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179;
     for (int index = 0; record < reinterpret_cast<unsigned char *>(NetWinFactionTable)
@@ -1673,7 +1681,7 @@ void NetWin::draw_factions() {
     spot_.kill_type(3);
     unsigned char *const self = reinterpret_cast<unsigned char *>(this);
     Buffer *buffer = reinterpret_cast<Buffer *>(self + 0x444);
-    RECT *rect = reinterpret_cast<RECT *>(self + 0xAE4);
+    RECT *rect = &setup_rects_[13];
     unsigned char *record =
         reinterpret_cast<unsigned char *>(NetWinFactionTable) + 0x179 + 0x45;
     for (int index = 0;
@@ -2430,12 +2438,9 @@ void NetWin::pick_planet_size() {
     dialogs.item(StringTable.get(
                      *reinterpret_cast<int *>(Labels.strings_ptr + 0xFE4)),
                  0);
-    int count = *NetWinPlanetSizeCount;
+    int count = NetWinPlanetSizeLabelCount;
     for (int index = 0; index < count; ++index) {
-        dialogs.item(reinterpret_cast<char *>(
-                         reinterpret_cast<unsigned char *>(this) + 0x6614
-                         + index * 0x80),
-                     index + 1);
+        dialogs.item(world_size_labels_[index], index + 1);
     }
     int answer = pick_answer(*this, pop_menu);
     if (answer >= 0) {
@@ -2460,6 +2465,233 @@ Purpose: The player-count picker: entries numbered max(2, lobby count) to 7,
 Return Value: n/a
 Status: Coverage transcription - unclaimed body
 */
+static void netwin_set_rect(RECT *rect, int left, int top, int right, int bottom) {
+    rect->left = left;
+    rect->top = top;
+    rect->right = right;
+    rect->bottom = bottom;
+}
+
+// ORIGINAL: 0x00482490 ?exec@NetWin@@QAEHXZ 0x00482490-0x00482D84
+// RECOVERY_BINDING: v1 {"evidence": ["source:src/unrecovered/00482490.cpp; original identity and primary482490..482D84 span retained", "Pinned4824C2 calls402EE0 with483820 for seven17C-byte stack rows; callback stores482A16 and modal setup identify static cdecl receivers", "recovery/tasks/netwin-owner-coverage.json; revisions1-3 authorize coupled ownership and consumer changes; no matching or runtime acceptance implied."], "reason": "Recover the complete lobby window lifecycle with typed setup rectangles, existing controls, stack-local lobby rows and real receiver-free callbacks."}
+// TRIED: full transcription treating `self` as `int *` (matches the original's word-indexed field layout exactly); vtable slot057 retyped to (int,int,int) in this file's VCall, verified against raw disasm; UnionRect/CharUpperA reached via the IAT slot pattern. Reaches MISMATCH #6 'xor' vs 'mov' (register allocation), not chased further given size (2292 bytes).
+int NetWin::exec() {
+    if (ExitTurnLoop != 0) {
+        return 0;
+    }
+
+    setup_faction_data(nullptr);
+    NetDaemonNet.enable_join();
+
+    struct ExecLobbyPacket {
+        NetWinLobbyPacketHeader header_;
+        uint8_t payload_[0xA64];
+    } lobby_message;
+    static_assert(sizeof(ExecLobbyPacket) == 0xA74, "exec lobby message size");
+    // The only sent branch overwrites the full payload; deterministic zeroing
+    // of the otherwise unwritten header tail avoids reading indeterminate C++
+    // storage while preserving every pinned field and payload byte.
+    memset(&lobby_message, 0, sizeof(lobby_message));
+    lobby_message.header_.opcode_ = 0x04;
+    lobby_message.header_.flags_ = 0x0F;
+    lobby_message.header_.field_2_ = 0;
+    lobby_message.header_.slot_ = -1;
+    lobby_message.header_.field_8_ = 0;
+    NetWinLobbyRow local_rows[7];
+    for (int row_index = 0; row_index < 7; ++row_index) {
+        local_rows[row_index].initialize_empty_slot();
+    }
+    // 0x483820 is the scoped NetWinLobbyRow reset identity (re-homed from the
+    // old, incorrect NetWin::UNK5 owner); do not mutate process-global rows.
+    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+        lobby_message.header_.flags_ |= 0x40;
+        memcpy(lobby_message.payload_, &NetWinLobbyRows[1], 0xA64);
+        NetDaemonNet.send(&lobby_message, 0xA74, 0, 1);
+    }
+
+    while (faction_records_ == nullptr) {
+        ::do_task();
+    }
+
+    NetDaemonNet.lock_state_[0].payload_.flags = 1;
+    NetWinExecAdjacentState = 0;
+    field_7614_ = 0;
+    spot_.init(0x55);
+
+    if (text_open(AlphaxFileID, "WORLDSIZE") == 0) {
+        text_get();
+        NetWinPlanetSizeLabelCount = text_item_number();
+        if (NetWinPlanetSizeLabelCount > 0x20) {
+            NetWinPlanetSizeLabelCount = 0x20;
+        }
+        for (int index = 0; index < NetWinPlanetSizeLabelCount; ++index) {
+            char *const label = world_size_labels_[index];
+            text_get();
+            label[0] = '\0';
+            strcat(label, text_item());
+            char *const separator = strchr(label, '|');
+            if (separator != nullptr) {
+                *separator = ' ';
+            }
+        }
+        text_close();
+    }
+
+    GraphicWin::init(0, 0, 0x320, 0x258, &NetWinWindowTitleInitialText,
+                     0x05000000, nullptr, nullptr, nullptr);
+    Win::center();
+    field_16C_ = 0x1A;
+
+    // Native setup rectangle span [this+0xA14,this+0xD34): 50 RECTs.
+    // Header proposal replaces its existing 200 dwords with setup_rects_[50]
+    // and migrates existing field_A14_ painter access to setup_rects_[0].
+    RECT *const r = setup_rects_;
+    const RECT &work = Buffer::rect2_;
+    r[0].left = work.left + 3;
+    r[0].top = work.top + 3;
+    r[0].right = work.right - 3;
+    r[0].bottom = work.top + 0x1D;
+
+    netwin_set_rect(&r[1], 7, 0x3A, 0x134, 0x180);
+    netwin_set_rect(&r[2], 7, 0x24, 0x134, 0x38);
+    ::UnionRect(&r[3], &r[1], &r[2]);
+    r[3].left -= 3;
+    r[3].top -= 3;
+    r[3].right += 3;
+    r[3].bottom += 3;
+
+    netwin_set_rect(&r[4], 0x13D, 0x24, 0x319, 0x38);
+    netwin_set_rect(&r[5], 0x13A, 0x21, 0x31C, 0xEB);
+
+    for (int i = 0; i < 7; ++i) {
+        const int top = 0x3A + 0x16 * i;
+        const int bottom = 0x4E + 0x16 * i;
+        netwin_set_rect(&r[6 + i], 0x161, top, 0x213, bottom);
+        netwin_set_rect(&r[13 + i], 0x215, top, 0x2A1, bottom);
+        netwin_set_rect(&r[20 + i], 0x2A3, top, 0x319, bottom);
+        netwin_set_rect(&r[27 + i], 0x14F, top, 0x15F, bottom);
+        netwin_set_rect(&r[36 + i], 0x13D, top, 0x14D, bottom);
+    }
+
+    netwin_set_rect(&r[34], 0x13D, 0xD4, 0x229, 0xE8);
+    netwin_set_rect(&r[35], 0x22C, 0xD4, 0x318, 0xE8);
+
+    netwin_set_rect(&r[43], 0x13D, 0xF1, 0x319, 0x162);
+    netwin_set_rect(&r[44], 0x13D, 0x164, 0x319, 0x180);
+    ::UnionRect(&r[45], &r[43], &r[44]);
+    r[45].left -= 3;
+    r[45].top -= 3;
+    r[45].right += 3;
+    r[45].bottom += 3;
+
+    netwin_set_rect(&r[46], 7, 0x189, 0x319, 0x19D);
+    netwin_set_rect(&r[48], 0x1B, 0x19F, 0x18F, 0x251);
+    netwin_set_rect(&r[49], 0x1A5, 0x19F, 0x251, 0x319);
+    RECT union_scratch;
+    ::UnionRect(&union_scratch, &r[46], &r[48]);
+    ::UnionRect(&r[47], &union_scratch, &r[49]);
+    r[47].left -= 3;
+    r[47].top -= 3;
+    r[47].right += 3;
+    r[47].bottom += 3;
+
+    stringBox_.init(r[43].left + 3, r[43].top + 3,
+                    r[43].right - r[43].left - 6,
+                    r[43].bottom - r[43].top - 6, this, nullptr, -1);
+    // init closes the prior list and clears its callback; install afterward.
+    stringBox_.set_write_strings_callback(&NetWin::string_callback);
+    Buffer *string_canvas = static_cast<Buffer *>(&stringBox_);
+    string_canvas->set_text_color(0xFF, -1, 1, 1);
+    stringBox_.set_visible_rows(100);
+    stringBox_.show(0);
+
+    editBox_.init(r[44].left, r[44].top,
+                  r[44].right - r[44].left,
+                  r[44].bottom - r[44].top, this, 0);
+
+    // Existing EditBox members preserve the native field stores; window
+    // flags belong to its actual Win base, not the separate CheckBox.
+    editBox_.add_window_flags(0x01000100);
+    editBox_.field_B1C_ = 9;
+    editBox_.field_B30_ = 0;
+    Buffer *edit_canvas = static_cast<Buffer *>(&editBox_);
+    edit_canvas->set_text_color(0xE1, -1, 1, 1);
+    editBox_.field_B20_ = 0x41;
+    editBox_.field_B24_ = 0xE1;
+    editBox_.field_B14_ = 0x80;
+    editBox_.show(0);
+
+    char *button_text = label_get(
+        (NetDaemonNet.lock_state_[0].leading_words_[1] != 0 ? 0x1058 : 0x1050) / 4);
+    flatButton1_.init(button_text, 10, r[34].left, r[34].top,
+                      r[34].right - r[34].left, r[34].bottom - r[34].top,
+                      this, 0);
+    Buffer *button_canvas = static_cast<Buffer *>(&flatButton1_);
+    button_canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    flatButton1_.redraw();
+    flatButton1_.set_text_color(0x41, -1, 1, 1);
+
+    StringTemp[0] = '\0';
+    strcat(StringTemp, label_get(0x198 / 4));
+    if (Language != 2) {
+        CharUpperA(StringTemp);
+    }
+    flatButton2_.init(StringTemp, -2, r[35].left, r[35].top,
+                      r[35].right - r[35].left, r[35].bottom - r[35].top,
+                      this, 0);
+    Buffer *second_button_canvas = static_cast<Buffer *>(&flatButton2_);
+    second_button_canvas->set_font(find_font(0xE, 1), 0, 0, 0);
+    flatButton2_.redraw();
+    flatButton2_.set_text_color(0x41, -1, 1, 1);
+
+    if (NetDaemonNet.lock_state_[0].leading_words_[1] != 0) {
+        NetWinSessionOptions.rule_bits_a_ = AlphaIniPrefs.rules;
+        NetWinSessionOptions.difficulty_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
+        NetWinSessionOptions.rule_bits_c_ |= 0x10;
+        NetWinLobbyRows[1].field_2_ = static_cast<uint8_t>(DefaultPrefs.difficulty);
+        NetWinSessionOptions.rule_bits_b_ = AlphaIniPrefs.semaphore;
+        NetDaemonNet.pid_2_idx(NetWinPlayerId);
+        NetWinSessionOptionsPacket packet;
+        memset(&packet, 0, sizeof(packet));
+        packet.opcode_ = 0x2F02;
+        packet.options_ = NetWinSessionOptions;
+        NetDaemonNet.send(&packet, 0x28, NetWinOtherPlayerId, 1);
+    }
+
+    NetDaemonNet.set_polling(1);
+    set_modal(0, &NetWin::modal_callback_daemon, nullptr);
+    hide();
+    NetDaemonNet.close_game();
+
+    if (field_7614_ > 0) {
+        on_redraw();
+        on_update();
+        prepare_game();
+    }
+    NetDaemonNet.lock_state_[0].payload_.flags = 2;
+
+    if (faction_records_ != nullptr) {
+        free(faction_records_);
+        faction_records_ = nullptr;
+    }
+    if (faction_records_copy_ != nullptr) {
+        free(faction_records_copy_);
+        faction_records_copy_ = nullptr;
+    }
+    field_761C_ = -1;
+    field_7620_ = -1;
+    spot_.shutdown();
+    stringBox_.close();
+    editBox_.close();
+    checkBox_.close();
+    flatButton1_.close();
+
+    if (ExitTurnLoop != 0) {
+        return 0;
+    }
+    return field_7614_;
+}
+
 void NetWin::pick_num_players() {
     PopMenu pop_menu;
     PullDown pull_down;
@@ -2604,7 +2836,7 @@ Purpose: The fixed dialog's twin of modal_callback: the same daemon drain and
          through NetWinDialog's own 0x7614/0x7618 words (the image's fixed
          0x811D0C/0x811D10 slots) instead of the receiver's.
 // ORIGINAL: 0x00483240 ?modal_callback_daemon@NetWin@@QAAHXZ 0x00483240-0x004832CF FILE
-// symbol    ?modal_callback_daemon@NetWin@@QAEHXZ
+// symbol    ?modal_callback_daemon@NetWin@@SAHXZ
 // size      143 bytes
 // prototype int (__thiscall ?modal_callback_daemon@NetWin@@QAAHXZ)(NetWin* this)
 // callers   1   call targets   2
@@ -2616,14 +2848,13 @@ Purpose: The fixed dialog's twin of modal_callback: the same daemon drain and
 Return Value: 1 to keep waiting, 0 when the dialog may proceed
 Status: Coverage transcription - unclaimed body
 */
-int NetWin::modal_callback_daemon() {
+int __cdecl NetWin::modal_callback_daemon() {
     if (NetDaemonNet.receive() != 0) {
         if (NetDaemonNet.receive() != 0) {
             do {
             } while (NetDaemonNet.receive() != 0);
         }
-        typedef void (__fastcall *dialog_slot_fn)(void *);
-        vtable_slot<dialog_slot_fn>(&NetWinDialog, 0x30)(&NetWinDialog);
+        NetWinDialog.on_redraw();
     }
     if (NetWinDialog.field_7614_ != 0) {
         return 0;
@@ -2658,8 +2889,8 @@ Purpose: The chat list's string callback: the message list repaints one line's
          is this dialog's own stringBox_ address, so the branch survives as
          the neg/sbb/and form the image emits - and the paint target sits
          0x1184 bytes into the dialog.
-// ORIGINAL: 0x004832D0 ?string_callback@NetWin@@QAAXHH@Z 0x004832D0-0x00483302 FILE
-// symbol    ?string_callback@NetWin@@QAEXHH@Z
+// ORIGINAL: 0x004832D0 ?string_callback@NetWin@@QAAXHH@Z 0x004832D0-0x00483302 FILE BYTE_EXACT
+// symbol    ?string_callback@NetWin@@SAXHH@Z
 // size      50 bytes
 // prototype void (__thiscall ?string_callback@NetWin@@QAAXHH@Z)(NetWin* this, int, int)
 // callers   0   call targets   2
@@ -2671,11 +2902,8 @@ Return Value: n/a
 Status: Coverage transcription - unclaimed body (the preserved seed keeps its
         own BYTE_EXACT claim until this converges)
 */
-void NetWin::string_callback(int payload, int) {
-    Buffer *canvas = &NetWinDialog.stringBox_ != 0
-        ? reinterpret_cast<Buffer *>(reinterpret_cast<unsigned char *>(
-                                          &NetWinDialog) + 0x1184)
-        : 0;
+void __cdecl NetWin::string_callback(int payload, int) {
+    Buffer *canvas = static_cast<Buffer *>(&NetWinDialog.stringBox_);
     canvas->set_text_color(NetWinDialog.get_player_color(payload), 0, 1, 1);
 }
 
@@ -2981,28 +3209,13 @@ void NetWin::on_mouse_leave(int, int) {
 
 
 /*
-Purpose: Clear the dword at 0x178 and write a five-byte pattern over the start
-         of the object.
-
-             mov [eax+0x178],ecx   ; ecx is zero
-             mov byte [eax],0xFF   / [eax+1],0 / [eax+2],0
-             mov byte [eax+3],0xFF / [eax+4],2
-
-         THE FIRST FIVE BYTES ARE INSIDE THE GraphicWin BASE, and that was
-         checked rather than assumed. ??0NetWin@@QAE@XZ does `mov esi,ecx` then
-         calls GraphicWin's constructor with ecx UNADJUSTED, which by the
-         base-versus-member rule in AGENTS.md makes GraphicWin a base at offset
-         zero - its Spot and StringBox members follow at 0xD34 and 0xD40, on
-         `this` plus an offset. The modelled inheritance is right.
-
-         So this really does write over the object's first five bytes, which
-         the model attributes to Win's leading AutoSound. 0xFF,00,00,0xFF then
-         2 reads like a colour and a mode rather than a pointer, and that
-         appearance is what made this look like a modelling error; it is not.
-         The behaviour is transcribed as the original has it, byte for byte and
-         in the original's order - 0x178 first - rather than corrected to what
-         it seems like it ought to be.
+Purpose: Initialize a lobby row, not the GraphicWin base. Native4824C2
+         passes483820 to the402EE0 iterator for seven stack-local17C-byte
+         rows. Owner178 and the five leading bytes are the only writes;
+         remaining row storage stays untouched. Historical catalogue owner
+         NetWin::UNK5 is retained as identity, not a receiver interpretation.
 // ORIGINAL: 0x00483820 ?UNK5@NetWin@@QAEXXZ 0x00483820-0x0048383C
+// symbol    ?initialize_empty_slot@NetWinLobbyRow@@QAEXXZ
 // size      28 bytes
 // prototype void (__thiscall ?UNK5@NetWin@@QAEXXZ)(NetWin* this)
 // callers   0   call targets   0
@@ -3012,15 +3225,16 @@ Purpose: Clear the dword at 0x178 and write a five-byte pattern over the start
 Return Value: n/a
 Status: Complete
 */
-void NetWin::UNK5() {
-    uint8_t *const self = reinterpret_cast<uint8_t *>(this);
-    *reinterpret_cast<uint32_t *>(self + 0x178) = 0;
-    self[0] = 0xFF;
-    self[1] = 0;
-    self[2] = 0;
-    self[3] = 0xFF;
-    self[4] = 2;
+void NetWinLobbyRow::initialize_empty_slot() {
+    owner_ = 0;
+    prefix_ = 0xFF;
+    ready_or_occupied_ = 0;
+    field_2_ = 0;
+    faction_or_color_ = -1;
+    field_4_ = 2;
 }
+
+
 
 
 

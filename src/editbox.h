@@ -54,6 +54,7 @@ class EditBox : public GraphicWin {
   int init(int x, int y, int width, int height, Win *parent, int focus_wrap);
   int init_with_font(Font *font, int x, int y, int width, Win *parent,
                      int unused);
+  void add_window_flags(uint32_t flags) { iFlags_ |= flags; }
 
   // 0x006151E0, a pending_bodies forwarder; EditGroup calls it directly.
   void set_text(char *text);
