@@ -1,0 +1,20 @@
+{
+  "event_id": "8b3d350e53446fa288a4cb62a6671d5c6a65209c83da7cc76e1cc0ae68cabe2c",
+  "payload": {
+    "affects": [
+      "entity-d4acf660cee2f15f9b9ff27350b6a73d6df51bbb6cf8a5fd19cccca4ee7d8bde"
+    ],
+    "author": "framework-coordinator",
+    "discovery_id": "sync-native-size-and-staging-correction",
+    "evidence": [
+      "Independent pinned-image review: dispatch DWORD0E at53412C+0E*4 targets532F7B, which sets ESI34hex, then routes VehPrototype at533555. Prior134hex host oracle was wrong. Pinned PeImage SHA01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf places93AD8C and observed1920hex receive window inside loaded data682000..9C21F8; file backing is absent there, virtual storage is present. Exactly three literal operand occurrences at file1338E2,133D2F,133E71 establish uses, not complete C++ allocation bounds. Do not use retired hybrid or adjacency as allocation proof. Epilogue social_set requires a2; diplomacy needs saved original faction pair and tuple; protocol hooks without those arguments are incomplete. Existing game.cpp wire0 owners added1cbd05b remain available, not blockers. No source recovery, matching claim or acceptance is granted by this discovery."
+    ],
+    "hypothesis": "Finish the real typed synchronization owner with the corrected opcode-0E extent and persistent source-owned rule staging; preserve unknown original complete allocation extent and callback arguments rather than importing the protocol-only scaffold.",
+    "kind": "discovery"
+  },
+  "previous_event": "0ea0038870c5744cf74133b5e6f7e827a61ba8c3c6cef65c1b3ffdd499829f36",
+  "request_id": "sync-native-size-and-staging-correction",
+  "schema_version": 1,
+  "sequence": 13,
+  "stream": "task:netdaemon-player-lifecycle-recovery"
+}
