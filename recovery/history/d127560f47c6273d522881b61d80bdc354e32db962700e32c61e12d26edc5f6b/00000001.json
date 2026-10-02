@@ -1,0 +1,23 @@
+{
+  "event_id": "ddbf7e758c9175abb52eed9985617946592bb5eb5d69300b79baa626c6b4b05a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Pinned original 479270 body pushes the shared space literal at 682820 before strcat. Admit only replacing its obsolete SpaceText reference with the independently bound BufferJoinSpace; preserve existing MultiWin behavior, original spans and claims. This adds no recovery coverage or exactness claim."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4690544,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": null,
+  "request_id": "buffer-multiwin-shared-space-consumer",
+  "schema_version": 1,
+  "sequence": 1,
+  "stream": "task:buffer-complete-remainder-recovery"
+}
