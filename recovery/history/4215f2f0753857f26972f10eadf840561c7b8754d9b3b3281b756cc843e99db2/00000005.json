@@ -1,0 +1,36 @@
+{
+  "event_id": "cc3ee395d5bc2aec984115598acb4fcf058b965a4e77cdb8e673975b20ae047a",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/test_monuwin_behavior.py",
+      "src/recovered/00476760.cpp",
+      "src/recovered/units/00476850.cpp",
+      "src/recovered/units/004769b0.cpp",
+      "src/recovered/units/00476a00.cpp",
+      "src/recovered/units/00477b10.cpp",
+      "src/recovered/units/00477c80.cpp",
+      "src/reportif.h",
+      "src/stringstruct.cpp",
+      "src/unrecovered/00472230.cpp",
+      "src/unrecovered/004736e0.cpp",
+      "src/unrecovered/00476780.cpp"
+    ],
+    "evidence": [
+      "Original476A50 trigger uses Players faction59C-byte stride for rule_flags508 and FactionMonuments4F4-byte stride for achieved16 in first15records. Existing stringstruct transcription incorrectly scales its int flag pointer by59C, four times native stride, and calls fixed executable init/vtable. Genuine source-owned MonuWin singleton/counter and typed lifecycle/callback interaction must replace these stand-ins. Authorize narrow ReportIf font/fullscreen access, actual source host controls and consumed seed retirement only after exact close/key claims and seed history transfer, build/link and regression verification; immutable original task baseline and all discoveries remain. Corrected full parser independently matches all60 bounded original call traces, not game/runtime acceptance."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 4680272,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "54e5a2478d5f248fb5cb64de2fb8c7d4724bf4f782ac42496d0853891505f853",
+  "request_id": "monuwin-genuine-trigger-and-seed-retirement",
+  "schema_version": 1,
+  "sequence": 5,
+  "stream": "task:monuwin-owner-coverage"
+}
