@@ -926,3 +926,16 @@ int PickTech::pick(int faction, int mode, int count, char *section_id) {
     do_all_draws();
     return technology_ids_[selected_index_];
 }
+
+// Native 5BEB8F..95 constructs the complete local PickTech; 5BEBB7 calls pick.
+// The 484B60 close and reverse Font/base cleanup at 5BEBDF..5BEC27 are the
+// caller-inlined complete destructor. Do not add a second explicit close.
+// EH action662A1E calls complete PickTech::~PickTech (488690).
+// ORIGINAL: 0x005BEB70 ?tech_pick@@YAHHHHPAD@Z 0x005BEB70-0x005BEC3D;0x00662A1E-0x00662A64
+// RECOVERY_BINDING: v1 {"evidence": ["image:5BEB70-5BEC3D and662A1E-662A64; retired seed provenance git:820312f0:src/unrecovered/005beb70.cpp; historical FILE/TRIED lessons retained.", "image:5BEB8F constructor484AC0, 5BEBB7 pick486510, 5BEBDF close484B60 and reverse Fonts/base cleanup are the inlined complete destructor; EH state0 action662A1E calls destructor488690.", "Historical symbol tech_pick PAD is mutable char*; both current product callers pass null. Authoritative declaration removes stale const overloads without changing arguments."], "reason": "Real automatic PickTech owns complete construction, modal pick and cleanup; close belongs to its destructor, not an extra caller operation."}
+// symbol    ?tech_pick@@YAHHHHPAD@Z
+// TRIED: this is the project's known EH-heavy-constructor wall (see src/recovered/units/00408490.cpp's BaseWin::BaseWin note): a local `PickTech` (GraphicWin base + 4 embedded `Font`s, constructed via placement new at the offsets the disassembly uses: 0xc34/0xc0c/0xbe4/0xbbc from the object base) is a faithful call-by-call translation, but the compiler- synthesized SEH try-frame (fs:[0] chain for unwind-safe partial construction, plus the ~PickTech funclet at 0x00662A1E which the scaffold never declares because it is reached only by unwind tables, not a `call`) is not something this reproduces. Landed FILE-mode because BODY mode's naive brace-balance extraction (`extract_forward_text`) stops at the first top-level `{...}` it meets - the placement-new `operator new` helper closes before `tech_pick` even starts, so a body-mode file here silently truncates to zero external symbols (measured: NO_COMPILE, "found 0"). Not expected exact (mnemonic_similarity 0.71).
+int __cdecl tech_pick(int faction, int mode, int count, char *section) {
+    PickTech picker;
+    return picker.pick(faction, mode, count, section);
+}

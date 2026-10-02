@@ -1027,7 +1027,6 @@ int __cdecl load_map();                                   // 0x005AB600 ?load_ma
 void __cdecl save_map();                                  // 0x005ABB90 ?save_map@@YAXXZ
 // a2 is 0 at all three call sites and a3 is -1 at two of them; nothing in
 // the tree names either, so the forward declaration leaves them unnamed.
-int __cdecl tech_pick(int, int, int, LPCSTR);            // 0x005BEB70 ?tech_pick@@YAHHHHPAD@Z
 void __cdecl set_dirty();                                 // 0x00592A80 ?set_dirty@@YAXXZ
 int __cdecl size_of_planet(int planet_size);                       // 0x0058CED0 ?size_of_planet@@YAHH@Z
 int __cdecl supply_options(int base_id, int flags);               // 0x00593A00 ?supply_options@@YAHHH@Z

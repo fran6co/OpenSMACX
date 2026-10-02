@@ -40,8 +40,6 @@
 #include "spritebox.h"
 #include "log.h"
 
-int __cdecl tech_pick(int faction, int mode, int suggested,
-                      const char *section);
 extern Sprite g_TECH_ICON_SPRITES[MaxTechnologyNum];
 void __cdecl design_new_veh(int faction_id, int proto_id);
 void __cdecl help_tech_info(Popup *popup, int tech_id, int faction_id);
@@ -87,8 +85,8 @@ uint8_t GameTechAchieved[MaxTechnologyNum];
 
 // The research slot is PlayersData[faction].tech_id_researching, not a
 // separate absolute table. A remote human's title/name are announced once
-// while the network loop waits for their choice. tech_pick and NetMsg::pop
-// retain their own unfinished recovery obligations.
+// while the network loop waits for their choice. tech_pick owns its real local
+// window in picktech.cpp; NetMsg::pop retains its separate recovery obligations.
 // ORIGINAL: 0x005BE380 ?tech_selection@@YAHH@Z 0x005BE380-0x005BE52A
 // RECOVERY_BINDING: v1 {"evidence": ["retired seed git:0c8bccd8:src/unrecovered/005be380.cpp records the two network wait paths and pop-up order", "PlayersData[faction].tech_id_researching is the seed's 0x0096CDAC+faction*0x20CC slot; Player title/name and general.h's default noun globals cover its 0x00946A50-based records", "ConsoleGlobal.faction_id_ owns the 0x00939284 local-faction slot"], "reason": "Home the typed faction research selection and network wait in the technology owner, retaining the picker and popup owner's separate unfinished obligations."}
 int __cdecl tech_selection(int faction) {

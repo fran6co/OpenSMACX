@@ -1,0 +1,33 @@
+{
+  "event_id": "ca46243264df239545c4ed94e7fb6071d04456c62c6cdf3197c707f722dc5133",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [
+      "recovery/tests/tech_pick_host_fixture.inc",
+      "recovery/tests/test_tech_pick_behavior.py",
+      "src/console.cpp",
+      "src/pending_bodies.cpp",
+      "src/picktech.cpp",
+      "src/technology.cpp",
+      "src/technology.h",
+      "src/unrecovered/005beb70.cpp"
+    ],
+    "evidence": [
+      "Pinned native5BEB70 owns a real automatic C5C PickTech: constructor484AC0, pick486510, inlined complete destructor close484B60/reversefourFonts/base, EH state0 calls complete destructor488690. Extra explicit close would duplicate recovered lifecycle.",
+      "Restore historical mutable char* PAD signature in authoritative technology.h declaration; both live technology.cpp and console.cpp callers pass null. Narrow declaration seam edits only, not outside-owner behavior changes. Preserve205+70byte original spans and historical FILE/TRIED seed history with native writer; retire seed only after build/link, protected claims and independent source-extracted lifecycle controls."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6024048,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "b62566a34e1deb0aadcd2a96828cd4251816404899d42a6e5a1820109f45ae8c",
+  "request_id": "picktech-genuine-tech-pick-caller-2026-10-02",
+  "schema_version": 1,
+  "sequence": 3,
+  "stream": "task:picktech-owner-coverage"
+}

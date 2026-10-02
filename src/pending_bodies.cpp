@@ -1166,13 +1166,7 @@ void __cdecl save_map() {
     PENDING_BODY(0x005ABB90, pending)();
 }
 
-// ?tech_pick@@YAHHHHPAD@Z at 0x005BEB70, still archived
-// (src/unrecovered/005beb70.cpp - the PickTech EH wall). Console::set_tech
-// calls it; the declaration is in console.cpp's handoff block.
-int __cdecl tech_pick(int faction_id, int a2, int a3, const char *section) {
-    typedef int(__cdecl *pending)(int, int, int, const char *);
-    return PENDING_BODY(0x005BEB70, pending)(faction_id, a2, a3, section);
-}
+
 
 
 

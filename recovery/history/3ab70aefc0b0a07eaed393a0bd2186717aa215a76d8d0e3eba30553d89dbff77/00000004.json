@@ -1,0 +1,28 @@
+{
+  "event_id": "dfe1d6ec7d81eb1c60aedf2bfd172718a9d556646e33739c8bf5975d4e71c17d",
+  "payload": {
+    "author": "framework-coordinator",
+    "editable_files": [],
+    "evidence": [
+      "Narrow authoritative tech_pick signature repair changes both live caller relocation targets from stale const PBD to historical mutable PAD. Native5BE380 and515010 call5BEB70; admit only these reference seam repairs, with no caller behavior rewrite and historical Console::set_tech byte obligation preserved/re-measured. Other compiled caller bodies remain protected."
+    ],
+    "kind": "scope_expanded",
+    "subjects": [
+      {
+        "address": 6022016,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      },
+      {
+        "address": 5328912,
+        "address_space": "pe:va",
+        "image_sha256": "01901cbf7196b0c5d0df9540a029520f5df8fd9a6b343deef8b5663872805fcf"
+      }
+    ]
+  },
+  "previous_event": "ca46243264df239545c4ed94e7fb6071d04456c62c6cdf3197c707f722dc5133",
+  "request_id": "picktech-tech-pick-caller-reference-seams-2026-10-02",
+  "schema_version": 1,
+  "sequence": 4,
+  "stream": "task:picktech-owner-coverage"
+}

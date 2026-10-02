@@ -303,3 +303,6 @@ MEASURED inline BOOL __cdecl has_tech(int tech_id, int faction_id) {
 // discounted, so this symbol's own name costs nothing - same idiom as
 // general.h's bitmask_call.
 BOOL __cdecl has_tech_call(int tech_id, int faction_id);
+
+// Owns an automatic PickTech window; historical signature is mutable char*.
+int __cdecl tech_pick(int faction, int mode, int count, char *section);
